@@ -60,6 +60,7 @@ type PlayerPosition =
 
 type Player = {
   id: string;
+  ownerUserId?: string;
   name: string;
   avatar?: string;
   phone?: string;
@@ -1092,18 +1093,7 @@ export default function Home() {
   }
 
   async function ensureInvitedUser(client: NonNullable<typeof supabase>) {
-    const user = await getSignedUser(client);
-    if (user) {
-      return user.id;
-    }
-
-    const signInResult = await client.auth.signInAnonymously();
-    if (signInResult.error || !signInResult.data.user) {
-      throw new Error(signInResult.error?.message ?? "No se pudo crear usuario anonimo");
-    }
-
-    updateAuthState(signInResult.data.user);
-    return signInResult.data.user.id;
+    return ensureRegisteredUser(client);
   }
 
   async function signInWithGoogle() {
@@ -1166,6 +1156,9 @@ export default function Home() {
         userId: String(member.user_id),
       })),
     );
+
+    const ownMember = (members.data ?? []).find((member) => String(member.user_id) === currentUserId);
+    if (ownMember?.display_name) setProfileName(displayName(String(ownMember.display_name)));
   }
 
   async function loadTeams(client: NonNullable<typeof supabase>, preferredGroupId?: string | null) {
@@ -1476,8 +1469,10 @@ export default function Home() {
   }
 
   function setStatus(playerId: string, status: MatchPlayer["status"]) {
-    if (matchFinalized && !canUseAdminControls) return;
     const player = players.find((item) => item.id === playerId);
+    const canChangeStatus = isDemoMode || canUseAdminControls || (hasRealTeam && isRegisteredUser && player?.ownerUserId === currentUserId);
+    if (!canChangeStatus) return;
+    if (matchFinalized && !canUseAdminControls) return;
     if (status === "voy" && (player?.injured || player?.inactive)) return;
     const existing = activeMatch.players.find((entry) => entry.playerId === playerId);
     if (existing?.status === "voy" && status !== "voy") {
@@ -1884,13 +1879,21 @@ export default function Home() {
   const canManageTeam = isRegisteredUser && (currentRole === "owner" || currentRole === "admin");
   const canUseAdminControls = hasRealTeam && canManageTeam;
   const canCreateTeam = Boolean(supabase && isRegisteredUser);
+  const ownPlayer = currentUserId ? players.find((player) => player.ownerUserId === currentUserId) : undefined;
+  const selectedPlayerIsOwn = Boolean(selectedPlayer?.ownerUserId && selectedPlayer.ownerUserId === currentUserId);
+  const canEditSelectedPlayer = Boolean(selectedPlayer && (canUseAdminControls || (hasRealTeam && isRegisteredUser && selectedPlayerIsOwn)));
   const canEditMatchSettings = canUseAdminControls && !matchFinalized;
   const canEditLineup = canUseAdminControls && !lineupClosed && !matchFinalized;
   const ratingVoterId = currentUserId ?? `local:${profileName.trim().toLocaleLowerCase("es-ES") || "jugador"}`;
   const selectedRatingHistory = selectedPlayer ? ratingHistory(selectedPlayer) : [];
   const selectedRatingWindow = selectedPlayer ? ratingWindow(selectedPlayer, ratingVoterId) : null;
   const selectedUserVote = selectedRatingWindow?.ownVote;
-  const canRateSelectedPlayer = Boolean(selectedRatingWindow?.canRate);
+  const canRateSelectedPlayer = Boolean(
+    selectedRatingWindow?.canRate &&
+      selectedPlayer &&
+      !selectedPlayerIsOwn &&
+      (isDemoMode || (hasRealTeam && isRegisteredUser)),
+  );
   const ratingWaitMatches = selectedRatingWindow?.waitMatches ?? 0;
   const draftPeerAverage = selectedPlayer
     ? ratingFacets.reduce((sum, facet) => sum + clampRating(newFacetRatings[facet.key] ?? facetAverage(selectedPlayer, facet.key)), 0) / ratingFacets.length
@@ -1898,7 +1901,11 @@ export default function Home() {
   const selectedRatingStatusText = selectedPlayer && selectedRatingWindow
     ? selectedPlayer.inactive
       ? "Jugador fuera del grupo: valoración bloqueada."
-      : selectedRatingWindow.canRate
+      : selectedPlayerIsOwn
+        ? "No puedes votar tu propia ficha."
+        : hasRealTeam && !isRegisteredUser
+          ? "Entra con Google para valorar a compañeros."
+          : selectedRatingWindow.canRate
         ? "Valoraciones abiertas: puedes votar ahora."
         : selectedUserVote
           ? `Cerradas: se reabren cuando juegue ${ratingWaitMatches} partido${ratingWaitMatches === 1 ? "" : "s"} más.`
@@ -1926,13 +1933,18 @@ export default function Home() {
   }
 
   function updatePlayer(playerId: string, next: Partial<Player>) {
-    if (!canUseAdminControls) return;
-    setPlayers((current) => current.map((player) => (player.id === playerId ? { ...player, ...next } : player)));
+    const player = players.find((item) => item.id === playerId);
+    if (!player) return;
+    const canEditPlayer = canUseAdminControls || (hasRealTeam && isRegisteredUser && player.ownerUserId === currentUserId);
+    if (!canEditPlayer) return;
+    setPlayers((current) => current.map((item) => (item.id === playerId ? { ...item, ...next } : item)));
   }
 
   function addPeerRating(playerId: string) {
     const player = players.find((item) => item.id === playerId);
     if (!player) return;
+    if (player.ownerUserId && player.ownerUserId === currentUserId) return;
+    if (hasRealTeam && !isRegisteredUser) return;
     const ratingState = ratingWindow(player, ratingVoterId);
     if (!ratingState.canRate) return;
 
@@ -1955,8 +1967,10 @@ export default function Home() {
 
   async function uploadAvatar(file: File | undefined, playerId = selectedPlayer?.id) {
     setAvatarMessage("");
-    if (!canUseAdminControls) {
-      setAvatarMessage("Solo un admin puede cambiar la foto.");
+    const player = players.find((item) => item.id === playerId);
+    const canEditPlayer = Boolean(player && (canUseAdminControls || (hasRealTeam && isRegisteredUser && player.ownerUserId === currentUserId)));
+    if (!canEditPlayer) {
+      setAvatarMessage("Solo tú o un admin podéis cambiar esta foto.");
       return;
     }
     if (!file || !playerId) return;
@@ -1981,8 +1995,10 @@ export default function Home() {
   }
 
   function openCamera(playerId: string) {
-    if (!canUseAdminControls) {
-      setAvatarMessage("Solo un admin puede cambiar la foto.");
+    const player = players.find((item) => item.id === playerId);
+    const canEditPlayer = Boolean(player && (canUseAdminControls || (hasRealTeam && isRegisteredUser && player.ownerUserId === currentUserId)));
+    if (!canEditPlayer) {
+      setAvatarMessage("Solo tú o un admin podéis cambiar esta foto.");
       return;
     }
     setCameraError("");
@@ -2102,6 +2118,79 @@ export default function Home() {
       setSyncStatus("error");
       setSyncError(error instanceof Error ? error.message : "No se pudo crear el equipo");
     }
+  }
+
+  async function saveProfileName() {
+    const nextName = displayName(profileName || authDisplayName(authUser));
+    if (!nextName) return;
+
+    setProfileName(nextName);
+
+    if (ownPlayer) {
+      updatePlayer(ownPlayer.id, { name: nextName });
+    }
+
+    if (!supabase || !remoteGroupId || !currentUserId) return;
+
+    const result = await supabase.rpc("update_pachanga_member_name", {
+      member_name: nextName,
+      target_group_id: remoteGroupId,
+    });
+
+    if (result.error) {
+      setSyncStatus("error");
+      setSyncError(result.error.message);
+      return;
+    }
+
+    await loadTeamMembers(supabase, remoteGroupId);
+    setSyncStatus("live");
+    setSyncError("");
+  }
+
+  function openOwnPlayerProfile() {
+    if (ownPlayer) {
+      setSelectedPlayerId(ownPlayer.id);
+      return;
+    }
+
+    if (!hasRealTeam || !isRegisteredUser || !currentUserId) return;
+
+    const name = displayName(profileName || authDisplayName(authUser)) || "Jugador";
+    const player: Player = {
+      id: id(),
+      ownerUserId: currentUserId,
+      name,
+      phone: "",
+      goalkeeperOnly: false,
+      injured: false,
+      rating: 5,
+      ratings: [],
+      ratingVotes: [],
+      position: defaultPositionForKind(activeKind),
+      goals: 0,
+      assists: 0,
+      appearances: 0,
+      wins: 0,
+      lateCancels: 0,
+    };
+
+    setPlayers((current) => [...current, player]);
+    setSelectedPlayerId(player.id);
+  }
+
+  function claimSelectedPlayer() {
+    if (!selectedPlayer || selectedPlayer.ownerUserId || ownPlayer || !hasRealTeam || !isRegisteredUser || !currentUserId) return;
+
+    const nextName = displayName(profileName || selectedPlayer.name || authDisplayName(authUser));
+    setPlayers((current) =>
+      current.map((player) =>
+        player.id === selectedPlayer.id
+          ? { ...player, ownerUserId: currentUserId, name: nextName || player.name }
+          : player,
+      ),
+    );
+    if (nextName) setProfileName(nextName);
   }
 
   async function deleteCurrentTeam() {
@@ -2357,7 +2446,10 @@ export default function Home() {
     const teamClass = team === "A" ? "team-a-card" : team === "B" ? "team-b-card" : "";
     const nextTeam = team === "A" ? "B" : "A";
     const playerRatingWindow = ratingWindow(player, ratingVoterId);
-    const ratingTitle = playerRatingWindow.canRate
+    const canChangeThisPlayerStatus = isDemoMode || canUseAdminControls || (hasRealTeam && isRegisteredUser && player.ownerUserId === currentUserId);
+    const ratingTitle = player.ownerUserId === currentUserId
+      ? "No puedes votarte a ti mismo"
+      : playerRatingWindow.canRate
       ? "Valoraciones abiertas"
       : `Valoraciones cerradas: faltan ${playerRatingWindow.waitMatches} partido${playerRatingWindow.waitMatches === 1 ? "" : "s"}`;
 
@@ -2411,9 +2503,9 @@ export default function Home() {
         </div>
         <div className="player-actions">
           <div className="status-buttons" aria-label={`Estado de ${playerDisplayName(player)}`}>
-            <button className={status === "voy" ? "selected" : ""} disabled={Boolean(player.injured || player.inactive)} onClick={() => setStatus(player.id, "voy")}>Voy</button>
-            <button className={status === "duda" ? "selected" : ""} disabled={Boolean(player.inactive)} onClick={() => setStatus(player.id, "duda")}>Duda</button>
-            <button className={status === "no" ? "selected danger" : ""} disabled={Boolean(player.inactive)} onClick={() => setStatus(player.id, "no")}>No</button>
+            <button className={status === "voy" ? "selected" : ""} disabled={!canChangeThisPlayerStatus || Boolean(player.injured || player.inactive)} onClick={() => setStatus(player.id, "voy")}>Voy</button>
+            <button className={status === "duda" ? "selected" : ""} disabled={!canChangeThisPlayerStatus || Boolean(player.inactive)} onClick={() => setStatus(player.id, "duda")}>Duda</button>
+            <button className={status === "no" ? "selected danger" : ""} disabled={!canChangeThisPlayerStatus || Boolean(player.inactive)} onClick={() => setStatus(player.id, "no")}>No</button>
           </div>
           {status === "voy" && team && canUseAdminControls ? (
             <button
@@ -2487,16 +2579,33 @@ export default function Home() {
       <section className="top-panel auth-panel">
         <div>
           <span>Registro</span>
-          <strong>{isRegisteredUser ? `Conectado como ${authDisplayName(authUser)}` : "Entra para crear tu equipo"}</strong>
+          <strong>{isRegisteredUser ? "Conectado con Google" : "Entra para crear tu equipo"}</strong>
           <p>
-            Para crear equipos y administrar partidos hace falta una cuenta. Los jugadores pueden entrar por invitación y apuntarse con menos fricción.
+            Cada jugador entra con Google para tener su propia ficha. Solo esa persona y los admins pueden editarla.
           </p>
         </div>
         <div className="auth-actions">
           {isRegisteredUser ? (
-            <button className="secondary-button" type="button" onClick={() => void signOut()}>
-              Salir
-            </button>
+            <>
+              <label className="profile-name-field">
+                Nombre en el equipo
+                <input
+                  value={profileName}
+                  onChange={(event) => setProfileName(event.target.value)}
+                  onBlur={() => setProfileName(displayName(profileName || authDisplayName(authUser)))}
+                  placeholder="Ej. Alberto"
+                />
+              </label>
+              <button className="secondary-button" type="button" onClick={() => void saveProfileName()} disabled={!hasRealTeam}>
+                Guardar nombre
+              </button>
+              <button className="primary-button" type="button" onClick={openOwnPlayerProfile} disabled={!hasRealTeam}>
+                {ownPlayer ? "Mi ficha" : "Crear mi ficha"}
+              </button>
+              <button className="secondary-button" type="button" onClick={() => void signOut()}>
+                Salir
+              </button>
+            </>
           ) : (
             <button className="primary-button" type="button" onClick={() => void signInWithGoogle()} disabled={!supabase || !googleClientId}>
               Entrar con Google
@@ -3025,6 +3134,7 @@ export default function Home() {
             <div className="panel-title">
               <span>Ficha jugador</span>
               <div className="profile-title-actions">
+                {selectedPlayerIsOwn ? <small className="own-label">Tu ficha</small> : null}
                 {selectedPlayer.inactive ? <small className="inactive-label">Ya no está</small> : null}
                 {canUseAdminControls && !selectedPlayer.inactive ? (
                   <button
@@ -3040,10 +3150,16 @@ export default function Home() {
                 <strong>{scorePlayer(selectedPlayer).toFixed(1)}</strong>
               </div>
             </div>
+            {!ownPlayer && selectedPlayer && !selectedPlayer.ownerUserId && hasRealTeam && isRegisteredUser ? (
+              <div className="profile-claim">
+                <span>¿Esta ficha eres tú?</span>
+                <button type="button" onClick={claimSelectedPlayer}>Esta es mi ficha</button>
+              </div>
+            ) : null}
             <>
               <div className="profile-top">
                 <div className="fifa-card-shell">
-                  <label className="fifa-player-card">
+                  <label className={canEditSelectedPlayer ? "fifa-player-card" : "fifa-player-card readonly-card"}>
                     <span className="fifa-score">{Math.round(scorePlayer(selectedPlayer) * 10)}</span>
                     <span className="fifa-position">{positionShort(selectedPlayer)}</span>
                     <span className="fifa-photo">
@@ -3068,6 +3184,7 @@ export default function Home() {
                     <input
                       type="file"
                       accept="image/*"
+                      disabled={!canEditSelectedPlayer}
                       aria-label={selectedPlayer.avatar ? "Cambiar foto del jugador" : "Añadir foto del jugador"}
                       onClick={(event) => {
                         event.currentTarget.value = "";
@@ -3084,6 +3201,7 @@ export default function Home() {
                       <input
                         type="file"
                         accept="image/*"
+                        disabled={!canEditSelectedPlayer}
                         onChange={(event) => {
                           void uploadAvatar(event.currentTarget.files?.[0], selectedPlayer.id);
                           event.currentTarget.value = "";
@@ -3096,13 +3214,14 @@ export default function Home() {
                         type="file"
                         accept="image/*"
                         capture="user"
+                        disabled={!canEditSelectedPlayer}
                         onChange={(event) => {
                           void uploadAvatar(event.currentTarget.files?.[0], selectedPlayer.id);
                           event.currentTarget.value = "";
                         }}
                       />
                     </label>
-                    <button className="avatar-action-button" type="button" onClick={() => openCamera(selectedPlayer.id)}>
+                    <button className="avatar-action-button" type="button" onClick={() => openCamera(selectedPlayer.id)} disabled={!canEditSelectedPlayer}>
                       Webcam
                     </button>
                   </div>
@@ -3126,6 +3245,7 @@ export default function Home() {
                   </select>
                   <input
                     value={selectedPlayer.name}
+                    disabled={!canEditSelectedPlayer}
                     onBlur={() => updatePlayer(selectedPlayer.id, { name: displayName(selectedPlayer.name) })}
                     onChange={(event) => updatePlayer(selectedPlayer.id, { name: event.target.value })}
                   />
@@ -3133,6 +3253,7 @@ export default function Home() {
                     inputMode="tel"
                     placeholder="Teléfono Bizum"
                     value={selectedPlayer.phone ?? ""}
+                    disabled={!canEditSelectedPlayer}
                     onChange={(event) => updatePlayer(selectedPlayer.id, { phone: event.target.value })}
                   />
                 </div>
@@ -3142,6 +3263,7 @@ export default function Home() {
                   <input
                     type="checkbox"
                     checked={Boolean(selectedPlayer.goalkeeperOnly)}
+                    disabled={!canEditSelectedPlayer}
                     onChange={(event) =>
                       updatePlayer(selectedPlayer.id, {
                         goalkeeperOnly: event.target.checked,
@@ -3155,6 +3277,7 @@ export default function Home() {
                   <input
                     type="checkbox"
                     checked={Boolean(selectedPlayer.injured)}
+                    disabled={!canEditSelectedPlayer}
                     onChange={(event) => setPlayerInjured(selectedPlayer.id, event.target.checked)}
                   />
                   Lesionado
@@ -3163,6 +3286,7 @@ export default function Home() {
                   Posición preferida
                   <select
                     value={equivalentPositionForKind(selectedPlayer.position, activeKind)}
+                    disabled={!canEditSelectedPlayer}
                     onChange={(event) => updatePlayer(selectedPlayer.id, { position: event.target.value as PlayerPosition })}
                   >
                     {positionOptionsByKind[activeKind].map((option) => (
@@ -3240,6 +3364,7 @@ export default function Home() {
                     type="number"
                     min="0"
                     value={selectedPlayer.goals}
+                    disabled={!canEditSelectedPlayer}
                     onChange={(event) => updatePlayer(selectedPlayer.id, { goals: Number(event.target.value) })}
                   />
                 </label>
