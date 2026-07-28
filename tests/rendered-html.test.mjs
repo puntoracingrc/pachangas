@@ -10,9 +10,7 @@ test("builds Pachangas IQ HTML", async () => {
   assert.match(html, /Confirmados/);
   assert.match(html, /Equipos sugeridos/i);
   assert.match(html, /Alineación abierta/);
-  assert.match(html, /Registro/);
-  assert.match(html, /Entrar con Google/);
-  assert.match(html, /Entra para crear tu equipo/);
+  assert.match(html, /Continuar con Google/);
   assert.match(html, /Finalizar partido/);
   assert.match(html, /Añadir foto de equipo/);
   assert.match(html, /Comparte este partido!/);
@@ -27,6 +25,8 @@ test("builds Pachangas IQ HTML", async () => {
   assert.match(html, /\/apple-touch-icon\.png/);
   assert.match(html, /\/icon-192\.png/);
   assert.doesNotMatch(html, /Manual de usuario<\/span>/);
+  assert.doesNotMatch(html, /Registro/);
+  assert.doesNotMatch(html, /Entra para crear tu equipo/);
   assert.doesNotMatch(html, /Your site is taking shape|Building your site|react-loading-skeleton/i);
 });
 
@@ -60,7 +60,9 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /MemberRole/);
   assert.match(page, /incomingSharedLinkFromSearch/);
   assert.match(page, /needsLoginForSharedLink/);
-  assert.match(page, /Entrar con Google y volver/);
+  assert.match(page, /Continuar con Google y volver/);
+  assert.match(page, /GoogleLogo/);
+  assert.match(page, /google-signin-button/);
   assert.match(page, /Crea tu ficha para poder marcar/);
   assert.match(page, /gated-shell/);
   assert.match(page, /match-focus-card/);
@@ -102,6 +104,7 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(globalsCss, /\.ranking-sort-buttons/);
   assert.match(globalsCss, /\.team-photo-card/);
   assert.match(globalsCss, /\.history-item\.has-photo/);
+  assert.match(globalsCss, /\.google-signin-button/);
   assert.match(globalsCss, /overflow-y:\s*auto/);
   assert.match(globalsCss, /\.hero-actions\s*\{[\s\S]*grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\)/);
   assert.match(globalsCss, /overflow-x:\s*hidden/);

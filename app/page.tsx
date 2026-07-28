@@ -411,6 +411,34 @@ const defaultSiteSettings: SiteSettings = {
   teamBColor: "#d93025",
 };
 
+function GoogleLogo() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 18 18">
+      <path fill="#4285f4" d="M17.6 9.2c0-.6-.1-1.1-.2-1.6H9v3.1h4.8a4.1 4.1 0 0 1-1.8 2.7v2.2h2.8a8.4 8.4 0 0 0 2.8-6.4Z" />
+      <path fill="#34a853" d="M9 18c2.4 0 4.4-.8 5.8-2.2L12 13.5c-.8.5-1.8.8-3 .8a5.3 5.3 0 0 1-5-3.7H1.1v2.3A8.8 8.8 0 0 0 9 18Z" />
+      <path fill="#fbbc05" d="M4 10.6a5.3 5.3 0 0 1 0-3.3V5H1.1a9 9 0 0 0 0 7.9l2.9-2.3Z" />
+      <path fill="#ea4335" d="M9 3.6c1.3 0 2.5.5 3.4 1.3l2.5-2.5A8.5 8.5 0 0 0 9 0a8.8 8.8 0 0 0-7.9 5L4 7.3a5.3 5.3 0 0 1 5-3.7Z" />
+    </svg>
+  );
+}
+
+function GoogleSignInButton({
+  disabled,
+  label,
+  onClick,
+}: {
+  disabled?: boolean;
+  label: string;
+  onClick: () => void;
+}) {
+  return (
+    <button className="google-signin-button" type="button" onClick={onClick} disabled={disabled}>
+      <GoogleLogo />
+      <span>{label}</span>
+    </button>
+  );
+}
+
 function WhatsAppLogo() {
   return (
     <svg aria-hidden="true" viewBox="0 0 24 24">
@@ -2124,19 +2152,7 @@ export default function Home() {
   const canCreateTeam = Boolean(supabase && isRegisteredUser);
   const ownPlayer = currentUserId ? players.find((player) => player.ownerUserId === currentUserId) : undefined;
   const needsProfileForSharedMatch = hasRealTeam && isRegisteredUser && incomingSharedLink.hasMatch && !ownPlayer;
-  const registrationTitle = needsLoginForSharedLink
-    ? incomingSharedLink.hasMatch
-      ? "Entra para apuntarte a este partido"
-      : incomingSharedLink.hasAdminInvite
-        ? "Entra para aceptar la invitación de admin"
-        : "Entra para unirte al equipo"
-    : isRegisteredUser
-      ? "Conectado con Google"
-      : "Entra para crear tu equipo";
-  const registrationCopy = needsLoginForSharedLink
-    ? "Después de Google volverás automáticamente a este mismo enlace. Si es tu primera vez, crearás tu ficha antes de marcar asistencia."
-    : "Cada jugador entra con Google para tener su propia ficha. Solo esa persona y los admins pueden editarla.";
-  const googleButtonText = needsLoginForSharedLink ? "Entrar con Google y volver" : "Entrar con Google";
+  const googleButtonText = needsLoginForSharedLink ? "Continuar con Google y volver" : "Continuar con Google";
   const selectedPlayerIsOwn = Boolean(selectedPlayer?.ownerUserId && selectedPlayer.ownerUserId === currentUserId);
   const canEditSelectedPlayer = Boolean(selectedPlayer && (canUseAdminControls || (hasRealTeam && isRegisteredUser && selectedPlayerIsOwn)));
   const showPlayerSwitcher = Boolean(canUseAdminControls && selectedPlayer && !selectedPlayerIsOwn && players.length > 1);
@@ -2933,6 +2949,18 @@ export default function Home() {
               <path d="M6 3h10.5A2.5 2.5 0 0 1 19 5.5V21l-3-1.8L13 21l-3-1.8L7 21l-3-1.8V5A2 2 0 0 1 6 3Zm0 2v12.6l1 .6 3-1.8 3 1.8 3-1.8 1 .6V5.5a.5.5 0 0 0-.5-.5H6Zm2 3h7v2H8V8Zm0 4h7v2H8v-2Z" />
             </svg>
           </a>
+          {isRegisteredUser ? (
+            <>
+              <button className="secondary-button" type="button" onClick={openOwnPlayerProfile} disabled={!hasRealTeam}>
+                {ownPlayer ? "Mi ficha" : "Crear ficha"}
+              </button>
+              <button className="secondary-button" type="button" onClick={() => void signOut()}>
+                Salir
+              </button>
+            </>
+          ) : !needsLoginForSharedLink ? (
+            <GoogleSignInButton label={googleButtonText} onClick={() => void signInWithGoogle()} disabled={!supabase || !googleClientId} />
+          ) : null}
           <button className="primary-button" onClick={createMatch} disabled={!canUseAdminControls}>
             + Partido
           </button>
@@ -2976,57 +3004,38 @@ export default function Home() {
             <button className="primary-button" type="button" onClick={openOwnPlayerProfile}>
               Crear mi ficha
             </button>
-          ) : !isRegisteredUser ? (
-            <button className="primary-button" type="button" onClick={() => void signInWithGoogle()} disabled={!supabase || !googleClientId}>
-              Entrar con Google
-            </button>
           ) : null}
         </section>
       ) : null}
 
-      <section className="top-panel auth-panel">
-        <div>
-          <span>Registro</span>
-          <strong>{registrationTitle}</strong>
-          <p>{registrationCopy}</p>
-        </div>
-        <div className="auth-actions">
-          {isRegisteredUser ? (
-            <>
-              <label className="profile-name-field">
-                Nombre en el equipo
-                <input
-                  value={profileName}
-                  onChange={(event) => setProfileName(event.target.value)}
-                  placeholder="Ej. Alberto"
-                />
-              </label>
-              <button className="secondary-button" type="button" onClick={() => void saveProfileName()} disabled={!hasRealTeam}>
-                Guardar nombre
-              </button>
-              <button className="primary-button" type="button" onClick={openOwnPlayerProfile} disabled={!hasRealTeam}>
-                {ownPlayer ? "Mi ficha" : "Crear mi ficha"}
-              </button>
-              <button className="secondary-button" type="button" onClick={() => void signOut()}>
-                Salir
-              </button>
-            </>
-          ) : (
-            <button className="primary-button" type="button" onClick={() => void signInWithGoogle()} disabled={!supabase || !googleClientId}>
-              {googleButtonText}
+      {isRegisteredUser ? (
+        <section className="top-panel auth-panel account-panel">
+          <div className="account-status">
+            <span>Cuenta</span>
+            <strong>{authDisplayName(authUser)}</strong>
+          </div>
+          <div className="auth-actions">
+            <label className="profile-name-field">
+              Nombre en el equipo
+              <input
+                value={profileName}
+                onChange={(event) => setProfileName(event.target.value)}
+                placeholder="Ej. Alberto"
+              />
+            </label>
+            <button className="secondary-button" type="button" onClick={() => void saveProfileName()} disabled={!hasRealTeam}>
+              Guardar nombre
             </button>
-          )}
-        </div>
-      </section>
+          </div>
+        </section>
+      ) : null}
 
       {openQuickForm === "team" ? (
         <form className="top-panel team-create-form top-team-form" onSubmit={createTeam}>
           <input value={newTeamName} onChange={(event) => setNewTeamName(event.target.value)} placeholder="Nombre del nuevo equipo" />
           <button type="submit" disabled={!canCreateTeam}>Crear equipo</button>
           {!canCreateTeam ? (
-            <button className="ghost-form-button" type="button" onClick={() => void signInWithGoogle()} disabled={!supabase}>
-              Entrar con Google
-            </button>
+            <GoogleSignInButton label="Continuar con Google" onClick={() => void signInWithGoogle()} disabled={!supabase || !googleClientId} />
           ) : null}
           <button className="ghost-form-button" type="button" onClick={() => setOpenQuickForm(null)}>Cerrar</button>
         </form>
@@ -3100,7 +3109,7 @@ export default function Home() {
             <span>{incomingSharedLink.hasMatch ? "Partido compartido" : "Invitación recibida"}</span>
             <strong>
               {incomingSharedLink.hasMatch
-                ? "Para apuntarte necesitas entrar con Google."
+                ? "Para apuntarte necesitas identificarte."
                 : "Para entrar al equipo necesitas identificarte."}
             </strong>
             <p>
@@ -3108,9 +3117,7 @@ export default function Home() {
               {incomingSharedLink.hasMatch ? " y este partido concreto" : ""}.
             </p>
           </div>
-          <button className="primary-button" type="button" onClick={() => void signInWithGoogle()} disabled={!supabase || !googleClientId}>
-            {googleButtonText}
-          </button>
+          <GoogleSignInButton label={googleButtonText} onClick={() => void signInWithGoogle()} disabled={!supabase || !googleClientId} />
         </section>
       ) : null}
 
