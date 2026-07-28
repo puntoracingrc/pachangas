@@ -11,6 +11,7 @@ test("builds Pachangas IQ HTML", async () => {
   assert.match(html, /Equipos sugeridos/i);
   assert.match(html, /Alineación abierta/);
   assert.match(html, /Continuar con Google/);
+  assert.match(html, /Mi equipo/);
   assert.match(html, /Finalizar partido/);
   assert.match(html, /Añadir foto del partido/);
   assert.match(html, /Comparte este partido!/);
@@ -173,6 +174,10 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(globalsCss, /\.gated-shell/);
   assert.doesNotMatch(globalsCss, /\.match-focus-card/);
   assert.match(globalsCss, /\.mobile-tabbar/);
+  assert.match(globalsCss, /\.team-gallery-panel/);
+  assert.match(globalsCss, /\.team-card-gallery/);
+  assert.match(globalsCss, /\.team-mini-player-card/);
+  assert.match(globalsCss, /\.profile-close-button/);
   assert.match(globalsCss, /\.player-facing-main \.readonly-editor/);
   assert.match(globalsCss, /\.ranking-toolbar/);
   assert.match(globalsCss, /\.ranking-sort-buttons/);
@@ -198,6 +203,14 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /showPlayerSwitcher\s*=\s*Boolean\(canUseAdminControls\s*&&\s*selectedPlayer\s*&&\s*!selectedPlayerIsOwn/);
   assert.match(page, /profile-player-switcher/);
   assert.match(page, /function scrollToPlayerProfile/);
+  assert.match(page, /function openTeamGallery/);
+  assert.match(page, /function openTeamGalleryPlayerProfile/);
+  assert.match(page, /function closePlayerProfile/);
+  assert.match(page, /teamGalleryReturnScrollYRef/);
+  assert.match(page, /teamGalleryOpen/);
+  assert.match(page, /teamGalleryPlayers/);
+  assert.match(page, /renderTeamMiniCard/);
+  assert.match(page, /Mi equipo/);
   assert.match(page, /function scrollToPanel/);
   assert.match(page, /function showQuickForm/);
   assert.match(page, /function selectMatch/);

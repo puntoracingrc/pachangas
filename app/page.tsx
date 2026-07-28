@@ -1637,6 +1637,7 @@ export default function Home() {
   const [newFacetRatings, setNewFacetRatings] = useState<Record<RatingFacet, number>>(makeFacetRatings());
   const [openQuickForm, setOpenQuickForm] = useState<"venue" | "team" | null>(null);
   const [createMenuOpen, setCreateMenuOpen] = useState(false);
+  const [teamGalleryOpen, setTeamGalleryOpen] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [siteSettings, setSiteSettings] = useState<SiteSettings>(defaultSiteSettings);
   const [result, setResult] = useState({ a: "", b: "" });
@@ -1677,9 +1678,11 @@ export default function Home() {
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const matchPanelRef = useRef<HTMLElement>(null);
   const settingsPanelRef = useRef<HTMLElement>(null);
+  const teamGalleryRef = useRef<HTMLElement>(null);
   const teamFormRef = useRef<HTMLFormElement>(null);
   const venueFormRef = useRef<HTMLFormElement>(null);
   const playerProfileRef = useRef<HTMLDivElement>(null);
+  const teamGalleryReturnScrollYRef = useRef<number | null>(null);
   const cameraVideoRef = useRef<HTMLVideoElement>(null);
   const cameraStreamRef = useRef<MediaStream | null>(null);
   const [cameraPlayerId, setCameraPlayerId] = useState<string | null>(null);
@@ -2318,10 +2321,35 @@ export default function Home() {
   }
 
   function openPlayerProfile(playerId: string) {
+    teamGalleryReturnScrollYRef.current = null;
     setSelectedPlayerId(playerId);
     if (selectedPlayerId === playerId) {
       scrollToPlayerProfile();
     }
+  }
+
+  function openTeamGallery() {
+    setTeamGalleryOpen(true);
+    scrollToPanel(teamGalleryRef);
+  }
+
+  function openTeamGalleryPlayerProfile(playerId: string) {
+    teamGalleryReturnScrollYRef.current = window.scrollY;
+    setSelectedPlayerId(playerId);
+    scrollToPlayerProfile();
+  }
+
+  function closePlayerProfile() {
+    setSelectedPlayerId(null);
+    const returnScrollY = teamGalleryReturnScrollYRef.current;
+    teamGalleryReturnScrollYRef.current = null;
+    if (returnScrollY === null) return;
+
+    window.setTimeout(() => {
+      window.requestAnimationFrame(() => {
+        window.scrollTo({ behavior: "smooth", top: returnScrollY });
+      });
+    }, 0);
   }
 
   function scrollToPanel(ref: { current: HTMLElement | null }) {
@@ -2884,6 +2912,7 @@ export default function Home() {
     const statusB = b.injured || b.inactive ? "no" : activeMatch.players.find((entry) => entry.playerId === b.id)?.status ?? "sin";
     return statusOrder[statusA] - statusOrder[statusB] || a.name.localeCompare(b.name, "es");
   });
+  const teamGalleryPlayers = [...players].sort((a, b) => Number(Boolean(a.inactive)) - Number(Boolean(b.inactive)) || playerDisplayName(a).localeCompare(playerDisplayName(b), "es"));
   const teamAPlayerIds = new Set(suggested.teamA.map((player) => player.id));
   const teamBPlayerIds = new Set(suggested.teamB.map((player) => player.id));
   const reservePlayerIds = new Set(reserveIds);
@@ -3638,6 +3667,45 @@ export default function Home() {
     }
   }
 
+  function renderTeamMiniCard(player: Player) {
+    const playerFacets = ratingFacetsForPlayer(player);
+    const compactAge = playerAge(player.birthDate, currentDateValue);
+
+    return (
+      <button
+        aria-label={`Abrir ficha de ${playerDisplayName(player)}`}
+        className={`fifa-player-card team-mini-player-card ${player.inactive ? "team-mini-inactive" : ""}`}
+        key={player.id}
+        onClick={() => openTeamGalleryPlayerProfile(player.id)}
+        type="button"
+      >
+        <span className="fifa-score">{Math.round(peerAverage(player) * 10)}</span>
+        <span className="fifa-position">{positionShort(player)}</span>
+        <span className="fifa-photo">
+          {player.avatar ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={player.avatar} alt={`Foto de ${playerDisplayName(player)}`} />
+          ) : (
+            <b>+</b>
+          )}
+        </span>
+        <strong>{playerDisplayName(player)}</strong>
+        <span className="fifa-card-meta">
+          {player.goals} Goles · {player.appearances} PJ{compactAge !== null ? ` · ${compactAge} años` : ""}
+        </span>
+        <span className="fifa-facets">
+          {playerFacets.map((facet) => (
+            <span key={facet.key}>
+              <b>{Math.round(facetAverage(player, facet.key) * 10)}</b>
+              {facet.short}
+            </span>
+          ))}
+        </span>
+        {player.inactive ? <span className="team-mini-status">Ya no está</span> : null}
+      </button>
+    );
+  }
+
   function renderPlayerCard(player: Player, team?: "A" | "B") {
     const matchEntry = activeMatch.players.find((entry) => entry.playerId === player.id);
     const status = player.injured || player.inactive ? "no" : matchEntry?.status;
@@ -3776,6 +3844,9 @@ export default function Home() {
               <path d="M6 3h10.5A2.5 2.5 0 0 1 19 5.5V21l-3-1.8L13 21l-3-1.8L7 21l-3-1.8V5A2 2 0 0 1 6 3Zm0 2v12.6l1 .6 3-1.8 3 1.8 3-1.8 1 .6V5.5a.5.5 0 0 0-.5-.5H6Zm2 3h7v2H8V8Zm0 4h7v2H8v-2Z" />
             </svg>
           </a>
+          <button className="secondary-button" type="button" onClick={openTeamGallery} disabled={players.length === 0 || needsLoginForSharedLink}>
+            Mi equipo
+          </button>
           {isRegisteredUser ? (
             <button className="secondary-button" type="button" onClick={() => void signOut()}>
               Salir
@@ -4487,6 +4558,25 @@ export default function Home() {
         </aside>
       </section>
 
+      {teamGalleryOpen ? (
+        <section className="panel team-gallery-panel" id="mi-equipo" ref={teamGalleryRef}>
+          <div className="panel-title">
+            <span>Mi equipo</span>
+            <div className="team-gallery-title-actions">
+              <strong>{teamGalleryPlayers.length}</strong>
+              <button type="button" onClick={() => setTeamGalleryOpen(false)}>Cerrar</button>
+            </div>
+          </div>
+          {teamGalleryPlayers.length > 0 ? (
+            <div className="team-card-gallery">
+              {teamGalleryPlayers.map((player) => renderTeamMiniCard(player))}
+            </div>
+          ) : (
+            <p className="empty-copy">Todavía no hay fichas de jugadores en este equipo.</p>
+          )}
+        </section>
+      ) : null}
+
       <section className={`${selectedPlayer ? "bottom-grid" : "bottom-grid without-profile"} ${needsLoginForSharedLink ? "gated-shell" : ""}`}>
         {selectedPlayer ? (
           <div className="panel player-profile" ref={playerProfileRef}>
@@ -4506,6 +4596,9 @@ export default function Home() {
                     <TrashLogo />
                   </button>
                 ) : null}
+                <button className="profile-close-button" type="button" onClick={closePlayerProfile}>
+                  Cerrar
+                </button>
                 <strong>{selectedPeerScore.toFixed(1)}</strong>
               </div>
             </div>
