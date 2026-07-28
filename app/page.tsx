@@ -1026,6 +1026,27 @@ export default function Home() {
     return `${window.location.origin}${window.location.pathname}?${params.toString()}`;
   }
 
+  async function copyTeamInvite() {
+    const inviteUrl = currentTeamInviteUrl();
+    if (!inviteUrl || !navigator.clipboard) return;
+
+    try {
+      await navigator.clipboard.writeText(inviteUrl);
+      setSyncStatus("live");
+      setSyncError("");
+    } catch {
+      setSyncStatus("error");
+      setSyncError("No se pudo copiar el enlace");
+    }
+  }
+
+  function shareTeamInviteWhatsApp() {
+    const inviteUrl = currentTeamInviteUrl();
+    if (!inviteUrl) return;
+    const teamName = currentTeam?.name ?? "mi equipo";
+    window.open(`https://wa.me/?text=${encodeURIComponent(`Únete a ${teamName}\n${inviteUrl}`)}`, "_blank", "noopener,noreferrer");
+  }
+
   function shareText() {
     const date = new Date(activeMatch.date).toLocaleString("es-ES", {
       weekday: "long",
@@ -1175,12 +1196,20 @@ export default function Home() {
         </div>
         <div className="team-access-meta">
           <span>Rol</span>
-          <strong>{currentRole === "owner" ? "Admin principal" : currentRole === "admin" ? "Admin" : currentRole === "player" ? "Jugador" : "-"}</strong>
+          <strong>{currentRole === "owner" || currentRole === "admin" ? "Admin" : currentRole === "player" ? "Jugador" : "-"}</strong>
         </div>
-        <label className="team-invite-link">
-          Invitación
-          <input readOnly value={currentTeamInviteUrl()} onFocus={(event) => event.currentTarget.select()} placeholder="Crea un equipo para invitar" />
-        </label>
+        <div className="team-invite-link">
+          <span>Invitación</span>
+          <div className="team-invite-actions">
+            <input readOnly value={currentTeamInviteUrl() ? "Enlace listo" : ""} placeholder="Crea un equipo para invitar" />
+            <button type="button" onClick={() => void copyTeamInvite()} disabled={!currentTeamInviteUrl()} title="Copiar invitación" aria-label="Copiar invitación">
+              ⧉
+            </button>
+            <button className="whatsapp-icon-button" type="button" onClick={shareTeamInviteWhatsApp} disabled={!currentTeamInviteUrl()} title="Enviar por WhatsApp" aria-label="Enviar por WhatsApp">
+              W
+            </button>
+          </div>
+        </div>
         {teamMembers.length > 0 ? (
           <div className="team-members">
             <span>Miembros</span>
