@@ -70,6 +70,23 @@ type AppPayload = {
   venues: Venue[];
 };
 
+type MemberRole = "owner" | "admin" | "player";
+
+type RemoteTeam = {
+  id: string;
+  inviteToken: string;
+  name: string;
+  payload: AppPayload;
+  role: MemberRole;
+  teamCode: string;
+};
+
+type RemoteMember = {
+  displayName: string;
+  role: MemberRole;
+  userId: string;
+};
+
 const seedPlayers: Player[] = [
   { id: "p1", name: "Carlos", phone: "600 111 222", rating: 8, position: "Ataque", goals: 18, assists: 7, appearances: 12, wins: 7, lateCancels: 1 },
   { id: "p2", name: "Manu", phone: "600 222 333", rating: 7, position: "Medio", goals: 10, assists: 13, appearances: 11, wins: 8, lateCancels: 0 },
@@ -103,6 +120,7 @@ const seedMatches: Match[] = [
 ];
 
 const storageKey = "pachanga-iq-v1";
+const profileNameKey = "pachanga-iq-profile-name";
 
 function defaultPayload(): AppPayload {
   return {
@@ -351,6 +369,12 @@ export default function Home() {
   const [remoteReady, setRemoteReady] = useState(false);
   const [syncStatus, setSyncStatus] = useState<"connecting" | "error" | "live" | "local">("local");
   const [syncError, setSyncError] = useState("");
+  const [remoteTeams, setRemoteTeams] = useState<RemoteTeam[]>([]);
+  const [teamMembers, setTeamMembers] = useState<RemoteMember[]>([]);
+  const [currentRole, setCurrentRole] = useState<MemberRole | null>(null);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [profileName, setProfileName] = useState("");
+  const [newTeamName, setNewTeamName] = useState("Mi equipo pachanguero");
   const [localHydrated, setLocalHydrated] = useState(false);
   const applyingRemoteRef = useRef(false);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -378,7 +402,97 @@ export default function Home() {
     }, 0);
   }
 
+  async function ensureUser(client: NonNullable<typeof supabase>) {
+    const sessionResult = await client.auth.getSession();
+    const existingUserId = sessionResult.data.session?.user.id;
+    if (existingUserId) {
+      setCurrentUserId(existingUserId);
+      return existingUserId;
+    }
+
+    const signInResult = await client.auth.signInAnonymously();
+    if (signInResult.error || !signInResult.data.user) {
+      throw new Error(signInResult.error?.message ?? "No se pudo crear usuario anonimo");
+    }
+
+    setCurrentUserId(signInResult.data.user.id);
+    return signInResult.data.user.id;
+  }
+
+  async function loadTeamMembers(client: NonNullable<typeof supabase>, groupId: string) {
+    const members = await client
+      .from("pachanga_group_members")
+      .select("user_id, role, display_name")
+      .eq("group_id", groupId)
+      .order("created_at", { ascending: true });
+
+    if (members.error) throw new Error(members.error.message);
+
+    setTeamMembers(
+      (members.data ?? []).map((member, index) => ({
+        displayName: displayName(String(member.display_name || `Jugador ${index + 1}`)),
+        role: (member.role as MemberRole | null) ?? "player",
+        userId: String(member.user_id),
+      })),
+    );
+  }
+
+  async function loadTeams(client: NonNullable<typeof supabase>, preferredGroupId?: string | null) {
+    const memberships = await client
+      .from("pachanga_group_members")
+      .select("group_id, role, pachanga_groups(id, name, team_code, invite_token, payload)")
+      .order("created_at", { ascending: true });
+
+    if (memberships.error) throw new Error(memberships.error.message);
+
+    const teams = (memberships.data ?? [])
+      .map((membership) => {
+        const group = Array.isArray(membership.pachanga_groups)
+          ? membership.pachanga_groups[0]
+          : membership.pachanga_groups;
+        if (!group) return null;
+
+        return {
+          id: String(group.id),
+          inviteToken: String(group.invite_token),
+          name: String(group.name ?? "Equipo pachanguero"),
+          payload: normalizePayload(group.payload as Partial<AppPayload>),
+          role: (membership.role as MemberRole | null) ?? "player",
+          teamCode: String(group.team_code ?? group.id).toUpperCase(),
+        } satisfies RemoteTeam;
+      })
+      .filter((team): team is RemoteTeam => Boolean(team));
+
+    setRemoteTeams(teams);
+
+    const selectedTeam = teams.find((team) => team.id === preferredGroupId) ?? teams[0];
+    if (!selectedTeam) {
+      setRemoteGroupId(null);
+      setRemoteInviteToken(null);
+      setCurrentRole(null);
+      setTeamMembers([]);
+      setRemoteReady(false);
+      setSyncStatus("local");
+      return;
+    }
+
+    setRemoteGroupId(selectedTeam.id);
+    setRemoteInviteToken(selectedTeam.inviteToken);
+    setCurrentRole(selectedTeam.role);
+    applyPayload(selectedTeam.payload);
+    setRemoteReady(true);
+    setSyncStatus("live");
+    setSyncError("");
+    await loadTeamMembers(client, selectedTeam.id);
+
+    const nextParams = new URLSearchParams(window.location.search);
+    nextParams.set("grupo", selectedTeam.id);
+    nextParams.set("invite", selectedTeam.inviteToken);
+    window.history.replaceState(null, "", `${window.location.pathname}?${nextParams.toString()}`);
+  }
+
   useEffect(() => {
+    setProfileName(localStorage.getItem(profileNameKey) ?? "");
     const saved = localStorage.getItem(storageKey);
     if (!saved) {
       setLocalHydrated(true);
@@ -400,6 +514,10 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
+    localStorage.setItem(profileNameKey, profileName.trim());
+  }, [profileName]);
+
+  useEffect(() => {
     if (!localHydrated || !supabase) return;
 
     const client = supabase;
@@ -409,79 +527,31 @@ export default function Home() {
       setSyncStatus("connecting");
       setSyncError("");
 
-      const sessionResult = await client.auth.getSession();
-      let userId = sessionResult.data.session?.user.id;
+      try {
+        const userId = await ensureUser(client);
 
-      if (!userId) {
-        const signInResult = await client.auth.signInAnonymously();
-        if (signInResult.error || !signInResult.data.user) {
-          setSyncStatus("error");
-          setSyncError(signInResult.error?.message ?? "No se pudo crear usuario anonimo");
-          return;
-        }
-        userId = signInResult.data.user.id;
-      }
+        const params = new URLSearchParams(window.location.search);
+        const inviteToken = params.get("invite");
+        let groupId = params.get("grupo");
 
-      const params = new URLSearchParams(window.location.search);
-      const inviteToken = params.get("invite");
-      let groupId = params.get("grupo");
-
-      if (inviteToken && !groupId) {
-        const joinResult = await client.rpc("join_pachanga_group", { token: inviteToken });
-        if (joinResult.error || !joinResult.data) {
-          setSyncStatus("error");
-          setSyncError(joinResult.error?.message ?? "No se pudo entrar al grupo");
-          return;
-        }
-        groupId = String(joinResult.data);
-      }
-
-      if (!groupId) {
-        const insertResult = await client
-          .from("pachanga_groups")
-          .insert({ owner_id: userId, payload: currentPayload() })
-          .select("id, invite_token, payload")
-          .single();
-
-        if (insertResult.error || !insertResult.data) {
-          setSyncStatus("error");
-          setSyncError(insertResult.error?.message ?? "No se pudo crear el grupo");
-          return;
+        if (inviteToken) {
+          const joinResult = await client.rpc("join_pachanga_team", {
+            member_name: profileName.trim() || "Jugador",
+            token: inviteToken,
+          });
+          if (joinResult.error || !joinResult.data) throw new Error(joinResult.error?.message ?? "No se pudo entrar al grupo");
+          groupId = String(joinResult.data);
         }
 
-        const createdGroupId = insertResult.data.id;
-        groupId = createdGroupId;
+        await loadTeams(client, groupId);
 
-        await client.from("pachanga_group_members").insert({ group_id: createdGroupId, user_id: userId });
-
-        const nextParams = new URLSearchParams(window.location.search);
-        nextParams.set("grupo", createdGroupId);
-        nextParams.set("invite", insertResult.data.invite_token);
-        window.history.replaceState(null, "", `${window.location.pathname}?${nextParams.toString()}`);
-      }
-
-      const groupResult = await client
-        .from("pachanga_groups")
-        .select("id, invite_token, payload")
-        .eq("id", groupId)
-        .single();
-
-      if (groupResult.error || !groupResult.data || cancelled) {
+        if (cancelled) return;
+        void userId;
+      } catch (error) {
         setSyncStatus("error");
-        setSyncError(groupResult.error?.message ?? "No se pudo cargar el grupo");
+        setSyncError(error instanceof Error ? error.message : "No se pudo cargar el equipo");
         return;
       }
-
-      const payload = normalizePayload(groupResult.data.payload as Partial<AppPayload>);
-      const urlMatchId = params.get("partido");
-      if (urlMatchId && payload.matches.some((match) => match.id === urlMatchId)) payload.activeMatchId = urlMatchId;
-
-      setRemoteGroupId(groupResult.data.id);
-      setRemoteInviteToken(groupResult.data.invite_token);
-      applyPayload(payload);
-      setRemoteReady(true);
-      setSyncStatus("live");
-      setSyncError("");
     }
 
     void connectGroup();
@@ -586,6 +656,7 @@ export default function Home() {
 
   function addPlayer(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (remoteReady && !canManageTeam) return;
     const name = displayName(newPlayer);
     if (!name) return;
 
@@ -610,6 +681,7 @@ export default function Home() {
   }
 
   function createMatch() {
+    if (remoteReady && !canManageTeam) return;
     const defaultVenue = venues.find((venue) => venue.id === activeMatch.venueId) ?? venues[0];
     const nextKind = activeMatch.kind ?? defaultVenue?.kind ?? "futbol7";
     const next: Match = {
@@ -629,6 +701,7 @@ export default function Home() {
   }
 
   function saveTeams() {
+    if (remoteReady && !canManageTeam) return;
     updateMatch({
       ...activeMatch,
       teamA: suggested.teamA.map((player) => player.id),
@@ -637,6 +710,7 @@ export default function Home() {
   }
 
   function applyRandomTeams() {
+    if (remoteReady && !canManageTeam) return;
     const next = randomTeams(confirmedPlayers);
     updateMatch({
       ...activeMatch,
@@ -646,6 +720,7 @@ export default function Home() {
   }
 
   function applyBalancedTeams() {
+    if (remoteReady && !canManageTeam) return;
     updateMatch({
       ...activeMatch,
       teamA: balancedLineup.teamA.map((player) => player.id),
@@ -654,6 +729,7 @@ export default function Home() {
   }
 
   function assignPlayerTeam(playerId: string, team: "A" | "B") {
+    if (remoteReady && !canManageTeam) return;
     const baseTeamA = suggested.teamA.map((player) => player.id).filter((id) => id !== playerId);
     const baseTeamB = suggested.teamB.map((player) => player.id).filter((id) => id !== playerId);
 
@@ -665,6 +741,7 @@ export default function Home() {
   }
 
   function setPlayerGoals(playerId: string, goals: number) {
+    if (remoteReady && !canManageTeam) return;
     if (!resultIsReady) return;
 
     const scorers = activeMatch.scorers ?? [];
@@ -689,6 +766,7 @@ export default function Home() {
   }
 
   function closeMatch() {
+    if (remoteReady && !canManageTeam) return;
     if (!resultIsReady) return;
 
     const scoreA = Number(scoreAValue);
@@ -722,6 +800,7 @@ export default function Home() {
   }
 
   function deleteClosedMatch(matchId: string) {
+    if (remoteReady && !canManageTeam) return;
     const match = matches.find((item) => item.id === matchId);
     if (!match) return;
 
@@ -778,12 +857,16 @@ export default function Home() {
   const sortedTeamB = sortedLineupPlayers(suggested.teamB);
   const otherPlayers = sortedPlayers.filter((player) => !teamAPlayerIds.has(player.id) && !teamBPlayerIds.has(player.id));
   const selectedPlayer = selectedPlayerId ? players.find((player) => player.id === selectedPlayerId) : undefined;
+  const currentTeam = remoteTeams.find((team) => team.id === remoteGroupId);
+  const canManageTeam = currentRole === "owner" || currentRole === "admin";
 
   function updatePlayer(playerId: string, next: Partial<Player>) {
+    if (remoteReady && !canManageTeam) return;
     setPlayers((current) => current.map((player) => (player.id === playerId ? { ...player, ...next } : player)));
   }
 
   function addPeerRating(playerId: string) {
+    if (remoteReady && !canManageTeam) return;
     const rating = Math.max(1, Math.min(10, Number(newRating) || 5));
     setPlayers((current) =>
       current.map((player) => (player.id === playerId ? { ...player, ratings: [...(player.ratings ?? []), rating] } : player)),
@@ -791,6 +874,7 @@ export default function Home() {
   }
 
   function uploadAvatar(file: File | undefined) {
+    if (remoteReady && !canManageTeam) return;
     if (!file || !selectedPlayer) return;
 
     const reader = new FileReader();
@@ -799,10 +883,12 @@ export default function Home() {
   }
 
   function changeKind(kind: MatchKind) {
+    if (remoteReady && !canManageTeam) return;
     updateMatch({ ...activeMatch, kind, targetPlayers: matchKinds[kind].targetPlayers });
   }
 
   function selectVenue(venueId: string) {
+    if (remoteReady && !canManageTeam) return;
     const venue = venues.find((item) => item.id === venueId);
     if (!venue) return;
     const kind = venue.kind ?? activeKind;
@@ -819,6 +905,7 @@ export default function Home() {
 
   function addVenue(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (remoteReady && !canManageTeam) return;
     const name = newVenue.name.trim();
     if (!name) return;
     const kind = newVenue.kind;
@@ -843,12 +930,98 @@ export default function Home() {
     setOpenQuickForm(null);
   }
 
+  async function createTeam(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!supabase) return;
+
+    const client = supabase;
+    setSyncStatus("connecting");
+    setSyncError("");
+
+    try {
+      const userId = await ensureUser(client);
+      const teamName = newTeamName.trim() || "Mi equipo pachanguero";
+      const insertResult = await client
+        .from("pachanga_groups")
+        .insert({ name: teamName, owner_id: userId, payload: currentPayload() })
+        .select("id, invite_token, name, payload, team_code")
+        .single();
+
+      if (insertResult.error || !insertResult.data) throw new Error(insertResult.error?.message ?? "No se pudo crear el equipo");
+
+      const memberResult = await client.from("pachanga_group_members").insert({
+        display_name: profileName.trim() || "Admin",
+        group_id: insertResult.data.id,
+        role: "owner",
+        user_id: userId,
+      });
+
+      if (memberResult.error) throw new Error(memberResult.error.message);
+
+      await loadTeams(client, insertResult.data.id);
+    } catch (error) {
+      setSyncStatus("error");
+      setSyncError(error instanceof Error ? error.message : "No se pudo crear el equipo");
+    }
+  }
+
+  function selectTeam(teamId: string) {
+    const selectedTeam = remoteTeams.find((team) => team.id === teamId);
+    if (!selectedTeam) return;
+
+    setRemoteGroupId(selectedTeam.id);
+    setRemoteInviteToken(selectedTeam.inviteToken);
+    setCurrentRole(selectedTeam.role);
+    applyPayload(selectedTeam.payload);
+    setRemoteReady(true);
+    setSyncStatus("live");
+    setSyncError("");
+
+    const nextParams = new URLSearchParams(window.location.search);
+    nextParams.set("grupo", selectedTeam.id);
+    nextParams.set("invite", selectedTeam.inviteToken);
+    window.history.replaceState(null, "", `${window.location.pathname}?${nextParams.toString()}`);
+
+    if (supabase) {
+      void loadTeamMembers(supabase, selectedTeam.id).catch((error) => {
+        setSyncStatus("error");
+        setSyncError(error instanceof Error ? error.message : "No se pudieron cargar miembros");
+      });
+    }
+  }
+
+  async function updateMemberRole(member: RemoteMember, role: MemberRole) {
+    if (!supabase || !remoteGroupId || currentRole !== "owner" || member.role === "owner") return;
+
+    const result = await supabase
+      .from("pachanga_group_members")
+      .update({ role })
+      .eq("group_id", remoteGroupId)
+      .eq("user_id", member.userId);
+
+    if (result.error) {
+      setSyncStatus("error");
+      setSyncError(result.error.message);
+      return;
+    }
+
+    await loadTeamMembers(supabase, remoteGroupId);
+  }
+
   function matchUrl() {
     if (typeof window === "undefined") return "";
     const params = new URLSearchParams();
     if (remoteGroupId) params.set("grupo", remoteGroupId);
     if (remoteInviteToken) params.set("invite", remoteInviteToken);
     params.set("partido", activeMatch.id);
+    return `${window.location.origin}${window.location.pathname}?${params.toString()}`;
+  }
+
+  function currentTeamInviteUrl() {
+    if (typeof window === "undefined" || !remoteGroupId || !remoteInviteToken) return "";
+    const params = new URLSearchParams();
+    params.set("grupo", remoteGroupId);
+    params.set("invite", remoteInviteToken);
     return `${window.location.origin}${window.location.pathname}?${params.toString()}`;
   }
 
@@ -953,19 +1126,81 @@ export default function Home() {
           <p className="hero-copy">{siteSettings.subtitle}</p>
         </div>
         <div className="hero-actions">
-          <button className="primary-button" onClick={createMatch}>
+          <button className="primary-button" onClick={createMatch} disabled={remoteReady && !canManageTeam}>
             + Partido
           </button>
-          <button className="secondary-button" onClick={() => setOpenQuickForm(openQuickForm === "player" ? null : "player")}>
+          <button className="secondary-button" onClick={() => setOpenQuickForm(openQuickForm === "player" ? null : "player")} disabled={remoteReady && !canManageTeam}>
             + Jugador
           </button>
-          <button className="secondary-button" onClick={() => setOpenQuickForm(openQuickForm === "venue" ? null : "venue")}>
+          <button className="secondary-button" onClick={() => setOpenQuickForm(openQuickForm === "venue" ? null : "venue")} disabled={remoteReady && !canManageTeam}>
             + Campo
           </button>
-          <button className="secondary-button" onClick={() => setShowSettings((current) => !current)}>
+          <button className="secondary-button" onClick={() => setShowSettings((current) => !current)} disabled={remoteReady && !canManageTeam}>
             Configurar
           </button>
         </div>
+      </section>
+
+      <section className="top-panel team-access-panel">
+        <div className="team-access-current">
+          <span>Equipo pachanguero</span>
+          {remoteTeams.length > 0 ? (
+            <select value={remoteGroupId ?? ""} onChange={(event) => selectTeam(event.target.value)}>
+              {remoteTeams.map((team) => (
+                <option key={team.id} value={team.id}>{team.name}</option>
+              ))}
+            </select>
+          ) : (
+            <strong>Sin equipo todavía</strong>
+          )}
+        </div>
+        <label>
+          Tu nombre
+          <input placeholder="Ej. Alberto" value={profileName} onChange={(event) => setProfileName(displayName(event.target.value))} />
+        </label>
+        <div className="team-access-meta">
+          <span>ID equipo</span>
+          <strong>{currentTeam?.teamCode ?? "-"}</strong>
+        </div>
+        <div className="team-access-meta">
+          <span>Rol</span>
+          <strong>{currentRole === "owner" ? "Admin principal" : currentRole === "admin" ? "Admin" : currentRole === "player" ? "Jugador" : "-"}</strong>
+        </div>
+        <label className="team-invite-link">
+          Invitación
+          <input readOnly value={currentTeamInviteUrl()} onFocus={(event) => event.currentTarget.select()} placeholder="Crea un equipo para invitar" />
+        </label>
+        <form className="team-create-form" onSubmit={createTeam}>
+          <input value={newTeamName} onChange={(event) => setNewTeamName(event.target.value)} placeholder="Nombre del nuevo equipo" />
+          <button type="submit">Crear equipo</button>
+        </form>
+        {teamMembers.length > 0 ? (
+          <div className="team-members">
+            <span>Miembros</span>
+            <div>
+              {teamMembers.map((member) => (
+                <label key={member.userId}>
+                  <strong>
+                    {member.displayName}
+                    {member.userId === currentUserId ? " (tú)" : ""}
+                  </strong>
+                  <select
+                    value={member.role}
+                    disabled={currentRole !== "owner" || member.role === "owner"}
+                    onChange={(event) => void updateMemberRole(member, event.target.value as MemberRole)}
+                  >
+                    <option value="owner">Admin principal</option>
+                    <option value="admin">Admin</option>
+                    <option value="player">Jugador</option>
+                  </select>
+                </label>
+              ))}
+            </div>
+          </div>
+        ) : null}
+        <small className={`sync-status sync-${syncStatus}`}>
+          {syncStatus === "live" ? "Equipo privado sincronizado" : syncStatus === "connecting" ? "Conectando..." : syncStatus === "error" ? `Sin sync: ${syncError}` : "Crea un equipo o entra con invitación"}
+        </small>
       </section>
 
       {showSettings ? (
@@ -1065,7 +1300,7 @@ export default function Home() {
           <div className="match-editor">
             <label>
               Campo
-              <select value={activeMatch.venueId ?? ""} onChange={(event) => selectVenue(event.target.value)}>
+              <select value={activeMatch.venueId ?? ""} onChange={(event) => selectVenue(event.target.value)} disabled={remoteReady && !canManageTeam}>
                 <option value="" disabled>Selecciona campo</option>
                 {venues.map((venue) => (
                   <option key={venue.id} value={venue.id}>{venue.name}</option>
@@ -1078,12 +1313,13 @@ export default function Home() {
                 type="datetime-local"
                 step="600"
                 value={activeMatch.date}
+                disabled={remoteReady && !canManageTeam}
                 onChange={(event) => updateMatch({ ...activeMatch, date: event.target.value })}
               />
             </label>
             <label>
               Modalidad
-              <select value={activeKind} onChange={(event) => changeKind(event.target.value as MatchKind)}>
+              <select value={activeKind} onChange={(event) => changeKind(event.target.value as MatchKind)} disabled={remoteReady && !canManageTeam}>
                 {Object.entries(matchKinds).map(([kind, config]) => (
                   <option key={kind} value={kind}>{config.label}</option>
                 ))}
@@ -1095,6 +1331,7 @@ export default function Home() {
                 type="number"
                 min="0"
                 value={fieldCost}
+                disabled={remoteReady && !canManageTeam}
                 onChange={(event) => updateMatch({ ...activeMatch, fieldCost: Number(event.target.value) })}
               />
             </label>
@@ -1182,12 +1419,12 @@ export default function Home() {
           </div>
           <MatchPitch teamA={suggested.teamA} teamB={suggested.teamB} kind={activeKind} />
           <div className="lineup-actions">
-            <button type="button" onClick={applyRandomTeams}>Aleatorio</button>
-            <button type="button" onClick={applyBalancedTeams}>Equilibrado por stats</button>
+            <button type="button" onClick={applyRandomTeams} disabled={remoteReady && !canManageTeam}>Aleatorio</button>
+            <button type="button" onClick={applyBalancedTeams} disabled={remoteReady && !canManageTeam}>Equilibrado por stats</button>
           </div>
           <Team title="Equipo 1" players={suggested.teamA} variant="team-a" />
           <Team title="Equipo 2" players={suggested.teamB} variant="team-b" />
-          <button className="primary-button full" onClick={saveTeams}>Guardar alineaciones</button>
+          <button className="primary-button full" onClick={saveTeams} disabled={remoteReady && !canManageTeam}>Guardar alineaciones</button>
           <div className="result-box">
             <span>Resultado</span>
             <div>

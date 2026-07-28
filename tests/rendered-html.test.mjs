@@ -21,7 +21,9 @@ test("keeps the project wired to the Pachanga app", async () => {
     readFile(new URL("../app/supabaseClient.ts", import.meta.url), "utf8"),
   ]);
 
-  assert.match(page, /join_pachanga_group/);
+  assert.match(page, /join_pachanga_team/);
+  assert.match(page, /MemberRole/);
+  assert.match(page, /Equipo pachanguero/);
   assert.match(page, /grupo/);
   assert.match(page, /invite/);
   assert.match(page, /remoteInviteToken/);

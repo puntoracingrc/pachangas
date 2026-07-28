@@ -117,6 +117,99 @@ h1 {
   margin-top: 0;
 }
 
+.team-access-panel {
+  align-items: end;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: minmax(190px, 0.9fr) minmax(150px, 0.65fr) 110px 130px minmax(240px, 1.2fr) minmax(260px, 1.1fr);
+}
+
+.team-access-current,
+.team-access-meta {
+  display: grid;
+  gap: 6px;
+}
+
+.team-access-current span,
+.team-access-meta span,
+.team-invite-link,
+.team-create-form + small {
+  color: var(--ink-soft);
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.team-access-meta strong {
+  align-items: center;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: flex;
+  min-height: 42px;
+  padding: 0 12px;
+}
+
+.team-invite-link {
+  display: grid;
+  gap: 6px;
+}
+
+.team-create-form {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: minmax(0, 1fr) 130px;
+}
+
+.team-create-form button {
+  background: #202820;
+  border: 0;
+  border-radius: 8px;
+  color: #fff;
+  font-weight: 900;
+  min-height: 42px;
+}
+
+.team-members {
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: grid;
+  gap: 8px;
+  grid-column: 1 / -1;
+  padding: 10px;
+}
+
+.team-members > span {
+  color: var(--ink-soft);
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.team-members > div {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.team-members label {
+  align-items: center;
+  background: #fffdf7;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: grid;
+  gap: 8px;
+  grid-template-columns: minmax(0, 1fr) 150px;
+  padding: 8px;
+}
+
+.team-members strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .palette-field {
   color: var(--ink-soft);
   display: grid;
@@ -1287,6 +1380,16 @@ select {
 }
 
 @media (max-width: 1040px) {
+  .team-access-panel {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .team-invite-link,
+  .team-create-form,
+  .team-access-panel .sync-status {
+    grid-column: 1 / -1;
+  }
+
   .app-shell,
   .bottom-grid {
     grid-template-columns: 1fr;
@@ -1319,6 +1422,7 @@ select {
 
   .match-editor,
   .settings-panel,
+  .team-access-panel,
   .venue-form,
   .share-box,
   .player-grid,
@@ -1343,7 +1447,8 @@ select {
   }
 
   .top-panel.top-player-form,
-  .top-panel.top-venue-form {
+  .top-panel.top-venue-form,
+  .team-create-form {
     grid-template-columns: 1fr;
   }
 }
