@@ -1939,6 +1939,7 @@ export default function Home() {
   const ownPlayer = currentUserId ? players.find((player) => player.ownerUserId === currentUserId) : undefined;
   const selectedPlayerIsOwn = Boolean(selectedPlayer?.ownerUserId && selectedPlayer.ownerUserId === currentUserId);
   const canEditSelectedPlayer = Boolean(selectedPlayer && (canUseAdminControls || (hasRealTeam && isRegisteredUser && selectedPlayerIsOwn)));
+  const showPlayerSwitcher = Boolean(canUseAdminControls && selectedPlayer && !selectedPlayerIsOwn && players.length > 1);
   const canEditMatchSettings = canUseAdminControls && !matchFinalized;
   const canEditLineup = canUseAdminControls && matchConfigured && !lineupClosed && !matchFinalized;
   const matchCanBeSaved = Boolean(
@@ -3325,11 +3326,16 @@ export default function Home() {
                   ) : null}
                 </div>
                 <div>
-                  <select value={selectedPlayer.id} onChange={(event) => setSelectedPlayerId(event.target.value)}>
-                    {players.map((player) => (
-                      <option key={player.id} value={player.id}>{playerDisplayName(player)}</option>
-                    ))}
-                  </select>
+                  {showPlayerSwitcher ? (
+                    <label className="profile-player-switcher">
+                      Cambiar ficha
+                      <select value={selectedPlayer.id} onChange={(event) => setSelectedPlayerId(event.target.value)}>
+                        {players.map((player) => (
+                          <option key={player.id} value={player.id}>{playerDisplayName(player)}</option>
+                        ))}
+                      </select>
+                    </label>
+                  ) : null}
                   <input
                     value={selectedPlayer.name}
                     disabled={!canEditSelectedPlayer}
