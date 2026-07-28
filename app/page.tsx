@@ -3742,6 +3742,50 @@ export default function Home() {
         </div>
       </section>
 
+      {openQuickForm === "player" ? (
+        <form className="top-panel quick-create-form top-player-form" ref={playerFormRef} onSubmit={addPlayer}>
+          <input placeholder="Nombre del jugador" value={newPlayer} onChange={(event) => setNewPlayer(event.target.value)} />
+          <button type="submit">Guardar jugador</button>
+        </form>
+      ) : null}
+
+      {openQuickForm === "venue" ? (
+        <form className="top-panel quick-create-form top-venue-form" ref={venueFormRef} onSubmit={addVenue}>
+          <input
+            placeholder="Crear campo: nombre"
+            value={newVenue.name}
+            onChange={(event) => setNewVenue({ ...newVenue, name: event.target.value })}
+          />
+          <label className="money-input">
+            <input
+              type="number"
+              min="0"
+              placeholder="Precio"
+              value={newVenue.cost}
+              onChange={(event) => setNewVenue({ ...newVenue, cost: event.target.value })}
+            />
+            <span>€</span>
+          </label>
+          <select value={newVenue.kind} onChange={(event) => setNewVenue({ ...newVenue, kind: event.target.value as MatchKind })}>
+            {Object.entries(matchKinds).map(([kind, config]) => (
+              <option key={kind} value={kind}>{config.label}</option>
+            ))}
+          </select>
+          <button type="submit">Guardar campo</button>
+        </form>
+      ) : null}
+
+      {openQuickForm === "team" ? (
+        <form className="top-panel quick-create-form team-create-form top-team-form" ref={teamFormRef} onSubmit={createTeam}>
+          <input value={newTeamName} onChange={(event) => setNewTeamName(event.target.value)} placeholder="Nombre del nuevo equipo" />
+          <button type="submit" disabled={!canCreateTeam}>Crear equipo</button>
+          {!canCreateTeam ? (
+            <GoogleSignInButton label="Continuar con Google" onClick={() => void signInWithGoogle()} disabled={!supabase || !googleClientId} />
+          ) : null}
+          <button className="ghost-form-button" type="button" onClick={() => setOpenQuickForm(null)}>Cerrar</button>
+        </form>
+      ) : null}
+
       {!needsLoginForSharedLink ? (
         <section className="top-panel match-focus-card" aria-label="Resumen del partido">
           <div className="focus-main">
@@ -3791,17 +3835,6 @@ export default function Home() {
             </button>
           </div>
         </section>
-      ) : null}
-
-      {openQuickForm === "team" ? (
-        <form className="top-panel team-create-form top-team-form" ref={teamFormRef} onSubmit={createTeam}>
-          <input value={newTeamName} onChange={(event) => setNewTeamName(event.target.value)} placeholder="Nombre del nuevo equipo" />
-          <button type="submit" disabled={!canCreateTeam}>Crear equipo</button>
-          {!canCreateTeam ? (
-            <GoogleSignInButton label="Continuar con Google" onClick={() => void signInWithGoogle()} disabled={!supabase || !googleClientId} />
-          ) : null}
-          <button className="ghost-form-button" type="button" onClick={() => setOpenQuickForm(null)}>Cerrar</button>
-        </form>
       ) : null}
 
       <section className="top-panel team-access-panel">
@@ -3972,39 +4005,6 @@ export default function Home() {
             Guardar
           </button>
         </section>
-      ) : null}
-
-      {openQuickForm === "player" ? (
-        <form className="top-panel add-player top-player-form" ref={playerFormRef} onSubmit={addPlayer}>
-          <input placeholder="Nombre del jugador" value={newPlayer} onChange={(event) => setNewPlayer(event.target.value)} />
-          <button type="submit">Guardar jugador</button>
-        </form>
-      ) : null}
-
-      {openQuickForm === "venue" ? (
-        <form className="top-panel venue-form top-venue-form" ref={venueFormRef} onSubmit={addVenue}>
-          <input
-            placeholder="Crear campo: nombre"
-            value={newVenue.name}
-            onChange={(event) => setNewVenue({ ...newVenue, name: event.target.value })}
-          />
-          <label className="money-input">
-            <input
-              type="number"
-              min="0"
-              placeholder="Precio"
-              value={newVenue.cost}
-              onChange={(event) => setNewVenue({ ...newVenue, cost: event.target.value })}
-            />
-            <span>€</span>
-          </label>
-          <select value={newVenue.kind} onChange={(event) => setNewVenue({ ...newVenue, kind: event.target.value as MatchKind })}>
-            {Object.entries(matchKinds).map(([kind, config]) => (
-              <option key={kind} value={kind}>{config.label}</option>
-            ))}
-          </select>
-          <button type="submit">Guardar campo</button>
-        </form>
       ) : null}
 
       <section className={needsLoginForSharedLink ? "app-shell gated-shell" : "app-shell"}>

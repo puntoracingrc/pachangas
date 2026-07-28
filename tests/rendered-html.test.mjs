@@ -76,6 +76,11 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /Crea tu ficha para poder marcar/);
   assert.match(page, /gated-shell/);
   assert.match(page, /match-focus-card/);
+  assert.match(page, /top-panel quick-create-form top-player-form/);
+  assert.match(page, /top-panel quick-create-form top-venue-form/);
+  assert.match(globalsCss, /\.quick-create-form/);
+  assert.ok(page.indexOf("top-panel quick-create-form top-player-form") < page.indexOf("match-focus-card"));
+  assert.ok(page.indexOf("top-panel quick-create-form top-venue-form") < page.indexOf("match-focus-card"));
   assert.match(page, /mobile-tabbar/);
   assert.match(page, /ownStatusText/);
   assert.match(page, /id="partido"/);
