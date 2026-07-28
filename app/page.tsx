@@ -568,6 +568,7 @@ const legacyPositionMeta: Record<"Porteria" | "Defensa" | "Medio" | "Ataque", { 
 };
 
 const ratingReviewInterval = 3;
+const footballSeasonStartMonth = 8;
 
 type RatingFacetConfig = { key: RatingFacet; label: string; short: string };
 
@@ -701,7 +702,7 @@ function seasonKey(date: string | Date) {
   const parsed = date instanceof Date ? new Date(date) : new Date(date);
   if (Number.isNaN(parsed.getTime())) return "Sin temporada";
   const year = parsed.getFullYear();
-  const startYear = parsed.getMonth() >= 6 ? year : year - 1;
+  const startYear = parsed.getMonth() >= footballSeasonStartMonth ? year : year - 1;
   return `${startYear}-${startYear + 1}`;
 }
 

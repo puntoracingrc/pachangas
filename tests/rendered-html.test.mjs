@@ -18,7 +18,7 @@ test("builds Pachangas IQ HTML", async () => {
   assert.match(html, /Próximo partido/);
   assert.match(html, /Temporada/);
   assert.match(html, /Ordenar por/);
-  assert.match(html, /2026-2027/);
+  assert.match(html, /2025-2026/);
   assert.match(html, /Navegación principal móvil/);
   assert.match(html, /Abrir manual de usuario/);
   assert.match(html, /\/manifest\.webmanifest/);
@@ -37,6 +37,7 @@ test("builds the user manual as its own page", async () => {
   assert.match(html, /Crear partido/);
   assert.match(html, /Guardar partido/);
   assert.match(html, /temporada, modalidad/);
+  assert.match(html, /empieza en septiembre y termina en agosto/);
   assert.match(html, /Jugador y admin/);
   assert.match(html, /Si cambias de Voy a Duda o No/);
   assert.match(html, /Cualquier miembro puede subir una foto de equipo/);
@@ -81,6 +82,8 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /absenceStreaks/);
   assert.match(page, /showAbsenceStreak/);
   assert.match(page, /sin venir/);
+  assert.match(page, /footballSeasonStartMonth/);
+  assert.match(page, /parsed\.getMonth\(\) >= footballSeasonStartMonth/);
   assert.match(page, /rankingSortLabels/);
   assert.match(page, /seasonKey/);
   assert.match(page, /matchSeason/);
