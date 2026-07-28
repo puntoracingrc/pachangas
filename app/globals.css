@@ -3570,12 +3570,13 @@ select:disabled {
   fill: none;
   stroke-linecap: round;
   stroke-linejoin: round;
-  stroke-width: 2.6;
+  stroke-opacity: 0.96;
+  stroke-width: 2.7;
 }
 
 .rating-line-chart circle {
-  stroke: #fff;
-  stroke-width: 1.4;
+  stroke: #fffaf0;
+  stroke-width: 1.8;
 }
 
 .rating-chart-tick line {

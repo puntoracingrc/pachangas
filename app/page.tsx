@@ -877,10 +877,16 @@ function voteAverage(vote: RatingVote, player?: Player) {
   return facets.reduce((sum, facet) => sum + clampRating(vote.facets[facet.key]), 0) / facets.length;
 }
 
-function ratingChartX(index: number, total: number) {
+function ratingSeriesOffset(index: number, total: number) {
+  if (total <= 1) return 0;
+  const spread = Math.min(10, total * 1.7);
+  return ((index / (total - 1)) - 0.5) * spread;
+}
+
+function ratingChartX(index: number, total: number, seriesIndex = 0, seriesTotal = 1) {
   const usableWidth = ratingChart.width - ratingChart.left - ratingChart.right;
-  if (total <= 1) return ratingChart.left + usableWidth / 2;
-  return ratingChart.left + (usableWidth * index) / (total - 1);
+  const x = total <= 1 ? ratingChart.left + usableWidth / 2 : ratingChart.left + (usableWidth * index) / (total - 1);
+  return Math.max(ratingChart.left, Math.min(ratingChart.width - ratingChart.right, x + ratingSeriesOffset(seriesIndex, seriesTotal)));
 }
 
 function ratingChartY(value: number) {
@@ -888,10 +894,10 @@ function ratingChartY(value: number) {
   return ratingChart.top + ((10 - clampRating(value)) / 9) * usableHeight;
 }
 
-function ratingLinePath(votes: RatingVote[], facet: RatingFacet) {
+function ratingLinePath(votes: RatingVote[], facet: RatingFacet, seriesIndex = 0, seriesTotal = 1) {
   return votes
     .map((vote, index) => {
-      const x = ratingChartX(index, votes.length);
+      const x = ratingChartX(index, votes.length, seriesIndex, seriesTotal);
       const y = ratingChartY(vote.facets[facet] ?? 5);
       return `${index === 0 ? "M" : "L"} ${x.toFixed(1)} ${y.toFixed(1)}`;
     })
@@ -4739,17 +4745,17 @@ export default function Home() {
                               </g>
                             );
                           })}
-                          {selectedRatingFacets.map((facet) => (
+                          {selectedRatingFacets.map((facet, facetIndex) => (
                             <g key={facet.key}>
                               <path
-                                d={ratingLinePath(selectedRatingChartHistory, facet.key)}
+                                d={ratingLinePath(selectedRatingChartHistory, facet.key, facetIndex, selectedRatingFacets.length)}
                                 stroke={ratingFacetColors[facet.key]}
                               />
                               {selectedRatingChartHistory.map((vote, index) => {
                                 const value = clampRating(vote.facets[facet.key] ?? 5);
                                 return (
                                   <circle
-                                    cx={ratingChartX(index, selectedRatingChartHistory.length)}
+                                    cx={ratingChartX(index, selectedRatingChartHistory.length, facetIndex, selectedRatingFacets.length)}
                                     cy={ratingChartY(value)}
                                     fill={ratingFacetColors[facet.key]}
                                     key={`${vote.id}-${facet.key}`}

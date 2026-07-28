@@ -192,6 +192,8 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /selectedRatingFacets\.map/);
   assert.match(page, /ratingFacetsForPlayer\(player\)/);
   assert.match(page, /ratingLinePath/);
+  assert.match(page, /ratingSeriesOffset/);
+  assert.match(page, /facetIndex, selectedRatingFacets\.length/);
   assert.match(page, /ratingChartX/);
   assert.match(page, /ratingVoteDateLabel/);
   assert.match(page, /rating-line-chart/);
