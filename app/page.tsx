@@ -569,14 +569,27 @@ const legacyPositionMeta: Record<"Porteria" | "Defensa" | "Medio" | "Ataque", { 
 
 const ratingReviewInterval = 3;
 
-const ratingFacets: Array<{ key: RatingFacet; label: string }> = [
-  { key: "ritmo", label: "Ritmo" },
-  { key: "tiro", label: "Tiro" },
-  { key: "pase", label: "Pase" },
-  { key: "regate", label: "Regate" },
-  { key: "defensa", label: "Defensa" },
-  { key: "fisico", label: "Físico" },
+type RatingFacetConfig = { key: RatingFacet; label: string; short: string };
+
+const fieldRatingFacets: RatingFacetConfig[] = [
+  { key: "ritmo", label: "Ritmo", short: "RIT" },
+  { key: "tiro", label: "Tiro", short: "TIR" },
+  { key: "pase", label: "Pase", short: "PAS" },
+  { key: "regate", label: "Regate", short: "REG" },
+  { key: "defensa", label: "Defensa", short: "DEF" },
+  { key: "fisico", label: "Físico", short: "FÍS" },
 ];
+
+const goalkeeperRatingFacets: RatingFacetConfig[] = [
+  { key: "ritmo", label: "Salidas", short: "SAL" },
+  { key: "tiro", label: "Paradas", short: "PAR" },
+  { key: "pase", label: "Saque", short: "SAQ" },
+  { key: "regate", label: "Reflejos", short: "REF" },
+  { key: "defensa", label: "Velocidad", short: "VEL" },
+  { key: "fisico", label: "Posición", short: "POS" },
+];
+
+const ratingFacets = fieldRatingFacets;
 
 const teamPalette = [
   { name: "Azul", value: "#2157a8" },
@@ -776,14 +789,16 @@ function normalizeRatingVotes(votes?: RatingVote[]) {
 }
 
 function peerAverage(player: Player) {
-  const facetScores = ratingFacets.map((facet) => facetAverage(player, facet.key));
+  const facets = ratingFacetsForPlayer(player);
+  const facetScores = facets.map((facet) => facetAverage(player, facet.key));
   if (facetScores.length > 0) return facetScores.reduce((sum, rating) => sum + rating, 0) / facetScores.length;
   if (player.ratings?.length) return player.ratings.reduce((sum, rating) => sum + rating, 0) / player.ratings.length;
   return player.rating;
 }
 
-function voteAverage(vote: RatingVote) {
-  return ratingFacets.reduce((sum, facet) => sum + clampRating(vote.facets[facet.key]), 0) / ratingFacets.length;
+function voteAverage(vote: RatingVote, player?: Player) {
+  const facets = player ? ratingFacetsForPlayer(player) : ratingFacets;
+  return facets.reduce((sum, facet) => sum + clampRating(vote.facets[facet.key]), 0) / facets.length;
 }
 
 function facetAverage(player: Player, facet: RatingFacet) {
@@ -968,6 +983,10 @@ function positionLabel(player: Player) {
 
 function positionShort(player: Player) {
   return player.goalkeeperOnly ? "POR" : positionMeta(player.position).short;
+}
+
+function ratingFacetsForPlayer(player: Player) {
+  return playerPosition(player) === "Porteria" ? goalkeeperRatingFacets : fieldRatingFacets;
 }
 
 function defaultPositionForKind(kind: MatchKind): PlayerPosition {
@@ -2179,6 +2198,7 @@ export default function Home() {
   const sortedTeamB = sortedLineupPlayers(suggested.teamB);
   const otherPlayers = sortedPlayers.filter((player) => !teamAPlayerIds.has(player.id) && !teamBPlayerIds.has(player.id) && !reservePlayerIds.has(player.id) && !waitingPlayerIds.has(player.id));
   const selectedPlayer = selectedPlayerId ? players.find((player) => player.id === selectedPlayerId) : undefined;
+  const selectedRatingFacets = selectedPlayer ? ratingFacetsForPlayer(selectedPlayer) : ratingFacets;
   const currentTeam = remoteTeams.find((team) => team.id === remoteGroupId);
   const hasIncomingSharedLink = incomingSharedLink.hasInvite || incomingSharedLink.hasAdminInvite || incomingSharedLink.hasMatch;
   const isRegisteredUser = Boolean(authUser && !isAnonymousAuthUser(authUser));
@@ -2218,7 +2238,7 @@ export default function Home() {
   );
   const ratingWaitMatches = selectedRatingWindow?.waitMatches ?? 0;
   const draftPeerAverage = selectedPlayer
-    ? ratingFacets.reduce((sum, facet) => sum + clampRating(newFacetRatings[facet.key] ?? facetAverage(selectedPlayer, facet.key)), 0) / ratingFacets.length
+    ? selectedRatingFacets.reduce((sum, facet) => sum + clampRating(newFacetRatings[facet.key] ?? facetAverage(selectedPlayer, facet.key)), 0) / selectedRatingFacets.length
     : 0;
   const selectedRatingStatusText = selectedPlayer && selectedRatingWindow
     ? selectedPlayer.inactive
@@ -2242,12 +2262,12 @@ export default function Home() {
   useEffect(() => {
     if (!selectedPlayer) return;
     const ownVote = ratingHistory(selectedPlayer).filter((vote) => vote.voterId === ratingVoterId).at(-1);
-    const nextFacets = ratingFacets.reduce((next, facet) => {
+    const nextFacets = ratingFacetsForPlayer(selectedPlayer).reduce((next, facet) => {
       next[facet.key] = clampRating(ownVote?.facets[facet.key] ?? facetAverage(selectedPlayer, facet.key));
       return next;
     }, {} as Record<RatingFacet, number>);
     setNewFacetRatings(nextFacets);
-  }, [selectedPlayerId, ratingVoterId]);
+  }, [selectedPlayerId, ratingVoterId, selectedPlayer?.goalkeeperOnly, selectedPlayer?.position]);
 
   function updateMatchSettings(next: Match) {
     if (!canEditMatchSettings) return;
@@ -2305,7 +2325,7 @@ export default function Home() {
       voterName: profileName.trim() ? displayName(profileName) : undefined,
       matchCount: player.appearances,
       createdAt: new Date().toISOString(),
-      facets: ratingFacets.reduce((next, facet) => {
+      facets: ratingFacetsForPlayer(player).reduce((next, facet) => {
         next[facet.key] = clampRating(newFacetRatings[facet.key]);
         return next;
       }, {} as Record<RatingFacet, number>),
@@ -3717,10 +3737,10 @@ export default function Home() {
                     <strong>{playerDisplayName(selectedPlayer)}</strong>
                     <span className="fifa-card-meta">{selectedPlayer.goals} Goles · {selectedPlayer.appearances} PJ</span>
                     <div className="fifa-facets">
-                      {ratingFacets.map((facet) => (
+                      {selectedRatingFacets.map((facet) => (
                         <span key={facet.key}>
                           <b>{Math.round(facetAverage(selectedPlayer, facet.key) * 10)}</b>
-                          {facet.label.slice(0, 3).toLocaleUpperCase("es-ES")}
+                          {facet.short}
                         </span>
                       ))}
                     </div>
@@ -3870,7 +3890,7 @@ export default function Home() {
                   </small>
                   <p className="rating-help">{selectedRatingStatusText}</p>
                   <div className="facet-grid">
-                    {ratingFacets.map((facet) => (
+                    {selectedRatingFacets.map((facet) => (
                       <label className="facet-field" key={facet.key}>
                         <span>{facet.label}</span>
                         <input
@@ -3899,7 +3919,7 @@ export default function Home() {
                     {selectedRatingHistory.length > 0 ? (
                       <div>
                         {selectedRatingHistory.slice(-10).map((vote, index, list) => {
-                          const average = voteAverage(vote);
+                          const average = voteAverage(vote, selectedPlayer);
                           return (
                             <i
                               key={vote.id}
