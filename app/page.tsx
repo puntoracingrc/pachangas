@@ -472,6 +472,7 @@ export default function Home() {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [profileName, setProfileName] = useState("");
   const [newTeamName, setNewTeamName] = useState("Mi equipo pachanguero");
+  const [adminInviteToken, setAdminInviteToken] = useState<string | null>(null);
   const [localHydrated, setLocalHydrated] = useState(false);
   const applyingRemoteRef = useRef(false);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -576,6 +577,7 @@ export default function Home() {
     setRemoteGroupId(selectedTeam.id);
     setRemoteInviteToken(selectedTeam.inviteToken);
     setCurrentRole(selectedTeam.role);
+    setAdminInviteToken(null);
     applyPayload(selectedTeam.payload);
     setRemoteReady(true);
     setSyncStatus("live");
@@ -585,6 +587,7 @@ export default function Home() {
     const nextParams = new URLSearchParams(window.location.search);
     nextParams.set("grupo", selectedTeam.id);
     nextParams.set("invite", selectedTeam.inviteToken);
+    nextParams.delete("admin");
     window.history.replaceState(null, "", `${window.location.pathname}?${nextParams.toString()}`);
   }
 
@@ -629,9 +632,17 @@ export default function Home() {
 
         const params = new URLSearchParams(window.location.search);
         const inviteToken = params.get("invite");
+        const adminInviteToken = params.get("admin");
         let groupId = params.get("grupo");
 
-        if (inviteToken) {
+        if (adminInviteToken) {
+          const adminJoinResult = await client.rpc("accept_pachanga_admin_invite", {
+            admin_token: adminInviteToken,
+            member_name: profileName.trim() || "Admin",
+          });
+          if (adminJoinResult.error || !adminJoinResult.data) throw new Error(adminJoinResult.error?.message ?? "No se pudo aceptar la invitación de admin");
+          groupId = String(adminJoinResult.data);
+        } else if (inviteToken) {
           const joinResult = await client.rpc("join_pachanga_team", {
             member_name: profileName.trim() || "Jugador",
             token: inviteToken,
@@ -1213,6 +1224,7 @@ export default function Home() {
       if (memberResult.error) throw new Error(memberResult.error.message);
 
       await loadTeams(client, insertResult.data.id);
+      setAdminInviteToken(null);
       setOpenQuickForm(null);
     } catch (error) {
       setSyncStatus("error");
@@ -1245,6 +1257,7 @@ export default function Home() {
         nextParams.delete("grupo");
         nextParams.delete("invite");
       }
+      nextParams.delete("admin");
       window.history.replaceState(null, "", nextParams.toString() ? `${window.location.pathname}?${nextParams.toString()}` : window.location.pathname);
     } catch (error) {
       setSyncStatus("error");
@@ -1259,6 +1272,7 @@ export default function Home() {
     setRemoteGroupId(selectedTeam.id);
     setRemoteInviteToken(selectedTeam.inviteToken);
     setCurrentRole(selectedTeam.role);
+    setAdminInviteToken(null);
     applyPayload(selectedTeam.payload);
     setRemoteReady(true);
     setSyncStatus("live");
@@ -1267,6 +1281,7 @@ export default function Home() {
     const nextParams = new URLSearchParams(window.location.search);
     nextParams.set("grupo", selectedTeam.id);
     nextParams.set("invite", selectedTeam.inviteToken);
+    nextParams.delete("admin");
     window.history.replaceState(null, "", `${window.location.pathname}?${nextParams.toString()}`);
 
     if (supabase) {
@@ -1278,7 +1293,7 @@ export default function Home() {
   }
 
   async function updateMemberRole(member: RemoteMember, role: MemberRole) {
-    if (!supabase || !remoteGroupId || currentRole !== "owner" || member.role === "owner") return;
+    if (!supabase || !remoteGroupId || !canManageTeam || member.role === "owner" || member.userId === currentUserId || role === "owner") return;
 
     const result = await supabase
       .from("pachanga_group_members")
@@ -1293,6 +1308,97 @@ export default function Home() {
     }
 
     await loadTeamMembers(supabase, remoteGroupId);
+  }
+
+  function adminInviteUrl(token: string | null = adminInviteToken) {
+    if (!localHydrated || typeof window === "undefined" || !remoteGroupId || !token) return "";
+    const params = new URLSearchParams();
+    params.set("grupo", remoteGroupId);
+    params.set("admin", token);
+    return `${window.location.origin}${window.location.pathname}?${params.toString()}`;
+  }
+
+  async function createAdminInvite() {
+    if (!supabase || !remoteGroupId || !canManageTeam) return;
+
+    setSyncStatus("connecting");
+    setSyncError("");
+
+    const result = await supabase.rpc("create_pachanga_admin_invite", {
+      target_group_id: remoteGroupId,
+    });
+
+    if (result.error || !result.data) {
+      setSyncStatus("error");
+      setSyncError(result.error?.message ?? "No se pudo crear la invitación de admin");
+      return;
+    }
+
+    const token = String(result.data);
+    setAdminInviteToken(token);
+    setSyncStatus("live");
+    setSyncError("");
+  }
+
+  async function copyAdminInvite() {
+    let token = adminInviteToken;
+    if (!token) {
+      if (!supabase || !remoteGroupId || !canManageTeam) return;
+      setSyncStatus("connecting");
+      setSyncError("");
+
+      const result = await supabase.rpc("create_pachanga_admin_invite", {
+        target_group_id: remoteGroupId,
+      });
+
+      if (result.error || !result.data) {
+        setSyncStatus("error");
+        setSyncError(result.error?.message ?? "No se pudo crear la invitación de admin");
+        return;
+      }
+
+      token = String(result.data);
+      setAdminInviteToken(token);
+    }
+
+    const inviteUrl = adminInviteUrl(token);
+    if (!inviteUrl || !navigator.clipboard) return;
+
+    try {
+      await navigator.clipboard.writeText(inviteUrl);
+      setSyncStatus("live");
+      setSyncError("");
+    } catch {
+      setSyncStatus("error");
+      setSyncError("No se pudo copiar la invitación de admin");
+    }
+  }
+
+  async function shareAdminInviteWhatsApp() {
+    let token = adminInviteToken;
+    if (!token) {
+      if (!supabase || !remoteGroupId || !canManageTeam) return;
+      setSyncStatus("connecting");
+      setSyncError("");
+
+      const result = await supabase.rpc("create_pachanga_admin_invite", {
+        target_group_id: remoteGroupId,
+      });
+
+      if (result.error || !result.data) {
+        setSyncStatus("error");
+        setSyncError(result.error?.message ?? "No se pudo crear la invitación de admin");
+        return;
+      }
+
+      token = String(result.data);
+      setAdminInviteToken(token);
+    }
+
+    const inviteUrl = adminInviteUrl(token);
+    const teamName = currentTeam?.name ?? "mi equipo";
+    if (!inviteUrl) return;
+    window.open(`https://wa.me/?text=${encodeURIComponent(`Invitación de admin para ${teamName}\n${inviteUrl}`)}`, "_blank", "noopener,noreferrer");
   }
 
   function matchUrl() {
@@ -1633,15 +1739,32 @@ export default function Home() {
                     </strong>
                     <select
                       value={member.role}
-                      disabled={currentRole !== "owner" || member.role === "owner"}
+                      disabled={!canManageTeam || member.role === "owner" || member.userId === currentUserId}
                       onChange={(event) => void updateMemberRole(member, event.target.value as MemberRole)}
                     >
-                      <option value="owner">Admin</option>
+                      {member.role === "owner" ? <option value="owner">Admin</option> : null}
                       <option value="admin">Admin</option>
                       <option value="player">Jugador</option>
                     </select>
                   </label>
                 ))}
+                {canManageTeam ? (
+                  <div className="admin-invite-row">
+                    <span>Invitar admin</span>
+                    <div>
+                      <button type="button" onClick={() => void createAdminInvite()} disabled={!remoteGroupId}>
+                        Crear link
+                      </button>
+                      <button className="copy-icon-button" type="button" onClick={() => void copyAdminInvite()} disabled={!remoteGroupId} title="Copiar invitación de admin" aria-label="Copiar invitación de admin">
+                        <CopyLogo />
+                      </button>
+                      <button className="whatsapp-icon-button" type="button" onClick={() => void shareAdminInviteWhatsApp()} disabled={!remoteGroupId} title="Enviar admin por WhatsApp" aria-label="Enviar admin por WhatsApp">
+                        <WhatsAppLogo />
+                      </button>
+                    </div>
+                    {adminInviteToken ? <small>Invitación admin lista</small> : null}
+                  </div>
+                ) : null}
               </div>
             </details>
           ) : null}

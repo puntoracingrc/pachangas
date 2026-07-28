@@ -282,6 +282,62 @@ h1 {
   white-space: nowrap;
 }
 
+.admin-invite-row {
+  border-top: 1px solid var(--line);
+  display: grid;
+  gap: 8px;
+  padding-top: 10px;
+}
+
+.admin-invite-row > span {
+  color: var(--ink-soft);
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.admin-invite-row > div {
+  display: grid;
+  gap: 6px;
+  grid-template-columns: minmax(96px, 1fr) 40px 40px;
+}
+
+.admin-invite-row button {
+  align-items: center;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: #202820;
+  display: flex;
+  font-weight: 900;
+  justify-content: center;
+  min-height: 40px;
+  padding: 0 10px;
+}
+
+.admin-invite-row .whatsapp-icon-button {
+  background: #25d366;
+  border-color: #25d366;
+  color: #07391a;
+}
+
+.admin-invite-row svg {
+  fill: currentColor;
+  height: 21px;
+  width: 21px;
+}
+
+.admin-invite-row button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.admin-invite-row small {
+  color: #0f7b3d;
+  font-size: 12px;
+  font-weight: 800;
+}
+
 .palette-field {
   color: var(--ink-soft);
   display: grid;
