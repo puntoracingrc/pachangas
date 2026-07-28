@@ -1980,6 +1980,59 @@ select:disabled {
   align-self: start;
 }
 
+.balance-summary {
+  background: #f8f6ef;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: grid;
+  gap: 7px;
+  margin-bottom: 12px;
+  padding: 10px;
+}
+
+.balance-summary > div {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+}
+
+.balance-summary span {
+  color: var(--ink-soft);
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.balance-summary strong {
+  color: var(--foreground);
+  font-size: 18px;
+  line-height: 1;
+}
+
+.balance-summary i {
+  background: #ebe7dc;
+  border-radius: 999px;
+  display: block;
+  height: 8px;
+  overflow: hidden;
+}
+
+.balance-summary b {
+  background: linear-gradient(90deg, var(--team-a), var(--team-b));
+  border-radius: inherit;
+  display: block;
+  height: 100%;
+  min-width: 4px;
+}
+
+.balance-summary small {
+  color: var(--ink-soft);
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.25;
+}
+
 .match-pitch {
   aspect-ratio: 0.68;
   background:
@@ -3466,6 +3519,12 @@ select:disabled {
 }
 
 @media (max-width: 760px) {
+  html,
+  body {
+    max-width: 100%;
+    width: 100%;
+  }
+
   body {
     padding-bottom: 72px;
   }
@@ -3473,7 +3532,12 @@ select:disabled {
   .hero {
     align-items: stretch;
     display: grid;
+    max-width: 100%;
+    overflow: hidden;
+    padding-left: 14px;
+    padding-right: 14px;
     padding-top: 28px;
+    width: 100%;
   }
 
   .hero > div,
@@ -3502,10 +3566,15 @@ select:disabled {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     justify-content: stretch;
+    max-width: 100%;
+    width: 100%;
   }
 
   .hero-actions > * {
     min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
     width: 100%;
   }
 

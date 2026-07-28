@@ -88,6 +88,12 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /formImpactLabel/);
   assert.match(page, /Forma sin ajuste/);
   assert.match(page, /portería a cero/);
+  assert.match(page, /playerBalancePower/);
+  assert.match(page, /playerGoalsPerMatch/);
+  assert.match(page, /playerWinRate/);
+  assert.match(page, /teamBalanceSummary/);
+  assert.match(page, /Equilibrio de equipos/);
+  assert.match(page, /goles\/partido/);
   assert.match(page, /footballSeasonStartMonth/);
   assert.match(page, /parsed\.getMonth\(\) >= footballSeasonStartMonth/);
   assert.match(page, /rankingSortLabels/);
@@ -118,6 +124,7 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(globalsCss, /\.result-score-field span/);
   assert.match(globalsCss, /\.team-b-score/);
   assert.match(globalsCss, /\.absence-chip/);
+  assert.match(globalsCss, /\.balance-summary/);
   assert.match(globalsCss, /scrollbar-color:\s*#64748b #ebe7dc/);
   assert.match(globalsCss, /\.side-history \.history::\-webkit-scrollbar-thumb/);
   assert.match(globalsCss, /\.joined-at/);

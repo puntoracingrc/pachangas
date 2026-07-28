@@ -134,6 +134,13 @@ type MatchRatingImpact = {
   delta: number;
   notes: string[];
 };
+type TeamBalanceMetrics = {
+  averageRating: number;
+  goalsPerMatch: number;
+  keeperCount: number;
+  power: number;
+  winRate: number;
+};
 
 type AppPayload = {
   activeMatchId: string;
@@ -1195,14 +1202,93 @@ function equivalentPositionForKind(position: PlayerPosition, kind: MatchKind): P
   return "Mediocentro / pivote";
 }
 
+function playerGames(player: Player) {
+  return Math.max(0, Math.floor(player.appearances || 0));
+}
+
+function playerGoalsPerMatch(player: Player) {
+  const games = playerGames(player);
+  return games > 0 ? player.goals / games : 0;
+}
+
+function playerWinRate(player: Player) {
+  const games = playerGames(player);
+  return games > 0 ? player.wins / games : 0.5;
+}
+
+function playerRoleBalanceBonus(player: Player) {
+  const line = playerPosition(player);
+  if (player.goalkeeperOnly) return 0.45;
+  if (line === "Porteria") return 0.3;
+  if (line === "Defensa") return 0.16;
+  if (line === "Ataque") return 0.12;
+  return 0.08;
+}
+
+function playerBalancePower(player: Player, scoreForPlayer: PlayerScoreFn = scorePlayer) {
+  const ratingPower = scoreForPlayer(player);
+  const scorerPower = Math.min(1.15, playerGoalsPerMatch(player) * 0.9);
+  const winPower = (playerWinRate(player) - 0.5) * 0.7;
+  const experiencePower = Math.min(0.38, Math.log1p(playerGames(player)) / 7);
+  return ratingPower + scorerPower + winPower + experiencePower + playerRoleBalanceBonus(player);
+}
+
+function teamBalanceMetrics(players: Player[], scoreForPlayer: PlayerScoreFn = scorePlayer): TeamBalanceMetrics {
+  if (players.length === 0) {
+    return {
+      averageRating: 0,
+      goalsPerMatch: 0,
+      keeperCount: 0,
+      power: 0,
+      winRate: 0,
+    };
+  }
+
+  return {
+    averageRating: players.reduce((sum, player) => sum + scoreForPlayer(player), 0) / players.length,
+    goalsPerMatch: players.reduce((sum, player) => sum + playerGoalsPerMatch(player), 0),
+    keeperCount: players.filter((player) => playerPosition(player) === "Porteria").length,
+    power: players.reduce((sum, player) => sum + playerBalancePower(player, scoreForPlayer), 0),
+    winRate: players.reduce((sum, player) => sum + playerWinRate(player), 0) / players.length,
+  };
+}
+
+function teamBalanceSummary(teamA: Player[], teamB: Player[], scoreForPlayer: PlayerScoreFn = scorePlayer) {
+  const metricsA = teamBalanceMetrics(teamA, scoreForPlayer);
+  const metricsB = teamBalanceMetrics(teamB, scoreForPlayer);
+  const hasPlayers = teamA.length > 0 || teamB.length > 0;
+  const diff = Math.abs(metricsA.power - metricsB.power);
+  const baseline = Math.max(metricsA.power, metricsB.power, 1);
+  const percent = hasPlayers ? Math.max(0, Math.min(100, Math.round(100 - (diff / baseline) * 100))) : 0;
+  const label = !hasPlayers
+    ? "Pendiente"
+    : percent >= 96
+      ? "Muy igualado"
+      : percent >= 90
+        ? "Bastante igualado"
+        : percent >= 82
+          ? "Algo desnivelado"
+          : "Desnivelado";
+
+  return {
+    detail: hasPlayers
+      ? `Diferencia ${diff.toFixed(1)} pts · usa media, goles/partido, victorias, experiencia, posición y porteros`
+      : "Marca jugadores como Voy para calcularlo",
+    label,
+    metricsA,
+    metricsB,
+    percent,
+  };
+}
+
 function balanceTeams(players: Player[], scoreForPlayer: PlayerScoreFn = scorePlayer) {
-  const ordered = [...players].sort((a, b) => scoreForPlayer(b) - scoreForPlayer(a));
+  const ordered = [...players].sort((a, b) => playerBalancePower(b, scoreForPlayer) - playerBalancePower(a, scoreForPlayer));
   const teamA: Player[] = [];
   const teamB: Player[] = [];
 
   ordered.forEach((player) => {
-    const totalA = teamA.reduce((sum, item) => sum + scoreForPlayer(item), 0);
-    const totalB = teamB.reduce((sum, item) => sum + scoreForPlayer(item), 0);
+    const totalA = teamA.reduce((sum, item) => sum + playerBalancePower(item, scoreForPlayer), 0);
+    const totalB = teamB.reduce((sum, item) => sum + playerBalancePower(item, scoreForPlayer), 0);
     const needsKeeperA = !teamA.some((item) => playerPosition(item) === "Porteria");
     const needsKeeperB = !teamB.some((item) => playerPosition(item) === "Porteria");
 
@@ -1872,6 +1958,7 @@ export default function Home() {
     [confirmedPlayers, matchRatingImpacts],
   );
   const suggested = savedTeams(activeMatch, players, confirmedIds) ?? balancedLineup;
+  const balanceSummary = teamBalanceSummary(suggested.teamA, suggested.teamB, effectivePlayerScore);
   const lineupClosed = activeMatch.lineupClosed ?? false;
   const matchFinalized = Boolean(activeMatch.closed || activeMatch.scoreA !== undefined);
   const matchConfigured = Boolean(activeMatch.configured);
@@ -3852,6 +3939,16 @@ export default function Home() {
           <div className="panel-title">
             <span>Equipos sugeridos</span>
             <strong>{matchKinds[activeKind].teamSize}v{matchKinds[activeKind].teamSize}</strong>
+          </div>
+          <div className="balance-summary" title={balanceSummary.detail}>
+            <div>
+              <span>Equilibrio de equipos</span>
+              <strong>{balanceSummary.percent > 0 ? `${balanceSummary.percent}%` : "Pendiente"}</strong>
+            </div>
+            <i aria-hidden="true">
+              <b style={{ width: `${balanceSummary.percent}%` }} />
+            </i>
+            <small>{balanceSummary.label} · {balanceSummary.detail}</small>
           </div>
           <MatchPitch teamA={suggested.teamA} teamB={suggested.teamB} kind={activeKind} scoreForPlayer={effectivePlayerScore} />
           <div className={lineupClosed ? "lineup-state closed" : "lineup-state"}>
