@@ -235,6 +235,9 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /settingsPanelRef/);
   assert.match(page, /scrollIntoView\(\{ behavior: "smooth", block: "start" \}\)/);
   assert.match(page, /selectedPlayerId === playerId/);
+  assert.match(page, /onPlayerClick=\{openPlayerProfile\}/);
+  assert.match(page, /className=\{`pitch-player-card/);
+  assert.match(page, /Abrir ficha de \$\{playerDisplayName\(player\)\} desde el campo/);
   assert.match(page, /saveSelectedPlayerProfile/);
   assert.match(page, /profile-save-area/);
   assert.match(page, /Guardar ficha/);
@@ -263,6 +266,9 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(globalsCss, /--ink:\s*#202820/);
   assert.match(globalsCss, /\.profile-save-area/);
   assert.match(globalsCss, /\.profile-save-button/);
+  assert.match(globalsCss, /\.pitch-player-card/);
+  assert.match(globalsCss, /\.pitch-player-card:hover/);
+  assert.match(globalsCss, /\.pitch-card-photo/);
   assert.match(globalsCss, /\.draggable-avatar/);
   assert.match(globalsCss, /\.avatar-dragging \.draggable-avatar/);
   assert.match(globalsCss, /\.avatar-adjust-hint/);

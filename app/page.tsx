@@ -4659,7 +4659,13 @@ export default function Home() {
             </i>
             <small>{balanceSummary.label} · {balanceSummary.detail}</small>
           </div>
-          <MatchPitch teamA={suggested.teamA} teamB={suggested.teamB} kind={activeKind} scoreForPlayer={effectivePlayerScore} />
+          <MatchPitch
+            teamA={suggested.teamA}
+            teamB={suggested.teamB}
+            kind={activeKind}
+            scoreForPlayer={effectivePlayerScore}
+            onPlayerClick={openPlayerProfile}
+          />
           <div className={lineupClosed ? "lineup-state closed" : "lineup-state"}>
             {!matchConfigured ? "Alineación pendiente" : lineupClosed ? "Alineación cerrada" : "Alineación abierta"}
           </div>
@@ -5242,11 +5248,13 @@ function MatchPitch({
   teamB,
   kind,
   scoreForPlayer = scorePlayer,
+  onPlayerClick,
 }: {
   teamA: Player[];
   teamB: Player[];
   kind: MatchKind;
   scoreForPlayer?: PlayerScoreFn;
+  onPlayerClick?: (playerId: string) => void;
 }) {
   const teamATokens = placeTeam(teamA, kind, "bottom", scoreForPlayer);
   const teamBTokens = placeTeam(teamB, kind, "top", scoreForPlayer);
@@ -5280,10 +5288,13 @@ function MatchPitch({
       ))}
       {tokens.map(({ player, x, y, variant }) => (
         <button
-          className={`player-token ${variant} ${player.injured ? "injured-token" : ""} ${player.inactive ? "inactive-token" : ""}`}
+          aria-label={`Abrir ficha de ${playerDisplayName(player)} desde el campo`}
+          className={`pitch-player-card ${variant} ${player.injured ? "injured-token" : ""} ${player.inactive ? "inactive-token" : ""}`}
           key={player.id}
+          onClick={() => onPlayerClick?.(player.id)}
           style={{ left: `${x}%`, top: `${y}%` }}
           title={`${playerDisplayName(player)} · ${positionLabel(player)} · ${scoreForPlayer(player).toFixed(1)}`}
+          type="button"
         >
           {player.inactive ? (
             <span className="token-inactive" title="Ya no está en el grupo" aria-label="Ya no está en el grupo">
@@ -5295,13 +5306,17 @@ function MatchPitch({
               <HospitalLogo />
             </span>
           ) : null}
-          {player.avatar ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={player.avatar} alt="" draggable={false} style={avatarImageStyle(player)} />
-          ) : (
-            <span>{playerDisplayName(player).slice(0, 2).toUpperCase()}</span>
-          )}
-          <b>{playerDisplayName(player).split(" ")[0]}</b>
+          <span className="pitch-card-score">{Math.round(scoreForPlayer(player) * 10)}</span>
+          <span className="pitch-card-position">{positionShort(player)}</span>
+          <span className="pitch-card-photo">
+            {player.avatar ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={player.avatar} alt="" draggable={false} style={avatarImageStyle(player)} />
+            ) : (
+              <b>{playerDisplayName(player).slice(0, 2).toUpperCase()}</b>
+            )}
+          </span>
+          <strong>{playerDisplayName(player).split(" ")[0]}</strong>
         </button>
       ))}
     </div>
