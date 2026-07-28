@@ -8,6 +8,19 @@ const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
 const googleAuthNonceKey = "pachanga-google-auth-nonce";
 const googleAuthReturnKey = "pachanga-google-auth-return";
 
+function createGoogleRawNonce() {
+  const bytes = crypto.getRandomValues(new Uint8Array(32));
+  return btoa(String.fromCharCode(...bytes));
+}
+
+async function sha256Hex(value: string) {
+  const encoded = new TextEncoder().encode(value);
+  const buffer = await crypto.subtle.digest("SHA-256", encoded);
+  return Array.from(new Uint8Array(buffer))
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("");
+}
+
 type RatingFacet = "ritmo" | "tiro" | "pase" | "regate" | "defensa" | "fisico";
 
 type RatingVote = {
@@ -1087,8 +1100,9 @@ export default function Home() {
       return;
     }
 
-    const nonce = crypto.randomUUID();
-    localStorage.setItem(googleAuthNonceKey, nonce);
+    const rawNonce = createGoogleRawNonce();
+    const hashedNonce = await sha256Hex(rawNonce);
+    localStorage.setItem(googleAuthNonceKey, rawNonce);
     localStorage.setItem(googleAuthReturnKey, window.location.href);
 
     const authUrl = new URL("https://accounts.google.com/o/oauth2/v2/auth");
@@ -1096,7 +1110,7 @@ export default function Home() {
     authUrl.searchParams.set("redirect_uri", `${window.location.origin}/auth/google`);
     authUrl.searchParams.set("response_type", "id_token");
     authUrl.searchParams.set("scope", "openid email profile");
-    authUrl.searchParams.set("nonce", nonce);
+    authUrl.searchParams.set("nonce", hashedNonce);
     authUrl.searchParams.set("prompt", "select_account");
 
     window.location.assign(authUrl.toString());

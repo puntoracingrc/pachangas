@@ -39,6 +39,8 @@ test("keeps the project wired to the Pachangas app", async () => {
 
   assert.match(page, /join_pachanga_team/);
   assert.match(page, /MemberRole/);
+  assert.match(page, /sha256Hex\(rawNonce\)/);
+  assert.match(page, /authUrl\.searchParams\.set\("nonce", hashedNonce\)/);
   assert.match(page, /Equipo pachanguero/);
   assert.match(page, /grupo/);
   assert.match(page, /invite/);

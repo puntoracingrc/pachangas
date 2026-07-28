@@ -37,7 +37,8 @@ export default function GoogleAuthPage() {
       });
 
       if (result.error) {
-        setStatus(result.error.message);
+        localStorage.removeItem(googleAuthNonceKey);
+        setStatus("No se pudo completar el login con Google. Vuelve a intentarlo.");
         return;
       }
 
