@@ -1293,9 +1293,21 @@ export default function Home() {
       });
     }
 
-    const existingScript = document.getElementById("google-identity-services");
+    function handleScriptError() {
+      if (!cancelled) {
+        setSyncStatus("error");
+        setSyncError("No se pudo cargar el login de Google.");
+      }
+    }
+
+    const existingScript = document.getElementById("google-identity-services") as HTMLScriptElement | null;
     if (existingScript) {
-      renderGoogleButton();
+      if (window.google) {
+        renderGoogleButton();
+      } else {
+        existingScript.addEventListener("load", renderGoogleButton);
+        existingScript.addEventListener("error", handleScriptError);
+      }
     } else {
       const script = document.createElement("script");
       script.id = "google-identity-services";
@@ -1303,17 +1315,15 @@ export default function Home() {
       script.async = true;
       script.defer = true;
       script.onload = renderGoogleButton;
-      script.onerror = () => {
-        if (!cancelled) {
-          setSyncStatus("error");
-          setSyncError("No se pudo cargar el login de Google.");
-        }
-      };
+      script.onerror = handleScriptError;
       document.head.appendChild(script);
     }
 
     return () => {
       cancelled = true;
+      const script = document.getElementById("google-identity-services");
+      script?.removeEventListener("load", renderGoogleButton);
+      script?.removeEventListener("error", handleScriptError);
     };
   }, [authUser, signInWithGoogleToken]);
 
