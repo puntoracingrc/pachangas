@@ -407,6 +407,73 @@ h1 {
   color: #8a6100;
 }
 
+.match-focus-card {
+  align-items: center;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(0, 1.5fr) auto minmax(180px, 0.8fr) minmax(220px, 0.8fr);
+}
+
+.focus-main,
+.focus-status {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.focus-main span,
+.focus-status span {
+  color: var(--ink-soft);
+  font-size: 12px;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.focus-main strong {
+  font-size: 22px;
+  line-height: 1.1;
+}
+
+.focus-main p,
+.focus-status strong {
+  color: var(--ink-soft);
+  font-size: 14px;
+  font-weight: 800;
+  margin: 0;
+}
+
+.focus-number {
+  align-items: center;
+  background: #202820;
+  border-radius: 8px;
+  color: #fff;
+  display: grid;
+  justify-items: center;
+  min-width: 92px;
+  padding: 10px 12px;
+}
+
+.focus-number strong {
+  font-size: 24px;
+  line-height: 1;
+}
+
+.focus-number span {
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 12px;
+  font-weight: 900;
+  margin-top: 4px;
+}
+
+.quick-status-buttons {
+  align-self: stretch;
+  min-width: 220px;
+}
+
+.mobile-tabbar {
+  display: none;
+}
+
 .app-shell.gated-shell,
 .bottom-grid.gated-shell {
   display: none;
@@ -2964,6 +3031,16 @@ select:disabled {
 }
 
 @media (max-width: 1040px) {
+  .match-focus-card {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .focus-status,
+  .quick-status-buttons,
+  .match-focus-card > .primary-button {
+    grid-column: 1 / -1;
+  }
+
   .team-access-panel {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -2997,6 +3074,10 @@ select:disabled {
 }
 
 @media (max-width: 760px) {
+  body {
+    padding-bottom: 72px;
+  }
+
   .hero {
     align-items: stretch;
     display: grid;
@@ -3041,8 +3122,29 @@ select:disabled {
   }
 
   .demo-banner,
-  .shared-link-gate {
+  .shared-link-gate,
+  .match-focus-card {
     grid-template-columns: 1fr;
+  }
+
+  .match-focus-card {
+    gap: 10px;
+    padding: 12px;
+  }
+
+  .focus-main strong {
+    font-size: 20px;
+  }
+
+  .focus-number {
+    align-items: center;
+    display: flex;
+    justify-content: space-between;
+    min-width: 0;
+  }
+
+  .quick-status-buttons {
+    min-width: 0;
   }
 
   .manual-grid {
@@ -3086,11 +3188,74 @@ select:disabled {
   .player-card {
     align-items: stretch;
     display: grid;
+    gap: 8px;
+    min-height: auto;
+    padding: 10px;
   }
 
   .status-buttons {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
+  }
+
+  .status-buttons button {
+    min-height: 32px;
+    padding: 0 6px;
+  }
+
+  .player-name strong {
+    gap: 4px;
+  }
+
+  .player-meta {
+    font-size: 10px;
+    min-height: 20px;
+    padding: 0 8px;
+  }
+
+  .player-actions {
+    gap: 6px;
+  }
+
+  .card-badges {
+    gap: 4px;
+  }
+
+  .player-facing-main .readonly-editor {
+    display: none;
+  }
+
+  .mobile-tabbar {
+    background: rgba(255, 253, 247, 0.96);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    bottom: 10px;
+    box-shadow: 0 16px 42px rgba(32, 40, 32, 0.18);
+    display: grid;
+    gap: 4px;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    left: 10px;
+    padding: 6px;
+    position: fixed;
+    right: 10px;
+    z-index: 30;
+  }
+
+  .mobile-tabbar a {
+    align-items: center;
+    border-radius: 12px;
+    color: var(--ink-soft);
+    display: flex;
+    font-size: 12px;
+    font-weight: 950;
+    justify-content: center;
+    min-height: 42px;
+    text-decoration: none;
+  }
+
+  .mobile-tabbar a:nth-child(2) {
+    background: #202820;
+    color: #fff;
   }
 
   .top-panel.top-player-form,

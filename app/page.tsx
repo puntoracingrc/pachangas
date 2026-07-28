@@ -639,6 +639,19 @@ function joinedAtLabel(date?: string) {
   });
 }
 
+function matchSummaryDate(date: string) {
+  const parsed = new Date(date);
+  if (Number.isNaN(parsed.getTime())) return "Fecha por confirmar";
+
+  return parsed.toLocaleString("es-ES", {
+    weekday: "long",
+    day: "2-digit",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 function playerDisplayName(player: Player) {
   return displayName(player.name);
 }
@@ -2705,10 +2718,45 @@ export default function Home() {
     "--team-b-muted": `color-mix(in srgb, ${siteSettings.teamBColor} 38%, white)`,
   } as CSSProperties;
   const currentTeamName = currentTeam?.name ?? displayName(siteSettings.brand) ?? "Pachangas IQ";
+  const ownMatchEntry = ownPlayer ? activeMatch.players.find((entry) => entry.playerId === ownPlayer.id) : undefined;
+  const ownStatus = ownPlayer?.injured || ownPlayer?.inactive ? "no" : ownMatchEntry?.status;
+  const ownIsReserve = Boolean(ownPlayer && reserveIds.includes(ownPlayer.id));
+  const ownIsWaiting = Boolean(ownPlayer && waitingIds.includes(ownPlayer.id));
+  const ownPays = Boolean(ownPlayer && payingIds.includes(ownPlayer.id));
+  const ownStatusText = !matchConfigured
+    ? "Partido pendiente de guardar"
+    : !isRegisteredUser
+      ? "Entra con Google para apuntarte"
+    : !ownPlayer
+      ? "Crea tu ficha para poder apuntarte"
+      : ownStatus === "voy"
+        ? ownIsWaiting
+          ? "Estás en lista de espera"
+          : ownIsReserve
+            ? "Vas como reserva"
+            : "Vas al partido"
+        : ownStatus === "duda"
+          ? "Estás en duda"
+          : ownStatus === "no"
+            ? "Has marcado que no vas"
+            : "Aún no has respondido";
+  const ownPaymentText = !ownPlayer || ownStatus !== "voy"
+    ? ""
+    : !ownPays
+      ? "Sin pago"
+      : ownMatchEntry?.paid
+        ? "Pago marcado"
+        : `Te toca ${sharePerPlayer.toFixed(2)} €`;
+  const canChangeOwnSummaryStatus = Boolean(
+    ownPlayer &&
+      matchConfigured &&
+      !ownPlayer.inactive &&
+      (!matchFinalized || canUseAdminControls),
+  );
 
   return (
     <main className="min-h-screen bg-[#f7f6f0] text-[#1d2521]" style={teamColorStyle}>
-      <section className={isDemoMode ? "hero demo-hero" : "hero team-hero"}>
+      <section className={isDemoMode ? "hero demo-hero" : "hero team-hero"} id="inicio">
         <div>
           {isDemoMode ? (
             <>
@@ -2749,6 +2797,39 @@ export default function Home() {
           </button>
         </div>
       </section>
+
+      {!needsLoginForSharedLink ? (
+        <section className="top-panel match-focus-card" aria-label="Resumen del partido">
+          <div className="focus-main">
+            <span>Próximo partido</span>
+            <strong>{matchSummaryDate(activeMatch.date)}</strong>
+            <p>{activeMatch.place} · {matchKinds[activeKind].label} · {sharePerPlayer.toFixed(2)} €</p>
+          </div>
+          <div className="focus-number">
+            <strong>{confirmedPlayers.length}/{activeMatch.targetPlayers}</strong>
+            <span>{missing === 0 ? "Completo" : `${missing} faltan`}</span>
+          </div>
+          <div className="focus-status">
+            <span>{ownStatusText}</span>
+            {ownPaymentText ? <strong>{ownPaymentText}</strong> : null}
+          </div>
+          {ownPlayer && matchConfigured && !ownPlayer.inactive ? (
+            <div className="quick-status-buttons status-buttons" aria-label={`Tu asistencia: ${playerDisplayName(ownPlayer)}`}>
+              <button type="button" className={ownStatus === "voy" ? "selected" : ""} disabled={!canChangeOwnSummaryStatus || Boolean(ownPlayer.injured)} onClick={() => setStatus(ownPlayer.id, "voy")}>Voy</button>
+              <button type="button" className={ownStatus === "duda" ? "selected" : ""} disabled={!canChangeOwnSummaryStatus} onClick={() => setStatus(ownPlayer.id, "duda")}>Duda</button>
+              <button type="button" className={ownStatus === "no" ? "selected danger" : ""} disabled={!canChangeOwnSummaryStatus} onClick={() => setStatus(ownPlayer.id, "no")}>No</button>
+            </div>
+          ) : hasRealTeam && isRegisteredUser && !ownPlayer ? (
+            <button className="primary-button" type="button" onClick={openOwnPlayerProfile}>
+              Crear mi ficha
+            </button>
+          ) : !isRegisteredUser ? (
+            <button className="primary-button" type="button" onClick={() => void signInWithGoogle()} disabled={!supabase || !googleClientId}>
+              Entrar con Google
+            </button>
+          ) : null}
+        </section>
+      ) : null}
 
       <section className="top-panel auth-panel">
         <div>
@@ -3083,7 +3164,7 @@ export default function Home() {
           </div>
         </aside>
 
-        <section className="panel main-panel">
+        <section className={canUseAdminControls ? "panel main-panel" : "panel main-panel player-facing-main"} id="partido">
           <div className={canEditMatchSettings ? "match-editor" : "match-editor readonly-editor"}>
             {!canUseAdminControls ? <span className="admin-only-badge">Solo admin</span> : null}
             {canUseAdminControls && matchFinalized ? <span className="admin-only-badge">Partido finalizado</span> : null}
@@ -3280,7 +3361,7 @@ export default function Home() {
           ) : null}
         </section>
 
-        <aside className="panel teams-panel">
+        <aside className="panel teams-panel" id="equipos">
           <div className="panel-title">
             <span>Equipos sugeridos</span>
             <strong>{matchKinds[activeKind].teamSize}v{matchKinds[activeKind].teamSize}</strong>
@@ -3599,7 +3680,7 @@ export default function Home() {
           </div>
         ) : null}
 
-        <div className="panel">
+        <div className="panel" id="ranking">
           <div className="panel-title">
             <span>Ranking vivo</span>
             <strong>{rankedPlayers.length}</strong>
@@ -3633,6 +3714,14 @@ export default function Home() {
           </div>
         </div>
       </section>
+      {!needsLoginForSharedLink ? (
+        <nav className="mobile-tabbar" aria-label="Navegación principal móvil">
+          <a href="#inicio">Inicio</a>
+          <a href="#partido">Partido</a>
+          <a href="#equipos">Equipos</a>
+          <a href="#ranking">Ranking</a>
+        </nav>
+      ) : null}
     </main>
   );
 }

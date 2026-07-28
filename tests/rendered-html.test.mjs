@@ -16,6 +16,8 @@ test("builds Pachangas IQ HTML", async () => {
   assert.match(html, /Finalizar partido/);
   assert.match(html, /Comparte este partido!/);
   assert.match(html, /Copiar link/);
+  assert.match(html, /Próximo partido/);
+  assert.match(html, /Navegación principal móvil/);
   assert.match(html, /Abrir manual de usuario/);
   assert.match(html, /\/manifest\.webmanifest/);
   assert.match(html, /\/apple-touch-icon\.png/);
@@ -54,6 +56,12 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /Entrar con Google y volver/);
   assert.match(page, /Crea tu ficha para poder marcar/);
   assert.match(page, /gated-shell/);
+  assert.match(page, /match-focus-card/);
+  assert.match(page, /mobile-tabbar/);
+  assert.match(page, /ownStatusText/);
+  assert.match(page, /id="partido"/);
+  assert.match(page, /id="equipos"/);
+  assert.match(page, /id="ranking"/);
   assert.match(googleAuthPage, /safeReturnUrl/);
   assert.match(googleAuthPage, /url\.origin !== window\.location\.origin/);
   assert.match(page, /sha256Hex\(rawNonce\)/);
@@ -66,6 +74,9 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(globalsCss, /\.joined-at/);
   assert.match(globalsCss, /\.shared-link-gate/);
   assert.match(globalsCss, /\.gated-shell/);
+  assert.match(globalsCss, /\.match-focus-card/);
+  assert.match(globalsCss, /\.mobile-tabbar/);
+  assert.match(globalsCss, /\.player-facing-main \.readonly-editor/);
   assert.match(globalsCss, /overflow-y:\s*auto/);
   assert.match(globalsCss, /\.hero-actions\s*\{[\s\S]*grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\)/);
   assert.match(globalsCss, /overflow-x:\s*hidden/);
