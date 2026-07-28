@@ -1113,6 +1113,30 @@ select:disabled {
   width: 20px;
 }
 
+.rating-badge {
+  align-items: center;
+  border-radius: 50%;
+  display: flex;
+  font-size: 16px;
+  font-weight: 950;
+  height: 34px;
+  justify-content: center;
+  padding: 0;
+  width: 34px;
+}
+
+.rating-badge.rating-open {
+  background: #dcfce7;
+  border: 2px solid #86efac;
+  color: #166534;
+}
+
+.rating-badge.rating-closed {
+  background: #f3f4f6;
+  border: 2px solid #d1d5db;
+  color: #6b7280;
+}
+
 .player-name {
   align-items: center;
   background: transparent;
@@ -2223,11 +2247,45 @@ select:disabled {
   padding: 12px;
 }
 
+.rating-open-box {
+  border-color: #86efac;
+  box-shadow: inset 0 0 0 1px rgba(22, 163, 74, 0.12);
+}
+
+.rating-locked-box {
+  background: #fbfaf6;
+}
+
+.rating-box-title {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+  justify-content: space-between;
+}
+
 .rating-box span {
   color: var(--ink-soft);
   font-size: 12px;
   font-weight: 900;
   text-transform: uppercase;
+}
+
+.rating-state {
+  border-radius: 999px;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 950;
+  padding: 5px 9px;
+}
+
+.rating-state.open {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.rating-state.closed {
+  background: #f3f4f6;
+  color: #6b7280;
 }
 
 .rating-box strong {
@@ -2237,6 +2295,19 @@ select:disabled {
 
 .rating-box small {
   color: var(--ink-soft);
+}
+
+.rating-help {
+  color: var(--foreground);
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1.35;
+  margin: 0;
+}
+
+.rating-locked-box .facet-field,
+.rating-locked-box button {
+  opacity: 0.68;
 }
 
 .base-rating-card {

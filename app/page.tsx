@@ -409,6 +409,18 @@ function ratingHistory(player: Player) {
   return [...(player.ratingVotes ?? [])].sort((a, b) => a.matchCount - b.matchCount || a.createdAt.localeCompare(b.createdAt));
 }
 
+function ratingWindow(player: Player, voterId: string) {
+  const ownVote = ratingHistory(player).filter((vote) => vote.voterId === voterId).at(-1);
+  const nextMatchCount = ownVote ? ownVote.matchCount + ratingReviewInterval : ratingReviewInterval;
+  const waitMatches = Math.max(0, nextMatchCount - player.appearances);
+  return {
+    canRate: !player.inactive && player.appearances >= nextMatchCount,
+    nextMatchCount,
+    ownVote,
+    waitMatches,
+  };
+}
+
 function makeFacetRatings(base = 5) {
   return ratingFacets.reduce((next, facet) => {
     next[facet.key] = clampRating(base);
@@ -1449,13 +1461,27 @@ export default function Home() {
   const canEditLineup = canUseAdminControls && !lineupClosed;
   const ratingVoterId = currentUserId ?? `local:${profileName.trim().toLocaleLowerCase("es-ES") || "jugador"}`;
   const selectedRatingHistory = selectedPlayer ? ratingHistory(selectedPlayer) : [];
-  const selectedUserVote = selectedRatingHistory.filter((vote) => vote.voterId === ratingVoterId).at(-1);
-  const selectedNextRatingMatch = selectedPlayer ? (selectedUserVote ? selectedUserVote.matchCount + ratingReviewInterval : selectedPlayer.appearances) : 0;
-  const canRateSelectedPlayer = Boolean(selectedPlayer && (!selectedUserVote || selectedPlayer.appearances >= selectedNextRatingMatch));
-  const ratingWaitMatches = selectedPlayer ? Math.max(0, selectedNextRatingMatch - selectedPlayer.appearances) : 0;
+  const selectedRatingWindow = selectedPlayer ? ratingWindow(selectedPlayer, ratingVoterId) : null;
+  const selectedUserVote = selectedRatingWindow?.ownVote;
+  const canRateSelectedPlayer = Boolean(selectedRatingWindow?.canRate);
+  const ratingWaitMatches = selectedRatingWindow?.waitMatches ?? 0;
   const draftPeerAverage = selectedPlayer
     ? ratingFacets.reduce((sum, facet) => sum + clampRating(newFacetRatings[facet.key] ?? facetAverage(selectedPlayer, facet.key)), 0) / ratingFacets.length
     : 0;
+  const selectedRatingStatusText = selectedPlayer && selectedRatingWindow
+    ? selectedPlayer.inactive
+      ? "Jugador fuera del grupo: valoración bloqueada."
+      : selectedRatingWindow.canRate
+        ? "Valoraciones abiertas: puedes votar ahora."
+        : selectedUserVote
+          ? `Cerradas: se reabren cuando juegue ${ratingWaitMatches} partido${ratingWaitMatches === 1 ? "" : "s"} más.`
+          : `Cerradas: se abren al completar 3 partidos. Faltan ${ratingWaitMatches}.`
+    : "";
+  const selectedRatingButtonText = canRateSelectedPlayer
+    ? "Guardar valoración"
+    : ratingWaitMatches > 0
+      ? `Faltan ${ratingWaitMatches} partido${ratingWaitMatches === 1 ? "" : "s"}`
+      : "Valoraciones cerradas";
 
   useEffect(() => {
     if (!selectedPlayer) return;
@@ -1480,9 +1506,8 @@ export default function Home() {
   function addPeerRating(playerId: string) {
     const player = players.find((item) => item.id === playerId);
     if (!player) return;
-    const voteHistory = ratingHistory(player);
-    const ownVote = voteHistory.filter((vote) => vote.voterId === ratingVoterId).at(-1);
-    if (ownVote && player.appearances < ownVote.matchCount + ratingReviewInterval) return;
+    const ratingState = ratingWindow(player, ratingVoterId);
+    if (!ratingState.canRate) return;
 
     const vote: RatingVote = {
       id: id(),
@@ -1900,6 +1925,10 @@ export default function Home() {
     const isWaiting = waitingIds.includes(player.id);
     const teamClass = team === "A" ? "team-a-card" : team === "B" ? "team-b-card" : "";
     const nextTeam = team === "A" ? "B" : "A";
+    const playerRatingWindow = ratingWindow(player, ratingVoterId);
+    const ratingTitle = playerRatingWindow.canRate
+      ? "Valoraciones abiertas"
+      : `Valoraciones cerradas: faltan ${playerRatingWindow.waitMatches} partido${playerRatingWindow.waitMatches === 1 ? "" : "s"}`;
 
     return (
       <article className={`player-card ${status ? `status-${status}` : "status-sin"} ${teamClass} ${isReserve ? "reserve-card" : ""} ${isWaiting ? "waiting-card" : ""} ${player.inactive ? "inactive-card" : ""} ${playerPosition(player) === "Porteria" ? "goalkeeper-card" : ""}`} key={player.id}>
@@ -1920,25 +1949,34 @@ export default function Home() {
             {isWaiting ? <em className="reserve-chip">Espera</em> : null}
           </span>
         </div>
-        {player.inactive || player.injured || payerId === player.id ? (
-          <div className="card-badges">
-            {player.inactive ? (
-              <span className="inactive-badge" title="Ya no está en el grupo" aria-label="Ya no está en el grupo">
-                <UserOffLogo />
-              </span>
-            ) : null}
-            {player.injured ? (
-              <span className="injury-badge" title="Jugador lesionado" aria-label="Jugador lesionado">
-                <HospitalLogo />
-              </span>
-            ) : null}
-            {payerId === player.id ? (
-              <span className="payer-badge" title="Le toca pagar el campo" aria-label="Le toca pagar el campo">
-                $
-              </span>
-            ) : null}
-          </div>
-        ) : null}
+        <div className="card-badges">
+          {!player.inactive ? (
+            <button
+              className={playerRatingWindow.canRate ? "rating-badge rating-open" : "rating-badge rating-closed"}
+              onClick={() => openPlayerProfile(player.id)}
+              title={ratingTitle}
+              type="button"
+              aria-label={ratingTitle}
+            >
+              ★
+            </button>
+          ) : null}
+          {player.inactive ? (
+            <span className="inactive-badge" title="Ya no está en el grupo" aria-label="Ya no está en el grupo">
+              <UserOffLogo />
+            </span>
+          ) : null}
+          {player.injured ? (
+            <span className="injury-badge" title="Jugador lesionado" aria-label="Jugador lesionado">
+              <HospitalLogo />
+            </span>
+          ) : null}
+          {payerId === player.id ? (
+            <span className="payer-badge" title="Le toca pagar el campo" aria-label="Le toca pagar el campo">
+              $
+            </span>
+          ) : null}
+        </div>
         <div className="player-actions">
           <div className="status-buttons" aria-label={`Estado de ${playerDisplayName(player)}`}>
             <button className={status === "voy" ? "selected" : ""} disabled={Boolean(player.injured || player.inactive)} onClick={() => setStatus(player.id, "voy")}>Voy</button>
@@ -2646,13 +2684,18 @@ export default function Home() {
                   <strong>{scorePlayer(selectedPlayer).toFixed(1)}</strong>
                   <small>Media de facetas</small>
                 </div>
-                <div className="rating-box">
-                  <span>Valoraciones</span>
+                <div className={canRateSelectedPlayer ? "rating-box rating-open-box" : "rating-box rating-locked-box"}>
+                  <div className="rating-box-title">
+                    <span>Valoraciones</span>
+                    <em className={canRateSelectedPlayer ? "rating-state open" : "rating-state closed"}>
+                      {canRateSelectedPlayer ? "Abiertas" : "Cerradas"}
+                    </em>
+                  </div>
                   <strong>{draftPeerAverage.toFixed(1)}</strong>
                   <small>
                     {(selectedPlayer.ratingVotes?.length ?? 0) + (selectedPlayer.ratings?.length ?? 0)} votos de compañeros
-                    {selectedUserVote ? ` · próxima revisión en ${ratingWaitMatches} partidos` : ""}
                   </small>
+                  <p className="rating-help">{selectedRatingStatusText}</p>
                   <div className="facet-grid">
                     {ratingFacets.map((facet) => (
                       <label className="facet-field" key={facet.key}>
@@ -2676,7 +2719,7 @@ export default function Home() {
                     ))}
                   </div>
                   <button type="button" onClick={() => addPeerRating(selectedPlayer.id)} disabled={!canRateSelectedPlayer}>
-                    {canRateSelectedPlayer ? "Guardar valoración" : `Revisar tras ${ratingWaitMatches} partidos`}
+                    {selectedRatingButtonText}
                   </button>
                   <div className="rating-evolution">
                     <span>Evolución</span>
