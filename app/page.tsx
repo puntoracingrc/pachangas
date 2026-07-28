@@ -56,6 +56,7 @@ type Match = {
   players: MatchPlayer[];
   scorers?: Array<{ playerId: string; goals: number }>;
   closed?: boolean;
+  lineupClosed?: boolean;
   scoreA?: number;
   scoreB?: number;
   teamA?: string[];
@@ -222,6 +223,7 @@ function normalizePayload(payload?: Partial<AppPayload>): AppPayload {
         ...match,
         venueId: match.venueId ?? venues.find((venue) => venue.name === match.place)?.id,
         fieldCost: match.fieldCost ?? (match.price ? match.price * Math.max(match.targetPlayers, 1) : 0),
+        lineupClosed: match.lineupClosed ?? false,
       }))
     : fallback.matches;
 
@@ -633,6 +635,7 @@ export default function Home() {
   const payer = players.find((player) => player.id === payerId);
   const balancedLineup = useMemo(() => balanceTeams(confirmedPlayers), [confirmedPlayers]);
   const suggested = savedTeams(activeMatch, players, confirmedIds) ?? balancedLineup;
+  const lineupClosed = activeMatch.lineupClosed ?? false;
   const scoreAValue = result.a.trim() === "" ? undefined : Number(result.a);
   const scoreBValue = result.b.trim() === "" ? undefined : Number(result.b);
   const resultIsReady =
@@ -657,6 +660,7 @@ export default function Home() {
   }
 
   function setStatus(playerId: string, status: MatchPlayer["status"]) {
+    if (lineupClosed) return;
     const existing = activeMatch.players.find((entry) => entry.playerId === playerId);
     const nextPlayers = existing
       ? activeMatch.players.map((entry) => (entry.playerId === playerId ? { ...entry, status, paid: status === "voy" ? entry.paid : false } : entry))
@@ -717,10 +721,11 @@ export default function Home() {
     setActiveMatchId(next.id);
   }
 
-  function saveTeams() {
+  function toggleLineupClosed() {
     if (remoteReady && !canManageTeam) return;
     updateMatch({
       ...activeMatch,
+      lineupClosed: !lineupClosed,
       teamA: suggested.teamA.map((player) => player.id),
       teamB: suggested.teamB.map((player) => player.id),
     });
@@ -728,6 +733,7 @@ export default function Home() {
 
   function applyRandomTeams() {
     if (remoteReady && !canManageTeam) return;
+    if (lineupClosed) return;
     const next = randomTeams(confirmedPlayers);
     updateMatch({
       ...activeMatch,
@@ -738,6 +744,7 @@ export default function Home() {
 
   function applyBalancedTeams() {
     if (remoteReady && !canManageTeam) return;
+    if (lineupClosed) return;
     updateMatch({
       ...activeMatch,
       teamA: balancedLineup.teamA.map((player) => player.id),
@@ -747,6 +754,7 @@ export default function Home() {
 
   function assignPlayerTeam(playerId: string, team: "A" | "B") {
     if (remoteReady && !canManageTeam) return;
+    if (lineupClosed) return;
     const baseTeamA = suggested.teamA.map((player) => player.id).filter((id) => id !== playerId);
     const baseTeamB = suggested.teamB.map((player) => player.id).filter((id) => id !== playerId);
 
@@ -782,7 +790,7 @@ export default function Home() {
     });
   }
 
-  function closeMatch() {
+  function finalizeMatch() {
     if (remoteReady && !canManageTeam) return;
     if (!resultIsReady) return;
 
@@ -876,6 +884,8 @@ export default function Home() {
   const selectedPlayer = selectedPlayerId ? players.find((player) => player.id === selectedPlayerId) : undefined;
   const currentTeam = remoteTeams.find((team) => team.id === remoteGroupId);
   const canManageTeam = currentRole === "owner" || currentRole === "admin";
+  const canUseAdminControls = !remoteReady || canManageTeam;
+  const canEditLineup = canUseAdminControls && !lineupClosed;
 
   function updatePlayer(playerId: string, next: Partial<Player>) {
     if (remoteReady && !canManageTeam) return;
@@ -1130,13 +1140,14 @@ export default function Home() {
         ) : null}
         <div className="player-actions">
           <div className="status-buttons" aria-label={`Estado de ${playerDisplayName(player)}`}>
-            <button className={status === "voy" ? "selected" : ""} onClick={() => setStatus(player.id, "voy")}>Voy</button>
-            <button className={status === "duda" ? "selected" : ""} onClick={() => setStatus(player.id, "duda")}>Duda</button>
-            <button className={status === "no" ? "selected danger" : ""} onClick={() => setStatus(player.id, "no")}>No</button>
+            <button className={status === "voy" ? "selected" : ""} disabled={lineupClosed} onClick={() => setStatus(player.id, "voy")}>Voy</button>
+            <button className={status === "duda" ? "selected" : ""} disabled={lineupClosed} onClick={() => setStatus(player.id, "duda")}>Duda</button>
+            <button className={status === "no" ? "selected danger" : ""} disabled={lineupClosed} onClick={() => setStatus(player.id, "no")}>No</button>
           </div>
-          {status === "voy" && team ? (
+          {status === "voy" && team && canUseAdminControls ? (
             <button
               className={`team-move ${team === "A" ? "to-b" : "to-a"}`}
+              disabled={lineupClosed}
               onClick={() => assignPlayerTeam(player.id, nextTeam)}
               title={team === "A" ? "Mover al equipo 2" : "Mover al equipo 1"}
               type="button"
@@ -1527,13 +1538,20 @@ export default function Home() {
             <strong>{matchKinds[activeKind].teamSize}v{matchKinds[activeKind].teamSize}</strong>
           </div>
           <MatchPitch teamA={suggested.teamA} teamB={suggested.teamB} kind={activeKind} />
+          <div className={lineupClosed ? "lineup-state closed" : "lineup-state"}>
+            {lineupClosed ? "Alineación cerrada" : "Alineación abierta"}
+          </div>
           <div className="lineup-actions">
-            <button type="button" onClick={applyRandomTeams} disabled={remoteReady && !canManageTeam}>Aleatorio</button>
-            <button type="button" onClick={applyBalancedTeams} disabled={remoteReady && !canManageTeam}>Equilibrado por stats</button>
+            <button type="button" onClick={applyRandomTeams} disabled={!canEditLineup}>Aleatorio</button>
+            <button type="button" onClick={applyBalancedTeams} disabled={!canEditLineup}>Equilibrado por stats</button>
           </div>
           <Team title="Equipo 1" players={suggested.teamA} variant="team-a" />
           <Team title="Equipo 2" players={suggested.teamB} variant="team-b" />
-          <button className="primary-button full" onClick={saveTeams} disabled={remoteReady && !canManageTeam}>Guardar alineaciones</button>
+          {canUseAdminControls ? (
+            <button className="primary-button full" onClick={toggleLineupClosed}>
+              {lineupClosed ? "Abrir alineación" : "Cerrar alineación"}
+            </button>
+          ) : null}
           <div className="result-box">
             <span>Resultado</span>
             <div>
@@ -1572,7 +1590,7 @@ export default function Home() {
                 );
               })}
             </div>
-            <button disabled={!resultIsReady} onClick={closeMatch}>Cerrar partido</button>
+            <button disabled={!resultIsReady || !canUseAdminControls} onClick={finalizeMatch}>Finalizar partido</button>
           </div>
         </aside>
       </section>
