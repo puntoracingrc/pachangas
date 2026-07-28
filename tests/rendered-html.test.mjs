@@ -38,16 +38,24 @@ test("builds the user manual as its own page", async () => {
 });
 
 test("keeps the project wired to the Pachangas app", async () => {
-  const [page, layout, packageJson, supabaseClient, globalsCss] = await Promise.all([
+  const [page, layout, packageJson, supabaseClient, globalsCss, googleAuthPage] = await Promise.all([
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
     readFile(new URL("../package.json", import.meta.url), "utf8"),
     readFile(new URL("../app/supabaseClient.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
+    readFile(new URL("../app/auth/google/page.tsx", import.meta.url), "utf8"),
   ]);
 
   assert.match(page, /join_pachanga_team/);
   assert.match(page, /MemberRole/);
+  assert.match(page, /incomingSharedLinkFromSearch/);
+  assert.match(page, /needsLoginForSharedLink/);
+  assert.match(page, /Entrar con Google y volver/);
+  assert.match(page, /Crea tu ficha para poder marcar/);
+  assert.match(page, /gated-shell/);
+  assert.match(googleAuthPage, /safeReturnUrl/);
+  assert.match(googleAuthPage, /url\.origin !== window\.location\.origin/);
   assert.match(page, /sha256Hex\(rawNonce\)/);
   assert.match(page, /authUrl\.searchParams\.set\("nonce", hashedNonce\)/);
   assert.match(page, /className="history-month"/);
@@ -56,6 +64,8 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /perderás tu posición/);
   assert.match(globalsCss, /\.side-history \.history/);
   assert.match(globalsCss, /\.joined-at/);
+  assert.match(globalsCss, /\.shared-link-gate/);
+  assert.match(globalsCss, /\.gated-shell/);
   assert.match(globalsCss, /overflow-y:\s*auto/);
   assert.match(globalsCss, /\.hero-actions\s*\{[\s\S]*grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\)/);
   assert.match(globalsCss, /overflow-x:\s*hidden/);

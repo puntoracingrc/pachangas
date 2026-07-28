@@ -151,6 +151,13 @@ type RemoteMember = {
   userId: string;
 };
 
+type IncomingSharedLink = {
+  hasAdminInvite: boolean;
+  hasInvite: boolean;
+  hasMatch: boolean;
+  teamCode: string | null;
+};
+
 function demoVotes(playerId: string, rows: Array<[number, string, Record<RatingFacet, number>]>): RatingVote[] {
   return rows.map(([matchCount, createdAt, facets], index) => ({
     id: `rv-${playerId}-${index + 1}`,
@@ -569,6 +576,20 @@ function expandCompactUuid(value: string | null) {
   } catch {
     return value;
   }
+}
+
+function incomingSharedLinkFromSearch(search: string): IncomingSharedLink {
+  const params = new URLSearchParams(search);
+  const hasAdminInvite = Boolean(params.get("a") || params.get("admin"));
+  const hasInvite = Boolean(params.get("i") || params.get("invite") || params.get("grupo") || params.get("equipo"));
+  const hasMatch = Boolean(params.get("p") || params.get("partido"));
+
+  return {
+    hasAdminInvite,
+    hasInvite,
+    hasMatch,
+    teamCode: params.get("equipo"),
+  };
 }
 
 function nextMatchDate(previousDate: string) {
@@ -1069,6 +1090,12 @@ export default function Home() {
   const [avatarMessage, setAvatarMessage] = useState("");
   const [profileSaveMessage, setProfileSaveMessage] = useState("");
   const [localHydrated, setLocalHydrated] = useState(false);
+  const [incomingSharedLink, setIncomingSharedLink] = useState<IncomingSharedLink>({
+    hasAdminInvite: false,
+    hasInvite: false,
+    hasMatch: false,
+    teamCode: null,
+  });
   const applyingRemoteRef = useRef(false);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const playerProfileRef = useRef<HTMLDivElement>(null);
@@ -1127,10 +1154,6 @@ export default function Home() {
     }
 
     return user.id;
-  }
-
-  async function ensureInvitedUser(client: NonNullable<typeof supabase>) {
-    return ensureRegisteredUser(client);
   }
 
   async function signInWithGoogle() {
@@ -1270,6 +1293,7 @@ export default function Home() {
   }
 
   useEffect(() => {
+    setIncomingSharedLink(incomingSharedLinkFromSearch(window.location.search));
     setProfileName(localStorage.getItem(profileNameKey) ?? "");
     const saved = localStorage.getItem(storageKey);
     if (!saved) {
@@ -1334,10 +1358,26 @@ export default function Home() {
         const adminInviteToken = expandCompactUuid(params.get("a") ?? params.get("admin"));
         const teamCode = params.get("equipo");
         let groupId = params.get("grupo");
+        const initialUser = await getSignedUser(client);
+        const linkNeedsLogin = Boolean(inviteToken || adminInviteToken || teamCode || groupId);
+
+        if (linkNeedsLogin && (!initialUser || isAnonymousAuthUser(initialUser))) {
+          if (!cancelled) {
+            setRemoteGroupId(null);
+            setRemoteInviteToken(null);
+            setRemoteReady(false);
+            setRemoteTeams([]);
+            setTeamMembers([]);
+            setCurrentRole(null);
+            setSyncStatus("local");
+            setSyncError("");
+          }
+          return;
+        }
 
         if (adminInviteToken) {
-          const userId = await ensureRegisteredUser(client);
-          const user = authUser?.id === userId ? authUser : (await getSignedUser(client));
+          const userId = initialUser?.id ?? await ensureRegisteredUser(client);
+          const user = initialUser?.id === userId ? initialUser : authUser?.id === userId ? authUser : (await getSignedUser(client));
           const adminJoinResult = await client.rpc("accept_pachanga_admin_invite", {
             admin_token: adminInviteToken,
             member_name: profileName.trim() || authDisplayName(user) || "Admin",
@@ -1345,15 +1385,14 @@ export default function Home() {
           if (adminJoinResult.error || !adminJoinResult.data) throw new Error(adminJoinResult.error?.message ?? "No se pudo aceptar la invitación de admin");
           groupId = String(adminJoinResult.data);
         } else if (inviteToken) {
-          await ensureInvitedUser(client);
           const joinResult = await client.rpc("join_pachanga_team", {
-            member_name: profileName.trim() || "Jugador",
+            member_name: profileName.trim() || authDisplayName(initialUser) || "Jugador",
             token: inviteToken,
           });
           if (joinResult.error || !joinResult.data) throw new Error(joinResult.error?.message ?? "No se pudo entrar al grupo");
           groupId = String(joinResult.data);
         } else {
-          const user = await getSignedUser(client);
+          const user = initialUser;
           if (!user) {
             if (!cancelled) {
               setRemoteGroupId(null);
@@ -1940,13 +1979,29 @@ export default function Home() {
   const otherPlayers = sortedPlayers.filter((player) => !teamAPlayerIds.has(player.id) && !teamBPlayerIds.has(player.id) && !reservePlayerIds.has(player.id) && !waitingPlayerIds.has(player.id));
   const selectedPlayer = selectedPlayerId ? players.find((player) => player.id === selectedPlayerId) : undefined;
   const currentTeam = remoteTeams.find((team) => team.id === remoteGroupId);
-  const isDemoMode = !remoteReady && remoteTeams.length === 0;
+  const hasIncomingSharedLink = incomingSharedLink.hasInvite || incomingSharedLink.hasAdminInvite || incomingSharedLink.hasMatch;
   const isRegisteredUser = Boolean(authUser && !isAnonymousAuthUser(authUser));
   const hasRealTeam = remoteReady && Boolean(remoteGroupId);
+  const needsLoginForSharedLink = hasIncomingSharedLink && !isRegisteredUser && !hasRealTeam;
+  const isDemoMode = !hasIncomingSharedLink && !remoteReady && remoteTeams.length === 0;
   const canManageTeam = isRegisteredUser && (currentRole === "owner" || currentRole === "admin");
   const canUseAdminControls = hasRealTeam && canManageTeam;
   const canCreateTeam = Boolean(supabase && isRegisteredUser);
   const ownPlayer = currentUserId ? players.find((player) => player.ownerUserId === currentUserId) : undefined;
+  const needsProfileForSharedMatch = hasRealTeam && isRegisteredUser && incomingSharedLink.hasMatch && !ownPlayer;
+  const registrationTitle = needsLoginForSharedLink
+    ? incomingSharedLink.hasMatch
+      ? "Entra para apuntarte a este partido"
+      : incomingSharedLink.hasAdminInvite
+        ? "Entra para aceptar la invitación de admin"
+        : "Entra para unirte al equipo"
+    : isRegisteredUser
+      ? "Conectado con Google"
+      : "Entra para crear tu equipo";
+  const registrationCopy = needsLoginForSharedLink
+    ? "Después de Google volverás automáticamente a este mismo enlace. Si es tu primera vez, crearás tu ficha antes de marcar asistencia."
+    : "Cada jugador entra con Google para tener su propia ficha. Solo esa persona y los admins pueden editarla.";
+  const googleButtonText = needsLoginForSharedLink ? "Entrar con Google y volver" : "Entrar con Google";
   const selectedPlayerIsOwn = Boolean(selectedPlayer?.ownerUserId && selectedPlayer.ownerUserId === currentUserId);
   const canEditSelectedPlayer = Boolean(selectedPlayer && (canUseAdminControls || (hasRealTeam && isRegisteredUser && selectedPlayerIsOwn)));
   const showPlayerSwitcher = Boolean(canUseAdminControls && selectedPlayer && !selectedPlayerIsOwn && players.length > 1);
@@ -2698,10 +2753,8 @@ export default function Home() {
       <section className="top-panel auth-panel">
         <div>
           <span>Registro</span>
-          <strong>{isRegisteredUser ? "Conectado con Google" : "Entra para crear tu equipo"}</strong>
-          <p>
-            Cada jugador entra con Google para tener su propia ficha. Solo esa persona y los admins pueden editarla.
-          </p>
+          <strong>{registrationTitle}</strong>
+          <p>{registrationCopy}</p>
         </div>
         <div className="auth-actions">
           {isRegisteredUser ? (
@@ -2726,7 +2779,7 @@ export default function Home() {
             </>
           ) : (
             <button className="primary-button" type="button" onClick={() => void signInWithGoogle()} disabled={!supabase || !googleClientId}>
-              Entrar con Google
+              {googleButtonText}
             </button>
           )}
         </div>
@@ -2807,6 +2860,41 @@ export default function Home() {
         </section>
       ) : null}
 
+      {needsLoginForSharedLink ? (
+        <section className="top-panel shared-link-gate">
+          <div>
+            <span>{incomingSharedLink.hasMatch ? "Partido compartido" : "Invitación recibida"}</span>
+            <strong>
+              {incomingSharedLink.hasMatch
+                ? "Para apuntarte necesitas entrar con Google."
+                : "Para entrar al equipo necesitas identificarte."}
+            </strong>
+            <p>
+              Guardamos este enlace mientras haces login. Al volver, la web abrirá el equipo
+              {incomingSharedLink.hasMatch ? " y este partido concreto" : ""}.
+            </p>
+          </div>
+          <button className="primary-button" type="button" onClick={() => void signInWithGoogle()} disabled={!supabase || !googleClientId}>
+            {googleButtonText}
+          </button>
+        </section>
+      ) : null}
+
+      {needsProfileForSharedMatch ? (
+        <section className="top-panel shared-link-gate profile-needed-gate">
+          <div>
+            <span>Último paso</span>
+            <strong>Crea tu ficha para poder marcar “Voy”.</strong>
+            <p>
+              Tu ficha queda vinculada a tu cuenta. A partir de ahí solo tú y los admins podréis editar tus datos.
+            </p>
+          </div>
+          <button className="primary-button" type="button" onClick={openOwnPlayerProfile}>
+            Crear mi ficha
+          </button>
+        </section>
+      ) : null}
+
       {showSettings ? (
         <section className="top-panel settings-panel">
           <label>
@@ -2874,7 +2962,7 @@ export default function Home() {
         </form>
       ) : null}
 
-      <section className="app-shell">
+      <section className={needsLoginForSharedLink ? "app-shell gated-shell" : "app-shell"}>
         <aside className="panel match-list" aria-label="Partidos">
           {teamMembers.length > 0 ? (
             <details className="team-members">
@@ -3252,7 +3340,7 @@ export default function Home() {
         </aside>
       </section>
 
-      <section className={selectedPlayer ? "bottom-grid" : "bottom-grid without-profile"}>
+      <section className={`${selectedPlayer ? "bottom-grid" : "bottom-grid without-profile"} ${needsLoginForSharedLink ? "gated-shell" : ""}`}>
         {selectedPlayer ? (
           <div className="panel player-profile" ref={playerProfileRef}>
             <div className="panel-title">

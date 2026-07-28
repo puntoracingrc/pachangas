@@ -6,6 +6,19 @@ import { supabase } from "../../supabaseClient";
 const googleAuthNonceKey = "pachanga-google-auth-nonce";
 const googleAuthReturnKey = "pachanga-google-auth-return";
 
+function safeReturnUrl(value: string | null) {
+  if (!value) return "/";
+
+  try {
+    const url = new URL(value, window.location.origin);
+    if (url.origin !== window.location.origin) return "/";
+    if (url.pathname === "/auth/google") return "/";
+    return `${url.pathname}${url.search}${url.hash}`;
+  } catch {
+    return "/";
+  }
+}
+
 export default function GoogleAuthPage() {
   const [status, setStatus] = useState("Conectando con Google...");
 
@@ -43,7 +56,7 @@ export default function GoogleAuthPage() {
       }
 
       localStorage.removeItem(googleAuthNonceKey);
-      const returnTo = localStorage.getItem(googleAuthReturnKey) || "/";
+      const returnTo = safeReturnUrl(localStorage.getItem(googleAuthReturnKey));
       localStorage.removeItem(googleAuthReturnKey);
       window.location.replace(returnTo);
     }
