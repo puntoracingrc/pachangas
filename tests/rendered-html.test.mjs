@@ -14,6 +14,7 @@ test("builds Pachangas IQ HTML", async () => {
   assert.match(html, /Entrar con Google/);
   assert.match(html, /Entra para crear tu equipo/);
   assert.match(html, /Finalizar partido/);
+  assert.match(html, /Añadir foto de equipo/);
   assert.match(html, /Comparte este partido!/);
   assert.match(html, /Copiar link/);
   assert.match(html, /Próximo partido/);
@@ -34,6 +35,8 @@ test("builds the user manual as its own page", async () => {
   assert.match(html, /Guardar partido/);
   assert.match(html, /Jugador y admin/);
   assert.match(html, /Si cambias de Voy a Duda o No/);
+  assert.match(html, /Cualquier miembro puede subir una foto de equipo/);
+  assert.match(html, /foto en miniatura/);
   assert.match(html, /Borrar jugador lo deja fuera del grupo/);
   assert.match(html, /Ranking vivo/);
   assert.match(html, /Volver/);
@@ -62,6 +65,12 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /id="partido"/);
   assert.match(page, /id="equipos"/);
   assert.match(page, /id="ranking"/);
+  assert.match(page, /teamPhoto\?: string/);
+  assert.match(page, /matchPhotoDataUrl/);
+  assert.match(page, /canUploadTeamPhoto/);
+  assert.match(page, /Añadir foto de equipo/);
+  assert.match(page, /Quitar foto/);
+  assert.match(page, /history-photo/);
   assert.match(googleAuthPage, /safeReturnUrl/);
   assert.match(googleAuthPage, /url\.origin !== window\.location\.origin/);
   assert.match(page, /sha256Hex\(rawNonce\)/);
@@ -77,6 +86,8 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(globalsCss, /\.match-focus-card/);
   assert.match(globalsCss, /\.mobile-tabbar/);
   assert.match(globalsCss, /\.player-facing-main \.readonly-editor/);
+  assert.match(globalsCss, /\.team-photo-card/);
+  assert.match(globalsCss, /\.history-item\.has-photo/);
   assert.match(globalsCss, /overflow-y:\s*auto/);
   assert.match(globalsCss, /\.hero-actions\s*\{[\s\S]*grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\)/);
   assert.match(globalsCss, /overflow-x:\s*hidden/);

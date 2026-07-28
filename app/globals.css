@@ -2230,6 +2230,103 @@ select:disabled {
   text-align: center;
 }
 
+.team-photo-card {
+  align-items: center;
+  background: #fffdfa;
+  border: 1px dashed color-mix(in srgb, var(--green) 38%, var(--line));
+  border-radius: 8px;
+  display: grid;
+  gap: 8px;
+  justify-items: stretch;
+  min-height: 118px;
+  overflow: hidden;
+  padding: 10px;
+}
+
+.team-photo-card.has-photo {
+  border-style: solid;
+  padding: 0;
+}
+
+.team-photo-card > img {
+  aspect-ratio: 4 / 3;
+  display: block;
+  height: auto;
+  object-fit: cover;
+  width: 100%;
+}
+
+.team-photo-empty {
+  align-items: center;
+  background: #eef7dc;
+  border-radius: 8px;
+  color: var(--green);
+  display: flex;
+  font-size: 42px;
+  font-weight: 950;
+  justify-content: center;
+  min-height: 86px;
+}
+
+.team-photo-actions {
+  display: flex;
+  gap: 8px;
+  padding: 0;
+}
+
+.team-photo-card.has-photo .team-photo-actions,
+.team-photo-card.has-photo .team-photo-message {
+  padding: 0 10px;
+}
+
+.team-photo-card.has-photo .team-photo-actions {
+  padding-top: 10px;
+}
+
+.team-photo-card.has-photo .team-photo-message {
+  padding-bottom: 10px;
+}
+
+.team-photo-button,
+.team-photo-remove {
+  align-items: center;
+  border-radius: 8px;
+  display: flex;
+  flex: 1;
+  font-size: 13px;
+  font-weight: 950;
+  justify-content: center;
+  min-height: 38px;
+  padding: 0 10px;
+}
+
+.team-photo-button {
+  background: #202820;
+  color: #fff;
+  cursor: pointer;
+}
+
+.team-photo-button:has(input:disabled) {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.team-photo-button input {
+  display: none;
+}
+
+.team-photo-remove {
+  background: #fff3f1;
+  border: 1px solid #ef9b8a;
+  color: #991b1b;
+}
+
+.team-photo-message {
+  color: var(--ink-soft);
+  font-size: 12px;
+  font-weight: 800;
+}
+
 .result-locked-note {
   color: var(--ink-soft);
   font-weight: 800;
@@ -2442,6 +2539,28 @@ select:disabled {
   gap: 8px;
   grid-template-columns: minmax(0, 1fr) auto auto;
   padding: 12px;
+}
+
+.history-item.has-photo {
+  grid-template-columns: 56px minmax(0, 1fr) auto auto;
+}
+
+.history-photo {
+  background: #eef7dc;
+  border: 0;
+  border-radius: 8px;
+  cursor: pointer;
+  height: 56px;
+  overflow: hidden;
+  padding: 0;
+  width: 56px;
+}
+
+.history-photo img {
+  display: block;
+  height: 100%;
+  object-fit: cover;
+  width: 100%;
 }
 
 .history-month {

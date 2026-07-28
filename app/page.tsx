@@ -124,6 +124,7 @@ type Match = {
   scoreB?: number;
   teamA?: string[];
   teamB?: string[];
+  teamPhoto?: string;
 };
 
 type AppPayload = {
@@ -865,6 +866,24 @@ async function avatarDataUrl(file: File) {
   return canvas.toDataURL("image/jpeg", 0.86);
 }
 
+async function matchPhotoDataUrl(file: File) {
+  if (!file.type.startsWith("image/")) throw new Error("El archivo no es una imagen");
+
+  const source = await readFileDataUrl(file);
+  const image = await loadAvatarImage(source);
+  const imageWidth = image.naturalWidth || image.width;
+  const imageHeight = image.naturalHeight || image.height;
+  const ratio = Math.min(960 / imageWidth, 720 / imageHeight, 1);
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.max(1, Math.round(imageWidth * ratio));
+  canvas.height = Math.max(1, Math.round(imageHeight * ratio));
+  const context = canvas.getContext("2d");
+  if (!context) return source;
+
+  context.drawImage(image, 0, 0, canvas.width, canvas.height);
+  return canvas.toDataURL("image/jpeg", 0.78);
+}
+
 function positionMeta(position: PlayerPosition) {
   const option = Object.values(positionOptionsByKind).flat().find((item) => item.value === position);
   if (option) return { line: option.line, label: option.value, short: option.short };
@@ -1101,6 +1120,7 @@ export default function Home() {
   const [newTeamName, setNewTeamName] = useState("Mi equipo pachanguero");
   const [adminInviteToken, setAdminInviteToken] = useState<string | null>(null);
   const [avatarMessage, setAvatarMessage] = useState("");
+  const [teamPhotoMessage, setTeamPhotoMessage] = useState("");
   const [profileSaveMessage, setProfileSaveMessage] = useState("");
   const [localHydrated, setLocalHydrated] = useState(false);
   const [incomingSharedLink, setIncomingSharedLink] = useState<IncomingSharedLink>({
@@ -2020,6 +2040,7 @@ export default function Home() {
   const showPlayerSwitcher = Boolean(canUseAdminControls && selectedPlayer && !selectedPlayerIsOwn && players.length > 1);
   const canEditMatchSettings = canUseAdminControls && !matchFinalized;
   const canEditLineup = canUseAdminControls && matchConfigured && !lineupClosed && !matchFinalized;
+  const canUploadTeamPhoto = Boolean(matchConfigured && (isDemoMode || hasRealTeam) && !needsLoginForSharedLink);
   const matchCanBeSaved = Boolean(
     canUseAdminControls &&
       !matchFinalized &&
@@ -2158,6 +2179,36 @@ export default function Home() {
     } catch {
       setAvatarMessage("No se pudo cargar la foto.");
     }
+  }
+
+  async function uploadTeamPhoto(file: File | undefined) {
+    setTeamPhotoMessage("");
+    if (!matchConfigured) {
+      setTeamPhotoMessage("Guarda primero el partido.");
+      return;
+    }
+    if (!canUploadTeamPhoto) {
+      setTeamPhotoMessage("Entra al equipo para subir la foto.");
+      return;
+    }
+    if (!file) return;
+
+    try {
+      setTeamPhotoMessage("Preparando foto...");
+      const teamPhoto = await matchPhotoDataUrl(file);
+      updateMatch({ ...activeMatch, teamPhoto });
+      setTeamPhotoMessage("Foto guardada para el historial");
+      window.setTimeout(() => setTeamPhotoMessage(""), 1800);
+    } catch {
+      setTeamPhotoMessage("No se pudo cargar la foto.");
+    }
+  }
+
+  function removeTeamPhoto() {
+    if (!canUseAdminControls) return;
+    updateMatch({ ...activeMatch, teamPhoto: undefined });
+    setTeamPhotoMessage("Foto eliminada");
+    window.setTimeout(() => setTeamPhotoMessage(""), 1800);
   }
 
   function stopCamera() {
@@ -3135,7 +3186,17 @@ export default function Home() {
                 return (
                   <Fragment key={match.id}>
                     {currentMonth !== previousMonth ? <div className="history-month">{currentMonth}</div> : null}
-                    <article className="history-item">
+                    <article className={match.teamPhoto ? "history-item has-photo" : "history-item"}>
+                      {match.teamPhoto ? (
+                        <button
+                          aria-label={`Abrir foto de ${match.title}`}
+                          className="history-photo"
+                          onClick={() => setActiveMatchId(match.id)}
+                          type="button"
+                        >
+                          <img src={match.teamPhoto} alt="" />
+                        </button>
+                      ) : null}
                       <div>
                         <strong>{match.title}</strong>
                         <small>{new Date(match.date).toLocaleDateString("es-ES", { day: "2-digit", month: "short" })}</small>
@@ -3387,6 +3448,34 @@ export default function Home() {
               <input type="number" min="0" value={result.a} disabled={!matchConfigured || matchFinalized} onChange={(event) => setResult({ ...result, a: event.target.value })} inputMode="numeric" />
               <b>-</b>
               <input type="number" min="0" value={result.b} disabled={!matchConfigured || matchFinalized} onChange={(event) => setResult({ ...result, b: event.target.value })} inputMode="numeric" />
+            </div>
+            <div className={activeMatch.teamPhoto ? "team-photo-card has-photo" : "team-photo-card"}>
+              {activeMatch.teamPhoto ? (
+                <img src={activeMatch.teamPhoto} alt={`Foto de recuerdo de ${activeMatch.title}`} />
+              ) : (
+                <span className="team-photo-empty">+</span>
+              )}
+              <div className="team-photo-actions">
+                <label className="team-photo-button">
+                  {activeMatch.teamPhoto ? "Cambiar foto de equipo" : "Añadir foto de equipo"}
+                  <input
+                    accept="image/*"
+                    capture="environment"
+                    disabled={!canUploadTeamPhoto}
+                    onChange={(event) => {
+                      void uploadTeamPhoto(event.target.files?.[0]);
+                      event.currentTarget.value = "";
+                    }}
+                    type="file"
+                  />
+                </label>
+                {canUseAdminControls && activeMatch.teamPhoto ? (
+                  <button className="team-photo-remove" type="button" onClick={removeTeamPhoto}>
+                    Quitar foto
+                  </button>
+                ) : null}
+              </div>
+              {teamPhotoMessage ? <small className="team-photo-message">{teamPhotoMessage}</small> : null}
             </div>
             <div className="scorers-box">
               <strong>Goles</strong>

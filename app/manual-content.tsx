@@ -109,6 +109,7 @@ const manualFlows = [
     steps: [
       "Primero rellena el resultado. Hasta entonces no se pueden asignar goles.",
       "Los goles se introducen por equipo y la app no deja superar el marcador de cada lado.",
+      "Cualquier miembro puede subir una foto de equipo como recuerdo; solo un admin puede quitarla.",
       "Al pulsar Finalizar partido, el partido pasa al historial.",
       "Después de finalizar, campo, fecha, modalidad, precio y reservas quedan bloqueados.",
       "Si hubo un error, aún puedes corregir asistencia y goleadores para ajustar el histórico.",
@@ -132,7 +133,7 @@ const manualFlows = [
     intro: "La memoria del grupo vive en los partidos cerrados, el ranking y las fichas.",
     steps: [
       "Próximos partidos muestra solo partidos abiertos y guardados.",
-      "Historial muestra los últimos partidos con separadores por mes y resumen de pago y goles.",
+      "Historial muestra los últimos partidos con separadores por mes, foto en miniatura y resumen de pago y goles.",
       "Ranking vivo ordena por rendimiento, goles y victorias.",
       "Cada fila del ranking abre la ficha del jugador para consultar detalle, estado y evolución.",
     ],
