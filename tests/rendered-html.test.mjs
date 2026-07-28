@@ -10,7 +10,9 @@ test("builds Pachanga IQ HTML", async () => {
   assert.match(html, /Confirmados/);
   assert.match(html, /Equipos sugeridos/i);
   assert.match(html, /Alineación abierta/);
-  assert.match(html, /Cerrar alineación/);
+  assert.match(html, /Registro/);
+  assert.match(html, /Entrar con Google/);
+  assert.match(html, /Entra para crear tu equipo/);
   assert.match(html, /Finalizar partido/);
   assert.match(html, /Comparte este partido!/);
   assert.match(html, /Copiar link/);

@@ -97,6 +97,38 @@ h1 {
   padding: 14px;
 }
 
+.auth-panel {
+  align-items: center;
+  display: grid;
+  gap: 14px;
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.auth-panel span {
+  color: var(--ink-soft);
+  display: block;
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.auth-panel strong {
+  display: block;
+  font-size: 18px;
+  margin-top: 4px;
+}
+
+.auth-panel p {
+  color: var(--ink-soft);
+  font-size: 14px;
+  margin: 6px 0 0;
+}
+
+.auth-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
 .settings-panel {
   display: grid;
   gap: 10px;
@@ -285,7 +317,7 @@ h1 {
 .team-create-form {
   display: grid;
   gap: 8px;
-  grid-template-columns: minmax(0, 1fr) 130px;
+  grid-template-columns: minmax(0, 1fr) repeat(3, max-content);
 }
 
 .team-create-form button {
@@ -295,6 +327,7 @@ h1 {
   color: #fff;
   font-weight: 900;
   min-height: 42px;
+  padding: 0 16px;
 }
 
 .team-create-form .ghost-form-button {
@@ -908,6 +941,15 @@ select:disabled {
   font-weight: 800;
   min-height: 44px;
   padding: 0 16px;
+}
+
+.primary-button:disabled,
+.secondary-button:disabled,
+.team-create-form button:disabled,
+.add-player button:disabled,
+.result-box button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
 }
 
 .secondary-button {
@@ -2575,6 +2617,7 @@ select:disabled {
 
   .match-editor,
   .settings-panel,
+  .auth-panel,
   .team-access-panel,
   .venue-form,
   .share-box,

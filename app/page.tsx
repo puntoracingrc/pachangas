@@ -1,6 +1,7 @@
 "use client";
 
 import { CSSProperties, FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import type { User } from "@supabase/supabase-js";
 import { supabase } from "./supabaseClient";
 
 type RatingFacet = "ritmo" | "tiro" | "pase" | "regate" | "defensa" | "fisico";
@@ -855,6 +856,7 @@ export default function Home() {
   const [teamMembers, setTeamMembers] = useState<RemoteMember[]>([]);
   const [currentRole, setCurrentRole] = useState<MemberRole | null>(null);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [authUser, setAuthUser] = useState<User | null>(null);
   const [profileName, setProfileName] = useState("");
   const [newTeamName, setNewTeamName] = useState("Mi equipo pachanguero");
   const [adminInviteToken, setAdminInviteToken] = useState<string | null>(null);
@@ -890,12 +892,40 @@ export default function Home() {
     }, 0);
   }
 
-  async function ensureUser(client: NonNullable<typeof supabase>) {
+  function isAnonymousAuthUser(user: User | null) {
+    return Boolean(user && (user as User & { is_anonymous?: boolean }).is_anonymous);
+  }
+
+  function authDisplayName(user: User | null) {
+    const metadata = user?.user_metadata as { full_name?: string; name?: string } | undefined;
+    return metadata?.full_name || metadata?.name || user?.email || "Usuario";
+  }
+
+  function updateAuthState(user: User | null) {
+    setAuthUser(user);
+    setCurrentUserId(user?.id ?? null);
+  }
+
+  async function getSignedUser(client: NonNullable<typeof supabase>) {
     const sessionResult = await client.auth.getSession();
-    const existingUserId = sessionResult.data.session?.user.id;
-    if (existingUserId) {
-      setCurrentUserId(existingUserId);
-      return existingUserId;
+    const user = sessionResult.data.session?.user ?? null;
+    updateAuthState(user);
+    return user;
+  }
+
+  async function ensureRegisteredUser(client: NonNullable<typeof supabase>) {
+    const user = await getSignedUser(client);
+    if (!user || isAnonymousAuthUser(user)) {
+      throw new Error("Entra con Google para crear equipos o ser admin.");
+    }
+
+    return user.id;
+  }
+
+  async function ensureInvitedUser(client: NonNullable<typeof supabase>) {
+    const user = await getSignedUser(client);
+    if (user) {
+      return user.id;
     }
 
     const signInResult = await client.auth.signInAnonymously();
@@ -903,8 +933,41 @@ export default function Home() {
       throw new Error(signInResult.error?.message ?? "No se pudo crear usuario anonimo");
     }
 
-    setCurrentUserId(signInResult.data.user.id);
+    updateAuthState(signInResult.data.user);
     return signInResult.data.user.id;
+  }
+
+  async function signInWithGoogle() {
+    if (!supabase) {
+      setSyncStatus("error");
+      setSyncError("Supabase no está configurado.");
+      return;
+    }
+
+    const result = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: window.location.href },
+    });
+
+    if (result.error) {
+      setSyncStatus("error");
+      setSyncError(result.error.message);
+    }
+  }
+
+  async function signOut() {
+    if (!supabase) return;
+
+    await supabase.auth.signOut();
+    updateAuthState(null);
+    setRemoteGroupId(null);
+    setRemoteInviteToken(null);
+    setRemoteReady(false);
+    setRemoteTeams([]);
+    setTeamMembers([]);
+    setCurrentRole(null);
+    setSyncStatus("local");
+    setSyncError("");
   }
 
   async function loadTeamMembers(client: NonNullable<typeof supabase>, groupId: string) {
@@ -1008,6 +1071,33 @@ export default function Home() {
   }, [profileName]);
 
   useEffect(() => {
+    if (!supabase) return;
+
+    const client = supabase;
+    let cancelled = false;
+
+    void client.auth.getSession().then(({ data }) => {
+      if (cancelled) return;
+      updateAuthState(data.session?.user ?? null);
+    });
+
+    const {
+      data: { subscription },
+    } = client.auth.onAuthStateChange((_event, session) => {
+      updateAuthState(session?.user ?? null);
+      const userName = authDisplayName(session?.user ?? null);
+      if (session?.user && !profileName.trim() && userName !== "Usuario") {
+        setProfileName(displayName(userName));
+      }
+    });
+
+    return () => {
+      cancelled = true;
+      subscription.unsubscribe();
+    };
+  }, [profileName]);
+
+  useEffect(() => {
     if (!localHydrated || !supabase) return;
 
     const client = supabase;
@@ -1018,33 +1108,47 @@ export default function Home() {
       setSyncError("");
 
       try {
-        const userId = await ensureUser(client);
-
         const params = new URLSearchParams(window.location.search);
         const inviteToken = params.get("invite");
         const adminInviteToken = params.get("admin");
         let groupId = params.get("grupo");
 
         if (adminInviteToken) {
+          const userId = await ensureRegisteredUser(client);
+          const user = authUser?.id === userId ? authUser : (await getSignedUser(client));
           const adminJoinResult = await client.rpc("accept_pachanga_admin_invite", {
             admin_token: adminInviteToken,
-            member_name: profileName.trim() || "Admin",
+            member_name: profileName.trim() || authDisplayName(user) || "Admin",
           });
           if (adminJoinResult.error || !adminJoinResult.data) throw new Error(adminJoinResult.error?.message ?? "No se pudo aceptar la invitación de admin");
           groupId = String(adminJoinResult.data);
         } else if (inviteToken) {
+          await ensureInvitedUser(client);
           const joinResult = await client.rpc("join_pachanga_team", {
             member_name: profileName.trim() || "Jugador",
             token: inviteToken,
           });
           if (joinResult.error || !joinResult.data) throw new Error(joinResult.error?.message ?? "No se pudo entrar al grupo");
           groupId = String(joinResult.data);
+        } else {
+          const user = await getSignedUser(client);
+          if (!user) {
+            if (!cancelled) {
+              setRemoteGroupId(null);
+              setRemoteInviteToken(null);
+              setRemoteReady(false);
+              setRemoteTeams([]);
+              setTeamMembers([]);
+              setCurrentRole(null);
+              setSyncStatus("local");
+            }
+            return;
+          }
         }
 
         await loadTeams(client, groupId);
 
         if (cancelled) return;
-        void userId;
       } catch (error) {
         setSyncStatus("error");
         setSyncError(error instanceof Error ? error.message : "No se pudo cargar el equipo");
@@ -1259,7 +1363,7 @@ export default function Home() {
 
   function addPlayer(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (remoteReady && !canManageTeam) return;
+    if (!canUseAdminControls) return;
     const name = displayName(newPlayer);
     if (!name) return;
 
@@ -1286,7 +1390,7 @@ export default function Home() {
   }
 
   function createMatch() {
-    if (remoteReady && !canManageTeam) return;
+    if (!canUseAdminControls) return;
     const defaultVenue = venues.find((venue) => venue.id === activeMatch.venueId) ?? venues[0];
     const nextKind = activeMatch.kind ?? defaultVenue?.kind ?? "futbol7";
     const next: Match = {
@@ -1308,7 +1412,7 @@ export default function Home() {
   }
 
   function toggleLineupClosed() {
-    if (remoteReady && !canManageTeam) return;
+    if (!canUseAdminControls) return;
     updateMatch({
       ...activeMatch,
       lineupClosed: !lineupClosed,
@@ -1318,7 +1422,7 @@ export default function Home() {
   }
 
   function applyRandomTeams() {
-    if (remoteReady && !canManageTeam) return;
+    if (!canUseAdminControls) return;
     if (lineupClosed) return;
     const next = randomTeams(confirmedPlayers);
     updateMatch({
@@ -1329,7 +1433,7 @@ export default function Home() {
   }
 
   function applyBalancedTeams() {
-    if (remoteReady && !canManageTeam) return;
+    if (!canUseAdminControls) return;
     if (lineupClosed) return;
     updateMatch({
       ...activeMatch,
@@ -1339,7 +1443,7 @@ export default function Home() {
   }
 
   function assignPlayerTeam(playerId: string, team: "A" | "B") {
-    if (remoteReady && !canManageTeam) return;
+    if (!canUseAdminControls) return;
     if (lineupClosed) return;
     const baseTeamA = suggested.teamA.map((player) => player.id).filter((id) => id !== playerId);
     const baseTeamB = suggested.teamB.map((player) => player.id).filter((id) => id !== playerId);
@@ -1352,7 +1456,7 @@ export default function Home() {
   }
 
   function setPlayerGoals(playerId: string, goals: number) {
-    if (remoteReady && !canManageTeam) return;
+    if (!canUseAdminControls) return;
     if (!resultIsReady) return;
 
     const scorers = activeMatch.scorers ?? [];
@@ -1415,7 +1519,7 @@ export default function Home() {
   }
 
   function finalizeMatch() {
-    if (remoteReady && !canManageTeam) return;
+    if (!canUseAdminControls) return;
     if (!resultIsReady) return;
 
     const scoreA = Number(scoreAValue);
@@ -1449,7 +1553,7 @@ export default function Home() {
   }
 
   function deleteClosedMatch(matchId: string) {
-    if (remoteReady && !canManageTeam) return;
+    if (!canUseAdminControls) return;
     const match = matches.find((item) => item.id === matchId);
     if (!match) return;
 
@@ -1496,7 +1600,7 @@ export default function Home() {
   }
 
   function deleteMatch(matchId: string) {
-    if (remoteReady && !canManageTeam) return;
+    if (!canUseAdminControls) return;
     const match = matches.find((item) => item.id === matchId);
     if (!match) return;
     if (!window.confirm("¿Borrar este partido?")) return;
@@ -1547,8 +1651,11 @@ export default function Home() {
   const selectedPlayer = selectedPlayerId ? players.find((player) => player.id === selectedPlayerId) : undefined;
   const currentTeam = remoteTeams.find((team) => team.id === remoteGroupId);
   const isDemoMode = !remoteReady && remoteTeams.length === 0;
-  const canManageTeam = currentRole === "owner" || currentRole === "admin";
-  const canUseAdminControls = !remoteReady || canManageTeam;
+  const isRegisteredUser = Boolean(authUser && !isAnonymousAuthUser(authUser));
+  const hasRealTeam = remoteReady && Boolean(remoteGroupId);
+  const canManageTeam = isRegisteredUser && (currentRole === "owner" || currentRole === "admin");
+  const canUseAdminControls = hasRealTeam && canManageTeam;
+  const canCreateTeam = Boolean(supabase && isRegisteredUser);
   const canEditLineup = canUseAdminControls && !lineupClosed;
   const ratingVoterId = currentUserId ?? `local:${profileName.trim().toLocaleLowerCase("es-ES") || "jugador"}`;
   const selectedRatingHistory = selectedPlayer ? ratingHistory(selectedPlayer) : [];
@@ -1590,7 +1697,7 @@ export default function Home() {
   }
 
   function updatePlayer(playerId: string, next: Partial<Player>) {
-    if (remoteReady && !canManageTeam) return;
+    if (!canUseAdminControls) return;
     setPlayers((current) => current.map((player) => (player.id === playerId ? { ...player, ...next } : player)));
   }
 
@@ -1619,7 +1726,7 @@ export default function Home() {
 
   async function uploadAvatar(file: File | undefined, playerId = selectedPlayer?.id) {
     setAvatarMessage("");
-    if (remoteReady && !canManageTeam) {
+    if (!canUseAdminControls) {
       setAvatarMessage("Solo un admin puede cambiar la foto.");
       return;
     }
@@ -1645,7 +1752,7 @@ export default function Home() {
   }
 
   function openCamera(playerId: string) {
-    if (remoteReady && !canManageTeam) {
+    if (!canUseAdminControls) {
       setAvatarMessage("Solo un admin puede cambiar la foto.");
       return;
     }
@@ -1681,12 +1788,12 @@ export default function Home() {
   }
 
   function changeKind(kind: MatchKind) {
-    if (remoteReady && !canManageTeam) return;
+    if (!canUseAdminControls) return;
     updateMatch({ ...activeMatch, kind, targetPlayers: matchKinds[kind].targetPlayers });
   }
 
   function selectVenue(venueId: string) {
-    if (remoteReady && !canManageTeam) return;
+    if (!canUseAdminControls) return;
     const venue = venues.find((item) => item.id === venueId);
     if (!venue) return;
     const kind = venue.kind ?? activeKind;
@@ -1703,7 +1810,7 @@ export default function Home() {
 
   function addVenue(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (remoteReady && !canManageTeam) return;
+    if (!canUseAdminControls) return;
     const name = newVenue.name.trim();
     if (!name) return;
     const kind = newVenue.kind;
@@ -1737,7 +1844,9 @@ export default function Home() {
     setSyncError("");
 
     try {
-      const userId = await ensureUser(client);
+      const user = await getSignedUser(client);
+      if (!user || isAnonymousAuthUser(user)) throw new Error("Entra con Google para crear equipos o ser admin.");
+      const userId = user.id;
       const teamName = newTeamName.trim() || "Mi equipo pachanguero";
       const initialPayload = emptyTeamPayload(teamName);
       const insertResult = await client
@@ -1749,7 +1858,7 @@ export default function Home() {
       if (insertResult.error || !insertResult.data) throw new Error(insertResult.error?.message ?? "No se pudo crear el equipo");
 
       const memberResult = await client.from("pachanga_group_members").insert({
-        display_name: profileName.trim() || "Admin",
+        display_name: profileName.trim() || authDisplayName(user),
         group_id: insertResult.data.id,
         role: "owner",
         user_id: userId,
@@ -2121,28 +2230,54 @@ export default function Home() {
           <p className="hero-copy">{siteSettings.subtitle}</p>
         </div>
         <div className="hero-actions">
-          <button className="primary-button" onClick={createMatch} disabled={remoteReady && !canManageTeam}>
+          <button className="primary-button" onClick={createMatch} disabled={!canUseAdminControls}>
             + Partido
           </button>
-          <button className="secondary-button" onClick={() => setOpenQuickForm(openQuickForm === "player" ? null : "player")} disabled={remoteReady && !canManageTeam}>
+          <button className="secondary-button" onClick={() => setOpenQuickForm(openQuickForm === "player" ? null : "player")} disabled={!canUseAdminControls}>
             + Jugador
           </button>
-          <button className="secondary-button" onClick={() => setOpenQuickForm(openQuickForm === "venue" ? null : "venue")} disabled={remoteReady && !canManageTeam}>
+          <button className="secondary-button" onClick={() => setOpenQuickForm(openQuickForm === "venue" ? null : "venue")} disabled={!canUseAdminControls}>
             + Campo
           </button>
           <button className="secondary-button" onClick={() => setOpenQuickForm(openQuickForm === "team" ? null : "team")}>
             + Equipo
           </button>
-          <button className="secondary-button" onClick={() => setShowSettings((current) => !current)} disabled={remoteReady && !canManageTeam}>
+          <button className="secondary-button" onClick={() => setShowSettings((current) => !current)} disabled={!canUseAdminControls}>
             Configurar
           </button>
+        </div>
+      </section>
+
+      <section className="top-panel auth-panel">
+        <div>
+          <span>Registro</span>
+          <strong>{isRegisteredUser ? `Conectado como ${authDisplayName(authUser)}` : "Entra para crear tu equipo"}</strong>
+          <p>
+            Para crear equipos y administrar partidos hace falta una cuenta. Los jugadores pueden entrar por invitación y apuntarse con menos fricción.
+          </p>
+        </div>
+        <div className="auth-actions">
+          {isRegisteredUser ? (
+            <button className="secondary-button" type="button" onClick={() => void signOut()}>
+              Salir
+            </button>
+          ) : (
+            <button className="primary-button" type="button" onClick={() => void signInWithGoogle()} disabled={!supabase}>
+              Entrar con Google
+            </button>
+          )}
         </div>
       </section>
 
       {openQuickForm === "team" ? (
         <form className="top-panel team-create-form top-team-form" onSubmit={createTeam}>
           <input value={newTeamName} onChange={(event) => setNewTeamName(event.target.value)} placeholder="Nombre del nuevo equipo" />
-          <button type="submit">Crear equipo</button>
+          <button type="submit" disabled={!canCreateTeam}>Crear equipo</button>
+          {!canCreateTeam ? (
+            <button className="ghost-form-button" type="button" onClick={() => void signInWithGoogle()} disabled={!supabase}>
+              Entrar con Google
+            </button>
+          ) : null}
           <button className="ghost-form-button" type="button" onClick={() => setOpenQuickForm(null)}>Cerrar</button>
         </form>
       ) : null}
