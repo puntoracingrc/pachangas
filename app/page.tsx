@@ -1079,6 +1079,20 @@ export default function Home() {
     window.open(`https://wa.me/?text=${encodeURIComponent(shareText())}`, "_blank", "noopener,noreferrer");
   }
 
+  async function copyMatchLink() {
+    const url = matchUrl();
+    if (!url || !navigator.clipboard) return;
+
+    try {
+      await navigator.clipboard.writeText(url);
+      setSyncStatus("live");
+      setSyncError("");
+    } catch {
+      setSyncStatus("error");
+      setSyncError("No se pudo copiar el partido");
+    }
+  }
+
   function renderPlayerCard(player: Player, team?: "A" | "B") {
     const matchEntry = activeMatch.players.find((entry) => entry.playerId === player.id);
     const status = matchEntry?.status;
@@ -1461,11 +1475,15 @@ export default function Home() {
           </div>
 
           <div className="share-box">
-            <label>
-              Link para compartir
-              <input readOnly value={matchUrl()} onFocus={(event) => event.currentTarget.select()} />
-            </label>
-            <button type="button" onClick={shareWhatsApp}>Abrir WhatsApp</button>
+            <span>Comparte este partido!</span>
+            <div className="share-actions">
+              <button className="copy-invite-button" type="button" onClick={() => void copyMatchLink()} disabled={!matchUrl()} title="Copiar link del partido" aria-label="Copiar link del partido">
+                Copiar link
+              </button>
+              <button className="whatsapp-icon-button" type="button" onClick={shareWhatsApp} disabled={!matchUrl()} title="Enviar partido por WhatsApp" aria-label="Enviar partido por WhatsApp">
+                <WhatsAppLogo />
+              </button>
+            </div>
             <small className={`sync-status sync-${syncStatus}`}>
               {syncStatus === "live" ? "Sincronizado" : syncStatus === "connecting" ? "Conectando..." : syncStatus === "error" ? `Sin sync: ${syncError}` : "Modo local"}
             </small>
