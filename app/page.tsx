@@ -416,6 +416,113 @@ function makeFacetRatings(base = 5) {
   }, {} as Record<RatingFacet, number>);
 }
 
+type FaceDetectorLike = new (options?: { fastMode?: boolean; maxDetectedFaces?: number }) => {
+  detect: (source: HTMLImageElement) => Promise<
+    Array<{
+      boundingBox: { x: number; y: number; width: number; height: number };
+      landmarks?: Array<{ type?: string; locations?: Array<{ x: number; y: number }> }>;
+    }>
+  >;
+};
+
+type AvatarFace = {
+  box: { x: number; y: number; width: number; height: number };
+  eyes?: { x: number; y: number };
+};
+
+function readFileDataUrl(file: File) {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error("No se pudo leer la imagen"));
+    reader.onload = () => resolve(String(reader.result ?? ""));
+    reader.readAsDataURL(file);
+  });
+}
+
+function loadAvatarImage(source: string) {
+  return new Promise<HTMLImageElement>((resolve, reject) => {
+    const image = new Image();
+    image.onerror = () => reject(new Error("No se pudo preparar la imagen"));
+    image.onload = () => resolve(image);
+    image.src = source;
+  });
+}
+
+async function detectAvatarFace(image: HTMLImageElement) {
+  const FaceDetector = (window as unknown as { FaceDetector?: FaceDetectorLike }).FaceDetector;
+  if (!FaceDetector) return null;
+
+  const faces = await new FaceDetector({ fastMode: true, maxDetectedFaces: 1 }).detect(image);
+  const face = faces
+    .map((face) => face.boundingBox)
+    .sort((a, b) => b.width * b.height - a.width * a.height)[0];
+  const original = faces.find((item) => item.boundingBox === face) ?? faces[0];
+  const eyePoints = (original?.landmarks ?? [])
+    .filter((landmark) => landmark.type?.toLocaleLowerCase("es-ES").includes("eye"))
+    .flatMap((landmark) => landmark.locations ?? []);
+
+  if (!face) return null;
+  return {
+    box: face,
+    eyes: eyePoints.length > 0
+      ? {
+          x: eyePoints.reduce((sum, point) => sum + point.x, 0) / eyePoints.length,
+          y: eyePoints.reduce((sum, point) => sum + point.y, 0) / eyePoints.length,
+        }
+      : undefined,
+  } satisfies AvatarFace;
+}
+
+function avatarCropArea(image: HTMLImageElement, face: AvatarFace | null) {
+  const targetAspect = 560 / 720;
+  const imageWidth = image.naturalWidth || image.width;
+  const imageHeight = image.naturalHeight || image.height;
+  const fallbackHeight = Math.min(imageHeight, imageWidth / targetAspect);
+  let cropHeight = fallbackHeight;
+  let centerX = imageWidth / 2;
+  let anchorY = imageHeight * 0.38;
+
+  if (face) {
+    centerX = face.eyes?.x ?? face.box.x + face.box.width / 2;
+    anchorY = face.eyes?.y ?? face.box.y + face.box.height * 0.42;
+    cropHeight = Math.max(face.box.height * 2.8, imageHeight * 0.42);
+  }
+
+  let cropWidth = cropHeight * targetAspect;
+  if (cropWidth > imageWidth) {
+    cropWidth = imageWidth;
+    cropHeight = cropWidth / targetAspect;
+  }
+  if (cropHeight > imageHeight) {
+    cropHeight = imageHeight;
+    cropWidth = cropHeight * targetAspect;
+  }
+
+  const x = Math.min(Math.max(centerX - cropWidth / 2, 0), Math.max(0, imageWidth - cropWidth));
+  const eyeTarget = face?.eyes ? 0.31 : 0.34;
+  const y = Math.min(Math.max(anchorY - cropHeight * eyeTarget, 0), Math.max(0, imageHeight - cropHeight));
+  return { x, y, width: cropWidth, height: cropHeight };
+}
+
+async function avatarDataUrl(file: File) {
+  if (!file.type.startsWith("image/")) throw new Error("El archivo no es una imagen");
+
+  const source = await readFileDataUrl(file);
+  const image = await loadAvatarImage(source);
+  const face = await detectAvatarFace(image).catch(() => null);
+  const crop = avatarCropArea(image, face);
+  const canvas = document.createElement("canvas");
+  canvas.width = 560;
+  canvas.height = 720;
+  const context = canvas.getContext("2d");
+  if (!context) return source;
+
+  context.fillStyle = "#f4df9a";
+  context.fillRect(0, 0, canvas.width, canvas.height);
+  context.drawImage(image, crop.x, crop.y, crop.width, crop.height, 0, 0, canvas.width, canvas.height);
+  return canvas.toDataURL("image/jpeg", 0.86);
+}
+
 function positionMeta(position: PlayerPosition) {
   const option = Object.values(positionOptionsByKind).flat().find((item) => item.value === position);
   if (option) return { line: option.line, label: option.value, short: option.short };
@@ -650,10 +757,15 @@ export default function Home() {
   const [profileName, setProfileName] = useState("");
   const [newTeamName, setNewTeamName] = useState("Mi equipo pachanguero");
   const [adminInviteToken, setAdminInviteToken] = useState<string | null>(null);
+  const [avatarMessage, setAvatarMessage] = useState("");
   const [localHydrated, setLocalHydrated] = useState(false);
   const applyingRemoteRef = useRef(false);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const playerProfileRef = useRef<HTMLDivElement>(null);
+  const cameraVideoRef = useRef<HTMLVideoElement>(null);
+  const cameraStreamRef = useRef<MediaStream | null>(null);
+  const [cameraPlayerId, setCameraPlayerId] = useState<string | null>(null);
+  const [cameraError, setCameraError] = useState("");
 
   function currentPayload(): AppPayload {
     return {
@@ -885,6 +997,44 @@ export default function Home() {
     if (!selectedPlayerId) return;
     playerProfileRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, [selectedPlayerId]);
+
+  useEffect(() => {
+    if (!cameraPlayerId) return;
+
+    let cancelled = false;
+    cameraStreamRef.current?.getTracks().forEach((track) => track.stop());
+    cameraStreamRef.current = null;
+
+    async function startCamera() {
+      if (!navigator.mediaDevices?.getUserMedia) {
+        setCameraError("Este navegador no permite usar la cámara aquí.");
+        return;
+      }
+
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false });
+        if (cancelled) {
+          stream.getTracks().forEach((track) => track.stop());
+          return;
+        }
+        cameraStreamRef.current = stream;
+        if (cameraVideoRef.current) {
+          cameraVideoRef.current.srcObject = stream;
+          await cameraVideoRef.current.play().catch(() => undefined);
+        }
+      } catch {
+        setCameraError("No se pudo abrir la cámara.");
+      }
+    }
+
+    void startCamera();
+
+    return () => {
+      cancelled = true;
+      cameraStreamRef.current?.getTracks().forEach((track) => track.stop());
+      cameraStreamRef.current = null;
+    };
+  }, [cameraPlayerId]);
 
   const activeMatch = matches.find((match) => match.id === activeMatchId) ?? matches[0];
   const activeKind = activeMatch.kind ?? "futbol7";
@@ -1351,13 +1501,67 @@ export default function Home() {
     );
   }
 
-  function uploadAvatar(file: File | undefined) {
-    if (remoteReady && !canManageTeam) return;
-    if (!file || !selectedPlayer) return;
+  async function uploadAvatar(file: File | undefined, playerId = selectedPlayer?.id) {
+    setAvatarMessage("");
+    if (remoteReady && !canManageTeam) {
+      setAvatarMessage("Solo un admin puede cambiar la foto.");
+      return;
+    }
+    if (!file || !playerId) return;
 
-    const reader = new FileReader();
-    reader.onload = () => updatePlayer(selectedPlayer.id, { avatar: String(reader.result) });
-    reader.readAsDataURL(file);
+    try {
+      setAvatarMessage("Recortando foto...");
+      const avatar = await avatarDataUrl(file);
+      updatePlayer(playerId, { avatar });
+      setAvatarMessage("Foto actualizada");
+      window.setTimeout(() => setAvatarMessage(""), 1800);
+    } catch {
+      setAvatarMessage("No se pudo cargar la foto.");
+    }
+  }
+
+  function stopCamera() {
+    cameraStreamRef.current?.getTracks().forEach((track) => track.stop());
+    cameraStreamRef.current = null;
+    if (cameraVideoRef.current) cameraVideoRef.current.srcObject = null;
+    setCameraPlayerId(null);
+    setCameraError("");
+  }
+
+  function openCamera(playerId: string) {
+    if (remoteReady && !canManageTeam) {
+      setAvatarMessage("Solo un admin puede cambiar la foto.");
+      return;
+    }
+    setCameraError("");
+    setCameraPlayerId(playerId);
+  }
+
+  async function captureCameraAvatar() {
+    const video = cameraVideoRef.current;
+    if (!video || !cameraPlayerId || video.videoWidth === 0 || video.videoHeight === 0) {
+      setCameraError("La cámara todavía no está lista.");
+      return;
+    }
+
+    const canvas = document.createElement("canvas");
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const context = canvas.getContext("2d");
+    if (!context) {
+      setCameraError("No se pudo capturar la foto.");
+      return;
+    }
+
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    canvas.toBlob((blob) => {
+      if (!blob) {
+        setCameraError("No se pudo capturar la foto.");
+        return;
+      }
+      void uploadAvatar(new File([blob], "webcam.jpg", { type: "image/jpeg" }), cameraPlayerId);
+      stopCamera();
+    }, "image/jpeg", 0.9);
   }
 
   function changeKind(kind: MatchKind) {
@@ -2309,29 +2513,82 @@ export default function Home() {
             </div>
             <>
               <div className="profile-top">
-                <label className="fifa-player-card">
-                  <span className="fifa-score">{Math.round(scorePlayer(selectedPlayer) * 10)}</span>
-                  <span className="fifa-position">{positionShort(selectedPlayer)}</span>
-                  <span className="fifa-photo">
-                    {selectedPlayer.avatar ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={selectedPlayer.avatar} alt={`Foto de ${playerDisplayName(selectedPlayer)}`} />
-                    ) : (
-                      <b>+</b>
-                    )}
-                  </span>
-                  <strong>{playerDisplayName(selectedPlayer)}</strong>
-                  <span className="fifa-card-meta">{selectedPlayer.goals} Goles · {selectedPlayer.appearances} PJ</span>
-                  <div className="fifa-facets">
-                    {ratingFacets.map((facet) => (
-                      <span key={facet.key}>
-                        <b>{Math.round(facetAverage(selectedPlayer, facet.key) * 10)}</b>
-                        {facet.label.slice(0, 3).toLocaleUpperCase("es-ES")}
-                      </span>
-                    ))}
+                <div className="fifa-card-shell">
+                  <label className="fifa-player-card">
+                    <span className="fifa-score">{Math.round(scorePlayer(selectedPlayer) * 10)}</span>
+                    <span className="fifa-position">{positionShort(selectedPlayer)}</span>
+                    <span className="fifa-photo">
+                      {selectedPlayer.avatar ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={selectedPlayer.avatar} alt={`Foto de ${playerDisplayName(selectedPlayer)}`} />
+                      ) : (
+                        <b>+</b>
+                      )}
+                    </span>
+                    <strong>{playerDisplayName(selectedPlayer)}</strong>
+                    <span className="fifa-card-meta">{selectedPlayer.goals} Goles · {selectedPlayer.appearances} PJ</span>
+                    <div className="fifa-facets">
+                      {ratingFacets.map((facet) => (
+                        <span key={facet.key}>
+                          <b>{Math.round(facetAverage(selectedPlayer, facet.key) * 10)}</b>
+                          {facet.label.slice(0, 3).toLocaleUpperCase("es-ES")}
+                        </span>
+                      ))}
+                    </div>
+                    <span className="fifa-photo-action">{selectedPlayer.avatar ? "Cambiar foto" : "Añadir foto"}</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      aria-label={selectedPlayer.avatar ? "Cambiar foto del jugador" : "Añadir foto del jugador"}
+                      onClick={(event) => {
+                        event.currentTarget.value = "";
+                      }}
+                      onChange={(event) => {
+                        void uploadAvatar(event.currentTarget.files?.[0], selectedPlayer.id);
+                        event.currentTarget.value = "";
+                      }}
+                    />
+                  </label>
+                  <div className="avatar-actions">
+                    <label className="avatar-action-button">
+                      Foto
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(event) => {
+                          void uploadAvatar(event.currentTarget.files?.[0], selectedPlayer.id);
+                          event.currentTarget.value = "";
+                        }}
+                      />
+                    </label>
+                    <label className="avatar-action-button">
+                      Cámara
+                      <input
+                        type="file"
+                        accept="image/*"
+                        capture="user"
+                        onChange={(event) => {
+                          void uploadAvatar(event.currentTarget.files?.[0], selectedPlayer.id);
+                          event.currentTarget.value = "";
+                        }}
+                      />
+                    </label>
+                    <button className="avatar-action-button" type="button" onClick={() => openCamera(selectedPlayer.id)}>
+                      Webcam
+                    </button>
                   </div>
-                  <input type="file" accept="image/*" onChange={(event) => uploadAvatar(event.target.files?.[0])} />
-                </label>
+                  {avatarMessage ? <small className="avatar-message">{avatarMessage}</small> : null}
+                  {cameraPlayerId === selectedPlayer.id ? (
+                    <div className="camera-panel">
+                      <video ref={cameraVideoRef} autoPlay muted playsInline />
+                      <div>
+                        <button type="button" onClick={captureCameraAvatar}>Usar foto</button>
+                        <button type="button" onClick={stopCamera}>Cerrar</button>
+                      </div>
+                      {cameraError ? <small>{cameraError}</small> : null}
+                    </div>
+                  ) : null}
+                </div>
                 <div>
                   <select value={selectedPlayer.id} onChange={(event) => setSelectedPlayerId(event.target.value)}>
                     {players.map((player) => (
