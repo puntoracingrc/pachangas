@@ -536,6 +536,32 @@ function id() {
   return crypto.randomUUID();
 }
 
+const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function compactUuid(value: string) {
+  if (!uuidPattern.test(value)) return value;
+
+  const hex = value.replaceAll("-", "");
+  const raw = Array.from({ length: 16 }, (_, index) => String.fromCharCode(Number.parseInt(hex.slice(index * 2, index * 2 + 2), 16))).join("");
+  return btoa(raw).replaceAll("+", "-").replaceAll("/", "_").replace(/=+$/, "");
+}
+
+function expandCompactUuid(value: string | null) {
+  if (!value) return null;
+  if (uuidPattern.test(value)) return value;
+
+  try {
+    const padded = value.replaceAll("-", "+").replaceAll("_", "/").padEnd(Math.ceil(value.length / 4) * 4, "=");
+    const raw = atob(padded);
+    if (raw.length !== 16) return value;
+
+    const hex = Array.from(raw, (char) => char.charCodeAt(0).toString(16).padStart(2, "0")).join("");
+    return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+  } catch {
+    return value;
+  }
+}
+
 function nextMatchDate(previousDate: string) {
   const base = new Date(previousDate);
   const next = Number.isNaN(base.getTime()) ? new Date() : base;
@@ -1161,7 +1187,17 @@ export default function Home() {
     if (ownMember?.display_name) setProfileName(displayName(String(ownMember.display_name)));
   }
 
-  async function loadTeams(client: NonNullable<typeof supabase>, preferredGroupId?: string | null) {
+  function prettyTeamParams(team: RemoteTeam, extra?: Record<string, string | undefined>) {
+    const params = new URLSearchParams();
+    params.set("equipo", team.teamCode);
+    params.set("i", compactUuid(team.inviteToken));
+    Object.entries(extra ?? {}).forEach(([key, value]) => {
+      if (value) params.set(key, value);
+    });
+    return params;
+  }
+
+  async function loadTeams(client: NonNullable<typeof supabase>, preferredGroupId?: string | null, preferredTeamCode?: string | null) {
     const memberships = await client
       .from("pachanga_group_members")
       .select("group_id, role, pachanga_groups(id, name, team_code, invite_token, payload)")
@@ -1189,7 +1225,10 @@ export default function Home() {
 
     setRemoteTeams(teams);
 
-    const selectedTeam = teams.find((team) => team.id === preferredGroupId) ?? teams[0];
+    const selectedTeam =
+      teams.find((team) => team.id === preferredGroupId) ??
+      teams.find((team) => team.teamCode === preferredTeamCode?.toUpperCase()) ??
+      teams[0];
     if (!selectedTeam) {
       setRemoteGroupId(null);
       setRemoteInviteToken(null);
@@ -1205,15 +1244,17 @@ export default function Home() {
     setCurrentRole(selectedTeam.role);
     setAdminInviteToken(null);
     applyPayload(selectedTeam.payload);
+    const currentParams = new URLSearchParams(window.location.search);
+    const sharedMatchId = expandCompactUuid(currentParams.get("p") ?? currentParams.get("partido"));
+    if (sharedMatchId && selectedTeam.payload.matches.some((match) => match.id === sharedMatchId)) {
+      setActiveMatchId(sharedMatchId);
+    }
     setRemoteReady(true);
     setSyncStatus("live");
     setSyncError("");
     await loadTeamMembers(client, selectedTeam.id);
 
-    const nextParams = new URLSearchParams(window.location.search);
-    nextParams.set("grupo", selectedTeam.id);
-    nextParams.set("invite", selectedTeam.inviteToken);
-    nextParams.delete("admin");
+    const nextParams = prettyTeamParams(selectedTeam, { p: sharedMatchId ? compactUuid(sharedMatchId) : undefined });
     window.history.replaceState(null, "", `${window.location.pathname}?${nextParams.toString()}`);
   }
 
@@ -1282,8 +1323,9 @@ export default function Home() {
 
       try {
         const params = new URLSearchParams(window.location.search);
-        const inviteToken = params.get("invite");
-        const adminInviteToken = params.get("admin");
+        const inviteToken = expandCompactUuid(params.get("i") ?? params.get("invite"));
+        const adminInviteToken = expandCompactUuid(params.get("a") ?? params.get("admin"));
+        const teamCode = params.get("equipo");
         let groupId = params.get("grupo");
 
         if (adminInviteToken) {
@@ -1319,7 +1361,7 @@ export default function Home() {
           }
         }
 
-        await loadTeams(client, groupId);
+        await loadTeams(client, groupId, teamCode);
 
         if (cancelled) return;
       } catch (error) {
@@ -2212,13 +2254,16 @@ export default function Home() {
 
       const nextParams = new URLSearchParams(window.location.search);
       if (nextTeam) {
-        nextParams.set("grupo", nextTeam.id);
-        nextParams.set("invite", nextTeam.inviteToken);
+        nextParams.set("equipo", nextTeam.teamCode);
+        nextParams.set("i", compactUuid(nextTeam.inviteToken));
       } else {
         nextParams.delete("grupo");
         nextParams.delete("invite");
+        nextParams.delete("equipo");
+        nextParams.delete("i");
       }
       nextParams.delete("admin");
+      nextParams.delete("a");
       window.history.replaceState(null, "", nextParams.toString() ? `${window.location.pathname}?${nextParams.toString()}` : window.location.pathname);
     } catch (error) {
       setSyncStatus("error");
@@ -2239,10 +2284,7 @@ export default function Home() {
     setSyncStatus("live");
     setSyncError("");
 
-    const nextParams = new URLSearchParams(window.location.search);
-    nextParams.set("grupo", selectedTeam.id);
-    nextParams.set("invite", selectedTeam.inviteToken);
-    nextParams.delete("admin");
+    const nextParams = prettyTeamParams(selectedTeam);
     window.history.replaceState(null, "", `${window.location.pathname}?${nextParams.toString()}`);
 
     if (supabase) {
@@ -2272,10 +2314,10 @@ export default function Home() {
   }
 
   function adminInviteUrl(token: string | null = adminInviteToken) {
-    if (!localHydrated || typeof window === "undefined" || !remoteGroupId || !token) return "";
+    if (!localHydrated || typeof window === "undefined" || !currentTeam || !token) return "";
     const params = new URLSearchParams();
-    params.set("grupo", remoteGroupId);
-    params.set("admin", token);
+    params.set("equipo", currentTeam.teamCode);
+    params.set("a", compactUuid(token));
     return `${window.location.origin}${window.location.pathname}?${params.toString()}`;
   }
 
@@ -2364,18 +2406,14 @@ export default function Home() {
 
   function matchUrl() {
     if (!localHydrated || typeof window === "undefined") return "";
-    const params = new URLSearchParams();
-    if (remoteGroupId) params.set("grupo", remoteGroupId);
-    if (remoteInviteToken) params.set("invite", remoteInviteToken);
-    params.set("partido", activeMatch.id);
+    const params = currentTeam ? prettyTeamParams(currentTeam) : new URLSearchParams();
+    params.set("p", compactUuid(activeMatch.id));
     return `${window.location.origin}${window.location.pathname}?${params.toString()}`;
   }
 
   function currentTeamInviteUrl() {
-    if (!localHydrated || typeof window === "undefined" || !remoteGroupId || !remoteInviteToken) return "";
-    const params = new URLSearchParams();
-    params.set("grupo", remoteGroupId);
-    params.set("invite", remoteInviteToken);
+    if (!localHydrated || typeof window === "undefined" || !currentTeam) return "";
+    const params = prettyTeamParams(currentTeam);
     return `${window.location.origin}${window.location.pathname}?${params.toString()}`;
   }
 

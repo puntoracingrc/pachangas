@@ -50,8 +50,9 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(globalsCss, /\.joined-at/);
   assert.match(globalsCss, /overflow-y:\s*auto/);
   assert.match(page, /Equipo pachanguero/);
-  assert.match(page, /grupo/);
-  assert.match(page, /invite/);
+  assert.match(page, /equipo/);
+  assert.match(page, /compactUuid/);
+  assert.match(page, /expandCompactUuid/);
   assert.match(page, /remoteInviteToken/);
   assert.match(page, /canEditMatchSettings\s*=\s*canUseAdminControls\s*&&\s*!matchFinalized/);
   assert.match(page, /Partido finalizado/);
