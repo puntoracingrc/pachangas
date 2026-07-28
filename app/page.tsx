@@ -142,6 +142,7 @@ type MatchRatingImpact = {
 };
 type PlayerFormState = {
   balanceScore: number;
+  hasData: boolean;
   label: "En ritmo" | "Excelente" | "Normal" | "Sin ritmo" | "En recuperación" | "Volviendo" | "Fuera del grupo";
   notes: string[];
   percent: number;
@@ -1078,6 +1079,7 @@ function playerFormState(player: Player, matches: Match[], playersById: Map<stri
   if (player.inactive) {
     return {
       balanceScore: clampRating(peerAverage(player) * 0.7),
+      hasData: true,
       label: "Fuera del grupo",
       notes: ["no cuenta para nuevos partidos"],
       percent: 70,
@@ -1102,6 +1104,7 @@ function playerFormState(player: Player, matches: Match[], playersById: Map<stri
   const recentAverage = playedRatings.length
     ? playedRatings.reduce((sum, item) => sum + item.rating, 0) / playedRatings.length
     : null;
+  const hasData = playedRatings.length > 0;
   const recentNotes = playedRatings.flatMap((item) => item.notes).filter((note, index, notes) => notes.indexOf(note) === index).slice(-3);
   const performanceBoost = recentAverage === null ? 0 : (recentAverage - 6.2) * 5.5;
   const absencePenalty = player.injured
@@ -1143,6 +1146,7 @@ function playerFormState(player: Player, matches: Match[], playersById: Map<stri
 
   return {
     balanceScore,
+    hasData,
     label,
     notes,
     percent,
@@ -3875,7 +3879,7 @@ export default function Home() {
           {row.goals} Goles · {row.appearances} PJ{compactAge !== null ? ` · ${compactAge} años` : ""}
         </span>
         <span className="ranking-card-detail">
-          Forma {row.form.percent}% · {row.wins} {row.wins === 1 ? "victoria" : "victorias"}
+          {row.form.hasData ? `Forma ${row.form.percent}%` : "Forma pendiente"} · {row.wins} {row.wins === 1 ? "victoria" : "victorias"}
         </span>
         <span className="fifa-facets">
           {playerFacets.map((facet) => (
@@ -3915,6 +3919,7 @@ export default function Home() {
     const teamClass = team === "A" ? "team-a-card" : team === "B" ? "team-b-card" : "";
     const nextTeam = team === "A" ? "B" : "A";
     const formState = playerForm(player);
+    const formSummary = formState.hasData ? ` · Forma ${formState.percent}%` : "";
     const playerRatingWindow = ratingWindow(player, ratingVoterId);
     const canChangeThisPlayerStatus = matchConfigured && (isDemoMode || canUseAdminControls || (hasRealTeam && isRegisteredUser && player.ownerUserId === currentUserId));
     const ratingTitle = player.ownerUserId === currentUserId
@@ -3932,12 +3937,12 @@ export default function Home() {
               <img src={player.avatar} alt="" draggable={false} style={avatarImageStyle(player)} />
             ) : null}
             <strong>
-              {playerDisplayName(player)} <small>({playerMediaScore(player).toFixed(1)}) · Forma {formState.percent}% · {player.goals} Goles</small>
+              {playerDisplayName(player)} <small>({playerMediaScore(player).toFixed(1)}){formSummary} · {player.goals} Goles</small>
             </strong>
           </button>
           <span className="player-meta">
             {positionLabel(player)}
-            <em className={`form-chip form-${formState.status}`}>{formState.label}</em>
+            {formState.hasData ? <em className={`form-chip form-${formState.status}`}>{formState.label}</em> : null}
             {player.inactive ? <em className="reserve-chip">Ya no está</em> : null}
             {isReserve ? <em className="reserve-chip">Reserva</em> : null}
             {isWaiting ? <em className="reserve-chip">Espera</em> : null}
@@ -5019,12 +5024,22 @@ export default function Home() {
                   <strong>{selectedPeerScore.toFixed(1)}</strong>
                   <small>Calidad por valoraciones. No baja por no jugar.</small>
                   {selectedForm ? (
-                    <div className={`form-state-card form-${selectedForm.status}`}>
-                      <b>Forma actual {selectedForm.percent}%</b>
-                      <em>{selectedForm.label}</em>
-                      <small>Valor para equilibrar: {selectedEffectiveScore.toFixed(1)}</small>
-                      <small>Fiabilidad: {selectedForm.reliability}%</small>
-                      {selectedForm.notes.length ? <small>{selectedForm.notes.join(" · ")}</small> : null}
+                    <div className={`form-state-card ${selectedForm.hasData ? `form-${selectedForm.status}` : "form-pending"}`}>
+                      {selectedForm.hasData ? (
+                        <>
+                          <b>Forma actual {selectedForm.percent}%</b>
+                          <em>{selectedForm.label}</em>
+                          <small>Valor para equilibrar: {selectedEffectiveScore.toFixed(1)}</small>
+                          <small>Fiabilidad: {selectedForm.reliability}%</small>
+                          {selectedForm.notes.length ? <small>{selectedForm.notes.join(" · ")}</small> : null}
+                        </>
+                      ) : (
+                        <>
+                          <b>Forma pendiente</b>
+                          <em>Sin partidos finalizados</em>
+                          <small>Para equilibrar cuenta como neutral hasta tener datos reales.</small>
+                        </>
+                      )}
                     </div>
                   ) : null}
                 </div>
@@ -5195,6 +5210,7 @@ function Team({
   title,
   formForPlayer = () => ({
     balanceScore: 5,
+    hasData: false,
     label: "Normal",
     notes: [],
     percent: 100,
@@ -5220,25 +5236,29 @@ function Team({
     <div className={`team ${variant}`}>
       <h2>{title}</h2>
       {players.length === 0 ? <p>Marca jugadores como “Voy”.</p> : null}
-      {orderedPlayers.map((player) => (
-        <div className={playerPosition(player) === "Porteria" ? "goalkeeper-row" : ""} key={player.id}>
-          <span>
-            {player.inactive ? (
-              <span className="inline-inactive" title="Ya no está en el grupo" aria-label="Ya no está en el grupo">
-                <UserOffLogo />
-              </span>
-            ) : null}
-            {player.injured ? (
-              <span className="inline-injury" title="Jugador lesionado" aria-label="Jugador lesionado">
-                <HospitalLogo />
-              </span>
-            ) : null}
-            {playerDisplayName(player)}
-            <em>({mediaForPlayer(player).toFixed(1)}) · Forma {formForPlayer(player).percent}% · {player.goals} Goles</em>
-          </span>
-          <small className="position-pill">{positionLabel(player)}</small>
-        </div>
-      ))}
+      {orderedPlayers.map((player) => {
+        const formState = formForPlayer(player);
+
+        return (
+          <div className={playerPosition(player) === "Porteria" ? "goalkeeper-row" : ""} key={player.id}>
+            <span>
+              {player.inactive ? (
+                <span className="inline-inactive" title="Ya no está en el grupo" aria-label="Ya no está en el grupo">
+                  <UserOffLogo />
+                </span>
+              ) : null}
+              {player.injured ? (
+                <span className="inline-injury" title="Jugador lesionado" aria-label="Jugador lesionado">
+                  <HospitalLogo />
+                </span>
+              ) : null}
+              {playerDisplayName(player)}
+              <em>({mediaForPlayer(player).toFixed(1)}){formState.hasData ? ` · Forma ${formState.percent}%` : ""} · {player.goals} Goles</em>
+            </span>
+            <small className="position-pill">{positionLabel(player)}</small>
+          </div>
+        );
+      })}
     </div>
   );
 }

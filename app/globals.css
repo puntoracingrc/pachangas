@@ -3938,6 +3938,10 @@ select:disabled {
   border-color: rgba(254, 202, 202, 0.42);
 }
 
+.form-state-card.form-pending {
+  border-color: rgba(226, 232, 240, 0.34);
+}
+
 .rating-box button {
   background: #202820;
   border: 0;

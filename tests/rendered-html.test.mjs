@@ -56,6 +56,7 @@ test("builds the user manual as its own page", async () => {
   assert.match(html, /Media, forma y equilibrio/);
   assert.match(html, /Media real = promedio/);
   assert.match(html, /Forma actual = porcentaje temporal/);
+  assert.match(html, /Forma pendiente/);
   assert.match(html, /Valor para equilibrar = media real multiplicada por forma actual/);
   assert.match(html, /Fiabilidad = 100% menos 7 puntos/);
   assert.match(html, /Gestión de jugadores/);
@@ -126,11 +127,13 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /showAbsenceStreak/);
   assert.match(page, /sin venir/);
   assert.match(page, /PlayerFormState/);
+  assert.match(page, /hasData/);
   assert.match(page, /playerFormState/);
   assert.match(page, /playerFormStates/);
   assert.match(page, /matchFormRatingForPlayer/);
   assert.match(page, /playerReliability/);
   assert.match(page, /Forma actual/);
+  assert.match(page, /Forma pendiente/);
   assert.match(page, /Valor para equilibrar/);
   assert.match(page, /media real, forma actual/);
   assert.match(page, /matchImpactForPlayer/);
@@ -176,6 +179,7 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(globalsCss, /\.absence-chip/);
   assert.match(globalsCss, /\.form-chip/);
   assert.match(globalsCss, /\.form-state-card/);
+  assert.match(globalsCss, /\.form-state-card\.form-pending/);
   assert.match(globalsCss, /\.balance-summary/);
   assert.match(globalsCss, /scrollbar-color:\s*#64748b #ebe7dc/);
   assert.match(globalsCss, /\.side-history \.history::\-webkit-scrollbar-thumb/);
