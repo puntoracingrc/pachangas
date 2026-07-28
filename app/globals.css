@@ -2002,6 +2002,28 @@ select:disabled {
   padding-left: 6px;
 }
 
+.form-chip {
+  border-left: 1px solid rgba(255, 255, 255, 0.34);
+  color: #fff;
+  font-style: normal;
+  margin-left: 6px;
+  padding-left: 6px;
+}
+
+.form-excellent,
+.form-good {
+  color: #dcfce7;
+}
+
+.form-low,
+.form-returning {
+  color: #fef3c7;
+}
+
+.form-injured {
+  color: #fee2e2;
+}
+
 .absence-chip {
   background: rgba(255, 255, 255, 0.18);
   border-left: 1px solid rgba(255, 255, 255, 0.34);
@@ -3406,25 +3428,44 @@ select:disabled {
   color: rgba(255, 255, 255, 0.72);
 }
 
-.base-rating-card .form-impact {
+.form-state-card {
   background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 8px;
+  display: grid;
+  gap: 4px;
+  margin-top: 6px;
+  padding: 9px;
+}
+
+.form-state-card b {
+  color: #fff;
+  font-size: 14px;
+}
+
+.form-state-card em {
+  background: rgba(255, 255, 255, 0.12);
   border-radius: 999px;
-  color: rgba(255, 255, 255, 0.82);
+  color: rgba(255, 255, 255, 0.9);
   font-size: 12px;
   font-style: normal;
   font-weight: 900;
-  padding: 5px 8px;
+  padding: 4px 8px;
   width: fit-content;
 }
 
-.base-rating-card .form-impact.positive {
-  background: rgba(187, 247, 208, 0.18);
-  color: #bbf7d0;
+.form-state-card.form-excellent,
+.form-state-card.form-good {
+  border-color: rgba(187, 247, 208, 0.38);
 }
 
-.base-rating-card .form-impact.negative {
-  background: rgba(254, 202, 202, 0.18);
-  color: #fecaca;
+.form-state-card.form-low,
+.form-state-card.form-returning {
+  border-color: rgba(254, 243, 199, 0.42);
+}
+
+.form-state-card.form-injured {
+  border-color: rgba(254, 202, 202, 0.42);
 }
 
 .rating-box button {

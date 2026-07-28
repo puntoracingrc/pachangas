@@ -134,6 +134,15 @@ type MatchRatingImpact = {
   delta: number;
   notes: string[];
 };
+type PlayerFormState = {
+  balanceScore: number;
+  label: "En ritmo" | "Excelente" | "Normal" | "Sin ritmo" | "En recuperación" | "Volviendo" | "Fuera del grupo";
+  notes: string[];
+  percent: number;
+  recentAverage: number | null;
+  reliability: number;
+  status: "excellent" | "good" | "normal" | "low" | "injured" | "returning" | "inactive";
+};
 type TeamBalanceMetrics = {
   averageRating: number;
   goalsPerMatch: number;
@@ -715,8 +724,8 @@ function toDateTimeLocal(date: Date) {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 
-function scorePlayer(player: Player, formDelta = 0) {
-  return clampRating(peerAverage(player) + formDelta);
+function scorePlayer(player: Player) {
+  return clampRating(peerAverage(player));
 }
 
 function clampRating(value: number) {
@@ -975,46 +984,99 @@ function matchImpactForPlayer(match: Match, player: Player, side: "A" | "B", pla
   };
 }
 
-function automaticMatchRatingImpacts(matches: Match[], players: Player[]) {
-  const playersById = new Map(players.map((player) => [player.id, player]));
-  const impacts = new Map<string, MatchRatingImpact>();
+function matchFormRatingForPlayer(match: Match, player: Player, side: "A" | "B", playersById: Map<string, Player>) {
+  const impact = matchImpactForPlayer(match, player, side, playersById);
+  return {
+    notes: impact.notes,
+    rating: clampRating(6.2 + impact.delta * 10),
+  };
+}
+
+function playerReliability(player: Player) {
+  return Math.max(70, Math.min(100, Math.round(100 - Math.max(0, player.lateCancels || 0) * 7)));
+}
+
+function playerFormState(player: Player, matches: Match[], playersById: Map<string, Player>): PlayerFormState {
+  if (player.inactive) {
+    return {
+      balanceScore: clampRating(peerAverage(player) * 0.7),
+      label: "Fuera del grupo",
+      notes: ["no cuenta para nuevos partidos"],
+      percent: 70,
+      recentAverage: null,
+      reliability: playerReliability(player),
+      status: "inactive",
+    };
+  }
+
   const finalizedMatches = matches
     .filter((match) => match.scoreA !== undefined && match.scoreB !== undefined)
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  const absenceStreak = consecutiveAbsenceStreak(finalizedMatches, player.id);
+  const playedRatings = finalizedMatches
+    .map((match) => {
+      const side = teamSideForPlayer(match, player.id);
+      if (!side || !matchAttendingIds(match).has(player.id)) return null;
+      return matchFormRatingForPlayer(match, player, side, playersById);
+    })
+    .filter((item): item is { notes: string[]; rating: number } => Boolean(item))
+    .slice(-5);
+  const recentAverage = playedRatings.length
+    ? playedRatings.reduce((sum, item) => sum + item.rating, 0) / playedRatings.length
+    : null;
+  const recentNotes = playedRatings.flatMap((item) => item.notes).filter((note, index, notes) => notes.indexOf(note) === index).slice(-3);
+  const performanceBoost = recentAverage === null ? 0 : (recentAverage - 6.2) * 5.5;
+  const absencePenalty = player.injured
+    ? Math.min(8, absenceStreak * 1.6)
+    : absenceStreak <= 1
+      ? 0
+      : Math.min(18, (absenceStreak - 1) * 3.5);
+  const reliabilityPenalty = Math.max(0, 100 - playerReliability(player)) * 0.12;
+  const rawPercent = 100 + performanceBoost - absencePenalty - reliabilityPenalty;
+  const percent = Math.round(Math.max(player.injured ? 88 : 78, Math.min(110, rawPercent)));
+  const balanceScore = clampRating(peerAverage(player) * (percent / 100));
+  let status: PlayerFormState["status"] = "normal";
+  let label: PlayerFormState["label"] = "Normal";
 
-  finalizedMatches.forEach((match) => {
-    matchAttendingIds(match).forEach((playerId) => {
-      const player = playersById.get(playerId);
-      const side = teamSideForPlayer(match, playerId);
-      const matchEntry = match.players.find((entry) => entry.playerId === playerId);
-      if (!player || !side) return;
-      if (matchEntry && matchEntry.status !== "voy") return;
+  if (player.injured) {
+    status = "injured";
+    label = "En recuperación";
+  } else if (absenceStreak >= 4) {
+    status = "returning";
+    label = "Volviendo";
+  } else if (percent >= 106) {
+    status = "excellent";
+    label = "Excelente";
+  } else if (percent >= 101) {
+    status = "good";
+    label = "En ritmo";
+  } else if (percent <= 92) {
+    status = "low";
+    label = "Sin ritmo";
+  }
 
-      const impact = matchImpactForPlayer(match, player, side, playersById);
-      const previous = impacts.get(playerId) ?? { delta: 0, notes: [] };
-      const nextNotes = [...previous.notes];
-      impact.notes.forEach((note) => {
-        if (!nextNotes.includes(note)) nextNotes.push(note);
-      });
-      impacts.set(playerId, {
-        delta: previous.delta + impact.delta,
-        notes: nextNotes.slice(-4),
-      });
-    });
-  });
+  const notes = [
+    recentAverage === null ? "sin partidos recientes" : `últimos ${playedRatings.length} PJ: ${recentAverage.toFixed(1)}`,
+    absenceStreak > 0 ? `${absenceStreak} sin venir` : "",
+    player.injured ? "lesión suave" : "",
+    player.lateCancels > 0 ? `fiabilidad ${playerReliability(player)}%` : "",
+    ...recentNotes,
+  ].filter(Boolean);
 
-  impacts.forEach((impact, playerId) => {
-    const delta = Number(cappedDelta(impact.delta, 0.8).toFixed(2));
-    impacts.set(playerId, { ...impact, delta });
-  });
-
-  return impacts;
+  return {
+    balanceScore,
+    label,
+    notes,
+    percent,
+    recentAverage,
+    reliability: playerReliability(player),
+    status,
+  };
 }
 
-function formImpactLabel(impact?: MatchRatingImpact) {
-  const delta = impact?.delta ?? 0;
-  if (Math.abs(delta) < 0.05) return "Forma sin ajuste";
-  return `Forma ${delta > 0 ? "+" : ""}${delta.toFixed(1)}`;
+function playerFormStates(matches: Match[], players: Player[]) {
+  const playersById = new Map(players.map((player) => [player.id, player]));
+  return new Map(players.map((player) => [player.id, playerFormState(player, matches, playersById)]));
 }
 
 function ratingHistory(player: Player) {
@@ -1297,7 +1359,7 @@ function teamBalanceSummary(teamA: Player[], teamB: Player[], scoreForPlayer: Pl
 
   return {
     detail: hasPlayers
-      ? `Diferencia ${diff.toFixed(1)} pts · usa media, goles/partido, victorias, experiencia, posición y porteros`
+      ? `Diferencia ${diff.toFixed(1)} pts · usa media real, forma actual, goles/partido, victorias, experiencia, posición y porteros`
       : "Marca jugadores como Voy para calcularlo",
     label,
     metricsA,
@@ -2135,8 +2197,10 @@ export default function Home() {
   const closedMatches = matches
     .filter((match) => match.scoreA !== undefined)
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  const matchRatingImpacts = useMemo(() => automaticMatchRatingImpacts(matches, players), [matches, players]);
-  const effectivePlayerScore = (player: Player) => scorePlayer(player, matchRatingImpacts.get(player.id)?.delta ?? 0);
+  const playerForms = useMemo(() => playerFormStates(matches, players), [matches, players]);
+  const playerMediaScore = (player: Player) => scorePlayer(player);
+  const playerForm = (player: Player) => playerForms.get(player.id) ?? playerFormState(player, matches, new Map(players.map((item) => [item.id, item])));
+  const effectivePlayerScore = (player: Player) => playerForm(player).balanceScore;
   const absenceStreaks = useMemo(() => {
     const streaks = new Map<string, number>();
     players.forEach((player) => streaks.set(player.id, consecutiveAbsenceStreak(matches, player.id)));
@@ -2150,10 +2214,7 @@ export default function Home() {
   const suggestedPayerId = nextPayer(players, matches, activeMatch, payingIds);
   const payerId = activeMatch.payerId && payingIds.includes(activeMatch.payerId) ? activeMatch.payerId : suggestedPayerId;
   const payer = players.find((player) => player.id === payerId);
-  const balancedLineup = useMemo(
-    () => balanceTeams(confirmedPlayers, (player) => scorePlayer(player, matchRatingImpacts.get(player.id)?.delta ?? 0)),
-    [confirmedPlayers, matchRatingImpacts],
-  );
+  const balancedLineup = useMemo(() => balanceTeams(confirmedPlayers, effectivePlayerScore), [confirmedPlayers, playerForms]);
   const suggested = savedTeams(activeMatch, players, confirmedIds) ?? balancedLineup;
   const balanceSummary = teamBalanceSummary(suggested.teamA, suggested.teamB, effectivePlayerScore);
   const lineupClosed = activeMatch.lineupClosed ?? false;
@@ -2713,8 +2774,10 @@ export default function Home() {
         player.id,
         {
           appearances: 0,
+          balanceScore: effectivePlayerScore(player),
+          form: playerForm(player),
           goals: 0,
-          media: effectivePlayerScore(player),
+          media: playerMediaScore(player),
           player,
           wins: 0,
         },
@@ -2758,7 +2821,7 @@ export default function Home() {
       b.appearances - a.appearances ||
       playerDisplayName(a.player).localeCompare(playerDisplayName(b.player), "es"),
     );
-  }, [activeRankingSeason, matches, players, rankingSort, matchRatingImpacts]);
+  }, [activeRankingSeason, matches, players, rankingSort, playerForms]);
   const rankingBadgeText = (row: (typeof rankedPlayers)[number]) => {
     if (rankingSort === "goles") return `${row.goals} ${row.goals === 1 ? "gol" : "goles"}`;
     if (rankingSort === "partidos") return `${row.appearances} PJ`;
@@ -2780,7 +2843,7 @@ export default function Home() {
   const otherPlayers = sortedPlayers.filter((player) => !teamAPlayerIds.has(player.id) && !teamBPlayerIds.has(player.id) && !reservePlayerIds.has(player.id) && !waitingPlayerIds.has(player.id));
   const selectedPlayer = selectedPlayerId ? players.find((player) => player.id === selectedPlayerId) : undefined;
   const selectedRatingFacets = selectedPlayer ? ratingFacetsForPlayer(selectedPlayer) : ratingFacets;
-  const selectedFormImpact = selectedPlayer ? matchRatingImpacts.get(selectedPlayer.id) : undefined;
+  const selectedForm = selectedPlayer ? playerForm(selectedPlayer) : undefined;
   const selectedEffectiveScore = selectedPlayer ? effectivePlayerScore(selectedPlayer) : 0;
   const selectedPeerScore = selectedPlayer ? peerAverage(selectedPlayer) : 0;
   const currentTeam = remoteTeams.find((team) => team.id === remoteGroupId);
@@ -3479,6 +3542,7 @@ export default function Home() {
     const showAbsenceStreak = absenceStreak > 0 && status !== "voy";
     const teamClass = team === "A" ? "team-a-card" : team === "B" ? "team-b-card" : "";
     const nextTeam = team === "A" ? "B" : "A";
+    const formState = playerForm(player);
     const playerRatingWindow = ratingWindow(player, ratingVoterId);
     const canChangeThisPlayerStatus = matchConfigured && (isDemoMode || canUseAdminControls || (hasRealTeam && isRegisteredUser && player.ownerUserId === currentUserId));
     const ratingTitle = player.ownerUserId === currentUserId
@@ -3496,11 +3560,12 @@ export default function Home() {
               <img src={player.avatar} alt="" />
             ) : null}
             <strong>
-              {playerDisplayName(player)} <small>({effectivePlayerScore(player).toFixed(1)}) {player.goals} Goles</small>
+              {playerDisplayName(player)} <small>({playerMediaScore(player).toFixed(1)}) · Forma {formState.percent}% · {player.goals} Goles</small>
             </strong>
           </button>
           <span className="player-meta">
             {positionLabel(player)}
+            <em className={`form-chip form-${formState.status}`}>{formState.label}</em>
             {player.inactive ? <em className="reserve-chip">Ya no está</em> : null}
             {isReserve ? <em className="reserve-chip">Reserva</em> : null}
             {isWaiting ? <em className="reserve-chip">Espera</em> : null}
@@ -4311,8 +4376,8 @@ export default function Home() {
             <button type="button" onClick={applyRandomTeams} disabled={!canEditLineup}>Aleatorio</button>
             <button type="button" onClick={applyBalancedTeams} disabled={!canEditLineup}>Equilibrado por stats</button>
           </div>
-          <Team title="Equipo 1" players={suggested.teamA} variant="team-a" scoreForPlayer={effectivePlayerScore} />
-          <Team title="Equipo 2" players={suggested.teamB} variant="team-b" scoreForPlayer={effectivePlayerScore} />
+          <Team title="Equipo 1" players={suggested.teamA} variant="team-a" scoreForPlayer={effectivePlayerScore} mediaForPlayer={playerMediaScore} formForPlayer={playerForm} />
+          <Team title="Equipo 2" players={suggested.teamB} variant="team-b" scoreForPlayer={effectivePlayerScore} mediaForPlayer={playerMediaScore} formForPlayer={playerForm} />
           {canUseAdminControls && matchConfigured && !matchFinalized ? (
             <button className="primary-button full" onClick={toggleLineupClosed}>
               {lineupClosed ? "Abrir alineación" : "Cerrar alineación"}
@@ -4427,7 +4492,7 @@ export default function Home() {
                     <TrashLogo />
                   </button>
                 ) : null}
-                <strong>{selectedEffectiveScore.toFixed(1)}</strong>
+                <strong>{selectedPeerScore.toFixed(1)}</strong>
               </div>
             </div>
             {!ownPlayer && selectedPlayer && !selectedPlayer.ownerUserId && hasRealTeam && isRegisteredUser ? (
@@ -4440,7 +4505,7 @@ export default function Home() {
               <div className="profile-top">
                 <div className="fifa-card-shell">
                   <label className={canEditSelectedPlayer ? "fifa-player-card" : "fifa-player-card readonly-card"}>
-                    <span className="fifa-score">{Math.round(selectedEffectiveScore * 10)}</span>
+                    <span className="fifa-score">{Math.round(selectedPeerScore * 10)}</span>
                     <span className="fifa-position">{positionShort(selectedPlayer)}</span>
                     <span className="fifa-photo">
                       {selectedPlayer.avatar ? (
@@ -4589,13 +4654,18 @@ export default function Home() {
                   </select>
                 </label>
                 <div className="base-rating-card">
-                  <span>Valor actual</span>
-                  <strong>{selectedEffectiveScore.toFixed(1)}</strong>
-                  <small>{selectedPeerScore.toFixed(1)} por votos</small>
-                  <em className={(selectedFormImpact?.delta ?? 0) > 0.04 ? "form-impact positive" : (selectedFormImpact?.delta ?? 0) < -0.04 ? "form-impact negative" : "form-impact"}>
-                    {formImpactLabel(selectedFormImpact)}
-                  </em>
-                  {selectedFormImpact?.notes.length ? <small>{selectedFormImpact.notes.join(" · ")}</small> : null}
+                  <span>Media</span>
+                  <strong>{selectedPeerScore.toFixed(1)}</strong>
+                  <small>Calidad por valoraciones. No baja por no jugar.</small>
+                  {selectedForm ? (
+                    <div className={`form-state-card form-${selectedForm.status}`}>
+                      <b>Forma actual {selectedForm.percent}%</b>
+                      <em>{selectedForm.label}</em>
+                      <small>Valor para equilibrar: {selectedEffectiveScore.toFixed(1)}</small>
+                      <small>Fiabilidad: {selectedForm.reliability}%</small>
+                      {selectedForm.notes.length ? <small>{selectedForm.notes.join(" · ")}</small> : null}
+                    </div>
+                  ) : null}
                 </div>
                 <div className={canRateSelectedPlayer ? "rating-box rating-open-box" : "rating-box rating-locked-box"}>
                   <div className="rating-box-title">
@@ -4769,7 +4839,7 @@ export default function Home() {
                 </strong>
                 <b>{rankingBadgeText(row)}</b>
                 <small>
-                  {positionLabel(row.player)} · {row.appearances} {row.appearances === 1 ? "partido" : "partidos"} · {row.goals} {row.goals === 1 ? "gol" : "goles"} · {row.wins} {row.wins === 1 ? "victoria" : "victorias"} · media {row.media.toFixed(1)}
+                  {positionLabel(row.player)} · Forma {row.form.percent}% · {row.form.label} · {row.appearances} {row.appearances === 1 ? "partido" : "partidos"} · {row.goals} {row.goals === 1 ? "gol" : "goles"} · {row.wins} {row.wins === 1 ? "victoria" : "victorias"} · media {row.media.toFixed(1)}
                 </small>
               </button>
             ))}
@@ -4790,11 +4860,23 @@ export default function Home() {
 
 function Team({
   title,
+  formForPlayer = () => ({
+    balanceScore: 5,
+    label: "Normal",
+    notes: [],
+    percent: 100,
+    recentAverage: null,
+    reliability: 100,
+    status: "normal",
+  }),
+  mediaForPlayer = scorePlayer,
   players,
   scoreForPlayer = scorePlayer,
   variant,
 }: {
   title: string;
+  formForPlayer?: (player: Player) => PlayerFormState;
+  mediaForPlayer?: PlayerScoreFn;
   players: Player[];
   scoreForPlayer?: PlayerScoreFn;
   variant: "team-a" | "team-b";
@@ -4819,7 +4901,7 @@ function Team({
               </span>
             ) : null}
             {playerDisplayName(player)}
-            <em>({scoreForPlayer(player).toFixed(1)}) {player.goals} Goles</em>
+            <em>({mediaForPlayer(player).toFixed(1)}) · Forma {formForPlayer(player).percent}% · {player.goals} Goles</em>
           </span>
           <small className="position-pill">{positionLabel(player)}</small>
         </div>
