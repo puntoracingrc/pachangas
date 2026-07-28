@@ -1676,6 +1676,7 @@ export default function Home() {
   const [teamGalleryOpen, setTeamGalleryOpen] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [siteSettings, setSiteSettings] = useState<SiteSettings>(defaultSiteSettings);
+  const [settingsDraft, setSettingsDraft] = useState<SiteSettings>(defaultSiteSettings);
   const [result, setResult] = useState({ a: "", b: "" });
   const [rankingSeason, setRankingSeason] = useState(seasonKey(new Date()));
   const [historySeason, setHistorySeason] = useState("all");
@@ -2436,8 +2437,14 @@ export default function Home() {
 
   function toggleSettingsPanel() {
     const nextShowSettings = !showSettings;
+    if (nextShowSettings) setSettingsDraft(siteSettings);
     setShowSettings(nextShowSettings);
     if (nextShowSettings) scrollToPanel(settingsPanelRef);
+  }
+
+  function saveSettingsPanel() {
+    if (canUseAdminControls) setSiteSettings(settingsDraft);
+    setShowSettings(false);
   }
 
   function runCreateAction(action: () => void) {
@@ -4241,13 +4248,13 @@ export default function Home() {
         <section className="top-panel settings-panel" ref={settingsPanelRef}>
           <label>
             Instrucciones
-            <input value={siteSettings.subtitle} disabled={!canUseAdminControls} onChange={(event) => setSiteSettings({ ...siteSettings, subtitle: event.target.value })} />
+            <input value={settingsDraft.subtitle} disabled={!canUseAdminControls} onChange={(event) => setSettingsDraft({ ...settingsDraft, subtitle: event.target.value })} />
           </label>
           <div className="palette-field">
             <span>Color equipo 1</span>
             <div className="color-select">
-              <span style={{ background: siteSettings.teamAColor }} />
-              <select value={siteSettings.teamAColor} disabled={!canUseAdminControls} onChange={(event) => setSiteSettings({ ...siteSettings, teamAColor: event.target.value })}>
+              <span style={{ background: settingsDraft.teamAColor }} />
+              <select value={settingsDraft.teamAColor} disabled={!canUseAdminControls} onChange={(event) => setSettingsDraft({ ...settingsDraft, teamAColor: event.target.value })}>
                 {teamPalette.map((color) => (
                   <option key={`team-a-${color.value}`} value={color.value}>{color.name}</option>
                 ))}
@@ -4257,8 +4264,8 @@ export default function Home() {
           <div className="palette-field">
             <span>Color equipo 2</span>
             <div className="color-select">
-              <span style={{ background: siteSettings.teamBColor }} />
-              <select value={siteSettings.teamBColor} disabled={!canUseAdminControls} onChange={(event) => setSiteSettings({ ...siteSettings, teamBColor: event.target.value })}>
+              <span style={{ background: settingsDraft.teamBColor }} />
+              <select value={settingsDraft.teamBColor} disabled={!canUseAdminControls} onChange={(event) => setSettingsDraft({ ...settingsDraft, teamBColor: event.target.value })}>
                 {teamPalette.map((color) => (
                   <option key={`team-b-${color.value}`} value={color.value}>{color.name}</option>
                 ))}
@@ -4306,7 +4313,7 @@ export default function Home() {
               </div>
             ) : null}
           </div>
-          <button className="panel-hide-button" type="button" onClick={() => setShowSettings(false)}>
+          <button className="panel-hide-button" type="button" onClick={saveSettingsPanel}>
             Guardar
           </button>
         </section>

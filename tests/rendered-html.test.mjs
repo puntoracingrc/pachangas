@@ -374,6 +374,9 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.doesNotMatch(supabaseSql, /policy "Members can update groups"/);
   assert.doesNotMatch(page, /setSiteSettings\(\{ \.\.\.siteSettings, title:/);
   assert.doesNotMatch(page, /setSiteSettings\(\{ \.\.\.siteSettings, brand:/);
+  assert.match(page, /settingsDraft/);
+  assert.match(page, /function saveSettingsPanel/);
+  assert.doesNotMatch(page, /setSiteSettings\(\{ \.\.\.siteSettings, subtitle:/);
   assert.match(page, /update_pachanga_member_name/);
   assert.match(page, /if \(selectedPlayerIsOwn\) setProfileName\(normalizedName\)/);
   assert.doesNotMatch(page, /Guardar nombre/);
