@@ -182,7 +182,11 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /scrollIntoView\(\{ behavior: "smooth", block: "start" \}\)/);
   assert.match(page, /selectedPlayerId === playerId/);
   assert.match(page, /saveSelectedPlayerProfile/);
+  assert.match(page, /profile-save-area/);
   assert.match(page, /Guardar ficha/);
+  assert.match(globalsCss, /--ink:\s*#202820/);
+  assert.match(globalsCss, /\.profile-save-area/);
+  assert.match(globalsCss, /\.profile-save-button/);
   assert.match(page, /goalkeeperRatingFacets/);
   assert.match(page, /Salidas/);
   assert.match(page, /Paradas/);

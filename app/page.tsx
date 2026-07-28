@@ -4601,15 +4601,17 @@ export default function Home() {
                     disabled={!canEditSelectedPlayer}
                     onChange={(event) => updatePlayer(selectedPlayer.id, { phone: event.target.value })}
                   />
-                  <button
-                    className="profile-save-button"
-                    type="button"
-                    onClick={() => void saveSelectedPlayerProfile()}
-                    disabled={!canEditSelectedPlayer}
-                  >
-                    Guardar ficha
-                  </button>
-                  {profileSaveMessage ? <small className="profile-save-message">{profileSaveMessage}</small> : null}
+                  <div className="profile-save-area">
+                    <button
+                      className="profile-save-button"
+                      type="button"
+                      onClick={() => void saveSelectedPlayerProfile()}
+                      disabled={!canEditSelectedPlayer}
+                    >
+                      Guardar ficha
+                    </button>
+                    {profileSaveMessage ? <small className="profile-save-message">{profileSaveMessage}</small> : null}
+                  </div>
                 </div>
               </div>
               <div className="profile-fields">
