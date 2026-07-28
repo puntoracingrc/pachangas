@@ -1191,6 +1191,11 @@ export default function Home() {
   });
   const applyingRemoteRef = useRef(false);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const matchPanelRef = useRef<HTMLElement>(null);
+  const settingsPanelRef = useRef<HTMLElement>(null);
+  const teamFormRef = useRef<HTMLFormElement>(null);
+  const playerFormRef = useRef<HTMLFormElement>(null);
+  const venueFormRef = useRef<HTMLFormElement>(null);
   const playerProfileRef = useRef<HTMLDivElement>(null);
   const cameraVideoRef = useRef<HTMLVideoElement>(null);
   const cameraStreamRef = useRef<MediaStream | null>(null);
@@ -1653,10 +1658,43 @@ export default function Home() {
     }
   }
 
+  function scrollToPanel(ref: { current: HTMLElement | null }) {
+    window.setTimeout(() => {
+      window.requestAnimationFrame(() => {
+        ref.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+    }, 0);
+  }
+
   function scrollToPlayerProfile() {
-    window.requestAnimationFrame(() => {
-      playerProfileRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-    });
+    scrollToPanel(playerProfileRef);
+  }
+
+  function scrollToQuickForm(form: NonNullable<typeof openQuickForm>) {
+    const targetRef = form === "player" ? playerFormRef : form === "venue" ? venueFormRef : teamFormRef;
+    scrollToPanel(targetRef);
+  }
+
+  function toggleQuickForm(form: NonNullable<typeof openQuickForm>) {
+    const nextForm = openQuickForm === form ? null : form;
+    setOpenQuickForm(nextForm);
+    if (nextForm) scrollToQuickForm(nextForm);
+  }
+
+  function showQuickForm(form: NonNullable<typeof openQuickForm>) {
+    setOpenQuickForm(form);
+    scrollToQuickForm(form);
+  }
+
+  function toggleSettingsPanel() {
+    const nextShowSettings = !showSettings;
+    setShowSettings(nextShowSettings);
+    if (nextShowSettings) scrollToPanel(settingsPanelRef);
+  }
+
+  function selectMatch(matchId: string) {
+    setActiveMatchId(matchId);
+    scrollToPanel(matchPanelRef);
   }
 
   function setStatus(playerId: string, status: MatchPlayer["status"]) {
@@ -1796,7 +1834,7 @@ export default function Home() {
     if (!canUseAdminControls) return;
     const existingDraft = matches.find((match) => !match.configured && !match.closed && match.scoreA === undefined);
     if (existingDraft) {
-      setActiveMatchId(existingDraft.id);
+      selectMatch(existingDraft.id);
       return;
     }
 
@@ -1820,7 +1858,7 @@ export default function Home() {
       reserveLimit: activeMatch.reserveLimit ?? 0,
     };
     setMatches((current) => [next, ...current]);
-    setActiveMatchId(next.id);
+    selectMatch(next.id);
   }
 
   function toggleLineupClosed() {
@@ -2964,16 +3002,16 @@ export default function Home() {
           <button className="primary-button" onClick={createMatch} disabled={!canUseAdminControls}>
             + Partido
           </button>
-          <button className="secondary-button" onClick={() => setOpenQuickForm(openQuickForm === "player" ? null : "player")} disabled={!canUseAdminControls}>
+          <button className="secondary-button" onClick={() => toggleQuickForm("player")} disabled={!canUseAdminControls}>
             + Jugador
           </button>
-          <button className="secondary-button" onClick={() => setOpenQuickForm(openQuickForm === "venue" ? null : "venue")} disabled={!canUseAdminControls}>
+          <button className="secondary-button" onClick={() => toggleQuickForm("venue")} disabled={!canUseAdminControls}>
             + Campo
           </button>
-          <button className="secondary-button" onClick={() => setOpenQuickForm(openQuickForm === "team" ? null : "team")}>
+          <button className="secondary-button" onClick={() => toggleQuickForm("team")}>
             + Equipo
           </button>
-          <button className="secondary-button" onClick={() => setShowSettings((current) => !current)} disabled={!canUseAdminControls}>
+          <button className="secondary-button" onClick={toggleSettingsPanel} disabled={!canUseAdminControls}>
             Configurar
           </button>
         </div>
@@ -3031,7 +3069,7 @@ export default function Home() {
       ) : null}
 
       {openQuickForm === "team" ? (
-        <form className="top-panel team-create-form top-team-form" onSubmit={createTeam}>
+        <form className="top-panel team-create-form top-team-form" ref={teamFormRef} onSubmit={createTeam}>
           <input value={newTeamName} onChange={(event) => setNewTeamName(event.target.value)} placeholder="Nombre del nuevo equipo" />
           <button type="submit" disabled={!canCreateTeam}>Crear equipo</button>
           {!canCreateTeam ? (
@@ -3097,7 +3135,7 @@ export default function Home() {
               Puedes tocar jugadores, cambiar asistencia, revisar reservas, pagos, alineaciones, valoraciones y fichas. Cuando crees tu equipo real, la web empieza limpia.
             </p>
           </div>
-          <button className="primary-button" type="button" onClick={() => setOpenQuickForm("team")}>
+          <button className="primary-button" type="button" onClick={() => showQuickForm("team")}>
             Crear mi equipo limpio
           </button>
         </section>
@@ -3137,7 +3175,7 @@ export default function Home() {
       ) : null}
 
       {showSettings ? (
-        <section className="top-panel settings-panel">
+        <section className="top-panel settings-panel" ref={settingsPanelRef}>
           <label>
             Instrucciones
             <input value={siteSettings.subtitle} onChange={(event) => setSiteSettings({ ...siteSettings, subtitle: event.target.value })} />
@@ -3171,14 +3209,14 @@ export default function Home() {
       ) : null}
 
       {openQuickForm === "player" ? (
-        <form className="top-panel add-player top-player-form" onSubmit={addPlayer}>
+        <form className="top-panel add-player top-player-form" ref={playerFormRef} onSubmit={addPlayer}>
           <input placeholder="Nombre del jugador" value={newPlayer} onChange={(event) => setNewPlayer(event.target.value)} />
           <button type="submit">Guardar jugador</button>
         </form>
       ) : null}
 
       {openQuickForm === "venue" ? (
-        <form className="top-panel venue-form top-venue-form" onSubmit={addVenue}>
+        <form className="top-panel venue-form top-venue-form" ref={venueFormRef} onSubmit={addVenue}>
           <input
             placeholder="Crear campo: nombre"
             value={newVenue.name}
@@ -3258,7 +3296,7 @@ export default function Home() {
             <div className="match-row" key={match.id}>
               <button
                 className={match.id === activeMatch.id ? "match-item active" : "match-item"}
-                onClick={() => setActiveMatchId(match.id)}
+                onClick={() => selectMatch(match.id)}
               >
                 <span>{match.title}</span>
                 <small>{new Date(match.date).toLocaleString("es-ES", { weekday: "short", hour: "2-digit", minute: "2-digit" })}</small>
@@ -3300,7 +3338,7 @@ export default function Home() {
                         <button
                           aria-label={`Abrir foto de ${match.title}`}
                           className="history-photo"
-                          onClick={() => setActiveMatchId(match.id)}
+                          onClick={() => selectMatch(match.id)}
                           type="button"
                         >
                           <img src={match.teamPhoto} alt="" />
@@ -3334,7 +3372,7 @@ export default function Home() {
           </div>
         </aside>
 
-        <section className={canUseAdminControls ? "panel main-panel" : "panel main-panel player-facing-main"} id="partido">
+        <section className={canUseAdminControls ? "panel main-panel" : "panel main-panel player-facing-main"} id="partido" ref={matchPanelRef}>
           <div className={canEditMatchSettings ? "match-editor" : "match-editor readonly-editor"}>
             {!canUseAdminControls ? <span className="admin-only-badge">Solo admin</span> : null}
             {canUseAdminControls && matchFinalized ? <span className="admin-only-badge">Partido finalizado</span> : null}

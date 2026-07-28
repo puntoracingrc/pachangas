@@ -192,6 +192,15 @@ h1 {
   padding: 14px;
 }
 
+.settings-panel,
+.top-player-form,
+.top-team-form,
+.top-venue-form,
+.main-panel,
+.player-profile {
+  scroll-margin-top: 14px;
+}
+
 .auth-panel {
   align-items: center;
   display: grid;

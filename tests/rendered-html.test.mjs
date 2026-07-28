@@ -105,6 +105,7 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(globalsCss, /\.team-photo-card/);
   assert.match(globalsCss, /\.history-item\.has-photo/);
   assert.match(globalsCss, /\.google-signin-button/);
+  assert.match(globalsCss, /scroll-margin-top:\s*14px/);
   assert.match(globalsCss, /overflow-y:\s*auto/);
   assert.match(globalsCss, /\.hero-actions\s*\{[\s\S]*grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\)/);
   assert.match(globalsCss, /overflow-x:\s*hidden/);
@@ -117,6 +118,12 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /showPlayerSwitcher\s*=\s*Boolean\(canUseAdminControls\s*&&\s*selectedPlayer\s*&&\s*!selectedPlayerIsOwn/);
   assert.match(page, /profile-player-switcher/);
   assert.match(page, /function scrollToPlayerProfile/);
+  assert.match(page, /function scrollToPanel/);
+  assert.match(page, /function toggleQuickForm/);
+  assert.match(page, /function selectMatch/);
+  assert.match(page, /matchPanelRef/);
+  assert.match(page, /settingsPanelRef/);
+  assert.match(page, /scrollIntoView\(\{ behavior: "smooth", block: "start" \}\)/);
   assert.match(page, /selectedPlayerId === playerId/);
   assert.match(page, /saveSelectedPlayerProfile/);
   assert.match(page, /Guardar ficha/);
