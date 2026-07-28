@@ -2905,9 +2905,11 @@ export default function Home() {
                 <WhatsAppLogo />
               </button>
             </div>
-            <small className={`sync-status sync-${syncStatus}`}>
-              {syncStatus === "live" ? "Sincronizado" : syncStatus === "connecting" ? "Conectando..." : syncStatus === "error" ? `Sin sync: ${syncError}` : "Modo local"}
-            </small>
+            {syncStatus !== "local" ? (
+              <small className={`sync-status sync-${syncStatus}`}>
+                {syncStatus === "live" ? "Sincronizado" : syncStatus === "connecting" ? "Conectando..." : `Sin sync: ${syncError}`}
+              </small>
+            ) : null}
           </div>
 
           <div className="team-player-grid">
