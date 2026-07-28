@@ -1212,6 +1212,7 @@ export default function Home() {
         <form className="top-panel team-create-form top-team-form" onSubmit={createTeam}>
           <input value={newTeamName} onChange={(event) => setNewTeamName(event.target.value)} placeholder="Nombre del nuevo equipo" />
           <button type="submit">Crear equipo</button>
+          <button className="ghost-form-button" type="button" onClick={() => setOpenQuickForm(null)}>Cerrar</button>
         </form>
       ) : null}
 

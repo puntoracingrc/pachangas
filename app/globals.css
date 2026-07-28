@@ -121,7 +121,7 @@ h1 {
 .top-team-form {
   display: grid;
   gap: 10px;
-  grid-template-columns: minmax(260px, 1fr) 160px;
+  grid-template-columns: minmax(260px, 1fr) 160px 100px;
 }
 
 .team-access-panel {
@@ -213,6 +213,12 @@ h1 {
   color: #fff;
   font-weight: 900;
   min-height: 42px;
+}
+
+.team-create-form .ghost-form-button {
+  background: #f1efe6;
+  border: 1px solid var(--line);
+  color: var(--foreground);
 }
 
 .team-members {
