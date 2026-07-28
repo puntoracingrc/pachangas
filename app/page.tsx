@@ -1402,6 +1402,7 @@ export default function Home() {
   const balancedLineup = useMemo(() => balanceTeams(confirmedPlayers), [confirmedPlayers]);
   const suggested = savedTeams(activeMatch, players, confirmedIds) ?? balancedLineup;
   const lineupClosed = activeMatch.lineupClosed ?? false;
+  const matchFinalized = Boolean(activeMatch.closed || activeMatch.scoreA !== undefined);
   const scoreAValue = result.a.trim() === "" ? undefined : Number(result.a);
   const scoreBValue = result.b.trim() === "" ? undefined : Number(result.b);
   const resultIsReady =
@@ -1426,6 +1427,7 @@ export default function Home() {
   }
 
   function setStatus(playerId: string, status: MatchPlayer["status"]) {
+    if (matchFinalized && !canUseAdminControls) return;
     const player = players.find((item) => item.id === playerId);
     if (status === "voy" && (player?.injured || player?.inactive)) return;
     const existing = activeMatch.players.find((entry) => entry.playerId === playerId);
@@ -1433,7 +1435,35 @@ export default function Home() {
     const nextPlayers = existing
       ? activeMatch.players.map((entry) => (entry.playerId === playerId ? { ...entry, status, joinedAt, paid: status === "voy" ? entry.paid : false } : entry))
       : [...activeMatch.players, { playerId, status, joinedAt, paid: false }];
-    updateMatch({ ...activeMatch, players: nextPlayers });
+    const wasConfirmed = existing?.status === "voy";
+    const willBeConfirmed = status === "voy";
+    const previousGoals = activeMatch.scorers?.find((entry) => entry.playerId === playerId)?.goals ?? 0;
+    const finalizedScoreA = activeMatch.scoreA ?? 0;
+    const finalizedScoreB = activeMatch.scoreB ?? 0;
+    const finalizedWinningIds = finalizedScoreA === finalizedScoreB ? [] : finalizedScoreA > finalizedScoreB ? activeMatch.teamA ?? [] : activeMatch.teamB ?? [];
+    const nextMatch = {
+      ...activeMatch,
+      players: nextPlayers,
+      scorers: matchFinalized && wasConfirmed && !willBeConfirmed ? activeMatch.scorers?.filter((entry) => entry.playerId !== playerId) : activeMatch.scorers,
+    };
+
+    updateMatch(nextMatch);
+
+    if (matchFinalized && wasConfirmed !== willBeConfirmed) {
+      const direction = willBeConfirmed ? 1 : -1;
+      setPlayers((current) =>
+        current.map((item) =>
+          item.id === playerId
+            ? {
+                ...item,
+                appearances: Math.max(0, item.appearances + direction),
+                goals: Math.max(0, item.goals + direction * previousGoals),
+                wins: Math.max(0, item.wins + (finalizedWinningIds.includes(playerId) ? direction : 0)),
+              }
+            : item,
+        ),
+      );
+    }
   }
 
   function setPlayerInjured(playerId: string, injured: boolean) {
@@ -1546,6 +1576,7 @@ export default function Home() {
 
   function toggleLineupClosed() {
     if (!canUseAdminControls) return;
+    if (matchFinalized) return;
     updateMatch({
       ...activeMatch,
       lineupClosed: !lineupClosed,
@@ -1557,6 +1588,7 @@ export default function Home() {
   function applyRandomTeams() {
     if (!canUseAdminControls) return;
     if (lineupClosed) return;
+    if (matchFinalized) return;
     const next = randomTeams(confirmedPlayers);
     updateMatch({
       ...activeMatch,
@@ -1568,6 +1600,7 @@ export default function Home() {
   function applyBalancedTeams() {
     if (!canUseAdminControls) return;
     if (lineupClosed) return;
+    if (matchFinalized) return;
     updateMatch({
       ...activeMatch,
       teamA: balancedLineup.teamA.map((player) => player.id),
@@ -1578,6 +1611,7 @@ export default function Home() {
   function assignPlayerTeam(playerId: string, team: "A" | "B") {
     if (!canUseAdminControls) return;
     if (lineupClosed) return;
+    if (matchFinalized) return;
     const baseTeamA = suggested.teamA.map((player) => player.id).filter((id) => id !== playerId);
     const baseTeamB = suggested.teamB.map((player) => player.id).filter((id) => id !== playerId);
 
@@ -1606,11 +1640,18 @@ export default function Home() {
       ? scorers.map((entry) => (entry.playerId === playerId ? { ...entry, goals: nextGoals } : entry))
       : [...scorers, { playerId, goals: nextGoals }];
     const cleanScorers = nextScorers.filter((entry) => entry.goals > 0);
+    const goalDelta = nextGoals - (existing?.goals ?? 0);
 
     updateMatch({
       ...activeMatch,
       scorers: cleanScorers,
     });
+
+    if (matchFinalized && goalDelta !== 0) {
+      setPlayers((current) =>
+        current.map((player) => (player.id === playerId ? { ...player, goals: Math.max(0, player.goals + goalDelta) } : player)),
+      );
+    }
   }
 
   function scorerRows(teamPlayers: Player[], variant: "team-a" | "team-b") {
@@ -1653,6 +1694,7 @@ export default function Home() {
 
   function finalizeMatch() {
     if (!canUseAdminControls) return;
+    if (matchFinalized) return;
     if (!resultIsReady) return;
 
     const scoreA = Number(scoreAValue);
@@ -1789,7 +1831,8 @@ export default function Home() {
   const canManageTeam = isRegisteredUser && (currentRole === "owner" || currentRole === "admin");
   const canUseAdminControls = hasRealTeam && canManageTeam;
   const canCreateTeam = Boolean(supabase && isRegisteredUser);
-  const canEditLineup = canUseAdminControls && !lineupClosed;
+  const canEditMatchSettings = canUseAdminControls && !matchFinalized;
+  const canEditLineup = canUseAdminControls && !lineupClosed && !matchFinalized;
   const ratingVoterId = currentUserId ?? `local:${profileName.trim().toLocaleLowerCase("es-ES") || "jugador"}`;
   const selectedRatingHistory = selectedPlayer ? ratingHistory(selectedPlayer) : [];
   const selectedRatingWindow = selectedPlayer ? ratingWindow(selectedPlayer, ratingVoterId) : null;
@@ -1825,7 +1868,7 @@ export default function Home() {
   }, [selectedPlayerId, ratingVoterId]);
 
   function updateMatchSettings(next: Match) {
-    if (!canUseAdminControls) return;
+    if (!canEditMatchSettings) return;
     updateMatch(next);
   }
 
@@ -1921,12 +1964,12 @@ export default function Home() {
   }
 
   function changeKind(kind: MatchKind) {
-    if (!canUseAdminControls) return;
+    if (!canEditMatchSettings) return;
     updateMatch({ ...activeMatch, kind, targetPlayers: matchKinds[kind].targetPlayers });
   }
 
   function selectVenue(venueId: string) {
-    if (!canUseAdminControls) return;
+    if (!canEditMatchSettings) return;
     const venue = venues.find((item) => item.id === venueId);
     if (!venue) return;
     const kind = venue.kind ?? activeKind;
@@ -2674,11 +2717,12 @@ export default function Home() {
         </aside>
 
         <section className="panel main-panel">
-          <div className={canUseAdminControls ? "match-editor" : "match-editor readonly-editor"}>
+          <div className={canEditMatchSettings ? "match-editor" : "match-editor readonly-editor"}>
             {!canUseAdminControls ? <span className="admin-only-badge">Solo admin</span> : null}
+            {canUseAdminControls && matchFinalized ? <span className="admin-only-badge">Partido finalizado</span> : null}
             <label>
               Campo
-              <select value={activeMatch.venueId ?? ""} onChange={(event) => selectVenue(event.target.value)} disabled={!canUseAdminControls}>
+              <select value={activeMatch.venueId ?? ""} onChange={(event) => selectVenue(event.target.value)} disabled={!canEditMatchSettings}>
                 <option value="" disabled>Selecciona campo</option>
                 {venues.map((venue) => (
                   <option key={venue.id} value={venue.id}>{venue.name}</option>
@@ -2691,13 +2735,13 @@ export default function Home() {
                 type="datetime-local"
                 step="600"
                 value={activeMatch.date}
-                disabled={!canUseAdminControls}
+                disabled={!canEditMatchSettings}
                 onChange={(event) => updateMatchSettings({ ...activeMatch, date: event.target.value })}
               />
             </label>
             <label>
               Modalidad
-              <select value={activeKind} onChange={(event) => changeKind(event.target.value as MatchKind)} disabled={!canUseAdminControls}>
+              <select value={activeKind} onChange={(event) => changeKind(event.target.value as MatchKind)} disabled={!canEditMatchSettings}>
                 {Object.entries(matchKinds).map(([kind, config]) => (
                   <option key={kind} value={kind}>{config.label}</option>
                 ))}
@@ -2709,7 +2753,7 @@ export default function Home() {
                 type="number"
                 min="0"
                 value={fieldCost}
-                disabled={!canUseAdminControls}
+                disabled={!canEditMatchSettings}
                 onChange={(event) => updateMatchSettings({ ...activeMatch, fieldCost: Number(event.target.value) })}
               />
             </label>
@@ -2719,7 +2763,7 @@ export default function Home() {
                 <input
                   type="checkbox"
                   checked={Boolean(activeMatch.reservesAttend)}
-                  disabled={!canUseAdminControls}
+                  disabled={!canEditMatchSettings}
                   onChange={(event) =>
                     updateMatchSettings({
                       ...activeMatch,
@@ -2737,7 +2781,7 @@ export default function Home() {
                 type="number"
                 min="0"
                 value={activeMatch.reserveLimit ?? 0}
-                disabled={!canUseAdminControls || !activeMatch.reservesAttend}
+                disabled={!canEditMatchSettings || !activeMatch.reservesAttend}
                 onChange={(event) => updateMatchSettings({ ...activeMatch, reserveLimit: Math.max(0, Math.floor(Number(event.target.value) || 0)) })}
               />
             </label>
@@ -2869,7 +2913,7 @@ export default function Home() {
           </div>
           <Team title="Equipo 1" players={suggested.teamA} variant="team-a" />
           <Team title="Equipo 2" players={suggested.teamB} variant="team-b" />
-          {canUseAdminControls ? (
+          {canUseAdminControls && !matchFinalized ? (
             <button className="primary-button full" onClick={toggleLineupClosed}>
               {lineupClosed ? "Abrir alineación" : "Cerrar alineación"}
             </button>
@@ -2877,9 +2921,9 @@ export default function Home() {
           <div className="result-box">
             <span>Resultado</span>
             <div>
-              <input type="number" min="0" value={result.a} onChange={(event) => setResult({ ...result, a: event.target.value })} inputMode="numeric" />
+              <input type="number" min="0" value={result.a} disabled={matchFinalized} onChange={(event) => setResult({ ...result, a: event.target.value })} inputMode="numeric" />
               <b>-</b>
-              <input type="number" min="0" value={result.b} onChange={(event) => setResult({ ...result, b: event.target.value })} inputMode="numeric" />
+              <input type="number" min="0" value={result.b} disabled={matchFinalized} onChange={(event) => setResult({ ...result, b: event.target.value })} inputMode="numeric" />
             </div>
             <div className="scorers-box">
               <strong>Goles</strong>
@@ -2904,7 +2948,11 @@ export default function Home() {
                 </div>
               ) : null}
             </div>
-            <button disabled={!resultIsReady || !canUseAdminControls} onClick={finalizeMatch}>Finalizar partido</button>
+            {matchFinalized ? (
+              <small className="result-locked-note">Partido finalizado. Puedes corregir goleadores y asistencia.</small>
+            ) : (
+              <button disabled={!resultIsReady || !canUseAdminControls} onClick={finalizeMatch}>Finalizar partido</button>
+            )}
           </div>
         </aside>
       </section>

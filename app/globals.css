@@ -1881,6 +1881,12 @@ select:disabled {
   text-align: center;
 }
 
+.result-locked-note {
+  color: var(--ink-soft);
+  font-weight: 800;
+  line-height: 1.35;
+}
+
 .scorers-box {
   background: #fffdfa;
   border: 1px solid var(--line);

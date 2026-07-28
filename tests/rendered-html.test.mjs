@@ -43,6 +43,8 @@ test("keeps the project wired to the Pachanga app", async () => {
   assert.match(page, /grupo/);
   assert.match(page, /invite/);
   assert.match(page, /remoteInviteToken/);
+  assert.match(page, /canEditMatchSettings\s*=\s*canUseAdminControls\s*&&\s*!matchFinalized/);
+  assert.match(page, /Partido finalizado/);
   assert.match(layout, /title:\s*"Pachanga IQ"/);
   assert.match(packageJson, /"@supabase\/supabase-js"/);
   assert.match(supabaseClient, /NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY/);
