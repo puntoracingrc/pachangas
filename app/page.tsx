@@ -3920,6 +3920,7 @@ export default function Home() {
     const nextTeam = team === "A" ? "B" : "A";
     const formState = playerForm(player);
     const formSummary = formState.hasData ? ` · Forma ${formState.percent}%` : "";
+    const matchCardAge = playerAge(player.birthDate, currentDateValue);
     const playerRatingWindow = ratingWindow(player, ratingVoterId);
     const canChangeThisPlayerStatus = matchConfigured && (isDemoMode || canUseAdminControls || (hasRealTeam && isRegisteredUser && player.ownerUserId === currentUserId));
     const ratingTitle = player.ownerUserId === currentUserId
@@ -3937,7 +3938,11 @@ export default function Home() {
               <img src={player.avatar} alt="" draggable={false} style={avatarImageStyle(player)} />
             ) : null}
             <strong>
-              {playerDisplayName(player)} <small>({playerMediaScore(player).toFixed(1)}){formSummary} · {player.goals} Goles</small>
+              <span className="player-name-line">
+                {playerDisplayName(player)}
+                {matchCardAge !== null ? <em className="player-age-inline">{matchCardAge} años</em> : null}
+              </span>
+              <small>({playerMediaScore(player).toFixed(1)}){formSummary} · {player.goals} Goles</small>
             </strong>
           </button>
           <span className="player-meta">

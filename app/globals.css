@@ -1901,6 +1901,21 @@ select:disabled {
   font-weight: 800;
 }
 
+.player-name-line {
+  align-items: baseline;
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.player-age-inline {
+  color: color-mix(in srgb, var(--foreground) 58%, transparent);
+  font-size: 0.78em;
+  font-style: normal;
+  font-weight: 850;
+  white-space: nowrap;
+}
+
 .player-meta,
 .position-pill {
   align-items: center;

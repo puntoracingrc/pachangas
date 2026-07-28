@@ -126,6 +126,9 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /absenceStreaks/);
   assert.match(page, /showAbsenceStreak/);
   assert.match(page, /sin venir/);
+  assert.match(page, /matchCardAge/);
+  assert.match(page, /player-age-inline/);
+  assert.match(globalsCss, /\.player-age-inline/);
   assert.match(page, /PlayerFormState/);
   assert.match(page, /hasData/);
   assert.match(page, /playerFormState/);
