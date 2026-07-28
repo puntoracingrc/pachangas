@@ -35,7 +35,12 @@ test("builds the user manual as its own page", async () => {
   const html = await readFile(new URL("../.next/server/app/manual.html", import.meta.url), "utf8");
   assert.match(html, /Manual de usuario/);
   assert.match(html, /Primera entrada/);
+  assert.match(html, /Crear o entrar en un equipo/);
+  assert.match(html, /Crear &gt; Equipo/);
+  assert.match(html, /Crear &gt; Ficha jugador/);
+  assert.match(html, /Campos y ajustes iniciales/);
   assert.match(html, /Crear partido/);
+  assert.match(html, /Crear &gt; Partido/);
   assert.match(html, /Guardar partido/);
   assert.match(html, /fecha, modalidad/);
   assert.match(html, /se calcula desde la fecha y se guarda en la ficha del partido/);
@@ -52,6 +57,8 @@ test("builds the user manual as its own page", async () => {
   assert.match(html, /Forma actual = porcentaje temporal/);
   assert.match(html, /Valor para equilibrar = media real multiplicada por forma actual/);
   assert.match(html, /Fiabilidad = 100% menos 7 puntos/);
+  assert.match(html, /Gestión de jugadores/);
+  assert.match(html, /Configuración profunda y copias/);
   assert.match(html, /Volver/);
 });
 

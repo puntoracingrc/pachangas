@@ -11,14 +11,50 @@ const manualFlows = [
     ],
   },
   {
+    audience: "Todos",
+    title: "Crear o entrar en un equipo",
+    intro: "El equipo pachanguero es el espacio privado donde se guardan jugadores, campos, partidos e historial.",
+    steps: [
+      "Si entras con una invitación, la web te pide Google si hace falta y después vuelve al equipo correcto.",
+      "Si empiezas desde cero, pulsa Crear > Equipo, escribe el nombre y guarda. El primer usuario queda como admin.",
+      "Cuando creas un equipo real, empieza limpio: sin jugadores, sin campos y sin partidos de demo.",
+      "Comparte la invitación del equipo con los iconos de copiar o WhatsApp para que entren los demás.",
+    ],
+  },
+  {
     audience: "Jugador",
     title: "Tu cuenta y tu ficha",
     intro: "Cada jugador registrado puede tener una ficha propia ligada a su usuario.",
     steps: [
       "Entra con Google y cambia tu nombre visible en el equipo, por ejemplo Alberto.",
-      "Abre Mi ficha para crear o editar tus datos: nombre, teléfono Bizum, foto, posición preferida y estado.",
+      "Pulsa Crear > Ficha jugador para crear o editar tus datos: nombre, teléfono Bizum, foto, posición preferida y estado.",
       "Puedes añadir foto desde archivo o cámara; la app intenta centrar el avatar para que encaje mejor.",
       "Solo tú y los admins podéis editar tu ficha. Las valoraciones las hacen compañeros, no puedes votarte a ti mismo.",
+    ],
+  },
+  {
+    audience: "Admin",
+    title: "Campos y ajustes iniciales",
+    intro: "Antes de crear partidos conviene guardar los campos habituales y los ajustes básicos del sitio.",
+    steps: [
+      "Pulsa Crear > Campo para guardar un campo con nombre, precio y modalidad por defecto.",
+      "La modalidad puede ser fútbol sala, fútbol 7 o fútbol 11.",
+      "En Configurar puedes cambiar las instrucciones del equipo y los colores de los equipos.",
+      "Los colores elegidos se aplican a bloques, listas, fichas, campo y goleadores.",
+    ],
+  },
+  {
+    audience: "Admin",
+    title: "Crear partido",
+    intro: "Un partido nuevo nace como borrador para evitar que la gente se apunte antes de estar bien configurado.",
+    steps: [
+      "Pulsa Crear > Partido y revisa campo, fecha, modalidad, precio y reservas.",
+      "La temporada no se elige a mano: se calcula desde la fecha y se guarda en la ficha del partido.",
+      "Cada temporada empieza en septiembre y termina en agosto del año siguiente.",
+      "Mientras no pulses Guardar partido, no aparece en Próximos partidos y nadie puede marcar asistencia.",
+      "Al guardar se activan confirmaciones, compartir, alineación, resultado y pago.",
+      "El enlace del partido se comparte con Copiar link o WhatsApp.",
+      "Si te equivocas o el partido no se juega, puedes borrarlo con papelera y doble confirmación.",
     ],
   },
   {
@@ -42,72 +78,6 @@ const manualFlows = [
       "Si no está activo, las reservas quedan como suplentes por orden y no entran en el reparto.",
       "El turno de pago rota entre asistentes. El pagador aparece destacado con el icono del dólar.",
       "Cada jugador puede verse como pagado cuando se marque su dólar en verde.",
-    ],
-  },
-  {
-    audience: "Jugador",
-    title: "Valoraciones",
-    intro: "La media del jugador sale de valoraciones por facetas, estilo ficha de fútbol.",
-    steps: [
-      "Las facetas son ritmo, tiro, pase, regate, defensa y físico.",
-      "La valoración se abre cuando ese jugador completa 3 partidos.",
-      "Después de votar, tu voto queda cerrado hasta que ese jugador juegue otros 3 partidos.",
-      "En el listado aparece si la valoración está abierta o cerrada, y la ficha muestra la evolución.",
-    ],
-  },
-  {
-    audience: "Todos",
-    title: "Media, forma y equilibrio",
-    intro: "La app separa la calidad real del jugador de su ritmo temporal para evitar castigos injustos.",
-    steps: [
-      "Media real = promedio de las facetas valoradas por compañeros. Si todavía no hay votos, se usa el valor base de la ficha.",
-      "La media real no baja por no jugar, lesionarse o no apuntarse. Representa calidad: tiro, pase, defensa, físico o facetas de portero.",
-      "Forma actual = porcentaje temporal calculado con los últimos 5 partidos jugados, la racha sin venir, lesiones y fiabilidad.",
-      "Nota reciente de partido = 6.2 más ajustes por victoria, derrota ajustada o amplia, goles, portería a cero y pocos o muchos goles encajados.",
-      "Forma actual parte de 100%. Si las notas recientes son buenas sube un poco; si hay varios partidos sin venir baja poco a poco.",
-      "Lesionado no castiga la media: marca el estado En recuperación y baja la forma de forma suave hasta que vuelva a jugar.",
-      "Fiabilidad = 100% menos 7 puntos por cada cancelación tarde, con mínimo 70%. Afecta al equilibrio, no a la media.",
-      "Valor para equilibrar = media real multiplicada por forma actual. Ejemplo: media 8.0 y forma 92% cuentan como 7.4 para montar equipos.",
-      "El equilibrio también suma goles por partido, victorias, experiencia, posición y bonus de portero/defensa para que el reparto sea más realista.",
-    ],
-  },
-  {
-    audience: "Admin",
-    title: "Crear y configurar equipo",
-    intro: "El primer usuario que crea el equipo queda como admin y puede dar permisos a otros.",
-    steps: [
-      "Pulsa + Equipo, escribe el nombre y guarda. El equipo se crea vacío.",
-      "Comparte la invitación con los iconos de copiar o WhatsApp.",
-      "En Miembros puedes ver usuarios del equipo y cambiar su rol a Admin o Jugador.",
-      "También puedes generar una invitación de admin para alguien que todavía no está registrado.",
-      "El equipo se puede borrar con papelera y doble confirmación para evitar errores.",
-    ],
-  },
-  {
-    audience: "Admin",
-    title: "Campos y configuración",
-    intro: "Antes de crear partidos conviene guardar los campos habituales y los ajustes del sitio.",
-    steps: [
-      "Con + Campo creas un campo con nombre, precio y modalidad por defecto.",
-      "La modalidad puede ser fútbol sala, fútbol 7 o fútbol 11.",
-      "En Configurar puedes cambiar las instrucciones del equipo y los colores de los equipos.",
-      "Los colores elegidos se aplican a bloques, listas, fichas, campo y goleadores.",
-      "Desde Configurar también puedes crear una copia manual, ver las últimas copias del servidor y restaurar una copia si algo se ha borrado por error.",
-      "La app crea copias automáticas al guardar o finalizar un partido, y también justo antes de borrar un equipo.",
-    ],
-  },
-  {
-    audience: "Admin",
-    title: "Crear partido",
-    intro: "Un partido nuevo nace como borrador para evitar que la gente se apunte antes de estar bien configurado.",
-    steps: [
-      "Pulsa + Partido y revisa campo, fecha, modalidad, precio y reservas.",
-      "La temporada no se elige a mano: se calcula desde la fecha y se guarda en la ficha del partido.",
-      "Cada temporada empieza en septiembre y termina en agosto del año siguiente.",
-      "Mientras no pulses Guardar partido, no aparece en Próximos partidos y nadie puede marcar asistencia.",
-      "Al guardar se activan confirmaciones, compartir, alineación, resultado y pago.",
-      "El enlace del partido se comparte con Copiar link o WhatsApp.",
-      "Si te equivocas o el partido no se juega, puedes borrarlo con papelera y doble confirmación.",
     ],
   },
   {
@@ -136,18 +106,6 @@ const manualFlows = [
     ],
   },
   {
-    audience: "Admin",
-    title: "Jugadores",
-    intro: "Los admins pueden crear fichas y mantener limpia la plantilla.",
-    steps: [
-      "Con + Jugador creas una ficha básica cuando alguien todavía no se ha registrado.",
-      "Un jugador registrado puede reclamar o crear su propia ficha.",
-      "Portero fijo ayuda a que el sistema lo coloque siempre en portería.",
-      "Lesionado bloquea el Voy y muestra el icono de hospital en listados.",
-      "Borrar jugador lo deja fuera del grupo, pero no elimina su histórico ni su ranking pasado.",
-    ],
-  },
-  {
     audience: "Todos",
     title: "Historial y ranking",
     intro: "La memoria del grupo vive en los partidos cerrados, el ranking y las fichas.",
@@ -158,6 +116,57 @@ const manualFlows = [
       "Cada fila del ranking abre la ficha del jugador para consultar detalle, estado y evolución.",
     ],
   },
+  {
+    audience: "Jugador",
+    title: "Valoraciones",
+    intro: "La media del jugador sale de valoraciones por facetas, estilo ficha de fútbol.",
+    steps: [
+      "Las facetas son ritmo, tiro, pase, regate, defensa y físico. Los porteros tienen facetas específicas.",
+      "La valoración se abre cuando ese jugador completa 3 partidos.",
+      "Después de votar, tu voto queda cerrado hasta que ese jugador juegue otros 3 partidos.",
+      "En el listado aparece si la valoración está abierta o cerrada, y la ficha muestra la evolución.",
+    ],
+  },
+  {
+    audience: "Todos",
+    title: "Media, forma y equilibrio",
+    intro: "La app separa la calidad real del jugador de su ritmo temporal para evitar castigos injustos.",
+    steps: [
+      "Media real = promedio de las facetas valoradas por compañeros. Si todavía no hay votos, se usa el valor base de la ficha.",
+      "La media real no baja por no jugar, lesionarse o no apuntarse. Representa calidad: tiro, pase, defensa, físico o facetas de portero.",
+      "Forma actual = porcentaje temporal calculado con los últimos 5 partidos jugados, la racha sin venir, lesiones y fiabilidad.",
+      "Nota reciente de partido = 6.2 más ajustes por victoria, derrota ajustada o amplia, goles, portería a cero y pocos o muchos goles encajados.",
+      "Forma actual parte de 100%. Si las notas recientes son buenas sube un poco; si hay varios partidos sin venir baja poco a poco.",
+      "Lesionado no castiga la media: marca el estado En recuperación y baja la forma de forma suave hasta que vuelva a jugar.",
+      "Fiabilidad = 100% menos 7 puntos por cada cancelación tarde, con mínimo 70%. Afecta al equilibrio, no a la media.",
+      "Valor para equilibrar = media real multiplicada por forma actual. Ejemplo: media 8.0 y forma 92% cuentan como 7.4 para montar equipos.",
+      "El equilibrio también suma goles por partido, victorias, experiencia, posición y bonus de portero/defensa para que el reparto sea más realista.",
+    ],
+  },
+  {
+    audience: "Admin",
+    title: "Gestión de jugadores",
+    intro: "Los admins pueden crear fichas y mantener limpia la plantilla.",
+    steps: [
+      "Con Crear > Ficha jugador cada usuario puede crear su ficha. Los admins pueden ayudar a corregir datos si hace falta.",
+      "Un jugador registrado puede reclamar o crear su propia ficha.",
+      "Portero fijo ayuda a que el sistema lo coloque siempre en portería.",
+      "Lesionado bloquea el Voy y muestra el icono de hospital en listados.",
+      "Borrar jugador lo deja fuera del grupo, pero no elimina su histórico ni su ranking pasado.",
+    ],
+  },
+  {
+    audience: "Admin",
+    title: "Configuración profunda y copias",
+    intro: "Cuando el equipo ya funciona, Configurar reúne permisos, estética, instrucciones y rescates.",
+    steps: [
+      "En Miembros puedes ver usuarios del equipo y cambiar su rol a Admin o Jugador.",
+      "También puedes generar una invitación de admin para alguien que todavía no está registrado.",
+      "Desde Configurar puedes crear una copia manual, ver las últimas copias del servidor y restaurar una copia si algo se ha borrado por error.",
+      "La app crea copias automáticas al guardar o finalizar un partido, y también justo antes de borrar un equipo.",
+      "El equipo se puede borrar con papelera y doble confirmación para evitar errores.",
+    ],
+  },
 ];
 
 export function ManualContent() {
@@ -165,10 +174,10 @@ export function ManualContent() {
     <div className="manual-flow-list">
       {manualFlows.map((flow) => (
         <article key={flow.title} className="manual-flow-card">
-          <div>
-            <span>{flow.audience}</span>
+          <header>
             <b>{flow.title}</b>
-          </div>
+            <span>{flow.audience}</span>
+          </header>
           <p>{flow.intro}</p>
           <ol>
             {flow.steps.map((step) => (

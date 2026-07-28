@@ -601,23 +601,33 @@ h1 {
 
 .manual-flow-list {
   display: grid;
-  gap: 12px;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0;
+  grid-template-columns: 1fr;
 }
 
 .manual-flow-card {
-  background: #fff;
+  background: #fffdf7;
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-bottom: 0;
+  border-radius: 0;
   display: grid;
-  gap: 10px;
-  padding: 14px;
+  gap: 12px;
+  padding: 18px;
 }
 
-.manual-flow-card > div {
-  align-items: center;
+.manual-flow-card:first-child {
+  border-radius: 8px 8px 0 0;
+}
+
+.manual-flow-card:last-child {
+  border-bottom: 1px solid var(--line);
+  border-radius: 0 0 8px 8px;
+}
+
+.manual-flow-card header {
+  align-items: start;
   display: flex;
-  gap: 10px;
+  gap: 18px;
   justify-content: space-between;
 }
 
@@ -625,6 +635,7 @@ h1 {
   background: #202820;
   border-radius: 999px;
   color: #fff;
+  flex: 0 0 auto;
   font-size: 11px;
   font-weight: 950;
   padding: 5px 9px;
@@ -632,14 +643,18 @@ h1 {
 }
 
 .manual-flow-card b {
-  font-size: 18px;
+  flex: 1 1 auto;
+  font-size: 22px;
+  line-height: 1.1;
+  min-width: 0;
 }
 
 .manual-flow-card p {
   color: var(--ink-soft);
-  font-size: 14px;
+  font-size: 15px;
   line-height: 1.45;
   margin: 0;
+  max-width: 860px;
 }
 
 .manual-flow-card ol {
@@ -651,8 +666,9 @@ h1 {
 
 .manual-flow-card li {
   color: #2f3934;
-  font-size: 14px;
+  font-size: 15px;
   line-height: 1.42;
+  max-width: 980px;
 }
 
 .manual-page {
@@ -3752,11 +3768,6 @@ select:disabled {
 
   .manual-grid {
     grid-template-columns: 1fr;
-  }
-
-  .manual-flow-card > div {
-    align-items: start;
-    display: grid;
   }
 
   .manual-page-title {
