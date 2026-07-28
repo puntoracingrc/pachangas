@@ -82,6 +82,12 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /absenceStreaks/);
   assert.match(page, /showAbsenceStreak/);
   assert.match(page, /sin venir/);
+  assert.match(page, /automaticMatchRatingImpacts/);
+  assert.match(page, /matchImpactForPlayer/);
+  assert.match(page, /teamHasFixedKeeper/);
+  assert.match(page, /formImpactLabel/);
+  assert.match(page, /Forma sin ajuste/);
+  assert.match(page, /portería a cero/);
   assert.match(page, /footballSeasonStartMonth/);
   assert.match(page, /parsed\.getMonth\(\) >= footballSeasonStartMonth/);
   assert.match(page, /rankingSortLabels/);

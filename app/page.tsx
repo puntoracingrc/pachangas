@@ -129,6 +129,12 @@ type Match = {
   teamPhoto?: string;
 };
 
+type PlayerScoreFn = (player: Player) => number;
+type MatchRatingImpact = {
+  delta: number;
+  notes: string[];
+};
+
 type AppPayload = {
   activeMatchId: string;
   matches: Match[];
@@ -677,8 +683,8 @@ function toDateTimeLocal(date: Date) {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 
-function scorePlayer(player: Player) {
-  return peerAverage(player);
+function scorePlayer(player: Player, formDelta = 0) {
+  return clampRating(peerAverage(player) + formDelta);
 }
 
 function clampRating(value: number) {
@@ -859,6 +865,126 @@ function facetAverage(player: Player, facet: RatingFacet) {
   return player.rating;
 }
 
+function cappedDelta(value: number, limit: number) {
+  return Math.max(-limit, Math.min(limit, value));
+}
+
+function teamSideForPlayer(match: Match, playerId: string) {
+  if (match.teamA?.includes(playerId)) return "A" as const;
+  if (match.teamB?.includes(playerId)) return "B" as const;
+  return undefined;
+}
+
+function teamIdsForSide(match: Match, side: "A" | "B") {
+  return side === "A" ? match.teamA ?? [] : match.teamB ?? [];
+}
+
+function teamScoreForSide(match: Match, side: "A" | "B") {
+  return side === "A" ? match.scoreA ?? 0 : match.scoreB ?? 0;
+}
+
+function matchGoalsForPlayer(match: Match, playerId: string) {
+  return match.scorers?.find((entry) => entry.playerId === playerId)?.goals ?? 0;
+}
+
+function matchImpactForPlayer(match: Match, player: Player, side: "A" | "B", playersById: Map<string, Player>): MatchRatingImpact {
+  const goalsFor = teamScoreForSide(match, side);
+  const goalsAgainst = teamScoreForSide(match, side === "A" ? "B" : "A");
+  const diff = goalsFor - goalsAgainst;
+  const absDiff = Math.abs(diff);
+  const playerGoals = matchGoalsForPlayer(match, player.id);
+  const teamHasFixedKeeper = teamIdsForSide(match, side).some((playerId) => playersById.get(playerId)?.goalkeeperOnly);
+  const line = playerPosition(player);
+  const isKeeper = line === "Porteria";
+  const isDefensive = isKeeper || line === "Defensa";
+  const notes: string[] = [];
+  let delta = 0;
+
+  if (diff > 0) {
+    delta += 0.08 + Math.min(0.08, diff * 0.02);
+    notes.push(absDiff >= 4 ? "victoria amplia" : "victoria");
+  } else if (diff < 0) {
+    const closeLoss = absDiff <= 1;
+    delta -= closeLoss ? 0.03 : 0.05 + Math.min(0.12, absDiff * 0.025);
+    if (goalsFor >= 2) delta += 0.02;
+    if (goalsFor >= 4) delta += 0.02;
+    notes.push(closeLoss ? "derrota ajustada" : absDiff >= 4 ? "derrota amplia" : "derrota");
+  } else {
+    if (goalsFor > 0) delta += 0.02;
+    notes.push("empate");
+  }
+
+  if (playerGoals > 0) {
+    delta += Math.min(0.14, playerGoals * 0.045);
+    notes.push(`${playerGoals} ${playerGoals === 1 ? "gol" : "goles"}`);
+  }
+
+  if (isDefensive) {
+    if (goalsAgainst === 0) {
+      delta += isKeeper ? (player.goalkeeperOnly ? 0.14 : 0.1) : teamHasFixedKeeper ? 0.08 : 0.06;
+      notes.push("portería a cero");
+    } else if (goalsAgainst === 1) {
+      delta += isKeeper ? (player.goalkeeperOnly ? 0.08 : 0.06) : teamHasFixedKeeper ? 0.045 : 0.03;
+      notes.push("pocos goles encajados");
+    } else if (goalsAgainst === 2 && diff >= 0) {
+      delta += isKeeper ? 0.03 : 0.02;
+    }
+
+    if (goalsAgainst >= 4) {
+      delta -= isKeeper ? (player.goalkeeperOnly ? 0.08 : 0.06) : 0.05;
+      notes.push("muchos goles encajados");
+    }
+    if (goalsAgainst >= 6) delta -= isKeeper ? 0.04 : 0.03;
+  }
+
+  return {
+    delta: cappedDelta(delta, 0.24),
+    notes,
+  };
+}
+
+function automaticMatchRatingImpacts(matches: Match[], players: Player[]) {
+  const playersById = new Map(players.map((player) => [player.id, player]));
+  const impacts = new Map<string, MatchRatingImpact>();
+  const finalizedMatches = matches
+    .filter((match) => match.scoreA !== undefined && match.scoreB !== undefined)
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+  finalizedMatches.forEach((match) => {
+    matchAttendingIds(match).forEach((playerId) => {
+      const player = playersById.get(playerId);
+      const side = teamSideForPlayer(match, playerId);
+      const matchEntry = match.players.find((entry) => entry.playerId === playerId);
+      if (!player || !side) return;
+      if (matchEntry && matchEntry.status !== "voy") return;
+
+      const impact = matchImpactForPlayer(match, player, side, playersById);
+      const previous = impacts.get(playerId) ?? { delta: 0, notes: [] };
+      const nextNotes = [...previous.notes];
+      impact.notes.forEach((note) => {
+        if (!nextNotes.includes(note)) nextNotes.push(note);
+      });
+      impacts.set(playerId, {
+        delta: previous.delta + impact.delta,
+        notes: nextNotes.slice(-4),
+      });
+    });
+  });
+
+  impacts.forEach((impact, playerId) => {
+    const delta = Number(cappedDelta(impact.delta, 0.8).toFixed(2));
+    impacts.set(playerId, { ...impact, delta });
+  });
+
+  return impacts;
+}
+
+function formImpactLabel(impact?: MatchRatingImpact) {
+  const delta = impact?.delta ?? 0;
+  if (Math.abs(delta) < 0.05) return "Forma sin ajuste";
+  return `Forma ${delta > 0 ? "+" : ""}${delta.toFixed(1)}`;
+}
+
 function ratingHistory(player: Player) {
   return [...(player.ratingVotes ?? [])].sort((a, b) => a.matchCount - b.matchCount || a.createdAt.localeCompare(b.createdAt));
 }
@@ -1023,8 +1149,8 @@ function positionRank(player: Player) {
   return order[playerPosition(player)];
 }
 
-function sortedLineupPlayers(players: Player[]) {
-  return [...players].sort((a, b) => positionRank(a) - positionRank(b) || scorePlayer(b) - scorePlayer(a) || a.name.localeCompare(b.name, "es"));
+function sortedLineupPlayers(players: Player[], scoreForPlayer: PlayerScoreFn = scorePlayer) {
+  return [...players].sort((a, b) => positionRank(a) - positionRank(b) || scoreForPlayer(b) - scoreForPlayer(a) || a.name.localeCompare(b.name, "es"));
 }
 
 function positionLabel(player: Player) {
@@ -1069,14 +1195,14 @@ function equivalentPositionForKind(position: PlayerPosition, kind: MatchKind): P
   return "Mediocentro / pivote";
 }
 
-function balanceTeams(players: Player[]) {
-  const ordered = [...players].sort((a, b) => scorePlayer(b) - scorePlayer(a));
+function balanceTeams(players: Player[], scoreForPlayer: PlayerScoreFn = scorePlayer) {
+  const ordered = [...players].sort((a, b) => scoreForPlayer(b) - scoreForPlayer(a));
   const teamA: Player[] = [];
   const teamB: Player[] = [];
 
   ordered.forEach((player) => {
-    const totalA = teamA.reduce((sum, item) => sum + scorePlayer(item), 0);
-    const totalB = teamB.reduce((sum, item) => sum + scorePlayer(item), 0);
+    const totalA = teamA.reduce((sum, item) => sum + scoreForPlayer(item), 0);
+    const totalB = teamB.reduce((sum, item) => sum + scoreForPlayer(item), 0);
     const needsKeeperA = !teamA.some((item) => playerPosition(item) === "Porteria");
     const needsKeeperB = !teamB.some((item) => playerPosition(item) === "Porteria");
 
@@ -1726,6 +1852,8 @@ export default function Home() {
   const closedMatches = matches
     .filter((match) => match.scoreA !== undefined)
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  const matchRatingImpacts = useMemo(() => automaticMatchRatingImpacts(matches, players), [matches, players]);
+  const effectivePlayerScore = (player: Player) => scorePlayer(player, matchRatingImpacts.get(player.id)?.delta ?? 0);
   const absenceStreaks = useMemo(() => {
     const streaks = new Map<string, number>();
     players.forEach((player) => streaks.set(player.id, consecutiveAbsenceStreak(matches, player.id)));
@@ -1739,7 +1867,10 @@ export default function Home() {
   const suggestedPayerId = nextPayer(players, matches, activeMatch, payingIds);
   const payerId = activeMatch.payerId && payingIds.includes(activeMatch.payerId) ? activeMatch.payerId : suggestedPayerId;
   const payer = players.find((player) => player.id === payerId);
-  const balancedLineup = useMemo(() => balanceTeams(confirmedPlayers), [confirmedPlayers]);
+  const balancedLineup = useMemo(
+    () => balanceTeams(confirmedPlayers, (player) => scorePlayer(player, matchRatingImpacts.get(player.id)?.delta ?? 0)),
+    [confirmedPlayers, matchRatingImpacts],
+  );
   const suggested = savedTeams(activeMatch, players, confirmedIds) ?? balancedLineup;
   const lineupClosed = activeMatch.lineupClosed ?? false;
   const matchFinalized = Boolean(activeMatch.closed || activeMatch.scoreA !== undefined);
@@ -2229,7 +2360,7 @@ export default function Home() {
         {
           appearances: 0,
           goals: 0,
-          media: scorePlayer(player),
+          media: effectivePlayerScore(player),
           player,
           wins: 0,
         },
@@ -2273,7 +2404,7 @@ export default function Home() {
       b.appearances - a.appearances ||
       playerDisplayName(a.player).localeCompare(playerDisplayName(b.player), "es"),
     );
-  }, [activeRankingSeason, matches, players, rankingSort]);
+  }, [activeRankingSeason, matches, players, rankingSort, matchRatingImpacts]);
   const rankingBadgeText = (row: (typeof rankedPlayers)[number]) => {
     if (rankingSort === "goles") return `${row.goals} ${row.goals === 1 ? "gol" : "goles"}`;
     if (rankingSort === "partidos") return `${row.appearances} PJ`;
@@ -2290,11 +2421,14 @@ export default function Home() {
   const teamBPlayerIds = new Set(suggested.teamB.map((player) => player.id));
   const reservePlayerIds = new Set(reserveIds);
   const waitingPlayerIds = new Set(waitingIds);
-  const sortedTeamA = sortedLineupPlayers(suggested.teamA);
-  const sortedTeamB = sortedLineupPlayers(suggested.teamB);
+  const sortedTeamA = sortedLineupPlayers(suggested.teamA, effectivePlayerScore);
+  const sortedTeamB = sortedLineupPlayers(suggested.teamB, effectivePlayerScore);
   const otherPlayers = sortedPlayers.filter((player) => !teamAPlayerIds.has(player.id) && !teamBPlayerIds.has(player.id) && !reservePlayerIds.has(player.id) && !waitingPlayerIds.has(player.id));
   const selectedPlayer = selectedPlayerId ? players.find((player) => player.id === selectedPlayerId) : undefined;
   const selectedRatingFacets = selectedPlayer ? ratingFacetsForPlayer(selectedPlayer) : ratingFacets;
+  const selectedFormImpact = selectedPlayer ? matchRatingImpacts.get(selectedPlayer.id) : undefined;
+  const selectedEffectiveScore = selectedPlayer ? effectivePlayerScore(selectedPlayer) : 0;
+  const selectedPeerScore = selectedPlayer ? peerAverage(selectedPlayer) : 0;
   const currentTeam = remoteTeams.find((team) => team.id === remoteGroupId);
   const hasIncomingSharedLink = incomingSharedLink.hasInvite || incomingSharedLink.hasAdminInvite || incomingSharedLink.hasMatch;
   const isRegisteredUser = Boolean(authUser && !isAnonymousAuthUser(authUser));
@@ -2962,7 +3096,7 @@ export default function Home() {
               <img src={player.avatar} alt="" />
             ) : null}
             <strong>
-              {playerDisplayName(player)} <small>({scorePlayer(player).toFixed(1)}) {player.goals} Goles</small>
+              {playerDisplayName(player)} <small>({effectivePlayerScore(player).toFixed(1)}) {player.goals} Goles</small>
             </strong>
           </button>
           <span className="player-meta">
@@ -3719,7 +3853,7 @@ export default function Home() {
             <span>Equipos sugeridos</span>
             <strong>{matchKinds[activeKind].teamSize}v{matchKinds[activeKind].teamSize}</strong>
           </div>
-          <MatchPitch teamA={suggested.teamA} teamB={suggested.teamB} kind={activeKind} />
+          <MatchPitch teamA={suggested.teamA} teamB={suggested.teamB} kind={activeKind} scoreForPlayer={effectivePlayerScore} />
           <div className={lineupClosed ? "lineup-state closed" : "lineup-state"}>
             {!matchConfigured ? "Alineación pendiente" : lineupClosed ? "Alineación cerrada" : "Alineación abierta"}
           </div>
@@ -3727,8 +3861,8 @@ export default function Home() {
             <button type="button" onClick={applyRandomTeams} disabled={!canEditLineup}>Aleatorio</button>
             <button type="button" onClick={applyBalancedTeams} disabled={!canEditLineup}>Equilibrado por stats</button>
           </div>
-          <Team title="Equipo 1" players={suggested.teamA} variant="team-a" />
-          <Team title="Equipo 2" players={suggested.teamB} variant="team-b" />
+          <Team title="Equipo 1" players={suggested.teamA} variant="team-a" scoreForPlayer={effectivePlayerScore} />
+          <Team title="Equipo 2" players={suggested.teamB} variant="team-b" scoreForPlayer={effectivePlayerScore} />
           {canUseAdminControls && matchConfigured && !matchFinalized ? (
             <button className="primary-button full" onClick={toggleLineupClosed}>
               {lineupClosed ? "Abrir alineación" : "Cerrar alineación"}
@@ -3843,7 +3977,7 @@ export default function Home() {
                     <TrashLogo />
                   </button>
                 ) : null}
-                <strong>{scorePlayer(selectedPlayer).toFixed(1)}</strong>
+                <strong>{selectedEffectiveScore.toFixed(1)}</strong>
               </div>
             </div>
             {!ownPlayer && selectedPlayer && !selectedPlayer.ownerUserId && hasRealTeam && isRegisteredUser ? (
@@ -3856,7 +3990,7 @@ export default function Home() {
               <div className="profile-top">
                 <div className="fifa-card-shell">
                   <label className={canEditSelectedPlayer ? "fifa-player-card" : "fifa-player-card readonly-card"}>
-                    <span className="fifa-score">{Math.round(scorePlayer(selectedPlayer) * 10)}</span>
+                    <span className="fifa-score">{Math.round(selectedEffectiveScore * 10)}</span>
                     <span className="fifa-position">{positionShort(selectedPlayer)}</span>
                     <span className="fifa-photo">
                       {selectedPlayer.avatar ? (
@@ -4005,9 +4139,13 @@ export default function Home() {
                   </select>
                 </label>
                 <div className="base-rating-card">
-                  <span>Valor base</span>
-                  <strong>{scorePlayer(selectedPlayer).toFixed(1)}</strong>
-                  <small>Media de facetas</small>
+                  <span>Valor actual</span>
+                  <strong>{selectedEffectiveScore.toFixed(1)}</strong>
+                  <small>{selectedPeerScore.toFixed(1)} por votos</small>
+                  <em className={(selectedFormImpact?.delta ?? 0) > 0.04 ? "form-impact positive" : (selectedFormImpact?.delta ?? 0) < -0.04 ? "form-impact negative" : "form-impact"}>
+                    {formImpactLabel(selectedFormImpact)}
+                  </em>
+                  {selectedFormImpact?.notes.length ? <small>{selectedFormImpact.notes.join(" · ")}</small> : null}
                 </div>
                 <div className={canRateSelectedPlayer ? "rating-box rating-open-box" : "rating-box rating-locked-box"}>
                   <div className="rating-box-title">
@@ -4200,8 +4338,18 @@ export default function Home() {
   );
 }
 
-function Team({ title, players, variant }: { title: string; players: Player[]; variant: "team-a" | "team-b" }) {
-  const orderedPlayers = sortedLineupPlayers(players);
+function Team({
+  title,
+  players,
+  scoreForPlayer = scorePlayer,
+  variant,
+}: {
+  title: string;
+  players: Player[];
+  scoreForPlayer?: PlayerScoreFn;
+  variant: "team-a" | "team-b";
+}) {
+  const orderedPlayers = sortedLineupPlayers(players, scoreForPlayer);
 
   return (
     <div className={`team ${variant}`}>
@@ -4221,7 +4369,7 @@ function Team({ title, players, variant }: { title: string; players: Player[]; v
               </span>
             ) : null}
             {playerDisplayName(player)}
-            <em>({scorePlayer(player).toFixed(1)}) {player.goals} Goles</em>
+            <em>({scoreForPlayer(player).toFixed(1)}) {player.goals} Goles</em>
           </span>
           <small className="position-pill">{positionLabel(player)}</small>
         </div>
@@ -4230,9 +4378,19 @@ function Team({ title, players, variant }: { title: string; players: Player[]; v
   );
 }
 
-function MatchPitch({ teamA, teamB, kind }: { teamA: Player[]; teamB: Player[]; kind: MatchKind }) {
-  const teamATokens = placeTeam(teamA, kind, "bottom");
-  const teamBTokens = placeTeam(teamB, kind, "top");
+function MatchPitch({
+  teamA,
+  teamB,
+  kind,
+  scoreForPlayer = scorePlayer,
+}: {
+  teamA: Player[];
+  teamB: Player[];
+  kind: MatchKind;
+  scoreForPlayer?: PlayerScoreFn;
+}) {
+  const teamATokens = placeTeam(teamA, kind, "bottom", scoreForPlayer);
+  const teamBTokens = placeTeam(teamB, kind, "top", scoreForPlayer);
   const emptySlots = [
     ...teamATokens.empty.map((slot) => ({ ...slot, variant: "team-a" as const })),
     ...teamBTokens.empty.map((slot) => ({ ...slot, variant: "team-b" as const })),
@@ -4266,7 +4424,7 @@ function MatchPitch({ teamA, teamB, kind }: { teamA: Player[]; teamB: Player[]; 
           className={`player-token ${variant} ${player.injured ? "injured-token" : ""} ${player.inactive ? "inactive-token" : ""}`}
           key={player.id}
           style={{ left: `${x}%`, top: `${y}%` }}
-          title={`${playerDisplayName(player)} · ${positionLabel(player)} · ${scorePlayer(player).toFixed(1)}`}
+          title={`${playerDisplayName(player)} · ${positionLabel(player)} · ${scoreForPlayer(player).toFixed(1)}`}
         >
           {player.inactive ? (
             <span className="token-inactive" title="Ya no está en el grupo" aria-label="Ya no está en el grupo">
@@ -4291,10 +4449,10 @@ function MatchPitch({ teamA, teamB, kind }: { teamA: Player[]; teamB: Player[]; 
   );
 }
 
-function placeTeam(players: Player[], kind: MatchKind, side: "top" | "bottom") {
+function placeTeam(players: Player[], kind: MatchKind, side: "top" | "bottom", scoreForPlayer: PlayerScoreFn = scorePlayer) {
   const sorted = [...players].sort((a, b) => {
     const order: Record<PositionLine, number> = { Porteria: 0, Defensa: 1, Medio: 2, Ataque: 3 };
-    return order[playerPosition(a)] - order[playerPosition(b)] || scorePlayer(b) - scorePlayer(a);
+    return order[playerPosition(a)] - order[playerPosition(b)] || scoreForPlayer(b) - scoreForPlayer(a);
   });
   const slots = formationSlots(kind, side);
 

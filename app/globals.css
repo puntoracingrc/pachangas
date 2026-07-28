@@ -3252,6 +3252,27 @@ select:disabled {
   color: rgba(255, 255, 255, 0.72);
 }
 
+.base-rating-card .form-impact {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 900;
+  padding: 5px 8px;
+  width: fit-content;
+}
+
+.base-rating-card .form-impact.positive {
+  background: rgba(187, 247, 208, 0.18);
+  color: #bbf7d0;
+}
+
+.base-rating-card .form-impact.negative {
+  background: rgba(254, 202, 202, 0.18);
+  color: #fecaca;
+}
+
 .rating-box button {
   background: #202820;
   border: 0;
