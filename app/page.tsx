@@ -2912,6 +2912,8 @@ export default function Home() {
   const selectedPlayerIsOwn = Boolean(selectedPlayer?.ownerUserId && selectedPlayer.ownerUserId === currentUserId);
   const canEditSelectedPlayer = Boolean(selectedPlayer && (canUseAdminControls || (hasRealTeam && isRegisteredUser && selectedPlayerIsOwn)));
   const showPlayerSwitcher = Boolean(canUseAdminControls && selectedPlayer && !selectedPlayerIsOwn && players.length > 1);
+  const showTeamAdminPanel = canUseAdminControls;
+  const showMatchAdminPanel = canUseAdminControls;
   const canEditMatchSettings = canUseAdminControls && !matchFinalized;
   const canEditLineup = canUseAdminControls && matchConfigured && !lineupClosed && !matchFinalized;
   const canUploadTeamPhoto = Boolean(matchConfigured && (isDemoMode || hasRealTeam) && !needsLoginForSharedLink);
@@ -3851,52 +3853,54 @@ export default function Home() {
         </form>
       ) : null}
 
-      <section className="top-panel team-access-panel">
-        <div className="team-access-current">
-          <span>Equipo pachanguero</span>
-          {remoteTeams.length > 0 ? (
-            <select value={remoteGroupId ?? ""} onChange={(event) => selectTeam(event.target.value)}>
-              {remoteTeams.map((team) => (
-                <option key={team.id} value={team.id}>{team.name}</option>
-              ))}
-            </select>
-          ) : (
-            <strong>Sin equipo todavía</strong>
-          )}
-        </div>
-        <div className="team-access-meta">
-          <span>ID equipo</span>
-          <strong>{currentTeam?.teamCode ?? "-"}</strong>
-        </div>
-        <div className="team-access-meta">
-          <span>Rol</span>
-          <strong>{currentRole === "owner" || currentRole === "admin" ? "Admin" : currentRole === "player" ? "Jugador" : "-"}</strong>
-        </div>
-        <div className="team-invite-link">
-          <span>Invitar a equipo</span>
-          <div className="team-invite-actions">
-            <button className="copy-icon-button" type="button" onClick={() => void copyTeamInvite()} disabled={!currentTeamInviteUrl()} title="Copiar invitación" aria-label="Copiar invitación">
-              <CopyLogo />
-            </button>
-            <button className="whatsapp-icon-button" type="button" onClick={shareTeamInviteWhatsApp} disabled={!currentTeamInviteUrl()} title="Enviar por WhatsApp" aria-label="Enviar por WhatsApp">
-              <WhatsAppLogo />
-            </button>
+      {showTeamAdminPanel ? (
+        <section className="top-panel team-access-panel">
+          <div className="team-access-current">
+            <span>Equipo pachanguero</span>
+            {remoteTeams.length > 0 ? (
+              <select value={remoteGroupId ?? ""} onChange={(event) => selectTeam(event.target.value)}>
+                {remoteTeams.map((team) => (
+                  <option key={team.id} value={team.id}>{team.name}</option>
+                ))}
+              </select>
+            ) : (
+              <strong>Sin equipo todavía</strong>
+            )}
           </div>
-        </div>
-        <button
-          className="trash-icon-button team-delete-button"
-          disabled={!remoteGroupId || !canUseAdminControls}
-          onClick={() => void deleteCurrentTeam()}
-          title="Eliminar equipo"
-          type="button"
-          aria-label="Eliminar equipo"
-        >
-          <TrashLogo />
-        </button>
-        <small className={`sync-status sync-${syncStatus}`}>
-          {syncStatus === "live" ? "Equipo privado sincronizado" : syncStatus === "connecting" ? "Conectando..." : syncStatus === "error" ? `Sin sync: ${syncError}` : "Crea un equipo o entra con invitación"}
-        </small>
-      </section>
+          <div className="team-access-meta">
+            <span>ID equipo</span>
+            <strong>{currentTeam?.teamCode ?? "-"}</strong>
+          </div>
+          <div className="team-access-meta">
+            <span>Rol</span>
+            <strong>{currentRole === "owner" || currentRole === "admin" ? "Admin" : currentRole === "player" ? "Jugador" : "-"}</strong>
+          </div>
+          <div className="team-invite-link">
+            <span>Invitar a equipo</span>
+            <div className="team-invite-actions">
+              <button className="copy-icon-button" type="button" onClick={() => void copyTeamInvite()} disabled={!currentTeamInviteUrl()} title="Copiar invitación" aria-label="Copiar invitación">
+                <CopyLogo />
+              </button>
+              <button className="whatsapp-icon-button" type="button" onClick={shareTeamInviteWhatsApp} disabled={!currentTeamInviteUrl()} title="Enviar por WhatsApp" aria-label="Enviar por WhatsApp">
+                <WhatsAppLogo />
+              </button>
+            </div>
+          </div>
+          <button
+            className="trash-icon-button team-delete-button"
+            disabled={!remoteGroupId || !canUseAdminControls}
+            onClick={() => void deleteCurrentTeam()}
+            title="Eliminar equipo"
+            type="button"
+            aria-label="Eliminar equipo"
+          >
+            <TrashLogo />
+          </button>
+          <small className={`sync-status sync-${syncStatus}`}>
+            {syncStatus === "live" ? "Equipo privado sincronizado" : syncStatus === "connecting" ? "Conectando..." : syncStatus === "error" ? `Sin sync: ${syncError}` : "Crea un equipo o entra con invitación"}
+          </small>
+        </section>
+      ) : null}
 
       {isDemoMode ? (
         <section className="top-panel demo-banner">
@@ -4163,90 +4167,93 @@ export default function Home() {
         </aside>
 
         <section className={canUseAdminControls ? "panel main-panel" : "panel main-panel player-facing-main"} id="partido" ref={matchPanelRef}>
-          <div className={canEditMatchSettings ? "match-editor" : "match-editor readonly-editor"}>
-            {!canUseAdminControls ? <span className="admin-only-badge">Solo admin</span> : null}
-            {canUseAdminControls && matchFinalized ? <span className="admin-only-badge">Partido finalizado</span> : null}
-            {canUseAdminControls && !matchConfigured && !matchFinalized ? <span className="admin-only-badge draft-badge">Borrador</span> : null}
-            <label>
-              Campo
-              <select value={activeMatch.venueId ?? ""} onChange={(event) => selectVenue(event.target.value)} disabled={!canEditMatchSettings}>
-                <option value="" disabled>Selecciona campo</option>
-                {venues.map((venue) => (
-                  <option key={venue.id} value={venue.id}>{venue.name}</option>
-                ))}
-              </select>
-            </label>
-            <label>
-              Fecha
-              <input
-                type="datetime-local"
-                step="600"
-                value={activeMatch.date}
-                disabled={!canEditMatchSettings}
-                onChange={(event) => {
-                  const nextDate = event.target.value;
-                  updateMatchSettings({ ...activeMatch, date: nextDate, season: seasonKey(nextDate) });
-                }}
-              />
-            </label>
-            <label>
-              Modalidad
-              <select value={activeKind} onChange={(event) => changeKind(event.target.value as MatchKind)} disabled={!canEditMatchSettings}>
-                {Object.entries(matchKinds).map(([kind, config]) => (
-                  <option key={kind} value={kind}>{config.label}</option>
-                ))}
-              </select>
-            </label>
-            <label>
-              Precio
-              <input
-                type="number"
-                min="0"
-                value={fieldCost}
-                disabled={!canEditMatchSettings}
-                onChange={(event) => updateMatchSettings({ ...activeMatch, fieldCost: Number(event.target.value) })}
-              />
-            </label>
-            <label className="reserve-toggle">
-              Reservas
-              <span className="reserve-toggle-box">
-                <input
-                  type="checkbox"
-                  checked={Boolean(activeMatch.reservesAttend)}
-                  disabled={!canEditMatchSettings}
-                  onChange={(event) =>
-                    updateMatchSettings({
-                      ...activeMatch,
-                      reservesAttend: event.target.checked,
-                      reserveLimit: event.target.checked ? Math.max(1, activeMatch.reserveLimit ?? 2) : 0,
-                    })
-                  }
-                />
-                Van y pagan
-              </span>
-            </label>
-            <label>
-              Max reservas
-              <input
-                type="number"
-                min="0"
-                value={activeMatch.reserveLimit ?? 0}
-                disabled={!canEditMatchSettings || !activeMatch.reservesAttend}
-                onChange={(event) => updateMatchSettings({ ...activeMatch, reserveLimit: Math.max(0, Math.floor(Number(event.target.value) || 0)) })}
-              />
-            </label>
-            {canUseAdminControls && !matchFinalized ? (
-              <button className="save-match-button" type="button" onClick={() => void saveMatchConfiguration()} disabled={!matchCanBeSaved || matchConfigured}>
-                {matchConfigured ? "Guardado" : "Guardar partido"}
-              </button>
-            ) : null}
-          </div>
+          {showMatchAdminPanel ? (
+            <>
+              <div className={canEditMatchSettings ? "match-editor" : "match-editor readonly-editor"}>
+                {matchFinalized ? <span className="admin-only-badge">Partido finalizado</span> : null}
+                {!matchConfigured && !matchFinalized ? <span className="admin-only-badge draft-badge">Borrador</span> : null}
+                <label>
+                  Campo
+                  <select value={activeMatch.venueId ?? ""} onChange={(event) => selectVenue(event.target.value)} disabled={!canEditMatchSettings}>
+                    <option value="" disabled>Selecciona campo</option>
+                    {venues.map((venue) => (
+                      <option key={venue.id} value={venue.id}>{venue.name}</option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  Fecha
+                  <input
+                    type="datetime-local"
+                    step="600"
+                    value={activeMatch.date}
+                    disabled={!canEditMatchSettings}
+                    onChange={(event) => {
+                      const nextDate = event.target.value;
+                      updateMatchSettings({ ...activeMatch, date: nextDate, season: seasonKey(nextDate) });
+                    }}
+                  />
+                </label>
+                <label>
+                  Modalidad
+                  <select value={activeKind} onChange={(event) => changeKind(event.target.value as MatchKind)} disabled={!canEditMatchSettings}>
+                    {Object.entries(matchKinds).map(([kind, config]) => (
+                      <option key={kind} value={kind}>{config.label}</option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  Precio
+                  <input
+                    type="number"
+                    min="0"
+                    value={fieldCost}
+                    disabled={!canEditMatchSettings}
+                    onChange={(event) => updateMatchSettings({ ...activeMatch, fieldCost: Number(event.target.value) })}
+                  />
+                </label>
+                <label className="reserve-toggle">
+                  Reservas
+                  <span className="reserve-toggle-box">
+                    <input
+                      type="checkbox"
+                      checked={Boolean(activeMatch.reservesAttend)}
+                      disabled={!canEditMatchSettings}
+                      onChange={(event) =>
+                        updateMatchSettings({
+                          ...activeMatch,
+                          reservesAttend: event.target.checked,
+                          reserveLimit: event.target.checked ? Math.max(1, activeMatch.reserveLimit ?? 2) : 0,
+                        })
+                      }
+                    />
+                    Van y pagan
+                  </span>
+                </label>
+                <label>
+                  Max reservas
+                  <input
+                    type="number"
+                    min="0"
+                    value={activeMatch.reserveLimit ?? 0}
+                    disabled={!canEditMatchSettings || !activeMatch.reservesAttend}
+                    onChange={(event) => updateMatchSettings({ ...activeMatch, reserveLimit: Math.max(0, Math.floor(Number(event.target.value) || 0)) })}
+                  />
+                </label>
+                {!matchFinalized ? (
+                  <button className="save-match-button" type="button" onClick={() => void saveMatchConfiguration()} disabled={!matchCanBeSaved || matchConfigured}>
+                    {matchConfigured ? "Guardado" : "Guardar partido"}
+                  </button>
+                ) : null}
+              </div>
 
-          {!matchConfigured && !matchFinalized ? (
-            <div className="draft-match-note">
-              <span>Partido sin guardar</span>
-              <strong>Configura campo, fecha, modalidad y precio. Al guardar se activan confirmaciones, compartir y alineación.</strong>
-            </div>
+              {!matchConfigured && !matchFinalized ? (
+                <div className="draft-match-note">
+                  <span>Partido sin guardar</span>
+                  <strong>Configura campo, fecha, modalidad y precio. Al guardar se activan confirmaciones, compartir y alineación.</strong>
+                </div>
+              ) : null}
+            </>
           ) : null}
 
           <div className="stats-row">
