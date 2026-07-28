@@ -505,7 +505,7 @@ h1 {
 .match-editor {
   display: grid;
   gap: 10px;
-  grid-template-columns: minmax(180px, 1.1fr) minmax(170px, 0.9fr) minmax(140px, 0.8fr) minmax(100px, 0.45fr);
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
 }
 
 label {
@@ -526,6 +526,26 @@ select {
   min-height: 42px;
   padding: 0 12px;
   width: 100%;
+}
+
+.reserve-toggle-box {
+  align-items: center;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--foreground);
+  display: flex;
+  gap: 8px;
+  min-height: 42px;
+  padding: 0 12px;
+  text-transform: none;
+}
+
+.reserve-toggle-box input {
+  flex: 0 0 auto;
+  min-height: 18px;
+  padding: 0;
+  width: 18px;
 }
 
 .stats-row {
@@ -821,6 +841,11 @@ select {
   padding: 10px;
 }
 
+.waiting-section {
+  background: #f7f8fb;
+  border-color: #c7cedb;
+}
+
 .reserve-player-grid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
@@ -858,6 +883,12 @@ select {
 .player-card.reserve-card {
   background: #fffdf7;
   border-left-color: #f59e0b;
+}
+
+.player-card.waiting-card {
+  background: #f8fafc;
+  border-left-color: #64748b;
+  opacity: 0.88;
 }
 
 .player-card.status-duda {

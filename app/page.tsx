@@ -55,6 +55,8 @@ type Match = {
   price?: number;
   payerId?: string;
   players: MatchPlayer[];
+  reservesAttend?: boolean;
+  reserveLimit?: number;
   scorers?: Array<{ playerId: string; goals: number }>;
   closed?: boolean;
   lineupClosed?: boolean;
@@ -233,6 +235,8 @@ function normalizePayload(payload?: Partial<AppPayload>): AppPayload {
         venueId: match.venueId ?? venues.find((venue) => venue.name === match.place)?.id,
         fieldCost: match.fieldCost ?? (match.price ? match.price * Math.max(match.targetPlayers, 1) : 0),
         lineupClosed: match.lineupClosed ?? false,
+        reservesAttend: match.reservesAttend ?? false,
+        reserveLimit: Math.max(0, Math.floor(match.reserveLimit ?? 0)),
       }))
     : fallback.matches;
 
@@ -359,7 +363,11 @@ function savedTeams(match: Match, players: Player[], confirmedIds: string[]) {
   return separateGoalkeepers({ teamA, teamB });
 }
 
-function matchPlayingIds(match: Match) {
+function reserveCapacity(match: Match) {
+  return match.reservesAttend ? Math.max(0, Math.floor(match.reserveLimit ?? 0)) : 0;
+}
+
+function orderedGoingPlayers(match: Match) {
   return match.players
     .map((entry, index) => ({ entry, index }))
     .filter(({ entry }) => entry.status === "voy")
@@ -367,8 +375,18 @@ function matchPlayingIds(match: Match) {
       const timeA = a.entry.joinedAt ? Date.parse(a.entry.joinedAt) || 0 : a.index;
       const timeB = b.entry.joinedAt ? Date.parse(b.entry.joinedAt) || 0 : b.index;
       return timeA - timeB || a.index - b.index;
-    })
+    });
+}
+
+function matchPlayingIds(match: Match) {
+  return orderedGoingPlayers(match)
     .slice(0, match.targetPlayers)
+    .map(({ entry }) => entry.playerId);
+}
+
+function matchPayingIds(match: Match) {
+  return orderedGoingPlayers(match)
+    .slice(0, match.targetPlayers + reserveCapacity(match))
     .map(({ entry }) => entry.playerId);
 }
 
@@ -399,7 +417,7 @@ function nextPayer(players: Player[], matches: Match[], activeMatch: Match, conf
 
   for (const { match } of orderedMatches) {
     if (match.id === activeMatch.id) break;
-    const matchConfirmedIds = matchPlayingIds(match);
+    const matchConfirmedIds = matchPayingIds(match);
     if (matchConfirmedIds.length === 0) continue;
     lastPayerId = match.payerId && matchConfirmedIds.includes(match.payerId) ? match.payerId : pickAfter(lastPayerId, matchConfirmedIds);
   }
@@ -660,28 +678,26 @@ export default function Home() {
   const activeMatch = matches.find((match) => match.id === activeMatchId) ?? matches[0];
   const activeKind = activeMatch.kind ?? "futbol7";
   const activeVenue = venues.find((venue) => venue.id === activeMatch.venueId);
-  const orderedGoingEntries = activeMatch.players
-    .map((entry, index) => ({ entry, index }))
-    .filter(({ entry }) => entry.status === "voy")
-    .sort((a, b) => {
-      const timeA = a.entry.joinedAt ? Date.parse(a.entry.joinedAt) || 0 : a.index;
-      const timeB = b.entry.joinedAt ? Date.parse(b.entry.joinedAt) || 0 : b.index;
-      return timeA - timeB || a.index - b.index;
-    });
+  const reserveLimit = reserveCapacity(activeMatch);
+  const orderedGoingEntries = orderedGoingPlayers(activeMatch);
   const playingEntries = orderedGoingEntries.slice(0, activeMatch.targetPlayers);
-  const reserveEntries = orderedGoingEntries.slice(activeMatch.targetPlayers);
+  const reserveEntries = orderedGoingEntries.slice(activeMatch.targetPlayers, activeMatch.targetPlayers + reserveLimit);
+  const waitingEntries = orderedGoingEntries.slice(activeMatch.targetPlayers + reserveLimit);
   const confirmedIds = playingEntries.map(({ entry }) => entry.playerId);
   const reserveIds = reserveEntries.map(({ entry }) => entry.playerId);
+  const waitingIds = waitingEntries.map(({ entry }) => entry.playerId);
+  const payingIds = [...confirmedIds, ...reserveIds];
   const confirmedPlayers = players.filter((player) => confirmedIds.includes(player.id));
   const reservePlayers = reserveIds.map((playerId) => players.find((player) => player.id === playerId)).filter((player): player is Player => Boolean(player));
+  const waitingPlayers = waitingIds.map((playerId) => players.find((player) => player.id === playerId)).filter((player): player is Player => Boolean(player));
   const closedMatches = matches.filter((match) => match.scoreA !== undefined);
   const doubtfulCount = activeMatch.players.filter((entry) => entry.status === "duda").length;
   const missing = Math.max(activeMatch.targetPlayers - confirmedPlayers.length, 0);
   const fieldCost = activeMatch.fieldCost ?? 0;
-  const sharePerPlayer = confirmedPlayers.length > 0 ? fieldCost / confirmedPlayers.length : 0;
-  const paidCount = activeMatch.players.filter((entry) => confirmedIds.includes(entry.playerId) && entry.paid).length;
-  const suggestedPayerId = nextPayer(players, matches, activeMatch, confirmedIds);
-  const payerId = activeMatch.payerId && confirmedIds.includes(activeMatch.payerId) ? activeMatch.payerId : suggestedPayerId;
+  const sharePerPlayer = payingIds.length > 0 ? fieldCost / payingIds.length : 0;
+  const paidCount = activeMatch.players.filter((entry) => payingIds.includes(entry.playerId) && entry.paid).length;
+  const suggestedPayerId = nextPayer(players, matches, activeMatch, payingIds);
+  const payerId = activeMatch.payerId && payingIds.includes(activeMatch.payerId) ? activeMatch.payerId : suggestedPayerId;
   const payer = players.find((player) => player.id === payerId);
   const balancedLineup = useMemo(() => balanceTeams(confirmedPlayers), [confirmedPlayers]);
   const suggested = savedTeams(activeMatch, players, confirmedIds) ?? balancedLineup;
@@ -766,6 +782,8 @@ export default function Home() {
       fieldCost: activeMatch.fieldCost ?? defaultVenue?.defaultCost ?? 56,
       payerId: undefined,
       players: [],
+      reservesAttend: activeMatch.reservesAttend ?? false,
+      reserveLimit: activeMatch.reserveLimit ?? 0,
     };
     setMatches((current) => [next, ...current]);
     setActiveMatchId(next.id);
@@ -937,6 +955,8 @@ export default function Home() {
       targetPlayers: matchKinds[fallbackKind].targetPlayers,
       fieldCost: match.fieldCost ?? fallbackVenue?.defaultCost ?? 56,
       players: [],
+      reservesAttend: match.reservesAttend ?? false,
+      reserveLimit: match.reserveLimit ?? 0,
     };
     const nextMatches = remainingMatches.length > 0 ? remainingMatches : [replacementMatch];
     const nextActiveMatchId = activeMatchId === matchId ? nextMatches[0].id : activeMatchId;
@@ -970,6 +990,8 @@ export default function Home() {
       targetPlayers: matchKinds[fallbackKind].targetPlayers,
       fieldCost: match.fieldCost ?? fallbackVenue?.defaultCost ?? 56,
       players: [],
+      reservesAttend: match.reservesAttend ?? false,
+      reserveLimit: match.reserveLimit ?? 0,
     };
     const nextMatches = remainingMatches.length > 0 ? remainingMatches : [replacementMatch];
     const nextActiveMatchId = activeMatchId === matchId ? nextMatches[0].id : activeMatchId;
@@ -988,9 +1010,10 @@ export default function Home() {
   const teamAPlayerIds = new Set(suggested.teamA.map((player) => player.id));
   const teamBPlayerIds = new Set(suggested.teamB.map((player) => player.id));
   const reservePlayerIds = new Set(reserveIds);
+  const waitingPlayerIds = new Set(waitingIds);
   const sortedTeamA = sortedLineupPlayers(suggested.teamA);
   const sortedTeamB = sortedLineupPlayers(suggested.teamB);
-  const otherPlayers = sortedPlayers.filter((player) => !teamAPlayerIds.has(player.id) && !teamBPlayerIds.has(player.id) && !reservePlayerIds.has(player.id));
+  const otherPlayers = sortedPlayers.filter((player) => !teamAPlayerIds.has(player.id) && !teamBPlayerIds.has(player.id) && !reservePlayerIds.has(player.id) && !waitingPlayerIds.has(player.id));
   const selectedPlayer = selectedPlayerId ? players.find((player) => player.id === selectedPlayerId) : undefined;
   const currentTeam = remoteTeams.find((team) => team.id === remoteGroupId);
   const canManageTeam = currentRole === "owner" || currentRole === "admin";
@@ -1257,11 +1280,12 @@ export default function Home() {
     const matchEntry = activeMatch.players.find((entry) => entry.playerId === player.id);
     const status = matchEntry?.status;
     const isReserve = reserveIds.includes(player.id);
+    const isWaiting = waitingIds.includes(player.id);
     const teamClass = team === "A" ? "team-a-card" : team === "B" ? "team-b-card" : "";
     const nextTeam = team === "A" ? "B" : "A";
 
     return (
-      <article className={`player-card ${status ? `status-${status}` : "status-sin"} ${teamClass} ${isReserve ? "reserve-card" : ""} ${playerPosition(player) === "Porteria" ? "goalkeeper-card" : ""}`} key={player.id}>
+      <article className={`player-card ${status ? `status-${status}` : "status-sin"} ${teamClass} ${isReserve ? "reserve-card" : ""} ${isWaiting ? "waiting-card" : ""} ${playerPosition(player) === "Porteria" ? "goalkeeper-card" : ""}`} key={player.id}>
         <div>
           <button className="player-name" onClick={() => openPlayerProfile(player.id)}>
             {player.avatar ? (
@@ -1275,6 +1299,7 @@ export default function Home() {
           <span className="player-meta">
             {positionLabel(player)}
             {isReserve ? <em className="reserve-chip">Reserva</em> : null}
+            {isWaiting ? <em className="reserve-chip">Espera</em> : null}
           </span>
         </div>
         {payerId === player.id ? (
@@ -1299,7 +1324,7 @@ export default function Home() {
               {team === "A" ? "→" : "←"}
             </button>
           ) : null}
-          {status === "voy" && !isReserve ? (
+          {status === "voy" && !isWaiting ? (
             <button
               className={matchEntry?.paid ? "paid-button paid" : "paid-button"}
               onClick={() => togglePaid(player.id)}
@@ -1617,6 +1642,34 @@ export default function Home() {
                 onChange={(event) => updateMatch({ ...activeMatch, fieldCost: Number(event.target.value) })}
               />
             </label>
+            <label className="reserve-toggle">
+              Reservas
+              <span className="reserve-toggle-box">
+                <input
+                  type="checkbox"
+                  checked={Boolean(activeMatch.reservesAttend)}
+                  disabled={remoteReady && !canManageTeam}
+                  onChange={(event) =>
+                    updateMatch({
+                      ...activeMatch,
+                      reservesAttend: event.target.checked,
+                      reserveLimit: event.target.checked ? Math.max(1, activeMatch.reserveLimit ?? 2) : 0,
+                    })
+                  }
+                />
+                Van y pagan
+              </span>
+            </label>
+            <label>
+              Max reservas
+              <input
+                type="number"
+                min="0"
+                value={activeMatch.reserveLimit ?? 0}
+                disabled={(remoteReady && !canManageTeam) || !activeMatch.reservesAttend}
+                onChange={(event) => updateMatch({ ...activeMatch, reserveLimit: Math.max(0, Math.floor(Number(event.target.value) || 0)) })}
+              />
+            </label>
           </div>
 
           <div className="stats-row">
@@ -1630,7 +1683,11 @@ export default function Home() {
             </div>
             <div>
               <span>Reservas</span>
-              <strong>{reservePlayers.length}</strong>
+              <strong>{activeMatch.reservesAttend ? `${reservePlayers.length}/${reserveLimit}` : "No"}</strong>
+            </div>
+            <div>
+              <span>Espera</span>
+              <strong>{waitingPlayers.length}</strong>
             </div>
             <div>
               <span>Duda</span>
@@ -1650,7 +1707,7 @@ export default function Home() {
             </div>
             <div>
               <span>Pagados</span>
-              <strong>{paidCount}/{confirmedPlayers.length}</strong>
+              <strong>{paidCount}/{payingIds.length}</strong>
             </div>
           </div>
 
@@ -1698,11 +1755,23 @@ export default function Home() {
           {reservePlayers.length > 0 ? (
             <div className="reserve-section">
               <div className="team-column-title">
-                <span>Reservas</span>
+                <span>Reservas que van</span>
                 <strong>{reservePlayers.length}</strong>
               </div>
               <div className="player-grid reserve-player-grid">
                 {reservePlayers.map((player) => renderPlayerCard(player))}
+              </div>
+            </div>
+          ) : null}
+
+          {waitingPlayers.length > 0 ? (
+            <div className="reserve-section waiting-section">
+              <div className="team-column-title">
+                <span>Lista de espera</span>
+                <strong>{waitingPlayers.length}</strong>
+              </div>
+              <div className="player-grid reserve-player-grid">
+                {waitingPlayers.map((player) => renderPlayerCard(player))}
               </div>
             </div>
           ) : null}
