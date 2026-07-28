@@ -1422,7 +1422,7 @@ export default function Home() {
 
   useEffect(() => {
     if (!selectedPlayerId) return;
-    playerProfileRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    scrollToPlayerProfile();
   }, [selectedPlayerId]);
 
   useEffect(() => {
@@ -1516,6 +1516,15 @@ export default function Home() {
 
   function openPlayerProfile(playerId: string) {
     setSelectedPlayerId(playerId);
+    if (selectedPlayerId === playerId) {
+      scrollToPlayerProfile();
+    }
+  }
+
+  function scrollToPlayerProfile() {
+    window.requestAnimationFrame(() => {
+      playerProfileRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
   }
 
   function setStatus(playerId: string, status: MatchPlayer["status"]) {
@@ -2251,7 +2260,7 @@ export default function Home() {
 
   function openOwnPlayerProfile() {
     if (ownPlayer) {
-      setSelectedPlayerId(ownPlayer.id);
+      openPlayerProfile(ownPlayer.id);
       return;
     }
 
