@@ -3206,26 +3206,79 @@ select:disabled {
   padding-top: 10px;
 }
 
-.rating-evolution > div {
-  align-items: end;
+.rating-line-chart {
+  background: #fffaf0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
   display: grid;
-  gap: 6px;
-  grid-template-columns: repeat(10, minmax(12px, 1fr));
-  min-height: 96px;
+  gap: 8px;
+  padding: 8px;
 }
 
-.rating-evolution i {
-  align-items: end;
-  background: linear-gradient(180deg, var(--lime), var(--green));
-  border-radius: 6px 6px 2px 2px;
-  color: #fff;
+.rating-chart-legend {
+  display: grid;
+  gap: 6px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.rating-chart-legend em {
+  align-items: center;
+  color: var(--foreground);
   display: flex;
   font-size: 11px;
   font-style: normal;
   font-weight: 900;
-  justify-content: center;
-  min-height: 18px;
-  padding-bottom: 4px;
+  gap: 5px;
+}
+
+.rating-chart-legend i {
+  border-radius: 999px;
+  display: inline-block;
+  flex: 0 0 auto;
+  height: 8px;
+  width: 8px;
+}
+
+.rating-line-chart svg {
+  display: block;
+  min-height: 154px;
+  overflow: visible;
+  width: 100%;
+}
+
+.rating-line-chart line {
+  stroke: rgba(32, 40, 32, 0.13);
+  stroke-width: 1;
+}
+
+.rating-line-chart path {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2.6;
+}
+
+.rating-line-chart circle {
+  stroke: #fff;
+  stroke-width: 1.4;
+}
+
+.rating-chart-tick line {
+  stroke-dasharray: 3 5;
+  stroke-width: 0.7;
+}
+
+.rating-chart-tick text,
+.rating-chart-y-label {
+  fill: var(--ink-soft);
+  font-size: 9px;
+  font-weight: 800;
+  text-anchor: middle;
+  text-transform: none;
+}
+
+.rating-chart-y-label {
+  text-anchor: start;
 }
 
 .toggle-field {

@@ -142,6 +142,14 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /short: "POS"/);
   assert.match(page, /selectedRatingFacets\.map/);
   assert.match(page, /ratingFacetsForPlayer\(player\)/);
+  assert.match(page, /ratingLinePath/);
+  assert.match(page, /ratingChartX/);
+  assert.match(page, /ratingVoteDateLabel/);
+  assert.match(page, /rating-line-chart/);
+  assert.match(page, /rating-chart-legend/);
+  assert.match(page, /Evolución temporal de las valoraciones por habilidad/);
+  assert.match(globalsCss, /\.rating-line-chart svg/);
+  assert.match(globalsCss, /\.rating-chart-tick text/);
   assert.match(page, /team-hero-logo/);
   assert.match(page, /Equipo: \{currentTeamName\}/);
   assert.match(page, /Instrucciones/);

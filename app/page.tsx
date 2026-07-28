@@ -591,6 +591,24 @@ const goalkeeperRatingFacets: RatingFacetConfig[] = [
 
 const ratingFacets = fieldRatingFacets;
 
+const ratingFacetColors: Record<RatingFacet, string> = {
+  ritmo: "#0f766e",
+  tiro: "#dc2626",
+  pase: "#2563eb",
+  regate: "#7c3aed",
+  defensa: "#15803d",
+  fisico: "#d97706",
+};
+
+const ratingChart = {
+  bottom: 118,
+  height: 134,
+  left: 28,
+  right: 12,
+  top: 10,
+  width: 340,
+};
+
 const teamPalette = [
   { name: "Azul", value: "#2157a8" },
   { name: "Rojo", value: "#d93025" },
@@ -710,6 +728,16 @@ function joinedAtLabel(date?: string) {
   });
 }
 
+function ratingVoteDateLabel(date: string) {
+  const parsed = new Date(date);
+  if (Number.isNaN(parsed.getTime())) return "";
+
+  return parsed.toLocaleDateString("es-ES", {
+    day: "2-digit",
+    month: "short",
+  });
+}
+
 function matchSummaryDate(date: string) {
   const parsed = new Date(date);
   if (Number.isNaN(parsed.getTime())) return "Fecha por confirmar";
@@ -799,6 +827,27 @@ function peerAverage(player: Player) {
 function voteAverage(vote: RatingVote, player?: Player) {
   const facets = player ? ratingFacetsForPlayer(player) : ratingFacets;
   return facets.reduce((sum, facet) => sum + clampRating(vote.facets[facet.key]), 0) / facets.length;
+}
+
+function ratingChartX(index: number, total: number) {
+  const usableWidth = ratingChart.width - ratingChart.left - ratingChart.right;
+  if (total <= 1) return ratingChart.left + usableWidth / 2;
+  return ratingChart.left + (usableWidth * index) / (total - 1);
+}
+
+function ratingChartY(value: number) {
+  const usableHeight = ratingChart.bottom - ratingChart.top;
+  return ratingChart.top + ((10 - clampRating(value)) / 9) * usableHeight;
+}
+
+function ratingLinePath(votes: RatingVote[], facet: RatingFacet) {
+  return votes
+    .map((vote, index) => {
+      const x = ratingChartX(index, votes.length);
+      const y = ratingChartY(vote.facets[facet] ?? 5);
+      return `${index === 0 ? "M" : "L"} ${x.toFixed(1)} ${y.toFixed(1)}`;
+    })
+    .join(" ");
 }
 
 function facetAverage(player: Player, facet: RatingFacet) {
@@ -2228,6 +2277,7 @@ export default function Home() {
   );
   const ratingVoterId = currentUserId ?? `local:${profileName.trim().toLocaleLowerCase("es-ES") || "jugador"}`;
   const selectedRatingHistory = selectedPlayer ? ratingHistory(selectedPlayer) : [];
+  const selectedRatingChartHistory = selectedRatingHistory.slice(-10);
   const selectedRatingWindow = selectedPlayer ? ratingWindow(selectedPlayer, ratingVoterId) : null;
   const selectedUserVote = selectedRatingWindow?.ownVote;
   const canRateSelectedPlayer = Boolean(
@@ -3916,20 +3966,64 @@ export default function Home() {
                   </button>
                   <div className="rating-evolution">
                     <span>Evolución</span>
-                    {selectedRatingHistory.length > 0 ? (
-                      <div>
-                        {selectedRatingHistory.slice(-10).map((vote, index, list) => {
-                          const average = voteAverage(vote, selectedPlayer);
-                          return (
-                            <i
-                              key={vote.id}
-                              style={{ height: `${24 + average * 7}px` }}
-                              title={`Partido ${vote.matchCount}: ${average.toFixed(1)}`}
-                            >
-                              {index === list.length - 1 ? average.toFixed(1) : ""}
-                            </i>
-                          );
-                        })}
+                    {selectedRatingChartHistory.length > 0 ? (
+                      <div className="rating-line-chart">
+                        <div className="rating-chart-legend">
+                          {selectedRatingFacets.map((facet) => (
+                            <em key={facet.key}>
+                              <i style={{ background: ratingFacetColors[facet.key] }} />
+                              {facet.short}
+                            </em>
+                          ))}
+                        </div>
+                        <svg
+                          role="img"
+                          aria-label="Evolución temporal de las valoraciones por habilidad"
+                          viewBox={`0 0 ${ratingChart.width} ${ratingChart.height}`}
+                        >
+                          <line x1={ratingChart.left} x2={ratingChart.width - ratingChart.right} y1={ratingChartY(10)} y2={ratingChartY(10)} />
+                          <line x1={ratingChart.left} x2={ratingChart.width - ratingChart.right} y1={ratingChartY(5)} y2={ratingChartY(5)} />
+                          <line x1={ratingChart.left} x2={ratingChart.width - ratingChart.right} y1={ratingChartY(1)} y2={ratingChartY(1)} />
+                          {[10, 5, 1].map((value) => (
+                            <text className="rating-chart-y-label" key={value} x="4" y={ratingChartY(value) + 4}>
+                              {value}
+                            </text>
+                          ))}
+                          {selectedRatingChartHistory.map((vote, index) => {
+                            const x = ratingChartX(index, selectedRatingChartHistory.length);
+                            return (
+                              <g className="rating-chart-tick" key={vote.id}>
+                                <line x1={x} x2={x} y1={ratingChart.top} y2={ratingChart.bottom} />
+                                <text x={x} y={ratingChart.height - 16}>P{vote.matchCount}</text>
+                                <text x={x} y={ratingChart.height - 3}>{ratingVoteDateLabel(vote.createdAt)}</text>
+                              </g>
+                            );
+                          })}
+                          {selectedRatingFacets.map((facet) => (
+                            <g key={facet.key}>
+                              <path
+                                d={ratingLinePath(selectedRatingChartHistory, facet.key)}
+                                stroke={ratingFacetColors[facet.key]}
+                              />
+                              {selectedRatingChartHistory.map((vote, index) => {
+                                const value = clampRating(vote.facets[facet.key] ?? 5);
+                                return (
+                                  <circle
+                                    cx={ratingChartX(index, selectedRatingChartHistory.length)}
+                                    cy={ratingChartY(value)}
+                                    fill={ratingFacetColors[facet.key]}
+                                    key={`${vote.id}-${facet.key}`}
+                                    r="3"
+                                  >
+                                    <title>
+                                      {facet.label}: {value.toFixed(1)} · Partido {vote.matchCount} · {ratingVoteDateLabel(vote.createdAt)}
+                                    </title>
+                                  </circle>
+                                );
+                              })}
+                            </g>
+                          ))}
+                        </svg>
                       </div>
                     ) : (
                       <small>Sin evolución todavía</small>
