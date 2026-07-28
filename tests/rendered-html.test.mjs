@@ -161,6 +161,7 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(globalsCss, /\.history-season-filter/);
   assert.match(globalsCss, /\.result-score-field span/);
   assert.match(globalsCss, /\.team-b-score/);
+  assert.match(globalsCss, /::-webkit-calendar-picker-indicator/);
   assert.match(globalsCss, /\.absence-chip/);
   assert.match(globalsCss, /\.form-chip/);
   assert.match(globalsCss, /\.form-state-card/);

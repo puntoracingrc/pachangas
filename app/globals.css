@@ -1309,6 +1309,14 @@ select {
   width: 100%;
 }
 
+.match-editor input[type="datetime-local"] {
+  appearance: none;
+}
+
+.match-editor input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+  display: none;
+}
+
 input:disabled,
 select:disabled {
   color: var(--ink-soft);
