@@ -2619,7 +2619,10 @@ export default function Home() {
     <main className="min-h-screen bg-[#f7f6f0] text-[#1d2521]" style={teamColorStyle}>
       <section className="hero">
         <div>
-          <p className="eyebrow">{siteSettings.brand}</p>
+          <div className="brand-lockup" aria-label={siteSettings.brand}>
+            <img src="/icon-192.png" alt="" />
+            <span>{siteSettings.brand}</span>
+          </div>
           <h1>{siteSettings.title}</h1>
           <p className="hero-copy">{siteSettings.subtitle}</p>
         </div>

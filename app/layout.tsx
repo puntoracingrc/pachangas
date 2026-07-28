@@ -15,10 +15,22 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Pachangas IQ",
   description: "Organiza pachangas, confirma jugadores y equilibra equipos con historial.",
-  icons: {
-    icon: "/favicon.svg",
-    shortcut: "/favicon.svg",
+  applicationName: "Pachangas IQ",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Pachangas IQ",
   },
+  icons: {
+    icon: [
+      { url: "/favicon-16.png", sizes: "16x16", type: "image/png" },
+      { url: "/favicon-32.png", sizes: "32x32", type: "image/png" },
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+    ],
+    shortcut: "/favicon-32.png",
+    apple: "/apple-touch-icon.png",
+  },
+  manifest: "/manifest.webmanifest",
 };
 
 export default function RootLayout({

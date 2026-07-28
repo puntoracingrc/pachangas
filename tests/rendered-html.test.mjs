@@ -17,6 +17,9 @@ test("builds Pachangas IQ HTML", async () => {
   assert.match(html, /Comparte este partido!/);
   assert.match(html, /Copiar link/);
   assert.match(html, /Abrir manual de usuario/);
+  assert.match(html, /\/manifest\.webmanifest/);
+  assert.match(html, /\/apple-touch-icon\.png/);
+  assert.match(html, /\/icon-192\.png/);
   assert.doesNotMatch(html, /Manual de usuario<\/span>/);
   assert.doesNotMatch(html, /Your site is taking shape|Building your site|react-loading-skeleton/i);
 });
@@ -58,6 +61,7 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /Partido finalizado/);
   assert.doesNotMatch(page, /Modo local/);
   assert.match(layout, /title:\s*"Pachangas IQ"/);
+  assert.match(layout, /appleWebApp/);
   assert.match(packageJson, /"@supabase\/supabase-js"/);
   assert.match(supabaseClient, /NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY/);
   assert.doesNotMatch(page, /SkeletonPreview/);

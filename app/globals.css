@@ -56,6 +56,28 @@ button {
   padding: 42px 22px 22px;
 }
 
+.brand-lockup {
+  align-items: center;
+  display: inline-flex;
+  gap: 10px;
+  margin: 0 0 14px;
+}
+
+.brand-lockup img {
+  border-radius: 10px;
+  display: block;
+  height: 42px;
+  object-fit: cover;
+  width: 42px;
+}
+
+.brand-lockup span {
+  color: var(--green);
+  font-size: 14px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
 .eyebrow {
   color: var(--green);
   font-size: 13px;
