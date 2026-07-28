@@ -1303,6 +1303,9 @@ export default function Home() {
   const selectedNextRatingMatch = selectedPlayer ? (selectedUserVote ? selectedUserVote.matchCount + ratingReviewInterval : selectedPlayer.appearances) : 0;
   const canRateSelectedPlayer = Boolean(selectedPlayer && (!selectedUserVote || selectedPlayer.appearances >= selectedNextRatingMatch));
   const ratingWaitMatches = selectedPlayer ? Math.max(0, selectedNextRatingMatch - selectedPlayer.appearances) : 0;
+  const draftPeerAverage = selectedPlayer
+    ? ratingFacets.reduce((sum, facet) => sum + clampRating(newFacetRatings[facet.key] ?? facetAverage(selectedPlayer, facet.key)), 0) / ratingFacets.length
+    : 0;
 
   useEffect(() => {
     if (!selectedPlayer) return;
@@ -2388,7 +2391,7 @@ export default function Home() {
                 </div>
                 <div className="rating-box">
                   <span>Valoraciones</span>
-                  <strong>{peerAverage(selectedPlayer).toFixed(1)}</strong>
+                  <strong>{draftPeerAverage.toFixed(1)}</strong>
                   <small>
                     {(selectedPlayer.ratingVotes?.length ?? 0) + (selectedPlayer.ratings?.length ?? 0)} votos de compañeros
                     {selectedUserVote ? ` · próxima revisión en ${ratingWaitMatches} partidos` : ""}
@@ -2411,7 +2414,7 @@ export default function Home() {
                             }))
                           }
                         />
-                        <b>{facetAverage(selectedPlayer, facet.key).toFixed(1)}</b>
+                        <b>{clampRating(newFacetRatings[facet.key] ?? facetAverage(selectedPlayer, facet.key)).toFixed(1)}</b>
                       </label>
                     ))}
                   </div>
