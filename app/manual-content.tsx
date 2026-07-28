@@ -87,7 +87,7 @@ const manualFlows = [
     steps: [
       "Los porteros fijos se separan en equipos diferentes cuando hay dos disponibles.",
       "Puedes mover jugadores manualmente de un equipo a otro con las flechas.",
-      "Aleatorio reparte al azar; Equilibrado por stats intenta compensar medias y posiciones.",
+      "Aleatorio reparte al azar; Equilibrado intenta compensar medias y posiciones.",
       "Cerrar alineación bloquea la alineación para jugadores; Abrir alineación permite cambios de nuevo.",
       "Si alguien se baja, el primer reserva sube automáticamente aunque la alineación estuviera cerrada.",
     ],

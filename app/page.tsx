@@ -4671,7 +4671,7 @@ export default function Home() {
           </div>
           <div className="lineup-actions">
             <button type="button" onClick={applyRandomTeams} disabled={!canEditLineup}>Aleatorio</button>
-            <button type="button" onClick={applyBalancedTeams} disabled={!canEditLineup}>Equilibrado por stats</button>
+            <button type="button" onClick={applyBalancedTeams} disabled={!canEditLineup}>Equilibrado</button>
           </div>
           <Team title="Equipo 1" players={suggested.teamA} variant="team-a" scoreForPlayer={effectivePlayerScore} mediaForPlayer={playerMediaScore} formForPlayer={playerForm} />
           <Team title="Equipo 2" players={suggested.teamB} variant="team-b" scoreForPlayer={effectivePlayerScore} mediaForPlayer={playerMediaScore} formForPlayer={playerForm} />
