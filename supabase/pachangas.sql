@@ -1299,6 +1299,14 @@ begin
     next_player := next_player || jsonb_build_object('avatar', nullif(player_patch ->> 'avatar', ''));
   end if;
 
+  if player_patch ? 'avatarOffsetX' then
+    next_player := next_player || jsonb_build_object('avatarOffsetX', least(100, greatest(0, coalesce(nullif(player_patch ->> 'avatarOffsetX', '')::numeric, 50))));
+  end if;
+
+  if player_patch ? 'avatarOffsetY' then
+    next_player := next_player || jsonb_build_object('avatarOffsetY', least(100, greatest(0, coalesce(nullif(player_patch ->> 'avatarOffsetY', '')::numeric, 0))));
+  end if;
+
   if player_patch ? 'goalkeeperOnly' then
     next_player := next_player || jsonb_build_object('goalkeeperOnly', coalesce((player_patch ->> 'goalkeeperOnly')::boolean, false));
   end if;
@@ -1415,6 +1423,14 @@ begin
 
   if player_patch ? 'avatar' then
     patched_player := patched_player || jsonb_build_object('avatar', nullif(player_patch ->> 'avatar', ''));
+  end if;
+
+  if player_patch ? 'avatarOffsetX' then
+    patched_player := patched_player || jsonb_build_object('avatarOffsetX', least(100, greatest(0, coalesce(nullif(player_patch ->> 'avatarOffsetX', '')::numeric, 50))));
+  end if;
+
+  if player_patch ? 'avatarOffsetY' then
+    patched_player := patched_player || jsonb_build_object('avatarOffsetY', least(100, greatest(0, coalesce(nullif(player_patch ->> 'avatarOffsetY', '')::numeric, 0))));
   end if;
 
   if player_patch ? 'goalkeeperOnly' then

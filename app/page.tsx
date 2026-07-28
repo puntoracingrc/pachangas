@@ -1,6 +1,6 @@
 "use client";
 
-import { CSSProperties, FormEvent, Fragment, useEffect, useMemo, useRef, useState } from "react";
+import { type CSSProperties, type FormEvent, Fragment, type PointerEvent as ReactPointerEvent, useEffect, useMemo, useRef, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { supabase } from "./supabaseClient";
 
@@ -65,6 +65,8 @@ type Player = {
   ownerUserId?: string;
   name: string;
   avatar?: string;
+  avatarOffsetX?: number;
+  avatarOffsetY?: number;
   phone?: string;
   birthDate?: string;
   goalkeeperOnly?: boolean;
@@ -737,6 +739,31 @@ function clampRating(value: number) {
   return Math.max(1, Math.min(10, Number.isFinite(value) ? value : 5));
 }
 
+function clampAvatarOffset(value: unknown, fallback: number) {
+  const numeric = Number(value);
+  return Math.max(0, Math.min(100, Number.isFinite(numeric) ? numeric : fallback));
+}
+
+function avatarImageStyle(player: Pick<Player, "avatarOffsetX" | "avatarOffsetY">): CSSProperties {
+  return {
+    objectPosition: `${clampAvatarOffset(player.avatarOffsetX, 50)}% ${clampAvatarOffset(player.avatarOffsetY, 0)}%`,
+  };
+}
+
+async function withTimeout<T>(promise: Promise<T>, ms: number, message: string) {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      promise,
+      new Promise<T>((_, reject) => {
+        timer = setTimeout(() => reject(new Error(message)), ms);
+      }),
+    ]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
+
 function displayName(name: string) {
   return name
     .trim()
@@ -868,6 +895,8 @@ function normalizePayload(payload?: Partial<AppPayload>): AppPayload {
 
     return {
       ...player,
+      avatarOffsetX: player.avatar ? clampAvatarOffset(player.avatarOffsetX, 50) : undefined,
+      avatarOffsetY: player.avatar ? clampAvatarOffset(player.avatarOffsetY, 0) : undefined,
       birthDate: normalizeBirthDate(player.birthDate),
       injured: Boolean(player.injured),
       inactive: Boolean(player.inactive),
@@ -1188,7 +1217,7 @@ async function detectAvatarFace(image: HTMLImageElement) {
   const FaceDetector = (window as unknown as { FaceDetector?: FaceDetectorLike }).FaceDetector;
   if (!FaceDetector) return null;
 
-  const faces = await new FaceDetector({ fastMode: true, maxDetectedFaces: 1 }).detect(image);
+  const faces = await withTimeout(new FaceDetector({ fastMode: true, maxDetectedFaces: 1 }).detect(image), 1200, "Detección de cara agotada");
   const face = faces
     .map((face) => face.boundingBox)
     .sort((a, b) => b.width * b.height - a.width * a.height)[0];
@@ -1247,16 +1276,19 @@ async function avatarDataUrl(file: File) {
   const image = await loadAvatarImage(source);
   const face = await detectAvatarFace(image).catch(() => null);
   const crop = avatarCropArea(image, face);
+  const keepTransparency = file.type === "image/png" || file.type === "image/webp";
   const canvas = document.createElement("canvas");
   canvas.width = 560;
   canvas.height = 720;
   const context = canvas.getContext("2d");
   if (!context) return source;
 
-  context.fillStyle = "#f4df9a";
-  context.fillRect(0, 0, canvas.width, canvas.height);
+  if (!keepTransparency) {
+    context.fillStyle = "#f4df9a";
+    context.fillRect(0, 0, canvas.width, canvas.height);
+  }
   context.drawImage(image, crop.x, crop.y, crop.width, crop.height, 0, 0, canvas.width, canvas.height);
-  return canvas.toDataURL("image/jpeg", 0.86);
+  return keepTransparency ? canvas.toDataURL("image/png") : canvas.toDataURL("image/jpeg", 0.86);
 }
 
 async function matchPhotoDataUrl(file: File) {
@@ -1683,10 +1715,12 @@ export default function Home() {
   const venueFormRef = useRef<HTMLFormElement>(null);
   const playerProfileRef = useRef<HTMLDivElement>(null);
   const teamGalleryReturnScrollYRef = useRef<number | null>(null);
+  const avatarDragRef = useRef<{ playerId: string; startX: number; startY: number; startOffsetX: number; startOffsetY: number } | null>(null);
   const cameraVideoRef = useRef<HTMLVideoElement>(null);
   const cameraStreamRef = useRef<MediaStream | null>(null);
   const [cameraPlayerId, setCameraPlayerId] = useState<string | null>(null);
   const [cameraError, setCameraError] = useState("");
+  const [avatarDragging, setAvatarDragging] = useState(false);
 
   useEffect(() => {
     const refreshDate = () => setCurrentDateValue(dateInputValue(new Date()));
@@ -3024,9 +3058,50 @@ export default function Home() {
     setPlayers((current) => current.map((item) => (item.id === playerId ? { ...item, ...next } : item)));
   }
 
+  function startAvatarDrag(event: ReactPointerEvent<HTMLElement>, player: Player) {
+    const canEditPlayer = canUseAdminControls || (hasRealTeam && isRegisteredUser && player.ownerUserId === currentUserId);
+    if (!player.avatar || !canEditPlayer) return;
+
+    event.preventDefault();
+    event.currentTarget.setPointerCapture(event.pointerId);
+    avatarDragRef.current = {
+      playerId: player.id,
+      startX: event.clientX,
+      startY: event.clientY,
+      startOffsetX: clampAvatarOffset(player.avatarOffsetX, 50),
+      startOffsetY: clampAvatarOffset(player.avatarOffsetY, 0),
+    };
+    setAvatarDragging(true);
+    setAvatarMessage("Arrastra la foto y pulsa Guardar ficha");
+  }
+
+  function moveAvatarDrag(event: ReactPointerEvent<HTMLElement>) {
+    const drag = avatarDragRef.current;
+    if (!drag) return;
+
+    event.preventDefault();
+    const rect = event.currentTarget.getBoundingClientRect();
+    const x = clampAvatarOffset(drag.startOffsetX - ((event.clientX - drag.startX) / Math.max(rect.width, 1)) * 100, 50);
+    const y = clampAvatarOffset(drag.startOffsetY - ((event.clientY - drag.startY) / Math.max(rect.height, 1)) * 100, 0);
+    updatePlayer(drag.playerId, { avatarOffsetX: x, avatarOffsetY: y });
+  }
+
+  function finishAvatarDrag(event: ReactPointerEvent<HTMLElement>) {
+    if (!avatarDragRef.current) return;
+
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+    avatarDragRef.current = null;
+    setAvatarDragging(false);
+    setAvatarMessage("Encuadre listo. Pulsa Guardar ficha");
+  }
+
   function profilePatchFor(player: Player) {
     return {
       avatar: player.avatar,
+      avatarOffsetX: player.avatar ? clampAvatarOffset(player.avatarOffsetX, 50) : undefined,
+      avatarOffsetY: player.avatar ? clampAvatarOffset(player.avatarOffsetY, 0) : undefined,
       birthDate: normalizeBirthDate(player.birthDate),
       goalkeeperOnly: Boolean(player.goalkeeperOnly),
       goals: player.goals ?? 0,
@@ -3147,12 +3222,12 @@ export default function Home() {
 
     try {
       setAvatarMessage("Recortando foto...");
-      const avatar = await avatarDataUrl(file);
-      updatePlayer(playerId, { avatar });
-      setAvatarMessage("Foto actualizada");
-      window.setTimeout(() => setAvatarMessage(""), 1800);
+      const avatar = await withTimeout(avatarDataUrl(file), 8000, "Recorte agotado");
+      updatePlayer(playerId, { avatar, avatarOffsetX: 50, avatarOffsetY: 0 });
+      setAvatarMessage("Foto lista. Ajusta y pulsa Guardar ficha");
     } catch {
       setAvatarMessage("No se pudo cargar la foto.");
+      window.setTimeout(() => setAvatarMessage(""), 2600);
     }
   }
 
@@ -3684,7 +3759,7 @@ export default function Home() {
         <span className="fifa-photo">
           {player.avatar ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={player.avatar} alt={`Foto de ${playerDisplayName(player)}`} />
+            <img src={player.avatar} alt={`Foto de ${playerDisplayName(player)}`} draggable={false} style={avatarImageStyle(player)} />
           ) : (
             <b>+</b>
           )}
@@ -3725,7 +3800,7 @@ export default function Home() {
         <span className="fifa-photo">
           {player.avatar ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={player.avatar} alt={`Foto de ${playerDisplayName(player)}`} />
+            <img src={player.avatar} alt={`Foto de ${playerDisplayName(player)}`} draggable={false} style={avatarImageStyle(player)} />
           ) : (
             <b>+</b>
           )}
@@ -3789,7 +3864,7 @@ export default function Home() {
           <button className="player-name" onClick={() => openPlayerProfile(player.id)}>
             {player.avatar ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={player.avatar} alt="" />
+              <img src={player.avatar} alt="" draggable={false} style={avatarImageStyle(player)} />
             ) : null}
             <strong>
               {playerDisplayName(player)} <small>({playerMediaScore(player).toFixed(1)}) · Forma {formState.percent}% · {player.goals} Goles</small>
@@ -4669,13 +4744,19 @@ export default function Home() {
             <>
               <div className="profile-top">
                 <div className="fifa-card-shell">
-                  <label className={canEditSelectedPlayer ? "fifa-player-card" : "fifa-player-card readonly-card"}>
+                  <div className={`${canEditSelectedPlayer ? "fifa-player-card" : "fifa-player-card readonly-card"} ${avatarDragging ? "avatar-dragging" : ""}`}>
                     <span className="fifa-score">{Math.round(selectedPeerScore * 10)}</span>
                     <span className="fifa-position">{positionShort(selectedPlayer)}</span>
-                    <span className="fifa-photo">
+                    <span
+                      className={`fifa-photo ${canEditSelectedPlayer && selectedPlayer.avatar ? "draggable-avatar" : ""}`}
+                      onPointerCancel={finishAvatarDrag}
+                      onPointerDown={(event) => startAvatarDrag(event, selectedPlayer)}
+                      onPointerMove={moveAvatarDrag}
+                      onPointerUp={finishAvatarDrag}
+                    >
                       {selectedPlayer.avatar ? (
                         // eslint-disable-next-line @next/next/no-img-element
-                        <img src={selectedPlayer.avatar} alt={`Foto de ${playerDisplayName(selectedPlayer)}`} />
+                        <img src={selectedPlayer.avatar} alt={`Foto de ${playerDisplayName(selectedPlayer)}`} draggable={false} style={avatarImageStyle(selectedPlayer)} />
                       ) : (
                         <b>+</b>
                       )}
@@ -4692,21 +4773,27 @@ export default function Home() {
                         </span>
                       ))}
                     </div>
-                    <span className="fifa-photo-action">{selectedPlayer.avatar ? "Cambiar foto" : "Añadir foto"}</span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      disabled={!canEditSelectedPlayer}
-                      aria-label={selectedPlayer.avatar ? "Cambiar foto del jugador" : "Añadir foto del jugador"}
-                      onClick={(event) => {
-                        event.currentTarget.value = "";
-                      }}
-                      onChange={(event) => {
-                        void uploadAvatar(event.currentTarget.files?.[0], selectedPlayer.id);
-                        event.currentTarget.value = "";
-                      }}
-                    />
-                  </label>
+                    {canEditSelectedPlayer ? (
+                      <label className="fifa-photo-action">
+                        {selectedPlayer.avatar ? "Cambiar foto" : "Añadir foto"}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          aria-label={selectedPlayer.avatar ? "Cambiar foto del jugador" : "Añadir foto del jugador"}
+                          onClick={(event) => {
+                            event.currentTarget.value = "";
+                          }}
+                          onChange={(event) => {
+                            void uploadAvatar(event.currentTarget.files?.[0], selectedPlayer.id);
+                            event.currentTarget.value = "";
+                          }}
+                        />
+                      </label>
+                    ) : null}
+                  </div>
+                  {canEditSelectedPlayer && selectedPlayer.avatar ? (
+                    <small className="avatar-adjust-hint">Arrastra la foto dentro de la carta y pulsa Guardar ficha.</small>
+                  ) : null}
                   <div className="avatar-actions">
                     <label className="avatar-action-button">
                       Foto
@@ -5137,7 +5224,7 @@ function MatchPitch({
           ) : null}
           {player.avatar ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={player.avatar} alt="" />
+            <img src={player.avatar} alt="" draggable={false} style={avatarImageStyle(player)} />
           ) : (
             <span>{playerDisplayName(player).slice(0, 2).toUpperCase()}</span>
           )}

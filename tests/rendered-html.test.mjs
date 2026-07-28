@@ -228,6 +228,16 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /saveSelectedPlayerProfile/);
   assert.match(page, /profile-save-area/);
   assert.match(page, /Guardar ficha/);
+  assert.match(page, /avatarOffsetX\?: number/);
+  assert.match(page, /avatarOffsetY\?: number/);
+  assert.match(page, /clampAvatarOffset/);
+  assert.match(page, /avatarImageStyle/);
+  assert.match(page, /withTimeout\(avatarDataUrl\(file\), 8000/);
+  assert.match(page, /toDataURL\("image\/png"\)/);
+  assert.match(page, /startAvatarDrag/);
+  assert.match(page, /moveAvatarDrag/);
+  assert.match(page, /finishAvatarDrag/);
+  assert.match(page, /Arrastra la foto dentro de la carta y pulsa Guardar ficha/);
   assert.match(page, /birthDate\?: string/);
   assert.match(page, /playerAge/);
   assert.match(page, /Fecha nacimiento/);
@@ -239,6 +249,10 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(globalsCss, /--ink:\s*#202820/);
   assert.match(globalsCss, /\.profile-save-area/);
   assert.match(globalsCss, /\.profile-save-button/);
+  assert.match(globalsCss, /\.draggable-avatar/);
+  assert.match(globalsCss, /\.avatar-dragging \.draggable-avatar/);
+  assert.match(globalsCss, /\.avatar-adjust-hint/);
+  assert.match(globalsCss, /touch-action:\s*none/);
   assert.match(page, /goalkeeperRatingFacets/);
   assert.match(page, /type RatingRole = "field" \| "goalkeeper"/);
   assert.match(page, /outfieldPosition/);
@@ -314,6 +328,8 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(supabaseSql, /create or replace function public\.patch_pachanga_player_profile/);
   assert.match(supabaseSql, /create or replace function public\.append_pachanga_player_rating/);
   assert.match(supabaseSql, /birthDate/);
+  assert.match(supabaseSql, /avatarOffsetX/);
+  assert.match(supabaseSql, /avatarOffsetY/);
   assert.match(supabaseSql, /outfieldPosition/);
   assert.match(supabaseSql, /ratingRole/);
   assert.match(supabaseSql, /then 'goalkeeper'/);

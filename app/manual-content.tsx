@@ -28,7 +28,7 @@ const manualFlows = [
     steps: [
       "Entra con Google y cambia tu nombre visible en el equipo, por ejemplo Alberto.",
       "Pulsa Crear > Ficha jugador para crear o editar tus datos: nombre, teléfono Bizum, foto, posición preferida y estado.",
-      "Puedes añadir foto desde archivo o cámara; la app intenta centrar el avatar para que encaje mejor.",
+      "Puedes añadir foto desde archivo o cámara; la app intenta centrar el avatar y puedes arrastrarlo dentro de la carta antes de guardar.",
       "Solo tú y los admins podéis editar tu ficha. Las valoraciones las hacen compañeros, no puedes votarte a ti mismo.",
     ],
   },
