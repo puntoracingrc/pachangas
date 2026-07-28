@@ -41,6 +41,41 @@ before update on public.pachanga_groups
 for each row
 execute function public.set_updated_at();
 
+create or replace function public.is_pachanga_group_member(target_group_id uuid)
+returns boolean
+language sql
+security definer
+set search_path = public
+stable
+as $$
+  select exists (
+    select 1
+    from public.pachanga_group_members members
+    where members.group_id = target_group_id
+      and members.user_id = auth.uid()
+  );
+$$;
+
+create or replace function public.is_pachanga_group_owner(target_group_id uuid)
+returns boolean
+language sql
+security definer
+set search_path = public
+stable
+as $$
+  select exists (
+    select 1
+    from public.pachanga_groups groups
+    where groups.id = target_group_id
+      and groups.owner_id = auth.uid()
+  );
+$$;
+
+revoke all on function public.is_pachanga_group_member(uuid) from public;
+revoke all on function public.is_pachanga_group_owner(uuid) from public;
+grant execute on function public.is_pachanga_group_member(uuid) to authenticated;
+grant execute on function public.is_pachanga_group_owner(uuid) to authenticated;
+
 alter table public.pachanga_groups enable row level security;
 alter table public.pachanga_group_members enable row level security;
 
@@ -58,12 +93,7 @@ for select
 to authenticated
 using (
   owner_id = (select auth.uid())
-  or exists (
-    select 1
-    from public.pachanga_group_members members
-    where members.group_id = pachanga_groups.id
-      and members.user_id = (select auth.uid())
-  )
+  or public.is_pachanga_group_member(id)
 );
 
 drop policy if exists "Members can update groups" on public.pachanga_groups;
@@ -73,21 +103,11 @@ for update
 to authenticated
 using (
   owner_id = (select auth.uid())
-  or exists (
-    select 1
-    from public.pachanga_group_members members
-    where members.group_id = pachanga_groups.id
-      and members.user_id = (select auth.uid())
-  )
+  or public.is_pachanga_group_member(id)
 )
 with check (
   owner_id = (select auth.uid())
-  or exists (
-    select 1
-    from public.pachanga_group_members members
-    where members.group_id = pachanga_groups.id
-      and members.user_id = (select auth.uid())
-  )
+  or public.is_pachanga_group_member(id)
 );
 
 drop policy if exists "Members can read memberships" on public.pachanga_group_members;
@@ -97,12 +117,8 @@ for select
 to authenticated
 using (
   user_id = (select auth.uid())
-  or exists (
-    select 1
-    from public.pachanga_group_members own_membership
-    where own_membership.group_id = pachanga_group_members.group_id
-      and own_membership.user_id = (select auth.uid())
-  )
+  or public.is_pachanga_group_owner(group_id)
+  or public.is_pachanga_group_member(group_id)
 );
 
 drop policy if exists "Owners can add themselves as members" on public.pachanga_group_members;
@@ -112,12 +128,7 @@ for insert
 to authenticated
 with check (
   user_id = (select auth.uid())
-  and exists (
-    select 1
-    from public.pachanga_groups groups
-    where groups.id = pachanga_group_members.group_id
-      and groups.owner_id = (select auth.uid())
-  )
+  and public.is_pachanga_group_owner(group_id)
 );
 
 create or replace function public.join_pachanga_group(token uuid)
