@@ -1734,16 +1734,16 @@ select:disabled {
 .player-meta,
 .position-pill {
   align-items: center;
-  background: rgba(32, 40, 32, 0.9);
+  background: #64748b;
   border-radius: 999px;
-  color: #fff;
+  color: rgba(255, 255, 255, 0.9);
   display: inline-flex;
-  font-size: 11px;
-  font-weight: 900;
+  font-size: 9px;
+  font-weight: 800;
   justify-content: center;
-  line-height: 1.1;
-  min-height: 22px;
-  padding: 0 9px;
+  line-height: 1.05;
+  min-height: 16px;
+  padding: 1px 6px;
   text-align: center;
   text-transform: uppercase;
   width: fit-content;
@@ -1751,7 +1751,7 @@ select:disabled {
 
 .player-card .player-meta,
 .team .position-pill {
-  color: #fff;
+  color: rgba(255, 255, 255, 0.9);
 }
 
 .joined-at {
@@ -2251,8 +2251,8 @@ select:disabled {
 
 .team .position-pill {
   align-self: center;
-  max-width: 128px;
-  min-width: 54px;
+  max-width: 96px;
+  min-width: 34px;
   white-space: normal;
 }
 
@@ -3492,9 +3492,9 @@ select:disabled {
   }
 
   .player-meta {
-    font-size: 10px;
-    min-height: 20px;
-    padding: 0 8px;
+    font-size: 9px;
+    min-height: 17px;
+    padding: 1px 6px;
   }
 
   .player-actions {

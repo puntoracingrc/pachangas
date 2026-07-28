@@ -150,6 +150,9 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /Evolución temporal de las valoraciones por habilidad/);
   assert.match(globalsCss, /\.rating-line-chart svg/);
   assert.match(globalsCss, /\.rating-chart-tick text/);
+  assert.match(globalsCss, /background:\s*#64748b/);
+  assert.match(globalsCss, /font-size:\s*9px/);
+  assert.match(globalsCss, /min-height:\s*16px/);
   assert.match(page, /team-hero-logo/);
   assert.match(page, /Equipo: \{currentTeamName\}/);
   assert.match(page, /Instrucciones/);
