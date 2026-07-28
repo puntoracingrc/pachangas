@@ -188,6 +188,12 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(globalsCss, /\.profile-save-area/);
   assert.match(globalsCss, /\.profile-save-button/);
   assert.match(page, /goalkeeperRatingFacets/);
+  assert.match(page, /type RatingRole = "field" \| "goalkeeper"/);
+  assert.match(page, /outfieldPosition/);
+  assert.match(page, /rememberedOutfieldPosition/);
+  assert.match(page, /ratingRoleForPlayer/);
+  assert.match(page, /ratingVotesForRole/);
+  assert.match(page, /position:\s*goalkeeperOnly\s*\?\s*"Portero"\s*:\s*outfieldPosition/);
   assert.match(page, /Salidas/);
   assert.match(page, /Paradas/);
   assert.match(page, /Saque/);
@@ -245,6 +251,9 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(supabaseSql, /create or replace function public\.patch_pachanga_match_scorers/);
   assert.match(supabaseSql, /create or replace function public\.patch_pachanga_player_profile/);
   assert.match(supabaseSql, /create or replace function public\.append_pachanga_player_rating/);
+  assert.match(supabaseSql, /outfieldPosition/);
+  assert.match(supabaseSql, /ratingRole/);
+  assert.match(supabaseSql, /then 'goalkeeper'/);
   assert.match(supabaseSql, /Rating window closed for this player/);
   assert.match(supabaseSql, /last_vote_match_count \+ 3/);
   assert.match(supabaseSql, /current_group\.payload_revision <> expected_revision/);

@@ -1271,6 +1271,10 @@ begin
     patched_player := patched_player || jsonb_build_object('position', nullif(player_patch ->> 'position', ''));
   end if;
 
+  if player_patch ? 'outfieldPosition' then
+    patched_player := patched_player || jsonb_build_object('outfieldPosition', nullif(player_patch ->> 'outfieldPosition', ''));
+  end if;
+
   if player_patch ? 'goals' then
     patched_player := patched_player || jsonb_build_object('goals', greatest(0, coalesce((player_patch ->> 'goals')::integer, 0)));
   end if;
@@ -1424,6 +1428,13 @@ begin
     'id', gen_random_uuid()::text,
     'voterId', current_user_id::text,
     'voterName', selected_member_name,
+    'ratingRole',
+      case
+        when coalesce((selected_player ->> 'goalkeeperOnly')::boolean, false)
+          or coalesce(selected_player ->> 'position', '') in ('Portero', 'Porteria')
+        then 'goalkeeper'
+        else 'field'
+      end,
     'matchCount', player_appearances,
     'createdAt', to_char(now() at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"'),
     'facets', clean_facets

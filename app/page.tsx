@@ -22,11 +22,13 @@ async function sha256Hex(value: string) {
 }
 
 type RatingFacet = "ritmo" | "tiro" | "pase" | "regate" | "defensa" | "fisico";
+type RatingRole = "field" | "goalkeeper";
 
 type RatingVote = {
   id: string;
   voterId: string;
   voterName?: string;
+  ratingRole?: RatingRole;
   matchCount: number;
   createdAt: string;
   facets: Record<RatingFacet, number>;
@@ -71,6 +73,7 @@ type Player = {
   ratings?: number[];
   ratingVotes?: RatingVote[];
   position: PlayerPosition;
+  outfieldPosition?: PlayerPosition;
   goals: number;
   assists: number;
   appearances: number;
@@ -201,11 +204,12 @@ type RemotePayloadCommit = {
   updated_at?: string;
 };
 
-function demoVotes(playerId: string, rows: Array<[number, string, Record<RatingFacet, number>]>): RatingVote[] {
+function demoVotes(playerId: string, rows: Array<[number, string, Record<RatingFacet, number>]>, ratingRole: RatingRole = "field"): RatingVote[] {
   return rows.map(([matchCount, createdAt, facets], index) => ({
     id: `rv-${playerId}-${index + 1}`,
     voterId: "demo",
     voterName: "Demo",
+    ratingRole,
     matchCount,
     createdAt,
     facets,
@@ -216,7 +220,7 @@ const seedPlayers: Player[] = [
   { id: "p1", name: "Carlos", phone: "600 111 222", goalkeeperOnly: false, rating: 8, position: "Delantero / punta", goals: 18, assists: 7, appearances: 12, wins: 7, lateCancels: 1, ratingVotes: demoVotes("p1", [[3, "2026-06-10T23:00:00", { ritmo: 7, tiro: 8, pase: 6, regate: 7, defensa: 4, fisico: 7 }], [6, "2026-06-24T23:00:00", { ritmo: 8, tiro: 8, pase: 7, regate: 8, defensa: 5, fisico: 8 }], [9, "2026-07-08T23:00:00", { ritmo: 8, tiro: 9, pase: 7, regate: 8, defensa: 5, fisico: 8 }], [12, "2026-07-23T23:00:00", { ritmo: 8, tiro: 9, pase: 8, regate: 8, defensa: 5, fisico: 8 }]]) },
   { id: "p2", name: "Manu", phone: "600 222 333", rating: 7, position: "Mediocentro / pivote", goals: 10, assists: 13, appearances: 11, wins: 8, lateCancels: 0, ratingVotes: demoVotes("p2", [[3, "2026-06-10T23:00:00", { ritmo: 6, tiro: 5, pase: 8, regate: 6, defensa: 6, fisico: 7 }], [6, "2026-06-24T23:00:00", { ritmo: 6, tiro: 6, pase: 8, regate: 7, defensa: 7, fisico: 7 }], [8, "2026-07-08T23:00:00", { ritmo: 6, tiro: 6, pase: 9, regate: 7, defensa: 7, fisico: 7 }], [11, "2026-07-23T23:00:00", { ritmo: 7, tiro: 6, pase: 9, regate: 7, defensa: 8, fisico: 7 }]]) },
   { id: "p3", name: "Pablo", phone: "600 333 444", rating: 6, position: "Defensa central", goals: 5, assists: 4, appearances: 10, wins: 5, lateCancels: 2, ratingVotes: demoVotes("p3", [[3, "2026-06-10T23:00:00", { ritmo: 5, tiro: 4, pase: 5, regate: 5, defensa: 7, fisico: 6 }], [6, "2026-06-24T23:00:00", { ritmo: 5, tiro: 4, pase: 6, regate: 5, defensa: 8, fisico: 7 }], [10, "2026-07-23T23:00:00", { ritmo: 6, tiro: 4, pase: 6, regate: 5, defensa: 8, fisico: 7 }]]) },
-  { id: "p4", name: "Rafa", phone: "600 444 555", goalkeeperOnly: true, rating: 7, position: "Portero", goals: 1, assists: 2, appearances: 9, wins: 4, lateCancels: 0, ratingVotes: demoVotes("p4", [[3, "2026-06-10T23:00:00", { ritmo: 6, tiro: 4, pase: 6, regate: 5, defensa: 8, fisico: 7 }], [6, "2026-07-03T23:00:00", { ritmo: 6, tiro: 4, pase: 7, regate: 5, defensa: 9, fisico: 7 }], [9, "2026-07-23T23:00:00", { ritmo: 6, tiro: 4, pase: 7, regate: 6, defensa: 9, fisico: 7 }]]) },
+  { id: "p4", name: "Rafa", phone: "600 444 555", goalkeeperOnly: true, rating: 7, position: "Portero", goals: 1, assists: 2, appearances: 9, wins: 4, lateCancels: 0, ratingVotes: demoVotes("p4", [[3, "2026-06-10T23:00:00", { ritmo: 6, tiro: 4, pase: 6, regate: 5, defensa: 8, fisico: 7 }], [6, "2026-07-03T23:00:00", { ritmo: 6, tiro: 4, pase: 7, regate: 5, defensa: 9, fisico: 7 }], [9, "2026-07-23T23:00:00", { ritmo: 6, tiro: 4, pase: 7, regate: 6, defensa: 9, fisico: 7 }]], "goalkeeper") },
   { id: "p5", name: "Dani", phone: "600 555 666", rating: 5, position: "Interior / volante", goals: 6, assists: 3, appearances: 8, wins: 3, lateCancels: 1, ratingVotes: demoVotes("p5", [[3, "2026-06-10T23:00:00", { ritmo: 5, tiro: 5, pase: 5, regate: 6, defensa: 5, fisico: 5 }], [6, "2026-06-24T23:00:00", { ritmo: 6, tiro: 5, pase: 6, regate: 6, defensa: 5, fisico: 5 }], [8, "2026-07-23T23:00:00", { ritmo: 6, tiro: 6, pase: 6, regate: 6, defensa: 5, fisico: 6 }]]) },
   { id: "p6", name: "Alex", phone: "600 666 777", rating: 6, position: "Defensa central", goals: 4, assists: 8, appearances: 9, wins: 6, lateCancels: 0, ratingVotes: demoVotes("p6", [[3, "2026-06-10T23:00:00", { ritmo: 5, tiro: 4, pase: 6, regate: 5, defensa: 7, fisico: 6 }], [6, "2026-06-24T23:00:00", { ritmo: 6, tiro: 4, pase: 6, regate: 5, defensa: 8, fisico: 7 }], [9, "2026-07-23T23:00:00", { ritmo: 6, tiro: 5, pase: 7, regate: 5, defensa: 8, fisico: 7 }]]) },
   { id: "p7", name: "Sergio", phone: "600 777 888", rating: 8, position: "Delantero / punta", goals: 15, assists: 5, appearances: 8, wins: 5, lateCancels: 1, ratingVotes: demoVotes("p7", [[3, "2026-06-10T23:00:00", { ritmo: 7, tiro: 7, pase: 6, regate: 7, defensa: 4, fisico: 7 }], [5, "2026-07-07T23:00:00", { ritmo: 8, tiro: 8, pase: 6, regate: 8, defensa: 4, fisico: 7 }], [8, "2026-07-23T23:00:00", { ritmo: 9, tiro: 8, pase: 6, regate: 8, defensa: 4, fisico: 7 }]]) },
@@ -828,12 +832,23 @@ function normalizePayload(payload?: Partial<AppPayload>): AppPayload {
         season: match.season || seasonKey(match.date),
       }))
     : [starterMatch()];
-  const players = (payload?.players ? payload.players : fallback.players).map((player) => ({
-    ...player,
-    injured: Boolean(player.injured),
-    inactive: Boolean(player.inactive),
-    ratingVotes: normalizeRatingVotes(player.ratingVotes),
-  }));
+  const players = (payload?.players ? payload.players : fallback.players).map((player) => {
+    const position = player.position ?? "Mediocentro / pivote";
+    const outfieldPosition = player.outfieldPosition && !isGoalkeeperPosition(player.outfieldPosition)
+      ? player.outfieldPosition
+      : !isGoalkeeperPosition(position)
+        ? position
+        : "Mediocentro / pivote";
+
+    return {
+      ...player,
+      injured: Boolean(player.injured),
+      inactive: Boolean(player.inactive),
+      outfieldPosition,
+      position,
+      ratingVotes: normalizeRatingVotes(player.ratingVotes),
+    };
+  });
 
   return {
     activeMatchId: payload?.activeMatchId && matches.some((match) => match.id === payload.activeMatchId) ? payload.activeMatchId : matches[0].id,
@@ -856,6 +871,7 @@ function normalizeRatingVotes(votes?: RatingVote[]) {
         id: vote.id || id(),
         voterId: vote.voterId || "legacy",
         voterName: vote.voterName,
+        ratingRole: vote.ratingRole === "field" || vote.ratingRole === "goalkeeper" ? vote.ratingRole : undefined,
         matchCount: Math.max(0, Math.floor(Number(vote.matchCount) || 0)),
         createdAt: vote.createdAt || new Date().toISOString(),
         facets,
@@ -905,7 +921,7 @@ function ratingLinePath(votes: RatingVote[], facet: RatingFacet, seriesIndex = 0
 }
 
 function facetAverage(player: Player, facet: RatingFacet) {
-  const votes = player.ratingVotes ?? [];
+  const votes = ratingVotesForRole(player);
   const facetVotes = votes.map((vote) => vote.facets?.[facet]).filter((value): value is number => Number.isFinite(value));
   if (facetVotes.length > 0) return facetVotes.reduce((sum, rating) => sum + rating, 0) / facetVotes.length;
   if (player.ratings?.length) return player.ratings.reduce((sum, rating) => sum + rating, 0) / player.ratings.length;
@@ -1085,8 +1101,9 @@ function playerFormStates(matches: Match[], players: Player[]) {
   return new Map(players.map((player) => [player.id, playerFormState(player, matches, playersById)]));
 }
 
-function ratingHistory(player: Player) {
-  return [...(player.ratingVotes ?? [])].sort((a, b) => a.matchCount - b.matchCount || a.createdAt.localeCompare(b.createdAt));
+function ratingHistory(player: Player, role?: RatingRole) {
+  const votes = role ? ratingVotesForRole(player, role) : (player.ratingVotes ?? []);
+  return [...votes].sort((a, b) => a.matchCount - b.matchCount || a.createdAt.localeCompare(b.createdAt));
 }
 
 function ratingWindow(player: Player, voterId: string) {
@@ -1240,6 +1257,16 @@ function positionMeta(position: PlayerPosition) {
   return { line: "Medio" as PositionLine, label: position, short: "MED" };
 }
 
+function isGoalkeeperPosition(position: PlayerPosition | undefined) {
+  return position ? positionMeta(position).line === "Porteria" : false;
+}
+
+function rememberedOutfieldPosition(player: Player, kind: MatchKind) {
+  if (player.outfieldPosition && !isGoalkeeperPosition(player.outfieldPosition)) return player.outfieldPosition;
+  if (!isGoalkeeperPosition(player.position)) return player.position;
+  return defaultPositionForKind(kind);
+}
+
 function playerPosition(player: Player): PositionLine {
   return player.goalkeeperOnly ? "Porteria" : positionMeta(player.position).line;
 }
@@ -1263,6 +1290,17 @@ function positionShort(player: Player) {
 
 function ratingFacetsForPlayer(player: Player) {
   return playerPosition(player) === "Porteria" ? goalkeeperRatingFacets : fieldRatingFacets;
+}
+
+function ratingRoleForPlayer(player: Player): RatingRole {
+  return playerPosition(player) === "Porteria" ? "goalkeeper" : "field";
+}
+
+function ratingVotesForRole(player: Player, role = ratingRoleForPlayer(player)) {
+  const votes = player.ratingVotes ?? [];
+  const roleVotes = votes.filter((vote) => vote.ratingRole === role);
+  if (roleVotes.length > 0) return roleVotes;
+  return votes.filter((vote) => !vote.ratingRole);
 }
 
 function defaultPositionForKind(kind: MatchKind): PlayerPosition {
@@ -2456,6 +2494,7 @@ export default function Home() {
       ratings: [],
       ratingVotes: [],
       position: defaultPositionForKind(activeKind),
+      outfieldPosition: defaultPositionForKind(activeKind),
       goals: 0,
       assists: 0,
       appearances: 0,
@@ -2881,7 +2920,8 @@ export default function Home() {
       fieldCost >= 0,
   );
   const ratingVoterId = currentUserId ?? `local:${profileName.trim().toLocaleLowerCase("es-ES") || "jugador"}`;
-  const selectedRatingHistory = selectedPlayer ? ratingHistory(selectedPlayer) : [];
+  const selectedRatingRole = selectedPlayer ? ratingRoleForPlayer(selectedPlayer) : "field";
+  const selectedRatingHistory = selectedPlayer ? ratingHistory(selectedPlayer, selectedRatingRole) : [];
   const selectedRatingChartHistory = selectedRatingHistory.slice(-10);
   const selectedRatingWindow = selectedPlayer ? ratingWindow(selectedPlayer, ratingVoterId) : null;
   const selectedUserVote = selectedRatingWindow?.ownVote;
@@ -2916,7 +2956,7 @@ export default function Home() {
 
   useEffect(() => {
     if (!selectedPlayer) return;
-    const ownVote = ratingHistory(selectedPlayer).filter((vote) => vote.voterId === ratingVoterId).at(-1);
+    const ownVote = ratingHistory(selectedPlayer, ratingRoleForPlayer(selectedPlayer)).filter((vote) => vote.voterId === ratingVoterId).at(-1);
     const nextFacets = ratingFacetsForPlayer(selectedPlayer).reduce((next, facet) => {
       next[facet.key] = clampRating(ownVote?.facets[facet.key] ?? facetAverage(selectedPlayer, facet.key));
       return next;
@@ -2966,6 +3006,7 @@ export default function Home() {
           goals: editedPlayer.goals ?? 0,
           injured: Boolean(editedPlayer.injured),
           name: normalizedName,
+          outfieldPosition: rememberedOutfieldPosition(editedPlayer, activeKind),
           phone: editedPlayer.phone ?? "",
           position: editedPlayer.position,
         },
@@ -3001,6 +3042,7 @@ export default function Home() {
       id: id(),
       voterId: ratingVoterId,
       voterName: profileName.trim() ? displayName(profileName) : undefined,
+      ratingRole: ratingRoleForPlayer(player),
       matchCount: player.appearances,
       createdAt: new Date().toISOString(),
       facets: ratingFacetsForPlayer(player).reduce((next, facet) => {
@@ -3270,6 +3312,7 @@ export default function Home() {
       ratings: [],
       ratingVotes: [],
       position: defaultPositionForKind(activeKind),
+      outfieldPosition: defaultPositionForKind(activeKind),
       goals: 0,
       assists: 0,
       appearances: 0,
@@ -4620,12 +4663,15 @@ export default function Home() {
                     type="checkbox"
                     checked={Boolean(selectedPlayer.goalkeeperOnly)}
                     disabled={!canEditSelectedPlayer}
-                    onChange={(event) =>
+                    onChange={(event) => {
+                      const goalkeeperOnly = event.target.checked;
+                      const outfieldPosition = rememberedOutfieldPosition(selectedPlayer, activeKind);
                       updatePlayer(selectedPlayer.id, {
-                        goalkeeperOnly: event.target.checked,
-                        position: event.target.checked ? "Portero" : selectedPlayer.position,
-                      })
-                    }
+                        goalkeeperOnly,
+                        outfieldPosition,
+                        position: goalkeeperOnly ? "Portero" : outfieldPosition,
+                      });
+                    }}
                   />
                   Portero fijo
                 </label>
@@ -4643,7 +4689,13 @@ export default function Home() {
                   <select
                     value={equivalentPositionForKind(selectedPlayer.position, activeKind)}
                     disabled={!canEditSelectedPlayer}
-                    onChange={(event) => updatePlayer(selectedPlayer.id, { position: event.target.value as PlayerPosition })}
+                    onChange={(event) => {
+                      const position = event.target.value as PlayerPosition;
+                      updatePlayer(selectedPlayer.id, {
+                        position,
+                        ...(isGoalkeeperPosition(position) ? {} : { outfieldPosition: position }),
+                      });
+                    }}
                   >
                     {positionOptionsByKind[activeKind].map((option) => (
                       <option key={option.value} value={option.value}>{option.value}</option>
@@ -4672,9 +4724,7 @@ export default function Home() {
                     </em>
                   </div>
                   <strong>{draftPeerAverage.toFixed(1)}</strong>
-                  <small>
-                    {(selectedPlayer.ratingVotes?.length ?? 0) + (selectedPlayer.ratings?.length ?? 0)} votos de compañeros
-                  </small>
+                  <small>{selectedRatingHistory.length + (selectedPlayer.ratings?.length ?? 0)} votos de compañeros</small>
                   <p className="rating-help">{selectedRatingStatusText}</p>
                   <div className="facet-grid">
                     {selectedRatingFacets.map((facet) => (
