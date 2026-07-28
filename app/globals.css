@@ -34,6 +34,7 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+  overflow-x: hidden;
 }
 
 button,
@@ -2959,6 +2960,22 @@ select:disabled {
     padding-top: 28px;
   }
 
+  .hero > div,
+  .manual-hero > div {
+    min-width: 0;
+  }
+
+  h1,
+  .manual-hero h1 {
+    max-width: 100%;
+    overflow-wrap: anywhere;
+  }
+
+  .hero-copy {
+    max-width: 100%;
+    overflow-wrap: anywhere;
+  }
+
   .manual-hero {
     align-items: stretch;
     display: grid;
@@ -2966,15 +2983,18 @@ select:disabled {
   }
 
   .hero-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     justify-content: stretch;
   }
 
-  .hero-actions button {
-    flex: 1 1 120px;
+  .hero-actions > * {
+    min-width: 0;
+    width: 100%;
   }
 
   .manual-link-button {
-    flex: 0 0 44px;
+    flex: unset;
   }
 
   .demo-banner {
@@ -2988,6 +3008,18 @@ select:disabled {
   .manual-flow-card > div {
     align-items: start;
     display: grid;
+  }
+
+  .manual-page-title {
+    align-items: start;
+    display: grid;
+    gap: 4px;
+    justify-content: stretch;
+  }
+
+  .manual-page-title strong {
+    min-width: 0;
+    overflow-wrap: anywhere;
   }
 
   .match-editor,

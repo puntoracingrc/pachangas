@@ -57,6 +57,8 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(globalsCss, /\.side-history \.history/);
   assert.match(globalsCss, /\.joined-at/);
   assert.match(globalsCss, /overflow-y:\s*auto/);
+  assert.match(globalsCss, /\.hero-actions\s*\{[\s\S]*grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\)/);
+  assert.match(globalsCss, /overflow-x:\s*hidden/);
   assert.match(page, /Equipo pachanguero/);
   assert.match(page, /equipo/);
   assert.match(page, /compactUuid/);
