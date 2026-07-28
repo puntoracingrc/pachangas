@@ -3070,8 +3070,19 @@ export default function Home() {
       }
 
       applyRemoteCommit(result.data as RemotePayloadCommit);
+      if (selectedPlayerIsOwn) {
+        setProfileName(normalizedName);
+        const memberResult = await supabase.rpc("update_pachanga_member_name", {
+          member_name: normalizedName,
+          target_group_id: remoteGroupId,
+        });
+        if (!memberResult.error) {
+          await loadTeamMembers(supabase, remoteGroupId);
+        }
+      }
     } else {
       setPlayers(nextPlayers);
+      if (selectedPlayerIsOwn) setProfileName(normalizedName);
       localStorage.setItem(storageKey, JSON.stringify(nextPayload));
     }
 
@@ -3307,38 +3318,6 @@ export default function Home() {
       setSyncStatus("error");
       setSyncError(error instanceof Error ? error.message : "No se pudo crear el equipo");
     }
-  }
-
-  async function saveProfileName() {
-    const nextName = displayName(profileName.trim());
-    if (!nextName) {
-      setSyncStatus("error");
-      setSyncError("Escribe un nombre para guardarlo en el equipo.");
-      return;
-    }
-
-    setProfileName(nextName);
-
-    if (ownPlayer) {
-      updatePlayer(ownPlayer.id, { name: nextName });
-    }
-
-    if (!supabase || !remoteGroupId || !currentUserId) return;
-
-    const result = await supabase.rpc("update_pachanga_member_name", {
-      member_name: nextName,
-      target_group_id: remoteGroupId,
-    });
-
-    if (result.error) {
-      setSyncStatus("error");
-      setSyncError(result.error.message);
-      return;
-    }
-
-    await loadTeamMembers(supabase, remoteGroupId);
-    setSyncStatus("live");
-    setSyncError("");
   }
 
   async function openOwnPlayerProfile() {
@@ -3957,32 +3936,10 @@ export default function Home() {
               <button type="button" className={ownStatus === "no" ? "selected danger" : ""} disabled={!canChangeOwnSummaryStatus} onClick={() => void setStatus(ownPlayer.id, "no")}>No</button>
             </div>
           ) : hasRealTeam && isRegisteredUser && !ownPlayer ? (
-            <button className="primary-button" type="button" onClick={openOwnPlayerProfile}>
+            <button className="primary-button" type="button" onClick={() => void openOwnPlayerProfile()}>
               Crear mi ficha
             </button>
           ) : null}
-        </section>
-      ) : null}
-
-      {isRegisteredUser ? (
-        <section className="top-panel auth-panel account-panel">
-          <div className="account-status">
-            <span>Cuenta</span>
-            <strong>{authDisplayName(authUser)}</strong>
-          </div>
-          <div className="auth-actions">
-            <label className="profile-name-field">
-              Nombre en el equipo
-              <input
-                value={profileName}
-                onChange={(event) => setProfileName(event.target.value)}
-                placeholder="Ej. Alberto"
-              />
-            </label>
-            <button className="secondary-button" type="button" onClick={() => void saveProfileName()} disabled={!hasRealTeam}>
-              Guardar nombre
-            </button>
-          </div>
         </section>
       ) : null}
 
