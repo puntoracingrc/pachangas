@@ -3779,41 +3779,6 @@ export default function Home() {
     "--team-b-muted": `color-mix(in srgb, ${siteSettings.teamBColor} 38%, white)`,
   } as CSSProperties;
   const currentTeamName = currentTeam?.name ?? displayName(siteSettings.brand) ?? "Pachangas IQ";
-  const ownMatchEntry = ownPlayer ? activeMatch.players.find((entry) => entry.playerId === ownPlayer.id) : undefined;
-  const ownStatus = ownPlayer?.injured || ownPlayer?.inactive ? "no" : ownMatchEntry?.status;
-  const ownIsReserve = Boolean(ownPlayer && reserveIds.includes(ownPlayer.id));
-  const ownIsWaiting = Boolean(ownPlayer && waitingIds.includes(ownPlayer.id));
-  const ownPays = Boolean(ownPlayer && payingIds.includes(ownPlayer.id));
-  const ownStatusText = !matchConfigured
-    ? "Partido pendiente de guardar"
-    : !isRegisteredUser
-      ? "Entra con Google para apuntarte"
-    : !ownPlayer
-      ? "Crea tu ficha para poder apuntarte"
-      : ownStatus === "voy"
-        ? ownIsWaiting
-          ? "Estás en lista de espera"
-          : ownIsReserve
-            ? "Vas como reserva"
-            : "Vas al partido"
-        : ownStatus === "duda"
-          ? "Estás en duda"
-          : ownStatus === "no"
-            ? "Has marcado que no vas"
-            : "Aún no has respondido";
-  const ownPaymentText = !ownPlayer || ownStatus !== "voy"
-    ? ""
-    : !ownPays
-      ? "Sin pago"
-      : ownMatchEntry?.paid
-        ? "Pago marcado"
-        : `Te toca ${sharePerPlayer.toFixed(2)} €`;
-  const canChangeOwnSummaryStatus = Boolean(
-    ownPlayer &&
-      matchConfigured &&
-      !ownPlayer.inactive &&
-      (!matchFinalized || canUseAdminControls),
-  );
 
   return (
     <main className="min-h-screen bg-[#f7f6f0] text-[#1d2521]" style={teamColorStyle}>
@@ -3912,35 +3877,6 @@ export default function Home() {
           ) : null}
           <button className="ghost-form-button" type="button" onClick={() => setOpenQuickForm(null)}>Cerrar</button>
         </form>
-      ) : null}
-
-      {!needsLoginForSharedLink ? (
-        <section className="top-panel match-focus-card" aria-label="Resumen del partido">
-          <div className="focus-main">
-            <span>Próximo partido</span>
-            <strong>{matchSummaryDate(activeMatch.date)}</strong>
-            <p>{activeMatch.place} · {matchKinds[activeKind].label} · {sharePerPlayer.toFixed(2)} €</p>
-          </div>
-          <div className="focus-number">
-            <strong>{confirmedPlayers.length}/{activeMatch.targetPlayers}</strong>
-            <span>{missing === 0 ? "Completo" : `${missing} faltan`}</span>
-          </div>
-          <div className="focus-status">
-            <span>{ownStatusText}</span>
-            {ownPaymentText ? <strong>{ownPaymentText}</strong> : null}
-          </div>
-          {ownPlayer && matchConfigured && !ownPlayer.inactive ? (
-            <div className="quick-status-buttons status-buttons" aria-label={`Tu asistencia: ${playerDisplayName(ownPlayer)}`}>
-              <button type="button" className={ownStatus === "voy" ? "selected" : ""} disabled={!canChangeOwnSummaryStatus || Boolean(ownPlayer.injured)} onClick={() => void setStatus(ownPlayer.id, "voy")}>Voy</button>
-              <button type="button" className={ownStatus === "duda" ? "selected" : ""} disabled={!canChangeOwnSummaryStatus} onClick={() => void setStatus(ownPlayer.id, "duda")}>Duda</button>
-              <button type="button" className={ownStatus === "no" ? "selected danger" : ""} disabled={!canChangeOwnSummaryStatus} onClick={() => void setStatus(ownPlayer.id, "no")}>No</button>
-            </div>
-          ) : hasRealTeam && isRegisteredUser && !ownPlayer ? (
-            <button className="primary-button" type="button" onClick={() => void openOwnPlayerProfile()}>
-              Crear mi ficha
-            </button>
-          ) : null}
-        </section>
       ) : null}
 
       <section className="top-panel team-access-panel">
