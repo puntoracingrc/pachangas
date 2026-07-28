@@ -4316,14 +4316,12 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="payer-note">
-            <span>Turno de pago</span>
-            <strong>
-              {payer
-                ? `${playerDisplayName(payer)} adelanta el campo. Bizum: ${payer.phone || "sin telefono"} · ${sharePerPlayer.toFixed(2)} € por persona`
-                : "Añade asistentes para calcularlo"}
-            </strong>
-          </div>
+          {payer ? (
+            <div className="payer-note">
+              <span>Turno de pago</span>
+              <strong>{playerDisplayName(payer)} adelanta el campo. Bizum: {payer.phone || "sin telefono"} · {sharePerPlayer.toFixed(2)} € por persona</strong>
+            </div>
+          ) : null}
 
           <div className="share-box">
             <span>Comparte este partido!</span>

@@ -252,6 +252,7 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /partido_guardado/);
   assert.match(page, /partido_finalizado/);
   assert.match(page, /equipo_borrado/);
+  assert.doesNotMatch(page, /Añade asistentes para calcularlo/);
   assert.match(globalsCss, /\.backup-panel/);
   assert.match(globalsCss, /\.backup-list article/);
   assert.match(supabaseSql, /create table if not exists public\.pachanga_group_backups/);
