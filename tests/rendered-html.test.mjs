@@ -239,6 +239,11 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /remotePayloadRevisionRef/);
   assert.match(page, /payloadRef/);
   assert.match(page, /save_pachanga_payload_if_current/);
+  assert.match(page, /upsert_pachanga_own_player_profile/);
+  assert.match(page, /function profilePatchFor/);
+  assert.match(page, /function ownPlayerFromCommit/);
+  assert.match(page, /Creando ficha/);
+  assert.match(page, /Asignando ficha/);
   assert.match(page, /patch_pachanga_match_player_status/);
   assert.match(page, /patch_pachanga_match_player_paid/);
   assert.match(page, /patch_pachanga_match_scorers/);
@@ -257,6 +262,10 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(supabaseSql, /create or replace function public\.patch_pachanga_match_player_status/);
   assert.match(supabaseSql, /create or replace function public\.patch_pachanga_match_player_paid/);
   assert.match(supabaseSql, /create or replace function public\.patch_pachanga_match_scorers/);
+  assert.match(supabaseSql, /create or replace function public\.upsert_pachanga_own_player_profile/);
+  assert.match(supabaseSql, /Only group members can create a player profile/);
+  assert.match(supabaseSql, /This player profile already belongs to another user/);
+  assert.match(supabaseSql, /grant execute on function public\.upsert_pachanga_own_player_profile/);
   assert.match(supabaseSql, /create or replace function public\.patch_pachanga_player_profile/);
   assert.match(supabaseSql, /create or replace function public\.append_pachanga_player_rating/);
   assert.match(supabaseSql, /birthDate/);

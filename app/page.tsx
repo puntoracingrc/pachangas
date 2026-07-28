@@ -3024,6 +3024,28 @@ export default function Home() {
     setPlayers((current) => current.map((item) => (item.id === playerId ? { ...item, ...next } : item)));
   }
 
+  function profilePatchFor(player: Player) {
+    return {
+      avatar: player.avatar,
+      birthDate: normalizeBirthDate(player.birthDate),
+      goalkeeperOnly: Boolean(player.goalkeeperOnly),
+      goals: player.goals ?? 0,
+      injured: Boolean(player.injured),
+      name: displayName(player.name) || player.name,
+      outfieldPosition: rememberedOutfieldPosition(player, activeKind),
+      phone: player.phone ?? "",
+      position: player.position,
+    };
+  }
+
+  function ownPlayerFromCommit(commit: RemotePayloadCommit, fallbackPlayerId: string) {
+    const payload = normalizePayload(commit.payload);
+    applyPayload(payload, commit.payload_revision);
+    setSyncStatus("live");
+    setSyncError("");
+    return payload.players.find((player) => player.ownerUserId === currentUserId) ?? payload.players.find((player) => player.id === fallbackPlayerId);
+  }
+
   async function saveSelectedPlayerProfile() {
     if (!selectedPlayer || !canEditSelectedPlayer) return;
     const normalizedName = displayName(selectedPlayer.name) || selectedPlayer.name;
@@ -3036,17 +3058,7 @@ export default function Home() {
 
     if (supabase && remoteGroupId && remoteReady) {
       const result = await supabase.rpc("patch_pachanga_player_profile", {
-        player_patch: {
-          avatar: editedPlayer.avatar,
-          birthDate: normalizeBirthDate(editedPlayer.birthDate),
-          goalkeeperOnly: Boolean(editedPlayer.goalkeeperOnly),
-          goals: editedPlayer.goals ?? 0,
-          injured: Boolean(editedPlayer.injured),
-          name: normalizedName,
-          outfieldPosition: rememberedOutfieldPosition(editedPlayer, activeKind),
-          phone: editedPlayer.phone ?? "",
-          position: editedPlayer.position,
-        },
+        player_patch: profilePatchFor({ ...editedPlayer, name: normalizedName }),
         target_group_id: remoteGroupId,
         target_player_id: selectedPlayer.id,
       });
@@ -3329,7 +3341,7 @@ export default function Home() {
     setSyncError("");
   }
 
-  function openOwnPlayerProfile() {
+  async function openOwnPlayerProfile() {
     if (ownPlayer) {
       openPlayerProfile(ownPlayer.id);
       return;
@@ -3357,14 +3369,71 @@ export default function Home() {
       lateCancels: 0,
     };
 
+    if (supabase && remoteGroupId && remoteReady) {
+      setSyncStatus("connecting");
+      setSyncError("");
+      setProfileSaveMessage("Creando ficha...");
+
+      const result = await supabase.rpc("upsert_pachanga_own_player_profile", {
+        player_patch: profilePatchFor(player),
+        target_group_id: remoteGroupId,
+        target_player_id: player.id,
+      });
+
+      if (result.error) {
+        setProfileSaveMessage("No se pudo crear la ficha.");
+        markRemoteWriteError(result.error.message);
+        window.setTimeout(() => setProfileSaveMessage(""), 2600);
+        return;
+      }
+
+      const savedPlayer = ownPlayerFromCommit(result.data as RemotePayloadCommit, player.id);
+      if (savedPlayer) {
+        setSelectedPlayerId(savedPlayer.id);
+        setProfileSaveMessage("Ficha creada");
+        window.setTimeout(() => setProfileSaveMessage(""), 1800);
+      }
+      return;
+    }
+
     setPlayers((current) => [...current, player]);
     setSelectedPlayerId(player.id);
   }
 
-  function claimSelectedPlayer() {
+  async function claimSelectedPlayer() {
     if (!selectedPlayer || selectedPlayer.ownerUserId || ownPlayer || !hasRealTeam || !isRegisteredUser || !currentUserId) return;
 
     const nextName = displayName(profileName || selectedPlayer.name || authDisplayName(authUser));
+    const claimedPlayer = { ...selectedPlayer, ownerUserId: currentUserId, name: nextName || selectedPlayer.name };
+
+    if (supabase && remoteGroupId && remoteReady) {
+      setSyncStatus("connecting");
+      setSyncError("");
+      setProfileSaveMessage("Asignando ficha...");
+
+      const result = await supabase.rpc("upsert_pachanga_own_player_profile", {
+        player_patch: profilePatchFor(claimedPlayer),
+        target_group_id: remoteGroupId,
+        target_player_id: selectedPlayer.id,
+      });
+
+      if (result.error) {
+        setProfileSaveMessage("No se pudo asignar la ficha.");
+        markRemoteWriteError(result.error.message);
+        window.setTimeout(() => setProfileSaveMessage(""), 2600);
+        return;
+      }
+
+      const savedPlayer = ownPlayerFromCommit(result.data as RemotePayloadCommit, selectedPlayer.id);
+      if (savedPlayer) {
+        setSelectedPlayerId(savedPlayer.id);
+        setProfileSaveMessage("Ficha asignada");
+        window.setTimeout(() => setProfileSaveMessage(""), 1800);
+      }
+      if (nextName) setProfileName(nextName);
+      return;
+    }
+
     setPlayers((current) =>
       current.map((player) =>
         player.id === selectedPlayer.id
@@ -3794,7 +3863,7 @@ export default function Home() {
           </a>
           {isRegisteredUser ? (
             <>
-              <button className="secondary-button" type="button" onClick={openOwnPlayerProfile} disabled={!hasRealTeam}>
+              <button className="secondary-button" type="button" onClick={() => void openOwnPlayerProfile()} disabled={!hasRealTeam}>
                 {ownPlayer ? "Mi ficha" : "Crear ficha"}
               </button>
               <button className="secondary-button" type="button" onClick={() => void signOut()}>
@@ -4573,7 +4642,7 @@ export default function Home() {
             {!ownPlayer && selectedPlayer && !selectedPlayer.ownerUserId && hasRealTeam && isRegisteredUser ? (
               <div className="profile-claim">
                 <span>¿Esta ficha eres tú?</span>
-                <button type="button" onClick={claimSelectedPlayer}>Esta es mi ficha</button>
+                <button type="button" onClick={() => void claimSelectedPlayer()}>Esta es mi ficha</button>
               </div>
             ) : null}
             <>
