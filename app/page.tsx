@@ -2363,6 +2363,11 @@ export default function Home() {
           <p className="hero-copy">{siteSettings.subtitle}</p>
         </div>
         <div className="hero-actions">
+          <a className="manual-link-button" href="/manual" title="Manual de usuario" aria-label="Abrir manual de usuario">
+            <svg aria-hidden="true" viewBox="0 0 24 24">
+              <path d="M6 3h10.5A2.5 2.5 0 0 1 19 5.5V21l-3-1.8L13 21l-3-1.8L7 21l-3-1.8V5A2 2 0 0 1 6 3Zm0 2v12.6l1 .6 3-1.8 3 1.8 3-1.8 1 .6V5.5a.5.5 0 0 0-.5-.5H6Zm2 3h7v2H8V8Zm0 4h7v2H8v-2Z" />
+            </svg>
+          </a>
           <button className="primary-button" onClick={createMatch} disabled={!canUseAdminControls}>
             + Partido
           </button>
@@ -2476,47 +2481,6 @@ export default function Home() {
           </button>
         </section>
       ) : null}
-
-      <details className="top-panel user-manual" open={isDemoMode}>
-        <summary>
-          <span>Manual de usuario</span>
-          <strong>Guía rápida de secciones</strong>
-        </summary>
-        <div className="manual-grid">
-          <article>
-            <b>Equipo privado</b>
-            <p>Crea un grupo, comparte la invitación y gestiona miembros. Los admins pueden crear partidos, campos, jugadores, cerrar alineaciones y borrar errores.</p>
-          </article>
-          <article>
-            <b>Próximos partidos</b>
-            <p>Lista los partidos abiertos. El orden de “Voy” decide titulares, reservas y espera. Si alguien se baja, el primer reserva sube automáticamente.</p>
-          </article>
-          <article>
-            <b>Partido</b>
-            <p>Configura campo, fecha, modalidad, precio y reservas. El pago rota entre asistentes y puedes marcar quién ha pagado.</p>
-          </article>
-          <article>
-            <b>Alineaciones</b>
-            <p>El sistema separa porteros, coloca fichas en el campo y permite equipos aleatorios o equilibrados por estadísticas. El admin puede cerrar o reabrir la alineación.</p>
-          </article>
-          <article>
-            <b>Ficha jugador</b>
-            <p>Guarda foto, teléfono Bizum, posición preferida, portero fijo, lesión, goles y valoraciones tipo FIFA por facetas.</p>
-          </article>
-          <article>
-            <b>Valoraciones</b>
-            <p>Se abren cada 3 partidos jugados por jugador. Al votar se cierran para ti hasta que ese jugador complete otros 3 partidos.</p>
-          </article>
-          <article>
-            <b>Resultado e historial</b>
-            <p>Rellena marcador, asigna goleadores sin superar el resultado y finaliza el partido para archivarlo en histórico y actualizar ranking.</p>
-          </article>
-          <article>
-            <b>Ranking vivo</b>
-            <p>Ordena jugadores por rendimiento, goles y victorias. Cada fila abre la ficha para consultar detalle, evolución y estado.</p>
-          </article>
-        </div>
-      </details>
 
       {showSettings ? (
         <section className="top-panel settings-panel">

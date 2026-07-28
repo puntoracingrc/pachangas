@@ -16,7 +16,17 @@ test("builds Pachanga IQ HTML", async () => {
   assert.match(html, /Finalizar partido/);
   assert.match(html, /Comparte este partido!/);
   assert.match(html, /Copiar link/);
+  assert.match(html, /Abrir manual de usuario/);
+  assert.doesNotMatch(html, /Manual de usuario<\/span>/);
   assert.doesNotMatch(html, /Your site is taking shape|Building your site|react-loading-skeleton/i);
+});
+
+test("builds the user manual as its own page", async () => {
+  const html = await readFile(new URL("../.next/server/app/manual.html", import.meta.url), "utf8");
+  assert.match(html, /Manual de usuario/);
+  assert.match(html, /Equipo privado/);
+  assert.match(html, /Ranking vivo/);
+  assert.match(html, /Volver/);
 });
 
 test("keeps the project wired to the Pachanga app", async () => {

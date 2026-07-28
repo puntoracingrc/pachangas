@@ -88,6 +88,25 @@ h1 {
   justify-content: flex-end;
 }
 
+.manual-link-button {
+  align-items: center;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--green);
+  display: inline-flex;
+  height: 44px;
+  justify-content: center;
+  text-decoration: none;
+  width: 44px;
+}
+
+.manual-link-button svg {
+  fill: currentColor;
+  height: 22px;
+  width: 22px;
+}
+
 .top-panel {
   background: var(--panel);
   border: 1px solid var(--line);
@@ -261,37 +280,10 @@ h1 {
   margin: 6px 0 0;
 }
 
-.user-manual {
-  display: block;
-}
-
-.user-manual summary {
-  align-items: center;
-  cursor: pointer;
-  display: flex;
-  gap: 10px;
-  justify-content: space-between;
-  list-style: none;
-}
-
-.user-manual summary::-webkit-details-marker {
-  display: none;
-}
-
-.user-manual summary span {
-  color: var(--ink-soft);
-  font-size: 12px;
-  font-weight: 950;
-  text-transform: uppercase;
-}
-
 .manual-grid {
-  border-top: 1px solid var(--line);
   display: grid;
   gap: 10px;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  margin-top: 12px;
-  padding-top: 12px;
 }
 
 .manual-grid article {
@@ -312,6 +304,52 @@ h1 {
   font-size: 13px;
   line-height: 1.4;
   margin: 0;
+}
+
+.manual-page {
+  background: var(--background);
+  min-height: 100vh;
+  padding-bottom: 44px;
+}
+
+.manual-hero {
+  align-items: end;
+  display: flex;
+  gap: 24px;
+  justify-content: space-between;
+  margin: 0 auto;
+  max-width: 1320px;
+  padding: 42px 22px 22px;
+}
+
+.manual-hero h1 {
+  font-size: clamp(42px, 7vw, 84px);
+}
+
+.manual-back-button {
+  align-items: center;
+  display: inline-flex;
+  text-decoration: none;
+}
+
+.manual-page-panel {
+  display: grid;
+  gap: 14px;
+}
+
+.manual-page-title {
+  align-items: center;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  justify-content: space-between;
+  padding-bottom: 12px;
+}
+
+.manual-page-title span {
+  color: var(--ink-soft);
+  font-size: 12px;
+  font-weight: 950;
+  text-transform: uppercase;
 }
 
 .team-create-form {
@@ -2611,12 +2649,22 @@ select:disabled {
     padding-top: 28px;
   }
 
+  .manual-hero {
+    align-items: stretch;
+    display: grid;
+    padding-top: 28px;
+  }
+
   .hero-actions {
     justify-content: stretch;
   }
 
   .hero-actions button {
     flex: 1 1 120px;
+  }
+
+  .manual-link-button {
+    flex: 0 0 44px;
   }
 
   .demo-banner {
