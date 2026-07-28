@@ -2465,6 +2465,58 @@ select:disabled {
   gap: 9px;
 }
 
+.ranking-toolbar {
+  align-items: end;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: minmax(132px, 0.8fr) minmax(0, 1.2fr);
+  margin-bottom: 10px;
+}
+
+.ranking-toolbar label,
+.ranking-toolbar > div {
+  display: grid;
+  gap: 6px;
+}
+
+.ranking-toolbar label,
+.ranking-toolbar > div > span {
+  color: var(--ink-soft);
+  font-size: 12px;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.ranking-toolbar select {
+  min-height: 40px;
+}
+
+.ranking-sort-buttons {
+  background: #f4f1e7;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: grid;
+  gap: 4px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  padding: 4px;
+}
+
+.ranking-sort-buttons button {
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+  color: var(--ink-soft);
+  font-size: 12px;
+  font-weight: 950;
+  min-height: 32px;
+  padding: 0 6px;
+}
+
+.ranking-sort-buttons button.selected {
+  background: #202820;
+  color: #fff;
+}
+
 .ranking-row {
   align-items: center;
   background: #fff;
@@ -3264,6 +3316,14 @@ select:disabled {
 
   .quick-status-buttons {
     min-width: 0;
+  }
+
+  .ranking-toolbar {
+    grid-template-columns: 1fr;
+  }
+
+  .ranking-sort-buttons {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .manual-grid {

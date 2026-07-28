@@ -86,6 +86,7 @@ type MatchPlayer = {
 };
 
 type MatchKind = "sala" | "futbol7" | "futbol11";
+type RankingSort = "media" | "goles" | "partidos" | "ganados";
 
 type Venue = {
   id: string;
@@ -455,6 +456,13 @@ const matchKinds: Record<MatchKind, { label: string; targetPlayers: number; team
   futbol11: { label: "Fútbol 11", targetPlayers: 22, teamSize: 11 },
 };
 
+const rankingSortLabels: Record<RankingSort, string> = {
+  media: "Media",
+  goles: "Goles",
+  partidos: "Partidos",
+  ganados: "Ganados",
+};
+
 function starterMatch(baseDate = "2026-07-30T21:00", kind: MatchKind = "futbol7"): Match {
   return {
     id: id(),
@@ -624,6 +632,19 @@ function displayName(name: string) {
 function monthLabel(date: string) {
   const label = new Date(date).toLocaleDateString("es-ES", { month: "long", year: "numeric" });
   return label.charAt(0).toLocaleUpperCase("es-ES") + label.slice(1);
+}
+
+function seasonKey(date: string | Date) {
+  const parsed = date instanceof Date ? new Date(date) : new Date(date);
+  if (Number.isNaN(parsed.getTime())) return "Sin temporada";
+  const year = parsed.getFullYear();
+  const startYear = parsed.getMonth() >= 6 ? year : year - 1;
+  return `${startYear}-${startYear + 1}`;
+}
+
+function seasonStartYear(key: string) {
+  const start = Number(key.split("-")[0]);
+  return Number.isFinite(start) ? start : 0;
 }
 
 function joinedAtLabel(date?: string) {
@@ -1106,6 +1127,8 @@ export default function Home() {
   const [showSettings, setShowSettings] = useState(false);
   const [siteSettings, setSiteSettings] = useState<SiteSettings>(defaultSiteSettings);
   const [result, setResult] = useState({ a: "", b: "" });
+  const [rankingSeason, setRankingSeason] = useState(seasonKey(new Date()));
+  const [rankingSort, setRankingSort] = useState<RankingSort>("media");
   const [remoteGroupId, setRemoteGroupId] = useState<string | null>(null);
   const [remoteInviteToken, setRemoteInviteToken] = useState<string | null>(null);
   const [remoteReady, setRemoteReady] = useState(false);
@@ -1996,7 +2019,70 @@ export default function Home() {
     setMatches(nextMatches);
   }
 
-  const rankedPlayers = [...players].sort((a, b) => scorePlayer(b) - scorePlayer(a));
+  const rankingSeasons = useMemo(() => {
+    const seasons = new Set<string>([seasonKey(new Date()), seasonKey(activeMatch.date)]);
+    matches.forEach((match) => seasons.add(seasonKey(match.date)));
+    return [...seasons].sort((a, b) => seasonStartYear(b) - seasonStartYear(a));
+  }, [activeMatch.date, matches]);
+  const activeRankingSeason = rankingSeasons.includes(rankingSeason) ? rankingSeason : rankingSeasons[0] ?? rankingSeason;
+  const rankedPlayers = useMemo(() => {
+    const stats = new Map(
+      players.map((player) => [
+        player.id,
+        {
+          appearances: 0,
+          goals: 0,
+          media: scorePlayer(player),
+          player,
+          wins: 0,
+        },
+      ]),
+    );
+
+    matches
+      .filter((match) => match.scoreA !== undefined && seasonKey(match.date) === activeRankingSeason)
+      .forEach((match) => {
+        const playedIds = new Set(matchPlayingIds(match));
+        const winningIds = new Set(
+          match.scoreA === match.scoreB ? [] : (match.scoreA ?? 0) > (match.scoreB ?? 0) ? match.teamA ?? [] : match.teamB ?? [],
+        );
+
+        playedIds.forEach((playerId) => {
+          const row = stats.get(playerId);
+          if (!row) return;
+          row.appearances += 1;
+          if (winningIds.has(playerId)) row.wins += 1;
+        });
+
+        (match.scorers ?? []).forEach((entry) => {
+          const row = stats.get(entry.playerId);
+          if (!row) return;
+          row.goals += entry.goals;
+        });
+      });
+
+    const rankingValue = (row: { appearances: number; goals: number; media: number; wins: number }) => {
+      if (rankingSort === "goles") return row.goals;
+      if (rankingSort === "partidos") return row.appearances;
+      if (rankingSort === "ganados") return row.wins;
+      return row.media;
+    };
+
+    return [...stats.values()].sort((a, b) =>
+      rankingValue(b) - rankingValue(a) ||
+      b.media - a.media ||
+      b.goals - a.goals ||
+      b.wins - a.wins ||
+      b.appearances - a.appearances ||
+      playerDisplayName(a.player).localeCompare(playerDisplayName(b.player), "es"),
+    );
+  }, [activeRankingSeason, matches, players, rankingSort]);
+  const rankingBadgeText = (row: (typeof rankedPlayers)[number]) => {
+    if (rankingSort === "goles") return `${row.goals} ${row.goals === 1 ? "gol" : "goles"}`;
+    if (rankingSort === "partidos") return `${row.appearances} PJ`;
+    if (rankingSort === "ganados") return `${row.wins} ${row.wins === 1 ? "victoria" : "victorias"}`;
+    return `Media ${row.media.toFixed(1)}`;
+  };
   const sortedPlayers = [...players].sort((a, b) => {
     const statusOrder: Record<MatchPlayer["status"] | "sin", number> = { voy: 0, duda: 1, no: 2, sin: 3 };
     const statusA = a.injured || a.inactive ? "no" : activeMatch.players.find((entry) => entry.playerId === a.id)?.status ?? "sin";
@@ -3774,30 +3860,57 @@ export default function Home() {
             <span>Ranking vivo</span>
             <strong>{rankedPlayers.length}</strong>
           </div>
+          <div className="ranking-toolbar">
+            <label>
+              Temporada
+              <select value={activeRankingSeason} onChange={(event) => setRankingSeason(event.target.value)}>
+                {rankingSeasons.map((season) => (
+                  <option key={season} value={season}>{season}</option>
+                ))}
+              </select>
+            </label>
+            <div>
+              <span>Ordenar por</span>
+              <div className="ranking-sort-buttons">
+                {(Object.keys(rankingSortLabels) as RankingSort[]).map((sort) => (
+                  <button
+                    className={rankingSort === sort ? "selected" : ""}
+                    key={sort}
+                    onClick={() => setRankingSort(sort)}
+                    type="button"
+                  >
+                    {rankingSortLabels[sort]}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
           <div className="ranking">
-            {rankedPlayers.slice(0, 8).map((player, index) => (
+            {rankedPlayers.slice(0, 8).map((row, index) => (
               <button
                 className="ranking-row"
-                key={player.id}
-                onClick={() => openPlayerProfile(player.id)}
+                key={row.player.id}
+                onClick={() => openPlayerProfile(row.player.id)}
                 type="button"
               >
                 <span>{index + 1}</span>
                 <strong>
-                  {player.inactive ? (
+                  {row.player.inactive ? (
                     <span className="inline-inactive" title="Ya no está en el grupo" aria-label="Ya no está en el grupo">
                       <UserOffLogo />
                     </span>
                   ) : null}
-                  {player.injured ? (
+                  {row.player.injured ? (
                     <span className="inline-injury" title="Jugador lesionado" aria-label="Jugador lesionado">
                       <HospitalLogo />
                     </span>
                   ) : null}
-                  {playerDisplayName(player)}
+                  {playerDisplayName(row.player)}
                 </strong>
-                <b>Media {scorePlayer(player).toFixed(1)}</b>
-                <small>{positionLabel(player)} · {player.goals} goles · {player.wins} victorias</small>
+                <b>{rankingBadgeText(row)}</b>
+                <small>
+                  {positionLabel(row.player)} · {row.appearances} {row.appearances === 1 ? "partido" : "partidos"} · {row.goals} {row.goals === 1 ? "gol" : "goles"} · {row.wins} {row.wins === 1 ? "victoria" : "victorias"} · media {row.media.toFixed(1)}
+                </small>
               </button>
             ))}
           </div>

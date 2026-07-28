@@ -134,7 +134,7 @@ const manualFlows = [
     steps: [
       "Próximos partidos muestra solo partidos abiertos y guardados.",
       "Historial muestra los últimos partidos con separadores por mes, foto en miniatura y resumen de pago y goles.",
-      "Ranking vivo ordena por rendimiento, goles y victorias.",
+      "Ranking vivo se puede filtrar por temporada y ordenar por media, goles, partidos o ganados.",
       "Cada fila del ranking abre la ficha del jugador para consultar detalle, estado y evolución.",
     ],
   },

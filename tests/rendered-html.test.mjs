@@ -18,6 +18,9 @@ test("builds Pachangas IQ HTML", async () => {
   assert.match(html, /Comparte este partido!/);
   assert.match(html, /Copiar link/);
   assert.match(html, /Próximo partido/);
+  assert.match(html, /Temporada/);
+  assert.match(html, /Ordenar por/);
+  assert.match(html, /2026-2027/);
   assert.match(html, /Navegación principal móvil/);
   assert.match(html, /Abrir manual de usuario/);
   assert.match(html, /\/manifest\.webmanifest/);
@@ -65,6 +68,11 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /id="partido"/);
   assert.match(page, /id="equipos"/);
   assert.match(page, /id="ranking"/);
+  assert.match(page, /RankingSort/);
+  assert.match(page, /rankingSeason/);
+  assert.match(page, /rankingSortLabels/);
+  assert.match(page, /seasonKey/);
+  assert.match(page, /rankingBadgeText/);
   assert.match(page, /teamPhoto\?: string/);
   assert.match(page, /matchPhotoDataUrl/);
   assert.match(page, /canUploadTeamPhoto/);
@@ -86,6 +94,8 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(globalsCss, /\.match-focus-card/);
   assert.match(globalsCss, /\.mobile-tabbar/);
   assert.match(globalsCss, /\.player-facing-main \.readonly-editor/);
+  assert.match(globalsCss, /\.ranking-toolbar/);
+  assert.match(globalsCss, /\.ranking-sort-buttons/);
   assert.match(globalsCss, /\.team-photo-card/);
   assert.match(globalsCss, /\.history-item\.has-photo/);
   assert.match(globalsCss, /overflow-y:\s*auto/);
