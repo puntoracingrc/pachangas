@@ -3001,9 +3001,10 @@ select:disabled {
 
 .ranking-toolbar {
   align-items: end;
-  display: grid;
+  display: flex;
+  flex-wrap: wrap;
   gap: 10px;
-  grid-template-columns: minmax(132px, 0.8fr) minmax(0, 1.2fr);
+  justify-content: space-between;
   margin-bottom: 10px;
 }
 
@@ -3023,6 +3024,21 @@ select:disabled {
 
 .ranking-toolbar select {
   min-height: 40px;
+  width: 100%;
+}
+
+.ranking-season-filter {
+  flex: 0 0 136px;
+}
+
+.ranking-sort-filter {
+  flex: 1 1 300px;
+  min-width: min(100%, 280px);
+}
+
+.ranking-sort-filter .ranking-sort-buttons {
+  margin-left: auto;
+  max-width: 390px;
 }
 
 .ranking-sort-buttons {
@@ -3119,7 +3135,8 @@ select:disabled {
 .ranking-card-grid {
   align-items: start;
   gap: 12px;
-  grid-template-columns: repeat(auto-fit, minmax(138px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(150px, 178px));
+  justify-content: center;
 }
 
 .ranking-player-card {
@@ -4221,7 +4238,22 @@ select:disabled {
   }
 
   .ranking-toolbar {
-    grid-template-columns: 1fr;
+    align-items: stretch;
+    justify-content: flex-start;
+  }
+
+  .ranking-season-filter {
+    flex-basis: 132px;
+  }
+
+  .ranking-sort-filter {
+    flex-basis: 100%;
+    min-width: 0;
+  }
+
+  .ranking-sort-filter .ranking-sort-buttons {
+    margin-left: 0;
+    max-width: 100%;
   }
 
   .ranking-sort-buttons {

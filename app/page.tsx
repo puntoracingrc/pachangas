@@ -747,6 +747,7 @@ function clampAvatarOffset(value: unknown, fallback: number) {
 
 function avatarImageStyle(player: Pick<Player, "avatarOffsetX" | "avatarOffsetY">): CSSProperties {
   return {
+    objectFit: "cover",
     objectPosition: `${clampAvatarOffset(player.avatarOffsetX, 50)}% ${clampAvatarOffset(player.avatarOffsetY, 0)}%`,
   };
 }
@@ -5177,7 +5178,7 @@ export default function Home() {
             <strong>{rankedPlayers.length}</strong>
           </div>
           <div className="ranking-toolbar">
-            <label>
+            <label className="ranking-season-filter">
               Temporada
               <select value={activeRankingSeason} onChange={(event) => setRankingSeason(event.target.value)}>
                 {rankingSeasons.map((season) => (
@@ -5185,7 +5186,7 @@ export default function Home() {
                 ))}
               </select>
             </label>
-            <div>
+            <div className="ranking-sort-filter">
               <span>Ordenar por</span>
               <div className="ranking-sort-buttons">
                 {(Object.keys(rankingSortLabels) as RankingSort[]).map((sort) => (

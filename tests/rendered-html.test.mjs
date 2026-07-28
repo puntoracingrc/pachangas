@@ -200,6 +200,8 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(globalsCss, /\.profile-close-button/);
   assert.match(globalsCss, /\.player-facing-main \.readonly-editor/);
   assert.match(globalsCss, /\.ranking-toolbar/);
+  assert.match(globalsCss, /\.ranking-season-filter/);
+  assert.match(globalsCss, /\.ranking-sort-filter/);
   assert.match(globalsCss, /\.ranking-sort-buttons/);
   assert.match(globalsCss, /\.ranking-card-grid/);
   assert.match(globalsCss, /\.ranking-player-card/);
@@ -237,6 +239,8 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /renderRankingMiniCard/);
   assert.match(page, /ranking-card-grid/);
   assert.match(page, /ranking-player-card/);
+  assert.match(page, /ranking-season-filter/);
+  assert.match(page, /ranking-sort-filter/);
   assert.match(page, /Mi equipo/);
   assert.match(page, /function scrollToPanel/);
   assert.match(page, /function showQuickForm/);
@@ -255,6 +259,7 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /avatarOffsetY\?: number/);
   assert.match(page, /clampAvatarOffset/);
   assert.match(page, /avatarImageStyle/);
+  assert.match(page, /objectFit: "cover"/);
   assert.match(page, /withTimeout\(avatarDataUrl\(file\), 8000/);
   assert.match(page, /toDataURL\("image\/png"\)/);
   assert.match(page, /startAvatarDrag/);
