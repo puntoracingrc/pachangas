@@ -148,11 +148,24 @@ h1 {
   justify-content: flex-end;
 }
 
-.google-signin-box {
+.auth-callback-page {
   align-items: center;
+  background: #f7f6f0;
+  color: #1d2521;
   display: flex;
-  min-height: 44px;
-  min-width: 240px;
+  min-height: 100vh;
+  padding: 32px;
+}
+
+.auth-callback-page section {
+  margin: 0 auto;
+  max-width: 680px;
+}
+
+.auth-callback-page h1 {
+  font-size: clamp(34px, 6vw, 76px);
+  line-height: 0.95;
+  margin: 10px 0 0;
 }
 
 .settings-panel {
