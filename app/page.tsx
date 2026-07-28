@@ -140,6 +140,14 @@ const defaultSiteSettings: SiteSettings = {
   teamBColor: "#d93025",
 };
 
+function WhatsAppLogo() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 24 24">
+      <path d="M12 3.3a8.5 8.5 0 0 0-7.2 13L4 20.8l4.6-1.2A8.5 8.5 0 1 0 12 3.3Zm0 1.7a6.8 6.8 0 1 1-3.1 12.8l-.3-.2-2.4.6.6-2.3-.2-.4A6.8 6.8 0 0 1 12 5Zm-3.1 3.6c-.2 0-.5.1-.7.4-.2.3-.8.8-.8 1.9s.8 2.2 1 2.4c.1.2 1.7 2.8 4.2 3.8 2.1.8 2.5.5 3 .5.4 0 1.4-.6 1.6-1.1.2-.5.2-1 .1-1.1-.1-.1-.2-.2-.5-.3l-1.6-.8c-.2-.1-.4-.1-.6.2l-.7.9c-.1.2-.3.2-.5.1-.3-.1-1.1-.4-2-1.2-.7-.7-1.2-1.5-1.4-1.7-.1-.3 0-.4.1-.5l.4-.5c.1-.2.2-.3.3-.5.1-.2 0-.3 0-.5L10 9c-.2-.4-.4-.4-.6-.4h-.5Z" />
+    </svg>
+  );
+}
+
 const matchKinds: Record<MatchKind, { label: string; targetPlayers: number; teamSize: number }> = {
   sala: { label: "Fútbol sala", targetPlayers: 10, teamSize: 5 },
   futbol7: { label: "Fútbol 7", targetPlayers: 14, teamSize: 7 },
@@ -606,6 +614,7 @@ export default function Home() {
   const activeVenue = venues.find((venue) => venue.id === activeMatch.venueId);
   const confirmedIds = activeMatch.players.filter((entry) => entry.status === "voy").map((entry) => entry.playerId);
   const confirmedPlayers = players.filter((player) => confirmedIds.includes(player.id));
+  const closedMatches = matches.filter((match) => match.scoreA !== undefined);
   const doubtfulCount = activeMatch.players.filter((entry) => entry.status === "duda").length;
   const missing = Math.max(activeMatch.targetPlayers - confirmedPlayers.length, 0);
   const fieldCost = activeMatch.fieldCost ?? 0;
@@ -1195,41 +1204,16 @@ export default function Home() {
           <strong>{currentRole === "owner" || currentRole === "admin" ? "Admin" : currentRole === "player" ? "Jugador" : "-"}</strong>
         </div>
         <div className="team-invite-link">
-          <span>Invitación</span>
+          <span>Invitar a equipo</span>
           <div className="team-invite-actions">
-            <input readOnly value={currentTeamInviteUrl() ? "Enlace listo" : ""} placeholder="Crea un equipo para invitar" />
-            <button type="button" onClick={() => void copyTeamInvite()} disabled={!currentTeamInviteUrl()} title="Copiar invitación" aria-label="Copiar invitación">
-              ⧉
+            <button className="copy-invite-button" type="button" onClick={() => void copyTeamInvite()} disabled={!currentTeamInviteUrl()} title="Copiar invitación" aria-label="Copiar invitación">
+              Copiar link
             </button>
             <button className="whatsapp-icon-button" type="button" onClick={shareTeamInviteWhatsApp} disabled={!currentTeamInviteUrl()} title="Enviar por WhatsApp" aria-label="Enviar por WhatsApp">
-              W
+              <WhatsAppLogo />
             </button>
           </div>
         </div>
-        {teamMembers.length > 0 ? (
-          <div className="team-members">
-            <span>Miembros</span>
-            <div>
-              {teamMembers.map((member) => (
-                <label key={member.userId}>
-                  <strong>
-                    {member.displayName}
-                    {member.userId === currentUserId ? " (tú)" : ""}
-                  </strong>
-                  <select
-                    value={member.role}
-                    disabled={currentRole !== "owner" || member.role === "owner"}
-                    onChange={(event) => void updateMemberRole(member, event.target.value as MemberRole)}
-                  >
-                    <option value="owner">Admin principal</option>
-                    <option value="admin">Admin</option>
-                    <option value="player">Jugador</option>
-                  </select>
-                </label>
-              ))}
-            </div>
-          </div>
-        ) : null}
         <small className={`sync-status sync-${syncStatus}`}>
           {syncStatus === "live" ? "Equipo privado sincronizado" : syncStatus === "connecting" ? "Conectando..." : syncStatus === "error" ? `Sin sync: ${syncError}` : "Crea un equipo o entra con invitación"}
         </small>
@@ -1312,8 +1296,35 @@ export default function Home() {
 
       <section className="app-shell">
         <aside className="panel match-list" aria-label="Partidos">
+          {teamMembers.length > 0 ? (
+            <details className="team-members">
+              <summary>
+                <span>Miembros</span>
+                <strong>{teamMembers.length}</strong>
+              </summary>
+              <div>
+                {teamMembers.map((member) => (
+                  <label key={member.userId}>
+                    <strong>
+                      {member.displayName}
+                      {member.userId === currentUserId ? " (tú)" : ""}
+                    </strong>
+                    <select
+                      value={member.role}
+                      disabled={currentRole !== "owner" || member.role === "owner"}
+                      onChange={(event) => void updateMemberRole(member, event.target.value as MemberRole)}
+                    >
+                      <option value="owner">Admin</option>
+                      <option value="admin">Admin</option>
+                      <option value="player">Jugador</option>
+                    </select>
+                  </label>
+                ))}
+              </div>
+            </details>
+          ) : null}
           <div className="panel-title">
-            <span>Calendario</span>
+            <span>Próximos partidos</span>
             <strong>{matches.length}</strong>
           </div>
           {matches.map((match) => (
@@ -1326,6 +1337,46 @@ export default function Home() {
               <small>{new Date(match.date).toLocaleString("es-ES", { weekday: "short", hour: "2-digit", minute: "2-digit" })}</small>
             </button>
           ))}
+          <div className="side-history">
+            <div className="panel-title compact-title">
+              <span>Historial</span>
+              <strong>{closedMatches.length}</strong>
+            </div>
+            <div className="history">
+              {closedMatches.map((match) => {
+                const matchPayer = players.find((player) => player.id === match.payerId);
+                const scorersText = match.scorers
+                  ?.map((entry) => {
+                    const scorer = players.find((player) => player.id === entry.playerId);
+                    return `${scorer ? playerDisplayName(scorer) : "Jugador"} ${entry.goals}`;
+                  })
+                  .join(", ");
+
+                return (
+                  <article className="history-item" key={match.id}>
+                    <div>
+                      <strong>{match.title}</strong>
+                      <small>{new Date(match.date).toLocaleDateString("es-ES", { day: "2-digit", month: "short" })}</small>
+                    </div>
+                    <span>{match.scoreA} - {match.scoreB}</span>
+                    <button
+                      className="history-delete"
+                      type="button"
+                      onClick={() => {
+                        if (window.confirm("¿Borrar este partido y descontar sus estadísticas?")) deleteClosedMatch(match.id);
+                      }}
+                    >
+                      Borrar
+                    </button>
+                    <small>
+                      {match.place} · pagó {matchPayer ? playerDisplayName(matchPayer) : "sin asignar"}
+                      {scorersText ? ` · goles: ${scorersText}` : ""}
+                    </small>
+                  </article>
+                );
+              })}
+            </div>
+          </div>
         </aside>
 
         <section className="panel main-panel">
@@ -1615,49 +1666,6 @@ export default function Home() {
                 <small>{scorePlayer(player).toFixed(1)} pts · {player.goals} goles · {player.wins} victorias</small>
               </div>
             ))}
-          </div>
-        </div>
-
-        <div className="panel">
-          <div className="panel-title">
-            <span>Historial</span>
-            <strong>{matches.filter((match) => match.scoreA !== undefined).length}</strong>
-          </div>
-          <div className="history">
-            {matches
-              .filter((match) => match.scoreA !== undefined)
-              .map((match) => {
-                const matchPayer = players.find((player) => player.id === match.payerId);
-                const scorersText = match.scorers
-                  ?.map((entry) => {
-                    const scorer = players.find((player) => player.id === entry.playerId);
-                    return `${scorer ? playerDisplayName(scorer) : "Jugador"} ${entry.goals}`;
-                  })
-                  .join(", ");
-
-                return (
-                  <article className="history-item" key={match.id}>
-                    <div>
-                      <strong>{match.title}</strong>
-                      <small>{new Date(match.date).toLocaleDateString("es-ES", { day: "2-digit", month: "short" })}</small>
-                    </div>
-                    <span>{match.scoreA} - {match.scoreB}</span>
-                    <button
-                      className="history-delete"
-                      type="button"
-                      onClick={() => {
-                        if (window.confirm("¿Borrar este partido y descontar sus estadísticas?")) deleteClosedMatch(match.id);
-                      }}
-                    >
-                      Borrar
-                    </button>
-                    <small>
-                      {match.place} · pagó {matchPayer ? playerDisplayName(matchPayer) : "sin asignar"}
-                      {scorersText ? ` · goles: ${scorersText}` : ""}
-                    </small>
-                  </article>
-                );
-              })}
           </div>
         </div>
       </section>

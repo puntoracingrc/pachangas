@@ -163,14 +163,7 @@ h1 {
 .team-invite-actions {
   display: grid;
   gap: 6px;
-  grid-template-columns: minmax(150px, 1fr) 42px 42px;
-}
-
-.team-invite-actions input {
-  color: var(--ink-soft);
-  font-weight: 800;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  grid-template-columns: minmax(120px, 1fr) 44px;
 }
 
 .team-invite-actions button {
@@ -187,10 +180,21 @@ h1 {
   padding: 0;
 }
 
+.team-invite-actions .copy-invite-button {
+  font-size: 14px;
+  padding: 0 12px;
+}
+
 .team-invite-actions .whatsapp-icon-button {
   background: #25d366;
   border-color: #25d366;
   color: #07391a;
+}
+
+.whatsapp-icon-button svg {
+  fill: currentColor;
+  height: 23px;
+  width: 23px;
 }
 
 .team-invite-actions button:disabled {
@@ -217,23 +221,44 @@ h1 {
   background: rgba(255, 255, 255, 0.72);
   border: 1px solid var(--line);
   border-radius: 8px;
-  display: grid;
-  gap: 8px;
-  grid-column: 1 / -1;
+  display: block;
   padding: 10px;
 }
 
-.team-members > span {
+.team-members summary {
+  align-items: center;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  list-style: none;
+}
+
+.team-members summary::-webkit-details-marker {
+  display: none;
+}
+
+.team-members summary span {
   color: var(--ink-soft);
   font-size: 12px;
   font-weight: 900;
   text-transform: uppercase;
 }
 
+.team-members summary strong {
+  align-items: center;
+  background: #fff;
+  border-radius: 999px;
+  display: inline-flex;
+  height: 26px;
+  justify-content: center;
+  min-width: 26px;
+}
+
 .team-members > div {
   display: grid;
   gap: 8px;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: 1fr;
+  margin-top: 8px;
 }
 
 .team-members label {
@@ -243,7 +268,7 @@ h1 {
   border-radius: 8px;
   display: grid;
   gap: 8px;
-  grid-template-columns: minmax(0, 1fr) 150px;
+  grid-template-columns: 1fr;
   padding: 8px;
 }
 
@@ -314,12 +339,12 @@ h1 {
 }
 
 .bottom-grid {
-  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   padding-bottom: 42px;
 }
 
 .bottom-grid.without-profile {
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .panel {
@@ -354,6 +379,19 @@ h1 {
 
 .match-list {
   align-self: start;
+}
+
+.match-list .team-members {
+  margin-bottom: 14px;
+}
+
+.side-history {
+  margin-top: 16px;
+}
+
+.compact-title {
+  margin-bottom: 10px;
+  padding-bottom: 10px;
 }
 
 .match-item {
@@ -1301,6 +1339,24 @@ select {
   font-weight: 900;
   min-height: 34px;
   padding: 0 10px;
+}
+
+.match-list .history-item {
+  align-items: stretch;
+  grid-template-columns: 1fr;
+}
+
+.match-list .history-item span {
+  font-size: 18px;
+  justify-self: start;
+}
+
+.match-list .history-delete {
+  justify-self: start;
+}
+
+.match-list .history-item > small {
+  grid-column: 1;
 }
 
 .profile-top {
