@@ -22,6 +22,7 @@ type Player = {
 type MatchPlayer = {
   playerId: string;
   status: "voy" | "duda" | "no";
+  joinedAt?: string;
   paid?: boolean;
 };
 
@@ -358,23 +359,52 @@ function savedTeams(match: Match, players: Player[], confirmedIds: string[]) {
   return separateGoalkeepers({ teamA, teamB });
 }
 
+function matchPlayingIds(match: Match) {
+  return match.players
+    .map((entry, index) => ({ entry, index }))
+    .filter(({ entry }) => entry.status === "voy")
+    .sort((a, b) => {
+      const timeA = a.entry.joinedAt ? Date.parse(a.entry.joinedAt) || 0 : a.index;
+      const timeB = b.entry.joinedAt ? Date.parse(b.entry.joinedAt) || 0 : b.index;
+      return timeA - timeB || a.index - b.index;
+    })
+    .slice(0, match.targetPlayers)
+    .map(({ entry }) => entry.playerId);
+}
+
 function nextPayer(players: Player[], matches: Match[], activeMatch: Match, confirmedIds: string[]) {
   if (confirmedIds.length === 0) return undefined;
 
   const orderedIds = players.map((player) => player.id);
-  const paidIds = matches
-    .filter((match) => match.id !== activeMatch.id && match.payerId)
-    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-    .map((match) => match.payerId as string);
-  const lastPayerId = paidIds.at(-1);
-  const startIndex = lastPayerId ? orderedIds.indexOf(lastPayerId) + 1 : 0;
+  const pickAfter = (lastPayerId: string | undefined, candidateIds: string[]) => {
+    const previousIndex = lastPayerId ? orderedIds.indexOf(lastPayerId) : -1;
+    const startIndex = previousIndex >= 0 ? previousIndex + 1 : 0;
 
-  for (let offset = 0; offset < orderedIds.length; offset += 1) {
-    const candidateId = orderedIds[(startIndex + offset) % orderedIds.length];
-    if (confirmedIds.includes(candidateId)) return candidateId;
+    for (let offset = 0; offset < orderedIds.length; offset += 1) {
+      const candidateId = orderedIds[(startIndex + offset) % orderedIds.length];
+      if (candidateIds.includes(candidateId)) return candidateId;
+    }
+
+    return candidateIds[0];
+  };
+
+  const orderedMatches = matches
+    .map((match, index) => ({ index, match }))
+    .sort((a, b) => {
+      const dateDiff = new Date(a.match.date).getTime() - new Date(b.match.date).getTime();
+      return dateDiff === 0 ? a.index - b.index : dateDiff;
+    });
+
+  let lastPayerId: string | undefined;
+
+  for (const { match } of orderedMatches) {
+    if (match.id === activeMatch.id) break;
+    const matchConfirmedIds = matchPlayingIds(match);
+    if (matchConfirmedIds.length === 0) continue;
+    lastPayerId = match.payerId && matchConfirmedIds.includes(match.payerId) ? match.payerId : pickAfter(lastPayerId, matchConfirmedIds);
   }
 
-  return confirmedIds[0];
+  return pickAfter(lastPayerId, confirmedIds);
 }
 
 export default function Home() {
@@ -630,14 +660,26 @@ export default function Home() {
   const activeMatch = matches.find((match) => match.id === activeMatchId) ?? matches[0];
   const activeKind = activeMatch.kind ?? "futbol7";
   const activeVenue = venues.find((venue) => venue.id === activeMatch.venueId);
-  const confirmedIds = activeMatch.players.filter((entry) => entry.status === "voy").map((entry) => entry.playerId);
+  const orderedGoingEntries = activeMatch.players
+    .map((entry, index) => ({ entry, index }))
+    .filter(({ entry }) => entry.status === "voy")
+    .sort((a, b) => {
+      const timeA = a.entry.joinedAt ? Date.parse(a.entry.joinedAt) || 0 : a.index;
+      const timeB = b.entry.joinedAt ? Date.parse(b.entry.joinedAt) || 0 : b.index;
+      return timeA - timeB || a.index - b.index;
+    });
+  const playingEntries = orderedGoingEntries.slice(0, activeMatch.targetPlayers);
+  const reserveEntries = orderedGoingEntries.slice(activeMatch.targetPlayers);
+  const confirmedIds = playingEntries.map(({ entry }) => entry.playerId);
+  const reserveIds = reserveEntries.map(({ entry }) => entry.playerId);
   const confirmedPlayers = players.filter((player) => confirmedIds.includes(player.id));
+  const reservePlayers = reserveIds.map((playerId) => players.find((player) => player.id === playerId)).filter((player): player is Player => Boolean(player));
   const closedMatches = matches.filter((match) => match.scoreA !== undefined);
   const doubtfulCount = activeMatch.players.filter((entry) => entry.status === "duda").length;
   const missing = Math.max(activeMatch.targetPlayers - confirmedPlayers.length, 0);
   const fieldCost = activeMatch.fieldCost ?? 0;
   const sharePerPlayer = confirmedPlayers.length > 0 ? fieldCost / confirmedPlayers.length : 0;
-  const paidCount = activeMatch.players.filter((entry) => entry.status === "voy" && entry.paid).length;
+  const paidCount = activeMatch.players.filter((entry) => confirmedIds.includes(entry.playerId) && entry.paid).length;
   const suggestedPayerId = nextPayer(players, matches, activeMatch, confirmedIds);
   const payerId = activeMatch.payerId && confirmedIds.includes(activeMatch.payerId) ? activeMatch.payerId : suggestedPayerId;
   const payer = players.find((player) => player.id === payerId);
@@ -668,11 +710,11 @@ export default function Home() {
   }
 
   function setStatus(playerId: string, status: MatchPlayer["status"]) {
-    if (lineupClosed) return;
     const existing = activeMatch.players.find((entry) => entry.playerId === playerId);
+    const joinedAt = status === "voy" ? (existing?.status === "voy" ? existing.joinedAt : new Date().toISOString()) : undefined;
     const nextPlayers = existing
-      ? activeMatch.players.map((entry) => (entry.playerId === playerId ? { ...entry, status, paid: status === "voy" ? entry.paid : false } : entry))
-      : [...activeMatch.players, { playerId, status, paid: false }];
+      ? activeMatch.players.map((entry) => (entry.playerId === playerId ? { ...entry, status, joinedAt, paid: status === "voy" ? entry.paid : false } : entry))
+      : [...activeMatch.players, { playerId, status, joinedAt, paid: false }];
     updateMatch({ ...activeMatch, players: nextPlayers });
   }
 
@@ -945,9 +987,10 @@ export default function Home() {
   });
   const teamAPlayerIds = new Set(suggested.teamA.map((player) => player.id));
   const teamBPlayerIds = new Set(suggested.teamB.map((player) => player.id));
+  const reservePlayerIds = new Set(reserveIds);
   const sortedTeamA = sortedLineupPlayers(suggested.teamA);
   const sortedTeamB = sortedLineupPlayers(suggested.teamB);
-  const otherPlayers = sortedPlayers.filter((player) => !teamAPlayerIds.has(player.id) && !teamBPlayerIds.has(player.id));
+  const otherPlayers = sortedPlayers.filter((player) => !teamAPlayerIds.has(player.id) && !teamBPlayerIds.has(player.id) && !reservePlayerIds.has(player.id));
   const selectedPlayer = selectedPlayerId ? players.find((player) => player.id === selectedPlayerId) : undefined;
   const currentTeam = remoteTeams.find((team) => team.id === remoteGroupId);
   const canManageTeam = currentRole === "owner" || currentRole === "admin";
@@ -1213,11 +1256,12 @@ export default function Home() {
   function renderPlayerCard(player: Player, team?: "A" | "B") {
     const matchEntry = activeMatch.players.find((entry) => entry.playerId === player.id);
     const status = matchEntry?.status;
+    const isReserve = reserveIds.includes(player.id);
     const teamClass = team === "A" ? "team-a-card" : team === "B" ? "team-b-card" : "";
     const nextTeam = team === "A" ? "B" : "A";
 
     return (
-      <article className={`player-card ${status ? `status-${status}` : "status-sin"} ${teamClass} ${playerPosition(player) === "Porteria" ? "goalkeeper-card" : ""}`} key={player.id}>
+      <article className={`player-card ${status ? `status-${status}` : "status-sin"} ${teamClass} ${isReserve ? "reserve-card" : ""} ${playerPosition(player) === "Porteria" ? "goalkeeper-card" : ""}`} key={player.id}>
         <div>
           <button className="player-name" onClick={() => openPlayerProfile(player.id)}>
             {player.avatar ? (
@@ -1230,6 +1274,7 @@ export default function Home() {
           </button>
           <span className="player-meta">
             {positionLabel(player)}
+            {isReserve ? <em className="reserve-chip">Reserva</em> : null}
           </span>
         </div>
         {payerId === player.id ? (
@@ -1239,9 +1284,9 @@ export default function Home() {
         ) : null}
         <div className="player-actions">
           <div className="status-buttons" aria-label={`Estado de ${playerDisplayName(player)}`}>
-            <button className={status === "voy" ? "selected" : ""} disabled={lineupClosed} onClick={() => setStatus(player.id, "voy")}>Voy</button>
-            <button className={status === "duda" ? "selected" : ""} disabled={lineupClosed} onClick={() => setStatus(player.id, "duda")}>Duda</button>
-            <button className={status === "no" ? "selected danger" : ""} disabled={lineupClosed} onClick={() => setStatus(player.id, "no")}>No</button>
+            <button className={status === "voy" ? "selected" : ""} onClick={() => setStatus(player.id, "voy")}>Voy</button>
+            <button className={status === "duda" ? "selected" : ""} onClick={() => setStatus(player.id, "duda")}>Duda</button>
+            <button className={status === "no" ? "selected danger" : ""} onClick={() => setStatus(player.id, "no")}>No</button>
           </div>
           {status === "voy" && team && canUseAdminControls ? (
             <button
@@ -1254,7 +1299,7 @@ export default function Home() {
               {team === "A" ? "→" : "←"}
             </button>
           ) : null}
-          {status === "voy" ? (
+          {status === "voy" && !isReserve ? (
             <button
               className={matchEntry?.paid ? "paid-button paid" : "paid-button"}
               onClick={() => togglePaid(player.id)}
@@ -1584,6 +1629,10 @@ export default function Home() {
               <strong>{missing}</strong>
             </div>
             <div>
+              <span>Reservas</span>
+              <strong>{reservePlayers.length}</strong>
+            </div>
+            <div>
               <span>Duda</span>
               <strong>{doubtfulCount}</strong>
             </div>
@@ -1645,6 +1694,18 @@ export default function Home() {
               {sortedTeamB.map((player) => renderPlayerCard(player, "B"))}
             </div>
           </div>
+
+          {reservePlayers.length > 0 ? (
+            <div className="reserve-section">
+              <div className="team-column-title">
+                <span>Reservas</span>
+                <strong>{reservePlayers.length}</strong>
+              </div>
+              <div className="player-grid reserve-player-grid">
+                {reservePlayers.map((player) => renderPlayerCard(player))}
+              </div>
+            </div>
+          ) : null}
 
           {otherPlayers.length > 0 ? (
             <div className="player-grid other-player-grid">
