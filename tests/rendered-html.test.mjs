@@ -63,6 +63,9 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /expandCompactUuid/);
   assert.match(page, /remoteInviteToken/);
   assert.match(page, /canEditMatchSettings\s*=\s*canUseAdminControls\s*&&\s*!matchFinalized/);
+  assert.match(page, /const nextName = displayName\(profileName\.trim\(\)\)/);
+  assert.doesNotMatch(page, /onBlur=\{\(\) => setProfileName\(displayName\(profileName \|\| authDisplayName\(authUser\)\)\)\}/);
+  assert.doesNotMatch(page, /const nextName = displayName\(profileName \|\| authDisplayName\(authUser\)\)/);
   assert.match(page, /Partido finalizado/);
   assert.doesNotMatch(page, /Modo local/);
   assert.match(layout, /title:\s*"Pachangas IQ"/);

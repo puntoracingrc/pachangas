@@ -1309,17 +1309,13 @@ export default function Home() {
       data: { subscription },
     } = client.auth.onAuthStateChange((_event, session) => {
       updateAuthState(session?.user ?? null);
-      const userName = authDisplayName(session?.user ?? null);
-      if (session?.user && !profileName.trim() && userName !== "Usuario") {
-        setProfileName(displayName(userName));
-      }
     });
 
     return () => {
       cancelled = true;
       subscription.unsubscribe();
     };
-  }, [profileName]);
+  }, []);
 
   useEffect(() => {
     if (!localHydrated || !supabase) return;
@@ -2196,8 +2192,12 @@ export default function Home() {
   }
 
   async function saveProfileName() {
-    const nextName = displayName(profileName || authDisplayName(authUser));
-    if (!nextName) return;
+    const nextName = displayName(profileName.trim());
+    if (!nextName) {
+      setSyncStatus("error");
+      setSyncError("Escribe un nombre para guardarlo en el equipo.");
+      return;
+    }
 
     setProfileName(nextName);
 
@@ -2666,7 +2666,6 @@ export default function Home() {
                 <input
                   value={profileName}
                   onChange={(event) => setProfileName(event.target.value)}
-                  onBlur={() => setProfileName(displayName(profileName || authDisplayName(authUser)))}
                   placeholder="Ej. Alberto"
                 />
               </label>
