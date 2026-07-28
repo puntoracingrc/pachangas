@@ -157,6 +157,7 @@ type RemoteTeam = {
   inviteToken: string;
   name: string;
   payload: AppPayload;
+  payloadRevision: number;
   role: MemberRole;
   teamCode: string;
 };
@@ -183,6 +184,12 @@ type IncomingSharedLink = {
   hasInvite: boolean;
   hasMatch: boolean;
   teamCode: string | null;
+};
+
+type RemotePayloadCommit = {
+  payload?: Partial<AppPayload>;
+  payload_revision?: number | string;
+  updated_at?: string;
 };
 
 function demoVotes(playerId: string, rows: Array<[number, string, Record<RatingFacet, number>]>): RatingVote[] {
@@ -1505,6 +1512,7 @@ export default function Home() {
   const [rankingSort, setRankingSort] = useState<RankingSort>("media");
   const [remoteGroupId, setRemoteGroupId] = useState<string | null>(null);
   const [remoteInviteToken, setRemoteInviteToken] = useState<string | null>(null);
+  const [remotePayloadRevision, setRemotePayloadRevision] = useState<number | null>(null);
   const [remoteReady, setRemoteReady] = useState(false);
   const [syncStatus, setSyncStatus] = useState<"connecting" | "error" | "live" | "local">("local");
   const [syncError, setSyncError] = useState("");
@@ -1530,6 +1538,8 @@ export default function Home() {
     teamCode: null,
   });
   const applyingRemoteRef = useRef(false);
+  const payloadRef = useRef<AppPayload | null>(null);
+  const remotePayloadRevisionRef = useRef<number | null>(null);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const matchPanelRef = useRef<HTMLElement>(null);
   const settingsPanelRef = useRef<HTMLElement>(null);
@@ -1551,17 +1561,39 @@ export default function Home() {
       venues,
     };
   }
+  payloadRef.current = currentPayload();
 
-  function applyPayload(payload: AppPayload) {
+  function setRemoteRevision(revision: number | string | null | undefined) {
+    const nextRevision = revision === null || revision === undefined ? null : Number(revision);
+    if (nextRevision !== null && !Number.isFinite(nextRevision)) return;
+    remotePayloadRevisionRef.current = nextRevision;
+    setRemotePayloadRevision(nextRevision);
+  }
+
+  function applyPayload(payload: AppPayload, revision?: number | string | null) {
     applyingRemoteRef.current = true;
     setPlayers(payload.players);
     setVenues(payload.venues);
     setSiteSettings(payload.siteSettings);
     setMatches(payload.matches);
     setActiveMatchId(payload.activeMatchId);
+    if (revision !== undefined) setRemoteRevision(revision);
     window.setTimeout(() => {
       applyingRemoteRef.current = false;
     }, 0);
+  }
+
+  function applyRemoteCommit(commit: RemotePayloadCommit | null | undefined) {
+    if (!commit?.payload) return false;
+    applyPayload(normalizePayload(commit.payload), commit.payload_revision);
+    setSyncStatus("live");
+    setSyncError("");
+    return true;
+  }
+
+  function markRemoteWriteError(message = "Otro usuario ha actualizado antes. Espera la sincronización y prueba otra vez.") {
+    setSyncStatus("error");
+    setSyncError(message);
   }
 
   function isAnonymousAuthUser(user: User | null) {
@@ -1630,6 +1662,7 @@ export default function Home() {
     updateAuthState(null);
     setRemoteGroupId(null);
     setRemoteInviteToken(null);
+    setRemoteRevision(null);
     setRemoteReady(false);
     setRemoteTeams([]);
     setTeamMembers([]);
@@ -1672,7 +1705,7 @@ export default function Home() {
   async function loadTeams(client: NonNullable<typeof supabase>, preferredGroupId?: string | null, preferredTeamCode?: string | null) {
     const memberships = await client
       .from("pachanga_group_members")
-      .select("group_id, role, pachanga_groups(id, name, team_code, invite_token, payload)")
+      .select("group_id, role, pachanga_groups(id, name, team_code, invite_token, payload, payload_revision)")
       .order("created_at", { ascending: true });
 
     if (memberships.error) throw new Error(memberships.error.message);
@@ -1689,6 +1722,7 @@ export default function Home() {
           inviteToken: String(group.invite_token),
           name: String(group.name ?? "Equipo pachanguero"),
           payload: normalizePayload(group.payload as Partial<AppPayload>),
+          payloadRevision: Number(group.payload_revision ?? 0),
           role: (membership.role as MemberRole | null) ?? "player",
           teamCode: String(group.team_code ?? group.id).toUpperCase(),
         } satisfies RemoteTeam;
@@ -1704,6 +1738,7 @@ export default function Home() {
     if (!selectedTeam) {
       setRemoteGroupId(null);
       setRemoteInviteToken(null);
+      setRemoteRevision(null);
       setCurrentRole(null);
       setTeamMembers([]);
       setRemoteReady(false);
@@ -1713,9 +1748,10 @@ export default function Home() {
 
     setRemoteGroupId(selectedTeam.id);
     setRemoteInviteToken(selectedTeam.inviteToken);
+    setRemoteRevision(selectedTeam.payloadRevision);
     setCurrentRole(selectedTeam.role);
     setAdminInviteToken(null);
-    applyPayload(selectedTeam.payload);
+    applyPayload(selectedTeam.payload, selectedTeam.payloadRevision);
     const currentParams = new URLSearchParams(window.location.search);
     const sharedMatchId = expandCompactUuid(currentParams.get("p") ?? currentParams.get("partido"));
     if (sharedMatchId && selectedTeam.payload.matches.some((match) => match.id === sharedMatchId)) {
@@ -1800,13 +1836,17 @@ export default function Home() {
     setSyncStatus("connecting");
     setSyncError("");
 
-    const saveResult = await supabase.from("pachanga_groups").update({ payload }).eq("id", remoteGroupId);
+    const saveResult = await supabase.rpc("save_pachanga_payload_if_current", {
+      expected_revision: remotePayloadRevisionRef.current,
+      next_payload: payload,
+      target_group_id: remoteGroupId,
+    });
     if (saveResult.error) {
-      setSyncStatus("error");
-      setSyncError(saveResult.error.message);
+      markRemoteWriteError(saveResult.error.message);
       return;
     }
 
+    applyRemoteCommit(saveResult.data as RemotePayloadCommit);
     await createTeamBackup(reason, payload, showBackupMessage);
     setSyncStatus("live");
     setSyncError("");
@@ -1923,6 +1963,7 @@ export default function Home() {
           if (!cancelled) {
             setRemoteGroupId(null);
             setRemoteInviteToken(null);
+            setRemoteRevision(null);
             setRemoteReady(false);
             setRemoteTeams([]);
             setTeamMembers([]);
@@ -1955,6 +1996,7 @@ export default function Home() {
             if (!cancelled) {
               setRemoteGroupId(null);
               setRemoteInviteToken(null);
+              setRemoteRevision(null);
               setRemoteReady(false);
               setRemoteTeams([]);
               setTeamMembers([]);
@@ -1993,7 +2035,7 @@ export default function Home() {
         { event: "UPDATE", schema: "public", table: "pachanga_groups", filter: `id=eq.${remoteGroupId}` },
         (payload) => {
           const nextPayload = normalizePayload(payload.new.payload as Partial<AppPayload>);
-          applyPayload(nextPayload);
+          applyPayload(nextPayload, payload.new.payload_revision as number | string | null | undefined);
         },
       )
       .subscribe();
@@ -2003,19 +2045,33 @@ export default function Home() {
     };
   }, [remoteGroupId, remoteReady]);
 
+  const canAutosaveRemotePayload = Boolean(remoteGroupId && currentUserId && !selectedPlayerId && (currentRole === "owner" || currentRole === "admin"));
+
   useEffect(() => {
     localStorage.setItem(storageKey, JSON.stringify({ players, venues, matches, activeMatchId, siteSettings }));
 
-    if (!supabase || !remoteGroupId || !remoteReady || applyingRemoteRef.current) return;
-    const client = supabase;
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = null;
+    if (!supabase || !remoteGroupId || !remoteReady || !canAutosaveRemotePayload || applyingRemoteRef.current) return;
+    const client = supabase;
     saveTimerRef.current = setTimeout(() => {
+      const payload = payloadRef.current ?? currentPayload();
       void client
-        .from("pachanga_groups")
-        .update({ payload: currentPayload() })
-        .eq("id", remoteGroupId);
+        .rpc("save_pachanga_payload_if_current", {
+          expected_revision: remotePayloadRevisionRef.current,
+          next_payload: payload,
+          target_group_id: remoteGroupId,
+        })
+        .then((result) => {
+          if (result.error) {
+            markRemoteWriteError(result.error.message);
+            return;
+          }
+
+          applyRemoteCommit(result.data as RemotePayloadCommit);
+        });
     }, 450);
-  }, [players, venues, matches, activeMatchId, siteSettings]);
+  }, [players, venues, matches, activeMatchId, siteSettings, canAutosaveRemotePayload]);
 
   useEffect(() => {
     if (!selectedPlayerId) return;
@@ -2168,7 +2224,7 @@ export default function Home() {
     scrollToPanel(matchPanelRef);
   }
 
-  function setStatus(playerId: string, status: MatchPlayer["status"]) {
+  async function setStatus(playerId: string, status: MatchPlayer["status"]) {
     const player = players.find((item) => item.id === playerId);
     const canChangeStatus = matchConfigured && (isDemoMode || canUseAdminControls || (hasRealTeam && isRegisteredUser && player?.ownerUserId === currentUserId));
     if (!canChangeStatus) return;
@@ -2179,6 +2235,27 @@ export default function Home() {
       const confirmed = window.confirm("Si cambias de “Voy”, perderás tu posición. Si hay reservas, el primero ocupará tu plaza. ¿Continuar?");
       if (!confirmed) return;
     }
+
+    if (supabase && remoteGroupId && hasRealTeam) {
+      setSyncStatus("connecting");
+      setSyncError("");
+
+      const result = await supabase.rpc("patch_pachanga_match_player_status", {
+        next_status: status,
+        target_group_id: remoteGroupId,
+        target_match_id: activeMatch.id,
+        target_player_id: playerId,
+      });
+
+      if (result.error) {
+        markRemoteWriteError(result.error.message);
+        return;
+      }
+
+      applyRemoteCommit(result.data as RemotePayloadCommit);
+      return;
+    }
+
     const joinedAt = status === "voy" ? (existing?.status === "voy" ? existing.joinedAt : new Date().toISOString()) : undefined;
     const nextPlayers = existing
       ? activeMatch.players.map((entry) => (entry.playerId === playerId ? { ...entry, status, joinedAt, paid: status === "voy" ? entry.paid : false } : entry))
@@ -2208,7 +2285,7 @@ export default function Home() {
                 goals: Math.max(0, item.goals + direction * previousGoals),
                 wins: Math.max(0, item.wins + (finalizedWinningIds.includes(playerId) ? direction : 0)),
               }
-            : item,
+          : item,
         ),
       );
     }
@@ -2265,11 +2342,34 @@ export default function Home() {
     );
   }
 
-  function togglePaid(playerId: string) {
+  async function togglePaid(playerId: string) {
     if (!matchConfigured) return;
+    const existingEntry = activeMatch.players.find((entry) => entry.playerId === playerId);
+    const nextPaid = !existingEntry?.paid;
+
+    if (supabase && remoteGroupId && hasRealTeam) {
+      setSyncStatus("connecting");
+      setSyncError("");
+
+      const result = await supabase.rpc("patch_pachanga_match_player_paid", {
+        next_paid: nextPaid,
+        target_group_id: remoteGroupId,
+        target_match_id: activeMatch.id,
+        target_player_id: playerId,
+      });
+
+      if (result.error) {
+        markRemoteWriteError(result.error.message);
+        return;
+      }
+
+      applyRemoteCommit(result.data as RemotePayloadCommit);
+      return;
+    }
+
     updateMatch({
       ...activeMatch,
-      players: activeMatch.players.map((entry) => (entry.playerId === playerId ? { ...entry, paid: !entry.paid } : entry)),
+      players: activeMatch.players.map((entry) => (entry.playerId === playerId ? { ...entry, paid: nextPaid } : entry)),
     });
   }
 
@@ -2380,7 +2480,7 @@ export default function Home() {
     });
   }
 
-  function setPlayerGoals(playerId: string, goals: number) {
+  async function setPlayerGoals(playerId: string, goals: number) {
     if (!canUseAdminControls) return;
     if (!resultIsReady) return;
 
@@ -2399,6 +2499,29 @@ export default function Home() {
       : [...scorers, { playerId, goals: nextGoals }];
     const cleanScorers = nextScorers.filter((entry) => entry.goals > 0);
     const goalDelta = nextGoals - (existing?.goals ?? 0);
+
+    if (supabase && remoteGroupId && hasRealTeam && canUseAdminControls) {
+      setSyncStatus("connecting");
+      setSyncError("");
+
+      const result = await supabase.rpc("patch_pachanga_match_scorers", {
+        next_scorers: cleanScorers,
+        target_group_id: remoteGroupId,
+        target_match_id: activeMatch.id,
+        target_score_a: Number(scoreAValue),
+        target_score_b: Number(scoreBValue),
+        target_team_a_ids: suggested.teamA.map((player) => player.id),
+        target_team_b_ids: suggested.teamB.map((player) => player.id),
+      });
+
+      if (result.error) {
+        markRemoteWriteError(result.error.message);
+        return;
+      }
+
+      applyRemoteCommit(result.data as RemotePayloadCommit);
+      return;
+    }
 
     updateMatch({
       ...activeMatch,
@@ -2441,9 +2564,9 @@ export default function Home() {
               ) : null}
               {playerDisplayName(player)}
             </span>
-            <button type="button" disabled={goals === 0} onClick={() => setPlayerGoals(player.id, goals - 1)}>-</button>
+            <button type="button" disabled={goals === 0} onClick={() => void setPlayerGoals(player.id, goals - 1)}>-</button>
             <b>{goals}</b>
-            <button type="button" disabled={!resultIsReady || assignedTeamGoals >= teamLimit} onClick={() => setPlayerGoals(player.id, goals + 1)}>+</button>
+            <button type="button" disabled={!resultIsReady || assignedTeamGoals >= teamLimit} onClick={() => void setPlayerGoals(player.id, goals + 1)}>+</button>
           </div>
         );
       })
@@ -2759,26 +2882,44 @@ export default function Home() {
     if (!selectedPlayer || !canEditSelectedPlayer) return;
     const normalizedName = displayName(selectedPlayer.name) || selectedPlayer.name;
     const nextPlayers = players.map((player) => (player.id === selectedPlayer.id ? { ...player, name: normalizedName } : player));
+    const editedPlayer = nextPlayers.find((player) => player.id === selectedPlayer.id);
+    if (!editedPlayer) return;
     const nextPayload: AppPayload = { players: nextPlayers, venues, matches, activeMatchId, siteSettings };
 
     setProfileSaveMessage("Guardando ficha...");
-    setPlayers(nextPlayers);
-    localStorage.setItem(storageKey, JSON.stringify(nextPayload));
 
     if (supabase && remoteGroupId && remoteReady) {
-      const { error } = await supabase.from("pachanga_groups").update({ payload: nextPayload }).eq("id", remoteGroupId);
-      if (error) {
+      const result = await supabase.rpc("patch_pachanga_player_profile", {
+        player_patch: {
+          avatar: editedPlayer.avatar,
+          goalkeeperOnly: Boolean(editedPlayer.goalkeeperOnly),
+          goals: editedPlayer.goals ?? 0,
+          injured: Boolean(editedPlayer.injured),
+          name: normalizedName,
+          phone: editedPlayer.phone ?? "",
+          position: editedPlayer.position,
+        },
+        target_group_id: remoteGroupId,
+        target_player_id: selectedPlayer.id,
+      });
+      if (result.error) {
         setProfileSaveMessage("No se pudo guardar. Revisa la conexión.");
+        markRemoteWriteError(result.error.message);
         window.setTimeout(() => setProfileSaveMessage(""), 2600);
         return;
       }
+
+      applyRemoteCommit(result.data as RemotePayloadCommit);
+    } else {
+      setPlayers(nextPlayers);
+      localStorage.setItem(storageKey, JSON.stringify(nextPayload));
     }
 
     setProfileSaveMessage("Ficha guardada");
     window.setTimeout(() => setProfileSaveMessage(""), 1800);
   }
 
-  function addPeerRating(playerId: string) {
+  async function addPeerRating(playerId: string) {
     const player = players.find((item) => item.id === playerId);
     if (!player) return;
     if (player.ownerUserId && player.ownerUserId === currentUserId) return;
@@ -2798,9 +2939,28 @@ export default function Home() {
       }, {} as Record<RatingFacet, number>),
     };
 
-    setPlayers((current) =>
-      current.map((item) => (item.id === playerId ? { ...item, ratingVotes: [...(item.ratingVotes ?? []), vote] } : item)),
-    );
+    if (!supabase || !remoteGroupId || !hasRealTeam) {
+      setPlayers((current) =>
+        current.map((item) => (item.id === playerId ? { ...item, ratingVotes: [...(item.ratingVotes ?? []), vote] } : item)),
+      );
+      return;
+    }
+
+    setSyncStatus("connecting");
+    setSyncError("");
+
+    const result = await supabase.rpc("append_pachanga_player_rating", {
+      target_group_id: remoteGroupId,
+      target_player_id: playerId,
+      vote_facets: vote.facets,
+    });
+
+    if (result.error) {
+      markRemoteWriteError(result.error.message);
+      return;
+    }
+
+    applyRemoteCommit(result.data as RemotePayloadCommit);
   }
 
   async function uploadAvatar(file: File | undefined, playerId = selectedPlayer?.id) {
@@ -2965,7 +3125,7 @@ export default function Home() {
       const insertResult = await client
         .from("pachanga_groups")
         .insert({ name: teamName, owner_id: userId, payload: initialPayload })
-        .select("id, invite_token, name, payload, team_code")
+        .select("id, invite_token, name, payload, team_code, payload_revision")
         .single();
 
       if (insertResult.error || !insertResult.data) throw new Error(insertResult.error?.message ?? "No se pudo crear el equipo");
@@ -3110,9 +3270,10 @@ export default function Home() {
 
     setRemoteGroupId(selectedTeam.id);
     setRemoteInviteToken(selectedTeam.inviteToken);
+    setRemoteRevision(selectedTeam.payloadRevision);
     setCurrentRole(selectedTeam.role);
     setAdminInviteToken(null);
-    applyPayload(selectedTeam.payload);
+    applyPayload(selectedTeam.payload, selectedTeam.payloadRevision);
     setRemoteReady(true);
     setSyncStatus("live");
     setSyncError("");
@@ -3377,9 +3538,9 @@ export default function Home() {
         </div>
         <div className="player-actions">
           <div className="status-buttons" aria-label={`Estado de ${playerDisplayName(player)}`}>
-            <button className={status === "voy" ? "selected" : ""} disabled={!canChangeThisPlayerStatus || Boolean(player.injured || player.inactive)} onClick={() => setStatus(player.id, "voy")}>Voy</button>
-            <button className={status === "duda" ? "selected" : ""} disabled={!canChangeThisPlayerStatus || Boolean(player.inactive)} onClick={() => setStatus(player.id, "duda")}>Duda</button>
-            <button className={status === "no" ? "selected danger" : ""} disabled={!canChangeThisPlayerStatus || Boolean(player.inactive)} onClick={() => setStatus(player.id, "no")}>No</button>
+            <button className={status === "voy" ? "selected" : ""} disabled={!canChangeThisPlayerStatus || Boolean(player.injured || player.inactive)} onClick={() => void setStatus(player.id, "voy")}>Voy</button>
+            <button className={status === "duda" ? "selected" : ""} disabled={!canChangeThisPlayerStatus || Boolean(player.inactive)} onClick={() => void setStatus(player.id, "duda")}>Duda</button>
+            <button className={status === "no" ? "selected danger" : ""} disabled={!canChangeThisPlayerStatus || Boolean(player.inactive)} onClick={() => void setStatus(player.id, "no")}>No</button>
           </div>
           {status === "voy" && team && canUseAdminControls ? (
             <button
@@ -3395,7 +3556,7 @@ export default function Home() {
           {status === "voy" && !isWaiting ? (
             <button
               className={matchEntry?.paid ? "paid-button paid" : "paid-button"}
-              onClick={() => togglePaid(player.id)}
+              onClick={() => void togglePaid(player.id)}
               title={matchEntry?.paid ? "Pago recibido" : "Marcar pago recibido"}
               aria-label={matchEntry?.paid ? "Pago recibido" : "Marcar pago recibido"}
             >
@@ -3526,9 +3687,9 @@ export default function Home() {
           </div>
           {ownPlayer && matchConfigured && !ownPlayer.inactive ? (
             <div className="quick-status-buttons status-buttons" aria-label={`Tu asistencia: ${playerDisplayName(ownPlayer)}`}>
-              <button type="button" className={ownStatus === "voy" ? "selected" : ""} disabled={!canChangeOwnSummaryStatus || Boolean(ownPlayer.injured)} onClick={() => setStatus(ownPlayer.id, "voy")}>Voy</button>
-              <button type="button" className={ownStatus === "duda" ? "selected" : ""} disabled={!canChangeOwnSummaryStatus} onClick={() => setStatus(ownPlayer.id, "duda")}>Duda</button>
-              <button type="button" className={ownStatus === "no" ? "selected danger" : ""} disabled={!canChangeOwnSummaryStatus} onClick={() => setStatus(ownPlayer.id, "no")}>No</button>
+              <button type="button" className={ownStatus === "voy" ? "selected" : ""} disabled={!canChangeOwnSummaryStatus || Boolean(ownPlayer.injured)} onClick={() => void setStatus(ownPlayer.id, "voy")}>Voy</button>
+              <button type="button" className={ownStatus === "duda" ? "selected" : ""} disabled={!canChangeOwnSummaryStatus} onClick={() => void setStatus(ownPlayer.id, "duda")}>Duda</button>
+              <button type="button" className={ownStatus === "no" ? "selected danger" : ""} disabled={!canChangeOwnSummaryStatus} onClick={() => void setStatus(ownPlayer.id, "no")}>No</button>
             </div>
           ) : hasRealTeam && isRegisteredUser && !ownPlayer ? (
             <button className="primary-button" type="button" onClick={openOwnPlayerProfile}>
@@ -4470,7 +4631,7 @@ export default function Home() {
                       </label>
                     ))}
                   </div>
-                  <button type="button" onClick={() => addPeerRating(selectedPlayer.id)} disabled={!canRateSelectedPlayer}>
+                  <button type="button" onClick={() => void addPeerRating(selectedPlayer.id)} disabled={!canRateSelectedPlayer}>
                     {selectedRatingButtonText}
                   </button>
                   <div className="rating-evolution">
