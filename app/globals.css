@@ -382,7 +382,45 @@ h1 {
 }
 
 .match-list .team-members {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
   margin-bottom: 14px;
+  padding: 0;
+}
+
+.match-list .team-members summary {
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 10px;
+  padding-bottom: 10px;
+}
+
+.match-list .team-members summary:focus {
+  outline: 0;
+}
+
+.match-list .team-members summary:focus-visible {
+  border-radius: 6px;
+  box-shadow: 0 0 0 2px rgba(32, 40, 32, 0.18);
+}
+
+.match-list .team-members summary strong {
+  background: transparent;
+  border-radius: 0;
+  height: auto;
+  min-width: auto;
+}
+
+.match-list .team-members label {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  padding: 0 0 8px;
+}
+
+.match-list .team-members label + label {
+  border-top: 1px solid var(--line);
+  padding-top: 8px;
 }
 
 .side-history {
