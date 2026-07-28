@@ -179,6 +179,7 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(globalsCss, /\.history-item\.has-photo/);
   assert.match(globalsCss, /\.google-signin-button/);
   assert.match(globalsCss, /\.brand-hero-logo/);
+  assert.match(globalsCss, /transform:\s*translateX\(clamp\(-92px,\s*-12vw,\s*-42px\)\)/);
   assert.match(globalsCss, /scroll-margin-top:\s*14px/);
   assert.match(globalsCss, /overflow-y:\s*auto/);
   assert.match(globalsCss, /\.hero-actions\s*\{[\s\S]*grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\)/);

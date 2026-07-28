@@ -70,6 +70,7 @@ button {
   height: auto;
   max-width: 100%;
   object-fit: contain;
+  transform: translateX(clamp(-92px, -12vw, -42px));
   width: clamp(280px, 42vw, 560px);
 }
 
