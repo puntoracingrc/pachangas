@@ -1391,6 +1391,13 @@ select:disabled {
   color: #fff;
 }
 
+.joined-at {
+  color: color-mix(in srgb, var(--ink-soft) 62%, transparent);
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
 .inline-injury {
   align-items: center;
   background: #dc2626;

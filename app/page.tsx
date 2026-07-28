@@ -568,6 +568,20 @@ function monthLabel(date: string) {
   return label.charAt(0).toLocaleUpperCase("es-ES") + label.slice(1);
 }
 
+function joinedAtLabel(date?: string) {
+  if (!date) return "";
+
+  const parsed = new Date(date);
+  if (Number.isNaN(parsed.getTime())) return "";
+
+  return parsed.toLocaleString("es-ES", {
+    day: "2-digit",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 function playerDisplayName(player: Player) {
   return displayName(player.name);
 }
@@ -1466,6 +1480,10 @@ export default function Home() {
     const player = players.find((item) => item.id === playerId);
     if (status === "voy" && (player?.injured || player?.inactive)) return;
     const existing = activeMatch.players.find((entry) => entry.playerId === playerId);
+    if (existing?.status === "voy" && status !== "voy") {
+      const confirmed = window.confirm("Si cambias de “Voy”, perderás tu posición. Si hay reservas, el primero ocupará tu plaza. ¿Continuar?");
+      if (!confirmed) return;
+    }
     const joinedAt = status === "voy" ? (existing?.status === "voy" ? existing.joinedAt : new Date().toISOString()) : undefined;
     const nextPlayers = existing
       ? activeMatch.players.map((entry) => (entry.playerId === playerId ? { ...entry, status, joinedAt, paid: status === "voy" ? entry.paid : false } : entry))
@@ -2335,6 +2353,7 @@ export default function Home() {
     const status = player.injured || player.inactive ? "no" : matchEntry?.status;
     const isReserve = reserveIds.includes(player.id);
     const isWaiting = waitingIds.includes(player.id);
+    const joinedLabel = status === "voy" ? joinedAtLabel(matchEntry?.joinedAt) : "";
     const teamClass = team === "A" ? "team-a-card" : team === "B" ? "team-b-card" : "";
     const nextTeam = team === "A" ? "B" : "A";
     const playerRatingWindow = ratingWindow(player, ratingVoterId);
@@ -2360,6 +2379,7 @@ export default function Home() {
             {isReserve ? <em className="reserve-chip">Reserva</em> : null}
             {isWaiting ? <em className="reserve-chip">Espera</em> : null}
           </span>
+          {joinedLabel ? <small className="joined-at">Voy desde {joinedLabel}</small> : null}
         </div>
         <div className="card-badges">
           {!player.inactive ? (
