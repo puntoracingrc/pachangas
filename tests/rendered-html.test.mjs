@@ -69,6 +69,11 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /selectedPlayerId === playerId/);
   assert.match(page, /saveSelectedPlayerProfile/);
   assert.match(page, /Guardar ficha/);
+  assert.match(page, /team-hero-logo/);
+  assert.match(page, /Equipo: \{currentTeamName\}/);
+  assert.match(page, /Instrucciones/);
+  assert.doesNotMatch(page, /setSiteSettings\(\{ \.\.\.siteSettings, title:/);
+  assert.doesNotMatch(page, /setSiteSettings\(\{ \.\.\.siteSettings, brand:/);
   assert.match(page, /const nextName = displayName\(profileName\.trim\(\)\)/);
   assert.doesNotMatch(page, /onBlur=\{\(\) => setProfileName\(displayName\(profileName \|\| authDisplayName\(authUser\)\)\)\}/);
   assert.doesNotMatch(page, /const nextName = displayName\(profileName \|\| authDisplayName\(authUser\)\)/);

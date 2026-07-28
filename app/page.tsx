@@ -473,7 +473,7 @@ function emptyTeamPayload(teamName: string): AppPayload {
       ...defaultSiteSettings,
       brand: displayName(teamName) || defaultSiteSettings.brand,
       title: "Tu equipo pachanguero, desde cero.",
-      subtitle: "Añade jugadores, campos y partidos para empezar a organizar tu grupo.",
+      subtitle: "Crea tu ficha, selecciona un partido y apúntate.",
     },
     venues: [],
   };
@@ -2649,16 +2649,26 @@ export default function Home() {
     "--team-a-muted": `color-mix(in srgb, ${siteSettings.teamAColor} 38%, white)`,
     "--team-b-muted": `color-mix(in srgb, ${siteSettings.teamBColor} 38%, white)`,
   } as CSSProperties;
+  const currentTeamName = currentTeam?.name ?? displayName(siteSettings.brand) ?? "Pachangas IQ";
 
   return (
     <main className="min-h-screen bg-[#f7f6f0] text-[#1d2521]" style={teamColorStyle}>
-      <section className="hero">
+      <section className={isDemoMode ? "hero demo-hero" : "hero team-hero"}>
         <div>
-          <div className="brand-lockup" aria-label={siteSettings.brand}>
-            <img src="/icon-192.png" alt="" />
-            <span>{siteSettings.brand}</span>
-          </div>
-          <h1>{siteSettings.title}</h1>
+          {isDemoMode ? (
+            <>
+              <div className="brand-lockup" aria-label={siteSettings.brand}>
+                <img src="/icon-192.png" alt="" />
+                <span>{siteSettings.brand}</span>
+              </div>
+              <h1>{siteSettings.title}</h1>
+            </>
+          ) : (
+            <div className="team-brand-block" aria-label={`Equipo ${currentTeamName}`}>
+              <img className="team-hero-logo" src="/icon-192.png" alt="" />
+              <span>Equipo: {currentTeamName}</span>
+            </div>
+          )}
           <p className="hero-copy">{siteSettings.subtitle}</p>
         </div>
         <div className="hero-actions">
@@ -2800,15 +2810,7 @@ export default function Home() {
       {showSettings ? (
         <section className="top-panel settings-panel">
           <label>
-            Nombre
-            <input value={siteSettings.brand} onChange={(event) => setSiteSettings({ ...siteSettings, brand: event.target.value })} />
-          </label>
-          <label>
-            Título
-            <input value={siteSettings.title} onChange={(event) => setSiteSettings({ ...siteSettings, title: event.target.value })} />
-          </label>
-          <label>
-            Subtítulo
+            Instrucciones
             <input value={siteSettings.subtitle} onChange={(event) => setSiteSettings({ ...siteSettings, subtitle: event.target.value })} />
           </label>
           <div className="palette-field">

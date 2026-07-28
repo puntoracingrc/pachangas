@@ -78,6 +78,27 @@ button {
   text-transform: uppercase;
 }
 
+.team-brand-block {
+  display: grid;
+  gap: 10px;
+  justify-items: start;
+}
+
+.team-hero-logo {
+  border-radius: 18px;
+  display: block;
+  height: 104px;
+  object-fit: cover;
+  width: 104px;
+}
+
+.team-brand-block span {
+  color: var(--green);
+  font-size: 18px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
 .eyebrow {
   color: var(--green);
   font-size: 13px;
@@ -218,7 +239,7 @@ h1 {
 .settings-panel {
   display: grid;
   gap: 10px;
-  grid-template-columns: minmax(140px, 0.7fr) minmax(220px, 1.25fr) minmax(220px, 1.45fr) minmax(120px, 0.55fr) minmax(120px, 0.55fr) minmax(150px, 0.65fr);
+  grid-template-columns: minmax(260px, 1fr) minmax(150px, 0.35fr) minmax(150px, 0.35fr) 110px;
 }
 
 .top-player-form {
