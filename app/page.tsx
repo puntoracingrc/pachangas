@@ -1,6 +1,6 @@
 "use client";
 
-import { CSSProperties, FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { CSSProperties, FormEvent, Fragment, useEffect, useMemo, useRef, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { supabase } from "./supabaseClient";
 
@@ -561,6 +561,11 @@ function displayName(name: string) {
     .split(/\s+/)
     .map((word) => word.charAt(0).toLocaleUpperCase("es-ES") + word.slice(1).toLocaleLowerCase("es-ES"))
     .join(" ");
+}
+
+function monthLabel(date: string) {
+  const label = new Date(date).toLocaleDateString("es-ES", { month: "long", year: "numeric" });
+  return label.charAt(0).toLocaleUpperCase("es-ES") + label.slice(1);
 }
 
 function playerDisplayName(player: Player) {
@@ -1418,7 +1423,9 @@ export default function Home() {
   const reservePlayers = reserveIds.map((playerId) => players.find((player) => player.id === playerId)).filter((player): player is Player => Boolean(player));
   const waitingPlayers = waitingIds.map((playerId) => players.find((player) => player.id === playerId)).filter((player): player is Player => Boolean(player));
   const openMatches = matches.filter((match) => match.scoreA === undefined && !match.closed);
-  const closedMatches = matches.filter((match) => match.scoreA !== undefined);
+  const closedMatches = matches
+    .filter((match) => match.scoreA !== undefined)
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   const doubtfulCount = activeMatch.players.filter((entry) => entry.status === "duda").length;
   const missing = Math.max(activeMatch.targetPlayers - confirmedPlayers.length, 0);
   const fieldCost = activeMatch.fieldCost ?? 0;
@@ -2706,8 +2713,10 @@ export default function Home() {
               <strong>{closedMatches.length}</strong>
             </div>
             <div className="history">
-              {closedMatches.map((match) => {
+              {closedMatches.map((match, index) => {
                 const matchPayer = players.find((player) => player.id === match.payerId);
+                const currentMonth = monthLabel(match.date);
+                const previousMonth = index > 0 ? monthLabel(closedMatches[index - 1].date) : "";
                 const scorersText = match.scorers
                   ?.map((entry) => {
                     const scorer = players.find((player) => player.id === entry.playerId);
@@ -2716,28 +2725,31 @@ export default function Home() {
                   .join(", ");
 
                 return (
-                  <article className="history-item" key={match.id}>
-                    <div>
-                      <strong>{match.title}</strong>
-                      <small>{new Date(match.date).toLocaleDateString("es-ES", { day: "2-digit", month: "short" })}</small>
-                    </div>
-                    <span>{match.scoreA} - {match.scoreB}</span>
-                    {canUseAdminControls ? (
-                      <button
-                        className="history-delete"
-                        type="button"
-                        onClick={() => {
-                          if (window.confirm("¿Borrar este partido y descontar sus estadísticas?")) deleteClosedMatch(match.id);
-                        }}
-                      >
-                        Borrar
-                      </button>
-                    ) : null}
-                    <small>
-                      {match.place} · pagó {matchPayer ? playerDisplayName(matchPayer) : "sin asignar"}
-                      {scorersText ? ` · goles: ${scorersText}` : ""}
-                    </small>
-                  </article>
+                  <Fragment key={match.id}>
+                    {currentMonth !== previousMonth ? <div className="history-month">{currentMonth}</div> : null}
+                    <article className="history-item">
+                      <div>
+                        <strong>{match.title}</strong>
+                        <small>{new Date(match.date).toLocaleDateString("es-ES", { day: "2-digit", month: "short" })}</small>
+                      </div>
+                      <span>{match.scoreA} - {match.scoreB}</span>
+                      {canUseAdminControls ? (
+                        <button
+                          className="history-delete"
+                          type="button"
+                          onClick={() => {
+                            if (window.confirm("¿Borrar este partido y descontar sus estadísticas?")) deleteClosedMatch(match.id);
+                          }}
+                        >
+                          Borrar
+                        </button>
+                      ) : null}
+                      <small>
+                        {match.place} · pagó {matchPayer ? playerDisplayName(matchPayer) : "sin asignar"}
+                        {scorersText ? ` · goles: ${scorersText}` : ""}
+                      </small>
+                    </article>
+                  </Fragment>
                 );
               })}
             </div>

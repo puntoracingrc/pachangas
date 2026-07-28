@@ -689,6 +689,13 @@ h1 {
   margin-top: 16px;
 }
 
+.side-history .history {
+  max-height: min(620px, 68vh);
+  overflow-y: auto;
+  padding-right: 4px;
+  scrollbar-gutter: stable;
+}
+
 .compact-title {
   margin-bottom: 10px;
   padding-bottom: 10px;
@@ -2113,6 +2120,25 @@ select:disabled {
   gap: 8px;
   grid-template-columns: minmax(0, 1fr) auto auto;
   padding: 12px;
+}
+
+.history-month {
+  align-items: center;
+  color: var(--ink-soft);
+  display: flex;
+  font-size: 12px;
+  font-weight: 950;
+  gap: 9px;
+  letter-spacing: 0;
+  margin: 4px 0 -1px;
+  text-transform: uppercase;
+}
+
+.history-month::after {
+  background: var(--line);
+  content: "";
+  flex: 1;
+  height: 1px;
 }
 
 .history-item div {

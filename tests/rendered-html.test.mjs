@@ -30,17 +30,21 @@ test("builds the user manual as its own page", async () => {
 });
 
 test("keeps the project wired to the Pachangas app", async () => {
-  const [page, layout, packageJson, supabaseClient] = await Promise.all([
+  const [page, layout, packageJson, supabaseClient, globalsCss] = await Promise.all([
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
     readFile(new URL("../package.json", import.meta.url), "utf8"),
     readFile(new URL("../app/supabaseClient.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
   ]);
 
   assert.match(page, /join_pachanga_team/);
   assert.match(page, /MemberRole/);
   assert.match(page, /sha256Hex\(rawNonce\)/);
   assert.match(page, /authUrl\.searchParams\.set\("nonce", hashedNonce\)/);
+  assert.match(page, /className="history-month"/);
+  assert.match(globalsCss, /\.side-history \.history/);
+  assert.match(globalsCss, /overflow-y:\s*auto/);
   assert.match(page, /Equipo pachanguero/);
   assert.match(page, /grupo/);
   assert.match(page, /invite/);
