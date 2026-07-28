@@ -2461,7 +2461,12 @@ export default function Home() {
           </div>
           <div className="ranking">
             {rankedPlayers.slice(0, 8).map((player, index) => (
-              <div key={player.id}>
+              <button
+                className="ranking-row"
+                key={player.id}
+                onClick={() => openPlayerProfile(player.id)}
+                type="button"
+              >
                 <span>{index + 1}</span>
                 <strong>
                   {player.inactive ? (
@@ -2476,8 +2481,9 @@ export default function Home() {
                   ) : null}
                   {playerDisplayName(player)}
                 </strong>
-                <small>{scorePlayer(player).toFixed(1)} pts · {player.goals} goles · {player.wins} victorias</small>
-              </div>
+                <b>Media {scorePlayer(player).toFixed(1)}</b>
+                <small>{positionLabel(player)} · {player.goals} goles · {player.wins} victorias</small>
+              </button>
             ))}
           </div>
         </div>
