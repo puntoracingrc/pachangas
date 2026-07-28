@@ -1,0 +1,170 @@
+create table if not exists public.pachanga_groups (
+  id uuid primary key default gen_random_uuid(),
+  invite_token uuid not null unique default gen_random_uuid(),
+  owner_id uuid not null references auth.users(id) on delete cascade,
+  payload jsonb not null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists public.pachanga_group_members (
+  group_id uuid not null references public.pachanga_groups(id) on delete cascade,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  created_at timestamptz not null default now(),
+  primary key (group_id, user_id)
+);
+
+create index if not exists pachanga_groups_owner_id_idx
+on public.pachanga_groups(owner_id);
+
+create index if not exists pachanga_group_members_user_id_idx
+on public.pachanga_group_members(user_id);
+
+grant usage on schema public to authenticated;
+grant select, insert, update on public.pachanga_groups to authenticated;
+grant select, insert on public.pachanga_group_members to authenticated;
+
+create or replace function public.set_updated_at()
+returns trigger
+language plpgsql
+set search_path = public
+as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$;
+
+drop trigger if exists set_pachanga_groups_updated_at on public.pachanga_groups;
+create trigger set_pachanga_groups_updated_at
+before update on public.pachanga_groups
+for each row
+execute function public.set_updated_at();
+
+alter table public.pachanga_groups enable row level security;
+alter table public.pachanga_group_members enable row level security;
+
+drop policy if exists "Owners can create groups" on public.pachanga_groups;
+create policy "Owners can create groups"
+on public.pachanga_groups
+for insert
+to authenticated
+with check ((select auth.uid()) = owner_id);
+
+drop policy if exists "Members can read groups" on public.pachanga_groups;
+create policy "Members can read groups"
+on public.pachanga_groups
+for select
+to authenticated
+using (
+  owner_id = (select auth.uid())
+  or exists (
+    select 1
+    from public.pachanga_group_members members
+    where members.group_id = pachanga_groups.id
+      and members.user_id = (select auth.uid())
+  )
+);
+
+drop policy if exists "Members can update groups" on public.pachanga_groups;
+create policy "Members can update groups"
+on public.pachanga_groups
+for update
+to authenticated
+using (
+  owner_id = (select auth.uid())
+  or exists (
+    select 1
+    from public.pachanga_group_members members
+    where members.group_id = pachanga_groups.id
+      and members.user_id = (select auth.uid())
+  )
+)
+with check (
+  owner_id = (select auth.uid())
+  or exists (
+    select 1
+    from public.pachanga_group_members members
+    where members.group_id = pachanga_groups.id
+      and members.user_id = (select auth.uid())
+  )
+);
+
+drop policy if exists "Members can read memberships" on public.pachanga_group_members;
+create policy "Members can read memberships"
+on public.pachanga_group_members
+for select
+to authenticated
+using (
+  user_id = (select auth.uid())
+  or exists (
+    select 1
+    from public.pachanga_group_members own_membership
+    where own_membership.group_id = pachanga_group_members.group_id
+      and own_membership.user_id = (select auth.uid())
+  )
+);
+
+drop policy if exists "Owners can add themselves as members" on public.pachanga_group_members;
+create policy "Owners can add themselves as members"
+on public.pachanga_group_members
+for insert
+to authenticated
+with check (
+  user_id = (select auth.uid())
+  and exists (
+    select 1
+    from public.pachanga_groups groups
+    where groups.id = pachanga_group_members.group_id
+      and groups.owner_id = (select auth.uid())
+  )
+);
+
+create or replace function public.join_pachanga_group(token uuid)
+returns uuid
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  target_group_id uuid;
+  current_user_id uuid;
+begin
+  current_user_id := auth.uid();
+  if current_user_id is null then
+    raise exception 'Authentication required';
+  end if;
+
+  select id into target_group_id
+  from public.pachanga_groups
+  where invite_token = token;
+
+  if target_group_id is null then
+    raise exception 'Invalid invite token';
+  end if;
+
+  insert into public.pachanga_group_members (group_id, user_id)
+  values (target_group_id, current_user_id)
+  on conflict (group_id, user_id) do nothing;
+
+  return target_group_id;
+end;
+$$;
+
+revoke all on function public.join_pachanga_group(uuid) from public;
+revoke execute on function public.join_pachanga_group(uuid) from anon;
+grant execute on function public.join_pachanga_group(uuid) to authenticated;
+
+do $$
+begin
+  if not exists (
+    select 1
+    from pg_publication_tables
+    where pubname = 'supabase_realtime'
+      and schemaname = 'public'
+      and tablename = 'pachanga_groups'
+  ) then
+    alter publication supabase_realtime add table public.pachanga_groups;
+  end if;
+end;
+$$;
