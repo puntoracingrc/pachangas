@@ -1905,7 +1905,133 @@ select:disabled {
   align-items: center;
   display: grid;
   gap: 14px;
-  grid-template-columns: 104px 1fr;
+  grid-template-columns: minmax(210px, 260px) 1fr;
+}
+
+.fifa-player-card {
+  aspect-ratio: 0.72;
+  background:
+    radial-gradient(circle at 78% 20%, rgba(255, 255, 255, 0.55), transparent 22%),
+    conic-gradient(from 210deg at 72% 26%, rgba(255, 255, 255, 0.45), rgba(191, 139, 36, 0.18), rgba(255, 255, 255, 0.38), rgba(176, 126, 25, 0.2), rgba(255, 255, 255, 0.45)),
+    linear-gradient(145deg, #f8e39a, #c99b3a 54%, #f3d776);
+  border: 2px solid #9f792d;
+  border-radius: 24px 24px 34px 34px;
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.25), 0 18px 34px rgba(70, 50, 18, 0.2);
+  color: #2b2415;
+  display: grid;
+  grid-template-rows: 48px 1fr auto auto;
+  isolation: isolate;
+  max-width: 260px;
+  overflow: hidden;
+  padding: 18px 16px 16px;
+  position: relative;
+  width: 100%;
+}
+
+.fifa-player-card::before {
+  background: linear-gradient(135deg, transparent 0 44%, rgba(255, 255, 255, 0.5) 45%, transparent 46% 100%);
+  content: "";
+  inset: 0;
+  opacity: 0.45;
+  position: absolute;
+  z-index: -1;
+}
+
+.fifa-score {
+  font-size: 40px;
+  font-weight: 950;
+  left: 18px;
+  line-height: 0.9;
+  position: absolute;
+  top: 20px;
+}
+
+.fifa-position {
+  font-size: 16px;
+  font-weight: 950;
+  left: 21px;
+  position: absolute;
+  top: 58px;
+}
+
+.fifa-photo {
+  align-items: center;
+  align-self: end;
+  display: flex;
+  grid-row: 1 / 3;
+  justify-content: center;
+  justify-self: end;
+  margin-right: -8px;
+  max-height: 158px;
+  overflow: hidden;
+  width: 76%;
+}
+
+.fifa-photo img {
+  filter: saturate(1.04) contrast(1.02);
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
+  width: 100%;
+}
+
+.fifa-photo b {
+  align-items: center;
+  background: rgba(32, 40, 32, 0.88);
+  border-radius: 50%;
+  color: #fff;
+  display: flex;
+  font-size: 58px;
+  height: 118px;
+  justify-content: center;
+  line-height: 1;
+  width: 118px;
+}
+
+.fifa-player-card > strong {
+  border-top: 1px solid rgba(80, 56, 16, 0.28);
+  font-size: 22px;
+  font-weight: 950;
+  line-height: 1.1;
+  overflow: hidden;
+  padding-top: 10px;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fifa-card-meta {
+  color: rgba(43, 36, 21, 0.72);
+  font-size: 12px;
+  font-weight: 900;
+  margin-top: 4px;
+  text-align: center;
+}
+
+.fifa-facets {
+  display: grid;
+  gap: 4px 6px;
+  grid-template-columns: repeat(3, 1fr);
+  margin-top: 10px;
+}
+
+.fifa-facets span {
+  align-items: baseline;
+  display: flex;
+  font-size: 11px;
+  font-weight: 950;
+  gap: 3px;
+  justify-content: center;
+}
+
+.fifa-facets b {
+  font-size: 16px;
+}
+
+.fifa-player-card input {
+  inset: 0;
+  opacity: 0;
+  position: absolute;
 }
 
 .avatar-picker {
@@ -1985,10 +2111,29 @@ select:disabled {
   color: var(--ink-soft);
 }
 
-.rating-box div {
+.base-rating-card {
+  background: #202820;
+  border-radius: 8px;
+  color: #fff;
   display: grid;
-  gap: 8px;
-  grid-template-columns: 82px 1fr;
+  gap: 5px;
+  padding: 12px;
+}
+
+.base-rating-card span {
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.base-rating-card strong {
+  font-size: 32px;
+  line-height: 1;
+}
+
+.base-rating-card small {
+  color: rgba(255, 255, 255, 0.72);
 }
 
 .rating-box button {
@@ -1997,6 +2142,73 @@ select:disabled {
   border-radius: 8px;
   color: #fff;
   font-weight: 800;
+  min-height: 46px;
+}
+
+.rating-box button:disabled {
+  cursor: not-allowed;
+  opacity: 0.52;
+}
+
+.facet-grid {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.facet-field {
+  align-items: center;
+  background: #f8f6ef;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: grid;
+  gap: 7px;
+  grid-template-columns: 76px 1fr 38px;
+  padding: 8px;
+}
+
+.facet-field span {
+  color: var(--foreground);
+  font-size: 12px;
+}
+
+.facet-field input {
+  accent-color: var(--green);
+  min-height: auto;
+}
+
+.facet-field b {
+  font-size: 14px;
+  text-align: right;
+}
+
+.rating-evolution {
+  border-top: 1px solid var(--line);
+  display: grid;
+  gap: 8px;
+  padding-top: 10px;
+}
+
+.rating-evolution > div {
+  align-items: end;
+  display: grid;
+  gap: 6px;
+  grid-template-columns: repeat(10, minmax(12px, 1fr));
+  min-height: 96px;
+}
+
+.rating-evolution i {
+  align-items: end;
+  background: linear-gradient(180deg, var(--lime), var(--green));
+  border-radius: 6px 6px 2px 2px;
+  color: #fff;
+  display: flex;
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 900;
+  justify-content: center;
+  min-height: 18px;
+  padding-bottom: 4px;
 }
 
 .toggle-field {
@@ -2091,5 +2303,15 @@ select:disabled {
   .top-panel.top-team-form,
   .team-create-form {
     grid-template-columns: 1fr;
+  }
+
+  .profile-top,
+  .profile-fields,
+  .facet-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .fifa-player-card {
+    justify-self: center;
   }
 }

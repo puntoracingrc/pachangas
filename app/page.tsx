@@ -3,6 +3,17 @@
 import { CSSProperties, FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "./supabaseClient";
 
+type RatingFacet = "ritmo" | "tiro" | "pase" | "regate" | "defensa" | "fisico";
+
+type RatingVote = {
+  id: string;
+  voterId: string;
+  voterName?: string;
+  matchCount: number;
+  createdAt: string;
+  facets: Record<RatingFacet, number>;
+};
+
 type Player = {
   id: string;
   name: string;
@@ -13,6 +24,7 @@ type Player = {
   inactive?: boolean;
   rating: number;
   ratings?: number[];
+  ratingVotes?: RatingVote[];
   position: "Porteria" | "Defensa" | "Medio" | "Ataque";
   goals: number;
   assists: number;
@@ -192,6 +204,17 @@ const matchKinds: Record<MatchKind, { label: string; targetPlayers: number; team
   futbol11: { label: "Fútbol 11", targetPlayers: 22, teamSize: 11 },
 };
 
+const ratingReviewInterval = 3;
+
+const ratingFacets: Array<{ key: RatingFacet; label: string }> = [
+  { key: "ritmo", label: "Ritmo" },
+  { key: "tiro", label: "Tiro" },
+  { key: "pase", label: "Pase" },
+  { key: "regate", label: "Regate" },
+  { key: "defensa", label: "Defensa" },
+  { key: "fisico", label: "Físico" },
+];
+
 const teamPalette = [
   { name: "Azul", value: "#2157a8" },
   { name: "Rojo", value: "#d93025" },
@@ -221,6 +244,10 @@ function toDateTimeLocal(date: Date) {
 
 function scorePlayer(player: Player) {
   return peerAverage(player);
+}
+
+function clampRating(value: number) {
+  return Math.max(1, Math.min(10, Number.isFinite(value) ? value : 5));
 }
 
 function displayName(name: string) {
@@ -261,6 +288,7 @@ function normalizePayload(payload?: Partial<AppPayload>): AppPayload {
     ...player,
     injured: Boolean(player.injured),
     inactive: Boolean(player.inactive),
+    ratingVotes: normalizeRatingVotes(player.ratingVotes),
   }));
 
   return {
@@ -272,9 +300,54 @@ function normalizePayload(payload?: Partial<AppPayload>): AppPayload {
   };
 }
 
+function normalizeRatingVotes(votes?: RatingVote[]) {
+  return (votes ?? [])
+    .map((vote) => {
+      const facets = ratingFacets.reduce((next, facet) => {
+        next[facet.key] = clampRating(Number(vote.facets?.[facet.key] ?? 5));
+        return next;
+      }, {} as Record<RatingFacet, number>);
+
+      return {
+        id: vote.id || id(),
+        voterId: vote.voterId || "legacy",
+        voterName: vote.voterName,
+        matchCount: Math.max(0, Math.floor(Number(vote.matchCount) || 0)),
+        createdAt: vote.createdAt || new Date().toISOString(),
+        facets,
+      };
+    })
+    .filter((vote) => vote.voterId);
+}
+
 function peerAverage(player: Player) {
-  if (!player.ratings?.length) return player.rating;
-  return player.ratings.reduce((sum, rating) => sum + rating, 0) / player.ratings.length;
+  const facetScores = ratingFacets.map((facet) => facetAverage(player, facet.key));
+  if (facetScores.length > 0) return facetScores.reduce((sum, rating) => sum + rating, 0) / facetScores.length;
+  if (player.ratings?.length) return player.ratings.reduce((sum, rating) => sum + rating, 0) / player.ratings.length;
+  return player.rating;
+}
+
+function voteAverage(vote: RatingVote) {
+  return ratingFacets.reduce((sum, facet) => sum + clampRating(vote.facets[facet.key]), 0) / ratingFacets.length;
+}
+
+function facetAverage(player: Player, facet: RatingFacet) {
+  const votes = player.ratingVotes ?? [];
+  const facetVotes = votes.map((vote) => vote.facets?.[facet]).filter((value): value is number => Number.isFinite(value));
+  if (facetVotes.length > 0) return facetVotes.reduce((sum, rating) => sum + rating, 0) / facetVotes.length;
+  if (player.ratings?.length) return player.ratings.reduce((sum, rating) => sum + rating, 0) / player.ratings.length;
+  return player.rating;
+}
+
+function ratingHistory(player: Player) {
+  return [...(player.ratingVotes ?? [])].sort((a, b) => a.matchCount - b.matchCount || a.createdAt.localeCompare(b.createdAt));
+}
+
+function makeFacetRatings(base = 5) {
+  return ratingFacets.reduce((next, facet) => {
+    next[facet.key] = clampRating(base);
+    return next;
+  }, {} as Record<RatingFacet, number>);
 }
 
 function playerPosition(player: Player): Player["position"] {
@@ -295,6 +368,16 @@ function positionLabel(player: Player) {
   if (position === "Medio") return "Medio / lateral";
   if (position === "Ataque") return "Delantero / punta";
   return position;
+}
+
+function positionShort(player: Player) {
+  const labels: Record<Player["position"], string> = {
+    Porteria: "POR",
+    Defensa: "DEF",
+    Medio: "MED",
+    Ataque: "DEL",
+  };
+  return labels[playerPosition(player)];
 }
 
 function balanceTeams(players: Player[]) {
@@ -456,7 +539,7 @@ export default function Home() {
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
   const [newPlayer, setNewPlayer] = useState("");
   const [newVenue, setNewVenue] = useState({ name: "", cost: "56", kind: "futbol7" as MatchKind });
-  const [newRating, setNewRating] = useState("5");
+  const [newFacetRatings, setNewFacetRatings] = useState<Record<RatingFacet, number>>(makeFacetRatings());
   const [openQuickForm, setOpenQuickForm] = useState<"player" | "venue" | "team" | null>(null);
   const [showSettings, setShowSettings] = useState(false);
   const [siteSettings, setSiteSettings] = useState<SiteSettings>(defaultSiteSettings);
@@ -842,6 +925,7 @@ export default function Home() {
       injured: false,
       rating: 5,
       ratings: [],
+      ratingVotes: [],
       position: "Medio",
       goals: 0,
       assists: 0,
@@ -1119,6 +1203,22 @@ export default function Home() {
   const canManageTeam = currentRole === "owner" || currentRole === "admin";
   const canUseAdminControls = !remoteReady || canManageTeam;
   const canEditLineup = canUseAdminControls && !lineupClosed;
+  const ratingVoterId = currentUserId ?? `local:${profileName.trim().toLocaleLowerCase("es-ES") || "jugador"}`;
+  const selectedRatingHistory = selectedPlayer ? ratingHistory(selectedPlayer) : [];
+  const selectedUserVote = selectedRatingHistory.filter((vote) => vote.voterId === ratingVoterId).at(-1);
+  const selectedNextRatingMatch = selectedPlayer ? (selectedUserVote ? selectedUserVote.matchCount + ratingReviewInterval : selectedPlayer.appearances) : 0;
+  const canRateSelectedPlayer = Boolean(selectedPlayer && (!selectedUserVote || selectedPlayer.appearances >= selectedNextRatingMatch));
+  const ratingWaitMatches = selectedPlayer ? Math.max(0, selectedNextRatingMatch - selectedPlayer.appearances) : 0;
+
+  useEffect(() => {
+    if (!selectedPlayer) return;
+    const ownVote = ratingHistory(selectedPlayer).filter((vote) => vote.voterId === ratingVoterId).at(-1);
+    const nextFacets = ratingFacets.reduce((next, facet) => {
+      next[facet.key] = clampRating(ownVote?.facets[facet.key] ?? facetAverage(selectedPlayer, facet.key));
+      return next;
+    }, {} as Record<RatingFacet, number>);
+    setNewFacetRatings(nextFacets);
+  }, [selectedPlayerId, ratingVoterId]);
 
   function updateMatchSettings(next: Match) {
     if (!canUseAdminControls) return;
@@ -1131,10 +1231,26 @@ export default function Home() {
   }
 
   function addPeerRating(playerId: string) {
-    if (remoteReady && !canManageTeam) return;
-    const rating = Math.max(1, Math.min(10, Number(newRating) || 5));
+    const player = players.find((item) => item.id === playerId);
+    if (!player) return;
+    const voteHistory = ratingHistory(player);
+    const ownVote = voteHistory.filter((vote) => vote.voterId === ratingVoterId).at(-1);
+    if (ownVote && player.appearances < ownVote.matchCount + ratingReviewInterval) return;
+
+    const vote: RatingVote = {
+      id: id(),
+      voterId: ratingVoterId,
+      voterName: profileName.trim() ? displayName(profileName) : undefined,
+      matchCount: player.appearances,
+      createdAt: new Date().toISOString(),
+      facets: ratingFacets.reduce((next, facet) => {
+        next[facet.key] = clampRating(newFacetRatings[facet.key]);
+        return next;
+      }, {} as Record<RatingFacet, number>),
+    };
+
     setPlayers((current) =>
-      current.map((player) => (player.id === playerId ? { ...player, ratings: [...(player.ratings ?? []), rating] } : player)),
+      current.map((item) => (item.id === playerId ? { ...item, ratingVotes: [...(item.ratingVotes ?? []), vote] } : item)),
     );
   }
 
@@ -2096,13 +2212,27 @@ export default function Home() {
             </div>
             <>
               <div className="profile-top">
-                <label className="avatar-picker">
-                  {selectedPlayer.avatar ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={selectedPlayer.avatar} alt={`Foto de ${playerDisplayName(selectedPlayer)}`} />
-                  ) : (
-                    <span className="avatar-empty">+</span>
-                  )}
+                <label className="fifa-player-card">
+                  <span className="fifa-score">{Math.round(scorePlayer(selectedPlayer) * 10)}</span>
+                  <span className="fifa-position">{positionShort(selectedPlayer)}</span>
+                  <span className="fifa-photo">
+                    {selectedPlayer.avatar ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={selectedPlayer.avatar} alt={`Foto de ${playerDisplayName(selectedPlayer)}`} />
+                    ) : (
+                      <b>+</b>
+                    )}
+                  </span>
+                  <strong>{playerDisplayName(selectedPlayer)}</strong>
+                  <span className="fifa-card-meta">{selectedPlayer.goals} Goles · {selectedPlayer.appearances} PJ</span>
+                  <div className="fifa-facets">
+                    {ratingFacets.map((facet) => (
+                      <span key={facet.key}>
+                        <b>{Math.round(facetAverage(selectedPlayer, facet.key) * 10)}</b>
+                        {facet.label.slice(0, 3).toLocaleUpperCase("es-ES")}
+                      </span>
+                    ))}
+                  </div>
                   <input type="file" accept="image/*" onChange={(event) => uploadAvatar(event.target.files?.[0])} />
                 </label>
                 <div>
@@ -2158,29 +2288,63 @@ export default function Home() {
                     <option>Ataque</option>
                   </select>
                 </label>
-                <label>
-                  Valor base
-                  <input
-                    type="number"
-                    min="1"
-                    max="10"
-                    value={selectedPlayer.rating}
-                    onChange={(event) => updatePlayer(selectedPlayer.id, { rating: Number(event.target.value) })}
-                  />
-                </label>
+                <div className="base-rating-card">
+                  <span>Valor base</span>
+                  <strong>{scorePlayer(selectedPlayer).toFixed(1)}</strong>
+                  <small>Media de facetas</small>
+                </div>
                 <div className="rating-box">
                   <span>Valoraciones</span>
                   <strong>{peerAverage(selectedPlayer).toFixed(1)}</strong>
-                  <small>{selectedPlayer.ratings?.length ?? 0} votos de compañeros</small>
-                  <div>
-                    <input
-                      type="number"
-                      min="1"
-                      max="10"
-                      value={newRating}
-                      onChange={(event) => setNewRating(event.target.value)}
-                    />
-                    <button type="button" onClick={() => addPeerRating(selectedPlayer.id)}>Añadir valoración</button>
+                  <small>
+                    {(selectedPlayer.ratingVotes?.length ?? 0) + (selectedPlayer.ratings?.length ?? 0)} votos de compañeros
+                    {selectedUserVote ? ` · próxima revisión en ${ratingWaitMatches} partidos` : ""}
+                  </small>
+                  <div className="facet-grid">
+                    {ratingFacets.map((facet) => (
+                      <label className="facet-field" key={facet.key}>
+                        <span>{facet.label}</span>
+                        <input
+                          type="range"
+                          min="1"
+                          max="10"
+                          step="0.5"
+                          value={newFacetRatings[facet.key]}
+                          disabled={!canRateSelectedPlayer}
+                          onChange={(event) =>
+                            setNewFacetRatings((current) => ({
+                              ...current,
+                              [facet.key]: Number(event.target.value),
+                            }))
+                          }
+                        />
+                        <b>{facetAverage(selectedPlayer, facet.key).toFixed(1)}</b>
+                      </label>
+                    ))}
+                  </div>
+                  <button type="button" onClick={() => addPeerRating(selectedPlayer.id)} disabled={!canRateSelectedPlayer}>
+                    {canRateSelectedPlayer ? "Guardar valoración" : `Revisar tras ${ratingWaitMatches} partidos`}
+                  </button>
+                  <div className="rating-evolution">
+                    <span>Evolución</span>
+                    {selectedRatingHistory.length > 0 ? (
+                      <div>
+                        {selectedRatingHistory.slice(-10).map((vote, index, list) => {
+                          const average = voteAverage(vote);
+                          return (
+                            <i
+                              key={vote.id}
+                              style={{ height: `${24 + average * 7}px` }}
+                              title={`Partido ${vote.matchCount}: ${average.toFixed(1)}`}
+                            >
+                              {index === list.length - 1 ? average.toFixed(1) : ""}
+                            </i>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <small>Sin evolución todavía</small>
+                    )}
                   </div>
                 </div>
                 <label>
