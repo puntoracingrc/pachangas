@@ -4858,7 +4858,7 @@ export default function Home() {
                       ))}
                     </div>
                     {canEditSelectedPlayer ? (
-                      <label className="fifa-photo-action">
+                      <label className="fifa-photo-action" title={selectedPlayer.avatar ? "Cambiar foto" : "Añadir foto"}>
                         {selectedPlayer.avatar ? "Cambiar foto" : "Añadir foto"}
                         <input
                           type="file"

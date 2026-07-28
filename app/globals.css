@@ -3452,11 +3452,8 @@ select:disabled {
   white-space: nowrap;
 }
 
-.fifa-player-card input {
-  cursor: pointer;
-  inset: 0;
-  opacity: 0;
-  position: absolute;
+.fifa-photo-action input {
+  display: none;
 }
 
 .avatar-adjust-hint {

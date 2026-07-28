@@ -170,9 +170,12 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /joinedAtLabel/);
   assert.match(page, /Voy desde/);
   assert.match(page, /perderás tu posición/);
+  assert.match(page, /className="fifa-photo-action" title=\{selectedPlayer\.avatar \? "Cambiar foto" : "Añadir foto"\}/);
   assert.match(globalsCss, /\.side-history \.history/);
   assert.match(globalsCss, /\.side-history::after/);
   assert.match(globalsCss, /\.history-season-filter/);
+  assert.match(globalsCss, /\.fifa-photo-action input/);
+  assert.doesNotMatch(globalsCss, /\.fifa-player-card input\s*\{/);
   assert.match(globalsCss, /\.result-score-field span/);
   assert.match(globalsCss, /\.team-b-score/);
   assert.match(globalsCss, /::-webkit-calendar-picker-indicator/);
