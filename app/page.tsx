@@ -66,6 +66,7 @@ type Player = {
   name: string;
   avatar?: string;
   phone?: string;
+  birthDate?: string;
   goalkeeperOnly?: boolean;
   injured?: boolean;
   inactive?: boolean;
@@ -803,6 +804,31 @@ function matchSummaryDate(date: string) {
   });
 }
 
+function dateInputValue(date: Date) {
+  const pad = (value: number) => String(value).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+}
+
+function normalizeBirthDate(value?: string) {
+  if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return "";
+  const [year, month, day] = value.split("-").map(Number);
+  const parsed = new Date(year, month - 1, day);
+  if (parsed.getFullYear() !== year || parsed.getMonth() !== month - 1 || parsed.getDate() !== day) return "";
+  return value;
+}
+
+function playerAge(birthDate?: string, todayValue = dateInputValue(new Date())) {
+  const normalizedBirthDate = normalizeBirthDate(birthDate);
+  const normalizedToday = normalizeBirthDate(todayValue);
+  if (!normalizedBirthDate || !normalizedToday) return null;
+
+  const [birthYear, birthMonth, birthDay] = normalizedBirthDate.split("-").map(Number);
+  const [todayYear, todayMonth, todayDay] = normalizedToday.split("-").map(Number);
+  let age = todayYear - birthYear;
+  if (todayMonth < birthMonth || (todayMonth === birthMonth && todayDay < birthDay)) age -= 1;
+  return age >= 0 && age <= 120 ? age : null;
+}
+
 function playerDisplayName(player: Player) {
   return displayName(player.name);
 }
@@ -842,6 +868,7 @@ function normalizePayload(payload?: Partial<AppPayload>): AppPayload {
 
     return {
       ...player,
+      birthDate: normalizeBirthDate(player.birthDate),
       injured: Boolean(player.injured),
       inactive: Boolean(player.inactive),
       outfieldPosition,
@@ -1616,6 +1643,7 @@ export default function Home() {
   const [rankingSeason, setRankingSeason] = useState(seasonKey(new Date()));
   const [historySeason, setHistorySeason] = useState("all");
   const [rankingSort, setRankingSort] = useState<RankingSort>("media");
+  const [currentDateValue, setCurrentDateValue] = useState(() => dateInputValue(new Date()));
   const [remoteGroupId, setRemoteGroupId] = useState<string | null>(null);
   const [remoteInviteToken, setRemoteInviteToken] = useState<string | null>(null);
   const [remotePayloadRevision, setRemotePayloadRevision] = useState<number | null>(null);
@@ -1657,6 +1685,13 @@ export default function Home() {
   const cameraStreamRef = useRef<MediaStream | null>(null);
   const [cameraPlayerId, setCameraPlayerId] = useState<string | null>(null);
   const [cameraError, setCameraError] = useState("");
+
+  useEffect(() => {
+    const refreshDate = () => setCurrentDateValue(dateInputValue(new Date()));
+    refreshDate();
+    const interval = window.setInterval(refreshDate, 60 * 60 * 1000);
+    return () => window.clearInterval(interval);
+  }, []);
 
   function currentPayload(): AppPayload {
     return {
@@ -2892,6 +2927,7 @@ export default function Home() {
   const selectedForm = selectedPlayer ? playerForm(selectedPlayer) : undefined;
   const selectedEffectiveScore = selectedPlayer ? effectivePlayerScore(selectedPlayer) : 0;
   const selectedPeerScore = selectedPlayer ? peerAverage(selectedPlayer) : 0;
+  const selectedPlayerAge = selectedPlayer ? playerAge(selectedPlayer.birthDate, currentDateValue) : null;
   const currentTeam = remoteTeams.find((team) => team.id === remoteGroupId);
   const hasIncomingSharedLink = incomingSharedLink.hasInvite || incomingSharedLink.hasAdminInvite || incomingSharedLink.hasMatch;
   const isRegisteredUser = Boolean(authUser && !isAnonymousAuthUser(authUser));
@@ -3002,6 +3038,7 @@ export default function Home() {
       const result = await supabase.rpc("patch_pachanga_player_profile", {
         player_patch: {
           avatar: editedPlayer.avatar,
+          birthDate: normalizeBirthDate(editedPlayer.birthDate),
           goalkeeperOnly: Boolean(editedPlayer.goalkeeperOnly),
           goals: editedPlayer.goals ?? 0,
           injured: Boolean(editedPlayer.injured),
@@ -4554,7 +4591,9 @@ export default function Home() {
                       )}
                     </span>
                     <strong>{playerDisplayName(selectedPlayer)}</strong>
-                    <span className="fifa-card-meta">{selectedPlayer.goals} Goles · {selectedPlayer.appearances} PJ</span>
+                    <span className="fifa-card-meta">
+                      {selectedPlayer.goals} Goles · {selectedPlayer.appearances} PJ{selectedPlayerAge !== null ? ` · ${selectedPlayerAge} años` : ""}
+                    </span>
                     <div className="fifa-facets">
                       {selectedRatingFacets.map((facet) => (
                         <span key={facet.key}>
@@ -4644,6 +4683,23 @@ export default function Home() {
                     disabled={!canEditSelectedPlayer}
                     onChange={(event) => updatePlayer(selectedPlayer.id, { phone: event.target.value })}
                   />
+                  <div className="birthdate-row">
+                    <label>
+                      Fecha nacimiento
+                      <input
+                        type="date"
+                        max={currentDateValue}
+                        value={selectedPlayer.birthDate ?? ""}
+                        disabled={!canEditSelectedPlayer}
+                        onChange={(event) => updatePlayer(selectedPlayer.id, { birthDate: normalizeBirthDate(event.target.value) || undefined })}
+                      />
+                    </label>
+                    <div className="age-pill" aria-label="Edad calculada">
+                      <span>Edad</span>
+                      <strong>{selectedPlayerAge !== null ? `${selectedPlayerAge}` : "-"}</strong>
+                      <small>{selectedPlayerAge !== null ? "años" : "pendiente"}</small>
+                    </div>
+                  </div>
                   <div className="profile-save-area">
                     <button
                       className="profile-save-button"

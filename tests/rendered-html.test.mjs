@@ -184,6 +184,14 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /saveSelectedPlayerProfile/);
   assert.match(page, /profile-save-area/);
   assert.match(page, /Guardar ficha/);
+  assert.match(page, /birthDate\?: string/);
+  assert.match(page, /playerAge/);
+  assert.match(page, /Fecha nacimiento/);
+  assert.match(page, /Edad/);
+  assert.match(page, /currentDateValue/);
+  assert.match(page, /birthDate:\s*normalizeBirthDate/);
+  assert.match(globalsCss, /\.birthdate-row/);
+  assert.match(globalsCss, /\.age-pill/);
   assert.match(globalsCss, /--ink:\s*#202820/);
   assert.match(globalsCss, /\.profile-save-area/);
   assert.match(globalsCss, /\.profile-save-button/);
@@ -251,6 +259,7 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(supabaseSql, /create or replace function public\.patch_pachanga_match_scorers/);
   assert.match(supabaseSql, /create or replace function public\.patch_pachanga_player_profile/);
   assert.match(supabaseSql, /create or replace function public\.append_pachanga_player_rating/);
+  assert.match(supabaseSql, /birthDate/);
   assert.match(supabaseSql, /outfieldPosition/);
   assert.match(supabaseSql, /ratingRole/);
   assert.match(supabaseSql, /then 'goalkeeper'/);

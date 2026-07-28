@@ -1254,6 +1254,10 @@ begin
     patched_player := patched_player || jsonb_build_object('phone', coalesce(player_patch ->> 'phone', ''));
   end if;
 
+  if player_patch ? 'birthDate' then
+    patched_player := patched_player || jsonb_build_object('birthDate', nullif(player_patch ->> 'birthDate', ''));
+  end if;
+
   if player_patch ? 'avatar' then
     patched_player := patched_player || jsonb_build_object('avatar', nullif(player_patch ->> 'avatar', ''));
   end if;

@@ -3329,6 +3329,47 @@ select:disabled {
   text-transform: uppercase;
 }
 
+.birthdate-row {
+  align-items: end;
+  display: grid;
+  gap: 8px;
+  grid-template-columns: minmax(0, 1fr) 104px;
+}
+
+.birthdate-row label {
+  color: var(--ink-soft);
+  display: grid;
+  font-size: 12px;
+  font-weight: 900;
+  gap: 6px;
+  text-transform: uppercase;
+}
+
+.age-pill {
+  align-items: center;
+  background: #202820;
+  border-radius: 10px;
+  color: #fff;
+  display: grid;
+  gap: 1px;
+  justify-items: center;
+  min-height: 66px;
+  padding: 7px 9px;
+}
+
+.age-pill span,
+.age-pill small {
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 10px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.age-pill strong {
+  font-size: 25px;
+  line-height: 1;
+}
+
 .profile-save-area {
   align-items: stretch;
   background: #f1efe6;
@@ -3949,6 +3990,17 @@ select:disabled {
   .profile-fields,
   .facet-grid {
     grid-template-columns: 1fr;
+  }
+
+  .birthdate-row {
+    grid-template-columns: 1fr;
+  }
+
+  .age-pill {
+    grid-template-columns: auto auto auto;
+    justify-content: start;
+    justify-items: start;
+    min-height: 46px;
   }
 
   .fifa-player-card {
