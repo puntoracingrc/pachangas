@@ -14,6 +14,32 @@ type RatingVote = {
   facets: Record<RatingFacet, number>;
 };
 
+type PositionLine = "Porteria" | "Defensa" | "Medio" | "Ataque";
+
+type PlayerPosition =
+  | "Portero"
+  | "Defensa central"
+  | "Lateral derecho"
+  | "Lateral izquierdo"
+  | "Carrilero"
+  | "Pivote defensivo"
+  | "Interior / volante"
+  | "Mediapunta"
+  | "Extremo derecho"
+  | "Extremo izquierdo"
+  | "Delantero centro"
+  | "Segundo delantero"
+  | "Mediocentro / pivote"
+  | "Delantero / punta"
+  | "Cierre"
+  | "Ala derecha"
+  | "Ala izquierda"
+  | "Pívot"
+  | "Porteria"
+  | "Defensa"
+  | "Medio"
+  | "Ataque";
+
 type Player = {
   id: string;
   name: string;
@@ -25,7 +51,7 @@ type Player = {
   rating: number;
   ratings?: number[];
   ratingVotes?: RatingVote[];
-  position: "Porteria" | "Defensa" | "Medio" | "Ataque";
+  position: PlayerPosition;
   goals: number;
   assists: number;
   appearances: number;
@@ -106,14 +132,14 @@ type RemoteMember = {
 };
 
 const seedPlayers: Player[] = [
-  { id: "p1", name: "Carlos", phone: "600 111 222", rating: 8, position: "Ataque", goals: 18, assists: 7, appearances: 12, wins: 7, lateCancels: 1 },
-  { id: "p2", name: "Manu", phone: "600 222 333", rating: 7, position: "Medio", goals: 10, assists: 13, appearances: 11, wins: 8, lateCancels: 0 },
-  { id: "p3", name: "Pablo", phone: "600 333 444", rating: 6, position: "Defensa", goals: 5, assists: 4, appearances: 10, wins: 5, lateCancels: 2 },
-  { id: "p4", name: "Rafa", phone: "600 444 555", rating: 7, position: "Porteria", goals: 1, assists: 2, appearances: 9, wins: 4, lateCancels: 0 },
-  { id: "p5", name: "Dani", phone: "600 555 666", rating: 5, position: "Medio", goals: 6, assists: 3, appearances: 8, wins: 3, lateCancels: 1 },
-  { id: "p6", name: "Alex", phone: "600 666 777", rating: 6, position: "Defensa", goals: 4, assists: 8, appearances: 9, wins: 6, lateCancels: 0 },
-  { id: "p7", name: "Sergio", phone: "600 777 888", rating: 8, position: "Ataque", goals: 15, assists: 5, appearances: 8, wins: 5, lateCancels: 1 },
-  { id: "p8", name: "Javi", phone: "600 888 999", rating: 5, position: "Defensa", goals: 3, assists: 6, appearances: 7, wins: 2, lateCancels: 3 },
+  { id: "p1", name: "Carlos", phone: "600 111 222", rating: 8, position: "Delantero / punta", goals: 18, assists: 7, appearances: 12, wins: 7, lateCancels: 1 },
+  { id: "p2", name: "Manu", phone: "600 222 333", rating: 7, position: "Mediocentro / pivote", goals: 10, assists: 13, appearances: 11, wins: 8, lateCancels: 0 },
+  { id: "p3", name: "Pablo", phone: "600 333 444", rating: 6, position: "Defensa central", goals: 5, assists: 4, appearances: 10, wins: 5, lateCancels: 2 },
+  { id: "p4", name: "Rafa", phone: "600 444 555", rating: 7, position: "Portero", goals: 1, assists: 2, appearances: 9, wins: 4, lateCancels: 0 },
+  { id: "p5", name: "Dani", phone: "600 555 666", rating: 5, position: "Interior / volante", goals: 6, assists: 3, appearances: 8, wins: 3, lateCancels: 1 },
+  { id: "p6", name: "Alex", phone: "600 666 777", rating: 6, position: "Defensa central", goals: 4, assists: 8, appearances: 9, wins: 6, lateCancels: 0 },
+  { id: "p7", name: "Sergio", phone: "600 777 888", rating: 8, position: "Delantero / punta", goals: 15, assists: 5, appearances: 8, wins: 5, lateCancels: 1 },
+  { id: "p8", name: "Javi", phone: "600 888 999", rating: 5, position: "Lateral derecho", goals: 3, assists: 6, appearances: 7, wins: 2, lateCancels: 3 },
 ];
 
 const seedVenues: Venue[] = [
@@ -202,6 +228,46 @@ const matchKinds: Record<MatchKind, { label: string; targetPlayers: number; team
   sala: { label: "Fútbol sala", targetPlayers: 10, teamSize: 5 },
   futbol7: { label: "Fútbol 7", targetPlayers: 14, teamSize: 7 },
   futbol11: { label: "Fútbol 11", targetPlayers: 22, teamSize: 11 },
+};
+
+const positionOptionsByKind: Record<MatchKind, Array<{ value: PlayerPosition; line: PositionLine; short: string }>> = {
+  futbol11: [
+    { value: "Portero", line: "Porteria", short: "POR" },
+    { value: "Defensa central", line: "Defensa", short: "DFC" },
+    { value: "Lateral derecho", line: "Defensa", short: "LD" },
+    { value: "Lateral izquierdo", line: "Defensa", short: "LI" },
+    { value: "Carrilero", line: "Defensa", short: "CAR" },
+    { value: "Pivote defensivo", line: "Medio", short: "MCD" },
+    { value: "Interior / volante", line: "Medio", short: "INT" },
+    { value: "Mediapunta", line: "Medio", short: "MP" },
+    { value: "Extremo derecho", line: "Ataque", short: "ED" },
+    { value: "Extremo izquierdo", line: "Ataque", short: "EI" },
+    { value: "Delantero centro", line: "Ataque", short: "DC" },
+    { value: "Segundo delantero", line: "Ataque", short: "SD" },
+  ],
+  futbol7: [
+    { value: "Portero", line: "Porteria", short: "POR" },
+    { value: "Defensa central", line: "Defensa", short: "DFC" },
+    { value: "Lateral derecho", line: "Defensa", short: "LD" },
+    { value: "Lateral izquierdo", line: "Defensa", short: "LI" },
+    { value: "Mediocentro / pivote", line: "Medio", short: "MC" },
+    { value: "Interior / volante", line: "Medio", short: "INT" },
+    { value: "Delantero / punta", line: "Ataque", short: "DEL" },
+  ],
+  sala: [
+    { value: "Portero", line: "Porteria", short: "POR" },
+    { value: "Cierre", line: "Defensa", short: "CIE" },
+    { value: "Ala derecha", line: "Medio", short: "ALD" },
+    { value: "Ala izquierda", line: "Medio", short: "ALI" },
+    { value: "Pívot", line: "Ataque", short: "PIV" },
+  ],
+};
+
+const legacyPositionMeta: Record<"Porteria" | "Defensa" | "Medio" | "Ataque", { line: PositionLine; label: string; short: string }> = {
+  Porteria: { line: "Porteria", label: "Portero", short: "POR" },
+  Defensa: { line: "Defensa", label: "Defensa", short: "DEF" },
+  Medio: { line: "Medio", label: "Medio", short: "MED" },
+  Ataque: { line: "Ataque", label: "Delantero / punta", short: "DEL" },
 };
 
 const ratingReviewInterval = 3;
@@ -350,12 +416,19 @@ function makeFacetRatings(base = 5) {
   }, {} as Record<RatingFacet, number>);
 }
 
-function playerPosition(player: Player): Player["position"] {
-  return player.goalkeeperOnly ? "Porteria" : player.position;
+function positionMeta(position: PlayerPosition) {
+  const option = Object.values(positionOptionsByKind).flat().find((item) => item.value === position);
+  if (option) return { line: option.line, label: option.value, short: option.short };
+  if (position === "Porteria" || position === "Defensa" || position === "Medio" || position === "Ataque") return legacyPositionMeta[position];
+  return { line: "Medio" as PositionLine, label: position, short: "MED" };
+}
+
+function playerPosition(player: Player): PositionLine {
+  return player.goalkeeperOnly ? "Porteria" : positionMeta(player.position).line;
 }
 
 function positionRank(player: Player) {
-  const order: Record<Player["position"], number> = { Porteria: 0, Defensa: 1, Medio: 2, Ataque: 3 };
+  const order: Record<PositionLine, number> = { Porteria: 0, Defensa: 1, Medio: 2, Ataque: 3 };
   return order[playerPosition(player)];
 }
 
@@ -364,20 +437,41 @@ function sortedLineupPlayers(players: Player[]) {
 }
 
 function positionLabel(player: Player) {
-  const position = playerPosition(player);
-  if (position === "Medio") return "Medio / lateral";
-  if (position === "Ataque") return "Delantero / punta";
-  return position;
+  return player.goalkeeperOnly ? "Portero" : positionMeta(player.position).label;
 }
 
 function positionShort(player: Player) {
-  const labels: Record<Player["position"], string> = {
-    Porteria: "POR",
-    Defensa: "DEF",
-    Medio: "MED",
-    Ataque: "DEL",
-  };
-  return labels[playerPosition(player)];
+  return player.goalkeeperOnly ? "POR" : positionMeta(player.position).short;
+}
+
+function defaultPositionForKind(kind: MatchKind): PlayerPosition {
+  if (kind === "sala") return "Ala derecha";
+  if (kind === "futbol11") return "Interior / volante";
+  return "Mediocentro / pivote";
+}
+
+function equivalentPositionForKind(position: PlayerPosition, kind: MatchKind): PlayerPosition {
+  if (positionOptionsByKind[kind].some((option) => option.value === position)) return position;
+  const line = positionMeta(position).line;
+
+  if (kind === "sala") {
+    if (line === "Porteria") return "Portero";
+    if (line === "Defensa") return "Cierre";
+    if (line === "Ataque") return "Pívot";
+    return "Ala derecha";
+  }
+
+  if (kind === "futbol11") {
+    if (line === "Porteria") return "Portero";
+    if (line === "Defensa") return "Defensa central";
+    if (line === "Ataque") return "Delantero centro";
+    return "Interior / volante";
+  }
+
+  if (line === "Porteria") return "Portero";
+  if (line === "Defensa") return "Defensa central";
+  if (line === "Ataque") return "Delantero / punta";
+  return "Mediocentro / pivote";
 }
 
 function balanceTeams(players: Player[]) {
@@ -926,7 +1020,7 @@ export default function Home() {
       rating: 5,
       ratings: [],
       ratingVotes: [],
-      position: "Medio",
+      position: defaultPositionForKind(activeKind),
       goals: 0,
       assists: 0,
       appearances: 0,
@@ -2262,7 +2356,7 @@ export default function Home() {
                     onChange={(event) =>
                       updatePlayer(selectedPlayer.id, {
                         goalkeeperOnly: event.target.checked,
-                        position: event.target.checked ? "Porteria" : selectedPlayer.position,
+                        position: event.target.checked ? "Portero" : selectedPlayer.position,
                       })
                     }
                   />
@@ -2279,13 +2373,12 @@ export default function Home() {
                 <label>
                   Posición preferida
                   <select
-                    value={selectedPlayer.position}
-                    onChange={(event) => updatePlayer(selectedPlayer.id, { position: event.target.value as Player["position"] })}
+                    value={equivalentPositionForKind(selectedPlayer.position, activeKind)}
+                    onChange={(event) => updatePlayer(selectedPlayer.id, { position: event.target.value as PlayerPosition })}
                   >
-                    <option>Porteria</option>
-                    <option>Defensa</option>
-                    <option>Medio</option>
-                    <option>Ataque</option>
+                    {positionOptionsByKind[activeKind].map((option) => (
+                      <option key={option.value} value={option.value}>{option.value}</option>
+                    ))}
                   </select>
                 </label>
                 <div className="base-rating-card">
@@ -2459,7 +2552,7 @@ function MatchPitch({ teamA, teamB, kind }: { teamA: Player[]; teamB: Player[]; 
           className={`player-token ${variant} ${player.injured ? "injured-token" : ""} ${player.inactive ? "inactive-token" : ""}`}
           key={player.id}
           style={{ left: `${x}%`, top: `${y}%` }}
-          title={`${playerDisplayName(player)} · ${playerPosition(player)} · ${scorePlayer(player).toFixed(1)}`}
+          title={`${playerDisplayName(player)} · ${positionLabel(player)} · ${scorePlayer(player).toFixed(1)}`}
         >
           {player.inactive ? (
             <span className="token-inactive" title="Ya no está en el grupo" aria-label="Ya no está en el grupo">
@@ -2486,7 +2579,7 @@ function MatchPitch({ teamA, teamB, kind }: { teamA: Player[]; teamB: Player[]; 
 
 function placeTeam(players: Player[], kind: MatchKind, side: "top" | "bottom") {
   const sorted = [...players].sort((a, b) => {
-    const order: Record<Player["position"], number> = { Porteria: 0, Defensa: 1, Medio: 2, Ataque: 3 };
+    const order: Record<PositionLine, number> = { Porteria: 0, Defensa: 1, Medio: 2, Ataque: 3 };
     return order[playerPosition(a)] - order[playerPosition(b)] || scorePlayer(b) - scorePlayer(a);
   });
   const slots = formationSlots(kind, side);
@@ -2516,11 +2609,11 @@ function placeTeam(players: Player[], kind: MatchKind, side: "top" | "bottom") {
 }
 
 function formationSlots(kind: MatchKind, side: "top" | "bottom") {
-  const rows: Record<MatchKind, Array<{ position: Player["position"]; count: number; y: number }>> = {
+  const rows: Record<MatchKind, Array<{ position: PositionLine; count: number; y: number }>> = {
     sala: [
       { position: "Porteria", count: 1, y: 6 },
-      { position: "Defensa", count: 2, y: 20 },
-      { position: "Medio", count: 1, y: 32 },
+      { position: "Defensa", count: 1, y: 20 },
+      { position: "Medio", count: 2, y: 32 },
       { position: "Ataque", count: 1, y: 43 },
     ],
     futbol7: [
