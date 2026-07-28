@@ -1067,6 +1067,7 @@ export default function Home() {
   const [newTeamName, setNewTeamName] = useState("Mi equipo pachanguero");
   const [adminInviteToken, setAdminInviteToken] = useState<string | null>(null);
   const [avatarMessage, setAvatarMessage] = useState("");
+  const [profileSaveMessage, setProfileSaveMessage] = useState("");
   const [localHydrated, setLocalHydrated] = useState(false);
   const applyingRemoteRef = useRef(false);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -2009,7 +2010,31 @@ export default function Home() {
     if (!player) return;
     const canEditPlayer = canUseAdminControls || (hasRealTeam && isRegisteredUser && player.ownerUserId === currentUserId);
     if (!canEditPlayer) return;
+    setProfileSaveMessage("");
     setPlayers((current) => current.map((item) => (item.id === playerId ? { ...item, ...next } : item)));
+  }
+
+  async function saveSelectedPlayerProfile() {
+    if (!selectedPlayer || !canEditSelectedPlayer) return;
+    const normalizedName = displayName(selectedPlayer.name) || selectedPlayer.name;
+    const nextPlayers = players.map((player) => (player.id === selectedPlayer.id ? { ...player, name: normalizedName } : player));
+    const nextPayload: AppPayload = { players: nextPlayers, venues, matches, activeMatchId, siteSettings };
+
+    setProfileSaveMessage("Guardando ficha...");
+    setPlayers(nextPlayers);
+    localStorage.setItem(storageKey, JSON.stringify(nextPayload));
+
+    if (supabase && remoteGroupId && remoteReady) {
+      const { error } = await supabase.from("pachanga_groups").update({ payload: nextPayload }).eq("id", remoteGroupId);
+      if (error) {
+        setProfileSaveMessage("No se pudo guardar. Revisa la conexión.");
+        window.setTimeout(() => setProfileSaveMessage(""), 2600);
+        return;
+      }
+    }
+
+    setProfileSaveMessage("Ficha guardada");
+    window.setTimeout(() => setProfileSaveMessage(""), 1800);
   }
 
   function addPeerRating(playerId: string) {
@@ -3349,6 +3374,15 @@ export default function Home() {
                     disabled={!canEditSelectedPlayer}
                     onChange={(event) => updatePlayer(selectedPlayer.id, { phone: event.target.value })}
                   />
+                  <button
+                    className="profile-save-button"
+                    type="button"
+                    onClick={() => void saveSelectedPlayerProfile()}
+                    disabled={!canEditSelectedPlayer}
+                  >
+                    Guardar ficha
+                  </button>
+                  {profileSaveMessage ? <small className="profile-save-message">{profileSaveMessage}</small> : null}
                 </div>
               </div>
               <div className="profile-fields">
