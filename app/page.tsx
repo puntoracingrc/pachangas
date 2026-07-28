@@ -1184,6 +1184,43 @@ function matchPayingIds(match: Match) {
     .map(({ entry }) => entry.playerId);
 }
 
+function matchAttendingIds(match: Match) {
+  const ids = new Set(matchPayingIds(match));
+  match.teamA?.forEach((playerId) => ids.add(playerId));
+  match.teamB?.forEach((playerId) => ids.add(playerId));
+  match.scorers?.forEach((entry) => ids.add(entry.playerId));
+  return ids;
+}
+
+function matchHasPlayerRecord(match: Match, playerId: string) {
+  return Boolean(
+    match.players.some((entry) => entry.playerId === playerId) ||
+      match.teamA?.includes(playerId) ||
+      match.teamB?.includes(playerId) ||
+      match.scorers?.some((entry) => entry.playerId === playerId),
+  );
+}
+
+function consecutiveAbsenceStreak(matches: Match[], playerId: string) {
+  const finalizedMatches = matches
+    .filter((match) => match.scoreA !== undefined)
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  const firstKnownMatch = finalizedMatches.find((match) => matchHasPlayerRecord(match, playerId));
+
+  if (!firstKnownMatch) return 0;
+
+  let streak = 0;
+  const firstKnownTime = new Date(firstKnownMatch.date).getTime();
+
+  for (const match of [...finalizedMatches].reverse()) {
+    if (new Date(match.date).getTime() < firstKnownTime) break;
+    if (matchAttendingIds(match).has(playerId)) break;
+    streak += 1;
+  }
+
+  return streak;
+}
+
 function nextPayer(players: Player[], matches: Match[], activeMatch: Match, confirmedIds: string[]) {
   if (confirmedIds.length === 0) return undefined;
 
@@ -1688,6 +1725,11 @@ export default function Home() {
   const closedMatches = matches
     .filter((match) => match.scoreA !== undefined)
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  const absenceStreaks = useMemo(() => {
+    const streaks = new Map<string, number>();
+    players.forEach((player) => streaks.set(player.id, consecutiveAbsenceStreak(matches, player.id)));
+    return streaks;
+  }, [matches, players]);
   const doubtfulCount = activeMatch.players.filter((entry) => entry.status === "duda").length;
   const missing = Math.max(activeMatch.targetPlayers - confirmedPlayers.length, 0);
   const fieldCost = activeMatch.fieldCost ?? 0;
@@ -2898,6 +2940,8 @@ export default function Home() {
     const isReserve = reserveIds.includes(player.id);
     const isWaiting = waitingIds.includes(player.id);
     const joinedLabel = status === "voy" ? joinedAtLabel(matchEntry?.joinedAt) : "";
+    const absenceStreak = absenceStreaks.get(player.id) ?? 0;
+    const showAbsenceStreak = absenceStreak > 0 && status !== "voy";
     const teamClass = team === "A" ? "team-a-card" : team === "B" ? "team-b-card" : "";
     const nextTeam = team === "A" ? "B" : "A";
     const playerRatingWindow = ratingWindow(player, ratingVoterId);
@@ -2925,6 +2969,7 @@ export default function Home() {
             {player.inactive ? <em className="reserve-chip">Ya no está</em> : null}
             {isReserve ? <em className="reserve-chip">Reserva</em> : null}
             {isWaiting ? <em className="reserve-chip">Espera</em> : null}
+            {showAbsenceStreak ? <em className="absence-chip">{absenceStreak} sin venir</em> : null}
           </span>
           {joinedLabel ? <small className="joined-at">Voy desde {joinedLabel}</small> : null}
         </div>
