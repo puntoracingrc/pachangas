@@ -83,7 +83,8 @@ const manualFlows = [
     title: "Crear partido",
     intro: "Un partido nuevo nace como borrador para evitar que la gente se apunte antes de estar bien configurado.",
     steps: [
-      "Pulsa + Partido y revisa campo, fecha, modalidad, precio y reservas.",
+      "Pulsa + Partido y revisa campo, fecha, temporada, modalidad, precio y reservas.",
+      "La temporada se calcula por defecto desde la fecha y queda guardada en la ficha del partido.",
       "Mientras no pulses Guardar partido, no aparece en Próximos partidos y nadie puede marcar asistencia.",
       "Al guardar se activan confirmaciones, compartir, alineación, resultado y pago.",
       "El enlace del partido se comparte con Copiar link o WhatsApp.",
@@ -134,7 +135,7 @@ const manualFlows = [
     steps: [
       "Próximos partidos muestra solo partidos abiertos y guardados.",
       "Historial muestra los últimos partidos con separadores por mes, foto en miniatura y resumen de pago y goles.",
-      "Ranking vivo se puede filtrar por temporada y ordenar por media, goles, partidos o ganados.",
+      "Ranking vivo se puede filtrar por la temporada guardada en cada partido y ordenar por media, goles, partidos o ganados.",
       "Cada fila del ranking abre la ficha del jugador para consultar detalle, estado y evolución.",
     ],
   },

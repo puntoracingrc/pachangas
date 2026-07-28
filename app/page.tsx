@@ -107,6 +107,7 @@ type Match = {
   id: string;
   title: string;
   date: string;
+  season?: string;
   place: string;
   configured?: boolean;
   venueId?: string;
@@ -464,10 +465,13 @@ const rankingSortLabels: Record<RankingSort, string> = {
 };
 
 function starterMatch(baseDate = "2026-07-30T21:00", kind: MatchKind = "futbol7"): Match {
+  const date = nextMatchDate(baseDate);
+
   return {
     id: id(),
     title: "Nueva pachanga",
-    date: nextMatchDate(baseDate),
+    date,
+    season: seasonKey(date),
     place: "Campo por confirmar",
     configured: false,
     kind,
@@ -642,6 +646,10 @@ function seasonKey(date: string | Date) {
   return `${startYear}-${startYear + 1}`;
 }
 
+function matchSeason(match: Pick<Match, "date" | "season">) {
+  return match.season || seasonKey(match.date);
+}
+
 function seasonStartYear(key: string) {
   const start = Number(key.split("-")[0]);
   return Number.isFinite(start) ? start : 0;
@@ -700,6 +708,7 @@ function normalizePayload(payload?: Partial<AppPayload>): AppPayload {
         lineupClosed: match.lineupClosed ?? false,
         reservesAttend: match.reservesAttend ?? false,
         reserveLimit: Math.max(0, Math.floor(match.reserveLimit ?? 0)),
+        season: match.season || seasonKey(match.date),
       }))
     : [starterMatch()];
   const players = (payload?.players ? payload.players : fallback.players).map((player) => ({
@@ -1765,10 +1774,12 @@ export default function Home() {
 
     const defaultVenue = venues.find((venue) => venue.id === activeMatch.venueId) ?? venues[0];
     const nextKind = activeMatch.kind ?? defaultVenue?.kind ?? "futbol7";
+    const nextDate = nextMatchDate(activeMatch.date);
     const next: Match = {
       id: id(),
       title: "Nueva pachanga",
-      date: nextMatchDate(activeMatch.date),
+      date: nextDate,
+      season: seasonKey(nextDate),
       place: defaultVenue?.name ?? "Campo por confirmar",
       configured: false,
       venueId: defaultVenue?.id,
@@ -1964,10 +1975,12 @@ export default function Home() {
     const remainingMatches = matches.filter((item) => item.id !== matchId);
     const fallbackKind = match.kind ?? "futbol7";
     const fallbackVenue = venues.find((venue) => venue.id === match.venueId) ?? venues[0];
+    const replacementDate = nextMatchDate(match.date);
     const replacementMatch: Match = {
       id: id(),
       title: "Nueva pachanga",
-      date: nextMatchDate(match.date),
+      date: replacementDate,
+      season: seasonKey(replacementDate),
       place: fallbackVenue?.name ?? "Campo por confirmar",
       venueId: fallbackVenue?.id,
       kind: fallbackKind,
@@ -1999,10 +2012,12 @@ export default function Home() {
     const remainingMatches = matches.filter((item) => item.id !== matchId);
     const fallbackKind = match.kind ?? "futbol7";
     const fallbackVenue = venues.find((venue) => venue.id === match.venueId) ?? venues[0];
+    const replacementDate = nextMatchDate(match.date);
     const replacementMatch: Match = {
       id: id(),
       title: "Nueva pachanga",
-      date: nextMatchDate(match.date),
+      date: replacementDate,
+      season: seasonKey(replacementDate),
       place: fallbackVenue?.name ?? "Campo por confirmar",
       venueId: fallbackVenue?.id,
       kind: fallbackKind,
@@ -2019,11 +2034,12 @@ export default function Home() {
     setMatches(nextMatches);
   }
 
+  const activeMatchSeason = matchSeason(activeMatch);
   const rankingSeasons = useMemo(() => {
-    const seasons = new Set<string>([seasonKey(new Date()), seasonKey(activeMatch.date)]);
-    matches.forEach((match) => seasons.add(seasonKey(match.date)));
+    const seasons = new Set<string>([seasonKey(new Date()), activeMatchSeason]);
+    matches.forEach((match) => seasons.add(matchSeason(match)));
     return [...seasons].sort((a, b) => seasonStartYear(b) - seasonStartYear(a));
-  }, [activeMatch.date, matches]);
+  }, [activeMatchSeason, matches]);
   const activeRankingSeason = rankingSeasons.includes(rankingSeason) ? rankingSeason : rankingSeasons[0] ?? rankingSeason;
   const rankedPlayers = useMemo(() => {
     const stats = new Map(
@@ -2040,7 +2056,7 @@ export default function Home() {
     );
 
     matches
-      .filter((match) => match.scoreA !== undefined && seasonKey(match.date) === activeRankingSeason)
+      .filter((match) => match.scoreA !== undefined && matchSeason(match) === activeRankingSeason)
       .forEach((match) => {
         const playedIds = new Set(matchPlayingIds(match));
         const winningIds = new Set(
@@ -2186,7 +2202,7 @@ export default function Home() {
 
   function saveMatchConfiguration() {
     if (!matchCanBeSaved) return;
-    updateMatch({ ...activeMatch, configured: true });
+    updateMatch({ ...activeMatch, configured: true, season: activeMatchSeason });
   }
 
   function updatePlayer(playerId: string, next: Partial<Player>) {
@@ -3332,8 +3348,23 @@ export default function Home() {
                 step="600"
                 value={activeMatch.date}
                 disabled={!canEditMatchSettings}
-                onChange={(event) => updateMatchSettings({ ...activeMatch, date: event.target.value })}
+                onChange={(event) => {
+                  const nextDate = event.target.value;
+                  updateMatchSettings({ ...activeMatch, date: nextDate, season: seasonKey(nextDate) });
+                }}
               />
+            </label>
+            <label>
+              Temporada
+              <select
+                value={activeMatchSeason}
+                onChange={(event) => updateMatchSettings({ ...activeMatch, season: event.target.value })}
+                disabled={!canEditMatchSettings}
+              >
+                {rankingSeasons.map((season) => (
+                  <option key={season} value={season}>{season}</option>
+                ))}
+              </select>
             </label>
             <label>
               Modalidad
