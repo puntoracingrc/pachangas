@@ -37,7 +37,8 @@ test("builds the user manual as its own page", async () => {
   assert.match(html, /Primera entrada/);
   assert.match(html, /Crear partido/);
   assert.match(html, /Guardar partido/);
-  assert.match(html, /temporada, modalidad/);
+  assert.match(html, /fecha, modalidad/);
+  assert.match(html, /se calcula desde la fecha y se guarda en la ficha del partido/);
   assert.match(html, /empieza en septiembre y termina en agosto/);
   assert.match(html, /Jugador y admin/);
   assert.match(html, /Si cambias de Voy a Duda o No/);
@@ -113,7 +114,8 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /seasonKey/);
   assert.match(page, /matchSeason/);
   assert.match(page, /season: seasonKey/);
-  assert.match(page, /season: activeMatchSeason/);
+  assert.match(page, /season: seasonKey\(activeMatch\.date\)/);
+  assert.doesNotMatch(page, /updateMatchSettings\(\{ \.\.\.activeMatch, season: event\.target\.value \}\)/);
   assert.match(page, /rankingBadgeText/);
   assert.match(page, /teamPhoto\?: string/);
   assert.match(page, /matchPhotoDataUrl/);

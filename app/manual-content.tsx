@@ -101,8 +101,9 @@ const manualFlows = [
     title: "Crear partido",
     intro: "Un partido nuevo nace como borrador para evitar que la gente se apunte antes de estar bien configurado.",
     steps: [
-      "Pulsa + Partido y revisa campo, fecha, temporada, modalidad, precio y reservas.",
-      "La temporada se calcula por defecto desde la fecha: empieza en septiembre y termina en agosto del año siguiente.",
+      "Pulsa + Partido y revisa campo, fecha, modalidad, precio y reservas.",
+      "La temporada no se elige a mano: se calcula desde la fecha y se guarda en la ficha del partido.",
+      "Cada temporada empieza en septiembre y termina en agosto del año siguiente.",
       "Mientras no pulses Guardar partido, no aparece en Próximos partidos y nadie puede marcar asistencia.",
       "Al guardar se activan confirmaciones, compartir, alineación, resultado y pago.",
       "El enlace del partido se comparte con Copiar link o WhatsApp.",

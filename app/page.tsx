@@ -2667,6 +2667,7 @@ export default function Home() {
       scoreB,
       closed: true,
       payerId,
+      season: seasonKey(activeMatch.date),
       teamA: suggested.teamA.map((player) => player.id),
       teamB: suggested.teamB.map((player) => player.id),
     };
@@ -2930,7 +2931,7 @@ export default function Home() {
 
   async function saveMatchConfiguration() {
     if (!matchCanBeSaved) return;
-    const nextMatch = { ...activeMatch, configured: true, season: activeMatchSeason };
+    const nextMatch = { ...activeMatch, configured: true, season: seasonKey(activeMatch.date) };
     const nextMatches = matches.map((match) => (match.id === activeMatch.id ? nextMatch : match));
     const nextPayload = { activeMatchId, matches: nextMatches, players, siteSettings, venues };
 
@@ -4173,18 +4174,6 @@ export default function Home() {
                   updateMatchSettings({ ...activeMatch, date: nextDate, season: seasonKey(nextDate) });
                 }}
               />
-            </label>
-            <label>
-              Temporada
-              <select
-                value={activeMatchSeason}
-                onChange={(event) => updateMatchSettings({ ...activeMatch, season: event.target.value })}
-                disabled={!canEditMatchSettings}
-              >
-                {rankingSeasons.map((season) => (
-                  <option key={season} value={season}>{season}</option>
-                ))}
-              </select>
             </label>
             <label>
               Modalidad
