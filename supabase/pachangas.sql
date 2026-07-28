@@ -591,6 +591,22 @@ begin
   )
   returning id into created_backup_id;
 
+  delete from public.pachanga_group_backups stale_backup
+  using (
+    select backup_id
+    from (
+      select
+        backups.id as backup_id,
+        row_number() over (
+          order by (backups.id = created_backup_id) desc, backups.created_at desc, backups.id desc
+        ) as backup_rank
+      from public.pachanga_group_backups backups
+      where backups.source_group_id = source_group.id
+    ) ranked_backups
+    where ranked_backups.backup_rank > 3
+  ) old_backups
+  where stale_backup.id = old_backups.backup_id;
+
   return created_backup_id;
 end;
 $$;

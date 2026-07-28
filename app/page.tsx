@@ -1978,7 +1978,7 @@ export default function Home() {
       .from("pachanga_group_backups")
       .select("id, source_group_id, group_name, team_code, reason, payload, created_at")
       .order("created_at", { ascending: false })
-      .limit(12);
+      .limit(3);
 
     setBackupsLoading(false);
 
@@ -4281,7 +4281,7 @@ export default function Home() {
               </div>
             </div>
             <p>
-              Al guardar o finalizar un partido se crea una copia en el servidor. Antes de borrar un equipo también se guarda una copia de rescate.
+              Al guardar o finalizar un partido se crea una copia en el servidor. Se conservan solo las 3 últimas por equipo; al crear una nueva se elimina la más antigua.
             </p>
             {backupMessage ? <small className="backup-message">{backupMessage}</small> : null}
             {backupsLoading ? <small className="backup-message">Cargando copias...</small> : null}

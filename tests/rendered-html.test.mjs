@@ -340,10 +340,13 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /partido_guardado/);
   assert.match(page, /partido_finalizado/);
   assert.match(page, /equipo_borrado/);
+  assert.match(page, /\.limit\(3\)/);
+  assert.match(page, /solo las 3 últimas por equipo/);
   assert.doesNotMatch(page, /Añade asistentes para calcularlo/);
   assert.match(globalsCss, /\.backup-panel/);
   assert.match(globalsCss, /\.backup-list article/);
   assert.match(supabaseSql, /create table if not exists public\.pachanga_group_backups/);
+  assert.match(supabaseSql, /backup_rank > 3/);
   assert.match(supabaseSql, /create or replace function public\.restore_pachanga_group_backup/);
   assert.match(supabaseSql, /payload_revision bigint not null default 0/);
   assert.match(supabaseSql, /create or replace function public\.is_registered_pachanga_user/);
