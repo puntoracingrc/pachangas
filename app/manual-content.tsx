@@ -128,7 +128,7 @@ const manualFlows = [
     steps: [
       "Primero rellena el resultado. Hasta entonces no se pueden asignar goles.",
       "Los goles se introducen por equipo y la app no deja superar el marcador de cada lado.",
-      "Cualquier miembro puede subir una foto de equipo como recuerdo; solo un admin puede quitarla.",
+      "Cualquier miembro puede subir una foto del partido como recuerdo; solo un admin puede quitarla.",
       "Al pulsar Finalizar partido, el partido pasa al historial.",
       "Después de finalizar, campo, fecha, modalidad, precio y reservas quedan bloqueados.",
       "Si hubo un error, aún puedes corregir asistencia y goleadores para ajustar el histórico.",

@@ -12,7 +12,7 @@ test("builds Pachangas IQ HTML", async () => {
   assert.match(html, /Alineación abierta/);
   assert.match(html, /Continuar con Google/);
   assert.match(html, /Finalizar partido/);
-  assert.match(html, /Añadir foto de equipo/);
+  assert.match(html, /Añadir foto del partido/);
   assert.match(html, /Comparte este partido!/);
   assert.match(html, /Copiar link/);
   assert.match(html, /Próximo partido/);
@@ -41,7 +41,7 @@ test("builds the user manual as its own page", async () => {
   assert.match(html, /empieza en septiembre y termina en agosto/);
   assert.match(html, /Jugador y admin/);
   assert.match(html, /Si cambias de Voy a Duda o No/);
-  assert.match(html, /Cualquier miembro puede subir una foto de equipo/);
+  assert.match(html, /Cualquier miembro puede subir una foto del partido/);
   assert.match(html, /foto en miniatura/);
   assert.match(html, /copias automáticas al guardar o finalizar un partido/);
   assert.match(html, /Borrar jugador lo deja fuera del grupo/);
@@ -118,7 +118,7 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /teamPhoto\?: string/);
   assert.match(page, /matchPhotoDataUrl/);
   assert.match(page, /canUploadTeamPhoto/);
-  assert.match(page, /Añadir foto de equipo/);
+  assert.match(page, /Añadir foto del partido/);
   assert.match(page, /Quitar foto/);
   assert.match(page, /history-photo/);
   assert.match(page, /history-season-filter/);

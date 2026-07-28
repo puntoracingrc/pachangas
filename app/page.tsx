@@ -4414,13 +4414,13 @@ export default function Home() {
             </div>
             <div className={activeMatch.teamPhoto ? "team-photo-card has-photo" : "team-photo-card"}>
               {activeMatch.teamPhoto ? (
-                <img src={activeMatch.teamPhoto} alt={`Foto de recuerdo de ${activeMatch.title}`} />
+                <img src={activeMatch.teamPhoto} alt={`Foto del partido ${activeMatch.title}`} />
               ) : (
                 <span className="team-photo-empty">+</span>
               )}
               <div className="team-photo-actions">
                 <label className="team-photo-button">
-                  {activeMatch.teamPhoto ? "Cambiar foto de equipo" : "Añadir foto de equipo"}
+                  {activeMatch.teamPhoto ? "Cambiar foto del partido" : "Añadir foto del partido"}
                   <input
                     accept="image/*"
                     capture="environment"
