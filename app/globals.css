@@ -111,10 +111,11 @@ h1 {
 
 .top-venue-form {
   align-items: end;
-  grid-template-columns: minmax(260px, 1fr) 130px 160px 160px;
+  grid-template-columns: minmax(220px, 360px) 120px 160px 150px;
   justify-content: center;
   margin-bottom: 8px;
   margin-top: 0;
+  max-width: 850px;
 }
 
 .top-team-form {
@@ -537,7 +538,6 @@ select {
   display: grid;
   gap: 10px;
   grid-template-columns: minmax(0, 1fr) 110px 150px 140px;
-  margin: 12px 0 16px;
   padding: 12px;
 }
 
@@ -673,10 +673,11 @@ select {
 
 .top-panel.top-venue-form {
   align-items: end;
-  grid-template-columns: minmax(260px, 1fr) 130px 160px 160px;
+  grid-template-columns: minmax(220px, 360px) 120px 160px 150px;
   justify-content: center;
   margin-bottom: 8px;
   margin-top: 0;
+  max-width: 850px;
 }
 
 .top-panel .panel-hide-button {
