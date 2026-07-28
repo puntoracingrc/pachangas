@@ -4,7 +4,7 @@ import { ManualContent } from "../manual-content";
 
 export const metadata: Metadata = {
   title: "Manual de usuario | Pachangas IQ",
-  description: "Guía rápida para usar Pachangas IQ.",
+  description: "Guía de flujos para jugadores y admins de Pachangas IQ.",
 };
 
 export default function ManualPage() {
@@ -15,7 +15,7 @@ export default function ManualPage() {
           <p className="eyebrow">Pachangas IQ</p>
           <h1>Manual de usuario</h1>
           <p className="hero-copy">
-            Guía rápida de secciones para entender el flujo de equipo, partidos, jugadores, valoraciones y ranking.
+            Flujos completos para jugadores y admins: registro, equipos, partidos, reservas, pagos, fichas, valoraciones, historial y ranking.
           </p>
         </div>
         <Link className="secondary-button manual-back-button" href="/">
@@ -25,8 +25,8 @@ export default function ManualPage() {
 
       <section className="top-panel manual-page-panel">
         <div className="manual-page-title">
-          <span>Guía rápida</span>
-          <strong>Secciones principales</strong>
+          <span>Guía de uso</span>
+          <strong>Jugador y admin</strong>
         </div>
         <ManualContent />
       </section>

@@ -373,6 +373,62 @@ h1 {
   margin: 0;
 }
 
+.manual-flow-list {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.manual-flow-card {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+}
+
+.manual-flow-card > div {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+}
+
+.manual-flow-card span {
+  background: #202820;
+  border-radius: 999px;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 950;
+  padding: 5px 9px;
+  text-transform: uppercase;
+}
+
+.manual-flow-card b {
+  font-size: 18px;
+}
+
+.manual-flow-card p {
+  color: var(--ink-soft);
+  font-size: 14px;
+  line-height: 1.45;
+  margin: 0;
+}
+
+.manual-flow-card ol {
+  display: grid;
+  gap: 7px;
+  margin: 0;
+  padding-left: 20px;
+}
+
+.manual-flow-card li {
+  color: #2f3934;
+  font-size: 14px;
+  line-height: 1.42;
+}
+
 .manual-page {
   background: var(--background);
   min-height: 100vh;
@@ -2822,6 +2878,10 @@ select:disabled {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .manual-flow-list {
+    grid-template-columns: 1fr;
+  }
+
   .team-invite-link,
   .team-access-panel .sync-status {
     grid-column: 1 / -1;
@@ -2873,6 +2933,11 @@ select:disabled {
 
   .manual-grid {
     grid-template-columns: 1fr;
+  }
+
+  .manual-flow-card > div {
+    align-items: start;
+    display: grid;
   }
 
   .match-editor,

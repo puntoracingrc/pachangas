@@ -27,7 +27,12 @@ test("builds Pachangas IQ HTML", async () => {
 test("builds the user manual as its own page", async () => {
   const html = await readFile(new URL("../.next/server/app/manual.html", import.meta.url), "utf8");
   assert.match(html, /Manual de usuario/);
-  assert.match(html, /Equipo privado/);
+  assert.match(html, /Primera entrada/);
+  assert.match(html, /Crear partido/);
+  assert.match(html, /Guardar partido/);
+  assert.match(html, /Jugador y admin/);
+  assert.match(html, /Si cambias de Voy a Duda o No/);
+  assert.match(html, /Borrar jugador lo deja fuera del grupo/);
   assert.match(html, /Ranking vivo/);
   assert.match(html, /Volver/);
 });
