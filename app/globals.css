@@ -1312,8 +1312,11 @@ select:disabled {
   display: inline-flex;
   font-size: 11px;
   font-weight: 900;
+  justify-content: center;
+  line-height: 1.1;
   min-height: 22px;
   padding: 0 9px;
+  text-align: center;
   text-transform: uppercase;
   width: fit-content;
 }
@@ -1769,8 +1772,9 @@ select:disabled {
 .team div,
 .team p {
   align-items: center;
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: minmax(0, 1fr) max-content;
   margin: 0;
   padding: 10px 12px;
 }
@@ -1788,6 +1792,7 @@ select:disabled {
   display: flex;
   gap: 8px;
   min-width: 0;
+  overflow: hidden;
 }
 
 .team div span b {
@@ -1807,6 +1812,13 @@ select:disabled {
   font-size: 12px;
   font-style: normal;
   font-weight: 800;
+}
+
+.team .position-pill {
+  align-self: center;
+  max-width: 128px;
+  min-width: 54px;
+  white-space: normal;
 }
 
 .result-box {

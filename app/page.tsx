@@ -132,15 +132,26 @@ type RemoteMember = {
   userId: string;
 };
 
+function demoVotes(playerId: string, rows: Array<[number, string, Record<RatingFacet, number>]>): RatingVote[] {
+  return rows.map(([matchCount, createdAt, facets], index) => ({
+    id: `rv-${playerId}-${index + 1}`,
+    voterId: "demo",
+    voterName: "Demo",
+    matchCount,
+    createdAt,
+    facets,
+  }));
+}
+
 const seedPlayers: Player[] = [
-  { id: "p1", name: "Carlos", phone: "600 111 222", goalkeeperOnly: false, rating: 8, position: "Delantero / punta", goals: 18, assists: 7, appearances: 12, wins: 7, lateCancels: 1, ratingVotes: [{ id: "rv1", voterId: "demo", voterName: "Demo", matchCount: 9, createdAt: "2026-07-01T20:00:00", facets: { ritmo: 8, tiro: 9, pase: 7, regate: 8, defensa: 5, fisico: 8 } }] },
-  { id: "p2", name: "Manu", phone: "600 222 333", rating: 7, position: "Mediocentro / pivote", goals: 10, assists: 13, appearances: 11, wins: 8, lateCancels: 0, ratingVotes: [{ id: "rv2", voterId: "demo", voterName: "Demo", matchCount: 8, createdAt: "2026-07-02T20:00:00", facets: { ritmo: 6, tiro: 6, pase: 9, regate: 7, defensa: 7, fisico: 7 } }] },
-  { id: "p3", name: "Pablo", phone: "600 333 444", rating: 6, position: "Defensa central", goals: 5, assists: 4, appearances: 10, wins: 5, lateCancels: 2, ratingVotes: [{ id: "rv3", voterId: "demo", voterName: "Demo", matchCount: 10, createdAt: "2026-07-05T20:00:00", facets: { ritmo: 5, tiro: 4, pase: 6, regate: 5, defensa: 8, fisico: 7 } }] },
-  { id: "p4", name: "Rafa", phone: "600 444 555", goalkeeperOnly: true, rating: 7, position: "Portero", goals: 1, assists: 2, appearances: 9, wins: 4, lateCancels: 0, ratingVotes: [{ id: "rv4", voterId: "demo", voterName: "Demo", matchCount: 6, createdAt: "2026-07-03T20:00:00", facets: { ritmo: 6, tiro: 4, pase: 7, regate: 5, defensa: 9, fisico: 7 } }] },
-  { id: "p5", name: "Dani", phone: "600 555 666", rating: 5, position: "Interior / volante", goals: 6, assists: 3, appearances: 8, wins: 3, lateCancels: 1, ratingVotes: [{ id: "rv5", voterId: "demo", voterName: "Demo", matchCount: 7, createdAt: "2026-07-04T20:00:00", facets: { ritmo: 6, tiro: 5, pase: 6, regate: 6, defensa: 5, fisico: 5 } }] },
-  { id: "p6", name: "Alex", phone: "600 666 777", rating: 6, position: "Defensa central", goals: 4, assists: 8, appearances: 9, wins: 6, lateCancels: 0, ratingVotes: [{ id: "rv6", voterId: "demo", voterName: "Demo", matchCount: 9, createdAt: "2026-07-06T20:00:00", facets: { ritmo: 6, tiro: 4, pase: 6, regate: 5, defensa: 8, fisico: 7 } }] },
-  { id: "p7", name: "Sergio", phone: "600 777 888", rating: 8, position: "Delantero / punta", goals: 15, assists: 5, appearances: 8, wins: 5, lateCancels: 1, ratingVotes: [{ id: "rv7", voterId: "demo", voterName: "Demo", matchCount: 5, createdAt: "2026-07-07T20:00:00", facets: { ritmo: 8, tiro: 8, pase: 6, regate: 8, defensa: 4, fisico: 7 } }] },
-  { id: "p8", name: "Javi", phone: "600 888 999", rating: 5, position: "Lateral derecho", goals: 3, assists: 6, appearances: 7, wins: 2, lateCancels: 3, ratingVotes: [{ id: "rv8", voterId: "demo", voterName: "Demo", matchCount: 7, createdAt: "2026-07-08T20:00:00", facets: { ritmo: 7, tiro: 4, pase: 5, regate: 6, defensa: 6, fisico: 5 } }] },
+  { id: "p1", name: "Carlos", phone: "600 111 222", goalkeeperOnly: false, rating: 8, position: "Delantero / punta", goals: 18, assists: 7, appearances: 12, wins: 7, lateCancels: 1, ratingVotes: demoVotes("p1", [[3, "2026-06-10T23:00:00", { ritmo: 7, tiro: 8, pase: 6, regate: 7, defensa: 4, fisico: 7 }], [6, "2026-06-24T23:00:00", { ritmo: 8, tiro: 8, pase: 7, regate: 8, defensa: 5, fisico: 8 }], [9, "2026-07-08T23:00:00", { ritmo: 8, tiro: 9, pase: 7, regate: 8, defensa: 5, fisico: 8 }], [12, "2026-07-23T23:00:00", { ritmo: 8, tiro: 9, pase: 8, regate: 8, defensa: 5, fisico: 8 }]]) },
+  { id: "p2", name: "Manu", phone: "600 222 333", rating: 7, position: "Mediocentro / pivote", goals: 10, assists: 13, appearances: 11, wins: 8, lateCancels: 0, ratingVotes: demoVotes("p2", [[3, "2026-06-10T23:00:00", { ritmo: 6, tiro: 5, pase: 8, regate: 6, defensa: 6, fisico: 7 }], [6, "2026-06-24T23:00:00", { ritmo: 6, tiro: 6, pase: 8, regate: 7, defensa: 7, fisico: 7 }], [8, "2026-07-08T23:00:00", { ritmo: 6, tiro: 6, pase: 9, regate: 7, defensa: 7, fisico: 7 }], [11, "2026-07-23T23:00:00", { ritmo: 7, tiro: 6, pase: 9, regate: 7, defensa: 8, fisico: 7 }]]) },
+  { id: "p3", name: "Pablo", phone: "600 333 444", rating: 6, position: "Defensa central", goals: 5, assists: 4, appearances: 10, wins: 5, lateCancels: 2, ratingVotes: demoVotes("p3", [[3, "2026-06-10T23:00:00", { ritmo: 5, tiro: 4, pase: 5, regate: 5, defensa: 7, fisico: 6 }], [6, "2026-06-24T23:00:00", { ritmo: 5, tiro: 4, pase: 6, regate: 5, defensa: 8, fisico: 7 }], [10, "2026-07-23T23:00:00", { ritmo: 6, tiro: 4, pase: 6, regate: 5, defensa: 8, fisico: 7 }]]) },
+  { id: "p4", name: "Rafa", phone: "600 444 555", goalkeeperOnly: true, rating: 7, position: "Portero", goals: 1, assists: 2, appearances: 9, wins: 4, lateCancels: 0, ratingVotes: demoVotes("p4", [[3, "2026-06-10T23:00:00", { ritmo: 6, tiro: 4, pase: 6, regate: 5, defensa: 8, fisico: 7 }], [6, "2026-07-03T23:00:00", { ritmo: 6, tiro: 4, pase: 7, regate: 5, defensa: 9, fisico: 7 }], [9, "2026-07-23T23:00:00", { ritmo: 6, tiro: 4, pase: 7, regate: 6, defensa: 9, fisico: 7 }]]) },
+  { id: "p5", name: "Dani", phone: "600 555 666", rating: 5, position: "Interior / volante", goals: 6, assists: 3, appearances: 8, wins: 3, lateCancels: 1, ratingVotes: demoVotes("p5", [[3, "2026-06-10T23:00:00", { ritmo: 5, tiro: 5, pase: 5, regate: 6, defensa: 5, fisico: 5 }], [6, "2026-06-24T23:00:00", { ritmo: 6, tiro: 5, pase: 6, regate: 6, defensa: 5, fisico: 5 }], [8, "2026-07-23T23:00:00", { ritmo: 6, tiro: 6, pase: 6, regate: 6, defensa: 5, fisico: 6 }]]) },
+  { id: "p6", name: "Alex", phone: "600 666 777", rating: 6, position: "Defensa central", goals: 4, assists: 8, appearances: 9, wins: 6, lateCancels: 0, ratingVotes: demoVotes("p6", [[3, "2026-06-10T23:00:00", { ritmo: 5, tiro: 4, pase: 6, regate: 5, defensa: 7, fisico: 6 }], [6, "2026-06-24T23:00:00", { ritmo: 6, tiro: 4, pase: 6, regate: 5, defensa: 8, fisico: 7 }], [9, "2026-07-23T23:00:00", { ritmo: 6, tiro: 5, pase: 7, regate: 5, defensa: 8, fisico: 7 }]]) },
+  { id: "p7", name: "Sergio", phone: "600 777 888", rating: 8, position: "Delantero / punta", goals: 15, assists: 5, appearances: 8, wins: 5, lateCancels: 1, ratingVotes: demoVotes("p7", [[3, "2026-06-10T23:00:00", { ritmo: 7, tiro: 7, pase: 6, regate: 7, defensa: 4, fisico: 7 }], [5, "2026-07-07T23:00:00", { ritmo: 8, tiro: 8, pase: 6, regate: 8, defensa: 4, fisico: 7 }], [8, "2026-07-23T23:00:00", { ritmo: 9, tiro: 8, pase: 6, regate: 8, defensa: 4, fisico: 7 }]]) },
+  { id: "p8", name: "Javi", phone: "600 888 999", rating: 5, position: "Lateral derecho", goals: 3, assists: 6, appearances: 7, wins: 2, lateCancels: 3, ratingVotes: demoVotes("p8", [[3, "2026-06-10T23:00:00", { ritmo: 6, tiro: 4, pase: 5, regate: 5, defensa: 5, fisico: 5 }], [7, "2026-07-23T23:00:00", { ritmo: 7, tiro: 4, pase: 5, regate: 6, defensa: 6, fisico: 5 }]]) },
   { id: "p9", name: "Nico", phone: "600 999 000", rating: 5, position: "Ala izquierda", goals: 2, assists: 2, appearances: 2, wins: 1, lateCancels: 0 },
   { id: "p10", name: "Pedro", phone: "601 111 222", rating: 6, position: "Cierre", goals: 7, assists: 2, appearances: 4, wins: 2, lateCancels: 0 },
   { id: "p11", name: "Alberto", phone: "601 222 333", rating: 5, position: "Mediapunta", goals: 0, assists: 1, appearances: 1, wins: 0, lateCancels: 0 },
@@ -158,6 +169,10 @@ const seedVenues: Venue[] = [
   { id: "v2", name: "Pista El Parque", defaultCost: 42, kind: "sala" },
   { id: "v3", name: "Municipal Norte", defaultCost: 110, kind: "futbol11" },
 ];
+
+function demoMatchPlayers(playerIds: string[], paidIds: string[] = playerIds): MatchPlayer[] {
+  return playerIds.map((playerId) => ({ playerId, status: "voy" as const, paid: paidIds.includes(playerId) }));
+}
 
 const seedMatches: Match[] = [
   {
@@ -196,7 +211,7 @@ const seedMatches: Match[] = [
   },
   {
     id: "m2",
-    title: "Demo finalizada",
+    title: "Demo sala rápida",
     date: "2026-07-23T21:00",
     place: "Pista El Parque",
     venueId: "v2",
@@ -217,11 +232,129 @@ const seedMatches: Match[] = [
       { playerId: "p6", goals: 1 },
       { playerId: "p8", goals: 1 },
     ],
-    players: ["p4", "p1", "p2", "p7", "p12", "p14", "p3", "p5", "p6", "p8"].map((playerId) => ({ playerId, status: "voy" as const, paid: true })),
+    players: demoMatchPlayers(["p4", "p1", "p2", "p7", "p12", "p14", "p3", "p5", "p6", "p8"]),
+  },
+  {
+    id: "m3",
+    title: "Demo 7v7 igualada",
+    date: "2026-07-16T21:00",
+    place: "Polideportivo La Mina",
+    venueId: "v1",
+    kind: "futbol7",
+    targetPlayers: 14,
+    fieldCost: 56,
+    payerId: "p2",
+    closed: true,
+    scoreA: 4,
+    scoreB: 4,
+    teamA: ["p4", "p6", "p8", "p13", "p1", "p7", "p10"],
+    teamB: ["p14", "p3", "p5", "p2", "p11", "p12", "p18"],
+    scorers: [
+      { playerId: "p1", goals: 2 },
+      { playerId: "p7", goals: 1 },
+      { playerId: "p10", goals: 1 },
+      { playerId: "p18", goals: 2 },
+      { playerId: "p12", goals: 1 },
+      { playerId: "p5", goals: 1 },
+    ],
+    players: demoMatchPlayers(["p4", "p6", "p8", "p13", "p1", "p7", "p10", "p14", "p3", "p5", "p2", "p11", "p12", "p18"], ["p4", "p6", "p1", "p14", "p3", "p2", "p18"]),
+  },
+  {
+    id: "m4",
+    title: "Demo lunes sala",
+    date: "2026-07-09T20:30",
+    place: "Pista El Parque",
+    venueId: "v2",
+    kind: "sala",
+    targetPlayers: 10,
+    fieldCost: 42,
+    payerId: "p3",
+    closed: true,
+    scoreA: 6,
+    scoreB: 2,
+    teamA: ["p4", "p1", "p2", "p7", "p18"],
+    teamB: ["p14", "p3", "p5", "p6", "p12"],
+    scorers: [
+      { playerId: "p18", goals: 3 },
+      { playerId: "p1", goals: 2 },
+      { playerId: "p7", goals: 1 },
+      { playerId: "p12", goals: 1 },
+      { playerId: "p5", goals: 1 },
+    ],
+    players: demoMatchPlayers(["p4", "p1", "p2", "p7", "p18", "p14", "p3", "p5", "p6", "p12"], ["p1", "p2", "p18", "p3", "p12"]),
+  },
+  {
+    id: "m5",
+    title: "Demo jueves 7v7",
+    date: "2026-07-02T21:00",
+    place: "Polideportivo La Mina",
+    venueId: "v1",
+    kind: "futbol7",
+    targetPlayers: 14,
+    fieldCost: 56,
+    payerId: "p6",
+    closed: true,
+    scoreA: 3,
+    scoreB: 5,
+    teamA: ["p4", "p3", "p8", "p13", "p5", "p11", "p12"],
+    teamB: ["p14", "p6", "p10", "p2", "p1", "p7", "p18"],
+    scorers: [
+      { playerId: "p12", goals: 2 },
+      { playerId: "p5", goals: 1 },
+      { playerId: "p1", goals: 2 },
+      { playerId: "p7", goals: 2 },
+      { playerId: "p18", goals: 1 },
+    ],
+    players: demoMatchPlayers(["p4", "p3", "p8", "p13", "p5", "p11", "p12", "p14", "p6", "p10", "p2", "p1", "p7", "p18"], ["p4", "p8", "p12", "p14", "p6", "p1", "p7"]),
+  },
+  {
+    id: "m6",
+    title: "Demo municipal 11",
+    date: "2026-06-25T22:00",
+    place: "Municipal Norte",
+    venueId: "v3",
+    kind: "futbol11",
+    targetPlayers: 22,
+    fieldCost: 110,
+    payerId: "p7",
+    closed: true,
+    scoreA: 2,
+    scoreB: 1,
+    teamA: ["p4", "p3", "p6", "p8", "p13", "p2", "p5", "p11", "p1", "p7", "p12"],
+    teamB: ["p14", "p10", "p15", "p16", "p9", "p17", "p18"],
+    scorers: [
+      { playerId: "p7", goals: 1 },
+      { playerId: "p1", goals: 1 },
+      { playerId: "p18", goals: 1 },
+    ],
+    players: demoMatchPlayers(["p4", "p3", "p6", "p8", "p13", "p2", "p5", "p11", "p1", "p7", "p12", "p14", "p10", "p15", "p16", "p9", "p17", "p18"], ["p4", "p3", "p6", "p2", "p1", "p7", "p14", "p10", "p18"]),
+  },
+  {
+    id: "m7",
+    title: "Demo primera prueba",
+    date: "2026-06-18T21:00",
+    place: "Polideportivo La Mina",
+    venueId: "v1",
+    kind: "futbol7",
+    targetPlayers: 14,
+    fieldCost: 50,
+    payerId: "p4",
+    closed: true,
+    scoreA: 1,
+    scoreB: 3,
+    teamA: ["p4", "p3", "p8", "p13", "p5", "p11", "p12"],
+    teamB: ["p14", "p6", "p10", "p2", "p1", "p7", "p18"],
+    scorers: [
+      { playerId: "p12", goals: 1 },
+      { playerId: "p1", goals: 1 },
+      { playerId: "p7", goals: 1 },
+      { playerId: "p18", goals: 1 },
+    ],
+    players: demoMatchPlayers(["p4", "p3", "p8", "p13", "p5", "p11", "p12", "p14", "p6", "p10", "p2", "p1", "p7", "p18"], ["p4", "p3", "p12", "p14", "p2", "p7"]),
   },
 ];
 
-const storageKey = "pachanga-iq-v2";
+const storageKey = "pachanga-iq-v3";
 const profileNameKey = "pachanga-iq-profile-name";
 
 function defaultPayload(): AppPayload {
