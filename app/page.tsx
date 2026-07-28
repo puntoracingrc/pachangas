@@ -1020,6 +1020,11 @@ export default function Home() {
   const canUseAdminControls = !remoteReady || canManageTeam;
   const canEditLineup = canUseAdminControls && !lineupClosed;
 
+  function updateMatchSettings(next: Match) {
+    if (!canUseAdminControls) return;
+    updateMatch(next);
+  }
+
   function updatePlayer(playerId: string, next: Partial<Player>) {
     if (remoteReady && !canManageTeam) return;
     setPlayers((current) => current.map((player) => (player.id === playerId ? { ...player, ...next } : player)));
@@ -1604,10 +1609,11 @@ export default function Home() {
         </aside>
 
         <section className="panel main-panel">
-          <div className="match-editor">
+          <div className={canUseAdminControls ? "match-editor" : "match-editor readonly-editor"}>
+            {!canUseAdminControls ? <span className="admin-only-badge">Solo admin</span> : null}
             <label>
               Campo
-              <select value={activeMatch.venueId ?? ""} onChange={(event) => selectVenue(event.target.value)} disabled={remoteReady && !canManageTeam}>
+              <select value={activeMatch.venueId ?? ""} onChange={(event) => selectVenue(event.target.value)} disabled={!canUseAdminControls}>
                 <option value="" disabled>Selecciona campo</option>
                 {venues.map((venue) => (
                   <option key={venue.id} value={venue.id}>{venue.name}</option>
@@ -1620,13 +1626,13 @@ export default function Home() {
                 type="datetime-local"
                 step="600"
                 value={activeMatch.date}
-                disabled={remoteReady && !canManageTeam}
-                onChange={(event) => updateMatch({ ...activeMatch, date: event.target.value })}
+                disabled={!canUseAdminControls}
+                onChange={(event) => updateMatchSettings({ ...activeMatch, date: event.target.value })}
               />
             </label>
             <label>
               Modalidad
-              <select value={activeKind} onChange={(event) => changeKind(event.target.value as MatchKind)} disabled={remoteReady && !canManageTeam}>
+              <select value={activeKind} onChange={(event) => changeKind(event.target.value as MatchKind)} disabled={!canUseAdminControls}>
                 {Object.entries(matchKinds).map(([kind, config]) => (
                   <option key={kind} value={kind}>{config.label}</option>
                 ))}
@@ -1638,8 +1644,8 @@ export default function Home() {
                 type="number"
                 min="0"
                 value={fieldCost}
-                disabled={remoteReady && !canManageTeam}
-                onChange={(event) => updateMatch({ ...activeMatch, fieldCost: Number(event.target.value) })}
+                disabled={!canUseAdminControls}
+                onChange={(event) => updateMatchSettings({ ...activeMatch, fieldCost: Number(event.target.value) })}
               />
             </label>
             <label className="reserve-toggle">
@@ -1648,9 +1654,9 @@ export default function Home() {
                 <input
                   type="checkbox"
                   checked={Boolean(activeMatch.reservesAttend)}
-                  disabled={remoteReady && !canManageTeam}
+                  disabled={!canUseAdminControls}
                   onChange={(event) =>
-                    updateMatch({
+                    updateMatchSettings({
                       ...activeMatch,
                       reservesAttend: event.target.checked,
                       reserveLimit: event.target.checked ? Math.max(1, activeMatch.reserveLimit ?? 2) : 0,
@@ -1666,8 +1672,8 @@ export default function Home() {
                 type="number"
                 min="0"
                 value={activeMatch.reserveLimit ?? 0}
-                disabled={(remoteReady && !canManageTeam) || !activeMatch.reservesAttend}
-                onChange={(event) => updateMatch({ ...activeMatch, reserveLimit: Math.max(0, Math.floor(Number(event.target.value) || 0)) })}
+                disabled={!canUseAdminControls || !activeMatch.reservesAttend}
+                onChange={(event) => updateMatchSettings({ ...activeMatch, reserveLimit: Math.max(0, Math.floor(Number(event.target.value) || 0)) })}
               />
             </label>
           </div>
