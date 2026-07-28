@@ -1633,10 +1633,10 @@ export default function Home() {
   const [matches, setMatches] = useState<Match[]>(seedMatches);
   const [activeMatchId, setActiveMatchId] = useState(seedMatches[0].id);
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
-  const [newPlayer, setNewPlayer] = useState("");
   const [newVenue, setNewVenue] = useState({ name: "", cost: "56", kind: "futbol7" as MatchKind });
   const [newFacetRatings, setNewFacetRatings] = useState<Record<RatingFacet, number>>(makeFacetRatings());
-  const [openQuickForm, setOpenQuickForm] = useState<"player" | "venue" | "team" | null>(null);
+  const [openQuickForm, setOpenQuickForm] = useState<"venue" | "team" | null>(null);
+  const [createMenuOpen, setCreateMenuOpen] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [siteSettings, setSiteSettings] = useState<SiteSettings>(defaultSiteSettings);
   const [result, setResult] = useState({ a: "", b: "" });
@@ -1678,7 +1678,6 @@ export default function Home() {
   const matchPanelRef = useRef<HTMLElement>(null);
   const settingsPanelRef = useRef<HTMLElement>(null);
   const teamFormRef = useRef<HTMLFormElement>(null);
-  const playerFormRef = useRef<HTMLFormElement>(null);
   const venueFormRef = useRef<HTMLFormElement>(null);
   const playerProfileRef = useRef<HTMLDivElement>(null);
   const cameraVideoRef = useRef<HTMLVideoElement>(null);
@@ -2338,14 +2337,8 @@ export default function Home() {
   }
 
   function scrollToQuickForm(form: NonNullable<typeof openQuickForm>) {
-    const targetRef = form === "player" ? playerFormRef : form === "venue" ? venueFormRef : teamFormRef;
+    const targetRef = form === "venue" ? venueFormRef : teamFormRef;
     scrollToPanel(targetRef);
-  }
-
-  function toggleQuickForm(form: NonNullable<typeof openQuickForm>) {
-    const nextForm = openQuickForm === form ? null : form;
-    setOpenQuickForm(nextForm);
-    if (nextForm) scrollToQuickForm(nextForm);
   }
 
   function showQuickForm(form: NonNullable<typeof openQuickForm>) {
@@ -2357,6 +2350,11 @@ export default function Home() {
     const nextShowSettings = !showSettings;
     setShowSettings(nextShowSettings);
     if (nextShowSettings) scrollToPanel(settingsPanelRef);
+  }
+
+  function runCreateAction(action: () => void) {
+    setCreateMenuOpen(false);
+    action();
   }
 
   function selectMatch(matchId: string) {
@@ -2511,35 +2509,6 @@ export default function Home() {
       ...activeMatch,
       players: activeMatch.players.map((entry) => (entry.playerId === playerId ? { ...entry, paid: nextPaid } : entry)),
     });
-  }
-
-  function addPlayer(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!canUseAdminControls) return;
-    const name = displayName(newPlayer);
-    if (!name) return;
-
-    const player: Player = {
-      id: id(),
-      name,
-      phone: "",
-      goalkeeperOnly: false,
-      injured: false,
-      rating: 5,
-      ratings: [],
-      ratingVotes: [],
-      position: defaultPositionForKind(activeKind),
-      outfieldPosition: defaultPositionForKind(activeKind),
-      goals: 0,
-      assists: 0,
-      appearances: 0,
-      wins: 0,
-      lateCancels: 0,
-    };
-
-    setPlayers((current) => [...current, player]);
-    setNewPlayer("");
-    setOpenQuickForm(null);
   }
 
   function createMatch() {
@@ -3806,41 +3775,44 @@ export default function Home() {
             </svg>
           </a>
           {isRegisteredUser ? (
-            <>
-              <button className="secondary-button" type="button" onClick={() => void openOwnPlayerProfile()} disabled={!hasRealTeam}>
-                {ownPlayer ? "Mi ficha" : "Crear ficha"}
-              </button>
-              <button className="secondary-button" type="button" onClick={() => void signOut()}>
-                Salir
-              </button>
-            </>
+            <button className="secondary-button" type="button" onClick={() => void signOut()}>
+              Salir
+            </button>
           ) : !needsLoginForSharedLink ? (
             <GoogleSignInButton label={googleButtonText} onClick={() => void signInWithGoogle()} disabled={!supabase || !googleClientId} />
           ) : null}
-          <button className="primary-button" onClick={createMatch} disabled={!canUseAdminControls}>
-            + Partido
-          </button>
-          <button className="secondary-button" onClick={() => toggleQuickForm("player")} disabled={!canUseAdminControls}>
-            + Jugador
-          </button>
-          <button className="secondary-button" onClick={() => toggleQuickForm("venue")} disabled={!canUseAdminControls}>
-            + Campo
-          </button>
-          <button className="secondary-button" onClick={() => toggleQuickForm("team")}>
-            + Equipo
-          </button>
+          <div className="create-menu">
+            <button
+              className="primary-button create-menu-button"
+              type="button"
+              aria-expanded={createMenuOpen}
+              aria-haspopup="menu"
+              onClick={() => setCreateMenuOpen((open) => !open)}
+            >
+              Crear <span aria-hidden="true">⌄</span>
+            </button>
+            {createMenuOpen ? (
+              <div className="create-menu-panel" role="menu">
+                <button type="button" role="menuitem" onClick={() => runCreateAction(createMatch)} disabled={!canUseAdminControls}>
+                  Partido
+                </button>
+                <button type="button" role="menuitem" onClick={() => runCreateAction(() => void openOwnPlayerProfile())} disabled={!hasRealTeam || !isRegisteredUser}>
+                  Ficha jugador
+                </button>
+                <button type="button" role="menuitem" onClick={() => runCreateAction(() => showQuickForm("venue"))} disabled={!canUseAdminControls}>
+                  Campo
+                </button>
+                <button type="button" role="menuitem" onClick={() => runCreateAction(() => showQuickForm("team"))}>
+                  Equipo
+                </button>
+              </div>
+            ) : null}
+          </div>
           <button className="secondary-button" onClick={toggleSettingsPanel} disabled={!canUseAdminControls && !isRegisteredUser}>
             Configurar
           </button>
         </div>
       </section>
-
-      {openQuickForm === "player" ? (
-        <form className="top-panel quick-create-form top-player-form" ref={playerFormRef} onSubmit={addPlayer}>
-          <input placeholder="Nombre del jugador" value={newPlayer} onChange={(event) => setNewPlayer(event.target.value)} />
-          <button type="submit">Guardar jugador</button>
-        </form>
-      ) : null}
 
       {openQuickForm === "venue" ? (
         <form className="top-panel quick-create-form top-venue-form" ref={venueFormRef} onSubmit={addVenue}>
@@ -3968,7 +3940,7 @@ export default function Home() {
               Tu ficha queda vinculada a tu cuenta. A partir de ahí solo tú y los admins podréis editar tus datos.
             </p>
           </div>
-          <button className="primary-button" type="button" onClick={openOwnPlayerProfile}>
+          <button className="primary-button" type="button" onClick={() => void openOwnPlayerProfile()}>
             Crear mi ficha
           </button>
         </section>
@@ -4099,7 +4071,7 @@ export default function Home() {
             <span>Próximos partidos</span>
             <strong>{openMatches.length}</strong>
           </div>
-          {openMatches.length === 0 ? <p className="empty-copy">Crea tu primer partido con “+ Partido”.</p> : null}
+          {openMatches.length === 0 ? <p className="empty-copy">Crea tu primer partido desde “Crear”.</p> : null}
           {openMatches.map((match) => (
             <div className="match-row" key={match.id}>
               <button

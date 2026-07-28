@@ -125,6 +125,59 @@ h1 {
   justify-content: flex-end;
 }
 
+.create-menu {
+  position: relative;
+}
+
+.create-menu-button {
+  align-items: center;
+  display: inline-flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.create-menu-button span {
+  font-size: 14px;
+  line-height: 1;
+}
+
+.create-menu-panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: 0 18px 42px rgba(32, 40, 32, 0.16);
+  display: grid;
+  gap: 4px;
+  min-width: 210px;
+  padding: 6px;
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  z-index: 30;
+}
+
+.create-menu-panel button {
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+  color: var(--foreground);
+  font-weight: 850;
+  min-height: 38px;
+  padding: 0 12px;
+  text-align: left;
+}
+
+.create-menu-panel button:hover:not(:disabled),
+.create-menu-panel button:focus-visible {
+  background: #eef7dc;
+}
+
+.create-menu-panel button:disabled {
+  color: var(--ink-soft);
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
 .manual-link-button {
   align-items: center;
   background: #fff;
@@ -186,7 +239,6 @@ h1 {
 }
 
 .settings-panel,
-.top-player-form,
 .top-team-form,
 .top-venue-form,
 .main-panel,
@@ -327,12 +379,6 @@ h1 {
   font-size: 12px;
   font-weight: 800;
   line-height: 1.35;
-}
-
-.top-player-form {
-  display: grid;
-  gap: 10px;
-  grid-template-columns: minmax(0, 1fr) 170px;
 }
 
 .quick-create-form {
@@ -1466,10 +1512,6 @@ select:disabled {
 
 .top-panel.quick-create-form {
   margin-bottom: 8px;
-}
-
-.top-panel.top-player-form {
-  grid-template-columns: minmax(0, 1fr) 170px;
 }
 
 .top-panel.top-venue-form {
@@ -3632,7 +3674,7 @@ select:disabled {
     align-items: stretch;
     display: grid;
     max-width: 100%;
-    overflow: hidden;
+    overflow: visible;
     padding-left: 14px;
     padding-right: 14px;
     padding-top: 28px;
@@ -3675,6 +3717,16 @@ select:disabled {
     text-overflow: ellipsis;
     white-space: nowrap;
     width: 100%;
+  }
+
+  .hero-actions .create-menu {
+    overflow: visible;
+    z-index: 40;
+  }
+
+  .hero-actions .create-menu-panel {
+    left: 0;
+    right: auto;
   }
 
   .hero-actions .google-signin-button {
@@ -3827,7 +3879,6 @@ select:disabled {
     color: #fff;
   }
 
-  .top-panel.top-player-form,
   .top-panel.top-venue-form,
   .top-panel.top-team-form,
   .team-create-form {
