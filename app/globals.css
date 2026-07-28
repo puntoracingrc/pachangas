@@ -381,6 +381,27 @@ h1 {
   text-transform: uppercase;
 }
 
+.profile-title-actions {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+}
+
+.inactive-label {
+  background: #e5e7eb;
+  border-radius: 999px;
+  color: #4b5563;
+  font-size: 11px;
+  font-weight: 900;
+  padding: 5px 8px;
+  text-transform: uppercase;
+}
+
+.profile-delete-button {
+  min-height: 34px;
+  width: 38px;
+}
+
 .match-list {
   align-self: start;
 }
@@ -917,6 +938,14 @@ select:disabled {
   opacity: 0.88;
 }
 
+.player-card.inactive-card {
+  background: #f3f4f6;
+  border-color: #d1d5db;
+  border-left-color: #6b7280;
+  color: #4b5563;
+  opacity: 0.82;
+}
+
 .player-card.status-duda {
   border-left: 5px solid #eab308;
 }
@@ -999,11 +1028,31 @@ select:disabled {
 
 .injury-badge svg,
 .inline-injury svg,
-.token-injury svg {
+.token-injury svg,
+.inactive-badge svg,
+.inline-inactive svg,
+.token-inactive svg {
   fill: currentColor;
 }
 
 .injury-badge svg {
+  height: 20px;
+  width: 20px;
+}
+
+.inactive-badge {
+  align-items: center;
+  background: #6b7280;
+  border: 2px solid #e5e7eb;
+  border-radius: 50%;
+  color: #fff;
+  display: flex;
+  height: 34px;
+  justify-content: center;
+  width: 34px;
+}
+
+.inactive-badge svg {
   height: 20px;
   width: 20px;
 }
@@ -1076,16 +1125,37 @@ select:disabled {
   width: 19px;
 }
 
+.inline-inactive {
+  align-items: center;
+  background: #6b7280;
+  border-radius: 50%;
+  color: #fff;
+  display: inline-flex;
+  flex: 0 0 auto;
+  height: 19px;
+  justify-content: center;
+  margin-right: 5px;
+  vertical-align: middle;
+  width: 19px;
+}
+
 .inline-injury svg {
+  height: 13px;
+  width: 13px;
+}
+
+.inline-inactive svg {
   height: 13px;
   width: 13px;
 }
 
 .scorer-row .inline-injury,
 .ranking .inline-injury,
-.team .inline-injury {
+.team .inline-injury,
+.scorer-row .inline-inactive,
+.ranking .inline-inactive,
+.team .inline-inactive {
   align-items: center;
-  background: #dc2626;
   border-radius: 50%;
   color: #fff;
   display: inline-flex;
@@ -1096,6 +1166,18 @@ select:disabled {
   margin-right: 5px;
   padding: 0;
   width: 19px;
+}
+
+.scorer-row .inline-injury,
+.ranking .inline-injury,
+.team .inline-injury {
+  background: #dc2626;
+}
+
+.scorer-row .inline-inactive,
+.ranking .inline-inactive,
+.team .inline-inactive {
+  background: #6b7280;
 }
 
 .reserve-chip {
@@ -1346,6 +1428,11 @@ select:disabled {
   box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.24), 0 8px 18px rgba(0, 0, 0, 0.22);
 }
 
+.player-token.inactive-token {
+  filter: grayscale(0.85);
+  opacity: 0.78;
+}
+
 .player-token .token-injury {
   align-items: center;
   background: #dc2626;
@@ -1362,7 +1449,28 @@ select:disabled {
   z-index: 2;
 }
 
+.player-token .token-inactive {
+  align-items: center;
+  background: #6b7280;
+  border: 1px solid #e5e7eb;
+  border-radius: 50%;
+  color: #fff;
+  display: flex;
+  height: 18px;
+  justify-content: center;
+  position: absolute;
+  right: -4px;
+  top: -5px;
+  width: 18px;
+  z-index: 3;
+}
+
 .player-token .token-injury svg {
+  height: 12px;
+  width: 12px;
+}
+
+.player-token .token-inactive svg {
   height: 12px;
   width: 12px;
 }

@@ -174,12 +174,13 @@ with check (
 );
 
 drop policy if exists "Owners can delete groups" on public.pachanga_groups;
-create policy "Owners can delete groups"
+drop policy if exists "Admins can delete groups" on public.pachanga_groups;
+create policy "Admins can delete groups"
 on public.pachanga_groups
 for delete
 to authenticated
 using (
-  public.is_pachanga_group_owner(id)
+  public.is_pachanga_group_admin(id)
 );
 
 drop policy if exists "Members can read memberships" on public.pachanga_group_members;

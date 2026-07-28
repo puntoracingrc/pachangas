@@ -10,6 +10,7 @@ type Player = {
   phone?: string;
   goalkeeperOnly?: boolean;
   injured?: boolean;
+  inactive?: boolean;
   rating: number;
   ratings?: number[];
   position: "Porteria" | "Defensa" | "Medio" | "Ataque";
@@ -177,6 +178,14 @@ function HospitalLogo() {
   );
 }
 
+function UserOffLogo() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 24 24">
+      <path d="M10 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm0 2c-3.6 0-7 1.8-7 4.8V20h10.7A6.9 6.9 0 0 1 13 17c0-1.4.4-2.7 1.1-3.8A12 12 0 0 0 10 13Zm8 1a4 4 0 1 0 0 8 4 4 0 0 0 0-8Zm-2.2 3.2 1.4-1.4.8.8.8-.8 1.4 1.4-.8.8.8.8-1.4 1.4-.8-.8-.8.8-1.4-1.4.8-.8-.8-.8Z" />
+    </svg>
+  );
+}
+
 const matchKinds: Record<MatchKind, { label: string; targetPlayers: number; teamSize: number }> = {
   sala: { label: "Fútbol sala", targetPlayers: 10, teamSize: 5 },
   futbol7: { label: "Fútbol 7", targetPlayers: 14, teamSize: 7 },
@@ -251,6 +260,7 @@ function normalizePayload(payload?: Partial<AppPayload>): AppPayload {
   const players = (payload?.players ?? fallback.players).map((player) => ({
     ...player,
     injured: Boolean(player.injured),
+    inactive: Boolean(player.inactive),
   }));
 
   return {
@@ -740,7 +750,7 @@ export default function Home() {
 
   function setStatus(playerId: string, status: MatchPlayer["status"]) {
     const player = players.find((item) => item.id === playerId);
-    if (status === "voy" && player?.injured) return;
+    if (status === "voy" && (player?.injured || player?.inactive)) return;
     const existing = activeMatch.players.find((entry) => entry.playerId === playerId);
     const joinedAt = status === "voy" ? (existing?.status === "voy" ? existing.joinedAt : new Date().toISOString()) : undefined;
     const nextPlayers = existing
@@ -765,6 +775,36 @@ export default function Home() {
               ? { ...entry, status: "no", joinedAt: undefined, paid: false }
               : entry,
           ),
+        };
+      }),
+    );
+  }
+
+  function deactivatePlayer(playerId: string) {
+    if (!canUseAdminControls) return;
+    const player = players.find((item) => item.id === playerId);
+    if (!player) return;
+    if (!window.confirm(`¿Eliminar a ${playerDisplayName(player)} del grupo?`)) return;
+    if (!window.confirm("Confirmación final: conservará ranking e histórico, pero no podrá apuntarse.")) return;
+
+    updatePlayer(playerId, { inactive: true, injured: false });
+    setMatches((current) =>
+      current.map((match) => {
+        if (match.closed || match.scoreA !== undefined) return match;
+        const existing = match.players.find((entry) => entry.playerId === playerId);
+        if (!existing) return match;
+
+        return {
+          ...match,
+          payerId: match.payerId === playerId ? undefined : match.payerId,
+          players: match.players.map((entry) =>
+            entry.playerId === playerId
+              ? { ...entry, status: "no", joinedAt: undefined, paid: false }
+              : entry,
+          ),
+          scorers: match.scorers?.filter((entry) => entry.playerId !== playerId),
+          teamA: match.teamA?.filter((id) => id !== playerId),
+          teamB: match.teamB?.filter((id) => id !== playerId),
         };
       }),
     );
@@ -912,6 +952,11 @@ export default function Home() {
         return (
           <div className={`scorer-row ${variant}-row`} key={player.id}>
             <span>
+              {player.inactive ? (
+                <span className="inline-inactive" title="Ya no está en el grupo" aria-label="Ya no está en el grupo">
+                  <UserOffLogo />
+                </span>
+              ) : null}
               {player.injured ? (
                 <span className="inline-injury" title="Jugador lesionado" aria-label="Jugador lesionado">
                   <HospitalLogo />
@@ -1047,8 +1092,8 @@ export default function Home() {
   const rankedPlayers = [...players].sort((a, b) => scorePlayer(b) - scorePlayer(a));
   const sortedPlayers = [...players].sort((a, b) => {
     const statusOrder: Record<MatchPlayer["status"] | "sin", number> = { voy: 0, duda: 1, no: 2, sin: 3 };
-    const statusA = a.injured ? "no" : activeMatch.players.find((entry) => entry.playerId === a.id)?.status ?? "sin";
-    const statusB = b.injured ? "no" : activeMatch.players.find((entry) => entry.playerId === b.id)?.status ?? "sin";
+    const statusA = a.injured || a.inactive ? "no" : activeMatch.players.find((entry) => entry.playerId === a.id)?.status ?? "sin";
+    const statusB = b.injured || b.inactive ? "no" : activeMatch.players.find((entry) => entry.playerId === b.id)?.status ?? "sin";
     return statusOrder[statusA] - statusOrder[statusB] || a.name.localeCompare(b.name, "es");
   });
   const teamAPlayerIds = new Set(suggested.teamA.map((player) => player.id));
@@ -1176,7 +1221,7 @@ export default function Home() {
   }
 
   async function deleteCurrentTeam() {
-    if (!supabase || !remoteGroupId || currentRole !== "owner") return;
+    if (!supabase || !remoteGroupId || !canManageTeam) return;
     const teamName = currentTeam?.name ?? "este equipo";
     if (!window.confirm(`¿Eliminar ${teamName}?`)) return;
     if (!window.confirm("Confirmación final: se borrarán el equipo y sus miembros.")) return;
@@ -1327,14 +1372,14 @@ export default function Home() {
 
   function renderPlayerCard(player: Player, team?: "A" | "B") {
     const matchEntry = activeMatch.players.find((entry) => entry.playerId === player.id);
-    const status = player.injured ? "no" : matchEntry?.status;
+    const status = player.injured || player.inactive ? "no" : matchEntry?.status;
     const isReserve = reserveIds.includes(player.id);
     const isWaiting = waitingIds.includes(player.id);
     const teamClass = team === "A" ? "team-a-card" : team === "B" ? "team-b-card" : "";
     const nextTeam = team === "A" ? "B" : "A";
 
     return (
-      <article className={`player-card ${status ? `status-${status}` : "status-sin"} ${teamClass} ${isReserve ? "reserve-card" : ""} ${isWaiting ? "waiting-card" : ""} ${playerPosition(player) === "Porteria" ? "goalkeeper-card" : ""}`} key={player.id}>
+      <article className={`player-card ${status ? `status-${status}` : "status-sin"} ${teamClass} ${isReserve ? "reserve-card" : ""} ${isWaiting ? "waiting-card" : ""} ${player.inactive ? "inactive-card" : ""} ${playerPosition(player) === "Porteria" ? "goalkeeper-card" : ""}`} key={player.id}>
         <div>
           <button className="player-name" onClick={() => openPlayerProfile(player.id)}>
             {player.avatar ? (
@@ -1347,12 +1392,18 @@ export default function Home() {
           </button>
           <span className="player-meta">
             {positionLabel(player)}
+            {player.inactive ? <em className="reserve-chip">Ya no está</em> : null}
             {isReserve ? <em className="reserve-chip">Reserva</em> : null}
             {isWaiting ? <em className="reserve-chip">Espera</em> : null}
           </span>
         </div>
-        {player.injured || payerId === player.id ? (
+        {player.inactive || player.injured || payerId === player.id ? (
           <div className="card-badges">
+            {player.inactive ? (
+              <span className="inactive-badge" title="Ya no está en el grupo" aria-label="Ya no está en el grupo">
+                <UserOffLogo />
+              </span>
+            ) : null}
             {player.injured ? (
               <span className="injury-badge" title="Jugador lesionado" aria-label="Jugador lesionado">
                 <HospitalLogo />
@@ -1367,9 +1418,9 @@ export default function Home() {
         ) : null}
         <div className="player-actions">
           <div className="status-buttons" aria-label={`Estado de ${playerDisplayName(player)}`}>
-            <button className={status === "voy" ? "selected" : ""} disabled={Boolean(player.injured)} onClick={() => setStatus(player.id, "voy")}>Voy</button>
-            <button className={status === "duda" ? "selected" : ""} onClick={() => setStatus(player.id, "duda")}>Duda</button>
-            <button className={status === "no" ? "selected danger" : ""} onClick={() => setStatus(player.id, "no")}>No</button>
+            <button className={status === "voy" ? "selected" : ""} disabled={Boolean(player.injured || player.inactive)} onClick={() => setStatus(player.id, "voy")}>Voy</button>
+            <button className={status === "duda" ? "selected" : ""} disabled={Boolean(player.inactive)} onClick={() => setStatus(player.id, "duda")}>Duda</button>
+            <button className={status === "no" ? "selected danger" : ""} disabled={Boolean(player.inactive)} onClick={() => setStatus(player.id, "no")}>No</button>
           </div>
           {status === "voy" && team && canUseAdminControls ? (
             <button
@@ -1477,7 +1528,7 @@ export default function Home() {
         </div>
         <button
           className="trash-icon-button team-delete-button"
-          disabled={!remoteGroupId || currentRole !== "owner"}
+          disabled={!remoteGroupId || !canUseAdminControls}
           onClick={() => void deleteCurrentTeam()}
           title="Eliminar equipo"
           type="button"
@@ -1641,15 +1692,17 @@ export default function Home() {
                       <small>{new Date(match.date).toLocaleDateString("es-ES", { day: "2-digit", month: "short" })}</small>
                     </div>
                     <span>{match.scoreA} - {match.scoreB}</span>
-                    <button
-                      className="history-delete"
-                      type="button"
-                      onClick={() => {
-                        if (window.confirm("¿Borrar este partido y descontar sus estadísticas?")) deleteClosedMatch(match.id);
-                      }}
-                    >
-                      Borrar
-                    </button>
+                    {canUseAdminControls ? (
+                      <button
+                        className="history-delete"
+                        type="button"
+                        onClick={() => {
+                          if (window.confirm("¿Borrar este partido y descontar sus estadísticas?")) deleteClosedMatch(match.id);
+                        }}
+                      >
+                        Borrar
+                      </button>
+                    ) : null}
                     <small>
                       {match.place} · pagó {matchPayer ? playerDisplayName(matchPayer) : "sin asignar"}
                       {scorersText ? ` · goles: ${scorersText}` : ""}
@@ -1902,7 +1955,21 @@ export default function Home() {
           <div className="panel player-profile" ref={playerProfileRef}>
             <div className="panel-title">
               <span>Ficha jugador</span>
-              <strong>{scorePlayer(selectedPlayer).toFixed(1)}</strong>
+              <div className="profile-title-actions">
+                {selectedPlayer.inactive ? <small className="inactive-label">Ya no está</small> : null}
+                {canUseAdminControls && !selectedPlayer.inactive ? (
+                  <button
+                    className="trash-icon-button profile-delete-button"
+                    onClick={() => deactivatePlayer(selectedPlayer.id)}
+                    title="Eliminar jugador"
+                    type="button"
+                    aria-label="Eliminar jugador"
+                  >
+                    <TrashLogo />
+                  </button>
+                ) : null}
+                <strong>{scorePlayer(selectedPlayer).toFixed(1)}</strong>
+              </div>
             </div>
             <>
               <div className="profile-top">
@@ -2017,6 +2084,11 @@ export default function Home() {
               <div key={player.id}>
                 <span>{index + 1}</span>
                 <strong>
+                  {player.inactive ? (
+                    <span className="inline-inactive" title="Ya no está en el grupo" aria-label="Ya no está en el grupo">
+                      <UserOffLogo />
+                    </span>
+                  ) : null}
                   {player.injured ? (
                     <span className="inline-injury" title="Jugador lesionado" aria-label="Jugador lesionado">
                       <HospitalLogo />
@@ -2044,6 +2116,11 @@ function Team({ title, players, variant }: { title: string; players: Player[]; v
       {orderedPlayers.map((player) => (
         <div className={playerPosition(player) === "Porteria" ? "goalkeeper-row" : ""} key={player.id}>
           <span>
+            {player.inactive ? (
+              <span className="inline-inactive" title="Ya no está en el grupo" aria-label="Ya no está en el grupo">
+                <UserOffLogo />
+              </span>
+            ) : null}
             {player.injured ? (
               <span className="inline-injury" title="Jugador lesionado" aria-label="Jugador lesionado">
                 <HospitalLogo />
@@ -2092,11 +2169,16 @@ function MatchPitch({ teamA, teamB, kind }: { teamA: Player[]; teamB: Player[]; 
       ))}
       {tokens.map(({ player, x, y, variant }) => (
         <button
-          className={`player-token ${variant} ${player.injured ? "injured-token" : ""}`}
+          className={`player-token ${variant} ${player.injured ? "injured-token" : ""} ${player.inactive ? "inactive-token" : ""}`}
           key={player.id}
           style={{ left: `${x}%`, top: `${y}%` }}
           title={`${playerDisplayName(player)} · ${playerPosition(player)} · ${scorePlayer(player).toFixed(1)}`}
         >
+          {player.inactive ? (
+            <span className="token-inactive" title="Ya no está en el grupo" aria-label="Ya no está en el grupo">
+              <UserOffLogo />
+            </span>
+          ) : null}
           {player.injured ? (
             <span className="token-injury" title="Jugador lesionado" aria-label="Jugador lesionado">
               <HospitalLogo />
