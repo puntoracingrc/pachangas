@@ -855,6 +855,48 @@ h1 {
   z-index: 1;
 }
 
+.draft-badge {
+  background: #9a6b05;
+}
+
+.save-match-button {
+  align-self: end;
+  background: var(--green);
+  border: 0;
+  border-radius: 8px;
+  color: #fff;
+  font-weight: 900;
+  min-height: 42px;
+  padding: 0 14px;
+}
+
+.save-match-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.48;
+}
+
+.draft-match-note {
+  align-items: center;
+  background: #fff7d6;
+  border: 1px solid #e8c650;
+  border-radius: 8px;
+  display: grid;
+  gap: 8px;
+  grid-template-columns: 170px 1fr;
+  padding: 12px 14px;
+}
+
+.draft-match-note span {
+  color: #8a6100;
+  font-size: 12px;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.draft-match-note strong {
+  font-size: 14px;
+}
+
 label {
   color: var(--ink-soft);
   display: grid;

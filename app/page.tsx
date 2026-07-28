@@ -107,6 +107,7 @@ type Match = {
   title: string;
   date: string;
   place: string;
+  configured?: boolean;
   venueId?: string;
   kind?: MatchKind;
   targetPlayers: number;
@@ -202,6 +203,7 @@ const seedMatches: Match[] = [
     kind: "futbol7",
     targetPlayers: 14,
     fieldCost: 56,
+    configured: true,
     payerId: "p2",
     reservesAttend: true,
     reserveLimit: 2,
@@ -236,6 +238,7 @@ const seedMatches: Match[] = [
     kind: "sala",
     targetPlayers: 10,
     fieldCost: 42,
+    configured: true,
     payerId: "p1",
     closed: true,
     scoreA: 5,
@@ -261,6 +264,7 @@ const seedMatches: Match[] = [
     kind: "futbol7",
     targetPlayers: 14,
     fieldCost: 56,
+    configured: true,
     payerId: "p2",
     closed: true,
     scoreA: 4,
@@ -286,6 +290,7 @@ const seedMatches: Match[] = [
     kind: "sala",
     targetPlayers: 10,
     fieldCost: 42,
+    configured: true,
     payerId: "p3",
     closed: true,
     scoreA: 6,
@@ -310,6 +315,7 @@ const seedMatches: Match[] = [
     kind: "futbol7",
     targetPlayers: 14,
     fieldCost: 56,
+    configured: true,
     payerId: "p6",
     closed: true,
     scoreA: 3,
@@ -334,6 +340,7 @@ const seedMatches: Match[] = [
     kind: "futbol11",
     targetPlayers: 22,
     fieldCost: 110,
+    configured: true,
     payerId: "p7",
     closed: true,
     scoreA: 2,
@@ -356,6 +363,7 @@ const seedMatches: Match[] = [
     kind: "futbol7",
     targetPlayers: 14,
     fieldCost: 50,
+    configured: true,
     payerId: "p4",
     closed: true,
     scoreA: 1,
@@ -445,6 +453,7 @@ function starterMatch(baseDate = "2026-07-30T21:00", kind: MatchKind = "futbol7"
     title: "Nueva pachanga",
     date: nextMatchDate(baseDate),
     place: "Campo por confirmar",
+    configured: false,
     kind,
     targetPlayers: matchKinds[kind].targetPlayers,
     fieldCost: 0,
@@ -631,6 +640,7 @@ function normalizePayload(payload?: Partial<AppPayload>): AppPayload {
         ...match,
         venueId: match.venueId ?? venues.find((venue) => venue.name === match.place)?.id,
         fieldCost: match.fieldCost ?? (match.price ? match.price * Math.max(match.targetPlayers, 1) : 0),
+        configured: match.configured ?? Boolean(match.closed || match.scoreA !== undefined || match.players?.length || match.venueId),
         lineupClosed: match.lineupClosed ?? false,
         reservesAttend: match.reservesAttend ?? false,
         reserveLimit: Math.max(0, Math.floor(match.reserveLimit ?? 0)),
@@ -1471,7 +1481,7 @@ export default function Home() {
   const confirmedPlayers = players.filter((player) => confirmedIds.includes(player.id));
   const reservePlayers = reserveIds.map((playerId) => players.find((player) => player.id === playerId)).filter((player): player is Player => Boolean(player));
   const waitingPlayers = waitingIds.map((playerId) => players.find((player) => player.id === playerId)).filter((player): player is Player => Boolean(player));
-  const openMatches = matches.filter((match) => match.scoreA === undefined && !match.closed);
+  const openMatches = matches.filter((match) => match.configured && match.scoreA === undefined && !match.closed);
   const closedMatches = matches
     .filter((match) => match.scoreA !== undefined)
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
@@ -1487,6 +1497,7 @@ export default function Home() {
   const suggested = savedTeams(activeMatch, players, confirmedIds) ?? balancedLineup;
   const lineupClosed = activeMatch.lineupClosed ?? false;
   const matchFinalized = Boolean(activeMatch.closed || activeMatch.scoreA !== undefined);
+  const matchConfigured = Boolean(activeMatch.configured);
   const scoreAValue = result.a.trim() === "" ? undefined : Number(result.a);
   const scoreBValue = result.b.trim() === "" ? undefined : Number(result.b);
   const resultIsReady =
@@ -1512,7 +1523,7 @@ export default function Home() {
 
   function setStatus(playerId: string, status: MatchPlayer["status"]) {
     const player = players.find((item) => item.id === playerId);
-    const canChangeStatus = isDemoMode || canUseAdminControls || (hasRealTeam && isRegisteredUser && player?.ownerUserId === currentUserId);
+    const canChangeStatus = matchConfigured && (isDemoMode || canUseAdminControls || (hasRealTeam && isRegisteredUser && player?.ownerUserId === currentUserId));
     if (!canChangeStatus) return;
     if (matchFinalized && !canUseAdminControls) return;
     if (status === "voy" && (player?.injured || player?.inactive)) return;
@@ -1608,6 +1619,7 @@ export default function Home() {
   }
 
   function togglePaid(playerId: string) {
+    if (!matchConfigured) return;
     updateMatch({
       ...activeMatch,
       players: activeMatch.players.map((entry) => (entry.playerId === playerId ? { ...entry, paid: !entry.paid } : entry)),
@@ -1644,6 +1656,12 @@ export default function Home() {
 
   function createMatch() {
     if (!canUseAdminControls) return;
+    const existingDraft = matches.find((match) => !match.configured && !match.closed && match.scoreA === undefined);
+    if (existingDraft) {
+      setActiveMatchId(existingDraft.id);
+      return;
+    }
+
     const defaultVenue = venues.find((venue) => venue.id === activeMatch.venueId) ?? venues[0];
     const nextKind = activeMatch.kind ?? defaultVenue?.kind ?? "futbol7";
     const next: Match = {
@@ -1651,6 +1669,7 @@ export default function Home() {
       title: "Nueva pachanga",
       date: nextMatchDate(activeMatch.date),
       place: defaultVenue?.name ?? "Campo por confirmar",
+      configured: false,
       venueId: defaultVenue?.id,
       kind: nextKind,
       targetPlayers: matchKinds[nextKind].targetPlayers,
@@ -1925,7 +1944,16 @@ export default function Home() {
   const selectedPlayerIsOwn = Boolean(selectedPlayer?.ownerUserId && selectedPlayer.ownerUserId === currentUserId);
   const canEditSelectedPlayer = Boolean(selectedPlayer && (canUseAdminControls || (hasRealTeam && isRegisteredUser && selectedPlayerIsOwn)));
   const canEditMatchSettings = canUseAdminControls && !matchFinalized;
-  const canEditLineup = canUseAdminControls && !lineupClosed && !matchFinalized;
+  const canEditLineup = canUseAdminControls && matchConfigured && !lineupClosed && !matchFinalized;
+  const matchCanBeSaved = Boolean(
+    canUseAdminControls &&
+      !matchFinalized &&
+      activeMatch.venueId &&
+      activeMatch.date &&
+      activeMatch.kind &&
+      Number.isFinite(fieldCost) &&
+      fieldCost >= 0,
+  );
   const ratingVoterId = currentUserId ?? `local:${profileName.trim().toLocaleLowerCase("es-ES") || "jugador"}`;
   const selectedRatingHistory = selectedPlayer ? ratingHistory(selectedPlayer) : [];
   const selectedRatingWindow = selectedPlayer ? ratingWindow(selectedPlayer, ratingVoterId) : null;
@@ -1972,6 +2000,11 @@ export default function Home() {
   function updateMatchSettings(next: Match) {
     if (!canEditMatchSettings) return;
     updateMatch(next);
+  }
+
+  function saveMatchConfiguration() {
+    if (!matchCanBeSaved) return;
+    updateMatch({ ...activeMatch, configured: true });
   }
 
   function updatePlayer(playerId: string, next: Partial<Player>) {
@@ -2405,7 +2438,7 @@ export default function Home() {
   }
 
   function matchUrl() {
-    if (!localHydrated || typeof window === "undefined") return "";
+    if (!localHydrated || typeof window === "undefined" || !matchConfigured) return "";
     const params = currentTeam ? prettyTeamParams(currentTeam) : new URLSearchParams();
     params.set("p", compactUuid(activeMatch.id));
     return `${window.location.origin}${window.location.pathname}?${params.toString()}`;
@@ -2484,7 +2517,7 @@ export default function Home() {
     const teamClass = team === "A" ? "team-a-card" : team === "B" ? "team-b-card" : "";
     const nextTeam = team === "A" ? "B" : "A";
     const playerRatingWindow = ratingWindow(player, ratingVoterId);
-    const canChangeThisPlayerStatus = isDemoMode || canUseAdminControls || (hasRealTeam && isRegisteredUser && player.ownerUserId === currentUserId);
+    const canChangeThisPlayerStatus = matchConfigured && (isDemoMode || canUseAdminControls || (hasRealTeam && isRegisteredUser && player.ownerUserId === currentUserId));
     const ratingTitle = player.ownerUserId === currentUserId
       ? "No puedes votarte a ti mismo"
       : playerRatingWindow.canRate
@@ -2927,6 +2960,7 @@ export default function Home() {
           <div className={canEditMatchSettings ? "match-editor" : "match-editor readonly-editor"}>
             {!canUseAdminControls ? <span className="admin-only-badge">Solo admin</span> : null}
             {canUseAdminControls && matchFinalized ? <span className="admin-only-badge">Partido finalizado</span> : null}
+            {canUseAdminControls && !matchConfigured && !matchFinalized ? <span className="admin-only-badge draft-badge">Borrador</span> : null}
             <label>
               Campo
               <select value={activeMatch.venueId ?? ""} onChange={(event) => selectVenue(event.target.value)} disabled={!canEditMatchSettings}>
@@ -2992,7 +3026,19 @@ export default function Home() {
                 onChange={(event) => updateMatchSettings({ ...activeMatch, reserveLimit: Math.max(0, Math.floor(Number(event.target.value) || 0)) })}
               />
             </label>
+            {canUseAdminControls && !matchFinalized ? (
+              <button className="save-match-button" type="button" onClick={saveMatchConfiguration} disabled={!matchCanBeSaved || matchConfigured}>
+                {matchConfigured ? "Guardado" : "Guardar partido"}
+              </button>
+            ) : null}
           </div>
+
+          {!matchConfigured && !matchFinalized ? (
+            <div className="draft-match-note">
+              <span>Partido sin guardar</span>
+              <strong>Configura campo, fecha, modalidad y precio. Al guardar se activan confirmaciones, compartir y alineación.</strong>
+            </div>
+          ) : null}
 
           <div className="stats-row">
             <div>
@@ -3054,7 +3100,7 @@ export default function Home() {
             </div>
             {syncStatus !== "local" ? (
               <small className={`sync-status sync-${syncStatus}`}>
-                {syncStatus === "live" ? "Sincronizado" : syncStatus === "connecting" ? "Conectando..." : `Sin sync: ${syncError}`}
+                {!matchConfigured ? "Guarda el partido para compartirlo" : syncStatus === "live" ? "Sincronizado" : syncStatus === "connecting" ? "Conectando..." : `Sin sync: ${syncError}`}
               </small>
             ) : null}
           </div>
@@ -3114,7 +3160,7 @@ export default function Home() {
           </div>
           <MatchPitch teamA={suggested.teamA} teamB={suggested.teamB} kind={activeKind} />
           <div className={lineupClosed ? "lineup-state closed" : "lineup-state"}>
-            {lineupClosed ? "Alineación cerrada" : "Alineación abierta"}
+            {!matchConfigured ? "Alineación pendiente" : lineupClosed ? "Alineación cerrada" : "Alineación abierta"}
           </div>
           <div className="lineup-actions">
             <button type="button" onClick={applyRandomTeams} disabled={!canEditLineup}>Aleatorio</button>
@@ -3122,7 +3168,7 @@ export default function Home() {
           </div>
           <Team title="Equipo 1" players={suggested.teamA} variant="team-a" />
           <Team title="Equipo 2" players={suggested.teamB} variant="team-b" />
-          {canUseAdminControls && !matchFinalized ? (
+          {canUseAdminControls && matchConfigured && !matchFinalized ? (
             <button className="primary-button full" onClick={toggleLineupClosed}>
               {lineupClosed ? "Abrir alineación" : "Cerrar alineación"}
             </button>
@@ -3130,15 +3176,16 @@ export default function Home() {
           <div className="result-box">
             <span>Resultado</span>
             <div>
-              <input type="number" min="0" value={result.a} disabled={matchFinalized} onChange={(event) => setResult({ ...result, a: event.target.value })} inputMode="numeric" />
+              <input type="number" min="0" value={result.a} disabled={!matchConfigured || matchFinalized} onChange={(event) => setResult({ ...result, a: event.target.value })} inputMode="numeric" />
               <b>-</b>
-              <input type="number" min="0" value={result.b} disabled={matchFinalized} onChange={(event) => setResult({ ...result, b: event.target.value })} inputMode="numeric" />
+              <input type="number" min="0" value={result.b} disabled={!matchConfigured || matchFinalized} onChange={(event) => setResult({ ...result, b: event.target.value })} inputMode="numeric" />
             </div>
             <div className="scorers-box">
               <strong>Goles</strong>
-              {confirmedPlayers.length === 0 ? <small>Marca asistentes para añadir goleadores.</small> : null}
+              {!matchConfigured ? <small>Guarda primero el partido.</small> : null}
+              {matchConfigured && confirmedPlayers.length === 0 ? <small>Marca asistentes para añadir goleadores.</small> : null}
               {confirmedPlayers.length > 0 && !resultIsReady ? <small>Rellena primero el resultado.</small> : null}
-              {confirmedPlayers.length > 0 && resultIsReady ? (
+              {matchConfigured && confirmedPlayers.length > 0 && resultIsReady ? (
                 <div className="scorers-teams">
                   <div className="scorers-team team-a-scorers">
                     <div className="scorers-team-title">
@@ -3160,7 +3207,7 @@ export default function Home() {
             {matchFinalized ? (
               <small className="result-locked-note">Partido finalizado. Puedes corregir goleadores y asistencia.</small>
             ) : (
-              <button disabled={!resultIsReady || !canUseAdminControls} onClick={finalizeMatch}>Finalizar partido</button>
+              <button disabled={!matchConfigured || !resultIsReady || !canUseAdminControls} onClick={finalizeMatch}>Finalizar partido</button>
             )}
           </div>
         </aside>
