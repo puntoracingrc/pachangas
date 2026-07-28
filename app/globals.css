@@ -163,7 +163,8 @@ h1 {
 .team-invite-actions {
   display: grid;
   gap: 6px;
-  grid-template-columns: minmax(120px, 1fr) 44px;
+  grid-template-columns: 44px 44px;
+  justify-content: start;
 }
 
 .team-invite-actions button {
@@ -180,17 +181,13 @@ h1 {
   padding: 0;
 }
 
-.team-invite-actions .copy-invite-button {
-  font-size: 14px;
-  padding: 0 12px;
-}
-
 .team-invite-actions .whatsapp-icon-button {
   background: #25d366;
   border-color: #25d366;
   color: #07391a;
 }
 
+.team-invite-actions svg,
 .whatsapp-icon-button svg {
   fill: currentColor;
   height: 23px;

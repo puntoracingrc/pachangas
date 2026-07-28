@@ -148,6 +148,14 @@ function WhatsAppLogo() {
   );
 }
 
+function CopyLogo() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 24 24">
+      <path d="M8 7.5A2.5 2.5 0 0 1 10.5 5h7A2.5 2.5 0 0 1 20 7.5v7a2.5 2.5 0 0 1-2.5 2.5H16v1.5A2.5 2.5 0 0 1 13.5 21h-7A2.5 2.5 0 0 1 4 18.5v-7A2.5 2.5 0 0 1 6.5 9H8V7.5Zm2 1.5h3.5A2.5 2.5 0 0 1 16 11.5V15h1.5a.5.5 0 0 0 .5-.5v-7a.5.5 0 0 0-.5-.5h-7a.5.5 0 0 0-.5.5V9Zm-3.5 2a.5.5 0 0 0-.5.5v7a.5.5 0 0 0 .5.5h7a.5.5 0 0 0 .5-.5v-7a.5.5 0 0 0-.5-.5h-7Z" />
+    </svg>
+  );
+}
+
 const matchKinds: Record<MatchKind, { label: string; targetPlayers: number; teamSize: number }> = {
   sala: { label: "Fútbol sala", targetPlayers: 10, teamSize: 5 },
   futbol7: { label: "Fútbol 7", targetPlayers: 14, teamSize: 7 },
@@ -1220,8 +1228,8 @@ export default function Home() {
         <div className="team-invite-link">
           <span>Invitar a equipo</span>
           <div className="team-invite-actions">
-            <button className="copy-invite-button" type="button" onClick={() => void copyTeamInvite()} disabled={!currentTeamInviteUrl()} title="Copiar invitación" aria-label="Copiar invitación">
-              Copiar link
+            <button className="copy-icon-button" type="button" onClick={() => void copyTeamInvite()} disabled={!currentTeamInviteUrl()} title="Copiar invitación" aria-label="Copiar invitación">
+              <CopyLogo />
             </button>
             <button className="whatsapp-icon-button" type="button" onClick={shareTeamInviteWhatsApp} disabled={!currentTeamInviteUrl()} title="Enviar por WhatsApp" aria-label="Enviar por WhatsApp">
               <WhatsAppLogo />
