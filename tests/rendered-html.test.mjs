@@ -75,6 +75,8 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /rankingSeason/);
   assert.match(page, /historySeason/);
   assert.match(page, /filteredClosedMatches/);
+  assert.match(page, /result-score-field team-a-score/);
+  assert.match(page, /Resultado equipo 1/);
   assert.match(page, /rankingSortLabels/);
   assert.match(page, /seasonKey/);
   assert.match(page, /matchSeason/);
@@ -100,6 +102,8 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(globalsCss, /\.side-history \.history/);
   assert.match(globalsCss, /\.side-history::after/);
   assert.match(globalsCss, /\.history-season-filter/);
+  assert.match(globalsCss, /\.result-score-field span/);
+  assert.match(globalsCss, /\.team-b-score/);
   assert.match(globalsCss, /scrollbar-color:\s*#64748b #ebe7dc/);
   assert.match(globalsCss, /\.side-history \.history::\-webkit-scrollbar-thumb/);
   assert.match(globalsCss, /\.joined-at/);

@@ -2329,16 +2329,41 @@ select:disabled {
   padding: 12px;
 }
 
-.result-box > div:first-of-type {
+.result-score-grid {
   align-items: center;
   display: grid;
   gap: 8px;
   grid-template-columns: 1fr auto 1fr;
 }
 
-.result-box input {
+.result-score-field {
+  --score-color: var(--green);
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+
+.result-score-field span {
+  color: var(--score-color);
+  font-size: 10px;
+  font-weight: 950;
+  letter-spacing: 0;
+  line-height: 1;
+}
+
+.team-a-score {
+  --score-color: var(--team-a);
+}
+
+.team-b-score {
+  --score-color: var(--team-b);
+}
+
+.result-score-field input {
+  border-color: color-mix(in srgb, var(--score-color) 30%, var(--line));
   font-size: 22px;
   font-weight: 900;
+  min-width: 0;
   text-align: center;
 }
 

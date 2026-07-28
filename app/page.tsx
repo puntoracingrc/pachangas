@@ -3690,10 +3690,32 @@ export default function Home() {
           ) : null}
           <div className="result-box">
             <span>Resultado</span>
-            <div>
-              <input type="number" min="0" value={result.a} disabled={!matchConfigured || matchFinalized} onChange={(event) => setResult({ ...result, a: event.target.value })} inputMode="numeric" />
+            <div className="result-score-grid">
+              <label className="result-score-field team-a-score">
+                <span>Equipo 1</span>
+                <input
+                  aria-label="Resultado equipo 1"
+                  type="number"
+                  min="0"
+                  value={result.a}
+                  disabled={!matchConfigured || matchFinalized}
+                  onChange={(event) => setResult({ ...result, a: event.target.value })}
+                  inputMode="numeric"
+                />
+              </label>
               <b>-</b>
-              <input type="number" min="0" value={result.b} disabled={!matchConfigured || matchFinalized} onChange={(event) => setResult({ ...result, b: event.target.value })} inputMode="numeric" />
+              <label className="result-score-field team-b-score">
+                <span>Equipo 2</span>
+                <input
+                  aria-label="Resultado equipo 2"
+                  type="number"
+                  min="0"
+                  value={result.b}
+                  disabled={!matchConfigured || matchFinalized}
+                  onChange={(event) => setResult({ ...result, b: event.target.value })}
+                  inputMode="numeric"
+                />
+              </label>
             </div>
             <div className={activeMatch.teamPhoto ? "team-photo-card has-photo" : "team-photo-card"}>
               {activeMatch.teamPhoto ? (
