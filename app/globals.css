@@ -381,6 +381,21 @@ select {
   padding: 0 12px;
 }
 
+.sync-status {
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 800;
+  grid-column: 1 / -1;
+}
+
+.sync-live {
+  color: #0f7a3a;
+}
+
+.sync-error {
+  color: #b42318;
+}
+
 .add-player {
   display: grid;
   gap: 10px;

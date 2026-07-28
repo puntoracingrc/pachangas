@@ -350,6 +350,7 @@ export default function Home() {
   const [remoteInviteToken, setRemoteInviteToken] = useState<string | null>(null);
   const [remoteReady, setRemoteReady] = useState(false);
   const [syncStatus, setSyncStatus] = useState<"connecting" | "error" | "live" | "local">("local");
+  const [syncError, setSyncError] = useState("");
   const [localHydrated, setLocalHydrated] = useState(false);
   const applyingRemoteRef = useRef(false);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -406,6 +407,7 @@ export default function Home() {
 
     async function connectGroup() {
       setSyncStatus("connecting");
+      setSyncError("");
 
       const sessionResult = await client.auth.getSession();
       let userId = sessionResult.data.session?.user.id;
@@ -414,6 +416,7 @@ export default function Home() {
         const signInResult = await client.auth.signInAnonymously();
         if (signInResult.error || !signInResult.data.user) {
           setSyncStatus("error");
+          setSyncError(signInResult.error?.message ?? "No se pudo crear usuario anonimo");
           return;
         }
         userId = signInResult.data.user.id;
@@ -427,6 +430,7 @@ export default function Home() {
         const joinResult = await client.rpc("join_pachanga_group", { token: inviteToken });
         if (joinResult.error || !joinResult.data) {
           setSyncStatus("error");
+          setSyncError(joinResult.error?.message ?? "No se pudo entrar al grupo");
           return;
         }
         groupId = String(joinResult.data);
@@ -441,6 +445,7 @@ export default function Home() {
 
         if (insertResult.error || !insertResult.data) {
           setSyncStatus("error");
+          setSyncError(insertResult.error?.message ?? "No se pudo crear el grupo");
           return;
         }
 
@@ -463,6 +468,7 @@ export default function Home() {
 
       if (groupResult.error || !groupResult.data || cancelled) {
         setSyncStatus("error");
+        setSyncError(groupResult.error?.message ?? "No se pudo cargar el grupo");
         return;
       }
 
@@ -475,6 +481,7 @@ export default function Home() {
       applyPayload(payload);
       setRemoteReady(true);
       setSyncStatus("live");
+      setSyncError("");
     }
 
     void connectGroup();
@@ -1139,6 +1146,9 @@ export default function Home() {
               <input readOnly value={matchUrl()} onFocus={(event) => event.currentTarget.select()} />
             </label>
             <button type="button" onClick={shareWhatsApp}>Abrir WhatsApp</button>
+            <small className={`sync-status sync-${syncStatus}`}>
+              {syncStatus === "live" ? "Sincronizado" : syncStatus === "connecting" ? "Conectando..." : syncStatus === "error" ? `Sin sync: ${syncError}` : "Modo local"}
+            </small>
           </div>
 
           <div className="team-player-grid">
