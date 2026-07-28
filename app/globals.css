@@ -127,7 +127,7 @@ h1 {
   align-items: end;
   display: grid;
   gap: 10px;
-  grid-template-columns: minmax(190px, 0.95fr) minmax(150px, 0.7fr) 110px 130px minmax(260px, 1.35fr);
+  grid-template-columns: minmax(220px, 1fr) 110px 120px minmax(280px, 1.35fr);
 }
 
 .team-access-current,

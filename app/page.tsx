@@ -1186,10 +1186,6 @@ export default function Home() {
             <strong>Sin equipo todavía</strong>
           )}
         </div>
-        <label>
-          Tu nombre
-          <input placeholder="Ej. Alberto" value={profileName} onChange={(event) => setProfileName(displayName(event.target.value))} />
-        </label>
         <div className="team-access-meta">
           <span>ID equipo</span>
           <strong>{currentTeam?.teamCode ?? "-"}</strong>
