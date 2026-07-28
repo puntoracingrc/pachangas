@@ -372,7 +372,7 @@ function defaultPayload(): AppPayload {
 }
 
 const defaultSiteSettings: SiteSettings = {
-  brand: "Pachanga IQ",
+  brand: "Pachangas IQ",
   title: "El grupo del partido, pero con memoria.",
   subtitle: "Confirma gente, guarda resultados y monta equipos equilibrados sin discutir media hora en WhatsApp.",
   teamAColor: "#2157a8",

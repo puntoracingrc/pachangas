@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Pachanga IQ",
+  title: "Pachangas IQ",
   description: "Organiza pachangas, confirma jugadores y equilibra equipos con historial.",
   icons: {
     icon: "/favicon.svg",

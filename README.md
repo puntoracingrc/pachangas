@@ -1,4 +1,4 @@
-# Pachanga IQ
+# Pachangas IQ
 
 App para organizar pachangas: asistencia, equipos equilibrados, campos, pagos, resultados, goles e historial.
 

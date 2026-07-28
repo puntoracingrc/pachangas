@@ -53,7 +53,7 @@ export default function GoogleAuthPage() {
   return (
     <main className="auth-callback-page">
       <section>
-        <p className="eyebrow">Pachanga IQ</p>
+        <p className="eyebrow">Pachangas IQ</p>
         <h1>{status}</h1>
       </section>
     </main>

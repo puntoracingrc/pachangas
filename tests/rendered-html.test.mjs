@@ -2,10 +2,10 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-test("builds Pachanga IQ HTML", async () => {
+test("builds Pachangas IQ HTML", async () => {
   const html = await readFile(new URL("../.next/server/app/index.html", import.meta.url), "utf8");
   assert.match(html, /<html lang="es">/i);
-  assert.match(html, /<title>Pachanga IQ<\/title>/i);
+  assert.match(html, /<title>Pachangas IQ<\/title>/i);
   assert.match(html, /El grupo del partido, pero con memoria\./);
   assert.match(html, /Confirmados/);
   assert.match(html, /Equipos sugeridos/i);
@@ -29,7 +29,7 @@ test("builds the user manual as its own page", async () => {
   assert.match(html, /Volver/);
 });
 
-test("keeps the project wired to the Pachanga app", async () => {
+test("keeps the project wired to the Pachangas app", async () => {
   const [page, layout, packageJson, supabaseClient] = await Promise.all([
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
@@ -45,7 +45,7 @@ test("keeps the project wired to the Pachanga app", async () => {
   assert.match(page, /remoteInviteToken/);
   assert.match(page, /canEditMatchSettings\s*=\s*canUseAdminControls\s*&&\s*!matchFinalized/);
   assert.match(page, /Partido finalizado/);
-  assert.match(layout, /title:\s*"Pachanga IQ"/);
+  assert.match(layout, /title:\s*"Pachangas IQ"/);
   assert.match(packageJson, /"@supabase\/supabase-js"/);
   assert.match(supabaseClient, /NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY/);
   assert.doesNotMatch(page, /SkeletonPreview/);
