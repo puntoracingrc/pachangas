@@ -21,6 +21,7 @@ test("builds Pachangas IQ HTML", async () => {
   assert.match(html, /2025-2026/);
   assert.match(html, /Navegación principal móvil/);
   assert.match(html, /Abrir manual de usuario/);
+  assert.match(html, /\/brand\/pachangas-logo-hero\.png/);
   assert.match(html, /\/manifest\.webmanifest/);
   assert.match(html, /\/apple-touch-icon\.png/);
   assert.match(html, /\/icon-192\.png/);
@@ -138,6 +139,7 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(globalsCss, /\.team-photo-card/);
   assert.match(globalsCss, /\.history-item\.has-photo/);
   assert.match(globalsCss, /\.google-signin-button/);
+  assert.match(globalsCss, /\.brand-hero-logo/);
   assert.match(globalsCss, /scroll-margin-top:\s*14px/);
   assert.match(globalsCss, /overflow-y:\s*auto/);
   assert.match(globalsCss, /\.hero-actions\s*\{[\s\S]*grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\)/);

@@ -58,18 +58,18 @@ button {
 }
 
 .brand-lockup {
-  align-items: center;
-  display: inline-flex;
-  gap: 10px;
-  margin: 0 0 14px;
+  display: block;
+  margin: 0 0 18px;
 }
 
-.brand-lockup img {
-  border-radius: 10px;
+.brand-hero-logo,
+.team-hero-logo {
+  border-radius: 18px;
   display: block;
-  height: 42px;
-  object-fit: cover;
-  width: 42px;
+  height: auto;
+  max-width: 100%;
+  object-fit: contain;
+  width: clamp(280px, 42vw, 560px);
 }
 
 .brand-lockup span {
@@ -81,16 +81,8 @@ button {
 
 .team-brand-block {
   display: grid;
-  gap: 10px;
+  gap: 12px;
   justify-items: start;
-}
-
-.team-hero-logo {
-  border-radius: 18px;
-  display: block;
-  height: 104px;
-  object-fit: cover;
-  width: 104px;
 }
 
 .team-brand-block span {

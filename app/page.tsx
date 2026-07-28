@@ -3309,14 +3309,13 @@ export default function Home() {
           {isDemoMode ? (
             <>
               <div className="brand-lockup" aria-label={siteSettings.brand}>
-                <img src="/icon-192.png" alt="" />
-                <span>{siteSettings.brand}</span>
+                <img className="brand-hero-logo" src="/brand/pachangas-logo-hero.png" alt={siteSettings.brand} />
               </div>
               <h1>{siteSettings.title}</h1>
             </>
           ) : (
             <div className="team-brand-block" aria-label={`Equipo ${currentTeamName}`}>
-              <img className="team-hero-logo" src="/icon-192.png" alt="" />
+              <img className="team-hero-logo" src="/brand/pachangas-logo-hero.png" alt="Pachangas IQ" />
               <span>Equipo: {currentTeamName}</span>
             </div>
           )}
