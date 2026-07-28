@@ -157,6 +157,14 @@ function CopyLogo() {
   );
 }
 
+function TrashLogo() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 24 24">
+      <path d="M9 4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2h4v2H5V4h4Zm-2 4h10l-.7 11.2A3 3 0 0 1 13.3 22h-2.6a3 3 0 0 1-3-2.8L7 8Zm3 2 .4 9h1.7l-.3-9H10Zm3.2 0-.3 9h1.7l.4-9h-1.8Z" />
+    </svg>
+  );
+}
+
 const matchKinds: Record<MatchKind, { label: string; targetPlayers: number; teamSize: number }> = {
   sala: { label: "Fútbol sala", targetPlayers: 10, teamSize: 5 },
   futbol7: { label: "Fútbol 7", targetPlayers: 14, teamSize: 7 },
@@ -869,6 +877,39 @@ export default function Home() {
     setMatches(nextMatches);
   }
 
+  function deleteMatch(matchId: string) {
+    if (remoteReady && !canManageTeam) return;
+    const match = matches.find((item) => item.id === matchId);
+    if (!match) return;
+    if (!window.confirm("¿Borrar este partido?")) return;
+    if (!window.confirm("Confirmación final: se eliminará definitivamente.")) return;
+
+    if (match.scoreA !== undefined || match.closed) {
+      deleteClosedMatch(matchId);
+      return;
+    }
+
+    const remainingMatches = matches.filter((item) => item.id !== matchId);
+    const fallbackKind = match.kind ?? "futbol7";
+    const fallbackVenue = venues.find((venue) => venue.id === match.venueId) ?? venues[0];
+    const replacementMatch: Match = {
+      id: id(),
+      title: "Nueva pachanga",
+      date: nextMatchDate(match.date),
+      place: fallbackVenue?.name ?? "Campo por confirmar",
+      venueId: fallbackVenue?.id,
+      kind: fallbackKind,
+      targetPlayers: matchKinds[fallbackKind].targetPlayers,
+      fieldCost: match.fieldCost ?? fallbackVenue?.defaultCost ?? 56,
+      players: [],
+    };
+    const nextMatches = remainingMatches.length > 0 ? remainingMatches : [replacementMatch];
+    const nextActiveMatchId = activeMatchId === matchId ? nextMatches[0].id : activeMatchId;
+
+    setActiveMatchId(nextActiveMatchId);
+    setMatches(nextMatches);
+  }
+
   const rankedPlayers = [...players].sort((a, b) => scorePlayer(b) - scorePlayer(a));
   const sortedPlayers = [...players].sort((a, b) => {
     const statusOrder: Record<MatchPlayer["status"] | "sin", number> = { voy: 0, duda: 1, no: 2, sin: 3 };
@@ -990,6 +1031,38 @@ export default function Home() {
     } catch (error) {
       setSyncStatus("error");
       setSyncError(error instanceof Error ? error.message : "No se pudo crear el equipo");
+    }
+  }
+
+  async function deleteCurrentTeam() {
+    if (!supabase || !remoteGroupId || currentRole !== "owner") return;
+    const teamName = currentTeam?.name ?? "este equipo";
+    if (!window.confirm(`¿Eliminar ${teamName}?`)) return;
+    if (!window.confirm("Confirmación final: se borrarán el equipo y sus miembros.")) return;
+
+    const client = supabase;
+    setSyncStatus("connecting");
+    setSyncError("");
+
+    try {
+      const deleteResult = await client.from("pachanga_groups").delete().eq("id", remoteGroupId);
+      if (deleteResult.error) throw new Error(deleteResult.error.message);
+
+      const nextTeam = remoteTeams.find((team) => team.id !== remoteGroupId);
+      await loadTeams(client, nextTeam?.id ?? null);
+
+      const nextParams = new URLSearchParams(window.location.search);
+      if (nextTeam) {
+        nextParams.set("grupo", nextTeam.id);
+        nextParams.set("invite", nextTeam.inviteToken);
+      } else {
+        nextParams.delete("grupo");
+        nextParams.delete("invite");
+      }
+      window.history.replaceState(null, "", nextParams.toString() ? `${window.location.pathname}?${nextParams.toString()}` : window.location.pathname);
+    } catch (error) {
+      setSyncStatus("error");
+      setSyncError(error instanceof Error ? error.message : "No se pudo eliminar el equipo");
     }
   }
 
@@ -1248,6 +1321,16 @@ export default function Home() {
             </button>
           </div>
         </div>
+        <button
+          className="trash-icon-button team-delete-button"
+          disabled={!remoteGroupId || currentRole !== "owner"}
+          onClick={() => void deleteCurrentTeam()}
+          title="Eliminar equipo"
+          type="button"
+          aria-label="Eliminar equipo"
+        >
+          <TrashLogo />
+        </button>
         <small className={`sync-status sync-${syncStatus}`}>
           {syncStatus === "live" ? "Equipo privado sincronizado" : syncStatus === "connecting" ? "Conectando..." : syncStatus === "error" ? `Sin sync: ${syncError}` : "Crea un equipo o entra con invitación"}
         </small>
@@ -1290,7 +1373,7 @@ export default function Home() {
             </div>
           </div>
           <button className="panel-hide-button" type="button" onClick={() => setShowSettings(false)}>
-            Guardar configuración
+            Guardar
           </button>
         </section>
       ) : null}
@@ -1362,14 +1445,25 @@ export default function Home() {
             <strong>{matches.length}</strong>
           </div>
           {matches.map((match) => (
-            <button
-              className={match.id === activeMatch.id ? "match-item active" : "match-item"}
-              key={match.id}
-              onClick={() => setActiveMatchId(match.id)}
-            >
-              <span>{match.title}</span>
-              <small>{new Date(match.date).toLocaleString("es-ES", { weekday: "short", hour: "2-digit", minute: "2-digit" })}</small>
-            </button>
+            <div className="match-row" key={match.id}>
+              <button
+                className={match.id === activeMatch.id ? "match-item active" : "match-item"}
+                onClick={() => setActiveMatchId(match.id)}
+              >
+                <span>{match.title}</span>
+                <small>{new Date(match.date).toLocaleString("es-ES", { weekday: "short", hour: "2-digit", minute: "2-digit" })}</small>
+              </button>
+              <button
+                className="trash-icon-button"
+                disabled={!canUseAdminControls}
+                onClick={() => deleteMatch(match.id)}
+                title="Borrar partido"
+                type="button"
+                aria-label={`Borrar ${match.title}`}
+              >
+                <TrashLogo />
+              </button>
+            </div>
           ))}
           <div className="side-history">
             <div className="panel-title compact-title">

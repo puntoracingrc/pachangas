@@ -66,7 +66,7 @@ create index if not exists pachanga_group_members_user_id_idx
 on public.pachanga_group_members(user_id);
 
 grant usage on schema public to authenticated;
-grant select, insert, update on public.pachanga_groups to authenticated;
+grant select, insert, update, delete on public.pachanga_groups to authenticated;
 grant select, insert, update on public.pachanga_group_members to authenticated;
 
 create or replace function public.set_updated_at()
@@ -171,6 +171,15 @@ using (
 with check (
   owner_id = (select auth.uid())
   or public.is_pachanga_group_member(id)
+);
+
+drop policy if exists "Owners can delete groups" on public.pachanga_groups;
+create policy "Owners can delete groups"
+on public.pachanga_groups
+for delete
+to authenticated
+using (
+  public.is_pachanga_group_owner(id)
 );
 
 drop policy if exists "Members can read memberships" on public.pachanga_group_members;
