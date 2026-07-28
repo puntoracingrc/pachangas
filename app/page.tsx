@@ -1233,6 +1233,7 @@ export default function Home() {
   const [siteSettings, setSiteSettings] = useState<SiteSettings>(defaultSiteSettings);
   const [result, setResult] = useState({ a: "", b: "" });
   const [rankingSeason, setRankingSeason] = useState(seasonKey(new Date()));
+  const [historySeason, setHistorySeason] = useState("all");
   const [rankingSort, setRankingSort] = useState<RankingSort>("media");
   const [remoteGroupId, setRemoteGroupId] = useState<string | null>(null);
   const [remoteInviteToken, setRemoteInviteToken] = useState<string | null>(null);
@@ -2175,6 +2176,9 @@ export default function Home() {
     return [...seasons].sort((a, b) => seasonStartYear(b) - seasonStartYear(a));
   }, [activeMatchSeason, matches]);
   const activeRankingSeason = rankingSeasons.includes(rankingSeason) ? rankingSeason : rankingSeasons[0] ?? rankingSeason;
+  const activeHistorySeason = historySeason === "all" || rankingSeasons.includes(historySeason) ? historySeason : "all";
+  const filteredClosedMatches =
+    activeHistorySeason === "all" ? closedMatches : closedMatches.filter((match) => matchSeason(match) === activeHistorySeason);
   const rankedPlayers = useMemo(() => {
     const stats = new Map(
       players.map((player) => [
@@ -3386,13 +3390,23 @@ export default function Home() {
           <div className="side-history">
             <div className="panel-title compact-title">
               <span>Historial</span>
-              <strong>{closedMatches.length}</strong>
+              <strong>{filteredClosedMatches.length}</strong>
             </div>
+            <label className="history-season-filter">
+              Temporada
+              <select value={activeHistorySeason} onChange={(event) => setHistorySeason(event.target.value)}>
+                <option value="all">Todas</option>
+                {rankingSeasons.map((season) => (
+                  <option key={season} value={season}>{season}</option>
+                ))}
+              </select>
+            </label>
             <div className="history">
-              {closedMatches.map((match, index) => {
+              {filteredClosedMatches.length === 0 ? <p className="empty-copy">No hay partidos en esta temporada.</p> : null}
+              {filteredClosedMatches.map((match, index) => {
                 const matchPayer = players.find((player) => player.id === match.payerId);
                 const currentMonth = monthLabel(match.date);
-                const previousMonth = index > 0 ? monthLabel(closedMatches[index - 1].date) : "";
+                const previousMonth = index > 0 ? monthLabel(filteredClosedMatches[index - 1].date) : "";
                 const scorersText = match.scorers
                   ?.map((entry) => {
                     const scorer = players.find((player) => player.id === entry.playerId);

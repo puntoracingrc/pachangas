@@ -1008,13 +1008,77 @@ h1 {
 
 .side-history {
   margin-top: 16px;
+  position: relative;
+}
+
+.side-history::after {
+  background:
+    linear-gradient(180deg, rgba(100, 116, 139, 0.2), rgba(100, 116, 139, 0.58), rgba(100, 116, 139, 0.2));
+  border-radius: 999px;
+  bottom: 2px;
+  content: "";
+  pointer-events: none;
+  position: absolute;
+  right: 0;
+  top: 102px;
+  width: 3px;
+}
+
+.history-season-filter {
+  color: var(--ink-soft);
+  display: grid;
+  font-size: 11px;
+  font-weight: 950;
+  gap: 5px;
+  margin: -2px 0 10px;
+  text-transform: uppercase;
+}
+
+.history-season-filter select {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--foreground);
+  font-size: 13px;
+  font-weight: 850;
+  min-height: 34px;
+  padding: 0 9px;
 }
 
 .side-history .history {
+  background:
+    linear-gradient(#fffdf7 30%, rgba(255, 253, 247, 0)) center top,
+    linear-gradient(rgba(255, 253, 247, 0), #fffdf7 70%) center bottom,
+    radial-gradient(farthest-side at 50% 0, rgba(32, 40, 32, 0.18), rgba(32, 40, 32, 0)) center top,
+    radial-gradient(farthest-side at 50% 100%, rgba(32, 40, 32, 0.18), rgba(32, 40, 32, 0)) center bottom;
+  background-attachment: local, local, scroll, scroll;
+  background-repeat: no-repeat;
+  background-size: 100% 22px, 100% 22px, 100% 9px, 100% 9px;
   max-height: min(620px, 68vh);
   overflow-y: auto;
-  padding-right: 4px;
+  padding-right: 8px;
   scrollbar-gutter: stable;
+  scrollbar-color: #64748b #ebe7dc;
+  scrollbar-width: thin;
+}
+
+.side-history .history::-webkit-scrollbar {
+  width: 10px;
+}
+
+.side-history .history::-webkit-scrollbar-track {
+  background: #ebe7dc;
+  border-radius: 999px;
+}
+
+.side-history .history::-webkit-scrollbar-thumb {
+  background: #64748b;
+  border: 2px solid #ebe7dc;
+  border-radius: 999px;
+}
+
+.side-history .history::-webkit-scrollbar-thumb:hover {
+  background: #475569;
 }
 
 .compact-title {

@@ -73,6 +73,8 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /id="ranking"/);
   assert.match(page, /RankingSort/);
   assert.match(page, /rankingSeason/);
+  assert.match(page, /historySeason/);
+  assert.match(page, /filteredClosedMatches/);
   assert.match(page, /rankingSortLabels/);
   assert.match(page, /seasonKey/);
   assert.match(page, /matchSeason/);
@@ -85,6 +87,8 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /Añadir foto de equipo/);
   assert.match(page, /Quitar foto/);
   assert.match(page, /history-photo/);
+  assert.match(page, /history-season-filter/);
+  assert.match(page, /No hay partidos en esta temporada/);
   assert.match(googleAuthPage, /safeReturnUrl/);
   assert.match(googleAuthPage, /url\.origin !== window\.location\.origin/);
   assert.match(page, /sha256Hex\(rawNonce\)/);
@@ -94,6 +98,10 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /Voy desde/);
   assert.match(page, /perderás tu posición/);
   assert.match(globalsCss, /\.side-history \.history/);
+  assert.match(globalsCss, /\.side-history::after/);
+  assert.match(globalsCss, /\.history-season-filter/);
+  assert.match(globalsCss, /scrollbar-color:\s*#64748b #ebe7dc/);
+  assert.match(globalsCss, /\.side-history \.history::\-webkit-scrollbar-thumb/);
   assert.match(globalsCss, /\.joined-at/);
   assert.match(globalsCss, /\.shared-link-gate/);
   assert.match(globalsCss, /\.gated-shell/);
