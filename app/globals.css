@@ -148,6 +148,13 @@ h1 {
   justify-content: flex-end;
 }
 
+.google-signin-box {
+  align-items: center;
+  display: flex;
+  min-height: 44px;
+  min-width: 240px;
+}
+
 .settings-panel {
   display: grid;
   gap: 10px;

@@ -1,8 +1,42 @@
 "use client";
 
-import { CSSProperties, FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { CSSProperties, FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { supabase } from "./supabaseClient";
+
+const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+
+type GoogleCredentialResponse = {
+  credential?: string;
+};
+
+type GoogleButtonOptions = {
+  theme?: "outline" | "filled_blue" | "filled_black";
+  size?: "large" | "medium" | "small";
+  text?: "signin_with" | "signup_with" | "continue_with" | "signin";
+  shape?: "rectangular" | "pill" | "circle" | "square";
+  width?: number;
+  locale?: string;
+};
+
+type GoogleAccounts = {
+  id: {
+    initialize: (options: {
+      client_id: string;
+      callback: (response: GoogleCredentialResponse) => void;
+      ux_mode?: "popup" | "redirect";
+      auto_select?: boolean;
+    }) => void;
+    renderButton: (parent: HTMLElement, options: GoogleButtonOptions) => void;
+    prompt: () => void;
+  };
+};
+
+declare global {
+  interface Window {
+    google?: { accounts: GoogleAccounts };
+  }
+}
 
 type RatingFacet = "ritmo" | "tiro" | "pase" | "regate" | "defensa" | "fisico";
 
@@ -998,6 +1032,7 @@ export default function Home() {
   const applyingRemoteRef = useRef(false);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const playerProfileRef = useRef<HTMLDivElement>(null);
+  const googleButtonRef = useRef<HTMLDivElement>(null);
   const cameraVideoRef = useRef<HTMLVideoElement>(null);
   const cameraStreamRef = useRef<MediaStream | null>(null);
   const [cameraPlayerId, setCameraPlayerId] = useState<string | null>(null);
@@ -1033,6 +1068,35 @@ export default function Home() {
     const metadata = user?.user_metadata as { full_name?: string; name?: string } | undefined;
     return metadata?.full_name || metadata?.name || user?.email || "Usuario";
   }
+
+  const signInWithGoogleToken = useCallback(async (response: GoogleCredentialResponse) => {
+    if (!supabase) {
+      setSyncStatus("error");
+      setSyncError("Supabase no está configurado.");
+      return;
+    }
+
+    if (!response.credential) {
+      setSyncStatus("error");
+      setSyncError("Google no devolvió una credencial válida.");
+      return;
+    }
+
+    const result = await supabase.auth.signInWithIdToken({
+      provider: "google",
+      token: response.credential,
+    });
+
+    if (result.error) {
+      setSyncStatus("error");
+      setSyncError(result.error.message);
+      return;
+    }
+
+    setAuthUser(result.data.user ?? null);
+    setCurrentUserId(result.data.user?.id ?? null);
+    setSyncError("");
+  }, []);
 
   function updateAuthState(user: User | null) {
     setAuthUser(user);
@@ -1077,15 +1141,13 @@ export default function Home() {
       return;
     }
 
-    const result = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: { redirectTo: window.location.href },
-    });
-
-    if (result.error) {
+    if (!googleClientId) {
       setSyncStatus("error");
-      setSyncError(result.error.message);
+      setSyncError("Falta NEXT_PUBLIC_GOOGLE_CLIENT_ID.");
+      return;
     }
+
+    window.google?.accounts.id.prompt();
   }
 
   async function signOut() {
@@ -1202,6 +1264,58 @@ export default function Home() {
   useEffect(() => {
     localStorage.setItem(profileNameKey, profileName.trim());
   }, [profileName]);
+
+  useEffect(() => {
+    const buttonHost = googleButtonRef.current;
+    if (!buttonHost || !googleClientId || authUser) return;
+
+    const clientId = googleClientId;
+    let cancelled = false;
+
+    function renderGoogleButton() {
+      if (cancelled || !buttonHost || !window.google) return;
+
+      buttonHost.innerHTML = "";
+      window.google.accounts.id.initialize({
+        client_id: clientId,
+        callback: (response) => {
+          void signInWithGoogleToken(response);
+        },
+        ux_mode: "popup",
+      });
+      window.google.accounts.id.renderButton(buttonHost, {
+        locale: "es",
+        shape: "rectangular",
+        size: "large",
+        text: "signin_with",
+        theme: "outline",
+        width: 240,
+      });
+    }
+
+    const existingScript = document.getElementById("google-identity-services");
+    if (existingScript) {
+      renderGoogleButton();
+    } else {
+      const script = document.createElement("script");
+      script.id = "google-identity-services";
+      script.src = "https://accounts.google.com/gsi/client";
+      script.async = true;
+      script.defer = true;
+      script.onload = renderGoogleButton;
+      script.onerror = () => {
+        if (!cancelled) {
+          setSyncStatus("error");
+          setSyncError("No se pudo cargar el login de Google.");
+        }
+      };
+      document.head.appendChild(script);
+    }
+
+    return () => {
+      cancelled = true;
+    };
+  }, [authUser, signInWithGoogleToken]);
 
   useEffect(() => {
     if (!supabase) return;
@@ -2443,9 +2557,11 @@ export default function Home() {
               Salir
             </button>
           ) : (
-            <button className="primary-button" type="button" onClick={() => void signInWithGoogle()} disabled={!supabase}>
-              Entrar con Google
-            </button>
+            <div className="google-signin-box" ref={googleButtonRef}>
+              <button className="primary-button" type="button" onClick={() => void signInWithGoogle()} disabled={!supabase || !googleClientId}>
+                Entrar con Google
+              </button>
+            </div>
           )}
         </div>
       </section>
