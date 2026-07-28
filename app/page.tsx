@@ -1708,6 +1708,7 @@ export default function Home() {
   const payloadRef = useRef<AppPayload | null>(null);
   const remotePayloadRevisionRef = useRef<number | null>(null);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const createMenuRef = useRef<HTMLDivElement>(null);
   const matchPanelRef = useRef<HTMLElement>(null);
   const settingsPanelRef = useRef<HTMLElement>(null);
   const teamGalleryRef = useRef<HTMLElement>(null);
@@ -1728,6 +1729,26 @@ export default function Home() {
     const interval = window.setInterval(refreshDate, 60 * 60 * 1000);
     return () => window.clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    if (!createMenuOpen) return;
+
+    function closeCreateMenu(event: PointerEvent) {
+      if (createMenuRef.current?.contains(event.target as Node)) return;
+      setCreateMenuOpen(false);
+    }
+
+    function closeCreateMenuWithKeyboard(event: KeyboardEvent) {
+      if (event.key === "Escape") setCreateMenuOpen(false);
+    }
+
+    document.addEventListener("pointerdown", closeCreateMenu);
+    document.addEventListener("keydown", closeCreateMenuWithKeyboard);
+    return () => {
+      document.removeEventListener("pointerdown", closeCreateMenu);
+      document.removeEventListener("keydown", closeCreateMenuWithKeyboard);
+    };
+  }, [createMenuOpen]);
 
   function currentPayload(): AppPayload {
     return {
@@ -2008,7 +2029,7 @@ export default function Home() {
   }
 
   async function saveRemotePayloadWithBackup(payload: AppPayload, reason: string, showBackupMessage = false) {
-    if (!supabase || !remoteGroupId || !remoteReady || !canManageTeam) return;
+    if (!supabase || !remoteGroupId || !remoteReady || !canManageTeam) return false;
 
     setSyncStatus("connecting");
     setSyncError("");
@@ -2020,13 +2041,14 @@ export default function Home() {
     });
     if (saveResult.error) {
       markRemoteWriteError(saveResult.error.message);
-      return;
+      return false;
     }
 
     applyRemoteCommit(saveResult.data as RemotePayloadCommit);
     await createTeamBackup(reason, payload, showBackupMessage);
     setSyncStatus("live");
     setSyncError("");
+    return true;
   }
 
   async function createManualBackup() {
@@ -3454,6 +3476,49 @@ export default function Home() {
     setSelectedPlayerId(player.id);
   }
 
+  async function openCreatePlayerProfile() {
+    if (!canUseAdminControls) {
+      await openOwnPlayerProfile();
+      return;
+    }
+
+    const player: Player = {
+      id: id(),
+      name: `Jugador ${players.length + 1}`,
+      phone: "",
+      goalkeeperOnly: false,
+      injured: false,
+      rating: 5,
+      ratings: [],
+      ratingVotes: [],
+      position: defaultPositionForKind(activeKind),
+      outfieldPosition: defaultPositionForKind(activeKind),
+      goals: 0,
+      assists: 0,
+      appearances: 0,
+      wins: 0,
+      lateCancels: 0,
+    };
+    const nextPlayers = [...players, player];
+    const nextPayload: AppPayload = { players: nextPlayers, venues, matches, activeMatchId, siteSettings };
+
+    setProfileSaveMessage("Creando jugador...");
+    if (supabase && remoteGroupId && remoteReady) {
+      const saved = await saveRemotePayloadWithBackup(nextPayload, "jugador_creado", false);
+      if (!saved) {
+        setProfileSaveMessage("No se pudo crear el jugador.");
+        window.setTimeout(() => setProfileSaveMessage(""), 2600);
+        return;
+      }
+    } else {
+      setPlayers(nextPlayers);
+    }
+
+    setSelectedPlayerId(player.id);
+    setProfileSaveMessage("Jugador creado");
+    window.setTimeout(() => setProfileSaveMessage(""), 1800);
+  }
+
   async function claimSelectedPlayer() {
     if (!selectedPlayer || selectedPlayer.ownerUserId || ownPlayer || !hasRealTeam || !isRegisteredUser || !currentUserId) return;
 
@@ -3977,7 +4042,15 @@ export default function Home() {
               <path d="M6 3h10.5A2.5 2.5 0 0 1 19 5.5V21l-3-1.8L13 21l-3-1.8L7 21l-3-1.8V5A2 2 0 0 1 6 3Zm0 2v12.6l1 .6 3-1.8 3 1.8 3-1.8 1 .6V5.5a.5.5 0 0 0-.5-.5H6Zm2 3h7v2H8V8Zm0 4h7v2H8v-2Z" />
             </svg>
           </a>
-          <button className="secondary-button" type="button" onClick={openTeamGallery} disabled={players.length === 0 || needsLoginForSharedLink}>
+          <button
+            className="secondary-button personal-action-button"
+            type="button"
+            onClick={() => void openOwnPlayerProfile()}
+            disabled={!hasRealTeam || !isRegisteredUser || needsLoginForSharedLink}
+          >
+            Mi ficha
+          </button>
+          <button className="secondary-button" type="button" onClick={openTeamGallery} disabled={needsLoginForSharedLink}>
             Mi equipo
           </button>
           {isRegisteredUser ? (
@@ -3987,7 +4060,7 @@ export default function Home() {
           ) : !needsLoginForSharedLink ? (
             <GoogleSignInButton label={googleButtonText} onClick={() => void signInWithGoogle()} disabled={!supabase || !googleClientId} />
           ) : null}
-          <div className="create-menu">
+          <div className="create-menu" ref={createMenuRef}>
             <button
               className="primary-button create-menu-button"
               type="button"
@@ -4002,7 +4075,7 @@ export default function Home() {
                 <button type="button" role="menuitem" onClick={() => runCreateAction(createMatch)} disabled={!canUseAdminControls}>
                   Partido
                 </button>
-                <button type="button" role="menuitem" onClick={() => runCreateAction(() => void openOwnPlayerProfile())} disabled={!hasRealTeam || !isRegisteredUser}>
+                <button type="button" role="menuitem" onClick={() => runCreateAction(() => void openCreatePlayerProfile())} disabled={!canUseAdminControls && (!hasRealTeam || !isRegisteredUser)}>
                   Ficha jugador
                 </button>
                 <button type="button" role="menuitem" onClick={() => runCreateAction(() => showQuickForm("venue"))} disabled={!canUseAdminControls}>

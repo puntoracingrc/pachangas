@@ -87,8 +87,18 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.doesNotMatch(page, /Resumen del partido/);
   assert.match(page, /create-menu/);
   assert.match(page, /create-menu-panel/);
+  assert.match(page, /createMenuRef/);
+  assert.match(page, /document\.addEventListener\("pointerdown", closeCreateMenu\)/);
+  assert.match(page, /document\.addEventListener\("keydown", closeCreateMenuWithKeyboard\)/);
+  assert.match(page, /event\.key === "Escape"/);
   assert.match(page, /aria-haspopup="menu"/);
+  assert.match(page, /personal-action-button/);
+  assert.match(page, /Mi ficha/);
+  assert.match(page, /Mi equipo/);
   assert.match(page, /Ficha jugador/);
+  assert.match(page, /openOwnPlayerProfile/);
+  assert.match(page, /openCreatePlayerProfile/);
+  assert.match(page, /runCreateAction\(\(\) => void openCreatePlayerProfile\(\)\)/);
   assert.match(page, /showQuickForm\("venue"\)/);
   assert.match(page, /showQuickForm\("team"\)/);
   assert.match(page, /runCreateAction\(createMatch\)/);
