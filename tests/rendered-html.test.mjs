@@ -234,6 +234,8 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(supabaseSql, /create or replace function public\.patch_pachanga_match_scorers/);
   assert.match(supabaseSql, /create or replace function public\.patch_pachanga_player_profile/);
   assert.match(supabaseSql, /create or replace function public\.append_pachanga_player_rating/);
+  assert.match(supabaseSql, /Rating window closed for this player/);
+  assert.match(supabaseSql, /last_vote_match_count \+ 3/);
   assert.match(supabaseSql, /current_group\.payload_revision <> expected_revision/);
   assert.match(supabaseSql, /policy "Admins can update groups"/);
   assert.match(supabaseSql, /public\.is_registered_pachanga_user\(\)/);

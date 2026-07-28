@@ -1347,6 +1347,8 @@ declare
   selected_player jsonb;
   selected_member_name text;
   clean_facets jsonb;
+  last_vote_match_count integer;
+  player_appearances integer;
   next_vote jsonb;
   next_players jsonb;
   saved_payload jsonb;
@@ -1393,6 +1395,17 @@ begin
     raise exception 'Inactive players cannot be rated';
   end if;
 
+  player_appearances := greatest(0, coalesce((selected_player ->> 'appearances')::integer, 0));
+
+  select max(greatest(0, coalesce((vote.value ->> 'matchCount')::integer, 0)))
+  into last_vote_match_count
+  from jsonb_array_elements(coalesce(selected_player -> 'ratingVotes', '[]'::jsonb)) as vote(value)
+  where vote.value ->> 'voterId' = current_user_id::text;
+
+  if player_appearances < coalesce(last_vote_match_count + 3, 3) then
+    raise exception 'Rating window closed for this player';
+  end if;
+
   select display_name into selected_member_name
   from public.pachanga_group_members
   where group_id = target_group_id
@@ -1411,7 +1424,7 @@ begin
     'id', gen_random_uuid()::text,
     'voterId', current_user_id::text,
     'voterName', selected_member_name,
-    'matchCount', greatest(0, coalesce((selected_player ->> 'appearances')::integer, 0)),
+    'matchCount', player_appearances,
     'createdAt', to_char(now() at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"'),
     'facets', clean_facets
   );
