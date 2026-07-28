@@ -798,6 +798,32 @@ export default function Home() {
     });
   }
 
+  function scorerRows(teamPlayers: Player[], variant: "team-a" | "team-b") {
+    const teamLimit = Number(variant === "team-a" ? scoreAValue : scoreBValue);
+    const assignedTeamGoals = teamPlayers.reduce(
+      (sum, teamPlayer) => sum + (activeMatch.scorers?.find((entry) => entry.playerId === teamPlayer.id)?.goals ?? 0),
+      0,
+    );
+    const teamHasNoGoals = resultIsReady && teamLimit === 0;
+    const teamGoalsComplete = resultIsReady && assignedTeamGoals >= teamLimit;
+
+    return teamPlayers
+      .map((player) => {
+        const goals = activeMatch.scorers?.find((entry) => entry.playerId === player.id)?.goals ?? 0;
+        if (!resultIsReady || (teamHasNoGoals && goals === 0) || (teamGoalsComplete && goals === 0)) return null;
+
+        return (
+          <div className={`scorer-row ${variant}-row`} key={player.id}>
+            <span>{playerDisplayName(player)}</span>
+            <button type="button" disabled={goals === 0} onClick={() => setPlayerGoals(player.id, goals - 1)}>-</button>
+            <b>{goals}</b>
+            <button type="button" disabled={!resultIsReady || assignedTeamGoals >= teamLimit} onClick={() => setPlayerGoals(player.id, goals + 1)}>+</button>
+          </div>
+        );
+      })
+      .filter(Boolean);
+  }
+
   function finalizeMatch() {
     if (remoteReady && !canManageTeam) return;
     if (!resultIsReady) return;
@@ -1110,7 +1136,7 @@ export default function Home() {
   }
 
   function matchUrl() {
-    if (typeof window === "undefined") return "";
+    if (!localHydrated || typeof window === "undefined") return "";
     const params = new URLSearchParams();
     if (remoteGroupId) params.set("grupo", remoteGroupId);
     if (remoteInviteToken) params.set("invite", remoteInviteToken);
@@ -1119,7 +1145,7 @@ export default function Home() {
   }
 
   function currentTeamInviteUrl() {
-    if (typeof window === "undefined" || !remoteGroupId || !remoteInviteToken) return "";
+    if (!localHydrated || typeof window === "undefined" || !remoteGroupId || !remoteInviteToken) return "";
     const params = new URLSearchParams();
     params.set("grupo", remoteGroupId);
     params.set("invite", remoteInviteToken);
@@ -1658,32 +1684,24 @@ export default function Home() {
               <strong>Goles</strong>
               {confirmedPlayers.length === 0 ? <small>Marca asistentes para añadir goleadores.</small> : null}
               {confirmedPlayers.length > 0 && !resultIsReady ? <small>Rellena primero el resultado.</small> : null}
-              {confirmedPlayers.map((player) => {
-                const goals = activeMatch.scorers?.find((entry) => entry.playerId === player.id)?.goals ?? 0;
-                const isTeamA = suggested.teamA.some((teamPlayer) => teamPlayer.id === player.id);
-                const teamPlayers = isTeamA ? suggested.teamA : suggested.teamB;
-                const teamLimit = Number(isTeamA ? scoreAValue : scoreBValue);
-                const assignedTeamGoals = teamPlayers.reduce(
-                  (sum, teamPlayer) => sum + (activeMatch.scorers?.find((entry) => entry.playerId === teamPlayer.id)?.goals ?? 0),
-                  0,
-                );
-                const teamHasNoGoals = resultIsReady && teamLimit === 0;
-                const teamGoalsComplete = resultIsReady && assignedTeamGoals >= teamLimit;
-                if (!resultIsReady || (teamHasNoGoals && goals === 0) || (teamGoalsComplete && goals === 0)) return null;
-                const scorerTeamClass = suggested.teamA.some((teamPlayer) => teamPlayer.id === player.id)
-                  ? "team-a-row"
-                  : suggested.teamB.some((teamPlayer) => teamPlayer.id === player.id)
-                    ? "team-b-row"
-                    : "";
-                return (
-                  <div className={`scorer-row ${scorerTeamClass}`} key={player.id}>
-                    <span>{playerDisplayName(player)}</span>
-                    <button type="button" disabled={goals === 0} onClick={() => setPlayerGoals(player.id, goals - 1)}>-</button>
-                    <b>{goals}</b>
-                    <button type="button" disabled={!resultIsReady || assignedTeamGoals >= teamLimit} onClick={() => setPlayerGoals(player.id, goals + 1)}>+</button>
+              {confirmedPlayers.length > 0 && resultIsReady ? (
+                <div className="scorers-teams">
+                  <div className="scorers-team team-a-scorers">
+                    <div className="scorers-team-title">
+                      <span>Equipo 1</span>
+                      <b>{scoreAValue}</b>
+                    </div>
+                    {scorerRows(suggested.teamA, "team-a")}
                   </div>
-                );
-              })}
+                  <div className="scorers-team team-b-scorers">
+                    <div className="scorers-team-title">
+                      <span>Equipo 2</span>
+                      <b>{scoreBValue}</b>
+                    </div>
+                    {scorerRows(suggested.teamB, "team-b")}
+                  </div>
+                </div>
+              ) : null}
             </div>
             <button disabled={!resultIsReady || !canUseAdminControls} onClick={finalizeMatch}>Finalizar partido</button>
           </div>

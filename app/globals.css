@@ -1330,8 +1330,7 @@ select {
 }
 
 .scorers-box {
-  background:
-    linear-gradient(90deg, var(--team-a-soft) 0 50%, var(--team-b-soft) 50% 100%);
+  background: #fffdfa;
   border: 1px solid var(--line);
   border-radius: 8px;
   display: grid;
@@ -1348,31 +1347,92 @@ select {
   line-height: 1.35;
 }
 
-.scorer-row {
-  align-items: center;
+.scorers-teams {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+
+.scorers-team {
+  border: 1px solid var(--line);
+  border-radius: 8px;
   display: grid;
   gap: 6px;
-  grid-template-columns: minmax(0, 1fr) 32px 28px 32px;
-  margin: 0 -4px;
+  min-width: 0;
+  padding: 6px;
+}
+
+.team-a-scorers {
+  background: var(--team-a-soft);
+  border-color: color-mix(in srgb, var(--team-a) 24%, var(--line));
+}
+
+.team-b-scorers {
+  background: var(--team-b-soft);
+  border-color: color-mix(in srgb, var(--team-b) 24%, var(--line));
+}
+
+.scorers-team-title {
+  align-items: center;
+  display: flex;
+  gap: 6px;
+  justify-content: space-between;
+  min-width: 0;
+}
+
+.scorers-team-title span {
+  color: var(--foreground);
+  font-size: 11px;
+  font-weight: 900;
+  overflow: hidden;
+  text-transform: uppercase;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.scorers-team-title b {
+  align-items: center;
+  background: #fff;
+  border-radius: 999px;
+  display: inline-flex;
+  font-size: 12px;
+  height: 24px;
+  justify-content: center;
+  min-width: 24px;
+  padding: 0 7px;
+}
+
+.scorer-row {
+  align-items: center;
+  background: color-mix(in srgb, white 72%, transparent);
+  display: grid;
+  gap: 4px;
+  grid-template-areas:
+    "name name name"
+    "minus count plus";
+  grid-template-columns: 28px 20px 28px;
+  justify-content: center;
   padding: 4px;
   border-radius: 8px;
 }
 
-.scorer-row.team-a-row {
-  background: var(--team-a-soft);
-}
-
-.scorer-row.team-b-row {
-  background: var(--team-b-soft);
-}
-
 .scorer-row span {
   color: var(--foreground);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 800;
+  grid-area: name;
   overflow: hidden;
+  text-align: center;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.scorer-row button:first-of-type {
+  grid-area: minus;
+}
+
+.scorer-row button:last-of-type {
+  grid-area: plus;
 }
 
 .scorer-row button {
@@ -1381,7 +1441,8 @@ select {
   border-radius: 8px;
   color: var(--foreground);
   font-weight: 950;
-  min-height: 30px;
+  min-height: 28px;
+  padding: 0;
 }
 
 .scorer-row button:disabled {
@@ -1390,6 +1451,7 @@ select {
 }
 
 .scorer-row b {
+  grid-area: count;
   text-align: center;
 }
 
