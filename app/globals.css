@@ -200,6 +200,88 @@ h1 {
   opacity: 0.45;
 }
 
+.demo-banner {
+  align-items: center;
+  background: #eef8df;
+  border-color: #b9df8a;
+  display: grid;
+  gap: 14px;
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.demo-banner span {
+  color: #467312;
+  display: block;
+  font-size: 12px;
+  font-weight: 950;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+}
+
+.demo-banner strong {
+  display: block;
+  font-size: 18px;
+}
+
+.demo-banner p {
+  color: var(--ink-soft);
+  line-height: 1.45;
+  margin: 6px 0 0;
+}
+
+.user-manual {
+  display: block;
+}
+
+.user-manual summary {
+  align-items: center;
+  cursor: pointer;
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+  list-style: none;
+}
+
+.user-manual summary::-webkit-details-marker {
+  display: none;
+}
+
+.user-manual summary span {
+  color: var(--ink-soft);
+  font-size: 12px;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.manual-grid {
+  border-top: 1px solid var(--line);
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin-top: 12px;
+  padding-top: 12px;
+}
+
+.manual-grid article {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: grid;
+  gap: 6px;
+  padding: 12px;
+}
+
+.manual-grid b {
+  font-size: 14px;
+}
+
+.manual-grid p {
+  color: var(--ink-soft);
+  font-size: 13px;
+  line-height: 1.4;
+  margin: 0;
+}
+
 .team-create-form {
   display: grid;
   gap: 8px;
@@ -426,6 +508,14 @@ h1 {
   border-bottom: 1px solid var(--line);
   margin-bottom: 14px;
   padding-bottom: 12px;
+}
+
+.empty-copy {
+  color: var(--ink-soft);
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1.4;
+  margin: 0;
 }
 
 .panel-title span,
@@ -2436,6 +2526,10 @@ select:disabled {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .manual-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .team-invite-link,
   .team-access-panel .sync-status {
     grid-column: 1 / -1;
@@ -2469,6 +2563,14 @@ select:disabled {
 
   .hero-actions button {
     flex: 1 1 120px;
+  }
+
+  .demo-banner {
+    grid-template-columns: 1fr;
+  }
+
+  .manual-grid {
+    grid-template-columns: 1fr;
   }
 
   .match-editor,

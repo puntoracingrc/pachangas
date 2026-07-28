@@ -132,14 +132,24 @@ type RemoteMember = {
 };
 
 const seedPlayers: Player[] = [
-  { id: "p1", name: "Carlos", phone: "600 111 222", rating: 8, position: "Delantero / punta", goals: 18, assists: 7, appearances: 12, wins: 7, lateCancels: 1 },
-  { id: "p2", name: "Manu", phone: "600 222 333", rating: 7, position: "Mediocentro / pivote", goals: 10, assists: 13, appearances: 11, wins: 8, lateCancels: 0 },
-  { id: "p3", name: "Pablo", phone: "600 333 444", rating: 6, position: "Defensa central", goals: 5, assists: 4, appearances: 10, wins: 5, lateCancels: 2 },
-  { id: "p4", name: "Rafa", phone: "600 444 555", rating: 7, position: "Portero", goals: 1, assists: 2, appearances: 9, wins: 4, lateCancels: 0 },
-  { id: "p5", name: "Dani", phone: "600 555 666", rating: 5, position: "Interior / volante", goals: 6, assists: 3, appearances: 8, wins: 3, lateCancels: 1 },
-  { id: "p6", name: "Alex", phone: "600 666 777", rating: 6, position: "Defensa central", goals: 4, assists: 8, appearances: 9, wins: 6, lateCancels: 0 },
-  { id: "p7", name: "Sergio", phone: "600 777 888", rating: 8, position: "Delantero / punta", goals: 15, assists: 5, appearances: 8, wins: 5, lateCancels: 1 },
-  { id: "p8", name: "Javi", phone: "600 888 999", rating: 5, position: "Lateral derecho", goals: 3, assists: 6, appearances: 7, wins: 2, lateCancels: 3 },
+  { id: "p1", name: "Carlos", phone: "600 111 222", goalkeeperOnly: false, rating: 8, position: "Delantero / punta", goals: 18, assists: 7, appearances: 12, wins: 7, lateCancels: 1, ratingVotes: [{ id: "rv1", voterId: "demo", voterName: "Demo", matchCount: 9, createdAt: "2026-07-01T20:00:00", facets: { ritmo: 8, tiro: 9, pase: 7, regate: 8, defensa: 5, fisico: 8 } }] },
+  { id: "p2", name: "Manu", phone: "600 222 333", rating: 7, position: "Mediocentro / pivote", goals: 10, assists: 13, appearances: 11, wins: 8, lateCancels: 0, ratingVotes: [{ id: "rv2", voterId: "demo", voterName: "Demo", matchCount: 8, createdAt: "2026-07-02T20:00:00", facets: { ritmo: 6, tiro: 6, pase: 9, regate: 7, defensa: 7, fisico: 7 } }] },
+  { id: "p3", name: "Pablo", phone: "600 333 444", rating: 6, position: "Defensa central", goals: 5, assists: 4, appearances: 10, wins: 5, lateCancels: 2, ratingVotes: [{ id: "rv3", voterId: "demo", voterName: "Demo", matchCount: 10, createdAt: "2026-07-05T20:00:00", facets: { ritmo: 5, tiro: 4, pase: 6, regate: 5, defensa: 8, fisico: 7 } }] },
+  { id: "p4", name: "Rafa", phone: "600 444 555", goalkeeperOnly: true, rating: 7, position: "Portero", goals: 1, assists: 2, appearances: 9, wins: 4, lateCancels: 0, ratingVotes: [{ id: "rv4", voterId: "demo", voterName: "Demo", matchCount: 6, createdAt: "2026-07-03T20:00:00", facets: { ritmo: 6, tiro: 4, pase: 7, regate: 5, defensa: 9, fisico: 7 } }] },
+  { id: "p5", name: "Dani", phone: "600 555 666", rating: 5, position: "Interior / volante", goals: 6, assists: 3, appearances: 8, wins: 3, lateCancels: 1, ratingVotes: [{ id: "rv5", voterId: "demo", voterName: "Demo", matchCount: 7, createdAt: "2026-07-04T20:00:00", facets: { ritmo: 6, tiro: 5, pase: 6, regate: 6, defensa: 5, fisico: 5 } }] },
+  { id: "p6", name: "Alex", phone: "600 666 777", rating: 6, position: "Defensa central", goals: 4, assists: 8, appearances: 9, wins: 6, lateCancels: 0, ratingVotes: [{ id: "rv6", voterId: "demo", voterName: "Demo", matchCount: 9, createdAt: "2026-07-06T20:00:00", facets: { ritmo: 6, tiro: 4, pase: 6, regate: 5, defensa: 8, fisico: 7 } }] },
+  { id: "p7", name: "Sergio", phone: "600 777 888", rating: 8, position: "Delantero / punta", goals: 15, assists: 5, appearances: 8, wins: 5, lateCancels: 1, ratingVotes: [{ id: "rv7", voterId: "demo", voterName: "Demo", matchCount: 5, createdAt: "2026-07-07T20:00:00", facets: { ritmo: 8, tiro: 8, pase: 6, regate: 8, defensa: 4, fisico: 7 } }] },
+  { id: "p8", name: "Javi", phone: "600 888 999", rating: 5, position: "Lateral derecho", goals: 3, assists: 6, appearances: 7, wins: 2, lateCancels: 3, ratingVotes: [{ id: "rv8", voterId: "demo", voterName: "Demo", matchCount: 7, createdAt: "2026-07-08T20:00:00", facets: { ritmo: 7, tiro: 4, pase: 5, regate: 6, defensa: 6, fisico: 5 } }] },
+  { id: "p9", name: "Nico", phone: "600 999 000", rating: 5, position: "Ala izquierda", goals: 2, assists: 2, appearances: 2, wins: 1, lateCancels: 0 },
+  { id: "p10", name: "Pedro", phone: "601 111 222", rating: 6, position: "Cierre", goals: 7, assists: 2, appearances: 4, wins: 2, lateCancels: 0 },
+  { id: "p11", name: "Alberto", phone: "601 222 333", rating: 5, position: "Mediapunta", goals: 0, assists: 1, appearances: 1, wins: 0, lateCancels: 0 },
+  { id: "p12", name: "Carlitos", phone: "601 333 444", rating: 6, position: "Extremo derecho", goals: 9, assists: 4, appearances: 6, wins: 4, lateCancels: 1 },
+  { id: "p13", name: "Vicente", phone: "601 444 555", rating: 5, position: "Lateral izquierdo", goals: 1, assists: 2, appearances: 5, wins: 2, lateCancels: 0 },
+  { id: "p14", name: "Mario", phone: "601 555 666", goalkeeperOnly: true, rating: 6, position: "Portero", goals: 0, assists: 0, appearances: 3, wins: 1, lateCancels: 0 },
+  { id: "p15", name: "Hugo", phone: "601 666 777", injured: true, rating: 7, position: "Defensa central", goals: 4, assists: 1, appearances: 6, wins: 2, lateCancels: 0 },
+  { id: "p16", name: "Rubén", phone: "601 777 888", inactive: true, rating: 6, position: "Interior / volante", goals: 6, assists: 7, appearances: 9, wins: 4, lateCancels: 1 },
+  { id: "p17", name: "Iván", phone: "601 888 999", rating: 4, position: "Ala derecha", goals: 1, assists: 1, appearances: 0, wins: 0, lateCancels: 0 },
+  { id: "p18", name: "Óscar", phone: "601 999 000", rating: 7, position: "Pívot", goals: 12, assists: 3, appearances: 5, wins: 3, lateCancels: 0 },
 ];
 
 const seedVenues: Venue[] = [
@@ -151,19 +161,66 @@ const seedVenues: Venue[] = [
 const seedMatches: Match[] = [
   {
     id: "m1",
-    title: "Jueves 21:00",
+    title: "Demo jueves 21:00",
     date: "2026-07-30T21:00",
     place: "Polideportivo La Mina",
     venueId: "v1",
     kind: "futbol7",
     targetPlayers: 14,
     fieldCost: 56,
+    payerId: "p2",
+    reservesAttend: true,
+    reserveLimit: 2,
+    lineupClosed: false,
+    players: [
+      { playerId: "p4", status: "voy", joinedAt: "2026-07-20T09:00:00", paid: true },
+      { playerId: "p14", status: "voy", joinedAt: "2026-07-20T09:03:00", paid: false },
+      { playerId: "p1", status: "voy", joinedAt: "2026-07-20T09:10:00", paid: true },
+      { playerId: "p2", status: "voy", joinedAt: "2026-07-20T09:14:00", paid: false },
+      { playerId: "p3", status: "voy", joinedAt: "2026-07-20T09:21:00", paid: true },
+      { playerId: "p5", status: "voy", joinedAt: "2026-07-20T09:28:00", paid: false },
+      { playerId: "p6", status: "voy", joinedAt: "2026-07-20T09:35:00", paid: true },
+      { playerId: "p7", status: "voy", joinedAt: "2026-07-20T09:40:00", paid: false },
+      { playerId: "p8", status: "voy", joinedAt: "2026-07-20T09:45:00", paid: false },
+      { playerId: "p10", status: "voy", joinedAt: "2026-07-20T09:51:00", paid: false },
+      { playerId: "p11", status: "voy", joinedAt: "2026-07-20T09:58:00", paid: false },
+      { playerId: "p12", status: "voy", joinedAt: "2026-07-20T10:02:00", paid: true },
+      { playerId: "p13", status: "voy", joinedAt: "2026-07-20T10:10:00", paid: false },
+      { playerId: "p18", status: "voy", joinedAt: "2026-07-20T10:15:00", paid: false },
+      { playerId: "p9", status: "voy", joinedAt: "2026-07-20T10:35:00", paid: false },
+      { playerId: "p17", status: "voy", joinedAt: "2026-07-20T10:46:00", paid: false },
+      { playerId: "p15", status: "no" },
+      { playerId: "p16", status: "no" },
+    ],
+  },
+  {
+    id: "m2",
+    title: "Demo finalizada",
+    date: "2026-07-23T21:00",
+    place: "Pista El Parque",
+    venueId: "v2",
+    kind: "sala",
+    targetPlayers: 10,
+    fieldCost: 42,
     payerId: "p1",
-    players: [],
+    closed: true,
+    scoreA: 5,
+    scoreB: 3,
+    teamA: ["p4", "p1", "p2", "p7", "p12"],
+    teamB: ["p14", "p3", "p5", "p6", "p8"],
+    scorers: [
+      { playerId: "p1", goals: 2 },
+      { playerId: "p7", goals: 2 },
+      { playerId: "p12", goals: 1 },
+      { playerId: "p5", goals: 1 },
+      { playerId: "p6", goals: 1 },
+      { playerId: "p8", goals: 1 },
+    ],
+    players: ["p4", "p1", "p2", "p7", "p12", "p14", "p3", "p5", "p6", "p8"].map((playerId) => ({ playerId, status: "voy" as const, paid: true })),
   },
 ];
 
-const storageKey = "pachanga-iq-v1";
+const storageKey = "pachanga-iq-v2";
 const profileNameKey = "pachanga-iq-profile-name";
 
 function defaultPayload(): AppPayload {
@@ -229,6 +286,37 @@ const matchKinds: Record<MatchKind, { label: string; targetPlayers: number; team
   futbol7: { label: "Fútbol 7", targetPlayers: 14, teamSize: 7 },
   futbol11: { label: "Fútbol 11", targetPlayers: 22, teamSize: 11 },
 };
+
+function starterMatch(baseDate = "2026-07-30T21:00", kind: MatchKind = "futbol7"): Match {
+  return {
+    id: id(),
+    title: "Nueva pachanga",
+    date: nextMatchDate(baseDate),
+    place: "Campo por confirmar",
+    kind,
+    targetPlayers: matchKinds[kind].targetPlayers,
+    fieldCost: 0,
+    players: [],
+    reservesAttend: false,
+    reserveLimit: 0,
+  };
+}
+
+function emptyTeamPayload(teamName: string): AppPayload {
+  const match = starterMatch(undefined, "futbol7");
+  return {
+    activeMatchId: match.id,
+    matches: [match],
+    players: [],
+    siteSettings: {
+      ...defaultSiteSettings,
+      brand: displayName(teamName) || defaultSiteSettings.brand,
+      title: "Tu equipo pachanguero, desde cero.",
+      subtitle: "Añade jugadores, campos y partidos para empezar a organizar tu grupo.",
+    },
+    venues: [],
+  };
+}
 
 const positionOptionsByKind: Record<MatchKind, Array<{ value: PlayerPosition; line: PositionLine; short: string }>> = {
   futbol11: [
@@ -339,9 +427,10 @@ function normalizeSiteSettings(settings?: Partial<SiteSettings>): SiteSettings {
 
 function normalizePayload(payload?: Partial<AppPayload>): AppPayload {
   const fallback = defaultPayload();
-  const venues = payload?.venues?.length ? payload.venues : fallback.venues;
-  const matches = payload?.matches?.length
-    ? payload.matches.map((match) => ({
+  const venues = payload?.venues ? payload.venues : fallback.venues;
+  const rawMatches = payload?.matches ? payload.matches : fallback.matches;
+  const matches = rawMatches.length
+    ? rawMatches.map((match) => ({
         ...match,
         venueId: match.venueId ?? venues.find((venue) => venue.name === match.place)?.id,
         fieldCost: match.fieldCost ?? (match.price ? match.price * Math.max(match.targetPlayers, 1) : 0),
@@ -349,8 +438,8 @@ function normalizePayload(payload?: Partial<AppPayload>): AppPayload {
         reservesAttend: match.reservesAttend ?? false,
         reserveLimit: Math.max(0, Math.floor(match.reserveLimit ?? 0)),
       }))
-    : fallback.matches;
-  const players = (payload?.players ?? fallback.players).map((player) => ({
+    : [starterMatch()];
+  const players = (payload?.players ? payload.players : fallback.players).map((player) => ({
     ...player,
     injured: Boolean(player.injured),
     inactive: Boolean(player.inactive),
@@ -1063,6 +1152,7 @@ export default function Home() {
   const confirmedPlayers = players.filter((player) => confirmedIds.includes(player.id));
   const reservePlayers = reserveIds.map((playerId) => players.find((player) => player.id === playerId)).filter((player): player is Player => Boolean(player));
   const waitingPlayers = waitingIds.map((playerId) => players.find((player) => player.id === playerId)).filter((player): player is Player => Boolean(player));
+  const openMatches = matches.filter((match) => match.scoreA === undefined && !match.closed);
   const closedMatches = matches.filter((match) => match.scoreA !== undefined);
   const doubtfulCount = activeMatch.players.filter((entry) => entry.status === "duda").length;
   const missing = Math.max(activeMatch.targetPlayers - confirmedPlayers.length, 0);
@@ -1456,6 +1546,7 @@ export default function Home() {
   const otherPlayers = sortedPlayers.filter((player) => !teamAPlayerIds.has(player.id) && !teamBPlayerIds.has(player.id) && !reservePlayerIds.has(player.id) && !waitingPlayerIds.has(player.id));
   const selectedPlayer = selectedPlayerId ? players.find((player) => player.id === selectedPlayerId) : undefined;
   const currentTeam = remoteTeams.find((team) => team.id === remoteGroupId);
+  const isDemoMode = !remoteReady && remoteTeams.length === 0;
   const canManageTeam = currentRole === "owner" || currentRole === "admin";
   const canUseAdminControls = !remoteReady || canManageTeam;
   const canEditLineup = canUseAdminControls && !lineupClosed;
@@ -1648,9 +1739,10 @@ export default function Home() {
     try {
       const userId = await ensureUser(client);
       const teamName = newTeamName.trim() || "Mi equipo pachanguero";
+      const initialPayload = emptyTeamPayload(teamName);
       const insertResult = await client
         .from("pachanga_groups")
-        .insert({ name: teamName, owner_id: userId, payload: currentPayload() })
+        .insert({ name: teamName, owner_id: userId, payload: initialPayload })
         .select("id, invite_token, name, payload, team_code")
         .single();
 
@@ -2102,6 +2194,62 @@ export default function Home() {
         </small>
       </section>
 
+      {isDemoMode ? (
+        <section className="top-panel demo-banner">
+          <div>
+            <span>Demo interactiva</span>
+            <strong>Lo que ves son datos de ejemplo.</strong>
+            <p>
+              Puedes tocar jugadores, cambiar asistencia, revisar reservas, pagos, alineaciones, valoraciones y fichas. Cuando crees tu equipo real, la web empieza limpia.
+            </p>
+          </div>
+          <button className="primary-button" type="button" onClick={() => setOpenQuickForm("team")}>
+            Crear mi equipo limpio
+          </button>
+        </section>
+      ) : null}
+
+      <details className="top-panel user-manual" open={isDemoMode}>
+        <summary>
+          <span>Manual de usuario</span>
+          <strong>Guía rápida de secciones</strong>
+        </summary>
+        <div className="manual-grid">
+          <article>
+            <b>Equipo privado</b>
+            <p>Crea un grupo, comparte la invitación y gestiona miembros. Los admins pueden crear partidos, campos, jugadores, cerrar alineaciones y borrar errores.</p>
+          </article>
+          <article>
+            <b>Próximos partidos</b>
+            <p>Lista los partidos abiertos. El orden de “Voy” decide titulares, reservas y espera. Si alguien se baja, el primer reserva sube automáticamente.</p>
+          </article>
+          <article>
+            <b>Partido</b>
+            <p>Configura campo, fecha, modalidad, precio y reservas. El pago rota entre asistentes y puedes marcar quién ha pagado.</p>
+          </article>
+          <article>
+            <b>Alineaciones</b>
+            <p>El sistema separa porteros, coloca fichas en el campo y permite equipos aleatorios o equilibrados por estadísticas. El admin puede cerrar o reabrir la alineación.</p>
+          </article>
+          <article>
+            <b>Ficha jugador</b>
+            <p>Guarda foto, teléfono Bizum, posición preferida, portero fijo, lesión, goles y valoraciones tipo FIFA por facetas.</p>
+          </article>
+          <article>
+            <b>Valoraciones</b>
+            <p>Se abren cada 3 partidos jugados por jugador. Al votar se cierran para ti hasta que ese jugador complete otros 3 partidos.</p>
+          </article>
+          <article>
+            <b>Resultado e historial</b>
+            <p>Rellena marcador, asigna goleadores sin superar el resultado y finaliza el partido para archivarlo en histórico y actualizar ranking.</p>
+          </article>
+          <article>
+            <b>Ranking vivo</b>
+            <p>Ordena jugadores por rendimiento, goles y victorias. Cada fila abre la ficha para consultar detalle, evolución y estado.</p>
+          </article>
+        </div>
+      </details>
+
       {showSettings ? (
         <section className="top-panel settings-panel">
           <label>
@@ -2225,9 +2373,10 @@ export default function Home() {
           ) : null}
           <div className="panel-title">
             <span>Próximos partidos</span>
-            <strong>{matches.length}</strong>
+            <strong>{openMatches.length}</strong>
           </div>
-          {matches.map((match) => (
+          {openMatches.length === 0 ? <p className="empty-copy">Crea tu primer partido con “+ Partido”.</p> : null}
+          {openMatches.map((match) => (
             <div className="match-row" key={match.id}>
               <button
                 className={match.id === activeMatch.id ? "match-item active" : "match-item"}
