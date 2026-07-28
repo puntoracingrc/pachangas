@@ -1981,7 +1981,7 @@ export default function Home() {
   const selectedRatingButtonText = canRateSelectedPlayer
     ? "Guardar valoración"
     : ratingWaitMatches > 0
-      ? `Faltan ${ratingWaitMatches} partido${ratingWaitMatches === 1 ? "" : "s"}`
+      ? `${ratingWaitMatches === 1 ? "Falta" : "Faltan"} ${ratingWaitMatches} partido${ratingWaitMatches === 1 ? "" : "s"} para abrir votaciones`
       : "Valoraciones cerradas";
 
   useEffect(() => {
