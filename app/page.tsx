@@ -4950,6 +4950,24 @@ export default function Home() {
                       <small>{selectedPlayerAge !== null ? "años" : "pendiente"}</small>
                     </div>
                   </div>
+                  <label className="profile-position-row">
+                    <span>Posición preferida</span>
+                    <select
+                      value={equivalentPositionForKind(selectedPlayer.position, activeKind)}
+                      disabled={!canEditSelectedPlayer}
+                      onChange={(event) => {
+                        const position = event.target.value as PlayerPosition;
+                        updatePlayer(selectedPlayer.id, {
+                          position,
+                          ...(isGoalkeeperPosition(position) ? {} : { outfieldPosition: position }),
+                        });
+                      }}
+                    >
+                      {positionOptionsByKind[activeKind].map((option) => (
+                        <option key={option.value} value={option.value}>{option.value}</option>
+                      ))}
+                    </select>
+                  </label>
                   <div className="profile-save-area">
                     <button
                       className="profile-save-button"
@@ -4989,24 +5007,6 @@ export default function Home() {
                     onChange={(event) => setPlayerInjured(selectedPlayer.id, event.target.checked)}
                   />
                   Lesionado
-                </label>
-                <label>
-                  Posición preferida
-                  <select
-                    value={equivalentPositionForKind(selectedPlayer.position, activeKind)}
-                    disabled={!canEditSelectedPlayer}
-                    onChange={(event) => {
-                      const position = event.target.value as PlayerPosition;
-                      updatePlayer(selectedPlayer.id, {
-                        position,
-                        ...(isGoalkeeperPosition(position) ? {} : { outfieldPosition: position }),
-                      });
-                    }}
-                  >
-                    {positionOptionsByKind[activeKind].map((option) => (
-                      <option key={option.value} value={option.value}>{option.value}</option>
-                    ))}
-                  </select>
                 </label>
                 <div className="base-rating-card">
                   <span>Media</span>

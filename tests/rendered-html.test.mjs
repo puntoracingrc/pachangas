@@ -253,9 +253,13 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /Fecha nacimiento/);
   assert.match(page, /Edad/);
   assert.match(page, /currentDateValue/);
+  assert.match(page, /profile-position-row/);
+  assert.ok(page.indexOf("birthdate-row") < page.indexOf("profile-position-row"));
+  assert.ok(page.indexOf("profile-position-row") < page.indexOf("profile-save-area"));
   assert.match(page, /birthDate:\s*normalizeBirthDate/);
   assert.match(globalsCss, /\.birthdate-row/);
   assert.match(globalsCss, /\.age-pill/);
+  assert.match(globalsCss, /\.profile-position-row/);
   assert.match(globalsCss, /--ink:\s*#202820/);
   assert.match(globalsCss, /\.profile-save-area/);
   assert.match(globalsCss, /\.profile-save-button/);
