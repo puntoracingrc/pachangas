@@ -167,6 +167,17 @@ type RemoteMember = {
   userId: string;
 };
 
+type TeamBackup = {
+  createdAt: string;
+  groupName: string;
+  id: string;
+  matchCount: number;
+  playerCount: number;
+  reason: string;
+  sourceGroupId: string | null;
+  teamCode: string | null;
+};
+
 type IncomingSharedLink = {
   hasAdminInvite: boolean;
   hasInvite: boolean;
@@ -405,6 +416,13 @@ const seedMatches: Match[] = [
 
 const storageKey = "pachanga-iq-v3";
 const profileNameKey = "pachanga-iq-profile-name";
+
+const backupReasonLabels: Record<string, string> = {
+  equipo_borrado: "Antes de borrar equipo",
+  manual: "Copia manual",
+  partido_finalizado: "Partido finalizado",
+  partido_guardado: "Partido guardado",
+};
 
 function defaultPayload(): AppPayload {
   return {
@@ -1501,6 +1519,9 @@ export default function Home() {
   const [avatarMessage, setAvatarMessage] = useState("");
   const [teamPhotoMessage, setTeamPhotoMessage] = useState("");
   const [profileSaveMessage, setProfileSaveMessage] = useState("");
+  const [teamBackups, setTeamBackups] = useState<TeamBackup[]>([]);
+  const [backupsLoading, setBackupsLoading] = useState(false);
+  const [backupMessage, setBackupMessage] = useState("");
   const [localHydrated, setLocalHydrated] = useState(false);
   const [incomingSharedLink, setIncomingSharedLink] = useState<IncomingSharedLink>({
     hasAdminInvite: false,
@@ -1709,6 +1730,120 @@ export default function Home() {
     window.history.replaceState(null, "", `${window.location.pathname}?${nextParams.toString()}`);
   }
 
+  async function loadTeamBackups(client = supabase, clearMessage = true) {
+    if (!client || !isRegisteredUser) return;
+
+    setBackupsLoading(true);
+    if (clearMessage) setBackupMessage("");
+
+    const result = await client
+      .from("pachanga_group_backups")
+      .select("id, source_group_id, group_name, team_code, reason, payload, created_at")
+      .order("created_at", { ascending: false })
+      .limit(12);
+
+    setBackupsLoading(false);
+
+    if (result.error) {
+      setBackupMessage("No se pudieron cargar las copias.");
+      return;
+    }
+
+    setTeamBackups(
+      (result.data ?? []).map((backup) => {
+        const payload = normalizePayload(backup.payload as Partial<AppPayload>);
+
+        return {
+          createdAt: String(backup.created_at),
+          groupName: String(backup.group_name ?? "Equipo pachanguero"),
+          id: String(backup.id),
+          matchCount: payload.matches.length,
+          playerCount: payload.players.filter((player) => !player.inactive).length,
+          reason: String(backup.reason ?? "manual"),
+          sourceGroupId: backup.source_group_id ? String(backup.source_group_id) : null,
+          teamCode: backup.team_code ? String(backup.team_code) : null,
+        };
+      }),
+    );
+  }
+
+  async function createTeamBackup(reason: string, payload: AppPayload, showMessage = true) {
+    if (!supabase || !remoteGroupId || !canManageTeam) return false;
+
+    if (showMessage) {
+      setBackupMessage("Creando copia...");
+    }
+
+    const result = await supabase.rpc("create_pachanga_group_backup", {
+      backup_payload: payload,
+      backup_reason: reason,
+      target_group_id: remoteGroupId,
+    });
+
+    if (result.error) {
+      setBackupMessage("No se pudo crear la copia de seguridad.");
+      return false;
+    }
+
+    if (showMessage) {
+      setBackupMessage("Copia de seguridad creada");
+      window.setTimeout(() => setBackupMessage(""), 2200);
+    }
+
+    await loadTeamBackups(supabase, false);
+    return true;
+  }
+
+  async function saveRemotePayloadWithBackup(payload: AppPayload, reason: string, showBackupMessage = false) {
+    if (!supabase || !remoteGroupId || !remoteReady || !canManageTeam) return;
+
+    setSyncStatus("connecting");
+    setSyncError("");
+
+    const saveResult = await supabase.from("pachanga_groups").update({ payload }).eq("id", remoteGroupId);
+    if (saveResult.error) {
+      setSyncStatus("error");
+      setSyncError(saveResult.error.message);
+      return;
+    }
+
+    await createTeamBackup(reason, payload, showBackupMessage);
+    setSyncStatus("live");
+    setSyncError("");
+  }
+
+  async function createManualBackup() {
+    if (!canManageTeam) return;
+    await saveRemotePayloadWithBackup(currentPayload(), "manual", true);
+  }
+
+  async function restoreTeamBackup(backup: TeamBackup) {
+    if (!supabase || !isRegisteredUser) return;
+    if (!window.confirm(`¿Restaurar la copia de ${backup.groupName}?`)) return;
+    if (!window.confirm("Confirmación final: si el equipo sigue existiendo, se reemplazarán sus datos por esta copia.")) return;
+
+    setBackupMessage("Restaurando copia...");
+    setSyncStatus("connecting");
+    setSyncError("");
+
+    const result = await supabase.rpc("restore_pachanga_group_backup", {
+      backup_id: backup.id,
+    });
+
+    if (result.error || !result.data) {
+      setBackupMessage("No se pudo restaurar la copia.");
+      setSyncStatus("error");
+      setSyncError(result.error?.message ?? "No se pudo restaurar la copia");
+      return;
+    }
+
+    await loadTeams(supabase, String(result.data));
+    await loadTeamBackups(supabase);
+    setBackupMessage("Equipo restaurado");
+    setShowSettings(false);
+    window.setTimeout(() => setBackupMessage(""), 2200);
+  }
+
   useEffect(() => {
     setIncomingSharedLink(incomingSharedLinkFromSearch(window.location.search));
     setProfileName(localStorage.getItem(profileNameKey) ?? "");
@@ -1735,6 +1870,12 @@ export default function Home() {
   useEffect(() => {
     localStorage.setItem(profileNameKey, profileName.trim());
   }, [profileName]);
+
+  useEffect(() => {
+    const registeredUser = Boolean(authUser && !isAnonymousAuthUser(authUser));
+    if (!showSettings || !supabase || !registeredUser) return;
+    void loadTeamBackups(supabase);
+  }, [showSettings, authUser?.id, remoteGroupId]);
 
   useEffect(() => {
     if (!supabase) return;
@@ -2309,7 +2450,7 @@ export default function Home() {
       .filter(Boolean);
   }
 
-  function finalizeMatch() {
+  async function finalizeMatch() {
     if (!canUseAdminControls) return;
     if (matchFinalized) return;
     if (!resultIsReady) return;
@@ -2320,20 +2461,17 @@ export default function Home() {
     const previousGoalsByPlayer = new Map((activeMatch.scorers ?? []).map((entry) => [entry.playerId, entry.goals]));
     const shouldApplyMatchStats = !activeMatch.closed;
 
-    setPlayers((current) =>
-      current.map((player) =>
-        confirmedIds.includes(player.id)
-          ? {
-              ...player,
-              appearances: shouldApplyMatchStats ? player.appearances + 1 : player.appearances,
-              goals: shouldApplyMatchStats ? player.goals + (previousGoalsByPlayer.get(player.id) ?? 0) : player.goals,
-              wins: shouldApplyMatchStats && winners.includes(player.id) ? player.wins + 1 : player.wins,
-            }
-          : player,
-      ),
+    const nextPlayers = players.map((player) =>
+      confirmedIds.includes(player.id)
+        ? {
+            ...player,
+            appearances: shouldApplyMatchStats ? player.appearances + 1 : player.appearances,
+            goals: shouldApplyMatchStats ? player.goals + (previousGoalsByPlayer.get(player.id) ?? 0) : player.goals,
+            wins: shouldApplyMatchStats && winners.includes(player.id) ? player.wins + 1 : player.wins,
+          }
+        : player,
     );
-
-    updateMatch({
+    const nextMatch = {
       ...activeMatch,
       scoreA,
       scoreB,
@@ -2341,7 +2479,13 @@ export default function Home() {
       payerId,
       teamA: suggested.teamA.map((player) => player.id),
       teamB: suggested.teamB.map((player) => player.id),
-    });
+    };
+    const nextMatches = matches.map((match) => (match.id === activeMatch.id ? nextMatch : match));
+    const nextPayload = { activeMatchId, matches: nextMatches, players: nextPlayers, siteSettings, venues };
+
+    setPlayers(nextPlayers);
+    setMatches(nextMatches);
+    await saveRemotePayloadWithBackup(nextPayload, "partido_finalizado");
   }
 
   function deleteClosedMatch(matchId: string) {
@@ -2592,9 +2736,14 @@ export default function Home() {
     updateMatch(next);
   }
 
-  function saveMatchConfiguration() {
+  async function saveMatchConfiguration() {
     if (!matchCanBeSaved) return;
-    updateMatch({ ...activeMatch, configured: true, season: activeMatchSeason });
+    const nextMatch = { ...activeMatch, configured: true, season: activeMatchSeason };
+    const nextMatches = matches.map((match) => (match.id === activeMatch.id ? nextMatch : match));
+    const nextPayload = { activeMatchId, matches: nextMatches, players, siteSettings, venues };
+
+    setMatches(nextMatches);
+    await saveRemotePayloadWithBackup(nextPayload, "partido_guardado", true);
   }
 
   function updatePlayer(playerId: string, next: Partial<Player>) {
@@ -2927,6 +3076,9 @@ export default function Home() {
     setSyncError("");
 
     try {
+      const backupCreated = await createTeamBackup("equipo_borrado", currentPayload(), false);
+      if (!backupCreated) throw new Error("No se pudo crear una copia antes de borrar el equipo.");
+
       const deleteResult = await client.from("pachanga_groups").delete().eq("id", remoteGroupId);
       if (deleteResult.error) throw new Error(deleteResult.error.message);
 
@@ -3351,7 +3503,7 @@ export default function Home() {
           <button className="secondary-button" onClick={() => toggleQuickForm("team")}>
             + Equipo
           </button>
-          <button className="secondary-button" onClick={toggleSettingsPanel} disabled={!canUseAdminControls}>
+          <button className="secondary-button" onClick={toggleSettingsPanel} disabled={!canUseAdminControls && !isRegisteredUser}>
             Configurar
           </button>
         </div>
@@ -3518,13 +3670,13 @@ export default function Home() {
         <section className="top-panel settings-panel" ref={settingsPanelRef}>
           <label>
             Instrucciones
-            <input value={siteSettings.subtitle} onChange={(event) => setSiteSettings({ ...siteSettings, subtitle: event.target.value })} />
+            <input value={siteSettings.subtitle} disabled={!canUseAdminControls} onChange={(event) => setSiteSettings({ ...siteSettings, subtitle: event.target.value })} />
           </label>
           <div className="palette-field">
             <span>Color equipo 1</span>
             <div className="color-select">
               <span style={{ background: siteSettings.teamAColor }} />
-              <select value={siteSettings.teamAColor} onChange={(event) => setSiteSettings({ ...siteSettings, teamAColor: event.target.value })}>
+              <select value={siteSettings.teamAColor} disabled={!canUseAdminControls} onChange={(event) => setSiteSettings({ ...siteSettings, teamAColor: event.target.value })}>
                 {teamPalette.map((color) => (
                   <option key={`team-a-${color.value}`} value={color.value}>{color.name}</option>
                 ))}
@@ -3535,12 +3687,53 @@ export default function Home() {
             <span>Color equipo 2</span>
             <div className="color-select">
               <span style={{ background: siteSettings.teamBColor }} />
-              <select value={siteSettings.teamBColor} onChange={(event) => setSiteSettings({ ...siteSettings, teamBColor: event.target.value })}>
+              <select value={siteSettings.teamBColor} disabled={!canUseAdminControls} onChange={(event) => setSiteSettings({ ...siteSettings, teamBColor: event.target.value })}>
                 {teamPalette.map((color) => (
                   <option key={`team-b-${color.value}`} value={color.value}>{color.name}</option>
                 ))}
               </select>
             </div>
+          </div>
+          <div className="backup-panel">
+            <div className="backup-title">
+              <div>
+                <span>Copias de seguridad</span>
+                <strong>Rescate de equipos</strong>
+              </div>
+              <div className="backup-actions">
+                <button type="button" onClick={() => void loadTeamBackups()} disabled={!isRegisteredUser || backupsLoading}>
+                  Recargar
+                </button>
+                <button type="button" onClick={() => void createManualBackup()} disabled={!canUseAdminControls}>
+                  Crear copia
+                </button>
+              </div>
+            </div>
+            <p>
+              Al guardar o finalizar un partido se crea una copia en el servidor. Antes de borrar un equipo también se guarda una copia de rescate.
+            </p>
+            {backupMessage ? <small className="backup-message">{backupMessage}</small> : null}
+            {backupsLoading ? <small className="backup-message">Cargando copias...</small> : null}
+            {!isRegisteredUser ? <small className="backup-message">Entra con Google para ver tus copias.</small> : null}
+            {isRegisteredUser && teamBackups.length === 0 && !backupsLoading ? (
+              <small className="backup-message">Todavía no hay copias guardadas.</small>
+            ) : null}
+            {teamBackups.length > 0 ? (
+              <div className="backup-list">
+                {teamBackups.map((backup) => (
+                  <article key={backup.id}>
+                    <div>
+                      <strong>{backup.groupName}</strong>
+                      <span>{backupReasonLabels[backup.reason] ?? backup.reason} · {new Date(backup.createdAt).toLocaleString("es-ES", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}</span>
+                      <small>{backup.playerCount} jugadores · {backup.matchCount} partidos{backup.teamCode ? ` · ID ${backup.teamCode}` : ""}</small>
+                    </div>
+                    <button type="button" onClick={() => void restoreTeamBackup(backup)}>
+                      Restaurar
+                    </button>
+                  </article>
+                ))}
+              </div>
+            ) : null}
           </div>
           <button className="panel-hide-button" type="button" onClick={() => setShowSettings(false)}>
             Guardar
@@ -3808,7 +4001,7 @@ export default function Home() {
               />
             </label>
             {canUseAdminControls && !matchFinalized ? (
-              <button className="save-match-button" type="button" onClick={saveMatchConfiguration} disabled={!matchCanBeSaved || matchConfigured}>
+              <button className="save-match-button" type="button" onClick={() => void saveMatchConfiguration()} disabled={!matchCanBeSaved || matchConfigured}>
                 {matchConfigured ? "Guardado" : "Guardar partido"}
               </button>
             ) : null}
@@ -4048,7 +4241,7 @@ export default function Home() {
             {matchFinalized ? (
               <small className="result-locked-note">Partido finalizado. Puedes corregir goleadores y asistencia.</small>
             ) : (
-              <button disabled={!matchConfigured || !resultIsReady || !canUseAdminControls} onClick={finalizeMatch}>Finalizar partido</button>
+              <button disabled={!matchConfigured || !resultIsReady || !canUseAdminControls} onClick={() => void finalizeMatch()}>Finalizar partido</button>
             )}
           </div>
         </aside>

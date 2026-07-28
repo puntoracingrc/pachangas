@@ -276,6 +276,115 @@ h1 {
   grid-template-columns: minmax(260px, 1fr) minmax(150px, 0.35fr) minmax(150px, 0.35fr) 110px;
 }
 
+.backup-panel {
+  background: #fffdf7;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: grid;
+  gap: 10px;
+  grid-column: 1 / -1;
+  padding: 12px;
+}
+
+.backup-title {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+.backup-title span {
+  color: var(--ink-soft);
+  display: block;
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.backup-title strong {
+  display: block;
+  font-size: 18px;
+  margin-top: 2px;
+}
+
+.backup-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.backup-actions button,
+.backup-list button {
+  background: #202820;
+  border: 0;
+  border-radius: 8px;
+  color: #fff;
+  font-weight: 900;
+  min-height: 38px;
+  padding: 0 12px;
+}
+
+.backup-actions button:first-child {
+  background: #f1efe6;
+  border: 1px solid var(--line);
+  color: var(--foreground);
+}
+
+.backup-actions button:disabled,
+.backup-list button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.backup-panel p,
+.backup-message {
+  color: var(--ink-soft);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.35;
+  margin: 0;
+}
+
+.backup-message {
+  color: #0f7b3d;
+  display: block;
+}
+
+.backup-list {
+  display: grid;
+  gap: 8px;
+}
+
+.backup-list article {
+  align-items: center;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: minmax(0, 1fr) 110px;
+  padding: 10px;
+}
+
+.backup-list strong,
+.backup-list span,
+.backup-list small {
+  display: block;
+}
+
+.backup-list strong {
+  font-size: 15px;
+}
+
+.backup-list span,
+.backup-list small {
+  color: var(--ink-soft);
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
 .top-player-form {
   display: grid;
   gap: 10px;
@@ -3644,6 +3753,25 @@ select:disabled {
   .add-player,
   .match-list {
     grid-template-columns: 1fr;
+  }
+
+  .backup-title,
+  .backup-list article {
+    align-items: stretch;
+    grid-template-columns: 1fr;
+  }
+
+  .backup-title {
+    display: grid;
+  }
+
+  .backup-actions {
+    justify-content: stretch;
+  }
+
+  .backup-actions button,
+  .backup-list button {
+    width: 100%;
   }
 
   .stats-row {

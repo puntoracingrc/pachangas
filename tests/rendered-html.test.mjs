@@ -43,19 +43,21 @@ test("builds the user manual as its own page", async () => {
   assert.match(html, /Si cambias de Voy a Duda o No/);
   assert.match(html, /Cualquier miembro puede subir una foto de equipo/);
   assert.match(html, /foto en miniatura/);
+  assert.match(html, /copias automáticas al guardar o finalizar un partido/);
   assert.match(html, /Borrar jugador lo deja fuera del grupo/);
   assert.match(html, /Ranking vivo/);
   assert.match(html, /Volver/);
 });
 
 test("keeps the project wired to the Pachangas app", async () => {
-  const [page, layout, packageJson, supabaseClient, globalsCss, googleAuthPage] = await Promise.all([
+  const [page, layout, packageJson, supabaseClient, globalsCss, googleAuthPage, supabaseSql] = await Promise.all([
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
     readFile(new URL("../package.json", import.meta.url), "utf8"),
     readFile(new URL("../app/supabaseClient.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
     readFile(new URL("../app/auth/google/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../supabase/pachangas.sql", import.meta.url), "utf8"),
   ]);
 
   assert.match(page, /join_pachanga_team/);
@@ -191,6 +193,16 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /team-hero-logo/);
   assert.match(page, /Equipo: \{currentTeamName\}/);
   assert.match(page, /Instrucciones/);
+  assert.match(page, /Copias de seguridad/);
+  assert.match(page, /create_pachanga_group_backup/);
+  assert.match(page, /restore_pachanga_group_backup/);
+  assert.match(page, /partido_guardado/);
+  assert.match(page, /partido_finalizado/);
+  assert.match(page, /equipo_borrado/);
+  assert.match(globalsCss, /\.backup-panel/);
+  assert.match(globalsCss, /\.backup-list article/);
+  assert.match(supabaseSql, /create table if not exists public\.pachanga_group_backups/);
+  assert.match(supabaseSql, /create or replace function public\.restore_pachanga_group_backup/);
   assert.doesNotMatch(page, /setSiteSettings\(\{ \.\.\.siteSettings, title:/);
   assert.doesNotMatch(page, /setSiteSettings\(\{ \.\.\.siteSettings, brand:/);
   assert.match(page, /const nextName = displayName\(profileName\.trim\(\)\)/);

@@ -74,8 +74,10 @@ const manualFlows = [
     steps: [
       "Con + Campo creas un campo con nombre, precio y modalidad por defecto.",
       "La modalidad puede ser fútbol sala, fútbol 7 o fútbol 11.",
-      "En Configurar puedes cambiar nombre de la web, título, subtítulo y colores de los equipos.",
+      "En Configurar puedes cambiar las instrucciones del equipo y los colores de los equipos.",
       "Los colores elegidos se aplican a bloques, listas, fichas, campo y goleadores.",
+      "Desde Configurar también puedes crear una copia manual, ver las últimas copias del servidor y restaurar una copia si algo se ha borrado por error.",
+      "La app crea copias automáticas al guardar o finalizar un partido, y también justo antes de borrar un equipo.",
     ],
   },
   {
