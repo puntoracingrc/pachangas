@@ -957,6 +957,15 @@ select:disabled {
   min-width: 0;
 }
 
+.card-badges {
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  grid-column: 2;
+  grid-row: 1;
+}
+
 .payer-badge {
   align-items: center;
   background: #16a34a;
@@ -973,6 +982,30 @@ select:disabled {
   height: 36px;
   justify-content: center;
   width: 34px;
+}
+
+.injury-badge {
+  align-items: center;
+  background: #dc2626;
+  border: 2px solid #fee2e2;
+  border-radius: 50%;
+  box-shadow: 0 6px 14px rgba(220, 38, 38, 0.2);
+  color: #fff;
+  display: flex;
+  height: 34px;
+  justify-content: center;
+  width: 34px;
+}
+
+.injury-badge svg,
+.inline-injury svg,
+.token-injury svg {
+  fill: currentColor;
+}
+
+.injury-badge svg {
+  height: 20px;
+  width: 20px;
 }
 
 .player-name {
@@ -1029,11 +1062,52 @@ select:disabled {
   color: #fff;
 }
 
+.inline-injury {
+  align-items: center;
+  background: #dc2626;
+  border-radius: 50%;
+  color: #fff;
+  display: inline-flex;
+  flex: 0 0 auto;
+  height: 19px;
+  justify-content: center;
+  margin-right: 5px;
+  vertical-align: middle;
+  width: 19px;
+}
+
+.inline-injury svg {
+  height: 13px;
+  width: 13px;
+}
+
+.scorer-row .inline-injury,
+.ranking .inline-injury,
+.team .inline-injury {
+  align-items: center;
+  background: #dc2626;
+  border-radius: 50%;
+  color: #fff;
+  display: inline-flex;
+  flex: 0 0 auto;
+  font-size: 0;
+  height: 19px;
+  justify-content: center;
+  margin-right: 5px;
+  padding: 0;
+  width: 19px;
+}
+
 .reserve-chip {
   border-left: 1px solid rgba(255, 255, 255, 0.34);
   font-style: normal;
   margin-left: 6px;
   padding-left: 6px;
+}
+
+.injured-toggle {
+  background: #fff1f2;
+  border-color: #fecdd3;
 }
 
 .player-actions {
@@ -1266,6 +1340,31 @@ select:disabled {
 
 .player-token.team-a {
   border-color: var(--team-a);
+}
+
+.player-token.injured-token {
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.24), 0 8px 18px rgba(0, 0, 0, 0.22);
+}
+
+.player-token .token-injury {
+  align-items: center;
+  background: #dc2626;
+  border: 1px solid #fee2e2;
+  border-radius: 50%;
+  color: #fff;
+  display: flex;
+  height: 18px;
+  justify-content: center;
+  position: absolute;
+  right: -4px;
+  top: -5px;
+  width: 18px;
+  z-index: 2;
+}
+
+.player-token .token-injury svg {
+  height: 12px;
+  width: 12px;
 }
 
 .empty-token {

@@ -9,6 +9,7 @@ type Player = {
   avatar?: string;
   phone?: string;
   goalkeeperOnly?: boolean;
+  injured?: boolean;
   rating: number;
   ratings?: number[];
   position: "Porteria" | "Defensa" | "Medio" | "Ataque";
@@ -168,6 +169,14 @@ function TrashLogo() {
   );
 }
 
+function HospitalLogo() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 24 24">
+      <path d="M4 21V5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v16h-6v-5h-4v5H4Zm2-2h2v-5h8v5h2V5H6v14Zm5-6v-3H8V8h3V5h2v3h3v2h-3v3h-2Z" />
+    </svg>
+  );
+}
+
 const matchKinds: Record<MatchKind, { label: string; targetPlayers: number; teamSize: number }> = {
   sala: { label: "Fútbol sala", targetPlayers: 10, teamSize: 5 },
   futbol7: { label: "Fútbol 7", targetPlayers: 14, teamSize: 7 },
@@ -239,11 +248,15 @@ function normalizePayload(payload?: Partial<AppPayload>): AppPayload {
         reserveLimit: Math.max(0, Math.floor(match.reserveLimit ?? 0)),
       }))
     : fallback.matches;
+  const players = (payload?.players ?? fallback.players).map((player) => ({
+    ...player,
+    injured: Boolean(player.injured),
+  }));
 
   return {
     activeMatchId: payload?.activeMatchId && matches.some((match) => match.id === payload.activeMatchId) ? payload.activeMatchId : matches[0].id,
     matches,
-    players: payload?.players ?? fallback.players,
+    players,
     siteSettings: normalizeSiteSettings(payload?.siteSettings),
     venues,
   };
@@ -726,12 +739,35 @@ export default function Home() {
   }
 
   function setStatus(playerId: string, status: MatchPlayer["status"]) {
+    const player = players.find((item) => item.id === playerId);
+    if (status === "voy" && player?.injured) return;
     const existing = activeMatch.players.find((entry) => entry.playerId === playerId);
     const joinedAt = status === "voy" ? (existing?.status === "voy" ? existing.joinedAt : new Date().toISOString()) : undefined;
     const nextPlayers = existing
       ? activeMatch.players.map((entry) => (entry.playerId === playerId ? { ...entry, status, joinedAt, paid: status === "voy" ? entry.paid : false } : entry))
       : [...activeMatch.players, { playerId, status, joinedAt, paid: false }];
     updateMatch({ ...activeMatch, players: nextPlayers });
+  }
+
+  function setPlayerInjured(playerId: string, injured: boolean) {
+    updatePlayer(playerId, { injured });
+    if (!injured) return;
+
+    setMatches((current) =>
+      current.map((match) => {
+        const existing = match.players.find((entry) => entry.playerId === playerId);
+        if (!existing) return match;
+
+        return {
+          ...match,
+          players: match.players.map((entry) =>
+            entry.playerId === playerId
+              ? { ...entry, status: "no", joinedAt: undefined, paid: false }
+              : entry,
+          ),
+        };
+      }),
+    );
   }
 
   function togglePaid(playerId: string) {
@@ -752,6 +788,7 @@ export default function Home() {
       name,
       phone: "",
       goalkeeperOnly: false,
+      injured: false,
       rating: 5,
       ratings: [],
       position: "Medio",
@@ -874,7 +911,14 @@ export default function Home() {
 
         return (
           <div className={`scorer-row ${variant}-row`} key={player.id}>
-            <span>{playerDisplayName(player)}</span>
+            <span>
+              {player.injured ? (
+                <span className="inline-injury" title="Jugador lesionado" aria-label="Jugador lesionado">
+                  <HospitalLogo />
+                </span>
+              ) : null}
+              {playerDisplayName(player)}
+            </span>
             <button type="button" disabled={goals === 0} onClick={() => setPlayerGoals(player.id, goals - 1)}>-</button>
             <b>{goals}</b>
             <button type="button" disabled={!resultIsReady || assignedTeamGoals >= teamLimit} onClick={() => setPlayerGoals(player.id, goals + 1)}>+</button>
@@ -1003,8 +1047,8 @@ export default function Home() {
   const rankedPlayers = [...players].sort((a, b) => scorePlayer(b) - scorePlayer(a));
   const sortedPlayers = [...players].sort((a, b) => {
     const statusOrder: Record<MatchPlayer["status"] | "sin", number> = { voy: 0, duda: 1, no: 2, sin: 3 };
-    const statusA = activeMatch.players.find((entry) => entry.playerId === a.id)?.status ?? "sin";
-    const statusB = activeMatch.players.find((entry) => entry.playerId === b.id)?.status ?? "sin";
+    const statusA = a.injured ? "no" : activeMatch.players.find((entry) => entry.playerId === a.id)?.status ?? "sin";
+    const statusB = b.injured ? "no" : activeMatch.players.find((entry) => entry.playerId === b.id)?.status ?? "sin";
     return statusOrder[statusA] - statusOrder[statusB] || a.name.localeCompare(b.name, "es");
   });
   const teamAPlayerIds = new Set(suggested.teamA.map((player) => player.id));
@@ -1283,7 +1327,7 @@ export default function Home() {
 
   function renderPlayerCard(player: Player, team?: "A" | "B") {
     const matchEntry = activeMatch.players.find((entry) => entry.playerId === player.id);
-    const status = matchEntry?.status;
+    const status = player.injured ? "no" : matchEntry?.status;
     const isReserve = reserveIds.includes(player.id);
     const isWaiting = waitingIds.includes(player.id);
     const teamClass = team === "A" ? "team-a-card" : team === "B" ? "team-b-card" : "";
@@ -1307,14 +1351,23 @@ export default function Home() {
             {isWaiting ? <em className="reserve-chip">Espera</em> : null}
           </span>
         </div>
-        {payerId === player.id ? (
-          <span className="payer-badge" title="Le toca pagar el campo" aria-label="Le toca pagar el campo">
-            $
-          </span>
+        {player.injured || payerId === player.id ? (
+          <div className="card-badges">
+            {player.injured ? (
+              <span className="injury-badge" title="Jugador lesionado" aria-label="Jugador lesionado">
+                <HospitalLogo />
+              </span>
+            ) : null}
+            {payerId === player.id ? (
+              <span className="payer-badge" title="Le toca pagar el campo" aria-label="Le toca pagar el campo">
+                $
+              </span>
+            ) : null}
+          </div>
         ) : null}
         <div className="player-actions">
           <div className="status-buttons" aria-label={`Estado de ${playerDisplayName(player)}`}>
-            <button className={status === "voy" ? "selected" : ""} onClick={() => setStatus(player.id, "voy")}>Voy</button>
+            <button className={status === "voy" ? "selected" : ""} disabled={Boolean(player.injured)} onClick={() => setStatus(player.id, "voy")}>Voy</button>
             <button className={status === "duda" ? "selected" : ""} onClick={() => setStatus(player.id, "duda")}>Duda</button>
             <button className={status === "no" ? "selected danger" : ""} onClick={() => setStatus(player.id, "no")}>No</button>
           </div>
@@ -1895,6 +1948,14 @@ export default function Home() {
                   />
                   Portero fijo
                 </label>
+                <label className="toggle-field injured-toggle">
+                  <input
+                    type="checkbox"
+                    checked={Boolean(selectedPlayer.injured)}
+                    onChange={(event) => setPlayerInjured(selectedPlayer.id, event.target.checked)}
+                  />
+                  Lesionado
+                </label>
                 <label>
                   Posición preferida
                   <select
@@ -1955,7 +2016,14 @@ export default function Home() {
             {rankedPlayers.slice(0, 8).map((player, index) => (
               <div key={player.id}>
                 <span>{index + 1}</span>
-                <strong>{playerDisplayName(player)}</strong>
+                <strong>
+                  {player.injured ? (
+                    <span className="inline-injury" title="Jugador lesionado" aria-label="Jugador lesionado">
+                      <HospitalLogo />
+                    </span>
+                  ) : null}
+                  {playerDisplayName(player)}
+                </strong>
                 <small>{scorePlayer(player).toFixed(1)} pts · {player.goals} goles · {player.wins} victorias</small>
               </div>
             ))}
@@ -1976,6 +2044,11 @@ function Team({ title, players, variant }: { title: string; players: Player[]; v
       {orderedPlayers.map((player) => (
         <div className={playerPosition(player) === "Porteria" ? "goalkeeper-row" : ""} key={player.id}>
           <span>
+            {player.injured ? (
+              <span className="inline-injury" title="Jugador lesionado" aria-label="Jugador lesionado">
+                <HospitalLogo />
+              </span>
+            ) : null}
             {playerDisplayName(player)}
             <em>({scorePlayer(player).toFixed(1)}) {player.goals} Goles</em>
           </span>
@@ -2019,11 +2092,16 @@ function MatchPitch({ teamA, teamB, kind }: { teamA: Player[]; teamB: Player[]; 
       ))}
       {tokens.map(({ player, x, y, variant }) => (
         <button
-          className={`player-token ${variant}`}
+          className={`player-token ${variant} ${player.injured ? "injured-token" : ""}`}
           key={player.id}
           style={{ left: `${x}%`, top: `${y}%` }}
           title={`${playerDisplayName(player)} · ${playerPosition(player)} · ${scorePlayer(player).toFixed(1)}`}
         >
+          {player.injured ? (
+            <span className="token-injury" title="Jugador lesionado" aria-label="Jugador lesionado">
+              <HospitalLogo />
+            </span>
+          ) : null}
           {player.avatar ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={player.avatar} alt="" />
