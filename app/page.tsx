@@ -360,7 +360,7 @@ export default function Home() {
   const [newPlayer, setNewPlayer] = useState("");
   const [newVenue, setNewVenue] = useState({ name: "", cost: "56", kind: "futbol7" as MatchKind });
   const [newRating, setNewRating] = useState("5");
-  const [openQuickForm, setOpenQuickForm] = useState<"player" | "venue" | null>(null);
+  const [openQuickForm, setOpenQuickForm] = useState<"player" | "venue" | "team" | null>(null);
   const [showSettings, setShowSettings] = useState(false);
   const [siteSettings, setSiteSettings] = useState<SiteSettings>(defaultSiteSettings);
   const [result, setResult] = useState({ a: "", b: "" });
@@ -959,6 +959,7 @@ export default function Home() {
       if (memberResult.error) throw new Error(memberResult.error.message);
 
       await loadTeams(client, insertResult.data.id);
+      setOpenQuickForm(null);
     } catch (error) {
       setSyncStatus("error");
       setSyncError(error instanceof Error ? error.message : "No se pudo crear el equipo");
@@ -1135,11 +1136,21 @@ export default function Home() {
           <button className="secondary-button" onClick={() => setOpenQuickForm(openQuickForm === "venue" ? null : "venue")} disabled={remoteReady && !canManageTeam}>
             + Campo
           </button>
+          <button className="secondary-button" onClick={() => setOpenQuickForm(openQuickForm === "team" ? null : "team")}>
+            + Equipo
+          </button>
           <button className="secondary-button" onClick={() => setShowSettings((current) => !current)} disabled={remoteReady && !canManageTeam}>
             Configurar
           </button>
         </div>
       </section>
+
+      {openQuickForm === "team" ? (
+        <form className="top-panel team-create-form top-team-form" onSubmit={createTeam}>
+          <input value={newTeamName} onChange={(event) => setNewTeamName(event.target.value)} placeholder="Nombre del nuevo equipo" />
+          <button type="submit">Crear equipo</button>
+        </form>
+      ) : null}
 
       <section className="top-panel team-access-panel">
         <div className="team-access-current">
@@ -1170,10 +1181,6 @@ export default function Home() {
           Invitación
           <input readOnly value={currentTeamInviteUrl()} onFocus={(event) => event.currentTarget.select()} placeholder="Crea un equipo para invitar" />
         </label>
-        <form className="team-create-form" onSubmit={createTeam}>
-          <input value={newTeamName} onChange={(event) => setNewTeamName(event.target.value)} placeholder="Nombre del nuevo equipo" />
-          <button type="submit">Crear equipo</button>
-        </form>
         {teamMembers.length > 0 ? (
           <div className="team-members">
             <span>Miembros</span>

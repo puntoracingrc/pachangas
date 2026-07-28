@@ -117,11 +117,17 @@ h1 {
   margin-top: 0;
 }
 
+.top-team-form {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: minmax(260px, 1fr) 160px;
+}
+
 .team-access-panel {
   align-items: end;
   display: grid;
   gap: 10px;
-  grid-template-columns: minmax(190px, 0.9fr) minmax(150px, 0.65fr) 110px 130px minmax(240px, 1.2fr) minmax(260px, 1.1fr);
+  grid-template-columns: minmax(190px, 0.95fr) minmax(150px, 0.7fr) 110px 130px minmax(260px, 1.35fr);
 }
 
 .team-access-current,
@@ -132,8 +138,7 @@ h1 {
 
 .team-access-current span,
 .team-access-meta span,
-.team-invite-link,
-.team-create-form + small {
+.team-invite-link {
   color: var(--ink-soft);
   font-size: 12px;
   font-weight: 800;
@@ -1385,7 +1390,6 @@ select {
   }
 
   .team-invite-link,
-  .team-create-form,
   .team-access-panel .sync-status {
     grid-column: 1 / -1;
   }
@@ -1448,6 +1452,7 @@ select {
 
   .top-panel.top-player-form,
   .top-panel.top-venue-form,
+  .top-panel.top-team-form,
   .team-create-form {
     grid-template-columns: 1fr;
   }
