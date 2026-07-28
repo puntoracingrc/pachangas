@@ -181,6 +181,10 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(globalsCss, /\.player-facing-main \.readonly-editor/);
   assert.match(globalsCss, /\.ranking-toolbar/);
   assert.match(globalsCss, /\.ranking-sort-buttons/);
+  assert.match(globalsCss, /\.ranking-card-grid/);
+  assert.match(globalsCss, /\.ranking-player-card/);
+  assert.match(globalsCss, /\.ranking-card-rank/);
+  assert.match(globalsCss, /\.ranking-card-badge/);
   assert.match(globalsCss, /\.team-photo-card/);
   assert.match(globalsCss, /\.history-item\.has-photo/);
   assert.match(globalsCss, /\.google-signin-button/);
@@ -210,6 +214,9 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /teamGalleryOpen/);
   assert.match(page, /teamGalleryPlayers/);
   assert.match(page, /renderTeamMiniCard/);
+  assert.match(page, /renderRankingMiniCard/);
+  assert.match(page, /ranking-card-grid/);
+  assert.match(page, /ranking-player-card/);
   assert.match(page, /Mi equipo/);
   assert.match(page, /function scrollToPanel/);
   assert.match(page, /function showQuickForm/);

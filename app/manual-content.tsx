@@ -113,7 +113,7 @@ const manualFlows = [
       "Próximos partidos muestra solo partidos abiertos y guardados.",
       "Historial muestra los últimos partidos con separadores por mes, foto en miniatura y resumen de pago y goles.",
       "Ranking vivo se puede filtrar por la temporada guardada en cada partido, de septiembre a agosto, y ordenar por media, goles, partidos o ganados.",
-      "Cada fila del ranking abre la ficha del jugador para consultar detalle, estado y evolución.",
+      "Cada carta del ranking abre la ficha del jugador para consultar detalle, estado y evolución.",
     ],
   },
   {

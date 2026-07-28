@@ -3706,6 +3706,64 @@ export default function Home() {
     );
   }
 
+  function renderRankingMiniCard(row: (typeof rankedPlayers)[number], index: number) {
+    const player = row.player;
+    const playerFacets = ratingFacetsForPlayer(player);
+    const compactAge = playerAge(player.birthDate, currentDateValue);
+
+    return (
+      <button
+        aria-label={`Abrir ficha de ${playerDisplayName(player)} desde ranking`}
+        className={`fifa-player-card team-mini-player-card ranking-player-card ${player.inactive ? "team-mini-inactive" : ""}`}
+        key={player.id}
+        onClick={() => openPlayerProfile(player.id)}
+        type="button"
+      >
+        <span className="ranking-card-rank">{index + 1}</span>
+        <span className="fifa-score">{Math.round(row.media * 10)}</span>
+        <span className="fifa-position">{positionShort(player)}</span>
+        <span className="fifa-photo">
+          {player.avatar ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={player.avatar} alt={`Foto de ${playerDisplayName(player)}`} />
+          ) : (
+            <b>+</b>
+          )}
+        </span>
+        <strong>{playerDisplayName(player)}</strong>
+        <span className="fifa-card-meta">
+          {row.goals} Goles · {row.appearances} PJ{compactAge !== null ? ` · ${compactAge} años` : ""}
+        </span>
+        <span className="ranking-card-detail">
+          Forma {row.form.percent}% · {row.wins} {row.wins === 1 ? "victoria" : "victorias"}
+        </span>
+        <span className="fifa-facets">
+          {playerFacets.map((facet) => (
+            <span key={facet.key}>
+              <b>{Math.round(facetAverage(player, facet.key) * 10)}</b>
+              {facet.short}
+            </span>
+          ))}
+        </span>
+        <span className="ranking-card-badge">{rankingBadgeText(row)}</span>
+        {player.injured || player.inactive ? (
+          <span className="ranking-card-flags">
+            {player.injured ? (
+              <span className="inline-injury" title="Jugador lesionado" aria-label="Jugador lesionado">
+                <HospitalLogo />
+              </span>
+            ) : null}
+            {player.inactive ? (
+              <span className="inline-inactive" title="Ya no está en el grupo" aria-label="Ya no está en el grupo">
+                <UserOffLogo />
+              </span>
+            ) : null}
+          </span>
+        ) : null}
+      </button>
+    );
+  }
+
   function renderPlayerCard(player: Player, team?: "A" | "B") {
     const matchEntry = activeMatch.players.find((entry) => entry.playerId === player.id);
     const status = player.injured || player.inactive ? "no" : matchEntry?.status;
@@ -4950,34 +5008,8 @@ export default function Home() {
               </div>
             </div>
           </div>
-          <div className="ranking">
-            {rankedPlayers.slice(0, 8).map((row, index) => (
-              <button
-                className="ranking-row"
-                key={row.player.id}
-                onClick={() => openPlayerProfile(row.player.id)}
-                type="button"
-              >
-                <span>{index + 1}</span>
-                <strong>
-                  {row.player.inactive ? (
-                    <span className="inline-inactive" title="Ya no está en el grupo" aria-label="Ya no está en el grupo">
-                      <UserOffLogo />
-                    </span>
-                  ) : null}
-                  {row.player.injured ? (
-                    <span className="inline-injury" title="Jugador lesionado" aria-label="Jugador lesionado">
-                      <HospitalLogo />
-                    </span>
-                  ) : null}
-                  {playerDisplayName(row.player)}
-                </strong>
-                <b>{rankingBadgeText(row)}</b>
-                <small>
-                  {positionLabel(row.player)} · Forma {row.form.percent}% · {row.form.label} · {row.appearances} {row.appearances === 1 ? "partido" : "partidos"} · {row.goals} {row.goals === 1 ? "gol" : "goles"} · {row.wins} {row.wins === 1 ? "victoria" : "victorias"} · media {row.media.toFixed(1)}
-                </small>
-              </button>
-            ))}
+          <div className="ranking ranking-card-grid">
+            {rankedPlayers.slice(0, 8).map((row, index) => renderRankingMiniCard(row, index))}
           </div>
         </div>
       </section>
