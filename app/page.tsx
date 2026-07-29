@@ -923,6 +923,10 @@ function normalizePayload(payload?: Partial<AppPayload>): AppPayload {
   };
 }
 
+function serializePayload(payload: AppPayload) {
+  return JSON.stringify(payload);
+}
+
 function normalizeRatingVotes(votes?: RatingVote[]) {
   return (votes ?? [])
     .map((vote) => {
@@ -1724,6 +1728,8 @@ export default function Home() {
   });
   const applyingRemoteRef = useRef(false);
   const payloadRef = useRef<AppPayload | null>(null);
+  const lastCommittedPayloadJsonRef = useRef("");
+  const autosaveInFlightRef = useRef(false);
   const remotePayloadRevisionRef = useRef<number | null>(null);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const createMenuRef = useRef<HTMLDivElement>(null);
@@ -1788,6 +1794,7 @@ export default function Home() {
 
   function applyPayload(payload: AppPayload, revision?: number | string | null) {
     applyingRemoteRef.current = true;
+    lastCommittedPayloadJsonRef.current = serializePayload(payload);
     setPlayers(payload.players);
     setVenues(payload.venues);
     setSiteSettings(payload.siteSettings);
@@ -1796,7 +1803,7 @@ export default function Home() {
     if (revision !== undefined) setRemoteRevision(revision);
     window.setTimeout(() => {
       applyingRemoteRef.current = false;
-    }, 0);
+    }, 250);
   }
 
   function applyRemoteCommit(commit: RemotePayloadCommit | null | undefined) {
@@ -1807,9 +1814,24 @@ export default function Home() {
     return true;
   }
 
+  function remoteWriteErrorMessage(message = "Otro usuario ha actualizado antes. Espera la sincronización y prueba otra vez.") {
+    const normalizedMessage = message.toLowerCase();
+    if (normalizedMessage.includes("connection pool")) {
+      return "Supabase está saturado. La app reintentará sincronizar en unos segundos.";
+    }
+    if (normalizedMessage.includes("team changed before saving")) {
+      return "El equipo cambió en otro dispositivo. Recargando datos...";
+    }
+    return message;
+  }
+
+  function isRemoteRevisionConflict(message: string) {
+    return message.toLowerCase().includes("team changed before saving");
+  }
+
   function markRemoteWriteError(message = "Otro usuario ha actualizado antes. Espera la sincronización y prueba otra vez.") {
     setSyncStatus("error");
-    setSyncError(message);
+    setSyncError(remoteWriteErrorMessage(message));
   }
 
   function isAnonymousAuthUser(user: User | null) {
@@ -2048,6 +2070,12 @@ export default function Home() {
 
   async function saveRemotePayload(payload: AppPayload) {
     if (!supabase || !remoteGroupId || !remoteReady || !canManageTeam) return false;
+    const payloadJson = serializePayload(payload);
+    if (payloadJson === lastCommittedPayloadJsonRef.current) {
+      setSyncStatus("live");
+      setSyncError("");
+      return true;
+    }
 
     setSyncStatus("connecting");
     setSyncError("");
@@ -2059,10 +2087,16 @@ export default function Home() {
     });
     if (saveResult.error) {
       markRemoteWriteError(saveResult.error.message);
+      if (isRemoteRevisionConflict(saveResult.error.message)) {
+        await loadTeams(supabase, remoteGroupId).catch((error) => {
+          setSyncError(error instanceof Error ? error.message : "No se pudo recargar el equipo");
+        });
+      }
       return false;
     }
 
     applyRemoteCommit(saveResult.data as RemotePayloadCommit);
+    lastCommittedPayloadJsonRef.current = payloadJson;
     setSyncStatus("live");
     setSyncError("");
     return true;
@@ -2274,30 +2308,55 @@ export default function Home() {
   const canAutosaveRemotePayload = Boolean(remoteGroupId && currentUserId && !selectedPlayerId && (currentRole === "owner" || currentRole === "admin"));
 
   useEffect(() => {
-    localStorage.setItem(storageKey, JSON.stringify({ players, venues, matches, activeMatchId, siteSettings }));
+    const localPayload: AppPayload = { players, venues, matches, activeMatchId, siteSettings };
+    const payloadJson = serializePayload(localPayload);
+    localStorage.setItem(storageKey, payloadJson);
 
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     saveTimerRef.current = null;
-    if (!supabase || !remoteGroupId || !remoteReady || !canAutosaveRemotePayload || applyingRemoteRef.current) return;
+    if (
+      !supabase ||
+      !remoteGroupId ||
+      !remoteReady ||
+      !canAutosaveRemotePayload ||
+      applyingRemoteRef.current ||
+      autosaveInFlightRef.current ||
+      payloadJson === lastCommittedPayloadJsonRef.current
+    ) return;
+
     const client = supabase;
+    const targetGroupId = remoteGroupId;
     saveTimerRef.current = setTimeout(() => {
       const payload = payloadRef.current ?? currentPayload();
-      void client
-        .rpc("save_pachanga_payload_if_current", {
+      const nextPayloadJson = serializePayload(payload);
+      if (nextPayloadJson === lastCommittedPayloadJsonRef.current || autosaveInFlightRef.current) return;
+
+      autosaveInFlightRef.current = true;
+      void Promise.resolve(
+        client.rpc("save_pachanga_payload_if_current", {
           expected_revision: remotePayloadRevisionRef.current,
           next_payload: payload,
-          target_group_id: remoteGroupId,
-        })
+          target_group_id: targetGroupId,
+        }),
+      )
         .then((result) => {
           if (result.error) {
             markRemoteWriteError(result.error.message);
+            if (isRemoteRevisionConflict(result.error.message)) {
+              void loadTeams(client, targetGroupId).catch((error) => {
+                setSyncError(error instanceof Error ? error.message : "No se pudo recargar el equipo");
+              });
+            }
             return;
           }
 
           applyRemoteCommit(result.data as RemotePayloadCommit);
+        })
+        .finally(() => {
+          autosaveInFlightRef.current = false;
         });
-    }, 450);
-  }, [players, venues, matches, activeMatchId, siteSettings, canAutosaveRemotePayload]);
+    }, 850);
+  }, [players, venues, matches, activeMatchId, siteSettings, canAutosaveRemotePayload, remoteGroupId, remoteReady, supabase]);
 
   useEffect(() => {
     if (!selectedPlayerId) return;

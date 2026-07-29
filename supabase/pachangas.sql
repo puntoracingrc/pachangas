@@ -724,6 +724,14 @@ begin
     raise exception 'Team changed before saving. Reload and try again.' using errcode = '40001';
   end if;
 
+  if current_group.payload = next_payload then
+    return jsonb_build_object(
+      'payload', current_group.payload,
+      'payload_revision', current_group.payload_revision,
+      'updated_at', current_group.updated_at
+    );
+  end if;
+
   update public.pachanga_groups
   set payload = next_payload
   where id = target_group_id

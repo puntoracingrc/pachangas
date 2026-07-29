@@ -349,6 +349,12 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /payloadRevision/);
   assert.match(page, /remotePayloadRevisionRef/);
   assert.match(page, /payloadRef/);
+  assert.match(page, /lastCommittedPayloadJsonRef/);
+  assert.match(page, /autosaveInFlightRef/);
+  assert.match(page, /function serializePayload/);
+  assert.match(page, /payloadJson === lastCommittedPayloadJsonRef\.current/);
+  assert.match(page, /autosaveInFlightRef\.current = true/);
+  assert.match(page, /autosaveInFlightRef\.current = false/);
   assert.match(page, /save_pachanga_payload_if_current/);
   assert.match(page, /upsert_pachanga_own_player_profile/);
   assert.match(page, /function profilePatchFor/);
@@ -392,6 +398,7 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(supabaseSql, /Rating window closed for this player/);
   assert.match(supabaseSql, /last_vote_match_count \+ 3/);
   assert.match(supabaseSql, /current_group\.payload_revision <> expected_revision/);
+  assert.match(supabaseSql, /current_group\.payload = next_payload/);
   assert.match(supabaseSql, /policy "Admins can update groups"/);
   assert.match(supabaseSql, /public\.is_registered_pachanga_user\(\)/);
   assert.doesNotMatch(supabaseSql, /policy "Members can update groups"/);
