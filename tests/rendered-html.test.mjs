@@ -57,7 +57,7 @@ test("builds the user manual as its own page", async () => {
   assert.match(html, /Ranking vivo/);
   assert.match(html, /Media, forma y equilibrio/);
   assert.match(html, /Media real = promedio/);
-  assert.match(html, /Forma actual = porcentaje temporal/);
+  assert.match(html, /Forma actual = porcentaje temporal visible de 0 a 100/);
   assert.match(html, /Forma pendiente/);
   assert.match(html, /Valor para equilibrar = media real multiplicada por forma actual/);
   assert.match(html, /Fiabilidad = 100% menos 7 puntos/);
@@ -134,6 +134,7 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /PlayerFormState/);
   assert.match(page, /hasData/);
   assert.match(page, /playerFormState/);
+  assert.match(page, /visibleFormPercent/);
   assert.match(page, /playerFormStates/);
   assert.match(page, /matchFormRatingForPlayer/);
   assert.match(page, /playerReliability/);
@@ -199,6 +200,8 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(globalsCss, /\.team-gallery-panel/);
   assert.match(globalsCss, /\.team-card-gallery/);
   assert.match(globalsCss, /\.team-mini-player-card/);
+  assert.match(globalsCss, /\.team-player-main/);
+  assert.match(globalsCss, /\.team-player-meta/);
   assert.match(globalsCss, /\.profile-close-button/);
   assert.match(globalsCss, /\.player-facing-main \.readonly-editor/);
   assert.match(globalsCss, /\.ranking-toolbar/);
@@ -241,6 +244,8 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /teamGalleryOpen/);
   assert.match(page, /teamGalleryPlayers/);
   assert.match(page, /renderTeamMiniCard/);
+  assert.match(page, /team-player-main/);
+  assert.match(page, /team-player-meta/);
   assert.match(page, /renderRankingMiniCard/);
   assert.match(page, /ranking-card-grid/);
   assert.match(page, /ranking-player-entry/);

@@ -134,7 +134,7 @@ const manualFlows = [
     steps: [
       "Media real = promedio de las facetas valoradas por compañeros. Si todavía no hay votos, se usa el valor base de la ficha.",
       "La media real no baja por no jugar, lesionarse o no apuntarse. Representa calidad: tiro, pase, defensa, físico o facetas de portero.",
-      "Forma actual = porcentaje temporal calculado con los últimos 5 partidos jugados, la racha sin venir, lesiones y fiabilidad; no se muestra hasta que el jugador tenga al menos un partido finalizado.",
+      "Forma actual = porcentaje temporal visible de 0 a 100 calculado con los últimos 5 partidos jugados, la racha sin venir, lesiones y fiabilidad; no se muestra hasta que el jugador tenga al menos un partido finalizado.",
       "Nota reciente de partido = 6.2 más ajustes por victoria, derrota ajustada o amplia, goles, portería a cero y pocos o muchos goles encajados.",
       "Antes de tener partidos, la app usa una forma neutral interna del 100% solo para equilibrar, pero la ficha muestra Forma pendiente para no inventar un dato.",
       "Lesionado no castiga la media: marca el estado En recuperación y baja la forma de forma suave hasta que vuelva a jugar.",
