@@ -84,6 +84,12 @@ type Player = {
   lateCancels: number;
 };
 
+type AvatarDraft = {
+  avatar: string;
+  avatarOffsetX: number;
+  avatarOffsetY: number;
+};
+
 type MatchPlayer = {
   playerId: string;
   status: "voy" | "duda" | "no";
@@ -1698,6 +1704,8 @@ export default function Home() {
   const [newTeamName, setNewTeamName] = useState("Mi equipo pachanguero");
   const [adminInviteToken, setAdminInviteToken] = useState<string | null>(null);
   const [avatarMessage, setAvatarMessage] = useState("");
+  const [avatarDrafts, setAvatarDrafts] = useState<Record<string, AvatarDraft>>({});
+  const [avatarAdjustingPlayerId, setAvatarAdjustingPlayerId] = useState<string | null>(null);
   const [teamPhotoMessage, setTeamPhotoMessage] = useState("");
   const [profileSaveMessage, setProfileSaveMessage] = useState("");
   const [teamBackups, setTeamBackups] = useState<TeamBackup[]>([]);
@@ -2382,6 +2390,18 @@ export default function Home() {
     setMatches((current) => current.map((match) => (match.id === next.id ? next : match)));
   }
 
+  function clearAvatarDraft(playerId: string) {
+    setAvatarDrafts((current) => {
+      if (!current[playerId]) return current;
+      const next = { ...current };
+      delete next[playerId];
+      return next;
+    });
+    if (avatarAdjustingPlayerId === playerId) setAvatarAdjustingPlayerId(null);
+    avatarDragRef.current = null;
+    setAvatarDragging(false);
+  }
+
   function openPlayerProfile(playerId: string) {
     teamGalleryReturnScrollYRef.current = null;
     setSelectedPlayerId(playerId);
@@ -2402,6 +2422,10 @@ export default function Home() {
   }
 
   function closePlayerProfile() {
+    if (selectedPlayerId) {
+      clearAvatarDraft(selectedPlayerId);
+      setAvatarMessage("");
+    }
     setSelectedPlayerId(null);
     const returnScrollY = teamGalleryReturnScrollYRef.current;
     teamGalleryReturnScrollYRef.current = null;
@@ -3008,6 +3032,9 @@ export default function Home() {
   const googleButtonText = needsLoginForSharedLink ? "Continuar con Google y volver" : "Continuar con Google";
   const selectedPlayerIsOwn = Boolean(selectedPlayer?.ownerUserId && selectedPlayer.ownerUserId === currentUserId);
   const canEditSelectedPlayer = Boolean(selectedPlayer && (canUseAdminControls || (hasRealTeam && isRegisteredUser && selectedPlayerIsOwn)));
+  const selectedAvatarDraft = selectedPlayer ? avatarDrafts[selectedPlayer.id] : undefined;
+  const selectedAvatarPreview = selectedAvatarDraft?.avatar ?? selectedPlayer?.avatar;
+  const canAdjustSelectedAvatar = Boolean(canEditSelectedPlayer && selectedPlayer && selectedAvatarDraft && avatarAdjustingPlayerId === selectedPlayer.id);
   const showPlayerSwitcher = Boolean(canUseAdminControls && selectedPlayer && !selectedPlayerIsOwn && players.length > 1);
   const showTeamAdminPanel = canUseAdminControls;
   const showMatchAdminPanel = canUseAdminControls;
@@ -3094,7 +3121,8 @@ export default function Home() {
 
   function startAvatarDrag(event: ReactPointerEvent<HTMLElement>, player: Player) {
     const canEditPlayer = canUseAdminControls || (hasRealTeam && isRegisteredUser && player.ownerUserId === currentUserId);
-    if (!player.avatar || !canEditPlayer) return;
+    const draft = avatarDrafts[player.id];
+    if (!draft?.avatar || avatarAdjustingPlayerId !== player.id || !canEditPlayer) return;
 
     event.preventDefault();
     event.currentTarget.setPointerCapture(event.pointerId);
@@ -3102,8 +3130,8 @@ export default function Home() {
       playerId: player.id,
       startX: event.clientX,
       startY: event.clientY,
-      startOffsetX: clampAvatarOffset(player.avatarOffsetX, 50),
-      startOffsetY: clampAvatarOffset(player.avatarOffsetY, 0),
+      startOffsetX: clampAvatarOffset(draft.avatarOffsetX, 50),
+      startOffsetY: clampAvatarOffset(draft.avatarOffsetY, 0),
     };
     setAvatarDragging(true);
     setAvatarMessage("Arrastra la foto y pulsa Guardar ficha");
@@ -3117,7 +3145,11 @@ export default function Home() {
     const rect = event.currentTarget.getBoundingClientRect();
     const x = clampAvatarOffset(drag.startOffsetX - ((event.clientX - drag.startX) / Math.max(rect.width, 1)) * 100, 50);
     const y = clampAvatarOffset(drag.startOffsetY - ((event.clientY - drag.startY) / Math.max(rect.height, 1)) * 100, 0);
-    updatePlayer(drag.playerId, { avatarOffsetX: x, avatarOffsetY: y });
+    setAvatarDrafts((current) => {
+      const draft = current[drag.playerId];
+      if (!draft) return current;
+      return { ...current, [drag.playerId]: { ...draft, avatarOffsetX: x, avatarOffsetY: y } };
+    });
   }
 
   function finishAvatarDrag(event: ReactPointerEvent<HTMLElement>) {
@@ -3158,7 +3190,13 @@ export default function Home() {
   async function saveSelectedPlayerProfile() {
     if (!selectedPlayer || !canEditSelectedPlayer) return;
     const normalizedName = displayName(selectedPlayer.name) || selectedPlayer.name;
-    const nextPlayers = players.map((player) => (player.id === selectedPlayer.id ? { ...player, name: normalizedName } : player));
+    const selectedAvatarDraft = avatarDrafts[selectedPlayer.id];
+    const savedPlayerId = selectedPlayer.id;
+    const nextPlayers = players.map((player) => (
+      player.id === selectedPlayer.id
+        ? { ...player, name: normalizedName, ...(selectedAvatarDraft ? selectedAvatarDraft : {}) }
+        : player
+    ));
     const editedPlayer = nextPlayers.find((player) => player.id === selectedPlayer.id);
     if (!editedPlayer) return;
     const nextPayload: AppPayload = { players: nextPlayers, venues, matches, activeMatchId, siteSettings };
@@ -3196,6 +3234,8 @@ export default function Home() {
     }
 
     setProfileSaveMessage("Ficha guardada");
+    clearAvatarDraft(savedPlayerId);
+    setAvatarMessage("");
     window.setTimeout(() => setProfileSaveMessage(""), 1800);
   }
 
@@ -3257,8 +3297,9 @@ export default function Home() {
     try {
       setAvatarMessage("Recortando foto...");
       const avatar = await withTimeout(avatarDataUrl(file), 8000, "Recorte agotado");
-      updatePlayer(playerId, { avatar, avatarOffsetX: 50, avatarOffsetY: 0 });
-      setAvatarMessage("Foto lista. Ajusta y pulsa Guardar ficha");
+      setAvatarDrafts((current) => ({ ...current, [playerId]: { avatar, avatarOffsetX: 50, avatarOffsetY: 0 } }));
+      setAvatarAdjustingPlayerId(playerId);
+      setAvatarMessage("Foto lista. Arrastra para encuadrar y pulsa Guardar ficha");
     } catch {
       setAvatarMessage("No se pudo cargar la foto.");
       window.setTimeout(() => setAvatarMessage(""), 2600);
@@ -3862,56 +3903,61 @@ export default function Home() {
     const player = row.player;
     const playerFacets = ratingFacetsForPlayer(player);
     const compactAge = playerAge(player.birthDate, currentDateValue);
+    const formText = row.form.hasData ? `Forma ${row.form.percent}%` : "Forma pendiente";
 
     return (
       <button
         aria-label={`Abrir ficha de ${playerDisplayName(player)} desde ranking`}
-        className={`fifa-player-card team-mini-player-card ranking-player-card ${player.inactive ? "team-mini-inactive" : ""}`}
+        className={`ranking-player-entry ${player.inactive ? "team-mini-inactive" : ""}`}
         key={player.id}
         onClick={() => openPlayerProfile(player.id)}
         type="button"
       >
-        <span className="ranking-card-rank">{index + 1}</span>
-        <span className="fifa-score">{Math.round(row.media * 10)}</span>
-        <span className="fifa-position">{positionShort(player)}</span>
-        <span className="fifa-photo">
-          {player.avatar ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={player.avatar} alt={`Foto de ${playerDisplayName(player)}`} draggable={false} style={avatarImageStyle(player)} />
-          ) : (
-            <b>+</b>
-          )}
-        </span>
-        <strong>{playerDisplayName(player)}</strong>
-        <span className="fifa-card-meta">
-          {row.goals} Goles · {row.appearances} PJ{compactAge !== null ? ` · ${compactAge} años` : ""}
-        </span>
-        <span className="ranking-card-detail">
-          {row.form.hasData ? `Forma ${row.form.percent}%` : "Forma pendiente"} · {row.wins} {row.wins === 1 ? "victoria" : "victorias"}
-        </span>
-        <span className="fifa-facets">
-          {playerFacets.map((facet) => (
-            <span key={facet.key}>
-              <b>{Math.round(facetAverage(player, facet.key) * 10)}</b>
-              {facet.short}
-            </span>
-          ))}
-        </span>
-        <span className="ranking-card-badge">{rankingBadgeText(row)}</span>
-        {player.injured || player.inactive ? (
-          <span className="ranking-card-flags">
-            {player.injured ? (
-              <span className="inline-injury" title="Jugador lesionado" aria-label="Jugador lesionado">
-                <HospitalLogo />
-              </span>
-            ) : null}
-            {player.inactive ? (
-              <span className="inline-inactive" title="Ya no está en el grupo" aria-label="Ya no está en el grupo">
-                <UserOffLogo />
-              </span>
-            ) : null}
+        <span className="fifa-player-card team-mini-player-card ranking-player-card">
+          <span className="ranking-card-rank">{index + 1}</span>
+          <span className="fifa-score">{Math.round(row.media * 10)}</span>
+          <span className="fifa-position">{positionShort(player)}</span>
+          <span className="fifa-photo">
+            {player.avatar ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={player.avatar} alt={`Foto de ${playerDisplayName(player)}`} draggable={false} style={avatarImageStyle(player)} />
+            ) : (
+              <b>+</b>
+            )}
           </span>
-        ) : null}
+          <strong>{playerDisplayName(player)}</strong>
+          <span className="fifa-facets">
+            {playerFacets.map((facet) => (
+              <span key={facet.key}>
+                <b>{Math.round(facetAverage(player, facet.key) * 10)}</b>
+                {facet.short}
+              </span>
+            ))}
+          </span>
+        </span>
+        <span className="ranking-player-stats">
+          <span className="ranking-card-badge">{rankingBadgeText(row)}</span>
+          <span className="ranking-stat-grid">
+            <span><b>{row.goals}</b><small>Goles</small></span>
+            <span><b>{row.appearances}</b><small>PJ</small></span>
+            <span><b>{row.wins}</b><small>PG</small></span>
+          </span>
+          <span className="ranking-card-detail">{formText}{compactAge !== null ? ` · ${compactAge} años` : ""}</span>
+          {player.injured || player.inactive ? (
+            <span className="ranking-card-flags">
+              {player.injured ? (
+                <span className="inline-injury" title="Jugador lesionado" aria-label="Jugador lesionado">
+                  <HospitalLogo />
+                </span>
+              ) : null}
+              {player.inactive ? (
+                <span className="inline-inactive" title="Ya no está en el grupo" aria-label="Ya no está en el grupo">
+                  <UserOffLogo />
+                </span>
+              ) : null}
+            </span>
+          ) : null}
+        </span>
       </button>
     );
   }
@@ -4845,15 +4891,15 @@ export default function Home() {
                     <span className="fifa-score">{Math.round(selectedPeerScore * 10)}</span>
                     <span className="fifa-position">{positionShort(selectedPlayer)}</span>
                     <span
-                      className={`fifa-photo ${canEditSelectedPlayer && selectedPlayer.avatar ? "draggable-avatar" : ""}`}
+                      className={`fifa-photo ${canAdjustSelectedAvatar ? "draggable-avatar" : ""}`}
                       onPointerCancel={finishAvatarDrag}
                       onPointerDown={(event) => startAvatarDrag(event, selectedPlayer)}
                       onPointerMove={moveAvatarDrag}
                       onPointerUp={finishAvatarDrag}
                     >
-                      {selectedPlayer.avatar ? (
+                      {selectedAvatarPreview ? (
                         // eslint-disable-next-line @next/next/no-img-element
-                        <img src={selectedPlayer.avatar} alt={`Foto de ${playerDisplayName(selectedPlayer)}`} draggable={false} style={avatarImageStyle(selectedPlayer)} />
+                        <img src={selectedAvatarPreview} alt={`Foto de ${playerDisplayName(selectedPlayer)}`} draggable={false} style={avatarImageStyle(selectedAvatarDraft ?? selectedPlayer)} />
                       ) : (
                         <b>+</b>
                       )}
@@ -4871,12 +4917,12 @@ export default function Home() {
                       ))}
                     </div>
                     {canEditSelectedPlayer ? (
-                      <label className="fifa-photo-action" title={selectedPlayer.avatar ? "Cambiar foto" : "Añadir foto"}>
-                        {selectedPlayer.avatar ? "Cambiar foto" : "Añadir foto"}
+                      <label className="fifa-photo-action" title={selectedAvatarPreview ? "Cambiar foto" : "Añadir foto"}>
+                        {selectedAvatarPreview ? "Cambiar foto" : "Añadir foto"}
                         <input
                           type="file"
                           accept="image/*"
-                          aria-label={selectedPlayer.avatar ? "Cambiar foto del jugador" : "Añadir foto del jugador"}
+                          aria-label={selectedAvatarPreview ? "Cambiar foto del jugador" : "Añadir foto del jugador"}
                           onClick={(event) => {
                             event.currentTarget.value = "";
                           }}
@@ -4888,8 +4934,8 @@ export default function Home() {
                       </label>
                     ) : null}
                   </div>
-                  {canEditSelectedPlayer && selectedPlayer.avatar ? (
-                    <small className="avatar-adjust-hint">Arrastra la foto dentro de la carta y pulsa Guardar ficha.</small>
+                  {canAdjustSelectedAvatar ? (
+                    <small className="avatar-adjust-hint">Arrastra la foto dentro de la carta. El encuadre se guarda al pulsar Guardar ficha.</small>
                   ) : null}
                   <div className="avatar-actions">
                     <label className="avatar-action-button">

@@ -173,7 +173,7 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /joinedAtLabel/);
   assert.match(page, /Voy desde/);
   assert.match(page, /perderás tu posición/);
-  assert.match(page, /className="fifa-photo-action" title=\{selectedPlayer\.avatar \? "Cambiar foto" : "Añadir foto"\}/);
+  assert.match(page, /className="fifa-photo-action" title=\{selectedAvatarPreview \? "Cambiar foto" : "Añadir foto"\}/);
   assert.match(globalsCss, /\.side-history \.history/);
   assert.match(globalsCss, /\.side-history::after/);
   assert.match(globalsCss, /\.history-season-filter/);
@@ -204,7 +204,10 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(globalsCss, /\.ranking-sort-filter/);
   assert.match(globalsCss, /\.ranking-sort-buttons/);
   assert.match(globalsCss, /\.ranking-card-grid/);
+  assert.match(globalsCss, /\.ranking-player-entry/);
   assert.match(globalsCss, /\.ranking-player-card/);
+  assert.match(globalsCss, /\.ranking-player-stats/);
+  assert.match(globalsCss, /\.ranking-stat-grid/);
   assert.match(globalsCss, /\.ranking-card-rank/);
   assert.match(globalsCss, /\.ranking-card-badge/);
   assert.match(globalsCss, /\.team-photo-card/);
@@ -238,7 +241,10 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /renderTeamMiniCard/);
   assert.match(page, /renderRankingMiniCard/);
   assert.match(page, /ranking-card-grid/);
+  assert.match(page, /ranking-player-entry/);
   assert.match(page, /ranking-player-card/);
+  assert.match(page, /ranking-player-stats/);
+  assert.match(page, /ranking-stat-grid/);
   assert.match(page, /ranking-season-filter/);
   assert.match(page, /ranking-sort-filter/);
   assert.match(page, /Mi equipo/);
@@ -257,6 +263,10 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /Guardar ficha/);
   assert.match(page, /avatarOffsetX\?: number/);
   assert.match(page, /avatarOffsetY\?: number/);
+  assert.match(page, /type AvatarDraft/);
+  assert.match(page, /avatarDrafts/);
+  assert.match(page, /selectedAvatarPreview/);
+  assert.match(page, /canAdjustSelectedAvatar/);
   assert.match(page, /clampAvatarOffset/);
   assert.match(page, /avatarImageStyle/);
   assert.match(page, /objectFit: "cover"/);
@@ -265,7 +275,7 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /startAvatarDrag/);
   assert.match(page, /moveAvatarDrag/);
   assert.match(page, /finishAvatarDrag/);
-  assert.match(page, /Arrastra la foto dentro de la carta y pulsa Guardar ficha/);
+  assert.match(page, /El encuadre se guarda al pulsar Guardar ficha/);
   assert.match(page, /birthDate\?: string/);
   assert.match(page, /playerAge/);
   assert.match(page, /Fecha nacimiento/);

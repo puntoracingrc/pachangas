@@ -3135,27 +3135,48 @@ select:disabled {
 .ranking-card-grid {
   align-items: start;
   gap: 12px;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 178px));
+  grid-template-columns: repeat(auto-fit, minmax(238px, 1fr));
   justify-content: center;
 }
 
-.ranking-player-card {
+.ranking-player-entry {
+  align-items: center;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  color: var(--foreground);
   cursor: pointer;
-  min-height: 252px;
-  max-width: 178px;
-  overflow: hidden;
-  position: relative;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: 104px minmax(0, 1fr);
+  justify-items: start;
+  min-height: 154px;
+  padding: 8px;
+  text-align: left;
+  transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
   width: 100%;
 }
 
-.ranking-player-card:hover {
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.28), 0 16px 28px rgba(70, 50, 18, 0.18);
-  transform: translateY(-2px);
+.ranking-player-entry:hover {
+  border-color: color-mix(in srgb, var(--green) 42%, var(--line));
+  box-shadow: 0 12px 24px rgba(32, 40, 32, 0.1);
+  transform: translateY(-1px);
 }
 
-.ranking-player-card:focus-visible {
+.ranking-player-entry:focus-visible {
   outline: 2px solid color-mix(in srgb, var(--green) 54%, transparent);
   outline-offset: 3px;
+}
+
+.ranking-player-card {
+  cursor: inherit;
+  min-height: 140px;
+  max-width: 104px;
+  overflow: hidden;
+  padding: 7px 6px 6px;
+  pointer-events: none;
+  position: relative;
+  width: 100%;
 }
 
 .ranking-card-rank {
@@ -3165,15 +3186,54 @@ select:disabled {
   border-radius: 50%;
   color: #fff;
   display: flex;
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 950;
-  height: 28px;
+  height: 22px;
   justify-content: center;
   position: absolute;
-  right: 8px;
-  top: 8px;
-  width: 28px;
+  right: 5px;
+  top: 5px;
+  width: 22px;
   z-index: 3;
+}
+
+.ranking-player-stats {
+  align-content: center;
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+  width: 100%;
+}
+
+.ranking-stat-grid {
+  display: grid;
+  gap: 5px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.ranking-stat-grid span {
+  background: #f8f6ef;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  display: grid;
+  gap: 1px;
+  min-height: 42px;
+  padding: 5px;
+  text-align: center;
+}
+
+.ranking-stat-grid b {
+  color: var(--foreground);
+  font-size: 16px;
+  font-weight: 950;
+  line-height: 1;
+}
+
+.ranking-stat-grid small {
+  color: var(--ink-soft);
+  font-size: 9px;
+  font-weight: 950;
+  text-transform: uppercase;
 }
 
 .ranking-card-detail {
@@ -3190,10 +3250,10 @@ select:disabled {
   border-radius: 999px;
   color: #1f3a23;
   display: inline-flex;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 950;
   justify-content: center;
-  justify-self: center;
+  justify-self: start;
   line-height: 1;
   margin-top: 4px;
   max-width: 100%;
@@ -3387,8 +3447,10 @@ select:disabled {
 .fifa-photo {
   align-items: center;
   align-self: end;
+  aspect-ratio: 0.92;
   display: flex;
   grid-row: 1 / 3;
+  height: min(158px, 34vw);
   justify-content: center;
   justify-self: end;
   margin-right: -8px;
@@ -3530,8 +3592,17 @@ select:disabled {
 }
 
 .team-mini-player-card .fifa-photo {
+  height: clamp(58px, 13vw, 92px);
   margin-right: -5px;
+  max-height: 92px;
   width: 74%;
+}
+
+.ranking-player-card .fifa-photo {
+  height: 58px;
+  margin-right: -3px;
+  max-height: 58px;
+  width: 72%;
 }
 
 .team-mini-player-card .fifa-photo b {
@@ -3563,6 +3634,55 @@ select:disabled {
 
 .team-mini-player-card .fifa-facets b {
   font-size: clamp(10px, 2.3vw, 14px);
+}
+
+.ranking-player-card {
+  max-width: 104px;
+  min-height: 140px;
+  padding: 7px 6px 6px;
+}
+
+.ranking-player-card .fifa-score {
+  font-size: 22px;
+  left: 8px;
+  top: 9px;
+}
+
+.ranking-player-card .fifa-position {
+  font-size: 8px;
+  left: 9px;
+  top: 31px;
+}
+
+.ranking-player-card .fifa-photo {
+  height: 58px;
+  margin-right: -3px;
+  max-height: 58px;
+  width: 72%;
+}
+
+.ranking-player-card .fifa-photo b {
+  font-size: 28px;
+  height: 46px;
+  width: 46px;
+}
+
+.ranking-player-card > strong {
+  font-size: 11px;
+  padding-top: 4px;
+}
+
+.ranking-player-card .fifa-facets {
+  gap: 1px 3px;
+  margin-top: 4px;
+}
+
+.ranking-player-card .fifa-facets span {
+  font-size: 7px;
+}
+
+.ranking-player-card .fifa-facets b {
+  font-size: 9px;
 }
 
 .team-mini-inactive {
