@@ -391,6 +391,9 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.doesNotMatch(page, /setSiteSettings\(\{ \.\.\.siteSettings, brand:/);
   assert.match(page, /settingsDraft/);
   assert.match(page, /function saveSettingsPanel/);
+  assert.match(page, /siteSettings: nextSettings/);
+  assert.match(page, /await saveRemotePayload\(nextPayload\)/);
+  assert.doesNotMatch(page, /if \(canUseAdminControls\) setSiteSettings\(settingsDraft\)/);
   assert.doesNotMatch(page, /setSiteSettings\(\{ \.\.\.siteSettings, subtitle:/);
   assert.match(page, /update_pachanga_member_name/);
   assert.match(page, /if \(selectedPlayerIsOwn\) setProfileName\(normalizedName\)/);

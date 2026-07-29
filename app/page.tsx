@@ -2042,7 +2042,7 @@ export default function Home() {
     return true;
   }
 
-  async function saveRemotePayloadWithBackup(payload: AppPayload, reason: string, showBackupMessage = false) {
+  async function saveRemotePayload(payload: AppPayload) {
     if (!supabase || !remoteGroupId || !remoteReady || !canManageTeam) return false;
 
     setSyncStatus("connecting");
@@ -2059,6 +2059,15 @@ export default function Home() {
     }
 
     applyRemoteCommit(saveResult.data as RemotePayloadCommit);
+    setSyncStatus("live");
+    setSyncError("");
+    return true;
+  }
+
+  async function saveRemotePayloadWithBackup(payload: AppPayload, reason: string, showBackupMessage = false) {
+    const saved = await saveRemotePayload(payload);
+    if (!saved) return false;
+
     await createTeamBackup(reason, payload, showBackupMessage);
     setSyncStatus("live");
     setSyncError("");
@@ -2467,8 +2476,25 @@ export default function Home() {
     if (nextShowSettings) scrollToPanel(settingsPanelRef);
   }
 
-  function saveSettingsPanel() {
-    if (canUseAdminControls) setSiteSettings(settingsDraft);
+  async function saveSettingsPanel() {
+    if (!canUseAdminControls) {
+      setShowSettings(false);
+      return;
+    }
+
+    const nextSettings = normalizeSiteSettings(settingsDraft);
+    const nextPayload: AppPayload = { activeMatchId, matches, players, siteSettings: nextSettings, venues };
+
+    setSiteSettings(nextSettings);
+    setSettingsDraft(nextSettings);
+    localStorage.setItem(storageKey, JSON.stringify(nextPayload));
+
+    const needsRemoteSave = Boolean(supabase && remoteGroupId && remoteReady && canManageTeam);
+    if (needsRemoteSave) {
+      const saved = await saveRemotePayload(nextPayload);
+      if (!saved) return;
+    }
+
     setShowSettings(false);
   }
 
@@ -4360,7 +4386,7 @@ export default function Home() {
               </div>
             ) : null}
           </div>
-          <button className="panel-hide-button" type="button" onClick={saveSettingsPanel}>
+          <button className="panel-hide-button" type="button" onClick={() => void saveSettingsPanel()}>
             Guardar
           </button>
         </section>
