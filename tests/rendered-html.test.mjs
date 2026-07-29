@@ -36,8 +36,8 @@ test("builds the user manual as its own page", async () => {
   const html = await readFile(new URL("../.next/server/app/manual.html", import.meta.url), "utf8");
   assert.match(html, /Manual de usuario/);
   assert.match(html, /Primera entrada/);
-  assert.match(html, /Crear o entrar en un equipo/);
-  assert.match(html, /Crear &gt; Equipo/);
+  assert.match(html, /Crear o entrar en un grupo de pachangas/);
+  assert.match(html, /Crear &gt; Grupo/);
   assert.match(html, /Crear &gt; Ficha jugador/);
   assert.match(html, /Campos y ajustes iniciales/);
   assert.match(html, /Crear partido/);
@@ -224,11 +224,12 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(globalsCss, /overflow-y:\s*auto/);
   assert.match(globalsCss, /\.hero-actions\s*\{[\s\S]*grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\)/);
   assert.match(globalsCss, /overflow-x:\s*hidden/);
-  assert.match(page, /Equipo pachanguero/);
-  assert.match(page, /equipo/);
+  assert.match(page, /Grupo de Pachangas/);
+  assert.match(page, /groupOptionLabel/);
   assert.match(page, /compactUuid/);
   assert.match(page, /expandCompactUuid/);
   assert.match(page, /remoteInviteToken/);
+  assert.match(page, /showGroupAccessPanel\s*=\s*isRegisteredUser/);
   assert.match(page, /showTeamAdminPanel\s*=\s*canUseAdminControls/);
   assert.match(page, /showMatchAdminPanel\s*=\s*canUseAdminControls/);
   assert.match(page, /showTeamAdminPanel \? \(/);
@@ -382,7 +383,7 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /partido_finalizado/);
   assert.match(page, /equipo_borrado/);
   assert.match(page, /\.limit\(3\)/);
-  assert.match(page, /solo las 3 últimas por equipo/);
+  assert.match(page, /solo las 3 últimas por grupo/);
   assert.doesNotMatch(page, /Añade asistentes para calcularlo/);
   assert.match(globalsCss, /\.backup-panel/);
   assert.match(globalsCss, /\.backup-list article/);

@@ -2,23 +2,23 @@ const manualFlows = [
   {
     audience: "Todos",
     title: "Primera entrada",
-    intro: "Al abrir Pachangas IQ puedes revisar una demo completa o entrar con Google para usar un equipo real.",
+    intro: "Al abrir Pachangas IQ puedes revisar una demo completa o entrar con Google para usar un grupo real.",
     steps: [
       "La demo muestra jugadores, partidos, historial, reservas, pagos, fichas y valoraciones para probar la web sin crear nada.",
-      "Para crear equipos, partidos, campos o administrar datos necesitas entrar con Google.",
-      "Cuando creas un equipo real, empieza limpio: sin jugadores, sin campos y sin partidos de demo.",
-      "Si llegas con un enlace de invitación, entras directamente al equipo correspondiente.",
+      "Para crear grupos, partidos, campos o administrar datos necesitas entrar con Google.",
+      "Cuando creas un grupo real, empieza limpio: sin jugadores, sin campos y sin partidos de demo.",
+      "Si llegas con un enlace de invitación, entras directamente al grupo correspondiente.",
     ],
   },
   {
     audience: "Todos",
-    title: "Crear o entrar en un equipo",
-    intro: "El equipo pachanguero es el espacio privado donde se guardan jugadores, campos, partidos e historial.",
+    title: "Crear o entrar en un grupo de pachangas",
+    intro: "El grupo de pachangas es el espacio privado donde se guardan jugadores, campos, partidos e historial.",
     steps: [
-      "Si entras con una invitación, la web te pide Google si hace falta y después vuelve al equipo correcto.",
-      "Si empiezas desde cero, pulsa Crear > Equipo, escribe el nombre y guarda. El primer usuario queda como admin.",
-      "Cuando creas un equipo real, empieza limpio: sin jugadores, sin campos y sin partidos de demo.",
-      "Comparte la invitación del equipo con los iconos de copiar o WhatsApp para que entren los demás.",
+      "Si entras con una invitación, la web te pide Google si hace falta y después vuelve al grupo correcto.",
+      "Si empiezas desde cero, pulsa Crear > Grupo, escribe el nombre y guarda. El primer usuario queda como admin.",
+      "Cuando creas un grupo real, empieza limpio: sin jugadores, sin campos y sin partidos de demo.",
+      "Comparte la invitación del grupo con los iconos de copiar o WhatsApp para que entren los demás.",
     ],
   },
   {
@@ -26,7 +26,7 @@ const manualFlows = [
     title: "Tu cuenta y tu ficha",
     intro: "Cada jugador registrado puede tener una ficha propia ligada a su usuario.",
     steps: [
-      "Entra con Google y cambia tu nombre visible en el equipo, por ejemplo Alberto.",
+      "Entra con Google y cambia tu nombre visible en el grupo, por ejemplo Alberto.",
       "Pulsa Crear > Ficha jugador para crear o editar tus datos: nombre, teléfono Bizum, foto, posición preferida y estado.",
       "Puedes añadir foto desde archivo o cámara; la app intenta centrar el avatar y puedes arrastrarlo dentro de la carta antes de guardar.",
       "Solo tú y los admins podéis editar tu ficha. Las valoraciones las hacen compañeros, no puedes votarte a ti mismo.",
@@ -39,7 +39,7 @@ const manualFlows = [
     steps: [
       "Pulsa Crear > Campo para guardar un campo con nombre, precio y modalidad por defecto.",
       "La modalidad puede ser fútbol sala, fútbol 7 o fútbol 11.",
-      "En Configurar puedes cambiar las instrucciones del equipo y los colores de los equipos.",
+      "En Configurar puedes cambiar las instrucciones del grupo y los colores de los equipos.",
       "Los colores elegidos se aplican a bloques, listas, fichas, campo y goleadores.",
     ],
   },
@@ -158,13 +158,13 @@ const manualFlows = [
   {
     audience: "Admin",
     title: "Configuración profunda y copias",
-    intro: "Cuando el equipo ya funciona, Configurar reúne permisos, estética, instrucciones y rescates.",
+    intro: "Cuando el grupo ya funciona, Configurar reúne permisos, estética, instrucciones y rescates.",
     steps: [
-      "En Miembros puedes ver usuarios del equipo y cambiar su rol a Admin o Jugador.",
+      "En Miembros puedes ver usuarios del grupo y cambiar su rol a Admin o Jugador.",
       "También puedes generar una invitación de admin para alguien que todavía no está registrado.",
       "Desde Configurar puedes crear una copia manual, ver las últimas copias del servidor y restaurar una copia si algo se ha borrado por error.",
-      "La app crea copias automáticas al guardar o finalizar un partido, y también justo antes de borrar un equipo.",
-      "El equipo se puede borrar con papelera y doble confirmación para evitar errores.",
+      "La app crea copias automáticas al guardar o finalizar un partido, y también justo antes de borrar un grupo.",
+      "El grupo se puede borrar con papelera y doble confirmación para evitar errores.",
     ],
   },
 ];

@@ -581,7 +581,7 @@ function emptyTeamPayload(teamName: string): AppPayload {
     siteSettings: {
       ...defaultSiteSettings,
       brand: displayName(teamName) || defaultSiteSettings.brand,
-      title: "Tu equipo pachanguero, desde cero.",
+      title: "Tu grupo de pachangas, desde cero.",
       subtitle: "Crea tu ficha, selecciona un partido y apúntate.",
     },
     venues: [],
@@ -778,6 +778,16 @@ function displayName(name: string) {
     .split(/\s+/)
     .map((word) => word.charAt(0).toLocaleUpperCase("es-ES") + word.slice(1).toLocaleLowerCase("es-ES"))
     .join(" ");
+}
+
+function memberRoleLabel(role: MemberRole | null | undefined) {
+  if (role === "owner" || role === "admin") return "Admin";
+  if (role === "player") return "Jugador";
+  return "-";
+}
+
+function groupOptionLabel(team: RemoteTeam) {
+  return `${team.name} · ${memberRoleLabel(team.role)}`;
 }
 
 function monthLabel(date: string) {
@@ -1712,7 +1722,7 @@ export default function Home() {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [authUser, setAuthUser] = useState<User | null>(null);
   const [profileName, setProfileName] = useState("");
-  const [newTeamName, setNewTeamName] = useState("Mi equipo pachanguero");
+  const [newTeamName, setNewTeamName] = useState("Mi grupo de pachangas");
   const [adminInviteToken, setAdminInviteToken] = useState<string | null>(null);
   const [avatarMessage, setAvatarMessage] = useState("");
   const [avatarDrafts, setAvatarDrafts] = useState<Record<string, AvatarDraft>>({});
@@ -1824,7 +1834,7 @@ export default function Home() {
       return "Supabase está saturado. La app reintentará sincronizar en unos segundos.";
     }
     if (normalizedMessage.includes("team changed before saving")) {
-      return "El equipo cambió en otro dispositivo. Recargando datos...";
+      return "El grupo cambió en otro dispositivo. Recargando datos...";
     }
     return message;
   }
@@ -1862,7 +1872,7 @@ export default function Home() {
   async function ensureRegisteredUser(client: NonNullable<typeof supabase>) {
     const user = await getSignedUser(client);
     if (!user || isAnonymousAuthUser(user)) {
-      throw new Error("Entra con Google para crear equipos o ser admin.");
+      throw new Error("Entra con Google para crear grupos o ser admin.");
     }
 
     return user.id;
@@ -1962,7 +1972,7 @@ export default function Home() {
         return {
           id: String(group.id),
           inviteToken: String(group.invite_token),
-          name: String(group.name ?? "Equipo pachanguero"),
+          name: String(group.name ?? "Grupo de pachangas"),
           payload: normalizePayload(group.payload as Partial<AppPayload>),
           payloadRevision: Number(group.payload_revision ?? 0),
           role: (membership.role as MemberRole | null) ?? "player",
@@ -2033,7 +2043,7 @@ export default function Home() {
 
         return {
           createdAt: String(backup.created_at),
-          groupName: String(backup.group_name ?? "Equipo pachanguero"),
+          groupName: String(backup.group_name ?? "Grupo de pachangas"),
           id: String(backup.id),
           matchCount: payload.matches.length,
           playerCount: payload.players.filter((player) => !player.inactive).length,
@@ -2093,7 +2103,7 @@ export default function Home() {
       markRemoteWriteError(saveResult.error.message);
       if (isRemoteRevisionConflict(saveResult.error.message)) {
         await loadTeams(supabase, remoteGroupId).catch((error) => {
-          setSyncError(error instanceof Error ? error.message : "No se pudo recargar el equipo");
+          setSyncError(error instanceof Error ? error.message : "No se pudo recargar el grupo");
         });
       }
       return false;
@@ -2124,7 +2134,7 @@ export default function Home() {
   async function restoreTeamBackup(backup: TeamBackup) {
     if (!supabase || !isRegisteredUser) return;
     if (!window.confirm(`¿Restaurar la copia de ${backup.groupName}?`)) return;
-    if (!window.confirm("Confirmación final: si el equipo sigue existiendo, se reemplazarán sus datos por esta copia.")) return;
+    if (!window.confirm("Confirmación final: si el grupo sigue existiendo, se reemplazarán sus datos por esta copia.")) return;
 
     setBackupMessage("Restaurando copia...");
     setSyncStatus("connecting");
@@ -2143,7 +2153,7 @@ export default function Home() {
 
     await loadTeams(supabase, String(result.data));
     await loadTeamBackups(supabase);
-    setBackupMessage("Equipo restaurado");
+    setBackupMessage("Grupo restaurado");
     setShowSettings(false);
     window.setTimeout(() => setBackupMessage(""), 2200);
   }
@@ -2276,7 +2286,7 @@ export default function Home() {
         if (cancelled) return;
       } catch (error) {
         setSyncStatus("error");
-        setSyncError(error instanceof Error ? error.message : "No se pudo cargar el equipo");
+        setSyncError(error instanceof Error ? error.message : "No se pudo cargar el grupo");
         return;
       }
     }
@@ -2348,7 +2358,7 @@ export default function Home() {
             markRemoteWriteError(result.error.message);
             if (isRemoteRevisionConflict(result.error.message)) {
               void loadTeams(client, targetGroupId).catch((error) => {
-                setSyncError(error instanceof Error ? error.message : "No se pudo recargar el equipo");
+                setSyncError(error instanceof Error ? error.message : "No se pudo recargar el grupo");
               });
             }
             return;
@@ -3129,6 +3139,7 @@ export default function Home() {
   const selectedAvatarPreview = selectedAvatarDraft?.avatar ?? selectedPlayer?.avatar;
   const canAdjustSelectedAvatar = Boolean(canEditSelectedPlayer && selectedPlayer && selectedAvatarDraft && avatarAdjustingPlayerId === selectedPlayer.id);
   const showPlayerSwitcher = Boolean(canUseAdminControls && selectedPlayer && !selectedPlayerIsOwn && players.length > 1);
+  const showGroupAccessPanel = isRegisteredUser;
   const showTeamAdminPanel = canUseAdminControls;
   const showMatchAdminPanel = canUseAdminControls;
   const canEditMatchSettings = canUseAdminControls && !matchFinalized;
@@ -3559,9 +3570,9 @@ export default function Home() {
 
     try {
       const user = await getSignedUser(client);
-      if (!user || isAnonymousAuthUser(user)) throw new Error("Entra con Google para crear equipos o ser admin.");
+      if (!user || isAnonymousAuthUser(user)) throw new Error("Entra con Google para crear grupos o ser admin.");
       const userId = user.id;
-      const teamName = newTeamName.trim() || "Mi equipo pachanguero";
+      const teamName = newTeamName.trim() || "Mi grupo de pachangas";
       const initialPayload = emptyTeamPayload(teamName);
       const insertResult = await client
         .from("pachanga_groups")
@@ -3569,7 +3580,7 @@ export default function Home() {
         .select("id, invite_token, name, payload, team_code, payload_revision")
         .single();
 
-      if (insertResult.error || !insertResult.data) throw new Error(insertResult.error?.message ?? "No se pudo crear el equipo");
+      if (insertResult.error || !insertResult.data) throw new Error(insertResult.error?.message ?? "No se pudo crear el grupo");
 
       const memberResult = await client.from("pachanga_group_members").insert({
         display_name: profileName.trim() || authDisplayName(user),
@@ -3585,7 +3596,7 @@ export default function Home() {
       setOpenQuickForm(null);
     } catch (error) {
       setSyncStatus("error");
-      setSyncError(error instanceof Error ? error.message : "No se pudo crear el equipo");
+      setSyncError(error instanceof Error ? error.message : "No se pudo crear el grupo");
     }
   }
 
@@ -3737,9 +3748,9 @@ export default function Home() {
 
   async function deleteCurrentTeam() {
     if (!supabase || !remoteGroupId || !canManageTeam) return;
-    const teamName = currentTeam?.name ?? "este equipo";
+    const teamName = currentTeam?.name ?? "este grupo";
     if (!window.confirm(`¿Eliminar ${teamName}?`)) return;
-    if (!window.confirm("Confirmación final: se borrarán el equipo y sus miembros.")) return;
+    if (!window.confirm("Confirmación final: se borrarán el grupo y sus miembros.")) return;
 
     const client = supabase;
     setSyncStatus("connecting");
@@ -3747,7 +3758,7 @@ export default function Home() {
 
     try {
       const backupCreated = await createTeamBackup("equipo_borrado", currentPayload(), false);
-      if (!backupCreated) throw new Error("No se pudo crear una copia antes de borrar el equipo.");
+      if (!backupCreated) throw new Error("No se pudo crear una copia antes de borrar el grupo.");
 
       const deleteResult = await client.from("pachanga_groups").delete().eq("id", remoteGroupId);
       if (deleteResult.error) throw new Error(deleteResult.error.message);
@@ -3770,14 +3781,28 @@ export default function Home() {
       window.history.replaceState(null, "", nextParams.toString() ? `${window.location.pathname}?${nextParams.toString()}` : window.location.pathname);
     } catch (error) {
       setSyncStatus("error");
-      setSyncError(error instanceof Error ? error.message : "No se pudo eliminar el equipo");
+      setSyncError(error instanceof Error ? error.message : "No se pudo eliminar el grupo");
     }
+  }
+
+  function resetTeamScopedUi() {
+    setSelectedPlayerId(null);
+    setTeamGalleryOpen(false);
+    teamGalleryReturnScrollYRef.current = null;
+    setOpenQuickForm(null);
+    setCreateMenuOpen(false);
+    setShowSettings(false);
+    setAvatarDrafts({});
+    setAvatarAdjustingPlayerId(null);
+    setAdminInviteToken(null);
+    setProfileSaveMessage("");
   }
 
   function selectTeam(teamId: string) {
     const selectedTeam = remoteTeams.find((team) => team.id === teamId);
     if (!selectedTeam) return;
 
+    resetTeamScopedUi();
     setRemoteGroupId(selectedTeam.id);
     setRemoteInviteToken(selectedTeam.inviteToken);
     setRemoteRevision(selectedTeam.payloadRevision);
@@ -4265,7 +4290,7 @@ export default function Home() {
                   Campo
                 </button>
                 <button type="button" role="menuitem" onClick={() => runCreateAction(() => showQuickForm("team"))}>
-                  Equipo
+                  Grupo
                 </button>
               </div>
             ) : null}
@@ -4304,8 +4329,8 @@ export default function Home() {
 
       {openQuickForm === "team" ? (
         <form className="top-panel quick-create-form team-create-form top-team-form" ref={teamFormRef} onSubmit={createTeam}>
-          <input value={newTeamName} onChange={(event) => setNewTeamName(event.target.value)} placeholder="Nombre del nuevo equipo" />
-          <button type="submit" disabled={!canCreateTeam}>Crear equipo</button>
+          <input value={newTeamName} onChange={(event) => setNewTeamName(event.target.value)} placeholder="Nombre del grupo de pachangas" />
+          <button type="submit" disabled={!canCreateTeam}>Crear grupo</button>
           {!canCreateTeam ? (
             <GoogleSignInButton label="Continuar con Google" onClick={() => void signInWithGoogle()} disabled={!supabase || !googleClientId} />
           ) : null}
@@ -4313,51 +4338,55 @@ export default function Home() {
         </form>
       ) : null}
 
-      {showTeamAdminPanel ? (
+      {showGroupAccessPanel ? (
         <section className="top-panel team-access-panel">
           <div className="team-access-current">
-            <span>Equipo pachanguero</span>
+            <span>Grupo de Pachangas</span>
             {remoteTeams.length > 0 ? (
               <select value={remoteGroupId ?? ""} onChange={(event) => selectTeam(event.target.value)}>
                 {remoteTeams.map((team) => (
-                  <option key={team.id} value={team.id}>{team.name}</option>
+                  <option key={team.id} value={team.id}>{groupOptionLabel(team)}</option>
                 ))}
               </select>
             ) : (
-              <strong>Sin equipo todavía</strong>
+              <strong>Sin grupo todavía</strong>
             )}
           </div>
           <div className="team-access-meta">
-            <span>ID equipo</span>
+            <span>ID grupo</span>
             <strong>{currentTeam?.teamCode ?? "-"}</strong>
           </div>
           <div className="team-access-meta">
             <span>Rol</span>
-            <strong>{currentRole === "owner" || currentRole === "admin" ? "Admin" : currentRole === "player" ? "Jugador" : "-"}</strong>
+            <strong>{memberRoleLabel(currentRole)}</strong>
           </div>
-          <div className="team-invite-link">
-            <span>Invitar a equipo</span>
-            <div className="team-invite-actions">
-              <button className="copy-icon-button" type="button" onClick={() => void copyTeamInvite()} disabled={!currentTeamInviteUrl()} title="Copiar invitación" aria-label="Copiar invitación">
-                <CopyLogo />
+          {showTeamAdminPanel ? (
+            <>
+              <div className="team-invite-link">
+                <span>Invitar al grupo</span>
+                <div className="team-invite-actions">
+                  <button className="copy-icon-button" type="button" onClick={() => void copyTeamInvite()} disabled={!currentTeamInviteUrl()} title="Copiar invitación" aria-label="Copiar invitación">
+                    <CopyLogo />
+                  </button>
+                  <button className="whatsapp-icon-button" type="button" onClick={shareTeamInviteWhatsApp} disabled={!currentTeamInviteUrl()} title="Enviar por WhatsApp" aria-label="Enviar por WhatsApp">
+                    <WhatsAppLogo />
+                  </button>
+                </div>
+              </div>
+              <button
+                className="trash-icon-button team-delete-button"
+                disabled={!remoteGroupId || !canUseAdminControls}
+                onClick={() => void deleteCurrentTeam()}
+                title="Eliminar grupo"
+                type="button"
+                aria-label="Eliminar grupo"
+              >
+                <TrashLogo />
               </button>
-              <button className="whatsapp-icon-button" type="button" onClick={shareTeamInviteWhatsApp} disabled={!currentTeamInviteUrl()} title="Enviar por WhatsApp" aria-label="Enviar por WhatsApp">
-                <WhatsAppLogo />
-              </button>
-            </div>
-          </div>
-          <button
-            className="trash-icon-button team-delete-button"
-            disabled={!remoteGroupId || !canUseAdminControls}
-            onClick={() => void deleteCurrentTeam()}
-            title="Eliminar equipo"
-            type="button"
-            aria-label="Eliminar equipo"
-          >
-            <TrashLogo />
-          </button>
+            </>
+          ) : null}
           <small className={`sync-status sync-${syncStatus}`}>
-            {syncStatus === "live" ? "Equipo privado sincronizado" : syncStatus === "connecting" ? "Conectando..." : syncStatus === "error" ? `Sin sync: ${syncError}` : "Crea un equipo o entra con invitación"}
+            {syncStatus === "live" ? "Grupo privado sincronizado" : syncStatus === "connecting" ? "Conectando..." : syncStatus === "error" ? `Sin sync: ${syncError}` : "Crea un grupo o entra con invitación"}
           </small>
         </section>
       ) : null}
@@ -4368,11 +4397,11 @@ export default function Home() {
             <span>Demo interactiva</span>
             <strong>Lo que ves son datos de ejemplo.</strong>
             <p>
-              Puedes tocar jugadores, cambiar asistencia, revisar reservas, pagos, alineaciones, valoraciones y fichas. Cuando crees tu equipo real, la web empieza limpia.
+              Puedes tocar jugadores, cambiar asistencia, revisar reservas, pagos, alineaciones, valoraciones y fichas. Cuando crees tu grupo real, la web empieza limpia.
             </p>
           </div>
           <button className="primary-button" type="button" onClick={() => showQuickForm("team")}>
-            Crear mi equipo limpio
+            Crear mi grupo limpio
           </button>
         </section>
       ) : null}
@@ -4384,10 +4413,10 @@ export default function Home() {
             <strong>
               {incomingSharedLink.hasMatch
                 ? "Para apuntarte necesitas identificarte."
-                : "Para entrar al equipo necesitas identificarte."}
+                : "Para entrar al grupo necesitas identificarte."}
             </strong>
             <p>
-              Guardamos este enlace mientras haces login. Al volver, la web abrirá el equipo
+              Guardamos este enlace mientras haces login. Al volver, la web abrirá el grupo
               {incomingSharedLink.hasMatch ? " y este partido concreto" : ""}.
             </p>
           </div>
@@ -4454,7 +4483,7 @@ export default function Home() {
               </div>
             </div>
             <p>
-              Al guardar o finalizar un partido se crea una copia en el servidor. Se conservan solo las 3 últimas por equipo; al crear una nueva se elimina la más antigua.
+              Al guardar o finalizar un partido se crea una copia en el servidor. Se conservan solo las 3 últimas por grupo; al crear una nueva se elimina la más antigua.
             </p>
             {backupMessage ? <small className="backup-message">{backupMessage}</small> : null}
             {backupsLoading ? <small className="backup-message">Cargando copias...</small> : null}
