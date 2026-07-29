@@ -302,6 +302,9 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(globalsCss, /\.pitch-player-card/);
   assert.match(globalsCss, /\.pitch-player-card:hover/);
   assert.match(globalsCss, /\.pitch-card-photo/);
+  assert.match(globalsCss, /\.empty-token/);
+  assert.match(globalsCss, /aspect-ratio:\s*0\.72/);
+  assert.match(globalsCss, /\.empty-token::after/);
   assert.match(globalsCss, /\.draggable-avatar/);
   assert.match(globalsCss, /\.avatar-dragging \.draggable-avatar/);
   assert.match(globalsCss, /\.avatar-adjust-hint/);
