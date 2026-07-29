@@ -259,6 +259,11 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /className=\{`pitch-player-card/);
   assert.match(page, /Abrir ficha de \$\{playerDisplayName\(player\)\} desde el campo/);
   assert.match(page, /saveSelectedPlayerProfile/);
+  assert.match(page, /profileSaving/);
+  assert.match(page, /setProfileSaving\(true\)/);
+  assert.match(page, /setProfileSaving\(false\)/);
+  assert.match(page, /withTimeout\(\s*Promise\.resolve\(\s*client\.rpc\("patch_pachanga_player_profile"/);
+  assert.match(page, /Guardado agotado/);
   assert.match(page, /profile-save-area/);
   assert.match(page, /Guardar ficha/);
   assert.match(page, /avatarOffsetX\?: number/);
@@ -271,6 +276,9 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /avatarImageStyle/);
   assert.match(page, /objectFit: "cover"/);
   assert.match(page, /withTimeout\(avatarDataUrl\(file\), 8000/);
+  assert.match(page, /canvas\.width = 420/);
+  assert.match(page, /canvas\.height = 540/);
+  assert.match(page, /toDataURL\("image\/webp", 0\.86\)/);
   assert.match(page, /toDataURL\("image\/png"\)/);
   assert.match(page, /startAvatarDrag/);
   assert.match(page, /moveAvatarDrag/);

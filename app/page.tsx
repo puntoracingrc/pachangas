@@ -1289,8 +1289,8 @@ async function avatarDataUrl(file: File) {
   const crop = avatarCropArea(image, face);
   const keepTransparency = file.type === "image/png" || file.type === "image/webp";
   const canvas = document.createElement("canvas");
-  canvas.width = 560;
-  canvas.height = 720;
+  canvas.width = 420;
+  canvas.height = 540;
   const context = canvas.getContext("2d");
   if (!context) return source;
 
@@ -1299,7 +1299,10 @@ async function avatarDataUrl(file: File) {
     context.fillRect(0, 0, canvas.width, canvas.height);
   }
   context.drawImage(image, crop.x, crop.y, crop.width, crop.height, 0, 0, canvas.width, canvas.height);
-  return keepTransparency ? canvas.toDataURL("image/png") : canvas.toDataURL("image/jpeg", 0.86);
+  if (!keepTransparency) return canvas.toDataURL("image/jpeg", 0.86);
+
+  const webpAvatar = canvas.toDataURL("image/webp", 0.86);
+  return webpAvatar.startsWith("data:image/webp") ? webpAvatar : canvas.toDataURL("image/png");
 }
 
 async function matchPhotoDataUrl(file: File) {
@@ -1708,6 +1711,7 @@ export default function Home() {
   const [avatarAdjustingPlayerId, setAvatarAdjustingPlayerId] = useState<string | null>(null);
   const [teamPhotoMessage, setTeamPhotoMessage] = useState("");
   const [profileSaveMessage, setProfileSaveMessage] = useState("");
+  const [profileSaving, setProfileSaving] = useState(false);
   const [teamBackups, setTeamBackups] = useState<TeamBackup[]>([]);
   const [backupsLoading, setBackupsLoading] = useState(false);
   const [backupMessage, setBackupMessage] = useState("");
@@ -3215,6 +3219,7 @@ export default function Home() {
 
   async function saveSelectedPlayerProfile() {
     if (!selectedPlayer || !canEditSelectedPlayer) return;
+    if (profileSaving) return;
     const normalizedName = displayName(selectedPlayer.name) || selectedPlayer.name;
     const selectedAvatarDraft = avatarDrafts[selectedPlayer.id];
     const savedPlayerId = selectedPlayer.id;
@@ -3227,42 +3232,67 @@ export default function Home() {
     if (!editedPlayer) return;
     const nextPayload: AppPayload = { players: nextPlayers, venues, matches, activeMatchId, siteSettings };
 
+    setProfileSaving(true);
     setProfileSaveMessage("Guardando ficha...");
 
-    if (supabase && remoteGroupId && remoteReady) {
-      const result = await supabase.rpc("patch_pachanga_player_profile", {
-        player_patch: profilePatchFor({ ...editedPlayer, name: normalizedName }),
-        target_group_id: remoteGroupId,
-        target_player_id: selectedPlayer.id,
-      });
-      if (result.error) {
-        setProfileSaveMessage("No se pudo guardar. Revisa la conexión.");
-        markRemoteWriteError(result.error.message);
-        window.setTimeout(() => setProfileSaveMessage(""), 2600);
-        return;
-      }
-
-      applyRemoteCommit(result.data as RemotePayloadCommit);
-      if (selectedPlayerIsOwn) {
-        setProfileName(normalizedName);
-        const memberResult = await supabase.rpc("update_pachanga_member_name", {
-          member_name: normalizedName,
-          target_group_id: remoteGroupId,
-        });
-        if (!memberResult.error) {
-          await loadTeamMembers(supabase, remoteGroupId);
+    try {
+      if (supabase && remoteGroupId && remoteReady) {
+        const client = supabase;
+        const groupId = remoteGroupId;
+        const result = await withTimeout(
+          Promise.resolve(
+            client.rpc("patch_pachanga_player_profile", {
+              player_patch: profilePatchFor({ ...editedPlayer, name: normalizedName }),
+              target_group_id: groupId,
+              target_player_id: selectedPlayer.id,
+            }),
+          ),
+          14000,
+          "Guardado agotado",
+        );
+        if (result.error) {
+          throw new Error(result.error.message);
         }
-      }
-    } else {
-      setPlayers(nextPlayers);
-      if (selectedPlayerIsOwn) setProfileName(normalizedName);
-      localStorage.setItem(storageKey, JSON.stringify(nextPayload));
-    }
 
-    setProfileSaveMessage("Ficha guardada");
-    clearAvatarDraft(savedPlayerId);
-    setAvatarMessage("");
-    window.setTimeout(() => setProfileSaveMessage(""), 1800);
+        applyRemoteCommit(result.data as RemotePayloadCommit);
+        if (selectedPlayerIsOwn) {
+          setProfileName(normalizedName);
+          void withTimeout(
+            Promise.resolve(
+              client.rpc("update_pachanga_member_name", {
+                member_name: normalizedName,
+                target_group_id: groupId,
+              }),
+            ),
+            7000,
+            "Nombre de miembro agotado",
+          )
+            .then((memberResult) => {
+              if (!memberResult.error) void loadTeamMembers(client, groupId);
+            })
+            .catch((error: unknown) => {
+              const message = error instanceof Error ? error.message : "No se pudo actualizar el nombre de miembro.";
+              markRemoteWriteError(message);
+            });
+        }
+      } else {
+        setPlayers(nextPlayers);
+        if (selectedPlayerIsOwn) setProfileName(normalizedName);
+        localStorage.setItem(storageKey, JSON.stringify(nextPayload));
+      }
+
+      setProfileSaveMessage("Ficha guardada");
+      clearAvatarDraft(savedPlayerId);
+      setAvatarMessage("");
+      window.setTimeout(() => setProfileSaveMessage(""), 1800);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "No se pudo guardar. Revisa la conexión.";
+      setProfileSaveMessage(message === "Guardado agotado" ? "El guardado tarda demasiado. Revisa la conexión y prueba otra vez." : "No se pudo guardar. Revisa la conexión.");
+      markRemoteWriteError(message);
+      window.setTimeout(() => setProfileSaveMessage(""), 3600);
+    } finally {
+      setProfileSaving(false);
+    }
   }
 
   async function addPeerRating(playerId: string) {
@@ -5069,9 +5099,9 @@ export default function Home() {
                       className="profile-save-button"
                       type="button"
                       onClick={() => void saveSelectedPlayerProfile()}
-                      disabled={!canEditSelectedPlayer}
+                      disabled={!canEditSelectedPlayer || profileSaving}
                     >
-                      Guardar ficha
+                      {profileSaving ? "Guardando..." : "Guardar ficha"}
                     </button>
                     {profileSaveMessage ? <small className="profile-save-message">{profileSaveMessage}</small> : null}
                   </div>
