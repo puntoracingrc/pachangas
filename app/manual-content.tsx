@@ -76,7 +76,7 @@ const manualFlows = [
     steps: [
       "Si Reservas van y pagan está activo, las reservas dentro del máximo cuentan para el pago.",
       "Si no está activo, las reservas quedan como suplentes por orden y no entran en el reparto.",
-      "El turno de pago rota entre asistentes. El pagador aparece destacado con el icono del dólar.",
+      "El turno de pago rota entre asistentes. El pagador aparece destacado con el dólar dorado.",
       "Cada jugador puede verse como pagado cuando se marque su dólar en verde.",
     ],
   },

@@ -48,6 +48,8 @@ test("builds the user manual as its own page", async () => {
   assert.match(html, /empieza en septiembre y termina en agosto/);
   assert.match(html, /Jugador y admin/);
   assert.match(html, /Si cambias de Voy a Duda o No/);
+  assert.match(html, /dólar dorado/);
+  assert.match(html, /dólar en verde/);
   assert.match(html, /Cualquier miembro puede subir una foto del partido/);
   assert.match(html, /foto en miniatura/);
   assert.match(html, /copias automáticas al guardar o finalizar un partido/);
@@ -305,6 +307,8 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(globalsCss, /\.empty-token/);
   assert.match(globalsCss, /aspect-ratio:\s*0\.72/);
   assert.match(globalsCss, /\.empty-token::after/);
+  assert.match(globalsCss, /\.payer-badge/);
+  assert.match(globalsCss, /linear-gradient\(145deg, #fde68a 0%, #f59e0b 100%\)/);
   assert.match(globalsCss, /\.draggable-avatar/);
   assert.match(globalsCss, /\.avatar-dragging \.draggable-avatar/);
   assert.match(globalsCss, /\.avatar-adjust-hint/);
