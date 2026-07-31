@@ -1,0 +1,938 @@
+.page {
+  min-height: 100vh;
+  padding: 28px;
+  background:
+    linear-gradient(135deg, rgba(15, 103, 72, 0.14), transparent 34%),
+    linear-gradient(315deg, rgba(217, 242, 95, 0.16), transparent 28%),
+    var(--background, #f7f6f0);
+  color: var(--ink, #202820);
+}
+
+.testPage {
+  box-sizing: border-box;
+  height: 100dvh;
+  overflow: hidden;
+  padding: 44px 28px 126px;
+  background: #0e2734;
+  color: #102532;
+}
+
+.testTop {
+  display: grid;
+  grid-template-columns: 46px minmax(0, 1fr);
+  gap: 18px;
+  align-items: center;
+  width: min(100%, 860px);
+  margin: 0 auto 34px;
+}
+
+.testTop button {
+  width: 46px;
+  height: 46px;
+  border: 0;
+  background: transparent;
+  color: #fff;
+  cursor: pointer;
+  font-size: 50px;
+  font-weight: 300;
+  line-height: 1;
+}
+
+.testTop progress {
+  width: 100%;
+  height: 10px;
+  overflow: hidden;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.88);
+}
+
+.testTop progress::-webkit-progress-bar {
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.88);
+}
+
+.testTop progress::-webkit-progress-value {
+  border-radius: 999px;
+  background: #3764ff;
+}
+
+.testGrid {
+  display: block;
+  width: min(100%, 860px);
+  margin: 0 auto;
+}
+
+.testCard {
+  box-sizing: border-box;
+  max-height: calc(100dvh - 196px);
+  min-height: min(70dvh, 760px);
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: clamp(28px, 6vw, 48px);
+  border-radius: 48px;
+  background: #e9eaec;
+  box-shadow: 0 18px 0 rgba(0, 0, 0, 0.24);
+}
+
+.testCard .screen {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+}
+
+.testCard .stepHeader {
+  display: none;
+}
+
+.testCard h3,
+.testCard .question legend span {
+  margin-bottom: 34px;
+  color: #102532;
+  font-size: clamp(28px, 4.2vw, 44px);
+  line-height: 1.22;
+  font-weight: 900;
+  overflow-wrap: anywhere;
+}
+
+.testCard .subQuestionTitle,
+.testCard .stepCopy,
+.testCard .question legend small {
+  display: none;
+}
+
+.multiSelectHint {
+  margin: -18px 0 24px;
+  color: #49616c;
+  font-size: clamp(18px, 3vw, 24px);
+  font-weight: 800;
+}
+
+.testCard .question {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+}
+
+.testCard .question legend {
+  padding: 0;
+}
+
+.hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 20px;
+  align-items: center;
+  max-width: 1360px;
+  margin: 0 auto 22px;
+}
+
+.brand {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 18px;
+}
+
+.brand img {
+  width: 76px;
+  height: 76px;
+  border-radius: 8px;
+  object-fit: cover;
+  box-shadow: 0 16px 34px rgba(17, 97, 73, 0.2);
+}
+
+.brand p,
+.panelTitle small {
+  margin: 0 0 5px;
+  color: var(--ink-soft, #64706a);
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.brand h1,
+.panelTitle h2 {
+  margin: 0;
+  font-size: 34px;
+  line-height: 1.05;
+}
+
+.heroActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.heroActions button,
+.moduleTabs button,
+.chipGrid button,
+.choiceGrid button,
+.answerRow button,
+.ghostButton {
+  min-height: 40px;
+  border: 1px solid var(--line, #dedbd0);
+  border-radius: 8px;
+  background: var(--panel, #fffdf7);
+  color: var(--ink, #202820);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 850;
+}
+
+.heroActions button {
+  padding: 0 14px;
+}
+
+.heroActions button:hover,
+.moduleTabs button:hover,
+.chipGrid button:hover,
+.choiceGrid button:hover,
+.answerRow button:hover {
+  border-color: var(--green, #116149);
+}
+
+.ghostButton {
+  color: var(--ink-soft, #64706a);
+}
+
+.resultsBand,
+.grid,
+.panel {
+  max-width: 1360px;
+  margin-right: auto;
+  margin-left: auto;
+}
+
+.resultsBand {
+  display: grid;
+  grid-template-columns: minmax(260px, 340px) minmax(0, 1fr);
+  gap: 18px;
+  align-items: stretch;
+  margin-bottom: 18px;
+}
+
+.resultMetrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.metric,
+.panel,
+.screen,
+.question,
+.playerCard {
+  border: 1px solid var(--line, #dedbd0);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--panel, #fffdf7) 94%, transparent);
+  box-shadow: 0 18px 40px rgba(19, 35, 27, 0.08);
+}
+
+.metric {
+  display: flex;
+  min-height: 116px;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 18px;
+}
+
+.metric span,
+.cardFooter,
+.currentDiffs,
+.question legend small,
+.emptyState {
+  color: var(--ink-soft, #64706a);
+}
+
+.metric strong {
+  font-size: 38px;
+  line-height: 1;
+}
+
+.playerCard {
+  position: relative;
+  overflow: hidden;
+  padding: 18px;
+  background:
+    linear-gradient(145deg, #e6c463, #fff1a6 38%, #9b742e 100%),
+    #d9bf62;
+  color: #241b09;
+}
+
+.playerCard::before {
+  position: absolute;
+  inset: 10px;
+  border: 1px solid rgba(36, 27, 9, 0.22);
+  border-radius: 8px;
+  content: "";
+  pointer-events: none;
+}
+
+.cardTop {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.cardTop span {
+  font-size: 52px;
+  font-weight: 950;
+  line-height: 0.9;
+}
+
+.cardTop b {
+  padding: 6px 9px;
+  border: 1px solid rgba(36, 27, 9, 0.2);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.cardSilhouette {
+  display: grid;
+  width: 112px;
+  height: 112px;
+  margin: 8px auto 12px;
+  place-items: center;
+  border: 2px solid rgba(36, 27, 9, 0.18);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.24);
+  font-size: 32px;
+  font-weight: 950;
+}
+
+.playerCard strong {
+  display: block;
+  margin-bottom: 14px;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.cardAttrs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px 14px;
+}
+
+.cardAttrs span {
+  display: flex;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(36, 27, 9, 0.16);
+  font-weight: 850;
+}
+
+.cardFooter,
+.currentDiffs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 14px;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.cardFooter span,
+.currentDiffs span {
+  padding: 4px 7px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.28);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 18px;
+  margin-bottom: 18px;
+}
+
+.panel {
+  padding: 18px;
+}
+
+.panelTitle {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.panelTitle b {
+  flex: 0 0 auto;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--green, #116149) 12%, transparent);
+  color: var(--green, #116149);
+  font-size: 13px;
+}
+
+.screenList,
+.questionStack,
+.formGrid {
+  display: grid;
+  gap: 12px;
+}
+
+.screen {
+  padding: 14px;
+  box-shadow: none;
+}
+
+.screen h3 {
+  margin: 0 0 12px;
+}
+
+.stepHeader {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 16px;
+  color: var(--ink-soft, #64706a);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.stepHeader progress {
+  width: 100%;
+  height: 10px;
+  overflow: hidden;
+  border: 0;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--line, #dedbd0) 70%, transparent);
+}
+
+.stepHeader progress::-webkit-progress-bar {
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--line, #dedbd0) 70%, transparent);
+}
+
+.stepHeader progress::-webkit-progress-value {
+  border-radius: 8px;
+  background: var(--green, #116149);
+}
+
+.stepCopy {
+  margin: -4px 0 14px;
+  color: var(--ink-soft, #64706a);
+  font-weight: 800;
+}
+
+.stepActions,
+.nextActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 18px;
+}
+
+.stepActions button,
+.nextActions button {
+  min-height: 44px;
+  border: 1px solid var(--green, #116149);
+  border-radius: 8px;
+  background: var(--green, #116149);
+  color: #fff;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 900;
+  padding: 0 16px;
+}
+
+.stepActions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.stepActions .ghostButton,
+.nextActions .ghostButton {
+  border-color: var(--line, #dedbd0);
+  background: var(--panel, #fffdf7);
+  color: var(--ink-soft, #64706a);
+}
+
+.modeGrid {
+  display: grid;
+  gap: 10px;
+}
+
+.modeGrid label {
+  display: grid;
+  grid-template-columns: 140px minmax(120px, 1fr) 52px;
+  gap: 12px;
+  align-items: center;
+  font-weight: 850;
+}
+
+.modeGrid input {
+  width: 100%;
+  accent-color: var(--green, #116149);
+}
+
+.okText,
+.warnText {
+  display: block;
+  margin-top: 10px;
+  font-weight: 900;
+}
+
+.okText {
+  color: var(--green, #116149);
+}
+
+.warnText,
+.down {
+  color: #b02a25;
+}
+
+.up {
+  color: var(--green, #116149);
+}
+
+.compactFields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.compactFields label {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 7px;
+  color: var(--ink-soft, #64706a);
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.compactFields input,
+.compactFields select {
+  width: 100%;
+  min-height: 42px;
+  border: 1px solid var(--line, #dedbd0);
+  border-radius: 8px;
+  background: var(--panel, #fffdf7);
+  color: var(--ink, #202820);
+  font: inherit;
+  font-weight: 800;
+}
+
+.chipGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.choiceGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.chipGrid button {
+  padding: 0 10px;
+}
+
+.choiceGrid button {
+  min-height: 48px;
+  padding: 10px;
+  text-align: left;
+}
+
+.choiceGrid button span,
+.choiceGrid button small {
+  display: block;
+}
+
+.choiceGrid button small {
+  margin-top: 3px;
+  color: inherit;
+  opacity: 0.78;
+  font-weight: 800;
+}
+
+.subQuestionTitle {
+  margin: 14px 0 8px !important;
+  color: var(--ink-soft, #64706a);
+  font-size: 13px;
+  text-transform: uppercase;
+}
+
+.selectedChip,
+.activeTab,
+.selectedAnswer {
+  border-color: var(--green, #116149) !important;
+  background: var(--green, #116149) !important;
+  color: #fff !important;
+}
+
+.question {
+  margin: 0;
+  padding: 13px;
+  box-shadow: none;
+}
+
+.question legend {
+  display: grid;
+  gap: 4px;
+  padding: 0 4px;
+  font-weight: 850;
+}
+
+.question legend span {
+  max-width: 68ch;
+}
+
+.answerRow {
+  display: grid;
+  gap: 14px;
+  margin-top: 12px;
+}
+
+.answerRow button {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr);
+  width: 100%;
+  min-height: 58px;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 16px;
+  text-align: left;
+}
+
+.radioDot {
+  display: block;
+  width: 26px;
+  height: 26px;
+  border: 4px solid #3764ff;
+  border-radius: 50%;
+  background: transparent;
+}
+
+.selectedAnswer .radioDot {
+  box-shadow: inset 0 0 0 5px #fff;
+  background: #3764ff;
+}
+
+.selectedChip .radioDot {
+  box-shadow: inset 0 0 0 5px #fff;
+  background: #3764ff;
+}
+
+.testCard .answerRow {
+  gap: 14px;
+}
+
+.testCard .answerRow button,
+.testCard .choiceGrid button,
+.testCard .chipGrid button {
+  min-height: 72px;
+  border: 0;
+  border-radius: 20px;
+  background: #fff;
+  color: #102532;
+  font-size: clamp(20px, 3.1vw, 30px);
+  font-weight: 500;
+  line-height: 1.2;
+  padding: 14px 28px;
+  overflow-wrap: normal;
+}
+
+.testCard .choiceGrid button {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+}
+
+.testCard .choiceGrid button:has(.radioDot) {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+}
+
+.testCard .choiceGrid,
+.testCard .chipGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+}
+
+.testCard .selectedChip,
+.testCard .selectedAnswer {
+  background: #fff !important;
+  color: #102532 !important;
+  outline: 4px solid #3764ff;
+}
+
+.testCard .stepActions {
+  position: fixed;
+  left: 28px;
+  bottom: calc(28px + env(safe-area-inset-bottom));
+  width: calc(100% - 56px);
+  max-width: 860px;
+  justify-content: space-between;
+  margin: 0;
+  pointer-events: none;
+}
+
+.testCard .stepActions button {
+  pointer-events: auto;
+}
+
+.testCard .stepActions .ghostButton {
+  width: 84px;
+  height: 84px;
+  min-height: 84px;
+  border: 0;
+  border-radius: 50%;
+  background: #3764ff;
+  color: #fff;
+  font-size: 0;
+  padding: 0;
+}
+
+.testCard .stepActions .ghostButton::before {
+  content: "←";
+  font-size: 44px;
+  line-height: 1;
+}
+
+.testCard .stepActions button:not(.ghostButton) {
+  min-width: 150px;
+  min-height: 58px;
+  border: 0;
+  border-radius: 999px;
+  background: #3764ff;
+  color: #fff;
+}
+
+.moduleTabs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.moduleTabs button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+  padding: 8px 10px;
+}
+
+.moduleTabs span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.moduleTabs small {
+  flex: 0 0 auto;
+  font-weight: 950;
+}
+
+.formGrid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.toggleLine {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  font-weight: 850;
+}
+
+.toggleLine input {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--green, #116149);
+}
+
+.changeGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.changeGrid span {
+  padding: 8px 10px;
+  border: 1px solid var(--line, #dedbd0);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--panel, #fffdf7) 88%, transparent);
+  font-weight: 900;
+}
+
+.emptyState {
+  margin: 12px 0 0;
+  font-weight: 800;
+}
+
+.audit {
+  max-height: 460px;
+  overflow: auto;
+  padding: 14px;
+  border: 1px solid var(--line, #dedbd0);
+  border-radius: 8px;
+  background: #0d1512;
+  color: #e9f5ef;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+@media (max-width: 1080px) {
+  .hero,
+  .resultsBand,
+  .grid {
+    grid-template-columns: 1fr;
+  }
+
+  .resultMetrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .heroActions {
+    justify-content: flex-start;
+  }
+}
+
+@media (max-height: 800px) {
+  .testPage {
+    padding-top: 28px;
+    padding-bottom: 112px;
+  }
+
+  .testTop {
+    margin-bottom: 20px;
+  }
+
+  .testCard {
+    max-height: calc(100dvh - 208px);
+    min-height: auto;
+    border-radius: 38px;
+    padding: 26px 48px 28px;
+  }
+
+  .testCard h3,
+  .testCard .question legend span {
+    margin-bottom: 14px;
+    font-size: 30px;
+    line-height: 1.18;
+  }
+
+  .multiSelectHint {
+    margin: -10px 0 16px;
+    font-size: 18px;
+  }
+
+  .testCard .answerRow button,
+  .testCard .choiceGrid button,
+  .testCard .chipGrid button {
+    min-height: 48px;
+    border-radius: 16px;
+    font-size: 20px;
+    padding: 8px 22px;
+  }
+
+  .testCard .answerRow,
+  .testCard .choiceGrid,
+  .testCard .chipGrid {
+    gap: 8px;
+  }
+}
+
+@media (max-width: 680px) {
+  .page {
+    padding: 16px;
+  }
+
+  .testPage {
+    padding: 28px 16px 116px;
+  }
+
+  .testTop {
+    margin-bottom: 26px;
+  }
+
+  .testCard {
+    max-height: calc(100dvh - 174px);
+    min-height: calc(100dvh - 198px);
+    border-radius: 32px;
+    padding: 28px 20px;
+  }
+
+  .testCard h3,
+  .testCard .question legend span {
+    margin-bottom: 20px;
+    font-size: 30px;
+  }
+
+  .multiSelectHint {
+    margin: -12px 0 18px;
+    font-size: 18px;
+  }
+
+  .testCard .answerRow button,
+  .testCard .choiceGrid button,
+  .testCard .chipGrid button {
+    min-height: 56px;
+    border-radius: 16px;
+    font-size: 21px;
+    padding: 11px 18px;
+  }
+
+  .testCard .answerRow,
+  .testCard .choiceGrid,
+  .testCard .chipGrid {
+    gap: 10px;
+  }
+
+  .brand {
+    align-items: flex-start;
+  }
+
+  .brand img {
+    width: 58px;
+    height: 58px;
+  }
+
+  .brand h1 {
+    font-size: 27px;
+  }
+
+  .resultMetrics,
+  .compactFields,
+  .formGrid,
+  .moduleTabs,
+  .choiceGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .modeGrid label {
+    grid-template-columns: 1fr 50px;
+  }
+
+  .modeGrid input {
+    grid-column: 1 / -1;
+  }
+
+  .answerRow button {
+    width: auto;
+  }
+
+  .panel,
+  .screen,
+  .question {
+    padding: 12px;
+  }
+}

@@ -1,6 +1,21 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { LegalFooter } from "./legal-data";
 import "./globals.css";
+
+const themePreferenceScript = `
+(() => {
+  try {
+    const preference = localStorage.getItem("pachanga-iq-theme");
+    if (preference === "light" || preference === "dark") {
+      [document.documentElement, document.body].filter(Boolean).forEach((element) => {
+        element.dataset.theme = preference;
+        element.style.colorScheme = preference;
+      });
+    }
+  } catch {}
+})();
+`;
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -39,11 +54,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="es">
+    <html lang="es" suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+        <script dangerouslySetInnerHTML={{ __html: themePreferenceScript }} />
         {children}
+        <LegalFooter />
       </body>
     </html>
   );
