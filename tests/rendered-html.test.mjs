@@ -8,7 +8,7 @@ test("builds Pachangas IQ HTML", async () => {
   assert.match(html, /<title>Pachangas IQ<\/title>/i);
   assert.match(html, /El grupo del partido, pero con memoria\./);
   assert.match(html, /Confirmados/);
-  assert.match(html, /Equipos sugeridos/i);
+  assert.match(html, /Alineación/i);
   assert.match(html, /Alineación abierta/);
   assert.match(html, /Continuar con Google/);
   assert.match(html, /Mi equipo/);
@@ -312,8 +312,11 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /navigateMobileTab/);
   assert.match(page, /onNavigate=\{navigatePrimaryMobile\}/);
   assert.match(page, /id="partido"/);
-  assert.match(page, /id="equipos"/);
+  assert.match(page, /id="alineacion"/);
+  assert.match(page, /className="panel teams-panel lineup-panel"/);
   assert.match(page, /id="ranking"/);
+  assert.match(page, /if \(requestedTab === "equipo"\) \{[\s\S]*setProfilePane\("ranking"\);[\s\S]*setTeamGalleryOpen\(false\)/);
+  assert.match(page, /if \(tabId === "equipo"\) \{[\s\S]*setProfilePane\("ranking"\);[\s\S]*setTeamGalleryOpen\(false\)/);
   assert.match(page, /RankingSort/);
   assert.match(page, /rankingSeason/);
   assert.match(page, /historySeason/);
@@ -446,7 +449,9 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(globalsCss, /\.market-admin-panel/);
   assert.match(globalsCss, /main\[data-mobile-tab="mercado"\] > \.app-shell/);
   assert.match(globalsCss, /main\[data-mobile-tab="inicio"\]\s*\{[\s\S]*grid-template-columns:\s*minmax\(230px,\s*0\.72fr\) minmax\(0,\s*1\.28fr\)/);
-  assert.match(globalsCss, /main\[data-mobile-tab="equipo"\] \.teams-panel\s*\{[\s\S]*grid-template-columns:\s*minmax\(176px,\s*0\.62fr\)/);
+  assert.match(globalsCss, /main\[data-mobile-tab="partido"\] > \.app-shell > \.lineup-panel/);
+  assert.match(globalsCss, /main\[data-mobile-tab="partido"\] \.lineup-panel\s*\{[\s\S]*grid-template-columns:\s*minmax\(0,\s*1fr\)/);
+  assert.match(globalsCss, /main\[data-mobile-tab="equipo"\] > \.bottom-grid #ranking\s*\{[\s\S]*grid-template-rows:\s*auto auto minmax\(0,\s*1fr\)/);
   assert.match(globalsCss, /main\[data-mobile-tab="perfil"\] \.player-profile\s*\{[\s\S]*grid-template-columns:\s*minmax\(116px,\s*0\.44fr\)/);
   assert.match(globalsCss, /\.market-page\s*\{[\s\S]*grid-template-rows:\s*auto auto auto minmax\(0,\s*1fr\)/);
   assert.match(globalsCss, /\.team-photo-card/);
@@ -859,6 +864,7 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(manifest, /\/\?mobile=partido/);
   assert.match(manifest, /\/mercado/);
   assert.match(manifest, /\/\?mobile=equipo/);
+  assert.match(manifest, /Abrir el ranking del equipo/);
   assert.match(pwaRuntime, /serviceWorker\.register\("\/sw\.js", \{ scope: "\/" \}\)/);
   assert.match(pwaRuntime, /dataDisplayMode|dataset\.displayMode/);
   assert.match(serviceWorker, /CACHE_NAME = "pachangas-iq-pwa-v1"/);

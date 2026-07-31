@@ -3089,7 +3089,8 @@ export default function Home() {
     if (requestedTab === "equipo") {
       lockMobileNavigationTab("equipo");
       setActiveMobileTab("equipo");
-      setTeamGalleryOpen(!managerLandscape);
+      setProfilePane("ranking");
+      setTeamGalleryOpen(false);
       return;
     }
 
@@ -4074,8 +4075,13 @@ export default function Home() {
   function openTeamGallery() {
     setMobileAccountOpen(false);
     setActiveMobileTab("equipo");
-    setTeamGalleryOpen(true);
-    scrollToPanel(teamGalleryRef);
+    setProfilePane("ranking");
+    setTeamGalleryOpen(false);
+    window.setTimeout(() => {
+      window.requestAnimationFrame(() => {
+        document.getElementById("ranking")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+    }, 0);
   }
 
   function openGroupSwitcher() {
@@ -4095,7 +4101,8 @@ export default function Home() {
   function openRankingPanel() {
     setMobileAccountOpen(false);
     setProfilePane("ranking");
-    setActiveMobileTab("perfil");
+    setActiveMobileTab("equipo");
+    setTeamGalleryOpen(false);
     window.setTimeout(() => {
       window.requestAnimationFrame(() => {
         document.getElementById("ranking")?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -4175,11 +4182,8 @@ export default function Home() {
     const managerLandscape = isMobileManagerLandscape();
 
     if (tabId === "equipo") {
-      if (managerLandscape) {
-        setTeamGalleryOpen(false);
-        return;
-      }
-      openTeamGallery();
+      setProfilePane("ranking");
+      setTeamGalleryOpen(false);
       return;
     }
 
@@ -8461,9 +8465,9 @@ export default function Home() {
           ) : null}
         </section>
 
-        <aside className="panel teams-panel" id="equipos">
+        <aside className="panel teams-panel lineup-panel" id="alineacion">
           <div className="panel-title teams-panel-title">
-            <span>Equipos sugeridos</span>
+            <span>Alineación</span>
             <div className="teams-panel-actions">
               <strong>{matchKinds[activeKind].teamSize}v{matchKinds[activeKind].teamSize}</strong>
             </div>
@@ -9353,7 +9357,7 @@ export default function Home() {
                   <span>Mi ficha</span><small>Datos, posición, forma y valoraciones</small><b aria-hidden="true">›</b>
                 </button>
                 <button type="button" onClick={() => runMobileAccountAction(openTeamGallery)} disabled={!hasRealTeam}>
-                  <span>Mi equipo</span><small>Fichas de los jugadores del grupo</small><b aria-hidden="true">›</b>
+                  <span>Equipo</span><small>Ranking del grupo con filtros</small><b aria-hidden="true">›</b>
                 </button>
                 <button
                   type="button"

@@ -56,9 +56,9 @@ export default function manifest(): MetadataRoute.Manifest {
         icons: [{ src: "/icon-192.png", sizes: "192x192", type: "image/png" }],
       },
       {
-        name: "Mi equipo",
+        name: "Equipo",
         short_name: "Equipo",
-        description: "Abrir las fichas del equipo.",
+        description: "Abrir el ranking del equipo.",
         url: "/?mobile=equipo",
         icons: [{ src: "/icon-192.png", sizes: "192x192", type: "image/png" }],
       },
