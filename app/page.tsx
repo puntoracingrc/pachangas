@@ -103,6 +103,7 @@ type MarketZone = {
 
 type Player = {
   id: string;
+  globalPlayerProfileId?: string;
   ownerUserId?: string;
   name: string;
   avatar?: string;
@@ -1623,6 +1624,7 @@ function normalizePayload(payload?: Partial<AppPayload>): AppPayload {
       avatarOffsetX: player.avatar ? clampAvatarOffset(player.avatarOffsetX, 50) : undefined,
       avatarOffsetY: player.avatar ? clampAvatarOffset(player.avatarOffsetY, 0) : undefined,
       birthDate: normalizeBirthDate(player.birthDate),
+      globalPlayerProfileId: player.globalPlayerProfileId || undefined,
       importedRating: player.importedRating ? clampRating(Number(player.importedRating)) : undefined,
       importedRatingAt: player.importedRatingAt || undefined,
       importedRatingFromGroup: player.importedRatingFromGroup || undefined,
@@ -4798,6 +4800,7 @@ export default function Home() {
     const marketZonesGeo = normalizeMarketZonesGeo(player.marketZonesGeo);
 
     return {
+      globalPlayerProfileId: player.globalPlayerProfileId,
       avatar: player.avatar,
       avatarOffsetX: player.avatar ? clampAvatarOffset(player.avatarOffsetX, 50) : undefined,
       avatarOffsetY: player.avatar ? clampAvatarOffset(player.avatarOffsetY, 0) : undefined,
@@ -5068,7 +5071,7 @@ export default function Home() {
     const nextPayload: AppPayload = { players: nextPlayers, venues, matches, activeMatchId, siteSettings };
 
     setProfileSaving(true);
-    setProfileSaveMessage("Guardando ficha...");
+    setProfileSaveMessage(selectedPlayerIsOwn ? "Guardando ficha universal..." : "Guardando ficha...");
     let marketWarning = "";
 
     try {
@@ -5124,7 +5127,7 @@ export default function Home() {
         localStorage.setItem(storageKey, serializeLocalPayloadCache(nextPayload, remoteGroupId ? "server-cache" : "local-draft"));
       }
 
-      setProfileSaveMessage(`Ficha guardada${marketWarning}`);
+      setProfileSaveMessage(`${selectedPlayerIsOwn ? "Ficha universal guardada" : "Ficha guardada"}${marketWarning}`);
       clearAvatarDraft(savedPlayerId);
       setAvatarMessage("");
       window.setTimeout(() => setProfileSaveMessage(""), 1800);
@@ -5464,7 +5467,7 @@ export default function Home() {
     if (supabase && remoteGroupId && remoteReady) {
       setSyncStatus("connecting");
       setSyncError("");
-      setProfileSaveMessage("Creando ficha...");
+      setProfileSaveMessage("Creando ficha universal...");
 
       const result = await supabase.rpc("upsert_pachanga_own_player_profile", {
         player_patch: profilePatchFor(player),
@@ -5482,7 +5485,7 @@ export default function Home() {
       const savedPlayer = ownPlayerFromCommit(result.data as RemotePayloadCommit, player.id);
       if (savedPlayer) {
         setSelectedPlayerId(savedPlayer.id);
-        setProfileSaveMessage("Ficha creada");
+        setProfileSaveMessage("Ficha universal creada");
         window.setTimeout(() => setProfileSaveMessage(""), 1800);
       }
       return;
@@ -5546,7 +5549,7 @@ export default function Home() {
     if (supabase && remoteGroupId && remoteReady) {
       setSyncStatus("connecting");
       setSyncError("");
-      setProfileSaveMessage("Importando ficha...");
+      setProfileSaveMessage("Importando ficha universal...");
 
       const result = await supabase.rpc("upsert_pachanga_own_player_profile", {
         player_patch: profilePatchFor(player),
@@ -5567,7 +5570,7 @@ export default function Home() {
         setProfileName(playerDisplayName(savedPlayer));
         setSelectedImportCandidateKey(null);
         setShowImportChoices(false);
-        setProfileSaveMessage("Ficha importada");
+        setProfileSaveMessage("Ficha universal importada");
         window.setTimeout(() => setProfileSaveMessage(""), 1800);
       }
       return;
@@ -5632,7 +5635,7 @@ export default function Home() {
     if (supabase && remoteGroupId && remoteReady) {
       setSyncStatus("connecting");
       setSyncError("");
-      setProfileSaveMessage("Asignando ficha...");
+      setProfileSaveMessage("Asignando ficha universal...");
 
       const result = await supabase.rpc("upsert_pachanga_own_player_profile", {
         player_patch: profilePatchFor(claimedPlayer),
@@ -5650,7 +5653,7 @@ export default function Home() {
       const savedPlayer = ownPlayerFromCommit(result.data as RemotePayloadCommit, selectedPlayer.id);
       if (savedPlayer) {
         setSelectedPlayerId(savedPlayer.id);
-        setProfileSaveMessage("Ficha asignada");
+        setProfileSaveMessage("Ficha universal asignada");
         window.setTimeout(() => setProfileSaveMessage(""), 1800);
       }
       if (nextName) setProfileName(nextName);
@@ -7544,7 +7547,7 @@ export default function Home() {
             <div className="panel-title">
               <span>Ficha jugador</span>
               <div className="profile-title-actions">
-                {selectedPlayerIsOwn ? <small className="own-label">Tu ficha</small> : null}
+                {selectedPlayerIsOwn ? <small className="own-label">Tu ficha universal</small> : null}
                 {selectedPlayer.inactive ? <small className="inactive-label">Ya no está</small> : null}
                 {canUseAdminControls && !selectedPlayer.inactive ? (
                   <button

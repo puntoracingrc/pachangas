@@ -633,6 +633,16 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(supabaseSql, /Close the lineup before changing payments/);
   assert.match(supabaseSql, /selected_match \? 'scoreA'/);
   assert.match(supabaseSql, /create or replace function public\.patch_pachanga_match_scorers/);
+  assert.match(supabaseSql, /create table if not exists public\.pachanga_player_profiles/);
+  assert.match(supabaseSql, /create unique index if not exists pachanga_player_profiles_user_id_idx/);
+  assert.match(supabaseSql, /Users can read own universal player profile/);
+  assert.match(supabaseSql, /player_profile_id uuid references public\.pachanga_player_profiles/);
+  assert.match(supabaseSql, /create or replace function public\.upsert_pachanga_player_profile_from_player/);
+  assert.match(supabaseSql, /create or replace function public\.sync_pachanga_player_profile_to_groups/);
+  assert.match(supabaseSql, /revoke execute on function public\.sync_pachanga_player_profile_to_groups\(uuid, uuid\) from authenticated/);
+  assert.match(supabaseSql, /globalPlayerProfileId/);
+  assert.match(page, /globalPlayerProfileId/);
+  assert.match(page, /Tu ficha universal/);
   assert.match(supabaseSql, /create or replace function public\.upsert_pachanga_own_player_profile/);
   assert.match(supabaseSql, /Only group members can create a player profile/);
   assert.match(supabaseSql, /This player profile already belongs to another user/);
