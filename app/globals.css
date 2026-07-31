@@ -173,12 +173,17 @@
     display: none;
   }
 
+  main[data-mobile-tab]:not([data-mobile-tab="mercado"]) > .market-admin-panel {
+    display: none;
+  }
+
   main[data-mobile-tab]:not([data-mobile-tab="equipo"]) > .team-gallery-panel {
     display: none;
   }
 
   main[data-mobile-tab="equipo"] > .app-shell,
-  main[data-mobile-tab="perfil"] > .app-shell {
+  main[data-mobile-tab="perfil"] > .app-shell,
+  main[data-mobile-tab="mercado"] > .app-shell {
     display: none;
   }
 
@@ -198,6 +203,7 @@
   }
 
   main[data-mobile-tab="partido"] > .app-shell,
+  main[data-mobile-tab="mercado"] > .market-admin-panel,
   main[data-mobile-tab="perfil"] > .bottom-grid,
   main[data-mobile-tab="equipo"] > .team-gallery-panel {
     margin-top: 10px;
@@ -3198,6 +3204,24 @@ select:disabled {
   text-decoration: none;
 }
 
+.team-player-grid + .market-scout-card {
+  margin-top: 12px;
+}
+
+.market-scout-card-compact {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  min-height: 76px;
+}
+
+.market-scout-card-compact .market-scout-actions {
+  grid-column: auto;
+  justify-content: end;
+}
+
+.market-scout-card-compact .market-scout-actions button {
+  white-space: nowrap;
+}
+
 .market-scout-card.public-open {
   background:
     radial-gradient(circle at 90% 12%, rgba(255, 255, 255, 0.9), transparent 28%),
@@ -3351,6 +3375,129 @@ select:disabled {
   background: transparent;
   border: 1px solid #8b978f;
   color: var(--foreground);
+}
+
+.market-admin-panel {
+  display: grid;
+  gap: 14px;
+}
+
+.market-admin-panel.public-open {
+  border-color: color-mix(in srgb, var(--green) 34%, var(--line));
+}
+
+.market-admin-header {
+  align-items: center;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.market-admin-header > div:first-child {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.market-admin-header span,
+.market-admin-summary span {
+  color: var(--ink-soft);
+  font-size: 11px;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.market-admin-header strong {
+  color: var(--foreground);
+  font-size: 22px;
+  line-height: 1.05;
+}
+
+.market-admin-header p {
+  color: var(--ink-soft);
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.35;
+  margin: 0;
+}
+
+.market-admin-header-actions,
+.market-admin-actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: end;
+}
+
+.market-admin-header-actions a,
+.market-admin-header-actions button {
+  align-items: center;
+  background: #f4f1e7;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--foreground);
+  cursor: pointer;
+  display: inline-flex;
+  font-size: 13px;
+  font-weight: 900;
+  justify-content: center;
+  min-height: 36px;
+  padding: 0 12px;
+  text-decoration: none;
+}
+
+.market-admin-summary {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.market-admin-summary div {
+  background: color-mix(in srgb, var(--green) 8%, var(--panel));
+  border: 1px solid color-mix(in srgb, var(--green) 16%, var(--line));
+  border-radius: 8px;
+  display: grid;
+  gap: 4px;
+  min-height: 68px;
+  padding: 10px;
+}
+
+.market-admin-summary strong {
+  color: var(--foreground);
+  font-size: 22px;
+  line-height: 1;
+}
+
+.market-admin-options {
+  background: color-mix(in srgb, var(--green) 6%, transparent);
+  border: 1px solid color-mix(in srgb, var(--green) 18%, var(--line));
+  border-radius: 8px;
+  padding: 10px;
+}
+
+.market-admin-actions {
+  justify-content: start;
+}
+
+.market-admin-actions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.market-admin-empty {
+  background: #f8fafc;
+  border: 1px dashed #cbd5e1;
+  border-radius: 8px;
+  color: #334155;
+  display: grid;
+  gap: 5px;
+  padding: 14px;
+}
+
+.market-admin-empty strong {
+  color: var(--foreground);
+  font-size: 18px;
 }
 
 .open-match-requests-panel {
@@ -7345,6 +7492,24 @@ select:disabled {
     flex: 1 1 150px;
   }
 
+  .market-admin-header,
+  .market-admin-summary,
+  .market-admin-options {
+    grid-template-columns: 1fr;
+  }
+
+  .market-admin-header-actions,
+  .market-admin-actions {
+    justify-content: stretch;
+  }
+
+  .market-admin-header-actions a,
+  .market-admin-header-actions button,
+  .market-admin-actions a,
+  .market-admin-actions button {
+    flex: 1 1 150px;
+  }
+
   .market-context-actions {
     justify-items: stretch;
   }
@@ -7500,6 +7665,16 @@ select:disabled {
 
   .player-facing-main .readonly-editor {
     display: none;
+  }
+
+  main[data-mobile-tab="perfil"] > .bottom-grid:not(.without-profile)[data-profile-pane="ficha"] > #ranking,
+  main[data-mobile-tab="perfil"] > .bottom-grid[data-profile-pane="ranking"] > .player-profile {
+    display: none;
+  }
+
+  main[data-mobile-tab="perfil"] > .bottom-grid:not(.without-profile)[data-profile-pane="ficha"],
+  main[data-mobile-tab="perfil"] > .bottom-grid[data-profile-pane="ranking"] {
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .mobile-tabbar {
@@ -8709,6 +8884,10 @@ select:disabled {
     display: none;
   }
 
+  main[data-mobile-tab]:not([data-mobile-tab="mercado"]) > .market-admin-panel {
+    display: none;
+  }
+
   main[data-mobile-tab]:not([data-mobile-tab="equipo"]) > .team-gallery-panel {
     display: none;
   }
@@ -8739,6 +8918,10 @@ select:disabled {
   }
 
   main[data-mobile-tab="perfil"] > .app-shell {
+    display: none;
+  }
+
+  main[data-mobile-tab="mercado"] > .app-shell {
     display: none;
   }
 
@@ -8801,6 +8984,7 @@ select:disabled {
   main[data-mobile-tab="perfil"] > .bottom-grid,
   main[data-mobile-tab="perfil"] > .billing-panel,
   main[data-mobile-tab="perfil"] > .settings-panel,
+  main[data-mobile-tab="mercado"] > .market-admin-panel,
   main[data-mobile-tab="equipo"] > .team-gallery-panel {
     width: auto;
     max-width: none;
@@ -8815,11 +8999,29 @@ select:disabled {
     padding: 0;
   }
 
+  main[data-mobile-tab="mercado"] > .market-admin-panel {
+    height: calc(100dvh - 56px);
+    overflow: auto;
+  }
+
   main[data-mobile-tab="perfil"] > .bottom-grid:not(.without-profile) {
     grid-template-columns: minmax(280px, 0.95fr) minmax(0, 1.05fr);
   }
 
   main[data-mobile-tab="perfil"] > .bottom-grid.without-profile {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  main[data-mobile-tab="perfil"] > .bottom-grid:not(.without-profile)[data-profile-pane="ficha"] {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  main[data-mobile-tab="perfil"] > .bottom-grid:not(.without-profile)[data-profile-pane="ficha"] > #ranking,
+  main[data-mobile-tab="perfil"] > .bottom-grid[data-profile-pane="ranking"] > .player-profile {
+    display: none;
+  }
+
+  main[data-mobile-tab="perfil"] > .bottom-grid[data-profile-pane="ranking"] {
     grid-template-columns: minmax(0, 1fr);
   }
 
@@ -8846,6 +9048,100 @@ select:disabled {
     max-height: 100%;
     overflow: auto;
     scrollbar-width: thin;
+  }
+
+  main[data-mobile-tab="mercado"] .market-admin-panel {
+    gap: 8px;
+    padding: 10px;
+  }
+
+  main[data-mobile-tab="mercado"] .market-admin-header {
+    gap: 8px;
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  main[data-mobile-tab="mercado"] .market-admin-header strong {
+    color: #f5f2e8;
+    font-size: 18px;
+  }
+
+  main[data-mobile-tab="mercado"] .market-admin-header p {
+    color: #c4d3cb;
+    font-size: 11px;
+    line-height: 1.2;
+  }
+
+  main[data-mobile-tab="mercado"] .market-admin-header-actions a,
+  main[data-mobile-tab="mercado"] .market-admin-header-actions button {
+    background: rgba(245, 242, 232, 0.08);
+    border-color: rgba(255, 255, 255, 0.14);
+    color: #f5f2e8;
+    font-size: 11px;
+    min-height: 30px;
+    padding: 0 10px;
+  }
+
+  main[data-mobile-tab="mercado"] .market-admin-summary {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  main[data-mobile-tab="mercado"] .market-admin-summary div {
+    background: rgba(9, 19, 16, 0.9);
+    border-color: rgba(255, 255, 255, 0.12);
+    min-height: 54px;
+    padding: 8px;
+  }
+
+  main[data-mobile-tab="mercado"] .market-admin-summary strong {
+    color: #f5f2e8;
+    font-size: 20px;
+  }
+
+  main[data-mobile-tab="mercado"] .market-admin-options {
+    background: rgba(245, 242, 232, 0.06);
+    border-color: rgba(255, 255, 255, 0.12);
+    gap: 7px;
+    grid-template-columns: 84px 80px 80px repeat(2, minmax(118px, auto));
+    padding: 8px;
+  }
+
+  main[data-mobile-tab="mercado"] .market-admin-options label {
+    color: #a7b8af;
+    font-size: 9px;
+    line-height: 1;
+  }
+
+  main[data-mobile-tab="mercado"] .market-admin-options input,
+  main[data-mobile-tab="mercado"] .market-admin-options select,
+  main[data-mobile-tab="mercado"] .market-admin-options .public-match-toggle {
+    background: rgba(245, 242, 232, 0.08);
+    border-color: rgba(255, 255, 255, 0.16);
+    color: #f5f2e8 !important;
+    min-height: 28px;
+  }
+
+  main[data-mobile-tab="mercado"] .market-admin-options .public-position-options {
+    gap: 5px;
+  }
+
+  main[data-mobile-tab="mercado"] .market-admin-options .public-position-options label {
+    background: rgba(245, 242, 232, 0.08);
+    border-color: rgba(255, 255, 255, 0.12);
+    color: #f5f2e8;
+    min-height: 24px;
+  }
+
+  main[data-mobile-tab="mercado"] .market-admin-actions a,
+  main[data-mobile-tab="mercado"] .market-admin-actions button {
+    border-radius: 6px;
+    font-size: 11px;
+    min-height: 30px;
+  }
+
+  main[data-mobile-tab="mercado"] .market-admin-empty {
+    background: rgba(245, 242, 232, 0.08);
+    border-color: rgba(255, 255, 255, 0.14);
+    color: #c4d3cb;
   }
 
   main[data-mobile-tab="partido"] .stats-row {
@@ -9124,9 +9420,102 @@ select:disabled {
   main[data-mobile-tab="partido"] .open-match-requests-panel,
   main[data-mobile-tab="partido"] .reserve-section,
   main[data-mobile-tab="partido"] .other-player-grid,
+  main[data-mobile-tab="partido"] .market-scout-card,
   main[data-mobile-tab="partido"] .add-player {
     grid-column: 1 / -1;
     margin-top: 7px;
+  }
+
+  main[data-mobile-tab="partido"] .market-scout-card {
+    background:
+      radial-gradient(circle at 94% 12%, rgba(200, 239, 93, 0.12), transparent 28%),
+      rgba(15, 27, 22, 0.94);
+    border-color: rgba(200, 239, 93, 0.26);
+    border-left-color: var(--lime);
+    color: #f5f2e8;
+    gap: 7px;
+    grid-template-columns: 30px minmax(130px, 1fr) auto;
+    min-height: 0;
+    padding: 7px 8px;
+  }
+
+  main[data-mobile-tab="partido"] .market-scout-card > div {
+    gap: 2px;
+  }
+
+  main[data-mobile-tab="partido"] .market-scout-icon {
+    height: 30px;
+    width: 30px;
+  }
+
+  main[data-mobile-tab="partido"] .market-scout-card strong {
+    color: #f5f2e8;
+    font-size: 13px;
+    line-height: 1;
+  }
+
+  main[data-mobile-tab="partido"] .market-scout-card small,
+  main[data-mobile-tab="partido"] .market-scout-card em {
+    color: #c4d3cb;
+    display: -webkit-box;
+    font-size: 10px;
+    line-height: 1.15;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 1;
+  }
+
+  main[data-mobile-tab="partido"] .public-match-options {
+    align-items: end;
+    display: grid;
+    gap: 5px;
+    grid-column: auto;
+    grid-template-columns: 58px 58px 58px repeat(2, minmax(88px, 1fr));
+  }
+
+  main[data-mobile-tab="partido"] .public-match-options label {
+    font-size: 8px;
+    gap: 2px;
+    line-height: 1;
+  }
+
+  main[data-mobile-tab="partido"] .public-match-options input,
+  main[data-mobile-tab="partido"] .public-match-options select {
+    border-radius: 6px;
+    font-size: 10px;
+    height: 24px;
+    min-height: 24px;
+    padding: 0 5px;
+  }
+
+  main[data-mobile-tab="partido"] .public-match-toggle {
+    min-height: 24px;
+    padding: 0 6px;
+  }
+
+  main[data-mobile-tab="partido"] .public-match-toggle input {
+    width: 12px;
+  }
+
+  main[data-mobile-tab="partido"] .public-position-options {
+    display: none;
+  }
+
+  main[data-mobile-tab="partido"] .market-scout-actions {
+    align-content: center;
+    display: grid !important;
+    gap: 4px;
+    grid-column: auto;
+    grid-template-columns: minmax(82px, 1fr);
+  }
+
+  main[data-mobile-tab="partido"] .market-scout-actions a,
+  main[data-mobile-tab="partido"] .market-scout-actions button {
+    border-radius: 6px;
+    font-size: 9px;
+    min-height: 23px;
+    padding: 0 7px;
+    white-space: nowrap;
   }
 
   main[data-mobile-tab="partido"] .reserve-section {

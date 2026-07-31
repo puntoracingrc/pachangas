@@ -64,7 +64,7 @@ test("builds the user manual as its own page", async () => {
   assert.match(html, /foto en miniatura/);
   assert.match(html, /copias automáticas al guardar o finalizar un partido/);
   assert.match(html, /Borrar jugador lo deja fuera del grupo/);
-  assert.match(html, /Ranking vivo/);
+  assert.match(html, /El ranking se puede filtrar/);
   assert.match(html, /Media, forma y equilibrio/);
   assert.match(html, /Media real = promedio/);
   assert.match(html, /Forma actual = porcentaje temporal visible de 0 a 100/);
@@ -216,6 +216,11 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /Solo owner/);
   assert.match(page, /Da o quita permisos de admin/);
   assert.match(page, /openOwnPlayerProfile/);
+  assert.match(page, /type ProfilePane = "ficha" \| "ranking"/);
+  assert.match(page, /setProfilePane\("ficha"\)/);
+  assert.match(page, /function openRankingPanel/);
+  assert.match(page, /function openMarketConfiguration/);
+  assert.match(page, /if \(tabId === "mercado"\) \{\s*if \(canUseAdminControls\) return;/);
   assert.match(page, /complete_pachanga_player_initial_assessment/);
   assert.match(page, /complete_pachanga_player_advanced_assessment/);
   assert.match(page, /Este test crea tu ficha real y solo se puede completar una vez por usuario/);
@@ -433,6 +438,12 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(globalsCss, /\.ranking-stat-grid/);
   assert.match(globalsCss, /\.ranking-card-rank/);
   assert.match(globalsCss, /\.ranking-card-badge/);
+  assert.match(globalsCss, /data-profile-pane="ficha"/);
+  assert.match(globalsCss, /data-profile-pane="ranking"/);
+  assert.match(globalsCss, /\.team-player-grid \+ \.market-scout-card/);
+  assert.match(globalsCss, /\.market-scout-card-compact/);
+  assert.match(globalsCss, /\.market-admin-panel/);
+  assert.match(globalsCss, /main\[data-mobile-tab="mercado"\] > \.app-shell/);
   assert.match(globalsCss, /\.team-photo-card/);
   assert.match(globalsCss, /\.history-item\.has-photo/);
   assert.match(globalsCss, /\.google-signin-button/);
@@ -468,6 +479,7 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /Inscripción pendiente/);
   assert.match(page, /Se abrirá cuando pase/);
   assert.match(page, /showPlayerSwitcher\s*=\s*Boolean\(canUseAdminControls\s*&&\s*selectedPlayer\s*&&\s*!selectedPlayerIsOwn/);
+  assert.match(page, /<\/div>\s*\{showMarketScoutCard \? \(\s*<div className=\{\`player-card market-scout-card market-scout-card-compact/);
   assert.match(page, /statusConfirmation/);
   assert.match(page, /status-confirm-dialog/);
   assert.match(page, /skipLeaveConfirmation/);
@@ -762,12 +774,14 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /Partido finalizado/);
   assert.doesNotMatch(page, /Modo local/);
   assert.match(page, /paymentReady/);
-  assert.match(page, /const showMarketScoutCard = showMatchRoster && !lineupClosed && !matchFinalized && missing > 0/);
+  assert.match(page, /const canConfigureMatchMarket = canUseAdminControls && showMatchRoster && !lineupClosed && !matchFinalized/);
+  assert.match(page, /const showMarketScoutCard = canConfigureMatchMarket && \(missing > 0 \|\| Boolean\(activeMatch\.publicOpen\)\)/);
   assert.match(page, /const otherPlayers = registrationOpen/);
   assert.match(page, /const canChangeStatus = matchConfigured && registrationOpen/);
   assert.match(page, /const canChangeThisPlayerStatus = matchConfigured && registrationOpen/);
   assert.match(page, /Buscar en mercado/);
-  assert.match(page, /Al cerrar alineación se oculta/);
+  assert.match(page, /Configurar mercado/);
+  assert.match(page, /Solo admins y owner ven esta pantalla/);
   assert.match(page, /Abrir partido al público/);
   assert.match(page, /publicOpen/);
   assert.match(page, /publicMatchUrl/);
