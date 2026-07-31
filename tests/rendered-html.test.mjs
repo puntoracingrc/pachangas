@@ -15,6 +15,7 @@ test("builds Pachangas IQ HTML", async () => {
   assert.match(html, /Finalizar partido/);
   assert.match(html, /Añadir foto del partido/);
   assert.match(html, /Comparte este partido!/);
+  assert.match(html, /Tiempo previsto/);
   assert.match(html, /Copiar link/);
   assert.match(html, /Próximos partidos/);
   assert.match(html, /Temporada/);
@@ -22,10 +23,15 @@ test("builds Pachangas IQ HTML", async () => {
   assert.match(html, /2025-2026/);
   assert.match(html, /Navegación principal móvil/);
   assert.match(html, /Abrir manual de usuario/);
+  assert.match(html, /Mercado/);
   assert.match(html, /\/brand\/pachangas-logo-hero\.png/);
   assert.match(html, /\/manifest\.webmanifest/);
   assert.match(html, /\/apple-touch-icon\.png/);
   assert.match(html, /\/icon-192\.png/);
+  assert.match(html, /Aviso legal/);
+  assert.match(html, /Privacidad/);
+  assert.match(html, /Cookies/);
+  assert.match(html, /Condiciones de venta/);
   assert.doesNotMatch(html, /Manual de usuario<\/span>/);
   assert.doesNotMatch(html, /Registro/);
   assert.doesNotMatch(html, /Entra para crear tu equipo/);
@@ -40,6 +46,10 @@ test("builds the user manual as its own page", async () => {
   assert.match(html, /Crear &gt; Grupo/);
   assert.match(html, /Crear &gt; Ficha jugador/);
   assert.match(html, /Campos y ajustes iniciales/);
+  assert.match(html, /Prueba gratuita y suscripción/);
+  assert.match(html, /2 partidos gratis/);
+  assert.match(html, /Plan mensual: 5,99 € al mes/);
+  assert.match(html, /Fórmula del trial/);
   assert.match(html, /Crear partido/);
   assert.match(html, /Crear &gt; Partido/);
   assert.match(html, /Guardar partido/);
@@ -63,18 +73,100 @@ test("builds the user manual as its own page", async () => {
   assert.match(html, /Fiabilidad = 100% menos 7 puntos/);
   assert.match(html, /Gestión de jugadores/);
   assert.match(html, /Configuración profunda y copias/);
+  assert.match(html, /Mercado de fichajes/);
+  assert.match(html, /Google Places/);
+  assert.match(html, /página separada del grupo privado/);
+  assert.match(html, /El nombre del campo debe elegirse desde una sugerencia/);
+  assert.match(html, /Google Weather/);
+  assert.match(html, /Tiempo previsto/);
   assert.match(html, /Volver/);
 });
 
+test("builds the transfer market as a separated page", async () => {
+  const html = await readFile(new URL("../.next/server/app/mercado.html", import.meta.url), "utf8");
+  assert.match(html, /Mercado de fichajes/);
+  assert.match(html, /Filtros del mercado de fichajes/);
+  assert.doesNotMatch(html, /Jugadores disponibles por zona y horario/);
+  assert.doesNotMatch(html, /Un escaparate separado del grupo privado/);
+  assert.match(html, /Zona/);
+  assert.match(html, /Día/);
+  assert.match(html, /Modalidad/);
+  assert.match(html, /Posición/);
+  assert.match(html, /Jugadores disponibles/);
+  assert.match(html, /Partidos abiertos/);
+  assert.match(html, /38 años/);
+  assert.match(html, /Solo admins invitan/);
+  assert.match(html, /Invitado puntual/);
+  assert.doesNotMatch(html, /\/brand\/pachangas-logo-wide\.png/);
+});
+
+test("builds the legal pages", async () => {
+  const [legal, privacy, cookies, terms, sales] = await Promise.all([
+    readFile(new URL("../.next/server/app/aviso-legal.html", import.meta.url), "utf8"),
+    readFile(new URL("../.next/server/app/privacidad.html", import.meta.url), "utf8"),
+    readFile(new URL("../.next/server/app/cookies.html", import.meta.url), "utf8"),
+    readFile(new URL("../.next/server/app/condiciones.html", import.meta.url), "utf8"),
+    readFile(new URL("../.next/server/app/condiciones-venta.html", import.meta.url), "utf8"),
+  ]);
+
+  assert.match(legal, /Aviso legal/);
+  assert.match(legal, /Datos legales del responsable pendientes de completar/);
+  assert.match(legal, /Ley 34\/2002/);
+  assert.match(privacy, /Política de privacidad/);
+  assert.match(privacy, /Supabase/);
+  assert.match(privacy, /Stripe/);
+  assert.match(privacy, /Google Maps Platform/);
+  assert.match(privacy, /Google Weather/);
+  assert.match(privacy, /direcciones verificadas de instalaciones deportivas/);
+  assert.match(privacy, /previsión meteorológica/);
+  assert.match(privacy, /mercado de fichajes/);
+  assert.match(cookies, /Política de cookies/);
+  assert.match(cookies, /No usamos cookies de publicidad/);
+  assert.match(terms, /Condiciones de uso/);
+  assert.match(terms, /Owner/);
+  assert.match(terms, /Mercado de fichajes/);
+  assert.match(terms, /ubicación verificada del campo/);
+  assert.match(sales, /Condiciones de contratación/);
+  assert.match(sales, /Plan mensual: 5,99 € al mes/);
+  assert.match(sales, /Plan anual: 64,99 € al año/);
+  assert.match(sales, /Stripe/);
+});
+
 test("keeps the project wired to the Pachangas app", async () => {
-  const [page, layout, packageJson, supabaseClient, globalsCss, googleAuthPage, supabaseSql] = await Promise.all([
+  const [
+    page,
+    layout,
+    legalData,
+    packageJson,
+    supabaseClient,
+    globalsCss,
+    googleAuthPage,
+    supabaseSql,
+    billingShared,
+    billingCheckout,
+    billingPortal,
+    stripeWebhook,
+    envExample,
+    googlePlacesClient,
+    marketPage,
+    weatherRoute,
+  ] = await Promise.all([
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/legal-data.tsx", import.meta.url), "utf8"),
     readFile(new URL("../package.json", import.meta.url), "utf8"),
     readFile(new URL("../app/supabaseClient.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
     readFile(new URL("../app/auth/google/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../supabase/pachangas.sql", import.meta.url), "utf8"),
+    readFile(new URL("../app/api/billing/_shared.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/api/billing/checkout/route.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/api/billing/portal/route.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/api/stripe/webhook/route.ts", import.meta.url), "utf8"),
+    readFile(new URL("../.env.example", import.meta.url), "utf8"),
+    readFile(new URL("../app/googlePlacesClient.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/mercado/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/api/weather/route.ts", import.meta.url), "utf8"),
   ]);
 
   assert.match(page, /join_pachanga_team/);
@@ -84,6 +176,9 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /Continuar con Google y volver/);
   assert.match(page, /GoogleLogo/);
   assert.match(page, /google-signin-button/);
+  assert.match(page, /google-signout-button/);
+  assert.match(page, /hero-account-row/);
+  assert.match(page, /Cerrar sesión/);
   assert.match(page, /Crea tu ficha para poder marcar/);
   assert.match(page, /gated-shell/);
   assert.doesNotMatch(page, /match-focus-card/);
@@ -98,23 +193,108 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /personal-action-button/);
   assert.match(page, /Mi ficha/);
   assert.match(page, /Mi equipo/);
+  assert.match(page, /openGroupSwitcher/);
+  assert.match(page, /teamAccessPanelRef/);
+  assert.match(page, /team-move-label/);
+  assert.match(page, /Equipo 2/);
   assert.match(page, /Ficha jugador/);
+  assert.match(page, /Grupo de pachangas/);
+  assert.match(page, /mobile-account-sheet/);
+  assert.match(page, /Perfil y ajustes/);
+  assert.match(page, /canUseAdminControls \? \(/);
+  assert.match(page, /closeSettingsPanelWithoutSave/);
+  assert.match(page, /Cerrar sin guardar/);
+  assert.match(page, /Admins · permisos solo owner/);
+  assert.match(page, /canManageRoles/);
+  assert.match(page, /Permisos de admin/);
+  assert.match(page, /Solo owner/);
+  assert.match(page, /Da o quita permisos de admin/);
   assert.match(page, /openOwnPlayerProfile/);
   assert.match(page, /openCreatePlayerProfile/);
   assert.match(page, /runCreateAction\(\(\) => void openCreatePlayerProfile\(\)\)/);
   assert.match(page, /showQuickForm\("venue"\)/);
   assert.match(page, /showQuickForm\("team"\)/);
   assert.match(page, /runCreateAction\(createMatch\)/);
+  assert.match(page, /attachVenueAutocomplete/);
+  assert.match(page, /NEXT_PUBLIC_GOOGLE_MAPS_API_KEY/);
+  assert.match(page, /selectedVenuePlace/);
+  assert.match(page, /Dirección verificada/);
+  assert.match(page, /Google Places pendiente/);
+  assert.match(page, /Mostrarme en mercado de fichajes/);
+  assert.match(page, /marketZoneRadiusOptions/);
+  assert.match(page, /Solo esta población/);
+  assert.match(page, /marketZonesGeo/);
+  assert.match(page, /appendMarketZoneGeo/);
+  assert.match(page, /updateMarketZoneRadius/);
+  assert.match(page, /marketModalitiesForPlayer/);
+  assert.match(page, /syncOwnMarketProfile/);
+  assert.match(page, /sync_pachanga_market_profile/);
+  assert.match(page, /marketScoutUrl/);
+  assert.match(page, /params\.set\("partido", activeMatch\.id\)/);
+  assert.match(page, /params\.set\("modalidad", activeKind\)/);
+  assert.match(page, /params\.set\("plazas", String\(missing\)\)/);
+  assert.match(googlePlacesClient, /maps\/api\/js/);
+  assert.match(googlePlacesClient, /libraries", "places"/);
+  assert.match(googlePlacesClient, /callback", "__pachangasGooglePlacesReady"/);
+  assert.match(googlePlacesClient, /importLibrary\?\.\("places"\)/);
+  assert.match(googlePlacesClient, /PlaceAutocompleteElement/);
+  assert.match(googlePlacesClient, /gmp-select/);
+  assert.match(googlePlacesClient, /includedRegionCodes = \["es"\]/);
+  assert.match(googlePlacesClient, /Autocomplete/);
+  assert.match(googlePlacesClient, /componentRestrictions: \{ country: "es" \}/);
+  assert.ok(
+    googlePlacesClient.indexOf("const Autocomplete = googleMapsWindow().google?.maps?.places?.Autocomplete") <
+      googlePlacesClient.indexOf("const newPlacesCleanup = attachNewPlaceAutocomplete"),
+    "Google Places should keep the normal input as the primary autocomplete path",
+  );
+  assert.match(globalsCss, /\.pachangas-place-autocomplete/);
+  assert.match(marketPage, /pachanga_market_profiles/);
+  assert.match(marketPage, /pachanga_open_matches/);
+  assert.match(marketPage, /zones_geo/);
+  assert.match(marketPage, /zonesGeo/);
+  assert.match(marketPage, /distanceKmBetween/);
+  assert.match(marketPage, /profileZoneMatch/);
+  assert.match(marketPage, /openMatchZoneMatch/);
+  assert.match(marketPage, /activeMarketTarget/);
+  assert.match(marketPage, /misma población/);
+  assert.match(marketPage, /filteredOpenMatches/);
+  assert.match(marketPage, /Partidos abiertos/);
+  assert.match(marketPage, /pachanga_open_match_requests/);
+  assert.match(marketPage, /requestOpenMatch/);
+  assert.match(marketPage, /request_pachanga_open_match/);
+  assert.match(marketPage, /operation_key: crypto\.randomUUID\(\)/);
+  assert.match(marketPage, /target_open_match_id/);
+  assert.match(marketPage, /requester_user_id/);
+  assert.match(marketPage, /Solicitar plaza/);
+  assert.match(marketPage, /Solicitud enviada/);
+  assert.match(marketPage, /Admin acepta/);
+  assert.match(marketPage, /Nivel equipo/);
+  assert.match(marketPage, /Solo admins invitan/);
+  assert.match(marketPage, /Invitar desde un partido/);
+  assert.match(marketPage, /MarketMatchContext/);
+  assert.match(marketPage, /Filtros aplicados desde el partido/);
+  assert.match(marketPage, /copyMarketInvite/);
+  assert.match(marketPage, /Copiar invitación/);
+  assert.match(marketPage, /marketInviteText/);
   assert.doesNotMatch(page, /top-panel quick-create-form top-player-form/);
   assert.doesNotMatch(page, /Nombre del jugador/);
   assert.doesNotMatch(page, /Guardar jugador/);
   assert.match(page, /top-panel quick-create-form top-venue-form/);
   assert.match(page, /Crea tu primer partido desde “Crear”/);
+  assert.match(page, /Campos guardados/);
+  assert.match(page, /deleteVenue/);
+  assert.match(page, /Los partidos históricos conservarán el nombre del campo/);
+  assert.match(globalsCss, /\.saved-venues-panel/);
+  assert.match(globalsCss, /\.saved-venue-list/);
   assert.match(globalsCss, /\.quick-create-form/);
   assert.ok(page.indexOf("top-panel quick-create-form top-venue-form") < page.indexOf("team-access-panel"));
   assert.match(globalsCss, /\.create-menu-panel/);
   assert.doesNotMatch(globalsCss, /\.top-player-form/);
-  assert.match(page, /mobile-tabbar/);
+  assert.match(page, /MobileAppNav/);
+  assert.match(page, /mobileNavigationTabs/);
+  assert.match(page, /activeMobileTab/);
+  assert.match(page, /navigateMobileTab/);
+  assert.match(page, /onNavigate=\{navigatePrimaryMobile\}/);
   assert.match(page, /id="partido"/);
   assert.match(page, /id="equipos"/);
   assert.match(page, /id="ranking"/);
@@ -131,6 +311,11 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /matchCardAge/);
   assert.match(page, /player-age-inline/);
   assert.match(globalsCss, /\.player-age-inline/);
+  assert.match(page, /playerRatingTrend/);
+  assert.match(page, /renderRatingTrendChip/);
+  assert.match(page, /Media subiendo/);
+  assert.match(page, /Media bajando/);
+  assert.match(page, /Media estable/);
   assert.match(page, /PlayerFormState/);
   assert.match(page, /hasData/);
   assert.match(page, /playerFormState/);
@@ -177,6 +362,11 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /Voy desde/);
   assert.match(page, /perderás tu posición/);
   assert.match(page, /className="fifa-photo-action" title=\{selectedAvatarPreview \? "Cambiar foto" : "Añadir foto"\}/);
+  assert.match(page, /playerPhotoPromptForChatGpt/);
+  assert.match(page, /Crea un retrato profesional desde los hombros hacia arriba/);
+  assert.match(page, /Prompt para ChatGPT/);
+  assert.match(page, /Copiar prompt/);
+  assert.match(page, /Salida final en PNG con fondo transparente/);
   assert.match(globalsCss, /\.side-history \.history/);
   assert.match(globalsCss, /\.side-history::after/);
   assert.match(globalsCss, /\.history-season-filter/);
@@ -186,6 +376,11 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(globalsCss, /\.team-b-score/);
   assert.match(globalsCss, /::-webkit-calendar-picker-indicator/);
   assert.match(globalsCss, /\.absence-chip/);
+  assert.match(globalsCss, /\.rating-trend-chip/);
+  assert.match(globalsCss, /\.rating-trend-up/);
+  assert.match(globalsCss, /\.rating-trend-down/);
+  assert.match(globalsCss, /\.rating-trend-flat/);
+  assert.match(globalsCss, /\.pitch-player-card \.rating-trend-chip/);
   assert.match(globalsCss, /\.form-chip/);
   assert.match(globalsCss, /\.form-state-card/);
   assert.match(globalsCss, /\.form-state-card\.form-pending/);
@@ -196,12 +391,24 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(globalsCss, /\.shared-link-gate/);
   assert.match(globalsCss, /\.gated-shell/);
   assert.doesNotMatch(globalsCss, /\.match-focus-card/);
-  assert.match(globalsCss, /\.mobile-tabbar/);
+  assert.match(globalsCss, /\.mobile-app-nav/);
+  assert.match(globalsCss, /\.mobile-app-nav-item/);
+  assert.match(globalsCss, /\.mobile-app-nav-item\.active/);
+  assert.match(globalsCss, /\.mobile-account-sheet/);
   assert.match(globalsCss, /\.team-gallery-panel/);
   assert.match(globalsCss, /\.team-card-gallery/);
+  assert.match(globalsCss, /grid-template-columns:\s*repeat\(auto-fit,\s*minmax\(190px,\s*1fr\)\)/);
   assert.match(globalsCss, /\.team-mini-player-card/);
+  assert.match(globalsCss, /\.team-access-role strong/);
+  assert.match(globalsCss, /white-space:\s*nowrap/);
+  assert.match(globalsCss, /\.settings-panel-header/);
+  assert.match(globalsCss, /\.settings-actions/);
+  assert.match(globalsCss, /\.panel-cancel-button/);
+  assert.match(globalsCss, /border:\s*3px solid #202820/);
   assert.match(globalsCss, /\.team-player-main/);
   assert.match(globalsCss, /\.team-player-meta/);
+  assert.match(globalsCss, /\.market-scout-card/);
+  assert.match(globalsCss, /\.market-scout-icon/);
   assert.match(globalsCss, /\.profile-close-button/);
   assert.match(globalsCss, /\.player-facing-main \.readonly-editor/);
   assert.match(globalsCss, /\.ranking-toolbar/);
@@ -222,7 +429,14 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(globalsCss, /transform:\s*translateX\(clamp\(-92px,\s*-12vw,\s*-42px\)\)/);
   assert.match(globalsCss, /scroll-margin-top:\s*14px/);
   assert.match(globalsCss, /overflow-y:\s*auto/);
-  assert.match(globalsCss, /\.hero-actions\s*\{[\s\S]*grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\)/);
+  assert.match(globalsCss, /\.hero-action-stack/);
+  assert.match(globalsCss, /\.hero-account-row/);
+  assert.match(globalsCss, /\.google-signout-button/);
+  assert.match(globalsCss, /\.mobile-account-group/);
+  assert.match(globalsCss, /\.mobile-account-session/);
+  assert.match(globalsCss, /\.mobile-account-backdrop/);
+  assert.match(globalsCss, /\.mobile-account-header/);
+  assert.match(globalsCss, /\.player-actions \.team-move-label/);
   assert.match(globalsCss, /overflow-x:\s*hidden/);
   assert.match(page, /Grupo de Pachangas/);
   assert.match(page, /groupOptionLabel/);
@@ -235,6 +449,11 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /showTeamAdminPanel \? \(/);
   assert.match(page, /showMatchAdminPanel \? \(/);
   assert.match(page, /canEditMatchSettings\s*=\s*canUseAdminControls\s*&&\s*!matchFinalized/);
+  assert.match(page, /registrationLockedByPreviousMatch/);
+  assert.match(page, /registrationOpen/);
+  assert.match(page, /showMatchRoster/);
+  assert.match(page, /Inscripción pendiente/);
+  assert.match(page, /Se abrirá cuando pase/);
   assert.match(page, /showPlayerSwitcher\s*=\s*Boolean\(canUseAdminControls\s*&&\s*selectedPlayer\s*&&\s*!selectedPlayerIsOwn/);
   assert.match(page, /profile-player-switcher/);
   assert.match(page, /function scrollToPlayerProfile/);
@@ -266,6 +485,12 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /onPlayerClick=\{openPlayerProfile\}/);
   assert.match(page, /className=\{`pitch-player-card/);
   assert.match(page, /Abrir ficha de \$\{playerDisplayName\(player\)\} desde el campo/);
+  assert.match(page, /SearchLogo/);
+  assert.match(page, /pitchZoomOpen/);
+  assert.match(page, /Ver campo en grande/);
+  assert.match(page, /match-pitch-zoomed/);
+  assert.match(globalsCss, /\.pitch-zoom-button/);
+  assert.match(globalsCss, /\.pitch-modal-backdrop/);
   assert.match(page, /saveSelectedPlayerProfile/);
   assert.match(page, /profileSaving/);
   assert.match(page, /setProfileSaving\(true\)/);
@@ -316,6 +541,9 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(globalsCss, /\.payer-badge/);
   assert.match(globalsCss, /linear-gradient\(145deg, #fde68a 0%, #f59e0b 100%\)/);
   assert.match(globalsCss, /\.draggable-avatar/);
+  assert.match(globalsCss, /\.avatar-prompt-help/);
+  assert.match(globalsCss, /\.avatar-prompt-info/);
+  assert.match(globalsCss, /\.avatar-prompt-copy/);
   assert.match(globalsCss, /\.avatar-dragging \.draggable-avatar/);
   assert.match(globalsCss, /\.avatar-adjust-hint/);
   assert.match(globalsCss, /touch-action:\s*none/);
@@ -365,6 +593,10 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /lastCommittedPayloadJsonRef/);
   assert.match(page, /autosaveInFlightRef/);
   assert.match(page, /function serializePayload/);
+  assert.match(page, /function serializeLocalPayloadCache/);
+  assert.match(page, /function parseLocalPayloadCache/);
+  assert.match(page, /kind: "pachanga-iq-cache"/);
+  assert.match(page, /remoteGroupId \? "server-cache" : "local-draft"/);
   assert.match(page, /payloadJson === lastCommittedPayloadJsonRef\.current/);
   assert.match(page, /autosaveInFlightRef\.current = true/);
   assert.match(page, /autosaveInFlightRef\.current = false/);
@@ -377,6 +609,9 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /patch_pachanga_match_player_status/);
   assert.match(page, /patch_pachanga_match_player_paid/);
   assert.match(page, /patch_pachanga_match_scorers/);
+  assert.match(page, /patch_pachanga_match_lineup_state/);
+  assert.match(page, /operation_key: id\(\)/);
+  assert.match(page, /set_pachanga_member_role/);
   assert.match(page, /patch_pachanga_player_profile/);
   assert.match(page, /append_pachanga_player_rating/);
   assert.match(page, /partido_guardado/);
@@ -395,12 +630,59 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(supabaseSql, /create or replace function public\.save_pachanga_payload_if_current/);
   assert.match(supabaseSql, /create or replace function public\.patch_pachanga_match_player_status/);
   assert.match(supabaseSql, /create or replace function public\.patch_pachanga_match_player_paid/);
+  assert.match(supabaseSql, /Close the lineup before changing payments/);
+  assert.match(supabaseSql, /selected_match \? 'scoreA'/);
   assert.match(supabaseSql, /create or replace function public\.patch_pachanga_match_scorers/);
   assert.match(supabaseSql, /create or replace function public\.upsert_pachanga_own_player_profile/);
   assert.match(supabaseSql, /Only group members can create a player profile/);
   assert.match(supabaseSql, /This player profile already belongs to another user/);
   assert.match(supabaseSql, /grant execute on function public\.upsert_pachanga_own_player_profile/);
   assert.match(supabaseSql, /create or replace function public\.patch_pachanga_player_profile/);
+  assert.match(supabaseSql, /create table if not exists public\.pachanga_market_profiles/);
+  assert.match(supabaseSql, /create or replace function public\.sync_pachanga_market_profile/);
+  assert.match(supabaseSql, /create table if not exists public\.pachanga_open_matches/);
+  assert.match(supabaseSql, /create or replace function public\.sync_pachanga_open_match/);
+  assert.match(supabaseSql, /create table if not exists public\.pachanga_open_match_requests/);
+  assert.match(supabaseSql, /create table if not exists public\.pachanga_match_read_model/);
+  assert.match(supabaseSql, /create table if not exists public\.pachanga_match_participants/);
+  assert.match(supabaseSql, /create table if not exists public\.pachanga_match_scorers/);
+  assert.match(supabaseSql, /create table if not exists public\.pachanga_operation_receipts/);
+  assert.match(supabaseSql, /create table if not exists public\.pachanga_group_events/);
+  assert.match(supabaseSql, /pachanga_admin_invites_created_by_idx/);
+  assert.match(supabaseSql, /pachanga_admin_invites_accepted_by_idx/);
+  assert.match(supabaseSql, /pachanga_open_matches_created_by_idx/);
+  assert.match(supabaseSql, /pachanga_group_events_actor_id_idx/);
+  assert.match(supabaseSql, /unique\(group_id, operation_id\)/);
+  assert.match(supabaseSql, /create or replace function public\.remember_pachanga_operation/);
+  assert.match(supabaseSql, /create or replace function public\.record_pachanga_group_event/);
+  assert.match(supabaseSql, /create or replace function public\.sync_pachanga_group_read_model/);
+  assert.match(supabaseSql, /revoke execute on function public\.remember_pachanga_operation\(uuid, uuid, text, jsonb\) from authenticated/);
+  assert.match(supabaseSql, /perform public\.sync_pachanga_group_read_model\(\s*group_record\.id,/);
+  assert.match(supabaseSql, /create or replace function public\.request_pachanga_open_match/);
+  assert.match(supabaseSql, /create or replace function public\.review_pachanga_open_match_request/);
+  assert.match(supabaseSql, /create or replace function public\.patch_pachanga_match_lineup_state/);
+  assert.match(supabaseSql, /operation_key uuid default null/);
+  assert.match(supabaseSql, /Open the lineup before changing attendance/);
+  assert.match(supabaseSql, /Match already finalized/);
+  assert.match(supabaseSql, /Payer must belong to the closed lineup/);
+  assert.match(supabaseSql, /La solicitud ya estaba decidida/);
+  assert.match(supabaseSql, /requests\.status in \('accepted', 'pending'\) then requests\.requested_at/);
+  assert.match(supabaseSql, /create or replace function public\.set_pachanga_member_role/);
+  assert.match(supabaseSql, /Authenticated users can read active open matches/);
+  assert.match(supabaseSql, /Users and admins can read open match requests/);
+  assert.match(supabaseSql, /Members can read normalized matches/);
+  assert.match(supabaseSql, /alter publication supabase_realtime add table public\.pachanga_group_events/);
+  assert.match(supabaseSql, /grant execute on function public\.sync_pachanga_open_match\(uuid, text, jsonb, uuid\)/);
+  assert.match(supabaseSql, /grant execute on function public\.request_pachanga_open_match/);
+  assert.match(supabaseSql, /grant execute on function public\.review_pachanga_open_match_request/);
+  assert.match(supabaseSql, /marketEnabled/);
+  assert.match(supabaseSql, /marketModalities/);
+  assert.match(supabaseSql, /zones_geo jsonb not null default '\[\]'::jsonb/);
+  assert.match(supabaseSql, /pachanga_market_profiles_zones_geo_idx/);
+  assert.match(supabaseSql, /marketZonesGeo/);
+  assert.match(supabaseSql, /grant execute on function public\.sync_pachanga_market_profile/);
+  assert.match(supabaseSql, /Authenticated users can read active market profiles/);
+  assert.match(supabaseSql, /pachanga_market_profiles_zones_idx/);
   assert.match(supabaseSql, /create or replace function public\.append_pachanga_player_rating/);
   assert.match(supabaseSql, /birthDate/);
   assert.match(supabaseSql, /avatarOffsetX/);
@@ -410,6 +692,9 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(supabaseSql, /then 'goalkeeper'/);
   assert.match(supabaseSql, /Rating window closed for this player/);
   assert.match(supabaseSql, /last_vote_match_count \+ 3/);
+  assert.match(supabaseSql, /player_appearances = 0 then 0 else 3/);
+  assert.match(page, /isInitialWindow/);
+  assert.match(page, /Valoración inicial abierta/);
   assert.match(supabaseSql, /current_group\.payload_revision <> expected_revision/);
   assert.match(supabaseSql, /current_group\.payload = next_payload/);
   assert.match(supabaseSql, /policy "Admins can update groups"/);
@@ -435,10 +720,124 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.doesNotMatch(page, /const nextName = displayName\(profileName \|\| authDisplayName\(authUser\)\)/);
   assert.match(page, /Partido finalizado/);
   assert.doesNotMatch(page, /Modo local/);
+  assert.match(page, /paymentReady/);
+  assert.match(page, /const showMarketScoutCard = showMatchRoster && !lineupClosed && !matchFinalized && missing > 0/);
+  assert.match(page, /const otherPlayers = registrationOpen/);
+  assert.match(page, /const canChangeStatus = matchConfigured && registrationOpen/);
+  assert.match(page, /const canChangeThisPlayerStatus = matchConfigured && registrationOpen/);
+  assert.match(page, /Buscar en mercado/);
+  assert.match(page, /Al cerrar alineación se oculta/);
+  assert.match(page, /Abrir partido al público/);
+  assert.match(page, /publicOpen/);
+  assert.match(page, /publicMatchUrl/);
+  assert.match(page, /sync_pachanga_open_match/);
+  assert.match(page, /loadOpenMatchRequests/);
+  assert.match(page, /reviewOpenMatchRequest/);
+  assert.match(page, /target_request_id/);
+  assert.match(page, /Solicitudes del mercado/);
+  assert.match(page, /Aceptar/);
+  assert.match(page, /Rechazar/);
+  assert.match(page, /Nivel del equipo/);
+  assert.match(page, /teamLevelScore/);
+  assert.match(page, /Pago por persona/);
+  assert.match(page, /type MatchWeather/);
+  assert.match(page, /conditionType: string/);
+  assert.match(page, /matchWeatherStatus/);
+  assert.match(page, /\/api\/weather/);
+  assert.match(page, /Tiempo previsto/);
+  assert.match(page, /function WeatherIcon/);
+  assert.match(page, /function WeatherMetricIcon/);
+  assert.match(page, /weatherVisualKey/);
+  assert.match(page, /weather-availability-message/);
+  assert.match(page, /weatherForecastClientLimitMs = 7 \* weatherClientDayMs/);
+  assert.match(page, /weatherClientShortCacheMs = 2 \* weatherClientHourMs/);
+  assert.match(page, /weatherClientLongCacheMs = weatherClientDayMs/);
+  assert.match(page, /matchWeatherClientCache/);
+  assert.match(page, /msUntilMatch > weatherForecastClientLimitMs/);
+  assert.match(weatherRoute, /Previsión del tiempo disponible en/);
+  assert.match(page, /Previsión más cercana/);
+  assert.match(page, /Google Places para ver la previsión/);
+  assert.doesNotMatch(page, /<span>Toca<\/span>/);
+  assert.match(page, /Cierra la alineación para calcular pago y finalizar/);
+  assert.match(page, /disabled=\{!matchConfigured \|\| !lineupClosed \|\| !resultIsReady \|\| !canUseAdminControls\}/);
+  assert.match(page, /const matchTimeOptions = Array\.from\(\{ length: 144 \}/);
+  assert.match(page, /type="date"/);
+  assert.match(page, /className="match-time-control"[\s\S]*?Hora[\s\S]*?<select/);
+  assert.match(page, /className="match-field-control"/);
+  assert.match(page, /className="match-price-control"/);
+  assert.doesNotMatch(page, /type="datetime-local"/);
+  assert.match(page, /const allPositionOptions = Array\.from/);
+  assert.match(page, /value=\{selectablePositionValue\(selectedPlayer\.position\)\}/);
+  assert.match(page, /\{allPositionOptions\.map\(\(option\) =>/);
+  assert.match(page, /freeTrialMatchLimit\s*=\s*2/);
+  assert.match(page, /groupBillingLocked/);
+  assert.match(page, /startBillingCheckout/);
+  assert.match(page, /openBillingPortal/);
+  assert.match(page, /Suscripción del grupo/);
+  assert.match(page, /Prueba terminada/);
+  assert.match(page, /Mensual 5,99 €\/mes/);
+  assert.match(page, /Anual 64,99 €\/año/);
+  assert.match(page, /Aporte app por Bizum/);
+  assert.match(page, /Esta cuota no se suma al campo/);
+  assert.match(page, /subscriptionContributionPerPlayer/);
   assert.match(layout, /title:\s*"Pachangas IQ"/);
+  assert.match(layout, /LegalFooter/);
+  assert.match(legalData, /Aviso legal/);
+  assert.match(legalData, /Política de privacidad/);
+  assert.match(legalData, /Política de cookies/);
+  assert.match(legalData, /Condiciones de contratación/);
+  assert.match(legalData, /Datos legales del responsable pendientes de completar/);
+  assert.match(globalsCss, /\.legal-footer/);
+  assert.match(globalsCss, /\.legal-page-panel/);
   assert.match(layout, /appleWebApp/);
   assert.match(packageJson, /"@supabase\/supabase-js"/);
+  assert.match(packageJson, /"stripe"/);
   assert.match(supabaseClient, /NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY/);
+  assert.match(billingShared, /FREE_TRIAL_MATCH_LIMIT = 2/);
+  assert.match(billingShared, /priceIdForInterval/);
+  assert.match(billingShared, /STRIPE_MONTHLY_PRODUCT_ID/);
+  assert.match(billingShared, /STRIPE_YEARLY_PRODUCT_ID/);
+  assert.match(billingShared, /billingGroupIsActive/);
+  assert.match(billingCheckout, /checkout\.sessions\.create/);
+  assert.match(billingCheckout, /mode:\s*"subscription"/);
+  assert.match(billingCheckout, /allow_promotion_codes:\s*true/);
+  assert.match(billingCheckout, /billingGroupIsActive\(group\)/);
+  assert.match(billingCheckout, /billingPortal\.sessions\.create/);
+  assert.match(billingPortal, /billingPortal\.sessions\.create/);
+  assert.match(stripeWebhook, /constructEvent\(await request\.text\(\)/);
+  assert.match(stripeWebhook, /checkout\.session\.completed/);
+  assert.match(stripeWebhook, /customer\.subscription\.updated/);
+  assert.match(stripeWebhook, /invoice\.payment_failed/);
+  assert.match(stripeWebhook, /pachanga_stripe_webhook_events/);
+  assert.match(stripeWebhook, /event_id: event\.id/);
+  assert.match(stripeWebhook, /duplicate: true/);
+  assert.match(stripeWebhook, /processing_status: "processed"/);
+  assert.match(supabaseSql, /create table if not exists public\.pachanga_stripe_webhook_events/);
+  assert.match(supabaseSql, /pachanga_stripe_webhook_events_status_check/);
+  assert.match(supabaseSql, /billing_trial_finalized_matches/);
+  assert.match(supabaseSql, /create or replace function public\.finalize_pachanga_match_if_current/);
+  assert.match(supabaseSql, /Trial limit reached\. Subscription required\./);
+  assert.match(supabaseSql, /Finalize matches with finalize_pachanga_match_if_current/);
+  assert.match(envExample, /STRIPE_MONTHLY_PRODUCT_ID=prod_UyN3AQOFvB9Bdb/);
+  assert.match(envExample, /STRIPE_YEARLY_PRODUCT_ID=prod_UyN51e1Sg6RwH1/);
+  assert.match(envExample, /NEXT_PUBLIC_GOOGLE_MAPS_API_KEY/);
+  assert.match(envExample, /GOOGLE_WEATHER_API_KEY/);
+  assert.match(globalsCss, /\.weather-card/);
+  assert.match(globalsCss, /\.weather-icon-rain/);
+  assert.match(globalsCss, /\.weather-metric-icon/);
+  assert.match(globalsCss, /\.weather-metrics/);
+  assert.match(weatherRoute, /weather\.googleapis\.com\/v1\/forecast\/hours:lookup/);
+  assert.match(weatherRoute, /GOOGLE_WEATHER_API_KEY/);
+  assert.match(weatherRoute, /forecastHours/);
+  assert.match(weatherRoute, /conditionType: closest\.weatherCondition\?\.type/);
+  assert.match(weatherRoute, /location\.latitude/);
+  assert.match(weatherRoute, /location\.longitude/);
+  assert.match(weatherRoute, /weatherForecastLimitHours\s*=\s*7 \* 24/);
+  assert.match(weatherRoute, /weatherShortCacheSeconds\s*=\s*2 \* 60 \* 60/);
+  assert.match(weatherRoute, /weatherLongCacheSeconds\s*=\s*24 \* 60 \* 60/);
+  assert.match(weatherRoute, /next: \{ revalidate: revalidateSeconds \}/);
+  assert.match(weatherRoute, /publicCache\(cacheSeconds\)/);
+  assert.match(weatherRoute, /languageCode", "es"/);
   assert.doesNotMatch(page, /SkeletonPreview/);
   assert.doesNotMatch(layout, /Starter Project|codex-preview/);
 });

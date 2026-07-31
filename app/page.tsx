@@ -2,11 +2,39 @@
 
 import { type CSSProperties, type FormEvent, Fragment, type PointerEvent as ReactPointerEvent, useEffect, useMemo, useRef, useState } from "react";
 import type { User } from "@supabase/supabase-js";
+import { attachVenueAutocomplete, type VenuePlace } from "./googlePlacesClient";
+import { MobileAppNav, type MobileAppTab } from "./mobile-app-nav";
 import { supabase } from "./supabaseClient";
+import { ThemeToggle } from "./theme-toggle";
 
 const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+const googleMapsApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
 const googleAuthNonceKey = "pachanga-google-auth-nonce";
 const googleAuthReturnKey = "pachanga-google-auth-return";
+const playerPhotoPromptForChatGpt = `Utiliza la fotografía adjunta como referencia y recorta únicamente a la persona que aparece en ella.
+
+Crea un retrato profesional desde los hombros hacia arriba, similar a la fotografía de un jugador utilizada en una carta de fútbol tipo FIFA.
+
+Requisitos:
+
+- Mantén exactamente la identidad, los rasgos faciales, el peinado, el tono de piel y la expresión de la persona.
+- Elimina por completo el fondo y entrégalo con transparencia real.
+- Incluye la cabeza completa, el cuello y ambos hombros.
+- Coloca el cuerpo ligeramente girado y la cabeza mirando hacia la cámara, con una pose natural, segura y profesional.
+- Centra correctamente a la persona y deja un pequeño margen transparente alrededor de la cabeza.
+- Corrige suavemente la postura si fuera necesario, sin cambiar el aspecto físico.
+- Mejora la iluminación, la nitidez y el contraste de manera realista.
+- Conserva la ropa original, salvo que se indique expresamente otra vestimenta.
+- No añadas marcos, textos, escudos, fondos, efectos, sombras exteriores ni elementos de una carta.
+- No deformes la cara, no rejuvenezcas, no embellezcas en exceso y no inventes partes ocultas de forma poco natural.
+- Acabado fotográfico realista, limpio y de alta resolución.
+- Formato vertical, preparado para integrarse posteriormente en una carta de jugador.
+- Salida final en PNG con fondo transparente.`;
+
+const mobileNavigationTabs: Array<{ id: MobileSectionTabId; label: string }> = [
+  { id: "inicio", label: "Inicio" },
+  { id: "partido", label: "Partido" },
+];
 
 function createGoogleRawNonce() {
   const bytes = crypto.getRandomValues(new Uint8Array(32));
@@ -23,6 +51,7 @@ async function sha256Hex(value: string) {
 
 type RatingFacet = "ritmo" | "tiro" | "pase" | "regate" | "defensa" | "fisico";
 type RatingRole = "field" | "goalkeeper";
+type MobileSectionTabId = "inicio" | "partido";
 
 type RatingVote = {
   id: string;
@@ -60,6 +89,18 @@ type PlayerPosition =
   | "Medio"
   | "Ataque";
 
+type MarketZone = {
+  address?: string;
+  city?: string;
+  country?: string;
+  lat?: number;
+  lng?: number;
+  name: string;
+  placeId: string;
+  province?: string;
+  radiusKm: number;
+};
+
 type Player = {
   id: string;
   ownerUserId?: string;
@@ -72,16 +113,33 @@ type Player = {
   goalkeeperOnly?: boolean;
   injured?: boolean;
   inactive?: boolean;
+  importedRating?: number;
+  importedRatingAt?: string;
+  importedRatingFromGroup?: string;
   rating: number;
   ratings?: number[];
   ratingVotes?: RatingVote[];
   position: PlayerPosition;
   outfieldPosition?: PlayerPosition;
+  marketAvailability?: string;
+  marketBio?: string;
+  marketEnabled?: boolean;
+  marketModalities?: MatchKind[];
+  marketOpenToGroup?: boolean;
+  marketOpenToGuest?: boolean;
+  marketZones?: string;
+  marketZonesGeo?: MarketZone[];
   goals: number;
   assists: number;
   appearances: number;
   wins: number;
   lateCancels: number;
+};
+
+type RatingTrend = {
+  current: number;
+  direction: "down" | "flat" | "up";
+  previous: number;
 };
 
 type AvatarDraft = {
@@ -97,18 +155,69 @@ type MatchPlayer = {
   paid?: boolean;
 };
 
+type OpenMatchRequestStatus = "accepted" | "cancelled" | "pending" | "rejected";
+
+type PublicMatchRequest = {
+  avatar?: string;
+  avatarOffsetX?: number;
+  avatarOffsetY?: number;
+  birthDate?: string;
+  goalkeeperOnly: boolean;
+  id: string;
+  media: number;
+  openMatchId: string;
+  playerId?: string;
+  position: PlayerPosition;
+  requestedAt: string;
+  requesterName: string;
+  requesterProfileId?: string;
+  requesterUserId: string;
+  status: OpenMatchRequestStatus;
+};
+
+type PublicMatchRequestRow = {
+  avatar: string | null;
+  avatar_offset_x: number | string | null;
+  avatar_offset_y: number | string | null;
+  birth_date: string | null;
+  goalkeeper_only: boolean | null;
+  id: string;
+  media: number | string | null;
+  open_match_id: string | null;
+  player_id: string | null;
+  position: string | null;
+  requested_at: string | null;
+  requester_name: string | null;
+  requester_profile_id: string | null;
+  requester_user_id: string | null;
+  status: string | null;
+};
+
 type MatchKind = "sala" | "futbol7" | "futbol11";
 type RankingSort = "media" | "goles" | "partidos" | "ganados";
+type BillingInterval = "month" | "year";
+type BillingStatus = "trial" | "active" | "trialing" | "past_due" | "canceled" | "unpaid" | "incomplete";
 
 type Venue = {
+  address?: string;
+  city?: string;
+  country?: string;
   id: string;
+  lat?: number;
+  lng?: number;
   name: string;
   defaultCost: number;
   kind?: MatchKind;
+  placeId?: string;
+  province?: string;
 };
 
 type SiteSettings = {
   brand: string;
+  subscriptionContributionEnabled: boolean;
+  subscriptionContributionMonthlyAmount: number;
+  subscriptionContributionPeriod: BillingInterval;
+  subscriptionContributionYearlyAmount: number;
   title: string;
   subtitle: string;
   teamAColor: string;
@@ -139,7 +248,38 @@ type Match = {
   teamA?: string[];
   teamB?: string[];
   teamPhoto?: string;
+  publicGuestsPay?: boolean;
+  publicMaxRating?: number;
+  publicMinRating?: number;
+  publicOpen?: boolean;
+  publicOpenSlots?: number;
+  publicPositions?: PublicMatchPosition[];
+  publicRequiresApproval?: boolean;
 };
+
+type PublicMatchPosition = "Portero" | "Defensa" | "Medio" | "Ataque";
+
+type MatchWeather = {
+  cloudCover: number | null;
+  condition: string;
+  conditionType: string;
+  feelsLike: number | null;
+  forecastTime: string;
+  humidity: number | null;
+  precipitationProbability: number | null;
+  temperature: number | null;
+  windKmh: number | null;
+};
+
+type WeatherApiPayload = { available?: boolean; forecast?: MatchWeather; message?: string };
+
+const weatherClientHourMs = 60 * 60 * 1000;
+const weatherClientDayMs = 24 * weatherClientHourMs;
+const weatherForecastClientLimitMs = 7 * weatherClientDayMs;
+const weatherForecastClientFreshWindowMs = weatherClientDayMs;
+const weatherClientShortCacheMs = 2 * weatherClientHourMs;
+const weatherClientLongCacheMs = weatherClientDayMs;
+const matchWeatherClientCache = new Map<string, { expiresAt: number; payload: WeatherApiPayload }>();
 
 type PlayerScoreFn = (player: Player) => number;
 type MatchRatingImpact = {
@@ -175,13 +315,32 @@ type AppPayload = {
 type MemberRole = "owner" | "admin" | "player";
 
 type RemoteTeam = {
+  billingInterval: BillingInterval | null;
+  billingStatus: BillingStatus;
+  billingTrialFinalizedMatches: number;
   id: string;
   inviteToken: string;
   name: string;
+  ownerId: string | null;
   payload: AppPayload;
   payloadRevision: number;
   role: MemberRole;
+  stripeCustomerId: string | null;
+  stripeCurrentPeriodEnd: string | null;
+  stripePriceId: string | null;
+  stripeSubscriptionId: string | null;
   teamCode: string;
+};
+
+type PlayerImportCandidate = {
+  appearances: number;
+  groupId: string;
+  groupName: string;
+  inactive: boolean;
+  key: string;
+  lastActivity: number;
+  media: number;
+  player: Player;
 };
 
 type RemoteMember = {
@@ -209,8 +368,15 @@ type IncomingSharedLink = {
 };
 
 type RemotePayloadCommit = {
+  billing_interval?: BillingInterval | null;
+  billing_status?: BillingStatus | string | null;
+  billing_trial_finalized_matches?: number | string | null;
   payload?: Partial<AppPayload>;
   payload_revision?: number | string;
+  stripe_customer_id?: string | null;
+  stripe_current_period_end?: string | null;
+  stripe_price_id?: string | null;
+  stripe_subscription_id?: string | null;
   updated_at?: string;
 };
 
@@ -248,9 +414,9 @@ const seedPlayers: Player[] = [
 ];
 
 const seedVenues: Venue[] = [
-  { id: "v1", name: "Polideportivo La Mina", defaultCost: 56, kind: "futbol7" },
-  { id: "v2", name: "Pista El Parque", defaultCost: 42, kind: "sala" },
-  { id: "v3", name: "Municipal Norte", defaultCost: 110, kind: "futbol11" },
+  { id: "v1", name: "Polideportivo La Mina", address: "Sant Adrià de Besòs, Barcelona", city: "Sant Adrià de Besòs", defaultCost: 56, kind: "futbol7" },
+  { id: "v2", name: "Pista El Parque", address: "Barcelona, Barcelona", city: "Barcelona", defaultCost: 42, kind: "sala" },
+  { id: "v3", name: "Municipal Norte", address: "Sabadell, Barcelona", city: "Sabadell", defaultCost: 110, kind: "futbol11" },
 ];
 
 function demoMatchPlayers(playerIds: string[], paidIds: string[] = playerIds): MatchPlayer[] {
@@ -446,6 +612,7 @@ const seedMatches: Match[] = [
 
 const storageKey = "pachanga-iq-v3";
 const profileNameKey = "pachanga-iq-profile-name";
+const freeTrialMatchLimit = 2;
 
 const backupReasonLabels: Record<string, string> = {
   equipo_borrado: "Antes de borrar equipo",
@@ -466,6 +633,10 @@ function defaultPayload(): AppPayload {
 
 const defaultSiteSettings: SiteSettings = {
   brand: "Pachangas IQ",
+  subscriptionContributionEnabled: false,
+  subscriptionContributionMonthlyAmount: 5.99,
+  subscriptionContributionPeriod: "year",
+  subscriptionContributionYearlyAmount: 64.99,
   title: "El grupo del partido, pero con memoria.",
   subtitle: "Confirma gente, guarda resultados y monta equipos equilibrados sin discutir media hora en WhatsApp.",
   teamAColor: "#2157a8",
@@ -483,17 +654,27 @@ function GoogleLogo() {
   );
 }
 
+function SearchLogo() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 24 24">
+      <path d="M10.8 4a6.8 6.8 0 0 1 5.4 10.9l4 4-1.4 1.4-4-4A6.8 6.8 0 1 1 10.8 4Zm0 2a4.8 4.8 0 1 0 0 9.6 4.8 4.8 0 0 0 0-9.6Z" />
+    </svg>
+  );
+}
+
 function GoogleSignInButton({
+  className = "",
   disabled,
   label,
   onClick,
 }: {
+  className?: string;
   disabled?: boolean;
   label: string;
   onClick: () => void;
 }) {
   return (
-    <button className="google-signin-button" type="button" onClick={onClick} disabled={disabled}>
+    <button className={`google-signin-button${className ? ` ${className}` : ""}`} type="button" onClick={onClick} disabled={disabled}>
       <GoogleLogo />
       <span>{label}</span>
     </button>
@@ -621,6 +802,14 @@ const positionOptionsByKind: Record<MatchKind, Array<{ value: PlayerPosition; li
   ],
 };
 
+const allPositionOptions = Array.from(
+  new Map(Object.values(positionOptionsByKind).flat().map((option) => [option.value, option])).values(),
+);
+
+function selectablePositionValue(position: PlayerPosition) {
+  return allPositionOptions.some((option) => option.value === position) ? position : equivalentPositionForKind(position, "futbol7");
+}
+
 const legacyPositionMeta: Record<"Porteria" | "Defensa" | "Medio" | "Ataque", { line: PositionLine; label: string; short: string }> = {
   Porteria: { line: "Porteria", label: "Portero", short: "POR" },
   Defensa: { line: "Defensa", label: "Defensa", short: "DEF" },
@@ -738,8 +927,99 @@ function toDateTimeLocal(date: Date) {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 
+function matchDatePart(value: string) {
+  const directDate = value.match(/^\d{4}-\d{2}-\d{2}/)?.[0];
+  if (directDate) return directDate;
+
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? dateInputValue(new Date()) : dateInputValue(parsed);
+}
+
+function normalizeMatchTime(value: string) {
+  const [, hourText = "21", minuteText = "00"] = value.match(/(?:T|\b)(\d{2}):(\d{2})/) ?? [];
+  const hour = Math.max(0, Math.min(23, Number(hourText) || 0));
+  const minute = Math.max(0, Math.min(59, Number(minuteText) || 0));
+  const roundedMinutes = Math.min(23 * 60 + 50, Math.round((hour * 60 + minute) / 10) * 10);
+  const roundedHour = Math.floor(roundedMinutes / 60);
+  const roundedMinute = roundedMinutes % 60;
+  return `${String(roundedHour).padStart(2, "0")}:${String(roundedMinute).padStart(2, "0")}`;
+}
+
+function matchTimePart(value: string) {
+  const time = normalizeMatchTime(value);
+  return matchTimeOptions.includes(time) ? time : "21:00";
+}
+
+function combineMatchDateTime(datePart: string, timePart: string) {
+  const date = /^\d{4}-\d{2}-\d{2}$/.test(datePart) ? datePart : dateInputValue(new Date());
+  return `${date}T${matchTimePart(timePart)}`;
+}
+
 function scorePlayer(player: Player) {
   return clampRating(peerAverage(player));
+}
+
+function ratingPoints(value: number) {
+  return Math.round((Number.isFinite(value) ? value : 0) * 10);
+}
+
+function overallScore(score: number) {
+  return ratingPoints(clampRating(score));
+}
+
+function cardTierClass(score: number) {
+  const overall = overallScore(score);
+  if (overall <= 64) return "fifa-card-bronze";
+  if (overall <= 74) return "fifa-card-silver";
+  return "fifa-card-gold";
+}
+
+const publicMatchPositionOptions: PublicMatchPosition[] = ["Portero", "Defensa", "Medio", "Ataque"];
+const publicMatchRatingPointOptions = [0, 40, 50, 60, 70, 80, 90, 100];
+
+function publicMatchRating(value: unknown, fallback: number) {
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) return fallback;
+  return Math.max(0, Math.min(10, numeric));
+}
+
+function normalizePublicMatchPositions(value: unknown): PublicMatchPosition[] {
+  if (!Array.isArray(value)) return [];
+  return value.filter((position): position is PublicMatchPosition =>
+    publicMatchPositionOptions.includes(position as PublicMatchPosition),
+  );
+}
+
+function normalizeOpenMatchRequestRow(row: PublicMatchRequestRow): PublicMatchRequest {
+  const status: OpenMatchRequestStatus =
+    row.status === "accepted" || row.status === "rejected" || row.status === "cancelled" ? row.status : "pending";
+  const position = allPositionOptions.some((option) => option.value === row.position)
+    ? (row.position as PlayerPosition)
+    : "Mediocentro / pivote";
+
+  return {
+    avatar: row.avatar ?? undefined,
+    avatarOffsetX: clampAvatarOffset(row.avatar_offset_x, 50),
+    avatarOffsetY: clampAvatarOffset(row.avatar_offset_y, 0),
+    birthDate: normalizeBirthDate(row.birth_date ?? undefined) ?? undefined,
+    goalkeeperOnly: Boolean(row.goalkeeper_only),
+    id: row.id,
+    media: clampRating(Number(row.media) || 5),
+    openMatchId: row.open_match_id ?? "",
+    playerId: row.player_id ?? undefined,
+    position,
+    requestedAt: row.requested_at ?? "",
+    requesterName: displayName(row.requester_name ?? "Jugador"),
+    requesterProfileId: row.requester_profile_id ?? undefined,
+    requesterUserId: row.requester_user_id ?? "",
+    status,
+  };
+}
+
+function teamLevelScore(teamPlayers: Player[]) {
+  const activePlayers = teamPlayers.filter((player) => !player.inactive);
+  if (activePlayers.length === 0) return null;
+  return activePlayers.reduce((sum, player) => sum + scorePlayer(player), 0) / activePlayers.length;
 }
 
 function clampRating(value: number) {
@@ -749,6 +1029,220 @@ function clampRating(value: number) {
 function clampAvatarOffset(value: unknown, fallback: number) {
   const numeric = Number(value);
   return Math.max(0, Math.min(100, Number.isFinite(numeric) ? numeric : fallback));
+}
+
+function splitMarketList(value?: string) {
+  return (value ?? "")
+    .split(/[,;\n]/)
+    .map((item) => item.trim())
+    .filter(Boolean)
+    .slice(0, 12);
+}
+
+const marketZoneRadiusOptions = [
+  { label: "Solo esta población", value: 0 },
+  { label: "+5 km", value: 5 },
+  { label: "+10 km", value: 10 },
+  { label: "+20 km", value: 20 },
+  { label: "+30 km", value: 30 },
+  { label: "+50 km", value: 50 },
+] as const;
+const defaultMarketZoneRadiusKm = 0;
+
+const marketWeekdays = [
+  { key: "lunes", label: "Lunes" },
+  { key: "martes", label: "Martes" },
+  { key: "miercoles", label: "Miércoles" },
+  { key: "jueves", label: "Jueves" },
+  { key: "viernes", label: "Viernes" },
+  { key: "sabado", label: "Sábado" },
+  { key: "domingo", label: "Domingo" },
+] as const;
+
+const marketTimeOptions = Array.from({ length: 48 }, (_, index) => {
+  const totalMinutes = index * 30;
+  const hour = Math.floor(totalMinutes / 60);
+  const minute = totalMinutes % 60;
+  return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+});
+
+const matchTimeOptions = Array.from({ length: 144 }, (_, index) => {
+  const totalMinutes = index * 10;
+  const hour = Math.floor(totalMinutes / 60);
+  const minute = totalMinutes % 60;
+  return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+});
+
+type MarketAvailabilitySlot = {
+  dayKey: (typeof marketWeekdays)[number]["key"];
+  enabled: boolean;
+  end: string;
+  label: string;
+  start: string;
+};
+
+function normalizeMarketText(value: string) {
+  return value
+    .toLocaleLowerCase("es-ES")
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "");
+}
+
+function marketTimeIndex(value: string) {
+  return marketTimeOptions.indexOf(value);
+}
+
+function marketTimeRangeIsValid(start: string, end: string) {
+  const startIndex = marketTimeIndex(start);
+  const endIndex = marketTimeIndex(end);
+  return startIndex >= 0 && endIndex >= 0 && endIndex > startIndex;
+}
+
+function normalizeMarketEndTime(start: string, end: string) {
+  if (marketTimeRangeIsValid(start, end)) return end;
+  const startIndex = Math.max(0, marketTimeIndex(start));
+  return marketTimeOptions[Math.min(marketTimeOptions.length - 1, startIndex + 2)] ?? "22:00";
+}
+
+function marketAvailabilitySlots(value?: string): MarketAvailabilitySlot[] {
+  const segments = (value ?? "")
+    .split(/[;\n]/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+
+  return marketWeekdays.map((day) => {
+    const normalizedDay = normalizeMarketText(day.label);
+    const segment = segments.find((item) => normalizeMarketText(item).includes(normalizedDay));
+    const times = segment?.match(/\b\d{2}:\d{2}\b/g) ?? [];
+    const startCandidate = times[0] ?? "";
+    const endCandidate = times[1] ?? "";
+    const start = marketTimeOptions.includes(startCandidate) ? startCandidate : "20:00";
+    const end = marketTimeOptions.includes(endCandidate) ? endCandidate : "22:00";
+
+    return {
+      dayKey: day.key,
+      enabled: Boolean(segment),
+      end: normalizeMarketEndTime(start, end),
+      label: day.label,
+      start,
+    };
+  });
+}
+
+function serializeMarketAvailability(slots: MarketAvailabilitySlot[]) {
+  return slots
+    .filter((slot) => slot.enabled && marketTimeRangeIsValid(slot.start, slot.end))
+    .map((slot) => `${slot.label} ${slot.start}-${slot.end}`)
+    .join("; ");
+}
+
+function updateMarketAvailabilityText(
+  value: string | undefined,
+  dayKey: MarketAvailabilitySlot["dayKey"],
+  patch: Partial<Pick<MarketAvailabilitySlot, "enabled" | "end" | "start">>,
+) {
+  const slots = marketAvailabilitySlots(value).map((slot) => {
+    if (slot.dayKey !== dayKey) return slot;
+    const nextStart = patch.start ?? slot.start;
+    const nextEnd = normalizeMarketEndTime(nextStart, patch.end ?? slot.end);
+    return {
+      ...slot,
+      ...patch,
+      end: nextEnd,
+      start: nextStart,
+    };
+  });
+
+  return serializeMarketAvailability(slots);
+}
+
+function marketAvailabilityIsComplete(value?: string) {
+  return marketAvailabilitySlots(value).some((slot) => slot.enabled && marketTimeRangeIsValid(slot.start, slot.end));
+}
+
+function marketZoneLabelFromPlace(place: Pick<VenuePlace, "city" | "name" | "province">) {
+  const main = place.city || place.name;
+  const province = place.province && normalizeMarketText(place.province) !== normalizeMarketText(main) ? place.province : "";
+  return [main, province].filter(Boolean).join(", ");
+}
+
+function normalizeMarketZoneRadius(value: unknown) {
+  const radius = Number(value);
+  const option = marketZoneRadiusOptions.find((item) => item.value === radius);
+  return option ? option.value : defaultMarketZoneRadiusKm;
+}
+
+function normalizeMarketZone(zone: Partial<MarketZone> | null | undefined): MarketZone | null {
+  const placeId = typeof zone?.placeId === "string" ? zone.placeId.trim() : "";
+  const name = typeof zone?.name === "string" ? zone.name.trim() : "";
+  if (!placeId || !name) return null;
+
+  return {
+    address: zone?.address || undefined,
+    city: zone?.city || undefined,
+    country: zone?.country || undefined,
+    lat: Number.isFinite(Number(zone?.lat)) ? Number(zone?.lat) : undefined,
+    lng: Number.isFinite(Number(zone?.lng)) ? Number(zone?.lng) : undefined,
+    name,
+    placeId,
+    province: zone?.province || undefined,
+    radiusKm: normalizeMarketZoneRadius(zone?.radiusKm),
+  };
+}
+
+function normalizeMarketZonesGeo(value: unknown): MarketZone[] {
+  const rawZones = Array.isArray(value) ? value : [];
+  const seen = new Set<string>();
+  const zones: MarketZone[] = [];
+
+  rawZones.forEach((zone) => {
+    const normalized = normalizeMarketZone(zone as Partial<MarketZone>);
+    if (!normalized || seen.has(normalized.placeId)) return;
+    seen.add(normalized.placeId);
+    zones.push(normalized);
+  });
+
+  return zones.slice(0, 12);
+}
+
+function marketZoneTextFromGeo(zones: MarketZone[]) {
+  return zones.map((zone) => marketZoneLabelFromPlace(zone)).filter(Boolean).join(", ");
+}
+
+function marketZoneFromPlace(place: VenuePlace, radiusKm = defaultMarketZoneRadiusKm): MarketZone | null {
+  const normalized = normalizeMarketZone({
+    ...place,
+    name: place.city || place.name,
+    radiusKm,
+  });
+  return normalized;
+}
+
+function appendMarketZoneGeo(value: MarketZone[] | undefined, place: VenuePlace, radiusKm = defaultMarketZoneRadiusKm) {
+  const zones = normalizeMarketZonesGeo(value);
+  const nextZone = marketZoneFromPlace(place, radiusKm);
+  if (!nextZone) return zones;
+  const nextZones = zones.filter((zone) => zone.placeId !== nextZone.placeId);
+  return [...nextZones, nextZone].slice(0, 12);
+}
+
+function updateMarketZoneRadius(value: MarketZone[] | undefined, placeId: string, radiusKm: number) {
+  return normalizeMarketZonesGeo(value).map((zone) =>
+    zone.placeId === placeId ? { ...zone, radiusKm: normalizeMarketZoneRadius(radiusKm) } : zone,
+  );
+}
+
+function removeMarketZoneGeo(value: MarketZone[] | undefined, placeId: string) {
+  return normalizeMarketZonesGeo(value).filter((zone) => zone.placeId !== placeId);
+}
+
+function playerMarketProfileComplete(player: Player) {
+  if (!player.marketEnabled) return true;
+  return normalizeMarketZonesGeo(player.marketZonesGeo).length > 0 && marketAvailabilityIsComplete(player.marketAvailability);
+}
+
+function marketModalitiesForPlayer(player: Player) {
+  return (player.marketModalities?.length ? player.marketModalities : (Object.keys(matchKinds) as MatchKind[])).filter((kind) => Boolean(matchKinds[kind]));
 }
 
 function avatarImageStyle(player: Pick<Player, "avatarOffsetX" | "avatarOffsetY">): CSSProperties {
@@ -780,10 +1274,78 @@ function displayName(name: string) {
     .join(" ");
 }
 
+function nameInitials(name: string) {
+  const words = displayName(name).split(/\s+/).filter(Boolean);
+  if (words.length === 0) return "PI";
+  const first = words[0]?.charAt(0) ?? "";
+  const lastWord = words[words.length - 1] ?? "";
+  const second = words.length > 1 ? lastWord.charAt(0) : words[0]?.charAt(1) ?? "";
+  return `${first}${second}`.toLocaleUpperCase("es-ES");
+}
+
 function memberRoleLabel(role: MemberRole | null | undefined) {
-  if (role === "owner" || role === "admin") return "Admin";
+  if (role === "owner") return "Owner / Admin";
+  if (role === "admin") return "Admin";
   if (role === "player") return "Jugador";
   return "-";
+}
+
+function normalizeBillingStatus(status: unknown): BillingStatus {
+  if (
+    status === "active" ||
+    status === "trialing" ||
+    status === "past_due" ||
+    status === "canceled" ||
+    status === "unpaid" ||
+    status === "incomplete"
+  ) {
+    return status;
+  }
+
+  return "trial";
+}
+
+function normalizeBillingInterval(interval: unknown): BillingInterval | null {
+  return interval === "month" || interval === "year" ? interval : null;
+}
+
+function billingDateIsActive(date: string | null | undefined) {
+  if (!date) return true;
+  const parsed = new Date(date);
+  return Number.isNaN(parsed.getTime()) || parsed.getTime() >= Date.now();
+}
+
+function teamBillingIsActive(team: RemoteTeam | null | undefined) {
+  return Boolean(
+    team &&
+      (team.billingStatus === "active" || team.billingStatus === "trialing") &&
+      billingDateIsActive(team.stripeCurrentPeriodEnd),
+  );
+}
+
+function billingStatusLabel(team: RemoteTeam | null | undefined) {
+  if (teamBillingIsActive(team)) return "Suscripción activa";
+  if (team?.billingStatus === "past_due") return "Pago pendiente";
+  if (team?.billingStatus === "incomplete") return "Pago sin completar";
+  if (team?.billingStatus === "unpaid") return "Suscripción impagada";
+  if (team?.billingStatus === "canceled") return "Suscripción cancelada";
+  return "Prueba gratuita";
+}
+
+function billingPeriodLabel(interval: BillingInterval | null | undefined) {
+  return interval === "month" ? "mensual" : interval === "year" ? "anual" : "sin plan";
+}
+
+function billingPatchFromRecord(record: Record<string, unknown>): Partial<RemoteTeam> {
+  return {
+    billingInterval: normalizeBillingInterval(record.billing_interval),
+    billingStatus: normalizeBillingStatus(record.billing_status),
+    billingTrialFinalizedMatches: Math.max(0, Math.floor(Number(record.billing_trial_finalized_matches) || 0)),
+    stripeCustomerId: record.stripe_customer_id ? String(record.stripe_customer_id) : null,
+    stripeCurrentPeriodEnd: record.stripe_current_period_end ? String(record.stripe_current_period_end) : null,
+    stripePriceId: record.stripe_price_id ? String(record.stripe_price_id) : null,
+    stripeSubscriptionId: record.stripe_subscription_id ? String(record.stripe_subscription_id) : null,
+  };
 }
 
 function groupOptionLabel(team: RemoteTeam) {
@@ -849,6 +1411,122 @@ function matchSummaryDate(date: string) {
   });
 }
 
+function weatherDateTimeLabel(date: string) {
+  const parsed = new Date(date);
+  if (Number.isNaN(parsed.getTime())) return "hora por confirmar";
+
+  return parsed.toLocaleString("es-ES", {
+    weekday: "short",
+    day: "2-digit",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function weatherVisualKey(weather: MatchWeather | null, status: "error" | "idle" | "loading" | "ready" | "unavailable") {
+  if (status === "loading") return "loading";
+  if (status === "error") return "storm";
+  if (!weather) return "cloud";
+
+  const raw = `${weather.conditionType} ${weather.condition}`.toLocaleLowerCase("es-ES");
+  if (/thunder|storm|tormenta/.test(raw)) return "storm";
+  if (/snow|sleet|ice|nieve|granizo/.test(raw)) return "snow";
+  if (/rain|shower|drizzle|lluv|chubasco/.test(raw)) return "rain";
+  if (/fog|mist|haze|niebla|bruma/.test(raw)) return "fog";
+  if ((weather.windKmh ?? 0) >= 30 || /wind|viento/.test(raw)) return "wind";
+  if (/partly|mostly|cloud|overcast|nube|cubierto|nublado/.test(raw)) return raw.includes("partly") ? "partly" : "cloud";
+  return "sun";
+}
+
+function WeatherIcon({ status, weather }: { status: "error" | "idle" | "loading" | "ready" | "unavailable"; weather: MatchWeather | null }) {
+  const key = weatherVisualKey(weather, status);
+
+  return (
+    <span className={`weather-icon weather-icon-${key}`} aria-hidden="true">
+      <svg viewBox="0 0 48 48" role="img">
+        {key === "sun" ? (
+          <>
+            <circle cx="24" cy="24" r="8" />
+            <path d="M24 5v7M24 36v7M5 24h7M36 24h7M10 10l5 5M33 33l5 5M38 10l-5 5M15 33l-5 5" />
+          </>
+        ) : null}
+        {key === "partly" ? (
+          <>
+            <circle cx="18" cy="18" r="6" />
+            <path d="M18 5v5M6 18h5M9 9l4 4M28 9l-4 4" />
+            <path d="M17 34h19a7 7 0 0 0 1-14 10 10 0 0 0-19-2 8 8 0 0 0-1 16Z" />
+          </>
+        ) : null}
+        {key === "cloud" || key === "loading" ? (
+          <path d="M13 34h22a8 8 0 0 0 1-16 11 11 0 0 0-21-2 9 9 0 0 0-2 18Z" />
+        ) : null}
+        {key === "rain" ? (
+          <>
+            <path d="M13 27h22a8 8 0 0 0 1-16 11 11 0 0 0-21-2 9 9 0 0 0-2 18Z" />
+            <path d="M18 33l-2 5M26 33l-2 5M34 33l-2 5" />
+          </>
+        ) : null}
+        {key === "storm" ? (
+          <>
+            <path d="M13 27h22a8 8 0 0 0 1-16 11 11 0 0 0-21-2 9 9 0 0 0-2 18Z" />
+            <path d="M25 30l-5 8h7l-3 6" />
+          </>
+        ) : null}
+        {key === "snow" ? (
+          <>
+            <path d="M13 26h22a8 8 0 0 0 1-16 11 11 0 0 0-21-2 9 9 0 0 0-2 18Z" />
+            <path d="M18 34h.01M26 36h.01M34 34h.01M22 41h.01M30 41h.01" />
+          </>
+        ) : null}
+        {key === "fog" ? (
+          <>
+            <path d="M13 23h22a8 8 0 0 0 1-16 11 11 0 0 0-21-2 9 9 0 0 0-2 18Z" />
+            <path d="M10 31h28M14 37h20M9 42h30" />
+          </>
+        ) : null}
+        {key === "wind" ? (
+          <>
+            <path d="M8 18h22a5 5 0 1 0-5-5" />
+            <path d="M8 27h30a5 5 0 1 1-5 5" />
+            <path d="M8 36h16" />
+          </>
+        ) : null}
+      </svg>
+    </span>
+  );
+}
+
+function WeatherMetricIcon({ kind }: { kind: "feels" | "humidity" | "rain" | "wind" }) {
+  return (
+    <i className={`weather-metric-icon weather-metric-icon-${kind}`} aria-hidden="true">
+      <svg viewBox="0 0 24 24">
+        {kind === "feels" ? (
+          <>
+            <path d="M14 14.8V5a4 4 0 0 0-8 0v9.8a6 6 0 1 0 8 0Z" />
+            <path d="M10 6v9" />
+          </>
+        ) : null}
+        {kind === "rain" ? (
+          <>
+            <path d="M6 9.5h10a4 4 0 0 0 .5-8 5.5 5.5 0 0 0-10.3 1.4A4.5 4.5 0 0 0 6 9.5Z" />
+            <path d="M7 14l-1.4 3.2M12 14l-1.4 3.2M17 14l-1.4 3.2" />
+          </>
+        ) : null}
+        {kind === "wind" ? (
+          <>
+            <path d="M3 8h12a3 3 0 1 0-3-3" />
+            <path d="M3 14h16a3 3 0 1 1-3 3" />
+          </>
+        ) : null}
+        {kind === "humidity" ? (
+          <path d="M12 3s6 6.2 6 11a6 6 0 0 1-12 0c0-4.8 6-11 6-11Z" />
+        ) : null}
+      </svg>
+    </i>
+  );
+}
+
 function dateInputValue(date: Date) {
   const pad = (value: number) => String(value).padStart(2, "0");
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
@@ -879,17 +1557,39 @@ function playerDisplayName(player: Player) {
 }
 
 function normalizeSiteSettings(settings?: Partial<SiteSettings>): SiteSettings {
+  const monthlyAmount = Number(settings?.subscriptionContributionMonthlyAmount);
+  const yearlyAmount = Number(settings?.subscriptionContributionYearlyAmount);
+
   return {
     ...defaultSiteSettings,
     ...settings,
+    subscriptionContributionEnabled: Boolean(settings?.subscriptionContributionEnabled),
+    subscriptionContributionMonthlyAmount: Number.isFinite(monthlyAmount) && monthlyAmount >= 0 ? monthlyAmount : defaultSiteSettings.subscriptionContributionMonthlyAmount,
+    subscriptionContributionPeriod: settings?.subscriptionContributionPeriod === "month" ? "month" : "year",
+    subscriptionContributionYearlyAmount: Number.isFinite(yearlyAmount) && yearlyAmount >= 0 ? yearlyAmount : defaultSiteSettings.subscriptionContributionYearlyAmount,
     teamAColor: settings?.teamAColor ?? defaultSiteSettings.teamAColor,
     teamBColor: settings?.teamBColor ?? defaultSiteSettings.teamBColor,
   };
 }
 
+function normalizeVenue(venue: Venue): Venue {
+  return {
+    ...venue,
+    address: venue.address || undefined,
+    city: venue.city || undefined,
+    country: venue.country || undefined,
+    defaultCost: Number(venue.defaultCost) || 0,
+    kind: venue.kind && matchKinds[venue.kind] ? venue.kind : undefined,
+    lat: Number.isFinite(Number(venue.lat)) ? Number(venue.lat) : undefined,
+    lng: Number.isFinite(Number(venue.lng)) ? Number(venue.lng) : undefined,
+    placeId: venue.placeId || undefined,
+    province: venue.province || undefined,
+  };
+}
+
 function normalizePayload(payload?: Partial<AppPayload>): AppPayload {
   const fallback = defaultPayload();
-  const venues = payload?.venues ? payload.venues : fallback.venues;
+  const venues = (payload?.venues ? payload.venues : fallback.venues).map(normalizeVenue);
   const rawMatches = payload?.matches ? payload.matches : fallback.matches;
   const matches = rawMatches.length
     ? rawMatches.map((match) => ({
@@ -898,6 +1598,13 @@ function normalizePayload(payload?: Partial<AppPayload>): AppPayload {
         fieldCost: match.fieldCost ?? (match.price ? match.price * Math.max(match.targetPlayers, 1) : 0),
         configured: match.configured ?? Boolean(match.closed || match.scoreA !== undefined || match.players?.length || match.venueId),
         lineupClosed: match.lineupClosed ?? false,
+        publicGuestsPay: match.publicGuestsPay ?? true,
+        publicMaxRating: publicMatchRating(match.publicMaxRating, 10),
+        publicMinRating: publicMatchRating(match.publicMinRating, 0),
+        publicOpen: Boolean(match.publicOpen),
+        publicOpenSlots: Math.max(1, Math.floor(Number(match.publicOpenSlots) || 1)),
+        publicPositions: normalizePublicMatchPositions(match.publicPositions),
+        publicRequiresApproval: match.publicRequiresApproval ?? true,
         reservesAttend: match.reservesAttend ?? false,
         reserveLimit: Math.max(0, Math.floor(match.reserveLimit ?? 0)),
         season: match.season || seasonKey(match.date),
@@ -916,10 +1623,22 @@ function normalizePayload(payload?: Partial<AppPayload>): AppPayload {
       avatarOffsetX: player.avatar ? clampAvatarOffset(player.avatarOffsetX, 50) : undefined,
       avatarOffsetY: player.avatar ? clampAvatarOffset(player.avatarOffsetY, 0) : undefined,
       birthDate: normalizeBirthDate(player.birthDate),
+      importedRating: player.importedRating ? clampRating(Number(player.importedRating)) : undefined,
+      importedRatingAt: player.importedRatingAt || undefined,
+      importedRatingFromGroup: player.importedRatingFromGroup || undefined,
       injured: Boolean(player.injured),
       inactive: Boolean(player.inactive),
+      marketAvailability: player.marketAvailability || "",
+      marketBio: player.marketBio || "",
+      marketEnabled: Boolean(player.marketEnabled),
+      marketModalities: (player.marketModalities ?? []).filter((kind): kind is MatchKind => Boolean(matchKinds[kind])),
+      marketOpenToGroup: player.marketOpenToGroup ?? true,
+      marketOpenToGuest: player.marketOpenToGuest ?? true,
+      marketZones: marketZoneTextFromGeo(normalizeMarketZonesGeo(player.marketZonesGeo)),
+      marketZonesGeo: normalizeMarketZonesGeo(player.marketZonesGeo),
       outfieldPosition,
       position,
+      rating: clampRating(Number(player.rating ?? 5)),
       ratingVotes: normalizeRatingVotes(player.ratingVotes),
     };
   });
@@ -935,6 +1654,39 @@ function normalizePayload(payload?: Partial<AppPayload>): AppPayload {
 
 function serializePayload(payload: AppPayload) {
   return JSON.stringify(payload);
+}
+
+type LocalPayloadCacheSource = "local-draft" | "server-cache";
+
+type LocalPayloadCache = {
+  cachedAt: string;
+  kind: "pachanga-iq-cache";
+  payload: Partial<AppPayload>;
+  source: LocalPayloadCacheSource;
+};
+
+function serializeLocalPayloadCache(payload: AppPayload, source: LocalPayloadCacheSource) {
+  return JSON.stringify({
+    cachedAt: new Date().toISOString(),
+    kind: "pachanga-iq-cache",
+    payload,
+    source,
+  } satisfies LocalPayloadCache);
+}
+
+function parseLocalPayloadCache(value: string) {
+  const parsed = JSON.parse(value) as Partial<AppPayload> | Partial<LocalPayloadCache>;
+  if (
+    parsed &&
+    typeof parsed === "object" &&
+    "kind" in parsed &&
+    parsed.kind === "pachanga-iq-cache" &&
+    "payload" in parsed
+  ) {
+    return parsed.payload as Partial<AppPayload>;
+  }
+
+  return parsed as Partial<AppPayload>;
 }
 
 function normalizeRatingVotes(votes?: RatingVote[]) {
@@ -964,6 +1716,25 @@ function peerAverage(player: Player) {
   if (facetScores.length > 0) return facetScores.reduce((sum, rating) => sum + rating, 0) / facetScores.length;
   if (player.ratings?.length) return player.ratings.reduce((sum, rating) => sum + rating, 0) / player.ratings.length;
   return player.rating;
+}
+
+function localRatingVoteCount(player: Player) {
+  return (player.ratingVotes ?? []).length + (player.ratings?.length ?? 0);
+}
+
+function hasGroupRatingData(player: Player) {
+  return localRatingVoteCount(player) > 0;
+}
+
+function playerRatingSource(player: Player) {
+  if (player.importedRating && !hasGroupRatingData(player)) return "importada";
+  if (hasGroupRatingData(player)) return "del grupo";
+  return "";
+}
+
+function playerMediaLabel(player: Player) {
+  const source = playerRatingSource(player);
+  return source ? `Media ${overallScore(peerAverage(player))} · ${source}` : `Media ${overallScore(peerAverage(player))}`;
 }
 
 function voteAverage(vote: RatingVote, player?: Player) {
@@ -1162,7 +1933,7 @@ function playerFormState(player: Player, matches: Match[], playersById: Map<stri
   }
 
   const notes = [
-    recentAverage === null ? "sin partidos recientes" : `últimos ${playedRatings.length} PJ: ${recentAverage.toFixed(1)}`,
+    recentAverage === null ? "sin partidos recientes" : `últimos ${playedRatings.length} PJ: ${overallScore(recentAverage)}`,
     absenceStreak > 0 ? `${absenceStreak} sin venir` : "",
     player.injured ? "lesión suave" : "",
     player.lateCancels > 0 ? `fiabilidad ${playerReliability(player)}%` : "",
@@ -1191,12 +1962,67 @@ function ratingHistory(player: Player, role?: RatingRole) {
   return [...votes].sort((a, b) => a.matchCount - b.matchCount || a.createdAt.localeCompare(b.createdAt));
 }
 
+function averageRatingValues(values: number[]) {
+  const cleanValues = values.map((value) => clampRating(value)).filter((value) => Number.isFinite(value));
+  return cleanValues.length > 0 ? cleanValues.reduce((sum, value) => sum + value, 0) / cleanValues.length : 5;
+}
+
+function ratingAverageFromVotes(player: Player, votes: RatingVote[]) {
+  return peerAverage({ ...player, ratingVotes: votes });
+}
+
+function playerRatingTrend(player: Player): RatingTrend | null {
+  const votes = ratingHistory(player, ratingRoleForPlayer(player));
+  const legacyRatings = player.ratings ?? [];
+  const current = overallScore(peerAverage(player));
+  let previous: number | null = null;
+
+  if (votes.length > 0) {
+    const previousVotes = votes.slice(0, -1);
+    previous = previousVotes.length > 0
+      ? overallScore(ratingAverageFromVotes(player, previousVotes))
+      : overallScore(legacyRatings.length > 0 ? averageRatingValues(legacyRatings) : player.rating);
+  } else if (legacyRatings.length > 1) {
+    previous = overallScore(averageRatingValues(legacyRatings.slice(0, -1)));
+  }
+
+  if (previous === null) return null;
+
+  return {
+    current,
+    direction: current > previous ? "up" : current < previous ? "down" : "flat",
+    previous,
+  };
+}
+
+function ratingTrendText(trend: RatingTrend) {
+  if (trend.direction === "up") return `Media subiendo: antes ${trend.previous}, ahora ${trend.current}`;
+  if (trend.direction === "down") return `Media bajando: antes ${trend.previous}, ahora ${trend.current}`;
+  return `Media estable: ${trend.current}`;
+}
+
+function renderRatingTrendChip(player: Player) {
+  const trend = playerRatingTrend(player);
+  if (!trend) return null;
+
+  const icon = trend.direction === "up" ? "↑" : trend.direction === "down" ? "↓" : "→";
+
+  return (
+    <span className={`rating-trend-chip rating-trend-${trend.direction}`} title={ratingTrendText(trend)} aria-label={ratingTrendText(trend)}>
+      <b aria-hidden="true">{icon}</b>
+      {trend.direction === "flat" ? <em>igual</em> : <s>{trend.previous}</s>}
+    </span>
+  );
+}
+
 function ratingWindow(player: Player, voterId: string) {
   const ownVote = ratingHistory(player).filter((vote) => vote.voterId === voterId).at(-1);
-  const nextMatchCount = ownVote ? ownVote.matchCount + ratingReviewInterval : ratingReviewInterval;
+  const isInitialWindow = !ownVote && player.appearances === 0;
+  const nextMatchCount = ownVote ? ownVote.matchCount + ratingReviewInterval : isInitialWindow ? 0 : ratingReviewInterval;
   const waitMatches = Math.max(0, nextMatchCount - player.appearances);
   return {
     canRate: !player.inactive && player.appearances >= nextMatchCount,
+    isInitialWindow,
     nextMatchCount,
     ownVote,
     waitMatches,
@@ -1494,7 +2320,7 @@ function teamBalanceSummary(teamA: Player[], teamB: Player[], scoreForPlayer: Pl
 
   return {
     detail: hasPlayers
-      ? `Diferencia ${diff.toFixed(1)} pts · usa media real, forma actual, goles/partido, victorias, experiencia, posición y porteros`
+      ? `Diferencia ${ratingPoints(diff)} pts · usa media real, forma actual, goles/partido, victorias, experiencia, posición y porteros`
       : "Marca jugadores como Voy para calcularlo",
     label,
     metricsA,
@@ -1627,6 +2453,42 @@ function matchAttendingIds(match: Match) {
   return ids;
 }
 
+function playerLastActivityInGroup(player: Player, matches: Match[]) {
+  const matchActivity = matches
+    .filter((match) => matchHasPlayerRecord(match, player.id))
+    .map((match) => Date.parse(match.date) || 0);
+  const voteActivity = (player.ratingVotes ?? []).map((vote) => Date.parse(vote.createdAt) || 0);
+  return Math.max(0, ...matchActivity, ...voteActivity);
+}
+
+function importCandidatesForUser(teams: RemoteTeam[], currentGroupId: string | null, currentUserId: string | null): PlayerImportCandidate[] {
+  if (!currentUserId) return [];
+
+  return teams
+    .filter((team) => team.id !== currentGroupId)
+    .flatMap((team) =>
+      team.payload.players
+        .filter((player) => player.ownerUserId === currentUserId)
+        .map((player) => ({
+          appearances: Math.max(0, Number(player.appearances) || 0),
+          groupId: team.id,
+          groupName: team.name,
+          inactive: Boolean(player.inactive),
+          key: `${team.id}:${player.id}`,
+          lastActivity: playerLastActivityInGroup(player, team.payload.matches),
+          media: peerAverage(player),
+          player,
+        })),
+    )
+    .sort((a, b) =>
+      Number(a.inactive) - Number(b.inactive) ||
+      b.media - a.media ||
+      b.appearances - a.appearances ||
+      b.lastActivity - a.lastActivity ||
+      playerDisplayName(a.player).localeCompare(playerDisplayName(b.player), "es"),
+    );
+}
+
 function matchHasPlayerRecord(match: Match, playerId: string) {
   return Boolean(
     match.players.some((entry) => entry.playerId === playerId) ||
@@ -1697,11 +2559,23 @@ export default function Home() {
   const [matches, setMatches] = useState<Match[]>(seedMatches);
   const [activeMatchId, setActiveMatchId] = useState(seedMatches[0].id);
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
-  const [newVenue, setNewVenue] = useState({ name: "", cost: "56", kind: "futbol7" as MatchKind });
+  const [newVenue, setNewVenue] = useState({ address: "", cost: "56", kind: "futbol7" as MatchKind, name: "" });
   const [newFacetRatings, setNewFacetRatings] = useState<Record<RatingFacet, number>>(makeFacetRatings());
+  const [selectedVenuePlace, setSelectedVenuePlace] = useState<VenuePlace | null>(null);
+  const [venuePlaceMessage, setVenuePlaceMessage] = useState("");
+  const [venuePlaceStatus, setVenuePlaceStatus] = useState<"error" | "idle" | "loading" | "missing-key" | "ready">("idle");
+  const [marketZoneDraft, setMarketZoneDraft] = useState("");
+  const [marketZoneRadiusKm, setMarketZoneRadiusKm] = useState(defaultMarketZoneRadiusKm);
+  const [marketZonePlaceMessage, setMarketZonePlaceMessage] = useState("");
+  const [marketZonePlaceStatus, setMarketZonePlaceStatus] = useState<"error" | "idle" | "loading" | "missing-key" | "ready">("idle");
   const [openQuickForm, setOpenQuickForm] = useState<"venue" | "team" | null>(null);
   const [createMenuOpen, setCreateMenuOpen] = useState(false);
+  const [selectedImportCandidateKey, setSelectedImportCandidateKey] = useState<string | null>(null);
+  const [showImportChoices, setShowImportChoices] = useState(false);
   const [teamGalleryOpen, setTeamGalleryOpen] = useState(false);
+  const [pitchZoomOpen, setPitchZoomOpen] = useState(false);
+  const [activeMobileTab, setActiveMobileTab] = useState<MobileAppTab>("inicio");
+  const [mobileAccountOpen, setMobileAccountOpen] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [siteSettings, setSiteSettings] = useState<SiteSettings>(defaultSiteSettings);
   const [settingsDraft, setSettingsDraft] = useState<SiteSettings>(defaultSiteSettings);
@@ -1710,6 +2584,7 @@ export default function Home() {
   const [historySeason, setHistorySeason] = useState("all");
   const [rankingSort, setRankingSort] = useState<RankingSort>("media");
   const [currentDateValue, setCurrentDateValue] = useState(() => dateInputValue(new Date()));
+  const [currentTimeMs, setCurrentTimeMs] = useState(() => Date.now());
   const [remoteGroupId, setRemoteGroupId] = useState<string | null>(null);
   const [remoteInviteToken, setRemoteInviteToken] = useState<string | null>(null);
   const [remotePayloadRevision, setRemotePayloadRevision] = useState<number | null>(null);
@@ -1725,14 +2600,23 @@ export default function Home() {
   const [newTeamName, setNewTeamName] = useState("Mi grupo de pachangas");
   const [adminInviteToken, setAdminInviteToken] = useState<string | null>(null);
   const [avatarMessage, setAvatarMessage] = useState("");
+  const [avatarPromptCopied, setAvatarPromptCopied] = useState(false);
   const [avatarDrafts, setAvatarDrafts] = useState<Record<string, AvatarDraft>>({});
   const [avatarAdjustingPlayerId, setAvatarAdjustingPlayerId] = useState<string | null>(null);
   const [teamPhotoMessage, setTeamPhotoMessage] = useState("");
   const [profileSaveMessage, setProfileSaveMessage] = useState("");
   const [profileSaving, setProfileSaving] = useState(false);
+  const [matchWeather, setMatchWeather] = useState<MatchWeather | null>(null);
+  const [matchWeatherMessage, setMatchWeatherMessage] = useState("");
+  const [matchWeatherStatus, setMatchWeatherStatus] = useState<"error" | "idle" | "loading" | "ready" | "unavailable">("idle");
+  const [showBillingPanel, setShowBillingPanel] = useState(false);
+  const [billingLoading, setBillingLoading] = useState<false | BillingInterval | "portal">(false);
+  const [billingMessage, setBillingMessage] = useState("");
   const [teamBackups, setTeamBackups] = useState<TeamBackup[]>([]);
   const [backupsLoading, setBackupsLoading] = useState(false);
   const [backupMessage, setBackupMessage] = useState("");
+  const [openMatchRequests, setOpenMatchRequests] = useState<PublicMatchRequest[]>([]);
+  const [openMatchRequestMessage, setOpenMatchRequestMessage] = useState("");
   const [localHydrated, setLocalHydrated] = useState(false);
   const [incomingSharedLink, setIncomingSharedLink] = useState<IncomingSharedLink>({
     hasAdminInvite: false,
@@ -1747,25 +2631,87 @@ export default function Home() {
   const remotePayloadRevisionRef = useRef<number | null>(null);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const createMenuRef = useRef<HTMLDivElement>(null);
+  const teamAccessPanelRef = useRef<HTMLElement>(null);
   const matchPanelRef = useRef<HTMLElement>(null);
   const settingsPanelRef = useRef<HTMLElement>(null);
+  const billingPanelRef = useRef<HTMLElement>(null);
   const teamGalleryRef = useRef<HTMLElement>(null);
   const teamFormRef = useRef<HTMLFormElement>(null);
   const venueFormRef = useRef<HTMLFormElement>(null);
+  const venueNameInputRef = useRef<HTMLInputElement>(null);
+  const marketZoneInputRef = useRef<HTMLInputElement>(null);
   const playerProfileRef = useRef<HTMLDivElement>(null);
   const teamGalleryReturnScrollYRef = useRef<number | null>(null);
   const avatarDragRef = useRef<{ playerId: string; startX: number; startY: number; startOffsetX: number; startOffsetY: number } | null>(null);
   const cameraVideoRef = useRef<HTMLVideoElement>(null);
   const cameraStreamRef = useRef<MediaStream | null>(null);
+  const handledMobileEntryRef = useRef(false);
+  const mobileNavigationLockRef = useRef<MobileAppTab | null>(null);
+  const mobileNavigationUnlockTimerRef = useRef<number | null>(null);
   const [cameraPlayerId, setCameraPlayerId] = useState<string | null>(null);
   const [cameraError, setCameraError] = useState("");
   const [avatarDragging, setAvatarDragging] = useState(false);
 
   useEffect(() => {
-    const refreshDate = () => setCurrentDateValue(dateInputValue(new Date()));
+    const refreshDate = () => {
+      const now = new Date();
+      setCurrentDateValue(dateInputValue(now));
+      setCurrentTimeMs(now.getTime());
+    };
     refreshDate();
-    const interval = window.setInterval(refreshDate, 60 * 60 * 1000);
+    const interval = window.setInterval(refreshDate, 60 * 1000);
     return () => window.clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    if (handledMobileEntryRef.current) return;
+    handledMobileEntryRef.current = true;
+
+    const requestedTab = new URLSearchParams(window.location.search).get("mobile");
+    if (requestedTab === "partido") {
+      lockMobileNavigationTab("partido");
+      setActiveMobileTab("partido");
+      window.requestAnimationFrame(() => {
+        document.getElementById("partido")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+      return;
+    }
+
+    if (requestedTab === "equipo") {
+      lockMobileNavigationTab("equipo");
+      setActiveMobileTab("equipo");
+      setTeamGalleryOpen(true);
+      return;
+    }
+
+    if (requestedTab === "perfil") {
+      lockMobileNavigationTab("perfil");
+      setActiveMobileTab("perfil");
+      setMobileAccountOpen(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!mobileAccountOpen) return;
+
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMobileAccountOpen(false);
+    };
+
+    document.addEventListener("keydown", closeOnEscape);
+    document.body.classList.add("mobile-sheet-open");
+    return () => {
+      document.removeEventListener("keydown", closeOnEscape);
+      document.body.classList.remove("mobile-sheet-open");
+    };
+  }, [mobileAccountOpen]);
+
+  useEffect(() => {
+    return () => {
+      if (mobileNavigationUnlockTimerRef.current !== null) {
+        window.clearTimeout(mobileNavigationUnlockTimerRef.current);
+      }
+    };
   }, []);
 
   useEffect(() => {
@@ -1787,6 +2733,64 @@ export default function Home() {
       document.removeEventListener("keydown", closeCreateMenuWithKeyboard);
     };
   }, [createMenuOpen]);
+
+  useEffect(() => {
+    if (openQuickForm !== "venue") return;
+    setVenuePlaceMessage("");
+    setSelectedVenuePlace(null);
+
+    if (!googleMapsApiKey) {
+      setVenuePlaceStatus("missing-key");
+      return;
+    }
+
+    const input = venueNameInputRef.current;
+    if (!input) return;
+
+    let cleanup: (() => void) | undefined;
+    let disposed = false;
+    setVenuePlaceStatus("loading");
+
+    attachVenueAutocomplete({
+      apiKey: googleMapsApiKey,
+      input,
+      onPlace: (place) => {
+        if (disposed) return;
+        setSelectedVenuePlace(place);
+        setNewVenue((current) => ({ ...current, address: place.address, name: place.name }));
+        setVenuePlaceMessage("");
+      },
+    })
+      .then((nextCleanup) => {
+        if (disposed) {
+          nextCleanup();
+          return;
+        }
+        cleanup = nextCleanup;
+        setVenuePlaceStatus("ready");
+      })
+      .catch((error: unknown) => {
+        if (disposed) return;
+        setVenuePlaceStatus("error");
+        setVenuePlaceMessage(error instanceof Error ? error.message : "No se pudo cargar Google Places.");
+      });
+
+    return () => {
+      disposed = true;
+      cleanup?.();
+    };
+  }, [openQuickForm]);
+
+  useEffect(() => {
+    if (!pitchZoomOpen) return;
+
+    function closePitchZoomWithKeyboard(event: KeyboardEvent) {
+      if (event.key === "Escape") setPitchZoomOpen(false);
+    }
+
+    document.addEventListener("keydown", closePitchZoomWithKeyboard);
+    return () => document.removeEventListener("keydown", closePitchZoomWithKeyboard);
+  }, [pitchZoomOpen]);
 
   function currentPayload(): AppPayload {
     return {
@@ -1823,9 +2827,33 @@ export default function Home() {
   function applyRemoteCommit(commit: RemotePayloadCommit | null | undefined) {
     if (!commit?.payload) return false;
     applyPayload(normalizePayload(commit.payload), commit.payload_revision);
+    applyBillingFromCommit(commit);
     setSyncStatus("live");
     setSyncError("");
     return true;
+  }
+
+  function applyBillingFromCommit(commit: RemotePayloadCommit | null | undefined) {
+    if (!commit || !remoteGroupId) return;
+    if (
+      commit.billing_status === undefined &&
+      commit.billing_trial_finalized_matches === undefined &&
+      commit.stripe_customer_id === undefined &&
+      commit.stripe_subscription_id === undefined &&
+      commit.stripe_price_id === undefined &&
+      commit.stripe_current_period_end === undefined &&
+      commit.billing_interval === undefined
+    ) return;
+
+    const patch = billingPatchFromRecord(commit as Record<string, unknown>);
+    setRemoteTeams((current) => current.map((team) => (team.id === remoteGroupId ? { ...team, ...patch } : team)));
+  }
+
+  function applyBillingFromGroupRow(row: Record<string, unknown>) {
+    const rowId = row.id ? String(row.id) : remoteGroupId;
+    if (!rowId) return;
+    const patch = billingPatchFromRecord(row);
+    setRemoteTeams((current) => current.map((team) => (team.id === rowId ? { ...team, ...patch } : team)));
   }
 
   function remoteWriteErrorMessage(message = "Otro usuario ha actualizado antes. Espera la sincronización y prueba otra vez.") {
@@ -1957,7 +2985,9 @@ export default function Home() {
   async function loadTeams(client: NonNullable<typeof supabase>, preferredGroupId?: string | null, preferredTeamCode?: string | null) {
     const memberships = await client
       .from("pachanga_group_members")
-      .select("group_id, role, pachanga_groups(id, name, team_code, invite_token, payload, payload_revision)")
+      .select(
+        "group_id, role, pachanga_groups(id, name, owner_id, team_code, invite_token, payload, payload_revision, billing_status, billing_trial_finalized_matches, stripe_customer_id, stripe_subscription_id, stripe_price_id, stripe_current_period_end, billing_interval)",
+      )
       .order("created_at", { ascending: true });
 
     if (memberships.error) throw new Error(memberships.error.message);
@@ -1970,12 +3000,20 @@ export default function Home() {
         if (!group) return null;
 
         return {
+          billingInterval: normalizeBillingInterval(group.billing_interval),
+          billingStatus: normalizeBillingStatus(group.billing_status),
+          billingTrialFinalizedMatches: Math.max(0, Math.floor(Number(group.billing_trial_finalized_matches) || 0)),
           id: String(group.id),
           inviteToken: String(group.invite_token),
           name: String(group.name ?? "Grupo de pachangas"),
+          ownerId: group.owner_id ? String(group.owner_id) : null,
           payload: normalizePayload(group.payload as Partial<AppPayload>),
           payloadRevision: Number(group.payload_revision ?? 0),
           role: (membership.role as MemberRole | null) ?? "player",
+          stripeCustomerId: group.stripe_customer_id ? String(group.stripe_customer_id) : null,
+          stripeCurrentPeriodEnd: group.stripe_current_period_end ? String(group.stripe_current_period_end) : null,
+          stripePriceId: group.stripe_price_id ? String(group.stripe_price_id) : null,
+          stripeSubscriptionId: group.stripe_subscription_id ? String(group.stripe_subscription_id) : null,
           teamCode: String(group.team_code ?? group.id).toUpperCase(),
         } satisfies RemoteTeam;
       })
@@ -2168,7 +3206,7 @@ export default function Home() {
     }
 
     try {
-      const parsed = JSON.parse(saved) as { players: Player[]; venues?: Venue[]; matches: Match[]; activeMatchId: string; siteSettings?: SiteSettings };
+      const parsed = parseLocalPayloadCache(saved);
       const payload = normalizePayload(parsed);
       setPlayers(payload.players);
       setVenues(payload.venues);
@@ -2310,6 +3348,7 @@ export default function Home() {
         (payload) => {
           const nextPayload = normalizePayload(payload.new.payload as Partial<AppPayload>);
           applyPayload(nextPayload, payload.new.payload_revision as number | string | null | undefined);
+          applyBillingFromGroupRow(payload.new as Record<string, unknown>);
         },
       )
       .subscribe();
@@ -2324,7 +3363,7 @@ export default function Home() {
   useEffect(() => {
     const localPayload: AppPayload = { players, venues, matches, activeMatchId, siteSettings };
     const payloadJson = serializePayload(localPayload);
-    localStorage.setItem(storageKey, payloadJson);
+    localStorage.setItem(storageKey, serializeLocalPayloadCache(localPayload, remoteGroupId ? "server-cache" : "local-draft"));
 
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     saveTimerRef.current = null;
@@ -2445,18 +3484,53 @@ export default function Home() {
   }, [matches, players]);
   const doubtfulCount = activeMatch.players.filter((entry) => entry.status === "duda").length;
   const missing = Math.max(activeMatch.targetPlayers - confirmedPlayers.length, 0);
+  const publicOpenSlots = Math.max(1, Math.min(missing || activeMatch.targetPlayers, Math.floor(Number(activeMatch.publicOpenSlots) || missing || 1)));
   const fieldCost = activeMatch.fieldCost ?? 0;
-  const sharePerPlayer = payingIds.length > 0 ? fieldCost / payingIds.length : 0;
-  const paidCount = activeMatch.players.filter((entry) => payingIds.includes(entry.playerId) && entry.paid).length;
-  const suggestedPayerId = nextPayer(players, matches, activeMatch, payingIds);
-  const payerId = activeMatch.payerId && payingIds.includes(activeMatch.payerId) ? activeMatch.payerId : suggestedPayerId;
+  const lineupClosed = activeMatch.lineupClosed ?? false;
+  const matchFinalized = Boolean(activeMatch.closed || activeMatch.scoreA !== undefined);
+  const matchConfigured = Boolean(activeMatch.configured);
+  const activeMatchTime = new Date(activeMatch.date).getTime();
+  const previousPendingMatch = Number.isFinite(activeMatchTime)
+    ? matches
+        .filter((match) => {
+          if (match.id === activeMatch.id || !match.configured || match.closed || match.scoreA !== undefined) return false;
+          const matchTime = new Date(match.date).getTime();
+          return Number.isFinite(matchTime) && matchTime < activeMatchTime;
+        })
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0]
+    : undefined;
+  const previousPendingMatchTime = previousPendingMatch ? new Date(previousPendingMatch.date).getTime() : NaN;
+  const registrationLockedByPreviousMatch = Boolean(
+    matchConfigured &&
+      !matchFinalized &&
+      previousPendingMatch &&
+      Number.isFinite(previousPendingMatchTime) &&
+      previousPendingMatchTime > currentTimeMs,
+  );
+  const registrationOpen = matchConfigured && !registrationLockedByPreviousMatch;
+  const showMatchRoster = matchConfigured && registrationOpen;
+  const showMarketScoutCard = showMatchRoster && !lineupClosed && !matchFinalized && missing > 0;
+  const pendingOpenMatchRequests = openMatchRequests.filter((request) => request.status === "pending");
+  const paymentReady = matchConfigured && (lineupClosed || matchFinalized);
+  const payingParticipantIds = paymentReady ? payingIds : [];
+  const sharePerPlayer = payingParticipantIds.length > 0 ? fieldCost / payingParticipantIds.length : 0;
+  const subscriptionContributionAmount = siteSettings.subscriptionContributionPeriod === "month"
+    ? siteSettings.subscriptionContributionMonthlyAmount
+    : siteSettings.subscriptionContributionYearlyAmount;
+  const activeGroupPlayers = players.filter((player) => !player.inactive);
+  const activeRosterCount = activeGroupPlayers.length;
+  const groupLevel = teamLevelScore(activeGroupPlayers);
+  const subscriptionContributionPerPlayer = siteSettings.subscriptionContributionEnabled && activeRosterCount > 0
+    ? subscriptionContributionAmount / activeRosterCount
+    : 0;
+  const subscriptionContributionLabel = siteSettings.subscriptionContributionPeriod === "month" ? "mensual" : "anual";
+  const paidCount = activeMatch.players.filter((entry) => payingParticipantIds.includes(entry.playerId) && entry.paid).length;
+  const suggestedPayerId = paymentReady ? nextPayer(players, matches, activeMatch, payingParticipantIds) : undefined;
+  const payerId = paymentReady && activeMatch.payerId && payingParticipantIds.includes(activeMatch.payerId) ? activeMatch.payerId : suggestedPayerId;
   const payer = players.find((player) => player.id === payerId);
   const balancedLineup = useMemo(() => balanceTeams(confirmedPlayers, effectivePlayerScore), [confirmedPlayers, playerForms]);
   const suggested = savedTeams(activeMatch, players, confirmedIds) ?? balancedLineup;
   const balanceSummary = teamBalanceSummary(suggested.teamA, suggested.teamB, effectivePlayerScore);
-  const lineupClosed = activeMatch.lineupClosed ?? false;
-  const matchFinalized = Boolean(activeMatch.closed || activeMatch.scoreA !== undefined);
-  const matchConfigured = Boolean(activeMatch.configured);
   const scoreAValue = result.a.trim() === "" ? undefined : Number(result.a);
   const scoreBValue = result.b.trim() === "" ? undefined : Number(result.b);
   const resultIsReady =
@@ -2471,6 +3545,91 @@ export default function Home() {
       b: activeMatch.scoreB === undefined ? "" : String(activeMatch.scoreB),
     });
   }, [activeMatch.id, activeMatch.scoreA, activeMatch.scoreB]);
+
+  useEffect(() => {
+    if (!matchConfigured) {
+      setMatchWeather(null);
+      setMatchWeatherStatus("idle");
+      setMatchWeatherMessage("");
+      return;
+    }
+
+    if (typeof activeVenue?.lat !== "number" || typeof activeVenue.lng !== "number") {
+      setMatchWeather(null);
+      setMatchWeatherStatus("unavailable");
+      setMatchWeatherMessage("Elige un campo guardado desde Google Places para ver la previsión.");
+      return;
+    }
+
+    const matchDate = new Date(activeMatch.date);
+    if (Number.isNaN(matchDate.getTime())) {
+      setMatchWeather(null);
+      setMatchWeatherStatus("unavailable");
+      setMatchWeatherMessage("Fecha del partido pendiente de confirmar.");
+      return;
+    }
+
+    const applyWeatherPayload = (payload: WeatherApiPayload) => {
+      if (!payload.available || !payload.forecast) {
+        setMatchWeather(null);
+        setMatchWeatherStatus("unavailable");
+        setMatchWeatherMessage(payload.message ?? "Previsión no disponible para este partido.");
+        return;
+      }
+
+      setMatchWeather(payload.forecast);
+      setMatchWeatherStatus("ready");
+      setMatchWeatherMessage("");
+    };
+    const nowMs = Date.now();
+    const msUntilMatch = matchDate.getTime() - nowMs;
+    if (msUntilMatch > weatherForecastClientLimitMs) {
+      const msUntilAvailable = Math.max(0, msUntilMatch - weatherForecastClientLimitMs);
+      const daysUntilAvailable = Math.max(1, Math.ceil(msUntilAvailable / weatherClientDayMs));
+      setMatchWeather(null);
+      setMatchWeatherStatus("unavailable");
+      setMatchWeatherMessage(`Previsión del tiempo disponible en ${daysUntilAvailable} ${daysUntilAvailable === 1 ? "día" : "días"}.`);
+      return;
+    }
+
+    const weatherCacheKey = `${activeMatch.id}:${matchDate.toISOString()}:${activeVenue.lat.toFixed(5)}:${activeVenue.lng.toFixed(5)}`;
+    const cachedWeather = matchWeatherClientCache.get(weatherCacheKey);
+    if (cachedWeather && cachedWeather.expiresAt > nowMs) {
+      applyWeatherPayload(cachedWeather.payload);
+      return;
+    }
+
+    const controller = new AbortController();
+    const params = new URLSearchParams({
+      at: matchDate.toISOString(),
+      lat: String(activeVenue.lat),
+      lng: String(activeVenue.lng),
+    });
+    const weatherClientCacheMs =
+      msUntilMatch <= weatherForecastClientFreshWindowMs ? weatherClientShortCacheMs : weatherClientLongCacheMs;
+
+    setMatchWeatherStatus("loading");
+    setMatchWeatherMessage("");
+
+    fetch(`/api/weather?${params.toString()}`, { signal: controller.signal })
+      .then(async (response) => {
+        const payload = await response.json();
+        if (!response.ok) throw new Error(payload?.message ?? "No se pudo consultar la previsión.");
+        return payload as WeatherApiPayload;
+      })
+      .then((payload) => {
+        matchWeatherClientCache.set(weatherCacheKey, { expiresAt: Date.now() + weatherClientCacheMs, payload });
+        applyWeatherPayload(payload);
+      })
+      .catch((error: unknown) => {
+        if (error instanceof DOMException && error.name === "AbortError") return;
+        setMatchWeather(null);
+        setMatchWeatherStatus("error");
+        setMatchWeatherMessage(error instanceof Error ? error.message : "No se pudo consultar la previsión.");
+      });
+
+    return () => controller.abort();
+  }, [activeMatch.date, activeMatch.id, activeVenue?.lat, activeVenue?.lng, matchConfigured]);
 
   function updateMatch(next: Match) {
     setMatches((current) => current.map((match) => (match.id === next.id ? next : match)));
@@ -2499,6 +3658,10 @@ export default function Home() {
   function openTeamGallery() {
     setTeamGalleryOpen(true);
     scrollToPanel(teamGalleryRef);
+  }
+
+  function openGroupSwitcher() {
+    scrollToPanel(teamAccessPanelRef);
   }
 
   function openTeamGalleryPlayerProfile(playerId: string) {
@@ -2541,16 +3704,70 @@ export default function Home() {
     scrollToPanel(targetRef);
   }
 
+  function lockMobileNavigationTab(tabId: MobileAppTab) {
+    mobileNavigationLockRef.current = tabId;
+    if (mobileNavigationUnlockTimerRef.current !== null) {
+      window.clearTimeout(mobileNavigationUnlockTimerRef.current);
+    }
+    mobileNavigationUnlockTimerRef.current = window.setTimeout(() => {
+      if (mobileNavigationLockRef.current === tabId) {
+        mobileNavigationLockRef.current = null;
+      }
+    }, 1400);
+  }
+
+  function navigateMobileTab(tabId: MobileSectionTabId) {
+    lockMobileNavigationTab(tabId);
+    setActiveMobileTab(tabId);
+    const target = document.getElementById(tabId);
+    target?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  function navigatePrimaryMobile(tabId: MobileAppTab) {
+    setCreateMenuOpen(false);
+    setMobileAccountOpen(false);
+    lockMobileNavigationTab(tabId);
+    setActiveMobileTab(tabId);
+
+    if (tabId === "mercado") {
+      window.location.assign("/mercado");
+      return;
+    }
+
+    if (tabId === "equipo") {
+      openTeamGallery();
+      return;
+    }
+
+    if (tabId === "perfil") {
+      setMobileAccountOpen(true);
+      return;
+    }
+
+    navigateMobileTab(tabId);
+  }
+
+  function runMobileAccountAction(action: () => void) {
+    setMobileAccountOpen(false);
+    window.setTimeout(action, 80);
+  }
+
   function showQuickForm(form: NonNullable<typeof openQuickForm>) {
     setOpenQuickForm(form);
     scrollToQuickForm(form);
   }
 
   function toggleSettingsPanel() {
+    if (!canUseAdminControls) return;
     const nextShowSettings = !showSettings;
     if (nextShowSettings) setSettingsDraft(siteSettings);
     setShowSettings(nextShowSettings);
     if (nextShowSettings) scrollToPanel(settingsPanelRef);
+  }
+
+  function closeSettingsPanelWithoutSave() {
+    setSettingsDraft(siteSettings);
+    setShowSettings(false);
   }
 
   async function saveSettingsPanel() {
@@ -2564,7 +3781,7 @@ export default function Home() {
 
     setSiteSettings(nextSettings);
     setSettingsDraft(nextSettings);
-    localStorage.setItem(storageKey, JSON.stringify(nextPayload));
+    localStorage.setItem(storageKey, serializeLocalPayloadCache(nextPayload, remoteGroupId ? "server-cache" : "local-draft"));
 
     const needsRemoteSave = Boolean(supabase && remoteGroupId && remoteReady && canManageTeam);
     if (needsRemoteSave) {
@@ -2573,6 +3790,74 @@ export default function Home() {
     }
 
     setShowSettings(false);
+  }
+
+  function revealBillingPanel(message?: string) {
+    if (message) setBillingMessage(message);
+    setShowBillingPanel(true);
+    scrollToPanel(billingPanelRef);
+  }
+
+  async function authAccessToken() {
+    if (!supabase) throw new Error("Supabase no está configurado.");
+    const sessionResult = await supabase.auth.getSession();
+    const token = sessionResult.data.session?.access_token;
+    if (!token) throw new Error("Entra con Google para gestionar pagos.");
+    return token;
+  }
+
+  async function startBillingCheckout(interval: BillingInterval) {
+    if (!remoteGroupId || !canManageBilling) {
+      revealBillingPanel("Solo el owner del grupo puede activar la suscripción.");
+      return;
+    }
+
+    setBillingLoading(interval);
+    setBillingMessage("");
+
+    try {
+      const response = await fetch("/api/billing/checkout", {
+        body: JSON.stringify({ groupId: remoteGroupId, interval }),
+        headers: {
+          Authorization: `Bearer ${await authAccessToken()}`,
+          "Content-Type": "application/json",
+        },
+        method: "POST",
+      });
+      const data = (await response.json()) as { error?: string; url?: string };
+      if (!response.ok || !data.url) throw new Error(data.error ?? "No se pudo abrir Stripe.");
+      window.location.href = data.url;
+    } catch (error) {
+      setBillingMessage(error instanceof Error ? error.message : "No se pudo abrir Stripe.");
+      setBillingLoading(false);
+    }
+  }
+
+  async function openBillingPortal() {
+    if (!remoteGroupId || !canManageBilling) {
+      revealBillingPanel("Solo el owner del grupo puede gestionar la suscripción.");
+      return;
+    }
+
+    setBillingLoading("portal");
+    setBillingMessage("");
+
+    try {
+      const response = await fetch("/api/billing/portal", {
+        body: JSON.stringify({ groupId: remoteGroupId }),
+        headers: {
+          Authorization: `Bearer ${await authAccessToken()}`,
+          "Content-Type": "application/json",
+        },
+        method: "POST",
+      });
+      const data = (await response.json()) as { error?: string; url?: string };
+      if (!response.ok || !data.url) throw new Error(data.error ?? "No se pudo abrir el portal.");
+      window.location.href = data.url;
+    } catch (error) {
+      setBillingMessage(error instanceof Error ? error.message : "No se pudo abrir el portal.");
+      setBillingLoading(false);
+    }
   }
 
   function runCreateAction(action: () => void) {
@@ -2587,7 +3872,7 @@ export default function Home() {
 
   async function setStatus(playerId: string, status: MatchPlayer["status"]) {
     const player = players.find((item) => item.id === playerId);
-    const canChangeStatus = matchConfigured && (isDemoMode || canUseAdminControls || (hasRealTeam && isRegisteredUser && player?.ownerUserId === currentUserId));
+    const canChangeStatus = matchConfigured && registrationOpen && (isDemoMode || canUseAdminControls || (hasRealTeam && isRegisteredUser && player?.ownerUserId === currentUserId));
     if (!canChangeStatus) return;
     if (matchFinalized && !canUseAdminControls) return;
     if (status === "voy" && (player?.injured || player?.inactive)) return;
@@ -2603,6 +3888,7 @@ export default function Home() {
 
       const result = await supabase.rpc("patch_pachanga_match_player_status", {
         next_status: status,
+        operation_key: id(),
         target_group_id: remoteGroupId,
         target_match_id: activeMatch.id,
         target_player_id: playerId,
@@ -2705,6 +3991,7 @@ export default function Home() {
 
   async function togglePaid(playerId: string) {
     if (!matchConfigured) return;
+    if (!paymentReady) return;
     const existingEntry = activeMatch.players.find((entry) => entry.playerId === playerId);
     const nextPaid = !existingEntry?.paid;
 
@@ -2714,6 +4001,7 @@ export default function Home() {
 
       const result = await supabase.rpc("patch_pachanga_match_player_paid", {
         next_paid: nextPaid,
+        operation_key: id(),
         target_group_id: remoteGroupId,
         target_match_id: activeMatch.id,
         target_player_id: playerId,
@@ -2742,6 +4030,11 @@ export default function Home() {
       return;
     }
 
+    if (groupBillingLocked) {
+      revealBillingPanel("Ya has finalizado los 2 partidos de prueba. Activa un plan para crear el siguiente.");
+      return;
+    }
+
     const defaultVenue = venues.find((venue) => venue.id === activeMatch.venueId) ?? venues[0];
     const nextKind = activeMatch.kind ?? defaultVenue?.kind ?? "futbol7";
     const nextDate = nextMatchDate(activeMatch.date);
@@ -2765,15 +4058,53 @@ export default function Home() {
     selectMatch(next.id);
   }
 
-  function toggleLineupClosed() {
+  async function toggleLineupClosed() {
     if (!canUseAdminControls) return;
+    if (!registrationOpen) return;
     if (matchFinalized) return;
-    updateMatch({
+    const nextLineupClosed = !lineupClosed;
+    const nextPayingIds = nextLineupClosed ? payingIds : [];
+    const nextPayerId = nextLineupClosed
+      ? activeMatch.payerId && nextPayingIds.includes(activeMatch.payerId)
+        ? activeMatch.payerId
+        : nextPayer(players, matches, activeMatch, nextPayingIds)
+      : undefined;
+    const nextMatch = {
       ...activeMatch,
-      lineupClosed: !lineupClosed,
+      lineupClosed: nextLineupClosed,
+      payerId: nextPayerId,
+      publicOpen: nextLineupClosed ? false : activeMatch.publicOpen,
       teamA: suggested.teamA.map((player) => player.id),
       teamB: suggested.teamB.map((player) => player.id),
-    });
+    };
+
+    if (supabase && remoteGroupId && hasRealTeam) {
+      setSyncStatus("connecting");
+      setSyncError("");
+
+      const result = await supabase.rpc("patch_pachanga_match_lineup_state", {
+        next_lineup_closed: nextLineupClosed,
+        operation_key: id(),
+        target_group_id: remoteGroupId,
+        target_match_id: activeMatch.id,
+        target_payer_id: nextPayerId ?? null,
+        target_team_a_ids: nextMatch.teamA ?? [],
+        target_team_b_ids: nextMatch.teamB ?? [],
+      });
+
+      if (result.error) {
+        markRemoteWriteError(result.error.message);
+        return;
+      }
+
+      applyRemoteCommit(result.data as RemotePayloadCommit);
+      return;
+    }
+
+    updateMatch(nextMatch);
+    if (nextLineupClosed && activeMatch.publicOpen) {
+      void syncOpenMatchPublication(nextMatch, false);
+    }
   }
 
   function applyRandomTeams() {
@@ -2800,7 +4131,7 @@ export default function Home() {
   }
 
   function assignPlayerTeam(playerId: string, team: "A" | "B") {
-    if (!canUseAdminControls) return;
+    if (!canUseAdminControls && !isDemoMode) return;
     if (lineupClosed) return;
     if (matchFinalized) return;
     const baseTeamA = suggested.teamA.map((player) => player.id).filter((id) => id !== playerId);
@@ -2839,6 +4170,7 @@ export default function Home() {
 
       const result = await supabase.rpc("patch_pachanga_match_scorers", {
         next_scorers: cleanScorers,
+        operation_key: id(),
         target_group_id: remoteGroupId,
         target_match_id: activeMatch.id,
         target_score_a: Number(scoreAValue),
@@ -2910,6 +4242,11 @@ export default function Home() {
     if (!canUseAdminControls) return;
     if (matchFinalized) return;
     if (!resultIsReady) return;
+    if (!lineupClosed) return;
+    if (groupBillingLocked) {
+      revealBillingPanel("La prueba gratuita ya ha cerrado 2 partidos. Activa un plan para finalizar más partidos.");
+      return;
+    }
 
     const scoreA = Number(scoreAValue);
     const scoreB = Number(scoreBValue);
@@ -2939,6 +4276,41 @@ export default function Home() {
     };
     const nextMatches = matches.map((match) => (match.id === activeMatch.id ? nextMatch : match));
     const nextPayload = { activeMatchId, matches: nextMatches, players: nextPlayers, siteSettings, venues };
+
+    if (supabase && remoteGroupId && hasRealTeam) {
+      setSyncStatus("connecting");
+      setSyncError("");
+
+      const result = await supabase.rpc("finalize_pachanga_match_if_current", {
+        expected_revision: remotePayloadRevisionRef.current,
+        next_payload: nextPayload,
+        operation_key: id(),
+        target_group_id: remoteGroupId,
+        target_match_id: activeMatch.id,
+      });
+
+      if (result.error) {
+        const message = result.error.message;
+        if (message.toLowerCase().includes("trial limit")) {
+          revealBillingPanel("La prueba gratuita ya ha cerrado 2 partidos. Activa un plan para finalizar más partidos.");
+          setSyncStatus("live");
+          setSyncError("");
+          return;
+        }
+
+        markRemoteWriteError(message);
+        if (isRemoteRevisionConflict(message)) {
+          await loadTeams(supabase, remoteGroupId).catch((error) => {
+            setSyncError(error instanceof Error ? error.message : "No se pudo recargar el grupo");
+          });
+        }
+        return;
+      }
+
+      applyRemoteCommit(result.data as RemotePayloadCommit);
+      await createTeamBackup("partido_finalizado", nextPayload, false);
+      return;
+    }
 
     setPlayers(nextPlayers);
     setMatches(nextMatches);
@@ -3099,7 +4471,7 @@ export default function Home() {
     if (rankingSort === "goles") return `${row.goals} ${row.goals === 1 ? "gol" : "goles"}`;
     if (rankingSort === "partidos") return `${row.appearances} PJ`;
     if (rankingSort === "ganados") return `${row.wins} ${row.wins === 1 ? "victoria" : "victorias"}`;
-    return `Media ${row.media.toFixed(1)}`;
+    return `Media ${overallScore(row.media)}`;
   };
   const sortedPlayers = [...players].sort((a, b) => {
     const statusOrder: Record<MatchPlayer["status"] | "sin", number> = { voy: 0, duda: 1, no: 2, sin: 3 };
@@ -3114,24 +4486,48 @@ export default function Home() {
   const waitingPlayerIds = new Set(waitingIds);
   const sortedTeamA = sortedLineupPlayers(suggested.teamA, effectivePlayerScore);
   const sortedTeamB = sortedLineupPlayers(suggested.teamB, effectivePlayerScore);
-  const otherPlayers = sortedPlayers.filter((player) => !teamAPlayerIds.has(player.id) && !teamBPlayerIds.has(player.id) && !reservePlayerIds.has(player.id) && !waitingPlayerIds.has(player.id));
+  const otherPlayers = registrationOpen
+    ? sortedPlayers.filter((player) => !teamAPlayerIds.has(player.id) && !teamBPlayerIds.has(player.id) && !reservePlayerIds.has(player.id) && !waitingPlayerIds.has(player.id))
+    : [];
   const selectedPlayer = selectedPlayerId ? players.find((player) => player.id === selectedPlayerId) : undefined;
   const selectedRatingFacets = selectedPlayer ? ratingFacetsForPlayer(selectedPlayer) : ratingFacets;
   const selectedForm = selectedPlayer ? playerForm(selectedPlayer) : undefined;
   const selectedEffectiveScore = selectedPlayer ? effectivePlayerScore(selectedPlayer) : 0;
   const selectedPeerScore = selectedPlayer ? peerAverage(selectedPlayer) : 0;
   const selectedPlayerAge = selectedPlayer ? playerAge(selectedPlayer.birthDate, currentDateValue) : null;
+  const selectedMarketZones = selectedPlayer ? normalizeMarketZonesGeo(selectedPlayer.marketZonesGeo) : [];
+  const selectedMarketAvailabilitySlots = selectedPlayer ? marketAvailabilitySlots(selectedPlayer.marketAvailability) : [];
+  const selectedMarketReady = selectedPlayer ? playerMarketProfileComplete(selectedPlayer) : true;
   const currentTeam = remoteTeams.find((team) => team.id === remoteGroupId);
   const hasIncomingSharedLink = incomingSharedLink.hasInvite || incomingSharedLink.hasAdminInvite || incomingSharedLink.hasMatch;
   const isRegisteredUser = Boolean(authUser && !isAnonymousAuthUser(authUser));
   const hasRealTeam = remoteReady && Boolean(remoteGroupId);
+  const billingActive = teamBillingIsActive(currentTeam);
+  const billingTrialUsed = Math.max(0, currentTeam?.billingTrialFinalizedMatches ?? 0);
+  const billingTrialRemaining = Math.max(0, freeTrialMatchLimit - billingTrialUsed);
+  const groupBillingLocked = Boolean(hasRealTeam && !billingActive && billingTrialUsed >= freeTrialMatchLimit);
+  const canManageBilling = Boolean(hasRealTeam && isRegisteredUser && currentRole === "owner");
+  const ownerContributionPlayer = players.find((player) => currentTeam?.ownerId && player.ownerUserId === currentTeam.ownerId);
+  const ownerContributionRecipient = ownerContributionPlayer ? playerDisplayName(ownerContributionPlayer) : "owner del grupo";
+  const showSubscriptionPanel = Boolean(hasRealTeam && (showBillingPanel || groupBillingLocked || (showSettings && currentRole === "owner")));
   const needsLoginForSharedLink = hasIncomingSharedLink && !isRegisteredUser && !hasRealTeam;
   const isDemoMode = !hasIncomingSharedLink && !remoteReady && remoteTeams.length === 0;
   const canManageTeam = isRegisteredUser && (currentRole === "owner" || currentRole === "admin");
+  const canManageRoles = hasRealTeam && isRegisteredUser && currentRole === "owner";
   const canUseAdminControls = hasRealTeam && canManageTeam;
   const canCreateTeam = Boolean(supabase && isRegisteredUser);
   const ownPlayer = currentUserId ? players.find((player) => player.ownerUserId === currentUserId) : undefined;
-  const needsProfileForSharedMatch = hasRealTeam && isRegisteredUser && incomingSharedLink.hasMatch && !ownPlayer;
+  const needsOwnPlayerProfile = hasRealTeam && isRegisteredUser && !ownPlayer;
+  const playerImportCandidates = useMemo(
+    () => importCandidatesForUser(remoteTeams, remoteGroupId, currentUserId),
+    [remoteTeams, remoteGroupId, currentUserId],
+  );
+  const defaultPlayerImportCandidate = playerImportCandidates.find((candidate) => !candidate.inactive) ?? playerImportCandidates[0];
+  const selectedImportCandidate =
+    playerImportCandidates.find((candidate) => candidate.key === selectedImportCandidateKey) ??
+    defaultPlayerImportCandidate;
+  const showPlayerImportGate = Boolean(needsOwnPlayerProfile && playerImportCandidates.length > 0);
+  const needsProfileForSharedMatch = hasRealTeam && isRegisteredUser && incomingSharedLink.hasMatch && !ownPlayer && !showPlayerImportGate;
   const googleButtonText = needsLoginForSharedLink ? "Continuar con Google y volver" : "Continuar con Google";
   const selectedPlayerIsOwn = Boolean(selectedPlayer?.ownerUserId && selectedPlayer.ownerUserId === currentUserId);
   const canEditSelectedPlayer = Boolean(selectedPlayer && (canUseAdminControls || (hasRealTeam && isRegisteredUser && selectedPlayerIsOwn)));
@@ -3139,11 +4535,66 @@ export default function Home() {
   const selectedAvatarPreview = selectedAvatarDraft?.avatar ?? selectedPlayer?.avatar;
   const canAdjustSelectedAvatar = Boolean(canEditSelectedPlayer && selectedPlayer && selectedAvatarDraft && avatarAdjustingPlayerId === selectedPlayer.id);
   const showPlayerSwitcher = Boolean(canUseAdminControls && selectedPlayer && !selectedPlayerIsOwn && players.length > 1);
+
+  useEffect(() => {
+    if (!selectedPlayerIsOwn || !selectedPlayer?.marketEnabled) {
+      setMarketZoneDraft("");
+      setMarketZonePlaceMessage("");
+      setMarketZonePlaceStatus("idle");
+      return;
+    }
+
+    if (!googleMapsApiKey) {
+      setMarketZonePlaceStatus("missing-key");
+      return;
+    }
+
+    const input = marketZoneInputRef.current;
+    if (!input) return;
+
+    let cleanup: (() => void) | undefined;
+    let disposed = false;
+    setMarketZonePlaceStatus("loading");
+
+    attachVenueAutocomplete({
+      apiKey: googleMapsApiKey,
+      input,
+      onPlace: (place) => {
+        if (disposed || !selectedPlayer) return;
+        const nextZones = appendMarketZoneGeo(selectedPlayer.marketZonesGeo, place, marketZoneRadiusKm);
+        updatePlayer(selectedPlayer.id, {
+          marketZones: marketZoneTextFromGeo(nextZones),
+          marketZonesGeo: nextZones,
+        });
+        setMarketZoneDraft("");
+        setMarketZonePlaceMessage("");
+      },
+      types: ["(cities)"],
+    })
+      .then((nextCleanup) => {
+        if (disposed) {
+          nextCleanup();
+          return;
+        }
+        cleanup = nextCleanup;
+        setMarketZonePlaceStatus("ready");
+      })
+      .catch((error: unknown) => {
+        if (disposed) return;
+        setMarketZonePlaceStatus("error");
+        setMarketZonePlaceMessage(error instanceof Error ? error.message : "No se pudo cargar Google Places.");
+      });
+
+    return () => {
+      disposed = true;
+      cleanup?.();
+    };
+  }, [marketZoneRadiusKm, selectedPlayer?.id, selectedPlayer?.marketEnabled, selectedPlayer?.marketZonesGeo, selectedPlayerIsOwn]);
   const showGroupAccessPanel = isRegisteredUser;
   const showTeamAdminPanel = canUseAdminControls;
   const showMatchAdminPanel = canUseAdminControls;
   const canEditMatchSettings = canUseAdminControls && !matchFinalized;
-  const canEditLineup = canUseAdminControls && matchConfigured && !lineupClosed && !matchFinalized;
+  const canEditLineup = canUseAdminControls && registrationOpen && !lineupClosed && !matchFinalized;
   const canUploadTeamPhoto = Boolean(matchConfigured && (isDemoMode || hasRealTeam) && !needsLoginForSharedLink);
   const matchCanBeSaved = Boolean(
     canUseAdminControls &&
@@ -3152,8 +4603,78 @@ export default function Home() {
       activeMatch.date &&
       activeMatch.kind &&
       Number.isFinite(fieldCost) &&
-      fieldCost >= 0,
+      fieldCost >= 0 &&
+      !groupBillingLocked,
   );
+
+  useEffect(() => {
+    void loadOpenMatchRequests();
+  }, [activeMatch.id, canUseAdminControls, remoteGroupId, remoteReady]);
+
+  useEffect(() => {
+    if (!supabase || !remoteGroupId || !remoteReady || !canUseAdminControls) return;
+
+    const client = supabase;
+    const channel = client
+      .channel(`pachanga-open-requests-${remoteGroupId}-${activeMatch.id}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "pachanga_open_match_requests", filter: `source_group_id=eq.${remoteGroupId}` },
+        (payload) => {
+          const row = (payload.new ?? payload.old) as { source_match_id?: string } | null;
+          if (!row || row.source_match_id === activeMatch.id) void loadOpenMatchRequests(client, remoteGroupId, activeMatch.id);
+        },
+      )
+      .subscribe();
+
+    return () => {
+      void client.removeChannel(channel);
+    };
+  }, [activeMatch.id, canUseAdminControls, remoteGroupId, remoteReady]);
+
+  useEffect(() => {
+    if (!showPlayerImportGate || !defaultPlayerImportCandidate) {
+      setSelectedImportCandidateKey(null);
+      setShowImportChoices(false);
+      return;
+    }
+
+    const selectedStillExists = playerImportCandidates.some((candidate) => candidate.key === selectedImportCandidateKey);
+    if (!selectedImportCandidateKey || !selectedStillExists) {
+      setSelectedImportCandidateKey(defaultPlayerImportCandidate.key);
+    }
+  }, [defaultPlayerImportCandidate?.key, playerImportCandidates, selectedImportCandidateKey, showPlayerImportGate]);
+
+  useEffect(() => {
+    if (needsLoginForSharedLink) return;
+
+    const sections = mobileNavigationTabs
+      .map((tab) => document.getElementById(tab.id))
+      .filter((section): section is HTMLElement => Boolean(section));
+
+    if (sections.length === 0) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (mobileNavigationLockRef.current) return;
+
+        const visibleEntry = entries
+          .filter((entry) => entry.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+
+        const visibleId = visibleEntry?.target.id as MobileSectionTabId | undefined;
+        if (visibleId) setActiveMobileTab(visibleId);
+      },
+      {
+        rootMargin: "-18% 0px -58% 0px",
+        threshold: [0.04, 0.18, 0.34, 0.5, 0.72],
+      },
+    );
+
+    sections.forEach((section) => observer.observe(section));
+    return () => observer.disconnect();
+  }, [needsLoginForSharedLink, selectedPlayerId, teamGalleryOpen]);
+
   const ratingVoterId = currentUserId ?? `local:${profileName.trim().toLocaleLowerCase("es-ES") || "jugador"}`;
   const selectedRatingRole = selectedPlayer ? ratingRoleForPlayer(selectedPlayer) : "field";
   const selectedRatingHistory = selectedPlayer ? ratingHistory(selectedPlayer, selectedRatingRole) : [];
@@ -3178,10 +4699,12 @@ export default function Home() {
         : hasRealTeam && !isRegisteredUser
           ? "Entra con Google para valorar a compañeros."
           : selectedRatingWindow.canRate
-        ? "Valoraciones abiertas: puedes votar ahora."
+        ? selectedRatingWindow.isInitialWindow
+          ? "Valoración inicial abierta: puedes valorar esta ficha antes de su primer partido."
+          : "Valoraciones abiertas: puedes votar ahora."
         : selectedUserVote
           ? `Cerradas: se reabren cuando juegue ${ratingWaitMatches} partido${ratingWaitMatches === 1 ? "" : "s"} más.`
-          : `Cerradas: se abren al completar 3 partidos. Faltan ${ratingWaitMatches}.`
+          : `Cerradas: se abren al completar 3 partidos. Faltan ${ratingWaitMatches} partido${ratingWaitMatches === 1 ? "" : "s"}.`
     : "";
   const selectedRatingButtonText = canRateSelectedPlayer
     ? "Guardar valoración"
@@ -3205,6 +4728,10 @@ export default function Home() {
   }
 
   async function saveMatchConfiguration() {
+    if (groupBillingLocked) {
+      revealBillingPanel("La prueba gratuita ya ha cerrado 2 partidos. Activa un plan para guardar nuevos partidos.");
+      return;
+    }
     if (!matchCanBeSaved) return;
     const nextMatch = { ...activeMatch, configured: true, season: seasonKey(activeMatch.date) };
     const nextMatches = matches.map((match) => (match.id === activeMatch.id ? nextMatch : match));
@@ -3268,6 +4795,8 @@ export default function Home() {
   }
 
   function profilePatchFor(player: Player) {
+    const marketZonesGeo = normalizeMarketZonesGeo(player.marketZonesGeo);
+
     return {
       avatar: player.avatar,
       avatarOffsetX: player.avatar ? clampAvatarOffset(player.avatarOffsetX, 50) : undefined,
@@ -3275,12 +4804,232 @@ export default function Home() {
       birthDate: normalizeBirthDate(player.birthDate),
       goalkeeperOnly: Boolean(player.goalkeeperOnly),
       goals: player.goals ?? 0,
+      importedRating: player.importedRating ? clampRating(player.importedRating) : undefined,
+      importedRatingAt: player.importedRatingAt,
+      importedRatingFromGroup: player.importedRatingFromGroup,
       injured: Boolean(player.injured),
+      marketAvailability: player.marketAvailability ?? "",
+      marketBio: player.marketBio ?? "",
+      marketEnabled: Boolean(player.marketEnabled),
+      marketModalities: marketModalitiesForPlayer(player),
+      marketOpenToGroup: player.marketOpenToGroup ?? true,
+      marketOpenToGuest: player.marketOpenToGuest ?? true,
+      marketZones: marketZoneTextFromGeo(marketZonesGeo),
+      marketZonesGeo,
       name: displayName(player.name) || player.name,
       outfieldPosition: rememberedOutfieldPosition(player, activeKind),
       phone: player.phone ?? "",
       position: player.position,
     };
+  }
+
+  function marketPatchFor(player: Player) {
+    const marketZonesGeo = normalizeMarketZonesGeo(player.marketZonesGeo);
+    const marketZoneText = marketZoneTextFromGeo(marketZonesGeo);
+
+    return {
+      active: Boolean(player.marketEnabled),
+      appearances: Math.max(0, Math.floor(player.appearances || 0)),
+      availabilityText: player.marketAvailability ?? "",
+      avatar: player.avatar,
+      avatarOffsetX: player.avatar ? clampAvatarOffset(player.avatarOffsetX, 50) : undefined,
+      avatarOffsetY: player.avatar ? clampAvatarOffset(player.avatarOffsetY, 0) : undefined,
+      bio: player.marketBio ?? "",
+      birthDate: normalizeBirthDate(player.birthDate),
+      displayName: playerDisplayName(player) || player.name,
+      goalkeeperOnly: Boolean(player.goalkeeperOnly),
+      goals: Math.max(0, Math.floor(player.goals || 0)),
+      groupName: currentTeamName,
+      media: playerMediaScore(player),
+      modalities: marketModalitiesForPlayer(player),
+      openToGroup: player.marketOpenToGroup ?? true,
+      openToGuest: player.marketOpenToGuest ?? true,
+      position: player.position,
+      wins: Math.max(0, Math.floor(player.wins || 0)),
+      zones: splitMarketList(marketZoneText),
+      zonesGeo: marketZonesGeo,
+      zonesText: marketZoneText,
+    };
+  }
+
+  function publicMatchPatchFor(match: Match, active: boolean) {
+    const matchVenue = venues.find((venue) => venue.id === match.venueId);
+    const parsedDate = new Date(match.date);
+    const day = Number.isNaN(parsedDate.getTime())
+      ? ""
+      : displayName(parsedDate.toLocaleDateString("es-ES", { weekday: "long" }));
+    const zone = [
+      matchVenue?.city,
+      matchVenue?.province && matchVenue.province !== matchVenue.city ? matchVenue.province : "",
+    ].filter(Boolean).join(", ") || matchVenue?.address || match.place;
+    const confirmedCount = orderedGoingPlayers(match).slice(0, match.targetPlayers).length;
+    const openSlots = Math.max(match.targetPlayers - confirmedCount, 0);
+    const rawMinRating = publicMatchRating(match.publicMinRating, 0);
+    const rawMaxRating = publicMatchRating(match.publicMaxRating, 10);
+    const minRating = Math.min(rawMinRating, rawMaxRating);
+    const maxRating = Math.max(rawMinRating, rawMaxRating);
+    const safeSlots = active ? Math.max(1, Math.min(openSlots || match.targetPlayers, Math.floor(Number(match.publicOpenSlots) || openSlots || 1))) : 0;
+    const matchLink = publicMatchUrl(match.id);
+
+    return {
+      active,
+      confirmedCount,
+      date: match.date,
+      dateText: matchSummaryDate(match.date),
+      day,
+      fieldCost: Math.max(0, Number(match.fieldCost ?? 0) || 0),
+      fieldName: matchVenue?.name || match.place || "Campo por confirmar",
+      groupLevel: groupLevel ?? null,
+      groupName: currentTeamName,
+      guestsPay: match.publicGuestsPay ?? true,
+      lat: matchVenue?.lat,
+      lng: matchVenue?.lng,
+      matchUrl: matchLink,
+      maxRating,
+      minRating,
+      modality: match.kind ?? "futbol7",
+      openSlots: safeSlots,
+      placeId: matchVenue?.placeId,
+      positions: normalizePublicMatchPositions(match.publicPositions),
+      pricePerPlayer: match.targetPlayers > 0 ? Math.max(0, Number(match.fieldCost ?? 0) || 0) / match.targetPlayers : 0,
+      requiresApproval: match.publicRequiresApproval ?? true,
+      targetPlayers: Math.max(0, Math.floor(Number(match.targetPlayers) || 0)),
+      title: match.title || "Partido abierto",
+      zone,
+    };
+  }
+
+  async function syncOpenMatchPublication(nextMatch: Match, active: boolean) {
+    const nextSlots = Math.max(1, Math.min(missing || nextMatch.targetPlayers, Math.floor(Number(nextMatch.publicOpenSlots) || missing || 1)));
+    const nextPublicMatch: Match = {
+      ...nextMatch,
+      publicMaxRating: publicMatchRating(nextMatch.publicMaxRating, 10),
+      publicMinRating: publicMatchRating(nextMatch.publicMinRating, 0),
+      publicOpen: active,
+      publicOpenSlots: nextSlots,
+      publicPositions: normalizePublicMatchPositions(nextMatch.publicPositions),
+      publicRequiresApproval: nextMatch.publicRequiresApproval ?? true,
+      publicGuestsPay: nextMatch.publicGuestsPay ?? true,
+    };
+
+    updateMatch(nextPublicMatch);
+
+    if (!supabase || !remoteGroupId || !canUseAdminControls) return true;
+
+    setSyncStatus("connecting");
+    setSyncError("");
+    const result = await withTimeout(
+      Promise.resolve(
+        supabase.rpc("sync_pachanga_open_match", {
+          match_patch: publicMatchPatchFor(nextPublicMatch, active),
+          operation_key: id(),
+          target_group_id: remoteGroupId,
+          target_match_id: nextPublicMatch.id,
+        }),
+      ),
+      9000,
+      "Mercado agotado",
+    );
+
+    if (result.error) {
+      markRemoteWriteError(result.error.message);
+      if (isRemoteRevisionConflict(result.error.message)) {
+        await loadTeams(supabase, remoteGroupId).catch((error) => {
+          setSyncError(error instanceof Error ? error.message : "No se pudo recargar el grupo");
+        });
+      }
+      return false;
+    }
+
+    applyRemoteCommit(result.data as RemotePayloadCommit);
+    return true;
+  }
+
+  async function loadOpenMatchRequests(client = supabase, groupId = remoteGroupId, matchId = activeMatch.id) {
+    if (!client || !groupId || !matchId || !canUseAdminControls) {
+      setOpenMatchRequests([]);
+      return;
+    }
+
+    const result = await client
+      .from("pachanga_open_match_requests")
+      .select(
+        "id, open_match_id, requester_user_id, requester_profile_id, requester_name, avatar, avatar_offset_x, avatar_offset_y, birth_date, position, goalkeeper_only, media, status, requested_at, player_id",
+      )
+      .eq("source_group_id", groupId)
+      .eq("source_match_id", matchId)
+      .in("status", ["pending", "accepted"])
+      .order("requested_at", { ascending: true });
+
+    if (result.error) {
+      setOpenMatchRequestMessage(result.error.message);
+      return;
+    }
+
+    setOpenMatchRequests(((result.data ?? []) as PublicMatchRequestRow[]).map(normalizeOpenMatchRequestRow));
+  }
+
+  async function reviewOpenMatchRequest(request: PublicMatchRequest, nextStatus: "accepted" | "rejected") {
+    if (!supabase || !remoteGroupId || !canUseAdminControls) return;
+
+    setOpenMatchRequestMessage(nextStatus === "accepted" ? "Aceptando solicitud..." : "Rechazando solicitud...");
+    const result = await withTimeout(
+      Promise.resolve(
+        supabase.rpc("review_pachanga_open_match_request", {
+          next_status: nextStatus,
+          operation_key: id(),
+          target_request_id: request.id,
+        }),
+      ),
+      9000,
+      "Solicitud agotada",
+    );
+
+    if (result.error) {
+      setOpenMatchRequestMessage(result.error.message);
+      markRemoteWriteError(result.error.message);
+      return;
+    }
+
+    applyRemoteCommit(result.data as RemotePayloadCommit);
+    await loadOpenMatchRequests(supabase, remoteGroupId, activeMatch.id);
+    setOpenMatchRequestMessage(nextStatus === "accepted" ? `${request.requesterName} aceptado en el partido.` : `${request.requesterName} rechazado.`);
+  }
+
+  async function publishOpenMatch() {
+    if (!matchConfigured || matchFinalized || lineupClosed || missing <= 0 || !canUseAdminControls) return;
+    await syncOpenMatchPublication(
+      {
+        ...activeMatch,
+        publicOpen: true,
+        publicOpenSlots,
+        publicMinRating: publicMatchRating(activeMatch.publicMinRating, 0),
+        publicMaxRating: publicMatchRating(activeMatch.publicMaxRating, 10),
+        publicRequiresApproval: activeMatch.publicRequiresApproval ?? true,
+        publicGuestsPay: activeMatch.publicGuestsPay ?? true,
+      },
+      true,
+    );
+  }
+
+  async function closeOpenMatch() {
+    if (!activeMatch.publicOpen || !canUseAdminControls) return;
+    await syncOpenMatchPublication({ ...activeMatch, publicOpen: false }, false);
+  }
+
+  async function syncOwnMarketProfile(client: NonNullable<typeof supabase>, groupId: string, player: Player) {
+    const result = await withTimeout(
+      Promise.resolve(
+        client.rpc("sync_pachanga_market_profile", {
+          market_patch: marketPatchFor(player),
+          target_group_id: groupId,
+          target_player_id: player.id,
+        }),
+      ),
+      9000,
+      "Mercado agotado",
+    );
+    if (result.error) throw new Error(result.error.message);
   }
 
   function ownPlayerFromCommit(commit: RemotePayloadCommit, fallbackPlayerId: string) {
@@ -3294,12 +5043,24 @@ export default function Home() {
   async function saveSelectedPlayerProfile() {
     if (!selectedPlayer || !canEditSelectedPlayer) return;
     if (profileSaving) return;
+    if (!playerMarketProfileComplete(selectedPlayer)) {
+      setProfileSaveMessage("Para publicarte en mercado añade al menos una zona y un horario.");
+      return;
+    }
     const normalizedName = displayName(selectedPlayer.name) || selectedPlayer.name;
+    const normalizedMarketZonesGeo = normalizeMarketZonesGeo(selectedPlayer.marketZonesGeo);
+    const normalizedMarketZones = marketZoneTextFromGeo(normalizedMarketZonesGeo);
     const selectedAvatarDraft = avatarDrafts[selectedPlayer.id];
     const savedPlayerId = selectedPlayer.id;
     const nextPlayers = players.map((player) => (
       player.id === selectedPlayer.id
-        ? { ...player, name: normalizedName, ...(selectedAvatarDraft ? selectedAvatarDraft : {}) }
+        ? {
+            ...player,
+            name: normalizedName,
+            marketZones: normalizedMarketZones,
+            marketZonesGeo: normalizedMarketZonesGeo,
+            ...(selectedAvatarDraft ? selectedAvatarDraft : {}),
+          }
         : player
     ));
     const editedPlayer = nextPlayers.find((player) => player.id === selectedPlayer.id);
@@ -3308,6 +5069,7 @@ export default function Home() {
 
     setProfileSaving(true);
     setProfileSaveMessage("Guardando ficha...");
+    let marketWarning = "";
 
     try {
       if (supabase && remoteGroupId && remoteReady) {
@@ -3330,6 +5092,13 @@ export default function Home() {
 
         applyRemoteCommit(result.data as RemotePayloadCommit);
         if (selectedPlayerIsOwn) {
+          try {
+            await syncOwnMarketProfile(client, groupId, { ...editedPlayer, name: normalizedName });
+          } catch (marketError) {
+            const message = marketError instanceof Error ? marketError.message : "No se pudo actualizar el mercado.";
+            marketWarning = " Mercado pendiente.";
+            markRemoteWriteError(message);
+          }
           setProfileName(normalizedName);
           void withTimeout(
             Promise.resolve(
@@ -3352,10 +5121,10 @@ export default function Home() {
       } else {
         setPlayers(nextPlayers);
         if (selectedPlayerIsOwn) setProfileName(normalizedName);
-        localStorage.setItem(storageKey, JSON.stringify(nextPayload));
+        localStorage.setItem(storageKey, serializeLocalPayloadCache(nextPayload, remoteGroupId ? "server-cache" : "local-draft"));
       }
 
-      setProfileSaveMessage("Ficha guardada");
+      setProfileSaveMessage(`Ficha guardada${marketWarning}`);
       clearAvatarDraft(savedPlayerId);
       setAvatarMessage("");
       window.setTimeout(() => setProfileSaveMessage(""), 1800);
@@ -3538,13 +5307,24 @@ export default function Home() {
     if (!canUseAdminControls) return;
     const name = newVenue.name.trim();
     if (!name) return;
+    if (!selectedVenuePlace) {
+      setVenuePlaceMessage(googleMapsApiKey ? "Selecciona el campo desde las sugerencias de Google Places." : "Falta configurar NEXT_PUBLIC_GOOGLE_MAPS_API_KEY.");
+      return;
+    }
     const kind = newVenue.kind;
 
     const venue: Venue = {
+      address: selectedVenuePlace.address,
+      city: selectedVenuePlace.city,
+      country: selectedVenuePlace.country,
       id: id(),
-      name,
+      lat: selectedVenuePlace.lat,
+      lng: selectedVenuePlace.lng,
+      name: selectedVenuePlace.name || name,
       defaultCost: Number(newVenue.cost) || 0,
       kind,
+      placeId: selectedVenuePlace.placeId,
+      province: selectedVenuePlace.province,
     };
 
     setVenues((current) => [...current, venue]);
@@ -3556,8 +5336,61 @@ export default function Home() {
       kind,
       targetPlayers: matchKinds[kind].targetPlayers,
     });
-    setNewVenue({ name: "", cost: String(venue.defaultCost || 56), kind });
+    setNewVenue({ address: "", cost: String(venue.defaultCost || 56), kind, name: "" });
+    setSelectedVenuePlace(null);
+    setVenuePlaceMessage("");
     setOpenQuickForm(null);
+  }
+
+  function venueUsage(venueId: string) {
+    return matches.reduce(
+      (usage, match) => {
+        if (match.venueId !== venueId) return usage;
+        if (match.closed) usage.closed += 1;
+        else usage.open += 1;
+        return usage;
+      },
+      { closed: 0, open: 0 },
+    );
+  }
+
+  async function deleteVenue(venueId: string) {
+    if (!canUseAdminControls) return;
+    const venue = venues.find((item) => item.id === venueId);
+    if (!venue) return;
+
+    const usage = venueUsage(venueId);
+    const impact = [
+      usage.open ? `${usage.open} partido${usage.open === 1 ? "" : "s"} abierto${usage.open === 1 ? "" : "s"} volverán a Campo por confirmar` : "",
+      usage.closed ? `${usage.closed} histórico${usage.closed === 1 ? "" : "s"} conservarán el nombre del campo` : "",
+    ].filter(Boolean);
+
+    if (!window.confirm(`¿Borrar el campo "${venue.name}"?${impact.length ? `\n\n${impact.join(". ")}.` : ""}\n\nLos partidos históricos conservarán el nombre del campo.`)) return;
+
+    const nextVenues = venues.filter((item) => item.id !== venueId);
+    const nextMatches = matches.map((match) => {
+      if (match.venueId !== venueId) return match;
+      if (match.closed) return { ...match, venueId: undefined };
+
+      return {
+        ...match,
+        configured: false,
+        fieldCost: 0,
+        lineupClosed: false,
+        payerId: undefined,
+        place: "Campo por confirmar",
+        venueId: undefined,
+      };
+    });
+    const nextPayload: AppPayload = { activeMatchId, matches: nextMatches, players, siteSettings, venues: nextVenues };
+
+    setVenues(nextVenues);
+    setMatches(nextMatches);
+    localStorage.setItem(storageKey, serializeLocalPayloadCache(nextPayload, remoteGroupId ? "server-cache" : "local-draft"));
+
+    if (supabase && remoteGroupId && remoteReady && canManageTeam) {
+      await saveRemotePayload(nextPayload);
+    }
   }
 
   async function createTeam(event: FormEvent<HTMLFormElement>) {
@@ -3657,6 +5490,94 @@ export default function Home() {
 
     setPlayers((current) => [...current, player]);
     setSelectedPlayerId(player.id);
+  }
+
+  function ownPlayerFromImportCandidate(candidate: PlayerImportCandidate): Player | null {
+    if (!currentUserId) return null;
+
+    const source = candidate.player;
+    const preferredPosition = source.goalkeeperOnly
+      ? "Portero"
+      : equivalentPositionForKind(source.position, activeKind);
+    const outfieldPosition = source.goalkeeperOnly
+      ? equivalentPositionForKind(rememberedOutfieldPosition(source, activeKind), activeKind)
+      : preferredPosition;
+    const importedRating = clampRating(candidate.media);
+
+    return {
+      id: id(),
+      ownerUserId: currentUserId,
+      name: playerDisplayName(source) || "Jugador",
+      avatar: source.avatar,
+      avatarOffsetX: source.avatar ? clampAvatarOffset(source.avatarOffsetX, 50) : undefined,
+      avatarOffsetY: source.avatar ? clampAvatarOffset(source.avatarOffsetY, 0) : undefined,
+      phone: source.phone ?? "",
+      birthDate: normalizeBirthDate(source.birthDate),
+      goalkeeperOnly: Boolean(source.goalkeeperOnly),
+      injured: false,
+      inactive: false,
+      importedRating,
+      importedRatingAt: new Date().toISOString(),
+      importedRatingFromGroup: candidate.groupName,
+      rating: importedRating,
+      ratings: [],
+      ratingVotes: [],
+      position: preferredPosition,
+      outfieldPosition: isGoalkeeperPosition(outfieldPosition) ? defaultPositionForKind(activeKind) : outfieldPosition,
+      goals: 0,
+      assists: 0,
+      appearances: 0,
+      wins: 0,
+      lateCancels: 0,
+    };
+  }
+
+  async function importOwnPlayerProfile(candidate: PlayerImportCandidate | undefined) {
+    if (ownPlayer) {
+      openPlayerProfile(ownPlayer.id);
+      return;
+    }
+
+    if (!candidate || !hasRealTeam || !isRegisteredUser || !currentUserId) return;
+
+    const player = ownPlayerFromImportCandidate(candidate);
+    if (!player) return;
+
+    if (supabase && remoteGroupId && remoteReady) {
+      setSyncStatus("connecting");
+      setSyncError("");
+      setProfileSaveMessage("Importando ficha...");
+
+      const result = await supabase.rpc("upsert_pachanga_own_player_profile", {
+        player_patch: profilePatchFor(player),
+        target_group_id: remoteGroupId,
+        target_player_id: player.id,
+      });
+
+      if (result.error) {
+        setProfileSaveMessage("No se pudo importar la ficha.");
+        markRemoteWriteError(result.error.message);
+        window.setTimeout(() => setProfileSaveMessage(""), 2600);
+        return;
+      }
+
+      const savedPlayer = ownPlayerFromCommit(result.data as RemotePayloadCommit, player.id);
+      if (savedPlayer) {
+        setSelectedPlayerId(savedPlayer.id);
+        setProfileName(playerDisplayName(savedPlayer));
+        setSelectedImportCandidateKey(null);
+        setShowImportChoices(false);
+        setProfileSaveMessage("Ficha importada");
+        window.setTimeout(() => setProfileSaveMessage(""), 1800);
+      }
+      return;
+    }
+
+    setPlayers((current) => [...current, player]);
+    setSelectedPlayerId(player.id);
+    setProfileName(playerDisplayName(player));
+    setSelectedImportCandidateKey(null);
+    setShowImportChoices(false);
   }
 
   async function openCreatePlayerProfile() {
@@ -3791,7 +5712,12 @@ export default function Home() {
     teamGalleryReturnScrollYRef.current = null;
     setOpenQuickForm(null);
     setCreateMenuOpen(false);
+    setSelectedImportCandidateKey(null);
+    setShowImportChoices(false);
     setShowSettings(false);
+    setShowBillingPanel(false);
+    setBillingMessage("");
+    setBillingLoading(false);
     setAvatarDrafts({});
     setAvatarAdjustingPlayerId(null);
     setAdminInviteToken(null);
@@ -3825,13 +5751,14 @@ export default function Home() {
   }
 
   async function updateMemberRole(member: RemoteMember, role: MemberRole) {
-    if (!supabase || !remoteGroupId || !canManageTeam || member.role === "owner" || member.userId === currentUserId || role === "owner") return;
+    if (!supabase || !remoteGroupId || !canManageRoles || member.role === "owner" || member.userId === currentUserId || role === "owner") return;
 
-    const result = await supabase
-      .from("pachanga_group_members")
-      .update({ role })
-      .eq("group_id", remoteGroupId)
-      .eq("user_id", member.userId);
+    const result = await supabase.rpc("set_pachanga_member_role", {
+      next_role: role,
+      operation_key: id(),
+      target_group_id: remoteGroupId,
+      target_user_id: member.userId,
+    });
 
     if (result.error) {
       setSyncStatus("error");
@@ -3851,12 +5778,13 @@ export default function Home() {
   }
 
   async function createAdminInvite() {
-    if (!supabase || !remoteGroupId || !canManageTeam) return;
+    if (!supabase || !remoteGroupId || !canManageRoles) return;
 
     setSyncStatus("connecting");
     setSyncError("");
 
     const result = await supabase.rpc("create_pachanga_admin_invite", {
+      operation_key: id(),
       target_group_id: remoteGroupId,
     });
 
@@ -3875,11 +5803,12 @@ export default function Home() {
   async function copyAdminInvite() {
     let token = adminInviteToken;
     if (!token) {
-      if (!supabase || !remoteGroupId || !canManageTeam) return;
+      if (!supabase || !remoteGroupId || !canManageRoles) return;
       setSyncStatus("connecting");
       setSyncError("");
 
       const result = await supabase.rpc("create_pachanga_admin_invite", {
+        operation_key: id(),
         target_group_id: remoteGroupId,
       });
 
@@ -3909,11 +5838,12 @@ export default function Home() {
   async function shareAdminInviteWhatsApp() {
     let token = adminInviteToken;
     if (!token) {
-      if (!supabase || !remoteGroupId || !canManageTeam) return;
+      if (!supabase || !remoteGroupId || !canManageRoles) return;
       setSyncStatus("connecting");
       setSyncError("");
 
       const result = await supabase.rpc("create_pachanga_admin_invite", {
+        operation_key: id(),
         target_group_id: remoteGroupId,
       });
 
@@ -3938,6 +5868,46 @@ export default function Home() {
     const params = currentTeam ? prettyTeamParams(currentTeam) : new URLSearchParams();
     params.set("p", compactUuid(activeMatch.id));
     return `${window.location.origin}${window.location.pathname}?${params.toString()}`;
+  }
+
+  function publicMatchUrl(matchId = activeMatch.id) {
+    if (!localHydrated || typeof window === "undefined" || !currentTeam) return "";
+    const params = new URLSearchParams();
+    params.set("equipo", currentTeam.teamCode);
+    params.set("p", compactUuid(matchId));
+    return `${window.location.origin}${window.location.pathname}?${params.toString()}`;
+  }
+
+  function marketScoutUrl(tab: "jugadores" | "partidos" = "jugadores") {
+    if (!matchConfigured) return "/mercado";
+
+    const params = new URLSearchParams();
+    const matchLink = publicMatchUrl();
+    const parsedDate = new Date(activeMatch.date);
+    const day = Number.isNaN(parsedDate.getTime())
+      ? ""
+      : displayName(parsedDate.toLocaleDateString("es-ES", { weekday: "long" }));
+    const zone = [
+      activeVenue?.city,
+      activeVenue?.province && activeVenue.province !== activeVenue.city ? activeVenue.province : "",
+    ].filter(Boolean).join(", ") || activeVenue?.address || activeMatch.place;
+
+    params.set("partido", activeMatch.id);
+    params.set("modalidad", activeKind);
+    params.set("titulo", activeMatch.title || "Partido");
+    params.set("fecha", matchSummaryDate(activeMatch.date));
+    params.set("plazas", String(missing));
+    params.set("tab", tab);
+    if (day) params.set("dia", day);
+    if (zone && zone !== "Campo por confirmar") params.set("zona", zone);
+    if (activeVenue?.lat !== undefined && activeVenue.lng !== undefined) {
+      params.set("lat", String(activeVenue.lat));
+      params.set("lng", String(activeVenue.lng));
+    }
+    if (activeVenue?.placeId) params.set("placeId", activeVenue.placeId);
+    if (matchLink) params.set("link", matchLink);
+
+    return `/mercado?${params.toString()}`;
   }
 
   function currentTeamInviteUrl() {
@@ -4004,19 +5974,36 @@ export default function Home() {
     }
   }
 
+  async function copyPlayerPhotoPrompt() {
+    if (typeof navigator === "undefined" || !navigator.clipboard) {
+      setAvatarMessage("No se pudo copiar el prompt.");
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(playerPhotoPromptForChatGpt);
+      setAvatarPromptCopied(true);
+      window.setTimeout(() => setAvatarPromptCopied(false), 1800);
+    } catch {
+      setAvatarMessage("No se pudo copiar el prompt.");
+    }
+  }
+
   function renderTeamMiniCard(player: Player) {
     const playerFacets = ratingFacetsForPlayer(player);
     const compactAge = playerAge(player.birthDate, currentDateValue);
+    const playerScore = peerAverage(player);
 
     return (
       <button
         aria-label={`Abrir ficha de ${playerDisplayName(player)}`}
-        className={`fifa-player-card team-mini-player-card ${player.inactive ? "team-mini-inactive" : ""}`}
+        className={`fifa-player-card team-mini-player-card ${cardTierClass(playerScore)} ${player.inactive ? "team-mini-inactive" : ""}`}
         key={player.id}
         onClick={() => openTeamGalleryPlayerProfile(player.id)}
         type="button"
       >
-        <span className="fifa-score">{Math.round(peerAverage(player) * 10)}</span>
+        <span className="fifa-score">{overallScore(playerScore)}</span>
+        {renderRatingTrendChip(player)}
         <span className="fifa-position">{positionShort(player)}</span>
         <span className="fifa-photo">
           {player.avatar ? (
@@ -4033,7 +6020,7 @@ export default function Home() {
         <span className="fifa-facets">
           {playerFacets.map((facet) => (
             <span key={facet.key}>
-              <b>{Math.round(facetAverage(player, facet.key) * 10)}</b>
+              <b>{overallScore(facetAverage(player, facet.key))}</b>
               {facet.short}
             </span>
           ))}
@@ -4048,6 +6035,7 @@ export default function Home() {
     const playerFacets = ratingFacetsForPlayer(player);
     const compactAge = playerAge(player.birthDate, currentDateValue);
     const formText = row.form.hasData ? `Forma ${visibleFormPercent(row.form)}%` : "Forma pendiente";
+    const mediaSource = playerRatingSource(player);
 
     return (
       <button
@@ -4057,9 +6045,10 @@ export default function Home() {
         onClick={() => openPlayerProfile(player.id)}
         type="button"
       >
-        <span className="fifa-player-card team-mini-player-card ranking-player-card">
+        <span className={`fifa-player-card team-mini-player-card ranking-player-card ${cardTierClass(row.media)}`}>
           <span className="ranking-card-rank">{index + 1}</span>
-          <span className="fifa-score">{Math.round(row.media * 10)}</span>
+          <span className="fifa-score">{overallScore(row.media)}</span>
+          {renderRatingTrendChip(player)}
           <span className="fifa-position">{positionShort(player)}</span>
           <span className="fifa-photo">
             {player.avatar ? (
@@ -4073,7 +6062,7 @@ export default function Home() {
           <span className="fifa-facets">
             {playerFacets.map((facet) => (
               <span key={facet.key}>
-                <b>{Math.round(facetAverage(player, facet.key) * 10)}</b>
+                <b>{overallScore(facetAverage(player, facet.key))}</b>
                 {facet.short}
               </span>
             ))}
@@ -4081,12 +6070,15 @@ export default function Home() {
         </span>
         <span className="ranking-player-stats">
           <span className="ranking-card-badge">{rankingBadgeText(row)}</span>
-          <span className="ranking-stat-grid">
-            <span><b>{row.goals}</b><small>Goles</small></span>
-            <span><b>{row.appearances}</b><small>PJ</small></span>
-            <span><b>{row.wins}</b><small>PG</small></span>
+          <span
+            aria-label={`${row.goals} goles, ${row.appearances} partidos jugados, ${row.wins} partidos ganados`}
+            className="ranking-stat-grid"
+          >
+            <span title={`${row.goals} goles`}><b>{row.goals}</b><small>G</small></span>
+            <span title={`${row.appearances} partidos jugados`}><b>{row.appearances}</b><small>PJ</small></span>
+            <span title={`${row.wins} partidos ganados`}><b>{row.wins}</b><small>PG</small></span>
           </span>
-          <span className="ranking-card-detail">{formText}{compactAge !== null ? ` · ${compactAge} años` : ""}</span>
+          <span className="ranking-card-detail">{mediaSource ? `${mediaSource} · ` : ""}{formText}{compactAge !== null ? ` · ${compactAge} años` : ""}</span>
           {player.injured || player.inactive ? (
             <span className="ranking-card-flags">
               {player.injured ? (
@@ -4118,9 +6110,10 @@ export default function Home() {
     const nextTeam = team === "A" ? "B" : "A";
     const formState = playerForm(player);
     const formSummary = formState.hasData ? ` · Forma ${visibleFormPercent(formState)}%` : "";
+    const mediaSource = playerRatingSource(player);
     const matchCardAge = playerAge(player.birthDate, currentDateValue);
     const playerRatingWindow = ratingWindow(player, ratingVoterId);
-    const canChangeThisPlayerStatus = matchConfigured && (isDemoMode || canUseAdminControls || (hasRealTeam && isRegisteredUser && player.ownerUserId === currentUserId));
+    const canChangeThisPlayerStatus = matchConfigured && registrationOpen && (isDemoMode || canUseAdminControls || (hasRealTeam && isRegisteredUser && player.ownerUserId === currentUserId));
     const ratingTitle = player.ownerUserId === currentUserId
       ? "No puedes votarte a ti mismo"
       : playerRatingWindow.canRate
@@ -4140,7 +6133,7 @@ export default function Home() {
                 {playerDisplayName(player)}
                 {matchCardAge !== null ? <em className="player-age-inline">{matchCardAge} años</em> : null}
               </span>
-              <small>({playerMediaScore(player).toFixed(1)}){formSummary} · {player.goals} Goles</small>
+              <small>({overallScore(playerMediaScore(player))}){mediaSource ? ` · ${mediaSource}` : ""}{formSummary} · {player.goals} Goles</small>
             </strong>
           </button>
           <span className="player-meta">
@@ -4187,23 +6180,26 @@ export default function Home() {
             <button className={status === "duda" ? "selected" : ""} disabled={!canChangeThisPlayerStatus || Boolean(player.inactive)} onClick={() => void setStatus(player.id, "duda")}>Duda</button>
             <button className={status === "no" ? "selected danger" : ""} disabled={!canChangeThisPlayerStatus || Boolean(player.inactive)} onClick={() => void setStatus(player.id, "no")}>No</button>
           </div>
-          {status === "voy" && team && canUseAdminControls ? (
+          {status === "voy" && team && (canUseAdminControls || isDemoMode) ? (
             <button
               className={`team-move ${team === "A" ? "to-b" : "to-a"}`}
-              disabled={lineupClosed}
+              disabled={lineupClosed || matchFinalized}
               onClick={() => assignPlayerTeam(player.id, nextTeam)}
               title={team === "A" ? "Mover al equipo 2" : "Mover al equipo 1"}
+              aria-label={team === "A" ? "Mover al equipo 2" : "Mover al equipo 1"}
               type="button"
             >
-              {team === "A" ? "→" : "←"}
+              <span className="team-move-symbol">{team === "A" ? "→" : "←"}</span>
+              <span className="team-move-label">{team === "A" ? "Equipo 2" : "Equipo 1"}</span>
             </button>
           ) : null}
           {status === "voy" && !isWaiting ? (
             <button
               className={matchEntry?.paid ? "paid-button paid" : "paid-button"}
+              disabled={!paymentReady}
               onClick={() => void togglePaid(player.id)}
-              title={matchEntry?.paid ? "Pago recibido" : "Marcar pago recibido"}
-              aria-label={matchEntry?.paid ? "Pago recibido" : "Marcar pago recibido"}
+              title={!paymentReady ? "Cierra la alineación para activar pagos" : matchEntry?.paid ? "Pago recibido" : "Marcar pago recibido"}
+              aria-label={!paymentReady ? "Pagos pendientes hasta cerrar alineación" : matchEntry?.paid ? "Pago recibido" : "Marcar pago recibido"}
             >
               $
             </button>
@@ -4244,69 +6240,83 @@ export default function Home() {
           )}
           <p className="hero-copy">{siteSettings.subtitle}</p>
         </div>
-        <div className="hero-actions">
-          <a className="manual-link-button" href="/manual" title="Manual de usuario" aria-label="Abrir manual de usuario">
-            <svg aria-hidden="true" viewBox="0 0 24 24">
-              <path d="M6 3h10.5A2.5 2.5 0 0 1 19 5.5V21l-3-1.8L13 21l-3-1.8L7 21l-3-1.8V5A2 2 0 0 1 6 3Zm0 2v12.6l1 .6 3-1.8 3 1.8 3-1.8 1 .6V5.5a.5.5 0 0 0-.5-.5H6Zm2 3h7v2H8V8Zm0 4h7v2H8v-2Z" />
-            </svg>
-          </a>
-          <button
-            className="secondary-button personal-action-button"
-            type="button"
-            onClick={() => void openOwnPlayerProfile()}
-            disabled={!hasRealTeam || !isRegisteredUser || needsLoginForSharedLink}
-          >
-            Mi ficha
-          </button>
-          <button className="secondary-button" type="button" onClick={openTeamGallery} disabled={needsLoginForSharedLink}>
-            Mi equipo
-          </button>
-          {isRegisteredUser ? (
-            <button className="secondary-button" type="button" onClick={() => void signOut()}>
-              Salir
-            </button>
-          ) : !needsLoginForSharedLink ? (
-            <GoogleSignInButton label={googleButtonText} onClick={() => void signInWithGoogle()} disabled={!supabase || !googleClientId} />
+        <div className="hero-action-stack">
+          {isRegisteredUser || !needsLoginForSharedLink ? (
+            <div className="hero-account-row">
+              {isRegisteredUser ? (
+                <GoogleSignInButton className="google-signout-button" label="Cerrar sesión" onClick={() => void signOut()} />
+              ) : (
+                <GoogleSignInButton label={googleButtonText} onClick={() => void signInWithGoogle()} disabled={!supabase || !googleClientId} />
+              )}
+            </div>
           ) : null}
-          <div className="create-menu" ref={createMenuRef}>
+          <div className="hero-actions">
+            <a className="manual-link-button" href="/manual" title="Manual de usuario" aria-label="Abrir manual de usuario">
+              <svg aria-hidden="true" viewBox="0 0 24 24">
+                <path d="M6 3h10.5A2.5 2.5 0 0 1 19 5.5V21l-3-1.8L13 21l-3-1.8L7 21l-3-1.8V5A2 2 0 0 1 6 3Zm0 2v12.6l1 .6 3-1.8 3 1.8 3-1.8 1 .6V5.5a.5.5 0 0 0-.5-.5H6Zm2 3h7v2H8V8Zm0 4h7v2H8v-2Z" />
+              </svg>
+            </a>
             <button
-              className="primary-button create-menu-button"
+              className="secondary-button personal-action-button"
               type="button"
-              aria-expanded={createMenuOpen}
-              aria-haspopup="menu"
-              onClick={() => setCreateMenuOpen((open) => !open)}
+              onClick={() => void openOwnPlayerProfile()}
+              disabled={!hasRealTeam || !isRegisteredUser || needsLoginForSharedLink}
             >
-              Crear <span aria-hidden="true">⌄</span>
+              Mi ficha
             </button>
-            {createMenuOpen ? (
-              <div className="create-menu-panel" role="menu">
-                <button type="button" role="menuitem" onClick={() => runCreateAction(createMatch)} disabled={!canUseAdminControls}>
-                  Partido
-                </button>
-                <button type="button" role="menuitem" onClick={() => runCreateAction(() => void openCreatePlayerProfile())} disabled={!canUseAdminControls && (!hasRealTeam || !isRegisteredUser)}>
-                  Ficha jugador
-                </button>
-                <button type="button" role="menuitem" onClick={() => runCreateAction(() => showQuickForm("venue"))} disabled={!canUseAdminControls}>
-                  Campo
-                </button>
-                <button type="button" role="menuitem" onClick={() => runCreateAction(() => showQuickForm("team"))}>
-                  Grupo
-                </button>
-              </div>
+            <button className="secondary-button" type="button" onClick={openTeamGallery} disabled={needsLoginForSharedLink}>
+              Mi equipo
+            </button>
+            <a className="secondary-button market-link-button" href="/mercado">
+              Mercado
+            </a>
+            <div className="create-menu desktop-create-menu" ref={createMenuRef}>
+              <button
+                className="primary-button create-menu-button"
+                type="button"
+                aria-expanded={createMenuOpen}
+                aria-haspopup="menu"
+                onClick={() => setCreateMenuOpen((open) => !open)}
+              >
+                Crear <span aria-hidden="true">⌄</span>
+              </button>
+              {createMenuOpen ? (
+                <div className="create-menu-panel" role="menu">
+                  <button type="button" role="menuitem" onClick={() => runCreateAction(createMatch)} disabled={!canUseAdminControls}>
+                    Partido
+                  </button>
+                  <button type="button" role="menuitem" onClick={() => runCreateAction(() => void openCreatePlayerProfile())} disabled={!canUseAdminControls && (!hasRealTeam || !isRegisteredUser)}>
+                    Ficha jugador
+                  </button>
+                  <button type="button" role="menuitem" onClick={() => runCreateAction(() => showQuickForm("venue"))} disabled={!canUseAdminControls}>
+                    Campo
+                  </button>
+                  <button type="button" role="menuitem" onClick={() => runCreateAction(() => showQuickForm("team"))}>
+                    Grupo de pachangas
+                  </button>
+                </div>
+              ) : null}
+            </div>
+            {canUseAdminControls ? (
+              <button className="secondary-button" onClick={toggleSettingsPanel}>
+                Configurar
+              </button>
             ) : null}
           </div>
-          <button className="secondary-button" onClick={toggleSettingsPanel} disabled={!canUseAdminControls && !isRegisteredUser}>
-            Configurar
-          </button>
         </div>
       </section>
 
       {openQuickForm === "venue" ? (
         <form className="top-panel quick-create-form top-venue-form" ref={venueFormRef} onSubmit={addVenue}>
           <input
+            ref={venueNameInputRef}
             placeholder="Crear campo: nombre"
             value={newVenue.name}
-            onChange={(event) => setNewVenue({ ...newVenue, name: event.target.value })}
+            onChange={(event) => {
+              setNewVenue({ ...newVenue, address: "", name: event.target.value });
+              setSelectedVenuePlace(null);
+              setVenuePlaceMessage("");
+            }}
           />
           <label className="money-input">
             <input
@@ -4323,7 +6333,25 @@ export default function Home() {
               <option key={kind} value={kind}>{config.label}</option>
             ))}
           </select>
-          <button type="submit">Guardar campo</button>
+          <button type="submit" disabled={!selectedVenuePlace}>Guardar campo</button>
+          <div className={selectedVenuePlace ? "venue-place-status selected" : `venue-place-status ${venuePlaceStatus}`}>
+            {selectedVenuePlace ? (
+              <>
+                <strong>Dirección verificada</strong>
+                <span>{selectedVenuePlace.address}</span>
+              </>
+            ) : venuePlaceStatus === "missing-key" ? (
+              <>
+                <strong>Google Places pendiente</strong>
+                <span>Configura NEXT_PUBLIC_GOOGLE_MAPS_API_KEY para crear campos reales.</span>
+              </>
+            ) : venuePlaceStatus === "loading" ? (
+              <span>Cargando Google Places...</span>
+            ) : (
+              <span>Escribe y elige una sugerencia de Google Places.</span>
+            )}
+            {venuePlaceMessage ? <small>{venuePlaceMessage}</small> : null}
+          </div>
         </form>
       ) : null}
 
@@ -4339,7 +6367,7 @@ export default function Home() {
       ) : null}
 
       {showGroupAccessPanel ? (
-        <section className="top-panel team-access-panel">
+        <section className="top-panel team-access-panel" ref={teamAccessPanelRef}>
           <div className="team-access-current">
             <span>Grupo de Pachangas</span>
             {remoteTeams.length > 0 ? (
@@ -4356,9 +6384,14 @@ export default function Home() {
             <span>ID grupo</span>
             <strong>{currentTeam?.teamCode ?? "-"}</strong>
           </div>
-          <div className="team-access-meta">
+          <div className="team-access-meta team-access-role">
             <span>Rol</span>
             <strong>{memberRoleLabel(currentRole)}</strong>
+          </div>
+          <div className="team-access-meta team-access-level">
+            <span>Nivel del equipo</span>
+            <strong>{groupLevel === null ? "-" : overallScore(groupLevel)}</strong>
+            {groupLevel !== null ? <small>{activeRosterCount} jugador{activeRosterCount === 1 ? "" : "es"} activos</small> : null}
           </div>
           {showTeamAdminPanel ? (
             <>
@@ -4424,6 +6457,68 @@ export default function Home() {
         </section>
       ) : null}
 
+      {showPlayerImportGate && selectedImportCandidate ? (
+        <section className="top-panel shared-link-gate profile-import-gate">
+          <div className="profile-import-copy">
+            <span>Ficha encontrada</span>
+            <strong>Hemos encontrado {playerImportCandidates.length} ficha{playerImportCandidates.length === 1 ? "" : "s"} tuyas.</strong>
+            <p>
+              Te proponemos entrar con la mejor media. Se copian solo datos base; goles, partidos, forma, votos y lesiones empiezan limpios en este grupo.
+            </p>
+          </div>
+          <div className="profile-import-card">
+            <button
+              className="profile-import-selected"
+              onClick={() => setShowImportChoices((current) => !current)}
+              type="button"
+            >
+              <span className="profile-import-avatar">
+                {selectedImportCandidate.player.avatar ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={selectedImportCandidate.player.avatar} alt="" draggable={false} style={avatarImageStyle(selectedImportCandidate.player)} />
+                ) : (
+                  <b>+</b>
+                )}
+              </span>
+              <span>
+                <strong>{playerDisplayName(selectedImportCandidate.player)}</strong>
+                <small>Media {overallScore(selectedImportCandidate.media)} · importada · {selectedImportCandidate.appearances} PJ</small>
+                <small>{selectedImportCandidate.groupName}{selectedImportCandidate.inactive ? " · ya no está" : ""}</small>
+              </span>
+            </button>
+            {showImportChoices ? (
+              <div className="profile-import-options">
+                {playerImportCandidates.map((candidate) => (
+                  <button
+                    className={candidate.key === selectedImportCandidate.key ? "selected" : ""}
+                    key={candidate.key}
+                    onClick={() => {
+                      setSelectedImportCandidateKey(candidate.key);
+                      setShowImportChoices(false);
+                    }}
+                    type="button"
+                  >
+                    <strong>{playerDisplayName(candidate.player)}</strong>
+                    <span>{overallScore(candidate.media)} · {candidate.appearances} PJ · {candidate.groupName}{candidate.inactive ? " · inactiva" : ""}</span>
+                  </button>
+                ))}
+              </div>
+            ) : null}
+          </div>
+          <div className="profile-import-actions">
+            <button className="primary-button" type="button" onClick={() => void importOwnPlayerProfile(selectedImportCandidate)}>
+              Entrar con esta ficha
+            </button>
+            <button className="ghost-form-button" type="button" onClick={() => setShowImportChoices((current) => !current)}>
+              Elegir otra
+            </button>
+            <button className="ghost-form-button" type="button" onClick={() => void openOwnPlayerProfile()}>
+              Crear ficha nueva
+            </button>
+          </div>
+        </section>
+      ) : null}
+
       {needsProfileForSharedMatch ? (
         <section className="top-panel shared-link-gate profile-needed-gate">
           <div>
@@ -4439,8 +6534,65 @@ export default function Home() {
         </section>
       ) : null}
 
-      {showSettings ? (
+      {showSubscriptionPanel ? (
+        <section className={groupBillingLocked ? "top-panel billing-panel billing-locked" : "top-panel billing-panel"} ref={billingPanelRef}>
+          <div className="billing-copy">
+            <span>Suscripción del grupo</span>
+            <strong>{groupBillingLocked ? "Prueba terminada" : billingStatusLabel(currentTeam)}</strong>
+            <p>
+              {billingActive
+                ? `Plan ${billingPeriodLabel(currentTeam?.billingInterval)} activo. El grupo puede seguir creando y finalizando partidos.`
+                : `Cada grupo puede finalizar ${freeTrialMatchLimit} partidos gratis. Después, el owner activa un plan para seguir usando el histórico, ranking y organización.`}
+            </p>
+          </div>
+          <div className="billing-metrics">
+            <div>
+              <span>Prueba usada</span>
+              <strong>{billingTrialUsed}/{freeTrialMatchLimit}</strong>
+            </div>
+            <div>
+              <span>Quedan</span>
+              <strong>{billingActive ? "Ilimitados" : billingTrialRemaining}</strong>
+            </div>
+            <div>
+              <span>Plan</span>
+              <strong>{billingPeriodLabel(currentTeam?.billingInterval)}</strong>
+            </div>
+          </div>
+          {canManageBilling ? (
+            <div className="billing-actions">
+              {!billingActive ? (
+                <>
+                  <button type="button" onClick={() => void startBillingCheckout("month")} disabled={Boolean(billingLoading)}>
+                    {billingLoading === "month" ? "Abriendo..." : "Mensual 5,99 €/mes"}
+                  </button>
+                  <button type="button" onClick={() => void startBillingCheckout("year")} disabled={Boolean(billingLoading)}>
+                    {billingLoading === "year" ? "Abriendo..." : "Anual 64,99 €/año"}
+                  </button>
+                </>
+              ) : null}
+              {currentTeam?.stripeCustomerId ? (
+                <button type="button" onClick={() => void openBillingPortal()} disabled={Boolean(billingLoading)}>
+                  {billingLoading === "portal" ? "Abriendo..." : "Gestionar plan"}
+                </button>
+              ) : null}
+            </div>
+          ) : (
+            <small className="billing-message">Solo el owner del grupo puede activar o gestionar el plan.</small>
+          )}
+          {billingMessage ? <small className="billing-message billing-error">{billingMessage}</small> : null}
+        </section>
+      ) : null}
+
+      {showSettings && canUseAdminControls ? (
         <section className="top-panel settings-panel" ref={settingsPanelRef}>
+          <div className="settings-panel-header">
+            <div>
+              <span>Configuración</span>
+              <strong>Grupo de pachangas</strong>
+            </div>
+            <small>Admins · permisos solo owner</small>
+          </div>
           <label>
             Instrucciones
             <input value={settingsDraft.subtitle} disabled={!canUseAdminControls} onChange={(event) => setSettingsDraft({ ...settingsDraft, subtitle: event.target.value })} />
@@ -4467,6 +6619,138 @@ export default function Home() {
               </select>
             </div>
           </div>
+          <div className="subscription-settings">
+            <label className="settings-toggle">
+              Aporte app por Bizum
+              <span>
+                <input
+                  type="checkbox"
+                  checked={settingsDraft.subscriptionContributionEnabled}
+                  disabled={!canUseAdminControls}
+                  onChange={(event) => setSettingsDraft({ ...settingsDraft, subscriptionContributionEnabled: event.target.checked })}
+                />
+                Repartir entre jugadores activos
+              </span>
+            </label>
+            <label>
+              Periodo
+              <select
+                value={settingsDraft.subscriptionContributionPeriod}
+                disabled={!canUseAdminControls}
+                onChange={(event) => setSettingsDraft({ ...settingsDraft, subscriptionContributionPeriod: event.target.value as BillingInterval })}
+              >
+                <option value="year">Anual recomendado</option>
+                <option value="month">Mensual</option>
+              </select>
+            </label>
+            <label>
+              Mensual €
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                value={settingsDraft.subscriptionContributionMonthlyAmount}
+                disabled={!canUseAdminControls}
+                onChange={(event) => setSettingsDraft({ ...settingsDraft, subscriptionContributionMonthlyAmount: Number(event.target.value) })}
+              />
+            </label>
+            <label>
+              Anual €
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                value={settingsDraft.subscriptionContributionYearlyAmount}
+                disabled={!canUseAdminControls}
+                onChange={(event) => setSettingsDraft({ ...settingsDraft, subscriptionContributionYearlyAmount: Number(event.target.value) })}
+              />
+            </label>
+            <p>Esta cuota no se suma al campo. Es una referencia aparte para que los jugadores aporten por Bizum al owner.</p>
+          </div>
+          <div className="saved-venues-panel">
+            <div className="backup-title">
+              <div>
+                <span>Campos guardados</span>
+                <strong>{venues.length}</strong>
+              </div>
+            </div>
+            <p>Borra campos que ya no usáis o que se crearon mal. Los partidos históricos conservan el nombre del lugar.</p>
+            {venues.length === 0 ? <small className="backup-message">Todavía no hay campos guardados.</small> : null}
+            {venues.length > 0 ? (
+              <div className="saved-venue-list">
+                {venues.map((venue) => {
+                  const usage = venueUsage(venue.id);
+
+                  return (
+                    <article key={venue.id}>
+                      <div>
+                        <strong>{venue.name}</strong>
+                        <span>{venue.address ?? venue.city ?? "Dirección sin completar"}</span>
+                        <small>
+                          {venue.kind ? matchKinds[venue.kind].label : "Sin modalidad"} · {venue.defaultCost.toFixed(0)} €
+                          {usage.open || usage.closed ? ` · ${usage.open} abiertos · ${usage.closed} históricos` : ""}
+                        </small>
+                      </div>
+                      <button
+                        className="trash-icon-button venue-delete-button"
+                        type="button"
+                        onClick={() => void deleteVenue(venue.id)}
+                        title={`Borrar ${venue.name}`}
+                        aria-label={`Borrar campo ${venue.name}`}
+                      >
+                        <TrashLogo />
+                      </button>
+                    </article>
+                  );
+                })}
+              </div>
+            ) : null}
+          </div>
+          {canManageRoles ? (
+            <div className="owner-permissions-panel">
+              <div className="backup-title">
+                <div>
+                  <span>Permisos de admin</span>
+                  <strong>Solo owner</strong>
+                </div>
+              </div>
+              <p>Da o quita permisos de admin a jugadores registrados. Los admins pueden organizar partidos, pero no pueden cambiar roles.</p>
+              <div className="member-admin-list">
+                {teamMembers.map((member) => (
+                  <label key={`settings-member-${member.userId}`}>
+                    <strong>
+                      {member.displayName}
+                      {member.userId === currentUserId ? " (tú)" : ""}
+                    </strong>
+                    <select
+                      value={member.role}
+                      disabled={member.role === "owner" || member.userId === currentUserId}
+                      onChange={(event) => void updateMemberRole(member, event.target.value as MemberRole)}
+                    >
+                      {member.role === "owner" ? <option value="owner">Owner / Admin</option> : null}
+                      <option value="admin">Admin</option>
+                      <option value="player">Jugador</option>
+                    </select>
+                  </label>
+                ))}
+              </div>
+              <div className="admin-invite-row settings-admin-invite-row">
+                <span>Invitar admin</span>
+                <div>
+                  <button type="button" onClick={() => void createAdminInvite()} disabled={!remoteGroupId}>
+                    Crear link
+                  </button>
+                  <button className="copy-icon-button" type="button" onClick={() => void copyAdminInvite()} disabled={!remoteGroupId} title="Copiar invitación de admin" aria-label="Copiar invitación de admin">
+                    <CopyLogo />
+                  </button>
+                  <button className="whatsapp-icon-button" type="button" onClick={() => void shareAdminInviteWhatsApp()} disabled={!remoteGroupId} title="Enviar admin por WhatsApp" aria-label="Enviar admin por WhatsApp">
+                    <WhatsAppLogo />
+                  </button>
+                </div>
+                {adminInviteToken ? <small>Invitación admin lista</small> : null}
+              </div>
+            </div>
+          ) : null}
           <div className="backup-panel">
             <div className="backup-title">
               <div>
@@ -4508,58 +6792,19 @@ export default function Home() {
               </div>
             ) : null}
           </div>
-          <button className="panel-hide-button" type="button" onClick={() => void saveSettingsPanel()}>
-            Guardar
-          </button>
+          <div className="settings-actions">
+            <button className="panel-hide-button" type="button" onClick={() => void saveSettingsPanel()}>
+              Guardar
+            </button>
+            <button className="panel-cancel-button" type="button" onClick={closeSettingsPanelWithoutSave}>
+              Cerrar sin guardar
+            </button>
+          </div>
         </section>
       ) : null}
 
       <section className={needsLoginForSharedLink ? "app-shell gated-shell" : "app-shell"}>
         <aside className="panel match-list" aria-label="Partidos">
-          {teamMembers.length > 0 ? (
-            <details className="team-members">
-              <summary>
-                <span>Miembros</span>
-                <strong>{teamMembers.length}</strong>
-              </summary>
-              <div>
-                {teamMembers.map((member) => (
-                  <label key={member.userId}>
-                    <strong>
-                      {member.displayName}
-                      {member.userId === currentUserId ? " (tú)" : ""}
-                    </strong>
-                    <select
-                      value={member.role}
-                      disabled={!canManageTeam || member.role === "owner" || member.userId === currentUserId}
-                      onChange={(event) => void updateMemberRole(member, event.target.value as MemberRole)}
-                    >
-                      {member.role === "owner" ? <option value="owner">Admin</option> : null}
-                      <option value="admin">Admin</option>
-                      <option value="player">Jugador</option>
-                    </select>
-                  </label>
-                ))}
-                {canManageTeam ? (
-                  <div className="admin-invite-row">
-                    <span>Invitar admin</span>
-                    <div>
-                      <button type="button" onClick={() => void createAdminInvite()} disabled={!remoteGroupId}>
-                        Crear link
-                      </button>
-                      <button className="copy-icon-button" type="button" onClick={() => void copyAdminInvite()} disabled={!remoteGroupId} title="Copiar invitación de admin" aria-label="Copiar invitación de admin">
-                        <CopyLogo />
-                      </button>
-                      <button className="whatsapp-icon-button" type="button" onClick={() => void shareAdminInviteWhatsApp()} disabled={!remoteGroupId} title="Enviar admin por WhatsApp" aria-label="Enviar admin por WhatsApp">
-                        <WhatsAppLogo />
-                      </button>
-                    </div>
-                    {adminInviteToken ? <small>Invitación admin lista</small> : null}
-                  </div>
-                ) : null}
-              </div>
-            </details>
-          ) : null}
           <div className="panel-title">
             <span>Próximos partidos</span>
             <strong>{openMatches.length}</strong>
@@ -4661,7 +6906,7 @@ export default function Home() {
               <div className={canEditMatchSettings ? "match-editor" : "match-editor readonly-editor"}>
                 {matchFinalized ? <span className="admin-only-badge">Partido finalizado</span> : null}
                 {!matchConfigured && !matchFinalized ? <span className="admin-only-badge draft-badge">Borrador</span> : null}
-                <label>
+                <label className="match-field-control">
                   Campo
                   <select value={activeMatch.venueId ?? ""} onChange={(event) => selectVenue(event.target.value)} disabled={!canEditMatchSettings}>
                     <option value="" disabled>Selecciona campo</option>
@@ -4670,36 +6915,40 @@ export default function Home() {
                     ))}
                   </select>
                 </label>
-                <label>
+                <label className="match-date-control">
                   Fecha
                   <input
-                    type="datetime-local"
-                    step="600"
-                    value={activeMatch.date}
+                    type="date"
+                    value={matchDatePart(activeMatch.date)}
                     disabled={!canEditMatchSettings}
                     onChange={(event) => {
-                      const nextDate = event.target.value;
+                      const nextDate = combineMatchDateTime(event.target.value, activeMatch.date);
                       updateMatchSettings({ ...activeMatch, date: nextDate, season: seasonKey(nextDate) });
                     }}
                   />
                 </label>
-                <label>
+                <label className="match-time-control">
+                  Hora
+                  <select
+                    value={matchTimePart(activeMatch.date)}
+                    disabled={!canEditMatchSettings}
+                    onChange={(event) => {
+                      const nextDate = combineMatchDateTime(matchDatePart(activeMatch.date), event.target.value);
+                      updateMatchSettings({ ...activeMatch, date: nextDate, season: seasonKey(nextDate) });
+                    }}
+                  >
+                    {matchTimeOptions.map((time) => (
+                      <option key={time} value={time}>{time}</option>
+                    ))}
+                  </select>
+                </label>
+                <label className="match-kind-control">
                   Modalidad
                   <select value={activeKind} onChange={(event) => changeKind(event.target.value as MatchKind)} disabled={!canEditMatchSettings}>
                     {Object.entries(matchKinds).map(([kind, config]) => (
                       <option key={kind} value={kind}>{config.label}</option>
                     ))}
                   </select>
-                </label>
-                <label>
-                  Precio
-                  <input
-                    type="number"
-                    min="0"
-                    value={fieldCost}
-                    disabled={!canEditMatchSettings}
-                    onChange={(event) => updateMatchSettings({ ...activeMatch, fieldCost: Number(event.target.value) })}
-                  />
                 </label>
                 <label className="reserve-toggle">
                   Reservas
@@ -4729,6 +6978,16 @@ export default function Home() {
                     onChange={(event) => updateMatchSettings({ ...activeMatch, reserveLimit: Math.max(0, Math.floor(Number(event.target.value) || 0)) })}
                   />
                 </label>
+                <label className="match-price-control">
+                  Precio
+                  <input
+                    type="number"
+                    min="0"
+                    value={fieldCost}
+                    disabled={!canEditMatchSettings}
+                    onChange={(event) => updateMatchSettings({ ...activeMatch, fieldCost: Number(event.target.value) })}
+                  />
+                </label>
                 {!matchFinalized ? (
                   <button className="save-match-button" type="button" onClick={() => void saveMatchConfiguration()} disabled={!matchCanBeSaved || matchConfigured}>
                     {matchConfigured ? "Guardado" : "Guardar partido"}
@@ -4742,7 +7001,57 @@ export default function Home() {
                   <strong>Configura campo, fecha, modalidad y precio. Al guardar se activan confirmaciones, compartir y alineación.</strong>
                 </div>
               ) : null}
+              {registrationLockedByPreviousMatch && previousPendingMatch ? (
+                <div className="registration-locked-note">
+                  <span>Inscripción pendiente</span>
+                  <strong>
+                    Se abrirá cuando pase {previousPendingMatch.title || "el partido anterior"} ({matchSummaryDate(previousPendingMatch.date)}).
+                  </strong>
+                </div>
+              ) : null}
             </>
+          ) : null}
+
+          {matchConfigured ? (
+            <section className={`weather-card weather-card-${matchWeatherStatus}`} aria-label="Previsión del tiempo">
+              {matchWeatherStatus === "unavailable" && matchWeatherMessage.startsWith("Previsión del tiempo disponible") ? (
+                <p className="weather-availability-message">{matchWeatherMessage}</p>
+              ) : (
+                <>
+                  <div className="weather-card-main">
+                    <WeatherIcon status={matchWeatherStatus} weather={matchWeather} />
+                    <div className="weather-summary">
+                      <span>Tiempo previsto</span>
+                      <strong>
+                        {matchWeatherStatus === "ready" && matchWeather && matchWeather.temperature !== null
+                          ? `${Math.round(matchWeather.temperature)}°`
+                          : matchWeatherStatus === "loading"
+                            ? "Consultando"
+                            : "Sin previsión"}
+                      </strong>
+                    </div>
+                    <p>
+                      {matchWeatherStatus === "ready" && matchWeather
+                        ? matchWeather.condition
+                        : matchWeatherStatus === "loading"
+                          ? "Buscando la previsión más cercana a la hora del partido."
+                          : matchWeatherMessage || "Guarda un campo con ubicación verificada para activar esta previsión."}
+                    </p>
+                  </div>
+                  {matchWeatherStatus === "ready" && matchWeather ? (
+                    <>
+                      <div className="weather-metrics">
+                        <span><WeatherMetricIcon kind="feels" /> Sensación {matchWeather.feelsLike === null ? "-" : `${Math.round(matchWeather.feelsLike)}°`}</span>
+                        <span><WeatherMetricIcon kind="rain" /> Lluvia {matchWeather.precipitationProbability === null ? "-" : `${Math.round(matchWeather.precipitationProbability)}%`}</span>
+                        <span><WeatherMetricIcon kind="wind" /> Viento {matchWeather.windKmh === null ? "-" : `${Math.round(matchWeather.windKmh)} km/h`}</span>
+                        <span><WeatherMetricIcon kind="humidity" /> Humedad {matchWeather.humidity === null ? "-" : `${Math.round(matchWeather.humidity)}%`}</span>
+                      </div>
+                      <small>Previsión más cercana: {weatherDateTimeLabel(matchWeather.forecastTime)}</small>
+                    </>
+                  ) : null}
+                </>
+              )}
+            </section>
           ) : null}
 
           <div className="stats-row">
@@ -4767,27 +7076,42 @@ export default function Home() {
               <strong>{doubtfulCount}</strong>
             </div>
             <div>
-              <span>Toca</span>
-              <strong>{sharePerPlayer.toFixed(2)} €</strong>
-            </div>
-            <div>
               <span>Campo</span>
               <strong>{fieldCost.toFixed(0)} €</strong>
             </div>
+            {siteSettings.subscriptionContributionEnabled ? (
+              <div>
+                <span>App</span>
+                <strong>{subscriptionContributionPerPlayer.toFixed(2)} €</strong>
+              </div>
+            ) : null}
             <div>
               <span>Paga</span>
-              <strong>{payer?.name ?? "-"}</strong>
+              <strong>{paymentReady ? payer?.name ?? "-" : "-"}</strong>
+            </div>
+            <div className="payment-per-person-stat">
+              <span>Pago por persona</span>
+              <strong>{paymentReady ? `${sharePerPlayer.toFixed(2)} €` : "-"}</strong>
             </div>
             <div>
               <span>Pagados</span>
-              <strong>{paidCount}/{payingIds.length}</strong>
+              <strong>{paymentReady ? `${paidCount}/${payingParticipantIds.length}` : "-"}</strong>
             </div>
           </div>
 
-          {payer ? (
+          {paymentReady && payer ? (
             <div className="payer-note">
               <span>Turno de pago</span>
               <strong>{playerDisplayName(payer)} adelanta el campo. Bizum: {payer.phone || "sin telefono"} · {sharePerPlayer.toFixed(2)} € por persona</strong>
+            </div>
+          ) : null}
+
+          {siteSettings.subscriptionContributionEnabled && activeRosterCount > 0 ? (
+            <div className="payer-note subscription-contribution-note">
+              <span>Aporte app por Bizum</span>
+              <strong>
+                Suscripción {subscriptionContributionLabel}: {subscriptionContributionAmount.toFixed(2)} € entre {activeRosterCount} jugadores activos · {subscriptionContributionPerPlayer.toFixed(2)} € para {ownerContributionRecipient}
+              </strong>
             </div>
           ) : null}
 
@@ -4808,58 +7132,230 @@ export default function Home() {
             ) : null}
           </div>
 
-          <div className="team-player-grid">
-            <div className="team-player-column team-a-column">
-              <div className="team-column-title">
-                <span>Equipo 1</span>
-                <strong>{suggested.teamA.length}</strong>
-              </div>
-              {sortedTeamA.map((player) => renderPlayerCard(player, "A"))}
-            </div>
-            <div className="team-player-column team-b-column">
-              <div className="team-column-title">
-                <span>Equipo 2</span>
-                <strong>{suggested.teamB.length}</strong>
-              </div>
-              {sortedTeamB.map((player) => renderPlayerCard(player, "B"))}
-            </div>
-          </div>
+          {showMatchRoster ? (
+            <>
+              {canUseAdminControls && openMatchRequests.length > 0 ? (
+                <section className="open-match-requests-panel" aria-label="Solicitudes del mercado">
+                  <div className="open-match-requests-title">
+                    <span>Solicitudes del mercado</span>
+                    <strong>{pendingOpenMatchRequests.length} pendiente{pendingOpenMatchRequests.length === 1 ? "" : "s"}</strong>
+                  </div>
+                  <div className="open-match-request-list">
+                    {openMatchRequests.map((request) => {
+                      const requestAge = playerAge(request.birthDate, currentDateValue);
+                      const requestPending = request.status === "pending";
+                      const requestStatusLabel = request.status === "accepted"
+                        ? "Aceptado"
+                        : request.status === "rejected"
+                          ? "Rechazado"
+                          : request.status === "cancelled"
+                            ? "Cancelado"
+                            : "Pendiente";
 
-          {reservePlayers.length > 0 ? (
-            <div className="reserve-section">
-              <div className="team-column-title">
-                <span>Reservas que van</span>
-                <strong>{reservePlayers.length}</strong>
-              </div>
-              <div className="player-grid reserve-player-grid">
-                {reservePlayers.map((player) => renderPlayerCard(player))}
-              </div>
-            </div>
-          ) : null}
+                      return (
+                        <article className={`open-match-request-card request-${request.status}`} key={request.id}>
+                          <span className="request-avatar">
+                            {request.avatar ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img src={request.avatar} alt="" draggable={false} style={avatarImageStyle(request)} />
+                            ) : (
+                              <b>+</b>
+                            )}
+                          </span>
+                          <div>
+                            <strong>
+                              {request.requesterName}
+                              {requestAge !== null ? <em>{requestAge} años</em> : null}
+                            </strong>
+                            <small>
+                              {request.goalkeeperOnly ? "Portero fijo" : request.position} · Media {overallScore(request.media)} · Solicitud {joinedAtLabel(request.requestedAt)}
+                            </small>
+                          </div>
+                          <div className="request-actions">
+                            {requestPending ? (
+                              <>
+                                <button type="button" onClick={() => void reviewOpenMatchRequest(request, "accepted")}>Aceptar</button>
+                                <button className="danger-light-button" type="button" onClick={() => void reviewOpenMatchRequest(request, "rejected")}>Rechazar</button>
+                              </>
+                            ) : (
+                              <span>{requestStatusLabel}</span>
+                            )}
+                          </div>
+                        </article>
+                      );
+                    })}
+                  </div>
+                  {openMatchRequestMessage ? <small className="sync-status sync-live">{openMatchRequestMessage}</small> : null}
+                </section>
+              ) : null}
 
-          {waitingPlayers.length > 0 ? (
-            <div className="reserve-section waiting-section">
-              <div className="team-column-title">
-                <span>Lista de espera</span>
-                <strong>{waitingPlayers.length}</strong>
+              <div className="team-player-grid">
+                <div className="team-player-column team-a-column">
+                  <div className="team-column-title">
+                    <span>Equipo 1</span>
+                    <strong>{suggested.teamA.length}</strong>
+                  </div>
+                  {sortedTeamA.map((player) => renderPlayerCard(player, "A"))}
+                </div>
+                <div className="team-player-column team-b-column">
+                  <div className="team-column-title">
+                    <span>Equipo 2</span>
+                    <strong>{suggested.teamB.length}</strong>
+                  </div>
+                  {sortedTeamB.map((player) => renderPlayerCard(player, "B"))}
+                </div>
+                {showMarketScoutCard ? (
+                  <div className={`player-card market-scout-card ${activeMatch.publicOpen ? "public-open" : ""}`} aria-label={`Buscar en mercado. Faltan ${missing} plaza${missing === 1 ? "" : "s"}`}>
+                    <span className="market-scout-icon">
+                      <SearchLogo />
+                    </span>
+                    <div>
+                      <strong>Buscar en mercado</strong>
+                      <small>Faltan {missing} plaza{missing === 1 ? "" : "s"} para completar el cupo.</small>
+                      <em>{activeMatch.publicOpen ? "Partido publicado: los jugadores externos podrán solicitar plaza." : "Al cerrar alineación se oculta y el partido queda con los que estén."}</em>
+                      {pendingOpenMatchRequests.length > 0 ? (
+                        <small className="public-request-count">{pendingOpenMatchRequests.length} solicitud{pendingOpenMatchRequests.length === 1 ? "" : "es"} pendiente{pendingOpenMatchRequests.length === 1 ? "" : "s"}</small>
+                      ) : null}
+                    </div>
+                    {canUseAdminControls ? (
+                      <div className="public-match-options">
+                        <label>
+                          Plazas públicas
+                          <input
+                            min="1"
+                            max={Math.max(missing, 1)}
+                            type="number"
+                            value={publicOpenSlots}
+                            onChange={(event) =>
+                              updateMatch({
+                                ...activeMatch,
+                                publicOpenSlots: Math.max(1, Math.min(Math.max(missing, 1), Math.floor(Number(event.target.value) || 1))),
+                              })
+                            }
+                          />
+                        </label>
+                        <label>
+                          Nivel mín.
+                          <select
+                            value={Math.round(publicMatchRating(activeMatch.publicMinRating, 0) * 10)}
+                            onChange={(event) => updateMatch({ ...activeMatch, publicMinRating: Number(event.target.value) / 10 })}
+                          >
+                            {publicMatchRatingPointOptions.map((rating) => (
+                              <option key={rating} value={rating}>{rating}</option>
+                            ))}
+                          </select>
+                        </label>
+                        <label>
+                          Nivel máx.
+                          <select
+                            value={Math.round(publicMatchRating(activeMatch.publicMaxRating, 10) * 10)}
+                            onChange={(event) => updateMatch({ ...activeMatch, publicMaxRating: Number(event.target.value) / 10 })}
+                          >
+                            {publicMatchRatingPointOptions.map((rating) => (
+                              <option key={rating} value={rating}>{rating}</option>
+                            ))}
+                          </select>
+                        </label>
+                        <label className="public-match-toggle">
+                          <input
+                            checked={activeMatch.publicRequiresApproval ?? true}
+                            onChange={(event) => updateMatch({ ...activeMatch, publicRequiresApproval: event.target.checked })}
+                            type="checkbox"
+                          />
+                          Requiere aceptar
+                        </label>
+                        <label className="public-match-toggle">
+                          <input
+                            checked={activeMatch.publicGuestsPay ?? true}
+                            onChange={(event) => updateMatch({ ...activeMatch, publicGuestsPay: event.target.checked })}
+                            type="checkbox"
+                          />
+                          Invitado paga
+                        </label>
+                        <div className="public-position-options" aria-label="Posiciones buscadas">
+                          {publicMatchPositionOptions.map((position) => {
+                            const selectedPositions = normalizePublicMatchPositions(activeMatch.publicPositions);
+                            const selected = selectedPositions.includes(position);
+                            return (
+                              <label key={position}>
+                                <input
+                                  checked={selected}
+                                  onChange={(event) => {
+                                    const nextPositions = event.target.checked
+                                      ? [...selectedPositions, position]
+                                      : selectedPositions.filter((item) => item !== position);
+                                    updateMatch({ ...activeMatch, publicPositions: nextPositions });
+                                  }}
+                                  type="checkbox"
+                                />
+                                {position}
+                              </label>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ) : null}
+                    <div className="market-scout-actions">
+                      <a href={marketScoutUrl("jugadores")}>Buscar jugadores</a>
+                      {canUseAdminControls ? (
+                        <button type="button" onClick={() => void publishOpenMatch()}>
+                          {activeMatch.publicOpen ? "Actualizar público" : "Abrir partido al público"}
+                        </button>
+                      ) : null}
+                      {activeMatch.publicOpen ? (
+                        <>
+                          <a href={marketScoutUrl("partidos")}>Ver anuncio</a>
+                          {canUseAdminControls ? (
+                            <button className="ghost-scout-button" type="button" onClick={() => void closeOpenMatch()}>
+                              Cerrar público
+                            </button>
+                          ) : null}
+                        </>
+                      ) : null}
+                    </div>
+                  </div>
+                ) : null}
               </div>
-              <div className="player-grid reserve-player-grid">
-                {waitingPlayers.map((player) => renderPlayerCard(player))}
-              </div>
-            </div>
-          ) : null}
 
-          {otherPlayers.length > 0 ? (
-            <div className="player-grid other-player-grid">
-              {otherPlayers.map((player) => renderPlayerCard(player))}
-            </div>
+              {reservePlayers.length > 0 ? (
+                <div className="reserve-section">
+                  <div className="team-column-title">
+                    <span>Reservas que van</span>
+                    <strong>{reservePlayers.length}</strong>
+                  </div>
+                  <div className="player-grid reserve-player-grid">
+                    {reservePlayers.map((player) => renderPlayerCard(player))}
+                  </div>
+                </div>
+              ) : null}
+
+              {waitingPlayers.length > 0 ? (
+                <div className="reserve-section waiting-section">
+                  <div className="team-column-title">
+                    <span>Lista de espera</span>
+                    <strong>{waitingPlayers.length}</strong>
+                  </div>
+                  <div className="player-grid reserve-player-grid">
+                    {waitingPlayers.map((player) => renderPlayerCard(player))}
+                  </div>
+                </div>
+              ) : null}
+
+              {otherPlayers.length > 0 ? (
+                <div className="player-grid other-player-grid">
+                  {otherPlayers.map((player) => renderPlayerCard(player))}
+                </div>
+              ) : null}
+            </>
           ) : null}
         </section>
 
         <aside className="panel teams-panel" id="equipos">
-          <div className="panel-title">
+          <div className="panel-title teams-panel-title">
             <span>Equipos sugeridos</span>
-            <strong>{matchKinds[activeKind].teamSize}v{matchKinds[activeKind].teamSize}</strong>
+            <div className="teams-panel-actions">
+              <strong>{matchKinds[activeKind].teamSize}v{matchKinds[activeKind].teamSize}</strong>
+            </div>
           </div>
           <div className="balance-summary" title={balanceSummary.detail}>
             <div>
@@ -4877,6 +7373,7 @@ export default function Home() {
             kind={activeKind}
             scoreForPlayer={effectivePlayerScore}
             onPlayerClick={openPlayerProfile}
+            onZoom={() => setPitchZoomOpen(true)}
           />
           <div className={lineupClosed ? "lineup-state closed" : "lineup-state"}>
             {!matchConfigured ? "Alineación pendiente" : lineupClosed ? "Alineación cerrada" : "Alineación abierta"}
@@ -4888,7 +7385,7 @@ export default function Home() {
           <Team title="Equipo 1" players={suggested.teamA} variant="team-a" scoreForPlayer={effectivePlayerScore} mediaForPlayer={playerMediaScore} formForPlayer={playerForm} />
           <Team title="Equipo 2" players={suggested.teamB} variant="team-b" scoreForPlayer={effectivePlayerScore} mediaForPlayer={playerMediaScore} formForPlayer={playerForm} />
           {canUseAdminControls && matchConfigured && !matchFinalized ? (
-            <button className="primary-button full" onClick={toggleLineupClosed}>
+            <button className="primary-button full" onClick={() => void toggleLineupClosed()}>
               {lineupClosed ? "Abrir alineación" : "Cerrar alineación"}
             </button>
           ) : null}
@@ -4952,6 +7449,7 @@ export default function Home() {
             <div className="scorers-box">
               <strong>Goles</strong>
               {!matchConfigured ? <small>Guarda primero el partido.</small> : null}
+              {matchConfigured && !lineupClosed ? <small>Cierra la alineación para calcular pago y finalizar.</small> : null}
               {matchConfigured && confirmedPlayers.length === 0 ? <small>Marca asistentes para añadir goleadores.</small> : null}
               {confirmedPlayers.length > 0 && !resultIsReady ? <small>Rellena primero el resultado.</small> : null}
               {matchConfigured && confirmedPlayers.length > 0 && resultIsReady ? (
@@ -4976,11 +7474,50 @@ export default function Home() {
             {matchFinalized ? (
               <small className="result-locked-note">Partido finalizado. Puedes corregir goleadores y asistencia.</small>
             ) : (
-              <button disabled={!matchConfigured || !resultIsReady || !canUseAdminControls} onClick={() => void finalizeMatch()}>Finalizar partido</button>
+              <button disabled={!matchConfigured || !lineupClosed || !resultIsReady || !canUseAdminControls} onClick={() => void finalizeMatch()}>Finalizar partido</button>
             )}
           </div>
         </aside>
       </section>
+
+      {pitchZoomOpen ? (
+        <div
+          className="pitch-modal-backdrop"
+          role="presentation"
+          onMouseDown={(event) => {
+            if (event.currentTarget === event.target) setPitchZoomOpen(false);
+          }}
+        >
+          <section
+            className="pitch-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="pitch-modal-title"
+            style={{ justifyItems: "stretch" }}
+          >
+            <div className="pitch-modal-title">
+              <div>
+                <span>Campo en grande</span>
+                <strong id="pitch-modal-title">{matchKinds[activeKind].teamSize}v{matchKinds[activeKind].teamSize}</strong>
+              </div>
+              <button type="button" onClick={() => setPitchZoomOpen(false)}>Cerrar</button>
+            </div>
+            <div className="pitch-modal-pitch-wrap">
+              <MatchPitch
+                className="match-pitch-zoomed"
+                teamA={suggested.teamA}
+                teamB={suggested.teamB}
+                kind={activeKind}
+                scoreForPlayer={effectivePlayerScore}
+                onPlayerClick={(playerId) => {
+                  setPitchZoomOpen(false);
+                  openPlayerProfile(playerId);
+                }}
+              />
+            </div>
+          </section>
+        </div>
+      ) : null}
 
       {teamGalleryOpen ? (
         <section className="panel team-gallery-panel" id="mi-equipo" ref={teamGalleryRef}>
@@ -5023,7 +7560,7 @@ export default function Home() {
                 <button className="profile-close-button" type="button" onClick={closePlayerProfile}>
                   Cerrar
                 </button>
-                <strong>{selectedPeerScore.toFixed(1)}</strong>
+                <strong>{overallScore(selectedPeerScore)}</strong>
               </div>
             </div>
             {!ownPlayer && selectedPlayer && !selectedPlayer.ownerUserId && hasRealTeam && isRegisteredUser ? (
@@ -5035,8 +7572,9 @@ export default function Home() {
             <>
               <div className="profile-top">
                 <div className="fifa-card-shell">
-                  <div className={`${canEditSelectedPlayer ? "fifa-player-card" : "fifa-player-card readonly-card"} ${avatarDragging ? "avatar-dragging" : ""}`}>
-                    <span className="fifa-score">{Math.round(selectedPeerScore * 10)}</span>
+                  <div className={`${canEditSelectedPlayer ? "fifa-player-card" : "fifa-player-card readonly-card"} ${cardTierClass(selectedPeerScore)} ${avatarDragging ? "avatar-dragging" : ""}`}>
+                    <span className="fifa-score">{overallScore(selectedPeerScore)}</span>
+                    {renderRatingTrendChip(selectedPlayer)}
                     <span className="fifa-position">{positionShort(selectedPlayer)}</span>
                     <span
                       className={`fifa-photo ${canAdjustSelectedAvatar ? "draggable-avatar" : ""}`}
@@ -5059,7 +7597,7 @@ export default function Home() {
                     <div className="fifa-facets">
                       {selectedRatingFacets.map((facet) => (
                         <span key={facet.key}>
-                          <b>{Math.round(facetAverage(selectedPlayer, facet.key) * 10)}</b>
+                          <b>{overallScore(facetAverage(selectedPlayer, facet.key))}</b>
                           {facet.short}
                         </span>
                       ))}
@@ -5115,6 +7653,15 @@ export default function Home() {
                       Webcam
                     </button>
                   </div>
+                  {canEditSelectedPlayer ? (
+                    <div className="avatar-prompt-help">
+                      <span className="avatar-prompt-info" aria-hidden="true">i</span>
+                      <small>Prompt para ChatGPT: crea un retrato PNG transparente con estilo de carta.</small>
+                      <button className="avatar-prompt-copy" type="button" onClick={() => void copyPlayerPhotoPrompt()}>
+                        {avatarPromptCopied ? "Copiado" : "Copiar prompt"}
+                      </button>
+                    </div>
+                  ) : null}
                   {avatarMessage ? <small className="avatar-message">{avatarMessage}</small> : null}
                   {cameraPlayerId === selectedPlayer.id ? (
                     <div className="camera-panel">
@@ -5171,7 +7718,7 @@ export default function Home() {
                   <label className="profile-position-row">
                     <span>Posición preferida</span>
                     <select
-                      value={equivalentPositionForKind(selectedPlayer.position, activeKind)}
+                      value={selectablePositionValue(selectedPlayer.position)}
                       disabled={!canEditSelectedPlayer}
                       onChange={(event) => {
                         const position = event.target.value as PlayerPosition;
@@ -5181,7 +7728,7 @@ export default function Home() {
                         });
                       }}
                     >
-                      {positionOptionsByKind[activeKind].map((option) => (
+                      {allPositionOptions.map((option) => (
                         <option key={option.value} value={option.value}>{option.value}</option>
                       ))}
                     </select>
@@ -5196,6 +7743,7 @@ export default function Home() {
                       {profileSaving ? "Guardando..." : "Guardar ficha"}
                     </button>
                     {profileSaveMessage ? <small className="profile-save-message">{profileSaveMessage}</small> : null}
+                    <ThemeToggle />
                   </div>
                 </div>
               </div>
@@ -5226,39 +7774,240 @@ export default function Home() {
                   />
                   Lesionado
                 </label>
-                <div className="base-rating-card">
-                  <span>Media</span>
-                  <strong>{selectedPeerScore.toFixed(1)}</strong>
-                  <small>Calidad por valoraciones. No baja por no jugar.</small>
-                  {selectedForm ? (
-                    <div className={`form-state-card ${selectedForm.hasData ? `form-${selectedForm.status}` : "form-pending"}`}>
-                      {selectedForm.hasData ? (
-                        <>
-                          <b>Forma actual {visibleFormPercent(selectedForm)}%</b>
-                          <em>{selectedForm.label}</em>
-                          <small>Valor para equilibrar: {selectedEffectiveScore.toFixed(1)}</small>
-                          <small>Fiabilidad: {selectedForm.reliability}%</small>
-                          {selectedForm.notes.length ? <small>{selectedForm.notes.join(" · ")}</small> : null}
-                        </>
-                      ) : (
-                        <>
-                          <b>Forma pendiente</b>
-                          <em>Sin partidos finalizados</em>
-                          <small>Para equilibrar cuenta como neutral hasta tener datos reales.</small>
-                        </>
-                      )}
+                {selectedPlayerIsOwn ? (
+                  <div className="market-profile-box">
+                    <label className="toggle-field market-toggle">
+                      <input
+                        type="checkbox"
+                        checked={Boolean(selectedPlayer.marketEnabled)}
+                        disabled={!canEditSelectedPlayer}
+                        onChange={(event) => updatePlayer(selectedPlayer.id, { marketEnabled: event.target.checked })}
+                      />
+                      Mostrarme en mercado de fichajes
+                    </label>
+                    <div className="market-profile-fields">
+                      <div className="market-zone-field">
+                        <label>
+                          Zonas donde puedes jugar
+                          <span className="market-zone-picker">
+                            <span className="market-zone-control">
+                              <small>Ciudad</small>
+                              <input
+                                ref={marketZoneInputRef}
+                                placeholder="Busca una ciudad con Google Places"
+                                value={marketZoneDraft}
+                                disabled={!canEditSelectedPlayer || !selectedPlayer.marketEnabled}
+                                onChange={(event) => setMarketZoneDraft(event.target.value)}
+                              />
+                            </span>
+                            <span className="market-zone-control">
+                              <small>Distancia máxima</small>
+                              <select
+                                aria-label="Radio de desplazamiento para la próxima zona"
+                                value={marketZoneRadiusKm}
+                                disabled={!canEditSelectedPlayer || !selectedPlayer.marketEnabled}
+                                onChange={(event) => setMarketZoneRadiusKm(normalizeMarketZoneRadius(event.target.value))}
+                              >
+                                {marketZoneRadiusOptions.map((option) => (
+                                  <option key={option.value} value={option.value}>
+                                    {option.label}
+                                  </option>
+                                ))}
+                              </select>
+                            </span>
+                          </span>
+                        </label>
+                        <div className="market-zone-chips">
+                          {selectedMarketZones.length ? (
+                            selectedMarketZones.map((zone) => (
+                              <div className="market-zone-chip" key={zone.placeId}>
+                                <span>{marketZoneLabelFromPlace(zone)}</span>
+                                <select
+                                  aria-label={`Radio para ${marketZoneLabelFromPlace(zone)}`}
+                                  value={zone.radiusKm}
+                                  disabled={!canEditSelectedPlayer || !selectedPlayer.marketEnabled}
+                                  onChange={(event) => {
+                                    const nextZones = updateMarketZoneRadius(selectedPlayer.marketZonesGeo, zone.placeId, Number(event.target.value));
+                                    updatePlayer(selectedPlayer.id, {
+                                      marketZones: marketZoneTextFromGeo(nextZones),
+                                      marketZonesGeo: nextZones,
+                                    });
+                                  }}
+                                >
+                                  {marketZoneRadiusOptions.map((option) => (
+                                    <option key={option.value} value={option.value}>
+                                      {option.label}
+                                    </option>
+                                  ))}
+                                </select>
+                                <button
+                                  type="button"
+                                  aria-label={`Quitar ${marketZoneLabelFromPlace(zone)}`}
+                                  disabled={!canEditSelectedPlayer || !selectedPlayer.marketEnabled}
+                                  onClick={() => {
+                                    const nextZones = removeMarketZoneGeo(selectedPlayer.marketZonesGeo, zone.placeId);
+                                    updatePlayer(selectedPlayer.id, {
+                                      marketZones: marketZoneTextFromGeo(nextZones),
+                                      marketZonesGeo: nextZones,
+                                    });
+                                  }}
+                                >
+                                  ×
+                                </button>
+                              </div>
+                            ))
+                          ) : (
+                            <small>Añade al menos una ciudad.</small>
+                          )}
+                        </div>
+                        {marketZonePlaceStatus === "missing-key" ? <small className="market-field-warning">Google Places pendiente.</small> : null}
+                        {marketZonePlaceMessage ? <small className="market-field-warning">{marketZonePlaceMessage}</small> : null}
+                      </div>
+                      <div className="market-availability-builder">
+                        <span>Disponibilidad</span>
+                        <div>
+                          {selectedMarketAvailabilitySlots.map((slot) => (
+                            <div className={slot.enabled ? "market-day-row active" : "market-day-row"} key={slot.dayKey}>
+                              <label>
+                                <input
+                                  type="checkbox"
+                                  checked={slot.enabled}
+                                  disabled={!canEditSelectedPlayer || !selectedPlayer.marketEnabled}
+                                  onChange={(event) => {
+                                    updatePlayer(selectedPlayer.id, {
+                                      marketAvailability: updateMarketAvailabilityText(selectedPlayer.marketAvailability, slot.dayKey, { enabled: event.target.checked }),
+                                    });
+                                  }}
+                                />
+                                {slot.label}
+                              </label>
+                              <select
+                                value={slot.start}
+                                disabled={!canEditSelectedPlayer || !selectedPlayer.marketEnabled || !slot.enabled}
+                                onChange={(event) => {
+                                  updatePlayer(selectedPlayer.id, {
+                                    marketAvailability: updateMarketAvailabilityText(selectedPlayer.marketAvailability, slot.dayKey, { start: event.target.value }),
+                                  });
+                                }}
+                              >
+                                {marketTimeOptions.map((time) => (
+                                  <option key={time} value={time}>{time}</option>
+                                ))}
+                              </select>
+                              <span>a</span>
+                              <select
+                                value={slot.end}
+                                disabled={!canEditSelectedPlayer || !selectedPlayer.marketEnabled || !slot.enabled}
+                                onChange={(event) => {
+                                  updatePlayer(selectedPlayer.id, {
+                                    marketAvailability: updateMarketAvailabilityText(selectedPlayer.marketAvailability, slot.dayKey, { end: event.target.value }),
+                                  });
+                                }}
+                              >
+                                {marketTimeOptions.map((time) => (
+                                  <option key={time} value={time}>{time}</option>
+                                ))}
+                              </select>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="market-modality-options">
+                        <span>Modalidades</span>
+                        {Object.entries(matchKinds).map(([kind, config]) => {
+                          const modality = kind as MatchKind;
+                          const selectedModalities = marketModalitiesForPlayer(selectedPlayer);
+                          return (
+                            <label key={kind}>
+                              <input
+                                type="checkbox"
+                                checked={selectedModalities.includes(modality)}
+                                disabled={!canEditSelectedPlayer || !selectedPlayer.marketEnabled}
+                                onChange={(event) => {
+                                  const next = event.target.checked
+                                    ? [...new Set([...selectedModalities, modality])]
+                                    : selectedModalities.filter((item) => item !== modality);
+                                  updatePlayer(selectedPlayer.id, { marketModalities: next.length ? next : [modality] });
+                                }}
+                              />
+                              {config.label}
+                            </label>
+                          );
+                        })}
+                      </div>
+                      <label className="market-bio-field">
+                        Presentación
+                        <textarea
+                          placeholder="Portero puntual, me desplazo por la zona norte..."
+                          value={selectedPlayer.marketBio ?? ""}
+                          disabled={!canEditSelectedPlayer || !selectedPlayer.marketEnabled}
+                          onChange={(event) => updatePlayer(selectedPlayer.id, { marketBio: event.target.value })}
+                        />
+                      </label>
+                      <div className="market-intent-options">
+                        <label>
+                          <input
+                            type="checkbox"
+                            checked={selectedPlayer.marketOpenToGuest ?? true}
+                            disabled={!canEditSelectedPlayer || !selectedPlayer.marketEnabled}
+                            onChange={(event) => updatePlayer(selectedPlayer.id, { marketOpenToGuest: event.target.checked })}
+                          />
+                          Acepto invitaciones puntuales
+                        </label>
+                        <label>
+                          <input
+                            type="checkbox"
+                            checked={selectedPlayer.marketOpenToGroup ?? true}
+                            disabled={!canEditSelectedPlayer || !selectedPlayer.marketEnabled}
+                            onChange={(event) => updatePlayer(selectedPlayer.id, { marketOpenToGroup: event.target.checked })}
+                          />
+                          Acepto entrar en grupos
+                        </label>
+                      </div>
                     </div>
-                  ) : null}
-                </div>
+                    <small>{selectedPlayer.marketEnabled && !selectedMarketReady ? "Para publicarte, añade al menos una zona y un horario activo." : "Se publica solo si guardas la ficha con esta opción marcada. Tu historial del grupo no se comparte."}</small>
+                  </div>
+                ) : null}
                 <div className={canRateSelectedPlayer ? "rating-box rating-open-box" : "rating-box rating-locked-box"}>
                   <div className="rating-box-title">
-                    <span>Valoraciones</span>
+                    <span>Media y valoraciones</span>
                     <em className={canRateSelectedPlayer ? "rating-state open" : "rating-state closed"}>
                       {canRateSelectedPlayer ? "Abiertas" : "Cerradas"}
                     </em>
                   </div>
-                  <strong>{draftPeerAverage.toFixed(1)}</strong>
-                  <small>{selectedRatingHistory.length + (selectedPlayer.ratings?.length ?? 0)} votos de compañeros</small>
+                  <div className="rating-summary-grid">
+                    <div className="rating-summary-card rating-summary-main">
+                      <span>Media</span>
+                      <strong>{overallScore(selectedPeerScore)}</strong>
+                      <small>{playerMediaLabel(selectedPlayer)}. No baja por no jugar.</small>
+                    </div>
+                    {canRateSelectedPlayer ? (
+                      <div className="rating-summary-card">
+                        <span>Tu valoración</span>
+                        <strong>{overallScore(draftPeerAverage)}</strong>
+                        <small>{selectedRatingHistory.length + (selectedPlayer.ratings?.length ?? 0)} votos de compañeros</small>
+                      </div>
+                    ) : null}
+                    {selectedForm ? (
+                      <div className={`form-state-card ${canRateSelectedPlayer ? "rating-summary-wide" : ""} ${selectedForm.hasData ? `form-${selectedForm.status}` : "form-pending"}`}>
+                        {selectedForm.hasData ? (
+                          <>
+                            <b>Forma actual {visibleFormPercent(selectedForm)}%</b>
+                            <em>{selectedForm.label}</em>
+                            <small>Valor para equilibrar: {overallScore(selectedEffectiveScore)}</small>
+                            <small>Fiabilidad: {selectedForm.reliability}%</small>
+                            {selectedForm.notes.length ? <small>{selectedForm.notes.join(" · ")}</small> : null}
+                          </>
+                        ) : (
+                          <>
+                            <b>Forma pendiente</b>
+                            <em>Sin partidos finalizados</em>
+                            <small>Para equilibrar cuenta como neutral hasta tener datos reales.</small>
+                          </>
+                        )}
+                      </div>
+                    ) : null}
+                  </div>
                   <p className="rating-help">{selectedRatingStatusText}</p>
                   <div className="facet-grid">
                     {selectedRatingFacets.map((facet) => (
@@ -5266,19 +8015,20 @@ export default function Home() {
                         <span>{facet.label}</span>
                         <input
                           type="range"
-                          min="1"
-                          max="10"
-                          step="0.5"
-                          value={newFacetRatings[facet.key]}
+                          min="10"
+                          max="100"
+                          step="5"
+                          value={overallScore(newFacetRatings[facet.key] ?? facetAverage(selectedPlayer, facet.key))}
                           disabled={!canRateSelectedPlayer}
+                          aria-valuetext={`${overallScore(newFacetRatings[facet.key] ?? facetAverage(selectedPlayer, facet.key))} de 100`}
                           onChange={(event) =>
                             setNewFacetRatings((current) => ({
                               ...current,
-                              [facet.key]: Number(event.target.value),
+                              [facet.key]: clampRating(Number(event.target.value) / 10),
                             }))
                           }
                         />
-                        <b>{clampRating(newFacetRatings[facet.key] ?? facetAverage(selectedPlayer, facet.key)).toFixed(1)}</b>
+                        <b>{overallScore(clampRating(newFacetRatings[facet.key] ?? facetAverage(selectedPlayer, facet.key)))}</b>
                       </label>
                     ))}
                   </div>
@@ -5307,7 +8057,7 @@ export default function Home() {
                           <line x1={ratingChart.left} x2={ratingChart.width - ratingChart.right} y1={ratingChartY(1)} y2={ratingChartY(1)} />
                           {[10, 5, 1].map((value) => (
                             <text className="rating-chart-y-label" key={value} x="4" y={ratingChartY(value) + 4}>
-                              {value}
+                              {ratingPoints(value)}
                             </text>
                           ))}
                           {selectedRatingChartHistory.map((vote, index) => {
@@ -5337,7 +8087,7 @@ export default function Home() {
                                     r="3"
                                   >
                                     <title>
-                                      {facet.label}: {value.toFixed(1)} · Partido {vote.matchCount} · {ratingVoteDateLabel(vote.createdAt)}
+                                      {facet.label}: {overallScore(value)} · Partido {vote.matchCount} · {ratingVoteDateLabel(vote.createdAt)}
                                     </title>
                                   </circle>
                                 );
@@ -5401,13 +8151,130 @@ export default function Home() {
           </div>
         </div>
       </section>
+      {!needsLoginForSharedLink && mobileAccountOpen ? (
+        <>
+          <button
+            className="mobile-account-backdrop"
+            type="button"
+            aria-label="Cerrar menú de perfil"
+            onClick={() => setMobileAccountOpen(false)}
+          />
+          <section className="mobile-account-sheet" role="dialog" aria-modal="true" aria-label="Perfil y ajustes">
+            <header className="mobile-account-header">
+              <span className="mobile-account-avatar" aria-hidden="true">
+                {nameInitials(profileName || authDisplayName(authUser))}
+              </span>
+              <span className="mobile-account-identity">
+                <strong>{displayName(profileName || authDisplayName(authUser)) || "Jugador"}</strong>
+                <small>
+                  {hasRealTeam ? `${currentTeamName} · ${memberRoleLabel(currentRole)}` : "Sin grupo de pachangas"}
+                </small>
+              </span>
+              <button
+                className="mobile-account-close"
+                type="button"
+                aria-label="Cerrar menú de perfil"
+                onClick={() => setMobileAccountOpen(false)}
+              >
+                ×
+              </button>
+            </header>
+            <div className="mobile-account-scroll">
+              <div className="mobile-account-group">
+                <h2>Jugador</h2>
+                <button
+                  type="button"
+                  onClick={() => runMobileAccountAction(() => void openOwnPlayerProfile())}
+                  disabled={!hasRealTeam || !isRegisteredUser}
+                >
+                  <span>Mi ficha</span><small>Datos, posición, forma y valoraciones</small><b aria-hidden="true">›</b>
+                </button>
+                <button type="button" onClick={() => runMobileAccountAction(openTeamGallery)} disabled={!hasRealTeam}>
+                  <span>Mi equipo</span><small>Fichas de los jugadores del grupo</small><b aria-hidden="true">›</b>
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    runMobileAccountAction(() =>
+                      document.getElementById("ranking")?.scrollIntoView({ behavior: "smooth", block: "start" }),
+                    )
+                  }
+                >
+                  <span>Ranking</span><small>Media, goles, partidos y victorias</small><b aria-hidden="true">›</b>
+                </button>
+                <a href="/mercado">
+                  <span>Mercado</span><small>Jugadores disponibles y partidos abiertos</small><b aria-hidden="true">›</b>
+                </a>
+              </div>
+
+              <div className="mobile-account-group">
+                <h2>Mi grupo</h2>
+                <button type="button" onClick={() => runMobileAccountAction(openGroupSwitcher)} disabled={!isRegisteredUser}>
+                  <span>Cambiar de pachanga</span><small>Entra en otro de tus grupos</small><b aria-hidden="true">›</b>
+                </button>
+                <a href="/manual">
+                  <span>Manual de usuario</span><small>Flujos para jugadores y administradores</small><b aria-hidden="true">›</b>
+                </a>
+              </div>
+
+              {canUseAdminControls || canCreateTeam ? (
+                <div className="mobile-account-group">
+                  <h2>Administrar</h2>
+                  <button type="button" onClick={() => runMobileAccountAction(createMatch)} disabled={!canUseAdminControls}>
+                    <span>Crear partido</span><small>Fecha, campo, modalidad y plazas</small><b aria-hidden="true">›</b>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => runMobileAccountAction(() => void openCreatePlayerProfile())}
+                    disabled={!canUseAdminControls && (!hasRealTeam || !isRegisteredUser)}
+                  >
+                    <span>Crear ficha de jugador</span><small>Añade un miembro al grupo</small><b aria-hidden="true">›</b>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => runMobileAccountAction(() => showQuickForm("venue"))}
+                    disabled={!canUseAdminControls}
+                  >
+                    <span>Crear campo</span><small>Dirección, precio y modalidad</small><b aria-hidden="true">›</b>
+                  </button>
+                  <button type="button" onClick={() => runMobileAccountAction(() => showQuickForm("team"))}>
+                    <span>Crear grupo de pachangas</span><small>Empieza un grupo nuevo</small><b aria-hidden="true">›</b>
+                  </button>
+                  {canUseAdminControls ? (
+                    <button type="button" onClick={() => runMobileAccountAction(toggleSettingsPanel)}>
+                      <span>Configuración</span><small>Colores, roles, suscripción y copias</small><b aria-hidden="true">›</b>
+                    </button>
+                  ) : null}
+                </div>
+              ) : null}
+
+              <div className="mobile-account-group">
+                <h2>Información</h2>
+                <a href="/condiciones"><span>Condiciones de uso</span><b aria-hidden="true">›</b></a>
+                <a href="/privacidad"><span>Privacidad</span><b aria-hidden="true">›</b></a>
+                <a href="/cookies"><span>Cookies</span><b aria-hidden="true">›</b></a>
+                <a href="/aviso-legal"><span>Aviso legal</span><b aria-hidden="true">›</b></a>
+              </div>
+
+              {isRegisteredUser ? (
+                <button className="mobile-account-session danger" type="button" onClick={() => void signOut()}>
+                  Cerrar sesión
+                </button>
+              ) : (
+                <button
+                  className="mobile-account-session"
+                  type="button"
+                  onClick={() => runMobileAccountAction(() => void signInWithGoogle())}
+                >
+                  <GoogleLogo /> Continuar con Google
+                </button>
+              )}
+            </div>
+          </section>
+        </>
+      ) : null}
       {!needsLoginForSharedLink ? (
-        <nav className="mobile-tabbar" aria-label="Navegación principal móvil">
-          <a href="#inicio">Inicio</a>
-          <a href="#partido">Partido</a>
-          <a href="#equipos">Equipos</a>
-          <a href="#ranking">Ranking</a>
-        </nav>
+        <MobileAppNav active={activeMobileTab} onNavigate={navigatePrimaryMobile} />
       ) : null}
     </main>
   );
@@ -5461,7 +8328,7 @@ function Team({
               ) : null}
               <b className="team-player-name">{playerDisplayName(player)}</b>
               <em className="team-player-meta">
-                ({mediaForPlayer(player).toFixed(1)}){formState.hasData ? ` · Forma ${visibleFormPercent(formState)}%` : ""} · {player.goals} G
+                ({overallScore(mediaForPlayer(player))}){formState.hasData ? ` · Forma ${visibleFormPercent(formState)}%` : ""} · {player.goals} G
               </em>
             </span>
             <small className="position-pill">{positionLabel(player)}</small>
@@ -5473,17 +8340,21 @@ function Team({
 }
 
 function MatchPitch({
+  className = "",
   teamA,
   teamB,
   kind,
   scoreForPlayer = scorePlayer,
   onPlayerClick,
+  onZoom,
 }: {
+  className?: string;
   teamA: Player[];
   teamB: Player[];
   kind: MatchKind;
   scoreForPlayer?: PlayerScoreFn;
   onPlayerClick?: (playerId: string) => void;
+  onZoom?: () => void;
 }) {
   const teamATokens = placeTeam(teamA, kind, "bottom", scoreForPlayer);
   const teamBTokens = placeTeam(teamB, kind, "top", scoreForPlayer);
@@ -5497,7 +8368,18 @@ function MatchPitch({
   ];
 
   return (
-    <div className="match-pitch" aria-label="Campo completo con alineaciones">
+    <div className={`match-pitch ${className}`.trim()} aria-label="Campo completo con alineaciones">
+      {onZoom ? (
+        <button
+          className="pitch-zoom-button"
+          type="button"
+          onClick={onZoom}
+          title="Ver campo en grande"
+          aria-label="Ver campo en grande"
+        >
+          <SearchLogo />
+        </button>
+      ) : null}
       <div className="pitch-label top">Equipo 2</div>
       <div className="pitch-label bottom">Equipo 1</div>
       <div className="midline" />
@@ -5515,39 +8397,44 @@ function MatchPitch({
           <b>Falta</b>
         </div>
       ))}
-      {tokens.map(({ player, x, y, variant }) => (
-        <button
-          aria-label={`Abrir ficha de ${playerDisplayName(player)} desde el campo`}
-          className={`pitch-player-card ${variant} ${player.injured ? "injured-token" : ""} ${player.inactive ? "inactive-token" : ""}`}
-          key={player.id}
-          onClick={() => onPlayerClick?.(player.id)}
-          style={{ left: `${x}%`, top: `${y}%` }}
-          title={`${playerDisplayName(player)} · ${positionLabel(player)} · ${scoreForPlayer(player).toFixed(1)}`}
-          type="button"
-        >
-          {player.inactive ? (
-            <span className="token-inactive" title="Ya no está en el grupo" aria-label="Ya no está en el grupo">
-              <UserOffLogo />
+      {tokens.map(({ player, x, y, variant }) => {
+        const score = scoreForPlayer(player);
+
+        return (
+          <button
+            aria-label={`Abrir ficha de ${playerDisplayName(player)} desde el campo`}
+            className={`pitch-player-card ${cardTierClass(score)} ${variant} ${player.injured ? "injured-token" : ""} ${player.inactive ? "inactive-token" : ""}`}
+            key={player.id}
+            onClick={() => onPlayerClick?.(player.id)}
+            style={{ left: `${x}%`, top: `${y}%` }}
+            title={`${playerDisplayName(player)} · ${positionLabel(player)} · ${overallScore(score)}`}
+            type="button"
+          >
+            {player.inactive ? (
+              <span className="token-inactive" title="Ya no está en el grupo" aria-label="Ya no está en el grupo">
+                <UserOffLogo />
+              </span>
+            ) : null}
+            {player.injured ? (
+              <span className="token-injury" title="Jugador lesionado" aria-label="Jugador lesionado">
+                <HospitalLogo />
+              </span>
+            ) : null}
+            <span className="pitch-card-score">{overallScore(score)}</span>
+            {renderRatingTrendChip(player)}
+            <span className="pitch-card-position">{positionShort(player)}</span>
+            <span className="pitch-card-photo">
+              {player.avatar ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={player.avatar} alt="" draggable={false} style={avatarImageStyle(player)} />
+              ) : (
+                <b>{playerDisplayName(player).slice(0, 2).toUpperCase()}</b>
+              )}
             </span>
-          ) : null}
-          {player.injured ? (
-            <span className="token-injury" title="Jugador lesionado" aria-label="Jugador lesionado">
-              <HospitalLogo />
-            </span>
-          ) : null}
-          <span className="pitch-card-score">{Math.round(scoreForPlayer(player) * 10)}</span>
-          <span className="pitch-card-position">{positionShort(player)}</span>
-          <span className="pitch-card-photo">
-            {player.avatar ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={player.avatar} alt="" draggable={false} style={avatarImageStyle(player)} />
-            ) : (
-              <b>{playerDisplayName(player).slice(0, 2).toUpperCase()}</b>
-            )}
-          </span>
-          <strong>{playerDisplayName(player).split(" ")[0]}</strong>
-        </button>
-      ))}
+            <strong>{playerDisplayName(player).split(" ")[0]}</strong>
+          </button>
+        );
+      })}
     </div>
   );
 }
