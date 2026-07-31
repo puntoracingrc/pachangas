@@ -1,6 +1,7 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { LegalFooter } from "./legal-data";
+import { PwaRuntime } from "./pwa-runtime";
 import "./globals.css";
 
 const themePreferenceScript = `
@@ -31,6 +32,7 @@ export const metadata: Metadata = {
   title: "Pachangas IQ",
   description: "Organiza pachangas, confirma jugadores y equilibra equipos con historial.",
   applicationName: "Pachangas IQ",
+  manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
@@ -45,7 +47,21 @@ export const metadata: Metadata = {
     shortcut: "/favicon-32.png",
     apple: "/apple-touch-icon.png",
   },
-  manifest: "/manifest.webmanifest",
+  other: {
+    "mobile-web-app-capable": "yes",
+    "msapplication-TileColor": "#116149",
+  },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  colorScheme: "light dark",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#116149" },
+    { media: "(prefers-color-scheme: dark)", color: "#0b1210" },
+  ],
 };
 
 export default function RootLayout({
@@ -59,6 +75,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <script dangerouslySetInnerHTML={{ __html: themePreferenceScript }} />
+        <PwaRuntime />
         {children}
         <LegalFooter />
       </body>

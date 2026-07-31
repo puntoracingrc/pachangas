@@ -150,6 +150,9 @@ test("keeps the project wired to the Pachangas app", async () => {
     googlePlacesClient,
     marketPage,
     weatherRoute,
+    manifest,
+    pwaRuntime,
+    serviceWorker,
   ] = await Promise.all([
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
@@ -167,6 +170,9 @@ test("keeps the project wired to the Pachangas app", async () => {
     readFile(new URL("../app/googlePlacesClient.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/mercado/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/api/weather/route.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/manifest.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/pwa-runtime.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../public/sw.js", import.meta.url), "utf8"),
   ]);
 
   assert.match(page, /join_pachanga_team/);
@@ -825,6 +831,23 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(globalsCss, /\.legal-footer/);
   assert.match(globalsCss, /\.legal-page-panel/);
   assert.match(layout, /appleWebApp/);
+  assert.match(layout, /viewportFit:\s*"cover"/);
+  assert.match(layout, /PwaRuntime/);
+  assert.match(manifest, /display:\s*"standalone"/);
+  assert.match(manifest, /orientation:\s*"any"/);
+  assert.match(manifest, /purpose:\s*"maskable"/);
+  assert.match(manifest, /shortcuts/);
+  assert.match(manifest, /\/\?mobile=partido/);
+  assert.match(manifest, /\/mercado/);
+  assert.match(manifest, /\/\?mobile=equipo/);
+  assert.match(pwaRuntime, /serviceWorker\.register\("\/sw\.js", \{ scope: "\/" \}\)/);
+  assert.match(pwaRuntime, /dataDisplayMode|dataset\.displayMode/);
+  assert.match(serviceWorker, /CACHE_NAME = "pachangas-iq-pwa-v1"/);
+  assert.match(serviceWorker, /CACHEABLE_NAVIGATION_PATHS/);
+  assert.match(serviceWorker, /!url\.search/);
+  assert.match(serviceWorker, /request\.mode === "navigate"/);
+  assert.match(serviceWorker, /pathname\.startsWith\("\/api\/"\)/);
+  assert.match(serviceWorker, /pathname\.startsWith\("\/auth\/"\)/);
   assert.match(packageJson, /"@supabase\/supabase-js"/);
   assert.match(packageJson, /"stripe"/);
   assert.match(supabaseClient, /NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY/);
