@@ -3096,8 +3096,13 @@ export default function Home() {
     if (requestedTab === "perfil") {
       lockMobileNavigationTab("perfil");
       setActiveMobileTab("perfil");
+      if (managerLandscape) {
+        setProfilePane("ficha");
+        setSelectedPlayerId(ownPlayer?.id ?? selectedPlayerId ?? players[0]?.id ?? "");
+      }
       setMobileAccountOpen(!managerLandscape);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- mobile entry is intentionally handled once from the initial URL.
   }, []);
 
   useEffect(() => {
@@ -4181,6 +4186,8 @@ export default function Home() {
     if (tabId === "perfil") {
       if (managerLandscape) {
         setMobileAccountOpen(false);
+        setProfilePane("ficha");
+        setSelectedPlayerId(ownPlayer?.id ?? selectedPlayerId ?? players[0]?.id ?? "");
         return;
       }
       setMobileAccountOpen(true);

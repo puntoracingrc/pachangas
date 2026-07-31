@@ -9959,6 +9959,606 @@ select:disabled {
     grid-template-columns: repeat(2, minmax(220px, 1fr));
   }
 
+  main[data-mobile-tab="inicio"] {
+    align-content: stretch;
+    display: grid;
+    gap: 8px;
+    grid-template-columns: minmax(230px, 0.72fr) minmax(0, 1.28fr);
+    grid-template-rows: minmax(0, 1fr);
+    overflow: hidden;
+    padding: 48px 8px 8px;
+  }
+
+  main[data-mobile-tab="inicio"] > .hero {
+    align-content: center;
+    align-self: start;
+    background: rgba(18, 29, 24, 0.94);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 8px;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    grid-column: 1;
+    margin: 0;
+    min-height: 0;
+    overflow: hidden;
+    padding: 8px 10px;
+  }
+
+  main[data-mobile-tab="inicio"] .hero-action-stack {
+    display: none;
+  }
+
+  main[data-mobile-tab="inicio"] .hero h1 {
+    font-size: 28px;
+    line-height: 1;
+    max-width: 100%;
+  }
+
+  main[data-mobile-tab="inicio"] .hero-copy {
+    display: -webkit-box;
+    font-size: 11px;
+    line-height: 1.2;
+    max-width: 100%;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+
+  main[data-mobile-tab="inicio"] > .top-panel,
+  main[data-mobile-tab="inicio"] > .demo-banner,
+  main[data-mobile-tab="inicio"] > .shared-link-gate {
+    align-self: start;
+    grid-column: 1;
+    margin: 0;
+    max-height: 148px;
+    min-height: 0;
+    overflow: auto;
+    padding: 8px;
+    scrollbar-width: thin;
+  }
+
+  main[data-mobile-tab="inicio"] > .demo-banner {
+    align-items: center;
+    grid-template-columns: minmax(0, 1fr);
+    max-height: 96px;
+  }
+
+  main[data-mobile-tab="inicio"] > .demo-banner p {
+    display: none;
+  }
+
+  main[data-mobile-tab="inicio"] > .demo-banner button {
+    font-size: 11px;
+    min-height: 28px;
+    padding: 0 10px;
+  }
+
+  main[data-mobile-tab="inicio"] > .team-access-panel {
+    grid-template-columns: minmax(0, 1fr) minmax(58px, auto) minmax(58px, auto);
+  }
+
+  main[data-mobile-tab="inicio"] .team-access-meta,
+  main[data-mobile-tab="inicio"] .team-access-current,
+  main[data-mobile-tab="inicio"] .team-invite-link {
+    gap: 3px;
+    min-height: 42px;
+    padding: 6px 8px;
+  }
+
+  main[data-mobile-tab="inicio"] .team-access-current span,
+  main[data-mobile-tab="inicio"] .team-access-meta span,
+  main[data-mobile-tab="inicio"] .team-invite-link span {
+    font-size: 9px;
+    line-height: 1;
+  }
+
+  main[data-mobile-tab="inicio"] .team-access-meta strong,
+  main[data-mobile-tab="inicio"] .team-access-current strong {
+    font-size: 13px;
+    line-height: 1.05;
+  }
+
+  main[data-mobile-tab="inicio"] .team-access-current select {
+    height: 24px;
+    min-height: 24px;
+  }
+
+  main[data-mobile-tab="inicio"] .team-invite-link,
+  main[data-mobile-tab="inicio"] .team-access-level,
+  main[data-mobile-tab="inicio"] .team-delete-button,
+  main[data-mobile-tab="inicio"] .sync-status {
+    display: none;
+  }
+
+  main[data-mobile-tab="inicio"] > .app-shell {
+    grid-column: 2;
+    grid-row: 1 / span 6;
+    height: 100%;
+    min-height: 0;
+    padding: 0;
+  }
+
+  main[data-mobile-tab="inicio"] > .app-shell > .match-list {
+    align-content: start;
+    display: grid;
+    gap: 6px;
+    grid-template-columns: minmax(172px, 0.74fr) minmax(0, 1.26fr);
+    grid-template-rows: auto minmax(0, 1fr);
+    max-height: 100%;
+    overflow: hidden;
+    padding: 8px;
+  }
+
+  main[data-mobile-tab="inicio"] .match-list > .panel-title {
+    grid-column: 1 / -1;
+    margin: 0;
+    min-height: 28px;
+    padding-bottom: 6px;
+  }
+
+  main[data-mobile-tab="inicio"] .match-row {
+    grid-column: 1;
+    min-width: 0;
+  }
+
+  main[data-mobile-tab="inicio"] .match-item {
+    min-height: 38px;
+    padding: 7px 8px;
+  }
+
+  main[data-mobile-tab="inicio"] .match-item span {
+    font-size: 12px;
+  }
+
+  main[data-mobile-tab="inicio"] .match-item small {
+    font-size: 10px;
+  }
+
+  main[data-mobile-tab="inicio"] .side-history {
+    grid-column: 2;
+    grid-row: 2 / span 12;
+    min-height: 0;
+    overflow: auto;
+    padding-right: 2px;
+    scrollbar-width: thin;
+  }
+
+  main[data-mobile-tab="inicio"] .history-item {
+    gap: 5px;
+    grid-template-columns: minmax(0, 1fr) auto;
+    min-height: 38px;
+    padding: 7px 8px;
+  }
+
+  main[data-mobile-tab="inicio"] .history-item small {
+    font-size: 10px;
+    line-height: 1.1;
+  }
+
+  main[data-mobile-tab="equipo"] .teams-panel {
+    grid-template-columns: minmax(176px, 0.62fr) minmax(178px, 0.69fr) minmax(178px, 0.69fr);
+    grid-template-rows: auto auto minmax(0, 1fr);
+    height: calc(100dvh - 56px);
+    overflow: hidden;
+    padding: 8px;
+  }
+
+  main[data-mobile-tab="equipo"] .teams-panel > .panel-title {
+    margin: 0;
+    min-height: 30px;
+    padding-bottom: 6px;
+  }
+
+  main[data-mobile-tab="equipo"] .teams-panel > .balance-summary {
+    grid-row: 2;
+    margin: 0;
+  }
+
+  main[data-mobile-tab="equipo"] .teams-panel > .match-pitch {
+    align-self: center;
+    grid-row: 3;
+    width: min(100%, 29vh, 210px);
+  }
+
+  main[data-mobile-tab="equipo"] .teams-panel > .team {
+    align-self: stretch;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+    margin: 0;
+    min-height: 0;
+    overflow: auto;
+    scrollbar-width: thin;
+  }
+
+  main[data-mobile-tab="equipo"] .team h2 {
+    font-size: 12px;
+    line-height: 1;
+    padding: 8px 9px;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+  }
+
+  main[data-mobile-tab="equipo"] .team > div,
+  main[data-mobile-tab="equipo"] .team > p {
+    gap: 6px;
+    grid-template-columns: minmax(0, 1fr) max-content;
+    padding: 7px 8px;
+  }
+
+  main[data-mobile-tab="equipo"] .team-player-name {
+    font-size: 12px;
+    line-height: 1;
+  }
+
+  main[data-mobile-tab="equipo"] .team-player-meta,
+  main[data-mobile-tab="equipo"] .team .position-pill {
+    font-size: 9px;
+    line-height: 1;
+  }
+
+  main[data-mobile-tab="perfil"] > .bottom-grid {
+    height: calc(100dvh - 56px);
+    margin: 8px;
+  }
+
+  main[data-mobile-tab="perfil"] > .bottom-grid > .player-profile,
+  main[data-mobile-tab="perfil"] > .bottom-grid > #ranking {
+    overflow: hidden;
+  }
+
+  main[data-mobile-tab="perfil"] .player-profile {
+    display: grid;
+    gap: 8px;
+    grid-template-columns: minmax(116px, 0.44fr) minmax(160px, 0.54fr) minmax(0, 1.34fr);
+    grid-template-rows: auto minmax(0, 1fr);
+    padding: 8px;
+  }
+
+  main[data-mobile-tab="perfil"] .player-profile > .panel-title {
+    grid-column: 1 / -1;
+    margin: 0;
+    min-height: 30px;
+    padding-bottom: 6px;
+  }
+
+  main[data-mobile-tab="perfil"] .profile-title-actions {
+    gap: 5px;
+  }
+
+  main[data-mobile-tab="perfil"] .profile-title-actions small,
+  main[data-mobile-tab="perfil"] .profile-close-button {
+    display: none;
+  }
+
+  main[data-mobile-tab="perfil"] .profile-top {
+    align-content: start;
+    display: grid;
+    gap: 7px;
+    grid-column: 1 / 3;
+    grid-row: 2;
+    grid-template-columns: minmax(104px, 0.44fr) minmax(0, 0.56fr);
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  main[data-mobile-tab="perfil"] .profile-top > .fifa-card-shell {
+    grid-column: 1;
+    min-width: 0;
+  }
+
+  main[data-mobile-tab="perfil"] .profile-top > div:last-child {
+    align-content: start;
+    display: grid;
+    gap: 5px;
+    grid-column: 2;
+    max-height: 100%;
+    min-width: 0;
+    overflow: auto;
+    padding-right: 2px;
+    scrollbar-width: thin;
+  }
+
+  main[data-mobile-tab="perfil"] .profile-top input,
+  main[data-mobile-tab="perfil"] .profile-top select,
+  main[data-mobile-tab="perfil"] .profile-position-row,
+  main[data-mobile-tab="perfil"] .profile-save-area {
+    min-height: 26px;
+  }
+
+  main[data-mobile-tab="perfil"] .profile-top input,
+  main[data-mobile-tab="perfil"] .profile-top select {
+    font-size: 11px;
+    height: 26px;
+    padding: 0 7px;
+  }
+
+  main[data-mobile-tab="perfil"] .birthdate-row {
+    gap: 5px;
+    grid-template-columns: minmax(0, 1fr) 48px;
+  }
+
+  main[data-mobile-tab="perfil"] .age-pill {
+    min-height: 36px;
+    padding: 4px 5px;
+  }
+
+  main[data-mobile-tab="perfil"] .fifa-card-shell {
+    display: grid;
+    gap: 5px;
+    justify-items: center;
+    min-height: 0;
+  }
+
+  main[data-mobile-tab="perfil"] .fifa-player-card {
+    max-width: 112px;
+    min-height: 154px;
+    width: 100%;
+  }
+
+  main[data-mobile-tab="perfil"] .avatar-actions {
+    gap: 4px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    width: 100%;
+  }
+
+  main[data-mobile-tab="perfil"] .avatar-action-button,
+  main[data-mobile-tab="perfil"] .profile-save-button,
+  main[data-mobile-tab="perfil"] .theme-preference-button {
+    font-size: 10px;
+    min-height: 26px;
+    padding: 0 7px;
+  }
+
+  main[data-mobile-tab="perfil"] .theme-preference-panel {
+    gap: 4px;
+    padding: 6px;
+  }
+
+  main[data-mobile-tab="perfil"] .theme-preference-panel > span {
+    font-size: 9px;
+    line-height: 1;
+  }
+
+  main[data-mobile-tab="perfil"] .theme-preference-options {
+    gap: 4px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    padding: 3px;
+  }
+
+  main[data-mobile-tab="perfil"] .theme-preference-options button {
+    font-size: 9px;
+    min-height: 24px;
+    padding: 0 4px;
+  }
+
+  main[data-mobile-tab="perfil"] .avatar-prompt-help,
+  main[data-mobile-tab="perfil"] .avatar-message,
+  main[data-mobile-tab="perfil"] .camera-panel {
+    display: none;
+  }
+
+  main[data-mobile-tab="perfil"] .profile-fields {
+    align-content: start;
+    display: grid;
+    gap: 8px;
+    grid-column: 3;
+    grid-row: 2;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    min-height: 0;
+    overflow: auto;
+    padding-right: 2px;
+    scrollbar-width: thin;
+  }
+
+  main[data-mobile-tab="perfil"] .market-profile-box,
+  main[data-mobile-tab="perfil"] .rating-box {
+    grid-column: 1 / -1;
+  }
+
+  main[data-mobile-tab="perfil"] .market-profile-fields {
+    gap: 7px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  main[data-mobile-tab="perfil"] .market-availability-builder,
+  main[data-mobile-tab="perfil"] .market-bio-field,
+  main[data-mobile-tab="perfil"] .market-intent-options {
+    grid-column: auto;
+  }
+
+  main[data-mobile-tab="perfil"] .market-profile-box,
+  main[data-mobile-tab="perfil"] .rating-box,
+  main[data-mobile-tab="perfil"] .toggle-field,
+  main[data-mobile-tab="perfil"] .profile-position-row,
+  main[data-mobile-tab="perfil"] .profile-save-area {
+    background: rgba(245, 242, 232, 0.07);
+    border-color: rgba(255, 255, 255, 0.12);
+    color: #f5f2e8;
+  }
+
+  main[data-mobile-tab="perfil"] .rating-summary-grid {
+    gap: 6px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  main[data-mobile-tab="perfil"] .rating-summary-card,
+  main[data-mobile-tab="perfil"] .form-state-card {
+    min-height: 58px;
+    padding: 7px;
+  }
+
+  main[data-mobile-tab="perfil"] .facet-grid {
+    gap: 5px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  main[data-mobile-tab="perfil"] .facet-field {
+    min-height: 30px;
+    padding: 5px 6px;
+  }
+
+  main[data-mobile-tab="perfil"] .rating-help,
+  main[data-mobile-tab="perfil"] .assessment-followup small {
+    font-size: 10px;
+    line-height: 1.2;
+  }
+
+  main[data-mobile-tab="perfil"] .rating-evolution {
+    max-height: 136px;
+    overflow: hidden;
+  }
+
+  main[data-mobile-tab="perfil"] > .bottom-grid[data-profile-pane="ranking"] #ranking {
+    display: grid;
+    gap: 8px;
+    grid-template-rows: auto auto minmax(0, 1fr);
+    padding: 8px;
+  }
+
+  main[data-mobile-tab="perfil"] > .bottom-grid.without-profile #ranking {
+    display: grid;
+    gap: 8px;
+    grid-template-rows: auto auto minmax(0, 1fr);
+    padding: 8px;
+  }
+
+  main[data-mobile-tab="perfil"] .ranking-toolbar {
+    gap: 7px;
+    grid-template-columns: minmax(110px, auto) minmax(0, 1fr);
+  }
+
+  main[data-mobile-tab="perfil"] .ranking-card-grid {
+    grid-template-columns: repeat(4, minmax(150px, 1fr));
+    min-height: 0;
+    overflow: auto;
+    padding-right: 2px;
+    scrollbar-width: thin;
+  }
+
+  main[data-mobile-tab="mercado"] > .market-admin-panel {
+    display: grid;
+    grid-template-rows: auto auto minmax(0, 1fr) auto;
+    overflow: hidden;
+  }
+
+  main[data-mobile-tab="mercado"] .market-admin-header p {
+    display: none;
+  }
+
+  main[data-mobile-tab="mercado"] .market-admin-options {
+    align-items: end;
+    grid-template-columns: 76px 72px 72px repeat(2, minmax(108px, auto));
+  }
+
+  main[data-mobile-tab="mercado"] .market-admin-options .public-position-options {
+    max-height: 60px;
+    overflow: auto;
+    scrollbar-width: thin;
+  }
+
+  main[data-mobile-tab="mercado"] .market-admin-actions {
+    align-items: center;
+    display: flex !important;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .market-page {
+    background:
+      linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px) 0 0 / 48px 100%,
+      linear-gradient(135deg, #071116 0%, #11231d 52%, #171224 100%) !important;
+    color: #f5f2e8;
+    display: grid;
+    gap: 8px;
+    grid-template-rows: auto auto auto minmax(0, 1fr);
+    height: 100dvh;
+    overflow: hidden;
+    padding: 48px 8px 8px;
+  }
+
+  .market-page .market-titlebar,
+  .market-page .market-filters,
+  .market-page .market-tabs,
+  .market-page .market-player,
+  .market-page .market-open-match,
+  .market-page .market-context-panel {
+    background: rgba(18, 29, 24, 0.94);
+    border-color: rgba(255, 255, 255, 0.12);
+    color: #f5f2e8;
+  }
+
+  .market-page .market-titlebar {
+    margin: 0;
+    min-height: 36px;
+    padding: 7px 9px;
+  }
+
+  .market-page .market-titlebar h1 {
+    font-size: 20px;
+    line-height: 1;
+  }
+
+  .market-page .market-filters {
+    gap: 7px;
+    grid-template-columns: minmax(160px, 1.2fr) repeat(3, minmax(98px, 0.6fr));
+    padding: 8px;
+  }
+
+  .market-page .market-filters label {
+    font-size: 9px;
+    line-height: 1;
+  }
+
+  .market-page .market-filters input,
+  .market-page .market-filters select {
+    background: rgba(245, 242, 232, 0.08);
+    border-color: rgba(255, 255, 255, 0.16);
+    color: #f5f2e8;
+    font-size: 11px;
+    height: 28px;
+    min-height: 28px;
+  }
+
+  .market-page .market-grid {
+    gap: 8px;
+    grid-template-columns: repeat(3, minmax(210px, 1fr));
+    min-height: 0;
+    overflow: auto;
+    padding-right: 2px;
+    scrollbar-width: thin;
+  }
+
+  .market-page .market-player {
+    align-items: center;
+    gap: 8px;
+    grid-template-columns: 84px minmax(0, 1fr);
+    padding: 8px;
+  }
+
+  .market-page .market-player-card {
+    max-width: 84px;
+    min-height: 118px;
+  }
+
+  .market-page .market-player-info {
+    gap: 4px;
+  }
+
+  .market-page .market-player-info strong,
+  .market-page .market-player-info small,
+  .market-page .market-player-info p {
+    display: -webkit-box;
+    line-height: 1.15;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 1;
+  }
+
+  .market-page .market-tags {
+    max-height: 22px;
+    overflow: hidden;
+  }
+
   .mobile-account-sheet {
     top: 64px;
     right: 10px;

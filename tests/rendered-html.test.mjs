@@ -221,6 +221,7 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /function openRankingPanel/);
   assert.match(page, /function openMarketConfiguration/);
   assert.match(page, /if \(tabId === "mercado"\) \{\s*if \(canUseAdminControls\) return;/);
+  assert.match(page, /if \(requestedTab === "perfil"\) \{[\s\S]*setProfilePane\("ficha"\);[\s\S]*setSelectedPlayerId\(ownPlayer\?\.id \?\? selectedPlayerId \?\? players\[0\]\?\.id \?\? ""\)/);
   assert.match(page, /complete_pachanga_player_initial_assessment/);
   assert.match(page, /complete_pachanga_player_advanced_assessment/);
   assert.match(page, /Este test crea tu ficha real y solo se puede completar una vez por usuario/);
@@ -444,6 +445,10 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(globalsCss, /\.market-scout-card-compact/);
   assert.match(globalsCss, /\.market-admin-panel/);
   assert.match(globalsCss, /main\[data-mobile-tab="mercado"\] > \.app-shell/);
+  assert.match(globalsCss, /main\[data-mobile-tab="inicio"\]\s*\{[\s\S]*grid-template-columns:\s*minmax\(230px,\s*0\.72fr\) minmax\(0,\s*1\.28fr\)/);
+  assert.match(globalsCss, /main\[data-mobile-tab="equipo"\] \.teams-panel\s*\{[\s\S]*grid-template-columns:\s*minmax\(176px,\s*0\.62fr\)/);
+  assert.match(globalsCss, /main\[data-mobile-tab="perfil"\] \.player-profile\s*\{[\s\S]*grid-template-columns:\s*minmax\(116px,\s*0\.44fr\)/);
+  assert.match(globalsCss, /\.market-page\s*\{[\s\S]*grid-template-rows:\s*auto auto auto minmax\(0,\s*1fr\)/);
   assert.match(globalsCss, /\.team-photo-card/);
   assert.match(globalsCss, /\.history-item\.has-photo/);
   assert.match(globalsCss, /\.google-signin-button/);
