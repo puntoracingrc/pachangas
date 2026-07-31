@@ -210,6 +210,10 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /Solo owner/);
   assert.match(page, /Da o quita permisos de admin/);
   assert.match(page, /openOwnPlayerProfile/);
+  assert.match(page, /complete_pachanga_player_initial_assessment/);
+  assert.match(page, /complete_pachanga_player_advanced_assessment/);
+  assert.match(page, /Este test crea tu ficha real y solo se puede completar una vez por usuario/);
+  assert.match(page, /Mejorar precisión de mi ficha/);
   assert.match(page, /openCreatePlayerProfile/);
   assert.match(page, /runCreateAction\(\(\) => void openCreatePlayerProfile\(\)\)/);
   assert.match(page, /showQuickForm\("venue"\)/);
@@ -605,7 +609,9 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /function profilePatchFor/);
   assert.match(page, /function ownPlayerFromCommit/);
   assert.match(page, /Creando ficha/);
-  assert.match(page, /Asignando ficha/);
+  assert.match(page, /Crear ficha con test/);
+  assert.match(page, /complete_pachanga_player_initial_assessment/);
+  assert.match(page, /complete_pachanga_player_advanced_assessment/);
   assert.match(page, /patch_pachanga_match_player_status/);
   assert.match(page, /patch_pachanga_match_player_paid/);
   assert.match(page, /patch_pachanga_match_scorers/);
@@ -634,6 +640,16 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(supabaseSql, /selected_match \? 'scoreA'/);
   assert.match(supabaseSql, /create or replace function public\.patch_pachanga_match_scorers/);
   assert.match(supabaseSql, /create table if not exists public\.pachanga_player_profiles/);
+  assert.match(supabaseSql, /assessment_summary jsonb not null default '\{\}'::jsonb/);
+  assert.match(supabaseSql, /create table if not exists public\.pachanga_player_assessments/);
+  assert.match(supabaseSql, /unique index if not exists pachanga_player_assessments_user_kind_idx/);
+  assert.match(supabaseSql, /create or replace function public\.complete_pachanga_player_initial_assessment/);
+  assert.match(supabaseSql, /create or replace function public\.complete_pachanga_player_advanced_assessment/);
+  assert.match(supabaseSql, /Complete the initial player assessment before creating a new profile/);
+  assert.match(supabaseSql, /create table if not exists public\.pachanga_player_assessments/);
+  assert.match(supabaseSql, /pachanga_player_assessments_user_kind_idx/);
+  assert.match(supabaseSql, /Initial player assessment already completed/);
+  assert.match(supabaseSql, /Complete the initial player assessment before creating a new profile/);
   assert.match(supabaseSql, /create unique index if not exists pachanga_player_profiles_user_id_idx/);
   assert.match(supabaseSql, /Users can read own universal player profile/);
   assert.match(supabaseSql, /player_profile_id uuid references public\.pachanga_player_profiles/);
@@ -644,6 +660,8 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /globalPlayerProfileId/);
   assert.match(page, /Tu ficha universal/);
   assert.match(supabaseSql, /create or replace function public\.upsert_pachanga_own_player_profile/);
+  assert.match(supabaseSql, /create or replace function public\.complete_pachanga_player_initial_assessment/);
+  assert.match(supabaseSql, /create or replace function public\.complete_pachanga_player_advanced_assessment/);
   assert.match(supabaseSql, /Only group members can create a player profile/);
   assert.match(supabaseSql, /This player profile already belongs to another user/);
   assert.match(supabaseSql, /grant execute on function public\.upsert_pachanga_own_player_profile/);

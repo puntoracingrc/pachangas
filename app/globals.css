@@ -1470,6 +1470,173 @@ h1 {
   min-height: 38px;
 }
 
+.player-assessment-panel {
+  align-items: stretch;
+  background: #eef8df;
+  border-color: #b9df8a;
+  display: grid;
+  gap: 18px;
+  grid-template-columns: minmax(190px, 260px) minmax(0, 1fr);
+}
+
+.player-assessment-preview {
+  align-content: center;
+  display: grid;
+  justify-items: center;
+}
+
+.player-assessment-preview .fifa-player-card {
+  cursor: default;
+  max-width: 210px;
+  min-height: 292px;
+}
+
+.player-assessment-flow {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+}
+
+.player-assessment-title {
+  align-items: start;
+  display: grid;
+  gap: 4px 12px;
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.player-assessment-title span {
+  color: #467312;
+  display: block;
+  font-size: 12px;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.player-assessment-title strong {
+  display: block;
+  font-size: 22px;
+  line-height: 1.05;
+}
+
+.player-assessment-title button {
+  align-items: center;
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid #b9df8a;
+  border-radius: 50%;
+  color: var(--foreground);
+  display: inline-flex;
+  font-size: 22px;
+  font-weight: 900;
+  height: 38px;
+  justify-content: center;
+  line-height: 1;
+  width: 38px;
+}
+
+.player-assessment-progress {
+  align-items: center;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.player-assessment-progress progress {
+  accent-color: #75a919;
+  height: 10px;
+  width: 100%;
+}
+
+.player-assessment-progress small,
+.player-assessment-message,
+.player-assessment-empty {
+  color: var(--ink-soft);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.player-assessment-intro,
+.player-assessment-step,
+.player-assessment-question {
+  display: grid;
+  gap: 12px;
+}
+
+.player-assessment-intro p,
+.player-assessment-question p {
+  color: var(--ink-soft);
+  line-height: 1.45;
+  margin: 0;
+}
+
+.player-assessment-step > span,
+.player-assessment-question > span {
+  color: #467312;
+  font-size: 12px;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.player-assessment-step h3,
+.player-assessment-question h3 {
+  font-size: 20px;
+  line-height: 1.15;
+  margin: 0;
+}
+
+.player-assessment-choice-grid {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+}
+
+.player-assessment-choice-grid.compact {
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+}
+
+.player-assessment-choice-grid button {
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid #cfe5ad;
+  border-radius: 8px;
+  color: var(--foreground);
+  font-size: 13px;
+  font-weight: 900;
+  min-height: 48px;
+  padding: 10px;
+  text-align: left;
+}
+
+.player-assessment-choice-grid button.selected {
+  background: #dff2c1;
+  border-color: #75a919;
+  box-shadow: inset 0 0 0 1px #75a919;
+}
+
+.player-assessment-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.assessment-followup {
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+}
+
+.assessment-followup button {
+  justify-self: start;
+}
+
+.assessment-followup small {
+  color: var(--ink-soft);
+  font-size: 12px;
+  font-weight: 800;
+}
+
 .mobile-tabbar {
   display: none;
 }
@@ -6762,6 +6929,32 @@ select:disabled {
     padding-bottom: 132px;
   }
 
+  .player-assessment-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .player-assessment-preview .fifa-player-card {
+    max-width: 178px;
+    min-height: 248px;
+  }
+
+  .player-assessment-title strong {
+    font-size: 20px;
+  }
+
+  .player-assessment-choice-grid,
+  .player-assessment-choice-grid.compact {
+    grid-template-columns: 1fr;
+  }
+
+  .player-assessment-actions {
+    justify-content: stretch;
+  }
+
+  .player-assessment-actions button {
+    flex: 1 1 140px;
+  }
+
   .hero {
     align-items: stretch;
     display: grid;
@@ -7895,6 +8088,7 @@ select:disabled {
 :root[data-theme="dark"] .team-access-meta strong,
 :root[data-theme="dark"] .demo-banner strong,
 :root[data-theme="dark"] .shared-link-gate strong,
+:root[data-theme="dark"] .player-assessment-title strong,
 :root[data-theme="dark"] .market-info-panel strong,
 :root[data-theme="dark"] .market-context-panel strong,
 :root[data-theme="dark"] .market-player-info strong,
@@ -7933,7 +8127,8 @@ select:disabled {
 :root[data-theme="dark"] .profile-position-row,
 :root[data-theme="dark"] .color-select,
 :root[data-theme="dark"] .create-menu-panel,
-:root[data-theme="dark"] .profile-import-options {
+:root[data-theme="dark"] .profile-import-options,
+:root[data-theme="dark"] .player-assessment-panel {
   background: var(--panel);
   border-color: var(--line);
   color: var(--foreground);
@@ -7949,6 +8144,9 @@ select:disabled {
 :root[data-theme="dark"] .team-access-meta strong,
 :root[data-theme="dark"] .profile-import-selected,
 :root[data-theme="dark"] .profile-claim,
+:root[data-theme="dark"] .player-assessment-title button,
+:root[data-theme="dark"] .player-assessment-choice-grid button,
+:root[data-theme="dark"] .assessment-followup,
 :root[data-theme="dark"] .lineup-actions button,
 :root[data-theme="dark"] .status-buttons button,
 :root[data-theme="dark"] .paid-button,
@@ -7976,6 +8174,18 @@ select:disabled {
   background: #18251f;
   border-color: var(--line);
   color: var(--foreground);
+}
+
+:root[data-theme="dark"] .player-assessment-title span,
+:root[data-theme="dark"] .player-assessment-step > span,
+:root[data-theme="dark"] .player-assessment-question > span {
+  color: #a6d96b;
+}
+
+:root[data-theme="dark"] .player-assessment-choice-grid button.selected {
+  background: rgba(117, 169, 25, 0.24);
+  border-color: #a6d96b;
+  box-shadow: inset 0 0 0 1px #a6d96b;
 }
 
 :root[data-theme="dark"] input,
