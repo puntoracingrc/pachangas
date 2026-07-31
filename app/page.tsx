@@ -3,6 +3,30 @@
 import { type CSSProperties, type FormEvent, Fragment, type PointerEvent as ReactPointerEvent, useEffect, useMemo, useRef, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { attachVenueAutocomplete, type VenuePlace } from "./googlePlacesClient";
+import {
+  ADVANCED_TEST_VERSION,
+  ATTRIBUTE_KEYS,
+  FOOTBALL_RATING_ENGINE_VERSION,
+  FREQUENCIES,
+  INITIAL_TECHNICAL_QUESTIONS,
+  INITIAL_TEST_VERSION,
+  POSITION_LABELS,
+  RESPONSE_OPTIONS,
+  calculateAdvancedRatings,
+  calculateApplicableAdvancedQuestions,
+  calculateInitialRatings,
+  roundRating,
+  type AdvancedQuestion,
+  type AnswerValue,
+  type AttributeKey,
+  type AttributeRatings,
+  type FootballMode,
+  type FrequencyId,
+  type InitialRatingInput,
+  type InitialRatingResult,
+  type InitialTechnicalQuestionId,
+  type PlayerPosition as AssessmentPosition,
+} from "./laboratorio-ficha-jugador/_engine/player-rating-engine";
 import { MobileAppNav, type MobileAppTab } from "./mobile-app-nav";
 import { supabase } from "./supabaseClient";
 import { ThemeToggle } from "./theme-toggle";
@@ -58,6 +82,7 @@ type RatingVote = {
   voterId: string;
   voterName?: string;
   ratingRole?: RatingRole;
+  source?: "advancedAssessment" | "initialAssessment";
   matchCount: number;
   createdAt: string;
   facets: Record<RatingFacet, number>;
@@ -105,6 +130,7 @@ type Player = {
   id: string;
   globalPlayerProfileId?: string;
   ownerUserId?: string;
+  assessmentSummary?: PlayerAssessmentSummary;
   name: string;
   avatar?: string;
   avatarOffsetX?: number;
@@ -135,6 +161,34 @@ type Player = {
   appearances: number;
   wins: number;
   lateCancels: number;
+};
+
+type PlayerAssessmentKind = "advanced" | "initial";
+
+type PlayerAssessmentSummaryItem = {
+  completedAt?: string;
+  engineVersion?: string;
+  facets?: Partial<Record<RatingFacet, number>>;
+  primaryPosition?: AssessmentPosition;
+  questionnaireVersion?: string;
+  rating?: number;
+  reliability?: number;
+};
+
+type PlayerAssessmentSummary = {
+  advanced?: PlayerAssessmentSummaryItem;
+  initial?: PlayerAssessmentSummaryItem;
+};
+
+type PlayerAssessmentFlow = {
+  advancedAnswers: Record<string, AnswerValue>;
+  advancedStep: number;
+  idempotencyKey: string;
+  initial: InitialRatingInput;
+  initialStep: number;
+  kind: PlayerAssessmentKind;
+  saving: boolean;
+  targetPlayerId: string;
 };
 
 type RatingTrend = {
@@ -852,6 +906,137 @@ const ratingFacetColors: Record<RatingFacet, string> = {
   fisico: "#d97706",
 };
 
+const assessmentModeOptions: Array<{ label: string; mode: FootballMode }> = [
+  { mode: "futsal_5", label: "Fútbol sala" },
+  { mode: "football_7", label: "Fútbol 7" },
+  { mode: "football_11", label: "Fútbol 11" },
+];
+
+const assessmentExperienceOptions: Array<{ id: InitialRatingInput["experienceLevel"]; label: string }> = [
+  { id: "barely_played", label: "Estoy empezando" },
+  { id: "occasional_pachangas", label: "Pachangas ocasionales" },
+  { id: "regular_pachangas", label: "Pachangas habituales" },
+  { id: "social_league", label: "Liga social o amateur" },
+  { id: "federated_club", label: "Club federado" },
+  { id: "national_semipro", label: "Semipro o superior" },
+];
+
+const assessmentYearsSinceLevelOptions = [
+  { value: 0, label: "Juego ahora" },
+  { value: 2, label: "Hace 1-2 años" },
+  { value: 5, label: "Hace 3-5 años" },
+  { value: 10, label: "Hace 6-10 años" },
+  { value: 15, label: "Hace más de 10 años" },
+];
+
+const assessmentInitialAnswerOptions: Record<InitialTechnicalQuestionId, Array<{ label: string; value: Exclude<AnswerValue, null> }>> = {
+  controlUnderPressure: [
+    { value: 1, label: "La pierdo a menudo" },
+    { value: 2, label: "Solo con tiempo" },
+    { value: 3, label: "Normal en mis partidos" },
+    { value: 4, label: "Controlo bajo presión" },
+    { value: 5, label: "Destaco controlando" },
+  ],
+  ballCarrying: [
+    { value: 1, label: "Me cuesta conducir" },
+    { value: 2, label: "Solo con espacio" },
+    { value: 3, label: "Normal en mis partidos" },
+    { value: 4, label: "Salgo bien conduciendo" },
+    { value: 5, label: "Desbordo con facilidad" },
+  ],
+  passingExecution: [
+    { value: 1, label: "Fallo muchos pases" },
+    { value: 2, label: "Pases fáciles" },
+    { value: 3, label: "Normal en mis partidos" },
+    { value: 4, label: "Paso bien con presión" },
+    { value: 5, label: "Creo juego con pases" },
+  ],
+  decisionMaking: [
+    { value: 1, label: "Me precipito" },
+    { value: 2, label: "Decido bien con tiempo" },
+    { value: 3, label: "Normal en mis partidos" },
+    { value: 4, label: "Decido rápido y bien" },
+    { value: 5, label: "Leo muy bien el juego" },
+  ],
+  finishing: [
+    { value: 1, label: "Casi no genero peligro" },
+    { value: 2, label: "Solo ocasiones claras" },
+    { value: 3, label: "Normal en mis partidos" },
+    { value: 4, label: "Suelo crear peligro" },
+    { value: 5, label: "Marco diferencias arriba" },
+  ],
+  attackingMovement: [
+    { value: 1, label: "Me cuesta ofrecerme" },
+    { value: 2, label: "Me muevo poco" },
+    { value: 3, label: "Normal en mis partidos" },
+    { value: 4, label: "Me desmarco bien" },
+    { value: 5, label: "Siempre doy opción" },
+  ],
+  defensivePositioning: [
+    { value: 1, label: "Pierdo la posición" },
+    { value: 2, label: "Defiendo a ratos" },
+    { value: 3, label: "Normal en mis partidos" },
+    { value: 4, label: "Me coloco bien" },
+    { value: 5, label: "Anticipo y recupero" },
+  ],
+  defensiveDuels: [
+    { value: 1, label: "Me superan fácil" },
+    { value: 2, label: "Me cuesta frenar" },
+    { value: 3, label: "Normal en mis partidos" },
+    { value: 4, label: "Gano bastantes duelos" },
+    { value: 5, label: "Soy muy difícil de superar" },
+  ],
+  paceComparison: [
+    { value: 1, label: "Soy de los más lentos" },
+    { value: 2, label: "Me cuesta ganar carreras" },
+    { value: 3, label: "Normal en mis partidos" },
+    { value: 4, label: "Soy bastante rápido" },
+    { value: 5, label: "Soy de los más rápidos" },
+  ],
+  physicalIntensity: [
+    { value: 1, label: "Me falta intensidad" },
+    { value: 2, label: "Me cuesta aguantar" },
+    { value: 3, label: "Normal en mis partidos" },
+    { value: 4, label: "Aguanto bien" },
+    { value: 5, label: "Destaco físicamente" },
+  ],
+};
+
+const assessmentInitialQuestionGroups: Array<{ questionIds: InitialTechnicalQuestionId[]; subtitle: string; title: string }> = [
+  { title: "Control", subtitle: "Recepción bajo presión", questionIds: ["controlUnderPressure"] },
+  { title: "Conducción", subtitle: "Giro, conducción y regate", questionIds: ["ballCarrying"] },
+  { title: "Pase", subtitle: "Ejecución con presión", questionIds: ["passingExecution"] },
+  { title: "Decisión", subtitle: "Elegir antes de que cierre el rival", questionIds: ["decisionMaking"] },
+  { title: "Finalización", subtitle: "Ocasiones favorables", questionIds: ["finishing"] },
+  { title: "Movimiento", subtitle: "Recibir y crear espacio", questionIds: ["attackingMovement"] },
+  { title: "Defensa", subtitle: "Posición, anticipación y recuperación", questionIds: ["defensivePositioning"] },
+  { title: "Duelos", subtitle: "Frenar al rival", questionIds: ["defensiveDuels"] },
+  { title: "Ritmo", subtitle: "Aceleraciones y carreras", questionIds: ["paceComparison"] },
+  { title: "Físico", subtitle: "Intensidad durante el partido", questionIds: ["physicalIntensity"] },
+];
+
+const assessmentInitialStepCount = 5 + assessmentInitialQuestionGroups.length;
+const emptyAssessmentAnswers = Object.fromEntries(INITIAL_TECHNICAL_QUESTIONS.map((question) => [question.id, null])) as Record<InitialTechnicalQuestionId, AnswerValue>;
+
+const assessmentAttributeFacetMap: Record<AttributeKey, RatingFacet> = {
+  pace: "ritmo",
+  shooting: "tiro",
+  passing: "pase",
+  dribbling: "regate",
+  defending: "defensa",
+  physical: "fisico",
+};
+
+const assessmentPositionToAppPosition: Record<AssessmentPosition, PlayerPosition> = {
+  centre_back: "Defensa central",
+  full_back: "Lateral derecho",
+  defensive_midfielder: "Pivote defensivo",
+  central_midfielder: "Mediocentro / pivote",
+  attacking_midfielder: "Mediapunta",
+  winger: "Extremo derecho",
+  striker: "Delantero / punta",
+};
+
 const ratingChart = {
   bottom: 118,
   height: 134,
@@ -1025,6 +1210,189 @@ function teamLevelScore(teamPlayers: Player[]) {
 
 function clampRating(value: number) {
   return Math.max(1, Math.min(10, Number.isFinite(value) ? value : 5));
+}
+
+function assessmentModeFromKind(kind: MatchKind): FootballMode {
+  if (kind === "sala") return "futsal_5";
+  if (kind === "futbol11") return "football_11";
+  return "football_7";
+}
+
+function assessmentModeSharesFromKind(kind: MatchKind) {
+  const activeMode = assessmentModeFromKind(kind);
+  return assessmentModeOptions.map(({ mode }) => ({ mode, percentage: mode === activeMode ? 100 : 0 }));
+}
+
+function assessmentSelectedModes(modeShares: InitialRatingInput["modeShares"]) {
+  return modeShares.filter((share) => share.percentage > 0).map((share) => share.mode);
+}
+
+function assessmentSharesFromSelectedModes(modes: FootballMode[]) {
+  if (modes.length === 0) {
+    return assessmentModeOptions.map(({ mode }) => ({ mode, percentage: 0 }));
+  }
+  const base = Math.floor(100 / modes.length);
+  let remainder = 100 - base * modes.length;
+  return assessmentModeOptions.map(({ mode }) => {
+    const active = modes.includes(mode);
+    const extra = active && remainder > 0 ? 1 : 0;
+    if (extra) remainder -= 1;
+    return { mode, percentage: active ? base + extra : 0 };
+  });
+}
+
+function assessmentPositionFromPlayer(player: Player | undefined, kind: MatchKind): AssessmentPosition {
+  if (!player) {
+    if (kind === "sala") return "winger";
+    return "central_midfielder";
+  }
+  const position = player.goalkeeperOnly ? rememberedOutfieldPosition(player, kind) : player.position;
+  const line = positionMeta(position).line;
+  if (line === "Defensa") {
+    return position.includes("Lateral") || position === "Carrilero" ? "full_back" : "centre_back";
+  }
+  if (line === "Ataque") return "striker";
+  if (position === "Pivote defensivo" || position === "Cierre") return "defensive_midfielder";
+  if (position === "Mediapunta") return "attacking_midfielder";
+  if (position.includes("Ala") || position.includes("Extremo")) return "winger";
+  return "central_midfielder";
+}
+
+function makeAssessmentInitialInput(kind: MatchKind, player?: Player): InitialRatingInput {
+  return {
+    age: playerAge(player?.birthDate, dateInputValue(new Date())) ?? undefined,
+    heightCm: undefined,
+    weightKg: undefined,
+    primaryPosition: assessmentPositionFromPlayer(player, kind),
+    secondaryPositions: [],
+    modeShares: assessmentModeSharesFromKind(kind),
+    experienceLevel: "regular_pachangas",
+    yearsSinceLevel: 0,
+    frequency: "weekly",
+    answers: { ...emptyAssessmentAnswers },
+    calculatedAt: new Date().toISOString(),
+  };
+}
+
+function assessmentInitialIsComplete(initial: InitialRatingInput) {
+  const allTechnicalAnswered = INITIAL_TECHNICAL_QUESTIONS.every((question) => initial.answers[question.id] !== null);
+  const modeTotal = initial.modeShares.reduce((total, share) => total + share.percentage, 0);
+  return allTechnicalAnswered && Math.round(modeTotal * 100) / 100 === 100;
+}
+
+function assessmentInitialStepIsComplete(initial: InitialRatingInput, step: number) {
+  if (step === -1) return true;
+  if (step === 0) return Math.round(initial.modeShares.reduce((total, share) => total + share.percentage, 0) * 100) / 100 === 100;
+  if (step === 1) return Boolean(initial.primaryPosition);
+  if (step === 2) return Boolean(initial.experienceLevel);
+  if (step === 3) return initial.yearsSinceLevel >= 0;
+  if (step === 4) return Boolean(initial.frequency);
+  const group = assessmentInitialQuestionGroups[step - 5];
+  return group ? group.questionIds.every((questionId) => initial.answers[questionId] !== null) : false;
+}
+
+function assessmentFacetsFromRatings(ratings: AttributeRatings) {
+  return ATTRIBUTE_KEYS.reduce((next, attribute) => {
+    next[assessmentAttributeFacetMap[attribute]] = clampRating(ratings[attribute] / 10);
+    return next;
+  }, {} as Record<RatingFacet, number>);
+}
+
+function assessmentSummaryKindCompleted(player: Player | undefined, kind: PlayerAssessmentKind) {
+  if (!player) return false;
+  if (player.assessmentSummary?.[kind]?.completedAt) return true;
+  return (player.ratingVotes ?? []).some((vote) => vote.source === `${kind}Assessment`);
+}
+
+function normalizeAssessmentSummary(value: unknown): PlayerAssessmentSummary | undefined {
+  if (!value || typeof value !== "object") return undefined;
+  const summary = value as PlayerAssessmentSummary;
+  return {
+    ...(summary.initial ? { initial: normalizeAssessmentSummaryItem(summary.initial) } : {}),
+    ...(summary.advanced ? { advanced: normalizeAssessmentSummaryItem(summary.advanced) } : {}),
+  };
+}
+
+function normalizeAssessmentSummaryItem(value: unknown): PlayerAssessmentSummaryItem {
+  const item = value && typeof value === "object" ? value as PlayerAssessmentSummaryItem : {};
+  return {
+    completedAt: item.completedAt,
+    engineVersion: item.engineVersion,
+    facets: normalizeAssessmentFacets(item.facets),
+    primaryPosition: item.primaryPosition,
+    questionnaireVersion: item.questionnaireVersion,
+    rating: Number.isFinite(Number(item.rating)) ? clampRating(Number(item.rating)) : undefined,
+    reliability: Number.isFinite(Number(item.reliability)) ? Math.max(0, Math.min(100, Number(item.reliability))) : undefined,
+  };
+}
+
+function normalizeAssessmentFacets(value: unknown): Partial<Record<RatingFacet, number>> | undefined {
+  if (!value || typeof value !== "object") return undefined;
+  const facets = value as Partial<Record<RatingFacet, unknown>>;
+  const next: Partial<Record<RatingFacet, number>> = {};
+  for (const facet of ratingFacets) {
+    const numeric = Number(facets[facet.key]);
+    if (Number.isFinite(numeric)) next[facet.key] = clampRating(numeric);
+  }
+  return Object.keys(next).length ? next : undefined;
+}
+
+function assessmentAdvancedAnswerOptions(question: AdvancedQuestion): Array<{ label: string; value: Exclude<AnswerValue, null> }> {
+  if (question.id.startsWith("RIT") || question.targets.pace && (!question.targets.physical || question.targets.pace >= question.targets.physical)) {
+    return [
+      { value: 1, label: "Me superan casi siempre" },
+      { value: 2, label: "Me cuesta ganar ventaja" },
+      { value: 3, label: "Normal en mis partidos" },
+      { value: 4, label: "Suelo ganar ventaja" },
+      { value: 5, label: "Marco diferencias por velocidad" },
+    ];
+  }
+  if (question.id.startsWith("FIS") || question.targets.physical && (!question.targets.pace || question.targets.physical > question.targets.pace)) {
+    return [
+      { value: 1, label: "Me cuesta aguantar" },
+      { value: 2, label: "Bajo pronto el ritmo" },
+      { value: 3, label: "Normal en mis partidos" },
+      { value: 4, label: "Aguanto bien" },
+      { value: 5, label: "Destaco físicamente" },
+    ];
+  }
+  if (question.module === "shooting" || question.targets.shooting) {
+    return [
+      { value: 1, label: "Casi no genero peligro" },
+      { value: 2, label: "Solo en ocasiones claras" },
+      { value: 3, label: "Normal en mis partidos" },
+      { value: 4, label: "Suelo generar peligro" },
+      { value: 5, label: "Marco diferencias arriba" },
+    ];
+  }
+  if (question.module === "defending" || question.targets.defending && !question.targets.passing) {
+    return [
+      { value: 1, label: "Me superan fácil" },
+      { value: 2, label: "Me cuesta sostenerlo" },
+      { value: 3, label: "Normal en mis partidos" },
+      { value: 4, label: "Lo hago bastante bien" },
+      { value: 5, label: "Soy muy fiable atrás" },
+    ];
+  }
+  if (question.module === "passing" || question.targets.passing && !question.targets.dribbling) {
+    return [
+      { value: 1, label: "Fallo demasiado" },
+      { value: 2, label: "Solo si es fácil" },
+      { value: 3, label: "Normal en mis partidos" },
+      { value: 4, label: "Lo hago con seguridad" },
+      { value: 5, label: "Creo ventaja con eso" },
+    ];
+  }
+  if (question.module === "intelligence") {
+    return [
+      { value: 1, label: "Me cuesta leerlo" },
+      { value: 2, label: "Lo veo tarde" },
+      { value: 3, label: "Normal en mis partidos" },
+      { value: 4, label: "Lo leo bastante bien" },
+      { value: 5, label: "Anticipo lo que va a pasar" },
+    ];
+  }
+  return RESPONSE_OPTIONS.filter((option): option is { label: string; score: number; value: Exclude<AnswerValue, null> } => option.value !== null);
 }
 
 function clampAvatarOffset(value: unknown, fallback: number) {
@@ -1621,6 +1989,7 @@ function normalizePayload(payload?: Partial<AppPayload>): AppPayload {
 
     return {
       ...player,
+      assessmentSummary: normalizeAssessmentSummary(player.assessmentSummary),
       avatarOffsetX: player.avatar ? clampAvatarOffset(player.avatarOffsetX, 50) : undefined,
       avatarOffsetY: player.avatar ? clampAvatarOffset(player.avatarOffsetY, 0) : undefined,
       birthDate: normalizeBirthDate(player.birthDate),
@@ -1704,6 +2073,7 @@ function normalizeRatingVotes(votes?: RatingVote[]) {
         voterId: vote.voterId || "legacy",
         voterName: vote.voterName,
         ratingRole: vote.ratingRole === "field" || vote.ratingRole === "goalkeeper" ? vote.ratingRole : undefined,
+        source: vote.source === "initialAssessment" || vote.source === "advancedAssessment" ? vote.source : undefined,
         matchCount: Math.max(0, Math.floor(Number(vote.matchCount) || 0)),
         createdAt: vote.createdAt || new Date().toISOString(),
         facets,
@@ -1720,17 +2090,19 @@ function peerAverage(player: Player) {
   return player.rating;
 }
 
-function localRatingVoteCount(player: Player) {
-  return (player.ratingVotes ?? []).length + (player.ratings?.length ?? 0);
+function groupRatingVoteCount(player: Player) {
+  return (player.ratingVotes ?? []).filter((vote) => !vote.source).length + (player.ratings?.length ?? 0);
 }
 
 function hasGroupRatingData(player: Player) {
-  return localRatingVoteCount(player) > 0;
+  return groupRatingVoteCount(player) > 0;
 }
 
 function playerRatingSource(player: Player) {
-  if (player.importedRating && !hasGroupRatingData(player)) return "importada";
   if (hasGroupRatingData(player)) return "del grupo";
+  if (assessmentSummaryKindCompleted(player, "advanced")) return "test avanzado";
+  if (assessmentSummaryKindCompleted(player, "initial")) return "test inicial";
+  if (player.importedRating) return "importada";
   return "";
 }
 
@@ -2608,6 +2980,8 @@ export default function Home() {
   const [teamPhotoMessage, setTeamPhotoMessage] = useState("");
   const [profileSaveMessage, setProfileSaveMessage] = useState("");
   const [profileSaving, setProfileSaving] = useState(false);
+  const [playerAssessment, setPlayerAssessment] = useState<PlayerAssessmentFlow | null>(null);
+  const [playerAssessmentMessage, setPlayerAssessmentMessage] = useState("");
   const [matchWeather, setMatchWeather] = useState<MatchWeather | null>(null);
   const [matchWeatherMessage, setMatchWeatherMessage] = useState("");
   const [matchWeatherStatus, setMatchWeatherStatus] = useState<"error" | "idle" | "loading" | "ready" | "unavailable">("idle");
@@ -4713,6 +5087,43 @@ export default function Home() {
     : ratingWaitMatches > 0
       ? `${ratingWaitMatches === 1 ? "Falta" : "Faltan"} ${ratingWaitMatches} partido${ratingWaitMatches === 1 ? "" : "s"} para abrir votaciones`
       : "Valoraciones cerradas";
+  const playerAssessmentInitialResult = useMemo(() => {
+    if (!playerAssessment) return null;
+    try {
+      return calculateInitialRatings(playerAssessment.initial);
+    } catch {
+      return null;
+    }
+  }, [playerAssessment]);
+  const playerAssessmentApplicableAdvancedQuestions = useMemo(
+    () => playerAssessmentInitialResult ? calculateApplicableAdvancedQuestions(playerAssessmentInitialResult) : [],
+    [playerAssessmentInitialResult],
+  );
+  const playerAssessmentAdvancedStepCount = Math.max(1, playerAssessmentApplicableAdvancedQuestions.length);
+  const playerAssessmentAdvancedQuestion = playerAssessment
+    ? playerAssessmentApplicableAdvancedQuestions[Math.min(Math.max(0, playerAssessment.advancedStep), Math.max(0, playerAssessmentApplicableAdvancedQuestions.length - 1))]
+    : undefined;
+  const playerAssessmentAdvancedAnsweredCount = playerAssessmentApplicableAdvancedQuestions.filter((question) => (
+    playerAssessment?.advancedAnswers[question.id] !== undefined && playerAssessment.advancedAnswers[question.id] !== null
+  )).length;
+  const playerAssessmentAdvancedComplete =
+    playerAssessmentApplicableAdvancedQuestions.length > 0 &&
+    playerAssessmentAdvancedAnsweredCount === playerAssessmentApplicableAdvancedQuestions.length;
+  const playerAssessmentAdvancedResult = useMemo(() => {
+    if (!playerAssessmentInitialResult || !playerAssessment) return null;
+    return calculateAdvancedRatings({ initial: playerAssessmentInitialResult, answers: playerAssessment.advancedAnswers });
+  }, [playerAssessment, playerAssessmentInitialResult]);
+  const playerAssessmentPreviewRatings =
+    playerAssessment?.kind === "advanced" && playerAssessmentAdvancedResult
+      ? playerAssessmentAdvancedResult.baseRatings
+      : playerAssessmentInitialResult?.profile.baseRatings;
+  const playerAssessmentPreviewOverall =
+    playerAssessment?.kind === "advanced" && playerAssessmentAdvancedResult
+      ? playerAssessmentAdvancedResult.baseOverall
+      : playerAssessmentInitialResult?.profile.baseOverall;
+  const playerAssessmentPreviewFacets = playerAssessmentPreviewRatings
+    ? assessmentFacetsFromRatings(playerAssessmentPreviewRatings)
+    : makeFacetRatings();
 
   useEffect(() => {
     if (!selectedPlayer) return;
@@ -4801,6 +5212,7 @@ export default function Home() {
 
     return {
       globalPlayerProfileId: player.globalPlayerProfileId,
+      assessmentSummary: player.assessmentSummary,
       avatar: player.avatar,
       avatarOffsetX: player.avatar ? clampAvatarOffset(player.avatarOffsetX, 50) : undefined,
       avatarOffsetY: player.avatar ? clampAvatarOffset(player.avatarOffsetY, 0) : undefined,
@@ -5436,6 +5848,165 @@ export default function Home() {
     }
   }
 
+  function startPlayerAssessment(kind: PlayerAssessmentKind, seedPlayer?: Player) {
+    if (!hasRealTeam || !isRegisteredUser || !currentUserId) return;
+    const initial = makeAssessmentInitialInput(activeKind, seedPlayer);
+    if (kind === "advanced" && seedPlayer?.assessmentSummary?.initial?.primaryPosition) {
+      initial.primaryPosition = seedPlayer.assessmentSummary.initial.primaryPosition;
+    }
+    setPlayerAssessment({
+      advancedAnswers: {},
+      advancedStep: -1,
+      idempotencyKey: id(),
+      initial,
+      initialStep: -1,
+      kind,
+      saving: false,
+      targetPlayerId: seedPlayer?.id ?? id(),
+    });
+    setPlayerAssessmentMessage("");
+    setOpenQuickForm(null);
+    setShowImportChoices(false);
+  }
+
+  function updateAssessmentInitial(patch: Partial<InitialRatingInput>) {
+    setPlayerAssessment((current) => current ? { ...current, initial: { ...current.initial, ...patch } } : current);
+  }
+
+  function toggleAssessmentMode(mode: FootballMode) {
+    setPlayerAssessment((current) => {
+      if (!current) return current;
+      const currentModes = assessmentSelectedModes(current.initial.modeShares);
+      const nextModes = currentModes.includes(mode) ? currentModes.filter((item) => item !== mode) : [...currentModes, mode];
+      return { ...current, initial: { ...current.initial, modeShares: assessmentSharesFromSelectedModes(nextModes) } };
+    });
+  }
+
+  function updateAssessmentInitialAnswer(questionId: InitialTechnicalQuestionId, value: AnswerValue) {
+    setPlayerAssessment((current) => current ? {
+      ...current,
+      initial: { ...current.initial, answers: { ...current.initial.answers, [questionId]: value } },
+    } : current);
+  }
+
+  function updateAssessmentAdvancedAnswer(questionId: string, value: AnswerValue) {
+    setPlayerAssessment((current) => current ? { ...current, advancedAnswers: { ...current.advancedAnswers, [questionId]: value } } : current);
+  }
+
+  function setAssessmentSaving(saving: boolean) {
+    setPlayerAssessment((current) => current ? { ...current, saving } : current);
+  }
+
+  function playerFromAssessmentDraft(flow: PlayerAssessmentFlow, initialResult: InitialRatingResult) {
+    const existing = players.find((player) => player.id === flow.targetPlayerId);
+    const position = assessmentPositionToAppPosition[flow.initial.primaryPosition];
+    const name = displayName(profileName || existing?.name || authDisplayName(authUser)) || "Jugador";
+    return {
+      ...(existing ?? {}),
+      id: flow.targetPlayerId,
+      ownerUserId: currentUserId ?? undefined,
+      name,
+      phone: existing?.phone ?? "",
+      goalkeeperOnly: Boolean(existing?.goalkeeperOnly),
+      injured: Boolean(existing?.injured),
+      inactive: false,
+      rating: clampRating(initialResult.profile.baseOverall / 10),
+      ratings: [],
+      ratingVotes: [],
+      position: existing?.goalkeeperOnly ? "Portero" : position,
+      outfieldPosition: position,
+      goals: existing?.goals ?? 0,
+      assists: existing?.assists ?? 0,
+      appearances: existing?.appearances ?? 0,
+      wins: existing?.wins ?? 0,
+      lateCancels: existing?.lateCancels ?? 0,
+    } satisfies Player;
+  }
+
+  async function completeInitialPlayerAssessment() {
+    if (!playerAssessment || playerAssessment.kind !== "initial" || !playerAssessmentInitialResult) return;
+    if (!assessmentInitialIsComplete(playerAssessment.initial)) {
+      setPlayerAssessmentMessage("Completa todas las respuestas del test obligatorio.");
+      return;
+    }
+    if (!supabase || !remoteGroupId || !remoteReady || !currentUserId) {
+      setPlayerAssessmentMessage("No hay conexión con el servidor para crear la ficha.");
+      return;
+    }
+
+    const player = playerFromAssessmentDraft(playerAssessment, playerAssessmentInitialResult);
+    setAssessmentSaving(true);
+    setPlayerAssessmentMessage("Creando ficha universal...");
+    try {
+      const result = await withTimeout(
+        Promise.resolve(
+          supabase.rpc("complete_pachanga_player_initial_assessment", {
+            assessment_input: {
+              ...playerAssessment.initial,
+              engineVersion: FOOTBALL_RATING_ENGINE_VERSION,
+              questionnaireVersion: INITIAL_TEST_VERSION,
+            },
+            operation_id: playerAssessment.idempotencyKey,
+            player_patch: profilePatchFor(player),
+            target_group_id: remoteGroupId,
+            target_player_id: player.id,
+          }),
+        ),
+        16000,
+        "Test agotado",
+      );
+      if (result.error) throw new Error(result.error.message);
+      const savedPlayer = ownPlayerFromCommit(result.data as RemotePayloadCommit, player.id);
+      setPlayerAssessment(null);
+      setProfileName(playerDisplayName(savedPlayer ?? player));
+      setSelectedPlayerId(savedPlayer?.id ?? player.id);
+      setProfileSaveMessage("Ficha creada con test inicial");
+      window.setTimeout(() => setProfileSaveMessage(""), 2200);
+    } catch (error) {
+      setAssessmentSaving(false);
+      setPlayerAssessmentMessage(error instanceof Error ? error.message : "No se pudo completar el test.");
+    }
+  }
+
+  async function completeAdvancedPlayerAssessment() {
+    if (!playerAssessment || playerAssessment.kind !== "advanced" || !selectedPlayer || !playerAssessmentAdvancedComplete) return;
+    if (!supabase || !remoteGroupId || !remoteReady || !currentUserId) {
+      setPlayerAssessmentMessage("No hay conexión con el servidor para mejorar la ficha.");
+      return;
+    }
+
+    setAssessmentSaving(true);
+    setPlayerAssessmentMessage("Guardando test avanzado...");
+    try {
+      const result = await withTimeout(
+        Promise.resolve(
+          supabase.rpc("complete_pachanga_player_advanced_assessment", {
+            assessment_input: {
+              answers: playerAssessment.advancedAnswers,
+              engineVersion: FOOTBALL_RATING_ENGINE_VERSION,
+              questionnaireVersion: ADVANCED_TEST_VERSION,
+            },
+            operation_id: playerAssessment.idempotencyKey,
+            player_patch: profilePatchFor(selectedPlayer),
+            target_group_id: remoteGroupId,
+            target_player_id: selectedPlayer.id,
+          }),
+        ),
+        16000,
+        "Test avanzado agotado",
+      );
+      if (result.error) throw new Error(result.error.message);
+      const savedPlayer = ownPlayerFromCommit(result.data as RemotePayloadCommit, selectedPlayer.id);
+      setPlayerAssessment(null);
+      setSelectedPlayerId(savedPlayer?.id ?? selectedPlayer.id);
+      setProfileSaveMessage("Ficha afinada con test avanzado");
+      window.setTimeout(() => setProfileSaveMessage(""), 2200);
+    } catch (error) {
+      setAssessmentSaving(false);
+      setPlayerAssessmentMessage(error instanceof Error ? error.message : "No se pudo completar el test avanzado.");
+    }
+  }
+
   async function openOwnPlayerProfile() {
     if (ownPlayer) {
       openPlayerProfile(ownPlayer.id);
@@ -5443,56 +6014,7 @@ export default function Home() {
     }
 
     if (!hasRealTeam || !isRegisteredUser || !currentUserId) return;
-
-    const name = displayName(profileName || authDisplayName(authUser)) || "Jugador";
-    const player: Player = {
-      id: id(),
-      ownerUserId: currentUserId,
-      name,
-      phone: "",
-      goalkeeperOnly: false,
-      injured: false,
-      rating: 5,
-      ratings: [],
-      ratingVotes: [],
-      position: defaultPositionForKind(activeKind),
-      outfieldPosition: defaultPositionForKind(activeKind),
-      goals: 0,
-      assists: 0,
-      appearances: 0,
-      wins: 0,
-      lateCancels: 0,
-    };
-
-    if (supabase && remoteGroupId && remoteReady) {
-      setSyncStatus("connecting");
-      setSyncError("");
-      setProfileSaveMessage("Creando ficha universal...");
-
-      const result = await supabase.rpc("upsert_pachanga_own_player_profile", {
-        player_patch: profilePatchFor(player),
-        target_group_id: remoteGroupId,
-        target_player_id: player.id,
-      });
-
-      if (result.error) {
-        setProfileSaveMessage("No se pudo crear la ficha.");
-        markRemoteWriteError(result.error.message);
-        window.setTimeout(() => setProfileSaveMessage(""), 2600);
-        return;
-      }
-
-      const savedPlayer = ownPlayerFromCommit(result.data as RemotePayloadCommit, player.id);
-      if (savedPlayer) {
-        setSelectedPlayerId(savedPlayer.id);
-        setProfileSaveMessage("Ficha universal creada");
-        window.setTimeout(() => setProfileSaveMessage(""), 1800);
-      }
-      return;
-    }
-
-    setPlayers((current) => [...current, player]);
-    setSelectedPlayerId(player.id);
+    startPlayerAssessment("initial");
   }
 
   function ownPlayerFromImportCandidate(candidate: PlayerImportCandidate): Player | null {
@@ -5628,46 +6150,7 @@ export default function Home() {
 
   async function claimSelectedPlayer() {
     if (!selectedPlayer || selectedPlayer.ownerUserId || ownPlayer || !hasRealTeam || !isRegisteredUser || !currentUserId) return;
-
-    const nextName = displayName(profileName || selectedPlayer.name || authDisplayName(authUser));
-    const claimedPlayer = { ...selectedPlayer, ownerUserId: currentUserId, name: nextName || selectedPlayer.name };
-
-    if (supabase && remoteGroupId && remoteReady) {
-      setSyncStatus("connecting");
-      setSyncError("");
-      setProfileSaveMessage("Asignando ficha universal...");
-
-      const result = await supabase.rpc("upsert_pachanga_own_player_profile", {
-        player_patch: profilePatchFor(claimedPlayer),
-        target_group_id: remoteGroupId,
-        target_player_id: selectedPlayer.id,
-      });
-
-      if (result.error) {
-        setProfileSaveMessage("No se pudo asignar la ficha.");
-        markRemoteWriteError(result.error.message);
-        window.setTimeout(() => setProfileSaveMessage(""), 2600);
-        return;
-      }
-
-      const savedPlayer = ownPlayerFromCommit(result.data as RemotePayloadCommit, selectedPlayer.id);
-      if (savedPlayer) {
-        setSelectedPlayerId(savedPlayer.id);
-        setProfileSaveMessage("Ficha universal asignada");
-        window.setTimeout(() => setProfileSaveMessage(""), 1800);
-      }
-      if (nextName) setProfileName(nextName);
-      return;
-    }
-
-    setPlayers((current) =>
-      current.map((player) =>
-        player.id === selectedPlayer.id
-          ? { ...player, ownerUserId: currentUserId, name: nextName || player.name }
-          : player,
-      ),
-    );
-    if (nextName) setProfileName(nextName);
+    startPlayerAssessment("initial", selectedPlayer);
   }
 
   async function deleteCurrentTeam() {
@@ -6224,6 +6707,278 @@ export default function Home() {
   } as CSSProperties;
   const currentTeamName = currentTeam?.name ?? displayName(siteSettings.brand) ?? "Pachangas IQ";
 
+  function renderPlayerAssessmentPanel() {
+    if (!playerAssessment) return null;
+
+    const isInitial = playerAssessment.kind === "initial";
+    const isIntro = isInitial ? playerAssessment.initialStep === -1 : playerAssessment.advancedStep === -1;
+    const currentStep = isInitial ? playerAssessment.initialStep : playerAssessment.advancedStep;
+    const totalSteps = isInitial ? assessmentInitialStepCount : playerAssessmentAdvancedStepCount;
+    const progressValue = isIntro ? 0 : Math.min(currentStep + 1, totalSteps);
+    const previewScore = roundRating(playerAssessmentPreviewOverall ?? 50);
+    const previewPosition = assessmentPositionToAppPosition[playerAssessment.initial.primaryPosition];
+    const activeModes = assessmentSelectedModes(playerAssessment.initial.modeShares);
+    const initialTechnicalGroup = assessmentInitialQuestionGroups[playerAssessment.initialStep - 5];
+    const stepReady = isInitial
+      ? assessmentInitialStepIsComplete(playerAssessment.initial, playerAssessment.initialStep)
+      : playerAssessment.advancedStep === -1 || Boolean(playerAssessmentAdvancedQuestion && playerAssessment.advancedAnswers[playerAssessmentAdvancedQuestion.id] !== null && playerAssessment.advancedAnswers[playerAssessmentAdvancedQuestion.id] !== undefined);
+
+    return (
+      <section className="top-panel player-assessment-panel" aria-label={isInitial ? "Test obligatorio de ficha" : "Test avanzado de ficha"}>
+        <div className="player-assessment-preview">
+          <div className={`fifa-player-card readonly-card ${cardTierClass(previewScore / 10)}`}>
+            <span className="fifa-score">{previewScore}</span>
+            <span className="fifa-position">{positionMeta(previewPosition).short}</span>
+            <span className="fifa-photo">
+              <b>+</b>
+            </span>
+            <strong>{displayName(profileName || authDisplayName(authUser)) || "Jugador"}</strong>
+            <span className="fifa-card-meta">
+              {isInitial ? "Test inicial" : "Test avanzado"} · {positionMeta(previewPosition).label}
+            </span>
+            <div className="fifa-facets">
+              {ratingFacets.map((facet) => (
+                <span key={facet.key}>
+                  <b>{overallScore(playerAssessmentPreviewFacets[facet.key] ?? 5)}</b>
+                  {facet.short}
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+        <div className="player-assessment-flow">
+          <div className="player-assessment-title">
+            <span>{isInitial ? "Test obligatorio" : "Test avanzado"}</span>
+            <strong>{isInitial ? "Crea tu ficha inicial" : "Afina tu ficha"}</strong>
+            <button type="button" onClick={() => setPlayerAssessment(null)} aria-label="Cerrar test" disabled={playerAssessment.saving}>
+              ×
+            </button>
+          </div>
+          <div className="player-assessment-progress">
+            <progress max={totalSteps} value={progressValue} />
+            <small>{isIntro ? "Aviso inicial" : `Paso ${progressValue}/${totalSteps}`}</small>
+          </div>
+
+          {isIntro ? (
+            <div className="player-assessment-intro">
+              <p>
+                Este test crea tu ficha real y solo se puede completar una vez por usuario. Responde con el nivel más fiel posible: después la media subirá o bajará con partidos y valoraciones de otros jugadores.
+              </p>
+              <p>
+                Si sales antes de terminar, no se guarda ningún resultado incompleto ni se borra tu ficha actual.
+              </p>
+              <button
+                className="primary-button"
+                type="button"
+                onClick={() =>
+                  setPlayerAssessment((current) => current ? {
+                    ...current,
+                    advancedStep: isInitial ? current.advancedStep : 0,
+                    initialStep: isInitial ? 0 : current.initialStep,
+                  } : current)
+                }
+              >
+                {isInitial ? "Empezar test" : "Empezar test avanzado"}
+              </button>
+            </div>
+          ) : null}
+
+          {isInitial && playerAssessment.initialStep === 0 ? (
+            <div className="player-assessment-step">
+              <h3>¿A qué juegas normalmente?</h3>
+              <div className="player-assessment-choice-grid">
+                {assessmentModeOptions.map((option) => (
+                  <button
+                    className={activeModes.includes(option.mode) ? "selected" : ""}
+                    key={option.mode}
+                    type="button"
+                    aria-pressed={activeModes.includes(option.mode)}
+                    onClick={() => toggleAssessmentMode(option.mode)}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
+          {isInitial && playerAssessment.initialStep === 1 ? (
+            <div className="player-assessment-step">
+              <h3>Posición en el campo</h3>
+              <div className="player-assessment-choice-grid">
+                {Object.entries(POSITION_LABELS).map(([position, label]) => (
+                  <button
+                    className={playerAssessment.initial.primaryPosition === position ? "selected" : ""}
+                    key={position}
+                    type="button"
+                    onClick={() => updateAssessmentInitial({ primaryPosition: position as AssessmentPosition, secondaryPositions: [] })}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
+          {isInitial && playerAssessment.initialStep === 2 ? (
+            <div className="player-assessment-step">
+              <h3>¿Cuál es o ha sido tu nivel más alto?</h3>
+              <div className="player-assessment-choice-grid">
+                {assessmentExperienceOptions.map((option) => (
+                  <button
+                    className={playerAssessment.initial.experienceLevel === option.id ? "selected" : ""}
+                    key={option.id}
+                    type="button"
+                    onClick={() => updateAssessmentInitial({ experienceLevel: option.id })}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
+          {isInitial && playerAssessment.initialStep === 3 ? (
+            <div className="player-assessment-step">
+              <h3>¿Cuándo jugabas a ese nivel?</h3>
+              <div className="player-assessment-choice-grid compact">
+                {assessmentYearsSinceLevelOptions.map((option) => (
+                  <button
+                    className={playerAssessment.initial.yearsSinceLevel === option.value ? "selected" : ""}
+                    key={option.value}
+                    type="button"
+                    onClick={() => updateAssessmentInitial({ yearsSinceLevel: option.value })}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
+          {isInitial && playerAssessment.initialStep === 4 ? (
+            <div className="player-assessment-step">
+              <h3>¿Con qué frecuencia juegas o entrenas?</h3>
+              <div className="player-assessment-choice-grid">
+                {Object.entries(FREQUENCIES).map(([frequencyId, frequency]) => (
+                  <button
+                    className={playerAssessment.initial.frequency === frequencyId ? "selected" : ""}
+                    key={frequencyId}
+                    type="button"
+                    onClick={() => updateAssessmentInitial({ frequency: frequencyId as FrequencyId })}
+                  >
+                    {frequency.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
+          {isInitial && initialTechnicalGroup ? (
+            <div className="player-assessment-step">
+              <span>{initialTechnicalGroup.subtitle}</span>
+              <h3>{initialTechnicalGroup.title}</h3>
+              {initialTechnicalGroup.questionIds.map((questionId) => {
+                const question = INITIAL_TECHNICAL_QUESTIONS.find((item) => item.id === questionId);
+                if (!question) return null;
+                return (
+                  <div className="player-assessment-question" key={question.id}>
+                    <p>{question.prompt}</p>
+                    <div className="player-assessment-choice-grid">
+                      {assessmentInitialAnswerOptions[question.id].map((option) => (
+                        <button
+                          className={playerAssessment.initial.answers[question.id] === option.value ? "selected" : ""}
+                          key={option.value}
+                          type="button"
+                          onClick={() => updateAssessmentInitialAnswer(question.id, option.value)}
+                        >
+                          {option.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : null}
+
+          {!isInitial && !isIntro ? (
+            <div className="player-assessment-step">
+              {playerAssessmentAdvancedQuestion ? (
+                <div className="player-assessment-question">
+                  <span>{playerAssessmentAdvancedQuestion.id}</span>
+                  <h3>{playerAssessmentAdvancedQuestion.prompt}</h3>
+                  <div className="player-assessment-choice-grid">
+                    {assessmentAdvancedAnswerOptions(playerAssessmentAdvancedQuestion).map((option) => (
+                      <button
+                        className={playerAssessment.advancedAnswers[playerAssessmentAdvancedQuestion.id] === option.value ? "selected" : ""}
+                        key={option.value}
+                        type="button"
+                        onClick={() => updateAssessmentAdvancedAnswer(playerAssessmentAdvancedQuestion.id, option.value)}
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <p className="player-assessment-empty">No hay preguntas avanzadas disponibles para esta ficha.</p>
+              )}
+            </div>
+          ) : null}
+
+          {!isIntro ? (
+            <div className="player-assessment-actions">
+              <button
+                className="ghost-form-button"
+                type="button"
+                disabled={playerAssessment.saving || currentStep <= 0}
+                onClick={() =>
+                  setPlayerAssessment((current) => current ? {
+                    ...current,
+                    advancedStep: isInitial ? current.advancedStep : Math.max(0, current.advancedStep - 1),
+                    initialStep: isInitial ? Math.max(0, current.initialStep - 1) : current.initialStep,
+                  } : current)
+                }
+              >
+                Atrás
+              </button>
+              <button
+                className="primary-button"
+                type="button"
+                disabled={playerAssessment.saving || !stepReady}
+                onClick={() => {
+                  if (isInitial) {
+                    if (playerAssessment.initialStep >= assessmentInitialStepCount - 1) {
+                      void completeInitialPlayerAssessment();
+                    } else {
+                      setPlayerAssessment((current) => current ? { ...current, initialStep: current.initialStep + 1 } : current);
+                    }
+                    return;
+                  }
+                  if (playerAssessment.advancedStep >= playerAssessmentAdvancedStepCount - 1) {
+                    void completeAdvancedPlayerAssessment();
+                  } else {
+                    setPlayerAssessment((current) => current ? { ...current, advancedStep: current.advancedStep + 1 } : current);
+                  }
+                }}
+              >
+                {playerAssessment.saving
+                  ? "Guardando..."
+                  : isInitial && playerAssessment.initialStep >= assessmentInitialStepCount - 1
+                    ? "Crear ficha"
+                    : !isInitial && playerAssessment.advancedStep >= playerAssessmentAdvancedStepCount - 1
+                      ? "Guardar test avanzado"
+                      : "Continuar"}
+              </button>
+            </div>
+          ) : null}
+          {playerAssessmentMessage ? <small className="player-assessment-message">{playerAssessmentMessage}</small> : null}
+        </div>
+      </section>
+    );
+  }
+
   return (
     <main className="min-h-screen bg-[#f7f6f0] text-[#1d2521]" style={teamColorStyle}>
       <section className={isDemoMode ? "hero demo-hero" : "hero team-hero"} id="inicio">
@@ -6460,6 +7215,8 @@ export default function Home() {
         </section>
       ) : null}
 
+      {renderPlayerAssessmentPanel()}
+
       {showPlayerImportGate && selectedImportCandidate ? (
         <section className="top-panel shared-link-gate profile-import-gate">
           <div className="profile-import-copy">
@@ -6516,7 +7273,7 @@ export default function Home() {
               Elegir otra
             </button>
             <button className="ghost-form-button" type="button" onClick={() => void openOwnPlayerProfile()}>
-              Crear ficha nueva
+              Crear ficha con test
             </button>
           </div>
         </section>
@@ -6528,11 +7285,11 @@ export default function Home() {
             <span>Último paso</span>
             <strong>Crea tu ficha para poder marcar “Voy”.</strong>
             <p>
-              Tu ficha queda vinculada a tu cuenta. A partir de ahí solo tú y los admins podréis editar tus datos.
+              El test inicial crea la ficha vinculada a tu cuenta. A partir de ahí solo tú y los admins podréis editar tus datos.
             </p>
           </div>
           <button className="primary-button" type="button" onClick={() => void openOwnPlayerProfile()}>
-            Crear mi ficha
+            Hacer test inicial
           </button>
         </section>
       ) : null}
@@ -8012,6 +8769,17 @@ export default function Home() {
                     ) : null}
                   </div>
                   <p className="rating-help">{selectedRatingStatusText}</p>
+                  {selectedPlayerIsOwn && assessmentSummaryKindCompleted(selectedPlayer, "initial") ? (
+                    <div className="assessment-followup">
+                      {assessmentSummaryKindCompleted(selectedPlayer, "advanced") ? (
+                        <small>Test avanzado completado. La ficha seguirá evolucionando con valoraciones de compañeros.</small>
+                      ) : (
+                        <button type="button" onClick={() => startPlayerAssessment("advanced", selectedPlayer)}>
+                          Mejorar precisión de mi ficha
+                        </button>
+                      )}
+                    </div>
+                  ) : null}
                   <div className="facet-grid">
                     {selectedRatingFacets.map((facet) => (
                       <label className="facet-field" key={facet.key}>
