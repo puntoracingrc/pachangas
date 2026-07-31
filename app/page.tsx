@@ -1,6 +1,6 @@
 "use client";
 
-import { type CSSProperties, type FormEvent, Fragment, type PointerEvent as ReactPointerEvent, useEffect, useMemo, useRef, useState } from "react";
+import { type CSSProperties, type FormEvent, Fragment, type MouseEvent as ReactMouseEvent, type PointerEvent as ReactPointerEvent, useEffect, useMemo, useRef, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { attachVenueAutocomplete, type VenuePlace } from "./googlePlacesClient";
 import {
@@ -2949,6 +2949,7 @@ export default function Home() {
   const [teamGalleryOpen, setTeamGalleryOpen] = useState(false);
   const [pitchZoomOpen, setPitchZoomOpen] = useState(false);
   const [activeMobileTab, setActiveMobileTab] = useState<MobileAppTab>("inicio");
+  const [playerActionMenu, setPlayerActionMenu] = useState<{ playerId: string; x: number; y: number } | null>(null);
   const [mobileAccountOpen, setMobileAccountOpen] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [siteSettings, setSiteSettings] = useState<SiteSettings>(defaultSiteSettings);
@@ -6627,11 +6628,28 @@ export default function Home() {
     const matchCardAge = playerAge(player.birthDate, currentDateValue);
     const playerRatingWindow = ratingWindow(player, ratingVoterId);
     const canChangeThisPlayerStatus = matchConfigured && registrationOpen && (isDemoMode || canUseAdminControls || (hasRealTeam && isRegisteredUser && player.ownerUserId === currentUserId));
+    const statusLabel = status === "voy" ? "Voy" : status === "duda" ? "Duda" : status === "no" ? "No va" : "Sin marcar";
     const ratingTitle = player.ownerUserId === currentUserId
       ? "No puedes votarte a ti mismo"
       : playerRatingWindow.canRate
       ? "Valoraciones abiertas"
       : `Valoraciones cerradas: faltan ${playerRatingWindow.waitMatches} partido${playerRatingWindow.waitMatches === 1 ? "" : "s"}`;
+    const toggleActionMenu = (event: ReactMouseEvent<HTMLButtonElement>) => {
+      const triggerRect = event.currentTarget.getBoundingClientRect();
+      setPlayerActionMenu((current) => {
+        if (current?.playerId === player.id) return null;
+
+        const panelWidth = 136;
+        const panelHeight = 128;
+        const margin = 8;
+
+        return {
+          playerId: player.id,
+          x: Math.max(margin, Math.min(window.innerWidth - panelWidth - margin, triggerRect.right - panelWidth)),
+          y: Math.max(margin, Math.min(window.innerHeight - panelHeight - margin, triggerRect.bottom + 4)),
+        };
+      });
+    };
 
     return (
       <article className={`player-card ${status ? `status-${status}` : "status-sin"} ${teamClass} ${isReserve ? "reserve-card" : ""} ${isWaiting ? "waiting-card" : ""} ${player.inactive ? "inactive-card" : ""} ${playerPosition(player) === "Porteria" ? "goalkeeper-card" : ""}`} key={player.id}>
@@ -6688,6 +6706,9 @@ export default function Home() {
           ) : null}
         </div>
         <div className="player-actions">
+          <span className={`player-status-chip player-status-${status ?? "sin"}`} aria-label={`Estado: ${statusLabel}`}>
+            {statusLabel}
+          </span>
           <div className="status-buttons" aria-label={`Estado de ${playerDisplayName(player)}`}>
             <button className={status === "voy" ? "selected" : ""} disabled={!canChangeThisPlayerStatus || Boolean(player.injured || player.inactive)} onClick={() => void setStatus(player.id, "voy")}>Voy</button>
             <button className={status === "duda" ? "selected" : ""} disabled={!canChangeThisPlayerStatus || Boolean(player.inactive)} onClick={() => void setStatus(player.id, "duda")}>Duda</button>
@@ -6716,6 +6737,86 @@ export default function Home() {
             >
               $
             </button>
+          ) : null}
+          <button
+            className="player-action-menu-trigger"
+            title="Más acciones"
+            aria-label={`Más acciones de ${playerDisplayName(player)}`}
+            aria-expanded={playerActionMenu?.playerId === player.id}
+            onClick={toggleActionMenu}
+            type="button"
+          >
+            ⋮
+          </button>
+          {playerActionMenu?.playerId === player.id ? (
+            <>
+              <button className="player-action-menu-backdrop" type="button" aria-label="Cerrar acciones" onClick={() => setPlayerActionMenu(null)} />
+              <div className="player-action-menu-panel" role="menu" style={{ left: playerActionMenu.x, top: playerActionMenu.y }}>
+                <button
+                  className={status === "voy" ? "selected" : ""}
+                  disabled={!canChangeThisPlayerStatus || Boolean(player.injured || player.inactive)}
+                  onClick={() => {
+                    setPlayerActionMenu(null);
+                    void setStatus(player.id, "voy");
+                  }}
+                  role="menuitem"
+                  type="button"
+                >
+                  Voy
+                </button>
+                <button
+                  className={status === "duda" ? "selected" : ""}
+                  disabled={!canChangeThisPlayerStatus || Boolean(player.inactive)}
+                  onClick={() => {
+                    setPlayerActionMenu(null);
+                    void setStatus(player.id, "duda");
+                  }}
+                  role="menuitem"
+                  type="button"
+                >
+                  Duda
+                </button>
+                <button
+                  className={status === "no" ? "selected danger" : ""}
+                  disabled={!canChangeThisPlayerStatus || Boolean(player.inactive)}
+                  onClick={() => {
+                    setPlayerActionMenu(null);
+                    void setStatus(player.id, "no");
+                  }}
+                  role="menuitem"
+                  type="button"
+                >
+                  No voy
+                </button>
+                {status === "voy" && !isWaiting ? (
+                  <button
+                    className={matchEntry?.paid ? "selected paid" : ""}
+                    disabled={!paymentReady}
+                    onClick={() => {
+                      setPlayerActionMenu(null);
+                      void togglePaid(player.id);
+                    }}
+                    role="menuitem"
+                    type="button"
+                  >
+                    {matchEntry?.paid ? "Pagado" : "Marcar pagado"}
+                  </button>
+                ) : null}
+                {status === "voy" && team && (canUseAdminControls || isDemoMode) ? (
+                  <button
+                    disabled={lineupClosed || matchFinalized}
+                    onClick={() => {
+                      setPlayerActionMenu(null);
+                      assignPlayerTeam(player.id, nextTeam);
+                    }}
+                    role="menuitem"
+                    type="button"
+                  >
+                    {team === "A" ? "Cambiar a equipo 2" : "Cambiar a equipo 1"}
+                  </button>
+                ) : null}
+              </div>
+            </>
           ) : null}
         </div>
       </article>

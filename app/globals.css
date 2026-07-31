@@ -3807,6 +3807,13 @@ select:disabled {
   min-width: 0;
 }
 
+.player-status-chip,
+.player-action-menu-trigger,
+.player-action-menu-backdrop,
+.player-action-menu-panel {
+  display: none;
+}
+
 .team-move {
   align-items: center;
   background: rgba(255, 255, 255, 0.78);
@@ -9171,33 +9178,137 @@ select:disabled {
 
   main[data-mobile-tab="partido"] .player-actions {
     align-items: center;
+    display: flex !important;
     grid-column: auto;
-    grid-template-columns: minmax(112px, 1fr) 66px auto;
+    justify-content: flex-end;
+    gap: 4px;
+    min-width: 0;
   }
 
-  main[data-mobile-tab="partido"] .status-buttons {
-    grid-template-columns: repeat(3, minmax(34px, 1fr));
+  main[data-mobile-tab="partido"] .player-status-chip {
+    align-items: center;
+    border: 1px solid rgba(245, 242, 232, 0.16);
+    border-radius: 999px;
+    color: #f5f2e8;
+    display: inline-flex;
+    flex: 0 0 auto;
+    font-size: 10px;
+    font-weight: 950;
+    height: 24px;
+    justify-content: center;
+    line-height: 1;
+    min-width: 42px;
+    padding: 0 8px;
+    white-space: nowrap;
   }
 
-  main[data-mobile-tab="partido"] .status-buttons button,
-  main[data-mobile-tab="partido"] .team-move,
+  main[data-mobile-tab="partido"] .player-status-voy {
+    background: var(--lime);
+    border-color: #acc33b;
+    color: #203014;
+  }
+
+  main[data-mobile-tab="partido"] .player-status-duda {
+    background: #facc15;
+    border-color: #fbbf24;
+    color: #422006;
+  }
+
+  main[data-mobile-tab="partido"] .player-status-no,
+  main[data-mobile-tab="partido"] .player-status-sin {
+    background: rgba(245, 242, 232, 0.08);
+    color: #d4ddd7;
+  }
+
+  main[data-mobile-tab="partido"] .status-buttons,
+  main[data-mobile-tab="partido"] .reserve-section .status-buttons,
+  main[data-mobile-tab="partido"] .player-actions > .team-move {
+    display: none !important;
+  }
+
   main[data-mobile-tab="partido"] .paid-button {
     font-size: 10px;
+    height: 24px;
     min-height: 24px;
     padding: 0 6px;
+    width: 24px;
   }
 
-  main[data-mobile-tab="partido"] .team-move {
-    min-width: 66px;
-    width: 66px;
+  main[data-mobile-tab="partido"] .player-action-menu-trigger {
+    align-items: center;
+    background: rgba(245, 242, 232, 0.08);
+    border: 1px solid rgba(245, 242, 232, 0.16);
+    border-radius: 50%;
+    color: #f5f2e8;
+    cursor: pointer;
+    display: inline-flex;
+    font-size: 17px;
+    font-weight: 950;
+    height: 24px;
+    justify-content: center;
+    line-height: 1;
+    padding: 0 0 2px;
+    width: 24px;
   }
 
-  main[data-mobile-tab="partido"] .team-move-label {
-    display: inline-block;
-    max-width: 44px;
-    overflow: hidden;
-    text-overflow: ellipsis;
+  main[data-mobile-tab="partido"] .player-action-menu-backdrop {
+    background: transparent;
+    border: 0;
+    display: block;
+    inset: 0;
+    padding: 0;
+    position: fixed;
+    z-index: 119;
+  }
+
+  main[data-mobile-tab="partido"] .player-action-menu-panel {
+    background: rgba(8, 16, 22, 0.97);
+    border: 1px solid rgba(245, 242, 232, 0.16);
+    border-radius: 8px;
+    box-shadow: 0 16px 34px rgba(0, 0, 0, 0.34);
+    display: grid;
+    gap: 1px;
+    min-width: 136px;
+    padding: 5px;
+    position: fixed;
+    z-index: 120;
+  }
+
+  main[data-mobile-tab="partido"] .player-action-menu-panel button {
+    align-items: center;
+    background: transparent;
+    border: 0;
+    border-radius: 6px;
+    color: #f5f2e8;
+    display: flex;
+    font-size: 10px;
+    font-weight: 850;
+    justify-content: flex-start;
+    min-height: 22px;
+    padding: 0 9px;
+    text-align: left;
     white-space: nowrap;
+  }
+
+  main[data-mobile-tab="partido"] .player-action-menu-panel button:hover:not(:disabled),
+  main[data-mobile-tab="partido"] .player-action-menu-panel button:focus-visible,
+  main[data-mobile-tab="partido"] .player-action-menu-panel button.selected {
+    background: rgba(200, 239, 93, 0.14);
+    color: var(--lime);
+  }
+
+  main[data-mobile-tab="partido"] .player-action-menu-panel button.danger,
+  main[data-mobile-tab="partido"] .player-action-menu-panel button.selected.danger {
+    color: #ffc2b6;
+  }
+
+  main[data-mobile-tab="partido"] .player-action-menu-panel button.paid {
+    color: #86efac;
+  }
+
+  main[data-mobile-tab="partido"] .player-action-menu-panel button:disabled {
+    cursor: not-allowed;
+    opacity: 0.42;
   }
 
   main[data-mobile-tab="equipo"] .teams-panel {
