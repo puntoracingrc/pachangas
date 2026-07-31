@@ -364,7 +364,8 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /className="history-month"/);
   assert.match(page, /joinedAtLabel/);
   assert.match(page, /Voy desde/);
-  assert.match(page, /perderás tu posición/);
+  assert.match(page, /perderá su posición/);
+  assert.match(page, /Movimiento de plaza/);
   assert.match(page, /className="fifa-photo-action" title=\{selectedAvatarPreview \? "Cambiar foto" : "Añadir foto"\}/);
   assert.match(page, /playerPhotoPromptForChatGpt/);
   assert.match(page, /Crea un retrato profesional desde los hombros hacia arriba/);
@@ -441,6 +442,8 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(globalsCss, /\.mobile-account-backdrop/);
   assert.match(globalsCss, /\.mobile-account-header/);
   assert.match(globalsCss, /\.player-actions \.team-move-label/);
+  assert.match(globalsCss, /\.status-confirm-backdrop/);
+  assert.match(globalsCss, /\.status-confirm-dialog/);
   assert.match(globalsCss, /overflow-x:\s*hidden/);
   assert.match(page, /Grupo de Pachangas/);
   assert.match(page, /groupOptionLabel/);
@@ -459,6 +462,10 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /Inscripción pendiente/);
   assert.match(page, /Se abrirá cuando pase/);
   assert.match(page, /showPlayerSwitcher\s*=\s*Boolean\(canUseAdminControls\s*&&\s*selectedPlayer\s*&&\s*!selectedPlayerIsOwn/);
+  assert.match(page, /statusConfirmation/);
+  assert.match(page, /status-confirm-dialog/);
+  assert.match(page, /skipLeaveConfirmation/);
+  assert.match(page, /Mantener plaza/);
   assert.match(page, /profile-player-switcher/);
   assert.match(page, /function scrollToPlayerProfile/);
   assert.match(page, /function openTeamGallery/);

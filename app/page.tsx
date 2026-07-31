@@ -233,6 +233,11 @@ type MatchPlayer = {
   paid?: boolean;
 };
 
+type PendingStatusChange = {
+  nextStatus: MatchPlayer["status"];
+  playerId: string;
+};
+
 type OpenMatchRequestStatus = "accepted" | "cancelled" | "pending" | "rejected";
 
 type PublicMatchRequest = {
@@ -2973,6 +2978,7 @@ export default function Home() {
   const [pitchZoomOpen, setPitchZoomOpen] = useState(false);
   const [activeMobileTab, setActiveMobileTab] = useState<MobileAppTab>("inicio");
   const [playerActionMenu, setPlayerActionMenu] = useState<{ playerId: string; x: number; y: number } | null>(null);
+  const [statusConfirmation, setStatusConfirmation] = useState<PendingStatusChange | null>(null);
   const [mobileAccountOpen, setMobileAccountOpen] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [siteSettings, setSiteSettings] = useState<SiteSettings>(defaultSiteSettings);
@@ -4295,7 +4301,7 @@ export default function Home() {
     scrollToPanel(matchPanelRef);
   }
 
-  async function setStatus(playerId: string, status: MatchPlayer["status"]) {
+  async function setStatus(playerId: string, status: MatchPlayer["status"], options?: { skipLeaveConfirmation?: boolean }) {
     const player = players.find((item) => item.id === playerId);
     const canChangeStatus = matchConfigured && registrationOpen && canEditPlayerOwnedFields({
       canUseAdminControls,
@@ -4309,9 +4315,10 @@ export default function Home() {
     if (matchFinalized && !canUseAdminControls) return;
     if (status === "voy" && (player?.injured || player?.inactive)) return;
     const existing = activeMatch.players.find((entry) => entry.playerId === playerId);
-    if (existing?.status === "voy" && status !== "voy") {
-      const confirmed = window.confirm("Si cambias de “Voy”, perderás tu posición. Si hay reservas, el primero ocupará tu plaza. ¿Continuar?");
-      if (!confirmed) return;
+    if (existing?.status === "voy" && status !== "voy" && !options?.skipLeaveConfirmation) {
+      setPlayerActionMenu(null);
+      setStatusConfirmation({ nextStatus: status, playerId });
+      return;
     }
 
     if (supabase && remoteGroupId && hasRealTeam) {
@@ -4368,6 +4375,18 @@ export default function Home() {
         ),
       );
     }
+  }
+
+  function closeStatusConfirmation() {
+    setStatusConfirmation(null);
+  }
+
+  function confirmStatusChange() {
+    const pending = statusConfirmation;
+    if (!pending) return;
+
+    setStatusConfirmation(null);
+    void setStatus(pending.playerId, pending.nextStatus, { skipLeaveConfirmation: true });
   }
 
   function setPlayerInjured(playerId: string, injured: boolean) {
@@ -6932,6 +6951,10 @@ export default function Home() {
     "--team-b-muted": `color-mix(in srgb, ${siteSettings.teamBColor} 38%, white)`,
   } as CSSProperties;
   const currentTeamName = currentTeam?.name ?? displayName(siteSettings.brand) ?? "Pachangas IQ";
+  const statusConfirmationPlayer = statusConfirmation ? players.find((player) => player.id === statusConfirmation.playerId) : undefined;
+  const statusConfirmationPlayerName = statusConfirmationPlayer ? playerDisplayName(statusConfirmationPlayer) : "este jugador";
+  const statusConfirmationTargetLabel = statusConfirmation?.nextStatus === "duda" ? "Duda" : "No voy";
+  const statusConfirmationActionLabel = statusConfirmation?.nextStatus === "duda" ? "Pasar a duda" : "Confirmar baja";
 
   function renderPlayerAssessmentPanel() {
     if (!playerAssessment) return null;
@@ -9148,6 +9171,41 @@ export default function Home() {
           </div>
         </div>
       </section>
+      {statusConfirmation ? (
+        <div
+          className="status-confirm-backdrop"
+          role="presentation"
+          onMouseDown={(event) => {
+            if (event.currentTarget === event.target) closeStatusConfirmation();
+          }}
+        >
+          <section
+            className="status-confirm-dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="status-confirm-title"
+            aria-describedby="status-confirm-copy"
+          >
+            <span>Movimiento de plaza</span>
+            <h2 id="status-confirm-title">¿Cambiar asistencia?</h2>
+            <p id="status-confirm-copy">
+              Si {statusConfirmationPlayerName} deja de ir, perderá su posición. Si hay reservas, el primero ocupará su plaza.
+            </p>
+            <div className="status-confirm-summary">
+              <small>Nuevo estado</small>
+              <strong>{statusConfirmationTargetLabel}</strong>
+            </div>
+            <div className="status-confirm-actions">
+              <button className="status-confirm-cancel" type="button" onClick={closeStatusConfirmation}>
+                Mantener plaza
+              </button>
+              <button className="status-confirm-accept" type="button" onClick={confirmStatusChange}>
+                {statusConfirmationActionLabel}
+              </button>
+            </div>
+          </section>
+        </div>
+      ) : null}
       {!needsLoginForSharedLink && mobileAccountOpen ? (
         <>
           <button

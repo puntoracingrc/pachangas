@@ -4098,6 +4098,112 @@ select:disabled {
   padding: 0 14px;
 }
 
+.status-confirm-backdrop {
+  align-items: center;
+  background: rgba(8, 16, 14, 0.68);
+  backdrop-filter: blur(8px);
+  display: flex;
+  inset: 0;
+  justify-content: center;
+  padding: max(18px, env(safe-area-inset-top)) max(18px, env(safe-area-inset-right)) max(18px, env(safe-area-inset-bottom)) max(18px, env(safe-area-inset-left));
+  position: fixed;
+  z-index: 132;
+}
+
+.status-confirm-dialog {
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--green) 9%, transparent), transparent 52%),
+    var(--panel);
+  border: 1px solid color-mix(in srgb, var(--green) 34%, var(--line));
+  border-radius: 8px;
+  box-shadow: 0 24px 80px rgba(8, 16, 14, 0.34);
+  color: var(--foreground);
+  display: grid;
+  gap: 12px;
+  max-width: 430px;
+  padding: 18px;
+  width: min(92vw, 430px);
+}
+
+.status-confirm-dialog > span {
+  color: var(--green);
+  font-size: 11px;
+  font-weight: 950;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.status-confirm-dialog h2 {
+  color: var(--foreground);
+  font-size: 24px;
+  line-height: 1.05;
+  margin: 0;
+}
+
+.status-confirm-dialog p {
+  color: var(--ink-soft);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.4;
+  margin: 0;
+}
+
+.status-confirm-summary {
+  align-items: center;
+  background: color-mix(in srgb, var(--green) 9%, transparent);
+  border: 1px solid color-mix(in srgb, var(--green) 24%, var(--line));
+  border-radius: 8px;
+  display: flex;
+  justify-content: space-between;
+  min-height: 44px;
+  padding: 8px 12px;
+}
+
+.status-confirm-summary small {
+  color: var(--ink-soft);
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.status-confirm-summary strong {
+  color: var(--foreground);
+  font-size: 16px;
+  font-weight: 950;
+}
+
+.status-confirm-actions {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+
+.status-confirm-actions button {
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 950;
+  min-height: 44px;
+  padding: 0 14px;
+}
+
+.status-confirm-cancel {
+  background: transparent;
+  border: 1px solid var(--line);
+  color: var(--foreground);
+}
+
+.status-confirm-accept {
+  background: #9f435d;
+  border: 1px solid #9f435d;
+  color: #fff;
+}
+
+.status-confirm-actions button:hover,
+.status-confirm-actions button:focus-visible {
+  transform: translateY(-1px);
+}
+
 .pitch-modal-pitch-wrap {
   display: flex;
   justify-content: center;
@@ -6979,6 +7085,16 @@ select:disabled {
     padding-bottom: 132px;
   }
 
+  .status-confirm-backdrop {
+    align-items: flex-end;
+    padding: 14px 14px calc(14px + env(safe-area-inset-bottom));
+  }
+
+  .status-confirm-dialog {
+    max-width: 520px;
+    width: 100%;
+  }
+
   .player-assessment-panel {
     grid-template-columns: 1fr;
   }
@@ -9309,6 +9425,37 @@ select:disabled {
   main[data-mobile-tab="partido"] .player-action-menu-panel button:disabled {
     cursor: not-allowed;
     opacity: 0.42;
+  }
+
+  .status-confirm-backdrop {
+    align-items: center;
+    padding: 10px calc(12px + env(safe-area-inset-right)) 10px calc(12px + env(safe-area-inset-left));
+  }
+
+  .status-confirm-dialog {
+    gap: 8px;
+    max-width: 420px;
+    padding: 12px;
+  }
+
+  .status-confirm-dialog h2 {
+    font-size: 19px;
+  }
+
+  .status-confirm-dialog p {
+    font-size: 12px;
+    line-height: 1.28;
+  }
+
+  .status-confirm-summary {
+    min-height: 34px;
+    padding: 5px 9px;
+  }
+
+  .status-confirm-actions button {
+    font-size: 12px;
+    min-height: 36px;
+    padding: 0 10px;
   }
 
   main[data-mobile-tab="equipo"] .teams-panel {
