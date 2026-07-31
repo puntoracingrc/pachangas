@@ -8482,8 +8482,12 @@ select:disabled {
 
   .mobile-app-nav-item {
     position: relative;
+    display: flex;
     min-width: 0;
+    width: 100%;
     min-height: 40px;
+    align-items: center;
+    justify-content: center;
     flex-direction: row;
     gap: 6px;
     padding: 0 7px;
@@ -8521,6 +8525,12 @@ select:disabled {
   .mobile-app-nav-icon svg {
     width: 16px;
     height: 16px;
+  }
+
+  .mobile-app-nav-icon {
+    display: grid;
+    flex: 0 0 16px;
+    place-items: center;
   }
 
   .mobile-app-nav-icon svg,
