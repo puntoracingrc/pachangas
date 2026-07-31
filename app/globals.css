@@ -169,7 +169,7 @@
 
   main[data-mobile-tab]:not([data-mobile-tab="perfil"]) > .billing-panel,
   main[data-mobile-tab]:not([data-mobile-tab="perfil"]) > .settings-panel,
-  main[data-mobile-tab]:not([data-mobile-tab="perfil"]) > .bottom-grid {
+  main[data-mobile-tab]:not([data-mobile-tab="perfil"]):not([data-mobile-tab="equipo"]) > .bottom-grid {
     display: none;
   }
 
@@ -177,7 +177,7 @@
     display: none;
   }
 
-  main[data-mobile-tab]:not([data-mobile-tab="equipo"]) > .team-gallery-panel {
+  main[data-mobile-tab] > .team-gallery-panel {
     display: none;
   }
 
@@ -205,8 +205,16 @@
   main[data-mobile-tab="partido"] > .app-shell,
   main[data-mobile-tab="mercado"] > .market-admin-panel,
   main[data-mobile-tab="perfil"] > .bottom-grid,
-  main[data-mobile-tab="equipo"] > .team-gallery-panel {
+  main[data-mobile-tab="equipo"] > .bottom-grid {
     margin-top: 10px;
+  }
+
+  main[data-mobile-tab="equipo"] > .bottom-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  main[data-mobile-tab="equipo"] > .bottom-grid > .player-profile {
+    display: none;
   }
 
   .mobile-account-backdrop {
@@ -7668,12 +7676,14 @@ select:disabled {
   }
 
   main[data-mobile-tab="perfil"] > .bottom-grid:not(.without-profile)[data-profile-pane="ficha"] > #ranking,
-  main[data-mobile-tab="perfil"] > .bottom-grid[data-profile-pane="ranking"] > .player-profile {
+  main[data-mobile-tab="perfil"] > .bottom-grid[data-profile-pane="ranking"] > .player-profile,
+  main[data-mobile-tab="equipo"] > .bottom-grid > .player-profile {
     display: none;
   }
 
   main[data-mobile-tab="perfil"] > .bottom-grid:not(.without-profile)[data-profile-pane="ficha"],
-  main[data-mobile-tab="perfil"] > .bottom-grid[data-profile-pane="ranking"] {
+  main[data-mobile-tab="perfil"] > .bottom-grid[data-profile-pane="ranking"],
+  main[data-mobile-tab="equipo"] > .bottom-grid {
     grid-template-columns: minmax(0, 1fr);
   }
 
@@ -8880,7 +8890,7 @@ select:disabled {
 
   main[data-mobile-tab]:not([data-mobile-tab="perfil"]) > .billing-panel,
   main[data-mobile-tab]:not([data-mobile-tab="perfil"]) > .settings-panel,
-  main[data-mobile-tab]:not([data-mobile-tab="perfil"]) > .bottom-grid {
+  main[data-mobile-tab]:not([data-mobile-tab="perfil"]):not([data-mobile-tab="equipo"]) > .bottom-grid {
     display: none;
   }
 
@@ -8888,7 +8898,7 @@ select:disabled {
     display: none;
   }
 
-  main[data-mobile-tab]:not([data-mobile-tab="equipo"]) > .team-gallery-panel {
+  main[data-mobile-tab] > .team-gallery-panel {
     display: none;
   }
 
@@ -8913,10 +8923,11 @@ select:disabled {
 
   main[data-mobile-tab="inicio"] > .app-shell > .match-list,
   main[data-mobile-tab="partido"] > .app-shell > .main-panel,
-  main[data-mobile-tab="equipo"] > .app-shell > .teams-panel {
+  main[data-mobile-tab="partido"] > .app-shell > .lineup-panel {
     display: grid;
   }
 
+  main[data-mobile-tab="equipo"] > .app-shell,
   main[data-mobile-tab="perfil"] > .app-shell {
     display: none;
   }
@@ -8985,13 +8996,14 @@ select:disabled {
   main[data-mobile-tab="perfil"] > .billing-panel,
   main[data-mobile-tab="perfil"] > .settings-panel,
   main[data-mobile-tab="mercado"] > .market-admin-panel,
-  main[data-mobile-tab="equipo"] > .team-gallery-panel {
+  main[data-mobile-tab="equipo"] > .bottom-grid {
     width: auto;
     max-width: none;
     margin: 8px;
   }
 
-  main[data-mobile-tab="perfil"] > .bottom-grid {
+  main[data-mobile-tab="perfil"] > .bottom-grid,
+  main[data-mobile-tab="equipo"] > .bottom-grid {
     display: grid;
     height: calc(100dvh - 72px);
     gap: 8px;
@@ -9017,16 +9029,14 @@ select:disabled {
   }
 
   main[data-mobile-tab="perfil"] > .bottom-grid:not(.without-profile)[data-profile-pane="ficha"] > #ranking,
-  main[data-mobile-tab="perfil"] > .bottom-grid[data-profile-pane="ranking"] > .player-profile {
+  main[data-mobile-tab="perfil"] > .bottom-grid[data-profile-pane="ranking"] > .player-profile,
+  main[data-mobile-tab="equipo"] > .bottom-grid > .player-profile {
     display: none;
   }
 
-  main[data-mobile-tab="perfil"] > .bottom-grid[data-profile-pane="ranking"] {
+  main[data-mobile-tab="perfil"] > .bottom-grid[data-profile-pane="ranking"],
+  main[data-mobile-tab="equipo"] > .bottom-grid {
     grid-template-columns: minmax(0, 1fr);
-  }
-
-  main[data-mobile-tab="equipo"] > .team-gallery-panel {
-    display: none;
   }
 
   main[data-mobile-tab] .panel,
@@ -9044,6 +9054,7 @@ select:disabled {
   main[data-mobile-tab] > .app-shell > .main-panel,
   main[data-mobile-tab] > .app-shell > .teams-panel,
   main[data-mobile-tab="perfil"] > .bottom-grid > .panel,
+  main[data-mobile-tab="equipo"] > .bottom-grid > .panel,
   main[data-mobile-tab="perfil"] > .bottom-grid > .player-profile {
     max-height: 100%;
     overflow: auto;
@@ -9862,7 +9873,11 @@ select:disabled {
     padding: 0 10px;
   }
 
-  main[data-mobile-tab="equipo"] .teams-panel {
+  main[data-mobile-tab="partido"] > .app-shell {
+    grid-template-columns: minmax(0, 1.38fr) minmax(210px, 0.62fr);
+  }
+
+  main[data-mobile-tab="partido"] .lineup-panel {
     grid-template-columns: minmax(250px, 0.82fr) repeat(2, minmax(160px, 0.59fr));
     grid-template-rows: auto auto minmax(0, 1fr) auto;
     align-content: start;
@@ -9870,53 +9885,50 @@ select:disabled {
     overflow: auto;
   }
 
-  main[data-mobile-tab="equipo"] .teams-panel > .panel-title,
-  main[data-mobile-tab="equipo"] .teams-panel > .balance-summary,
-  main[data-mobile-tab="equipo"] .teams-panel > .match-pitch {
+  main[data-mobile-tab="partido"] .lineup-panel > .panel-title,
+  main[data-mobile-tab="partido"] .lineup-panel > .balance-summary,
+  main[data-mobile-tab="partido"] .lineup-panel > .match-pitch,
+  main[data-mobile-tab="partido"] .lineup-panel > .lineup-state,
+  main[data-mobile-tab="partido"] .lineup-panel > .lineup-actions,
+  main[data-mobile-tab="partido"] .lineup-panel > .primary-button.full {
     grid-column: 1;
   }
 
-  main[data-mobile-tab="equipo"] .teams-panel > .lineup-state,
-  main[data-mobile-tab="equipo"] .teams-panel > .lineup-actions {
-    display: none !important;
-  }
-
-  main[data-mobile-tab="equipo"] .teams-panel > .team {
+  main[data-mobile-tab="partido"] .lineup-panel > .team {
     min-height: 0;
     overflow: auto;
   }
 
-  main[data-mobile-tab="equipo"] .teams-panel > .team.team-a {
+  main[data-mobile-tab="partido"] .lineup-panel > .team.team-a {
     grid-column: 2;
     grid-row: 1 / span 4;
   }
 
-  main[data-mobile-tab="equipo"] .teams-panel > .team.team-b {
+  main[data-mobile-tab="partido"] .lineup-panel > .team.team-b {
     grid-column: 3;
     grid-row: 1 / span 4;
   }
 
-  main[data-mobile-tab="equipo"] .teams-panel > .result-box,
-  main[data-mobile-tab="equipo"] .teams-panel > .primary-button.full {
-    display: none !important;
+  main[data-mobile-tab="partido"] .lineup-panel > .result-box {
+    grid-column: 1 / -1;
   }
 
-  main[data-mobile-tab="equipo"] .match-pitch {
+  main[data-mobile-tab="partido"] .lineup-panel .match-pitch {
     min-height: 0;
     margin-bottom: 0;
     width: min(100%, 29vh, 300px);
   }
 
-  main[data-mobile-tab="equipo"] .teams-panel-title {
+  main[data-mobile-tab="partido"] .lineup-panel .teams-panel-title {
     margin-bottom: 8px;
     padding-bottom: 8px;
   }
 
-  main[data-mobile-tab="equipo"] .teams-panel-title span {
+  main[data-mobile-tab="partido"] .lineup-panel .teams-panel-title span {
     font-size: 11px;
   }
 
-  main[data-mobile-tab="equipo"] .balance-summary {
+  main[data-mobile-tab="partido"] .lineup-panel .balance-summary {
     background: rgba(245, 242, 232, 0.08);
     border-color: rgba(255, 255, 255, 0.12);
     gap: 5px;
@@ -9924,11 +9936,11 @@ select:disabled {
     padding: 8px 10px;
   }
 
-  main[data-mobile-tab="equipo"] .balance-summary strong {
+  main[data-mobile-tab="partido"] .lineup-panel .balance-summary strong {
     font-size: 24px;
   }
 
-  main[data-mobile-tab="equipo"] .balance-summary small {
+  main[data-mobile-tab="partido"] .lineup-panel .balance-summary small {
     display: -webkit-box;
     line-height: 1.2;
     overflow: hidden;
@@ -9936,14 +9948,14 @@ select:disabled {
     -webkit-line-clamp: 2;
   }
 
-  main[data-mobile-tab="equipo"] .balance-summary span,
-  main[data-mobile-tab="equipo"] .balance-summary small {
+  main[data-mobile-tab="partido"] .lineup-panel .balance-summary span,
+  main[data-mobile-tab="partido"] .lineup-panel .balance-summary small {
     color: #c4d3cb;
   }
 
-  main[data-mobile-tab="equipo"] .balance-summary strong,
-  main[data-mobile-tab="equipo"] .team h2,
-  main[data-mobile-tab="equipo"] .team-player-name {
+  main[data-mobile-tab="partido"] .lineup-panel .balance-summary strong,
+  main[data-mobile-tab="partido"] .lineup-panel .team h2,
+  main[data-mobile-tab="partido"] .lineup-panel .team-player-name {
     color: #f5f2e8;
   }
 
@@ -10134,7 +10146,7 @@ select:disabled {
     line-height: 1.1;
   }
 
-  main[data-mobile-tab="equipo"] .teams-panel {
+  main[data-mobile-tab="partido"] .lineup-panel {
     grid-template-columns: minmax(176px, 0.62fr) minmax(178px, 0.69fr) minmax(178px, 0.69fr);
     grid-template-rows: auto auto minmax(0, 1fr);
     height: calc(100dvh - 56px);
@@ -10142,24 +10154,24 @@ select:disabled {
     padding: 8px;
   }
 
-  main[data-mobile-tab="equipo"] .teams-panel > .panel-title {
+  main[data-mobile-tab="partido"] .lineup-panel > .panel-title {
     margin: 0;
     min-height: 30px;
     padding-bottom: 6px;
   }
 
-  main[data-mobile-tab="equipo"] .teams-panel > .balance-summary {
+  main[data-mobile-tab="partido"] .lineup-panel > .balance-summary {
     grid-row: 2;
     margin: 0;
   }
 
-  main[data-mobile-tab="equipo"] .teams-panel > .match-pitch {
+  main[data-mobile-tab="partido"] .lineup-panel > .match-pitch {
     align-self: center;
     grid-row: 3;
     width: min(100%, 29vh, 210px);
   }
 
-  main[data-mobile-tab="equipo"] .teams-panel > .team {
+  main[data-mobile-tab="partido"] .lineup-panel > .team {
     align-self: stretch;
     display: grid;
     grid-template-rows: auto minmax(0, 1fr);
@@ -10169,7 +10181,7 @@ select:disabled {
     scrollbar-width: thin;
   }
 
-  main[data-mobile-tab="equipo"] .team h2 {
+  main[data-mobile-tab="partido"] .lineup-panel .team h2 {
     font-size: 12px;
     line-height: 1;
     padding: 8px 9px;
@@ -10178,22 +10190,48 @@ select:disabled {
     z-index: 2;
   }
 
-  main[data-mobile-tab="equipo"] .team > div,
-  main[data-mobile-tab="equipo"] .team > p {
+  main[data-mobile-tab="partido"] .lineup-panel .team > div,
+  main[data-mobile-tab="partido"] .lineup-panel .team > p {
     gap: 6px;
     grid-template-columns: minmax(0, 1fr) max-content;
     padding: 7px 8px;
   }
 
-  main[data-mobile-tab="equipo"] .team-player-name {
+  main[data-mobile-tab="partido"] .lineup-panel .team-player-name {
     font-size: 12px;
     line-height: 1;
   }
 
-  main[data-mobile-tab="equipo"] .team-player-meta,
-  main[data-mobile-tab="equipo"] .team .position-pill {
+  main[data-mobile-tab="partido"] .lineup-panel .team-player-meta,
+  main[data-mobile-tab="partido"] .lineup-panel .team .position-pill {
     font-size: 9px;
     line-height: 1;
+  }
+
+  main[data-mobile-tab="partido"] .lineup-panel {
+    align-content: start;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto auto auto auto minmax(0, 1fr);
+  }
+
+  main[data-mobile-tab="partido"] .lineup-panel > .panel-title,
+  main[data-mobile-tab="partido"] .lineup-panel > .balance-summary,
+  main[data-mobile-tab="partido"] .lineup-panel > .match-pitch,
+  main[data-mobile-tab="partido"] .lineup-panel > .lineup-state,
+  main[data-mobile-tab="partido"] .lineup-panel > .lineup-actions,
+  main[data-mobile-tab="partido"] .lineup-panel > .primary-button.full,
+  main[data-mobile-tab="partido"] .lineup-panel > .result-box {
+    grid-column: 1;
+    grid-row: auto;
+  }
+
+  main[data-mobile-tab="partido"] .lineup-panel > .team {
+    display: none;
+  }
+
+  main[data-mobile-tab="partido"] .lineup-panel .match-pitch {
+    justify-self: center;
+    width: min(100%, 31vh, 190px);
   }
 
   main[data-mobile-tab="perfil"] > .bottom-grid {
@@ -10202,7 +10240,8 @@ select:disabled {
   }
 
   main[data-mobile-tab="perfil"] > .bottom-grid > .player-profile,
-  main[data-mobile-tab="perfil"] > .bottom-grid > #ranking {
+  main[data-mobile-tab="perfil"] > .bottom-grid > #ranking,
+  main[data-mobile-tab="equipo"] > .bottom-grid > #ranking {
     overflow: hidden;
   }
 
@@ -10408,7 +10447,8 @@ select:disabled {
     overflow: hidden;
   }
 
-  main[data-mobile-tab="perfil"] > .bottom-grid[data-profile-pane="ranking"] #ranking {
+  main[data-mobile-tab="perfil"] > .bottom-grid[data-profile-pane="ranking"] #ranking,
+  main[data-mobile-tab="equipo"] > .bottom-grid #ranking {
     display: grid;
     gap: 8px;
     grid-template-rows: auto auto minmax(0, 1fr);
@@ -10422,12 +10462,14 @@ select:disabled {
     padding: 8px;
   }
 
-  main[data-mobile-tab="perfil"] .ranking-toolbar {
+  main[data-mobile-tab="perfil"] .ranking-toolbar,
+  main[data-mobile-tab="equipo"] .ranking-toolbar {
     gap: 7px;
     grid-template-columns: minmax(110px, auto) minmax(0, 1fr);
   }
 
-  main[data-mobile-tab="perfil"] .ranking-card-grid {
+  main[data-mobile-tab="perfil"] .ranking-card-grid,
+  main[data-mobile-tab="equipo"] .ranking-card-grid {
     grid-template-columns: repeat(4, minmax(150px, 1fr));
     min-height: 0;
     overflow: auto;
