@@ -198,7 +198,8 @@
   }
 
   main[data-mobile-tab="inicio"] > .app-shell > .match-list,
-  main[data-mobile-tab="partido"] > .app-shell > .main-panel {
+  main[data-mobile-tab="partido"] > .app-shell > .main-panel,
+  main[data-mobile-tab="partido"] > .app-shell > .lineup-panel {
     display: grid;
   }
 
