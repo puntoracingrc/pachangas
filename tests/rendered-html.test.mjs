@@ -314,6 +314,9 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /id="partido"/);
   assert.match(page, /id="alineacion"/);
   assert.match(page, /className="panel teams-panel lineup-panel"/);
+  assert.match(page, /\{ value: "Mediocentro \/ pivote", line: "Medio", short: "PIV" \}/);
+  assert.match(page, /<span className="player-meta" title=\{positionLabel\(player\)\} aria-label=\{positionLabel\(player\)\}>\s*\{positionShort\(player\)\}/);
+  assert.match(page, /<small className="position-pill" title=\{positionLabel\(player\)\} aria-label=\{positionLabel\(player\)\}>/);
   assert.match(page, /id="ranking"/);
   assert.match(page, /if \(requestedTab === "equipo"\) \{[\s\S]*setProfilePane\("ranking"\);[\s\S]*setTeamGalleryOpen\(false\)/);
   assert.match(page, /if \(tabId === "equipo"\) \{[\s\S]*setProfilePane\("ranking"\);[\s\S]*setTeamGalleryOpen\(false\)/);
@@ -448,6 +451,7 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(globalsCss, /\.market-scout-card-compact/);
   assert.match(globalsCss, /\.market-admin-panel/);
   assert.match(globalsCss, /main\[data-mobile-tab="mercado"\] > \.app-shell/);
+  assert.match(globalsCss, /main\[data-mobile-tab="partido"\] > \.app-shell > \.main-panel,\s*main\[data-mobile-tab="partido"\] > \.app-shell > \.lineup-panel\s*\{\s*display:\s*grid/);
   assert.match(globalsCss, /main\[data-mobile-tab="inicio"\]\s*\{[\s\S]*grid-template-columns:\s*minmax\(230px,\s*0\.72fr\) minmax\(0,\s*1\.28fr\)/);
   assert.match(globalsCss, /main\[data-mobile-tab="partido"\] > \.app-shell > \.lineup-panel/);
   assert.match(globalsCss, /main\[data-mobile-tab="partido"\] \.lineup-panel\s*\{[\s\S]*grid-template-columns:\s*minmax\(0,\s*1fr\)/);

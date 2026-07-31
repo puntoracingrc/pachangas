@@ -873,7 +873,7 @@ const positionOptionsByKind: Record<MatchKind, Array<{ value: PlayerPosition; li
     { value: "Defensa central", line: "Defensa", short: "DFC" },
     { value: "Lateral derecho", line: "Defensa", short: "LD" },
     { value: "Lateral izquierdo", line: "Defensa", short: "LI" },
-    { value: "Mediocentro / pivote", line: "Medio", short: "MC" },
+    { value: "Mediocentro / pivote", line: "Medio", short: "PIV" },
     { value: "Interior / volante", line: "Medio", short: "INT" },
     { value: "Delantero / punta", line: "Ataque", short: "DEL" },
   ],
@@ -6829,8 +6829,8 @@ export default function Home() {
               <small>({overallScore(playerMediaScore(player))}){mediaSource ? ` · ${mediaSource}` : ""}{formSummary} · {player.goals} Goles</small>
             </strong>
           </button>
-          <span className="player-meta">
-            {positionLabel(player)}
+          <span className="player-meta" title={positionLabel(player)} aria-label={positionLabel(player)}>
+            {positionShort(player)}
             {formState.hasData ? <em className={`form-chip form-${formState.status}`}>{formState.label}</em> : null}
             {player.inactive ? <em className="reserve-chip">Ya no está</em> : null}
             {isReserve ? <em className="reserve-chip">Reserva</em> : null}
@@ -9494,7 +9494,9 @@ function Team({
                 ({overallScore(mediaForPlayer(player))}){formState.hasData ? ` · Forma ${visibleFormPercent(formState)}%` : ""} · {player.goals} G
               </em>
             </span>
-            <small className="position-pill">{positionLabel(player)}</small>
+            <small className="position-pill" title={positionLabel(player)} aria-label={positionLabel(player)}>
+              {positionShort(player)}
+            </small>
           </div>
         );
       })}
