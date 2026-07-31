@@ -163,6 +163,29 @@ type Player = {
   lateCancels: number;
 };
 
+function canEditPlayerOwnedFields({
+  canUseAdminControls,
+  currentUserId,
+  hasRealTeam,
+  isDemoMode,
+  isRegisteredUser,
+  player,
+}: {
+  canUseAdminControls: boolean;
+  currentUserId?: string | null;
+  hasRealTeam: boolean;
+  isDemoMode: boolean;
+  isRegisteredUser: boolean;
+  player?: Pick<Player, "ownerUserId"> | null;
+}) {
+  return Boolean(
+    player &&
+      (isDemoMode ||
+        canUseAdminControls ||
+        (hasRealTeam && isRegisteredUser && currentUserId && player.ownerUserId === currentUserId)),
+  );
+}
+
 type PlayerAssessmentKind = "advanced" | "initial";
 
 type PlayerAssessmentSummaryItem = {
@@ -4274,7 +4297,14 @@ export default function Home() {
 
   async function setStatus(playerId: string, status: MatchPlayer["status"]) {
     const player = players.find((item) => item.id === playerId);
-    const canChangeStatus = matchConfigured && registrationOpen && (isDemoMode || canUseAdminControls || (hasRealTeam && isRegisteredUser && player?.ownerUserId === currentUserId));
+    const canChangeStatus = matchConfigured && registrationOpen && canEditPlayerOwnedFields({
+      canUseAdminControls,
+      currentUserId,
+      hasRealTeam,
+      isDemoMode,
+      isRegisteredUser,
+      player,
+    });
     if (!canChangeStatus) return;
     if (matchFinalized && !canUseAdminControls) return;
     if (status === "voy" && (player?.injured || player?.inactive)) return;
@@ -4394,6 +4424,16 @@ export default function Home() {
   async function togglePaid(playerId: string) {
     if (!matchConfigured) return;
     if (!paymentReady) return;
+    const player = players.find((item) => item.id === playerId);
+    const canChangePayment = canEditPlayerOwnedFields({
+      canUseAdminControls,
+      currentUserId,
+      hasRealTeam,
+      isDemoMode,
+      isRegisteredUser,
+      player,
+    });
+    if (!canChangePayment) return;
     const existingEntry = activeMatch.players.find((entry) => entry.playerId === playerId);
     const nextPaid = !existingEntry?.paid;
 
@@ -4932,7 +4972,14 @@ export default function Home() {
   const needsProfileForSharedMatch = hasRealTeam && isRegisteredUser && incomingSharedLink.hasMatch && !ownPlayer && !showPlayerImportGate;
   const googleButtonText = needsLoginForSharedLink ? "Continuar con Google y volver" : "Continuar con Google";
   const selectedPlayerIsOwn = Boolean(selectedPlayer?.ownerUserId && selectedPlayer.ownerUserId === currentUserId);
-  const canEditSelectedPlayer = Boolean(selectedPlayer && (canUseAdminControls || (hasRealTeam && isRegisteredUser && selectedPlayerIsOwn)));
+  const canEditSelectedPlayer = canEditPlayerOwnedFields({
+    canUseAdminControls,
+    currentUserId,
+    hasRealTeam,
+    isDemoMode,
+    isRegisteredUser,
+    player: selectedPlayer,
+  });
   const selectedAvatarDraft = selectedPlayer ? avatarDrafts[selectedPlayer.id] : undefined;
   const selectedAvatarPreview = selectedAvatarDraft?.avatar ?? selectedPlayer?.avatar;
   const canAdjustSelectedAvatar = Boolean(canEditSelectedPlayer && selectedPlayer && selectedAvatarDraft && avatarAdjustingPlayerId === selectedPlayer.id);
@@ -5185,14 +5232,28 @@ export default function Home() {
   function updatePlayer(playerId: string, next: Partial<Player>) {
     const player = players.find((item) => item.id === playerId);
     if (!player) return;
-    const canEditPlayer = canUseAdminControls || (hasRealTeam && isRegisteredUser && player.ownerUserId === currentUserId);
+    const canEditPlayer = canEditPlayerOwnedFields({
+      canUseAdminControls,
+      currentUserId,
+      hasRealTeam,
+      isDemoMode,
+      isRegisteredUser,
+      player,
+    });
     if (!canEditPlayer) return;
     setProfileSaveMessage("");
     setPlayers((current) => current.map((item) => (item.id === playerId ? { ...item, ...next } : item)));
   }
 
   function startAvatarDrag(event: ReactPointerEvent<HTMLElement>, player: Player) {
-    const canEditPlayer = canUseAdminControls || (hasRealTeam && isRegisteredUser && player.ownerUserId === currentUserId);
+    const canEditPlayer = canEditPlayerOwnedFields({
+      canUseAdminControls,
+      currentUserId,
+      hasRealTeam,
+      isDemoMode,
+      isRegisteredUser,
+      player,
+    });
     const draft = avatarDrafts[player.id];
     if (!draft?.avatar || avatarAdjustingPlayerId !== player.id || !canEditPlayer) return;
 
@@ -5629,7 +5690,14 @@ export default function Home() {
   async function uploadAvatar(file: File | undefined, playerId = selectedPlayer?.id) {
     setAvatarMessage("");
     const player = players.find((item) => item.id === playerId);
-    const canEditPlayer = Boolean(player && (canUseAdminControls || (hasRealTeam && isRegisteredUser && player.ownerUserId === currentUserId)));
+    const canEditPlayer = canEditPlayerOwnedFields({
+      canUseAdminControls,
+      currentUserId,
+      hasRealTeam,
+      isDemoMode,
+      isRegisteredUser,
+      player,
+    });
     if (!canEditPlayer) {
       setAvatarMessage("Solo tú o un admin podéis cambiar esta foto.");
       return;
@@ -5688,7 +5756,14 @@ export default function Home() {
 
   function openCamera(playerId: string) {
     const player = players.find((item) => item.id === playerId);
-    const canEditPlayer = Boolean(player && (canUseAdminControls || (hasRealTeam && isRegisteredUser && player.ownerUserId === currentUserId)));
+    const canEditPlayer = canEditPlayerOwnedFields({
+      canUseAdminControls,
+      currentUserId,
+      hasRealTeam,
+      isDemoMode,
+      isRegisteredUser,
+      player,
+    });
     if (!canEditPlayer) {
       setAvatarMessage("Solo tú o un admin podéis cambiar esta foto.");
       return;
@@ -6627,8 +6702,31 @@ export default function Home() {
     const mediaSource = playerRatingSource(player);
     const matchCardAge = playerAge(player.birthDate, currentDateValue);
     const playerRatingWindow = ratingWindow(player, ratingVoterId);
-    const canChangeThisPlayerStatus = matchConfigured && registrationOpen && (isDemoMode || canUseAdminControls || (hasRealTeam && isRegisteredUser && player.ownerUserId === currentUserId));
+    const canEditThisPlayer = canEditPlayerOwnedFields({
+      canUseAdminControls,
+      currentUserId,
+      hasRealTeam,
+      isDemoMode,
+      isRegisteredUser,
+      player,
+    });
+    const canChangeThisPlayerStatus = matchConfigured && registrationOpen && canEditThisPlayer;
+    const canChangeThisPlayerPayment = paymentReady && canEditThisPlayer;
     const statusLabel = status === "voy" ? "Voy" : status === "duda" ? "Duda" : status === "no" ? "No va" : "Sin marcar";
+    const paymentActionTitle = !paymentReady
+      ? "Cierra la alineación para activar pagos"
+      : !canEditThisPlayer
+      ? "Solo este jugador o un admin pueden cambiar el pago"
+      : matchEntry?.paid
+      ? "Pago recibido"
+      : "Marcar pago recibido";
+    const paymentActionLabel = !paymentReady
+      ? "Pagos pendientes hasta cerrar alineación"
+      : !canEditThisPlayer
+      ? "Solo este jugador o un admin pueden cambiar el pago"
+      : matchEntry?.paid
+      ? "Pago recibido"
+      : "Marcar pago recibido";
     const ratingTitle = player.ownerUserId === currentUserId
       ? "No puedes votarte a ti mismo"
       : playerRatingWindow.canRate
@@ -6730,10 +6828,10 @@ export default function Home() {
           {status === "voy" && !isWaiting ? (
             <button
               className={matchEntry?.paid ? "paid-button paid" : "paid-button"}
-              disabled={!paymentReady}
+              disabled={!canChangeThisPlayerPayment}
               onClick={() => void togglePaid(player.id)}
-              title={!paymentReady ? "Cierra la alineación para activar pagos" : matchEntry?.paid ? "Pago recibido" : "Marcar pago recibido"}
-              aria-label={!paymentReady ? "Pagos pendientes hasta cerrar alineación" : matchEntry?.paid ? "Pago recibido" : "Marcar pago recibido"}
+              title={paymentActionTitle}
+              aria-label={paymentActionLabel}
             >
               $
             </button>
@@ -6791,7 +6889,7 @@ export default function Home() {
                 {status === "voy" && !isWaiting ? (
                   <button
                     className={matchEntry?.paid ? "selected paid" : ""}
-                    disabled={!paymentReady}
+                    disabled={!canChangeThisPlayerPayment}
                     onClick={() => {
                       setPlayerActionMenu(null);
                       void togglePaid(player.id);
