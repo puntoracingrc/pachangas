@@ -8475,7 +8475,7 @@ select:disabled {
   .mobile-app-nav-inner {
     display: grid;
     width: 100%;
-    min-height: 56px;
+    min-height: 40px;
     grid-template-columns: repeat(5, minmax(0, 1fr));
     margin: 0;
   }
@@ -8483,16 +8483,16 @@ select:disabled {
   .mobile-app-nav-item {
     position: relative;
     min-width: 0;
-    min-height: 56px;
+    min-height: 40px;
     flex-direction: row;
-    gap: 8px;
-    padding: 0 8px;
+    gap: 6px;
+    padding: 0 7px;
     border: 0;
     border-right: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 0;
     background: transparent;
     color: rgba(245, 247, 238, 0.72);
-    font-size: 12px;
+    font-size: 10px;
     font-weight: 950;
     line-height: 1;
     text-decoration: none;
@@ -8519,8 +8519,14 @@ select:disabled {
 
   .mobile-app-nav-icon,
   .mobile-app-nav-icon svg {
-    width: 24px;
-    height: 24px;
+    width: 16px;
+    height: 16px;
+  }
+
+  .mobile-app-nav-icon svg,
+  .mobile-app-nav-icon svg * {
+    fill: none;
+    stroke: currentColor;
   }
 
   main[data-mobile-tab] {
@@ -8535,7 +8541,7 @@ select:disabled {
     --panel: #121d18;
     height: 100dvh;
     overflow: hidden;
-    padding-top: 56px;
+    padding-top: 40px;
     background:
       linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px) 0 0 / 48px 100%,
       linear-gradient(135deg, #071116 0%, #11231d 52%, #171224 100%) !important;
@@ -8563,7 +8569,7 @@ select:disabled {
     display: grid;
     width: 100%;
     max-width: none;
-    height: calc(100dvh - 56px);
+    height: calc(100dvh - 40px);
     align-items: stretch;
     gap: 8px;
     grid-template-columns: minmax(0, 1fr);
@@ -8695,16 +8701,367 @@ select:disabled {
   }
 
   main[data-mobile-tab="partido"] .stats-row {
-    grid-template-columns: repeat(5, minmax(86px, 1fr));
+    background:
+      linear-gradient(90deg, rgba(200, 239, 93, 0.1), transparent 34%),
+      rgba(9, 19, 16, 0.92);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    gap: 0;
+    grid-template-columns: repeat(auto-fit, minmax(72px, 1fr));
+    grid-column: 1 / -1;
+    grid-row: 2;
+    margin: 0;
+    padding: 0;
+  }
+
+  main[data-mobile-tab="partido"] .stats-row div {
+    border-right: 1px solid rgba(255, 255, 255, 0.09);
+    gap: 3px;
+    min-height: 42px;
+    padding: 5px 8px;
+  }
+
+  main[data-mobile-tab="partido"] .stats-row span {
+    color: #9fb1a7;
+    font-size: 10px;
+    letter-spacing: 0;
+    line-height: 1;
+  }
+
+  main[data-mobile-tab="partido"] .stats-row strong {
+    color: #f5f2e8;
+    font-size: 17px;
+    line-height: 1;
+  }
+
+  main[data-mobile-tab="partido"] .main-panel {
+    align-content: start;
+    display: grid;
+    gap: 7px;
+    grid-template-columns: minmax(0, 1fr) minmax(280px, 0.38fr);
+    overflow: auto;
+    padding: 7px;
+    scrollbar-width: thin;
+  }
+
+  main[data-mobile-tab="partido"] .weather-card {
+    background: rgba(245, 242, 232, 0.08);
+    border-color: rgba(255, 255, 255, 0.12);
+    grid-column: 1;
+    grid-row: 1;
+    gap: 6px;
+    grid-template-columns: minmax(0, 1fr) auto;
+    margin: 0;
+    min-height: 38px;
+    padding: 5px 8px;
+  }
+
+  main[data-mobile-tab="partido"] .weather-card-main {
+    align-items: center;
+    gap: 7px;
+    grid-template-columns: 24px auto minmax(0, 1fr);
+  }
+
+  main[data-mobile-tab="partido"] .weather-icon {
+    box-shadow: none;
+    height: 24px;
+    width: 24px;
+  }
+
+  main[data-mobile-tab="partido"] .weather-icon svg {
+    height: 16px;
+    width: 16px;
+  }
+
+  main[data-mobile-tab="partido"] .weather-summary {
+    align-items: baseline;
+    display: flex;
+    gap: 7px;
+    white-space: nowrap;
+  }
+
+  main[data-mobile-tab="partido"] .weather-card span,
+  main[data-mobile-tab="partido"] .weather-card small,
+  main[data-mobile-tab="partido"] .weather-card p {
+    color: #c4d3cb;
+    font-size: 10px;
+    line-height: 1.15;
+  }
+
+  main[data-mobile-tab="partido"] .weather-card strong {
+    color: #f5f2e8;
+    font-size: 13px;
+  }
+
+  main[data-mobile-tab="partido"] .weather-card-main p {
+    display: -webkit-box;
+    grid-column: 3;
+    margin: 0;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 1;
+  }
+
+  main[data-mobile-tab="partido"] .payer-note,
+  main[data-mobile-tab="partido"] .subscription-contribution-note {
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    min-height: 34px;
+    padding: 6px 9px;
+  }
+
+  main[data-mobile-tab="partido"] .payer-note span,
+  main[data-mobile-tab="partido"] .payer-note strong {
+    font-size: 10px;
+    line-height: 1.15;
+  }
+
+  main[data-mobile-tab="partido"] .share-box {
+    background: rgba(245, 242, 232, 0.08);
+    border-color: rgba(255, 255, 255, 0.12);
+    grid-column: 2;
+    grid-row: 1;
+    gap: 6px;
+    grid-template-columns: minmax(0, 1fr) auto;
+    margin: 0;
+    min-height: 38px;
+    padding: 6px 8px;
+  }
+
+  main[data-mobile-tab="partido"] .share-box > span {
+    color: #c4d3cb;
+    font-size: 10px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  main[data-mobile-tab="partido"] .share-actions {
+    gap: 5px;
+    grid-template-columns: minmax(82px, auto) 30px;
+  }
+
+  main[data-mobile-tab="partido"] .share-actions button {
+    font-size: 11px;
+    min-height: 32px;
+    padding: 0 8px;
+  }
+
+  main[data-mobile-tab="partido"] .share-actions .whatsapp-icon-button {
+    width: 30px;
+  }
+
+  main[data-mobile-tab="partido"] .share-box .sync-status {
+    font-size: 10px;
+    grid-column: 1;
+    line-height: 1;
+    margin: -3px 0 0;
+  }
+
+  main[data-mobile-tab="partido"] .open-match-requests-panel,
+  main[data-mobile-tab="partido"] .reserve-section,
+  main[data-mobile-tab="partido"] .other-player-grid,
+  main[data-mobile-tab="partido"] .add-player {
+    grid-column: 1 / -1;
+    margin-top: 7px;
+  }
+
+  main[data-mobile-tab="partido"] .reserve-section {
+    background: rgba(245, 242, 232, 0.06);
+    border-color: rgba(255, 255, 255, 0.14);
+    gap: 6px;
+    padding: 7px;
+  }
+
+  main[data-mobile-tab="partido"] .reserve-player-grid,
+  main[data-mobile-tab="partido"] .player-grid {
+    gap: 6px;
+    grid-template-columns: repeat(2, minmax(180px, 1fr));
+  }
+
+  main[data-mobile-tab="partido"] .reserve-section .team-column-title {
+    min-height: 28px;
+    padding: 0 6px;
+  }
+
+  main[data-mobile-tab="partido"] .reserve-section .team-column-title span,
+  main[data-mobile-tab="partido"] .reserve-section .team-column-title strong {
+    color: #f5f2e8;
+  }
+
+  main[data-mobile-tab="partido"] .reserve-section .team-column-title strong {
+    background: rgba(255, 255, 255, 0.12);
+  }
+
+  main[data-mobile-tab="partido"] .reserve-section .player-card {
+    align-items: center !important;
+    background: rgba(15, 27, 22, 0.94) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 8px !important;
+    display: flex !important;
+    gap: 6px !important;
+    min-height: 0 !important;
+    padding: 6px !important;
+  }
+
+  main[data-mobile-tab="partido"] .team-player-grid .player-card,
+  main[data-mobile-tab="partido"] .player-grid .player-card {
+    background: rgba(15, 27, 22, 0.94) !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+    color: #f5f2e8 !important;
+  }
+
+  main[data-mobile-tab="partido"] .reserve-section .player-card > div:first-child {
+    flex: 1 1 120px;
+    min-width: 0;
+  }
+
+  main[data-mobile-tab="partido"] .reserve-section .card-badges {
+    flex: 0 0 auto;
+  }
+
+  main[data-mobile-tab="partido"] .reserve-section .player-actions {
+    display: flex !important;
+    flex: 0 0 auto;
+    gap: 4px;
+  }
+
+  main[data-mobile-tab="partido"] .reserve-section .status-buttons {
+    display: flex;
+    gap: 3px;
+  }
+
+  main[data-mobile-tab="partido"] .reserve-section .status-buttons button {
+    min-width: 42px;
   }
 
   main[data-mobile-tab="partido"] .team-player-grid {
-    grid-template-columns: repeat(2, minmax(230px, 1fr));
+    align-items: stretch;
+    gap: 7px;
+    grid-column: 1 / -1;
+    grid-template-columns: repeat(2, minmax(220px, 1fr));
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  main[data-mobile-tab="partido"] .team-player-column {
+    align-content: start;
+    background: rgba(13, 24, 20, 0.84);
+    gap: 0;
+    min-height: 0;
+    overflow: auto;
+    padding: 0;
+    scrollbar-width: thin;
+  }
+
+  main[data-mobile-tab="partido"] .team-a-column {
+    border-color: color-mix(in srgb, var(--team-a) 52%, transparent);
+  }
+
+  main[data-mobile-tab="partido"] .team-b-column {
+    border-color: color-mix(in srgb, var(--team-b) 52%, transparent);
+  }
+
+  main[data-mobile-tab="partido"] .team-player-column > .team-column-title {
+    background: color-mix(in srgb, var(--team-a) 72%, #0b1210);
+    min-height: 40px;
+    padding: 0 12px;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+  }
+
+  main[data-mobile-tab="partido"] .team-b-column > .team-column-title {
+    background: color-mix(in srgb, var(--team-b) 72%, #0b1210);
+  }
+
+  main[data-mobile-tab="partido"] .team-player-column > .team-column-title span,
+  main[data-mobile-tab="partido"] .team-player-column > .team-column-title strong {
+    color: #f5f2e8;
+  }
+
+  main[data-mobile-tab="partido"] .team-player-column > .team-column-title strong {
+    background: rgba(255, 255, 255, 0.14);
   }
 
   main[data-mobile-tab="partido"] .player-card {
+    border: 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.09);
+    border-left-width: 0;
+    border-radius: 0;
+    box-shadow: none;
+    gap: 6px;
+    grid-template-columns: minmax(110px, 1fr) auto minmax(150px, 0.72fr);
     min-height: auto;
-    padding: 9px;
+    padding: 6px 8px;
+  }
+
+  main[data-mobile-tab="partido"] .player-card > div:first-child {
+    gap: 3px;
+  }
+
+  main[data-mobile-tab="partido"] .player-name strong {
+    gap: 1px;
+  }
+
+  main[data-mobile-tab="partido"] .player-name-line {
+    font-size: 14px;
+    line-height: 1.05;
+  }
+
+  main[data-mobile-tab="partido"] .player-name small,
+  main[data-mobile-tab="partido"] .joined-at {
+    color: #9fb1a7;
+    display: block;
+    font-size: 9px;
+    line-height: 1;
+    max-width: 116px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  main[data-mobile-tab="partido"] .player-meta {
+    max-width: 116px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  main[data-mobile-tab="partido"] .card-badges {
+    gap: 4px;
+  }
+
+  main[data-mobile-tab="partido"] .player-actions {
+    align-items: center;
+    grid-column: auto;
+    grid-template-columns: minmax(112px, 1fr) 66px auto;
+  }
+
+  main[data-mobile-tab="partido"] .status-buttons {
+    grid-template-columns: repeat(3, minmax(34px, 1fr));
+  }
+
+  main[data-mobile-tab="partido"] .status-buttons button,
+  main[data-mobile-tab="partido"] .team-move,
+  main[data-mobile-tab="partido"] .paid-button {
+    font-size: 10px;
+    min-height: 24px;
+    padding: 0 6px;
+  }
+
+  main[data-mobile-tab="partido"] .team-move {
+    min-width: 66px;
+    width: 66px;
+  }
+
+  main[data-mobile-tab="partido"] .team-move-label {
+    display: inline-block;
+    max-width: 44px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   main[data-mobile-tab="equipo"] .teams-panel {
