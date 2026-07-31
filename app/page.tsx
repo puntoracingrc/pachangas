@@ -475,7 +475,139 @@ function demoVotes(playerId: string, rows: Array<[number, string, Record<RatingF
   }));
 }
 
-const seedPlayers: Player[] = [
+function demoDate(daysFromToday: number, time: string) {
+  const [hourText = "21", minuteText = "00"] = time.split(":");
+  const date = new Date();
+  date.setDate(date.getDate() + daysFromToday);
+  date.setHours(Number(hourText) || 0, Number(minuteText) || 0, 0, 0);
+  return toDateTimeLocal(date);
+}
+
+function demoJoinedAt(daysFromToday: number, time: string) {
+  return demoDate(daysFromToday, time);
+}
+
+type DemoPlayerLivingFields = {
+  advanced?: boolean;
+  assessmentFacets: Record<RatingFacet, number>;
+  assessmentPosition: AssessmentPosition;
+  birthDate: string;
+  marketAvailability?: string;
+  marketBio?: string;
+  marketEnabled?: boolean;
+  marketModalities?: MatchKind[];
+  marketOpenToGroup?: boolean;
+  marketOpenToGuest?: boolean;
+  marketZonesGeo?: MarketZone[];
+};
+
+const demoBarcelonaZones: MarketZone[] = [
+  { city: "Barcelona", country: "España", lat: 41.3874, lng: 2.1686, name: "Barcelona", placeId: "demo-barcelona", province: "Barcelona", radiusKm: 25 },
+  { city: "Sabadell", country: "España", lat: 41.5463, lng: 2.1086, name: "Sabadell", placeId: "demo-sabadell", province: "Barcelona", radiusKm: 15 },
+];
+
+const demoPlayerLivingFields: Record<string, DemoPlayerLivingFields> = {
+  p1: { birthDate: "1988-04-12", assessmentPosition: "striker", assessmentFacets: { ritmo: 8, tiro: 9, pase: 8, regate: 8, defensa: 5, fisico: 8 }, marketEnabled: true, marketModalities: ["futbol7", "futbol11"], marketAvailability: "Martes y jueves a partir de las 20:30", marketBio: "Delantero para completar partidos por Barcelona y alrededores.", marketOpenToGroup: true, marketOpenToGuest: true, marketZonesGeo: demoBarcelonaZones },
+  p2: { birthDate: "1990-11-03", assessmentPosition: "central_midfielder", assessmentFacets: { ritmo: 7, tiro: 6, pase: 9, regate: 7, defensa: 8, fisico: 7 }, marketEnabled: true, marketModalities: ["futbol7"], marketAvailability: "Entre semana por la noche", marketBio: "Mediocentro de apoyo, buen pase y orden.", marketOpenToGroup: true, marketOpenToGuest: true, marketZonesGeo: demoBarcelonaZones },
+  p3: { birthDate: "1986-02-19", assessmentPosition: "centre_back", assessmentFacets: { ritmo: 6, tiro: 4, pase: 6, regate: 5, defensa: 8, fisico: 7 } },
+  p4: { birthDate: "1981-09-22", assessmentPosition: "centre_back", assessmentFacets: { ritmo: 6, tiro: 4, pase: 7, regate: 6, defensa: 9, fisico: 7 }, marketEnabled: true, marketModalities: ["futbol7", "sala"], marketAvailability: "Miércoles noche y domingo mañana", marketBio: "Portero fijo. Puedo ir puntual si falta portería.", marketOpenToGroup: true, marketOpenToGuest: true, marketZonesGeo: demoBarcelonaZones },
+  p5: { birthDate: "1995-06-27", assessmentPosition: "central_midfielder", assessmentFacets: { ritmo: 6, tiro: 6, pase: 6, regate: 6, defensa: 5, fisico: 6 } },
+  p6: { birthDate: "1989-01-15", assessmentPosition: "centre_back", assessmentFacets: { ritmo: 6, tiro: 5, pase: 7, regate: 5, defensa: 8, fisico: 7 } },
+  p7: { birthDate: "1992-08-08", assessmentPosition: "striker", assessmentFacets: { ritmo: 9, tiro: 8, pase: 6, regate: 8, defensa: 4, fisico: 7 }, marketEnabled: true, marketModalities: ["futbol7", "futbol11"], marketAvailability: "Fines de semana", marketBio: "Delantero rápido para partidos competitivos.", marketOpenToGroup: false, marketOpenToGuest: true, marketZonesGeo: demoBarcelonaZones },
+  p8: { birthDate: "1997-12-30", assessmentPosition: "full_back", assessmentFacets: { ritmo: 7, tiro: 4, pase: 5, regate: 6, defensa: 6, fisico: 5 } },
+  p9: { birthDate: "2001-05-09", assessmentPosition: "winger", assessmentFacets: { ritmo: 5, tiro: 5, pase: 5, regate: 5, defensa: 5, fisico: 5 }, advanced: false },
+  p10: { birthDate: "1994-03-25", assessmentPosition: "defensive_midfielder", assessmentFacets: { ritmo: 6, tiro: 6, pase: 6, regate: 6, defensa: 6, fisico: 6 } },
+  p11: { birthDate: "1987-10-14", assessmentPosition: "attacking_midfielder", assessmentFacets: { ritmo: 5, tiro: 5, pase: 5, regate: 5, defensa: 5, fisico: 5 }, advanced: false },
+  p12: { birthDate: "1999-07-02", assessmentPosition: "winger", assessmentFacets: { ritmo: 6, tiro: 6, pase: 6, regate: 6, defensa: 6, fisico: 6 } },
+  p13: { birthDate: "1984-04-18", assessmentPosition: "full_back", assessmentFacets: { ritmo: 5, tiro: 5, pase: 5, regate: 5, defensa: 5, fisico: 5 }, advanced: false },
+  p14: { birthDate: "1979-11-28", assessmentPosition: "centre_back", assessmentFacets: { ritmo: 6, tiro: 4, pase: 6, regate: 5, defensa: 9, fisico: 7 } },
+  p15: { birthDate: "1991-02-06", assessmentPosition: "centre_back", assessmentFacets: { ritmo: 7, tiro: 7, pase: 7, regate: 7, defensa: 7, fisico: 7 } },
+  p16: { birthDate: "1985-09-17", assessmentPosition: "central_midfielder", assessmentFacets: { ritmo: 6, tiro: 6, pase: 6, regate: 6, defensa: 6, fisico: 6 } },
+  p17: { birthDate: "2003-01-22", assessmentPosition: "winger", assessmentFacets: { ritmo: 4, tiro: 4, pase: 4, regate: 4, defensa: 4, fisico: 4 }, advanced: false },
+  p18: { birthDate: "1993-12-11", assessmentPosition: "striker", assessmentFacets: { ritmo: 7, tiro: 7, pase: 7, regate: 7, defensa: 7, fisico: 7 } },
+};
+
+function demoFacetsAverage(facets: Record<RatingFacet, number>) {
+  return Object.values(facets).reduce((sum, value) => sum + value, 0) / Object.values(facets).length;
+}
+
+function demoAssessmentSummary(fields: DemoPlayerLivingFields): PlayerAssessmentSummary {
+  const rating = demoFacetsAverage(fields.assessmentFacets);
+  return {
+    initial: {
+      completedAt: "2026-06-02T18:00:00.000Z",
+      engineVersion: FOOTBALL_RATING_ENGINE_VERSION,
+      facets: fields.assessmentFacets,
+      primaryPosition: fields.assessmentPosition,
+      questionnaireVersion: INITIAL_TEST_VERSION,
+      rating,
+      reliability: 48,
+    },
+    ...(fields.advanced === false ? {} : {
+      advanced: {
+        completedAt: "2026-07-18T18:00:00.000Z",
+        engineVersion: FOOTBALL_RATING_ENGINE_VERSION,
+        facets: fields.assessmentFacets,
+        primaryPosition: fields.assessmentPosition,
+        questionnaireVersion: ADVANCED_TEST_VERSION,
+        rating,
+        reliability: 64,
+      },
+    }),
+  };
+}
+
+function demoAssessmentVotes(playerId: string, fields: DemoPlayerLivingFields, ratingRole: RatingRole): RatingVote[] {
+  return [
+    {
+      id: `assessment-${playerId}-initial`,
+      voterId: "demo-assessment",
+      voterName: "Test inicial",
+      ratingRole,
+      source: "initialAssessment",
+      matchCount: 0,
+      createdAt: "2026-06-02T18:00:00.000Z",
+      facets: fields.assessmentFacets,
+    },
+    ...(fields.advanced === false ? [] : [{
+      id: `assessment-${playerId}-advanced`,
+      voterId: "demo-assessment",
+      voterName: "Test avanzado",
+      ratingRole,
+      source: "advancedAssessment" as const,
+      matchCount: 0,
+      createdAt: "2026-07-18T18:00:00.000Z",
+      facets: fields.assessmentFacets,
+    }]),
+  ];
+}
+
+function applyDemoLivingPlayerFields(player: Player): Player {
+  const fields = demoPlayerLivingFields[player.id];
+  if (!fields) return player;
+
+  const ratingRole = player.goalkeeperOnly ? "goalkeeper" : "field";
+  const existingVotes = player.ratingVotes ?? [];
+  const assessmentVotes = demoAssessmentVotes(player.id, fields, ratingRole).filter((vote) =>
+    !existingVotes.some((existingVote) => existingVote.source === vote.source),
+  );
+
+  return {
+    ...player,
+    assessmentSummary: player.assessmentSummary ?? demoAssessmentSummary(fields),
+    birthDate: player.birthDate || fields.birthDate,
+    marketAvailability: fields.marketAvailability ?? player.marketAvailability,
+    marketBio: fields.marketBio ?? player.marketBio,
+    marketEnabled: fields.marketEnabled ?? player.marketEnabled,
+    marketModalities: fields.marketModalities ?? player.marketModalities,
+    marketOpenToGroup: fields.marketOpenToGroup ?? player.marketOpenToGroup,
+    marketOpenToGuest: fields.marketOpenToGuest ?? player.marketOpenToGuest,
+    marketZonesGeo: fields.marketZonesGeo ?? player.marketZonesGeo,
+    ratingVotes: [...assessmentVotes, ...existingVotes],
+  };
+}
+
+const rawSeedPlayers: Player[] = [
   { id: "p1", name: "Carlos", phone: "600 111 222", goalkeeperOnly: false, rating: 8, position: "Delantero / punta", goals: 18, assists: 7, appearances: 12, wins: 7, lateCancels: 1, ratingVotes: demoVotes("p1", [[3, "2026-06-10T23:00:00", { ritmo: 7, tiro: 8, pase: 6, regate: 7, defensa: 4, fisico: 7 }], [6, "2026-06-24T23:00:00", { ritmo: 8, tiro: 8, pase: 7, regate: 8, defensa: 5, fisico: 8 }], [9, "2026-07-08T23:00:00", { ritmo: 8, tiro: 9, pase: 7, regate: 8, defensa: 5, fisico: 8 }], [12, "2026-07-23T23:00:00", { ritmo: 8, tiro: 9, pase: 8, regate: 8, defensa: 5, fisico: 8 }]]) },
   { id: "p2", name: "Manu", phone: "600 222 333", rating: 7, position: "Mediocentro / pivote", goals: 10, assists: 13, appearances: 11, wins: 8, lateCancels: 0, ratingVotes: demoVotes("p2", [[3, "2026-06-10T23:00:00", { ritmo: 6, tiro: 5, pase: 8, regate: 6, defensa: 6, fisico: 7 }], [6, "2026-06-24T23:00:00", { ritmo: 6, tiro: 6, pase: 8, regate: 7, defensa: 7, fisico: 7 }], [8, "2026-07-08T23:00:00", { ritmo: 6, tiro: 6, pase: 9, regate: 7, defensa: 7, fisico: 7 }], [11, "2026-07-23T23:00:00", { ritmo: 7, tiro: 6, pase: 9, regate: 7, defensa: 8, fisico: 7 }]]) },
   { id: "p3", name: "Pablo", phone: "600 333 444", rating: 6, position: "Defensa central", goals: 5, assists: 4, appearances: 10, wins: 5, lateCancels: 2, ratingVotes: demoVotes("p3", [[3, "2026-06-10T23:00:00", { ritmo: 5, tiro: 4, pase: 5, regate: 5, defensa: 7, fisico: 6 }], [6, "2026-06-24T23:00:00", { ritmo: 5, tiro: 4, pase: 6, regate: 5, defensa: 8, fisico: 7 }], [10, "2026-07-23T23:00:00", { ritmo: 6, tiro: 4, pase: 6, regate: 5, defensa: 8, fisico: 7 }]]) },
@@ -496,6 +628,8 @@ const seedPlayers: Player[] = [
   { id: "p18", name: "Óscar", phone: "601 999 000", rating: 7, position: "Pívot", goals: 12, assists: 3, appearances: 5, wins: 3, lateCancels: 0 },
 ];
 
+const seedPlayers: Player[] = rawSeedPlayers.map(applyDemoLivingPlayerFields);
+
 const seedVenues: Venue[] = [
   { id: "v1", name: "Polideportivo La Mina", address: "Sant Adrià de Besòs, Barcelona", city: "Sant Adrià de Besòs", defaultCost: 56, kind: "futbol7" },
   { id: "v2", name: "Pista El Parque", address: "Barcelona, Barcelona", city: "Barcelona", defaultCost: 42, kind: "sala" },
@@ -510,7 +644,7 @@ const seedMatches: Match[] = [
   {
     id: "m1",
     title: "Demo jueves 21:00",
-    date: "2026-07-30T21:00",
+    date: demoDate(6, "21:00"),
     place: "Polideportivo La Mina",
     venueId: "v1",
     kind: "futbol7",
@@ -522,22 +656,22 @@ const seedMatches: Match[] = [
     reserveLimit: 2,
     lineupClosed: false,
     players: [
-      { playerId: "p4", status: "voy", joinedAt: "2026-07-20T09:00:00", paid: true },
-      { playerId: "p14", status: "voy", joinedAt: "2026-07-20T09:03:00", paid: false },
-      { playerId: "p1", status: "voy", joinedAt: "2026-07-20T09:10:00", paid: true },
-      { playerId: "p2", status: "voy", joinedAt: "2026-07-20T09:14:00", paid: false },
-      { playerId: "p3", status: "voy", joinedAt: "2026-07-20T09:21:00", paid: true },
-      { playerId: "p5", status: "voy", joinedAt: "2026-07-20T09:28:00", paid: false },
-      { playerId: "p6", status: "voy", joinedAt: "2026-07-20T09:35:00", paid: true },
-      { playerId: "p7", status: "voy", joinedAt: "2026-07-20T09:40:00", paid: false },
-      { playerId: "p8", status: "voy", joinedAt: "2026-07-20T09:45:00", paid: false },
-      { playerId: "p10", status: "voy", joinedAt: "2026-07-20T09:51:00", paid: false },
-      { playerId: "p11", status: "voy", joinedAt: "2026-07-20T09:58:00", paid: false },
-      { playerId: "p12", status: "voy", joinedAt: "2026-07-20T10:02:00", paid: true },
-      { playerId: "p13", status: "voy", joinedAt: "2026-07-20T10:10:00", paid: false },
-      { playerId: "p18", status: "voy", joinedAt: "2026-07-20T10:15:00", paid: false },
-      { playerId: "p9", status: "voy", joinedAt: "2026-07-20T10:35:00", paid: false },
-      { playerId: "p17", status: "voy", joinedAt: "2026-07-20T10:46:00", paid: false },
+      { playerId: "p4", status: "voy", joinedAt: demoJoinedAt(-5, "09:00"), paid: true },
+      { playerId: "p14", status: "voy", joinedAt: demoJoinedAt(-5, "09:03"), paid: false },
+      { playerId: "p1", status: "voy", joinedAt: demoJoinedAt(-5, "09:10"), paid: true },
+      { playerId: "p2", status: "voy", joinedAt: demoJoinedAt(-5, "09:14"), paid: false },
+      { playerId: "p3", status: "voy", joinedAt: demoJoinedAt(-5, "09:21"), paid: true },
+      { playerId: "p5", status: "voy", joinedAt: demoJoinedAt(-5, "09:28"), paid: false },
+      { playerId: "p6", status: "voy", joinedAt: demoJoinedAt(-5, "09:35"), paid: true },
+      { playerId: "p7", status: "voy", joinedAt: demoJoinedAt(-5, "09:40"), paid: false },
+      { playerId: "p8", status: "voy", joinedAt: demoJoinedAt(-5, "09:45"), paid: false },
+      { playerId: "p10", status: "voy", joinedAt: demoJoinedAt(-5, "09:51"), paid: false },
+      { playerId: "p11", status: "voy", joinedAt: demoJoinedAt(-5, "09:58"), paid: false },
+      { playerId: "p12", status: "voy", joinedAt: demoJoinedAt(-5, "10:02"), paid: true },
+      { playerId: "p13", status: "voy", joinedAt: demoJoinedAt(-5, "10:10"), paid: false },
+      { playerId: "p18", status: "voy", joinedAt: demoJoinedAt(-5, "10:15"), paid: false },
+      { playerId: "p9", status: "voy", joinedAt: demoJoinedAt(-5, "10:35"), paid: false },
+      { playerId: "p17", status: "voy", joinedAt: demoJoinedAt(-5, "10:46"), paid: false },
       { playerId: "p15", status: "no" },
       { playerId: "p16", status: "no" },
     ],
@@ -545,7 +679,7 @@ const seedMatches: Match[] = [
   {
     id: "m2",
     title: "Demo sala rápida",
-    date: "2026-07-23T21:00",
+    date: demoDate(-7, "21:00"),
     place: "Pista El Parque",
     venueId: "v2",
     kind: "sala",
@@ -571,7 +705,7 @@ const seedMatches: Match[] = [
   {
     id: "m3",
     title: "Demo 7v7 igualada",
-    date: "2026-07-16T21:00",
+    date: demoDate(-14, "21:00"),
     place: "Polideportivo La Mina",
     venueId: "v1",
     kind: "futbol7",
@@ -597,7 +731,7 @@ const seedMatches: Match[] = [
   {
     id: "m4",
     title: "Demo lunes sala",
-    date: "2026-07-09T20:30",
+    date: demoDate(-21, "20:30"),
     place: "Pista El Parque",
     venueId: "v2",
     kind: "sala",
@@ -622,7 +756,7 @@ const seedMatches: Match[] = [
   {
     id: "m5",
     title: "Demo jueves 7v7",
-    date: "2026-07-02T21:00",
+    date: demoDate(-28, "21:00"),
     place: "Polideportivo La Mina",
     venueId: "v1",
     kind: "futbol7",
@@ -647,7 +781,7 @@ const seedMatches: Match[] = [
   {
     id: "m6",
     title: "Demo municipal 11",
-    date: "2026-06-25T22:00",
+    date: demoDate(-35, "22:00"),
     place: "Municipal Norte",
     venueId: "v3",
     kind: "futbol11",
@@ -670,7 +804,7 @@ const seedMatches: Match[] = [
   {
     id: "m7",
     title: "Demo primera prueba",
-    date: "2026-06-18T21:00",
+    date: demoDate(-42, "21:00"),
     place: "Polideportivo La Mina",
     venueId: "v1",
     kind: "futbol7",
@@ -692,6 +826,19 @@ const seedMatches: Match[] = [
     players: demoMatchPlayers(["p4", "p3", "p8", "p13", "p5", "p11", "p12", "p14", "p6", "p10", "p2", "p1", "p7", "p18"], ["p4", "p3", "p12", "p14", "p2", "p7"]),
   },
 ];
+
+const seedMatchesById = new Map(seedMatches.map((match) => [match.id, match]));
+
+function applyDemoLivingMatchFields(match: Match): Match {
+  const seedMatch = seedMatchesById.get(match.id);
+  if (!seedMatch) return match;
+
+  return {
+    ...match,
+    date: seedMatch.date,
+    season: seasonKey(seedMatch.date),
+  };
+}
 
 const storageKey = "pachanga-iq-v3";
 const profileNameKey = "pachanga-iq-profile-name";
@@ -1989,56 +2136,61 @@ function normalizePayload(payload?: Partial<AppPayload>): AppPayload {
   const venues = (payload?.venues ? payload.venues : fallback.venues).map(normalizeVenue);
   const rawMatches = payload?.matches ? payload.matches : fallback.matches;
   const matches = rawMatches.length
-    ? rawMatches.map((match) => ({
-        ...match,
-        venueId: match.venueId ?? venues.find((venue) => venue.name === match.place)?.id,
-        fieldCost: match.fieldCost ?? (match.price ? match.price * Math.max(match.targetPlayers, 1) : 0),
-        configured: match.configured ?? Boolean(match.closed || match.scoreA !== undefined || match.players?.length || match.venueId),
-        lineupClosed: match.lineupClosed ?? false,
-        publicGuestsPay: match.publicGuestsPay ?? true,
-        publicMaxRating: publicMatchRating(match.publicMaxRating, 10),
-        publicMinRating: publicMatchRating(match.publicMinRating, 0),
-        publicOpen: Boolean(match.publicOpen),
-        publicOpenSlots: Math.max(1, Math.floor(Number(match.publicOpenSlots) || 1)),
-        publicPositions: normalizePublicMatchPositions(match.publicPositions),
-        publicRequiresApproval: match.publicRequiresApproval ?? true,
-        reservesAttend: match.reservesAttend ?? false,
-        reserveLimit: Math.max(0, Math.floor(match.reserveLimit ?? 0)),
-        season: match.season || seasonKey(match.date),
-      }))
+    ? rawMatches.map((match) => {
+        const matchWithDemoFields = applyDemoLivingMatchFields(match);
+
+        return {
+          ...matchWithDemoFields,
+          venueId: matchWithDemoFields.venueId ?? venues.find((venue) => venue.name === matchWithDemoFields.place)?.id,
+          fieldCost: matchWithDemoFields.fieldCost ?? (matchWithDemoFields.price ? matchWithDemoFields.price * Math.max(matchWithDemoFields.targetPlayers, 1) : 0),
+          configured: matchWithDemoFields.configured ?? Boolean(matchWithDemoFields.closed || matchWithDemoFields.scoreA !== undefined || matchWithDemoFields.players?.length || matchWithDemoFields.venueId),
+          lineupClosed: matchWithDemoFields.lineupClosed ?? false,
+          publicGuestsPay: matchWithDemoFields.publicGuestsPay ?? true,
+          publicMaxRating: publicMatchRating(matchWithDemoFields.publicMaxRating, 10),
+          publicMinRating: publicMatchRating(matchWithDemoFields.publicMinRating, 0),
+          publicOpen: Boolean(matchWithDemoFields.publicOpen),
+          publicOpenSlots: Math.max(1, Math.floor(Number(matchWithDemoFields.publicOpenSlots) || 1)),
+          publicPositions: normalizePublicMatchPositions(matchWithDemoFields.publicPositions),
+          publicRequiresApproval: matchWithDemoFields.publicRequiresApproval ?? true,
+          reservesAttend: matchWithDemoFields.reservesAttend ?? false,
+          reserveLimit: Math.max(0, Math.floor(matchWithDemoFields.reserveLimit ?? 0)),
+          season: matchWithDemoFields.season || seasonKey(matchWithDemoFields.date),
+        };
+      })
     : [starterMatch()];
   const players = (payload?.players ? payload.players : fallback.players).map((player) => {
-    const position = player.position ?? "Mediocentro / pivote";
-    const outfieldPosition = player.outfieldPosition && !isGoalkeeperPosition(player.outfieldPosition)
-      ? player.outfieldPosition
+    const playerWithDemoFields = applyDemoLivingPlayerFields(player);
+    const position = playerWithDemoFields.position ?? "Mediocentro / pivote";
+    const outfieldPosition = playerWithDemoFields.outfieldPosition && !isGoalkeeperPosition(playerWithDemoFields.outfieldPosition)
+      ? playerWithDemoFields.outfieldPosition
       : !isGoalkeeperPosition(position)
         ? position
         : "Mediocentro / pivote";
 
     return {
-      ...player,
-      assessmentSummary: normalizeAssessmentSummary(player.assessmentSummary),
-      avatarOffsetX: player.avatar ? clampAvatarOffset(player.avatarOffsetX, 50) : undefined,
-      avatarOffsetY: player.avatar ? clampAvatarOffset(player.avatarOffsetY, 0) : undefined,
-      birthDate: normalizeBirthDate(player.birthDate),
-      globalPlayerProfileId: player.globalPlayerProfileId || undefined,
-      importedRating: player.importedRating ? clampRating(Number(player.importedRating)) : undefined,
-      importedRatingAt: player.importedRatingAt || undefined,
-      importedRatingFromGroup: player.importedRatingFromGroup || undefined,
-      injured: Boolean(player.injured),
-      inactive: Boolean(player.inactive),
-      marketAvailability: player.marketAvailability || "",
-      marketBio: player.marketBio || "",
-      marketEnabled: Boolean(player.marketEnabled),
-      marketModalities: (player.marketModalities ?? []).filter((kind): kind is MatchKind => Boolean(matchKinds[kind])),
-      marketOpenToGroup: player.marketOpenToGroup ?? true,
-      marketOpenToGuest: player.marketOpenToGuest ?? true,
-      marketZones: marketZoneTextFromGeo(normalizeMarketZonesGeo(player.marketZonesGeo)),
-      marketZonesGeo: normalizeMarketZonesGeo(player.marketZonesGeo),
+      ...playerWithDemoFields,
+      assessmentSummary: normalizeAssessmentSummary(playerWithDemoFields.assessmentSummary),
+      avatarOffsetX: playerWithDemoFields.avatar ? clampAvatarOffset(playerWithDemoFields.avatarOffsetX, 50) : undefined,
+      avatarOffsetY: playerWithDemoFields.avatar ? clampAvatarOffset(playerWithDemoFields.avatarOffsetY, 0) : undefined,
+      birthDate: normalizeBirthDate(playerWithDemoFields.birthDate),
+      globalPlayerProfileId: playerWithDemoFields.globalPlayerProfileId || undefined,
+      importedRating: playerWithDemoFields.importedRating ? clampRating(Number(playerWithDemoFields.importedRating)) : undefined,
+      importedRatingAt: playerWithDemoFields.importedRatingAt || undefined,
+      importedRatingFromGroup: playerWithDemoFields.importedRatingFromGroup || undefined,
+      injured: Boolean(playerWithDemoFields.injured),
+      inactive: Boolean(playerWithDemoFields.inactive),
+      marketAvailability: playerWithDemoFields.marketAvailability || "",
+      marketBio: playerWithDemoFields.marketBio || "",
+      marketEnabled: Boolean(playerWithDemoFields.marketEnabled),
+      marketModalities: (playerWithDemoFields.marketModalities ?? []).filter((kind): kind is MatchKind => Boolean(matchKinds[kind])),
+      marketOpenToGroup: playerWithDemoFields.marketOpenToGroup ?? true,
+      marketOpenToGuest: playerWithDemoFields.marketOpenToGuest ?? true,
+      marketZones: marketZoneTextFromGeo(normalizeMarketZonesGeo(playerWithDemoFields.marketZonesGeo)),
+      marketZonesGeo: normalizeMarketZonesGeo(playerWithDemoFields.marketZonesGeo),
       outfieldPosition,
       position,
-      rating: clampRating(Number(player.rating ?? 5)),
-      ratingVotes: normalizeRatingVotes(player.ratingVotes),
+      rating: clampRating(Number(playerWithDemoFields.rating ?? 5)),
+      ratingVotes: normalizeRatingVotes(playerWithDemoFields.ratingVotes),
     };
   });
 

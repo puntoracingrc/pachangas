@@ -529,6 +529,13 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /finishAvatarDrag/);
   assert.match(page, /El encuadre se guarda al pulsar Guardar ficha/);
   assert.match(page, /birthDate\?: string/);
+  assert.match(page, /demoPlayerLivingFields/);
+  assert.match(page, /applyDemoLivingPlayerFields/);
+  assert.match(page, /applyDemoLivingMatchFields/);
+  assert.match(page, /birthDate: "1988-04-12"/);
+  assert.match(page, /source: "initialAssessment"/);
+  assert.match(page, /source: "advancedAssessment"/);
+  assert.match(page, /assessmentSummary: player\.assessmentSummary \?\? demoAssessmentSummary/);
   assert.match(page, /playerAge/);
   assert.match(page, /Fecha nacimiento/);
   assert.match(page, /Edad/);
