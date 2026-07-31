@@ -451,6 +451,7 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(globalsCss, /\.market-scout-card-compact/);
   assert.match(globalsCss, /\.market-admin-panel/);
   assert.match(globalsCss, /main\[data-mobile-tab="mercado"\] > \.app-shell/);
+  assert.match(globalsCss, /@media \(max-width:\s*760px\)\s*\{[\s\S]*\.legal-footer\s*\{\s*display:\s*none/);
   assert.match(globalsCss, /main\[data-mobile-tab="partido"\] > \.app-shell > \.main-panel,\s*main\[data-mobile-tab="partido"\] > \.app-shell > \.lineup-panel\s*\{\s*display:\s*grid/);
   assert.match(globalsCss, /main\[data-mobile-tab="inicio"\]\s*\{[\s\S]*grid-template-columns:\s*minmax\(230px,\s*0\.72fr\) minmax\(0,\s*1\.28fr\)/);
   assert.match(globalsCss, /main\[data-mobile-tab="partido"\] > \.app-shell > \.lineup-panel/);
