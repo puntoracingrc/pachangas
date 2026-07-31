@@ -82,6 +82,10 @@
     display: none !important;
   }
 
+  .legal-footer {
+    display: none;
+  }
+
   .mobile-app-nav {
     position: fixed;
     z-index: 80;
@@ -7414,10 +7418,7 @@ select:disabled {
   }
 
   .legal-footer {
-    align-items: stretch;
-    display: grid;
-    gap: 12px;
-    margin-bottom: 112px;
+    display: none;
   }
 
   .legal-footer nav {
