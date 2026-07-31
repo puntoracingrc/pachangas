@@ -8744,6 +8744,120 @@ select:disabled {
     scrollbar-width: thin;
   }
 
+  main[data-mobile-tab="partido"] .match-editor {
+    align-items: end;
+    background:
+      linear-gradient(90deg, rgba(200, 239, 93, 0.08), transparent 36%),
+      rgba(9, 19, 16, 0.9) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    gap: 4px 6px;
+    grid-column: 1 / -1;
+    grid-template-columns:
+      minmax(150px, 1.7fr)
+      minmax(94px, 0.75fr)
+      minmax(76px, 0.58fr)
+      minmax(96px, 0.85fr)
+      minmax(100px, 0.85fr)
+      minmax(72px, 0.5fr)
+      minmax(70px, 0.5fr)
+      minmax(86px, 0.56fr);
+    margin: 0 !important;
+    height: 52px;
+    min-height: 52px;
+    overflow: hidden;
+    padding: 5px 7px !important;
+  }
+
+  main[data-mobile-tab="partido"] .match-editor label,
+  main[data-mobile-tab="partido"] .match-editor .reserve-toggle {
+    color: #9fb1a7;
+    font-size: 9px;
+    font-weight: 950;
+    gap: 3px;
+    letter-spacing: 0;
+    line-height: 1;
+    min-width: 0;
+    text-transform: uppercase;
+  }
+
+  main[data-mobile-tab="partido"] .match-field-control,
+  main[data-mobile-tab="partido"] .match-date-control,
+  main[data-mobile-tab="partido"] .match-time-control,
+  main[data-mobile-tab="partido"] .match-kind-control,
+  main[data-mobile-tab="partido"] .match-price-control {
+    grid-column: auto;
+  }
+
+  main[data-mobile-tab="partido"] .match-editor input,
+  main[data-mobile-tab="partido"] .match-editor select,
+  main[data-mobile-tab="partido"] .reserve-toggle-box {
+    background: rgba(245, 242, 232, 0.08);
+    border-color: rgba(255, 255, 255, 0.16);
+    border-radius: 6px;
+    color: #f5f2e8;
+    font-size: 11px;
+    font-weight: 850;
+    height: 28px;
+    min-height: 28px;
+    padding: 0 8px;
+  }
+
+  main[data-mobile-tab="partido"] .match-editor input:disabled,
+  main[data-mobile-tab="partido"] .match-editor select:disabled,
+  main[data-mobile-tab="partido"] .reserve-toggle-box:has(input:disabled) {
+    background: rgba(245, 242, 232, 0.07);
+    border-color: rgba(255, 255, 255, 0.12);
+    color: #d4ddd7;
+    opacity: 1;
+  }
+
+  main[data-mobile-tab="partido"] .reserve-toggle-box {
+    align-items: center;
+    display: flex;
+    gap: 5px;
+    overflow: hidden;
+    text-transform: none;
+    white-space: nowrap;
+  }
+
+  main[data-mobile-tab="partido"] .reserve-toggle-box input {
+    flex: 0 0 13px;
+    height: 13px;
+    min-height: 13px;
+    padding: 0;
+    width: 13px;
+  }
+
+  main[data-mobile-tab="partido"] .save-match-button {
+    border-radius: 6px;
+    font-size: 11px;
+    height: 28px;
+    min-height: 28px;
+    padding: 0 9px;
+  }
+
+  main[data-mobile-tab="partido"] .save-match-button:disabled {
+    opacity: 0.86;
+  }
+
+  main[data-mobile-tab="partido"] .draft-match-note,
+  main[data-mobile-tab="partido"] .registration-locked-note {
+    grid-column: 1 / -1;
+    grid-template-columns: auto minmax(0, 1fr);
+    margin: 0;
+    min-height: 30px;
+    padding: 6px 9px;
+  }
+
+  main[data-mobile-tab="partido"] .draft-match-note span,
+  main[data-mobile-tab="partido"] .draft-match-note strong,
+  main[data-mobile-tab="partido"] .registration-locked-note span,
+  main[data-mobile-tab="partido"] .registration-locked-note strong {
+    font-size: 10px;
+    line-height: 1.15;
+  }
+
   main[data-mobile-tab="partido"] .weather-card {
     background: rgba(245, 242, 232, 0.08);
     border-color: rgba(255, 255, 255, 0.12);
@@ -8941,14 +9055,20 @@ select:disabled {
     gap: 7px;
     grid-column: 1 / -1;
     grid-template-columns: repeat(2, minmax(220px, 1fr));
-    min-height: 0;
+    height: clamp(136px, calc(100dvh - 218px), 316px);
+    min-height: 136px;
     overflow: hidden;
+  }
+
+  main[data-mobile-tab="partido"] .main-panel:has(.match-editor) .team-player-grid {
+    height: clamp(138px, calc(100dvh - 252px), 300px);
   }
 
   main[data-mobile-tab="partido"] .team-player-column {
     align-content: start;
     background: rgba(13, 24, 20, 0.84);
     gap: 0;
+    height: 100%;
     min-height: 0;
     overflow: auto;
     padding: 0;
