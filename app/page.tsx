@@ -4025,6 +4025,8 @@ export default function Home() {
 
   function openPlayerProfile(playerId: string) {
     teamGalleryReturnScrollYRef.current = null;
+    setMobileAccountOpen(false);
+    setActiveMobileTab("perfil");
     setSelectedPlayerId(playerId);
     if (selectedPlayerId === playerId) {
       scrollToPlayerProfile();
@@ -4032,11 +4034,14 @@ export default function Home() {
   }
 
   function openTeamGallery() {
+    setMobileAccountOpen(false);
+    setActiveMobileTab("equipo");
     setTeamGalleryOpen(true);
     scrollToPanel(teamGalleryRef);
   }
 
   function openGroupSwitcher() {
+    setActiveMobileTab("inicio");
     scrollToPanel(teamAccessPanelRef);
   }
 
@@ -4129,6 +4134,7 @@ export default function Home() {
   }
 
   function showQuickForm(form: NonNullable<typeof openQuickForm>) {
+    setActiveMobileTab("inicio");
     setOpenQuickForm(form);
     scrollToQuickForm(form);
   }
@@ -4137,6 +4143,7 @@ export default function Home() {
     if (!canUseAdminControls) return;
     const nextShowSettings = !showSettings;
     if (nextShowSettings) setSettingsDraft(siteSettings);
+    if (nextShowSettings) setActiveMobileTab("perfil");
     setShowSettings(nextShowSettings);
     if (nextShowSettings) scrollToPanel(settingsPanelRef);
   }
@@ -4170,6 +4177,7 @@ export default function Home() {
 
   function revealBillingPanel(message?: string) {
     if (message) setBillingMessage(message);
+    setActiveMobileTab("perfil");
     setShowBillingPanel(true);
     scrollToPanel(billingPanelRef);
   }
@@ -6980,7 +6988,7 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-screen bg-[#f7f6f0] text-[#1d2521]" style={teamColorStyle}>
+    <main className="min-h-screen bg-[#f7f6f0] text-[#1d2521]" data-mobile-tab={activeMobileTab} style={teamColorStyle}>
       <section className={isDemoMode ? "hero demo-hero" : "hero team-hero"} id="inicio">
         <div>
           {isDemoMode ? (

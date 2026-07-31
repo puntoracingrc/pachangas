@@ -160,6 +160,49 @@
     stroke-width: 1.8;
   }
 
+  main[data-mobile-tab]:not([data-mobile-tab="inicio"]) > .hero,
+  main[data-mobile-tab]:not([data-mobile-tab="inicio"]) > .demo-banner,
+  main[data-mobile-tab]:not([data-mobile-tab="inicio"]) > .team-access-panel,
+  main[data-mobile-tab]:not([data-mobile-tab="inicio"]) > .quick-create-form {
+    display: none;
+  }
+
+  main[data-mobile-tab]:not([data-mobile-tab="perfil"]) > .billing-panel,
+  main[data-mobile-tab]:not([data-mobile-tab="perfil"]) > .settings-panel,
+  main[data-mobile-tab]:not([data-mobile-tab="perfil"]) > .bottom-grid {
+    display: none;
+  }
+
+  main[data-mobile-tab]:not([data-mobile-tab="equipo"]) > .team-gallery-panel {
+    display: none;
+  }
+
+  main[data-mobile-tab="equipo"] > .app-shell,
+  main[data-mobile-tab="perfil"] > .app-shell {
+    display: none;
+  }
+
+  main[data-mobile-tab] > .app-shell {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  main[data-mobile-tab] > .app-shell > .match-list,
+  main[data-mobile-tab] > .app-shell > .main-panel,
+  main[data-mobile-tab] > .app-shell > .teams-panel {
+    display: none;
+  }
+
+  main[data-mobile-tab="inicio"] > .app-shell > .match-list,
+  main[data-mobile-tab="partido"] > .app-shell > .main-panel {
+    display: grid;
+  }
+
+  main[data-mobile-tab="partido"] > .app-shell,
+  main[data-mobile-tab="perfil"] > .bottom-grid,
+  main[data-mobile-tab="equipo"] > .team-gallery-panel {
+    margin-top: 10px;
+  }
+
   .mobile-account-backdrop {
     position: fixed;
     z-index: 95;
