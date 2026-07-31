@@ -76,6 +76,7 @@ async function sha256Hex(value: string) {
 type RatingFacet = "ritmo" | "tiro" | "pase" | "regate" | "defensa" | "fisico";
 type RatingRole = "field" | "goalkeeper";
 type MobileSectionTabId = "inicio" | "partido";
+type ProfilePane = "ficha" | "ranking";
 
 type RatingVote = {
   id: string;
@@ -2977,6 +2978,7 @@ export default function Home() {
   const [teamGalleryOpen, setTeamGalleryOpen] = useState(false);
   const [pitchZoomOpen, setPitchZoomOpen] = useState(false);
   const [activeMobileTab, setActiveMobileTab] = useState<MobileAppTab>("inicio");
+  const [profilePane, setProfilePane] = useState<ProfilePane>("ficha");
   const [playerActionMenu, setPlayerActionMenu] = useState<{ playerId: string; x: number; y: number } | null>(null);
   const [statusConfirmation, setStatusConfirmation] = useState<PendingStatusChange | null>(null);
   const [mobileAccountOpen, setMobileAccountOpen] = useState(false);
@@ -3916,7 +3918,6 @@ export default function Home() {
   );
   const registrationOpen = matchConfigured && !registrationLockedByPreviousMatch;
   const showMatchRoster = matchConfigured && registrationOpen;
-  const showMarketScoutCard = showMatchRoster && !lineupClosed && !matchFinalized && missing > 0;
   const pendingOpenMatchRequests = openMatchRequests.filter((request) => request.status === "pending");
   const paymentReady = matchConfigured && (lineupClosed || matchFinalized);
   const payingParticipantIds = paymentReady ? payingIds : [];
@@ -4057,6 +4058,7 @@ export default function Home() {
   function openPlayerProfile(playerId: string) {
     teamGalleryReturnScrollYRef.current = null;
     setMobileAccountOpen(false);
+    setProfilePane("ficha");
     setActiveMobileTab("perfil");
     setSelectedPlayerId(playerId);
     if (selectedPlayerId === playerId) {
@@ -4079,9 +4081,21 @@ export default function Home() {
   function openTeamGalleryPlayerProfile(playerId: string) {
     teamGalleryReturnScrollYRef.current = window.scrollY;
     setMobileAccountOpen(false);
+    setProfilePane("ficha");
     setActiveMobileTab("perfil");
     setSelectedPlayerId(playerId);
     scrollToPlayerProfile();
+  }
+
+  function openRankingPanel() {
+    setMobileAccountOpen(false);
+    setProfilePane("ranking");
+    setActiveMobileTab("perfil");
+    window.setTimeout(() => {
+      window.requestAnimationFrame(() => {
+        document.getElementById("ranking")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+    }, 0);
   }
 
   function closePlayerProfile() {
@@ -4148,6 +4162,7 @@ export default function Home() {
     setActiveMobileTab(tabId);
 
     if (tabId === "mercado") {
+      if (canUseAdminControls) return;
       window.location.assign("/mercado");
       return;
     }
@@ -4173,6 +4188,18 @@ export default function Home() {
     }
 
     navigateMobileTab(tabId);
+  }
+
+  function openMarketConfiguration() {
+    setCreateMenuOpen(false);
+    setMobileAccountOpen(false);
+    lockMobileNavigationTab("mercado");
+    setActiveMobileTab("mercado");
+    window.setTimeout(() => {
+      window.requestAnimationFrame(() => {
+        document.getElementById("mercado")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+    }, 0);
   }
 
   function runMobileAccountAction(action: () => void) {
@@ -4976,6 +5003,8 @@ export default function Home() {
   const canManageTeam = isRegisteredUser && (currentRole === "owner" || currentRole === "admin");
   const canManageRoles = hasRealTeam && isRegisteredUser && currentRole === "owner";
   const canUseAdminControls = hasRealTeam && canManageTeam;
+  const canConfigureMatchMarket = canUseAdminControls && showMatchRoster && !lineupClosed && !matchFinalized;
+  const showMarketScoutCard = canConfigureMatchMarket && (missing > 0 || Boolean(activeMatch.publicOpen));
   const canCreateTeam = Boolean(supabase && isRegisteredUser);
   const ownPlayer = currentUserId ? players.find((player) => player.ownerUserId === currentUserId) : undefined;
   const needsOwnPlayerProfile = hasRealTeam && isRegisteredUser && !ownPlayer;
@@ -6081,6 +6110,7 @@ export default function Home() {
       const savedPlayer = ownPlayerFromCommit(result.data as RemotePayloadCommit, player.id);
       setPlayerAssessment(null);
       setProfileName(playerDisplayName(savedPlayer ?? player));
+      setProfilePane("ficha");
       setSelectedPlayerId(savedPlayer?.id ?? player.id);
       setProfileSaveMessage("Ficha creada con test inicial");
       window.setTimeout(() => setProfileSaveMessage(""), 2200);
@@ -6120,6 +6150,7 @@ export default function Home() {
       if (result.error) throw new Error(result.error.message);
       const savedPlayer = ownPlayerFromCommit(result.data as RemotePayloadCommit, selectedPlayer.id);
       setPlayerAssessment(null);
+      setProfilePane("ficha");
       setSelectedPlayerId(savedPlayer?.id ?? selectedPlayer.id);
       setProfileSaveMessage("Ficha afinada con test avanzado");
       window.setTimeout(() => setProfileSaveMessage(""), 2200);
@@ -6210,6 +6241,7 @@ export default function Home() {
 
       const savedPlayer = ownPlayerFromCommit(result.data as RemotePayloadCommit, player.id);
       if (savedPlayer) {
+        setProfilePane("ficha");
         setSelectedPlayerId(savedPlayer.id);
         setProfileName(playerDisplayName(savedPlayer));
         setSelectedImportCandidateKey(null);
@@ -6221,6 +6253,7 @@ export default function Home() {
     }
 
     setPlayers((current) => [...current, player]);
+    setProfilePane("ficha");
     setSelectedPlayerId(player.id);
     setProfileName(playerDisplayName(player));
     setSelectedImportCandidateKey(null);
@@ -6265,6 +6298,7 @@ export default function Home() {
       setPlayers(nextPlayers);
     }
 
+    setProfilePane("ficha");
     setSelectedPlayerId(player.id);
     setProfileSaveMessage("Jugador creado");
     window.setTimeout(() => setProfileSaveMessage(""), 1800);
@@ -7466,6 +7500,155 @@ export default function Home() {
 
       {renderPlayerAssessmentPanel()}
 
+      {canUseAdminControls && activeMobileTab === "mercado" ? (
+        <section className={`top-panel market-admin-panel ${activeMatch.publicOpen ? "public-open" : ""}`} id="mercado" aria-label="Configuración de mercado del partido">
+          <div className="market-admin-header">
+            <div>
+              <span>Mercado</span>
+              <strong>Configurar partido público</strong>
+              <p>
+                Solo admins y owner ven esta pantalla. Los jugadores normales siguen entrando al mercado público.
+              </p>
+            </div>
+            <div className="market-admin-header-actions">
+              <a href={marketScoutUrl("jugadores")}>Ver mercado público</a>
+              <button type="button" onClick={() => navigateMobileTab("partido")}>
+                Volver al partido
+              </button>
+            </div>
+          </div>
+
+          {matchConfigured ? (
+            canConfigureMatchMarket ? (
+              <>
+                <div className="market-admin-summary">
+                  <div>
+                    <span>Faltan</span>
+                    <strong>{missing}</strong>
+                  </div>
+                  <div>
+                    <span>Plazas públicas</span>
+                    <strong>{activeMatch.publicOpen ? publicOpenSlots : "-"}</strong>
+                  </div>
+                  <div>
+                    <span>Solicitudes</span>
+                    <strong>{pendingOpenMatchRequests.length}</strong>
+                  </div>
+                  <div>
+                    <span>Estado</span>
+                    <strong>{activeMatch.publicOpen ? "Publicado" : "Privado"}</strong>
+                  </div>
+                </div>
+
+                <div className="public-match-options market-admin-options">
+                  <label>
+                    Plazas públicas
+                    <input
+                      min="1"
+                      max={Math.max(missing, 1)}
+                      type="number"
+                      value={publicOpenSlots}
+                      onChange={(event) =>
+                        updateMatch({
+                          ...activeMatch,
+                          publicOpenSlots: Math.max(1, Math.min(Math.max(missing, 1), Math.floor(Number(event.target.value) || 1))),
+                        })
+                      }
+                    />
+                  </label>
+                  <label>
+                    Nivel mín.
+                    <select
+                      value={Math.round(publicMatchRating(activeMatch.publicMinRating, 0) * 10)}
+                      onChange={(event) => updateMatch({ ...activeMatch, publicMinRating: Number(event.target.value) / 10 })}
+                    >
+                      {publicMatchRatingPointOptions.map((rating) => (
+                        <option key={rating} value={rating}>{rating}</option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    Nivel máx.
+                    <select
+                      value={Math.round(publicMatchRating(activeMatch.publicMaxRating, 10) * 10)}
+                      onChange={(event) => updateMatch({ ...activeMatch, publicMaxRating: Number(event.target.value) / 10 })}
+                    >
+                      {publicMatchRatingPointOptions.map((rating) => (
+                        <option key={rating} value={rating}>{rating}</option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="public-match-toggle">
+                    <input
+                      checked={activeMatch.publicRequiresApproval ?? true}
+                      onChange={(event) => updateMatch({ ...activeMatch, publicRequiresApproval: event.target.checked })}
+                      type="checkbox"
+                    />
+                    Requiere aceptar
+                  </label>
+                  <label className="public-match-toggle">
+                    <input
+                      checked={activeMatch.publicGuestsPay ?? true}
+                      onChange={(event) => updateMatch({ ...activeMatch, publicGuestsPay: event.target.checked })}
+                      type="checkbox"
+                    />
+                    Invitado paga
+                  </label>
+                  <div className="public-position-options" aria-label="Posiciones buscadas">
+                    {publicMatchPositionOptions.map((position) => {
+                      const selectedPositions = normalizePublicMatchPositions(activeMatch.publicPositions);
+                      const selected = selectedPositions.includes(position);
+                      return (
+                        <label key={position}>
+                          <input
+                            checked={selected}
+                            onChange={(event) => {
+                              const nextPositions = event.target.checked
+                                ? [...selectedPositions, position]
+                                : selectedPositions.filter((item) => item !== position);
+                              updateMatch({ ...activeMatch, publicPositions: nextPositions });
+                            }}
+                            type="checkbox"
+                          />
+                          {position}
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="market-scout-actions market-admin-actions">
+                  <a href={marketScoutUrl("jugadores")}>Buscar jugadores</a>
+                  <button type="button" onClick={() => void publishOpenMatch()} disabled={missing <= 0 && !activeMatch.publicOpen}>
+                    {activeMatch.publicOpen ? "Actualizar público" : "Abrir partido al público"}
+                  </button>
+                  {activeMatch.publicOpen ? (
+                    <>
+                      <a href={marketScoutUrl("partidos")}>Ver anuncio</a>
+                      <button className="ghost-scout-button" type="button" onClick={() => void closeOpenMatch()}>
+                        Cerrar público
+                      </button>
+                    </>
+                  ) : null}
+                </div>
+
+                {openMatchRequestMessage ? <small className="sync-status sync-live">{openMatchRequestMessage}</small> : null}
+              </>
+            ) : (
+              <div className="market-admin-empty">
+                <strong>Este partido no admite mercado ahora.</strong>
+                <span>Solo se puede publicar mientras la alineación está abierta y el partido no está finalizado.</span>
+              </div>
+            )
+          ) : (
+            <div className="market-admin-empty">
+              <strong>Guarda el partido primero.</strong>
+              <span>Cuando tenga campo, fecha y plazas, podrás abrirlo al mercado.</span>
+            </div>
+          )}
+        </section>
+      ) : null}
+
       {showPlayerImportGate && selectedImportCandidate ? (
         <section className="top-panel shared-link-gate profile-import-gate">
           <div className="profile-import-copy">
@@ -8213,118 +8396,30 @@ export default function Home() {
                   </div>
                   {sortedTeamB.map((player) => renderPlayerCard(player, "B"))}
                 </div>
-                {showMarketScoutCard ? (
-                  <div className={`player-card market-scout-card ${activeMatch.publicOpen ? "public-open" : ""}`} aria-label={`Buscar en mercado. Faltan ${missing} plaza${missing === 1 ? "" : "s"}`}>
-                    <span className="market-scout-icon">
-                      <SearchLogo />
-                    </span>
-                    <div>
-                      <strong>Buscar en mercado</strong>
-                      <small>Faltan {missing} plaza{missing === 1 ? "" : "s"} para completar el cupo.</small>
-                      <em>{activeMatch.publicOpen ? "Partido publicado: los jugadores externos podrán solicitar plaza." : "Al cerrar alineación se oculta y el partido queda con los que estén."}</em>
-                      {pendingOpenMatchRequests.length > 0 ? (
-                        <small className="public-request-count">{pendingOpenMatchRequests.length} solicitud{pendingOpenMatchRequests.length === 1 ? "" : "es"} pendiente{pendingOpenMatchRequests.length === 1 ? "" : "s"}</small>
-                      ) : null}
-                    </div>
-                    {canUseAdminControls ? (
-                      <div className="public-match-options">
-                        <label>
-                          Plazas públicas
-                          <input
-                            min="1"
-                            max={Math.max(missing, 1)}
-                            type="number"
-                            value={publicOpenSlots}
-                            onChange={(event) =>
-                              updateMatch({
-                                ...activeMatch,
-                                publicOpenSlots: Math.max(1, Math.min(Math.max(missing, 1), Math.floor(Number(event.target.value) || 1))),
-                              })
-                            }
-                          />
-                        </label>
-                        <label>
-                          Nivel mín.
-                          <select
-                            value={Math.round(publicMatchRating(activeMatch.publicMinRating, 0) * 10)}
-                            onChange={(event) => updateMatch({ ...activeMatch, publicMinRating: Number(event.target.value) / 10 })}
-                          >
-                            {publicMatchRatingPointOptions.map((rating) => (
-                              <option key={rating} value={rating}>{rating}</option>
-                            ))}
-                          </select>
-                        </label>
-                        <label>
-                          Nivel máx.
-                          <select
-                            value={Math.round(publicMatchRating(activeMatch.publicMaxRating, 10) * 10)}
-                            onChange={(event) => updateMatch({ ...activeMatch, publicMaxRating: Number(event.target.value) / 10 })}
-                          >
-                            {publicMatchRatingPointOptions.map((rating) => (
-                              <option key={rating} value={rating}>{rating}</option>
-                            ))}
-                          </select>
-                        </label>
-                        <label className="public-match-toggle">
-                          <input
-                            checked={activeMatch.publicRequiresApproval ?? true}
-                            onChange={(event) => updateMatch({ ...activeMatch, publicRequiresApproval: event.target.checked })}
-                            type="checkbox"
-                          />
-                          Requiere aceptar
-                        </label>
-                        <label className="public-match-toggle">
-                          <input
-                            checked={activeMatch.publicGuestsPay ?? true}
-                            onChange={(event) => updateMatch({ ...activeMatch, publicGuestsPay: event.target.checked })}
-                            type="checkbox"
-                          />
-                          Invitado paga
-                        </label>
-                        <div className="public-position-options" aria-label="Posiciones buscadas">
-                          {publicMatchPositionOptions.map((position) => {
-                            const selectedPositions = normalizePublicMatchPositions(activeMatch.publicPositions);
-                            const selected = selectedPositions.includes(position);
-                            return (
-                              <label key={position}>
-                                <input
-                                  checked={selected}
-                                  onChange={(event) => {
-                                    const nextPositions = event.target.checked
-                                      ? [...selectedPositions, position]
-                                      : selectedPositions.filter((item) => item !== position);
-                                    updateMatch({ ...activeMatch, publicPositions: nextPositions });
-                                  }}
-                                  type="checkbox"
-                                />
-                                {position}
-                              </label>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    ) : null}
-                    <div className="market-scout-actions">
-                      <a href={marketScoutUrl("jugadores")}>Buscar jugadores</a>
-                      {canUseAdminControls ? (
-                        <button type="button" onClick={() => void publishOpenMatch()}>
-                          {activeMatch.publicOpen ? "Actualizar público" : "Abrir partido al público"}
-                        </button>
-                      ) : null}
-                      {activeMatch.publicOpen ? (
-                        <>
-                          <a href={marketScoutUrl("partidos")}>Ver anuncio</a>
-                          {canUseAdminControls ? (
-                            <button className="ghost-scout-button" type="button" onClick={() => void closeOpenMatch()}>
-                              Cerrar público
-                            </button>
-                          ) : null}
-                        </>
-                      ) : null}
-                    </div>
-                  </div>
-                ) : null}
               </div>
+              {showMarketScoutCard ? (
+                <div className={`player-card market-scout-card market-scout-card-compact ${activeMatch.publicOpen ? "public-open" : ""}`} aria-label={`Configurar mercado. Faltan ${missing} plaza${missing === 1 ? "" : "s"}`}>
+                  <span className="market-scout-icon">
+                    <SearchLogo />
+                  </span>
+                  <div>
+                    <strong>{activeMatch.publicOpen ? "Mercado publicado" : "Buscar en mercado"}</strong>
+                    <small>
+                      {missing > 0
+                        ? `Faltan ${missing} plaza${missing === 1 ? "" : "s"} para completar el cupo.`
+                        : "El partido está completo."}
+                    </small>
+                    {pendingOpenMatchRequests.length > 0 ? (
+                      <small className="public-request-count">{pendingOpenMatchRequests.length} solicitud{pendingOpenMatchRequests.length === 1 ? "" : "es"} pendiente{pendingOpenMatchRequests.length === 1 ? "" : "s"}</small>
+                    ) : null}
+                  </div>
+                  <div className="market-scout-actions">
+                    <button type="button" onClick={openMarketConfiguration}>
+                      {activeMatch.publicOpen ? "Gestionar mercado" : "Configurar mercado"}
+                    </button>
+                  </div>
+                </div>
+              ) : null}
 
               {reservePlayers.length > 0 ? (
                 <div className="reserve-section">
@@ -8547,7 +8642,7 @@ export default function Home() {
         </section>
       ) : null}
 
-      <section className={`${selectedPlayer ? "bottom-grid" : "bottom-grid without-profile"} ${needsLoginForSharedLink ? "gated-shell" : ""}`}>
+      <section className={`${selectedPlayer ? "bottom-grid" : "bottom-grid without-profile"} ${needsLoginForSharedLink ? "gated-shell" : ""}`} data-profile-pane={profilePane}>
         {selectedPlayer ? (
           <div className="panel player-profile" ref={playerProfileRef}>
             <div className="panel-title">
@@ -8687,7 +8782,13 @@ export default function Home() {
                   {showPlayerSwitcher ? (
                     <label className="profile-player-switcher">
                       Cambiar ficha
-                      <select value={selectedPlayer.id} onChange={(event) => setSelectedPlayerId(event.target.value)}>
+                      <select
+                        value={selectedPlayer.id}
+                        onChange={(event) => {
+                          setProfilePane("ficha");
+                          setSelectedPlayerId(event.target.value);
+                        }}
+                      >
                         {players.map((player) => (
                           <option key={player.id} value={player.id}>{playerDisplayName(player)}</option>
                         ))}
@@ -9138,7 +9239,7 @@ export default function Home() {
 
         <div className="panel" id="ranking">
           <div className="panel-title">
-            <span>Ranking vivo</span>
+            <span>Ranking</span>
             <strong>{rankedPlayers.length}</strong>
           </div>
           <div className="ranking-toolbar">
@@ -9249,11 +9350,7 @@ export default function Home() {
                 </button>
                 <button
                   type="button"
-                  onClick={() =>
-                    runMobileAccountAction(() =>
-                      document.getElementById("ranking")?.scrollIntoView({ behavior: "smooth", block: "start" }),
-                    )
-                  }
+                  onClick={() => runMobileAccountAction(openRankingPanel)}
                 >
                   <span>Ranking</span><small>Media, goles, partidos y victorias</small><b aria-hidden="true">›</b>
                 </button>
