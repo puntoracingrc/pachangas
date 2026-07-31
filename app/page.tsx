@@ -3044,6 +3044,7 @@ export default function Home() {
     handledMobileEntryRef.current = true;
 
     const requestedTab = new URLSearchParams(window.location.search).get("mobile");
+    const managerLandscape = isMobileManagerLandscape();
     if (requestedTab === "partido") {
       lockMobileNavigationTab("partido");
       setActiveMobileTab("partido");
@@ -3056,14 +3057,14 @@ export default function Home() {
     if (requestedTab === "equipo") {
       lockMobileNavigationTab("equipo");
       setActiveMobileTab("equipo");
-      setTeamGalleryOpen(true);
+      setTeamGalleryOpen(!managerLandscape);
       return;
     }
 
     if (requestedTab === "perfil") {
       lockMobileNavigationTab("perfil");
       setActiveMobileTab("perfil");
-      setMobileAccountOpen(true);
+      setMobileAccountOpen(!managerLandscape);
     }
   }, []);
 
@@ -4047,6 +4048,8 @@ export default function Home() {
 
   function openTeamGalleryPlayerProfile(playerId: string) {
     teamGalleryReturnScrollYRef.current = window.scrollY;
+    setMobileAccountOpen(false);
+    setActiveMobileTab("perfil");
     setSelectedPlayerId(playerId);
     scrollToPlayerProfile();
   }
@@ -4097,6 +4100,10 @@ export default function Home() {
     }, 1400);
   }
 
+  function isMobileManagerLandscape() {
+    return window.matchMedia("(orientation: landscape) and (max-height: 560px)").matches;
+  }
+
   function navigateMobileTab(tabId: MobileSectionTabId) {
     lockMobileNavigationTab(tabId);
     setActiveMobileTab(tabId);
@@ -4115,12 +4122,22 @@ export default function Home() {
       return;
     }
 
+    const managerLandscape = isMobileManagerLandscape();
+
     if (tabId === "equipo") {
+      if (managerLandscape) {
+        setTeamGalleryOpen(false);
+        return;
+      }
       openTeamGallery();
       return;
     }
 
     if (tabId === "perfil") {
+      if (managerLandscape) {
+        setMobileAccountOpen(false);
+        return;
+      }
       setMobileAccountOpen(true);
       return;
     }
@@ -5031,6 +5048,7 @@ export default function Home() {
 
   useEffect(() => {
     if (needsLoginForSharedLink) return;
+    if (isMobileManagerLandscape()) return;
 
     const sections = mobileNavigationTabs
       .map((tab) => document.getElementById(tab.id))
@@ -5041,6 +5059,7 @@ export default function Home() {
     const observer = new IntersectionObserver(
       (entries) => {
         if (mobileNavigationLockRef.current) return;
+        if (isMobileManagerLandscape()) return;
 
         const visibleEntry = entries
           .filter((entry) => entry.isIntersecting)

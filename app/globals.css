@@ -8436,3 +8436,381 @@ select:disabled {
     background: linear-gradient(90deg, var(--team-a-soft) 0 50%, var(--team-b-soft) 50% 100%);
   }
 }
+
+@media (orientation: landscape) and (max-height: 560px) {
+  body {
+    background: #0b1210;
+    overflow: hidden;
+    padding-bottom: 0;
+  }
+
+  body.mobile-sheet-open {
+    overflow: hidden;
+  }
+
+  .legal-footer {
+    display: none !important;
+  }
+
+  .mobile-tabbar {
+    display: none !important;
+  }
+
+  .mobile-app-nav {
+    position: fixed;
+    z-index: 90;
+    top: 0;
+    right: 0;
+    bottom: auto;
+    left: 0;
+    display: block;
+    padding-bottom: 0;
+    border-top: 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+    background: rgba(8, 16, 22, 0.94);
+    box-shadow: 0 10px 26px rgba(0, 0, 0, 0.28);
+    backdrop-filter: blur(18px);
+  }
+
+  .mobile-app-nav-inner {
+    display: grid;
+    width: 100%;
+    min-height: 56px;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    margin: 0;
+  }
+
+  .mobile-app-nav-item {
+    position: relative;
+    min-width: 0;
+    min-height: 56px;
+    flex-direction: row;
+    gap: 8px;
+    padding: 0 8px;
+    border: 0;
+    border-right: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 0;
+    background: transparent;
+    color: rgba(245, 247, 238, 0.72);
+    font-size: 12px;
+    font-weight: 950;
+    line-height: 1;
+    text-decoration: none;
+  }
+
+  .mobile-app-nav-item::before {
+    top: auto;
+    right: 12px;
+    bottom: 0;
+    left: 12px;
+    width: auto;
+    height: 3px;
+    border-radius: 3px 3px 0 0;
+  }
+
+  .mobile-app-nav-item.active {
+    background: rgba(200, 239, 93, 0.13);
+    color: var(--lime);
+  }
+
+  .mobile-app-nav-item.active::before {
+    background: var(--lime);
+  }
+
+  .mobile-app-nav-icon,
+  .mobile-app-nav-icon svg {
+    width: 24px;
+    height: 24px;
+  }
+
+  main[data-mobile-tab] {
+    --background: #0b1210;
+    --foreground: #f5f2e8;
+    --green: #5ad990;
+    --ink: #f5f2e8;
+    --ink-soft: #a7b8af;
+    --line: #2c4037;
+    --lime: #c8ef5d;
+    --muted: #8da198;
+    --panel: #121d18;
+    height: 100dvh;
+    overflow: hidden;
+    padding-top: 56px;
+    background:
+      linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px) 0 0 / 48px 100%,
+      linear-gradient(135deg, #071116 0%, #11231d 52%, #171224 100%) !important;
+    color: var(--foreground);
+  }
+
+  main[data-mobile-tab]:not([data-mobile-tab="inicio"]) > .hero,
+  main[data-mobile-tab]:not([data-mobile-tab="inicio"]) > .demo-banner,
+  main[data-mobile-tab]:not([data-mobile-tab="inicio"]) > .team-access-panel,
+  main[data-mobile-tab]:not([data-mobile-tab="inicio"]) > .quick-create-form {
+    display: none;
+  }
+
+  main[data-mobile-tab]:not([data-mobile-tab="perfil"]) > .billing-panel,
+  main[data-mobile-tab]:not([data-mobile-tab="perfil"]) > .settings-panel,
+  main[data-mobile-tab]:not([data-mobile-tab="perfil"]) > .bottom-grid {
+    display: none;
+  }
+
+  main[data-mobile-tab]:not([data-mobile-tab="equipo"]) > .team-gallery-panel {
+    display: none;
+  }
+
+  main[data-mobile-tab] > .app-shell {
+    display: grid;
+    width: 100%;
+    max-width: none;
+    height: calc(100dvh - 56px);
+    align-items: stretch;
+    gap: 8px;
+    grid-template-columns: minmax(0, 1fr);
+    margin: 0;
+    overflow: hidden;
+    padding: 8px;
+  }
+
+  main[data-mobile-tab] > .app-shell > .match-list,
+  main[data-mobile-tab] > .app-shell > .main-panel,
+  main[data-mobile-tab] > .app-shell > .teams-panel {
+    display: none;
+  }
+
+  main[data-mobile-tab="inicio"] > .app-shell > .match-list,
+  main[data-mobile-tab="partido"] > .app-shell > .main-panel,
+  main[data-mobile-tab="equipo"] > .app-shell > .teams-panel {
+    display: grid;
+  }
+
+  main[data-mobile-tab="perfil"] > .app-shell {
+    display: none;
+  }
+
+  main[data-mobile-tab="inicio"] {
+    overflow-y: auto;
+  }
+
+  main[data-mobile-tab="inicio"] > .hero {
+    display: grid;
+    max-width: none;
+    min-height: auto;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 12px;
+    margin: 0;
+    padding: 10px 12px;
+  }
+
+  main[data-mobile-tab="inicio"] .brand-hero-logo,
+  main[data-mobile-tab="inicio"] .team-hero-logo {
+    max-height: 54px;
+    width: auto;
+  }
+
+  main[data-mobile-tab="inicio"] .hero h1 {
+    color: #f5f2e8 !important;
+    font-size: clamp(24px, 5vw, 40px);
+    line-height: 0.98;
+  }
+
+  main[data-mobile-tab="inicio"] .hero-copy {
+    color: #c4d3cb !important;
+    max-width: 44rem;
+    font-size: 12px;
+    line-height: 1.25;
+  }
+
+  main[data-mobile-tab="inicio"] .brand-lockup span,
+  main[data-mobile-tab="inicio"] .team-brand-block span,
+  main[data-mobile-tab="inicio"] .eyebrow {
+    color: var(--lime) !important;
+  }
+
+  main[data-mobile-tab="inicio"] .demo-banner strong,
+  main[data-mobile-tab="inicio"] .demo-banner p {
+    color: #f5f2e8 !important;
+  }
+
+  main[data-mobile-tab="inicio"] > .top-panel,
+  main[data-mobile-tab="inicio"] > .demo-banner {
+    max-width: none;
+    margin: 8px;
+  }
+
+  main[data-mobile-tab="inicio"] > .app-shell {
+    height: auto;
+    min-height: 220px;
+    padding-top: 0;
+  }
+
+  main[data-mobile-tab="perfil"] > .bottom-grid,
+  main[data-mobile-tab="perfil"] > .billing-panel,
+  main[data-mobile-tab="perfil"] > .settings-panel,
+  main[data-mobile-tab="equipo"] > .team-gallery-panel {
+    width: auto;
+    max-width: none;
+    margin: 8px;
+  }
+
+  main[data-mobile-tab="perfil"] > .bottom-grid {
+    display: grid;
+    height: calc(100dvh - 72px);
+    gap: 8px;
+    overflow: hidden;
+    padding: 0;
+  }
+
+  main[data-mobile-tab="perfil"] > .bottom-grid:not(.without-profile) {
+    grid-template-columns: minmax(280px, 0.95fr) minmax(0, 1.05fr);
+  }
+
+  main[data-mobile-tab="perfil"] > .bottom-grid.without-profile {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  main[data-mobile-tab="equipo"] > .team-gallery-panel {
+    display: none;
+  }
+
+  main[data-mobile-tab] .panel,
+  main[data-mobile-tab] .top-panel,
+  main[data-mobile-tab] .main-panel,
+  main[data-mobile-tab] .teams-panel,
+  main[data-mobile-tab] .player-profile {
+    border-color: rgba(255, 255, 255, 0.12);
+    border-radius: 8px;
+    background: rgba(18, 29, 24, 0.94);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  }
+
+  main[data-mobile-tab] > .app-shell > .panel,
+  main[data-mobile-tab] > .app-shell > .main-panel,
+  main[data-mobile-tab] > .app-shell > .teams-panel,
+  main[data-mobile-tab="perfil"] > .bottom-grid > .panel,
+  main[data-mobile-tab="perfil"] > .bottom-grid > .player-profile {
+    max-height: 100%;
+    overflow: auto;
+    scrollbar-width: thin;
+  }
+
+  main[data-mobile-tab="partido"] .stats-row {
+    grid-template-columns: repeat(5, minmax(86px, 1fr));
+  }
+
+  main[data-mobile-tab="partido"] .team-player-grid {
+    grid-template-columns: repeat(2, minmax(230px, 1fr));
+  }
+
+  main[data-mobile-tab="partido"] .player-card {
+    min-height: auto;
+    padding: 9px;
+  }
+
+  main[data-mobile-tab="equipo"] .teams-panel {
+    grid-template-columns: minmax(250px, 0.82fr) repeat(2, minmax(160px, 0.59fr));
+    grid-template-rows: auto auto minmax(0, 1fr) auto;
+    align-content: start;
+    gap: 8px 10px;
+    overflow: auto;
+  }
+
+  main[data-mobile-tab="equipo"] .teams-panel > .panel-title,
+  main[data-mobile-tab="equipo"] .teams-panel > .balance-summary,
+  main[data-mobile-tab="equipo"] .teams-panel > .match-pitch {
+    grid-column: 1;
+  }
+
+  main[data-mobile-tab="equipo"] .teams-panel > .lineup-state,
+  main[data-mobile-tab="equipo"] .teams-panel > .lineup-actions {
+    display: none !important;
+  }
+
+  main[data-mobile-tab="equipo"] .teams-panel > .team {
+    min-height: 0;
+    overflow: auto;
+  }
+
+  main[data-mobile-tab="equipo"] .teams-panel > .team.team-a {
+    grid-column: 2;
+    grid-row: 1 / span 4;
+  }
+
+  main[data-mobile-tab="equipo"] .teams-panel > .team.team-b {
+    grid-column: 3;
+    grid-row: 1 / span 4;
+  }
+
+  main[data-mobile-tab="equipo"] .teams-panel > .result-box,
+  main[data-mobile-tab="equipo"] .teams-panel > .primary-button.full {
+    display: none !important;
+  }
+
+  main[data-mobile-tab="equipo"] .match-pitch {
+    min-height: 0;
+    margin-bottom: 0;
+    width: min(100%, 29vh, 300px);
+  }
+
+  main[data-mobile-tab="equipo"] .teams-panel-title {
+    margin-bottom: 8px;
+    padding-bottom: 8px;
+  }
+
+  main[data-mobile-tab="equipo"] .teams-panel-title span {
+    font-size: 11px;
+  }
+
+  main[data-mobile-tab="equipo"] .balance-summary {
+    background: rgba(245, 242, 232, 0.08);
+    border-color: rgba(255, 255, 255, 0.12);
+    gap: 5px;
+    margin-bottom: 4px;
+    padding: 8px 10px;
+  }
+
+  main[data-mobile-tab="equipo"] .balance-summary strong {
+    font-size: 24px;
+  }
+
+  main[data-mobile-tab="equipo"] .balance-summary small {
+    display: -webkit-box;
+    line-height: 1.2;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+
+  main[data-mobile-tab="equipo"] .balance-summary span,
+  main[data-mobile-tab="equipo"] .balance-summary small {
+    color: #c4d3cb;
+  }
+
+  main[data-mobile-tab="equipo"] .balance-summary strong,
+  main[data-mobile-tab="equipo"] .team h2,
+  main[data-mobile-tab="equipo"] .team-player-name {
+    color: #f5f2e8;
+  }
+
+  main[data-mobile-tab="perfil"] .profile-top {
+    grid-template-columns: minmax(190px, 0.75fr) minmax(0, 1fr);
+  }
+
+  main[data-mobile-tab="perfil"] .fifa-player-card {
+    min-height: 245px;
+  }
+
+  main[data-mobile-tab="perfil"] .ranking-card-grid {
+    grid-template-columns: repeat(2, minmax(220px, 1fr));
+  }
+
+  .mobile-account-sheet {
+    top: 64px;
+    right: 10px;
+    bottom: 10px;
+    left: auto;
+    width: min(380px, calc(100vw - 20px));
+    max-height: none;
+    border-radius: 8px;
+  }
+}
