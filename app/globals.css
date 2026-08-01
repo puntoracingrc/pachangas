@@ -9739,7 +9739,7 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
   }
 
   main[data-mobile-tab] {
-    --background: #0b1210;
+    --background: #0f211b;
     --foreground: #f5f2e8;
     --green: #5ad990;
     --ink: #f5f2e8;
@@ -9747,15 +9747,15 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
     --line: #2c4037;
     --lime: #c8ef5d;
     --muted: #8da198;
-    --panel: #121d18;
+    --panel: #121f1a;
     position: relative;
     isolation: isolate;
     height: var(--app-viewport-height);
     overflow: hidden;
     padding-top: var(--game-nav-offset);
     background:
-      linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px) 0 0 / 48px 100%,
-      linear-gradient(135deg, #081114 0%, #11251f 46%, #151827 100%) !important;
+      linear-gradient(90deg, rgba(255, 255, 255, 0.045) 1px, transparent 1px) 0 0 / 48px 100%,
+      linear-gradient(135deg, #071923 0%, #145038 48%, #202847 100%) !important;
     color: var(--foreground);
   }
 
@@ -9765,11 +9765,11 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
     z-index: -2;
     inset: calc(var(--game-nav-offset) * -1) 0 0;
     background:
-      linear-gradient(115deg, rgba(13, 29, 31, 0.82) 0%, rgba(13, 29, 31, 0.32) 36%, rgba(25, 25, 42, 0.74) 100%),
-      repeating-linear-gradient(90deg, rgba(63, 139, 92, 0.2) 0 72px, rgba(28, 83, 61, 0.2) 72px 144px),
-      linear-gradient(180deg, rgba(239, 246, 255, 0.1) 0%, rgba(14, 36, 33, 0.34) 38%, rgba(3, 10, 12, 0.74) 100%);
-    filter: blur(12px) saturate(1.15);
-    opacity: 0.94;
+      linear-gradient(115deg, rgba(8, 28, 35, 0.76) 0%, rgba(10, 72, 52, 0.52) 38%, rgba(34, 31, 69, 0.74) 100%),
+      repeating-linear-gradient(90deg, rgba(91, 197, 127, 0.42) 0 70px, rgba(26, 121, 87, 0.42) 70px 140px),
+      linear-gradient(180deg, rgba(190, 255, 226, 0.26) 0%, rgba(20, 92, 70, 0.62) 38%, rgba(9, 23, 34, 0.66) 100%);
+    filter: blur(9px) saturate(1.34);
+    opacity: 1;
     transform: scale(1.03);
   }
 
@@ -9779,8 +9779,8 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
     z-index: -1;
     inset: calc(var(--game-nav-offset) * -1) 0 0;
     background:
-      linear-gradient(180deg, rgba(5, 11, 14, 0.42), rgba(5, 11, 14, 0.16) 46%, rgba(5, 11, 14, 0.56)),
-      linear-gradient(90deg, rgba(9, 18, 24, 0.22), rgba(255, 255, 255, 0.04) 50%, rgba(9, 18, 24, 0.32));
+      linear-gradient(180deg, rgba(5, 11, 14, 0.2), rgba(5, 11, 14, 0.04) 46%, rgba(5, 11, 14, 0.42)),
+      linear-gradient(90deg, rgba(9, 18, 24, 0.1), rgba(255, 255, 255, 0.07) 50%, rgba(9, 18, 24, 0.18));
     pointer-events: none;
   }
 
@@ -9921,6 +9921,9 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
     margin: 0;
     overflow: hidden;
     padding: var(--game-shell-padding);
+    background:
+      linear-gradient(120deg, rgba(200, 239, 93, 0.07), transparent 34%),
+      linear-gradient(300deg, rgba(59, 130, 246, 0.08), transparent 44%);
   }
 
   main[data-mobile-tab] > .app-shell > .match-list,
@@ -10055,7 +10058,10 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
   main[data-mobile-tab] .player-profile {
     border-color: rgba(255, 255, 255, 0.12);
     border-radius: 8px;
-    background: rgba(18, 29, 24, 0.94);
+    background:
+      linear-gradient(145deg, rgba(255, 255, 255, 0.035), transparent 42%),
+      rgba(16, 29, 24, 0.8);
+    backdrop-filter: blur(14px) saturate(1.05);
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
   }
 
