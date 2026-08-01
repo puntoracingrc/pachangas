@@ -586,7 +586,14 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /className="pitch-balance-hud"/);
   assert.match(page, /aria-label=\{`Equilibrio de equipos:/);
   assert.match(page, /const pitchRef = useRef<HTMLDivElement \| null>\(null\)/);
+  assert.match(page, /const pointerAbortRef = useRef<AbortController \| null>\(null\)/);
+  assert.match(page, /type PitchPointerState/);
   assert.match(page, /function nearestPitchDropTarget/);
+  assert.match(page, /function activatePitchDrag/);
+  assert.match(page, /function moveWindowPitchDrag/);
+  assert.match(page, /window\.addEventListener\("pointermove", moveWindowPitchDrag, \{ passive: false, signal: pointerAbortRef\.current\.signal \}\)/);
+  assert.match(page, /window\.addEventListener\("pointerup", finishWindowPitchDrag, \{ passive: false, signal: pointerAbortRef\.current\.signal \}\)/);
+  assert.match(page, /suppressPitchPreviewUntilRef/);
   assert.match(page, /const teamATokens = placeTeam\(teamA, kind, isLandscapePitch \? "left" : "bottom"/);
   assert.match(page, /const teamBTokens = placeTeam\(teamB, kind, isLandscapePitch \? "right" : "top"/);
   assert.match(page, /<div className=\{`pitch-label \$\{isLandscapePitch \? "left" : "bottom"\}`\}>Equipo 1<\/div>/);
@@ -641,6 +648,7 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(globalsCss, /\.pitch-player-card/);
   assert.match(globalsCss, /\.pitch-player-card:hover/);
   assert.match(globalsCss, /\.lineup-drag-enabled \.pitch-player-card/);
+  assert.match(globalsCss, /\.match-pitch\.lineup-drag-enabled/);
   assert.match(globalsCss, /\.pitch-player-card\.dragging-token/);
   assert.match(globalsCss, /\.pitch-player-card\.drop-target-token/);
   assert.match(globalsCss, /\.pitch-player-preview-card/);

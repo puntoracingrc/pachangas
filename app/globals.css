@@ -5019,6 +5019,12 @@ select:disabled {
   touch-action: none;
 }
 
+.match-pitch.lineup-drag-enabled {
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
 .lineup-drag-active .pitch-player-card:not(.dragging-token):not(.drop-target-token) {
   filter: saturate(0.72) brightness(0.88);
 }
