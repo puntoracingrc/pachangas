@@ -233,6 +233,11 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /className=\{matchFinalized \? "match-active-context finalized" : "match-active-context"\}/);
   assert.match(page, /<span>\{matchContextKind\}<\/span>/);
   assert.match(page, /<b>\{matchContextStatus\}<\/b>/);
+  assert.match(page, /const mainPanelClassName = \[/);
+  assert.match(page, /matchFinalized \? "match-finalized-main" : ""/);
+  assert.match(page, /<section className=\{mainPanelClassName\} id="partido"/);
+  assert.match(page, /historicalPlayerSnapshot\(player, activeMatch, matches\)/);
+  assert.match(page, /selectedMatchManagerPane === "alineacion" && !matchFinalized/);
   assert.match(page, /setActiveMatchManagerPane\(pane\)/);
   assert.match(page, /<span>\{matchManagerPaneLabel\(pane\)\}<\/span>/);
   assert.match(page, /className="lineup-side-tools"/);
@@ -517,6 +522,8 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(globalsCss, /\.match-manager-subnav/);
   assert.match(globalsCss, /\.match-active-context/);
   assert.match(globalsCss, /main\[data-mobile-tab="partido"\] \.match-active-context\s*\{[\s\S]*grid-column:\s*2[\s\S]*grid-row:\s*1/);
+  assert.match(globalsCss, /\.match-finalized-main \.stats-row[\s\S]*grid-row:\s*1/);
+  assert.match(globalsCss, /\.match-finalized-main \.next-match-roster-rail[\s\S]*height:\s*clamp/);
   assert.match(globalsCss, /\.lineup-side-tools/);
   assert.match(globalsCss, /\.lineup-side-tools-kicker/);
   assert.doesNotMatch(globalsCss, /\.lineup-side-balance/);
@@ -532,6 +539,8 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(globalsCss, /input\[type="date"\]::-webkit-calendar-picker-indicator/);
   assert.match(globalsCss, /\.next-match-roster-rail/);
   assert.match(globalsCss, /grid-auto-flow:\s*column/);
+  assert.match(globalsCss, /\.next-match-roster-rail::-webkit-scrollbar[\s\S]*display:\s*none/);
+  assert.match(globalsCss, /\.next-match-roster-rail[\s\S]*scrollbar-width:\s*none/);
   assert.doesNotMatch(globalsCss, /scroll-snap-type:\s*x proximity/);
   assert.match(globalsCss, /\.next-match-roster-rail\[data-dragging="true"\]/);
   assert.match(page, /onPointerDown=\{startRosterRailDrag\}/);
@@ -1207,6 +1216,7 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(envExample, /NEXT_PUBLIC_GOOGLE_MAPS_API_KEY/);
   assert.match(envExample, /GOOGLE_WEATHER_API_KEY/);
   assert.match(globalsCss, /\.weather-card/);
+  assert.match(page, /matchConfigured && !matchFinalized \? \(\s*<section className=\{`weather-card weather-card-\$\{matchWeatherStatus\}`\}/);
   assert.match(globalsCss, /\.weather-icon-rain/);
   assert.match(globalsCss, /\.weather-metric-icon/);
   assert.match(globalsCss, /\.weather-metrics/);

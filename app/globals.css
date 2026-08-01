@@ -11661,12 +11661,26 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
     overflow-x: auto;
     overflow-y: hidden;
     overscroll-behavior: contain;
-    padding: 0 0 4px;
+    padding: 0;
     scroll-behavior: auto;
-    scrollbar-color: rgba(200, 239, 93, 0.45) rgba(245, 242, 232, 0.1);
-    scrollbar-width: thin;
+    scrollbar-width: none;
     touch-action: pan-x pan-y;
     -webkit-overflow-scrolling: touch;
+  }
+
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="proximo"] .next-match-roster-rail::-webkit-scrollbar {
+    display: none;
+    height: 0;
+    width: 0;
+  }
+
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="proximo"] .match-finalized-main .stats-row {
+    grid-row: 1;
+  }
+
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="proximo"] .match-finalized-main .next-match-roster-rail {
+    height: clamp(190px, calc(var(--app-viewport-height) - 136px), 370px);
+    min-height: 190px;
   }
 
   main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="proximo"] .next-match-roster-rail[data-dragging="true"] {
