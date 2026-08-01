@@ -10157,7 +10157,7 @@ export default function Home() {
             </div>
           </div>
           <div className="ranking ranking-card-grid">
-            {rankedPlayers.slice(0, 8).map((row, index) => renderRankingMiniCard(row, index))}
+            {rankedPlayers.map((row, index) => renderRankingMiniCard(row, index))}
           </div>
         </div>
       </section>

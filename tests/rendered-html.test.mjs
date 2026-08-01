@@ -553,7 +553,7 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(globalsCss, /grid-auto-flow:\s*column/);
   assert.match(globalsCss, /\.next-match-roster-rail::-webkit-scrollbar[\s\S]*display:\s*none/);
   assert.match(globalsCss, /\.next-match-roster-rail[\s\S]*scrollbar-width:\s*none/);
-  assert.doesNotMatch(globalsCss, /scroll-snap-type:\s*x proximity/);
+  assert.doesNotMatch(globalsCss, /\.next-match-roster-rail\s*\{[^}]*scroll-snap-type:\s*x proximity/);
   assert.match(globalsCss, /\.next-match-roster-rail\[data-dragging="true"\]/);
   assert.match(page, /onPointerDown=\{startRosterRailDrag\}/);
   assert.match(page, /onPointerMove=\{moveRosterRailDrag\}/);
@@ -614,6 +614,9 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(globalsCss, /main\[data-mobile-tab="equipo"\] > \.bottom-grid #ranking\s*\{[\s\S]*grid-template-rows:\s*auto minmax\(0,\s*1fr\)/);
   assert.match(globalsCss, /main\[data-mobile-tab="equipo"\] > \.bottom-grid #ranking > \.panel-title\s*\{[\s\S]*display:\s*none/);
   assert.match(globalsCss, /main\[data-mobile-tab="equipo"\] \.ranking-card-grid\s*\{[\s\S]*grid-auto-flow:\s*column[\s\S]*justify-content:\s*start[\s\S]*overflow-x:\s*auto[\s\S]*overflow-y:\s*hidden/);
+  assert.match(globalsCss, /main\[data-mobile-tab="equipo"\] \.ranking-card-grid\s*\{[\s\S]*grid-auto-columns:\s*clamp\(118px,\s*15vw,\s*154px\)[\s\S]*grid-template-rows:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\)/);
+  assert.match(globalsCss, /main\[data-mobile-tab="equipo"\] \.ranking-player-entry\s*\{[\s\S]*grid-template-columns:\s*minmax\(0,\s*1fr\)[\s\S]*scroll-snap-align:\s*start/);
+  assert.match(globalsCss, /main\[data-mobile-tab="equipo"\] \.ranking-player-stats\s*\{\s*display:\s*none/);
   assert.match(globalsCss, /main\[data-mobile-tab="perfil"\] \.player-profile\s*\{[\s\S]*grid-template-columns:\s*minmax\(116px,\s*0\.44fr\)/);
   assert.match(globalsCss, /\.market-page\s*\{[\s\S]*grid-template-rows:\s*auto auto auto minmax\(0,\s*1fr\)/);
   assert.match(globalsCss, /\.team-photo-card/);
@@ -689,6 +692,7 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /ranking-stat-grid/);
   assert.match(page, /ranking-season-filter/);
   assert.match(page, /ranking-sort-filter/);
+  assert.doesNotMatch(page, /rankedPlayers\.slice\(0,\s*8\)/);
   assert.match(page, /Mi equipo/);
   assert.match(page, /function scrollToPanel/);
   assert.match(page, /function showQuickForm/);
