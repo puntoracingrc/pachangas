@@ -454,6 +454,15 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(globalsCss, /\.mobile-app-nav/);
   assert.match(globalsCss, /\.mobile-app-nav-item/);
   assert.match(globalsCss, /\.mobile-app-nav-item\.active/);
+  assert.match(globalsCss, /--app-viewport-height:\s*100dvh/);
+  assert.match(globalsCss, /--mobile-nav-height/);
+  assert.match(globalsCss, /--game-side-nav-width/);
+  assert.match(globalsCss, /--tap-target/);
+  assert.match(globalsCss, /container-type:\s*inline-size/);
+  assert.match(globalsCss, /@container \(max-width: 520px\)/);
+  assert.match(globalsCss, /@container \(max-width: 360px\)/);
+  assert.match(globalsCss, /@media \(orientation: landscape\) and \(max-height: 560px\) and \(max-width: 740px\)/);
+  assert.match(globalsCss, /touch-action:\s*manipulation/);
   assert.match(globalsCss, /\.match-manager-subnav/);
   assert.match(globalsCss, /\.lineup-side-tools/);
   assert.match(globalsCss, /\.lineup-side-tools-kicker/);
