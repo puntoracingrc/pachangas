@@ -1892,19 +1892,6 @@ function matchSummaryDate(date: string) {
   });
 }
 
-function weatherDateTimeLabel(date: string) {
-  const parsed = new Date(date);
-  if (Number.isNaN(parsed.getTime())) return "hora por confirmar";
-
-  return parsed.toLocaleString("es-ES", {
-    weekday: "short",
-    day: "2-digit",
-    month: "short",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
-
 function weatherVisualKey(weather: MatchWeather | null, status: "error" | "idle" | "loading" | "ready" | "unavailable") {
   if (status === "loading") return "loading";
   if (status === "error") return "storm";
@@ -9483,7 +9470,6 @@ export default function Home() {
                         <span><WeatherMetricIcon kind="wind" /> Viento {matchWeather.windKmh === null ? "-" : `${Math.round(matchWeather.windKmh)} km/h`}</span>
                         <span><WeatherMetricIcon kind="humidity" /> Humedad {matchWeather.humidity === null ? "-" : `${Math.round(matchWeather.humidity)}%`}</span>
                       </div>
-                      <small>Previsión más cercana: {weatherDateTimeLabel(matchWeather.forecastTime)}</small>
                     </>
                   ) : null}
                 </>

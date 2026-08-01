@@ -1165,7 +1165,7 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /matchWeatherClientCache/);
   assert.match(page, /msUntilMatch > weatherForecastClientLimitMs/);
   assert.match(weatherRoute, /Previsión del tiempo disponible en/);
-  assert.match(page, /Previsión más cercana/);
+  assert.doesNotMatch(page, /Previsión más cercana:/);
   assert.match(page, /Elige un campo con ubicación para ver la previsión/);
   assert.doesNotMatch(page, /Google Places para ver la previsión/);
   assert.doesNotMatch(page, /<span>Toca<\/span>/);
@@ -1313,9 +1313,9 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(envExample, /GOOGLE_WEATHER_API_KEY/);
   assert.match(globalsCss, /\.weather-card/);
   assert.match(globalsCss, /main\[data-mobile-tab="partido"\] \.weather-card\s*\{[\s\S]*grid-column:\s*1 \/ -1/);
-  assert.match(globalsCss, /main\[data-mobile-tab="partido"\] \.weather-card\s*\{[\s\S]*grid-template-columns:\s*minmax\(170px,\s*0\.68fr\) minmax\(230px,\s*1fr\) minmax\(70px,\s*0\.32fr\)/);
-  assert.match(globalsCss, /main\[data-mobile-tab="partido"\] \.weather-card-main\s*\{[\s\S]*grid-template-columns:\s*24px auto auto minmax\(0,\s*1fr\)/);
-  assert.match(globalsCss, /main\[data-mobile-tab="partido"\] \.weather-metrics\s*\{[\s\S]*grid-template-columns:\s*repeat\(4,\s*minmax\(50px,\s*1fr\)\)/);
+  assert.match(globalsCss, /main\[data-mobile-tab="partido"\] \.weather-card\s*\{[\s\S]*grid-template-columns:\s*minmax\(210px,\s*0\.62fr\) minmax\(320px,\s*1\.38fr\)/);
+  assert.match(globalsCss, /main\[data-mobile-tab="partido"\] \.weather-card-main\s*\{[\s\S]*grid-template-columns:\s*22px auto auto minmax\(0,\s*1fr\)/);
+  assert.match(globalsCss, /main\[data-mobile-tab="partido"\] \.weather-metrics\s*\{[\s\S]*grid-template-columns:\s*repeat\(4,\s*minmax\(58px,\s*1fr\)\)/);
   assert.match(globalsCss, /\.match-side-share/);
   assert.match(globalsCss, /\.match-side-share \.share-box/);
   assert.match(page, /matchConfigured && !matchFinalized \? \(\s*<section className=\{`weather-card weather-card-\$\{matchWeatherStatus\}`\}/);
