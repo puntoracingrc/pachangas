@@ -390,7 +390,7 @@ type MatchRatingImpact = {
 type PlayerFormState = {
   balanceScore: number;
   hasData: boolean;
-  label: "En ritmo" | "Excelente" | "Normal" | "Sin ritmo" | "En recuperación" | "Volviendo" | "Fuera del grupo";
+  label: "En ritmo" | "Excelente" | "Normal" | "Sin ritmo" | "En recuperación" | "Fuera del grupo" | null;
   notes: string[];
   percent: number;
   recentAverage: number | null;
@@ -2367,7 +2367,7 @@ function playerFormState(player: Player, matches: Match[], playersById: Map<stri
     label = "En recuperación";
   } else if (absenceStreak >= 4) {
     status = "returning";
-    label = "Volviendo";
+    label = null;
   } else if (percent >= 106) {
     status = "excellent";
     label = "Excelente";
@@ -7053,7 +7053,7 @@ export default function Home() {
     );
   }
 
-  function renderPlayerCard(player: Player, team?: "A" | "B") {
+  function renderPlayerCard(player: Player, team?: "A" | "B", context?: "reserve" | "waiting") {
     const matchEntry = activeMatch.players.find((entry) => entry.playerId === player.id);
     const status = player.injured || player.inactive ? "no" : matchEntry?.status;
     const isReserve = reserveIds.includes(player.id);
@@ -7137,10 +7137,10 @@ export default function Home() {
           </button>
           <span className="player-meta" title={positionLabel(player)} aria-label={positionLabel(player)}>
             {positionShort(player)}
-            {formState.hasData ? <em className={`form-chip form-${formState.status}`}>{formState.label}</em> : null}
+            {formState.hasData && formState.label ? <em className={`form-chip form-${formState.status}`}>{formState.label}</em> : null}
             {player.inactive ? <em className="reserve-chip">Ya no está</em> : null}
-            {isReserve ? <em className="reserve-chip">Reserva</em> : null}
-            {isWaiting ? <em className="reserve-chip">Espera</em> : null}
+            {isReserve && context !== "reserve" ? <em className="reserve-chip">Reserva</em> : null}
+            {isWaiting && context !== "waiting" ? <em className="reserve-chip">Espera</em> : null}
             {showAbsenceStreak ? <em className="absence-chip">{absenceStreak} sin venir</em> : null}
           </span>
           {joinedLabel ? <small className="joined-at">Voy desde {joinedLabel}</small> : null}
@@ -9034,7 +9034,7 @@ export default function Home() {
                       <span>Reservas</span>
                       <strong>{reservePlayers.length}/{reserveLimit}</strong>
                     </div>
-                    {reservePlayers.length > 0 ? reservePlayers.map((player) => renderPlayerCard(player)) : <p className="empty-copy">No hay reservas apuntados.</p>}
+                    {reservePlayers.length > 0 ? reservePlayers.map((player) => renderPlayerCard(player, undefined, "reserve")) : <p className="empty-copy">No hay reservas apuntados.</p>}
                   </div>
                 ) : null}
 
@@ -9044,7 +9044,7 @@ export default function Home() {
                       <span>Lista de espera</span>
                       <strong>{waitingPlayers.length}</strong>
                     </div>
-                    {waitingPlayers.map((player) => renderPlayerCard(player))}
+                    {waitingPlayers.map((player) => renderPlayerCard(player, undefined, "waiting"))}
                   </div>
                 ) : null}
 

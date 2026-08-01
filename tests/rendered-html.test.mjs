@@ -248,6 +248,13 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /nextMatchStatusGroups/);
   assert.match(page, /className="next-match-roster-rail"/);
   assert.match(page, /Reservas/);
+  assert.match(page, /label = null/);
+  assert.doesNotMatch(page, /Recuperando ritmo/);
+  assert.doesNotMatch(page, /label = "Volviendo"/);
+  assert.match(page, /renderPlayerCard\(player, undefined, "reserve"\)/);
+  assert.match(page, /renderPlayerCard\(player, undefined, "waiting"\)/);
+  assert.match(page, /isReserve && context !== "reserve"/);
+  assert.match(page, /isWaiting && context !== "waiting"/);
   const nextMatchStatsStart = page.indexOf('<div className="stats-row">');
   const nextMatchStatsEnd = page.indexOf("{siteSettings.subscriptionContributionEnabled", nextMatchStatsStart);
   assert.ok(nextMatchStatsStart > 0 && nextMatchStatsEnd > nextMatchStatsStart);
