@@ -11544,9 +11544,15 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
   main[data-mobile-tab="partido"] > .app-shell > .match-manager-subnav {
     align-content: start;
     align-self: stretch;
-    background: rgba(8, 16, 22, 0.92);
-    border: 1px solid rgba(255, 255, 255, 0.12);
+    background:
+      linear-gradient(180deg, rgba(245, 242, 232, 0.055), rgba(8, 16, 22, 0.34)),
+      rgba(8, 16, 22, 0.56);
+    backdrop-filter: blur(14px) saturate(1.08);
+    border: 1px solid rgba(255, 255, 255, 0.14);
     border-radius: 8px;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.06),
+      0 14px 32px rgba(0, 0, 0, 0.16);
     display: grid;
     gap: 5px;
     grid-column: 1;
@@ -11632,8 +11638,8 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
 
   main[data-mobile-tab="partido"] .match-manager-subnav button {
     align-items: center;
-    background: rgba(245, 242, 232, 0.05);
-    border: 1px solid rgba(245, 242, 232, 0.1);
+    background: rgba(245, 242, 232, 0.075);
+    border: 1px solid rgba(245, 242, 232, 0.13);
     border-radius: 6px;
     color: #d4ddd7;
     display: flex;
@@ -11648,7 +11654,9 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
   }
 
   main[data-mobile-tab="partido"] .match-manager-subnav button.active {
-    background: rgba(200, 239, 93, 0.16);
+    background:
+      linear-gradient(135deg, rgba(200, 239, 93, 0.22), rgba(200, 239, 93, 0.08)),
+      rgba(8, 16, 22, 0.24);
     border-color: rgba(200, 239, 93, 0.55);
     color: var(--lime);
   }

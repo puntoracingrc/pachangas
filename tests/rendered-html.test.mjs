@@ -549,6 +549,8 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(globalsCss, /\.profile-return-button/);
   assert.doesNotMatch(globalsCss, /\.profile-demo-create-button/);
   assert.match(globalsCss, /\.match-manager-subnav/);
+  assert.match(globalsCss, /main\[data-mobile-tab="partido"\] > \.app-shell > \.match-manager-subnav\s*\{[\s\S]*rgba\(8,\s*16,\s*22,\s*0\.56\)/);
+  assert.match(globalsCss, /main\[data-mobile-tab="partido"\] > \.app-shell > \.match-manager-subnav\s*\{[\s\S]*backdrop-filter:\s*blur\(14px\) saturate\(1\.08\)/);
   assert.match(globalsCss, /\.match-active-context/);
   assert.match(globalsCss, /main\[data-mobile-tab="partido"\] \.match-active-context\s*\{[\s\S]*grid-column:\s*2[\s\S]*grid-row:\s*1/);
   assert.doesNotMatch(globalsCss, /\.match-finalized-main \.stats-row/);
