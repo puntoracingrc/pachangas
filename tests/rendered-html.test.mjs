@@ -233,6 +233,7 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /className="lineup-side-tools"/);
   assert.match(page, /Herramientas/);
   assert.doesNotMatch(page, /className="lineup-side-balance"/);
+  assert.doesNotMatch(page, /lineup-side-state/);
   assert.match(page, /className="lineup-side-actions"/);
   assert.match(page, /<button type="button" onClick=\{applyRandomTeams\} disabled=\{!canEditLineup\}>Aleatorio<\/button>/);
   assert.match(page, /<button type="button" onClick=\{applyBalancedTeams\} disabled=\{!canEditLineup\}>Equilibrado<\/button>/);
@@ -503,7 +504,7 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(globalsCss, /\.lineup-side-tools-kicker/);
   assert.doesNotMatch(globalsCss, /\.lineup-side-balance/);
   assert.match(globalsCss, /\.lineup-side-actions button/);
-  assert.match(globalsCss, /\.lineup-side-state\.closed/);
+  assert.doesNotMatch(globalsCss, /\.lineup-side-state/);
   assert.match(globalsCss, /data-match-manager-pane="proximo"/);
   assert.match(globalsCss, /data-match-manager-pane="alineacion"/);
   assert.match(globalsCss, /data-match-manager-pane="resultado"/);
