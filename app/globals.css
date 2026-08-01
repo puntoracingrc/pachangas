@@ -6211,14 +6211,30 @@ html:fullscreen .pitch-modal-fullscreen .match-pitch.match-pitch-horizontal.matc
   width: fit-content;
 }
 
-.history-item span {
+.history-item .history-score-badge {
   background: #202820;
   border-radius: 8px;
   color: #fff;
-  font-size: 22px;
-  font-weight: 900;
+  display: grid;
+  font-weight: 950;
+  gap: 2px;
+  justify-items: center;
   padding: 6px 10px;
   white-space: nowrap;
+}
+
+.history-score-badge b {
+  color: inherit;
+  font-size: 22px;
+  line-height: 1;
+}
+
+.history-item .history-score-badge small {
+  color: color-mix(in srgb, currentColor 68%, transparent);
+  font-size: 11px;
+  font-weight: 850;
+  grid-column: auto;
+  line-height: 1;
 }
 
 .history-item small {
@@ -6232,7 +6248,7 @@ html:fullscreen .pitch-modal-fullscreen .match-pitch.match-pitch-horizontal.matc
   grid-template-columns: 1fr;
 }
 
-.match-list .history-item span {
+.match-list .history-item .history-score-badge {
   font-size: 18px;
   justify-self: start;
 }
@@ -8883,7 +8899,7 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
   .avatar-prompt-copy,
   .age-pill,
   .avatar-picker,
-  .history-item span,
+  .history-item .history-score-badge,
   .ranking-row > span,
   .admin-only-badge {
     background: #e8f5e8;
@@ -8915,7 +8931,7 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
   .avatar-prompt-copy,
   .age-pill,
   .avatar-picker,
-  .history-item span,
+  .history-item .history-score-badge,
   .ranking-row > span,
   .admin-only-badge {
     border-color: transparent;
@@ -11377,9 +11393,16 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
     padding: 3px 6px;
   }
 
-  main[data-mobile-tab="inicio"] .history-item > span {
+  main[data-mobile-tab="inicio"] .history-item .history-score-badge {
     background: rgba(5, 12, 14, 0.82);
     color: #f5f2e8;
+  }
+
+  main[data-mobile-tab="inicio"] .history-item .history-score-badge small {
+    color: rgba(245, 242, 232, 0.68);
+    font-size: 10px;
+    grid-column: auto;
+    line-height: 1;
   }
 
   main[data-mobile-tab="inicio"] .history-item small {
@@ -12121,7 +12144,7 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
   }
 
   main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="historico"] .history-item strong,
-  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="historico"] .history-item span {
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="historico"] .history-item .history-score-badge {
     color: #f5f2e8;
   }
 
@@ -12133,10 +12156,20 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
     -webkit-line-clamp: 4;
   }
 
-  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="historico"] .history-item > span {
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="historico"] .history-item .history-score-badge {
     background: rgba(8, 16, 22, 0.86);
     border-radius: 8px;
     padding: 8px 10px;
+  }
+
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="historico"] .history-item .history-score-badge small {
+    color: rgba(245, 242, 232, 0.68);
+    display: block;
+    font-size: 10px;
+    grid-column: auto;
+    line-height: 1;
+    overflow: visible;
+    -webkit-line-clamp: unset;
   }
 
   main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="alineacion"] > .lineup-panel {
