@@ -12772,17 +12772,133 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
 
   main[data-mobile-tab="equipo"] .ranking-card-grid {
     align-items: stretch;
-    grid-auto-columns: minmax(248px, 30vw);
+    grid-auto-columns: clamp(118px, 15vw, 154px);
     grid-auto-flow: column;
+    grid-template-rows: repeat(2, minmax(0, 1fr));
     grid-template-columns: none;
     justify-content: start;
     overflow-x: auto;
     overflow-y: hidden;
-    padding: 2px 2px 6px;
+    overscroll-behavior-x: contain;
+    padding: 2px 2px 8px;
+    scroll-snap-type: x proximity;
   }
 
   main[data-mobile-tab="equipo"] .ranking-player-entry {
+    align-content: start;
+    align-items: center;
+    gap: 5px;
+    grid-template-columns: minmax(0, 1fr);
     height: 100%;
+    justify-items: center;
+    min-height: 0;
+    padding: 6px;
+    scroll-snap-align: start;
+  }
+
+  main[data-mobile-tab="equipo"] .ranking-player-card {
+    max-width: clamp(70px, 8.2vw, 88px);
+    min-height: clamp(98px, 19vh, 116px);
+    padding: 5px 5px 4px;
+  }
+
+  main[data-mobile-tab="equipo"] .ranking-player-card .fifa-score {
+    font-size: clamp(16px, 2.5vw, 20px);
+    left: 6px;
+    top: 7px;
+  }
+
+  main[data-mobile-tab="equipo"] .ranking-player-card .fifa-position {
+    font-size: 7px;
+    left: 7px;
+    top: 27px;
+  }
+
+  main[data-mobile-tab="equipo"] .ranking-player-card .rating-trend-chip {
+    font-size: 6px;
+    left: 6px;
+    min-height: 11px;
+    padding: 0 3px;
+    top: 36px;
+  }
+
+  main[data-mobile-tab="equipo"] .ranking-player-card .rating-trend-chip b {
+    font-size: 7px;
+  }
+
+  main[data-mobile-tab="equipo"] .ranking-player-card .fifa-photo b {
+    font-size: 22px;
+    height: 34px;
+    width: 34px;
+  }
+
+  main[data-mobile-tab="equipo"] .ranking-card-rank {
+    font-size: 9px;
+    height: 18px;
+    right: 3px;
+    top: 3px;
+    width: 18px;
+  }
+
+  main[data-mobile-tab="equipo"] .ranking-player-card > strong {
+    font-size: 9px;
+    max-width: 100%;
+    overflow: hidden;
+    padding-top: 3px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  main[data-mobile-tab="equipo"] .ranking-player-card .fifa-facets {
+    gap: 0 2px;
+    margin-top: 3px;
+  }
+
+  main[data-mobile-tab="equipo"] .ranking-player-card .fifa-facets span,
+  main[data-mobile-tab="equipo"] .ranking-player-card .fifa-facets b {
+    font-size: 6px;
+  }
+
+  main[data-mobile-tab="equipo"] .ranking-player-stats {
+    display: none;
+  }
+
+  main[data-mobile-tab="equipo"] .ranking-card-badge {
+    font-size: 10px;
+    padding: 5px 8px;
+  }
+
+  main[data-mobile-tab="equipo"] .ranking-stat-grid {
+    gap: 3px;
+    grid-template-columns: repeat(3, 1fr);
+    max-width: 100%;
+    width: 100%;
+  }
+
+  main[data-mobile-tab="equipo"] .ranking-stat-grid span {
+    border-radius: 6px;
+    min-height: 30px;
+    padding: 4px 2px;
+  }
+
+  main[data-mobile-tab="equipo"] .ranking-stat-grid b {
+    font-size: 14px;
+  }
+
+  main[data-mobile-tab="equipo"] .ranking-stat-grid small {
+    font-size: 7px;
+  }
+
+  main[data-mobile-tab="equipo"] .ranking-card-detail {
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    display: -webkit-box;
+    font-size: 8px;
+    line-height: 1.15;
+    max-width: 100%;
+    min-height: 18px;
+    overflow: hidden;
+    text-align: center;
   }
 
   main[data-mobile-tab="mercado"] > .market-admin-panel {
