@@ -417,8 +417,10 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /Resultado equipo 1/);
   assert.match(page, /consecutiveAbsenceStreak/);
   assert.match(page, /absenceStreaks/);
-  assert.match(page, /showAbsenceStreak/);
+  assert.match(page, /const showAbsenceStreak = !player\.inactive && absenceStreak > 0 && status !== "voy"/);
   assert.match(page, /sin venir/);
+  assert.doesNotMatch(page, /player\.inactive \? <em className="reserve-chip">Ya no está<\/em>/);
+  assert.match(page, /const formSummary = !player\.inactive && formState\.hasData/);
   assert.match(page, /matchCardAge/);
   assert.match(page, /player-age-inline/);
   assert.match(globalsCss, /\.player-age-inline/);
