@@ -2986,6 +2986,7 @@ export default function Home() {
   const [showImportChoices, setShowImportChoices] = useState(false);
   const [teamGalleryOpen, setTeamGalleryOpen] = useState(false);
   const [pitchZoomOpen, setPitchZoomOpen] = useState(false);
+  const [pitchPreviewPlayerId, setPitchPreviewPlayerId] = useState<string | null>(null);
   const [activeMobileTab, setActiveMobileTab] = useState<MobileAppTab>("inicio");
   const [activeMatchManagerPane, setActiveMatchManagerPane] = useState<MatchManagerPane>("proximo");
   const [profilePane, setProfilePane] = useState<ProfilePane>("ficha");
@@ -3207,15 +3208,17 @@ export default function Home() {
   }, [openQuickForm]);
 
   useEffect(() => {
-    if (!pitchZoomOpen) return;
+    if (!pitchZoomOpen && !pitchPreviewPlayerId) return;
 
     function closePitchZoomWithKeyboard(event: KeyboardEvent) {
-      if (event.key === "Escape") setPitchZoomOpen(false);
+      if (event.key !== "Escape") return;
+      setPitchZoomOpen(false);
+      setPitchPreviewPlayerId(null);
     }
 
     document.addEventListener("keydown", closePitchZoomWithKeyboard);
     return () => document.removeEventListener("keydown", closePitchZoomWithKeyboard);
-  }, [pitchZoomOpen]);
+  }, [pitchZoomOpen, pitchPreviewPlayerId]);
 
   function currentPayload(): AppPayload {
     return {
@@ -4639,6 +4642,35 @@ export default function Home() {
     });
   }
 
+  function swapLineupPlayers(sourcePlayerId: string, targetPlayerId: string) {
+    if (sourcePlayerId === targetPlayerId) return;
+    if (!canEditLineup && !isDemoMode) return;
+    if (!registrationOpen) return;
+    if (lineupClosed) return;
+    if (matchFinalized) return;
+
+    const nextTeamA = suggested.teamA.map((player) => player.id);
+    const nextTeamB = suggested.teamB.map((player) => player.id);
+    const sourceSide = nextTeamA.includes(sourcePlayerId) ? "A" : nextTeamB.includes(sourcePlayerId) ? "B" : null;
+    const targetSide = nextTeamA.includes(targetPlayerId) ? "A" : nextTeamB.includes(targetPlayerId) ? "B" : null;
+    if (!sourceSide || !targetSide) return;
+
+    const sourceTeam = sourceSide === "A" ? nextTeamA : nextTeamB;
+    const targetTeam = targetSide === "A" ? nextTeamA : nextTeamB;
+    const sourceIndex = sourceTeam.indexOf(sourcePlayerId);
+    const targetIndex = targetTeam.indexOf(targetPlayerId);
+    if (sourceIndex < 0 || targetIndex < 0) return;
+
+    sourceTeam[sourceIndex] = targetPlayerId;
+    targetTeam[targetIndex] = sourcePlayerId;
+
+    updateMatch({
+      ...activeMatch,
+      teamA: nextTeamA,
+      teamB: nextTeamB,
+    });
+  }
+
   function assignPlayerTeam(playerId: string, team: "A" | "B") {
     if (!canUseAdminControls && !isDemoMode) return;
     if (lineupClosed) return;
@@ -5012,6 +5044,7 @@ export default function Home() {
   ].filter((group) => group.players.length > 0);
   const nextMatchStatusCount = nextMatchStatusGroups.reduce((total, group) => total + group.players.length, 0);
   const selectedPlayer = selectedPlayerId ? players.find((player) => player.id === selectedPlayerId) : undefined;
+  const pitchPreviewPlayer = pitchPreviewPlayerId ? players.find((player) => player.id === pitchPreviewPlayerId) : undefined;
   const selectedRatingFacets = selectedPlayer ? ratingFacetsForPlayer(selectedPlayer) : ratingFacets;
   const selectedForm = selectedPlayer ? playerForm(selectedPlayer) : undefined;
   const selectedEffectiveScore = selectedPlayer ? effectivePlayerScore(selectedPlayer) : 0;
@@ -8550,8 +8583,11 @@ export default function Home() {
             teamA={suggested.teamA}
             teamB={suggested.teamB}
             kind={activeKind}
+            orientation={activeMatchManagerPane === "alineacion" ? "landscape" : "portrait"}
             scoreForPlayer={effectivePlayerScore}
-            onPlayerClick={openPlayerProfile}
+            canDragPlayers={(canEditLineup || isDemoMode) && registrationOpen && !lineupClosed && !matchFinalized}
+            onPlayerClick={setPitchPreviewPlayerId}
+            onPlayerSwap={swapLineupPlayers}
             onZoom={() => setPitchZoomOpen(true)}
           />
           <div className={lineupClosed ? "lineup-state closed" : "lineup-state"}>
@@ -8661,14 +8697,14 @@ export default function Home() {
 
       {pitchZoomOpen ? (
         <div
-          className="pitch-modal-backdrop"
+          className={`pitch-modal-backdrop ${activeMatchManagerPane === "alineacion" ? "pitch-modal-fullscreen-backdrop" : ""}`.trim()}
           role="presentation"
           onMouseDown={(event) => {
             if (event.currentTarget === event.target) setPitchZoomOpen(false);
           }}
         >
           <section
-            className="pitch-modal"
+            className={`pitch-modal ${activeMatchManagerPane === "alineacion" ? "pitch-modal-fullscreen" : ""}`.trim()}
             role="dialog"
             aria-modal="true"
             aria-labelledby="pitch-modal-title"
@@ -8687,15 +8723,26 @@ export default function Home() {
                 teamA={suggested.teamA}
                 teamB={suggested.teamB}
                 kind={activeKind}
+                orientation={activeMatchManagerPane === "alineacion" ? "landscape" : "portrait"}
                 scoreForPlayer={effectivePlayerScore}
+                canDragPlayers={(canEditLineup || isDemoMode) && registrationOpen && !lineupClosed && !matchFinalized}
                 onPlayerClick={(playerId) => {
                   setPitchZoomOpen(false);
-                  openPlayerProfile(playerId);
+                  setPitchPreviewPlayerId(playerId);
                 }}
+                onPlayerSwap={swapLineupPlayers}
               />
             </div>
           </section>
         </div>
+      ) : null}
+
+      {pitchPreviewPlayer ? (
+        <PitchPlayerPreview
+          player={pitchPreviewPlayer}
+          score={effectivePlayerScore(pitchPreviewPlayer)}
+          onClose={() => setPitchPreviewPlayerId(null)}
+        />
       ) : null}
 
       {teamGalleryOpen ? (
@@ -9568,25 +9615,45 @@ function Team({
   );
 }
 
+type PitchDragState = {
+  dx: number;
+  dy: number;
+  sourceId: string;
+  targetId: string | null;
+};
+
+type PitchOrientation = "landscape" | "portrait";
+
 function MatchPitch({
   className = "",
   teamA,
   teamB,
   kind,
+  orientation = "portrait",
   scoreForPlayer = scorePlayer,
+  canDragPlayers = false,
   onPlayerClick,
+  onPlayerSwap,
   onZoom,
 }: {
   className?: string;
   teamA: Player[];
   teamB: Player[];
   kind: MatchKind;
+  orientation?: PitchOrientation;
   scoreForPlayer?: PlayerScoreFn;
+  canDragPlayers?: boolean;
   onPlayerClick?: (playerId: string) => void;
+  onPlayerSwap?: (sourcePlayerId: string, targetPlayerId: string) => void;
   onZoom?: () => void;
 }) {
-  const teamATokens = placeTeam(teamA, kind, "bottom", scoreForPlayer);
-  const teamBTokens = placeTeam(teamB, kind, "top", scoreForPlayer);
+  const holdTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pointerRef = useRef<{ active: boolean; pointerId: number; sourceId: string; startX: number; startY: number } | null>(null);
+  const dropTargetRef = useRef<string | null>(null);
+  const [dragState, setDragState] = useState<PitchDragState | null>(null);
+  const isLandscapePitch = orientation === "landscape";
+  const teamATokens = placeTeam(teamA, kind, isLandscapePitch ? "right" : "bottom", scoreForPlayer);
+  const teamBTokens = placeTeam(teamB, kind, isLandscapePitch ? "left" : "top", scoreForPlayer);
   const emptySlots = [
     ...teamATokens.empty.map((slot) => ({ ...slot, variant: "team-a" as const })),
     ...teamBTokens.empty.map((slot) => ({ ...slot, variant: "team-b" as const })),
@@ -9596,8 +9663,88 @@ function MatchPitch({
     ...teamBTokens.players.map((token) => ({ ...token, variant: "team-b" as const })),
   ];
 
+  function clearPitchDrag() {
+    if (holdTimerRef.current) clearTimeout(holdTimerRef.current);
+    holdTimerRef.current = null;
+    pointerRef.current = null;
+    dropTargetRef.current = null;
+    setDragState(null);
+  }
+
+  function startPitchDrag(event: ReactPointerEvent<HTMLButtonElement>, playerId: string) {
+    if (!event.isPrimary) return;
+    pointerRef.current = {
+      active: false,
+      pointerId: event.pointerId,
+      sourceId: playerId,
+      startX: event.clientX,
+      startY: event.clientY,
+    };
+
+    if (!canDragPlayers) return;
+    event.currentTarget.setPointerCapture(event.pointerId);
+    holdTimerRef.current = setTimeout(() => {
+      const pointer = pointerRef.current;
+      if (!pointer || pointer.pointerId !== event.pointerId) return;
+      pointer.active = true;
+      setDragState({ dx: 0, dy: 0, sourceId: playerId, targetId: null });
+    }, 220);
+  }
+
+  function movePitchDrag(event: ReactPointerEvent<HTMLButtonElement>) {
+    const pointer = pointerRef.current;
+    if (!pointer || pointer.pointerId !== event.pointerId) return;
+    const dx = event.clientX - pointer.startX;
+    const dy = event.clientY - pointer.startY;
+
+    if (!pointer.active) {
+      if (!canDragPlayers || Math.hypot(dx, dy) < 12) return;
+      if (holdTimerRef.current) clearTimeout(holdTimerRef.current);
+      holdTimerRef.current = null;
+      pointer.active = true;
+    }
+
+    event.preventDefault();
+    const target = document
+      .elementFromPoint(event.clientX, event.clientY)
+      ?.closest<HTMLElement>("[data-pitch-player-id]")
+      ?.dataset.pitchPlayerId;
+    const nextTargetId = target && target !== pointer.sourceId ? target : null;
+    dropTargetRef.current = nextTargetId;
+    setDragState({
+      dx,
+      dy,
+      sourceId: pointer.sourceId,
+      targetId: nextTargetId,
+    });
+  }
+
+  function finishPitchDrag(event: ReactPointerEvent<HTMLButtonElement>, playerId: string) {
+    const pointer = pointerRef.current;
+    if (!pointer || pointer.pointerId !== event.pointerId) {
+      onPlayerClick?.(playerId);
+      return;
+    }
+
+    const wasDragging = pointer.active;
+    const releaseTarget = document
+      .elementFromPoint(event.clientX, event.clientY)
+      ?.closest<HTMLElement>("[data-pitch-player-id]")
+      ?.dataset.pitchPlayerId;
+    const targetId = dropTargetRef.current ?? (releaseTarget && releaseTarget !== pointer.sourceId ? releaseTarget : null);
+    clearPitchDrag();
+
+    if (wasDragging) {
+      event.preventDefault();
+      if (targetId) onPlayerSwap?.(pointer.sourceId, targetId);
+      return;
+    }
+
+    onPlayerClick?.(playerId);
+  }
+
   return (
-    <div className={`match-pitch ${className}`.trim()} aria-label="Campo completo con alineaciones">
+    <div className={`match-pitch ${isLandscapePitch ? "match-pitch-horizontal" : ""} ${canDragPlayers ? "lineup-drag-enabled" : ""} ${dragState ? "lineup-drag-active" : ""} ${className}`.trim()} aria-label="Campo completo con alineaciones">
       {onZoom ? (
         <button
           className="pitch-zoom-button"
@@ -9609,12 +9756,12 @@ function MatchPitch({
           <SearchLogo />
         </button>
       ) : null}
-      <div className="pitch-label top">Equipo 2</div>
-      <div className="pitch-label bottom">Equipo 1</div>
-      <div className="midline" />
+      <div className={`pitch-label ${isLandscapePitch ? "left" : "top"}`}>Equipo 2</div>
+      <div className={`pitch-label ${isLandscapePitch ? "right" : "bottom"}`}>Equipo 1</div>
+      <div className={`midline ${isLandscapePitch ? "vertical" : ""}`} />
       <div className="center-circle" />
-      <div className="goal-box top" />
-      <div className="goal-box bottom" />
+      <div className={`goal-box ${isLandscapePitch ? "left" : "top"}`} />
+      <div className={`goal-box ${isLandscapePitch ? "right" : "bottom"}`} />
       {tokens.length === 0 ? <p>Marca jugadores como “Voy”.</p> : null}
       {emptySlots.map((slot, index) => (
         <div
@@ -9628,14 +9775,31 @@ function MatchPitch({
       ))}
       {tokens.map(({ player, x, y, variant }) => {
         const score = scoreForPlayer(player);
+        const isDragging = dragState?.sourceId === player.id;
+        const isDropTarget = dragState?.targetId === player.id;
+        const tokenStyle = {
+          left: `${x}%`,
+          top: `${y}%`,
+          "--drag-x": isDragging ? `${dragState.dx}px` : "0px",
+          "--drag-y": isDragging ? `${dragState.dy}px` : "0px",
+        } as CSSProperties;
 
         return (
           <button
-            aria-label={`Abrir ficha de ${playerDisplayName(player)} desde el campo`}
-            className={`pitch-player-card ${cardTierClass(score)} ${variant} ${player.injured ? "injured-token" : ""} ${player.inactive ? "inactive-token" : ""}`}
+            aria-label={`Ver ficha de ${playerDisplayName(player)} desde el campo`}
+            className={`pitch-player-card ${cardTierClass(score)} ${variant} ${isDragging ? "dragging-token" : ""} ${isDropTarget ? "drop-target-token" : ""} ${player.injured ? "injured-token" : ""} ${player.inactive ? "inactive-token" : ""}`}
+            data-pitch-player-id={player.id}
             key={player.id}
-            onClick={() => onPlayerClick?.(player.id)}
-            style={{ left: `${x}%`, top: `${y}%` }}
+            onKeyDown={(event) => {
+              if (event.key !== "Enter" && event.key !== " ") return;
+              event.preventDefault();
+              onPlayerClick?.(player.id);
+            }}
+            onPointerCancel={clearPitchDrag}
+            onPointerDown={(event) => startPitchDrag(event, player.id)}
+            onPointerMove={movePitchDrag}
+            onPointerUp={(event) => finishPitchDrag(event, player.id)}
+            style={tokenStyle}
             title={`${playerDisplayName(player)} · ${positionLabel(player)} · ${overallScore(score)}`}
             type="button"
           >
@@ -9668,7 +9832,38 @@ function MatchPitch({
   );
 }
 
-function placeTeam(players: Player[], kind: MatchKind, side: "top" | "bottom", scoreForPlayer: PlayerScoreFn = scorePlayer) {
+function PitchPlayerPreview({ player, score, onClose }: { player: Player; score: number; onClose: () => void }) {
+  return (
+    <div
+      className="pitch-player-preview-backdrop"
+      role="presentation"
+      onMouseDown={(event) => {
+        if (event.currentTarget === event.target) onClose();
+      }}
+    >
+      <section className={`pitch-player-preview-card ${cardTierClass(score)}`} role="dialog" aria-modal="true" aria-label={`Ficha ampliada de ${playerDisplayName(player)}`}>
+        <button className="pitch-player-preview-close" type="button" onClick={onClose} aria-label="Cerrar ficha ampliada">Cerrar</button>
+        <div className="pitch-preview-rating">
+          <strong>{overallScore(score)}</strong>
+          <span>{positionShort(player)}</span>
+        </div>
+        {renderRatingTrendChip(player)}
+        <div className="pitch-preview-photo">
+          {player.avatar ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={player.avatar} alt={`Foto de ${playerDisplayName(player)}`} draggable={false} style={avatarImageStyle(player)} />
+          ) : (
+            <b>{playerDisplayName(player).slice(0, 2).toUpperCase()}</b>
+          )}
+        </div>
+        <strong className="pitch-preview-name">{playerDisplayName(player)}</strong>
+        <small>{positionLabel(player)} · {player.goals} goles · {player.appearances} PJ</small>
+      </section>
+    </div>
+  );
+}
+
+function placeTeam(players: Player[], kind: MatchKind, side: "bottom" | "left" | "right" | "top", scoreForPlayer: PlayerScoreFn = scorePlayer) {
   const sorted = [...players].sort((a, b) => {
     const order: Record<PositionLine, number> = { Porteria: 0, Defensa: 1, Medio: 2, Ataque: 3 };
     return order[playerPosition(a)] - order[playerPosition(b)] || scoreForPlayer(b) - scoreForPlayer(a);
@@ -9683,6 +9878,14 @@ function placeTeam(players: Player[], kind: MatchKind, side: "top" | "bottom", s
 
     if (index >= slots.length) {
       const extraOffset = index - slots.length + 1;
+      if (side === "left" || side === "right") {
+        return {
+          player,
+          x: side === "left" ? 44 : 56,
+          y: 18 + ((extraOffset * 17) % 64),
+        };
+      }
+
       return {
         player,
         x: 18 + ((extraOffset * 17) % 64),
@@ -9699,7 +9902,7 @@ function placeTeam(players: Player[], kind: MatchKind, side: "top" | "bottom", s
   };
 }
 
-function formationSlots(kind: MatchKind, side: "top" | "bottom") {
+function formationSlots(kind: MatchKind, side: "bottom" | "left" | "right" | "top") {
   const rows: Record<MatchKind, Array<{ position: PositionLine; count: number; y: number }>> = {
     sala: [
       { position: "Porteria", count: 1, y: 6 },
@@ -9721,14 +9924,23 @@ function formationSlots(kind: MatchKind, side: "top" | "bottom") {
     ],
   };
 
-  return rows[kind].flatMap((row) =>
-    spreadX(row.count).map((x) => ({
+  return rows[kind].flatMap((row) => {
+    if (side === "left" || side === "right") {
+      return spreadX(row.count).map((y) => ({
+        position: row.position,
+        x: side === "left" ? row.y : 100 - row.y,
+        y,
+        used: false,
+      }));
+    }
+
+    return spreadX(row.count).map((x) => ({
       position: row.position,
       x,
       y: side === "top" ? row.y : 100 - row.y,
       used: false,
-    })),
-  );
+    }));
+  });
 }
 
 function spreadX(count: number) {
