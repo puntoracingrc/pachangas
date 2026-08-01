@@ -8420,10 +8420,6 @@ export default function Home() {
               <strong>{confirmedPlayers.length}/{activeMatch.targetPlayers}</strong>
             </div>
             <div>
-              <span>Faltan</span>
-              <strong>{missing}</strong>
-            </div>
-            <div>
               <span>Reservas</span>
               <strong>{activeMatch.reservesAttend ? `${reservePlayers.length}/${reserveLimit}` : "No"}</strong>
             </div>
