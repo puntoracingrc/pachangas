@@ -415,6 +415,9 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.doesNotMatch(page, /\["proximo", "alineacion", "resultado", "historico"/);
   assert.match(page, /result-score-field team-a-score/);
   assert.match(page, /Resultado equipo 1/);
+  assert.match(page, /const otherPlayers = registrationOpen[\s\S]*!player\.inactive/);
+  assert.doesNotMatch(page, /const inactiveOtherPlayers/);
+  assert.doesNotMatch(page, /\{ id: "bajas", title: "Ya no están"/);
   assert.match(page, /consecutiveAbsenceStreak/);
   assert.match(page, /absenceStreaks/);
   assert.match(page, /const showAbsenceStreak = !player\.inactive && absenceStreak > 0 && status !== "voy"/);
