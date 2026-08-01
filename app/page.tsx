@@ -10246,6 +10246,7 @@ function MatchPitch({
   const pointerRef = useRef<PitchPointerState | null>(null);
   const suppressPitchPreviewUntilRef = useRef(0);
   const dropTargetRef = useRef<string | null>(null);
+  const [boardDraggingPlayerId, setBoardDraggingPlayerId] = useState<string | null>(null);
   const [dragState, setDragState] = useState<PitchDragState | null>(null);
   const isLandscapePitch = orientation === "landscape";
   const canUseBoard = isLandscapePitch;
@@ -10291,6 +10292,7 @@ function MatchPitch({
     boardPointerAbortRef.current?.abort();
     boardPointerAbortRef.current = null;
     boardInteractionRef.current = null;
+    setBoardDraggingPlayerId(null);
   }
 
   function resetBoardDraft() {
@@ -10451,6 +10453,7 @@ function MatchPitch({
       playerId,
       pointerId: event.pointerId,
     };
+    setBoardDraggingPlayerId(playerId);
     startBoardWindowTracking();
   }
 
@@ -10696,7 +10699,8 @@ function MatchPitch({
       })}
       {tokens.map(({ player, x, y, variant }) => {
         const score = scoreForPlayer(player);
-        const isDragging = dragState?.sourceId === player.id;
+        const isLineupDragging = dragState?.sourceId === player.id;
+        const isDragging = isLineupDragging || boardDraggingPlayerId === player.id;
         const isDropTarget = dragState?.targetId === `player:${player.id}`;
         const boardPosition = boardMode ? boardState.playerPositions[player.id] : undefined;
         const displayedX = boardPosition?.x ?? x;
@@ -10704,8 +10708,8 @@ function MatchPitch({
         const tokenStyle = {
           left: `${displayedX}%`,
           top: `${displayedY}%`,
-          "--drag-x": isDragging ? `${dragState.dx}px` : "0px",
-          "--drag-y": isDragging ? `${dragState.dy}px` : "0px",
+          "--drag-x": isLineupDragging ? `${dragState.dx}px` : "0px",
+          "--drag-y": isLineupDragging ? `${dragState.dy}px` : "0px",
         } as CSSProperties;
 
         return (
