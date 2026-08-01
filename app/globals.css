@@ -3092,6 +3092,10 @@ select:disabled {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+.next-match-roster-rail {
+  display: contents;
+}
+
 .team-player-column {
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -3153,6 +3157,44 @@ select:disabled {
 .waiting-section {
   background: #f7f8fb;
   border-color: #c7cedb;
+}
+
+.next-match-status-groups {
+  display: grid;
+  gap: 10px;
+}
+
+.next-match-status-group {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.status-group-title {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+  justify-content: space-between;
+  min-height: 26px;
+}
+
+.status-group-title span {
+  color: var(--ink-soft);
+  font-size: 11px;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.status-group-title strong {
+  align-items: center;
+  background: rgba(32, 40, 32, 0.08);
+  border-radius: 999px;
+  display: flex;
+  font-size: 11px;
+  height: 22px;
+  justify-content: center;
+  min-width: 22px;
+  padding: 0 7px;
 }
 
 .reserve-player-grid {
@@ -9575,6 +9617,7 @@ select:disabled {
   }
 
   main[data-mobile-tab="partido"] .team-player-grid .player-card,
+  main[data-mobile-tab="partido"] .next-match-roster-rail > .team-player-column .player-card,
   main[data-mobile-tab="partido"] .player-grid .player-card {
     background: rgba(15, 27, 22, 0.94) !important;
     border-color: rgba(255, 255, 255, 0.1) !important;
@@ -10317,15 +10360,76 @@ select:disabled {
   main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="proximo"] .draft-match-note,
   main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="proximo"] .registration-locked-note,
   main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="proximo"] .open-match-requests-panel,
-  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="proximo"] .reserve-section,
   main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="proximo"] .other-player-grid,
   main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="proximo"] .add-player {
     display: none !important;
   }
 
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="proximo"] .next-match-roster-rail {
+    display: grid;
+    gap: 8px;
+    grid-auto-columns: minmax(320px, calc((100vw - 158px) / 2));
+    grid-auto-flow: column;
+    grid-column: 1 / -1;
+    grid-template-rows: minmax(0, 1fr);
+    height: clamp(154px, calc(100dvh - 184px), 330px);
+    min-height: 154px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 0 0 4px;
+    scroll-snap-type: x proximity;
+    scrollbar-color: rgba(200, 239, 93, 0.45) rgba(245, 242, 232, 0.1);
+    scrollbar-width: thin;
+  }
+
   main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="proximo"] .team-player-grid {
+    display: contents;
     height: auto;
     min-height: 0;
+  }
+
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="proximo"] .team-player-column,
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="proximo"] .next-match-roster-rail > .reserve-section {
+    grid-column: auto;
+    grid-row: auto;
+    height: 100%;
+    margin: 0;
+    min-height: 0;
+    overflow: auto;
+    scroll-snap-align: start;
+    scrollbar-width: thin;
+  }
+
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="proximo"] .next-match-status-section {
+    min-width: 0;
+  }
+
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="proximo"] .next-match-roster-rail .reserve-player-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="proximo"] .next-match-status-groups {
+    gap: 7px;
+  }
+
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="proximo"] .next-match-status-group {
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    gap: 6px;
+    padding-top: 7px;
+  }
+
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="proximo"] .next-match-status-group:first-child {
+    border-top: 0;
+    padding-top: 0;
+  }
+
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="proximo"] .status-group-title span,
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="proximo"] .status-group-title strong {
+    color: #f5f2e8;
+  }
+
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="proximo"] .status-group-title strong {
+    background: rgba(255, 255, 255, 0.12);
   }
 
   main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="admin"] > .main-panel {

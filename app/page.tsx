@@ -4998,6 +4998,19 @@ export default function Home() {
   const otherPlayers = registrationOpen
     ? sortedPlayers.filter((player) => !teamAPlayerIds.has(player.id) && !teamBPlayerIds.has(player.id) && !reservePlayerIds.has(player.id) && !waitingPlayerIds.has(player.id))
     : [];
+  const doubtfulOtherPlayers = otherPlayers.filter((player) => !player.injured && !player.inactive && activeMatch.players.find((entry) => entry.playerId === player.id)?.status === "duda");
+  const notGoingPlayers = otherPlayers.filter((player) => !player.injured && !player.inactive && activeMatch.players.find((entry) => entry.playerId === player.id)?.status === "no");
+  const silentPlayers = otherPlayers.filter((player) => !player.injured && !player.inactive && !activeMatch.players.some((entry) => entry.playerId === player.id));
+  const injuredOtherPlayers = otherPlayers.filter((player) => player.injured);
+  const inactiveOtherPlayers = otherPlayers.filter((player) => player.inactive);
+  const nextMatchStatusGroups = [
+    { id: "duda", title: "Duda", players: doubtfulOtherPlayers },
+    { id: "no", title: "No van", players: notGoingPlayers },
+    { id: "sin", title: "Sin respuesta", players: silentPlayers },
+    { id: "lesionados", title: "Lesionados", players: injuredOtherPlayers },
+    { id: "bajas", title: "Ya no están", players: inactiveOtherPlayers },
+  ].filter((group) => group.players.length > 0);
+  const nextMatchStatusCount = nextMatchStatusGroups.reduce((total, group) => total + group.players.length, 0);
   const selectedPlayer = selectedPlayerId ? players.find((player) => player.id === selectedPlayerId) : undefined;
   const selectedRatingFacets = selectedPlayer ? ratingFacetsForPlayer(selectedPlayer) : ratingFacets;
   const selectedForm = selectedPlayer ? playerForm(selectedPlayer) : undefined;
@@ -8419,7 +8432,7 @@ export default function Home() {
                 </section>
               ) : null}
 
-              <div className="team-player-grid">
+              <div className="next-match-roster-rail" aria-label="Jugadores del próximo partido">
                 <div className="team-player-column team-a-column">
                   <div className="team-column-title">
                     <span>Equipo 1</span>
@@ -8433,6 +8446,58 @@ export default function Home() {
                     <strong>{suggested.teamB.length}</strong>
                   </div>
                   {sortedTeamB.map((player) => renderPlayerCard(player, "B"))}
+                </div>
+
+                {activeMatch.reservesAttend || reservePlayers.length > 0 ? (
+                  <div className="reserve-section next-match-reserve-section">
+                    <div className="team-column-title">
+                      <span>Reservas</span>
+                      <strong>{reservePlayers.length}/{reserveLimit}</strong>
+                    </div>
+                    {reservePlayers.length > 0 ? (
+                      <div className="player-grid reserve-player-grid">
+                        {reservePlayers.map((player) => renderPlayerCard(player))}
+                      </div>
+                    ) : (
+                      <p className="empty-copy">No hay reservas apuntados.</p>
+                    )}
+                  </div>
+                ) : null}
+
+                {waitingPlayers.length > 0 ? (
+                  <div className="reserve-section waiting-section next-match-waiting-section">
+                    <div className="team-column-title">
+                      <span>Lista de espera</span>
+                      <strong>{waitingPlayers.length}</strong>
+                    </div>
+                    <div className="player-grid reserve-player-grid">
+                      {waitingPlayers.map((player) => renderPlayerCard(player))}
+                    </div>
+                  </div>
+                ) : null}
+
+                <div className="reserve-section next-match-status-section">
+                  <div className="team-column-title">
+                    <span>Otros estados</span>
+                    <strong>{nextMatchStatusCount}</strong>
+                  </div>
+                  {nextMatchStatusGroups.length > 0 ? (
+                    <div className="next-match-status-groups">
+                      {nextMatchStatusGroups.map((group) => (
+                        <section className={`next-match-status-group status-group-${group.id}`} key={group.id}>
+                          <div className="status-group-title">
+                            <span>{group.title}</span>
+                            <strong>{group.players.length}</strong>
+                          </div>
+                          <div className="player-grid reserve-player-grid">
+                            {group.players.map((player) => renderPlayerCard(player))}
+                          </div>
+                        </section>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="empty-copy">Todos tienen estado claro.</p>
+                  )}
                 </div>
               </div>
               {showMarketScoutCard ? (
@@ -8459,35 +8524,6 @@ export default function Home() {
                 </div>
               ) : null}
 
-              {reservePlayers.length > 0 ? (
-                <div className="reserve-section">
-                  <div className="team-column-title">
-                    <span>Reservas que van</span>
-                    <strong>{reservePlayers.length}</strong>
-                  </div>
-                  <div className="player-grid reserve-player-grid">
-                    {reservePlayers.map((player) => renderPlayerCard(player))}
-                  </div>
-                </div>
-              ) : null}
-
-              {waitingPlayers.length > 0 ? (
-                <div className="reserve-section waiting-section">
-                  <div className="team-column-title">
-                    <span>Lista de espera</span>
-                    <strong>{waitingPlayers.length}</strong>
-                  </div>
-                  <div className="player-grid reserve-player-grid">
-                    {waitingPlayers.map((player) => renderPlayerCard(player))}
-                  </div>
-                </div>
-              ) : null}
-
-              {otherPlayers.length > 0 ? (
-                <div className="player-grid other-player-grid">
-                  {otherPlayers.map((player) => renderPlayerCard(player))}
-                </div>
-              ) : null}
             </>
           ) : null}
         </section>
