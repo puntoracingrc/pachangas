@@ -8691,9 +8691,6 @@ export default function Home() {
         <div
           className={`pitch-modal-backdrop ${activeMatchManagerPane === "alineacion" ? "pitch-modal-fullscreen-backdrop" : ""}`.trim()}
           role="presentation"
-          onMouseDown={(event) => {
-            if (event.currentTarget === event.target) setPitchZoomOpen(false);
-          }}
         >
           <section
             className={`pitch-modal ${activeMatchManagerPane === "alineacion" ? "pitch-modal-fullscreen" : ""}`.trim()}
@@ -8719,7 +8716,6 @@ export default function Home() {
                 scoreForPlayer={effectivePlayerScore}
                 canDragPlayers={(canEditLineup || isDemoMode) && registrationOpen && !lineupClosed && !matchFinalized}
                 onPlayerClick={(playerId) => {
-                  setPitchZoomOpen(false);
                   setPitchPreviewPlayerId(playerId);
                 }}
                 onPlayerSwap={swapLineupPlayers}
@@ -9640,12 +9636,13 @@ function MatchPitch({
   onZoom?: () => void;
 }) {
   const holdTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pitchRef = useRef<HTMLDivElement | null>(null);
   const pointerRef = useRef<{ active: boolean; pointerId: number; sourceId: string; startX: number; startY: number } | null>(null);
   const dropTargetRef = useRef<string | null>(null);
   const [dragState, setDragState] = useState<PitchDragState | null>(null);
   const isLandscapePitch = orientation === "landscape";
-  const teamATokens = placeTeam(teamA, kind, isLandscapePitch ? "right" : "bottom", scoreForPlayer);
-  const teamBTokens = placeTeam(teamB, kind, isLandscapePitch ? "left" : "top", scoreForPlayer);
+  const teamATokens = placeTeam(teamA, kind, isLandscapePitch ? "left" : "bottom", scoreForPlayer);
+  const teamBTokens = placeTeam(teamB, kind, isLandscapePitch ? "right" : "top", scoreForPlayer);
   const emptySlots = [
     ...teamATokens.empty.map((slot) => ({ ...slot, variant: "team-a" as const })),
     ...teamBTokens.empty.map((slot) => ({ ...slot, variant: "team-b" as const })),
@@ -9661,6 +9658,30 @@ function MatchPitch({
     pointerRef.current = null;
     dropTargetRef.current = null;
     setDragState(null);
+  }
+
+  function nearestPitchDropTarget(clientX: number, clientY: number, sourceId: string) {
+    const pitch = pitchRef.current;
+    if (!pitch) return null;
+    let bestDistance = Infinity;
+    let bestId: string | null = null;
+
+    pitch.querySelectorAll<HTMLElement>("[data-pitch-player-id]").forEach((element) => {
+      const targetId = element.dataset.pitchPlayerId;
+      if (!targetId || targetId === sourceId) return;
+      const rect = element.getBoundingClientRect();
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top + rect.height / 2;
+      const distance = Math.hypot(clientX - centerX, clientY - centerY);
+      const limit = Math.max(rect.width, rect.height) * 1.15;
+      if (distance > limit) return;
+      if (distance < bestDistance) {
+        bestDistance = distance;
+        bestId = targetId;
+      }
+    });
+
+    return bestId;
   }
 
   function startPitchDrag(event: ReactPointerEvent<HTMLButtonElement>, playerId: string) {
@@ -9697,11 +9718,7 @@ function MatchPitch({
     }
 
     event.preventDefault();
-    const target = document
-      .elementFromPoint(event.clientX, event.clientY)
-      ?.closest<HTMLElement>("[data-pitch-player-id]")
-      ?.dataset.pitchPlayerId;
-    const nextTargetId = target && target !== pointer.sourceId ? target : null;
+    const nextTargetId = nearestPitchDropTarget(event.clientX, event.clientY, pointer.sourceId);
     dropTargetRef.current = nextTargetId;
     setDragState({
       dx,
@@ -9719,11 +9736,7 @@ function MatchPitch({
     }
 
     const wasDragging = pointer.active;
-    const releaseTarget = document
-      .elementFromPoint(event.clientX, event.clientY)
-      ?.closest<HTMLElement>("[data-pitch-player-id]")
-      ?.dataset.pitchPlayerId;
-    const targetId = dropTargetRef.current ?? (releaseTarget && releaseTarget !== pointer.sourceId ? releaseTarget : null);
+    const targetId = dropTargetRef.current ?? nearestPitchDropTarget(event.clientX, event.clientY, pointer.sourceId);
     clearPitchDrag();
 
     if (wasDragging) {
@@ -9736,7 +9749,7 @@ function MatchPitch({
   }
 
   return (
-    <div className={`match-pitch ${isLandscapePitch ? "match-pitch-horizontal" : ""} ${canDragPlayers ? "lineup-drag-enabled" : ""} ${dragState ? "lineup-drag-active" : ""} ${className}`.trim()} aria-label="Campo completo con alineaciones">
+    <div ref={pitchRef} className={`match-pitch ${isLandscapePitch ? "match-pitch-horizontal" : ""} ${canDragPlayers ? "lineup-drag-enabled" : ""} ${dragState ? "lineup-drag-active" : ""} ${className}`.trim()} aria-label="Campo completo con alineaciones">
       {onZoom ? (
         <button
           className="pitch-zoom-button"
@@ -9748,8 +9761,8 @@ function MatchPitch({
           <SearchLogo />
         </button>
       ) : null}
-      <div className={`pitch-label ${isLandscapePitch ? "left" : "top"}`}>Equipo 2</div>
-      <div className={`pitch-label ${isLandscapePitch ? "right" : "bottom"}`}>Equipo 1</div>
+      <div className={`pitch-label ${isLandscapePitch ? "left" : "bottom"}`}>Equipo 1</div>
+      <div className={`pitch-label ${isLandscapePitch ? "right" : "top"}`}>Equipo 2</div>
       <div className={`midline ${isLandscapePitch ? "vertical" : ""}`} />
       <div className="center-circle" />
       <div className={`goal-box ${isLandscapePitch ? "left" : "top"}`} />

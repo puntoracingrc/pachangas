@@ -567,6 +567,14 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /pitchPreviewPlayer/);
   assert.match(page, /Ver campo en grande/);
   assert.match(page, /match-pitch-zoomed/);
+  assert.match(page, /const pitchRef = useRef<HTMLDivElement \| null>\(null\)/);
+  assert.match(page, /function nearestPitchDropTarget/);
+  assert.match(page, /const teamATokens = placeTeam\(teamA, kind, isLandscapePitch \? "left" : "bottom"/);
+  assert.match(page, /const teamBTokens = placeTeam\(teamB, kind, isLandscapePitch \? "right" : "top"/);
+  assert.match(page, /<div className=\{`pitch-label \$\{isLandscapePitch \? "left" : "bottom"\}`\}>Equipo 1<\/div>/);
+  assert.match(page, /<div className=\{`pitch-label \$\{isLandscapePitch \? "right" : "top"\}`\}>Equipo 2<\/div>/);
+  assert.doesNotMatch(page, /onMouseDown=\{\(event\) => \{\s*if \(event\.currentTarget === event\.target\) setPitchZoomOpen\(false\);/);
+  assert.doesNotMatch(page, /onPlayerClick=\{\(playerId\) => \{[\s\S]{0,120}setPitchZoomOpen\(false\);[\s\S]{0,120}setPitchPreviewPlayerId\(playerId\);/);
   assert.match(globalsCss, /\.pitch-zoom-button/);
   assert.match(globalsCss, /\.pitch-modal-backdrop/);
   assert.match(page, /saveSelectedPlayerProfile/);
