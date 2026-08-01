@@ -1,4 +1,4 @@
-const CACHE_NAME = "pachangas-iq-pwa-v2";
+const CACHE_NAME = "pachangas-iq-pwa-v3";
 const APP_SHELL_URL = "/";
 const MAX_RUNTIME_CACHE_ENTRIES = 120;
 const PRECACHE_URLS = [
@@ -12,6 +12,9 @@ const PRECACHE_URLS = [
   "/icon-512.png",
   "/icon-maskable-192.png",
   "/icon-maskable-512.png",
+  "/icon-monochrome.svg",
+  "/brand/pachangas-logo-hero.png",
+  "/brand/pachangas-logo-wide.png",
 ];
 
 const STATIC_DESTINATIONS = new Set(["font", "image", "manifest", "script", "style"]);

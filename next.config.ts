@@ -8,6 +8,7 @@ const pwaIconPaths = [
   "/icon-512.png",
   "/icon-maskable-192.png",
   "/icon-maskable-512.png",
+  "/icon-monochrome.svg",
 ];
 
 const nextConfig: NextConfig = {

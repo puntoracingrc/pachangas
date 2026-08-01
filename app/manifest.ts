@@ -9,11 +9,17 @@ export default function manifest(): MetadataRoute.Manifest {
     start_url: "/",
     scope: "/",
     display: "standalone",
+    display_override: ["standalone", "minimal-ui", "browser"],
     orientation: "any",
     background_color: "#f7f6f0",
     theme_color: "#116149",
     categories: ["sports", "productivity", "social"],
+    dir: "ltr",
     lang: "es",
+    launch_handler: {
+      client_mode: "focus-existing",
+    },
+    prefer_related_applications: false,
     icons: [
       {
         src: "/icon-192.png",
@@ -38,6 +44,12 @@ export default function manifest(): MetadataRoute.Manifest {
         sizes: "512x512",
         type: "image/png",
         purpose: "maskable",
+      },
+      {
+        src: "/icon-monochrome.svg",
+        sizes: "any",
+        type: "image/svg+xml",
+        purpose: "monochrome",
       },
     ],
     shortcuts: [

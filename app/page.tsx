@@ -6616,6 +6616,24 @@ export default function Home() {
     return `${window.location.origin}${window.location.pathname}?${params.toString()}`;
   }
 
+  async function copyTextWithFallback(text: string, fallbackTitle: string) {
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(text);
+        return true;
+      }
+    } catch {
+      // The prompt fallback below keeps copy actions usable in restricted WebViews.
+    }
+
+    if (typeof window !== "undefined") {
+      window.prompt(fallbackTitle, text);
+      return true;
+    }
+
+    return false;
+  }
+
   async function createAdminInvite() {
     if (!supabase || !remoteGroupId || !canManageRoles) return;
 
@@ -6662,16 +6680,17 @@ export default function Home() {
     }
 
     const inviteUrl = adminInviteUrl(token);
-    if (!inviteUrl || !navigator.clipboard) return;
+    if (!inviteUrl) return;
 
-    try {
-      await navigator.clipboard.writeText(inviteUrl);
+    const copied = await copyTextWithFallback(inviteUrl, "Copia la invitación de admin");
+    if (copied) {
       setSyncStatus("live");
       setSyncError("");
-    } catch {
-      setSyncStatus("error");
-      setSyncError("No se pudo copiar la invitación de admin");
+      return;
     }
+
+    setSyncStatus("error");
+    setSyncError("No se pudo copiar la invitación de admin");
   }
 
   async function shareAdminInviteWhatsApp() {
@@ -6757,16 +6776,17 @@ export default function Home() {
 
   async function copyTeamInvite() {
     const inviteUrl = currentTeamInviteUrl();
-    if (!inviteUrl || !navigator.clipboard) return;
+    if (!inviteUrl) return;
 
-    try {
-      await navigator.clipboard.writeText(inviteUrl);
+    const copied = await copyTextWithFallback(inviteUrl, "Copia el enlace del equipo");
+    if (copied) {
       setSyncStatus("live");
       setSyncError("");
-    } catch {
-      setSyncStatus("error");
-      setSyncError("No se pudo copiar el enlace");
+      return;
     }
+
+    setSyncStatus("error");
+    setSyncError("No se pudo copiar el enlace");
   }
 
   function shareTeamInviteWhatsApp() {
@@ -6801,31 +6821,28 @@ export default function Home() {
 
   async function copyMatchLink() {
     const url = matchUrl();
-    if (!url || !navigator.clipboard) return;
+    if (!url) return;
 
-    try {
-      await navigator.clipboard.writeText(url);
+    const copied = await copyTextWithFallback(url, "Copia el enlace del partido");
+    if (copied) {
       setSyncStatus("live");
       setSyncError("");
-    } catch {
-      setSyncStatus("error");
-      setSyncError("No se pudo copiar el partido");
+      return;
     }
+
+    setSyncStatus("error");
+    setSyncError("No se pudo copiar el partido");
   }
 
   async function copyPlayerPhotoPrompt() {
-    if (typeof navigator === "undefined" || !navigator.clipboard) {
+    const copied = await copyTextWithFallback(playerPhotoPromptForChatGpt, "Copia el prompt para generar la foto");
+    if (!copied) {
       setAvatarMessage("No se pudo copiar el prompt.");
       return;
     }
 
-    try {
-      await navigator.clipboard.writeText(playerPhotoPromptForChatGpt);
-      setAvatarPromptCopied(true);
-      window.setTimeout(() => setAvatarPromptCopied(false), 1800);
-    } catch {
-      setAvatarMessage("No se pudo copiar el prompt.");
-    }
+    setAvatarPromptCopied(true);
+    window.setTimeout(() => setAvatarPromptCopied(false), 1800);
   }
 
   function renderTeamMiniCard(player: Player) {

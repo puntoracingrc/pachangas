@@ -19,6 +19,7 @@
   --team-a-muted: color-mix(in srgb, var(--team-a) 36%, white);
   --team-b-muted: color-mix(in srgb, var(--team-b) 36%, white);
   --app-viewport-height: 100dvh;
+  --app-viewport-width: 100vw;
   --safe-top: env(safe-area-inset-top);
   --safe-right: env(safe-area-inset-right);
   --safe-bottom: env(safe-area-inset-bottom);
@@ -29,6 +30,7 @@
   --mobile-nav-height-tight: 58px;
   --game-nav-height: 40px;
   --game-nav-height-tight: 36px;
+  --game-nav-offset: calc(var(--game-nav-height) + var(--safe-top));
   --mobile-page-padding: clamp(12px, 3.2vw, 18px);
   --mobile-page-padding-tight: clamp(8px, 2.4vw, 12px);
   --game-shell-padding: clamp(6px, 1.3vw, 8px);
@@ -555,18 +557,34 @@ html {
 }
 
 html {
+  inline-size: 100%;
+  min-block-size: 100%;
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
+  overflow-x: clip;
 }
 
 body {
   min-height: var(--app-viewport-height);
+  min-block-size: var(--app-viewport-height);
   margin: 0;
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
   overflow-x: hidden;
   -webkit-tap-highlight-color: transparent;
+}
+
+@supports not (height: 100dvh) {
+  :root {
+    --app-viewport-height: 100vh;
+  }
+}
+
+@supports (overflow: clip) {
+  body {
+    overflow-x: clip;
+  }
 }
 
 html[data-display-mode="standalone"] body {
@@ -577,6 +595,14 @@ html[data-display-mode="standalone"] body {
   body {
     min-height: var(--app-viewport-height);
     touch-action: manipulation;
+  }
+}
+
+@media (hover: none) and (pointer: coarse) {
+  input,
+  select,
+  textarea {
+    min-height: var(--tap-target);
   }
 }
 
@@ -603,6 +629,33 @@ button,
 a,
 [role="button"] {
   touch-action: manipulation;
+}
+
+@media (min-width: 600px) and (max-width: 1180px) and (pointer: coarse) {
+  :root {
+    --content-measure: min(100%, calc(var(--app-viewport-width) - max(24px, var(--safe-left) + var(--safe-right))));
+    --mobile-page-padding: clamp(16px, 3vw, 28px);
+  }
+
+  .app-shell,
+  .bottom-grid,
+  .market-page,
+  .legal-page-panel,
+  .top-panel,
+  .hero,
+  .demo-banner,
+  .team-access-panel {
+    max-width: var(--content-measure);
+  }
+
+  .panel,
+  .main-panel,
+  .teams-panel,
+  .player-profile,
+  .market-page,
+  .market-admin-panel {
+    min-width: 0;
+  }
 }
 
 .hero {
@@ -9454,6 +9507,7 @@ select:disabled {
     bottom: auto;
     left: 0;
     display: block;
+    padding-top: var(--safe-top);
     padding-bottom: 0;
     border-top: 0;
     border-bottom: 1px solid rgba(255, 255, 255, 0.14);
@@ -9541,7 +9595,7 @@ select:disabled {
     --panel: #121d18;
     height: var(--app-viewport-height);
     overflow: hidden;
-    padding-top: var(--game-nav-height);
+    padding-top: var(--game-nav-offset);
     background:
       linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px) 0 0 / 48px 100%,
       linear-gradient(135deg, #071116 0%, #11231d 52%, #171224 100%) !important;
@@ -9573,7 +9627,7 @@ select:disabled {
     display: grid;
     width: 100%;
     max-width: none;
-    height: calc(var(--app-viewport-height) - var(--game-nav-height));
+    height: calc(var(--app-viewport-height) - var(--game-nav-offset));
     align-items: stretch;
     gap: var(--game-shell-gap);
     grid-template-columns: minmax(0, 1fr);
@@ -9672,14 +9726,14 @@ select:disabled {
   main[data-mobile-tab="perfil"] > .bottom-grid,
   main[data-mobile-tab="equipo"] > .bottom-grid {
     display: grid;
-    height: calc(var(--app-viewport-height) - var(--game-nav-height) - 32px);
+    height: calc(var(--app-viewport-height) - var(--game-nav-offset) - 32px);
     gap: var(--game-shell-gap);
     overflow: hidden;
     padding: 0;
   }
 
   main[data-mobile-tab="mercado"] > .market-admin-panel {
-    height: calc(var(--app-viewport-height) - var(--game-nav-height) - 16px);
+    height: calc(var(--app-viewport-height) - var(--game-nav-offset) - 16px);
     overflow: auto;
   }
 
