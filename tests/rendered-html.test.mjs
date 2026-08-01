@@ -569,6 +569,8 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /onPointerMove=\{moveRosterRailDrag\}/);
   assert.match(page, /onClickCapture=\{cancelRosterRailClick\}/);
   assert.match(globalsCss, /\.next-match-roster-rail[\s\S]*touch-action:\s*pan-x pan-y/);
+  assert.match(globalsCss, /data-match-manager-pane="proximo"[\s\S]*\.next-match-roster-rail\s*\{[\s\S]*height:\s*100%[\s\S]*max-height:\s*100%[\s\S]*min-height:\s*0/);
+  assert.doesNotMatch(globalsCss, /height:\s*clamp\(154px,\s*calc\(var\(--app-viewport-height\) - 184px\),\s*330px\)/);
   assert.match(globalsCss, /main\[data-mobile-tab="partido"\] \.team-player-column[\s\S]*grid-auto-rows:\s*max-content/);
   assert.match(globalsCss, /data-match-manager-pane="proximo"[\s\S]*scroll-padding-bottom:\s*max\(22px,\s*env\(safe-area-inset-bottom\)\)/);
   assert.match(globalsCss, /\.next-match-roster-rail > \.team-player-column::after,[\s\S]*height:\s*max\(22px,\s*env\(safe-area-inset-bottom\)\)/);
