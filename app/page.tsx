@@ -4142,7 +4142,7 @@ export default function Home() {
     if (typeof activeVenue?.lat !== "number" || typeof activeVenue.lng !== "number") {
       setMatchWeather(null);
       setMatchWeatherStatus("unavailable");
-      setMatchWeatherMessage("Elige un campo guardado desde Google Places para ver la previsión.");
+      setMatchWeatherMessage("Elige un campo con ubicación para ver la previsión.");
       return;
     }
 
