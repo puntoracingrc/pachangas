@@ -4574,6 +4574,11 @@ export default function Home() {
     scrollToPanel(matchPanelRef);
   }
 
+  function openMatchFromInicio(matchId: string) {
+    setActiveMatchId(matchId);
+    navigateMobileTab("partido");
+  }
+
   async function setStatus(playerId: string, status: MatchPlayer["status"], options?: { skipLeaveConfirmation?: boolean }) {
     const player = players.find((item) => item.id === playerId);
     const canChangeStatus = matchConfigured && registrationOpen && canEditPlayerOwnedFields({
@@ -8761,7 +8766,8 @@ export default function Home() {
               <div className="match-row" key={match.id}>
                 <button
                   className={match.id === activeMatch.id ? "match-item active" : "match-item"}
-                  onClick={() => selectMatch(match.id)}
+                  onClick={() => openMatchFromInicio(match.id)}
+                  type="button"
                 >
                   <span>{match.title}</span>
                   <small>{new Date(match.date).toLocaleString("es-ES", { weekday: "short", hour: "2-digit", minute: "2-digit" })}</small>

@@ -11194,29 +11194,29 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
   main[data-mobile-tab="inicio"] > .app-shell > .match-list {
     align-content: start;
     display: grid;
-    gap: 6px;
+    gap: 4px;
     grid-template-columns: minmax(0, 1fr);
     grid-template-rows: auto auto minmax(0, 1fr);
     max-height: 100%;
     overflow: hidden;
-    padding: 8px;
+    padding: 6px;
   }
 
   main[data-mobile-tab="inicio"] .match-list > .panel-title {
     grid-column: 1 / -1;
     margin: 0;
-    min-height: 28px;
-    padding-bottom: 6px;
+    min-height: 22px;
+    padding-bottom: 4px;
   }
 
   main[data-mobile-tab="inicio"] .next-match-rail {
     align-items: stretch;
     display: grid;
     gap: 8px;
-    grid-auto-columns: minmax(252px, 32%);
+    grid-auto-columns: 188px;
     grid-auto-flow: column;
     grid-column: 1 / -1;
-    min-height: 74px;
+    min-height: 52px;
     min-width: 0;
     overflow-x: auto;
     overflow-y: hidden;
@@ -11228,21 +11228,27 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
   main[data-mobile-tab="inicio"] .match-row {
     align-items: start;
     align-self: start;
+    display: block;
     min-width: 0;
+    position: relative;
   }
 
   main[data-mobile-tab="inicio"] .match-item {
     background: rgba(245, 242, 232, 0.07);
     border-color: rgba(255, 255, 255, 0.14);
     color: #f5f2e8;
-    min-height: 38px;
-    padding: 7px 8px;
+    min-height: 32px;
+    padding: 5px 46px 5px 8px;
   }
 
   main[data-mobile-tab="inicio"] .match-row > .trash-icon-button {
     align-self: start;
-    height: 38px;
-    min-height: 38px;
+    height: 32px;
+    min-height: 32px;
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 32px;
   }
 
   main[data-mobile-tab="inicio"] .match-item:hover,
@@ -11262,7 +11268,7 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
 
   main[data-mobile-tab="inicio"] .side-history {
     display: grid;
-    gap: 8px;
+    gap: 5px;
     grid-column: 1 / -1;
     grid-row: 3;
     grid-template-columns: minmax(0, 1fr);
@@ -11281,8 +11287,8 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
     align-self: end;
     grid-column: 1 / -1;
     margin: 0;
-    min-height: 28px;
-    padding-bottom: 6px;
+    min-height: 22px;
+    padding-bottom: 4px;
   }
 
   main[data-mobile-tab="inicio"] .side-history .history-season-filter {

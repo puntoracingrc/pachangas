@@ -357,6 +357,8 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /activeMobileTab/);
   assert.match(page, /navigateMobileTab/);
   assert.match(page, /next-match-rail/);
+  assert.match(page, /function openMatchFromInicio\(matchId: string\) \{[\s\S]*setActiveMatchId\(matchId\);[\s\S]*navigateMobileTab\("partido"\);[\s\S]*\}/);
+  assert.match(page, /onClick=\{\(\) => openMatchFromInicio\(match\.id\)\}/);
   assert.match(page, /onNavigate=\{navigatePrimaryMobile\}/);
   assert.match(page, /id="partido"/);
   assert.match(page, /id="alineacion"/);
@@ -561,7 +563,7 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(globalsCss, /main\[data-mobile-tab="partido"\] > \.app-shell > \.main-panel,\s*main\[data-mobile-tab="partido"\] > \.app-shell > \.lineup-panel\s*\{\s*display:\s*grid/);
   assert.match(globalsCss, /main\[data-mobile-tab="inicio"\]\s*\{[\s\S]*grid-template-columns:\s*minmax\(0,\s*1fr\)/);
   assert.match(globalsCss, /main\[data-mobile-tab="inicio"\] > \.app-shell > \.match-list\s*\{[\s\S]*grid-template-columns:\s*minmax\(0,\s*1fr\)/);
-  assert.match(globalsCss, /main\[data-mobile-tab="inicio"\] \.next-match-rail\s*\{[\s\S]*grid-auto-flow:\s*column[\s\S]*overflow-x:\s*auto/);
+  assert.match(globalsCss, /main\[data-mobile-tab="inicio"\] \.next-match-rail\s*\{[\s\S]*grid-auto-columns:\s*188px[\s\S]*grid-auto-flow:\s*column[\s\S]*min-height:\s*52px[\s\S]*overflow-x:\s*auto/);
   assert.match(globalsCss, /main\[data-mobile-tab="inicio"\] \.side-history\s*\{[\s\S]*grid-column:\s*1 \/ -1/);
   assert.match(globalsCss, /main\[data-mobile-tab="inicio"\] \.side-history \.history-season-filter\s*\{[\s\S]*display:\s*none/);
   assert.match(globalsCss, /main\[data-mobile-tab="partido"\] > \.app-shell > \.lineup-panel/);
