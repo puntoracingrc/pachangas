@@ -249,6 +249,9 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /<button type="button" onClick=\{applyBalancedTeams\} disabled=\{!canEditLineup\}>Equilibrado<\/button>/);
   assert.match(page, /lineupClosed \? "Abrir" : "Cerrar"/);
   assert.match(page, /pitch-board-mode/);
+  assert.match(page, /canUseBoard=\{!matchFinalized\}/);
+  assert.match(page, /canUseBoard:\s*canUseBoardProp = true/);
+  assert.match(page, /const canUseBoard = canUseBoardProp && isLandscapePitch/);
   assert.match(page, /Entrar en modo pizarra/);
   assert.match(page, /Dibujar con color del equipo 1/);
   assert.match(page, /Dibujar con color del equipo 2/);
@@ -769,6 +772,10 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(globalsCss, /\.profile-save-area/);
   assert.match(globalsCss, /\.profile-save-button/);
   assert.match(globalsCss, /\.pitch-player-card/);
+  assert.match(globalsCss, /\.empty-token\s*\{[\s\S]*aspect-ratio:\s*var\(--pitch-card-ratio,\s*0\.72\)/);
+  assert.match(globalsCss, /\.pitch-player-card\s*\{[\s\S]*aspect-ratio:\s*var\(--pitch-card-ratio,\s*0\.72\)/);
+  assert.match(globalsCss, /\.empty-token\s*\{[\s\S]*width:\s*var\(--pitch-card-width,\s*clamp\(34px,\s*9\.5cqw,\s*58px\)\)/);
+  assert.match(globalsCss, /\.pitch-player-card\s*\{[\s\S]*width:\s*var\(--pitch-card-width,\s*clamp\(34px,\s*9\.5cqw,\s*58px\)\)/);
   assert.match(globalsCss, /\.pitch-player-card:hover/);
   assert.match(globalsCss, /\.lineup-drag-enabled \.pitch-player-card/);
   assert.match(globalsCss, /\.match-pitch\.lineup-drag-enabled/);
@@ -786,8 +793,7 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(globalsCss, /data-match-manager-pane="alineacion"[\s\S]*\.lineup-panel > \.team\s*\{\s*display:\s*none/);
   assert.match(globalsCss, /data-match-manager-pane="alineacion"[\s\S]*\.lineup-panel > \.match-pitch\s*\{[\s\S]*aspect-ratio:\s*1\.78/);
   assert.match(globalsCss, /\.pitch-card-photo/);
-  assert.match(globalsCss, /\.empty-token/);
-  assert.match(globalsCss, /aspect-ratio:\s*0\.72/);
+  assert.match(globalsCss, /\.pitch-player-card,\s*[\s\S]*\.empty-token\s*\{[\s\S]*--pitch-card-width:\s*clamp\(34px,\s*6\.5cqw,\s*68px\)/);
   assert.match(globalsCss, /\.empty-token::after/);
   assert.match(globalsCss, /\.payer-badge/);
   assert.match(globalsCss, /linear-gradient\(145deg, #fde68a 0%, #f59e0b 100%\)/);
