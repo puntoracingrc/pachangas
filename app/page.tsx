@@ -5379,6 +5379,11 @@ export default function Home() {
     { id: "bajas", title: "Ya no están", players: inactiveOtherPlayers },
   ].filter((group) => group.players.length > 0);
   const nextMatchStatusCount = nextMatchStatusGroups.reduce((total, group) => total + group.players.length, 0);
+  const showReserveRosterColumn = matchFinalized
+    ? Boolean(activeMatch.reservesAttend && reservePlayers.length > 0)
+    : Boolean(activeMatch.reservesAttend || reservePlayers.length > 0);
+  const showWaitingRosterColumn = !matchFinalized && waitingPlayers.length > 0;
+  const showStatusRosterColumn = !matchFinalized;
   const selectedPlayer = selectedPlayerId ? players.find((player) => player.id === selectedPlayerId) : undefined;
   const pitchPreviewPlayer = pitchPreviewPlayerId ? (matchPlayersById.get(pitchPreviewPlayerId) ?? players.find((player) => player.id === pitchPreviewPlayerId)) : undefined;
   const selectedRatingFacets = selectedPlayer ? ratingFacetsForPlayer(selectedPlayer) : ratingFacets;
@@ -8961,6 +8966,23 @@ export default function Home() {
         <section className={mainPanelClassName} id="partido" ref={matchPanelRef}>
           {showMatchAdminPanel ? (
             <>
+              {matchFinalized ? (
+                <div className="match-admin-hub match-manager-admin-block historical-match-admin-hub" aria-label="Administración del partido histórico">
+                  <section className="match-admin-action-panel match-admin-create-panel historical-match-admin-panel">
+                    <div className="match-admin-action-heading">
+                      <span>Archivo</span>
+                      <strong>Partido finalizado</strong>
+                    </div>
+                    <div className="match-admin-create-grid historical-match-admin-actions">
+                      <button className="match-admin-danger-button" type="button" onClick={() => deleteMatch(activeMatch.id)} disabled={!canUseAdminControls}>
+                        <span>Borrar partido</span>
+                        <small>Eliminar histórico</small>
+                      </button>
+                    </div>
+                  </section>
+                </div>
+              ) : (
+                <>
               <div className={canEditMatchSettings ? "match-editor match-manager-admin-block" : "match-editor readonly-editor match-manager-admin-block"}>
                 {matchFinalized ? <span className="admin-only-badge">Partido finalizado</span> : null}
                 {!matchConfigured && !matchFinalized ? <span className="admin-only-badge draft-badge">Borrador</span> : null}
@@ -9129,6 +9151,8 @@ export default function Home() {
                   </div>
                 </section>
               </div>
+                </>
+              )}
 
               {!matchConfigured && !matchFinalized ? (
                 <div className="draft-match-note">
@@ -9189,46 +9213,48 @@ export default function Home() {
             </section>
           ) : null}
 
-          <div className="stats-row">
-            <div>
-              <span>Confirmados</span>
-              <strong>{confirmedPlayers.length}/{activeMatch.targetPlayers}</strong>
-            </div>
-            <div>
-              <span>Reservas</span>
-              <strong>{activeMatch.reservesAttend ? `${reservePlayers.length}/${reserveLimit}` : "No"}</strong>
-            </div>
-            <div>
-              <span>Espera</span>
-              <strong>{waitingPlayers.length}</strong>
-            </div>
-            <div>
-              <span>Duda</span>
-              <strong>{doubtfulCount}</strong>
-            </div>
-            <div>
-              <span>Campo</span>
-              <strong>{fieldCost.toFixed(0)} €</strong>
-            </div>
-            {siteSettings.subscriptionContributionEnabled ? (
+          {!matchFinalized ? (
+            <div className="stats-row">
               <div>
-                <span>App</span>
-                <strong>{subscriptionContributionPerPlayer.toFixed(2)} €</strong>
+                <span>Confirmados</span>
+                <strong>{confirmedPlayers.length}/{activeMatch.targetPlayers}</strong>
               </div>
-            ) : null}
-            <div>
-              <span>Paga</span>
-              <strong>{paymentReady ? payer?.name ?? "-" : "-"}</strong>
+              <div>
+                <span>Reservas</span>
+                <strong>{activeMatch.reservesAttend ? `${reservePlayers.length}/${reserveLimit}` : "No"}</strong>
+              </div>
+              <div>
+                <span>Espera</span>
+                <strong>{waitingPlayers.length}</strong>
+              </div>
+              <div>
+                <span>Duda</span>
+                <strong>{doubtfulCount}</strong>
+              </div>
+              <div>
+                <span>Campo</span>
+                <strong>{fieldCost.toFixed(0)} €</strong>
+              </div>
+              {siteSettings.subscriptionContributionEnabled ? (
+                <div>
+                  <span>App</span>
+                  <strong>{subscriptionContributionPerPlayer.toFixed(2)} €</strong>
+                </div>
+              ) : null}
+              <div>
+                <span>Paga</span>
+                <strong>{paymentReady ? payer?.name ?? "-" : "-"}</strong>
+              </div>
+              <div className="payment-per-person-stat">
+                <span>Pago por persona</span>
+                <strong>{paymentReady ? `${sharePerPlayer.toFixed(2)} €` : "-"}</strong>
+              </div>
+              <div>
+                <span>Pagados</span>
+                <strong>{paymentReady ? `${paidCount}/${payingParticipantIds.length}` : "-"}</strong>
+              </div>
             </div>
-            <div className="payment-per-person-stat">
-              <span>Pago por persona</span>
-              <strong>{paymentReady ? `${sharePerPlayer.toFixed(2)} €` : "-"}</strong>
-            </div>
-            <div>
-              <span>Pagados</span>
-              <strong>{paymentReady ? `${paidCount}/${payingParticipantIds.length}` : "-"}</strong>
-            </div>
-          </div>
+          ) : null}
 
           {paymentReady && payer && !matchFinalized ? (
             <div className="payer-note">
@@ -9324,7 +9350,7 @@ export default function Home() {
 
               <div
                 className="next-match-roster-rail"
-                aria-label="Jugadores del próximo partido"
+                aria-label={matchFinalized ? "Jugadores del partido histórico" : "Jugadores del próximo partido"}
                 onClickCapture={cancelRosterRailClick}
                 onPointerCancel={finishRosterRailDrag}
                 onPointerDown={startRosterRailDrag}
@@ -9347,7 +9373,7 @@ export default function Home() {
                   {sortedTeamB.map((player) => renderPlayerCard(player, "B"))}
                 </div>
 
-                {activeMatch.reservesAttend || reservePlayers.length > 0 ? (
+                {showReserveRosterColumn ? (
                   <div className="team-player-column status-roster-column reserve-roster-column next-match-reserve-section">
                     <div className="team-column-title">
                       <span>Reservas</span>
@@ -9357,7 +9383,7 @@ export default function Home() {
                   </div>
                 ) : null}
 
-                {waitingPlayers.length > 0 ? (
+                {showWaitingRosterColumn ? (
                   <div className="team-player-column status-roster-column waiting-roster-column next-match-waiting-section">
                     <div className="team-column-title">
                       <span>Lista de espera</span>
@@ -9367,29 +9393,31 @@ export default function Home() {
                   </div>
                 ) : null}
 
-                <div className="team-player-column status-roster-column other-status-roster-column next-match-status-section">
-                  <div className="team-column-title">
-                    <span>Otros estados</span>
-                    <strong>{nextMatchStatusCount}</strong>
-                  </div>
-                  {nextMatchStatusGroups.length > 0 ? (
-                    <div className="next-match-status-groups">
-                      {nextMatchStatusGroups.map((group) => (
-                        <section className={`next-match-status-group status-group-${group.id}`} key={group.id}>
-                          <div className="status-group-title">
-                            <span>{group.title}</span>
-                            <strong>{group.players.length}</strong>
-                          </div>
-                          <div className="player-grid reserve-player-grid">
-                            {group.players.map((player) => renderPlayerCard(player))}
-                          </div>
-                        </section>
-                      ))}
+                {showStatusRosterColumn ? (
+                  <div className="team-player-column status-roster-column other-status-roster-column next-match-status-section">
+                    <div className="team-column-title">
+                      <span>Otros estados</span>
+                      <strong>{nextMatchStatusCount}</strong>
                     </div>
-                  ) : (
-                    <p className="empty-copy">Todos tienen estado claro.</p>
-                  )}
-                </div>
+                    {nextMatchStatusGroups.length > 0 ? (
+                      <div className="next-match-status-groups">
+                        {nextMatchStatusGroups.map((group) => (
+                          <section className={`next-match-status-group status-group-${group.id}`} key={group.id}>
+                            <div className="status-group-title">
+                              <span>{group.title}</span>
+                              <strong>{group.players.length}</strong>
+                            </div>
+                            <div className="player-grid reserve-player-grid">
+                              {group.players.map((player) => renderPlayerCard(player))}
+                            </div>
+                          </section>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="empty-copy">Todos tienen estado claro.</p>
+                    )}
+                  </div>
+                ) : null}
               </div>
               {showMarketScoutCard ? (
                 <div className={`player-card market-scout-card market-scout-card-compact ${activeMatch.publicOpen ? "public-open" : ""}`} aria-label={`Configurar mercado. Faltan ${missing} plaza${missing === 1 ? "" : "s"}`}>

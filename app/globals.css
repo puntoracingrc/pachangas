@@ -11674,13 +11674,9 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
     width: 0;
   }
 
-  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="proximo"] .match-finalized-main .stats-row {
-    grid-row: 1;
-  }
-
   main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="proximo"] .match-finalized-main .next-match-roster-rail {
-    height: clamp(190px, calc(var(--app-viewport-height) - 136px), 370px);
-    min-height: 190px;
+    height: clamp(232px, calc(var(--app-viewport-height) - 84px), 390px);
+    min-height: 232px;
   }
 
   main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="proximo"] .next-match-roster-rail[data-dragging="true"] {
@@ -11834,6 +11830,10 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
     min-height: 0;
   }
 
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="admin"] .historical-match-admin-hub {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
   main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="admin"] .match-admin-action-panel {
     align-content: start;
     background:
@@ -11960,6 +11960,11 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
 
   main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="admin"] .match-admin-create-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="admin"] .historical-match-admin-actions {
+    grid-template-columns: minmax(0, 1fr);
+    max-width: 360px;
   }
 
   main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="admin"] .match-admin-create-grid button {
