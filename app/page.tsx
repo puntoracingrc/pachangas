@@ -3247,6 +3247,8 @@ export default function Home() {
   const playerProfileRef = useRef<HTMLDivElement>(null);
   const teamGalleryReturnScrollYRef = useRef<number | null>(null);
   const avatarDragRef = useRef<{ playerId: string; startX: number; startY: number; startOffsetX: number; startOffsetY: number } | null>(null);
+  const rosterRailDragRef = useRef<{ dragged: boolean; pointerId: number; scrollLeft: number; startX: number; startY: number } | null>(null);
+  const suppressRosterRailClickRef = useRef(false);
   const cameraVideoRef = useRef<HTMLVideoElement>(null);
   const cameraStreamRef = useRef<MediaStream | null>(null);
   const handledMobileEntryRef = useRef(false);
@@ -7007,12 +7009,64 @@ export default function Home() {
   }
 
   function handleRosterRailWheel(event: ReactWheelEvent<HTMLDivElement>) {
-    const horizontalIntent = Math.abs(event.deltaX) >= Math.abs(event.deltaY);
+    const horizontalIntent = Math.abs(event.deltaX) > 0 && Math.abs(event.deltaX) >= Math.abs(event.deltaY) * 0.35;
     const shiftHorizontal = event.shiftKey && Math.abs(event.deltaY) > 0;
     if (!horizontalIntent && !shiftHorizontal) return;
 
     event.preventDefault();
     event.currentTarget.scrollLeft += horizontalIntent ? event.deltaX : event.deltaY;
+  }
+
+  function startRosterRailDrag(event: ReactPointerEvent<HTMLDivElement>) {
+    if (event.button !== 0) return;
+    if (event.target instanceof HTMLElement && event.target.closest("button,a,input,select,textarea,[role='menu']")) return;
+    rosterRailDragRef.current = {
+      dragged: false,
+      pointerId: event.pointerId,
+      scrollLeft: event.currentTarget.scrollLeft,
+      startX: event.clientX,
+      startY: event.clientY,
+    };
+    event.currentTarget.setPointerCapture(event.pointerId);
+  }
+
+  function moveRosterRailDrag(event: ReactPointerEvent<HTMLDivElement>) {
+    const drag = rosterRailDragRef.current;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+
+    const deltaX = event.clientX - drag.startX;
+    const deltaY = event.clientY - drag.startY;
+    if (!drag.dragged && Math.abs(deltaX) < 6 && Math.abs(deltaY) < 6) return;
+    if (Math.abs(deltaX) < Math.abs(deltaY)) return;
+
+    drag.dragged = true;
+    suppressRosterRailClickRef.current = true;
+    event.currentTarget.dataset.dragging = "true";
+    event.currentTarget.scrollLeft = drag.scrollLeft - deltaX;
+    event.preventDefault();
+  }
+
+  function finishRosterRailDrag(event: ReactPointerEvent<HTMLDivElement>) {
+    const drag = rosterRailDragRef.current;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+
+    rosterRailDragRef.current = null;
+    delete event.currentTarget.dataset.dragging;
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+    if (drag.dragged) {
+      window.setTimeout(() => {
+        suppressRosterRailClickRef.current = false;
+      }, 0);
+    }
+  }
+
+  function cancelRosterRailClick(event: ReactMouseEvent<HTMLDivElement>) {
+    if (!suppressRosterRailClickRef.current) return;
+    suppressRosterRailClickRef.current = false;
+    event.preventDefault();
+    event.stopPropagation();
   }
 
   async function copyMatchLink() {
@@ -9212,7 +9266,16 @@ export default function Home() {
                 </section>
               ) : null}
 
-              <div className="next-match-roster-rail" aria-label="Jugadores del próximo partido" onWheel={handleRosterRailWheel}>
+              <div
+                className="next-match-roster-rail"
+                aria-label="Jugadores del próximo partido"
+                onClickCapture={cancelRosterRailClick}
+                onPointerCancel={finishRosterRailDrag}
+                onPointerDown={startRosterRailDrag}
+                onPointerMove={moveRosterRailDrag}
+                onPointerUp={finishRosterRailDrag}
+                onWheel={handleRosterRailWheel}
+              >
                 <div className="team-player-column team-a-column">
                   <div className="team-column-title">
                     <span>Equipo 1</span>
