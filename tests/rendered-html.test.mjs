@@ -152,8 +152,10 @@ test("keeps the project wired to the Pachangas app", async () => {
     weatherRoute,
     manifest,
     pwaRuntime,
+    adaptiveWindow,
     serviceWorker,
     nextConfig,
+    adaptiveDocs,
   ] = await Promise.all([
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
@@ -173,8 +175,10 @@ test("keeps the project wired to the Pachangas app", async () => {
     readFile(new URL("../app/api/weather/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/manifest.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/pwa-runtime.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/adaptive-window.ts", import.meta.url), "utf8"),
     readFile(new URL("../public/sw.js", import.meta.url), "utf8"),
     readFile(new URL("../next.config.ts", import.meta.url), "utf8"),
+    readFile(new URL("../docs/android-adaptive-compatibility.md", import.meta.url), "utf8"),
   ]);
 
   assert.match(page, /join_pachanga_team/);
@@ -994,6 +998,15 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(pwaRuntime, /visualViewport/);
   assert.match(pwaRuntime, /--app-viewport-height/);
   assert.match(pwaRuntime, /--app-viewport-width/);
+  assert.match(pwaRuntime, /adaptiveWindowClass\(width, height\)/);
+  assert.match(pwaRuntime, /dataset\.windowWidthClass/);
+  assert.match(pwaRuntime, /dataset\.windowHeightClass/);
+  assert.match(adaptiveWindow, /width >= 1600/);
+  assert.match(adaptiveWindow, /width >= 1200/);
+  assert.match(adaptiveWindow, /width >= 840/);
+  assert.match(adaptiveWindow, /width >= 600/);
+  assert.match(adaptiveWindow, /height >= 900/);
+  assert.match(adaptiveWindow, /height >= 480/);
   assert.match(pwaRuntime, /supportsShare/);
   assert.match(pwaRuntime, /supportsClipboard/);
   assert.match(pwaRuntime, /supportsCamera/);
@@ -1022,8 +1035,12 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(globalsCss, /@supports not \(height: 100dvh\)/);
   assert.match(globalsCss, /@supports \(overflow: clip\)/);
   assert.match(globalsCss, /@media \(min-width: 600px\) and \(max-width: 1180px\) and \(pointer: coarse\)/);
+  assert.match(globalsCss, /data-window-width-class/);
+  assert.match(globalsCss, /data-window-height-class/);
   assert.match(globalsCss, /padding-top:\s*var\(--game-nav-offset\)/);
   assert.match(globalsCss, /height:\s*calc\(var\(--app-viewport-height\) - var\(--game-nav-offset\)\)/);
+  assert.match(adaptiveDocs, /Pachangas QA Matrix/);
+  assert.match(adaptiveDocs, /COMPAT_BASE_URL/);
   assert.match(page, /function copyTextWithFallback/);
   assert.match(page, /window\.prompt\(fallbackTitle, text\)/);
   assert.match(page, /Copia el enlace del partido/);
