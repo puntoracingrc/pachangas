@@ -2009,6 +2009,15 @@ function dateInputValue(date: Date) {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 }
 
+function requestNativeDatePicker(input: HTMLInputElement) {
+  if (input.disabled) return;
+  try {
+    (input as HTMLInputElement & { showPicker?: () => void }).showPicker?.();
+  } catch {
+    input.focus();
+  }
+}
+
 function normalizeBirthDate(value?: string) {
   if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return "";
   const [year, month, day] = value.split("-").map(Number);
@@ -9206,6 +9215,14 @@ export default function Home() {
                     type="date"
                     value={matchDatePart(activeMatch.date)}
                     disabled={!canEditMatchSettings}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " " || event.key === "ArrowDown") {
+                        requestNativeDatePicker(event.currentTarget);
+                      }
+                    }}
+                    onPointerDown={(event) => {
+                      if (event.button === 0) requestNativeDatePicker(event.currentTarget);
+                    }}
                     onChange={(event) => {
                       const nextDate = combineMatchDateTime(event.target.value, activeMatch.date);
                       updateMatchSettings({ ...activeMatch, date: nextDate, season: seasonKey(nextDate) });
@@ -9982,6 +9999,14 @@ export default function Home() {
                         max={currentDateValue}
                         value={selectedPlayer.birthDate ?? ""}
                         disabled={!canEditSelectedPlayer}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter" || event.key === " " || event.key === "ArrowDown") {
+                            requestNativeDatePicker(event.currentTarget);
+                          }
+                        }}
+                        onPointerDown={(event) => {
+                          if (event.button === 0) requestNativeDatePicker(event.currentTarget);
+                        }}
                         onChange={(event) => updatePlayer(selectedPlayer.id, { birthDate: normalizeBirthDate(event.target.value) || undefined })}
                       />
                     </label>
