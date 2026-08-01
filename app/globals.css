@@ -3471,7 +3471,8 @@ select:disabled {
   border-color: #d1d5db;
   border-left-color: #6b7280;
   color: #4b5563;
-  opacity: 0.82;
+  filter: grayscale(0.75);
+  opacity: 0.68;
 }
 
 .market-scout-card {

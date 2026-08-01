@@ -7379,11 +7379,11 @@ export default function Home() {
     const isWaiting = waitingIds.includes(player.id);
     const joinedLabel = status === "voy" ? joinedAtLabel(matchEntry?.joinedAt) : "";
     const absenceStreak = absenceStreaks.get(player.id) ?? 0;
-    const showAbsenceStreak = absenceStreak > 0 && status !== "voy";
+    const showAbsenceStreak = !player.inactive && absenceStreak > 0 && status !== "voy";
     const teamClass = team === "A" ? "team-a-card" : team === "B" ? "team-b-card" : "";
     const nextTeam = team === "A" ? "B" : "A";
     const formState = playerForm(player);
-    const formSummary = formState.hasData ? ` · Forma ${visibleFormPercent(formState)}%` : "";
+    const formSummary = !player.inactive && formState.hasData ? ` · Forma ${visibleFormPercent(formState)}%` : "";
     const matchCardAge = playerAge(player.birthDate, matchFinalized ? activeMatch.date : currentDateValue);
     const playerRatingWindow = ratingWindow(player, ratingVoterId);
     const canEditThisPlayer = canEditPlayerOwnedFields({
@@ -7479,8 +7479,7 @@ export default function Home() {
           </button>
           <span className="player-meta" title={positionLabel(player)} aria-label={positionLabel(player)}>
             {positionShort(player)}
-            {formState.hasData && formState.label ? <em className={`form-chip form-${formState.status}`}>{formState.label}</em> : null}
-            {player.inactive ? <em className="reserve-chip">Ya no está</em> : null}
+            {!player.inactive && formState.hasData && formState.label ? <em className={`form-chip form-${formState.status}`}>{formState.label}</em> : null}
             {isReserve && context !== "reserve" ? <em className="reserve-chip">Reserva</em> : null}
             {isWaiting && context !== "waiting" ? <em className="reserve-chip">Espera</em> : null}
             {showAbsenceStreak ? <em className="absence-chip">{absenceStreak} sin venir</em> : null}
