@@ -1847,6 +1847,10 @@ h1 {
   display: none;
 }
 
+.match-active-context {
+  display: none;
+}
+
 .app-shell.gated-shell,
 .bottom-grid.gated-shell {
   display: none;
@@ -11440,7 +11444,7 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
 
   main[data-mobile-tab="partido"] > .app-shell {
     grid-template-columns: var(--game-side-nav-width) minmax(0, 1fr);
-    grid-template-rows: minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
   }
 
   main[data-mobile-tab="partido"] > .app-shell > .match-manager-subnav {
@@ -11452,9 +11456,79 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
     display: grid;
     gap: 5px;
     grid-column: 1;
-    grid-row: 1;
+    grid-row: 1 / span 2;
     min-height: 0;
     padding: 6px;
+  }
+
+  main[data-mobile-tab="partido"] .match-active-context {
+    align-items: center;
+    background:
+      linear-gradient(90deg, rgba(200, 239, 93, 0.12), transparent 58%),
+      rgba(8, 16, 22, 0.92);
+    border: 1px solid rgba(200, 239, 93, 0.2);
+    border-radius: 8px;
+    color: #f5f2e8;
+    display: grid;
+    gap: 8px;
+    grid-column: 2;
+    grid-row: 1;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    min-height: 34px;
+    min-width: 0;
+    overflow: hidden;
+    padding: 5px 9px;
+  }
+
+  main[data-mobile-tab="partido"] .match-active-context span,
+  main[data-mobile-tab="partido"] .match-active-context b {
+    border-radius: 999px;
+    font-size: 9px;
+    font-weight: 950;
+    line-height: 1;
+    padding: 6px 8px;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  main[data-mobile-tab="partido"] .match-active-context span {
+    background: rgba(245, 242, 232, 0.08);
+    color: #c4d3cb;
+  }
+
+  main[data-mobile-tab="partido"] .match-active-context b {
+    background: rgba(200, 239, 93, 0.16);
+    color: var(--lime);
+  }
+
+  main[data-mobile-tab="partido"] .match-active-context.finalized b {
+    background: rgba(251, 191, 36, 0.15);
+    color: #f8d67a;
+  }
+
+  main[data-mobile-tab="partido"] .match-active-context div {
+    display: grid;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  main[data-mobile-tab="partido"] .match-active-context strong,
+  main[data-mobile-tab="partido"] .match-active-context small {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  main[data-mobile-tab="partido"] .match-active-context strong {
+    color: #f5f2e8;
+    font-size: 13px;
+    line-height: 1;
+  }
+
+  main[data-mobile-tab="partido"] .match-active-context small {
+    color: #b9c8c0;
+    font-size: 10px;
+    line-height: 1;
   }
 
   main[data-mobile-tab="partido"] .match-manager-subnav button {
@@ -11545,7 +11619,7 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
   main[data-mobile-tab="partido"] > .app-shell > .lineup-panel {
     display: none;
     grid-column: 2;
-    grid-row: 1;
+    grid-row: 2;
     height: 100%;
     min-height: 0;
   }
@@ -12873,6 +12947,26 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
   main[data-mobile-tab="partido"] .match-manager-subnav button {
     min-height: 31px;
     padding: 0 6px;
+    font-size: 9px;
+  }
+
+  main[data-mobile-tab="partido"] .match-active-context {
+    gap: 5px;
+    min-height: 30px;
+    padding: 4px 7px;
+  }
+
+  main[data-mobile-tab="partido"] .match-active-context span,
+  main[data-mobile-tab="partido"] .match-active-context b {
+    font-size: 8px;
+    padding: 5px 6px;
+  }
+
+  main[data-mobile-tab="partido"] .match-active-context strong {
+    font-size: 11px;
+  }
+
+  main[data-mobile-tab="partido"] .match-active-context small {
     font-size: 9px;
   }
 
