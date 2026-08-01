@@ -1723,6 +1723,10 @@ h1 {
   display: none;
 }
 
+.lineup-side-tools {
+  display: none;
+}
+
 .app-shell.gated-shell,
 .bottom-grid.gated-shell {
   display: none;
@@ -10614,6 +10618,121 @@ select:disabled {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+
+  main[data-mobile-tab="partido"] .lineup-side-tools {
+    align-self: start;
+    background:
+      linear-gradient(180deg, rgba(200, 239, 93, 0.11), rgba(245, 242, 232, 0.035)),
+      rgba(13, 24, 20, 0.92);
+    border: 1px solid rgba(200, 239, 93, 0.2);
+    border-radius: 8px;
+    display: grid;
+    gap: 6px;
+    margin-top: 8px;
+    padding: 7px;
+  }
+
+  main[data-mobile-tab="partido"] .lineup-side-tools-kicker {
+    color: rgba(245, 242, 232, 0.68);
+    font-size: 8px;
+    font-weight: 950;
+    line-height: 1;
+    text-transform: uppercase;
+  }
+
+  main[data-mobile-tab="partido"] .lineup-side-state,
+  main[data-mobile-tab="partido"] .lineup-side-balance,
+  main[data-mobile-tab="partido"] .lineup-side-actions button {
+    border-radius: 6px;
+    font-size: 10px;
+    font-weight: 950;
+  }
+
+  main[data-mobile-tab="partido"] .lineup-side-state {
+    background: rgba(34, 197, 94, 0.14);
+    border: 1px solid rgba(74, 222, 128, 0.28);
+    color: #d7ffe1;
+    min-height: 30px;
+    padding: 8px 7px;
+    text-align: center;
+    text-transform: uppercase;
+  }
+
+  main[data-mobile-tab="partido"] .lineup-side-state.closed {
+    background: rgba(250, 204, 21, 0.14);
+    border-color: rgba(250, 204, 21, 0.34);
+    color: #fff0bf;
+  }
+
+  main[data-mobile-tab="partido"] .lineup-side-balance {
+    background: rgba(245, 242, 232, 0.065);
+    border: 1px solid rgba(245, 242, 232, 0.1);
+    color: #f5f2e8;
+    display: grid;
+    gap: 5px;
+    padding: 7px;
+  }
+
+  main[data-mobile-tab="partido"] .lineup-side-balance span,
+  main[data-mobile-tab="partido"] .lineup-side-balance small {
+    color: #9fb1a7;
+    font-size: 8px;
+    font-weight: 950;
+    line-height: 1.1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  main[data-mobile-tab="partido"] .lineup-side-balance strong {
+    color: var(--lime);
+    font-size: 18px;
+    line-height: 1;
+  }
+
+  main[data-mobile-tab="partido"] .lineup-side-balance i {
+    background: rgba(245, 242, 232, 0.14);
+    border-radius: 999px;
+    display: block;
+    height: 6px;
+    overflow: hidden;
+  }
+
+  main[data-mobile-tab="partido"] .lineup-side-balance b {
+    background: linear-gradient(90deg, var(--team-a), var(--team-b));
+    border-radius: inherit;
+    display: block;
+    height: 100%;
+    min-width: 4px;
+  }
+
+  main[data-mobile-tab="partido"] .lineup-side-actions {
+    display: grid;
+    gap: 5px;
+  }
+
+  main[data-mobile-tab="partido"] .lineup-side-actions button {
+    background: rgba(245, 242, 232, 0.08);
+    border: 1px solid rgba(245, 242, 232, 0.14);
+    color: #f5f2e8;
+    cursor: pointer;
+    justify-content: center;
+    min-height: 30px;
+    padding: 0 6px;
+    text-align: center;
+  }
+
+  main[data-mobile-tab="partido"] .lineup-side-actions button:nth-child(2) {
+    background: rgba(200, 239, 93, 0.14);
+    border-color: rgba(200, 239, 93, 0.3);
+    color: var(--lime);
+  }
+
+  main[data-mobile-tab="partido"] .lineup-side-actions button:disabled {
+    cursor: not-allowed;
+    opacity: 0.48;
   }
 
   main[data-mobile-tab="partido"] > .app-shell > .match-list,

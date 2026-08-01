@@ -8079,6 +8079,31 @@ export default function Home() {
               <span>{matchManagerPaneLabels[pane]}</span>
             </button>
           ))}
+          {selectedMatchManagerPane === "alineacion" ? (
+            <div className="lineup-side-tools" aria-label="Herramientas de alineación">
+              <span className="lineup-side-tools-kicker">Herramientas</span>
+              <div className={lineupClosed ? "lineup-side-state closed" : "lineup-side-state"}>
+                {!matchConfigured ? "Pendiente" : lineupClosed ? "Cerrada" : "Abierta"}
+              </div>
+              <div className="lineup-side-balance" title={balanceSummary.detail}>
+                <span>Equilibrio</span>
+                <strong>{balanceSummary.percent > 0 ? `${balanceSummary.percent}%` : "Pendiente"}</strong>
+                <i aria-hidden="true">
+                  <b style={{ width: `${balanceSummary.percent}%` }} />
+                </i>
+                <small>{balanceSummary.label}</small>
+              </div>
+              <div className="lineup-side-actions">
+                <button type="button" onClick={applyRandomTeams} disabled={!canEditLineup}>Aleatorio</button>
+                <button type="button" onClick={applyBalancedTeams} disabled={!canEditLineup}>Equilibrado</button>
+                {canUseAdminControls && matchConfigured && !matchFinalized ? (
+                  <button type="button" onClick={() => void toggleLineupClosed()}>
+                    {lineupClosed ? "Abrir" : "Cerrar"}
+                  </button>
+                ) : null}
+              </div>
+            </div>
+          ) : null}
         </nav>
         <aside className="panel match-list" aria-label="Partidos">
           <div className="panel-title">

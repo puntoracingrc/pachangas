@@ -224,6 +224,13 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /data-match-manager-pane=\{selectedMatchManagerPane\}/);
   assert.match(page, /className="match-manager-subnav"/);
   assert.match(page, /setActiveMatchManagerPane\(pane\)/);
+  assert.match(page, /className="lineup-side-tools"/);
+  assert.match(page, /Herramientas/);
+  assert.match(page, /className="lineup-side-balance"/);
+  assert.match(page, /className="lineup-side-actions"/);
+  assert.match(page, /<button type="button" onClick=\{applyRandomTeams\} disabled=\{!canEditLineup\}>Aleatorio<\/button>/);
+  assert.match(page, /<button type="button" onClick=\{applyBalancedTeams\} disabled=\{!canEditLineup\}>Equilibrado<\/button>/);
+  assert.match(page, /lineupClosed \? "Abrir" : "Cerrar"/);
   assert.match(page, /match-manager-admin-block/);
   assert.match(page, /lineup-title-result/);
   assert.match(page, /nextMatchStatusGroups/);
@@ -436,6 +443,11 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(globalsCss, /\.mobile-app-nav-item/);
   assert.match(globalsCss, /\.mobile-app-nav-item\.active/);
   assert.match(globalsCss, /\.match-manager-subnav/);
+  assert.match(globalsCss, /\.lineup-side-tools/);
+  assert.match(globalsCss, /\.lineup-side-tools-kicker/);
+  assert.match(globalsCss, /\.lineup-side-balance/);
+  assert.match(globalsCss, /\.lineup-side-actions button/);
+  assert.match(globalsCss, /\.lineup-side-state\.closed/);
   assert.match(globalsCss, /data-match-manager-pane="proximo"/);
   assert.match(globalsCss, /data-match-manager-pane="alineacion"/);
   assert.match(globalsCss, /data-match-manager-pane="resultado"/);
