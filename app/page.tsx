@@ -8482,34 +8482,26 @@ export default function Home() {
                 </div>
 
                 {activeMatch.reservesAttend || reservePlayers.length > 0 ? (
-                  <div className="reserve-section next-match-reserve-section">
+                  <div className="team-player-column status-roster-column reserve-roster-column next-match-reserve-section">
                     <div className="team-column-title">
                       <span>Reservas</span>
                       <strong>{reservePlayers.length}/{reserveLimit}</strong>
                     </div>
-                    {reservePlayers.length > 0 ? (
-                      <div className="player-grid reserve-player-grid">
-                        {reservePlayers.map((player) => renderPlayerCard(player))}
-                      </div>
-                    ) : (
-                      <p className="empty-copy">No hay reservas apuntados.</p>
-                    )}
+                    {reservePlayers.length > 0 ? reservePlayers.map((player) => renderPlayerCard(player)) : <p className="empty-copy">No hay reservas apuntados.</p>}
                   </div>
                 ) : null}
 
                 {waitingPlayers.length > 0 ? (
-                  <div className="reserve-section waiting-section next-match-waiting-section">
+                  <div className="team-player-column status-roster-column waiting-roster-column next-match-waiting-section">
                     <div className="team-column-title">
                       <span>Lista de espera</span>
                       <strong>{waitingPlayers.length}</strong>
                     </div>
-                    <div className="player-grid reserve-player-grid">
-                      {waitingPlayers.map((player) => renderPlayerCard(player))}
-                    </div>
+                    {waitingPlayers.map((player) => renderPlayerCard(player))}
                   </div>
                 ) : null}
 
-                <div className="reserve-section next-match-status-section">
+                <div className="team-player-column status-roster-column other-status-roster-column next-match-status-section">
                   <div className="team-column-title">
                     <span>Otros estados</span>
                     <strong>{nextMatchStatusCount}</strong>
