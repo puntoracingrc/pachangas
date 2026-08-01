@@ -712,6 +712,7 @@ const seedMatches: Match[] = [
 
 const storageKey = "pachanga-iq-v3";
 const profileNameKey = "pachanga-iq-profile-name";
+const demoTeamOptionId = "__pachangas_demo__";
 const freeTrialMatchLimit = 2;
 
 const backupReasonLabels: Record<string, string> = {
@@ -2749,9 +2750,14 @@ function teamBalanceSummary(teamA: Player[], teamB: Player[], scoreForPlayer: Pl
   const metricsA = teamBalanceMetrics(teamA, scoreForPlayer);
   const metricsB = teamBalanceMetrics(teamB, scoreForPlayer);
   const hasPlayers = teamA.length > 0 || teamB.length > 0;
-  const diff = Math.abs(metricsA.power - metricsB.power);
+  const rawDiff = metricsA.power - metricsB.power;
+  const diff = Math.abs(rawDiff);
   const baseline = Math.max(metricsA.power, metricsB.power, 1);
   const percent = hasPlayers ? Math.max(0, Math.min(100, Math.round(100 - (diff / baseline) * 100))) : 0;
+  const leadingTeam = !hasPlayers || percent >= 96 ? null : rawDiff > 0 ? "Equipo 1" : "Equipo 2";
+  const weakerTeam = !leadingTeam ? null : leadingTeam === "Equipo 1" ? "Equipo 2" : "Equipo 1";
+  const compactEdge = leadingTeam ? `${leadingTeam.replace("Equipo ", "E")} +${ratingPoints(diff)}` : "";
+  const edgeLabel = leadingTeam ? `${leadingTeam} más fuerte · ${weakerTeam} por debajo` : hasPlayers ? "Sin ventaja clara" : "Pendiente";
   const label = !hasPlayers
     ? "Pendiente"
     : percent >= 96
@@ -2763,13 +2769,17 @@ function teamBalanceSummary(teamA: Player[], teamB: Player[], scoreForPlayer: Pl
           : "Desnivelado";
 
   return {
+    compactEdge,
     detail: hasPlayers
-      ? `Diferencia ${ratingPoints(diff)} pts · usa media real, forma actual, goles/partido, victorias, experiencia, posición y porteros`
+      ? `${edgeLabel} · Diferencia ${ratingPoints(diff)} pts · usa media real, forma actual, goles/partido, victorias, experiencia, posición y porteros`
       : "Marca jugadores como Voy para calcularlo",
+    edgeLabel,
     label,
+    leadingTeam,
     metricsA,
     metricsB,
     percent,
+    weakerTeam,
   };
 }
 
@@ -3101,6 +3111,7 @@ export default function Home() {
   const [activeMobileTab, setActiveMobileTab] = useState<MobileAppTab>("inicio");
   const [activeMatchManagerPane, setActiveMatchManagerPane] = useState<MatchManagerPane>("proximo");
   const [profilePane, setProfilePane] = useState<ProfilePane>("ficha");
+  const [previewDemoMode, setPreviewDemoMode] = useState(false);
   const [playerActionMenu, setPlayerActionMenu] = useState<{ playerId: string; x: number; y: number } | null>(null);
   const [statusConfirmation, setStatusConfirmation] = useState<PendingStatusChange | null>(null);
   const [mobileAccountOpen, setMobileAccountOpen] = useState(false);
@@ -3479,6 +3490,7 @@ export default function Home() {
 
     await supabase.auth.signOut();
     updateAuthState(null);
+    setPreviewDemoMode(false);
     setRemoteGroupId(null);
     setRemoteInviteToken(null);
     setRemoteRevision(null);
@@ -3521,7 +3533,12 @@ export default function Home() {
     return params;
   }
 
-  async function loadTeams(client: NonNullable<typeof supabase>, preferredGroupId?: string | null, preferredTeamCode?: string | null) {
+  async function loadTeams(
+    client: NonNullable<typeof supabase>,
+    preferredGroupId?: string | null,
+    preferredTeamCode?: string | null,
+    options?: { previewOnly?: boolean },
+  ) {
     const memberships = await client
       .from("pachanga_group_members")
       .select(
@@ -3572,6 +3589,19 @@ export default function Home() {
       setTeamMembers([]);
       setRemoteReady(false);
       setSyncStatus("local");
+      return;
+    }
+
+    if (options?.previewOnly) {
+      setRemoteGroupId(selectedTeam.id);
+      setRemoteInviteToken(selectedTeam.inviteToken);
+      setRemoteRevision(selectedTeam.payloadRevision);
+      setCurrentRole(selectedTeam.role);
+      setAdminInviteToken(null);
+      setTeamMembers([]);
+      setRemoteReady(false);
+      setSyncStatus("local");
+      setSyncError("");
       return;
     }
 
@@ -3738,6 +3768,14 @@ export default function Home() {
   useEffect(() => {
     setIncomingSharedLink(incomingSharedLinkFromSearch(window.location.search));
     setProfileName(localStorage.getItem(profileNameKey) ?? "");
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("demo") === "1") {
+      setPreviewDemoMode(true);
+      applyPayload(defaultPayload());
+      setLocalHydrated(true);
+      return;
+    }
+
     const saved = localStorage.getItem(storageKey);
     if (!saved) {
       setLocalHydrated(true);
@@ -3803,10 +3841,10 @@ export default function Home() {
 
       try {
         const params = new URLSearchParams(window.location.search);
-        const inviteToken = expandCompactUuid(params.get("i") ?? params.get("invite"));
-        const adminInviteToken = expandCompactUuid(params.get("a") ?? params.get("admin"));
-        const teamCode = params.get("equipo");
-        let groupId = params.get("grupo");
+        const inviteToken = previewDemoMode ? null : expandCompactUuid(params.get("i") ?? params.get("invite"));
+        const adminInviteToken = previewDemoMode ? null : expandCompactUuid(params.get("a") ?? params.get("admin"));
+        const teamCode = previewDemoMode ? null : params.get("equipo");
+        let groupId = previewDemoMode ? null : params.get("grupo");
         const initialUser = await getSignedUser(client);
         const linkNeedsLogin = Boolean(inviteToken || adminInviteToken || teamCode || groupId);
 
@@ -3858,7 +3896,7 @@ export default function Home() {
           }
         }
 
-        await loadTeams(client, groupId, teamCode);
+        await loadTeams(client, groupId, teamCode, { previewOnly: previewDemoMode });
 
         if (cancelled) return;
       } catch (error) {
@@ -3873,7 +3911,7 @@ export default function Home() {
     return () => {
       cancelled = true;
     };
-  }, [localHydrated]);
+  }, [localHydrated, previewDemoMode]);
 
   useEffect(() => {
     if (!supabase || !remoteGroupId || !remoteReady) return;
@@ -3900,6 +3938,8 @@ export default function Home() {
   const canAutosaveRemotePayload = Boolean(remoteGroupId && currentUserId && !selectedPlayerId && (currentRole === "owner" || currentRole === "admin"));
 
   useEffect(() => {
+    if (previewDemoMode) return;
+
     const localPayload: AppPayload = { players, venues, matches, activeMatchId, siteSettings };
     const payloadJson = serializePayload(localPayload);
     localStorage.setItem(storageKey, serializeLocalPayloadCache(localPayload, remoteGroupId ? "server-cache" : "local-draft"));
@@ -3948,7 +3988,7 @@ export default function Home() {
           autosaveInFlightRef.current = false;
         });
     }, 850);
-  }, [players, venues, matches, activeMatchId, siteSettings, canAutosaveRemotePayload, remoteGroupId, remoteReady, supabase]);
+  }, [players, venues, matches, activeMatchId, siteSettings, canAutosaveRemotePayload, remoteGroupId, remoteReady, supabase, previewDemoMode]);
 
   useEffect(() => {
     if (!selectedPlayerId) return;
@@ -5182,7 +5222,7 @@ export default function Home() {
   const currentTeam = remoteTeams.find((team) => team.id === remoteGroupId);
   const hasIncomingSharedLink = incomingSharedLink.hasInvite || incomingSharedLink.hasAdminInvite || incomingSharedLink.hasMatch;
   const isRegisteredUser = Boolean(authUser && !isAnonymousAuthUser(authUser));
-  const hasRealTeam = remoteReady && Boolean(remoteGroupId);
+  const hasRealTeam = !previewDemoMode && remoteReady && Boolean(remoteGroupId);
   const billingActive = teamBillingIsActive(currentTeam);
   const billingTrialUsed = Math.max(0, currentTeam?.billingTrialFinalizedMatches ?? 0);
   const billingTrialRemaining = Math.max(0, freeTrialMatchLimit - billingTrialUsed);
@@ -5192,10 +5232,10 @@ export default function Home() {
   const ownerContributionRecipient = ownerContributionPlayer ? playerDisplayName(ownerContributionPlayer) : "owner del grupo";
   const showSubscriptionPanel = Boolean(hasRealTeam && (showBillingPanel || groupBillingLocked || (showSettings && currentRole === "owner")));
   const needsLoginForSharedLink = hasIncomingSharedLink && !isRegisteredUser && !hasRealTeam;
-  const isDemoMode = !hasIncomingSharedLink && !remoteReady && remoteTeams.length === 0;
-  const canManageTeam = isRegisteredUser && (currentRole === "owner" || currentRole === "admin");
+  const isDemoMode = previewDemoMode || (!hasIncomingSharedLink && !remoteReady && remoteTeams.length === 0);
+  const canManageTeam = Boolean(hasRealTeam && isRegisteredUser && (currentRole === "owner" || currentRole === "admin"));
   const canManageRoles = hasRealTeam && isRegisteredUser && currentRole === "owner";
-  const canUseAdminControls = hasRealTeam && canManageTeam;
+  const canUseAdminControls = isDemoMode || canManageTeam;
   const matchManagerPanes: MatchManagerPane[] = canUseAdminControls
     ? ["proximo", "alineacion", "resultado", "historico", "admin"]
     : ["proximo", "alineacion", "resultado", "historico"];
@@ -5285,7 +5325,7 @@ export default function Home() {
     };
   }, [marketZoneRadiusKm, selectedPlayer?.id, selectedPlayer?.marketEnabled, selectedPlayer?.marketZonesGeo, selectedPlayerIsOwn]);
   const showGroupAccessPanel = isRegisteredUser;
-  const showTeamAdminPanel = canUseAdminControls;
+  const showTeamAdminPanel = canManageTeam;
   const showMatchAdminPanel = canUseAdminControls;
   const canEditMatchSettings = canUseAdminControls && !matchFinalized;
   const canEditLineup = canUseAdminControls && registrationOpen && !lineupClosed && !matchFinalized;
@@ -6563,11 +6603,41 @@ export default function Home() {
     setProfileSaveMessage("");
   }
 
+  function enterPreviewDemo() {
+    const demoPayload = defaultPayload();
+    resetTeamScopedUi();
+    setPreviewDemoMode(true);
+    setRemoteReady(false);
+    setRemoteRevision(null);
+    setTeamMembers([]);
+    setSyncStatus("local");
+    setSyncError("");
+    applyPayload(demoPayload);
+
+    const params = new URLSearchParams(window.location.search);
+    params.set("demo", "1");
+    params.delete("equipo");
+    params.delete("grupo");
+    params.delete("i");
+    params.delete("invite");
+    params.delete("a");
+    params.delete("admin");
+    params.delete("p");
+    params.delete("partido");
+    window.history.replaceState(null, "", `${window.location.pathname}?${params.toString()}`);
+  }
+
   function selectTeam(teamId: string) {
+    if (teamId === demoTeamOptionId) {
+      enterPreviewDemo();
+      return;
+    }
+
     const selectedTeam = remoteTeams.find((team) => team.id === teamId);
     if (!selectedTeam) return;
 
     resetTeamScopedUi();
+    setPreviewDemoMode(false);
     setRemoteGroupId(selectedTeam.id);
     setRemoteInviteToken(selectedTeam.inviteToken);
     setRemoteRevision(selectedTeam.payloadRevision);
@@ -7625,8 +7695,10 @@ export default function Home() {
         <section className="top-panel team-access-panel" ref={teamAccessPanelRef}>
           <div className="team-access-current">
             <span>Grupo de Pachangas</span>
-            {remoteTeams.length > 0 ? (
-              <select value={remoteGroupId ?? ""} onChange={(event) => selectTeam(event.target.value)}>
+            {remoteTeams.length > 0 || previewDemoMode || isRegisteredUser ? (
+              <select value={previewDemoMode ? demoTeamOptionId : remoteGroupId ?? ""} onChange={(event) => selectTeam(event.target.value)}>
+                <option value="" disabled>Elige grupo o demo</option>
+                <option value={demoTeamOptionId}>Demo interactiva</option>
                 {remoteTeams.map((team) => (
                   <option key={team.id} value={team.id}>{groupOptionLabel(team)}</option>
                 ))}
@@ -7637,11 +7709,11 @@ export default function Home() {
           </div>
           <div className="team-access-meta">
             <span>ID grupo</span>
-            <strong>{currentTeam?.teamCode ?? "-"}</strong>
+            <strong>{previewDemoMode ? "DEMO" : currentTeam?.teamCode ?? "-"}</strong>
           </div>
           <div className="team-access-meta team-access-role">
             <span>Rol</span>
-            <strong>{memberRoleLabel(currentRole)}</strong>
+            <strong>{previewDemoMode ? "Demo" : memberRoleLabel(currentRole)}</strong>
           </div>
           <div className="team-access-meta team-access-level">
             <span>Nivel del equipo</span>
@@ -7663,7 +7735,7 @@ export default function Home() {
               </div>
               <button
                 className="trash-icon-button team-delete-button"
-                disabled={!remoteGroupId || !canUseAdminControls}
+                disabled={!remoteGroupId || !canManageTeam}
                 onClick={() => void deleteCurrentTeam()}
                 title="Eliminar grupo"
                 type="button"
@@ -7674,7 +7746,7 @@ export default function Home() {
             </>
           ) : null}
           <small className={`sync-status sync-${syncStatus}`}>
-            {syncStatus === "live" ? "Grupo privado sincronizado" : syncStatus === "connecting" ? "Conectando..." : syncStatus === "error" ? `Sin sync: ${syncError}` : "Crea un grupo o entra con invitación"}
+            {previewDemoMode ? "Demo local: no modifica tu grupo real" : syncStatus === "live" ? "Grupo privado sincronizado" : syncStatus === "connecting" ? "Conectando..." : syncStatus === "error" ? `Sin sync: ${syncError}` : "Crea un grupo o entra con invitación"}
           </small>
         </section>
       ) : null}
@@ -10249,6 +10321,7 @@ function MatchPitch({
             <b style={{ width: `${balanceSummary.percent}%` }} />
           </i>
           <small>{balanceSummary.label}</small>
+          {balanceSummary.compactEdge ? <em>{balanceSummary.compactEdge}</em> : null}
         </div>
       ) : null}
       <div className={`pitch-label ${isLandscapePitch ? "left" : "bottom"}`}>Equipo 1</div>
