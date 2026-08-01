@@ -485,6 +485,7 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(globalsCss, /data-match-manager-pane="resultado"/);
   assert.match(globalsCss, /data-match-manager-pane="historico"/);
   assert.match(globalsCss, /data-match-manager-pane="admin"/);
+  assert.match(globalsCss, /data-match-manager-pane="admin"[\s\S]*\.next-match-roster-rail/);
   assert.match(globalsCss, /\.next-match-roster-rail/);
   assert.match(globalsCss, /grid-auto-flow:\s*column/);
   assert.match(globalsCss, /scroll-snap-type:\s*x proximity/);
@@ -516,6 +517,7 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(globalsCss, /\.ranking-sort-buttons/);
   assert.match(globalsCss, /\.ranking-card-grid/);
   assert.match(globalsCss, /\.ranking-player-entry/);
+  assert.match(globalsCss, /main\[data-mobile-tab="equipo"\] \.ranking-player-entry/);
   assert.match(globalsCss, /\.ranking-player-card/);
   assert.match(globalsCss, /\.ranking-player-stats/);
   assert.match(globalsCss, /\.ranking-stat-grid/);

@@ -9712,8 +9712,40 @@ select:disabled {
 
   main[data-mobile-tab="equipo"] .ranking-sort-buttons button.selected,
   main[data-mobile-tab="perfil"] .ranking-sort-buttons button.selected {
-    background: rgba(245, 242, 232, 0.92);
+    background: rgba(200, 239, 93, 0.86);
     color: #132018;
+  }
+
+  main[data-mobile-tab="equipo"] .ranking-player-entry,
+  main[data-mobile-tab="perfil"] .ranking-player-entry {
+    background:
+      linear-gradient(135deg, rgba(245, 242, 232, 0.1), rgba(245, 242, 232, 0.035)),
+      rgba(8, 20, 16, 0.9);
+    border-color: rgba(255, 255, 255, 0.14);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.05),
+      0 14px 28px rgba(0, 0, 0, 0.18);
+    color: #f5f2e8;
+  }
+
+  main[data-mobile-tab="equipo"] .ranking-player-entry:hover,
+  main[data-mobile-tab="perfil"] .ranking-player-entry:hover {
+    border-color: rgba(200, 239, 93, 0.44);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.07),
+      0 16px 30px rgba(0, 0, 0, 0.22);
+  }
+
+  main[data-mobile-tab="equipo"] .ranking-card-detail,
+  main[data-mobile-tab="perfil"] .ranking-card-detail {
+    color: rgba(245, 242, 232, 0.68);
+  }
+
+  main[data-mobile-tab="equipo"] .ranking-card-badge,
+  main[data-mobile-tab="perfil"] .ranking-card-badge {
+    background: rgba(200, 239, 93, 0.14);
+    border-color: rgba(200, 239, 93, 0.38);
+    color: #d9fb91;
   }
 
   main[data-mobile-tab="equipo"] .ranking-stat-grid span,
@@ -11396,6 +11428,7 @@ select:disabled {
   main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="admin"] .subscription-contribution-note,
   main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="admin"] .share-box,
   main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="admin"] .open-match-requests-panel,
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="admin"] .next-match-roster-rail,
   main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="admin"] .team-player-grid,
   main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="admin"] .market-scout-card,
   main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="admin"] .reserve-section,
@@ -11686,10 +11719,12 @@ select:disabled {
 
   main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="resultado"] .scorers-team {
     --scorer-accent: #c8ef5d;
+    align-content: start;
     background: rgba(3, 18, 14, 0.72);
     border-color: color-mix(in srgb, var(--scorer-accent) 32%, rgba(255, 255, 255, 0.12));
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
     gap: 7px;
+    grid-auto-rows: max-content;
     padding: 7px;
   }
 
@@ -11709,6 +11744,10 @@ select:disabled {
 
   main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="resultado"] .scorers-team-title span {
     color: rgba(245, 242, 232, 0.94);
+  }
+
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="resultado"] .scorers-team-title {
+    min-height: 36px;
   }
 
   main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="resultado"] .scorers-team-title b {
