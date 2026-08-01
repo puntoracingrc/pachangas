@@ -10293,6 +10293,7 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
     border-top-width: 5px;
     bottom: 7px;
     content: "";
+    display: none;
     height: 13px;
     opacity: 0.9;
     pointer-events: none;
@@ -10322,7 +10323,8 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
 
   main[data-mobile-tab="partido"] .match-editor input[type="date"]::-webkit-calendar-picker-indicator {
     cursor: pointer;
-    opacity: 0;
+    filter: invert(1);
+    opacity: 0.85;
   }
 
   main[data-mobile-tab="partido"] .match-editor input:disabled,
