@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { adaptiveWindowClass } from "./adaptive-window";
 
 type NavigatorWithStandalone = Navigator & {
   standalone?: boolean;
@@ -42,6 +43,7 @@ function setViewportVariables() {
   const viewport = window.visualViewport;
   const height = Math.round(viewport?.height ?? window.innerHeight);
   const width = Math.round(viewport?.width ?? window.innerWidth);
+  const sizeClass = adaptiveWindowClass(width, height);
 
   if (height > 0) {
     document.documentElement.style.setProperty("--app-viewport-height", `${height}px`);
@@ -50,6 +52,10 @@ function setViewportVariables() {
   if (width > 0) {
     document.documentElement.style.setProperty("--app-viewport-width", `${width}px`);
   }
+
+  document.documentElement.dataset.windowWidthClass = sizeClass.width;
+  document.documentElement.dataset.windowHeightClass = sizeClass.height;
+  document.documentElement.dataset.windowSizeClass = `${sizeClass.width}-${sizeClass.height}`;
 }
 
 function updateOrientationDataset() {

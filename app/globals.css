@@ -658,6 +658,26 @@ a,
   }
 }
 
+html[data-window-width-class="medium"],
+html[data-window-width-class="expanded"] {
+  --content-measure: min(100%, calc(var(--app-viewport-width) - max(24px, var(--safe-left) + var(--safe-right))));
+}
+
+html[data-window-width-class="large"],
+html[data-window-width-class="extra-large"] {
+  --content-measure: min(100%, 1440px);
+  --mobile-page-padding: clamp(18px, 2.2vw, 34px);
+}
+
+html[data-window-height-class="compact"] {
+  --mobile-nav-height: var(--mobile-nav-height-tight);
+}
+
+html[data-window-width-class="medium"][data-window-height-class="compact"],
+html[data-window-width-class="expanded"][data-window-height-class="compact"] {
+  --game-shell-gap: clamp(5px, 1vw, 8px);
+}
+
 .hero {
   align-items: end;
   display: flex;
