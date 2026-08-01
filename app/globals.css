@@ -10344,8 +10344,10 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
   main[data-mobile-tab="partido"] .match-editor input[type="date"]::-webkit-calendar-picker-indicator,
   main[data-mobile-tab="partido"] .match-editor input[type="time"]::-webkit-calendar-picker-indicator {
     cursor: pointer;
-    filter: invert(1);
-    opacity: 0.85;
+    filter: brightness(0) invert(1) drop-shadow(0 0 2px rgba(245, 242, 232, 0.42));
+    height: 16px;
+    opacity: 1;
+    width: 16px;
   }
 
   main[data-mobile-tab="partido"] .match-editor input:disabled,
