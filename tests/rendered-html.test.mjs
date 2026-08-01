@@ -749,10 +749,16 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /payerId === player\.id \? "payer-card" : ""/);
   assert.match(page, /playerRatingWindow\.canRate \? "rating-open-card" : ""/);
   assert.match(page, /playerRatingWindow\.canRate \? "Valorar" : "Valoraciones"/);
+  assert.match(page, /placement:\s*"down" \| "up"/);
+  assert.match(page, /const viewportWidth = Math\.min\(/);
+  assert.match(page, /const hasRoomDown = preferredDownY \+ panelHeight <= viewportHeight - margin/);
+  assert.match(page, /className=\{`player-action-menu-panel open-\$\{playerActionMenu\.placement\}`\}/);
   assert.match(page, /const openCardProfile = \(event: ReactMouseEvent<HTMLElement>\)/);
   assert.match(page, /event\.target\.closest\("button,a,input,select,textarea,\[role='menu'\]"\)/);
   assert.match(globalsCss, /\.player-card\.payer-card/);
   assert.match(globalsCss, /\.player-card\.rating-open-card/);
+  assert.match(globalsCss, /\.player-action-menu-panel\s*\{[\s\S]*overflow-y:\s*auto/);
+  assert.match(globalsCss, /\.player-action-menu-panel\s*\{[\s\S]*width:\s*170px/);
   assert.match(globalsCss, /data-match-manager-pane="proximo"[\s\S]*\.rating-badge/);
   assert.match(globalsCss, /data-match-manager-pane="proximo"[\s\S]*\.payer-badge/);
   assert.match(globalsCss, /\.draggable-avatar/);
