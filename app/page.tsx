@@ -9157,9 +9157,11 @@ export default function Home() {
                       <div>
                         <strong>{match.title}</strong>
                         <small className="history-item-kind">{matchKinds[match.kind ?? "futbol7"].label}</small>
-                        <small>{new Date(match.date).toLocaleDateString("es-ES", { day: "2-digit", month: "short" })}</small>
                       </div>
-                      <span>{match.scoreA} - {match.scoreB}</span>
+                      <span className="history-score-badge">
+                        <b>{match.scoreA} - {match.scoreB}</b>
+                        <small>{new Date(match.date).toLocaleDateString("es-ES", { day: "2-digit", month: "short" })}</small>
+                      </span>
                       <small>{match.place}</small>
                     </button>
                   </Fragment>

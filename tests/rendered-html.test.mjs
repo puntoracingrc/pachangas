@@ -389,6 +389,10 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /onClick=\{\(\) => openMatchFromInicio\(match\.id, "resultado"\)\}/);
   assert.match(page, /className="match-item-kind">\{matchKinds\[match\.kind \?\? "futbol7"\]\.label\}/);
   assert.match(page, /className="history-item-kind">\{matchKinds\[match\.kind \?\? "futbol7"\]\.label\}/);
+  assert.match(page, /<span className="history-score-badge">\s*<b>\{match\.scoreA\} - \{match\.scoreB\}<\/b>\s*<small>\{new Date\(match\.date\)\.toLocaleDateString/);
+  assert.doesNotMatch(page, /className="history-item-kind"[\s\S]{0,220}<small>\{new Date\(match\.date\)\.toLocaleDateString/);
+  assert.match(globalsCss, /\.history-item \.history-score-badge/);
+  assert.match(globalsCss, /\.history-item \.history-score-badge small/);
   assert.match(page, /Borrar partido/);
   assert.doesNotMatch(page, /className="history-delete"/);
   assert.doesNotMatch(page, /pagó \{matchPayer/);
