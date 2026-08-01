@@ -2533,6 +2533,11 @@ body.player-evaluation-lab-body .legal-footer {
   align-self: start;
 }
 
+.next-match-rail {
+  display: grid;
+  gap: 8px;
+}
+
 .side-history {
   margin-top: 16px;
   position: relative;
@@ -11186,8 +11191,8 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
     align-content: start;
     display: grid;
     gap: 6px;
-    grid-template-columns: minmax(172px, 0.74fr) minmax(0, 1.26fr);
-    grid-template-rows: auto minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto minmax(0, 1fr);
     max-height: 100%;
     overflow: hidden;
     padding: 8px;
@@ -11200,10 +11205,25 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
     padding-bottom: 6px;
   }
 
+  main[data-mobile-tab="inicio"] .next-match-rail {
+    align-items: stretch;
+    display: grid;
+    gap: 8px;
+    grid-auto-columns: minmax(252px, 32%);
+    grid-auto-flow: column;
+    grid-column: 1 / -1;
+    min-height: 74px;
+    min-width: 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 0 0 3px;
+    scrollbar-color: rgba(200, 239, 93, 0.38) rgba(245, 242, 232, 0.08);
+    scrollbar-width: thin;
+  }
+
   main[data-mobile-tab="inicio"] .match-row {
     align-items: start;
     align-self: start;
-    grid-column: 1;
     min-width: 0;
   }
 
@@ -11239,15 +11259,29 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
   main[data-mobile-tab="inicio"] .side-history {
     display: grid;
     gap: 8px;
-    grid-column: 2;
-    grid-row: 2 / span 12;
-    grid-template-rows: auto auto minmax(0, 1fr);
+    grid-column: 1 / -1;
+    grid-row: 3;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
     min-height: 0;
+    min-width: 0;
     overflow: hidden;
     padding-right: 0;
   }
 
   main[data-mobile-tab="inicio"] .side-history::after {
+    display: none;
+  }
+
+  main[data-mobile-tab="inicio"] .side-history > .panel-title {
+    align-self: end;
+    grid-column: 1 / -1;
+    margin: 0;
+    min-height: 28px;
+    padding-bottom: 6px;
+  }
+
+  main[data-mobile-tab="inicio"] .side-history .history-season-filter {
     display: none;
   }
 
@@ -11260,6 +11294,8 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
     grid-auto-flow: column;
     max-height: none;
     min-height: 0;
+    grid-column: 1 / -1;
+    grid-row: 2;
     overflow-x: auto;
     overflow-y: hidden;
     padding: 0 0 3px;
@@ -11300,6 +11336,13 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
 
   main[data-mobile-tab="inicio"] .history-item strong {
     color: #f5f2e8;
+  }
+
+  main[data-mobile-tab="inicio"] .history-item div small {
+    color: #c4d3cb;
+    display: block;
+    font-size: 11px;
+    line-height: 1.1;
   }
 
   main[data-mobile-tab="inicio"] .history-item > span {
