@@ -235,6 +235,8 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /lineupClosed \? "Abrir" : "Cerrar"/);
   assert.match(page, /pitch-board-mode/);
   assert.match(page, /Entrar en modo pizarra/);
+  assert.match(page, /Dibujar con color del equipo 1/);
+  assert.match(page, /Dibujar con color del equipo 2/);
   assert.match(page, /Ocultar fichas de la pizarra/);
   assert.match(page, /Borrar pizarra/);
   assert.match(page, /match-manager-admin-block/);
