@@ -442,6 +442,9 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.doesNotMatch(globalsCss, /\.fifa-player-card input\s*\{/);
   assert.match(globalsCss, /\.result-score-field span/);
   assert.match(globalsCss, /\.team-b-score/);
+  assert.match(globalsCss, /data-match-manager-pane="resultado"[\s\S]*\.scorers-team/);
+  assert.match(globalsCss, /data-match-manager-pane="resultado"[\s\S]*--scorer-accent/);
+  assert.match(globalsCss, /data-match-manager-pane="resultado"[\s\S]*\.scorer-row/);
   assert.match(globalsCss, /::-webkit-calendar-picker-indicator/);
   assert.match(globalsCss, /\.absence-chip/);
   assert.match(globalsCss, /\.rating-trend-chip/);
