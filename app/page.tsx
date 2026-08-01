@@ -1,6 +1,6 @@
 "use client";
 
-import { type CSSProperties, type FormEvent, Fragment, type MouseEvent as ReactMouseEvent, type PointerEvent as ReactPointerEvent, useEffect, useMemo, useRef, useState } from "react";
+import { type CSSProperties, type Dispatch, type FormEvent, Fragment, type MouseEvent as ReactMouseEvent, type PointerEvent as ReactPointerEvent, type SetStateAction, useEffect, useMemo, useRef, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { attachVenueAutocomplete, type VenuePlace } from "./googlePlacesClient";
 import {
@@ -3044,6 +3044,37 @@ function nextPayer(players: Player[], matches: Match[], activeMatch: Match, conf
   return pickAfter(lastPayerId, confirmedIds);
 }
 
+type PitchBoardColor = "team-a" | "team-b";
+
+type PitchBoardPoint = {
+  x: number;
+  y: number;
+};
+
+type PitchBoardLine = {
+  color: PitchBoardColor;
+  id: string;
+  points: PitchBoardPoint[];
+};
+
+type PitchBoardState = {
+  active: boolean;
+  color: PitchBoardColor;
+  lines: PitchBoardLine[];
+  playerPositions: Record<string, PitchBoardPoint>;
+  playersVisible: boolean;
+};
+
+function initialPitchBoardState(): PitchBoardState {
+  return {
+    active: false,
+    color: "team-a",
+    lines: [],
+    playerPositions: {},
+    playersVisible: true,
+  };
+}
+
 export default function Home() {
   const [players, setPlayers] = useState<Player[]>(seedPlayers);
   const [venues, setVenues] = useState<Venue[]>(seedVenues);
@@ -3064,6 +3095,7 @@ export default function Home() {
   const [selectedImportCandidateKey, setSelectedImportCandidateKey] = useState<string | null>(null);
   const [showImportChoices, setShowImportChoices] = useState(false);
   const [teamGalleryOpen, setTeamGalleryOpen] = useState(false);
+  const [pitchBoardState, setPitchBoardState] = useState<PitchBoardState>(() => initialPitchBoardState());
   const [pitchZoomOpen, setPitchZoomOpen] = useState(false);
   const [pitchPreviewPlayerId, setPitchPreviewPlayerId] = useState<string | null>(null);
   const [activeMobileTab, setActiveMobileTab] = useState<MobileAppTab>("inicio");
@@ -3963,6 +3995,9 @@ export default function Home() {
 
   const activeMatch = matches.find((match) => match.id === activeMatchId) ?? matches[0];
   const activeKind = activeMatch.kind ?? "futbol7";
+  useEffect(() => {
+    setPitchBoardState(initialPitchBoardState());
+  }, [activeMatchId, activeKind]);
   const activeVenue = venues.find((venue) => venue.id === activeMatch.venueId);
   const reserveLimit = reserveCapacity(activeMatch);
   const orderedGoingEntries = orderedGoingPlayers(activeMatch);
@@ -8683,7 +8718,9 @@ export default function Home() {
             kind={activeKind}
             orientation={activeMatchManagerPane === "alineacion" ? "landscape" : "portrait"}
             scoreForPlayer={effectivePlayerScore}
+            boardState={pitchBoardState}
             canDragPlayers={(canEditLineup || isDemoMode) && registrationOpen && !lineupClosed && !matchFinalized}
+            onBoardStateChange={setPitchBoardState}
             onPlayerClick={setPitchPreviewPlayerId}
             onPlayerSwap={swapLineupPlayers}
             onZoom={() => setPitchZoomOpen(true)}
@@ -8822,7 +8859,9 @@ export default function Home() {
                 kind={activeKind}
                 orientation={activeMatchManagerPane === "alineacion" ? "landscape" : "portrait"}
                 scoreForPlayer={effectivePlayerScore}
+                boardState={pitchBoardState}
                 canDragPlayers={(canEditLineup || isDemoMode) && registrationOpen && !lineupClosed && !matchFinalized}
+                onBoardStateChange={setPitchBoardState}
                 onPlayerClick={(playerId) => {
                   setPitchPreviewPlayerId(playerId);
                 }}
@@ -9718,16 +9757,6 @@ type PitchDragState = {
   targetId: string | null;
 };
 
-type PitchBoardPoint = {
-  x: number;
-  y: number;
-};
-
-type PitchBoardLine = {
-  id: string;
-  points: PitchBoardPoint[];
-};
-
 type PitchBoardInteraction =
   | { kind: "draw"; lineId: string; pointerId: number }
   | { grabOffsetX: number; grabOffsetY: number; kind: "player"; playerId: string; pointerId: number };
@@ -9751,7 +9780,9 @@ function MatchPitch({
   kind,
   orientation = "portrait",
   scoreForPlayer = scorePlayer,
+  boardState = initialPitchBoardState(),
   canDragPlayers = false,
+  onBoardStateChange,
   onPlayerClick,
   onPlayerSwap,
   onZoom,
@@ -9764,7 +9795,9 @@ function MatchPitch({
   kind: MatchKind;
   orientation?: PitchOrientation;
   scoreForPlayer?: PlayerScoreFn;
+  boardState?: PitchBoardState;
   canDragPlayers?: boolean;
+  onBoardStateChange?: Dispatch<SetStateAction<PitchBoardState>>;
   onPlayerClick?: (playerId: string) => void;
   onPlayerSwap?: (sourcePlayerId: string, targetPlayerId: string) => void;
   onZoom?: () => void;
@@ -9777,13 +9810,11 @@ function MatchPitch({
   const pointerRef = useRef<PitchPointerState | null>(null);
   const suppressPitchPreviewUntilRef = useRef(0);
   const dropTargetRef = useRef<string | null>(null);
-  const [boardLines, setBoardLines] = useState<PitchBoardLine[]>([]);
-  const [boardMode, setBoardMode] = useState(false);
-  const [boardPlayerPositions, setBoardPlayerPositions] = useState<Record<string, PitchBoardPoint>>({});
-  const [boardPlayersVisible, setBoardPlayersVisible] = useState(true);
   const [dragState, setDragState] = useState<PitchDragState | null>(null);
   const isLandscapePitch = orientation === "landscape";
   const canUseBoard = isLandscapePitch;
+  const boardMode = canUseBoard && boardState.active;
+  const boardPlayersVisible = boardState.playersVisible;
   const teamATokens = placeTeam(teamA, kind, isLandscapePitch ? "left" : "bottom", scoreForPlayer, lineupSlots?.teamA);
   const teamBTokens = placeTeam(teamB, kind, isLandscapePitch ? "right" : "top", scoreForPlayer, lineupSlots?.teamB);
   const emptySlots = [
@@ -9806,17 +9837,18 @@ function MatchPitch({
   useEffect(() => {
     if (canUseBoard) return;
     clearBoardInteraction();
-    setBoardMode(false);
-    setBoardLines([]);
-    setBoardPlayerPositions({});
-    setBoardPlayersVisible(true);
-  }, [canUseBoard]);
+    onBoardStateChange?.(initialPitchBoardState());
+  }, [canUseBoard, onBoardStateChange]);
 
   function baseBoardPositions() {
     return tokens.reduce<Record<string, PitchBoardPoint>>((current, token) => {
       current[token.player.id] = { x: token.x, y: token.y };
       return current;
     }, {});
+  }
+
+  function updateBoardState(updater: SetStateAction<PitchBoardState>) {
+    onBoardStateChange?.(updater);
   }
 
   function clearBoardInteraction() {
@@ -9827,17 +9859,24 @@ function MatchPitch({
 
   function resetBoardDraft() {
     clearBoardInteraction();
-    setBoardLines([]);
-    setBoardPlayerPositions(baseBoardPositions());
-    setBoardPlayersVisible(true);
+    updateBoardState((current) => ({
+      ...current,
+      active: true,
+      lines: [],
+      playerPositions: baseBoardPositions(),
+      playersVisible: true,
+    }));
   }
 
   function closeBoardMode() {
     clearBoardInteraction();
-    setBoardLines([]);
-    setBoardPlayerPositions({});
-    setBoardPlayersVisible(true);
-    setBoardMode(false);
+    updateBoardState((current) => ({
+      ...current,
+      active: false,
+      lines: [],
+      playerPositions: {},
+      playersVisible: true,
+    }));
   }
 
   function toggleBoardMode() {
@@ -9847,10 +9886,28 @@ function MatchPitch({
     }
 
     clearPitchDrag({ suppressPreview: true });
-    setBoardLines([]);
-    setBoardPlayerPositions(baseBoardPositions());
-    setBoardPlayersVisible(true);
-    setBoardMode(true);
+    updateBoardState((current) => ({
+      ...current,
+      active: true,
+      lines: current.lines,
+      playerPositions: Object.keys(current.playerPositions).length > 0 ? current.playerPositions : baseBoardPositions(),
+    }));
+  }
+
+  function selectBoardColor(color: PitchBoardColor) {
+    updateBoardState((current) => ({
+      ...current,
+      active: true,
+      color,
+    }));
+  }
+
+  function toggleBoardPlayersVisible() {
+    updateBoardState((current) => ({
+      ...current,
+      active: true,
+      playersVisible: !current.playersVisible,
+    }));
   }
 
   function boardPointFromClient(clientX: number, clientY: number) {
@@ -9863,14 +9920,15 @@ function MatchPitch({
   }
 
   function appendBoardPoint(lineId: string, point: PitchBoardPoint) {
-    setBoardLines((current) =>
-      current.map((line) => {
+    updateBoardState((current) => ({
+      ...current,
+      lines: current.lines.map((line) => {
         if (line.id !== lineId) return line;
         const lastPoint = line.points.at(-1);
         if (lastPoint && Math.hypot(point.x - lastPoint.x, point.y - lastPoint.y) < 0.35) return line;
         return { ...line, points: [...line.points, point] };
       }),
-    );
+    }));
   }
 
   function moveBoardInteraction(event: PointerEvent) {
@@ -9885,11 +9943,15 @@ function MatchPitch({
       return;
     }
 
-    setBoardPlayerPositions((current) => ({
+    updateBoardState((current) => ({
       ...current,
-      [interaction.playerId]: {
-        x: Math.max(0, Math.min(100, point.x + interaction.grabOffsetX)),
-        y: Math.max(0, Math.min(100, point.y + interaction.grabOffsetY)),
+      active: true,
+      playerPositions: {
+        ...current.playerPositions,
+        [interaction.playerId]: {
+          x: Math.max(0, Math.min(100, point.x + interaction.grabOffsetX)),
+          y: Math.max(0, Math.min(100, point.y + interaction.grabOffsetY)),
+        },
       },
     }));
   }
@@ -9924,7 +9986,11 @@ function MatchPitch({
     event.stopPropagation();
     clearBoardInteraction();
     const lineId = `line-${Date.now()}-${event.pointerId}`;
-    setBoardLines((current) => [...current, { id: lineId, points: [point] }]);
+    updateBoardState((current) => ({
+      ...current,
+      active: true,
+      lines: [...current.lines, { color: current.color, id: lineId, points: [point] }],
+    }));
     boardInteractionRef.current = { kind: "draw", lineId, pointerId: event.pointerId };
     startBoardWindowTracking();
   }
@@ -9941,7 +10007,7 @@ function MatchPitch({
     event.stopPropagation();
     clearPitchDrag({ suppressPreview: true });
     clearBoardInteraction();
-    const currentPosition = boardPlayerPositions[playerId] ?? fallbackPosition;
+    const currentPosition = boardState.playerPositions[playerId] ?? fallbackPosition;
     boardInteractionRef.current = {
       grabOffsetX: currentPosition.x - point.x,
       grabOffsetY: currentPosition.y - point.y,
@@ -10112,9 +10178,27 @@ function MatchPitch({
           {boardMode ? (
             <>
               <button
+                className={`pitch-board-color-button team-a ${boardState.color === "team-a" ? "active" : ""}`}
+                type="button"
+                onClick={() => selectBoardColor("team-a")}
+                title="Dibujar con color del equipo 1"
+                aria-label="Dibujar con color del equipo 1"
+              >
+                <span />
+              </button>
+              <button
+                className={`pitch-board-color-button team-b ${boardState.color === "team-b" ? "active" : ""}`}
+                type="button"
+                onClick={() => selectBoardColor("team-b")}
+                title="Dibujar con color del equipo 2"
+                aria-label="Dibujar con color del equipo 2"
+              >
+                <span />
+              </button>
+              <button
                 className={`pitch-board-button ${!boardPlayersVisible ? "active" : ""}`}
                 type="button"
-                onClick={() => setBoardPlayersVisible((visible) => !visible)}
+                onClick={toggleBoardPlayersVisible}
                 title={boardPlayersVisible ? "Ocultar fichas" : "Mostrar fichas"}
                 aria-label={boardPlayersVisible ? "Ocultar fichas de la pizarra" : "Mostrar fichas de la pizarra"}
               >
@@ -10135,8 +10219,8 @@ function MatchPitch({
       ) : null}
       {boardMode ? (
         <svg className="pitch-board-lines" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-          {boardLines.map((line) => (
-            <polyline key={line.id} points={line.points.map((point) => `${point.x},${point.y}`).join(" ")} />
+          {boardState.lines.map((line) => (
+            <polyline className={`pitch-board-line-${line.color}`} key={line.id} points={line.points.map((point) => `${point.x},${point.y}`).join(" ")} />
           ))}
         </svg>
       ) : null}
@@ -10171,7 +10255,7 @@ function MatchPitch({
         const score = scoreForPlayer(player);
         const isDragging = dragState?.sourceId === player.id;
         const isDropTarget = dragState?.targetId === player.id;
-        const boardPosition = boardMode ? boardPlayerPositions[player.id] : undefined;
+        const boardPosition = boardMode ? boardState.playerPositions[player.id] : undefined;
         const displayedX = boardPosition?.x ?? x;
         const displayedY = boardPosition?.y ?? y;
         const tokenStyle = {

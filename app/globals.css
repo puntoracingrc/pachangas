@@ -2273,7 +2273,8 @@ body.player-evaluation-lab-body .legal-footer {
 }
 
 .pitch-zoom-button,
-.pitch-board-button {
+.pitch-board-button,
+.pitch-board-color-button {
   align-items: center;
   background: rgba(255, 253, 247, 0.94);
   border: 1px solid rgba(15, 49, 35, 0.24);
@@ -2290,7 +2291,9 @@ body.player-evaluation-lab-body .legal-footer {
 
 .pitch-zoom-button:hover,
 .pitch-board-button:hover,
-.pitch-board-button.active {
+.pitch-board-button.active,
+.pitch-board-color-button:hover,
+.pitch-board-color-button.active {
   background: #eef7dc;
   border-color: rgba(183, 215, 121, 0.9);
   color: var(--green);
@@ -2301,6 +2304,32 @@ body.player-evaluation-lab-body .legal-footer {
   background: var(--lime);
   border-color: rgba(16, 34, 25, 0.46);
   color: #102219;
+}
+
+.pitch-board-color-button {
+  background: rgba(8, 16, 14, 0.78);
+}
+
+.pitch-board-color-button span {
+  border-radius: 999px;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.42);
+  display: block;
+  height: clamp(17px, 4.8cqw, 24px);
+  width: clamp(17px, 4.8cqw, 24px);
+}
+
+.pitch-board-color-button.team-a span {
+  background: var(--team-a);
+}
+
+.pitch-board-color-button.team-b span {
+  background: var(--team-b);
+}
+
+.pitch-board-color-button.active {
+  box-shadow:
+    0 8px 18px rgba(15, 23, 20, 0.18),
+    0 0 0 2px rgba(245, 242, 232, 0.8);
 }
 
 .pitch-zoom-button svg,
@@ -4329,24 +4358,35 @@ select:disabled {
 }
 
 .pitch-board-lines {
+  display: block;
+  height: 100%;
   inset: 0;
   overflow: visible;
   pointer-events: none;
   position: absolute;
+  width: 100%;
   z-index: 9;
 }
 
 .pitch-board-lines polyline {
   fill: none;
-  stroke: rgba(245, 242, 232, 0.92);
   stroke-linecap: round;
   stroke-linejoin: round;
-  stroke-width: 1.15;
+  stroke-width: 4.6;
   vector-effect: non-scaling-stroke;
   filter: drop-shadow(0 1px 2px rgba(4, 10, 8, 0.34));
 }
 
-.pitch-board-hide-players .pitch-player-card {
+.pitch-board-line-team-a {
+  stroke: var(--team-a);
+}
+
+.pitch-board-line-team-b {
+  stroke: var(--team-b);
+}
+
+.pitch-board-hide-players .pitch-player-card,
+.pitch-board-hide-players .empty-token {
   opacity: 0;
   pointer-events: none;
 }
