@@ -467,6 +467,9 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /rankingBadgeText/);
   assert.match(page, /teamPhoto\?: string/);
   assert.match(page, /matchPhotoDataUrl/);
+  assert.match(page, /matchPhotoPreview/);
+  assert.match(page, /team-photo-preview-button/);
+  assert.match(page, /match-photo-preview-backdrop/);
   assert.match(page, /canUploadTeamPhoto/);
   assert.match(page, /Añadir foto del partido/);
   assert.match(page, /Quitar foto/);
@@ -1115,7 +1118,7 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.doesNotMatch(page, /Google Places para ver la previsión/);
   assert.doesNotMatch(page, /<span>Toca<\/span>/);
   assert.match(page, /matchConfigured && !matchFinalized && !lineupClosed \? <small>Cierra la alineación para calcular pago y finalizar/);
-  assert.match(page, /Partido finalizado\. Resultado y goleadores guardados\./);
+  assert.doesNotMatch(page, /Partido finalizado\. Resultado y goleadores guardados\./);
   assert.doesNotMatch(page, /Partido finalizado\. Puedes corregir goleadores y asistencia\./);
   assert.match(page, /disabled=\{!matchConfigured \|\| !lineupClosed \|\| !resultIsReady \|\| !canUseAdminControls\}/);
   assert.match(page, /const matchTimeOptions = Array\.from\(\{ length: 144 \}/);

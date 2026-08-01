@@ -3325,6 +3325,7 @@ export default function Home() {
   const [avatarDrafts, setAvatarDrafts] = useState<Record<string, AvatarDraft>>({});
   const [avatarAdjustingPlayerId, setAvatarAdjustingPlayerId] = useState<string | null>(null);
   const [teamPhotoMessage, setTeamPhotoMessage] = useState("");
+  const [matchPhotoPreview, setMatchPhotoPreview] = useState<{ src: string; title: string } | null>(null);
   const [profileSaveMessage, setProfileSaveMessage] = useState("");
   const [profileSaving, setProfileSaving] = useState(false);
   const [playerAssessment, setPlayerAssessment] = useState<PlayerAssessmentFlow | null>(null);
@@ -3439,6 +3440,17 @@ export default function Home() {
       document.body.classList.remove("mobile-sheet-open");
     };
   }, [mobileAccountOpen]);
+
+  useEffect(() => {
+    if (!matchPhotoPreview) return;
+
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMatchPhotoPreview(null);
+    };
+
+    document.addEventListener("keydown", closeOnEscape);
+    return () => document.removeEventListener("keydown", closeOnEscape);
+  }, [matchPhotoPreview]);
 
   useEffect(() => {
     return () => {
@@ -9028,7 +9040,14 @@ export default function Home() {
                       type="button"
                     >
                       {match.teamPhoto ? (
-                        <span className="history-photo" aria-hidden="true">
+                        <span
+                          className="history-photo"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            setMatchPhotoPreview({ src: match.teamPhoto!, title: match.title });
+                          }}
+                          title={`Ver foto de ${match.title}`}
+                        >
                           <img src={match.teamPhoto} alt="" />
                         </span>
                       ) : null}
@@ -9609,31 +9628,41 @@ export default function Home() {
             </div>
             <div className={activeMatch.teamPhoto ? "team-photo-card has-photo" : "team-photo-card"}>
               {activeMatch.teamPhoto ? (
-                <img src={activeMatch.teamPhoto} alt={`Foto del partido ${activeMatch.title}`} />
+                <button
+                  className="team-photo-preview-button"
+                  type="button"
+                  onClick={() => setMatchPhotoPreview({ src: activeMatch.teamPhoto!, title: activeMatch.title })}
+                  aria-label={`Ver foto del partido ${activeMatch.title}`}
+                >
+                  <img src={activeMatch.teamPhoto} alt={`Foto del partido ${activeMatch.title}`} />
+                  <span>Ver foto</span>
+                </button>
               ) : (
                 <span className="team-photo-empty">+</span>
               )}
-              <div className="team-photo-actions">
-                <label className="team-photo-button">
-                  {activeMatch.teamPhoto ? "Cambiar foto del partido" : "Añadir foto del partido"}
-                  <input
-                    accept="image/*"
-                    capture="environment"
-                    disabled={!canUploadTeamPhoto}
-                    onChange={(event) => {
-                      void uploadTeamPhoto(event.target.files?.[0]);
-                      event.currentTarget.value = "";
-                    }}
-                    type="file"
-                  />
-                </label>
-                {canUseAdminControls && activeMatch.teamPhoto ? (
-                  <button className="team-photo-remove" type="button" onClick={removeTeamPhoto}>
-                    Quitar foto
-                  </button>
-                ) : null}
-              </div>
-              {teamPhotoMessage ? <small className="team-photo-message">{teamPhotoMessage}</small> : null}
+              {!matchFinalized ? (
+                <div className="team-photo-actions">
+                  <label className="team-photo-button">
+                    {activeMatch.teamPhoto ? "Cambiar foto del partido" : "Añadir foto del partido"}
+                    <input
+                      accept="image/*"
+                      capture="environment"
+                      disabled={!canUploadTeamPhoto}
+                      onChange={(event) => {
+                        void uploadTeamPhoto(event.target.files?.[0]);
+                        event.currentTarget.value = "";
+                      }}
+                      type="file"
+                    />
+                  </label>
+                  {canUseAdminControls && activeMatch.teamPhoto ? (
+                    <button className="team-photo-remove" type="button" onClick={removeTeamPhoto}>
+                      Quitar foto
+                    </button>
+                  ) : null}
+                </div>
+              ) : null}
+              {!matchFinalized && teamPhotoMessage ? <small className="team-photo-message">{teamPhotoMessage}</small> : null}
             </div>
             <div className="scorers-box">
               <strong>Goles</strong>
@@ -9661,13 +9690,31 @@ export default function Home() {
               ) : null}
             </div>
             {matchFinalized ? (
-              <small className="result-locked-note">Partido finalizado. Resultado y goleadores guardados.</small>
+              null
             ) : (
               <button disabled={!matchConfigured || !lineupClosed || !resultIsReady || !canUseAdminControls} onClick={() => void finalizeMatch()}>Finalizar partido</button>
             )}
           </div>
         </aside>
       </section>
+
+      {matchPhotoPreview ? (
+        <div
+          className="match-photo-preview-backdrop"
+          role="presentation"
+          onMouseDown={(event) => {
+            if (event.currentTarget === event.target) setMatchPhotoPreview(null);
+          }}
+        >
+          <section className="match-photo-preview-dialog" role="dialog" aria-modal="true" aria-label={`Foto del partido ${matchPhotoPreview.title}`}>
+            <div className="match-photo-preview-title">
+              <strong>{matchPhotoPreview.title}</strong>
+              <button type="button" onClick={() => setMatchPhotoPreview(null)}>Cerrar</button>
+            </div>
+            <img src={matchPhotoPreview.src} alt={`Foto del partido ${matchPhotoPreview.title}`} />
+          </section>
+        </div>
+      ) : null}
 
       {pitchZoomOpen ? (
         <div
