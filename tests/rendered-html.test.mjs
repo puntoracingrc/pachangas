@@ -228,7 +228,7 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /setActiveMatchManagerPane\(pane\)/);
   assert.match(page, /className="lineup-side-tools"/);
   assert.match(page, /Herramientas/);
-  assert.match(page, /className="lineup-side-balance"/);
+  assert.doesNotMatch(page, /className="lineup-side-balance"/);
   assert.match(page, /className="lineup-side-actions"/);
   assert.match(page, /<button type="button" onClick=\{applyRandomTeams\} disabled=\{!canEditLineup\}>Aleatorio<\/button>/);
   assert.match(page, /<button type="button" onClick=\{applyBalancedTeams\} disabled=\{!canEditLineup\}>Equilibrado<\/button>/);
@@ -447,7 +447,7 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(globalsCss, /\.match-manager-subnav/);
   assert.match(globalsCss, /\.lineup-side-tools/);
   assert.match(globalsCss, /\.lineup-side-tools-kicker/);
-  assert.match(globalsCss, /\.lineup-side-balance/);
+  assert.doesNotMatch(globalsCss, /\.lineup-side-balance/);
   assert.match(globalsCss, /\.lineup-side-actions button/);
   assert.match(globalsCss, /\.lineup-side-state\.closed/);
   assert.match(globalsCss, /data-match-manager-pane="proximo"/);
@@ -581,6 +581,10 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /pitchPreviewPlayer/);
   assert.match(page, /Ver campo en grande/);
   assert.match(page, /match-pitch-zoomed/);
+  assert.match(page, /type TeamBalanceSummary = ReturnType<typeof teamBalanceSummary>/);
+  assert.match(page, /balanceSummary=\{balanceSummary\}/);
+  assert.match(page, /className="pitch-balance-hud"/);
+  assert.match(page, /aria-label=\{`Equilibrio de equipos:/);
   assert.match(page, /const pitchRef = useRef<HTMLDivElement \| null>\(null\)/);
   assert.match(page, /function nearestPitchDropTarget/);
   assert.match(page, /const teamATokens = placeTeam\(teamA, kind, isLandscapePitch \? "left" : "bottom"/);
@@ -590,6 +594,8 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.doesNotMatch(page, /onMouseDown=\{\(event\) => \{\s*if \(event\.currentTarget === event\.target\) setPitchZoomOpen\(false\);/);
   assert.doesNotMatch(page, /onPlayerClick=\{\(playerId\) => \{[\s\S]{0,120}setPitchZoomOpen\(false\);[\s\S]{0,120}setPitchPreviewPlayerId\(playerId\);/);
   assert.match(globalsCss, /\.pitch-zoom-button/);
+  assert.match(globalsCss, /\.pitch-balance-hud/);
+  assert.match(globalsCss, /\.pitch-modal-fullscreen \.pitch-balance-hud/);
   assert.match(globalsCss, /\.pitch-modal-backdrop/);
   assert.match(page, /saveSelectedPlayerProfile/);
   assert.match(page, /profileSaving/);

@@ -4250,6 +4250,60 @@ select:disabled {
   right: 0;
 }
 
+.pitch-balance-hud {
+  background:
+    linear-gradient(180deg, rgba(13, 24, 20, 0.88), rgba(13, 24, 20, 0.68)),
+    rgba(13, 24, 20, 0.82);
+  border: 1px solid rgba(245, 242, 232, 0.22);
+  border-radius: clamp(6px, 1.4cqw, 8px);
+  bottom: clamp(7px, 1.7cqw, 12px);
+  box-shadow: 0 10px 24px rgba(4, 10, 8, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  color: #f5f2e8;
+  display: grid;
+  gap: clamp(3px, 0.8cqw, 6px);
+  left: clamp(7px, 1.7cqw, 12px);
+  max-width: min(42%, 190px);
+  min-width: clamp(88px, 17cqw, 128px);
+  padding: clamp(7px, 1.5cqw, 10px);
+  pointer-events: none;
+  position: absolute;
+  text-transform: uppercase;
+  z-index: 5;
+}
+
+.pitch-balance-hud span,
+.pitch-balance-hud small {
+  color: rgba(245, 242, 232, 0.68);
+  font-size: clamp(7px, 1.5cqw, 10px);
+  font-weight: 950;
+  line-height: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pitch-balance-hud strong {
+  color: var(--lime);
+  font-size: clamp(18px, 4.8cqw, 32px);
+  line-height: 0.95;
+}
+
+.pitch-balance-hud i {
+  background: rgba(245, 242, 232, 0.18);
+  border-radius: 999px;
+  display: block;
+  height: clamp(5px, 1.2cqw, 8px);
+  overflow: hidden;
+}
+
+.pitch-balance-hud b {
+  background: linear-gradient(90deg, var(--team-a), var(--team-b));
+  border-radius: inherit;
+  display: block;
+  height: 100%;
+  min-width: 4px;
+}
+
 .midline {
   background: rgba(255, 255, 255, 0.72);
   height: 2px;
@@ -4417,6 +4471,11 @@ select:disabled {
   max-height: none !important;
   max-width: none !important;
   width: 100% !important;
+}
+
+.pitch-modal-fullscreen .pitch-balance-hud {
+  bottom: max(10px, env(safe-area-inset-bottom));
+  left: max(10px, env(safe-area-inset-left));
 }
 
 .pitch-modal-title {
@@ -10642,7 +10701,6 @@ select:disabled {
   }
 
   main[data-mobile-tab="partido"] .lineup-side-state,
-  main[data-mobile-tab="partido"] .lineup-side-balance,
   main[data-mobile-tab="partido"] .lineup-side-actions button {
     border-radius: 6px;
     font-size: 10px;
@@ -10663,49 +10721,6 @@ select:disabled {
     background: rgba(250, 204, 21, 0.14);
     border-color: rgba(250, 204, 21, 0.34);
     color: #fff0bf;
-  }
-
-  main[data-mobile-tab="partido"] .lineup-side-balance {
-    background: rgba(245, 242, 232, 0.065);
-    border: 1px solid rgba(245, 242, 232, 0.1);
-    color: #f5f2e8;
-    display: grid;
-    gap: 5px;
-    padding: 7px;
-  }
-
-  main[data-mobile-tab="partido"] .lineup-side-balance span,
-  main[data-mobile-tab="partido"] .lineup-side-balance small {
-    color: #9fb1a7;
-    font-size: 8px;
-    font-weight: 950;
-    line-height: 1.1;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    text-transform: uppercase;
-    white-space: nowrap;
-  }
-
-  main[data-mobile-tab="partido"] .lineup-side-balance strong {
-    color: var(--lime);
-    font-size: 18px;
-    line-height: 1;
-  }
-
-  main[data-mobile-tab="partido"] .lineup-side-balance i {
-    background: rgba(245, 242, 232, 0.14);
-    border-radius: 999px;
-    display: block;
-    height: 6px;
-    overflow: hidden;
-  }
-
-  main[data-mobile-tab="partido"] .lineup-side-balance b {
-    background: linear-gradient(90deg, var(--team-a), var(--team-b));
-    border-radius: inherit;
-    display: block;
-    height: 100%;
-    min-width: 4px;
   }
 
   main[data-mobile-tab="partido"] .lineup-side-actions {
