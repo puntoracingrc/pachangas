@@ -489,6 +489,8 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(globalsCss, /@container \(max-width: 360px\)/);
   assert.match(globalsCss, /@media \(orientation: landscape\) and \(max-height: 560px\) and \(max-width: 740px\)/);
   assert.match(globalsCss, /touch-action:\s*manipulation/);
+  assert.match(globalsCss, /main\[data-mobile-tab\][\s\S]*repeating-linear-gradient\(90deg,\s*rgba\(91,\s*197,\s*127,\s*0\.42\)/);
+  assert.match(globalsCss, /main\[data-mobile-tab\] \.panel,[\s\S]*backdrop-filter:\s*blur\(14px\) saturate\(1\.05\)/);
   assert.match(globalsCss, /\.match-manager-subnav/);
   assert.match(globalsCss, /\.lineup-side-tools/);
   assert.match(globalsCss, /\.lineup-side-tools-kicker/);
