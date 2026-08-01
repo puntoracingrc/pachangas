@@ -552,6 +552,7 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(globalsCss, /\.mobile-account-backdrop/);
   assert.match(globalsCss, /\.mobile-account-header/);
   assert.match(globalsCss, /\.player-actions \.team-move-label/);
+  assert.match(page, /Valoraciones/);
   assert.match(globalsCss, /\.status-confirm-backdrop/);
   assert.match(globalsCss, /\.status-confirm-dialog/);
   assert.match(globalsCss, /overflow-x:\s*hidden/);
@@ -703,6 +704,15 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(globalsCss, /\.empty-token::after/);
   assert.match(globalsCss, /\.payer-badge/);
   assert.match(globalsCss, /linear-gradient\(145deg, #fde68a 0%, #f59e0b 100%\)/);
+  assert.match(page, /payerId === player\.id \? "payer-card" : ""/);
+  assert.match(page, /playerRatingWindow\.canRate \? "rating-open-card" : ""/);
+  assert.match(page, /playerRatingWindow\.canRate \? "Valorar" : "Valoraciones"/);
+  assert.match(page, /const openCardProfile = \(event: ReactMouseEvent<HTMLElement>\)/);
+  assert.match(page, /event\.target\.closest\("button,a,input,select,textarea,\[role='menu'\]"\)/);
+  assert.match(globalsCss, /\.player-card\.payer-card/);
+  assert.match(globalsCss, /\.player-card\.rating-open-card/);
+  assert.match(globalsCss, /data-match-manager-pane="proximo"[\s\S]*\.rating-badge/);
+  assert.match(globalsCss, /data-match-manager-pane="proximo"[\s\S]*\.payer-badge/);
   assert.match(globalsCss, /\.draggable-avatar/);
   assert.match(globalsCss, /\.avatar-prompt-help/);
   assert.match(globalsCss, /\.avatar-prompt-info/);

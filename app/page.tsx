@@ -7085,9 +7085,13 @@ export default function Home() {
         };
       });
     };
+    const openCardProfile = (event: ReactMouseEvent<HTMLElement>) => {
+      if (event.target instanceof HTMLElement && event.target.closest("button,a,input,select,textarea,[role='menu']")) return;
+      openPlayerProfile(player.id);
+    };
 
     return (
-      <article className={`player-card ${status ? `status-${status}` : "status-sin"} ${teamClass} ${isReserve ? "reserve-card" : ""} ${isWaiting ? "waiting-card" : ""} ${player.inactive ? "inactive-card" : ""} ${playerPosition(player) === "Porteria" ? "goalkeeper-card" : ""}`} key={player.id}>
+      <article className={`player-card ${status ? `status-${status}` : "status-sin"} ${teamClass} ${isReserve ? "reserve-card" : ""} ${isWaiting ? "waiting-card" : ""} ${player.inactive ? "inactive-card" : ""} ${payerId === player.id ? "payer-card" : ""} ${playerRatingWindow.canRate ? "rating-open-card" : ""} ${playerPosition(player) === "Porteria" ? "goalkeeper-card" : ""}`} key={player.id} onClick={openCardProfile}>
         <div>
           <button className="player-name" onClick={() => openPlayerProfile(player.id)}>
             {player.avatar ? (
@@ -7187,6 +7191,18 @@ export default function Home() {
             <>
               <button className="player-action-menu-backdrop" type="button" aria-label="Cerrar acciones" onClick={() => setPlayerActionMenu(null)} />
               <div className="player-action-menu-panel" role="menu" style={{ left: playerActionMenu.x, top: playerActionMenu.y }}>
+                {!player.inactive ? (
+                  <button
+                    onClick={() => {
+                      setPlayerActionMenu(null);
+                      openPlayerProfile(player.id);
+                    }}
+                    role="menuitem"
+                    type="button"
+                  >
+                    {playerRatingWindow.canRate ? "Valorar" : "Valoraciones"}
+                  </button>
+                ) : null}
                 <button
                   className={status === "voy" ? "selected" : ""}
                   disabled={!canChangeThisPlayerStatus || Boolean(player.injured || player.inactive)}

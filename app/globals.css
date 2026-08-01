@@ -10501,7 +10501,8 @@ select:disabled {
     gap: 0;
     height: 100%;
     min-height: 0;
-    overflow: auto;
+    overflow-x: hidden;
+    overflow-y: auto;
     padding: 0;
     scrollbar-width: thin;
   }
@@ -10542,10 +10543,35 @@ select:disabled {
     border-left-width: 0;
     border-radius: 0;
     box-shadow: none;
+    cursor: pointer;
     gap: 6px;
-    grid-template-columns: minmax(110px, 1fr) auto minmax(150px, 0.72fr);
+    grid-template-columns: minmax(0, 1fr) auto minmax(76px, auto);
     min-height: auto;
+    min-width: 0;
+    overflow: hidden;
     padding: 6px 8px;
+    position: relative;
+    width: 100%;
+  }
+
+  main[data-mobile-tab="partido"] .player-card.rating-open-card {
+    box-shadow:
+      inset 0 0 0 1px rgba(200, 239, 93, 0.26),
+      inset 3px 0 0 rgba(200, 239, 93, 0.62);
+  }
+
+  main[data-mobile-tab="partido"] .player-card.payer-card {
+    border-left: 3px solid #fbbf24 !important;
+    box-shadow:
+      inset 0 0 0 1px rgba(251, 191, 36, 0.38),
+      inset 7px 0 16px rgba(251, 191, 36, 0.12);
+  }
+
+  main[data-mobile-tab="partido"] .player-card.payer-card.rating-open-card {
+    box-shadow:
+      inset 0 0 0 1px rgba(251, 191, 36, 0.44),
+      inset 7px 0 16px rgba(251, 191, 36, 0.13),
+      inset 0 -2px 0 rgba(200, 239, 93, 0.58);
   }
 
   main[data-mobile-tab="partido"] .player-card > div:first-child {
@@ -10590,6 +10616,11 @@ select:disabled {
     gap: 4px;
   }
 
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="proximo"] .rating-badge,
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="proximo"] .payer-badge {
+    display: none;
+  }
+
   main[data-mobile-tab="partido"] .player-actions {
     align-items: center;
     display: flex !important;
@@ -10597,6 +10628,7 @@ select:disabled {
     justify-content: flex-end;
     gap: 4px;
     min-width: 0;
+    overflow: hidden;
   }
 
   main[data-mobile-tab="partido"] .player-status-chip {
@@ -11333,7 +11365,8 @@ select:disabled {
     height: 100%;
     margin: 0;
     min-height: 0;
-    overflow: auto;
+    overflow-x: hidden;
+    overflow-y: auto;
     scroll-snap-align: start;
     scrollbar-width: thin;
   }
@@ -11384,6 +11417,12 @@ select:disabled {
 
   main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="proximo"] .next-match-status-groups {
     gap: 7px;
+  }
+
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="proximo"] .next-match-roster-rail > .team-player-column,
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="proximo"] .next-match-roster-rail > .status-roster-column {
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
   }
 
   main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="proximo"] .next-match-status-group {
@@ -12263,7 +12302,7 @@ select:disabled {
   }
 
   main[data-mobile-tab="partido"] .player-card {
-    grid-template-columns: minmax(96px, 1fr) auto minmax(116px, 0.68fr);
+    grid-template-columns: minmax(0, 1fr) auto minmax(68px, auto);
     padding: 5px 6px;
   }
 
