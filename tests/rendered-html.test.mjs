@@ -574,7 +574,14 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /showMatchRoster/);
   assert.match(page, /Inscripción pendiente/);
   assert.match(page, /Se abrirá cuando pase/);
-  assert.match(page, /showPlayerSwitcher\s*=\s*Boolean\(canUseAdminControls\s*&&\s*selectedPlayer\s*&&\s*!selectedPlayerIsOwn/);
+  assert.match(page, /type PlayerProfileMode = "edit" \| "viewer"/);
+  assert.match(page, /const \[playerProfileMode, setPlayerProfileMode\] = useState<PlayerProfileMode>\("edit"\)/);
+  assert.match(page, /function openPlayerProfile\(playerId: string\)[\s\S]*setPlayerProfileMode\("viewer"\)/);
+  assert.match(page, /async function openOwnPlayerProfile\(\)[\s\S]*setPlayerProfileMode\("edit"\)/);
+  assert.match(page, /showPlayerSwitcher\s*=\s*Boolean\(playerProfileMode === "edit" && canUseAdminControls\s*&&\s*selectedPlayer\s*&&\s*!selectedPlayerIsOwn/);
+  assert.match(page, /player-profile-viewer/);
+  assert.match(page, /player-public-stats/);
+  assert.match(globalsCss, /\.player-profile-viewer/);
   assert.match(page, /<\/div>\s*\{showMarketScoutCard \? \(\s*<div className=\{\`player-card market-scout-card market-scout-card-compact/);
   assert.match(page, /statusConfirmation/);
   assert.match(page, /status-confirm-dialog/);

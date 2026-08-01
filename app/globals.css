@@ -7317,6 +7317,59 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
   text-transform: none;
 }
 
+.player-profile-viewer {
+  align-items: start;
+  display: grid;
+  gap: 14px;
+  grid-template-columns: minmax(154px, 240px) minmax(0, 1fr);
+  min-height: 0;
+}
+
+.player-profile-viewer-card {
+  align-content: start;
+  display: grid;
+  gap: 10px;
+  justify-items: center;
+  min-width: 0;
+}
+
+.player-profile-viewer-details {
+  align-content: start;
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+
+.player-public-stats {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.player-public-stats div {
+  background: #f8f6ef;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  padding: 9px;
+}
+
+.player-public-stats span {
+  color: var(--ink-soft);
+  font-size: 11px;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.player-public-stats strong {
+  color: var(--foreground);
+  font-size: 20px;
+  font-weight: 950;
+  line-height: 1;
+}
+
 .toggle-field input {
   accent-color: var(--green);
   min-height: auto;
@@ -9316,6 +9369,7 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
 :root[data-theme="dark"] .ranking-stat-grid span,
 :root[data-theme="dark"] .form-state-card,
 :root[data-theme="dark"] .facet-field,
+:root[data-theme="dark"] .player-public-stats div,
 :root[data-theme="dark"] .rating-line-chart,
 :root[data-theme="dark"] .toggle-field,
 :root[data-theme="dark"] .market-modality-options label,
@@ -9334,6 +9388,10 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
 :root[data-theme="dark"] .result-box {
   background: #18251f;
   border-color: var(--line);
+  color: var(--foreground);
+}
+
+:root[data-theme="dark"] .player-public-stats strong {
   color: var(--foreground);
 }
 
@@ -9491,6 +9549,7 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
   :root[data-theme="light"] .ranking-stat-grid span,
   :root[data-theme="light"] .form-state-card,
   :root[data-theme="light"] .facet-field,
+  :root[data-theme="light"] .player-public-stats div,
   :root[data-theme="light"] .rating-line-chart,
   :root[data-theme="light"] .toggle-field,
   :root[data-theme="light"] .market-modality-options label,
@@ -11900,6 +11959,10 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
     padding: 8px;
   }
 
+  main[data-mobile-tab="perfil"] .player-profile.profile-viewer {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
   main[data-mobile-tab="perfil"] .player-profile > .panel-title {
     grid-column: 1 / -1;
     margin: 0;
@@ -11925,6 +11988,62 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
     grid-template-columns: minmax(104px, 0.44fr) minmax(0, 0.56fr);
     min-height: 0;
     overflow: hidden;
+  }
+
+  main[data-mobile-tab="perfil"] .player-profile-viewer {
+    display: grid;
+    gap: 8px;
+    grid-column: 1 / -1;
+    grid-row: 2;
+    grid-template-columns: minmax(116px, 0.34fr) minmax(0, 1fr);
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  main[data-mobile-tab="perfil"] .player-profile-viewer-card {
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  main[data-mobile-tab="perfil"] .player-profile-viewer-details {
+    min-height: 0;
+    overflow: auto;
+    padding-right: 2px;
+    scrollbar-width: thin;
+  }
+
+  main[data-mobile-tab="perfil"] .player-profile-viewer .rating-box {
+    gap: 7px;
+    padding: 8px;
+  }
+
+  main[data-mobile-tab="perfil"] .player-profile-viewer .fifa-player-card {
+    max-width: 126px;
+    min-height: 174px;
+  }
+
+  main[data-mobile-tab="perfil"] .player-public-stats {
+    gap: 5px;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  main[data-mobile-tab="perfil"] .player-public-stats div {
+    background: rgba(245, 242, 232, 0.07);
+    border-color: rgba(255, 255, 255, 0.12);
+    gap: 2px;
+    min-height: 40px;
+    padding: 6px;
+  }
+
+  main[data-mobile-tab="perfil"] .player-public-stats span {
+    color: rgba(245, 242, 232, 0.68);
+    font-size: 8px;
+    line-height: 1;
+  }
+
+  main[data-mobile-tab="perfil"] .player-public-stats strong {
+    color: #f5f2e8;
+    font-size: 15px;
   }
 
   main[data-mobile-tab="perfil"] .profile-top > .fifa-card-shell {
