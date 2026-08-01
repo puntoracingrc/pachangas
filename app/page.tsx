@@ -79,6 +79,13 @@ type MobileSectionTabId = "inicio" | "partido";
 type ProfilePane = "ficha" | "ranking";
 type PlayerProfileMode = "edit" | "viewer";
 type MatchManagerPane = "proximo" | "alineacion" | "resultado" | "admin";
+type ProfileReturnTarget = {
+  matchPane: MatchManagerPane;
+  mobileTab: MobileAppTab;
+  profilePane: ProfilePane;
+  scrollY: number | null;
+  teamGalleryOpen: boolean;
+};
 
 const matchManagerPaneLabels: Record<MatchManagerPane, string> = {
   proximo: "Próximo",
@@ -3366,6 +3373,7 @@ export default function Home() {
   const marketZoneInputRef = useRef<HTMLInputElement>(null);
   const playerProfileRef = useRef<HTMLDivElement>(null);
   const teamGalleryReturnScrollYRef = useRef<number | null>(null);
+  const profileReturnTargetRef = useRef<ProfileReturnTarget | null>(null);
   const avatarDragRef = useRef<{ playerId: string; startX: number; startY: number; startOffsetX: number; startOffsetY: number } | null>(null);
   const rosterRailDragRef = useRef<{ dragged: boolean; pointerId: number; scrollLeft: number; startX: number; startY: number } | null>(null);
   const suppressRosterRailClickRef = useRef(false);
@@ -4463,7 +4471,18 @@ export default function Home() {
     setAvatarDragging(false);
   }
 
+  function rememberPlayerProfileReturnTarget(scrollY: number | null = null) {
+    profileReturnTargetRef.current = {
+      matchPane: activeMatchManagerPane,
+      mobileTab: activeMobileTab,
+      profilePane,
+      scrollY: scrollY ?? (activeMobileTab === "perfil" ? null : window.scrollY),
+      teamGalleryOpen,
+    };
+  }
+
   function openPlayerProfile(playerId: string) {
+    rememberPlayerProfileReturnTarget();
     teamGalleryReturnScrollYRef.current = null;
     setMobileAccountOpen(false);
     setPlayerProfileMode("viewer");
@@ -4493,7 +4512,9 @@ export default function Home() {
   }
 
   function openTeamGalleryPlayerProfile(playerId: string) {
-    teamGalleryReturnScrollYRef.current = window.scrollY;
+    const returnScrollY = window.scrollY;
+    teamGalleryReturnScrollYRef.current = returnScrollY;
+    rememberPlayerProfileReturnTarget(returnScrollY);
     setMobileAccountOpen(false);
     setPlayerProfileMode("viewer");
     setProfilePane("ficha");
@@ -4514,22 +4535,37 @@ export default function Home() {
     }, 0);
   }
 
-  function closePlayerProfile() {
+  function returnFromPlayerProfile() {
     if (selectedPlayerId) {
       clearAvatarDraft(selectedPlayerId);
       setAvatarMessage("");
     }
     setSelectedPlayerId(null);
     setPlayerProfileMode("edit");
-    const returnScrollY = teamGalleryReturnScrollYRef.current;
+    const returnTarget = profileReturnTargetRef.current;
+    const nextTab = returnTarget && returnTarget.mobileTab !== "perfil" ? returnTarget.mobileTab : "inicio";
+    const returnScrollY = returnTarget?.scrollY ?? teamGalleryReturnScrollYRef.current;
+    profileReturnTargetRef.current = null;
     teamGalleryReturnScrollYRef.current = null;
-    if (returnScrollY === null) return;
+    setActiveMatchManagerPane(returnTarget?.matchPane ?? activeMatchManagerPane);
+    setProfilePane(returnTarget?.profilePane ?? (nextTab === "equipo" ? "ranking" : "ficha"));
+    setTeamGalleryOpen(returnTarget?.teamGalleryOpen ?? false);
+    lockMobileNavigationTab(nextTab);
+    setActiveMobileTab(nextTab);
 
     window.setTimeout(() => {
       window.requestAnimationFrame(() => {
-        window.scrollTo({ behavior: "smooth", top: returnScrollY });
+        if (returnScrollY !== null && returnScrollY !== undefined) {
+          window.scrollTo({ behavior: "smooth", top: returnScrollY });
+          return;
+        }
+        document.getElementById(nextTab)?.scrollIntoView({ behavior: "smooth", block: "start" });
       });
     }, 0);
+  }
+
+  function closePlayerProfile() {
+    returnFromPlayerProfile();
   }
 
   function scrollToPanel(ref: { current: HTMLElement | null }) {
@@ -4594,6 +4630,7 @@ export default function Home() {
 
     if (tabId === "perfil") {
       if (managerLandscape) {
+        rememberPlayerProfileReturnTarget();
         setMobileAccountOpen(false);
         setPlayerProfileMode("edit");
         setProfilePane("ficha");
@@ -6685,6 +6722,7 @@ export default function Home() {
 
   async function openOwnPlayerProfile() {
     if (ownPlayer) {
+      rememberPlayerProfileReturnTarget();
       teamGalleryReturnScrollYRef.current = null;
       setMobileAccountOpen(false);
       setPlayerProfileMode("edit");
@@ -9797,8 +9835,8 @@ export default function Home() {
                 {selectedPlayerIsOwn ? <small className="own-label">Tu ficha universal</small> : null}
                 {selectedPlayer.inactive ? <small className="inactive-label">Ya no está</small> : null}
                 {isDemoMode ? (
-                  <button className="profile-demo-create-button" type="button" onClick={() => showQuickForm("team")}>
-                    Crear mi grupo limpio
+                  <button className="profile-return-button" type="button" onClick={returnFromPlayerProfile}>
+                    Volver
                   </button>
                 ) : null}
                 {playerProfileMode === "edit" && canUseAdminControls && !selectedPlayer.inactive ? (
