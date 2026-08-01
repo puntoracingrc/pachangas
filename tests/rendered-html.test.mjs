@@ -548,6 +548,8 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(globalsCss, /main\[data-mobile-tab="inicio"\] > \.app-shell\s*\{[\s\S]*grid-column:\s*1/);
   assert.match(globalsCss, /\.profile-return-button/);
   assert.doesNotMatch(globalsCss, /\.profile-demo-create-button/);
+  assert.match(globalsCss, /main\[data-mobile-tab="perfil"\] \.avatar-actions\s*\{[\s\S]*grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\)/);
+  assert.match(globalsCss, /main\[data-mobile-tab="perfil"\] \.avatar-actions button\.avatar-action-button,[\s\S]*main\[data-mobile-tab="perfil"\] \.theme-preference-panel\s*\{[\s\S]*display:\s*none/);
   assert.match(globalsCss, /\.match-manager-subnav/);
   assert.match(globalsCss, /main\[data-mobile-tab="partido"\] > \.app-shell > \.match-manager-subnav\s*\{[\s\S]*rgba\(8,\s*16,\s*22,\s*0\.56\)/);
   assert.match(globalsCss, /main\[data-mobile-tab="partido"\] > \.app-shell > \.match-manager-subnav\s*\{[\s\S]*backdrop-filter:\s*blur\(14px\) saturate\(1\.08\)/);

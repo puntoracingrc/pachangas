@@ -12716,8 +12716,13 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
 
   main[data-mobile-tab="perfil"] .avatar-actions {
     gap: 4px;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     width: 100%;
+  }
+
+  main[data-mobile-tab="perfil"] .avatar-actions button.avatar-action-button,
+  main[data-mobile-tab="perfil"] .theme-preference-panel {
+    display: none;
   }
 
   main[data-mobile-tab="perfil"] .avatar-action-button,
