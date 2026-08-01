@@ -4662,6 +4662,14 @@ export default function Home() {
       return;
     }
 
+    if (tabId === "partido") {
+      const nextOpenMatch = openMatches[0];
+      if (nextOpenMatch) setActiveMatchId(nextOpenMatch.id);
+      setActiveMatchManagerPane("proximo");
+      navigateMobileTab("partido");
+      return;
+    }
+
     const managerLandscape = isMobileManagerLandscape();
 
     if (tabId === "equipo") {
