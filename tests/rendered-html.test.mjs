@@ -229,7 +229,12 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /activeMatchManagerPane/);
   assert.match(page, /data-match-manager-pane=\{selectedMatchManagerPane\}/);
   assert.match(page, /className="match-manager-subnav"/);
+  assert.match(page, /const matchManagerPaneLabel = \(pane: MatchManagerPane\) => \(pane === "proximo" && matchFinalized \? "Histórico" : matchManagerPaneLabels\[pane\]\)/);
+  assert.match(page, /className=\{matchFinalized \? "match-active-context finalized" : "match-active-context"\}/);
+  assert.match(page, /<span>\{matchContextKind\}<\/span>/);
+  assert.match(page, /<b>\{matchContextStatus\}<\/b>/);
   assert.match(page, /setActiveMatchManagerPane\(pane\)/);
+  assert.match(page, /<span>\{matchManagerPaneLabel\(pane\)\}<\/span>/);
   assert.match(page, /className="lineup-side-tools"/);
   assert.match(page, /Herramientas/);
   assert.doesNotMatch(page, /className="lineup-side-balance"/);
@@ -510,6 +515,8 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(globalsCss, /main\[data-mobile-tab="inicio"\] > \.app-shell\s*\{[\s\S]*grid-column:\s*1/);
   assert.match(globalsCss, /\.profile-demo-create-button/);
   assert.match(globalsCss, /\.match-manager-subnav/);
+  assert.match(globalsCss, /\.match-active-context/);
+  assert.match(globalsCss, /main\[data-mobile-tab="partido"\] \.match-active-context\s*\{[\s\S]*grid-column:\s*2[\s\S]*grid-row:\s*1/);
   assert.match(globalsCss, /\.lineup-side-tools/);
   assert.match(globalsCss, /\.lineup-side-tools-kicker/);
   assert.doesNotMatch(globalsCss, /\.lineup-side-balance/);
@@ -1065,7 +1072,9 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /Elige un campo con ubicación para ver la previsión/);
   assert.doesNotMatch(page, /Google Places para ver la previsión/);
   assert.doesNotMatch(page, /<span>Toca<\/span>/);
-  assert.match(page, /Cierra la alineación para calcular pago y finalizar/);
+  assert.match(page, /matchConfigured && !matchFinalized && !lineupClosed \? <small>Cierra la alineación para calcular pago y finalizar/);
+  assert.match(page, /Partido finalizado\. Resultado y goleadores guardados\./);
+  assert.doesNotMatch(page, /Partido finalizado\. Puedes corregir goleadores y asistencia\./);
   assert.match(page, /disabled=\{!matchConfigured \|\| !lineupClosed \|\| !resultIsReady \|\| !canUseAdminControls\}/);
   assert.match(page, /const matchTimeOptions = Array\.from\(\{ length: 144 \}/);
   assert.match(page, /type="date"/);

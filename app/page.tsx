@@ -4163,6 +4163,8 @@ export default function Home() {
   const showMatchRoster = matchConfigured && registrationOpen;
   const pendingOpenMatchRequests = openMatchRequests.filter((request) => request.status === "pending");
   const paymentReady = matchConfigured && (lineupClosed || matchFinalized);
+  const matchContextStatus = matchFinalized ? "Finalizado" : !matchConfigured ? "Borrador" : lineupClosed ? "Alineación cerrada" : "Alineación abierta";
+  const matchContextKind = matchFinalized ? "Histórico" : "Partido activo";
   const payingParticipantIds = paymentReady ? payingIds : [];
   const sharePerPlayer = payingParticipantIds.length > 0 ? fieldCost / payingParticipantIds.length : 0;
   const subscriptionContributionAmount = siteSettings.subscriptionContributionPeriod === "month"
@@ -5343,6 +5345,7 @@ export default function Home() {
     ? ["proximo", "alineacion", "resultado", "admin"]
     : ["proximo", "alineacion", "resultado"];
   const selectedMatchManagerPane = matchManagerPanes.includes(activeMatchManagerPane) ? activeMatchManagerPane : "proximo";
+  const matchManagerPaneLabel = (pane: MatchManagerPane) => (pane === "proximo" && matchFinalized ? "Histórico" : matchManagerPaneLabels[pane]);
   const canConfigureMatchMarket = canUseAdminControls && showMatchRoster && !lineupClosed && !matchFinalized;
   const showMarketScoutCard = canConfigureMatchMarket && (missing > 0 || Boolean(activeMatch.publicOpen));
   const canCreateTeam = Boolean(supabase && isRegisteredUser);
@@ -8793,7 +8796,7 @@ export default function Home() {
               onClick={() => setActiveMatchManagerPane(pane)}
               type="button"
             >
-              <span>{matchManagerPaneLabels[pane]}</span>
+              <span>{matchManagerPaneLabel(pane)}</span>
             </button>
           ))}
           {selectedMatchManagerPane === "alineacion" ? (
@@ -8811,6 +8814,14 @@ export default function Home() {
             </div>
           ) : null}
         </nav>
+        <div className={matchFinalized ? "match-active-context finalized" : "match-active-context"} aria-label="Partido activo">
+          <span>{matchContextKind}</span>
+          <div>
+            <strong>{activeMatch.title || matchKinds[activeKind].label}</strong>
+            <small>{matchSummaryDate(activeMatch.date)} · {activeMatch.place}</small>
+          </div>
+          <b>{matchContextStatus}</b>
+        </div>
         <aside className="panel match-list" aria-label="Partidos">
           <div className="panel-title">
             <span>Próximos partidos</span>
@@ -9444,7 +9455,7 @@ export default function Home() {
             <div className="scorers-box">
               <strong>Goles</strong>
               {!matchConfigured ? <small>Guarda primero el partido.</small> : null}
-              {matchConfigured && !lineupClosed ? <small>Cierra la alineación para calcular pago y finalizar.</small> : null}
+              {matchConfigured && !matchFinalized && !lineupClosed ? <small>Cierra la alineación para calcular pago y finalizar.</small> : null}
               {matchConfigured && confirmedPlayers.length === 0 ? <small>Marca asistentes para añadir goleadores.</small> : null}
               {confirmedPlayers.length > 0 && !resultIsReady ? <small>Rellena primero el resultado.</small> : null}
               {matchConfigured && confirmedPlayers.length > 0 && resultIsReady ? (
@@ -9467,7 +9478,7 @@ export default function Home() {
               ) : null}
             </div>
             {matchFinalized ? (
-              <small className="result-locked-note">Partido finalizado. Puedes corregir goleadores y asistencia.</small>
+              <small className="result-locked-note">Partido finalizado. Resultado y goleadores guardados.</small>
             ) : (
               <button disabled={!matchConfigured || !lineupClosed || !resultIsReady || !canUseAdminControls} onClick={() => void finalizeMatch()}>Finalizar partido</button>
             )}
