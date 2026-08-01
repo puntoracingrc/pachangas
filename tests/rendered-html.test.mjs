@@ -398,6 +398,10 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /playerWinRate/);
   assert.match(page, /teamBalanceSummary/);
   assert.match(page, /Equilibrio de equipos/);
+  assert.match(page, /leadingTeam/);
+  assert.match(page, /weakerTeam/);
+  assert.match(page, /compactEdge/);
+  assert.match(page, /más fuerte/);
   assert.match(page, /goles\/partido/);
   assert.match(page, /footballSeasonStartMonth/);
   assert.match(page, /parsed\.getMonth\(\) >= footballSeasonStartMonth/);
@@ -552,7 +556,9 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /expandCompactUuid/);
   assert.match(page, /remoteInviteToken/);
   assert.match(page, /showGroupAccessPanel\s*=\s*isRegisteredUser/);
-  assert.match(page, /showTeamAdminPanel\s*=\s*canUseAdminControls/);
+  assert.match(page, /canManageTeam\s*=\s*Boolean\(hasRealTeam\s*&&\s*isRegisteredUser/);
+  assert.match(page, /canUseAdminControls\s*=\s*isDemoMode\s*\|\|\s*canManageTeam/);
+  assert.match(page, /showTeamAdminPanel\s*=\s*canManageTeam/);
   assert.match(page, /showMatchAdminPanel\s*=\s*canUseAdminControls/);
   assert.match(page, /showTeamAdminPanel \? \(/);
   assert.match(page, /showMatchAdminPanel \? \(/);
@@ -568,6 +574,8 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /status-confirm-dialog/);
   assert.match(page, /skipLeaveConfirmation/);
   assert.match(page, /Mantener plaza/);
+  assert.match(page, /Demo interactiva/);
+  assert.match(page, /Demo local: no modifica tu grupo real/);
   assert.match(page, /profile-player-switcher/);
   assert.match(page, /function scrollToPlayerProfile/);
   assert.match(page, /function openTeamGallery/);
@@ -608,6 +616,7 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /balanceSummary=\{balanceSummary\}/);
   assert.match(page, /className="pitch-balance-hud"/);
   assert.match(page, /aria-label=\{`Equilibrio de equipos:/);
+  assert.match(page, /balanceSummary\.compactEdge \? <em>\{balanceSummary\.compactEdge\}<\/em> : null/);
   assert.match(page, /const pitchRef = useRef<HTMLDivElement \| null>\(null\)/);
   assert.match(page, /const pointerAbortRef = useRef<AbortController \| null>\(null\)/);
   assert.match(page, /type PitchPointerState/);

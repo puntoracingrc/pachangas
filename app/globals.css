@@ -4417,19 +4417,21 @@ select:disabled {
 
 .pitch-balance-hud {
   background:
-    linear-gradient(180deg, rgba(13, 24, 20, 0.88), rgba(13, 24, 20, 0.68)),
-    rgba(13, 24, 20, 0.82);
-  border: 1px solid rgba(245, 242, 232, 0.22);
-  border-radius: clamp(6px, 1.4cqw, 8px);
-  bottom: clamp(7px, 1.7cqw, 12px);
-  box-shadow: 0 10px 24px rgba(4, 10, 8, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    linear-gradient(180deg, rgba(13, 24, 20, 0.64), rgba(13, 24, 20, 0.46)),
+    rgba(13, 24, 20, 0.5);
+  backdrop-filter: blur(6px) saturate(1.1);
+  border: 1px solid rgba(245, 242, 232, 0.16);
+  border-radius: clamp(5px, 1.1cqw, 7px);
+  bottom: clamp(6px, 1.4cqw, 10px);
+  box-shadow: 0 8px 18px rgba(4, 10, 8, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.05);
   color: #f5f2e8;
   display: grid;
-  gap: clamp(3px, 0.8cqw, 6px);
-  left: clamp(7px, 1.7cqw, 12px);
-  max-width: min(42%, 190px);
-  min-width: clamp(88px, 17cqw, 128px);
-  padding: clamp(7px, 1.5cqw, 10px);
+  gap: clamp(2px, 0.55cqw, 4px);
+  left: clamp(6px, 1.4cqw, 10px);
+  max-width: min(30%, 136px);
+  min-width: clamp(74px, 12cqw, 104px);
+  opacity: 0.9;
+  padding: clamp(5px, 1cqw, 7px);
   pointer-events: none;
   position: absolute;
   text-transform: uppercase;
@@ -4437,9 +4439,10 @@ select:disabled {
 }
 
 .pitch-balance-hud span,
-.pitch-balance-hud small {
-  color: rgba(245, 242, 232, 0.68);
-  font-size: clamp(7px, 1.5cqw, 10px);
+.pitch-balance-hud small,
+.pitch-balance-hud em {
+  color: rgba(245, 242, 232, 0.7);
+  font-size: clamp(6px, 1.05cqw, 8px);
   font-weight: 950;
   line-height: 1;
   overflow: hidden;
@@ -4447,9 +4450,14 @@ select:disabled {
   white-space: nowrap;
 }
 
+.pitch-balance-hud em {
+  color: rgba(245, 242, 232, 0.84);
+  font-style: normal;
+}
+
 .pitch-balance-hud strong {
   color: var(--lime);
-  font-size: clamp(18px, 4.8cqw, 32px);
+  font-size: clamp(15px, 3.15cqw, 23px);
   line-height: 0.95;
 }
 
@@ -4457,7 +4465,7 @@ select:disabled {
   background: rgba(245, 242, 232, 0.18);
   border-radius: 999px;
   display: block;
-  height: clamp(5px, 1.2cqw, 8px);
+  height: clamp(3px, 0.7cqw, 5px);
   overflow: hidden;
 }
 
@@ -4474,7 +4482,7 @@ select:disabled {
 }
 
 .pitch-board-mode .pitch-balance-hud {
-  opacity: 0.86;
+  opacity: 0.72;
 }
 
 .pitch-board-lines {
@@ -9613,13 +9621,113 @@ select:disabled {
     --lime: #c8ef5d;
     --muted: #8da198;
     --panel: #121d18;
+    position: relative;
+    isolation: isolate;
     height: var(--app-viewport-height);
     overflow: hidden;
     padding-top: var(--game-nav-offset);
     background:
-      linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px) 0 0 / 48px 100%,
-      linear-gradient(135deg, #071116 0%, #11231d 52%, #171224 100%) !important;
+      linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px) 0 0 / 48px 100%,
+      linear-gradient(135deg, #081114 0%, #11251f 46%, #151827 100%) !important;
     color: var(--foreground);
+  }
+
+  main[data-mobile-tab]::before {
+    content: "";
+    position: fixed;
+    z-index: -2;
+    inset: calc(var(--game-nav-offset) * -1) 0 0;
+    background:
+      linear-gradient(115deg, rgba(13, 29, 31, 0.82) 0%, rgba(13, 29, 31, 0.32) 36%, rgba(25, 25, 42, 0.74) 100%),
+      repeating-linear-gradient(90deg, rgba(63, 139, 92, 0.2) 0 72px, rgba(28, 83, 61, 0.2) 72px 144px),
+      linear-gradient(180deg, rgba(239, 246, 255, 0.1) 0%, rgba(14, 36, 33, 0.34) 38%, rgba(3, 10, 12, 0.74) 100%);
+    filter: blur(12px) saturate(1.15);
+    opacity: 0.94;
+    transform: scale(1.03);
+  }
+
+  main[data-mobile-tab]::after {
+    content: "";
+    position: fixed;
+    z-index: -1;
+    inset: calc(var(--game-nav-offset) * -1) 0 0;
+    background:
+      linear-gradient(180deg, rgba(5, 11, 14, 0.42), rgba(5, 11, 14, 0.16) 46%, rgba(5, 11, 14, 0.56)),
+      linear-gradient(90deg, rgba(9, 18, 24, 0.22), rgba(255, 255, 255, 0.04) 50%, rgba(9, 18, 24, 0.32));
+    pointer-events: none;
+  }
+
+  main[data-mobile-tab] > :not(.mobile-app-nav):not(.pitch-modal-backdrop):not(.status-confirm-backdrop):not(.mobile-account-backdrop):not(.mobile-account-sheet) {
+    position: relative;
+    z-index: 1;
+  }
+
+  main[data-mobile-tab] :is(input, select, textarea),
+  main[data-mobile-tab] .history-season-filter select,
+  main[data-mobile-tab] .pachangas-place-autocomplete,
+  main[data-mobile-tab] .theme-preference-options {
+    background: rgba(7, 17, 15, 0.92) !important;
+    border-color: rgba(207, 222, 214, 0.28) !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07);
+    color: #f5f2e8 !important;
+  }
+
+  main[data-mobile-tab] :is(input, select, textarea)::placeholder {
+    color: #b5c5bc !important;
+    opacity: 1;
+  }
+
+  main[data-mobile-tab] :is(input, select, textarea):disabled,
+  main[data-mobile-tab] .history-season-filter select:disabled,
+  main[data-mobile-tab] .reserve-toggle-box:has(input:disabled) {
+    background: rgba(10, 21, 18, 0.86) !important;
+    border-color: rgba(188, 205, 196, 0.2) !important;
+    color: #d7e2dc !important;
+    opacity: 1;
+  }
+
+  main[data-mobile-tab] select option {
+    background: #101915;
+    color: #f5f2e8;
+  }
+
+  main[data-mobile-tab] button:disabled {
+    background: rgba(10, 21, 18, 0.86) !important;
+    border-color: rgba(188, 205, 196, 0.2) !important;
+    box-shadow: none !important;
+    color: #d7e2dc !important;
+    opacity: 1;
+  }
+
+  main[data-mobile-tab="equipo"] .ranking-sort-buttons,
+  main[data-mobile-tab="perfil"] .ranking-sort-buttons {
+    background: rgba(245, 242, 232, 0.07);
+    border-color: rgba(255, 255, 255, 0.16);
+  }
+
+  main[data-mobile-tab="equipo"] .ranking-sort-buttons button,
+  main[data-mobile-tab="perfil"] .ranking-sort-buttons button {
+    color: #c4d3cb;
+  }
+
+  main[data-mobile-tab="equipo"] .ranking-sort-buttons button.selected,
+  main[data-mobile-tab="perfil"] .ranking-sort-buttons button.selected {
+    background: rgba(245, 242, 232, 0.92);
+    color: #132018;
+  }
+
+  main[data-mobile-tab="equipo"] .ranking-stat-grid span,
+  main[data-mobile-tab="perfil"] .ranking-stat-grid span {
+    background: rgba(12, 25, 21, 0.86);
+    border-color: rgba(19, 32, 24, 0.72);
+    color: #f5f2e8;
+  }
+
+  main[data-mobile-tab="equipo"] .ranking-stat-grid b,
+  main[data-mobile-tab="equipo"] .ranking-stat-grid small,
+  main[data-mobile-tab="perfil"] .ranking-stat-grid b,
+  main[data-mobile-tab="perfil"] .ranking-stat-grid small {
+    color: #f5f2e8;
   }
 
   main[data-mobile-tab]:not([data-mobile-tab="inicio"]) > .hero,
@@ -9694,7 +9802,8 @@ select:disabled {
   main[data-mobile-tab="inicio"] .brand-hero-logo,
   main[data-mobile-tab="inicio"] .team-hero-logo {
     max-height: 54px;
-    width: auto;
+    transform: none;
+    width: min(210px, 46vw);
   }
 
   main[data-mobile-tab="inicio"] .hero h1 {
@@ -10855,8 +10964,17 @@ select:disabled {
   }
 
   main[data-mobile-tab="inicio"] .match-item {
+    background: rgba(245, 242, 232, 0.07);
+    border-color: rgba(255, 255, 255, 0.14);
+    color: #f5f2e8;
     min-height: 38px;
     padding: 7px 8px;
+  }
+
+  main[data-mobile-tab="inicio"] .match-item:hover,
+  main[data-mobile-tab="inicio"] .match-item:focus-visible {
+    background: rgba(200, 239, 93, 0.12);
+    border-color: rgba(200, 239, 93, 0.38);
   }
 
   main[data-mobile-tab="inicio"] .match-item span {
@@ -10864,6 +10982,7 @@ select:disabled {
   }
 
   main[data-mobile-tab="inicio"] .match-item small {
+    color: #c4d3cb;
     font-size: 10px;
   }
 
@@ -10876,16 +10995,40 @@ select:disabled {
     scrollbar-width: thin;
   }
 
+  main[data-mobile-tab="inicio"] .side-history .history {
+    background: transparent;
+    scrollbar-color: rgba(200, 239, 93, 0.38) rgba(245, 242, 232, 0.08);
+  }
+
   main[data-mobile-tab="inicio"] .history-item {
+    background: rgba(245, 242, 232, 0.07);
+    border-color: rgba(255, 255, 255, 0.14);
+    color: #f5f2e8;
     gap: 5px;
     grid-template-columns: minmax(0, 1fr) auto;
     min-height: 38px;
     padding: 7px 8px;
   }
 
+  main[data-mobile-tab="inicio"] .history-item strong {
+    color: #f5f2e8;
+  }
+
+  main[data-mobile-tab="inicio"] .history-item > span {
+    background: rgba(5, 12, 14, 0.82);
+    color: #f5f2e8;
+  }
+
   main[data-mobile-tab="inicio"] .history-item small {
+    color: #c4d3cb;
     font-size: 10px;
     line-height: 1.1;
+  }
+
+  main[data-mobile-tab="inicio"] .history-delete {
+    background: rgba(255, 241, 242, 0.12);
+    border-color: rgba(248, 113, 113, 0.58);
+    color: #fecaca;
   }
 
   main[data-mobile-tab="partido"] .lineup-panel {
@@ -11643,6 +11786,28 @@ select:disabled {
     font-size: 10px;
     min-height: 26px;
     padding: 0 7px;
+  }
+
+  main[data-mobile-tab="perfil"] label.avatar-action-button,
+  main[data-mobile-tab="perfil"] button.avatar-action-button,
+  :root[data-theme="light"] main[data-mobile-tab="perfil"] label.avatar-action-button,
+  :root[data-theme="light"] main[data-mobile-tab="perfil"] button.avatar-action-button {
+    background: rgba(10, 21, 18, 0.9) !important;
+    border-color: rgba(207, 222, 214, 0.28) !important;
+    color: #f5f2e8 !important;
+  }
+
+  main[data-mobile-tab="perfil"] button.profile-save-button,
+  :root[data-theme="light"] main[data-mobile-tab="perfil"] button.profile-save-button {
+    background: rgba(200, 239, 93, 0.86) !important;
+    border-color: rgba(200, 239, 93, 0.4) !important;
+    color: #132018 !important;
+  }
+
+  main[data-mobile-tab="perfil"] .theme-preference-options button.active,
+  :root[data-theme="light"] main[data-mobile-tab="perfil"] .theme-preference-options button.active {
+    background: rgba(200, 239, 93, 0.86) !important;
+    color: #132018 !important;
   }
 
   main[data-mobile-tab="perfil"] .theme-preference-panel {
