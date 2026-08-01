@@ -8728,27 +8728,29 @@ export default function Home() {
             <strong>{openMatches.length}</strong>
           </div>
           {openMatches.length === 0 ? <p className="empty-copy">Crea tu primer partido desde “Crear”.</p> : null}
-          {openMatches.map((match) => (
-            <div className="match-row" key={match.id}>
-              <button
-                className={match.id === activeMatch.id ? "match-item active" : "match-item"}
-                onClick={() => selectMatch(match.id)}
-              >
-                <span>{match.title}</span>
-                <small>{new Date(match.date).toLocaleString("es-ES", { weekday: "short", hour: "2-digit", minute: "2-digit" })}</small>
-              </button>
-              <button
-                className="trash-icon-button"
-                disabled={!canUseAdminControls}
-                onClick={() => deleteMatch(match.id)}
-                title="Borrar partido"
-                type="button"
-                aria-label={`Borrar ${match.title}`}
-              >
-                <TrashLogo />
-              </button>
-            </div>
-          ))}
+          <div className="next-match-rail">
+            {openMatches.map((match) => (
+              <div className="match-row" key={match.id}>
+                <button
+                  className={match.id === activeMatch.id ? "match-item active" : "match-item"}
+                  onClick={() => selectMatch(match.id)}
+                >
+                  <span>{match.title}</span>
+                  <small>{new Date(match.date).toLocaleString("es-ES", { weekday: "short", hour: "2-digit", minute: "2-digit" })}</small>
+                </button>
+                <button
+                  className="trash-icon-button"
+                  disabled={!canUseAdminControls}
+                  onClick={() => deleteMatch(match.id)}
+                  title="Borrar partido"
+                  type="button"
+                  aria-label={`Borrar ${match.title}`}
+                >
+                  <TrashLogo />
+                </button>
+              </div>
+            ))}
+          </div>
           <div className="side-history">
             <div className="panel-title compact-title">
               <span>Historial</span>
