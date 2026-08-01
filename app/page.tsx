@@ -3175,7 +3175,7 @@ export default function Home() {
   const [profilePane, setProfilePane] = useState<ProfilePane>("ficha");
   const [playerProfileMode, setPlayerProfileMode] = useState<PlayerProfileMode>("edit");
   const [previewDemoMode, setPreviewDemoMode] = useState(false);
-  const [playerActionMenu, setPlayerActionMenu] = useState<{ playerId: string; x: number; y: number } | null>(null);
+  const [playerActionMenu, setPlayerActionMenu] = useState<{ playerId: string; maxHeight: number; placement: "down" | "up"; x: number; y: number } | null>(null);
   const [statusConfirmation, setStatusConfirmation] = useState<PendingStatusChange | null>(null);
   const [mobileAccountOpen, setMobileAccountOpen] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
@@ -7194,14 +7194,38 @@ export default function Home() {
       setPlayerActionMenu((current) => {
         if (current?.playerId === player.id) return null;
 
-        const panelWidth = 136;
-        const panelHeight = 128;
+        const actionCount =
+          (player.inactive ? 0 : 1) +
+          3 +
+          (status === "voy" && !isWaiting ? 1 : 0) +
+          (status === "voy" && team && (canUseAdminControls || isDemoMode) ? 1 : 0);
+        const panelWidth = 170;
+        const viewportWidth = Math.min(
+          window.innerWidth,
+          window.visualViewport?.width ?? window.innerWidth,
+          document.documentElement.clientWidth || window.innerWidth,
+        );
+        const viewportHeight = Math.min(
+          window.innerHeight,
+          window.visualViewport?.height ?? window.innerHeight,
+          document.documentElement.clientHeight || window.innerHeight,
+        );
+        const panelHeight = Math.min(viewportHeight - 16, actionCount * 25 + 12);
         const margin = 8;
+        const preferredDownY = triggerRect.bottom + 4;
+        const preferredUpY = triggerRect.top - panelHeight - 4;
+        const hasRoomDown = preferredDownY + panelHeight <= viewportHeight - margin;
+        const placement = hasRoomDown || triggerRect.top < viewportHeight - triggerRect.bottom ? "down" : "up";
+        const y = placement === "up"
+          ? Math.max(margin, preferredUpY)
+          : Math.max(margin, Math.min(viewportHeight - panelHeight - margin, preferredDownY));
 
         return {
+          maxHeight: Math.max(80, viewportHeight - margin * 2),
           playerId: player.id,
-          x: Math.max(margin, Math.min(window.innerWidth - panelWidth - margin, triggerRect.right - panelWidth)),
-          y: Math.max(margin, Math.min(window.innerHeight - panelHeight - margin, triggerRect.bottom + 4)),
+          x: Math.max(margin, Math.min(viewportWidth - panelWidth - margin, triggerRect.right - panelWidth)),
+          y,
+          placement,
         };
       });
     };
@@ -7310,7 +7334,11 @@ export default function Home() {
           {playerActionMenu?.playerId === player.id ? (
             <>
               <button className="player-action-menu-backdrop" type="button" aria-label="Cerrar acciones" onClick={() => setPlayerActionMenu(null)} />
-              <div className="player-action-menu-panel" role="menu" style={{ left: playerActionMenu.x, top: playerActionMenu.y }}>
+              <div
+                className={`player-action-menu-panel open-${playerActionMenu.placement}`}
+                role="menu"
+                style={{ left: playerActionMenu.x, maxHeight: playerActionMenu.maxHeight, top: playerActionMenu.y }}
+              >
                 {!player.inactive ? (
                   <button
                     onClick={() => {
