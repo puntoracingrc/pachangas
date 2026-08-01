@@ -226,6 +226,12 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /setActiveMatchManagerPane\(pane\)/);
   assert.match(page, /match-manager-admin-block/);
   assert.match(page, /lineup-title-result/);
+  assert.match(page, /nextMatchStatusGroups/);
+  assert.match(page, /className="next-match-roster-rail"/);
+  assert.match(page, /Reservas/);
+  assert.match(page, /Otros estados/);
+  assert.match(page, /Sin respuesta/);
+  assert.match(page, /Lesionados/);
   assert.match(page, /function openRankingPanel/);
   assert.match(page, /function openMarketConfiguration/);
   assert.match(page, /if \(tabId === "mercado"\) \{\s*if \(canUseAdminControls\) return;/);
@@ -431,6 +437,10 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(globalsCss, /data-match-manager-pane="resultado"/);
   assert.match(globalsCss, /data-match-manager-pane="historico"/);
   assert.match(globalsCss, /data-match-manager-pane="admin"/);
+  assert.match(globalsCss, /\.next-match-roster-rail/);
+  assert.match(globalsCss, /grid-auto-flow:\s*column/);
+  assert.match(globalsCss, /scroll-snap-type:\s*x proximity/);
+  assert.match(globalsCss, /\.next-match-status-section/);
   assert.match(globalsCss, /\.mobile-account-sheet/);
   assert.match(globalsCss, /\.team-gallery-panel/);
   assert.match(globalsCss, /\.team-card-gallery/);
