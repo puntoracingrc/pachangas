@@ -9698,6 +9698,14 @@ type PitchDragState = {
   targetId: string | null;
 };
 
+type PitchPointerState = {
+  active: boolean;
+  pointerId: number;
+  sourceId: string;
+  startX: number;
+  startY: number;
+};
+
 type PitchOrientation = "landscape" | "portrait";
 
 function MatchPitch({
@@ -9729,7 +9737,9 @@ function MatchPitch({
 }) {
   const holdTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pitchRef = useRef<HTMLDivElement | null>(null);
-  const pointerRef = useRef<{ active: boolean; pointerId: number; sourceId: string; startX: number; startY: number } | null>(null);
+  const pointerAbortRef = useRef<AbortController | null>(null);
+  const pointerRef = useRef<PitchPointerState | null>(null);
+  const suppressPitchPreviewUntilRef = useRef(0);
   const dropTargetRef = useRef<string | null>(null);
   const [dragState, setDragState] = useState<PitchDragState | null>(null);
   const isLandscapePitch = orientation === "landscape";
@@ -9744,11 +9754,21 @@ function MatchPitch({
     ...teamBTokens.players.map((token) => ({ ...token, variant: "team-b" as const })),
   ];
 
-  function clearPitchDrag() {
+  useEffect(() => {
+    return () => {
+      if (holdTimerRef.current) clearTimeout(holdTimerRef.current);
+      pointerAbortRef.current?.abort();
+    };
+  }, []);
+
+  function clearPitchDrag({ suppressPreview = false } = {}) {
     if (holdTimerRef.current) clearTimeout(holdTimerRef.current);
     holdTimerRef.current = null;
+    pointerAbortRef.current?.abort();
+    pointerAbortRef.current = null;
     pointerRef.current = null;
     dropTargetRef.current = null;
+    if (suppressPreview) suppressPitchPreviewUntilRef.current = Date.now() + 450;
     setDragState(null);
   }
 
@@ -9776,37 +9796,29 @@ function MatchPitch({
     return bestId;
   }
 
-  function startPitchDrag(event: ReactPointerEvent<HTMLButtonElement>, playerId: string) {
-    if (!event.isPrimary) return;
-    pointerRef.current = {
-      active: false,
-      pointerId: event.pointerId,
-      sourceId: playerId,
-      startX: event.clientX,
-      startY: event.clientY,
-    };
-
-    if (!canDragPlayers) return;
-    event.currentTarget.setPointerCapture(event.pointerId);
-    holdTimerRef.current = setTimeout(() => {
-      const pointer = pointerRef.current;
-      if (!pointer || pointer.pointerId !== event.pointerId) return;
-      pointer.active = true;
-      setDragState({ dx: 0, dy: 0, sourceId: playerId, targetId: null });
-    }, 220);
+  function activatePitchDrag(pointer: PitchPointerState, clientX: number, clientY: number) {
+    if (holdTimerRef.current) clearTimeout(holdTimerRef.current);
+    holdTimerRef.current = null;
+    pointer.active = true;
+    const targetId = nearestPitchDropTarget(clientX, clientY, pointer.sourceId);
+    dropTargetRef.current = targetId;
+    setDragState({
+      dx: clientX - pointer.startX,
+      dy: clientY - pointer.startY,
+      sourceId: pointer.sourceId,
+      targetId,
+    });
   }
 
-  function movePitchDrag(event: ReactPointerEvent<HTMLButtonElement>) {
+  function moveWindowPitchDrag(event: PointerEvent) {
     const pointer = pointerRef.current;
     if (!pointer || pointer.pointerId !== event.pointerId) return;
     const dx = event.clientX - pointer.startX;
     const dy = event.clientY - pointer.startY;
 
     if (!pointer.active) {
-      if (!canDragPlayers || Math.hypot(dx, dy) < 12) return;
-      if (holdTimerRef.current) clearTimeout(holdTimerRef.current);
-      holdTimerRef.current = null;
-      pointer.active = true;
+      if (!canDragPlayers || Math.hypot(dx, dy) < 10) return;
+      activatePitchDrag(pointer, event.clientX, event.clientY);
     }
 
     event.preventDefault();
@@ -9820,24 +9832,59 @@ function MatchPitch({
     });
   }
 
-  function finishPitchDrag(event: ReactPointerEvent<HTMLButtonElement>, playerId: string) {
+  function finishWindowPitchDrag(event: PointerEvent) {
     const pointer = pointerRef.current;
-    if (!pointer || pointer.pointerId !== event.pointerId) {
-      onPlayerClick?.(playerId);
-      return;
-    }
+    if (!pointer || pointer.pointerId !== event.pointerId) return;
 
     const wasDragging = pointer.active;
-    const targetId = dropTargetRef.current ?? nearestPitchDropTarget(event.clientX, event.clientY, pointer.sourceId);
-    clearPitchDrag();
+    const sourceId = pointer.sourceId;
+    const targetId = dropTargetRef.current ?? nearestPitchDropTarget(event.clientX, event.clientY, sourceId);
+    clearPitchDrag({ suppressPreview: wasDragging });
 
     if (wasDragging) {
       event.preventDefault();
-      if (targetId) onPlayerSwap?.(pointer.sourceId, targetId);
+      if (targetId) onPlayerSwap?.(sourceId, targetId);
       return;
     }
 
-    onPlayerClick?.(playerId);
+    if (Date.now() < suppressPitchPreviewUntilRef.current) return;
+    onPlayerClick?.(sourceId);
+  }
+
+  function cancelWindowPitchDrag(event: PointerEvent) {
+    const pointer = pointerRef.current;
+    if (!pointer || pointer.pointerId !== event.pointerId) return;
+    clearPitchDrag({ suppressPreview: pointer.active || canDragPlayers });
+  }
+
+  function startPitchDrag(event: ReactPointerEvent<HTMLButtonElement>, playerId: string) {
+    if (!event.isPrimary) return;
+    clearPitchDrag();
+    pointerRef.current = {
+      active: false,
+      pointerId: event.pointerId,
+      sourceId: playerId,
+      startX: event.clientX,
+      startY: event.clientY,
+    };
+
+    pointerAbortRef.current = new AbortController();
+    window.addEventListener("pointermove", moveWindowPitchDrag, { passive: false, signal: pointerAbortRef.current.signal });
+    window.addEventListener("pointerup", finishWindowPitchDrag, { passive: false, signal: pointerAbortRef.current.signal });
+    window.addEventListener("pointercancel", cancelWindowPitchDrag, { passive: false, signal: pointerAbortRef.current.signal });
+
+    if (!canDragPlayers) return;
+    event.preventDefault();
+    try {
+      event.currentTarget.setPointerCapture(event.pointerId);
+    } catch {
+      // Some mobile browsers may drop capture during layout changes; window listeners keep the drag alive.
+    }
+    holdTimerRef.current = setTimeout(() => {
+      const pointer = pointerRef.current;
+      if (!pointer || pointer.pointerId !== event.pointerId) return;
+      activatePitchDrag(pointer, event.clientX, event.clientY);
+    }, 180);
   }
 
   return (
@@ -9902,10 +9949,8 @@ function MatchPitch({
               event.preventDefault();
               onPlayerClick?.(player.id);
             }}
-            onPointerCancel={clearPitchDrag}
+            onPointerCancel={() => clearPitchDrag({ suppressPreview: canDragPlayers })}
             onPointerDown={(event) => startPitchDrag(event, player.id)}
-            onPointerMove={movePitchDrag}
-            onPointerUp={(event) => finishPitchDrag(event, player.id)}
             style={tokenStyle}
             title={`${playerDisplayName(player)} · ${positionLabel(player)} · ${overallScore(score)}`}
             type="button"
