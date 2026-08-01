@@ -3020,6 +3020,64 @@ function matchAttendingIds(match: Match) {
   return ids;
 }
 
+function historicalRatingVotes(player: Player, cutoffMs: number) {
+  if (!Number.isFinite(cutoffMs)) return player.ratingVotes ?? [];
+  return (player.ratingVotes ?? []).filter((vote) => {
+    const voteTime = Date.parse(vote.createdAt);
+    return !Number.isFinite(voteTime) || voteTime <= cutoffMs;
+  });
+}
+
+function playerStatsUntilMatch(player: Player, activeMatch: Match, matches: Match[]) {
+  const activeTime = Date.parse(activeMatch.date);
+  let appearances = 0;
+  let goals = 0;
+  let wins = 0;
+
+  matches.forEach((match) => {
+    if (match.scoreA === undefined || match.scoreB === undefined) return;
+    const matchTime = Date.parse(match.date);
+    if (Number.isFinite(activeTime) && Number.isFinite(matchTime) && matchTime > activeTime) return;
+    if (!matchAttendingIds(match).has(player.id)) return;
+
+    appearances += 1;
+    goals += matchGoalsForPlayer(match, player.id);
+
+    const side = teamSideForPlayer(match, player.id);
+    if (side && teamScoreForSide(match, side) > teamScoreForSide(match, side === "A" ? "B" : "A")) {
+      wins += 1;
+    }
+  });
+
+  return { appearances, goals, wins };
+}
+
+function historicalPlayerSnapshot(player: Player, activeMatch: Match, matches: Match[]) {
+  const cutoffMs = Date.parse(activeMatch.date);
+  const stats = playerStatsUntilMatch(player, activeMatch, matches);
+
+  return {
+    ...player,
+    appearances: stats.appearances,
+    goals: stats.goals,
+    ratingVotes: historicalRatingVotes(player, cutoffMs),
+    wins: stats.wins,
+  };
+}
+
+function historicalPlayerFormState(player: Player): PlayerFormState {
+  return {
+    balanceScore: scorePlayer(player),
+    hasData: false,
+    label: null,
+    notes: ["snapshot histórico"],
+    percent: 100,
+    recentAverage: null,
+    reliability: playerReliability(player),
+    status: "normal",
+  };
+}
+
 function playerLastActivityInGroup(player: Player, matches: Match[]) {
   const matchActivity = matches
     .filter((match) => matchHasPlayerRecord(match, player.id))
@@ -4105,10 +4163,16 @@ export default function Home() {
 
   const activeMatch = matches.find((match) => match.id === activeMatchId) ?? matches[0];
   const activeKind = activeMatch.kind ?? "futbol7";
+  const matchFinalized = Boolean(activeMatch.closed || activeMatch.scoreA !== undefined);
   useEffect(() => {
     setPitchBoardState(initialPitchBoardState());
   }, [activeMatchId, activeKind]);
   const activeVenue = venues.find((venue) => venue.id === activeMatch.venueId);
+  const matchPlayersForDisplay = useMemo(
+    () => matchFinalized ? players.map((player) => historicalPlayerSnapshot(player, activeMatch, matches)) : players,
+    [activeMatch, matchFinalized, matches, players],
+  );
+  const matchPlayersById = useMemo(() => new Map(matchPlayersForDisplay.map((player) => [player.id, player])), [matchPlayersForDisplay]);
   const reserveLimit = reserveCapacity(activeMatch);
   const orderedGoingEntries = orderedGoingPlayers(activeMatch);
   const playingEntries = orderedGoingEntries.slice(0, activeMatch.targetPlayers);
@@ -4118,16 +4182,18 @@ export default function Home() {
   const reserveIds = reserveEntries.map(({ entry }) => entry.playerId);
   const waitingIds = waitingEntries.map(({ entry }) => entry.playerId);
   const payingIds = [...confirmedIds, ...reserveIds];
-  const confirmedPlayers = players.filter((player) => confirmedIds.includes(player.id));
-  const reservePlayers = reserveIds.map((playerId) => players.find((player) => player.id === playerId)).filter((player): player is Player => Boolean(player));
-  const waitingPlayers = waitingIds.map((playerId) => players.find((player) => player.id === playerId)).filter((player): player is Player => Boolean(player));
+  const confirmedPlayers = matchPlayersForDisplay.filter((player) => confirmedIds.includes(player.id));
+  const reservePlayers = reserveIds.map((playerId) => matchPlayersById.get(playerId)).filter((player): player is Player => Boolean(player));
+  const waitingPlayers = waitingIds.map((playerId) => matchPlayersById.get(playerId)).filter((player): player is Player => Boolean(player));
   const openMatches = matches.filter((match) => match.configured && match.scoreA === undefined && !match.closed);
   const closedMatches = matches
     .filter((match) => match.scoreA !== undefined)
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   const playerForms = useMemo(() => playerFormStates(matches, players), [matches, players]);
   const playerMediaScore = (player: Player) => scorePlayer(player);
-  const playerForm = (player: Player) => playerForms.get(player.id) ?? playerFormState(player, matches, new Map(players.map((item) => [item.id, item])));
+  const playerForm = (player: Player) => matchFinalized && matchPlayersById.has(player.id)
+    ? historicalPlayerFormState(player)
+    : playerForms.get(player.id) ?? playerFormState(player, matches, new Map(players.map((item) => [item.id, item])));
   const effectivePlayerScore = (player: Player) => playerForm(player).balanceScore;
   const absenceStreaks = useMemo(() => {
     const streaks = new Map<string, number>();
@@ -4139,7 +4205,6 @@ export default function Home() {
   const publicOpenSlots = Math.max(1, Math.min(missing || activeMatch.targetPlayers, Math.floor(Number(activeMatch.publicOpenSlots) || missing || 1)));
   const fieldCost = activeMatch.fieldCost ?? 0;
   const lineupClosed = activeMatch.lineupClosed ?? false;
-  const matchFinalized = Boolean(activeMatch.closed || activeMatch.scoreA !== undefined);
   const matchConfigured = Boolean(activeMatch.configured);
   const activeMatchTime = new Date(activeMatch.date).getTime();
   const previousPendingMatch = Number.isFinite(activeMatchTime)
@@ -5315,7 +5380,7 @@ export default function Home() {
   ].filter((group) => group.players.length > 0);
   const nextMatchStatusCount = nextMatchStatusGroups.reduce((total, group) => total + group.players.length, 0);
   const selectedPlayer = selectedPlayerId ? players.find((player) => player.id === selectedPlayerId) : undefined;
-  const pitchPreviewPlayer = pitchPreviewPlayerId ? players.find((player) => player.id === pitchPreviewPlayerId) : undefined;
+  const pitchPreviewPlayer = pitchPreviewPlayerId ? (matchPlayersById.get(pitchPreviewPlayerId) ?? players.find((player) => player.id === pitchPreviewPlayerId)) : undefined;
   const selectedRatingFacets = selectedPlayer ? ratingFacetsForPlayer(selectedPlayer) : ratingFacets;
   const selectedForm = selectedPlayer ? playerForm(selectedPlayer) : undefined;
   const selectedEffectiveScore = selectedPlayer ? effectivePlayerScore(selectedPlayer) : 0;
@@ -5341,6 +5406,10 @@ export default function Home() {
   const canManageTeam = Boolean(hasRealTeam && isRegisteredUser && (currentRole === "owner" || currentRole === "admin"));
   const canManageRoles = hasRealTeam && isRegisteredUser && currentRole === "owner";
   const canUseAdminControls = isDemoMode || canManageTeam;
+  const mainPanelClassName = [
+    canUseAdminControls ? "panel main-panel" : "panel main-panel player-facing-main",
+    matchFinalized ? "match-finalized-main" : "",
+  ].filter(Boolean).join(" ");
   const matchManagerPanes: MatchManagerPane[] = canUseAdminControls
     ? ["proximo", "alineacion", "resultado", "admin"]
     : ["proximo", "alineacion", "resultado"];
@@ -7224,7 +7293,7 @@ export default function Home() {
     const nextTeam = team === "A" ? "B" : "A";
     const formState = playerForm(player);
     const formSummary = formState.hasData ? ` · Forma ${visibleFormPercent(formState)}%` : "";
-    const matchCardAge = playerAge(player.birthDate, currentDateValue);
+    const matchCardAge = playerAge(player.birthDate, matchFinalized ? activeMatch.date : currentDateValue);
     const playerRatingWindow = ratingWindow(player, ratingVoterId);
     const canEditThisPlayer = canEditPlayerOwnedFields({
       canUseAdminControls,
@@ -8799,7 +8868,7 @@ export default function Home() {
               <span>{matchManagerPaneLabel(pane)}</span>
             </button>
           ))}
-          {selectedMatchManagerPane === "alineacion" ? (
+          {selectedMatchManagerPane === "alineacion" && !matchFinalized ? (
             <div className="lineup-side-tools" aria-label="Herramientas de alineación">
               <span className="lineup-side-tools-kicker">Herramientas</span>
               <div className="lineup-side-actions">
@@ -8889,7 +8958,7 @@ export default function Home() {
           </div>
         </aside>
 
-        <section className={canUseAdminControls ? "panel main-panel" : "panel main-panel player-facing-main"} id="partido" ref={matchPanelRef}>
+        <section className={mainPanelClassName} id="partido" ref={matchPanelRef}>
           {showMatchAdminPanel ? (
             <>
               <div className={canEditMatchSettings ? "match-editor match-manager-admin-block" : "match-editor readonly-editor match-manager-admin-block"}>
@@ -9078,7 +9147,7 @@ export default function Home() {
             </>
           ) : null}
 
-          {matchConfigured ? (
+          {matchConfigured && !matchFinalized ? (
             <section className={`weather-card weather-card-${matchWeatherStatus}`} aria-label="Previsión del tiempo">
               {matchWeatherStatus === "unavailable" && matchWeatherMessage.startsWith("Previsión del tiempo disponible") ? (
                 <p className="weather-availability-message">{matchWeatherMessage}</p>
@@ -9161,7 +9230,7 @@ export default function Home() {
             </div>
           </div>
 
-          {paymentReady && payer ? (
+          {paymentReady && payer && !matchFinalized ? (
             <div className="payer-note">
               <span>Turno de pago</span>
               <strong>{playerDisplayName(payer)} adelanta el campo. Bizum: {payer.phone || "sin telefono"} · {sharePerPlayer.toFixed(2)} € por persona</strong>
@@ -9177,22 +9246,24 @@ export default function Home() {
             </div>
           ) : null}
 
-          <div className="share-box">
-            <span>Comparte este partido!</span>
-            <div className="share-actions">
-              <button className="copy-invite-button" type="button" onClick={() => void copyMatchLink()} disabled={!matchUrl()} title="Copiar link del partido" aria-label="Copiar link del partido">
-                Copiar link
-              </button>
-              <button className="whatsapp-icon-button" type="button" onClick={shareWhatsApp} disabled={!matchUrl()} title="Enviar partido por WhatsApp" aria-label="Enviar partido por WhatsApp">
-                <WhatsAppLogo />
-              </button>
+          {!matchFinalized ? (
+            <div className="share-box">
+              <span>Comparte este partido!</span>
+              <div className="share-actions">
+                <button className="copy-invite-button" type="button" onClick={() => void copyMatchLink()} disabled={!matchUrl()} title="Copiar link del partido" aria-label="Copiar link del partido">
+                  Copiar link
+                </button>
+                <button className="whatsapp-icon-button" type="button" onClick={shareWhatsApp} disabled={!matchUrl()} title="Enviar partido por WhatsApp" aria-label="Enviar partido por WhatsApp">
+                  <WhatsAppLogo />
+                </button>
+              </div>
+              {syncStatus !== "local" ? (
+                <small className={`sync-status sync-${syncStatus}`}>
+                  {!matchConfigured ? "Guarda el partido para compartirlo" : syncStatus === "live" ? "Sincronizado" : syncStatus === "connecting" ? "Conectando..." : `Sin sync: ${syncError}`}
+                </small>
+              ) : null}
             </div>
-            {syncStatus !== "local" ? (
-              <small className={`sync-status sync-${syncStatus}`}>
-                {!matchConfigured ? "Guarda el partido para compartirlo" : syncStatus === "live" ? "Sincronizado" : syncStatus === "connecting" ? "Conectando..." : `Sin sync: ${syncError}`}
-              </small>
-            ) : null}
-          </div>
+          ) : null}
 
           {showMatchRoster ? (
             <>
