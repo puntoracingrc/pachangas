@@ -3159,6 +3159,30 @@ select:disabled {
   border-color: #c7cedb;
 }
 
+.status-roster-column {
+  background: #f8faf7;
+  border-color: #c9d3c7;
+}
+
+.reserve-roster-column {
+  background: #fffaf0;
+  border-color: #d8caa8;
+}
+
+.waiting-roster-column {
+  background: #f7f8fb;
+  border-color: #c7cedb;
+}
+
+.other-status-roster-column {
+  background: #f6faf7;
+  border-color: #b9c8bd;
+}
+
+.status-roster-column .empty-copy {
+  margin: 0;
+}
+
 .next-match-status-groups {
   display: grid;
   gap: 10px;
@@ -10660,8 +10684,44 @@ select:disabled {
     scrollbar-width: thin;
   }
 
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="proximo"] .status-roster-column {
+    background: rgba(13, 24, 20, 0.84);
+    border-style: solid;
+    gap: 0;
+    padding: 0;
+  }
+
   main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="proximo"] .next-match-status-section {
     min-width: 0;
+  }
+
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="proximo"] .reserve-roster-column > .team-column-title {
+    background: color-mix(in srgb, #b87913 72%, #0b1210);
+  }
+
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="proximo"] .waiting-roster-column > .team-column-title {
+    background: color-mix(in srgb, #64748b 68%, #0b1210);
+  }
+
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="proximo"] .other-status-roster-column > .team-column-title {
+    background: color-mix(in srgb, #3f4a42 78%, #0b1210);
+  }
+
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="proximo"] .status-roster-column > .team-column-title {
+    min-height: 40px;
+    padding: 0 12px;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+  }
+
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="proximo"] .status-roster-column > .team-column-title span,
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="proximo"] .status-roster-column > .team-column-title strong {
+    color: #f5f2e8;
+  }
+
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="proximo"] .status-roster-column > .team-column-title strong {
+    background: rgba(255, 255, 255, 0.14);
   }
 
   main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="proximo"] .next-match-roster-rail .reserve-player-grid {
@@ -10675,7 +10735,7 @@ select:disabled {
   main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="proximo"] .next-match-status-group {
     border-top: 1px solid rgba(255, 255, 255, 0.08);
     gap: 6px;
-    padding-top: 7px;
+    padding: 7px 0 0;
   }
 
   main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="proximo"] .next-match-status-group:first-child {
@@ -10690,6 +10750,16 @@ select:disabled {
 
   main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="proximo"] .status-group-title strong {
     background: rgba(255, 255, 255, 0.12);
+  }
+
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="proximo"] .status-roster-column .empty-copy {
+    align-items: center;
+    color: #9fb1a7;
+    display: flex;
+    font-size: 12px;
+    font-weight: 800;
+    min-height: 72px;
+    padding: 10px 12px;
   }
 
   main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="admin"] > .main-panel {

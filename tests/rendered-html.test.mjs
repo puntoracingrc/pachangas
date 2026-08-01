@@ -328,6 +328,10 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /id="partido"/);
   assert.match(page, /id="alineacion"/);
   assert.match(page, /className="panel teams-panel lineup-panel"/);
+  assert.match(page, /team-player-column status-roster-column reserve-roster-column next-match-reserve-section/);
+  assert.match(page, /team-player-column status-roster-column waiting-roster-column next-match-waiting-section/);
+  assert.match(page, /team-player-column status-roster-column other-status-roster-column next-match-status-section/);
+  assert.doesNotMatch(page, /className="reserve-section next-match-reserve-section"/);
   assert.match(page, /\{ value: "Mediocentro \/ pivote", line: "Medio", short: "PIV" \}/);
   assert.match(page, /<span className="player-meta" title=\{positionLabel\(player\)\} aria-label=\{positionLabel\(player\)\}>\s*\{positionShort\(player\)\}/);
   assert.match(page, /<small className="position-pill" title=\{positionLabel\(player\)\} aria-label=\{positionLabel\(player\)\}>/);
@@ -441,6 +445,10 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(globalsCss, /grid-auto-flow:\s*column/);
   assert.match(globalsCss, /scroll-snap-type:\s*x proximity/);
   assert.match(globalsCss, /\.next-match-status-section/);
+  assert.match(globalsCss, /\.status-roster-column/);
+  assert.match(globalsCss, /\.reserve-roster-column/);
+  assert.match(globalsCss, /\.other-status-roster-column/);
+  assert.match(globalsCss, /\.status-roster-column > \.team-column-title/);
   assert.match(globalsCss, /\.mobile-account-sheet/);
   assert.match(globalsCss, /\.team-gallery-panel/);
   assert.match(globalsCss, /\.team-card-gallery/);
