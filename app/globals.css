@@ -11560,6 +11560,8 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
     scroll-snap-type: x proximity;
     scrollbar-color: rgba(200, 239, 93, 0.45) rgba(245, 242, 232, 0.1);
     scrollbar-width: thin;
+    touch-action: pan-x pan-y;
+    -webkit-overflow-scrolling: touch;
   }
 
   main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="proximo"] .team-player-grid {
@@ -11580,7 +11582,7 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
     overscroll-behavior: contain;
     scroll-snap-align: start;
     scrollbar-width: thin;
-    touch-action: pan-y;
+    touch-action: pan-x pan-y;
     -webkit-overflow-scrolling: touch;
   }
 
@@ -11636,7 +11638,7 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
   main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="proximo"] .next-match-roster-rail > .status-roster-column {
     overflow-x: hidden !important;
     overflow-y: auto !important;
-    touch-action: pan-y;
+    touch-action: pan-x pan-y;
   }
 
   main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="proximo"] .next-match-status-group {

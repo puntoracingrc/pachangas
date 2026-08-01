@@ -1,6 +1,6 @@
 "use client";
 
-import { type CSSProperties, type Dispatch, type FormEvent, Fragment, type MouseEvent as ReactMouseEvent, type PointerEvent as ReactPointerEvent, type SetStateAction, useEffect, useMemo, useRef, useState } from "react";
+import { type CSSProperties, type Dispatch, type FormEvent, Fragment, type MouseEvent as ReactMouseEvent, type PointerEvent as ReactPointerEvent, type SetStateAction, type WheelEvent as ReactWheelEvent, useEffect, useMemo, useRef, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { attachVenueAutocomplete, type VenuePlace } from "./googlePlacesClient";
 import {
@@ -7001,6 +7001,15 @@ export default function Home() {
     window.open(`https://wa.me/?text=${encodeURIComponent(shareText())}`, "_blank", "noopener,noreferrer");
   }
 
+  function handleRosterRailWheel(event: ReactWheelEvent<HTMLDivElement>) {
+    const horizontalIntent = Math.abs(event.deltaX) >= Math.abs(event.deltaY);
+    const shiftHorizontal = event.shiftKey && Math.abs(event.deltaY) > 0;
+    if (!horizontalIntent && !shiftHorizontal) return;
+
+    event.preventDefault();
+    event.currentTarget.scrollLeft += horizontalIntent ? event.deltaX : event.deltaY;
+  }
+
   async function copyMatchLink() {
     const url = matchUrl();
     if (!url) return;
@@ -9167,7 +9176,7 @@ export default function Home() {
                 </section>
               ) : null}
 
-              <div className="next-match-roster-rail" aria-label="Jugadores del próximo partido">
+              <div className="next-match-roster-rail" aria-label="Jugadores del próximo partido" onWheel={handleRosterRailWheel}>
                 <div className="team-player-column team-a-column">
                   <div className="team-column-title">
                     <span>Equipo 1</span>

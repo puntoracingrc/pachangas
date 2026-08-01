@@ -247,6 +247,7 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /lineup-title-result/);
   assert.match(page, /nextMatchStatusGroups/);
   assert.match(page, /className="next-match-roster-rail"/);
+  assert.match(page, /onWheel=\{handleRosterRailWheel\}/);
   assert.match(page, /Reservas/);
   assert.match(page, /label = null/);
   assert.doesNotMatch(page, /Recuperando ritmo/);
@@ -508,7 +509,9 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(globalsCss, /\.next-match-roster-rail/);
   assert.match(globalsCss, /grid-auto-flow:\s*column/);
   assert.match(globalsCss, /scroll-snap-type:\s*x proximity/);
+  assert.match(globalsCss, /\.next-match-roster-rail[\s\S]*touch-action:\s*pan-x pan-y/);
   assert.match(globalsCss, /main\[data-mobile-tab="partido"\] \.team-player-column[\s\S]*grid-auto-rows:\s*max-content/);
+  assert.match(globalsCss, /team-player-column,[\s\S]*touch-action:\s*pan-x pan-y/);
   assert.match(globalsCss, /main\[data-mobile-tab="partido"\] \.player-card[\s\S]*min-height:\s*58px/);
   assert.match(globalsCss, /\.next-match-status-section/);
   assert.match(globalsCss, /\.status-roster-column/);
