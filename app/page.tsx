@@ -317,6 +317,11 @@ type SiteSettings = {
   teamBColor: string;
 };
 
+type LineupSlots = {
+  teamA?: string[];
+  teamB?: string[];
+};
+
 type Match = {
   id: string;
   title: string;
@@ -336,6 +341,7 @@ type Match = {
   scorers?: Array<{ playerId: string; goals: number }>;
   closed?: boolean;
   lineupClosed?: boolean;
+  lineupSlots?: LineupSlots;
   scoreA?: number;
   scoreB?: number;
   teamA?: string[];
@@ -2005,6 +2011,7 @@ function normalizePayload(payload?: Partial<AppPayload>): AppPayload {
         fieldCost: match.fieldCost ?? (match.price ? match.price * Math.max(match.targetPlayers, 1) : 0),
         configured: match.configured ?? Boolean(match.closed || match.scoreA !== undefined || match.players?.length || match.venueId),
         lineupClosed: match.lineupClosed ?? false,
+        lineupSlots: cleanLineupSlots(match.lineupSlots, match.teamA ?? [], match.teamB ?? []),
         publicGuestsPay: match.publicGuestsPay ?? true,
         publicMaxRating: publicMatchRating(match.publicMaxRating, 10),
         publicMinRating: publicMatchRating(match.publicMinRating, 0),
@@ -2828,6 +2835,53 @@ function savedTeams(match: Match, players: Player[], confirmedIds: string[]) {
   });
 
   return separateGoalkeepers({ teamA, teamB });
+}
+
+function automaticPitchPlayerOrder(players: Player[], scoreForPlayer: PlayerScoreFn = scorePlayer) {
+  return [...players].sort((a, b) => {
+    const order: Record<PositionLine, number> = { Porteria: 0, Defensa: 1, Medio: 2, Ataque: 3 };
+    return order[playerPosition(a)] - order[playerPosition(b)] || scoreForPlayer(b) - scoreForPlayer(a);
+  });
+}
+
+function pitchOrderedPlayers(players: Player[], slotIds?: string[], scoreForPlayer: PlayerScoreFn = scorePlayer) {
+  if (!slotIds?.length) return automaticPitchPlayerOrder(players, scoreForPlayer);
+
+  const playersById = new Map(players.map((player) => [player.id, player]));
+  const used = new Set<string>();
+  const ordered: Player[] = [];
+
+  slotIds.forEach((playerId) => {
+    if (used.has(playerId)) return;
+    const player = playersById.get(playerId);
+    if (!player) return;
+    used.add(playerId);
+    ordered.push(player);
+  });
+
+  const remaining = players.filter((player) => !used.has(player.id));
+  return [...ordered, ...automaticPitchPlayerOrder(remaining, scoreForPlayer)];
+}
+
+function pitchOrderedPlayerIds(players: Player[], slotIds?: string[], scoreForPlayer: PlayerScoreFn = scorePlayer) {
+  return pitchOrderedPlayers(players, slotIds, scoreForPlayer).map((player) => player.id);
+}
+
+function cleanLineupSlots(slots: LineupSlots | undefined, teamAIds: string[], teamBIds: string[]): LineupSlots | undefined {
+  const cleanTeam = (ids: string[] | undefined, allowedIds: string[]) => {
+    if (!ids?.length) return undefined;
+    const allowed = new Set(allowedIds);
+    const seen = new Set<string>();
+    return ids.filter((playerId) => {
+      if (!allowed.has(playerId) || seen.has(playerId)) return false;
+      seen.add(playerId);
+      return true;
+    });
+  };
+  const teamA = cleanTeam(slots?.teamA, teamAIds);
+  const teamB = cleanTeam(slots?.teamB, teamBIds);
+
+  return teamA?.length || teamB?.length ? { teamA, teamB } : undefined;
 }
 
 function reserveCapacity(match: Match) {
@@ -4626,6 +4680,7 @@ export default function Home() {
     const next = randomTeams(confirmedPlayers);
     updateMatch({
       ...activeMatch,
+      lineupSlots: undefined,
       teamA: next.teamA.map((player) => player.id),
       teamB: next.teamB.map((player) => player.id),
     });
@@ -4637,6 +4692,7 @@ export default function Home() {
     if (matchFinalized) return;
     updateMatch({
       ...activeMatch,
+      lineupSlots: undefined,
       teamA: balancedLineup.teamA.map((player) => player.id),
       teamB: balancedLineup.teamB.map((player) => player.id),
     });
@@ -4649,8 +4705,8 @@ export default function Home() {
     if (lineupClosed) return;
     if (matchFinalized) return;
 
-    const nextTeamA = suggested.teamA.map((player) => player.id);
-    const nextTeamB = suggested.teamB.map((player) => player.id);
+    const nextTeamA = pitchOrderedPlayerIds(suggested.teamA, activeMatch.lineupSlots?.teamA, effectivePlayerScore);
+    const nextTeamB = pitchOrderedPlayerIds(suggested.teamB, activeMatch.lineupSlots?.teamB, effectivePlayerScore);
     const sourceSide = nextTeamA.includes(sourcePlayerId) ? "A" : nextTeamB.includes(sourcePlayerId) ? "B" : null;
     const targetSide = nextTeamA.includes(targetPlayerId) ? "A" : nextTeamB.includes(targetPlayerId) ? "B" : null;
     if (!sourceSide || !targetSide) return;
@@ -4666,6 +4722,10 @@ export default function Home() {
 
     updateMatch({
       ...activeMatch,
+      lineupSlots: {
+        teamA: nextTeamA,
+        teamB: nextTeamB,
+      },
       teamA: nextTeamA,
       teamB: nextTeamB,
     });
@@ -4675,13 +4735,19 @@ export default function Home() {
     if (!canUseAdminControls && !isDemoMode) return;
     if (lineupClosed) return;
     if (matchFinalized) return;
-    const baseTeamA = suggested.teamA.map((player) => player.id).filter((id) => id !== playerId);
-    const baseTeamB = suggested.teamB.map((player) => player.id).filter((id) => id !== playerId);
+    const baseTeamA = pitchOrderedPlayerIds(suggested.teamA, activeMatch.lineupSlots?.teamA, effectivePlayerScore).filter((id) => id !== playerId);
+    const baseTeamB = pitchOrderedPlayerIds(suggested.teamB, activeMatch.lineupSlots?.teamB, effectivePlayerScore).filter((id) => id !== playerId);
+    const nextTeamA = team === "A" ? [...baseTeamA, playerId] : baseTeamA;
+    const nextTeamB = team === "B" ? [...baseTeamB, playerId] : baseTeamB;
 
     updateMatch({
       ...activeMatch,
-      teamA: team === "A" ? [...baseTeamA, playerId] : baseTeamA,
-      teamB: team === "B" ? [...baseTeamB, playerId] : baseTeamB,
+      lineupSlots: {
+        teamA: nextTeamA,
+        teamB: nextTeamB,
+      },
+      teamA: nextTeamA,
+      teamB: nextTeamB,
     });
   }
 
@@ -8599,6 +8665,7 @@ export default function Home() {
           <MatchPitch
             teamA={suggested.teamA}
             teamB={suggested.teamB}
+            lineupSlots={activeMatch.lineupSlots}
             kind={activeKind}
             orientation={activeMatchManagerPane === "alineacion" ? "landscape" : "portrait"}
             scoreForPlayer={effectivePlayerScore}
@@ -8736,6 +8803,7 @@ export default function Home() {
                 className="match-pitch-zoomed"
                 teamA={suggested.teamA}
                 teamB={suggested.teamB}
+                lineupSlots={activeMatch.lineupSlots}
                 kind={activeKind}
                 orientation={activeMatchManagerPane === "alineacion" ? "landscape" : "portrait"}
                 scoreForPlayer={effectivePlayerScore}
@@ -9641,6 +9709,7 @@ function MatchPitch({
   className = "",
   teamA,
   teamB,
+  lineupSlots,
   kind,
   orientation = "portrait",
   scoreForPlayer = scorePlayer,
@@ -9652,6 +9721,7 @@ function MatchPitch({
   className?: string;
   teamA: Player[];
   teamB: Player[];
+  lineupSlots?: LineupSlots;
   kind: MatchKind;
   orientation?: PitchOrientation;
   scoreForPlayer?: PlayerScoreFn;
@@ -9666,8 +9736,8 @@ function MatchPitch({
   const dropTargetRef = useRef<string | null>(null);
   const [dragState, setDragState] = useState<PitchDragState | null>(null);
   const isLandscapePitch = orientation === "landscape";
-  const teamATokens = placeTeam(teamA, kind, isLandscapePitch ? "left" : "bottom", scoreForPlayer);
-  const teamBTokens = placeTeam(teamB, kind, isLandscapePitch ? "right" : "top", scoreForPlayer);
+  const teamATokens = placeTeam(teamA, kind, isLandscapePitch ? "left" : "bottom", scoreForPlayer, lineupSlots?.teamA);
+  const teamBTokens = placeTeam(teamB, kind, isLandscapePitch ? "right" : "top", scoreForPlayer, lineupSlots?.teamB);
   const emptySlots = [
     ...teamATokens.empty.map((slot) => ({ ...slot, variant: "team-a" as const })),
     ...teamBTokens.empty.map((slot) => ({ ...slot, variant: "team-b" as const })),
@@ -9893,17 +9963,16 @@ function PitchPlayerPreview({ player, score, onClose }: { player: Player; score:
   );
 }
 
-function placeTeam(players: Player[], kind: MatchKind, side: "bottom" | "left" | "right" | "top", scoreForPlayer: PlayerScoreFn = scorePlayer) {
-  const sorted = [...players].sort((a, b) => {
-    const order: Record<PositionLine, number> = { Porteria: 0, Defensa: 1, Medio: 2, Ataque: 3 };
-    return order[playerPosition(a)] - order[playerPosition(b)] || scoreForPlayer(b) - scoreForPlayer(a);
-  });
+function placeTeam(players: Player[], kind: MatchKind, side: "bottom" | "left" | "right" | "top", scoreForPlayer: PlayerScoreFn = scorePlayer, lineupSlotIds?: string[]) {
+  const sorted = pitchOrderedPlayers(players, lineupSlotIds, scoreForPlayer);
   const slots = formationSlots(kind, side);
+  const usesManualSlots = Boolean(lineupSlotIds?.length);
 
   const placedPlayers = sorted.map((player, index) => {
-    const preferred = slots.find((slot) => slot.position === playerPosition(player) && !slot.used);
+    const manual = usesManualSlots ? slots.find((slot) => !slot.used) : undefined;
+    const preferred = usesManualSlots ? undefined : slots.find((slot) => slot.position === playerPosition(player) && !slot.used);
     const fallback = slots.find((slot) => !slot.used) ?? slots[slots.length - 1];
-    const slot = preferred ?? fallback;
+    const slot = manual ?? preferred ?? fallback;
     slot.used = true;
 
     if (index >= slots.length) {
