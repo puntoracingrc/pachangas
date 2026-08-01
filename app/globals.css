@@ -5035,6 +5035,67 @@ html:fullscreen .pitch-modal-fullscreen .match-pitch.match-pitch-horizontal.matc
   font-weight: 900;
 }
 
+.match-photo-preview-backdrop {
+  align-items: center;
+  background: rgba(5, 11, 10, 0.82);
+  backdrop-filter: blur(10px);
+  display: flex;
+  inset: 0;
+  justify-content: center;
+  padding: max(14px, var(--safe-top)) max(14px, var(--safe-right)) max(14px, var(--safe-bottom)) max(14px, var(--safe-left));
+  position: fixed;
+  z-index: 113;
+}
+
+.match-photo-preview-dialog {
+  background: rgba(18, 29, 24, 0.96);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 8px;
+  box-shadow: 0 28px 90px rgba(0, 0, 0, 0.46);
+  color: #f5f2e8;
+  display: grid;
+  gap: 10px;
+  max-height: calc(100dvh - max(28px, var(--safe-top)) - max(28px, var(--safe-bottom)));
+  max-width: min(920px, calc(100vw - max(28px, var(--safe-left)) - max(28px, var(--safe-right))));
+  min-width: min(92vw, 360px);
+  overflow: hidden;
+  padding: 10px;
+}
+
+.match-photo-preview-title {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  min-width: 0;
+}
+
+.match-photo-preview-title strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.match-photo-preview-title button {
+  background: #f5f2e8;
+  border: 0;
+  border-radius: 8px;
+  color: #132018;
+  cursor: pointer;
+  font-weight: 950;
+  min-height: 34px;
+  padding: 0 12px;
+}
+
+.match-photo-preview-dialog img {
+  border-radius: 6px;
+  display: block;
+  max-height: calc(100dvh - 96px - var(--safe-top) - var(--safe-bottom));
+  max-width: 100%;
+  object-fit: contain;
+  width: 100%;
+}
+
 .lineup-actions {
   display: grid;
   gap: 8px;
@@ -5650,16 +5711,54 @@ html:fullscreen .pitch-modal-fullscreen .match-pitch.match-pitch-horizontal.matc
 }
 
 .team-photo-card.has-photo {
+  align-content: stretch;
   border-style: solid;
   padding: 0;
 }
 
-.team-photo-card > img {
+.team-photo-card.has-photo .team-photo-preview-button {
+  height: 100%;
+}
+
+.team-photo-preview-button {
+  background: transparent;
+  border: 0;
+  color: inherit;
+  cursor: zoom-in;
+  display: grid;
+  min-height: 0;
+  padding: 0;
+  position: relative;
+  width: 100%;
+}
+
+.result-box .team-photo-preview-button {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  color: inherit;
+  min-height: 0;
+  padding: 0;
+}
+
+.team-photo-preview-button img {
   aspect-ratio: 4 / 3;
   display: block;
   height: auto;
   object-fit: cover;
   width: 100%;
+}
+
+.team-photo-preview-button span {
+  background: rgba(10, 18, 14, 0.72);
+  border-radius: 999px;
+  bottom: 8px;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 950;
+  padding: 6px 9px;
+  position: absolute;
+  right: 8px;
 }
 
 .team-photo-empty {
@@ -5731,12 +5830,6 @@ html:fullscreen .pitch-modal-fullscreen .match-pitch.match-pitch-horizontal.matc
   color: var(--ink-soft);
   font-size: 12px;
   font-weight: 800;
-}
-
-.result-locked-note {
-  color: var(--ink-soft);
-  font-weight: 800;
-  line-height: 1.35;
 }
 
 .scorers-box {
@@ -6176,6 +6269,7 @@ html:fullscreen .pitch-modal-fullscreen .match-pitch.match-pitch-horizontal.matc
   background: #eef7dc;
   border: 0;
   border-radius: 8px;
+  cursor: zoom-in;
   height: 56px;
   overflow: hidden;
   padding: 0;
@@ -9814,7 +9908,7 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
     pointer-events: none;
   }
 
-  main[data-mobile-tab] > :not(.mobile-app-nav):not(.pitch-modal-backdrop):not(.status-confirm-backdrop):not(.mobile-account-backdrop):not(.mobile-account-sheet) {
+  main[data-mobile-tab] > :not(.mobile-app-nav):not(.pitch-modal-backdrop):not(.match-photo-preview-backdrop):not(.status-confirm-backdrop):not(.mobile-account-backdrop):not(.mobile-account-sheet) {
     position: relative;
     z-index: 1;
   }
@@ -12229,7 +12323,7 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
     grid-column: 1;
     grid-row: 2;
     grid-template-columns: minmax(190px, 0.52fr) minmax(0, 1fr);
-    grid-template-rows: auto auto minmax(0, 1fr) auto;
+    grid-template-rows: auto auto minmax(0, 1fr);
     margin: 0;
     min-height: 0;
     overflow: hidden;
@@ -12242,8 +12336,7 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
 
   main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="resultado"] .result-score-grid,
   main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="resultado"] .team-photo-card,
-  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="resultado"] .result-box > button,
-  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="resultado"] .result-locked-note {
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="resultado"] .result-box > button {
     grid-column: 1;
   }
 
@@ -12255,7 +12348,17 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
   }
 
   main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="resultado"] .team-photo-card {
+    align-self: stretch;
     min-height: 0;
+  }
+
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="resultado"] .team-photo-card.has-photo {
+    grid-row: 3;
+  }
+
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="resultado"] .team-photo-preview-button,
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="resultado"] .team-photo-preview-button img {
+    height: 100%;
   }
 
   main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="resultado"] .team-photo-empty {
