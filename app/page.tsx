@@ -8794,9 +8794,6 @@ export default function Home() {
           {selectedMatchManagerPane === "alineacion" ? (
             <div className="lineup-side-tools" aria-label="Herramientas de alineación">
               <span className="lineup-side-tools-kicker">Herramientas</span>
-              <div className={lineupClosed ? "lineup-side-state closed" : "lineup-side-state"}>
-                {!matchConfigured ? "Pendiente" : lineupClosed ? "Cerrada" : "Abierta"}
-              </div>
               <div className="lineup-side-actions">
                 <button type="button" onClick={applyRandomTeams} disabled={!canEditLineup}>Aleatorio</button>
                 <button type="button" onClick={applyBalancedTeams} disabled={!canEditLineup}>Equilibrado</button>
