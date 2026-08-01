@@ -752,6 +752,17 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /short: "VEL"/);
   assert.match(page, /short: "POS"/);
   assert.match(page, /selectedRatingFacets\.map/);
+  const facetGridStart = page.indexOf('<div className="facet-grid">');
+  const facetGridEnd = page.indexOf('<button type="button" onClick={() => void addPeerRating', facetGridStart);
+  assert.ok(facetGridStart > -1 && facetGridEnd > facetGridStart, "rating facet editor should render before the save button");
+  const facetGridMarkup = page.slice(facetGridStart, facetGridEnd);
+  assert.match(page, /const ratingFacetStep = 0\.5/);
+  assert.match(facetGridMarkup, /facet-stepper/);
+  assert.match(facetGridMarkup, /Bajar \$\{facet\.label\}/);
+  assert.match(facetGridMarkup, /Subir \$\{facet\.label\}/);
+  assert.doesNotMatch(facetGridMarkup, /type="range"/);
+  assert.match(globalsCss, /\.facet-stepper/);
+  assert.match(globalsCss, /\.rating-box \.facet-stepper button/);
   assert.match(page, /ratingFacetsForPlayer\(player\)/);
   assert.match(page, /ratingLinePath/);
   assert.match(page, /ratingSeriesOffset/);
