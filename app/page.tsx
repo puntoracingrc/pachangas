@@ -1222,8 +1222,7 @@ function normalizeMatchTime(value: string) {
 }
 
 function matchTimePart(value: string) {
-  const time = normalizeMatchTime(value);
-  return matchTimeOptions.includes(time) ? time : "21:00";
+  return normalizeMatchTime(value);
 }
 
 function combineMatchDateTime(datePart: string, timePart: string) {
@@ -1538,13 +1537,6 @@ const marketWeekdays = [
 
 const marketTimeOptions = Array.from({ length: 48 }, (_, index) => {
   const totalMinutes = index * 30;
-  const hour = Math.floor(totalMinutes / 60);
-  const minute = totalMinutes % 60;
-  return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
-});
-
-const matchTimeOptions = Array.from({ length: 144 }, (_, index) => {
-  const totalMinutes = index * 10;
   const hour = Math.floor(totalMinutes / 60);
   const minute = totalMinutes % 60;
   return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
@@ -2009,7 +2001,7 @@ function dateInputValue(date: Date) {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 }
 
-function requestNativeDatePicker(input: HTMLInputElement) {
+function requestNativeInputPicker(input: HTMLInputElement) {
   if (input.disabled) return;
   try {
     (input as HTMLInputElement & { showPicker?: () => void }).showPicker?.();
@@ -9217,11 +9209,11 @@ export default function Home() {
                     disabled={!canEditMatchSettings}
                     onKeyDown={(event) => {
                       if (event.key === "Enter" || event.key === " " || event.key === "ArrowDown") {
-                        requestNativeDatePicker(event.currentTarget);
+                        requestNativeInputPicker(event.currentTarget);
                       }
                     }}
                     onPointerDown={(event) => {
-                      if (event.button === 0) requestNativeDatePicker(event.currentTarget);
+                      if (event.button === 0) requestNativeInputPicker(event.currentTarget);
                     }}
                     onChange={(event) => {
                       const nextDate = combineMatchDateTime(event.target.value, activeMatch.date);
@@ -9231,18 +9223,24 @@ export default function Home() {
                 </label>
                 <label className="match-time-control">
                   Hora
-                  <select
+                  <input
+                    type="time"
+                    step={600}
                     value={matchTimePart(activeMatch.date)}
                     disabled={!canEditMatchSettings}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " " || event.key === "ArrowDown") {
+                        requestNativeInputPicker(event.currentTarget);
+                      }
+                    }}
+                    onPointerDown={(event) => {
+                      if (event.button === 0) requestNativeInputPicker(event.currentTarget);
+                    }}
                     onChange={(event) => {
                       const nextDate = combineMatchDateTime(matchDatePart(activeMatch.date), event.target.value);
                       updateMatchSettings({ ...activeMatch, date: nextDate, season: seasonKey(nextDate) });
                     }}
-                  >
-                    {matchTimeOptions.map((time) => (
-                      <option key={time} value={time}>{time}</option>
-                    ))}
-                  </select>
+                  />
                 </label>
                 <label className="match-kind-control">
                   Modalidad
@@ -10001,11 +9999,11 @@ export default function Home() {
                         disabled={!canEditSelectedPlayer}
                         onKeyDown={(event) => {
                           if (event.key === "Enter" || event.key === " " || event.key === "ArrowDown") {
-                            requestNativeDatePicker(event.currentTarget);
+                            requestNativeInputPicker(event.currentTarget);
                           }
                         }}
                         onPointerDown={(event) => {
-                          if (event.button === 0) requestNativeDatePicker(event.currentTarget);
+                          if (event.button === 0) requestNativeInputPicker(event.currentTarget);
                         }}
                         onChange={(event) => updatePlayer(selectedPlayer.id, { birthDate: normalizeBirthDate(event.target.value) || undefined })}
                       />

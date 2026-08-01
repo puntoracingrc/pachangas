@@ -10321,7 +10321,12 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
     padding-right: 28px;
   }
 
-  main[data-mobile-tab="partido"] .match-editor input[type="date"]::-webkit-calendar-picker-indicator {
+  main[data-mobile-tab="partido"] .match-editor input[type="time"] {
+    color-scheme: dark;
+  }
+
+  main[data-mobile-tab="partido"] .match-editor input[type="date"]::-webkit-calendar-picker-indicator,
+  main[data-mobile-tab="partido"] .match-editor input[type="time"]::-webkit-calendar-picker-indicator {
     cursor: pointer;
     filter: invert(1);
     opacity: 0.85;
