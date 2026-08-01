@@ -2465,6 +2465,17 @@ body.player-evaluation-lab-body .legal-footer {
   gap: 8px;
 }
 
+.profile-demo-create-button {
+  background: #d9f25f;
+  border: 1px solid #b8dc32;
+  border-radius: 8px;
+  color: #172115;
+  font-size: 12px;
+  font-weight: 900;
+  min-height: 34px;
+  padding: 0 10px;
+}
+
 .inactive-label {
   background: #e5e7eb;
   border-radius: 999px;
@@ -11052,10 +11063,15 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
     align-content: stretch;
     display: grid;
     gap: 8px;
-    grid-template-columns: minmax(230px, 0.72fr) minmax(0, 1.28fr);
+    grid-template-columns: minmax(0, 1fr);
     grid-template-rows: minmax(0, 1fr);
     overflow: hidden;
     padding: 48px 8px 8px;
+  }
+
+  main[data-mobile-tab="inicio"] > .hero,
+  main[data-mobile-tab="inicio"] > .demo-banner {
+    display: none !important;
   }
 
   main[data-mobile-tab="inicio"] > .hero {
@@ -11159,7 +11175,7 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
   }
 
   main[data-mobile-tab="inicio"] > .app-shell {
-    grid-column: 2;
+    grid-column: 1;
     grid-row: 1 / span 6;
     height: 100%;
     min-height: 0;
@@ -12238,6 +12254,14 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
   main[data-mobile-tab="perfil"] .profile-title-actions small,
   main[data-mobile-tab="perfil"] .profile-close-button {
     display: none;
+  }
+
+  main[data-mobile-tab="perfil"] .profile-demo-create-button {
+    border-radius: 6px;
+    font-size: 10px;
+    min-height: 28px;
+    padding: 0 8px;
+    white-space: nowrap;
   }
 
   main[data-mobile-tab="perfil"] .profile-top {
