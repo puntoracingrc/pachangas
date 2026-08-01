@@ -567,7 +567,8 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(globalsCss, /data-match-manager-pane="admin"[\s\S]*\.match-admin-hub/);
   assert.match(globalsCss, /input\[type="date"\]::-webkit-calendar-picker-indicator/);
   assert.match(globalsCss, /input\[type="time"\]::-webkit-calendar-picker-indicator/);
-  assert.match(globalsCss, /input\[type="date"\]::-webkit-calendar-picker-indicator,[\s\S]*input\[type="time"\]::-webkit-calendar-picker-indicator\s*\{[\s\S]*opacity:\s*0\.85/);
+  assert.match(globalsCss, /input\[type="date"\]::-webkit-calendar-picker-indicator,[\s\S]*input\[type="time"\]::-webkit-calendar-picker-indicator\s*\{[\s\S]*filter:\s*brightness\(0\) invert\(1\) drop-shadow/);
+  assert.match(globalsCss, /input\[type="date"\]::-webkit-calendar-picker-indicator,[\s\S]*input\[type="time"\]::-webkit-calendar-picker-indicator\s*\{[\s\S]*opacity:\s*1/);
   assert.doesNotMatch(globalsCss, /input\[type="date"\]::-webkit-calendar-picker-indicator,[\s\S]*input\[type="time"\]::-webkit-calendar-picker-indicator\s*\{[\s\S]{0,100}opacity:\s*0\s*;/);
   assert.match(globalsCss, /\.next-match-roster-rail/);
   assert.match(globalsCss, /grid-auto-flow:\s*column/);
