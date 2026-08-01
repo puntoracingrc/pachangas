@@ -136,12 +136,23 @@ async function runViewport(client, viewport) {
     const main = document.querySelector("main[data-mobile-tab]");
     const nav = document.querySelector(".mobile-app-nav");
     const overflow = Math.max(doc.scrollWidth, body.scrollWidth) - Math.max(doc.clientWidth, window.innerWidth);
+    const rosterColumns = [...document.querySelectorAll(".next-match-roster-rail > .team-player-column")];
+    const rosterColumnMetrics = rosterColumns.map((column) => {
+      const style = getComputedStyle(column);
+      return {
+        horizontalOverflow: column.scrollWidth - column.clientWidth,
+        overflowY: style.overflowY,
+        scrollableY: column.scrollHeight > column.clientHeight + 2,
+      };
+    });
     return {
       heightClass: doc.dataset.windowHeightClass || "",
       hasContent: text.includes("Pachangas IQ") || text.includes("Partido") || text.includes("Mercado"),
       hasMain: Boolean(main),
       hasNav: Boolean(nav),
       overflow,
+      rosterColumnHorizontalOverflow: rosterColumnMetrics.reduce((max, column) => Math.max(max, column.horizontalOverflow), 0),
+      rosterHasVerticalColumnScroll: rosterColumnMetrics.some((column) => column.scrollableY && column.overflowY !== "hidden"),
       tab: main?.dataset.mobileTab || "",
       widthClass: doc.dataset.windowWidthClass || ""
     };
@@ -155,6 +166,10 @@ async function runViewport(client, viewport) {
   assert(metrics.heightClass, `${viewport.label}: missing height size class`);
   if (viewport.expectTab) {
     assert(metrics.tab === viewport.tab, `${viewport.label}: expected tab ${viewport.tab}, got ${metrics.tab}`);
+  }
+  if (viewport.tab === "partido" && metrics.heightClass === "compact") {
+    assert(metrics.rosterHasVerticalColumnScroll, `${viewport.label}: match roster columns must keep vertical scrolling`);
+    assert(metrics.rosterColumnHorizontalOverflow <= 2, `${viewport.label}: roster column horizontal overflow ${metrics.rosterColumnHorizontalOverflow}px`);
   }
 
   return { ...viewport, ...metrics };
