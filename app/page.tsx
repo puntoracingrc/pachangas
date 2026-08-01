@@ -762,6 +762,30 @@ function SearchLogo() {
   );
 }
 
+function BoardLogo() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 24 24">
+      <path d="M4 4h16v16H4V4Zm2 2v12h12V6H6Zm2 7.7 1.35-1.35 2.15 2.15 4.15-4.15L17 11.7l-5.5 5.5L8 13.7Z" />
+    </svg>
+  );
+}
+
+function EyeSlashLogo() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 24 24">
+      <path d="m3.28 2.22 18.5 18.5-1.42 1.42-3.2-3.2A11.7 11.7 0 0 1 12 20C6.4 20 2.4 16.36 1 12c.62-1.94 1.82-3.65 3.4-4.97L1.86 4.5l1.42-2.28ZM6.1 8.73A9.56 9.56 0 0 0 3.16 12c1.2 3.16 4.42 6 8.84 6 1.2 0 2.3-.2 3.3-.57l-2.12-2.12A4 4 0 0 1 8.7 10.82L6.1 8.73ZM12 4c5.6 0 9.6 3.64 11 8a11.1 11.1 0 0 1-2.72 4.36l-1.42-1.42A9.02 9.02 0 0 0 20.84 12C19.64 8.84 16.42 6 12 6c-.9 0-1.76.12-2.55.35L7.86 4.76A11.6 11.6 0 0 1 12 4Zm0 4a4 4 0 0 1 4 4c0 .38-.05.74-.15 1.08L10.92 8.15C11.26 8.05 11.62 8 12 8Z" />
+    </svg>
+  );
+}
+
+function EraserLogo() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 24 24">
+      <path d="M15.7 4.3a2.4 2.4 0 0 1 3.4 0l1.6 1.6a2.4 2.4 0 0 1 0 3.4L10.1 19.9H4.9L2.3 17.3a2.4 2.4 0 0 1 0-3.4l13.4-9.6Zm1.4 1.4L10.8 12l3.2 3.2 5.3-5.3a.4.4 0 0 0 0-.56l-1.6-1.6a.4.4 0 0 0-.6 0ZM4.6 15.3a.4.4 0 0 0 0 .56L5.7 17h3.55l3.35-3.35-3.2-3.2-4.8 4.85ZM13 20h9v2h-9v-2Z" />
+    </svg>
+  );
+}
+
 function GoogleSignInButton({
   className = "",
   disabled,
@@ -9694,6 +9718,20 @@ type PitchDragState = {
   targetId: string | null;
 };
 
+type PitchBoardPoint = {
+  x: number;
+  y: number;
+};
+
+type PitchBoardLine = {
+  id: string;
+  points: PitchBoardPoint[];
+};
+
+type PitchBoardInteraction =
+  | { kind: "draw"; lineId: string; pointerId: number }
+  | { grabOffsetX: number; grabOffsetY: number; kind: "player"; playerId: string; pointerId: number };
+
 type PitchPointerState = {
   active: boolean;
   pointerId: number;
@@ -9732,13 +9770,20 @@ function MatchPitch({
   onZoom?: () => void;
 }) {
   const holdTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const boardInteractionRef = useRef<PitchBoardInteraction | null>(null);
+  const boardPointerAbortRef = useRef<AbortController | null>(null);
   const pitchRef = useRef<HTMLDivElement | null>(null);
   const pointerAbortRef = useRef<AbortController | null>(null);
   const pointerRef = useRef<PitchPointerState | null>(null);
   const suppressPitchPreviewUntilRef = useRef(0);
   const dropTargetRef = useRef<string | null>(null);
+  const [boardLines, setBoardLines] = useState<PitchBoardLine[]>([]);
+  const [boardMode, setBoardMode] = useState(false);
+  const [boardPlayerPositions, setBoardPlayerPositions] = useState<Record<string, PitchBoardPoint>>({});
+  const [boardPlayersVisible, setBoardPlayersVisible] = useState(true);
   const [dragState, setDragState] = useState<PitchDragState | null>(null);
   const isLandscapePitch = orientation === "landscape";
+  const canUseBoard = isLandscapePitch;
   const teamATokens = placeTeam(teamA, kind, isLandscapePitch ? "left" : "bottom", scoreForPlayer, lineupSlots?.teamA);
   const teamBTokens = placeTeam(teamB, kind, isLandscapePitch ? "right" : "top", scoreForPlayer, lineupSlots?.teamB);
   const emptySlots = [
@@ -9754,8 +9799,158 @@ function MatchPitch({
     return () => {
       if (holdTimerRef.current) clearTimeout(holdTimerRef.current);
       pointerAbortRef.current?.abort();
+      boardPointerAbortRef.current?.abort();
     };
   }, []);
+
+  useEffect(() => {
+    if (canUseBoard) return;
+    clearBoardInteraction();
+    setBoardMode(false);
+    setBoardLines([]);
+    setBoardPlayerPositions({});
+    setBoardPlayersVisible(true);
+  }, [canUseBoard]);
+
+  function baseBoardPositions() {
+    return tokens.reduce<Record<string, PitchBoardPoint>>((current, token) => {
+      current[token.player.id] = { x: token.x, y: token.y };
+      return current;
+    }, {});
+  }
+
+  function clearBoardInteraction() {
+    boardPointerAbortRef.current?.abort();
+    boardPointerAbortRef.current = null;
+    boardInteractionRef.current = null;
+  }
+
+  function resetBoardDraft() {
+    clearBoardInteraction();
+    setBoardLines([]);
+    setBoardPlayerPositions(baseBoardPositions());
+    setBoardPlayersVisible(true);
+  }
+
+  function closeBoardMode() {
+    clearBoardInteraction();
+    setBoardLines([]);
+    setBoardPlayerPositions({});
+    setBoardPlayersVisible(true);
+    setBoardMode(false);
+  }
+
+  function toggleBoardMode() {
+    if (boardMode) {
+      closeBoardMode();
+      return;
+    }
+
+    clearPitchDrag({ suppressPreview: true });
+    setBoardLines([]);
+    setBoardPlayerPositions(baseBoardPositions());
+    setBoardPlayersVisible(true);
+    setBoardMode(true);
+  }
+
+  function boardPointFromClient(clientX: number, clientY: number) {
+    const rect = pitchRef.current?.getBoundingClientRect();
+    if (!rect) return null;
+    return {
+      x: Math.max(0, Math.min(100, ((clientX - rect.left) / Math.max(rect.width, 1)) * 100)),
+      y: Math.max(0, Math.min(100, ((clientY - rect.top) / Math.max(rect.height, 1)) * 100)),
+    };
+  }
+
+  function appendBoardPoint(lineId: string, point: PitchBoardPoint) {
+    setBoardLines((current) =>
+      current.map((line) => {
+        if (line.id !== lineId) return line;
+        const lastPoint = line.points.at(-1);
+        if (lastPoint && Math.hypot(point.x - lastPoint.x, point.y - lastPoint.y) < 0.35) return line;
+        return { ...line, points: [...line.points, point] };
+      }),
+    );
+  }
+
+  function moveBoardInteraction(event: PointerEvent) {
+    const interaction = boardInteractionRef.current;
+    if (!interaction || interaction.pointerId !== event.pointerId) return;
+    const point = boardPointFromClient(event.clientX, event.clientY);
+    if (!point) return;
+    event.preventDefault();
+
+    if (interaction.kind === "draw") {
+      appendBoardPoint(interaction.lineId, point);
+      return;
+    }
+
+    setBoardPlayerPositions((current) => ({
+      ...current,
+      [interaction.playerId]: {
+        x: Math.max(0, Math.min(100, point.x + interaction.grabOffsetX)),
+        y: Math.max(0, Math.min(100, point.y + interaction.grabOffsetY)),
+      },
+    }));
+  }
+
+  function finishBoardInteraction(event: PointerEvent) {
+    const interaction = boardInteractionRef.current;
+    if (!interaction || interaction.pointerId !== event.pointerId) return;
+    event.preventDefault();
+    clearBoardInteraction();
+  }
+
+  function cancelBoardInteraction(event: PointerEvent) {
+    const interaction = boardInteractionRef.current;
+    if (!interaction || interaction.pointerId !== event.pointerId) return;
+    clearBoardInteraction();
+  }
+
+  function startBoardWindowTracking() {
+    boardPointerAbortRef.current = new AbortController();
+    window.addEventListener("pointermove", moveBoardInteraction, { passive: false, signal: boardPointerAbortRef.current.signal });
+    window.addEventListener("pointerup", finishBoardInteraction, { passive: false, signal: boardPointerAbortRef.current.signal });
+    window.addEventListener("pointercancel", cancelBoardInteraction, { passive: false, signal: boardPointerAbortRef.current.signal });
+  }
+
+  function startBoardDrawing(event: ReactPointerEvent<HTMLDivElement>) {
+    if (!boardMode || !event.isPrimary) return;
+    const target = event.target as Element | null;
+    if (target?.closest("button, .pitch-board-toolbar")) return;
+    const point = boardPointFromClient(event.clientX, event.clientY);
+    if (!point) return;
+    event.preventDefault();
+    event.stopPropagation();
+    clearBoardInteraction();
+    const lineId = `line-${Date.now()}-${event.pointerId}`;
+    setBoardLines((current) => [...current, { id: lineId, points: [point] }]);
+    boardInteractionRef.current = { kind: "draw", lineId, pointerId: event.pointerId };
+    startBoardWindowTracking();
+  }
+
+  function startBoardPlayerDrag(event: ReactPointerEvent<HTMLButtonElement>, playerId: string, fallbackPosition: PitchBoardPoint) {
+    if (!boardMode || !event.isPrimary) {
+      startPitchDrag(event, playerId);
+      return;
+    }
+
+    const point = boardPointFromClient(event.clientX, event.clientY);
+    if (!point) return;
+    event.preventDefault();
+    event.stopPropagation();
+    clearPitchDrag({ suppressPreview: true });
+    clearBoardInteraction();
+    const currentPosition = boardPlayerPositions[playerId] ?? fallbackPosition;
+    boardInteractionRef.current = {
+      grabOffsetX: currentPosition.x - point.x,
+      grabOffsetY: currentPosition.y - point.y,
+      kind: "player",
+      playerId,
+      pointerId: event.pointerId,
+    };
+    startBoardWindowTracking();
+  }
 
   function clearPitchDrag({ suppressPreview = false } = {}) {
     if (holdTimerRef.current) clearTimeout(holdTimerRef.current);
@@ -9884,17 +10079,66 @@ function MatchPitch({
   }
 
   return (
-    <div ref={pitchRef} className={`match-pitch ${isLandscapePitch ? "match-pitch-horizontal" : ""} ${canDragPlayers ? "lineup-drag-enabled" : ""} ${dragState ? "lineup-drag-active" : ""} ${className}`.trim()} aria-label="Campo completo con alineaciones">
-      {onZoom ? (
-        <button
-          className="pitch-zoom-button"
-          type="button"
-          onClick={onZoom}
-          title="Ver campo en grande"
-          aria-label="Ver campo en grande"
-        >
-          <SearchLogo />
-        </button>
+    <div
+      ref={pitchRef}
+      className={`match-pitch ${isLandscapePitch ? "match-pitch-horizontal" : ""} ${canDragPlayers ? "lineup-drag-enabled" : ""} ${dragState ? "lineup-drag-active" : ""} ${boardMode ? "pitch-board-mode" : ""} ${boardMode && !boardPlayersVisible ? "pitch-board-hide-players" : ""} ${className}`.trim()}
+      aria-label={boardMode ? "Pizarra táctica temporal" : "Campo completo con alineaciones"}
+      onPointerDown={startBoardDrawing}
+    >
+      {(onZoom || canUseBoard) ? (
+        <div className="pitch-board-toolbar" aria-label="Herramientas del campo">
+          {onZoom ? (
+            <button
+              className="pitch-zoom-button"
+              type="button"
+              onClick={onZoom}
+              title="Ver campo en grande"
+              aria-label="Ver campo en grande"
+            >
+              <SearchLogo />
+            </button>
+          ) : null}
+          {canUseBoard ? (
+            <button
+              className={`pitch-board-button ${boardMode ? "active" : ""}`}
+              type="button"
+              onClick={toggleBoardMode}
+              title={boardMode ? "Salir de pizarra" : "Modo pizarra"}
+              aria-label={boardMode ? "Salir de modo pizarra" : "Entrar en modo pizarra"}
+            >
+              <BoardLogo />
+            </button>
+          ) : null}
+          {boardMode ? (
+            <>
+              <button
+                className={`pitch-board-button ${!boardPlayersVisible ? "active" : ""}`}
+                type="button"
+                onClick={() => setBoardPlayersVisible((visible) => !visible)}
+                title={boardPlayersVisible ? "Ocultar fichas" : "Mostrar fichas"}
+                aria-label={boardPlayersVisible ? "Ocultar fichas de la pizarra" : "Mostrar fichas de la pizarra"}
+              >
+                <EyeSlashLogo />
+              </button>
+              <button
+                className="pitch-board-button"
+                type="button"
+                onClick={resetBoardDraft}
+                title="Borrar pizarra"
+                aria-label="Borrar pizarra"
+              >
+                <EraserLogo />
+              </button>
+            </>
+          ) : null}
+        </div>
+      ) : null}
+      {boardMode ? (
+        <svg className="pitch-board-lines" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+          {boardLines.map((line) => (
+            <polyline key={line.id} points={line.points.map((point) => `${point.x},${point.y}`).join(" ")} />
+          ))}
+        </svg>
       ) : null}
       {balanceSummary ? (
         <div className="pitch-balance-hud" title={balanceSummary.detail} aria-label={`Equilibrio de equipos: ${balanceSummary.percent > 0 ? `${balanceSummary.percent}%` : "pendiente"}`}>
@@ -9927,9 +10171,12 @@ function MatchPitch({
         const score = scoreForPlayer(player);
         const isDragging = dragState?.sourceId === player.id;
         const isDropTarget = dragState?.targetId === player.id;
+        const boardPosition = boardMode ? boardPlayerPositions[player.id] : undefined;
+        const displayedX = boardPosition?.x ?? x;
+        const displayedY = boardPosition?.y ?? y;
         const tokenStyle = {
-          left: `${x}%`,
-          top: `${y}%`,
+          left: `${displayedX}%`,
+          top: `${displayedY}%`,
           "--drag-x": isDragging ? `${dragState.dx}px` : "0px",
           "--drag-y": isDragging ? `${dragState.dy}px` : "0px",
         } as CSSProperties;
@@ -9941,12 +10188,13 @@ function MatchPitch({
             data-pitch-player-id={player.id}
             key={player.id}
             onKeyDown={(event) => {
+              if (boardMode) return;
               if (event.key !== "Enter" && event.key !== " ") return;
               event.preventDefault();
               onPlayerClick?.(player.id);
             }}
             onPointerCancel={() => clearPitchDrag({ suppressPreview: canDragPlayers })}
-            onPointerDown={(event) => startPitchDrag(event, player.id)}
+            onPointerDown={(event) => startBoardPlayerDrag(event, player.id, { x, y })}
             style={tokenStyle}
             title={`${playerDisplayName(player)} · ${positionLabel(player)} · ${overallScore(score)}`}
             type="button"

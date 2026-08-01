@@ -233,6 +233,10 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /<button type="button" onClick=\{applyRandomTeams\} disabled=\{!canEditLineup\}>Aleatorio<\/button>/);
   assert.match(page, /<button type="button" onClick=\{applyBalancedTeams\} disabled=\{!canEditLineup\}>Equilibrado<\/button>/);
   assert.match(page, /lineupClosed \? "Abrir" : "Cerrar"/);
+  assert.match(page, /pitch-board-mode/);
+  assert.match(page, /Entrar en modo pizarra/);
+  assert.match(page, /Ocultar fichas de la pizarra/);
+  assert.match(page, /Borrar pizarra/);
   assert.match(page, /match-manager-admin-block/);
   assert.match(page, /lineup-title-result/);
   assert.match(page, /nextMatchStatusGroups/);
