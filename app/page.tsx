@@ -388,6 +388,18 @@ const weatherForecastClientLimitMs = 7 * weatherClientDayMs;
 const weatherForecastClientFreshWindowMs = weatherClientDayMs;
 const weatherClientShortCacheMs = 2 * weatherClientHourMs;
 const weatherClientLongCacheMs = weatherClientDayMs;
+
+const demoMatchWeather: MatchWeather = {
+  cloudCover: 8,
+  condition: "Sol",
+  conditionType: "CLEAR",
+  feelsLike: 33,
+  forecastTime: "2026-08-05T21:00:00.000Z",
+  humidity: 68,
+  precipitationProbability: 0,
+  temperature: 29,
+  windKmh: 6,
+};
 const matchWeatherClientCache = new Map<string, { expiresAt: number; payload: WeatherApiPayload }>();
 
 type PlayerScoreFn = (player: Player) => number;
@@ -3397,6 +3409,8 @@ export default function Home() {
     hasMatch: false,
     teamCode: null,
   });
+  const hasIncomingSharedLink = incomingSharedLink.hasInvite || incomingSharedLink.hasAdminInvite || incomingSharedLink.hasMatch;
+  const isDemoMode = previewDemoMode || (!hasIncomingSharedLink && !remoteReady && remoteTeams.length === 0);
   const applyingRemoteRef = useRef(false);
   const payloadRef = useRef<AppPayload | null>(null);
   const lastCommittedPayloadJsonRef = useRef("");
@@ -4420,6 +4434,16 @@ export default function Home() {
       return;
     }
 
+    if (isDemoMode) {
+      setMatchWeather({
+        ...demoMatchWeather,
+        forecastTime: activeMatch.date || demoMatchWeather.forecastTime,
+      });
+      setMatchWeatherStatus("ready");
+      setMatchWeatherMessage("");
+      return;
+    }
+
     if (typeof activeVenue?.lat !== "number" || typeof activeVenue.lng !== "number") {
       setMatchWeather(null);
       setMatchWeatherStatus("unavailable");
@@ -4495,7 +4519,7 @@ export default function Home() {
       });
 
     return () => controller.abort();
-  }, [activeMatch.date, activeMatch.id, activeVenue?.lat, activeVenue?.lng, matchConfigured]);
+  }, [activeMatch.date, activeMatch.id, activeVenue?.lat, activeVenue?.lng, isDemoMode, matchConfigured]);
 
   function updateMatch(next: Match) {
     setMatches((current) => current.map((match) => (match.id === next.id ? next : match)));
@@ -4641,7 +4665,17 @@ export default function Home() {
   }
 
   function isMobileManagerLandscape() {
-    return window.matchMedia("(orientation: landscape) and (max-height: 560px)").matches;
+    const isLandscape = window.matchMedia("(orientation: landscape)").matches;
+    if (!isLandscape) return false;
+
+    const viewportWidth = Math.round(window.visualViewport?.width ?? window.innerWidth);
+    const viewportHeight = Math.round(window.visualViewport?.height ?? window.innerHeight);
+    const hasTouchInput =
+      window.matchMedia("(pointer: coarse)").matches ||
+      window.matchMedia("(any-pointer: coarse)").matches ||
+      navigator.maxTouchPoints > 0;
+
+    return viewportHeight <= 560 || (hasTouchInput && viewportWidth >= 768 && viewportWidth <= 1368 && viewportHeight <= 1024);
   }
 
   function navigateMobileTab(tabId: MobileSectionTabId) {
@@ -5578,7 +5612,6 @@ export default function Home() {
   const selectedMarketAvailabilitySlots = selectedPlayer ? marketAvailabilitySlots(selectedPlayer.marketAvailability) : [];
   const selectedMarketReady = selectedPlayer ? playerMarketProfileComplete(selectedPlayer) : true;
   const currentTeam = remoteTeams.find((team) => team.id === remoteGroupId);
-  const hasIncomingSharedLink = incomingSharedLink.hasInvite || incomingSharedLink.hasAdminInvite || incomingSharedLink.hasMatch;
   const isRegisteredUser = Boolean(authUser && !isAnonymousAuthUser(authUser));
   const hasRealTeam = !previewDemoMode && remoteReady && Boolean(remoteGroupId);
   const billingActive = teamBillingIsActive(currentTeam);
@@ -5590,7 +5623,6 @@ export default function Home() {
   const ownerContributionRecipient = ownerContributionPlayer ? playerDisplayName(ownerContributionPlayer) : "owner del grupo";
   const showSubscriptionPanel = Boolean(hasRealTeam && (showBillingPanel || groupBillingLocked || (showSettings && currentRole === "owner")));
   const needsLoginForSharedLink = hasIncomingSharedLink && !isRegisteredUser && !hasRealTeam;
-  const isDemoMode = previewDemoMode || (!hasIncomingSharedLink && !remoteReady && remoteTeams.length === 0);
   const canManageTeam = Boolean(hasRealTeam && isRegisteredUser && (currentRole === "owner" || currentRole === "admin"));
   const canManageRoles = hasRealTeam && isRegisteredUser && currentRole === "owner";
   const canUseAdminControls = isDemoMode || canManageTeam;

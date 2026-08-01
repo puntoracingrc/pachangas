@@ -9670,7 +9670,9 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
   }
 }
 
-@media (orientation: landscape) and (max-height: 560px) {
+@media (orientation: landscape) and (max-height: 560px),
+  (orientation: landscape) and (min-width: 768px) and (max-width: 1368px) and (max-height: 1024px) and (pointer: coarse),
+  (orientation: landscape) and (min-width: 768px) and (max-width: 1368px) and (max-height: 1024px) and (any-pointer: coarse) {
   :root {
     --mobile-nav-height: var(--game-nav-height);
     --tap-target: var(--tap-target-compact);
@@ -10406,21 +10408,23 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
   }
 
   main[data-mobile-tab="partido"] .weather-card {
+    align-items: center;
     background: rgba(245, 242, 232, 0.08);
     border-color: rgba(255, 255, 255, 0.12);
     grid-column: 1 / -1;
     grid-row: 1;
-    gap: 6px;
-    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+    grid-template-columns: minmax(170px, 0.68fr) minmax(230px, 1fr) minmax(70px, 0.32fr);
     margin: 0;
     min-height: 38px;
-    padding: 5px 8px;
+    padding: 4px 8px;
   }
 
   main[data-mobile-tab="partido"] .weather-card-main {
     align-items: center;
-    gap: 7px;
+    gap: 6px;
     grid-template-columns: 24px auto auto minmax(0, 1fr);
+    min-width: 0;
   }
 
   main[data-mobile-tab="partido"] .weather-icon {
@@ -10461,6 +10465,37 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
     overflow: hidden;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 1;
+  }
+
+  main[data-mobile-tab="partido"] .weather-metrics {
+    align-items: center;
+    display: grid;
+    gap: 4px;
+    grid-template-columns: repeat(4, minmax(50px, 1fr));
+    justify-content: end;
+    min-width: 0;
+  }
+
+  main[data-mobile-tab="partido"] .weather-metrics span {
+    gap: 4px;
+    min-height: 24px;
+    overflow: hidden;
+    padding: 3px 6px;
+    text-overflow: ellipsis;
+  }
+
+  main[data-mobile-tab="partido"] .weather-metric-icon,
+  main[data-mobile-tab="partido"] .weather-metric-icon svg {
+    height: 13px;
+    width: 13px;
+  }
+
+  main[data-mobile-tab="partido"] .weather-card small {
+    grid-column: auto;
+    overflow: hidden;
+    text-align: right;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   main[data-mobile-tab="partido"] .payer-note,
