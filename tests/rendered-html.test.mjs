@@ -244,6 +244,10 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /Dibujar con color del equipo 2/);
   assert.match(page, /Ocultar fichas de la pizarra/);
   assert.match(page, /Borrar pizarra/);
+  assert.match(page, /boardDraggingPlayerId/);
+  assert.match(page, /setBoardDraggingPlayerId\(playerId\)/);
+  assert.match(page, /const isLineupDragging = dragState\?\.sourceId === player\.id/);
+  assert.match(page, /const isDragging = isLineupDragging \|\| boardDraggingPlayerId === player\.id/);
   assert.match(page, /match-manager-admin-block/);
   assert.match(page, /lineup-title-result/);
   assert.match(page, /nextMatchStatusGroups/);
@@ -744,6 +748,7 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(globalsCss, /\.lineup-drag-enabled \.pitch-player-card/);
   assert.match(globalsCss, /\.match-pitch\.lineup-drag-enabled/);
   assert.match(globalsCss, /\.pitch-player-card\.dragging-token/);
+  assert.match(globalsCss, /\.pitch-board-mode \.pitch-player-card\.dragging-token\s*\{[\s\S]*z-index:\s*80/);
   assert.match(globalsCss, /\.pitch-player-card\.drop-target-token/);
   assert.match(globalsCss, /\.empty-token\.drop-target-token/);
   assert.match(globalsCss, /\.pitch-player-preview-card/);
