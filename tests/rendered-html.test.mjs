@@ -706,6 +706,7 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(globalsCss, /\.match-pitch\.lineup-drag-enabled/);
   assert.match(globalsCss, /\.pitch-player-card\.dragging-token/);
   assert.match(globalsCss, /\.pitch-player-card\.drop-target-token/);
+  assert.match(globalsCss, /\.empty-token\.drop-target-token/);
   assert.match(globalsCss, /\.pitch-player-preview-card/);
   assert.match(globalsCss, /\.match-pitch\.match-pitch-horizontal/);
   assert.match(globalsCss, /\.match-pitch-horizontal \.center-circle\s*\{[\s\S]*width:\s*15\.4%/);
@@ -738,7 +739,12 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(globalsCss, /\.avatar-adjust-hint/);
   assert.match(globalsCss, /touch-action:\s*none/);
   assert.match(page, /function swapLineupPlayers/);
+  assert.match(page, /type LineupSlotPlayerId = string \| null/);
   assert.match(page, /type LineupSlots/);
+  assert.match(page, /function automaticPitchSlotPlayerIds/);
+  assert.match(page, /function pitchSlotPlayerIds/);
+  assert.match(page, /function trimLineupSlots/);
+  assert.match(page, /targetDropId\.startsWith\("slot:"\)/);
   assert.match(page, /lineupSlots:\s*cleanLineupSlots\(match\.lineupSlots, match\.teamA \?\? \[\], match\.teamB \?\? \[\]\)/);
   assert.match(page, /function pitchOrderedPlayers/);
   assert.match(page, /function pitchOrderedPlayerIds/);
@@ -748,6 +754,9 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /const manual = usesManualSlots \? slots\.find\(\(slot\) => !slot\.used\) : undefined/);
   assert.match(page, /onPlayerSwap=\{swapLineupPlayers\}/);
   assert.match(page, /setPitchPreviewPlayerId/);
+  assert.match(page, /data-pitch-drop-id/);
+  assert.match(page, /player:\$\{player\.id\}/);
+  assert.match(page, /slot:\$\{slot\.side\}:\$\{slot\.slotIndex\}/);
   assert.match(page, /data-pitch-player-id/);
   assert.match(page, /goalkeeperRatingFacets/);
   assert.match(page, /type RatingRole = "field" \| "goalkeeper"/);

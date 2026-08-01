@@ -318,9 +318,11 @@ type SiteSettings = {
   teamBColor: string;
 };
 
+type LineupSlotPlayerId = string | null;
+
 type LineupSlots = {
-  teamA?: string[];
-  teamB?: string[];
+  teamA?: LineupSlotPlayerId[];
+  teamB?: LineupSlotPlayerId[];
 };
 
 type Match = {
@@ -2881,7 +2883,7 @@ function automaticPitchPlayerOrder(players: Player[], scoreForPlayer: PlayerScor
   });
 }
 
-function pitchOrderedPlayers(players: Player[], slotIds?: string[], scoreForPlayer: PlayerScoreFn = scorePlayer) {
+function pitchOrderedPlayers(players: Player[], slotIds?: LineupSlotPlayerId[], scoreForPlayer: PlayerScoreFn = scorePlayer) {
   if (!slotIds?.length) return automaticPitchPlayerOrder(players, scoreForPlayer);
 
   const playersById = new Map(players.map((player) => [player.id, player]));
@@ -2889,6 +2891,7 @@ function pitchOrderedPlayers(players: Player[], slotIds?: string[], scoreForPlay
   const ordered: Player[] = [];
 
   slotIds.forEach((playerId) => {
+    if (!playerId) return;
     if (used.has(playerId)) return;
     const player = playersById.get(playerId);
     if (!player) return;
@@ -2900,20 +2903,74 @@ function pitchOrderedPlayers(players: Player[], slotIds?: string[], scoreForPlay
   return [...ordered, ...automaticPitchPlayerOrder(remaining, scoreForPlayer)];
 }
 
-function pitchOrderedPlayerIds(players: Player[], slotIds?: string[], scoreForPlayer: PlayerScoreFn = scorePlayer) {
+function pitchOrderedPlayerIds(players: Player[], slotIds?: LineupSlotPlayerId[], scoreForPlayer: PlayerScoreFn = scorePlayer) {
   return pitchOrderedPlayers(players, slotIds, scoreForPlayer).map((player) => player.id);
 }
 
+function compactLineupSlotIds(slotIds: LineupSlotPlayerId[]) {
+  return slotIds.filter((playerId): playerId is string => Boolean(playerId));
+}
+
+function trimLineupSlots(slotIds: LineupSlotPlayerId[]) {
+  const trimmed = [...slotIds];
+  while (trimmed.length > 0 && !trimmed.at(-1)) trimmed.pop();
+  return trimmed;
+}
+
+function automaticPitchSlotPlayerIds(players: Player[], kind: MatchKind, side: "bottom" | "left" | "right" | "top", scoreForPlayer: PlayerScoreFn = scorePlayer) {
+  const slots = formationSlots(kind, side).map((slot) => ({ ...slot }));
+  const slotIds: LineupSlotPlayerId[] = Array.from({ length: slots.length }, () => null);
+  const extras: string[] = [];
+
+  automaticPitchPlayerOrder(players, scoreForPlayer).forEach((player) => {
+    const preferredIndex = slots.findIndex((slot) => !slot.used && slot.position === playerPosition(player));
+    const fallbackIndex = slots.findIndex((slot) => !slot.used);
+    const slotIndex = preferredIndex >= 0 ? preferredIndex : fallbackIndex;
+    if (slotIndex < 0) {
+      extras.push(player.id);
+      return;
+    }
+
+    slots[slotIndex].used = true;
+    slotIds[slotIndex] = player.id;
+  });
+
+  return [...slotIds, ...extras];
+}
+
+function pitchSlotPlayerIds(players: Player[], slotIds: LineupSlotPlayerId[] | undefined, scoreForPlayer: PlayerScoreFn = scorePlayer, slotCount = players.length) {
+  const automaticIds = automaticPitchPlayerOrder(players, scoreForPlayer).map((player) => player.id);
+  if (!slotIds?.length) return automaticIds;
+
+  const playerIds = new Set(players.map((player) => player.id));
+  const used = new Set<string>();
+  const slots: LineupSlotPlayerId[] = Array.from({ length: Math.max(slotCount, Math.min(slotIds.length, slotCount)) }, (_, index) => {
+    const playerId = slotIds[index];
+    if (!playerId || used.has(playerId) || !playerIds.has(playerId)) return null;
+    used.add(playerId);
+    return playerId;
+  });
+  let remaining = automaticIds.filter((playerId) => !used.has(playerId));
+
+  for (let index = 0; index < slots.length && remaining.length > 0; index += 1) {
+    if (slots[index]) continue;
+    slots[index] = remaining.shift() ?? null;
+  }
+
+  return [...slots, ...remaining];
+}
+
 function cleanLineupSlots(slots: LineupSlots | undefined, teamAIds: string[], teamBIds: string[]): LineupSlots | undefined {
-  const cleanTeam = (ids: string[] | undefined, allowedIds: string[]) => {
+  const cleanTeam = (ids: LineupSlotPlayerId[] | undefined, allowedIds: string[]) => {
     if (!ids?.length) return undefined;
     const allowed = new Set(allowedIds);
     const seen = new Set<string>();
-    return ids.filter((playerId) => {
-      if (!allowed.has(playerId) || seen.has(playerId)) return false;
+    const cleaned = ids.map((playerId) => {
+      if (!playerId || !allowed.has(playerId) || seen.has(playerId)) return null;
       seen.add(playerId);
-      return true;
+      return playerId;
     });
+    return cleaned.some(Boolean) ? trimLineupSlots(cleaned) : undefined;
   };
   const teamA = cleanTeam(slots?.teamA, teamAIds);
   const teamB = cleanTeam(slots?.teamB, teamBIds);
@@ -4806,33 +4863,56 @@ export default function Home() {
     });
   }
 
-  function swapLineupPlayers(sourcePlayerId: string, targetPlayerId: string) {
+  function swapLineupPlayers(sourcePlayerId: string, targetDropId: string) {
+    const targetPlayerId = targetDropId.startsWith("player:") ? targetDropId.slice("player:".length) : targetDropId;
     if (sourcePlayerId === targetPlayerId) return;
     if (!canEditLineup && !isDemoMode) return;
     if (!registrationOpen) return;
     if (lineupClosed) return;
     if (matchFinalized) return;
 
-    const nextTeamA = pitchOrderedPlayerIds(suggested.teamA, activeMatch.lineupSlots?.teamA, effectivePlayerScore);
-    const nextTeamB = pitchOrderedPlayerIds(suggested.teamB, activeMatch.lineupSlots?.teamB, effectivePlayerScore);
-    const sourceSide = nextTeamA.includes(sourcePlayerId) ? "A" : nextTeamB.includes(sourcePlayerId) ? "B" : null;
-    const targetSide = nextTeamA.includes(targetPlayerId) ? "A" : nextTeamB.includes(targetPlayerId) ? "B" : null;
-    if (!sourceSide || !targetSide) return;
+    const slotCount = formationSlots(activeKind, "bottom").length;
+    const nextTeamASlots = activeMatch.lineupSlots?.teamA?.length
+      ? pitchSlotPlayerIds(suggested.teamA, activeMatch.lineupSlots.teamA, effectivePlayerScore, slotCount)
+      : automaticPitchSlotPlayerIds(suggested.teamA, activeKind, "bottom", effectivePlayerScore);
+    const nextTeamBSlots = activeMatch.lineupSlots?.teamB?.length
+      ? pitchSlotPlayerIds(suggested.teamB, activeMatch.lineupSlots.teamB, effectivePlayerScore, slotCount)
+      : automaticPitchSlotPlayerIds(suggested.teamB, activeKind, "bottom", effectivePlayerScore);
+    const sourceSide = nextTeamASlots.includes(sourcePlayerId) ? "A" : nextTeamBSlots.includes(sourcePlayerId) ? "B" : null;
+    if (!sourceSide) return;
 
-    const sourceTeam = sourceSide === "A" ? nextTeamA : nextTeamB;
-    const targetTeam = targetSide === "A" ? nextTeamA : nextTeamB;
-    const sourceIndex = sourceTeam.indexOf(sourcePlayerId);
-    const targetIndex = targetTeam.indexOf(targetPlayerId);
-    if (sourceIndex < 0 || targetIndex < 0) return;
+    const sourceTeamSlots = sourceSide === "A" ? nextTeamASlots : nextTeamBSlots;
+    const sourceIndex = sourceTeamSlots.indexOf(sourcePlayerId);
+    if (sourceIndex < 0) return;
 
-    sourceTeam[sourceIndex] = targetPlayerId;
-    targetTeam[targetIndex] = sourcePlayerId;
+    if (targetDropId.startsWith("slot:")) {
+      const [, targetSideValue, targetIndexValue] = targetDropId.split(":");
+      const targetSide = targetSideValue === "A" || targetSideValue === "B" ? targetSideValue : null;
+      const targetIndex = Number(targetIndexValue);
+      if (!targetSide || !Number.isInteger(targetIndex) || targetIndex < 0 || targetIndex >= slotCount) return;
+      const targetTeamSlots = targetSide === "A" ? nextTeamASlots : nextTeamBSlots;
+      if (targetTeamSlots[targetIndex] === sourcePlayerId) return;
+      sourceTeamSlots[sourceIndex] = targetTeamSlots[targetIndex] ?? null;
+      targetTeamSlots[targetIndex] = sourcePlayerId;
+    } else {
+      const targetSide = nextTeamASlots.includes(targetPlayerId) ? "A" : nextTeamBSlots.includes(targetPlayerId) ? "B" : null;
+      if (!targetSide) return;
+      const targetTeamSlots = targetSide === "A" ? nextTeamASlots : nextTeamBSlots;
+      const targetIndex = targetTeamSlots.indexOf(targetPlayerId);
+      if (targetIndex < 0) return;
+
+      sourceTeamSlots[sourceIndex] = targetPlayerId;
+      targetTeamSlots[targetIndex] = sourcePlayerId;
+    }
+
+    const nextTeamA = compactLineupSlotIds(nextTeamASlots);
+    const nextTeamB = compactLineupSlotIds(nextTeamBSlots);
 
     updateMatch({
       ...activeMatch,
       lineupSlots: {
-        teamA: nextTeamA,
-        teamB: nextTeamB,
+        teamA: trimLineupSlots(nextTeamASlots),
+        teamB: trimLineupSlots(nextTeamBSlots),
       },
       teamA: nextTeamA,
       teamB: nextTeamB,
@@ -10009,8 +10089,8 @@ function MatchPitch({
   const teamATokens = placeTeam(teamA, kind, isLandscapePitch ? "left" : "bottom", scoreForPlayer, lineupSlots?.teamA);
   const teamBTokens = placeTeam(teamB, kind, isLandscapePitch ? "right" : "top", scoreForPlayer, lineupSlots?.teamB);
   const emptySlots = [
-    ...teamATokens.empty.map((slot) => ({ ...slot, variant: "team-a" as const })),
-    ...teamBTokens.empty.map((slot) => ({ ...slot, variant: "team-b" as const })),
+    ...teamATokens.empty.map((slot) => ({ ...slot, side: "A" as const, variant: "team-a" as const })),
+    ...teamBTokens.empty.map((slot) => ({ ...slot, side: "B" as const, variant: "team-b" as const })),
   ];
   const tokens = [
     ...teamATokens.players.map((token) => ({ ...token, variant: "team-a" as const })),
@@ -10226,9 +10306,9 @@ function MatchPitch({
     let bestDistance = Infinity;
     let bestId: string | null = null;
 
-    pitch.querySelectorAll<HTMLElement>("[data-pitch-player-id]").forEach((element) => {
-      const targetId = element.dataset.pitchPlayerId;
-      if (!targetId || targetId === sourceId) return;
+    pitch.querySelectorAll<HTMLElement>("[data-pitch-drop-id]").forEach((element) => {
+      const targetId = element.dataset.pitchDropId;
+      if (!targetId || targetId === `player:${sourceId}`) return;
       const rect = element.getBoundingClientRect();
       const centerX = rect.left + rect.width / 2;
       const centerY = rect.top + rect.height / 2;
@@ -10433,20 +10513,26 @@ function MatchPitch({
       <div className={`goal-box ${isLandscapePitch ? "left" : "top"}`} />
       <div className={`goal-box ${isLandscapePitch ? "right" : "bottom"}`} />
       {tokens.length === 0 ? <p>Marca jugadores como “Voy”.</p> : null}
-      {emptySlots.map((slot, index) => (
-        <div
-          className={`empty-token ${slot.variant}`}
-          key={`${slot.variant}-empty-${index}`}
-          style={{ left: `${slot.x}%`, top: `${slot.y}%` }}
-          title="Falta jugador"
-        >
-          <b>Falta</b>
-        </div>
-      ))}
+      {emptySlots.map((slot, index) => {
+        const dropId = `slot:${slot.side}:${slot.slotIndex}`;
+        const isDropTarget = dragState?.targetId === dropId;
+
+        return (
+          <div
+            className={`empty-token ${slot.variant} ${isDropTarget ? "drop-target-token" : ""}`}
+            data-pitch-drop-id={dropId}
+            key={`${slot.variant}-empty-${index}`}
+            style={{ left: `${slot.x}%`, top: `${slot.y}%` }}
+            title="Falta jugador"
+          >
+            <b>Falta</b>
+          </div>
+        );
+      })}
       {tokens.map(({ player, x, y, variant }) => {
         const score = scoreForPlayer(player);
         const isDragging = dragState?.sourceId === player.id;
-        const isDropTarget = dragState?.targetId === player.id;
+        const isDropTarget = dragState?.targetId === `player:${player.id}`;
         const boardPosition = boardMode ? boardState.playerPositions[player.id] : undefined;
         const displayedX = boardPosition?.x ?? x;
         const displayedY = boardPosition?.y ?? y;
@@ -10461,6 +10547,7 @@ function MatchPitch({
           <button
             aria-label={`Ver ficha de ${playerDisplayName(player)} desde el campo`}
             className={`pitch-player-card ${cardTierClass(score)} ${variant} ${isDragging ? "dragging-token" : ""} ${isDropTarget ? "drop-target-token" : ""} ${player.injured ? "injured-token" : ""} ${player.inactive ? "inactive-token" : ""}`}
+            data-pitch-drop-id={`player:${player.id}`}
             data-pitch-player-id={player.id}
             key={player.id}
             onKeyDown={(event) => {
@@ -10535,10 +10622,54 @@ function PitchPlayerPreview({ player, score, onClose }: { player: Player; score:
   );
 }
 
-function placeTeam(players: Player[], kind: MatchKind, side: "bottom" | "left" | "right" | "top", scoreForPlayer: PlayerScoreFn = scorePlayer, lineupSlotIds?: string[]) {
-  const sorted = pitchOrderedPlayers(players, lineupSlotIds, scoreForPlayer);
-  const slots = formationSlots(kind, side);
+function extraPitchPosition(side: "bottom" | "left" | "right" | "top", extraIndex: number) {
+  if (side === "left" || side === "right") {
+    const lane = extraIndex % 4;
+    const row = Math.floor(extraIndex / 4);
+    return {
+      x: side === "left" ? 14 + lane * 8 : 86 - lane * 8,
+      y: row % 2 === 0 ? 90 : 10,
+    };
+  }
+
+  const lane = extraIndex % 4;
+  const row = Math.floor(extraIndex / 4);
+  return {
+    x: row % 2 === 0 ? 90 : 10,
+    y: side === "top" ? 14 + lane * 8 : 86 - lane * 8,
+  };
+}
+
+function placeTeam(players: Player[], kind: MatchKind, side: "bottom" | "left" | "right" | "top", scoreForPlayer: PlayerScoreFn = scorePlayer, lineupSlotIds?: LineupSlotPlayerId[]) {
+  const slots = formationSlots(kind, side).map((slot, slotIndex) => ({ ...slot, slotIndex }));
   const usesManualSlots = Boolean(lineupSlotIds?.length);
+
+  if (usesManualSlots) {
+    const playersById = new Map(players.map((player) => [player.id, player]));
+    const slotPlayerIds = pitchSlotPlayerIds(players, lineupSlotIds, scoreForPlayer, slots.length);
+    const placedPlayers = slotPlayerIds
+      .map((playerId, index) => {
+        if (!playerId) return null;
+        const player = playersById.get(playerId);
+        if (!player) return null;
+
+        if (index >= slots.length) {
+          return { player, slotIndex: index, ...extraPitchPosition(side, index - slots.length) };
+        }
+
+        const slot = slots[index];
+        slot.used = true;
+        return { player, slotIndex: slot.slotIndex, x: slot.x, y: slot.y };
+      })
+      .filter((token): token is { player: Player; slotIndex: number; x: number; y: number } => Boolean(token));
+
+    return {
+      players: placedPlayers,
+      empty: slots.filter((slot) => !slot.used).map((slot) => ({ slotIndex: slot.slotIndex, x: slot.x, y: slot.y })),
+    };
+  }
+
+  const sorted = pitchOrderedPlayers(players, lineupSlotIds, scoreForPlayer);
 
   const placedPlayers = sorted.map((player, index) => {
     const manual = usesManualSlots ? slots.find((slot) => !slot.used) : undefined;
@@ -10548,28 +10679,15 @@ function placeTeam(players: Player[], kind: MatchKind, side: "bottom" | "left" |
     slot.used = true;
 
     if (index >= slots.length) {
-      const extraOffset = index - slots.length + 1;
-      if (side === "left" || side === "right") {
-        return {
-          player,
-          x: side === "left" ? 44 : 56,
-          y: 18 + ((extraOffset * 17) % 64),
-        };
-      }
-
-      return {
-        player,
-        x: 18 + ((extraOffset * 17) % 64),
-        y: side === "top" ? 44 : 56,
-      };
+      return { player, slotIndex: index, ...extraPitchPosition(side, index - slots.length) };
     }
 
-    return { player, x: slot.x, y: slot.y };
+    return { player, slotIndex: slot.slotIndex, x: slot.x, y: slot.y };
   });
 
   return {
     players: placedPlayers,
-    empty: slots.filter((slot) => !slot.used).map((slot) => ({ x: slot.x, y: slot.y })),
+    empty: slots.filter((slot) => !slot.used).map((slot) => ({ slotIndex: slot.slotIndex, x: slot.x, y: slot.y })),
   };
 }
 
