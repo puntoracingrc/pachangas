@@ -598,6 +598,13 @@ html[data-display-mode="standalone"] body {
   }
 }
 
+html:fullscreen,
+html:fullscreen body {
+  height: 100%;
+  overflow: hidden;
+  width: 100%;
+}
+
 @media (hover: none) and (pointer: coarse) {
   input,
   select,
@@ -4662,6 +4669,10 @@ select:disabled {
   z-index: 220;
 }
 
+html:fullscreen .pitch-modal-fullscreen-backdrop {
+  padding: max(4px, var(--safe-top)) max(4px, var(--safe-right)) max(4px, var(--safe-bottom)) max(4px, var(--safe-left));
+}
+
 .pitch-modal {
   background: #fffdf7;
   border: 1px solid var(--line);
@@ -4735,6 +4746,10 @@ select:disabled {
   max-height: none !important;
   max-width: none !important;
   width: 100% !important;
+}
+
+html:fullscreen .pitch-modal-fullscreen .match-pitch.match-pitch-horizontal.match-pitch-zoomed {
+  height: calc(100vh - max(8px, var(--safe-top)) - max(8px, var(--safe-bottom))) !important;
 }
 
 .pitch-modal-fullscreen .pitch-balance-hud {

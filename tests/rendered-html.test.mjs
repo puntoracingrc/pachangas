@@ -705,6 +705,12 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /pitchZoomOpen/);
   assert.match(page, /pitchPreviewPlayer/);
   assert.match(page, /Ver campo en grande/);
+  assert.match(page, /function canRequestGameFullscreen/);
+  assert.match(page, /requestFullscreen\(\{ navigationUI: "hide" \}\)/);
+  assert.match(page, /const openPitchZoom = useCallback/);
+  assert.match(page, /onZoom=\{openPitchZoom\}/);
+  assert.match(page, /const closePitchZoom = useCallback/);
+  assert.match(page, /pitchFullscreenRequestedRef/);
   assert.match(page, /match-pitch-zoomed/);
   assert.match(page, /type TeamBalanceSummary = ReturnType<typeof teamBalanceSummary>/);
   assert.match(page, /balanceSummary=\{balanceSummary\}/);
@@ -788,8 +794,11 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(globalsCss, /\.match-pitch-horizontal \.center-circle\s*\{[\s\S]*width:\s*15\.4%/);
   assert.match(globalsCss, /linear-gradient\(90deg,\s*rgba\(255,\s*255,\s*255,\s*0\.07\) 50%,\s*transparent 50%\) 0 0 \/ 46px 100%/);
   assert.match(globalsCss, /\.pitch-modal-fullscreen-backdrop/);
+  assert.match(globalsCss, /html:fullscreen,\s*[\s\S]*html:fullscreen body/);
+  assert.match(globalsCss, /html:fullscreen \.pitch-modal-fullscreen-backdrop/);
   assert.match(globalsCss, /z-index:\s*220/);
   assert.match(globalsCss, /\.pitch-modal-fullscreen \.match-pitch\.match-pitch-horizontal\.match-pitch-zoomed/);
+  assert.match(globalsCss, /html:fullscreen \.pitch-modal-fullscreen \.match-pitch\.match-pitch-horizontal\.match-pitch-zoomed/);
   assert.match(globalsCss, /data-match-manager-pane="alineacion"[\s\S]*\.lineup-panel > \.team\s*\{\s*display:\s*none/);
   assert.match(globalsCss, /data-match-manager-pane="alineacion"[\s\S]*\.lineup-panel > \.match-pitch\s*\{[\s\S]*aspect-ratio:\s*1\.78/);
   assert.match(globalsCss, /\.pitch-card-photo/);
@@ -1132,8 +1141,8 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(layout, /appleWebApp/);
   assert.match(layout, /viewportFit:\s*"cover"/);
   assert.match(layout, /PwaRuntime/);
-  assert.match(manifest, /display:\s*"standalone"/);
-  assert.match(manifest, /display_override:\s*\["standalone", "minimal-ui", "browser"\]/);
+  assert.match(manifest, /display:\s*"fullscreen"/);
+  assert.match(manifest, /display_override:\s*\["fullscreen", "standalone", "minimal-ui", "browser"\]/);
   assert.match(manifest, /orientation:\s*"any"/);
   assert.match(manifest, /launch_handler/);
   assert.match(manifest, /client_mode:\s*"focus-existing"/);
