@@ -1,6 +1,6 @@
 "use client";
 
-import { type CSSProperties, type Dispatch, type FormEvent, Fragment, type MouseEvent as ReactMouseEvent, type PointerEvent as ReactPointerEvent, type SetStateAction, type WheelEvent as ReactWheelEvent, useEffect, useMemo, useRef, useState } from "react";
+import { type CSSProperties, type Dispatch, type FormEvent, Fragment, type MouseEvent as ReactMouseEvent, type PointerEvent as ReactPointerEvent, type SetStateAction, type WheelEvent as ReactWheelEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { attachVenueAutocomplete, type VenuePlace } from "./googlePlacesClient";
 import {
@@ -3199,6 +3199,15 @@ type PitchBoardState = {
   playersVisible: boolean;
 };
 
+type FullscreenCapableDocument = Document & {
+  webkitExitFullscreen?: () => Promise<void> | void;
+  webkitFullscreenElement?: Element | null;
+};
+
+type FullscreenCapableElement = HTMLElement & {
+  webkitRequestFullscreen?: () => Promise<void> | void;
+};
+
 function initialPitchBoardState(): PitchBoardState {
   return {
     active: false,
@@ -3207,6 +3216,54 @@ function initialPitchBoardState(): PitchBoardState {
     playerPositions: {},
     playersVisible: true,
   };
+}
+
+function isGameFullscreenActive() {
+  const fullscreenDocument = document as FullscreenCapableDocument;
+  return Boolean(document.fullscreenElement ?? fullscreenDocument.webkitFullscreenElement);
+}
+
+function canRequestGameFullscreen() {
+  const fullscreenElement = document.documentElement as FullscreenCapableElement;
+  const hasFullscreenApi = Boolean(fullscreenElement.requestFullscreen ?? fullscreenElement.webkitRequestFullscreen);
+  const hasTouchInput = window.matchMedia("(pointer: coarse)").matches || navigator.maxTouchPoints > 0;
+  const isLandscape = window.matchMedia("(orientation: landscape)").matches;
+
+  return hasFullscreenApi && hasTouchInput && isLandscape;
+}
+
+async function requestGameFullscreen() {
+  if (!canRequestGameFullscreen() || isGameFullscreenActive()) return false;
+
+  const fullscreenElement = document.documentElement as FullscreenCapableElement;
+
+  try {
+    if (fullscreenElement.requestFullscreen) {
+      await fullscreenElement.requestFullscreen({ navigationUI: "hide" });
+      return true;
+    }
+
+    await fullscreenElement.webkitRequestFullscreen?.();
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function exitGameFullscreen() {
+  const fullscreenDocument = document as FullscreenCapableDocument;
+  if (!isGameFullscreenActive()) return;
+
+  try {
+    if (document.exitFullscreen) {
+      await document.exitFullscreen();
+      return;
+    }
+
+    await fullscreenDocument.webkitExitFullscreen?.();
+  } catch {
+    // Exiting fullscreen is best-effort; the user can always leave it with system controls.
+  }
 }
 
 export default function Home() {
@@ -3316,6 +3373,7 @@ export default function Home() {
   const handledMobileEntryRef = useRef(false);
   const mobileNavigationLockRef = useRef<MobileAppTab | null>(null);
   const mobileNavigationUnlockTimerRef = useRef<number | null>(null);
+  const pitchFullscreenRequestedRef = useRef(false);
   const [cameraPlayerId, setCameraPlayerId] = useState<string | null>(null);
   const [cameraError, setCameraError] = useState("");
   const [avatarDragging, setAvatarDragging] = useState(false);
@@ -3457,18 +3515,46 @@ export default function Home() {
     };
   }, [openQuickForm]);
 
+  const openPitchZoom = useCallback(() => {
+    setPitchZoomOpen(true);
+    void requestGameFullscreen().then((enteredFullscreen) => {
+      if (enteredFullscreen) pitchFullscreenRequestedRef.current = true;
+    });
+  }, []);
+
+  const closePitchZoom = useCallback(() => {
+    setPitchZoomOpen(false);
+    if (!pitchFullscreenRequestedRef.current) return;
+
+    pitchFullscreenRequestedRef.current = false;
+    void exitGameFullscreen();
+  }, []);
+
   useEffect(() => {
     if (!pitchZoomOpen && !pitchPreviewPlayerId) return;
 
     function closePitchZoomWithKeyboard(event: KeyboardEvent) {
       if (event.key !== "Escape") return;
-      setPitchZoomOpen(false);
+      closePitchZoom();
       setPitchPreviewPlayerId(null);
     }
 
     document.addEventListener("keydown", closePitchZoomWithKeyboard);
     return () => document.removeEventListener("keydown", closePitchZoomWithKeyboard);
-  }, [pitchZoomOpen, pitchPreviewPlayerId]);
+  }, [closePitchZoom, pitchPreviewPlayerId, pitchZoomOpen]);
+
+  useEffect(() => {
+    const clearFullscreenRequestFlag = () => {
+      if (!isGameFullscreenActive()) pitchFullscreenRequestedRef.current = false;
+    };
+
+    document.addEventListener("fullscreenchange", clearFullscreenRequestFlag);
+    document.addEventListener("webkitfullscreenchange", clearFullscreenRequestFlag);
+    return () => {
+      document.removeEventListener("fullscreenchange", clearFullscreenRequestFlag);
+      document.removeEventListener("webkitfullscreenchange", clearFullscreenRequestFlag);
+    };
+  }, []);
 
   function currentPayload(): AppPayload {
     return {
@@ -9479,7 +9565,7 @@ export default function Home() {
             onBoardStateChange={setPitchBoardState}
             onPlayerClick={setPitchPreviewPlayerId}
             onPlayerSwap={swapLineupPlayers}
-            onZoom={() => setPitchZoomOpen(true)}
+            onZoom={openPitchZoom}
           />
           <div className={lineupClosed ? "lineup-state closed" : "lineup-state"}>
             {!matchConfigured ? "Alineación pendiente" : lineupClosed ? "Alineación cerrada" : "Alineación abierta"}
@@ -9603,7 +9689,7 @@ export default function Home() {
                 <span>Campo en grande</span>
                 <strong id="pitch-modal-title">{matchKinds[activeKind].teamSize}v{matchKinds[activeKind].teamSize}</strong>
               </div>
-              <button type="button" onClick={() => setPitchZoomOpen(false)}>Cerrar</button>
+              <button type="button" onClick={closePitchZoom}>Cerrar</button>
             </div>
             <div className="pitch-modal-pitch-wrap">
               <MatchPitch
