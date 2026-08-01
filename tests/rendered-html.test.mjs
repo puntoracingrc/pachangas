@@ -660,6 +660,14 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(globalsCss, /\.avatar-adjust-hint/);
   assert.match(globalsCss, /touch-action:\s*none/);
   assert.match(page, /function swapLineupPlayers/);
+  assert.match(page, /type LineupSlots/);
+  assert.match(page, /lineupSlots:\s*cleanLineupSlots\(match\.lineupSlots, match\.teamA \?\? \[\], match\.teamB \?\? \[\]\)/);
+  assert.match(page, /function pitchOrderedPlayers/);
+  assert.match(page, /function pitchOrderedPlayerIds/);
+  assert.match(page, /lineupSlots:\s*\{\s*teamA:\s*nextTeamA,\s*teamB:\s*nextTeamB/);
+  assert.match(page, /placeTeam\(teamA, kind, isLandscapePitch \? "left" : "bottom", scoreForPlayer, lineupSlots\?\.teamA\)/);
+  assert.match(page, /const usesManualSlots = Boolean\(lineupSlotIds\?\.length\)/);
+  assert.match(page, /const manual = usesManualSlots \? slots\.find\(\(slot\) => !slot\.used\) : undefined/);
   assert.match(page, /onPlayerSwap=\{swapLineupPlayers\}/);
   assert.match(page, /setPitchPreviewPlayerId/);
   assert.match(page, /data-pitch-player-id/);
