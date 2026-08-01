@@ -9475,6 +9475,7 @@ export default function Home() {
             scoreForPlayer={effectivePlayerScore}
             boardState={pitchBoardState}
             canDragPlayers={(canEditLineup || isDemoMode) && registrationOpen && !lineupClosed && !matchFinalized}
+            canUseBoard={!matchFinalized}
             onBoardStateChange={setPitchBoardState}
             onPlayerClick={setPitchPreviewPlayerId}
             onPlayerSwap={swapLineupPlayers}
@@ -9616,6 +9617,7 @@ export default function Home() {
                 scoreForPlayer={effectivePlayerScore}
                 boardState={pitchBoardState}
                 canDragPlayers={(canEditLineup || isDemoMode) && registrationOpen && !lineupClosed && !matchFinalized}
+                canUseBoard={!matchFinalized}
                 onBoardStateChange={setPitchBoardState}
                 onPlayerClick={(playerId) => {
                   setPitchPreviewPlayerId(playerId);
@@ -10328,6 +10330,7 @@ function MatchPitch({
   scoreForPlayer = scorePlayer,
   boardState = initialPitchBoardState(),
   canDragPlayers = false,
+  canUseBoard: canUseBoardProp = true,
   onBoardStateChange,
   onPlayerClick,
   onPlayerSwap,
@@ -10343,6 +10346,7 @@ function MatchPitch({
   scoreForPlayer?: PlayerScoreFn;
   boardState?: PitchBoardState;
   canDragPlayers?: boolean;
+  canUseBoard?: boolean;
   onBoardStateChange?: Dispatch<SetStateAction<PitchBoardState>>;
   onPlayerClick?: (playerId: string) => void;
   onPlayerSwap?: (sourcePlayerId: string, targetPlayerId: string) => void;
@@ -10359,7 +10363,7 @@ function MatchPitch({
   const [boardDraggingPlayerId, setBoardDraggingPlayerId] = useState<string | null>(null);
   const [dragState, setDragState] = useState<PitchDragState | null>(null);
   const isLandscapePitch = orientation === "landscape";
-  const canUseBoard = isLandscapePitch;
+  const canUseBoard = canUseBoardProp && isLandscapePitch;
   const boardMode = canUseBoard && boardState.active;
   const boardPlayersVisible = boardState.playersVisible;
   const teamATokens = placeTeam(teamA, kind, isLandscapePitch ? "left" : "bottom", scoreForPlayer, lineupSlots?.teamA);

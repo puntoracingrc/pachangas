@@ -5147,7 +5147,7 @@ select:disabled {
 
 .empty-token {
   align-items: center;
-  aspect-ratio: 0.72;
+  aspect-ratio: var(--pitch-card-ratio, 0.72);
   background:
     radial-gradient(circle at 74% 22%, rgba(255, 255, 255, 0.46), transparent 20%),
     conic-gradient(from 210deg at 72% 26%, rgba(255, 255, 255, 0.28), rgba(120, 128, 138, 0.2), rgba(255, 255, 255, 0.2), rgba(92, 99, 110, 0.24), rgba(255, 255, 255, 0.26)),
@@ -5167,7 +5167,7 @@ select:disabled {
   padding: clamp(4px, 1cqw, 7px) clamp(4px, 1cqw, 6px) clamp(4px, 1cqw, 6px);
   position: absolute;
   transform: translate(-50%, -50%);
-  width: clamp(34px, 9.5cqw, 58px);
+  width: var(--pitch-card-width, clamp(34px, 9.5cqw, 58px));
   z-index: 2;
 }
 
@@ -5246,7 +5246,7 @@ select:disabled {
 }
 
 .pitch-player-card {
-  aspect-ratio: 0.72;
+  aspect-ratio: var(--pitch-card-ratio, 0.72);
   background: var(--card-bg,
     radial-gradient(circle at 82% 20%, rgba(255, 255, 255, 0.62), transparent 20%),
     conic-gradient(from 210deg at 72% 26%, rgba(255, 255, 255, 0.42), rgba(191, 139, 36, 0.2), rgba(255, 255, 255, 0.36), rgba(176, 126, 25, 0.2), rgba(255, 255, 255, 0.42)),
@@ -5266,7 +5266,7 @@ select:disabled {
   text-align: center;
   transform: translate(-50%, -50%);
   transition: box-shadow 160ms ease, filter 160ms ease, transform 160ms ease;
-  width: clamp(34px, 9.5cqw, 58px);
+  width: var(--pitch-card-width, clamp(34px, 9.5cqw, 58px));
   z-index: 3;
 }
 
@@ -12169,8 +12169,9 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
     display: none;
   }
 
-  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="alineacion"] .pitch-player-card {
-    width: clamp(34px, 6.5cqw, 68px);
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="alineacion"] .pitch-player-card,
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="alineacion"] .empty-token {
+    --pitch-card-width: clamp(34px, 6.5cqw, 68px);
   }
 
   main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="alineacion"] .lineup-panel > .team {
