@@ -962,6 +962,7 @@ const legacyPositionMeta: Record<"Porteria" | "Defensa" | "Medio" | "Ataque", { 
 
 const ratingReviewInterval = 3;
 const ratingFacetStep = 0.5;
+const peerRatingFacetLimit = 1;
 const footballSeasonStartMonth = 8;
 
 type RatingFacetConfig = { key: RatingFacet; label: string; short: string };
@@ -1299,6 +1300,24 @@ function teamLevelScore(teamPlayers: Player[]) {
 
 function clampRating(value: number) {
   return Math.max(1, Math.min(10, Number.isFinite(value) ? value : 5));
+}
+
+function clampRatingWithinLimit(value: number, base: number, limit = peerRatingFacetLimit) {
+  const cleanBase = clampRating(base);
+  return Math.max(clampRating(cleanBase - limit), Math.min(clampRating(cleanBase + limit), clampRating(value)));
+}
+
+function peerRatingFacetBounds(player: Player, facet: RatingFacet) {
+  const base = currentPeerFacetBaseline(player, facet);
+  return {
+    max: clampRating(base + peerRatingFacetLimit),
+    min: clampRating(base - peerRatingFacetLimit),
+  };
+}
+
+function clampPeerRatingFacet(player: Player, facet: RatingFacet, value: number) {
+  const bounds = peerRatingFacetBounds(player, facet);
+  return Math.max(bounds.min, Math.min(bounds.max, clampRating(value)));
 }
 
 function assessmentModeFromKind(kind: MatchKind): FootballMode {
@@ -2233,12 +2252,33 @@ function ratingLinePath(votes: RatingVote[], facet: RatingFacet, seriesIndex = 0
     .join(" ");
 }
 
+function baseFacetRating(player: Player) {
+  if (player.ratings?.length) return averageRatingValues(player.ratings);
+  return player.rating;
+}
+
+function boundedFacetVoteValues(player: Player, facet: RatingFacet) {
+  const values: number[] = [];
+  let baseline = baseFacetRating(player);
+
+  for (const vote of ratingHistory(player, ratingRoleForPlayer(player))) {
+    const boundedValue = clampRatingWithinLimit(vote.facets?.[facet] ?? baseline, baseline);
+    values.push(boundedValue);
+    baseline = averageRatingValues(values);
+  }
+
+  return values;
+}
+
 function facetAverage(player: Player, facet: RatingFacet) {
-  const votes = ratingVotesForRole(player);
-  const facetVotes = votes.map((vote) => vote.facets?.[facet]).filter((value): value is number => Number.isFinite(value));
+  const facetVotes = boundedFacetVoteValues(player, facet);
   if (facetVotes.length > 0) return facetVotes.reduce((sum, rating) => sum + rating, 0) / facetVotes.length;
   if (player.ratings?.length) return player.ratings.reduce((sum, rating) => sum + rating, 0) / player.ratings.length;
   return player.rating;
+}
+
+function currentPeerFacetBaseline(player: Player, facet: RatingFacet) {
+  return facetAverage(player, facet);
 }
 
 function cappedDelta(value: number, limit: number) {
@@ -5742,15 +5782,16 @@ export default function Home() {
   );
   const ratingWaitMatches = selectedRatingWindow?.waitMatches ?? 0;
   const selectedFacetDraftValue = (facetKey: RatingFacet) =>
-    selectedPlayer ? clampRating(newFacetRatings[facetKey] ?? facetAverage(selectedPlayer, facetKey)) : 5;
+    selectedPlayer ? clampPeerRatingFacet(selectedPlayer, facetKey, newFacetRatings[facetKey] ?? facetAverage(selectedPlayer, facetKey)) : 5;
   const setSelectedFacetRating = (facetKey: RatingFacet, value: number) => {
+    if (!selectedPlayer) return;
     setNewFacetRatings((current) => ({
       ...current,
-      [facetKey]: clampRating(value),
+      [facetKey]: clampPeerRatingFacet(selectedPlayer, facetKey, value),
     }));
   };
   const draftPeerAverage = selectedPlayer
-    ? selectedRatingFacets.reduce((sum, facet) => sum + clampRating(newFacetRatings[facet.key] ?? facetAverage(selectedPlayer, facet.key)), 0) / selectedRatingFacets.length
+    ? selectedRatingFacets.reduce((sum, facet) => sum + clampPeerRatingFacet(selectedPlayer, facet.key, newFacetRatings[facet.key] ?? facetAverage(selectedPlayer, facet.key)), 0) / selectedRatingFacets.length
     : 0;
   const selectedRatingStatusText = selectedPlayer && selectedRatingWindow
     ? selectedPlayer.inactive
@@ -5814,7 +5855,7 @@ export default function Home() {
     if (!selectedPlayer) return;
     const ownVote = ratingHistory(selectedPlayer, ratingRoleForPlayer(selectedPlayer)).filter((vote) => vote.voterId === ratingVoterId).at(-1);
     const nextFacets = ratingFacetsForPlayer(selectedPlayer).reduce((next, facet) => {
-      next[facet.key] = clampRating(ownVote?.facets[facet.key] ?? facetAverage(selectedPlayer, facet.key));
+      next[facet.key] = clampPeerRatingFacet(selectedPlayer, facet.key, ownVote?.facets[facet.key] ?? facetAverage(selectedPlayer, facet.key));
       return next;
     }, {} as Record<RatingFacet, number>);
     setNewFacetRatings(nextFacets);
@@ -6279,7 +6320,7 @@ export default function Home() {
       matchCount: player.appearances,
       createdAt: new Date().toISOString(),
       facets: ratingFacetsForPlayer(player).reduce((next, facet) => {
-        next[facet.key] = clampRating(newFacetRatings[facet.key]);
+        next[facet.key] = clampPeerRatingFacet(player, facet.key, newFacetRatings[facet.key]);
         return next;
       }, {} as Record<RatingFacet, number>),
     };
@@ -8175,13 +8216,14 @@ export default function Home() {
           {selectedRatingFacets.map((facet) => {
             const facetValue = selectedFacetDraftValue(facet.key);
             const facetPoints = overallScore(facetValue);
+            const facetBounds = selectedPlayer ? peerRatingFacetBounds(selectedPlayer, facet.key) : { max: 10, min: 1 };
             return (
               <div className="facet-field" key={facet.key}>
                 <span>{facet.label}</span>
                 <div className="facet-stepper" aria-label={`${facet.label}: ${facetPoints} de 100`}>
                   <button
                     type="button"
-                    disabled={!canRateSelectedPlayer || facetPoints <= 10}
+                    disabled={!canRateSelectedPlayer || facetValue <= facetBounds.min}
                     onClick={() => setSelectedFacetRating(facet.key, facetValue - ratingFacetStep)}
                     aria-label={`Bajar ${facet.label}`}
                   >
@@ -8190,7 +8232,7 @@ export default function Home() {
                   <b>{facetPoints}</b>
                   <button
                     type="button"
-                    disabled={!canRateSelectedPlayer || facetPoints >= 100}
+                    disabled={!canRateSelectedPlayer || facetValue >= facetBounds.max}
                     onClick={() => setSelectedFacetRating(facet.key, facetValue + ratingFacetStep)}
                     aria-label={`Subir ${facet.label}`}
                   >

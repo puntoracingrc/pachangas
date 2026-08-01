@@ -902,6 +902,12 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.ok(facetGridStart > -1 && facetGridEnd > facetGridStart, "rating facet editor should render before the save button");
   const facetGridMarkup = page.slice(facetGridStart, facetGridEnd);
   assert.match(page, /const ratingFacetStep = 0\.5/);
+  assert.match(page, /const peerRatingFacetLimit = 1/);
+  assert.match(page, /function clampPeerRatingFacet/);
+  assert.match(page, /function boundedFacetVoteValues/);
+  assert.match(page, /clampRatingWithinLimit\(vote\.facets\?\.\[facet\] \?\? baseline, baseline\)/);
+  assert.match(page, /disabled=\{!canRateSelectedPlayer \|\| facetValue <= facetBounds\.min\}/);
+  assert.match(page, /disabled=\{!canRateSelectedPlayer \|\| facetValue >= facetBounds\.max\}/);
   assert.match(facetGridMarkup, /facet-stepper/);
   assert.match(facetGridMarkup, /Bajar \$\{facet\.label\}/);
   assert.match(facetGridMarkup, /Subir \$\{facet\.label\}/);
@@ -1050,6 +1056,9 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(supabaseSql, /Authenticated users can read active market profiles/);
   assert.match(supabaseSql, /pachanga_market_profiles_zones_idx/);
   assert.match(supabaseSql, /create or replace function public\.append_pachanga_player_rating/);
+  assert.match(supabaseSql, /selected_rating_role text/);
+  assert.match(supabaseSql, /base_ritmo numeric/);
+  assert.match(supabaseSql, /greatest\(greatest\(1, base_ritmo - 1\), least\(least\(10, base_ritmo \+ 1\)/);
   assert.match(supabaseSql, /birthDate/);
   assert.match(supabaseSql, /avatarOffsetX/);
   assert.match(supabaseSql, /avatarOffsetY/);

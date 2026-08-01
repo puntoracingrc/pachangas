@@ -5591,6 +5591,15 @@ declare
   saved_updated_at timestamptz;
   global_profile_id uuid;
   selected_owner_id uuid;
+  selected_rating_role text;
+  role_vote_count integer;
+  fallback_rating numeric;
+  base_ritmo numeric;
+  base_tiro numeric;
+  base_pase numeric;
+  base_regate numeric;
+  base_defensa numeric;
+  base_fisico numeric;
 begin
   current_user_id := auth.uid();
   if current_user_id is null then
@@ -5643,31 +5652,52 @@ begin
     raise exception 'Rating window closed for this player';
   end if;
 
+  selected_rating_role :=
+    case
+      when coalesce((selected_player ->> 'goalkeeperOnly')::boolean, false)
+        or coalesce(selected_player ->> 'position', '') in ('Portero', 'Porteria')
+      then 'goalkeeper'
+      else 'field'
+    end;
+
+  select count(*)
+  into role_vote_count
+  from jsonb_array_elements(coalesce(selected_player -> 'ratingVotes', '[]'::jsonb)) as vote(value)
+  where vote.value ->> 'ratingRole' = selected_rating_role;
+
+  fallback_rating := greatest(1, least(10, coalesce(nullif(selected_player ->> 'rating', '')::numeric, 5)));
+
+  select
+    coalesce(avg(case when (vote.value -> 'facets' ->> 'ritmo') is not null then (vote.value -> 'facets' ->> 'ritmo')::numeric end), fallback_rating),
+    coalesce(avg(case when (vote.value -> 'facets' ->> 'tiro') is not null then (vote.value -> 'facets' ->> 'tiro')::numeric end), fallback_rating),
+    coalesce(avg(case when (vote.value -> 'facets' ->> 'pase') is not null then (vote.value -> 'facets' ->> 'pase')::numeric end), fallback_rating),
+    coalesce(avg(case when (vote.value -> 'facets' ->> 'regate') is not null then (vote.value -> 'facets' ->> 'regate')::numeric end), fallback_rating),
+    coalesce(avg(case when (vote.value -> 'facets' ->> 'defensa') is not null then (vote.value -> 'facets' ->> 'defensa')::numeric end), fallback_rating),
+    coalesce(avg(case when (vote.value -> 'facets' ->> 'fisico') is not null then (vote.value -> 'facets' ->> 'fisico')::numeric end), fallback_rating)
+  into base_ritmo, base_tiro, base_pase, base_regate, base_defensa, base_fisico
+  from jsonb_array_elements(coalesce(selected_player -> 'ratingVotes', '[]'::jsonb)) as vote(value)
+  where (role_vote_count > 0 and vote.value ->> 'ratingRole' = selected_rating_role)
+     or (role_vote_count = 0 and not (vote.value ? 'ratingRole'));
+
   select display_name into selected_member_name
   from public.pachanga_group_members
   where group_id = target_group_id
     and user_id = current_user_id;
 
   clean_facets := jsonb_build_object(
-    'ritmo', greatest(1, least(10, coalesce((vote_facets ->> 'ritmo')::numeric, 5))),
-    'tiro', greatest(1, least(10, coalesce((vote_facets ->> 'tiro')::numeric, 5))),
-    'pase', greatest(1, least(10, coalesce((vote_facets ->> 'pase')::numeric, 5))),
-    'regate', greatest(1, least(10, coalesce((vote_facets ->> 'regate')::numeric, 5))),
-    'defensa', greatest(1, least(10, coalesce((vote_facets ->> 'defensa')::numeric, 5))),
-    'fisico', greatest(1, least(10, coalesce((vote_facets ->> 'fisico')::numeric, 5)))
+    'ritmo', greatest(greatest(1, base_ritmo - 1), least(least(10, base_ritmo + 1), coalesce((vote_facets ->> 'ritmo')::numeric, base_ritmo))),
+    'tiro', greatest(greatest(1, base_tiro - 1), least(least(10, base_tiro + 1), coalesce((vote_facets ->> 'tiro')::numeric, base_tiro))),
+    'pase', greatest(greatest(1, base_pase - 1), least(least(10, base_pase + 1), coalesce((vote_facets ->> 'pase')::numeric, base_pase))),
+    'regate', greatest(greatest(1, base_regate - 1), least(least(10, base_regate + 1), coalesce((vote_facets ->> 'regate')::numeric, base_regate))),
+    'defensa', greatest(greatest(1, base_defensa - 1), least(least(10, base_defensa + 1), coalesce((vote_facets ->> 'defensa')::numeric, base_defensa))),
+    'fisico', greatest(greatest(1, base_fisico - 1), least(least(10, base_fisico + 1), coalesce((vote_facets ->> 'fisico')::numeric, base_fisico)))
   );
 
   next_vote := jsonb_build_object(
     'id', gen_random_uuid()::text,
     'voterId', current_user_id::text,
     'voterName', selected_member_name,
-    'ratingRole',
-      case
-        when coalesce((selected_player ->> 'goalkeeperOnly')::boolean, false)
-          or coalesce(selected_player ->> 'position', '') in ('Portero', 'Porteria')
-        then 'goalkeeper'
-        else 'field'
-      end,
+    'ratingRole', selected_rating_role,
     'matchCount', player_appearances,
     'createdAt', to_char(now() at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"'),
     'facets', clean_facets
