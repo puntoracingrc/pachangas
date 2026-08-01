@@ -12645,6 +12645,14 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
     padding: 8px;
   }
 
+  main[data-mobile-tab="equipo"] > .bottom-grid #ranking {
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+
+  main[data-mobile-tab="equipo"] > .bottom-grid #ranking > .panel-title {
+    display: none;
+  }
+
   main[data-mobile-tab="perfil"] > .bottom-grid.without-profile #ranking {
     display: grid;
     gap: 8px;
@@ -12665,6 +12673,21 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
     overflow: auto;
     padding-right: 2px;
     scrollbar-width: thin;
+  }
+
+  main[data-mobile-tab="equipo"] .ranking-card-grid {
+    align-items: stretch;
+    grid-auto-columns: minmax(248px, 30vw);
+    grid-auto-flow: column;
+    grid-template-columns: none;
+    justify-content: start;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 2px 2px 6px;
+  }
+
+  main[data-mobile-tab="equipo"] .ranking-player-entry {
+    height: 100%;
   }
 
   main[data-mobile-tab="mercado"] > .market-admin-panel {

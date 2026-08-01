@@ -566,7 +566,9 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(globalsCss, /main\[data-mobile-tab="inicio"\] \.side-history \.history-season-filter\s*\{[\s\S]*display:\s*none/);
   assert.match(globalsCss, /main\[data-mobile-tab="partido"\] > \.app-shell > \.lineup-panel/);
   assert.match(globalsCss, /main\[data-mobile-tab="partido"\] \.lineup-panel\s*\{[\s\S]*grid-template-columns:\s*minmax\(0,\s*1fr\)/);
-  assert.match(globalsCss, /main\[data-mobile-tab="equipo"\] > \.bottom-grid #ranking\s*\{[\s\S]*grid-template-rows:\s*auto auto minmax\(0,\s*1fr\)/);
+  assert.match(globalsCss, /main\[data-mobile-tab="equipo"\] > \.bottom-grid #ranking\s*\{[\s\S]*grid-template-rows:\s*auto minmax\(0,\s*1fr\)/);
+  assert.match(globalsCss, /main\[data-mobile-tab="equipo"\] > \.bottom-grid #ranking > \.panel-title\s*\{[\s\S]*display:\s*none/);
+  assert.match(globalsCss, /main\[data-mobile-tab="equipo"\] \.ranking-card-grid\s*\{[\s\S]*grid-auto-flow:\s*column[\s\S]*justify-content:\s*start[\s\S]*overflow-x:\s*auto[\s\S]*overflow-y:\s*hidden/);
   assert.match(globalsCss, /main\[data-mobile-tab="perfil"\] \.player-profile\s*\{[\s\S]*grid-template-columns:\s*minmax\(116px,\s*0\.44fr\)/);
   assert.match(globalsCss, /\.market-page\s*\{[\s\S]*grid-template-rows:\s*auto auto auto minmax\(0,\s*1fr\)/);
   assert.match(globalsCss, /\.team-photo-card/);
