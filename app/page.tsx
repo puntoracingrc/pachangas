@@ -7065,7 +7065,6 @@ export default function Home() {
     const nextTeam = team === "A" ? "B" : "A";
     const formState = playerForm(player);
     const formSummary = formState.hasData ? ` · Forma ${visibleFormPercent(formState)}%` : "";
-    const mediaSource = playerRatingSource(player);
     const matchCardAge = playerAge(player.birthDate, currentDateValue);
     const playerRatingWindow = ratingWindow(player, ratingVoterId);
     const canEditThisPlayer = canEditPlayerOwnedFields({
@@ -7132,7 +7131,7 @@ export default function Home() {
                 {playerDisplayName(player)}
                 {matchCardAge !== null ? <em className="player-age-inline">{matchCardAge} años</em> : null}
               </span>
-              <small>({overallScore(playerMediaScore(player))}){mediaSource ? ` · ${mediaSource}` : ""}{formSummary} · {player.goals} Goles</small>
+              <small>({overallScore(playerMediaScore(player))}){formSummary} · {player.goals} Goles</small>
             </strong>
           </button>
           <span className="player-meta" title={positionLabel(player)} aria-label={positionLabel(player)}>

@@ -255,6 +255,7 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /renderPlayerCard\(player, undefined, "waiting"\)/);
   assert.match(page, /isReserve && context !== "reserve"/);
   assert.match(page, /isWaiting && context !== "waiting"/);
+  assert.doesNotMatch(page, /overallScore\(playerMediaScore\(player\)\)\}\)\{mediaSource \? ` · \$\{mediaSource\}` : ""\}/);
   const nextMatchStatsStart = page.indexOf('<div className="stats-row">');
   const nextMatchStatsEnd = page.indexOf("{siteSettings.subscriptionContributionEnabled", nextMatchStatsStart);
   assert.ok(nextMatchStatsStart > 0 && nextMatchStatsEnd > nextMatchStatsStart);
