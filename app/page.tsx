@@ -7286,6 +7286,25 @@ export default function Home() {
     window.open(`https://wa.me/?text=${encodeURIComponent(shareText())}`, "_blank", "noopener,noreferrer");
   }
 
+  const matchShareBox = !matchFinalized ? (
+    <div className="share-box">
+      <span>Compartir</span>
+      <div className="share-actions">
+        <button className="copy-invite-button" type="button" onClick={() => void copyMatchLink()} disabled={!matchUrl()} title="Copiar link del partido" aria-label="Copiar link del partido">
+          Copiar link
+        </button>
+        <button className="whatsapp-icon-button" type="button" onClick={shareWhatsApp} disabled={!matchUrl()} title="Enviar partido por WhatsApp" aria-label="Enviar partido por WhatsApp">
+          <WhatsAppLogo />
+        </button>
+      </div>
+      {syncStatus !== "local" ? (
+        <small className={`sync-status sync-${syncStatus}`}>
+          {!matchConfigured ? "Guarda el partido para compartirlo" : syncStatus === "live" ? "Sincronizado" : syncStatus === "connecting" ? "Conectando..." : `Sin sync: ${syncError}`}
+        </small>
+      ) : null}
+    </div>
+  ) : null;
+
   function handleRosterRailWheel(event: ReactWheelEvent<HTMLDivElement>) {
     const horizontalIntent = Math.abs(event.deltaX) > 0 && Math.abs(event.deltaX) >= Math.abs(event.deltaY) * 0.35;
     const shiftHorizontal = event.shiftKey && Math.abs(event.deltaY) > 0;
@@ -9083,6 +9102,11 @@ export default function Home() {
               </div>
             </div>
           ) : null}
+          {selectedMatchManagerPane === "proximo" && matchShareBox ? (
+            <div className="match-side-share" aria-label="Compartir partido">
+              {matchShareBox}
+            </div>
+          ) : null}
         </nav>
         <div className={matchFinalized ? "match-active-context finalized" : "match-active-context"} aria-label="Partido activo">
           <span>{matchContextKind}</span>
@@ -9491,25 +9515,6 @@ export default function Home() {
               <strong>
                 Suscripción {subscriptionContributionLabel}: {subscriptionContributionAmount.toFixed(2)} € entre {activeRosterCount} jugadores activos · {subscriptionContributionPerPlayer.toFixed(2)} € para {ownerContributionRecipient}
               </strong>
-            </div>
-          ) : null}
-
-          {!matchFinalized ? (
-            <div className="share-box">
-              <span>Comparte este partido!</span>
-              <div className="share-actions">
-                <button className="copy-invite-button" type="button" onClick={() => void copyMatchLink()} disabled={!matchUrl()} title="Copiar link del partido" aria-label="Copiar link del partido">
-                  Copiar link
-                </button>
-                <button className="whatsapp-icon-button" type="button" onClick={shareWhatsApp} disabled={!matchUrl()} title="Enviar partido por WhatsApp" aria-label="Enviar partido por WhatsApp">
-                  <WhatsAppLogo />
-                </button>
-              </div>
-              {syncStatus !== "local" ? (
-                <small className={`sync-status sync-${syncStatus}`}>
-                  {!matchConfigured ? "Guarda el partido para compartirlo" : syncStatus === "live" ? "Sincronizado" : syncStatus === "connecting" ? "Conectando..." : `Sin sync: ${syncError}`}
-                </small>
-              ) : null}
             </div>
           ) : null}
 

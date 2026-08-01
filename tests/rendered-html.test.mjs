@@ -14,7 +14,7 @@ test("builds Pachangas IQ HTML", async () => {
   assert.match(html, /Mi equipo/);
   assert.match(html, /Finalizar partido/);
   assert.match(html, /Añadir foto del partido/);
-  assert.match(html, /Comparte este partido!/);
+  assert.match(html, /Compartir/);
   assert.match(html, /Tiempo previsto/);
   assert.match(html, /Copiar link/);
   assert.match(html, /Próximos partidos/);
@@ -1144,6 +1144,8 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /matchWeatherStatus/);
   assert.match(page, /\/api\/weather/);
   assert.match(page, /Tiempo previsto/);
+  assert.match(page, /const matchShareBox = !matchFinalized \? \(/);
+  assert.match(page, /className="match-side-share" aria-label="Compartir partido"[\s\S]*\{matchShareBox\}/);
   assert.match(page, /function WeatherIcon/);
   assert.match(page, /function WeatherMetricIcon/);
   assert.match(page, /weatherVisualKey/);
@@ -1299,6 +1301,10 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(envExample, /NEXT_PUBLIC_GOOGLE_MAPS_API_KEY/);
   assert.match(envExample, /GOOGLE_WEATHER_API_KEY/);
   assert.match(globalsCss, /\.weather-card/);
+  assert.match(globalsCss, /main\[data-mobile-tab="partido"\] \.weather-card\s*\{[\s\S]*grid-column:\s*1 \/ -1/);
+  assert.match(globalsCss, /main\[data-mobile-tab="partido"\] \.weather-card-main\s*\{[\s\S]*grid-template-columns:\s*24px auto auto minmax\(0,\s*1fr\)/);
+  assert.match(globalsCss, /\.match-side-share/);
+  assert.match(globalsCss, /\.match-side-share \.share-box/);
   assert.match(page, /matchConfigured && !matchFinalized \? \(\s*<section className=\{`weather-card weather-card-\$\{matchWeatherStatus\}`\}/);
   assert.match(globalsCss, /\.weather-icon-rain/);
   assert.match(globalsCss, /\.weather-metric-icon/);
