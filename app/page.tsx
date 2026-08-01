@@ -381,6 +381,7 @@ const weatherClientLongCacheMs = weatherClientDayMs;
 const matchWeatherClientCache = new Map<string, { expiresAt: number; payload: WeatherApiPayload }>();
 
 type PlayerScoreFn = (player: Player) => number;
+type TeamBalanceSummary = ReturnType<typeof teamBalanceSummary>;
 type MatchRatingImpact = {
   delta: number;
   notes: string[];
@@ -8151,14 +8152,6 @@ export default function Home() {
               <div className={lineupClosed ? "lineup-side-state closed" : "lineup-side-state"}>
                 {!matchConfigured ? "Pendiente" : lineupClosed ? "Cerrada" : "Abierta"}
               </div>
-              <div className="lineup-side-balance" title={balanceSummary.detail}>
-                <span>Equilibrio</span>
-                <strong>{balanceSummary.percent > 0 ? `${balanceSummary.percent}%` : "Pendiente"}</strong>
-                <i aria-hidden="true">
-                  <b style={{ width: `${balanceSummary.percent}%` }} />
-                </i>
-                <small>{balanceSummary.label}</small>
-              </div>
               <div className="lineup-side-actions">
                 <button type="button" onClick={applyRandomTeams} disabled={!canEditLineup}>Aleatorio</button>
                 <button type="button" onClick={applyBalancedTeams} disabled={!canEditLineup}>Equilibrado</button>
@@ -8666,6 +8659,7 @@ export default function Home() {
             teamA={suggested.teamA}
             teamB={suggested.teamB}
             lineupSlots={activeMatch.lineupSlots}
+            balanceSummary={balanceSummary}
             kind={activeKind}
             orientation={activeMatchManagerPane === "alineacion" ? "landscape" : "portrait"}
             scoreForPlayer={effectivePlayerScore}
@@ -8804,6 +8798,7 @@ export default function Home() {
                 teamA={suggested.teamA}
                 teamB={suggested.teamB}
                 lineupSlots={activeMatch.lineupSlots}
+                balanceSummary={balanceSummary}
                 kind={activeKind}
                 orientation={activeMatchManagerPane === "alineacion" ? "landscape" : "portrait"}
                 scoreForPlayer={effectivePlayerScore}
@@ -9710,6 +9705,7 @@ function MatchPitch({
   teamA,
   teamB,
   lineupSlots,
+  balanceSummary,
   kind,
   orientation = "portrait",
   scoreForPlayer = scorePlayer,
@@ -9722,6 +9718,7 @@ function MatchPitch({
   teamA: Player[];
   teamB: Player[];
   lineupSlots?: LineupSlots;
+  balanceSummary?: TeamBalanceSummary;
   kind: MatchKind;
   orientation?: PitchOrientation;
   scoreForPlayer?: PlayerScoreFn;
@@ -9855,6 +9852,16 @@ function MatchPitch({
         >
           <SearchLogo />
         </button>
+      ) : null}
+      {balanceSummary ? (
+        <div className="pitch-balance-hud" title={balanceSummary.detail} aria-label={`Equilibrio de equipos: ${balanceSummary.percent > 0 ? `${balanceSummary.percent}%` : "pendiente"}`}>
+          <span>Equilibrio</span>
+          <strong>{balanceSummary.percent > 0 ? `${balanceSummary.percent}%` : "Pendiente"}</strong>
+          <i aria-hidden="true">
+            <b style={{ width: `${balanceSummary.percent}%` }} />
+          </i>
+          <small>{balanceSummary.label}</small>
+        </div>
       ) : null}
       <div className={`pitch-label ${isLandscapePitch ? "left" : "bottom"}`}>Equipo 1</div>
       <div className={`pitch-label ${isLandscapePitch ? "right" : "top"}`}>Equipo 2</div>
