@@ -1,5 +1,6 @@
-const CACHE_NAME = "pachangas-iq-pwa-v1";
+const CACHE_NAME = "pachangas-iq-pwa-v2";
 const APP_SHELL_URL = "/";
+const MAX_RUNTIME_CACHE_ENTRIES = 120;
 const PRECACHE_URLS = [
   APP_SHELL_URL,
   "/manifest.webmanifest",
@@ -14,6 +15,15 @@ const PRECACHE_URLS = [
 ];
 
 const STATIC_DESTINATIONS = new Set(["font", "image", "manifest", "script", "style"]);
+const STATIC_FILE_EXTENSIONS = /\.(?:css|js|mjs|png|jpg|jpeg|webp|svg|ico|woff2?)$/i;
+const LIVE_SERVICE_HOST_PARTS = [
+  "supabase.co",
+  "stripe.com",
+  "googleapis.com",
+  "google.com",
+  "gstatic.com",
+  "weather.googleapis.com",
+];
 const CACHEABLE_NAVIGATION_PATHS = new Set([
   "/",
   "/aviso-legal",
@@ -29,6 +39,10 @@ function isSameOrigin(url) {
   return url.origin === self.location.origin;
 }
 
+function isLiveServiceUrl(url) {
+  return LIVE_SERVICE_HOST_PARTS.some((hostPart) => url.hostname === hostPart || url.hostname.endsWith(`.${hostPart}`));
+}
+
 function isSensitivePath(pathname) {
   return pathname.startsWith("/api/") || pathname.startsWith("/auth/") || pathname.startsWith("/_next/data/");
 }
@@ -41,18 +55,26 @@ function shouldCacheStaticRequest(request, url) {
   return (
     isSameOrigin(url) &&
     !isSensitivePath(url.pathname) &&
-    (url.pathname.startsWith("/_next/static/") || STATIC_DESTINATIONS.has(request.destination))
+    !url.search &&
+    (url.pathname.startsWith("/_next/static/") || STATIC_DESTINATIONS.has(request.destination) || STATIC_FILE_EXTENSIONS.test(url.pathname))
   );
 }
 
-async function networkFirstNavigation(request) {
+async function trimRuntimeCache(cache) {
+  const keys = await cache.keys();
+  if (keys.length <= MAX_RUNTIME_CACHE_ENTRIES) return;
+  await Promise.all(keys.slice(0, keys.length - MAX_RUNTIME_CACHE_ENTRIES).map((request) => cache.delete(request)));
+}
+
+async function networkFirstNavigation(request, preloadResponsePromise) {
   const url = new URL(request.url);
   const cache = await caches.open(CACHE_NAME);
 
   try {
-    const response = await fetch(request);
+    const response = (await preloadResponsePromise) || (await fetch(request));
     if (response.ok && shouldCacheNavigation(url)) {
       await cache.put(request, response.clone());
+      await trimRuntimeCache(cache);
     }
     return response;
   } catch {
@@ -68,6 +90,7 @@ async function staleWhileRevalidate(request) {
     .then((response) => {
       if (response.ok) {
         void cache.put(request, response.clone());
+        void trimRuntimeCache(cache);
       }
       return response;
     })
@@ -89,10 +112,12 @@ self.addEventListener("install", (event) => {
 
 self.addEventListener("activate", (event) => {
   event.waitUntil(
-    caches
-      .keys()
-      .then((keys) => Promise.all(keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))))
-      .then(() => self.clients.claim()),
+    Promise.all([
+      caches
+        .keys()
+        .then((keys) => Promise.all(keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key)))),
+      self.registration.navigationPreload?.enable?.(),
+    ]).then(() => self.clients.claim()),
   );
 });
 
@@ -101,10 +126,10 @@ self.addEventListener("fetch", (event) => {
   if (request.method !== "GET") return;
 
   const url = new URL(request.url);
-  if (!isSameOrigin(url) || isSensitivePath(url.pathname)) return;
+  if (!isSameOrigin(url) || isSensitivePath(url.pathname) || isLiveServiceUrl(url)) return;
 
   if (request.mode === "navigate") {
-    event.respondWith(networkFirstNavigation(request));
+    event.respondWith(networkFirstNavigation(request, event.preloadResponse));
     return;
   }
 

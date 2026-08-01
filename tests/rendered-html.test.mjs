@@ -153,6 +153,7 @@ test("keeps the project wired to the Pachangas app", async () => {
     manifest,
     pwaRuntime,
     serviceWorker,
+    nextConfig,
   ] = await Promise.all([
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
@@ -173,6 +174,7 @@ test("keeps the project wired to the Pachangas app", async () => {
     readFile(new URL("../app/manifest.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/pwa-runtime.tsx", import.meta.url), "utf8"),
     readFile(new URL("../public/sw.js", import.meta.url), "utf8"),
+    readFile(new URL("../next.config.ts", import.meta.url), "utf8"),
   ]);
 
   assert.match(page, /join_pachanga_team/);
@@ -942,12 +944,21 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(manifest, /Abrir el ranking del equipo/);
   assert.match(pwaRuntime, /serviceWorker\.register\("\/sw\.js", \{ scope: "\/" \}\)/);
   assert.match(pwaRuntime, /dataDisplayMode|dataset\.displayMode/);
-  assert.match(serviceWorker, /CACHE_NAME = "pachangas-iq-pwa-v1"/);
+  assert.match(serviceWorker, /CACHE_NAME = "pachangas-iq-pwa-v2"/);
   assert.match(serviceWorker, /CACHEABLE_NAVIGATION_PATHS/);
   assert.match(serviceWorker, /!url\.search/);
+  assert.match(serviceWorker, /MAX_RUNTIME_CACHE_ENTRIES = 120/);
+  assert.match(serviceWorker, /function trimRuntimeCache/);
+  assert.match(serviceWorker, /navigationPreload\?\.enable\?\.\(\)/);
+  assert.match(serviceWorker, /LIVE_SERVICE_HOST_PARTS/);
+  assert.match(serviceWorker, /supabase\.co/);
+  assert.match(serviceWorker, /stripe\.com/);
   assert.match(serviceWorker, /request\.mode === "navigate"/);
   assert.match(serviceWorker, /pathname\.startsWith\("\/api\/"\)/);
   assert.match(serviceWorker, /pathname\.startsWith\("\/auth\/"\)/);
+  assert.match(nextConfig, /source: "\/sw\.js"/);
+  assert.match(nextConfig, /Service-Worker-Allowed/);
+  assert.match(nextConfig, /no-cache, no-store, must-revalidate/);
   assert.match(packageJson, /"@supabase\/supabase-js"/);
   assert.match(packageJson, /"stripe"/);
   assert.match(supabaseClient, /NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY/);
