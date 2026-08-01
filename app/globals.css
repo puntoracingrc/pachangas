@@ -11147,6 +11147,8 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
   }
 
   main[data-mobile-tab="inicio"] .match-row {
+    align-items: start;
+    align-self: start;
     grid-column: 1;
     min-width: 0;
   }
@@ -11157,6 +11159,12 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
     color: #f5f2e8;
     min-height: 38px;
     padding: 7px 8px;
+  }
+
+  main[data-mobile-tab="inicio"] .match-row > .trash-icon-button {
+    align-self: start;
+    height: 38px;
+    min-height: 38px;
   }
 
   main[data-mobile-tab="inicio"] .match-item:hover,
@@ -11175,27 +11183,65 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
   }
 
   main[data-mobile-tab="inicio"] .side-history {
+    display: grid;
+    gap: 8px;
     grid-column: 2;
     grid-row: 2 / span 12;
+    grid-template-rows: auto auto minmax(0, 1fr);
     min-height: 0;
-    overflow: auto;
-    padding-right: 2px;
-    scrollbar-width: thin;
+    overflow: hidden;
+    padding-right: 0;
+  }
+
+  main[data-mobile-tab="inicio"] .side-history::after {
+    display: none;
   }
 
   main[data-mobile-tab="inicio"] .side-history .history {
+    align-items: stretch;
     background: transparent;
+    display: grid;
+    gap: 8px;
+    grid-auto-columns: minmax(188px, 236px);
+    grid-auto-flow: column;
+    max-height: none;
+    min-height: 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 0 0 3px;
     scrollbar-color: rgba(200, 239, 93, 0.38) rgba(245, 242, 232, 0.08);
+    scrollbar-gutter: auto;
+    scrollbar-width: thin;
+  }
+
+  main[data-mobile-tab="inicio"] .history-month {
+    display: none !important;
   }
 
   main[data-mobile-tab="inicio"] .history-item {
+    align-content: start;
     background: rgba(245, 242, 232, 0.07);
     border-color: rgba(255, 255, 255, 0.14);
     color: #f5f2e8;
     gap: 5px;
     grid-template-columns: minmax(0, 1fr) auto;
-    min-height: 38px;
+    min-height: 100%;
     padding: 7px 8px;
+  }
+
+  main[data-mobile-tab="inicio"] .history-item.has-photo {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-rows: 72px auto auto;
+  }
+
+  main[data-mobile-tab="inicio"] .history-photo {
+    background:
+      linear-gradient(135deg, rgba(200, 239, 93, 0.16), rgba(42, 96, 69, 0.38)),
+      rgba(5, 12, 14, 0.84);
+    border: 1px solid rgba(255, 255, 255, 0.13);
+    grid-column: 1 / -1;
+    height: 72px;
+    width: 100%;
   }
 
   main[data-mobile-tab="inicio"] .history-item strong {

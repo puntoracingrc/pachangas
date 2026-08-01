@@ -78,13 +78,12 @@ type RatingRole = "field" | "goalkeeper";
 type MobileSectionTabId = "inicio" | "partido";
 type ProfilePane = "ficha" | "ranking";
 type PlayerProfileMode = "edit" | "viewer";
-type MatchManagerPane = "proximo" | "alineacion" | "resultado" | "historico" | "admin";
+type MatchManagerPane = "proximo" | "alineacion" | "resultado" | "admin";
 
 const matchManagerPaneLabels: Record<MatchManagerPane, string> = {
   proximo: "Próximo",
   alineacion: "Alineación",
   resultado: "Resultado",
-  historico: "Histórico",
   admin: "Admin",
 };
 
@@ -526,6 +525,8 @@ function demoMatchPlayers(playerIds: string[], paidIds: string[] = playerIds): M
   return playerIds.map((playerId) => ({ playerId, status: "voy" as const, paid: paidIds.includes(playerId) }));
 }
 
+const demoTeamPhoto = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 320 180'%3E%3Cdefs%3E%3ClinearGradient id='sky' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop stop-color='%231b2f46'/%3E%3Cstop offset='.55' stop-color='%23154736'/%3E%3Cstop offset='1' stop-color='%23071110'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='320' height='180' fill='url(%23sky)'/%3E%3Cpath d='M0 132h320v48H0z' fill='%23216d42'/%3E%3Cpath d='M0 146h320M46 132v48M104 132v48M162 132v48M220 132v48M278 132v48' stroke='%23ffffff' stroke-opacity='.28' stroke-width='2'/%3E%3Ccircle cx='160' cy='154' r='23' fill='none' stroke='%23ffffff' stroke-opacity='.45' stroke-width='3'/%3E%3Cg fill='%23f5f2e8'%3E%3Ccircle cx='72' cy='76' r='16'/%3E%3Cpath d='M45 126c6-25 48-25 54 0z'/%3E%3Ccircle cx='128' cy='65' r='15'/%3E%3Cpath d='M102 126c6-27 47-27 53 0z'/%3E%3Ccircle cx='188' cy='70' r='15'/%3E%3Cpath d='M162 126c6-26 47-26 53 0z'/%3E%3Ccircle cx='248' cy='76' r='16'/%3E%3Cpath d='M221 126c6-25 48-25 54 0z'/%3E%3C/g%3E%3Ctext x='160' y='36' text-anchor='middle' font-family='Arial,sans-serif' font-size='18' font-weight='800' fill='%23c8ef5d'%3EPACHANGAS IQ%3C/text%3E%3C/svg%3E";
+
 const seedMatches: Match[] = [
   {
     id: "m1",
@@ -576,6 +577,7 @@ const seedMatches: Match[] = [
     closed: true,
     scoreA: 5,
     scoreB: 3,
+    teamPhoto: demoTeamPhoto,
     teamA: ["p4", "p1", "p2", "p7", "p12"],
     teamB: ["p14", "p3", "p5", "p6", "p8"],
     scorers: [
@@ -602,6 +604,7 @@ const seedMatches: Match[] = [
     closed: true,
     scoreA: 4,
     scoreB: 4,
+    teamPhoto: demoTeamPhoto,
     teamA: ["p4", "p6", "p8", "p13", "p1", "p7", "p10"],
     teamB: ["p14", "p3", "p5", "p2", "p11", "p12", "p18"],
     scorers: [
@@ -5325,8 +5328,8 @@ export default function Home() {
   const canManageRoles = hasRealTeam && isRegisteredUser && currentRole === "owner";
   const canUseAdminControls = isDemoMode || canManageTeam;
   const matchManagerPanes: MatchManagerPane[] = canUseAdminControls
-    ? ["proximo", "alineacion", "resultado", "historico", "admin"]
-    : ["proximo", "alineacion", "resultado", "historico"];
+    ? ["proximo", "alineacion", "resultado", "admin"]
+    : ["proximo", "alineacion", "resultado"];
   const selectedMatchManagerPane = matchManagerPanes.includes(activeMatchManagerPane) ? activeMatchManagerPane : "proximo";
   const canConfigureMatchMarket = canUseAdminControls && showMatchRoster && !lineupClosed && !matchFinalized;
   const showMarketScoutCard = canConfigureMatchMarket && (missing > 0 || Boolean(activeMatch.publicOpen));
