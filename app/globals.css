@@ -2476,11 +2476,11 @@ body.player-evaluation-lab-body .legal-footer {
   gap: 8px;
 }
 
-.profile-demo-create-button {
-  background: #d9f25f;
-  border: 1px solid #b8dc32;
+.profile-return-button {
+  background: rgba(217, 242, 95, 0.14);
+  border: 1px solid rgba(184, 220, 50, 0.72);
   border-radius: 8px;
-  color: #172115;
+  color: #d9f25f;
   font-size: 12px;
   font-weight: 900;
   min-height: 34px;
@@ -12531,7 +12531,7 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
     display: none;
   }
 
-  main[data-mobile-tab="perfil"] .profile-demo-create-button {
+  main[data-mobile-tab="perfil"] .profile-return-button {
     border-radius: 6px;
     font-size: 10px;
     min-height: 28px;

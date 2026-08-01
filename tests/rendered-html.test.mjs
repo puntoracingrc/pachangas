@@ -538,7 +538,8 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(globalsCss, /main\[data-mobile-tab\] \.panel,[\s\S]*backdrop-filter:\s*blur\(14px\) saturate\(1\.05\)/);
   assert.match(globalsCss, /main\[data-mobile-tab="inicio"\] > \.hero,[\s\S]*main\[data-mobile-tab="inicio"\] > \.demo-banner\s*\{[\s\S]*display:\s*none !important/);
   assert.match(globalsCss, /main\[data-mobile-tab="inicio"\] > \.app-shell\s*\{[\s\S]*grid-column:\s*1/);
-  assert.match(globalsCss, /\.profile-demo-create-button/);
+  assert.match(globalsCss, /\.profile-return-button/);
+  assert.doesNotMatch(globalsCss, /\.profile-demo-create-button/);
   assert.match(globalsCss, /\.match-manager-subnav/);
   assert.match(globalsCss, /\.match-active-context/);
   assert.match(globalsCss, /main\[data-mobile-tab="partido"\] \.match-active-context\s*\{[\s\S]*grid-column:\s*2[\s\S]*grid-row:\s*1/);
@@ -691,6 +692,8 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /Demo local: no modifica tu grupo real/);
   assert.match(page, /Crear mi grupo limpio/);
   assert.match(page, /Salir de la demo y empezar desde cero/);
+  assert.match(page, /profile-return-button/);
+  assert.doesNotMatch(page, /profile-demo-create-button/);
   assert.match(page, /profile-player-switcher/);
   assert.match(page, /function scrollToPlayerProfile/);
   assert.match(page, /function openTeamGallery/);
