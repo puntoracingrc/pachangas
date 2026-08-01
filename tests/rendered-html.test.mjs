@@ -232,6 +232,7 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /const matchManagerPaneLabel = \(pane: MatchManagerPane\) => \(pane === "proximo" && matchFinalized \? "Histórico" : matchManagerPaneLabels\[pane\]\)/);
   assert.match(page, /className=\{matchFinalized \? "match-active-context finalized" : "match-active-context"\}/);
   assert.match(page, /<span>\{matchContextKind\}<\/span>/);
+  assert.match(page, /className="match-active-kind">\{matchKinds\[activeKind\]\.label\}/);
   assert.match(page, /<b>\{matchContextStatus\}<\/b>/);
   assert.match(page, /const mainPanelClassName = \[/);
   assert.match(page, /matchFinalized \? "match-finalized-main" : ""/);
@@ -385,6 +386,7 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /function openMatchFromInicio\(matchId: string, pane: MatchManagerPane = "proximo"\) \{[\s\S]*setActiveMatchId\(matchId\);[\s\S]*setActiveMatchManagerPane\(pane\);[\s\S]*navigateMobileTab\("partido"\);[\s\S]*\}/);
   assert.match(page, /onClick=\{\(\) => openMatchFromInicio\(match\.id, "proximo"\)\}/);
   assert.match(page, /onClick=\{\(\) => openMatchFromInicio\(match\.id, "resultado"\)\}/);
+  assert.match(page, /className="match-item-kind">\{matchKinds\[match\.kind \?\? "futbol7"\]\.label\}/);
   assert.match(page, /Borrar partido/);
   assert.doesNotMatch(page, /className="history-delete"/);
   assert.doesNotMatch(page, /pagó \{matchPayer/);
@@ -568,8 +570,13 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /onClickCapture=\{cancelRosterRailClick\}/);
   assert.match(globalsCss, /\.next-match-roster-rail[\s\S]*touch-action:\s*pan-x pan-y/);
   assert.match(globalsCss, /main\[data-mobile-tab="partido"\] \.team-player-column[\s\S]*grid-auto-rows:\s*max-content/);
+  assert.match(globalsCss, /data-match-manager-pane="proximo"[\s\S]*scroll-padding-bottom:\s*max\(22px,\s*env\(safe-area-inset-bottom\)\)/);
+  assert.match(globalsCss, /\.next-match-roster-rail > \.team-player-column::after,[\s\S]*height:\s*max\(22px,\s*env\(safe-area-inset-bottom\)\)/);
   assert.match(globalsCss, /team-player-column,[\s\S]*touch-action:\s*pan-x pan-y/);
   assert.match(globalsCss, /main\[data-mobile-tab="partido"\] \.player-card[\s\S]*min-height:\s*58px/);
+  assert.match(globalsCss, /data-match-manager-pane="resultado"[\s\S]*\.lineup-panel > \.panel-title\s*\{[\s\S]*display:\s*none/);
+  assert.match(globalsCss, /data-match-manager-pane="resultado"[\s\S]*\.result-box > span\s*\{[\s\S]*display:\s*none/);
+  assert.match(globalsCss, /data-match-manager-pane="resultado"[\s\S]*\.scorers-box > strong\s*\{[\s\S]*display:\s*none/);
   assert.match(globalsCss, /\.next-match-status-section/);
   assert.match(globalsCss, /\.status-roster-column/);
   assert.match(globalsCss, /\.reserve-roster-column/);
@@ -615,6 +622,7 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(globalsCss, /main\[data-mobile-tab="inicio"\]\s*\{[\s\S]*grid-template-columns:\s*minmax\(0,\s*1fr\)/);
   assert.match(globalsCss, /main\[data-mobile-tab="inicio"\] > \.app-shell > \.match-list\s*\{[\s\S]*grid-template-columns:\s*minmax\(0,\s*1fr\)/);
   assert.match(globalsCss, /main\[data-mobile-tab="inicio"\] \.next-match-rail\s*\{[\s\S]*grid-auto-columns:\s*188px[\s\S]*grid-auto-flow:\s*column[\s\S]*min-height:\s*52px[\s\S]*overflow-x:\s*auto/);
+  assert.match(globalsCss, /main\[data-mobile-tab="inicio"\] \.match-item \.match-item-kind/);
   assert.match(globalsCss, /main\[data-mobile-tab="inicio"\] \.side-history\s*\{[\s\S]*grid-column:\s*1 \/ -1/);
   assert.match(globalsCss, /main\[data-mobile-tab="inicio"\] \.side-history \.history-season-filter\s*\{[\s\S]*display:\s*none/);
   assert.match(globalsCss, /main\[data-mobile-tab="partido"\] > \.app-shell > \.lineup-panel/);

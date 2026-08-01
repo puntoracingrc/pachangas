@@ -11364,6 +11364,14 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
     font-size: 10px;
   }
 
+  main[data-mobile-tab="inicio"] .match-item .match-item-kind {
+    color: var(--lime);
+    font-size: 9px;
+    font-weight: 950;
+    line-height: 1;
+    text-transform: uppercase;
+  }
+
   main[data-mobile-tab="inicio"] .side-history {
     display: grid;
     gap: 5px;
@@ -11583,7 +11591,7 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
     gap: 8px;
     grid-column: 2;
     grid-row: 1;
-    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-columns: auto auto minmax(0, 1fr) auto;
     min-height: 34px;
     min-width: 0;
     overflow: hidden;
@@ -11604,6 +11612,11 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
   main[data-mobile-tab="partido"] .match-active-context span {
     background: rgba(245, 242, 232, 0.08);
     color: #c4d3cb;
+  }
+
+  main[data-mobile-tab="partido"] .match-active-context .match-active-kind {
+    background: rgba(34, 197, 94, 0.14);
+    color: #d9f99d;
   }
 
   main[data-mobile-tab="partido"] .match-active-context b {
@@ -11814,9 +11827,18 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
     overflow-x: hidden;
     overflow-y: auto;
     overscroll-behavior: contain;
+    scroll-padding-bottom: max(22px, env(safe-area-inset-bottom));
     scrollbar-width: thin;
     touch-action: pan-x pan-y;
     -webkit-overflow-scrolling: touch;
+  }
+
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="proximo"] .next-match-roster-rail > .team-player-column::after,
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="proximo"] .next-match-roster-rail > .status-roster-column::after {
+    content: "";
+    display: block;
+    height: max(22px, env(safe-area-inset-bottom));
+    min-height: max(22px, env(safe-area-inset-bottom));
   }
 
   main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="proximo"] .status-roster-column {
@@ -12294,8 +12316,12 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
 
   main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="resultado"] > .lineup-panel {
     grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: auto minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr);
     overflow: hidden;
+  }
+
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="resultado"] .lineup-panel > .panel-title {
+    display: none;
   }
 
   main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="resultado"] .lineup-title-default {
@@ -12316,22 +12342,22 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
   }
 
   main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="resultado"] .lineup-panel > .result-box {
-    background: rgba(18, 29, 24, 0.94);
-    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: transparent;
+    border: 0;
     display: grid;
     gap: 8px;
     grid-column: 1;
-    grid-row: 2;
+    grid-row: 1;
     grid-template-columns: minmax(190px, 0.52fr) minmax(0, 1fr);
-    grid-template-rows: auto auto minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr) auto;
     margin: 0;
     min-height: 0;
     overflow: hidden;
-    padding: 8px;
+    padding: 0;
   }
 
   main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="resultado"] .result-box > span {
-    grid-column: 1 / -1;
+    display: none;
   }
 
   main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="resultado"] .result-score-grid,
@@ -12368,10 +12394,13 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
 
   main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="resultado"] .scorers-box {
     align-content: start;
+    background: transparent;
+    border: 0;
     grid-column: 2;
-    grid-row: 2 / span 3;
+    grid-row: 1 / span 3;
     min-height: 0;
     overflow: auto;
+    padding: 0;
     scrollbar-width: thin;
   }
 
@@ -12382,8 +12411,7 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
   }
 
   main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="resultado"] .scorers-box > strong {
-    color: #f5f2e8;
-    font-size: 14px;
+    display: none;
   }
 
   main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="resultado"] .scorers-box small {

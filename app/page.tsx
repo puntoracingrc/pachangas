@@ -8985,6 +8985,7 @@ export default function Home() {
         </nav>
         <div className={matchFinalized ? "match-active-context finalized" : "match-active-context"} aria-label="Partido activo">
           <span>{matchContextKind}</span>
+          <span className="match-active-kind">{matchKinds[activeKind].label}</span>
           <div>
             <strong>{activeMatch.title || matchKinds[activeKind].label}</strong>
             <small>{matchSummaryDate(activeMatch.date)} · {activeMatch.place}</small>
@@ -9006,6 +9007,7 @@ export default function Home() {
                   type="button"
                 >
                   <span>{match.title}</span>
+                  <small className="match-item-kind">{matchKinds[match.kind ?? "futbol7"].label}</small>
                   <small>{new Date(match.date).toLocaleString("es-ES", { weekday: "short", hour: "2-digit", minute: "2-digit" })}</small>
                 </button>
               </div>
