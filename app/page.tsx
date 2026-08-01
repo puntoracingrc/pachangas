@@ -3336,7 +3336,6 @@ export default function Home() {
   const [teamGalleryOpen, setTeamGalleryOpen] = useState(false);
   const [pitchBoardState, setPitchBoardState] = useState<PitchBoardState>(() => initialPitchBoardState());
   const [pitchZoomOpen, setPitchZoomOpen] = useState(false);
-  const [pitchPreviewPlayerId, setPitchPreviewPlayerId] = useState<string | null>(null);
   const [activeMobileTab, setActiveMobileTab] = useState<MobileAppTab>("inicio");
   const [activeMatchManagerPane, setActiveMatchManagerPane] = useState<MatchManagerPane>("proximo");
   const [profilePane, setProfilePane] = useState<ProfilePane>("ficha");
@@ -3594,17 +3593,16 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    if (!pitchZoomOpen && !pitchPreviewPlayerId) return;
+    if (!pitchZoomOpen) return;
 
     function closePitchZoomWithKeyboard(event: KeyboardEvent) {
       if (event.key !== "Escape") return;
       closePitchZoom();
-      setPitchPreviewPlayerId(null);
     }
 
     document.addEventListener("keydown", closePitchZoomWithKeyboard);
     return () => document.removeEventListener("keydown", closePitchZoomWithKeyboard);
-  }, [closePitchZoom, pitchPreviewPlayerId, pitchZoomOpen]);
+  }, [closePitchZoom, pitchZoomOpen]);
 
   useEffect(() => {
     const clearFullscreenRequestFlag = () => {
@@ -5562,7 +5560,6 @@ export default function Home() {
   const showWaitingRosterColumn = !matchFinalized && waitingPlayers.length > 0;
   const showStatusRosterColumn = !matchFinalized;
   const selectedPlayer = selectedPlayerId ? players.find((player) => player.id === selectedPlayerId) : undefined;
-  const pitchPreviewPlayer = pitchPreviewPlayerId ? (matchPlayersById.get(pitchPreviewPlayerId) ?? players.find((player) => player.id === pitchPreviewPlayerId)) : undefined;
   const selectedRatingFacets = selectedPlayer ? ratingFacetsForPlayer(selectedPlayer) : ratingFacets;
   const selectedForm = selectedPlayer ? playerForm(selectedPlayer) : undefined;
   const selectedEffectiveScore = selectedPlayer ? effectivePlayerScore(selectedPlayer) : 0;
@@ -9676,7 +9673,6 @@ export default function Home() {
             canDragPlayers={(canEditLineup || isDemoMode) && registrationOpen && !lineupClosed && !matchFinalized}
             canUseBoard={!matchFinalized}
             onBoardStateChange={setPitchBoardState}
-            onPlayerClick={setPitchPreviewPlayerId}
             onPlayerSwap={swapLineupPlayers}
             onZoom={openPitchZoom}
           />
@@ -9846,22 +9842,11 @@ export default function Home() {
                 canDragPlayers={(canEditLineup || isDemoMode) && registrationOpen && !lineupClosed && !matchFinalized}
                 canUseBoard={!matchFinalized}
                 onBoardStateChange={setPitchBoardState}
-                onPlayerClick={(playerId) => {
-                  setPitchPreviewPlayerId(playerId);
-                }}
                 onPlayerSwap={swapLineupPlayers}
               />
             </div>
           </section>
         </div>
-      ) : null}
-
-      {pitchPreviewPlayer ? (
-        <PitchPlayerPreview
-          player={pitchPreviewPlayer}
-          score={effectivePlayerScore(pitchPreviewPlayer)}
-          onClose={() => setPitchPreviewPlayerId(null)}
-        />
       ) : null}
 
       {teamGalleryOpen ? (
@@ -10559,7 +10544,6 @@ function MatchPitch({
   canDragPlayers = false,
   canUseBoard: canUseBoardProp = true,
   onBoardStateChange,
-  onPlayerClick,
   onPlayerSwap,
   onZoom,
 }: {
@@ -10575,7 +10559,6 @@ function MatchPitch({
   canDragPlayers?: boolean;
   canUseBoard?: boolean;
   onBoardStateChange?: Dispatch<SetStateAction<PitchBoardState>>;
-  onPlayerClick?: (playerId: string) => void;
   onPlayerSwap?: (sourcePlayerId: string, targetPlayerId: string) => void;
   onZoom?: () => void;
 }) {
@@ -10585,7 +10568,6 @@ function MatchPitch({
   const pitchRef = useRef<HTMLDivElement | null>(null);
   const pointerAbortRef = useRef<AbortController | null>(null);
   const pointerRef = useRef<PitchPointerState | null>(null);
-  const suppressPitchPreviewUntilRef = useRef(0);
   const dropTargetRef = useRef<string | null>(null);
   const [boardDraggingPlayerId, setBoardDraggingPlayerId] = useState<string | null>(null);
   const [dragState, setDragState] = useState<PitchDragState | null>(null);
@@ -10664,7 +10646,7 @@ function MatchPitch({
       return;
     }
 
-    clearPitchDrag({ suppressPreview: true });
+    clearPitchDrag();
     updateBoardState((current) => ({
       ...current,
       active: true,
@@ -10784,7 +10766,7 @@ function MatchPitch({
     if (!point) return;
     event.preventDefault();
     event.stopPropagation();
-    clearPitchDrag({ suppressPreview: true });
+    clearPitchDrag();
     clearBoardInteraction();
     const currentPosition = boardState.playerPositions[playerId] ?? fallbackPosition;
     boardInteractionRef.current = {
@@ -10798,14 +10780,13 @@ function MatchPitch({
     startBoardWindowTracking();
   }
 
-  function clearPitchDrag({ suppressPreview = false } = {}) {
+  function clearPitchDrag() {
     if (holdTimerRef.current) clearTimeout(holdTimerRef.current);
     holdTimerRef.current = null;
     pointerAbortRef.current?.abort();
     pointerAbortRef.current = null;
     pointerRef.current = null;
     dropTargetRef.current = null;
-    if (suppressPreview) suppressPitchPreviewUntilRef.current = Date.now() + 450;
     setDragState(null);
   }
 
@@ -10876,22 +10857,18 @@ function MatchPitch({
     const wasDragging = pointer.active;
     const sourceId = pointer.sourceId;
     const targetId = dropTargetRef.current ?? nearestPitchDropTarget(event.clientX, event.clientY, sourceId);
-    clearPitchDrag({ suppressPreview: wasDragging });
+    clearPitchDrag();
 
     if (wasDragging) {
       event.preventDefault();
       if (targetId) onPlayerSwap?.(sourceId, targetId);
-      return;
     }
-
-    if (Date.now() < suppressPitchPreviewUntilRef.current) return;
-    onPlayerClick?.(sourceId);
   }
 
   function cancelWindowPitchDrag(event: PointerEvent) {
     const pointer = pointerRef.current;
     if (!pointer || pointer.pointerId !== event.pointerId) return;
-    clearPitchDrag({ suppressPreview: pointer.active || canDragPlayers });
+    clearPitchDrag();
   }
 
   function startPitchDrag(event: ReactPointerEvent<HTMLButtonElement>, playerId: string) {
@@ -11055,18 +11032,12 @@ function MatchPitch({
 
         return (
           <button
-            aria-label={`Ver ficha de ${playerDisplayName(player)} desde el campo`}
+            aria-label={`${playerDisplayName(player)} en el campo`}
             className={`pitch-player-card ${cardTierClass(score)} ${variant} ${isDragging ? "dragging-token" : ""} ${isDropTarget ? "drop-target-token" : ""} ${player.injured ? "injured-token" : ""} ${player.inactive ? "inactive-token" : ""}`}
             data-pitch-drop-id={`player:${player.id}`}
             data-pitch-player-id={player.id}
             key={player.id}
-            onKeyDown={(event) => {
-              if (boardMode) return;
-              if (event.key !== "Enter" && event.key !== " ") return;
-              event.preventDefault();
-              onPlayerClick?.(player.id);
-            }}
-            onPointerCancel={() => clearPitchDrag({ suppressPreview: canDragPlayers })}
+            onPointerCancel={clearPitchDrag}
             onPointerDown={(event) => startBoardPlayerDrag(event, player.id, { x, y })}
             style={tokenStyle}
             title={`${playerDisplayName(player)} · ${positionLabel(player)} · ${overallScore(score)}`}
@@ -11097,37 +11068,6 @@ function MatchPitch({
           </button>
         );
       })}
-    </div>
-  );
-}
-
-function PitchPlayerPreview({ player, score, onClose }: { player: Player; score: number; onClose: () => void }) {
-  return (
-    <div
-      className="pitch-player-preview-backdrop"
-      role="presentation"
-      onMouseDown={(event) => {
-        if (event.currentTarget === event.target) onClose();
-      }}
-    >
-      <section className={`pitch-player-preview-card ${cardTierClass(score)}`} role="dialog" aria-modal="true" aria-label={`Ficha ampliada de ${playerDisplayName(player)}`}>
-        <button className="pitch-player-preview-close" type="button" onClick={onClose} aria-label="Cerrar ficha ampliada">Cerrar</button>
-        <div className="pitch-preview-rating">
-          <strong>{overallScore(score)}</strong>
-          <span>{positionShort(player)}</span>
-        </div>
-        {renderRatingTrendChip(player)}
-        <div className="pitch-preview-photo">
-          {player.avatar ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={player.avatar} alt={`Foto de ${playerDisplayName(player)}`} draggable={false} style={avatarImageStyle(player)} />
-          ) : (
-            <b>{playerDisplayName(player).slice(0, 2).toUpperCase()}</b>
-          )}
-        </div>
-        <strong className="pitch-preview-name">{playerDisplayName(player)}</strong>
-        <small>{positionLabel(player)} · {player.goals} goles · {player.appearances} PJ</small>
-      </section>
     </div>
   );
 }
