@@ -539,6 +539,8 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(globalsCss, /@container \(max-width: 520px\)/);
   assert.match(globalsCss, /@container \(max-width: 360px\)/);
   assert.match(globalsCss, /@media \(orientation: landscape\) and \(max-height: 560px\) and \(max-width: 740px\)/);
+  assert.match(globalsCss, /\(orientation: landscape\) and \(min-width: 768px\) and \(max-width: 1368px\) and \(max-height: 1024px\) and \(pointer: coarse\)/);
+  assert.match(globalsCss, /\(orientation: landscape\) and \(min-width: 768px\) and \(max-width: 1368px\) and \(max-height: 1024px\) and \(any-pointer: coarse\)/);
   assert.match(globalsCss, /touch-action:\s*manipulation/);
   assert.match(globalsCss, /main\[data-mobile-tab\][\s\S]*repeating-linear-gradient\(90deg,\s*rgba\(91,\s*197,\s*127,\s*0\.42\)/);
   assert.match(globalsCss, /main\[data-mobile-tab\] \.panel,[\s\S]*backdrop-filter:\s*blur\(14px\) saturate\(1\.05\)/);
@@ -1144,6 +1146,9 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /matchWeatherStatus/);
   assert.match(page, /\/api\/weather/);
   assert.match(page, /Tiempo previsto/);
+  assert.match(page, /const demoMatchWeather: MatchWeather = \{/);
+  assert.match(page, /condition:\s*"Sol"/);
+  assert.match(page, /if \(isDemoMode\) \{[\s\S]*setMatchWeather\(\{[\s\S]*\.\.\.demoMatchWeather/);
   assert.match(page, /const matchShareBox = !matchFinalized \? \(/);
   assert.match(page, /className="match-side-share" aria-label="Compartir partido"[\s\S]*\{matchShareBox\}/);
   assert.match(page, /function WeatherIcon/);
@@ -1262,6 +1267,8 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(globalsCss, /data-window-height-class/);
   assert.match(globalsCss, /padding-top:\s*var\(--game-nav-offset\)/);
   assert.match(globalsCss, /height:\s*calc\(var\(--app-viewport-height\) - var\(--game-nav-offset\)\)/);
+  assert.match(page, /window\.matchMedia\("\(any-pointer: coarse\)"\)\.matches/);
+  assert.match(page, /viewportWidth >= 768 && viewportWidth <= 1368 && viewportHeight <= 1024/);
   assert.match(adaptiveDocs, /Pachangas QA Matrix/);
   assert.match(adaptiveDocs, /COMPAT_BASE_URL/);
   assert.match(page, /function copyTextWithFallback/);
@@ -1302,7 +1309,9 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(envExample, /GOOGLE_WEATHER_API_KEY/);
   assert.match(globalsCss, /\.weather-card/);
   assert.match(globalsCss, /main\[data-mobile-tab="partido"\] \.weather-card\s*\{[\s\S]*grid-column:\s*1 \/ -1/);
+  assert.match(globalsCss, /main\[data-mobile-tab="partido"\] \.weather-card\s*\{[\s\S]*grid-template-columns:\s*minmax\(170px,\s*0\.68fr\) minmax\(230px,\s*1fr\) minmax\(70px,\s*0\.32fr\)/);
   assert.match(globalsCss, /main\[data-mobile-tab="partido"\] \.weather-card-main\s*\{[\s\S]*grid-template-columns:\s*24px auto auto minmax\(0,\s*1fr\)/);
+  assert.match(globalsCss, /main\[data-mobile-tab="partido"\] \.weather-metrics\s*\{[\s\S]*grid-template-columns:\s*repeat\(4,\s*minmax\(50px,\s*1fr\)\)/);
   assert.match(globalsCss, /\.match-side-share/);
   assert.match(globalsCss, /\.match-side-share \.share-box/);
   assert.match(page, /matchConfigured && !matchFinalized \? \(\s*<section className=\{`weather-card weather-card-\$\{matchWeatherStatus\}`\}/);
