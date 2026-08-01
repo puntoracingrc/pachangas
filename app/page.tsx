@@ -77,6 +77,7 @@ type RatingFacet = "ritmo" | "tiro" | "pase" | "regate" | "defensa" | "fisico";
 type RatingRole = "field" | "goalkeeper";
 type MobileSectionTabId = "inicio" | "partido";
 type ProfilePane = "ficha" | "ranking";
+type PlayerProfileMode = "edit" | "viewer";
 type MatchManagerPane = "proximo" | "alineacion" | "resultado" | "historico" | "admin";
 
 const matchManagerPaneLabels: Record<MatchManagerPane, string> = {
@@ -3112,6 +3113,7 @@ export default function Home() {
   const [activeMobileTab, setActiveMobileTab] = useState<MobileAppTab>("inicio");
   const [activeMatchManagerPane, setActiveMatchManagerPane] = useState<MatchManagerPane>("proximo");
   const [profilePane, setProfilePane] = useState<ProfilePane>("ficha");
+  const [playerProfileMode, setPlayerProfileMode] = useState<PlayerProfileMode>("edit");
   const [previewDemoMode, setPreviewDemoMode] = useState(false);
   const [playerActionMenu, setPlayerActionMenu] = useState<{ playerId: string; x: number; y: number } | null>(null);
   const [statusConfirmation, setStatusConfirmation] = useState<PendingStatusChange | null>(null);
@@ -3232,6 +3234,7 @@ export default function Home() {
       lockMobileNavigationTab("perfil");
       setActiveMobileTab("perfil");
       if (managerLandscape) {
+        setPlayerProfileMode("edit");
         setProfilePane("ficha");
         setSelectedPlayerId(ownPlayer?.id ?? selectedPlayerId ?? players[0]?.id ?? "");
       }
@@ -4232,6 +4235,7 @@ export default function Home() {
   function openPlayerProfile(playerId: string) {
     teamGalleryReturnScrollYRef.current = null;
     setMobileAccountOpen(false);
+    setPlayerProfileMode("viewer");
     setProfilePane("ficha");
     setActiveMobileTab("perfil");
     setSelectedPlayerId(playerId);
@@ -4260,6 +4264,7 @@ export default function Home() {
   function openTeamGalleryPlayerProfile(playerId: string) {
     teamGalleryReturnScrollYRef.current = window.scrollY;
     setMobileAccountOpen(false);
+    setPlayerProfileMode("viewer");
     setProfilePane("ficha");
     setActiveMobileTab("perfil");
     setSelectedPlayerId(playerId);
@@ -4284,6 +4289,7 @@ export default function Home() {
       setAvatarMessage("");
     }
     setSelectedPlayerId(null);
+    setPlayerProfileMode("edit");
     const returnScrollY = teamGalleryReturnScrollYRef.current;
     teamGalleryReturnScrollYRef.current = null;
     if (returnScrollY === null) return;
@@ -4358,6 +4364,7 @@ export default function Home() {
     if (tabId === "perfil") {
       if (managerLandscape) {
         setMobileAccountOpen(false);
+        setPlayerProfileMode("edit");
         setProfilePane("ficha");
         setSelectedPlayerId(ownPlayer?.id ?? selectedPlayerId ?? players[0]?.id ?? "");
         return;
@@ -5269,7 +5276,7 @@ export default function Home() {
   const selectedAvatarDraft = selectedPlayer ? avatarDrafts[selectedPlayer.id] : undefined;
   const selectedAvatarPreview = selectedAvatarDraft?.avatar ?? selectedPlayer?.avatar;
   const canAdjustSelectedAvatar = Boolean(canEditSelectedPlayer && selectedPlayer && selectedAvatarDraft && avatarAdjustingPlayerId === selectedPlayer.id);
-  const showPlayerSwitcher = Boolean(canUseAdminControls && selectedPlayer && !selectedPlayerIsOwn && players.length > 1);
+  const showPlayerSwitcher = Boolean(playerProfileMode === "edit" && canUseAdminControls && selectedPlayer && !selectedPlayerIsOwn && players.length > 1);
 
   useEffect(() => {
     if (!selectedPlayerIsOwn || !selectedPlayer?.marketEnabled) {
@@ -6356,6 +6363,7 @@ export default function Home() {
       const savedPlayer = ownPlayerFromCommit(result.data as RemotePayloadCommit, player.id);
       setPlayerAssessment(null);
       setProfileName(playerDisplayName(savedPlayer ?? player));
+      setPlayerProfileMode("edit");
       setProfilePane("ficha");
       setSelectedPlayerId(savedPlayer?.id ?? player.id);
       setProfileSaveMessage("Ficha creada con test inicial");
@@ -6396,6 +6404,7 @@ export default function Home() {
       if (result.error) throw new Error(result.error.message);
       const savedPlayer = ownPlayerFromCommit(result.data as RemotePayloadCommit, selectedPlayer.id);
       setPlayerAssessment(null);
+      setPlayerProfileMode("edit");
       setProfilePane("ficha");
       setSelectedPlayerId(savedPlayer?.id ?? selectedPlayer.id);
       setProfileSaveMessage("Ficha afinada con test avanzado");
@@ -6408,7 +6417,15 @@ export default function Home() {
 
   async function openOwnPlayerProfile() {
     if (ownPlayer) {
-      openPlayerProfile(ownPlayer.id);
+      teamGalleryReturnScrollYRef.current = null;
+      setMobileAccountOpen(false);
+      setPlayerProfileMode("edit");
+      setProfilePane("ficha");
+      setActiveMobileTab("perfil");
+      setSelectedPlayerId(ownPlayer.id);
+      if (selectedPlayerId === ownPlayer.id) {
+        scrollToPlayerProfile();
+      }
       return;
     }
 
@@ -6458,7 +6475,7 @@ export default function Home() {
 
   async function importOwnPlayerProfile(candidate: PlayerImportCandidate | undefined) {
     if (ownPlayer) {
-      openPlayerProfile(ownPlayer.id);
+      await openOwnPlayerProfile();
       return;
     }
 
@@ -6487,6 +6504,7 @@ export default function Home() {
 
       const savedPlayer = ownPlayerFromCommit(result.data as RemotePayloadCommit, player.id);
       if (savedPlayer) {
+        setPlayerProfileMode("edit");
         setProfilePane("ficha");
         setSelectedPlayerId(savedPlayer.id);
         setProfileName(playerDisplayName(savedPlayer));
@@ -6499,6 +6517,7 @@ export default function Home() {
     }
 
     setPlayers((current) => [...current, player]);
+    setPlayerProfileMode("edit");
     setProfilePane("ficha");
     setSelectedPlayerId(player.id);
     setProfileName(playerDisplayName(player));
@@ -6544,6 +6563,7 @@ export default function Home() {
       setPlayers(nextPlayers);
     }
 
+    setPlayerProfileMode("edit");
     setProfilePane("ficha");
     setSelectedPlayerId(player.id);
     setProfileSaveMessage("Jugador creado");
@@ -7568,6 +7588,280 @@ export default function Home() {
           {playerAssessmentMessage ? <small className="player-assessment-message">{playerAssessmentMessage}</small> : null}
         </div>
       </section>
+    );
+  }
+
+  function renderSelectedPlayerCard(editable: boolean) {
+    if (!selectedPlayer) return null;
+    const cardCanEdit = Boolean(editable && canEditSelectedPlayer);
+    const cardCanAdjustAvatar = Boolean(editable && canAdjustSelectedAvatar);
+
+    return (
+      <div className="fifa-card-shell">
+        <div className={`${cardCanEdit ? "fifa-player-card" : "fifa-player-card readonly-card"} ${cardTierClass(selectedPeerScore)} ${avatarDragging && cardCanAdjustAvatar ? "avatar-dragging" : ""}`}>
+          <span className="fifa-score">{overallScore(selectedPeerScore)}</span>
+          {renderRatingTrendChip(selectedPlayer)}
+          <span className="fifa-position">{positionShort(selectedPlayer)}</span>
+          <span
+            className={`fifa-photo ${cardCanAdjustAvatar ? "draggable-avatar" : ""}`}
+            onPointerCancel={cardCanAdjustAvatar ? finishAvatarDrag : undefined}
+            onPointerDown={cardCanAdjustAvatar ? (event) => startAvatarDrag(event, selectedPlayer) : undefined}
+            onPointerMove={cardCanAdjustAvatar ? moveAvatarDrag : undefined}
+            onPointerUp={cardCanAdjustAvatar ? finishAvatarDrag : undefined}
+          >
+            {selectedAvatarPreview ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={selectedAvatarPreview} alt={`Foto de ${playerDisplayName(selectedPlayer)}`} draggable={false} style={avatarImageStyle(selectedAvatarDraft ?? selectedPlayer)} />
+            ) : (
+              <b>+</b>
+            )}
+          </span>
+          <strong>{playerDisplayName(selectedPlayer)}</strong>
+          <span className="fifa-card-meta">
+            {selectedPlayer.goals} Goles · {selectedPlayer.appearances} PJ{selectedPlayerAge !== null ? ` · ${selectedPlayerAge} años` : ""}
+          </span>
+          <div className="fifa-facets">
+            {selectedRatingFacets.map((facet) => (
+              <span key={facet.key}>
+                <b>{overallScore(facetAverage(selectedPlayer, facet.key))}</b>
+                {facet.short}
+              </span>
+            ))}
+          </div>
+          {cardCanEdit ? (
+            <label className="fifa-photo-action" title={selectedAvatarPreview ? "Cambiar foto" : "Añadir foto"}>
+              {selectedAvatarPreview ? "Cambiar foto" : "Añadir foto"}
+              <input
+                type="file"
+                accept="image/*"
+                aria-label={selectedAvatarPreview ? "Cambiar foto del jugador" : "Añadir foto del jugador"}
+                onClick={(event) => {
+                  event.currentTarget.value = "";
+                }}
+                onChange={(event) => {
+                  void uploadAvatar(event.currentTarget.files?.[0], selectedPlayer.id);
+                  event.currentTarget.value = "";
+                }}
+              />
+            </label>
+          ) : null}
+        </div>
+        {cardCanAdjustAvatar ? (
+          <small className="avatar-adjust-hint">Arrastra la foto dentro de la carta. El encuadre se guarda al pulsar Guardar ficha.</small>
+        ) : null}
+        {editable ? (
+          <>
+            <div className="avatar-actions">
+              <label className="avatar-action-button">
+                Foto
+                <input
+                  type="file"
+                  accept="image/*"
+                  disabled={!canEditSelectedPlayer}
+                  onChange={(event) => {
+                    void uploadAvatar(event.currentTarget.files?.[0], selectedPlayer.id);
+                    event.currentTarget.value = "";
+                  }}
+                />
+              </label>
+              <label className="avatar-action-button">
+                Cámara
+                <input
+                  type="file"
+                  accept="image/*"
+                  capture="user"
+                  disabled={!canEditSelectedPlayer}
+                  onChange={(event) => {
+                    void uploadAvatar(event.currentTarget.files?.[0], selectedPlayer.id);
+                    event.currentTarget.value = "";
+                  }}
+                />
+              </label>
+              <button className="avatar-action-button" type="button" onClick={() => openCamera(selectedPlayer.id)} disabled={!canEditSelectedPlayer}>
+                Webcam
+              </button>
+            </div>
+            {canEditSelectedPlayer ? (
+              <div className="avatar-prompt-help">
+                <span className="avatar-prompt-info" aria-hidden="true">i</span>
+                <small>Prompt para ChatGPT: crea un retrato PNG transparente con estilo de carta.</small>
+                <button className="avatar-prompt-copy" type="button" onClick={() => void copyPlayerPhotoPrompt()}>
+                  {avatarPromptCopied ? "Copiado" : "Copiar prompt"}
+                </button>
+              </div>
+            ) : null}
+            {avatarMessage ? <small className="avatar-message">{avatarMessage}</small> : null}
+            {cameraPlayerId === selectedPlayer.id ? (
+              <div className="camera-panel">
+                <video ref={cameraVideoRef} autoPlay muted playsInline />
+                <div>
+                  <button type="button" onClick={captureCameraAvatar}>Usar foto</button>
+                  <button type="button" onClick={stopCamera}>Cerrar</button>
+                </div>
+                {cameraError ? <small>{cameraError}</small> : null}
+              </div>
+            ) : null}
+          </>
+        ) : null}
+      </div>
+    );
+  }
+
+  function renderSelectedPlayerRatingPanel() {
+    if (!selectedPlayer) return null;
+
+    return (
+      <div className={canRateSelectedPlayer ? "rating-box rating-open-box" : "rating-box rating-locked-box"}>
+        <div className="rating-box-title">
+          <span>Media y valoraciones</span>
+          <em className={canRateSelectedPlayer ? "rating-state open" : "rating-state closed"}>
+            {canRateSelectedPlayer ? "Abiertas" : "Cerradas"}
+          </em>
+        </div>
+        <div className="rating-summary-grid">
+          <div className="rating-summary-card rating-summary-main">
+            <span>Media</span>
+            <strong>{overallScore(selectedPeerScore)}</strong>
+            <small>{playerMediaLabel(selectedPlayer)}. No baja por no jugar.</small>
+          </div>
+          {canRateSelectedPlayer ? (
+            <div className="rating-summary-card">
+              <span>Tu valoración</span>
+              <strong>{overallScore(draftPeerAverage)}</strong>
+              <small>{selectedRatingHistory.length + (selectedPlayer.ratings?.length ?? 0)} votos de compañeros</small>
+            </div>
+          ) : null}
+          {selectedForm ? (
+            <div className={`form-state-card ${canRateSelectedPlayer ? "rating-summary-wide" : ""} ${selectedForm.hasData ? `form-${selectedForm.status}` : "form-pending"}`}>
+              {selectedForm.hasData ? (
+                <>
+                  <b>Forma actual {visibleFormPercent(selectedForm)}%</b>
+                  <em>{selectedForm.label}</em>
+                  <small>Valor para equilibrar: {overallScore(selectedEffectiveScore)}</small>
+                  <small>Fiabilidad: {selectedForm.reliability}%</small>
+                  {selectedForm.notes.length ? <small>{selectedForm.notes.join(" · ")}</small> : null}
+                </>
+              ) : (
+                <>
+                  <b>Forma pendiente</b>
+                  <em>Sin partidos finalizados</em>
+                  <small>Para equilibrar cuenta como neutral hasta tener datos reales.</small>
+                </>
+              )}
+            </div>
+          ) : null}
+        </div>
+        <p className="rating-help">{selectedRatingStatusText}</p>
+        {selectedPlayerIsOwn && assessmentSummaryKindCompleted(selectedPlayer, "initial") ? (
+          <div className="assessment-followup">
+            {assessmentSummaryKindCompleted(selectedPlayer, "advanced") ? (
+              <small>Test avanzado completado. La ficha seguirá evolucionando con valoraciones de compañeros.</small>
+            ) : (
+              <button type="button" onClick={() => startPlayerAssessment("advanced", selectedPlayer)}>
+                Mejorar precisión de mi ficha
+              </button>
+            )}
+          </div>
+        ) : null}
+        <div className="facet-grid">
+          {selectedRatingFacets.map((facet) => {
+            const facetValue = selectedFacetDraftValue(facet.key);
+            const facetPoints = overallScore(facetValue);
+            return (
+              <div className="facet-field" key={facet.key}>
+                <span>{facet.label}</span>
+                <div className="facet-stepper" aria-label={`${facet.label}: ${facetPoints} de 100`}>
+                  <button
+                    type="button"
+                    disabled={!canRateSelectedPlayer || facetPoints <= 10}
+                    onClick={() => setSelectedFacetRating(facet.key, facetValue - ratingFacetStep)}
+                    aria-label={`Bajar ${facet.label}`}
+                  >
+                    -
+                  </button>
+                  <b>{facetPoints}</b>
+                  <button
+                    type="button"
+                    disabled={!canRateSelectedPlayer || facetPoints >= 100}
+                    onClick={() => setSelectedFacetRating(facet.key, facetValue + ratingFacetStep)}
+                    aria-label={`Subir ${facet.label}`}
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        <button type="button" onClick={() => void addPeerRating(selectedPlayer.id)} disabled={!canRateSelectedPlayer}>
+          {selectedRatingButtonText}
+        </button>
+        <div className="rating-evolution">
+          <span>Evolución</span>
+          {selectedRatingChartHistory.length > 0 ? (
+            <div className="rating-line-chart">
+              <div className="rating-chart-legend">
+                {selectedRatingFacets.map((facet) => (
+                  <em key={facet.key}>
+                    <i style={{ background: ratingFacetColors[facet.key] }} />
+                    {facet.short}
+                  </em>
+                ))}
+              </div>
+              <svg
+                role="img"
+                aria-label="Evolución temporal de las valoraciones por habilidad"
+                viewBox={`0 0 ${ratingChart.width} ${ratingChart.height}`}
+              >
+                <line x1={ratingChart.left} x2={ratingChart.width - ratingChart.right} y1={ratingChartY(10)} y2={ratingChartY(10)} />
+                <line x1={ratingChart.left} x2={ratingChart.width - ratingChart.right} y1={ratingChartY(5)} y2={ratingChartY(5)} />
+                <line x1={ratingChart.left} x2={ratingChart.width - ratingChart.right} y1={ratingChartY(1)} y2={ratingChartY(1)} />
+                {[10, 5, 1].map((value) => (
+                  <text className="rating-chart-y-label" key={value} x="4" y={ratingChartY(value) + 4}>
+                    {ratingPoints(value)}
+                  </text>
+                ))}
+                {selectedRatingChartHistory.map((vote, index) => {
+                  const x = ratingChartX(index, selectedRatingChartHistory.length);
+                  return (
+                    <g className="rating-chart-tick" key={vote.id}>
+                      <line x1={x} x2={x} y1={ratingChart.top} y2={ratingChart.bottom} />
+                      <text x={x} y={ratingChart.height - 16}>P{vote.matchCount}</text>
+                      <text x={x} y={ratingChart.height - 3}>{ratingVoteDateLabel(vote.createdAt)}</text>
+                    </g>
+                  );
+                })}
+                {selectedRatingFacets.map((facet, facetIndex) => (
+                  <g key={facet.key}>
+                    <path
+                      d={ratingLinePath(selectedRatingChartHistory, facet.key, facetIndex, selectedRatingFacets.length)}
+                      stroke={ratingFacetColors[facet.key]}
+                    />
+                    {selectedRatingChartHistory.map((vote, index) => {
+                      const value = clampRating(vote.facets[facet.key] ?? 5);
+                      return (
+                        <circle
+                          cx={ratingChartX(index, selectedRatingChartHistory.length, facetIndex, selectedRatingFacets.length)}
+                          cy={ratingChartY(value)}
+                          fill={ratingFacetColors[facet.key]}
+                          key={`${vote.id}-${facet.key}`}
+                          r="3"
+                        >
+                          <title>
+                            {facet.label}: {overallScore(value)} · Partido {vote.matchCount} · {ratingVoteDateLabel(vote.createdAt)}
+                          </title>
+                        </circle>
+                      );
+                    })}
+                  </g>
+                ))}
+              </svg>
+            </div>
+          ) : (
+            <small>Sin evolución todavía</small>
+          )}
+        </div>
+      </div>
     );
   }
 
@@ -9015,13 +9309,13 @@ export default function Home() {
 
       <section className={`${selectedPlayer ? "bottom-grid" : "bottom-grid without-profile"} ${needsLoginForSharedLink ? "gated-shell" : ""}`} data-profile-pane={profilePane}>
         {selectedPlayer ? (
-          <div className="panel player-profile" ref={playerProfileRef}>
+          <div className={`panel player-profile ${playerProfileMode === "viewer" ? "profile-viewer" : "profile-editor"}`} ref={playerProfileRef}>
             <div className="panel-title">
-              <span>Ficha jugador</span>
+              <span>{playerProfileMode === "viewer" ? "Ficha de jugador" : "Mi perfil"}</span>
               <div className="profile-title-actions">
                 {selectedPlayerIsOwn ? <small className="own-label">Tu ficha universal</small> : null}
                 {selectedPlayer.inactive ? <small className="inactive-label">Ya no está</small> : null}
-                {canUseAdminControls && !selectedPlayer.inactive ? (
+                {playerProfileMode === "edit" && canUseAdminControls && !selectedPlayer.inactive ? (
                   <button
                     className="trash-icon-button profile-delete-button"
                     onClick={() => deactivatePlayer(selectedPlayer.id)}
@@ -9044,111 +9338,37 @@ export default function Home() {
                 <button type="button" onClick={() => void claimSelectedPlayer()}>Esta es mi ficha</button>
               </div>
             ) : null}
+            {playerProfileMode === "viewer" ? (
+              <div className="player-profile-viewer">
+                <div className="player-profile-viewer-card">
+                  {renderSelectedPlayerCard(false)}
+                </div>
+                <div className="player-profile-viewer-details">
+                  <div className="player-public-stats" aria-label={`Resumen de ${playerDisplayName(selectedPlayer)}`}>
+                    <div>
+                      <span>Posición</span>
+                      <strong>{positionShort(selectedPlayer)}</strong>
+                    </div>
+                    <div>
+                      <span>Partidos</span>
+                      <strong>{selectedPlayer.appearances}</strong>
+                    </div>
+                    <div>
+                      <span>Goles</span>
+                      <strong>{selectedPlayer.goals}</strong>
+                    </div>
+                    <div>
+                      <span>Edad</span>
+                      <strong>{selectedPlayerAge !== null ? selectedPlayerAge : "-"}</strong>
+                    </div>
+                  </div>
+                  {renderSelectedPlayerRatingPanel()}
+                </div>
+              </div>
+            ) : (
             <>
               <div className="profile-top">
-                <div className="fifa-card-shell">
-                  <div className={`${canEditSelectedPlayer ? "fifa-player-card" : "fifa-player-card readonly-card"} ${cardTierClass(selectedPeerScore)} ${avatarDragging ? "avatar-dragging" : ""}`}>
-                    <span className="fifa-score">{overallScore(selectedPeerScore)}</span>
-                    {renderRatingTrendChip(selectedPlayer)}
-                    <span className="fifa-position">{positionShort(selectedPlayer)}</span>
-                    <span
-                      className={`fifa-photo ${canAdjustSelectedAvatar ? "draggable-avatar" : ""}`}
-                      onPointerCancel={finishAvatarDrag}
-                      onPointerDown={(event) => startAvatarDrag(event, selectedPlayer)}
-                      onPointerMove={moveAvatarDrag}
-                      onPointerUp={finishAvatarDrag}
-                    >
-                      {selectedAvatarPreview ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={selectedAvatarPreview} alt={`Foto de ${playerDisplayName(selectedPlayer)}`} draggable={false} style={avatarImageStyle(selectedAvatarDraft ?? selectedPlayer)} />
-                      ) : (
-                        <b>+</b>
-                      )}
-                    </span>
-                    <strong>{playerDisplayName(selectedPlayer)}</strong>
-                    <span className="fifa-card-meta">
-                      {selectedPlayer.goals} Goles · {selectedPlayer.appearances} PJ{selectedPlayerAge !== null ? ` · ${selectedPlayerAge} años` : ""}
-                    </span>
-                    <div className="fifa-facets">
-                      {selectedRatingFacets.map((facet) => (
-                        <span key={facet.key}>
-                          <b>{overallScore(facetAverage(selectedPlayer, facet.key))}</b>
-                          {facet.short}
-                        </span>
-                      ))}
-                    </div>
-                    {canEditSelectedPlayer ? (
-                      <label className="fifa-photo-action" title={selectedAvatarPreview ? "Cambiar foto" : "Añadir foto"}>
-                        {selectedAvatarPreview ? "Cambiar foto" : "Añadir foto"}
-                        <input
-                          type="file"
-                          accept="image/*"
-                          aria-label={selectedAvatarPreview ? "Cambiar foto del jugador" : "Añadir foto del jugador"}
-                          onClick={(event) => {
-                            event.currentTarget.value = "";
-                          }}
-                          onChange={(event) => {
-                            void uploadAvatar(event.currentTarget.files?.[0], selectedPlayer.id);
-                            event.currentTarget.value = "";
-                          }}
-                        />
-                      </label>
-                    ) : null}
-                  </div>
-                  {canAdjustSelectedAvatar ? (
-                    <small className="avatar-adjust-hint">Arrastra la foto dentro de la carta. El encuadre se guarda al pulsar Guardar ficha.</small>
-                  ) : null}
-                  <div className="avatar-actions">
-                    <label className="avatar-action-button">
-                      Foto
-                      <input
-                        type="file"
-                        accept="image/*"
-                        disabled={!canEditSelectedPlayer}
-                        onChange={(event) => {
-                          void uploadAvatar(event.currentTarget.files?.[0], selectedPlayer.id);
-                          event.currentTarget.value = "";
-                        }}
-                      />
-                    </label>
-                    <label className="avatar-action-button">
-                      Cámara
-                      <input
-                        type="file"
-                        accept="image/*"
-                        capture="user"
-                        disabled={!canEditSelectedPlayer}
-                        onChange={(event) => {
-                          void uploadAvatar(event.currentTarget.files?.[0], selectedPlayer.id);
-                          event.currentTarget.value = "";
-                        }}
-                      />
-                    </label>
-                    <button className="avatar-action-button" type="button" onClick={() => openCamera(selectedPlayer.id)} disabled={!canEditSelectedPlayer}>
-                      Webcam
-                    </button>
-                  </div>
-                  {canEditSelectedPlayer ? (
-                    <div className="avatar-prompt-help">
-                      <span className="avatar-prompt-info" aria-hidden="true">i</span>
-                      <small>Prompt para ChatGPT: crea un retrato PNG transparente con estilo de carta.</small>
-                      <button className="avatar-prompt-copy" type="button" onClick={() => void copyPlayerPhotoPrompt()}>
-                        {avatarPromptCopied ? "Copiado" : "Copiar prompt"}
-                      </button>
-                    </div>
-                  ) : null}
-                  {avatarMessage ? <small className="avatar-message">{avatarMessage}</small> : null}
-                  {cameraPlayerId === selectedPlayer.id ? (
-                    <div className="camera-panel">
-                      <video ref={cameraVideoRef} autoPlay muted playsInline />
-                      <div>
-                        <button type="button" onClick={captureCameraAvatar}>Usar foto</button>
-                        <button type="button" onClick={stopCamera}>Cerrar</button>
-                      </div>
-                      {cameraError ? <small>{cameraError}</small> : null}
-                    </div>
-                  ) : null}
-                </div>
+                {renderSelectedPlayerCard(true)}
                 <div>
                   {showPlayerSwitcher ? (
                     <label className="profile-player-switcher">
@@ -9449,157 +9669,7 @@ export default function Home() {
                     <small>{selectedPlayer.marketEnabled && !selectedMarketReady ? "Para publicarte, añade al menos una zona y un horario activo." : "Se publica solo si guardas la ficha con esta opción marcada. Tu historial del grupo no se comparte."}</small>
                   </div>
                 ) : null}
-                <div className={canRateSelectedPlayer ? "rating-box rating-open-box" : "rating-box rating-locked-box"}>
-                  <div className="rating-box-title">
-                    <span>Media y valoraciones</span>
-                    <em className={canRateSelectedPlayer ? "rating-state open" : "rating-state closed"}>
-                      {canRateSelectedPlayer ? "Abiertas" : "Cerradas"}
-                    </em>
-                  </div>
-                  <div className="rating-summary-grid">
-                    <div className="rating-summary-card rating-summary-main">
-                      <span>Media</span>
-                      <strong>{overallScore(selectedPeerScore)}</strong>
-                      <small>{playerMediaLabel(selectedPlayer)}. No baja por no jugar.</small>
-                    </div>
-                    {canRateSelectedPlayer ? (
-                      <div className="rating-summary-card">
-                        <span>Tu valoración</span>
-                        <strong>{overallScore(draftPeerAverage)}</strong>
-                        <small>{selectedRatingHistory.length + (selectedPlayer.ratings?.length ?? 0)} votos de compañeros</small>
-                      </div>
-                    ) : null}
-                    {selectedForm ? (
-                      <div className={`form-state-card ${canRateSelectedPlayer ? "rating-summary-wide" : ""} ${selectedForm.hasData ? `form-${selectedForm.status}` : "form-pending"}`}>
-                        {selectedForm.hasData ? (
-                          <>
-                            <b>Forma actual {visibleFormPercent(selectedForm)}%</b>
-                            <em>{selectedForm.label}</em>
-                            <small>Valor para equilibrar: {overallScore(selectedEffectiveScore)}</small>
-                            <small>Fiabilidad: {selectedForm.reliability}%</small>
-                            {selectedForm.notes.length ? <small>{selectedForm.notes.join(" · ")}</small> : null}
-                          </>
-                        ) : (
-                          <>
-                            <b>Forma pendiente</b>
-                            <em>Sin partidos finalizados</em>
-                            <small>Para equilibrar cuenta como neutral hasta tener datos reales.</small>
-                          </>
-                        )}
-                      </div>
-                    ) : null}
-                  </div>
-                  <p className="rating-help">{selectedRatingStatusText}</p>
-                  {selectedPlayerIsOwn && assessmentSummaryKindCompleted(selectedPlayer, "initial") ? (
-                    <div className="assessment-followup">
-                      {assessmentSummaryKindCompleted(selectedPlayer, "advanced") ? (
-                        <small>Test avanzado completado. La ficha seguirá evolucionando con valoraciones de compañeros.</small>
-                      ) : (
-                        <button type="button" onClick={() => startPlayerAssessment("advanced", selectedPlayer)}>
-                          Mejorar precisión de mi ficha
-                        </button>
-                      )}
-                    </div>
-                  ) : null}
-                  <div className="facet-grid">
-                    {selectedRatingFacets.map((facet) => {
-                      const facetValue = selectedFacetDraftValue(facet.key);
-                      const facetPoints = overallScore(facetValue);
-                      return (
-                        <div className="facet-field" key={facet.key}>
-                          <span>{facet.label}</span>
-                          <div className="facet-stepper" aria-label={`${facet.label}: ${facetPoints} de 100`}>
-                            <button
-                              type="button"
-                              disabled={!canRateSelectedPlayer || facetPoints <= 10}
-                              onClick={() => setSelectedFacetRating(facet.key, facetValue - ratingFacetStep)}
-                              aria-label={`Bajar ${facet.label}`}
-                            >
-                              -
-                            </button>
-                            <b>{facetPoints}</b>
-                            <button
-                              type="button"
-                              disabled={!canRateSelectedPlayer || facetPoints >= 100}
-                              onClick={() => setSelectedFacetRating(facet.key, facetValue + ratingFacetStep)}
-                              aria-label={`Subir ${facet.label}`}
-                            >
-                              +
-                            </button>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                  <button type="button" onClick={() => void addPeerRating(selectedPlayer.id)} disabled={!canRateSelectedPlayer}>
-                    {selectedRatingButtonText}
-                  </button>
-                  <div className="rating-evolution">
-                    <span>Evolución</span>
-                    {selectedRatingChartHistory.length > 0 ? (
-                      <div className="rating-line-chart">
-                        <div className="rating-chart-legend">
-                          {selectedRatingFacets.map((facet) => (
-                            <em key={facet.key}>
-                              <i style={{ background: ratingFacetColors[facet.key] }} />
-                              {facet.short}
-                            </em>
-                          ))}
-                        </div>
-                        <svg
-                          role="img"
-                          aria-label="Evolución temporal de las valoraciones por habilidad"
-                          viewBox={`0 0 ${ratingChart.width} ${ratingChart.height}`}
-                        >
-                          <line x1={ratingChart.left} x2={ratingChart.width - ratingChart.right} y1={ratingChartY(10)} y2={ratingChartY(10)} />
-                          <line x1={ratingChart.left} x2={ratingChart.width - ratingChart.right} y1={ratingChartY(5)} y2={ratingChartY(5)} />
-                          <line x1={ratingChart.left} x2={ratingChart.width - ratingChart.right} y1={ratingChartY(1)} y2={ratingChartY(1)} />
-                          {[10, 5, 1].map((value) => (
-                            <text className="rating-chart-y-label" key={value} x="4" y={ratingChartY(value) + 4}>
-                              {ratingPoints(value)}
-                            </text>
-                          ))}
-                          {selectedRatingChartHistory.map((vote, index) => {
-                            const x = ratingChartX(index, selectedRatingChartHistory.length);
-                            return (
-                              <g className="rating-chart-tick" key={vote.id}>
-                                <line x1={x} x2={x} y1={ratingChart.top} y2={ratingChart.bottom} />
-                                <text x={x} y={ratingChart.height - 16}>P{vote.matchCount}</text>
-                                <text x={x} y={ratingChart.height - 3}>{ratingVoteDateLabel(vote.createdAt)}</text>
-                              </g>
-                            );
-                          })}
-                          {selectedRatingFacets.map((facet, facetIndex) => (
-                            <g key={facet.key}>
-                              <path
-                                d={ratingLinePath(selectedRatingChartHistory, facet.key, facetIndex, selectedRatingFacets.length)}
-                                stroke={ratingFacetColors[facet.key]}
-                              />
-                              {selectedRatingChartHistory.map((vote, index) => {
-                                const value = clampRating(vote.facets[facet.key] ?? 5);
-                                return (
-                                  <circle
-                                    cx={ratingChartX(index, selectedRatingChartHistory.length, facetIndex, selectedRatingFacets.length)}
-                                    cy={ratingChartY(value)}
-                                    fill={ratingFacetColors[facet.key]}
-                                    key={`${vote.id}-${facet.key}`}
-                                    r="3"
-                                  >
-                                    <title>
-                                      {facet.label}: {overallScore(value)} · Partido {vote.matchCount} · {ratingVoteDateLabel(vote.createdAt)}
-                                    </title>
-                                  </circle>
-                                );
-                              })}
-                            </g>
-                          ))}
-                        </svg>
-                      </div>
-                    ) : (
-                      <small>Sin evolución todavía</small>
-                    )}
-                  </div>
-                </div>
+                {renderSelectedPlayerRatingPanel()}
                 <label>
                   Goles
                   <input
@@ -9612,6 +9682,7 @@ export default function Home() {
                 </label>
               </div>
             </>
+            )}
           </div>
         ) : null}
 
