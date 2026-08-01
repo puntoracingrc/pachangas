@@ -10408,10 +10408,10 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
   main[data-mobile-tab="partido"] .weather-card {
     background: rgba(245, 242, 232, 0.08);
     border-color: rgba(255, 255, 255, 0.12);
-    grid-column: 1;
+    grid-column: 1 / -1;
     grid-row: 1;
     gap: 6px;
-    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-columns: minmax(0, 1fr);
     margin: 0;
     min-height: 38px;
     padding: 5px 8px;
@@ -10420,7 +10420,7 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
   main[data-mobile-tab="partido"] .weather-card-main {
     align-items: center;
     gap: 7px;
-    grid-template-columns: 24px auto minmax(0, 1fr);
+    grid-template-columns: 24px auto auto minmax(0, 1fr);
   }
 
   main[data-mobile-tab="partido"] .weather-icon {
@@ -10456,7 +10456,7 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
 
   main[data-mobile-tab="partido"] .weather-card-main p {
     display: -webkit-box;
-    grid-column: 3;
+    grid-column: 4;
     margin: 0;
     overflow: hidden;
     -webkit-box-orient: vertical;
@@ -11622,6 +11622,66 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+
+  main[data-mobile-tab="partido"] .match-side-share {
+    align-self: end;
+    display: grid;
+    margin-top: auto;
+    min-width: 0;
+  }
+
+  main[data-mobile-tab="partido"] .match-side-share .share-box {
+    align-content: start;
+    background:
+      linear-gradient(180deg, rgba(200, 239, 93, 0.12), rgba(245, 242, 232, 0.035)),
+      rgba(13, 24, 20, 0.92);
+    border-color: rgba(200, 239, 93, 0.24);
+    border-radius: 8px;
+    display: grid;
+    gap: 6px;
+    grid-column: auto;
+    grid-row: auto;
+    grid-template-columns: minmax(0, 1fr);
+    margin: 0;
+    min-height: 0;
+    padding: 7px;
+  }
+
+  main[data-mobile-tab="partido"] .match-side-share .share-box > span {
+    color: #c4d3cb;
+    font-size: 9px;
+    font-weight: 950;
+    line-height: 1.05;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  main[data-mobile-tab="partido"] .match-side-share .share-actions {
+    display: grid;
+    gap: 5px;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  main[data-mobile-tab="partido"] .match-side-share .share-actions button {
+    border-radius: 6px;
+    font-size: 9px;
+    min-height: 28px;
+    padding: 0 5px;
+    width: 100%;
+  }
+
+  main[data-mobile-tab="partido"] .match-side-share .share-actions .whatsapp-icon-button {
+    min-height: 30px;
+    width: 100%;
+  }
+
+  main[data-mobile-tab="partido"] .match-side-share .share-box .sync-status {
+    font-size: 8px;
+    line-height: 1.05;
+    margin: 0;
   }
 
   main[data-mobile-tab="partido"] .lineup-side-tools {
