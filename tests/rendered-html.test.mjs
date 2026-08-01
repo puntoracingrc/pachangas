@@ -492,6 +492,9 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(globalsCss, /touch-action:\s*manipulation/);
   assert.match(globalsCss, /main\[data-mobile-tab\][\s\S]*repeating-linear-gradient\(90deg,\s*rgba\(91,\s*197,\s*127,\s*0\.42\)/);
   assert.match(globalsCss, /main\[data-mobile-tab\] \.panel,[\s\S]*backdrop-filter:\s*blur\(14px\) saturate\(1\.05\)/);
+  assert.match(globalsCss, /main\[data-mobile-tab="inicio"\] > \.hero,[\s\S]*main\[data-mobile-tab="inicio"\] > \.demo-banner\s*\{[\s\S]*display:\s*none !important/);
+  assert.match(globalsCss, /main\[data-mobile-tab="inicio"\] > \.app-shell\s*\{[\s\S]*grid-column:\s*1/);
+  assert.match(globalsCss, /\.profile-demo-create-button/);
   assert.match(globalsCss, /\.match-manager-subnav/);
   assert.match(globalsCss, /\.lineup-side-tools/);
   assert.match(globalsCss, /\.lineup-side-tools-kicker/);
@@ -555,7 +558,7 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(globalsCss, /main\[data-mobile-tab="mercado"\] > \.app-shell/);
   assert.match(globalsCss, /@media \(max-width:\s*760px\)\s*\{[\s\S]*\.legal-footer\s*\{\s*display:\s*none/);
   assert.match(globalsCss, /main\[data-mobile-tab="partido"\] > \.app-shell > \.main-panel,\s*main\[data-mobile-tab="partido"\] > \.app-shell > \.lineup-panel\s*\{\s*display:\s*grid/);
-  assert.match(globalsCss, /main\[data-mobile-tab="inicio"\]\s*\{[\s\S]*grid-template-columns:\s*minmax\(230px,\s*0\.72fr\) minmax\(0,\s*1\.28fr\)/);
+  assert.match(globalsCss, /main\[data-mobile-tab="inicio"\]\s*\{[\s\S]*grid-template-columns:\s*minmax\(0,\s*1fr\)/);
   assert.match(globalsCss, /main\[data-mobile-tab="partido"\] > \.app-shell > \.lineup-panel/);
   assert.match(globalsCss, /main\[data-mobile-tab="partido"\] \.lineup-panel\s*\{[\s\S]*grid-template-columns:\s*minmax\(0,\s*1fr\)/);
   assert.match(globalsCss, /main\[data-mobile-tab="equipo"\] > \.bottom-grid #ranking\s*\{[\s\S]*grid-template-rows:\s*auto auto minmax\(0,\s*1fr\)/);
@@ -613,6 +616,8 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /Mantener plaza/);
   assert.match(page, /Demo interactiva/);
   assert.match(page, /Demo local: no modifica tu grupo real/);
+  assert.match(page, /Crear mi grupo limpio/);
+  assert.match(page, /Salir de la demo y empezar desde cero/);
   assert.match(page, /profile-player-switcher/);
   assert.match(page, /function scrollToPlayerProfile/);
   assert.match(page, /function openTeamGallery/);

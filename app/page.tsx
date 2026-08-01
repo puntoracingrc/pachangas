@@ -9479,6 +9479,11 @@ export default function Home() {
               <div className="profile-title-actions">
                 {selectedPlayerIsOwn ? <small className="own-label">Tu ficha universal</small> : null}
                 {selectedPlayer.inactive ? <small className="inactive-label">Ya no está</small> : null}
+                {isDemoMode ? (
+                  <button className="profile-demo-create-button" type="button" onClick={() => showQuickForm("team")}>
+                    Crear mi grupo limpio
+                  </button>
+                ) : null}
                 {playerProfileMode === "edit" && canUseAdminControls && !selectedPlayer.inactive ? (
                   <button
                     className="trash-icon-button profile-delete-button"
@@ -10003,7 +10008,9 @@ export default function Home() {
                     <span>Crear campo</span><small>Dirección, precio y modalidad</small><b aria-hidden="true">›</b>
                   </button>
                   <button type="button" onClick={() => runMobileAccountAction(() => showQuickForm("team"))}>
-                    <span>Crear grupo de pachangas</span><small>Empieza un grupo nuevo</small><b aria-hidden="true">›</b>
+                    <span>{isDemoMode ? "Crear mi grupo limpio" : "Crear grupo de pachangas"}</span>
+                    <small>{isDemoMode ? "Salir de la demo y empezar desde cero" : "Empieza un grupo nuevo"}</small>
+                    <b aria-hidden="true">›</b>
                   </button>
                   {canUseAdminControls ? (
                     <button type="button" onClick={() => runMobileAccountAction(toggleSettingsPanel)}>
