@@ -992,7 +992,8 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /msUntilMatch > weatherForecastClientLimitMs/);
   assert.match(weatherRoute, /Previsión del tiempo disponible en/);
   assert.match(page, /Previsión más cercana/);
-  assert.match(page, /Google Places para ver la previsión/);
+  assert.match(page, /Elige un campo con ubicación para ver la previsión/);
+  assert.doesNotMatch(page, /Google Places para ver la previsión/);
   assert.doesNotMatch(page, /<span>Toca<\/span>/);
   assert.match(page, /Cierra la alineación para calcular pago y finalizar/);
   assert.match(page, /disabled=\{!matchConfigured \|\| !lineupClosed \|\| !resultIsReady \|\| !canUseAdminControls\}/);
