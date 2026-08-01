@@ -943,6 +943,7 @@ const legacyPositionMeta: Record<"Porteria" | "Defensa" | "Medio" | "Ataque", { 
 };
 
 const ratingReviewInterval = 3;
+const ratingFacetStep = 0.5;
 const footballSeasonStartMonth = 8;
 
 type RatingFacetConfig = { key: RatingFacet; label: string; short: string };
@@ -5424,6 +5425,14 @@ export default function Home() {
       (isDemoMode || (hasRealTeam && isRegisteredUser)),
   );
   const ratingWaitMatches = selectedRatingWindow?.waitMatches ?? 0;
+  const selectedFacetDraftValue = (facetKey: RatingFacet) =>
+    selectedPlayer ? clampRating(newFacetRatings[facetKey] ?? facetAverage(selectedPlayer, facetKey)) : 5;
+  const setSelectedFacetRating = (facetKey: RatingFacet, value: number) => {
+    setNewFacetRatings((current) => ({
+      ...current,
+      [facetKey]: clampRating(value),
+    }));
+  };
   const draftPeerAverage = selectedPlayer
     ? selectedRatingFacets.reduce((sum, facet) => sum + clampRating(newFacetRatings[facet.key] ?? facetAverage(selectedPlayer, facet.key)), 0) / selectedRatingFacets.length
     : 0;
@@ -9493,27 +9502,34 @@ export default function Home() {
                     </div>
                   ) : null}
                   <div className="facet-grid">
-                    {selectedRatingFacets.map((facet) => (
-                      <label className="facet-field" key={facet.key}>
-                        <span>{facet.label}</span>
-                        <input
-                          type="range"
-                          min="10"
-                          max="100"
-                          step="5"
-                          value={overallScore(newFacetRatings[facet.key] ?? facetAverage(selectedPlayer, facet.key))}
-                          disabled={!canRateSelectedPlayer}
-                          aria-valuetext={`${overallScore(newFacetRatings[facet.key] ?? facetAverage(selectedPlayer, facet.key))} de 100`}
-                          onChange={(event) =>
-                            setNewFacetRatings((current) => ({
-                              ...current,
-                              [facet.key]: clampRating(Number(event.target.value) / 10),
-                            }))
-                          }
-                        />
-                        <b>{overallScore(clampRating(newFacetRatings[facet.key] ?? facetAverage(selectedPlayer, facet.key)))}</b>
-                      </label>
-                    ))}
+                    {selectedRatingFacets.map((facet) => {
+                      const facetValue = selectedFacetDraftValue(facet.key);
+                      const facetPoints = overallScore(facetValue);
+                      return (
+                        <div className="facet-field" key={facet.key}>
+                          <span>{facet.label}</span>
+                          <div className="facet-stepper" aria-label={`${facet.label}: ${facetPoints} de 100`}>
+                            <button
+                              type="button"
+                              disabled={!canRateSelectedPlayer || facetPoints <= 10}
+                              onClick={() => setSelectedFacetRating(facet.key, facetValue - ratingFacetStep)}
+                              aria-label={`Bajar ${facet.label}`}
+                            >
+                              -
+                            </button>
+                            <b>{facetPoints}</b>
+                            <button
+                              type="button"
+                              disabled={!canRateSelectedPlayer || facetPoints >= 100}
+                              onClick={() => setSelectedFacetRating(facet.key, facetValue + ratingFacetStep)}
+                              aria-label={`Subir ${facet.label}`}
+                            >
+                              +
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                   <button type="button" onClick={() => void addPeerRating(selectedPlayer.id)} disabled={!canRateSelectedPlayer}>
                     {selectedRatingButtonText}
