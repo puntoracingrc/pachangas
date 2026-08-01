@@ -631,6 +631,7 @@ const seedMatches: Match[] = [
     closed: true,
     scoreA: 6,
     scoreB: 2,
+    teamPhoto: demoTeamPhoto,
     teamA: ["p4", "p1", "p2", "p7", "p18"],
     teamB: ["p14", "p3", "p5", "p6", "p12"],
     scorers: [
@@ -656,6 +657,7 @@ const seedMatches: Match[] = [
     closed: true,
     scoreA: 3,
     scoreB: 5,
+    teamPhoto: demoTeamPhoto,
     teamA: ["p4", "p3", "p8", "p13", "p5", "p11", "p12"],
     teamB: ["p14", "p6", "p10", "p2", "p1", "p7", "p18"],
     scorers: [
@@ -681,6 +683,7 @@ const seedMatches: Match[] = [
     closed: true,
     scoreA: 2,
     scoreB: 1,
+    teamPhoto: demoTeamPhoto,
     teamA: ["p4", "p3", "p6", "p8", "p13", "p2", "p5", "p11", "p1", "p7", "p12"],
     teamB: ["p14", "p10", "p15", "p16", "p9", "p17", "p18"],
     scorers: [
@@ -704,6 +707,7 @@ const seedMatches: Match[] = [
     closed: true,
     scoreA: 1,
     scoreB: 3,
+    teamPhoto: demoTeamPhoto,
     teamA: ["p4", "p3", "p8", "p13", "p5", "p11", "p12"],
     teamB: ["p14", "p6", "p10", "p2", "p1", "p7", "p18"],
     scorers: [
@@ -4576,8 +4580,9 @@ export default function Home() {
     scrollToPanel(matchPanelRef);
   }
 
-  function openMatchFromInicio(matchId: string) {
+  function openMatchFromInicio(matchId: string, pane: MatchManagerPane = "proximo") {
     setActiveMatchId(matchId);
+    setActiveMatchManagerPane(pane);
     navigateMobileTab("partido");
   }
 
@@ -8817,21 +8822,11 @@ export default function Home() {
               <div className="match-row" key={match.id}>
                 <button
                   className={match.id === activeMatch.id ? "match-item active" : "match-item"}
-                  onClick={() => openMatchFromInicio(match.id)}
+                  onClick={() => openMatchFromInicio(match.id, "proximo")}
                   type="button"
                 >
                   <span>{match.title}</span>
                   <small>{new Date(match.date).toLocaleString("es-ES", { weekday: "short", hour: "2-digit", minute: "2-digit" })}</small>
-                </button>
-                <button
-                  className="trash-icon-button"
-                  disabled={!canUseAdminControls}
-                  onClick={() => deleteMatch(match.id)}
-                  title="Borrar partido"
-                  type="button"
-                  aria-label={`Borrar ${match.title}`}
-                >
-                  <TrashLogo />
                 </button>
               </div>
             ))}
@@ -8853,51 +8848,29 @@ export default function Home() {
             <div className="history">
               {filteredClosedMatches.length === 0 ? <p className="empty-copy">No hay partidos en esta temporada.</p> : null}
               {filteredClosedMatches.map((match, index) => {
-                const matchPayer = players.find((player) => player.id === match.payerId);
                 const currentMonth = monthLabel(match.date);
                 const previousMonth = index > 0 ? monthLabel(filteredClosedMatches[index - 1].date) : "";
-                const scorersText = match.scorers
-                  ?.map((entry) => {
-                    const scorer = players.find((player) => player.id === entry.playerId);
-                    return `${scorer ? playerDisplayName(scorer) : "Jugador"} ${entry.goals}`;
-                  })
-                  .join(", ");
 
                 return (
                   <Fragment key={match.id}>
                     {currentMonth !== previousMonth ? <div className="history-month">{currentMonth}</div> : null}
-                    <article className={match.teamPhoto ? "history-item has-photo" : "history-item"}>
+                    <button
+                      className={match.teamPhoto ? "history-item has-photo" : "history-item"}
+                      onClick={() => openMatchFromInicio(match.id, "resultado")}
+                      type="button"
+                    >
                       {match.teamPhoto ? (
-                        <button
-                          aria-label={`Abrir foto de ${match.title}`}
-                          className="history-photo"
-                          onClick={() => selectMatch(match.id)}
-                          type="button"
-                        >
+                        <span className="history-photo" aria-hidden="true">
                           <img src={match.teamPhoto} alt="" />
-                        </button>
+                        </span>
                       ) : null}
                       <div>
                         <strong>{match.title}</strong>
                         <small>{new Date(match.date).toLocaleDateString("es-ES", { day: "2-digit", month: "short" })}</small>
                       </div>
                       <span>{match.scoreA} - {match.scoreB}</span>
-                      {canUseAdminControls ? (
-                        <button
-                          className="history-delete"
-                          type="button"
-                          onClick={() => {
-                            if (window.confirm("¿Borrar este partido y descontar sus estadísticas?")) deleteClosedMatch(match.id);
-                          }}
-                        >
-                          Borrar
-                        </button>
-                      ) : null}
-                      <small>
-                        {match.place} · pagó {matchPayer ? playerDisplayName(matchPayer) : "sin asignar"}
-                        {scorersText ? ` · goles: ${scorersText}` : ""}
-                      </small>
-                    </article>
+                      <small>{match.place}</small>
+                    </button>
                   </Fragment>
                 );
               })}
@@ -9068,6 +9041,10 @@ export default function Home() {
                     <button type="button" onClick={createMatch} disabled={!canUseAdminControls}>
                       <span>Nuevo partido</span>
                       <small>Borrador siguiente</small>
+                    </button>
+                    <button className="match-admin-danger-button" type="button" onClick={() => deleteMatch(activeMatch.id)} disabled={!canUseAdminControls}>
+                      <span>Borrar partido</span>
+                      <small>Eliminar actual</small>
                     </button>
                   </div>
                 </section>

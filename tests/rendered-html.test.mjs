@@ -358,8 +358,13 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /activeMobileTab/);
   assert.match(page, /navigateMobileTab/);
   assert.match(page, /next-match-rail/);
-  assert.match(page, /function openMatchFromInicio\(matchId: string\) \{[\s\S]*setActiveMatchId\(matchId\);[\s\S]*navigateMobileTab\("partido"\);[\s\S]*\}/);
-  assert.match(page, /onClick=\{\(\) => openMatchFromInicio\(match\.id\)\}/);
+  assert.match(page, /function openMatchFromInicio\(matchId: string, pane: MatchManagerPane = "proximo"\) \{[\s\S]*setActiveMatchId\(matchId\);[\s\S]*setActiveMatchManagerPane\(pane\);[\s\S]*navigateMobileTab\("partido"\);[\s\S]*\}/);
+  assert.match(page, /onClick=\{\(\) => openMatchFromInicio\(match\.id, "proximo"\)\}/);
+  assert.match(page, /onClick=\{\(\) => openMatchFromInicio\(match\.id, "resultado"\)\}/);
+  assert.match(page, /Borrar partido/);
+  assert.doesNotMatch(page, /className="history-delete"/);
+  assert.doesNotMatch(page, /pagó \{matchPayer/);
+  assert.doesNotMatch(page, /goles: \$\{scorersText\}/);
   assert.match(page, /onNavigate=\{navigatePrimaryMobile\}/);
   assert.match(page, /id="partido"/);
   assert.match(page, /id="alineacion"/);
@@ -380,6 +385,7 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /filteredClosedMatches/);
   assert.match(page, /const demoTeamPhoto = "data:image\/svg\+xml/);
   assert.match(page, /teamPhoto: demoTeamPhoto/);
+  assert.ok((page.match(/teamPhoto: demoTeamPhoto/g) ?? []).length >= 6);
   assert.match(page, /\["proximo", "alineacion", "resultado", "admin"\]/);
   assert.match(page, /\["proximo", "alineacion", "resultado"\]/);
   assert.doesNotMatch(page, /\["proximo", "alineacion", "resultado", "historico"/);
