@@ -6131,10 +6131,15 @@ select:disabled {
   background: #fff;
   border: 1px solid var(--line);
   border-radius: 8px;
+  color: var(--foreground);
+  cursor: pointer;
   display: grid;
+  font: inherit;
   gap: 8px;
   grid-template-columns: minmax(0, 1fr) auto auto;
   padding: 12px;
+  text-align: left;
+  width: 100%;
 }
 
 .history-item.has-photo {
@@ -6145,7 +6150,6 @@ select:disabled {
   background: #eef7dc;
   border: 0;
   border-radius: 8px;
-  cursor: pointer;
   height: 56px;
   overflow: hidden;
   padding: 0;
@@ -6204,17 +6208,6 @@ select:disabled {
   line-height: 1.35;
 }
 
-.history-delete {
-  background: #fff3f1;
-  border: 1px solid #ef9b8a;
-  border-radius: 8px;
-  color: #991b1b;
-  font-size: 13px;
-  font-weight: 900;
-  min-height: 34px;
-  padding: 0 10px;
-}
-
 .match-list .history-item {
   align-items: stretch;
   grid-template-columns: 1fr;
@@ -6222,10 +6215,6 @@ select:disabled {
 
 .match-list .history-item span {
   font-size: 18px;
-  justify-self: start;
-}
-
-.match-list .history-delete {
   justify-self: start;
 }
 
@@ -9057,7 +9046,6 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
   .venue-place-status.error,
   .venue-place-status.missing-key,
   .trash-icon-button,
-  .history-delete,
   .team-photo-remove,
   .injured-toggle,
   .form-state-card.form-injured {
@@ -11238,17 +11226,7 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
     border-color: rgba(255, 255, 255, 0.14);
     color: #f5f2e8;
     min-height: 32px;
-    padding: 5px 46px 5px 8px;
-  }
-
-  main[data-mobile-tab="inicio"] .match-row > .trash-icon-button {
-    align-self: start;
-    height: 32px;
-    min-height: 32px;
-    position: absolute;
-    right: 0;
-    top: 0;
-    width: 32px;
+    padding: 5px 8px;
   }
 
   main[data-mobile-tab="inicio"] .match-item:hover,
@@ -11364,12 +11342,6 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
     color: #c4d3cb;
     font-size: 10px;
     line-height: 1.1;
-  }
-
-  main[data-mobile-tab="inicio"] .history-delete {
-    background: rgba(255, 241, 242, 0.12);
-    border-color: rgba(248, 113, 113, 0.58);
-    color: #fecaca;
   }
 
   main[data-mobile-tab="partido"] .lineup-panel {
@@ -11893,13 +11865,13 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
   }
 
   main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="admin"] .match-admin-create-grid {
-    grid-template-columns: minmax(0, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="admin"] .match-admin-create-grid button {
     align-items: start;
     flex-direction: column;
-    min-height: 48px;
+    min-height: 44px;
     text-align: left;
   }
 
@@ -11915,6 +11887,16 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
     font-size: 9px;
     line-height: 1.15;
     margin-top: 4px;
+  }
+
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="admin"] .match-admin-create-grid .match-admin-danger-button {
+    background: rgba(127, 29, 29, 0.26);
+    border-color: rgba(248, 113, 113, 0.48);
+  }
+
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="admin"] .match-admin-create-grid .match-admin-danger-button span,
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="admin"] .match-admin-create-grid .match-admin-danger-button small {
+    color: #fecaca;
   }
 
   main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="historico"] > .match-list {
@@ -12843,7 +12825,7 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
   }
 
   main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="admin"] .match-admin-create-grid button {
-    min-height: 50px;
+    min-height: 42px;
     padding: 7px;
   }
 
