@@ -6194,6 +6194,23 @@ html:fullscreen .pitch-modal-fullscreen .match-pitch.match-pitch-horizontal.matc
   overflow-wrap: anywhere;
 }
 
+.history-item .history-item-kind {
+  align-self: start;
+  background: rgba(200, 239, 93, 0.12);
+  border: 1px solid rgba(200, 239, 93, 0.36);
+  border-radius: 999px;
+  color: var(--lime);
+  display: inline-flex;
+  font-size: 10px;
+  font-weight: 950;
+  grid-column: auto;
+  justify-self: start;
+  line-height: 1;
+  padding: 4px 7px;
+  text-transform: uppercase;
+  width: fit-content;
+}
+
 .history-item span {
   background: #202820;
   border-radius: 8px;
@@ -11342,6 +11359,15 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
     display: block;
     font-size: 11px;
     line-height: 1.1;
+  }
+
+  main[data-mobile-tab="inicio"] .history-item div .history-item-kind {
+    color: var(--lime);
+    display: inline-flex;
+    font-size: 9px;
+    line-height: 1;
+    margin-bottom: 1px;
+    padding: 3px 6px;
   }
 
   main[data-mobile-tab="inicio"] .history-item > span {
