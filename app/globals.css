@@ -2811,6 +2811,10 @@ select {
   display: none;
 }
 
+.match-admin-hub {
+  display: none;
+}
+
 input:disabled,
 select:disabled {
   color: var(--ink-soft);
@@ -10249,6 +10253,24 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
     grid-column: auto;
   }
 
+  main[data-mobile-tab="partido"] .match-date-control {
+    position: relative;
+  }
+
+  main[data-mobile-tab="partido"] .match-date-control::after {
+    border: 2px solid #f5f2e8;
+    border-radius: 3px;
+    border-top-width: 5px;
+    bottom: 7px;
+    content: "";
+    height: 13px;
+    opacity: 0.9;
+    pointer-events: none;
+    position: absolute;
+    right: 11px;
+    width: 13px;
+  }
+
   main[data-mobile-tab="partido"] .match-editor input,
   main[data-mobile-tab="partido"] .match-editor select,
   main[data-mobile-tab="partido"] .reserve-toggle-box {
@@ -10261,6 +10283,16 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
     height: 28px;
     min-height: 28px;
     padding: 0 8px;
+  }
+
+  main[data-mobile-tab="partido"] .match-editor input[type="date"] {
+    color-scheme: dark;
+    padding-right: 28px;
+  }
+
+  main[data-mobile-tab="partido"] .match-editor input[type="date"]::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    opacity: 0;
   }
 
   main[data-mobile-tab="partido"] .match-editor input:disabled,
@@ -11660,6 +11692,162 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
     padding: 8px !important;
   }
 
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="admin"] .match-admin-hub {
+    display: grid;
+    gap: 8px;
+    grid-template-columns: minmax(0, 1.35fr) minmax(250px, 0.65fr);
+    min-height: 0;
+  }
+
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="admin"] .match-admin-action-panel {
+    align-content: start;
+    background:
+      linear-gradient(135deg, rgba(200, 239, 93, 0.08), transparent 45%),
+      rgba(9, 19, 16, 0.92);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 8px;
+    display: grid;
+    gap: 8px;
+    min-height: 0;
+    padding: 10px;
+  }
+
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="admin"] .match-admin-market-panel.public-open {
+    border-color: rgba(34, 197, 94, 0.38);
+    box-shadow: inset 0 0 0 1px rgba(34, 197, 94, 0.08);
+  }
+
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="admin"] .match-admin-action-heading {
+    align-items: center;
+    display: flex;
+    gap: 10px;
+    justify-content: space-between;
+    min-width: 0;
+  }
+
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="admin"] .match-admin-action-heading span {
+    color: #9fb1a7;
+    font-size: 10px;
+    font-weight: 950;
+    text-transform: uppercase;
+  }
+
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="admin"] .match-admin-action-heading strong {
+    color: #f5f2e8;
+    font-size: 18px;
+    line-height: 1;
+  }
+
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="admin"] .match-admin-filter-strip {
+    display: grid;
+    gap: 6px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="admin"] .match-admin-filter-strip span,
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="admin"] .match-admin-market-stats div {
+    background: rgba(245, 242, 232, 0.07);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 7px;
+    color: #f5f2e8;
+    font-size: 11px;
+    font-weight: 850;
+    min-width: 0;
+    overflow: hidden;
+    padding: 7px 8px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="admin"] .match-admin-market-stats {
+    display: grid;
+    gap: 6px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="admin"] .match-admin-market-stats div {
+    display: grid;
+    gap: 3px;
+  }
+
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="admin"] .match-admin-market-stats span {
+    color: #9fb1a7;
+    font-size: 9px;
+    font-weight: 950;
+    text-transform: uppercase;
+  }
+
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="admin"] .match-admin-market-stats strong {
+    color: #f5f2e8;
+    font-size: 20px;
+    line-height: 1;
+  }
+
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="admin"] .match-admin-actions-row,
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="admin"] .match-admin-create-grid {
+    display: grid;
+    gap: 6px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="admin"] .match-admin-actions-row a,
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="admin"] .match-admin-actions-row button,
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="admin"] .match-admin-create-grid button {
+    align-items: center;
+    background: rgba(245, 242, 232, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 7px;
+    color: #f5f2e8;
+    display: flex;
+    font-size: 11px;
+    font-weight: 900;
+    justify-content: center;
+    min-height: 34px;
+    min-width: 0;
+    padding: 0 10px;
+    text-align: center;
+    text-decoration: none;
+  }
+
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="admin"] .match-admin-actions-row a:first-child,
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="admin"] .match-admin-actions-row button:nth-child(2) {
+    background: rgba(200, 239, 93, 0.18);
+    border-color: rgba(200, 239, 93, 0.34);
+    color: var(--lime);
+  }
+
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="admin"] .match-admin-actions-row .disabled,
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="admin"] .match-admin-actions-row button:disabled,
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="admin"] .match-admin-create-grid button:disabled {
+    cursor: not-allowed;
+    opacity: 0.45;
+  }
+
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="admin"] .match-admin-create-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="admin"] .match-admin-create-grid button {
+    align-items: start;
+    flex-direction: column;
+    min-height: 48px;
+    text-align: left;
+  }
+
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="admin"] .match-admin-create-grid span {
+    color: #f5f2e8;
+    font-size: 13px;
+    line-height: 1.05;
+  }
+
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="admin"] .match-admin-create-grid small {
+    color: #9fb1a7;
+    display: block;
+    font-size: 9px;
+    line-height: 1.15;
+    margin-top: 4px;
+  }
+
   main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="historico"] > .match-list {
     align-content: stretch;
     grid-template-columns: minmax(0, 1fr);
@@ -12533,6 +12721,39 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
     max-height: none;
     border-radius: 8px;
   }
+
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="admin"] .match-admin-hub {
+    gap: 7px;
+  }
+
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="admin"] .match-admin-action-panel {
+    gap: 7px;
+    padding: 8px;
+  }
+
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="admin"] .match-admin-action-heading strong {
+    font-size: 16px;
+  }
+
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="admin"] .match-admin-actions-row a,
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="admin"] .match-admin-actions-row button {
+    font-size: 10px;
+    min-height: 30px;
+    padding: 0 7px;
+  }
+
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="admin"] .match-admin-create-grid button {
+    min-height: 50px;
+    padding: 7px;
+  }
+
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="admin"] .match-admin-create-grid span,
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="admin"] .match-admin-create-grid small {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: normal;
+  }
 }
 
 @media (orientation: landscape) and (max-height: 560px) and (max-width: 740px) {
@@ -12636,6 +12857,15 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
   main[data-mobile-tab="mercado"] .market-admin-options,
   .market-page .market-filters {
     grid-template-columns: repeat(2, minmax(120px, 1fr));
+  }
+
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="admin"] .match-admin-hub {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="admin"] .match-admin-filter-strip,
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="admin"] .match-admin-actions-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .market-page .market-grid {

@@ -501,6 +501,8 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(globalsCss, /data-match-manager-pane="historico"/);
   assert.match(globalsCss, /data-match-manager-pane="admin"/);
   assert.match(globalsCss, /data-match-manager-pane="admin"[\s\S]*\.next-match-roster-rail/);
+  assert.match(globalsCss, /data-match-manager-pane="admin"[\s\S]*\.match-admin-hub/);
+  assert.match(globalsCss, /input\[type="date"\]::-webkit-calendar-picker-indicator/);
   assert.match(globalsCss, /\.next-match-roster-rail/);
   assert.match(globalsCss, /grid-auto-flow:\s*column/);
   assert.match(globalsCss, /scroll-snap-type:\s*x proximity/);
@@ -981,6 +983,14 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /const canChangeThisPlayerStatus = matchConfigured && registrationOpen/);
   assert.match(page, /Buscar en mercado/);
   assert.match(page, /Configurar mercado/);
+  assert.match(page, /match-admin-hub/);
+  assert.match(page, /Mercado del partido/);
+  assert.match(page, /Buscar jugadores/);
+  assert.match(page, /Abrir al mercado/);
+  assert.match(page, /Altas rápidas/);
+  assert.match(page, /Nuevo partido/);
+  assert.match(page, /showQuickForm\("venue"\)/);
+  assert.match(page, /openCreatePlayerProfile\(\)/);
   assert.match(page, /Solo admins y owner ven esta pantalla/);
   assert.match(page, /Abrir partido al público/);
   assert.match(page, /publicOpen/);

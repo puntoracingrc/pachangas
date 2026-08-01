@@ -8904,6 +8904,79 @@ export default function Home() {
                 ) : null}
               </div>
 
+              <div className="match-admin-hub match-manager-admin-block" aria-label="Administración del partido">
+                <section className={`match-admin-action-panel match-admin-market-panel ${activeMatch.publicOpen ? "public-open" : ""}`}>
+                  <div className="match-admin-action-heading">
+                    <span>Mercado del partido</span>
+                    <strong>{activeMatch.publicOpen ? "Publicado" : "Privado"}</strong>
+                  </div>
+                  <div className="match-admin-filter-strip" aria-label="Filtros del partido activo">
+                    <span>{matchKinds[activeKind].label}</span>
+                    <span>{missing} plaza{missing === 1 ? "" : "s"}</span>
+                    <span>{activeVenue?.city || activeMatch.place || "Zona pendiente"}</span>
+                  </div>
+                  <div className="match-admin-market-stats">
+                    <div>
+                      <span>Solicitudes</span>
+                      <strong>{pendingOpenMatchRequests.length}</strong>
+                    </div>
+                    <div>
+                      <span>Públicas</span>
+                      <strong>{activeMatch.publicOpen ? publicOpenSlots : "-"}</strong>
+                    </div>
+                  </div>
+                  <div className="match-admin-actions-row">
+                    <a
+                      className={!matchConfigured ? "disabled" : ""}
+                      href={marketScoutUrl("jugadores")}
+                      aria-disabled={!matchConfigured}
+                      onClick={(event) => {
+                        if (!matchConfigured) event.preventDefault();
+                      }}
+                    >
+                      Buscar jugadores
+                    </a>
+                    <button
+                      type="button"
+                      onClick={() => void publishOpenMatch()}
+                      disabled={!canConfigureMatchMarket || (missing <= 0 && !activeMatch.publicOpen)}
+                    >
+                      {activeMatch.publicOpen ? "Actualizar mercado" : "Abrir al mercado"}
+                    </button>
+                    {activeMatch.publicOpen ? (
+                      <button className="ghost-scout-button" type="button" onClick={() => void closeOpenMatch()}>
+                        Cerrar mercado
+                      </button>
+                    ) : null}
+                    <button type="button" onClick={openMarketConfiguration} disabled={!matchConfigured}>
+                      Configurar filtros
+                    </button>
+                  </div>
+                  {openMatchRequestMessage ? <small className="sync-status sync-live">{openMatchRequestMessage}</small> : null}
+                </section>
+
+                <section className="match-admin-action-panel match-admin-create-panel">
+                  <div className="match-admin-action-heading">
+                    <span>Crear</span>
+                    <strong>Altas rápidas</strong>
+                  </div>
+                  <div className="match-admin-create-grid">
+                    <button type="button" onClick={() => showQuickForm("venue")} disabled={!canUseAdminControls}>
+                      <span>Campo</span>
+                      <small>Precio y modalidad</small>
+                    </button>
+                    <button type="button" onClick={() => void openCreatePlayerProfile()} disabled={!canUseAdminControls && (!hasRealTeam || !isRegisteredUser)}>
+                      <span>Jugador</span>
+                      <small>Ficha del grupo</small>
+                    </button>
+                    <button type="button" onClick={createMatch} disabled={!canUseAdminControls}>
+                      <span>Nuevo partido</span>
+                      <small>Borrador siguiente</small>
+                    </button>
+                  </div>
+                </section>
+              </div>
+
               {!matchConfigured && !matchFinalized ? (
                 <div className="draft-match-note">
                   <span>Partido sin guardar</span>
