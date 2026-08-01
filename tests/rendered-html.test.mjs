@@ -497,6 +497,8 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(globalsCss, /\.next-match-roster-rail/);
   assert.match(globalsCss, /grid-auto-flow:\s*column/);
   assert.match(globalsCss, /scroll-snap-type:\s*x proximity/);
+  assert.match(globalsCss, /main\[data-mobile-tab="partido"\] \.team-player-column[\s\S]*grid-auto-rows:\s*max-content/);
+  assert.match(globalsCss, /main\[data-mobile-tab="partido"\] \.player-card[\s\S]*min-height:\s*58px/);
   assert.match(globalsCss, /\.next-match-status-section/);
   assert.match(globalsCss, /\.status-roster-column/);
   assert.match(globalsCss, /\.reserve-roster-column/);
