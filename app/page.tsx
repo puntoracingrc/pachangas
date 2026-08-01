@@ -86,6 +86,7 @@ type ProfileReturnTarget = {
   scrollY: number | null;
   teamGalleryOpen: boolean;
 };
+type ProfileFocusTarget = "rating";
 
 const matchManagerPaneLabels: Record<MatchManagerPane, string> = {
   proximo: "Próximo",
@@ -3300,6 +3301,7 @@ export default function Home() {
   const [activeMatchManagerPane, setActiveMatchManagerPane] = useState<MatchManagerPane>("proximo");
   const [profilePane, setProfilePane] = useState<ProfilePane>("ficha");
   const [playerProfileMode, setPlayerProfileMode] = useState<PlayerProfileMode>("edit");
+  const [profileFocusTarget, setProfileFocusTarget] = useState<ProfileFocusTarget | null>(null);
   const [previewDemoMode, setPreviewDemoMode] = useState(false);
   const [playerActionMenu, setPlayerActionMenu] = useState<{ playerId: string; maxHeight: number; placement: "down" | "up"; x: number; y: number } | null>(null);
   const [statusConfirmation, setStatusConfirmation] = useState<PendingStatusChange | null>(null);
@@ -3372,6 +3374,7 @@ export default function Home() {
   const venueNameInputRef = useRef<HTMLInputElement>(null);
   const marketZoneInputRef = useRef<HTMLInputElement>(null);
   const playerProfileRef = useRef<HTMLDivElement>(null);
+  const playerRatingFacetGridRef = useRef<HTMLDivElement>(null);
   const teamGalleryReturnScrollYRef = useRef<number | null>(null);
   const profileReturnTargetRef = useRef<ProfileReturnTarget | null>(null);
   const avatarDragRef = useRef<{ playerId: string; startX: number; startY: number; startOffsetX: number; startOffsetY: number } | null>(null);
@@ -4481,12 +4484,13 @@ export default function Home() {
     };
   }
 
-  function openPlayerProfile(playerId: string) {
+  function openPlayerProfile(playerId: string, options: { focusRating?: boolean } = {}) {
     rememberPlayerProfileReturnTarget();
     teamGalleryReturnScrollYRef.current = null;
     setMobileAccountOpen(false);
     setPlayerProfileMode("viewer");
     setProfilePane("ficha");
+    setProfileFocusTarget(options.focusRating ? "rating" : null);
     setActiveMobileTab("perfil");
     setSelectedPlayerId(playerId);
     if (selectedPlayerId === playerId) {
@@ -5815,6 +5819,17 @@ export default function Home() {
     }, {} as Record<RatingFacet, number>);
     setNewFacetRatings(nextFacets);
   }, [selectedPlayerId, ratingVoterId, selectedPlayer?.goalkeeperOnly, selectedPlayer?.position]);
+
+  useEffect(() => {
+    if (profileFocusTarget !== "rating" || activeMobileTab !== "perfil" || !selectedPlayerId) return;
+
+    window.setTimeout(() => {
+      window.requestAnimationFrame(() => {
+        playerRatingFacetGridRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+        setProfileFocusTarget(null);
+      });
+    }, 80);
+  }, [activeMobileTab, profileFocusTarget, selectedPlayerId]);
 
   function updateMatchSettings(next: Match) {
     if (!canEditMatchSettings) return;
@@ -7538,7 +7553,7 @@ export default function Home() {
           {!player.inactive ? (
             <button
               className={playerRatingWindow.canRate ? "rating-badge rating-open" : "rating-badge rating-closed"}
-              onClick={() => openPlayerProfile(player.id)}
+              onClick={() => openPlayerProfile(player.id, { focusRating: true })}
               title={ratingTitle}
               type="button"
               aria-label={ratingTitle}
@@ -7617,7 +7632,7 @@ export default function Home() {
                   <button
                     onClick={() => {
                       setPlayerActionMenu(null);
-                      openPlayerProfile(player.id);
+                      openPlayerProfile(player.id, { focusRating: true });
                     }}
                     role="menuitem"
                     type="button"
@@ -8156,7 +8171,7 @@ export default function Home() {
             )}
           </div>
         ) : null}
-        <div className="facet-grid">
+        <div className="facet-grid" ref={playerRatingFacetGridRef}>
           {selectedRatingFacets.map((facet) => {
             const facetValue = selectedFacetDraftValue(facet.key);
             const facetPoints = overallScore(facetValue);
