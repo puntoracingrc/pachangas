@@ -850,7 +850,7 @@ export default function MarketPage() {
 
     const text = marketInviteText(profile, marketContext);
     try {
-      if (navigator.clipboard) {
+      if (navigator.clipboard?.writeText) {
         await navigator.clipboard.writeText(text);
         setInviteMessage(`Invitación copiada para ${profile.displayName}.`);
         return;
