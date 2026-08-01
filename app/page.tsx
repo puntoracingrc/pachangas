@@ -5450,19 +5450,17 @@ export default function Home() {
   const sortedTeamA = sortedLineupPlayers(suggested.teamA, effectivePlayerScore);
   const sortedTeamB = sortedLineupPlayers(suggested.teamB, effectivePlayerScore);
   const otherPlayers = registrationOpen
-    ? sortedPlayers.filter((player) => !teamAPlayerIds.has(player.id) && !teamBPlayerIds.has(player.id) && !reservePlayerIds.has(player.id) && !waitingPlayerIds.has(player.id))
+    ? sortedPlayers.filter((player) => !player.inactive && !teamAPlayerIds.has(player.id) && !teamBPlayerIds.has(player.id) && !reservePlayerIds.has(player.id) && !waitingPlayerIds.has(player.id))
     : [];
   const doubtfulOtherPlayers = otherPlayers.filter((player) => !player.injured && !player.inactive && activeMatch.players.find((entry) => entry.playerId === player.id)?.status === "duda");
   const notGoingPlayers = otherPlayers.filter((player) => !player.injured && !player.inactive && activeMatch.players.find((entry) => entry.playerId === player.id)?.status === "no");
   const silentPlayers = otherPlayers.filter((player) => !player.injured && !player.inactive && !activeMatch.players.some((entry) => entry.playerId === player.id));
   const injuredOtherPlayers = otherPlayers.filter((player) => player.injured);
-  const inactiveOtherPlayers = otherPlayers.filter((player) => player.inactive);
   const nextMatchStatusGroups = [
     { id: "duda", title: "Duda", players: doubtfulOtherPlayers },
     { id: "no", title: "No van", players: notGoingPlayers },
     { id: "sin", title: "Sin respuesta", players: silentPlayers },
     { id: "lesionados", title: "Lesionados", players: injuredOtherPlayers },
-    { id: "bajas", title: "Ya no están", players: inactiveOtherPlayers },
   ].filter((group) => group.players.length > 0);
   const nextMatchStatusCount = nextMatchStatusGroups.reduce((total, group) => total + group.players.length, 0);
   const showReserveRosterColumn = matchFinalized
