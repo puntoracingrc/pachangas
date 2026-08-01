@@ -11614,6 +11614,7 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
 
   main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="proximo"] .next-match-roster-rail {
     align-items: stretch;
+    cursor: grab;
     display: grid;
     gap: 8px;
     grid-auto-columns: minmax(320px, calc((100vw - 158px) / 2));
@@ -11624,13 +11625,22 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
     min-height: 154px;
     overflow-x: auto;
     overflow-y: hidden;
-    overscroll-behavior-x: contain;
+    overscroll-behavior: contain;
     padding: 0 0 4px;
-    scroll-snap-type: x proximity;
+    scroll-behavior: auto;
     scrollbar-color: rgba(200, 239, 93, 0.45) rgba(245, 242, 232, 0.1);
     scrollbar-width: thin;
     touch-action: pan-x pan-y;
     -webkit-overflow-scrolling: touch;
+  }
+
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="proximo"] .next-match-roster-rail[data-dragging="true"] {
+    cursor: grabbing;
+    user-select: none;
+  }
+
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="proximo"] .next-match-roster-rail[data-dragging="true"] .player-card {
+    pointer-events: none;
   }
 
   main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="proximo"] .team-player-grid {
@@ -11649,7 +11659,6 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
     overflow-x: hidden;
     overflow-y: auto;
     overscroll-behavior: contain;
-    scroll-snap-align: start;
     scrollbar-width: thin;
     touch-action: pan-x pan-y;
     -webkit-overflow-scrolling: touch;
