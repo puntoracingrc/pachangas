@@ -387,6 +387,7 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /onClick=\{\(\) => openMatchFromInicio\(match\.id, "proximo"\)\}/);
   assert.match(page, /onClick=\{\(\) => openMatchFromInicio\(match\.id, "resultado"\)\}/);
   assert.match(page, /className="match-item-kind">\{matchKinds\[match\.kind \?\? "futbol7"\]\.label\}/);
+  assert.match(page, /className="history-item-kind">\{matchKinds\[match\.kind \?\? "futbol7"\]\.label\}/);
   assert.match(page, /Borrar partido/);
   assert.doesNotMatch(page, /className="history-delete"/);
   assert.doesNotMatch(page, /pagó \{matchPayer/);
@@ -626,6 +627,8 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(globalsCss, /main\[data-mobile-tab="inicio"\] > \.app-shell > \.match-list\s*\{[\s\S]*grid-template-columns:\s*minmax\(0,\s*1fr\)/);
   assert.match(globalsCss, /main\[data-mobile-tab="inicio"\] \.next-match-rail\s*\{[\s\S]*grid-auto-columns:\s*188px[\s\S]*grid-auto-flow:\s*column[\s\S]*min-height:\s*52px[\s\S]*overflow-x:\s*auto/);
   assert.match(globalsCss, /main\[data-mobile-tab="inicio"\] \.match-item \.match-item-kind/);
+  assert.match(globalsCss, /\.history-item \.history-item-kind/);
+  assert.match(globalsCss, /main\[data-mobile-tab="inicio"\] \.history-item div \.history-item-kind/);
   assert.match(globalsCss, /main\[data-mobile-tab="inicio"\] \.side-history\s*\{[\s\S]*grid-column:\s*1 \/ -1/);
   assert.match(globalsCss, /main\[data-mobile-tab="inicio"\] \.side-history \.history-season-filter\s*\{[\s\S]*display:\s*none/);
   assert.match(globalsCss, /main\[data-mobile-tab="partido"\] > \.app-shell > \.lineup-panel/);

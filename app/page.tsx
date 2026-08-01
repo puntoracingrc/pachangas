@@ -9147,6 +9147,7 @@ export default function Home() {
                       ) : null}
                       <div>
                         <strong>{match.title}</strong>
+                        <small className="history-item-kind">{matchKinds[match.kind ?? "futbol7"].label}</small>
                         <small>{new Date(match.date).toLocaleDateString("es-ES", { day: "2-digit", month: "short" })}</small>
                       </div>
                       <span>{match.scoreA} - {match.scoreB}</span>
