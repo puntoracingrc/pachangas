@@ -1718,6 +1718,11 @@ h1 {
   display: none;
 }
 
+.match-manager-subnav,
+.lineup-title-result {
+  display: none;
+}
+
 .app-shell.gated-shell,
 .bottom-grid.gated-shell {
   display: none;
@@ -10234,6 +10239,372 @@ select:disabled {
   main[data-mobile-tab="partido"] .lineup-panel .match-pitch {
     justify-self: center;
     width: min(100%, 31vh, 190px);
+  }
+
+  main[data-mobile-tab="partido"] > .app-shell {
+    grid-template-columns: 104px minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr);
+  }
+
+  main[data-mobile-tab="partido"] > .app-shell > .match-manager-subnav {
+    align-content: start;
+    align-self: stretch;
+    background: rgba(8, 16, 22, 0.92);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 8px;
+    display: grid;
+    gap: 5px;
+    grid-column: 1;
+    grid-row: 1;
+    min-height: 0;
+    padding: 6px;
+  }
+
+  main[data-mobile-tab="partido"] .match-manager-subnav button {
+    align-items: center;
+    background: rgba(245, 242, 232, 0.05);
+    border: 1px solid rgba(245, 242, 232, 0.1);
+    border-radius: 6px;
+    color: #d4ddd7;
+    display: flex;
+    font-size: 10px;
+    font-weight: 950;
+    justify-content: flex-start;
+    line-height: 1;
+    min-height: 35px;
+    overflow: hidden;
+    padding: 0 8px;
+    text-align: left;
+  }
+
+  main[data-mobile-tab="partido"] .match-manager-subnav button.active {
+    background: rgba(200, 239, 93, 0.16);
+    border-color: rgba(200, 239, 93, 0.55);
+    color: var(--lime);
+  }
+
+  main[data-mobile-tab="partido"] .match-manager-subnav button span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  main[data-mobile-tab="partido"] > .app-shell > .match-list,
+  main[data-mobile-tab="partido"] > .app-shell > .main-panel,
+  main[data-mobile-tab="partido"] > .app-shell > .lineup-panel {
+    display: none;
+    grid-column: 2;
+    grid-row: 1;
+    height: 100%;
+    min-height: 0;
+  }
+
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="proximo"] > .main-panel,
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="admin"] > .main-panel,
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="alineacion"] > .lineup-panel,
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="resultado"] > .lineup-panel,
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="historico"] > .match-list {
+    display: grid;
+  }
+
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="proximo"] > .main-panel {
+    grid-template-columns: minmax(0, 1fr) minmax(214px, 0.34fr);
+    grid-template-rows: auto auto minmax(0, 1fr) auto;
+    overflow: hidden;
+  }
+
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="proximo"] .match-manager-admin-block,
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="proximo"] .draft-match-note,
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="proximo"] .registration-locked-note,
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="proximo"] .open-match-requests-panel,
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="proximo"] .reserve-section,
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="proximo"] .other-player-grid,
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="proximo"] .add-player {
+    display: none !important;
+  }
+
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="proximo"] .team-player-grid {
+    height: auto;
+    min-height: 0;
+  }
+
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="admin"] > .main-panel {
+    align-content: start;
+    grid-template-columns: minmax(0, 1fr);
+    overflow: auto;
+  }
+
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="admin"] .weather-card,
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="admin"] .stats-row,
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="admin"] .payer-note,
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="admin"] .subscription-contribution-note,
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="admin"] .share-box,
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="admin"] .open-match-requests-panel,
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="admin"] .team-player-grid,
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="admin"] .market-scout-card,
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="admin"] .reserve-section,
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="admin"] .other-player-grid,
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="admin"] .add-player {
+    display: none !important;
+  }
+
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="admin"] .match-editor {
+    grid-template-columns: repeat(4, minmax(120px, 1fr));
+    height: auto;
+    min-height: 0;
+    overflow: visible;
+    padding: 8px !important;
+  }
+
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="historico"] > .match-list {
+    align-content: stretch;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr);
+    overflow: hidden;
+    padding: 8px;
+  }
+
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="historico"] .match-list > .panel-title,
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="historico"] .match-row {
+    display: none;
+  }
+
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="historico"] .side-history {
+    display: grid;
+    gap: 8px;
+    grid-template-rows: auto auto minmax(0, 1fr);
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="historico"] .side-history::after {
+    display: none;
+  }
+
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="historico"] .history {
+    align-items: stretch;
+    background: none;
+    display: grid;
+    gap: 8px;
+    grid-auto-columns: minmax(188px, 236px);
+    grid-auto-flow: column;
+    min-height: 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 0 0 3px;
+    scrollbar-color: rgba(200, 239, 93, 0.45) rgba(245, 242, 232, 0.1);
+    scrollbar-width: thin;
+  }
+
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="historico"] .history-month {
+    align-items: center;
+    align-self: stretch;
+    background: rgba(200, 239, 93, 0.14);
+    border: 1px solid rgba(200, 239, 93, 0.24);
+    border-radius: 8px;
+    color: var(--lime);
+    display: flex;
+    font-size: 10px;
+    justify-content: center;
+    min-width: 76px;
+    padding: 0 8px;
+    text-align: center;
+  }
+
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="historico"] .history-season-filter select {
+    background: rgba(245, 242, 232, 0.08);
+    border-color: rgba(255, 255, 255, 0.16);
+    color: #f5f2e8;
+    font-size: 11px;
+    height: 30px;
+    min-height: 30px;
+  }
+
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="historico"] .history-item {
+    align-content: start;
+    background: rgba(245, 242, 232, 0.07);
+    border-color: rgba(255, 255, 255, 0.12);
+    color: #f5f2e8;
+    grid-template-columns: minmax(0, 1fr) auto;
+    min-height: 100%;
+  }
+
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="historico"] .history-item strong,
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="historico"] .history-item span {
+    color: #f5f2e8;
+  }
+
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="historico"] .history-item small {
+    color: #c4d3cb;
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 4;
+  }
+
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="historico"] .history-item > span {
+    background: rgba(8, 16, 22, 0.86);
+    border-radius: 8px;
+    padding: 8px 10px;
+  }
+
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="alineacion"] > .lineup-panel {
+    grid-template-columns: minmax(170px, 0.5fr) minmax(88px, 0.26fr) repeat(2, minmax(166px, 0.62fr));
+    grid-template-rows: auto minmax(0, 1fr);
+    overflow: hidden;
+  }
+
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="alineacion"] .lineup-panel > .panel-title {
+    grid-column: 1 / 3;
+    grid-row: 1;
+  }
+
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="alineacion"] .lineup-panel > .balance-summary {
+    display: none;
+  }
+
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="alineacion"] .lineup-panel > .match-pitch {
+    align-self: center;
+    grid-column: 1;
+    grid-row: 2;
+    justify-self: center;
+    margin: 0;
+    overflow: visible;
+    width: min(100%, 46vh, 190px);
+  }
+
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="alineacion"] .lineup-panel > .lineup-state {
+    align-self: start;
+    grid-column: 2;
+    grid-row: 2;
+  }
+
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="alineacion"] .lineup-panel > .lineup-actions {
+    align-self: center;
+    gap: 6px;
+    grid-column: 2;
+    grid-row: 2;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="alineacion"] .lineup-actions button {
+    font-size: 10px;
+    line-height: 1.08;
+    min-height: 34px;
+    padding: 0 5px;
+    white-space: normal;
+  }
+
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="alineacion"] .lineup-actions button:disabled {
+    color: rgba(245, 242, 232, 0.72);
+    opacity: 0.62;
+  }
+
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="alineacion"] .lineup-panel > .primary-button.full {
+    align-self: end;
+    grid-column: 2;
+    grid-row: 2;
+  }
+
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="alineacion"] .pitch-player-card {
+    width: clamp(28px, 7.8cqw, 44px);
+  }
+
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="alineacion"] .lineup-panel > .team {
+    display: grid;
+  }
+
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="alineacion"] .lineup-panel > .team.team-a {
+    grid-column: 3;
+    grid-row: 1 / span 2;
+  }
+
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="alineacion"] .lineup-panel > .team.team-b {
+    grid-column: 4;
+    grid-row: 1 / span 2;
+  }
+
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="alineacion"] .lineup-panel > .result-box {
+    display: none;
+  }
+
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="resultado"] > .lineup-panel {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
+    overflow: hidden;
+  }
+
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="resultado"] .lineup-title-default {
+    display: none;
+  }
+
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="resultado"] .lineup-title-result {
+    display: inline;
+  }
+
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="resultado"] .lineup-panel > .balance-summary,
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="resultado"] .lineup-panel > .match-pitch,
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="resultado"] .lineup-panel > .lineup-state,
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="resultado"] .lineup-panel > .lineup-actions,
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="resultado"] .lineup-panel > .team,
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="resultado"] .lineup-panel > .primary-button.full {
+    display: none;
+  }
+
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="resultado"] .lineup-panel > .result-box {
+    background: rgba(18, 29, 24, 0.94);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    display: grid;
+    gap: 8px;
+    grid-column: 1;
+    grid-row: 2;
+    grid-template-columns: minmax(190px, 0.52fr) minmax(0, 1fr);
+    grid-template-rows: auto auto minmax(0, 1fr) auto;
+    margin: 0;
+    min-height: 0;
+    overflow: hidden;
+    padding: 8px;
+  }
+
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="resultado"] .result-box > span {
+    grid-column: 1 / -1;
+  }
+
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="resultado"] .result-score-grid,
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="resultado"] .team-photo-card,
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="resultado"] .result-box > button,
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="resultado"] .result-locked-note {
+    grid-column: 1;
+  }
+
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="resultado"] .team-photo-card,
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="resultado"] .scorers-box {
+    background: rgba(245, 242, 232, 0.07);
+    border-color: rgba(255, 255, 255, 0.12);
+    color: #f5f2e8;
+  }
+
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="resultado"] .team-photo-card {
+    min-height: 0;
+  }
+
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="resultado"] .team-photo-empty {
+    background: rgba(200, 239, 93, 0.12);
+    min-height: 62px;
+  }
+
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="resultado"] .scorers-box {
+    align-content: start;
+    grid-column: 2;
+    grid-row: 2 / span 3;
+    min-height: 0;
+    overflow: auto;
+    scrollbar-width: thin;
+  }
+
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="resultado"] .scorers-teams {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    min-height: 0;
   }
 
   main[data-mobile-tab="perfil"] > .bottom-grid {

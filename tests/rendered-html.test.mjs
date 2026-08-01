@@ -218,6 +218,14 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /openOwnPlayerProfile/);
   assert.match(page, /type ProfilePane = "ficha" \| "ranking"/);
   assert.match(page, /setProfilePane\("ficha"\)/);
+  assert.match(page, /type MatchManagerPane = "proximo" \| "alineacion" \| "resultado" \| "historico" \| "admin"/);
+  assert.match(page, /matchManagerPaneLabels/);
+  assert.match(page, /activeMatchManagerPane/);
+  assert.match(page, /data-match-manager-pane=\{selectedMatchManagerPane\}/);
+  assert.match(page, /className="match-manager-subnav"/);
+  assert.match(page, /setActiveMatchManagerPane\(pane\)/);
+  assert.match(page, /match-manager-admin-block/);
+  assert.match(page, /lineup-title-result/);
   assert.match(page, /function openRankingPanel/);
   assert.match(page, /function openMarketConfiguration/);
   assert.match(page, /if \(tabId === "mercado"\) \{\s*if \(canUseAdminControls\) return;/);
@@ -417,6 +425,12 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(globalsCss, /\.mobile-app-nav/);
   assert.match(globalsCss, /\.mobile-app-nav-item/);
   assert.match(globalsCss, /\.mobile-app-nav-item\.active/);
+  assert.match(globalsCss, /\.match-manager-subnav/);
+  assert.match(globalsCss, /data-match-manager-pane="proximo"/);
+  assert.match(globalsCss, /data-match-manager-pane="alineacion"/);
+  assert.match(globalsCss, /data-match-manager-pane="resultado"/);
+  assert.match(globalsCss, /data-match-manager-pane="historico"/);
+  assert.match(globalsCss, /data-match-manager-pane="admin"/);
   assert.match(globalsCss, /\.mobile-account-sheet/);
   assert.match(globalsCss, /\.team-gallery-panel/);
   assert.match(globalsCss, /\.team-card-gallery/);

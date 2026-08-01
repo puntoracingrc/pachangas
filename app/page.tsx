@@ -77,6 +77,15 @@ type RatingFacet = "ritmo" | "tiro" | "pase" | "regate" | "defensa" | "fisico";
 type RatingRole = "field" | "goalkeeper";
 type MobileSectionTabId = "inicio" | "partido";
 type ProfilePane = "ficha" | "ranking";
+type MatchManagerPane = "proximo" | "alineacion" | "resultado" | "historico" | "admin";
+
+const matchManagerPaneLabels: Record<MatchManagerPane, string> = {
+  proximo: "Próximo",
+  alineacion: "Alineación",
+  resultado: "Resultado",
+  historico: "Histórico",
+  admin: "Admin",
+};
 
 type RatingVote = {
   id: string;
@@ -2978,6 +2987,7 @@ export default function Home() {
   const [teamGalleryOpen, setTeamGalleryOpen] = useState(false);
   const [pitchZoomOpen, setPitchZoomOpen] = useState(false);
   const [activeMobileTab, setActiveMobileTab] = useState<MobileAppTab>("inicio");
+  const [activeMatchManagerPane, setActiveMatchManagerPane] = useState<MatchManagerPane>("proximo");
   const [profilePane, setProfilePane] = useState<ProfilePane>("ficha");
   const [playerActionMenu, setPlayerActionMenu] = useState<{ playerId: string; x: number; y: number } | null>(null);
   const [statusConfirmation, setStatusConfirmation] = useState<PendingStatusChange | null>(null);
@@ -5014,6 +5024,10 @@ export default function Home() {
   const canManageTeam = isRegisteredUser && (currentRole === "owner" || currentRole === "admin");
   const canManageRoles = hasRealTeam && isRegisteredUser && currentRole === "owner";
   const canUseAdminControls = hasRealTeam && canManageTeam;
+  const matchManagerPanes: MatchManagerPane[] = canUseAdminControls
+    ? ["proximo", "alineacion", "resultado", "historico", "admin"]
+    : ["proximo", "alineacion", "resultado", "historico"];
+  const selectedMatchManagerPane = matchManagerPanes.includes(activeMatchManagerPane) ? activeMatchManagerPane : "proximo";
   const canConfigureMatchMarket = canUseAdminControls && showMatchRoster && !lineupClosed && !matchFinalized;
   const showMarketScoutCard = canConfigureMatchMarket && (missing > 0 || Boolean(activeMatch.publicOpen));
   const canCreateTeam = Boolean(supabase && isRegisteredUser);
@@ -8006,7 +8020,20 @@ export default function Home() {
         </section>
       ) : null}
 
-      <section className={needsLoginForSharedLink ? "app-shell gated-shell" : "app-shell"}>
+      <section className={needsLoginForSharedLink ? "app-shell gated-shell" : "app-shell"} data-match-manager-pane={selectedMatchManagerPane}>
+        <nav className="match-manager-subnav" aria-label="Secciones del partido en modo juego">
+          {matchManagerPanes.map((pane) => (
+            <button
+              aria-current={selectedMatchManagerPane === pane ? "page" : undefined}
+              className={selectedMatchManagerPane === pane ? "active" : ""}
+              key={pane}
+              onClick={() => setActiveMatchManagerPane(pane)}
+              type="button"
+            >
+              <span>{matchManagerPaneLabels[pane]}</span>
+            </button>
+          ))}
+        </nav>
         <aside className="panel match-list" aria-label="Partidos">
           <div className="panel-title">
             <span>Próximos partidos</span>
@@ -8106,7 +8133,7 @@ export default function Home() {
         <section className={canUseAdminControls ? "panel main-panel" : "panel main-panel player-facing-main"} id="partido" ref={matchPanelRef}>
           {showMatchAdminPanel ? (
             <>
-              <div className={canEditMatchSettings ? "match-editor" : "match-editor readonly-editor"}>
+              <div className={canEditMatchSettings ? "match-editor match-manager-admin-block" : "match-editor readonly-editor match-manager-admin-block"}>
                 {matchFinalized ? <span className="admin-only-badge">Partido finalizado</span> : null}
                 {!matchConfigured && !matchFinalized ? <span className="admin-only-badge draft-badge">Borrador</span> : null}
                 <label className="match-field-control">
@@ -8467,7 +8494,8 @@ export default function Home() {
 
         <aside className="panel teams-panel lineup-panel" id="alineacion">
           <div className="panel-title teams-panel-title">
-            <span>Alineación</span>
+            <span className="lineup-title-default">Alineación</span>
+            <span className="lineup-title-result">Resultado</span>
             <div className="teams-panel-actions">
               <strong>{matchKinds[activeKind].teamSize}v{matchKinds[activeKind].teamSize}</strong>
             </div>
