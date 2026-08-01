@@ -7280,6 +7280,7 @@ html:fullscreen .pitch-modal-fullscreen .match-pitch.match-pitch-horizontal.matc
   display: grid;
   gap: 8px;
   grid-template-columns: repeat(2, minmax(0, 1fr));
+  scroll-margin-top: 8px;
 }
 
 .facet-field {

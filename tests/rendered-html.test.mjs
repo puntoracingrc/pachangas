@@ -677,7 +677,7 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /Se abrirá cuando pase/);
   assert.match(page, /type PlayerProfileMode = "edit" \| "viewer"/);
   assert.match(page, /const \[playerProfileMode, setPlayerProfileMode\] = useState<PlayerProfileMode>\("edit"\)/);
-  assert.match(page, /function openPlayerProfile\(playerId: string\)[\s\S]*setPlayerProfileMode\("viewer"\)/);
+  assert.match(page, /function openPlayerProfile\(playerId: string, options: \{ focusRating\?: boolean \} = \{\}\)[\s\S]*setPlayerProfileMode\("viewer"\)/);
   assert.match(page, /async function openOwnPlayerProfile\(\)[\s\S]*setPlayerProfileMode\("edit"\)/);
   assert.match(page, /showPlayerSwitcher\s*=\s*Boolean\(playerProfileMode === "edit" && canUseAdminControls\s*&&\s*selectedPlayer\s*&&\s*!selectedPlayerIsOwn/);
   assert.match(page, /player-profile-viewer/);
@@ -834,6 +834,10 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /payerId === player\.id \? "payer-card" : ""/);
   assert.match(page, /playerRatingWindow\.canRate \? "rating-open-card" : ""/);
   assert.match(page, /playerRatingWindow\.canRate \? "Valorar" : "Valoraciones"/);
+  assert.match(page, /type ProfileFocusTarget = "rating"/);
+  assert.match(page, /const \[profileFocusTarget, setProfileFocusTarget\]/);
+  assert.match(page, /playerRatingFacetGridRef\.current\?\.scrollIntoView/);
+  assert.match(page, /openPlayerProfile\(player\.id, \{ focusRating: true \}\)/);
   assert.match(page, /placement:\s*"down" \| "up"/);
   assert.match(page, /const viewportWidth = Math\.min\(/);
   assert.match(page, /const hasRoomDown = preferredDownY \+ panelHeight <= viewportHeight - margin/);
@@ -893,7 +897,7 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /short: "VEL"/);
   assert.match(page, /short: "POS"/);
   assert.match(page, /selectedRatingFacets\.map/);
-  const facetGridStart = page.indexOf('<div className="facet-grid">');
+  const facetGridStart = page.indexOf('<div className="facet-grid" ref={playerRatingFacetGridRef}>');
   const facetGridEnd = page.indexOf('<button type="button" onClick={() => void addPeerRating', facetGridStart);
   assert.ok(facetGridStart > -1 && facetGridEnd > facetGridStart, "rating facet editor should render before the save button");
   const facetGridMarkup = page.slice(facetGridStart, facetGridEnd);
@@ -903,6 +907,7 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(facetGridMarkup, /Subir \$\{facet\.label\}/);
   assert.doesNotMatch(facetGridMarkup, /type="range"/);
   assert.match(globalsCss, /\.facet-stepper/);
+  assert.match(globalsCss, /\.facet-grid\s*\{[\s\S]*scroll-margin-top:\s*8px/);
   assert.match(globalsCss, /\.rating-box \.facet-stepper button/);
   assert.match(page, /ratingFacetsForPlayer\(player\)/);
   assert.match(page, /ratingLinePath/);
