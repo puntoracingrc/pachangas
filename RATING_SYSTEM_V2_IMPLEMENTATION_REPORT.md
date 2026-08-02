@@ -71,7 +71,7 @@ Realtime se utiliza solo como aviso. En un `UPDATE` de `pachanga_groups`, `app/p
 
 ## 4. Superficie de cambios
 
-Antes de preparar la publicación se confirmaron exactamente **38 rutas persistentes de implementación V2 modificadas o creadas**. El runbook operativo solicitado para el PR añade una ruta documental, por lo que el commit de cierre contiene **39 rutas**:
+Antes de preparar la publicación se confirmaron exactamente **38 rutas persistentes de implementación V2 modificadas o creadas**. El runbook operativo solicitado para el PR añadió una ruta documental y el endurecimiento previo a staging añade una guardia de emergencia diferida, por lo que el PR contiene **40 rutas únicas**:
 
 - 5 archivos existentes modificados: `app/globals.css`, `app/mercado/page.tsx`, `app/page.tsx`, `package.json`, `tests/rendered-html.test.mjs`.
 - 5 archivos de aplicación nuevos: `app/api/ratings/assessment/route.ts`, `app/global-rating-panel.tsx`, `app/rating-assessment-contract.ts`, `app/rating-system-v2.ts`, `app/valorar-equipo/page.tsx`.
@@ -79,6 +79,7 @@ Antes de preparar la publicación se confirmaron exactamente **38 rutas persiste
 - 3 pruebas nuevas: `tests/rating-system-v2.test.ts`, `tests/rating-system-v2-db.sql`, `tests/rating-system-v2-concurrency.mjs`.
 - Este informe.
 - El runbook `docs/rating-system-v2-deployment-runbook.md`.
+- La guardia de continuidad `supabase/deferred-migrations/20260802203605_rating_v2_emergency_safe_hold.sql`, excluida del despliegue normal.
 
 ## 5. Migraciones
 
@@ -111,9 +112,11 @@ Antes de preparar la publicación se confirmaron exactamente **38 rutas persiste
 
 Las 23 migraciones aditivas se aplican primero. La unidad 24 se valida después como activación separada y no forma parte de un `supabase db push` ordinario. Esta separación evita romper V1 antes de desplegar V2; el procedimiento completo está en `docs/rating-system-v2-deployment-runbook.md`.
 
+`deferred-migrations/20260802203605_rating_v2_emergency_safe_hold.sql` tampoco forma parte de las 24 unidades de despliegue. Es una guardia de incidente: mantiene V1 y `UPDATE` directo revocados y garantiza únicamente la RPC V2 de asistencia para un frontend temporal de mantenimiento. Debe convertirse en una migración nueva y ensayarse en staging antes de cualquier uso.
+
 ### 5.1 Artefactos preexistentes
 
-Se compararon expresamente `supabase/.temp/cli-latest` y `tsconfig.tsbuildinfo` con el commit base `abcd7d25f00959afb405b68bd56f02c2058e1fe2`. Ninguna de las dos rutas existe en ese commit y ninguna existe en el worktree final; por tanto, el estado fiel al base es su ausencia. No aparecen en `git diff`, `git status` ni entre las 39 rutas del commit.
+Se compararon expresamente `supabase/.temp/cli-latest` y `tsconfig.tsbuildinfo` con el commit base `abcd7d25f00959afb405b68bd56f02c2058e1fe2`. Ninguna de las dos rutas existe en ese commit y ninguna existe en el worktree final; por tanto, el estado fiel al base es su ausencia. No aparecen en `git diff`, `git status` ni entre las 40 rutas del PR.
 
 ### 5.2 Orden canónico auditado
 
@@ -288,6 +291,10 @@ Después de cada carrera, dos actores vuelven a leer PostgreSQL y obtienen exact
 | `tests/rating-system-v2.test.ts` | PASS: 21 pruebas unitarias, de propiedades y contrato. |
 | `npm run test:rating-v2:db` | PASS: seguridad, RLS, privacidad, fórmulas, legado, idempotencia, restauración A-B y empate de snapshots dentro de transacción. |
 | `npm run test:rating-v2:concurrency` | PASS: 8 carreras/convergencias y diario ordenado. |
+| Contrato documental previo a staging | PASS: 5/5 pruebas sobre versionado de cliente, actualización PWA, silencio V1, timeouts, volumen, restauración y ausencia de reapertura directa. |
+| Guardia de emergencia en PostgreSQL 16 local | PASS tras esquema completo + 23 migraciones + unidad 24 + guardia: `UPDATE` directo es falso; las 10 RPC V1 son falsas para `anon` y `authenticated`; solo la asistencia autoritativa V2 permanece ejecutable para `authenticated`. |
+| SQL/RLS después de la guardia | PASS: batería completa en la base desechable, incluida privacidad, idempotencia, restauración y snapshots. |
+| Concurrencia después de la guardia | PASS: 8 casos, incluida selección canónica con el mismo timestamp, y revisión final convergente. |
 | Restauración A-B | PASS: vuelve la primera evidencia con fecha/peso originales, sin voto nuevo; `restoredAt` separado y desbloqueo calculado desde la segunda opinión emitida. |
 | Snapshots con timestamp idéntico | PASS: RPC, lectura RLS y dos conexiones seleccionan el mismo ID; otro miembro no puede leerlo. |
 | Auditoría del catálogo SQL | PASS: ninguna función final depende solo de fecha descendente para elegir el último registro. |
@@ -298,7 +305,7 @@ Después de cada carrera, dos actores vuelven a leer PostgreSQL y obtienen exact
 | Lint focalizado V2 | PASS. |
 | Lint global | FAIL esperado: 43 problemas preexistentes, 23 errores y 20 avisos. |
 | `git diff --check` | PASS final. |
-| `git status --porcelain=v1 -uall` | Checkpoint previo al runbook: 38 rutas. Commit de cierre previsto: 39 rutas, incluida la documentación operativa. |
+| `git status --porcelain=v1 -uall` | Checkpoint previo al runbook: 38 rutas. PR endurecido: 40 rutas únicas, incluidas documentación operativa y guardia de emergencia. |
 | Limpieza local | PASS: bootstrap temporal eliminado, contenedor PostgreSQL desechable retirado y sin `supabase/.temp/cli-latest` ni `tsconfig.tsbuildinfo`. |
 
 La base SQL fue exclusivamente local y desechable. Se utilizaron stubs locales de `auth` y la publicación de Realtime necesaria para simular el esquema de Supabase. No se usó ninguna credencial ni dato remoto.
@@ -312,3 +319,16 @@ La base SQL fue exclusivamente local y desechable. Se utilizaron stubs locales d
 5. Completar el flujo persistido de hábitos y limitaciones si se desea que los modificadores actuales sean editables por el jugador.
 
 El despliegue no forma parte de esta tarea. No se ha modificado producción ni se ha realizado merge o despliegue. La rama se publica únicamente mediante un PR borrador.
+
+## 15. Addendum de autorización previa a staging
+
+El runbook incorpora tres nuevas puertas obligatorias, sin sustituir ninguna fase anterior:
+
+1. **Compatibilidad PWA:** `clientVersion` es SemVer del bundle más SHA; `minimumSupportedClientVersion` es una política `no-store` del servidor. Un release puente V1 debe instrumentar las escrituras y actualizar el Service Worker de forma controlada antes de elevar el mínimo a V2.
+2. **Silencio V1:** la unidad 24 exige cero escrituras V1 y cero clientes sin versión durante 24 horas en staging y 7 días naturales en producción. Cualquier evento reinicia la ventana.
+3. **Rollback seguro:** la guardia diferida no reabre V1 ni `UPDATE` directo. Mantiene únicamente asistencia por la RPC V2 autoritativa para un frontend mínimo de mantenimiento, priorizando mantenimiento o roll-forward.
+4. **Volumen y recuperación:** staging debe registrar duración, filas, locks, CPU e índices por migración, ejecutar el backfill con volumen representativo y restaurar realmente un backup en un destino aislado.
+
+Estas puertas están **documentadas y cubiertas por una prueba contractual local**, pero la PWA antigua, la telemetría remota, el ensayo de rollback y la carga representativa deben ejecutarse en staging antes de autorizar cualquier aplicación remota. Este addendum no concede esa autorización.
+
+La guardia sí fue aplicada localmente sobre PostgreSQL 16 después de todo el recorrido de migraciones. La matriz observada fue inequívoca: las diez escrituras V1 quedaron denegadas para `anon` y `authenticated`, `authenticated` no tuvo `UPDATE` sobre `pachanga_groups` y conservó únicamente `EXECUTE` sobre la RPC V2 de asistencia. Esto valida el SQL y su mínimo de permisos, pero no sustituye el ensayo de staging con una PWA V1 real, telemetría, carga ni restauración.

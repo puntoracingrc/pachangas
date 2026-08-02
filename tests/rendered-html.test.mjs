@@ -162,6 +162,8 @@ test("keeps the project wired to the Pachangas app", async () => {
     ratingV2MatchAuthority,
     ratingV2AssessmentAuthority,
     ratingV2LegacyClosure,
+    ratingV2EmergencySafeHold,
+    ratingV2Runbook,
   ] = await Promise.all([
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
@@ -191,6 +193,8 @@ test("keeps the project wired to the Pachangas app", async () => {
     readFile(new URL("../supabase/migrations/20260802143500_rating_v2_match_authority.sql", import.meta.url), "utf8"),
     readFile(new URL("../supabase/migrations/20260802144000_rating_v2_assessment_authority.sql", import.meta.url), "utf8"),
     readFile(new URL("../supabase/deferred-migrations/20260802144700_rating_v2_legacy_write_closure.sql", import.meta.url), "utf8"),
+    readFile(new URL("../supabase/deferred-migrations/20260802203605_rating_v2_emergency_safe_hold.sql", import.meta.url), "utf8"),
+    readFile(new URL("../docs/rating-system-v2-deployment-runbook.md", import.meta.url), "utf8"),
   ]);
 
   assert.match(page, /join_pachanga_team/);
@@ -1032,6 +1036,23 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(ratingV2PrivacyReads, /create or replace function public\.get_pachanga_player_rating_summary_v2/);
   assert.match(ratingV2LegacyClosure, /revoke execute on function public\.save_pachanga_payload_if_current/);
   assert.match(ratingV2LegacyClosure, /revoke update on table public\.pachanga_groups from authenticated/);
+  assert.match(ratingV2EmergencySafeHold, /revoke update on table public\.pachanga_groups from public, anon, authenticated/);
+  assert.match(ratingV2EmergencySafeHold, /revoke execute on function public\.save_pachanga_payload_if_current/);
+  assert.match(ratingV2EmergencySafeHold, /grant execute on function public\.patch_pachanga_match_player_status_authoritative_v2/);
+  assert.doesNotMatch(ratingV2EmergencySafeHold, /grant update on table public\.pachanga_groups/i);
+  assert.doesNotMatch(ratingV2EmergencySafeHold, /grant execute on function public\.patch_pachanga_match_player_status\(/i);
+  assert.match(ratingV2Runbook, /clientVersion/);
+  assert.match(ratingV2Runbook, /minimumSupportedClientVersion/);
+  assert.match(ratingV2Runbook, /v1-unversioned/);
+  assert.match(ratingV2Runbook, /7 días naturales/);
+  assert.match(ratingV2Runbook, /PWA V1 abierta antes del despliegue/);
+  assert.match(ratingV2Runbook, /registration\.update\(\)/);
+  assert.match(ratingV2Runbook, /controllerchange/);
+  assert.match(ratingV2Runbook, /lock_timeout = '3s'/);
+  assert.match(ratingV2Runbook, /statement_timeout = '60s'/);
+  assert.match(ratingV2Runbook, /500\.000/);
+  assert.match(ratingV2Runbook, /restaurarl[ao] realmente/);
+  assert.match(ratingV2Runbook, /UPDATE` directo/);
   assert.match(supabaseSql, /create table if not exists public\.pachanga_player_profiles/);
   assert.match(supabaseSql, /assessment_summary jsonb not null default '\{\}'::jsonb/);
   assert.match(supabaseSql, /create table if not exists public\.pachanga_player_assessments/);

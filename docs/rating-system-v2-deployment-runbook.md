@@ -16,8 +16,22 @@ La entrega queda separada físicamente:
 
 - `supabase/migrations/`: 23 migraciones aditivas y compatibles con V1.
 - `supabase/deferred-migrations/20260802144700_rating_v2_legacy_write_closure.sql`: unidad 24, destructiva para clientes V1 y deliberadamente excluida de `db push`.
+- `supabase/deferred-migrations/20260802203605_rating_v2_emergency_safe_hold.sql`: guardia de continuidad versionada, fuera del flujo normal y también excluida de `db push`.
 
 No se debe mover la unidad 24 a `supabase/migrations/` hasta la fase 5 y debe hacerse en un PR de activación independiente.
+
+La guardia de emergencia no es una migración 25: no forma parte del despliegue normal, no devuelve autoridad a V1 y no se aplica salvo incidente aprobado y ensayo previo en staging.
+
+### 1.1 Contrato de versión de cliente
+
+| Dato | Definición obligatoria |
+| --- | --- |
+| `clientVersion` | SemVer inmutable del bundle, `MAJOR.MINOR.PATCH+<gitSha12>`, generada en build mediante `NEXT_PUBLIC_PACHANGAS_CLIENT_VERSION`. Para V2 el protocolo mínimo es `2.0.0`; el metadata de build no participa en la comparación. |
+| `minimumSupportedClientVersion` | SemVer controlada por servidor, nunca por `localStorage`, publicada mediante una respuesta `no-store`. Empieza en `1.0.0` durante el bridge y solo sube a `2.0.0` al autorizar V2. |
+| `serviceWorkerVersion` | Identificador inmutable del `sw.js` que controla la ventana. Debe viajar en telemetría junto con `clientVersion`. |
+| Cliente sin versión | Se clasifica como `v1-unversioned`; nunca se presupone actualizado. |
+
+Todas las escrituras deben enviar `clientVersion`, `serviceWorkerVersion`, `operationId` y el tipo de cliente (`browser`, `standalone` o `fullscreen`). El servidor compara SemVer sin el metadata `+sha`. Las lecturas siguen disponibles para un cliente obsoleto, pero cualquier escritura se bloquea antes de la mutación y devuelve un error explícito `CLIENT_UPDATE_REQUIRED`, nunca un resultado de éxito.
 
 ## 2. Responsables y entornos
 
@@ -33,6 +47,12 @@ Antes de actuar, registrar:
 | Proyecto Vercel de producción | Proyecto y dominio comprobados |
 | Commit V2 | SHA exacto aprobado |
 | Copia de seguridad | Identificador y hora |
+| `clientVersion` servido | SemVer y SHA exactos |
+| `minimumSupportedClientVersion` | Valor antes y después de cada fase |
+| Ventana sin escrituras V1 | Inicio, fin y consulta de evidencia |
+| Service Worker | Versión esperada y versión controladora observada |
+| Restauración ensayada | Backup, destino aislado, RTO, RPO y verificador |
+| Volumen del ensayo | Filas por tabla y factor respecto a producción/previsión |
 
 Hay otros proyectos en Supabase y Vercel: no continuar si la referencia, organización o dominio no coinciden exactamente con Pachangas IQ.
 
@@ -51,9 +71,27 @@ supabase migration list --linked
 supabase db push --linked --dry-run
 ```
 
-5. Crear o verificar una copia recuperable de la base antes de tocar producción.
-6. Registrar métricas base: errores RPC, latencia, CPU, locks, conexiones y eventos Realtime.
-7. Definir criterio de parada: cualquier error de autorización, revisión, RLS, duplicado o divergencia entre dispositivos detiene la fase.
+5. Crear una copia recuperable y restaurarla realmente en un proyecto aislado antes de tocar producción. Ver una copia en el panel no demuestra que sea restaurable.
+6. Registrar métricas base: errores RPC, latencia, CPU, locks, conexiones, eventos Realtime, filas y tamaño de índices.
+7. Confirmar que el release puente PWA registra versión y telemetría, actualiza el Service Worker de forma controlada y bloquea solo escrituras incompatibles.
+8. Confirmar una ventana continua de 24 horas sin escrituras V1 en staging y de 7 días naturales sin escrituras V1 ni `v1-unversioned` en producción antes de la unidad 24.
+9. Ejecutar el ensayo de volumen definido en la sección 13 y adjuntar sus medidas por migración.
+10. Aplicar los criterios objetivos de parada de la sección 12. Cualquier error de autorización, revisión, RLS, duplicado o divergencia entre dispositivos detiene la fase.
+
+### 3.1 Fase 0: bridge PWA y clientes antiguos
+
+Esta fase precede a las migraciones aditivas. No se autoriza staging V2 hasta completarla.
+
+1. Publicar un release puente compatible con V1 que incluya `clientVersion`, telemetría de intentos de escritura y el diálogo de actualización obligatoria.
+2. Servir `minimumSupportedClientVersion` desde el servidor con `Cache-Control: no-store`; ni el Service Worker ni el navegador pueden reutilizar una política antigua.
+3. Enviar la versión en cada escritura y clasificar como `v1-unversioned` cualquier llamada sin cabecera o metadata.
+4. Mantener `minimumSupportedClientVersion=1.0.0` durante la observación. La telemetría debe distinguir intento, RPC, resultado, versión, modo instalado, versión SW y hora del servidor, sin nombres, correo ni contenido deportivo.
+5. Actualizar `sw.js` conservando la misma URL, llamar a `registration.update()` con `updateViaCache: "none"` y evitar una activación mezclada. Cuando el nuevo worker esté listo, detener nuevas escrituras, esperar a que no haya ninguna intención pendiente, enviar `SKIP_WAITING` y recargar una sola vez tras `controllerchange`. Referencia: [Update a PWA](https://web.dev/learn/pwa/update/).
+6. Al detectar `clientVersion < minimumSupportedClientVersion`, mantener navegación y lecturas, deshabilitar mutaciones, mostrar `Actualización obligatoria` y conservar cualquier intención local como pendiente o fallida, nunca confirmada.
+7. Un error `CLIENT_UPDATE_REQUIRED`, `42501` o de RPC revocada obliga a descartar la previsualización optimista y recargar el snapshot oficial. Ningún `catch`, timeout o estado offline puede transformarlo en éxito.
+8. No iniciar la ventana de silencio hasta que el bridge lleve desplegado al menos un ciclo normal de uso y todas las instalaciones activas observadas hayan enviado una versión.
+
+La implementación del bridge, su endpoint `no-store` y la telemetría son requisitos de código previos a staging; documentarlos no equivale a tenerlos desplegados.
 
 ## 4. Fase 1: infraestructura y RPC V2 aditivas
 
@@ -61,14 +99,16 @@ supabase db push --linked --dry-run
 
 1. Enlazar exclusivamente el proyecto de staging.
 2. Revisar el `--dry-run`: debe listar las 23 migraciones aditivas y nunca la activación diferida.
-3. Aplicar las 23 migraciones.
-4. Verificar que las RPC V2 existen y que las RPC V1 siguen ejecutables para `authenticated`.
-5. Ejecutar pruebas SQL/RLS y concurrencia contra staging con datos sintéticos.
-6. Confirmar que el frontend V1 de staging todavía puede leer y escribir.
+3. Aplicar las 23 migraciones primero en una copia restaurada y con volumen representativo, registrando la ficha de la sección 14 para cada archivo.
+4. Usar `SET LOCAL lock_timeout = '3s'` y `SET LOCAL statement_timeout = '60s'` en DDL/permisos. Para el backfill se permite hasta `15min` solo si el ensayo confirma progreso, ausencia de bloqueos y duración esperada; en caso contrario se divide en lotes antes de producción.
+5. Verificar que las RPC V2 existen y que las RPC V1 siguen ejecutables para `authenticated`.
+6. Ejecutar pruebas SQL/RLS y concurrencia contra staging con datos sintéticos.
+7. Confirmar que el frontend V1 de staging todavía puede leer y escribir.
+8. Comparar filas previstas/afectadas, locks, CPU e índices con el ensayo; cualquier desviación fuera de umbral detiene la fase.
 
 ### Producción
 
-Solo después de aprobar staging, repetir el `--dry-run` con la referencia de producción verificada. Aplicar únicamente las 23 migraciones aditivas. El frontend V1 debe seguir funcionando durante esta fase.
+Solo después de aprobar staging, su prueba de restauración y su ensayo de volumen, repetir el `--dry-run` con la referencia de producción verificada. Aplicar únicamente las 23 migraciones aditivas. El frontend V1 debe seguir funcionando durante esta fase. No improvisar un timeout mayor durante producción: una migración que exceda el valor ensayado se detiene y se rediseña.
 
 ## 5. Fase 2: frontend V2 en staging
 
@@ -77,6 +117,9 @@ Solo después de aprobar staging, repetir el `--dry-run` con la referencia de pr
 3. Verificar que el navegador envía solo intención, `operationId` y `expectedRevision`.
 4. Confirmar que la respuesta reemplaza la previsualización con `confirmedRevision`, `serverSequence` y snapshot canónico.
 5. Mantener V1 disponible; todavía no ejecutar la unidad 24.
+6. Confirmar que el bundle expone su `clientVersion`, obtiene la política con `no-store` y adjunta versión/SW a toda escritura.
+7. Con un mínimo superior al cliente, verificar que las lecturas continúan y que las escrituras quedan bloqueadas con actualización obligatoria.
+8. Verificar una actualización controlada del Service Worker: worker nuevo en espera, pausa de escrituras, `SKIP_WAITING`, un único `controllerchange` y una única recarga.
 
 ## 6. Fase 3: QA autenticada y Realtime
 
@@ -93,6 +136,12 @@ Usar al menos dos usuarios y dos sesiones independientes. Deben pasar:
 - selección idéntica del último snapshot cuando varios comparten `created_at`;
 - invitado, enlace reversible y valoración global;
 - intento directo de RPC V1 y V2 fuera de permisos.
+- PWA V1 abierta antes del despliegue, mantenida en segundo plano, reconectada después y clasificada por telemetría como antigua;
+- la misma PWA recibe actualización obligatoria, no confirma una escritura rechazada, actualiza el Service Worker y recarga una sola vez;
+- cliente V2 compatible que conserva lecturas y escrituras normales tras el cambio de versión mínima;
+- cliente sin versión clasificado como `v1-unversioned` y bloqueado para escribir cuando se eleva el mínimo;
+- restauración real del backup en un destino aislado, con conteos y snapshots canónicos equivalentes;
+- backfill con el volumen representativo y métricas dentro de todos los umbrales.
 
 Guardar evidencias sin PII: SHA, operación, revisiones, secuencias, resultado y capturas de staging.
 
@@ -103,8 +152,11 @@ Guardar evidencias sin PII: SHA, operación, revisiones, secuencias, resultado y
 3. Hacer smoke autenticado inmediato con un grupo sintético o controlado.
 4. Observar durante la ventana acordada errores RPC, revisiones obsoletas, CPU, locks y Realtime.
 5. Si falla V2 antes de la revocación, revertir el frontend a V1. No hay que revertir el esquema aditivo.
+6. Mantener `minimumSupportedClientVersion=1.0.0` mientras convivan V1 y V2; el bridge continúa registrando ambos protocolos.
+7. Cuando V2 sea estable, elevar el mínimo a `2.0.0`: solo se bloquean escrituras antiguas y se fuerza la actualización controlada.
+8. Iniciar entonces la ventana de producción de 7 días. Debe haber cero escrituras V1 aceptadas, cero intentos `v1-unversioned` y cero permisos interpretados como éxito.
 
-No avanzar mientras exista tráfico V1 conocido o una versión cliente antigua que todavía necesite escribir.
+No avanzar mientras exista tráfico V1 conocido, telemetría incompleta o una versión cliente antigua que todavía necesite escribir. Reiniciar la ventana completa ante cualquier evento V1.
 
 ## 8. Fase 5: revocación final de escrituras V1
 
@@ -112,10 +164,12 @@ La activación se publica en un PR independiente:
 
 1. Mover `supabase/deferred-migrations/20260802144700_rating_v2_legacy_write_closure.sql` a `supabase/migrations/` con un timestamp nuevo generado por `supabase migration new`.
 2. Revisar que el nuevo archivo contiene únicamente las revocaciones aprobadas.
-3. Ejecutar `supabase db push --linked --dry-run`; debe aparecer solo la migración de cierre.
-4. Aplicarla primero en staging y repetir los intentos directos contra V1.
-5. Aplicarla en producción únicamente tras confirmar que el frontend V2 está estable.
-6. Verificar que V1 devuelve error de permisos y V2 continúa operativo.
+3. Adjuntar la consulta de telemetría que demuestra 24 horas limpias en staging y 7 días limpios en producción, incluyendo clientes sin versión.
+4. Ejecutar `supabase db push --linked --dry-run`; debe aparecer solo la migración de cierre.
+5. Aplicarla primero en staging y repetir los intentos directos contra V1, incluida la PWA que quedó abierta antes del despliegue.
+6. Ensayar en staging la guardia `20260802203605_rating_v2_emergency_safe_hold.sql`; debe mantener V1 y `UPDATE` revocados y permitir únicamente asistencia por la RPC V2 autoritativa.
+7. Aplicar el cierre en producción únicamente tras confirmar que el frontend V2 está estable y todos los umbrales siguen verdes.
+8. Verificar que V1 devuelve error explícito, nunca éxito, y V2 continúa operativo.
 
 ## 9. Fase 6: verificación
 
@@ -130,6 +184,12 @@ Comprobar y registrar:
 - secuencias monotónicas y revisiones convergentes;
 - Realtime provoca recarga del estado oficial;
 - CPU, locks, errores y latencia dentro del umbral acordado.
+- `clientVersion >= minimumSupportedClientVersion` en todos los clientes activos observados;
+- cero escrituras V1 y `v1-unversioned` durante toda la ventana exigida;
+- `sw.js` controlador coincide con la versión del release y no quedan workers antiguos en espera;
+- cualquier PWA antigua conserva lecturas, bloquea escrituras y muestra actualización obligatoria;
+- backup restaurado y verificado, con RTO/RPO registrados;
+- filas, tiempos e índices de cada migración coinciden con el ensayo de volumen.
 
 ## 10. Reversión
 
@@ -139,31 +199,84 @@ Revertir únicamente el frontend a V1. Las 23 migraciones son aditivas y se cons
 
 ### Después de la fase 5
 
-Antes de volver a desplegar V1, restaurar temporalmente sus permisos mediante una migración de emergencia revisada:
+No volver a desplegar V1 con escrituras abiertas. El orden de preferencia es:
 
-```sql
-grant execute on function public.save_pachanga_payload_if_current(uuid, bigint, jsonb) to authenticated;
-grant execute on function public.patch_pachanga_match_player_status(uuid, text, text, text, uuid) to authenticated;
-grant execute on function public.patch_pachanga_match_lineup_state(uuid, text, boolean, text[], text[], text, uuid) to authenticated;
-grant execute on function public.patch_pachanga_match_player_paid(uuid, text, text, boolean, uuid) to authenticated;
-grant execute on function public.patch_pachanga_match_scorers(uuid, text, integer, integer, jsonb, text[], text[], uuid) to authenticated;
-grant execute on function public.finalize_pachanga_match_if_current(uuid, bigint, text, jsonb, uuid) to authenticated;
-grant execute on function public.sync_pachanga_market_profile(uuid, text, jsonb) to authenticated;
-grant execute on function public.sync_pachanga_open_match(uuid, text, jsonb, uuid) to authenticated;
-grant execute on function public.review_pachanga_open_match_request(uuid, text, uuid) to authenticated;
-grant execute on function public.request_pachanga_open_match(uuid, uuid) to authenticated;
-grant update on table public.pachanga_groups to authenticated;
-```
+1. activar mantenimiento temporal de solo lectura;
+2. corregir V2 y hacer roll-forward;
+3. si la asistencia es imprescindible, desplegar un frontend mínimo que use únicamente `patch_pachanga_match_player_status_authoritative_v2` con `operationId` y revisión esperada;
+4. aplicar, solo si la matriz de permisos se ha probado en staging, `supabase/deferred-migrations/20260802203605_rating_v2_emergency_safe_hold.sql` mediante un PR/migración de incidente independiente.
 
-Después:
+La guardia de emergencia es versionada y revisable. Reafirma la revocación de todas las escrituras V1 y de `UPDATE` directo; solo garantiza `EXECUTE` a `authenticated` sobre la RPC V2 autoritativa de asistencia. No concede acceso a `save_pachanga_payload_if_current`, assessments V1, ratings V1, mercado V1, alineación, pagos, goleadores ni finalización V1.
 
-1. confirmar permisos V1 con un usuario controlado;
-2. revertir el frontend;
-3. mantener intactas evidencias, snapshots, recibos y eventos V2;
-4. abrir incidente y no reintentar la activación hasta identificar la causa.
+Antes de usarla:
 
-No borrar tablas V2 ni reescribir historial durante una reversión.
+1. crear una migración de incidente con timestamp nuevo mediante `supabase migration new` y copiar exactamente la guardia revisada;
+2. aplicar y revertir el escenario en staging con una PWA antigua, un cliente V2 y dos usuarios concurrentes;
+3. confirmar que `has_table_privilege('authenticated', 'public.pachanga_groups', 'UPDATE')` es falso;
+4. confirmar que todas las RPC V1 siguen sin `EXECUTE` y que la asistencia V2 mantiene revisión, recibo, evento y snapshot canónico;
+5. aprobar duración máxima de la contingencia y responsable del roll-forward.
+
+Durante la contingencia, el payload sigue siendo un modelo derivado. Está prohibido usarlo para reconstruir o sobrescribir evidencias, snapshots, cartas, valoraciones o secuencias V2. No borrar tablas V2, no reescribir historial y no restaurar una copia sobre producción como mecanismo de rollback de aplicación.
+
+La reversión de base solo se considera posible si el backup se restauró previamente en un destino aislado y se verificaron esquema, filas, RLS, funciones, índices, snapshots y secuencias. Una restauración física provoca indisponibilidad y puede requerir reconfigurar elementos externos; se trata como recuperación ante desastre, no como rollback ordinario.
 
 ## 11. Criterio de cierre
 
-La activación solo se considera cerrada cuando frontend, PostgreSQL, Realtime y dos clientes convergen; los permisos V1 están revocados; no hay errores de autorización inesperados; y existe una ruta de recuperación comprobada. Un deployment `READY` por sí solo no basta.
+La activación solo se considera cerrada cuando frontend, PostgreSQL, Realtime y dos clientes convergen; los permisos V1 están revocados; no hay errores de autorización inesperados; la ventana de telemetría está limpia; la PWA antigua queda bloqueada y actualizada de forma controlada; el ensayo de volumen está dentro de umbral; y existe una restauración realmente comprobada. Un deployment `READY` por sí solo no basta.
+
+## 12. Telemetría y umbrales de parada
+
+La telemetría usa hora y secuencia del servidor. No acepta la hora del dispositivo como orden. Debe poder agrupar por `clientVersion`, `serviceWorkerVersion`, tipo de RPC, resultado y modo instalado. Un `installationId` aleatorio puede correlacionar una instalación, pero no se guarda nombre, correo, respuesta de assessment, resultado deportivo ni payload.
+
+Consulta mínima de autorización para la unidad 24:
+
+| Señal | Umbral para continuar | Umbral de parada |
+| --- | --- | --- |
+| Escrituras V1 aceptadas | 0 en 24 h de staging y 7 días de producción | Cualquier evento reinicia la ventana |
+| Intentos `v1-unversioned` | 0 en las mismas ventanas | Cualquier intento |
+| Errores de escritura V2 | < 0,5% durante 5 min y ninguno de integridad | >= 0,5% o cualquier divergencia |
+| Realtime | p95 <= 2 s | p95 > 5 s durante 1 min |
+| CPU de base | < 70% sostenido y < 20 puntos sobre baseline | >= 70% durante 5 min o +20 puntos |
+| Conexiones | < 80% del límite | >= 80% durante 1 min |
+| Espera de lock | < 3 s | lock bloqueante >= 3 s o deadlock |
+| RPC p95 | <= 2x baseline y <= 1 s | > 2x baseline o > 1 s durante 5 min |
+| Migración no-backfill | <= 60 s y <= 2x staging | Supera cualquiera |
+| Backfill | <= 15 min, progreso continuo y <= 2x staging | Sin progreso 60 s, > 15 min o > 2x staging |
+| Disco/índices | >= 30% libre; crecimiento dentro de +20% del ensayo | < 30% libre o > 20% inesperado |
+
+Ante un umbral de parada: no aumentar timeouts para forzar el avance, cancelar la fase, conservar evidencias, volver al estado compatible anterior y decidir mantenimiento o roll-forward.
+
+## 13. Ensayo de volumen y restauración
+
+El dataset de staging debe ser sintético y reproducible. Su tamaño será el mayor de: `2x` las filas actuales de producción, `2x` la previsión de 12 meses o estos mínimos de ensayo:
+
+| Entidad | Mínimo |
+| --- | ---: |
+| Grupos | 500 |
+| Perfiles universales | 10.000 |
+| Partidos | 50.000 |
+| Participaciones/asistencias | 500.000 |
+| Evidencias individuales | 250.000 |
+| Eventos y recibos | 1.000.000 |
+
+Procedimiento:
+
+1. restaurar una copia compatible en un proyecto aislado o crear el dataset sintético con la misma distribución de tamaños JSON, miembros, partidos y evidencias; seguir [Database Backups](https://supabase.com/docs/guides/platform/backups) y [Backup and Restore using the CLI](https://supabase.com/docs/guides/platform/migrating-within-supabase/backup-restore);
+2. registrar conteos, `pg_total_relation_size`, `pg_indexes_size`, CPU, conexiones y locks antes del primer archivo;
+3. aplicar las 23 migraciones una a una en el ensayo, capturando hora del servidor, duración, filas afectadas, locks máximos, CPU máxima y crecimiento de índices;
+4. repetir el backfill con actividad concurrente de lectura y escritura equivalente al pico previsto;
+5. validar conteos, restricciones, RLS, snapshots canónicos y convergencia de dos clientes;
+6. crear un backup posterior y restaurarlo en otro destino aislado; comprobar los mismos conteos y una muestra determinista de hashes/snapshots;
+7. registrar RPO y RTO reales. No autorizar producción si la restauración falla o si el RTO supera la ventana de mantenimiento aprobada.
+
+Los timeouts se fijan con `SET LOCAL` dentro de la transacción ensayada. No se cambian valores globales del proyecto para acomodar una migración lenta.
+
+## 14. Ficha de evidencia por migración
+
+Completar una fila por cada una de las 23 migraciones y otra para la unidad 24 en su ensayo independiente:
+
+| Migración | Inicio/fin servidor | Duración | Filas antes/después/afectadas | Lock máximo | CPU base/máxima | Índices antes/después | Resultado/decisión |
+| --- | --- | ---: | --- | ---: | --- | --- | --- |
+| `<timestamp>_<nombre>.sql` | `<timestamptz>` | `<ms>` | `<n>/<n>/<n>` | `<ms>` | `<%>/<%>` | `<bytes>/<bytes>` | `continuar/detener` |
+
+Adjuntar también: SHA del frontend, refs exactas de Supabase/Vercel, versiones cliente mínima/servida, consulta de telemetría, identificador del backup restaurado, RPO/RTO, pruebas PWA y responsable que autorizó cada transición.
