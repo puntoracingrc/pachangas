@@ -215,8 +215,8 @@ Supabase CORS acceptance of the new request headers, authenticated RPC behavior,
 
 Related planning:
 
-- Rating V2 draft PR: [#92](https://github.com/ancarpi77-blip/pachangas/pull/92)
-- Rating V2 deployment runbook: `RATING_SYSTEM_V2_RUNBOOK.md` on `codex/rating-system-v2`
+- Rating V2 draft PR: [#92](https://github.com/puntoracingrc/pachangas/pull/92)
+- [Rating V2 staging and production runbook](https://github.com/puntoracingrc/pachangas/blob/codex/rating-system-v2/docs/rating-system-v2-deployment-runbook.md)
 
 ## 10. Sources
 
