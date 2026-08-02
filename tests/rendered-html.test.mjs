@@ -519,6 +519,7 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(globalsCss, /\.rating-trend-flat/);
   assert.match(globalsCss, /\.pitch-player-card \.rating-trend-chip/);
   assert.match(globalsCss, /\.form-chip/);
+  assert.match(page, /!player\.injured && !player\.inactive && formState\.hasData && formState\.label/);
   assert.match(globalsCss, /\.form-state-card/);
   assert.match(globalsCss, /\.form-state-card\.form-pending/);
   assert.match(globalsCss, /\.balance-summary/);
