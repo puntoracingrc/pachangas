@@ -11835,6 +11835,8 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
   main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="proximo"] .match-manager-admin-block,
   main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="proximo"] .draft-match-note,
   main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="proximo"] .registration-locked-note,
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="proximo"] .payer-note,
+  main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="proximo"] .subscription-contribution-note,
   main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="proximo"] .open-match-requests-panel,
   main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="proximo"] .other-player-grid,
   main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="proximo"] .add-player {
