@@ -189,6 +189,17 @@ Local HTTP QA confirmed:
 - Worker source contains `1.0.0+sw.abcd7d25f009`, `GET_VERSION` and explicit `SKIP_WAITING` handling.
 - A local minimum `2.0.0` displays the mandatory-update alert while the read-only demo and history remain visible.
 
+Staging and controlled installed-PWA QA completed on 2026-08-03 01:11 CEST:
+
+- Vercel Preview deployment `dpl_3km6w8S1Y2fWFGsswdMiEHti59Jj` is `READY`, targets Preview rather than Production and contains the bridge build `2d5e909149ce`.
+- Requests without a version are readable but return `writeAllowed: false` and `CLIENT_UPDATE_REQUIRED`; compatible `1.0.0+qa` requests return `writeAllowed: true`. Both responses are `private, no-store`.
+- Supabase staging accepted the bridge's custom CORS headers and an authenticated synthetic RPC write. No production row was read for or changed by this QA.
+- A real Chromium app-mode profile started with the old cache `pachangas-iq-pwa-v3`, `display-mode: standalone` and a worker classified as `v1-unversioned`.
+- Reopening that installed profile against the bridge replaced the cache with `pachangas-iq-pwa-1.0.0-sw.2d5e909149ce`, activated worker `1.0.0+sw.2d5e909149ce` and produced exactly one automatic reload plus one reload marker.
+- Offline mode displayed that writes are not confirmed. Reconnection restored the compatible policy, while the same request without bridge headers remained blocked.
+- Two authenticated staging clients advanced the same group from revision `2` to `3`; Realtime delivered revision `3`, both clients read the same marker and both converged on revision `3`.
+- The first Realtime attempt coincided with cold initialization of the branch replication slot and timed out after the write reached revision `1`. Repeating after the service initialized succeeded twice (`1` to `2`, then `2` to `3`), including a final clean process exit. This cold-start behavior remains a staging observation for Rating V2 QA.
+
 ## 8. Validation results
 
 Final command results are recorded after the closing validation pass:
@@ -207,7 +218,7 @@ The final staged scope contains exactly 24 paths. It contains no SQL, migration,
 
 ## 9. Deployment boundary and follow-up
 
-This branch is intentionally local/GitHub-only. It must be deployed and observed before the Rating V2 closure migration, but this task does not deploy it.
+This branch is deployed only to an isolated Vercel Preview connected to an isolated Supabase development branch. It has not been promoted, merged or deployed to Production.
 
 The bridge cannot retroactively instrument JavaScript that was loaded before the bridge existed. Final server-side V1 revocation remains the authority that prevents obsolete clients from bypassing the browser bridge once real users exist.
 
@@ -219,6 +230,8 @@ The isolated staging topology is:
 - Supabase preview branch: `pwa-bridge-staging` (`iozcjirlfytryzrcmrnq`), with no production data.
 - Branch-specific Vercel Preview variables only; production and other preview branches retain their existing configuration.
 - No production deployment or production database write is authorized by this report.
+
+The bridge staging gate is complete. Rating V2 may proceed in the same isolated staging environment according to its runbook, starting with additive infrastructure and keeping the V1 closure migration deferred.
 
 Related planning:
 
