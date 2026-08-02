@@ -209,9 +209,16 @@ The final staged scope contains exactly 24 paths. It contains no SQL, migration,
 
 This branch is intentionally local/GitHub-only. It must be deployed and observed before the Rating V2 closure migration, but this task does not deploy it.
 
-The bridge cannot retroactively instrument JavaScript that was loaded before the bridge existed. The rollout runbook therefore still requires a real old-PWA reconnection test and a defined period with no V1 write telemetry before migration 24. Final server-side V1 revocation remains the authority that prevents truly obsolete clients from bypassing the browser bridge.
+The bridge cannot retroactively instrument JavaScript that was loaded before the bridge existed. Final server-side V1 revocation remains the authority that prevents obsolete clients from bypassing the browser bridge once real users exist.
 
-Supabase CORS acceptance of the new request headers, authenticated RPC behavior, Realtime convergence and installed PWA replacement must be verified in staging before production authorization.
+For this pre-launch release there are no real users or installed clients to preserve. The product owner has therefore waived the seven-day observation window and additional V1 server-side instrumentation for this release. Browser telemetry remains in place for future rollouts, while the current gate is one controlled old-PWA replacement test followed by staging verification of Supabase CORS, authenticated RPC behavior, offline rejection, reconnection, Realtime convergence and installed PWA replacement.
+
+The isolated staging topology is:
+
+- Vercel Preview branch: `codex/pwa-client-version-bridge`.
+- Supabase preview branch: `pwa-bridge-staging` (`iozcjirlfytryzrcmrnq`), with no production data.
+- Branch-specific Vercel Preview variables only; production and other preview branches retain their existing configuration.
+- No production deployment or production database write is authorized by this report.
 
 Related planning:
 
