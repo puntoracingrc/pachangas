@@ -11285,7 +11285,7 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
     grid-auto-columns: 188px;
     grid-auto-flow: column;
     grid-column: 1 / -1;
-    min-height: 52px;
+    min-height: 72px;
     min-width: 0;
     overflow-x: auto;
     overflow-y: hidden;
@@ -11306,8 +11306,9 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
     background: rgba(245, 242, 232, 0.07);
     border-color: rgba(255, 255, 255, 0.14);
     color: #f5f2e8;
-    min-height: 32px;
-    padding: 5px 8px;
+    gap: 4px;
+    min-height: 70px;
+    padding: 6px 8px;
   }
 
   main[data-mobile-tab="inicio"] .match-item:hover,
@@ -11318,11 +11319,17 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
 
   main[data-mobile-tab="inicio"] .match-item span {
     font-size: 12px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   main[data-mobile-tab="inicio"] .match-item small {
     color: #c4d3cb;
     font-size: 10px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   main[data-mobile-tab="inicio"] .match-item .match-item-kind {
@@ -11331,6 +11338,10 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
     font-weight: 950;
     line-height: 1;
     text-transform: uppercase;
+  }
+
+  main[data-mobile-tab="inicio"] .match-item .match-item-place {
+    color: rgba(245, 242, 232, 0.78);
   }
 
   main[data-mobile-tab="inicio"] .side-history {
