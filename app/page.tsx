@@ -9465,10 +9465,10 @@ export default function Home() {
                   {matchWeatherStatus === "ready" && matchWeather ? (
                     <>
                       <div className="weather-metrics">
-                        <span><WeatherMetricIcon kind="feels" /> Sensación {matchWeather.feelsLike === null ? "-" : `${Math.round(matchWeather.feelsLike)}°`}</span>
+                        <span><WeatherMetricIcon kind="feels" /> Sens. {matchWeather.feelsLike === null ? "-" : `${Math.round(matchWeather.feelsLike)}°`}</span>
                         <span><WeatherMetricIcon kind="rain" /> Lluvia {matchWeather.precipitationProbability === null ? "-" : `${Math.round(matchWeather.precipitationProbability)}%`}</span>
                         <span><WeatherMetricIcon kind="wind" /> Viento {matchWeather.windKmh === null ? "-" : `${Math.round(matchWeather.windKmh)} km/h`}</span>
-                        <span><WeatherMetricIcon kind="humidity" /> Humedad {matchWeather.humidity === null ? "-" : `${Math.round(matchWeather.humidity)}%`}</span>
+                        <span><WeatherMetricIcon kind="humidity" /> Hum. {matchWeather.humidity === null ? "-" : `${Math.round(matchWeather.humidity)}%`}</span>
                       </div>
                     </>
                   ) : null}
