@@ -7627,7 +7627,7 @@ export default function Home() {
           </button>
           <span className="player-meta" title={positionLabel(player)} aria-label={positionLabel(player)}>
             {positionShort(player)}
-            {!player.inactive && formState.hasData && formState.label ? <em className={`form-chip form-${formState.status}`}>{formState.label}</em> : null}
+            {!player.injured && !player.inactive && formState.hasData && formState.label ? <em className={`form-chip form-${formState.status}`}>{formState.label}</em> : null}
             {isReserve && context !== "reserve" ? <em className="reserve-chip">Reserva</em> : null}
             {isWaiting && context !== "waiting" ? <em className="reserve-chip">Espera</em> : null}
             {showAbsenceStreak ? <em className="absence-chip">{absenceStreak} sin venir</em> : null}
