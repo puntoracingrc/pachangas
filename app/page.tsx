@@ -3356,6 +3356,9 @@ export default function Home() {
   const [pitchZoomOpen, setPitchZoomOpen] = useState(false);
   const [activeMobileTab, setActiveMobileTab] = useState<MobileAppTab>("inicio");
   const [activeMatchManagerPane, setActiveMatchManagerPane] = useState<MatchManagerPane>("proximo");
+  const [editingMatchNumberField, setEditingMatchNumberField] = useState<"fieldCost" | "reserveLimit" | null>(null);
+  const [matchFieldCostDraft, setMatchFieldCostDraft] = useState("");
+  const [matchReserveLimitDraft, setMatchReserveLimitDraft] = useState("");
   const [profilePane, setProfilePane] = useState<ProfilePane>("ficha");
   const [playerProfileMode, setPlayerProfileMode] = useState<PlayerProfileMode>("edit");
   const [profileFocusTarget, setProfileFocusTarget] = useState<ProfileFocusTarget | null>(null);
@@ -4371,8 +4374,15 @@ export default function Home() {
   const missing = Math.max(activeMatch.targetPlayers - confirmedPlayers.length, 0);
   const publicOpenSlots = Math.max(1, Math.min(missing || activeMatch.targetPlayers, Math.floor(Number(activeMatch.publicOpenSlots) || missing || 1)));
   const fieldCost = activeMatch.fieldCost ?? 0;
+  const reserveLimitDraftValue = editingMatchNumberField === "reserveLimit" ? matchReserveLimitDraft : String(activeMatch.reserveLimit ?? 0);
+  const fieldCostDraftValue = editingMatchNumberField === "fieldCost" ? matchFieldCostDraft : String(fieldCost);
   const lineupClosed = activeMatch.lineupClosed ?? false;
   const matchConfigured = Boolean(activeMatch.configured);
+  useEffect(() => {
+    if (editingMatchNumberField) return;
+    setMatchReserveLimitDraft(String(activeMatch.reserveLimit ?? 0));
+    setMatchFieldCostDraft(String(fieldCost));
+  }, [activeMatch.id, activeMatch.reserveLimit, editingMatchNumberField, fieldCost]);
   const activeMatchTime = new Date(activeMatch.date).getTime();
   const previousPendingMatch = Number.isFinite(activeMatchTime)
     ? matches
@@ -5915,6 +5925,32 @@ export default function Home() {
       });
     }, 80);
   }, [activeMobileTab, profileFocusTarget, selectedPlayerId]);
+
+  function editReserveLimitDraft(value: string) {
+    setMatchReserveLimitDraft(value);
+    if (value.trim() === "") return;
+    updateMatchSettings({ ...activeMatch, reserveLimit: Math.max(0, Math.floor(Number(value) || 0)) });
+  }
+
+  function editFieldCostDraft(value: string) {
+    setMatchFieldCostDraft(value);
+    if (value.trim() === "") return;
+    updateMatchSettings({ ...activeMatch, fieldCost: Math.max(0, Number(value) || 0) });
+  }
+
+  function commitReserveLimitDraft() {
+    const nextValue = Math.max(0, Math.floor(Number(matchReserveLimitDraft) || 0));
+    setEditingMatchNumberField(null);
+    setMatchReserveLimitDraft(String(nextValue));
+    updateMatchSettings({ ...activeMatch, reserveLimit: nextValue });
+  }
+
+  function commitFieldCostDraft() {
+    const nextValue = Math.max(0, Number(matchFieldCostDraft) || 0);
+    setEditingMatchNumberField(null);
+    setMatchFieldCostDraft(String(nextValue));
+    updateMatchSettings({ ...activeMatch, fieldCost: nextValue });
+  }
 
   function updateMatchSettings(next: Match) {
     if (!canEditMatchSettings) return;
@@ -9353,9 +9389,14 @@ export default function Home() {
                   <input
                     type="number"
                     min="0"
-                    value={activeMatch.reserveLimit ?? 0}
+                    value={reserveLimitDraftValue}
                     disabled={!canEditMatchSettings || !activeMatch.reservesAttend}
-                    onChange={(event) => updateMatchSettings({ ...activeMatch, reserveLimit: Math.max(0, Math.floor(Number(event.target.value) || 0)) })}
+                    onFocus={() => {
+                      setEditingMatchNumberField("reserveLimit");
+                      setMatchReserveLimitDraft(String(activeMatch.reserveLimit ?? 0));
+                    }}
+                    onBlur={commitReserveLimitDraft}
+                    onChange={(event) => editReserveLimitDraft(event.target.value)}
                   />
                 </label>
                 <label className="match-price-control">
@@ -9363,9 +9404,14 @@ export default function Home() {
                   <input
                     type="number"
                     min="0"
-                    value={fieldCost}
+                    value={fieldCostDraftValue}
                     disabled={!canEditMatchSettings}
-                    onChange={(event) => updateMatchSettings({ ...activeMatch, fieldCost: Number(event.target.value) })}
+                    onFocus={() => {
+                      setEditingMatchNumberField("fieldCost");
+                      setMatchFieldCostDraft(String(fieldCost));
+                    }}
+                    onBlur={commitFieldCostDraft}
+                    onChange={(event) => editFieldCostDraft(event.target.value)}
                   />
                 </label>
                 {!matchFinalized ? (
