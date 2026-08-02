@@ -386,6 +386,7 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /mobileNavigationTabs/);
   assert.match(page, /activeMobileTab/);
   assert.match(page, /navigateMobileTab/);
+  assert.match(page, /const openMatches = \[\.\.\.matches\][\s\S]*\.filter\(\(match\) => match\.configured && match\.scoreA === undefined && !match\.closed\)[\s\S]*\.sort\(\(a, b\) => \{[\s\S]*new Date\(a\.date\)\.getTime\(\) - new Date\(b\.date\)\.getTime\(\)/);
   assert.match(page, /if \(tabId === "partido"\) \{[\s\S]*const nextOpenMatch = openMatches\[0\];[\s\S]*if \(nextOpenMatch\) setActiveMatchId\(nextOpenMatch\.id\);[\s\S]*setActiveMatchManagerPane\("proximo"\);[\s\S]*navigateMobileTab\("partido"\);[\s\S]*return;[\s\S]*\}/);
   assert.match(page, /next-match-rail/);
   assert.match(page, /function openMatchFromInicio\(matchId: string, pane: MatchManagerPane = "proximo"\) \{[\s\S]*setActiveMatchId\(matchId\);[\s\S]*setActiveMatchManagerPane\(pane\);[\s\S]*navigateMobileTab\("partido"\);[\s\S]*\}/);
