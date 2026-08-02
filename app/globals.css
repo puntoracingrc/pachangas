@@ -84,6 +84,62 @@
   --team-b-muted: color-mix(in srgb, var(--team-b) 44%, #203029);
 }
 
+.pwa-bridge-notice {
+  position: fixed;
+  z-index: 1200;
+  right: max(12px, var(--safe-right));
+  bottom: max(12px, var(--safe-bottom));
+  display: flex;
+  width: min(560px, calc(100vw - 24px));
+  min-height: 64px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 12px 14px;
+  border: 1px solid color-mix(in srgb, var(--green) 55%, var(--line));
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--panel) 94%, transparent);
+  box-shadow: 0 14px 38px rgba(5, 16, 11, 0.24);
+  color: var(--ink);
+  backdrop-filter: blur(18px);
+}
+
+.pwa-bridge-notice.update-required {
+  border-color: color-mix(in srgb, #d93025 62%, var(--line));
+}
+
+.pwa-bridge-notice > div {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+}
+
+.pwa-bridge-notice strong,
+.pwa-bridge-notice span {
+  overflow-wrap: anywhere;
+}
+
+.pwa-bridge-notice strong {
+  font-size: 14px;
+}
+
+.pwa-bridge-notice span {
+  color: var(--ink-soft);
+  font-size: 12px;
+  line-height: 1.3;
+}
+
+.pwa-bridge-notice button {
+  min-width: 126px;
+  min-height: 40px;
+  padding: 0 12px;
+  border: 1px solid color-mix(in srgb, var(--green) 65%, var(--line));
+  border-radius: 6px;
+  background: var(--lime);
+  color: #17200f;
+  font-weight: 850;
+}
+
 /* Mobile app shell */
 .mobile-app-nav,
 .mobile-account-backdrop,
@@ -92,6 +148,13 @@
 }
 
 @media (max-width: 760px) {
+  .pwa-bridge-notice {
+    right: max(8px, var(--safe-right));
+    bottom: calc(var(--mobile-nav-height) + var(--safe-bottom) + 8px);
+    left: max(8px, var(--safe-left));
+    width: auto;
+  }
+
   body {
     padding-bottom: calc(var(--mobile-nav-height) + var(--mobile-page-padding-tight) + var(--safe-bottom));
   }

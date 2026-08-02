@@ -1,4 +1,31 @@
+import { execFileSync } from "node:child_process";
 import type { NextConfig } from "next";
+
+const semVerCorePattern = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/;
+
+function buildCommitSha() {
+  const suppliedSha = process.env.VERCEL_GIT_COMMIT_SHA ?? process.env.GITHUB_SHA;
+  if (suppliedSha?.trim()) return suppliedSha.trim();
+
+  try {
+    return execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim();
+  } catch {
+    return "local";
+  }
+}
+
+function buildReleaseVersion() {
+  const releaseVersion = process.env.PACHANGAS_CLIENT_RELEASE_VERSION?.trim() || "1.0.0";
+  if (!semVerCorePattern.test(releaseVersion)) {
+    throw new Error("PACHANGAS_CLIENT_RELEASE_VERSION must be a SemVer core such as 1.0.0");
+  }
+  return releaseVersion;
+}
+
+const releaseVersion = buildReleaseVersion();
+const buildId = buildCommitSha().replace(/[^0-9A-Za-z-]/g, "").slice(0, 12) || "local";
+const clientVersion = `${releaseVersion}+${buildId}`;
+const serviceWorkerVersion = `${releaseVersion}+sw.${buildId}`;
 
 const pwaIconPaths = [
   "/apple-touch-icon.png",
@@ -12,6 +39,10 @@ const pwaIconPaths = [
 ];
 
 const nextConfig: NextConfig = {
+  env: {
+    NEXT_PUBLIC_PACHANGAS_CLIENT_VERSION: clientVersion,
+    NEXT_PUBLIC_PACHANGAS_SERVICE_WORKER_VERSION: serviceWorkerVersion,
+  },
   async headers() {
     return [
       {

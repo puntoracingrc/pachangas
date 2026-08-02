@@ -28,6 +28,7 @@ import {
   type PlayerPosition as AssessmentPosition,
 } from "./laboratorio-ficha-jugador/_engine/player-rating-engine";
 import { MobileAppNav, type MobileAppTab } from "./mobile-app-nav";
+import { clientWriteFetch, PWA_WRITE_REJECTED_EVENT } from "./pwa-client-bridge";
 import { supabase } from "./supabaseClient";
 import { ThemeToggle } from "./theme-toggle";
 
@@ -3724,6 +3725,41 @@ export default function Home() {
     setSyncError(remoteWriteErrorMessage(message));
   }
 
+  useEffect(() => {
+    function rollbackRejectedWrite(event: Event) {
+      if (!remoteGroupId || !remoteReady) return;
+      const rejection = (event as CustomEvent<{ code?: string; message?: string }>).detail;
+      if (saveTimerRef.current) window.clearTimeout(saveTimerRef.current);
+      saveTimerRef.current = null;
+
+      try {
+        if (lastCommittedPayloadJsonRef.current) {
+          applyPayload(normalizePayload(JSON.parse(lastCommittedPayloadJsonRef.current)), remotePayloadRevisionRef.current);
+        }
+      } catch {
+        // The authoritative reload below remains the fallback for a damaged local cache.
+      }
+
+      const message = rejection?.code === "CLIENT_UPDATE_REQUIRED"
+        ? "Actualización obligatoria. El cambio no se ha guardado."
+        : rejection?.code === "OFFLINE_WRITE_NOT_CONFIRMED"
+          ? "Sin conexión. El cambio no se ha confirmado."
+          : rejection?.message || "El servidor ha rechazado el cambio. Se ha restaurado el estado confirmado.";
+      markRemoteWriteError(message);
+
+      if (navigator.onLine && supabase) {
+        void loadTeams(supabase, remoteGroupId).catch((error) => {
+          setSyncError(error instanceof Error ? error.message : "No se pudo recargar el estado oficial");
+        });
+      }
+    }
+
+    window.addEventListener(PWA_WRITE_REJECTED_EVENT, rollbackRejectedWrite);
+    return () => window.removeEventListener(PWA_WRITE_REJECTED_EVENT, rollbackRejectedWrite);
+    // The handler intentionally follows the currently selected remote group and its canonical revision.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [remoteGroupId, remoteReady]);
+
   function isAnonymousAuthUser(user: User | null) {
     return Boolean(user && (user as User & { is_anonymous?: boolean }).is_anonymous);
   }
@@ -4834,7 +4870,7 @@ export default function Home() {
     setBillingMessage("");
 
     try {
-      const response = await fetch("/api/billing/checkout", {
+      const response = await clientWriteFetch("api:billing-checkout", "/api/billing/checkout", {
         body: JSON.stringify({ groupId: remoteGroupId, interval }),
         headers: {
           Authorization: `Bearer ${await authAccessToken()}`,
@@ -4861,7 +4897,7 @@ export default function Home() {
     setBillingMessage("");
 
     try {
-      const response = await fetch("/api/billing/portal", {
+      const response = await clientWriteFetch("api:billing-portal", "/api/billing/portal", {
         body: JSON.stringify({ groupId: remoteGroupId }),
         headers: {
           Authorization: `Bearer ${await authAccessToken()}`,
