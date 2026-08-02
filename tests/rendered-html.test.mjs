@@ -1194,6 +1194,13 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.doesNotMatch(page, /className="match-time-control"[\s\S]{0,500}?<select/);
   assert.match(page, /className="match-field-control"/);
   assert.match(page, /className="match-price-control"/);
+  assert.match(page, /const \[editingMatchNumberField, setEditingMatchNumberField\] = useState<"fieldCost" \| "reserveLimit" \| null>\(null\)/);
+  assert.match(page, /const reserveLimitDraftValue = editingMatchNumberField === "reserveLimit" \? matchReserveLimitDraft : String\(activeMatch\.reserveLimit \?\? 0\)/);
+  assert.match(page, /const fieldCostDraftValue = editingMatchNumberField === "fieldCost" \? matchFieldCostDraft : String\(fieldCost\)/);
+  assert.match(page, /function editReserveLimitDraft\(value: string\)/);
+  assert.match(page, /function editFieldCostDraft\(value: string\)/);
+  assert.match(page, /onChange=\{\(event\) => editReserveLimitDraft\(event\.target\.value\)\}/);
+  assert.match(page, /onChange=\{\(event\) => editFieldCostDraft\(event\.target\.value\)\}/);
   assert.doesNotMatch(page, /type="datetime-local"/);
   assert.match(page, /const allPositionOptions = Array\.from/);
   assert.match(page, /value=\{selectablePositionValue\(selectedPlayer\.position\)\}/);
