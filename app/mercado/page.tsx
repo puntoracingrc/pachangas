@@ -8,6 +8,20 @@ import { supabase } from "../supabaseClient";
 
 const googleMapsApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
 
+function marketOperationMetadata() {
+  const storageKey = "pachangas-operation-session";
+  let sessionId = window.sessionStorage.getItem(storageKey);
+  if (!sessionId) {
+    sessionId = crypto.randomUUID();
+    window.sessionStorage.setItem(storageKey, sessionId);
+  }
+  return {
+    orientation: window.matchMedia("(orientation: landscape)").matches ? "landscape" : "portrait",
+    sessionId,
+    surface: window.matchMedia("(display-mode: standalone)").matches ? "pwa-market" : "web-market",
+  };
+}
+
 type MarketZone = {
   address?: string;
   city?: string;
@@ -98,6 +112,7 @@ type OpenMarketMatch = {
   positions: string[];
   pricePerPlayer: number;
   requiresApproval: boolean;
+  sourcePayloadRevision: number;
   sourceMatchId: string;
   targetPlayers: number;
   title: string;
@@ -127,6 +142,7 @@ type OpenMarketMatchRow = {
   positions: string[] | null;
   price_per_player: number | string | null;
   requires_approval: boolean | null;
+  source_payload_revision: number | string | null;
   source_match_id: string | null;
   target_players: number | string | null;
   title: string | null;
@@ -241,6 +257,7 @@ const fallbackOpenMatches: OpenMarketMatch[] = [
     positions: ["Defensa", "Medio"],
     pricePerPlayer: 4,
     requiresApproval: true,
+    sourcePayloadRevision: 0,
     sourceMatchId: "demo-open-1",
     targetPlayers: 14,
     title: "Jueves 21:00",
@@ -269,6 +286,7 @@ const fallbackOpenMatches: OpenMarketMatch[] = [
     positions: ["Portero", "Ataque"],
     pricePerPlayer: 0,
     requiresApproval: true,
+    sourcePayloadRevision: 0,
     sourceMatchId: "demo-open-2",
     targetPlayers: 10,
     title: "Sala rápida",
@@ -517,6 +535,7 @@ function normalizeOpenMatchRow(row: OpenMarketMatchRow): OpenMarketMatch {
     positions: row.positions ?? [],
     pricePerPlayer: Math.max(0, Number(row.price_per_player) || 0),
     requiresApproval: row.requires_approval ?? true,
+    sourcePayloadRevision: Math.max(0, Math.floor(Number(row.source_payload_revision) || 0)),
     sourceMatchId: row.source_match_id || row.id,
     targetPlayers: Math.max(0, Math.floor(Number(row.target_players) || 0)),
     title: row.title || "Partido abierto",
@@ -729,7 +748,7 @@ export default function MarketPage() {
       const openMatchesResult = (await supabase
         ?.from("pachanga_open_matches")
         .select(
-          "id, source_match_id, group_name, title, date, date_text, day, modality, zone, place_id, lat, lng, field_name, field_cost, price_per_player, target_players, confirmed_count, open_slots, min_media, max_media, positions, requires_approval, guests_pay, group_level, match_url, active",
+          "id, source_match_id, source_payload_revision, group_name, title, date, date_text, day, modality, zone, place_id, lat, lng, field_name, field_cost, price_per_player, target_players, confirmed_count, open_slots, min_media, max_media, positions, requires_approval, guests_pay, group_level, match_url, active",
         )
         .eq("active", true)
         .gt("open_slots", 0)
@@ -875,8 +894,10 @@ export default function MarketPage() {
       return;
     }
 
-    const result = await supabase.rpc("request_pachanga_open_match", {
-      operation_key: crypto.randomUUID(),
+    const result = await supabase.rpc("request_pachanga_open_match_authoritative_v2", {
+      client_metadata: marketOperationMetadata(),
+      expected_match_revision: match.sourcePayloadRevision,
+      operation_id: crypto.randomUUID(),
       target_open_match_id: match.id,
     });
 
@@ -885,7 +906,8 @@ export default function MarketPage() {
       return;
     }
 
-    const status = (result.data as { status?: string } | null)?.status;
+    const request = (result.data as { request?: { status?: string } } | null)?.request;
+    const status = request?.status;
     const nextStatus: OpenMatchRequestStatus =
       status === "accepted" || status === "rejected" || status === "cancelled" ? status : "pending";
     setOpenMatchRequests((items) => ({
