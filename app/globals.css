@@ -11593,7 +11593,8 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
   }
 
   main[data-mobile-tab="partido"] .match-active-context span,
-  main[data-mobile-tab="partido"] .match-active-context b {
+  main[data-mobile-tab="partido"] .match-active-context b,
+  main[data-mobile-tab="partido"] .match-active-context .match-context-status-button {
     border-radius: 999px;
     font-size: 9px;
     font-weight: 950;
@@ -11613,9 +11614,23 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
     color: #d9f99d;
   }
 
-  main[data-mobile-tab="partido"] .match-active-context b {
+  main[data-mobile-tab="partido"] .match-active-context b,
+  main[data-mobile-tab="partido"] .match-active-context .match-context-status-button {
     background: rgba(200, 239, 93, 0.16);
+    border: 0;
     color: var(--lime);
+  }
+
+  main[data-mobile-tab="partido"] .match-active-context .match-context-status-button {
+    cursor: pointer;
+    font-family: inherit;
+  }
+
+  main[data-mobile-tab="partido"] .match-active-context .match-context-status-button:hover,
+  main[data-mobile-tab="partido"] .match-active-context .match-context-status-button:focus-visible {
+    background: rgba(200, 239, 93, 0.24);
+    outline: 2px solid rgba(80, 146, 255, 0.7);
+    outline-offset: 2px;
   }
 
   main[data-mobile-tab="partido"] .match-active-context.finalized b {

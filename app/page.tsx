@@ -5729,6 +5729,7 @@ export default function Home() {
   const showMatchAdminPanel = canUseAdminControls;
   const canEditMatchSettings = canUseAdminControls && !matchFinalized;
   const canEditLineup = canUseAdminControls && registrationOpen && !lineupClosed && !matchFinalized;
+  const canToggleLineupFromContext = canUseAdminControls && matchConfigured && registrationOpen && !matchFinalized;
   const canUploadTeamPhoto = Boolean(matchConfigured && (isDemoMode || hasRealTeam) && !needsLoginForSharedLink);
   const matchCanBeSaved = Boolean(
     canUseAdminControls &&
@@ -9152,7 +9153,19 @@ export default function Home() {
             <strong>{activeMatch.title || matchKinds[activeKind].label}</strong>
             <small>{matchSummaryDate(activeMatch.date)} · {activeMatch.place}</small>
           </div>
-          <b>{matchContextStatus}</b>
+          {canToggleLineupFromContext ? (
+            <button
+              aria-label={lineupClosed ? "Abrir alineación" : "Cerrar alineación"}
+              aria-pressed={lineupClosed}
+              className="match-context-status-button"
+              onClick={() => void toggleLineupClosed()}
+              type="button"
+            >
+              {matchContextStatus}
+            </button>
+          ) : (
+            <b>{matchContextStatus}</b>
+          )}
         </div>
         <aside className="panel match-list" aria-label="Partidos">
           <div className="panel-title">
