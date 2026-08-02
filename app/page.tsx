@@ -1892,6 +1892,24 @@ function matchSummaryDate(date: string) {
   });
 }
 
+function matchDayLabel(date: string) {
+  const parsed = new Date(date);
+  if (Number.isNaN(parsed.getTime())) return "Día por confirmar";
+
+  return parsed.toLocaleDateString("es-ES", { weekday: "short" });
+}
+
+function matchTimeLabel(date: string) {
+  const parsed = new Date(date);
+  if (Number.isNaN(parsed.getTime())) return "Hora por confirmar";
+
+  return parsed.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" });
+}
+
+function matchTitleWithoutTrailingTime(title: string) {
+  return title.replace(/\s+\d{1,2}:\d{2}\s*$/, "").trim();
+}
+
 function weatherVisualKey(weather: MatchWeather | null, status: "error" | "idle" | "loading" | "ready" | "unavailable") {
   if (status === "loading") return "loading";
   if (status === "error") return "storm";
@@ -9143,19 +9161,23 @@ export default function Home() {
           </div>
           {openMatches.length === 0 ? <p className="empty-copy">Crea tu primer partido desde “Crear”.</p> : null}
           <div className="next-match-rail">
-            {openMatches.map((match) => (
-              <div className="match-row" key={match.id}>
-                <button
-                  className={match.id === activeMatch.id ? "match-item active" : "match-item"}
-                  onClick={() => openMatchFromInicio(match.id, "proximo")}
-                  type="button"
-                >
-                  <span>{match.title}</span>
-                  <small className="match-item-kind">{matchKinds[match.kind ?? "futbol7"].label}</small>
-                  <small>{new Date(match.date).toLocaleString("es-ES", { weekday: "short", hour: "2-digit", minute: "2-digit" })}</small>
-                </button>
-              </div>
-            ))}
+            {openMatches.map((match) => {
+              const matchTitle = matchTitleWithoutTrailingTime(match.title) || matchKinds[match.kind ?? "futbol7"].label;
+              return (
+                <div className="match-row" key={match.id}>
+                  <button
+                    className={match.id === activeMatch.id ? "match-item active" : "match-item"}
+                    onClick={() => openMatchFromInicio(match.id, "proximo")}
+                    type="button"
+                  >
+                    <span>{matchTitle}</span>
+                    <small className="match-item-kind">{matchKinds[match.kind ?? "futbol7"].label}</small>
+                    <small className="match-item-date">{matchDayLabel(match.date)} · {matchTimeLabel(match.date)}</small>
+                    <small className="match-item-place">{match.place || "Campo por confirmar"}</small>
+                  </button>
+                </div>
+              );
+            })}
           </div>
           <div className="side-history">
             <div className="panel-title compact-title">

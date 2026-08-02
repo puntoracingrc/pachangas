@@ -641,8 +641,12 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(globalsCss, /main\[data-mobile-tab="partido"\] > \.app-shell > \.main-panel,\s*main\[data-mobile-tab="partido"\] > \.app-shell > \.lineup-panel\s*\{\s*display:\s*grid/);
   assert.match(globalsCss, /main\[data-mobile-tab="inicio"\]\s*\{[\s\S]*grid-template-columns:\s*minmax\(0,\s*1fr\)/);
   assert.match(globalsCss, /main\[data-mobile-tab="inicio"\] > \.app-shell > \.match-list\s*\{[\s\S]*grid-template-columns:\s*minmax\(0,\s*1fr\)/);
-  assert.match(globalsCss, /main\[data-mobile-tab="inicio"\] \.next-match-rail\s*\{[\s\S]*grid-auto-columns:\s*188px[\s\S]*grid-auto-flow:\s*column[\s\S]*min-height:\s*52px[\s\S]*overflow-x:\s*auto/);
+  assert.match(globalsCss, /main\[data-mobile-tab="inicio"\] \.next-match-rail\s*\{[\s\S]*grid-auto-columns:\s*188px[\s\S]*grid-auto-flow:\s*column[\s\S]*min-height:\s*72px[\s\S]*overflow-x:\s*auto/);
   assert.match(globalsCss, /main\[data-mobile-tab="inicio"\] \.match-item \.match-item-kind/);
+  assert.match(page, /matchTitleWithoutTrailingTime\(match\.title\)/);
+  assert.match(page, /className="match-item-date"/);
+  assert.match(page, /className="match-item-place"/);
+  assert.match(globalsCss, /main\[data-mobile-tab="inicio"\] \.match-item \.match-item-place/);
   assert.match(globalsCss, /\.history-item \.history-item-kind/);
   assert.match(globalsCss, /main\[data-mobile-tab="inicio"\] \.history-item div \.history-item-kind/);
   assert.match(globalsCss, /main\[data-mobile-tab="inicio"\] \.side-history\s*\{[\s\S]*grid-column:\s*1 \/ -1/);
