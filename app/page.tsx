@@ -4355,7 +4355,13 @@ export default function Home() {
   const confirmedPlayers = matchPlayersForDisplay.filter((player) => confirmedIds.includes(player.id));
   const reservePlayers = reserveIds.map((playerId) => matchPlayersById.get(playerId)).filter((player): player is Player => Boolean(player));
   const waitingPlayers = waitingIds.map((playerId) => matchPlayersById.get(playerId)).filter((player): player is Player => Boolean(player));
-  const openMatches = matches.filter((match) => match.configured && match.scoreA === undefined && !match.closed);
+  const openMatches = [...matches]
+    .filter((match) => match.configured && match.scoreA === undefined && !match.closed)
+    .sort((a, b) => {
+      const dateDelta = new Date(a.date).getTime() - new Date(b.date).getTime();
+      if (dateDelta !== 0) return dateDelta;
+      return (a.title || a.id).localeCompare(b.title || b.id, "es");
+    });
   const closedMatches = matches
     .filter((match) => match.scoreA !== undefined)
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
