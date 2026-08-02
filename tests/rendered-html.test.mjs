@@ -233,6 +233,10 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /className=\{matchFinalized \? "match-active-context finalized" : "match-active-context"\}/);
   assert.match(page, /<span>\{matchContextKind\}<\/span>/);
   assert.match(page, /className="match-active-kind">\{matchKinds\[activeKind\]\.label\}/);
+  assert.match(page, /const canToggleLineupFromContext = canUseAdminControls && matchConfigured && registrationOpen && !matchFinalized/);
+  assert.match(page, /canToggleLineupFromContext \? \(/);
+  assert.match(page, /className="match-context-status-button"/);
+  assert.match(page, /onClick=\{\(\) => void toggleLineupClosed\(\)\}/);
   assert.match(page, /<b>\{matchContextStatus\}<\/b>/);
   assert.match(page, /const mainPanelClassName = \[/);
   assert.match(page, /matchFinalized \? "match-finalized-main" : ""/);
@@ -556,6 +560,7 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(globalsCss, /main\[data-mobile-tab="partido"\] > \.app-shell > \.match-manager-subnav\s*\{[\s\S]*backdrop-filter:\s*blur\(14px\) saturate\(1\.08\)/);
   assert.match(globalsCss, /\.match-active-context/);
   assert.match(globalsCss, /main\[data-mobile-tab="partido"\] \.match-active-context\s*\{[\s\S]*grid-column:\s*2[\s\S]*grid-row:\s*1/);
+  assert.match(globalsCss, /main\[data-mobile-tab="partido"\] \.match-active-context \.match-context-status-button/);
   assert.doesNotMatch(globalsCss, /\.match-finalized-main \.stats-row/);
   assert.match(globalsCss, /\.match-finalized-main \.next-match-roster-rail[\s\S]*height:\s*clamp/);
   assert.match(globalsCss, /\.historical-match-admin-hub[\s\S]*grid-template-columns:\s*minmax\(0,\s*1fr\)/);
