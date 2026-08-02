@@ -1316,6 +1316,8 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(globalsCss, /main\[data-mobile-tab="partido"\] \.weather-card\s*\{[\s\S]*grid-template-columns:\s*minmax\(210px,\s*0\.62fr\) minmax\(320px,\s*1\.38fr\)/);
   assert.match(globalsCss, /main\[data-mobile-tab="partido"\] \.weather-card-main\s*\{[\s\S]*grid-template-columns:\s*22px auto auto minmax\(0,\s*1fr\)/);
   assert.match(globalsCss, /main\[data-mobile-tab="partido"\] \.weather-metrics\s*\{[\s\S]*grid-template-columns:\s*repeat\(4,\s*minmax\(58px,\s*1fr\)\)/);
+  assert.match(globalsCss, /main\[data-mobile-tab="partido"\] \.weather-metrics span\s*\{[\s\S]*rgba\(8,\s*16,\s*22,\s*0\.56\)/);
+  assert.match(globalsCss, /main\[data-mobile-tab="partido"\] \.weather-card small\s*\{[\s\S]*display:\s*none/);
   assert.match(globalsCss, /\.match-side-share/);
   assert.match(globalsCss, /\.match-side-share \.share-box/);
   assert.match(page, /matchConfigured && !matchFinalized \? \(\s*<section className=\{`weather-card weather-card-\$\{matchWeatherStatus\}`\}/);

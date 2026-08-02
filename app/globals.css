@@ -10477,11 +10477,20 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
   }
 
   main[data-mobile-tab="partido"] .weather-metrics span {
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.025)),
+      rgba(8, 16, 22, 0.56);
+    border-color: rgba(169, 240, 204, 0.16);
+    color: #dce9e2;
     gap: 3px;
     min-height: 21px;
     overflow: hidden;
     padding: 2px 5px;
     text-overflow: ellipsis;
+  }
+
+  main[data-mobile-tab="partido"] .weather-card small {
+    display: none;
   }
 
   main[data-mobile-tab="partido"] .weather-metric-icon,
