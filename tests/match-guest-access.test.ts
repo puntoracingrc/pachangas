@@ -1,11 +1,19 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
+import { readFile, readdir } from "node:fs/promises";
 import test from "node:test";
 import { classifySupabaseWrite } from "../app/pwa-write-classifier";
 
+const migrationsDirectory = new URL("../supabase/migrations/", import.meta.url);
+
+async function readMigration(name: string) {
+  const migration = (await readdir(migrationsDirectory)).find((entry) => entry.endsWith(`_${name}.sql`));
+  assert.ok(migration, `Missing migration ${name}`);
+  return readFile(new URL(migration, migrationsDirectory), "utf8");
+}
+
 const files = Promise.all([
-  readFile(new URL("../supabase/migrations/20260803165703_match_guest_invitations_notifications.sql", import.meta.url), "utf8"),
-  readFile(new URL("../supabase/migrations/20260803173745_match_guest_market_read_closure.sql", import.meta.url), "utf8"),
+  readMigration("match_guest_invitations_notifications"),
+  readMigration("match_guest_market_read_closure"),
   readFile(new URL("../app/mercado/page.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/notification-center.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/partido-invitado/page.tsx", import.meta.url), "utf8"),
