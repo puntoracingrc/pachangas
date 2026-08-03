@@ -559,6 +559,412 @@
   }
 }
 
+/* Private team challenges: server-confirmed social state inside Mercado. */
+.market-tabs {
+  flex-wrap: wrap;
+}
+
+.team-challenges-area {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+
+.team-challenges-toolbar {
+  align-items: end;
+  background: color-mix(in srgb, var(--panel) 88%, transparent);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: minmax(220px, 1.4fr) minmax(140px, 0.8fr) minmax(140px, 0.8fr);
+  padding: 12px;
+}
+
+.team-challenges-toolbar label,
+.team-challenges-toolbar > div,
+.private-challenge-form header > div,
+.challenge-confirmed-team,
+.challenge-card-heading > div {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.team-challenges-toolbar span,
+.private-challenge-form header span,
+.challenge-confirmed-team span,
+.challenge-card-heading > div span,
+.challenge-card dt,
+.market-public-teams-next > span {
+  color: var(--ink-soft);
+  font-size: 11px;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.team-challenges-toolbar label {
+  color: var(--ink-soft);
+  font-size: 11px;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.team-challenges-toolbar strong,
+.challenge-confirmed-team strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.private-challenge-form {
+  display: grid;
+  gap: 14px;
+}
+
+.private-challenge-form > header,
+.challenge-list-panel > header,
+.known-opponents-panel > header,
+.resolved-challenges-panel > header {
+  align-items: center;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  justify-content: space-between;
+  padding-bottom: 10px;
+}
+
+.private-challenge-form > header strong {
+  font-size: 19px;
+}
+
+.private-challenge-form button,
+.challenge-card button,
+.known-opponents-list button {
+  background: color-mix(in srgb, var(--panel) 72%, #0b1611);
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  color: var(--ink);
+  cursor: pointer;
+  font-weight: 900;
+  min-height: 38px;
+  padding: 0 12px;
+}
+
+.private-challenge-form button:disabled,
+.challenge-card button:disabled,
+.known-opponents-list button:disabled {
+  cursor: wait;
+  opacity: 0.5;
+}
+
+.challenge-team-code-row {
+  align-items: end;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: minmax(180px, 0.8fr) auto minmax(200px, 1.2fr);
+}
+
+.challenge-team-code-row label,
+.challenge-fields-grid label {
+  color: var(--ink-soft);
+  display: grid;
+  font-size: 11px;
+  font-weight: 950;
+  gap: 6px;
+  text-transform: uppercase;
+}
+
+.challenge-confirmed-team {
+  background: color-mix(in srgb, #7dbb46 15%, var(--panel));
+  border: 1px solid color-mix(in srgb, #7dbb46 55%, var(--line));
+  border-radius: 7px;
+  min-height: 40px;
+  padding: 7px 10px;
+}
+
+.challenge-fields-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.challenge-message-field {
+  grid-column: 1 / -1;
+}
+
+.challenge-wide-field {
+  grid-column: span 2;
+}
+
+.challenge-message-field textarea {
+  min-height: 72px;
+  resize: vertical;
+}
+
+.challenge-primary-action {
+  background: #b7e34a !important;
+  border-color: #8db72a !important;
+  color: #14200c !important;
+  justify-self: start;
+  min-width: 160px;
+}
+
+.team-challenges-message,
+.team-challenges-readonly,
+.team-challenges-loading,
+.team-challenges-empty {
+  color: var(--ink-soft);
+  font-weight: 850;
+  margin: 0;
+}
+
+.team-challenges-message {
+  background: color-mix(in srgb, #f0b429 12%, var(--panel));
+  border: 1px solid color-mix(in srgb, #f0b429 42%, var(--line));
+  border-radius: 7px;
+  padding: 10px 12px;
+}
+
+.team-challenges-columns {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(0, 1.45fr) minmax(260px, 0.75fr);
+}
+
+.challenge-list-panel,
+.known-opponents-panel,
+.resolved-challenges-panel {
+  display: grid;
+  gap: 0;
+  min-width: 0;
+}
+
+.challenge-list-panel > header strong,
+.known-opponents-panel > header strong,
+.resolved-challenges-panel > header strong {
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+  border-radius: 50%;
+  display: grid;
+  height: 32px;
+  place-items: center;
+  width: 32px;
+}
+
+.challenge-list,
+.known-opponents-list,
+.resolved-challenges-panel > div {
+  display: grid;
+  min-width: 0;
+}
+
+.challenge-card,
+.known-opponents-list article,
+.resolved-challenges-panel article {
+  min-width: 0;
+  padding: 13px 0;
+}
+
+.challenge-card + .challenge-card,
+.known-opponents-list article + article,
+.resolved-challenges-panel article + article {
+  border-top: 1px solid var(--line);
+}
+
+.challenge-card-heading {
+  align-items: start;
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+}
+
+.challenge-card-heading strong {
+  font-size: 18px;
+}
+
+.challenge-status {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--ink-soft);
+  font-size: 10px;
+  font-weight: 950;
+  padding: 5px 8px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.challenge-status.proposed,
+.challenge-status.changes_proposed {
+  background: color-mix(in srgb, #f0b429 17%, var(--panel));
+  border-color: color-mix(in srgb, #f0b429 55%, var(--line));
+}
+
+.challenge-status.accepted {
+  background: color-mix(in srgb, #4bb67a 18%, var(--panel));
+  border-color: color-mix(in srgb, #4bb67a 55%, var(--line));
+}
+
+.challenge-status.rejected,
+.challenge-status.cancelled {
+  background: color-mix(in srgb, #d75a52 13%, var(--panel));
+  border-color: color-mix(in srgb, #d75a52 45%, var(--line));
+}
+
+.challenge-card dl {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 12px 0;
+}
+
+.challenge-card dl div {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.challenge-card dd {
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 850;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.challenge-card > p,
+.challenge-card > a {
+  color: var(--ink-soft);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.challenge-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 12px;
+}
+
+.challenge-card-actions button:first-child {
+  background: #b7e34a;
+  border-color: #8db72a;
+  color: #14200c;
+}
+
+.known-opponents-list article {
+  display: grid;
+  gap: 7px;
+}
+
+.known-opponents-list article > div {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+  justify-content: space-between;
+}
+
+.known-opponents-list article span,
+.known-opponents-list article small {
+  color: var(--ink-soft);
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.known-opponents-list button {
+  justify-self: start;
+}
+
+.resolved-challenges-panel > div {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.resolved-challenges-panel article {
+  align-content: start;
+  display: grid;
+  gap: 6px;
+  padding-right: 16px;
+}
+
+.resolved-challenges-panel article span {
+  color: var(--ink-soft);
+  font-size: 12px;
+}
+
+.accepted-challenges-panel article a {
+  color: #b7e34a;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.resolved-challenges-panel .challenge-status {
+  justify-self: start;
+}
+
+.market-public-teams-next {
+  display: grid;
+  gap: 8px;
+  max-width: 760px;
+}
+
+.market-public-teams-next strong {
+  font-size: 22px;
+}
+
+.market-public-teams-next p {
+  color: var(--ink-soft);
+  line-height: 1.45;
+  margin: 0;
+}
+
+@media (max-width: 800px) {
+  .team-challenges-toolbar,
+  .team-challenges-columns {
+    grid-template-columns: 1fr;
+  }
+
+  .challenge-fields-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .challenge-team-code-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .challenge-confirmed-team {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 560px) {
+  .market-tabs {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    justify-self: stretch;
+  }
+
+  .market-tabs button {
+    min-width: 0;
+    padding-inline: 8px;
+  }
+
+  .challenge-fields-grid,
+  .challenge-team-code-row,
+  .challenge-card dl {
+    grid-template-columns: 1fr;
+  }
+
+  .challenge-wide-field {
+    grid-column: auto;
+  }
+
+  .challenge-confirmed-team {
+    grid-column: auto;
+  }
+
+  .challenge-primary-action {
+    justify-self: stretch;
+  }
+}
+
 @media (max-width: 380px) {
   :root {
     --mobile-nav-height: var(--mobile-nav-height-tight);
@@ -13711,5 +14117,16 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
   .global-rating-options,
   .guest-team-rating-options {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  .market-tabs {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .market-tabs button {
+    min-width: 0;
   }
 }
