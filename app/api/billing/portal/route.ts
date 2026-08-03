@@ -1,6 +1,10 @@
 import { getOrigin, requireOwnedGroup, stripeClient } from "../_shared";
+import { clientWriteGateResponse } from "../../client-policy/_contract";
 
 export async function POST(request: Request) {
+  const clientGate = clientWriteGateResponse(request);
+  if (clientGate) return clientGate;
+
   try {
     const body = (await request.json()) as { groupId?: string };
     const groupId = body.groupId?.trim();

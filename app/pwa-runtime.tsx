@@ -1,11 +1,22 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { adaptiveWindowClass } from "./adaptive-window";
-
-type NavigatorWithStandalone = Navigator & {
-  standalone?: boolean;
-};
+import {
+  flushQueuedClientTelemetry,
+  pausePwaWrites,
+  pwaBridgeSnapshot,
+  refreshPwaClientPolicy,
+  setPwaOnlineState,
+  setPwaServiceWorkerVersion,
+  subscribePwaBridge,
+  waitForPwaWrites,
+} from "./pwa-client-bridge";
+import {
+  activateWaitingServiceWorker,
+  reloadOnceAfterControllerChange,
+  serviceWorkerVersion,
+} from "./pwa-service-worker-update";
 
 type StorageManagerWithEstimate = StorageManager & {
   estimate?: () => Promise<StorageEstimate>;
@@ -20,19 +31,7 @@ function canRegisterServiceWorker() {
 
   if (!isSecureOrigin) return false;
   if (process.env.NODE_ENV !== "production" && isLocalhost) return false;
-
   return true;
-}
-
-function isInstalledDisplayMode() {
-  const navigatorWithStandalone = navigator as NavigatorWithStandalone;
-
-  return (
-    window.matchMedia("(display-mode: standalone)").matches ||
-    window.matchMedia("(display-mode: fullscreen)").matches ||
-    window.matchMedia("(display-mode: minimal-ui)").matches ||
-    Boolean(navigatorWithStandalone.standalone)
-  );
 }
 
 function setDatasetFlag(name: string, value: boolean) {
@@ -45,13 +44,8 @@ function setViewportVariables() {
   const width = Math.round(viewport?.width ?? window.innerWidth);
   const sizeClass = adaptiveWindowClass(width, height);
 
-  if (height > 0) {
-    document.documentElement.style.setProperty("--app-viewport-height", `${height}px`);
-  }
-
-  if (width > 0) {
-    document.documentElement.style.setProperty("--app-viewport-width", `${width}px`);
-  }
+  if (height > 0) document.documentElement.style.setProperty("--app-viewport-height", `${height}px`);
+  if (width > 0) document.documentElement.style.setProperty("--app-viewport-width", `${width}px`);
 
   document.documentElement.dataset.windowWidthClass = sizeClass.width;
   document.documentElement.dataset.windowHeightClass = sizeClass.height;
@@ -63,6 +57,14 @@ function updateOrientationDataset() {
 }
 
 export function PwaRuntime() {
+  const [bridgeState, setBridgeState] = useState(pwaBridgeSnapshot);
+  const [updateMessage, setUpdateMessage] = useState("");
+  const registrationRef = useRef<ServiceWorkerRegistration | null>(null);
+  const expectedWorkerVersionRef = useRef(bridgeState.serviceWorkerVersion);
+  const reloadAfterControllerChangeRef = useRef(false);
+
+  useEffect(() => subscribePwaBridge(() => setBridgeState(pwaBridgeSnapshot())), []);
+
   useEffect(() => {
     let frame = 0;
     const updateViewport = () => {
@@ -100,7 +102,6 @@ export function PwaRuntime() {
       const quota = estimate.quota ?? 0;
       const usage = estimate.usage ?? 0;
       if (quota <= 0) return;
-
       const ratio = usage / quota;
       document.documentElement.dataset.storagePressure = ratio > 0.85 ? "high" : ratio > 0.65 ? "medium" : "low";
     }).catch(() => undefined);
@@ -108,7 +109,14 @@ export function PwaRuntime() {
 
   useEffect(() => {
     const updateDisplayMode = () => {
-      document.documentElement.dataset.displayMode = isInstalledDisplayMode() ? "standalone" : "browser";
+      const displayMode = window.matchMedia("(display-mode: fullscreen)").matches
+        ? "fullscreen"
+        : window.matchMedia("(display-mode: standalone)").matches ||
+            window.matchMedia("(display-mode: minimal-ui)").matches ||
+            Boolean((navigator as Navigator & { standalone?: boolean }).standalone)
+          ? "standalone"
+          : "browser";
+      document.documentElement.dataset.displayMode = displayMode;
     };
     const displayModeQueries = [
       window.matchMedia("(display-mode: standalone)"),
@@ -127,20 +135,149 @@ export function PwaRuntime() {
   }, []);
 
   useEffect(() => {
-    if (!canRegisterServiceWorker()) return;
-
-    const registerServiceWorker = () => {
-      void navigator.serviceWorker.register("/sw.js", { scope: "/" }).catch(() => undefined);
+    const refreshPolicy = () => {
+      setPwaOnlineState(navigator.onLine);
+      if (!navigator.onLine) return;
+      void flushQueuedClientTelemetry();
+      void refreshPwaClientPolicy().catch(() => undefined);
+    };
+    const onOffline = () => setPwaOnlineState(false);
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible") refreshPolicy();
     };
 
-    if (document.readyState === "complete") {
-      registerServiceWorker();
+    refreshPolicy();
+    window.addEventListener("online", refreshPolicy);
+    window.addEventListener("offline", onOffline);
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    return () => {
+      window.removeEventListener("online", refreshPolicy);
+      window.removeEventListener("offline", onOffline);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!canRegisterServiceWorker()) return;
+    let disposed = false;
+
+    const activateWaiting = async (registration: ServiceWorkerRegistration) => {
+      if (!registration.waiting || !navigator.serviceWorker.controller) return;
+      setUpdateMessage("Aplicando actualización...");
+      const activated = await activateWaitingServiceWorker({
+        pauseWrites: pausePwaWrites,
+        registration,
+        setExpectedVersion: (version) => {
+          expectedWorkerVersionRef.current = version;
+          reloadAfterControllerChangeRef.current = true;
+          setPwaServiceWorkerVersion(version);
+        },
+        waitForWrites: () => waitForPwaWrites(30_000),
+      });
+      if (!activated && !disposed) setUpdateMessage("Actualización pendiente. Termina la operación en curso y vuelve a intentarlo.");
+    };
+
+    const watchInstallingWorker = (registration: ServiceWorkerRegistration) => {
+      const installing = registration.installing;
+      if (!installing) return;
+      const onStateChange = () => {
+        if (installing.state === "installed" && navigator.serviceWorker.controller) void activateWaiting(registration);
+      };
+      installing.addEventListener("statechange", onStateChange);
+    };
+
+    const registerServiceWorker = async () => {
+      try {
+        const registration = await navigator.serviceWorker.register("/sw.js", {
+          scope: "/",
+          updateViaCache: "none",
+        });
+        if (disposed) return;
+        registrationRef.current = registration;
+        registration.addEventListener("updatefound", () => watchInstallingWorker(registration));
+
+        const activeVersion = await serviceWorkerVersion(registration.active);
+        if (!disposed) setPwaServiceWorkerVersion(activeVersion);
+        if (registration.waiting) await activateWaiting(registration);
+        await registration.update();
+        if (registration.waiting) await activateWaiting(registration);
+      } catch {
+        if (!disposed) setUpdateMessage("No se pudo comprobar la actualización automática.");
+      }
+    };
+
+    const onControllerChange = () => {
+      if (!reloadAfterControllerChangeRef.current) {
+        void serviceWorkerVersion(navigator.serviceWorker.controller).then(setPwaServiceWorkerVersion);
+        return;
+      }
+      reloadAfterControllerChangeRef.current = false;
+      const version = expectedWorkerVersionRef.current;
+      reloadOnceAfterControllerChange({
+        reload: () => window.location.reload(),
+        serviceWorkerVersion: version,
+        storage: window.sessionStorage,
+      });
+    };
+
+    navigator.serviceWorker.addEventListener("controllerchange", onControllerChange);
+    if (document.readyState === "complete") void registerServiceWorker();
+    else window.addEventListener("load", registerServiceWorker, { once: true });
+
+    return () => {
+      disposed = true;
+      navigator.serviceWorker.removeEventListener("controllerchange", onControllerChange);
+      window.removeEventListener("load", registerServiceWorker);
+    };
+  }, []);
+
+  async function requestUpdate() {
+    const registration = registrationRef.current;
+    if (!registration) {
+      window.location.reload();
       return;
     }
 
-    window.addEventListener("load", registerServiceWorker, { once: true });
-    return () => window.removeEventListener("load", registerServiceWorker);
-  }, []);
+    setUpdateMessage("Buscando actualización...");
+    try {
+      await registration.update();
+      if (!registration.waiting) {
+        setUpdateMessage("La actualización se instalará en cuanto esté disponible.");
+        return;
+      }
+      await activateWaitingServiceWorker({
+        pauseWrites: pausePwaWrites,
+        registration,
+        setExpectedVersion: (version) => {
+          expectedWorkerVersionRef.current = version;
+          reloadAfterControllerChangeRef.current = true;
+          setPwaServiceWorkerVersion(version);
+        },
+        waitForWrites: () => waitForPwaWrites(30_000),
+      });
+    } catch {
+      setUpdateMessage("No se pudo descargar la actualización. Comprueba la conexión.");
+    }
+  }
 
-  return null;
+  const showUpdateRequired = bridgeState.updateRequired;
+  const showConnectionWarning = !showUpdateRequired && bridgeState.offline;
+  const showUpdating = !showUpdateRequired && !showConnectionWarning && bridgeState.writesPaused;
+  if (!showUpdateRequired && !showConnectionWarning && !showUpdating && !updateMessage) return null;
+
+  return (
+    <aside className={`pwa-bridge-notice ${showUpdateRequired ? "update-required" : ""}`} role={showUpdateRequired ? "alert" : "status"}>
+      <div>
+        <strong>{showUpdateRequired ? "Actualización obligatoria" : showConnectionWarning ? "Sin conexión" : "Actualizando Pachangas IQ"}</strong>
+        <span>
+          {showUpdateRequired
+            ? "Puedes seguir consultando datos, pero necesitas actualizar para guardar cambios."
+            : showConnectionWarning
+              ? "Los cambios no se mostrarán como confirmados hasta recibir respuesta del servidor."
+              : updateMessage || "Esperando a que terminen las operaciones pendientes."}
+        </span>
+      </div>
+      {showUpdateRequired ? <button type="button" onClick={() => void requestUpdate()}>Actualizar ahora</button> : null}
+    </aside>
+  );
 }

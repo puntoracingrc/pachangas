@@ -176,7 +176,7 @@ test("keeps the project wired to the Pachangas app", async () => {
     readFile(new URL("../app/manifest.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/pwa-runtime.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/adaptive-window.ts", import.meta.url), "utf8"),
-    readFile(new URL("../public/sw.js", import.meta.url), "utf8"),
+    readFile(new URL("../app/service-worker-source.ts", import.meta.url), "utf8"),
     readFile(new URL("../next.config.ts", import.meta.url), "utf8"),
     readFile(new URL("../docs/android-adaptive-compatibility.md", import.meta.url), "utf8"),
   ]);
@@ -1244,7 +1244,12 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(manifest, /\/mercado/);
   assert.match(manifest, /\/\?mobile=equipo/);
   assert.match(manifest, /Abrir el ranking del equipo/);
-  assert.match(pwaRuntime, /serviceWorker\.register\("\/sw\.js", \{ scope: "\/" \}\)/);
+  assert.match(pwaRuntime, /serviceWorker\.register\("\/sw\.js"/);
+  assert.match(pwaRuntime, /updateViaCache:\s*"none"/);
+  assert.match(pwaRuntime, /registration\.update\(\)/);
+  assert.match(pwaRuntime, /controllerchange/);
+  assert.match(pwaRuntime, /waitForPwaWrites/);
+  assert.match(pwaRuntime, /setPwaServiceWorkerVersion\(activeVersion\)/);
   assert.match(pwaRuntime, /dataDisplayMode|dataset\.displayMode/);
   assert.match(pwaRuntime, /visualViewport/);
   assert.match(pwaRuntime, /--app-viewport-height/);
@@ -1263,7 +1268,8 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(pwaRuntime, /supportsCamera/);
   assert.match(pwaRuntime, /supportsStorageEstimate/);
   assert.match(pwaRuntime, /storagePressure/);
-  assert.match(serviceWorker, /CACHE_NAME = "pachangas-iq-pwa-v3"/);
+  assert.match(serviceWorker, /SERVICE_WORKER_VERSION/);
+  assert.match(serviceWorker, /CACHE_NAME = "pachangas-iq-pwa-"/);
   assert.match(serviceWorker, /CACHEABLE_NAVIGATION_PATHS/);
   assert.match(serviceWorker, /!url\.search/);
   assert.match(serviceWorker, /MAX_RUNTIME_CACHE_ENTRIES = 120/);
@@ -1277,6 +1283,9 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(serviceWorker, /request\.mode === "navigate"/);
   assert.match(serviceWorker, /pathname\.startsWith\("\/api\/"\)/);
   assert.match(serviceWorker, /pathname\.startsWith\("\/auth\/"\)/);
+  assert.match(serviceWorker, /GET_VERSION/);
+  assert.match(serviceWorker, /SKIP_WAITING/);
+  assert.doesNotMatch(serviceWorker, /then\(\(\) => self\.skipWaiting\(\)\)/);
   assert.match(nextConfig, /source: "\/sw\.js"/);
   assert.match(nextConfig, /Service-Worker-Allowed/);
   assert.match(nextConfig, /no-cache, no-store, must-revalidate/);

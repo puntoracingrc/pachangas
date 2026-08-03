@@ -8,11 +8,12 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "typecheck": "tsc --noEmit --incremental false",
     "start": "next start",
     "vinext:dev": "WRANGLER_LOG_PATH=.wrangler/wrangler.log vinext dev",
     "vinext:build": "WRANGLER_LOG_PATH=.wrangler/wrangler.log vinext build",
     "vinext:start": "WRANGLER_LOG_PATH=.wrangler/wrangler.log vinext start",
-    "test": "npm run build && node --test tests/rendered-html.test.mjs && tsx --test tests/player-rating-engine.test.ts tests/adaptive-compatibility.test.ts",
+    "test": "npm run build && node --test tests/rendered-html.test.mjs && tsx --test tests/player-rating-engine.test.ts tests/adaptive-compatibility.test.ts tests/pwa-client-version-bridge.test.ts tests/pwa-client-version-routes.test.ts",
     "compat:browser": "node tests/adaptive-browser-smoke.mjs",
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",
     "db:generate": "drizzle-kit generate"
