@@ -77,6 +77,9 @@ const receiverGroupId = randomUUID();
 const createOperationId = randomUUID();
 const acceptOperationId = randomUUID();
 const rejectOperationId = randomUUID();
+const initialProfileOperationId = randomUUID();
+const profileOperationAId = randomUUID();
+const profileOperationBId = randomUUID();
 const receiverCode = `SC${receiverGroupId.replaceAll("-", "").slice(0, 8).toUpperCase()}`;
 let challengeId = null;
 
@@ -100,6 +103,10 @@ insert into public.pachanga_group_members(group_id, user_id, role) values
 `;
 
 const cleanupSql = `
+delete from public.pachanga_challengeable_team_profile_events
+where group_id in (${sqlText(senderGroupId)}::uuid, ${sqlText(receiverGroupId)}::uuid);
+delete from public.pachanga_challengeable_team_operation_receipts
+where group_id in (${sqlText(senderGroupId)}::uuid, ${sqlText(receiverGroupId)}::uuid);
 delete from public.pachanga_team_challenge_events where challenge_id in (
   select id from public.pachanga_team_challenges
   where sender_group_id in (${sqlText(senderGroupId)}::uuid, ${sqlText(receiverGroupId)}::uuid)
@@ -194,6 +201,88 @@ try {
     "concurrency evidence",
   );
   assert.deepEqual(lastJson(evidence, "concurrency evidence"), { events: 2, receipts: 2 });
+
+  const publicProfileSql = (radius, operationId, expectedRevision, sessionId) => authenticatedSql(
+    receiverUserId,
+    `select public.upsert_pachanga_challengeable_team_profile_authoritative(
+      ${sqlText(receiverGroupId)}::uuid,
+      true,
+      'Barcelona',
+      'concurrent-public-zone',
+      41.3874,
+      2.1686,
+      ${radius},
+      0,
+      100,
+      array['futbol7'],
+      ${sqlJson([{ day: 4, start: "20:00", end: "22:00" }])},
+      ${sqlText(operationId)}::uuid,
+      ${expectedRevision},
+      ${sqlJson({ sessionId, surface: "concurrency-test" })}
+    )`,
+  );
+
+  await runOk(
+    publicProfileSql(20, initialProfileOperationId, 0, "public-profile-device-initial"),
+    "create public challengeable profile",
+  );
+
+  const profileResults = await Promise.all([
+    runSql(publicProfileSql(30, profileOperationAId, 1, "public-profile-device-a"), "public profile device A"),
+    runSql(publicProfileSql(40, profileOperationBId, 1, "public-profile-device-b"), "public profile device B"),
+  ]);
+  const profileWinners = profileResults.filter((result) => result.code === 0);
+  const profileLosers = profileResults.filter((result) => result.code !== 0);
+  assert.equal(profileWinners.length, 1, `Exactly one public-profile update must win: ${JSON.stringify(profileResults)}`);
+  assert.equal(profileLosers.length, 1, `Exactly one stale public-profile update must fail: ${JSON.stringify(profileResults)}`);
+  assert.match(profileLosers[0].stderr, /Server revision is newer|could not serialize|could not obtain lock/i);
+
+  const winningProfile = lastJson(profileWinners[0].stdout, "winning public profile update");
+  assert.equal(winningProfile.profileRevision, 2);
+  assert.ok([30, 40].includes(winningProfile.profile.travelRadiusKm));
+
+  const [canonicalProfileOutput, canonicalSearchOutput] = await Promise.all([
+    runOk(
+      authenticatedSql(
+        receiverUserId,
+        `select public.get_pachanga_challengeable_team_profile(${sqlText(receiverGroupId)}::uuid)`,
+      ),
+      "receiver canonical public profile",
+    ),
+    runOk(
+      authenticatedSql(
+        senderUserId,
+        `select public.search_pachanga_challengeable_teams(
+          ${sqlText(senderGroupId)}::uuid,
+          null, null, null, null, null, null, null, null, null, null, 1, 12
+        )`,
+      ),
+      "sender canonical public search",
+    ),
+  ]);
+  const canonicalProfile = lastJson(canonicalProfileOutput, "receiver canonical public profile");
+  const canonicalSearch = lastJson(canonicalSearchOutput, "sender canonical public search");
+  const canonicalPublicItem = canonicalSearch.items.find((item) => item.groupId === receiverGroupId);
+  assert.ok(canonicalPublicItem, "The receiver must remain visible in the canonical public search");
+  assert.equal(canonicalProfile.profileRevision, 2);
+  assert.equal(canonicalPublicItem.profileRevision, canonicalProfile.profileRevision);
+  assert.equal(canonicalPublicItem.travelRadiusKm, canonicalProfile.profile.travelRadiusKm);
+  assert.equal(canonicalSearch.serverSequence, canonicalProfile.serverSequence);
+
+  const publicEvidence = await runOk(
+    `select jsonb_build_object(
+      'events', (select count(*) from public.pachanga_challengeable_team_profile_events
+        where group_id = ${sqlText(receiverGroupId)}::uuid),
+      'receipts', (select count(*) from public.pachanga_challengeable_team_operation_receipts
+        where operation_id in (
+          ${sqlText(initialProfileOperationId)}::uuid,
+          ${sqlText(profileOperationAId)}::uuid,
+          ${sqlText(profileOperationBId)}::uuid
+        ))
+    )`,
+    "public profile concurrency evidence",
+  );
+  assert.deepEqual(lastJson(publicEvidence, "public profile concurrency evidence"), { events: 2, receipts: 2 });
 } finally {
   await runOk(cleanupSql, "social concurrency fixture cleanup");
 }

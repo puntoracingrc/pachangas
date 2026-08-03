@@ -44,6 +44,7 @@ const v2WriteRpcNames = new Set([
   "set_pachanga_group_ratings_enabled_authoritative_v2",
   "sync_pachanga_market_profile_authoritative_v2",
   "sync_pachanga_open_match_authoritative_v2",
+  "upsert_pachanga_challengeable_team_profile_authoritative",
   "upsert_pachanga_own_player_profile_authoritative_v2",
 ]);
 
