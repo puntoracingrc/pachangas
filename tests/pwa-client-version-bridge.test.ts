@@ -251,6 +251,8 @@ test("the write bridge classifies every browser RPC without treating reads as wr
     readFile(new URL("../app/mercado/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/mercado/challengeable-teams-panel.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/mercado/team-challenges-panel.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/notification-center.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/partido-invitado/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/global-rating-panel.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/valorar-equipo/page.tsx", import.meta.url), "utf8"),
   ]).then((files) => files.join("\n"));
@@ -260,9 +262,14 @@ test("the write bridge classifies every browser RPC without treating reads as wr
     "get_pachanga_rating_eligibility",
     "get_pachanga_team_social_snapshot",
     "get_pachanga_challengeable_team_profile",
+    "get_pachanga_guest_match_snapshot_v1",
+    "get_pachanga_match_invitation_admin_state_v1",
+    "get_pachanga_notification_center_v1",
+    "get_my_pachanga_open_match_requests_v1",
     "lookup_pachanga_challengeable_team_for_challenge",
     "lookup_pachanga_team_by_code",
     "search_pachanga_challengeable_teams",
+    "search_pachanga_open_matches_v1",
   ]);
   const invokedRpcNames = [...new Set(
     [...source.matchAll(/\.rpc\("([a-z0-9_]+)"/g)].map((match) => match[1]),

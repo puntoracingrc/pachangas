@@ -7547,6 +7547,8 @@ export default function Home() {
     ].filter(Boolean).join(", ") || activeVenue?.address || activeMatch.place;
 
     params.set("partido", activeMatch.id);
+    if (remoteGroupId) params.set("grupoId", remoteGroupId);
+    if (remotePayloadRevisionRef.current !== null) params.set("revision", String(remotePayloadRevisionRef.current));
     params.set("modalidad", activeKind);
     params.set("titulo", activeMatch.title || "Partido");
     params.set("fecha", matchSummaryDate(activeMatch.date));

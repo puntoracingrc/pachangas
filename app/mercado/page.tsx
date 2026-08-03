@@ -106,17 +106,14 @@ type OpenMarketMatch = {
   id: string;
   lat?: number;
   lng?: number;
-  matchUrl: string;
   maxRating: number;
   minRating: number;
   modality: string;
   openSlots: number;
-  placeId?: string;
   positions: string[];
   pricePerPlayer: number;
   requiresApproval: boolean;
   sourcePayloadRevision: number;
-  sourceMatchId: string;
   targetPlayers: number;
   title: string;
   zone: string;
@@ -136,17 +133,14 @@ type OpenMarketMatchRow = {
   id: string;
   lat: number | string | null;
   lng: number | string | null;
-  match_url: string | null;
   max_media: number | string | null;
   min_media: number | string | null;
   modality: string | null;
   open_slots: number | string | null;
-  place_id: string | null;
   positions: string[] | null;
   price_per_player: number | string | null;
   requires_approval: boolean | null;
   source_payload_revision: number | string | null;
-  source_match_id: string | null;
   target_players: number | string | null;
   title: string | null;
   zone: string | null;
@@ -155,13 +149,32 @@ type OpenMarketMatchRow = {
 type OpenMatchRequestStatus = "accepted" | "cancelled" | "pending" | "rejected";
 
 type OpenMatchRequestSummary = {
+  accessId?: string;
+  actionUrl?: string;
+  id: string;
+  matchRevision: number;
   openMatchId: string;
+  revision: number;
+  serverSequence: number;
   status: OpenMatchRequestStatus;
 };
 
 type OpenMatchRequestSummaryRow = {
+  access_id?: string | null;
+  action_url?: string | null;
+  id: string;
+  match_revision: number | string | null;
   open_match_id: string | null;
+  revision: number | string | null;
+  server_sequence: number | string | null;
   status: string | null;
+};
+
+type MatchInvitationSummary = {
+  id: string;
+  revision: number;
+  status: "accepted" | "cancelled" | "pending" | "rejected";
+  targetMarketProfileId: string;
 };
 
 const fallbackProfiles: MarketProfile[] = [
@@ -251,17 +264,14 @@ const fallbackOpenMatches: OpenMarketMatch[] = [
     id: "open-demo-1",
     lat: 41.4467,
     lng: 2.2146,
-    matchUrl: "/",
     maxRating: 8,
     minRating: 5,
     modality: "futbol7",
     openSlots: 3,
-    placeId: "demo-la-mina",
     positions: ["Defensa", "Medio"],
     pricePerPlayer: 4,
     requiresApproval: true,
     sourcePayloadRevision: 0,
-    sourceMatchId: "demo-open-1",
     targetPlayers: 14,
     title: "Jueves 21:00",
     zone: "Sant Adrià de Besòs, Barcelona",
@@ -280,17 +290,14 @@ const fallbackOpenMatches: OpenMarketMatch[] = [
     id: "open-demo-2",
     lat: 41.5463,
     lng: 2.1086,
-    matchUrl: "/",
     maxRating: 7,
     minRating: 4,
     modality: "sala",
     openSlots: 2,
-    placeId: "demo-open-sabadell",
     positions: ["Portero", "Ataque"],
     pricePerPlayer: 0,
     requiresApproval: true,
     sourcePayloadRevision: 0,
-    sourceMatchId: "demo-open-2",
     targetPlayers: 10,
     title: "Sala rápida",
     zone: "Sabadell, Barcelona",
@@ -308,6 +315,7 @@ const positionFilters = ["Todas", "Portero", "Defensa", "Medio", "Ataque"];
 type MarketMatchContext = {
   dateText: string;
   day: string;
+  groupId: string;
   lat?: number;
   lng?: number;
   matchId: string;
@@ -315,6 +323,7 @@ type MarketMatchContext = {
   missing: string;
   modality: string;
   placeId?: string;
+  revision: number;
   title: string;
   zone: string;
 };
@@ -529,17 +538,14 @@ function normalizeOpenMatchRow(row: OpenMarketMatchRow): OpenMarketMatch {
     id: row.id,
     lat: Number.isFinite(Number(row.lat)) ? Number(row.lat) : undefined,
     lng: Number.isFinite(Number(row.lng)) ? Number(row.lng) : undefined,
-    matchUrl: row.match_url ?? "",
     maxRating: Math.max(0, Math.min(10, Number(row.max_media) || 10)),
     minRating: Math.max(0, Math.min(10, Number(row.min_media) || 0)),
     modality: row.modality || "futbol7",
     openSlots: Math.max(0, Math.floor(Number(row.open_slots) || 0)),
-    placeId: row.place_id ?? undefined,
     positions: row.positions ?? [],
     pricePerPlayer: Math.max(0, Number(row.price_per_player) || 0),
     requiresApproval: row.requires_approval ?? true,
     sourcePayloadRevision: Math.max(0, Math.floor(Number(row.source_payload_revision) || 0)),
-    sourceMatchId: row.source_match_id || row.id,
     targetPlayers: Math.max(0, Math.floor(Number(row.target_players) || 0)),
     title: row.title || "Partido abierto",
     zone: row.zone || "",
@@ -551,9 +557,6 @@ function openMatchZoneMatch(match: OpenMarketMatch, target: MarketTarget | null,
   if (!query && !target) return { label: match.zone || match.fieldName, matches: true };
 
   if (target?.lat !== undefined && target.lng !== undefined && match.lat !== undefined && match.lng !== undefined) {
-    if (target.placeId && match.placeId === target.placeId) {
-      return { label: `${match.zone || match.fieldName} · misma zona`, matches: true };
-    }
     const distance = distanceKmBetween({ lat: match.lat, lng: match.lng }, target);
     if (distance !== null) {
       return {
@@ -638,24 +641,11 @@ function positionMatchesFilter(profile: MarketProfile, filter: string) {
   return true;
 }
 
-function marketInviteText(profile: MarketProfile, context: MarketMatchContext) {
-  return [
-    `Hola ${profile.displayName}, ¿te apetece venir a este partido?`,
-    context.title ? `Partido: ${context.title}` : "",
-    context.dateText ? `Fecha: ${context.dateText}` : "",
-    context.zone ? `Zona: ${context.zone}` : "",
-    context.modality !== "Todas" ? `Modalidad: ${modalityLabels[context.modality] ?? context.modality}` : "",
-    context.missing ? `Faltan: ${context.missing} plaza${context.missing === "1" ? "" : "s"}` : "",
-    context.matchUrl ? `Enlace: ${context.matchUrl}` : "",
-  ]
-    .filter(Boolean)
-    .join("\n");
-}
-
 export default function MarketPage() {
   const [profiles, setProfiles] = useState<MarketProfile[]>(fallbackProfiles);
   const [openMatches, setOpenMatches] = useState<OpenMarketMatch[]>(fallbackOpenMatches);
   const [openMatchRequests, setOpenMatchRequests] = useState<Record<string, OpenMatchRequestSummary>>({});
+  const [matchInvitations, setMatchInvitations] = useState<Record<string, MatchInvitationSummary>>({});
   const [activeTab, setActiveTab] = useState<"equipos" | "jugadores" | "partidos" | "retos">("jugadores");
   const [zoneFilter, setZoneFilter] = useState("");
   const [dayFilter, setDayFilter] = useState("Todos");
@@ -663,6 +653,7 @@ export default function MarketPage() {
   const [positionFilter, setPositionFilter] = useState("Todas");
   const [canInvite, setCanInvite] = useState(false);
   const [inviteMessage, setInviteMessage] = useState("");
+  const [marketRefresh, setMarketRefresh] = useState(0);
   const [preparedRival, setPreparedRival] = useState<TeamSummary | null>(null);
   const [marketContext, setMarketContext] = useState<MarketMatchContext | null>(null);
   const [zonePlace, setZonePlace] = useState<MarketTarget | null>(null);
@@ -693,6 +684,7 @@ export default function MarketPage() {
     setMarketContext({
       dateText: params.get("fecha") ?? "",
       day: nextDay,
+      groupId: params.get("grupoId") ?? "",
       lat: nextLat,
       lng: nextLng,
       matchId,
@@ -700,6 +692,7 @@ export default function MarketPage() {
       missing: params.get("plazas") ?? "",
       modality: nextModality,
       placeId: nextPlaceId,
+      revision: Math.max(0, Math.floor(numberParam(params.get("revision")) ?? 0)),
       title: params.get("titulo") ?? "Partido",
       zone: nextZone,
     });
@@ -713,15 +706,17 @@ export default function MarketPage() {
       const session = await supabase?.auth.getSession();
       const user = session?.data.session?.user ?? null;
 
-      if (user) {
-        const memberships = await supabase
+      let exactCanInvite = false;
+      if (user && marketContext?.groupId) {
+        const membership = await supabase
           ?.from("pachanga_group_members")
           .select("role")
-          .order("created_at", { ascending: true });
-        if (active && !memberships?.error) {
-          setCanInvite(Boolean((memberships?.data ?? []).some((membership) => ["owner", "admin"].includes(String(membership.role)))));
-        }
+          .eq("group_id", marketContext.groupId)
+          .eq("user_id", user.id)
+          .maybeSingle();
+        exactCanInvite = !membership?.error && ["owner", "admin"].includes(String(membership?.data?.role));
       }
+      if (active) setCanInvite(exactCanInvite);
 
       const marketColumns =
         "id, display_name, avatar, avatar_offset_x, avatar_offset_y, birth_date, position, goalkeeper_only, media, appearances, goals, wins, zones, zones_geo, availability_text, modalities, open_to_guest, open_to_group, bio, active, group_name";
@@ -751,34 +746,37 @@ export default function MarketPage() {
       const rows = (result?.data ?? []) as MarketRow[];
       setProfiles(rows.length ? rows.map(normalizeRow) : fallbackProfiles);
 
-      const openMatchesResult = (await supabase
-        ?.from("pachanga_open_matches")
-        .select(
-          "id, source_match_id, source_payload_revision, group_name, title, date, date_text, day, modality, zone, place_id, lat, lng, field_name, field_cost, price_per_player, target_players, confirmed_count, open_slots, min_media, max_media, positions, requires_approval, guests_pay, group_level, match_url, active",
-        )
-        .eq("active", true)
-        .gt("open_slots", 0)
-        .order("date", { ascending: true })
-        .limit(80)) as { data: unknown[] | null; error: { message: string } | null } | undefined;
+      const openMatchesResult = user
+        ? (await supabase?.rpc("search_pachanga_open_matches_v1")) as { data: unknown; error: { message: string } | null } | undefined
+        : undefined;
 
       if (!active) return;
       if (!openMatchesResult?.error) {
-        const openRows = (openMatchesResult?.data ?? []) as OpenMarketMatchRow[];
+        const openRows = (Array.isArray(openMatchesResult?.data) ? openMatchesResult?.data : []) as OpenMarketMatchRow[];
         const nextOpenMatches = openRows.length ? openRows.map(normalizeOpenMatchRow) : fallbackOpenMatches;
         setOpenMatches(nextOpenMatches);
 
-        if (user && nextOpenMatches.length) {
-          const requestRows = (await supabase
-            ?.from("pachanga_open_match_requests")
-            .select("open_match_id, status")
-            .in("open_match_id", nextOpenMatches.map((match) => match.id))
-            .eq("requester_user_id", user.id)) as { data: unknown[] | null; error: { message: string } | null } | undefined;
+        if (user) {
+          const requestRows = (await supabase?.rpc("get_my_pachanga_open_match_requests_v1")) as {
+            data: unknown;
+            error: { message: string } | null;
+          } | undefined;
 
           if (!requestRows?.error) {
-            const nextRequests = ((requestRows?.data ?? []) as OpenMatchRequestSummaryRow[]).reduce<Record<string, OpenMatchRequestSummary>>((items, row) => {
+            const rows = (Array.isArray(requestRows?.data) ? requestRows.data : []) as OpenMatchRequestSummaryRow[];
+            const nextRequests = rows.reduce<Record<string, OpenMatchRequestSummary>>((items, row) => {
               if (!row.open_match_id) return items;
               const status = row.status === "accepted" || row.status === "rejected" || row.status === "cancelled" ? row.status : "pending";
-              items[row.open_match_id] = { openMatchId: row.open_match_id, status };
+              items[row.open_match_id] = {
+                accessId: row.access_id ?? undefined,
+                actionUrl: row.action_url ?? undefined,
+                id: row.id,
+                matchRevision: Math.max(0, Math.floor(Number(row.match_revision) || 0)),
+                openMatchId: row.open_match_id,
+                revision: Math.max(1, Math.floor(Number(row.revision) || 1)),
+                serverSequence: Math.max(0, Math.floor(Number(row.server_sequence) || 0)),
+                status,
+              };
               return items;
             }, {});
             if (active) setOpenMatchRequests(nextRequests);
@@ -787,6 +785,31 @@ export default function MarketPage() {
           setOpenMatchRequests({});
         }
       }
+
+      if (exactCanInvite && marketContext?.groupId && marketContext.matchId) {
+        const invitationState = (await supabase?.rpc("get_pachanga_match_invitation_admin_state_v1", {
+          target_group_id: marketContext.groupId,
+          target_match_id: marketContext.matchId,
+        })) as { data: unknown; error: { message: string } | null } | undefined;
+        if (!invitationState?.error && invitationState?.data && typeof invitationState.data === "object") {
+          const payload = invitationState.data as { confirmedRevision?: number; invitations?: MatchInvitationSummary[] };
+          const nextInvitations = (payload.invitations ?? []).reduce<Record<string, MatchInvitationSummary>>((items, invitation) => {
+            if (invitation.targetMarketProfileId && !items[invitation.targetMarketProfileId]) {
+              items[invitation.targetMarketProfileId] = invitation;
+            }
+            return items;
+          }, {});
+          if (active) {
+            setMatchInvitations(nextInvitations);
+            const confirmedRevision = Math.max(0, Math.floor(Number(payload.confirmedRevision) || 0));
+            setMarketContext((current) => current && current.revision !== confirmedRevision
+              ? { ...current, revision: confirmedRevision }
+              : current);
+          }
+        }
+      } else if (active) {
+        setMatchInvitations({});
+      }
     }
 
     void loadMarket();
@@ -794,7 +817,51 @@ export default function MarketPage() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [marketContext?.groupId, marketContext?.matchId, marketRefresh]);
+
+  useEffect(() => {
+    const client = supabase;
+    if (!client) return;
+    let disposed = false;
+    let channel: ReturnType<typeof client.channel> | null = null;
+
+    void client.auth.getSession().then(({ data }) => {
+      const user = data.session?.user;
+      if (!user || disposed) return;
+      channel = client.channel(`market-live-${user.id}-${marketContext?.groupId ?? "public"}`)
+        .on("postgres_changes", {
+          event: "*",
+          schema: "public",
+          table: "pachanga_open_match_requests",
+          filter: `requester_user_id=eq.${user.id}`,
+        }, () => setMarketRefresh((value) => value + 1))
+        .on("postgres_changes", {
+          event: "*",
+          schema: "public",
+          table: "pachanga_user_notifications",
+          filter: `recipient_user_id=eq.${user.id}`,
+        }, () => setMarketRefresh((value) => value + 1));
+      if (marketContext?.groupId) {
+        channel = channel.on("postgres_changes", {
+          event: "UPDATE",
+          schema: "public",
+          table: "pachanga_groups",
+          filter: `id=eq.${marketContext.groupId}`,
+        }, () => setMarketRefresh((value) => value + 1));
+      }
+      channel.subscribe();
+    });
+
+    const refreshWhenVisible = () => {
+      if (document.visibilityState === "visible") setMarketRefresh((value) => value + 1);
+    };
+    document.addEventListener("visibilitychange", refreshWhenVisible);
+    return () => {
+      disposed = true;
+      document.removeEventListener("visibilitychange", refreshWhenVisible);
+      if (channel) void client.removeChannel(channel);
+    };
+  }, [marketContext?.groupId]);
 
   useEffect(() => {
     if (!googleMapsApiKey) {
@@ -865,27 +932,72 @@ export default function MarketPage() {
       const dayMatches = dayFilter === "Todos" || match.day === dayFilter || textMatches(match.dateText, dayFilter);
       const modalityMatches = modalityFilter === "Todas" || match.modality === modalityFilter;
       const positionMatches = positionFilter === "Todas" || match.positions.length === 0 || match.positions.includes(positionFilter);
+      const ownAcceptedRequest = openMatchRequests[match.id]?.status === "accepted";
 
-      return match.active && match.openSlots > 0 && zoneMatches && dayMatches && modalityMatches && positionMatches;
+      return (ownAcceptedRequest || (match.active && match.openSlots > 0))
+        && zoneMatches
+        && dayMatches
+        && modalityMatches
+        && positionMatches;
     });
-  }, [dayFilter, marketContext, modalityFilter, openMatches, positionFilter, zoneFilter, zonePlace]);
+  }, [dayFilter, marketContext, modalityFilter, openMatches, openMatchRequests, positionFilter, zoneFilter, zonePlace]);
 
-  async function copyMarketInvite(profile: MarketProfile) {
-    if (!marketContext || !profile.openToGuest) return;
+  async function toggleMarketInvitation(profile: MarketProfile) {
+    if (!supabase || !marketContext || !profile.openToGuest || !canInvite) return;
 
-    const text = marketInviteText(profile, marketContext);
-    try {
-      if (navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(text);
-        setInviteMessage(`Invitación copiada para ${profile.displayName}.`);
-        return;
-      }
-    } catch {
-      // Fallback below.
+    const existing = matchInvitations[profile.id];
+    const result = existing?.status === "pending"
+      ? await supabase.rpc("cancel_pachanga_match_invitation_v1", {
+          client_metadata: marketOperationMetadata(),
+          expected_invitation_revision: existing.revision,
+          expected_match_revision: marketContext.revision,
+          operation_id: crypto.randomUUID(),
+          target_invitation_id: existing.id,
+        })
+      : await supabase.rpc("create_pachanga_match_invitation_v1", {
+          client_metadata: marketOperationMetadata(),
+          expected_revision: marketContext.revision,
+          operation_id: crypto.randomUUID(),
+          target_group_id: marketContext.groupId,
+          target_market_profile_id: profile.id,
+          target_match_id: marketContext.matchId,
+        });
+
+    if (result.error) {
+      setInviteMessage(result.error.message);
+      setMarketRefresh((value) => value + 1);
+      return;
     }
 
-    window.prompt("Copia la invitación", text);
-    setInviteMessage(`Invitación preparada para ${profile.displayName}.`);
+    const payload = result.data as {
+      confirmedRevision?: number;
+      invitation?: {
+        id?: string;
+        revision?: number;
+        status?: string;
+        targetMarketProfileId?: string;
+      };
+    } | null;
+    const invitation = payload?.invitation;
+    const status = invitation?.status === "accepted" || invitation?.status === "cancelled" || invitation?.status === "rejected"
+      ? invitation.status
+      : "pending";
+    if (invitation?.id) {
+      setMatchInvitations((current) => ({
+        ...current,
+        [profile.id]: {
+          id: invitation.id as string,
+          revision: Math.max(1, Math.floor(Number(invitation.revision) || 1)),
+          status,
+          targetMarketProfileId: invitation.targetMarketProfileId || profile.id,
+        },
+      }));
+    }
+    const confirmedRevision = Math.max(0, Math.floor(Number(payload?.confirmedRevision) || marketContext.revision));
+    setMarketContext((current) => current ? { ...current, revision: confirmedRevision } : current);
+    setInviteMessage(status === "cancelled"
+      ? `Invitación cancelada para ${profile.displayName}.`
+      : `Invitación enviada a ${profile.displayName}.`);
   }
 
   async function requestOpenMatch(match: OpenMarketMatch) {
@@ -912,15 +1024,57 @@ export default function MarketPage() {
       return;
     }
 
-    const request = (result.data as { request?: { status?: string } } | null)?.request;
+    const payload = result.data as {
+      confirmedRevision?: number;
+      request?: { id?: string; openMatchId?: string; revision?: number; serverSequence?: number; status?: string };
+    } | null;
+    const request = payload?.request;
     const status = request?.status;
     const nextStatus: OpenMatchRequestStatus =
       status === "accepted" || status === "rejected" || status === "cancelled" ? status : "pending";
     setOpenMatchRequests((items) => ({
       ...items,
-      [match.id]: { openMatchId: match.id, status: nextStatus },
+      [match.id]: {
+        id: request?.id || items[match.id]?.id || "",
+        matchRevision: Math.max(0, Math.floor(Number(payload?.confirmedRevision) || match.sourcePayloadRevision)),
+        openMatchId: request?.openMatchId || match.id,
+        revision: Math.max(1, Math.floor(Number(request?.revision) || 1)),
+        serverSequence: Math.max(0, Math.floor(Number(request?.serverSequence) || 0)),
+        status: nextStatus,
+      },
     }));
-    setInviteMessage(nextStatus === "accepted" ? "Plaza aceptada. Ya puedes entrar al partido." : `Solicitud enviada a ${match.groupName}.`);
+    setInviteMessage(`Solicitud enviada a ${match.groupName}. El admin debe aceptarla.`);
+  }
+
+  async function cancelOpenMatchRequest(request: OpenMatchRequestSummary) {
+    if (!supabase || !request.id) return;
+    const result = await supabase.rpc("cancel_my_pachanga_open_match_request_v1", {
+      client_metadata: marketOperationMetadata(),
+      expected_match_revision: request.matchRevision,
+      expected_request_revision: request.revision,
+      operation_id: crypto.randomUUID(),
+      target_request_id: request.id,
+    });
+    if (result.error) {
+      setInviteMessage(result.error.message);
+      setMarketRefresh((value) => value + 1);
+      return;
+    }
+    const confirmed = (result.data as {
+      confirmedRevision?: number;
+      request?: { id?: string; openMatchId?: string; revision?: number; serverSequence?: number; status?: string };
+    } | null);
+    setOpenMatchRequests((items) => ({
+      ...items,
+      [request.openMatchId]: {
+        ...request,
+        matchRevision: Math.max(0, Math.floor(Number(confirmed?.confirmedRevision) || request.matchRevision)),
+        revision: Math.max(1, Math.floor(Number(confirmed?.request?.revision) || request.revision + 1)),
+        serverSequence: Math.max(0, Math.floor(Number(confirmed?.request?.serverSequence) || request.serverSequence)),
+        status: "cancelled",
+      },
+    }));
+    setInviteMessage("Solicitud cancelada. El admin ha recibido el cambio.");
   }
 
   return (
@@ -1020,6 +1174,9 @@ export default function MarketPage() {
         {filteredProfiles.map((profile) => {
           const age = ageFromBirthDate(profile.birthDate);
           const zoneMatch = profileZoneMatch(profile, activeMarketTarget(zonePlace, marketContext, zoneFilter), zoneFilter);
+          const invitation = matchInvitations[profile.id];
+          const invitationPending = invitation?.status === "pending";
+          const invitationAccepted = invitation?.status === "accepted";
 
           return (
           <article className="market-player" key={profile.id}>
@@ -1054,8 +1211,22 @@ export default function MarketPage() {
                 {profile.openToGuest ? <span>Invitado puntual</span> : null}
                 {profile.openToGroup ? <span>Grupo</span> : null}
               </div>
-              <button type="button" onClick={() => void copyMarketInvite(profile)} disabled={!canInvite || !marketContext || !profile.openToGuest}>
-                {!canInvite ? "Solo admins invitan" : !marketContext ? "Invitar desde un partido" : !profile.openToGuest ? "No acepta puntual" : "Copiar invitación"}
+              <button
+                type="button"
+                onClick={() => void toggleMarketInvitation(profile)}
+                disabled={!canInvite || !marketContext || !profile.openToGuest || invitationAccepted}
+              >
+                {!canInvite
+                  ? "Solo admins invitan"
+                  : !marketContext
+                    ? "Invitar desde un partido"
+                    : !profile.openToGuest
+                      ? "No acepta puntual"
+                      : invitationAccepted
+                        ? "Invitación aceptada"
+                        : invitationPending
+                          ? "Cancelar invitación"
+                          : "Enviar invitación"}
               </button>
               {inviteMessage ? <small className="market-invite-message" aria-live="polite">{inviteMessage}</small> : null}
             </div>
@@ -1089,7 +1260,7 @@ export default function MarketPage() {
                   {match.groupLevel !== null ? <span>Nivel equipo {overall(match.groupLevel)}</span> : null}
                   {match.positions.length ? match.positions.map((position) => <span key={position}>{position}</span>) : <span>Cualquier posición</span>}
                   <span>{match.guestsPay ? "Invitado paga" : "Invitado gratis"}</span>
-                  <span>{match.requiresApproval ? "Admin acepta" : "Entrada directa"}</span>
+                  <span>Admin acepta</span>
                 </div>
               </div>
               <div className="open-match-side">
@@ -1097,10 +1268,14 @@ export default function MarketPage() {
                 <strong>{match.fieldName}</strong>
                 <small>{match.confirmedCount}/{match.targetPlayers} confirmados</small>
                 {match.pricePerPlayer > 0 ? <small>Referencia {match.pricePerPlayer.toFixed(2)} € por persona</small> : null}
-                <button type="button" onClick={() => void requestOpenMatch(match)} disabled={requestPending || requestAccepted}>
-                  {requestAccepted ? "Solicitud aceptada" : requestPending ? "Solicitud enviada" : requestRejected ? "Solicitar otra vez" : "Solicitar plaza"}
+                <button
+                  type="button"
+                  onClick={() => requestPending && request ? void cancelOpenMatchRequest(request) : void requestOpenMatch(match)}
+                  disabled={requestAccepted}
+                >
+                  {requestAccepted ? "Solicitud aceptada" : requestPending ? "Cancelar solicitud" : requestRejected ? "Solicitar otra vez" : "Solicitar plaza"}
                 </button>
-                {requestAccepted && match.matchUrl ? <a href={match.matchUrl}>Ver partido</a> : null}
+                {requestAccepted && request?.actionUrl ? <a href={request.actionUrl}>Ver partido</a> : null}
               </div>
             </article>
           );

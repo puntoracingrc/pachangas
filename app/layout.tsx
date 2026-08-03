@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { LegalFooter } from "./legal-data";
+import { NotificationCenter } from "./notification-center";
 import { PwaRuntime } from "./pwa-runtime";
 import "./globals.css";
 
@@ -76,6 +77,7 @@ export default function RootLayout({
       >
         <script dangerouslySetInnerHTML={{ __html: themePreferenceScript }} />
         <PwaRuntime />
+        <NotificationCenter />
         {children}
         <LegalFooter />
       </body>
