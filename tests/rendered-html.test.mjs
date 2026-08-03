@@ -359,7 +359,8 @@ test("keeps the project wired to the Pachangas app", async () => {
   );
   assert.match(globalsCss, /\.pachangas-place-autocomplete/);
   assert.match(marketPage, /pachanga_market_profiles/);
-  assert.match(marketPage, /pachanga_open_matches/);
+  assert.match(marketPage, /search_pachanga_open_matches_v1/);
+  assert.doesNotMatch(marketPage, /\.from\("pachanga_open_matches"\)/);
   assert.match(marketPage, /zones_geo/);
   assert.match(marketPage, /zonesGeo/);
   assert.match(marketPage, /distanceKmBetween/);
@@ -384,9 +385,12 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(marketPage, /Invitar desde un partido/);
   assert.match(marketPage, /MarketMatchContext/);
   assert.match(marketPage, /Filtros aplicados desde el partido/);
-  assert.match(marketPage, /copyMarketInvite/);
-  assert.match(marketPage, /Copiar invitación/);
-  assert.match(marketPage, /marketInviteText/);
+  assert.match(marketPage, /toggleMarketInvitation/);
+  assert.match(marketPage, /create_pachanga_match_invitation_v1/);
+  assert.match(marketPage, /cancel_pachanga_match_invitation_v1/);
+  assert.match(marketPage, /Enviar invitación/);
+  assert.match(marketPage, /Cancelar invitación/);
+  assert.doesNotMatch(marketPage, /marketInviteText/);
   assert.doesNotMatch(page, /top-panel quick-create-form top-player-form/);
   assert.doesNotMatch(page, /Nombre del jugador/);
   assert.doesNotMatch(page, /Guardar jugador/);
@@ -1353,7 +1357,8 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /function copyTextWithFallback/);
   assert.match(page, /window\.prompt\(fallbackTitle, text\)/);
   assert.match(page, /Copia el enlace del partido/);
-  assert.match(marketPage, /navigator\.clipboard\?\.writeText/);
+  assert.match(marketPage, /create_pachanga_match_invitation_v1/);
+  assert.doesNotMatch(marketPage, /Copiar invitación/);
   assert.match(packageJson, /"@supabase\/supabase-js"/);
   assert.match(packageJson, /"stripe"/);
   assert.match(supabaseClient, /NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY/);
