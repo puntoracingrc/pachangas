@@ -3754,19 +3754,32 @@ export default function Home() {
     if (normalizedMessage.includes("connection pool")) {
       return "Supabase está saturado. La app reintentará sincronizar en unos segundos.";
     }
-    if (normalizedMessage.includes("team changed before saving")) {
+    if (isRemoteRevisionConflict(normalizedMessage)) {
       return "El grupo cambió en otro dispositivo. Recargando datos...";
     }
     return message;
   }
 
   function isRemoteRevisionConflict(message: string) {
-    return message.toLowerCase().includes("team changed before saving");
+    const normalizedMessage = message.toLowerCase();
+    return [
+      "team changed before saving",
+      "server revision is newer",
+      "match revision is newer",
+      "could not obtain lock",
+      "could not serialize",
+      "upstream request timeout",
+    ].some((fragment) => normalizedMessage.includes(fragment));
   }
 
   function markRemoteWriteError(message = "Otro usuario ha actualizado antes. Espera la sincronización y prueba otra vez.") {
     setSyncStatus("error");
     setSyncError(remoteWriteErrorMessage(message));
+    if (isRemoteRevisionConflict(message) && supabase && remoteGroupId) {
+      void loadTeams(supabase, remoteGroupId).catch((error) => {
+        setSyncError(error instanceof Error ? error.message : "No se pudo recargar el grupo");
+      });
+    }
   }
 
   useEffect(() => {

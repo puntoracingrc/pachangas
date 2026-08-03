@@ -402,7 +402,9 @@ begin
     profile.rating_reliability, evaluator_count, active_ids, 'pachangas-rating-v2'
   );
 
-  perform public.sync_pachanga_player_profile_to_groups(profile.id);
+  if coalesce(current_setting('pachangas.rating_v2_defer_group_sync', true), 'off') <> 'on' then
+    perform public.sync_pachanga_player_profile_to_groups(profile.id);
+  end if;
   return jsonb_build_object(
     'baseFacets', base_values,
     'calibratedFacets', calibrated_values,
@@ -1227,9 +1229,9 @@ begin
     'engineVersion', 'pachangas-rating-v2'
   );
   update public.pachanga_match_rating_snapshots
-  set group_level = snapshot_pachanga_match_ratings_v2.group_level,
-      lineup_a_level = snapshot_pachanga_match_ratings_v2.lineup_a_level,
-      lineup_b_level = snapshot_pachanga_match_ratings_v2.lineup_b_level,
+  set group_level = (result ->> 'groupLevel')::numeric,
+      lineup_a_level = (result ->> 'lineupALevel')::numeric,
+      lineup_b_level = (result ->> 'lineupBLevel')::numeric,
       snapshot = result
   where group_id = target_group_id and match_id = target_match_id;
   return result;

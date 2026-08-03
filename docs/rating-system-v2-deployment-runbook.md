@@ -22,7 +22,20 @@ No se debe mover la unidad 24 a `supabase/migrations/` hasta la fase 5 y debe ha
 
 La guardia de emergencia no es una migración 25: no forma parte del despliegue normal, no devuelve autoridad a V1 y no se aplica salvo incidente aprobado y ensayo previo en staging.
 
-### 1.1 Contrato de versión de cliente
+PRs relacionados:
+
+- Rating System V2: https://github.com/puntoracingrc/pachangas/pull/92
+- Release puente PWA/client version: https://github.com/puntoracingrc/pachangas/pull/93
+
+### 1.1 Contrato permanente server-authoritative
+
+Pachangas IQ adopta como contrato permanente una arquitectura server-authoritative con caché local. Supabase/PostgreSQL es la única fuente de verdad para creaciones, modificaciones, valoraciones, resultados, acciones sociales, invitados, snapshots, permisos, niveles y recálculos. El cliente solo puede enviar intenciones: objetivo, acción semántica, `operationId`, revisión esperada y metadatos de versión/sesión.
+
+El cliente nunca confirma ni reintenta por su cuenta una operación deportiva offline. No existe cola offline autoritativa: sin confirmación central, la operación queda pendiente/fallida y la pantalla debe volver al snapshot canónico. Las previsualizaciones son solo visuales y se sustituyen por la respuesta con `confirmedRevision`, `serverSequence` y payload/read model oficial.
+
+Las lecturas pueden usar caché local derivada: snapshots, catálogos, campos, partidos finalizados y modelos de lectura. La invalidación se guía por `payload_revision`, `updated_at`, eventos Realtime y secuencias de servidor. Los partidos activos se leen desde el snapshot actual y Realtime solo avisa para recargar la entidad afectada; los partidos finalizados, campos y catálogos casi inmutables admiten caché larga. Las cartas, medias, historiales y niveles no se recalculan en cada lectura del navegador: se recalculan en servidor ante el evento que los cambia y se publican como read models canónicos.
+
+### 1.2 Contrato de versión de cliente
 
 | Dato | Definición obligatoria |
 | --- | --- |
@@ -74,7 +87,7 @@ supabase db push --linked --dry-run
 5. Crear una copia recuperable y restaurarla realmente en un proyecto aislado antes de tocar producción. Ver una copia en el panel no demuestra que sea restaurable.
 6. Registrar métricas base: errores RPC, latencia, CPU, locks, conexiones, eventos Realtime, filas y tamaño de índices.
 7. Confirmar que el release puente PWA registra versión y telemetría, actualiza el Service Worker de forma controlada y bloquea solo escrituras incompatibles.
-8. Confirmar una ventana continua de 24 horas sin escrituras V1 en staging y de 7 días naturales sin escrituras V1 ni `v1-unversioned` en producción antes de la unidad 24.
+8. Confirmar la política de observación aplicable. En el lanzamiento preusuarios de agosto de 2026 no hay usuarios reales ni PWAs activas que preservar, por lo que el owner ha dispensado la ventana real de 24 horas/7 días. Se mantiene una prueba controlada de PWA antigua y la telemetría queda lista para futuros despliegues con usuarios.
 9. Ejecutar el ensayo de volumen definido en la sección 13 y adjuntar sus medidas por migración.
 10. Aplicar los criterios objetivos de parada de la sección 12. Cualquier error de autorización, revisión, RLS, duplicado o divergencia entre dispositivos detiene la fase.
 
@@ -85,11 +98,11 @@ Esta fase precede a las migraciones aditivas. No se autoriza staging V2 hasta co
 1. Publicar un release puente compatible con V1 que incluya `clientVersion`, telemetría de intentos de escritura y el diálogo de actualización obligatoria.
 2. Servir `minimumSupportedClientVersion` desde el servidor con `Cache-Control: no-store`; ni el Service Worker ni el navegador pueden reutilizar una política antigua.
 3. Enviar la versión en cada escritura y clasificar como `v1-unversioned` cualquier llamada sin cabecera o metadata.
-4. Mantener `minimumSupportedClientVersion=1.0.0` durante la observación. La telemetría debe distinguir intento, RPC, resultado, versión, modo instalado, versión SW y hora del servidor, sin nombres, correo ni contenido deportivo.
+4. Mantener `minimumSupportedClientVersion=1.0.0` durante la observación o, en el lanzamiento preusuarios autorizado, durante la prueba controlada de PWA antigua. La telemetría debe distinguir intento, RPC, resultado, versión, modo instalado, versión SW y hora del servidor, sin nombres, correo ni contenido deportivo.
 5. Actualizar `sw.js` conservando la misma URL, llamar a `registration.update()` con `updateViaCache: "none"` y evitar una activación mezclada. Cuando el nuevo worker esté listo, detener nuevas escrituras, esperar a que no haya ninguna intención pendiente, enviar `SKIP_WAITING` y recargar una sola vez tras `controllerchange`. Referencia: [Update a PWA](https://web.dev/learn/pwa/update/).
 6. Al detectar `clientVersion < minimumSupportedClientVersion`, mantener navegación y lecturas, deshabilitar mutaciones, mostrar `Actualización obligatoria` y conservar cualquier intención local como pendiente o fallida, nunca confirmada.
 7. Un error `CLIENT_UPDATE_REQUIRED`, `42501` o de RPC revocada obliga a descartar la previsualización optimista y recargar el snapshot oficial. Ningún `catch`, timeout o estado offline puede transformarlo en éxito.
-8. No iniciar la ventana de silencio hasta que el bridge lleve desplegado al menos un ciclo normal de uso y todas las instalaciones activas observadas hayan enviado una versión.
+8. No iniciar una ventana de silencio futura hasta que el bridge lleve desplegado al menos un ciclo normal de uso y todas las instalaciones activas observadas hayan enviado una versión. Esta espera queda dispensada solo mientras no existan usuarios reales ni instalaciones activas.
 
 La implementación del bridge, su endpoint `no-store` y la telemetría son requisitos de código previos a staging; documentarlos no equivale a tenerlos desplegados.
 
@@ -150,13 +163,13 @@ Guardar evidencias sin PII: SHA, operación, revisiones, secuencias, resultado y
 1. Aplicar primero las 23 migraciones aditivas en producción y comprobar V1.
 2. Desplegar/promover el frontend V2 exacto.
 3. Hacer smoke autenticado inmediato con un grupo sintético o controlado.
-4. Observar durante la ventana acordada errores RPC, revisiones obsoletas, CPU, locks y Realtime.
+4. Observar durante la ventana acordada errores RPC, revisiones obsoletas, CPU, locks y Realtime. En el lanzamiento preusuarios, esta observación se limita a QA controlada de staging porque no existe tráfico real que esperar.
 5. Si falla V2 antes de la revocación, revertir el frontend a V1. No hay que revertir el esquema aditivo.
 6. Mantener `minimumSupportedClientVersion=1.0.0` mientras convivan V1 y V2; el bridge continúa registrando ambos protocolos.
 7. Cuando V2 sea estable, elevar el mínimo a `2.0.0`: solo se bloquean escrituras antiguas y se fuerza la actualización controlada.
-8. Iniciar entonces la ventana de producción de 7 días. Debe haber cero escrituras V1 aceptadas, cero intentos `v1-unversioned` y cero permisos interpretados como éxito.
+8. Iniciar entonces la ventana de producción de 7 días cuando existan usuarios reales o instalaciones activas. Para el lanzamiento preusuarios autorizado, sustituirla por una prueba controlada de cliente antiguo, versión mínima y escritura rechazada.
 
-No avanzar mientras exista tráfico V1 conocido, telemetría incompleta o una versión cliente antigua que todavía necesite escribir. Reiniciar la ventana completa ante cualquier evento V1.
+No avanzar mientras exista tráfico V1 conocido, telemetría incompleta o una versión cliente antigua que todavía necesite escribir. Reiniciar la ventana completa ante cualquier evento V1 en despliegues con usuarios reales.
 
 ## 8. Fase 5: revocación final de escrituras V1
 
@@ -164,7 +177,7 @@ La activación se publica en un PR independiente:
 
 1. Mover `supabase/deferred-migrations/20260802144700_rating_v2_legacy_write_closure.sql` a `supabase/migrations/` con un timestamp nuevo generado por `supabase migration new`.
 2. Revisar que el nuevo archivo contiene únicamente las revocaciones aprobadas.
-3. Adjuntar la consulta de telemetría que demuestra 24 horas limpias en staging y 7 días limpios en producción, incluyendo clientes sin versión.
+3. Adjuntar la consulta de telemetría que demuestra 24 horas limpias en staging y 7 días limpios en producción, incluyendo clientes sin versión. En el lanzamiento preusuarios aprobado, adjuntar la evidencia de inexistencia de usuarios reales y la prueba controlada de PWA antigua en lugar de esperar la ventana temporal.
 4. Ejecutar `supabase db push --linked --dry-run`; debe aparecer solo la migración de cierre.
 5. Aplicarla primero en staging y repetir los intentos directos contra V1, incluida la PWA que quedó abierta antes del despliegue.
 6. Ensayar en staging la guardia `20260802203605_rating_v2_emergency_safe_hold.sql`; debe mantener V1 y `UPDATE` revocados y permitir únicamente asistencia por la RPC V2 autoritativa.
@@ -232,8 +245,8 @@ Consulta mínima de autorización para la unidad 24:
 
 | Señal | Umbral para continuar | Umbral de parada |
 | --- | --- | --- |
-| Escrituras V1 aceptadas | 0 en 24 h de staging y 7 días de producción | Cualquier evento reinicia la ventana |
-| Intentos `v1-unversioned` | 0 en las mismas ventanas | Cualquier intento |
+| Escrituras V1 aceptadas | 0 en la ventana aplicable; en preusuarios, 0 durante QA controlada | Cualquier evento reinicia la ventana si hay usuarios reales |
+| Intentos `v1-unversioned` | 0 en la ventana aplicable; en preusuarios, solo el intento controlado esperado | Cualquier intento no controlado |
 | Errores de escritura V2 | < 0,5% durante 5 min y ninguno de integridad | >= 0,5% o cualquier divergencia |
 | Realtime | p95 <= 2 s | p95 > 5 s durante 1 min |
 | CPU de base | < 70% sostenido y < 20 puntos sobre baseline | >= 70% durante 5 min o +20 puntos |

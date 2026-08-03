@@ -95,7 +95,7 @@ async function oneWinner(label, actions) {
   const losers = results.filter((result) => result.code !== 0);
   assert.equal(winners.length, 1, `${label} must have exactly one accepted client: ${JSON.stringify(results)}`);
   assert.equal(losers.length, 1, `${label} must reject exactly one stale client: ${JSON.stringify(results)}`);
-  assert.match(losers[0].stderr, /Server revision is newer|could not serialize/i, `${label} must reject stale revision explicitly`);
+  assert.match(losers[0].stderr, /Server revision is newer|could not serialize|could not obtain lock/i, `${label} must reject stale revision explicitly`);
   const action = actions.find((candidate) => `${label}:${candidate.client}` === winners[0].label);
   const response = lastJson(winners[0].stdout, `${label} winner`);
   assert.ok(Number(response.confirmedRevision) > Number(response.expectedRevision), `${label} must advance revision`);
@@ -563,7 +563,7 @@ const staleReconnect = await runSql(
   "stale reconnect",
 );
 assert.notEqual(staleReconnect.code, 0, "a stale reconnect must not be silently accepted");
-assert.match(staleReconnect.stderr, /Server revision is newer|could not serialize/i, "stale reconnect must receive an explicit revision conflict");
+assert.match(staleReconnect.stderr, /Server revision is newer|could not serialize|could not obtain lock/i, "stale reconnect must receive an explicit revision conflict");
 const afterReconnect = await assertConverged("stale reconnect reload");
 assert.deepEqual(afterReconnect, beforeReconnect, "stale reconnect must not mutate the canonical state before reload");
 

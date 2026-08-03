@@ -95,31 +95,138 @@ do $$
 declare
   profile_id uuid;
 begin
+  perform set_config('pachangas.rating_v2_defer_group_sync', 'on', true);
   for profile_id in select id from public.pachanga_player_profiles order by id
   loop
     perform public.pachanga_recalculate_player_rating_v2(profile_id, null, null, 'migration');
   end loop;
+  perform set_config('pachangas.rating_v2_defer_group_sync', 'off', true);
 end;
 $$;
+
+-- Rebuild the compatibility payload once after every profile has been
+-- recalculated. Re-syncing a group's complete match read model for each of its
+-- players multiplies the same work by the squad size on large groups.
+with rebuilt_players as (
+  select
+    groups.id as group_id,
+    coalesce(jsonb_agg(
+      case
+        when profile.id is null then entry.value
+        else entry.value || jsonb_build_object(
+          'rating', profile.rating,
+          'ratingV2', jsonb_strip_nulls(jsonb_build_object(
+            'domain', profile.rating_domain,
+            'baseFacets', profile.base_facets,
+            'calibratedFacets', profile.calibrated_facets,
+            'currentFacets', profile.current_facets,
+            'currentFacetModifiers', profile.current_facet_modifiers,
+            'goalkeeperFacets', profile.goalkeeper_facets,
+            'baseOverall', profile.base_overall,
+            'calibratedOverall', profile.calibrated_overall,
+            'currentOverall', profile.current_overall,
+            'reliability', profile.rating_reliability,
+            'evaluatorCount', profile.rating_evaluator_count,
+            'engineVersion', profile.rating_engine_version,
+            'recalculatedAt', profile.rating_recalculated_at
+          ))
+        )
+      end
+      order by entry.ordinality
+    ), '[]'::jsonb) as players
+  from public.pachanga_groups groups
+  cross join lateral jsonb_array_elements(
+    coalesce(groups.payload -> 'players', '[]'::jsonb)
+  ) with ordinality as entry(value, ordinality)
+  left join public.pachanga_player_profiles profile
+    on profile.user_id::text = entry.value ->> 'ownerUserId'
+  group by groups.id
+)
+update public.pachanga_groups groups
+set payload = groups.payload || jsonb_build_object('players', rebuilt_players.players)
+from rebuilt_players
+where rebuilt_players.group_id = groups.id;
 
 do $$
 declare
   group_row public.pachanga_groups%rowtype;
-  match_payload jsonb;
 begin
   for group_row in select * from public.pachanga_groups order by id
   loop
+    perform public.sync_pachanga_group_read_model(
+      group_row.id,
+      group_row.payload,
+      group_row.payload_revision
+    );
+  end loop;
+end;
+$$;
+
+create or replace function public.backfill_pachanga_match_rating_snapshots_v2(
+  after_group_id uuid default null,
+  group_batch_size integer default 25
+)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  group_row public.pachanga_groups%rowtype;
+  match_payload jsonb;
+  last_group_id uuid := after_group_id;
+  processed_groups integer := 0;
+  processed_matches integer := 0;
+  has_more boolean := false;
+begin
+  if group_batch_size < 1 or group_batch_size > 100 then
+    raise exception 'Group batch size must be between 1 and 100';
+  end if;
+
+  for group_row in
+    select *
+    from public.pachanga_groups groups
+    where after_group_id is null or groups.id > after_group_id
+    order by groups.id
+    limit group_batch_size
+  loop
+    last_group_id := group_row.id;
+    processed_groups := processed_groups + 1;
     for match_payload in
       select value
       from jsonb_array_elements(coalesce(group_row.payload -> 'matches', '[]'::jsonb)) matches(value)
       where coalesce((value ->> 'closed')::boolean, false) or value ? 'scoreA'
       order by value ->> 'date', value ->> 'id'
     loop
-      perform public.snapshot_pachanga_match_ratings_v2(group_row.id, match_payload ->> 'id', match_payload);
+      perform public.snapshot_pachanga_match_ratings_v2(
+        group_row.id,
+        match_payload ->> 'id',
+        match_payload
+      );
+      processed_matches := processed_matches + 1;
     end loop;
   end loop;
+
+  if last_group_id is not null then
+    select exists (
+      select 1 from public.pachanga_groups groups where groups.id > last_group_id
+    ) into has_more;
+  end if;
+
+  return jsonb_build_object(
+    'afterGroupId', after_group_id,
+    'nextGroupId', last_group_id,
+    'processedGroups', processed_groups,
+    'processedMatches', processed_matches,
+    'done', not has_more
+  );
 end;
 $$;
+
+revoke all on function public.backfill_pachanga_match_rating_snapshots_v2(uuid, integer)
+from public, anon, authenticated;
+grant execute on function public.backfill_pachanga_match_rating_snapshots_v2(uuid, integer)
+to service_role;
 
 create or replace function public.pachanga_player_profile_patch(target_profile_id uuid)
 returns jsonb

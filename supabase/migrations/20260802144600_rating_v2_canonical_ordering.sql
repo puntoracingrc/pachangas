@@ -86,3 +86,31 @@ revoke all on function public.get_latest_pachanga_player_rating_snapshot_v2(uuid
   from public, anon;
 grant execute on function public.get_latest_pachanga_player_rating_snapshot_v2(uuid)
   to authenticated;
+
+-- A second device must fail quickly and reload the canonical revision instead
+-- of waiting behind a row lock until the HTTP gateway times out.
+alter function public.create_pachanga_guest_identity_authoritative_v2(uuid, text, text, uuid, bigint, jsonb) set lock_timeout = '750ms';
+alter function public.ensure_pachanga_external_team_authoritative_v2(uuid, text, text, text, uuid, bigint, jsonb) set lock_timeout = '750ms';
+alter function public.finalize_pachanga_match_authoritative_v2(uuid, text, integer, integer, jsonb, uuid, bigint, jsonb) set lock_timeout = '750ms';
+alter function public.issue_pachanga_guest_rating_token_authoritative_v2(uuid, text, uuid, uuid, bigint, integer, jsonb) set lock_timeout = '750ms';
+alter function public.link_pachanga_guest_identity_authoritative_v2(uuid, uuid, uuid, text, uuid, bigint, jsonb) set lock_timeout = '750ms';
+alter function public.link_pachanga_registered_opponent_authoritative_v2(uuid, text, text, uuid, bigint, jsonb) set lock_timeout = '750ms';
+alter function public.patch_pachanga_match_lineup_authoritative_v2(uuid, text, boolean, text[], text[], text, uuid, bigint, jsonb) set lock_timeout = '750ms';
+alter function public.patch_pachanga_match_player_paid_authoritative_v2(uuid, text, text, boolean, uuid, bigint, jsonb) set lock_timeout = '750ms';
+alter function public.patch_pachanga_match_player_status_authoritative_v2(uuid, text, text, text, uuid, bigint, jsonb) set lock_timeout = '750ms';
+alter function public.patch_pachanga_match_scorers_authoritative_v2(uuid, text, integer, integer, jsonb, text[], text[], uuid, bigint, jsonb) set lock_timeout = '750ms';
+alter function public.patch_pachanga_player_profile_authoritative_v2(uuid, text, jsonb, uuid, bigint, jsonb) set lock_timeout = '750ms';
+alter function public.persist_pachanga_player_assessment_authoritative_v2(uuid, uuid, text, text, jsonb, jsonb, uuid, bigint, jsonb) set lock_timeout = '750ms';
+alter function public.record_pachanga_global_rating_authoritative_v2(uuid, text, text, text, uuid, uuid, uuid, uuid, bigint, jsonb) set lock_timeout = '750ms';
+alter function public.record_pachanga_guest_team_rating_token_v2(text, text, uuid, bigint, jsonb) set lock_timeout = '750ms';
+alter function public.record_pachanga_individual_rating_authoritative_v2(uuid, text, jsonb, uuid, bigint, jsonb) set lock_timeout = '750ms';
+alter function public.request_pachanga_open_match_authoritative_v2(uuid, uuid, bigint, jsonb) set lock_timeout = '750ms';
+alter function public.reverse_pachanga_guest_link_authoritative_v2(uuid, uuid, text, uuid, bigint, jsonb) set lock_timeout = '750ms';
+alter function public.review_pachanga_open_match_request_authoritative_v2(uuid, uuid, text, uuid, bigint, jsonb) set lock_timeout = '750ms';
+alter function public.revoke_pachanga_guest_rating_token_authoritative_v2(uuid, uuid, uuid, bigint, jsonb) set lock_timeout = '750ms';
+alter function public.save_pachanga_payload_authoritative_v2(uuid, bigint, jsonb, uuid, jsonb) set lock_timeout = '750ms';
+alter function public.set_pachanga_group_ratings_enabled_authoritative_v2(uuid, boolean, uuid, bigint, jsonb) set lock_timeout = '750ms';
+alter function public.sync_pachanga_market_profile_authoritative_v2(uuid, text, jsonb, uuid, bigint, jsonb) set lock_timeout = '750ms';
+alter function public.sync_pachanga_open_match_authoritative_v2(uuid, text, jsonb, uuid, bigint, jsonb) set lock_timeout = '750ms';
+alter function public.upsert_pachanga_own_player_profile_authoritative_v2(uuid, text, jsonb, uuid, bigint, jsonb) set lock_timeout = '750ms';
+alter function public.void_my_pachanga_individual_rating_v2(uuid, text, uuid, bigint, jsonb) set lock_timeout = '750ms';

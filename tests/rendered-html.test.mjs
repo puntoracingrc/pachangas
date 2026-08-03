@@ -1004,6 +1004,9 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /patch_pachanga_match_scorers_authoritative_v2/);
   assert.match(page, /patch_pachanga_match_lineup_authoritative_v2/);
   assert.match(page, /finalize_pachanga_match_authoritative_v2/);
+  assert.match(page, /server revision is newer/);
+  assert.match(page, /could not obtain lock/);
+  assert.match(page, /loadTeams\(supabase, remoteGroupId\)/);
   assert.match(page, /expected_revision: remotePayloadRevisionRef\.current/);
   assert.match(page, /client_metadata: clientOperationMetadata\(\)/);
   assert.match(page, /operation_key: id\(\)/);
@@ -1044,7 +1047,11 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(ratingV2Runbook, /clientVersion/);
   assert.match(ratingV2Runbook, /minimumSupportedClientVersion/);
   assert.match(ratingV2Runbook, /v1-unversioned/);
-  assert.match(ratingV2Runbook, /7 días naturales/);
+  assert.match(ratingV2Runbook, /server-authoritative con caché local/);
+  assert.match(ratingV2Runbook, /No existe cola offline autoritativa/);
+  assert.match(ratingV2Runbook, /read models canónicos/);
+  assert.match(ratingV2Runbook, /preusuarios de agosto de 2026/);
+  assert.match(ratingV2Runbook, /24 horas\/7 días/);
   assert.match(ratingV2Runbook, /PWA V1 abierta antes del despliegue/);
   assert.match(ratingV2Runbook, /registration\.update\(\)/);
   assert.match(ratingV2Runbook, /controllerchange/);

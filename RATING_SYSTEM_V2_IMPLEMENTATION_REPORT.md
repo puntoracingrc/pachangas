@@ -6,7 +6,7 @@
 | --- | --- |
 | Rama | `codex/rating-system-v2` |
 | Commit base exacto | `abcd7d25f00959afb405b68bd56f02c2058e1fe2` |
-| Fecha de cierre técnico | 2026-08-02 17:52:50 CEST |
+| Fecha de cierre técnico | 2026-08-03 03:21:48 CEST |
 | Estado inicial | Worktree dedicado y limpio antes de implementar V2 |
 | Entorno | macOS, Node.js 24.16.0, Next.js 16.2.6 y PostgreSQL 16 desechable en Docker |
 | Fuentes consultadas | Código local y documentación oficial de Supabase; ninguna lectura de datos de producción |
@@ -17,9 +17,9 @@ El contrato funcional procede de `CURRENT_RATING_SYSTEM_AUDIT.md`, de la especif
 
 ## 2. Veredicto
 
-**Código fusionable: sí. Activación productiva: todavía no.**
+**Código local completo: sí. Activación productiva: todavía no. Fusión: pendiente de cerrar staging remoto y PR.**
 
-La implementación y sus 24 unidades SQL pasan en una base PostgreSQL 16 creada desde cero y vuelven a pasar al reaplicarlas con la activación diferida siempre en último lugar. También superan pruebas de dos clientes concurrentes. Antes de activar V2 en producción sigue siendo obligatorio aplicar las 23 migraciones aditivas en staging, desplegar el frontend V2, ejecutar QA autenticada con Realtime y solo después valorar la unidad 24 de cierre V1.
+La implementación y sus 24 unidades SQL pasan en una base PostgreSQL 16 creada desde cero y vuelven a pasar al reaplicarlas con la activación diferida siempre en último lugar. También superan pruebas de dos clientes concurrentes. Las 23 migraciones aditivas se han aplicado en la rama Supabase de staging `iozcjirlfytryzrcmrnq`; la unidad 24 de cierre V1 no se ha aplicado. Antes de activar V2 en producción sigue siendo obligatorio cerrar la QA remota autenticada con Realtime, publicar/actualizar el PR borrador y solo después decidir la activación diferida.
 
 El lint global continúa fallando por deuda previa fuera del alcance: 43 problemas, 23 errores y 20 avisos. El lint focalizado de todos los archivos nuevos de V2 pasa.
 
@@ -68,6 +68,10 @@ Cada mutación autoritativa de V2:
 Realtime se utiliza solo como aviso. En un `UPDATE` de `pachanga_groups`, `app/page.tsx` vuelve a consultar la fila oficial, compara `payload_revision` y aplica el payload confirmado. No confía en el payload del evento.
 
 `localStorage`, el payload grande y los read models son copias derivadas. En un grupo remoto no pueden confirmar una acción ni competir con PostgreSQL. El modo demo sigue siendo local deliberadamente porque no representa usuarios ni partidos reales.
+
+El contrato permanente de Pachangas IQ queda fijado como server-authoritative con caché local. El cliente puede guardar snapshots, catálogos, campos, partidos finalizados y read models como caché derivada, pero toda creación, modificación, valoración, resultado o acción social debe confirmarse mediante RPC/API central con `operationId` y revisión esperada. No existe cola offline de operaciones deportivas: un rechazo, timeout, offline o cliente obsoleto obliga a descartar la previsualización y recargar el estado canónico.
+
+Las cartas, medias, historiales y niveles no se recalculan en cada lectura del navegador. Se recalculan en PostgreSQL cuando un evento relevante cambia evidencias, asistencia, alineación o finalización, y luego se devuelven como payload/read model canónico con revisión y secuencia de servidor.
 
 ## 4. Superficie de cambios
 
@@ -310,10 +314,26 @@ Después de cada carrera, dos actores vuelven a leer PostgreSQL y obtienen exact
 
 La base SQL fue exclusivamente local y desechable. Se utilizaron stubs locales de `auth` y la publicación de Realtime necesaria para simular el esquema de Supabase. No se usó ninguna credencial ni dato remoto.
 
+### 13.1 Revalidación del 3 de agosto de 2026
+
+| Comprobación | Resultado |
+| --- | --- |
+| `npm test` | PASS: build Next.js, TypeScript de Next, 5 pruebas HTML/rutas y 37 pruebas TS. |
+| Supabase staging `iozcjirlfytryzrcmrnq` en solo lectura | PASS: PostgreSQL 17.6, 500 grupos sintéticos `V2V%`, 10.000 perfiles, 250.000 evidencias y 4 snapshots. |
+| Timeouts de RPC V2 en staging | PASS: las RPC V2 autoritativas inspeccionadas exponen `lock_timeout=750ms`; también `record_pachanga_guest_team_rating_token_v2` y `void_my_pachanga_individual_rating_v2`. |
+| Snapshot de partido en staging | PASS: `snapshot_pachanga_match_ratings_v2` usa los valores calculados del `result`, no referencias ambiguas del nombre de función. |
+| Contrato server-authoritative/cache | PASS local: runbook e informe exigen RPC/API central, `operationId`, revisión esperada, sin cola offline deportiva y read models canónicos. |
+| Lint de tests tocados | PASS: `tests/rendered-html.test.mjs` y `tests/rating-system-v2-concurrency.mjs`. |
+| Lint global | FAIL esperado: 43 problemas preexistentes, 23 errores y 20 avisos en `app/legal-data.tsx`, `app/mercado/page.tsx`, `app/page.tsx` y `app/theme-toggle.tsx`. |
+| Lint focalizado de `app/page.tsx` | FAIL esperado por deuda previa del archivo grande; no se corrige aquí para no mezclar UI/pizarra/efectos con Rating V2. |
+| `git diff --check` | PASS. |
+| Concurrencia SQL local | No reejecutada en esta vuelta: `RATING_V2_DATABASE_URL` no está cargada en el entorno actual. |
+| QA HTTP del preview protegido | Bloqueada por Vercel SSO en lectura automática; el preview de PR #93 existe y está READY, pero el fetch de `/api/client-policy` redirige a SSO incluso con URL temporal. |
+
 ## 14. Riesgos y siguiente paso
 
-1. Aplicar las 23 migraciones aditivas en un proyecto Supabase de staging; la unidad 24 de cierre V1 se activa después y por separado.
-2. Ejecutar QA autenticada con dos usuarios y Realtime para confirmar el recorrido navegador, API, PostgreSQL y vuelta al navegador.
+1. Mantener las 23 migraciones aditivas aplicadas en Supabase staging `iozcjirlfytryzrcmrnq`; la unidad 24 de cierre V1 se activa después y por separado.
+2. Ejecutar QA autenticada con dos usuarios y Realtime para confirmar el recorrido navegador, API, PostgreSQL y vuelta al navegador cuando estén disponibles la URL/key de staging o una sesión de navegador autorizada.
 3. Seguir `docs/rating-system-v2-deployment-runbook.md`: frontend V2 antes de la revocación final V1, con observación de CPU, locks, errores de revisión y latencia de Realtime.
 4. Definir con criterio futbolístico el cuestionario y la fórmula específica de porteros antes de habilitarlos en V2.
 5. Completar el flujo persistido de hábitos y limitaciones si se desea que los modificadores actuales sean editables por el jugador.
@@ -325,10 +345,10 @@ El despliegue no forma parte de esta tarea. No se ha modificado producción ni s
 El runbook incorpora tres nuevas puertas obligatorias, sin sustituir ninguna fase anterior:
 
 1. **Compatibilidad PWA:** `clientVersion` es SemVer del bundle más SHA; `minimumSupportedClientVersion` es una política `no-store` del servidor. Un release puente V1 debe instrumentar las escrituras y actualizar el Service Worker de forma controlada antes de elevar el mínimo a V2.
-2. **Silencio V1:** la unidad 24 exige cero escrituras V1 y cero clientes sin versión durante 24 horas en staging y 7 días naturales en producción. Cualquier evento reinicia la ventana.
+2. **Silencio V1:** para despliegues con usuarios reales, la unidad 24 exige cero escrituras V1 y cero clientes sin versión durante 24 horas en staging y 7 días naturales en producción. En el lanzamiento preusuarios autorizado el owner dispensa esa espera porque no hay usuarios reales ni PWAs activas; se sustituye por una prueba controlada de PWA antigua, CORS, autenticación, offline, reconexión y Realtime.
 3. **Rollback seguro:** la guardia diferida no reabre V1 ni `UPDATE` directo. Mantiene únicamente asistencia por la RPC V2 autoritativa para un frontend mínimo de mantenimiento, priorizando mantenimiento o roll-forward.
 4. **Volumen y recuperación:** staging debe registrar duración, filas, locks, CPU e índices por migración, ejecutar el backfill con volumen representativo y restaurar realmente un backup en un destino aislado.
 
-Estas puertas están **documentadas y cubiertas por una prueba contractual local**, pero la PWA antigua, la telemetría remota, el ensayo de rollback y la carga representativa deben ejecutarse en staging antes de autorizar cualquier aplicación remota. Este addendum no concede esa autorización.
+Estas puertas están **documentadas y cubiertas por una prueba contractual local**. El bridge PWA ya completó su staging controlado en el PR #93 y permanece separado de Rating V2. La carga representativa de V2 se ejecutó sobre la rama Supabase de staging y detectó dos mejoras incorporadas al SQL: backfill por sincronización diferida/set-based y rechazo rápido ante locks. Queda pendiente cerrar la concurrencia remota final y la QA de navegador de V2 antes de considerar fusionable la rama.
 
 La guardia sí fue aplicada localmente sobre PostgreSQL 16 después de todo el recorrido de migraciones. La matriz observada fue inequívoca: las diez escrituras V1 quedaron denegadas para `anon` y `authenticated`, `authenticated` no tuvo `UPDATE` sobre `pachanga_groups` y conservó únicamente `EXECUTE` sobre la RPC V2 de asistencia. Esto valida el SQL y su mínimo de permisos, pero no sustituye el ensayo de staging con una PWA V1 real, telemetría, carga ni restauración.
