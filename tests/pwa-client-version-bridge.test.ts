@@ -249,6 +249,7 @@ test("the write bridge classifies every browser RPC without treating reads as wr
   const source = await Promise.all([
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/mercado/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/mercado/team-challenges-panel.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/global-rating-panel.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/valorar-equipo/page.tsx", import.meta.url), "utf8"),
   ]).then((files) => files.join("\n"));
@@ -256,6 +257,8 @@ test("the write bridge classifies every browser RPC without treating reads as wr
     "get_pachanga_global_rating_context_v2",
     "get_pachanga_guest_rating_token_context_v2",
     "get_pachanga_rating_eligibility",
+    "get_pachanga_team_social_snapshot",
+    "lookup_pachanga_team_by_code",
   ]);
   const invokedRpcNames = [...new Set(
     [...source.matchAll(/\.rpc\("([a-z0-9_]+)"/g)].map((match) => match[1]),

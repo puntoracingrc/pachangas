@@ -24,6 +24,7 @@ const v1WriteRpcNames = new Set([
 ]);
 
 const v2WriteRpcNames = new Set([
+  "create_pachanga_team_challenge_authoritative",
   "ensure_pachanga_external_team_authoritative_v2",
   "finalize_pachanga_match_authoritative_v2",
   "issue_pachanga_guest_rating_token_authoritative_v2",
@@ -37,6 +38,7 @@ const v2WriteRpcNames = new Set([
   "record_pachanga_guest_team_rating_token_v2",
   "record_pachanga_individual_rating_authoritative_v2",
   "request_pachanga_open_match_authoritative_v2",
+  "respond_pachanga_team_challenge_authoritative",
   "review_pachanga_open_match_request_authoritative_v2",
   "save_pachanga_payload_authoritative_v2",
   "set_pachanga_group_ratings_enabled_authoritative_v2",

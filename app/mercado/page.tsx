@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { attachVenueAutocomplete, type VenuePlace } from "../googlePlacesClient";
 import { MobileAppNav } from "../mobile-app-nav";
 import { supabase } from "../supabaseClient";
+import { TeamChallengesPanel } from "./team-challenges-panel";
 
 const googleMapsApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
 
@@ -653,7 +654,7 @@ export default function MarketPage() {
   const [profiles, setProfiles] = useState<MarketProfile[]>(fallbackProfiles);
   const [openMatches, setOpenMatches] = useState<OpenMarketMatch[]>(fallbackOpenMatches);
   const [openMatchRequests, setOpenMatchRequests] = useState<Record<string, OpenMatchRequestSummary>>({});
-  const [activeTab, setActiveTab] = useState<"jugadores" | "partidos">("jugadores");
+  const [activeTab, setActiveTab] = useState<"equipos" | "jugadores" | "partidos" | "retos">("jugadores");
   const [zoneFilter, setZoneFilter] = useState("");
   const [dayFilter, setDayFilter] = useState("Todos");
   const [modalityFilter, setModalityFilter] = useState("Todas");
@@ -670,6 +671,8 @@ export default function MarketPage() {
     const tab = params.get("tab");
     if (tab === "partidos") setActiveTab("partidos");
     if (tab === "jugadores") setActiveTab("jugadores");
+    if (tab === "retos") setActiveTab("retos");
+    if (tab === "equipos") setActiveTab("equipos");
     const matchId = params.get("partido");
     if (!matchId) return;
 
@@ -922,7 +925,7 @@ export default function MarketPage() {
       <header className="market-titlebar">
         <div>
           <Link className="manual-back-button" href="/">Volver</Link>
-          <h1>Mercado de fichajes</h1>
+          <h1>Mercado</h1>
         </div>
       </header>
 
@@ -944,46 +947,48 @@ export default function MarketPage() {
         </section>
       ) : null}
 
-      <section className="market-panel market-filters" aria-label="Filtros del mercado de fichajes">
-        <label>
-          Zona
-          <input
-            ref={zoneInputRef}
-            value={zoneFilter}
-            onChange={(event) => {
-              setZoneFilter(event.target.value);
-              setZonePlace(null);
-            }}
-            placeholder="Busca ciudad con Google Places"
-          />
-          {zonePlaceMessage ? <small>{zonePlaceMessage}</small> : null}
-        </label>
-        <label>
-          Día
-          <select value={dayFilter} onChange={(event) => setDayFilter(event.target.value)}>
-            {dayFilters.map((day) => (
-              <option key={day} value={day}>{day}</option>
-            ))}
-          </select>
-        </label>
-        <label>
-          Modalidad
-          <select value={modalityFilter} onChange={(event) => setModalityFilter(event.target.value)}>
-            <option value="Todas">Todas</option>
-            {Object.entries(modalityLabels).map(([value, label]) => (
-              <option key={value} value={value}>{label}</option>
-            ))}
-          </select>
-        </label>
-        <label>
-          Posición
-          <select value={positionFilter} onChange={(event) => setPositionFilter(event.target.value)}>
-            {positionFilters.map((position) => (
-              <option key={position} value={position}>{position}</option>
-            ))}
-          </select>
-        </label>
-      </section>
+      {activeTab === "jugadores" || activeTab === "partidos" ? (
+        <section className="market-panel market-filters" aria-label="Filtros del mercado">
+          <label>
+            Zona
+            <input
+              ref={zoneInputRef}
+              value={zoneFilter}
+              onChange={(event) => {
+                setZoneFilter(event.target.value);
+                setZonePlace(null);
+              }}
+              placeholder="Busca ciudad con Google Places"
+            />
+            {zonePlaceMessage ? <small>{zonePlaceMessage}</small> : null}
+          </label>
+          <label>
+            Día
+            <select value={dayFilter} onChange={(event) => setDayFilter(event.target.value)}>
+              {dayFilters.map((day) => (
+                <option key={day} value={day}>{day}</option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Modalidad
+            <select value={modalityFilter} onChange={(event) => setModalityFilter(event.target.value)}>
+              <option value="Todas">Todas</option>
+              {Object.entries(modalityLabels).map(([value, label]) => (
+                <option key={value} value={value}>{label}</option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Posición
+            <select value={positionFilter} onChange={(event) => setPositionFilter(event.target.value)}>
+              {positionFilters.map((position) => (
+                <option key={position} value={position}>{position}</option>
+              ))}
+            </select>
+          </label>
+        </section>
+      ) : null}
 
       <div className="market-tabs" aria-label="Tipo de mercado">
         <button className={activeTab === "jugadores" ? "selected" : ""} type="button" onClick={() => setActiveTab("jugadores")}>
@@ -991,6 +996,12 @@ export default function MarketPage() {
         </button>
         <button className={activeTab === "partidos" ? "selected" : ""} type="button" onClick={() => setActiveTab("partidos")}>
           Partidos abiertos
+        </button>
+        <button className={activeTab === "retos" ? "selected" : ""} type="button" onClick={() => setActiveTab("retos")}>
+          Retos privados
+        </button>
+        <button className={activeTab === "equipos" ? "selected" : ""} type="button" onClick={() => setActiveTab("equipos")}>
+          Equipos retables
         </button>
       </div>
 
@@ -1045,7 +1056,7 @@ export default function MarketPage() {
           <p className="market-empty">No hay jugadores que encajen con estos filtros todavía.</p>
         ) : null}
       </section>
-      ) : (
+      ) : activeTab === "partidos" ? (
       <section className="market-open-grid" aria-label="Partidos abiertos del mercado">
         {filteredOpenMatches.map((match) => {
           const zoneMatch = openMatchZoneMatch(match, activeMarketTarget(zonePlace, marketContext, zoneFilter), zoneFilter);
@@ -1088,6 +1099,17 @@ export default function MarketPage() {
           <p className="market-empty">No hay partidos abiertos que encajen con estos filtros todavía.</p>
         ) : null}
       </section>
+      ) : activeTab === "retos" ? (
+        <TeamChallengesPanel />
+      ) : (
+        <section className="market-panel market-public-teams-next" aria-label="Equipos públicamente retables">
+          <span>Siguiente fase</span>
+          <strong>Equipos retables</strong>
+          <p>
+            Este buscador se activará cuando las fichas públicas tengan zona, nivel, días, horarios y modalidad confirmados por el servidor.
+            Los retos privados por código ya funcionan aunque un equipo no publique esta ficha.
+          </p>
+        </section>
       )}
       <MobileAppNav
         active="mercado"

@@ -84,8 +84,8 @@ test("builds the user manual as its own page", async () => {
 
 test("builds the transfer market as a separated page", async () => {
   const html = await readFile(new URL("../.next/server/app/mercado.html", import.meta.url), "utf8");
-  assert.match(html, /Mercado de fichajes/);
-  assert.match(html, /Filtros del mercado de fichajes/);
+  assert.match(html, /<h1>Mercado<\/h1>/);
+  assert.match(html, /Filtros del mercado/);
   assert.doesNotMatch(html, /Jugadores disponibles por zona y horario/);
   assert.doesNotMatch(html, /Un escaparate separado del grupo privado/);
   assert.match(html, /Zona/);
@@ -94,6 +94,8 @@ test("builds the transfer market as a separated page", async () => {
   assert.match(html, /Posición/);
   assert.match(html, /Jugadores disponibles/);
   assert.match(html, /Partidos abiertos/);
+  assert.match(html, /Retos privados/);
+  assert.match(html, /Equipos retables/);
   assert.match(html, /38 años/);
   assert.match(html, /Solo admins invitan/);
   assert.match(html, /Invitado puntual/);
