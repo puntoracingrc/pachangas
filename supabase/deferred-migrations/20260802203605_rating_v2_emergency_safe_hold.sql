@@ -1,6 +1,6 @@
 -- Pachangas IQ rating system V2: deferred emergency continuity guard.
 --
--- Keep this file outside supabase/migrations. It is not migration 25 and must
+-- Keep this file outside supabase/migrations. It is not migration 26 and must
 -- never be included in a normal db push. Apply it only after rehearsal in
 -- staging, incident approval, and verification of the exact project ref.
 --

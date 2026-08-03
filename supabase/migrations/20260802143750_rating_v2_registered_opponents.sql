@@ -49,7 +49,7 @@ begin
     raise exception 'Only group admins can link a registered rival';
   end if;
   if current_group.payload_revision <> expected_revision then
-    raise exception 'Server revision is newer. Reload the confirmed state.' using errcode = '40001';
+    raise exception 'Server revision is newer. Reload the confirmed state.' using errcode = 'PT409';
   end if;
   if not current_group.ratings_enabled then raise exception 'Ratings are disabled for this group'; end if;
   if not exists (

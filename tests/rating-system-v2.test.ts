@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readdirSync, readFileSync } from "node:fs";
 import test from "node:test";
 import {
   INITIAL_TECHNICAL_QUESTIONS,
@@ -42,6 +43,39 @@ const FACETS_60: AttributeRatings = {
   defending: 60,
   physical: 60,
 };
+
+test("authoritative revision conflicts are HTTP-safe and renamed implementations preserve qualifiers", () => {
+  const migrationsDirectory = new URL("../supabase/migrations/", import.meta.url);
+  const ratingMigrationSql = readdirSync(migrationsDirectory)
+    .filter((name) => name.includes("rating_v2") || name.includes("rating_system_v2"))
+    .map((name) => readFileSync(new URL(name, migrationsDirectory), "utf8"))
+    .join("\n");
+  const baseSchemaSql = readFileSync(new URL("../supabase/pachangas.sql", import.meta.url), "utf8");
+  const conflictMigration = readFileSync(
+    new URL("../supabase/migrations/20260803052408_rating_v2_http_conflicts.sql", import.meta.url),
+    "utf8",
+  );
+
+  assert.doesNotMatch(ratingMigrationSql, /errcode\s*=\s*'40001'/i);
+  assert.doesNotMatch(baseSchemaSql, /errcode\s*=\s*'40001'/i);
+  assert.equal(conflictMigration.match(/rename to [a-z0-9_]+_impl;/g)?.length, 28);
+  assert.equal(
+    conflictMigration.match(
+      /exception when transaction_rollback or serialization_failure or deadlock_detected or lock_not_available/g,
+    )?.length,
+    28,
+  );
+  assert.match(conflictMigration, /raise sqlstate 'PT409'/);
+  assert.match(conflictMigration, /raise sqlstate 'PT422'/);
+  assert.doesNotMatch(conflictMigration, /grant execute on function public\.[a-z0-9_]+_impl/i);
+  assert.equal(
+    conflictMigration.match(/revoke all on function public\.[a-z0-9_]+_impl/g)?.length,
+    28,
+  );
+  assert.match(conflictMigration, /pg_get_functiondef\(implementation\.oid\)/);
+  assert.match(conflictMigration, /regexp_replace\(implementation\.implementation_name, '_impl\$', ''\)/);
+  assert.match(conflictMigration, /Expected 28 Rating V2 implementations/);
+});
 
 function facets(value: number): AttributeRatings {
   return {

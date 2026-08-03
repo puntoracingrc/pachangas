@@ -29,10 +29,10 @@ begin
   for update;
   if not found then raise exception 'Group not found'; end if;
   if current_group.payload_revision <> expected_revision then
-    raise exception 'Server revision is newer. Reload the confirmed state.' using errcode = '40001';
+    raise exception 'Server revision is newer. Reload the confirmed state.' using errcode = 'PT409';
   end if;
   if not public.pachanga_rating_payload_is_canonical_v2(current_group.payload, next_payload) then
-    raise exception 'Player cards and ratings are server managed' using errcode = '40001';
+    raise exception 'Player cards and ratings are server managed' using errcode = 'PT422';
   end if;
 
   ignored_result := public.save_pachanga_payload_if_current(
@@ -89,7 +89,7 @@ begin
   for update;
   if not found then raise exception 'Group not found'; end if;
   if current_group.payload_revision <> expected_revision then
-    raise exception 'Server revision is newer. Reload the confirmed state.' using errcode = '40001';
+    raise exception 'Server revision is newer. Reload the confirmed state.' using errcode = 'PT409';
   end if;
 
   ignored_result := public.patch_pachanga_match_player_status(
@@ -142,7 +142,7 @@ begin
   for update;
   if not found then raise exception 'Group not found'; end if;
   if current_group.payload_revision <> expected_revision then
-    raise exception 'Server revision is newer. Reload the confirmed state.' using errcode = '40001';
+    raise exception 'Server revision is newer. Reload the confirmed state.' using errcode = 'PT409';
   end if;
 
   ignored_result := public.patch_pachanga_match_lineup_state(
@@ -219,7 +219,7 @@ begin
   for update;
   if not found then raise exception 'Group not found'; end if;
   if current_group.payload_revision <> expected_revision then
-    raise exception 'Server revision is newer. Reload the confirmed state.' using errcode = '40001';
+    raise exception 'Server revision is newer. Reload the confirmed state.' using errcode = 'PT409';
   end if;
   if not public.is_pachanga_group_admin(target_group_id) then
     raise exception 'Only admins can finalize matches';

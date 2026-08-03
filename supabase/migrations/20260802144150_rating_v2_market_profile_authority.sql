@@ -32,7 +32,7 @@ begin
   for update;
   if not found then raise exception 'Group not found'; end if;
   if current_group.payload_revision <> expected_revision then
-    raise exception 'Server revision is newer. Reload the confirmed state.' using errcode = '40001';
+    raise exception 'Server revision is newer. Reload the confirmed state.' using errcode = 'PT409';
   end if;
 
   select players.value into selected_player

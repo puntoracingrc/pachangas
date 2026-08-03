@@ -41,7 +41,7 @@ begin
   where groups.id = selected.group_id
   for update;
   if current_group.payload_revision <> expected_revision then
-    raise exception 'Server revision is newer. Reload the confirmed state.' using errcode = '40001';
+    raise exception 'Server revision is newer. Reload the confirmed state.' using errcode = 'PT409';
   end if;
 
   legacy_result := public.void_pachanga_individual_rating_v2(evidence_id, reason, operation_id);
@@ -102,7 +102,7 @@ begin
   where groups.id = target_group_id
   for update;
   if current_group.payload_revision <> expected_revision then
-    raise exception 'Server revision is newer. Reload the confirmed state.' using errcode = '40001';
+    raise exception 'Server revision is newer. Reload the confirmed state.' using errcode = 'PT409';
   end if;
 
   legacy_result := public.void_pachanga_individual_rating_v2(selected.id, reason, operation_id);

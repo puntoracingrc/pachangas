@@ -5,21 +5,21 @@
 | Dato | Valor |
 | --- | --- |
 | Rama | `codex/rating-system-v2` |
-| Commit base exacto | `abcd7d25f00959afb405b68bd56f02c2058e1fe2` |
-| Fecha de cierre técnico | 2026-08-03 03:21:48 CEST |
+| Commit base exacto | `12be27f720c53f7ee95967e8024eade2d9dd198e` (PR #93 fusionado) |
+| Fecha de última revalidación | 2026-08-03 07:20:58 CEST |
 | Estado inicial | Worktree dedicado y limpio antes de implementar V2 |
-| Entorno | macOS, Node.js 24.16.0, Next.js 16.2.6 y PostgreSQL 16 desechable en Docker |
-| Fuentes consultadas | Código local y documentación oficial de Supabase; ninguna lectura de datos de producción |
-| Producción | No consultada, modificada ni desplegada |
-| Alcance de publicación | Commit y PR borrador autorizados; sin merge ni despliegue |
+| Entorno | macOS, Node.js 24.16.0, Next.js 16.2.6 y PostgreSQL 17 desechable en Docker |
+| Fuentes consultadas | Código local, documentación oficial, Vercel preview y Supabase staging con datos sintéticos |
+| Producción | No modificada ni desplegada |
+| Alcance de publicación | PR #92 actualizado sobre el bridge fusionado; sin merge ni despliegue de Rating V2 |
 
 El contrato funcional procede de `CURRENT_RATING_SYSTEM_AUDIT.md`, de la especificación de Rating System V2 y del requisito posterior de servidor central autoritativo.
 
 ## 2. Veredicto
 
-**Código local completo: sí. Activación productiva: todavía no. Fusión: pendiente de cerrar staging remoto y PR.**
+**Código local completo: sí. Staging remoto: aprobado. Activación productiva: todavía no. Fusión: pendiente de checks y despliegue coordinado del PR.**
 
-La implementación y sus 24 unidades SQL pasan en una base PostgreSQL 16 creada desde cero y vuelven a pasar al reaplicarlas con la activación diferida siempre en último lugar. También superan pruebas de dos clientes concurrentes. Las 23 migraciones aditivas se han aplicado en la rama Supabase de staging `iozcjirlfytryzrcmrnq`; la unidad 24 de cierre V1 no se ha aplicado. Antes de activar V2 en producción sigue siendo obligatorio cerrar la QA remota autenticada con Realtime, publicar/actualizar el PR borrador y solo después decidir la activación diferida.
+Las 24 migraciones aditivas están aplicadas en la rama Supabase de staging `iozcjirlfytryzrcmrnq`. La QA real con dos clientes descubrió que PostgreSQL/Supabase traducía el SQLSTATE `40001` de revisión obsoleta a HTTP 500, pudiendo agotar el timeout del gateway. La migración 24 corrige el transporte con `PT409`, conserva los permisos externos y encapsula 28 implementaciones internas no ejecutables por clientes. Tras aplicarla, una carrera autenticada produjo un único ganador, un conflicto `PT409`, reintento sobre la revisión confirmada y convergencia Realtime inequívoca en ambos dispositivos. El cierre V1 pasa a ser la unidad 25 y continúa diferido.
 
 El lint global continúa fallando por deuda previa fuera del alcance: 43 problemas, 23 errores y 20 avisos. El lint focalizado de todos los archivos nuevos de V2 pasa.
 
@@ -75,15 +75,13 @@ Las cartas, medias, historiales y niveles no se recalculan en cada lectura del n
 
 ## 4. Superficie de cambios
 
-Antes de preparar la publicación se confirmaron exactamente **38 rutas persistentes de implementación V2 modificadas o creadas**. El runbook operativo solicitado para el PR añadió una ruta documental y el endurecimiento previo a staging añade una guardia de emergencia diferida, por lo que el PR contiene **40 rutas únicas**:
+Después de rebasar Rating V2 sobre el `main` que ya contiene el PR #93 y añadir el conflicto HTTP determinista, el PR contiene **44 rutas persistentes únicas**:
 
-- 5 archivos existentes modificados: `app/globals.css`, `app/mercado/page.tsx`, `app/page.tsx`, `package.json`, `tests/rendered-html.test.mjs`.
+- 8 archivos existentes modificados: `app/globals.css`, `app/mercado/page.tsx`, `app/page.tsx`, `app/pwa-write-classifier.ts`, `package.json`, `supabase/pachangas.sql`, `tests/pwa-client-version-bridge.test.ts` y `tests/rendered-html.test.mjs`.
 - 5 archivos de aplicación nuevos: `app/api/ratings/assessment/route.ts`, `app/global-rating-panel.tsx`, `app/rating-assessment-contract.ts`, `app/rating-system-v2.ts`, `app/valorar-equipo/page.tsx`.
-- 23 migraciones SQL aditivas nuevas y 1 migración de cierre V1 diferida.
+- 24 migraciones SQL aditivas nuevas, 1 migración de cierre V1 diferida y 1 guardia de continuidad diferida.
 - 3 pruebas nuevas: `tests/rating-system-v2.test.ts`, `tests/rating-system-v2-db.sql`, `tests/rating-system-v2-concurrency.mjs`.
-- Este informe.
-- El runbook `docs/rating-system-v2-deployment-runbook.md`.
-- La guardia de continuidad `supabase/deferred-migrations/20260802203605_rating_v2_emergency_safe_hold.sql`, excluida del despliegue normal.
+- Este informe y el runbook `docs/rating-system-v2-deployment-runbook.md`.
 
 ## 5. Migraciones
 
@@ -112,15 +110,16 @@ Antes de preparar la publicación se confirmaron exactamente **38 rutas persiste
 | `20260802144400_rating_v2_snapshot_assignment_fix.sql` | Corrección de asignación de columnas al crear snapshots de partido. |
 | `20260802144500_rating_v2_restoration_semantics.sql` | Restaura la evidencia original sin crear voto ni peso nuevo y separa `opinion_created_at` de `restored_at`. |
 | `20260802144600_rating_v2_canonical_ordering.sql` | Lectura canónica de snapshots y órdenes deterministas mediante secuencia, revisión o fecha más ID estable. |
-| `deferred-migrations/20260802144700_rating_v2_legacy_write_closure.sql` | Activación diferida: revoca RPC antiguas y `UPDATE` directo solo cuando el frontend V2 ya está verificado. |
+| `20260803052408_rating_v2_http_conflicts.sql` | Compatibilidad para instalaciones ya migradas: encapsula 28 RPC V2, traduce revisión/lock obsoleto a HTTP 409 y mantiene las implementaciones internas sin permisos de cliente. |
+| `deferred-migrations/20260802144700_rating_v2_legacy_write_closure.sql` | Unidad 25 de activación diferida: revoca RPC antiguas y `UPDATE` directo solo cuando el frontend V2 ya está verificado. |
 
-Las 23 migraciones aditivas se aplican primero. La unidad 24 se valida después como activación separada y no forma parte de un `supabase db push` ordinario. Esta separación evita romper V1 antes de desplegar V2; el procedimiento completo está en `docs/rating-system-v2-deployment-runbook.md`.
+Las 24 migraciones aditivas se aplican primero. La unidad 25 se valida después como activación separada y no forma parte de un `supabase db push` ordinario. Esta separación evita romper V1 antes de desplegar V2; el procedimiento completo está en `docs/rating-system-v2-deployment-runbook.md`.
 
-`deferred-migrations/20260802203605_rating_v2_emergency_safe_hold.sql` tampoco forma parte de las 24 unidades de despliegue. Es una guardia de incidente: mantiene V1 y `UPDATE` directo revocados y garantiza únicamente la RPC V2 de asistencia para un frontend temporal de mantenimiento. Debe convertirse en una migración nueva y ensayarse en staging antes de cualquier uso.
+`deferred-migrations/20260802203605_rating_v2_emergency_safe_hold.sql` tampoco forma parte de las 25 unidades de despliegue. Es una guardia de incidente: mantiene V1 y `UPDATE` directo revocados y garantiza únicamente la RPC V2 de asistencia para un frontend temporal de mantenimiento. Debe convertirse en una migración nueva y ensayarse en staging antes de cualquier uso.
 
 ### 5.1 Artefactos preexistentes
 
-Se compararon expresamente `supabase/.temp/cli-latest` y `tsconfig.tsbuildinfo` con el commit base `abcd7d25f00959afb405b68bd56f02c2058e1fe2`. Ninguna de las dos rutas existe en ese commit y ninguna existe en el worktree final; por tanto, el estado fiel al base es su ausencia. No aparecen en `git diff`, `git status` ni entre las 40 rutas del PR.
+Se compararon expresamente `supabase/.temp/cli-latest` y `tsconfig.tsbuildinfo` con el commit base `12be27f720c53f7ee95967e8024eade2d9dd198e`. Ninguna de las dos rutas aparece en el diff del PR ni en el estado final esperado; tampoco forman parte de sus 44 rutas.
 
 ### 5.2 Orden canónico auditado
 
@@ -291,25 +290,25 @@ Después de cada carrera, dos actores vuelven a leer PostgreSQL y obtienen exact
 
 | Comprobación | Resultado |
 | --- | --- |
-| `npm test` | PASS: build, 5 pruebas de rutas y 37 pruebas TypeScript, 42 en total. |
-| `tests/rating-system-v2.test.ts` | PASS: 21 pruebas unitarias, de propiedades y contrato. |
+| `npm test` | PASS: build, 5 pruebas de rutas y 52 pruebas TypeScript, 57 en total. |
+| `tests/rating-system-v2.test.ts` | PASS: 22 pruebas unitarias, de propiedades y contrato. |
 | `npm run test:rating-v2:db` | PASS: seguridad, RLS, privacidad, fórmulas, legado, idempotencia, restauración A-B y empate de snapshots dentro de transacción. |
 | `npm run test:rating-v2:concurrency` | PASS: 8 carreras/convergencias y diario ordenado. |
 | Contrato documental previo a staging | PASS: 5/5 pruebas sobre versionado de cliente, actualización PWA, silencio V1, timeouts, volumen, restauración y ausencia de reapertura directa. |
-| Guardia de emergencia en PostgreSQL 16 local | PASS tras esquema completo + 23 migraciones + unidad 24 + guardia: `UPDATE` directo es falso; las 10 RPC V1 son falsas para `anon` y `authenticated`; solo la asistencia autoritativa V2 permanece ejecutable para `authenticated`. |
+| Guardia de emergencia en PostgreSQL 17 local | PASS tras esquema completo + 24 migraciones aditivas + unidad 25 + guardia: `UPDATE` directo es falso; las implementaciones internas de 28 RPC no son ejecutables por `anon` ni `authenticated`; solo la asistencia autoritativa V2 permanece ejecutable para `authenticated`. |
 | SQL/RLS después de la guardia | PASS: batería completa en la base desechable, incluida privacidad, idempotencia, restauración y snapshots. |
 | Concurrencia después de la guardia | PASS: 8 casos, incluida selección canónica con el mismo timestamp, y revisión final convergente. |
 | Restauración A-B | PASS: vuelve la primera evidencia con fecha/peso originales, sin voto nuevo; `restoredAt` separado y desbloqueo calculado desde la segunda opinión emitida. |
 | Snapshots con timestamp idéntico | PASS: RPC, lectura RLS y dos conexiones seleccionan el mismo ID; otro miembro no puede leerlo. |
 | Auditoría del catálogo SQL | PASS: ninguna función final depende solo de fecha descendente para elegir el último registro. |
-| Base PostgreSQL 16 desde cero | PASS con 23 migraciones aditivas y la activación diferida aplicada como unidad 24. |
+| Base PostgreSQL 17 desde cero | PASS con 24 migraciones aditivas y la activación diferida aplicada localmente como unidad 25. |
 | Reaplicación completa de migraciones | PASS sobre la misma base con datos V2, manteniendo la activación como último paso. |
 | `npx tsc --noEmit --incremental false` | PASS. |
 | Build Next.js | PASS; 19 rutas, incluida `/api/ratings/assessment` y `/valorar-equipo`. |
 | Lint focalizado V2 | PASS. |
 | Lint global | FAIL esperado: 43 problemas preexistentes, 23 errores y 20 avisos. |
 | `git diff --check` | PASS final. |
-| `git status --porcelain=v1 -uall` | Checkpoint previo al runbook: 38 rutas. PR endurecido: 40 rutas únicas, incluidas documentación operativa y guardia de emergencia. |
+| `git status --porcelain=v1 -uall` | El cierre debe contener 44 rutas persistentes del PR y ningún script temporal de QA. |
 | Limpieza local | PASS: bootstrap temporal eliminado, contenedor PostgreSQL desechable retirado y sin `supabase/.temp/cli-latest` ni `tsconfig.tsbuildinfo`. |
 
 La base SQL fue exclusivamente local y desechable. Se utilizaron stubs locales de `auth` y la publicación de Realtime necesaria para simular el esquema de Supabase. No se usó ninguna credencial ni dato remoto.
@@ -318,7 +317,10 @@ La base SQL fue exclusivamente local y desechable. Se utilizaron stubs locales d
 
 | Comprobación | Resultado |
 | --- | --- |
-| `npm test` | PASS: build Next.js, TypeScript de Next, 5 pruebas HTML/rutas y 37 pruebas TS. |
+| Base e integración del bridge | PASS: PR #93 fusionado en `main` (`12be27f720c53f7ee95967e8024eade2d9dd198e`); PR #92 rebasado encima y conserva el contrato de versión/escritura. |
+| Preview V2 | PASS: deployment `dpl_pgKLgSh4CKB4jhgziwvX62KBe7mn`, conectado exclusivamente al proyecto Supabase de staging `iozcjirlfytryzrcmrnq`. |
+| Estado remoto revalidado | PASS en lectura: preview Vercel `READY` para `442a2196ad97a0c7ad392bd5c84d5e8bbffd809f`; rama Supabase `pwa-bridge-staging` (`iozcjirlfytryzrcmrnq`) `ACTIVE_HEALTHY`. |
+| `npm test` | PASS: build Next.js, TypeScript de Next, 5 pruebas HTML/rutas y 52 pruebas TS; 57 en total. |
 | Supabase staging `iozcjirlfytryzrcmrnq` en solo lectura | PASS: PostgreSQL 17.6, 500 grupos sintéticos `V2V%`, 10.000 perfiles, 250.000 evidencias y 4 snapshots. |
 | Timeouts de RPC V2 en staging | PASS: las RPC V2 autoritativas inspeccionadas exponen `lock_timeout=750ms`; también `record_pachanga_guest_team_rating_token_v2` y `void_my_pachanga_individual_rating_v2`. |
 | Snapshot de partido en staging | PASS: `snapshot_pachanga_match_ratings_v2` usa los valores calculados del `result`, no referencias ambiguas del nombre de función. |
@@ -327,14 +329,23 @@ La base SQL fue exclusivamente local y desechable. Se utilizaron stubs locales d
 | Lint global | FAIL esperado: 43 problemas preexistentes, 23 errores y 20 avisos en `app/legal-data.tsx`, `app/mercado/page.tsx`, `app/page.tsx` y `app/theme-toggle.tsx`. |
 | Lint focalizado de `app/page.tsx` | FAIL esperado por deuda previa del archivo grande; no se corrige aquí para no mezclar UI/pizarra/efectos con Rating V2. |
 | `git diff --check` | PASS. |
-| Concurrencia SQL local | No reejecutada en esta vuelta: `RATING_V2_DATABASE_URL` no está cargada en el entorno actual. |
+| Concurrencia SQL local | PASS en PostgreSQL 17: 8/8 carreras, selección canónica con timestamp idéntico y revisión/evento final `8`. |
 | QA HTTP del preview protegido | Bloqueada por Vercel SSO en lectura automática; el preview de PR #93 existe y está READY, pero el fetch de `/api/client-policy` redirige a SSO incluso con URL temporal. |
+| Dos usuarios autenticados y Realtime | PASS: dos cuentas y dos conexiones independientes completaron valoración, replay idempotente, asistencia concurrente, rechazo obsoleto, reintento y dos convergencias Realtime con datos sintéticos. |
+| Conflicto HTTP determinista | PASS local: PostgreSQL 17 + PostgREST 14 devolvieron HTTP 409/`PT409` inmediatamente; la implementación interna de las 28 RPC quedó denegada para `authenticated`. |
+| Migración `20260803052408_rating_v2_http_conflicts.sql` | PASS local y en staging. El historial remoto la registra como versión `20260803050527`, nombre `rating_v2_http_conflicts`. |
+| Matriz de permisos posterior | PASS en staging: 28 implementaciones `_impl`, 28 denegadas a `anon`, 28 denegadas a `authenticated` y 28 wrappers públicos con firma correspondiente. |
+| Carrera HTTP posterior a migración | PASS: revisión compartida `6`, confirmada `8`; un ganador en 99 ms, un `PT409` en 140 ms, reintento idempotente y dos eventos recibidos por cada dispositivo. Convergencia Realtime en 51 ms y 359 ms. |
+| Valoración posterior a migración | PASS: primera valoración B->A en revisión `8`, confirmada `9`; un evento Realtime en 563 ms y replay idempotente sin nueva revisión. |
+| Arranque en frío de Realtime | OBSERVADO: el primer intento se suscribió mientras arrancaba la replicación del tenant y no recibió el primer evento dentro de 10 s. Tras esperar la disponibilidad del stream, la misma prueba pasó completa; no hubo divergencia de datos. |
+| Limpieza de QA | PASS: eliminadas en transacción las evidencias, snapshots, eventos, grupo y dos usuarios sintéticos exactos; verificación final `groups_remaining=0`, `users_remaining=0`, `evidence_remaining=0`. |
+| Historial de migraciones de staging | PASS: las 24 migraciones aditivas V2 constan aplicadas; la unidad 25 de cierre V1 no se aplicó. |
 
 ## 14. Riesgos y siguiente paso
 
-1. Mantener las 23 migraciones aditivas aplicadas en Supabase staging `iozcjirlfytryzrcmrnq`; la unidad 24 de cierre V1 se activa después y por separado.
-2. Ejecutar QA autenticada con dos usuarios y Realtime para confirmar el recorrido navegador, API, PostgreSQL y vuelta al navegador cuando estén disponibles la URL/key de staging o una sesión de navegador autorizada.
-3. Seguir `docs/rating-system-v2-deployment-runbook.md`: frontend V2 antes de la revocación final V1, con observación de CPU, locks, errores de revisión y latencia de Realtime.
+1. Publicar este cierre en el PR #92 y completar sus checks.
+2. Antes de fusionar un PR que despliegue automáticamente a producción, verificar la referencia exacta de Supabase y aplicar de forma coordinada solo las 24 migraciones aditivas; esta transición requiere autorización explícita de producción.
+3. Desplegar el frontend V2 únicamente cuando sus RPC estén disponibles. Mantener la unidad 25 de cierre V1 separada hasta la fase de activación específica.
 4. Definir con criterio futbolístico el cuestionario y la fórmula específica de porteros antes de habilitarlos en V2.
 5. Completar el flujo persistido de hábitos y limitaciones si se desea que los modificadores actuales sean editables por el jugador.
 
@@ -345,10 +356,10 @@ El despliegue no forma parte de esta tarea. No se ha modificado producción ni s
 El runbook incorpora tres nuevas puertas obligatorias, sin sustituir ninguna fase anterior:
 
 1. **Compatibilidad PWA:** `clientVersion` es SemVer del bundle más SHA; `minimumSupportedClientVersion` es una política `no-store` del servidor. Un release puente V1 debe instrumentar las escrituras y actualizar el Service Worker de forma controlada antes de elevar el mínimo a V2.
-2. **Silencio V1:** para despliegues con usuarios reales, la unidad 24 exige cero escrituras V1 y cero clientes sin versión durante 24 horas en staging y 7 días naturales en producción. En el lanzamiento preusuarios autorizado el owner dispensa esa espera porque no hay usuarios reales ni PWAs activas; se sustituye por una prueba controlada de PWA antigua, CORS, autenticación, offline, reconexión y Realtime.
+2. **Silencio V1:** para despliegues con usuarios reales, la unidad 25 exige cero escrituras V1 y cero clientes sin versión durante 24 horas en staging y 7 días naturales en producción. En el lanzamiento preusuarios autorizado el owner dispensa esa espera porque no hay usuarios reales ni PWAs activas; se sustituye por una prueba controlada de PWA antigua, CORS, autenticación, offline, reconexión y Realtime.
 3. **Rollback seguro:** la guardia diferida no reabre V1 ni `UPDATE` directo. Mantiene únicamente asistencia por la RPC V2 autoritativa para un frontend mínimo de mantenimiento, priorizando mantenimiento o roll-forward.
 4. **Volumen y recuperación:** staging debe registrar duración, filas, locks, CPU e índices por migración, ejecutar el backfill con volumen representativo y restaurar realmente un backup en un destino aislado.
 
-Estas puertas están **documentadas y cubiertas por una prueba contractual local**. El bridge PWA ya completó su staging controlado en el PR #93 y permanece separado de Rating V2. La carga representativa de V2 se ejecutó sobre la rama Supabase de staging y detectó dos mejoras incorporadas al SQL: backfill por sincronización diferida/set-based y rechazo rápido ante locks. Queda pendiente cerrar la concurrencia remota final y la QA de navegador de V2 antes de considerar fusionable la rama.
+Estas puertas están **documentadas y cubiertas por pruebas locales y staging**. El bridge PWA completó su staging controlado y fue fusionado primero mediante el PR #93. Rating V2 está rebasado sobre ese `main`. La carga representativa de V2 se ejecutó sobre la rama Supabase de staging y detectó mejoras incorporadas al SQL: backfill set-based, rechazo rápido ante locks y conflicto HTTP 409 explícito para revisiones obsoletas. La migración correctora y la carrera remota final ya pasaron; staging queda aprobado.
 
-La guardia sí fue aplicada localmente sobre PostgreSQL 16 después de todo el recorrido de migraciones. La matriz observada fue inequívoca: las diez escrituras V1 quedaron denegadas para `anon` y `authenticated`, `authenticated` no tuvo `UPDATE` sobre `pachanga_groups` y conservó únicamente `EXECUTE` sobre la RPC V2 de asistencia. Esto valida el SQL y su mínimo de permisos, pero no sustituye el ensayo de staging con una PWA V1 real, telemetría, carga ni restauración.
+La guardia sí fue aplicada localmente sobre PostgreSQL 17 después de las 24 migraciones aditivas y la unidad 25. La matriz observada fue inequívoca: las 28 implementaciones internas quedaron denegadas para `anon` y `authenticated`, `authenticated` no tuvo `UPDATE` sobre `pachanga_groups` y conservó únicamente `EXECUTE` sobre la RPC V2 de asistencia. La guardia continúa fuera del flujo normal y no se ha aplicado en staging ni producción.

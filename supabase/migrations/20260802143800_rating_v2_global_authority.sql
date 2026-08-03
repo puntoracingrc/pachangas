@@ -42,7 +42,7 @@ begin
   where groups.id = target_group_id for update;
   if not found then raise exception 'Group not found'; end if;
   if current_group.payload_revision <> expected_revision then
-    raise exception 'Server revision is newer. Reload the confirmed state.' using errcode = '40001';
+    raise exception 'Server revision is newer. Reload the confirmed state.' using errcode = 'PT409';
   end if;
   if not current_group.ratings_enabled then raise exception 'Ratings are disabled for this group'; end if;
   if not exists (
@@ -157,7 +157,7 @@ begin
   where groups.id = target_group_id for update;
   if not found then raise exception 'Group not found'; end if;
   if current_group.payload_revision <> expected_revision then
-    raise exception 'Server revision is newer. Reload the confirmed state.' using errcode = '40001';
+    raise exception 'Server revision is newer. Reload the confirmed state.' using errcode = 'PT409';
   end if;
   if not current_group.ratings_enabled then raise exception 'Ratings are disabled for this group'; end if;
   if not exists (

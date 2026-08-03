@@ -14,18 +14,18 @@ Advertencias obligatorias:
 
 La entrega queda separada físicamente:
 
-- `supabase/migrations/`: 23 migraciones aditivas y compatibles con V1.
-- `supabase/deferred-migrations/20260802144700_rating_v2_legacy_write_closure.sql`: unidad 24, destructiva para clientes V1 y deliberadamente excluida de `db push`.
+- `supabase/migrations/`: 24 migraciones aditivas y compatibles con V1. La número 24 traduce conflictos de revisión/lock a HTTP 409 para instalaciones donde las RPC V2 originales ya existen.
+- `supabase/deferred-migrations/20260802144700_rating_v2_legacy_write_closure.sql`: unidad 25, destructiva para clientes V1 y deliberadamente excluida de `db push`.
 - `supabase/deferred-migrations/20260802203605_rating_v2_emergency_safe_hold.sql`: guardia de continuidad versionada, fuera del flujo normal y también excluida de `db push`.
 
-No se debe mover la unidad 24 a `supabase/migrations/` hasta la fase 5 y debe hacerse en un PR de activación independiente.
+No se debe mover la unidad 25 a `supabase/migrations/` hasta la fase 5 y debe hacerse en un PR de activación independiente.
 
-La guardia de emergencia no es una migración 25: no forma parte del despliegue normal, no devuelve autoridad a V1 y no se aplica salvo incidente aprobado y ensayo previo en staging.
+La guardia de emergencia no es una migración 26: no forma parte del despliegue normal, no devuelve autoridad a V1 y no se aplica salvo incidente aprobado y ensayo previo en staging.
 
 PRs relacionados:
 
 - Rating System V2: https://github.com/puntoracingrc/pachangas/pull/92
-- Release puente PWA/client version: https://github.com/puntoracingrc/pachangas/pull/93
+- Release puente PWA/client version: https://github.com/puntoracingrc/pachangas/pull/93 (fusionado primero en `main`, SHA `12be27f720c53f7ee95967e8024eade2d9dd198e`)
 
 ### 1.1 Contrato permanente server-authoritative
 
@@ -72,7 +72,7 @@ Hay otros proyectos en Supabase y Vercel: no continuar si la referencia, organiz
 ## 3. Preflight
 
 1. Congelar otros cambios de esquema y elegir una ventana con un único operador de base de datos.
-2. Confirmar que el commit contiene 23 archivos en `supabase/migrations/` y una activación en `supabase/deferred-migrations/`.
+2. Confirmar que el commit contiene 24 archivos en `supabase/migrations/` y una activación en `supabase/deferred-migrations/`.
 3. Confirmar que la activación diferida no aparece en la salida de `supabase db push --dry-run`.
 4. Ejecutar y guardar:
 
@@ -111,8 +111,8 @@ La implementación del bridge, su endpoint `no-store` y la telemetría son requi
 ### Staging
 
 1. Enlazar exclusivamente el proyecto de staging.
-2. Revisar el `--dry-run`: debe listar las 23 migraciones aditivas y nunca la activación diferida.
-3. Aplicar las 23 migraciones primero en una copia restaurada y con volumen representativo, registrando la ficha de la sección 14 para cada archivo.
+2. Revisar el `--dry-run`: debe listar las 24 migraciones aditivas y nunca la activación diferida.
+3. Aplicar las 24 migraciones primero en una copia restaurada y con volumen representativo, registrando la ficha de la sección 14 para cada archivo.
 4. Usar `SET LOCAL lock_timeout = '3s'` y `SET LOCAL statement_timeout = '60s'` en DDL/permisos. Para el backfill se permite hasta `15min` solo si el ensayo confirma progreso, ausencia de bloqueos y duración esperada; en caso contrario se divide en lotes antes de producción.
 5. Verificar que las RPC V2 existen y que las RPC V1 siguen ejecutables para `authenticated`.
 6. Ejecutar pruebas SQL/RLS y concurrencia contra staging con datos sintéticos.
@@ -121,7 +121,7 @@ La implementación del bridge, su endpoint `no-store` y la telemetría son requi
 
 ### Producción
 
-Solo después de aprobar staging, su prueba de restauración y su ensayo de volumen, repetir el `--dry-run` con la referencia de producción verificada. Aplicar únicamente las 23 migraciones aditivas. El frontend V1 debe seguir funcionando durante esta fase. No improvisar un timeout mayor durante producción: una migración que exceda el valor ensayado se detiene y se rediseña.
+Solo después de aprobar staging, su prueba de restauración y su ensayo de volumen, repetir el `--dry-run` con la referencia de producción verificada. Aplicar únicamente las 24 migraciones aditivas. El frontend V1 debe seguir funcionando durante esta fase. No improvisar un timeout mayor durante producción: una migración que exceda el valor ensayado se detiene y se rediseña.
 
 ## 5. Fase 2: frontend V2 en staging
 
@@ -129,7 +129,7 @@ Solo después de aprobar staging, su prueba de restauración y su ensayo de volu
 2. Confirmar que no contiene claves `service_role` ni apunta a producción.
 3. Verificar que el navegador envía solo intención, `operationId` y `expectedRevision`.
 4. Confirmar que la respuesta reemplaza la previsualización con `confirmedRevision`, `serverSequence` y snapshot canónico.
-5. Mantener V1 disponible; todavía no ejecutar la unidad 24.
+5. Mantener V1 disponible; todavía no ejecutar la unidad 25.
 6. Confirmar que el bundle expone su `clientVersion`, obtiene la política con `no-store` y adjunta versión/SW a toda escritura.
 7. Con un mínimo superior al cliente, verificar que las lecturas continúan y que las escrituras quedan bloqueadas con actualización obligatoria.
 8. Verificar una actualización controlada del Service Worker: worker nuevo en espera, pausa de escrituras, `SKIP_WAITING`, un único `controllerchange` y una única recarga.
@@ -143,7 +143,7 @@ Usar al menos dos usuarios y dos sesiones independientes. Deben pasar:
 - resumen social oculto con 0, 1 y 2 evaluadores, visible con 3;
 - assessment inicial y avanzado de una sola ejecución;
 - asistencia, alineación, pago, goleadores y finalización concurrentes;
-- rechazo de una revisión obsoleta y recarga del snapshot oficial;
+- rechazo de una revisión obsoleta como HTTP 409/`PT409`, sin timeout, y recarga del snapshot oficial;
 - reconexión y Realtime con convergencia de ambos clientes;
 - restauración A->B sin voto, peso ni fecha de opinión nuevos;
 - selección idéntica del último snapshot cuando varios comparten `created_at`;
@@ -158,9 +158,25 @@ Usar al menos dos usuarios y dos sesiones independientes. Deben pasar:
 
 Guardar evidencias sin PII: SHA, operación, revisiones, secuencias, resultado y capturas de staging.
 
+### 6.1 Evidencia de staging aprobada (3 de agosto de 2026)
+
+| Dato | Evidencia |
+| --- | --- |
+| Supabase staging | Rama `pwa-bridge-staging`, ref `iozcjirlfytryzrcmrnq`, estado `ACTIVE_HEALTHY`. |
+| Frontend probado | Preview Vercel `dpl_pgKLgSh4CKB4jhgziwvX62KBe7mn`, commit funcional `442a2196ad97a0c7ad392bd5c84d5e8bbffd809f`, conectado exclusivamente a staging. |
+| Migraciones | 24 aditivas aplicadas; `rating_v2_http_conflicts` registrada como `20260803050527`. Unidad 25 no aplicada. |
+| Permisos internos | 28 funciones `_impl`; `anon` y `authenticated` sin `EXECUTE` sobre las 28; 28 wrappers públicos coincidentes. |
+| Concurrencia | Desde revisión `6`: un dispositivo confirmado, otro rechazado con `PT409`, reintento sobre estado canónico y revisión final `8`. |
+| Realtime | Dos eventos recibidos por cada dispositivo; convergencias observadas en 51 ms y 359 ms. |
+| Valoración | Primera valoración B->A confirmada de revisión `8` a `9`, evento Realtime en 563 ms y replay idempotente. |
+| Datos sintéticos | Grupo, usuarios y evidencias exactos eliminados transaccionalmente; verificación final a cero. |
+| Producción | No modificada. |
+
+El primer intento de Realtime coincidió con el arranque en frío de la replicación del tenant: ambos clientes alcanzaron `SUBSCRIBED`, pero el stream no entregó el primer evento dentro de 10 segundos. Tras esperar la disponibilidad del stream, la prueba completa pasó sin cambiar la lógica de negocio. Esta observación no se interpreta como éxito silencioso: los clientes siempre recargaron el snapshot canónico y nunca divergieron.
+
 ## 7. Fase 4: activación controlada de V2
 
-1. Aplicar primero las 23 migraciones aditivas en producción y comprobar V1.
+1. Aplicar primero las 24 migraciones aditivas en producción y comprobar V1.
 2. Desplegar/promover el frontend V2 exacto.
 3. Hacer smoke autenticado inmediato con un grupo sintético o controlado.
 4. Observar durante la ventana acordada errores RPC, revisiones obsoletas, CPU, locks y Realtime. En el lanzamiento preusuarios, esta observación se limita a QA controlada de staging porque no existe tráfico real que esperar.
@@ -208,7 +224,7 @@ Comprobar y registrar:
 
 ### Antes de la fase 5
 
-Revertir únicamente el frontend a V1. Las 23 migraciones son aditivas y se conservan para evitar pérdida de historial.
+Revertir únicamente el frontend a V1. Las 24 migraciones son aditivas y se conservan para evitar pérdida de historial.
 
 ### Después de la fase 5
 
@@ -241,7 +257,7 @@ La activación solo se considera cerrada cuando frontend, PostgreSQL, Realtime y
 
 La telemetría usa hora y secuencia del servidor. No acepta la hora del dispositivo como orden. Debe poder agrupar por `clientVersion`, `serviceWorkerVersion`, tipo de RPC, resultado y modo instalado. Un `installationId` aleatorio puede correlacionar una instalación, pero no se guarda nombre, correo, respuesta de assessment, resultado deportivo ni payload.
 
-Consulta mínima de autorización para la unidad 24:
+Consulta mínima de autorización para la unidad 25:
 
 | Señal | Umbral para continuar | Umbral de parada |
 | --- | --- | --- |
@@ -276,7 +292,7 @@ Procedimiento:
 
 1. restaurar una copia compatible en un proyecto aislado o crear el dataset sintético con la misma distribución de tamaños JSON, miembros, partidos y evidencias; seguir [Database Backups](https://supabase.com/docs/guides/platform/backups) y [Backup and Restore using the CLI](https://supabase.com/docs/guides/platform/migrating-within-supabase/backup-restore);
 2. registrar conteos, `pg_total_relation_size`, `pg_indexes_size`, CPU, conexiones y locks antes del primer archivo;
-3. aplicar las 23 migraciones una a una en el ensayo, capturando hora del servidor, duración, filas afectadas, locks máximos, CPU máxima y crecimiento de índices;
+3. aplicar las 24 migraciones una a una en el ensayo, capturando hora del servidor, duración, filas afectadas, locks máximos, CPU máxima y crecimiento de índices;
 4. repetir el backfill con actividad concurrente de lectura y escritura equivalente al pico previsto;
 5. validar conteos, restricciones, RLS, snapshots canónicos y convergencia de dos clientes;
 6. crear un backup posterior y restaurarlo en otro destino aislado; comprobar los mismos conteos y una muestra determinista de hashes/snapshots;
@@ -286,7 +302,7 @@ Los timeouts se fijan con `SET LOCAL` dentro de la transacción ensayada. No se 
 
 ## 14. Ficha de evidencia por migración
 
-Completar una fila por cada una de las 23 migraciones y otra para la unidad 24 en su ensayo independiente:
+Completar una fila por cada una de las 24 migraciones y otra para la unidad 25 en su ensayo independiente:
 
 | Migración | Inicio/fin servidor | Duración | Filas antes/después/afectadas | Lock máximo | CPU base/máxima | Índices antes/después | Resultado/decisión |
 | --- | --- | ---: | --- | ---: | --- | --- | --- |

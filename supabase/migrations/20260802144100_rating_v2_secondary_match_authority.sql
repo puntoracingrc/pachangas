@@ -30,7 +30,7 @@ begin
   for update;
   if not found then raise exception 'Group not found'; end if;
   if current_group.payload_revision <> expected_revision then
-    raise exception 'Server revision is newer. Reload the confirmed state.' using errcode = '40001';
+    raise exception 'Server revision is newer. Reload the confirmed state.' using errcode = 'PT409';
   end if;
 
   perform public.patch_pachanga_match_player_paid(
@@ -75,7 +75,7 @@ begin
   for update;
   if not found then raise exception 'Group not found'; end if;
   if current_group.payload_revision <> expected_revision then
-    raise exception 'Server revision is newer. Reload the confirmed state.' using errcode = '40001';
+    raise exception 'Server revision is newer. Reload the confirmed state.' using errcode = 'PT409';
   end if;
 
   perform public.patch_pachanga_match_scorers(
@@ -130,7 +130,7 @@ begin
   for update;
   if not found then raise exception 'Group not found'; end if;
   if current_group.payload_revision <> expected_revision then
-    raise exception 'Server revision is newer. Reload the confirmed state.' using errcode = '40001';
+    raise exception 'Server revision is newer. Reload the confirmed state.' using errcode = 'PT409';
   end if;
 
   select matches.value into selected_match
@@ -208,7 +208,7 @@ begin
   for update;
   if not found then raise exception 'Group not found'; end if;
   if current_group.payload_revision <> expected_revision then
-    raise exception 'Server revision is newer. Reload the confirmed state.' using errcode = '40001';
+    raise exception 'Server revision is newer. Reload the confirmed state.' using errcode = 'PT409';
   end if;
 
   perform public.review_pachanga_open_match_request(target_request_id, next_status, operation_id);
@@ -257,7 +257,7 @@ begin
     return replay;
   end if;
   if selected_open.source_payload_revision <> expected_match_revision then
-    raise exception 'Match revision is newer. Reload the confirmed state.' using errcode = '40001';
+    raise exception 'Match revision is newer. Reload the confirmed state.' using errcode = 'PT409';
   end if;
 
   select * into current_group

@@ -29,7 +29,7 @@ begin
   for update;
   if not found then raise exception 'Group not found'; end if;
   if current_group.payload_revision <> expected_revision then
-    raise exception 'Server revision is newer. Reload the confirmed state.' using errcode = '40001';
+    raise exception 'Server revision is newer. Reload the confirmed state.' using errcode = 'PT409';
   end if;
 
   ignored_result := public.patch_pachanga_player_profile_v2(
@@ -85,7 +85,7 @@ begin
   for update;
   if not found then raise exception 'Group not found'; end if;
   if current_group.payload_revision <> expected_revision then
-    raise exception 'Server revision is newer. Reload the confirmed state.' using errcode = '40001';
+    raise exception 'Server revision is newer. Reload the confirmed state.' using errcode = 'PT409';
   end if;
 
   ignored_result := public.upsert_pachanga_own_player_profile_v2(

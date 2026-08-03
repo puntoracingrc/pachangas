@@ -32,7 +32,7 @@ begin
     raise exception 'Only group admins can create guests';
   end if;
   if current_group.payload_revision <> expected_revision then
-    raise exception 'Server revision is newer. Reload the confirmed state.' using errcode = '40001';
+    raise exception 'Server revision is newer. Reload the confirmed state.' using errcode = 'PT409';
   end if;
 
   guest_id := public.create_pachanga_guest_identity_v2(target_group_id, display_name, contact_hint);
@@ -80,7 +80,7 @@ begin
   for update;
   if not found then raise exception 'Group not found'; end if;
   if current_group.payload_revision <> expected_revision then
-    raise exception 'Server revision is newer. Reload the confirmed state.' using errcode = '40001';
+    raise exception 'Server revision is newer. Reload the confirmed state.' using errcode = 'PT409';
   end if;
   if not exists (
     select 1 from public.pachanga_guest_identities guests
@@ -135,7 +135,7 @@ begin
   for update;
   if not found then raise exception 'Group not found'; end if;
   if current_group.payload_revision <> expected_revision then
-    raise exception 'Server revision is newer. Reload the confirmed state.' using errcode = '40001';
+    raise exception 'Server revision is newer. Reload the confirmed state.' using errcode = 'PT409';
   end if;
   if not exists (
     select 1 from public.pachanga_guest_identities guests

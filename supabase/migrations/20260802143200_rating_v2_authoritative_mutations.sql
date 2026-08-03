@@ -37,7 +37,7 @@ begin
   if replay is not null then return replay; end if;
 
   if current_group.payload_revision <> expected_revision then
-    raise exception 'Server revision is newer. Reload the confirmed state.' using errcode = '40001';
+    raise exception 'Server revision is newer. Reload the confirmed state.' using errcode = 'PT409';
   end if;
   if not current_group.ratings_enabled then
     raise exception 'Ratings are disabled for this group';
@@ -110,7 +110,7 @@ begin
   for update;
   if not found then raise exception 'Group not found'; end if;
   if current_group.payload_revision <> expected_revision then
-    raise exception 'Server revision is newer. Reload the confirmed state.' using errcode = '40001';
+    raise exception 'Server revision is newer. Reload the confirmed state.' using errcode = 'PT409';
   end if;
 
   legacy_result := public.set_pachanga_group_ratings_enabled_v2(

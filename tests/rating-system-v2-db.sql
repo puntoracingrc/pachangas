@@ -233,7 +233,7 @@ begin
       group_id, 'zero', comparisons, gen_random_uuid(), initial_revision, '{}'
     );
     raise exception 'Stale revision unexpectedly succeeded';
-  exception when serialization_failure then null;
+  exception when sqlstate 'PT409' then null;
   end;
 end;
 $$;
