@@ -79,7 +79,7 @@ Después de rebasar Rating V2 sobre el `main` que ya contiene el PR #93 y añadi
 
 - 8 archivos existentes modificados: `app/globals.css`, `app/mercado/page.tsx`, `app/page.tsx`, `app/pwa-write-classifier.ts`, `package.json`, `supabase/pachangas.sql`, `tests/pwa-client-version-bridge.test.ts` y `tests/rendered-html.test.mjs`.
 - 5 archivos de aplicación nuevos: `app/api/ratings/assessment/route.ts`, `app/global-rating-panel.tsx`, `app/rating-assessment-contract.ts`, `app/rating-system-v2.ts`, `app/valorar-equipo/page.tsx`.
-- 24 migraciones SQL aditivas nuevas, 1 migración de cierre V1 diferida y 1 guardia de continuidad diferida.
+- 24 migraciones SQL aditivas, 1 migración de cierre V1 aplicada y 1 guardia de continuidad diferida.
 - 3 pruebas nuevas: `tests/rating-system-v2.test.ts`, `tests/rating-system-v2-db.sql`, `tests/rating-system-v2-concurrency.mjs`.
 - Este informe y el runbook `docs/rating-system-v2-deployment-runbook.md`.
 
@@ -87,41 +87,47 @@ Después de rebasar Rating V2 sobre el `main` que ya contiene el PR #93 y añadi
 
 | Migración | Responsabilidad principal |
 | --- | --- |
-| `20260802105905_rating_system_v2_schema.sql` | Modelo normalizado, evidencias, snapshots, invitados, equipos externos, restricciones, índices y RLS inicial. |
-| `20260802105906_rating_system_v2_functions.sql` | Fórmulas V2, elegibilidad, recálculo, snapshots, global, invitados y preservación histórica. |
-| `20260802105907_rating_system_v2_backfill.sql` | Backfill conservador e idempotente del legado sin inventar autores ni observaciones. |
-| `20260802105908_rating_system_v2_assessments.sql` | Persistencia de assessments calculados por el motor TypeScript compartido. |
-| `20260802131048_rating_system_v2_hardening.sql` | Anonimato, mínimo social de tres evaluadores, interruptor por grupo y calibración externa. |
-| `20260802143000_rating_v2_authority_foundation.sql` | Revisiones, metadatos, secuencia del servidor, recibos y snapshots canónicos. |
-| `20260802143100_rating_v2_privacy_reads.sql` | Lecturas privadas, resumen agregado y moderación mediante identificador opaco. |
-| `20260802143200_rating_v2_authoritative_mutations.sql` | Valoración individual y configuración de valoraciones con revisión e idempotencia. |
-| `20260802143300_rating_v2_authoritative_void.sql` | Anulación propia y moderación opaca, ambas autoritativas y auditadas. |
-| `20260802143400_rating_v2_profile_authority.sql` | Alta y patch del perfil universal resueltos en servidor. |
-| `20260802143500_rating_v2_match_authority.sql` | Payload, asistencia, alineación, pago, goleadores y finalización autoritativos. |
-| `20260802143600_rating_v2_payload_validation.sql` | Rechazo de facetas, votos y resultados definitivos falsificados dentro del payload cliente. |
-| `20260802143700_rating_v2_global_calibration.sql` | Calibración global determinista con ventana de 12 meses y snapshots. |
-| `20260802143750_rating_v2_registered_opponents.sql` | Vinculación de rivales registrados sin duplicar identidades de equipo. |
-| `20260802143800_rating_v2_global_authority.sql` | Contexto y valoraciones globales autoritativas. |
-| `20260802143900_rating_v2_guest_tokens.sql` | Token invitado con hash, alcance, caducidad, revisión e idempotencia. |
-| `20260802144000_rating_v2_assessment_authority.sql` | Assessment de una sola ejecución, actor resuelto y respuesta canónica. |
-| `20260802144100_rating_v2_secondary_match_authority.sql` | Mercado público, solicitudes y operaciones secundarias de partido con revisión. |
-| `20260802144150_rating_v2_market_profile_authority.sql` | Perfil de mercado sincronizado desde el perfil universal oficial. |
-| `20260802144300_rating_v2_guest_authority.sql` | Crear, enlazar y revertir invitados con historial y revisión. |
-| `20260802144400_rating_v2_snapshot_assignment_fix.sql` | Corrección de asignación de columnas al crear snapshots de partido. |
-| `20260802144500_rating_v2_restoration_semantics.sql` | Restaura la evidencia original sin crear voto ni peso nuevo y separa `opinion_created_at` de `restored_at`. |
-| `20260802144600_rating_v2_canonical_ordering.sql` | Lectura canónica de snapshots y órdenes deterministas mediante secuencia, revisión o fecha más ID estable. |
-| `20260803052408_rating_v2_http_conflicts.sql` | Compatibilidad para instalaciones ya migradas: encapsula 28 RPC V2, traduce revisión/lock obsoleto a HTTP 409 y mantiene las implementaciones internas sin permisos de cliente. |
-| `migrations/20260803061133_rating_v2_legacy_write_closure.sql` | Unidad 25 del PR de activación: revoca RPC antiguas y `UPDATE` directo solo cuando el frontend V2 ya está verificado. |
+| `20260803053357_rating_system_v2_schema.sql` | Modelo normalizado, evidencias, snapshots, invitados, equipos externos, restricciones, índices y RLS inicial. |
+| `20260803053439_rating_system_v2_functions.sql` | Fórmulas V2, elegibilidad, recálculo, snapshots, global, invitados y preservación histórica. |
+| `20260803053445_rating_system_v2_backfill.sql` | Backfill conservador e idempotente del legado sin inventar autores ni observaciones. |
+| `20260803053451_rating_system_v2_assessments.sql` | Persistencia de assessments calculados por el motor TypeScript compartido. |
+| `20260803053456_rating_system_v2_hardening.sql` | Anonimato, mínimo social de tres evaluadores, interruptor por grupo y calibración externa. |
+| `20260803053538_rating_v2_authority_foundation.sql` | Revisiones, metadatos, secuencia del servidor, recibos y snapshots canónicos. |
+| `20260803053543_rating_v2_privacy_reads.sql` | Lecturas privadas, resumen agregado y moderación mediante identificador opaco. |
+| `20260803053625_rating_v2_authoritative_mutations.sql` | Valoración individual y configuración de valoraciones con revisión e idempotencia. |
+| `20260803053628_rating_v2_authoritative_void.sql` | Anulación propia y moderación opaca, ambas autoritativas y auditadas. |
+| `20260803053632_rating_v2_profile_authority.sql` | Alta y patch del perfil universal resueltos en servidor. |
+| `20260803053635_rating_v2_match_authority.sql` | Payload, asistencia, alineación, pago, goleadores y finalización autoritativos. |
+| `20260803053700_rating_v2_payload_validation.sql` | Rechazo de facetas, votos y resultados definitivos falsificados dentro del payload cliente. |
+| `20260803053705_rating_v2_global_calibration.sql` | Calibración global determinista con ventana de 12 meses y snapshots. |
+| `20260803053710_rating_v2_registered_opponents.sql` | Vinculación de rivales registrados sin duplicar identidades de equipo. |
+| `20260803053813_rating_v2_global_authority.sql` | Contexto y valoraciones globales autoritativas. |
+| `20260803053818_rating_v2_guest_tokens.sql` | Token invitado con hash, alcance, caducidad, revisión e idempotencia. |
+| `20260803053825_rating_v2_assessment_authority.sql` | Assessment de una sola ejecución, actor resuelto y respuesta canónica. |
+| `20260803053858_rating_v2_secondary_match_authority.sql` | Mercado público, solicitudes y operaciones secundarias de partido con revisión. |
+| `20260803053901_rating_v2_market_profile_authority.sql` | Perfil de mercado sincronizado desde el perfil universal oficial. |
+| `20260803053904_rating_v2_guest_authority.sql` | Crear, enlazar y revertir invitados con historial y revisión. |
+| `20260803053908_rating_v2_snapshot_assignment_fix.sql` | Corrección de asignación de columnas al crear snapshots de partido. |
+| `20260803053912_rating_v2_restoration_semantics.sql` | Restaura la evidencia original sin crear voto ni peso nuevo y separa `opinion_created_at` de `restored_at`. |
+| `20260803053919_rating_v2_canonical_ordering.sql` | Lectura canónica de snapshots y órdenes deterministas mediante secuencia, revisión o fecha más ID estable. |
+| `20260803053937_rating_v2_http_conflicts.sql` | Compatibilidad para instalaciones ya migradas: encapsula 28 RPC V2, traduce revisión/lock obsoleto a HTTP 409 y mantiene las implementaciones internas sin permisos de cliente. |
+| `migrations/20260803062830_rating_v2_legacy_write_closure.sql` | Unidad 25 del PR de activación: revoca RPC antiguas y `UPDATE` directo solo cuando el frontend V2 ya está verificado. |
 
 Las 24 migraciones aditivas se aplican primero. La unidad 25 se valida después como activación separada y solo entra en el flujo normal al publicarse su PR independiente. Esta separación evita romper V1 antes de desplegar V2; el procedimiento completo está en `docs/rating-system-v2-deployment-runbook.md`.
 
 `deferred-migrations/20260802203605_rating_v2_emergency_safe_hold.sql` tampoco forma parte de las 25 unidades de despliegue. Es una guardia de incidente: mantiene V1 y `UPDATE` directo revocados y garantiza únicamente la RPC V2 de asistencia para un frontend temporal de mantenimiento. Debe convertirse en una migración nueva y ensayarse en staging antes de cualquier uso.
 
-### 5.1 Artefactos preexistentes
+### 5.1 Sincronización del historial remoto
+
+El 3 de agosto de 2026 se comparó el repositorio con `supabase_migrations.schema_migrations` del proyecto de producción `qonbngfrnrqgmxbdfbea`. El historial remoto contenía 61 versiones: 36 migraciones anteriores a V2, 24 aditivas V2 y la unidad de cierre. Las 25 unidades V2 tenían nombres coincidentes, pero timestamps locales distintos porque habían sido registradas mediante la API de migraciones.
+
+`supabase/migrations/` conserva ahora las 61 versiones y nombres exactos del historial remoto. Las 36 migraciones históricas se recuperaron desde su único `statements[1]` persistido por Supabase y los 25 archivos V2 se renombraron a la versión ya aplicada. No se reejecutó SQL, no se alteró el esquema y no se modificaron datos.
+
+### 5.2 Artefactos preexistentes
 
 Se compararon expresamente `supabase/.temp/cli-latest` y `tsconfig.tsbuildinfo` con el commit base `12be27f720c53f7ee95967e8024eade2d9dd198e`. Ninguna de las dos rutas aparece en el diff del PR ni en el estado final esperado; tampoco forman parte de sus 44 rutas.
 
-### 5.2 Orden canónico auditado
+### 5.3 Orden canónico auditado
 
 Se revisaron las consultas de aplicación y todas las funciones PostgreSQL finales que seleccionan el último snapshot, evento, recibo, assessment o evidencia. Los índices temporales no se contaron como lecturas. El contrato final es:
 
@@ -333,23 +339,24 @@ La base SQL fue exclusivamente local y desechable. Se utilizaron stubs locales d
 | QA HTTP del preview protegido | Bloqueada por Vercel SSO en lectura automática; el preview de PR #93 existe y está READY, pero el fetch de `/api/client-policy` redirige a SSO incluso con URL temporal. |
 | Dos usuarios autenticados y Realtime | PASS: dos cuentas y dos conexiones independientes completaron valoración, replay idempotente, asistencia concurrente, rechazo obsoleto, reintento y dos convergencias Realtime con datos sintéticos. |
 | Conflicto HTTP determinista | PASS local: PostgreSQL 17 + PostgREST 14 devolvieron HTTP 409/`PT409` inmediatamente; la implementación interna de las 28 RPC quedó denegada para `authenticated`. |
-| Migración `20260803052408_rating_v2_http_conflicts.sql` | PASS local y en staging. El historial remoto la registra como versión `20260803050527`, nombre `rating_v2_http_conflicts`. |
+| Migración `20260803053937_rating_v2_http_conflicts.sql` | PASS local, staging y producción. El historial de producción la registra con esa misma versión y nombre; staging conserva su versión propia `20260803050527`. |
 | Matriz de permisos posterior | PASS en staging: 28 implementaciones `_impl`, 28 denegadas a `anon`, 28 denegadas a `authenticated` y 28 wrappers públicos con firma correspondiente. |
 | Carrera HTTP posterior a migración | PASS: revisión compartida `6`, confirmada `8`; un ganador en 99 ms, un `PT409` en 140 ms, reintento idempotente y dos eventos recibidos por cada dispositivo. Convergencia Realtime en 51 ms y 359 ms. |
 | Valoración posterior a migración | PASS: primera valoración B->A en revisión `8`, confirmada `9`; un evento Realtime en 563 ms y replay idempotente sin nueva revisión. |
 | Arranque en frío de Realtime | OBSERVADO: el primer intento se suscribió mientras arrancaba la replicación del tenant y no recibió el primer evento dentro de 10 s. Tras esperar la disponibilidad del stream, la misma prueba pasó completa; no hubo divergencia de datos. |
 | Limpieza de QA | PASS: eliminadas en transacción las evidencias, snapshots, eventos, grupo y dos usuarios sintéticos exactos; verificación final `groups_remaining=0`, `users_remaining=0`, `evidence_remaining=0`. |
 | Historial de migraciones de staging | PASS: las 24 migraciones aditivas V2 constan aplicadas; la unidad 25 de cierre V1 no se aplicó. |
+| Activación en producción | PASS: PR #94 fusionado en `7695fc283f7eed9d9ce5d2fe31cb842b0e588e68`, frontend V2 servido y unidad 25 aplicada como versión `20260803062830`. |
+| Historial de migraciones de producción | PASS: 61 versiones remotas reflejadas en `supabase/migrations/`, sin pares locales o remotos huérfanos. |
 
 ## 14. Riesgos y siguiente paso
 
-1. Publicar este cierre en el PR #92 y completar sus checks.
-2. Antes de fusionar un PR que despliegue automáticamente a producción, verificar la referencia exacta de Supabase y aplicar de forma coordinada solo las 24 migraciones aditivas; esta transición requiere autorización explícita de producción.
-3. Desplegar el frontend V2 únicamente cuando sus RPC estén disponibles. Mantener la unidad 25 de cierre V1 separada hasta la fase de activación específica.
-4. Definir con criterio futbolístico el cuestionario y la fórmula específica de porteros antes de habilitarlos en V2.
-5. Completar el flujo persistido de hábitos y limitaciones si se desea que los modificadores actuales sean editables por el jugador.
+1. Rating V2, el bridge PWA y el cierre de escrituras V1 ya están fusionados y activos en producción.
+2. No reabrir V1 ni `UPDATE` directo; cualquier evolución debe mantener RPC/API central, revisión esperada e idempotencia.
+3. Definir con criterio futbolístico el cuestionario y la fórmula específica de porteros antes de habilitarlos en V2.
+4. Completar el flujo persistido de hábitos y limitaciones si se desea que los modificadores actuales sean editables por el jugador.
 
-El despliegue no forma parte de esta tarea. No se ha modificado producción ni se ha realizado merge o despliegue. La rama se publica únicamente mediante un PR borrador.
+La sincronización del historial no ejecuta SQL ni modifica producción: alinea los archivos del repositorio con las versiones que ya constan aplicadas.
 
 ## 15. Addendum de autorización previa a staging
 

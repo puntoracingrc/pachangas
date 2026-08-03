@@ -14,7 +14,7 @@ Advertencias obligatorias:
 
 La entrega quedó separada físicamente durante la implantación y la unidad 25 se promueve en el PR de activación:
 
-- `supabase/migrations/`: 24 migraciones aditivas y la unidad 25 `20260803061133_rating_v2_legacy_write_closure.sql`. La número 24 traduce conflictos de revisión/lock a HTTP 409; la 25 revoca las escrituras V1 solo después de verificar el frontend V2.
+- `supabase/migrations/`: 36 migraciones históricas anteriores a V2, 24 migraciones aditivas V2 y la unidad 25 `20260803062830_rating_v2_legacy_write_closure.sql`. La número 24 traduce conflictos de revisión/lock a HTTP 409; la 25 revoca las escrituras V1 solo después de verificar el frontend V2.
 - `supabase/deferred-migrations/20260802203605_rating_v2_emergency_safe_hold.sql`: guardia de continuidad versionada, fuera del flujo normal y también excluida de `db push`.
 
 La unidad 25 no debe aplicarse hasta la fase 5 y se publica mediante un PR de activación independiente.
@@ -25,6 +25,7 @@ PRs relacionados:
 
 - Rating System V2: https://github.com/puntoracingrc/pachangas/pull/92
 - Release puente PWA/client version: https://github.com/puntoracingrc/pachangas/pull/93 (fusionado primero en `main`, SHA `12be27f720c53f7ee95967e8024eade2d9dd198e`)
+- Activación y cierre V1: https://github.com/puntoracingrc/pachangas/pull/94 (fusionado en `main`, SHA `7695fc283f7eed9d9ce5d2fe31cb842b0e588e68`)
 
 ### 1.1 Contrato permanente server-authoritative
 
@@ -71,7 +72,7 @@ Hay otros proyectos en Supabase y Vercel: no continuar si la referencia, organiz
 ## 3. Preflight
 
 1. Congelar otros cambios de esquema y elegir una ventana con un único operador de base de datos.
-2. Antes del PR de activación, confirmar 24 archivos en `supabase/migrations/`; después, confirmar 25 y que el único pendiente sea `20260803061133_rating_v2_legacy_write_closure.sql`.
+2. Confirmar 61 archivos en `supabase/migrations/` y paridad exacta de versión/nombre con el historial enlazado: 36 históricos, 24 V2 aditivos y `20260803062830_rating_v2_legacy_write_closure.sql`.
 3. Confirmar mediante `supabase db push --dry-run` que no aparece la unidad 25 antes de autorizarla y que, una vez promovida, es la única migración pendiente.
 4. Ejecutar y guardar:
 
@@ -190,7 +191,7 @@ No avanzar mientras exista tráfico V1 conocido, telemetría incompleta o una ve
 
 La activación se publica en un PR independiente:
 
-1. Promover la unidad 25 como `supabase/migrations/20260803061133_rating_v2_legacy_write_closure.sql`, creada con `supabase migration new`, en un PR independiente.
+1. Promover la unidad 25 como `supabase/migrations/20260803062830_rating_v2_legacy_write_closure.sql`, creada originalmente con `supabase migration new` y sincronizada después con la versión remota aplicada, en un PR independiente.
 2. Revisar que el nuevo archivo contiene únicamente las revocaciones aprobadas.
 3. Adjuntar la consulta de telemetría que demuestra 24 horas limpias en staging y 7 días limpios en producción, incluyendo clientes sin versión. En el lanzamiento preusuarios aprobado, adjuntar la evidencia de inexistencia de usuarios reales y la prueba controlada de PWA antigua en lugar de esperar la ventana temporal.
 4. Ejecutar `supabase db push --linked --dry-run`; debe aparecer solo la migración de cierre.

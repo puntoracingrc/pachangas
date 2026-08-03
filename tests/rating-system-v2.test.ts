@@ -52,7 +52,7 @@ test("authoritative revision conflicts are HTTP-safe and renamed implementations
     .join("\n");
   const baseSchemaSql = readFileSync(new URL("../supabase/pachangas.sql", import.meta.url), "utf8");
   const conflictMigration = readFileSync(
-    new URL("../supabase/migrations/20260803052408_rating_v2_http_conflicts.sql", import.meta.url),
+    new URL("../supabase/migrations/20260803053937_rating_v2_http_conflicts.sql", import.meta.url),
     "utf8",
   );
 
