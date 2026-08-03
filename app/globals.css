@@ -2884,7 +2884,7 @@ h1 {
 }
 
 .manual-flow-card li {
-  color: #2f3934;
+  color: var(--ink);
   font-size: 15px;
   line-height: 1.42;
   max-width: 980px;

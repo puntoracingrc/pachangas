@@ -4,7 +4,7 @@ import { ManualContent } from "../manual-content";
 
 export const metadata: Metadata = {
   title: "Manual de usuario | Pachangas IQ",
-  description: "Guía de flujos para jugadores y admins de Pachangas IQ.",
+  description: "Guía de partidos, fichas, valoraciones, invitaciones, retos y sincronización para jugadores y admins de Pachangas IQ.",
 };
 
 export default function ManualPage() {
@@ -15,7 +15,7 @@ export default function ManualPage() {
           <p className="eyebrow">Pachangas IQ</p>
           <h1>Manual de usuario</h1>
           <p className="hero-copy">
-            Flujos completos para jugadores y admins: registro, equipos, partidos, reservas, pagos, fichas, valoraciones, historial y ranking.
+            Flujos completos para jugadores y admins: grupos, partidos, fichas, valoraciones, invitaciones, avisos, equipos retables, retos e historial.
           </p>
         </div>
         <Link className="secondary-button manual-back-button" href="/">
