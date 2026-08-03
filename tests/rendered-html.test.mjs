@@ -39,12 +39,20 @@ test("builds Pachangas IQ HTML", async () => {
 });
 
 test("builds the user manual as its own page", async () => {
-  const html = await readFile(new URL("../.next/server/app/manual.html", import.meta.url), "utf8");
+  const [html, css] = await Promise.all([
+    readFile(new URL("../.next/server/app/manual.html", import.meta.url), "utf8"),
+    readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
+  ]);
   assert.match(html, /Manual de usuario/);
   assert.match(html, /Primera entrada/);
   assert.match(html, /Crear o entrar en un grupo de pachangas/);
   assert.match(html, /Crear &gt; Grupo/);
   assert.match(html, /Crear &gt; Ficha jugador/);
+  assert.match(html, /Instalar la app y usar el modo juego/);
+  assert.match(html, /La rotación no recarga la página/);
+  assert.match(html, /una única ficha universal/);
+  assert.match(html, /test inicial obligatorio/);
+  assert.match(html, /test avanzado opcional/);
   assert.match(html, /Campos y ajustes iniciales/);
   assert.match(html, /Prueba gratuita y suscripción/);
   assert.match(html, /2 partidos gratis/);
@@ -66,20 +74,38 @@ test("builds the user manual as its own page", async () => {
   assert.match(html, /Borrar jugador lo deja fuera del grupo/);
   assert.match(html, /El ranking se puede filtrar/);
   assert.match(html, /Media, forma y equilibrio/);
-  assert.match(html, /Media real = promedio/);
+  assert.match(html, /Base = resultado del test inicial/);
+  assert.match(html, /Calibrada = base combinada en el servidor/);
+  assert.match(html, /Actual = calibrada más los modificadores/);
   assert.match(html, /Forma actual = porcentaje temporal visible de 0 a 100/);
   assert.match(html, /Forma pendiente/);
-  assert.match(html, /Valor para equilibrar = media real multiplicada por forma actual/);
+  assert.match(html, /Valor para equilibrar = nivel actual multiplicado por forma actual/);
   assert.match(html, /Fiabilidad = 100% menos 7 puntos/);
   assert.match(html, /Gestión de jugadores/);
   assert.match(html, /Configuración profunda y copias/);
   assert.match(html, /Mercado de fichajes/);
+  assert.match(html, /Invitar a un jugador a un partido/);
+  assert.match(html, /Partidos públicos y solicitudes de plaza/);
+  assert.match(html, /Acceso a un partido como invitado/);
+  assert.match(html, /Centro de avisos/);
+  assert.match(html, /Publicar un equipo retable/);
+  assert.match(html, /Retos privados entre equipos/);
+  assert.match(html, /Rivales conocidos/);
+  assert.match(html, /Confirmar abandono o Descartar/);
+  assert.match(html, /Valoraciones globales de un partido/);
+  assert.match(html, /Mucho peor, Peor, Parecido, Mejor o Mucho mejor/);
+  assert.match(html, /3 evaluadores independientes/);
+  assert.match(html, /Sincronización, caché y uso sin conexión/);
+  assert.match(html, /nunca aparece como confirmada/);
   assert.match(html, /Google Places/);
   assert.match(html, /página separada del grupo privado/);
   assert.match(html, /El nombre del campo debe elegirse desde una sugerencia/);
   assert.match(html, /Google Weather/);
   assert.match(html, /Tiempo previsto/);
   assert.match(html, /Volver/);
+  assert.doesNotMatch(html, /Owners y admins podrán invitar/);
+  assert.doesNotMatch(html, /Los porteros tienen facetas específicas/);
+  assert.match(css, /\.manual-flow-card li\s*\{[^}]*color: var\(--ink\)/s);
 });
 
 test("builds the transfer market as a separated page", async () => {
