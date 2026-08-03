@@ -156,6 +156,14 @@ test("keeps the project wired to the Pachangas app", async () => {
     serviceWorker,
     nextConfig,
     adaptiveDocs,
+    ratingV2PrivacyReads,
+    ratingV2Mutations,
+    ratingV2ProfileAuthority,
+    ratingV2MatchAuthority,
+    ratingV2AssessmentAuthority,
+    ratingV2LegacyClosure,
+    ratingV2EmergencySafeHold,
+    ratingV2Runbook,
   ] = await Promise.all([
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
@@ -179,6 +187,14 @@ test("keeps the project wired to the Pachangas app", async () => {
     readFile(new URL("../app/service-worker-source.ts", import.meta.url), "utf8"),
     readFile(new URL("../next.config.ts", import.meta.url), "utf8"),
     readFile(new URL("../docs/android-adaptive-compatibility.md", import.meta.url), "utf8"),
+    readFile(new URL("../supabase/migrations/20260802143100_rating_v2_privacy_reads.sql", import.meta.url), "utf8"),
+    readFile(new URL("../supabase/migrations/20260802143200_rating_v2_authoritative_mutations.sql", import.meta.url), "utf8"),
+    readFile(new URL("../supabase/migrations/20260802143400_rating_v2_profile_authority.sql", import.meta.url), "utf8"),
+    readFile(new URL("../supabase/migrations/20260802143500_rating_v2_match_authority.sql", import.meta.url), "utf8"),
+    readFile(new URL("../supabase/migrations/20260802144000_rating_v2_assessment_authority.sql", import.meta.url), "utf8"),
+    readFile(new URL("../supabase/deferred-migrations/20260802144700_rating_v2_legacy_write_closure.sql", import.meta.url), "utf8"),
+    readFile(new URL("../supabase/deferred-migrations/20260802203605_rating_v2_emergency_safe_hold.sql", import.meta.url), "utf8"),
+    readFile(new URL("../docs/rating-system-v2-deployment-runbook.md", import.meta.url), "utf8"),
   ]);
 
   assert.match(page, /join_pachanga_team/);
@@ -298,8 +314,8 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /function openMarketConfiguration/);
   assert.match(page, /if \(tabId === "mercado"\) \{\s*if \(canUseAdminControls\) return;/);
   assert.match(page, /if \(requestedTab === "perfil"\) \{[\s\S]*setProfilePane\("ficha"\);[\s\S]*setSelectedPlayerId\(ownPlayer\?\.id \?\? selectedPlayerId \?\? players\[0\]\?\.id \?\? ""\)/);
-  assert.match(page, /complete_pachanga_player_initial_assessment/);
-  assert.match(page, /complete_pachanga_player_advanced_assessment/);
+  assert.match(page, /\/api\/ratings\/assessment/);
+  assert.match(page, /record_pachanga_individual_rating_authoritative_v2/);
   assert.match(page, /Este test crea tu ficha real y solo se puede completar una vez por usuario/);
   assert.match(page, /Mejorar precisión de mi ficha/);
   assert.match(page, /openCreatePlayerProfile/);
@@ -353,8 +369,9 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(marketPage, /Partidos abiertos/);
   assert.match(marketPage, /pachanga_open_match_requests/);
   assert.match(marketPage, /requestOpenMatch/);
-  assert.match(marketPage, /request_pachanga_open_match/);
-  assert.match(marketPage, /operation_key: crypto\.randomUUID\(\)/);
+  assert.match(marketPage, /request_pachanga_open_match_authoritative_v2/);
+  assert.match(marketPage, /operation_id: crypto\.randomUUID\(\)/);
+  assert.match(marketPage, /expected_match_revision: match\.sourcePayloadRevision/);
   assert.match(marketPage, /target_open_match_id/);
   assert.match(marketPage, /requester_user_id/);
   assert.match(marketPage, /Solicitar plaza/);
@@ -797,7 +814,7 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /profileSaving/);
   assert.match(page, /setProfileSaving\(true\)/);
   assert.match(page, /setProfileSaving\(false\)/);
-  assert.match(page, /withTimeout\(\s*Promise\.resolve\(\s*client\.rpc\("patch_pachanga_player_profile"/);
+  assert.match(page, /withTimeout\(\s*Promise\.resolve\(\s*client\.rpc\("patch_pachanga_player_profile_authoritative_v2"/);
   assert.match(page, /Guardado agotado/);
   assert.match(page, /profile-save-area/);
   assert.match(page, /Guardar ficha/);
@@ -929,20 +946,14 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /short: "VEL"/);
   assert.match(page, /short: "POS"/);
   assert.match(page, /selectedRatingFacets\.map/);
-  const facetGridStart = page.indexOf('<div className="facet-grid" ref={playerRatingFacetGridRef}>');
+  const facetGridStart = page.indexOf('<div className="relative-rating-form" ref={playerRatingFacetGridRef}>');
   const facetGridEnd = page.indexOf('<button type="button" onClick={() => void addPeerRating', facetGridStart);
-  assert.ok(facetGridStart > -1 && facetGridEnd > facetGridStart, "rating facet editor should render before the save button");
+  assert.ok(facetGridStart > -1 && facetGridEnd > facetGridStart, "semantic rating editor should render before the save button");
   const facetGridMarkup = page.slice(facetGridStart, facetGridEnd);
-  assert.match(page, /const ratingFacetStep = 0\.5/);
-  assert.match(page, /const peerRatingFacetLimit = 1/);
-  assert.match(page, /function clampPeerRatingFacet/);
-  assert.match(page, /function boundedFacetVoteValues/);
-  assert.match(page, /clampRatingWithinLimit\(vote\.facets\?\.\[facet\] \?\? baseline, baseline\)/);
-  assert.match(page, /disabled=\{!canRateSelectedPlayer \|\| facetValue <= facetBounds\.min\}/);
-  assert.match(page, /disabled=\{!canRateSelectedPlayer \|\| facetValue >= facetBounds\.max\}/);
-  assert.match(facetGridMarkup, /facet-stepper/);
-  assert.match(facetGridMarkup, /Bajar \$\{facet\.label\}/);
-  assert.match(facetGridMarkup, /Subir \$\{facet\.label\}/);
+  assert.match(page, /Compáralo contigo en cada aspecto/);
+  assert.match(page, /RATING_COMPARISON_OPTIONS\.map/);
+  assert.match(facetGridMarkup, /relative-rating-options/);
+  assert.match(facetGridMarkup, /aria-pressed=\{ratingComparisons\[facet\] === option\.id\}/);
   assert.doesNotMatch(facetGridMarkup, /type="range"/);
   assert.match(globalsCss, /\.facet-stepper/);
   assert.match(globalsCss, /\.facet-grid\s*\{[\s\S]*scroll-margin-top:\s*8px/);
@@ -980,22 +991,28 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /payloadJson === lastCommittedPayloadJsonRef\.current/);
   assert.match(page, /autosaveInFlightRef\.current = true/);
   assert.match(page, /autosaveInFlightRef\.current = false/);
-  assert.match(page, /save_pachanga_payload_if_current/);
-  assert.match(page, /upsert_pachanga_own_player_profile/);
+  assert.match(page, /save_pachanga_payload_authoritative_v2/);
+  assert.match(page, /upsert_pachanga_own_player_profile_authoritative_v2/);
   assert.match(page, /function profilePatchFor/);
   assert.match(page, /function ownPlayerFromCommit/);
   assert.match(page, /Creando ficha/);
   assert.match(page, /Crear ficha con test/);
-  assert.match(page, /complete_pachanga_player_initial_assessment/);
-  assert.match(page, /complete_pachanga_player_advanced_assessment/);
-  assert.match(page, /patch_pachanga_match_player_status/);
-  assert.match(page, /patch_pachanga_match_player_paid/);
-  assert.match(page, /patch_pachanga_match_scorers/);
-  assert.match(page, /patch_pachanga_match_lineup_state/);
+  assert.match(page, /\/api\/ratings\/assessment/);
+  assert.match(page, /record_pachanga_individual_rating_authoritative_v2/);
+  assert.match(page, /patch_pachanga_match_player_status_authoritative_v2/);
+  assert.match(page, /patch_pachanga_match_player_paid_authoritative_v2/);
+  assert.match(page, /patch_pachanga_match_scorers_authoritative_v2/);
+  assert.match(page, /patch_pachanga_match_lineup_authoritative_v2/);
+  assert.match(page, /finalize_pachanga_match_authoritative_v2/);
+  assert.match(page, /server revision is newer/);
+  assert.match(page, /could not obtain lock/);
+  assert.match(page, /loadTeams\(supabase, remoteGroupId\)/);
+  assert.match(page, /expected_revision: remotePayloadRevisionRef\.current/);
+  assert.match(page, /client_metadata: clientOperationMetadata\(\)/);
   assert.match(page, /operation_key: id\(\)/);
   assert.match(page, /set_pachanga_member_role/);
-  assert.match(page, /patch_pachanga_player_profile/);
-  assert.match(page, /append_pachanga_player_rating/);
+  assert.match(page, /patch_pachanga_player_profile_authoritative_v2/);
+  assert.match(page, /record_pachanga_individual_rating_authoritative_v2/);
   assert.match(page, /partido_guardado/);
   assert.match(page, /partido_finalizado/);
   assert.match(page, /equipo_borrado/);
@@ -1015,6 +1032,34 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(supabaseSql, /Close the lineup before changing payments/);
   assert.match(supabaseSql, /selected_match \? 'scoreA'/);
   assert.match(supabaseSql, /create or replace function public\.patch_pachanga_match_scorers/);
+  assert.match(ratingV2Mutations, /create or replace function public\.record_pachanga_individual_rating_authoritative_v2/);
+  assert.match(ratingV2ProfileAuthority, /create or replace function public\.patch_pachanga_player_profile_authoritative_v2/);
+  assert.match(ratingV2MatchAuthority, /create or replace function public\.finalize_pachanga_match_authoritative_v2/);
+  assert.match(ratingV2AssessmentAuthority, /persist_pachanga_player_assessment_authoritative_v2/);
+  assert.match(ratingV2PrivacyReads, /create or replace function public\.get_pachanga_player_rating_summary_v2/);
+  assert.match(ratingV2LegacyClosure, /revoke execute on function public\.save_pachanga_payload_if_current/);
+  assert.match(ratingV2LegacyClosure, /revoke update on table public\.pachanga_groups from authenticated/);
+  assert.match(ratingV2EmergencySafeHold, /revoke update on table public\.pachanga_groups from public, anon, authenticated/);
+  assert.match(ratingV2EmergencySafeHold, /revoke execute on function public\.save_pachanga_payload_if_current/);
+  assert.match(ratingV2EmergencySafeHold, /grant execute on function public\.patch_pachanga_match_player_status_authoritative_v2/);
+  assert.doesNotMatch(ratingV2EmergencySafeHold, /grant update on table public\.pachanga_groups/i);
+  assert.doesNotMatch(ratingV2EmergencySafeHold, /grant execute on function public\.patch_pachanga_match_player_status\(/i);
+  assert.match(ratingV2Runbook, /clientVersion/);
+  assert.match(ratingV2Runbook, /minimumSupportedClientVersion/);
+  assert.match(ratingV2Runbook, /v1-unversioned/);
+  assert.match(ratingV2Runbook, /server-authoritative con caché local/);
+  assert.match(ratingV2Runbook, /No existe cola offline autoritativa/);
+  assert.match(ratingV2Runbook, /read models canónicos/);
+  assert.match(ratingV2Runbook, /preusuarios de agosto de 2026/);
+  assert.match(ratingV2Runbook, /24 horas\/7 días/);
+  assert.match(ratingV2Runbook, /PWA V1 abierta antes del despliegue/);
+  assert.match(ratingV2Runbook, /registration\.update\(\)/);
+  assert.match(ratingV2Runbook, /controllerchange/);
+  assert.match(ratingV2Runbook, /lock_timeout = '3s'/);
+  assert.match(ratingV2Runbook, /statement_timeout = '60s'/);
+  assert.match(ratingV2Runbook, /500\.000/);
+  assert.match(ratingV2Runbook, /restaurarl[ao] realmente/);
+  assert.match(ratingV2Runbook, /UPDATE` directo/);
   assert.match(supabaseSql, /create table if not exists public\.pachanga_player_profiles/);
   assert.match(supabaseSql, /assessment_summary jsonb not null default '\{\}'::jsonb/);
   assert.match(supabaseSql, /create table if not exists public\.pachanga_player_assessments/);
@@ -1100,8 +1145,8 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(supabaseSql, /Rating window closed for this player/);
   assert.match(supabaseSql, /last_vote_match_count \+ 3/);
   assert.match(supabaseSql, /player_appearances = 0 then 0 else 3/);
-  assert.match(page, /isInitialWindow/);
-  assert.match(page, /Valoración inicial abierta/);
+  assert.match(page, /ratingEligibility\.firstRating/);
+  assert.match(page, /Primera valoración disponible/);
   assert.match(supabaseSql, /current_group\.payload_revision <> expected_revision/);
   assert.match(supabaseSql, /current_group\.payload = next_payload/);
   assert.match(supabaseSql, /policy "Admins can update groups"/);

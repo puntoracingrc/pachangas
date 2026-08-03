@@ -3,6 +3,7 @@
 import { type CSSProperties, type Dispatch, type FormEvent, Fragment, type MouseEvent as ReactMouseEvent, type PointerEvent as ReactPointerEvent, type SetStateAction, type WheelEvent as ReactWheelEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { attachVenueAutocomplete, type VenuePlace } from "./googlePlacesClient";
+import { GlobalRatingPanel } from "./global-rating-panel";
 import {
   ADVANCED_TEST_VERSION,
   ATTRIBUTE_KEYS,
@@ -29,6 +30,13 @@ import {
 } from "./laboratorio-ficha-jugador/_engine/player-rating-engine";
 import { MobileAppNav, type MobileAppTab } from "./mobile-app-nav";
 import { clientWriteFetch, PWA_WRITE_REJECTED_EVENT } from "./pwa-client-bridge";
+import {
+  OUTFIELD_FACET_LABELS,
+  RATING_COMPARISON_DELTAS,
+  RATING_COMPARISON_OPTIONS,
+  socialRatingDisclosure,
+  type RatingComparison,
+} from "./rating-system-v2";
 import { supabase } from "./supabaseClient";
 import { ThemeToggle } from "./theme-toggle";
 
@@ -107,6 +115,31 @@ type RatingVote = {
   facets: Record<RatingFacet, number>;
 };
 
+type RatingEligibility = {
+  canRate: boolean;
+  firstRating: boolean;
+  previousEvidenceId?: string;
+  previousRatingAt?: string | null;
+  reason?: string;
+  requiredMatches: number;
+  sharedMatches: number;
+};
+
+type PlayerRatingV2 = {
+  baseFacets?: AttributeRatings;
+  baseOverall?: number | null;
+  calibratedFacets?: AttributeRatings;
+  calibratedOverall?: number | null;
+  currentFacetModifiers?: Partial<AttributeRatings>;
+  currentFacets?: AttributeRatings;
+  currentOverall?: number | null;
+  domain?: "field" | "goalkeeper" | "goalkeeper_legacy";
+  engineVersion?: string | null;
+  evaluatorCount?: number;
+  recalculatedAt?: string | null;
+  reliability?: number;
+};
+
 type PositionLine = "Porteria" | "Defensa" | "Medio" | "Ataque";
 
 type PlayerPosition =
@@ -165,6 +198,7 @@ type Player = {
   rating: number;
   ratings?: number[];
   ratingVotes?: RatingVote[];
+  ratingV2?: PlayerRatingV2;
   position: PlayerPosition;
   outfieldPosition?: PlayerPosition;
   marketAvailability?: string;
@@ -447,6 +481,7 @@ type RemoteTeam = {
   ownerId: string | null;
   payload: AppPayload;
   payloadRevision: number;
+  ratingsEnabled: boolean;
   role: MemberRole;
   stripeCustomerId: string | null;
   stripeCurrentPeriodEnd: string | null;
@@ -496,6 +531,9 @@ type RemotePayloadCommit = {
   billing_trial_finalized_matches?: number | string | null;
   payload?: Partial<AppPayload>;
   payload_revision?: number | string;
+  confirmedRevision?: number | string;
+  ratingsEnabled?: boolean;
+  ratings_enabled?: boolean;
   stripe_customer_id?: string | null;
   stripe_current_period_end?: string | null;
   stripe_price_id?: string | null;
@@ -974,7 +1012,6 @@ const legacyPositionMeta: Record<"Porteria" | "Defensa" | "Medio" | "Ataque", { 
 };
 
 const ratingReviewInterval = 3;
-const ratingFacetStep = 0.5;
 const peerRatingFacetLimit = 1;
 const footballSeasonStartMonth = 8;
 
@@ -1130,6 +1167,10 @@ const assessmentAttributeFacetMap: Record<AttributeKey, RatingFacet> = {
   physical: "fisico",
 };
 
+const ratingFacetAttributeMap = Object.fromEntries(
+  Object.entries(assessmentAttributeFacetMap).map(([attribute, facet]) => [facet, attribute]),
+) as Record<RatingFacet, AttributeKey>;
+
 const assessmentPositionToAppPosition: Record<AssessmentPosition, PlayerPosition> = {
   centre_back: "Defensa central",
   full_back: "Lateral derecho",
@@ -1162,6 +1203,23 @@ const teamPalette = [
 
 function id() {
   return crypto.randomUUID();
+}
+
+function clientOperationMetadata() {
+  if (typeof window === "undefined") return {};
+
+  const storageKey = "pachangas-operation-session";
+  let sessionId = window.sessionStorage.getItem(storageKey);
+  if (!sessionId) {
+    sessionId = id();
+    window.sessionStorage.setItem(storageKey, sessionId);
+  }
+
+  return {
+    orientation: window.matchMedia("(orientation: landscape)").matches ? "landscape" : "portrait",
+    sessionId,
+    surface: window.matchMedia("(display-mode: standalone)").matches ? "pwa" : "web",
+  };
 }
 
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -1317,19 +1375,6 @@ function clampRating(value: number) {
 function clampRatingWithinLimit(value: number, base: number, limit = peerRatingFacetLimit) {
   const cleanBase = clampRating(base);
   return Math.max(clampRating(cleanBase - limit), Math.min(clampRating(cleanBase + limit), clampRating(value)));
-}
-
-function peerRatingFacetBounds(player: Player, facet: RatingFacet) {
-  const base = currentPeerFacetBaseline(player, facet);
-  return {
-    max: clampRating(base + peerRatingFacetLimit),
-    min: clampRating(base - peerRatingFacetLimit),
-  };
-}
-
-function clampPeerRatingFacet(player: Player, facet: RatingFacet, value: number) {
-  const bounds = peerRatingFacetBounds(player, facet);
-  return Math.max(bounds.min, Math.min(bounds.max, clampRating(value)));
 }
 
 function assessmentModeFromKind(kind: MatchKind): FootballMode {
@@ -2232,16 +2277,6 @@ function playerRatingSource(player: Player) {
   if (assessmentSummaryKindCompleted(player, "initial")) return "test inicial";
   if (player.importedRating) return "importada";
   return "";
-}
-
-function playerMediaLabel(player: Player) {
-  const source = playerRatingSource(player);
-  return source ? `Media ${overallScore(peerAverage(player))} · ${source}` : `Media ${overallScore(peerAverage(player))}`;
-}
-
-function voteAverage(vote: RatingVote, player?: Player) {
-  const facets = player ? ratingFacetsForPlayer(player) : ratingFacets;
-  return facets.reduce((sum, facet) => sum + clampRating(vote.facets[facet.key]), 0) / facets.length;
 }
 
 function ratingSeriesOffset(index: number, total: number) {
@@ -3340,7 +3375,12 @@ export default function Home() {
   const [activeMatchId, setActiveMatchId] = useState(seedMatches[0].id);
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
   const [newVenue, setNewVenue] = useState({ address: "", cost: "56", kind: "futbol7" as MatchKind, name: "" });
-  const [newFacetRatings, setNewFacetRatings] = useState<Record<RatingFacet, number>>(makeFacetRatings());
+  const [ratingComparisons, setRatingComparisons] = useState<Record<AttributeKey, RatingComparison>>(() => (
+    Object.fromEntries(ATTRIBUTE_KEYS.map((facet) => [facet, "PARECIDO"])) as Record<AttributeKey, RatingComparison>
+  ));
+  const [ratingEligibility, setRatingEligibility] = useState<RatingEligibility | null>(null);
+  const [ratingEligibilityLoading, setRatingEligibilityLoading] = useState(false);
+  const [ratingEligibilityRevision, setRatingEligibilityRevision] = useState(0);
   const [selectedVenuePlace, setSelectedVenuePlace] = useState<VenuePlace | null>(null);
   const [venuePlaceMessage, setVenuePlaceMessage] = useState("");
   const [venuePlaceStatus, setVenuePlaceStatus] = useState<"error" | "idle" | "loading" | "missing-key" | "ready">("idle");
@@ -3675,8 +3715,12 @@ export default function Home() {
 
   function applyRemoteCommit(commit: RemotePayloadCommit | null | undefined) {
     if (!commit?.payload) return false;
-    applyPayload(normalizePayload(commit.payload), commit.payload_revision);
+    applyPayload(normalizePayload(commit.payload), commit.confirmedRevision ?? commit.payload_revision);
     applyBillingFromCommit(commit);
+    if (remoteGroupId && (commit.ratingsEnabled !== undefined || commit.ratings_enabled !== undefined)) {
+      const ratingsEnabled = commit.ratingsEnabled ?? commit.ratings_enabled ?? true;
+      setRemoteTeams((current) => current.map((team) => (team.id === remoteGroupId ? { ...team, ratingsEnabled } : team)));
+    }
     setSyncStatus("live");
     setSyncError("");
     return true;
@@ -3710,19 +3754,32 @@ export default function Home() {
     if (normalizedMessage.includes("connection pool")) {
       return "Supabase está saturado. La app reintentará sincronizar en unos segundos.";
     }
-    if (normalizedMessage.includes("team changed before saving")) {
+    if (isRemoteRevisionConflict(normalizedMessage)) {
       return "El grupo cambió en otro dispositivo. Recargando datos...";
     }
     return message;
   }
 
   function isRemoteRevisionConflict(message: string) {
-    return message.toLowerCase().includes("team changed before saving");
+    const normalizedMessage = message.toLowerCase();
+    return [
+      "team changed before saving",
+      "server revision is newer",
+      "match revision is newer",
+      "could not obtain lock",
+      "could not serialize",
+      "upstream request timeout",
+    ].some((fragment) => normalizedMessage.includes(fragment));
   }
 
   function markRemoteWriteError(message = "Otro usuario ha actualizado antes. Espera la sincronización y prueba otra vez.") {
     setSyncStatus("error");
     setSyncError(remoteWriteErrorMessage(message));
+    if (isRemoteRevisionConflict(message) && supabase && remoteGroupId) {
+      void loadTeams(supabase, remoteGroupId).catch((error) => {
+        setSyncError(error instanceof Error ? error.message : "No se pudo recargar el grupo");
+      });
+    }
   }
 
   useEffect(() => {
@@ -3876,7 +3933,7 @@ export default function Home() {
     const memberships = await client
       .from("pachanga_group_members")
       .select(
-        "group_id, role, pachanga_groups(id, name, owner_id, team_code, invite_token, payload, payload_revision, billing_status, billing_trial_finalized_matches, stripe_customer_id, stripe_subscription_id, stripe_price_id, stripe_current_period_end, billing_interval)",
+        "group_id, role, pachanga_groups(id, name, owner_id, team_code, invite_token, payload, payload_revision, ratings_enabled, billing_status, billing_trial_finalized_matches, stripe_customer_id, stripe_subscription_id, stripe_price_id, stripe_current_period_end, billing_interval)",
       )
       .order("created_at", { ascending: true });
 
@@ -3899,6 +3956,7 @@ export default function Home() {
           ownerId: group.owner_id ? String(group.owner_id) : null,
           payload: normalizePayload(group.payload as Partial<AppPayload>),
           payloadRevision: Number(group.payload_revision ?? 0),
+          ratingsEnabled: group.ratings_enabled !== false,
           role: (membership.role as MemberRole | null) ?? "player",
           stripeCustomerId: group.stripe_customer_id ? String(group.stripe_customer_id) : null,
           stripeCurrentPeriodEnd: group.stripe_current_period_end ? String(group.stripe_current_period_end) : null,
@@ -3969,6 +4027,7 @@ export default function Home() {
       .from("pachanga_group_backups")
       .select("id, source_group_id, group_name, team_code, reason, payload, created_at")
       .order("created_at", { ascending: false })
+      .order("id", { ascending: false })
       .limit(3);
 
     setBackupsLoading(false);
@@ -4035,9 +4094,11 @@ export default function Home() {
     setSyncStatus("connecting");
     setSyncError("");
 
-    const saveResult = await supabase.rpc("save_pachanga_payload_if_current", {
+    const saveResult = await supabase.rpc("save_pachanga_payload_authoritative_v2", {
+      client_metadata: clientOperationMetadata(),
       expected_revision: remotePayloadRevisionRef.current,
       next_payload: payload,
+      operation_id: id(),
       target_group_id: remoteGroupId,
     });
     if (saveResult.error) {
@@ -4256,10 +4317,31 @@ export default function Home() {
       .on(
         "postgres_changes",
         { event: "UPDATE", schema: "public", table: "pachanga_groups", filter: `id=eq.${remoteGroupId}` },
-        (payload) => {
-          const nextPayload = normalizePayload(payload.new.payload as Partial<AppPayload>);
-          applyPayload(nextPayload, payload.new.payload_revision as number | string | null | undefined);
-          applyBillingFromGroupRow(payload.new as Record<string, unknown>);
+        () => {
+          void client
+            .from("pachanga_groups")
+            .select(
+              "id, payload, payload_revision, ratings_enabled, billing_status, billing_trial_finalized_matches, stripe_customer_id, stripe_subscription_id, stripe_price_id, stripe_current_period_end, billing_interval",
+            )
+            .eq("id", remoteGroupId)
+            .single()
+            .then(({ data, error }) => {
+              if (error || !data) {
+                setSyncStatus("error");
+                setSyncError(error?.message ?? "No se pudo recuperar el estado confirmado");
+                return;
+              }
+              const confirmedRevision = Number(data.payload_revision ?? 0);
+              const currentRevision = remotePayloadRevisionRef.current;
+              if (currentRevision !== null && confirmedRevision < currentRevision) return;
+              applyPayload(normalizePayload(data.payload as Partial<AppPayload>), confirmedRevision);
+              applyBillingFromGroupRow(data as Record<string, unknown>);
+              setRemoteTeams((current) => current.map((team) => (
+                team.id === remoteGroupId ? { ...team, ratingsEnabled: data.ratings_enabled !== false } : team
+              )));
+              setSyncStatus("live");
+              setSyncError("");
+            });
         },
       )
       .subscribe();
@@ -4299,9 +4381,11 @@ export default function Home() {
 
       autosaveInFlightRef.current = true;
       void Promise.resolve(
-        client.rpc("save_pachanga_payload_if_current", {
+        client.rpc("save_pachanga_payload_authoritative_v2", {
+          client_metadata: clientOperationMetadata(),
           expected_revision: remotePayloadRevisionRef.current,
           next_payload: payload,
+          operation_id: id(),
           target_group_id: targetGroupId,
         }),
       )
@@ -4845,6 +4929,27 @@ export default function Home() {
     setShowSettings(false);
   }
 
+  async function setGroupRatingsEnabled(nextEnabled: boolean) {
+    if (!supabase || !remoteGroupId || !canManageTeam) return;
+
+    setSyncStatus("connecting");
+    setSyncError("");
+    const result = await supabase.rpc("set_pachanga_group_ratings_enabled_authoritative_v2", {
+      client_metadata: clientOperationMetadata(),
+      expected_revision: remotePayloadRevisionRef.current,
+      next_enabled: nextEnabled,
+      operation_id: id(),
+      target_group_id: remoteGroupId,
+    });
+    if (result.error) {
+      markRemoteWriteError(result.error.message);
+      return;
+    }
+
+    applyRemoteCommit(result.data as RemotePayloadCommit);
+    setRatingEligibilityRevision((current) => current + 1);
+  }
+
   function revealBillingPanel(message?: string) {
     if (message) setBillingMessage(message);
     setActiveMobileTab("perfil");
@@ -4954,9 +5059,11 @@ export default function Home() {
       setSyncStatus("connecting");
       setSyncError("");
 
-      const result = await supabase.rpc("patch_pachanga_match_player_status", {
+      const result = await supabase.rpc("patch_pachanga_match_player_status_authoritative_v2", {
+        client_metadata: clientOperationMetadata(),
+        expected_revision: remotePayloadRevisionRef.current,
         next_status: status,
-        operation_key: id(),
+        operation_id: id(),
         target_group_id: remoteGroupId,
         target_match_id: activeMatch.id,
         target_player_id: playerId,
@@ -5089,9 +5196,11 @@ export default function Home() {
       setSyncStatus("connecting");
       setSyncError("");
 
-      const result = await supabase.rpc("patch_pachanga_match_player_paid", {
+      const result = await supabase.rpc("patch_pachanga_match_player_paid_authoritative_v2", {
+        client_metadata: clientOperationMetadata(),
+        expected_revision: remotePayloadRevisionRef.current,
         next_paid: nextPaid,
-        operation_key: id(),
+        operation_id: id(),
         target_group_id: remoteGroupId,
         target_match_id: activeMatch.id,
         target_player_id: playerId,
@@ -5172,9 +5281,11 @@ export default function Home() {
       setSyncStatus("connecting");
       setSyncError("");
 
-      const result = await supabase.rpc("patch_pachanga_match_lineup_state", {
+      const result = await supabase.rpc("patch_pachanga_match_lineup_authoritative_v2", {
+        client_metadata: clientOperationMetadata(),
+        expected_revision: remotePayloadRevisionRef.current,
         next_lineup_closed: nextLineupClosed,
-        operation_key: id(),
+        operation_id: id(),
         target_group_id: remoteGroupId,
         target_match_id: activeMatch.id,
         target_payer_id: nextPayerId ?? null,
@@ -5322,9 +5433,11 @@ export default function Home() {
       setSyncStatus("connecting");
       setSyncError("");
 
-      const result = await supabase.rpc("patch_pachanga_match_scorers", {
+      const result = await supabase.rpc("patch_pachanga_match_scorers_authoritative_v2", {
+        client_metadata: clientOperationMetadata(),
+        expected_revision: remotePayloadRevisionRef.current,
         next_scorers: cleanScorers,
-        operation_key: id(),
+        operation_id: id(),
         target_group_id: remoteGroupId,
         target_match_id: activeMatch.id,
         target_score_a: Number(scoreAValue),
@@ -5435,12 +5548,15 @@ export default function Home() {
       setSyncStatus("connecting");
       setSyncError("");
 
-      const result = await supabase.rpc("finalize_pachanga_match_if_current", {
+      const result = await supabase.rpc("finalize_pachanga_match_authoritative_v2", {
+        client_metadata: clientOperationMetadata(),
         expected_revision: remotePayloadRevisionRef.current,
-        next_payload: nextPayload,
-        operation_key: id(),
+        operation_id: id(),
         target_group_id: remoteGroupId,
         target_match_id: activeMatch.id,
+        target_score_a: scoreA,
+        target_score_b: scoreB,
+        target_scorers: activeMatch.scorers ?? [],
       });
 
       if (result.error) {
@@ -5461,8 +5577,13 @@ export default function Home() {
         return;
       }
 
-      applyRemoteCommit(result.data as RemotePayloadCommit);
-      await createTeamBackup("partido_finalizado", nextPayload, false);
+      const commit = result.data as RemotePayloadCommit;
+      applyRemoteCommit(commit);
+      await createTeamBackup(
+        "partido_finalizado",
+        normalizePayload((commit.payload ?? nextPayload) as Partial<AppPayload>),
+        false,
+      );
       return;
     }
 
@@ -5669,6 +5790,7 @@ export default function Home() {
   const selectedMarketAvailabilitySlots = selectedPlayer ? marketAvailabilitySlots(selectedPlayer.marketAvailability) : [];
   const selectedMarketReady = selectedPlayer ? playerMarketProfileComplete(selectedPlayer) : true;
   const currentTeam = remoteTeams.find((team) => team.id === remoteGroupId);
+  const ratingsEnabled = isDemoMode || currentTeam?.ratingsEnabled !== false;
   const isRegisteredUser = Boolean(authUser && !isAnonymousAuthUser(authUser));
   const hasRealTeam = !previewDemoMode && remoteReady && Boolean(remoteGroupId);
   const billingActive = teamBillingIsActive(currentTeam);
@@ -5868,44 +5990,38 @@ export default function Home() {
   const selectedRatingRole = selectedPlayer ? ratingRoleForPlayer(selectedPlayer) : "field";
   const selectedRatingHistory = selectedPlayer ? ratingHistory(selectedPlayer, selectedRatingRole) : [];
   const selectedRatingChartHistory = selectedRatingHistory.slice(-10);
-  const selectedRatingWindow = selectedPlayer ? ratingWindow(selectedPlayer, ratingVoterId) : null;
-  const selectedUserVote = selectedRatingWindow?.ownVote;
   const canRateSelectedPlayer = Boolean(
-    selectedRatingWindow?.canRate &&
+    ratingsEnabled &&
+    ratingEligibility?.canRate &&
       selectedPlayer &&
       !selectedPlayerIsOwn &&
       (isDemoMode || (hasRealTeam && isRegisteredUser)),
   );
-  const ratingWaitMatches = selectedRatingWindow?.waitMatches ?? 0;
-  const selectedFacetDraftValue = (facetKey: RatingFacet) =>
-    selectedPlayer ? clampPeerRatingFacet(selectedPlayer, facetKey, newFacetRatings[facetKey] ?? facetAverage(selectedPlayer, facetKey)) : 5;
-  const setSelectedFacetRating = (facetKey: RatingFacet, value: number) => {
-    if (!selectedPlayer) return;
-    setNewFacetRatings((current) => ({
-      ...current,
-      [facetKey]: clampPeerRatingFacet(selectedPlayer, facetKey, value),
-    }));
-  };
-  const draftPeerAverage = selectedPlayer
-    ? selectedRatingFacets.reduce((sum, facet) => sum + clampPeerRatingFacet(selectedPlayer, facet.key, newFacetRatings[facet.key] ?? facetAverage(selectedPlayer, facet.key)), 0) / selectedRatingFacets.length
-    : 0;
-  const selectedRatingStatusText = selectedPlayer && selectedRatingWindow
+  const ratingSharedMatches = Math.min(ratingEligibility?.sharedMatches ?? 0, ratingEligibility?.requiredMatches ?? 3);
+  const ratingWaitMatches = Math.max(0, (ratingEligibility?.requiredMatches ?? 0) - (ratingEligibility?.sharedMatches ?? 0));
+  const selectedRatingStatusText = selectedPlayer
     ? selectedPlayer.inactive
       ? "Jugador fuera del grupo: valoración bloqueada."
+      : !ratingsEnabled
+        ? "Las valoraciones están desactivadas para este grupo."
+      : selectedPlayer.goalkeeperOnly
+        ? "La valoración específica de porteros está pendiente. Sus facetas antiguas se conservan como legado."
       : selectedPlayerIsOwn
         ? "No puedes votar tu propia ficha."
         : hasRealTeam && !isRegisteredUser
           ? "Entra con Google para valorar a compañeros."
-          : selectedRatingWindow.canRate
-        ? selectedRatingWindow.isInitialWindow
-          ? "Valoración inicial abierta: puedes valorar esta ficha antes de su primer partido."
-          : "Valoraciones abiertas: puedes votar ahora."
-        : selectedUserVote
-          ? `Cerradas: se reabren cuando juegue ${ratingWaitMatches} partido${ratingWaitMatches === 1 ? "" : "s"} más.`
-          : `Cerradas: se abren al completar 3 partidos. Faltan ${ratingWaitMatches} partido${ratingWaitMatches === 1 ? "" : "s"}.`
+          : ratingEligibilityLoading
+            ? "Comprobando si puedes valorar..."
+            : ratingEligibility?.canRate
+              ? ratingEligibility.firstRating
+                ? "Primera valoración disponible. No necesitas haber jugado antes con esta persona."
+                : "Ya habéis compartido 3 partidos nuevos. Esta valoración sustituirá a la anterior."
+              : ratingEligibility?.reason === "target_not_current_member"
+                ? "Solo puedes valorar a miembros activos de este grupo."
+                : `Progreso para volver a valorar: ${ratingSharedMatches}/3. Faltan ${ratingWaitMatches}.`
     : "";
   const selectedRatingButtonText = canRateSelectedPlayer
-    ? "Guardar valoración"
+    ? ratingEligibility?.firstRating ? "Guardar primera valoración" : "Sustituir valoración anterior"
     : ratingWaitMatches > 0
       ? `${ratingWaitMatches === 1 ? "Falta" : "Faltan"} ${ratingWaitMatches} partido${ratingWaitMatches === 1 ? "" : "s"} para abrir votaciones`
       : "Valoraciones cerradas";
@@ -5948,14 +6064,65 @@ export default function Home() {
     : makeFacetRatings();
 
   useEffect(() => {
-    if (!selectedPlayer) return;
-    const ownVote = ratingHistory(selectedPlayer, ratingRoleForPlayer(selectedPlayer)).filter((vote) => vote.voterId === ratingVoterId).at(-1);
-    const nextFacets = ratingFacetsForPlayer(selectedPlayer).reduce((next, facet) => {
-      next[facet.key] = clampPeerRatingFacet(selectedPlayer, facet.key, ownVote?.facets[facet.key] ?? facetAverage(selectedPlayer, facet.key));
-      return next;
-    }, {} as Record<RatingFacet, number>);
-    setNewFacetRatings(nextFacets);
-  }, [selectedPlayerId, ratingVoterId, selectedPlayer?.goalkeeperOnly, selectedPlayer?.position]);
+    let cancelled = false;
+    queueMicrotask(() => {
+      if (!cancelled) {
+        setRatingComparisons(Object.fromEntries(ATTRIBUTE_KEYS.map((facet) => [facet, "PARECIDO"])) as Record<AttributeKey, RatingComparison>);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedPlayerId]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const updateEligibility = (eligibility: RatingEligibility | null | undefined, loading: boolean) => {
+      queueMicrotask(() => {
+        if (cancelled) return;
+        if (eligibility !== undefined) setRatingEligibility(eligibility);
+        setRatingEligibilityLoading(loading);
+      });
+    };
+    if (!selectedPlayer || selectedPlayerIsOwn || selectedPlayer.inactive || selectedPlayer.goalkeeperOnly || !ratingsEnabled) {
+      updateEligibility(null, false);
+      return () => {
+        cancelled = true;
+      };
+    }
+    if (isDemoMode) {
+      const demoWindow = ratingWindow(selectedPlayer, ratingVoterId);
+      updateEligibility({
+        canRate: true,
+        firstRating: !demoWindow.ownVote,
+        previousRatingAt: demoWindow.ownVote?.createdAt,
+        requiredMatches: demoWindow.ownVote ? 3 : 0,
+        sharedMatches: demoWindow.ownVote ? Math.min(3, Math.max(0, selectedPlayer.appearances - demoWindow.ownVote.matchCount)) : 0,
+      }, false);
+      return () => {
+        cancelled = true;
+      };
+    }
+    if (!supabase || !remoteGroupId || !isRegisteredUser) {
+      updateEligibility(null, false);
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    updateEligibility(undefined, true);
+    void supabase.rpc("get_pachanga_rating_eligibility", {
+      target_group_id: remoteGroupId,
+      target_player_id: selectedPlayer.id,
+    }).then((result) => {
+      if (cancelled) return;
+      updateEligibility(result.error ? null : result.data as RatingEligibility, false);
+      if (result.error) setSyncError(result.error.message);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [isDemoMode, isRegisteredUser, ratingEligibilityRevision, ratingVoterId, ratingsEnabled, remoteGroupId, selectedPlayer, selectedPlayerIsOwn]);
 
   useEffect(() => {
     if (profileFocusTarget !== "rating" || activeMobileTab !== "perfil" || !selectedPlayerId) return;
@@ -6084,17 +6251,11 @@ export default function Home() {
     const marketZonesGeo = normalizeMarketZonesGeo(player.marketZonesGeo);
 
     return {
-      globalPlayerProfileId: player.globalPlayerProfileId,
-      assessmentSummary: player.assessmentSummary,
       avatar: player.avatar,
       avatarOffsetX: player.avatar ? clampAvatarOffset(player.avatarOffsetX, 50) : undefined,
       avatarOffsetY: player.avatar ? clampAvatarOffset(player.avatarOffsetY, 0) : undefined,
       birthDate: normalizeBirthDate(player.birthDate),
       goalkeeperOnly: Boolean(player.goalkeeperOnly),
-      goals: player.goals ?? 0,
-      importedRating: player.importedRating ? clampRating(player.importedRating) : undefined,
-      importedRatingAt: player.importedRatingAt,
-      importedRatingFromGroup: player.importedRatingFromGroup,
       injured: Boolean(player.injured),
       marketAvailability: player.marketAvailability ?? "",
       marketBio: player.marketBio ?? "",
@@ -6208,9 +6369,11 @@ export default function Home() {
     setSyncError("");
     const result = await withTimeout(
       Promise.resolve(
-        supabase.rpc("sync_pachanga_open_match", {
+        supabase.rpc("sync_pachanga_open_match_authoritative_v2", {
+          client_metadata: clientOperationMetadata(),
+          expected_revision: remotePayloadRevisionRef.current,
           match_patch: publicMatchPatchFor(nextPublicMatch, active),
-          operation_key: id(),
+          operation_id: id(),
           target_group_id: remoteGroupId,
           target_match_id: nextPublicMatch.id,
         }),
@@ -6263,9 +6426,12 @@ export default function Home() {
     setOpenMatchRequestMessage(nextStatus === "accepted" ? "Aceptando solicitud..." : "Rechazando solicitud...");
     const result = await withTimeout(
       Promise.resolve(
-        supabase.rpc("review_pachanga_open_match_request", {
+        supabase.rpc("review_pachanga_open_match_request_authoritative_v2", {
+          client_metadata: clientOperationMetadata(),
+          expected_revision: remotePayloadRevisionRef.current,
           next_status: nextStatus,
-          operation_key: id(),
+          operation_id: id(),
+          target_group_id: remoteGroupId,
           target_request_id: request.id,
         }),
       ),
@@ -6308,8 +6474,11 @@ export default function Home() {
   async function syncOwnMarketProfile(client: NonNullable<typeof supabase>, groupId: string, player: Player) {
     const result = await withTimeout(
       Promise.resolve(
-        client.rpc("sync_pachanga_market_profile", {
-          market_patch: marketPatchFor(player),
+        client.rpc("sync_pachanga_market_profile_authoritative_v2", {
+          client_metadata: clientOperationMetadata(),
+          expected_revision: remotePayloadRevisionRef.current,
+          market_intent: marketPatchFor(player),
+          operation_id: id(),
           target_group_id: groupId,
           target_player_id: player.id,
         }),
@@ -6318,6 +6487,7 @@ export default function Home() {
       "Mercado agotado",
     );
     if (result.error) throw new Error(result.error.message);
+    applyRemoteCommit(result.data as RemotePayloadCommit);
   }
 
   function ownPlayerFromCommit(commit: RemotePayloadCommit, fallbackPlayerId: string) {
@@ -6365,7 +6535,10 @@ export default function Home() {
         const groupId = remoteGroupId;
         const result = await withTimeout(
           Promise.resolve(
-            client.rpc("patch_pachanga_player_profile", {
+            client.rpc("patch_pachanga_player_profile_authoritative_v2", {
+              client_metadata: clientOperationMetadata(),
+              expected_revision: remotePayloadRevisionRef.current,
+              operation_id: id(),
               player_patch: profilePatchFor({ ...editedPlayer, name: normalizedName }),
               target_group_id: groupId,
               target_player_id: selectedPlayer.id,
@@ -6431,8 +6604,8 @@ export default function Home() {
     if (!player) return;
     if (player.ownerUserId && player.ownerUserId === currentUserId) return;
     if (hasRealTeam && !isRegisteredUser) return;
-    const ratingState = ratingWindow(player, ratingVoterId);
-    if (!ratingState.canRate) return;
+    if (!ratingEligibility?.canRate || player.goalkeeperOnly) return;
+    if (!ratingEligibility.firstRating && !window.confirm("Esta nueva valoración sustituirá a tu valoración anterior. El historial se conservará. ¿Continuar?")) return;
 
     const vote: RatingVote = {
       id: id(),
@@ -6442,25 +6615,35 @@ export default function Home() {
       matchCount: player.appearances,
       createdAt: new Date().toISOString(),
       facets: ratingFacetsForPlayer(player).reduce((next, facet) => {
-        next[facet.key] = clampPeerRatingFacet(player, facet.key, newFacetRatings[facet.key]);
+        const attribute = ratingFacetAttributeMap[facet.key];
+        const ownReference = ownPlayer?.ratingV2?.currentFacets?.[attribute] ?? facetAverage(ownPlayer ?? player, facet.key) * 10;
+        next[facet.key] = clampRating((ownReference + RATING_COMPARISON_DELTAS[ratingComparisons[attribute]]) / 10);
         return next;
       }, {} as Record<RatingFacet, number>),
     };
 
-    if (!supabase || !remoteGroupId || !hasRealTeam) {
+    if (isDemoMode) {
       setPlayers((current) =>
-        current.map((item) => (item.id === playerId ? { ...item, ratingVotes: [...(item.ratingVotes ?? []), vote] } : item)),
+        current.map((item) => (item.id === playerId ? {
+          ...item,
+          ratingVotes: [...(item.ratingVotes ?? []).filter((itemVote) => itemVote.voterId !== ratingVoterId), vote],
+        } : item)),
       );
+      setRatingEligibility((current) => current ? { ...current, canRate: false, firstRating: false, previousRatingAt: vote.createdAt, requiredMatches: 3, sharedMatches: 0 } : current);
       return;
     }
+    if (!supabase || !remoteGroupId || !hasRealTeam) return;
 
     setSyncStatus("connecting");
     setSyncError("");
 
-    const result = await supabase.rpc("append_pachanga_player_rating", {
+    const result = await supabase.rpc("record_pachanga_individual_rating_authoritative_v2", {
+      client_metadata: clientOperationMetadata(),
+      comparisons: ratingComparisons,
+      expected_revision: remotePayloadRevisionRef.current,
+      operation_id: crypto.randomUUID(),
       target_group_id: remoteGroupId,
       target_player_id: playerId,
-      vote_facets: vote.facets,
     });
 
     if (result.error) {
@@ -6469,6 +6652,9 @@ export default function Home() {
     }
 
     applyRemoteCommit(result.data as RemotePayloadCommit);
+    const nextEligibility = (result.data as { eligibility?: RatingEligibility }).eligibility;
+    if (nextEligibility) setRatingEligibility(nextEligibility);
+    setRatingEligibilityRevision((current) => current + 1);
   }
 
   async function uploadAvatar(file: File | undefined, playerId = selectedPlayer?.id) {
@@ -6810,6 +6996,38 @@ export default function Home() {
     } satisfies Player;
   }
 
+  async function persistSharedEngineAssessment(args: {
+    assessmentInput: Record<string, unknown>;
+    kind: PlayerAssessmentKind;
+    operationId: string;
+    player: Player;
+  }) {
+    if (!supabase || !remoteGroupId) throw new Error("No hay conexión con el servidor para guardar el test.");
+    const sessionResult = await supabase.auth.getSession();
+    const accessToken = sessionResult.data.session?.access_token;
+    if (!accessToken) throw new Error("Vuelve a entrar para guardar el test.");
+
+    const response = await clientWriteFetch("api:ratings-assessment", "/api/ratings/assessment", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        assessmentInput: args.assessmentInput,
+        clientMetadata: clientOperationMetadata(),
+        expectedRevision: remotePayloadRevisionRef.current,
+        groupId: remoteGroupId,
+        kind: args.kind,
+        operationId: args.operationId,
+        playerId: args.player.id,
+      }),
+    });
+    const payload = await response.json() as RemotePayloadCommit & { error?: string };
+    if (!response.ok) throw new Error(payload.error || "No se pudo guardar el test.");
+    return payload;
+  }
+
   async function completeInitialPlayerAssessment() {
     if (!playerAssessment || playerAssessment.kind !== "initial" || !playerAssessmentInitialResult) return;
     if (!assessmentInitialIsComplete(playerAssessment.initial)) {
@@ -6826,24 +7044,20 @@ export default function Home() {
     setPlayerAssessmentMessage("Creando ficha universal...");
     try {
       const result = await withTimeout(
-        Promise.resolve(
-          supabase.rpc("complete_pachanga_player_initial_assessment", {
-            assessment_input: {
-              ...playerAssessment.initial,
-              engineVersion: FOOTBALL_RATING_ENGINE_VERSION,
-              questionnaireVersion: INITIAL_TEST_VERSION,
-            },
-            operation_id: playerAssessment.idempotencyKey,
-            player_patch: profilePatchFor(player),
-            target_group_id: remoteGroupId,
-            target_player_id: player.id,
-          }),
-        ),
+        persistSharedEngineAssessment({
+          assessmentInput: {
+            ...playerAssessment.initial,
+            engineVersion: FOOTBALL_RATING_ENGINE_VERSION,
+            questionnaireVersion: INITIAL_TEST_VERSION,
+          },
+          kind: "initial",
+          operationId: playerAssessment.idempotencyKey,
+          player,
+        }),
         16000,
         "Test agotado",
       );
-      if (result.error) throw new Error(result.error.message);
-      const savedPlayer = ownPlayerFromCommit(result.data as RemotePayloadCommit, player.id);
+      const savedPlayer = ownPlayerFromCommit(result, player.id);
       setPlayerAssessment(null);
       setProfileName(playerDisplayName(savedPlayer ?? player));
       setPlayerProfileMode("edit");
@@ -6868,24 +7082,20 @@ export default function Home() {
     setPlayerAssessmentMessage("Guardando test avanzado...");
     try {
       const result = await withTimeout(
-        Promise.resolve(
-          supabase.rpc("complete_pachanga_player_advanced_assessment", {
-            assessment_input: {
-              answers: playerAssessment.advancedAnswers,
-              engineVersion: FOOTBALL_RATING_ENGINE_VERSION,
-              questionnaireVersion: ADVANCED_TEST_VERSION,
-            },
-            operation_id: playerAssessment.idempotencyKey,
-            player_patch: profilePatchFor(selectedPlayer),
-            target_group_id: remoteGroupId,
-            target_player_id: selectedPlayer.id,
-          }),
-        ),
+        persistSharedEngineAssessment({
+          assessmentInput: {
+            answers: playerAssessment.advancedAnswers,
+            engineVersion: FOOTBALL_RATING_ENGINE_VERSION,
+            questionnaireVersion: ADVANCED_TEST_VERSION,
+          },
+          kind: "advanced",
+          operationId: playerAssessment.idempotencyKey,
+          player: selectedPlayer,
+        }),
         16000,
         "Test avanzado agotado",
       );
-      if (result.error) throw new Error(result.error.message);
-      const savedPlayer = ownPlayerFromCommit(result.data as RemotePayloadCommit, selectedPlayer.id);
+      const savedPlayer = ownPlayerFromCommit(result, selectedPlayer.id);
       setPlayerAssessment(null);
       setPlayerProfileMode("edit");
       setProfilePane("ficha");
@@ -6973,7 +7183,10 @@ export default function Home() {
       setSyncError("");
       setProfileSaveMessage("Importando ficha universal...");
 
-      const result = await supabase.rpc("upsert_pachanga_own_player_profile", {
+      const result = await supabase.rpc("upsert_pachanga_own_player_profile_authoritative_v2", {
+        client_metadata: clientOperationMetadata(),
+        expected_revision: remotePayloadRevisionRef.current,
+        operation_id: id(),
         player_patch: profilePatchFor(player),
         target_group_id: remoteGroupId,
         target_player_id: player.id,
@@ -8299,6 +8512,7 @@ export default function Home() {
 
   function renderSelectedPlayerRatingPanel() {
     if (!selectedPlayer) return null;
+    const socialDisclosure = socialRatingDisclosure(selectedPlayer.ratingV2?.evaluatorCount ?? 0);
 
     return (
       <div className={canRateSelectedPlayer ? "rating-box rating-open-box" : "rating-box rating-locked-box"}>
@@ -8310,17 +8524,29 @@ export default function Home() {
         </div>
         <div className="rating-summary-grid">
           <div className="rating-summary-card rating-summary-main">
-            <span>Media</span>
-            <strong>{overallScore(selectedPeerScore)}</strong>
-            <small>{playerMediaLabel(selectedPlayer)}. No baja por no jugar.</small>
+            <span>Actual</span>
+            <strong>{Math.round(selectedPlayer.ratingV2?.currentOverall ?? selectedPeerScore * 10)}</strong>
+            <small>La cifra principal de la carta</small>
           </div>
-          {canRateSelectedPlayer ? (
-            <div className="rating-summary-card">
-              <span>Tu valoración</span>
-              <strong>{overallScore(draftPeerAverage)}</strong>
-              <small>{selectedRatingHistory.length + (selectedPlayer.ratings?.length ?? 0)} votos de compañeros</small>
-            </div>
-          ) : null}
+          <div className="rating-summary-card">
+            <span>Base</span>
+            <strong>{Math.round(selectedPlayer.ratingV2?.baseOverall ?? selectedPlayer.rating * 10)}</strong>
+            <small>Tests del jugador</small>
+          </div>
+          <div className="rating-summary-card">
+            <span>Calibrada</span>
+            {socialDisclosure.canShowAggregate ? (
+              <>
+                <strong>{Math.round(selectedPlayer.ratingV2?.calibratedOverall ?? selectedPeerScore * 10)}</strong>
+                <small>{socialDisclosure.evaluatorCount} evaluadores · fiabilidad {Math.round(selectedPlayer.ratingV2?.reliability ?? 0)}%</small>
+              </>
+            ) : (
+              <>
+                <strong>{socialDisclosure.evaluatorCount}/{socialDisclosure.requiredEvaluators}</strong>
+                <small>Calibración en curso. Faltan {socialDisclosure.remaining} evaluador{socialDisclosure.remaining === 1 ? "" : "es"} independiente{socialDisclosure.remaining === 1 ? "" : "s"}.</small>
+              </>
+            )}
+          </div>
           {selectedForm ? (
             <div className={`form-state-card ${canRateSelectedPlayer ? "rating-summary-wide" : ""} ${selectedForm.hasData ? `form-${selectedForm.status}` : "form-pending"}`}>
               {selectedForm.hasData ? (
@@ -8342,6 +8568,14 @@ export default function Home() {
           ) : null}
         </div>
         <p className="rating-help">{selectedRatingStatusText}</p>
+        {ratingEligibility && !ratingEligibility.firstRating ? (
+          <div className="rating-eligibility-progress" aria-label={`Partidos compartidos: ${ratingSharedMatches} de 3`}>
+            <span>Partidos compartidos desde tu valoración</span>
+            <strong>{ratingSharedMatches}/3</strong>
+            <progress max={3} value={ratingSharedMatches} />
+            {ratingEligibility.previousRatingAt ? <small>Valoración anterior: {new Date(ratingEligibility.previousRatingAt).toLocaleDateString("es-ES")}</small> : null}
+          </div>
+        ) : null}
         {selectedPlayerIsOwn && assessmentSummaryKindCompleted(selectedPlayer, "initial") ? (
           <div className="assessment-followup">
             {assessmentSummaryKindCompleted(selectedPlayer, "advanced") ? (
@@ -8353,40 +8587,34 @@ export default function Home() {
             )}
           </div>
         ) : null}
-        <div className="facet-grid" ref={playerRatingFacetGridRef}>
-          {selectedRatingFacets.map((facet) => {
-            const facetValue = selectedFacetDraftValue(facet.key);
-            const facetPoints = overallScore(facetValue);
-            const facetBounds = selectedPlayer ? peerRatingFacetBounds(selectedPlayer, facet.key) : { max: 10, min: 1 };
-            return (
-              <div className="facet-field" key={facet.key}>
-                <span>{facet.label}</span>
-                <div className="facet-stepper" aria-label={`${facet.label}: ${facetPoints} de 100`}>
-                  <button
-                    type="button"
-                    disabled={!canRateSelectedPlayer || facetValue <= facetBounds.min}
-                    onClick={() => setSelectedFacetRating(facet.key, facetValue - ratingFacetStep)}
-                    aria-label={`Bajar ${facet.label}`}
-                  >
-                    -
-                  </button>
-                  <b>{facetPoints}</b>
-                  <button
-                    type="button"
-                    disabled={!canRateSelectedPlayer || facetValue >= facetBounds.max}
-                    onClick={() => setSelectedFacetRating(facet.key, facetValue + ratingFacetStep)}
-                    aria-label={`Subir ${facet.label}`}
-                  >
-                    +
-                  </button>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-        <button type="button" onClick={() => void addPeerRating(selectedPlayer.id)} disabled={!canRateSelectedPlayer}>
-          {selectedRatingButtonText}
-        </button>
+        {!selectedPlayer.goalkeeperOnly && !selectedPlayerIsOwn ? (
+          <div className="relative-rating-form" ref={playerRatingFacetGridRef}>
+            <strong>Compáralo contigo en cada aspecto.</strong>
+            <div className="relative-rating-facets">
+              {ATTRIBUTE_KEYS.map((facet) => (
+                <fieldset key={facet} disabled={!canRateSelectedPlayer}>
+                  <legend>{OUTFIELD_FACET_LABELS[facet]}</legend>
+                  <div className="relative-rating-options">
+                    {RATING_COMPARISON_OPTIONS.map((option) => (
+                      <button
+                        aria-pressed={ratingComparisons[facet] === option.id}
+                        className={ratingComparisons[facet] === option.id ? "selected" : ""}
+                        key={option.id}
+                        onClick={() => setRatingComparisons((current) => ({ ...current, [facet]: option.id }))}
+                        type="button"
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
+                </fieldset>
+              ))}
+            </div>
+            <button type="button" onClick={() => void addPeerRating(selectedPlayer.id)} disabled={!canRateSelectedPlayer}>
+              {selectedRatingButtonText}
+            </button>
+          </div>
+        ) : null}
         <div className="rating-evolution">
           <span>Evolución</span>
           {selectedRatingChartHistory.length > 0 ? (
@@ -9008,6 +9236,18 @@ export default function Home() {
             </div>
           </div>
           <div className="subscription-settings">
+            <label className="settings-toggle">
+              Valoraciones entre jugadores
+              <span>
+                <input
+                  type="checkbox"
+                  checked={ratingsEnabled}
+                  disabled={!canManageTeam}
+                  onChange={(event) => void setGroupRatingsEnabled(event.target.checked)}
+                />
+                {ratingsEnabled ? "Activadas" : "Desactivadas"}
+              </span>
+            </label>
             <label className="settings-toggle">
               Aporte app por Bizum
               <span>
@@ -9960,6 +10200,16 @@ export default function Home() {
               <button disabled={!matchConfigured || !lineupClosed || !resultIsReady || !canUseAdminControls} onClick={() => void finalizeMatch()}>Finalizar partido</button>
             )}
           </div>
+          {matchFinalized && canUseAdminControls && ratingsEnabled && supabase && remoteGroupId ? (
+            <GlobalRatingPanel
+              client={supabase}
+              clientMetadata={clientOperationMetadata}
+              expectedRevision={remotePayloadRevision}
+              groupId={remoteGroupId}
+              matchId={activeMatch.id}
+              onCommit={(commit) => applyRemoteCommit(commit as RemotePayloadCommit)}
+            />
+          ) : null}
         </aside>
       </section>
 

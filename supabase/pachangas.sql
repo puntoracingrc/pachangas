@@ -2122,7 +2122,7 @@ begin
   end if;
 
   if expected_revision is not null and current_group.payload_revision <> expected_revision then
-    raise exception 'Team changed before saving. Reload and try again.' using errcode = '40001';
+    raise exception 'Team changed before saving. Reload and try again.' using errcode = 'PT409';
   end if;
 
   select count(*) into current_finalized_count
@@ -2240,7 +2240,7 @@ begin
   end if;
 
   if expected_revision is not null and current_group.payload_revision <> expected_revision then
-    raise exception 'Team changed before saving. Reload and try again.' using errcode = '40001';
+    raise exception 'Team changed before saving. Reload and try again.' using errcode = 'PT409';
   end if;
 
   select value into selected_match
