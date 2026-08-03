@@ -192,7 +192,7 @@ test("keeps the project wired to the Pachangas app", async () => {
     readFile(new URL("../supabase/migrations/20260802143400_rating_v2_profile_authority.sql", import.meta.url), "utf8"),
     readFile(new URL("../supabase/migrations/20260802143500_rating_v2_match_authority.sql", import.meta.url), "utf8"),
     readFile(new URL("../supabase/migrations/20260802144000_rating_v2_assessment_authority.sql", import.meta.url), "utf8"),
-    readFile(new URL("../supabase/deferred-migrations/20260802144700_rating_v2_legacy_write_closure.sql", import.meta.url), "utf8"),
+    readFile(new URL("../supabase/migrations/20260803061133_rating_v2_legacy_write_closure.sql", import.meta.url), "utf8"),
     readFile(new URL("../supabase/deferred-migrations/20260802203605_rating_v2_emergency_safe_hold.sql", import.meta.url), "utf8"),
     readFile(new URL("../docs/rating-system-v2-deployment-runbook.md", import.meta.url), "utf8"),
   ]);

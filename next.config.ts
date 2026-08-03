@@ -15,7 +15,7 @@ function buildCommitSha() {
 }
 
 function buildReleaseVersion() {
-  const releaseVersion = process.env.PACHANGAS_CLIENT_RELEASE_VERSION?.trim() || "1.0.0";
+  const releaseVersion = process.env.PACHANGAS_CLIENT_RELEASE_VERSION?.trim() || "2.0.0";
   if (!semVerCorePattern.test(releaseVersion)) {
     throw new Error("PACHANGAS_CLIENT_RELEASE_VERSION must be a SemVer core such as 1.0.0");
   }

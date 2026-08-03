@@ -1,5 +1,5 @@
 export const CLIENT_UPDATE_REQUIRED = "CLIENT_UPDATE_REQUIRED";
-export const INITIAL_MINIMUM_SUPPORTED_CLIENT_VERSION = "1.0.0";
+export const INITIAL_MINIMUM_SUPPORTED_CLIENT_VERSION = "2.0.0";
 export const V1_UNVERSIONED = "v1-unversioned";
 
 export type ClientVersionClassification = typeof V1_UNVERSIONED | string;

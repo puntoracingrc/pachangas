@@ -111,9 +111,9 @@ Después de rebasar Rating V2 sobre el `main` que ya contiene el PR #93 y añadi
 | `20260802144500_rating_v2_restoration_semantics.sql` | Restaura la evidencia original sin crear voto ni peso nuevo y separa `opinion_created_at` de `restored_at`. |
 | `20260802144600_rating_v2_canonical_ordering.sql` | Lectura canónica de snapshots y órdenes deterministas mediante secuencia, revisión o fecha más ID estable. |
 | `20260803052408_rating_v2_http_conflicts.sql` | Compatibilidad para instalaciones ya migradas: encapsula 28 RPC V2, traduce revisión/lock obsoleto a HTTP 409 y mantiene las implementaciones internas sin permisos de cliente. |
-| `deferred-migrations/20260802144700_rating_v2_legacy_write_closure.sql` | Unidad 25 de activación diferida: revoca RPC antiguas y `UPDATE` directo solo cuando el frontend V2 ya está verificado. |
+| `migrations/20260803061133_rating_v2_legacy_write_closure.sql` | Unidad 25 del PR de activación: revoca RPC antiguas y `UPDATE` directo solo cuando el frontend V2 ya está verificado. |
 
-Las 24 migraciones aditivas se aplican primero. La unidad 25 se valida después como activación separada y no forma parte de un `supabase db push` ordinario. Esta separación evita romper V1 antes de desplegar V2; el procedimiento completo está en `docs/rating-system-v2-deployment-runbook.md`.
+Las 24 migraciones aditivas se aplican primero. La unidad 25 se valida después como activación separada y solo entra en el flujo normal al publicarse su PR independiente. Esta separación evita romper V1 antes de desplegar V2; el procedimiento completo está en `docs/rating-system-v2-deployment-runbook.md`.
 
 `deferred-migrations/20260802203605_rating_v2_emergency_safe_hold.sql` tampoco forma parte de las 25 unidades de despliegue. Es una guardia de incidente: mantiene V1 y `UPDATE` directo revocados y garantiza únicamente la RPC V2 de asistencia para un frontend temporal de mantenimiento. Debe convertirse en una migración nueva y ensayarse en staging antes de cualquier uso.
 

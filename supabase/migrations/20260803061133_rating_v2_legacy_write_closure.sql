@@ -1,7 +1,7 @@
--- Pachangas IQ rating system V2: deferred activation.
+-- Pachangas IQ rating system V2: final legacy write closure.
 --
--- Do not place this file in supabase/migrations until the V2 frontend is live
--- and verified. See docs/rating-system-v2-deployment-runbook.md.
+-- The V2 frontend and the 24 additive migrations must be live and verified
+-- before this migration is applied.
 
 revoke execute on function public.save_pachanga_payload_if_current(uuid, bigint, jsonb)
   from public, anon, authenticated;
