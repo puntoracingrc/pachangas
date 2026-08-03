@@ -7007,7 +7007,7 @@ export default function Home() {
     const accessToken = sessionResult.data.session?.access_token;
     if (!accessToken) throw new Error("Vuelve a entrar para guardar el test.");
 
-    const response = await fetch("/api/ratings/assessment", {
+    const response = await clientWriteFetch("api:ratings-assessment", "/api/ratings/assessment", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${accessToken}`,

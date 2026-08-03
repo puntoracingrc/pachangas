@@ -20,7 +20,12 @@ import {
   activateWaitingServiceWorker,
   reloadOnceAfterControllerChange,
 } from "../app/pwa-service-worker-update";
-import { classifySupabaseWrite, knownV1WriteRpcNames } from "../app/pwa-write-classifier";
+import {
+  classifySupabaseWrite,
+  isKnownClientWriteOperation,
+  knownClientWriteRpcNames,
+  knownV1WriteRpcNames,
+} from "../app/pwa-write-classifier";
 import type { ClientWriteTelemetryInput } from "../app/api/client-telemetry/_contract";
 
 function policyResponse(minimum: string, writeAllowed: boolean) {
@@ -240,11 +245,31 @@ test("the classifier covers every current V1 write RPC and leaves auth outside t
   assert.equal(classifySupabaseWrite("https://demo.supabase.co/auth/v1/token", { method: "POST" }), null);
 });
 
-test("the write RPC allowlist matches every browser RPC currently invoked", async () => {
+test("the write bridge classifies every browser RPC without treating reads as writes", async () => {
   const source = await Promise.all([
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/mercado/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/global-rating-panel.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/valorar-equipo/page.tsx", import.meta.url), "utf8"),
   ]).then((files) => files.join("\n"));
-  const invokedRpcNames = [...source.matchAll(/\.rpc\("([a-z0-9_]+)"/g)].map((match) => match[1]).sort();
-  assert.deepEqual([...new Set(invokedRpcNames)], knownV1WriteRpcNames());
+  const readRpcNames = new Set([
+    "get_pachanga_global_rating_context_v2",
+    "get_pachanga_guest_rating_token_context_v2",
+    "get_pachanga_rating_eligibility",
+  ]);
+  const invokedRpcNames = [...new Set(
+    [...source.matchAll(/\.rpc\("([a-z0-9_]+)"/g)].map((match) => match[1]),
+  )].sort();
+  const currentWriteRpcNames = invokedRpcNames.filter((rpcName) => !readRpcNames.has(rpcName));
+
+  for (const rpcName of invokedRpcNames) {
+    const classified = classifySupabaseWrite(`https://demo.supabase.co/rest/v1/rpc/${rpcName}`, { method: "POST" });
+    assert.equal(classified, readRpcNames.has(rpcName) ? null : `rpc:${rpcName}`);
+  }
+  assert.deepEqual(
+    currentWriteRpcNames,
+    knownClientWriteRpcNames().filter((rpcName) => currentWriteRpcNames.includes(rpcName)),
+  );
+  assert.equal(isKnownClientWriteOperation("api:ratings-assessment"), true);
+  assert.match(source, /clientWriteFetch\("api:ratings-assessment", "\/api\/ratings\/assessment"/);
 });

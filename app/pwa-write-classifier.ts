@@ -23,6 +23,30 @@ const v1WriteRpcNames = new Set([
   "upsert_pachanga_own_player_profile",
 ]);
 
+const v2WriteRpcNames = new Set([
+  "ensure_pachanga_external_team_authoritative_v2",
+  "finalize_pachanga_match_authoritative_v2",
+  "issue_pachanga_guest_rating_token_authoritative_v2",
+  "link_pachanga_registered_opponent_authoritative_v2",
+  "patch_pachanga_match_lineup_authoritative_v2",
+  "patch_pachanga_match_player_paid_authoritative_v2",
+  "patch_pachanga_match_player_status_authoritative_v2",
+  "patch_pachanga_match_scorers_authoritative_v2",
+  "patch_pachanga_player_profile_authoritative_v2",
+  "record_pachanga_global_rating_authoritative_v2",
+  "record_pachanga_guest_team_rating_token_v2",
+  "record_pachanga_individual_rating_authoritative_v2",
+  "request_pachanga_open_match_authoritative_v2",
+  "review_pachanga_open_match_request_authoritative_v2",
+  "save_pachanga_payload_authoritative_v2",
+  "set_pachanga_group_ratings_enabled_authoritative_v2",
+  "sync_pachanga_market_profile_authoritative_v2",
+  "sync_pachanga_open_match_authoritative_v2",
+  "upsert_pachanga_own_player_profile_authoritative_v2",
+]);
+
+const clientWriteRpcNames = new Set([...v1WriteRpcNames, ...v2WriteRpcNames]);
+
 const writeMethods = new Set(["DELETE", "PATCH", "POST", "PUT"]);
 const v1DirectTableWriteOperations = new Set([
   "table:pachanga_group_members:post",
@@ -32,6 +56,13 @@ const v1DirectTableWriteOperations = new Set([
 const v1ApplicationWriteOperations = new Set([
   "api:billing-checkout",
   "api:billing-portal",
+]);
+const v2ApplicationWriteOperations = new Set([
+  "api:ratings-assessment",
+]);
+const clientApplicationWriteOperations = new Set([
+  ...v1ApplicationWriteOperations,
+  ...v2ApplicationWriteOperations,
 ]);
 
 export function requestMethod(input: RequestInfo | URL, init?: RequestInit) {
@@ -55,7 +86,7 @@ export function classifySupabaseWrite(input: RequestInfo | URL, init?: RequestIn
   const rpcPrefix = "/rest/v1/rpc/";
   if (url.pathname.startsWith(rpcPrefix)) {
     const rpcName = decodeURIComponent(url.pathname.slice(rpcPrefix.length));
-    return v1WriteRpcNames.has(rpcName) ? `rpc:${rpcName}` : null;
+    return clientWriteRpcNames.has(rpcName) ? `rpc:${rpcName}` : null;
   }
 
   const tablePrefix = "/rest/v1/";
@@ -68,7 +99,11 @@ export function knownV1WriteRpcNames() {
   return [...v1WriteRpcNames].sort();
 }
 
+export function knownClientWriteRpcNames() {
+  return [...clientWriteRpcNames].sort();
+}
+
 export function isKnownClientWriteOperation(operation: string) {
-  if (operation.startsWith("rpc:")) return v1WriteRpcNames.has(operation.slice(4));
-  return v1DirectTableWriteOperations.has(operation) || v1ApplicationWriteOperations.has(operation);
+  if (operation.startsWith("rpc:")) return clientWriteRpcNames.has(operation.slice(4));
+  return v1DirectTableWriteOperations.has(operation) || clientApplicationWriteOperations.has(operation);
 }
