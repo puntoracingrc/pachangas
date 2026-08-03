@@ -14130,3 +14130,485 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
     min-width: 0;
   }
 }
+
+/* Public challengeable teams: private configuration, public server-filtered results. */
+.challengeable-teams-area {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+
+.challengeable-teams-toolbar {
+  align-items: end;
+  background: color-mix(in srgb, var(--panel) 88%, transparent);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: minmax(220px, 1.4fr) minmax(120px, 0.6fr) minmax(140px, 0.7fr) auto;
+  padding: 12px;
+}
+
+.challengeable-teams-toolbar label,
+.challengeable-profile-grid label,
+.challengeable-search-grid label {
+  color: var(--ink-soft);
+  display: grid;
+  font-size: 11px;
+  font-weight: 950;
+  gap: 6px;
+  min-width: 0;
+  text-transform: uppercase;
+}
+
+.challengeable-teams-toolbar > div,
+.challengeable-profile-editor > header > div,
+.challengeable-team-card header > div,
+.challengeable-results-heading > div {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.challengeable-teams-toolbar span,
+.challengeable-profile-editor > header > div span,
+.challengeable-team-card header span,
+.challengeable-team-card dt,
+.challengeable-results-heading span {
+  color: var(--ink-soft);
+  font-size: 10px;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.challengeable-teams-toolbar strong,
+.challengeable-team-card header strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.challengeable-teams-toolbar button,
+.challengeable-profile-editor button,
+.challengeable-search-panel button,
+.challengeable-team-card > button,
+.challengeable-pagination button {
+  background: color-mix(in srgb, var(--panel) 72%, #0b1611);
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  color: var(--ink);
+  cursor: pointer;
+  font-weight: 900;
+  min-height: 38px;
+  padding: 0 12px;
+}
+
+.challengeable-teams-toolbar button,
+.challengeable-search-action,
+.challengeable-editor-footer > button,
+.challengeable-team-card > button {
+  background: var(--lime);
+  border-color: color-mix(in srgb, var(--green) 60%, var(--line));
+  color: #17200f;
+}
+
+.challengeable-teams-toolbar button:disabled,
+.challengeable-profile-editor button:disabled,
+.challengeable-search-panel button:disabled,
+.challengeable-team-card > button:disabled,
+.challengeable-pagination button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.challengeable-profile-editor {
+  display: grid;
+  gap: 14px;
+}
+
+.challengeable-profile-editor > header,
+.challengeable-slots > header,
+.challengeable-editor-footer,
+.challengeable-results-heading {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+.challengeable-profile-editor > header {
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 10px;
+}
+
+.challengeable-profile-editor > header strong {
+  font-size: 19px;
+}
+
+.challengeable-enabled-toggle {
+  align-items: center;
+  background: color-mix(in srgb, var(--green) 12%, var(--panel));
+  border: 1px solid color-mix(in srgb, var(--green) 48%, var(--line));
+  border-radius: 7px;
+  color: var(--ink);
+  cursor: pointer;
+  display: flex;
+  font-size: 12px;
+  font-weight: 950;
+  gap: 8px;
+  min-height: 38px;
+  padding: 0 12px;
+}
+
+.challengeable-enabled-toggle input,
+.challengeable-modalities input {
+  accent-color: var(--green);
+  height: 18px;
+  width: 18px;
+}
+
+.challengeable-profile-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: minmax(220px, 1.6fr) repeat(3, minmax(110px, 0.7fr));
+}
+
+.challengeable-modalities {
+  border: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+}
+
+.challengeable-modalities legend,
+.challengeable-slots > header > span {
+  color: var(--ink-soft);
+  font-size: 11px;
+  font-weight: 950;
+  margin-bottom: 7px;
+  text-transform: uppercase;
+}
+
+.challengeable-modalities label {
+  align-items: center;
+  background: color-mix(in srgb, var(--panel) 82%, var(--background));
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  cursor: pointer;
+  display: flex;
+  font-size: 12px;
+  font-weight: 850;
+  gap: 7px;
+  min-height: 36px;
+  padding: 0 10px;
+}
+
+.challengeable-slots {
+  display: grid;
+  gap: 7px;
+}
+
+.challengeable-slot-row {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: minmax(130px, 1fr) minmax(105px, 0.7fr) minmax(105px, 0.7fr) 38px;
+  max-width: 620px;
+}
+
+.challengeable-slot-row > button {
+  font-size: 20px;
+  padding: 0;
+}
+
+.challengeable-editor-footer {
+  border-top: 1px solid var(--line);
+  padding-top: 10px;
+}
+
+.challengeable-editor-footer p,
+.challengeable-results-heading small,
+.challengeable-team-card > p {
+  color: var(--ink-soft);
+  font-size: 12px;
+  font-weight: 750;
+  line-height: 1.4;
+  margin: 0;
+}
+
+.challengeable-search-panel {
+  padding: 12px;
+}
+
+.challengeable-search-grid {
+  align-items: end;
+  display: grid;
+  gap: 8px;
+  grid-template-columns: minmax(190px, 1.6fr) repeat(7, minmax(95px, 0.7fr)) auto;
+}
+
+.challengeable-search-action {
+  white-space: nowrap;
+}
+
+.challengeable-teams-message,
+.challengeable-teams-loading,
+.challengeable-teams-empty {
+  color: var(--ink-soft);
+  font-weight: 850;
+  margin: 0;
+}
+
+.challengeable-teams-message {
+  background: color-mix(in srgb, #f0b429 12%, var(--panel));
+  border: 1px solid color-mix(in srgb, #f0b429 42%, var(--line));
+  border-radius: 7px;
+  padding: 10px 12px;
+}
+
+.challengeable-results-heading {
+  border-bottom: 1px solid var(--line);
+  padding: 2px 2px 9px;
+}
+
+.challengeable-results-heading strong {
+  font-size: 22px;
+}
+
+.challengeable-team-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+  min-width: 0;
+}
+
+.challengeable-team-card {
+  background: color-mix(in srgb, var(--panel) 92%, var(--background));
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+  padding: 14px;
+}
+
+.challengeable-team-card > header {
+  align-items: start;
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+}
+
+.challengeable-team-card header strong {
+  font-size: 18px;
+}
+
+.challengeable-team-card header b {
+  background: color-mix(in srgb, var(--lime) 16%, var(--panel));
+  border: 1px solid color-mix(in srgb, var(--lime) 54%, var(--line));
+  border-radius: 999px;
+  color: var(--ink);
+  font-size: 11px;
+  padding: 6px 8px;
+  white-space: nowrap;
+}
+
+.challengeable-team-card dl {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 0;
+}
+
+.challengeable-team-card dl > div {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.challengeable-team-card dd {
+  font-size: 13px;
+  font-weight: 850;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.challengeable-team-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.challengeable-team-tags span {
+  background: color-mix(in srgb, var(--green) 12%, var(--panel));
+  border: 1px solid color-mix(in srgb, var(--green) 35%, var(--line));
+  border-radius: 999px;
+  color: var(--ink-soft);
+  font-size: 10px;
+  font-weight: 900;
+  padding: 4px 7px;
+}
+
+.challengeable-team-card > button {
+  justify-self: start;
+}
+
+.challengeable-pagination {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+.challengeable-pagination span {
+  color: var(--ink-soft);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+@media (max-width: 1180px) {
+  .challengeable-teams-toolbar,
+  .challengeable-profile-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .challengeable-search-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .challengeable-search-zone {
+    grid-column: span 2;
+  }
+}
+
+@media (max-width: 560px) {
+  .challengeable-teams-toolbar,
+  .challengeable-profile-grid,
+  .challengeable-search-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .challengeable-search-zone {
+    grid-column: auto;
+  }
+
+  .challengeable-profile-editor > header,
+  .challengeable-editor-footer,
+  .challengeable-results-heading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .challengeable-slot-row {
+    grid-template-columns: minmax(0, 1fr) minmax(88px, 0.7fr) minmax(88px, 0.7fr) 38px;
+  }
+
+  .challengeable-team-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (orientation: landscape) and (max-height: 560px),
+  (orientation: landscape) and (min-width: 768px) and (max-width: 1368px) and (max-height: 1024px) and (pointer: coarse),
+  (orientation: landscape) and (min-width: 768px) and (max-width: 1368px) and (max-height: 1024px) and (any-pointer: coarse) {
+  .market-page > .challengeable-teams-area {
+    color-scheme: dark;
+    gap: 7px;
+    min-height: 0;
+    overflow: auto;
+    padding-right: 2px;
+    scrollbar-width: thin;
+  }
+
+  .market-page .challengeable-teams-toolbar,
+  .market-page .challengeable-profile-editor,
+  .market-page .challengeable-search-panel,
+  .market-page .challengeable-team-card {
+    background: rgba(18, 29, 24, 0.94);
+    border-color: rgba(255, 255, 255, 0.12);
+    color: #f5f2e8;
+  }
+
+  .market-page .challengeable-teams-toolbar span,
+  .market-page .challengeable-teams-toolbar label,
+  .market-page .challengeable-profile-grid label,
+  .market-page .challengeable-search-grid label,
+  .market-page .challengeable-profile-editor > header > div span,
+  .market-page .challengeable-team-card header span,
+  .market-page .challengeable-team-card dt,
+  .market-page .challengeable-team-card > p,
+  .market-page .challengeable-results-heading span,
+  .market-page .challengeable-results-heading small {
+    color: #a7b8af;
+  }
+
+  .market-page .challengeable-profile-grid input,
+  .market-page .challengeable-profile-grid select,
+  .market-page .challengeable-search-grid input,
+  .market-page .challengeable-search-grid select,
+  .market-page .challengeable-slot-row input,
+  .market-page .challengeable-slot-row select {
+    background: rgba(245, 242, 232, 0.08);
+    border-color: rgba(255, 255, 255, 0.16);
+    color: #f5f2e8;
+  }
+
+  .market-page .challengeable-enabled-toggle,
+  .market-page .challengeable-modalities label,
+  .market-page .challengeable-team-tags span {
+    background: rgba(90, 217, 144, 0.1);
+    border-color: rgba(90, 217, 144, 0.28);
+    color: #d7e4dd;
+  }
+
+  .challengeable-teams-toolbar {
+    gap: 7px;
+    grid-template-columns: minmax(180px, 1.3fr) 100px 120px auto;
+    padding: 8px;
+  }
+
+  .challengeable-teams-toolbar button,
+  .challengeable-profile-editor button,
+  .challengeable-search-panel button,
+  .challengeable-team-card > button,
+  .challengeable-pagination button {
+    min-height: 30px;
+    padding-inline: 8px;
+  }
+
+  .challengeable-profile-editor {
+    gap: 8px;
+    padding: 9px;
+  }
+
+  .challengeable-profile-grid {
+    gap: 7px;
+    grid-template-columns: minmax(180px, 1.4fr) repeat(3, minmax(86px, 0.65fr));
+  }
+
+  .challengeable-search-panel {
+    padding: 8px;
+  }
+
+  .challengeable-search-grid {
+    gap: 6px;
+    grid-template-columns: minmax(155px, 1.25fr) repeat(7, minmax(76px, 0.62fr)) auto;
+  }
+
+  .challengeable-teams-toolbar label,
+  .challengeable-profile-grid label,
+  .challengeable-search-grid label {
+    font-size: 9px;
+    gap: 3px;
+  }
+
+  .challengeable-team-grid {
+    grid-template-columns: repeat(3, minmax(230px, 1fr));
+  }
+
+  .challengeable-team-card {
+    gap: 8px;
+    padding: 10px;
+  }
+}

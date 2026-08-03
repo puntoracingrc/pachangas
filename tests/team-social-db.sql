@@ -241,4 +241,185 @@ select pg_temp.assert_true(
   'Voiding the only finalized match must remove the known opponent'
 );
 
+insert into public.pachanga_player_profiles(
+  user_id, source_group_id, display_name, calibrated_overall, current_overall,
+  calibrated_facets, current_facets, rating_engine_version
+) values
+  (
+    '71000000-0000-0000-0000-000000000001',
+    '72000000-0000-0000-0000-000000000001',
+    'Owner social A', 62, 62,
+    '{"pace":62,"shooting":62,"passing":62,"dribbling":62,"defending":62,"physical":62}'::jsonb,
+    '{"pace":62,"shooting":62,"passing":62,"dribbling":62,"defending":62,"physical":62}'::jsonb,
+    'pachangas-rating-v2'
+  ),
+  (
+    '71000000-0000-0000-0000-000000000002',
+    '72000000-0000-0000-0000-000000000002',
+    'Owner social B', 67, 67,
+    '{"pace":67,"shooting":67,"passing":67,"dribbling":67,"defending":67,"physical":67}'::jsonb,
+    '{"pace":67,"shooting":67,"passing":67,"dribbling":67,"defending":67,"physical":67}'::jsonb,
+    'pachangas-rating-v2'
+  );
+
+select pg_temp.assert_true(
+  not has_table_privilege('authenticated', 'public.pachanga_challengeable_team_profiles', 'SELECT'),
+  'Authenticated clients must not read private challengeable profiles directly'
+);
+select pg_temp.assert_true(
+  not has_table_privilege('authenticated', 'public.pachanga_challengeable_team_profiles', 'UPDATE'),
+  'Authenticated clients must not update private challengeable profiles directly'
+);
+select pg_temp.assert_true(
+  has_table_privilege('authenticated', 'public.pachanga_challengeable_team_profile_state', 'SELECT'),
+  'Members need the scoped profile revision row for Realtime invalidation'
+);
+select pg_temp.assert_true(
+  has_table_privilege('authenticated', 'public.pachanga_challengeable_team_search_state', 'SELECT'),
+  'Registered users need the global search revision row for Realtime invalidation'
+);
+
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '71000000-0000-0000-0000-000000000001', true);
+
+select public.upsert_pachanga_challengeable_team_profile_authoritative(
+  '72000000-0000-0000-0000-000000000001', true,
+  'Barcelona', 'zone-social-a', 41.3874, 2.1686,
+  30, 40, 80, array['futbol7'],
+  '[{"day":4,"start":"20:00","end":"22:00"}]'::jsonb,
+  '74000000-0000-0000-0000-000000000001', 0,
+  '{"sessionId":"public-team-device-a"}'::jsonb
+) as public_a_response \gset
+
+select public.upsert_pachanga_challengeable_team_profile_authoritative(
+  '72000000-0000-0000-0000-000000000001', true,
+  'Barcelona', 'zone-social-a', 41.3874, 2.1686,
+  30, 40, 80, array['futbol7'],
+  '[{"day":4,"start":"20:00","end":"22:00"}]'::jsonb,
+  '74000000-0000-0000-0000-000000000001', 0,
+  '{"sessionId":"public-team-device-a"}'::jsonb
+) as public_a_replay \gset
+
+reset role;
+select pg_temp.assert_true(
+  :'public_a_response'::jsonb = :'public_a_replay'::jsonb,
+  'Repeating a public-profile operation must replay the exact canonical response'
+);
+select pg_temp.assert_true(
+  (select count(*) from public.pachanga_challengeable_team_profile_events
+   where group_id = '72000000-0000-0000-0000-000000000001') = 1,
+  'An idempotent public-profile retry must create one event'
+);
+select pg_temp.assert_true(
+  (select count(*) from public.pachanga_challengeable_team_operation_receipts
+   where group_id = '72000000-0000-0000-0000-000000000001') = 1,
+  'An idempotent public-profile retry must create one receipt'
+);
+
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '71000000-0000-0000-0000-000000000003', true);
+do $$
+begin
+  perform public.upsert_pachanga_challengeable_team_profile_authoritative(
+    '72000000-0000-0000-0000-000000000001', true,
+    'Barcelona', 'zone-forbidden', 41.3874, 2.1686,
+    20, 0, 100, array['futbol7'],
+    '[{"day":4,"start":"20:00","end":"22:00"}]'::jsonb,
+    '74000000-0000-0000-0000-000000000002', 1, '{}'::jsonb
+  );
+  raise exception 'A non-admin unexpectedly changed the public team profile';
+exception when others then
+  if sqlerrm = 'A non-admin unexpectedly changed the public team profile' then raise; end if;
+  if sqlerrm <> 'Admin authentication, operation id and expected revision required' then raise; end if;
+end;
+$$;
+
+select set_config('request.jwt.claim.sub', '71000000-0000-0000-0000-000000000002', true);
+select public.upsert_pachanga_challengeable_team_profile_authoritative(
+  '72000000-0000-0000-0000-000000000002', true,
+  'Sant Adrià de Besòs', 'zone-social-b', 41.4306, 2.2182,
+  20, 45, 75, array['futbol7','futbol11'],
+  '[{"day":4,"start":"19:30","end":"22:30"},{"day":6,"start":"18:00","end":"21:00"}]'::jsonb,
+  '74000000-0000-0000-0000-000000000003', 0,
+  '{"sessionId":"public-team-device-b"}'::jsonb
+) as public_b_response \gset
+
+select set_config('request.jwt.claim.sub', '71000000-0000-0000-0000-000000000001', true);
+select public.search_pachanga_challengeable_teams(
+  '72000000-0000-0000-0000-000000000001',
+  null, 41.3874::double precision, 2.1686::double precision, 30,
+  60::numeric, 70::numeric, 4::smallint, '20:00'::time, '22:00'::time,
+  'futbol7', 1, 12
+) as public_search \gset
+reset role;
+
+select pg_temp.assert_true(
+  jsonb_array_length(:'public_search'::jsonb -> 'items') = 1,
+  'Server-side filters must return the compatible public rival'
+);
+select pg_temp.assert_true(
+  (:'public_search'::jsonb -> 'items' -> 0 ->> 'groupId')::uuid = '72000000-0000-0000-0000-000000000002',
+  'The compatible result must be the rival team'
+);
+select pg_temp.assert_true(
+  not ((:'public_search'::jsonb -> 'items' -> 0) ?| array['zoneLat','zoneLng','placeId','teamCode','address','createdBy','updatedBy']),
+  'Public results must not expose coordinates, team code, address or actor identities'
+);
+select pg_temp.assert_true(
+  (:'public_search'::jsonb ->> 'confirmedRevision')::bigint =
+    (select revision from public.pachanga_challengeable_team_search_state where id),
+  'Search results and the returned revision must come from one canonical server snapshot'
+);
+
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '71000000-0000-0000-0000-000000000002', true);
+do $$
+begin
+  perform public.upsert_pachanga_challengeable_team_profile_authoritative(
+    '72000000-0000-0000-0000-000000000002', true,
+    'Sant Adrià de Besòs', 'zone-social-b', 41.4306, 2.2182,
+    20, 45, 75, array['futbol7'],
+    '[{"day":4,"start":"19:30","end":"22:30"}]'::jsonb,
+    '74000000-0000-0000-0000-000000000004', 0, '{}'::jsonb
+  );
+  raise exception 'A stale profile revision unexpectedly won';
+exception when sqlstate 'PT409' then
+  null;
+end;
+$$;
+
+select public.upsert_pachanga_challengeable_team_profile_authoritative(
+  '72000000-0000-0000-0000-000000000002', false,
+  'Sant Adrià de Besòs', 'zone-social-b', 41.4306, 2.2182,
+  20, 45, 75, array['futbol7','futbol11'],
+  '[{"day":4,"start":"19:30","end":"22:30"}]'::jsonb,
+  '74000000-0000-0000-0000-000000000005', 1,
+  '{"sessionId":"public-team-device-b"}'::jsonb
+) as public_b_disabled \gset
+
+select set_config('request.jwt.claim.sub', '71000000-0000-0000-0000-000000000001', true);
+select public.search_pachanga_challengeable_teams(
+  '72000000-0000-0000-0000-000000000001',
+  null, 41.3874::double precision, 2.1686::double precision, 30,
+  null, null, null, null, null, null, 1, 12
+) as public_search_after_disable \gset
+select public.lookup_pachanga_team_by_code(
+  '72000000-0000-0000-0000-000000000001', 'SOCIALB'
+) as private_lookup_after_disable \gset
+reset role;
+
+select pg_temp.assert_true(
+  jsonb_array_length(:'public_search_after_disable'::jsonb -> 'items') = 0,
+  'A disabled public profile must disappear from public search'
+);
+select pg_temp.assert_true(
+  (:'private_lookup_after_disable'::jsonb ->> 'groupId')::uuid = '72000000-0000-0000-0000-000000000002',
+  'Disabling a public profile must not block private code challenges'
+);
+select pg_temp.assert_true(
+  (select stable_level from public.pachanga_team_level_read_models
+   where group_id = '72000000-0000-0000-0000-000000000001') = 62,
+  'The public team read model must use the canonical V2 group level'
+);
+
 rollback;

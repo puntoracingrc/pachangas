@@ -32,6 +32,10 @@ type ChallengeDraft = {
   scheduledAt: string;
 };
 
+type Props = {
+  initialOpponent?: TeamSummary | null;
+};
+
 const emptyDraft: ChallengeDraft = {
   fieldAddress: "",
   fieldMapsUrl: "",
@@ -107,16 +111,20 @@ function challengeDraftFingerprint(draft: ChallengeDraft) {
   return JSON.stringify(draft);
 }
 
-export function TeamChallengesPanel() {
+export function TeamChallengesPanel({ initialOpponent }: Props) {
   const [memberships, setMemberships] = useState<GroupMembership[]>([]);
   const [selectedGroupId, setSelectedGroupId] = useState("");
   const [currentUserId, setCurrentUserId] = useState("");
   const [snapshot, setSnapshot] = useState<TeamSocialSnapshot | null>(null);
-  const [teamCode, setTeamCode] = useState("");
-  const [confirmedTeam, setConfirmedTeam] = useState<TeamSummary | null>(null);
+  const [teamCode, setTeamCode] = useState(initialOpponent?.teamCode ?? "");
+  const [confirmedTeam, setConfirmedTeam] = useState<TeamSummary | null>(initialOpponent ?? null);
   const [draft, setDraft] = useState<ChallengeDraft>(emptyDraft);
   const [editingChallengeId, setEditingChallengeId] = useState<string | null>(null);
-  const [message, setMessage] = useState(supabase ? "" : "Supabase no está configurado para cargar retos.");
+  const [message, setMessage] = useState(
+    initialOpponent
+      ? `Rival público confirmado: ${initialOpponent.name}. Completa el campo y la fecha.`
+      : supabase ? "" : "Supabase no está configurado para cargar retos.",
+  );
   const [loading, setLoading] = useState(Boolean(supabase));
   const [busyKey, setBusyKey] = useState("");
   const fieldInputRef = useRef<HTMLInputElement>(null);
@@ -180,6 +188,7 @@ export function TeamChallengesPanel() {
       const result = await supabase
         ?.from("pachanga_group_members")
         .select("group_id, role, pachanga_groups(id, name, team_code)")
+        .eq("user_id", user.id)
         .order("created_at", { ascending: true });
       if (!active) return;
       if (result?.error) {

@@ -5,6 +5,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { attachVenueAutocomplete, type VenuePlace } from "../googlePlacesClient";
 import { MobileAppNav } from "../mobile-app-nav";
 import { supabase } from "../supabaseClient";
+import type { TeamSummary } from "../team-social-contract";
+import { ChallengeableTeamsPanel } from "./challengeable-teams-panel";
 import { TeamChallengesPanel } from "./team-challenges-panel";
 
 const googleMapsApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
@@ -661,6 +663,7 @@ export default function MarketPage() {
   const [positionFilter, setPositionFilter] = useState("Todas");
   const [canInvite, setCanInvite] = useState(false);
   const [inviteMessage, setInviteMessage] = useState("");
+  const [preparedRival, setPreparedRival] = useState<TeamSummary | null>(null);
   const [marketContext, setMarketContext] = useState<MarketMatchContext | null>(null);
   const [zonePlace, setZonePlace] = useState<MarketTarget | null>(null);
   const [zonePlaceMessage, setZonePlaceMessage] = useState("");
@@ -997,7 +1000,14 @@ export default function MarketPage() {
         <button className={activeTab === "partidos" ? "selected" : ""} type="button" onClick={() => setActiveTab("partidos")}>
           Partidos abiertos
         </button>
-        <button className={activeTab === "retos" ? "selected" : ""} type="button" onClick={() => setActiveTab("retos")}>
+        <button
+          className={activeTab === "retos" ? "selected" : ""}
+          type="button"
+          onClick={() => {
+            setPreparedRival(null);
+            setActiveTab("retos");
+          }}
+        >
           Retos privados
         </button>
         <button className={activeTab === "equipos" ? "selected" : ""} type="button" onClick={() => setActiveTab("equipos")}>
@@ -1100,16 +1110,14 @@ export default function MarketPage() {
         ) : null}
       </section>
       ) : activeTab === "retos" ? (
-        <TeamChallengesPanel />
+        <TeamChallengesPanel initialOpponent={preparedRival} />
       ) : (
-        <section className="market-panel market-public-teams-next" aria-label="Equipos públicamente retables">
-          <span>Siguiente fase</span>
-          <strong>Equipos retables</strong>
-          <p>
-            Este buscador se activará cuando las fichas públicas tengan zona, nivel, días, horarios y modalidad confirmados por el servidor.
-            Los retos privados por código ya funcionan aunque un equipo no publique esta ficha.
-          </p>
-        </section>
+        <ChallengeableTeamsPanel
+          onPrepareChallenge={(team) => {
+            setPreparedRival(team);
+            setActiveTab("retos");
+          }}
+        />
       )}
       <MobileAppNav
         active="mercado"
