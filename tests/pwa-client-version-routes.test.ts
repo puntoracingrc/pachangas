@@ -5,15 +5,15 @@ import { POST as postClientTelemetry } from "../app/api/client-telemetry/route";
 import { GET as getServiceWorker } from "../app/sw.js/route";
 import { clientWriteGateResponse } from "../app/api/client-policy/_contract";
 
-test("client policy is no-store and starts at minimumSupportedClientVersion 1.0.0", async () => {
+test("client policy is no-store and requires minimumSupportedClientVersion 2.0.0", async () => {
   const previous = process.env.PACHANGAS_MINIMUM_SUPPORTED_CLIENT_VERSION;
   delete process.env.PACHANGAS_MINIMUM_SUPPORTED_CLIENT_VERSION;
   try {
     const response = await getClientPolicy(new Request("http://localhost/api/client-policy", {
-      headers: { "X-Pachangas-Client-Version": "1.0.0+abcdef" },
+      headers: { "X-Pachangas-Client-Version": "2.0.0+abcdef" },
     }));
     const body = (await response.json()) as { minimumSupportedClientVersion: string; writeAllowed: boolean };
-    assert.equal(body.minimumSupportedClientVersion, "1.0.0");
+    assert.equal(body.minimumSupportedClientVersion, "2.0.0");
     assert.equal(body.writeAllowed, true);
     assert.match(response.headers.get("cache-control") ?? "", /no-store/);
     assert.equal(response.headers.get("pragma"), "no-cache");
@@ -38,7 +38,7 @@ test("server policy classifies unversioned and old clients and blocks only write
   assert.equal((await blockedWrite?.json() as { error: { code: string } }).error.code, "CLIENT_UPDATE_REQUIRED");
 
   const compatibleRequest = new Request("http://localhost/api/billing/checkout", {
-    headers: { "X-Pachangas-Client-Version": "1.0.0+current" },
+    headers: { "X-Pachangas-Client-Version": "2.0.0+current" },
     method: "POST",
   });
   assert.equal(clientWriteGateResponse(compatibleRequest), null);
