@@ -1,0 +1,272 @@
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import test from "node:test";
+import {
+  EXTERNAL_RESULTS_CACHE_MAX_AGE_MS,
+  externalMatchStateLabel,
+  normalizeExternalMatch,
+  normalizeExternalResultsSnapshot,
+  readExternalResultsCache,
+  writeExternalResultsCache,
+} from "../app/external-results-contract";
+import { classifySupabaseWrite } from "../app/pwa-write-classifier";
+import {
+  TEAM_IDENTITY_CACHE_MAX_AGE_MS,
+  normalizeProgressionSnapshot,
+  normalizeTeamCrestSnapshot,
+  readTeamIdentityCache,
+  writeTeamIdentityCache,
+} from "../app/team-identity-contract";
+
+class MemoryStorage {
+  readonly values = new Map<string, string>();
+
+  getItem(key: string) {
+    return this.values.get(key) ?? null;
+  }
+
+  setItem(key: string, value: string) {
+    this.values.set(key, value);
+  }
+}
+
+function externalMatchFixture() {
+  return {
+    activeVersion: 2,
+    autoConfirmationBlocked: true,
+    awayTeam: { groupId: "group-b", levelSnapshot: 61, name: "Visitante", teamCode: "AWAY" },
+    canonicalScoreAway: null,
+    canonicalScoreHome: null,
+    challengeId: "challenge-1",
+    field: { address: "Carrer Major, 1", mapsUrl: null, name: "Camp", placeId: null },
+    homeTeam: { groupId: "group-a", levelSnapshot: 63, name: "Local", teamCode: "HOME" },
+    id: "external-1",
+    modality: "futbol7",
+    officialAt: null,
+    officialVersion: null,
+    participants: [{ cardSnapshot: { currentOverall: 67 }, groupId: "group-a", localPlayerId: "a1", name: "Ana", playerProfileId: "profile-a" }],
+    pendingResponseFromGroupId: "group-a",
+    proposedByGroupId: "group-b",
+    responseDeadline: "2026-08-06T20:00:00.000Z",
+    revision: 3,
+    scheduledAt: "2026-08-03T20:00:00.000Z",
+    scoreAway: 2,
+    scoreHome: 3,
+    scorers: [{ goals: 3, groupId: "group-a", localPlayerId: "a1" }],
+    serverSequence: 41,
+    side: "home",
+    state: "change_proposed",
+    unassignedAway: 0,
+    unassignedHome: 0,
+    updatedAt: "2026-08-03T21:00:00.000Z",
+  };
+}
+
+function crestFixture() {
+  const design = {
+    adornmentKey: null,
+    borderKey: "border.standard",
+    effectKey: null,
+    initials: "PIQ",
+    paletteKey: null,
+    patternKey: "pattern.solid",
+    primaryColorKey: "color.green",
+    secondaryColorKey: "color.white",
+    shapeKey: "shape.classic",
+    symbolKey: null,
+  };
+  return {
+    canManage: true,
+    catalog: [{ availability: "base", description: "Forma inicial", family: "shape", key: "shape.classic", name: "Clásico", rarity: "common", render: { shape: "classic" }, unlocked: true }],
+    confirmedRevision: 2,
+    crestRevision: 2,
+    defaultDesign: design,
+    draft: { basedOnVersion: 1, design, draftRevision: 2, updatedAt: "2026-08-03T21:00:00.000Z" },
+    group: { groupId: "group-a", name: "Pachangas A" },
+    history: [],
+    published: null,
+    serverSequence: 8,
+    updatedAt: "2026-08-03T21:00:00.000Z",
+  };
+}
+
+function progressionFixture() {
+  return {
+    confirmedRevision: 4,
+    groupId: "group-a",
+    groupRevision: 4,
+    personalAchievements: [],
+    rewards: [{
+      achievement: { awardedAt: "2026-08-03T21:00:00.000Z", description: "Primer partido", key: "team.external.matches.001", rarity: "common", title: "Primer rival" },
+      openedAt: null,
+      recipientRevision: 1,
+      rewardGrantId: "reward-1",
+      rewardKey: "symbol.lightning",
+      rewardKind: "team_cosmetic",
+      status: "pending",
+    }],
+    serverSequence: 19,
+    teamAchievements: [],
+    updatedAt: "2026-08-03T21:00:00.000Z",
+    userRevision: 2,
+  };
+}
+
+test("normalizes canonical external matches without inventing invalid numeric values", () => {
+  const normalized = normalizeExternalMatch(externalMatchFixture());
+  assert.ok(normalized);
+  assert.equal(normalized.revision, 3);
+  assert.equal(normalized.state, "change_proposed");
+  assert.equal(normalized.participants[0]?.cardSnapshot.currentOverall, 67);
+  assert.equal(normalized.scorers[0]?.goals, 3);
+
+  const invalidNumbers = normalizeExternalMatch({
+    ...externalMatchFixture(),
+    activeVersion: "not-a-number",
+    canonicalScoreHome: "not-a-number",
+    homeTeam: { ...externalMatchFixture().homeTeam, levelSnapshot: "not-a-number" },
+  });
+  assert.ok(invalidNumbers);
+  assert.equal(invalidNumbers.activeVersion, null);
+  assert.equal(invalidNumbers.canonicalScoreHome, null);
+  assert.equal(invalidNumbers.homeTeam.levelSnapshot, null);
+  assert.equal(externalMatchStateLabel("auto_confirmed"), "Autoconfirmado");
+});
+
+test("derived caches are scoped, finite and never manufacture canonical state", () => {
+  const storage = new MemoryStorage();
+  const external = normalizeExternalResultsSnapshot({
+    canManage: true,
+    confirmedRevision: 3,
+    groupId: "group-a",
+    groupName: "Pachangas A",
+    matches: [externalMatchFixture()],
+    roster: [{ active: true, currentOverall: 67, localPlayerId: "a1", name: "Ana", playerProfileId: "profile-a", position: "DEL" }],
+    serverSequence: 41,
+    updatedAt: "2026-08-03T21:00:00.000Z",
+  });
+  const crest = normalizeTeamCrestSnapshot(crestFixture());
+  const progression = normalizeProgressionSnapshot(progressionFixture());
+  assert.ok(external && crest && progression);
+
+  writeExternalResultsCache(storage, "user-a", "group-a", external, 1_000);
+  writeTeamIdentityCache(storage, "user-a", "group-a", crest, progression, 1_000);
+  assert.equal(readExternalResultsCache(storage, "user-a", "group-a", 1_001)?.serverSequence, 41);
+  assert.equal(readExternalResultsCache(storage, "user-b", "group-a", 1_001), null);
+  assert.equal(readTeamIdentityCache(storage, "user-a", "group-a", 1_001)?.crest?.crestRevision, 2);
+  assert.equal(readTeamIdentityCache(storage, "user-a", "group-b", 1_001), null);
+  assert.equal(readExternalResultsCache(storage, "user-a", "group-a", 1_000 + EXTERNAL_RESULTS_CACHE_MAX_AGE_MS + 1), null);
+  assert.equal(readTeamIdentityCache(storage, "user-a", "group-a", 1_000 + TEAM_IDENTITY_CACHE_MAX_AGE_MS + 1), null);
+});
+
+test("the PWA bridge classifies every new mutation and leaves canonical reads available", () => {
+  const endpoint = "https://demo.supabase.co/rest/v1/rpc/";
+  const writes = [
+    "cancel_pachanga_external_match_v1",
+    "complete_pachanga_external_scorers_v1",
+    "confirm_pachanga_external_result_v1",
+    "open_pachanga_reward_v1",
+    "propose_pachanga_external_result_change_v1",
+    "publish_pachanga_external_result_v1",
+    "publish_pachanga_team_crest_v1",
+    "reject_pachanga_external_result_change_v1",
+    "save_pachanga_team_crest_draft_v1",
+  ];
+  for (const rpc of writes) {
+    assert.equal(classifySupabaseWrite(`${endpoint}${rpc}`, { method: "POST" }), `rpc:${rpc}`);
+  }
+  for (const rpc of [
+    "get_pachanga_external_results_snapshot_v1",
+    "get_pachanga_progression_snapshot_v1",
+    "get_pachanga_team_crest_snapshot_v1",
+  ]) {
+    assert.equal(classifySupabaseWrite(`${endpoint}${rpc}`, { method: "POST" }), null);
+  }
+});
+
+test("external result SQL is bilateral, revisioned, idempotent and canonical", () => {
+  const sql = readFileSync(new URL("../supabase/migrations/20260804023455_external_match_results_mvp.sql", import.meta.url), "utf8");
+  assert.match(sql, /create table if not exists public\.pachanga_external_matches/);
+  assert.match(sql, /create table if not exists public\.pachanga_external_result_versions/);
+  assert.match(sql, /create table if not exists public\.pachanga_external_result_operation_receipts/);
+  assert.match(sql, /state in \([\s\S]*'draft'[\s\S]*'pending_rival'[\s\S]*'change_proposed'[\s\S]*'confirmed'[\s\S]*'auto_confirmed'[\s\S]*'disputed'[\s\S]*'cancelled'/);
+  assert.match(sql, /pg_advisory_xact_lock\(hashtextextended\('external-result-operation:'/);
+  assert.match(sql, /if selected\.revision <> expected_revision/);
+  assert.match(sql, /using errcode = 'PT409'/);
+  assert.match(sql, /Scorer must be a participant of the acting team/);
+  assert.match(sql, /Own scorers must add up exactly to the team score/);
+  assert.match(sql, /target_final_state = 'auto_confirmed'/);
+  assert.match(sql, /selected\.state in \('change_proposed', 'needs_scorer_fix'\)/);
+  assert.match(sql, /jsonb_build_object\('reason', 'change_response_expired'\)/);
+  assert.match(sql, /for update skip locked/);
+  assert.match(sql, /order by matches\.response_deadline, matches\.id/);
+  assert.match(sql, /alter publication supabase_realtime[\s\S]*pachanga_external_match_group_state/);
+  assert.doesNotMatch(sql, /grant (insert|update|delete|all) on table public\.pachanga_external_matches to authenticated/i);
+});
+
+test("achievement evaluators are typed and rewards are decided before opening", () => {
+  const sql = readFileSync(new URL("../supabase/migrations/20260804023520_achievement_reward_engine_mvp.sql", import.meta.url), "utf8");
+  assert.equal(sql.match(/\('team\.internal\./g)?.length, 10);
+  assert.equal(sql.match(/\('team\.external\./g)?.length, 20);
+  assert.equal(sql.match(/\('player\.internal\./g)?.length, 6);
+  assert.equal(sql.match(/\('player\.external\./g)?.length, 6);
+  assert.match(sql, /evaluator_key in \([\s\S]*'TEAM_MATCHES'[\s\S]*'PLAYER_HATTRICKS'/);
+  assert.doesNotMatch(sql, /execute\s+format|evaluator_sql|condition_sql/i);
+  assert.match(sql, /'deterministic', true/);
+  assert.match(sql, /insert into public\.pachanga_reward_recipients/);
+  assert.match(sql, /select distinct on \(members\.user_id\)/);
+  assert.match(sql, /where recipients\.user_id = auth\.uid\(\)/);
+  assert.match(sql, /pg_advisory_xact_lock\(hashtextextended\(\s*'reward-open:'/);
+  assert.match(sql, /pachanga_progression_match_fact_sequence_idx[\s\S]*server_sequence, group_id/);
+  assert.match(sql, /order by events\.server_sequence desc, events\.id desc/);
+  assert.match(sql, /'\/equipo\/identidad\?reward='/);
+});
+
+test("crest SQL provides five base shapes, immutable versions and server-side unlock checks", () => {
+  const sql = readFileSync(new URL("../supabase/migrations/20260804023534_team_crest_identity_mvp.sql", import.meta.url), "utf8");
+  assert.match(sql, /create table if not exists public\.pachanga_team_crest_drafts/);
+  assert.match(sql, /create table if not exists public\.pachanga_team_crest_versions/);
+  assert.match(sql, /Published crest versions are immutable/);
+  assert.match(sql, /Only team administrators can edit the official crest/);
+  assert.match(sql, /Only team administrators can publish the official crest/);
+  assert.match(sql, /COSMETIC_LOCKED:/);
+  assert.match(sql, /pg_advisory_xact_lock\(hashtextextended\('team-crest-operation:'/);
+  assert.match(sql, /alter publication supabase_realtime add table public\.pachanga_team_crest_state/);
+  assert.doesNotMatch(sql, /grant (insert|update|delete|all) on table public\.pachanga_team_crest_versions to authenticated/i);
+
+  const achievementsSql = readFileSync(new URL("../supabase/migrations/20260804023520_achievement_reward_engine_mvp.sql", import.meta.url), "utf8");
+  assert.equal(achievementsSql.match(/\('shape\.(classic|rounded|pointed|circle|banner)'/g)?.length, 5);
+});
+
+test("new migrations consume Rating V2 snapshots without redefining or mutating Rating V2", () => {
+  const newSql = [
+    "20260804023455_external_match_results_mvp.sql",
+    "20260804023520_achievement_reward_engine_mvp.sql",
+    "20260804023534_team_crest_identity_mvp.sql",
+  ].map((name) => readFileSync(new URL(`../supabase/migrations/${name}`, import.meta.url), "utf8")).join("\n");
+  assert.match(newSql, /from public\.pachanga_match_rating_participants/);
+  assert.match(newSql, /on public\.pachanga_match_rating_snapshots/);
+  assert.doesNotMatch(newSql, /create or replace function public\.finalize_pachanga_match_authoritative_v2/i);
+  assert.doesNotMatch(newSql, /create or replace function public\.(submit_pachanga_player_rating_v2|complete_pachanga_player_initial_assessment)/i);
+  assert.doesNotMatch(newSql, /update public\.pachanga_player_profiles/i);
+  assert.doesNotMatch(newSql, /insert into public\.pachanga_rating_evidence/i);
+  assert.doesNotMatch(newSql, /calibrated_facets\s*=/i);
+
+  const revocationSql = readFileSync(new URL("../supabase/migrations/20260803053632_rating_v2_profile_authority.sql", import.meta.url), "utf8");
+  assert.match(revocationSql, /revoke all on function public\.append_pachanga_player_rating\(uuid, text, jsonb\)/);
+  assert.match(revocationSql, /revoke all on function public\.complete_pachanga_player_initial_assessment/);
+  assert.match(revocationSql, /revoke all on function public\.complete_pachanga_player_advanced_assessment/);
+});
+
+test("client surfaces write only through RPC and subscribe to revision rows", () => {
+  const externalUi = readFileSync(new URL("../app/mercado/external-results-panel.tsx", import.meta.url), "utf8");
+  const identityUi = readFileSync(new URL("../app/equipo/identidad/page.tsx", import.meta.url), "utf8");
+  assert.match(externalUi, /\.rpc\("publish_pachanga_external_result_v1"/);
+  assert.match(externalUi, /table: "pachanga_external_match_group_state"/);
+  assert.match(identityUi, /\.rpc\("save_pachanga_team_crest_draft_v1"/);
+  assert.match(identityUi, /\.rpc\("open_pachanga_reward_v1"/);
+  assert.match(identityUi, /table: "pachanga_progression_group_state"/);
+  assert.match(identityUi, /table: "pachanga_progression_user_state"/);
+  assert.doesNotMatch(externalUi, /\.from\("pachanga_external_[^"]+"\)\s*\.(insert|update|delete)/);
+  assert.doesNotMatch(identityUi, /\.from\("pachanga_(achievement|reward|team_crest)[^"]+"\)\s*\.(insert|update|delete)/);
+});
