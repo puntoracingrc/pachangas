@@ -185,7 +185,7 @@ test("the PWA bridge classifies every new mutation and leaves canonical reads av
 });
 
 test("external result SQL is bilateral, revisioned, idempotent and canonical", () => {
-  const sql = readFileSync(new URL("../supabase/migrations/20260803211957_external_match_results_mvp.sql", import.meta.url), "utf8");
+  const sql = readFileSync(new URL("../supabase/migrations/20260804023455_external_match_results_mvp.sql", import.meta.url), "utf8");
   assert.match(sql, /create table if not exists public\.pachanga_external_matches/);
   assert.match(sql, /create table if not exists public\.pachanga_external_result_versions/);
   assert.match(sql, /create table if not exists public\.pachanga_external_result_operation_receipts/);
@@ -205,7 +205,7 @@ test("external result SQL is bilateral, revisioned, idempotent and canonical", (
 });
 
 test("achievement evaluators are typed and rewards are decided before opening", () => {
-  const sql = readFileSync(new URL("../supabase/migrations/20260803211958_achievement_reward_engine_mvp.sql", import.meta.url), "utf8");
+  const sql = readFileSync(new URL("../supabase/migrations/20260804023520_achievement_reward_engine_mvp.sql", import.meta.url), "utf8");
   assert.equal(sql.match(/\('team\.internal\./g)?.length, 10);
   assert.equal(sql.match(/\('team\.external\./g)?.length, 20);
   assert.equal(sql.match(/\('player\.internal\./g)?.length, 6);
@@ -223,7 +223,7 @@ test("achievement evaluators are typed and rewards are decided before opening", 
 });
 
 test("crest SQL provides five base shapes, immutable versions and server-side unlock checks", () => {
-  const sql = readFileSync(new URL("../supabase/migrations/20260803212000_team_crest_identity_mvp.sql", import.meta.url), "utf8");
+  const sql = readFileSync(new URL("../supabase/migrations/20260804023534_team_crest_identity_mvp.sql", import.meta.url), "utf8");
   assert.match(sql, /create table if not exists public\.pachanga_team_crest_drafts/);
   assert.match(sql, /create table if not exists public\.pachanga_team_crest_versions/);
   assert.match(sql, /Published crest versions are immutable/);
@@ -234,15 +234,15 @@ test("crest SQL provides five base shapes, immutable versions and server-side un
   assert.match(sql, /alter publication supabase_realtime add table public\.pachanga_team_crest_state/);
   assert.doesNotMatch(sql, /grant (insert|update|delete|all) on table public\.pachanga_team_crest_versions to authenticated/i);
 
-  const achievementsSql = readFileSync(new URL("../supabase/migrations/20260803211958_achievement_reward_engine_mvp.sql", import.meta.url), "utf8");
+  const achievementsSql = readFileSync(new URL("../supabase/migrations/20260804023520_achievement_reward_engine_mvp.sql", import.meta.url), "utf8");
   assert.equal(achievementsSql.match(/\('shape\.(classic|rounded|pointed|circle|banner)'/g)?.length, 5);
 });
 
 test("new migrations consume Rating V2 snapshots without redefining or mutating Rating V2", () => {
   const newSql = [
-    "20260803211957_external_match_results_mvp.sql",
-    "20260803211958_achievement_reward_engine_mvp.sql",
-    "20260803212000_team_crest_identity_mvp.sql",
+    "20260804023455_external_match_results_mvp.sql",
+    "20260804023520_achievement_reward_engine_mvp.sql",
+    "20260804023534_team_crest_identity_mvp.sql",
   ].map((name) => readFileSync(new URL(`../supabase/migrations/${name}`, import.meta.url), "utf8")).join("\n");
   assert.match(newSql, /from public\.pachanga_match_rating_participants/);
   assert.match(newSql, /on public\.pachanga_match_rating_snapshots/);
