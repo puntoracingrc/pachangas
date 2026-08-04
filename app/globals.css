@@ -744,6 +744,52 @@
   display: none;
 }
 
+.admin-view-preview-button {
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+}
+
+.admin-view-preview-desktop {
+  display: inline-flex;
+  border-color: color-mix(in srgb, #d9a928 58%, var(--line));
+  color: color-mix(in srgb, #a56f00 84%, var(--ink));
+}
+
+.admin-view-preview-desktop.player-preview-active {
+  border-color: color-mix(in srgb, var(--green) 62%, var(--line));
+  background: color-mix(in srgb, var(--green) 12%, var(--panel));
+  color: var(--green);
+}
+
+.admin-view-preview-desktop .mobile-app-nav-icon,
+.admin-view-preview-desktop .mobile-app-nav-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.admin-view-preview-desktop .mobile-app-nav-icon {
+  display: grid;
+  place-items: center;
+}
+
+.admin-view-preview-desktop .mobile-app-nav-icon svg,
+.admin-view-preview-desktop .mobile-app-nav-icon svg * {
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+}
+
+.market-titlebar-actions {
+  display: flex !important;
+  align-items: center;
+  justify-content: flex-end;
+  flex-direction: row !important;
+  gap: 8px !important;
+}
+
 @media (max-width: 760px) {
   .pwa-bridge-notice {
     right: max(8px, var(--safe-right));
@@ -790,6 +836,10 @@
     margin: 0 auto;
   }
 
+  .mobile-app-nav-inner.has-admin-view-preview {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+
   .mobile-app-nav-item {
     position: relative;
     display: flex;
@@ -827,6 +877,24 @@
 
   .mobile-app-nav-item.active::before {
     background: var(--green);
+  }
+
+  .mobile-app-role-preview {
+    color: #a56f00;
+  }
+
+  .mobile-app-role-preview.player-preview-active {
+    background: color-mix(in srgb, var(--green) 12%, transparent);
+    color: var(--green);
+  }
+
+  .mobile-app-role-preview::before,
+  .mobile-app-role-preview.player-preview-active::before {
+    background: currentColor;
+  }
+
+  .admin-view-preview-desktop {
+    display: none;
   }
 
   .mobile-app-nav-icon {
@@ -11186,6 +11254,10 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
     margin: 0;
   }
 
+  .mobile-app-nav-inner.has-admin-view-preview {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+
   .mobile-app-nav-item {
     position: relative;
     display: flex;
@@ -11225,6 +11297,19 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
 
   .mobile-app-nav-item.active::before {
     background: var(--lime);
+  }
+
+  .mobile-app-role-preview {
+    color: #f8d67a;
+  }
+
+  .mobile-app-role-preview.player-preview-active {
+    background: rgba(90, 217, 144, 0.14);
+    color: #8ff0b7;
+  }
+
+  .admin-view-preview-desktop {
+    display: none !important;
   }
 
   .mobile-app-nav-icon,

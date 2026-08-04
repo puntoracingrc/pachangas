@@ -29,7 +29,8 @@ import {
   type InitialTechnicalQuestionId,
   type PlayerPosition as AssessmentPosition,
 } from "./laboratorio-ficha-jugador/_engine/player-rating-engine";
-import { MobileAppNav, type MobileAppTab } from "./mobile-app-nav";
+import { useAdminViewPreview } from "./admin-view-preview";
+import { AdminViewPreviewButton, MobileAppNav, type MobileAppTab } from "./mobile-app-nav";
 import { clientWriteFetch, PWA_WRITE_REJECTED_EVENT } from "./pwa-client-bridge";
 import {
   OUTFIELD_FACET_LABELS,
@@ -3449,6 +3450,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
   const [remoteTeams, setRemoteTeams] = useState<RemoteTeam[]>([]);
   const [teamMembers, setTeamMembers] = useState<RemoteMember[]>([]);
   const [currentRole, setCurrentRole] = useState<MemberRole | null>(null);
+  const { previewRequested, toggleAdminViewPreview } = useAdminViewPreview();
   const [rewardBoxDemoOpen, setRewardBoxDemoOpen] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [authUser, setAuthUser] = useState<User | null>(null);
@@ -5117,7 +5119,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
       canUseAdminControls,
       currentUserId,
       hasRealTeam,
-      isDemoMode,
+      isDemoMode: isDemoMode && !playerPreviewActive,
       isRegisteredUser,
       player,
     });
@@ -5260,7 +5262,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
       canUseAdminControls,
       currentUserId,
       hasRealTeam,
-      isDemoMode,
+      isDemoMode: isDemoMode && !playerPreviewActive,
       isRegisteredUser,
       player,
     });
@@ -5412,7 +5414,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
   function swapLineupPlayers(sourcePlayerId: string, targetDropId: string) {
     const targetPlayerId = targetDropId.startsWith("player:") ? targetDropId.slice("player:".length) : targetDropId;
     if (sourcePlayerId === targetPlayerId) return;
-    if (!canEditLineup && !isDemoMode) return;
+    if (!canEditLineup) return;
     if (!registrationOpen) return;
     if (lineupClosed) return;
     if (matchFinalized) return;
@@ -5466,7 +5468,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
   }
 
   function assignPlayerTeam(playerId: string, team: "A" | "B") {
-    if (!canUseAdminControls && !isDemoMode) return;
+    if (!canUseAdminControls) return;
     if (lineupClosed) return;
     if (matchFinalized) return;
     const baseTeamA = pitchOrderedPlayerIds(suggested.teamA, activeMatch.lineupSlots?.teamA, effectivePlayerScore).filter((id) => id !== playerId);
@@ -5873,15 +5875,20 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
   const billingTrialUsed = Math.max(0, currentTeam?.billingTrialFinalizedMatches ?? 0);
   const billingTrialRemaining = Math.max(0, freeTrialMatchLimit - billingTrialUsed);
   const groupBillingLocked = Boolean(hasRealTeam && !billingActive && billingTrialUsed >= freeTrialMatchLimit);
-  const canManageBilling = Boolean(hasRealTeam && isRegisteredUser && currentRole === "owner");
+  const actualCanManageBilling = Boolean(hasRealTeam && isRegisteredUser && currentRole === "owner");
+  const actualCanManageTeam = Boolean(hasRealTeam && isRegisteredUser && (currentRole === "owner" || currentRole === "admin"));
+  const canPreviewPlayerView = isDemoMode || actualCanManageTeam;
+  const playerPreviewActive = canPreviewPlayerView && previewRequested;
+  const canManageBilling = actualCanManageBilling && !playerPreviewActive;
   const ownerContributionPlayer = players.find((player) => currentTeam?.ownerId && player.ownerUserId === currentTeam.ownerId);
   const ownerContributionRecipient = ownerContributionPlayer ? playerDisplayName(ownerContributionPlayer) : "owner del grupo";
-  const showSubscriptionPanel = Boolean(hasRealTeam && (showBillingPanel || groupBillingLocked || (showSettings && currentRole === "owner")));
+  const showSubscriptionPanel = Boolean(hasRealTeam && !playerPreviewActive && (showBillingPanel || groupBillingLocked || (showSettings && currentRole === "owner")));
   const needsLoginForSharedLink = hasIncomingSharedLink && !isRegisteredUser && !hasRealTeam;
   const sharedLinkContentBlocked = needsLoginForSharedLink || sharedMatchAccessDenied;
-  const canManageTeam = Boolean(hasRealTeam && isRegisteredUser && (currentRole === "owner" || currentRole === "admin"));
-  const canManageRoles = hasRealTeam && isRegisteredUser && currentRole === "owner";
-  const canUseAdminControls = isDemoMode || canManageTeam;
+  const canManageTeam = actualCanManageTeam && !playerPreviewActive;
+  const canManageRoles = actualCanManageBilling && !playerPreviewActive;
+  const canUseAdminControls = canPreviewPlayerView && !playerPreviewActive;
+  const displayedRole: MemberRole | null = playerPreviewActive ? "player" : currentRole;
   const mainPanelClassName = [
     canUseAdminControls ? "panel main-panel" : "panel main-panel player-facing-main",
     matchFinalized ? "match-finalized-main" : "",
@@ -5912,7 +5919,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
     canUseAdminControls,
     currentUserId,
     hasRealTeam,
-    isDemoMode,
+    isDemoMode: isDemoMode && !playerPreviewActive,
     isRegisteredUser,
     player: selectedPlayer,
   });
@@ -5981,6 +5988,17 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
   const canEditMatchSettings = canUseAdminControls && !matchFinalized;
   const canEditLineup = canUseAdminControls && registrationOpen && !lineupClosed && !matchFinalized;
   const canToggleLineupFromContext = canUseAdminControls && matchConfigured && registrationOpen && !matchFinalized;
+
+  function toggleAdminPlayerView() {
+    if (!previewRequested) {
+      setCreateMenuOpen(false);
+      setOpenQuickForm(null);
+      setRewardBoxDemoOpen(false);
+      setShowBillingPanel(false);
+      setShowSettings(false);
+    }
+    toggleAdminViewPreview();
+  }
   const canUploadTeamPhoto = Boolean(matchConfigured && (isDemoMode || hasRealTeam) && !needsLoginForSharedLink);
   const matchCanBeSaved = Boolean(
     canUseAdminControls &&
@@ -6265,7 +6283,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
       canUseAdminControls,
       currentUserId,
       hasRealTeam,
-      isDemoMode,
+      isDemoMode: isDemoMode && !playerPreviewActive,
       isRegisteredUser,
       player,
     });
@@ -6279,7 +6297,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
       canUseAdminControls,
       currentUserId,
       hasRealTeam,
-      isDemoMode,
+      isDemoMode: isDemoMode && !playerPreviewActive,
       isRegisteredUser,
       player,
     });
@@ -6742,7 +6760,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
       canUseAdminControls,
       currentUserId,
       hasRealTeam,
-      isDemoMode,
+      isDemoMode: isDemoMode && !playerPreviewActive,
       isRegisteredUser,
       player,
     });
@@ -6808,7 +6826,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
       canUseAdminControls,
       currentUserId,
       hasRealTeam,
-      isDemoMode,
+      isDemoMode: isDemoMode && !playerPreviewActive,
       isRegisteredUser,
       player,
     });
@@ -7981,7 +7999,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
       canUseAdminControls,
       currentUserId,
       hasRealTeam,
-      isDemoMode,
+      isDemoMode: isDemoMode && !playerPreviewActive,
       isRegisteredUser,
       player,
     });
@@ -8016,7 +8034,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
           (player.inactive ? 0 : 1) +
           3 +
           (status === "voy" && !isWaiting ? 1 : 0) +
-          (status === "voy" && team && (canUseAdminControls || isDemoMode) ? 1 : 0);
+          (status === "voy" && team && canUseAdminControls ? 1 : 0);
         const panelWidth = 170;
         const viewportWidth = Math.min(
           window.innerWidth,
@@ -8114,7 +8132,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
             <button className={status === "duda" ? "selected" : ""} disabled={!canChangeThisPlayerStatus || Boolean(player.inactive)} onClick={() => void setStatus(player.id, "duda")}>Duda</button>
             <button className={status === "no" ? "selected danger" : ""} disabled={!canChangeThisPlayerStatus || Boolean(player.inactive)} onClick={() => void setStatus(player.id, "no")}>No</button>
           </div>
-          {status === "voy" && team && (canUseAdminControls || isDemoMode) ? (
+          {status === "voy" && team && canUseAdminControls ? (
             <button
               className={`team-move ${team === "A" ? "to-b" : "to-a"}`}
               disabled={lineupClosed || matchFinalized}
@@ -8218,7 +8236,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
                     {matchEntry?.paid ? "Pagado" : "Marcar pagado"}
                   </button>
                 ) : null}
-                {status === "voy" && team && (canUseAdminControls || isDemoMode) ? (
+                {status === "voy" && team && canUseAdminControls ? (
                   <button
                     disabled={lineupClosed || matchFinalized}
                     onClick={() => {
@@ -8847,6 +8865,13 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
             </div>
           ) : null}
           <div className="hero-actions">
+            {canPreviewPlayerView ? (
+              <AdminViewPreviewButton
+                active={playerPreviewActive}
+                className="admin-view-preview-desktop secondary-button"
+                onToggle={toggleAdminPlayerView}
+              />
+            ) : null}
             <a className="manual-link-button" href="/manual" title="Manual de usuario" aria-label="Abrir manual de usuario">
               <svg aria-hidden="true" viewBox="0 0 24 24">
                 <path d="M6 3h10.5A2.5 2.5 0 0 1 19 5.5V21l-3-1.8L13 21l-3-1.8L7 21l-3-1.8V5A2 2 0 0 1 6 3Zm0 2v12.6l1 .6 3-1.8 3 1.8 3-1.8 1 .6V5.5a.5.5 0 0 0-.5-.5H6Zm2 3h7v2H8V8Zm0 4h7v2H8v-2Z" />
@@ -8989,7 +9014,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
           </div>
           <div className="team-access-meta team-access-role">
             <span>Rol</span>
-            <strong>{previewDemoMode ? "Demo" : memberRoleLabel(currentRole)}</strong>
+            <strong>{previewDemoMode ? (playerPreviewActive ? "Jugador (vista)" : "Demo") : memberRoleLabel(displayedRole)}</strong>
           </div>
           <div className="team-access-meta team-access-level">
             <span>Nivel del equipo</span>
@@ -10241,7 +10266,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
             orientation={activeMatchManagerPane === "alineacion" ? "landscape" : "portrait"}
             scoreForPlayer={effectivePlayerScore}
             boardState={pitchBoardState}
-            canDragPlayers={(canEditLineup || isDemoMode) && registrationOpen && !lineupClosed && !matchFinalized}
+            canDragPlayers={canEditLineup && registrationOpen && !lineupClosed && !matchFinalized}
             canUseBoard={!matchFinalized}
             onBoardStateChange={setPitchBoardState}
             onPlayerSwap={swapLineupPlayers}
@@ -10420,7 +10445,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
                 orientation={activeMatchManagerPane === "alineacion" ? "landscape" : "portrait"}
                 scoreForPlayer={effectivePlayerScore}
                 boardState={pitchBoardState}
-                canDragPlayers={(canEditLineup || isDemoMode) && registrationOpen && !lineupClosed && !matchFinalized}
+                canDragPlayers={canEditLineup && registrationOpen && !lineupClosed && !matchFinalized}
                 canUseBoard={!matchFinalized}
                 onBoardStateChange={setPitchBoardState}
                 onPlayerSwap={swapLineupPlayers}
@@ -10927,7 +10952,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
               <span className="mobile-account-identity">
                 <strong>{displayName(profileName || authDisplayName(authUser)) || "Jugador"}</strong>
                 <small>
-                  {hasRealTeam ? `${currentTeamName} · ${memberRoleLabel(currentRole)}` : "Sin grupo de pachangas"}
+                  {hasRealTeam ? `${currentTeamName} · ${memberRoleLabel(displayedRole)}` : "Sin grupo de pachangas"}
                 </small>
               </span>
               <button
@@ -11042,7 +11067,11 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
         </>
       ) : null}
       {!needsLoginForSharedLink ? (
-        <MobileAppNav active={activeMobileTab} onNavigate={navigatePrimaryMobile} />
+        <MobileAppNav
+          active={activeMobileTab}
+          adminViewPreview={canPreviewPlayerView ? { active: playerPreviewActive, onToggle: toggleAdminPlayerView } : undefined}
+          onNavigate={navigatePrimaryMobile}
+        />
       ) : null}
       <RewardBoxDemo open={rewardBoxDemoOpen && canUseAdminControls} onClose={() => setRewardBoxDemoOpen(false)} />
     </main>

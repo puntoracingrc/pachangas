@@ -4,8 +4,14 @@ export type MobileAppTab = "inicio" | "partido" | "mercado" | "equipo" | "perfil
 
 type MobileAppNavProps = {
   active: MobileAppTab;
+  adminViewPreview?: AdminViewPreviewControl;
   links?: Partial<Record<MobileAppTab, string>>;
   onNavigate?: (tab: MobileAppTab) => void;
+};
+
+export type AdminViewPreviewControl = {
+  active: boolean;
+  onToggle: () => void;
 };
 
 const items: Array<{ id: MobileAppTab; label: string }> = [
@@ -61,10 +67,43 @@ function MobileNavIcon({ name }: { name: MobileAppTab }) {
   );
 }
 
-export function MobileAppNav({ active, links = {}, onNavigate }: MobileAppNavProps) {
+function AdminViewPreviewIcon() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 24 24">
+      <circle cx="12" cy="8" r="3.5" />
+      <path d="M5.2 20c.4-4.4 2.7-6.8 6.8-6.8s6.4 2.4 6.8 6.8M18.5 4.5l1 1 2-2" />
+    </svg>
+  );
+}
+
+export function AdminViewPreviewButton({
+  active,
+  className = "",
+  onToggle,
+}: AdminViewPreviewControl & { className?: string }) {
+  const actionLabel = active ? "Volver a vista admin" : "Cambiar a vista jugador";
+
+  return (
+    <button
+      className={`admin-view-preview-button${active ? " player-preview-active" : ""}${className ? ` ${className}` : ""}`}
+      type="button"
+      aria-label={actionLabel}
+      aria-pressed={active}
+      onClick={onToggle}
+      title={actionLabel}
+    >
+      <span className="mobile-app-nav-icon">
+        <AdminViewPreviewIcon />
+      </span>
+      <span>{active ? "Jugador" : "Admin"}</span>
+    </button>
+  );
+}
+
+export function MobileAppNav({ active, adminViewPreview, links = {}, onNavigate }: MobileAppNavProps) {
   return (
     <nav className="mobile-app-nav" aria-label="Navegación principal móvil">
-      <div className="mobile-app-nav-inner">
+      <div className={`mobile-app-nav-inner${adminViewPreview ? " has-admin-view-preview" : ""}`}>
         {items.map((item) => {
           const selected = active === item.id;
           const content = (
@@ -97,6 +136,13 @@ export function MobileAppNav({ active, links = {}, onNavigate }: MobileAppNavPro
             </button>
           );
         })}
+        {adminViewPreview ? (
+          <AdminViewPreviewButton
+            active={adminViewPreview.active}
+            className="mobile-app-nav-item mobile-app-role-preview"
+            onToggle={adminViewPreview.onToggle}
+          />
+        ) : null}
       </div>
     </nav>
   );

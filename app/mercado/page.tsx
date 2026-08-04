@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { attachVenueAutocomplete, type VenuePlace } from "../googlePlacesClient";
-import { MobileAppNav } from "../mobile-app-nav";
+import { useAdminViewPreview } from "../admin-view-preview";
+import { AdminViewPreviewButton, MobileAppNav } from "../mobile-app-nav";
 import { supabase } from "../supabaseClient";
 import type { TeamSummary } from "../team-social-contract";
 import { ChallengeableTeamsPanel } from "./challengeable-teams-panel";
@@ -665,6 +666,7 @@ export default function MarketPage() {
   const [modalityFilter, setModalityFilter] = useState("Todas");
   const [positionFilter, setPositionFilter] = useState("Todas");
   const [canInvite, setCanInvite] = useState(false);
+  const { previewRequested, toggleAdminViewPreview } = useAdminViewPreview();
   const [inviteMessage, setInviteMessage] = useState("");
   const [marketRefresh, setMarketRefresh] = useState(0);
   const [preparedRival, setPreparedRival] = useState<TeamSummary | null>(null);
@@ -672,6 +674,8 @@ export default function MarketPage() {
   const [zonePlace, setZonePlace] = useState<MarketTarget | null>(null);
   const [zonePlaceMessage, setZonePlaceMessage] = useState("");
   const zoneInputRef = useRef<HTMLInputElement>(null);
+  const playerPreviewActive = canInvite && previewRequested;
+  const canUseMarketAdminControls = canInvite && !playerPreviewActive;
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -983,7 +987,7 @@ export default function MarketPage() {
   }, [dayFilter, modalityFilter, openMatches, openMatchRequests, positionFilter, zoneFilter, zonePlace]);
 
   async function toggleMarketInvitation(profile: MarketProfile) {
-    if (!supabase || !marketContext || !profile.openToGuest || !canInvite) return;
+    if (!supabase || !marketContext || !profile.openToGuest || !canUseMarketAdminControls) return;
 
     const existing = matchInvitations[profile.id];
     const result = existing?.status === "pending"
@@ -1139,7 +1143,7 @@ export default function MarketPage() {
         <button className={activeTab === "equipos" ? "active" : ""} type="button" onClick={() => selectMarketTab("equipos")}>
           Equipos
         </button>
-        {canInvite && marketContext?.matchUrl ? (
+        {canUseMarketAdminControls && marketContext?.matchUrl ? (
           <Link className="market-manager-admin-link" href={marketAdminMatchUrl(marketContext.matchUrl)}>
             Configurar partido
           </Link>
@@ -1149,7 +1153,16 @@ export default function MarketPage() {
       <div className="market-manager-content">
         <header className="market-titlebar">
           <h1>Mercado</h1>
-          <Link className="manual-back-button" href="/">Volver</Link>
+          <div className="market-titlebar-actions">
+            {canInvite ? (
+              <AdminViewPreviewButton
+                active={playerPreviewActive}
+                className="admin-view-preview-desktop secondary-button"
+                onToggle={toggleAdminViewPreview}
+              />
+            ) : null}
+            <Link className="manual-back-button" href="/">Volver</Link>
+          </div>
         </header>
 
       {activeTab === "jugadores" && marketContext ? (
@@ -1271,9 +1284,9 @@ export default function MarketPage() {
               <button
                 type="button"
                 onClick={() => void toggleMarketInvitation(profile)}
-                disabled={!canInvite || !marketContext || !profile.openToGuest || invitationAccepted}
+                disabled={!canUseMarketAdminControls || !marketContext || !profile.openToGuest || invitationAccepted}
               >
-                {!canInvite
+                {!canUseMarketAdminControls
                   ? "Solo admins invitan"
                   : !marketContext
                     ? "Invitar desde un partido"
@@ -1354,6 +1367,7 @@ export default function MarketPage() {
       </div>
       <MobileAppNav
         active="mercado"
+        adminViewPreview={canInvite ? { active: playerPreviewActive, onToggle: toggleAdminViewPreview } : undefined}
         links={{
           inicio: "/",
           partido: "/?mobile=partido",
