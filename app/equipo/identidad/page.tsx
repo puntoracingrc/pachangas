@@ -1,0 +1,584 @@
+"use client";
+
+import Link from "next/link";
+import { type CSSProperties, useCallback, useEffect, useRef, useState } from "react";
+import { CLIENT_VERSION } from "../../client-version-contract";
+import { currentClientDisplayMode } from "../../pwa-client-bridge";
+import { supabase } from "../../supabaseClient";
+import {
+  normalizePendingReward,
+  normalizeProgressionSnapshot,
+  normalizeTeamCrestSnapshot,
+  readTeamIdentityCache,
+  writeTeamIdentityCache,
+  type CrestCatalogItem,
+  type CrestDesign,
+  type PendingReward,
+  type ProgressionSnapshot,
+  type TeamCrestSnapshot,
+} from "../../team-identity-contract";
+import styles from "./page.module.css";
+
+type Membership = {
+  groupId: string;
+  name: string;
+  role: "admin" | "owner" | "player";
+};
+
+type CrestCss = CSSProperties & {
+  "--crest-primary": string;
+  "--crest-secondary": string;
+};
+
+const familyLabels: Partial<Record<CrestCatalogItem["family"], string>> = {
+  adornment: "Adorno",
+  border: "Borde",
+  effect: "Efecto",
+  palette: "Paleta especial",
+  pattern: "Patrón",
+  shape: "Forma",
+  symbol: "Símbolo",
+};
+
+function clientMetadata() {
+  return {
+    clientVersion: CLIENT_VERSION,
+    displayMode: currentClientDisplayMode(),
+    surface: "team-identity",
+  };
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
+function membershipsFromRows(value: unknown): Membership[] {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((row) => {
+    if (!isRecord(row)) return [];
+    const group = Array.isArray(row.pachanga_groups) ? row.pachanga_groups[0] : row.pachanga_groups;
+    if (!isRecord(group) || typeof row.group_id !== "string" || typeof group.name !== "string") return [];
+    return [{
+      groupId: row.group_id,
+      name: group.name,
+      role: row.role === "owner" || row.role === "admin" ? row.role : "player",
+    }];
+  });
+}
+
+function dateLabel(value: string) {
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return value;
+  return new Intl.DateTimeFormat("es-ES", { dateStyle: "medium", timeStyle: "short" }).format(parsed);
+}
+
+function symbolLabel(key: string | null) {
+  if (key === "symbol.ball") return "⚽";
+  if (key === "symbol.lightning") return "ϟ";
+  if (key === "symbol.crown") return "♛";
+  return "";
+}
+
+function colorHex(catalog: CrestCatalogItem[], key: string, fallback: string) {
+  const item = catalog.find((entry) => entry.key === key);
+  return typeof item?.render.hex === "string" ? item.render.hex : fallback;
+}
+
+function CrestPreview({ catalog, design, compact = false }: { catalog: CrestCatalogItem[]; compact?: boolean; design: CrestDesign }) {
+  const palette = design.paletteKey ? catalog.find((item) => item.key === design.paletteKey) : null;
+  const paletteColors = Array.isArray(palette?.render.palette) ? palette.render.palette.filter((value): value is string => typeof value === "string") : [];
+  const primary = paletteColors[0] ?? colorHex(catalog, design.primaryColorKey, "#16a34a");
+  const secondary = paletteColors[1] ?? colorHex(catalog, design.secondaryColorKey, "#f8fafc");
+  const crestStyle: CrestCss = { "--crest-primary": primary, "--crest-secondary": secondary };
+  const shape = design.shapeKey.split(".")[1] ?? "classic";
+  const pattern = design.patternKey.split(".")[1] ?? "solid";
+  const border = design.borderKey.split(".")[1] ?? "standard";
+  return (
+    <div
+      className={`${styles.crestPreview} ${styles[`shape_${shape}`] ?? ""} ${styles[`pattern_${pattern}`] ?? ""} ${styles[`border_${border}`] ?? ""} ${design.effectKey === "effect.glow" ? styles.glow : ""} ${compact ? styles.compactCrest : ""}`.trim()}
+      style={crestStyle}
+      role="img"
+      aria-label={`Escudo ${design.initials}`}
+    >
+      {design.adornmentKey === "adornment.star" ? <span className={styles.crestTop}>★</span> : null}
+      <span className={styles.crestSymbol}>{symbolLabel(design.symbolKey)}</span>
+      <strong>{design.initials}</strong>
+      {design.adornmentKey === "adornment.ribbon" ? <span className={styles.crestRibbon}>PACHANGAS IQ</span> : null}
+    </div>
+  );
+}
+
+function CatalogOptions({
+  catalog,
+  design,
+  family,
+  onChange,
+}: {
+  catalog: CrestCatalogItem[];
+  design: CrestDesign;
+  family: Exclude<CrestCatalogItem["family"], "color">;
+  onChange: (key: string | null) => void;
+}) {
+  const keyForFamily: Record<Exclude<CrestCatalogItem["family"], "color">, keyof CrestDesign> = {
+    adornment: "adornmentKey",
+    border: "borderKey",
+    effect: "effectKey",
+    palette: "paletteKey",
+    pattern: "patternKey",
+    shape: "shapeKey",
+    symbol: "symbolKey",
+  };
+  const selectedKey = design[keyForFamily[family]];
+  const optional = family === "adornment" || family === "effect" || family === "palette" || family === "symbol";
+  return (
+    <fieldset className={styles.optionFieldset}>
+      <legend>{familyLabels[family]}</legend>
+      <div className={styles.optionGrid}>
+        {optional ? (
+          <button className={selectedKey === null ? styles.selectedOption : ""} type="button" onClick={() => onChange(null)}>Ninguno</button>
+        ) : null}
+        {catalog.filter((item) => item.family === family).map((item) => (
+          <button
+            className={selectedKey === item.key ? styles.selectedOption : ""}
+            disabled={!item.unlocked}
+            key={item.key}
+            type="button"
+            onClick={() => onChange(item.key)}
+            title={item.unlocked ? item.description : `${item.description} · Bloqueado`}
+          >
+            <span>{item.name}</span>
+            {!item.unlocked ? <small>Bloqueado</small> : null}
+          </button>
+        ))}
+      </div>
+    </fieldset>
+  );
+}
+
+export default function TeamIdentityPage() {
+  const [memberships, setMemberships] = useState<Membership[]>([]);
+  const [selectedGroupId, setSelectedGroupId] = useState("");
+  const [userId, setUserId] = useState("");
+  const [crest, setCrest] = useState<TeamCrestSnapshot | null>(null);
+  const [progression, setProgression] = useState<ProgressionSnapshot | null>(null);
+  const [draftDesign, setDraftDesign] = useState<CrestDesign | null>(null);
+  const [busy, setBusy] = useState("");
+  const [message, setMessage] = useState(supabase ? "" : "Supabase no está configurado.");
+  const [openedReward, setOpenedReward] = useState<PendingReward | null>(null);
+  const operationIds = useRef(new Map<string, string>());
+
+  const persistCache = useCallback((nextCrest: TeamCrestSnapshot | null, nextProgression: ProgressionSnapshot | null) => {
+    if (!userId || !selectedGroupId) return;
+    try {
+      writeTeamIdentityCache(window.localStorage, userId, selectedGroupId, nextCrest, nextProgression);
+    } catch {
+      // Cache is derived and optional.
+    }
+  }, [selectedGroupId, userId]);
+
+  const loadCrest = useCallback(async () => {
+    if (!supabase || !selectedGroupId) return;
+    const result = await supabase.rpc("get_pachanga_team_crest_snapshot_v1", { target_group_id: selectedGroupId });
+    if (result.error) {
+      setMessage(result.error.message);
+      return;
+    }
+    const canonical = normalizeTeamCrestSnapshot(result.data);
+    if (!canonical || canonical.group.groupId !== selectedGroupId) {
+      setMessage("El servidor devolvió un escudo no válido.");
+      return;
+    }
+    setCrest(canonical);
+    setProgression((current) => {
+      persistCache(canonical, current);
+      return current;
+    });
+  }, [persistCache, selectedGroupId]);
+
+  const loadProgression = useCallback(async () => {
+    if (!supabase || !selectedGroupId) return;
+    const result = await supabase.rpc("get_pachanga_progression_snapshot_v1", { target_group_id: selectedGroupId });
+    if (result.error) {
+      setMessage(result.error.message);
+      return;
+    }
+    const canonical = normalizeProgressionSnapshot(result.data);
+    if (!canonical || canonical.groupId !== selectedGroupId) {
+      setMessage("El servidor devolvió una progresión no válida.");
+      return;
+    }
+    setProgression(canonical);
+    setCrest((current) => {
+      persistCache(current, canonical);
+      return current;
+    });
+  }, [persistCache, selectedGroupId]);
+
+  useEffect(() => {
+    if (!supabase) return;
+    const client = supabase;
+    let active = true;
+    void client.auth.getSession().then(async ({ data }) => {
+      const user = data.session?.user ?? null;
+      if (!active) return;
+      if (!user) {
+        setMessage("Inicia sesión para ver la identidad de tu equipo.");
+        return;
+      }
+      setUserId(user.id);
+      const result = await client
+        .from("pachanga_group_members")
+        .select("group_id, role, pachanga_groups(id, name)")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: true });
+      if (!active) return;
+      if (result.error) {
+        setMessage(result.error.message);
+        return;
+      }
+      const groups = membershipsFromRows(result.data);
+      setMemberships(groups);
+      const queryGroupId = new URLSearchParams(window.location.search).get("grupo") ?? "";
+      const cachedGroupId = window.localStorage.getItem("pachangas-identity-selected-group") ?? "";
+      const preferred = groups.find((group) => group.groupId === queryGroupId)?.groupId
+        ?? groups.find((group) => group.groupId === cachedGroupId)?.groupId
+        ?? groups[0]?.groupId
+        ?? "";
+      setSelectedGroupId(preferred);
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!selectedGroupId || !userId) return;
+    window.localStorage.setItem("pachangas-identity-selected-group", selectedGroupId);
+    const cached = readTeamIdentityCache(window.localStorage, userId, selectedGroupId);
+    queueMicrotask(() => {
+      setCrest(cached?.crest ?? null);
+      setProgression(cached?.progression ?? null);
+      setMessage("");
+    });
+    queueMicrotask(() => void Promise.all([loadCrest(), loadProgression()]));
+  }, [loadCrest, loadProgression, selectedGroupId, userId]);
+
+  useEffect(() => {
+    if (!crest) return;
+    queueMicrotask(() => setDraftDesign(crest.canManage
+      ? crest.draft?.design ?? crest.published?.design ?? crest.defaultDesign
+      : crest.published?.design ?? crest.defaultDesign));
+  }, [crest]);
+
+  useEffect(() => {
+    if (!supabase || !selectedGroupId || !userId) return;
+    const client = supabase;
+    const crestChannel = client
+      .channel(`pachanga-crest-${selectedGroupId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "pachanga_team_crest_state", filter: `group_id=eq.${selectedGroupId}` },
+        () => void loadCrest(),
+      )
+      .subscribe();
+    const progressionChannel = client
+      .channel(`pachanga-progression-${selectedGroupId}-${userId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "pachanga_progression_group_state", filter: `group_id=eq.${selectedGroupId}` },
+        () => void loadProgression(),
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "pachanga_progression_user_state", filter: `user_id=eq.${userId}` },
+        () => void loadProgression(),
+      )
+      .subscribe();
+    const reconnect = () => {
+      if (navigator.onLine) void Promise.all([loadCrest(), loadProgression()]);
+    };
+    window.addEventListener("online", reconnect);
+    return () => {
+      window.removeEventListener("online", reconnect);
+      void client.removeChannel(crestChannel);
+      void client.removeChannel(progressionChannel);
+    };
+  }, [loadCrest, loadProgression, selectedGroupId, userId]);
+
+  function operationIdFor(fingerprint: string) {
+    const existing = operationIds.current.get(fingerprint);
+    if (existing) return existing;
+    const created = crypto.randomUUID();
+    operationIds.current.set(fingerprint, created);
+    return created;
+  }
+
+  function acceptCrestCommit(value: unknown) {
+    const canonical = normalizeTeamCrestSnapshot(value);
+    if (!canonical || canonical.group.groupId !== selectedGroupId) return false;
+    setCrest(canonical);
+    persistCache(canonical, progression);
+    return true;
+  }
+
+  async function saveDraft() {
+    if (!supabase || !crest?.canManage || !draftDesign || busy) return;
+    const fingerprint = `crest-save:${selectedGroupId}:${crest.crestRevision}:${JSON.stringify(draftDesign)}`;
+    const operationId = operationIdFor(fingerprint);
+    setBusy("save");
+    setMessage("");
+    const result = await supabase.rpc("save_pachanga_team_crest_draft_v1", {
+      client_metadata: clientMetadata(),
+      expected_revision: crest.crestRevision,
+      operation_id: operationId,
+      target_design: draftDesign,
+      target_group_id: selectedGroupId,
+    });
+    setBusy("");
+    if (result.error) {
+      setMessage(result.error.message);
+      if (result.error.code === "PT409") await loadCrest();
+      return;
+    }
+    operationIds.current.delete(fingerprint);
+    if (!acceptCrestCommit(result.data)) await loadCrest();
+    setMessage("Borrador confirmado por el servidor.");
+  }
+
+  async function publishCrest() {
+    if (!supabase || !crest?.canManage || !draftDesign || busy) return;
+    const fingerprint = `crest-publish:${selectedGroupId}:${crest.crestRevision}:${crest.draft?.draftRevision ?? 0}`;
+    const operationId = operationIdFor(fingerprint);
+    setBusy("publish");
+    setMessage("");
+    const result = await supabase.rpc("publish_pachanga_team_crest_v1", {
+      client_metadata: clientMetadata(),
+      expected_revision: crest.crestRevision,
+      operation_id: operationId,
+      target_group_id: selectedGroupId,
+    });
+    setBusy("");
+    if (result.error) {
+      setMessage(result.error.message);
+      if (result.error.code === "PT409") await loadCrest();
+      return;
+    }
+    operationIds.current.delete(fingerprint);
+    if (!acceptCrestCommit(result.data)) await loadCrest();
+    setMessage("Escudo publicado para todo el equipo.");
+  }
+
+  async function openReward(reward: PendingReward) {
+    if (!supabase || busy || reward.status !== "pending") return;
+    const fingerprint = `reward-open:${reward.rewardGrantId}:${reward.recipientRevision}`;
+    const operationId = operationIdFor(fingerprint);
+    setBusy(reward.rewardGrantId);
+    setMessage("");
+    const result = await supabase.rpc("open_pachanga_reward_v1", {
+      client_metadata: clientMetadata(),
+      expected_revision: reward.recipientRevision,
+      operation_id: operationId,
+      target_reward_grant_id: reward.rewardGrantId,
+    });
+    setBusy("");
+    if (result.error) {
+      setMessage(result.error.message);
+      if (result.error.code === "PT409") await loadProgression();
+      return;
+    }
+    operationIds.current.delete(fingerprint);
+    const opened = normalizePendingReward(result.data);
+    if (opened) setOpenedReward(opened);
+    await loadProgression();
+  }
+
+  const designIsSaved = Boolean(crest?.draft && draftDesign && JSON.stringify(crest.draft.design) === JSON.stringify(draftDesign));
+  const activeTeamAchievements = progression?.teamAchievements.filter((item) => item.state === "active") ?? [];
+  const activePersonalAchievements = progression?.personalAchievements.filter((item) => item.state === "active") ?? [];
+  const pendingRewards = progression?.rewards.filter((reward) => reward.status === "pending") ?? [];
+
+  return (
+    <main className={styles.page}>
+      <nav className={styles.topbar}>
+        <Link href="/">Inicio</Link>
+        <strong>Identidad del equipo</strong>
+        <Link href="/mercado?section=retos">Rivales</Link>
+      </nav>
+
+      <header className={styles.header}>
+        <div>
+          <span>Equipo y colección</span>
+          <h1>{crest?.group.name ?? "Pachangas IQ"}</h1>
+        </div>
+        {memberships.length > 1 ? (
+          <label>
+            Grupo
+            <select value={selectedGroupId} onChange={(event) => setSelectedGroupId(event.target.value)}>
+              {memberships.map((membership) => <option key={membership.groupId} value={membership.groupId}>{membership.name}</option>)}
+            </select>
+          </label>
+        ) : null}
+      </header>
+
+      {!selectedGroupId ? <p className={styles.empty}>Necesitas pertenecer a un grupo para abrir su identidad.</p> : null}
+      {crest && draftDesign ? (
+        <>
+          <section className={styles.crestBand}>
+            <div className={styles.previewStage}>
+              <CrestPreview catalog={crest.catalog} design={draftDesign} />
+              <div>
+                <span>{crest.published ? `Versión publicada ${crest.published.version}` : "Todavía sin publicar"}</span>
+                <strong>{draftDesign.initials}</strong>
+                <small>Revisión confirmada {crest.crestRevision}</small>
+              </div>
+            </div>
+
+            {crest.canManage ? (
+              <div className={styles.editor}>
+                <div className={styles.initialsRow}>
+                  <label>Iniciales<input maxLength={4} value={draftDesign.initials} onChange={(event) => setDraftDesign((current) => current ? { ...current, initials: event.target.value.toUpperCase().replace(/\s/g, "") } : current)} /></label>
+                  <div className={styles.colorGroup}>
+                    <span>Color principal</span>
+                    <div>{crest.catalog.filter((item) => item.family === "color").map((item) => (
+                      <button
+                        aria-label={`Color principal ${item.name}`}
+                        className={draftDesign.primaryColorKey === item.key ? styles.activeSwatch : ""}
+                        key={`primary-${item.key}`}
+                        style={{ background: typeof item.render.hex === "string" ? item.render.hex : "#fff" }}
+                        type="button"
+                        onClick={() => setDraftDesign((current) => current ? { ...current, primaryColorKey: item.key } : current)}
+                      />
+                    ))}</div>
+                  </div>
+                  <div className={styles.colorGroup}>
+                    <span>Color secundario</span>
+                    <div>{crest.catalog.filter((item) => item.family === "color").map((item) => (
+                      <button
+                        aria-label={`Color secundario ${item.name}`}
+                        className={draftDesign.secondaryColorKey === item.key ? styles.activeSwatch : ""}
+                        key={`secondary-${item.key}`}
+                        style={{ background: typeof item.render.hex === "string" ? item.render.hex : "#fff" }}
+                        type="button"
+                        onClick={() => setDraftDesign((current) => current ? { ...current, secondaryColorKey: item.key } : current)}
+                      />
+                    ))}</div>
+                  </div>
+                </div>
+                {(["shape", "pattern", "border", "symbol", "adornment", "palette", "effect"] as const).map((family) => (
+                  <CatalogOptions
+                    catalog={crest.catalog}
+                    design={draftDesign}
+                    family={family}
+                    key={family}
+                    onChange={(key) => setDraftDesign((current) => current ? {
+                      ...current,
+                      [family === "shape" ? "shapeKey"
+                        : family === "pattern" ? "patternKey"
+                          : family === "border" ? "borderKey"
+                            : family === "symbol" ? "symbolKey"
+                              : family === "adornment" ? "adornmentKey"
+                                : family === "palette" ? "paletteKey" : "effectKey"]: key,
+                    } : current)}
+                  />
+                ))}
+                <div className={styles.editorActions}>
+                  <button type="button" disabled={Boolean(busy)} onClick={() => void saveDraft()}>{busy === "save" ? "Guardando…" : "Guardar borrador"}</button>
+                  <button className={styles.publishButton} type="button" disabled={Boolean(busy) || !designIsSaved} onClick={() => void publishCrest()}>{busy === "publish" ? "Publicando…" : "Publicar escudo"}</button>
+                </div>
+                {!designIsSaved ? <small className={styles.editorHint}>Guarda el borrador antes de publicar esta combinación.</small> : null}
+              </div>
+            ) : (
+              <div className={styles.memberCrestCopy}>
+                <strong>Escudo oficial</strong>
+                <p>El historial y las piezas desbloqueadas pertenecen al equipo. Solo owner y admins pueden publicar cambios.</p>
+              </div>
+            )}
+          </section>
+
+          {pendingRewards.length ? (
+            <section className={styles.rewardsBand}>
+              <header><span>Recompensas pendientes</span><strong>{pendingRewards.length}</strong></header>
+              <div className={styles.rewardRail}>
+                {pendingRewards.map((reward) => (
+                  <button disabled={Boolean(busy)} key={reward.rewardGrantId} type="button" onClick={() => void openReward(reward)}>
+                    <span>{reward.achievement.rarity}</span>
+                    <strong>{reward.achievement.title}</strong>
+                    <small>Abrir recompensa decidida por el servidor</small>
+                  </button>
+                ))}
+              </div>
+            </section>
+          ) : null}
+
+          <section className={styles.progressBand}>
+            <div>
+              <header><span>Logros del equipo</span><strong>{activeTeamAchievements.length}</strong></header>
+              <div className={styles.achievementGrid}>
+                {activeTeamAchievements.map((achievement) => (
+                  <article key={achievement.grantId}>
+                    <span>{achievement.scope === "external" ? "Rivales" : "Pachangas"} · {achievement.rarity}</span>
+                    <strong>{achievement.title}</strong>
+                    <p>{achievement.description}</p>
+                  </article>
+                ))}
+                {!activeTeamAchievements.length ? <p className={styles.empty}>Los logros aparecerán al finalizar partidos canónicos.</p> : null}
+              </div>
+            </div>
+            <div>
+              <header><span>Mis logros</span><strong>{activePersonalAchievements.length}</strong></header>
+              <div className={styles.achievementGrid}>
+                {activePersonalAchievements.map((achievement) => (
+                  <article key={achievement.grantId}>
+                    <span>{achievement.scope === "external" ? "Rivales" : "Pachangas"} · {achievement.rarity}</span>
+                    <strong>{achievement.title}</strong>
+                    <p>{achievement.description}</p>
+                  </article>
+                ))}
+                {!activePersonalAchievements.length ? <p className={styles.empty}>Aún no hay insignias personales confirmadas.</p> : null}
+              </div>
+            </div>
+          </section>
+
+          <section className={styles.collectionBand}>
+            <header><span>Colección del equipo</span><strong>{crest.catalog.filter((item) => item.unlocked).length}/{crest.catalog.length}</strong></header>
+            <div className={styles.collectionGrid}>
+              {crest.catalog.map((item) => (
+                <article className={item.unlocked ? styles.unlockedItem : styles.lockedItem} key={item.key}>
+                  <span>{familyLabels[item.family] ?? item.family}</span>
+                  <strong>{item.name}</strong>
+                  <small>{item.unlocked ? "Disponible" : "Bloqueado por logro"}</small>
+                </article>
+              ))}
+            </div>
+          </section>
+
+          <section className={styles.historyBand}>
+            <header><span>Historial publicado</span><strong>{crest.history.length}</strong></header>
+            <div className={styles.historyRail}>
+              {crest.history.map((version) => (
+                <article key={version.id}>
+                  <CrestPreview catalog={crest.catalog} compact design={version.design} />
+                  <div><strong>Versión {version.version}</strong><small>{dateLabel(version.publishedAt)}</small></div>
+                </article>
+              ))}
+              {!crest.history.length ? <p className={styles.empty}>La primera publicación quedará guardada aquí.</p> : null}
+            </div>
+          </section>
+        </>
+      ) : null}
+
+      {message ? <p className={styles.message} aria-live="polite">{message}</p> : null}
+
+      {openedReward ? (
+        <div className={styles.rewardModalBackdrop} role="presentation" onMouseDown={(event) => { if (event.currentTarget === event.target) setOpenedReward(null); }}>
+          <section className={styles.rewardModal} role="dialog" aria-modal="true" aria-label="Recompensa abierta">
+            <span>{openedReward.achievement.rarity}</span>
+            <strong>{openedReward.achievement.title}</strong>
+            <p>{openedReward.rewardKey}</p>
+            <button type="button" onClick={() => setOpenedReward(null)}>Cerrar</button>
+          </section>
+        </div>
+      ) : null}
+    </main>
+  );
+}

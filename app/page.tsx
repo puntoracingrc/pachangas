@@ -8732,6 +8732,11 @@ export default function Home() {
             <button className="secondary-button" type="button" onClick={openTeamGallery} disabled={needsLoginForSharedLink}>
               Mi equipo
             </button>
+            {hasRealTeam && isRegisteredUser ? (
+              <a className="secondary-button" href={`/equipo/identidad${remoteGroupId ? `?grupo=${remoteGroupId}` : ""}`}>
+                Identidad
+              </a>
+            ) : null}
             <a className="secondary-button market-link-button" href="/mercado">
               Mercado
             </a>
@@ -10808,6 +10813,11 @@ export default function Home() {
 
               <div className="mobile-account-group">
                 <h2>Mi grupo</h2>
+                {hasRealTeam ? (
+                  <a href={`/equipo/identidad${remoteGroupId ? `?grupo=${remoteGroupId}` : ""}`}>
+                    <span>Escudo, logros y colección</span><small>Identidad oficial y recompensas del equipo</small><b aria-hidden="true">›</b>
+                  </a>
+                ) : null}
                 <button type="button" onClick={() => runMobileAccountAction(openGroupSwitcher)} disabled={!isRegisteredUser}>
                   <span>Cambiar de pachanga</span><small>Entra en otro de tus grupos</small><b aria-hidden="true">›</b>
                 </button>

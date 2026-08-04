@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { attachVenueAutocomplete, type VenuePlace } from "../googlePlacesClient";
 import { supabase } from "../supabaseClient";
+import { ExternalResultsPanel } from "./external-results-panel";
 import {
   normalizeTeamSocialSnapshot,
   readTeamSocialCache,
@@ -573,6 +574,10 @@ export function TeamChallengesPanel({ initialOpponent }: Props) {
           </div>
         </section>
       </div>
+
+      {selectedGroupId && currentUserId ? (
+        <ExternalResultsPanel groupId={selectedGroupId} userId={currentUserId} />
+      ) : null}
 
       {acceptedChallenges.length ? (
         <section className="market-panel resolved-challenges-panel accepted-challenges-panel">
