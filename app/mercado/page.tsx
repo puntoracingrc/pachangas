@@ -1321,23 +1321,26 @@ export default function MarketPage() {
 
           return (
             <article className="market-open-match" key={match.id}>
-              <div className="open-match-main">
-                <span className="market-media-pill">{match.openSlots} plaza{match.openSlots === 1 ? "" : "s"}</span>
-                <strong>{match.title}</strong>
-                <p>{[match.dateText, zoneMatch.label, modalityLabels[match.modality] ?? match.modality].filter(Boolean).join(" · ")}</p>
-                <div className="market-tags">
-                  <span>Nivel {minOverall}-{maxOverall}</span>
-                  {match.groupLevel !== null ? <span>Nivel equipo {overall(match.groupLevel)}</span> : null}
-                  {match.positions.length ? match.positions.map((position) => <span key={position}>{position}</span>) : <span>Cualquier posición</span>}
-                  <span>{match.guestsPay ? "Invitado paga" : "Invitado gratis"}</span>
-                  <span>Admin acepta</span>
+              <header className="open-match-heading">
+                <div>
+                  <span>{match.groupName}</span>
+                  <strong>{match.title}</strong>
                 </div>
+                <b>{match.openSlots} plaza{match.openSlots === 1 ? "" : "s"}</b>
+              </header>
+              <p className="open-match-meta">{[match.dateText, modalityLabels[match.modality] ?? match.modality, zoneMatch.label].filter(Boolean).join(" · ")}</p>
+              <dl className="open-match-facts">
+                <div><dt>Nivel</dt><dd>{minOverall}-{maxOverall}</dd></div>
+                <div><dt>Campo</dt><dd>{match.fieldName}</dd></div>
+                <div><dt>Jugadores</dt><dd>{match.confirmedCount}/{match.targetPlayers}</dd></div>
+                <div><dt>Pago</dt><dd>{match.pricePerPlayer > 0 ? `${match.pricePerPlayer.toFixed(2)} €` : match.guestsPay ? "Por confirmar" : "Gratis"}</dd></div>
+              </dl>
+              <div className="market-tags open-match-tags">
+                {match.groupLevel !== null ? <span>Equipo {overall(match.groupLevel)}</span> : null}
+                {match.positions.length ? match.positions.map((position) => <span key={position}>{position}</span>) : <span>Cualquier posición</span>}
+                <span>Con aprobación</span>
               </div>
-              <div className="open-match-side">
-                <span>{match.groupName}</span>
-                <strong>{match.fieldName}</strong>
-                <small>{match.confirmedCount}/{match.targetPlayers} confirmados</small>
-                {match.pricePerPlayer > 0 ? <small>Referencia {match.pricePerPlayer.toFixed(2)} € por persona</small> : null}
+              <footer className="open-match-actions">
                 <button
                   type="button"
                   onClick={() => requestPending && request ? void cancelOpenMatchRequest(request) : void requestOpenMatch(match)}
@@ -1346,7 +1349,7 @@ export default function MarketPage() {
                   {requestAccepted ? "Solicitud aceptada" : requestPending ? "Cancelar solicitud" : requestRejected ? "Solicitar otra vez" : "Solicitar plaza"}
                 </button>
                 {requestAccepted && request?.actionUrl ? <a href={request.actionUrl}>Ver partido</a> : null}
-              </div>
+              </footer>
             </article>
           );
         })}

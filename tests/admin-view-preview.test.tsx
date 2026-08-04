@@ -22,6 +22,21 @@ test("keeps the admin-player switch visible in both preview states", () => {
   assert.doesNotMatch(regularPlayer, /admin-view-preview-button/);
 });
 
+test("keeps game navigation client-side and requests fullscreen from a user gesture", async () => {
+  const linkedNav = renderToStaticMarkup(
+    <MobileAppNav active="inicio" links={{ mercado: "/mercado", partido: "/?mobile=partido" }} />,
+  );
+  const source = await readFile(new URL("../app/mobile-app-nav.tsx", import.meta.url), "utf8");
+
+  assert.match(linkedNav, /href="\/mercado"/);
+  assert.match(linkedNav, /href="\/\?mobile=partido"/);
+  assert.match(source, /import Link from "next\/link"/);
+  assert.match(source, /requestMobileGameFullscreen/);
+  assert.match(source, /requestFullscreen\(\{ navigationUI: "hide" \}\)/);
+  assert.match(source, /display-mode: standalone/);
+  assert.match(source, /display-mode: fullscreen/);
+});
+
 test("keeps real authorization separate from the visual preview", async () => {
   const [home, market, previewState, css] = await Promise.all([
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),

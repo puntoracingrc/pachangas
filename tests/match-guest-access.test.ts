@@ -120,8 +120,9 @@ test("match sharing is separate from group and admin invitations", async () => {
   );
   assert.match(home, /\/partido\/\$\{encodeURIComponent\(currentTeam\.teamCode\)\}/);
   assert.match(home, /No puedes ver este partido porque no perteneces al grupo/);
-  assert.match(home, /const matchShareBox = !matchFinalized && hasRealTeam/);
-  assert.match(home, /\{canManageTeam \? \([\s\S]*?<span>Invitar al partido<\/span>/);
+  assert.match(home, /const matchMemberShareBox = !matchFinalized && hasRealTeam/);
+  assert.match(home, /const matchAdminInviteBox = !matchFinalized && hasRealTeam && canManageTeam/);
+  assert.match(home, /match-admin-invite-panel[\s\S]*\{matchAdminInviteBox\}/);
   assert.doesNotMatch(
     home.match(/async function copySharedMatchLink[\s\S]*?\n  }/)?.[0] ?? "",
     /create_pachanga_match_link_invitation_v1/,

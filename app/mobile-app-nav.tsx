@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+
 export type MobileAppTab = "inicio" | "partido" | "mercado" | "equipo" | "perfil";
 
 type MobileAppNavProps = {
@@ -21,6 +23,29 @@ const items: Array<{ id: MobileAppTab; label: string }> = [
   { id: "equipo", label: "Equipo" },
   { id: "perfil", label: "Perfil" },
 ];
+
+export async function requestMobileGameFullscreen() {
+  if (typeof window === "undefined" || typeof document === "undefined") return;
+  const standalone = window.matchMedia("(display-mode: standalone)").matches
+    || window.matchMedia("(display-mode: fullscreen)").matches
+    || Boolean((window.navigator as Navigator & { standalone?: boolean }).standalone);
+  const landscape = window.matchMedia("(orientation: landscape)").matches;
+  const gameViewport = window.innerWidth >= 568 && window.innerHeight <= 1024;
+  if (standalone || !landscape || !gameViewport || document.fullscreenElement) return;
+
+  const root = document.documentElement as HTMLElement & {
+    webkitRequestFullscreen?: () => Promise<void> | void;
+  };
+  try {
+    if (root.requestFullscreen) {
+      await root.requestFullscreen({ navigationUI: "hide" });
+    } else {
+      await root.webkitRequestFullscreen?.();
+    }
+  } catch {
+    // iOS and some browsers only allow installed standalone mode; navigation still proceeds.
+  }
+}
 
 function MobileNavIcon({ name }: { name: MobileAppTab }) {
   if (name === "inicio") {
@@ -106,6 +131,7 @@ export function MobileAppNav({ active, adminViewPreview, links = {}, onNavigate 
       <div className={`mobile-app-nav-inner${adminViewPreview ? " has-admin-view-preview" : ""}`}>
         {items.map((item) => {
           const selected = active === item.id;
+          const href = links[item.id];
           const content = (
             <>
               <span className="mobile-app-nav-icon">
@@ -116,11 +142,17 @@ export function MobileAppNav({ active, adminViewPreview, links = {}, onNavigate 
           );
           const className = selected ? "mobile-app-nav-item active" : "mobile-app-nav-item";
 
-          if (links[item.id]) {
+          if (href) {
             return (
-              <a className={className} href={links[item.id]} key={item.id} aria-current={selected ? "page" : undefined}>
+              <Link
+                className={className}
+                href={href}
+                key={item.id}
+                aria-current={selected ? "page" : undefined}
+                onClick={() => void requestMobileGameFullscreen()}
+              >
                 {content}
-              </a>
+              </Link>
             );
           }
 
@@ -130,7 +162,10 @@ export function MobileAppNav({ active, adminViewPreview, links = {}, onNavigate 
               key={item.id}
               type="button"
               aria-current={selected ? "page" : undefined}
-              onClick={() => onNavigate?.(item.id)}
+              onClick={() => {
+                void requestMobileGameFullscreen();
+                onNavigate?.(item.id);
+              }}
             >
               {content}
             </button>
