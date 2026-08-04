@@ -154,7 +154,10 @@ test("builds the transfer market as a separated page", async () => {
   assert.match(css, /\.market-page \.market-context-summary strong,[\s\S]*font-size:\s*12px[\s\S]*white-space:\s*nowrap/);
   assert.match(css, /linear-gradient\(135deg, #071923 0%, #145038 48%, #202847 100%\)/);
   assert.match(css, /\.market-page \.market-titlebar,[\s\S]*rgba\(16, 29, 24, 0\.8\)/);
-  assert.match(css, /\.market-page \.open-match-side,[\s\S]*rgba\(16, 29, 24, 0\.8\)/);
+  assert.match(css, /\.market-page \.market-open-match,[\s\S]*rgba\(16, 29, 24, 0\.8\)/);
+  assert.match(source, /className="open-match-heading"/);
+  assert.match(source, /className="open-match-facts"/);
+  assert.match(css, /\.market-page \.market-open-grid\s*\{[\s\S]*grid-template-columns: repeat\(3, minmax\(220px, 1fr\)\)/);
 });
 
 test("keeps portrait mobile views compact and readable", async () => {
@@ -451,8 +454,8 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(marketPage, /requester_user_id/);
   assert.match(marketPage, /Solicitar plaza/);
   assert.match(marketPage, /Solicitud enviada/);
-  assert.match(marketPage, /Admin acepta/);
-  assert.match(marketPage, /Nivel equipo/);
+  assert.match(marketPage, /Con aprobación/);
+  assert.match(marketPage, /<span>Equipo \{overall\(match\.groupLevel\)\}<\/span>/);
   assert.match(marketPage, /Solo admins invitan/);
   assert.match(marketPage, /Invitar desde un partido/);
   assert.match(marketPage, /MarketMatchContext/);
@@ -788,7 +791,7 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /compactUuid/);
   assert.match(page, /expandCompactUuid/);
   assert.match(page, /remoteInviteToken/);
-  assert.match(page, /showGroupAccessPanel\s*=\s*isRegisteredUser/);
+  assert.match(page, /showGroupAccessPanel\s*=\s*isRegisteredUser\s*&&\s*canUseAdminControls/);
   assert.match(page, /actualCanManageTeam\s*=\s*Boolean\(hasRealTeam\s*&&\s*isRegisteredUser/);
   assert.match(page, /canManageTeam\s*=\s*actualCanManageTeam\s*&&\s*!playerPreviewActive/);
   assert.match(page, /canUseAdminControls\s*=\s*canPreviewPlayerView\s*&&\s*!playerPreviewActive/);
@@ -810,7 +813,11 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /player-profile-viewer/);
   assert.match(page, /player-public-stats/);
   assert.match(globalsCss, /\.player-profile-viewer/);
-  assert.match(page, /<\/div>\s*\{showMarketScoutCard \? \(\s*<div className=\{\`player-card market-scout-card market-scout-card-compact/);
+  assert.doesNotMatch(page, /showMarketScoutCard/);
+  assert.match(page, /mobile-account-group-details/);
+  assert.match(page, /<span>Datos del grupo<\/span>/);
+  assert.match(page, /playerProfileMode === "edit" && selectedPlayerIsOwn && hasRealTeam/);
+  assert.match(page, /player-profile-group-details/);
   assert.match(page, /statusConfirmation/);
   assert.match(page, /status-confirm-dialog/);
   assert.match(page, /skipLeaveConfirmation/);
@@ -1254,12 +1261,12 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.doesNotMatch(page, /Modo local/);
   assert.match(page, /paymentReady/);
   assert.match(page, /const canConfigureMatchMarket = canUseAdminControls && showMatchRoster && !lineupClosed && !matchFinalized/);
-  assert.match(page, /const showMarketScoutCard = canConfigureMatchMarket && \(missing > 0 \|\| Boolean\(activeMatch\.publicOpen\)\)/);
+  assert.doesNotMatch(page, /const showMarketScoutCard/);
   assert.match(page, /const otherPlayers = registrationOpen/);
   assert.match(page, /const canChangeStatus = matchConfigured && registrationOpen/);
   assert.match(page, /const canChangeThisPlayerStatus = matchConfigured && registrationOpen/);
-  assert.match(page, /Buscar en mercado/);
-  assert.match(page, /Configurar mercado/);
+  assert.doesNotMatch(page, /Buscar en mercado/);
+  assert.match(page, /Configurar filtros/);
   assert.match(page, /match-admin-hub/);
   assert.match(page, /Mercado del partido/);
   assert.match(page, /Buscar jugadores/);
@@ -1290,11 +1297,13 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /const demoMatchWeather: MatchWeather = \{/);
   assert.match(page, /condition:\s*"Sol"/);
   assert.match(page, /if \(isDemoMode\) \{[\s\S]*setMatchWeather\(\{[\s\S]*\.\.\.demoMatchWeather/);
-  assert.match(page, /const matchShareBox = !matchFinalized && hasRealTeam \? \(/);
+  assert.match(page, /const matchMemberShareBox = !matchFinalized && hasRealTeam \? \(/);
+  assert.match(page, /const matchAdminInviteBox = !matchFinalized && hasRealTeam && canManageTeam \? \(/);
   assert.match(page, /create_pachanga_match_link_invitation_v1/);
   assert.match(page, /Compartir partido/);
   assert.match(page, /Invitar al partido/);
-  assert.match(page, /className="match-side-share" aria-label="Compartir partido"[\s\S]*\{matchShareBox\}/);
+  assert.match(page, /className="match-side-share" aria-label="Compartir partido"[\s\S]*\{matchMemberShareBox\}/);
+  assert.match(page, /className="match-admin-action-panel match-admin-invite-panel"[\s\S]*\{matchAdminInviteBox\}/);
   assert.match(page, /function WeatherIcon/);
   assert.match(page, /function WeatherMetricIcon/);
   assert.match(page, /weatherVisualKey/);

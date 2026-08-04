@@ -5899,7 +5899,6 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
   const selectedMatchManagerPane = matchManagerPanes.includes(activeMatchManagerPane) ? activeMatchManagerPane : "proximo";
   const matchManagerPaneLabel = (pane: MatchManagerPane) => (pane === "proximo" && matchFinalized ? "Histórico" : matchManagerPaneLabels[pane]);
   const canConfigureMatchMarket = canUseAdminControls && showMatchRoster && !lineupClosed && !matchFinalized;
-  const showMarketScoutCard = canConfigureMatchMarket && (missing > 0 || Boolean(activeMatch.publicOpen));
   const canCreateTeam = Boolean(supabase && isRegisteredUser);
   const ownPlayer = currentUserId ? players.find((player) => player.ownerUserId === currentUserId) : undefined;
   const needsOwnPlayerProfile = hasRealTeam && isRegisteredUser && !ownPlayer;
@@ -5982,7 +5981,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
       cleanup?.();
     };
   }, [marketZoneRadiusKm, selectedPlayer?.id, selectedPlayer?.marketEnabled, selectedPlayer?.marketZonesGeo, selectedPlayerIsOwn]);
-  const showGroupAccessPanel = isRegisteredUser;
+  const showGroupAccessPanel = isRegisteredUser && canUseAdminControls;
   const showTeamAdminPanel = canManageTeam;
   const showMatchAdminPanel = canUseAdminControls;
   const canEditMatchSettings = canUseAdminControls && !matchFinalized;
@@ -7745,7 +7744,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
     window.open(`https://wa.me/?text=${encodeURIComponent(shareText(invitationUrl))}`, "_blank", "noopener,noreferrer");
   }
 
-  const matchShareBox = !matchFinalized && hasRealTeam ? (
+  const matchMemberShareBox = !matchFinalized && hasRealTeam ? (
     <div className="match-share-options">
       <div className="share-box">
         <span>Compartir partido</span>
@@ -7758,19 +7757,20 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
           </button>
         </div>
       </div>
-      {canManageTeam ? (
-        <div className="share-box invitation-share-box">
-          <span>Invitar al partido</span>
-          <div className="share-actions">
-            <button className="copy-invite-button" type="button" onClick={() => void copyMatchInvitationLink()} disabled={!matchConfigured || syncStatus === "connecting"} title="Crear acceso limitado y copiar la invitación" aria-label="Crear y copiar invitación limitada al partido">
-              Crear link
-            </button>
-            <button className="whatsapp-icon-button" type="button" onClick={() => void shareMatchInvitationWhatsApp()} disabled={!matchConfigured || syncStatus === "connecting"} title="Crear acceso limitado y enviarlo por WhatsApp" aria-label="Crear invitación limitada al partido y enviar por WhatsApp">
-              <WhatsAppLogo />
-            </button>
-          </div>
-        </div>
-      ) : null}
+    </div>
+  ) : null;
+
+  const matchAdminInviteBox = !matchFinalized && hasRealTeam && canManageTeam ? (
+    <div className="share-box invitation-share-box">
+      <span>Invitar al partido</span>
+      <div className="share-actions">
+        <button className="copy-invite-button" type="button" onClick={() => void copyMatchInvitationLink()} disabled={!matchConfigured || syncStatus === "connecting"} title="Crear acceso limitado y copiar la invitación" aria-label="Crear y copiar invitación limitada al partido">
+          Crear link
+        </button>
+        <button className="whatsapp-icon-button" type="button" onClick={() => void shareMatchInvitationWhatsApp()} disabled={!matchConfigured || syncStatus === "connecting"} title="Crear acceso limitado y enviarlo por WhatsApp" aria-label="Crear invitación limitada al partido y enviar por WhatsApp">
+          <WhatsAppLogo />
+        </button>
+      </div>
     </div>
   ) : null;
 
@@ -9638,9 +9638,9 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
               </div>
             </div>
           ) : null}
-          {selectedMatchManagerPane === "proximo" && matchShareBox ? (
+          {selectedMatchManagerPane === "proximo" && matchMemberShareBox ? (
             <div className="match-side-share" aria-label="Compartir partido">
-              {matchShareBox}
+              {matchMemberShareBox}
             </div>
           ) : null}
         </nav>
@@ -9884,6 +9884,16 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
               </div>
 
               <div className="match-admin-hub match-manager-admin-block" aria-label="Administración del partido">
+                {matchAdminInviteBox ? (
+                  <section className="match-admin-action-panel match-admin-invite-panel">
+                    <div className="match-admin-action-heading">
+                      <span>Invitar al partido</span>
+                      <strong>Acceso limitado</strong>
+                    </div>
+                    <p>La invitación permite ver este partido sin convertir al jugador en miembro ni administrador del grupo.</p>
+                    {matchAdminInviteBox}
+                  </section>
+                ) : null}
                 <section className={`match-admin-action-panel match-admin-market-panel ${activeMatch.publicOpen ? "public-open" : ""}`}>
                   <div className="match-admin-action-heading">
                     <span>Mercado del partido</span>
@@ -10211,30 +10221,6 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
                   </div>
                 ) : null}
               </div>
-              {showMarketScoutCard ? (
-                <div className={`player-card market-scout-card market-scout-card-compact ${activeMatch.publicOpen ? "public-open" : ""}`} aria-label={`Configurar mercado. Faltan ${missing} plaza${missing === 1 ? "" : "s"}`}>
-                  <span className="market-scout-icon">
-                    <SearchLogo />
-                  </span>
-                  <div>
-                    <strong>{activeMatch.publicOpen ? "Mercado publicado" : "Buscar en mercado"}</strong>
-                    <small>
-                      {missing > 0
-                        ? `Faltan ${missing} plaza${missing === 1 ? "" : "s"} para completar el cupo.`
-                        : "El partido está completo."}
-                    </small>
-                    {pendingOpenMatchRequests.length > 0 ? (
-                      <small className="public-request-count">{pendingOpenMatchRequests.length} solicitud{pendingOpenMatchRequests.length === 1 ? "" : "es"} pendiente{pendingOpenMatchRequests.length === 1 ? "" : "s"}</small>
-                    ) : null}
-                  </div>
-                  <div className="market-scout-actions">
-                    <button type="button" onClick={openMarketConfiguration}>
-                      {activeMatch.publicOpen ? "Gestionar mercado" : "Configurar mercado"}
-                    </button>
-                  </div>
-                </div>
-              ) : null}
-
             </>
           ) : null}
         </section>
@@ -10504,6 +10490,20 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
                 <strong>{overallScore(selectedPeerScore)}</strong>
               </div>
             </div>
+            {playerProfileMode === "edit" && selectedPlayerIsOwn && hasRealTeam ? (
+              <details className="player-profile-group-details">
+                <summary>
+                  <span>Datos del grupo</span>
+                  <small>{currentTeamName}</small>
+                  <b aria-hidden="true">›</b>
+                </summary>
+                <dl>
+                  <div><dt>Código</dt><dd>{currentTeam?.teamCode ?? "-"}</dd></div>
+                  <div><dt>Rol</dt><dd>{memberRoleLabel(displayedRole)}</dd></div>
+                  <div><dt>Nivel</dt><dd>{groupLevel === null ? "-" : overallScore(groupLevel)}</dd></div>
+                </dl>
+              </details>
+            ) : null}
             {!ownPlayer && selectedPlayer && !selectedPlayer.ownerUserId && hasRealTeam && isRegisteredUser ? (
               <div className="profile-claim">
                 <span>¿Esta ficha eres tú?</span>
@@ -10990,6 +10990,21 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
 
               <div className="mobile-account-group">
                 <h2>Mi grupo</h2>
+                {hasRealTeam ? (
+                  <details className="mobile-account-group-details">
+                    <summary>
+                      <span>Datos del grupo</span>
+                      <small>Código, rol y nivel</small>
+                      <b aria-hidden="true">›</b>
+                    </summary>
+                    <dl>
+                      <div><dt>Grupo</dt><dd>{currentTeamName}</dd></div>
+                      <div><dt>Código</dt><dd>{currentTeam?.teamCode ?? "-"}</dd></div>
+                      <div><dt>Rol</dt><dd>{memberRoleLabel(displayedRole)}</dd></div>
+                      <div><dt>Nivel</dt><dd>{groupLevel === null ? "-" : overallScore(groupLevel)}</dd></div>
+                    </dl>
+                  </details>
+                ) : null}
                 {hasRealTeam ? (
                   <a href={`/equipo/identidad${remoteGroupId ? `?grupo=${remoteGroupId}` : ""}`}>
                     <span>Escudo, logros y colección</span><small>Identidad oficial y recompensas del equipo</small><b aria-hidden="true">›</b>
