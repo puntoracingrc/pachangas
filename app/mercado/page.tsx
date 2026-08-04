@@ -641,6 +641,12 @@ function positionMatchesFilter(profile: MarketProfile, filter: string) {
   return true;
 }
 
+function marketAdminMatchUrl(matchUrl: string) {
+  if (!matchUrl) return "/?mobile=partido&pane=admin";
+  const separator = matchUrl.includes("?") ? "&" : "?";
+  return `${matchUrl}${separator}mobile=partido&pane=admin`;
+}
+
 export default function MarketPage() {
   const [profiles, setProfiles] = useState<MarketProfile[]>(fallbackProfiles);
   const [openMatches, setOpenMatches] = useState<OpenMarketMatch[]>(fallbackOpenMatches);
@@ -1079,12 +1085,40 @@ export default function MarketPage() {
 
   return (
     <main className="market-page">
-      <header className="market-titlebar">
-        <div>
-          <Link className="manual-back-button" href="/">Volver</Link>
-          <h1>Mercado</h1>
-        </div>
-      </header>
+      <nav className="market-manager-subnav" aria-label="Secciones del mercado en modo juego">
+        <button className={activeTab === "jugadores" ? "active" : ""} type="button" onClick={() => setActiveTab("jugadores")}>
+          Jugadores
+        </button>
+        <button className={activeTab === "partidos" ? "active" : ""} type="button" onClick={() => setActiveTab("partidos")}>
+          Partidos
+        </button>
+        <button
+          className={activeTab === "retos" ? "active" : ""}
+          type="button"
+          onClick={() => {
+            setPreparedRival(null);
+            setActiveTab("retos");
+          }}
+        >
+          Retos
+        </button>
+        <button className={activeTab === "equipos" ? "active" : ""} type="button" onClick={() => setActiveTab("equipos")}>
+          Equipos
+        </button>
+        {canInvite && marketContext?.matchUrl ? (
+          <Link className="market-manager-admin-link" href={marketAdminMatchUrl(marketContext.matchUrl)}>
+            Configurar partido
+          </Link>
+        ) : null}
+      </nav>
+
+      <div className="market-manager-content">
+        <header className="market-titlebar">
+          <div>
+            <Link className="manual-back-button" href="/">Volver</Link>
+            <h1>Mercado</h1>
+          </div>
+        </header>
 
       {marketContext ? (
         <section className="market-panel market-context-panel" aria-label="Partido usado para buscar jugadores">
@@ -1294,6 +1328,7 @@ export default function MarketPage() {
           }}
         />
       )}
+      </div>
       <MobileAppNav
         active="mercado"
         links={{

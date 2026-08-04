@@ -3508,11 +3508,14 @@ export default function Home() {
     if (handledMobileEntryRef.current) return;
     handledMobileEntryRef.current = true;
 
-    const requestedTab = new URLSearchParams(window.location.search).get("mobile");
+    const requestedParams = new URLSearchParams(window.location.search);
+    const requestedTab = requestedParams.get("mobile");
+    const requestedMatchPane = requestedParams.get("pane");
     const managerLandscape = isMobileManagerLandscape();
     if (requestedTab === "partido") {
       lockMobileNavigationTab("partido");
       setActiveMobileTab("partido");
+      if (requestedMatchPane === "admin") setActiveMatchManagerPane("admin");
       window.requestAnimationFrame(() => {
         document.getElementById("partido")?.scrollIntoView({ behavior: "smooth", block: "start" });
       });
@@ -4833,8 +4836,7 @@ export default function Home() {
     setActiveMobileTab(tabId);
 
     if (tabId === "mercado") {
-      if (canUseAdminControls) return;
-      window.location.assign("/mercado");
+      window.location.assign(canUseAdminControls && matchConfigured ? marketScoutUrl("jugadores") : "/mercado");
       return;
     }
 
