@@ -134,7 +134,7 @@ test("builds the transfer market as a separated page", async () => {
   assert.match(source, /Partidos/);
   assert.match(source, /Retos/);
   assert.match(source, /Equipos/);
-  assert.match(source, /canInvite && marketContext\?\.matchUrl/);
+  assert.match(source, /canUseMarketAdminControls && marketContext\?\.matchUrl/);
   assert.match(source, /Configurar partido/);
   assert.match(source, /marketAdminMatchUrl\(marketContext\.matchUrl\)/);
   assert.match(source, /mobile=partido&pane=admin/);
@@ -789,8 +789,9 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /expandCompactUuid/);
   assert.match(page, /remoteInviteToken/);
   assert.match(page, /showGroupAccessPanel\s*=\s*isRegisteredUser/);
-  assert.match(page, /canManageTeam\s*=\s*Boolean\(hasRealTeam\s*&&\s*isRegisteredUser/);
-  assert.match(page, /canUseAdminControls\s*=\s*isDemoMode\s*\|\|\s*canManageTeam/);
+  assert.match(page, /actualCanManageTeam\s*=\s*Boolean\(hasRealTeam\s*&&\s*isRegisteredUser/);
+  assert.match(page, /canManageTeam\s*=\s*actualCanManageTeam\s*&&\s*!playerPreviewActive/);
+  assert.match(page, /canUseAdminControls\s*=\s*canPreviewPlayerView\s*&&\s*!playerPreviewActive/);
   assert.match(page, /showTeamAdminPanel\s*=\s*canManageTeam/);
   assert.match(page, /showMatchAdminPanel\s*=\s*canUseAdminControls/);
   assert.match(page, /showTeamAdminPanel \? \(/);
