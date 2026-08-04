@@ -5957,6 +5957,7 @@ export default function Home() {
   useEffect(() => {
     if (needsLoginForSharedLink) return;
     if (isMobileManagerLandscape()) return;
+    if (window.matchMedia("(max-width: 760px)").matches) return;
 
     const sections = mobileNavigationTabs
       .map((tab) => document.getElementById(tab.id))

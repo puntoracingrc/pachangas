@@ -15319,3 +15319,559 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
     padding: 10px;
   }
 }
+
+/* Portrait game mode keeps the compact manager language without locking vertical scroll. */
+@media (orientation: portrait) and (max-width: 760px) {
+  :root {
+    color-scheme: dark;
+  }
+
+  html {
+    background: #07110e !important;
+  }
+
+  body {
+    background: #07110e;
+    padding-bottom: calc(var(--mobile-nav-height) + 14px + var(--safe-bottom));
+  }
+
+  main[data-mobile-tab],
+  .market-page {
+    --background: #0b1713;
+    --foreground: #f5f2e8;
+    --green: #5ad990;
+    --ink: #f5f2e8;
+    --ink-soft: #a7b8af;
+    --line: #30483e;
+    --lime: #c8ef5d;
+    --muted: #8da198;
+    --panel: rgba(15, 32, 26, 0.94);
+    --team-a: #78aaff;
+    --team-b: #ff766b;
+    --team-a-soft: color-mix(in srgb, var(--team-a) 16%, #0b1713);
+    --team-b-soft: color-mix(in srgb, var(--team-b) 16%, #0b1713);
+    --team-a-card: color-mix(in srgb, var(--team-a) 18%, #102018);
+    --team-b-card: color-mix(in srgb, var(--team-b) 18%, #102018);
+    --team-a-muted: color-mix(in srgb, var(--team-a) 42%, #203029);
+    --team-b-muted: color-mix(in srgb, var(--team-b) 42%, #203029);
+    background:
+      linear-gradient(135deg, rgba(0, 105, 69, 0.22), transparent 48%),
+      linear-gradient(315deg, rgba(30, 75, 118, 0.2), transparent 52%),
+      #07110e !important;
+    color: var(--foreground);
+    color-scheme: dark;
+  }
+
+  main[data-mobile-tab] {
+    min-height: 100dvh;
+    padding-bottom: calc(var(--mobile-nav-height) + 16px + var(--safe-bottom));
+  }
+
+  main[data-mobile-tab] :is(input, select, textarea),
+  .market-page :is(input, select, textarea),
+  main[data-mobile-tab] .pachangas-place-autocomplete,
+  .market-page .pachangas-place-autocomplete,
+  main[data-mobile-tab] .reserve-toggle-box {
+    background: rgba(5, 16, 13, 0.9) !important;
+    border-color: rgba(167, 184, 175, 0.38) !important;
+    color: #f5f2e8 !important;
+  }
+
+  main[data-mobile-tab] :is(input, textarea)::placeholder,
+  .market-page :is(input, textarea)::placeholder {
+    color: rgba(215, 228, 221, 0.55) !important;
+    opacity: 1;
+  }
+
+  main[data-mobile-tab] :is(input, select, textarea):focus,
+  .market-page :is(input, select, textarea):focus {
+    border-color: #5ad990 !important;
+    box-shadow: 0 0 0 2px rgba(90, 217, 144, 0.2);
+    outline: 0;
+  }
+
+  main[data-mobile-tab] :is(input, select, textarea):disabled,
+  .market-page :is(input, select, textarea):disabled {
+    background: rgba(167, 184, 175, 0.1) !important;
+    color: rgba(245, 242, 232, 0.64) !important;
+    opacity: 1;
+  }
+
+  main[data-mobile-tab] select option,
+  .market-page select option {
+    background: #0b1713;
+    color: #f5f2e8;
+  }
+
+  main[data-mobile-tab] input:is([type="date"], [type="time"])::-webkit-calendar-picker-indicator {
+    filter: brightness(0) invert(1);
+    opacity: 0.9;
+  }
+
+  main[data-mobile-tab] input:is([type="date"], [type="time"]) {
+    color-scheme: dark !important;
+  }
+
+  main[data-mobile-tab] .panel,
+  main[data-mobile-tab] .top-panel,
+  main[data-mobile-tab] .main-panel,
+  main[data-mobile-tab] .lineup-panel,
+  main[data-mobile-tab] .bottom-grid,
+  main[data-mobile-tab] .ranking-player-entry,
+  main[data-mobile-tab] .mobile-account-sheet,
+  .market-page .market-panel,
+  .market-page .market-tabs,
+  .market-page .market-player,
+  .market-page .market-open-match,
+  .market-page .market-context-panel {
+    background: rgba(15, 32, 26, 0.94) !important;
+    border-color: rgba(167, 184, 175, 0.26) !important;
+    color: #f5f2e8 !important;
+  }
+
+  main[data-mobile-tab] :is(.match-item, .history-item) {
+    background: rgba(20, 42, 34, 0.96) !important;
+    border-color: rgba(167, 184, 175, 0.28) !important;
+    color: #f5f2e8 !important;
+  }
+
+  main[data-mobile-tab] .match-item.active {
+    background: rgba(200, 239, 93, 0.12) !important;
+    border-color: rgba(200, 239, 93, 0.5) !important;
+  }
+
+  main[data-mobile-tab] :is(.match-item, .history-item) :is(strong, b) {
+    color: #f5f2e8;
+  }
+
+  main[data-mobile-tab] :is(.match-item, .history-item) small {
+    color: #a7b8af;
+  }
+
+  main[data-mobile-tab] :is(.panel, .top-panel, .main-panel, .lineup-panel),
+  .market-page :is(.market-panel, .market-player, .market-open-match, .market-context-panel) {
+    border-radius: 8px;
+  }
+
+  main[data-mobile-tab] :is(.panel-title, label, .ranking-toolbar label),
+  .market-page :is(label, .market-info-panel span, .market-context-panel span),
+  main[data-mobile-tab] :is(.ranking-card-detail, .ranking-card-flags),
+  .market-page :is(.market-player-info small, .market-player-info p) {
+    color: #a7b8af;
+  }
+
+  main[data-mobile-tab] .hero {
+    gap: 10px;
+    padding: 14px 12px 10px;
+  }
+
+  main[data-mobile-tab] .brand-hero-logo,
+  main[data-mobile-tab] .team-hero-logo {
+    max-height: 52px;
+    max-width: min(230px, 72vw);
+  }
+
+  main[data-mobile-tab] .hero h1 {
+    font-size: 34px;
+    line-height: 1.02;
+  }
+
+  main[data-mobile-tab] .hero-copy {
+    font-size: 15px;
+    line-height: 1.35;
+  }
+
+  main[data-mobile-tab] .hero-account-row .google-signin-button {
+    min-height: 46px;
+  }
+
+  main[data-mobile-tab] .demo-banner,
+  main[data-mobile-tab] .shared-link-gate {
+    gap: 5px;
+    margin: 8px 12px;
+    padding: 11px 12px;
+  }
+
+  main[data-mobile-tab] .demo-banner strong {
+    font-size: 17px;
+  }
+
+  main[data-mobile-tab] .demo-banner p {
+    font-size: 12px;
+    line-height: 1.3;
+  }
+
+  main[data-mobile-tab] > :is(.top-panel, .main-panel, .lineup-panel, .bottom-grid),
+  main[data-mobile-tab] > .app-shell {
+    margin-left: 8px;
+    margin-right: 8px;
+  }
+
+  main[data-mobile-tab] .main-panel {
+    gap: 8px;
+    padding: 8px;
+  }
+
+  main[data-mobile-tab] .main-panel .match-editor {
+    background: rgba(6, 20, 16, 0.7) !important;
+    margin: 0;
+    padding: 9px;
+  }
+
+  main[data-mobile-tab] .match-editor {
+    align-items: end;
+    gap: 8px;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  main[data-mobile-tab] .match-editor > :is(label, button) {
+    grid-column: auto !important;
+    min-width: 0;
+  }
+
+  main[data-mobile-tab] .match-editor > .match-field-control,
+  main[data-mobile-tab] .match-editor > .match-kind-control,
+  main[data-mobile-tab] .match-editor > .save-match-button,
+  main[data-mobile-tab] .match-editor > .admin-only-badge {
+    grid-column: 1 / -1 !important;
+  }
+
+  main[data-mobile-tab] .match-editor label,
+  .market-page .market-filters label {
+    font-size: 10px;
+    gap: 4px;
+  }
+
+  main[data-mobile-tab] .match-editor :is(input, select),
+  main[data-mobile-tab] .reserve-toggle-box,
+  .market-page .market-filters :is(input, select) {
+    font-size: 14px;
+    min-height: 44px;
+    padding-inline: 10px;
+  }
+
+  main[data-mobile-tab] .save-match-button {
+    min-height: 42px;
+  }
+
+  main[data-mobile-tab] .weather-card {
+    background: rgba(30, 51, 43, 0.94) !important;
+    border-color: rgba(90, 217, 144, 0.3) !important;
+    color: #f5f2e8 !important;
+    gap: 7px;
+    grid-template-columns: 1fr;
+    margin-top: 8px;
+    padding: 9px;
+  }
+
+  main[data-mobile-tab] .weather-card-main {
+    gap: 7px;
+  }
+
+  main[data-mobile-tab] .weather-metrics {
+    gap: 5px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  main[data-mobile-tab] .weather-metrics span {
+    background: rgba(5, 16, 13, 0.38);
+    min-height: 34px;
+    padding: 5px 7px;
+  }
+
+  main[data-mobile-tab] .weather-card small {
+    display: none;
+  }
+
+  main[data-mobile-tab] .weather-card :is(.weather-summary span, strong, p, .weather-availability-message),
+  main[data-mobile-tab] .weather-metrics span {
+    color: #d7e4dd;
+  }
+
+  main[data-mobile-tab] .weather-card strong {
+    color: #f5f2e8;
+  }
+
+  main[data-mobile-tab] .stats-row {
+    gap: 1px;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  main[data-mobile-tab] .stats-row div {
+    min-height: 54px;
+    padding: 7px 6px;
+  }
+
+  main[data-mobile-tab] .stats-row span {
+    font-size: 9px;
+    line-height: 1.05;
+  }
+
+  main[data-mobile-tab] .stats-row strong {
+    font-size: 20px;
+  }
+
+  main[data-mobile-tab] .share-box {
+    gap: 7px;
+    padding: 8px !important;
+  }
+
+  main[data-mobile-tab] .team-player-grid,
+  main[data-mobile-tab] .player-grid {
+    gap: 8px;
+  }
+
+  main[data-mobile-tab] .team-player-column,
+  main[data-mobile-tab] .player-card {
+    padding: 8px;
+  }
+
+  main[data-mobile-tab] .player-card {
+    background: rgba(10, 27, 21, 0.96);
+    border-color: rgba(167, 184, 175, 0.26);
+    color: #f5f2e8;
+  }
+
+  main[data-mobile-tab] .player-card.reserve-card {
+    background: rgba(89, 60, 7, 0.28);
+  }
+
+  main[data-mobile-tab] .player-card.waiting-card,
+  main[data-mobile-tab] .player-card.inactive-card {
+    background: rgba(73, 86, 80, 0.24);
+  }
+
+  main[data-mobile-tab] .ranking-toolbar {
+    gap: 7px;
+    grid-template-columns: 104px minmax(0, 1fr);
+  }
+
+  main[data-mobile-tab] .ranking-season-filter {
+    width: 100%;
+  }
+
+  main[data-mobile-tab] .ranking-toolbar :is(select, button) {
+    min-height: 38px;
+  }
+
+  main[data-mobile-tab] .ranking-sort-buttons {
+    gap: 3px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  main[data-mobile-tab] .ranking-sort-buttons button {
+    font-size: 11px;
+    padding: 0 5px;
+  }
+
+  main[data-mobile-tab] .ranking-sort-buttons {
+    background: rgba(5, 16, 13, 0.72);
+    border-color: rgba(167, 184, 175, 0.28);
+  }
+
+  main[data-mobile-tab] .ranking-sort-buttons button {
+    color: #a7b8af;
+  }
+
+  main[data-mobile-tab] .ranking-sort-buttons button.selected {
+    background: rgba(200, 239, 93, 0.16);
+    color: #d8fa78;
+  }
+
+  main[data-mobile-tab] .ranking-card-grid {
+    gap: 8px;
+    grid-template-columns: 1fr;
+  }
+
+  main[data-mobile-tab] .ranking-player-entry {
+    gap: 8px;
+    grid-template-columns: 86px minmax(0, 1fr);
+    min-height: 126px;
+    padding: 7px;
+  }
+
+  main[data-mobile-tab] .ranking-player-card {
+    max-width: 86px;
+    min-height: 116px;
+    padding: 6px 5px 5px;
+  }
+
+  main[data-mobile-tab] .ranking-stat-grid {
+    max-width: none;
+  }
+
+  main[data-mobile-tab] .ranking-stat-grid span {
+    background: rgba(5, 16, 13, 0.52);
+    border-color: rgba(167, 184, 175, 0.24);
+    min-height: 34px;
+    padding: 4px 2px;
+  }
+
+  main[data-mobile-tab] .ranking-stat-grid b {
+    color: #f5f2e8;
+    font-size: 14px;
+  }
+
+  main[data-mobile-tab] .ranking-card-badge {
+    background: rgba(200, 239, 93, 0.13);
+    border-color: rgba(200, 239, 93, 0.45);
+    color: #d8fa78;
+    font-size: 10px;
+    padding: 5px 7px;
+  }
+
+  .market-page {
+    gap: 9px;
+    margin: 0;
+    max-width: none;
+    padding: 14px 10px calc(var(--mobile-nav-height) + 16px + var(--safe-bottom));
+  }
+
+  .market-page .market-titlebar {
+    align-items: center;
+    gap: 6px;
+  }
+
+  .market-page .market-titlebar > div {
+    gap: 4px;
+  }
+
+  .market-page .market-titlebar h1 {
+    font-size: 30px;
+  }
+
+  .market-page .market-titlebar a {
+    font-size: 13px;
+  }
+
+  .market-page .market-filters,
+  .market-page .market-context-panel {
+    gap: 7px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    padding: 9px;
+  }
+
+  .market-page .market-filters > :first-child,
+  .market-page .market-filters > :last-child,
+  .market-page .market-context-panel > :first-child,
+  .market-page .market-context-panel > :last-child {
+    grid-column: 1 / -1;
+  }
+
+  .market-page .market-tabs {
+    gap: 3px;
+    padding: 4px;
+  }
+
+  .market-page .market-tabs button,
+  .market-page .market-tabs a {
+    font-size: 11px;
+    min-height: 40px;
+    padding: 5px 6px;
+  }
+
+  .market-page .market-tabs button.selected,
+  .market-page .market-tabs a.selected {
+    background: rgba(200, 239, 93, 0.14);
+    color: #d8fa78;
+  }
+
+  .market-page .market-grid,
+  .market-page .market-open-grid {
+    gap: 8px;
+  }
+
+  .market-page .market-player {
+    align-items: center;
+    gap: 8px;
+    grid-template-columns: 88px minmax(0, 1fr);
+    justify-items: stretch;
+    padding: 8px;
+  }
+
+  .market-page .market-player-card {
+    max-width: 88px;
+    width: 88px;
+  }
+
+  .market-page .market-player-info {
+    gap: 5px;
+    justify-items: stretch;
+  }
+
+  .market-page .market-player-info strong {
+    color: #f5f2e8;
+    font-size: 15px;
+  }
+
+  .market-page .market-tags {
+    gap: 3px;
+    max-height: 44px;
+    overflow: hidden;
+  }
+
+  .market-page .market-tags span {
+    background: rgba(167, 184, 175, 0.14);
+    color: #d7e4dd;
+    font-size: 8px;
+    padding: 3px 5px;
+  }
+
+  main[data-mobile-tab] .mobile-account-sheet {
+    inset: auto 8px calc(var(--mobile-nav-height) + 8px + var(--safe-bottom));
+    max-height: calc(100dvh - var(--mobile-nav-height) - 24px - var(--safe-top));
+    width: calc(100vw - 16px);
+  }
+
+  main[data-mobile-tab] .mobile-account-header {
+    gap: 9px;
+    padding: 11px;
+  }
+
+  main[data-mobile-tab] .mobile-account-avatar {
+    height: 42px;
+    width: 42px;
+  }
+
+  main[data-mobile-tab] .mobile-account-scroll {
+    gap: 10px;
+    padding: 8px 10px 12px;
+  }
+
+  main[data-mobile-tab] .mobile-account-group {
+    gap: 4px;
+  }
+
+  main[data-mobile-tab] .mobile-account-group > :is(button, a),
+  main[data-mobile-tab] .mobile-account-session {
+    min-height: 46px;
+    padding: 7px 9px;
+  }
+
+  main[data-mobile-tab] .mobile-account-group > :is(button, a) small {
+    font-size: 10px;
+  }
+}
+
+@media (orientation: portrait) and (max-width: 350px) {
+  main[data-mobile-tab] .match-editor,
+  .market-page .market-filters,
+  .market-page .market-context-panel {
+    grid-template-columns: 1fr !important;
+  }
+
+  main[data-mobile-tab] .match-editor > :is(label, button),
+  .market-page .market-filters > *,
+  .market-page .market-context-panel > * {
+    grid-column: 1 !important;
+  }
+
+  main[data-mobile-tab] .ranking-toolbar,
+  .market-page .market-player {
+    grid-template-columns: 1fr;
+  }
+
+  .market-page .market-player-card {
+    justify-self: center;
+  }
+}
