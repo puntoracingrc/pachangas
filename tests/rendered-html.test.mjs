@@ -140,12 +140,23 @@ test("builds the transfer market as a separated page", async () => {
   assert.match(source, /Configurar partido/);
   assert.match(source, /marketAdminMatchUrl\(marketContext\.matchUrl\)/);
   assert.match(source, /mobile=partido&pane=admin/);
+  assert.match(source, /<h1>Mercado<\/h1>[\s\S]*className="manual-back-button"[\s\S]*Volver/);
+  assert.match(source, /activeTab === "jugadores" && marketContext/);
+  assert.match(source, /Filtrado por próximo partido:/);
+  assert.match(source, /function selectMarketTab\(nextTab: MarketTab\)/);
+  assert.match(source, /activeMarketTarget\(zonePlace, null, zoneQuery\)/);
+  assert.match(source, /setDayFilter\("Todos"\)[\s\S]*setModalityFilter\("Todas"\)[\s\S]*setZoneFilter\(""\)/);
   assert.match(page, /requestedMatchPane === "admin"/);
   assert.match(page, /setActiveMatchManagerPane\("admin"\)/);
   assert.match(page, /window\.location\.assign\(canUseAdminControls && matchConfigured \? marketScoutUrl\("jugadores"\) : "\/mercado"\)/);
   assert.match(css, /\.market-page \.market-manager-subnav/);
   assert.match(css, /grid-template-columns: var\(--game-side-nav-width\) minmax\(0, 1fr\)/);
   assert.match(css, /\.market-page \.market-tabs\s*\{\s*display: none/);
+  assert.match(css, /\.market-page \.market-context-summary\s*\{[\s\S]*min-height:\s*32px/);
+  assert.match(css, /\.market-page \.market-context-summary strong,[\s\S]*font-size:\s*12px[\s\S]*white-space:\s*nowrap/);
+  assert.match(css, /linear-gradient\(135deg, #071923 0%, #145038 48%, #202847 100%\)/);
+  assert.match(css, /\.market-page \.market-titlebar,[\s\S]*rgba\(16, 29, 24, 0\.8\)/);
+  assert.match(css, /\.market-page \.open-match-side,[\s\S]*rgba\(16, 29, 24, 0\.8\)/);
 });
 
 test("keeps portrait mobile views compact and readable", async () => {
@@ -447,7 +458,7 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(marketPage, /Solo admins invitan/);
   assert.match(marketPage, /Invitar desde un partido/);
   assert.match(marketPage, /MarketMatchContext/);
-  assert.match(marketPage, /Filtros aplicados desde el partido/);
+  assert.match(marketPage, /Filtrado por próximo partido:/);
   assert.match(marketPage, /toggleMarketInvitation/);
   assert.match(marketPage, /create_pachanga_match_invitation_v1/);
   assert.match(marketPage, /cancel_pachanga_match_invitation_v1/);

@@ -328,6 +328,13 @@ type MarketMatchContext = {
   zone: string;
 };
 
+type MarketTab = "equipos" | "jugadores" | "partidos" | "retos";
+
+function marketTabFromParam(value: string | null): MarketTab {
+  if (value === "equipos" || value === "partidos" || value === "retos") return value;
+  return "jugadores";
+}
+
 function validDayFilter(value: string | null) {
   return value && dayFilters.includes(value) ? value : "Todos";
 }
@@ -652,7 +659,7 @@ export default function MarketPage() {
   const [openMatches, setOpenMatches] = useState<OpenMarketMatch[]>(fallbackOpenMatches);
   const [openMatchRequests, setOpenMatchRequests] = useState<Record<string, OpenMatchRequestSummary>>({});
   const [matchInvitations, setMatchInvitations] = useState<Record<string, MatchInvitationSummary>>({});
-  const [activeTab, setActiveTab] = useState<"equipos" | "jugadores" | "partidos" | "retos">("jugadores");
+  const [activeTab, setActiveTab] = useState<MarketTab>("jugadores");
   const [zoneFilter, setZoneFilter] = useState("");
   const [dayFilter, setDayFilter] = useState("Todos");
   const [modalityFilter, setModalityFilter] = useState("Todas");
@@ -668,11 +675,8 @@ export default function MarketPage() {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const tab = params.get("tab");
-    if (tab === "partidos") setActiveTab("partidos");
-    if (tab === "jugadores") setActiveTab("jugadores");
-    if (tab === "retos") setActiveTab("retos");
-    if (tab === "equipos") setActiveTab("equipos");
+    const nextTab = marketTabFromParam(params.get("tab"));
+    setActiveTab(nextTab);
     const matchId = params.get("partido");
     if (!matchId) return;
 
@@ -683,11 +687,7 @@ export default function MarketPage() {
     const nextLng = numberParam(params.get("lng"));
     const nextPlaceId = params.get("placeId") ?? undefined;
 
-    setDayFilter(nextDay);
-    setModalityFilter(nextModality);
-    setZoneFilter(nextZone);
-    setZonePlace(nextZone ? { lat: nextLat, lng: nextLng, name: nextZone, placeId: nextPlaceId } : null);
-    setMarketContext({
+    const nextContext: MarketMatchContext = {
       dateText: params.get("fecha") ?? "",
       day: nextDay,
       groupId: params.get("grupoId") ?? "",
@@ -701,8 +701,42 @@ export default function MarketPage() {
       revision: Math.max(0, Math.floor(numberParam(params.get("revision")) ?? 0)),
       title: params.get("titulo") ?? "Partido",
       zone: nextZone,
-    });
+    };
+
+    setMarketContext(nextContext);
+    if (nextTab === "jugadores") {
+      setDayFilter(nextDay);
+      setModalityFilter(nextModality);
+      setZoneFilter(nextZone);
+      setZonePlace(nextZone ? { lat: nextLat, lng: nextLng, name: nextZone, placeId: nextPlaceId } : null);
+    }
   }, []);
+
+  function selectMarketTab(nextTab: MarketTab) {
+    setActiveTab(nextTab);
+
+    if (nextTab === "jugadores" && marketContext) {
+      setDayFilter(marketContext.day);
+      setModalityFilter(marketContext.modality);
+      setPositionFilter("Todas");
+      setZoneFilter(marketContext.zone);
+      setZonePlace(marketContext.zone
+        ? {
+            lat: marketContext.lat,
+            lng: marketContext.lng,
+            name: marketContext.zone,
+            placeId: marketContext.placeId,
+          }
+        : null);
+      return;
+    }
+
+    setDayFilter("Todos");
+    setModalityFilter("Todas");
+    setPositionFilter("Todas");
+    setZoneFilter("");
+    setZonePlace(null);
+  }
 
   useEffect(() => {
     if (!supabase) return;
@@ -931,7 +965,7 @@ export default function MarketPage() {
 
   const filteredOpenMatches = useMemo(() => {
     const zoneQuery = zoneFilter.trim();
-    const target = activeMarketTarget(zonePlace, marketContext, zoneQuery);
+    const target = activeMarketTarget(zonePlace, null, zoneQuery);
 
     return openMatches.filter((match) => {
       const zoneMatches = openMatchZoneMatch(match, target, zoneQuery).matches;
@@ -946,7 +980,7 @@ export default function MarketPage() {
         && modalityMatches
         && positionMatches;
     });
-  }, [dayFilter, marketContext, modalityFilter, openMatches, openMatchRequests, positionFilter, zoneFilter, zonePlace]);
+  }, [dayFilter, modalityFilter, openMatches, openMatchRequests, positionFilter, zoneFilter, zonePlace]);
 
   async function toggleMarketInvitation(profile: MarketProfile) {
     if (!supabase || !marketContext || !profile.openToGuest || !canInvite) return;
@@ -1086,10 +1120,10 @@ export default function MarketPage() {
   return (
     <main className="market-page">
       <nav className="market-manager-subnav" aria-label="Secciones del mercado en modo juego">
-        <button className={activeTab === "jugadores" ? "active" : ""} type="button" onClick={() => setActiveTab("jugadores")}>
+        <button className={activeTab === "jugadores" ? "active" : ""} type="button" onClick={() => selectMarketTab("jugadores")}>
           Jugadores
         </button>
-        <button className={activeTab === "partidos" ? "active" : ""} type="button" onClick={() => setActiveTab("partidos")}>
+        <button className={activeTab === "partidos" ? "active" : ""} type="button" onClick={() => selectMarketTab("partidos")}>
           Partidos
         </button>
         <button
@@ -1097,12 +1131,12 @@ export default function MarketPage() {
           type="button"
           onClick={() => {
             setPreparedRival(null);
-            setActiveTab("retos");
+            selectMarketTab("retos");
           }}
         >
           Retos
         </button>
-        <button className={activeTab === "equipos" ? "active" : ""} type="button" onClick={() => setActiveTab("equipos")}>
+        <button className={activeTab === "equipos" ? "active" : ""} type="button" onClick={() => selectMarketTab("equipos")}>
           Equipos
         </button>
         {canInvite && marketContext?.matchUrl ? (
@@ -1114,27 +1148,16 @@ export default function MarketPage() {
 
       <div className="market-manager-content">
         <header className="market-titlebar">
-          <div>
-            <Link className="manual-back-button" href="/">Volver</Link>
-            <h1>Mercado</h1>
-          </div>
+          <h1>Mercado</h1>
+          <Link className="manual-back-button" href="/">Volver</Link>
         </header>
 
-      {marketContext ? (
-        <section className="market-panel market-context-panel" aria-label="Partido usado para buscar jugadores">
-          <div>
-            <span>Filtros aplicados desde el partido</span>
-            <strong>{marketContext.title}</strong>
-            <p>
-              {[marketContext.dateText, marketContext.zone, modalityLabels[marketContext.modality] ?? marketContext.modality]
-                .filter(Boolean)
-                .join(" · ")}
-            </p>
-          </div>
-          <div className="market-context-actions">
-            <span>{marketContext.missing ? `${marketContext.missing} plaza${marketContext.missing === "1" ? "" : "s"} por cubrir` : "Partido seleccionado"}</span>
-            {marketContext.matchUrl ? <a href={marketContext.matchUrl}>Volver al partido</a> : null}
-          </div>
+      {activeTab === "jugadores" && marketContext ? (
+        <section className="market-panel market-context-panel market-context-summary" aria-label="Partido usado para buscar jugadores">
+          <strong>Filtrado por próximo partido:</strong>
+          <span>
+            {marketContext.missing || "0"} plaza{marketContext.missing === "1" ? "" : "s"} libre{marketContext.missing === "1" ? "" : "s"}.
+          </span>
         </section>
       ) : null}
 
@@ -1182,10 +1205,10 @@ export default function MarketPage() {
       ) : null}
 
       <div className="market-tabs" aria-label="Tipo de mercado">
-        <button className={activeTab === "jugadores" ? "selected" : ""} type="button" onClick={() => setActiveTab("jugadores")}>
+        <button className={activeTab === "jugadores" ? "selected" : ""} type="button" onClick={() => selectMarketTab("jugadores")}>
           Jugadores disponibles
         </button>
-        <button className={activeTab === "partidos" ? "selected" : ""} type="button" onClick={() => setActiveTab("partidos")}>
+        <button className={activeTab === "partidos" ? "selected" : ""} type="button" onClick={() => selectMarketTab("partidos")}>
           Partidos abiertos
         </button>
         <button
@@ -1193,12 +1216,12 @@ export default function MarketPage() {
           type="button"
           onClick={() => {
             setPreparedRival(null);
-            setActiveTab("retos");
+            selectMarketTab("retos");
           }}
         >
           Retos privados
         </button>
-        <button className={activeTab === "equipos" ? "selected" : ""} type="button" onClick={() => setActiveTab("equipos")}>
+        <button className={activeTab === "equipos" ? "selected" : ""} type="button" onClick={() => selectMarketTab("equipos")}>
           Equipos retables
         </button>
       </div>
@@ -1274,7 +1297,7 @@ export default function MarketPage() {
       ) : activeTab === "partidos" ? (
       <section className="market-open-grid" aria-label="Partidos abiertos del mercado">
         {filteredOpenMatches.map((match) => {
-          const zoneMatch = openMatchZoneMatch(match, activeMarketTarget(zonePlace, marketContext, zoneFilter), zoneFilter);
+          const zoneMatch = openMatchZoneMatch(match, activeMarketTarget(zonePlace, null, zoneFilter), zoneFilter);
           const minOverall = levelOverall(match.minRating);
           const maxOverall = levelOverall(match.maxRating);
           const request = openMatchRequests[match.id];
@@ -1324,7 +1347,7 @@ export default function MarketPage() {
         <ChallengeableTeamsPanel
           onPrepareChallenge={(team) => {
             setPreparedRival(team);
-            setActiveTab("retos");
+            selectMarketTab("retos");
           }}
         />
       )}
