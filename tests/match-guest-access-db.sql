@@ -20,7 +20,8 @@ insert into auth.users(id, email) values
   ('81000000-0000-0000-0000-000000000002', 'guest-admin@example.test'),
   ('81000000-0000-0000-0000-000000000003', 'invited-player@example.test'),
   ('81000000-0000-0000-0000-000000000004', 'public-player@example.test'),
-  ('81000000-0000-0000-0000-000000000005', 'outsider@example.test');
+  ('81000000-0000-0000-0000-000000000005', 'outsider@example.test'),
+  ('81000000-0000-0000-0000-000000000006', 'second-outsider@example.test');
 
 insert into public.pachanga_groups(id, owner_id, name, team_code, payload) values (
   '82000000-0000-0000-0000-000000000001',
@@ -576,5 +577,181 @@ select pg_temp.assert_true(
   ),
   'Snapshot identity must remain unambiguous through server sequence and stable id'
 );
+
+-- A shared-link invitation is intentionally different from a permanent group
+-- invitation. It can be previewed before signup, but acceptance grants only the
+-- safe match guest access model.
+select payload_revision
+from public.pachanga_groups
+where id = '82000000-0000-0000-0000-000000000001'
+\gset link_group_
+select set_config('match_guest_test.link_group_revision', :'link_group_payload_revision', false);
+
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '81000000-0000-0000-0000-000000000001', true);
+select public.create_pachanga_match_link_invitation_v1(
+  '82000000-0000-0000-0000-000000000001',
+  'guest-match-1',
+  '85000000-0000-0000-0000-000000000014',
+  :'link_group_payload_revision'::bigint,
+  '{"sessionId":"admin-link-device","surface":"db-test"}'::jsonb
+) as link_created \gset
+select public.create_pachanga_match_link_invitation_v1(
+  '82000000-0000-0000-0000-000000000001',
+  'guest-match-1',
+  '85000000-0000-0000-0000-000000000014',
+  :'link_group_payload_revision'::bigint,
+  '{"sessionId":"admin-link-device","surface":"db-test"}'::jsonb
+) as link_replayed \gset
+reset role;
+
+select pg_temp.assert_true(
+  :'link_created'::jsonb = :'link_replayed'::jsonb
+  and (select count(*) from public.pachanga_match_link_invitations) = 1,
+  'Shared-link creation must be idempotent'
+);
+select set_config(
+  'match_guest_test.link_token',
+  (:'link_created'::jsonb -> 'invitation' ->> 'token'),
+  false
+);
+
+set local role anon;
+select public.get_pachanga_match_link_invitation_v1(
+  current_setting('match_guest_test.link_token')::uuid
+) as anonymous_link_preview \gset
+reset role;
+select pg_temp.assert_true(
+  not jsonb_path_exists(:'anonymous_link_preview'::jsonb, '$.**.phone')
+  and not jsonb_path_exists(:'anonymous_link_preview'::jsonb, '$.**.paid')
+  and not jsonb_path_exists(:'anonymous_link_preview'::jsonb, '$.**.ownerUserId')
+  and not jsonb_path_exists(:'anonymous_link_preview'::jsonb, '$.**.inviteToken'),
+  'Anonymous shared-link preview must not expose private group data'
+);
+
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '81000000-0000-0000-0000-000000000005', true);
+select public.respond_pachanga_match_link_invitation_v1(
+  current_setting('match_guest_test.link_token')::uuid,
+  'rejected',
+  '85000000-0000-0000-0000-000000000015',
+  1,
+  :'link_group_payload_revision'::bigint,
+  '{"sessionId":"new-user-device","surface":"db-test"}'::jsonb
+) as link_rejected \gset
+reset role;
+select pg_temp.assert_true(
+  not exists (
+    select 1 from public.pachanga_group_members
+    where group_id = '82000000-0000-0000-0000-000000000001'
+      and user_id = '81000000-0000-0000-0000-000000000005'
+  )
+  and not exists (
+    select 1 from public.pachanga_match_guest_access
+    where guest_user_id = '81000000-0000-0000-0000-000000000005'
+  ),
+  'Rejecting a shared link must grant no access and no membership'
+);
+
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '81000000-0000-0000-0000-000000000002', true);
+select public.create_pachanga_match_link_invitation_v1(
+  '82000000-0000-0000-0000-000000000001',
+  'guest-match-1',
+  '85000000-0000-0000-0000-000000000016',
+  :'link_group_payload_revision'::bigint,
+  '{"sessionId":"admin-link-device-b","surface":"db-test"}'::jsonb
+) as accepted_link_created \gset
+reset role;
+select set_config(
+  'match_guest_test.accepted_link_token',
+  (:'accepted_link_created'::jsonb -> 'invitation' ->> 'token'),
+  false
+);
+
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '81000000-0000-0000-0000-000000000005', true);
+select public.respond_pachanga_match_link_invitation_v1(
+  current_setting('match_guest_test.accepted_link_token')::uuid,
+  'accepted',
+  '85000000-0000-0000-0000-000000000017',
+  1,
+  :'link_group_payload_revision'::bigint,
+  '{"sessionId":"new-user-device","surface":"db-test"}'::jsonb
+) as accepted_link_response \gset
+reset role;
+select set_config(
+  'match_guest_test.accepted_link_access_id',
+  (:'accepted_link_response'::jsonb ->> 'accessId'),
+  false
+);
+select pg_temp.assert_true(
+  not exists (
+    select 1 from public.pachanga_group_members
+    where group_id = '82000000-0000-0000-0000-000000000001'
+      and user_id = '81000000-0000-0000-0000-000000000005'
+  )
+  and (select status from public.pachanga_match_guest_access
+       where id = current_setting('match_guest_test.accepted_link_access_id')::uuid) = 'accepted',
+  'Accepting a shared link must grant exact-match access without group membership'
+);
+
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '81000000-0000-0000-0000-000000000006', true);
+do $$
+begin
+  perform public.respond_pachanga_match_link_invitation_v1(
+    current_setting('match_guest_test.accepted_link_token')::uuid,
+    'accepted',
+    '85000000-0000-0000-0000-000000000018',
+    1,
+    current_setting('match_guest_test.link_group_revision')::bigint,
+    '{}'::jsonb
+  );
+  raise exception 'A second account unexpectedly claimed a one-use link';
+exception when others then
+  if sqlerrm = 'A second account unexpectedly claimed a one-use link' then raise; end if;
+  if sqlerrm not like '%revision is newer%' and sqlerrm not like '%ya estaba decidida%' then raise; end if;
+end;
+$$;
+reset role;
+
+select payload_revision,
+       (select player_id from public.pachanga_match_guest_access
+        where id = current_setting('match_guest_test.accepted_link_access_id')::uuid) as guest_player_id
+from public.pachanga_groups
+where id = '82000000-0000-0000-0000-000000000001'
+\gset accepted_link_group_
+select set_config(
+  'match_guest_test.accepted_link_group_revision',
+  :'accepted_link_group_payload_revision',
+  false
+);
+select set_config(
+  'match_guest_test.accepted_link_guest_player_id',
+  :'accepted_link_group_guest_player_id',
+  false
+);
+
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '81000000-0000-0000-0000-000000000005', true);
+do $$
+begin
+  perform public.patch_pachanga_match_player_paid_authoritative_v2(
+    '82000000-0000-0000-0000-000000000001',
+    'guest-match-1',
+    current_setting('match_guest_test.accepted_link_guest_player_id'),
+    true,
+    '85000000-0000-0000-0000-000000000019',
+    current_setting('match_guest_test.accepted_link_group_revision')::bigint,
+    '{}'::jsonb
+  );
+  raise exception 'A match-only guest unexpectedly modified payment state';
+exception when others then
+  if sqlerrm = 'A match-only guest unexpectedly modified payment state' then raise; end if;
+  if sqlerrm <> 'Solo los miembros del grupo pueden modificar este dato' then raise; end if;
+end;
+$$;
+reset role;
 
 rollback;
