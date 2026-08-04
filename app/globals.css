@@ -2279,6 +2279,37 @@ h1 {
   white-space: nowrap;
 }
 
+.settings-reward-demo-button {
+  min-height: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  grid-column: 1 / -1;
+  border: 1px solid #789b2e;
+  border-radius: 8px;
+  background: #24341d;
+  color: #f1f7ed;
+  padding: 9px 13px;
+  text-align: left;
+}
+
+.settings-reward-demo-button span {
+  font-weight: 900;
+}
+
+.settings-reward-demo-button small {
+  color: #c8d8c0;
+  font-weight: 750;
+}
+
+.settings-reward-demo-button:hover,
+.settings-reward-demo-button:focus-visible {
+  border-color: #b7f452;
+  outline: 2px solid rgba(82, 157, 255, 0.78);
+  outline-offset: 1px;
+}
+
 .settings-actions {
   display: grid;
   gap: 10px;
