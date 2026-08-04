@@ -109,7 +109,12 @@ test("builds the user manual as its own page", async () => {
 });
 
 test("builds the transfer market as a separated page", async () => {
-  const html = await readFile(new URL("../.next/server/app/mercado.html", import.meta.url), "utf8");
+  const [html, source, page, css] = await Promise.all([
+    readFile(new URL("../.next/server/app/mercado.html", import.meta.url), "utf8"),
+    readFile(new URL("../app/mercado/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
+  ]);
   assert.match(html, /<h1>Mercado<\/h1>/);
   assert.match(html, /Filtros del mercado/);
   assert.doesNotMatch(html, /Jugadores disponibles por zona y horario/);
@@ -126,6 +131,21 @@ test("builds the transfer market as a separated page", async () => {
   assert.match(html, /Solo admins invitan/);
   assert.match(html, /Invitado puntual/);
   assert.doesNotMatch(html, /\/brand\/pachangas-logo-wide\.png/);
+  assert.match(source, /className="market-manager-subnav"/);
+  assert.match(source, /Jugadores/);
+  assert.match(source, /Partidos/);
+  assert.match(source, /Retos/);
+  assert.match(source, /Equipos/);
+  assert.match(source, /canInvite && marketContext\?\.matchUrl/);
+  assert.match(source, /Configurar partido/);
+  assert.match(source, /marketAdminMatchUrl\(marketContext\.matchUrl\)/);
+  assert.match(source, /mobile=partido&pane=admin/);
+  assert.match(page, /requestedMatchPane === "admin"/);
+  assert.match(page, /setActiveMatchManagerPane\("admin"\)/);
+  assert.match(page, /window\.location\.assign\(canUseAdminControls && matchConfigured \? marketScoutUrl\("jugadores"\) : "\/mercado"\)/);
+  assert.match(css, /\.market-page \.market-manager-subnav/);
+  assert.match(css, /grid-template-columns: var\(--game-side-nav-width\) minmax\(0, 1fr\)/);
+  assert.match(css, /\.market-page \.market-tabs\s*\{\s*display: none/);
 });
 
 test("keeps portrait mobile views compact and readable", async () => {
@@ -357,7 +377,7 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /Lesionados/);
   assert.match(page, /function openRankingPanel/);
   assert.match(page, /function openMarketConfiguration/);
-  assert.match(page, /if \(tabId === "mercado"\) \{\s*if \(canUseAdminControls\) return;/);
+  assert.match(page, /if \(tabId === "mercado"\) \{\s*window\.location\.assign\(canUseAdminControls && matchConfigured \? marketScoutUrl\("jugadores"\) : "\/mercado"\);/);
   assert.match(page, /if \(requestedTab === "perfil"\) \{[\s\S]*setProfilePane\("ficha"\);[\s\S]*setSelectedPlayerId\(ownPlayer\?\.id \?\? selectedPlayerId \?\? players\[0\]\?\.id \?\? ""\)/);
   assert.match(page, /\/api\/ratings\/assessment/);
   assert.match(page, /record_pachanga_individual_rating_authoritative_v2/);
@@ -733,7 +753,8 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(globalsCss, /main\[data-mobile-tab="equipo"\] \.ranking-player-entry\s*\{[\s\S]*grid-template-columns:\s*minmax\(0,\s*1fr\)[\s\S]*scroll-snap-align:\s*start/);
   assert.match(globalsCss, /main\[data-mobile-tab="equipo"\] \.ranking-player-stats\s*\{\s*display:\s*none/);
   assert.match(globalsCss, /main\[data-mobile-tab="perfil"\] \.player-profile\s*\{[\s\S]*grid-template-columns:\s*minmax\(116px,\s*0\.44fr\)/);
-  assert.match(globalsCss, /\.market-page\s*\{[\s\S]*grid-template-rows:\s*auto auto auto minmax\(0,\s*1fr\)/);
+  assert.match(globalsCss, /\.market-page\s*\{[\s\S]*grid-template-columns:\s*var\(--game-side-nav-width\) minmax\(0,\s*1fr\)/);
+  assert.match(globalsCss, /\.market-page \.market-manager-content\s*\{[\s\S]*display:\s*flex[\s\S]*overflow:\s*hidden/);
   assert.match(globalsCss, /\.team-photo-card/);
   assert.match(globalsCss, /\.history-item\.has-photo/);
   assert.match(globalsCss, /\.google-signin-button/);
