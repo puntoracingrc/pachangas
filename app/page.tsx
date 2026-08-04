@@ -10504,6 +10504,13 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
                 </dl>
               </details>
             ) : null}
+            {playerProfileMode === "edit" && selectedPlayerIsOwn ? (
+              <a className="profile-notifications-link" href="/perfil/avisos">
+                <span>Avisos y notificaciones</span>
+                <small>Preferencias por categoría y canal</small>
+                <b aria-hidden="true">›</b>
+              </a>
+            ) : null}
             {!ownPlayer && selectedPlayer && !selectedPlayer.ownerUserId && hasRealTeam && isRegisteredUser ? (
               <div className="profile-claim">
                 <span>¿Esta ficha eres tú?</span>
@@ -10974,6 +10981,9 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
                 >
                   <span>Mi ficha</span><small>Datos, posición, forma y valoraciones</small><b aria-hidden="true">›</b>
                 </button>
+                <a href="/perfil/avisos">
+                  <span>Avisos y notificaciones</span><small>Elige categorías y canales</small><b aria-hidden="true">›</b>
+                </a>
                 <button type="button" onClick={() => runMobileAccountAction(openTeamGallery)} disabled={!hasRealTeam}>
                   <span>Equipo</span><small>Ranking del grupo con filtros</small><b aria-hidden="true">›</b>
                 </button>

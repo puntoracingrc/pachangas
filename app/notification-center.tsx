@@ -22,18 +22,37 @@ type NotificationContext = {
   reviewStatus?: string;
 };
 
+type NotificationCategory = "achievement" | "challenge" | "group" | "market" | "match" | "security";
+
+const notificationCategoryLabels: Record<NotificationCategory, string> = {
+  achievement: "Logros",
+  challenge: "Retos",
+  group: "Grupo",
+  market: "Mercado",
+  match: "Partidos",
+  security: "Seguridad",
+};
+
 type UserNotification = {
   actionUrl?: string;
   body: string;
+  category: NotificationCategory;
   context: NotificationContext;
   createdAt: string;
   id: string;
   kind: string;
+  mandatoryInApp: boolean;
+  priority: "critical" | "high" | "normal";
   readAt?: string;
   revision: number;
   serverSequence: number;
   title: string;
 };
+
+function notificationCategory(value: unknown): NotificationCategory {
+  return value === "achievement" || value === "challenge" || value === "market"
+    || value === "match" || value === "security" ? value : "group";
+}
 
 function notificationMetadata() {
   return {
@@ -51,10 +70,13 @@ function normalizeNotifications(value: unknown): UserNotification[] {
     return [{
       actionUrl: typeof row.actionUrl === "string" ? row.actionUrl : undefined,
       body: typeof row.body === "string" ? row.body : "",
+      category: notificationCategory(row.category),
       context: row.context && typeof row.context === "object" ? row.context as NotificationContext : {},
       createdAt: typeof row.createdAt === "string" ? row.createdAt : "",
       id: row.id,
       kind: typeof row.kind === "string" ? row.kind : "general",
+      mandatoryInApp: Boolean(row.mandatoryInApp),
+      priority: row.priority === "critical" || row.priority === "high" ? row.priority : "normal",
       readAt: typeof row.readAt === "string" ? row.readAt : undefined,
       revision: Math.max(1, Math.floor(Number(row.revision) || 1)),
       serverSequence: Math.max(0, Math.floor(Number(row.serverSequence) || 0)),
@@ -69,7 +91,14 @@ export function NotificationCenter() {
   const [authenticated, setAuthenticated] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [message, setMessage] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<"all" | NotificationCategory>("all");
   const unreadCount = useMemo(() => notifications.filter((item) => !item.readAt).length, [notifications]);
+  const visibleCategories = useMemo(() => (
+    Object.keys(notificationCategoryLabels) as NotificationCategory[]
+  ).filter((category) => notifications.some((item) => item.category === category)), [notifications]);
+  const filteredNotifications = useMemo(() => selectedCategory === "all"
+    ? notifications
+    : notifications.filter((item) => item.category === selectedCategory), [notifications, selectedCategory]);
 
   async function loadNotifications() {
     if (!supabase) return;
@@ -220,18 +249,35 @@ export function NotificationCenter() {
         <section className="notification-panel" id="notification-panel" aria-label="Centro de avisos">
           <header>
             <strong>Notificaciones</strong>
-            <button type="button" onClick={() => setOpen(false)} aria-label="Cerrar notificaciones">×</button>
+            <div>
+              <Link href="/perfil/avisos">Configurar</Link>
+              <button type="button" onClick={() => setOpen(false)} aria-label="Cerrar notificaciones">×</button>
+            </div>
           </header>
           {message ? <p className="notification-message" role="status">{message}</p> : null}
+          {visibleCategories.length ? (
+            <div className="notification-filters" aria-label="Filtrar notificaciones">
+              <button className={selectedCategory === "all" ? "active" : ""} type="button" onClick={() => setSelectedCategory("all")}>Todas</button>
+              {visibleCategories.map((category) => (
+                <button className={selectedCategory === category ? "active" : ""} type="button" key={category} onClick={() => setSelectedCategory(category)}>
+                  {notificationCategoryLabels[category]}
+                </button>
+              ))}
+            </div>
+          ) : null}
           <div className="notification-list">
-            {notifications.map((notification) => {
+            {filteredNotifications.map((notification) => {
               const invitationPending = notification.context.invitationStatus === "pending";
               const requestPending = notification.context.requestStatus === "pending"
                 && Boolean(notification.context.requestGroupId);
               const reviewPending = notification.context.reviewStatus === "pending";
               return (
-                <article className={notification.readAt ? "read" : "unread"} key={notification.id}>
+                <article className={notification.readAt ? "read" : "unread"} data-priority={notification.priority} key={notification.id}>
                   <div>
+                    <span className="notification-category">
+                      {notificationCategoryLabels[notification.category]}
+                      {notification.mandatoryInApp ? <small>Obligatorio</small> : null}
+                    </span>
                     <strong>{notification.title}</strong>
                     <p>{notification.body}</p>
                   </div>
@@ -254,7 +300,11 @@ export function NotificationCenter() {
                         <button className="secondary" type="button" disabled={busyId === notification.id} onClick={() => void reviewWithdrawal(notification, "dismissed")}>Descartar</button>
                       </>
                     ) : null}
-                    {notification.actionUrl ? <Link href={notification.actionUrl}>Ver partido</Link> : null}
+                    {notification.actionUrl ? (
+                      <Link href={notification.actionUrl} onClick={() => void markRead(notification)}>
+                        {notification.category === "achievement" ? "Descubrir" : notification.category === "challenge" ? "Ver reto" : "Abrir"}
+                      </Link>
+                    ) : null}
                     {!notification.readAt ? (
                       <button className="text-action" type="button" disabled={busyId === notification.id} onClick={() => void markRead(notification)}>Marcar leída</button>
                     ) : null}
@@ -262,7 +312,7 @@ export function NotificationCenter() {
                 </article>
               );
             })}
-            {notifications.length === 0 ? <p className="notification-empty">No tienes avisos pendientes.</p> : null}
+            {filteredNotifications.length === 0 ? <p className="notification-empty">No hay avisos en esta categoría.</p> : null}
           </div>
         </section>
       ) : null}
