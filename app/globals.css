@@ -9009,6 +9009,19 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
   grid-template-columns: minmax(0, 1fr) auto;
 }
 
+.market-context-summary {
+  display: flex;
+  gap: 6px;
+  min-height: 42px;
+}
+
+.market-context-summary strong,
+.market-context-summary span {
+  font-size: 13px;
+  line-height: 1.2;
+  text-transform: none;
+}
+
 .market-context-panel div {
   display: grid;
   gap: 5px;
@@ -14414,8 +14427,8 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
 
   .market-page {
     background:
-      linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px) 0 0 / 48px 100%,
-      linear-gradient(135deg, #071116 0%, #11231d 52%, #171224 100%) !important;
+      linear-gradient(90deg, rgba(255, 255, 255, 0.045) 1px, transparent 1px) 0 0 / 48px 100%,
+      linear-gradient(135deg, #071923 0%, #145038 48%, #202847 100%) !important;
     color: #f5f2e8;
     display: grid;
     gap: 8px;
@@ -14492,12 +14505,21 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
   }
 
   .market-page .market-titlebar,
+  .market-page .market-panel,
   .market-page .market-filters,
   .market-page .market-tabs,
   .market-page .market-player,
   .market-page .market-open-match,
+  .market-page .open-match-side,
+  .market-page .team-challenges-toolbar,
+  .market-page .challenge-card,
+  .market-page .challengeable-teams-toolbar,
+  .market-page .challengeable-team-card,
   .market-page .market-context-panel {
-    background: rgba(18, 29, 24, 0.94);
+    background:
+      linear-gradient(145deg, rgba(255, 255, 255, 0.035), transparent 42%),
+      rgba(16, 29, 24, 0.8);
+    backdrop-filter: blur(14px) saturate(1.05);
     border-color: rgba(255, 255, 255, 0.12);
     color: #f5f2e8;
   }
@@ -14506,12 +14528,6 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
     margin: 0;
     min-height: 36px;
     padding: 7px 9px;
-  }
-
-  .market-page .market-titlebar > div {
-    align-items: center;
-    display: flex;
-    gap: 8px;
   }
 
   .market-page .market-titlebar h1 {
@@ -14527,6 +14543,19 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
     gap: 7px;
     grid-template-columns: minmax(160px, 1.2fr) repeat(3, minmax(98px, 0.6fr));
     padding: 8px;
+  }
+
+  .market-page .market-context-summary {
+    flex: 0 0 auto;
+    gap: 5px;
+    min-height: 32px;
+    padding: 6px 9px;
+  }
+
+  .market-page .market-context-summary strong,
+  .market-page .market-context-summary span {
+    font-size: 10px;
+    white-space: nowrap;
   }
 
   .market-page .market-filters label {
@@ -15323,7 +15352,10 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
   .market-page .challengeable-profile-editor,
   .market-page .challengeable-search-panel,
   .market-page .challengeable-team-card {
-    background: rgba(18, 29, 24, 0.94);
+    background:
+      linear-gradient(145deg, rgba(255, 255, 255, 0.035), transparent 42%),
+      rgba(16, 29, 24, 0.8);
+    backdrop-filter: blur(14px) saturate(1.05);
     border-color: rgba(255, 255, 255, 0.12);
     color: #f5f2e8;
   }
@@ -15514,8 +15546,12 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
   .market-page .market-tabs,
   .market-page .market-player,
   .market-page .market-open-match,
+  .market-page .open-match-side,
   .market-page .market-context-panel {
-    background: rgba(15, 32, 26, 0.94) !important;
+    background:
+      linear-gradient(145deg, rgba(255, 255, 255, 0.035), transparent 42%),
+      rgba(16, 29, 24, 0.8) !important;
+    backdrop-filter: blur(14px) saturate(1.05);
     border-color: rgba(167, 184, 175, 0.26) !important;
     color: #f5f2e8 !important;
   }
@@ -15823,10 +15859,6 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
     gap: 6px;
   }
 
-  .market-page .market-titlebar > div {
-    gap: 4px;
-  }
-
   .market-page .market-titlebar h1 {
     font-size: 30px;
   }
@@ -15835,18 +15867,28 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
     font-size: 13px;
   }
 
-  .market-page .market-filters,
-  .market-page .market-context-panel {
+  .market-page .market-filters {
     gap: 7px;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     padding: 9px;
   }
 
   .market-page .market-filters > :first-child,
-  .market-page .market-filters > :last-child,
-  .market-page .market-context-panel > :first-child,
-  .market-page .market-context-panel > :last-child {
+  .market-page .market-filters > :last-child {
     grid-column: 1 / -1;
+  }
+
+  .market-page .market-context-summary {
+    display: flex;
+    flex-wrap: nowrap;
+    min-height: 40px;
+    padding: 9px;
+  }
+
+  .market-page .market-context-summary strong,
+  .market-page .market-context-summary span {
+    font-size: 12px;
+    white-space: nowrap;
   }
 
   .market-page .market-tabs {
