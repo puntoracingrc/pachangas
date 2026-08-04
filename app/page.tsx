@@ -525,6 +525,13 @@ type IncomingSharedLink = {
   teamCode: string | null;
 };
 
+export type HomeEntryRoute = {
+  adminInviteToken?: string;
+  inviteToken?: string;
+  matchId?: string;
+  teamCode?: string;
+};
+
 type RemotePayloadCommit = {
   billing_interval?: BillingInterval | null;
   billing_status?: BillingStatus | string | null;
@@ -1251,7 +1258,7 @@ function expandCompactUuid(value: string | null) {
 function incomingSharedLinkFromSearch(search: string): IncomingSharedLink {
   const params = new URLSearchParams(search);
   const hasAdminInvite = Boolean(params.get("a") || params.get("admin"));
-  const hasInvite = Boolean(params.get("i") || params.get("invite") || params.get("grupo") || params.get("equipo"));
+  const hasInvite = Boolean(params.get("i") || params.get("invite"));
   const hasMatch = Boolean(params.get("p") || params.get("partido"));
 
   return {
@@ -3368,7 +3375,17 @@ async function exitGameFullscreen() {
   }
 }
 
-export default function Home() {
+export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {}) {
+  function currentEntrySearch() {
+    if (!entryRoute) return typeof window === "undefined" ? "" : window.location.search;
+
+    const params = new URLSearchParams();
+    if (entryRoute.teamCode) params.set("equipo", entryRoute.teamCode);
+    if (entryRoute.matchId) params.set("p", entryRoute.matchId);
+    if (entryRoute.inviteToken) params.set("i", entryRoute.inviteToken);
+    if (entryRoute.adminInviteToken) params.set("a", entryRoute.adminInviteToken);
+    return `?${params.toString()}`;
+  }
   const [players, setPlayers] = useState<Player[]>(seedPlayers);
   const [venues, setVenues] = useState<Venue[]>(seedVenues);
   const [matches, setMatches] = useState<Match[]>(seedMatches);
@@ -3422,6 +3439,7 @@ export default function Home() {
   const [remoteReady, setRemoteReady] = useState(false);
   const [syncStatus, setSyncStatus] = useState<"connecting" | "error" | "live" | "local">("local");
   const [syncError, setSyncError] = useState("");
+  const [sharedMatchAccessDenied, setSharedMatchAccessDenied] = useState(false);
   const [remoteTeams, setRemoteTeams] = useState<RemoteTeam[]>([]);
   const [teamMembers, setTeamMembers] = useState<RemoteMember[]>([]);
   const [currentRole, setCurrentRole] = useState<MemberRole | null>(null);
@@ -3452,13 +3470,12 @@ export default function Home() {
   const [openMatchRequests, setOpenMatchRequests] = useState<PublicMatchRequest[]>([]);
   const [openMatchRequestMessage, setOpenMatchRequestMessage] = useState("");
   const [localHydrated, setLocalHydrated] = useState(false);
-  const [incomingSharedLink, setIncomingSharedLink] = useState<IncomingSharedLink>({
-    hasAdminInvite: false,
-    hasInvite: false,
-    hasMatch: false,
-    teamCode: null,
-  });
-  const hasIncomingSharedLink = incomingSharedLink.hasInvite || incomingSharedLink.hasAdminInvite || incomingSharedLink.hasMatch;
+  const [incomingSharedLink, setIncomingSharedLink] = useState<IncomingSharedLink>(() => (
+    entryRoute
+      ? incomingSharedLinkFromSearch(currentEntrySearch())
+      : { hasAdminInvite: false, hasInvite: false, hasMatch: false, teamCode: null }
+  ));
+  const hasIncomingSharedLink = incomingSharedLink.hasInvite || incomingSharedLink.hasAdminInvite || incomingSharedLink.hasMatch || Boolean(incomingSharedLink.teamCode);
   const isDemoMode = previewDemoMode || (!hasIncomingSharedLink && !remoteReady && remoteTeams.length === 0);
   const applyingRemoteRef = useRef(false);
   const payloadRef = useRef<AppPayload | null>(null);
@@ -3920,7 +3937,6 @@ export default function Home() {
   function prettyTeamParams(team: RemoteTeam, extra?: Record<string, string | undefined>) {
     const params = new URLSearchParams();
     params.set("equipo", team.teamCode);
-    params.set("i", compactUuid(team.inviteToken));
     Object.entries(extra ?? {}).forEach(([key, value]) => {
       if (value) params.set(key, value);
     });
@@ -3931,13 +3947,28 @@ export default function Home() {
     client: NonNullable<typeof supabase>,
     preferredGroupId?: string | null,
     preferredTeamCode?: string | null,
-    options?: { previewOnly?: boolean },
+    options?: { previewOnly?: boolean; sharedMatchAccess?: boolean },
   ) {
+    const session = await client.auth.getSession();
+    const memberUserId = session.data.session?.user?.id;
+    if (!memberUserId) {
+      setRemoteTeams([]);
+      setRemoteGroupId(null);
+      setRemoteInviteToken(null);
+      setRemoteRevision(null);
+      setCurrentRole(null);
+      setTeamMembers([]);
+      setRemoteReady(false);
+      setSyncStatus("local");
+      return;
+    }
+
     const memberships = await client
       .from("pachanga_group_members")
       .select(
         "group_id, role, pachanga_groups(id, name, owner_id, team_code, invite_token, payload, payload_revision, ratings_enabled, billing_status, billing_trial_finalized_matches, stripe_customer_id, stripe_subscription_id, stripe_price_id, stripe_current_period_end, billing_interval)",
       )
+      .eq("user_id", memberUserId)
       .order("created_at", { ascending: true });
 
     if (memberships.error) throw new Error(memberships.error.message);
@@ -3948,6 +3979,11 @@ export default function Home() {
           ? membership.pachanga_groups[0]
           : membership.pachanga_groups;
         if (!group) return null;
+
+        const rawRole = membership.role as MemberRole | null;
+        const confirmedRole: MemberRole = rawRole === "owner"
+          ? (String(group.owner_id ?? "") === memberUserId ? "owner" : "player")
+          : rawRole === "admin" ? "admin" : "player";
 
         return {
           billingInterval: normalizeBillingInterval(group.billing_interval),
@@ -3960,7 +3996,7 @@ export default function Home() {
           payload: normalizePayload(group.payload as Partial<AppPayload>),
           payloadRevision: Number(group.payload_revision ?? 0),
           ratingsEnabled: group.ratings_enabled !== false,
-          role: (membership.role as MemberRole | null) ?? "player",
+          role: confirmedRole,
           stripeCustomerId: group.stripe_customer_id ? String(group.stripe_customer_id) : null,
           stripeCurrentPeriodEnd: group.stripe_current_period_end ? String(group.stripe_current_period_end) : null,
           stripePriceId: group.stripe_price_id ? String(group.stripe_price_id) : null,
@@ -3972,10 +4008,25 @@ export default function Home() {
 
     setRemoteTeams(teams);
 
-    const selectedTeam =
+    const requestedTeam =
       teams.find((team) => team.id === preferredGroupId) ??
-      teams.find((team) => team.teamCode === preferredTeamCode?.toUpperCase()) ??
-      teams[0];
+      teams.find((team) => team.teamCode === preferredTeamCode?.toUpperCase());
+    if ((preferredGroupId || preferredTeamCode) && !requestedTeam) {
+      setRemoteGroupId(null);
+      setRemoteInviteToken(null);
+      setRemoteRevision(null);
+      setCurrentRole(null);
+      setTeamMembers([]);
+      setRemoteReady(false);
+      setSharedMatchAccessDenied(Boolean(options?.sharedMatchAccess));
+      setSyncStatus("error");
+      setSyncError(options?.sharedMatchAccess
+        ? "No puedes ver este partido porque no perteneces al grupo."
+        : "No tienes acceso a este grupo.");
+      return;
+    }
+
+    const selectedTeam = requestedTeam ?? teams[0];
     if (!selectedTeam) {
       setRemoteGroupId(null);
       setRemoteInviteToken(null);
@@ -3986,6 +4037,8 @@ export default function Home() {
       setSyncStatus("local");
       return;
     }
+
+    setSharedMatchAccessDenied(false);
 
     if (options?.previewOnly) {
       setRemoteGroupId(selectedTeam.id);
@@ -4006,7 +4059,7 @@ export default function Home() {
     setCurrentRole(selectedTeam.role);
     setAdminInviteToken(null);
     applyPayload(selectedTeam.payload, selectedTeam.payloadRevision);
-    const currentParams = new URLSearchParams(window.location.search);
+    const currentParams = new URLSearchParams(currentEntrySearch());
     const sharedMatchId = expandCompactUuid(currentParams.get("p") ?? currentParams.get("partido"));
     if (sharedMatchId && selectedTeam.payload.matches.some((match) => match.id === sharedMatchId)) {
       setActiveMatchId(sharedMatchId);
@@ -4016,8 +4069,12 @@ export default function Home() {
     setSyncError("");
     await loadTeamMembers(client, selectedTeam.id);
 
-    const nextParams = prettyTeamParams(selectedTeam, { p: sharedMatchId ? compactUuid(sharedMatchId) : undefined });
-    window.history.replaceState(null, "", `${window.location.pathname}?${nextParams.toString()}`);
+    if (entryRoute?.teamCode && entryRoute.matchId) {
+      window.history.replaceState(null, "", window.location.pathname);
+    } else {
+      const nextParams = prettyTeamParams(selectedTeam, { p: sharedMatchId ? compactUuid(sharedMatchId) : undefined });
+      window.history.replaceState(null, "", `${window.location.pathname}?${nextParams.toString()}`);
+    }
   }
 
   async function loadTeamBackups(client = supabase, clearMessage = true) {
@@ -4164,7 +4221,7 @@ export default function Home() {
   }
 
   useEffect(() => {
-    setIncomingSharedLink(incomingSharedLinkFromSearch(window.location.search));
+    setIncomingSharedLink(incomingSharedLinkFromSearch(currentEntrySearch()));
     setProfileName(localStorage.getItem(profileNameKey) ?? "");
     const params = new URLSearchParams(window.location.search);
     if (params.get("demo") === "1") {
@@ -4238,13 +4295,16 @@ export default function Home() {
       setSyncError("");
 
       try {
-        const params = new URLSearchParams(window.location.search);
+        const params = new URLSearchParams(currentEntrySearch());
         const inviteToken = previewDemoMode ? null : expandCompactUuid(params.get("i") ?? params.get("invite"));
         const adminInviteToken = previewDemoMode ? null : expandCompactUuid(params.get("a") ?? params.get("admin"));
+        const sharedMatchId = previewDemoMode ? null : expandCompactUuid(params.get("p") ?? params.get("partido"));
         const teamCode = previewDemoMode ? null : params.get("equipo");
         let groupId = previewDemoMode ? null : params.get("grupo");
         const initialUser = await getSignedUser(client);
         const linkNeedsLogin = Boolean(inviteToken || adminInviteToken || teamCode || groupId);
+
+        setSharedMatchAccessDenied(false);
 
         if (linkNeedsLogin && (!initialUser || isAnonymousAuthUser(initialUser))) {
           if (!cancelled) {
@@ -4259,6 +4319,10 @@ export default function Home() {
             setSyncError("");
           }
           return;
+        }
+
+        if (inviteToken && sharedMatchId) {
+          throw new Error("Este enlace antiguo mezclaba una invitación de grupo con un partido. Pide al admin un nuevo enlace de partido seguro.");
         }
 
         if (adminInviteToken) {
@@ -4294,7 +4358,10 @@ export default function Home() {
           }
         }
 
-        await loadTeams(client, groupId, teamCode, { previewOnly: previewDemoMode });
+        await loadTeams(client, groupId, teamCode, {
+          previewOnly: previewDemoMode,
+          sharedMatchAccess: Boolean(sharedMatchId && !inviteToken && !adminInviteToken),
+        });
 
         if (cancelled) return;
       } catch (error) {
@@ -5804,6 +5871,7 @@ export default function Home() {
   const ownerContributionRecipient = ownerContributionPlayer ? playerDisplayName(ownerContributionPlayer) : "owner del grupo";
   const showSubscriptionPanel = Boolean(hasRealTeam && (showBillingPanel || groupBillingLocked || (showSettings && currentRole === "owner")));
   const needsLoginForSharedLink = hasIncomingSharedLink && !isRegisteredUser && !hasRealTeam;
+  const sharedLinkContentBlocked = needsLoginForSharedLink || sharedMatchAccessDenied;
   const canManageTeam = Boolean(hasRealTeam && isRegisteredUser && (currentRole === "owner" || currentRole === "admin"));
   const canManageRoles = hasRealTeam && isRegisteredUser && currentRole === "owner";
   const canUseAdminControls = isDemoMode || canManageTeam;
@@ -7409,10 +7477,7 @@ export default function Home() {
 
   function adminInviteUrl(token: string | null = adminInviteToken) {
     if (!localHydrated || typeof window === "undefined" || !currentTeam || !token) return "";
-    const params = new URLSearchParams();
-    params.set("equipo", currentTeam.teamCode);
-    params.set("a", compactUuid(token));
-    return `${window.location.origin}${window.location.pathname}?${params.toString()}`;
+    return `${window.location.origin}/invitacion/admin/${encodeURIComponent(compactUuid(token))}`;
   }
 
   async function copyTextWithFallback(text: string, fallbackTitle: string) {
@@ -7481,7 +7546,7 @@ export default function Home() {
     const inviteUrl = adminInviteUrl(token);
     if (!inviteUrl) return;
 
-    const copied = await copyTextWithFallback(inviteUrl, "Copia la invitación de admin");
+    const copied = await copyTextWithFallback(inviteUrl, "Copia la invitación como admin (no owner)");
     if (copied) {
       setSyncStatus("live");
       setSyncError("");
@@ -7517,22 +7582,50 @@ export default function Home() {
     const inviteUrl = adminInviteUrl(token);
     const teamName = currentTeam?.name ?? "mi equipo";
     if (!inviteUrl) return;
-    window.open(`https://wa.me/?text=${encodeURIComponent(`Invitación de admin para ${teamName}\n${inviteUrl}`)}`, "_blank", "noopener,noreferrer");
+    window.open(`https://wa.me/?text=${encodeURIComponent(`Invitación como admin (no owner) para ${teamName}\n${inviteUrl}`)}`, "_blank", "noopener,noreferrer");
   }
 
-  function matchUrl() {
-    if (!localHydrated || typeof window === "undefined" || !matchConfigured) return "";
-    const params = currentTeam ? prettyTeamParams(currentTeam) : new URLSearchParams();
-    params.set("p", compactUuid(activeMatch.id));
-    return `${window.location.origin}${window.location.pathname}?${params.toString()}`;
+  async function createMatchInvitationUrl() {
+    if (
+      !supabase ||
+      !remoteGroupId ||
+      !canManageTeam ||
+      !matchConfigured ||
+      matchFinalized ||
+      remotePayloadRevisionRef.current === null ||
+      typeof window === "undefined"
+    ) return "";
+
+    setSyncStatus("connecting");
+    setSyncError("");
+    const result = await supabase.rpc("create_pachanga_match_link_invitation_v1", {
+      client_metadata: clientOperationMetadata(),
+      expected_revision: remotePayloadRevisionRef.current,
+      operation_id: id(),
+      target_group_id: remoteGroupId,
+      target_match_id: activeMatch.id,
+    });
+    if (result.error || !result.data) {
+      setSyncStatus("error");
+      setSyncError(result.error?.message ?? "No se pudo crear la invitación al partido");
+      return "";
+    }
+
+    const response = result.data as { invitation?: { token?: string } };
+    const token = response.invitation?.token;
+    if (!token) {
+      setSyncStatus("error");
+      setSyncError("El servidor no devolvió una invitación válida");
+      return "";
+    }
+
+    setSyncStatus("live");
+    return `${window.location.origin}/invitacion/partido/${encodeURIComponent(compactUuid(token))}`;
   }
 
   function publicMatchUrl(matchId = activeMatch.id) {
     if (!localHydrated || typeof window === "undefined" || !currentTeam) return "";
-    const params = new URLSearchParams();
-    params.set("equipo", currentTeam.teamCode);
-    params.set("p", compactUuid(matchId));
-    return `${window.location.origin}${window.location.pathname}?${params.toString()}`;
+    return `${window.location.origin}/partido/${encodeURIComponent(currentTeam.teamCode)}/${encodeURIComponent(compactUuid(matchId))}`;
   }
 
   function marketScoutUrl(tab: "jugadores" | "partidos" = "jugadores") {
@@ -7571,8 +7664,7 @@ export default function Home() {
 
   function currentTeamInviteUrl() {
     if (!localHydrated || typeof window === "undefined" || !currentTeam) return "";
-    const params = prettyTeamParams(currentTeam);
-    return `${window.location.origin}${window.location.pathname}?${params.toString()}`;
+    return `${window.location.origin}/invitacion/grupo/${encodeURIComponent(compactUuid(currentTeam.inviteToken))}`;
   }
 
   async function copyTeamInvite() {
@@ -7597,7 +7689,7 @@ export default function Home() {
     window.open(`https://wa.me/?text=${encodeURIComponent(`Únete a ${teamName}\n${inviteUrl}`)}`, "_blank", "noopener,noreferrer");
   }
 
-  function shareText() {
+  function shareText(invitationUrl: string) {
     const date = new Date(activeMatch.date).toLocaleString("es-ES", {
       weekday: "long",
       day: "2-digit",
@@ -7610,31 +7702,49 @@ export default function Home() {
       "Nuevo partido",
       `${date}`,
       `${activeMatch.place}`,
-      matchUrl(),
+      invitationUrl,
     ]
       .filter(Boolean)
       .join("\n");
   }
 
-  function shareWhatsApp() {
-    window.open(`https://wa.me/?text=${encodeURIComponent(shareText())}`, "_blank", "noopener,noreferrer");
+  function shareSharedMatchWhatsApp() {
+    const sharedUrl = publicMatchUrl();
+    if (!sharedUrl) return;
+    window.open(`https://wa.me/?text=${encodeURIComponent(shareText(sharedUrl))}`, "_blank", "noopener,noreferrer");
   }
 
-  const matchShareBox = !matchFinalized ? (
-    <div className="share-box">
-      <span>Compartir</span>
-      <div className="share-actions">
-        <button className="copy-invite-button" type="button" onClick={() => void copyMatchLink()} disabled={!matchUrl()} title="Copiar link del partido" aria-label="Copiar link del partido">
-          Copiar link
-        </button>
-        <button className="whatsapp-icon-button" type="button" onClick={shareWhatsApp} disabled={!matchUrl()} title="Enviar partido por WhatsApp" aria-label="Enviar partido por WhatsApp">
-          <WhatsAppLogo />
-        </button>
+  async function shareMatchInvitationWhatsApp() {
+    const invitationUrl = await createMatchInvitationUrl();
+    if (!invitationUrl) return;
+    window.open(`https://wa.me/?text=${encodeURIComponent(shareText(invitationUrl))}`, "_blank", "noopener,noreferrer");
+  }
+
+  const matchShareBox = !matchFinalized && hasRealTeam ? (
+    <div className="match-share-options">
+      <div className="share-box">
+        <span>Compartir partido</span>
+        <div className="share-actions">
+          <button className="copy-invite-button" type="button" onClick={() => void copySharedMatchLink()} disabled={!matchConfigured} title="Copiar enlace para miembros del grupo" aria-label="Copiar enlace del partido para miembros del grupo">
+            Copiar link
+          </button>
+          <button className="whatsapp-icon-button" type="button" onClick={shareSharedMatchWhatsApp} disabled={!matchConfigured} title="Compartir el partido con miembros del grupo" aria-label="Compartir el partido con miembros del grupo por WhatsApp">
+            <WhatsAppLogo />
+          </button>
+        </div>
       </div>
-      {syncStatus !== "local" ? (
-        <small className={`sync-status sync-${syncStatus}`}>
-          {!matchConfigured ? "Guarda el partido para compartirlo" : syncStatus === "live" ? "Sincronizado" : syncStatus === "connecting" ? "Conectando..." : `Sin sync: ${syncError}`}
-        </small>
+      {canManageTeam ? (
+        <div className="share-box invitation-share-box">
+          <span>Invitar al partido</span>
+          <div className="share-actions">
+            <button className="copy-invite-button" type="button" onClick={() => void copyMatchInvitationLink()} disabled={!matchConfigured || syncStatus === "connecting"} title="Crear acceso limitado y copiar la invitación" aria-label="Crear y copiar invitación limitada al partido">
+              Crear link
+            </button>
+            <button className="whatsapp-icon-button" type="button" onClick={() => void shareMatchInvitationWhatsApp()} disabled={!matchConfigured || syncStatus === "connecting"} title="Crear acceso limitado y enviarlo por WhatsApp" aria-label="Crear invitación limitada al partido y enviar por WhatsApp">
+              <WhatsAppLogo />
+            </button>
+          </div>
+        </div>
       ) : null}
     </div>
   ) : null;
@@ -7700,11 +7810,22 @@ export default function Home() {
     event.stopPropagation();
   }
 
-  async function copyMatchLink() {
-    const url = matchUrl();
+  async function copySharedMatchLink() {
+    const url = publicMatchUrl();
     if (!url) return;
 
     const copied = await copyTextWithFallback(url, "Copia el enlace del partido");
+    if (!copied) {
+      setSyncStatus("error");
+      setSyncError("No se pudo copiar el partido");
+    }
+  }
+
+  async function copyMatchInvitationLink() {
+    const url = await createMatchInvitationUrl();
+    if (!url) return;
+
+    const copied = await copyTextWithFallback(url, "Copia la invitación al partido");
     if (copied) {
       setSyncStatus("live");
       setSyncError("");
@@ -7712,7 +7833,7 @@ export default function Home() {
     }
 
     setSyncStatus("error");
-    setSyncError("No se pudo copiar el partido");
+    setSyncError("No se pudo copiar la invitación al partido");
   }
 
   async function copyPlayerPhotoPrompt() {
@@ -8920,15 +9041,28 @@ export default function Home() {
             <span>{incomingSharedLink.hasMatch ? "Partido compartido" : "Invitación recibida"}</span>
             <strong>
               {incomingSharedLink.hasMatch
-                ? "Para apuntarte necesitas identificarte."
+                ? "Inicia sesión para comprobar si perteneces al grupo."
                 : "Para entrar al grupo necesitas identificarte."}
             </strong>
             <p>
-              Guardamos este enlace mientras haces login. Al volver, la web abrirá el grupo
-              {incomingSharedLink.hasMatch ? " y este partido concreto" : ""}.
+              Guardamos este enlace mientras haces login.
+              {incomingSharedLink.hasMatch
+                ? " Al volver, el partido solo se abrirá si ya eres miembro del grupo."
+                : " Al volver podrás decidir si aceptas la invitación."}
             </p>
           </div>
           <GoogleSignInButton label={googleButtonText} onClick={() => void signInWithGoogle()} disabled={!supabase || !googleClientId} />
+        </section>
+      ) : null}
+
+      {sharedMatchAccessDenied ? (
+        <section className="top-panel shared-link-gate shared-link-denied" role="alert">
+          <div>
+            <span>Partido privado</span>
+            <strong>No puedes ver este partido porque no perteneces al grupo.</strong>
+            <p>El enlace compartido no concede acceso. Un admin puede invitarte al partido o al grupo mediante una invitación distinta.</p>
+          </div>
+          <button className="secondary-button" type="button" onClick={() => window.location.assign("/")}>Volver</button>
         </section>
       ) : null}
 
@@ -9373,15 +9507,15 @@ export default function Home() {
                 ))}
               </div>
               <div className="admin-invite-row settings-admin-invite-row">
-                <span>Invitar admin</span>
+                <span>Invitar como admin (no owner)</span>
                 <div>
                   <button type="button" onClick={() => void createAdminInvite()} disabled={!remoteGroupId}>
                     Crear link
                   </button>
-                  <button className="copy-icon-button" type="button" onClick={() => void copyAdminInvite()} disabled={!remoteGroupId} title="Copiar invitación de admin" aria-label="Copiar invitación de admin">
+                  <button className="copy-icon-button" type="button" onClick={() => void copyAdminInvite()} disabled={!remoteGroupId} title="Copiar invitación como admin, sin permisos de owner" aria-label="Copiar invitación como admin, sin permisos de owner">
                     <CopyLogo />
                   </button>
-                  <button className="whatsapp-icon-button" type="button" onClick={() => void shareAdminInviteWhatsApp()} disabled={!remoteGroupId} title="Enviar admin por WhatsApp" aria-label="Enviar admin por WhatsApp">
+                  <button className="whatsapp-icon-button" type="button" onClick={() => void shareAdminInviteWhatsApp()} disabled={!remoteGroupId} title="Enviar invitación como admin por WhatsApp" aria-label="Enviar invitación como admin por WhatsApp">
                     <WhatsAppLogo />
                   </button>
                 </div>
@@ -9441,7 +9575,7 @@ export default function Home() {
         </section>
       ) : null}
 
-      <section className={needsLoginForSharedLink ? "app-shell gated-shell" : "app-shell"} data-match-manager-pane={selectedMatchManagerPane}>
+      <section className={sharedLinkContentBlocked ? "app-shell gated-shell" : "app-shell"} data-match-manager-pane={selectedMatchManagerPane}>
         <nav className="match-manager-subnav" aria-label="Secciones del partido en modo juego">
           {matchManagerPanes.map((pane) => (
             <button
@@ -10300,7 +10434,7 @@ export default function Home() {
         </section>
       ) : null}
 
-      <section className={`${selectedPlayer ? "bottom-grid" : "bottom-grid without-profile"} ${needsLoginForSharedLink ? "gated-shell" : ""}`} data-profile-pane={profilePane}>
+      <section className={`${selectedPlayer ? "bottom-grid" : "bottom-grid without-profile"} ${sharedLinkContentBlocked ? "gated-shell" : ""}`} data-profile-pane={profilePane}>
         {selectedPlayer ? (
           <div className={`panel player-profile ${playerProfileMode === "viewer" ? "profile-viewer" : "profile-editor"}`} ref={playerProfileRef}>
             <div className="panel-title">

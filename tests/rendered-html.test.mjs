@@ -14,9 +14,7 @@ test("builds Pachangas IQ HTML", async () => {
   assert.match(html, /Mi equipo/);
   assert.match(html, /Finalizar partido/);
   assert.match(html, /Añadir foto del partido/);
-  assert.match(html, /Compartir/);
   assert.match(html, /Tiempo previsto/);
-  assert.match(html, /Copiar link/);
   assert.match(html, /Próximos partidos/);
   assert.match(html, /Temporada/);
   assert.match(html, /Ordenar por/);
@@ -1291,7 +1289,10 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /const demoMatchWeather: MatchWeather = \{/);
   assert.match(page, /condition:\s*"Sol"/);
   assert.match(page, /if \(isDemoMode\) \{[\s\S]*setMatchWeather\(\{[\s\S]*\.\.\.demoMatchWeather/);
-  assert.match(page, /const matchShareBox = !matchFinalized \? \(/);
+  assert.match(page, /const matchShareBox = !matchFinalized && hasRealTeam \? \(/);
+  assert.match(page, /create_pachanga_match_link_invitation_v1/);
+  assert.match(page, /Compartir partido/);
+  assert.match(page, /Invitar al partido/);
   assert.match(page, /className="match-side-share" aria-label="Compartir partido"[\s\S]*\{matchShareBox\}/);
   assert.match(page, /function WeatherIcon/);
   assert.match(page, /function WeatherMetricIcon/);
