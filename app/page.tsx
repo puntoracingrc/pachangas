@@ -2,6 +2,7 @@
 
 import { type CSSProperties, type Dispatch, type FormEvent, Fragment, type MouseEvent as ReactMouseEvent, type PointerEvent as ReactPointerEvent, type SetStateAction, type WheelEvent as ReactWheelEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { User } from "@supabase/supabase-js";
+import dynamic from "next/dynamic";
 import { attachVenueAutocomplete, type VenuePlace } from "./googlePlacesClient";
 import { GlobalRatingPanel } from "./global-rating-panel";
 import {
@@ -39,6 +40,11 @@ import {
 } from "./rating-system-v2";
 import { supabase } from "./supabaseClient";
 import { ThemeToggle } from "./theme-toggle";
+
+const RewardBoxDemo = dynamic(
+  () => import("./reward-box-demo").then((module) => module.RewardBoxDemo),
+  { ssr: false },
+);
 
 const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
 const googleMapsApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
@@ -3443,6 +3449,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
   const [remoteTeams, setRemoteTeams] = useState<RemoteTeam[]>([]);
   const [teamMembers, setTeamMembers] = useState<RemoteMember[]>([]);
   const [currentRole, setCurrentRole] = useState<MemberRole | null>(null);
+  const [rewardBoxDemoOpen, setRewardBoxDemoOpen] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [authUser, setAuthUser] = useState<User | null>(null);
   const [profileName, setProfileName] = useState("");
@@ -9353,6 +9360,10 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
             </div>
             <small>Admins · permisos solo owner</small>
           </div>
+          <button className="settings-reward-demo-button" type="button" onClick={() => setRewardBoxDemoOpen(true)}>
+            <span>Animación de logro</span>
+            <small>Abrir prueba visual</small>
+          </button>
           <label>
             Instrucciones
             <input value={settingsDraft.subtitle} disabled={!canUseAdminControls} onChange={(event) => setSettingsDraft({ ...settingsDraft, subtitle: event.target.value })} />
@@ -9919,6 +9930,10 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
                     <button className="match-admin-danger-button" type="button" onClick={() => deleteMatch(activeMatch.id)} disabled={!canUseAdminControls}>
                       <span>Borrar partido</span>
                       <small>Eliminar actual</small>
+                    </button>
+                    <button type="button" onClick={() => setRewardBoxDemoOpen(true)} disabled={!canUseAdminControls}>
+                      <span>Animación de logro</span>
+                      <small>Prueba visual</small>
                     </button>
                   </div>
                 </section>
@@ -10989,9 +11004,14 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
                     <b aria-hidden="true">›</b>
                   </button>
                   {canUseAdminControls ? (
-                    <button type="button" onClick={() => runMobileAccountAction(toggleSettingsPanel)}>
-                      <span>Configuración</span><small>Colores, roles, suscripción y copias</small><b aria-hidden="true">›</b>
-                    </button>
+                    <>
+                      <button type="button" onClick={() => runMobileAccountAction(() => setRewardBoxDemoOpen(true))}>
+                        <span>Animación de logro</span><small>Prueba visual de la recompensa</small><b aria-hidden="true">›</b>
+                      </button>
+                      <button type="button" onClick={() => runMobileAccountAction(toggleSettingsPanel)}>
+                        <span>Configuración</span><small>Colores, roles, suscripción y copias</small><b aria-hidden="true">›</b>
+                      </button>
+                    </>
                   ) : null}
                 </div>
               ) : null}
@@ -11024,6 +11044,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
       {!needsLoginForSharedLink ? (
         <MobileAppNav active={activeMobileTab} onNavigate={navigatePrimaryMobile} />
       ) : null}
+      <RewardBoxDemo open={rewardBoxDemoOpen && canUseAdminControls} onClose={() => setRewardBoxDemoOpen(false)} />
     </main>
   );
 }
