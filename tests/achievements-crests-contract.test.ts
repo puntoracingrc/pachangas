@@ -93,6 +93,7 @@ function crestFixture() {
 
 function progressionFixture() {
   return {
+    catalogKey: "achievement_catalog_v2",
     confirmedRevision: 4,
     groupId: "group-a",
     groupRevision: 4,
@@ -101,8 +102,13 @@ function progressionFixture() {
       category: "matches",
       currentValue: 3,
       description: "Participa en cinco partidos internos finalizados.",
+      displayPriority: 15,
+      family: "player.matches",
+      firstAchievedAt: null,
       grantId: null,
+      iconKey: "matches",
       key: "player.internal.matches.005",
+      lastAchievedAt: null,
       occurrenceCount: 0,
       progressPercent: 60,
       rarity: "common",
@@ -110,11 +116,21 @@ function progressionFixture() {
       rewardKey: null,
       rewardKind: "none",
       scope: "internal",
+      shareDescription: "Cinco partidos confirmados.",
+      shareTemplateKey: "player_milestone",
+      shareTitle: "Uno de los nuestros",
       threshold: 5,
       title: "Uno de los nuestros",
       unlocked: false,
     }],
     personalAchievements: [],
+    personalStats: [{
+      appearances: 7, braces: 1, currentUnbeatenStreak: 2, currentWinStreak: 1,
+      distinctOpponents: 3, distinctOpponentsWon: 2, doubleHatTricks: 0,
+      draws: 2, goals: 6, hatTricks: 1, losses: 2, maxUnbeatenStreak: 4,
+      maxWinStreak: 2, pokers: 0, repokers: 0, revision: 4, scope: "all",
+      updatedAt: "2026-08-03T21:00:00.000Z", wins: 3,
+    }],
     rewardEconomy: {
       account: { balance: 15, lifetimeEarned: 15, lifetimeSpent: 0, revision: 2, serverSequence: 20, updatedAt: "2026-08-03T21:00:00.000Z" },
       boxCatalog: [{ animationKey: "reward_box_blue", boxType: "collective.common", catalogVersion: 1, maxPoints: 7, minPoints: 4, name: "Caja común", possibleRewards: [{ kind: "points", weight: 70 }], presentationKey: "box.common", rarity: "common" }],
@@ -145,6 +161,21 @@ function progressionFixture() {
     }],
     serverSequence: 19,
     teamAchievements: [],
+    teamAchievementCatalog: [{
+      animationKey: "reward_box_blue", boxRarity: "common", category: "matches",
+      currentValue: 3, description: "Cinco partidos", displayPriority: 15,
+      family: "team.external.matches", iconKey: "matches",
+      key: "team.external.matches.005", presentationKey: "box.common",
+      rarity: "common", repeatable: false, rewardPoolVersion: 1,
+      scope: "external", threshold: 5, title: "Cinco rivales",
+    }],
+    teamStats: [{
+      bigWins: 1, cleanSheets: 2, closeWins: 1, currentUnbeatenStreak: 2,
+      currentWinStreak: 1, distinctOpponents: 3, distinctOpponentsWon: 2,
+      draws: 1, goalsAgainst: 5, goalsFor: 9, losses: 1, matches: 5,
+      maxUnbeatenStreak: 3, maxWinStreak: 2, revision: 4, scope: "external",
+      updatedAt: "2026-08-03T21:00:00.000Z", wins: 3,
+    }],
     updatedAt: "2026-08-03T21:00:00.000Z",
     userRevision: 2,
   };
@@ -194,6 +225,11 @@ test("derived caches are scoped, finite and never manufacture canonical state", 
   assert.equal(readTeamIdentityCache(storage, "user-a", "group-a", 1_001)?.crest?.crestRevision, 2);
   assert.equal(progression.personalAchievementCatalog[0]?.progressPercent, 60);
   assert.equal(progression.personalAchievementCatalog[0]?.unlocked, false);
+  assert.equal(progression.catalogKey, "achievement_catalog_v2");
+  assert.equal(progression.personalStats[0]?.scope, "all");
+  assert.equal(progression.personalStats[0]?.distinctOpponents, 3);
+  assert.equal(progression.teamStats[0]?.cleanSheets, 2);
+  assert.equal(progression.teamAchievementCatalog[0]?.boxRarity, "common");
   assert.equal(progression.rewardEconomy.account.balance, 15);
   assert.equal(progression.rewardEconomy.inventory[0]?.key, "symbol.ball");
   assert.equal(progression.rewards[0]?.boxType, "collective.uncommon");
