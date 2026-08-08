@@ -79,6 +79,19 @@ function dateLabel(value: string) {
   return new Intl.DateTimeFormat("es-ES", { dateStyle: "medium", timeStyle: "short" }).format(parsed);
 }
 
+function rewardResultLabel(reward: PendingReward) {
+  const payload = reward.rewardPayload;
+  const grant = payload && isRecord(payload.grant) ? payload.grant : null;
+  if (!grant) return "Premio confirmado por el servidor";
+  const points = Math.max(0, Math.floor(Number(grant.pointsGranted) || 0));
+  const cosmeticKey = typeof grant.cosmeticKey === "string" ? grant.cosmeticKey : "";
+  const duplicate = grant.duplicateConverted === true;
+  if (duplicate && cosmeticKey) return `${cosmeticKey} repetido · convertido en ${points} puntos`;
+  if (cosmeticKey && points) return `${cosmeticKey} + ${points} puntos`;
+  if (cosmeticKey) return cosmeticKey;
+  return `${points} puntos`;
+}
+
 function symbolLabel(key: string | null) {
   if (key === "symbol.ball") return "⚽";
   if (key === "symbol.lightning") return "ϟ";
@@ -438,6 +451,8 @@ export default function TeamIdentityPage() {
   const personalAchievementCatalog = progression?.personalAchievementCatalog ?? [];
   const unlockedPersonalAchievements = personalAchievementCatalog.filter((item) => item.unlocked).length;
   const pendingRewards = progression?.rewards.filter((reward) => reward.status === "pending") ?? [];
+  const openedRewards = progression?.rewards.filter((reward) => reward.status === "opened") ?? [];
+  const rewardEconomy = progression?.rewardEconomy ?? null;
   const currentSequenceReward = rewardSequence[rewardSequenceIndex] ?? null;
 
   return (
@@ -552,6 +567,25 @@ export default function TeamIdentityPage() {
             </section>
           ) : null}
 
+          {rewardEconomy ? (
+            <section className={styles.economyBand}>
+              <header><span>Mi inventario</span><strong>{rewardEconomy.account.balance} puntos</strong></header>
+              <div className={styles.economySummary}>
+                <article><span>Cosméticos</span><strong>{rewardEconomy.inventory.length}</strong></article>
+                <article><span>Cajas abiertas</span><strong>{openedRewards.length}</strong></article>
+                <article><span>Conseguidos</span><strong>{rewardEconomy.account.lifetimeEarned}</strong></article>
+                <article><span>Catálogo activo</span><strong>V{rewardEconomy.boxCatalog[0]?.catalogVersion ?? 1}</strong></article>
+              </div>
+              {rewardEconomy.inventory.length ? (
+                <div className={styles.playerInventory} aria-label="Cosméticos personales">
+                  {rewardEconomy.inventory.slice(0, 8).map((item) => (
+                    <span key={`${item.kind}:${item.key}`}>{item.key}</span>
+                  ))}
+                </div>
+              ) : <small className={styles.economyEmpty}>Tus cosméticos aparecerán al abrir cajas colectivas.</small>}
+            </section>
+          ) : null}
+
           <section className={styles.progressBand}>
             <div>
               <header><span>Logros del equipo</span><strong>{activeTeamAchievements.length}</strong></header>
@@ -659,11 +693,11 @@ export default function TeamIdentityPage() {
         open={Boolean(currentSequenceReward)}
         onClose={closeRewardSequence}
         eyebrow={currentSequenceReward
-          ? `Caja ${rewardSequenceIndex + 1} de ${rewardSequence.length} · ${currentSequenceReward.achievement.rarity}`
+          ? `Caja ${rewardSequenceIndex + 1} de ${rewardSequence.length} · ${currentSequenceReward.boxRarity}`
           : undefined}
         title={currentSequenceReward?.achievement.title}
         description={openedReward
-          ? `Premio confirmado: ${String(openedReward.rewardPayload?.key ?? openedReward.rewardKey)}`
+          ? `Premio confirmado: ${rewardResultLabel(openedReward)}`
           : "El contenido permanece sellado hasta que abras esta caja."}
         actionDisabled={Boolean(busy)}
         actionLabel={openedReward

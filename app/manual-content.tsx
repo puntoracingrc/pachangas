@@ -346,9 +346,11 @@ const manualFlows = [
       "Los goles no asignados sí cuentan para el marcador y los logros colectivos del equipo, pero no inventan un logro individual.",
       "Los logros colectivos se guardan al confirmar el resultado y generan una caja separada para cada participante real del partido.",
       "La caja queda pendiente aunque cierres la app o cambies de dispositivo. Su contenido permanece oculto y solo se concede una vez cuando la abres.",
+      "Una caja puede contener puntos de jugador, un cosmético personal o ambos. Los puntos quedan registrados con la caja, el partido y el logro que los originó.",
+      "Si recibes un cosmético que ya posees, el servidor lo convierte automáticamente en puntos; nunca acumulas copias idénticas.",
       "Al entrar desde un aviso de premios puedes abrir en orden todas las cajas pendientes y después ver los logros personales de esos partidos.",
       "Si un resultado se corrige, las cajas pendientes dejan de ser válidas. Un premio ya abierto se conserva con una anotación auditable y nunca se descuenta de forma destructiva.",
-      "Rating V2 es independiente: ningún logro, caja o futuro punto de jugador modifica la valoración, las facetas ni el GRL.",
+      "Rating V2 es independiente: ningún logro, caja, punto o cosmético modifica la valoración, las facetas ni el GRL.",
     ],
   },
   {

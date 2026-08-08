@@ -15,6 +15,20 @@ begin
 end;
 $$;
 
+create or replace function pg_temp.expect_error(statement text, message text)
+returns void
+language plpgsql
+as $$
+begin
+  execute statement;
+  raise exception 'Expected failure: %', message;
+exception
+  when others then
+    if sqlerrm = 'Expected failure: ' || message then raise; end if;
+end;
+$$;
+grant execute on function pg_temp.expect_error(text, text) to authenticated;
+
 create or replace function pg_temp.apply_canonical_match(
   source_match text,
   played timestamptz,
@@ -145,6 +159,13 @@ select pg_temp.assert_true(
   ),
   'Authenticated clients must never open a box by updating its row directly'
 );
+select pg_temp.assert_true(
+  not has_table_privilege('authenticated', 'public.pachanga_player_points_ledger', 'INSERT')
+    and not has_table_privilege('authenticated', 'public.pachanga_player_points_ledger', 'UPDATE')
+    and not has_table_privilege('authenticated', 'public.pachanga_player_point_accounts', 'UPDATE')
+    and not has_table_privilege('authenticated', 'public.pachanga_player_reward_inventory', 'INSERT'),
+  'Authenticated clients must never mutate points or player inventory directly'
+);
 
 -- A prior defeat consumes only the first-match milestone. The following 5-0
 -- therefore has exactly the four collective achievements in the product case.
@@ -205,6 +226,46 @@ select pg_temp.assert_true(
    where boxes.match_fact_id = :'five_nil_fact'::uuid
      and boxes.status = 'pending') = 40,
   'Four collective achievements and ten participants must create forty boxes'
+);
+select pg_temp.assert_true(
+  (select count(*) from public.pachanga_reward_recipients boxes
+   where boxes.match_fact_id = :'five_nil_fact'::uuid
+     and boxes.economy_version = 1
+     and boxes.box_type is not null
+     and boxes.box_rarity is not null
+     and boxes.reward_pool_key is not null) = 40,
+  'Every generated box must persist its economy version, type, rarity and pool'
+);
+select pg_temp.assert_true(
+  (select count(*)
+   from private.pachanga_reward_box_contents contents
+   join public.pachanga_reward_recipients boxes on boxes.box_id = contents.box_id
+   where boxes.match_fact_id = :'five_nil_fact'::uuid
+     and contents.catalog_version = 1
+     and contents.content_hash = md5(contents.reward_payload::text)
+     and contents.reward_payload ->> 'catalogVersion' = '1') = 40,
+  'Every participant box must have one stable server-sealed V1 payload'
+);
+select pg_temp.assert_true(
+  not exists (
+    select 1
+    from public.pachanga_reward_recipients first_box
+    join public.pachanga_reward_recipients peer_box
+      on peer_box.achievement_grant_id = first_box.achievement_grant_id
+    where first_box.match_fact_id = :'five_nil_fact'::uuid
+      and peer_box.match_fact_id = first_box.match_fact_id
+      and peer_box.box_type <> first_box.box_type
+  ),
+  'All participants must receive an equivalent box tier for one collective achievement'
+);
+select pg_temp.assert_true(
+  not exists (select 1 from public.pachanga_player_point_accounts)
+    and not exists (select 1 from public.pachanga_player_points_ledger)
+    and not exists (
+      select 1 from public.pachanga_player_reward_inventory
+      where source_box_id is not null
+    ),
+  'Pending boxes must grant neither points nor inventory'
 );
 select pg_temp.assert_true(
   not exists (
@@ -378,14 +439,85 @@ select pg_temp.assert_true(
   'A noncanonical match must create no achievement and no box'
 );
 
--- Atomic opening, replay, independent recipients and correction policy.
-select boxes.box_id as opened_box_id, boxes.achievement_grant_id as opened_grant_id
+-- Atomic opening, every V1 reward kind, replay, inventory and correction.
+select
+  (array_agg(boxes.box_id order by boxes.box_id))[1] as opened_box_id,
+  (array_agg(boxes.achievement_grant_id order by boxes.box_id))[1] as opened_grant_id,
+  (array_agg(boxes.box_type order by boxes.box_id))[1] as opened_box_type,
+  (array_agg(boxes.box_id order by boxes.box_id))[2] as cosmetic_box_id,
+  (array_agg(boxes.box_id order by boxes.box_id))[3] as combination_box_id,
+  (array_agg(boxes.box_id order by boxes.box_id))[4] as duplicate_box_id
 from public.pachanga_reward_recipients boxes
 where boxes.match_fact_id = :'five_nil_fact'::uuid
   and boxes.user_id = '81100000-0000-0000-0000-000000000001'
-  and boxes.status = 'pending'
-order by boxes.box_id
-limit 1 \gset
+  and boxes.status = 'pending' \gset
+
+alter table private.pachanga_reward_box_contents
+  disable trigger keep_pachanga_reward_box_contents_sealed_v1;
+update private.pachanga_reward_box_contents contents
+set reward_payload = fixtures.payload,
+    content_hash = md5(fixtures.payload::text)
+from (values
+  (:'opened_box_id'::uuid, jsonb_build_object(
+    'schemaVersion', 1, 'catalogVersion', 1, 'boxType', :'opened_box_type',
+    'reward', jsonb_build_object('kind', 'points', 'points', 6)
+  )),
+  (:'cosmetic_box_id'::uuid, jsonb_build_object(
+    'schemaVersion', 1, 'catalogVersion', 1, 'boxType', 'collective.common',
+    'reward', jsonb_build_object(
+      'kind', 'player_cosmetic', 'points', 0, 'cosmeticKey', 'symbol.ball',
+      'duplicateConversionPoints', 4
+    )
+  )),
+  (:'combination_box_id'::uuid, jsonb_build_object(
+    'schemaVersion', 1, 'catalogVersion', 1, 'boxType', 'collective.common',
+    'reward', jsonb_build_object(
+      'kind', 'combination', 'points', 5, 'cosmeticKey', 'pattern.stripes',
+      'duplicateConversionPoints', 4
+    )
+  )),
+  (:'duplicate_box_id'::uuid, jsonb_build_object(
+    'schemaVersion', 1, 'catalogVersion', 1, 'boxType', 'collective.common',
+    'reward', jsonb_build_object(
+      'kind', 'player_cosmetic', 'points', 0, 'cosmeticKey', 'symbol.ball',
+      'duplicateConversionPoints', 4
+    )
+  ))
+) fixtures(box_id, payload)
+where contents.box_id = fixtures.box_id;
+alter table private.pachanga_reward_box_contents
+  enable trigger keep_pachanga_reward_box_contents_sealed_v1;
+
+do $$
+begin
+  update private.pachanga_reward_box_contents
+  set reward_payload = '{}'::jsonb
+  where box_id in (select box_id from private.pachanga_reward_box_contents limit 1);
+  raise exception 'A sealed box unexpectedly changed';
+exception when others then
+  if sqlerrm = 'A sealed box unexpectedly changed' then raise; end if;
+  if sqlerrm <> 'Sealed reward box contents are immutable' then raise; end if;
+end;
+$$;
+
+update public.pachanga_reward_economy_versions
+set state = 'retired', retired_at = clock_timestamp()
+where version = 1;
+insert into public.pachanga_reward_economy_versions(
+  version, state, currency_key, config, activated_at
+) values (2, 'active', 'player_points', '{"policy":"qa-v2"}', clock_timestamp());
+
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '81100000-0000-0000-0000-000000000002', true);
+select pg_temp.expect_error(format(
+  'select public.open_pachanga_reward_box_v2(%L::uuid, %L::uuid, 1, %L::jsonb)',
+  :'opened_box_id', '84100000-0000-0000-0000-000000000099', '{}'
+), 'another player cannot open this box');
+select pg_temp.expect_error(
+  'insert into public.pachanga_player_points_ledger(player_profile_id,user_id,delta,balance_after,source_type,source_id,idempotency_key) values (''82600000-0000-0000-0000-000000000002'',''81100000-0000-0000-0000-000000000002'',1000,1000,''admin_adjustment'',''82600000-0000-0000-0000-000000000002'',''forged'')',
+  'clients cannot forge point ledger entries'
+);
+reset role;
 
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '81100000-0000-0000-0000-000000000001', true);
@@ -416,11 +548,36 @@ select public.open_pachanga_reward_box_v2(
   '84100000-0000-0000-0000-000000000001', 1,
   '{"sessionId":"box-device-a"}'::jsonb
 ) as replay_open \gset
+select pg_temp.expect_error(format(
+  'select public.open_pachanga_reward_box_v2(%L::uuid, %L::uuid, 1, %L::jsonb)',
+  :'cosmetic_box_id', '84100000-0000-0000-0000-000000000001', '{}'
+), 'an operation id cannot be reused for another box');
 select public.open_pachanga_reward_box_v2(
   :'opened_box_id'::uuid,
   '84100000-0000-0000-0000-000000000002', 2,
   '{"sessionId":"box-device-b"}'::jsonb
 ) as reconnect_open \gset
+select public.get_pachanga_progression_snapshot_v1(
+  '82100000-0000-0000-0000-000000000001'
+) as mid_sequence_snapshot \gset
+select public.open_pachanga_reward_box_v2(
+  :'cosmetic_box_id'::uuid,
+  '84100000-0000-0000-0000-000000000003', 1,
+  '{"sessionId":"box-device-return"}'::jsonb
+) as cosmetic_open \gset
+select public.open_pachanga_reward_box_v2(
+  :'combination_box_id'::uuid,
+  '84100000-0000-0000-0000-000000000004', 1,
+  '{"sessionId":"box-device-return"}'::jsonb
+) as combination_open \gset
+select public.open_pachanga_reward_box_v2(
+  :'duplicate_box_id'::uuid,
+  '84100000-0000-0000-0000-000000000005', 1,
+  '{"sessionId":"box-device-return"}'::jsonb
+) as duplicate_open \gset
+select public.get_pachanga_progression_snapshot_v1(
+  '82100000-0000-0000-0000-000000000001'
+) as completed_sequence_snapshot \gset
 reset role;
 
 select pg_temp.assert_true(
@@ -430,6 +587,58 @@ select pg_temp.assert_true(
 select pg_temp.assert_true(
   (:'reconnect_open'::jsonb ->> 'alreadyOpened')::boolean,
   'A second device must converge without granting the reward twice'
+);
+select pg_temp.assert_true(
+  (:'first_open'::jsonb -> 'rewardPayload' ->> 'catalogVersion')::integer = 1
+    and (:'first_open'::jsonb -> 'rewardPayload' -> 'grant' ->> 'pointsGranted')::integer = 6,
+  'A sealed V1 box must keep its original six points after the live catalog changes'
+);
+select pg_temp.assert_true(
+  (select count(*) from jsonb_array_elements(
+    :'mid_sequence_snapshot'::jsonb -> 'rewards'
+  ) boxes(value)
+   where boxes.value ->> 'matchFactId' = :'five_nil_fact'
+     and boxes.value ->> 'status' = 'pending') = 3,
+  'Closing after one box and returning must leave the remaining sequence pending'
+);
+select pg_temp.assert_true(
+  (:'cosmetic_open'::jsonb -> 'rewardPayload' -> 'grant' ->> 'cosmeticGranted')::boolean
+    and (:'cosmetic_open'::jsonb -> 'rewardPayload' -> 'grant' ->> 'pointsGranted')::integer = 0,
+  'A cosmetic box must grant one new personal cosmetic without points'
+);
+select pg_temp.assert_true(
+  (:'combination_open'::jsonb -> 'rewardPayload' -> 'grant' ->> 'cosmeticGranted')::boolean
+    and (:'combination_open'::jsonb -> 'rewardPayload' -> 'grant' ->> 'pointsGranted')::integer = 5,
+  'A combination box must grant its cosmetic and points atomically'
+);
+select pg_temp.assert_true(
+  (:'duplicate_open'::jsonb -> 'rewardPayload' -> 'grant' ->> 'duplicateConverted')::boolean
+    and (:'duplicate_open'::jsonb -> 'rewardPayload' -> 'grant' ->> 'duplicateConversionPoints')::integer = 4,
+  'A duplicate cosmetic must convert to its audited point value'
+);
+select pg_temp.assert_true(
+  (select balance = 15 and lifetime_earned = 15 and lifetime_spent = 0
+   from public.pachanga_player_point_accounts accounts
+   where accounts.player_profile_id = '82600000-0000-0000-0000-000000000001'),
+  'Points, combination and duplicate conversion must produce the exact balance once'
+);
+select pg_temp.assert_true(
+  (select count(*) from public.pachanga_player_points_ledger ledger
+   where ledger.player_profile_id = '82600000-0000-0000-0000-000000000001'
+     and ledger.source_type = 'reward_box') = 3,
+  'Only boxes that grant points may append one immutable ledger entry each'
+);
+select pg_temp.assert_true(
+  (select count(*) from public.pachanga_player_reward_inventory inventory
+   where inventory.player_profile_id = '82600000-0000-0000-0000-000000000001'
+     and inventory.reward_kind = 'player_cosmetic'
+     and inventory.state = 'unlocked') = 2,
+  'Duplicate cosmetics must not create a second inventory copy'
+);
+select pg_temp.assert_true(
+  (:'completed_sequence_snapshot'::jsonb -> 'rewardEconomy' -> 'account' ->> 'balance')::integer = 15
+    and jsonb_array_length(:'completed_sequence_snapshot'::jsonb -> 'rewardEconomy' -> 'inventory') = 2,
+  'The canonical read model must expose the confirmed point account and inventory'
 );
 select pg_temp.assert_true(
   (select count(*) from public.pachanga_progression_events events

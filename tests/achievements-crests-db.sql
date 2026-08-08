@@ -464,8 +464,8 @@ select pg_temp.assert_true(
 select pg_temp.assert_true(
   (select count(*) from public.pachanga_reward_grants rewards
    where rewards.group_id = '82000000-0000-0000-0000-000000000001'
-     and rewards.reward_kind = 'team_cosmetic' and rewards.state = 'active') >= 2,
-  'The first match and first win must unlock deterministic team cosmetics'
+     and rewards.reward_kind = 'collective_box' and rewards.state = 'active') >= 2,
+  'The first match and first win must create distinct collective box grants'
 );
 select pg_temp.assert_true(
   not exists (
@@ -474,7 +474,7 @@ select pg_temp.assert_true(
     join public.pachanga_reward_recipients recipients on recipients.reward_grant_id = rewards.id
     join public.pachanga_achievement_grants grants on grants.id = rewards.achievement_grant_id
     where rewards.group_id = '82000000-0000-0000-0000-000000000001'
-      and rewards.reward_kind = 'team_cosmetic'
+      and rewards.reward_kind = 'collective_box'
       and not exists (
         select 1
         from public.pachanga_progression_player_match_facts player_facts
@@ -511,11 +511,13 @@ select pg_temp.assert_true(
   'A pending box must not unlock the collective inventory'
 );
 
-select rewards.id as owner_reward_id, recipients.box_id as owner_box_id
+select rewards.id as owner_reward_id,
+  rewards.achievement_grant_id as owner_achievement_grant_id,
+  recipients.box_id as owner_box_id
 from public.pachanga_reward_grants rewards
 join public.pachanga_reward_recipients recipients on recipients.reward_grant_id = rewards.id
 where rewards.group_id = '82000000-0000-0000-0000-000000000001'
-  and rewards.reward_kind = 'team_cosmetic'
+  and rewards.reward_kind = 'collective_box'
   and recipients.user_id = '81000000-0000-0000-0000-000000000001'
   and recipients.status = 'pending'
 order by rewards.granted_at, rewards.id
@@ -589,6 +591,13 @@ reset role;
 update public.pachanga_team_crest_drafts
 set symbol_key = 'symbol.lightning'
 where group_id = '82000000-0000-0000-0000-000000000001';
+insert into public.pachanga_team_cosmetic_inventory(
+  group_id, cosmetic_key, source_grant_id
+) values (
+  '82000000-0000-0000-0000-000000000001', 'symbol.lightning',
+  :'owner_achievement_grant_id'::uuid
+) on conflict (group_id, cosmetic_key) do update set
+  state = 'unlocked', revoked_at = null;
 
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '81000000-0000-0000-0000-000000000001', true);

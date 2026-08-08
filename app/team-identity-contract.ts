@@ -1,4 +1,4 @@
-export const TEAM_IDENTITY_CACHE_VERSION = "team-identity-v1";
+export const TEAM_IDENTITY_CACHE_VERSION = "team-identity-v2";
 export const TEAM_IDENTITY_CACHE_MAX_AGE_MS = 15 * 60 * 1000;
 
 export type CrestDesign = {
@@ -103,7 +103,11 @@ export type PendingReward = {
     title: string;
   };
   boxId: string;
+  boxRarity: CrestCatalogItem["rarity"];
+  boxType: string;
+  economyVersion: number;
   generatedAt: string;
+  animationKey: string;
   matchFactId: string;
   openedAt: string | null;
   recipientRevision: number;
@@ -112,8 +116,61 @@ export type PendingReward = {
   rewardKey: string;
   rewardKind: "collective_box" | "team_cosmetic";
   rewardPayload: Record<string, unknown> | null;
+  rewardPoolKey: string;
+  presentationKey: string;
   sourceCorrection: Record<string, unknown> | null;
   status: "opened" | "pending" | "revoked" | "skipped";
+};
+
+export type PlayerPointAccount = {
+  balance: number;
+  lifetimeEarned: number;
+  lifetimeSpent: number;
+  revision: number;
+  serverSequence: number;
+  updatedAt: string;
+};
+
+export type PlayerRewardInventoryItem = {
+  acquiredAt: string;
+  key: string;
+  kind: "player_badge" | "player_cosmetic" | "player_title";
+  metadata: Record<string, unknown>;
+  sourceBoxId: string | null;
+  state: "revoked" | "unlocked";
+};
+
+export type PlayerPointLedgerEntry = {
+  achievementGrantId: string | null;
+  balanceAfter: number;
+  createdAt: string;
+  delta: number;
+  id: string;
+  matchFactId: string | null;
+  metadata: Record<string, unknown>;
+  serverSequence: number;
+  sourceBoxId: string | null;
+  sourceType: "admin_adjustment" | "box_purchase" | "cosmetic_purchase" | "reward_box";
+};
+
+export type RewardBoxCatalogItem = {
+  animationKey: string;
+  boxType: string;
+  catalogVersion: number;
+  maxPoints: number;
+  minPoints: number;
+  name: string;
+  possibleRewards: Record<string, unknown>[];
+  presentationKey: string;
+  rarity: CrestCatalogItem["rarity"];
+};
+
+export type RewardEconomySnapshot = {
+  account: PlayerPointAccount;
+  boxCatalog: RewardBoxCatalogItem[];
+  currencyKey: "player_points";
+  inventory: PlayerRewardInventoryItem[];
+  ledger: PlayerPointLedgerEntry[];
 };
 
 export type ProgressionSnapshot = {
@@ -122,6 +179,7 @@ export type ProgressionSnapshot = {
   groupRevision: number;
   personalAchievementCatalog: IndividualAchievementProgress[];
   personalAchievements: ProgressionAchievement[];
+  rewardEconomy: RewardEconomySnapshot;
   rewards: PendingReward[];
   serverSequence: number;
   teamAchievements: ProgressionAchievement[];
@@ -311,6 +369,72 @@ function individualAchievementProgress(value: unknown): IndividualAchievementPro
   };
 }
 
+function rewardEconomy(value: unknown): RewardEconomySnapshot {
+  const source = isRecord(value) ? value : {};
+  const account = isRecord(source.account) ? source.account : {};
+  const inventory = Array.isArray(source.inventory) ? source.inventory.flatMap((entry) => {
+    if (!isRecord(entry) || !text(entry.key)) return [];
+    const kind: PlayerRewardInventoryItem["kind"] = entry.kind === "player_badge" || entry.kind === "player_title"
+      ? entry.kind
+      : "player_cosmetic";
+    return [{
+      acquiredAt: text(entry.acquiredAt),
+      key: text(entry.key),
+      kind,
+      metadata: isRecord(entry.metadata) ? entry.metadata : {},
+      sourceBoxId: nullableText(entry.sourceBoxId),
+      state: entry.state === "revoked" ? "revoked" as const : "unlocked" as const,
+    }];
+  }) : [];
+  const ledger = Array.isArray(source.ledger) ? source.ledger.flatMap((entry) => {
+    if (!isRecord(entry) || !text(entry.id)) return [];
+    const sourceType: PlayerPointLedgerEntry["sourceType"] = entry.sourceType === "box_purchase" || entry.sourceType === "cosmetic_purchase"
+      || entry.sourceType === "admin_adjustment" ? entry.sourceType : "reward_box";
+    return [{
+      achievementGrantId: nullableText(entry.achievementGrantId),
+      balanceAfter: Math.max(0, Math.floor(numberValue(entry.balanceAfter))),
+      createdAt: text(entry.createdAt),
+      delta: Math.trunc(numberValue(entry.delta)),
+      id: text(entry.id),
+      matchFactId: nullableText(entry.matchFactId),
+      metadata: isRecord(entry.metadata) ? entry.metadata : {},
+      serverSequence: Math.max(0, Math.floor(numberValue(entry.serverSequence))),
+      sourceBoxId: nullableText(entry.sourceBoxId),
+      sourceType,
+    }];
+  }) : [];
+  const boxCatalog = Array.isArray(source.boxCatalog) ? source.boxCatalog.flatMap((entry) => {
+    if (!isRecord(entry) || !text(entry.boxType)) return [];
+    return [{
+      animationKey: text(entry.animationKey),
+      boxType: text(entry.boxType),
+      catalogVersion: Math.max(1, Math.floor(numberValue(entry.catalogVersion))),
+      maxPoints: Math.max(0, Math.floor(numberValue(entry.maxPoints))),
+      minPoints: Math.max(0, Math.floor(numberValue(entry.minPoints))),
+      name: text(entry.name),
+      possibleRewards: Array.isArray(entry.possibleRewards)
+        ? entry.possibleRewards.filter(isRecord)
+        : [],
+      presentationKey: text(entry.presentationKey),
+      rarity: rarity(entry.rarity),
+    }];
+  }) : [];
+  return {
+    account: {
+      balance: Math.max(0, Math.floor(numberValue(account.balance))),
+      lifetimeEarned: Math.max(0, Math.floor(numberValue(account.lifetimeEarned))),
+      lifetimeSpent: Math.max(0, Math.floor(numberValue(account.lifetimeSpent))),
+      revision: Math.max(0, Math.floor(numberValue(account.revision))),
+      serverSequence: Math.max(0, Math.floor(numberValue(account.serverSequence))),
+      updatedAt: text(account.updatedAt),
+    },
+    boxCatalog,
+    currencyKey: "player_points",
+    inventory,
+    ledger,
+  };
+}
+
 export function normalizePendingReward(value: unknown): PendingReward | null {
   if (!isRecord(value) || !isRecord(value.achievement)) return null;
   const boxId = text(value.boxId);
@@ -334,7 +458,11 @@ export function normalizePendingReward(value: unknown): PendingReward | null {
       title: text(value.achievement.title),
     },
     boxId,
+    boxRarity: rarity(value.boxRarity ?? value.achievement.rarity),
+    boxType: text(value.boxType),
+    economyVersion: Math.max(0, Math.floor(numberValue(value.economyVersion))),
     generatedAt: text(value.generatedAt),
+    animationKey: text(value.animationKey),
     matchFactId: text(value.matchFactId),
     openedAt: nullableText(value.openedAt),
     recipientRevision: Math.max(1, Math.floor(numberValue(value.recipientRevision))),
@@ -343,6 +471,8 @@ export function normalizePendingReward(value: unknown): PendingReward | null {
     rewardKey,
     rewardKind,
     rewardPayload: isRecord(value.rewardPayload) ? value.rewardPayload : null,
+    rewardPoolKey: text(value.rewardPoolKey),
+    presentationKey: text(value.presentationKey),
     sourceCorrection: isRecord(value.sourceCorrection) ? value.sourceCorrection : null,
     status,
   };
@@ -364,6 +494,7 @@ export function normalizeProgressionSnapshot(value: unknown): ProgressionSnapsho
     personalAchievements: Array.isArray(value.personalAchievements)
       ? value.personalAchievements.map(achievement).filter((item): item is ProgressionAchievement => Boolean(item))
       : [],
+    rewardEconomy: rewardEconomy(value.rewardEconomy),
     rewards: Array.isArray(value.rewards)
       ? value.rewards.map(normalizePendingReward).filter((item): item is PendingReward => Boolean(item))
       : [],

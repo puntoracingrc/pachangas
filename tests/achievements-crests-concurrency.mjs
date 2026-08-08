@@ -199,18 +199,26 @@ where id in (${challengeIds});
 
 const cleanupSql = `
 delete from public.pachanga_reward_open_receipts where actor_user_id in (${userIds});
+delete from public.pachanga_player_points_ledger
+where user_id in (${userIds}) or player_profile_id in (${profileIds});
+delete from public.pachanga_player_point_accounts
+where user_id in (${userIds}) or player_profile_id in (${profileIds});
+delete from public.pachanga_player_reward_inventory where player_profile_id in (${profileIds});
+alter table private.pachanga_reward_box_contents
+  disable trigger keep_pachanga_reward_box_contents_sealed_v1;
 delete from private.pachanga_reward_box_contents contents
 using public.pachanga_reward_recipients recipients, public.pachanga_reward_grants rewards
 where contents.box_id = recipients.box_id
   and recipients.reward_grant_id = rewards.id
   and rewards.group_id in (${groupIds});
+alter table private.pachanga_reward_box_contents
+  enable trigger keep_pachanga_reward_box_contents_sealed_v1;
 delete from public.pachanga_reward_recipients recipients
 using public.pachanga_reward_grants rewards
 where recipients.reward_grant_id = rewards.id and rewards.group_id in (${groupIds});
 delete from public.pachanga_progression_events
 where group_id in (${groupIds}) or player_profile_id in (${profileIds});
 delete from public.pachanga_team_cosmetic_inventory where group_id in (${groupIds});
-delete from public.pachanga_player_reward_inventory where player_profile_id in (${profileIds});
 delete from public.pachanga_reward_grants
 where group_id in (${groupIds}) or player_profile_id in (${profileIds});
 delete from public.pachanga_achievement_grants
@@ -559,13 +567,24 @@ try {
           where box_id = ${sqlText(staleRaceReward.boxId)}::uuid),
         'events', (select count(*) from public.pachanga_progression_events
           where event_type = 'reward_opened'
-            and payload ->> 'boxId' = ${sqlText(staleRaceReward.boxId)})
+            and payload ->> 'boxId' = ${sqlText(staleRaceReward.boxId)}),
+        'ledgerEntries', (select count(*) from public.pachanga_player_points_ledger
+          where source_box_id = ${sqlText(staleRaceReward.boxId)}::uuid),
+        'inventoryEntries', (select count(*) from public.pachanga_player_reward_inventory
+          where source_box_id = ${sqlText(staleRaceReward.boxId)}::uuid)
       )`,
       "reward race evidence",
     ),
     "reward race evidence",
   );
-  assert.deepEqual(raceEvidence, { receipts: 2, events: 1 });
+  assert.equal(raceEvidence.receipts, 2);
+  assert.equal(raceEvidence.events, 1);
+  assert.ok(raceEvidence.ledgerEntries <= 1, "Concurrent opening must append at most one point entry");
+  assert.ok(raceEvidence.inventoryEntries <= 1, "Concurrent opening must add at most one inventory item");
+  assert.ok(
+    raceEvidence.ledgerEntries + raceEvidence.inventoryEntries >= 1,
+    "The winning transaction must persist the sealed reward exactly once",
+  );
 } finally {
   await runOk(cleanupSql, "achievements concurrency fixture cleanup");
 }
