@@ -27,17 +27,17 @@ Fecha local: 2026-08-08. Rama: `codex/achievement-catalog-v1`.
 23. **Cambios de catálogo.** Metadatos versionados para familia, prioridad, icono, primera vez, caja, pool, animación, presentación, texto social, temporada futura y secuencia de activación.
 24. **Tests.** 103 pruebas de aplicación verdes; tres suites SQL verdes, incluida una secuencia de 500 partidos.
 25. **Rating V2.** Intacto por prueba de contrato y comparación SQL byte a byte de overall, facetas, fiabilidad y versión.
-26. **QA escritorio.** Shell local 1440x900 sin overflow; QA autenticada del contenido queda pendiente de staging.
-27. **QA móvil vertical.** Shell local 390x844 sin overflow; QA autenticada del contenido queda pendiente de staging.
-28. **QA móvil horizontal.** Rectángulos reales 844x390 sin overflow ni errores de consola; QA autenticada queda pendiente de staging.
-29. **Preview.** Pendiente de publicar la rama y obtener el despliegue de Vercel.
-30. **Commit.** Pendiente en el momento de crear este informe.
-31. **PR.** Debe abrirse como borrador antes de staging.
+26. **QA escritorio.** Preview autenticada 1440x900 sin overflow horizontal; Logros, Estadísticas y Récords muestran el read model canónico y la consola no contiene errores.
+27. **QA móvil vertical.** Preview autenticada 390x844 sin overflow horizontal; pestañas, tarjetas, estadísticas, récords y colección conservan una composición legible.
+28. **QA móvil horizontal.** Preview autenticada 844x390 sin overflow horizontal; la progresión utiliza todo el ancho disponible y mantiene visibles sus controles.
+29. **Preview.** Deployment aislado `dpl_94iuPWTFhdL2sMfjCNNb1QDYFTRi`, conectado exclusivamente a Supabase staging `iozcjirlfytryzrcmrnq`; el bundle no contiene la referencia de producción.
+30. **Commit.** `ccf99b35a3fa8d35d978723aa6f2cb2196cfd38b` (`Add definitive achievement catalog V1`).
+31. **PR.** Borrador [#111](https://github.com/puntoracingrc/pachangas/pull/111), abierto antes de modificar staging.
 32. **FUTURE.** Portero, MVP rival, triple hat-trick, goles 750/1000, rankings, temporadas, tienda, pase premium, tarjetas sociales y umbral por modalidad.
 33. **Riesgos reales.** La victoria externa repetible sigue siendo la principal fuente de cajas; se mantiene porque la simulación anual no muestra crecimiento explosivo. El catálogo pequeño eleva duplicados con alta actividad.
 34. **Sin retroactividad.** Las definiciones guardan `activation_server_sequence`; hechos anteriores actualizan estadísticas, pero no generan grants ni cajas V2.
 35. **Fuera de alcance.** No se implementaron tienda, pase premium, rankings, MVP ni reconocimiento individual de portero.
-36. **Producción.** No se ha tocado antes de Preview, staging y E2E; cualquier producción dependerá de que esas fases terminen verdes.
+36. **Producción.** No se ha tocado durante Preview, staging ni E2E. Solo podrá avanzar después de integrar el PR verde, volver a comparar el historial remoto y aplicar exclusivamente la migración pendiente.
 
 ## Validación local
 
@@ -48,3 +48,18 @@ Fecha local: 2026-08-08. Rama: `codex/achievement-catalog-v1`.
 - SQL catálogo V2, logros/escudos y cajas colectivas: verde sobre instalación limpia.
 - concurrencia de logros/escudos: verde.
 - `git diff --check`: verde.
+
+## Validación remota de staging
+
+- Rama Supabase: `pwa-bridge-staging` (`iozcjirlfytryzrcmrnq`), hija del proyecto Pachangas y confirmada `ACTIVE_HEALTHY`.
+- Historial remoto alineado con el repositorio hasta `20260808185802_achievement_catalog_v2`; no se reparó ni reescribió SQL aplicado.
+- Catálogo remoto: 101 definiciones activas, 45 individuales, 56 colectivas y 22 familias.
+- Escenarios canónicos: 5-0 con Pedro 3/Juan 2, 3-2 con segundo hat-trick y 1-0 para racha e hitos. El servidor generó 13 logros colectivos y 26 cajas para dos participantes.
+- Jerarquía individual: una sola faceta goleadora máxima por jugador y partido; títulos `Primer hat-trick` y `Hat-trick`; cero recompensas individuales.
+- Idempotencia: reevaluar el primer partido devolvió cero concesiones nuevas.
+- Concurrencia: dos dispositivos abrieron la misma caja con dos `operationId`; quedaron dos recibos, una caja abierta, un evento y un único apunte económico.
+- Realtime: tras la inicialización fría de la rama, entregó el `UPDATE` de revisión del usuario y el cliente recargó el snapshot confirmado.
+- RLS: cada cuenta leyó solo sus 13 cajas; una escritura cruzada devolvió cero filas y un ledger falsificado fue rechazado.
+- Corrección: anular el 3-2 revocó cuatro grants y seis cajas pendientes, recalculó a dos partidos/dos victorias y el replay de la corrección no alteró el resultado.
+- Rating V2: overall, facetas, fiabilidad, versión y fechas de control permanecieron intactos.
+- Limpieza: usuarios, grupos, perfiles, hechos, grants y notificaciones sintéticas quedaron todos a cero.
