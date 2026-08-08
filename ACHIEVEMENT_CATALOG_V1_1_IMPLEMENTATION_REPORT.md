@@ -64,7 +64,23 @@ No existe cálculo definitivo local, cola offline deportiva ni escritura directa
 - Historial remoto: producción y staging coinciden y terminan en `20260808185802_achievement_catalog_v2`.
 - `supabase migration list --linked`: bloqueado localmente por `LegacyProfileLoadError`; el historial se comprobó con la API oficial de Supabase.
 
-Los resultados de Preview, staging, E2E autenticado y producción se completarán en este informe durante el flujo de entrega.
+## Preview y staging
+
+- PR borrador: `#113`.
+- Preview Vercel del commit `0dfbb56927299d5cb297d41df05f5e6076570263`: `READY`.
+- QA responsive: escritorio 1440x900, iPhone vertical 390x844, iPhone horizontal 844x390 e iPad horizontal 1180x820.
+- Overflow horizontal global: ausente en los cuatro tamaños.
+- Errores de consola en Preview: ninguno.
+- Staging Supabase: `iozcjirlfytryzrcmrnq` (`pwa-bridge-staging`).
+- Migración V3 aplicada y su historial alineado con el repositorio en `20260808205638`.
+- Batería SQL completa en staging dentro de una transacción revertida: aprobada.
+- Concurrencia de evaluación: un cliente concede cuatro ocurrencias legítimas y el segundo converge con cero; no existen grants ni cajas duplicados.
+- Dos usuarios autenticados: cada actor solo lee sus cajas; un usuario ajeno no puede abrir la caja de otro.
+- Dos dispositivos del mismo usuario: repetir el mismo `operationId` devuelve el mismo `boxId` y revisión confirmada.
+- Realtime: la apertura produjo un `UPDATE` canónico de `pachanga_progression_user_state` con revisión monotónica.
+- Advisors: sin avisos nuevos atribuibles a V1.1. Permanecen avisos previos del proyecto; las RPC de apertura autenticadas son superficie pública intencional y validan actor, caja, revisión e idempotencia.
+
+Los resultados de producción se completarán en este informe durante el flujo de entrega.
 
 ## Rutas del diff
 
