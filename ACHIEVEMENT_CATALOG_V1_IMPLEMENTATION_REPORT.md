@@ -37,7 +37,7 @@ Fecha local: 2026-08-08. Rama: `codex/achievement-catalog-v1`.
 33. **Riesgos reales.** La victoria externa repetible sigue siendo la principal fuente de cajas; se mantiene porque la simulación anual no muestra crecimiento explosivo. El catálogo pequeño eleva duplicados con alta actividad.
 34. **Sin retroactividad.** Las definiciones guardan `activation_server_sequence`; hechos anteriores actualizan estadísticas, pero no generan grants ni cajas V2.
 35. **Fuera de alcance.** No se implementaron tienda, pase premium, rankings, MVP ni reconocimiento individual de portero.
-36. **Producción.** No se ha tocado durante Preview, staging ni E2E. Solo podrá avanzar después de integrar el PR verde, volver a comparar el historial remoto y aplicar exclusivamente la migración pendiente.
+36. **Producción.** No se tocó antes de superar Preview, staging y E2E. Tras integrar el PR verde se aplicó exclusivamente `20260808185802_achievement_catalog_v2` y se desplegó `main` en producción.
 
 ## Validación local
 
@@ -63,3 +63,17 @@ Fecha local: 2026-08-08. Rama: `codex/achievement-catalog-v1`.
 - Corrección: anular el 3-2 revocó cuatro grants y seis cajas pendientes, recalculó a dos partidos/dos victorias y el replay de la corrección no alteró el resultado.
 - Rating V2: overall, facetas, fiabilidad, versión y fechas de control permanecieron intactos.
 - Limpieza: usuarios, grupos, perfiles, hechos, grants y notificaciones sintéticas quedaron todos a cero.
+
+## Validación de producción
+
+- PR [#111](https://github.com/puntoracingrc/pachangas/pull/111) fusionado mediante squash en `main` como `dee1fb7a64bfdc3c1806f98b52a13a07aa3c1932`.
+- Historial Supabase alineado con el repositorio: `20260808185802_achievement_catalog_v2` es la única migración añadida por esta fase.
+- Catálogo productivo: 101 definiciones activas, 45 individuales, 56 colectivas y 22 familias.
+- Recompensas: las 45 definiciones individuales carecen de caja y las 56 colectivas tienen rareza, pool, animación y presentación configurados.
+- Retroactividad: cero grants asociados al catálogo V2 inmediatamente después de instalarlo.
+- Permisos: el snapshot canónico no es ejecutable por `anon` y sí por `authenticated`.
+- Rating V2: staging y producción conservan 58 funciones de rating/assessment con el mismo hash `e1d702850b7433d4bc63ad323ecc614b`.
+- Vercel: deployment productivo `dpl_ExYnppdbyFfUVAqTgkva4RZ2K7KQ`, estado `READY`, construido desde el SHA exacto de `main` y asignado a `pachangasiq.com` y `www.pachangasiq.com`.
+- Smoke: `/` y `/equipo/identidad` responden HTTP 200; la demo productiva carga el equipo, partidos, alineación y ranking sin error visible.
+- Observabilidad: Vercel no registró errores de runtime en la ventana posterior al despliegue.
+- La QA autenticada destructiva se realizó íntegramente en staging; en producción solo se hicieron comprobaciones de lectura y no se crearon datos sintéticos.
