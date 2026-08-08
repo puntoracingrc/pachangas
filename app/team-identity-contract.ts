@@ -1,4 +1,4 @@
-export const TEAM_IDENTITY_CACHE_VERSION = "team-identity-v2";
+export const TEAM_IDENTITY_CACHE_VERSION = "team-identity-v3";
 export const TEAM_IDENTITY_CACHE_MAX_AGE_MS = 15 * 60 * 1000;
 
 export function opensPendingRewardSequence(search: string) {
@@ -72,7 +72,7 @@ export type ProgressionAchievement = {
   repeatable: boolean;
   rewardKey: string | null;
   sequenceCount: number;
-  scope: "external" | "internal";
+  scope: MatchScope;
   state: "active" | "revoked";
   title: string;
 };
@@ -82,18 +82,90 @@ export type IndividualAchievementProgress = {
   category: string;
   currentValue: number;
   description: string;
+  displayPriority: number;
+  family: string;
+  firstAchievedAt: string | null;
   grantId: string | null;
+  iconKey: string | null;
   key: string;
+  lastAchievedAt: string | null;
   occurrenceCount: number;
   progressPercent: number;
   rarity: CrestCatalogItem["rarity"];
   repeatable: boolean;
   rewardKey: string | null;
   rewardKind: "none";
-  scope: "external" | "internal";
+  scope: MatchScope;
+  shareDescription: string | null;
+  shareTemplateKey: string | null;
+  shareTitle: string | null;
   threshold: number;
   title: string;
   unlocked: boolean;
+};
+
+export type MatchScope = "all" | "external" | "internal";
+
+export type PlayerProgressionStats = {
+  appearances: number;
+  braces: number;
+  currentUnbeatenStreak: number;
+  currentWinStreak: number;
+  distinctOpponents: number;
+  distinctOpponentsWon: number;
+  doubleHatTricks: number;
+  draws: number;
+  goals: number;
+  hatTricks: number;
+  losses: number;
+  maxUnbeatenStreak: number;
+  maxWinStreak: number;
+  pokers: number;
+  repokers: number;
+  revision: number;
+  scope: MatchScope;
+  updatedAt: string;
+  wins: number;
+};
+
+export type TeamProgressionStats = {
+  bigWins: number;
+  cleanSheets: number;
+  closeWins: number;
+  currentUnbeatenStreak: number;
+  currentWinStreak: number;
+  distinctOpponents: number;
+  distinctOpponentsWon: number;
+  draws: number;
+  goalsAgainst: number;
+  goalsFor: number;
+  losses: number;
+  matches: number;
+  maxUnbeatenStreak: number;
+  maxWinStreak: number;
+  revision: number;
+  scope: Exclude<MatchScope, "all">;
+  updatedAt: string;
+  wins: number;
+};
+
+export type TeamAchievementProgress = {
+  animationKey: string;
+  boxRarity: CrestCatalogItem["rarity"];
+  category: string;
+  currentValue: number;
+  description: string;
+  displayPriority: number;
+  family: string;
+  iconKey: string | null;
+  key: string;
+  presentationKey: string;
+  rarity: CrestCatalogItem["rarity"];
+  repeatable: boolean;
+  rewardPoolVersion: number;
+  scope: Exclude<MatchScope, "all">;
+  threshold: number;
+  title: string;
 };
 
 export type PendingReward = {
@@ -179,15 +251,19 @@ export type RewardEconomySnapshot = {
 };
 
 export type ProgressionSnapshot = {
+  catalogKey: string;
   confirmedRevision: number;
   groupId: string;
   groupRevision: number;
   personalAchievementCatalog: IndividualAchievementProgress[];
   personalAchievements: ProgressionAchievement[];
+  personalStats: PlayerProgressionStats[];
   rewardEconomy: RewardEconomySnapshot;
   rewards: PendingReward[];
   serverSequence: number;
   teamAchievements: ProgressionAchievement[];
+  teamAchievementCatalog: TeamAchievementProgress[];
+  teamStats: TeamProgressionStats[];
   userRevision: number;
   updatedAt: string;
 };
@@ -219,6 +295,11 @@ function numberValue(value: unknown) {
 function rarity(value: unknown): CrestCatalogItem["rarity"] {
   if (value === "uncommon" || value === "rare" || value === "epic" || value === "legendary") return value;
   return "common";
+}
+
+function matchScope(value: unknown): MatchScope {
+  if (value === "all" || value === "external") return value;
+  return "internal";
 }
 
 function family(value: unknown): CrestCatalogItem["family"] | null {
@@ -342,7 +423,7 @@ function achievement(value: unknown): ProgressionAchievement | null {
     repeatable: value.repeatable === true,
     rewardKey: nullableText(value.rewardKey),
     sequenceCount: Math.max(1, Math.floor(numberValue(value.sequenceCount))),
-    scope: value.scope === "external" ? "external" : "internal",
+    scope: matchScope(value.scope),
     state: value.state === "revoked" ? "revoked" : "active",
     title,
   };
@@ -359,7 +440,11 @@ function individualAchievementProgress(value: unknown): IndividualAchievementPro
     category: text(value.category),
     currentValue: Math.max(0, Math.floor(numberValue(value.currentValue))),
     description: text(value.description),
+    displayPriority: Math.max(0, Math.floor(numberValue(value.displayPriority))),
+    family: text(value.family),
+    firstAchievedAt: nullableText(value.firstAchievedAt),
     grantId: nullableText(value.grantId),
+    iconKey: nullableText(value.iconKey),
     key,
     occurrenceCount: Math.max(0, Math.floor(numberValue(value.occurrenceCount))),
     progressPercent: Math.min(100, Math.max(0, Math.floor(numberValue(value.progressPercent)))),
@@ -367,10 +452,85 @@ function individualAchievementProgress(value: unknown): IndividualAchievementPro
     repeatable: value.repeatable === true,
     rewardKey: nullableText(value.rewardKey),
     rewardKind: "none",
-    scope: value.scope === "external" ? "external" : "internal",
+    scope: matchScope(value.scope),
+    shareDescription: nullableText(value.shareDescription),
+    shareTemplateKey: nullableText(value.shareTemplateKey),
+    shareTitle: nullableText(value.shareTitle),
+    lastAchievedAt: nullableText(value.lastAchievedAt),
     threshold,
     title,
     unlocked: value.unlocked === true,
+  };
+}
+
+function playerStats(value: unknown): PlayerProgressionStats | null {
+  if (!isRecord(value)) return null;
+  return {
+    appearances: Math.max(0, Math.floor(numberValue(value.appearances))),
+    braces: Math.max(0, Math.floor(numberValue(value.braces))),
+    currentUnbeatenStreak: Math.max(0, Math.floor(numberValue(value.currentUnbeatenStreak))),
+    currentWinStreak: Math.max(0, Math.floor(numberValue(value.currentWinStreak))),
+    distinctOpponents: Math.max(0, Math.floor(numberValue(value.distinctOpponents))),
+    distinctOpponentsWon: Math.max(0, Math.floor(numberValue(value.distinctOpponentsWon))),
+    doubleHatTricks: Math.max(0, Math.floor(numberValue(value.doubleHatTricks))),
+    draws: Math.max(0, Math.floor(numberValue(value.draws))),
+    goals: Math.max(0, Math.floor(numberValue(value.goals))),
+    hatTricks: Math.max(0, Math.floor(numberValue(value.hatTricks))),
+    losses: Math.max(0, Math.floor(numberValue(value.losses))),
+    maxUnbeatenStreak: Math.max(0, Math.floor(numberValue(value.maxUnbeatenStreak))),
+    maxWinStreak: Math.max(0, Math.floor(numberValue(value.maxWinStreak))),
+    pokers: Math.max(0, Math.floor(numberValue(value.pokers))),
+    repokers: Math.max(0, Math.floor(numberValue(value.repokers))),
+    revision: Math.max(0, Math.floor(numberValue(value.revision))),
+    scope: matchScope(value.scope),
+    updatedAt: text(value.updatedAt),
+    wins: Math.max(0, Math.floor(numberValue(value.wins))),
+  };
+}
+
+function teamStats(value: unknown): TeamProgressionStats | null {
+  if (!isRecord(value)) return null;
+  return {
+    bigWins: Math.max(0, Math.floor(numberValue(value.bigWins))),
+    cleanSheets: Math.max(0, Math.floor(numberValue(value.cleanSheets))),
+    closeWins: Math.max(0, Math.floor(numberValue(value.closeWins))),
+    currentUnbeatenStreak: Math.max(0, Math.floor(numberValue(value.currentUnbeatenStreak))),
+    currentWinStreak: Math.max(0, Math.floor(numberValue(value.currentWinStreak))),
+    distinctOpponents: Math.max(0, Math.floor(numberValue(value.distinctOpponents))),
+    distinctOpponentsWon: Math.max(0, Math.floor(numberValue(value.distinctOpponentsWon))),
+    draws: Math.max(0, Math.floor(numberValue(value.draws))),
+    goalsAgainst: Math.max(0, Math.floor(numberValue(value.goalsAgainst))),
+    goalsFor: Math.max(0, Math.floor(numberValue(value.goalsFor))),
+    losses: Math.max(0, Math.floor(numberValue(value.losses))),
+    matches: Math.max(0, Math.floor(numberValue(value.matches))),
+    maxUnbeatenStreak: Math.max(0, Math.floor(numberValue(value.maxUnbeatenStreak))),
+    maxWinStreak: Math.max(0, Math.floor(numberValue(value.maxWinStreak))),
+    revision: Math.max(0, Math.floor(numberValue(value.revision))),
+    scope: value.scope === "external" ? "external" : "internal",
+    updatedAt: text(value.updatedAt),
+    wins: Math.max(0, Math.floor(numberValue(value.wins))),
+  };
+}
+
+function teamAchievementProgress(value: unknown): TeamAchievementProgress | null {
+  if (!isRecord(value) || !text(value.key) || !text(value.title)) return null;
+  return {
+    animationKey: text(value.animationKey),
+    boxRarity: rarity(value.boxRarity),
+    category: text(value.category),
+    currentValue: Math.max(0, Math.floor(numberValue(value.currentValue))),
+    description: text(value.description),
+    displayPriority: Math.max(0, Math.floor(numberValue(value.displayPriority))),
+    family: text(value.family),
+    iconKey: nullableText(value.iconKey),
+    key: text(value.key),
+    presentationKey: text(value.presentationKey),
+    rarity: rarity(value.rarity),
+    repeatable: value.repeatable === true,
+    rewardPoolVersion: Math.max(1, Math.floor(numberValue(value.rewardPoolVersion))),
+    scope: value.scope === "external" ? "external" : "internal",
+    threshold: Math.max(1, Math.floor(numberValue(value.threshold))),
+    title: text(value.title),
   };
 }
 
@@ -488,6 +648,7 @@ export function normalizeProgressionSnapshot(value: unknown): ProgressionSnapsho
   const groupId = text(value.groupId);
   if (!groupId) return null;
   return {
+    catalogKey: text(value.catalogKey),
     confirmedRevision: Math.max(0, Math.floor(numberValue(value.confirmedRevision))),
     groupId,
     groupRevision: Math.max(0, Math.floor(numberValue(value.groupRevision))),
@@ -499,6 +660,9 @@ export function normalizeProgressionSnapshot(value: unknown): ProgressionSnapsho
     personalAchievements: Array.isArray(value.personalAchievements)
       ? value.personalAchievements.map(achievement).filter((item): item is ProgressionAchievement => Boolean(item))
       : [],
+    personalStats: Array.isArray(value.personalStats)
+      ? value.personalStats.map(playerStats).filter((item): item is PlayerProgressionStats => Boolean(item))
+      : [],
     rewardEconomy: rewardEconomy(value.rewardEconomy),
     rewards: Array.isArray(value.rewards)
       ? value.rewards.map(normalizePendingReward).filter((item): item is PendingReward => Boolean(item))
@@ -506,6 +670,14 @@ export function normalizeProgressionSnapshot(value: unknown): ProgressionSnapsho
     serverSequence: Math.max(0, Math.floor(numberValue(value.serverSequence))),
     teamAchievements: Array.isArray(value.teamAchievements)
       ? value.teamAchievements.map(achievement).filter((item): item is ProgressionAchievement => Boolean(item))
+      : [],
+    teamAchievementCatalog: Array.isArray(value.teamAchievementCatalog)
+      ? value.teamAchievementCatalog
+        .map(teamAchievementProgress)
+        .filter((item): item is TeamAchievementProgress => Boolean(item))
+      : [],
+    teamStats: Array.isArray(value.teamStats)
+      ? value.teamStats.map(teamStats).filter((item): item is TeamProgressionStats => Boolean(item))
       : [],
     updatedAt: text(value.updatedAt),
     userRevision: Math.max(0, Math.floor(numberValue(value.userRevision))),

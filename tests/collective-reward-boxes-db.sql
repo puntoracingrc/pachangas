@@ -198,6 +198,7 @@ select pg_temp.assert_true(
    join public.pachanga_achievement_definitions definitions
      on definitions.id = grants.definition_id
    where grants.origin_match_fact_id = :'five_nil_fact'::uuid
+     and grants.subject_type = 'team'
      and definitions.category = 'match_goals') = 1,
   'Only the highest collective goal tier may be granted per match'
 );
@@ -293,7 +294,7 @@ select pg_temp.assert_true(
       on definitions.id = grants.definition_id
     where grants.origin_match_fact_id = :'five_nil_fact'::uuid
       and grants.subject_id = '82600000-0000-0000-0000-000000000001'
-      and definitions.achievement_key = 'player.external.hat_tricks.001'
+      and definitions.achievement_key = 'player.all.hat_tricks.001'
       and grants.occurrence_metadata ->> 'displayTitle' = 'Primer hat-trick'
   ) and exists (
     select 1 from public.pachanga_achievement_grants grants
@@ -301,7 +302,7 @@ select pg_temp.assert_true(
       on definitions.id = grants.definition_id
     where grants.origin_match_fact_id = :'five_nil_fact'::uuid
       and grants.subject_id = '82600000-0000-0000-0000-000000000002'
-      and definitions.achievement_key = 'player.external.braces.001'
+      and definitions.achievement_key = 'player.all.braces.001'
       and grants.occurrence_metadata ->> 'displayTitle' = 'Primer doblete'
   ),
   'Pedro and Juan must receive the first hat-trick and first double recognitions'
@@ -347,7 +348,7 @@ select pg_temp.assert_true(
      on definitions.id = grants.definition_id
    where grants.subject_id = '82600000-0000-0000-0000-000000000002'
      and grants.state = 'active'
-     and definitions.achievement_key = 'player.external.braces.001'),
+     and definitions.achievement_key = 'player.all.braces.001'),
   'A second double must create a second ordered occurrence'
 );
 select pg_temp.assert_true(
@@ -358,7 +359,7 @@ select pg_temp.assert_true(
      on definitions.id = grants.definition_id
    where grants.subject_id = '82600000-0000-0000-0000-000000000001'
      and grants.state = 'active'
-     and definitions.achievement_key = 'player.external.hat_tricks.001'),
+     and definitions.achievement_key = 'player.all.hat_tricks.001'),
   'Hat-tricks must distinguish the first occurrence from repetitions'
 );
 select pg_temp.assert_true(
@@ -368,9 +369,9 @@ select pg_temp.assert_true(
    where grants.subject_id = '82600000-0000-0000-0000-000000000001'
      and grants.state = 'active'
      and definitions.achievement_key in (
-       'player.external.pokers.001',
-       'player.external.repokers.001',
-       'player.external.double_hat_tricks.001'
+       'player.all.pokers.001',
+       'player.all.repokers.001',
+       'player.all.double_hat_tricks.001'
      )) = 3,
   'Poker, repoker and double hat-trick must each persist as repeatable occurrences'
 );
@@ -387,7 +388,7 @@ select pg_temp.assert_true(
     join public.pachanga_achievement_definitions definitions
       on definitions.id = grants.definition_id
     where grants.origin_match_fact_id = :'repoker_fact'::uuid
-      and definitions.achievement_key = 'player.external.repokers.001'
+      and definitions.achievement_key = 'player.all.repokers.001'
   ),
   'Five personal goals must create only the repoker occurrence in its family'
 );
@@ -399,7 +400,7 @@ select pg_temp.assert_true(
       on definitions.id = grants.definition_id
     where grants.subject_id = '82600000-0000-0000-0000-000000000001'
       and definitions.achievement_key in (
-        'player.external.goals.001', 'player.external.goals.010'
+        'player.all.goals.001', 'player.all.goals.010'
       )
       and grants.state = 'active'
     group by grants.subject_id

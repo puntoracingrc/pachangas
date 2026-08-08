@@ -33,6 +33,8 @@ type Membership = {
   role: "admin" | "owner" | "player";
 };
 
+type ProgressView = "achievements" | "records" | "stats";
+
 type CrestCss = CSSProperties & {
   "--crest-primary": string;
   "--crest-secondary": string;
@@ -54,6 +56,11 @@ function clientMetadata() {
     displayMode: currentClientDisplayMode(),
     surface: "team-identity",
   };
+}
+
+function progressionScopeLabel(scope: "all" | "external" | "internal") {
+  if (scope === "all") return "Trayectoria";
+  return scope === "external" ? "Rivales" : "Pachangas";
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -189,6 +196,7 @@ export default function TeamIdentityPage() {
   const [rewardSequenceIndex, setRewardSequenceIndex] = useState(0);
   const [openedReward, setOpenedReward] = useState<PendingReward | null>(null);
   const [sequenceRecognitions, setSequenceRecognitions] = useState<ProgressionAchievement[]>([]);
+  const [progressView, setProgressView] = useState<ProgressView>("achievements");
   const operationIds = useRef(new Map<string, string>());
   const handledRewardDeepLinks = useRef(new Set<string>());
 
@@ -475,6 +483,10 @@ export default function TeamIdentityPage() {
   const activePersonalAchievements = progression?.personalAchievements.filter((item) => item.state === "active") ?? [];
   const personalAchievementCatalog = progression?.personalAchievementCatalog ?? [];
   const unlockedPersonalAchievements = personalAchievementCatalog.filter((item) => item.unlocked).length;
+  const personalStats = progression?.personalStats.find((item) => item.scope === "all")
+    ?? progression?.personalStats[0]
+    ?? null;
+  const teamStats = progression?.teamStats ?? [];
   const pendingRewards = progression?.rewards.filter((reward) => reward.status === "pending") ?? [];
   const openedRewards = progression?.rewards.filter((reward) => reward.status === "opened") ?? [];
   const rewardEconomy = progression?.rewardEconomy ?? null;
@@ -611,13 +623,31 @@ export default function TeamIdentityPage() {
             </section>
           ) : null}
 
-          <section className={styles.progressBand}>
+          <nav className={styles.progressTabs} aria-label="Progresión">
+            {([
+              ["achievements", "Logros"],
+              ["stats", "Estadísticas"],
+              ["records", "Récords"],
+            ] as const).map(([value, label]) => (
+              <button
+                aria-pressed={progressView === value}
+                className={progressView === value ? styles.activeProgressTab : ""}
+                key={value}
+                type="button"
+                onClick={() => setProgressView(value)}
+              >
+                {label}
+              </button>
+            ))}
+          </nav>
+
+          {progressView === "achievements" ? <section className={styles.progressBand}>
             <div>
               <header><span>Logros del equipo</span><strong>{activeTeamAchievements.length}</strong></header>
               <div className={styles.achievementGrid}>
                 {activeTeamAchievements.map((achievement) => (
                   <article key={achievement.grantId}>
-                    <span>{achievement.scope === "external" ? "Rivales" : "Pachangas"} · {achievement.rarity}</span>
+                    <span>{progressionScopeLabel(achievement.scope)} · {achievement.rarity}</span>
                     <strong>{achievement.title}</strong>
                     <p>{achievement.description}</p>
                   </article>
@@ -638,7 +668,7 @@ export default function TeamIdentityPage() {
                     className={achievement.unlocked ? styles.achievementUnlocked : styles.achievementLocked}
                     key={achievement.key}
                   >
-                    <span>{achievement.scope === "external" ? "Rivales" : "Pachangas"} · {achievement.rarity}</span>
+                    <span>{progressionScopeLabel(achievement.scope)} · {achievement.rarity}</span>
                     <strong>{achievement.title}</strong>
                     <p>{achievement.description}</p>
                     <div
@@ -661,7 +691,7 @@ export default function TeamIdentityPage() {
                   </article>
                 )) : activePersonalAchievements.map((achievement) => (
                   <article className={styles.achievementUnlocked} key={achievement.grantId}>
-                    <span>{achievement.scope === "external" ? "Rivales" : "Pachangas"} · {achievement.rarity}</span>
+                    <span>{progressionScopeLabel(achievement.scope)} · {achievement.rarity}</span>
                     <strong>{achievement.title}</strong>
                     <p>{achievement.description}</p>
                   </article>
@@ -682,7 +712,71 @@ export default function TeamIdentityPage() {
                 </div>
               ) : null}
             </div>
-          </section>
+          </section> : null}
+
+          {progressView === "stats" ? (
+            <section className={styles.progressBand}>
+              <div>
+                <header><span>Mis estadísticas</span><strong>{personalStats?.appearances ?? 0} partidos</strong></header>
+                <div className={styles.statGrid}>
+                  <article><span>Victorias</span><strong>{personalStats?.wins ?? 0}</strong></article>
+                  <article><span>Empates</span><strong>{personalStats?.draws ?? 0}</strong></article>
+                  <article><span>Derrotas</span><strong>{personalStats?.losses ?? 0}</strong></article>
+                  <article><span>Goles</span><strong>{personalStats?.goals ?? 0}</strong></article>
+                  <article><span>Rivales</span><strong>{personalStats?.distinctOpponents ?? 0}</strong></article>
+                  <article><span>Rivales vencidos</span><strong>{personalStats?.distinctOpponentsWon ?? 0}</strong></article>
+                </div>
+              </div>
+              <div>
+                <header><span>Estadísticas del equipo</span><strong>{teamStats.length}</strong></header>
+                <div className={styles.scopeStats}>
+                  {teamStats.map((stats) => (
+                    <article key={stats.scope}>
+                      <header><span>{progressionScopeLabel(stats.scope)}</span><strong>{stats.matches}</strong></header>
+                      <div className={styles.statGrid}>
+                        <span>V {stats.wins}</span><span>E {stats.draws}</span><span>D {stats.losses}</span>
+                        <span>GF {stats.goalsFor}</span><span>GC {stats.goalsAgainst}</span>
+                        <span>Porterías a cero {stats.cleanSheets}</span>
+                      </div>
+                    </article>
+                  ))}
+                  {!teamStats.length ? <p className={styles.empty}>Las estadísticas se calculan al confirmar partidos.</p> : null}
+                </div>
+              </div>
+            </section>
+          ) : null}
+
+          {progressView === "records" ? (
+            <section className={styles.progressBand}>
+              <div>
+                <header><span>Mis récords</span><strong>Trayectoria</strong></header>
+                <div className={styles.statGrid}>
+                  <article><span>Mejor racha ganando</span><strong>{personalStats?.maxWinStreak ?? 0}</strong></article>
+                  <article><span>Mejor racha invicto</span><strong>{personalStats?.maxUnbeatenStreak ?? 0}</strong></article>
+                  <article><span>Dobletes</span><strong>{personalStats?.braces ?? 0}</strong></article>
+                  <article><span>Hat-tricks</span><strong>{personalStats?.hatTricks ?? 0}</strong></article>
+                  <article><span>Pókeres</span><strong>{personalStats?.pokers ?? 0}</strong></article>
+                  <article><span>Repókeres</span><strong>{personalStats?.repokers ?? 0}</strong></article>
+                </div>
+              </div>
+              <div>
+                <header><span>Récords del equipo</span><strong>Por competición</strong></header>
+                <div className={styles.scopeStats}>
+                  {teamStats.map((stats) => (
+                    <article key={stats.scope}>
+                      <header><span>{progressionScopeLabel(stats.scope)}</span><strong>{stats.distinctOpponents} rivales</strong></header>
+                      <div className={styles.statGrid}>
+                        <span>Racha ganando {stats.maxWinStreak}</span>
+                        <span>Racha invicto {stats.maxUnbeatenStreak}</span>
+                        <span>Goleadas {stats.bigWins}</span>
+                        <span>Mínimas {stats.closeWins}</span>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              </div>
+            </section>
+          ) : null}
 
           <section className={styles.collectionBand}>
             <header><span>Colección del equipo</span><strong>{crest.catalog.filter((item) => item.unlocked).length}/{crest.catalog.length}</strong></header>

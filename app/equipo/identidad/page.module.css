@@ -520,6 +520,75 @@
   border-bottom: 1px solid rgba(204, 229, 216, 0.2);
 }
 
+.progressTabs {
+  width: min(1440px, 100%);
+  margin-inline: auto;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  padding-top: 22px;
+}
+
+.progressTabs button {
+  min-height: 42px;
+  border: 1px solid rgba(194, 218, 205, 0.22);
+  border-radius: 6px;
+  background: rgba(15, 31, 24, 0.72);
+  color: #b9c8c0;
+  font: inherit;
+  font-weight: 800;
+}
+
+.progressTabs .activeProgressTab {
+  border-color: #84cc16;
+  background: rgba(41, 61, 31, 0.9);
+  color: #efffcf;
+}
+
+.statGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.statGrid article,
+.scopeStats > article {
+  min-width: 0;
+  border: 1px solid rgba(194, 218, 205, 0.2);
+  border-radius: 6px;
+  background: rgba(15, 31, 24, 0.72);
+  padding: 12px;
+}
+
+.statGrid article span,
+.statGrid article strong {
+  display: block;
+}
+
+.statGrid article span,
+.scopeStats span {
+  color: #9eb1a7;
+  font-size: 0.76rem;
+}
+
+.statGrid article strong {
+  margin-top: 4px;
+  font-size: 1.25rem;
+}
+
+.scopeStats {
+  display: grid;
+  gap: 8px;
+}
+
+.scopeStats > article > header {
+  margin-bottom: 10px;
+}
+
+.scopeStats .statGrid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
 .achievementGrid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
@@ -736,6 +805,11 @@
   }
 
   .economySummary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .statGrid,
+  .scopeStats .statGrid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 

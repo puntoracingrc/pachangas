@@ -792,8 +792,8 @@ select pg_temp.assert_true(
      and grants.subject_id = '82500000-0000-0000-0000-000000000001'
      and grants.state = 'active'
      and definitions.achievement_key in (
-       'player.internal.matches.005',
-       'player.internal.matches.025'
+       'player.all.matches.005',
+       'player.all.matches.025'
      )) = 2,
   'Five and twenty-five appearances must each grant one active achievement'
 );
@@ -811,8 +811,8 @@ select pg_temp.assert_true(
     from jsonb_array_elements(
       :'individual_catalog_snapshot'::jsonb -> 'personalAchievementCatalog'
     ) achievements(value)
-    where achievements.value ->> 'key' = 'player.internal.matches.025'
-      and (achievements.value ->> 'currentValue')::integer = 26
+    where achievements.value ->> 'key' = 'player.all.matches.025'
+      and (achievements.value ->> 'currentValue')::integer = 30
       and (achievements.value ->> 'progressPercent')::integer = 100
       and (achievements.value ->> 'unlocked')::boolean
   ),

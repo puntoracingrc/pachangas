@@ -343,8 +343,11 @@ const manualFlows = [
     steps: [
       "Los logros individuales son reconocimiento personal: quedan en el historial y muestran su contador, pero no entregan cajas, puntos ni cosméticos.",
       "Doblete, hat-trick, póker, repóker y doble hat-trick pueden repetirse. En cada partido solo cuenta el mayor de esos logros que corresponda a los goles asignados al jugador.",
+      "En Identidad del equipo puedes separar Logros, Estadísticas y Récords. Allí aparecen partidos, victorias, goles, rivales distintos y mejores rachas calculados por el servidor.",
+      "Los hitos personales de partidos, victorias, goles, rachas y rivales se guardan para tu historial, pero siguen sin entregar cajas.",
       "Los goles no asignados sí cuentan para el marcador y los logros colectivos del equipo, pero no inventan un logro individual.",
       "Los logros colectivos se guardan al confirmar el resultado y generan una caja separada para cada participante real del partido.",
+      "Un 0-0 cuenta como portería a cero colectiva. En goles del equipo solo se concede el escalón mayor del partido, por ejemplo Manita al marcar cinco.",
       "La caja queda pendiente aunque cierres la app o cambies de dispositivo. Su contenido permanece oculto y solo se concede una vez cuando la abres.",
       "Una caja puede contener puntos de jugador, un cosmético personal o ambos. Los puntos quedan registrados con la caja, el partido y el logro que los originó.",
       "Si recibes un cosmético que ya posees, el servidor lo convierte automáticamente en puntos; nunca acumulas copias idénticas.",
