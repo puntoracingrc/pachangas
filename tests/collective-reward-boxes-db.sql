@@ -97,7 +97,7 @@ insert into auth.users(id, email)
 select
   ('81100000-0000-0000-0000-' || lpad(value::text, 12, '0'))::uuid,
   'box-player-' || value::text || '@example.test'
-from generate_series(1, 11) value;
+from generate_series(1, 30) value;
 
 insert into public.pachanga_groups(id, owner_id, name, team_code, payload)
 values (
@@ -111,7 +111,7 @@ values (
       'ownerUserId', ('81100000-0000-0000-0000-' || lpad(value::text, 12, '0'))::text,
       'position', case when value = 10 then 'POR' else 'DEL' end
     ) order by value)
-    from generate_series(1, 11) value
+    from generate_series(1, 30) value
   ))
 );
 
@@ -120,7 +120,7 @@ select '82100000-0000-0000-0000-000000000001',
   ('81100000-0000-0000-0000-' || lpad(value::text, 12, '0'))::uuid,
   case when value = 1 then 'owner' else 'player' end,
   'Jugador ' || value::text
-from generate_series(1, 11) value;
+from generate_series(1, 30) value;
 
 insert into public.pachanga_player_profiles(
   id, user_id, display_name, position, current_overall, base_overall,
@@ -138,14 +138,14 @@ select
     'passing', 60 + value, 'dribbling', 60 + value,
     'defending', 60 + value, 'physical', 60 + value
   ), 80, 'pachangas-rating-v2'
-from generate_series(1, 11) value;
+from generate_series(1, 30) value;
 
 create temporary table rating_before as
 select id, current_overall, calibrated_overall, current_facets,
   rating_reliability, rating_engine_version
 from public.pachanga_player_profiles
 where id between '82600000-0000-0000-0000-000000000001'::uuid
-  and '82600000-0000-0000-0000-000000000011'::uuid;
+  and '82600000-0000-0000-0000-000000000030'::uuid;
 
 select pg_temp.assert_true(
   not has_table_privilege(
@@ -271,9 +271,10 @@ select pg_temp.assert_true(
   not exists (
     select 1 from public.pachanga_reward_recipients boxes
     where boxes.match_fact_id = :'five_nil_fact'::uuid
-      and boxes.user_id = '81100000-0000-0000-0000-000000000011'
+      and boxes.user_id between '81100000-0000-0000-0000-000000000011'::uuid
+        and '81100000-0000-0000-0000-000000000030'::uuid
   ),
-  'A roster member who did not play must receive zero boxes'
+  'Twenty roster members who did not participate must receive zero boxes'
 );
 select pg_temp.assert_true(
   (select count(*)
@@ -284,6 +285,26 @@ select pg_temp.assert_true(
      and grants.subject_type = 'player' and grants.state = 'active'
      and definitions.parameters ->> 'ruleKind' = 'player_match_goals') = 2,
   'Pedro with three and Juan with two goals must receive only one personal scoring occurrence each'
+);
+select pg_temp.assert_true(
+  exists (
+    select 1 from public.pachanga_achievement_grants grants
+    join public.pachanga_achievement_definitions definitions
+      on definitions.id = grants.definition_id
+    where grants.origin_match_fact_id = :'five_nil_fact'::uuid
+      and grants.subject_id = '82600000-0000-0000-0000-000000000001'
+      and definitions.achievement_key = 'player.external.hat_tricks.001'
+      and grants.occurrence_metadata ->> 'displayTitle' = 'Primer hat-trick'
+  ) and exists (
+    select 1 from public.pachanga_achievement_grants grants
+    join public.pachanga_achievement_definitions definitions
+      on definitions.id = grants.definition_id
+    where grants.origin_match_fact_id = :'five_nil_fact'::uuid
+      and grants.subject_id = '82600000-0000-0000-0000-000000000002'
+      and definitions.achievement_key = 'player.external.braces.001'
+      and grants.occurrence_metadata ->> 'displayTitle' = 'Primer doblete'
+  ),
+  'Pedro and Juan must receive the first hat-trick and first double recognitions'
 );
 
 -- Reprocessing a canonical fact is idempotent for achievements and boxes.
@@ -509,6 +530,11 @@ insert into public.pachanga_reward_economy_versions(
 
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '81100000-0000-0000-0000-000000000002', true);
+select pg_temp.assert_true(
+  (select count(*) from public.pachanga_reward_recipients boxes
+   where boxes.user_id = '81100000-0000-0000-0000-000000000001') = 0,
+  'A player must not read another player private boxes'
+);
 select pg_temp.expect_error(format(
   'select public.open_pachanga_reward_box_v2(%L::uuid, %L::uuid, 1, %L::jsonb)',
   :'opened_box_id', '84100000-0000-0000-0000-000000000099', '{}'
@@ -517,6 +543,22 @@ select pg_temp.expect_error(
   'insert into public.pachanga_player_points_ledger(player_profile_id,user_id,delta,balance_after,source_type,source_id,idempotency_key) values (''82600000-0000-0000-0000-000000000002'',''81100000-0000-0000-0000-000000000002'',1000,1000,''admin_adjustment'',''82600000-0000-0000-0000-000000000002'',''forged'')',
   'clients cannot forge point ledger entries'
 );
+select pg_temp.expect_error(
+  'insert into public.pachanga_player_point_accounts(player_profile_id,user_id,balance,lifetime_earned,lifetime_spent) values (''82600000-0000-0000-0000-000000000002'',''81100000-0000-0000-0000-000000000002'',1000,1000,0)',
+  'clients cannot forge point balances'
+);
+select pg_temp.expect_error(
+  'insert into public.pachanga_player_reward_inventory(player_profile_id,reward_kind,reward_key,state) values (''82600000-0000-0000-0000-000000000002'',''player_cosmetic'',''symbol.crown'',''unlocked'')',
+  'clients cannot forge cosmetics'
+);
+select pg_temp.expect_error(format(
+  'update public.pachanga_reward_recipients set box_rarity = %L where box_id = %L::uuid',
+  'legendary', :'opened_box_id'
+), 'clients cannot change box rarity');
+select pg_temp.expect_error(format(
+  'update private.pachanga_reward_box_contents set reward_payload = %L::jsonb where box_id = %L::uuid',
+  '{"reward":{"kind":"points","points":9999}}', :'opened_box_id'
+), 'clients cannot change sealed box contents');
 reset role;
 
 set local role authenticated;
@@ -565,6 +607,9 @@ select public.open_pachanga_reward_box_v2(
   '84100000-0000-0000-0000-000000000003', 1,
   '{"sessionId":"box-device-return"}'::jsonb
 ) as cosmetic_open \gset
+select public.get_pachanga_progression_snapshot_v1(
+  '82100000-0000-0000-0000-000000000001'
+) as two_opened_snapshot \gset
 select public.open_pachanga_reward_box_v2(
   :'combination_box_id'::uuid,
   '84100000-0000-0000-0000-000000000004', 1,
@@ -600,6 +645,15 @@ select pg_temp.assert_true(
    where boxes.value ->> 'matchFactId' = :'five_nil_fact'
      and boxes.value ->> 'status' = 'pending') = 3,
   'Closing after one box and returning must leave the remaining sequence pending'
+);
+select pg_temp.assert_true(
+  (select count(*) from jsonb_array_elements(
+    :'two_opened_snapshot'::jsonb -> 'rewards'
+  ) boxes(value)
+   where boxes.value ->> 'boxId' in (
+     :'opened_box_id', :'cosmetic_box_id', :'combination_box_id', :'duplicate_box_id'
+   ) and boxes.value ->> 'status' = 'pending') = 2,
+  'Closing after two of four boxes must resume with exactly two pending'
 );
 select pg_temp.assert_true(
   (:'cosmetic_open'::jsonb -> 'rewardPayload' -> 'grant' ->> 'cosmeticGranted')::boolean

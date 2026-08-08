@@ -14,6 +14,7 @@ import {
   TEAM_IDENTITY_CACHE_MAX_AGE_MS,
   normalizeProgressionSnapshot,
   normalizeTeamCrestSnapshot,
+  opensPendingRewardSequence,
   readTeamIdentityCache,
   writeTeamIdentityCache,
 } from "../app/team-identity-contract";
@@ -201,6 +202,17 @@ test("derived caches are scoped, finite and never manufacture canonical state", 
   assert.equal(readTeamIdentityCache(storage, "user-a", "group-a", 1_000 + TEAM_IDENTITY_CACHE_MAX_AGE_MS + 1), null);
 });
 
+test("every reward notification deep link opens the complete pending sequence", () => {
+  assert.equal(opensPendingRewardSequence("?grupo=group-a&rewards=pending"), true);
+  assert.equal(opensPendingRewardSequence("?reward=legacy-grant"), true);
+  assert.equal(opensPendingRewardSequence("?grupo=group-a&achievements=latest"), false);
+  assert.equal(opensPendingRewardSequence("?grupo=group-a"), false);
+
+  const identityUi = readFileSync(new URL("../app/equipo/identidad/page.tsx", import.meta.url), "utf8");
+  assert.match(identityUi, /handledRewardDeepLinks/);
+  assert.match(identityUi, /canonical\.rewards\.filter\(\(reward\) => reward\.status === "pending"\)/);
+});
+
 test("the PWA bridge classifies every new mutation and leaves canonical reads available", () => {
   const endpoint = "https://demo.supabase.co/rest/v1/rpc/";
   const writes = [
@@ -294,6 +306,7 @@ test("collective boxes separate personal recognition, team occurrences and seale
   assert.match(sql, /if selected\.revision <> expected_revision/);
   assert.match(sql, /pg_advisory_xact_lock\(hashtextextended\([\s\S]*'reward-box-open:'/);
   assert.match(sql, /'postmatch_reward_boxes'[\s\S]*'Tus premios del partido están listos'/);
+  assert.match(sql, /'\/equipo\/identidad\?grupo='[\s\S]*'&rewards=pending'/);
   assert.match(sql, /openedBoxesPreserved/);
   assert.doesNotMatch(sql, /update public\.pachanga_player_profiles/i);
   assert.doesNotMatch(sql, /calibrated_(overall|facets)\s*=/i);

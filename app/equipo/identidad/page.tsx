@@ -10,6 +10,7 @@ import {
   normalizePendingReward,
   normalizeProgressionSnapshot,
   normalizeTeamCrestSnapshot,
+  opensPendingRewardSequence,
   readTeamIdentityCache,
   writeTeamIdentityCache,
   type CrestCatalogItem,
@@ -189,6 +190,7 @@ export default function TeamIdentityPage() {
   const [openedReward, setOpenedReward] = useState<PendingReward | null>(null);
   const [sequenceRecognitions, setSequenceRecognitions] = useState<ProgressionAchievement[]>([]);
   const operationIds = useRef(new Map<string, string>());
+  const handledRewardDeepLinks = useRef(new Set<string>());
 
   const persistCache = useCallback((nextCrest: TeamCrestSnapshot | null, nextProgression: ProgressionSnapshot | null) => {
     if (!userId || !selectedGroupId) return;
@@ -231,6 +233,19 @@ export default function TeamIdentityPage() {
       return;
     }
     setProgression(canonical);
+    if (
+      opensPendingRewardSequence(window.location.search)
+      && !handledRewardDeepLinks.current.has(canonical.groupId)
+    ) {
+      handledRewardDeepLinks.current.add(canonical.groupId);
+      const pending = canonical.rewards.filter((reward) => reward.status === "pending");
+      if (pending.length) {
+        setRewardSequence(pending);
+        setRewardSequenceIndex(0);
+        setOpenedReward(null);
+        setSequenceRecognitions([]);
+      }
+    }
     setCrest((current) => {
       persistCache(current, canonical);
       return current;

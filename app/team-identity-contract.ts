@@ -1,6 +1,11 @@
 export const TEAM_IDENTITY_CACHE_VERSION = "team-identity-v2";
 export const TEAM_IDENTITY_CACHE_MAX_AGE_MS = 15 * 60 * 1000;
 
+export function opensPendingRewardSequence(search: string) {
+  const params = new URLSearchParams(search);
+  return params.get("rewards") === "pending" || Boolean(params.get("reward"));
+}
+
 export type CrestDesign = {
   adornmentKey: string | null;
   borderKey: string;
