@@ -80,7 +80,18 @@ No existe cálculo definitivo local, cola offline deportiva ni escritura directa
 - Realtime: la apertura produjo un `UPDATE` canónico de `pachanga_progression_user_state` con revisión monotónica.
 - Advisors: sin avisos nuevos atribuibles a V1.1. Permanecen avisos previos del proyecto; las RPC de apertura autenticadas son superficie pública intencional y validan actor, caja, revisión e idempotencia.
 
-Los resultados de producción se completarán en este informe durante el flujo de entrega.
+## Producción
+
+- PR `#113`: fusionado mediante squash.
+- SHA de `main`: `a80f993b478d3703682b1295dcc7604bbf4e5e78`.
+- Migración remota: `20260808205638_achievement_catalog_v3`, alineada con staging y repositorio.
+- Vercel Production: `READY` en el deployment `dpl_B4HhjWGARe14jSQfB7yzx2vXFw2F`.
+- Dominio canónico: `https://pachangasiq.com`.
+- Smoke SQL: 45 definiciones individuales V2 activas, 60 colectivas V3 activas, Dominio absoluto único y cero definiciones colectivas V2 activas.
+- Rating V2: sus cinco campos canónicos permanecen presentes y la migración no los modifica.
+- Advisors posteriores: ningún aviso nuevo atribuible a V1.1.
+- Smoke web: escritorio, móvil vertical y móvil horizontal sin overflow global, errores de consola ni errores de runtime.
+- Datos de QA en staging: dos usuarios, dos grupos, perfiles, partido, grants y cajas sintéticas eliminados tras la prueba.
 
 ## Rutas del diff
 
