@@ -301,7 +301,22 @@ export function NotificationCenter() {
                       </>
                     ) : null}
                     {notification.actionUrl ? (
-                      <Link href={notification.actionUrl} onClick={() => void markRead(notification)}>
+                      <Link
+                        href={notification.actionUrl}
+                        onClick={(event) => {
+                          const target = new URL(notification.actionUrl!, window.location.origin);
+                          if (
+                            target.pathname === window.location.pathname
+                            && target.searchParams.get("rewards") === "pending"
+                          ) {
+                            event.preventDefault();
+                            window.history.pushState({}, "", target);
+                            window.dispatchEvent(new Event("pachangas:reward-deep-link"));
+                          }
+                          setOpen(false);
+                          void markRead(notification);
+                        }}
+                      >
                         {notification.category === "achievement" ? "Descubrir" : notification.category === "challenge" ? "Ver reto" : "Abrir"}
                       </Link>
                     ) : null}

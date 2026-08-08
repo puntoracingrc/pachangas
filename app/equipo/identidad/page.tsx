@@ -343,6 +343,16 @@ export default function TeamIdentityPage() {
     };
   }, [loadCrest, loadProgression, selectedGroupId, userId]);
 
+  useEffect(() => {
+    const openRewardDeepLink = () => {
+      if (!selectedGroupId || !opensPendingRewardSequence(window.location.search)) return;
+      handledRewardDeepLinks.current.delete(selectedGroupId);
+      void loadProgression();
+    };
+    window.addEventListener("pachangas:reward-deep-link", openRewardDeepLink);
+    return () => window.removeEventListener("pachangas:reward-deep-link", openRewardDeepLink);
+  }, [loadProgression, selectedGroupId]);
+
   function operationIdFor(fingerprint: string) {
     const existing = operationIds.current.get(fingerprint);
     if (existing) return existing;

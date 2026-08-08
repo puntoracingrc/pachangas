@@ -81,6 +81,8 @@ test("the notification center exposes unread count, Realtime refresh and categor
   assert.match(center, /notification-filters/);
   assert.match(center, /selectedCategory/);
   assert.match(center, /href="\/perfil\/avisos"/);
+  assert.match(center, /pachangas:reward-deep-link/);
+  assert.match(center, /target\.searchParams\.get\("rewards"\) === "pending"/);
   assert.match(css, /\.notification-filters/);
   assert.match(css, /\.notification-preferences-page/);
 });

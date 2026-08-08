@@ -210,6 +210,8 @@ test("every reward notification deep link opens the complete pending sequence", 
 
   const identityUi = readFileSync(new URL("../app/equipo/identidad/page.tsx", import.meta.url), "utf8");
   assert.match(identityUi, /handledRewardDeepLinks/);
+  assert.match(identityUi, /addEventListener\("pachangas:reward-deep-link"/);
+  assert.match(identityUi, /handledRewardDeepLinks\.current\.delete\(selectedGroupId\)/);
   assert.match(identityUi, /canonical\.rewards\.filter\(\(reward\) => reward\.status === "pending"\)/);
 });
 
