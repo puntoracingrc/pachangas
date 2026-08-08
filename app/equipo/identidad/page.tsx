@@ -60,7 +60,7 @@ function clientMetadata() {
 
 function progressionScopeLabel(scope: "all" | "external" | "internal") {
   if (scope === "all") return "Trayectoria";
-  return scope === "external" ? "Rivales" : "Pachangas";
+  return scope === "external" ? "Retos" : "Pachangas";
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -812,7 +812,7 @@ export default function TeamIdentityPage() {
         open={Boolean(currentSequenceReward)}
         onClose={closeRewardSequence}
         eyebrow={currentSequenceReward
-          ? `Caja ${rewardSequenceIndex + 1} de ${rewardSequence.length} · ${currentSequenceReward.boxRarity}`
+          ? `Caja ${rewardSequenceIndex + 1} de ${rewardSequence.length} · ${currentSequenceReward.rewardComponent?.label ?? currentSequenceReward.boxRarity}`
           : undefined}
         title={currentSequenceReward?.achievement.title}
         description={openedReward
