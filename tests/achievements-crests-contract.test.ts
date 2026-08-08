@@ -102,10 +102,12 @@ function progressionFixture() {
       description: "Participa en cinco partidos internos finalizados.",
       grantId: null,
       key: "player.internal.matches.005",
+      occurrenceCount: 0,
       progressPercent: 60,
       rarity: "common",
-      rewardKey: "badge.internal.five_matches",
-      rewardKind: "player_badge",
+      repeatable: false,
+      rewardKey: null,
+      rewardKind: "none",
       scope: "internal",
       threshold: 5,
       title: "Uno de los nuestros",
@@ -113,12 +115,18 @@ function progressionFixture() {
     }],
     personalAchievements: [],
     rewards: [{
-      achievement: { awardedAt: "2026-08-03T21:00:00.000Z", description: "Primer partido", key: "team.external.matches.001", rarity: "common", title: "Primer rival" },
+      achievement: { awardedAt: "2026-08-03T21:00:00.000Z", description: "Primer partido", isFirst: true, key: "team.external.matches.001", occurredAt: "2026-08-03T20:00:00.000Z", rarity: "common", sequenceCount: 1, title: "Primer rival" },
+      boxId: "box-1",
+      generatedAt: "2026-08-03T21:00:00.000Z",
+      matchFactId: "fact-1",
       openedAt: null,
       recipientRevision: 1,
+      rewardGrantedAt: null,
       rewardGrantId: "reward-1",
-      rewardKey: "symbol.lightning",
-      rewardKind: "team_cosmetic",
+      rewardKey: "box.collective.common",
+      rewardKind: "collective_box",
+      rewardPayload: null,
+      sourceCorrection: null,
       status: "pending",
     }],
     serverSequence: 19,
@@ -183,6 +191,7 @@ test("the PWA bridge classifies every new mutation and leaves canonical reads av
     "cancel_pachanga_external_match_v1",
     "complete_pachanga_external_scorers_v1",
     "confirm_pachanga_external_result_v1",
+    "open_pachanga_reward_box_v2",
     "open_pachanga_reward_v1",
     "propose_pachanga_external_result_change_v1",
     "publish_pachanga_external_result_v1",
@@ -255,6 +264,25 @@ test("individual achievement catalog adds canonical milestones and exact doubles
   assert.doesNotMatch(sql, /calibrated_(overall|facets)\s*=/i);
 });
 
+test("collective boxes separate personal recognition, team occurrences and sealed rewards", () => {
+  const sql = readFileSync(new URL("../supabase/migrations/20260808115100_collective_reward_boxes_v2.sql", import.meta.url), "utf8");
+  assert.match(sql, /set reward_kind = 'none', reward_key = null[\s\S]*subject_type = 'player'/);
+  assert.match(sql, /'PLAYER_POKERS'[\s\S]*'PLAYER_REPOKERS'[\s\S]*'PLAYER_DOUBLE_HAT_TRICKS'/);
+  assert.match(sql, /'ruleKind', 'player_match_goals'/);
+  assert.match(sql, /order by definitions\.threshold desc[\s\S]*limit 1/);
+  assert.match(sql, /'ruleKind', 'team_match_goals'/);
+  assert.match(sql, /create table if not exists private\.pachanga_reward_box_contents/);
+  assert.match(sql, /revoke all on table private\.pachanga_reward_box_contents[\s\S]*authenticated/);
+  assert.match(sql, /from public\.pachanga_progression_player_match_facts player_facts[\s\S]*player_facts\.state = 'active'/);
+  assert.match(sql, /create or replace function public\.open_pachanga_reward_box_v2/);
+  assert.match(sql, /if selected\.revision <> expected_revision/);
+  assert.match(sql, /pg_advisory_xact_lock\(hashtextextended\([\s\S]*'reward-box-open:'/);
+  assert.match(sql, /'postmatch_reward_boxes'[\s\S]*'Tus premios del partido están listos'/);
+  assert.match(sql, /openedBoxesPreserved/);
+  assert.doesNotMatch(sql, /update public\.pachanga_player_profiles/i);
+  assert.doesNotMatch(sql, /calibrated_(overall|facets)\s*=/i);
+});
+
 test("crest SQL provides five base shapes, immutable versions and server-side unlock checks", () => {
   const sql = readFileSync(new URL("../supabase/migrations/20260804023534_team_crest_identity_mvp.sql", import.meta.url), "utf8");
   assert.match(sql, /create table if not exists public\.pachanga_team_crest_drafts/);
@@ -297,7 +325,8 @@ test("client surfaces write only through RPC and subscribe to revision rows", ()
   assert.match(externalUi, /\.rpc\("publish_pachanga_external_result_v1"/);
   assert.match(externalUi, /table: "pachanga_external_match_group_state"/);
   assert.match(identityUi, /\.rpc\("save_pachanga_team_crest_draft_v1"/);
-  assert.match(identityUi, /\.rpc\("open_pachanga_reward_v1"/);
+  assert.match(identityUi, /\.rpc\("open_pachanga_reward_box_v2"/);
+  assert.match(identityUi, /beginRewardSequence\(pendingRewards\)/);
   assert.match(identityUi, /table: "pachanga_progression_group_state"/);
   assert.match(identityUi, /table: "pachanga_progression_user_state"/);
   assert.doesNotMatch(externalUi, /\.from\("pachanga_external_[^"]+"\)\s*\.(insert|update|delete)/);

@@ -199,6 +199,11 @@ where id in (${challengeIds});
 
 const cleanupSql = `
 delete from public.pachanga_reward_open_receipts where actor_user_id in (${userIds});
+delete from private.pachanga_reward_box_contents contents
+using public.pachanga_reward_recipients recipients, public.pachanga_reward_grants rewards
+where contents.box_id = recipients.box_id
+  and recipients.reward_grant_id = rewards.id
+  and rewards.group_id in (${groupIds});
 delete from public.pachanga_reward_recipients recipients
 using public.pachanga_reward_grants rewards
 where recipients.reward_grant_id = rewards.id and rewards.group_id in (${groupIds});
@@ -463,6 +468,7 @@ try {
     await runOk(
       `select coalesce(jsonb_agg(jsonb_build_object(
         'id', recipients.reward_grant_id,
+        'boxId', recipients.box_id,
         'revision', recipients.revision,
         'key', rewards.reward_key
       ) order by rewards.reward_key), '[]'::jsonb)
@@ -482,8 +488,8 @@ try {
 
   const replaySql = authenticatedSql(
     homeOwnerId,
-    `select public.open_pachanga_reward_v1(
-      ${sqlText(replayReward.id)}::uuid,
+    `select public.open_pachanga_reward_box_v2(
+      ${sqlText(replayReward.boxId)}::uuid,
       ${sqlText(rewardReplayOperationId)}::uuid,
       ${Number(replayReward.revision)},
       ${sqlJson({ sessionId: "reward-replay-device", surface: "achievements-concurrency-test" })}
@@ -522,8 +528,8 @@ try {
 
   const rewardRaceSql = (operationId, sessionId) => authenticatedSql(
     homeOwnerId,
-    `select public.open_pachanga_reward_v1(
-      ${sqlText(staleRaceReward.id)}::uuid,
+    `select public.open_pachanga_reward_box_v2(
+      ${sqlText(staleRaceReward.boxId)}::uuid,
       ${sqlText(operationId)}::uuid,
       ${Number(staleRaceReward.revision)},
       ${sqlJson({ sessionId, surface: "achievements-concurrency-test" })}
@@ -534,13 +540,32 @@ try {
     runSql(rewardRaceSql(rewardRaceOperationBId, "reward-device-b"), "reward device B"),
   ]);
   const rewardWinners = rewardRace.filter((result) => result.code === 0);
-  const rewardLosers = rewardRace.filter((result) => result.code !== 0);
-  assert.equal(rewardWinners.length, 1, `Exactly one reward revision must win: ${JSON.stringify(rewardRace)}`);
-  assert.equal(rewardLosers.length, 1, `Exactly one stale reward operation must fail: ${JSON.stringify(rewardRace)}`);
-  assert.match(
-    rewardLosers[0].stderr,
-    /Reward revision is newer|could not serialize|could not obtain lock/i,
+  assert.equal(rewardWinners.length, 2, `Both devices must converge on the opened box: ${JSON.stringify(rewardRace)}`);
+  const raceResponses = rewardWinners.map((result) => lastJson(result.stdout, result.label));
+  assert.equal(
+    raceResponses.filter((response) => response.alreadyOpened === false).length,
+    1,
+    "Exactly one device must perform the transition",
   );
+  assert.equal(
+    raceResponses.filter((response) => response.alreadyOpened === true).length,
+    1,
+    "The other device must receive the canonical already-opened state",
+  );
+  const raceEvidence = lastJson(
+    await runOk(
+      `select jsonb_build_object(
+        'receipts', (select count(*) from public.pachanga_reward_open_receipts
+          where box_id = ${sqlText(staleRaceReward.boxId)}::uuid),
+        'events', (select count(*) from public.pachanga_progression_events
+          where event_type = 'reward_opened'
+            and payload ->> 'boxId' = ${sqlText(staleRaceReward.boxId)})
+      )`,
+      "reward race evidence",
+    ),
+    "reward race evidence",
+  );
+  assert.deepEqual(raceEvidence, { receipts: 2, events: 1 });
 } finally {
   await runOk(cleanupSql, "achievements concurrency fixture cleanup");
 }

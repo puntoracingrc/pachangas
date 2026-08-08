@@ -460,7 +460,7 @@ select pg_temp.assert_true(
   'Rejected scorer submissions must not change the canonical match'
 );
 
--- Team rewards snapshot current members exactly once; late members inherit inventory, not boxes.
+-- Collective boxes belong only to canonical participants; late members receive no box.
 select pg_temp.assert_true(
   (select count(*) from public.pachanga_reward_grants rewards
    where rewards.group_id = '82000000-0000-0000-0000-000000000001'
@@ -472,12 +472,20 @@ select pg_temp.assert_true(
     select 1
     from public.pachanga_reward_grants rewards
     join public.pachanga_reward_recipients recipients on recipients.reward_grant_id = rewards.id
+    join public.pachanga_achievement_grants grants on grants.id = rewards.achievement_grant_id
     where rewards.group_id = '82000000-0000-0000-0000-000000000001'
       and rewards.reward_kind = 'team_cosmetic'
-    group by rewards.id
-    having count(*) <> 3
+      and not exists (
+        select 1
+        from public.pachanga_progression_player_match_facts player_facts
+        join public.pachanga_player_profiles profiles on profiles.id = player_facts.player_profile_id
+        where player_facts.match_fact_id = grants.origin_match_fact_id
+          and player_facts.group_id = rewards.group_id
+          and player_facts.state = 'active'
+          and profiles.user_id = recipients.user_id
+      )
   ),
-  'Every collective reward must snapshot the three active members once'
+  'Collective boxes must belong exclusively to canonical participants'
 );
 
 insert into public.pachanga_group_members(group_id, user_id, role, display_name) values
@@ -493,15 +501,17 @@ select pg_temp.assert_true(
   'A later member must not receive retroactive reward openings'
 );
 select pg_temp.assert_true(
-  exists (
-    select 1 from jsonb_array_elements(:'late_snapshot'::jsonb -> 'collection') items(value)
-    where items.value ->> 'key' = 'symbol.lightning'
-      and (items.value ->> 'unlocked')::boolean
+  not exists (
+    select 1
+    from public.pachanga_team_cosmetic_inventory inventory
+    where inventory.group_id = '82000000-0000-0000-0000-000000000001'
+      and inventory.cosmetic_key = 'symbol.lightning'
+      and inventory.state = 'unlocked'
   ),
-  'A later member must use the collective inventory'
+  'A pending box must not unlock the collective inventory'
 );
 
-select rewards.id as owner_reward_id
+select rewards.id as owner_reward_id, recipients.box_id as owner_box_id
 from public.pachanga_reward_grants rewards
 join public.pachanga_reward_recipients recipients on recipients.reward_grant_id = rewards.id
 where rewards.group_id = '82000000-0000-0000-0000-000000000001'
@@ -513,15 +523,27 @@ limit 1 \gset
 
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '81000000-0000-0000-0000-000000000001', true);
-select public.open_pachanga_reward_v1(
-  :'owner_reward_id'::uuid, '84000000-0000-0000-0000-000000000020', 1,
+select public.get_pachanga_progression_snapshot_v1(
+  '82000000-0000-0000-0000-000000000001'
+) as owner_pending_snapshot \gset
+select public.open_pachanga_reward_box_v2(
+  :'owner_box_id'::uuid, '84000000-0000-0000-0000-000000000020', 1,
   '{"sessionId":"reward-device-a"}'::jsonb
 ) as opened_reward \gset
-select public.open_pachanga_reward_v1(
-  :'owner_reward_id'::uuid, '84000000-0000-0000-0000-000000000020', 1,
+select public.open_pachanga_reward_box_v2(
+  :'owner_box_id'::uuid, '84000000-0000-0000-0000-000000000020', 1,
   '{"sessionId":"reward-device-a"}'::jsonb
 ) as replayed_reward \gset
 reset role;
+select pg_temp.assert_true(
+  not exists (
+    select 1
+    from jsonb_array_elements(:'owner_pending_snapshot'::jsonb -> 'rewards') boxes(value)
+    where boxes.value ->> 'boxId' = :'owner_box_id'
+      and boxes.value ? 'rewardPayload'
+  ),
+  'A pending box must not expose or grant its sealed payload'
+);
 select pg_temp.assert_true(
   :'opened_reward'::jsonb = :'replayed_reward'::jsonb,
   'The same reward operation must replay exactly'
@@ -531,7 +553,11 @@ select pg_temp.assert_true(
    where reward_grant_id = :'owner_reward_id'::uuid and event_type = 'reward_opened') = 1,
   'A deterministic reward must emit one opening event'
 );
-
+select pg_temp.assert_true(
+  (:'opened_reward'::jsonb -> 'rewardPayload') is not null
+    and (:'opened_reward'::jsonb ->> 'status') = 'opened',
+  'Opening a box must reveal its server-sealed payload'
+);
 -- Crest drafts and publications remain server-authoritative.
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '81000000-0000-0000-0000-000000000001', true);

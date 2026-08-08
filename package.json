@@ -24,6 +24,7 @@
     "test:match-guest:concurrency": "node tests/match-guest-access-concurrency.mjs",
     "test:achievements-crests:db": "psql -X -w \"$ACHIEVEMENTS_DATABASE_URL\" -v ON_ERROR_STOP=1 -f tests/achievements-crests-db.sql",
     "test:achievements-crests:concurrency": "node tests/achievements-crests-concurrency.mjs",
+    "test:collective-boxes:db": "psql -X -w \"$ACHIEVEMENTS_DATABASE_URL\" -v ON_ERROR_STOP=1 -f tests/collective-reward-boxes-db.sql",
     "test:notifications:db": "psql -X -w \"$NOTIFICATION_DATABASE_URL\" -v ON_ERROR_STOP=1 -f tests/notification-foundation-db.sql",
     "db:generate": "drizzle-kit generate"
   },

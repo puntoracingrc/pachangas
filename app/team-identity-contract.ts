@@ -59,9 +59,14 @@ export type ProgressionAchievement = {
   awardedAt: string;
   description: string;
   grantId: string;
+  isFirst: boolean;
   key: string;
+  matchFactId: string;
+  occurredAt: string;
   rarity: CrestCatalogItem["rarity"];
+  repeatable: boolean;
   rewardKey: string | null;
+  sequenceCount: number;
   scope: "external" | "internal";
   state: "active" | "revoked";
   title: string;
@@ -74,10 +79,12 @@ export type IndividualAchievementProgress = {
   description: string;
   grantId: string | null;
   key: string;
+  occurrenceCount: number;
   progressPercent: number;
   rarity: CrestCatalogItem["rarity"];
+  repeatable: boolean;
   rewardKey: string | null;
-  rewardKind: "player_badge" | "player_title";
+  rewardKind: "none";
   scope: "external" | "internal";
   threshold: number;
   title: string;
@@ -88,15 +95,24 @@ export type PendingReward = {
   achievement: {
     awardedAt: string;
     description: string;
+    isFirst: boolean;
     key: string;
+    occurredAt: string;
     rarity: CrestCatalogItem["rarity"];
+    sequenceCount: number;
     title: string;
   };
+  boxId: string;
+  generatedAt: string;
+  matchFactId: string;
   openedAt: string | null;
   recipientRevision: number;
+  rewardGrantedAt: string | null;
   rewardGrantId: string;
   rewardKey: string;
-  rewardKind: "player_badge" | "player_title" | "team_cosmetic";
+  rewardKind: "collective_box" | "team_cosmetic";
+  rewardPayload: Record<string, unknown> | null;
+  sourceCorrection: Record<string, unknown> | null;
   status: "opened" | "pending" | "revoked" | "skipped";
 };
 
@@ -255,9 +271,14 @@ function achievement(value: unknown): ProgressionAchievement | null {
     awardedAt: text(value.awardedAt),
     description: text(value.description),
     grantId,
+    isFirst: value.isFirst === true,
     key,
+    matchFactId: text(value.matchFactId ?? value.originMatchFactId),
+    occurredAt: text(value.occurredAt ?? value.awardedAt),
     rarity: rarity(value.rarity),
+    repeatable: value.repeatable === true,
     rewardKey: nullableText(value.rewardKey),
+    sequenceCount: Math.max(1, Math.floor(numberValue(value.sequenceCount))),
     scope: value.scope === "external" ? "external" : "internal",
     state: value.state === "revoked" ? "revoked" : "active",
     title,
@@ -277,10 +298,12 @@ function individualAchievementProgress(value: unknown): IndividualAchievementPro
     description: text(value.description),
     grantId: nullableText(value.grantId),
     key,
+    occurrenceCount: Math.max(0, Math.floor(numberValue(value.occurrenceCount))),
     progressPercent: Math.min(100, Math.max(0, Math.floor(numberValue(value.progressPercent)))),
     rarity: rarity(value.rarity),
+    repeatable: value.repeatable === true,
     rewardKey: nullableText(value.rewardKey),
-    rewardKind: value.rewardKind === "player_title" ? "player_title" : "player_badge",
+    rewardKind: "none",
     scope: value.scope === "external" ? "external" : "internal",
     threshold,
     title,
@@ -290,13 +313,12 @@ function individualAchievementProgress(value: unknown): IndividualAchievementPro
 
 export function normalizePendingReward(value: unknown): PendingReward | null {
   if (!isRecord(value) || !isRecord(value.achievement)) return null;
+  const boxId = text(value.boxId);
   const rewardGrantId = text(value.rewardGrantId);
   const rewardKey = text(value.rewardKey);
   const achievementKey = text(value.achievement.key);
-  if (!rewardGrantId || !rewardKey || !achievementKey) return null;
-  const rewardKind = value.rewardKind === "player_badge" || value.rewardKind === "player_title"
-    ? value.rewardKind
-    : "team_cosmetic";
+  if (!boxId || !rewardGrantId || !rewardKey || !achievementKey) return null;
+  const rewardKind = value.rewardKind === "team_cosmetic" ? "team_cosmetic" : "collective_box";
   const status = value.status === "opened" || value.status === "revoked" || value.status === "skipped"
     ? value.status
     : "pending";
@@ -304,15 +326,24 @@ export function normalizePendingReward(value: unknown): PendingReward | null {
     achievement: {
       awardedAt: text(value.achievement.awardedAt),
       description: text(value.achievement.description),
+      isFirst: value.achievement.isFirst === true,
       key: achievementKey,
+      occurredAt: text(value.achievement.occurredAt ?? value.achievement.awardedAt),
       rarity: rarity(value.achievement.rarity),
+      sequenceCount: Math.max(1, Math.floor(numberValue(value.achievement.sequenceCount))),
       title: text(value.achievement.title),
     },
+    boxId,
+    generatedAt: text(value.generatedAt),
+    matchFactId: text(value.matchFactId),
     openedAt: nullableText(value.openedAt),
     recipientRevision: Math.max(1, Math.floor(numberValue(value.recipientRevision))),
+    rewardGrantedAt: nullableText(value.rewardGrantedAt),
     rewardGrantId,
     rewardKey,
     rewardKind,
+    rewardPayload: isRecord(value.rewardPayload) ? value.rewardPayload : null,
+    sourceCorrection: isRecord(value.sourceCorrection) ? value.sourceCorrection : null,
     status,
   };
 }

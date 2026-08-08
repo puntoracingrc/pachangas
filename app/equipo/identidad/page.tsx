@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { type CSSProperties, useCallback, useEffect, useRef, useState } from "react";
 import { CLIENT_VERSION } from "../../client-version-contract";
 import { currentClientDisplayMode } from "../../pwa-client-bridge";
@@ -14,10 +15,16 @@ import {
   type CrestCatalogItem,
   type CrestDesign,
   type PendingReward,
+  type ProgressionAchievement,
   type ProgressionSnapshot,
   type TeamCrestSnapshot,
 } from "../../team-identity-contract";
 import styles from "./page.module.css";
+
+const RewardBoxDemo = dynamic(
+  () => import("../../reward-box-demo").then((module) => module.RewardBoxDemo),
+  { ssr: false },
+);
 
 type Membership = {
   groupId: string;
@@ -164,7 +171,10 @@ export default function TeamIdentityPage() {
   const [draftDesign, setDraftDesign] = useState<CrestDesign | null>(null);
   const [busy, setBusy] = useState("");
   const [message, setMessage] = useState(supabase ? "" : "Supabase no está configurado.");
+  const [rewardSequence, setRewardSequence] = useState<PendingReward[]>([]);
+  const [rewardSequenceIndex, setRewardSequenceIndex] = useState(0);
   const [openedReward, setOpenedReward] = useState<PendingReward | null>(null);
+  const [sequenceRecognitions, setSequenceRecognitions] = useState<ProgressionAchievement[]>([]);
   const operationIds = useRef(new Map<string, string>());
 
   const persistCache = useCallback((nextCrest: TeamCrestSnapshot | null, nextProgression: ProgressionSnapshot | null) => {
@@ -370,15 +380,15 @@ export default function TeamIdentityPage() {
 
   async function openReward(reward: PendingReward) {
     if (!supabase || busy || reward.status !== "pending") return;
-    const fingerprint = `reward-open:${reward.rewardGrantId}:${reward.recipientRevision}`;
+    const fingerprint = `reward-open:${reward.boxId}:${reward.recipientRevision}`;
     const operationId = operationIdFor(fingerprint);
-    setBusy(reward.rewardGrantId);
+    setBusy(reward.boxId);
     setMessage("");
-    const result = await supabase.rpc("open_pachanga_reward_v1", {
+    const result = await supabase.rpc("open_pachanga_reward_box_v2", {
       client_metadata: clientMetadata(),
       expected_revision: reward.recipientRevision,
       operation_id: operationId,
-      target_reward_grant_id: reward.rewardGrantId,
+      target_box_id: reward.boxId,
     });
     setBusy("");
     if (result.error) {
@@ -392,12 +402,43 @@ export default function TeamIdentityPage() {
     await loadProgression();
   }
 
+  function beginRewardSequence(rewards: PendingReward[]) {
+    if (!rewards.length) return;
+    setRewardSequence(rewards);
+    setRewardSequenceIndex(0);
+    setOpenedReward(null);
+    setSequenceRecognitions([]);
+  }
+
+  function closeRewardSequence() {
+    setRewardSequence([]);
+    setRewardSequenceIndex(0);
+    setOpenedReward(null);
+  }
+
+  function advanceRewardSequence() {
+    const nextIndex = rewardSequenceIndex + 1;
+    if (nextIndex < rewardSequence.length) {
+      setRewardSequenceIndex(nextIndex);
+      setOpenedReward(null);
+      return;
+    }
+    const matchIds = new Set(rewardSequence.map((reward) => reward.matchFactId));
+    setSequenceRecognitions(
+      (progression?.personalAchievements ?? []).filter(
+        (achievement) => achievement.state === "active" && matchIds.has(achievement.matchFactId),
+      ),
+    );
+    closeRewardSequence();
+  }
+
   const designIsSaved = Boolean(crest?.draft && draftDesign && JSON.stringify(crest.draft.design) === JSON.stringify(draftDesign));
   const activeTeamAchievements = progression?.teamAchievements.filter((item) => item.state === "active") ?? [];
   const activePersonalAchievements = progression?.personalAchievements.filter((item) => item.state === "active") ?? [];
   const personalAchievementCatalog = progression?.personalAchievementCatalog ?? [];
   const unlockedPersonalAchievements = personalAchievementCatalog.filter((item) => item.unlocked).length;
   const pendingRewards = progression?.rewards.filter((reward) => reward.status === "pending") ?? [];
+  const currentSequenceReward = rewardSequence[rewardSequenceIndex] ?? null;
 
   return (
     <main className={styles.page}>
@@ -500,15 +541,14 @@ export default function TeamIdentityPage() {
           {pendingRewards.length ? (
             <section className={styles.rewardsBand}>
               <header><span>Recompensas pendientes</span><strong>{pendingRewards.length}</strong></header>
-              <div className={styles.rewardRail}>
-                {pendingRewards.map((reward) => (
-                  <button disabled={Boolean(busy)} key={reward.rewardGrantId} type="button" onClick={() => void openReward(reward)}>
-                    <span>{reward.achievement.rarity}</span>
-                    <strong>{reward.achievement.title}</strong>
-                    <small>Abrir recompensa decidida por el servidor</small>
-                  </button>
-                ))}
-              </div>
+              <button
+                className={styles.openAllRewards}
+                disabled={Boolean(busy)}
+                type="button"
+                onClick={() => beginRewardSequence(pendingRewards)}
+              >
+                Abrir {pendingRewards.length === 1 ? "premio" : `${pendingRewards.length} premios`}
+              </button>
             </section>
           ) : null}
 
@@ -554,7 +594,9 @@ export default function TeamIdentityPage() {
                     </div>
                     <small className={styles.achievementStatus}>
                       {achievement.unlocked
-                        ? `Desbloqueado${achievement.awardedAt ? ` · ${new Date(achievement.awardedAt).toLocaleDateString("es-ES")}` : ""}`
+                        ? achievement.repeatable
+                          ? `${achievement.occurrenceCount} ${achievement.occurrenceCount === 1 ? "vez" : "veces"}`
+                          : `Desbloqueado${achievement.awardedAt ? ` · ${new Date(achievement.awardedAt).toLocaleDateString("es-ES")}` : ""}`
                         : `${achievement.currentValue}/${achievement.threshold}`}
                     </small>
                   </article>
@@ -569,6 +611,17 @@ export default function TeamIdentityPage() {
                   ? <p className={styles.empty}>Aún no hay insignias personales confirmadas.</p>
                   : null}
               </div>
+              {activePersonalAchievements.length ? (
+                <div className={styles.recognitionHistory}>
+                  <strong>Historial personal</strong>
+                  {activePersonalAchievements.slice(0, 8).map((achievement) => (
+                    <span key={achievement.grantId}>
+                      {achievement.title}
+                      <small>{dateLabel(achievement.occurredAt)}</small>
+                    </span>
+                  ))}
+                </div>
+              ) : null}
             </div>
           </section>
 
@@ -602,13 +655,38 @@ export default function TeamIdentityPage() {
 
       {message ? <p className={styles.message} aria-live="polite">{message}</p> : null}
 
-      {openedReward ? (
-        <div className={styles.rewardModalBackdrop} role="presentation" onMouseDown={(event) => { if (event.currentTarget === event.target) setOpenedReward(null); }}>
-          <section className={styles.rewardModal} role="dialog" aria-modal="true" aria-label="Recompensa abierta">
-            <span>{openedReward.achievement.rarity}</span>
-            <strong>{openedReward.achievement.title}</strong>
-            <p>{openedReward.rewardKey}</p>
-            <button type="button" onClick={() => setOpenedReward(null)}>Cerrar</button>
+      <RewardBoxDemo
+        open={Boolean(currentSequenceReward)}
+        onClose={closeRewardSequence}
+        eyebrow={currentSequenceReward
+          ? `Caja ${rewardSequenceIndex + 1} de ${rewardSequence.length} · ${currentSequenceReward.achievement.rarity}`
+          : undefined}
+        title={currentSequenceReward?.achievement.title}
+        description={openedReward
+          ? `Premio confirmado: ${String(openedReward.rewardPayload?.key ?? openedReward.rewardKey)}`
+          : "El contenido permanece sellado hasta que abras esta caja."}
+        actionDisabled={Boolean(busy)}
+        actionLabel={openedReward
+          ? rewardSequenceIndex + 1 < rewardSequence.length ? "Siguiente caja" : "Ver mis logros"
+          : busy ? "Abriendo..." : "Abrir caja"}
+        onAction={() => {
+          if (!currentSequenceReward) return;
+          if (openedReward) advanceRewardSequence();
+          else void openReward(currentSequenceReward);
+        }}
+      />
+
+      {sequenceRecognitions.length ? (
+        <div className={styles.rewardModalBackdrop} role="presentation">
+          <section className={styles.rewardModal} role="dialog" aria-modal="true" aria-label="Logros personales del partido">
+            <span>Tus logros personales del partido</span>
+            <strong>{sequenceRecognitions.length}</strong>
+            <div className={styles.sequenceRecognitions}>
+              {sequenceRecognitions.map((achievement) => (
+                <p key={achievement.grantId}>{achievement.title}</p>
+              ))}
+            </div>
+            <button type="button" onClick={() => setSequenceRecognitions([])}>Cerrar</button>
           </section>
         </div>
       ) : null}

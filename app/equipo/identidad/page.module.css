@@ -437,6 +437,21 @@
   color: #bbcabf;
 }
 
+.openAllRewards {
+  width: 100%;
+  min-height: 58px;
+  border: 1px solid #9ccc3c;
+  border-radius: 8px;
+  background: rgba(39, 60, 27, 0.86);
+  color: #eefaee;
+  font: inherit;
+  font-weight: 900;
+}
+
+.openAllRewards:disabled {
+  opacity: 0.56;
+}
+
 .progressBand {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -504,6 +519,27 @@
   display: block;
   margin-top: 7px;
   color: #aebeb5;
+}
+
+.recognitionHistory {
+  display: grid;
+  gap: 6px;
+  margin-top: 12px;
+  border-top: 1px solid rgba(194, 218, 205, 0.18);
+  padding-top: 12px;
+}
+
+.recognitionHistory > span {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  color: #dce8e1;
+  font-size: 0.84rem;
+}
+
+.recognitionHistory small {
+  flex: 0 0 auto;
+  color: #94a79d;
 }
 
 .collectionGrid {
@@ -595,6 +631,20 @@
 
 .rewardModal button {
   padding-inline: 22px;
+}
+
+.sequenceRecognitions {
+  width: 100%;
+  display: grid;
+  gap: 7px;
+}
+
+.sequenceRecognitions p {
+  margin: 0;
+  border: 1px solid rgba(183, 244, 82, 0.28);
+  border-radius: 6px;
+  background: rgba(9, 26, 19, 0.74);
+  padding: 10px 12px;
 }
 
 @media (max-width: 850px) {

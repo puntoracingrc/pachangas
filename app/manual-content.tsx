@@ -338,6 +338,21 @@ const manualFlows = [
   },
   {
     audience: "Todos",
+    title: "Logros y premios postpartido",
+    intro: "Los logros reconocen lo ocurrido en partidos confirmados sin cambiar nunca el nivel deportivo ni las facetas de una ficha.",
+    steps: [
+      "Los logros individuales son reconocimiento personal: quedan en el historial y muestran su contador, pero no entregan cajas, puntos ni cosméticos.",
+      "Doblete, hat-trick, póker, repóker y doble hat-trick pueden repetirse. En cada partido solo cuenta el mayor de esos logros que corresponda a los goles asignados al jugador.",
+      "Los goles no asignados sí cuentan para el marcador y los logros colectivos del equipo, pero no inventan un logro individual.",
+      "Los logros colectivos se guardan al confirmar el resultado y generan una caja separada para cada participante real del partido.",
+      "La caja queda pendiente aunque cierres la app o cambies de dispositivo. Su contenido permanece oculto y solo se concede una vez cuando la abres.",
+      "Al entrar desde un aviso de premios puedes abrir en orden todas las cajas pendientes y después ver los logros personales de esos partidos.",
+      "Si un resultado se corrige, las cajas pendientes dejan de ser válidas. Un premio ya abierto se conserva con una anotación auditable y nunca se descuenta de forma destructiva.",
+      "Rating V2 es independiente: ningún logro, caja o futuro punto de jugador modifica la valoración, las facetas ni el GRL.",
+    ],
+  },
+  {
+    audience: "Todos",
     title: "Sincronización, caché y uso sin conexión",
     intro: "El teléfono solicita acciones y el servidor confirma el resultado; la copia local solo acelera la lectura.",
     steps: [
