@@ -67,6 +67,23 @@ export type ProgressionAchievement = {
   title: string;
 };
 
+export type IndividualAchievementProgress = {
+  awardedAt: string | null;
+  category: string;
+  currentValue: number;
+  description: string;
+  grantId: string | null;
+  key: string;
+  progressPercent: number;
+  rarity: CrestCatalogItem["rarity"];
+  rewardKey: string | null;
+  rewardKind: "player_badge" | "player_title";
+  scope: "external" | "internal";
+  threshold: number;
+  title: string;
+  unlocked: boolean;
+};
+
 export type PendingReward = {
   achievement: {
     awardedAt: string;
@@ -87,6 +104,7 @@ export type ProgressionSnapshot = {
   confirmedRevision: number;
   groupId: string;
   groupRevision: number;
+  personalAchievementCatalog: IndividualAchievementProgress[];
   personalAchievements: ProgressionAchievement[];
   rewards: PendingReward[];
   serverSequence: number;
@@ -246,6 +264,30 @@ function achievement(value: unknown): ProgressionAchievement | null {
   };
 }
 
+function individualAchievementProgress(value: unknown): IndividualAchievementProgress | null {
+  if (!isRecord(value)) return null;
+  const key = text(value.key);
+  const title = text(value.title);
+  const threshold = Math.max(1, Math.floor(numberValue(value.threshold)));
+  if (!key || !title) return null;
+  return {
+    awardedAt: nullableText(value.awardedAt),
+    category: text(value.category),
+    currentValue: Math.max(0, Math.floor(numberValue(value.currentValue))),
+    description: text(value.description),
+    grantId: nullableText(value.grantId),
+    key,
+    progressPercent: Math.min(100, Math.max(0, Math.floor(numberValue(value.progressPercent)))),
+    rarity: rarity(value.rarity),
+    rewardKey: nullableText(value.rewardKey),
+    rewardKind: value.rewardKind === "player_title" ? "player_title" : "player_badge",
+    scope: value.scope === "external" ? "external" : "internal",
+    threshold,
+    title,
+    unlocked: value.unlocked === true,
+  };
+}
+
 export function normalizePendingReward(value: unknown): PendingReward | null {
   if (!isRecord(value) || !isRecord(value.achievement)) return null;
   const rewardGrantId = text(value.rewardGrantId);
@@ -283,6 +325,11 @@ export function normalizeProgressionSnapshot(value: unknown): ProgressionSnapsho
     confirmedRevision: Math.max(0, Math.floor(numberValue(value.confirmedRevision))),
     groupId,
     groupRevision: Math.max(0, Math.floor(numberValue(value.groupRevision))),
+    personalAchievementCatalog: Array.isArray(value.personalAchievementCatalog)
+      ? value.personalAchievementCatalog
+        .map(individualAchievementProgress)
+        .filter((item): item is IndividualAchievementProgress => Boolean(item))
+      : [],
     personalAchievements: Array.isArray(value.personalAchievements)
       ? value.personalAchievements.map(achievement).filter((item): item is ProgressionAchievement => Boolean(item))
       : [],

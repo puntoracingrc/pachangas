@@ -95,6 +95,22 @@ function progressionFixture() {
     confirmedRevision: 4,
     groupId: "group-a",
     groupRevision: 4,
+    personalAchievementCatalog: [{
+      awardedAt: null,
+      category: "matches",
+      currentValue: 3,
+      description: "Participa en cinco partidos internos finalizados.",
+      grantId: null,
+      key: "player.internal.matches.005",
+      progressPercent: 60,
+      rarity: "common",
+      rewardKey: "badge.internal.five_matches",
+      rewardKind: "player_badge",
+      scope: "internal",
+      threshold: 5,
+      title: "Uno de los nuestros",
+      unlocked: false,
+    }],
     personalAchievements: [],
     rewards: [{
       achievement: { awardedAt: "2026-08-03T21:00:00.000Z", description: "Primer partido", key: "team.external.matches.001", rarity: "common", title: "Primer rival" },
@@ -154,6 +170,8 @@ test("derived caches are scoped, finite and never manufacture canonical state", 
   assert.equal(readExternalResultsCache(storage, "user-a", "group-a", 1_001)?.serverSequence, 41);
   assert.equal(readExternalResultsCache(storage, "user-b", "group-a", 1_001), null);
   assert.equal(readTeamIdentityCache(storage, "user-a", "group-a", 1_001)?.crest?.crestRevision, 2);
+  assert.equal(progression.personalAchievementCatalog[0]?.progressPercent, 60);
+  assert.equal(progression.personalAchievementCatalog[0]?.unlocked, false);
   assert.equal(readTeamIdentityCache(storage, "user-a", "group-b", 1_001), null);
   assert.equal(readExternalResultsCache(storage, "user-a", "group-a", 1_000 + EXTERNAL_RESULTS_CACHE_MAX_AGE_MS + 1), null);
   assert.equal(readTeamIdentityCache(storage, "user-a", "group-a", 1_000 + TEAM_IDENTITY_CACHE_MAX_AGE_MS + 1), null);
@@ -220,6 +238,21 @@ test("achievement evaluators are typed and rewards are decided before opening", 
   assert.match(sql, /pachanga_progression_match_fact_sequence_idx[\s\S]*server_sequence, group_id/);
   assert.match(sql, /order by events\.server_sequence desc, events\.id desc/);
   assert.match(sql, /'\/equipo\/identidad\?reward='/);
+});
+
+test("individual achievement catalog adds canonical milestones and exact doubles", () => {
+  const sql = readFileSync(new URL("../supabase/migrations/20260808115012_individual_achievements_catalog_v1.sql", import.meta.url), "utf8");
+  assert.match(sql, /'player\.internal\.matches\.005', 'Uno de los nuestros'/);
+  assert.match(sql, /'player\.internal\.matches\.025', 'Habitual'/);
+  assert.match(sql, /player_facts\.goals = 2\)::integer as braces/);
+  assert.match(sql, /player_facts\.goals >= 3\)::integer as hat_tricks/);
+  assert.match(sql, /'personalAchievementCatalog'/);
+  assert.match(sql, /'progressPercent'/);
+  assert.match(sql, /private\.pachanga_progression_snapshot_base_v1/);
+  assert.match(sql, /grant execute on function public\.get_pachanga_progression_snapshot_v1\(uuid\)[\s\S]*to authenticated/);
+  assert.doesNotMatch(sql, /execute\s+format|evaluator_sql|condition_sql/i);
+  assert.doesNotMatch(sql, /update public\.pachanga_player_profiles/i);
+  assert.doesNotMatch(sql, /calibrated_(overall|facets)\s*=/i);
 });
 
 test("crest SQL provides five base shapes, immutable versions and server-side unlock checks", () => {

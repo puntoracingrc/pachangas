@@ -395,6 +395,8 @@ export default function TeamIdentityPage() {
   const designIsSaved = Boolean(crest?.draft && draftDesign && JSON.stringify(crest.draft.design) === JSON.stringify(draftDesign));
   const activeTeamAchievements = progression?.teamAchievements.filter((item) => item.state === "active") ?? [];
   const activePersonalAchievements = progression?.personalAchievements.filter((item) => item.state === "active") ?? [];
+  const personalAchievementCatalog = progression?.personalAchievementCatalog ?? [];
+  const unlockedPersonalAchievements = personalAchievementCatalog.filter((item) => item.unlocked).length;
   const pendingRewards = progression?.rewards.filter((reward) => reward.status === "pending") ?? [];
 
   return (
@@ -525,16 +527,47 @@ export default function TeamIdentityPage() {
               </div>
             </div>
             <div>
-              <header><span>Mis logros</span><strong>{activePersonalAchievements.length}</strong></header>
+              <header>
+                <span>Mis logros</span>
+                <strong>{personalAchievementCatalog.length
+                  ? `${unlockedPersonalAchievements}/${personalAchievementCatalog.length}`
+                  : activePersonalAchievements.length}</strong>
+              </header>
               <div className={styles.achievementGrid}>
-                {activePersonalAchievements.map((achievement) => (
-                  <article key={achievement.grantId}>
+                {personalAchievementCatalog.length ? personalAchievementCatalog.map((achievement) => (
+                  <article
+                    className={achievement.unlocked ? styles.achievementUnlocked : styles.achievementLocked}
+                    key={achievement.key}
+                  >
+                    <span>{achievement.scope === "external" ? "Rivales" : "Pachangas"} · {achievement.rarity}</span>
+                    <strong>{achievement.title}</strong>
+                    <p>{achievement.description}</p>
+                    <div
+                      aria-label={`Progreso ${achievement.currentValue} de ${achievement.threshold}`}
+                      className={styles.achievementProgress}
+                      role="progressbar"
+                      aria-valuemax={achievement.threshold}
+                      aria-valuemin={0}
+                      aria-valuenow={Math.min(achievement.currentValue, achievement.threshold)}
+                    >
+                      <span style={{ width: `${achievement.progressPercent}%` }} />
+                    </div>
+                    <small className={styles.achievementStatus}>
+                      {achievement.unlocked
+                        ? `Desbloqueado${achievement.awardedAt ? ` · ${new Date(achievement.awardedAt).toLocaleDateString("es-ES")}` : ""}`
+                        : `${achievement.currentValue}/${achievement.threshold}`}
+                    </small>
+                  </article>
+                )) : activePersonalAchievements.map((achievement) => (
+                  <article className={styles.achievementUnlocked} key={achievement.grantId}>
                     <span>{achievement.scope === "external" ? "Rivales" : "Pachangas"} · {achievement.rarity}</span>
                     <strong>{achievement.title}</strong>
                     <p>{achievement.description}</p>
                   </article>
                 ))}
-                {!activePersonalAchievements.length ? <p className={styles.empty}>Aún no hay insignias personales confirmadas.</p> : null}
+                {!personalAchievementCatalog.length && !activePersonalAchievements.length
+                  ? <p className={styles.empty}>Aún no hay insignias personales confirmadas.</p>
+                  : null}
               </div>
             </div>
           </section>

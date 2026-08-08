@@ -475,6 +475,37 @@
   font-size: 0.88rem;
 }
 
+.achievementGrid .achievementUnlocked {
+  border-color: rgba(132, 204, 22, 0.56);
+  background: rgba(29, 52, 31, 0.9);
+}
+
+.achievementGrid .achievementLocked {
+  border-color: rgba(194, 218, 205, 0.14);
+  background: rgba(15, 27, 22, 0.66);
+}
+
+.achievementProgress {
+  height: 6px;
+  margin-top: 12px;
+  overflow: hidden;
+  border-radius: 3px;
+  background: rgba(226, 240, 232, 0.12);
+}
+
+.achievementProgress > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: #84cc16;
+}
+
+.achievementStatus {
+  display: block;
+  margin-top: 7px;
+  color: #aebeb5;
+}
+
 .collectionGrid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));

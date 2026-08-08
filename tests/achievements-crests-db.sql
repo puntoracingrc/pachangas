@@ -688,4 +688,100 @@ select pg_temp.assert_true(
   'One internal Rating V2 snapshot must create one internal progression fact'
 );
 
+-- Canonical cumulative participation milestones and exact scoring feats.
+do $$
+declare
+  match_number integer;
+  test_match_id text;
+begin
+  for match_number in 2..25 loop
+    test_match_id := 'achievement-internal-' || match_number::text;
+    insert into public.pachanga_match_rating_snapshots(
+      group_id, match_id, group_level, lineup_a_level, lineup_b_level,
+      engine_version, snapshot, state, finalized_at
+    ) values (
+      '82000000-0000-0000-0000-000000000001', test_match_id,
+      66, 66, 66, 'pachangas-rating-v2', '{}'::jsonb, 'active',
+      clock_timestamp() + make_interval(secs => match_number)
+    );
+    insert into public.pachanga_match_rating_participants(
+      group_id, match_id, local_player_id, player_profile_id, team_side,
+      attendance_confirmed, was_reserve, card_snapshot
+    ) values (
+      '82000000-0000-0000-0000-000000000001', test_match_id, 'a1',
+      '82500000-0000-0000-0000-000000000001', 'A', true, false,
+      '{"currentOverall":68,"engineVersion":"pachangas-rating-v2"}'::jsonb
+    );
+    update public.pachanga_match_rating_snapshots
+    set snapshot = '{"match":{"scoreA":0,"scoreB":0,"scorers":[]}}'::jsonb
+    where group_id = '82000000-0000-0000-0000-000000000001'
+      and match_id = test_match_id;
+  end loop;
+end;
+$$;
+
+insert into public.pachanga_match_rating_snapshots(
+  group_id, match_id, group_level, lineup_a_level, lineup_b_level,
+  engine_version, snapshot, state, finalized_at
+) values (
+  '82000000-0000-0000-0000-000000000001', 'achievement-internal-26',
+  66, 67, 65, 'pachangas-rating-v2', '{}'::jsonb, 'active',
+  clock_timestamp() + interval '26 seconds'
+);
+insert into public.pachanga_match_rating_participants(
+  group_id, match_id, local_player_id, player_profile_id, team_side,
+  attendance_confirmed, was_reserve, card_snapshot
+) values (
+  '82000000-0000-0000-0000-000000000001', 'achievement-internal-26', 'a1',
+  '82500000-0000-0000-0000-000000000001', 'A', true, false,
+  '{"currentOverall":68,"engineVersion":"pachangas-rating-v2"}'::jsonb
+);
+update public.pachanga_match_rating_snapshots
+set snapshot = '{"match":{"scoreA":3,"scoreB":0,"scorers":[{"playerId":"a1","goals":3}]}}'::jsonb
+where group_id = '82000000-0000-0000-0000-000000000001'
+  and match_id = 'achievement-internal-26';
+
+select pg_temp.assert_true(
+  (select appearances = 26 and braces = 1 and hat_tricks = 1
+   from public.pachanga_player_progression_stats
+   where player_profile_id = '82500000-0000-0000-0000-000000000001'
+     and match_scope = 'internal'),
+  'A hat-trick must not also increase the exact-double counter'
+);
+select pg_temp.assert_true(
+  (select count(*)
+   from public.pachanga_achievement_grants grants
+   join public.pachanga_achievement_definitions definitions
+     on definitions.id = grants.definition_id
+   where grants.subject_type = 'player'
+     and grants.subject_id = '82500000-0000-0000-0000-000000000001'
+     and grants.state = 'active'
+     and definitions.achievement_key in (
+       'player.internal.matches.005',
+       'player.internal.matches.025'
+     )) = 2,
+  'Five and twenty-five appearances must each grant one active achievement'
+);
+
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '81000000-0000-0000-0000-000000000001', true);
+select public.get_pachanga_progression_snapshot_v1(
+  '82000000-0000-0000-0000-000000000001'
+) as individual_catalog_snapshot \gset
+reset role;
+
+select pg_temp.assert_true(
+  exists (
+    select 1
+    from jsonb_array_elements(
+      :'individual_catalog_snapshot'::jsonb -> 'personalAchievementCatalog'
+    ) achievements(value)
+    where achievements.value ->> 'key' = 'player.internal.matches.025'
+      and (achievements.value ->> 'currentValue')::integer = 26
+      and (achievements.value ->> 'progressPercent')::integer = 100
+      and (achievements.value ->> 'unlocked')::boolean
+  ),
+  'The canonical read model must expose unlocked progress for the 25-match milestone'
+);
+
 rollback;
