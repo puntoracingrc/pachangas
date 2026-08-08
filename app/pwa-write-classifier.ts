@@ -44,6 +44,7 @@ const v2WriteRpcNames = new Set([
   "leave_pachanga_guest_match_v1",
   "mark_pachanga_notification_read_v1",
   "open_pachanga_reward_v1",
+  "open_pachanga_reward_box_v2",
   "propose_pachanga_external_result_change_v1",
   "publish_pachanga_external_result_v1",
   "publish_pachanga_team_crest_v1",

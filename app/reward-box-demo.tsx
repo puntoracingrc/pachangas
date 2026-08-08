@@ -9,8 +9,14 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import styles from "./reward-box-demo.module.css";
 
 type RewardBoxDemoProps = {
+  actionDisabled?: boolean;
+  actionLabel?: string;
+  description?: string;
+  eyebrow?: string;
+  onAction?: () => void;
   onClose: () => void;
   open: boolean;
+  title?: string;
 };
 
 type DemoPhase = "loading" | "ready" | "error";
@@ -35,7 +41,16 @@ function fitCameraToBox(camera: THREE.PerspectiveCamera, controls: OrbitControls
   controls.update();
 }
 
-export function RewardBoxDemo({ onClose, open }: RewardBoxDemoProps) {
+export function RewardBoxDemo({
+  actionDisabled = false,
+  actionLabel,
+  description,
+  eyebrow,
+  onAction,
+  onClose,
+  open,
+  title,
+}: RewardBoxDemoProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
@@ -214,7 +229,7 @@ export function RewardBoxDemo({ onClose, open }: RewardBoxDemoProps) {
   if (!open || typeof document === "undefined") return null;
 
   return createPortal(
-    <div className={styles.backdrop} role="dialog" aria-modal="true" aria-label="Animación de logro de prueba">
+    <div className={styles.backdrop} role="dialog" aria-modal="true" aria-label={title ?? "Animación de logro de prueba"}>
       <div className={styles.stage} ref={stageRef}>
         <canvas className={styles.canvas} ref={canvasRef} aria-label="Maletín de recompensa animado en tres dimensiones" />
         {phase === "loading" ? <div className={styles.status} role="status">Preparando animación...</div> : null}
@@ -222,6 +237,16 @@ export function RewardBoxDemo({ onClose, open }: RewardBoxDemoProps) {
         <button className={styles.close} ref={closeButtonRef} type="button" onClick={onClose} aria-label="Cerrar animación">
           <span aria-hidden="true">×</span>
         </button>
+        {title || description || actionLabel ? (
+          <div className={styles.revealPanel}>
+            {eyebrow ? <span>{eyebrow}</span> : null}
+            {title ? <strong>{title}</strong> : null}
+            {description ? <p>{description}</p> : null}
+            {actionLabel && onAction ? (
+              <button type="button" disabled={actionDisabled} onClick={onAction}>{actionLabel}</button>
+            ) : null}
+          </div>
+        ) : null}
       </div>
     </div>,
     document.body,
