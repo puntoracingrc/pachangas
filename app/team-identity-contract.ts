@@ -144,9 +144,16 @@ export type TeamProgressionStats = {
   maxUnbeatenStreak: number;
   maxWinStreak: number;
   revision: number;
-  scope: Exclude<MatchScope, "all">;
+  scope: MatchScope;
   updatedAt: string;
   wins: number;
+};
+
+export type RewardComponent = {
+  boxRarity: CrestCatalogItem["rarity"];
+  goals: number | null;
+  key: string;
+  label: string;
 };
 
 export type TeamAchievementProgress = {
@@ -162,8 +169,9 @@ export type TeamAchievementProgress = {
   presentationKey: string;
   rarity: CrestCatalogItem["rarity"];
   repeatable: boolean;
+  rewardComponents: RewardComponent[];
   rewardPoolVersion: number;
-  scope: Exclude<MatchScope, "all">;
+  scope: MatchScope;
   threshold: number;
   title: string;
 };
@@ -182,6 +190,7 @@ export type PendingReward = {
   boxId: string;
   boxRarity: CrestCatalogItem["rarity"];
   boxType: string;
+  componentIndex: number;
   economyVersion: number;
   generatedAt: string;
   animationKey: string;
@@ -192,6 +201,8 @@ export type PendingReward = {
   rewardGrantId: string;
   rewardKey: string;
   rewardKind: "collective_box" | "team_cosmetic";
+  rewardComponent: RewardComponent | null;
+  rewardComponentKey: string | null;
   rewardPayload: Record<string, unknown> | null;
   rewardPoolKey: string;
   presentationKey: string;
@@ -506,7 +517,7 @@ function teamStats(value: unknown): TeamProgressionStats | null {
     maxUnbeatenStreak: Math.max(0, Math.floor(numberValue(value.maxUnbeatenStreak))),
     maxWinStreak: Math.max(0, Math.floor(numberValue(value.maxWinStreak))),
     revision: Math.max(0, Math.floor(numberValue(value.revision))),
-    scope: value.scope === "external" ? "external" : "internal",
+    scope: matchScope(value.scope),
     updatedAt: text(value.updatedAt),
     wins: Math.max(0, Math.floor(numberValue(value.wins))),
   };
@@ -514,6 +525,17 @@ function teamStats(value: unknown): TeamProgressionStats | null {
 
 function teamAchievementProgress(value: unknown): TeamAchievementProgress | null {
   if (!isRecord(value) || !text(value.key) || !text(value.title)) return null;
+  const rewardComponents = Array.isArray(value.rewardComponents)
+    ? value.rewardComponents.flatMap((component) => {
+      if (!isRecord(component) || !text(component.key) || !text(component.label)) return [];
+      return [{
+        boxRarity: rarity(component.boxRarity),
+        goals: component.goals == null ? null : Math.max(0, Math.floor(numberValue(component.goals))),
+        key: text(component.key),
+        label: text(component.label),
+      }];
+    })
+    : [];
   return {
     animationKey: text(value.animationKey),
     boxRarity: rarity(value.boxRarity),
@@ -527,8 +549,9 @@ function teamAchievementProgress(value: unknown): TeamAchievementProgress | null
     presentationKey: text(value.presentationKey),
     rarity: rarity(value.rarity),
     repeatable: value.repeatable === true,
+    rewardComponents,
     rewardPoolVersion: Math.max(1, Math.floor(numberValue(value.rewardPoolVersion))),
-    scope: value.scope === "external" ? "external" : "internal",
+    scope: matchScope(value.scope),
     threshold: Math.max(1, Math.floor(numberValue(value.threshold))),
     title: text(value.title),
   };
@@ -611,6 +634,17 @@ export function normalizePendingReward(value: unknown): PendingReward | null {
   const status = value.status === "opened" || value.status === "revoked" || value.status === "skipped"
     ? value.status
     : "pending";
+  const componentSource = isRecord(value.rewardComponent) ? value.rewardComponent : null;
+  const rewardComponent = componentSource && text(componentSource.key) && text(componentSource.label)
+    ? {
+      boxRarity: rarity(componentSource.boxRarity),
+      goals: componentSource.goals == null
+        ? null
+        : Math.max(0, Math.floor(numberValue(componentSource.goals))),
+      key: text(componentSource.key),
+      label: text(componentSource.label),
+    }
+    : null;
   return {
     achievement: {
       awardedAt: text(value.achievement.awardedAt),
@@ -625,6 +659,7 @@ export function normalizePendingReward(value: unknown): PendingReward | null {
     boxId,
     boxRarity: rarity(value.boxRarity ?? value.achievement.rarity),
     boxType: text(value.boxType),
+    componentIndex: Math.max(0, Math.floor(numberValue(value.componentIndex))),
     economyVersion: Math.max(0, Math.floor(numberValue(value.economyVersion))),
     generatedAt: text(value.generatedAt),
     animationKey: text(value.animationKey),
@@ -635,6 +670,8 @@ export function normalizePendingReward(value: unknown): PendingReward | null {
     rewardGrantId,
     rewardKey,
     rewardKind,
+    rewardComponent,
+    rewardComponentKey: nullableText(value.rewardComponentKey),
     rewardPayload: isRecord(value.rewardPayload) ? value.rewardPayload : null,
     rewardPoolKey: text(value.rewardPoolKey),
     presentationKey: text(value.presentationKey),
