@@ -104,8 +104,8 @@ Ejecutada el 8 de agosto de 2026 en la rama Supabase `pwa-bridge-staging` (`iozc
 - Los perfiles Rating V2 de control conservaron exactamente overall, facetas, fiabilidad, versión y `updated_at`.
 - QA visual autenticada en 1440x900, 390x844 y 844x390: canvas 3D visible, sin overflow horizontal, secuencia siguiente/cerrar/reabrir funcional y consola sin errores.
 
-### Preflight de producción pendiente
+### Preflight de producción
 
-La cadena histórica del repositorio no puede considerarse sincronizada todavía: el remoto registra las migraciones de notificaciones como `20260804144819` y `20260804145109`, mientras el repositorio conserva `20260804141213` y `20260804144912`. Además, las tres migraciones del PR se aplicaron a staging mediante la API de ramas con versiones remotas `20260808175351`, `20260808175352` y `20260808175354`.
+El historial del repositorio se alineó con las versiones ya registradas por Supabase sin cambiar el SQL ni volver a ejecutar migraciones: notificaciones usan `20260804144819` y `20260804145109`; las tres migraciones de este PR usan `20260808175351`, `20260808175352` y `20260808175354`, iguales a staging.
 
-Antes de cualquier `db push`, merge de la rama Supabase o despliegue de producción se debe reconciliar el historial de forma revisable, sin reescribir migraciones ya ejecutadas ni volver a aplicar su SQL. Hasta entonces rige: **NO producción**. Un deployment frontend verde no elimina este bloqueo de base de datos.
+Producción termina en `20260804145109`, por lo que sus únicas migraciones pendientes son las tres de este PR, en ese orden. Antes de aplicarlas se debe volver a comparar el historial remoto, confirmar el SHA verde de `main` y conservar el rollback no destructivo descrito arriba.

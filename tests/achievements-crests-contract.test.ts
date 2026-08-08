@@ -280,7 +280,7 @@ test("achievement evaluators are typed and rewards are decided before opening", 
 });
 
 test("individual achievement catalog adds canonical milestones and exact doubles", () => {
-  const sql = readFileSync(new URL("../supabase/migrations/20260808115012_individual_achievements_catalog_v1.sql", import.meta.url), "utf8");
+  const sql = readFileSync(new URL("../supabase/migrations/20260808175351_individual_achievements_catalog_v1.sql", import.meta.url), "utf8");
   assert.match(sql, /'player\.internal\.matches\.005', 'Uno de los nuestros'/);
   assert.match(sql, /'player\.internal\.matches\.025', 'Habitual'/);
   assert.match(sql, /player_facts\.goals = 2\)::integer as braces/);
@@ -295,7 +295,7 @@ test("individual achievement catalog adds canonical milestones and exact doubles
 });
 
 test("collective boxes separate personal recognition, team occurrences and sealed rewards", () => {
-  const sql = readFileSync(new URL("../supabase/migrations/20260808115100_collective_reward_boxes_v2.sql", import.meta.url), "utf8");
+  const sql = readFileSync(new URL("../supabase/migrations/20260808175352_collective_reward_boxes_v2.sql", import.meta.url), "utf8");
   assert.match(sql, /set reward_kind = 'none', reward_key = null[\s\S]*subject_type = 'player'/);
   assert.match(sql, /'PLAYER_POKERS'[\s\S]*'PLAYER_REPOKERS'[\s\S]*'PLAYER_DOUBLE_HAT_TRICKS'/);
   assert.match(sql, /'ruleKind', 'player_match_goals'/);
@@ -315,7 +315,7 @@ test("collective boxes separate personal recognition, team occurrences and seale
 });
 
 test("reward economy is versioned, sealed, auditable and inaccessible to direct client writes", () => {
-  const sql = readFileSync(new URL("../supabase/migrations/20260808115200_reward_economy_v1.sql", import.meta.url), "utf8");
+  const sql = readFileSync(new URL("../supabase/migrations/20260808175354_reward_economy_v1.sql", import.meta.url), "utf8");
   for (const table of [
     "pachanga_reward_economy_versions",
     "pachanga_reward_box_catalog",
@@ -365,7 +365,7 @@ test("new migrations consume Rating V2 snapshots without redefining or mutating 
     "20260804023455_external_match_results_mvp.sql",
     "20260804023520_achievement_reward_engine_mvp.sql",
     "20260804023534_team_crest_identity_mvp.sql",
-    "20260808115200_reward_economy_v1.sql",
+    "20260808175354_reward_economy_v1.sql",
   ].map((name) => readFileSync(new URL(`../supabase/migrations/${name}`, import.meta.url), "utf8")).join("\n");
   assert.match(newSql, /from public\.pachanga_match_rating_participants/);
   assert.match(newSql, /on public\.pachanga_match_rating_snapshots/);

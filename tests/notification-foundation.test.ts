@@ -3,7 +3,7 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 const [migration, center, preferences, page, profilePage, css] = await Promise.all([
-  readFile(new URL("../supabase/migrations/20260804141213_notification_foundation.sql", import.meta.url), "utf8"),
+  readFile(new URL("../supabase/migrations/20260804144819_notification_foundation.sql", import.meta.url), "utf8"),
   readFile(new URL("../app/notification-center.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/notification-preferences.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
