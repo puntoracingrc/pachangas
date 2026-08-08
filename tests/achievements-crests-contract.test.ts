@@ -14,6 +14,7 @@ import {
   TEAM_IDENTITY_CACHE_MAX_AGE_MS,
   normalizeProgressionSnapshot,
   normalizeTeamCrestSnapshot,
+  opensPendingRewardSequence,
   readTeamIdentityCache,
   writeTeamIdentityCache,
 } from "../app/team-identity-contract";
@@ -95,14 +96,51 @@ function progressionFixture() {
     confirmedRevision: 4,
     groupId: "group-a",
     groupRevision: 4,
+    personalAchievementCatalog: [{
+      awardedAt: null,
+      category: "matches",
+      currentValue: 3,
+      description: "Participa en cinco partidos internos finalizados.",
+      grantId: null,
+      key: "player.internal.matches.005",
+      occurrenceCount: 0,
+      progressPercent: 60,
+      rarity: "common",
+      repeatable: false,
+      rewardKey: null,
+      rewardKind: "none",
+      scope: "internal",
+      threshold: 5,
+      title: "Uno de los nuestros",
+      unlocked: false,
+    }],
     personalAchievements: [],
+    rewardEconomy: {
+      account: { balance: 15, lifetimeEarned: 15, lifetimeSpent: 0, revision: 2, serverSequence: 20, updatedAt: "2026-08-03T21:00:00.000Z" },
+      boxCatalog: [{ animationKey: "reward_box_blue", boxType: "collective.common", catalogVersion: 1, maxPoints: 7, minPoints: 4, name: "Caja común", possibleRewards: [{ kind: "points", weight: 70 }], presentationKey: "box.common", rarity: "common" }],
+      currencyKey: "player_points",
+      inventory: [{ acquiredAt: "2026-08-03T21:00:00.000Z", key: "symbol.ball", kind: "player_cosmetic", metadata: {}, sourceBoxId: "box-0", state: "unlocked" }],
+      ledger: [{ achievementGrantId: "grant-0", balanceAfter: 15, createdAt: "2026-08-03T21:00:00.000Z", delta: 15, id: "ledger-1", matchFactId: "fact-0", metadata: {}, serverSequence: 20, sourceBoxId: "box-0", sourceType: "reward_box" }],
+    },
     rewards: [{
-      achievement: { awardedAt: "2026-08-03T21:00:00.000Z", description: "Primer partido", key: "team.external.matches.001", rarity: "common", title: "Primer rival" },
+      achievement: { awardedAt: "2026-08-03T21:00:00.000Z", description: "Primer partido", isFirst: true, key: "team.external.matches.001", occurredAt: "2026-08-03T20:00:00.000Z", rarity: "common", sequenceCount: 1, title: "Primer rival" },
+      animationKey: "reward_box_blue",
+      boxId: "box-1",
+      boxRarity: "uncommon",
+      boxType: "collective.uncommon",
+      economyVersion: 1,
+      generatedAt: "2026-08-03T21:00:00.000Z",
+      matchFactId: "fact-1",
       openedAt: null,
       recipientRevision: 1,
+      rewardGrantedAt: null,
       rewardGrantId: "reward-1",
-      rewardKey: "symbol.lightning",
-      rewardKind: "team_cosmetic",
+      rewardKey: "box.collective.common",
+      rewardKind: "collective_box",
+      rewardPayload: null,
+      rewardPoolKey: "pool.collective.uncommon",
+      presentationKey: "box.uncommon",
+      sourceCorrection: null,
       status: "pending",
     }],
     serverSequence: 19,
@@ -154,9 +192,27 @@ test("derived caches are scoped, finite and never manufacture canonical state", 
   assert.equal(readExternalResultsCache(storage, "user-a", "group-a", 1_001)?.serverSequence, 41);
   assert.equal(readExternalResultsCache(storage, "user-b", "group-a", 1_001), null);
   assert.equal(readTeamIdentityCache(storage, "user-a", "group-a", 1_001)?.crest?.crestRevision, 2);
+  assert.equal(progression.personalAchievementCatalog[0]?.progressPercent, 60);
+  assert.equal(progression.personalAchievementCatalog[0]?.unlocked, false);
+  assert.equal(progression.rewardEconomy.account.balance, 15);
+  assert.equal(progression.rewardEconomy.inventory[0]?.key, "symbol.ball");
+  assert.equal(progression.rewards[0]?.boxType, "collective.uncommon");
   assert.equal(readTeamIdentityCache(storage, "user-a", "group-b", 1_001), null);
   assert.equal(readExternalResultsCache(storage, "user-a", "group-a", 1_000 + EXTERNAL_RESULTS_CACHE_MAX_AGE_MS + 1), null);
   assert.equal(readTeamIdentityCache(storage, "user-a", "group-a", 1_000 + TEAM_IDENTITY_CACHE_MAX_AGE_MS + 1), null);
+});
+
+test("every reward notification deep link opens the complete pending sequence", () => {
+  assert.equal(opensPendingRewardSequence("?grupo=group-a&rewards=pending"), true);
+  assert.equal(opensPendingRewardSequence("?reward=legacy-grant"), true);
+  assert.equal(opensPendingRewardSequence("?grupo=group-a&achievements=latest"), false);
+  assert.equal(opensPendingRewardSequence("?grupo=group-a"), false);
+
+  const identityUi = readFileSync(new URL("../app/equipo/identidad/page.tsx", import.meta.url), "utf8");
+  assert.match(identityUi, /handledRewardDeepLinks/);
+  assert.match(identityUi, /addEventListener\("pachangas:reward-deep-link"/);
+  assert.match(identityUi, /handledRewardDeepLinks\.current\.delete\(selectedGroupId\)/);
+  assert.match(identityUi, /canonical\.rewards\.filter\(\(reward\) => reward\.status === "pending"\)/);
 });
 
 test("the PWA bridge classifies every new mutation and leaves canonical reads available", () => {
@@ -165,6 +221,7 @@ test("the PWA bridge classifies every new mutation and leaves canonical reads av
     "cancel_pachanga_external_match_v1",
     "complete_pachanga_external_scorers_v1",
     "confirm_pachanga_external_result_v1",
+    "open_pachanga_reward_box_v2",
     "open_pachanga_reward_v1",
     "propose_pachanga_external_result_change_v1",
     "publish_pachanga_external_result_v1",
@@ -222,6 +279,71 @@ test("achievement evaluators are typed and rewards are decided before opening", 
   assert.match(sql, /'\/equipo\/identidad\?reward='/);
 });
 
+test("individual achievement catalog adds canonical milestones and exact doubles", () => {
+  const sql = readFileSync(new URL("../supabase/migrations/20260808175351_individual_achievements_catalog_v1.sql", import.meta.url), "utf8");
+  assert.match(sql, /'player\.internal\.matches\.005', 'Uno de los nuestros'/);
+  assert.match(sql, /'player\.internal\.matches\.025', 'Habitual'/);
+  assert.match(sql, /player_facts\.goals = 2\)::integer as braces/);
+  assert.match(sql, /player_facts\.goals >= 3\)::integer as hat_tricks/);
+  assert.match(sql, /'personalAchievementCatalog'/);
+  assert.match(sql, /'progressPercent'/);
+  assert.match(sql, /private\.pachanga_progression_snapshot_base_v1/);
+  assert.match(sql, /grant execute on function public\.get_pachanga_progression_snapshot_v1\(uuid\)[\s\S]*to authenticated/);
+  assert.doesNotMatch(sql, /execute\s+format|evaluator_sql|condition_sql/i);
+  assert.doesNotMatch(sql, /update public\.pachanga_player_profiles/i);
+  assert.doesNotMatch(sql, /calibrated_(overall|facets)\s*=/i);
+});
+
+test("collective boxes separate personal recognition, team occurrences and sealed rewards", () => {
+  const sql = readFileSync(new URL("../supabase/migrations/20260808175352_collective_reward_boxes_v2.sql", import.meta.url), "utf8");
+  assert.match(sql, /set reward_kind = 'none', reward_key = null[\s\S]*subject_type = 'player'/);
+  assert.match(sql, /'PLAYER_POKERS'[\s\S]*'PLAYER_REPOKERS'[\s\S]*'PLAYER_DOUBLE_HAT_TRICKS'/);
+  assert.match(sql, /'ruleKind', 'player_match_goals'/);
+  assert.match(sql, /order by definitions\.threshold desc[\s\S]*limit 1/);
+  assert.match(sql, /'ruleKind', 'team_match_goals'/);
+  assert.match(sql, /create table if not exists private\.pachanga_reward_box_contents/);
+  assert.match(sql, /revoke all on table private\.pachanga_reward_box_contents[\s\S]*authenticated/);
+  assert.match(sql, /from public\.pachanga_progression_player_match_facts player_facts[\s\S]*player_facts\.state = 'active'/);
+  assert.match(sql, /create or replace function public\.open_pachanga_reward_box_v2/);
+  assert.match(sql, /if selected\.revision <> expected_revision/);
+  assert.match(sql, /pg_advisory_xact_lock\(hashtextextended\([\s\S]*'reward-box-open:'/);
+  assert.match(sql, /'postmatch_reward_boxes'[\s\S]*'Tus premios del partido están listos'/);
+  assert.match(sql, /'\/equipo\/identidad\?grupo='[\s\S]*'&rewards=pending'/);
+  assert.match(sql, /openedBoxesPreserved/);
+  assert.doesNotMatch(sql, /update public\.pachanga_player_profiles/i);
+  assert.doesNotMatch(sql, /calibrated_(overall|facets)\s*=/i);
+});
+
+test("reward economy is versioned, sealed, auditable and inaccessible to direct client writes", () => {
+  const sql = readFileSync(new URL("../supabase/migrations/20260808175354_reward_economy_v1.sql", import.meta.url), "utf8");
+  for (const table of [
+    "pachanga_reward_economy_versions",
+    "pachanga_reward_box_catalog",
+    "pachanga_reward_pool_catalog",
+    "pachanga_achievement_box_rules",
+    "pachanga_player_point_accounts",
+    "pachanga_player_points_ledger",
+  ]) assert.match(sql, new RegExp(`create table if not exists public\\.${table}`));
+  for (const rarity of ["common", "uncommon", "rare", "epic", "legendary"]) {
+    assert.match(sql, new RegExp(`'collective\\.${rarity}'`));
+  }
+  assert.match(sql, /private\.pachanga_seal_reward_box_v1/);
+  assert.match(sql, /entropy uuid := gen_random_uuid\(\)/);
+  assert.match(sql, /Sealed reward box contents are immutable/);
+  assert.match(sql, /catalogVersion[\s\S]*poolEntryKey[\s\S]*duplicateConversionPoints/);
+  assert.match(sql, /pg_advisory_xact_lock\(hashtextextended\([\s\S]*'player-points:'/);
+  assert.match(sql, /pg_advisory_xact_lock\(hashtextextended\([\s\S]*'reward-box-open:'/);
+  assert.match(sql, /on conflict \(player_profile_id, reward_kind, reward_key\) do nothing/);
+  assert.match(sql, /'duplicateConverted'/);
+  assert.match(sql, /'rewardEconomy'/);
+  assert.match(sql, /revoke all on table public\.pachanga_player_points_ledger[\s\S]*authenticated/);
+  assert.match(sql, /revoke all on function private\.pachanga_apply_player_points_v1/);
+  assert.doesNotMatch(sql, /grant (insert|update|delete|all) on table public\.pachanga_player_points_ledger to authenticated/i);
+  assert.doesNotMatch(sql, /update public\.pachanga_player_profiles/i);
+  assert.doesNotMatch(sql, /calibrated_(overall|facets)\s*=/i);
+  assert.doesNotMatch(sql, /stripe_(secret|checkout)|google play billing|service_role_key/i);
+});
+
 test("crest SQL provides five base shapes, immutable versions and server-side unlock checks", () => {
   const sql = readFileSync(new URL("../supabase/migrations/20260804023534_team_crest_identity_mvp.sql", import.meta.url), "utf8");
   assert.match(sql, /create table if not exists public\.pachanga_team_crest_drafts/);
@@ -243,6 +365,7 @@ test("new migrations consume Rating V2 snapshots without redefining or mutating 
     "20260804023455_external_match_results_mvp.sql",
     "20260804023520_achievement_reward_engine_mvp.sql",
     "20260804023534_team_crest_identity_mvp.sql",
+    "20260808175354_reward_economy_v1.sql",
   ].map((name) => readFileSync(new URL(`../supabase/migrations/${name}`, import.meta.url), "utf8")).join("\n");
   assert.match(newSql, /from public\.pachanga_match_rating_participants/);
   assert.match(newSql, /on public\.pachanga_match_rating_snapshots/);
@@ -264,7 +387,8 @@ test("client surfaces write only through RPC and subscribe to revision rows", ()
   assert.match(externalUi, /\.rpc\("publish_pachanga_external_result_v1"/);
   assert.match(externalUi, /table: "pachanga_external_match_group_state"/);
   assert.match(identityUi, /\.rpc\("save_pachanga_team_crest_draft_v1"/);
-  assert.match(identityUi, /\.rpc\("open_pachanga_reward_v1"/);
+  assert.match(identityUi, /\.rpc\("open_pachanga_reward_box_v2"/);
+  assert.match(identityUi, /beginRewardSequence\(pendingRewards\)/);
   assert.match(identityUi, /table: "pachanga_progression_group_state"/);
   assert.match(identityUi, /table: "pachanga_progression_user_state"/);
   assert.doesNotMatch(externalUi, /\.from\("pachanga_external_[^"]+"\)\s*\.(insert|update|delete)/);
