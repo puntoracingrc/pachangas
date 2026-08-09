@@ -1104,6 +1104,18 @@ export const KNOWN_SYNTHETIC_INCIDENTS: KnownIncident[] = [
     reproductionSteps: ["Authenticate a user with no reporting-group membership", "Submit a match-linked conduct report", "Observe the membership denial instead of the test's expected generic registration denial"],
     severity: "low",
   },
+  {
+    actual: "The SQL fixture inserted an already-finalized match in one read-model sync and sent its storage match_version 0, while Conduct V1 normalizes the first valid sporting-context revision to 1.",
+    category: "TESTABILITY_GAP",
+    evidence: ["The fixture now uses greatest(match_version, 1), matching the report context contract without changing the production read model or revision checks."],
+    expected: "Synthetic report fixtures send the canonical context revision accepted by the server, including the initial revision normalization.",
+    fixed: false,
+    id: "SW-0091",
+    operation: "conduct.tests.initial_match_context_revision",
+    regressionVerified: false,
+    reproductionSteps: ["Insert a finalized match directly into a fresh normalized read model", "Read storage match_version 0", "Submit it to Conduct V1", "Observe the server requiring canonical revision 1"],
+    severity: "low",
+  },
 ];
 
 export function knownIncidentsForWorld(seed: number, virtualDate: string): SyntheticIncident[] {
