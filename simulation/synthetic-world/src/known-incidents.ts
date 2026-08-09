@@ -852,6 +852,18 @@ export const KNOWN_SYNTHETIC_INCIDENTS: KnownIncident[] = [
     reproductionSteps: ["Run npm run synthetic:network-v31", "Observe the process remain CPU-bound during the matrix and 10k contextualization", "Inspect contextualizeNetworkCandidates", "Observe a full rows.filter call for every player"],
     severity: "medium",
   },
+  {
+    actual: "The first completed V3.1 calculation generated seven keyed Model 1 threshold variants, but the Markdown summary requested a non-existent unqualified model_1_absolute aggregate and failed after local clones were saved.",
+    category: "SIMULATION_BUG",
+    evidence: [],
+    expected: "The report renders Model 0 and Models 2-5 as primary rows while presenting all seven Model 1 thresholds in their dedicated control table.",
+    fixed: false,
+    id: "SW-0070",
+    operation: "simulation.ranking.v31_report_absolute_model_key",
+    regressionVerified: false,
+    reproductionSteps: ["Run npm run synthetic:network-v31", "Allow all model clones to persist", "Enter report generation", "Observe TypeError reading falsePositiveRate from healthy.model_1_absolute"],
+    severity: "low",
+  },
 ];
 
 export function knownIncidentsForWorld(seed: number, virtualDate: string): SyntheticIncident[] {
