@@ -1260,6 +1260,18 @@ export const KNOWN_SYNTHETIC_INCIDENTS: KnownIncident[] = [
     reproductionSteps: ["Run npm test in the Conduct V1 worktree", "Enter next build", "Observe Turbopack reject the external node_modules symlink before compiling application code"],
     severity: "medium",
   },
+  {
+    actual: "The first full suite showed that new Conduct V1 mutations were invoked as RPCs but were not classified as writes by the PWA client-version bridge, so an incompatible installed client could bypass the write update gate.",
+    category: "PRODUCT_BUG",
+    evidence: ["npm test passed the production build but failed pwa-client-version-bridge.test.ts because respond_pachanga_post_match_attendance_v1 classified as null instead of an RPC write."],
+    expected: "Every Conduct V1 mutation is classified as an authoritative write while read-model RPCs remain available as reads.",
+    fixed: false,
+    id: "SW-0104",
+    operation: "conduct.pwa_bridge.classify_all_mutations",
+    regressionVerified: false,
+    reproductionSteps: ["Run the complete browser RPC classifier test", "Inspect a Conduct V1 response or moderation RPC", "Observe classifyBrowserWrite returning null"],
+    severity: "critical",
+  },
 ];
 
 export function knownIncidentsForWorld(seed: number, virtualDate: string): SyntheticIncident[] {
