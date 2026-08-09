@@ -1152,6 +1152,18 @@ export const KNOWN_SYNTHETIC_INCIDENTS: KnownIncident[] = [
     reproductionSteps: ["Confirm a conduct case", "Issue a warning", "Appeal as the target", "Resolve it as moderator", "Observe PostgreSQL ambiguous_column on resolution_note"],
     severity: "high",
   },
+  {
+    actual: "After adding the mutual-retaliation fixture, the anonymity test still expected the target's submittedReports array to be empty even though that user had now authored one reciprocal report.",
+    category: "TESTABILITY_GAP",
+    evidence: ["The actor matrix now expects one self-authored opaque report while continuing to reject every inbound reporter UUID and identity."],
+    expected: "A player may inspect their own report without gaining access to reports or identities submitted against them.",
+    fixed: false,
+    id: "SW-0095",
+    operation: "conduct.tests.own_vote_anonymity_matrix",
+    regressionVerified: false,
+    reproductionSteps: ["Submit a report against the target", "Submit one reciprocal report as the target", "Read the target conduct model", "Observe one legitimate self-authored submittedReports entry"],
+    severity: "low",
+  },
 ];
 
 export function knownIncidentsForWorld(seed: number, virtualDate: string): SyntheticIncident[] {
