@@ -1,0 +1,6 @@
+certification,classification,id,risk
+not_eligible,clean,siblings-shared-network,6.25
+not_eligible,clean,real-club-four-squads,8.57
+pending_integrity_review,clean,same-weekly-venue,6.67
+not_eligible,clean,owner-two-teams,10.73
+not_eligible,clean,small-league,7.78

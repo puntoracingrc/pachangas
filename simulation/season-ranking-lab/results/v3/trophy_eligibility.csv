@@ -1,0 +1,10 @@
+candidateRecall20Median,certifiedPlayers,id,nationalTop100Ndcg,nationalTop10Ndcg,ndcg10Median,scope,territories
+0.9,6262,province-20/8,,,0.7502,province,51
+0.9,4635,province-25/10,,,0.7814,province,51
+0.9,2843,province-30/10,,,0.8243,province,44
+0.7,4304,autonomous_community-25/10,,,0.6893,autonomous_community,17
+0.8,2610,autonomous_community-30/12,,,0.7448,autonomous_community,16
+0.9,1339,autonomous_community-35/15,,,0.7609,autonomous_community,14
+0,2290,national-30/12,0.6616,0.19,0,national,0
+0,562,national-40/15,0.8805,0.2327,0,national,0
+0,74,national-50/20,0.9953,0.8136,0,national,0

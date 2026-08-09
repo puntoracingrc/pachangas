@@ -177,7 +177,7 @@ export function evaluateEliteByScope(options: {
   for (const [code, group] of groups) {
     const eligibleWithTruth = group.filter(({ playerId }) => values.get(playerId) !== null && values.get(playerId) !== undefined);
     if (eligibleWithTruth.length < minimumEligible) continue;
-    const predictedIds = [...eligibleWithTruth].sort((left, right) => right.score - left.score || left.playerId.localeCompare(right.playerId)).map(({ playerId }) => playerId);
+    const predictedIds = [...eligibleWithTruth].sort((left, right) => right.rawScore - left.rawScore || left.playerId.localeCompare(right.playerId)).map(({ playerId }) => playerId);
     const referenceIds = [...eligibleWithTruth].sort((left, right) => (values.get(right.playerId) ?? 0) - (values.get(left.playerId) ?? 0) || left.playerId.localeCompare(right.playerId)).map(({ playerId }) => playerId);
     const metadata = scopeMetadata(options.scope, code);
     rows.push(evaluateOrderedGroup(predictedIds, referenceIds, {
@@ -212,7 +212,7 @@ export function evaluatePredictiveTops(
   const eligible = results.filter(({ eligibility, playerId }) => {
     const input = inputsById.get(playerId);
     return eligibility.eligible && Boolean(input && groundTruthValue(input, "future", splitWeek) !== null);
-  }).sort((left, right) => right.score - left.score || left.playerId.localeCompare(right.playerId));
+  }).sort((left, right) => right.rawScore - left.rawScore || left.playerId.localeCompare(right.playerId));
   const observations = eligible.map(({ playerId }) => {
     const input = inputsById.get(playerId)!;
     const futureRecords = input.records.filter(isSeasonScoreEvidence).filter(({ week }) => week > splitWeek);
@@ -253,7 +253,7 @@ export function evaluateNationalTops(
 ): NationalTopMetrics[] {
   const values = truthMap(inputs, truth, splitWeek);
   const eligible = results.filter(({ eligibility, playerId }) => eligibility.eligible && values.get(playerId) !== null);
-  const predictedIds = [...eligible].sort((left, right) => right.score - left.score).map(({ playerId }) => playerId);
+  const predictedIds = [...eligible].sort((left, right) => right.rawScore - left.rawScore || left.playerId.localeCompare(right.playerId)).map(({ playerId }) => playerId);
   const referenceIds = [...eligible].sort((left, right) => (values.get(right.playerId) ?? 0) - (values.get(left.playerId) ?? 0)).map(({ playerId }) => playerId);
   return [10, 25, 50, 100].map((k) => {
     const predicted = new Set(predictedIds.slice(0, k));
@@ -275,7 +275,7 @@ export function predictiveUplift(inputs: SeasonPlayerInput[], results: RankedPla
   const values = truthMap(inputs, "future", splitWeek);
   const eligible = results.filter(({ eligibility, playerId }) => eligibility.eligible && values.get(playerId) !== null);
   if (eligible.length === 0) return { correlation: 0, populationMean: 0, topMean: 0, uplift: 0 };
-  const ordered = [...eligible].sort((left, right) => right.score - left.score);
+  const ordered = [...eligible].sort((left, right) => right.rawScore - left.rawScore || left.playerId.localeCompare(right.playerId));
   const topValues = ordered.slice(0, topSize).map(({ playerId }) => values.get(playerId) ?? 0);
   const populationValues = eligible.map(({ playerId }) => values.get(playerId) ?? 0);
   return {

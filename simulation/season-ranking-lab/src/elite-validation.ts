@@ -31,7 +31,7 @@ function provinceGroups(results: RankedPlayer[]) {
     group.push(result);
     groups.set(result.competitiveProvinceCode, group);
   }
-  for (const group of groups.values()) group.sort((left, right) => right.score - left.score);
+  for (const group of groups.values()) group.sort((left, right) => right.rawScore - left.rawScore || left.playerId.localeCompare(right.playerId));
   return groups;
 }
 

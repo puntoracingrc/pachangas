@@ -86,6 +86,7 @@ export type SeasonScoreConfig = {
   eligibility: EligibilityConfig;
   id: string;
   integrityMode: IntegrityMode;
+  integrityScorePenalty?: boolean;
   label: string;
   opponentDecay: number[];
   ratingConfidenceModel: RatingConfidenceModel;
@@ -135,6 +136,7 @@ export type SeasonScoreResult = {
   eligibility: EligibilityResult;
   playerId: string;
   risk: RiskAssessment;
+  rawScore: number;
   score: number;
   seasonId: string;
   weightedChallenges: number;

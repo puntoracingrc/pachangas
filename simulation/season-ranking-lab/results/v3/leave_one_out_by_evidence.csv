@@ -1,0 +1,6 @@
+category,dependencies,dependencyRate,removals
+low_confidence,0,0,0
+low_independence,0,0,0
+normal,99,0.0949,1043
+repeated_opponent,188,0.0802,2345
+strong_opponent,16,0.1127,142

@@ -1,0 +1,4 @@
+confidencePolicy,eligibleAttackProfiles,eligiblePlayers,ndcg10Median,recall20Median,volumeAdvantage
+graduated,1,7643,0.695,0.8,0.0202
+hard_050,1,7643,0.695,0.8,0.0202
+hard_075,1,7643,0.695,0.8,0.0202

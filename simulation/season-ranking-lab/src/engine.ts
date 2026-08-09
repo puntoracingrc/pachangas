@@ -266,14 +266,15 @@ export function calculateSeasonScore(
   const opposition = clamp(opponentStrength * 0.58 + diversity * 0.42, 0, 100);
 
   const risk = assessRankingIntegrity(input);
-  const integrityFactor = config.integrityMode === "weighted"
+  const integrityFactor = config.integrityMode === "weighted" && config.integrityScorePenalty !== false
     ? 1 - clamp((risk.risk - 20) / 100, 0, 0.42) : 1;
   const weightedScore = (
     quality * config.weights.quality
     + competition * config.weights.competition
     + opposition * config.weights.opposition
   ) / 100;
-  const score = round(clamp(weightedScore * 10 * integrityFactor, 0, 1000));
+  const rawScore = clamp(weightedScore * 10 * integrityFactor, 0, 1000);
+  const score = round(rawScore);
   return {
     components: {
       competition: round(competition * config.weights.competition / 10),
@@ -284,6 +285,7 @@ export function calculateSeasonScore(
     competitiveProvinceCode: resolveCompetitiveProvince(validRecords, input.previousCompetitiveProvinceCode),
     eligibility: resolveEligibility(input, config, validRecords, asOfWeek),
     playerId: input.player.id,
+    rawScore,
     risk,
     score,
     seasonId: input.seasonId,
@@ -302,7 +304,7 @@ function assignRanks(results: SeasonScoreResult[], key: (result: SeasonScoreResu
   }
   const ranks = new Map<string, number>();
   for (const group of groups.values()) {
-    group.sort((left, right) => right.score - left.score || left.playerId.localeCompare(right.playerId));
+    group.sort((left, right) => right.rawScore - left.rawScore || left.playerId.localeCompare(right.playerId));
     group.forEach((result, index) => ranks.set(result.playerId, index + 1));
   }
   return ranks;

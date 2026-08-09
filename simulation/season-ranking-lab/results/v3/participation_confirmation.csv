@@ -1,0 +1,5 @@
+additionalActionsPerMatch,attackAcceptanceRate,id,label,legitimateCompletionRate
+0,1,self,Confirmación propia,0.99
+1,0.48,admin,Confirmación admin,0.96
+2,0.08,rival,Confirmación cruzada rival,0.91
+0.18,0.12,sampled,Muestreo Top10/anomalías,0.97

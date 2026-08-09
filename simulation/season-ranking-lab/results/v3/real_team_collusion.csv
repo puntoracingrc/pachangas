@@ -1,0 +1,13 @@
+certification,competitionNetworkDiversity,competitiveConfidence,risk,scenario,score,strategy
+not_eligible,0.5765,0.9206,8.33,ABCDE,854.36,control
+not_eligible,0.5765,0.9206,8.33,ABCDE,854.36,score_penalty
+not_eligible,0.5765,0.9206,8.33,ABCDE,854.36,evidence_exclusion
+not_eligible,0.5765,0.9206,8.33,ABCDE,854.36,certification_hold
+not_eligible,0.5765,0.9206,8.33,ABCDE,854.36,penalty_and_hold
+not_eligible,0.5765,0.9206,8.33,ABCDE,854.36,exclusion_and_hold
+eligible,0.5765,0.9206,6.67,ten-team-ring,881.71,control
+eligible,0.5765,0.9206,6.67,ten-team-ring,881.71,score_penalty
+eligible,0.5765,0.9206,6.67,ten-team-ring,881.71,evidence_exclusion
+pending_integrity_review,0.5765,0.9206,6.67,ten-team-ring,881.71,certification_hold
+pending_integrity_review,0.5765,0.9206,6.67,ten-team-ring,881.71,penalty_and_hold
+pending_integrity_review,0.5765,0.9206,6.67,ten-team-ring,881.71,exclusion_and_hold
