@@ -1140,6 +1140,18 @@ export const KNOWN_SYNTHETIC_INCIDENTS: KnownIncident[] = [
     reproductionSteps: ["Read the target conduct model", "Search its serialized text for reporter", "Match reporterIdentityVisibleToTarget=false despite no reporter identifier being present"],
     severity: "low",
   },
+  {
+    actual: "Resolving a real warning appeal reached its database update but PostgreSQL rejected resolution_note as ambiguous between the RPC parameter and the appeal-table column.",
+    category: "PRODUCT_BUG",
+    evidence: ["The authenticated warning -> appeal -> moderator correction regression exercises the original statement and verifies the warning becomes corrected while audit events remain."],
+    expected: "An authorized moderator can uphold or correct an appeal exactly once without ambiguous SQL identifiers.",
+    fixed: false,
+    id: "SW-0094",
+    operation: "conduct.appeals.resolve_note_authority",
+    regressionVerified: false,
+    reproductionSteps: ["Confirm a conduct case", "Issue a warning", "Appeal as the target", "Resolve it as moderator", "Observe PostgreSQL ambiguous_column on resolution_note"],
+    severity: "high",
+  },
 ];
 
 export function knownIncidentsForWorld(seed: number, virtualDate: string): SyntheticIncident[] {
