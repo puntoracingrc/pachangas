@@ -1092,6 +1092,18 @@ export const KNOWN_SYNTHETIC_INCIDENTS: KnownIncident[] = [
     reproductionSteps: ["Insert a Conduct V1 target fixture with role member", "Observe pachanga_group_members_role_check rejecting the row", "Confirm the transaction rolls back"],
     severity: "low",
   },
+  {
+    actual: "The outsider-report regression expected the generic Registered reporter required error, while the canonical RPC reached the stricter group-membership check and returned Reporter must currently belong to the reporting group.",
+    category: "TESTABILITY_GAP",
+    evidence: ["The regression now requires the precise membership denial and still verifies that no report, case or receipt is created."],
+    expected: "Negative report tests assert the authoritative rejection layer actually reached by each fixture without accepting an arbitrary error.",
+    fixed: false,
+    id: "SW-0090",
+    operation: "conduct.tests.outsider_report_denial_layer",
+    regressionVerified: false,
+    reproductionSteps: ["Authenticate a user with no reporting-group membership", "Submit a match-linked conduct report", "Observe the membership denial instead of the test's expected generic registration denial"],
+    severity: "low",
+  },
 ];
 
 export function knownIncidentsForWorld(seed: number, virtualDate: string): SyntheticIncident[] {
