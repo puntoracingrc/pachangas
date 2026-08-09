@@ -1068,6 +1068,18 @@ export const KNOWN_SYNTHETIC_INCIDENTS: KnownIncident[] = [
     reproductionSteps: ["Run focused ESLint for the new conduct clients", "Inspect react-hooks/set-state-in-effect", "Observe direct loader calls and a synchronous setEvidence inside effects"],
     severity: "medium",
   },
+  {
+    actual: "The first ad-hoc source-world inspection used top-level await through tsx -e, whose CommonJS evaluation mode rejected the diagnostic before the database read began.",
+    category: "TESTABILITY_GAP",
+    evidence: ["The replacement diagnostic wraps the same read in an async function and verifies revision 313 and server sequence 69458 without mutating the source world."],
+    expected: "Local source-world diagnostics run in the module mode they require and produce preservation evidence before the conduct replay is generated.",
+    fixed: false,
+    id: "SW-0088",
+    operation: "simulation.diagnostics.tsx_eval_async_entrypoint",
+    regressionVerified: false,
+    reproductionSteps: ["Run tsx -e with a top-level await while the evaluator emits CommonJS", "Observe Transform failed: Top-level await is currently not supported with the cjs output format"],
+    severity: "low",
+  },
 ];
 
 export function knownIncidentsForWorld(seed: number, virtualDate: string): SyntheticIncident[] {
