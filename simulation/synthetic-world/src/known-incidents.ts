@@ -1380,6 +1380,18 @@ export const KNOWN_SYNTHETIC_INCIDENTS: KnownIncident[] = [
     reproductionSteps: ["Run npm run test:synthetic-world:dashboard-api without SYNTHETIC_WORLD_ID", "Observe the preflight environment error"],
     severity: "low",
   },
+  {
+    actual: "The default local dashboard API port 3090 was already occupied when the disposable-world regression server started.",
+    category: "ENVIRONMENT_ISSUE",
+    evidence: ["Next.js returned EADDRINUSE for 127.0.0.1:3090 before serving the Conduct V1.1 worktree."],
+    expected: "Final local API validation selects a free isolated port without terminating a server owned by another task.",
+    fixed: false,
+    id: "SW-0114",
+    operation: "environment.conduct_triage_dashboard_api_port",
+    regressionVerified: false,
+    reproductionSteps: ["Start the final dashboard QA server on 127.0.0.1:3090", "Observe EADDRINUSE"],
+    severity: "low",
+  },
 ];
 
 export function knownIncidentsForWorld(seed: number, virtualDate: string): SyntheticIncident[] {
