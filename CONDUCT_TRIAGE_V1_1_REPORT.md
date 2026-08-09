@@ -131,7 +131,7 @@ El dashboard local de Synthetic World muestra colas, recall, precisión, falsa e
 
 ## Incidencias
 
-- `SW-0105`, `SW-0106`, `SW-0107`, `SW-0109`, `SW-0110`, `SW-0111`, `SW-0112`, `SW-0113` y `SW-0114`: corregidas con regresión verificada.
+- `SW-0105`, `SW-0106`, `SW-0107`, `SW-0109`, `SW-0110`, `SW-0111`, `SW-0112`, `SW-0113`, `SW-0114`, `SW-0115` y `SW-0116`: corregidas con regresión verificada.
 - `SW-0108`: `NEEDS_PRODUCT_DECISION`, abierta por falta de distribución real de no-show.
 - Trofeo TOPS durante una restricción social: `NEEDS_PRODUCT_DECISION`; no implementado. El ranking deportivo permanece intacto.
 
@@ -143,6 +143,7 @@ El dashboard local de Synthetic World muestra colas, recall, precisión, falsa e
 - Idempotencia y concurrencia superadas con dos sesiones PostgreSQL: un merge aceptado, otro rechazado por revisión obsoleta y replay idempotente del split.
 - PWA write bridge superado: 10/10 tests, incluyendo las nuevas RPC de lectura y escritura.
 - API del dashboard superada sobre un mundo local descartable: una escritura confirmada, replay idempotente y rechazo `STALE_WORLD_REVISION`; el mundo se eliminó después.
+- Supabase local verificado con CLI `2.107.0` mediante un perfil temporal aislado, sin cambiar el perfil global heredado ni consultar el proyecto remoto.
 - Suite completa: build y 193 tests superados.
 - Typecheck y lint focalizado de todos los archivos V1.1: superados.
 - Lint global: mantiene exclusivamente deuda preexistente fuera del alcance, 43 incidencias (23 errores y 20 avisos) en `app/legal-data.tsx`, `app/mercado/page.tsx`, `app/page.tsx` y `app/theme-toggle.tsx`.
