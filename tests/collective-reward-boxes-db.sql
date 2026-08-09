@@ -188,9 +188,10 @@ select pg_temp.assert_true(
        'team.external.wins.001',
        'team.external.clean_sheets.001',
        'team.external.big_wins.001',
+       'team.external.absolute_dominance.001',
        'team.external.match_goals.005'
-     )) = 4,
-  'The 5-0 must grant victory, clean sheet, big win and the five-goal tier'
+     )) = 5,
+  'The 5-0 must grant victory, clean sheet, big win, absolute dominance and the five-goal tier'
 );
 select pg_temp.assert_true(
   (select count(*)
@@ -225,8 +226,8 @@ select pg_temp.assert_true(
 select pg_temp.assert_true(
   (select count(*) from public.pachanga_reward_recipients boxes
    where boxes.match_fact_id = :'five_nil_fact'::uuid
-     and boxes.status = 'pending') = 40,
-  'Four collective achievements and ten participants must create forty boxes'
+     and boxes.status = 'pending') = 50,
+  'Five collective achievements and ten participants must create fifty boxes'
 );
 select pg_temp.assert_true(
   (select count(*) from public.pachanga_reward_recipients boxes
@@ -234,7 +235,7 @@ select pg_temp.assert_true(
      and boxes.economy_version = 1
      and boxes.box_type is not null
      and boxes.box_rarity is not null
-     and boxes.reward_pool_key is not null) = 40,
+     and boxes.reward_pool_key is not null) = 50,
   'Every generated box must persist its economy version, type, rarity and pool'
 );
 select pg_temp.assert_true(
@@ -244,7 +245,7 @@ select pg_temp.assert_true(
    where boxes.match_fact_id = :'five_nil_fact'::uuid
      and contents.catalog_version = 1
      and contents.content_hash = md5(contents.reward_payload::text)
-     and contents.reward_payload ->> 'catalogVersion' = '1') = 40,
+     and contents.reward_payload ->> 'catalogVersion' = '1') = 50,
   'Every participant box must have one stable server-sealed V1 payload'
 );
 select pg_temp.assert_true(
@@ -314,7 +315,7 @@ select private.pachanga_evaluate_achievements_v1(
 );
 select pg_temp.assert_true(
   (select count(*) from public.pachanga_reward_recipients boxes
-   where boxes.match_fact_id = :'five_nil_fact'::uuid) = 40,
+   where boxes.match_fact_id = :'five_nil_fact'::uuid) = 50,
   'Reprocessing the same match must not duplicate boxes'
 );
 
@@ -644,7 +645,7 @@ select pg_temp.assert_true(
     :'mid_sequence_snapshot'::jsonb -> 'rewards'
   ) boxes(value)
    where boxes.value ->> 'matchFactId' = :'five_nil_fact'
-     and boxes.value ->> 'status' = 'pending') = 3,
+     and boxes.value ->> 'status' = 'pending') = 4,
   'Closing after one box and returning must leave the remaining sequence pending'
 );
 select pg_temp.assert_true(

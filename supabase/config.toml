@@ -57,9 +57,8 @@ max_client_conn = 100
 # secret_key = "env(SECRET_VALUE)"
 
 [db.migrations]
-# The historical migration chain predates the consolidated baseline and cannot
-# rebuild an empty database by itself. Synthetic World applies the consolidated
-# schema plus only the later additive migrations as local seed input.
+# Fresh product databases use the versioned baseline through the guarded
+# `npm run db:bootstrap:fresh` command. Existing databases use migration up.
 enabled = false
 # Specifies an ordered list of schema files that describe your database.
 # Supports glob patterns relative to supabase directory: "./schemas/*.sql"
@@ -72,7 +71,7 @@ enabled = false
 # Specifies an ordered list of seed files to load during db reset.
 # Supports glob patterns relative to supabase directory: "./seeds/*.sql"
 sql_paths = [
-  "./pachangas.sql",
+  "./baselines/20260731080738_pachangas_product_baseline.sql",
   "./migrations/20260803*.sql",
   "./migrations/20260804*.sql",
   "./migrations/20260808*.sql",

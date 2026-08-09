@@ -2,7 +2,13 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
 export function loadSyntheticLocalEnv(path = resolve(process.cwd(), ".env.local")) {
-  const source = readFileSync(path, "utf8");
+  let source: string;
+  try {
+    source = readFileSync(path, "utf8");
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") return false;
+    throw error;
+  }
   for (const rawLine of source.split(/\r?\n/)) {
     const line = rawLine.trim();
     if (!line || line.startsWith("#")) continue;
@@ -13,4 +19,5 @@ export function loadSyntheticLocalEnv(path = resolve(process.cwd(), ".env.local"
     const value = rawValue.replace(/^(['"])(.*)\1$/, "$2");
     if (!process.env[key]) process.env[key] = value;
   }
+  return true;
 }

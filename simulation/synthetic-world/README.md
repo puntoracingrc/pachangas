@@ -14,9 +14,12 @@ Entorno local, persistente y reproducible para recorrer una temporada 2026-2027 
 
 ```bash
 supabase start
+PACHANGAS_BOOTSTRAP_DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:55322/postgres npm run db:bootstrap:fresh
 psql -X -v ON_ERROR_STOP=1 "$PACHANGAS_SYNTHETIC_DB_URL" -f simulation/synthetic-world/sql/schema.sql
 npm run test:synthetic-world:db
 ```
+
+The product bootstrap never installs the `simulation` schema. That local-only schema is applied explicitly on the next line and remains inaccessible to `anon` and `authenticated`.
 
 Variables mínimas, tomando como referencia [`.env.example`](./.env.example):
 

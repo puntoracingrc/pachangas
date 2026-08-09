@@ -1,4 +1,6 @@
 import assert from "node:assert/strict";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import test from "node:test";
 import { CANONICAL_CONTRACTS } from "../simulation/synthetic-world/src/canonical-contracts";
 import {
@@ -14,6 +16,7 @@ import { syntheticErrorMessage } from "../simulation/synthetic-world/src/errors"
 import { createSyntheticWorld } from "../simulation/synthetic-world/src/generator";
 import { dailyInvariantChecks, weeklyInvariantChecks } from "../simulation/synthetic-world/src/invariants";
 import { KNOWN_SYNTHETIC_INCIDENTS, knownIncidentsForWorld } from "../simulation/synthetic-world/src/known-incidents";
+import { loadSyntheticLocalEnv } from "../simulation/synthetic-world/src/local-env";
 import { normalizeSyntheticWorldState } from "../simulation/synthetic-world/src/normalization";
 import { buildSyntheticRankingFunnelAudit, orderedDistributionValues } from "../simulation/synthetic-world/src/ranking-funnel";
 import { SYNTHETIC_SEASON_SCORE_CONFIG, seasonInputs } from "../simulation/synthetic-world/src/ranking";
@@ -24,6 +27,11 @@ const safeEnvironment = {
   PACHANGAS_SYNTHETIC_WORLD: "1",
   SUPABASE_SERVICE_ROLE_KEY: "local-test-key",
 } as NodeJS.ProcessEnv;
+
+test("synthetic local environment overlay is optional in clean worktrees", () => {
+  const missingPath = join(tmpdir(), `pachangas-missing-synthetic-env-${process.pid}`);
+  assert.equal(loadSyntheticLocalEnv(missingPath), false);
+});
 
 test("synthetic environment is loopback-only and rejects hosted or external integrations", () => {
   assert.equal(assertSyntheticWorldEnvironment(safeEnvironment).isolated, true);
@@ -262,11 +270,11 @@ test("canonical flow inventory keeps product and lab execution visibly distinct"
 
 test("permanent incident resolutions change only after a verified regression", () => {
   const byId = new Map(KNOWN_SYNTHETIC_INCIDENTS.map((incident) => [incident.id, incident]));
-  for (const id of ["SW-0002", "SW-0003", "SW-0009"]) {
+  for (const id of ["SW-0003", "SW-0009"]) {
     assert.equal(byId.get(id)?.fixed, false, id);
     assert.equal(byId.get(id)?.regressionVerified, false, id);
   }
-  for (const id of ["SW-0004", "SW-0005", "SW-0006", "SW-0007", "SW-0008", "SW-0012", "SW-0013", "SW-0014"]) {
+  for (const id of ["SW-0002", "SW-0004", "SW-0005", "SW-0006", "SW-0007", "SW-0008", "SW-0012", "SW-0013", "SW-0014", "SW-0134"]) {
     assert.equal(byId.get(id)?.fixed, true, id);
     assert.equal(byId.get(id)?.regressionVerified, true, id);
   }

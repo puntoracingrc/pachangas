@@ -37,8 +37,51 @@ const rivalId = randomUUID();
 const profileId = randomUUID();
 const factId = randomUUID();
 const sourceId = `catalog-v3-race-${randomUUID()}`;
+const groupIds = `${quote(groupId)}::uuid, ${quote(rivalId)}::uuid`;
+const userIds = `${quote(userId)}::uuid`;
+const profileIds = `${quote(profileId)}::uuid`;
 
-await runOk(`
+const cleanupSql = `
+begin;
+delete from public.pachanga_reward_open_receipts where actor_user_id in (${userIds});
+delete from public.pachanga_player_points_ledger
+where user_id in (${userIds}) or player_profile_id in (${profileIds});
+delete from public.pachanga_player_point_accounts
+where user_id in (${userIds}) or player_profile_id in (${profileIds});
+delete from public.pachanga_player_reward_inventory where player_profile_id in (${profileIds});
+alter table private.pachanga_reward_box_contents
+  disable trigger keep_pachanga_reward_box_contents_sealed_v1;
+delete from private.pachanga_reward_box_contents contents
+using public.pachanga_reward_recipients recipients
+where contents.box_id = recipients.box_id
+  and recipients.group_id in (${groupIds});
+alter table private.pachanga_reward_box_contents
+  enable trigger keep_pachanga_reward_box_contents_sealed_v1;
+delete from public.pachanga_reward_recipients where group_id in (${groupIds});
+delete from public.pachanga_progression_events
+where group_id in (${groupIds}) or player_profile_id in (${profileIds});
+delete from public.pachanga_team_cosmetic_inventory where group_id in (${groupIds});
+delete from public.pachanga_reward_grants
+where group_id in (${groupIds}) or player_profile_id in (${profileIds});
+delete from public.pachanga_achievement_grants
+where group_id in (${groupIds}) or subject_id in (${groupIds}, ${profileIds});
+delete from public.pachanga_progression_player_match_facts
+where group_id in (${groupIds}) or player_profile_id in (${profileIds});
+delete from public.pachanga_progression_match_facts
+where group_id in (${groupIds}) or opponent_group_id in (${groupIds});
+delete from public.pachanga_team_progression_stats where group_id in (${groupIds});
+delete from public.pachanga_player_progression_stats where player_profile_id in (${profileIds});
+delete from public.pachanga_progression_group_state where group_id in (${groupIds});
+delete from public.pachanga_progression_user_state where user_id in (${userIds});
+delete from public.pachanga_group_members where group_id in (${groupIds});
+delete from public.pachanga_player_profiles where id in (${profileIds});
+delete from public.pachanga_groups where id in (${groupIds});
+delete from auth.users where id in (${userIds});
+commit;
+`;
+
+try {
+  await runOk(`
 insert into auth.users(id, email) values (${quote(userId)}::uuid, ${quote(`${userId}@example.test`)});
 insert into public.pachanga_groups(id, owner_id, name, team_code, payload) values
   (${quote(groupId)}::uuid, ${quote(userId)}::uuid, 'V3 concurrency', ${quote(`V3${groupId.replaceAll("-", "").slice(0, 8)}`)}, '{"players":[]}'::jsonb),
@@ -137,6 +180,9 @@ select count(*) from public.pachanga_reward_recipients
 where achievement_grant_id = ${quote(grantId)}::uuid
   and user_id = ${quote(userId)}::uuid;
 `, "final count");
-assert.equal(Number(finalCount), 3);
+  assert.equal(Number(finalCount), 3);
 
-console.log("achievement catalog V3 concurrency: ok");
+  console.log("achievement catalog V3 concurrency: ok");
+} finally {
+  await runOk(cleanupSql, "achievement catalog V3 concurrency cleanup");
+}

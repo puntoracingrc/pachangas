@@ -204,8 +204,91 @@ insert into public.pachanga_player_profiles(
   );
 `;
 
-progress("fixture setup");
-await runOk(setupSql, "fixture setup");
+const userIds = `${sqlText(evaluatorUserId)}::uuid, ${sqlText(targetUserId)}::uuid`;
+const cleanupSql = `
+begin;
+delete from public.pachanga_reward_open_receipts
+where actor_user_id in (${userIds})
+   or box_id in (
+     select box_id from public.pachanga_reward_recipients
+     where group_id = ${sqlText(groupId)}::uuid or user_id in (${userIds})
+   );
+delete from public.pachanga_player_points_ledger
+where user_id in (${userIds})
+   or player_profile_id in (
+     select id from public.pachanga_player_profiles where user_id in (${userIds})
+   );
+delete from public.pachanga_player_point_accounts where user_id in (${userIds});
+delete from public.pachanga_player_reward_inventory
+where player_profile_id in (
+  select id from public.pachanga_player_profiles where user_id in (${userIds})
+);
+alter table private.pachanga_reward_box_contents
+  disable trigger keep_pachanga_reward_box_contents_sealed_v1;
+delete from private.pachanga_reward_box_contents contents
+using public.pachanga_reward_recipients recipients
+where contents.box_id = recipients.box_id
+  and (recipients.group_id = ${sqlText(groupId)}::uuid or recipients.user_id in (${userIds}));
+alter table private.pachanga_reward_box_contents
+  enable trigger keep_pachanga_reward_box_contents_sealed_v1;
+delete from public.pachanga_reward_recipients
+where group_id = ${sqlText(groupId)}::uuid or user_id in (${userIds});
+delete from public.pachanga_progression_events
+where group_id = ${sqlText(groupId)}::uuid
+   or player_profile_id in (
+     select id from public.pachanga_player_profiles where user_id in (${userIds})
+   );
+delete from public.pachanga_team_cosmetic_inventory where group_id = ${sqlText(groupId)}::uuid;
+delete from public.pachanga_reward_grants
+where group_id = ${sqlText(groupId)}::uuid
+   or player_profile_id in (
+     select id from public.pachanga_player_profiles where user_id in (${userIds})
+   );
+delete from public.pachanga_achievement_grants
+where group_id = ${sqlText(groupId)}::uuid
+   or subject_id = ${sqlText(groupId)}::uuid
+   or subject_id in (
+     select id from public.pachanga_player_profiles where user_id in (${userIds})
+   );
+delete from public.pachanga_progression_player_match_facts
+where group_id = ${sqlText(groupId)}::uuid
+   or player_profile_id in (
+     select id from public.pachanga_player_profiles where user_id in (${userIds})
+   );
+delete from public.pachanga_progression_match_facts
+where group_id = ${sqlText(groupId)}::uuid or opponent_group_id = ${sqlText(groupId)}::uuid;
+delete from public.pachanga_team_progression_stats where group_id = ${sqlText(groupId)}::uuid;
+delete from public.pachanga_player_progression_stats
+where player_profile_id in (
+  select id from public.pachanga_player_profiles where user_id in (${userIds})
+);
+delete from public.pachanga_progression_group_state where group_id = ${sqlText(groupId)}::uuid;
+delete from public.pachanga_progression_user_state where user_id in (${userIds});
+delete from public.pachanga_match_rating_participants where group_id = ${sqlText(groupId)}::uuid;
+delete from public.pachanga_match_rating_snapshots where group_id = ${sqlText(groupId)}::uuid;
+delete from public.pachanga_rating_evidence_state_events events
+using public.pachanga_individual_rating_evidence evidence
+where events.evidence_id = evidence.id and evidence.group_id = ${sqlText(groupId)}::uuid;
+delete from public.pachanga_rating_flags where group_id = ${sqlText(groupId)}::uuid;
+delete from public.pachanga_individual_rating_evidence where group_id = ${sqlText(groupId)}::uuid;
+delete from public.pachanga_player_rating_snapshots
+where group_id = ${sqlText(groupId)}::uuid
+   or player_profile_id in (
+     select id from public.pachanga_player_profiles where user_id in (${userIds})
+   );
+delete from public.pachanga_operation_receipts where group_id = ${sqlText(groupId)}::uuid;
+delete from public.pachanga_group_events where group_id = ${sqlText(groupId)}::uuid;
+delete from public.pachanga_group_members where group_id = ${sqlText(groupId)}::uuid;
+delete from public.pachanga_player_profiles
+where user_id in (${userIds}) or source_group_id = ${sqlText(groupId)}::uuid;
+delete from public.pachanga_groups where id = ${sqlText(groupId)}::uuid;
+delete from auth.users where id in (${userIds});
+commit;
+`;
+
+try {
+  progress("fixture setup");
+  await runOk(setupSql, "fixture setup");
 
 const tiedSnapshotIds = [randomUUID(), randomUUID(), randomUUID()];
 const expectedTiedSnapshotId = [...tiedSnapshotIds].sort().at(-1);
@@ -605,19 +688,22 @@ assert.ok(
   "the attendance winner may require one normalization, but no other event count is valid",
 );
 
-console.log(JSON.stringify({
-  groupId,
-  cases: [
-    "same-timestamp-snapshot",
-    "first-rating",
-    "rating-replacement",
-    "attendance",
-    "lineup",
-    "finalization",
-    "void",
-    "stale-reconnect",
-  ],
-  confirmedRevision: afterReconnect.confirmedRevision,
-  serverEventCount: eventJournal.eventCount,
-  status: "passed",
-}));
+  console.log(JSON.stringify({
+    groupId,
+    cases: [
+      "same-timestamp-snapshot",
+      "first-rating",
+      "rating-replacement",
+      "attendance",
+      "lineup",
+      "finalization",
+      "void",
+      "stale-reconnect",
+    ],
+    confirmedRevision: afterReconnect.confirmedRevision,
+    serverEventCount: eventJournal.eventCount,
+    status: "passed",
+  }));
+} finally {
+  await runOk(cleanupSql, "rating V2 concurrency cleanup");
+}

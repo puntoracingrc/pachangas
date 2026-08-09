@@ -114,13 +114,15 @@ where id in (
 
 select pg_temp.assert_true(
   (select count(*) from public.pachanga_achievement_definitions
-   where active and catalog_key = 'achievement_catalog_v2') = 101,
-  'The definitive catalog must expose 101 active threshold rows'
+   where active and catalog_key = 'achievement_catalog_v2'
+     and subject_type = 'player') = 45,
+  'The integrated catalog must preserve all 45 active individual V2 definitions'
 );
 select pg_temp.assert_true(
-  (select count(distinct family_key) from public.pachanga_achievement_definitions
-   where active and catalog_key = 'achievement_catalog_v2') = 22,
-  'The definitive catalog must remain within 15-25 principal families'
+  (select count(*) from public.pachanga_achievement_definitions
+   where active and catalog_key = 'achievement_catalog_v3'
+     and subject_type = 'team') = 60,
+  'The integrated catalog must expose all 60 active collective V3 definitions'
 );
 select pg_temp.assert_true(
   not exists (
@@ -251,7 +253,7 @@ select pg_temp.assert_true(
       on definitions.id = grants.definition_id
     where grants.subject_type = 'player'
       and definitions.family_key = 'player.match_goals'
-    group by grants.origin_match_fact_id
+    group by grants.origin_match_fact_id, grants.subject_id
     having count(*) > 1
   ),
   'A player match may never unlock more than its highest scoring tier'
@@ -335,6 +337,9 @@ select pg_temp.assert_true(
     join public.pachanga_progression_player_match_facts player_facts
       on player_facts.match_fact_id = recipients.match_fact_id
      and player_facts.player_profile_id = recipients.player_profile_id
+    join public.pachanga_progression_match_facts match_facts
+      on match_facts.id = recipients.match_fact_id
+     and match_facts.group_id = 'a1200000-0000-0000-0000-000000000001'
     where recipients.user_id <> 'a1100000-0000-0000-0000-000000000001'
   ),
   'Only canonical participants may receive collective boxes'

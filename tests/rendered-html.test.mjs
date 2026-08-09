@@ -255,7 +255,7 @@ test("keeps the project wired to the Pachangas app", async () => {
     readFile(new URL("../app/supabaseClient.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
     readFile(new URL("../app/auth/google/page.tsx", import.meta.url), "utf8"),
-    readFile(new URL("../supabase/pachangas.sql", import.meta.url), "utf8"),
+    readFile(new URL("../supabase/baselines/20260731080738_pachangas_product_baseline.sql", import.meta.url), "utf8"),
     readFile(new URL("../app/api/billing/_shared.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/api/billing/checkout/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/api/billing/portal/route.ts", import.meta.url), "utf8"),

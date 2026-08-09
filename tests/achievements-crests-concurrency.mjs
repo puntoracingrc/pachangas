@@ -179,14 +179,14 @@ insert into public.pachanga_team_challenges(
   (
     ${sqlText(publishChallengeId)}::uuid, ${sqlText(homeGroupId)}::uuid,
     ${sqlText(awayGroupId)}::uuid, 'proposed', 1, 1,
-    clock_timestamp() - interval '1 day', 'futbol7',
+    clock_timestamp() + interval '1 day', 'futbol7',
     'Concurrent field A', 'Concurrent address A', ${sqlText(homeGroupId)}::uuid,
     ${sqlText(homeOwnerId)}::uuid, ${sqlText(homeOwnerId)}::uuid
   ),
   (
     ${sqlText(expiryChallengeId)}::uuid, ${sqlText(homeGroupId)}::uuid,
     ${sqlText(awayGroupId)}::uuid, 'proposed', 1, 1,
-    clock_timestamp() - interval '2 days', 'futbol7',
+    clock_timestamp() + interval '1 day', 'futbol7',
     'Concurrent field B', 'Concurrent address B', ${sqlText(homeGroupId)}::uuid,
     ${sqlText(homeOwnerId)}::uuid, ${sqlText(homeOwnerId)}::uuid
   );
@@ -195,6 +195,13 @@ update public.pachanga_team_challenges
 set status = 'accepted', revision = 2, accepted_at = clock_timestamp(),
     updated_by = ${sqlText(awayOwnerId)}::uuid, updated_at = clock_timestamp()
 where id in (${challengeIds});
+
+update public.pachanga_external_matches
+set scheduled_at = case challenge_id
+  when ${sqlText(publishChallengeId)}::uuid then clock_timestamp() - interval '1 day'
+  when ${sqlText(expiryChallengeId)}::uuid then clock_timestamp() - interval '2 days'
+end
+where challenge_id in (${challengeIds});
 `;
 
 const cleanupSql = `
