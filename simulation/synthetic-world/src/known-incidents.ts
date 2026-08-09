@@ -1548,6 +1548,18 @@ export const KNOWN_SYNTHETIC_INCIDENTS: KnownIncident[] = [
     reproductionSteps: ["Apply the Core Social migration locally", "Correct a function body", "Re-run the complete migration", "Observe the one-time ALTER FUNCTION RENAME collides with its existing backup"],
     severity: "low",
   },
+  {
+    actual: "The lineup-closure regression treated the existing error text Open the lineup before changing attendance as an unexpected failure even though the mutation was correctly rejected.",
+    category: "SIMULATION_BUG",
+    evidence: ["The SQL regression reaches the canonical attendance RPC after lineup closure and PostgreSQL rejects it before any state change."],
+    expected: "The test accepts every established closed-lineup rejection message while still failing if the mutation succeeds or returns an unrelated error.",
+    fixed: false,
+    id: "SW-0128",
+    operation: "simulation.core_social.closed_lineup_error_contract",
+    regressionVerified: false,
+    reproductionSteps: ["Close a lineup through patch_pachanga_match_lineup_authoritative_v2", "Attempt an attendance mutation", "Observe the product rejects it with Open the lineup before changing attendance", "Observe the test rejects that valid error text"],
+    severity: "low",
+  },
 ];
 
 export function knownIncidentsForWorld(seed: number, virtualDate: string): SyntheticIncident[] {
