@@ -1536,6 +1536,18 @@ export const KNOWN_SYNTHETIC_INCIDENTS: KnownIncident[] = [
     reproductionSteps: ["Apply the Core Social migration locally", "Call leave_pachanga_group_authoritative_v1 as a current player", "Observe column reference operation_id is ambiguous in private.pachanga_depart_group_member_v1"],
     severity: "high",
   },
+  {
+    actual: "Reapplying the entire in-development migration to refresh two corrected functions stops when its one-time challenge RPC rename finds the preserved backup function already present.",
+    category: "ENVIRONMENT_ISSUE",
+    evidence: ["Local iteration reloads only the corrected CREATE OR REPLACE function definitions; clean migration validation continues from a disposable schema where every migration runs once."],
+    expected: "Local migration iteration does not treat a one-time production migration as a repeatable patch script or reset a shared database.",
+    fixed: false,
+    id: "SW-0127",
+    operation: "environment.core_social.migration_function_reload",
+    regressionVerified: false,
+    reproductionSteps: ["Apply the Core Social migration locally", "Correct a function body", "Re-run the complete migration", "Observe the one-time ALTER FUNCTION RENAME collides with its existing backup"],
+    severity: "low",
+  },
 ];
 
 export function knownIncidentsForWorld(seed: number, virtualDate: string): SyntheticIncident[] {
