@@ -816,6 +816,18 @@ export const KNOWN_SYNTHETIC_INCIDENTS: KnownIncident[] = [
     reproductionSteps: ["Run ESLint over the V1.1 touched source and test files", "Observe @typescript-eslint/no-unused-vars for SeasonPlayerInput and playerById"],
     severity: "info",
   },
+  {
+    actual: "The first local-server readiness loop assigned to zsh's reserved read-only variable status; after correcting that name, the detached nohup launcher was reaped before it could bind port 3090.",
+    category: "ENVIRONMENT_ISSUE",
+    evidence: ["A controlled dev-server session reached Next.js ready state and a non-reserved http_code readiness probe confirmed HTTP 200 on the local dashboard."],
+    expected: "The local dashboard readiness probe reaches HTTP 200 without shell-variable collisions.",
+    fixed: true,
+    id: "SW-0067",
+    operation: "simulation.validation.local_dashboard_readiness_shell",
+    regressionVerified: true,
+    reproductionSteps: ["Run the zsh readiness loop assigning curl output to status", "Observe zsh: read-only variable: status", "Retry with a detached nohup child", "Observe the child is reaped with no listener or log before the readiness poll"],
+    severity: "info",
+  },
 ];
 
 export function knownIncidentsForWorld(seed: number, virtualDate: string): SyntheticIncident[] {

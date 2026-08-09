@@ -178,6 +178,7 @@ ${topDiagnostics}
 - \`SW-0064\`: identidad única para las etapas duplicadas del funnel, verificada sin errores de consola.
 - \`SW-0065\`: runner de concurrencia ejecutado con mundo QA local explícito, sin mutar V1.
 - \`SW-0066\`: lint focalizado V1.1 sin símbolos muertos ni avisos.
+- \`SW-0067\`: dashboard local arrancado en sesión controlada y verificado por HTTP 200.
 `;
 }
 
