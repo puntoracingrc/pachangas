@@ -129,6 +129,19 @@ function RankingFunnelView({ data }: { data: SyntheticDashboardData }) {
         </div>
       </section>
 
+      <section className={styles.panel}>
+        <header><div><span>Capa territorial separada</span><h2>Ranking frente a premios</h2></div><b>TOPS V1</b></header>
+        <div className={styles.readinessTable}>
+          {data.territoryAwardReadiness.sourceTerritories.map((row) => (
+            <div key={row.provinceCode}>
+              <strong>{row.provinceName}</strong>
+              <span>{row.snapshot.signals.rankingEligiblePlayers} ranking · {row.snapshot.signals.awardCandidatePlayers} candidatos 25/10 · {row.snapshot.signals.independentOpponentEdges} conexiones independientes</span>
+              <b>{readable(row.snapshot.readinessState)}</b>
+            </div>
+          ))}
+        </div>
+      </section>
+
       {player ? (
         <section className={styles.inspector}>
           <aside>
@@ -174,6 +187,7 @@ function RankingFunnelView({ data }: { data: SyntheticDashboardData }) {
 
 function NetworkHealthView({ data }: { data: SyntheticDashboardData }) {
   const audit = data.networkHealthV31;
+  const readiness = data.territoryAwardReadiness;
   const nodeById = new Map(audit.graph.nodes.map((node) => [node.id, node]));
   const healthySizes = audit.ecosystems.filter(({ scenario }) => scenario === "healthy");
   return (
@@ -240,11 +254,26 @@ function NetworkHealthView({ data }: { data: SyntheticDashboardData }) {
           </div>
         </div>
         <div className={styles.panel}>
-          <header><div><span>Entrega de premios</span><h2>Readiness territorial</h2></div><b>25 / 10 intacto</b></header>
+          <header><div><span>Entrega de premios</span><h2>Readiness territorial</h2></div><b>TOPS V1</b></header>
           <div className={styles.readinessTable}>
-            {audit.provinceReadiness.map((row) => <div key={row.provinceCode}><strong>{row.provinceCode}</strong><span>{row.activeTeams} equipos · {row.rankingEligible} ranking · {row.certifiable} certificables</span><b>{readable(row.state)}</b></div>)}
+            {readiness.sourceTerritories.map((row) => <div key={row.provinceCode}><strong>{row.provinceName}</strong><span>{row.snapshot.signals.activeTeams} equipos · {row.snapshot.signals.rankingEligiblePlayers} ranking · {row.snapshot.signals.awardCandidatePlayers} candidatos</span><b>{readable(row.snapshot.readinessState)}</b></div>)}
           </div>
-          <p className={styles.networkDecision}>Producto V3: sin cambios. La señal absoluta depende del tamaño, pero ningún reemplazo ha demostrado aún protección y falso positivo suficientes sobre V1.</p>
+          <p className={styles.networkDecision}>Rankings provinciales activos y premios desactivados en el piloto. La madurez territorial no modifica Season Score ni sustituye la certificación individual; M3 continúa como referencia experimental.</p>
+        </div>
+      </section>
+
+      <section className={styles.networkHealthColumns}>
+        <div className={styles.panel}>
+          <header><div><span>10 a 150 equipos</span><h2>Crecimiento territorial</h2></div><b>3 ventanas para READY</b></header>
+          <div className={styles.readinessTable}>
+            {readiness.growth.healthy.map((row) => <div key={row.teamCount}><strong>{row.teamCount} equipos</strong><span>{row.snapshot.signals.rankingEligiblePlayers} ranking · {row.snapshot.signals.awardCandidatePlayers} candidatos · {row.snapshot.signals.independentOpponentEdges} conexiones</span><b>{readable(row.snapshot.readinessState)}</b></div>)}
+          </div>
+        </div>
+        <div className={styles.panel}>
+          <header><div><span>Snapshots periódicos</span><h2>Hysteresis</h2></div><b>{readiness.temporalHistory.length} ventanas</b></header>
+          <div className={styles.readinessTable}>
+            {readiness.temporalHistory.map((row) => <div key={row.revision}><strong>r{row.revision}</strong><span>{readable(row.observedState)} · {row.stability.observedWindows}/{row.stability.requiredWindows} ventanas</span><b>{readable(row.readinessState)}</b></div>)}
+          </div>
         </div>
       </section>
     </div>
@@ -358,6 +387,7 @@ export function SimulationWorldDashboard({
   const selectedPlayer = data?.players.find(({ id }) => id === selectedPlayerId) ?? data?.players[0];
   const selectedTeam = data?.teams.find(({ id }) => id === selectedTeamId) ?? data?.teams[0];
   const selectedMatch = data?.matches.find(({ id }) => id === selectedMatchId) ?? data?.matches[0];
+  const selectedReadiness = data?.territoryAwardReadiness.sourceTerritories.find(({ provinceCode }) => provinceCode === province);
   const filteredTimeline = useMemo(() => {
     if (!data) return [];
     const needle = search.trim().toLowerCase();
@@ -488,7 +518,17 @@ export function SimulationWorldDashboard({
         ) : null}
 
         {tab === "ranking" ? (
-          <section className={styles.panel}><header><div><span>Top 50 territorial</span><h2>Season Score V3</h2></div><select value={province} onChange={(event) => setProvince(event.target.value)}>{[...new Set(data.ranking.map(({ provinceCode }) => provinceCode))].map((code) => <option key={code} value={code}>Provincia {code}</option>)}</select></header><ol className={styles.rankingList}>{data.ranking.filter(({ provinceCode }) => provinceCode === province).slice(0, 50).map((row) => <li key={row.agentId}><b>{row.rank}</b><span>{row.displayName}<small>{row.certification} · {row.validChallenges} retos · {row.logicalOpponents} rivales</small></span><strong>{row.score.toFixed(1)}</strong><i>{row.movement > 0 ? `↑${row.movement}` : row.movement < 0 ? `↓${Math.abs(row.movement)}` : "="}</i></li>)}</ol></section>
+          <section className={styles.panel}>
+            <header>
+              <div><span>Posición en directo · {selectedReadiness ? readable(selectedReadiness.snapshot.readinessState) : "sin snapshot"}</span><h2>Season Score provincial</h2></div>
+              <div className={styles.rankingControls}>
+                <a href="/laboratorio-ranking-provincial">Abrir piloto</a>
+                <select value={province} onChange={(event) => setProvince(event.target.value)}>{[...new Set(data.ranking.map(({ provinceCode }) => provinceCode))].map((code) => <option key={code} value={code}>Provincia {code}</option>)}</select>
+              </div>
+            </header>
+            {selectedReadiness ? <p className={styles.rankingReadinessMessage}>{selectedReadiness.publicSurface.message}</p> : null}
+            <ol className={styles.rankingList}>{data.ranking.filter(({ provinceCode }) => provinceCode === province).slice(0, 50).map((row) => <li key={row.agentId}><b>{row.rank}</b><span>{row.displayName}<small>{row.validChallenges} Retos válidos · {row.logicalOpponents} rivales</small></span><strong>{row.score.toFixed(1)}</strong><i>{row.movement > 0 ? `↑${row.movement}` : row.movement < 0 ? `↓${Math.abs(row.movement)}` : "="}</i></li>)}</ol>
+          </section>
         ) : null}
 
         {tab === "ranking_funnel" ? <RankingFunnelView key={data.world.id} data={data} /> : null}

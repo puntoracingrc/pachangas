@@ -830,11 +830,40 @@
 
 .readinessTable > div {
   display: grid;
-  grid-template-columns: 34px minmax(0, 1fr) 112px;
+  grid-template-columns: minmax(92px, 0.45fr) minmax(0, 1fr) 112px;
   gap: 9px;
   align-items: center;
   min-height: 38px;
   border-bottom: 1px solid var(--sim-line);
+  font-size: 10px;
+}
+
+.rankingControls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.rankingControls a {
+  display: inline-grid;
+  min-height: 32px;
+  place-items: center;
+  padding: 0 10px;
+  border: 1px solid rgba(75, 166, 255, 0.35);
+  border-radius: 5px;
+  color: #a9d5ff;
+  background: rgba(75, 166, 255, 0.08);
+  font-size: 10px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.rankingReadinessMessage {
+  margin: -2px 0 12px;
+  padding: 8px 10px;
+  border-left: 3px solid var(--sim-gold);
+  color: #ebdec1;
+  background: rgba(231, 184, 82, 0.08);
   font-size: 10px;
 }
 

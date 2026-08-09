@@ -1,6 +1,7 @@
 import { syntheticWorldSummary } from "./engine";
 import networkHealthV31Summary from "../generated/network-diversity-v3.1-summary.json";
 import rankingFunnelSummary from "../generated/ranking-funnel-v1.1-summary.json";
+import territoryAwardReadinessSummary from "../generated/territory-award-readiness-v1-summary.json";
 import { buildSyntheticRankingFunnelAudit } from "./ranking-funnel";
 import { rankingAuditOptionsForWorld } from "./ranking-counterfactuals";
 import type { SyntheticSnapshotListItem, SyntheticWorldListItem } from "./store";
@@ -141,6 +142,7 @@ export function buildSyntheticDashboardData(options: {
     rankingCounterfactuals: rankingFunnelSummary.clones,
     rankingFunnel: rankingAudit(world),
     rankingReference: rankingFunnelSummary.reference,
+    territoryAwardReadiness: territoryAwardReadinessSummary,
     snapshots: options.snapshots ?? [],
     summary: {
       ...syntheticWorldSummary(world),
