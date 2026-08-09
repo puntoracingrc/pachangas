@@ -1356,6 +1356,18 @@ export const KNOWN_SYNTHETIC_INCIDENTS: KnownIncident[] = [
     reproductionSteps: ["Create a three-report case", "Split one report into an auditable branch", "Merge that branch back concurrently", "Sum report_count across the active and closed branches and observe 4 instead of 3"],
     severity: "high",
   },
+  {
+    actual: "The first static no-score regression matched the explanatory SQL comment that says the policy is not a conduct score, so it failed despite there being no score column or formula.",
+    category: "SIMULATION_BUG",
+    evidence: ["Pending identifier-focused static regression."],
+    expected: "The regression rejects authoritative conduct/risk score identifiers without treating an explicit safety comment as implementation.",
+    fixed: false,
+    id: "SW-0112",
+    operation: "simulation.conduct_triage.no_score_static_guard",
+    regressionVerified: false,
+    reproductionSteps: ["Run npm run test:conduct-v1-1", "Read the failure input", "Observe /conduct score/ matches only the table comment that prohibits such a score"],
+    severity: "low",
+  },
 ];
 
 export function knownIncidentsForWorld(seed: number, virtualDate: string): SyntheticIncident[] {
