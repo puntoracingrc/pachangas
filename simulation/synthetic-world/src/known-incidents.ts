@@ -1236,6 +1236,18 @@ export const KNOWN_SYNTHETIC_INCIDENTS: KnownIncident[] = [
     reproductionSteps: ["Apply receive_public_challenges or public_guest_access", "Invoke the corresponding authoritative social write", "Observe the write is not rejected by a conduct gate"],
     severity: "critical",
   },
+  {
+    actual: "The first complete social-gate regression reached pachanga_has_active_social_restriction_v1 through the challenge trigger, where target_user_id was ambiguous between the function parameter and the restriction-table column.",
+    category: "PRODUCT_BUG",
+    evidence: ["tests/conduct-reports-no-show-v1-db.sql failed inside the authoritative trigger with PostgreSQL ambiguous_column before creating the challenge fixture; the transaction rolled back."],
+    expected: "Every restriction gate resolves its target and restriction type unambiguously under real trigger execution.",
+    fixed: false,
+    id: "SW-0102",
+    operation: "conduct.restrictions.active_gate_parameter_resolution",
+    regressionVerified: false,
+    reproductionSteps: ["Enable social restrictions", "Insert a challenge through the gated table", "Enter pachanga_has_active_social_restriction_v1", "Observe target_user_id is ambiguous"],
+    severity: "critical",
+  },
 ];
 
 export function knownIncidentsForWorld(seed: number, virtualDate: string): SyntheticIncident[] {
