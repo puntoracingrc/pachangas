@@ -1080,6 +1080,18 @@ export const KNOWN_SYNTHETIC_INCIDENTS: KnownIncident[] = [
     reproductionSteps: ["Run tsx -e with a top-level await while the evaluator emits CommonJS", "Observe Transform failed: Top-level await is currently not supported with the cjs output format"],
     severity: "low",
   },
+  {
+    actual: "The first Conduct V1 SQL fixture used the invented group role member, which the canonical pachanga_group_members constraint rejected before any RPC behavior ran.",
+    category: "TESTABILITY_GAP",
+    evidence: ["The fixture now reads and uses the canonical non-admin role accepted by pachanga_group_members_role_check; the production constraint remains unchanged."],
+    expected: "Conduct SQL fixtures use existing membership roles and never weaken product constraints to make a diagnostic pass.",
+    fixed: false,
+    id: "SW-0089",
+    operation: "conduct.tests.canonical_group_member_role",
+    regressionVerified: false,
+    reproductionSteps: ["Insert a Conduct V1 target fixture with role member", "Observe pachanga_group_members_role_check rejecting the row", "Confirm the transaction rolls back"],
+    severity: "low",
+  },
 ];
 
 export function knownIncidentsForWorld(seed: number, virtualDate: string): SyntheticIncident[] {
