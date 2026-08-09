@@ -924,6 +924,18 @@ export const KNOWN_SYNTHETIC_INCIDENTS: KnownIncident[] = [
     reproductionSteps: ["Open SYNTHETIC_WORLD_V1_REPORT.md after V3.1", "Compare its Estado final and npm test lines with the permanent incident catalog and the current npm test output", "Observe the pre-V1.1 counts are presented as current"],
     severity: "low",
   },
+  {
+    actual: "The first territory-readiness adapter counted match rows for validChallenges while ranking eligibility counts accepted player-match evidence, leaving Barcelona ranking_inactive despite 44 ranking-eligible players.",
+    category: "SIMULATION_BUG",
+    evidence: ["Pending regression comparing canonical candidate evidence with the readiness snapshot."],
+    expected: "Territorial validChallenges uses the same accepted player-match evidence unit as Season Score eligibility and labels match-level volume separately if exposed.",
+    fixed: false,
+    id: "SW-0076",
+    operation: "simulation.ranking.readiness_evidence_unit",
+    regressionVerified: false,
+    reproductionSteps: ["Load Synthetic World V1 revision 313", "Build territory readiness for province 08", "Observe 44 ranking-eligible players but only 65 match rows assigned to validChallenges", "Observe ranking_inactive from the mismatched unit"],
+    severity: "high",
+  },
 ];
 
 export function knownIncidentsForWorld(seed: number, virtualDate: string): SyntheticIncident[] {
