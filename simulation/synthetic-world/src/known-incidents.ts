@@ -1644,6 +1644,18 @@ export const KNOWN_SYNTHETIC_INCIDENTS: KnownIncident[] = [
     reproductionSteps: ["Dump the local schema without data", "Restore it into a fresh local database as postgres", "Observe permission denied to set parameter log_min_messages"],
     severity: "low",
   },
+  {
+    actual: "The schema-only disposable clone applies the Core Social migration but its DB regression fails when the Conduct trigger reads the intentionally absent singleton settings and policy catalog rows.",
+    category: "ENVIRONMENT_ISSUE",
+    evidence: ["The failed database is dropped automatically; the final clone restores only non-user configuration rows from pachanga_conduct_settings and pachanga_conduct_triage_category_policy before running regressions."],
+    expected: "A disposable schema clone includes required technical catalog data without copying users, groups, matches, reports or other product records.",
+    fixed: false,
+    id: "SW-0136",
+    operation: "environment.core_social.schema_clone_reference_data",
+    regressionVerified: false,
+    reproductionSteps: ["Restore the schema without data", "Apply the Core Social migration", "Insert the Conduct preservation fixture", "Observe the triage trigger receives an empty settings row"],
+    severity: "low",
+  },
 ];
 
 export function knownIncidentsForWorld(seed: number, virtualDate: string): SyntheticIncident[] {
