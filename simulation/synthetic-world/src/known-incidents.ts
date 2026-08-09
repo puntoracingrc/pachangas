@@ -1584,6 +1584,18 @@ export const KNOWN_SYNTHETIC_INCIDENTS: KnownIncident[] = [
     reproductionSteps: ["Create a challenge beyond its deadline", "Race authenticated reconcile against accept", "Observe one expired event attributed to the reconciliation actor", "Observe the test incorrectly requires a null actor"],
     severity: "low",
   },
+  {
+    actual: "The first Core Social V2 persistence draft introduced core_social_v2 as a snapshot kind even though the canonical store contract only accepts checkpoint, monthly or season_end.",
+    category: "SIMULATION_BUG",
+    evidence: ["TypeScript rejected the script before execution; persistence now uses checkpoint and keeps the Core Social identity inside the snapshot payload."],
+    expected: "New synthetic studies reuse the canonical snapshot-kind vocabulary and identify the study in payload metadata instead of widening storage ad hoc.",
+    fixed: false,
+    id: "SW-0131",
+    operation: "simulation.core_social.snapshot_kind",
+    regressionVerified: false,
+    reproductionSteps: ["Run npm run typecheck", "Compile core-social-flows-v2.ts", "Observe core_social_v2 is not assignable to the canonical snapshot-kind union"],
+    severity: "low",
+  },
 ];
 
 export function knownIncidentsForWorld(seed: number, virtualDate: string): SyntheticIncident[] {
