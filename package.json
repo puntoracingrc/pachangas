@@ -38,6 +38,7 @@
     "lab:season-ranking:v3": "tsx simulation/season-ranking-lab/run-v3.ts",
     "synthetic:inventory": "node simulation/synthetic-world/scripts/inventory.mjs",
     "synthetic:conduct-inventory": "node simulation/synthetic-world/scripts/conduct-inventory.mjs",
+    "synthetic:ranking-funnel": "tsx simulation/synthetic-world/scripts/ranking-funnel-v1-1.ts",
     "synthetic:world": "tsx simulation/synthetic-world/cli.ts",
     "synthetic:season": "tsx simulation/synthetic-world/cli.ts season",
     "synthetic:soak": "tsx simulation/synthetic-world/scripts/soak.ts",

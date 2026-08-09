@@ -683,6 +683,220 @@
   font-size: 12px;
 }
 
+.funnelView {
+  display: grid;
+  gap: 12px;
+}
+
+.auditColumns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.funnelRows,
+.gateRows,
+.metricRows,
+.traceList,
+.counterfactualTable {
+  display: grid;
+}
+
+.funnelRows > div {
+  display: grid;
+  grid-template-columns: minmax(155px, 1fr) minmax(100px, 1.4fr) 44px;
+  min-height: 33px;
+  align-items: center;
+  gap: 10px;
+  border-bottom: 1px solid var(--sim-line);
+  font-size: 10px;
+}
+
+.funnelRows span,
+.gateRows span,
+.counterfactualTable span,
+.traceList span {
+  display: grid;
+  gap: 2px;
+}
+
+.funnelRows small,
+.gateRows small,
+.counterfactualTable small,
+.traceList small {
+  color: var(--sim-muted);
+  font-size: 8px;
+}
+
+.funnelRows i {
+  height: 5px;
+  overflow: hidden;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.funnelRows i b {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--sim-lime);
+}
+
+.funnelRows > div > strong,
+.gateRows strong {
+  text-align: right;
+}
+
+.gateRows > div,
+.metricRows > div {
+  display: flex;
+  min-height: 32px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid var(--sim-line);
+  font-size: 10px;
+}
+
+.metricRows span {
+  color: var(--sim-muted);
+}
+
+.inlineMetrics {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding-top: 8px;
+}
+
+.inlineMetrics > span {
+  display: grid;
+  flex: 0 0 88px;
+  min-height: 46px;
+  align-content: space-between;
+  padding: 6px;
+  border-left: 2px solid var(--sim-blue);
+  background: rgba(120, 169, 255, 0.06);
+}
+
+.inlineMetrics small {
+  color: var(--sim-muted);
+  font-size: 8px;
+}
+
+.confusionMatrix {
+  display: grid;
+  grid-template-columns: minmax(90px, 1fr) repeat(2, minmax(70px, 0.8fr));
+  gap: 1px;
+  overflow: hidden;
+  border: 1px solid var(--sim-line);
+  background: var(--sim-line);
+}
+
+.confusionMatrix > * {
+  display: grid;
+  min-height: 38px;
+  place-content: center;
+  margin: 0;
+  background: #10201a;
+  font-size: 10px;
+  font-style: normal;
+}
+
+.confusionMatrix i {
+  color: var(--sim-lime);
+  font-size: 17px;
+}
+
+.traceLayout {
+  display: grid;
+  grid-template-columns: minmax(190px, 0.8fr) minmax(240px, 1.2fr);
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.traceList {
+  max-height: 300px;
+  overflow: auto;
+}
+
+.traceList button {
+  display: flex;
+  min-height: 42px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 5px 8px;
+  border: 0;
+  border-bottom: 1px solid var(--sim-line);
+  background: transparent;
+  color: var(--sim-text);
+  cursor: pointer;
+  text-align: left;
+}
+
+.traceList .traceAccepted {
+  border-left: 3px solid var(--sim-lime);
+}
+
+.traceList .traceExcluded {
+  border-left: 3px solid var(--sim-coral);
+}
+
+.traceDetail {
+  min-width: 0;
+  padding: 10px;
+  border-left: 1px solid var(--sim-line);
+}
+
+.traceDetail > span {
+  color: var(--sim-blue);
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.traceDetail h3 {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.traceDetail p,
+.traceDetail summary {
+  color: var(--sim-muted);
+  font-size: 10px;
+}
+
+.traceDetail pre {
+  max-height: 180px;
+  overflow: auto;
+  padding: 7px;
+  background: #08100e;
+  color: var(--sim-text);
+  font-size: 9px;
+}
+
+.counterfactualTable > div {
+  display: grid;
+  grid-template-columns: 32px minmax(220px, 1fr) repeat(2, 100px) 90px;
+  min-height: 44px;
+  align-items: center;
+  gap: 10px;
+  border-bottom: 1px solid var(--sim-line);
+  font-size: 10px;
+}
+
+.counterfactualTable > div > b {
+  color: var(--sim-lime);
+  font-size: 17px;
+}
+
+.counterfactualTable i {
+  color: var(--sim-gold);
+  font-style: normal;
+}
+
 .healthGrid {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
@@ -777,6 +991,10 @@
   .incidents {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .auditColumns {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 640px) {
@@ -835,8 +1053,22 @@
 
   .twoColumns,
   .threeColumns,
-  .inspector {
+  .inspector,
+  .traceLayout {
     grid-template-columns: 1fr;
+  }
+
+  .counterfactualTable > div {
+    grid-template-columns: 28px minmax(0, 1fr) 72px;
+    padding: 5px 0;
+  }
+
+  .counterfactualTable > div > strong:first-of-type {
+    grid-column: 2;
+  }
+
+  .counterfactualTable i {
+    text-align: right;
   }
 
   .inspector {

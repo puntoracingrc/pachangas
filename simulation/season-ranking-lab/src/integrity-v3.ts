@@ -34,11 +34,25 @@ export type OpponentGraph = {
 };
 
 export type MatchEvidenceV3 = {
+  confidenceBreakdown: MatchCompetitiveConfidenceBreakdown;
   confidenceWeight: number;
   logicalOpponentId: string;
   matchCompetitiveConfidence: number;
   opponentIndependenceScore: number;
   record: PlayerMatchEvidence;
+};
+
+export type MatchCompetitiveConfidenceBreakdown = {
+  acceptedChallenge: number;
+  agreedTime: number;
+  agreedVenue: number;
+  bilateralResult: number;
+  dayAnomalyPenalty: number;
+  establishedTeams: number;
+  history: number;
+  opponentIndependence: number;
+  participants: number;
+  score: number;
 };
 
 export type CompetitiveEvidenceSummary = {
@@ -259,12 +273,12 @@ function sameDayAnomaly(records: PlayerMatchEvidence[]) {
   }));
 }
 
-function matchConfidence(
+export function explainMatchCompetitiveConfidence(
   record: PlayerMatchEvidence,
   graph: OpponentGraph,
   independence: number,
   dayAnomaly: number,
-) {
+): MatchCompetitiveConfidenceBreakdown {
   const opponent = graph.profilesById.get(record.opponentTeamId);
   const own = graph.profilesById.get(record.teamId);
   const acceptedChallenge = record.kind === "challenge" ? 1 : 0;
@@ -276,19 +290,21 @@ function matchConfidence(
     ? clamp(Math.min(own.createdDaysAgo, opponent.createdDaysAgo) / 120, 0, 1)
     : clamp(record.opponentIndependence, 0, 1);
   const history = clamp((graph.matchNeighbors.get(record.opponentTeamId)?.size ?? 4) / 5, 0, 1);
-  return clamp(
-    acceptedChallenge * 0.15
-      + agreedVenue * 0.1
-      + agreedTime * 0.05
-      + participants * 0.35
-      + bilateralResult * 0.17
-      + established * 0.08
-      + history * 0.04
-      + independence * 0.06
-      - dayAnomaly * 0.28,
-    0,
-    1,
-  );
+  const breakdown = {
+    acceptedChallenge: acceptedChallenge * 0.15,
+    agreedTime: agreedTime * 0.05,
+    agreedVenue: agreedVenue * 0.1,
+    bilateralResult: bilateralResult * 0.17,
+    dayAnomalyPenalty: -dayAnomaly * 0.28,
+    establishedTeams: established * 0.08,
+    history: history * 0.04,
+    opponentIndependence: independence * 0.06,
+    participants: participants * 0.35,
+  };
+  return {
+    ...breakdown,
+    score: clamp(Object.values(breakdown).reduce((sum, value) => sum + value, 0), 0, 1),
+  };
 }
 
 export function confidenceWeight(confidence: number, policy: ConfidencePolicy) {
@@ -307,13 +323,15 @@ export function enrichCompetitiveEvidence(
   const anomalyByChallenge = sameDayAnomaly(input.records.filter(isSeasonScoreEvidence));
   return input.records.map((record): MatchEvidenceV3 => {
     const opponentIndependenceScore = pairIndependence(record, graph);
-    const matchCompetitiveConfidence = matchConfidence(
+    const confidenceBreakdown = explainMatchCompetitiveConfidence(
       record,
       graph,
       opponentIndependenceScore,
       anomalyByChallenge.get(record.challengeId) ?? 0,
     );
+    const matchCompetitiveConfidence = confidenceBreakdown.score;
     return {
+      confidenceBreakdown,
       confidenceWeight: opponentIndependenceScore < 0.5
         || record.participationConfidence < 0.5
         || record.venueConfidence < 0.5

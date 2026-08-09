@@ -1255,7 +1255,7 @@ export function advanceSyntheticWorld(input: SyntheticWorld, options: AdvanceSyn
   if (world.currentDate.slice(0, 10) >= seasonEnd.slice(0, 10)) {
     world.status = "completed";
     world.state.rankings = calculateRankings(world);
-    if (options.rankingEligibilityCoverage !== false) world.state = ensureRankingEligibilityCoverage(world).state;
+    if (options.rankingEligibilityCoverage === true) world.state = ensureRankingEligibilityCoverage(world).state;
     world.state.rankings = calculateRankings(world);
     world.state = ensureRequiredConductScenarioCoverage(world).state;
   } else {
@@ -1345,7 +1345,9 @@ export function syntheticWorldSummary(world: SyntheticWorld) {
     scheduledMatches: world.state.matches.filter(({ state }) => state === "scheduled").length,
     teams: world.state.teams.length,
     totalMatches: world.state.matches.length,
-    validRankingEvidence: confirmed.filter(({ kind, evidenceExcluded }) => kind === "challenge" && !evidenceExcluded).length,
+    rankingEvidenceMatches: confirmed.filter(({ kind }) => kind === "challenge").length,
+    rankingEvidenceMatchesMarkedExcluded: confirmed.filter(({ kind, evidenceExcluded }) => kind === "challenge" && evidenceExcluded).length,
+    rankingEvidenceMatchesMarkedValid: confirmed.filter(({ kind, evidenceExcluded }) => kind === "challenge" && !evidenceExcluded).length,
     virtualWeeks: virtualWeek(world.startDate, world.currentDate),
   };
 }

@@ -36,6 +36,12 @@ test("builds Pachangas IQ HTML", async () => {
   assert.doesNotMatch(html, /Your site is taking shape|Building your site|react-loading-skeleton/i);
 });
 
+test("keeps Synthetic World funnel rows keyed independently from duplicate labels", async () => {
+  const dashboard = await readFile(new URL("../app/admin/simulation-world/simulation-world-dashboard.tsx", import.meta.url), "utf8");
+  assert.match(dashboard, /audit\.funnel\.map\(\(row, index\) => <div key=\{`\$\{index\}-\$\{row\.label\}`\}>/);
+  assert.doesNotMatch(dashboard, /audit\.funnel\.map\(\(row\) => <div key=\{row\.label\}>/);
+});
+
 test("builds the user manual as its own page", async () => {
   const [html, css] = await Promise.all([
     readFile(new URL("../.next/server/app/manual.html", import.meta.url), "utf8"),

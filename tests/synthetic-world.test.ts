@@ -15,7 +15,8 @@ import { createSyntheticWorld } from "../simulation/synthetic-world/src/generato
 import { dailyInvariantChecks, weeklyInvariantChecks } from "../simulation/synthetic-world/src/invariants";
 import { KNOWN_SYNTHETIC_INCIDENTS, knownIncidentsForWorld } from "../simulation/synthetic-world/src/known-incidents";
 import { normalizeSyntheticWorldState } from "../simulation/synthetic-world/src/normalization";
-import { seasonInputs } from "../simulation/synthetic-world/src/ranking";
+import { buildSyntheticRankingFunnelAudit, orderedDistributionValues } from "../simulation/synthetic-world/src/ranking-funnel";
+import { SYNTHETIC_SEASON_SCORE_CONFIG, seasonInputs } from "../simulation/synthetic-world/src/ranking";
 
 const safeEnvironment = {
   NEXT_PUBLIC_APP_URL: "http://127.0.0.1:3090",
@@ -135,10 +136,10 @@ test("five deterministic smoke seeds keep daily and weekly invariants green", ()
 
 test("a full season is rich, closed, auditable and ranking-capable", () => {
   const legacy = advanceSyntheticWorld(createSyntheticWorld({ mode: "ephemeral", seed: 20260811 }), {
-    rankingEligibilityCoverage: false,
     targetDate: "2027-06-30T00:00:00.000Z",
   });
   assert.equal(legacy.state.rankings.filter(({ certification }) => certification === "eligible").length, 0);
+  assert.equal(legacy.state.events.filter(({ flow }) => flow === "ranking.eligibility_control").length, 0);
   const ratingsBefore = new Map(legacy.state.agents.map(({ facets, id, ratingV2 }) => [id, { facets: structuredClone(facets), ratingV2 }]));
   const world = reconcileSyntheticRankingCoverage(legacy);
   const summary = syntheticWorldSummary(world);
@@ -180,6 +181,33 @@ test("a full season is rich, closed, auditable and ranking-capable", () => {
   assert.equal(rankingControl?.payload.formulasChanged, false);
   assert.equal(rankingControl?.payload.ratingV2Changed, false);
   assert.ok(world.state.agents.every((agent) => JSON.stringify({ facets: agent.facets, ratingV2: agent.ratingV2 }) === JSON.stringify(ratingsBefore.get(agent.id))));
+  const audit = buildSyntheticRankingFunnelAudit(world);
+  assert.equal(audit.evidence.matchLevelMarkedValid + audit.evidence.matchLevelMarkedExcluded, audit.evidence.matchLevelChallengeEvidence);
+  assert.equal(audit.evidence.playerMatchAccepted + audit.evidence.excludedPlayerMatchEvidence, audit.evidence.playerMatchSource);
+  assert.equal(audit.evidence.sourceMatchesWithoutEvidence.length, 0);
+  assert.equal(audit.confidence.playerEvidenceDistribution.reduce((sum, row) => sum + row.total, 0), audit.evidence.playerMatchSource);
+  assert.equal(audit.confidence.playerEvidenceDistribution.reduce((sum, row) => sum + row.normal + row.attackers, 0), audit.evidence.playerMatchSource);
+  assert.deepEqual(
+    orderedDistributionValues(audit.participation.challengeParticipationsPerRegisteredPlayer),
+    [
+      audit.participation.challengeParticipationsPerRegisteredPlayer.p10,
+      audit.participation.challengeParticipationsPerRegisteredPlayer.p25,
+      audit.participation.challengeParticipationsPerRegisteredPlayer.p50,
+      audit.participation.challengeParticipationsPerRegisteredPlayer.p75,
+      audit.participation.challengeParticipationsPerRegisteredPlayer.p90,
+      audit.participation.challengeParticipationsPerRegisteredPlayer.p95,
+      audit.participation.challengeParticipationsPerRegisteredPlayer.max,
+    ],
+  );
+  assert.ok(audit.topBarcelonaNarrative.every(({ narrative }) => narrative.includes("Season Score") && !narrative.includes("oposición")));
+  assert.equal(audit.provinceComparison.reduce((sum, row) => sum + row.registered, 0), audit.totals.registered);
+});
+
+test("Synthetic World mirrors the approved V3 scoring configuration exactly", () => {
+  assert.deepEqual(SYNTHETIC_SEASON_SCORE_CONFIG.opponentDecay, [1, 1, 0.5, 0.25, 0]);
+  assert.equal(SYNTHETIC_SEASON_SCORE_CONFIG.densityTop10Minimum, 50);
+  assert.deepEqual(SYNTHETIC_SEASON_SCORE_CONFIG.weights, { competition: 30, opposition: 15, quality: 55 });
+  assert.equal(SYNTHETIC_SEASON_SCORE_CONFIG.volumeModel, "recent_30");
 });
 
 test("scorers match results and internal matches never become Season Score evidence", () => {

@@ -346,6 +346,14 @@ export type SyntheticWorldConfig = {
   attackRate: number;
   guestCount: number;
   initialFreeAgentCount: number;
+  rankingAuditScenario?: {
+    id: "A" | "B" | "C" | "D" | "E";
+    mutation: "challenge_density_plus_25" | "none" | "rotation_not_applied";
+    sourceWorldId: string;
+    strategy: "evidence_exclusion" | "exclusion_and_hold";
+    trophyMinimumChallenges: number;
+    trophyMinimumLogicalOpponents: number;
+  };
   seasonEnd: string;
   teamCount: number;
 };

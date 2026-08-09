@@ -3,7 +3,9 @@ import {
   TROPHY_RULES,
   buildOpponentGraph,
   evaluateV3Ranking,
+  type EvidenceStrategy,
   type TeamIntegrityProfile,
+  type TrophyRule,
 } from "../../season-ranking-lab/src/integrity-v3";
 import type { PlayerMatchEvidence, SeasonPlayerInput, SeasonScoreConfig } from "../../season-ranking-lab/src/types";
 import { virtualDaysBetween, virtualWeek } from "./clock";
@@ -11,19 +13,19 @@ import { clamp } from "./random";
 import type { SyntheticAgent, SyntheticMatch, SyntheticRankingRow, SyntheticTeam, SyntheticWorld } from "./types";
 
 export const SYNTHETIC_SEASON_SCORE_CONFIG: SeasonScoreConfig = {
-  densityTop10Minimum: 30,
+  densityTop10Minimum: 50,
   eligibility: { ...RANKING_ELIGIBILITY },
   id: "season-score-v3-55-30-15",
   integrityMode: "weighted",
   label: "55/30/15 · recent30 · synthetic world",
-  opponentDecay: [1, 1, 0.75, 0.5, 0.25, 0],
+  opponentDecay: [1, 1, 0.5, 0.25, 0],
   ratingConfidenceModel: "full",
   volumeModel: "recent_30",
   weights: { competition: 30, opposition: 15, quality: 55 },
 };
 export const SYNTHETIC_PROVINCE_TROPHY_RULE = TROPHY_RULES.province;
 
-function teamProfiles(teams: SyntheticTeam[]): TeamIntegrityProfile[] {
+export function syntheticTeamIntegrityProfiles(teams: SyntheticTeam[]): TeamIntegrityProfile[] {
   return teams.map((team, index) => ({
     adminIds: team.adminAgentIds,
     createdDaysAgo: team.integrityClusterId === "synthetic-fake-team-ring" ? 18 + index % 8 : 220 + (index * 79) % 1_400,
@@ -43,7 +45,7 @@ function sideForAgent(match: SyntheticMatch, agentId: string, teams: Map<string,
   return "home" as const;
 }
 
-function matchEvidence(
+export function syntheticMatchEvidence(
   agent: SyntheticAgent,
   match: SyntheticMatch,
   teams: Map<string, SyntheticTeam>,
@@ -101,25 +103,18 @@ export function seasonInputs(world: SyntheticWorld): SeasonPlayerInput[] {
     previousCompetitiveProvinceCode: world.state.rankings.find((row) => row.agentId === agent.id)?.provinceCode ?? agent.provinceCode,
     records: eligibleMatches
       .filter((match) => match.participantIds.includes(agent.id))
-      .map((match) => matchEvidence(agent, match, teams, world.startDate))
+      .map((match) => syntheticMatchEvidence(agent, match, teams, world.startDate))
       .filter((record): record is PlayerMatchEvidence => Boolean(record)),
     seasonId: world.seasonId,
   }));
 }
 
-export function calculateRankings(world: SyntheticWorld): SyntheticRankingRow[] {
-  const inputs = seasonInputs(world);
+export function calculateRankings(world: SyntheticWorld, options: {
+  strategy?: EvidenceStrategy;
+  trophyRule?: TrophyRule;
+} = {}): SyntheticRankingRow[] {
+  const { evaluated } = evaluateSyntheticRanking(world, options);
   const previous = new Map(world.state.rankings.map((row) => [row.agentId, row.rank]));
-  const graph = buildOpponentGraph(teamProfiles(world.state.teams), inputs);
-  const evaluated = evaluateV3Ranking({
-    asOfWeek: virtualWeek(world.startDate, world.currentDate),
-    config: SYNTHETIC_SEASON_SCORE_CONFIG,
-    graph,
-    inputs,
-    phase: world.status === "completed" ? "awards_certified" : "active",
-    strategy: "exclusion_and_hold",
-    trophyRule: SYNTHETIC_PROVINCE_TROPHY_RULE,
-  });
   const visible = evaluated.filter(({ provinceRank }) => provinceRank !== null);
   return visible.map((result): SyntheticRankingRow => {
     const rank = result.provinceRank ?? result.nationalRank ?? Number.MAX_SAFE_INTEGER;
@@ -139,4 +134,22 @@ export function calculateRankings(world: SyntheticWorld): SyntheticRankingRow[] 
       validChallenges: result.validChallenges,
     };
   }).sort((left, right) => left.provinceCode.localeCompare(right.provinceCode) || left.rank - right.rank || left.agentId.localeCompare(right.agentId));
+}
+
+export function evaluateSyntheticRanking(world: SyntheticWorld, options: {
+  strategy?: EvidenceStrategy;
+  trophyRule?: TrophyRule;
+} = {}) {
+  const inputs = seasonInputs(world);
+  const graph = buildOpponentGraph(syntheticTeamIntegrityProfiles(world.state.teams), inputs);
+  const evaluated = evaluateV3Ranking({
+    asOfWeek: virtualWeek(world.startDate, world.currentDate),
+    config: SYNTHETIC_SEASON_SCORE_CONFIG,
+    graph,
+    inputs,
+    phase: world.status === "completed" ? "awards_certified" : "active",
+    strategy: options.strategy ?? "exclusion_and_hold",
+    trophyRule: options.trophyRule ?? SYNTHETIC_PROVINCE_TROPHY_RULE,
+  });
+  return { evaluated, graph, inputs };
 }

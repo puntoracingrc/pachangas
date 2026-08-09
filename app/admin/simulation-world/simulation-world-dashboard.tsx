@@ -6,7 +6,7 @@ import type { SyntheticWorldListItem } from "../../../simulation/synthetic-world
 import styles from "./simulation-world.module.css";
 
 type DashboardResponse = { data: SyntheticDashboardData | null; worlds: SyntheticWorldListItem[] };
-type Tab = "conducta" | "equipos" | "incidencias" | "jugadores" | "partidos" | "ranking" | "resumen" | "salud" | "timeline";
+type Tab = "conducta" | "equipos" | "incidencias" | "jugadores" | "partidos" | "ranking" | "ranking_funnel" | "resumen" | "salud" | "timeline";
 
 const TABS: Array<{ id: Tab; label: string }> = [
   { id: "resumen", label: "Mundo" },
@@ -15,6 +15,7 @@ const TABS: Array<{ id: Tab; label: string }> = [
   { id: "equipos", label: "Equipos" },
   { id: "partidos", label: "Partidos" },
   { id: "ranking", label: "Ranking" },
+  { id: "ranking_funnel", label: "Ranking funnel" },
   { id: "incidencias", label: "Incidencias" },
   { id: "conducta", label: "Conducta" },
   { id: "salud", label: "System Health" },
@@ -34,6 +35,138 @@ function CountRows({ values }: { values: Record<string, number> }) {
       {Object.entries(values).sort((left, right) => right[1] - left[1]).map(([label, value]) => (
         <div key={label}><span>{label.replaceAll("_", " ")}</span><strong>{compactNumber(value)}</strong></div>
       ))}
+    </div>
+  );
+}
+
+function readable(value: string) {
+  return value.replaceAll("_", " ");
+}
+
+function RankingFunnelView({ data }: { data: SyntheticDashboardData }) {
+  const audit = data.rankingFunnel;
+  const [playerSearch, setPlayerSearch] = useState("");
+  const [playerId, setPlayerId] = useState(audit.topCandidates[0]?.playerId ?? audit.players[0]?.id ?? "");
+  const player = audit.players.find(({ id }) => id === playerId) ?? audit.players[0];
+  const traces = audit.evidenceTraces.filter(({ agentId }) => agentId === player?.id)
+    .sort((left, right) => right.occurredAt.localeCompare(left.occurredAt));
+  const [traceId, setTraceId] = useState("");
+  const trace = traces.find(({ matchId }) => matchId === traceId) ?? traces[0];
+  const visiblePlayers = audit.players.filter(({ displayName, id }) => `${displayName} ${id}`.toLowerCase().includes(playerSearch.toLowerCase()));
+  return (
+    <div className={styles.funnelView}>
+      <section className={styles.statGrid}>
+        <article><span>Registrados</span><strong>{audit.totals.registered}</strong></article>
+        <article><span>Ranking eligible</span><strong>{audit.totals.rankingEligible}</strong></article>
+        <article><span>Trofeo eligible</span><strong>{audit.totals.trophyEligible}</strong></article>
+        <article><span>Eligible orgánico</span><strong>{audit.totals.organicEligible}</strong></article>
+        <article><span>Pending integrity</span><strong>{audit.totals.pendingIntegrityReview}</strong></article>
+        <article><span>Source sin evidence</span><strong>{audit.evidence.sourceMatchesWithoutEvidence.length}</strong></article>
+      </section>
+
+      <section className={styles.auditColumns}>
+        <div className={styles.panel}>
+          <header><div><span>640 jugadores</span><h2>Embudo completo</h2></div><b>{audit.totals.trophyEligible}</b></header>
+          <div className={styles.funnelRows}>
+            {audit.funnel.map((row, index) => <div key={`${index}-${row.label}`}><span>{row.label}<small>{row.percentage}% · pérdida {row.lossFromPrevious}</small></span><i><b style={{ width: `${Math.max(1, row.percentage)}%` }} /></i><strong>{row.count}</strong></div>)}
+          </div>
+        </div>
+        <div className={styles.panel}>
+          <header><div><span>No secuencial</span><h2>Blockers e interacciones</h2></div><b>{audit.gates.rankedPopulation}</b></header>
+          <div className={styles.gateRows}>
+            {audit.gates.gates.map((row) => <div key={row.gate}><span>{readable(row.gate)}<small>solo {row.failedOnlyThisGate} · con otros {row.failedThisAndOthers}</small></span><strong>{row.totalFailed}</strong></div>)}
+          </div>
+          <h3>Leave-one-gate-out</h3>
+          <div className={styles.inlineMetrics}>{audit.gates.leaveOneOut.map((row) => <span key={row.removedGate}><small>{readable(row.removedGate)}</small><b>{row.certificable}</b></span>)}</div>
+        </div>
+      </section>
+
+      <section className={styles.auditColumns}>
+        <div className={styles.panel}>
+          <header><div><span>Unidad correcta</span><h2>Evidencia Season Score</h2></div><b>{compactNumber(audit.evidence.playerMatchAccepted)}</b></header>
+          <div className={styles.metricRows}>
+            <div><span>Partidos de Reto</span><strong>{audit.evidence.matchLevelChallengeEvidence}</strong></div>
+            <div><span>Partidos marcados válidos</span><strong>{audit.evidence.matchLevelMarkedValid}</strong></div>
+            <div><span>Player-match fuente</span><strong>{compactNumber(audit.evidence.playerMatchSource)}</strong></div>
+            <div><span>Aceptadas por B</span><strong>{compactNumber(audit.evidence.playerMatchAccepted)}</strong></div>
+            <div><span>Excluidas por B</span><strong>{compactNumber(audit.evidence.excludedPlayerMatchEvidence)}</strong></div>
+          </div>
+          <h3>Motivos de exclusión, multi-label</h3>
+          <div className={styles.gateRows}>{audit.evidence.excludedByReason.map((row) => <div key={row.reason}><span>{readable(row.reason)}<small>{row.affectedPlayers} jugadores</small></span><strong>{row.evidence}</strong></div>)}</div>
+        </div>
+        <div className={styles.panel}>
+          <header><div><span>Retención C</span><h2>Atacante vs legítimo</h2></div><b>{audit.totals.pendingIntegrityReview}</b></header>
+          <div className={styles.confusionMatrix}>
+            <span /><b>HOLD</b><b>NO HOLD</b>
+            <strong>Atacante</strong><i>{audit.integrity.confusionAllRegistered.truePositive}</i><i>{audit.integrity.confusionAllRegistered.falseNegative}</i>
+            <strong>Legítimo</strong><i>{audit.integrity.confusionAllRegistered.falsePositive}</i><i>{audit.integrity.confusionAllRegistered.trueNegative}</i>
+          </div>
+          <h3>Motivos pending</h3>
+          <CountRows values={audit.integrity.pendingByReason} />
+        </div>
+      </section>
+
+      <section className={styles.auditColumns}>
+        <div className={styles.panel}>
+          <header><div><span>Team ID frente a identidad canónica</span><h2>Rivales por jugador</h2></div><b>{audit.opponents.collapseRows.length} colapsos</b></header>
+          <div className={styles.counterfactualTable}>
+            {audit.opponents.technicalDistribution.map((row, index) => <div key={row.label}><b>{row.label}</b><span>Rivales distintos<small>mismo tramo</small></span><strong>{row.total} team IDs</strong><strong>{audit.opponents.logicalDistribution[index]?.total ?? 0} lógicos</strong></div>)}
+          </div>
+        </div>
+        <div className={styles.panel}>
+          <header><div><span>Hyperactive a low activity</span><h2>Actividad y elegibilidad</h2></div><b>{audit.density.months} meses</b></header>
+          <div className={styles.gateRows}>
+            {audit.density.activityScenarios.map((row) => <div key={row.classification}><span>{readable(row.classification)}<small>{row.count} jugadores · trofeo {row.trophyEligiblePercentage}%</small></span><strong>{row.rankingEligiblePercentage}% ranking</strong></div>)}
+          </div>
+        </div>
+      </section>
+
+      <section className={styles.panel}>
+        <header><div><span>Comparación territorial</span><h2>Provincias</h2></div><b>medianas</b></header>
+        <div className={styles.counterfactualTable}>
+          {audit.provinceComparison.map((row) => <div key={row.provinceCode}><b>{row.provinceCode}</b><span>{row.registered} jugadores<small>{row.medianChallenges} retos · {row.medianLogicalOpponents} rivales · conf. {row.medianConfidence} · div. {row.medianDiversity}</small></span><strong>{row.rankingEligible} ranking</strong><strong>{row.trophyEligible} trofeo</strong><i>{row.pendingIntegrityReview} pending</i></div>)}
+        </div>
+      </section>
+
+      {player ? (
+        <section className={styles.inspector}>
+          <aside>
+            <label><span>Filtro de jugador</span><input value={playerSearch} onChange={(event) => setPlayerSearch(event.target.value)} placeholder="Nombre o ID" /></label>
+            <select size={18} value={player.id} onChange={(event) => { setPlayerId(event.target.value); setTraceId(""); }}>
+              {visiblePlayers.map((item) => <option key={item.id} value={item.id}>{item.displayName} · {item.sourceChallengeEvidence}</option>)}
+            </select>
+          </aside>
+          <div className={styles.detail}>
+            <header><div><span>{player.persona} · {player.attackProfile}</span><h2>{player.displayName}</h2></div><strong>{player.score.toFixed(1)}</strong></header>
+            <div className={styles.detailGrid}>
+              <div><span>Retos fuente / válidos</span><b>{player.sourceChallengeEvidence} / {player.acceptedEvidence}</b></div>
+              <div><span>Team IDs / lógicos</span><b>{player.sourceTechnicalOpponents} / {player.sourceLogicalOpponents}</b></div>
+              <div><span>Confidence / diversity</span><b>{player.competitiveConfidence.toFixed(2)} / {player.competitionNetworkDiversity.toFixed(2)}</b></div>
+              <div><span>Ranking / trofeo</span><b>{player.rankingEligible ? `#${player.provinceRank}` : "fuera"} · {player.certification}</b></div>
+            </div>
+            <h3>Blockers</h3><p className={styles.muted}>{player.certificationReasons.map(readable).join(" · ") || "Sin bloqueos"}</p>
+            <div className={styles.traceLayout}>
+              <div className={styles.traceList}>
+                {traces.map((item) => <button type="button" key={`${item.matchId}-${item.agentId}`} className={item.accepted ? styles.traceAccepted : styles.traceExcluded} onClick={() => setTraceId(item.matchId)}><span>{shortDate(item.occurredAt)}<small>{item.matchId.slice(0, 8)} · {readable(item.rule)}</small></span><b>{item.matchCompetitiveConfidence.toFixed(2)}</b></button>)}
+                {traces.length === 0 ? <p>Sin Retos confirmados.</p> : null}
+              </div>
+              {trace ? <div className={styles.traceDetail}><span>Trace de Reto</span><h3>{trace.matchId}</h3><p>{trace.accepted ? "Cuenta como evidencia" : "No cuenta"} · {trace.exclusionReasons.map(readable).join(", ") || "B accepted"}</p><div className={styles.metricRows}><div><span>Match confidence</span><strong>{trace.matchCompetitiveConfidence.toFixed(3)}</strong></div><div><span>Independencia</span><strong>{trace.opponentIndependence.toFixed(3)}</strong></div><div><span>Peso</span><strong>{trace.confidenceWeight.toFixed(3)}</strong></div><div><span>Rival lógico</span><strong>{trace.logicalOpponentId}</strong></div></div><details><summary>Componentes exactos</summary><pre>{JSON.stringify(trace.confidenceBreakdown, null, 2)}</pre></details></div> : null}
+            </div>
+          </div>
+        </section>
+      ) : null}
+
+      <section className={styles.panel}>
+        <header><div><span>Solo clones</span><h2>Contrafactuales A–E</h2></div><b>V1 intacto</b></header>
+        <div className={styles.counterfactualTable}>
+          {data.rankingCounterfactuals.map((row) => <div key={row.id}><b>{row.id}</b><span>{row.label}<small>{row.addedMatches} partidos añadidos · {row.worldId.slice(0, 8)}</small></span><strong>{row.totals.rankingEligible} ranking</strong><strong>{row.totals.trophyEligible} trofeo</strong><i>{row.totals.pendingIntegrityReview} pending</i></div>)}
+        </div>
+      </section>
+
+      <section className={styles.panel}>
+        <header><div><span>Mayor Season Score</span><h2>Top 50 candidatos</h2></div><b>No implica trofeo</b></header>
+        <ol className={styles.rankingList}>{audit.topCandidates.map((row) => <li key={row.playerId} onClick={() => setPlayerId(row.playerId)}><b>{row.rank}</b><span>{row.displayName}<small>{row.certification} · {row.validChallenges} retos · {row.logicalOpponents} rivales · {row.certificationBlockers.map(readable).join(", ")}</small></span><strong>{row.score.toFixed(1)}</strong><i>{row.provinceRank ? `#${row.provinceRank}` : "—"}</i></li>)}</ol>
+      </section>
     </div>
   );
 }
@@ -277,6 +410,8 @@ export function SimulationWorldDashboard({
         {tab === "ranking" ? (
           <section className={styles.panel}><header><div><span>Top 50 territorial</span><h2>Season Score V3</h2></div><select value={province} onChange={(event) => setProvince(event.target.value)}>{[...new Set(data.ranking.map(({ provinceCode }) => provinceCode))].map((code) => <option key={code} value={code}>Provincia {code}</option>)}</select></header><ol className={styles.rankingList}>{data.ranking.filter(({ provinceCode }) => provinceCode === province).slice(0, 50).map((row) => <li key={row.agentId}><b>{row.rank}</b><span>{row.displayName}<small>{row.certification} · {row.validChallenges} retos · {row.logicalOpponents} rivales</small></span><strong>{row.score.toFixed(1)}</strong><i>{row.movement > 0 ? `↑${row.movement}` : row.movement < 0 ? `↓${Math.abs(row.movement)}` : "="}</i></li>)}</ol></section>
         ) : null}
+
+        {tab === "ranking_funnel" ? <RankingFunnelView key={data.world.id} data={data} /> : null}
 
         {tab === "incidencias" ? (
           <section className={styles.panel}><header><div><span>Registro permanente</span><h2>Incidencias</h2></div><b>{data.incidents.length}</b></header><div className={styles.incidents}>{data.incidents.map((incident) => <article key={incident.id} className={styles[incident.severity]}><header><strong>{incident.category}</strong><b>{incident.status}</b></header><h3>{incident.operation}</h3><p>{String(incident.actual.behavior ?? incident.actual.productCapability ?? "Ver expected/actual")}</p><div><span>{shortDate(incident.virtualDate)}</span><span>{incident.actorName ?? "Sistema"}</span><span>{incident.occurrenceCount} ocurrencias</span></div><details><summary>Expected / actual / reproducción</summary><pre>{JSON.stringify({ actual: incident.actual, expected: incident.expected, reproduction: incident.reproductionSteps, resolution: incident.resolution }, null, 2)}</pre></details></article>)}</div></section>

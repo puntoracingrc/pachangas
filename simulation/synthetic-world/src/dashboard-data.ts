@@ -1,4 +1,7 @@
 import { syntheticWorldSummary } from "./engine";
+import rankingFunnelSummary from "../generated/ranking-funnel-v1.1-summary.json";
+import { buildSyntheticRankingFunnelAudit } from "./ranking-funnel";
+import { rankingAuditOptionsForWorld } from "./ranking-counterfactuals";
 import type { SyntheticSnapshotListItem, SyntheticWorldListItem } from "./store";
 import type { SyntheticEvent, SyntheticWorld } from "./types";
 
@@ -27,6 +30,19 @@ function countBy(values: string[]) {
 }
 
 export type SyntheticDashboardData = ReturnType<typeof buildSyntheticDashboardData>;
+
+const rankingAuditCache = new Map<string, ReturnType<typeof buildSyntheticRankingFunnelAudit>>();
+
+function rankingAudit(world: SyntheticWorld) {
+  const scenario = world.config.rankingAuditScenario?.id ?? "source";
+  const key = `${world.id}:${world.revision}:${world.state.eventSequence}:${scenario}`;
+  const cached = rankingAuditCache.get(key);
+  if (cached) return cached;
+  const audit = buildSyntheticRankingFunnelAudit(world, rankingAuditOptionsForWorld(world));
+  rankingAuditCache.clear();
+  rankingAuditCache.set(key, audit);
+  return audit;
+}
 
 export function buildSyntheticDashboardData(options: {
   snapshots?: SyntheticSnapshotListItem[];
@@ -120,6 +136,9 @@ export function buildSyntheticDashboardData(options: {
     ranking: [...world.state.rankings]
       .sort((left, right) => left.provinceCode.localeCompare(right.provinceCode) || left.rank - right.rank)
       .map((row) => ({ ...row, displayName: agentById.get(row.agentId)?.displayName ?? row.agentId })),
+    rankingCounterfactuals: rankingFunnelSummary.clones,
+    rankingFunnel: rankingAudit(world),
+    rankingReference: rankingFunnelSummary.reference,
     snapshots: options.snapshots ?? [],
     summary: {
       ...syntheticWorldSummary(world),

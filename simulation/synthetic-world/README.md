@@ -41,6 +41,7 @@ npm run synthetic:world -- reconcile-conduct --world <uuid>
 npm run synthetic:world -- reconcile-ranking --world <uuid>
 npm run synthetic:world -- sync-incidents --world <uuid>
 npm run synthetic:world -- export --world <uuid>
+npm run synthetic:ranking-funnel
 ```
 
 Toda mutación persistente exige `operationId` y revisión esperada. Un replay devuelve el mismo recibo; una revisión obsoleta se rechaza. El reloj solo avanza y los snapshots no sustituyen el historial de eventos.
@@ -51,12 +52,15 @@ Toda mutación persistente exige `operationId` y revisión esperada. Un replay d
 PACHANGAS_SYNTHETIC_ADMIN=1 npm run dev -- --hostname 127.0.0.1 --port 3090
 ```
 
-Abrir `http://127.0.0.1:3090/admin/simulation-world`. Incluye resumen, timeline, agentes, equipos, partidos, ranking, conducta, cobertura e incidencias. Las tablas pesadas se cargan después del shell y la API responde con `Cache-Control: no-store`.
+Abrir `http://127.0.0.1:3090/admin/simulation-world`. Incluye resumen, timeline, agentes, equipos, partidos, ranking, `Ranking funnel`, conducta, cobertura e incidencias. `Ranking funnel` permite inspeccionar gates, distribuciones, provincias, un jugador concreto y la traza match-confidence de cada Reto. Las tablas pesadas se cargan después del shell y la API responde con `Cache-Control: no-store`.
+
+La auditoría V1.1 usa como fuente inmutable el mundo `3df9494d-3b8c-4447-96e8-d5244892af78` en revisión 313. El comando crea o reutiliza únicamente los clones A-E y genera [`../../RANKING_FUNNEL_V1_1_REPORT.md`](../../RANKING_FUNNEL_V1_1_REPORT.md); nunca reescribe el mundo original.
 
 ## Verificación
 
 ```bash
 npm run test:synthetic-world
+npm run synthetic:ranking-funnel
 npm run synthetic:soak
 npm run test:synthetic-world:dashboard-api
 npm run typecheck

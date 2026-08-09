@@ -31,7 +31,7 @@ El servidor local es autoridad. El navegador no calcula ni persiste resultados c
 | Logros y cajas | 3.730 / 3.730 |
 | Opiniones sociales sintéticas | 3.961 |
 | Filas de ranking actuales | 135 |
-| Evidencias competitivas válidas | 950 |
+| Partidos de Reto marcados no excluidos | 950 |
 | Historial de ranking persistido | 574 filas |
 | Incidencias persistidas | 64 |
 
@@ -133,6 +133,18 @@ Capturas verificadas: [`final-desktop.png`](./simulation/synthetic-world/screens
 - No hay sistema general de reportes, no-show o sanciones; solo se cuantifica su demanda.
 - La simulación no convierte ausencia de definición en bug del producto.
 - Rating V2, sus fórmulas, facetas, assessments, votos, perfiles y evidencias no se modifican.
+
+## Apéndice V1.1: embudo de ranking
+
+La auditoría posterior preservó el mundo `3df9494d-3b8c-4447-96e8-d5244892af78` en revisión 313, secuencia 69.458 y hash de estado `92ab28b6092f4e20bfed43297dc4669a`, idéntico al checkpoint previo. Todos los experimentos A-E viven en mundos clonados.
+
+La aclaración principal es de unidad: 950 son partidos de Reto marcados no excluidos por el generador. El motor recibió 14.484 filas jugador-partido, aceptó 9.347 mediante B y excluyó 5.137. El invariante `eligible_source_match_without_ranking_evidence` encontró cero pérdidas.
+
+De 640 registrados, 135 entran en ranking provincial, uno cumple la certificación/trofeo persistida y 54 quedan `pending_integrity_review`. Al retirar los nueve partidos de control históricos, la elegibilidad orgánica de trofeo es cero. El cuello dominante es diversidad de red: 133 de los 135 rankeados fallan ese gate; quitarlo aisladamente elevaría el contrafactual estricto de 1 a 17, sin que ello constituya una recomendación de producto.
+
+Las incidencias `SW-0059` a `SW-0066` quedaron registradas antes de corregirse y cerradas con regresión. Cubren la ambigüedad de unidades, la contaminación por controles automáticos, la clasificación de cohorts de confidence, el drift de configuración V3, el etiquetado de percentiles, la identidad duplicada de filas React, la precondición del runner de concurrencia y dos símbolos muertos detectados por lint focalizado. La configuración del adaptador vuelve a coincidir exactamente con V3; Rating V2 permanece intacto.
+
+La pestaña local `Ranking funnel` fue verificada en 1440x900 y 390x844, con documento sin overflow horizontal y sin errores o avisos de consola en una sesión limpia. El diagnóstico completo, Top 50, Top 20 Barcelona, distribuciones, matriz attacker/legitimate, comparación V3 10k y clones A-E está en [`RANKING_FUNNEL_V1_1_REPORT.md`](./RANKING_FUNNEL_V1_1_REPORT.md).
 
 ## Entrega
 
