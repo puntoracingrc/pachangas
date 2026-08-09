@@ -1596,6 +1596,18 @@ export const KNOWN_SYNTHETIC_INCIDENTS: KnownIncident[] = [
     reproductionSteps: ["Run npm run typecheck", "Compile core-social-flows-v2.ts", "Observe core_social_v2 is not assignable to the canonical snapshot-kind union"],
     severity: "low",
   },
+  {
+    actual: "The first Core Social V2 clone covered voluntary leave and admin leave but never executed the distinct owner/admin member-removal contract declared in its matrix.",
+    category: "SIMULATION_BUG",
+    evidence: ["The focused coverage test reported team.member_remove as NO_COVERAGE while every other declared Core Social flow passed."],
+    expected: "Synthetic World V2 records administrative removal as its own server-authoritative flow instead of treating self-leave as equivalent evidence.",
+    fixed: false,
+    id: "SW-0132",
+    operation: "simulation.core_social.member_remove_coverage",
+    regressionVerified: false,
+    reproductionSteps: ["Create the Core Social V2 clone", "Inspect its declared coverage matrix", "Observe team.member_remove has zero executions"],
+    severity: "medium",
+  },
 ];
 
 export function knownIncidentsForWorld(seed: number, virtualDate: string): SyntheticIncident[] {
