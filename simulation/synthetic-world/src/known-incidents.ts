@@ -1632,6 +1632,18 @@ export const KNOWN_SYNTHETIC_INCIDENTS: KnownIncident[] = [
     reproductionSteps: ["Create an empty local PostgreSQL database with the Auth schema", "Apply migrations in lexical order", "Reach 20260728191804_require_registered_users_for_group_policies.sql", "Observe pachanga_admin_invites does not exist"],
     severity: "medium",
   },
+  {
+    actual: "Restoring a schema-only clone with the local Supabase postgres role fails on an Auth function-level SET log_min_messages directive that this managed local role cannot assign.",
+    category: "ENVIRONMENT_ISSUE",
+    evidence: ["The failed database is dropped by the validation trap; the retry removes only the unsupported function configuration line and preserves all schema, function bodies, grants and RLS definitions."],
+    expected: "Disposable schema validation accommodates the local Supabase role restrictions without weakening the schema under test.",
+    fixed: false,
+    id: "SW-0135",
+    operation: "environment.core_social.schema_clone_function_guc",
+    regressionVerified: false,
+    reproductionSteps: ["Dump the local schema without data", "Restore it into a fresh local database as postgres", "Observe permission denied to set parameter log_min_messages"],
+    severity: "low",
+  },
 ];
 
 export function knownIncidentsForWorld(seed: number, virtualDate: string): SyntheticIncident[] {
