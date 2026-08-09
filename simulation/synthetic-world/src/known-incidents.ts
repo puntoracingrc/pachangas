@@ -864,6 +864,30 @@ export const KNOWN_SYNTHETIC_INCIDENTS: KnownIncident[] = [
     reproductionSteps: ["Run npm run synthetic:network-v31", "Allow all model clones to persist", "Enter report generation", "Observe TypeError reading falsePositiveRate from healthy.model_1_absolute"],
     severity: "low",
   },
+  {
+    actual: "The first V3.1 contamination metric selected one global Top 10 across all provinces even though trophy eligibility and awards are territorial.",
+    category: "SIMULATION_BUG",
+    evidence: [],
+    expected: "Top 10 contamination is calculated independently inside each province and then aggregated over the territorial positions actually exposed to awards.",
+    fixed: false,
+    id: "SW-0071",
+    operation: "simulation.ranking.v31_territorial_top10_scope",
+    regressionVerified: false,
+    reproductionSteps: ["Evaluate multiple provinces with ranking-eligible players", "Place an executed-abuse player inside one provincial Top 10 but outside the global Top 10", "Observe top10Contamination remains zero"],
+    severity: "high",
+  },
+  {
+    actual: "The first V3.1 Top 20 report labeled every network decision without a HOLD as CERTIFICABLE even when the player failed a non-network trophy gate.",
+    category: "SIMULATION_BUG",
+    evidence: [],
+    expected: "The report distinguishes NO CANDIDATO from a network candidate that is held or certifiable and never presents a network-only result as complete trophy eligibility.",
+    fixed: false,
+    id: "SW-0072",
+    operation: "simulation.ranking.v31_report_candidate_status",
+    regressionVerified: false,
+    reproductionSteps: ["Generate the V3.1 Top 20 table", "Find a player with nonNetworkTrophyEligible=false and no network HOLD", "Observe the row is labeled CERTIFICABLE"],
+    severity: "medium",
+  },
 ];
 
 export function knownIncidentsForWorld(seed: number, virtualDate: string): SyntheticIncident[] {
