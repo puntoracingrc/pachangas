@@ -1512,6 +1512,18 @@ export const KNOWN_SYNTHETIC_INCIDENTS: KnownIncident[] = [
     reproductionSteps: ["Create the closure migration with Supabase CLI", "List migration filenames", "Observe 20260809194241 sorts before 20260809203000"],
     severity: "high",
   },
+  {
+    actual: "The running local PostgreSQL endpoint on port 55322 has no supabase_migrations.schema_migrations relation, so it cannot prove which stacked migrations are present.",
+    category: "ENVIRONMENT_ISSUE",
+    evidence: ["Core Social validation uses an isolated disposable local database built from repository migrations instead of inferring history from the shared test endpoint."],
+    expected: "Migration validation runs against a local database whose applied schema and migration order are explicit and reproducible.",
+    fixed: false,
+    id: "SW-0125",
+    operation: "environment.core_social.local_migration_history",
+    regressionVerified: false,
+    reproductionSteps: ["Connect to 127.0.0.1:55322", "Query supabase_migrations.schema_migrations", "Observe relation does not exist"],
+    severity: "medium",
+  },
 ];
 
 export function knownIncidentsForWorld(seed: number, virtualDate: string): SyntheticIncident[] {
