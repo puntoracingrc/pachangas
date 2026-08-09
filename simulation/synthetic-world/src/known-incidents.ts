@@ -1032,6 +1032,18 @@ export const KNOWN_SYNTHETIC_INCIDENTS: KnownIncident[] = [
     reproductionSteps: ["Create reporter and target profiles", "Switch to the reporter authenticated role", "Resolve the target with a direct SELECT on pachanga_player_profiles", "Observe RLS returning no row and the report RPC rejecting a null target"],
     severity: "low",
   },
+  {
+    actual: "The first report execution reached moderation-case creation but PostgreSQL rejected the partial-index ON CONFLICT target because target_profile_id could mean either the RPC parameter or the table column.",
+    category: "PRODUCT_BUG",
+    evidence: ["The local authenticated report fixture failed with PostgreSQL ambiguous_column inside submit_pachanga_conduct_report_v1 and rolled back."],
+    expected: "Case clustering serializes on the target/category key and selects or creates one open case without ambiguous identifiers.",
+    fixed: false,
+    id: "SW-0085",
+    operation: "conduct.reports.case_cluster_upsert",
+    regressionVerified: false,
+    reproductionSteps: ["Enable conduct reports in the local database", "Submit a valid match-linked report", "Reach the partial-index ON CONFLICT clause", "Observe target_profile_id is ambiguous"],
+    severity: "high",
+  },
 ];
 
 export function knownIncidentsForWorld(seed: number, virtualDate: string): SyntheticIncident[] {
