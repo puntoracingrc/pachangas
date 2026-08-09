@@ -1,0 +1,185 @@
+{
+  "generatedAt": "2026-08-09T17:56:18.701Z",
+  "policy": {
+    "appealAndCorrection": true,
+    "attendanceClosureHours": 48,
+    "disputeHours": 72,
+    "humanDecisionRequiredForRestriction": true,
+    "lateCancellationIsNoShow": false,
+    "reporterIdentityPublic": false,
+    "socialRestrictionsAffectSport": false
+  },
+  "soak": {
+    "invariants": {
+      "dailyFailures": 0,
+      "weeklyFailures": 0
+    },
+    "replay": {
+      "attendance": {
+        "byFinalOutcome": {
+          "played": 18,
+          "unexcused_no_show": 228,
+          "excused_absence": 23,
+          "late_cancellation": 21
+        },
+        "candidateNoShows": 290,
+        "corrections": 62,
+        "disputed": 95,
+        "falsePositiveNoShowsFromNormalCancellations": 0,
+        "finalConfirmedNoShows": 228,
+        "normalCancellations": 577,
+        "reminderCandidates90Days": 35,
+        "reviewCandidates180Days": 24,
+        "sourceRepeatCandidates": 49
+      },
+      "conduct": {
+        "appeals": 0,
+        "byKind": {
+          "mutual_conflict": 18,
+          "occasional_unsporting": 24,
+          "single_clean_history_report": 32,
+          "repeat_offender": 4,
+          "coordinated_false_report": 7,
+          "conflict_prone_incident": 1,
+          "same_team_report_burst": 1,
+          "independent_team_reports": 1
+        },
+        "cases": 88,
+        "correlatedReports": 49,
+        "corrections": 0,
+        "dismissalRecommendations": 7,
+        "humanCases": 88,
+        "independentSources": 90,
+        "rawReports": 139,
+        "retaliationSignals": 18,
+        "restrictionRecommendations": 5,
+        "restrictionsApplied": 0,
+        "sameTeamCampaigns": 8,
+        "warningsIssued": 0
+      },
+      "featureFlags": {
+        "attendance_closure_enabled": true,
+        "conduct_reports_enabled": true,
+        "social_restrictions_enabled": false
+      },
+      "isolation": {
+        "achievementsChanged": false,
+        "ratingV2Changed": false,
+        "seasonScoreChanged": false,
+        "topsChanged": false
+      },
+      "moderationLoad": {
+        "observedPlayers": 640,
+        "observedSeasonCases": 88,
+        "projectedCases": {
+          "players1000": 138,
+          "players5000": 688,
+          "players10000": 1375
+        },
+        "projectionIsOrientative": true
+      }
+    },
+    "sourcePreserved": true,
+    "sportingSystemsPreserved": true,
+    "summary": {
+      "achievements": 3949,
+      "activeAgents": 629,
+      "attendanceCancellations": 577,
+      "boxes": 3949,
+      "challenges": 1601,
+      "confirmedMatches": 1343,
+      "conductScenariosNeedingProduct": 88,
+      "currentDate": "2027-06-30T00:00:00.000Z",
+      "events": 66625,
+      "guests": 30,
+      "incidents": 109,
+      "notifications": 27921,
+      "possibleNoShows": 290,
+      "possibleRepeatNoShowAgents": 49,
+      "opinions": 3675,
+      "rankings": 165,
+      "registeredAgents": 640,
+      "revision": 302,
+      "scheduledMatches": 0,
+      "teams": 50,
+      "totalMatches": 1422,
+      "rankingEvidenceMatches": 1067,
+      "rankingEvidenceMatchesMarkedExcluded": 115,
+      "rankingEvidenceMatchesMarkedValid": 952,
+      "virtualWeeks": 44
+    }
+  },
+  "source": {
+    "eventSequence": 69458,
+    "replay": {
+      "attendance": {
+        "byFinalOutcome": {
+          "played": 3,
+          "unexcused_no_show": 29,
+          "excused_absence": 3,
+          "late_cancellation": 2
+        },
+        "candidateNoShows": 37,
+        "corrections": 8,
+        "disputed": 13,
+        "falsePositiveNoShowsFromNormalCancellations": 0,
+        "finalConfirmedNoShows": 29,
+        "normalCancellations": 424,
+        "reminderCandidates90Days": 6,
+        "reviewCandidates180Days": 2,
+        "sourceRepeatCandidates": 8
+      },
+      "conduct": {
+        "appeals": 0,
+        "byKind": {
+          "single_clean_history_report": 68,
+          "occasional_unsporting": 3,
+          "mutual_conflict": 3,
+          "conflict_prone_incident": 1,
+          "repeat_offender": 1,
+          "same_team_report_burst": 1,
+          "independent_team_reports": 1,
+          "coordinated_false_report": 1
+        },
+        "cases": 79,
+        "correlatedReports": 10,
+        "corrections": 0,
+        "dismissalRecommendations": 1,
+        "humanCases": 79,
+        "independentSources": 81,
+        "rawReports": 91,
+        "retaliationSignals": 3,
+        "restrictionRecommendations": 2,
+        "restrictionsApplied": 0,
+        "sameTeamCampaigns": 2,
+        "warningsIssued": 0
+      },
+      "featureFlags": {
+        "attendance_closure_enabled": true,
+        "conduct_reports_enabled": true,
+        "social_restrictions_enabled": false
+      },
+      "isolation": {
+        "achievementsChanged": false,
+        "ratingV2Changed": false,
+        "seasonScoreChanged": false,
+        "topsChanged": false
+      },
+      "moderationLoad": {
+        "observedPlayers": 640,
+        "observedSeasonCases": 79,
+        "projectedCases": {
+          "players1000": 123,
+          "players5000": 617,
+          "players10000": 1234
+        },
+        "projectionIsOrientative": true
+      }
+    },
+    "revision": 313,
+    "sourcePreserved": true,
+    "sportingSystemsPreserved": true,
+    "stateHash": "f2b71555b074b32658a11609d148efc5dbda7dc8ef5456d1d2d0b3dcbc776c31",
+    "worldId": "3df9494d-3b8c-4447-96e8-d5244892af78"
+  }
+}

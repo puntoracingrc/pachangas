@@ -357,6 +357,22 @@ const manualFlows = [
     ],
   },
   {
+    audience: "Jugador y admin",
+    title: "Asistencia real y conducta",
+    intro: "Después de un partido, asistencia y conducta se revisan de forma privada y nunca cambian el nivel deportivo.",
+    steps: [
+      "Hasta 48 horas después del partido, un owner o admin puede cerrar la asistencia completa de su propia plantilla indicando Jugó, Ausencia justificada, Cancelación tardía o No asistencia sin aviso.",
+      "Cambiar Voy a No antes del partido sigue siendo una cancelación normal. No se convierte automáticamente en no-show ni abre una sanción.",
+      "Si se registra una cancelación tardía o un no-show, el jugador recibe un aviso obligatorio y dispone de 72 horas para aceptarlo o solicitar una revisión privada.",
+      "Una corrección conserva el estado original, quién actuó y cuándo. No se sobrescribe el historial en silencio.",
+      "Desde el menú de un jugador en un partido histórico puedes usar Reportar conducta. El reporte exige una relación deportiva real, tiene categorías cerradas y admite un contexto opcional de hasta 500 caracteres.",
+      "La persona reportada no conoce la identidad de quien informa. Los admins del grupo tampoco acceden a ella; solo el rol interno de seguridad puede revisar la evidencia completa.",
+      "Varios reportes del mismo equipo e incidente se agrupan como una fuente correlacionada. Una fuente aislada nunca impone una sanción automática.",
+      "Los avisos formales y las limitaciones sociales requieren una decisión humana y pueden apelarse. Las limitaciones solo afectan mercado, retos o accesos públicos; no afectan grupos privados, Rating V2, GRL, facetas, ranking, logros ni premios.",
+      "En Perfil > Avisos y conducta puedes responder cierres de asistencia, consultar avisos, limitaciones y apelaciones, y revisar tus propios reportes enviados.",
+    ],
+  },
+  {
     audience: "Todos",
     title: "Sincronización, caché y uso sin conexión",
     intro: "El teléfono solicita acciones y el servidor confirma el resultado; la copia local solo acelera la lectura.",

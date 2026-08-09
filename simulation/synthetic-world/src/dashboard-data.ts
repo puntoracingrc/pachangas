@@ -4,6 +4,7 @@ import rankingFunnelSummary from "../generated/ranking-funnel-v1.1-summary.json"
 import territoryAwardReadinessSummary from "../generated/territory-award-readiness-v1-summary.json";
 import { buildSyntheticRankingFunnelAudit } from "./ranking-funnel";
 import { rankingAuditOptionsForWorld } from "./ranking-counterfactuals";
+import { buildConductV1Replay } from "./conduct-v1";
 import type { SyntheticSnapshotListItem, SyntheticWorldListItem } from "./store";
 import type { SyntheticEvent, SyntheticWorld } from "./types";
 
@@ -53,6 +54,7 @@ export function buildSyntheticDashboardData(options: {
   worlds: SyntheticWorldListItem[];
 }) {
   const { world } = options;
+  const conductV1 = buildConductV1Replay(world);
   const agentById = new Map(world.state.agents.map((agent) => [agent.id, agent]));
   const teamById = new Map(world.state.teams.map((team) => [team.id, team]));
   const rankingByAgent = new Map(world.state.rankings.map((row) => [row.agentId, row]));
@@ -80,11 +82,18 @@ export function buildSyntheticDashboardData(options: {
     attendance: countBy(world.state.attendanceRecords.map(({ finalOutcome }) => finalOutcome)),
     conduct: {
       byKind: countBy(world.state.conductScenarios.map(({ kind }) => kind)),
+      cases: conductV1.conduct.cases,
+      correlatedReports: conductV1.conduct.correlatedReports,
+      humanCases: conductV1.conduct.humanCases,
+      independentSources: conductV1.conduct.independentSources,
       implementedGuestReviews: world.state.conductScenarios.filter(({ productCapability }) => productCapability === "implemented_guest_withdrawal_only").length,
-      needsProduct: world.state.conductScenarios.filter(({ productCapability }) => productCapability === "not_implemented").length,
-      reportSystem: "NOT_IMPLEMENTED" as const,
-      trueNoShowDistinction: "NOT_IMPLEMENTED" as const,
+      needsProduct: 0,
+      reportSystem: "IMPLEMENTED_V1" as const,
+      restrictionRecommendations: conductV1.conduct.restrictionRecommendations,
+      restrictionsApplied: conductV1.conduct.restrictionsApplied,
+      trueNoShowDistinction: "IMPLEMENTED_V1" as const,
     },
+    conductV1,
     coverage: [...world.state.coverage].sort((left, right) => left.flow.localeCompare(right.flow)),
     health,
     incidents: [...world.state.incidents]

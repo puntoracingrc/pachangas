@@ -1,15 +1,15 @@
 {
-  "generatedAt": "2026-08-09T10:41:27.995Z",
+  "generatedAt": "2026-08-09T17:08:48.498Z",
   "summary": {
-    "implemented": 7,
-    "notImplemented": 3,
-    "partiallyImplemented": 2
+    "implemented": 9,
+    "notImplemented": 0,
+    "partiallyImplemented": 3
   },
   "rows": [
     {
       "capability": "General player reports",
-      "classification": "not_implemented",
-      "evidence": "No canonical table/RPC/UI located; guest withdrawal review is deliberately narrower."
+      "classification": "implemented",
+      "evidence": "Context-bound, idempotent reports create clustered moderation cases without automatic sanctions."
     },
     {
       "capability": "Guest voluntary withdrawal",
@@ -23,8 +23,8 @@
     },
     {
       "capability": "Canonical no-show distinction",
-      "classification": "not_implemented",
-      "evidence": "Product records status changes and guest withdrawal, but no attended/no-show fact distinct from cancellation."
+      "classification": "partially_implemented",
+      "evidence": "A complete post-match roster closure distinguishes played, excused absence, late cancellation and unexcused no-show."
     },
     {
       "capability": "Attendance joined notification",
@@ -53,18 +53,18 @@
     },
     {
       "capability": "Warnings and sanctions engine",
-      "classification": "partially_implemented",
-      "evidence": "Delivery policy reserves security/warning/sanction kinds, but no canonical decision/history/restriction engine was located."
+      "classification": "implemented",
+      "evidence": "Warnings, explicit moderator restrictions, expiry and appeals are canonical; social restrictions remain independently flag-gated."
     },
     {
       "capability": "Independent-source weighting and report abuse defense",
-      "classification": "not_implemented",
-      "evidence": "No general reports exist, so source-team independence, coordinated false-report detection and appeals are not product capabilities."
+      "classification": "partially_implemented",
+      "evidence": "Reports share source clusters by team/context while different teams increase independent-source count."
     },
     {
       "capability": "Conduct effect isolation from Rating V2",
       "classification": "partially_implemented",
-      "evidence": "The one existing withdrawal review explicitly cannot alter sport rating."
+      "evidence": "Guest withdrawal and Conduct V1 responses explicitly return affectsSportRating=false; no conduct path writes sport tables."
     }
   ]
 }

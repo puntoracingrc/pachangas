@@ -2,11 +2,16 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { conductClientMetadata } from "./conduct-contract";
 import { supabase } from "./supabaseClient";
 
 type NotificationContext = {
   accessId?: string;
   accessStatus?: string;
+  attendanceId?: string;
+  attendanceOutcome?: string;
+  attendanceResponseState?: string;
+  attendanceRevision?: number;
   groupRevision?: number;
   invitationId?: string;
   invitationRevision?: number;
@@ -231,6 +236,28 @@ export function NotificationCenter() {
     setBusyId(null);
   }
 
+  async function respondAttendance(notification: UserNotification, nextResponse: "agree" | "dispute") {
+    const context = notification.context;
+    if (!supabase || !context.attendanceId || !context.attendanceRevision) return;
+    const responseNote = nextResponse === "dispute"
+      ? window.prompt("Explica brevemente qué debe revisar el equipo.", "")?.trim()
+      : "";
+    if (nextResponse === "dispute" && !responseNote) return;
+    setBusyId(notification.id);
+    setMessage("");
+    const result = await supabase.rpc("respond_pachanga_post_match_attendance_v1", {
+      client_metadata: conductClientMetadata("notification-center"),
+      expected_revision: context.attendanceRevision,
+      next_response: nextResponse,
+      operation_id: crypto.randomUUID(),
+      response_note: responseNote ?? "",
+      target_attendance_id: context.attendanceId,
+    });
+    setMessage(result.error ? result.error.message : "Respuesta de asistencia confirmada.");
+    await loadNotifications();
+    setBusyId(null);
+  }
+
   if (!supabase || !authenticated) return null;
 
   return (
@@ -268,6 +295,7 @@ export function NotificationCenter() {
           <div className="notification-list">
             {filteredNotifications.map((notification) => {
               const invitationPending = notification.context.invitationStatus === "pending";
+              const attendancePending = notification.context.attendanceResponseState === "pending";
               const requestPending = notification.context.requestStatus === "pending"
                 && Boolean(notification.context.requestGroupId);
               const reviewPending = notification.context.reviewStatus === "pending";
@@ -282,6 +310,12 @@ export function NotificationCenter() {
                     <p>{notification.body}</p>
                   </div>
                   <div className="notification-actions">
+                    {attendancePending ? (
+                      <>
+                        <button type="button" disabled={busyId === notification.id} onClick={() => void respondAttendance(notification, "agree")}>De acuerdo</button>
+                        <button className="secondary" type="button" disabled={busyId === notification.id} onClick={() => void respondAttendance(notification, "dispute")}>Revisar</button>
+                      </>
+                    ) : null}
                     {invitationPending ? (
                       <>
                         <button type="button" disabled={busyId === notification.id} onClick={() => void respondInvitation(notification, "accepted")}>Aceptar</button>

@@ -8025,6 +8025,27 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
       : playerRatingWindow.canRate
       ? "Valoraciones abiertas"
       : `Valoraciones cerradas: faltan ${playerRatingWindow.waitMatches} partido${playerRatingWindow.waitMatches === 1 ? "" : "s"}`;
+    const reportRevision = remotePayloadRevisionRef.current;
+    const canReportConduct = Boolean(
+      matchFinalized
+      && hasRealTeam
+      && isRegisteredUser
+      && remoteGroupId
+      && player.globalPlayerProfileId
+      && player.ownerUserId !== currentUserId
+      && reportRevision !== null
+      && reportRevision > 0,
+    );
+    const conductReportUrl = canReportConduct
+      ? `/reportar?${new URLSearchParams({
+          contextId: activeMatch.id,
+          contextKind: "match",
+          reporterGroupId: remoteGroupId!,
+          revision: String(reportRevision),
+          targetGroupId: remoteGroupId!,
+          targetProfileId: player.globalPlayerProfileId!,
+        }).toString()}`
+      : "";
     const toggleActionMenu = (event: ReactMouseEvent<HTMLButtonElement>) => {
       const triggerRect = event.currentTarget.getBoundingClientRect();
       setPlayerActionMenu((current) => {
@@ -8034,7 +8055,8 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
           (player.inactive ? 0 : 1) +
           3 +
           (status === "voy" && !isWaiting ? 1 : 0) +
-          (status === "voy" && team && canUseAdminControls ? 1 : 0);
+          (status === "voy" && team && canUseAdminControls ? 1 : 0) +
+          (canReportConduct ? 1 : 0);
         const panelWidth = 170;
         const viewportWidth = Math.min(
           window.innerWidth,
@@ -8247,6 +8269,18 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
                     type="button"
                   >
                     {team === "A" ? "Cambiar a equipo 2" : "Cambiar a equipo 1"}
+                  </button>
+                ) : null}
+                {canReportConduct ? (
+                  <button
+                    onClick={() => {
+                      setPlayerActionMenu(null);
+                      window.location.assign(conductReportUrl);
+                    }}
+                    role="menuitem"
+                    type="button"
+                  >
+                    Reportar conducta
                   </button>
                 ) : null}
               </div>
@@ -9758,6 +9792,10 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
                       <strong>Partido finalizado</strong>
                     </div>
                     <div className="match-admin-create-grid historical-match-admin-actions">
+                      <button type="button" onClick={() => window.location.assign(`/admin/conduct?groupId=${encodeURIComponent(remoteGroupId ?? "")}&matchId=${encodeURIComponent(activeMatch.id)}`)}>
+                        <span>Cerrar asistencia</span>
+                        <small>Jugó, baja o no-show</small>
+                      </button>
                       <button className="match-admin-danger-button" type="button" onClick={() => deleteMatch(activeMatch.id)} disabled={!canUseAdminControls}>
                         <span>Borrar partido</span>
                         <small>Eliminar histórico</small>
@@ -10505,11 +10543,18 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
               </details>
             ) : null}
             {playerProfileMode === "edit" && selectedPlayerIsOwn ? (
-              <a className="profile-notifications-link" href="/perfil/avisos">
-                <span>Avisos y notificaciones</span>
-                <small>Preferencias por categoría y canal</small>
-                <b aria-hidden="true">›</b>
-              </a>
+              <>
+                <a className="profile-notifications-link" href="/perfil/avisos">
+                  <span>Avisos y notificaciones</span>
+                  <small>Preferencias por categoría y canal</small>
+                  <b aria-hidden="true">›</b>
+                </a>
+                <a className="profile-notifications-link" href="/perfil/conducta">
+                  <span>Avisos y conducta</span>
+                  <small>Asistencia, medidas y apelaciones</small>
+                  <b aria-hidden="true">›</b>
+                </a>
+              </>
             ) : null}
             {!ownPlayer && selectedPlayer && !selectedPlayer.ownerUserId && hasRealTeam && isRegisteredUser ? (
               <div className="profile-claim">
@@ -10983,6 +11028,9 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
                 </button>
                 <a href="/perfil/avisos">
                   <span>Avisos y notificaciones</span><small>Elige categorías y canales</small><b aria-hidden="true">›</b>
+                </a>
+                <a href="/perfil/conducta">
+                  <span>Avisos y conducta</span><small>Asistencia, medidas y apelaciones</small><b aria-hidden="true">›</b>
                 </a>
                 <button type="button" onClick={() => runMobileAccountAction(openTeamGallery)} disabled={!hasRealTeam}>
                   <span>Equipo</span><small>Ranking del grupo con filtros</small><b aria-hidden="true">›</b>

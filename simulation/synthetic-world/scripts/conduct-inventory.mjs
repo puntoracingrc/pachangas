@@ -8,14 +8,18 @@ const sources = {
   notificationTests: await readFile(resolve(root, "tests/notification-foundation-db.sql"), "utf8"),
   guestTests: await readFile(resolve(root, "tests/match-guest-access-db.sql"), "utf8"),
   notificationUi: await readFile(resolve(root, "app/notification-center.tsx"), "utf8"),
+  conduct: await readFile(resolve(root, "supabase/migrations/20260809162859_conduct_reports_no_show_v1.sql"), "utf8"),
+  conductAdminUi: await readFile(resolve(root, "app/admin/conduct/conduct-admin-client.tsx"), "utf8"),
+  conductPlayerUi: await readFile(resolve(root, "app/conduct-player-center.tsx"), "utf8"),
+  conductReportUi: await readFile(resolve(root, "app/conduct-report-form.tsx"), "utf8"),
 };
 
 const has = (source, expression) => expression.test(source);
 const rows = [
   {
     capability: "General player reports",
-    classification: "not_implemented",
-    evidence: "No canonical table/RPC/UI located; guest withdrawal review is deliberately narrower.",
+    classification: has(sources.conduct, /function public\.submit_pachanga_conduct_report_v1/) && has(sources.conductReportUi, /submit_pachanga_conduct_report_v1/) ? "implemented" : "partially_implemented",
+    evidence: "Context-bound, idempotent reports create clustered moderation cases without automatic sanctions.",
   },
   {
     capability: "Guest voluntary withdrawal",
@@ -29,8 +33,8 @@ const rows = [
   },
   {
     capability: "Canonical no-show distinction",
-    classification: "not_implemented",
-    evidence: "Product records status changes and guest withdrawal, but no attended/no-show fact distinct from cancellation.",
+    classification: has(sources.conduct, /function public\.close_pachanga_match_attendance_v1/) && has(sources.conductAdminUi, /close_pachanga_match_attendance_v1/) ? "implemented" : "partially_implemented",
+    evidence: "A complete post-match roster closure distinguishes played, excused absence, late cancellation and unexcused no-show.",
   },
   {
     capability: "Attendance joined notification",
@@ -59,18 +63,18 @@ const rows = [
   },
   {
     capability: "Warnings and sanctions engine",
-    classification: "partially_implemented",
-    evidence: "Delivery policy reserves security/warning/sanction kinds, but no canonical decision/history/restriction engine was located.",
+    classification: has(sources.conduct, /pachanga_conduct_warnings/) && has(sources.conduct, /pachanga_social_restrictions/) && has(sources.conduct, /function public\.appeal_pachanga_conduct_action_v1/) ? "implemented" : "partially_implemented",
+    evidence: "Warnings, explicit moderator restrictions, expiry and appeals are canonical; social restrictions remain independently flag-gated.",
   },
   {
     capability: "Independent-source weighting and report abuse defense",
-    classification: "not_implemented",
-    evidence: "No general reports exist, so source-team independence, coordinated false-report detection and appeals are not product capabilities.",
+    classification: has(sources.conduct, /pachanga_conduct_report_source_clusters/) && has(sources.conduct, /independent_source_count/) ? "implemented" : "partially_implemented",
+    evidence: "Reports share source clusters by team/context while different teams increase independent-source count.",
   },
   {
     capability: "Conduct effect isolation from Rating V2",
     classification: has(sources.guest, /'affectsSportRating', false/) && has(sources.guestTests, /must not change any Rating V2/) ? "implemented" : "partially_implemented",
-    evidence: "The one existing withdrawal review explicitly cannot alter sport rating.",
+    evidence: "Guest withdrawal and Conduct V1 responses explicitly return affectsSportRating=false; no conduct path writes sport tables.",
   },
 ];
 
@@ -87,5 +91,5 @@ const outputDirectory = resolve(root, "simulation/synthetic-world/generated");
 await mkdir(outputDirectory, { recursive: true });
 await writeFile(resolve(outputDirectory, "conduct-inventory.json"), `${JSON.stringify(inventory, null, 2)}\n`, "utf8");
 const markdownRows = rows.map((row) => `| ${row.capability} | ${row.classification} | ${row.evidence} |`).join("\n");
-await writeFile(resolve(outputDirectory, "conduct-inventory.md"), `# Conduct, reports and no-show inventory\n\nGenerated from local product SQL, UI and DB tests. Absence of a general report route is reported as absence, not simulated as product.\n\n| Capability | Classification | Evidence |\n| --- | --- | --- |\n${markdownRows}\n\n## Decision boundary\n\n- A normal cancellation is not misconduct.\n- Guest withdrawal review is not a no-show detector and creates no automatic sanction.\n- General player reporting, independent-source weighting, restrictions and appeals remain product decisions.\n- Notification transport can carry mandatory future warnings/sanctions, but that does not mean a sanction engine exists.\n`, "utf8");
+await writeFile(resolve(outputDirectory, "conduct-inventory.md"), `# Conduct, reports and no-show inventory\n\nGenerated from local product SQL, UI and DB tests. Feature availability is classified from canonical routes, not inferred from Synthetic World labels.\n\n| Capability | Classification | Evidence |\n| --- | --- | --- |\n${markdownRows}\n\n## Decision boundary\n\n- A normal cancellation is not misconduct.\n- Guest withdrawal review remains narrower than post-match attendance closure.\n- Reports create reviewable cases; no report imposes a sanction automatically.\n- Warnings and restrictions require an internal moderator, and social restrictions have an independent feature flag.\n- Conduct and attendance never alter Rating V2, Season Score, TOPS, achievements or reward boxes.\n`, "utf8");
 process.stdout.write(`${JSON.stringify(inventory.summary)}\n`);
