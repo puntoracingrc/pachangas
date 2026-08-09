@@ -429,7 +429,7 @@ El 0% era **métrica y fórmula, en distinta medida**. La métrica anterior comp
 ## Metodología no circular
 
 - NDCG usa relevancia ordinal lineal hasta 2K; evita que un #11 cuente casi como cero sin fingir que es Top10.
-- Capacidad usa `latent_skill`; mérito de temporada combina 45% capacidad, 35% rendimiento individual sintético realizado y 20% oposición, distinto del candidato.
+- Capacidad usa \`latent_skill\`; mérito de temporada combina 45% capacidad, 35% rendimiento individual sintético realizado y 20% oposición, distinto del candidato.
 - La verdad futura usa solo semanas 35–52. El simulador genera un índice individual oculto con ruido determinista separado del calendario; ni el motor ni la selección de ventana pueden leerlo.
 - Ese índice existe solo para validar capacidad predictiva del laboratorio. No es Rating V2, no usa goles y no propone un campo de producto.
 
@@ -548,11 +548,11 @@ Frenos medidos: contaminación Top10 ${round(protectedContamination5 * 100)}% fr
 ## Validación técnica
 
 - 11 tests de élite y 25 tests focalizados Season Score: PASS.
-- `npm test`: build de producción y 136 tests: PASS.
-- `npm run typecheck`: PASS.
+- \`npm test\`: build de producción y 136 tests: PASS.
+- \`npm run typecheck\`: PASS.
 - ESLint focalizado del laboratorio: PASS.
 - ESLint global: 23 errores y 20 avisos preexistentes, todos fuera del diff del laboratorio; no se modificaron por esta entrega.
-- `git diff --check`: PASS.
+- \`git diff --check\`: PASS.
 
 ## Entrega solicitada (1–37)
 
