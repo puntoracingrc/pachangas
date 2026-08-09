@@ -45,6 +45,7 @@ const v2WriteRpcNames = new Set([
   "patch_pachanga_player_profile_authoritative_v2",
   "leave_pachanga_guest_match_v1",
   "mark_pachanga_notification_read_v1",
+  "merge_pachanga_conduct_cases_v1_1",
   "moderate_pachanga_conduct_case_v1",
   "open_pachanga_reward_v1",
   "open_pachanga_reward_box_v2",
@@ -70,6 +71,7 @@ const v2WriteRpcNames = new Set([
   "sync_pachanga_market_profile_authoritative_v2",
   "sync_pachanga_open_match_authoritative_v2",
   "submit_pachanga_conduct_report_v1",
+  "split_pachanga_conduct_case_v1_1",
   "upsert_pachanga_challengeable_team_profile_authoritative",
   "upsert_pachanga_own_player_profile_authoritative_v2",
 ]);

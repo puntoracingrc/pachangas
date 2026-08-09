@@ -368,6 +368,8 @@ const manualFlows = [
       "Desde el menú de un jugador en un partido histórico puedes usar Reportar conducta. El reporte exige una relación deportiva real, tiene categorías cerradas y admite un contexto opcional de hasta 500 caracteres.",
       "La persona reportada no conoce la identidad de quien informa. Los admins del grupo tampoco acceden a ella; solo el rol interno de seguridad puede revisar la evidencia completa.",
       "Varios reportes del mismo equipo e incidente se agrupan como una fuente correlacionada. Una fuente aislada nunca impone una sanción automática.",
+      "El triage interno separa Solo registro, En observación, Revisión, Prioritario y Urgente. Es una recomendación explicable para ordenar trabajo humano, nunca una declaración de culpabilidad ni una puntuación de conducta.",
+      "Las amenazas o violencia pueden llegar a revisión urgente con una sola fuente, pero tampoco generan un bloqueo automático. Un moderador revisa cada decisión negativa de forma individual.",
       "Los avisos formales y las limitaciones sociales requieren una decisión humana y pueden apelarse. Las limitaciones solo afectan mercado, retos o accesos públicos; no afectan grupos privados, Rating V2, GRL, facetas, ranking, logros ni premios.",
       "En Perfil > Avisos y conducta puedes responder cierres de asistencia, consultar avisos, limitaciones y apelaciones, y revisar tus propios reportes enviados.",
     ],

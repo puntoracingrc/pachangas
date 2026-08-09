@@ -1,0 +1,2977 @@
+{
+  "generatedAt": "2026-08-09T19:12:07.369Z",
+  "policy": {
+    "categories": {
+      "abusive_behavior": {
+        "activeWindowDays": 180,
+        "isolatedQueue": "record_only"
+      },
+      "deliberate_cheating": {
+        "activeWindowDays": 180,
+        "isolatedQueue": "record_only"
+      },
+      "discriminatory_behavior": {
+        "activeWindowDays": 365,
+        "isolatedQueue": "review"
+      },
+      "harassment": {
+        "activeWindowDays": 365,
+        "isolatedQueue": "review"
+      },
+      "other": {
+        "activeWindowDays": 90,
+        "isolatedQueue": "record_only"
+      },
+      "repeated_disruption": {
+        "activeWindowDays": 180,
+        "isolatedQueue": "record_only"
+      },
+      "threats_or_violence": {
+        "activeWindowDays": 365,
+        "isolatedQueue": "urgent_review"
+      }
+    },
+    "policyVersion": "conduct-triage-v1.1-experimental",
+    "slaHours": {
+      "priority_review": 24,
+      "review": 72,
+      "urgent_review": 4
+    }
+  },
+  "shadowMode": {
+    "activeTriageEnabled": false,
+    "humanV1QueuePreserved": true,
+    "recommendedTriageCalculated": true,
+    "sanctionsAppliedAutomatically": false
+  },
+  "soak": {
+    "audit": {
+      "backlog": {
+        "casesPerDay5": {
+          "backlog": 0,
+          "casesPerDay": 5,
+          "meanWaitDays": 0,
+          "urgentWaiting": 0
+        },
+        "casesPerDay10": {
+          "backlog": 0,
+          "casesPerDay": 10,
+          "meanWaitDays": 0,
+          "urgentWaiting": 0
+        }
+      },
+      "beforeHumanReviewCases": 88,
+      "cases": 88,
+      "falseCampaignEscalation": 0,
+      "falseEscalationRate": 0.0122,
+      "humanReviewCases": 7,
+      "humanReviewRate": 0.0795,
+      "isolation": {
+        "achievementsChanged": false,
+        "ratingV2Changed": false,
+        "rewardsChanged": false,
+        "seasonScoreChanged": false,
+        "topsChanged": false
+      },
+      "missedSeriousCases": 0,
+      "noShowThresholds": {
+        "confirmedNoShowEvents": 228,
+        "distributionAssessment": "stress_distribution_not_product_calibration",
+        "generatedCandidateEvents": 290,
+        "generatedEventsPerRegisteredPlayer": 0.4531,
+        "policyChanged": false,
+        "variants": [
+          {
+            "count": 2,
+            "days": 60,
+            "candidates": 33
+          },
+          {
+            "count": 2,
+            "days": 90,
+            "candidates": 35
+          },
+          {
+            "count": 3,
+            "days": 120,
+            "candidates": 20
+          },
+          {
+            "count": 3,
+            "days": 180,
+            "candidates": 24
+          },
+          {
+            "count": 4,
+            "days": 180,
+            "candidates": 17
+          }
+        ]
+      },
+      "policyVersion": "conduct-triage-v1.1-experimental",
+      "projectedHumanCases": {
+        "players1000": 11,
+        "players5000": 48,
+        "players10000": 93,
+        "players50000": 421,
+        "projectionIsOrientativeAndNonLinear": true
+      },
+      "queues": {
+        "priority_review": 4,
+        "record_only": 59,
+        "review": 3,
+        "urgent_review": 0,
+        "watch": 22
+      },
+      "seriousCasePrecision": 0.8571,
+      "seriousCaseRecall": 1,
+      "singleCleanReportEscalation": 0,
+      "triageRows": [
+        {
+          "groundTruthSerious": true,
+          "kind": "conflict_prone_incident",
+          "reportedAt": "2026-09-05T18:45:00.000Z",
+          "scenarioId": "4c00236c-9a91-4044-b4da-048b25cb7052",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 365,
+          "activeWindowEndsAt": "2027-09-05T18:45:00.000Z",
+          "humanReviewRequired": true,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "review",
+          "reasonCodes": [
+            "CATEGORY_HARASSMENT"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "coordinated_false_report",
+          "reportedAt": "2026-09-05T18:45:00.000Z",
+          "scenarioId": "7b1115d3-6de9-4951-8455-12f9975eadb9",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 90,
+          "activeWindowEndsAt": "2026-12-04T18:45:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "CORRELATED_SOURCE_CLUSTER"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "single_clean_history_report",
+          "reportedAt": "2026-09-05T18:45:00.000Z",
+          "scenarioId": "97ab2abe-281a-466f-95fa-8f8542794d48",
+          "activePriorSignalCount": 1,
+          "activeWindowDays": 90,
+          "activeWindowEndsAt": "2026-12-04T18:45:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "watch",
+          "reasonCodes": [
+            "RECENT_COMPATIBLE_SIGNALS_1"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "same_team_report_burst",
+          "reportedAt": "2026-09-05T18:45:00.000Z",
+          "scenarioId": "e1360abb-96fa-4cac-800e-1ddca01be135",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 180,
+          "activeWindowEndsAt": "2027-03-04T18:45:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "CORRELATED_SOURCE_CLUSTER"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "occasional_unsporting",
+          "reportedAt": "2026-09-06T19:15:00.000Z",
+          "scenarioId": "4c367677-c6c7-4de0-8d9b-ea5d0d73b406",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 180,
+          "activeWindowEndsAt": "2027-03-05T19:15:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "ISOLATED_NON_SERIOUS_SIGNAL"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "mutual_conflict",
+          "reportedAt": "2026-09-12T19:00:00.000Z",
+          "scenarioId": "73945ce2-f4f1-4f6b-a884-0f763308f606",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 180,
+          "activeWindowEndsAt": "2027-03-11T19:00:00.000Z",
+          "humanReviewRequired": true,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "review",
+          "reasonCodes": [
+            "MUTUAL_RETALIATION",
+            "INDEPENDENT_SOURCES_2"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": true,
+          "kind": "repeat_offender",
+          "reportedAt": "2026-09-13T21:45:00.000Z",
+          "scenarioId": "9325b797-5743-4c82-a10e-474ebe62bb23",
+          "activePriorSignalCount": 2,
+          "activeWindowDays": 180,
+          "activeWindowEndsAt": "2027-03-12T21:45:00.000Z",
+          "humanReviewRequired": true,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "priority_review",
+          "reasonCodes": [
+            "DISTINCT_CONTEXTS_2_PLUS",
+            "RECENT_COMPATIBLE_SIGNALS_2_PLUS"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "mutual_conflict",
+          "reportedAt": "2026-09-15T00:00:00.000Z",
+          "scenarioId": "9012ec31-43aa-413e-abb9-2c86cebe22f9",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 180,
+          "activeWindowEndsAt": "2027-03-14T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "CORRELATED_SOURCE_CLUSTER",
+            "MUTUAL_RETALIATION"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "mutual_conflict",
+          "reportedAt": "2026-09-15T00:00:00.000Z",
+          "scenarioId": "e61a892d-76c3-47c8-9a24-b0542a704c7b",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 180,
+          "activeWindowEndsAt": "2027-03-14T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "CORRELATED_SOURCE_CLUSTER",
+            "MUTUAL_RETALIATION"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "occasional_unsporting",
+          "reportedAt": "2026-09-20T00:00:00.000Z",
+          "scenarioId": "b4d31351-3a73-445f-af3f-a2e87a170e75",
+          "activePriorSignalCount": 1,
+          "activeWindowDays": 180,
+          "activeWindowEndsAt": "2027-03-19T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "watch",
+          "reasonCodes": [
+            "RECENT_COMPATIBLE_SIGNALS_1"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": true,
+          "kind": "independent_team_reports",
+          "reportedAt": "2026-09-22T19:45:00.000Z",
+          "scenarioId": "d0aa9c52-761c-414c-9c62-6b6468d0418f",
+          "activePriorSignalCount": 1,
+          "activeWindowDays": 180,
+          "activeWindowEndsAt": "2027-03-21T19:45:00.000Z",
+          "humanReviewRequired": true,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "review",
+          "reasonCodes": [
+            "INDEPENDENT_SOURCES_2",
+            "DISTINCT_CONTEXTS_2_PLUS",
+            "RECENT_COMPATIBLE_SIGNALS_1"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "single_clean_history_report",
+          "reportedAt": "2026-09-23T00:00:00.000Z",
+          "scenarioId": "7a1f6bf4-38cb-4ffc-ba1c-70727703d104",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 90,
+          "activeWindowEndsAt": "2026-12-22T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "ISOLATED_NON_SERIOUS_SIGNAL"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "single_clean_history_report",
+          "reportedAt": "2026-09-24T00:00:00.000Z",
+          "scenarioId": "beec26ee-1b81-4eed-94aa-393d6b7a45ab",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 90,
+          "activeWindowEndsAt": "2026-12-23T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "ISOLATED_NON_SERIOUS_SIGNAL"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "single_clean_history_report",
+          "reportedAt": "2026-09-25T00:00:00.000Z",
+          "scenarioId": "b8edffe5-0db1-429f-9923-86cf203b290b",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 90,
+          "activeWindowEndsAt": "2026-12-24T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "ISOLATED_NON_SERIOUS_SIGNAL"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "mutual_conflict",
+          "reportedAt": "2026-09-25T00:00:00.000Z",
+          "scenarioId": "cabe5472-2fb2-4757-8a79-5d0042b8b2be",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 180,
+          "activeWindowEndsAt": "2027-03-24T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "CORRELATED_SOURCE_CLUSTER",
+            "MUTUAL_RETALIATION"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "single_clean_history_report",
+          "reportedAt": "2026-10-06T00:00:00.000Z",
+          "scenarioId": "300d74df-a0f8-4eb1-b901-0f39ac43f1cd",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 90,
+          "activeWindowEndsAt": "2027-01-04T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "ISOLATED_NON_SERIOUS_SIGNAL"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "mutual_conflict",
+          "reportedAt": "2026-10-07T00:00:00.000Z",
+          "scenarioId": "a5d06824-9151-4634-be46-6940b309b006",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 180,
+          "activeWindowEndsAt": "2027-04-05T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "CORRELATED_SOURCE_CLUSTER",
+            "MUTUAL_RETALIATION"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "occasional_unsporting",
+          "reportedAt": "2026-10-16T00:00:00.000Z",
+          "scenarioId": "0258cb66-01c8-44a4-a7d1-ce4fc696fcac",
+          "activePriorSignalCount": 1,
+          "activeWindowDays": 180,
+          "activeWindowEndsAt": "2027-04-14T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "watch",
+          "reasonCodes": [
+            "RECENT_COMPATIBLE_SIGNALS_1"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "occasional_unsporting",
+          "reportedAt": "2026-10-20T00:00:00.000Z",
+          "scenarioId": "d6182cad-44f8-424d-b8c9-d3805a26caa0",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 180,
+          "activeWindowEndsAt": "2027-04-18T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "ISOLATED_NON_SERIOUS_SIGNAL"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "single_clean_history_report",
+          "reportedAt": "2026-10-25T00:00:00.000Z",
+          "scenarioId": "f50cf31c-bd5d-499f-aa8b-364fae7696e9",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 90,
+          "activeWindowEndsAt": "2027-01-23T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "ISOLATED_NON_SERIOUS_SIGNAL"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": true,
+          "kind": "repeat_offender",
+          "reportedAt": "2026-10-26T00:00:00.000Z",
+          "scenarioId": "a1dda2e2-d044-498c-9829-d592199f4fb3",
+          "activePriorSignalCount": 2,
+          "activeWindowDays": 180,
+          "activeWindowEndsAt": "2027-04-24T00:00:00.000Z",
+          "humanReviewRequired": true,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "priority_review",
+          "reasonCodes": [
+            "DISTINCT_CONTEXTS_2_PLUS",
+            "RECENT_COMPATIBLE_SIGNALS_2_PLUS"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "single_clean_history_report",
+          "reportedAt": "2026-10-28T00:00:00.000Z",
+          "scenarioId": "18025da5-4115-466c-a7de-ace61cf08030",
+          "activePriorSignalCount": 1,
+          "activeWindowDays": 90,
+          "activeWindowEndsAt": "2027-01-26T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "watch",
+          "reasonCodes": [
+            "RECENT_COMPATIBLE_SIGNALS_1"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "mutual_conflict",
+          "reportedAt": "2026-11-02T00:00:00.000Z",
+          "scenarioId": "220c89a9-18ec-46a6-8c1d-e07d791d8099",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 180,
+          "activeWindowEndsAt": "2027-05-01T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "CORRELATED_SOURCE_CLUSTER",
+            "MUTUAL_RETALIATION"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "single_clean_history_report",
+          "reportedAt": "2026-11-02T00:00:00.000Z",
+          "scenarioId": "31876975-ba67-4025-be6f-16a42462630a",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 90,
+          "activeWindowEndsAt": "2027-01-31T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "ISOLATED_NON_SERIOUS_SIGNAL"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "coordinated_false_report",
+          "reportedAt": "2026-11-06T00:00:00.000Z",
+          "scenarioId": "a6d9f699-e65b-4295-ad37-bd35cf8353f6",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 90,
+          "activeWindowEndsAt": "2027-02-04T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "CORRELATED_SOURCE_CLUSTER"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "mutual_conflict",
+          "reportedAt": "2026-11-08T00:00:00.000Z",
+          "scenarioId": "6c8c6edf-082c-4632-b2b4-24b874cb1b79",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 180,
+          "activeWindowEndsAt": "2027-05-07T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "CORRELATED_SOURCE_CLUSTER",
+            "MUTUAL_RETALIATION"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "coordinated_false_report",
+          "reportedAt": "2026-11-08T00:00:00.000Z",
+          "scenarioId": "e5a16a58-fb79-4b7b-9f50-bc44fa19145a",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 90,
+          "activeWindowEndsAt": "2027-02-06T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "CORRELATED_SOURCE_CLUSTER"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "mutual_conflict",
+          "reportedAt": "2026-11-15T00:00:00.000Z",
+          "scenarioId": "0fca555d-33b7-4428-b745-32bc19c98afa",
+          "activePriorSignalCount": 2,
+          "activeWindowDays": 180,
+          "activeWindowEndsAt": "2027-05-14T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "watch",
+          "reasonCodes": [
+            "CORRELATED_SOURCE_CLUSTER",
+            "MUTUAL_RETALIATION",
+            "RECENT_COMPATIBLE_SIGNALS_2_PLUS"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "occasional_unsporting",
+          "reportedAt": "2026-11-28T00:00:00.000Z",
+          "scenarioId": "0661f0b6-8c2a-4988-a5bb-82699f3e11db",
+          "activePriorSignalCount": 2,
+          "activeWindowDays": 180,
+          "activeWindowEndsAt": "2027-05-27T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "watch",
+          "reasonCodes": [
+            "RECENT_COMPATIBLE_SIGNALS_2_PLUS"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "occasional_unsporting",
+          "reportedAt": "2026-12-05T00:00:00.000Z",
+          "scenarioId": "20deb466-caab-4c91-804e-b327190d9de4",
+          "activePriorSignalCount": 3,
+          "activeWindowDays": 180,
+          "activeWindowEndsAt": "2027-06-03T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "watch",
+          "reasonCodes": [
+            "RECENT_COMPATIBLE_SIGNALS_2_PLUS"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "single_clean_history_report",
+          "reportedAt": "2026-12-06T00:00:00.000Z",
+          "scenarioId": "aacf664a-1e05-4d27-aaf5-5c7b8977dc76",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 90,
+          "activeWindowEndsAt": "2027-03-06T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "ISOLATED_NON_SERIOUS_SIGNAL"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "coordinated_false_report",
+          "reportedAt": "2026-12-22T00:00:00.000Z",
+          "scenarioId": "be6e6791-d222-438f-8a34-d18338dfd39e",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 90,
+          "activeWindowEndsAt": "2027-03-22T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "CORRELATED_SOURCE_CLUSTER"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "occasional_unsporting",
+          "reportedAt": "2026-12-28T00:00:00.000Z",
+          "scenarioId": "f469f275-84b4-4ff4-88d9-2b866623096e",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 180,
+          "activeWindowEndsAt": "2027-06-26T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "ISOLATED_NON_SERIOUS_SIGNAL"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "occasional_unsporting",
+          "reportedAt": "2027-01-02T00:00:00.000Z",
+          "scenarioId": "d6fc549e-5b4f-4346-acdd-d59d85980647",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 180,
+          "activeWindowEndsAt": "2027-07-01T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "ISOLATED_NON_SERIOUS_SIGNAL"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "single_clean_history_report",
+          "reportedAt": "2027-01-03T00:00:00.000Z",
+          "scenarioId": "3d673491-0fd3-4688-ac53-fde73b702cf4",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 90,
+          "activeWindowEndsAt": "2027-04-03T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "ISOLATED_NON_SERIOUS_SIGNAL"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "mutual_conflict",
+          "reportedAt": "2027-01-06T00:00:00.000Z",
+          "scenarioId": "cdc2e675-1636-4601-a546-b3f7ead3f004",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 180,
+          "activeWindowEndsAt": "2027-07-05T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "CORRELATED_SOURCE_CLUSTER",
+            "MUTUAL_RETALIATION"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "coordinated_false_report",
+          "reportedAt": "2027-01-08T00:00:00.000Z",
+          "scenarioId": "6e13b697-25f7-46b1-b93f-5fbfebdd2ac7",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 90,
+          "activeWindowEndsAt": "2027-04-08T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "CORRELATED_SOURCE_CLUSTER"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "occasional_unsporting",
+          "reportedAt": "2027-01-11T00:00:00.000Z",
+          "scenarioId": "70d68e4d-748f-4196-9a03-9e4a39ba5be3",
+          "activePriorSignalCount": 3,
+          "activeWindowDays": 180,
+          "activeWindowEndsAt": "2027-07-10T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "watch",
+          "reasonCodes": [
+            "RECENT_COMPATIBLE_SIGNALS_2_PLUS"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "single_clean_history_report",
+          "reportedAt": "2027-01-12T00:00:00.000Z",
+          "scenarioId": "e2513fe3-aed5-434e-aad3-6ee6f9fd5d2a",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 90,
+          "activeWindowEndsAt": "2027-04-12T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "ISOLATED_NON_SERIOUS_SIGNAL"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "single_clean_history_report",
+          "reportedAt": "2027-01-12T00:00:00.000Z",
+          "scenarioId": "fa0d440f-0500-4e29-a3a9-25850059e1f2",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 90,
+          "activeWindowEndsAt": "2027-04-12T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "ISOLATED_NON_SERIOUS_SIGNAL"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "mutual_conflict",
+          "reportedAt": "2027-01-24T00:00:00.000Z",
+          "scenarioId": "8f5b7b02-e53f-4d88-8458-20ee043c3846",
+          "activePriorSignalCount": 4,
+          "activeWindowDays": 180,
+          "activeWindowEndsAt": "2027-07-23T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "watch",
+          "reasonCodes": [
+            "CORRELATED_SOURCE_CLUSTER",
+            "MUTUAL_RETALIATION",
+            "RECENT_COMPATIBLE_SIGNALS_2_PLUS"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "occasional_unsporting",
+          "reportedAt": "2027-01-30T00:00:00.000Z",
+          "scenarioId": "85efa5b8-f260-4573-9344-5f93296060f8",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 180,
+          "activeWindowEndsAt": "2027-07-29T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "ISOLATED_NON_SERIOUS_SIGNAL"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "coordinated_false_report",
+          "reportedAt": "2027-02-04T00:00:00.000Z",
+          "scenarioId": "2b82e42b-9c01-4d65-868e-e0ef440fc75b",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 90,
+          "activeWindowEndsAt": "2027-05-05T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "CORRELATED_SOURCE_CLUSTER"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "single_clean_history_report",
+          "reportedAt": "2027-02-06T00:00:00.000Z",
+          "scenarioId": "e95a8b79-22b3-4459-9890-00ca15930d0b",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 90,
+          "activeWindowEndsAt": "2027-05-07T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "ISOLATED_NON_SERIOUS_SIGNAL"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "single_clean_history_report",
+          "reportedAt": "2027-02-10T00:00:00.000Z",
+          "scenarioId": "c6a7eb6e-18b7-4879-b2bc-017761c99f13",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 90,
+          "activeWindowEndsAt": "2027-05-11T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "ISOLATED_NON_SERIOUS_SIGNAL"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "occasional_unsporting",
+          "reportedAt": "2027-02-12T00:00:00.000Z",
+          "scenarioId": "c5a8a8ef-d791-4376-8db3-fd539bc7b91b",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 180,
+          "activeWindowEndsAt": "2027-08-11T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "ISOLATED_NON_SERIOUS_SIGNAL"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "mutual_conflict",
+          "reportedAt": "2027-02-13T00:00:00.000Z",
+          "scenarioId": "6a11c840-bfa1-45a0-9e4f-8390e7e96885",
+          "activePriorSignalCount": 1,
+          "activeWindowDays": 180,
+          "activeWindowEndsAt": "2027-08-12T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "watch",
+          "reasonCodes": [
+            "CORRELATED_SOURCE_CLUSTER",
+            "MUTUAL_RETALIATION",
+            "RECENT_COMPATIBLE_SIGNALS_1"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "mutual_conflict",
+          "reportedAt": "2027-02-13T00:00:00.000Z",
+          "scenarioId": "d99ef3f3-90b8-42e6-b3c9-e7e42aa4a246",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 180,
+          "activeWindowEndsAt": "2027-08-12T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "CORRELATED_SOURCE_CLUSTER",
+            "MUTUAL_RETALIATION"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "mutual_conflict",
+          "reportedAt": "2027-02-17T00:00:00.000Z",
+          "scenarioId": "01dbc54d-7abe-4e94-a5c8-f98647c9b932",
+          "activePriorSignalCount": 4,
+          "activeWindowDays": 180,
+          "activeWindowEndsAt": "2027-08-16T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "watch",
+          "reasonCodes": [
+            "CORRELATED_SOURCE_CLUSTER",
+            "MUTUAL_RETALIATION",
+            "RECENT_COMPATIBLE_SIGNALS_2_PLUS"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "occasional_unsporting",
+          "reportedAt": "2027-03-17T00:00:00.000Z",
+          "scenarioId": "d401b71a-6837-4c98-b7eb-f388d625727c",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 180,
+          "activeWindowEndsAt": "2027-09-13T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "ISOLATED_NON_SERIOUS_SIGNAL"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "single_clean_history_report",
+          "reportedAt": "2027-03-20T00:00:00.000Z",
+          "scenarioId": "e114d95d-d867-4296-91df-f322997faa38",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 90,
+          "activeWindowEndsAt": "2027-06-18T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "ISOLATED_NON_SERIOUS_SIGNAL"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "occasional_unsporting",
+          "reportedAt": "2027-03-23T00:00:00.000Z",
+          "scenarioId": "204402dc-e3ba-4b15-9798-706b62f9b9c0",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 180,
+          "activeWindowEndsAt": "2027-09-19T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "ISOLATED_NON_SERIOUS_SIGNAL"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "occasional_unsporting",
+          "reportedAt": "2027-03-24T00:00:00.000Z",
+          "scenarioId": "00871ad3-1e45-4db7-9ae4-d6604a2707ef",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 180,
+          "activeWindowEndsAt": "2027-09-20T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "ISOLATED_NON_SERIOUS_SIGNAL"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "coordinated_false_report",
+          "reportedAt": "2027-03-24T00:00:00.000Z",
+          "scenarioId": "c99fe1ee-d2ee-4a48-973d-1c507d498348",
+          "activePriorSignalCount": 1,
+          "activeWindowDays": 90,
+          "activeWindowEndsAt": "2027-06-22T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "watch",
+          "reasonCodes": [
+            "CORRELATED_SOURCE_CLUSTER",
+            "RECENT_COMPATIBLE_SIGNALS_1"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "single_clean_history_report",
+          "reportedAt": "2027-03-27T00:00:00.000Z",
+          "scenarioId": "4318eb99-5220-416e-896b-3b5567ea18bc",
+          "activePriorSignalCount": 1,
+          "activeWindowDays": 90,
+          "activeWindowEndsAt": "2027-06-25T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "watch",
+          "reasonCodes": [
+            "RECENT_COMPATIBLE_SIGNALS_1"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "single_clean_history_report",
+          "reportedAt": "2027-03-28T00:00:00.000Z",
+          "scenarioId": "b51e652c-8133-4571-88ff-85e672d1a2f3",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 90,
+          "activeWindowEndsAt": "2027-06-26T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "ISOLATED_NON_SERIOUS_SIGNAL"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "single_clean_history_report",
+          "reportedAt": "2027-03-29T00:00:00.000Z",
+          "scenarioId": "824844da-0b6f-47a8-acfd-30d6095e6c43",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 90,
+          "activeWindowEndsAt": "2027-06-27T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "ISOLATED_NON_SERIOUS_SIGNAL"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "occasional_unsporting",
+          "reportedAt": "2027-03-30T00:00:00.000Z",
+          "scenarioId": "af0805ba-e22f-4766-a18e-b9f79c8f4632",
+          "activePriorSignalCount": 3,
+          "activeWindowDays": 180,
+          "activeWindowEndsAt": "2027-09-26T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "watch",
+          "reasonCodes": [
+            "RECENT_COMPATIBLE_SIGNALS_2_PLUS",
+            "ACTIVE_WINDOW_EXPIRED"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "single_clean_history_report",
+          "reportedAt": "2027-03-30T00:00:00.000Z",
+          "scenarioId": "bf98d22a-2587-4888-902d-e4acd7ccf424",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 90,
+          "activeWindowEndsAt": "2027-06-28T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "ISOLATED_NON_SERIOUS_SIGNAL"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "mutual_conflict",
+          "reportedAt": "2027-03-31T00:00:00.000Z",
+          "scenarioId": "e436ae74-e5d4-44b9-9fda-c27003f27d52",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 180,
+          "activeWindowEndsAt": "2027-09-27T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "CORRELATED_SOURCE_CLUSTER",
+            "MUTUAL_RETALIATION"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "mutual_conflict",
+          "reportedAt": "2027-04-01T00:00:00.000Z",
+          "scenarioId": "f69d6b58-79d1-4349-b427-0719fd08993a",
+          "activePriorSignalCount": 4,
+          "activeWindowDays": 180,
+          "activeWindowEndsAt": "2027-09-28T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "watch",
+          "reasonCodes": [
+            "CORRELATED_SOURCE_CLUSTER",
+            "MUTUAL_RETALIATION",
+            "RECENT_COMPATIBLE_SIGNALS_2_PLUS",
+            "ACTIVE_WINDOW_EXPIRED"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "occasional_unsporting",
+          "reportedAt": "2027-04-02T00:00:00.000Z",
+          "scenarioId": "a53089e0-af6b-4e94-a2a5-95a32c36ce7c",
+          "activePriorSignalCount": 1,
+          "activeWindowDays": 180,
+          "activeWindowEndsAt": "2027-09-29T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "watch",
+          "reasonCodes": [
+            "RECENT_COMPATIBLE_SIGNALS_1"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "mutual_conflict",
+          "reportedAt": "2027-04-05T00:00:00.000Z",
+          "scenarioId": "c1723a70-baee-4bb9-bd81-e8c49ad54244",
+          "activePriorSignalCount": 1,
+          "activeWindowDays": 180,
+          "activeWindowEndsAt": "2027-10-02T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "watch",
+          "reasonCodes": [
+            "CORRELATED_SOURCE_CLUSTER",
+            "MUTUAL_RETALIATION",
+            "RECENT_COMPATIBLE_SIGNALS_1"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "single_clean_history_report",
+          "reportedAt": "2027-04-08T00:00:00.000Z",
+          "scenarioId": "221398f2-8953-408b-9e19-d4ee948c5581",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 90,
+          "activeWindowEndsAt": "2027-07-07T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "ACTIVE_WINDOW_EXPIRED"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "mutual_conflict",
+          "reportedAt": "2027-04-08T00:00:00.000Z",
+          "scenarioId": "ca8a0efe-cd45-4b39-a082-78d6a17db836",
+          "activePriorSignalCount": 5,
+          "activeWindowDays": 180,
+          "activeWindowEndsAt": "2027-10-05T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "watch",
+          "reasonCodes": [
+            "CORRELATED_SOURCE_CLUSTER",
+            "MUTUAL_RETALIATION",
+            "RECENT_COMPATIBLE_SIGNALS_2_PLUS",
+            "ACTIVE_WINDOW_EXPIRED"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "occasional_unsporting",
+          "reportedAt": "2027-04-13T00:00:00.000Z",
+          "scenarioId": "e34e09ef-5ee8-4ecb-b50e-bbe20088d87d",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 180,
+          "activeWindowEndsAt": "2027-10-10T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "ISOLATED_NON_SERIOUS_SIGNAL"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "single_clean_history_report",
+          "reportedAt": "2027-04-14T00:00:00.000Z",
+          "scenarioId": "4118cee9-2421-4ec9-bdfb-adc157425d59",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 90,
+          "activeWindowEndsAt": "2027-07-13T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "ISOLATED_NON_SERIOUS_SIGNAL"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "occasional_unsporting",
+          "reportedAt": "2027-04-14T00:00:00.000Z",
+          "scenarioId": "4a0b0cfb-db80-453d-bb2e-522d8f50eef6",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 180,
+          "activeWindowEndsAt": "2027-10-11T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "ISOLATED_NON_SERIOUS_SIGNAL"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "occasional_unsporting",
+          "reportedAt": "2027-04-15T00:00:00.000Z",
+          "scenarioId": "9163e7d0-8a0a-493f-81e9-c54b018e30c8",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 180,
+          "activeWindowEndsAt": "2027-10-12T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "ISOLATED_NON_SERIOUS_SIGNAL"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "single_clean_history_report",
+          "reportedAt": "2027-04-17T00:00:00.000Z",
+          "scenarioId": "01182403-902d-4e92-9a29-2e849444f84e",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 90,
+          "activeWindowEndsAt": "2027-07-16T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "ISOLATED_NON_SERIOUS_SIGNAL"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "occasional_unsporting",
+          "reportedAt": "2027-04-18T00:00:00.000Z",
+          "scenarioId": "6f7ea5d0-9ee2-49c7-9773-4a9feb47acc2",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 180,
+          "activeWindowEndsAt": "2027-10-15T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "ISOLATED_NON_SERIOUS_SIGNAL"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "single_clean_history_report",
+          "reportedAt": "2027-04-21T00:00:00.000Z",
+          "scenarioId": "802e1980-d75b-45f7-ad4b-20e03c5467a0",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 90,
+          "activeWindowEndsAt": "2027-07-20T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "ISOLATED_NON_SERIOUS_SIGNAL"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "occasional_unsporting",
+          "reportedAt": "2027-04-22T00:00:00.000Z",
+          "scenarioId": "f2d639e2-d3d5-448b-a5a1-c8ceaa05c6e3",
+          "activePriorSignalCount": 3,
+          "activeWindowDays": 180,
+          "activeWindowEndsAt": "2027-10-19T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "watch",
+          "reasonCodes": [
+            "RECENT_COMPATIBLE_SIGNALS_2_PLUS",
+            "ACTIVE_WINDOW_EXPIRED"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "single_clean_history_report",
+          "reportedAt": "2027-04-24T00:00:00.000Z",
+          "scenarioId": "9661c29f-1410-4d42-9ac6-aaf4df57aa29",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 90,
+          "activeWindowEndsAt": "2027-07-23T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "ISOLATED_NON_SERIOUS_SIGNAL"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "occasional_unsporting",
+          "reportedAt": "2027-04-29T00:00:00.000Z",
+          "scenarioId": "1964c003-64f4-47d8-af87-d21c6e54cb3f",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 180,
+          "activeWindowEndsAt": "2027-10-26T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "ISOLATED_NON_SERIOUS_SIGNAL"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": true,
+          "kind": "repeat_offender",
+          "reportedAt": "2027-05-01T00:00:00.000Z",
+          "scenarioId": "03c1bed5-4864-42b7-bf23-37b331bbc023",
+          "activePriorSignalCount": 2,
+          "activeWindowDays": 180,
+          "activeWindowEndsAt": "2027-10-28T00:00:00.000Z",
+          "humanReviewRequired": true,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "priority_review",
+          "reasonCodes": [
+            "DISTINCT_CONTEXTS_2_PLUS",
+            "RECENT_COMPATIBLE_SIGNALS_2_PLUS"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "single_clean_history_report",
+          "reportedAt": "2027-05-10T00:00:00.000Z",
+          "scenarioId": "b61267bc-98e5-4332-a45b-ecfd8f2d491e",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 90,
+          "activeWindowEndsAt": "2027-08-08T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "ISOLATED_NON_SERIOUS_SIGNAL"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "single_clean_history_report",
+          "reportedAt": "2027-05-16T00:00:00.000Z",
+          "scenarioId": "61690713-a7e9-457d-805f-bc40e2b30525",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 90,
+          "activeWindowEndsAt": "2027-08-14T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "ISOLATED_NON_SERIOUS_SIGNAL"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "mutual_conflict",
+          "reportedAt": "2027-05-19T00:00:00.000Z",
+          "scenarioId": "bd239d40-51c8-4d4a-b5b3-5f2fd5612f8c",
+          "activePriorSignalCount": 3,
+          "activeWindowDays": 180,
+          "activeWindowEndsAt": "2027-11-15T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "watch",
+          "reasonCodes": [
+            "CORRELATED_SOURCE_CLUSTER",
+            "MUTUAL_RETALIATION",
+            "RECENT_COMPATIBLE_SIGNALS_2_PLUS",
+            "ACTIVE_WINDOW_EXPIRED"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "occasional_unsporting",
+          "reportedAt": "2027-05-21T00:00:00.000Z",
+          "scenarioId": "e0dfad6d-c0e8-4b09-8f21-9a0275b7926e",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 180,
+          "activeWindowEndsAt": "2027-11-17T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "ISOLATED_NON_SERIOUS_SIGNAL"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "single_clean_history_report",
+          "reportedAt": "2027-05-26T00:00:00.000Z",
+          "scenarioId": "76ce027a-b68e-4f5a-8765-36a453217c52",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 90,
+          "activeWindowEndsAt": "2027-08-24T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "ISOLATED_NON_SERIOUS_SIGNAL"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "single_clean_history_report",
+          "reportedAt": "2027-05-27T00:00:00.000Z",
+          "scenarioId": "c1ec9aeb-4fd8-475f-ae36-c08b8ef39d38",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 90,
+          "activeWindowEndsAt": "2027-08-25T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "ISOLATED_NON_SERIOUS_SIGNAL"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "single_clean_history_report",
+          "reportedAt": "2027-05-28T00:00:00.000Z",
+          "scenarioId": "e0e1f095-10b1-4e29-be4b-86eecf7811ae",
+          "activePriorSignalCount": 1,
+          "activeWindowDays": 90,
+          "activeWindowEndsAt": "2027-08-26T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "watch",
+          "reasonCodes": [
+            "RECENT_COMPATIBLE_SIGNALS_1"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "single_clean_history_report",
+          "reportedAt": "2027-06-01T00:00:00.000Z",
+          "scenarioId": "40bfd3dd-dd3b-4f6c-9d7f-674ccf36e992",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 90,
+          "activeWindowEndsAt": "2027-08-30T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "ISOLATED_NON_SERIOUS_SIGNAL"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "single_clean_history_report",
+          "reportedAt": "2027-06-03T00:00:00.000Z",
+          "scenarioId": "7784d548-b8c4-47a4-ba22-c12fda9c6f35",
+          "activePriorSignalCount": 2,
+          "activeWindowDays": 90,
+          "activeWindowEndsAt": "2027-09-01T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "watch",
+          "reasonCodes": [
+            "RECENT_COMPATIBLE_SIGNALS_2_PLUS"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "single_clean_history_report",
+          "reportedAt": "2027-06-08T00:00:00.000Z",
+          "scenarioId": "b553d76c-3571-4760-add4-7b1d497c8046",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 90,
+          "activeWindowEndsAt": "2027-09-06T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "ISOLATED_NON_SERIOUS_SIGNAL"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "occasional_unsporting",
+          "reportedAt": "2027-06-12T00:00:00.000Z",
+          "scenarioId": "ba7696b0-c570-480d-bbfd-6c86663308b6",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 180,
+          "activeWindowEndsAt": "2027-12-09T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "ISOLATED_NON_SERIOUS_SIGNAL"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": true,
+          "kind": "repeat_offender",
+          "reportedAt": "2027-06-18T00:00:00.000Z",
+          "scenarioId": "0d3589c5-c733-411a-8b75-88d569ffb2a7",
+          "activePriorSignalCount": 2,
+          "activeWindowDays": 180,
+          "activeWindowEndsAt": "2027-12-15T00:00:00.000Z",
+          "humanReviewRequired": true,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "priority_review",
+          "reasonCodes": [
+            "DISTINCT_CONTEXTS_2_PLUS",
+            "RECENT_COMPATIBLE_SIGNALS_2_PLUS",
+            "ACTIVE_WINDOW_EXPIRED"
+          ],
+          "sanctionApplied": false
+        }
+      ]
+    },
+    "canonicalHash": "1daf98db6eef79af5722eb8d402506864483a33b55f36d31bc3b345e087b63fb",
+    "sourcePreserved": true,
+    "sportingSystemsPreserved": true,
+    "invariants": {
+      "dailyFailures": 0,
+      "weeklyFailures": 0
+    },
+    "summary": {
+      "achievements": 3949,
+      "activeAgents": 629,
+      "attendanceCancellations": 577,
+      "boxes": 3949,
+      "challenges": 1601,
+      "confirmedMatches": 1343,
+      "conductScenariosNeedingProduct": 88,
+      "currentDate": "2027-06-30T00:00:00.000Z",
+      "events": 66625,
+      "guests": 30,
+      "incidents": 117,
+      "notifications": 27921,
+      "possibleNoShows": 290,
+      "possibleRepeatNoShowAgents": 49,
+      "opinions": 3675,
+      "rankings": 165,
+      "registeredAgents": 640,
+      "revision": 302,
+      "scheduledMatches": 0,
+      "teams": 50,
+      "totalMatches": 1422,
+      "rankingEvidenceMatches": 1067,
+      "rankingEvidenceMatchesMarkedExcluded": 115,
+      "rankingEvidenceMatchesMarkedValid": 952,
+      "virtualWeeks": 44
+    }
+  },
+  "source": {
+    "audit": {
+      "backlog": {
+        "casesPerDay5": {
+          "backlog": 0,
+          "casesPerDay": 5,
+          "meanWaitDays": 0,
+          "urgentWaiting": 0
+        },
+        "casesPerDay10": {
+          "backlog": 0,
+          "casesPerDay": 10,
+          "meanWaitDays": 0,
+          "urgentWaiting": 0
+        }
+      },
+      "beforeHumanReviewCases": 79,
+      "cases": 79,
+      "falseCampaignEscalation": 0,
+      "falseEscalationRate": 0.0132,
+      "humanReviewCases": 4,
+      "humanReviewRate": 0.0506,
+      "isolation": {
+        "achievementsChanged": false,
+        "ratingV2Changed": false,
+        "rewardsChanged": false,
+        "seasonScoreChanged": false,
+        "topsChanged": false
+      },
+      "missedSeriousCases": 0,
+      "noShowThresholds": {
+        "confirmedNoShowEvents": 29,
+        "distributionAssessment": "plausible_but_unverified",
+        "generatedCandidateEvents": 37,
+        "generatedEventsPerRegisteredPlayer": 0.0578,
+        "policyChanged": false,
+        "variants": [
+          {
+            "count": 2,
+            "days": 60,
+            "candidates": 4
+          },
+          {
+            "count": 2,
+            "days": 90,
+            "candidates": 6
+          },
+          {
+            "count": 3,
+            "days": 120,
+            "candidates": 2
+          },
+          {
+            "count": 3,
+            "days": 180,
+            "candidates": 2
+          },
+          {
+            "count": 4,
+            "days": 180,
+            "candidates": 2
+          }
+        ]
+      },
+      "policyVersion": "conduct-triage-v1.1-experimental",
+      "projectedHumanCases": {
+        "players1000": 6,
+        "players5000": 28,
+        "players10000": 53,
+        "players50000": 241,
+        "projectionIsOrientativeAndNonLinear": true
+      },
+      "queues": {
+        "priority_review": 1,
+        "record_only": 68,
+        "review": 3,
+        "urgent_review": 0,
+        "watch": 7
+      },
+      "seriousCasePrecision": 0.75,
+      "seriousCaseRecall": 1,
+      "singleCleanReportEscalation": 0,
+      "triageRows": [
+        {
+          "groundTruthSerious": true,
+          "kind": "conflict_prone_incident",
+          "reportedAt": "2026-09-05T21:30:00.000Z",
+          "scenarioId": "1ba31f10-2f16-4222-a2d8-766409c6cf0c",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 365,
+          "activeWindowEndsAt": "2027-09-05T21:30:00.000Z",
+          "humanReviewRequired": true,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "review",
+          "reasonCodes": [
+            "CATEGORY_HARASSMENT"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "occasional_unsporting",
+          "reportedAt": "2026-09-05T21:30:00.000Z",
+          "scenarioId": "1e148a2a-c0cf-4802-8c53-fa8a5eddf998",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 180,
+          "activeWindowEndsAt": "2027-03-04T21:30:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "ISOLATED_NON_SERIOUS_SIGNAL"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "coordinated_false_report",
+          "reportedAt": "2026-09-05T21:30:00.000Z",
+          "scenarioId": "83d9d8e9-522c-41c2-ac72-d2b75070f146",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 90,
+          "activeWindowEndsAt": "2026-12-04T21:30:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "CORRELATED_SOURCE_CLUSTER"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "single_clean_history_report",
+          "reportedAt": "2026-09-05T21:30:00.000Z",
+          "scenarioId": "880b9b27-bbe6-470a-b980-e2b0be7b14a6",
+          "activePriorSignalCount": 1,
+          "activeWindowDays": 90,
+          "activeWindowEndsAt": "2026-12-04T21:30:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "watch",
+          "reasonCodes": [
+            "RECENT_COMPATIBLE_SIGNALS_1"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "same_team_report_burst",
+          "reportedAt": "2026-09-05T21:30:00.000Z",
+          "scenarioId": "b7d432f6-2458-43d0-b725-3382cbfb7f58",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 180,
+          "activeWindowEndsAt": "2027-03-04T21:30:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "CORRELATED_SOURCE_CLUSTER"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "mutual_conflict",
+          "reportedAt": "2026-09-05T21:30:00.000Z",
+          "scenarioId": "ecd46570-8ac7-4838-8471-352411939895",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 180,
+          "activeWindowEndsAt": "2027-03-04T21:30:00.000Z",
+          "humanReviewRequired": true,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "review",
+          "reasonCodes": [
+            "MUTUAL_RETALIATION",
+            "INDEPENDENT_SOURCES_2"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": true,
+          "kind": "repeat_offender",
+          "reportedAt": "2026-09-05T21:30:00.000Z",
+          "scenarioId": "f1eec362-8405-43b5-a395-6cb0685e17fe",
+          "activePriorSignalCount": 3,
+          "activeWindowDays": 180,
+          "activeWindowEndsAt": "2027-03-04T21:30:00.000Z",
+          "humanReviewRequired": true,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "priority_review",
+          "reasonCodes": [
+            "DISTINCT_CONTEXTS_2_PLUS",
+            "RECENT_COMPATIBLE_SIGNALS_2_PLUS"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "single_clean_history_report",
+          "reportedAt": "2026-09-13T00:00:00.000Z",
+          "scenarioId": "e981feb1-1aa5-447f-86fe-b78485ee8a38",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 90,
+          "activeWindowEndsAt": "2026-12-12T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "ISOLATED_NON_SERIOUS_SIGNAL"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "single_clean_history_report",
+          "reportedAt": "2026-09-16T00:00:00.000Z",
+          "scenarioId": "47d33158-5616-45d6-9e1e-d4f5b9e174fe",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 90,
+          "activeWindowEndsAt": "2026-12-15T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "ISOLATED_NON_SERIOUS_SIGNAL"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "single_clean_history_report",
+          "reportedAt": "2026-09-17T00:00:00.000Z",
+          "scenarioId": "68234dd2-3633-4918-8794-b8d436e871de",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 90,
+          "activeWindowEndsAt": "2026-12-16T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "ISOLATED_NON_SERIOUS_SIGNAL"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "occasional_unsporting",
+          "reportedAt": "2026-09-18T00:00:00.000Z",
+          "scenarioId": "b7ecf69a-c093-4118-9ad3-aa85186ed314",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 180,
+          "activeWindowEndsAt": "2027-03-17T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "ISOLATED_NON_SERIOUS_SIGNAL"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "single_clean_history_report",
+          "reportedAt": "2026-09-21T00:00:00.000Z",
+          "scenarioId": "cf9fade1-3860-4d19-a03c-73869ff4d905",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 90,
+          "activeWindowEndsAt": "2026-12-20T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "ISOLATED_NON_SERIOUS_SIGNAL"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "single_clean_history_report",
+          "reportedAt": "2026-09-22T00:00:00.000Z",
+          "scenarioId": "ed8a2038-ad36-4bd2-99b5-ad918430a8de",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 90,
+          "activeWindowEndsAt": "2026-12-21T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "ISOLATED_NON_SERIOUS_SIGNAL"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "single_clean_history_report",
+          "reportedAt": "2026-09-26T00:00:00.000Z",
+          "scenarioId": "f77bb6f5-3036-47fb-8d3a-9d2b374a0266",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 90,
+          "activeWindowEndsAt": "2026-12-25T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "ISOLATED_NON_SERIOUS_SIGNAL"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "single_clean_history_report",
+          "reportedAt": "2026-10-02T00:00:00.000Z",
+          "scenarioId": "196004c3-bfc9-410b-948f-b6c36deffe9d",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 90,
+          "activeWindowEndsAt": "2026-12-31T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "ISOLATED_NON_SERIOUS_SIGNAL"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "single_clean_history_report",
+          "reportedAt": "2026-10-04T00:00:00.000Z",
+          "scenarioId": "207f31d4-4699-4590-883d-aeb6ff020d38",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 90,
+          "activeWindowEndsAt": "2027-01-02T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "ISOLATED_NON_SERIOUS_SIGNAL"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "single_clean_history_report",
+          "reportedAt": "2026-10-17T00:00:00.000Z",
+          "scenarioId": "7297e87d-3288-492e-af0e-22ac306aae31",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 90,
+          "activeWindowEndsAt": "2027-01-15T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "ISOLATED_NON_SERIOUS_SIGNAL"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "single_clean_history_report",
+          "reportedAt": "2026-10-24T00:00:00.000Z",
+          "scenarioId": "94b3af09-9203-4ea2-9740-b0c90d113185",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 90,
+          "activeWindowEndsAt": "2027-01-22T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "ISOLATED_NON_SERIOUS_SIGNAL"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "single_clean_history_report",
+          "reportedAt": "2026-10-26T00:00:00.000Z",
+          "scenarioId": "459cf02c-3a31-4bbe-99c5-cbd72985f282",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 90,
+          "activeWindowEndsAt": "2027-01-24T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "ISOLATED_NON_SERIOUS_SIGNAL"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "single_clean_history_report",
+          "reportedAt": "2026-11-03T00:00:00.000Z",
+          "scenarioId": "b6e1fc72-317d-4675-8778-24c718b3bfc6",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 90,
+          "activeWindowEndsAt": "2027-02-01T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "ISOLATED_NON_SERIOUS_SIGNAL"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "single_clean_history_report",
+          "reportedAt": "2026-11-15T00:00:00.000Z",
+          "scenarioId": "315b2ea2-6746-412e-9b1f-1f8044c539fd",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 90,
+          "activeWindowEndsAt": "2027-02-13T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "ISOLATED_NON_SERIOUS_SIGNAL"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "single_clean_history_report",
+          "reportedAt": "2026-11-22T00:00:00.000Z",
+          "scenarioId": "24ec7f3c-489c-4260-b8a5-b43c3e264968",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 90,
+          "activeWindowEndsAt": "2027-02-20T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "ISOLATED_NON_SERIOUS_SIGNAL"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "mutual_conflict",
+          "reportedAt": "2026-11-23T00:00:00.000Z",
+          "scenarioId": "23fac849-778c-407f-9af1-b492a436c832",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 180,
+          "activeWindowEndsAt": "2027-05-22T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "CORRELATED_SOURCE_CLUSTER",
+            "MUTUAL_RETALIATION"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "single_clean_history_report",
+          "reportedAt": "2026-11-23T00:00:00.000Z",
+          "scenarioId": "426d8cdf-080d-471a-a3df-d2f6b56f97b2",
+          "activePriorSignalCount": 1,
+          "activeWindowDays": 90,
+          "activeWindowEndsAt": "2027-02-21T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "watch",
+          "reasonCodes": [
+            "RECENT_COMPATIBLE_SIGNALS_1"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "single_clean_history_report",
+          "reportedAt": "2026-12-06T00:00:00.000Z",
+          "scenarioId": "29d3ff65-ec4f-48e3-9d4b-7bd25348088f",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 90,
+          "activeWindowEndsAt": "2027-03-06T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "ISOLATED_NON_SERIOUS_SIGNAL"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "single_clean_history_report",
+          "reportedAt": "2026-12-11T00:00:00.000Z",
+          "scenarioId": "06acad75-6d88-438b-8e5c-efc4c6f9692f",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 90,
+          "activeWindowEndsAt": "2027-03-11T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "ISOLATED_NON_SERIOUS_SIGNAL"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "single_clean_history_report",
+          "reportedAt": "2026-12-15T00:00:00.000Z",
+          "scenarioId": "4ad443b0-3c9a-49cb-9d50-9e9f8fa17662",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 90,
+          "activeWindowEndsAt": "2027-03-15T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "ISOLATED_NON_SERIOUS_SIGNAL"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "single_clean_history_report",
+          "reportedAt": "2026-12-15T00:00:00.000Z",
+          "scenarioId": "7e29e254-9eae-4349-b14f-210014665b10",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 90,
+          "activeWindowEndsAt": "2027-03-15T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "ISOLATED_NON_SERIOUS_SIGNAL"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "single_clean_history_report",
+          "reportedAt": "2026-12-17T00:00:00.000Z",
+          "scenarioId": "6b4853ec-d515-45fc-8751-d57d46b848ee",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 90,
+          "activeWindowEndsAt": "2027-03-17T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "ISOLATED_NON_SERIOUS_SIGNAL"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "single_clean_history_report",
+          "reportedAt": "2026-12-20T00:00:00.000Z",
+          "scenarioId": "2beb42b3-2a85-4e08-84dc-13e7de67536b",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 90,
+          "activeWindowEndsAt": "2027-03-20T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "ISOLATED_NON_SERIOUS_SIGNAL"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "single_clean_history_report",
+          "reportedAt": "2026-12-21T00:00:00.000Z",
+          "scenarioId": "66ed0369-cb1e-4ac0-9704-a2f74439d73c",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 90,
+          "activeWindowEndsAt": "2027-03-21T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "ISOLATED_NON_SERIOUS_SIGNAL"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "single_clean_history_report",
+          "reportedAt": "2026-12-25T00:00:00.000Z",
+          "scenarioId": "84afd7ee-b227-4035-85a1-68512d616032",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 90,
+          "activeWindowEndsAt": "2027-03-25T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "ISOLATED_NON_SERIOUS_SIGNAL"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "single_clean_history_report",
+          "reportedAt": "2026-12-26T00:00:00.000Z",
+          "scenarioId": "413bf531-8247-4727-9293-1506f113b209",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 90,
+          "activeWindowEndsAt": "2027-03-26T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "ISOLATED_NON_SERIOUS_SIGNAL"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "single_clean_history_report",
+          "reportedAt": "2026-12-27T00:00:00.000Z",
+          "scenarioId": "1ba47b7f-128c-459e-8638-ec7926561705",
+          "activePriorSignalCount": 1,
+          "activeWindowDays": 90,
+          "activeWindowEndsAt": "2027-03-27T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "watch",
+          "reasonCodes": [
+            "RECENT_COMPATIBLE_SIGNALS_1"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "single_clean_history_report",
+          "reportedAt": "2026-12-28T00:00:00.000Z",
+          "scenarioId": "4b07055a-a990-4957-8ff7-9417ea5ae8ff",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 90,
+          "activeWindowEndsAt": "2027-03-28T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "ISOLATED_NON_SERIOUS_SIGNAL"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "single_clean_history_report",
+          "reportedAt": "2026-12-29T00:00:00.000Z",
+          "scenarioId": "0fe2cf24-2561-479f-b62b-6f56414aeb8c",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 90,
+          "activeWindowEndsAt": "2027-03-29T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "ISOLATED_NON_SERIOUS_SIGNAL"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "single_clean_history_report",
+          "reportedAt": "2026-12-31T00:00:00.000Z",
+          "scenarioId": "0d927ae0-3efc-447d-b1e1-0d891bf77dba",
+          "activePriorSignalCount": 1,
+          "activeWindowDays": 90,
+          "activeWindowEndsAt": "2027-03-31T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "watch",
+          "reasonCodes": [
+            "RECENT_COMPATIBLE_SIGNALS_1"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "single_clean_history_report",
+          "reportedAt": "2027-01-02T00:00:00.000Z",
+          "scenarioId": "24bf13f5-f4e9-4960-ad44-9ba7c8df3f05",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 90,
+          "activeWindowEndsAt": "2027-04-02T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "ISOLATED_NON_SERIOUS_SIGNAL"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "single_clean_history_report",
+          "reportedAt": "2027-01-08T00:00:00.000Z",
+          "scenarioId": "68bd9ac9-f13e-46b2-b31d-fc6930611387",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 90,
+          "activeWindowEndsAt": "2027-04-08T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "ISOLATED_NON_SERIOUS_SIGNAL"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "single_clean_history_report",
+          "reportedAt": "2027-01-09T00:00:00.000Z",
+          "scenarioId": "42f2f082-a98a-49e7-b84a-4edfe08c6a81",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 90,
+          "activeWindowEndsAt": "2027-04-09T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "ISOLATED_NON_SERIOUS_SIGNAL"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "single_clean_history_report",
+          "reportedAt": "2027-01-22T00:00:00.000Z",
+          "scenarioId": "f90ccddd-e581-4f40-a75e-1c14ace41eab",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 90,
+          "activeWindowEndsAt": "2027-04-22T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "ISOLATED_NON_SERIOUS_SIGNAL"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "single_clean_history_report",
+          "reportedAt": "2027-01-23T00:00:00.000Z",
+          "scenarioId": "b6db609b-8936-4e62-b7b4-402242e93a9d",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 90,
+          "activeWindowEndsAt": "2027-04-23T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "ACTIVE_WINDOW_EXPIRED"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "single_clean_history_report",
+          "reportedAt": "2027-01-25T00:00:00.000Z",
+          "scenarioId": "8e9dca64-a251-43ef-a95f-c377856a66c7",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 90,
+          "activeWindowEndsAt": "2027-04-25T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "ISOLATED_NON_SERIOUS_SIGNAL"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "single_clean_history_report",
+          "reportedAt": "2027-01-26T00:00:00.000Z",
+          "scenarioId": "4ff0dd31-a37a-4bbc-9c5a-2e2938b4b30f",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 90,
+          "activeWindowEndsAt": "2027-04-26T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "ACTIVE_WINDOW_EXPIRED"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "single_clean_history_report",
+          "reportedAt": "2027-01-27T00:00:00.000Z",
+          "scenarioId": "5b195a39-d933-4c74-98f1-527c517ba01a",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 90,
+          "activeWindowEndsAt": "2027-04-27T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "ISOLATED_NON_SERIOUS_SIGNAL"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "single_clean_history_report",
+          "reportedAt": "2027-01-27T00:00:00.000Z",
+          "scenarioId": "9fd1929f-9b7e-4bcc-9fed-cfe1c73792a2",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 90,
+          "activeWindowEndsAt": "2027-04-27T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "ISOLATED_NON_SERIOUS_SIGNAL"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "single_clean_history_report",
+          "reportedAt": "2027-01-28T00:00:00.000Z",
+          "scenarioId": "b33c87a6-8d71-477d-b310-0e2303dd8aed",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 90,
+          "activeWindowEndsAt": "2027-04-28T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "ISOLATED_NON_SERIOUS_SIGNAL"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "single_clean_history_report",
+          "reportedAt": "2027-01-31T00:00:00.000Z",
+          "scenarioId": "3bee8f12-95d4-4265-9393-9be864dc4852",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 90,
+          "activeWindowEndsAt": "2027-05-01T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "ISOLATED_NON_SERIOUS_SIGNAL"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "single_clean_history_report",
+          "reportedAt": "2027-02-01T00:00:00.000Z",
+          "scenarioId": "1f7d1aa6-b78d-4334-bd8c-616690fb098d",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 90,
+          "activeWindowEndsAt": "2027-05-02T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "ISOLATED_NON_SERIOUS_SIGNAL"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "single_clean_history_report",
+          "reportedAt": "2027-02-04T00:00:00.000Z",
+          "scenarioId": "fc46a033-cb90-4a87-8b01-d52896a775dd",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 90,
+          "activeWindowEndsAt": "2027-05-05T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "ISOLATED_NON_SERIOUS_SIGNAL"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "occasional_unsporting",
+          "reportedAt": "2027-02-05T00:00:00.000Z",
+          "scenarioId": "957a930e-52b3-4ab3-a27b-ee9912b9e853",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 180,
+          "activeWindowEndsAt": "2027-08-04T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "ISOLATED_NON_SERIOUS_SIGNAL"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "single_clean_history_report",
+          "reportedAt": "2027-02-06T00:00:00.000Z",
+          "scenarioId": "9e0109e2-28a5-467e-8259-69335141be26",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 90,
+          "activeWindowEndsAt": "2027-05-07T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "ISOLATED_NON_SERIOUS_SIGNAL"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "single_clean_history_report",
+          "reportedAt": "2027-02-08T00:00:00.000Z",
+          "scenarioId": "09c5f2fe-ecc0-4884-8185-1e817f5c82b6",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 90,
+          "activeWindowEndsAt": "2027-05-09T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "ISOLATED_NON_SERIOUS_SIGNAL"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "single_clean_history_report",
+          "reportedAt": "2027-02-11T00:00:00.000Z",
+          "scenarioId": "8c96a966-447b-44cb-bbf2-475eb6114035",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 90,
+          "activeWindowEndsAt": "2027-05-12T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "ISOLATED_NON_SERIOUS_SIGNAL"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "single_clean_history_report",
+          "reportedAt": "2027-02-19T00:00:00.000Z",
+          "scenarioId": "1158fe28-5740-46e6-bd0c-9c88744ed735",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 90,
+          "activeWindowEndsAt": "2027-05-20T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "ACTIVE_WINDOW_EXPIRED"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "single_clean_history_report",
+          "reportedAt": "2027-02-28T00:00:00.000Z",
+          "scenarioId": "a5c225de-179e-4e80-847d-ba167e4a0356",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 90,
+          "activeWindowEndsAt": "2027-05-29T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "ISOLATED_NON_SERIOUS_SIGNAL"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "single_clean_history_report",
+          "reportedAt": "2027-03-06T00:00:00.000Z",
+          "scenarioId": "94a4f4ac-30c3-40c1-867d-8f504dd10edc",
+          "activePriorSignalCount": 2,
+          "activeWindowDays": 90,
+          "activeWindowEndsAt": "2027-06-04T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "watch",
+          "reasonCodes": [
+            "RECENT_COMPATIBLE_SIGNALS_2_PLUS"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "single_clean_history_report",
+          "reportedAt": "2027-03-08T00:00:00.000Z",
+          "scenarioId": "c066da94-0729-4d35-b8d1-ae279a8fe3a1",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 90,
+          "activeWindowEndsAt": "2027-06-06T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "ISOLATED_NON_SERIOUS_SIGNAL"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "single_clean_history_report",
+          "reportedAt": "2027-03-19T00:00:00.000Z",
+          "scenarioId": "54275430-473f-4e47-82d1-a94504b413fc",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 90,
+          "activeWindowEndsAt": "2027-06-17T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "ISOLATED_NON_SERIOUS_SIGNAL"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "mutual_conflict",
+          "reportedAt": "2027-03-27T00:00:00.000Z",
+          "scenarioId": "ba4f3250-691a-44fe-9523-ec5b248aa7b2",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 180,
+          "activeWindowEndsAt": "2027-09-23T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "CORRELATED_SOURCE_CLUSTER",
+            "MUTUAL_RETALIATION"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "single_clean_history_report",
+          "reportedAt": "2027-04-01T00:00:00.000Z",
+          "scenarioId": "92a36e14-51fa-4683-a68d-6f3c7f59095b",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 90,
+          "activeWindowEndsAt": "2027-06-30T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "ISOLATED_NON_SERIOUS_SIGNAL"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "single_clean_history_report",
+          "reportedAt": "2027-04-09T00:00:00.000Z",
+          "scenarioId": "4fb4fb01-852e-4d34-b082-31dbbad39667",
+          "activePriorSignalCount": 1,
+          "activeWindowDays": 90,
+          "activeWindowEndsAt": "2027-07-08T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "watch",
+          "reasonCodes": [
+            "RECENT_COMPATIBLE_SIGNALS_1"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "single_clean_history_report",
+          "reportedAt": "2027-04-09T00:00:00.000Z",
+          "scenarioId": "e06d0f39-f5c7-401f-a4be-71fbc2e8a209",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 90,
+          "activeWindowEndsAt": "2027-07-08T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "ACTIVE_WINDOW_EXPIRED"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "single_clean_history_report",
+          "reportedAt": "2027-04-13T00:00:00.000Z",
+          "scenarioId": "a54fd009-777a-4ecc-8b32-205b903b0c03",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 90,
+          "activeWindowEndsAt": "2027-07-12T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "ISOLATED_NON_SERIOUS_SIGNAL"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "single_clean_history_report",
+          "reportedAt": "2027-04-14T00:00:00.000Z",
+          "scenarioId": "329805a5-5cf1-4995-82fc-5a4ff09087f0",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 90,
+          "activeWindowEndsAt": "2027-07-13T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "ISOLATED_NON_SERIOUS_SIGNAL"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "single_clean_history_report",
+          "reportedAt": "2027-04-15T00:00:00.000Z",
+          "scenarioId": "59764d4c-4db8-4b08-9ddb-999bda308de8",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 90,
+          "activeWindowEndsAt": "2027-07-14T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "ISOLATED_NON_SERIOUS_SIGNAL"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "single_clean_history_report",
+          "reportedAt": "2027-04-29T00:00:00.000Z",
+          "scenarioId": "c2ec5514-d7f1-4534-8fd3-4ac607c1b298",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 90,
+          "activeWindowEndsAt": "2027-07-28T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "ISOLATED_NON_SERIOUS_SIGNAL"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "single_clean_history_report",
+          "reportedAt": "2027-04-30T00:00:00.000Z",
+          "scenarioId": "b94dd80f-dd05-465b-ac03-b89d78834f92",
+          "activePriorSignalCount": 1,
+          "activeWindowDays": 90,
+          "activeWindowEndsAt": "2027-07-29T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "watch",
+          "reasonCodes": [
+            "RECENT_COMPATIBLE_SIGNALS_1",
+            "ACTIVE_WINDOW_EXPIRED"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": true,
+          "kind": "independent_team_reports",
+          "reportedAt": "2027-05-15T21:45:00.000Z",
+          "scenarioId": "23a0f750-5337-44c1-8b80-a9a91a150f08",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 180,
+          "activeWindowEndsAt": "2027-11-11T21:45:00.000Z",
+          "humanReviewRequired": true,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "review",
+          "reasonCodes": [
+            "INDEPENDENT_SOURCES_2",
+            "DISTINCT_CONTEXTS_2_PLUS",
+            "ACTIVE_WINDOW_EXPIRED"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "single_clean_history_report",
+          "reportedAt": "2027-05-16T00:00:00.000Z",
+          "scenarioId": "d66f6302-1648-4070-ba15-96977db102a3",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 90,
+          "activeWindowEndsAt": "2027-08-14T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "ISOLATED_NON_SERIOUS_SIGNAL"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "single_clean_history_report",
+          "reportedAt": "2027-05-22T00:00:00.000Z",
+          "scenarioId": "aecbcd57-efc1-41b9-8184-db105e859042",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 90,
+          "activeWindowEndsAt": "2027-08-20T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "ISOLATED_NON_SERIOUS_SIGNAL"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "single_clean_history_report",
+          "reportedAt": "2027-05-25T00:00:00.000Z",
+          "scenarioId": "8836c35c-9ac1-4a65-b4bf-3419d2fc10ba",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 90,
+          "activeWindowEndsAt": "2027-08-23T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "ISOLATED_NON_SERIOUS_SIGNAL"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "single_clean_history_report",
+          "reportedAt": "2027-05-27T00:00:00.000Z",
+          "scenarioId": "959d295d-d418-4f31-ae08-8e88a78627d5",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 90,
+          "activeWindowEndsAt": "2027-08-25T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "ISOLATED_NON_SERIOUS_SIGNAL"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "single_clean_history_report",
+          "reportedAt": "2027-05-31T00:00:00.000Z",
+          "scenarioId": "4bc2ebed-acbe-481f-9ab1-3ed0babd938f",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 90,
+          "activeWindowEndsAt": "2027-08-29T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "ISOLATED_NON_SERIOUS_SIGNAL"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "single_clean_history_report",
+          "reportedAt": "2027-06-04T00:00:00.000Z",
+          "scenarioId": "7425605d-9ef7-43ba-b560-845883d9c2d4",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 90,
+          "activeWindowEndsAt": "2027-09-02T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "ACTIVE_WINDOW_EXPIRED"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "single_clean_history_report",
+          "reportedAt": "2027-06-19T00:00:00.000Z",
+          "scenarioId": "7931c320-2a0b-40e8-9a72-572197743dbf",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 90,
+          "activeWindowEndsAt": "2027-09-17T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "ISOLATED_NON_SERIOUS_SIGNAL"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "single_clean_history_report",
+          "reportedAt": "2027-06-19T00:00:00.000Z",
+          "scenarioId": "fd90e24f-0ce1-4ada-83aa-bc77306ac287",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 90,
+          "activeWindowEndsAt": "2027-09-17T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "ISOLATED_NON_SERIOUS_SIGNAL"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "single_clean_history_report",
+          "reportedAt": "2027-06-20T00:00:00.000Z",
+          "scenarioId": "e4395404-f4ea-4d51-aafd-7acbe14aa89a",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 90,
+          "activeWindowEndsAt": "2027-09-18T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "ISOLATED_NON_SERIOUS_SIGNAL"
+          ],
+          "sanctionApplied": false
+        },
+        {
+          "groundTruthSerious": false,
+          "kind": "single_clean_history_report",
+          "reportedAt": "2027-06-25T00:00:00.000Z",
+          "scenarioId": "91759813-824c-45cb-b4f9-750c67d0729c",
+          "activePriorSignalCount": 0,
+          "activeWindowDays": 90,
+          "activeWindowEndsAt": "2027-09-23T00:00:00.000Z",
+          "humanReviewRequired": false,
+          "policyVersion": "conduct-triage-v1.1-experimental",
+          "queue": "record_only",
+          "reasonCodes": [
+            "ACTIVE_WINDOW_EXPIRED"
+          ],
+          "sanctionApplied": false
+        }
+      ]
+    },
+    "canonicalHash": "f2b71555b074b32658a11609d148efc5dbda7dc8ef5456d1d2d0b3dcbc776c31",
+    "sourcePreserved": true,
+    "sportingSystemsPreserved": true,
+    "eventSequence": 69458,
+    "revision": 313,
+    "worldId": "3df9494d-3b8c-4447-96e8-d5244892af78"
+  }
+}

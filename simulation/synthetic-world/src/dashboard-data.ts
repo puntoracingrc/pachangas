@@ -5,6 +5,7 @@ import territoryAwardReadinessSummary from "../generated/territory-award-readine
 import { buildSyntheticRankingFunnelAudit } from "./ranking-funnel";
 import { rankingAuditOptionsForWorld } from "./ranking-counterfactuals";
 import { buildConductV1Replay } from "./conduct-v1";
+import { buildConductTriageV11Audit } from "./conduct-triage-v1-1";
 import type { SyntheticSnapshotListItem, SyntheticWorldListItem } from "./store";
 import type { SyntheticEvent, SyntheticWorld } from "./types";
 
@@ -55,6 +56,7 @@ export function buildSyntheticDashboardData(options: {
 }) {
   const { world } = options;
   const conductV1 = buildConductV1Replay(world);
+  const conductTriageV11 = buildConductTriageV11Audit(world);
   const agentById = new Map(world.state.agents.map((agent) => [agent.id, agent]));
   const teamById = new Map(world.state.teams.map((team) => [team.id, team]));
   const rankingByAgent = new Map(world.state.rankings.map((row) => [row.agentId, row]));
@@ -94,6 +96,7 @@ export function buildSyntheticDashboardData(options: {
       trueNoShowDistinction: "IMPLEMENTED_V1" as const,
     },
     conductV1,
+    conductTriageV11,
     coverage: [...world.state.coverage].sort((left, right) => left.flow.localeCompare(right.flow)),
     health,
     incidents: [...world.state.incidents]

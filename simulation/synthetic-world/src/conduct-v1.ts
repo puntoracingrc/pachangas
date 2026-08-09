@@ -56,7 +56,7 @@ function hasWindow(records: SyntheticAttendanceRecord[], minimum: number, days: 
   });
 }
 
-function replayNoShowCandidate(record: SyntheticAttendanceRecord, index: number): ConductV1AttendanceReplay {
+export function replayNoShowCandidate(record: SyntheticAttendanceRecord, index: number): ConductV1AttendanceReplay {
   if (index % 17 === 0) {
     return { candidateId: record.id, disputed: true, finalOutcome: "played", initialOutcome: "unexcused_no_show", resolution: "corrected" };
   }
