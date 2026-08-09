@@ -1344,6 +1344,18 @@ export const KNOWN_SYNTHETIC_INCIDENTS: KnownIncident[] = [
     reproductionSteps: ["Create the V1.1 worktree from PR #118", "Run npm run synthetic:conduct-v1-1", "Observe ENOENT for the ignored .env.local before database access"],
     severity: "low",
   },
+  {
+    actual: "The first concurrent split-then-merge regression preserved all three report rows in the canonical case, but the closed source branch retained report_count = 1, so aggregate moderation metrics counted four active report references instead of three.",
+    category: "PRODUCT_BUG",
+    evidence: ["Pending merge-counter reset and canonical aggregate regression."],
+    expected: "A merged source branch retains immutable lineage but exposes zero active evidence counters; aggregate case metrics count each canonical report exactly once.",
+    fixed: false,
+    id: "SW-0111",
+    operation: "conduct.moderation.merge_canonical_report_count",
+    regressionVerified: false,
+    reproductionSteps: ["Create a three-report case", "Split one report into an auditable branch", "Merge that branch back concurrently", "Sum report_count across the active and closed branches and observe 4 instead of 3"],
+    severity: "high",
+  },
 ];
 
 export function knownIncidentsForWorld(seed: number, virtualDate: string): SyntheticIncident[] {
