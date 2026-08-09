@@ -1056,6 +1056,18 @@ export const KNOWN_SYNTHETIC_INCIDENTS: KnownIncident[] = [
     reproductionSteps: ["Create a finalized match with three normalized participants", "Submit one valid attendance outcome", "Observe the draft RPC can close the roster while two participants remain uncertified"],
     severity: "high",
   },
+  {
+    actual: "The first conduct clients invoked async loaders directly from React effects and synchronously cleared evidence, triggering four react-hooks/set-state-in-effect errors in focused lint.",
+    category: "PRODUCT_BUG",
+    evidence: ["Focused ESLint reported four errors across conduct-player-center and conduct-admin-client before browser QA."],
+    expected: "Initial loads and evidence refreshes are scheduled asynchronously and every effect remains subscription-oriented with deterministic cleanup.",
+    fixed: false,
+    id: "SW-0087",
+    operation: "conduct.ui.react_effect_loading",
+    regressionVerified: false,
+    reproductionSteps: ["Run focused ESLint for the new conduct clients", "Inspect react-hooks/set-state-in-effect", "Observe direct loader calls and a synchronous setEvidence inside effects"],
+    severity: "medium",
+  },
 ];
 
 export function knownIncidentsForWorld(seed: number, virtualDate: string): SyntheticIncident[] {
