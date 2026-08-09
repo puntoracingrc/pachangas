@@ -1020,6 +1020,18 @@ export const KNOWN_SYNTHETIC_INCIDENTS: KnownIncident[] = [
     reproductionSteps: ["Start two transactions with the same operationId", "Let both read no receipt before either obtains the entity lock", "Commit the winner", "Observe the loser continuing into already-changed state without replaying the receipt"],
     severity: "critical",
   },
+  {
+    actual: "The first conduct SQL diagnostic resolved the target profile with a direct SELECT after switching to the reporter role, so profile RLS correctly hid the row and the RPC received a null fixture identifier.",
+    category: "TESTABILITY_GAP",
+    evidence: ["The diagnostic now assigns deterministic profile UUIDs before role switching and keeps the production RLS policy unchanged."],
+    expected: "Authenticated conduct tests use predeclared fixture identifiers and never weaken profile RLS to discover another player's internal row.",
+    fixed: true,
+    id: "SW-0084",
+    operation: "conduct.tests.target_profile_fixture_under_rls",
+    regressionVerified: true,
+    reproductionSteps: ["Create reporter and target profiles", "Switch to the reporter authenticated role", "Resolve the target with a direct SELECT on pachanga_player_profiles", "Observe RLS returning no row and the report RPC rejecting a null target"],
+    severity: "low",
+  },
 ];
 
 export function knownIncidentsForWorld(seed: number, virtualDate: string): SyntheticIncident[] {
