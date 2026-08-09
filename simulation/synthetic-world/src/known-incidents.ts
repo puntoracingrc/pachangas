@@ -1128,6 +1128,18 @@ export const KNOWN_SYNTHETIC_INCIDENTS: KnownIncident[] = [
     reproductionSteps: ["Submit a valid report as an authenticated player", "Read caseReference from the response", "Observe an empty value because only reportReference is public"],
     severity: "low",
   },
+  {
+    actual: "The first anonymity assertion searched for the bare word reporter and flagged the safe boolean reporterIdentityVisibleToTarget=false as an identity leak.",
+    category: "TESTABILITY_GAP",
+    evidence: ["The replacement assertion checks the actual reporter UUID, the absence of inbound report objects and the explicit false privacy flag."],
+    expected: "Anonymity regressions distinguish privacy metadata from identifying values and fail only on a real or reversible identity disclosure.",
+    fixed: false,
+    id: "SW-0093",
+    operation: "conduct.tests.anonymity_false_positive",
+    regressionVerified: false,
+    reproductionSteps: ["Read the target conduct model", "Search its serialized text for reporter", "Match reporterIdentityVisibleToTarget=false despite no reporter identifier being present"],
+    severity: "low",
+  },
 ];
 
 export function knownIncidentsForWorld(seed: number, virtualDate: string): SyntheticIncident[] {
