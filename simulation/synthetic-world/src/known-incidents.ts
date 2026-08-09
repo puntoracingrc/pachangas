@@ -1500,6 +1500,18 @@ export const KNOWN_SYNTHETIC_INCIDENTS: KnownIncident[] = [
     reproductionSteps: ["Open group administration", "Deactivate a registered player", "Inspect pachanga_group_members", "Observe the membership and its access remain while only the payload player is inactive"],
     severity: "high",
   },
+  {
+    actual: "Supabase CLI generated the new closure migration at 20260809194241, before the already committed Conduct V1.1 migration 20260809203000 on the exact PR #119 base.",
+    category: "ENVIRONMENT_ISSUE",
+    evidence: ["The empty generated migration is renamed above the latest committed migration before SQL is written or any local database applies it."],
+    expected: "A new migration created from a stacked branch sorts after every migration already present in that branch.",
+    fixed: false,
+    id: "SW-0124",
+    operation: "environment.core_social.migration_order",
+    regressionVerified: false,
+    reproductionSteps: ["Create the closure migration with Supabase CLI", "List migration filenames", "Observe 20260809194241 sorts before 20260809203000"],
+    severity: "high",
+  },
 ];
 
 export function knownIncidentsForWorld(seed: number, virtualDate: string): SyntheticIncident[] {
