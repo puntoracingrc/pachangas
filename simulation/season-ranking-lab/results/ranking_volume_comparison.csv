@@ -1,0 +1,5 @@
+maxControlledScore,minControlledScore,candidateId,eligiblePlayers,rankCorrelation,scoreSkillCorrelation,top10Precision,top50Precision,top100Precision,volumeAdvantage,volumeModel
+719.97,644.92,volume-all_saturated,9257,0.8144,0.743,0,0.1,0.28,0.2227,all_saturated
+700.21,644.92,volume-recent_20,9257,0.7947,0.7248,0,0.16,0.25,0.0695,recent_20
+709.99,644.92,volume-recent_25,9257,0.8093,0.7391,0,0.16,0.32,0.1385,recent_25
+815.53,644.92,volume-best_20,9257,0.6782,0.6231,0,0,0.07,0.6742,best_20

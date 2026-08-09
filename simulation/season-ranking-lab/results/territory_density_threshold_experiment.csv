@@ -1,0 +1,6 @@
+eligiblePlayers,top10ShareOfPopulation,top10VisibleAt30,top10VisibleAt50
+15,0.67,false,false
+30,0.33,true,false
+50,0.2,true,true
+100,0.1,true,true
+500,0.02,true,true

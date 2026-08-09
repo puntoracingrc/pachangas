@@ -1,0 +1,6 @@
+candidateId,eligiblePlayers,rankCorrelation,scoreSkillCorrelation,top10Precision,top50Precision,top100Precision,volumeAdvantage
+candidate_a_full_rating,9852,0.8506,0.8321,0,0.2,0.31,0.0853
+candidate_b_competitive_recent25,9812,0.8133,0.767,0,0.16,0.27,0.2978
+candidate_c_integrity_saturated,9838,0.8231,0.7733,0,0.1,0.26,0.3103
+candidate_d_best20_control,9726,0.7714,0.7548,0,0.02,0.11,0.6072
+candidate_e_recent20,9257,0.7947,0.7248,0,0.16,0.25,0.0695
