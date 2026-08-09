@@ -1164,6 +1164,18 @@ export const KNOWN_SYNTHETIC_INCIDENTS: KnownIncident[] = [
     reproductionSteps: ["Submit a report against the target", "Submit one reciprocal report as the target", "Read the target conduct model", "Observe one legitimate self-authored submittedReports entry"],
     severity: "low",
   },
+  {
+    actual: "The explicit moderator restriction path qualified a PL/pgSQL loop variable as moderate_pachanga_conduct_case_v1.restriction_type, which PostgreSQL interpreted as a missing table reference.",
+    category: "PRODUCT_BUG",
+    evidence: ["The restriction/appeal/expiry regression reaches the original branch and verifies one explicit social restriction, no automatic restriction and deterministic gate recovery."],
+    expected: "A confirmed case can receive a moderator-selected social restriction without SQL name-resolution errors or sporting side effects.",
+    fixed: false,
+    id: "SW-0096",
+    operation: "conduct.moderation.apply_social_restriction",
+    regressionVerified: false,
+    reproductionSteps: ["Enable social restrictions", "Confirm a moderation case", "Apply public_market for seven days", "Observe missing FROM-clause entry for moderate_pachanga_conduct_case_v1"],
+    severity: "high",
+  },
 ];
 
 export function knownIncidentsForWorld(seed: number, virtualDate: string): SyntheticIncident[] {
