@@ -1332,6 +1332,18 @@ export const KNOWN_SYNTHETIC_INCIDENTS: KnownIncident[] = [
     reproductionSteps: ["Build the Conduct V1 replay", "Request capacity at 5 or 10 cases per day", "Observe only a linear raw-case extrapolation is available"],
     severity: "medium",
   },
+  {
+    actual: "The isolated Conduct V1.1 worktree had no .env.local, so its first source-world replay stopped before any local database request.",
+    category: "ENVIRONMENT_ISSUE",
+    evidence: ["Pending rerun using the existing ignored local Synthetic World environment without copying or committing secrets."],
+    expected: "An isolated worktree can reuse the explicitly local Synthetic World configuration while keeping credentials ignored and every remote environment untouched.",
+    fixed: false,
+    id: "SW-0110",
+    operation: "environment.conduct_triage_local_env",
+    regressionVerified: false,
+    reproductionSteps: ["Create the V1.1 worktree from PR #118", "Run npm run synthetic:conduct-v1-1", "Observe ENOENT for the ignored .env.local before database access"],
+    severity: "low",
+  },
 ];
 
 export function knownIncidentsForWorld(seed: number, virtualDate: string): SyntheticIncident[] {
