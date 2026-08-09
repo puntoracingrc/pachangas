@@ -1116,6 +1116,18 @@ export const KNOWN_SYNTHETIC_INCIDENTS: KnownIncident[] = [
     reproductionSteps: ["Insert a finalized match directly into a fresh normalized read model", "Read storage match_version 0", "Submit it to Conduct V1", "Observe the server requiring canonical revision 1"],
     severity: "low",
   },
+  {
+    actual: "The SQL harness tried to read caseReference from the reporter response, but the privacy-preserving report receipt exposes only the reporter's opaque reportReference and no internal moderation-case identifier.",
+    category: "TESTABILITY_GAP",
+    evidence: ["The regression resolves the case only after restoring the privileged test role and joining the private report by operationId; the authenticated response remains unchanged."],
+    expected: "Tests obtain internal case identifiers through privileged fixtures, never by expanding the user-facing report response.",
+    fixed: false,
+    id: "SW-0092",
+    operation: "conduct.tests.private_case_reference_lookup",
+    regressionVerified: false,
+    reproductionSteps: ["Submit a valid report as an authenticated player", "Read caseReference from the response", "Observe an empty value because only reportReference is public"],
+    severity: "low",
+  },
 ];
 
 export function knownIncidentsForWorld(seed: number, virtualDate: string): SyntheticIncident[] {
