@@ -1524,6 +1524,18 @@ export const KNOWN_SYNTHETIC_INCIDENTS: KnownIncident[] = [
     reproductionSteps: ["Connect to 127.0.0.1:55322", "Query supabase_migrations.schema_migrations", "Observe relation does not exist"],
     severity: "medium",
   },
+  {
+    actual: "The first canonical self-leave call fails at runtime because the private departure function compares the group event column against an unqualified operation_id parameter, which PostgreSQL treats as ambiguous.",
+    category: "PRODUCT_BUG",
+    evidence: ["The local SQL regression stopped on the exact leave RPC with PostgreSQL error 42702 before applying any mutation; the test transaction rolled back."],
+    expected: "The canonical leave operation resolves its immutable event by an unambiguous identifier and returns one confirmed receipt.",
+    fixed: false,
+    id: "SW-0126",
+    operation: "team.membership.leave.operation_event_lookup",
+    regressionVerified: false,
+    reproductionSteps: ["Apply the Core Social migration locally", "Call leave_pachanga_group_authoritative_v1 as a current player", "Observe column reference operation_id is ambiguous in private.pachanga_depart_group_member_v1"],
+    severity: "high",
+  },
 ];
 
 export function knownIncidentsForWorld(seed: number, virtualDate: string): SyntheticIncident[] {
