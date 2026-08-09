@@ -1,0 +1,53 @@
+density,eligiblePlayers,scopeCode,scopeName,scopeType,truth,candidateRecallAt20,meanRankErrorTop10,medianRankErrorTop10,ndcgAt10,ndcgAt20,overlapAt10,precisionAt10,recallAt10,top10NearMissRate
+medium,160,20,Gipuzkoa,province,season_merit,0.7,13.7,7,0.6892,0.8249,5,0.5,0.5,0.2
+dense,377,48,Bizkaia,province,season_merit,0.6,28.3,7,0.5289,0.6947,4,0.4,0.4,0.1667
+dense,404,35,Las Palmas,province,season_merit,0.6,19,7,0.3797,0.5573,4,0.4,0.4,0.3333
+dense,226,30,Murcia,province,season_merit,0.6,13.7,8,0.5721,0.7201,4,0.4,0.4,0
+medium,105,47,Valladolid,province,season_merit,0.9,6.7,2,0.729,0.8505,6,0.6,0.6,0.75
+small,85,42,Soria,province,season_merit,0.6,16.3,13,0.4359,0.7914,3,0.3,0.3,0.2857
+dense,365,03,Alicante/Alacant,province,season_merit,0.6,24.3,14,0.2978,0.6665,2,0.2,0.2,0.25
+medium,196,17,Girona,province,season_merit,0.7,13,2,0.6207,0.8241,6,0.6,0.6,0.25
+medium,198,39,Cantabria,province,season_merit,0.6,13.2,6,0.7598,0.8149,5,0.5,0.5,0.2
+dense,362,29,Málaga,province,season_merit,0.4,24.3,19,0.4317,0.6069,2,0.2,0.2,0.125
+dense,381,41,Sevilla,province,season_merit,0.7,15.5,6,0.4962,0.7355,3,0.3,0.3,0.4286
+dense,384,11,Cádiz,province,season_merit,0.4,29.7,14,0.431,0.5241,2,0.2,0.2,0.25
+dense,429,08,Barcelona,province,season_merit,0.6,45.6,6,0.5884,0.6137,5,0.5,0.5,0.2
+medium,143,02,Albacete,province,season_merit,0.7,13.3,6,0.7711,0.7956,6,0.6,0.6,0
+small,88,05,Ávila,province,season_merit,0.7,11.3,4,0.5206,0.792,5,0.5,0.5,0.2
+medium,206,36,Pontevedra,province,season_merit,0.7,12.3,4,0.6784,0.802,5,0.5,0.5,0.2
+dense,354,46,Valencia/València,province,season_merit,0.8,9.7,3,0.747,0.8155,6,0.6,0.6,0.5
+medium,194,14,Córdoba,province,season_merit,0.4,20.6,18,0.435,0.6408,2,0.2,0.2,0
+medium,196,12,Castellón/Castelló,province,season_merit,0.6,15.6,14,0.5321,0.7514,4,0.4,0.4,0.1667
+medium,172,15,A Coruña,province,season_merit,0.7,12.6,7,0.5022,0.7678,4,0.4,0.4,0.5
+dense,404,28,Madrid,province,season_merit,0.9,7.7,5,0.6471,0.7295,7,0.7,0.7,0.6667
+medium,88,06,Badajoz,province,season_merit,0.9,7.6,4,0.7676,0.8604,6,0.6,0.6,0.5
+medium,167,50,Zaragoza,province,season_merit,0.4,22.5,15,0.3405,0.6491,2,0.2,0.2,0.125
+medium,150,23,Jaén,province,season_merit,0.8,9.9,10,0.685,0.8625,4,0.4,0.4,0.3333
+medium,176,31,Navarra,province,season_merit,0.7,13.2,6,0.4415,0.6866,5,0.5,0.5,0.4
+medium,126,27,Lugo,province,season_merit,0.8,6,3,0.7582,0.7602,7,0.7,0.7,0.3333
+small,95,51,Ceuta,province,season_merit,0.9,6.8,6,0.8008,0.8699,7,0.7,0.7,0.3333
+medium,251,43,Tarragona,province,season_merit,0.9,8.4,6,0.6294,0.8225,5,0.5,0.5,0.4
+medium,134,38,Santa Cruz de Tenerife,province,season_merit,0.8,9.1,7,0.4839,0.7605,4,0.4,0.4,0.5
+medium,152,37,Salamanca,province,season_merit,0.5,22.5,9,0.4377,0.6936,3,0.3,0.3,0.2857
+medium,137,13,Ciudad Real,province,season_merit,1,6.1,4,0.6185,0.8074,4,0.4,0.4,0.5
+small,60,34,Palencia,province,season_merit,0.9,2.3,0,0.8868,0.8658,8,0.8,0.8,0.5
+medium,186,21,Huelva,province,season_merit,0.7,12.6,6,0.5377,0.6693,5,0.5,0.5,0.4
+medium,96,25,Lleida,province,season_merit,0.8,10.3,6,0.589,0.7817,4,0.4,0.4,0.3333
+medium,98,24,León,province,season_merit,0.8,8.5,3,0.7796,0.881,6,0.6,0.6,0.25
+medium,204,26,La Rioja,province,season_merit,0.8,12,8,0.2966,0.5213,4,0.4,0.4,0.1667
+small,30,52,Melilla,province,season_merit,1,2.6,2,0.9131,0.957,8,0.8,0.8,1
+medium,134,33,Asturias,province,season_merit,0.9,10.9,4,0.7,0.8629,4,0.4,0.4,0.5
+medium,129,18,Granada,province,season_merit,1,3.9,4,0.7346,0.8989,5,0.5,0.5,1
+medium,184,45,Toledo,province,season_merit,0.5,20.8,13,0.3157,0.6763,3,0.3,0.3,0.1429
+medium,136,01,Araba/Álava,province,season_merit,0.8,9,5,0.6139,0.8266,5,0.5,0.5,0.2
+medium,163,07,Illes Balears,province,season_merit,0.3,28.6,17,0.4497,0.5862,2,0.2,0.2,0.125
+medium,100,10,Cáceres,province,season_merit,0.8,6.3,4,0.7017,0.8282,6,0.6,0.6,0.5
+small,97,44,Teruel,province,season_merit,0.9,6.4,2,0.7902,0.8608,6,0.6,0.6,0.25
+small,50,16,Cuenca,province,season_merit,1,3.2,3,0.9331,0.9808,9,0.9,0.9,1
+small,106,09,Burgos,province,season_merit,0.9,3.7,2,0.912,0.8882,8,0.8,0.8,0.5
+medium,114,04,Almería,province,season_merit,0.9,7.8,4,0.7095,0.8093,6,0.6,0.6,0.5
+small,59,19,Guadalajara,province,season_merit,0.9,4.6,2,0.8546,0.8837,6,0.6,0.6,0.5
+medium,183,32,Ourense,province,season_merit,0.7,13.9,4,0.6925,0.7695,5,0.5,0.5,0.4
+small,70,49,Zamora,province,season_merit,0.8,7.2,5,0.802,0.8767,5,0.5,0.5,0.6
+small,66,22,Huesca,province,season_merit,1,5.4,6,0.7065,0.9121,6,0.6,0.6,0.5
+small,87,40,Segovia,province,season_merit,1,4.6,3,0.7355,0.9481,6,0.6,0.6,0.75

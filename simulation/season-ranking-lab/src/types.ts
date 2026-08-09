@@ -2,8 +2,8 @@ export type SeasonStatus = "active" | "closed" | "frozen" | "planned";
 export type MatchStatus = "auto_confirmed" | "cancelled" | "confirmed" | "disputed" | "draft";
 export type MatchKind = "challenge" | "internal" | "tournament";
 export type Position = "DEF" | "DEL" | "MC" | "POR";
-export type VolumeModel = "all_saturated" | "best_20" | "recent_20" | "recent_25";
-export type RatingConfidenceModel = "competitive" | "full" | "graduated";
+export type VolumeModel = "all_saturated" | "best_20" | "hybrid_70_30" | "recent_20" | "recent_25" | "recent_30";
+export type RatingConfidenceModel = "challenge_calibrated" | "competitive" | "full" | "graduated";
 export type IntegrityMode = "none" | "weighted";
 
 export type Season = {
@@ -48,6 +48,7 @@ export type SyntheticTeam = {
 export type PlayerMatchEvidence = {
   challengeId: string;
   goals: number;
+  individualPerformanceIndex: number;
   kind: MatchKind;
   occurredAt: string;
   opponentClusterId: string;
@@ -60,6 +61,7 @@ export type PlayerMatchEvidence = {
   result: 0 | 0.5 | 1;
   status: MatchStatus;
   teamGoalDifference: number;
+  teamId: string;
   teamRating: number;
   venueConfidence: number;
   week: number;

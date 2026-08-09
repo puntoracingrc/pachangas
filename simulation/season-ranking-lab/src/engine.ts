@@ -29,6 +29,7 @@ function selectVolumeWindow(records: PlayerMatchEvidence[], config: SeasonScoreC
   const chronological = [...records].sort((left, right) => left.occurredAt.localeCompare(right.occurredAt));
   if (config.volumeModel === "recent_20") return chronological.slice(-20);
   if (config.volumeModel === "recent_25") return chronological.slice(-25);
+  if (config.volumeModel === "recent_30") return chronological.slice(-30);
   if (config.volumeModel === "best_20") {
     return chronological
       .map((record, index) => ({ index, record, value: performanceValue(record) }))
@@ -40,9 +41,9 @@ function selectVolumeWindow(records: PlayerMatchEvidence[], config: SeasonScoreC
   return chronological;
 }
 
-function weightedRecords(records: PlayerMatchEvidence[], config: SeasonScoreConfig) {
+function weightSelectedRecords(records: PlayerMatchEvidence[], config: SeasonScoreConfig) {
   const encounterCounts = new Map<string, number>();
-  return selectVolumeWindow(records, config).map((record) => {
+  return records.map((record) => {
     const opponentKey = config.integrityMode === "weighted"
       ? record.opponentClusterId : record.opponentTeamId;
     const encounter = encounterCounts.get(opponentKey) ?? 0;
@@ -51,6 +52,24 @@ function weightedRecords(records: PlayerMatchEvidence[], config: SeasonScoreConf
     const independence = config.integrityMode === "weighted" ? record.opponentIndependence : 1;
     return { record, weight: decay * independence };
   });
+}
+
+function weightedRecords(records: PlayerMatchEvidence[], config: SeasonScoreConfig) {
+  if (config.volumeModel !== "hybrid_70_30") {
+    return weightSelectedRecords(selectVolumeWindow(records, config), config);
+  }
+  const chronological = [...records].sort((left, right) => left.occurredAt.localeCompare(right.occurredAt));
+  const recent = weightSelectedRecords(chronological.slice(-20), config);
+  const season = weightSelectedRecords(chronological, config);
+  const combined = new Map<string, { record: PlayerMatchEvidence; weight: number }>();
+  for (const { record, weight } of season) {
+    combined.set(record.challengeId, { record, weight: weight * 0.3 });
+  }
+  for (const { record, weight } of recent) {
+    const current = combined.get(record.challengeId);
+    combined.set(record.challengeId, { record, weight: (current?.weight ?? 0) + weight * 0.7 });
+  }
+  return [...combined.values()].sort((left, right) => left.record.occurredAt.localeCompare(right.record.occurredAt));
 }
 
 export function resolveCompetitiveProvince(
@@ -187,7 +206,13 @@ function graduatedUnlock(challenges: number) {
   return 1;
 }
 
-function qualityComponent(input: SeasonPlayerInput, config: SeasonScoreConfig, weightedChallenges: number, independence: number) {
+function qualityComponent(
+  input: SeasonPlayerInput,
+  config: SeasonScoreConfig,
+  weightedChallenges: number,
+  independence: number,
+  records: PlayerMatchEvidence[],
+) {
   const reliabilityFactor = 0.72 + input.player.ratingReliability * 0.28;
   let unlock = 1;
   if (config.ratingConfidenceModel === "graduated") unlock = graduatedUnlock(weightedChallenges);
@@ -195,7 +220,20 @@ function qualityComponent(input: SeasonPlayerInput, config: SeasonScoreConfig, w
     const evidence = 1 - Math.exp(-weightedChallenges / 11);
     unlock = 0.55 + 0.45 * evidence * (0.65 + 0.35 * independence);
   }
-  return clamp(input.player.ratingV2 * reliabilityFactor * unlock, 0, 100);
+  let quality = input.player.ratingV2;
+  if (config.ratingConfidenceModel === "challenge_calibrated" && records.length > 0) {
+    const externalPerformance = records.reduce((sum, record) => (
+      sum + clamp(50 + (record.result - expectedResult(record.teamRating, record.opponentRating)) * 85, 0, 100)
+    ), 0) / records.length;
+    const opponentStrength = records.reduce((sum, record) => sum + record.opponentRating, 0) / records.length;
+    const challengeCalibratedQuality = input.player.ratingV2 * 0.62
+      + externalPerformance * 0.28
+      + opponentStrength * 0.1;
+    quality = challengeCalibratedQuality;
+    const evidence = 1 - Math.exp(-weightedChallenges / 12);
+    unlock = 0.6 + 0.4 * evidence * (0.65 + independence * 0.35);
+  }
+  return clamp(quality * reliabilityFactor * unlock, 0, 100);
 }
 
 export function calculateSeasonScore(
@@ -208,7 +246,7 @@ export function calculateSeasonScore(
   const totalWeight = weighted.reduce((sum, item) => sum + item.weight, 0);
   const independence = validRecords.length === 0 ? 0
     : validRecords.reduce((sum, record) => sum + record.opponentIndependence, 0) / validRecords.length;
-  const quality = qualityComponent(input, config, totalWeight, independence);
+  const quality = qualityComponent(input, config, totalWeight, independence, validRecords);
 
   const competitionEvidence = totalWeight === 0 ? 50 : weighted.reduce(
     (sum, item) => sum + performanceValue(item.record) * item.weight,

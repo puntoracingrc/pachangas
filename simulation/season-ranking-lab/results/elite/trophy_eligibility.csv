@@ -1,0 +1,4 @@
+candidateRecall20Median,eligiblePlayers,meanRankErrorMedian,ndcg10Median,rule,territories
+0.8,7665,9.7,0.6864,20/8,51
+0.9,5147,7,0.7701,25/10,49
+0.9,2698,5.2,0.8525,30/10,33

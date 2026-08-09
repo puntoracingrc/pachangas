@@ -1,0 +1,18 @@
+conceptualDuplicate,density,eligiblePlayers,scopeCode,scopeName,scopeType,truth,candidateRecallAt20,meanRankErrorTop10,medianRankErrorTop10,ndcgAt10,ndcgAt20,overlapAt10,precisionAt10,recallAt10,top10NearMissRate
+false,medium,673,16,País Vasco,autonomous_community,season_merit,0.5,52.4,9,0.4588,0.5631,4,0.4,0.4,0.1667
+false,medium,538,05,Canarias,autonomous_community,season_merit,0.6,21.5,7,0.3797,0.5573,4,0.4,0.4,0.3333
+true,medium,226,14,Región de Murcia,autonomous_community,season_merit,0.6,13.7,8,0.5721,0.7201,4,0.4,0.4,0
+false,medium,851,07,Castilla y León,autonomous_community,season_merit,0.2,71.8,36,0.1905,0.3218,2,0.2,0.2,0
+false,medium,915,10,Comunitat Valenciana,autonomous_community,season_merit,0.5,33.4,11,0.4458,0.6268,3,0.3,0.3,0.1429
+false,medium,972,09,Cataluña,autonomous_community,season_merit,0.3,103.6,20,0.2516,0.2928,3,0.3,0.3,0
+true,medium,198,06,Cantabria,autonomous_community,season_merit,0.6,13.2,6,0.7598,0.8149,5,0.5,0.5,0.2
+false,medium,1900,01,Andalucía,autonomous_community,season_merit,0.2,107.1,66,0.0047,0.2436,0,0,0,0.1
+false,medium,573,08,Castilla-La Mancha,autonomous_community,season_merit,0.4,41.7,19,0.2789,0.4551,3,0.3,0.3,0
+false,medium,687,12,Galicia,autonomous_community,season_merit,0.6,20.9,11,0.2024,0.5537,1,0.1,0.1,0.3333
+true,medium,404,13,Comunidad de Madrid,autonomous_community,season_merit,0.9,7.7,5,0.6471,0.7295,7,0.7,0.7,0.6667
+false,medium,188,11,Extremadura,autonomous_community,season_merit,0.8,8.4,4,0.6529,0.7395,6,0.6,0.6,0.5
+false,medium,330,02,Aragón,autonomous_community,season_merit,0.4,34.9,15,0.1885,0.5648,1,0.1,0.1,0.2222
+true,medium,176,15,Comunidad Foral de Navarra,autonomous_community,season_merit,0.7,13.2,6,0.4415,0.6866,5,0.5,0.5,0.4
+true,medium,204,17,La Rioja,autonomous_community,season_merit,0.8,12,8,0.2966,0.5213,4,0.4,0.4,0.1667
+true,medium,134,03,Principado de Asturias,autonomous_community,season_merit,0.9,10.9,4,0.7,0.8629,4,0.4,0.4,0.5
+true,medium,163,04,Illes Balears,autonomous_community,season_merit,0.3,28.6,17,0.4497,0.5862,2,0.2,0.2,0.125

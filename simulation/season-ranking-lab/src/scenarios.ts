@@ -1,4 +1,4 @@
-import { calculateSeasonScore } from "./engine";
+import { calculateSeasonScore, expectedResult } from "./engine";
 import { round } from "./random";
 import type {
   AttackKind,
@@ -26,6 +26,7 @@ type ProfileOptions = {
   sameDay?: boolean;
   technicalOpponents: number;
   teamRating?: number;
+  ownTeams?: number;
   venueConfidence?: number;
   participationConfidence?: number;
   winRate: number;
@@ -61,6 +62,12 @@ export function createProfileInput(options: ProfileOptions): SeasonPlayerInput {
     return {
       challengeId: `${options.id}-challenge-${index + 1}`,
       goals: index < (options.goals ?? 0) ? 1 : 0,
+      individualPerformanceIndex: Math.max(0, Math.min(100,
+        50
+        + ((options.latentSkill ?? options.rating) - 70) * 0.6
+        + ((options.latentSkill ?? options.rating) - (options.teamRating ?? options.rating)) * 0.4
+        + (result - expectedResult(options.teamRating ?? options.rating, options.opponentRating)) * 20,
+      )),
       kind: "challenge",
       occurredAt: new Date(Date.UTC(2028, 7, 1 + week * 7 + day, 18, index % 60)).toISOString(),
       opponentClusterId: `${options.id}-cluster-${index % Math.max(1, logicalOpponents)}`,
@@ -73,6 +80,7 @@ export function createProfileInput(options: ProfileOptions): SeasonPlayerInput {
       result,
       status: "confirmed",
       teamGoalDifference: result === 1 ? 1 : result === 0 ? -1 : 0,
+      teamId: `${options.id}-own-team-${index % Math.max(1, options.ownTeams ?? 1)}`,
       teamRating: options.teamRating ?? options.rating,
       venueConfidence: options.venueConfidence ?? 1,
       week,

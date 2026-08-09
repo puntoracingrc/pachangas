@@ -1,0 +1,6 @@
+classification,id,risk,accountAgeCluster,abnormalMatchFrequency,closedNetworkRatio,impossibleTravelRatio,opponentIdentityGap,participationAnomaly,ratingVsExternalEvidence,repeatedOpponentRatio,venueAnomaly
+clean,siblings-shared-network,6.25,0,0,0,0,0,0,0,0.625,0
+clean,real-club-four-squads,8.57,0,0,0,0,0,0,0,0.8571428571428572,0
+clean,same-weekly-venue,6.67,0,0,0,0,0,0,0,0.6666666666666667,0
+clean,owner-two-teams,10.73,0,0,0,0,0.16666666666666663,0,0,0.7727272727272727,0
+clean,small-league,7.78,0,0,0,0,0,0,0,0.7777777777777778,0

@@ -1,0 +1,53 @@
+density,eligiblePlayers,scopeCode,scopeName,scopeType,truth,candidateRecallAt20,meanRankErrorTop10,medianRankErrorTop10,ndcgAt10,ndcgAt20,overlapAt10,precisionAt10,recallAt10,top10NearMissRate
+medium,160,20,Gipuzkoa,province,capacity,0.8,11.1,7,0.7118,0.8278,6,0.6,0.6,0.25
+dense,377,48,Bizkaia,province,capacity,0.7,23.1,8,0.5416,0.7219,4,0.4,0.4,0.3333
+dense,404,35,Las Palmas,province,capacity,0.3,40.9,25,0.1524,0.4511,1,0.1,0.1,0.1111
+dense,226,30,Murcia,province,capacity,0.7,8.9,5,0.6287,0.7388,5,0.5,0.5,0
+medium,105,47,Valladolid,province,capacity,0.8,8.8,3,0.7417,0.8454,6,0.6,0.6,0.5
+small,85,42,Soria,province,capacity,0.5,18.7,15,0.4281,0.7758,2,0.2,0.2,0.25
+dense,365,03,Alicante/Alacant,province,capacity,0.5,27.3,16,0.4209,0.627,3,0.3,0.3,0
+medium,196,17,Girona,province,capacity,0.7,15,7,0.5616,0.7961,5,0.5,0.5,0.4
+medium,198,39,Cantabria,province,capacity,0.6,13,6,0.7532,0.823,5,0.5,0.5,0.2
+dense,362,29,Málaga,province,capacity,0.3,30.3,32,0.3826,0.5415,2,0.2,0.2,0.125
+dense,381,41,Sevilla,province,capacity,0.7,23.2,9,0.5829,0.7459,5,0.5,0.5,0.2
+dense,384,11,Cádiz,province,capacity,0.2,36.7,28,0.1571,0.4608,1,0.1,0.1,0
+dense,429,08,Barcelona,province,capacity,0.5,30.1,3,0.598,0.608,5,0.5,0.5,0
+medium,143,02,Albacete,province,capacity,0.7,13.9,6,0.7442,0.7763,6,0.6,0.6,0
+small,88,05,Ávila,province,capacity,0.7,12.8,4,0.4984,0.7739,4,0.4,0.4,0.1667
+medium,206,36,Pontevedra,province,capacity,0.7,10.9,4,0.7376,0.8012,6,0.6,0.6,0.25
+dense,354,46,Valencia/València,province,capacity,0.7,12.6,4,0.7868,0.8211,5,0.5,0.5,0.2
+medium,194,14,Córdoba,province,capacity,0.4,20.3,15,0.4384,0.6565,2,0.2,0.2,0.25
+medium,196,12,Castellón/Castelló,province,capacity,0.7,13.7,4,0.6072,0.7909,4,0.4,0.4,0.3333
+medium,172,15,A Coruña,province,capacity,0.7,11,3,0.5668,0.7615,4,0.4,0.4,0.3333
+dense,404,28,Madrid,province,capacity,0.8,15.2,4,0.7135,0.7344,6,0.6,0.6,0.5
+medium,88,06,Badajoz,province,capacity,0.8,8.7,3,0.7977,0.8676,6,0.6,0.6,0.5
+medium,167,50,Zaragoza,province,capacity,0.4,26.7,19,0.2884,0.5515,3,0.3,0.3,0.1429
+medium,150,23,Jaén,province,capacity,0.9,11.6,6,0.6352,0.839,5,0.5,0.5,0.4
+medium,176,31,Navarra,province,capacity,0.7,13.4,7,0.4364,0.673,5,0.5,0.5,0.4
+medium,126,27,Lugo,province,capacity,0.8,6.2,4,0.6386,0.6999,7,0.7,0.7,0.3333
+small,95,51,Ceuta,province,capacity,0.9,7,6,0.858,0.8769,7,0.7,0.7,0
+medium,251,43,Tarragona,province,capacity,0.8,18.5,5,0.5943,0.7976,4,0.4,0.4,0.3333
+medium,134,38,Santa Cruz de Tenerife,province,capacity,0.7,9.7,6,0.4593,0.7522,3,0.3,0.3,0.4286
+medium,152,37,Salamanca,province,capacity,0.7,13.8,5,0.4769,0.7106,4,0.4,0.4,0.3333
+medium,137,13,Ciudad Real,province,capacity,1,5.7,5,0.6435,0.8444,4,0.4,0.4,0.5
+small,60,34,Palencia,province,capacity,1,1.7,1,0.8795,0.8483,8,0.8,0.8,1
+medium,186,21,Huelva,province,capacity,0.6,14.4,5,0.4032,0.6309,4,0.4,0.4,0.3333
+medium,96,25,Lleida,province,capacity,0.8,11.1,7,0.5694,0.7797,4,0.4,0.4,0.3333
+medium,98,24,León,province,capacity,0.8,8.4,4,0.7875,0.8796,7,0.7,0.7,0.3333
+medium,204,26,La Rioja,province,capacity,0.6,13.9,17,0.2919,0.5721,3,0.3,0.3,0.1429
+small,30,52,Melilla,province,capacity,0.9,4.5,3,0.8891,0.9499,7,0.7,0.7,0.6667
+medium,134,33,Asturias,province,capacity,0.9,10.7,4,0.6636,0.8521,4,0.4,0.4,0.5
+medium,129,18,Granada,province,capacity,1,3.5,3,0.7065,0.8863,6,0.6,0.6,1
+medium,184,45,Toledo,province,capacity,0.5,22.7,12,0.2472,0.6276,2,0.2,0.2,0.25
+medium,136,01,Araba/Álava,province,capacity,0.8,9.3,5,0.6083,0.8251,5,0.5,0.5,0.4
+medium,163,07,Illes Balears,province,capacity,0.4,26.7,14,0.4435,0.5311,2,0.2,0.2,0.25
+medium,100,10,Cáceres,province,capacity,0.8,6.9,5,0.7156,0.8047,5,0.5,0.5,0.6
+small,97,44,Teruel,province,capacity,0.9,5.5,1,0.8026,0.8801,6,0.6,0.6,0.25
+small,50,16,Cuenca,province,capacity,1,3,3,0.9425,0.9788,9,0.9,0.9,1
+small,106,09,Burgos,province,capacity,0.9,4.2,2,0.9127,0.898,8,0.8,0.8,0
+medium,114,04,Almería,province,capacity,0.9,9,6,0.6651,0.7987,6,0.6,0.6,0.5
+small,59,19,Guadalajara,province,capacity,0.9,5,3,0.8498,0.8989,6,0.6,0.6,0.5
+medium,183,32,Ourense,province,capacity,0.7,15.1,6,0.5771,0.7401,4,0.4,0.4,0.5
+small,70,49,Zamora,province,capacity,0.8,7.1,4,0.803,0.8793,6,0.6,0.6,0.5
+small,66,22,Huesca,province,capacity,1,6.1,4,0.7263,0.9154,6,0.6,0.6,0.5
+small,87,40,Segovia,province,capacity,1,7.3,5,0.6251,0.9265,4,0.4,0.4,0.5

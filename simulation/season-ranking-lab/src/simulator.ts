@@ -18,6 +18,8 @@ export type SimulationWorld = {
   teams: SyntheticTeam[];
 };
 
+export type ActivityProfile = "high_activity" | "normal" | "progressive_growth" | "province_growth" | "summer_dip";
+
 const positions: Position[] = ["POR", "DEF", "DEF", "MC", "MC", "DEL", "DEF", "MC", "DEL", "DEF"];
 
 function isoDate(startYear: number, week: number, dayOffset: number) {
@@ -160,13 +162,34 @@ function addEvidence(
   recordsByPlayer: Map<string, PlayerMatchEvidence[]>,
   playerIds: string[],
   goals: Map<string, number>,
-  evidence: Omit<PlayerMatchEvidence, "goals">,
+  evidence: Omit<PlayerMatchEvidence, "goals" | "individualPerformanceIndex">,
+  playersById: Map<string, SyntheticPlayer>,
 ) {
   for (const playerId of playerIds) {
     const records = recordsByPlayer.get(playerId) ?? [];
-    records.push({ ...evidence, goals: goals.get(playerId) ?? 0 });
+    const player = playersById.get(playerId);
+    const expected = 1 / (1 + 10 ** ((evidence.opponentRating - evidence.teamRating) / 32));
+    const individualPerformanceIndex = clamp(
+      50
+      + ((player?.latentSkill ?? evidence.teamRating) - 70) * 0.6
+      + ((player?.latentSkill ?? evidence.teamRating) - evidence.teamRating) * 0.4
+      + (evidence.result - expected) * 20
+      + deterministicPerformanceNoise(`${evidence.challengeId}:${playerId}`),
+      0,
+      100,
+    );
+    records.push({ ...evidence, goals: goals.get(playerId) ?? 0, individualPerformanceIndex: round(individualPerformanceIndex) });
     recordsByPlayer.set(playerId, records);
   }
+}
+
+function deterministicPerformanceNoise(key: string) {
+  let hash = 2_166_136_261;
+  for (let index = 0; index < key.length; index += 1) {
+    hash ^= key.charCodeAt(index);
+    hash = Math.imul(hash, 16_777_619);
+  }
+  return ((hash >>> 0) / 4_294_967_295 - 0.5) * 16;
 }
 
 function createSeasonInputs(
@@ -175,6 +198,7 @@ function createSeasonInputs(
   seasonIndex: number,
   players: SyntheticPlayer[],
   teams: SyntheticTeam[],
+  activityProfile: ActivityProfile,
 ) {
   const playersById = new Map(players.map((player) => [player.id, player]));
   const activePlayers = new Set(players.filter(({ joinedSeasonIndex }) => joinedSeasonIndex <= seasonIndex).map(({ id }) => id));
@@ -184,6 +208,7 @@ function createSeasonInputs(
   const recurringOpponents = new Map<string, string[]>();
   const usedPairWeeks = new Set<string>();
   let challengeSequence = 0;
+  const weeks = Array.from({ length: 48 }, (_, index) => index + 1);
 
   const teamRatings = new Map(activeTeams.map((team) => {
     const roster = team.playerIds.map((id) => playersById.get(id)).filter((player): player is SyntheticPlayer => Boolean(player));
@@ -191,7 +216,16 @@ function createSeasonInputs(
   }));
 
   for (const home of activeTeams) {
-    const target = Math.round(7 + home.activityRate * 31);
+    const activityMultiplier = activityProfile === "high_activity" ? 1.35 : 1;
+    const target = Math.round((7 + home.activityRate * 31) * activityMultiplier);
+    const density = TERRITORY_BY_PROVINCE.get(home.provinceCode)?.density ?? "small";
+    const provinceGrowthFactor = density === "small" ? 1.25 : density === "medium" ? 0.8 : 0.35;
+    const weekWeights = weeks.map((week) => {
+      if (activityProfile === "summer_dip") return week <= 6 || week >= 44 ? 0.3 : 1;
+      if (activityProfile === "progressive_growth") return 0.25 + week / 48;
+      if (activityProfile === "province_growth") return 0.35 + (week / 48) * provinceGrowthFactor;
+      return 1;
+    });
     let attempts = 0;
     while ((matchCounts.get(home.id) ?? 0) < target && attempts < target * 9) {
       attempts += 1;
@@ -200,7 +234,7 @@ function createSeasonInputs(
         ? activeTeams.find(({ id }) => id === random.pick(recurring))
         : random.pick(candidateOpponents(home, activeTeams, random));
       if (!away || away.id === home.id) continue;
-      const week = random.integer(1, 48);
+      const week = random.weightedPick(weeks, weekWeights);
       const pair = [home.id, away.id].sort().join(":");
       const pairWeek = `${pair}:${week}`;
       if (usedPairWeeks.has(pairWeek)) continue;
@@ -239,10 +273,11 @@ function createSeasonInputs(
         result: homeResult,
         status,
         teamGoalDifference: homeResult === 1 ? goalMargin : homeResult === 0 ? -goalMargin : 0,
+        teamId: home.id,
         teamRating: homeRating,
         venueConfidence: 0.98,
         week,
-      });
+      }, playersById);
       addEvidence(recordsByPlayer, awayRoster, goalAllocation(random, awayRoster, playersById, awayResult), {
         challengeId,
         kind,
@@ -257,10 +292,11 @@ function createSeasonInputs(
         result: awayResult,
         status,
         teamGoalDifference: awayResult === 1 ? goalMargin : awayResult === 0 ? -goalMargin : 0,
+        teamId: away.id,
         teamRating: awayRating,
         venueConfidence: 0.98,
         week,
-      });
+      }, playersById);
     }
   }
 
@@ -273,6 +309,7 @@ function createSeasonInputs(
 }
 
 export function createSimulationWorld(options: {
+  activityProfile?: ActivityProfile;
   playerCount?: number;
   seasonCount?: number;
   seed?: number;
@@ -282,12 +319,13 @@ export function createSimulationWorld(options: {
   const seasonCount = options.seasonCount ?? 3;
   const teamSize = options.teamSize ?? 10;
   const random = new DeterministicRandom(options.seed ?? 20_260_809);
+  const activityProfile = options.activityProfile ?? "normal";
   const seasons = createSeasons(seasonCount);
   const teams = createTeams(random, Math.ceil(playerCount / teamSize));
   const players = createPlayers(random, playerCount, teams, teamSize);
   const inputsBySeason = new Map(seasons.map((season, index) => [
     season.id,
-    createSeasonInputs(random, season, index, players, teams),
+    createSeasonInputs(random, season, index, players, teams, activityProfile),
   ]));
   return { inputsBySeason, players, seasons, teams };
 }

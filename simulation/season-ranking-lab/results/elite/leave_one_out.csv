@@ -1,0 +1,52 @@
+dependentPlayers,provinceCode,provinceName,sensitiveRemovalRate,testedRemovals,top10DependencyRate
+5,20,Gipuzkoa,0.1047,258,0.5
+3,48,Bizkaia,0.0568,264,0.3
+2,35,Las Palmas,0.0435,299,0.2
+3,30,Murcia,0.1189,244,0.3
+4,47,Valladolid,0.0386,285,0.4
+3,42,Soria,0.0484,310,0.3
+8,03,Alicante/Alacant,0.2283,219,0.8
+0,17,Girona,0,309,0
+3,39,Cantabria,0.0385,260,0.3
+4,29,Málaga,0.0902,266,0.4
+1,41,Sevilla,0.0075,268,0.1
+3,11,Cádiz,0.0485,309,0.3
+5,08,Barcelona,0.1894,301,0.5
+6,02,Albacete,0.1154,234,0.6
+1,05,Ávila,0.0553,253,0.1
+2,36,Pontevedra,0.088,284,0.2
+2,46,Valencia/València,0.0457,328,0.2
+0,14,Córdoba,0,281,0
+2,12,Castellón/Castelló,0.0858,303,0.2
+4,15,A Coruña,0.0947,264,0.4
+2,28,Madrid,0.0969,289,0.2
+3,06,Badajoz,0.0339,295,0.3
+2,50,Zaragoza,0.047,319,0.2
+5,23,Jaén,0.1667,210,0.5
+4,31,Navarra,0.2088,340,0.4
+2,27,Lugo,0.0418,311,0.2
+4,51,Ceuta,0.0652,230,0.4
+1,43,Tarragona,0.004,252,0.1
+3,38,Santa Cruz de Tenerife,0.144,243,0.3
+2,37,Salamanca,0.0625,240,0.2
+3,13,Ciudad Real,0.1087,230,0.3
+2,34,Palencia,0.0354,311,0.2
+1,21,Huelva,0.0068,295,0.1
+3,25,Lleida,0.0972,247,0.3
+3,24,León,0.0315,254,0.3
+5,26,La Rioja,0.163,184,0.5
+5,33,Asturias,0.2637,182,0.5
+3,18,Granada,0.0321,312,0.3
+3,45,Toledo,0.0882,272,0.3
+1,01,Araba/Álava,0.0037,273,0.1
+2,07,Illes Balears,0.0258,271,0.2
+5,10,Cáceres,0.0519,231,0.5
+1,44,Teruel,0.0288,313,0.1
+0,16,Cuenca,0,337,0
+6,09,Burgos,0.1636,214,0.6
+1,04,Almería,0.0269,260,0.1
+2,19,Guadalajara,0.0212,236,0.2
+4,32,Ourense,0.0942,276,0.4
+1,49,Zamora,0.0074,272,0.1
+2,22,Huesca,0.0683,322,0.2
+5,40,Segovia,0.0583,223,0.5

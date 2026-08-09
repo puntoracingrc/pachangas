@@ -6,10 +6,14 @@ Laboratorio reproducible y exclusivamente sintético para Season Score, rankings
 
 ```bash
 npm run test:season-ranking-lab
+npm run test:season-ranking-elite
 npm run lab:season-ranking
+npm run lab:season-ranking:elite
 ```
 
 La semilla, población, fórmulas, elegibilidad, decaimiento por rival, volumen, actividad e integridad viven en `season_score_config.json`. El comando genera de nuevo `results/` y el informe `docs/season-ranking-lab-v1-report.md`.
+
+La validación de élite continúa el mismo laboratorio con métricas provinciales/autonómicas/nacionales, tres ground truths, corte out-of-sample 70/30, bootstrap #10/#11, leave-one-out, 20 seeds de 10.000 jugadores y ataque específico al corte. Genera `results/elite/` y `docs/season-ranking-elite-validation.md`.
 
 ## Límites
 
