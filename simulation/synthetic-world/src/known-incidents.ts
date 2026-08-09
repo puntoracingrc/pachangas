@@ -1560,6 +1560,18 @@ export const KNOWN_SYNTHETIC_INCIDENTS: KnownIncident[] = [
     reproductionSteps: ["Close a lineup through patch_pachanga_match_lineup_authoritative_v2", "Attempt an attendance mutation", "Observe the product rejects it with Open the lineup before changing attendance", "Observe the test rejects that valid error text"],
     severity: "low",
   },
+  {
+    actual: "The first Core Social concurrency run reached fixture cleanup with a challenge still referencing both synthetic groups, so PostgreSQL correctly rejected group deletion.",
+    category: "SIMULATION_BUG",
+    evidence: ["Cleanup is reordered to delete challenge events, challenge receipts and challenges before memberships and groups; a final query proves no Core Social fixture remains."],
+    expected: "Every concurrency run removes its own dependent rows in foreign-key order even when an earlier assertion fails.",
+    fixed: false,
+    id: "SW-0129",
+    operation: "simulation.core_social.concurrency_fixture_cleanup",
+    regressionVerified: false,
+    reproductionSteps: ["Run the Core Social concurrency fixture", "Create an expiring cross-group challenge", "Reach finally cleanup", "Observe pachanga_team_challenges_receiver_group_id_fkey blocks group deletion"],
+    severity: "medium",
+  },
 ];
 
 export function knownIncidentsForWorld(seed: number, virtualDate: string): SyntheticIncident[] {
