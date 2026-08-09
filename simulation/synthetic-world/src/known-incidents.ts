@@ -1044,6 +1044,18 @@ export const KNOWN_SYNTHETIC_INCIDENTS: KnownIncident[] = [
     reproductionSteps: ["Enable conduct reports in the local database", "Submit a valid match-linked report", "Reach the partial-index ON CONFLICT clause", "Observe target_profile_id is ambiguous"],
     severity: "high",
   },
+  {
+    actual: "The first attendance closure contract accepted any non-empty subset of match participants and then closed the roster, leaving omitted players without a canonical post-match outcome.",
+    category: "PRODUCT_BUG",
+    evidence: ["Static contract review found no equality check between submitted unique player IDs and the normalized match participant set."],
+    expected: "Closing attendance certifies each and every canonical match participant exactly once before the closure becomes immutable.",
+    fixed: false,
+    id: "SW-0086",
+    operation: "conduct.attendance.complete_roster_closure",
+    regressionVerified: false,
+    reproductionSteps: ["Create a finalized match with three normalized participants", "Submit one valid attendance outcome", "Observe the draft RPC can close the roster while two participants remain uncertified"],
+    severity: "high",
+  },
 ];
 
 export function knownIncidentsForWorld(seed: number, virtualDate: string): SyntheticIncident[] {
