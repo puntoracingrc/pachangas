@@ -1608,6 +1608,18 @@ export const KNOWN_SYNTHETIC_INCIDENTS: KnownIncident[] = [
     reproductionSteps: ["Create the Core Social V2 clone", "Inspect its declared coverage matrix", "Observe team.member_remove has zero executions"],
     severity: "medium",
   },
+  {
+    actual: "An authenticated user outside a group can reach the member-removal helper because actor_role is null and the PL/pgSQL condition actor_role NOT IN (owner, admin) evaluates to null instead of true.",
+    category: "PRODUCT_BUG",
+    evidence: ["The adversarial SQL regression called remove_pachanga_group_member_authoritative_v1 as a non-member and reached the sentinel proving the operation returned successfully; the surrounding transaction rolled back."],
+    expected: "Only a current owner or admin can remove another current non-owner member; missing membership must fail closed.",
+    fixed: false,
+    id: "SW-0133",
+    operation: "team.membership.admin_remove_null_role_authorization",
+    regressionVerified: false,
+    reproductionSteps: ["Authenticate as a registered user outside the target group", "Call remove_pachanga_group_member_authoritative_v1 with a valid group, target and revision", "Observe the null actor role bypasses NOT IN"],
+    severity: "critical",
+  },
 ];
 
 export function knownIncidentsForWorld(seed: number, virtualDate: string): SyntheticIncident[] {
