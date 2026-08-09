@@ -1176,6 +1176,18 @@ export const KNOWN_SYNTHETIC_INCIDENTS: KnownIncident[] = [
     reproductionSteps: ["Enable social restrictions", "Confirm a moderation case", "Apply public_market for seven days", "Observe missing FROM-clause entry for moderate_pachanga_conduct_case_v1"],
     severity: "high",
   },
+  {
+    actual: "The social-action gate invoked restriction expiry, whose target_user_id filter was ambiguous between the helper parameter and the table column.",
+    category: "PRODUCT_BUG",
+    evidence: ["The gate and explicit expiry regression run with an active finite restriction, then verify it expires once and restores only the affected social capability."],
+    expected: "Reading social gates and expiring finite restrictions never fails SQL name resolution and never touches sporting state.",
+    fixed: false,
+    id: "SW-0097",
+    operation: "conduct.restrictions.expiry_target_filter",
+    regressionVerified: false,
+    reproductionSteps: ["Apply a finite social restriction", "Call get_pachanga_social_action_gate_v1", "Observe ambiguous_column on target_user_id in the expiry helper"],
+    severity: "high",
+  },
 ];
 
 export function knownIncidentsForWorld(seed: number, virtualDate: string): SyntheticIncident[] {
