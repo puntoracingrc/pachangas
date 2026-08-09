@@ -1,28 +1,32 @@
 # Synthetic World product inventory
 
-Generated from product SQL and client code at `4c75d52e15449528fe206e4d542715ec96d42422`. This file distinguishes definitions from active client call sites; it is not proof that a remote environment has applied a migration.
+Generated from product SQL and client code at `93361fe0f22cafb8bd31fbde65fa055774ac0ca4+core-social-flows-closure-v1`. This file distinguishes definitions from active client or server-side activation paths; it is not proof that a remote environment has applied a migration.
 
 ## Counts
 
-- RPC definitions: 232
-- RPC called by the web client: 67
-- Product tables: 82
+- RPC definitions: 287
+- RPC called by the web client: 82
+- Product tables: 100
 - Mutable table targets in the web client: 3
 - Achievement keys found: 84
-- Notification/status literals found: 55
-- Time-dependent SQL lines: 352
+- Notification/status literals found: 63
+- Time-dependent SQL lines: 456
 
 ## Capability matrix
 
-| Area | Flow | Classification | Located contracts | Active web call sites |
+| Area | Flow | Classification | Located contracts | Active route or trigger |
 | --- | --- | --- | --- | --- |
 | teams | Crear equipo | implemented | pachanga_groups | pachanga_groups |
-| teams | Invitar y aceptar miembro | implemented | create_pachanga_admin_invite, join_pachanga_team | create_pachanga_admin_invite, join_pachanga_team |
-| teams | Abandonar grupo | not_implemented | - | - |
+| teams | Invitar y aceptar miembro | implemented | join_pachanga_team | join_pachanga_team |
+| teams | Invitar y aceptar admin | implemented | create_pachanga_admin_invite, accept_pachanga_admin_invite_authoritative_v1 | create_pachanga_admin_invite, accept_pachanga_admin_invite_authoritative_v1 |
+| teams | Abandonar grupo | implemented | leave_pachanga_group_authoritative_v1 | leave_pachanga_group_authoritative_v1 |
+| teams | Eliminar miembro | implemented | remove_pachanga_group_member_authoritative_v1 | remove_pachanga_group_member_authoritative_v1 |
+| teams | Transferir propiedad | implemented | transfer_pachanga_group_ownership_authoritative_v1 | transfer_pachanga_group_ownership_authoritative_v1 |
 | challenges | Crear reto | implemented | create_pachanga_team_challenge_authoritative | create_pachanga_team_challenge_authoritative |
 | challenges | Aceptar, rechazar o contrapropuesta | implemented | respond_pachanga_team_challenge_authoritative | respond_pachanga_team_challenge_authoritative |
-| challenges | Caducar reto | not_implemented | - | - |
-| market | Equipo busca jugador | implemented | sync_pachanga_open_match_authoritative_v2, request_pachanga_open_match_authoritative_v2 | sync_pachanga_open_match_authoritative_v2, request_pachanga_open_match_authoritative_v2 |
+| challenges | Caducar reto | implemented | reconcile_pachanga_team_challenge_expiry_v1 | reconcile_pachanga_team_challenge_expiry_v1 (server-side) |
+| market | Partido publico completo | implemented | sync_pachanga_open_match_authoritative_v2, request_pachanga_open_match_authoritative_v2, review_pachanga_open_match_request_authoritative_v2 | sync_pachanga_open_match_authoritative_v2, request_pachanga_open_match_authoritative_v2, review_pachanga_open_match_request_authoritative_v2 |
+| market | Abandonar plaza invitada | implemented | leave_pachanga_guest_match_v1 | leave_pachanga_guest_match_v1 |
 | market | Jugador busca equipo | implemented | sync_pachanga_market_profile_authoritative_v2 | sync_pachanga_market_profile_authoritative_v2 |
 | matches | Confirmar asistencia | implemented | patch_pachanga_match_player_status_authoritative_v2 | patch_pachanga_match_player_status_authoritative_v2 |
 | matches | Modificar alineacion | implemented | patch_pachanga_match_lineup_authoritative_v2 | patch_pachanga_match_lineup_authoritative_v2 |
@@ -39,8 +43,8 @@ Generated from product SQL and client code at `4c75d52e15449528fe206e4d542715ec9
 
 ## Interpretation
 
-- `implemented`: a product contract exists and the current web client invokes every located candidate.
-- `partially_implemented`: at least one contract exists, but part of the requested flow lacks an active web call site.
+- `implemented`: a product contract exists and has an active client or server-side activation path.
+- `partially_implemented`: at least one contract exists, but part of the requested flow lacks an active route.
 - `not_implemented`: no matching product contract was located.
 - `implemented_lab`: implemented only by the isolated Season Score laboratory and never presented as production behaviour.
 

@@ -323,8 +323,6 @@ export function createSyntheticWorld(options: {
       incidents: [
         ...knownIncidentsForWorld(seed, DEFAULT_WORLD_START),
         gap(seed, 20, "TESTABILITY_GAP", "virtual-clock.product-sql", "RPC time injection", "352 SQL time dependencies use server clock"),
-        gap(seed, 21, "NEEDS_PRODUCT_DECISION", "team.leave", "Canonical member departure flow", "No active product RPC located"),
-        gap(seed, 22, "NEEDS_PRODUCT_DECISION", "challenge.expire", "Canonical challenge expiry flow", "No active product RPC located"),
       ],
       matches: [],
       notifications: [],

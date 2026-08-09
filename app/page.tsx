@@ -4337,12 +4337,16 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
         if (adminInviteToken) {
           const userId = initialUser?.id ?? await ensureRegisteredUser(client);
           const user = initialUser?.id === userId ? initialUser : authUser?.id === userId ? authUser : (await getSignedUser(client));
-          const adminJoinResult = await client.rpc("accept_pachanga_admin_invite", {
+          const adminJoinResult = await client.rpc("accept_pachanga_admin_invite_authoritative_v1", {
             admin_token: adminInviteToken,
+            client_metadata: clientOperationMetadata(),
+            expected_invite_revision: 1,
             member_name: profileName.trim() || authDisplayName(user) || "Admin",
+            operation_id: id(),
           });
           if (adminJoinResult.error || !adminJoinResult.data) throw new Error(adminJoinResult.error?.message ?? "No se pudo aceptar la invitación de admin");
-          groupId = String(adminJoinResult.data);
+          groupId = String((adminJoinResult.data as { groupId?: string }).groupId ?? "");
+          if (!groupId) throw new Error("El servidor no devolvió el grupo de la invitación de admin");
         } else if (inviteToken) {
           const joinResult = await client.rpc("join_pachanga_team", {
             member_name: profileName.trim() || authDisplayName(initialUser) || "Jugador",
@@ -7499,6 +7503,81 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
     await loadTeamMembers(supabase, remoteGroupId);
   }
 
+  async function transferTeamOwnership(member: RemoteMember) {
+    if (!supabase || !remoteGroupId || !canManageRoles || member.role === "owner" || member.userId === currentUserId || remotePayloadRevisionRef.current === null) return;
+    if (!window.confirm(`¿Transferir la propiedad del grupo a ${member.displayName}? Seguirás como admin.`)) return;
+
+    setSyncStatus("connecting");
+    setSyncError("");
+    const result = await supabase.rpc("transfer_pachanga_group_ownership_authoritative_v1", {
+      client_metadata: clientOperationMetadata(),
+      expected_revision: remotePayloadRevisionRef.current,
+      operation_id: id(),
+      target_group_id: remoteGroupId,
+      target_user_id: member.userId,
+    });
+    if (result.error) {
+      setSyncStatus("error");
+      setSyncError(result.error.message);
+      return;
+    }
+    await loadTeams(supabase, remoteGroupId);
+  }
+
+  async function removeRegisteredMember(member: RemoteMember) {
+    const adminMayRemove = canManageRoles || (canManageTeam && member.role === "player");
+    if (!supabase || !remoteGroupId || !adminMayRemove || member.role === "owner" || member.userId === currentUserId || remotePayloadRevisionRef.current === null) return;
+    if (!window.confirm(`¿Eliminar a ${member.displayName} del grupo? Su perfil e historial se conservarán.`)) return;
+
+    setSyncStatus("connecting");
+    setSyncError("");
+    const result = await supabase.rpc("remove_pachanga_group_member_authoritative_v1", {
+      client_metadata: clientOperationMetadata(),
+      expected_revision: remotePayloadRevisionRef.current,
+      operation_id: id(),
+      target_group_id: remoteGroupId,
+      target_user_id: member.userId,
+    });
+    if (result.error) {
+      setSyncStatus("error");
+      setSyncError(result.error.message);
+      return;
+    }
+    await loadTeams(supabase, remoteGroupId);
+  }
+
+  async function leaveCurrentTeam() {
+    if (!supabase || !remoteGroupId || !hasRealTeam || remotePayloadRevisionRef.current === null) return;
+    if (currentRole === "owner") {
+      setSyncStatus("error");
+      setSyncError("Transfiere primero la propiedad del grupo desde Configuración.");
+      return;
+    }
+    if (!window.confirm(`¿Abandonar ${currentTeamName}? Tu ficha, Rating, logros e historial se conservarán.`)) return;
+
+    const client = supabase;
+    const leavingGroupId = remoteGroupId;
+    setSyncStatus("connecting");
+    setSyncError("");
+    const result = await client.rpc("leave_pachanga_group_authoritative_v1", {
+      client_metadata: clientOperationMetadata(),
+      expected_revision: remotePayloadRevisionRef.current,
+      operation_id: id(),
+      target_group_id: leavingGroupId,
+    });
+    if (result.error) {
+      setSyncStatus("error");
+      setSyncError(result.error.message);
+      return;
+    }
+
+    resetTeamScopedUi();
+    const params = new URLSearchParams(window.location.search);
+    ["grupo", "invite", "equipo", "i", "admin", "a", "p", "partido"].forEach((key) => params.delete(key));
+    window.history.replaceState(null, "", params.toString() ? `${window.location.pathname}?${params.toString()}` : window.location.pathname);
+    await loadTeams(client);
+  }
+
   function adminInviteUrl(token: string | null = adminInviteToken) {
     if (!localHydrated || typeof window === "undefined" || !currentTeam || !token) return "";
     return `${window.location.origin}/invitacion/admin/${encodeURIComponent(compactUuid(token))}`;
@@ -9548,15 +9627,15 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
               </div>
             ) : null}
           </div>
-          {canManageRoles ? (
+          {canManageTeam ? (
             <div className="owner-permissions-panel">
               <div className="backup-title">
                 <div>
-                  <span>Permisos de admin</span>
-                  <strong>Solo owner</strong>
+                  <span>Miembros y permisos</span>
+                  <strong>{canManageRoles ? "Owner" : "Admin"}</strong>
                 </div>
               </div>
-              <p>Da o quita permisos de admin a jugadores registrados. Los admins pueden organizar partidos, pero no pueden cambiar roles.</p>
+              <p>{canManageRoles ? "Cambia roles, transfiere la propiedad o elimina miembros registrados." : "Puedes eliminar jugadores. Solo el owner cambia admins o transfiere la propiedad."}</p>
               <div className="member-admin-list">
                 {teamMembers.map((member) => (
                   <label key={`settings-member-${member.userId}`}>
@@ -9564,33 +9643,43 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
                       {member.displayName}
                       {member.userId === currentUserId ? " (tú)" : ""}
                     </strong>
-                    <select
-                      value={member.role}
-                      disabled={member.role === "owner" || member.userId === currentUserId}
-                      onChange={(event) => void updateMemberRole(member, event.target.value as MemberRole)}
-                    >
-                      {member.role === "owner" ? <option value="owner">Owner / Admin</option> : null}
-                      <option value="admin">Admin</option>
-                      <option value="player">Jugador</option>
-                    </select>
+                    <span className="member-admin-actions">
+                      <select
+                        value={member.role}
+                        disabled={!canManageRoles || member.role === "owner" || member.userId === currentUserId}
+                        onChange={(event) => void updateMemberRole(member, event.target.value as MemberRole)}
+                      >
+                        {member.role === "owner" ? <option value="owner">Owner / Admin</option> : null}
+                        <option value="admin">Admin</option>
+                        <option value="player">Jugador</option>
+                      </select>
+                      {canManageRoles && member.role !== "owner" && member.userId !== currentUserId ? (
+                        <button type="button" onClick={() => void transferTeamOwnership(member)}>Hacer owner</button>
+                      ) : null}
+                      {member.role !== "owner" && member.userId !== currentUserId && (canManageRoles || member.role === "player") ? (
+                        <button className="danger-light-button" type="button" onClick={() => void removeRegisteredMember(member)}>Eliminar</button>
+                      ) : null}
+                    </span>
                   </label>
                 ))}
               </div>
-              <div className="admin-invite-row settings-admin-invite-row">
-                <span>Invitar como admin (no owner)</span>
-                <div>
-                  <button type="button" onClick={() => void createAdminInvite()} disabled={!remoteGroupId}>
-                    Crear link
-                  </button>
-                  <button className="copy-icon-button" type="button" onClick={() => void copyAdminInvite()} disabled={!remoteGroupId} title="Copiar invitación como admin, sin permisos de owner" aria-label="Copiar invitación como admin, sin permisos de owner">
-                    <CopyLogo />
-                  </button>
-                  <button className="whatsapp-icon-button" type="button" onClick={() => void shareAdminInviteWhatsApp()} disabled={!remoteGroupId} title="Enviar invitación como admin por WhatsApp" aria-label="Enviar invitación como admin por WhatsApp">
-                    <WhatsAppLogo />
-                  </button>
+              {canManageRoles ? (
+                <div className="admin-invite-row settings-admin-invite-row">
+                  <span>Invitar como admin (no owner)</span>
+                  <div>
+                    <button type="button" onClick={() => void createAdminInvite()} disabled={!remoteGroupId}>
+                      Crear link
+                    </button>
+                    <button className="copy-icon-button" type="button" onClick={() => void copyAdminInvite()} disabled={!remoteGroupId} title="Copiar invitación como admin, sin permisos de owner" aria-label="Copiar invitación como admin, sin permisos de owner">
+                      <CopyLogo />
+                    </button>
+                    <button className="whatsapp-icon-button" type="button" onClick={() => void shareAdminInviteWhatsApp()} disabled={!remoteGroupId} title="Enviar invitación como admin por WhatsApp" aria-label="Enviar invitación como admin por WhatsApp">
+                      <WhatsAppLogo />
+                    </button>
+                  </div>
+                  {adminInviteToken ? <small>Invitación admin lista</small> : null}
                 </div>
-                {adminInviteToken ? <small>Invitación admin lista</small> : null}
-              </div>
+              ) : null}
             </div>
           ) : null}
           <div className="backup-panel">
@@ -11071,6 +11160,18 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
                 <button type="button" onClick={() => runMobileAccountAction(openGroupSwitcher)} disabled={!isRegisteredUser}>
                   <span>Cambiar de pachanga</span><small>Entra en otro de tus grupos</small><b aria-hidden="true">›</b>
                 </button>
+                {hasRealTeam ? (
+                  <button
+                    className="danger"
+                    type="button"
+                    onClick={() => runMobileAccountAction(() => void leaveCurrentTeam())}
+                    disabled={currentRole === "owner"}
+                  >
+                    <span>Abandonar equipo</span>
+                    <small>{currentRole === "owner" ? "Transfiere antes la propiedad en Configuración" : "Conserva tu ficha, Rating e historial"}</small>
+                    <b aria-hidden="true">›</b>
+                  </button>
+                ) : null}
                 <a href="/manual">
                   <span>Manual de usuario</span><small>Flujos para jugadores y administradores</small><b aria-hidden="true">›</b>
                 </a>

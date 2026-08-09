@@ -317,9 +317,11 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /Cerrar sin guardar/);
   assert.match(page, /Admins · permisos solo owner/);
   assert.match(page, /canManageRoles/);
-  assert.match(page, /Permisos de admin/);
-  assert.match(page, /Solo owner/);
-  assert.match(page, /Da o quita permisos de admin/);
+  assert.match(page, /Miembros y permisos/);
+  assert.match(page, /transferTeamOwnership/);
+  assert.match(page, /removeRegisteredMember/);
+  assert.match(page, /leaveCurrentTeam/);
+  assert.match(page, /Abandonar equipo/);
   assert.match(page, /openOwnPlayerProfile/);
   assert.match(page, /type ProfilePane = "ficha" \| "ranking"/);
   assert.match(page, /setProfilePane\("ficha"\)/);

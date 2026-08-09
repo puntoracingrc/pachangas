@@ -112,6 +112,53 @@ delete from public.pachanga_team_challenge_events where challenge_id in (
   where sender_group_id in (${sqlText(senderGroupId)}::uuid, ${sqlText(receiverGroupId)}::uuid)
      or receiver_group_id in (${sqlText(senderGroupId)}::uuid, ${sqlText(receiverGroupId)}::uuid)
 );
+delete from public.pachanga_external_match_scorers where external_match_id in (
+  select matches.id from public.pachanga_external_matches matches
+  join public.pachanga_team_challenges challenges on challenges.id=matches.challenge_id
+  where challenges.sender_group_id in (${sqlText(senderGroupId)}::uuid, ${sqlText(receiverGroupId)}::uuid)
+     or challenges.receiver_group_id in (${sqlText(senderGroupId)}::uuid, ${sqlText(receiverGroupId)}::uuid)
+);
+delete from public.pachanga_external_match_participants where external_match_id in (
+  select matches.id from public.pachanga_external_matches matches
+  join public.pachanga_team_challenges challenges on challenges.id=matches.challenge_id
+  where challenges.sender_group_id in (${sqlText(senderGroupId)}::uuid, ${sqlText(receiverGroupId)}::uuid)
+     or challenges.receiver_group_id in (${sqlText(senderGroupId)}::uuid, ${sqlText(receiverGroupId)}::uuid)
+);
+delete from public.pachanga_external_result_attestations where external_match_id in (
+  select matches.id from public.pachanga_external_matches matches
+  join public.pachanga_team_challenges challenges on challenges.id=matches.challenge_id
+  where challenges.sender_group_id in (${sqlText(senderGroupId)}::uuid, ${sqlText(receiverGroupId)}::uuid)
+     or challenges.receiver_group_id in (${sqlText(senderGroupId)}::uuid, ${sqlText(receiverGroupId)}::uuid)
+);
+delete from public.pachanga_external_result_versions where external_match_id in (
+  select matches.id from public.pachanga_external_matches matches
+  join public.pachanga_team_challenges challenges on challenges.id=matches.challenge_id
+  where challenges.sender_group_id in (${sqlText(senderGroupId)}::uuid, ${sqlText(receiverGroupId)}::uuid)
+     or challenges.receiver_group_id in (${sqlText(senderGroupId)}::uuid, ${sqlText(receiverGroupId)}::uuid)
+);
+delete from public.pachanga_external_result_events where external_match_id in (
+  select matches.id from public.pachanga_external_matches matches
+  join public.pachanga_team_challenges challenges on challenges.id=matches.challenge_id
+  where challenges.sender_group_id in (${sqlText(senderGroupId)}::uuid, ${sqlText(receiverGroupId)}::uuid)
+     or challenges.receiver_group_id in (${sqlText(senderGroupId)}::uuid, ${sqlText(receiverGroupId)}::uuid)
+);
+delete from public.pachanga_external_result_operation_receipts where external_match_id in (
+  select matches.id from public.pachanga_external_matches matches
+  join public.pachanga_team_challenges challenges on challenges.id=matches.challenge_id
+  where challenges.sender_group_id in (${sqlText(senderGroupId)}::uuid, ${sqlText(receiverGroupId)}::uuid)
+     or challenges.receiver_group_id in (${sqlText(senderGroupId)}::uuid, ${sqlText(receiverGroupId)}::uuid)
+);
+delete from public.pachanga_external_match_group_state where external_match_id in (
+  select matches.id from public.pachanga_external_matches matches
+  join public.pachanga_team_challenges challenges on challenges.id=matches.challenge_id
+  where challenges.sender_group_id in (${sqlText(senderGroupId)}::uuid, ${sqlText(receiverGroupId)}::uuid)
+     or challenges.receiver_group_id in (${sqlText(senderGroupId)}::uuid, ${sqlText(receiverGroupId)}::uuid)
+);
+delete from public.pachanga_external_matches where challenge_id in (
+  select id from public.pachanga_team_challenges
+  where sender_group_id in (${sqlText(senderGroupId)}::uuid, ${sqlText(receiverGroupId)}::uuid)
+     or receiver_group_id in (${sqlText(senderGroupId)}::uuid, ${sqlText(receiverGroupId)}::uuid)
+);
 delete from public.pachanga_team_social_operation_receipts
 where group_id in (${sqlText(senderGroupId)}::uuid, ${sqlText(receiverGroupId)}::uuid);
 delete from public.pachanga_team_challenges

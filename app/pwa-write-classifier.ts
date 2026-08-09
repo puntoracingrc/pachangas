@@ -24,6 +24,7 @@ const v1WriteRpcNames = new Set([
 ]);
 
 const v2WriteRpcNames = new Set([
+  "accept_pachanga_admin_invite_authoritative_v1",
   "appeal_pachanga_conduct_action_v1",
   "cancel_pachanga_external_match_v1",
   "cancel_my_pachanga_open_match_request_v1",
@@ -44,6 +45,7 @@ const v2WriteRpcNames = new Set([
   "patch_pachanga_match_scorers_authoritative_v2",
   "patch_pachanga_player_profile_authoritative_v2",
   "leave_pachanga_guest_match_v1",
+  "leave_pachanga_group_authoritative_v1",
   "mark_pachanga_notification_read_v1",
   "merge_pachanga_conduct_cases_v1_1",
   "moderate_pachanga_conduct_case_v1",
@@ -56,10 +58,12 @@ const v2WriteRpcNames = new Set([
   "record_pachanga_guest_team_rating_token_v2",
   "record_pachanga_individual_rating_authoritative_v2",
   "request_pachanga_open_match_authoritative_v2",
+  "remove_pachanga_group_member_authoritative_v1",
   "resolve_pachanga_attendance_review_v1",
   "resolve_pachanga_conduct_appeal_v1",
   "respond_pachanga_post_match_attendance_v1",
   "respond_pachanga_team_challenge_authoritative",
+  "reconcile_pachanga_team_challenge_expiry_v1",
   "respond_pachanga_match_link_invitation_v1",
   "respond_pachanga_match_invitation_v1",
   "reject_pachanga_external_result_change_v1",
@@ -70,6 +74,7 @@ const v2WriteRpcNames = new Set([
   "set_pachanga_group_ratings_enabled_authoritative_v2",
   "sync_pachanga_market_profile_authoritative_v2",
   "sync_pachanga_open_match_authoritative_v2",
+  "transfer_pachanga_group_ownership_authoritative_v1",
   "submit_pachanga_conduct_report_v1",
   "split_pachanga_conduct_case_v1_1",
   "upsert_pachanga_challengeable_team_profile_authoritative",

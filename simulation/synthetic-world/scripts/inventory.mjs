@@ -61,12 +61,16 @@ function categoryForRpc(name) {
 
 const requestedCapabilities = [
   ["teams", "Crear equipo", ["pachanga_groups"]],
-  ["teams", "Invitar y aceptar miembro", ["create_pachanga_admin_invite", "accept_pachanga_admin_invite", "join_pachanga_team"]],
-  ["teams", "Abandonar grupo", ["leave_pachanga_group"]],
+  ["teams", "Invitar y aceptar miembro", ["join_pachanga_team"]],
+  ["teams", "Invitar y aceptar admin", ["create_pachanga_admin_invite", "accept_pachanga_admin_invite_authoritative_v1"]],
+  ["teams", "Abandonar grupo", ["leave_pachanga_group_authoritative_v1"]],
+  ["teams", "Eliminar miembro", ["remove_pachanga_group_member_authoritative_v1"]],
+  ["teams", "Transferir propiedad", ["transfer_pachanga_group_ownership_authoritative_v1"]],
   ["challenges", "Crear reto", ["create_pachanga_team_challenge_authoritative"]],
   ["challenges", "Aceptar, rechazar o contrapropuesta", ["respond_pachanga_team_challenge_authoritative"]],
-  ["challenges", "Caducar reto", ["expire_pachanga_team_challenge"]],
-  ["market", "Equipo busca jugador", ["sync_pachanga_open_match_authoritative_v2", "request_pachanga_open_match_authoritative_v2"]],
+  ["challenges", "Caducar reto", ["reconcile_pachanga_team_challenge_expiry_v1"]],
+  ["market", "Partido publico completo", ["sync_pachanga_open_match_authoritative_v2", "request_pachanga_open_match_authoritative_v2", "review_pachanga_open_match_request_authoritative_v2"]],
+  ["market", "Abandonar plaza invitada", ["leave_pachanga_guest_match_v1"]],
   ["market", "Jugador busca equipo", ["sync_pachanga_market_profile_authoritative_v2"]],
   ["matches", "Confirmar asistencia", ["patch_pachanga_match_player_status_authoritative_v2"]],
   ["matches", "Modificar alineacion", ["patch_pachanga_match_lineup_authoritative_v2"]],
@@ -117,16 +121,21 @@ const timeDependencies = sqlSources.flatMap(({ file, source }) => source.split("
 
 const rpcInventory = canonicalRpcNames.map((name) => ({ ...classifyRpc(name, clientRpcNames), category: categoryForRpc(name) }));
 const canonicalNames = new Set([...canonicalRpcNames, ...tables]);
+const serverActivatedCapabilities = new Set(["Caducar reto"]);
 const capabilities = requestedCapabilities.map(([category, label, candidates]) => {
   const implemented = candidates.filter((candidate) => canonicalNames.has(candidate));
   const called = implemented.filter((candidate) => clientRpcNames.has(candidate) || appTableWrites.includes(candidate));
+  const activated = called.length > 0
+    ? called
+    : serverActivatedCapabilities.has(label) ? implemented.map((candidate) => `${candidate} (server-side)`) : [];
   return {
+    activated,
     called,
     candidates,
     category,
     classification: implemented.length === 0
       ? (category === "integrity" ? "implemented_lab" : "not_implemented")
-      : called.length === implemented.length ? "implemented" : "partially_implemented",
+      : called.length === implemented.length || serverActivatedCapabilities.has(label) ? "implemented" : "partially_implemented",
     implemented,
     label,
   };
@@ -157,9 +166,9 @@ const inventory = {
 };
 
 const capabilityRows = capabilities.map((item) =>
-  `| ${item.category} | ${item.label} | ${item.classification} | ${item.implemented.join(", ") || "-"} | ${item.called.join(", ") || "-"} |`,
+  `| ${item.category} | ${item.label} | ${item.classification} | ${item.implemented.join(", ") || "-"} | ${item.activated.join(", ") || "-"} |`,
 ).join("\n");
-const markdown = `# Synthetic World product inventory\n\nGenerated from product SQL and client code at \`${inventory.sourceCommit}\`. This file distinguishes definitions from active client call sites; it is not proof that a remote environment has applied a migration.\n\n## Counts\n\n- RPC definitions: ${inventory.counts.rpcDefinitions}\n- RPC called by the web client: ${inventory.counts.appRpcCalls}\n- Product tables: ${inventory.counts.tables}\n- Mutable table targets in the web client: ${inventory.counts.appTableWrites}\n- Achievement keys found: ${inventory.counts.achievements}\n- Notification/status literals found: ${inventory.counts.notificationKinds}\n- Time-dependent SQL lines: ${inventory.counts.timeDependencies}\n\n## Capability matrix\n\n| Area | Flow | Classification | Located contracts | Active web call sites |\n| --- | --- | --- | --- | --- |\n${capabilityRows}\n\n## Interpretation\n\n- \`implemented\`: a product contract exists and the current web client invokes every located candidate.\n- \`partially_implemented\`: at least one contract exists, but part of the requested flow lacks an active web call site.\n- \`not_implemented\`: no matching product contract was located.\n- \`implemented_lab\`: implemented only by the isolated Season Score laboratory and never presented as production behaviour.\n\nThe machine-readable inventory is \`product-inventory.json\`.\n`;
+const markdown = `# Synthetic World product inventory\n\nGenerated from product SQL and client code at \`${inventory.sourceCommit}\`. This file distinguishes definitions from active client or server-side activation paths; it is not proof that a remote environment has applied a migration.\n\n## Counts\n\n- RPC definitions: ${inventory.counts.rpcDefinitions}\n- RPC called by the web client: ${inventory.counts.appRpcCalls}\n- Product tables: ${inventory.counts.tables}\n- Mutable table targets in the web client: ${inventory.counts.appTableWrites}\n- Achievement keys found: ${inventory.counts.achievements}\n- Notification/status literals found: ${inventory.counts.notificationKinds}\n- Time-dependent SQL lines: ${inventory.counts.timeDependencies}\n\n## Capability matrix\n\n| Area | Flow | Classification | Located contracts | Active route or trigger |\n| --- | --- | --- | --- | --- |\n${capabilityRows}\n\n## Interpretation\n\n- \`implemented\`: a product contract exists and has an active client or server-side activation path.\n- \`partially_implemented\`: at least one contract exists, but part of the requested flow lacks an active route.\n- \`not_implemented\`: no matching product contract was located.\n- \`implemented_lab\`: implemented only by the isolated Season Score laboratory and never presented as production behaviour.\n\nThe machine-readable inventory is \`product-inventory.json\`.\n`;
 
 await mkdir(outputDir, { recursive: true });
 await writeFile(path.join(outputDir, "product-inventory.json"), `${JSON.stringify(inventory, null, 2)}\n`);

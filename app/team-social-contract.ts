@@ -1,7 +1,7 @@
 export const TEAM_SOCIAL_CACHE_VERSION = "team-social-v1";
 export const TEAM_SOCIAL_CACHE_MAX_AGE_MS = 5 * 60 * 1000;
 
-export type TeamChallengeStatus = "accepted" | "cancelled" | "changes_proposed" | "proposed" | "rejected";
+export type TeamChallengeStatus = "accepted" | "cancelled" | "changes_proposed" | "expired" | "proposed" | "rejected";
 export type TeamChallengeAction = "accept" | "cancel" | "propose_changes" | "reject";
 export type TeamChallengeModality = "futbol11" | "futbol7" | "sala";
 
@@ -23,6 +23,7 @@ export type TeamChallenge = {
   cancelledAt: string | null;
   createdAt: string;
   direction: "incoming" | "outgoing";
+  expiredAt: string | null;
   field: TeamChallengeField;
   id: string;
   lastProposedBy: "opponent" | "own";
@@ -88,7 +89,7 @@ function teamSummary(value: unknown): TeamSummary | null {
 }
 
 function challengeStatus(value: unknown): TeamChallengeStatus {
-  return value === "accepted" || value === "cancelled" || value === "changes_proposed" || value === "rejected"
+  return value === "accepted" || value === "cancelled" || value === "changes_proposed" || value === "expired" || value === "rejected"
     ? value
     : "proposed";
 }
@@ -110,6 +111,7 @@ function teamChallenge(value: unknown): TeamChallenge | null {
     cancelledAt: nullableText(value.cancelledAt),
     createdAt: text(value.createdAt),
     direction: value.direction === "incoming" ? "incoming" : "outgoing",
+    expiredAt: nullableText(value.expiredAt),
     field: {
       address: text(field.address),
       mapsUrl: nullableText(field.mapsUrl),
@@ -196,6 +198,7 @@ export function teamChallengeStatusLabel(status: TeamChallengeStatus) {
   if (status === "accepted") return "Aceptado";
   if (status === "cancelled") return "Cancelado";
   if (status === "changes_proposed") return "Cambios propuestos";
+  if (status === "expired") return "Caducado";
   if (status === "rejected") return "Rechazado";
   return "Pendiente";
 }

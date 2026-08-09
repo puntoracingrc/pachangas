@@ -32,6 +32,7 @@ PACHANGAS_SYNTHETIC_DB_URL=postgresql://postgres:postgres@127.0.0.1:55322/postgr
 
 ```bash
 npm run synthetic:inventory
+npm run synthetic:core-social-v2
 npm run synthetic:conduct-inventory
 npm run synthetic:world -- create --seed 20260809 --name "Mundo de prueba"
 npm run synthetic:world -- advance --world <uuid> --days 7 --snapshot 1

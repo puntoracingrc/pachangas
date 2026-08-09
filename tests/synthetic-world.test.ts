@@ -250,7 +250,14 @@ test("canonical flow inventory keeps product and lab execution visibly distinct"
   assert.equal(CANONICAL_CONTRACTS.find(({ flow }) => flow === "match.finalize")?.route, "finalize_pachanga_match_authoritative_v2");
   assert.equal(CANONICAL_CONTRACTS.find(({ flow }) => flow === "rating.peer")?.execution, "product_rpc");
   assert.equal(CANONICAL_CONTRACTS.find(({ flow }) => flow === "ranking.season_score_v3")?.classification, "implemented_lab");
-  assert.equal(CANONICAL_CONTRACTS.find(({ flow }) => flow === "team.leave")?.classification, "not_implemented");
+  assert.deepEqual(
+    CANONICAL_CONTRACTS.find(({ flow }) => flow === "team.leave"),
+    { area: "teams", classification: "implemented", execution: "product_rpc", flow: "team.leave", route: "leave_pachanga_group_authoritative_v1", timeInjectable: false },
+  );
+  assert.deepEqual(
+    CANONICAL_CONTRACTS.find(({ flow }) => flow === "challenge.expire"),
+    { area: "challenges", classification: "implemented", execution: "product_rpc", flow: "challenge.expire", route: "reconcile_pachanga_team_challenge_expiry_v1", timeInjectable: false },
+  );
 });
 
 test("permanent incident resolutions change only after a verified regression", () => {
