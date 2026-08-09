@@ -36,6 +36,14 @@
     "lab:season-ranking": "tsx simulation/season-ranking-lab/run.ts",
     "lab:season-ranking:elite": "tsx simulation/season-ranking-lab/run-elite.ts",
     "lab:season-ranking:v3": "tsx simulation/season-ranking-lab/run-v3.ts",
+    "synthetic:inventory": "node simulation/synthetic-world/scripts/inventory.mjs",
+    "synthetic:conduct-inventory": "node simulation/synthetic-world/scripts/conduct-inventory.mjs",
+    "synthetic:world": "tsx simulation/synthetic-world/cli.ts",
+    "synthetic:season": "tsx simulation/synthetic-world/cli.ts season",
+    "synthetic:soak": "tsx simulation/synthetic-world/scripts/soak.ts",
+    "test:synthetic-world": "tsx --test tests/synthetic-world.test.ts",
+    "test:synthetic-world:db": "psql -X -v ON_ERROR_STOP=1 \"$PACHANGAS_SYNTHETIC_DB_URL\" -f tests/synthetic-world-db.sql",
+    "test:synthetic-world:dashboard-api": "node simulation/synthetic-world/scripts/dashboard-api-regression.mjs",
     "db:generate": "drizzle-kit generate"
   },
   "dependencies": {
