@@ -1188,6 +1188,18 @@ export const KNOWN_SYNTHETIC_INCIDENTS: KnownIncident[] = [
     reproductionSteps: ["Apply a finite social restriction", "Call get_pachanga_social_action_gate_v1", "Observe ambiguous_column on target_user_id in the expiry helper"],
     severity: "high",
   },
+  {
+    actual: "The first expiry fix renamed an existing function parameter, so PostgreSQL rejected the idempotent CREATE OR REPLACE migration with cannot change name of input parameter.",
+    category: "PRODUCT_BUG",
+    evidence: ["The migration keeps the published parameter name, copies it to an unambiguous local variable and reapplies cleanly over the existing local schema."],
+    expected: "Conduct V1 migration remains safely re-runnable during local diagnostics and never requires a destructive function drop for an internal name fix.",
+    fixed: false,
+    id: "SW-0098",
+    operation: "conduct.migration.function_parameter_compatibility",
+    regressionVerified: false,
+    reproductionSteps: ["Apply the original migration", "Rename target_user_id in CREATE OR REPLACE FUNCTION", "Reapply the migration", "Observe PostgreSQL 42P13"],
+    severity: "medium",
+  },
 ];
 
 export function knownIncidentsForWorld(seed: number, virtualDate: string): SyntheticIncident[] {
