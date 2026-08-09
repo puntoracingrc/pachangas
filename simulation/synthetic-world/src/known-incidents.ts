@@ -1572,6 +1572,18 @@ export const KNOWN_SYNTHETIC_INCIDENTS: KnownIncident[] = [
     reproductionSteps: ["Run the Core Social concurrency fixture", "Create an expiring cross-group challenge", "Reach finally cleanup", "Observe pachanga_team_challenges_receiver_group_id_fkey blocks group deletion"],
     severity: "medium",
   },
+  {
+    actual: "The accept-versus-expire regression required actor_user_id to be null even when the winning expiry path was the explicit authenticated reconciliation RPC.",
+    category: "SIMULATION_BUG",
+    evidence: ["Both race paths converge to one expired transition; lazy/batch expiry is system-authored while an explicit admin reconciliation remains attributable to that admin."],
+    expected: "The race asserts one canonical expiry event and accepts the documented actor distinction between automatic and explicitly requested reconciliation.",
+    fixed: false,
+    id: "SW-0130",
+    operation: "simulation.core_social.challenge_expiry_actor",
+    regressionVerified: false,
+    reproductionSteps: ["Create a challenge beyond its deadline", "Race authenticated reconcile against accept", "Observe one expired event attributed to the reconciliation actor", "Observe the test incorrectly requires a null actor"],
+    severity: "low",
+  },
 ];
 
 export function knownIncidentsForWorld(seed: number, virtualDate: string): SyntheticIncident[] {
