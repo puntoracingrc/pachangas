@@ -688,6 +688,181 @@
   gap: 12px;
 }
 
+.networkHealthView {
+  display: grid;
+  gap: 12px;
+}
+
+.networkHealthColumns {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(340px, 0.9fr);
+  gap: 12px;
+}
+
+.networkGraph {
+  display: grid;
+  grid-template-rows: minmax(260px, 44vh) auto;
+  gap: 8px;
+}
+
+.networkGraph svg {
+  width: 100%;
+  height: 100%;
+  min-height: 260px;
+  border: 1px solid var(--sim-line);
+  border-radius: 6px;
+  background: rgba(5, 15, 12, 0.52);
+}
+
+.networkGraph line {
+  stroke: #78a9ff;
+  stroke-width: 0.38;
+}
+
+.networkGraph circle {
+  fill: #d8f264;
+  stroke: #07110f;
+  stroke-width: 0.55;
+}
+
+.networkGraph .networkTopNode circle {
+  fill: #78a9ff;
+}
+
+.networkGraph .networkHoldNode circle {
+  fill: #ffd36b;
+}
+
+.networkGraph .networkRingNode circle {
+  fill: #ff776c;
+}
+
+.networkLegend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  color: var(--sim-muted);
+  font-size: 9px;
+}
+
+.networkLegend span::before {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 5px;
+  border-radius: 50%;
+  background: var(--sim-lime);
+  content: "";
+}
+
+.networkLegend span:nth-child(2)::before {
+  background: var(--sim-blue);
+}
+
+.networkLegend span:nth-child(3)::before {
+  background: var(--sim-gold);
+}
+
+.networkLegend span:nth-child(4)::before {
+  background: var(--sim-coral);
+}
+
+.networkModelTable,
+.ecosystemBars,
+.readinessTable {
+  display: grid;
+}
+
+.networkModelTable {
+  max-height: 50vh;
+  overflow: auto;
+}
+
+.networkModelTable > div {
+  display: grid;
+  grid-template-columns: minmax(140px, 1fr) repeat(3, minmax(82px, auto));
+  gap: 10px;
+  align-items: center;
+  min-height: 38px;
+  border-bottom: 1px solid var(--sim-line);
+  font-size: 9px;
+}
+
+.networkModelTable strong {
+  color: var(--sim-text);
+  text-transform: capitalize;
+}
+
+.networkModelTable span {
+  color: var(--sim-muted);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.ecosystemBars > div {
+  display: grid;
+  grid-template-columns: 42px minmax(100px, 1fr) 48px 76px;
+  gap: 9px;
+  align-items: center;
+  min-height: 34px;
+  border-bottom: 1px solid var(--sim-line);
+  font-size: 10px;
+}
+
+.ecosystemBars > div > span {
+  height: 7px;
+  overflow: hidden;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.ecosystemBars i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--sim-blue);
+}
+
+.ecosystemBars small {
+  color: var(--sim-muted);
+  text-align: right;
+}
+
+.readinessTable > div {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) 112px;
+  gap: 9px;
+  align-items: center;
+  min-height: 38px;
+  border-bottom: 1px solid var(--sim-line);
+  font-size: 10px;
+}
+
+.readinessTable strong {
+  color: var(--sim-lime);
+}
+
+.readinessTable span {
+  color: var(--sim-muted);
+}
+
+.readinessTable b {
+  color: var(--sim-gold);
+  font-size: 9px;
+  text-align: right;
+  text-transform: uppercase;
+}
+
+.networkDecision {
+  margin: 14px 0 0;
+  padding: 10px;
+  border-left: 3px solid var(--sim-coral);
+  background: rgba(255, 119, 108, 0.08);
+  color: #ffd1cd;
+  font-size: 10px;
+  line-height: 1.5;
+}
+
 .auditColumns {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -995,6 +1170,10 @@
   .auditColumns {
     grid-template-columns: 1fr;
   }
+
+  .networkHealthColumns {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 640px) {
@@ -1117,6 +1296,21 @@
   .labFooter {
     padding-right: 12px;
     padding-left: 12px;
+  }
+
+  .networkGraph {
+    grid-template-rows: minmax(240px, 52vh) auto;
+  }
+
+  .networkModelTable > div {
+    grid-template-columns: minmax(0, 1fr) 86px;
+    padding: 6px 0;
+  }
+
+  .networkModelTable span:nth-of-type(2),
+  .networkModelTable span:nth-of-type(3) {
+    grid-column: 1 / -1;
+    text-align: left;
   }
 }
 

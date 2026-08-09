@@ -6,7 +6,7 @@ import type { SyntheticWorldListItem } from "../../../simulation/synthetic-world
 import styles from "./simulation-world.module.css";
 
 type DashboardResponse = { data: SyntheticDashboardData | null; worlds: SyntheticWorldListItem[] };
-type Tab = "conducta" | "equipos" | "incidencias" | "jugadores" | "partidos" | "ranking" | "ranking_funnel" | "resumen" | "salud" | "timeline";
+type Tab = "conducta" | "equipos" | "incidencias" | "jugadores" | "network_health" | "partidos" | "ranking" | "ranking_funnel" | "resumen" | "salud" | "timeline";
 
 const TABS: Array<{ id: Tab; label: string }> = [
   { id: "resumen", label: "Mundo" },
@@ -16,6 +16,7 @@ const TABS: Array<{ id: Tab; label: string }> = [
   { id: "partidos", label: "Partidos" },
   { id: "ranking", label: "Ranking" },
   { id: "ranking_funnel", label: "Ranking funnel" },
+  { id: "network_health", label: "Network Health" },
   { id: "incidencias", label: "Incidencias" },
   { id: "conducta", label: "Conducta" },
   { id: "salud", label: "System Health" },
@@ -166,6 +167,85 @@ function RankingFunnelView({ data }: { data: SyntheticDashboardData }) {
       <section className={styles.panel}>
         <header><div><span>Mayor Season Score</span><h2>Top 50 candidatos</h2></div><b>No implica trofeo</b></header>
         <ol className={styles.rankingList}>{audit.topCandidates.map((row) => <li key={row.playerId} onClick={() => setPlayerId(row.playerId)}><b>{row.rank}</b><span>{row.displayName}<small>{row.certification} · {row.validChallenges} retos · {row.logicalOpponents} rivales · {row.certificationBlockers.map(readable).join(", ")}</small></span><strong>{row.score.toFixed(1)}</strong><i>{row.provinceRank ? `#${row.provinceRank}` : "—"}</i></li>)}</ol>
+      </section>
+    </div>
+  );
+}
+
+function NetworkHealthView({ data }: { data: SyntheticDashboardData }) {
+  const audit = data.networkHealthV31;
+  const nodeById = new Map(audit.graph.nodes.map((node) => [node.id, node]));
+  const healthySizes = audit.ecosystems.filter(({ scenario }) => scenario === "healthy");
+  return (
+    <div className={styles.networkHealthView}>
+      <section className={styles.statGrid}>
+        <article><span>Candidato aceptado</span><strong>{audit.candidateAccepted ? "Sí" : "No"}</strong></article>
+        <article><span>Referencia</span><strong>M3</strong></article>
+        <article><span>Ranking V1</span><strong>{audit.v31Clone.rankingEligible}</strong></article>
+        <article><span>Candidatos 25/10</span><strong>{audit.v31Clone.trophyCandidates}</strong></article>
+        <article><span>HOLD referencia</span><strong>{audit.v31Clone.pending}</strong></article>
+        <article><span>Top10 territorial</span><strong>{(audit.v31Clone.top10Contamination * 100).toFixed(1)}%</strong></article>
+      </section>
+
+      <section className={styles.networkHealthColumns}>
+        <div className={styles.panel}>
+          <header><div><span>Provincia {audit.graph.provinceCode}</span><h2>Red competitiva</h2></div><b>{audit.graph.nodes.length} equipos</b></header>
+          <div className={styles.networkGraph}>
+            <svg viewBox="0 0 100 100" role="img" aria-label="Grafo de equipos y Retos de la provincia 08">
+              {audit.graph.edges.map((edge) => {
+                const source = nodeById.get(edge.source);
+                const target = nodeById.get(edge.target);
+                if (!source || !target) return null;
+                return <line key={`${edge.source}-${edge.target}`} x1={source.x} y1={source.y} x2={target.x} y2={target.y} opacity={Math.min(0.75, 0.18 + edge.matches * 0.08)} />;
+              })}
+              {audit.graph.nodes.map((node) => (
+                <g key={node.id} className={node.possibleRing ? styles.networkRingNode : node.hold ? styles.networkHoldNode : node.topCandidate ? styles.networkTopNode : undefined}>
+                  <circle cx={node.x} cy={node.y} r={node.topCandidate ? 2.8 : 2.2} />
+                  <title>{node.label} · {node.degree} conexiones{node.hold ? " · HOLD" : ""}</title>
+                </g>
+              ))}
+            </svg>
+            <div className={styles.networkLegend}><span>Equipo</span><span>Top candidato</span><span>HOLD</span><span>Ring posible</span></div>
+          </div>
+          <p className={styles.muted}>Las líneas representan Retos confirmados. La conexión entre clubes es saludable por defecto; el color señala contexto para inspección, nunca culpabilidad.</p>
+        </div>
+
+        <div className={styles.panel}>
+          <header><div><span>Mundo V1 · revisión {audit.source.revision}</span><h2>Comparación M0–M5</h2></div><b>{audit.recommendedCandidate ?? "Sin candidato"}</b></header>
+          <div className={styles.networkModelTable}>
+            {audit.modelMetrics.map((row) => (
+              <div key={`${row.modelId}-${row.threshold ?? "base"}`}>
+                <strong>{row.modelId.replace("model_", "M").replaceAll("_", " ")}{row.threshold === undefined ? "" : ` · ${row.threshold}`}</strong>
+                <span>{row.certifiable} certificables</span>
+                <span>FPR {(row.falsePositiveRate * 100).toFixed(1)}%</span>
+                <span>Top10 cert. {(row.certifiedTop10Contamination * 100).toFixed(1)}%</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className={styles.networkHealthColumns}>
+        <div className={styles.panel}>
+          <header><div><span>30 semillas por tamaño</span><h2>Efecto del ecosistema</h2></div><b>V3 0,68</b></header>
+          <div className={styles.ecosystemBars}>
+            {healthySizes.map((row) => (
+              <div key={row.teamCount}>
+                <strong>{row.teamCount}</strong>
+                <span><i style={{ width: `${Math.min(100, row.v3MedianDiversity * 100)}%` }} /></span>
+                <b>{row.v3MedianDiversity.toFixed(3)}</b>
+                <small>FPR {(row.models.model_0_v3.falsePositiveRate * 100).toFixed(1)}%</small>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className={styles.panel}>
+          <header><div><span>Entrega de premios</span><h2>Readiness territorial</h2></div><b>25 / 10 intacto</b></header>
+          <div className={styles.readinessTable}>
+            {audit.provinceReadiness.map((row) => <div key={row.provinceCode}><strong>{row.provinceCode}</strong><span>{row.activeTeams} equipos · {row.rankingEligible} ranking · {row.certifiable} certificables</span><b>{readable(row.state)}</b></div>)}
+          </div>
+          <p className={styles.networkDecision}>Producto V3: sin cambios. La señal absoluta depende del tamaño, pero ningún reemplazo ha demostrado aún protección y falso positivo suficientes sobre V1.</p>
+        </div>
       </section>
     </div>
   );
@@ -412,6 +492,8 @@ export function SimulationWorldDashboard({
         ) : null}
 
         {tab === "ranking_funnel" ? <RankingFunnelView key={data.world.id} data={data} /> : null}
+
+        {tab === "network_health" ? <NetworkHealthView data={data} /> : null}
 
         {tab === "incidencias" ? (
           <section className={styles.panel}><header><div><span>Registro permanente</span><h2>Incidencias</h2></div><b>{data.incidents.length}</b></header><div className={styles.incidents}>{data.incidents.map((incident) => <article key={incident.id} className={styles[incident.severity]}><header><strong>{incident.category}</strong><b>{incident.status}</b></header><h3>{incident.operation}</h3><p>{String(incident.actual.behavior ?? incident.actual.productCapability ?? "Ver expected/actual")}</p><div><span>{shortDate(incident.virtualDate)}</span><span>{incident.actorName ?? "Sistema"}</span><span>{incident.occurrenceCount} ocurrencias</span></div><details><summary>Expected / actual / reproducción</summary><pre>{JSON.stringify({ actual: incident.actual, expected: incident.expected, reproduction: incident.reproductionSteps, resolution: incident.resolution }, null, 2)}</pre></details></article>)}</div></section>

@@ -42,6 +42,7 @@ npm run synthetic:world -- reconcile-ranking --world <uuid>
 npm run synthetic:world -- sync-incidents --world <uuid>
 npm run synthetic:world -- export --world <uuid>
 npm run synthetic:ranking-funnel
+npm run synthetic:network-v31
 ```
 
 Toda mutación persistente exige `operationId` y revisión esperada. Un replay devuelve el mismo recibo; una revisión obsoleta se rechaza. El reloj solo avanza y los snapshots no sustituyen el historial de eventos.
@@ -52,9 +53,9 @@ Toda mutación persistente exige `operationId` y revisión esperada. Un replay d
 PACHANGAS_SYNTHETIC_ADMIN=1 npm run dev -- --hostname 127.0.0.1 --port 3090
 ```
 
-Abrir `http://127.0.0.1:3090/admin/simulation-world`. Incluye resumen, timeline, agentes, equipos, partidos, ranking, `Ranking funnel`, conducta, cobertura e incidencias. `Ranking funnel` permite inspeccionar gates, distribuciones, provincias, un jugador concreto y la traza match-confidence de cada Reto. Las tablas pesadas se cargan después del shell y la API responde con `Cache-Control: no-store`.
+Abrir `http://127.0.0.1:3090/admin/simulation-world`. Incluye resumen, timeline, agentes, equipos, partidos, ranking, `Ranking funnel`, `Network Health`, conducta, cobertura e incidencias. `Ranking funnel` permite inspeccionar gates, distribuciones, provincias, un jugador concreto y la traza match-confidence de cada Reto. `Network Health` muestra la investigación V3.1, el grafo territorial, M0-M5, tamaño de ecosistema y readiness; no activa ningún cambio de producto. Las tablas pesadas se cargan después del shell y la API responde con `Cache-Control: no-store`.
 
-La auditoría V1.1 usa como fuente inmutable el mundo `3df9494d-3b8c-4447-96e8-d5244892af78` en revisión 313. El comando crea o reutiliza únicamente los clones A-E y genera [`../../RANKING_FUNNEL_V1_1_REPORT.md`](../../RANKING_FUNNEL_V1_1_REPORT.md); nunca reescribe el mundo original.
+Las auditorías V1.1/V3.1 usan como fuente inmutable el mundo `3df9494d-3b8c-4447-96e8-d5244892af78` en revisión 313. Los comandos crean o reutilizan únicamente los clones A-E y M0-M5 y generan [`../../RANKING_FUNNEL_V1_1_REPORT.md`](../../RANKING_FUNNEL_V1_1_REPORT.md) y [`../../NETWORK_DIVERSITY_V3_1_REPORT.md`](../../NETWORK_DIVERSITY_V3_1_REPORT.md); nunca reescriben el mundo original.
 
 ## Verificación
 

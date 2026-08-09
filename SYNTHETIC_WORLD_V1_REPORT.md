@@ -100,7 +100,7 @@ El catálogo permanente usa exclusivamente `PRODUCT_BUG`, `SIMULATION_BUG`, `TES
 
 Se conservaron como abiertos los límites reales del entorno, las capacidades no implementadas y los avisos de dependencias. Un falso positivo visual móvil está marcado explícitamente como tal, con las mediciones DOM que lo descartaron. Las correcciones incluyen idempotencia del dashboard, cobertura de conducta, normalización de perfiles legados, goleadores invitados, sincronización del catálogo y elegibilidad real del ranking.
 
-Estado final: 50 incidencias `regression_verified`, 4 `needs_product_decision`, 9 abiertas y 1 falso positivo. Por severidad hay 0 critical, 16 high, 18 medium, 18 low y 12 info. Tres de las abiertas documentan suites SQL históricas de logros/recompensas: esperan las filas colectivas V2 activas, mientras el catálogo V3 las desactiva expresamente y activa 60 definiciones colectivas V3. La suite SQL V3 vigente pasa; no se reactivó V2 para satisfacer contratos obsoletos.
+Estado del cierre V1 previo a V1.1/V3.1: 50 incidencias `regression_verified`, 4 `needs_product_decision`, 9 abiertas y 1 falso positivo. Por severidad había 0 critical, 16 high, 18 medium, 18 low y 12 info. Los apéndices posteriores conservan ese checkpoint y añaden sus propias incidencias sin reescribirlo. Tres de las abiertas documentan suites SQL históricas de logros/recompensas: esperan las filas colectivas V2 activas, mientras el catálogo V3 las desactiva expresamente y activa 60 definiciones colectivas V3. La suite SQL V3 vigente pasa; no se reactivó V2 para satisfacer contratos obsoletos.
 
 ## Rendimiento
 
@@ -116,7 +116,7 @@ Para reproducir una incidencia se utiliza su semilla, fecha virtual, operación,
 
 - `test:synthetic-world`: PASS, 20/20, incluida temporada completa y regresión de elegibilidad.
 - Soak de 30 semillas: PASS, 1.050 días y 283.421 eventos.
-- `npm test`: PASS, build + 6 pruebas HTML + 149 pruebas TypeScript.
+- `npm test` al cierre V3.1: PASS, build + 7 pruebas HTML + 163 pruebas TypeScript.
 - SQL/RLS: PASS para Synthetic World, notificaciones, invitados, Rating V2, grupos/retos y catálogo V3.
 - Concurrencia: PASS para dashboard, invitados, Rating V2, grupos/retos, logros y catálogo V3.
 - Suites SQL históricas V1/V2: 3 FAIL documentados como `SW-0051` a `SW-0053`; sus expectativas fueron sustituidas por V3 y no forman parte de `npm test`.
@@ -149,3 +149,13 @@ La pestaña local `Ranking funnel` fue verificada en 1440x900 y 390x844, con doc
 ## Entrega
 
 La rama debe publicarse como PR borrador apilado sobre el commit exacto de PR #115. No debe fusionarse ni desplegarse. El worktree y la base local deben conservarse mientras el PR permanezca sin fusionar.
+
+## Apéndice V3.1: diversidad de red contextual
+
+La auditoría V3.1 confirmó que el `externalNetworkRatio` absoluto depende del tamaño del ecosistema: la mediana sana crece de 0,5862 con 10 equipos a 0,7176 con 1.000. Una liga local conectada puede parecer cerrada sin ser colusiva. Se instrumentaron rivales lógicos, independencia, clústeres, exposición externa, concentración, entropía, oportunidad competitiva, densidad territorial y reciprocidad.
+
+Se compararon M0, siete umbrales M1 y M2-M5 sobre 810 ecosistemas, 30 semillas por tamaño/escenario, etapas de crecimiento, una referencia de 10.000 jugadores, red team y seis clones M0-M5. El Top 10 se mide ahora por provincia y baja confianza permanece como gate de evidencia, no como acusación de abuso.
+
+Resultado: **ningún candidato V3.1 aceptado**. M3 queda como referencia de investigación: reduce el cuello V1 a un HOLD legítimo entre 17 candidatos, pero su 5,9% supera el objetivo del 2% y V1 no aporta suficiente abuso ejecutado que haya pasado los demás gates para acreditar recall >=90%. Season Score 55/30/15, ranking eligibility, 25/10 y V3 de producto permanecen intactos. Se recomienda añadir `territory_award_readiness` antes de conceder premios en territorios sin diez candidatos certificables.
+
+El detalle reproducible está en [`NETWORK_DIVERSITY_V3_1_REPORT.md`](./NETWORK_DIVERSITY_V3_1_REPORT.md). La pestaña local `Network Health` muestra el grafo, M0-M5, efecto del tamaño y readiness territorial; no activa producto ni sanciones.

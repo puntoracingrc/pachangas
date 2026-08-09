@@ -2,6 +2,7 @@ import { isSeasonScoreEvidence } from "../../season-ranking-lab/src/engine";
 import {
   RANKING_ELIGIBILITY,
   enrichCompetitiveEvidence,
+  explainNetworkDiversity,
   type EvidenceStrategy,
   type TrophyRule,
 } from "../../season-ranking-lab/src/integrity-v3";
@@ -141,6 +142,7 @@ function buildPlayerAudit(
   const enriched = enrichCompetitiveEvidence(input, graph).filter(({ record }) => isSeasonScoreEvidence(record));
   const accepted = enriched.filter(({ confidenceWeight }) => confidenceWeight > 0);
   const excluded = enriched.filter(({ confidenceWeight }) => confidenceWeight === 0);
+  const network = explainNetworkDiversity(enriched, graph);
   const acceptedLogical = new Set(accepted.map(({ logicalOpponentId }) => logicalOpponentId));
   const acceptedTechnical = new Set(accepted.map(({ record }) => record.opponentTeamId));
   const sourceTechnical = new Set(enriched.map(({ record }) => record.opponentTeamId));
@@ -185,6 +187,8 @@ function buildPlayerAudit(
     latestSourceWeek,
     logicalOpponents: result.logicalOpponents,
     losses,
+    lowConfidenceEvidenceRatio: result.lowConfidenceEvidenceRatio,
+    network,
     persona: agent.persona,
     position: agent.position,
     provinceCode: agent.provinceCode,

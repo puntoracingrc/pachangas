@@ -67,6 +67,26 @@ export type CompetitiveEvidenceSummary = {
   validChallenges: number;
 };
 
+export type NetworkDiversityBreakdown = {
+  availableCompetitiveOpportunity: number;
+  broadConnectedOpponents: number;
+  closedNetworkRatio: number;
+  competitionNetworkDiversity: number;
+  ecosystemOpportunity: number;
+  externalExposure: number;
+  logicalOpponentCount: number;
+  opponentClusterDiversity: number;
+  opponentConcentration: number;
+  opponentEntropy: number;
+  outcomeAnomaly: number;
+  pairIndependence: number;
+  reciprocity: number;
+  structuralDiversity: number;
+  technicalOpponentCount: number;
+  territorialActiveTeams: number;
+  territorialNetworkDensity: number;
+};
+
 export type V3RankedPlayer = RankedPlayer & CompetitiveEvidenceSummary & {
   certification: CertificationState;
   certificationReasons: string[];
@@ -344,7 +364,7 @@ export function enrichCompetitiveEvidence(
   });
 }
 
-function externalNetworkRatio(evidence: MatchEvidenceV3[], graph: OpponentGraph) {
+export function externalNetworkRatio(evidence: MatchEvidenceV3[], graph: OpponentGraph) {
   const opponentIds = new Set(evidence.map(({ record }) => record.opponentTeamId));
   const closedSet = new Set([...opponentIds, ...evidence.map(({ record }) => record.teamId)]);
   const ratios = [...opponentIds].map((teamId) => {
@@ -354,6 +374,143 @@ function externalNetworkRatio(evidence: MatchEvidenceV3[], graph: OpponentGraph)
     return external / neighbors.size;
   });
   return ratios.length === 0 ? 0 : ratios.reduce((sum, value) => sum + value, 0) / ratios.length;
+}
+
+function normalizedEntropy(values: number[]) {
+  const total = values.reduce((sum, value) => sum + value, 0);
+  if (total === 0 || values.length <= 1) return values.length === 1 ? 0 : 1;
+  const entropy = values.reduce((sum, value) => {
+    const probability = value / total;
+    return sum - probability * Math.log(probability);
+  }, 0);
+  return clamp(entropy / Math.log(values.length), 0, 1);
+}
+
+const territoryStatsCache = new WeakMap<OpponentGraph, Map<string, {
+  activeTeams: number;
+  density: number;
+  reciprocity: number;
+}>>();
+
+function territoryStats(graph: OpponentGraph) {
+  const cached = territoryStatsCache.get(graph);
+  if (cached) return cached;
+  const teamIdsByProvince = new Map<string, string[]>();
+  for (const teamId of graph.matchNeighbors.keys()) {
+    const provinceCode = graph.profilesById.get(teamId)?.provinceCode ?? "*";
+    const ids = teamIdsByProvince.get(provinceCode) ?? [];
+    ids.push(teamId);
+    teamIdsByProvince.set(provinceCode, ids);
+  }
+  const stats = new Map<string, { activeTeams: number; density: number; reciprocity: number }>();
+  for (const [provinceCode, ids] of teamIdsByProvince) {
+    const idSet = new Set(ids);
+    let edges = 0;
+    let reciprocalEdges = 0;
+    for (const teamId of ids) {
+      for (const neighbor of graph.matchNeighbors.get(teamId) ?? []) {
+        if (!idSet.has(neighbor) || teamId >= neighbor) continue;
+        edges += 1;
+        if (graph.matchNeighbors.get(neighbor)?.has(teamId)) reciprocalEdges += 1;
+      }
+    }
+    const possibleEdges = ids.length * Math.max(0, ids.length - 1) / 2;
+    stats.set(provinceCode, {
+      activeTeams: ids.length,
+      density: possibleEdges === 0 ? 0 : edges / possibleEdges,
+      reciprocity: edges === 0 ? 0 : reciprocalEdges / edges,
+    });
+  }
+  territoryStatsCache.set(graph, stats);
+  return stats;
+}
+
+function networkOpportunity(evidence: MatchEvidenceV3[], graph: OpponentGraph) {
+  const ownTeamIds = new Set(evidence.map(({ record }) => record.teamId));
+  const provinceCodes = new Set([...ownTeamIds]
+    .map((teamId) => graph.profilesById.get(teamId)?.provinceCode)
+    .filter((provinceCode): provinceCode is string => Boolean(provinceCode)));
+  const inTerritory = (teamId: string) => {
+    const provinceCode = graph.profilesById.get(teamId)?.provinceCode;
+    return provinceCodes.size === 0 || Boolean(provinceCode && provinceCodes.has(provinceCode));
+  };
+  const reachable = new Set(ownTeamIds);
+  let frontier = new Set(ownTeamIds);
+  for (let depth = 0; depth < 2; depth += 1) {
+    const next = new Set<string>();
+    for (const teamId of frontier) {
+      for (const neighbor of graph.matchNeighbors.get(teamId) ?? []) {
+        if (!inTerritory(neighbor) || reachable.has(neighbor)) continue;
+        reachable.add(neighbor);
+        next.add(neighbor);
+      }
+    }
+    frontier = next;
+  }
+  const ownLogical = new Set([...ownTeamIds].map((teamId) => graph.logicalOpponentByTeam.get(teamId) ?? teamId));
+  const availableLogical = new Set([...reachable]
+    .map((teamId) => graph.logicalOpponentByTeam.get(teamId) ?? teamId)
+    .filter((logicalId) => !ownLogical.has(logicalId)));
+  const provinceCode = [...provinceCodes][0] ?? "*";
+  const stats = territoryStats(graph).get(provinceCode) ?? { activeTeams: 0, density: 0, reciprocity: 0 };
+  return {
+    availableCompetitiveOpportunity: availableLogical.size,
+    reciprocity: stats.reciprocity,
+    territorialActiveTeams: stats.activeTeams,
+    territorialNetworkDensity: stats.density,
+  };
+}
+
+export function explainNetworkDiversity(
+  evidence: MatchEvidenceV3[],
+  graph: OpponentGraph,
+): NetworkDiversityBreakdown {
+  const valid = evidence.filter(({ record }) => isSeasonScoreEvidence(record));
+  const technicalOpponentIds = new Set(valid.map(({ record }) => record.opponentTeamId));
+  const logicalIndependence = new Map<string, number>();
+  const logicalFrequency = new Map<string, number>();
+  for (const item of valid) {
+    logicalIndependence.set(item.logicalOpponentId, Math.max(logicalIndependence.get(item.logicalOpponentId) ?? 0, item.opponentIndependenceScore));
+    logicalFrequency.set(item.logicalOpponentId, (logicalFrequency.get(item.logicalOpponentId) ?? 0) + 1);
+  }
+  const logicalOpponentCount = logicalIndependence.size;
+  const structuralDiversity = technicalOpponentIds.size === 0 ? 0
+    : [...logicalIndependence.values()].reduce((sum, value) => sum + value, 0) / technicalOpponentIds.size;
+  const externalExposure = externalNetworkRatio(valid, graph);
+  const outcomeAnomaly = valid.length === 0 ? 0 : valid.reduce((sum, { record }) => {
+    const expected = 1 / (1 + 10 ** ((record.opponentRating - record.teamRating) / 32));
+    return sum + Math.max(0, record.result - expected);
+  }, 0) / valid.length;
+  const competitionNetworkDiversity = (structuralDiversity * 0.72 + externalExposure * 0.28)
+    * (1 - outcomeAnomaly * (1 - externalExposure) * 0.35);
+  const externalRatios = [...technicalOpponentIds].map((teamId) => {
+    const neighbors = graph.matchNeighbors.get(teamId) ?? new Set<string>();
+    const closedSet = new Set([...technicalOpponentIds, ...valid.map(({ record }) => record.teamId)]);
+    return neighbors.size === 0 ? 0 : [...neighbors].filter((neighbor) => !closedSet.has(neighbor)).length / neighbors.size;
+  });
+  const opportunity = networkOpportunity(valid, graph);
+  const opponentConcentration = valid.length === 0 ? 0
+    : Math.max(0, ...logicalFrequency.values()) / valid.length;
+  return {
+    ...opportunity,
+    broadConnectedOpponents: externalRatios.filter((ratio) => ratio >= 0.25).length,
+    closedNetworkRatio: 1 - externalExposure,
+    competitionNetworkDiversity: round(clamp(competitionNetworkDiversity, 0, 1), 4),
+    ecosystemOpportunity: opportunity.availableCompetitiveOpportunity === 0 ? 0
+      : clamp(logicalOpponentCount / opportunity.availableCompetitiveOpportunity, 0, 1),
+    externalExposure: round(externalExposure, 4),
+    logicalOpponentCount,
+    opponentClusterDiversity: technicalOpponentIds.size === 0 ? 0 : logicalOpponentCount / technicalOpponentIds.size,
+    opponentConcentration: round(opponentConcentration, 4),
+    opponentEntropy: round(normalizedEntropy([...logicalFrequency.values()]), 4),
+    outcomeAnomaly: round(outcomeAnomaly, 4),
+    pairIndependence: valid.length === 0 ? 0
+      : round(valid.reduce((sum, item) => sum + item.opponentIndependenceScore, 0) / valid.length, 4),
+    reciprocity: round(opportunity.reciprocity, 4),
+    structuralDiversity: round(structuralDiversity, 4),
+    technicalOpponentCount: technicalOpponentIds.size,
+    territorialNetworkDensity: round(opportunity.territorialNetworkDensity, 4),
+  };
 }
 
 export function summarizeCompetitiveEvidence(
@@ -371,17 +528,9 @@ export function summarizeCompetitiveEvidence(
     : valid.reduce((sum, item) => (
       sum + item.matchCompetitiveConfidence * (0.7 + item.opponentIndependenceScore * 0.3)
     ), 0) / valid.length;
-  const structuralDiversity = technicalOpponents === 0 ? 0
-    : [...logical.values()].reduce((sum, value) => sum + value, 0) / technicalOpponents;
-  const outsideNetwork = externalNetworkRatio(valid, graph);
-  const outcomeAnomaly = valid.length === 0 ? 0 : valid.reduce((sum, { record }) => {
-    const expected = 1 / (1 + 10 ** ((record.opponentRating - record.teamRating) / 32));
-    return sum + Math.max(0, record.result - expected);
-  }, 0) / valid.length;
-  const networkDiversity = (structuralDiversity * 0.72 + outsideNetwork * 0.28)
-    * (1 - outcomeAnomaly * (1 - outsideNetwork) * 0.35);
+  const network = explainNetworkDiversity(valid, graph);
   return {
-    competitionNetworkDiversity: round(clamp(networkDiversity, 0, 1), 4),
+    competitionNetworkDiversity: network.competitionNetworkDiversity,
     competitiveConfidence: round(averageConfidence * (0.65 + ratingReliability * 0.35), 4),
     latestValidWeek: Math.max(0, ...valid.map(({ record }) => record.week)),
     logicalOpponents: logical.size,

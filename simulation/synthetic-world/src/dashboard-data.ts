@@ -1,4 +1,5 @@
 import { syntheticWorldSummary } from "./engine";
+import networkHealthV31Summary from "../generated/network-diversity-v3.1-summary.json";
 import rankingFunnelSummary from "../generated/ranking-funnel-v1.1-summary.json";
 import { buildSyntheticRankingFunnelAudit } from "./ranking-funnel";
 import { rankingAuditOptionsForWorld } from "./ranking-counterfactuals";
@@ -108,6 +109,7 @@ export function buildSyntheticDashboardData(options: {
         state: match.state,
       })),
     notifications: countBy(world.state.notifications.map(({ kind }) => kind)),
+    networkHealthV31: networkHealthV31Summary,
     players: world.state.agents.map((agent) => {
       const ranking = rankingByAgent.get(agent.id);
       return {

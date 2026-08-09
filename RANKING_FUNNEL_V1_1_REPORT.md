@@ -9,6 +9,8 @@
 - Reglas de producto: sin cambios; Rating V2 y facetas: solo lectura.
 - Conducta/reportes/no-show: pausados.
 
+> Continuación: [`NETWORK_DIVERSITY_V3_1_REPORT.md`](./NETWORK_DIVERSITY_V3_1_REPORT.md) audita el blocker dominante sin modificar V3 ni Rating V2. La comparación concluye sin candidato V3.1 aceptado.
+
 ## Significado exacto de los estados
 
 Las 135 filas son los jugadores que ya superaron **ranking eligibility** (15 evidencias aceptadas por B, 6 rivales lógicos, fiabilidad 0,45 y actividad reciente). Dentro de esas filas, `eligible`, `not_eligible` y `pending_integrity_review` son estados de **certificación/trofeo provincial**, no de aparición en ranking.
