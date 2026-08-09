@@ -984,6 +984,18 @@ export const KNOWN_SYNTHETIC_INCIDENTS: KnownIncident[] = [
     reproductionSteps: ["Connect to the local Synthetic World database", "Select event_sequence from simulation.simulation_worlds", "Observe PostgreSQL 42703 column does not exist"],
     severity: "low",
   },
+  {
+    actual: "The first Supabase CLI migration-new invocation failed before creating a file because the local CLI profile contains an unsupported empty config type.",
+    category: "ENVIRONMENT_ISSUE",
+    evidence: [],
+    expected: "The local-only migration scaffold is created without consulting or changing any linked remote project or global profile.",
+    fixed: false,
+    id: "SW-0081",
+    operation: "simulation.environment.supabase_migration_scaffold",
+    regressionVerified: false,
+    reproductionSteps: ["Run supabase migration new conduct_reports_no_show_v1 in the isolated worktree", "Observe Unsupported Config Type before any migration file is created"],
+    severity: "low",
+  },
 ];
 
 export function knownIncidentsForWorld(seed: number, virtualDate: string): SyntheticIncident[] {
