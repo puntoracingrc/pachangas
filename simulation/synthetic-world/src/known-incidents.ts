@@ -1620,6 +1620,18 @@ export const KNOWN_SYNTHETIC_INCIDENTS: KnownIncident[] = [
     reproductionSteps: ["Authenticate as a registered user outside the target group", "Call remove_pachanga_group_member_authoritative_v1 with a valid group, target and revision", "Observe the null actor role bypasses NOT IN"],
     severity: "critical",
   },
+  {
+    actual: "A disposable database applying only the repository migration files stops at 20260728191804 because pachanga_admin_invites is referenced before any versioned migration creates it; the table exists only in the consolidated pachangas.sql baseline.",
+    category: "ENVIRONMENT_ISSUE",
+    evidence: ["The failed disposable database was dropped automatically; Core Social validation uses a fresh clone of the consolidated local schema and separately verifies the new migration is last in lexical order."],
+    expected: "Repository bootstrap documentation identifies the consolidated baseline required before incremental migrations, or the historical chain becomes self-contained in a separate maintenance task.",
+    fixed: false,
+    id: "SW-0134",
+    operation: "environment.core_social.historical_migration_bootstrap_gap",
+    regressionVerified: false,
+    reproductionSteps: ["Create an empty local PostgreSQL database with the Auth schema", "Apply migrations in lexical order", "Reach 20260728191804_require_registered_users_for_group_policies.sql", "Observe pachanga_admin_invites does not exist"],
+    severity: "medium",
+  },
 ];
 
 export function knownIncidentsForWorld(seed: number, virtualDate: string): SyntheticIncident[] {
