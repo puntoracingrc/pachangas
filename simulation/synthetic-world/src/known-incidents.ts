@@ -828,6 +828,18 @@ export const KNOWN_SYNTHETIC_INCIDENTS: KnownIncident[] = [
     reproductionSteps: ["Run the zsh readiness loop assigning curl output to status", "Observe zsh: read-only variable: status", "Retry with a detached nohup child", "Observe the child is reaped with no listener or log before the readiness poll"],
     severity: "info",
   },
+  {
+    actual: "Season Score V3 exposes competitionNetworkDiversity as one aggregate value, so the audit cannot distinguish a healthy connected local league from a closed collusion ring or explain how externalNetworkRatio penalizes each network.",
+    category: "TESTABILITY_GAP",
+    evidence: [],
+    expected: "The laboratory exposes the exact network-diversity components, ecosystem opportunity and relative context per player, with regressions covering healthy local networks, legitimate clubs, collusion rings, fake farms and sybil networks.",
+    fixed: false,
+    id: "SW-0068",
+    operation: "simulation.ranking.network_diversity_explainability",
+    regressionVerified: false,
+    reproductionSteps: ["Evaluate a player through summarizeCompetitiveEvidence", "Read competitionNetworkDiversity", "Observe that structural diversity, external exposure, concentration, entropy and territorial opportunity are not returned", "Compare a connected local league with a collusion ring and observe that the aggregate alone cannot explain the distinction"],
+    severity: "high",
+  },
 ];
 
 export function knownIncidentsForWorld(seed: number, virtualDate: string): SyntheticIncident[] {
