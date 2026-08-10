@@ -141,10 +141,17 @@
   font-size: 0.88rem;
 }
 
-.revealPanel > button {
+.revealActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 7px;
+  margin-top: 3px;
+}
+
+.revealActions > button {
   min-width: 150px;
   min-height: 44px;
-  margin-top: 3px;
   border: 1px solid #b7f452;
   border-radius: 6px;
   background: #b7f452;
@@ -153,7 +160,13 @@
   font-weight: 900;
 }
 
-.revealPanel > button:disabled {
+.revealActions > .secondaryAction {
+  border-color: rgba(221, 235, 227, 0.5);
+  background: rgba(8, 24, 18, 0.84);
+  color: #e7f0ea;
+}
+
+.revealActions > button:disabled {
   opacity: 0.56;
 }
 
@@ -197,7 +210,7 @@
     padding: 10px 12px;
   }
 
-  .revealPanel > button {
+  .revealActions > button {
     min-height: 40px;
   }
 }

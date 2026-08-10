@@ -1,0 +1,242 @@
+.page {
+  min-height: var(--app-viewport-height, 100dvh);
+  overflow-x: hidden;
+  background:
+    linear-gradient(115deg, rgba(17, 47, 35, 0.88), rgba(4, 12, 10, 0.96)),
+    radial-gradient(circle at 74% 28%, rgba(85, 135, 104, 0.24), transparent 32%);
+  padding: max(12px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(18px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+  color: #eaf2ed;
+}
+
+.topbar,
+.header,
+.page > section,
+.notice,
+.message {
+  width: min(1120px, 100%);
+  margin-inline: auto;
+}
+
+.topbar {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  min-height: 44px;
+  align-items: center;
+  border-bottom: 1px solid rgba(168, 190, 178, 0.24);
+}
+
+.topbar a {
+  justify-self: start;
+  color: #b7f452;
+  font-weight: 850;
+  text-decoration: none;
+}
+
+.topbar > span {
+  justify-self: end;
+}
+
+.header {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 24px 0 18px;
+}
+
+.header span,
+.categoryHeading span {
+  color: #a7bab0;
+  font-size: 0.72rem;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
+.header h1 {
+  margin: 2px 0 0;
+  font-size: clamp(1.55rem, 4vh, 2.35rem);
+  letter-spacing: 0;
+}
+
+.headerStats {
+  display: flex;
+  gap: 8px;
+}
+
+.headerStats span {
+  border: 1px solid rgba(169, 193, 180, 0.28);
+  border-radius: 5px;
+  background: rgba(9, 24, 19, 0.66);
+  padding: 6px 8px;
+  color: #dce8e1;
+}
+
+.page > section {
+  border-top: 1px solid rgba(169, 193, 180, 0.24);
+  padding-top: 14px;
+}
+
+.categoryHeading {
+  display: flex;
+  min-height: 48px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 4px 0 10px;
+}
+
+.categoryHeading > div {
+  display: grid;
+  gap: 2px;
+}
+
+.badgeGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.badgeGrid button {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr);
+  min-height: 58px;
+  align-items: center;
+  border: 1px solid rgba(161, 180, 171, 0.25);
+  border-radius: 7px;
+  background: rgba(8, 20, 17, 0.7);
+  padding: 8px;
+  color: #e7efea;
+  font: inherit;
+  text-align: left;
+}
+
+.badgeGrid button > span {
+  grid-row: 1 / span 2;
+  color: #ffe487;
+  font-size: 1.25rem;
+}
+
+.badgeGrid button > small {
+  color: #9eafa6;
+}
+
+.badgeGrid .selectedBadge {
+  border-color: #b7f452;
+  box-shadow: inset 0 0 0 1px rgba(183, 244, 82, 0.25);
+}
+
+.notice,
+.message {
+  margin-top: 12px;
+  border: 1px solid rgba(255, 210, 112, 0.42);
+  border-radius: 6px;
+  background: rgba(58, 42, 10, 0.62);
+  padding: 10px 12px;
+  color: #ffe4a5;
+  font-size: 0.82rem;
+}
+
+.message {
+  border-color: rgba(159, 187, 173, 0.34);
+  background: rgba(8, 24, 18, 0.72);
+  color: #d6e4dc;
+}
+
+@media (max-width: 600px) {
+  .topbar {
+    grid-template-columns: auto 1fr;
+  }
+
+  .topbar strong {
+    justify-self: end;
+  }
+
+  .topbar > span {
+    grid-column: 1 / -1;
+    justify-self: end;
+    margin-top: -5px;
+  }
+
+  .header {
+    align-items: start;
+    padding-block: 16px 12px;
+  }
+
+  .headerStats {
+    display: grid;
+    gap: 4px;
+  }
+
+  .page :global(.fifa-player-card) {
+    width: min(232px, 68vw);
+  }
+}
+
+@media (orientation: landscape) and (max-height: 650px) {
+  .page {
+    padding-top: max(6px, env(safe-area-inset-top));
+  }
+
+  .topbar {
+    min-height: 30px;
+  }
+
+  .header {
+    padding-block: 4px;
+  }
+
+  .header h1 {
+    font-size: 1.15rem;
+  }
+
+  .headerStats {
+    display: flex;
+  }
+
+  .page > section {
+    padding-top: 6px;
+  }
+
+  .page :global(.fifa-player-card) {
+    grid-template-rows: 30px 1fr auto auto;
+    width: min(180px, 24vw);
+    border-radius: 16px 16px 22px 22px;
+    padding: 10px 9px 9px;
+  }
+
+  .page :global(.fifa-score) {
+    top: 14px;
+    left: 13px;
+    font-size: 28px;
+  }
+
+  .page :global(.fifa-position) {
+    top: 43px;
+    left: 15px;
+    font-size: 11px;
+  }
+
+  .page :global(.fifa-player-card > strong) {
+    padding-top: 6px;
+    font-size: 15px;
+  }
+
+  .page :global(.fifa-card-meta) {
+    margin-top: 2px;
+    font-size: 9px;
+  }
+
+  .page :global(.fifa-facets) {
+    gap: 2px 4px;
+    margin-top: 5px;
+  }
+
+  .page :global(.fifa-facets span) {
+    gap: 2px;
+    font-size: 8px;
+  }
+
+  .page :global(.fifa-facets b) {
+    font-size: 12px;
+  }
+}

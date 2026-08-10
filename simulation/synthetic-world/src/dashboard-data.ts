@@ -131,6 +131,8 @@ export function buildSyntheticDashboardData(options: {
         attendance: countBy(attendanceByAgent.get(agent.id) ?? []),
         attendanceProfile: agent.attendanceProfile,
         boxes: world.state.boxes.filter(({ agentId }) => agentId === agent.id).length,
+        cosmetics: world.state.playerCosmeticInventory.filter(({ agentId }) => agentId === agent.id).length,
+        cosmeticLoadoutRevision: world.state.playerCosmeticLoadouts.find(({ agentId }) => agentId === agent.id)?.revision ?? 0,
         city: agent.city,
         conductProfile: agent.conductProfile,
         displayName: agent.displayName,

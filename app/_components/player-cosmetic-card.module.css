@@ -1,0 +1,251 @@
+.stage {
+  position: relative;
+  display: grid;
+  width: fit-content;
+  max-width: 100%;
+  isolation: isolate;
+}
+
+.card {
+  position: relative;
+  z-index: 2;
+}
+
+.backgroundLayer,
+.effectLayer {
+  position: absolute;
+  inset: 5% 7%;
+  z-index: 1;
+  overflow: hidden;
+  border-radius: 6px;
+  content: "";
+  pointer-events: none;
+}
+
+.stage[data-frame="player.frame.barrio.steel"] .card,
+.stage[data-frame="player.frame.barrio.copper"] .card,
+.stage[data-frame="player.frame.barrio.silver"] .card,
+.stage[data-frame="player.frame.future.navy"] .card,
+.stage[data-frame="player.frame.retro.chrome"] .card,
+.stage[data-frame^="prototype.frame"] .card {
+  filter: drop-shadow(0 0 5px color-mix(in srgb, var(--player-cosmetic-frame, #71828a) 62%, transparent));
+}
+
+.stage[data-frame^="player.frame.barrio"] .card,
+.stage[data-frame="prototype.frame.street.neon"] .card {
+  outline: 3px solid var(--player-cosmetic-frame, #71828a);
+  outline-offset: -6px;
+}
+
+.stage[data-frame="player.frame.future.navy"] .card,
+.stage[data-frame="prototype.frame.future.white"] .card {
+  box-shadow: inset 0 0 0 3px var(--player-cosmetic-frame, #173a67), inset 0 0 20px rgba(90, 167, 255, 0.22);
+}
+
+.stage[data-frame="player.frame.retro.chrome"] .card,
+.stage[data-frame="prototype.frame.retro.paper"] .card {
+  outline: 2px double var(--player-cosmetic-frame, #d8dde0);
+  outline-offset: -5px;
+}
+
+.stage[data-frame^="prototype.frame."] .card {
+  outline: 3px solid var(--player-cosmetic-frame, #71828a);
+  outline-offset: -6px;
+}
+
+.stage[data-background="player.background.asphalt_night"] .card {
+  --card-bg:
+    repeating-linear-gradient(117deg, rgba(255, 255, 255, 0.025) 0 1px, transparent 1px 5px),
+    linear-gradient(145deg, rgba(5, 9, 8, 0.9), rgba(35, 45, 41, 0.62));
+  --card-ink: #eef5f0;
+}
+
+.stage[data-background="player.background.grid_iq"] .card {
+  --card-bg:
+    linear-gradient(rgba(82, 164, 255, 0.1) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(82, 164, 255, 0.1) 1px, transparent 1px),
+    linear-gradient(150deg, rgba(5, 20, 43, 0.86), rgba(18, 54, 83, 0.52));
+  background-size: 15px 15px, 15px 15px, auto;
+  --card-ink: #edf7ff;
+}
+
+.stage[data-background="prototype.background.paper_league"] .card {
+  --card-bg: repeating-linear-gradient(0deg, #e7d6aa 0 1px, #f5ead0 1px 5px);
+  --card-ink: #3f3120;
+}
+
+.stage[data-background="prototype.background.chalkboard"] .card {
+  --card-bg: repeating-linear-gradient(15deg, #26352e 0 1px, #0a140f 1px 11px);
+  --card-ink: #edf4ef;
+}
+
+.stage[data-background="prototype.background.floodlights"] .card {
+  --card-bg: radial-gradient(circle at 50% 0, rgba(236, 247, 255, 0.42), transparent 38%), #081425;
+  --card-ink: #eef6ff;
+}
+
+.stage[data-accent]:not([data-accent="original"]) .card :global(.fifa-score),
+.stage[data-accent]:not([data-accent="original"]) .card :global(.fifa-position),
+.stage[data-accent]:not([data-accent="original"]) .card :global(.fifa-facets b) {
+  color: var(--player-cosmetic-accent-highlight, #f0b17f);
+  text-shadow: 0 0 8px color-mix(in srgb, var(--player-cosmetic-accent, #b96737) 56%, transparent);
+}
+
+.effectLayer {
+  z-index: 3;
+}
+
+.stage[data-effect="player.effect.spotlights"] .effectLayer {
+  background: linear-gradient(108deg, transparent 27%, rgba(231, 246, 255, 0.23) 43%, transparent 59%);
+  animation: spotlights 4.8s ease-in-out infinite;
+  will-change: opacity, transform;
+}
+
+.stage[data-effect="player.effect.iq_scan"] .effectLayer {
+  background: linear-gradient(180deg, transparent 42%, rgba(34, 225, 241, 0.54) 49%, transparent 56%);
+  animation: iqScan 3.6s linear infinite;
+  will-change: transform;
+}
+
+.stage[data-effect="player.effect.gold_glint"] .effectLayer,
+.stage[data-effect="prototype.effect.chrome_sweep"] .effectLayer {
+  background: linear-gradient(118deg, transparent 35%, rgba(255, 239, 158, 0.52) 48%, transparent 61%);
+  animation: glint 5.2s ease-in-out infinite;
+  will-change: opacity, transform;
+}
+
+.stage[data-effect="prototype.effect.scan_diagonal"] .effectLayer {
+  background: linear-gradient(128deg, transparent 42%, rgba(34, 225, 241, 0.5) 49%, transparent 56%);
+  animation: scanDiagonal 4.2s linear infinite;
+  will-change: transform;
+}
+
+.stage[data-effect="prototype.effect.holo_shimmer"] .effectLayer {
+  background: linear-gradient(118deg, rgba(90, 167, 255, 0.08), rgba(183, 244, 82, 0.2), rgba(219, 143, 255, 0.16), rgba(90, 167, 255, 0.08));
+  background-size: 220% 100%;
+  mix-blend-mode: screen;
+  animation: holoShimmer 5.6s ease-in-out infinite;
+  will-change: background-position, opacity;
+}
+
+.stage[data-effect="prototype.effect.dust"] .effectLayer {
+  opacity: 0.42;
+  background-image: radial-gradient(circle, rgba(234, 210, 157, 0.74) 0 1px, transparent 2px);
+  background-size: 22px 22px;
+  animation: dust 7s linear infinite;
+  will-change: transform;
+}
+
+.stage[data-effect="prototype.effect.score_pulse"] .card :global(.fifa-score) {
+  animation: scorePulse 2.5s ease-in-out infinite;
+}
+
+.featuredBadge {
+  position: absolute;
+  z-index: 4;
+  right: 7%;
+  top: 32%;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  max-width: 43%;
+  border: 1px solid rgba(255, 236, 160, 0.76);
+  border-radius: 5px;
+  background: rgba(23, 18, 7, 0.86);
+  padding: 3px 5px;
+  color: #fff1af;
+  font-size: 0.58rem;
+  font-weight: 800;
+  line-height: 1.05;
+}
+
+.playerTitle {
+  position: relative;
+  z-index: 4;
+  justify-self: center;
+  max-width: 82%;
+  margin-top: 3px;
+  overflow: hidden;
+  color: var(--card-ink, #e8f0eb);
+  border: 1px solid color-mix(in srgb, currentColor 42%, transparent);
+  border-radius: 4px;
+  padding: 2px 5px;
+  font-size: 0.58rem;
+  font-weight: 800;
+  line-height: 1;
+  text-align: center;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.card :global(.fifa-card-meta) {
+  color: color-mix(in srgb, var(--card-ink, #e8f0eb) 74%, transparent);
+}
+
+.card > :global(strong) {
+  border-top-color: color-mix(in srgb, var(--card-ink, #e8f0eb) 28%, transparent);
+}
+
+@keyframes spotlights {
+  0%, 100% { opacity: 0.15; transform: translateX(-38%); }
+  50% { opacity: 0.72; transform: translateX(38%); }
+}
+
+@keyframes iqScan {
+  from { transform: translateY(-58%); }
+  to { transform: translateY(58%); }
+}
+
+@keyframes glint {
+  0%, 65%, 100% { opacity: 0; transform: translateX(-55%); }
+  74% { opacity: 0.9; }
+  88% { opacity: 0; transform: translateX(55%); }
+}
+
+@keyframes scanDiagonal {
+  from { transform: translate3d(-60%, -45%, 0); }
+  to { transform: translate3d(60%, 45%, 0); }
+}
+
+@keyframes holoShimmer {
+  0%, 100% { opacity: 0.18; background-position: 0 0; }
+  50% { opacity: 0.52; background-position: 100% 0; }
+}
+
+@keyframes dust {
+  from { transform: translate3d(0, 8%, 0); }
+  to { transform: translate3d(11px, -8%, 0); }
+}
+
+@keyframes scorePulse {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.55); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stage[data-effect="player.effect.spotlights"] .effectLayer,
+  .stage[data-effect="player.effect.iq_scan"] .effectLayer,
+  .stage[data-effect="player.effect.gold_glint"] .effectLayer,
+  .stage[data-effect="prototype.effect.chrome_sweep"] .effectLayer,
+  .stage[data-effect="prototype.effect.dust"] .effectLayer,
+  .stage[data-effect="prototype.effect.scan_diagonal"] .effectLayer,
+  .stage[data-effect="prototype.effect.holo_shimmer"] .effectLayer,
+  .stage[data-effect="prototype.effect.score_pulse"] .card :global(.fifa-score) {
+    animation: none;
+    will-change: auto;
+  }
+
+  .stage[data-effect="player.effect.spotlights"] .effectLayer,
+  .stage[data-effect="player.effect.iq_scan"] .effectLayer,
+  .stage[data-effect="player.effect.gold_glint"] .effectLayer {
+    opacity: 0.28;
+    transform: none;
+  }
+
+  .stage[data-effect="prototype.effect.scan_diagonal"] .effectLayer,
+  .stage[data-effect="prototype.effect.holo_shimmer"] .effectLayer {
+    opacity: 0.28;
+    transform: none;
+  }
+}

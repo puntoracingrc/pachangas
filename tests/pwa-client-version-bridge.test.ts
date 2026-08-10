@@ -259,6 +259,7 @@ test("the write bridge classifies every browser RPC without treating reads as wr
     readFile(new URL("../app/conduct-player-center.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/conduct-report-form.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/admin/conduct/conduct-admin-client.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/personalizar-carta/page.tsx", import.meta.url), "utf8"),
   ]).then((files) => files.join("\n"));
   const readRpcNames = new Set([
     "get_pachanga_global_rating_context_v2",
@@ -270,6 +271,8 @@ test("the write bridge classifies every browser RPC without treating reads as wr
     "get_pachanga_match_link_invitation_v1",
     "get_pachanga_match_invitation_admin_state_v1",
     "get_pachanga_notification_center_v1",
+    "get_pachanga_player_cosmetics_snapshot_v1",
+    "get_pachanga_public_player_card_cosmetics_v1",
     "get_pachanga_attendance_admin_v1",
     "get_pachanga_moderation_case_evidence_v1",
     "get_pachanga_moderation_case_evidence_v1_1",

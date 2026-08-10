@@ -3,7 +3,12 @@
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { type CSSProperties, useCallback, useEffect, useRef, useState } from "react";
+import { EditorActions, UnsavedChanges } from "../../_components/cosmetics-editor";
 import { CLIENT_VERSION } from "../../client-version-contract";
+import {
+  normalizePlayerCosmeticsSnapshot,
+  type PlayerCosmeticsSnapshot,
+} from "../../player-cosmetics-contract";
 import { currentClientDisplayMode } from "../../pwa-client-bridge";
 import { supabase } from "../../supabaseClient";
 import {
@@ -98,6 +103,13 @@ function rewardResultLabel(reward: PendingReward) {
   if (cosmeticKey && points) return `${cosmeticKey} + ${points} puntos`;
   if (cosmeticKey) return cosmeticKey;
   return `${points} puntos`;
+}
+
+function grantedPlayerCosmetic(reward: PendingReward | null) {
+  const payload = reward?.rewardPayload;
+  const grant = payload && isRecord(payload.grant) ? payload.grant : null;
+  if (!grant || grant.cosmeticGranted !== true || typeof grant.cosmeticKey !== "string") return null;
+  return grant.cosmeticKey;
 }
 
 function symbolLabel(key: string | null) {
@@ -195,10 +207,19 @@ export default function TeamIdentityPage() {
   const [rewardSequence, setRewardSequence] = useState<PendingReward[]>([]);
   const [rewardSequenceIndex, setRewardSequenceIndex] = useState(0);
   const [openedReward, setOpenedReward] = useState<PendingReward | null>(null);
+  const [playerCosmetics, setPlayerCosmetics] = useState<PlayerCosmeticsSnapshot | null>(null);
   const [sequenceRecognitions, setSequenceRecognitions] = useState<ProgressionAchievement[]>([]);
   const [progressView, setProgressView] = useState<ProgressView>("achievements");
   const operationIds = useRef(new Map<string, string>());
   const handledRewardDeepLinks = useRef(new Set<string>());
+
+  const loadPlayerCosmetics = useCallback(async () => {
+    if (!supabase || !userId) return;
+    const result = await supabase.rpc("get_pachanga_player_cosmetics_snapshot_v1");
+    if (result.error) return;
+    const canonical = normalizePlayerCosmeticsSnapshot(result.data);
+    if (canonical) setPlayerCosmetics(canonical);
+  }, [userId]);
 
   const persistCache = useCallback((nextCrest: TeamCrestSnapshot | null, nextProgression: ProgressionSnapshot | null) => {
     if (!userId || !selectedGroupId) return;
@@ -308,6 +329,11 @@ export default function TeamIdentityPage() {
     });
     queueMicrotask(() => void Promise.all([loadCrest(), loadProgression()]));
   }, [loadCrest, loadProgression, selectedGroupId, userId]);
+
+  useEffect(() => {
+    if (!userId) return;
+    queueMicrotask(() => void loadPlayerCosmetics());
+  }, [loadPlayerCosmetics, userId]);
 
   useEffect(() => {
     if (!crest) return;
@@ -445,7 +471,34 @@ export default function TeamIdentityPage() {
     operationIds.current.delete(fingerprint);
     const opened = normalizePendingReward(result.data);
     if (opened) setOpenedReward(opened);
-    await loadProgression();
+    await Promise.all([loadProgression(), loadPlayerCosmetics()]);
+  }
+
+  async function equipOpenedPlayerCosmetic() {
+    const cosmeticKey = grantedPlayerCosmetic(openedReward);
+    if (!supabase || !openedReward || !cosmeticKey || !playerCosmetics || busy) return;
+    const fingerprint = `player-cosmetic-equip:${openedReward.boxId}:${cosmeticKey}:${playerCosmetics.revision}`;
+    const operationId = operationIdFor(fingerprint);
+    setBusy("equip-player-cosmetic");
+    setMessage("");
+    const result = await supabase.rpc("equip_pachanga_player_cosmetic_from_box_v1", {
+      client_metadata: clientMetadata(),
+      expected_revision: playerCosmetics.revision,
+      operation_id: operationId,
+      target_box_id: openedReward.boxId,
+      target_cosmetic_key: cosmeticKey,
+    });
+    setBusy("");
+    if (result.error) {
+      setMessage(result.error.message);
+      if (result.error.code === "PT409") await loadPlayerCosmetics();
+      return;
+    }
+    operationIds.current.delete(fingerprint);
+    const canonical = normalizePlayerCosmeticsSnapshot(result.data);
+    if (canonical) setPlayerCosmetics(canonical);
+    setMessage("Cosmético equipado y confirmado por el servidor.");
+    advanceRewardSequence();
   }
 
   function beginRewardSequence(rewards: PendingReward[]) {
@@ -491,6 +544,7 @@ export default function TeamIdentityPage() {
   const openedRewards = progression?.rewards.filter((reward) => reward.status === "opened") ?? [];
   const rewardEconomy = progression?.rewardEconomy ?? null;
   const currentSequenceReward = rewardSequence[rewardSequenceIndex] ?? null;
+  const openedCosmeticKey = grantedPlayerCosmetic(openedReward);
 
   return (
     <main className={styles.page}>
@@ -576,11 +630,15 @@ export default function TeamIdentityPage() {
                     } : current)}
                   />
                 ))}
-                <div className={styles.editorActions}>
-                  <button type="button" disabled={Boolean(busy)} onClick={() => void saveDraft()}>{busy === "save" ? "Guardando…" : "Guardar borrador"}</button>
-                  <button className={styles.publishButton} type="button" disabled={Boolean(busy) || !designIsSaved} onClick={() => void publishCrest()}>{busy === "publish" ? "Publicando…" : "Publicar escudo"}</button>
-                </div>
-                {!designIsSaved ? <small className={styles.editorHint}>Guarda el borrador antes de publicar esta combinación.</small> : null}
+                <EditorActions
+                  busy={Boolean(busy)}
+                  onPrimary={() => void publishCrest()}
+                  onReset={() => void saveDraft()}
+                  primaryDisabled={!designIsSaved}
+                  primaryLabel={busy === "publish" ? "Publicando…" : "Publicar escudo"}
+                  resetLabel={busy === "save" ? "Guardando…" : "Guardar borrador"}
+                />
+                <UnsavedChanges dirty={!designIsSaved} />
               </div>
             ) : (
               <div className={styles.memberCrestCopy}>
@@ -820,13 +878,21 @@ export default function TeamIdentityPage() {
           : "El contenido permanece sellado hasta que abras esta caja."}
         actionDisabled={Boolean(busy)}
         actionLabel={openedReward
-          ? rewardSequenceIndex + 1 < rewardSequence.length ? "Siguiente caja" : "Ver mis logros"
+          ? openedCosmeticKey
+            ? busy === "equip-player-cosmetic" ? "Equipando..." : "Equipar ahora"
+            : rewardSequenceIndex + 1 < rewardSequence.length ? "Siguiente caja" : "Ver mis logros"
           : busy ? "Abriendo..." : "Abrir caja"}
         onAction={() => {
           if (!currentSequenceReward) return;
-          if (openedReward) advanceRewardSequence();
+          if (openedCosmeticKey) void equipOpenedPlayerCosmetic();
+          else if (openedReward) advanceRewardSequence();
           else void openReward(currentSequenceReward);
         }}
+        secondaryActionLabel={openedCosmeticKey ? "Ver mi colección" : undefined}
+        onSecondaryAction={openedCosmeticKey ? () => {
+          const item = playerCosmetics?.owned.find((entry) => entry.key === openedCosmeticKey);
+          window.location.assign(`/personalizar-carta?slot=${encodeURIComponent(item?.slot ?? "frame")}&item=${encodeURIComponent(openedCosmeticKey)}`);
+        } : undefined}
       />
 
       {sequenceRecognitions.length ? (

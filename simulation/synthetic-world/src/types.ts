@@ -192,11 +192,33 @@ export type SyntheticConductScenario = {
 
 export type SyntheticRewardBox = {
   agentId: string | null;
+  cosmeticGranted: boolean | null;
+  cosmeticKey: string | null;
   createdAt: string;
+  duplicatePoints: number;
   id: string;
   openedAt: string | null;
   points: number | null;
   teamId: string;
+};
+
+export type SyntheticPlayerCosmeticInventoryItem = {
+  acquiredAt: string;
+  agentId: string;
+  cosmeticKey: string;
+  seenAt: string | null;
+  sourceBoxId: string;
+};
+
+export type SyntheticPlayerCosmeticLoadout = {
+  accentKey: string | null;
+  agentId: string;
+  backgroundKey: string | null;
+  effectKey: string | null;
+  frameKey: string | null;
+  revision: number;
+  titleKey: string | null;
+  updatedAt: string;
 };
 
 export type SyntheticRatingOpinion = {
@@ -319,6 +341,8 @@ export type SyntheticWorldState = {
   incidents: SyntheticIncident[];
   matches: SyntheticMatch[];
   notifications: SyntheticNotification[];
+  playerCosmeticInventory: SyntheticPlayerCosmeticInventoryItem[];
+  playerCosmeticLoadouts: SyntheticPlayerCosmeticLoadout[];
   ratingOpinions: SyntheticRatingOpinion[];
   rankings: SyntheticRankingRow[];
   teams: SyntheticTeam[];
