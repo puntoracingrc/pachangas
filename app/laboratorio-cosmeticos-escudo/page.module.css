@@ -1,0 +1,162 @@
+.page {
+  min-height: 100dvh;
+  overflow-x: hidden;
+  background:
+    linear-gradient(135deg, rgba(26, 66, 54, 0.82), rgba(5, 13, 10, 0.96)),
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.025) 0 1px, transparent 1px 46px);
+  color: #edf6f0;
+  padding: clamp(14px, 2vw, 28px);
+}
+
+.header,
+.baselineBand > header,
+.sizeBand > header,
+.catalogBand > header {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.header span,
+.baselineBand header span,
+.sizeBand header span,
+.catalogBand header span {
+  color: #a9d7c0;
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.header h1 {
+  margin: 4px 0 0;
+  font-size: clamp(1.6rem, 4vw, 3.2rem);
+  letter-spacing: 0;
+}
+
+.header > strong { color: #d5f46d; font-size: 0.82rem; }
+
+.presetRail {
+  display: flex;
+  gap: 8px;
+  margin: 18px 0 12px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.presetRail button,
+.identityControls input {
+  border: 1px solid rgba(216, 239, 225, 0.26);
+  border-radius: 5px;
+  background: rgba(8, 25, 18, 0.72);
+  color: #f4faf6;
+}
+
+.presetRail button { min-height: 40px; padding: 0 15px; font-weight: 800; white-space: nowrap; }
+
+.editorShell { background: rgba(7, 20, 15, 0.72); backdrop-filter: blur(16px); }
+
+.previewStage { display: grid; min-height: 310px; place-items: center; gap: 10px; }
+.previewStage small { color: #a9bcb1; }
+
+.identityControls {
+  display: grid;
+  grid-template-columns: minmax(92px, 0.7fr) minmax(92px, 0.7fr) 1fr 1fr;
+  gap: 10px;
+  padding: 10px 0;
+}
+
+.identityControls label,
+.identityControls > div { display: grid; align-content: start; gap: 6px; color: #a9bcb1; font-size: 0.72rem; font-weight: 800; }
+.identityControls input { min-width: 0; min-height: 42px; padding: 0 10px; font: inherit; font-size: 1rem; }
+
+.swatches { display: grid; grid-template-columns: repeat(4, minmax(28px, 1fr)); gap: 5px; }
+.swatches button { min-width: 30px; min-height: 30px; border: 2px solid transparent; border-radius: 4px; }
+.swatches .activeSwatch { border-color: #d5f46d; box-shadow: 0 0 0 1px #07140e; }
+
+.symbolControls {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  padding-bottom: 10px;
+}
+
+.symbolControls label {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  color: #a9bcb1;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.actionRow { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; }
+
+.baselineBand,
+.sizeBand,
+.catalogBand {
+  margin-top: 18px;
+  border-top: 1px solid rgba(216, 239, 225, 0.18);
+  padding-top: 16px;
+}
+
+.baselineBand {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.baselineBand > header { grid-column: 1 / -1; }
+.baselineBand article { display: flex; align-items: center; gap: 20px; min-height: 270px; padding: 16px; background: rgba(8, 25, 18, 0.52); }
+.baselineBand article > div { display: grid; gap: 5px; }
+.baselineBand small { color: #a9bcb1; }
+
+.sizeBand { display: flex; align-items: end; gap: 22px; min-height: 120px; }
+.sizeBand > header { align-self: stretch; min-width: 240px; }
+.sizeBand article { display: grid; justify-items: center; gap: 8px; }
+.sizeBand small { color: #a9bcb1; font-size: 0.68rem; }
+
+.catalogGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.catalogGrid article { min-width: 0; border-left: 3px solid #81928a; background: rgba(8, 25, 18, 0.58); padding: 11px; }
+.catalogGrid article[data-decision="MANTENER"] { border-left-color: #b7df58; }
+.catalogGrid article[data-decision="REVISAR"] { border-left-color: #e7b95b; }
+.catalogGrid article[data-decision="DESCARTAR"] { border-left-color: #d66e6e; opacity: 0.72; }
+.catalogGrid span,
+.catalogGrid small { color: #a9bcb1; font-size: 0.66rem; text-transform: uppercase; }
+.catalogGrid strong { display: block; margin-top: 5px; }
+.catalogGrid p { min-height: 2.5em; margin: 6px 0; color: #d5e0d9; font-size: 0.78rem; }
+
+@media (max-width: 760px) {
+  .header { align-items: start; }
+  .header > strong { max-width: 42%; text-align: right; }
+  .identityControls { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .baselineBand { grid-template-columns: 1fr; }
+  .baselineBand article { min-height: 220px; }
+  .sizeBand { align-items: center; overflow-x: auto; padding-bottom: 8px; }
+  .sizeBand > header { min-width: 170px; }
+  .catalogGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (orientation: landscape) and (max-height: 560px),
+  (orientation: landscape) and (hover: none) and (pointer: coarse) and (min-width: 768px) and (max-width: 1368px) {
+  .page { padding: 8px 12px; }
+  .editorShell { --cosmetics-editor-landscape-offset: 108px; }
+  .header h1 { font-size: 1.35rem; }
+  .header span { font-size: 0.58rem; }
+  .presetRail { margin: 7px 0; }
+  .presetRail button { min-height: 34px; }
+  .previewStage { min-height: 230px; }
+  .identityControls { grid-template-columns: 82px 82px 1fr 1fr; padding: 4px 0; }
+  .baselineBand article { min-height: 210px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .editorShell { scroll-behavior: auto; }
+}

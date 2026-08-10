@@ -1,26 +1,83 @@
 # Team Shield Cosmetics Lab V0.1
 
-Estado: PENDIENTE DE IMPLEMENTACION VISUAL.
+Estado: LABORATORIO VISUAL IMPLEMENTADO. NOINDEX/NOFOLLOW.
 
-El laboratorio explorara entre 24 y 30 piezas o combinaciones propias sin
-copiar escudos de clubes reales. Cada propuesta se clasificara como MANTENER,
-REVISAR o DESCARTAR tras comprobar legibilidad, combinabilidad, rendimiento,
-movil, reduced motion y tamanos 24/32/48/64 px.
+Ruta: `/laboratorio-cosmeticos-escudo`.
 
-## Familias Objetivo
+El laboratorio usa `TeamShieldView`, `TeamShieldConfig` y el Shared Cosmetics
+Editor reales. No compara ni conserva el renderer antiguo. Sus guardados son
+simulados y nunca modifican PostgreSQL.
 
-- Formas: Clasico, Redondo, Escudo alto, Suizo, Hex IQ y Diamante.
-- Materiales: Acero, Bronce, Cobre, Plata, Oro, Navy, Carbono, Negro Mate y Cromo.
-- Patrones: Solido, rayas, diagonal, cuartos, chevron, Grid IQ, retro y pizarra.
-- Simbolos: balon, estrella, rayo, torre, alas, corona geometrica e inicial.
-- Complementos: corona, estrellas, laureles, alas, cinta, banner y rayos.
-- Efectos: Glint, Scan, Edge Glow, Holo y Focos; maximo uno equipado.
+## Base Nueva
 
-## Evidencia Pendiente
+- 8 formas: Clasico IQ, Redondo, Alto, Suizo, Hex IQ, Diamante, Modern Crest y
+  Barrio Shield.
+- 6 colores normales gratuitos.
+- 3 fondos, 4 patrones, 5 simbolos y 2 bordes base.
+- Iniciales de hasta cuatro caracteres y ano opcional.
+- Preview central, tabs, miniaturas, swatches, reset, estado sin guardar y
+  seleccion visual; no es una coleccion de selects.
 
-- Capturas baseline legacy.
-- Matriz completa de propuestas.
-- Seleccion de 12 a 18 candidatas V1.
-- LOD y tamanos pequenos.
-- Desktop, movil vertical, movil horizontal y reduced motion.
+## Propuestas V0.1
 
+Total: 28.
+
+| Decision | Cantidad |
+| --- | ---: |
+| MANTENER | 16 |
+| REVISAR | 12 |
+| DESCARTAR | 0 |
+
+LAB ONLY: Cromo, Alas y Holo.
+
+## Candidatas V1
+
+Las 16 candidatas reales son:
+
+1. Acero
+2. Cobre
+3. Plata
+4. Navy
+5. Carbono
+6. Grid IQ
+7. Retro
+8. Torre Elite
+9. Estrella Future
+10. Corona Geometrica
+11. Tres Estrellas
+12. Laureles
+13. Banner
+14. Glint
+15. Scan
+16. Edge Glow
+
+Bronce, Oro, Negro Mate, Cromo, Perla, Pizarra, Hex Mesh, Doble Rayo, Alas,
+Rayos Laterales, Placa y Holo quedan en REVISAR.
+
+## Evaluacion
+
+- Identidad: lenguaje propio IQ, sin logos de clubes ni copia de productos.
+- Combinabilidad: slots y anchors controlados; maximo un efecto.
+- Pequeno: LOD oculta detalle en 24/32/48 sin cambiar la identidad.
+- Grande: materiales, ornamentos, iniciales y ano permanecen legibles.
+- Movil horizontal: editor a dos columnas; acciones dentro de 844x390.
+- Movil vertical: preview primero y controles tactiles en grid.
+- Reduced motion: efectos quedan estaticos y legibles.
+- Rendimiento: CSS, gradients, masks/clip-path y SVG ligero; sin WebGL/canvas.
+
+## Evidencia Visual
+
+- `artifacts/team-shield-cosmetics-qa/lab-desktop-1440x900.png`.
+- `artifacts/team-shield-cosmetics-qa/lab-portrait-390x844.png`.
+- `artifacts/team-shield-cosmetics-qa/lab-landscape-844x390.png`.
+- `artifacts/team-shield-cosmetics-qa/lab-landscape-reduced-motion.png`.
+- `artifacts/team-shield-cosmetics-qa/lab-full-catalog.png`.
+
+Las capturas prueban Base IQ, Barrio, Future IQ, Noche, materiales, patrones,
+complementos, efectos, catalogo y LOD 24/32/48/64.
+
+## Decision Pendiente
+
+Las 16 candidatas son propuesta de Release Candidate, no economia activa. La
+asignacion logro -> cosmetico sigue separada en
+`TEAM_COSMETIC_REWARD_MAPPING_PROPOSAL.md` y requiere decision de producto.

@@ -1,4 +1,10 @@
-export const TEAM_IDENTITY_CACHE_VERSION = "team-identity-v3";
+import {
+  normalizeTeamShieldConfig,
+  type TeamShieldConfig,
+  type TeamShieldCosmeticSlot,
+} from "./team-shield-contract";
+
+export const TEAM_IDENTITY_CACHE_VERSION = "team-identity-v5";
 export const TEAM_IDENTITY_CACHE_MAX_AGE_MS = 15 * 60 * 1000;
 
 export function opensPendingRewardSequence(search: string) {
@@ -6,57 +12,45 @@ export function opensPendingRewardSequence(search: string) {
   return params.get("rewards") === "pending" || Boolean(params.get("reward"));
 }
 
-export type CrestDesign = {
-  adornmentKey: string | null;
-  borderKey: string;
-  effectKey: string | null;
-  initials: string;
-  paletteKey: string | null;
-  patternKey: string;
-  primaryColorKey: string;
-  secondaryColorKey: string;
-  shapeKey: string;
-  symbolKey: string | null;
-};
-
 export type CrestCatalogItem = {
-  availability: "achievement" | "base";
+  acquiredAt: string | null;
+  availability: "achievement" | "base" | "prototype" | "reward_box";
+  collection: string | null;
   description: string;
   family: "adornment" | "border" | "color" | "effect" | "palette" | "pattern" | "shape" | "symbol";
   key: string;
+  material: string | null;
   name: string;
   rarity: "common" | "epic" | "legendary" | "rare" | "uncommon";
   render: Record<string, unknown>;
+  seenAt: string | null;
+  serverSequence: number;
+  slot: TeamShieldCosmeticSlot | null;
   unlocked: boolean;
 };
 
-export type CrestVersion = {
-  design: CrestDesign;
+export type TeamShieldVersion = {
+  config: TeamShieldConfig;
+  createdAt: string;
   id: string;
-  previousVersionId: string | null;
-  publishedAt: string;
-  sourceDraftRevision: number;
+  serverSequence: number;
   version: number;
 };
 
-export type CrestDraft = {
-  basedOnVersion: number | null;
-  design: CrestDesign;
-  draftRevision: number;
-  updatedAt: string;
-};
-
-export type TeamCrestSnapshot = {
+export type TeamShieldSnapshot = {
   canManage: boolean;
   catalog: CrestCatalogItem[];
   confirmedRevision: number;
-  crestRevision: number;
-  defaultDesign: CrestDesign;
-  draft: CrestDraft | null;
+  config: TeamShieldConfig;
+  defaultConfig: TeamShieldConfig;
   group: { groupId: string; name: string };
-  history: CrestVersion[];
-  published: CrestVersion | null;
+  history: TeamShieldVersion[];
+  revision: number;
+  seenRevision: number;
   serverSequence: number;
+  teamCosmeticRewardsEnabled: boolean;
+  teamCosmeticsEnabled: boolean;
+  unseenCount: number;
   updatedAt: string;
 };
 
@@ -281,7 +275,7 @@ export type ProgressionSnapshot = {
 
 type CachedTeamIdentity = {
   cachedAt: number;
-  crest: TeamCrestSnapshot | null;
+  shield: TeamShieldSnapshot | null;
   progression: ProgressionSnapshot | null;
   version: typeof TEAM_IDENTITY_CACHE_VERSION;
 };
@@ -321,27 +315,17 @@ function family(value: unknown): CrestCatalogItem["family"] | null {
   return null;
 }
 
-function design(value: unknown): CrestDesign | null {
-  if (!isRecord(value)) return null;
-  const shapeKey = text(value.shapeKey);
-  const primaryColorKey = text(value.primaryColorKey);
-  const secondaryColorKey = text(value.secondaryColorKey);
-  const patternKey = text(value.patternKey);
-  const borderKey = text(value.borderKey);
-  const initials = text(value.initials);
-  if (!shapeKey || !primaryColorKey || !secondaryColorKey || !patternKey || !borderKey || !initials) return null;
-  return {
-    adornmentKey: nullableText(value.adornmentKey),
-    borderKey,
-    effectKey: nullableText(value.effectKey),
-    initials,
-    paletteKey: nullableText(value.paletteKey),
-    patternKey,
-    primaryColorKey,
-    secondaryColorKey,
-    shapeKey,
-    symbolKey: nullableText(value.symbolKey),
-  };
+function shieldConfig(value: unknown): TeamShieldConfig | null {
+  return normalizeTeamShieldConfig(value);
+}
+
+function teamSlot(value: unknown): TeamShieldCosmeticSlot | null {
+  if (
+    value === "shape" || value === "border" || value === "background" || value === "pattern"
+    || value === "primary_symbol" || value === "secondary_symbol" || value === "top_ornament"
+    || value === "side_ornament" || value === "bottom_ornament" || value === "effect"
+  ) return value;
+  return null;
 }
 
 function catalogItem(value: unknown): CrestCatalogItem | null {
@@ -350,68 +334,65 @@ function catalogItem(value: unknown): CrestCatalogItem | null {
   const key = text(value.key);
   if (!itemFamily || !key) return null;
   return {
-    availability: value.availability === "achievement" ? "achievement" : "base",
+    acquiredAt: nullableText(value.acquiredAt),
+    availability: value.availability === "achievement" || value.availability === "prototype" || value.availability === "reward_box"
+      ? value.availability
+      : "base",
+    collection: nullableText(value.collection),
     description: text(value.description),
     family: itemFamily,
     key,
+    material: nullableText(value.material),
     name: text(value.name),
     rarity: rarity(value.rarity),
     render: isRecord(value.render) ? value.render : {},
+    seenAt: nullableText(value.seenAt),
+    serverSequence: Math.max(0, Math.floor(numberValue(value.serverSequence))),
+    slot: teamSlot(value.slot),
     unlocked: value.unlocked === true,
   };
 }
 
-function crestVersion(value: unknown): CrestVersion | null {
+function teamShieldVersion(value: unknown): TeamShieldVersion | null {
   if (!isRecord(value)) return null;
-  const normalizedDesign = design(value.design);
+  const config = shieldConfig(value.config);
   const id = text(value.id);
-  if (!normalizedDesign || !id) return null;
+  if (!config || !id) return null;
   return {
-    design: normalizedDesign,
+    config,
+    createdAt: text(value.createdAt),
     id,
-    previousVersionId: nullableText(value.previousVersionId),
-    publishedAt: text(value.publishedAt),
-    sourceDraftRevision: Math.max(1, Math.floor(numberValue(value.sourceDraftRevision))),
+    serverSequence: Math.max(0, Math.floor(numberValue(value.serverSequence))),
     version: Math.max(1, Math.floor(numberValue(value.version))),
   };
 }
 
-function crestDraft(value: unknown): CrestDraft | null {
-  if (!isRecord(value)) return null;
-  const normalizedDesign = design(value.design);
-  if (!normalizedDesign) return null;
-  return {
-    basedOnVersion: value.basedOnVersion === null || value.basedOnVersion === undefined
-      ? null
-      : Math.max(1, Math.floor(numberValue(value.basedOnVersion))),
-    design: normalizedDesign,
-    draftRevision: Math.max(1, Math.floor(numberValue(value.draftRevision))),
-    updatedAt: text(value.updatedAt),
-  };
-}
-
-export function normalizeTeamCrestSnapshot(value: unknown): TeamCrestSnapshot | null {
+export function normalizeTeamShieldSnapshot(value: unknown): TeamShieldSnapshot | null {
   if (!isRecord(value) || !isRecord(value.group)) return null;
   const groupId = text(value.group.groupId);
   const groupName = text(value.group.name);
-  const defaultDesign = design(value.defaultDesign);
-  if (!groupId || !groupName || !defaultDesign) return null;
-  const crestRevision = Math.max(0, Math.floor(numberValue(value.crestRevision ?? value.confirmedRevision)));
+  const config = shieldConfig(value.config);
+  const defaultConfig = shieldConfig(value.defaultConfig);
+  if (!groupId || !groupName || !config || !defaultConfig) return null;
+  const revision = Math.max(0, Math.floor(numberValue(value.revision ?? value.confirmedRevision)));
   return {
     canManage: value.canManage === true,
     catalog: Array.isArray(value.catalog)
       ? value.catalog.map(catalogItem).filter((item): item is CrestCatalogItem => Boolean(item))
       : [],
-    confirmedRevision: Math.max(crestRevision, Math.floor(numberValue(value.confirmedRevision))),
-    crestRevision,
-    defaultDesign,
-    draft: crestDraft(value.draft),
+    confirmedRevision: Math.max(revision, Math.floor(numberValue(value.confirmedRevision))),
+    config,
+    defaultConfig,
     group: { groupId, name: groupName },
     history: Array.isArray(value.history)
-      ? value.history.map(crestVersion).filter((item): item is CrestVersion => Boolean(item))
+      ? value.history.map(teamShieldVersion).filter((item): item is TeamShieldVersion => Boolean(item))
       : [],
-    published: crestVersion(value.published),
+    revision,
+    seenRevision: Math.max(0, Math.floor(numberValue(value.seenRevision))),
     serverSequence: Math.max(0, Math.floor(numberValue(value.serverSequence))),
+    teamCosmeticRewardsEnabled: value.teamCosmeticRewardsEnabled === true,
+    teamCosmeticsEnabled: value.teamCosmeticsEnabled === true,
+    unseenCount: Math.max(0, Math.floor(numberValue(value.unseenCount))),
     updatedAt: text(value.updatedAt),
   };
 }
@@ -737,7 +718,7 @@ export function readTeamIdentityCache(
     const cachedAt = numberValue(parsed.cachedAt);
     if (!cachedAt || now - cachedAt > TEAM_IDENTITY_CACHE_MAX_AGE_MS) return null;
     return {
-      crest: normalizeTeamCrestSnapshot(parsed.crest),
+      shield: normalizeTeamShieldSnapshot(parsed.shield),
       progression: normalizeProgressionSnapshot(parsed.progression),
     };
   } catch {
@@ -749,13 +730,13 @@ export function writeTeamIdentityCache(
   storage: Pick<Storage, "setItem">,
   userId: string,
   groupId: string,
-  crest: TeamCrestSnapshot | null,
+  shield: TeamShieldSnapshot | null,
   progression: ProgressionSnapshot | null,
   now = Date.now(),
 ) {
   const cached: CachedTeamIdentity = {
     cachedAt: now,
-    crest,
+    shield,
     progression,
     version: TEAM_IDENTITY_CACHE_VERSION,
   };

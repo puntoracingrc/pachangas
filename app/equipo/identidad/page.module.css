@@ -80,8 +80,7 @@
   text-transform: uppercase;
 }
 
-.header select,
-.initialsRow input {
+.header select {
   min-height: 44px;
   border: 1px solid #52665d;
   border-radius: 6px;
@@ -97,6 +96,109 @@
   gap: 18px;
   border-block: 1px solid rgba(204, 229, 216, 0.2);
   padding-block: 18px;
+}
+
+.teamCosmeticEditor {
+  width: min(1440px, 100%);
+  margin-inline: auto;
+  padding-block: 18px;
+  border-block: 1px solid rgba(204, 229, 216, 0.2);
+}
+
+.identityFields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.identityFields label,
+.teamColorRow,
+.symbolControls label {
+  display: grid;
+  gap: 6px;
+  color: #afc0b7;
+  font-size: 0.75rem;
+  font-weight: 850;
+}
+
+.identityFields input {
+  width: 100%;
+  min-height: 42px;
+  border: 1px solid rgba(179, 205, 191, 0.35);
+  border-radius: 6px;
+  background: rgba(7, 18, 15, 0.88);
+  padding: 8px 10px;
+  color: #f4f8f5;
+  font: inherit;
+}
+
+.teamColorRows {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.teamColorRow {
+  grid-template-columns: 74px minmax(0, 1fr);
+  align-items: center;
+}
+
+.teamColorRow > div {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 3px;
+}
+
+.teamColorRow button {
+  flex: 0 0 auto;
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  border: 1px solid rgba(217, 231, 224, 0.32);
+  border-radius: 6px;
+  background: rgba(8, 20, 17, 0.76);
+  padding: 2px;
+}
+
+.teamColorRow .activeSwatch {
+  border-color: #b7f452;
+  box-shadow: 0 0 0 2px rgba(183, 244, 82, 0.2);
+}
+
+.symbolControls {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.symbolControls label > span {
+  display: grid;
+  grid-template-columns: 38px minmax(64px, 1fr) 38px;
+  align-items: center;
+  text-align: center;
+}
+
+.symbolControls button,
+.symbolControls strong {
+  min-height: 38px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(179, 205, 191, 0.3);
+  background: rgba(8, 20, 17, 0.76);
+  color: #edf4ef;
+  font: inherit;
+}
+
+.symbolControls button:first-child { border-radius: 6px 0 0 6px; }
+.symbolControls button:last-child { border-radius: 0 6px 6px 0; }
+
+.emptyCategory {
+  margin: 0;
+  color: #9eb1a7;
 }
 
 .previewStage {
@@ -125,204 +227,10 @@
   color: #9eb1a7;
 }
 
-.crestPreview {
-  --crest-primary: #16a34a;
-  --crest-secondary: #f8fafc;
-  position: relative;
-  isolation: isolate;
-  width: 210px;
-  aspect-ratio: 0.82;
-  display: grid;
-  place-items: center;
-  overflow: visible;
-  border: 8px solid rgba(248, 250, 252, 0.92);
-  background-color: var(--crest-primary);
-  box-shadow: inset 0 0 0 3px rgba(4, 15, 10, 0.66), 0 18px 38px rgba(0, 0, 0, 0.32);
+.identityShield {
+  --shield-size: 210px;
 }
 
-.crestPreview::before {
-  content: "";
-  position: absolute;
-  inset: 9px;
-  z-index: -1;
-  border: 2px solid rgba(255, 255, 255, 0.42);
-  clip-path: inherit;
-}
-
-.crestPreview > strong {
-  color: #fff;
-  font-size: 3.2rem;
-  line-height: 1;
-  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.72);
-}
-
-.shape_classic {
-  clip-path: polygon(8% 0, 92% 0, 100% 20%, 90% 76%, 50% 100%, 10% 76%, 0 20%);
-}
-
-.shape_rounded {
-  border-radius: 28% 28% 42% 42% / 18% 18% 32% 32%;
-}
-
-.shape_pointed {
-  clip-path: polygon(6% 0, 94% 0, 100% 66%, 50% 100%, 0 66%);
-}
-
-.shape_circle {
-  aspect-ratio: 1;
-  border-radius: 50%;
-}
-
-.shape_banner {
-  clip-path: polygon(5% 0, 95% 0, 95% 86%, 72% 74%, 50% 100%, 28% 74%, 5% 86%);
-}
-
-.pattern_stripes {
-  background: repeating-linear-gradient(90deg, var(--crest-primary) 0 24px, var(--crest-secondary) 24px 48px);
-}
-
-.pattern_diagonal {
-  background: linear-gradient(135deg, var(--crest-primary) 0 46%, var(--crest-secondary) 46% 60%, var(--crest-primary) 60%);
-}
-
-.pattern_halves {
-  background: linear-gradient(90deg, var(--crest-primary) 0 50%, var(--crest-secondary) 50% 100%);
-}
-
-.border_double {
-  border-style: double;
-  border-width: 12px;
-}
-
-.border_silver {
-  border-color: #cbd5e1;
-}
-
-.border_gold {
-  border-color: #facc15;
-}
-
-.border_laurel::after {
-  content: "❮  ❯";
-  position: absolute;
-  inset: auto -34px 22px;
-  color: #d6e8a8;
-  font-size: 3rem;
-  display: flex;
-  justify-content: space-between;
-}
-
-.glow {
-  box-shadow: inset 0 0 0 3px rgba(4, 15, 10, 0.66), 0 0 26px rgba(183, 244, 82, 0.72);
-}
-
-.crestSymbol {
-  position: absolute;
-  top: 27%;
-  font-size: 2.2rem;
-  color: #fff;
-  text-shadow: 0 2px 5px #000;
-}
-
-.crestTop {
-  position: absolute;
-  top: -36px;
-  color: #facc15;
-  font-size: 2.2rem;
-}
-
-.crestRibbon {
-  position: absolute;
-  bottom: 21%;
-  padding: 4px 9px;
-  border-radius: 2px;
-  background: rgba(3, 12, 8, 0.84);
-  color: #fff;
-  font-size: 0.56rem;
-  font-weight: 900;
-}
-
-.compactCrest {
-  width: 82px;
-  border-width: 4px;
-}
-
-.compactCrest > strong {
-  font-size: 1.4rem;
-}
-
-.compactCrest .crestSymbol {
-  font-size: 0.9rem;
-}
-
-.compactCrest .crestTop,
-.compactCrest .crestRibbon {
-  display: none;
-}
-
-.editor {
-  min-width: 0;
-  display: grid;
-  align-content: start;
-  gap: 14px;
-}
-
-.initialsRow {
-  display: grid;
-  grid-template-columns: minmax(120px, 0.5fr) 1fr 1fr;
-  gap: 12px;
-}
-
-.initialsRow > label,
-.colorGroup {
-  min-width: 0;
-  display: grid;
-  gap: 7px;
-  color: #b8c8c0;
-  font-size: 0.8rem;
-  font-weight: 800;
-}
-
-.colorGroup > div {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.colorGroup button {
-  width: 40px;
-  aspect-ratio: 1;
-  border: 2px solid rgba(255, 255, 255, 0.36);
-  border-radius: 50%;
-}
-
-.colorGroup .activeSwatch {
-  outline: 3px solid #b7f452;
-  outline-offset: 2px;
-}
-
-.optionFieldset {
-  min-width: 0;
-  margin: 0;
-  border: 0;
-  padding: 0;
-}
-
-.optionFieldset legend {
-  margin-bottom: 7px;
-  color: #b8c8c0;
-  font-size: 0.8rem;
-  font-weight: 800;
-}
-
-.optionGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(112px, 1fr));
-  gap: 7px;
-}
-
-.optionGrid button,
-.editorActions button,
 .rewardModal button {
   min-height: 44px;
   border: 1px solid #455a50;
@@ -331,53 +239,6 @@
   color: #edf4ef;
   font: inherit;
   font-weight: 800;
-}
-
-.optionGrid button {
-  display: grid;
-  place-items: center;
-  padding: 7px;
-}
-
-.optionGrid button small {
-  color: #889b91;
-  font-size: 0.64rem;
-}
-
-.optionGrid button:disabled {
-  opacity: 0.52;
-}
-
-.optionGrid .selectedOption {
-  border-color: #b7f452;
-  background: #26371f;
-  color: #cfff68;
-}
-
-.editorActions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 9px;
-  padding-top: 4px;
-}
-
-.editorActions button {
-  padding-inline: 18px;
-}
-
-.editorActions .publishButton {
-  border-color: #a2cf3e;
-  background: #b7f452;
-  color: #102009;
-}
-
-.editorActions button:disabled {
-  opacity: 0.48;
-}
-
-.editorHint {
-  justify-self: end;
-  color: #aebfb6;
 }
 
 .memberCrestCopy {
@@ -417,7 +278,6 @@
   font-size: 1.35rem;
 }
 
-.rewardRail,
 .historyRail {
   display: grid;
   grid-auto-flow: column;
@@ -426,23 +286,6 @@
   overflow-x: auto;
   overscroll-behavior-inline: contain;
   padding-bottom: 7px;
-}
-
-.rewardRail button {
-  min-height: 132px;
-  display: grid;
-  align-content: center;
-  gap: 5px;
-  border: 1px solid #789b2e;
-  border-radius: 8px;
-  background: #24341d;
-  color: #f1f7ed;
-  padding: 16px;
-  text-align: left;
-}
-
-.rewardRail small {
-  color: #bbcabf;
 }
 
 .openAllRewards {
@@ -804,6 +647,11 @@
     grid-template-columns: 1fr;
   }
 
+  .identityFields,
+  .symbolControls {
+    grid-template-columns: 1fr 1fr;
+  }
+
   .previewStage {
     min-height: 340px;
   }
@@ -852,16 +700,22 @@
     padding-block: 10px;
   }
 
+  .teamCosmeticEditor {
+    padding-block: 8px;
+  }
+
+  .identityFields,
+  .teamColorRows,
+  .symbolControls {
+    margin-bottom: 7px;
+  }
+
   .previewStage {
     min-height: 310px;
   }
 
-  .crestPreview {
-    width: 150px;
-  }
-
-  .crestPreview > strong {
-    font-size: 2.25rem;
+  .identityShield {
+    --shield-size: 150px;
   }
 
   .optionGrid {

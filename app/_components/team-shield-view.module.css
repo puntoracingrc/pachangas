@@ -1,0 +1,368 @@
+.stage {
+  --shield-border-accent: #b4c6c1;
+  --shield-border-base: #e9f0ec;
+  --shield-border-highlight: #fff;
+  --shield-primary: #071b31;
+  --shield-secondary: #33d6dd;
+  --symbol-rotation: 0deg;
+  --symbol-scale: 1;
+  position: relative;
+  isolation: isolate;
+  width: var(--shield-size, 210px);
+  max-width: 100%;
+  aspect-ratio: 0.82;
+  color: #fff;
+  filter: drop-shadow(0 calc(var(--shield-size, 210px) * 0.06) calc(var(--shield-size, 210px) * 0.08) rgba(0, 0, 0, 0.42));
+}
+
+.shieldBody,
+.shieldFace,
+.innerLine,
+.backgroundLayer,
+.patternLayer,
+.effectLayer {
+  position: absolute;
+  inset: 0;
+  clip-path: inherit;
+}
+
+.shieldBody {
+  inset: 8% 8% 4%;
+  overflow: hidden;
+  background:
+    linear-gradient(128deg, var(--shield-border-highlight), transparent 23% 70%, var(--shield-border-accent)),
+    var(--shield-border-base);
+}
+
+.shieldFace {
+  inset: 5.5%;
+  overflow: hidden;
+  background: var(--shield-primary);
+}
+
+.stage[data-shape="classic_iq"] .shieldBody,
+.stage[data-shape="classic_iq"] .shieldFace,
+.stage[data-shape="classic_iq"] .innerLine {
+  clip-path: polygon(12% 1%, 88% 1%, 98% 15%, 90% 72%, 50% 99%, 10% 72%, 2% 15%);
+}
+
+.stage[data-shape="round"] .shieldBody,
+.stage[data-shape="round"] .shieldFace,
+.stage[data-shape="round"] .innerLine {
+  clip-path: circle(49% at 50% 50%);
+}
+
+.stage[data-shape="round"] .shieldBody {
+  inset: 11% 6% auto;
+  aspect-ratio: 1;
+}
+
+.stage[data-shape="tall"] .shieldBody,
+.stage[data-shape="tall"] .shieldFace,
+.stage[data-shape="tall"] .innerLine {
+  clip-path: polygon(16% 0, 84% 0, 96% 11%, 87% 76%, 50% 100%, 13% 76%, 4% 11%);
+}
+
+.stage[data-shape="swiss"] .shieldBody,
+.stage[data-shape="swiss"] .shieldFace,
+.stage[data-shape="swiss"] .innerLine {
+  clip-path: polygon(5% 2%, 95% 2%, 95% 66%, 50% 100%, 5% 66%);
+}
+
+.stage[data-shape="hex_iq"] .shieldBody,
+.stage[data-shape="hex_iq"] .shieldFace,
+.stage[data-shape="hex_iq"] .innerLine {
+  clip-path: polygon(21% 0, 79% 0, 99% 22%, 88% 78%, 50% 100%, 12% 78%, 1% 22%);
+}
+
+.stage[data-shape="diamond"] .shieldBody,
+.stage[data-shape="diamond"] .shieldFace,
+.stage[data-shape="diamond"] .innerLine {
+  clip-path: polygon(50% 0, 97% 31%, 78% 80%, 50% 100%, 22% 80%, 3% 31%);
+}
+
+.stage[data-shape="modern"] .shieldBody,
+.stage[data-shape="modern"] .shieldFace,
+.stage[data-shape="modern"] .innerLine {
+  clip-path: polygon(15% 1%, 85% 1%, 99% 19%, 83% 83%, 50% 99%, 17% 83%, 1% 19%);
+  border-radius: 22% 22% 38% 38% / 16% 16% 29% 29%;
+}
+
+.stage[data-shape="barrio"] .shieldBody,
+.stage[data-shape="barrio"] .shieldFace,
+.stage[data-shape="barrio"] .innerLine {
+  clip-path: polygon(6% 0, 94% 0, 100% 62%, 73% 88%, 50% 100%, 27% 88%, 0 62%);
+}
+
+.backgroundLayer {
+  z-index: 0;
+  background: var(--shield-primary);
+}
+
+.stage[data-background="duotone"] .backgroundLayer {
+  background: linear-gradient(118deg, var(--shield-primary) 0 54%, var(--shield-secondary) 54% 100%);
+}
+
+.stage[data-background="split"] .backgroundLayer {
+  background: linear-gradient(90deg, var(--shield-primary) 0 50%, var(--shield-secondary) 50% 100%);
+}
+
+.patternLayer {
+  z-index: 1;
+  opacity: 0.78;
+}
+
+.stage[data-pattern="diagonal"] .patternLayer {
+  background: linear-gradient(136deg, transparent 0 40%, color-mix(in srgb, var(--shield-secondary) 82%, white) 40% 55%, transparent 55%);
+}
+
+.stage[data-pattern="stripes"] .patternLayer {
+  background: repeating-linear-gradient(90deg, transparent 0 15%, color-mix(in srgb, var(--shield-secondary) 72%, transparent) 15% 29%);
+}
+
+.stage[data-pattern="chevron"] .patternLayer {
+  background:
+    linear-gradient(138deg, transparent 45%, color-mix(in srgb, var(--shield-secondary) 70%, transparent) 45% 53%, transparent 53%),
+    linear-gradient(222deg, transparent 45%, color-mix(in srgb, var(--shield-secondary) 70%, transparent) 45% 53%, transparent 53%);
+}
+
+.stage[data-pattern="grid_iq"] .patternLayer {
+  background:
+    linear-gradient(color-mix(in srgb, var(--shield-secondary) 24%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--shield-secondary) 24%, transparent) 1px, transparent 1px);
+  background-size: 12% 12%;
+}
+
+.stage[data-pattern="retro"] .patternLayer {
+  background: repeating-linear-gradient(90deg, transparent 0 8%, color-mix(in srgb, var(--shield-secondary) 75%, transparent) 8% 12%, transparent 12% 20%);
+}
+
+.stage[data-pattern="chalk"] .patternLayer {
+  background: repeating-linear-gradient(17deg, rgba(255, 255, 255, 0.07) 0 1px, transparent 1px 9px);
+}
+
+.stage[data-pattern="honeycomb"] .patternLayer {
+  background:
+    radial-gradient(circle at 50% 50%, transparent 0 36%, color-mix(in srgb, var(--shield-secondary) 24%, transparent) 38% 42%, transparent 44%) 0 0 / 18% 16%;
+}
+
+.innerLine {
+  z-index: 2;
+  inset: 7%;
+  border: max(1px, calc(var(--shield-size, 210px) * 0.008)) solid color-mix(in srgb, var(--shield-border-highlight) 78%, transparent);
+  opacity: 0.82;
+}
+
+.stage[data-border="double"] .innerLine {
+  inset: 9%;
+  border-width: max(2px, calc(var(--shield-size, 210px) * 0.014));
+  border-style: double;
+}
+
+.primarySymbol,
+.secondarySymbol,
+.initials,
+.foundationYear {
+  position: absolute;
+  z-index: 4;
+  left: 50%;
+  transform: translateX(-50%);
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.58));
+}
+
+.primarySymbol {
+  top: 24%;
+  width: 33%;
+  aspect-ratio: 1;
+  transform: translateX(-50%) rotate(var(--symbol-rotation)) scale(var(--symbol-scale));
+}
+
+.primarySymbol svg,
+.secondarySymbol svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  fill: color-mix(in srgb, white 88%, var(--shield-secondary));
+  stroke: color-mix(in srgb, white 92%, var(--shield-secondary));
+  stroke-width: 3.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.primarySymbol svg path:first-child,
+.secondarySymbol svg path:first-child {
+  fill: none;
+}
+
+.monogram {
+  display: grid;
+  height: 100%;
+  place-items: center;
+  font-size: calc(var(--shield-size, 210px) * 0.13);
+  line-height: 1;
+}
+
+.secondarySymbol {
+  left: auto;
+  right: 24%;
+  bottom: 26%;
+  width: 14%;
+  transform: none;
+}
+
+.initials {
+  top: 55%;
+  font-size: max(0.5rem, calc(var(--shield-size, 210px) * 0.14));
+  font-weight: 950;
+  line-height: 1;
+}
+
+.foundationYear {
+  bottom: 17%;
+  font-size: max(0.3rem, calc(var(--shield-size, 210px) * 0.039));
+  font-weight: 850;
+}
+
+.topOrnament,
+.sideOrnament,
+.bottomOrnament {
+  position: absolute;
+  z-index: 5;
+  display: grid;
+  place-items: center;
+  color: var(--shield-border-highlight);
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.7));
+  pointer-events: none;
+}
+
+.topOrnament {
+  top: -3%;
+  left: 24%;
+  width: 52%;
+  height: 22%;
+}
+
+.sideOrnament {
+  top: 23%;
+  left: -8%;
+  width: 116%;
+  height: 58%;
+  z-index: -1;
+}
+
+.bottomOrnament {
+  bottom: 0;
+  left: 14%;
+  width: 72%;
+  min-height: 14%;
+}
+
+.topOrnament svg,
+.sideOrnament svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  fill: var(--shield-border-base);
+  stroke: var(--shield-border-highlight);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.stars {
+  color: var(--shield-border-base);
+  font-size: calc(var(--shield-size, 210px) * 0.1);
+  white-space: nowrap;
+}
+
+.banner,
+.plate {
+  width: 100%;
+  border: max(1px, calc(var(--shield-size, 210px) * 0.007)) solid var(--shield-border-highlight);
+  border-radius: 3px;
+  background: linear-gradient(180deg, var(--shield-border-base), var(--shield-border-accent));
+  padding: 3% 8%;
+  color: #07110d;
+  font-size: max(0.28rem, calc(var(--shield-size, 210px) * 0.032));
+  font-weight: 950;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.plate {
+  clip-path: polygon(7% 0, 93% 0, 100% 50%, 93% 100%, 7% 100%, 0 50%);
+}
+
+.effectLayer {
+  z-index: 6;
+  pointer-events: none;
+}
+
+.stage[data-effect="edge_glow"] .shieldBody {
+  filter: drop-shadow(0 0 calc(var(--shield-size, 210px) * 0.07) var(--shield-secondary));
+}
+
+.stage[data-effect="glint"] .effectLayer {
+  background: linear-gradient(118deg, transparent 32%, rgba(255, 246, 203, 0.62) 48%, transparent 62%);
+  animation: shieldGlint 5.2s ease-in-out infinite;
+}
+
+.stage[data-effect="scan"] .effectLayer {
+  background: linear-gradient(180deg, transparent 43%, rgba(51, 214, 221, 0.58) 49%, transparent 55%);
+  animation: shieldScan 3.8s linear infinite;
+}
+
+.stage[data-effect="holo"] .effectLayer {
+  background: linear-gradient(118deg, rgba(90, 167, 255, 0.08), rgba(183, 244, 82, 0.2), rgba(219, 143, 255, 0.18), rgba(90, 167, 255, 0.08));
+  background-size: 220% 100%;
+  mix-blend-mode: screen;
+  animation: shieldHolo 5.6s ease-in-out infinite;
+}
+
+@keyframes shieldGlint {
+  0%, 64%, 100% { opacity: 0; transform: translateX(-60%); }
+  73% { opacity: 0.9; }
+  88% { opacity: 0; transform: translateX(60%); }
+}
+
+@keyframes shieldScan {
+  from { transform: translateY(-60%); }
+  to { transform: translateY(60%); }
+}
+
+@keyframes shieldHolo {
+  0%, 100% { opacity: 0.16; background-position: 0 0; }
+  50% { opacity: 0.5; background-position: 100% 0; }
+}
+
+.stage[data-size="24"] .primarySymbol,
+.stage[data-size="24"] .secondarySymbol,
+.stage[data-size="24"] .foundationYear,
+.stage[data-size="24"] .topOrnament,
+.stage[data-size="24"] .sideOrnament,
+.stage[data-size="24"] .bottomOrnament,
+.stage[data-size="32"] .secondarySymbol,
+.stage[data-size="32"] .foundationYear,
+.stage[data-size="32"] .sideOrnament,
+.stage[data-size="32"] .bottomOrnament,
+.stage[data-size="48"] .sideOrnament {
+  display: none;
+}
+
+.stage[data-size="24"] .shieldBody,
+.stage[data-size="32"] .shieldBody {
+  inset: 5%;
+}
+
+.stage[data-size="24"] .initials {
+  top: 43%;
+  font-size: 0.52rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .effectLayer {
+    animation: none !important;
+    opacity: 0.26;
+    transform: none !important;
+  }
+}

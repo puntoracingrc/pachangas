@@ -146,6 +146,8 @@
   font-weight: 900;
 }
 
+.materialSwatch[data-material="original"] { background: var(--swatch-color, transparent); }
+
 .materialSwatch[data-material="steel"] { background: linear-gradient(135deg, #c7d3d6, #354349); }
 .materialSwatch[data-material="bronze"] { background: linear-gradient(135deg, #e0a371, #704326); }
 .materialSwatch[data-material="copper"] { background: linear-gradient(135deg, #f0b17f, #6e2f19); }
@@ -230,7 +232,7 @@
   .shell {
     grid-template-columns: minmax(240px, 0.85fr) minmax(270px, 1.15fr);
     grid-template-areas: "controls preview" "actions preview";
-    height: calc(var(--app-viewport-height, 100dvh) - 88px);
+    height: calc(var(--app-viewport-height, 100dvh) - var(--cosmetics-editor-landscape-offset, 88px));
   }
 
   .controls {

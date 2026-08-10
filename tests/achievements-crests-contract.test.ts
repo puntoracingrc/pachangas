@@ -13,7 +13,7 @@ import { classifySupabaseWrite } from "../app/pwa-write-classifier";
 import {
   TEAM_IDENTITY_CACHE_MAX_AGE_MS,
   normalizeProgressionSnapshot,
-  normalizeTeamCrestSnapshot,
+  normalizeTeamShieldSnapshot,
   opensPendingRewardSequence,
   readTeamIdentityCache,
   writeTeamIdentityCache,
@@ -64,29 +64,39 @@ function externalMatchFixture() {
 }
 
 function crestFixture() {
-  const design = {
-    adornmentKey: null,
-    borderKey: "border.standard",
+  const config = {
+    backgroundKey: "team.shield.background.duotone",
+    borderKey: "team.shield.border.clean",
+    bottomOrnamentKey: null,
     effectKey: null,
+    foundationYear: "",
     initials: "PIQ",
-    paletteKey: null,
-    patternKey: "pattern.solid",
-    primaryColorKey: "color.green",
-    secondaryColorKey: "color.white",
-    shapeKey: "shape.classic",
-    symbolKey: null,
+    patternKey: "team.shield.pattern.diagonal",
+    primaryColorKey: "team.shield.color.midnight",
+    primarySymbolKey: "team.shield.symbol.ball_iq",
+    primarySymbolRotation: 0,
+    primarySymbolScale: 1,
+    schemaVersion: 1,
+    secondaryColorKey: "team.shield.color.cyan",
+    secondarySymbolKey: null,
+    shapeKey: "team.shield.shape.classic_iq",
+    sideOrnamentKey: null,
+    topOrnamentKey: null,
   };
   return {
     canManage: true,
-    catalog: [{ availability: "base", description: "Forma inicial", family: "shape", key: "shape.classic", name: "Clásico", rarity: "common", render: { shape: "classic" }, unlocked: true }],
+    catalog: [{ availability: "base", description: "Forma inicial", family: "shape", key: "team.shield.shape.classic_iq", name: "Clásico IQ", rarity: "common", render: { shape: "classic_iq" }, slot: "shape", unlocked: true }],
     confirmedRevision: 2,
-    crestRevision: 2,
-    defaultDesign: design,
-    draft: { basedOnVersion: 1, design, draftRevision: 2, updatedAt: "2026-08-03T21:00:00.000Z" },
+    config,
+    defaultConfig: config,
     group: { groupId: "group-a", name: "Pachangas A" },
     history: [],
-    published: null,
+    revision: 2,
+    seenRevision: 1,
     serverSequence: 8,
+    teamCosmeticRewardsEnabled: false,
+    teamCosmeticsEnabled: true,
+    unseenCount: 0,
     updatedAt: "2026-08-03T21:00:00.000Z",
   };
 }
@@ -214,7 +224,7 @@ test("derived caches are scoped, finite and never manufacture canonical state", 
     serverSequence: 41,
     updatedAt: "2026-08-03T21:00:00.000Z",
   });
-  const crest = normalizeTeamCrestSnapshot(crestFixture());
+  const crest = normalizeTeamShieldSnapshot(crestFixture());
   const progression = normalizeProgressionSnapshot(progressionFixture());
   assert.ok(external && crest && progression);
 
@@ -222,7 +232,7 @@ test("derived caches are scoped, finite and never manufacture canonical state", 
   writeTeamIdentityCache(storage, "user-a", "group-a", crest, progression, 1_000);
   assert.equal(readExternalResultsCache(storage, "user-a", "group-a", 1_001)?.serverSequence, 41);
   assert.equal(readExternalResultsCache(storage, "user-b", "group-a", 1_001), null);
-  assert.equal(readTeamIdentityCache(storage, "user-a", "group-a", 1_001)?.crest?.crestRevision, 2);
+  assert.equal(readTeamIdentityCache(storage, "user-a", "group-a", 1_001)?.shield?.revision, 2);
   assert.equal(progression.personalAchievementCatalog[0]?.progressPercent, 60);
   assert.equal(progression.personalAchievementCatalog[0]?.unlocked, false);
   assert.equal(progression.catalogKey, "achievement_catalog_v2");
@@ -264,6 +274,8 @@ test("the PWA bridge classifies every new mutation and leaves canonical reads av
     "publish_pachanga_team_crest_v1",
     "reject_pachanga_external_result_change_v1",
     "save_pachanga_team_crest_draft_v1",
+    "save_pachanga_team_shield_loadout_v1",
+    "mark_pachanga_team_cosmetics_seen_v1",
   ];
   for (const rpc of writes) {
     assert.equal(classifySupabaseWrite(`${endpoint}${rpc}`, { method: "POST" }), `rpc:${rpc}`);
@@ -272,6 +284,7 @@ test("the PWA bridge classifies every new mutation and leaves canonical reads av
     "get_pachanga_external_results_snapshot_v1",
     "get_pachanga_progression_snapshot_v1",
     "get_pachanga_team_crest_snapshot_v1",
+    "get_pachanga_team_shield_snapshot_v1",
   ]) {
     assert.equal(classifySupabaseWrite(`${endpoint}${rpc}`, { method: "POST" }), null);
   }
@@ -422,7 +435,11 @@ test("client surfaces write only through RPC and subscribe to revision rows", ()
   const identityUi = readFileSync(new URL("../app/equipo/identidad/page.tsx", import.meta.url), "utf8");
   assert.match(externalUi, /\.rpc\("publish_pachanga_external_result_v1"/);
   assert.match(externalUi, /table: "pachanga_external_match_group_state"/);
-  assert.match(identityUi, /\.rpc\("save_pachanga_team_crest_draft_v1"/);
+  assert.match(identityUi, /\.rpc\("save_pachanga_team_shield_loadout_v1"/);
+  assert.match(identityUi, /target_config: draftDesign/);
+  assert.match(identityUi, /table: "pachanga_team_shield_state"/);
+  assert.doesNotMatch(identityUi, /\.rpc\("save_pachanga_team_crest_draft_v1"/);
+  assert.doesNotMatch(identityUi, /\.rpc\("publish_pachanga_team_crest_v1"/);
   assert.match(identityUi, /\.rpc\("open_pachanga_reward_box_v2"/);
   assert.match(identityUi, /beginRewardSequence\(pendingRewards\)/);
   assert.match(identityUi, /table: "pachanga_progression_group_state"/);
