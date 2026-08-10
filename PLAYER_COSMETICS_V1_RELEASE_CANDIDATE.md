@@ -11,7 +11,7 @@ Fecha de cierre técnico: 2026-08-10 (Europe/Madrid).
 - PR funcional: #125, rama `codex/player-cosmetics-v1`.
 - SHA funcional previo a este informe: `0d48f6fab3a639224c352d3cede8b864f0fa73af`.
 - Base real de #125: coincide exactamente con el `main` anterior.
-- Diff normalizado: 58 rutas de Cosmetics V1/V0.2, evidencias y pruebas; no arrastra el diff histórico de #122.
+- Diff normalizado: 59 rutas, incluido este informe, de Cosmetics V1/V0.2, evidencias y pruebas; no arrastra el diff histórico de #122.
 
 ## Alcance
 
