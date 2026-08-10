@@ -75,7 +75,10 @@ En produccion, los tres assets responden 200, `image/webp` y
 - Inventarios Team Shield creados por el release: 0.
 - Inventarios premium creados por el release: 0.
 - Reward mappings nuevos: 0.
-- Ball en el catalogo productivo: ausente.
+- Contratos o assets del Balon Premium interactivo anadidos por esta release: 0.
+- Los simbolos estaticos preexistentes `symbol.ball` y
+  `team.shield.symbol.ball_iq` permanecen en el catalogo; no son el Balon
+  Premium, no usan sensores y no forman parte de este subset.
 
 Cobre, Plata y Oro existen como cosmeticos visuales catalogados. No aumentan
 Rating, Season Score ni TOPS y no se conceden automaticamente.
@@ -86,8 +89,8 @@ Rating, Season Score ni TOPS y no se conceden automaticamente.
 - `npm test`: build correcto y 215/215 pruebas.
 - Typecheck: correcto.
 - Lint focalizado: correcto.
-- SQL transaccional: Cobre/Plata/Oro v2, Ball ausente, rewards OFF; rollback
-  correcto.
+- SQL transaccional: Cobre/Plata/Oro v2, ningun contrato Premium interactivo
+  nuevo, rewards OFF y rollback correcto.
 - `git diff --check`: correcto.
 - PR #133: Vercel Preview verde.
 
