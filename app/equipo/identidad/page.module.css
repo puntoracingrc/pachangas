@@ -1,5 +1,8 @@
 .page {
+  box-sizing: border-box;
+  width: 100%;
   min-height: 100dvh;
+  overflow-x: hidden;
   background:
     linear-gradient(112deg, rgba(0, 119, 88, 0.2), transparent 46%),
     linear-gradient(252deg, rgba(28, 78, 121, 0.24), transparent 50%),
@@ -716,6 +719,7 @@
 }
 
 .message {
+  box-sizing: border-box;
   position: fixed;
   right: max(16px, env(safe-area-inset-right));
   bottom: max(16px, env(safe-area-inset-bottom));
@@ -778,12 +782,16 @@
 
 @media (max-width: 850px) {
   .topbar {
-    grid-template-columns: auto 1fr auto;
+    grid-template-columns: auto minmax(0, 1fr) auto;
     gap: 10px;
   }
 
   .topbar strong {
+    min-width: 0;
+    overflow: hidden;
     text-align: center;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .header {
