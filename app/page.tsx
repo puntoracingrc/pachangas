@@ -3,6 +3,7 @@
 import { type CSSProperties, type Dispatch, type FormEvent, Fragment, type MouseEvent as ReactMouseEvent, type PointerEvent as ReactPointerEvent, type SetStateAction, type WheelEvent as ReactWheelEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import dynamic from "next/dynamic";
+import { PlayerCardView } from "./_components/player-card-view";
 import { attachVenueAutocomplete, type VenuePlace } from "./googlePlacesClient";
 import { GlobalRatingPanel } from "./global-rating-panel";
 import {
@@ -8665,37 +8666,16 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
 
     return (
       <div className="fifa-card-shell">
-        <div className={`${cardCanEdit ? "fifa-player-card" : "fifa-player-card readonly-card"} ${cardTierClass(selectedPeerScore)} ${avatarDragging && cardCanAdjustAvatar ? "avatar-dragging" : ""}`}>
-          <span className="fifa-score">{overallScore(selectedPeerScore)}</span>
-          {renderRatingTrendChip(selectedPlayer)}
-          <span className="fifa-position">{positionShort(selectedPlayer)}</span>
-          <span
-            className={`fifa-photo ${cardCanAdjustAvatar ? "draggable-avatar" : ""}`}
-            onPointerCancel={cardCanAdjustAvatar ? finishAvatarDrag : undefined}
-            onPointerDown={cardCanAdjustAvatar ? (event) => startAvatarDrag(event, selectedPlayer) : undefined}
-            onPointerMove={cardCanAdjustAvatar ? moveAvatarDrag : undefined}
-            onPointerUp={cardCanAdjustAvatar ? finishAvatarDrag : undefined}
-          >
-            {selectedAvatarPreview ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={selectedAvatarPreview} alt={`Foto de ${playerDisplayName(selectedPlayer)}`} draggable={false} style={avatarImageStyle(selectedAvatarDraft ?? selectedPlayer)} />
-            ) : (
-              <b>+</b>
-            )}
-          </span>
-          <strong>{playerDisplayName(selectedPlayer)}</strong>
-          <span className="fifa-card-meta">
-            {selectedPlayer.goals} Goles · {selectedPlayer.appearances} PJ{selectedPlayerAge !== null ? ` · ${selectedPlayerAge} años` : ""}
-          </span>
-          <div className="fifa-facets">
-            {selectedRatingFacets.map((facet) => (
-              <span key={facet.key}>
-                <b>{overallScore(facetAverage(selectedPlayer, facet.key))}</b>
-                {facet.short}
-              </span>
-            ))}
-          </div>
-          {cardCanEdit ? (
+        <PlayerCardView
+          className={`${cardCanEdit ? "" : "readonly-card"} ${cardTierClass(selectedPeerScore)} ${avatarDragging && cardCanAdjustAvatar ? "avatar-dragging" : ""}`}
+          facets={selectedRatingFacets.map((facet) => ({
+            key: facet.key,
+            label: facet.short,
+            value: overallScore(facetAverage(selectedPlayer, facet.key)),
+          }))}
+          meta={`${selectedPlayer.goals} Goles · ${selectedPlayer.appearances} PJ${selectedPlayerAge !== null ? ` · ${selectedPlayerAge} años` : ""}`}
+          name={playerDisplayName(selectedPlayer)}
+          photoAction={cardCanEdit ? (
             <label className="fifa-photo-action" title={selectedAvatarPreview ? "Cambiar foto" : "Añadir foto"}>
               {selectedAvatarPreview ? "Cambiar foto" : "Añadir foto"}
               <input
@@ -8711,8 +8691,21 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
                 }}
               />
             </label>
-          ) : null}
-        </div>
+          ) : undefined}
+          photoAlt={`Foto de ${playerDisplayName(selectedPlayer)}`}
+          photoClassName={cardCanAdjustAvatar ? "draggable-avatar" : ""}
+          photoProps={{
+            onPointerCancel: cardCanAdjustAvatar ? finishAvatarDrag : undefined,
+            onPointerDown: cardCanAdjustAvatar ? (event) => startAvatarDrag(event, selectedPlayer) : undefined,
+            onPointerMove: cardCanAdjustAvatar ? moveAvatarDrag : undefined,
+            onPointerUp: cardCanAdjustAvatar ? finishAvatarDrag : undefined,
+          }}
+          photoSrc={selectedAvatarPreview}
+          photoStyle={avatarImageStyle(selectedAvatarDraft ?? selectedPlayer)}
+          position={positionShort(selectedPlayer)}
+          score={overallScore(selectedPeerScore)}
+          trend={renderRatingTrendChip(selectedPlayer)}
+        />
         {cardCanAdjustAvatar ? (
           <small className="avatar-adjust-hint">Arrastra la foto dentro de la carta. El encuadre se guarda al pulsar Guardar ficha.</small>
         ) : null}
