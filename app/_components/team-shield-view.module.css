@@ -72,6 +72,16 @@
   background: linear-gradient(128deg, #765009, var(--shield-border-highlight) 24%, var(--shield-border-base) 44%, #7a5205 67%, #ffe998 82%, var(--shield-border-base));
 }
 
+.stage[data-premium-border="true"] .shieldBody::before {
+  background-image:
+    linear-gradient(128deg, rgba(255, 255, 255, 0.2), transparent 28% 68%, rgba(255, 255, 255, 0.16)),
+    var(--shield-premium-texture);
+  background-position: center;
+  background-size: cover;
+  mix-blend-mode: soft-light;
+  opacity: 0.68;
+}
+
 .stage[data-material="chrome"] .shieldBody {
   background: linear-gradient(135deg, #222a31, #fff 18%, #65717a 34%, #f9ffff 48%, #313c46 65%, #fff 83%, #69747d);
 }
@@ -245,6 +255,43 @@
   width: 33%;
   aspect-ratio: 1;
   transform: translateX(-50%) rotate(var(--symbol-rotation)) scale(var(--symbol-scale));
+}
+
+.premiumBall,
+.premiumBallFallback {
+  position: absolute;
+  inset: -16%;
+  display: block;
+}
+
+.premiumBall {
+  transform: perspective(180px) rotateX(var(--premium-ball-tilt-x)) rotateY(var(--premium-ball-tilt-y));
+  transform-style: preserve-3d;
+  transition: transform 90ms linear;
+}
+
+.premiumBallFrame {
+  object-fit: contain;
+  filter: drop-shadow(0 5px 5px rgba(0, 0, 0, 0.42));
+  transition: opacity 90ms linear;
+}
+
+.premiumBallLight {
+  position: absolute;
+  inset: 13%;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at var(--premium-ball-light-x) var(--premium-ball-light-y),
+    rgba(255, 255, 255, 0.24),
+    transparent 42%
+  );
+  mix-blend-mode: screen;
+  pointer-events: none;
+}
+
+.premiumBallFallback svg {
+  width: 100%;
+  height: 100%;
 }
 
 .primarySymbol svg,
@@ -502,6 +549,11 @@
   stroke-width: 5.5;
 }
 
+.stage[data-size="24"] .premiumBallFallback,
+.stage[data-size="32"] .premiumBallFallback {
+  inset: -3%;
+}
+
 .stage[data-size="32"] .primarySymbol {
   top: 19%;
   width: 38%;
@@ -532,6 +584,11 @@
   animation: none;
 }
 
+.stage[data-motion="reduced"] .premiumBall {
+  transform: none;
+  transition: none;
+}
+
 .stage[data-motion="reduced"][data-effect="glint"] .effectLayer::before,
 .stage[data-motion="reduced"][data-effect="scan"] .effectLayer::before {
   opacity: 0.72;
@@ -550,6 +607,11 @@
   .stage[data-effect="scan"] .effectLayer::before {
     opacity: 0.72;
     transform: none;
+  }
+
+  .premiumBall,
+  .premiumBallFrame {
+    transition: none !important;
   }
 }
 

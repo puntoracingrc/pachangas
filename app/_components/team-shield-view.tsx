@@ -1,7 +1,13 @@
+import Image from "next/image";
 import type { CSSProperties } from "react";
 import { PLAYER_COSMETIC_MATERIALS } from "../player-cosmetics-catalog";
 import { teamShieldCatalogEntry } from "../team-shield-cosmetics-catalog";
 import type { TeamShieldConfig, TeamShieldRenderableItem } from "../team-shield-contract";
+import {
+  TEAM_SHIELD_PREMIUM_BALL_FRAMES,
+  TEAM_SHIELD_PREMIUM_BORDER_TEXTURES,
+} from "../team-shield-premium-assets";
+import type { PremiumBallVisualState } from "../team-shield-premium-motion";
 import styles from "./team-shield-view.module.css";
 
 type ShieldStyle = CSSProperties & {
@@ -11,8 +17,16 @@ type ShieldStyle = CSSProperties & {
   "--shield-primary": string;
   "--shield-secondary": string;
   "--shield-size"?: string;
+  "--shield-premium-texture"?: string;
   "--symbol-rotation": string;
   "--symbol-scale": number;
+};
+
+type PremiumBallStyle = CSSProperties & {
+  "--premium-ball-light-x": string;
+  "--premium-ball-light-y": string;
+  "--premium-ball-tilt-x": string;
+  "--premium-ball-tilt-y": string;
 };
 
 function findItem(catalog: readonly TeamShieldRenderableItem[], key: string | null | undefined) {
@@ -84,6 +98,70 @@ function SymbolGraphic({ kind, monogram }: { kind: string; monogram: string }) {
   return <svg viewBox="0 0 64 64" aria-hidden="true"><path d="M32 5 58 32 32 59 6 32Z" /><path d="m32 17 14 15-14 15-14-15Z" /></svg>;
 }
 
+function PremiumBallGraphic({
+  motion,
+  size,
+}: {
+  motion?: PremiumBallVisualState;
+  size?: 24 | 32 | 48 | 64 | 82 | 210;
+}) {
+  if (size === 24 || size === 32) {
+    return <span className={styles.premiumBallFallback} data-premium-lod="simplified-2d"><SymbolGraphic kind="ball_iq" monogram="" /></span>;
+  }
+  const frame = Math.max(0, Math.min(TEAM_SHIELD_PREMIUM_BALL_FRAMES.length - 1, motion?.frame ?? 4));
+  const previousFrame = Math.max(0, Math.min(
+    TEAM_SHIELD_PREMIUM_BALL_FRAMES.length - 1,
+    motion?.previousFrame ?? frame,
+  ));
+  const transitioning = frame !== previousFrame;
+  const blend = transitioning ? Math.max(0, Math.min(1, motion?.blend ?? 1)) : 1;
+  const tiltX = motion?.tiltX ?? 0;
+  const tiltY = motion?.tiltY ?? 0;
+  const style: PremiumBallStyle = {
+    "--premium-ball-light-x": `${50 + tiltX * 2.2}%`,
+    "--premium-ball-light-y": `${42 + tiltY * 1.8}%`,
+    "--premium-ball-tilt-x": `${tiltY * -0.42}deg`,
+    "--premium-ball-tilt-y": `${tiltX * 0.42}deg`,
+  };
+  const sizes = size ? `${Math.max(24, Math.ceil(size * 0.36))}px` : "76px";
+
+  return (
+    <span
+      className={styles.premiumBall}
+      data-frame={frame}
+      data-frame-count={TEAM_SHIELD_PREMIUM_BALL_FRAMES.length}
+      data-premium-lod={size === 48 || size === 64 ? "prerender-static" : "multiview"}
+      style={style}
+    >
+      {transitioning ? (
+        <Image
+          alt=""
+          aria-hidden="true"
+          className={styles.premiumBallFrame}
+          fill
+          loading="lazy"
+          sizes={sizes}
+          src={TEAM_SHIELD_PREMIUM_BALL_FRAMES[previousFrame]}
+          style={{ opacity: 1 - blend }}
+          unoptimized
+        />
+      ) : null}
+      <Image
+        alt=""
+        aria-hidden="true"
+        className={styles.premiumBallFrame}
+        fill
+        loading={motion ? "eager" : "lazy"}
+        sizes={sizes}
+        src={TEAM_SHIELD_PREMIUM_BALL_FRAMES[frame]}
+        style={{ opacity: blend }}
+        unoptimized
+      />
+      <span className={styles.premiumBallLight} aria-hidden="true" />
+    </span>
+  );
+}
+
 function OrnamentGraphic({ kind }: { kind: string }) {
   if (kind === "crown") return <svg viewBox="0 0 100 42" aria-hidden="true"><path d="m8 34 5-25 19 16L50 5l18 20L87 9l5 25Z" /><path d="M8 34h84v6H8Z" /><path d="M20 31h60" /></svg>;
   if (kind === "three_stars") return <span className={styles.stars}>★ ★ ★</span>;
@@ -100,6 +178,7 @@ export function TeamShieldView({
   config,
   label,
   motion = "auto",
+  premiumBallMotion,
   size,
 }: {
   catalog?: readonly TeamShieldRenderableItem[];
@@ -107,6 +186,7 @@ export function TeamShieldView({
   config: TeamShieldConfig;
   label?: string;
   motion?: "auto" | "reduced";
+  premiumBallMotion?: PremiumBallVisualState;
   size?: 24 | 32 | 48 | 64 | 82 | 210;
 }) {
   const selected = config;
@@ -119,6 +199,13 @@ export function TeamShieldView({
   const border = renderValue(borderItem, "border", "clean");
   const borderMaterial = materialKey(borderItem);
   const material = materialValue(borderItem);
+  const premiumBorderEnabled = renderValue(borderItem, "premiumBorder", "") === "prerender-material-v1"
+    && borderMaterial in TEAM_SHIELD_PREMIUM_BORDER_TEXTURES
+    && size !== 24
+    && size !== 32;
+  const premiumBorderTexture = premiumBorderEnabled
+    ? TEAM_SHIELD_PREMIUM_BORDER_TEXTURES[borderMaterial as keyof typeof TEAM_SHIELD_PREMIUM_BORDER_TEXTURES]
+    : null;
   const effect = renderValue(findItem(catalog, selected.effectKey), "effect", "none");
   const topOrnament = renderValue(findItem(catalog, selected.topOrnamentKey), "ornament", "none");
   const sideOrnament = renderValue(findItem(catalog, selected.sideOrnamentKey), "ornament", "none");
@@ -130,6 +217,7 @@ export function TeamShieldView({
     "--shield-primary": colorValue(catalog, selected.primaryColorKey, "#071b31"),
     "--shield-secondary": colorValue(catalog, selected.secondaryColorKey, "#33d6dd"),
     "--shield-size": size ? `${size}px` : undefined,
+    "--shield-premium-texture": premiumBorderTexture ? `url("${premiumBorderTexture}")` : undefined,
     "--symbol-rotation": `${selected.primarySymbolRotation}deg`,
     "--symbol-scale": selected.primarySymbolScale,
   };
@@ -144,6 +232,7 @@ export function TeamShieldView({
       data-material={borderMaterial}
       data-motion={motion}
       data-pattern={pattern}
+      data-premium-border={premiumBorderEnabled}
       data-shape={shape}
       data-size={size ?? "fluid"}
       role="img"
@@ -154,7 +243,11 @@ export function TeamShieldView({
           <span className={styles.backgroundLayer} aria-hidden="true" />
           <span className={styles.patternLayer} aria-hidden="true" />
           <span className={styles.innerLine} aria-hidden="true" />
-          <span className={styles.primarySymbol} data-symbol={primarySymbol} aria-hidden="true"><SymbolGraphic kind={primarySymbol} monogram={selected.initials} /></span>
+          <span className={styles.primarySymbol} data-symbol={primarySymbol} aria-hidden="true">
+            {primarySymbol === "ball_premium"
+              ? <PremiumBallGraphic motion={motion === "reduced" ? undefined : premiumBallMotion} size={size} />
+              : <SymbolGraphic kind={primarySymbol} monogram={selected.initials} />}
+          </span>
           {selected.secondarySymbolKey ? <span className={styles.secondarySymbol} data-symbol={secondarySymbol} aria-hidden="true"><SymbolGraphic kind={secondarySymbol} monogram={selected.initials} /></span> : null}
           <strong className={styles.initials}>{selected.initials}</strong>
           {selected.foundationYear ? <small className={styles.foundationYear}>{selected.foundationYear}</small> : null}

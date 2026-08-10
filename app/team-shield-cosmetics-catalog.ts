@@ -1,6 +1,10 @@
 import { PLAYER_COSMETIC_MATERIALS } from "./player-cosmetics-catalog";
 import type { PlayerCosmeticRarity } from "./player-cosmetics-contract";
 import type { TeamShieldCosmeticSlot, TeamShieldRenderableItem } from "./team-shield-contract";
+import {
+  TEAM_SHIELD_PREMIUM_BALL_KEY,
+  TEAM_SHIELD_PREMIUM_BORDER_TEXTURES,
+} from "./team-shield-premium-assets";
 
 export type TeamShieldLabDecision = "MANTENER" | "REVISAR" | "DESCARTAR";
 
@@ -64,9 +68,9 @@ const proposal = (entry: Omit<TeamShieldCatalogEntry, "availability" | "prototyp
 export const TEAM_SHIELD_COSMETIC_PROTOTYPES: TeamShieldCatalogEntry[] = [
   proposal({ key: "team.shield.border.steel", name: "Acero", description: "Acero cepillado sobrio.", collection: "Fútbol de Barrio", slot: "border", rarity: "common", material: "steel", render: { border: "material", material: "steel" }, decision: "MANTENER" }),
   proposal({ key: "team.shield.border.bronze", name: "Bronce", description: "Bronce envejecido de tono deportivo.", collection: "Fútbol de Barrio", slot: "border", rarity: "uncommon", material: "bronze", render: { border: "material", material: "bronze" }, decision: "REVISAR" }),
-  proposal({ key: "team.shield.border.copper", name: "Cobre", description: "Cobre cálido con contraste alto.", collection: "Fútbol de Barrio", slot: "border", rarity: "uncommon", material: "copper", render: { border: "material", material: "copper" }, decision: "MANTENER" }),
-  proposal({ key: "team.shield.border.silver", name: "Plata", description: "Plata satinada de alta lectura.", collection: "Retro", slot: "border", rarity: "rare", material: "silver", render: { border: "material", material: "silver" }, decision: "MANTENER" }),
-  proposal({ key: "team.shield.border.gold", name: "Oro", description: "Oro contenido para hitos de élite.", collection: "Noche de Partido", slot: "border", rarity: "legendary", material: "gold", render: { border: "material", material: "gold" }, decision: "REVISAR" }),
+  proposal({ key: "team.shield.border.copper", name: "Cobre", description: "Cobre cálido con contraste alto.", collection: "Fútbol de Barrio", slot: "border", rarity: "uncommon", material: "copper", render: { border: "material", material: "copper", premiumBorder: "prerender-material-v1", premiumTexture: TEAM_SHIELD_PREMIUM_BORDER_TEXTURES.copper }, decision: "MANTENER" }),
+  proposal({ key: "team.shield.border.silver", name: "Plata", description: "Plata satinada de alta lectura.", collection: "Retro", slot: "border", rarity: "rare", material: "silver", render: { border: "material", material: "silver", premiumBorder: "prerender-material-v1", premiumTexture: TEAM_SHIELD_PREMIUM_BORDER_TEXTURES.silver }, decision: "MANTENER" }),
+  proposal({ key: "team.shield.border.gold", name: "Oro", description: "Oro contenido para hitos de élite.", collection: "Noche de Partido", slot: "border", rarity: "legendary", material: "gold", render: { border: "material", material: "gold", premiumBorder: "prerender-material-v1", premiumTexture: TEAM_SHIELD_PREMIUM_BORDER_TEXTURES.gold }, decision: "MANTENER" }),
   proposal({ key: "team.shield.border.navy", name: "Navy", description: "Marco técnico azul oscuro.", collection: "Future IQ", slot: "border", rarity: "epic", material: "navy", render: { border: "material", material: "navy" }, decision: "MANTENER" }),
   proposal({ key: "team.shield.border.carbon", name: "Carbono", description: "Carbono mate de baja reflexión.", collection: "Future IQ", slot: "border", rarity: "epic", material: "carbon", render: { border: "material", material: "carbon" }, decision: "MANTENER" }),
   proposal({ key: "team.shield.border.black_matte", name: "Negro Mate", description: "Contorno oscuro táctico.", collection: "Noche de Partido", slot: "border", rarity: "rare", material: "black_matte", render: { border: "material", material: "black_matte" }, decision: "REVISAR" }),
@@ -78,6 +82,7 @@ export const TEAM_SHIELD_COSMETIC_PROTOTYPES: TeamShieldCatalogEntry[] = [
   proposal({ key: "team.shield.pattern.honeycomb", name: "Hex Mesh", description: "Malla hexagonal de competición.", collection: "Future IQ", slot: "pattern", rarity: "epic", material: "carbon", render: { pattern: "honeycomb" }, decision: "REVISAR" }),
   proposal({ key: "team.shield.symbol.tower_elite", name: "Torre Elite", description: "Torre doble con placa inferior.", collection: "Fútbol de Barrio", slot: "primary_symbol", rarity: "uncommon", material: "steel", render: { symbol: "tower_elite" }, decision: "MANTENER" }),
   proposal({ key: "team.shield.symbol.iq_star", name: "Estrella Future", description: "Estrella facetada de Future IQ.", collection: "Future IQ", slot: "primary_symbol", rarity: "rare", material: "cyan_iq", render: { symbol: "iq_star" }, decision: "MANTENER" }),
+  proposal({ key: TEAM_SHIELD_PREMIUM_BALL_KEY, name: "Balón Premium", description: "Balón multivista con profundidad opcional por sensor.", collection: "Noche de Partido", slot: "primary_symbol", rarity: "legendary", material: "pearl", render: { symbol: "ball_premium", premiumPipeline: "multiview-8-v1" }, decision: "MANTENER" }),
   proposal({ key: "team.shield.symbol.crown_iq", name: "Corona IQ", description: "Corona geométrica compacta como símbolo central.", collection: "Noche de Partido", slot: "primary_symbol", rarity: "epic", material: "gold", render: { symbol: "crown_iq" }, decision: "REVISAR", prototype: true }),
   proposal({ key: "team.shield.symbol.nested_badge", name: "Escudo Interior", description: "Escudo dentro de escudo con lectura heráldica propia.", collection: "Retro", slot: "primary_symbol", rarity: "rare", material: "silver", render: { symbol: "nested_badge" }, decision: "REVISAR", prototype: true }),
   proposal({ key: "team.shield.symbol.orbit_ball", name: "Órbita IQ", description: "Balón abstracto de lenguaje Future IQ.", collection: "Future IQ", slot: "primary_symbol", rarity: "epic", material: "cyan_iq", render: { symbol: "orbit_ball" }, decision: "REVISAR", prototype: true }),

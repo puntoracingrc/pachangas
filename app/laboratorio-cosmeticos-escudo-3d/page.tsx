@@ -3,8 +3,11 @@
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import dynamic from "next/dynamic";
 import Image from "next/image";
+import { TeamShieldPremiumPreview } from "../_components/team-shield-premium-preview";
 import { TeamShieldView } from "../_components/team-shield-view";
 import { TEAM_SHIELD_RENDER_CATALOG } from "../team-shield-cosmetics-catalog";
+import { TEAM_SHIELD_PREMIUM_BALL_KEY } from "../team-shield-premium-assets";
+import type { PremiumBallVisualState } from "../team-shield-premium-motion";
 import { TEAM_SHIELD_DEFAULT_CONFIG } from "../team-shield-contract";
 import type { PremiumCrownMaterial, PremiumFrameMaterial } from "./_components/premium-shield-3d";
 import { usePremiumMotion, type PremiumTilt } from "./_components/use-premium-motion";
@@ -42,6 +45,33 @@ const LOD_CONFIG = {
   initials: "PIQ",
   topOrnamentKey: "team.shield.ornament.crown",
 };
+
+const PREMIUM_RC_CONFIG = {
+  ...LOD_CONFIG,
+  primarySymbolKey: TEAM_SHIELD_PREMIUM_BALL_KEY,
+  topOrnamentKey: null,
+};
+
+const BASE_COMPARISON_CONFIG = {
+  ...LOD_CONFIG,
+  topOrnamentKey: null,
+};
+
+const PREMIUM_BORDER_CONFIGS = [
+  ["Cobre", "team.shield.border.copper"],
+  ["Plata", "team.shield.border.silver"],
+  ["Oro", "team.shield.border.gold"],
+] as const;
+
+const PREMIUM_LOD_SIZES = [24, 32, 48, 64, 210] as const;
+
+const PREMIUM_SENSOR_STATES: Array<{ label: string; motion: PremiumBallVisualState; reduced?: boolean }> = [
+  { label: "Neutral", motion: { blend: 1, frame: 4, previousFrame: 4, tiltX: 0, tiltY: 0 } },
+  { label: "Izquierda", motion: { blend: 1, frame: 2, previousFrame: 2, tiltX: -4, tiltY: 0 } },
+  { label: "Derecha", motion: { blend: 1, frame: 6, previousFrame: 6, tiltX: 4, tiltY: 0 } },
+  { label: "Arriba / abajo", motion: { blend: 1, frame: 4, previousFrame: 4, tiltX: 0, tiltY: 4 } },
+  { label: "Reduced motion", motion: { blend: 1, frame: 4, previousFrame: 4, tiltX: 0, tiltY: 0 }, reduced: true },
+];
 
 function crownSource(crown: PremiumCrownMaterial) {
   return crown === "none" ? null : `/team-shield-premium-3d/crown-premium-${crown}-overlay.webp`;
@@ -311,6 +341,69 @@ export default function TeamShieldPremium3DLabPage() {
           <article><LayeredShield crown="gold" material="gold" pipeline="B" reduced size={64} tilt={{ x: 0, y: 0 }} /><small>64 · sprite</small></article>
           <article className={styles.mediumLod}><LayeredShield crown="gold" material="gold" pipeline="B" reduced size={120} tilt={{ x: 0, y: 0 }} /><small>Medio · sprite</small></article>
           <article className={styles.editorLod}><LayeredShield crown="gold" material="gold" pipeline="A" reduced size={180} tilt={{ x: 0, y: 0 }} /><small>Editor · GLB en vista principal</small></article>
+        </div>
+      </section>
+
+      <section className={styles.rcBand}>
+        <header><span>Release Candidate</span><h2>Renderer canónico con sensor opcional</h2></header>
+        <div className={styles.rcInteractive}>
+          <TeamShieldPremiumPreview catalog={TEAM_SHIELD_RENDER_CATALOG} config={PREMIUM_RC_CONFIG} />
+          <div>
+            <strong>Balón Premium · 8 vistas</strong>
+            <small>El permiso solo se solicita al pulsar el botón. Sin permiso, el mismo escudo permanece estático.</small>
+          </div>
+        </div>
+      </section>
+
+      <section className={styles.rcBand}>
+        <header><span>Comparación</span><h2>Base 2D frente a Premium</h2></header>
+        <div className={styles.rcComparison} data-contact-sheet="2d-vs-premium">
+          <article>
+            <TeamShieldView catalog={TEAM_SHIELD_RENDER_CATALOG} config={BASE_COMPARISON_CONFIG} motion="reduced" size={210} />
+            <strong>Base 2D</strong>
+          </article>
+          <article>
+            <TeamShieldView catalog={TEAM_SHIELD_RENDER_CATALOG} config={PREMIUM_RC_CONFIG} motion="reduced" size={210} />
+            <strong>Premium estático</strong>
+          </article>
+        </div>
+      </section>
+
+      <section className={styles.rcBand}>
+        <header><span>Contact sheet</span><h2>Balón, bordes y LOD productivo</h2></header>
+        <div className={styles.rcContactSheet} data-contact-sheet="premium-v1-lod">
+          {PREMIUM_BORDER_CONFIGS.map(([label, borderKey]) => (
+            <article key={borderKey}>
+              <header><strong>{label}</strong></header>
+              <div>
+                {PREMIUM_LOD_SIZES.map((size) => (
+                  <figure key={size}>
+                    <TeamShieldView
+                      catalog={TEAM_SHIELD_RENDER_CATALOG}
+                      config={{ ...PREMIUM_RC_CONFIG, borderKey }}
+                      motion="reduced"
+                      size={size}
+                    />
+                    <figcaption>{size}px</figcaption>
+                  </figure>
+                ))}
+              </div>
+            </article>
+          ))}
+        </div>
+        <div className={styles.rcSensorSheet} data-contact-sheet="premium-v1-sensor-states">
+          {PREMIUM_SENSOR_STATES.map((entry) => (
+            <figure key={entry.label}>
+              <TeamShieldView
+                catalog={TEAM_SHIELD_RENDER_CATALOG}
+                config={PREMIUM_RC_CONFIG}
+                motion={entry.reduced ? "reduced" : "auto"}
+                premiumBallMotion={entry.motion}
+                size={82}
+              />
+              <figcaption>{entry.label}</figcaption>
+            </figure>
+          ))}
         </div>
       </section>
     </main>

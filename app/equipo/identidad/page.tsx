@@ -11,6 +11,7 @@ import {
   MaterialSwatch,
   UnsavedChanges,
 } from "../../_components/cosmetics-editor";
+import { TeamShieldPremiumPreview } from "../../_components/team-shield-premium-preview";
 import { TeamShieldView } from "../../_components/team-shield-view";
 import { CLIENT_VERSION } from "../../client-version-contract";
 import {
@@ -222,7 +223,7 @@ function TeamShieldCosmeticsEditor({
       className={styles.teamCosmeticEditor}
       preview={(
         <div className={styles.previewStage}>
-          <TeamShieldView catalog={catalog} className={styles.identityShield} config={config} />
+          <TeamShieldPremiumPreview catalog={catalog} className={styles.identityShield} config={config} />
           <div>
             <span>Escudo oficial</span>
             <strong>{config.initials}</strong>
@@ -810,7 +811,7 @@ export default function TeamIdentityPage() {
             />
           ) : <section className={styles.crestBand}>
             <div className={styles.previewStage}>
-              <TeamShieldView catalog={crest.catalog} className={styles.identityShield} config={draftDesign} />
+              <TeamShieldPremiumPreview catalog={crest.catalog} className={styles.identityShield} config={draftDesign} />
               <div>
                 <span>Escudo oficial</span>
                 <strong>{draftDesign.initials}</strong>
