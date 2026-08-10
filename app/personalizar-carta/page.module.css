@@ -1,4 +1,6 @@
 .page {
+  box-sizing: border-box;
+  width: 100%;
   min-height: var(--app-viewport-height, 100dvh);
   overflow-x: hidden;
   background:
@@ -144,7 +146,8 @@
 
 @media (max-width: 600px) {
   .topbar {
-    grid-template-columns: auto 1fr;
+    grid-template-columns: auto minmax(0, 1fr);
+    column-gap: 10px;
   }
 
   .topbar strong {
@@ -152,18 +155,24 @@
   }
 
   .topbar > span {
-    grid-column: 1 / -1;
+    grid-column: 2;
     justify-self: end;
-    margin-top: -5px;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .header {
+    flex-direction: column;
     align-items: start;
+    gap: 10px;
     padding-block: 16px 12px;
   }
 
   .headerStats {
-    display: grid;
+    display: flex;
+    flex-wrap: wrap;
     gap: 4px;
   }
 

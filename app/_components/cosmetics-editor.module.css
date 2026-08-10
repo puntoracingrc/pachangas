@@ -206,6 +206,24 @@
   .optionGrid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .tabs {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    overflow-x: visible;
+  }
+
+  .tabs > button {
+    width: 100%;
+    min-width: 0;
+    padding-inline: 6px;
+  }
+
+  .editorActions > button {
+    flex: 1 1 0;
+    min-width: 0;
+    padding-inline: 8px;
+  }
 }
 
 @media (orientation: landscape) and (max-height: 650px) {
@@ -223,5 +241,23 @@
   .tabs > button {
     min-height: 36px;
     padding: 6px 9px;
+  }
+
+  .tabs {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    overflow-x: visible;
+  }
+
+  .tabs > button {
+    width: 100%;
+    min-width: 0;
+    padding-inline: 5px;
+  }
+
+  .editorActions > button {
+    flex: 1 1 0;
+    min-width: 0;
+    padding-inline: 8px;
   }
 }
