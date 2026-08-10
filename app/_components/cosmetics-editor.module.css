@@ -232,6 +232,7 @@
   .shell {
     grid-template-columns: minmax(240px, 0.85fr) minmax(270px, 1.15fr);
     grid-template-areas: "controls preview" "actions preview";
+    grid-template-rows: minmax(0, 1fr) auto;
     height: calc(var(--app-viewport-height, 100dvh) - var(--cosmetics-editor-landscape-offset, 88px));
   }
 
@@ -247,7 +248,7 @@
 
   .tabs {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(5, minmax(0, 1fr));
     overflow-x: visible;
   }
 
