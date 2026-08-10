@@ -1,0 +1,132 @@
+{
+  "auditedAt": "2026-08-09T13:48:34.585Z",
+  "clones": [
+    {
+      "addedMatches": 0,
+      "id": "A",
+      "label": "V3 intacta",
+      "totals": {
+        "organicEligible": 0,
+        "pendingIntegrityReview": 54,
+        "rankingEligible": 135,
+        "registered": 640,
+        "trophyEligible": 1
+      },
+      "worldId": "c904411b-7936-4528-9db3-5d5b2f3fc60e"
+    },
+    {
+      "addedMatches": 0,
+      "id": "B",
+      "label": "Certificación provincial 20/8",
+      "totals": {
+        "organicEligible": 0,
+        "pendingIntegrityReview": 76,
+        "rankingEligible": 135,
+        "registered": 640,
+        "trophyEligible": 1
+      },
+      "worldId": "4a045b47-e2d7-467d-9be5-656367bb3c4a"
+    },
+    {
+      "addedMatches": 275,
+      "id": "C",
+      "label": "V3 + densidad de Retos 25%",
+      "totals": {
+        "organicEligible": 0,
+        "pendingIntegrityReview": 69,
+        "rankingEligible": 176,
+        "registered": 640,
+        "trophyEligible": 1
+      },
+      "worldId": "6a0e4709-02ae-4e79-ba53-33704c63e695"
+    },
+    {
+      "addedMatches": 0,
+      "id": "D",
+      "label": "Rotación: no aplicada, problema no demostrado",
+      "totals": {
+        "organicEligible": 0,
+        "pendingIntegrityReview": 54,
+        "rankingEligible": 135,
+        "registered": 640,
+        "trophyEligible": 1
+      },
+      "worldId": "15a3af53-67de-477a-b127-0c1f1cfc3af5"
+    },
+    {
+      "addedMatches": 0,
+      "id": "E",
+      "label": "V3 sin holds de integridad",
+      "totals": {
+        "organicEligible": 54,
+        "pendingIntegrityReview": 0,
+        "rankingEligible": 135,
+        "registered": 640,
+        "trophyEligible": 55
+      },
+      "worldId": "5856cd9e-7c87-45b8-aaf2-a8b22b694431"
+    }
+  ],
+  "reference": {
+    "acceptedChallengesPerPlayer": {
+      "mean": 22.509,
+      "p25": 17,
+      "p50": 25,
+      "p75": 31,
+      "p95": 42
+    },
+    "competitiveConfidence": {
+      "mean": 0.74,
+      "p25": 0.834,
+      "p50": 0.891,
+      "p75": 0.931,
+      "p95": 0.979
+    },
+    "eligibleRatio": 0.764,
+    "logicalOpponents": {
+      "mean": 13.542,
+      "p25": 11,
+      "p50": 15,
+      "p75": 19,
+      "p95": 24
+    },
+    "networkDiversity": {
+      "mean": 0.715,
+      "p25": 0.805,
+      "p50": 0.87,
+      "p75": 0.899,
+      "p95": 0.932
+    },
+    "players": 10000,
+    "ratingReliability": {
+      "mean": 0.774,
+      "p25": 0.679,
+      "p50": 0.779,
+      "p75": 0.879,
+      "p95": 1
+    },
+    "sourceChallengesPerPlayer": {
+      "mean": 22.509,
+      "p25": 17,
+      "p50": 25,
+      "p75": 31,
+      "p95": 42
+    },
+    "trophyEligibleRatio": 0.464
+  },
+  "source": {
+    "checkpoint": {
+      "controlMatches": 9,
+      "eventSequence": 69458,
+      "revision": 313,
+      "worldId": "3df9494d-3b8c-4447-96e8-d5244892af78"
+    },
+    "totals": {
+      "organicEligible": 0,
+      "pendingIntegrityReview": 54,
+      "rankingEligible": 135,
+      "registered": 640,
+      "trophyEligible": 1
+    }
+  }
+}

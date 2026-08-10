@@ -1,0 +1,9 @@
+cheaterPenetration,cheaters,mode,rate,top10Contamination
+0.8,10,unprotected,0.01,0.8
+0.2,10,finalist,0.01,0.2
+0.5,20,unprotected,0.02,1
+0.15,20,finalist,0.02,0.3
+0.2,50,unprotected,0.05,1
+0.12,50,finalist,0.05,0.6
+0.1,100,unprotected,0.1,1
+0.06,100,finalist,0.1,0.6

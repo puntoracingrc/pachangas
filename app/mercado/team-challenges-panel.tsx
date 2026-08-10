@@ -425,7 +425,7 @@ export function TeamChallengesPanel({ initialOpponent }: Props) {
 
   const pendingChallenges = snapshot?.challenges.filter((challenge) => challenge.status === "proposed" || challenge.status === "changes_proposed") ?? [];
   const acceptedChallenges = snapshot?.challenges.filter((challenge) => challenge.status === "accepted") ?? [];
-  const resolvedChallenges = snapshot?.challenges.filter((challenge) => challenge.status === "rejected" || challenge.status === "cancelled") ?? [];
+  const resolvedChallenges = snapshot?.challenges.filter((challenge) => challenge.status === "rejected" || challenge.status === "cancelled" || challenge.status === "expired") ?? [];
 
   return (
     <section className="team-challenges-area" aria-label="Retos privados entre equipos">

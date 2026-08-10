@@ -1,0 +1,11 @@
+cheaterTop10Penetration,cheaters,mode,populationRate,top10OccupiedByCheaters
+0,0,minimal,0,0
+0,0,integrity,0,0
+0.8,10,minimal,0.01,0.8
+0,10,integrity,0.01,0
+0.5,20,minimal,0.02,1
+0,20,integrity,0.02,0
+0.2,50,minimal,0.05,1
+0,50,integrity,0.05,0
+0.1,100,minimal,0.1,1
+0,100,integrity,0.1,0

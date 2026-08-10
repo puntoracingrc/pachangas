@@ -93,15 +93,19 @@ select pg_temp.assert_true(
   'Repeating one operation id must replay the exact canonical response'
 );
 select pg_temp.assert_true(
-  (select count(*) from public.pachanga_team_challenges) = 1,
+  (select count(*) from public.pachanga_team_challenges
+   where sender_group_id = '72000000-0000-0000-0000-000000000001'
+     and receiver_group_id = '72000000-0000-0000-0000-000000000002') = 1,
   'An idempotent retry must create one challenge'
 );
 select pg_temp.assert_true(
-  (select count(*) from public.pachanga_team_challenge_events) = 1,
+  (select count(*) from public.pachanga_team_challenge_events
+   where operation_id = '73000000-0000-0000-0000-000000000001') = 1,
   'An idempotent retry must create one event'
 );
 select pg_temp.assert_true(
-  (select count(*) from public.pachanga_team_social_operation_receipts) = 1,
+  (select count(*) from public.pachanga_team_social_operation_receipts
+   where operation_id = '73000000-0000-0000-0000-000000000001') = 1,
   'An idempotent retry must create one receipt'
 );
 
@@ -184,15 +188,25 @@ select pg_temp.assert_true(
   'The accepted response must replay exactly once'
 );
 select pg_temp.assert_true(
-  (select status from public.pachanga_team_challenges limit 1) = 'accepted',
+  (select status from public.pachanga_team_challenges
+   where sender_group_id = '72000000-0000-0000-0000-000000000001'
+     and receiver_group_id = '72000000-0000-0000-0000-000000000002') = 'accepted',
   'The receiver must be able to accept the challenge'
 );
 select pg_temp.assert_true(
-  (select count(*) from public.pachanga_team_challenge_events) = 2,
+  (select count(*) from public.pachanga_team_challenge_events
+   where operation_id in (
+     '73000000-0000-0000-0000-000000000001',
+     '73000000-0000-0000-0000-000000000003'
+   )) = 2,
   'Create and accept must remain as two auditable events'
 );
 select pg_temp.assert_true(
-  (select count(*) from public.pachanga_team_social_operation_receipts) = 2,
+  (select count(*) from public.pachanga_team_social_operation_receipts
+   where operation_id in (
+     '73000000-0000-0000-0000-000000000001',
+     '73000000-0000-0000-0000-000000000003'
+   )) = 2,
   'Only two successful operations must have receipts'
 );
 

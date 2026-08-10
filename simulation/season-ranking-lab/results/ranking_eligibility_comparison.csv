@@ -1,0 +1,6 @@
+minimumUniqueOpponents,minimumValidChallenges,candidateId,eligiblePlayers,rankCorrelation,scoreSkillCorrelation,top10Precision,top50Precision,top100Precision,volumeAdvantage
+3,6,6/3,9742,0.7944,0.7198,0,0.16,0.25,0.1351
+4,8,8/4,9739,0.7944,0.72,0,0.16,0.25,0.134
+5,10,10/5,9715,0.7949,0.7211,0,0.16,0.25,0.1288
+5,12,12/5,9632,0.795,0.7216,0,0.16,0.25,0.1154
+6,15,15/6,9257,0.7947,0.7248,0,0.16,0.25,0.0695

@@ -1,0 +1,13 @@
+candidateRecallAtDoubleK,k,ndcg,overlap,precision,truth
+0,10,0,0,0,capacity
+0.04,25,0.0247,1,0.04,capacity
+0.06,50,0.0209,1,0.02,capacity
+0.17,100,0.0793,7,0.07,capacity
+0.1,10,0.0752,1,0.1,season_merit
+0.08,25,0.0473,1,0.04,season_merit
+0.1,50,0.0907,2,0.04,season_merit
+0.28,100,0.1645,12,0.12,season_merit
+0,10,0,0,0,future
+0,25,0,0,0,future
+0,50,0.0187,0,0,future
+0.17,100,0.1081,5,0.05,future

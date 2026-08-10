@@ -1,0 +1,53 @@
+autonomousCommunity,density,eligiblePlayers,provinceCode,provinceName,territorialDuplicate,top10ActiveAt30,top10ActiveAt50,type
+País Vasco,medium,136,01,Araba/Álava,false,true,true,province
+Castilla-La Mancha,medium,143,02,Albacete,false,true,true,province
+Comunitat Valenciana,dense,365,03,Alicante/Alacant,false,true,true,province
+Andalucía,medium,114,04,Almería,false,true,true,province
+Castilla y León,small,88,05,Ávila,false,true,true,province
+Extremadura,medium,88,06,Badajoz,false,true,true,province
+Illes Balears,medium,163,07,Illes Balears,true,true,true,province
+Cataluña,dense,429,08,Barcelona,false,true,true,province
+Castilla y León,small,106,09,Burgos,false,true,true,province
+Extremadura,medium,100,10,Cáceres,false,true,true,province
+Andalucía,dense,384,11,Cádiz,false,true,true,province
+Comunitat Valenciana,medium,196,12,Castellón/Castelló,false,true,true,province
+Castilla-La Mancha,medium,137,13,Ciudad Real,false,true,true,province
+Andalucía,medium,194,14,Córdoba,false,true,true,province
+Galicia,medium,172,15,A Coruña,false,true,true,province
+Castilla-La Mancha,small,50,16,Cuenca,false,true,true,province
+Cataluña,medium,196,17,Girona,false,true,true,province
+Andalucía,medium,129,18,Granada,false,true,true,province
+Castilla-La Mancha,small,59,19,Guadalajara,false,true,true,province
+País Vasco,medium,160,20,Gipuzkoa,false,true,true,province
+Andalucía,medium,186,21,Huelva,false,true,true,province
+Aragón,small,66,22,Huesca,false,true,true,province
+Andalucía,medium,150,23,Jaén,false,true,true,province
+Castilla y León,medium,98,24,León,false,true,true,province
+Cataluña,medium,96,25,Lleida,false,true,true,province
+La Rioja,medium,204,26,La Rioja,true,true,true,province
+Galicia,medium,126,27,Lugo,false,true,true,province
+Comunidad de Madrid,dense,404,28,Madrid,true,true,true,province
+Andalucía,dense,362,29,Málaga,false,true,true,province
+Región de Murcia,dense,226,30,Murcia,true,true,true,province
+Comunidad Foral de Navarra,medium,176,31,Navarra,true,true,true,province
+Galicia,medium,183,32,Ourense,false,true,true,province
+Principado de Asturias,medium,134,33,Asturias,true,true,true,province
+Castilla y León,small,60,34,Palencia,false,true,true,province
+Canarias,dense,404,35,Las Palmas,false,true,true,province
+Galicia,medium,206,36,Pontevedra,false,true,true,province
+Castilla y León,medium,152,37,Salamanca,false,true,true,province
+Canarias,medium,134,38,Santa Cruz de Tenerife,false,true,true,province
+Cantabria,medium,198,39,Cantabria,true,true,true,province
+Castilla y León,small,87,40,Segovia,false,true,true,province
+Andalucía,dense,381,41,Sevilla,false,true,true,province
+Castilla y León,small,85,42,Soria,false,true,true,province
+Cataluña,medium,251,43,Tarragona,false,true,true,province
+Aragón,small,97,44,Teruel,false,true,true,province
+Castilla-La Mancha,medium,184,45,Toledo,false,true,true,province
+Comunitat Valenciana,dense,354,46,Valencia/València,false,true,true,province
+Castilla y León,medium,105,47,Valladolid,false,true,true,province
+País Vasco,dense,377,48,Bizkaia,false,true,true,province
+Castilla y León,small,70,49,Zamora,false,true,true,province
+Aragón,medium,167,50,Zaragoza,false,true,true,province
+,small,95,51,Ceuta,false,true,true,autonomous_city
+,small,30,52,Melilla,false,true,false,autonomous_city

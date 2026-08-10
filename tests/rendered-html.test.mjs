@@ -36,6 +36,12 @@ test("builds Pachangas IQ HTML", async () => {
   assert.doesNotMatch(html, /Your site is taking shape|Building your site|react-loading-skeleton/i);
 });
 
+test("keeps Synthetic World funnel rows keyed independently from duplicate labels", async () => {
+  const dashboard = await readFile(new URL("../app/admin/simulation-world/simulation-world-dashboard.tsx", import.meta.url), "utf8");
+  assert.match(dashboard, /audit\.funnel\.map\(\(row, index\) => <div key=\{`\$\{index\}-\$\{row\.label\}`\}>/);
+  assert.doesNotMatch(dashboard, /audit\.funnel\.map\(\(row\) => <div key=\{row\.label\}>/);
+});
+
 test("builds the user manual as its own page", async () => {
   const [html, css] = await Promise.all([
     readFile(new URL("../.next/server/app/manual.html", import.meta.url), "utf8"),
@@ -249,7 +255,7 @@ test("keeps the project wired to the Pachangas app", async () => {
     readFile(new URL("../app/supabaseClient.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
     readFile(new URL("../app/auth/google/page.tsx", import.meta.url), "utf8"),
-    readFile(new URL("../supabase/pachangas.sql", import.meta.url), "utf8"),
+    readFile(new URL("../supabase/baselines/20260731080738_pachangas_product_baseline.sql", import.meta.url), "utf8"),
     readFile(new URL("../app/api/billing/_shared.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/api/billing/checkout/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/api/billing/portal/route.ts", import.meta.url), "utf8"),
@@ -311,9 +317,11 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /Cerrar sin guardar/);
   assert.match(page, /Admins · permisos solo owner/);
   assert.match(page, /canManageRoles/);
-  assert.match(page, /Permisos de admin/);
-  assert.match(page, /Solo owner/);
-  assert.match(page, /Da o quita permisos de admin/);
+  assert.match(page, /Miembros y permisos/);
+  assert.match(page, /transferTeamOwnership/);
+  assert.match(page, /removeRegisteredMember/);
+  assert.match(page, /leaveCurrentTeam/);
+  assert.match(page, /Abandonar equipo/);
   assert.match(page, /openOwnPlayerProfile/);
   assert.match(page, /type ProfilePane = "ficha" \| "ranking"/);
   assert.match(page, /setProfilePane\("ficha"\)/);

@@ -3046,6 +3046,23 @@ h1 {
   white-space: nowrap;
 }
 
+.member-admin-actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+.member-admin-actions select {
+  min-width: 130px;
+}
+
+.member-admin-actions button {
+  min-height: 36px;
+  padding: 7px 10px;
+}
+
 .settings-admin-invite-row {
   border-top: 1px solid var(--line);
   padding-top: 12px;

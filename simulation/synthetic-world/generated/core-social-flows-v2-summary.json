@@ -1,0 +1,251 @@
+{
+  "audit": {
+    "clone": {
+      "id": "47f2515f-c723-46e9-b707-4d1e58dc8c74",
+      "revision": 1,
+      "sequence": 69490
+    },
+    "coverage": [
+      {
+        "flow": "team.leave",
+        "passes": 2,
+        "status": "PASS",
+        "failures": 0,
+        "scenario": "canonical-contract",
+        "lastExecution": "2027-02-01T09:00:00.000Z",
+        "timesExecuted": 2
+      },
+      {
+        "failures": 0,
+        "flow": "team.member_remove",
+        "lastExecution": "2027-02-04T09:00:00.000Z",
+        "passes": 1,
+        "scenario": "core-social-v2",
+        "status": "PASS",
+        "timesExecuted": 1
+      },
+      {
+        "failures": 0,
+        "flow": "team.owner_transfer",
+        "lastExecution": "2027-01-18T12:00:00.000Z",
+        "passes": 1,
+        "scenario": "core-social-v2",
+        "status": "PASS",
+        "timesExecuted": 1
+      },
+      {
+        "flow": "team.join",
+        "passes": 651,
+        "status": "PASS",
+        "failures": 0,
+        "scenario": "canonical-contract",
+        "lastExecution": "2027-03-10T18:00:00.000Z",
+        "timesExecuted": 651
+      },
+      {
+        "flow": "team.admin_invite",
+        "passes": 1,
+        "status": "PASS",
+        "failures": 0,
+        "scenario": "canonical-contract",
+        "lastExecution": "2027-02-08T10:00:00.000Z",
+        "timesExecuted": 1
+      },
+      {
+        "failures": 0,
+        "flow": "team.admin_invite_accept",
+        "lastExecution": "2027-02-08T10:05:00.000Z",
+        "passes": 1,
+        "scenario": "core-social-v2",
+        "status": "PASS",
+        "timesExecuted": 1
+      },
+      {
+        "flow": "challenge.create",
+        "passes": 1593,
+        "status": "PASS",
+        "failures": 0,
+        "scenario": "canonical-contract",
+        "lastExecution": "2027-03-15T10:00:00.000Z",
+        "timesExecuted": 1593
+      },
+      {
+        "flow": "challenge.respond",
+        "passes": 1722,
+        "status": "PASS",
+        "failures": 0,
+        "scenario": "canonical-contract",
+        "lastExecution": "2027-03-28T19:59:59.000Z",
+        "timesExecuted": 1722
+      },
+      {
+        "flow": "challenge.expire",
+        "passes": 1,
+        "status": "PASS",
+        "failures": 0,
+        "scenario": "canonical-contract",
+        "lastExecution": "2027-02-14T20:00:00.000Z",
+        "timesExecuted": 73
+      },
+      {
+        "flow": "market.open_match",
+        "passes": 2,
+        "status": "PASS",
+        "failures": 0,
+        "scenario": "canonical-contract",
+        "lastExecution": "2027-04-01T09:00:00.000Z",
+        "timesExecuted": 2
+      },
+      {
+        "failures": 0,
+        "flow": "market.open_match_request",
+        "lastExecution": "2027-04-01T13:00:00.000Z",
+        "passes": 4,
+        "scenario": "core-social-v2",
+        "status": "PASS",
+        "timesExecuted": 4
+      },
+      {
+        "failures": 0,
+        "flow": "market.open_match_review",
+        "lastExecution": "2027-04-02T13:00:00.000Z",
+        "passes": 4,
+        "scenario": "core-social-v2",
+        "status": "PASS",
+        "timesExecuted": 4
+      },
+      {
+        "failures": 0,
+        "flow": "market.guest_leave",
+        "lastExecution": "2027-04-03T10:00:00.000Z",
+        "passes": 1,
+        "scenario": "core-social-v2",
+        "status": "PASS",
+        "timesExecuted": 1
+      },
+      {
+        "flow": "match.attendance",
+        "passes": 1561,
+        "status": "PASS",
+        "failures": 0,
+        "scenario": "canonical-contract",
+        "lastExecution": "2027-05-01T10:01:00.000Z",
+        "timesExecuted": 1561
+      },
+      {
+        "flow": "match.finalize",
+        "passes": 1442,
+        "status": "PASS",
+        "failures": 0,
+        "scenario": "canonical-contract",
+        "lastExecution": "2027-03-20T22:00:00.000Z",
+        "timesExecuted": 1442
+      },
+      {
+        "flow": "match.lineup",
+        "passes": 3,
+        "status": "PASS",
+        "failures": 0,
+        "scenario": "canonical-contract",
+        "lastExecution": "2027-05-01T10:03:00.000Z",
+        "timesExecuted": 3
+      },
+      {
+        "flow": "result.counter",
+        "passes": 120,
+        "status": "PASS",
+        "failures": 0,
+        "scenario": "canonical-contract",
+        "lastExecution": "2027-03-20T22:05:00.000Z",
+        "timesExecuted": 120
+      },
+      {
+        "flow": "result.publish",
+        "passes": 1101,
+        "status": "PASS",
+        "failures": 0,
+        "scenario": "canonical-contract",
+        "lastExecution": "2027-03-20T22:01:00.000Z",
+        "timesExecuted": 1101
+      }
+    ],
+    "newGaps": [
+      {
+        "classification": "NEEDS_PRODUCT_DECISION",
+        "flow": "team.admin_invite.revoke",
+        "reason": "Expiry exists; explicit revocation does not."
+      },
+      {
+        "classification": "NEEDS_PRODUCT_DECISION",
+        "flow": "challenge.proposal_ttl",
+        "reason": "Scheduled-date expiry exists; inactivity TTL remains unset."
+      }
+    ],
+    "preserved": {
+      "achievements": true,
+      "conductHistory": true,
+      "ratingV2": true,
+      "rewards": true,
+      "seasonScoreAndTops": true,
+      "sourceWorld": true
+    },
+    "source": {
+      "id": "3df9494d-3b8c-4447-96e8-d5244892af78",
+      "revision": 313,
+      "sequence": 69458
+    },
+    "stories": [
+      {
+        "id": "marta-leaves-and-returns",
+        "summary": "Una jugadora abandona su equipo, conserva identidad e historial y vuelve dos meses después en otro equipo sin duplicarse."
+      },
+      {
+        "id": "challenge-expires",
+        "summary": "Un reto pendiente cruza la fecha, caduca una sola vez y no crea rival, Season Score, logro ni caja."
+      },
+      {
+        "id": "challenge-at-boundary",
+        "summary": "Una aceptación confirmada antes del límite gana; la caducidad posterior no altera el estado aceptado."
+      },
+      {
+        "id": "public-last-two-seats",
+        "summary": "Cuatro jugadores solicitan dos plazas; dos se aceptan, dos se rechazan y el mercado se cierra."
+      },
+      {
+        "id": "lineup-reserve-guest",
+        "summary": "La alineación incorpora titular, reserva e invitado y rechaza mutaciones después del cierre."
+      },
+      {
+        "id": "admin-removes-member",
+        "summary": "Un admin elimina una membresía activa sin borrar la identidad universal ni el historial deportivo del jugador."
+      },
+      {
+        "id": "challenge-guest-lineup-disputed-result",
+        "summary": "Un Reto aceptado incorpora invitado y cambio de alineación, se finaliza y recibe una contrapropuesta de resultado sin crear estados paralelos."
+      },
+      {
+        "id": "leave-with-active-market-and-rejoin",
+        "summary": "Un jugador abandona con participación futura en un partido público, pierde ese acceso y entra después en otro equipo con su identidad intacta."
+      },
+      {
+        "id": "conduct-state-survives-team-change",
+        "summary": "El cambio de equipo conserva el estado de Conducta ligado a la persona; la restricción real se verifica en la regresión SQL y Conducta continúa en shadow."
+      },
+      {
+        "id": "counterproposal-at-expiry-boundary",
+        "summary": "Una contrapropuesta confirmada justo antes del límite gana la carrera y la caducidad no aplica una segunda transición."
+      }
+    ]
+  },
+  "generatedAt": "2026-08-09T20:47:39.699Z",
+  "persistedClone": false,
+  "sourceHash": "5d9cafd0280ea31c6d88dd026c492ef59d08b32c7112090caad00fa3dd00d9c7",
+  "soak": {
+    "eventsAdded": 960,
+    "expectedFlows": 18,
+    "failedSeeds": 0,
+    "flowsPassed": 540,
+    "seeds": 30,
+    "stories": 300
+  }
+}

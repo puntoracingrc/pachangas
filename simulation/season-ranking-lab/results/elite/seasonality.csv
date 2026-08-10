@@ -1,0 +1,6 @@
+activityProfile,candidateRecall20Median,ndcg10Median,territoriesAt50,top10Churn
+normal,0.8,0.7207,45,0.1614
+high_activity,0.8,0.7044,44,0.1386
+summer_dip,0.8,0.7343,47,0.1152
+progressive_growth,0.8,0.6634,45,0.2455
+province_growth,0.8,0.6929,45,0.2186

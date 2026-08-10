@@ -1,0 +1,5579 @@
+{
+  "generatedAt": "2026-08-09T20:47:18.623Z",
+  "sourceCommit": "93361fe0f22cafb8bd31fbde65fa055774ac0ca4+core-social-flows-closure-v1",
+  "counts": {
+    "achievements": 84,
+    "appRpcCalls": 82,
+    "appTableWrites": 3,
+    "capabilities": 24,
+    "notificationKinds": 63,
+    "rpcDefinitions": 287,
+    "tables": 100,
+    "timeDependencies": 456
+  },
+  "capabilities": [
+    {
+      "activated": [
+        "pachanga_groups"
+      ],
+      "called": [
+        "pachanga_groups"
+      ],
+      "candidates": [
+        "pachanga_groups"
+      ],
+      "category": "teams",
+      "classification": "implemented",
+      "implemented": [
+        "pachanga_groups"
+      ],
+      "label": "Crear equipo"
+    },
+    {
+      "activated": [
+        "join_pachanga_team"
+      ],
+      "called": [
+        "join_pachanga_team"
+      ],
+      "candidates": [
+        "join_pachanga_team"
+      ],
+      "category": "teams",
+      "classification": "implemented",
+      "implemented": [
+        "join_pachanga_team"
+      ],
+      "label": "Invitar y aceptar miembro"
+    },
+    {
+      "activated": [
+        "create_pachanga_admin_invite",
+        "accept_pachanga_admin_invite_authoritative_v1"
+      ],
+      "called": [
+        "create_pachanga_admin_invite",
+        "accept_pachanga_admin_invite_authoritative_v1"
+      ],
+      "candidates": [
+        "create_pachanga_admin_invite",
+        "accept_pachanga_admin_invite_authoritative_v1"
+      ],
+      "category": "teams",
+      "classification": "implemented",
+      "implemented": [
+        "create_pachanga_admin_invite",
+        "accept_pachanga_admin_invite_authoritative_v1"
+      ],
+      "label": "Invitar y aceptar admin"
+    },
+    {
+      "activated": [
+        "leave_pachanga_group_authoritative_v1"
+      ],
+      "called": [
+        "leave_pachanga_group_authoritative_v1"
+      ],
+      "candidates": [
+        "leave_pachanga_group_authoritative_v1"
+      ],
+      "category": "teams",
+      "classification": "implemented",
+      "implemented": [
+        "leave_pachanga_group_authoritative_v1"
+      ],
+      "label": "Abandonar grupo"
+    },
+    {
+      "activated": [
+        "remove_pachanga_group_member_authoritative_v1"
+      ],
+      "called": [
+        "remove_pachanga_group_member_authoritative_v1"
+      ],
+      "candidates": [
+        "remove_pachanga_group_member_authoritative_v1"
+      ],
+      "category": "teams",
+      "classification": "implemented",
+      "implemented": [
+        "remove_pachanga_group_member_authoritative_v1"
+      ],
+      "label": "Eliminar miembro"
+    },
+    {
+      "activated": [
+        "transfer_pachanga_group_ownership_authoritative_v1"
+      ],
+      "called": [
+        "transfer_pachanga_group_ownership_authoritative_v1"
+      ],
+      "candidates": [
+        "transfer_pachanga_group_ownership_authoritative_v1"
+      ],
+      "category": "teams",
+      "classification": "implemented",
+      "implemented": [
+        "transfer_pachanga_group_ownership_authoritative_v1"
+      ],
+      "label": "Transferir propiedad"
+    },
+    {
+      "activated": [
+        "create_pachanga_team_challenge_authoritative"
+      ],
+      "called": [
+        "create_pachanga_team_challenge_authoritative"
+      ],
+      "candidates": [
+        "create_pachanga_team_challenge_authoritative"
+      ],
+      "category": "challenges",
+      "classification": "implemented",
+      "implemented": [
+        "create_pachanga_team_challenge_authoritative"
+      ],
+      "label": "Crear reto"
+    },
+    {
+      "activated": [
+        "respond_pachanga_team_challenge_authoritative"
+      ],
+      "called": [
+        "respond_pachanga_team_challenge_authoritative"
+      ],
+      "candidates": [
+        "respond_pachanga_team_challenge_authoritative"
+      ],
+      "category": "challenges",
+      "classification": "implemented",
+      "implemented": [
+        "respond_pachanga_team_challenge_authoritative"
+      ],
+      "label": "Aceptar, rechazar o contrapropuesta"
+    },
+    {
+      "activated": [
+        "reconcile_pachanga_team_challenge_expiry_v1 (server-side)"
+      ],
+      "called": [],
+      "candidates": [
+        "reconcile_pachanga_team_challenge_expiry_v1"
+      ],
+      "category": "challenges",
+      "classification": "implemented",
+      "implemented": [
+        "reconcile_pachanga_team_challenge_expiry_v1"
+      ],
+      "label": "Caducar reto"
+    },
+    {
+      "activated": [
+        "sync_pachanga_open_match_authoritative_v2",
+        "request_pachanga_open_match_authoritative_v2",
+        "review_pachanga_open_match_request_authoritative_v2"
+      ],
+      "called": [
+        "sync_pachanga_open_match_authoritative_v2",
+        "request_pachanga_open_match_authoritative_v2",
+        "review_pachanga_open_match_request_authoritative_v2"
+      ],
+      "candidates": [
+        "sync_pachanga_open_match_authoritative_v2",
+        "request_pachanga_open_match_authoritative_v2",
+        "review_pachanga_open_match_request_authoritative_v2"
+      ],
+      "category": "market",
+      "classification": "implemented",
+      "implemented": [
+        "sync_pachanga_open_match_authoritative_v2",
+        "request_pachanga_open_match_authoritative_v2",
+        "review_pachanga_open_match_request_authoritative_v2"
+      ],
+      "label": "Partido publico completo"
+    },
+    {
+      "activated": [
+        "leave_pachanga_guest_match_v1"
+      ],
+      "called": [
+        "leave_pachanga_guest_match_v1"
+      ],
+      "candidates": [
+        "leave_pachanga_guest_match_v1"
+      ],
+      "category": "market",
+      "classification": "implemented",
+      "implemented": [
+        "leave_pachanga_guest_match_v1"
+      ],
+      "label": "Abandonar plaza invitada"
+    },
+    {
+      "activated": [
+        "sync_pachanga_market_profile_authoritative_v2"
+      ],
+      "called": [
+        "sync_pachanga_market_profile_authoritative_v2"
+      ],
+      "candidates": [
+        "sync_pachanga_market_profile_authoritative_v2"
+      ],
+      "category": "market",
+      "classification": "implemented",
+      "implemented": [
+        "sync_pachanga_market_profile_authoritative_v2"
+      ],
+      "label": "Jugador busca equipo"
+    },
+    {
+      "activated": [
+        "patch_pachanga_match_player_status_authoritative_v2"
+      ],
+      "called": [
+        "patch_pachanga_match_player_status_authoritative_v2"
+      ],
+      "candidates": [
+        "patch_pachanga_match_player_status_authoritative_v2"
+      ],
+      "category": "matches",
+      "classification": "implemented",
+      "implemented": [
+        "patch_pachanga_match_player_status_authoritative_v2"
+      ],
+      "label": "Confirmar asistencia"
+    },
+    {
+      "activated": [
+        "patch_pachanga_match_lineup_authoritative_v2"
+      ],
+      "called": [
+        "patch_pachanga_match_lineup_authoritative_v2"
+      ],
+      "candidates": [
+        "patch_pachanga_match_lineup_authoritative_v2"
+      ],
+      "category": "matches",
+      "classification": "implemented",
+      "implemented": [
+        "patch_pachanga_match_lineup_authoritative_v2"
+      ],
+      "label": "Modificar alineacion"
+    },
+    {
+      "activated": [
+        "finalize_pachanga_match_authoritative_v2"
+      ],
+      "called": [
+        "finalize_pachanga_match_authoritative_v2"
+      ],
+      "candidates": [
+        "finalize_pachanga_match_authoritative_v2"
+      ],
+      "category": "matches",
+      "classification": "implemented",
+      "implemented": [
+        "finalize_pachanga_match_authoritative_v2"
+      ],
+      "label": "Finalizar partido interno"
+    },
+    {
+      "activated": [
+        "publish_pachanga_external_result_v1"
+      ],
+      "called": [
+        "publish_pachanga_external_result_v1"
+      ],
+      "candidates": [
+        "publish_pachanga_external_result_v1"
+      ],
+      "category": "results",
+      "classification": "implemented",
+      "implemented": [
+        "publish_pachanga_external_result_v1"
+      ],
+      "label": "Publicar resultado externo"
+    },
+    {
+      "activated": [
+        "confirm_pachanga_external_result_v1",
+        "reject_pachanga_external_result_change_v1",
+        "propose_pachanga_external_result_change_v1"
+      ],
+      "called": [
+        "confirm_pachanga_external_result_v1",
+        "reject_pachanga_external_result_change_v1",
+        "propose_pachanga_external_result_change_v1"
+      ],
+      "candidates": [
+        "confirm_pachanga_external_result_v1",
+        "reject_pachanga_external_result_change_v1",
+        "propose_pachanga_external_result_change_v1"
+      ],
+      "category": "results",
+      "classification": "implemented",
+      "implemented": [
+        "confirm_pachanga_external_result_v1",
+        "reject_pachanga_external_result_change_v1",
+        "propose_pachanga_external_result_change_v1"
+      ],
+      "label": "Confirmar, rechazar o corregir resultado"
+    },
+    {
+      "activated": [],
+      "called": [],
+      "candidates": [
+        "run_pachanga_external_result_expiry_v1"
+      ],
+      "category": "results",
+      "classification": "partially_implemented",
+      "implemented": [
+        "run_pachanga_external_result_expiry_v1"
+      ],
+      "label": "Auto-confirmar por plazo"
+    },
+    {
+      "activated": [
+        "persist_pachanga_player_assessment_authoritative_v2"
+      ],
+      "called": [
+        "persist_pachanga_player_assessment_authoritative_v2"
+      ],
+      "candidates": [
+        "persist_pachanga_player_assessment_authoritative_v2"
+      ],
+      "category": "rating",
+      "classification": "implemented",
+      "implemented": [
+        "persist_pachanga_player_assessment_authoritative_v2"
+      ],
+      "label": "Assessment inicial y avanzado"
+    },
+    {
+      "activated": [
+        "record_pachanga_individual_rating_authoritative_v2"
+      ],
+      "called": [
+        "record_pachanga_individual_rating_authoritative_v2"
+      ],
+      "candidates": [
+        "record_pachanga_individual_rating_authoritative_v2"
+      ],
+      "category": "rating",
+      "classification": "implemented",
+      "implemented": [
+        "record_pachanga_individual_rating_authoritative_v2"
+      ],
+      "label": "Valoracion entre jugadores"
+    },
+    {
+      "activated": [
+        "get_pachanga_progression_snapshot_v1"
+      ],
+      "called": [
+        "get_pachanga_progression_snapshot_v1"
+      ],
+      "candidates": [
+        "get_pachanga_progression_snapshot_v1"
+      ],
+      "category": "progression",
+      "classification": "implemented",
+      "implemented": [
+        "get_pachanga_progression_snapshot_v1"
+      ],
+      "label": "Evaluar logros"
+    },
+    {
+      "activated": [
+        "open_pachanga_reward_box_v2"
+      ],
+      "called": [
+        "open_pachanga_reward_box_v2"
+      ],
+      "candidates": [
+        "open_pachanga_reward_box_v2"
+      ],
+      "category": "progression",
+      "classification": "implemented",
+      "implemented": [
+        "open_pachanga_reward_box_v2"
+      ],
+      "label": "Abrir caja"
+    },
+    {
+      "activated": [
+        "get_pachanga_notification_center_v1",
+        "mark_pachanga_notification_read_v1"
+      ],
+      "called": [
+        "get_pachanga_notification_center_v1",
+        "mark_pachanga_notification_read_v1"
+      ],
+      "candidates": [
+        "get_pachanga_notification_center_v1",
+        "mark_pachanga_notification_read_v1"
+      ],
+      "category": "notifications",
+      "classification": "implemented",
+      "implemented": [
+        "get_pachanga_notification_center_v1",
+        "mark_pachanga_notification_read_v1"
+      ],
+      "label": "Leer y marcar notificaciones"
+    },
+    {
+      "activated": [],
+      "called": [],
+      "candidates": [],
+      "category": "integrity",
+      "classification": "implemented_lab",
+      "implemented": [],
+      "label": "Season Score V3"
+    }
+  ],
+  "rpcs": [
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "accept_pachanga_admin_invite",
+      "category": "teams"
+    },
+    {
+      "calledByClient": true,
+      "classification": "implemented",
+      "mutation": true,
+      "name": "accept_pachanga_admin_invite_authoritative_v1",
+      "category": "teams"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "annul_pachanga_external_result_v1",
+      "category": "results"
+    },
+    {
+      "calledByClient": true,
+      "classification": "implemented",
+      "mutation": true,
+      "name": "appeal_pachanga_conduct_action_v1",
+      "category": "other"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "append_pachanga_player_rating",
+      "category": "rating"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "backfill_pachanga_match_rating_snapshots_v2",
+      "category": "rating"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "calculate_pachanga_advanced_assessment",
+      "category": "rating"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "calculate_pachanga_initial_assessment",
+      "category": "rating"
+    },
+    {
+      "calledByClient": true,
+      "classification": "implemented",
+      "mutation": true,
+      "name": "cancel_my_pachanga_open_match_request_v1",
+      "category": "market"
+    },
+    {
+      "calledByClient": true,
+      "classification": "implemented",
+      "mutation": true,
+      "name": "cancel_pachanga_external_match_v1",
+      "category": "results"
+    },
+    {
+      "calledByClient": true,
+      "classification": "implemented",
+      "mutation": true,
+      "name": "cancel_pachanga_match_invitation_v1",
+      "category": "matches"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "capture_new_pachanga_match_rating_snapshots_v2",
+      "category": "rating"
+    },
+    {
+      "calledByClient": true,
+      "classification": "implemented",
+      "mutation": true,
+      "name": "close_pachanga_post_match_attendance_v1",
+      "category": "matches"
+    },
+    {
+      "calledByClient": true,
+      "classification": "implemented",
+      "mutation": true,
+      "name": "complete_pachanga_external_scorers_v1",
+      "category": "results"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "complete_pachanga_player_advanced_assessment",
+      "category": "rating"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "complete_pachanga_player_initial_assessment",
+      "category": "rating"
+    },
+    {
+      "calledByClient": true,
+      "classification": "implemented",
+      "mutation": true,
+      "name": "confirm_pachanga_external_result_v1",
+      "category": "results"
+    },
+    {
+      "calledByClient": true,
+      "classification": "implemented",
+      "mutation": true,
+      "name": "create_pachanga_admin_invite",
+      "category": "teams"
+    },
+    {
+      "calledByClient": true,
+      "classification": "implemented",
+      "mutation": true,
+      "name": "create_pachanga_group_backup",
+      "category": "teams"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "create_pachanga_guest_identity_authoritative_v2",
+      "category": "other"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "create_pachanga_guest_identity_v2",
+      "category": "other"
+    },
+    {
+      "calledByClient": true,
+      "classification": "implemented",
+      "mutation": true,
+      "name": "create_pachanga_match_invitation_v1",
+      "category": "matches"
+    },
+    {
+      "calledByClient": true,
+      "classification": "implemented",
+      "mutation": true,
+      "name": "create_pachanga_match_link_invitation_v1",
+      "category": "matches"
+    },
+    {
+      "calledByClient": true,
+      "classification": "implemented",
+      "mutation": true,
+      "name": "create_pachanga_team_challenge_authoritative",
+      "category": "challenges"
+    },
+    {
+      "calledByClient": true,
+      "classification": "implemented",
+      "mutation": true,
+      "name": "ensure_pachanga_external_team_authoritative_v2",
+      "category": "teams"
+    },
+    {
+      "calledByClient": true,
+      "classification": "implemented",
+      "mutation": true,
+      "name": "finalize_pachanga_match_authoritative_v2",
+      "category": "matches"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "finalize_pachanga_match_if_current",
+      "category": "matches"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": false,
+      "name": "get_latest_pachanga_player_rating_snapshot_v2",
+      "category": "rating"
+    },
+    {
+      "calledByClient": true,
+      "classification": "implemented",
+      "mutation": false,
+      "name": "get_my_pachanga_open_match_requests_v1",
+      "category": "market"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": false,
+      "name": "get_my_pachanga_rating_v2",
+      "category": "rating"
+    },
+    {
+      "calledByClient": true,
+      "classification": "implemented",
+      "mutation": false,
+      "name": "get_pachanga_attendance_admin_v1",
+      "category": "other"
+    },
+    {
+      "calledByClient": true,
+      "classification": "implemented",
+      "mutation": false,
+      "name": "get_pachanga_challengeable_team_profile",
+      "category": "challenges"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": false,
+      "name": "get_pachanga_conduct_capabilities_v1",
+      "category": "other"
+    },
+    {
+      "calledByClient": true,
+      "classification": "implemented",
+      "mutation": false,
+      "name": "get_pachanga_external_results_snapshot_v1",
+      "category": "results"
+    },
+    {
+      "calledByClient": true,
+      "classification": "implemented",
+      "mutation": false,
+      "name": "get_pachanga_global_rating_context_v2",
+      "category": "rating"
+    },
+    {
+      "calledByClient": true,
+      "classification": "implemented",
+      "mutation": false,
+      "name": "get_pachanga_guest_match_snapshot_v1",
+      "category": "matches"
+    },
+    {
+      "calledByClient": true,
+      "classification": "implemented",
+      "mutation": false,
+      "name": "get_pachanga_guest_rating_token_context_v2",
+      "category": "rating"
+    },
+    {
+      "calledByClient": true,
+      "classification": "implemented",
+      "mutation": false,
+      "name": "get_pachanga_match_invitation_admin_state_v1",
+      "category": "matches"
+    },
+    {
+      "calledByClient": true,
+      "classification": "implemented",
+      "mutation": false,
+      "name": "get_pachanga_match_link_invitation_v1",
+      "category": "matches"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": false,
+      "name": "get_pachanga_moderation_case_evidence_v1",
+      "category": "other"
+    },
+    {
+      "calledByClient": true,
+      "classification": "implemented",
+      "mutation": false,
+      "name": "get_pachanga_moderation_case_evidence_v1_1",
+      "category": "other"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": false,
+      "name": "get_pachanga_moderation_queue_v1",
+      "category": "other"
+    },
+    {
+      "calledByClient": true,
+      "classification": "implemented",
+      "mutation": false,
+      "name": "get_pachanga_moderation_queue_v1_1",
+      "category": "other"
+    },
+    {
+      "calledByClient": true,
+      "classification": "implemented",
+      "mutation": false,
+      "name": "get_pachanga_my_conduct_v1",
+      "category": "other"
+    },
+    {
+      "calledByClient": true,
+      "classification": "implemented",
+      "mutation": false,
+      "name": "get_pachanga_notification_center_v1",
+      "category": "notifications"
+    },
+    {
+      "calledByClient": true,
+      "classification": "implemented",
+      "mutation": false,
+      "name": "get_pachanga_notification_preferences_v1",
+      "category": "notifications"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": false,
+      "name": "get_pachanga_player_rating_summary_v2",
+      "category": "rating"
+    },
+    {
+      "calledByClient": true,
+      "classification": "implemented",
+      "mutation": false,
+      "name": "get_pachanga_progression_snapshot_v1",
+      "category": "progression"
+    },
+    {
+      "calledByClient": true,
+      "classification": "implemented",
+      "mutation": false,
+      "name": "get_pachanga_rating_eligibility",
+      "category": "rating"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": false,
+      "name": "get_pachanga_social_action_gate_v1",
+      "category": "other"
+    },
+    {
+      "calledByClient": true,
+      "classification": "implemented",
+      "mutation": false,
+      "name": "get_pachanga_team_crest_snapshot_v1",
+      "category": "progression"
+    },
+    {
+      "calledByClient": true,
+      "classification": "implemented",
+      "mutation": false,
+      "name": "get_pachanga_team_social_snapshot",
+      "category": "teams"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "is_pachanga_group_admin",
+      "category": "teams"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "is_pachanga_group_member",
+      "category": "teams"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "is_pachanga_group_owner",
+      "category": "teams"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "is_registered_pachanga_user",
+      "category": "other"
+    },
+    {
+      "calledByClient": true,
+      "classification": "implemented",
+      "mutation": true,
+      "name": "issue_pachanga_guest_rating_token_authoritative_v2",
+      "category": "rating"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "issue_pachanga_guest_rating_token_v2",
+      "category": "rating"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "join_pachanga_group",
+      "category": "teams"
+    },
+    {
+      "calledByClient": true,
+      "classification": "implemented",
+      "mutation": true,
+      "name": "join_pachanga_team",
+      "category": "teams"
+    },
+    {
+      "calledByClient": true,
+      "classification": "implemented",
+      "mutation": true,
+      "name": "leave_pachanga_group_authoritative_v1",
+      "category": "teams"
+    },
+    {
+      "calledByClient": true,
+      "classification": "implemented",
+      "mutation": true,
+      "name": "leave_pachanga_guest_match_v1",
+      "category": "matches"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "link_pachanga_guest_identity_authoritative_v2",
+      "category": "other"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "link_pachanga_guest_identity_v2",
+      "category": "other"
+    },
+    {
+      "calledByClient": true,
+      "classification": "implemented",
+      "mutation": true,
+      "name": "link_pachanga_registered_opponent_authoritative_v2",
+      "category": "challenges"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": false,
+      "name": "list_pachanga_rating_moderation_v2",
+      "category": "rating"
+    },
+    {
+      "calledByClient": true,
+      "classification": "implemented",
+      "mutation": false,
+      "name": "lookup_pachanga_challengeable_team_for_challenge",
+      "category": "challenges"
+    },
+    {
+      "calledByClient": true,
+      "classification": "implemented",
+      "mutation": false,
+      "name": "lookup_pachanga_team_by_code",
+      "category": "teams"
+    },
+    {
+      "calledByClient": true,
+      "classification": "implemented",
+      "mutation": true,
+      "name": "mark_pachanga_notification_read_v1",
+      "category": "notifications"
+    },
+    {
+      "calledByClient": true,
+      "classification": "implemented",
+      "mutation": true,
+      "name": "merge_pachanga_conduct_cases_v1_1",
+      "category": "other"
+    },
+    {
+      "calledByClient": true,
+      "classification": "implemented",
+      "mutation": true,
+      "name": "moderate_pachanga_conduct_case_v1",
+      "category": "other"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "moderate_pachanga_individual_rating_v2",
+      "category": "rating"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "new_pachanga_team_code",
+      "category": "teams"
+    },
+    {
+      "calledByClient": true,
+      "classification": "implemented",
+      "mutation": true,
+      "name": "open_pachanga_reward_box_v2",
+      "category": "progression"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "open_pachanga_reward_v1",
+      "category": "progression"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_accept_guest_into_match_v1",
+      "category": "matches"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_achievement_metric_v1",
+      "category": "progression"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_achievement_metric_without_match_v2",
+      "category": "progression"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_achievement_occurrence_title_v2",
+      "category": "progression"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_achievement_reward_components_v3",
+      "category": "progression"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_add_external_player_facts_v1",
+      "category": "other"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_apply_external_progression_event_v1",
+      "category": "progression"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": false,
+      "name": "pachanga_apply_internal_progression_snapshot_v1",
+      "category": "progression"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_apply_player_points_v1",
+      "category": "other"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_assert_team_crest_piece_v1",
+      "category": "progression"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_assessment_app_position",
+      "category": "rating"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_assessment_clamp",
+      "category": "rating"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_assessment_facets_from_attributes",
+      "category": "rating"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_assessment_mode_confidence",
+      "category": "rating"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_assessment_overall_weight",
+      "category": "rating"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_assessment_response_score",
+      "category": "rating"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_assessment_summary_item",
+      "category": "rating"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_assessment_without_self_votes",
+      "category": "rating"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": false,
+      "name": "pachanga_attendance_snapshot_v1",
+      "category": "other"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_authoritative_response_v2",
+      "category": "other"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_award_achievement_v1",
+      "category": "progression"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": false,
+      "name": "pachanga_build_guest_match_snapshot_v1",
+      "category": "matches"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_bump_attendance_group_v1",
+      "category": "teams"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_bump_conduct_subject_v1",
+      "category": "other"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_bump_open_request_revision_v1",
+      "category": "other"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_can_read_external_match_v1",
+      "category": "results"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_can_read_player_progression_v1",
+      "category": "progression"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_can_read_progression_group_v1",
+      "category": "progression"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_challengeable_profile_operation_replay",
+      "category": "challenges"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_challengeable_store_profile_response",
+      "category": "challenges"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": false,
+      "name": "pachanga_challengeable_team_profile_snapshot",
+      "category": "challenges"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_conduct_client_metadata_v1",
+      "category": "other"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_conduct_notify_moderators_v1",
+      "category": "other"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_conduct_replay_v1",
+      "category": "other"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_conduct_save_receipt_v1",
+      "category": "other"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_copy_external_result_version_v1",
+      "category": "results"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_create_external_match_after_challenge_v1",
+      "category": "challenges"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_create_external_match_for_challenge_v1",
+      "category": "challenges"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_depart_group_member_v1",
+      "category": "teams"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_enforce_challenge_social_gate_v1",
+      "category": "challenges"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_enforce_guest_access_social_gate_v1",
+      "category": "other"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_enforce_market_profile_social_gate_v1",
+      "category": "market"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_enforce_open_request_social_gate_v1",
+      "category": "other"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_ensure_collective_boxes_v2",
+      "category": "other"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_evaluate_achievements_v1",
+      "category": "progression"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_evaluate_attendance_reliability_v1",
+      "category": "other"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_expire_external_match_v1",
+      "category": "results"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_expire_social_restrictions_v1",
+      "category": "other"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_expire_team_challenge_v1",
+      "category": "challenges"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_external_bump_state_v1",
+      "category": "other"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_external_group_side_v1",
+      "category": "teams"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": false,
+      "name": "pachanga_external_match_snapshot_v1",
+      "category": "results"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_external_notify_admins_v1",
+      "category": "other"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_external_operation_replay_v1",
+      "category": "other"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_external_record_event_v1",
+      "category": "other"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_external_roster_v1",
+      "category": "other"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_external_side_scorer_total_v1",
+      "category": "results"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_external_store_response_v1",
+      "category": "other"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_finalize_external_result_v1",
+      "category": "results"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_goal_reward_components_v3",
+      "category": "progression"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_group_level_v2",
+      "category": "teams"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_group_notification_recipients_v1",
+      "category": "notifications"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_group_player_id_for_user_v1",
+      "category": "teams"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_group_player_identity_v1",
+      "category": "teams"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": false,
+      "name": "pachanga_group_snapshot_v2",
+      "category": "teams"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_guard_team_challenge_deadline_v1",
+      "category": "challenges"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_has_active_social_restriction_v1",
+      "category": "other"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_host_lineup_level_v2",
+      "category": "matches"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_initialize_challengeable_team_state",
+      "category": "challenges"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_initialize_team_social_state",
+      "category": "teams"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_is_security_moderator_v1",
+      "category": "other"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_keep_reward_box_contents_sealed_v1",
+      "category": "progression"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_membership_departure_payload_v1",
+      "category": "teams"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_notification_policy_v1",
+      "category": "notifications"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_notify_attendance_event_v1",
+      "category": "other"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_notify_challenge_event_v1",
+      "category": "challenges"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_notify_group_membership_v1",
+      "category": "teams"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_notify_player_availability_v1",
+      "category": "other"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_notify_v1",
+      "category": "other"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_open_request_notification_trigger_v1",
+      "category": "notifications"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_operation_replay_v2",
+      "category": "other"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_player_profile_patch",
+      "category": "other"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_progression_bump_group_v1",
+      "category": "progression"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_progression_bump_user_v1",
+      "category": "progression"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_progression_record_event_v1",
+      "category": "progression"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_rating_payload_is_canonical_v2",
+      "category": "rating"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_rating_v2_clamp",
+      "category": "rating"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_rating_v2_comparison_delta",
+      "category": "rating"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_rating_v2_facets_from_assessment",
+      "category": "rating"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_rating_v2_overall",
+      "category": "rating"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_rating_v2_position_id",
+      "category": "rating"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_rating_v2_profile_for_group_player",
+      "category": "rating"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_rating_v2_ratings_enabled",
+      "category": "rating"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_rating_v2_shared_matches",
+      "category": "rating"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_rebuild_known_opponent_pair",
+      "category": "challenges"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_rebuild_player_progression_stats_v1",
+      "category": "progression"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_rebuild_team_progression_stats_v1",
+      "category": "progression"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_recalculate_external_team_level_v2",
+      "category": "teams"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_recalculate_group_external_level_v2",
+      "category": "teams"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_recalculate_guest_level_v2",
+      "category": "other"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_recalculate_player_rating_v2",
+      "category": "rating"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_recompute_conduct_triage_trigger_v1_1",
+      "category": "other"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_recompute_conduct_triage_v1_1",
+      "category": "other"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_reconcile_open_match_lifecycle_v1",
+      "category": "market"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_reconcile_subject_achievements_v1",
+      "category": "progression"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_recount_conduct_case_v1_1",
+      "category": "other"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_refresh_global_official_v2",
+      "category": "other"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_refresh_known_opponents_from_link",
+      "category": "challenges"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": false,
+      "name": "pachanga_refresh_known_opponents_from_snapshot",
+      "category": "challenges"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": false,
+      "name": "pachanga_refresh_team_level_after_match_snapshot",
+      "category": "matches"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_refresh_team_level_after_participant_change",
+      "category": "teams"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_refresh_team_level_read_model",
+      "category": "teams"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_refresh_team_levels_for_membership",
+      "category": "teams"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_refresh_team_levels_for_profile",
+      "category": "teams"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_repeatable_grant_still_qualifies_v2",
+      "category": "other"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_require_group_member_v1",
+      "category": "teams"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_revoke_achievement_grant_v1",
+      "category": "progression"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_revoke_match_progression_v1",
+      "category": "progression"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": false,
+      "name": "pachanga_reward_box_snapshot_v2",
+      "category": "progression"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": false,
+      "name": "pachanga_reward_recipient_snapshot_v1",
+      "category": "progression"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_safe_operation_replay_v1",
+      "category": "other"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_seal_reward_box_v1",
+      "category": "progression"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_set_external_side_submission_v1",
+      "category": "other"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_store_membership_response_v1",
+      "category": "teams"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_store_safe_operation_v1",
+      "category": "other"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_sync_guest_match_state_trigger_v1",
+      "category": "matches"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_sync_guest_match_state_v1",
+      "category": "matches"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": false,
+      "name": "pachanga_team_challenge_snapshot",
+      "category": "challenges"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_team_crest_design_v1",
+      "category": "progression"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": false,
+      "name": "pachanga_team_crest_draft_snapshot_v1",
+      "category": "progression"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_team_crest_replay_v1",
+      "category": "progression"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": false,
+      "name": "pachanga_team_crest_version_snapshot_v1",
+      "category": "progression"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_team_crest_versions_are_immutable_v1",
+      "category": "progression"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_team_metric_without_match_v3",
+      "category": "matches"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_team_social_bump",
+      "category": "teams"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_team_social_operation_replay",
+      "category": "teams"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_team_social_store_response",
+      "category": "teams"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_translate_http_conflict_v2",
+      "category": "other"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_upsert_team_progression_scope_v3",
+      "category": "progression"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": false,
+      "name": "pachanga_validate_conduct_context_v1",
+      "category": "other"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "pachanga_validate_team_crest_design_v1",
+      "category": "progression"
+    },
+    {
+      "calledByClient": true,
+      "classification": "implemented",
+      "mutation": true,
+      "name": "patch_pachanga_match_lineup_authoritative_v2",
+      "category": "matches"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "patch_pachanga_match_player_paid",
+      "category": "matches"
+    },
+    {
+      "calledByClient": true,
+      "classification": "implemented",
+      "mutation": true,
+      "name": "patch_pachanga_match_player_paid_authoritative_v2",
+      "category": "matches"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "patch_pachanga_match_player_status",
+      "category": "matches"
+    },
+    {
+      "calledByClient": true,
+      "classification": "implemented",
+      "mutation": true,
+      "name": "patch_pachanga_match_player_status_authoritative_v2",
+      "category": "matches"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "patch_pachanga_match_scorers",
+      "category": "results"
+    },
+    {
+      "calledByClient": true,
+      "classification": "implemented",
+      "mutation": true,
+      "name": "patch_pachanga_match_scorers_authoritative_v2",
+      "category": "results"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "patch_pachanga_player_profile",
+      "category": "other"
+    },
+    {
+      "calledByClient": true,
+      "classification": "implemented",
+      "mutation": true,
+      "name": "patch_pachanga_player_profile_authoritative_v2",
+      "category": "other"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "patch_pachanga_player_profile_v2",
+      "category": "other"
+    },
+    {
+      "calledByClient": true,
+      "classification": "implemented",
+      "mutation": true,
+      "name": "persist_pachanga_player_assessment_authoritative_v2",
+      "category": "rating"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "persist_pachanga_player_assessment_v2",
+      "category": "rating"
+    },
+    {
+      "calledByClient": true,
+      "classification": "implemented",
+      "mutation": true,
+      "name": "propose_pachanga_external_result_change_v1",
+      "category": "results"
+    },
+    {
+      "calledByClient": true,
+      "classification": "implemented",
+      "mutation": true,
+      "name": "publish_pachanga_external_result_v1",
+      "category": "results"
+    },
+    {
+      "calledByClient": true,
+      "classification": "implemented",
+      "mutation": true,
+      "name": "publish_pachanga_team_crest_v1",
+      "category": "progression"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "reconcile_pachanga_team_challenge_expiry_v1",
+      "category": "challenges"
+    },
+    {
+      "calledByClient": true,
+      "classification": "implemented",
+      "mutation": true,
+      "name": "record_pachanga_global_rating_authoritative_v2",
+      "category": "rating"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "record_pachanga_global_rating_v2",
+      "category": "rating"
+    },
+    {
+      "calledByClient": true,
+      "classification": "implemented",
+      "mutation": true,
+      "name": "record_pachanga_guest_team_rating_token_v2",
+      "category": "rating"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "record_pachanga_guest_team_rating_v2",
+      "category": "rating"
+    },
+    {
+      "calledByClient": true,
+      "classification": "implemented",
+      "mutation": true,
+      "name": "record_pachanga_individual_rating_authoritative_v2",
+      "category": "rating"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "record_pachanga_individual_rating_v2",
+      "category": "rating"
+    },
+    {
+      "calledByClient": true,
+      "classification": "implemented",
+      "mutation": true,
+      "name": "reject_pachanga_external_result_change_v1",
+      "category": "results"
+    },
+    {
+      "calledByClient": true,
+      "classification": "implemented",
+      "mutation": true,
+      "name": "remove_pachanga_group_member_authoritative_v1",
+      "category": "teams"
+    },
+    {
+      "calledByClient": true,
+      "classification": "implemented",
+      "mutation": true,
+      "name": "request_pachanga_open_match_authoritative_v2",
+      "category": "market"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "request_pachanga_open_match_authoritative_v2_impl",
+      "category": "market"
+    },
+    {
+      "calledByClient": true,
+      "classification": "implemented",
+      "mutation": true,
+      "name": "resolve_pachanga_attendance_review_v1",
+      "category": "other"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "resolve_pachanga_conduct_appeal_v1",
+      "category": "other"
+    },
+    {
+      "calledByClient": true,
+      "classification": "implemented",
+      "mutation": true,
+      "name": "respond_pachanga_match_invitation_v1",
+      "category": "matches"
+    },
+    {
+      "calledByClient": true,
+      "classification": "implemented",
+      "mutation": true,
+      "name": "respond_pachanga_match_link_invitation_v1",
+      "category": "matches"
+    },
+    {
+      "calledByClient": true,
+      "classification": "implemented",
+      "mutation": true,
+      "name": "respond_pachanga_post_match_attendance_v1",
+      "category": "matches"
+    },
+    {
+      "calledByClient": true,
+      "classification": "implemented",
+      "mutation": true,
+      "name": "respond_pachanga_team_challenge_authoritative",
+      "category": "challenges"
+    },
+    {
+      "calledByClient": true,
+      "classification": "implemented",
+      "mutation": true,
+      "name": "restore_pachanga_group_backup",
+      "category": "teams"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "reverse_pachanga_guest_link_authoritative_v2",
+      "category": "other"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "reverse_pachanga_guest_link_v2",
+      "category": "other"
+    },
+    {
+      "calledByClient": true,
+      "classification": "implemented",
+      "mutation": true,
+      "name": "review_pachanga_guest_withdrawal_v1",
+      "category": "other"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "review_pachanga_open_match_request",
+      "category": "market"
+    },
+    {
+      "calledByClient": true,
+      "classification": "implemented",
+      "mutation": true,
+      "name": "review_pachanga_open_match_request_authoritative_v2",
+      "category": "market"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "review_pachanga_open_match_request_authoritative_v2_impl",
+      "category": "market"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "revoke_pachanga_guest_rating_token_authoritative_v2",
+      "category": "rating"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "run_pachanga_attendance_dispute_expiry_v1",
+      "category": "other"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "run_pachanga_external_result_expiry_v1",
+      "category": "results"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "run_pachanga_social_restriction_expiry_v1",
+      "category": "other"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "run_pachanga_team_challenge_expiry_v1",
+      "category": "challenges"
+    },
+    {
+      "calledByClient": true,
+      "classification": "implemented",
+      "mutation": true,
+      "name": "save_pachanga_payload_authoritative_v2",
+      "category": "other"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "save_pachanga_payload_if_current",
+      "category": "other"
+    },
+    {
+      "calledByClient": true,
+      "classification": "implemented",
+      "mutation": true,
+      "name": "save_pachanga_team_crest_draft_v1",
+      "category": "progression"
+    },
+    {
+      "calledByClient": true,
+      "classification": "implemented",
+      "mutation": false,
+      "name": "search_pachanga_challengeable_teams",
+      "category": "challenges"
+    },
+    {
+      "calledByClient": true,
+      "classification": "implemented",
+      "mutation": false,
+      "name": "search_pachanga_open_matches_v1",
+      "category": "market"
+    },
+    {
+      "calledByClient": true,
+      "classification": "implemented",
+      "mutation": true,
+      "name": "set_pachanga_group_ratings_enabled_authoritative_v2",
+      "category": "rating"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "set_pachanga_group_ratings_enabled_v2",
+      "category": "rating"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "set_updated_at",
+      "category": "other"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "snapshot_pachanga_match_ratings_v2",
+      "category": "rating"
+    },
+    {
+      "calledByClient": true,
+      "classification": "implemented",
+      "mutation": true,
+      "name": "split_pachanga_conduct_case_v1_1",
+      "category": "other"
+    },
+    {
+      "calledByClient": true,
+      "classification": "implemented",
+      "mutation": true,
+      "name": "submit_pachanga_conduct_report_v1",
+      "category": "other"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "sync_pachanga_market_profile",
+      "category": "market"
+    },
+    {
+      "calledByClient": true,
+      "classification": "implemented",
+      "mutation": true,
+      "name": "sync_pachanga_market_profile_authoritative_v2",
+      "category": "market"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "sync_pachanga_open_match",
+      "category": "market"
+    },
+    {
+      "calledByClient": true,
+      "classification": "implemented",
+      "mutation": true,
+      "name": "sync_pachanga_open_match_authoritative_v2",
+      "category": "market"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "sync_pachanga_open_match_authoritative_v2_impl",
+      "category": "market"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "sync_pachanga_player_profile_to_groups",
+      "category": "teams"
+    },
+    {
+      "calledByClient": true,
+      "classification": "implemented",
+      "mutation": true,
+      "name": "transfer_pachanga_group_ownership_authoritative_v1",
+      "category": "teams"
+    },
+    {
+      "calledByClient": true,
+      "classification": "implemented",
+      "mutation": true,
+      "name": "update_pachanga_member_name",
+      "category": "teams"
+    },
+    {
+      "calledByClient": true,
+      "classification": "implemented",
+      "mutation": true,
+      "name": "update_pachanga_notification_preferences_v1",
+      "category": "notifications"
+    },
+    {
+      "calledByClient": true,
+      "classification": "implemented",
+      "mutation": true,
+      "name": "upsert_pachanga_challengeable_team_profile_authoritative",
+      "category": "challenges"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "upsert_pachanga_own_player_profile",
+      "category": "other"
+    },
+    {
+      "calledByClient": true,
+      "classification": "implemented",
+      "mutation": true,
+      "name": "upsert_pachanga_own_player_profile_authoritative_v2",
+      "category": "other"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "upsert_pachanga_own_player_profile_v2",
+      "category": "other"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "upsert_pachanga_player_profile_from_player",
+      "category": "other"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "void_my_pachanga_individual_rating_v2",
+      "category": "rating"
+    },
+    {
+      "calledByClient": false,
+      "classification": "partially_implemented",
+      "mutation": true,
+      "name": "void_pachanga_individual_rating_v2",
+      "category": "rating"
+    }
+  ],
+  "clientRpcCalls": [
+    {
+      "file": "app/admin/conduct/conduct-admin-client.tsx",
+      "name": "get_pachanga_attendance_admin_v1"
+    },
+    {
+      "file": "app/admin/conduct/conduct-admin-client.tsx",
+      "name": "get_pachanga_moderation_queue_v1_1"
+    },
+    {
+      "file": "app/admin/conduct/conduct-admin-client.tsx",
+      "name": "get_pachanga_moderation_case_evidence_v1_1"
+    },
+    {
+      "file": "app/admin/conduct/conduct-admin-client.tsx",
+      "name": "close_pachanga_post_match_attendance_v1"
+    },
+    {
+      "file": "app/admin/conduct/conduct-admin-client.tsx",
+      "name": "resolve_pachanga_attendance_review_v1"
+    },
+    {
+      "file": "app/admin/conduct/conduct-admin-client.tsx",
+      "name": "moderate_pachanga_conduct_case_v1"
+    },
+    {
+      "file": "app/admin/conduct/conduct-admin-client.tsx",
+      "name": "split_pachanga_conduct_case_v1_1"
+    },
+    {
+      "file": "app/admin/conduct/conduct-admin-client.tsx",
+      "name": "merge_pachanga_conduct_cases_v1_1"
+    },
+    {
+      "file": "app/api/ratings/assessment/route.ts",
+      "name": "persist_pachanga_player_assessment_authoritative_v2"
+    },
+    {
+      "file": "app/conduct-player-center.tsx",
+      "name": "get_pachanga_my_conduct_v1"
+    },
+    {
+      "file": "app/conduct-player-center.tsx",
+      "name": "respond_pachanga_post_match_attendance_v1"
+    },
+    {
+      "file": "app/conduct-player-center.tsx",
+      "name": "appeal_pachanga_conduct_action_v1"
+    },
+    {
+      "file": "app/conduct-report-form.tsx",
+      "name": "submit_pachanga_conduct_report_v1"
+    },
+    {
+      "file": "app/equipo/identidad/page.tsx",
+      "name": "get_pachanga_team_crest_snapshot_v1"
+    },
+    {
+      "file": "app/equipo/identidad/page.tsx",
+      "name": "get_pachanga_progression_snapshot_v1"
+    },
+    {
+      "file": "app/equipo/identidad/page.tsx",
+      "name": "save_pachanga_team_crest_draft_v1"
+    },
+    {
+      "file": "app/equipo/identidad/page.tsx",
+      "name": "publish_pachanga_team_crest_v1"
+    },
+    {
+      "file": "app/equipo/identidad/page.tsx",
+      "name": "open_pachanga_reward_box_v2"
+    },
+    {
+      "file": "app/global-rating-panel.tsx",
+      "name": "get_pachanga_global_rating_context_v2"
+    },
+    {
+      "file": "app/global-rating-panel.tsx",
+      "name": "get_pachanga_global_rating_context_v2"
+    },
+    {
+      "file": "app/global-rating-panel.tsx",
+      "name": "ensure_pachanga_external_team_authoritative_v2"
+    },
+    {
+      "file": "app/global-rating-panel.tsx",
+      "name": "link_pachanga_registered_opponent_authoritative_v2"
+    },
+    {
+      "file": "app/global-rating-panel.tsx",
+      "name": "record_pachanga_global_rating_authoritative_v2"
+    },
+    {
+      "file": "app/global-rating-panel.tsx",
+      "name": "issue_pachanga_guest_rating_token_authoritative_v2"
+    },
+    {
+      "file": "app/invitacion-partido/page.tsx",
+      "name": "get_pachanga_match_link_invitation_v1"
+    },
+    {
+      "file": "app/invitacion-partido/page.tsx",
+      "name": "respond_pachanga_match_link_invitation_v1"
+    },
+    {
+      "file": "app/mercado/challengeable-teams-panel.tsx",
+      "name": "get_pachanga_challengeable_team_profile"
+    },
+    {
+      "file": "app/mercado/challengeable-teams-panel.tsx",
+      "name": "search_pachanga_challengeable_teams"
+    },
+    {
+      "file": "app/mercado/challengeable-teams-panel.tsx",
+      "name": "upsert_pachanga_challengeable_team_profile_authoritative"
+    },
+    {
+      "file": "app/mercado/challengeable-teams-panel.tsx",
+      "name": "lookup_pachanga_challengeable_team_for_challenge"
+    },
+    {
+      "file": "app/mercado/external-results-panel.tsx",
+      "name": "get_pachanga_external_results_snapshot_v1"
+    },
+    {
+      "file": "app/mercado/external-results-panel.tsx",
+      "name": "publish_pachanga_external_result_v1"
+    },
+    {
+      "file": "app/mercado/external-results-panel.tsx",
+      "name": "propose_pachanga_external_result_change_v1"
+    },
+    {
+      "file": "app/mercado/external-results-panel.tsx",
+      "name": "confirm_pachanga_external_result_v1"
+    },
+    {
+      "file": "app/mercado/external-results-panel.tsx",
+      "name": "complete_pachanga_external_scorers_v1"
+    },
+    {
+      "file": "app/mercado/external-results-panel.tsx",
+      "name": "reject_pachanga_external_result_change_v1"
+    },
+    {
+      "file": "app/mercado/external-results-panel.tsx",
+      "name": "cancel_pachanga_external_match_v1"
+    },
+    {
+      "file": "app/mercado/page.tsx",
+      "name": "search_pachanga_open_matches_v1"
+    },
+    {
+      "file": "app/mercado/page.tsx",
+      "name": "get_my_pachanga_open_match_requests_v1"
+    },
+    {
+      "file": "app/mercado/page.tsx",
+      "name": "get_pachanga_match_invitation_admin_state_v1"
+    },
+    {
+      "file": "app/mercado/page.tsx",
+      "name": "cancel_pachanga_match_invitation_v1"
+    },
+    {
+      "file": "app/mercado/page.tsx",
+      "name": "create_pachanga_match_invitation_v1"
+    },
+    {
+      "file": "app/mercado/page.tsx",
+      "name": "request_pachanga_open_match_authoritative_v2"
+    },
+    {
+      "file": "app/mercado/page.tsx",
+      "name": "cancel_my_pachanga_open_match_request_v1"
+    },
+    {
+      "file": "app/mercado/team-challenges-panel.tsx",
+      "name": "get_pachanga_team_social_snapshot"
+    },
+    {
+      "file": "app/mercado/team-challenges-panel.tsx",
+      "name": "lookup_pachanga_team_by_code"
+    },
+    {
+      "file": "app/mercado/team-challenges-panel.tsx",
+      "name": "respond_pachanga_team_challenge_authoritative"
+    },
+    {
+      "file": "app/mercado/team-challenges-panel.tsx",
+      "name": "create_pachanga_team_challenge_authoritative"
+    },
+    {
+      "file": "app/mercado/team-challenges-panel.tsx",
+      "name": "respond_pachanga_team_challenge_authoritative"
+    },
+    {
+      "file": "app/notification-center.tsx",
+      "name": "get_pachanga_notification_center_v1"
+    },
+    {
+      "file": "app/notification-center.tsx",
+      "name": "mark_pachanga_notification_read_v1"
+    },
+    {
+      "file": "app/notification-center.tsx",
+      "name": "respond_pachanga_match_invitation_v1"
+    },
+    {
+      "file": "app/notification-center.tsx",
+      "name": "review_pachanga_guest_withdrawal_v1"
+    },
+    {
+      "file": "app/notification-center.tsx",
+      "name": "review_pachanga_open_match_request_authoritative_v2"
+    },
+    {
+      "file": "app/notification-center.tsx",
+      "name": "respond_pachanga_post_match_attendance_v1"
+    },
+    {
+      "file": "app/notification-preferences.tsx",
+      "name": "get_pachanga_notification_preferences_v1"
+    },
+    {
+      "file": "app/notification-preferences.tsx",
+      "name": "update_pachanga_notification_preferences_v1"
+    },
+    {
+      "file": "app/page.tsx",
+      "name": "create_pachanga_group_backup"
+    },
+    {
+      "file": "app/page.tsx",
+      "name": "save_pachanga_payload_authoritative_v2"
+    },
+    {
+      "file": "app/page.tsx",
+      "name": "restore_pachanga_group_backup"
+    },
+    {
+      "file": "app/page.tsx",
+      "name": "accept_pachanga_admin_invite_authoritative_v1"
+    },
+    {
+      "file": "app/page.tsx",
+      "name": "join_pachanga_team"
+    },
+    {
+      "file": "app/page.tsx",
+      "name": "save_pachanga_payload_authoritative_v2"
+    },
+    {
+      "file": "app/page.tsx",
+      "name": "set_pachanga_group_ratings_enabled_authoritative_v2"
+    },
+    {
+      "file": "app/page.tsx",
+      "name": "patch_pachanga_match_player_status_authoritative_v2"
+    },
+    {
+      "file": "app/page.tsx",
+      "name": "patch_pachanga_match_player_paid_authoritative_v2"
+    },
+    {
+      "file": "app/page.tsx",
+      "name": "patch_pachanga_match_lineup_authoritative_v2"
+    },
+    {
+      "file": "app/page.tsx",
+      "name": "patch_pachanga_match_scorers_authoritative_v2"
+    },
+    {
+      "file": "app/page.tsx",
+      "name": "finalize_pachanga_match_authoritative_v2"
+    },
+    {
+      "file": "app/page.tsx",
+      "name": "get_pachanga_rating_eligibility"
+    },
+    {
+      "file": "app/page.tsx",
+      "name": "sync_pachanga_open_match_authoritative_v2"
+    },
+    {
+      "file": "app/page.tsx",
+      "name": "review_pachanga_open_match_request_authoritative_v2"
+    },
+    {
+      "file": "app/page.tsx",
+      "name": "sync_pachanga_market_profile_authoritative_v2"
+    },
+    {
+      "file": "app/page.tsx",
+      "name": "patch_pachanga_player_profile_authoritative_v2"
+    },
+    {
+      "file": "app/page.tsx",
+      "name": "update_pachanga_member_name"
+    },
+    {
+      "file": "app/page.tsx",
+      "name": "record_pachanga_individual_rating_authoritative_v2"
+    },
+    {
+      "file": "app/page.tsx",
+      "name": "upsert_pachanga_own_player_profile_authoritative_v2"
+    },
+    {
+      "file": "app/page.tsx",
+      "name": "set_pachanga_member_role"
+    },
+    {
+      "file": "app/page.tsx",
+      "name": "transfer_pachanga_group_ownership_authoritative_v1"
+    },
+    {
+      "file": "app/page.tsx",
+      "name": "remove_pachanga_group_member_authoritative_v1"
+    },
+    {
+      "file": "app/page.tsx",
+      "name": "leave_pachanga_group_authoritative_v1"
+    },
+    {
+      "file": "app/page.tsx",
+      "name": "create_pachanga_admin_invite"
+    },
+    {
+      "file": "app/page.tsx",
+      "name": "create_pachanga_admin_invite"
+    },
+    {
+      "file": "app/page.tsx",
+      "name": "create_pachanga_admin_invite"
+    },
+    {
+      "file": "app/page.tsx",
+      "name": "create_pachanga_match_link_invitation_v1"
+    },
+    {
+      "file": "app/partido-invitado/page.tsx",
+      "name": "get_pachanga_guest_match_snapshot_v1"
+    },
+    {
+      "file": "app/partido-invitado/page.tsx",
+      "name": "leave_pachanga_guest_match_v1"
+    },
+    {
+      "file": "app/valorar-equipo/page.tsx",
+      "name": "get_pachanga_guest_rating_token_context_v2"
+    },
+    {
+      "file": "app/valorar-equipo/page.tsx",
+      "name": "get_pachanga_guest_rating_token_context_v2"
+    },
+    {
+      "file": "app/valorar-equipo/page.tsx",
+      "name": "record_pachanga_guest_team_rating_token_v2"
+    }
+  ],
+  "appTableWrites": [
+    "pachanga_group_members",
+    "pachanga_groups",
+    "pachanga_stripe_webhook_events"
+  ],
+  "tables": [
+    "pachanga_achievement_box_rules",
+    "pachanga_achievement_definitions",
+    "pachanga_achievement_grants",
+    "pachanga_attendance_closures",
+    "pachanga_attendance_events",
+    "pachanga_attendance_group_state",
+    "pachanga_attendance_reviews",
+    "pachanga_challengeable_team_availability",
+    "pachanga_challengeable_team_operation_receipts",
+    "pachanga_challengeable_team_profile_events",
+    "pachanga_challengeable_team_profile_state",
+    "pachanga_challengeable_team_profiles",
+    "pachanga_challengeable_team_search_state",
+    "pachanga_conduct_appeals",
+    "pachanga_conduct_operation_receipts",
+    "pachanga_conduct_reports",
+    "pachanga_conduct_settings",
+    "pachanga_conduct_subject_state",
+    "pachanga_conduct_triage_category_policy",
+    "pachanga_conduct_warnings",
+    "pachanga_cosmetic_catalog",
+    "pachanga_external_match_group_state",
+    "pachanga_external_match_participants",
+    "pachanga_external_match_scorers",
+    "pachanga_external_matches",
+    "pachanga_external_result_attestations",
+    "pachanga_external_result_events",
+    "pachanga_external_result_operation_receipts",
+    "pachanga_external_result_settings",
+    "pachanga_external_result_versions",
+    "pachanga_external_teams",
+    "pachanga_global_rating_evidence",
+    "pachanga_global_rating_responses",
+    "pachanga_group_backups",
+    "pachanga_group_members",
+    "pachanga_groups",
+    "pachanga_guest_identities",
+    "pachanga_guest_link_events",
+    "pachanga_guest_rating_tokens",
+    "pachanga_guest_withdrawal_reviews",
+    "pachanga_individual_rating_evidence",
+    "pachanga_known_opponents",
+    "pachanga_legacy_rating_evidence",
+    "pachanga_market_profiles",
+    "pachanga_match_guest_access",
+    "pachanga_match_guest_snapshots",
+    "pachanga_match_invitations",
+    "pachanga_match_link_invitations",
+    "pachanga_match_rating_participants",
+    "pachanga_match_rating_snapshots",
+    "pachanga_moderation_case_relations",
+    "pachanga_moderation_cases",
+    "pachanga_moderation_events",
+    "pachanga_notification_channels",
+    "pachanga_notification_delivery_outbox",
+    "pachanga_notification_operation_receipts",
+    "pachanga_notification_preference_receipts",
+    "pachanga_notification_preferences",
+    "pachanga_open_matches",
+    "pachanga_player_assessments",
+    "pachanga_player_point_accounts",
+    "pachanga_player_points_ledger",
+    "pachanga_player_profiles",
+    "pachanga_player_progression_stats",
+    "pachanga_player_rating_snapshots",
+    "pachanga_player_reward_inventory",
+    "pachanga_post_match_attendance",
+    "pachanga_progression_events",
+    "pachanga_progression_group_state",
+    "pachanga_progression_match_facts",
+    "pachanga_progression_player_match_facts",
+    "pachanga_progression_user_state",
+    "pachanga_rating_config_events",
+    "pachanga_rating_evidence_state_events",
+    "pachanga_rating_flags",
+    "pachanga_registered_match_opponents",
+    "pachanga_report_source_clusters",
+    "pachanga_reward_box_catalog",
+    "pachanga_reward_box_contents",
+    "pachanga_reward_economy_versions",
+    "pachanga_reward_grants",
+    "pachanga_reward_open_receipts",
+    "pachanga_reward_pool_catalog",
+    "pachanga_reward_recipients",
+    "pachanga_social_restrictions",
+    "pachanga_team_challenge_events",
+    "pachanga_team_challenge_lifecycle_config",
+    "pachanga_team_challenges",
+    "pachanga_team_cosmetic_inventory",
+    "pachanga_team_crest_drafts",
+    "pachanga_team_crest_events",
+    "pachanga_team_crest_operation_receipts",
+    "pachanga_team_crest_state",
+    "pachanga_team_crest_versions",
+    "pachanga_team_external_rating_snapshots",
+    "pachanga_team_level_read_models",
+    "pachanga_team_progression_stats",
+    "pachanga_team_social_operation_receipts",
+    "pachanga_team_social_state",
+    "pachanga_user_notifications"
+  ],
+  "states": [
+    "A",
+    "abusive_behavior",
+    "accepted",
+    "achievement",
+    "achievement_awarded",
+    "achievement_revoked",
+    "active",
+    "admin",
+    "admin_adjustment",
+    "adornment",
+    "advanced",
+    "advanced_assessment",
+    "agreed",
+    "all",
+    "annulled",
+    "appealed",
+    "assessment",
+    "attendance_dispute",
+    "attendance_reliability",
+    "auto_confirmed",
+    "B",
+    "base",
+    "border",
+    "box_purchase",
+    "canceled",
+    "cancelled",
+    "challenge",
+    "change",
+    "change_proposed",
+    "changes_proposed",
+    "closed",
+    "clustered",
+    "collective_box",
+    "color",
+    "combination",
+    "common",
+    "conduct_report",
+    "conduct_report_split",
+    "confirmed",
+    "confirmed_uncontested",
+    "corrected",
+    "cosmetic_purchase",
+    "created",
+    "crest_draft_saved",
+    "crest_published",
+    "critical",
+    "deliberate_cheating",
+    "DEPRECATE",
+    "discriminatory_behavior",
+    "dismissed",
+    "disputed",
+    "draft",
+    "draw",
+    "duda",
+    "effect",
+    "email",
+    "epic",
+    "escalated",
+    "excused_absence",
+    "expired",
+    "external",
+    "external_match_created",
+    "external_result",
+    "external_team",
+    "external_vote",
+    "failed",
+    "field",
+    "futbol11",
+    "futbol7",
+    "FUTURE",
+    "goalkeeper",
+    "goalkeeper_legacy",
+    "group",
+    "guest",
+    "guest_participation",
+    "harassment",
+    "high",
+    "host_team",
+    "imported",
+    "incomplete",
+    "info",
+    "initial",
+    "initial_assessment",
+    "internal",
+    "internal_snapshot",
+    "invitation",
+    "KEEP",
+    "late_cancellation",
+    "legacy",
+    "legendary",
+    "link_requested",
+    "linked",
+    "loss",
+    "maintained",
+    "market",
+    "match",
+    "match_finalization",
+    "match_progression_applied",
+    "match_progression_revoked",
+    "match_result_annulled",
+    "match_result_auto_confirmed",
+    "match_result_cancelled",
+    "match_result_change_proposed",
+    "match_result_confirmed",
+    "match_result_disputed",
+    "match_result_proposed",
+    "match_result_reminder_sent",
+    "match_scorers_completed",
+    "MEJOR",
+    "merged_into",
+    "MIGRATE",
+    "migration",
+    "month",
+    "MUCHO_MEJOR",
+    "MUCHO_PEOR",
+    "needs_scorer_fix",
+    "no",
+    "none",
+    "normal",
+    "not_required",
+    "open",
+    "open_match",
+    "open_request",
+    "opened",
+    "other",
+    "owner",
+    "palette",
+    "PARECIDO",
+    "past_due",
+    "pattern",
+    "pending",
+    "pending_rival",
+    "PEOR",
+    "played",
+    "player",
+    "PLAYER_APPEARANCES",
+    "player_badge",
+    "PLAYER_BRACES",
+    "player_cosmetic",
+    "PLAYER_DISTINCT_OPPONENT_WINS",
+    "PLAYER_DISTINCT_OPPONENTS",
+    "PLAYER_DOUBLE_HAT_TRICKS",
+    "PLAYER_GOALS",
+    "PLAYER_HATTRICKS",
+    "PLAYER_MAX_UNBEATEN_STREAK",
+    "PLAYER_MAX_WIN_STREAK",
+    "PLAYER_POKERS",
+    "PLAYER_REPOKERS",
+    "player_title",
+    "PLAYER_WINS",
+    "points",
+    "priority_review",
+    "processing",
+    "profile_disabled",
+    "profile_enabled",
+    "profile_updated",
+    "proposed",
+    "public_guest_access",
+    "public_market",
+    "public_match_access",
+    "publish",
+    "push",
+    "rare",
+    "recalculation",
+    "receive_public_challenges",
+    "record_only",
+    "registered_group",
+    "rejected",
+    "RENAME",
+    "repeated_disruption",
+    "restricted",
+    "restriction",
+    "retired",
+    "reversed",
+    "review",
+    "revoked",
+    "reward_box",
+    "reward_granted",
+    "reward_opened",
+    "reward_revoked",
+    "sala",
+    "save_draft",
+    "scorers_completed",
+    "security",
+    "send_challenges",
+    "sent",
+    "shape",
+    "skipped",
+    "social",
+    "split_from",
+    "submitted",
+    "superseded",
+    "symbol",
+    "team",
+    "TEAM_BIG_WINS",
+    "TEAM_CLEAN_SHEETS",
+    "TEAM_CLOSE_WINS",
+    "team_cosmetic",
+    "TEAM_DISTINCT_OPPONENT_WINS",
+    "TEAM_DISTINCT_OPPONENTS",
+    "TEAM_DRAWS",
+    "TEAM_GOALS",
+    "TEAM_LOSSES",
+    "TEAM_MATCHES",
+    "TEAM_MAX_UNBEATEN_STREAK",
+    "TEAM_MAX_WIN_STREAK",
+    "TEAM_SCORELESS_DRAWS",
+    "TEAM_WINS",
+    "threats_or_violence",
+    "triaged",
+    "trial",
+    "trialing",
+    "unclassifiable",
+    "uncommon",
+    "under_review",
+    "unexcused_no_show",
+    "unlinked",
+    "unlocked",
+    "unpaid",
+    "unverified",
+    "upheld",
+    "urgent_review",
+    "void",
+    "voy",
+    "warned",
+    "warning",
+    "watch",
+    "win",
+    "withdrawn",
+    "year"
+  ],
+  "notificationKinds": [
+    "achievement_reward",
+    "admin_invite_accept_v1",
+    "admin_invite_accepted",
+    "collective_achievement",
+    "external_result",
+    "external_result_annulled",
+    "external_result_auto_confirmed",
+    "external_result_change",
+    "external_result_changed",
+    "external_result_confirm",
+    "external_result_confirmed",
+    "external_result_disputed",
+    "external_result_proposed",
+    "external_result_publish",
+    "external_result_reject_change",
+    "external_result_reminder",
+    "group_member_joined",
+    "group_member_left",
+    "group_member_removed",
+    "individual_achievement_rule_v1",
+    "individual_achievements_do_not_generate_rewards",
+    "legacy_nonparticipant_reward_preserved",
+    "match_attendance_cancelled",
+    "match_attendance_changed",
+    "match_attendance_joined",
+    "match_attendance_v2",
+    "match_invitation",
+    "match_invitation_",
+    "match_invitation_cancel_v1",
+    "match_invitation_cancelled",
+    "match_invitation_create_v1",
+    "match_invitation_respond_v1",
+    "match_invitation_response",
+    "match_link_invitation_create_v1",
+    "match_link_invitation_respond_v1",
+    "match_link_invitation_response",
+    "match_result_annulled",
+    "match_result_auto_confirmed",
+    "match_result_cancelled",
+    "match_result_change_proposed",
+    "match_result_confirmed",
+    "match_result_disputed",
+    "match_result_proposed",
+    "match_result_reminder_sent",
+    "pachanga_attendance_group_state",
+    "pachanga_challengeable_team_profile_state",
+    "pachanga_challengeable_team_search_state",
+    "pachanga_group_members_role_check",
+    "pachanga_user_notifications",
+    "personal_achievement",
+    "personal_achievement_reward",
+    "player_availability_available",
+    "player_availability_unavailable",
+    "player_reward_v1",
+    "postmatch_reward_boxes",
+    "public_market",
+    "receive_public_challenges",
+    "send_challenges",
+    "sync_pachanga_market_profile_authoritative_v2_impl",
+    "target_not_current_member",
+    "team_challenge_",
+    "team_challenge_created",
+    "team_challenge_expired"
+  ],
+  "achievementKeys": [
+    "player.all.braces.001",
+    "player.all.double_hat_tricks.001",
+    "player.all.goals.",
+    "player.all.hat_tricks.001",
+    "player.all.matches.",
+    "player.all.pokers.001",
+    "player.all.repokers.001",
+    "player.all.wins.",
+    "player.external.braces.001",
+    "player.external.double_hat_tricks.001",
+    "player.external.goals.001",
+    "player.external.goals.010",
+    "player.external.hat_tricks.001",
+    "player.external.matches.001",
+    "player.external.pokers.001",
+    "player.external.repokers.001",
+    "player.external.wins.001",
+    "player.goals",
+    "player.internal.braces.001",
+    "player.internal.double_hat_tricks.001",
+    "player.internal.goals.001",
+    "player.internal.goals.010",
+    "player.internal.hat_tricks.001",
+    "player.internal.matches.001",
+    "player.internal.matches.005",
+    "player.internal.matches.025",
+    "player.internal.pokers.001",
+    "player.internal.repokers.001",
+    "player.internal.wins.001",
+    "player.match_goals",
+    "player.matches",
+    "player.opponents_played",
+    "player.opponents_won",
+    "player.unbeaten",
+    "player.win_streak",
+    "player.wins",
+    "team.external.absolute_dominance",
+    "team.external.absolute_dominance.001",
+    "team.external.big_wins",
+    "team.external.big_wins.001",
+    "team.external.big_wins.005",
+    "team.external.clean_sheets",
+    "team.external.clean_sheets.001",
+    "team.external.clean_sheets.005",
+    "team.external.close_wins",
+    "team.external.close_wins.001",
+    "team.external.goals.025",
+    "team.external.matches",
+    "team.external.matches.001",
+    "team.external.matches.005",
+    "team.external.matches.010",
+    "team.external.matches.025",
+    "team.external.opponents_played",
+    "team.external.opponents_won",
+    "team.external.opponents.003",
+    "team.external.opponents.010",
+    "team.external.unbeaten",
+    "team.external.unbeaten.005",
+    "team.external.unbeaten.010",
+    "team.external.win_streak",
+    "team.external.win_streak.003",
+    "team.external.win_streak.005",
+    "team.external.wins",
+    "team.external.wins.",
+    "team.external.wins.001",
+    "team.external.wins.005",
+    "team.external.wins.010",
+    "team.external.wins.025",
+    "team.internal.big_wins",
+    "team.internal.big_wins.001",
+    "team.internal.close_wins",
+    "team.internal.close_wins.001",
+    "team.internal.goals.025",
+    "team.internal.goals.100",
+    "team.internal.matches",
+    "team.internal.matches.001",
+    "team.internal.matches.005",
+    "team.internal.matches.010",
+    "team.internal.matches.025",
+    "team.internal.matches.050",
+    "team.internal.scoreless.001",
+    "team.match_goals",
+    "team.matches",
+    "team.matches."
+  ],
+  "timeDependencies": [
+    {
+      "file": "supabase/migrations/20260728051437_create_pachanga_groups.sql",
+      "line": 6,
+      "text": "created_at timestamptz not null default now(),"
+    },
+    {
+      "file": "supabase/migrations/20260728051437_create_pachanga_groups.sql",
+      "line": 7,
+      "text": "updated_at timestamptz not null default now()"
+    },
+    {
+      "file": "supabase/migrations/20260728051437_create_pachanga_groups.sql",
+      "line": 13,
+      "text": "created_at timestamptz not null default now(),"
+    },
+    {
+      "file": "supabase/migrations/20260728051437_create_pachanga_groups.sql",
+      "line": 22,
+      "text": "new.updated_at = now();"
+    },
+    {
+      "file": "supabase/migrations/20260728051511_harden_pachanga_groups.sql",
+      "line": 10,
+      "text": "new.updated_at = now();"
+    },
+    {
+      "file": "supabase/migrations/20260728184957_add_pachanga_group_backups.sql",
+      "line": 10,
+      "text": "created_at timestamptz not null default now(),"
+    },
+    {
+      "file": "supabase/migrations/20260728184957_add_pachanga_group_backups.sql",
+      "line": 162,
+      "text": "set restored_at = now(),"
+    },
+    {
+      "file": "supabase/migrations/20260728185346_harden_pachanga_group_backups.sql",
+      "line": 149,
+      "text": "set restored_at = now(),"
+    },
+    {
+      "file": "supabase/migrations/20260728191429_harden_pachanga_critical_actions.sql",
+      "line": 10,
+      "text": "new.updated_at = now();"
+    },
+    {
+      "file": "supabase/migrations/20260728191429_harden_pachanga_critical_actions.sql",
+      "line": 196,
+      "text": "to_char(now() at time zone 'UTC', 'YYYY-MM-DD\"T\"HH24:MI:SS.MS\"Z\"')"
+    },
+    {
+      "file": "supabase/migrations/20260728191429_harden_pachanga_critical_actions.sql",
+      "line": 755,
+      "text": "'createdAt', to_char(now() at time zone 'UTC', 'YYYY-MM-DD\"T\"HH24:MI:SS.MS\"Z\"'),"
+    },
+    {
+      "file": "supabase/migrations/20260728195748_enforce_single_rating_per_window.sql",
+      "line": 96,
+      "text": "'createdAt', to_char(now() at time zone 'UTC', 'YYYY-MM-DD\"T\"HH24:MI:SS.MS\"Z\"'),"
+    },
+    {
+      "file": "supabase/migrations/20260728202823_preserve_goalkeeper_and_outfield_profile_stats.sql",
+      "line": 250,
+      "text": "'createdAt', to_char(now() at time zone 'UTC', 'YYYY-MM-DD\"T\"HH24:MI:SS.MS\"Z\"'),"
+    },
+    {
+      "file": "supabase/migrations/20260729062339_billing_trial_subscription_gate.sql",
+      "line": 200,
+      "text": "or current_group.stripe_current_period_end > now()"
+    },
+    {
+      "file": "supabase/migrations/20260729151138_allow_initial_player_rating_window.sql",
+      "line": 103,
+      "text": "'createdAt', to_char(now() at time zone 'UTC', 'YYYY-MM-DD\"T\"HH24:MI:SS.MS\"Z\"'),"
+    },
+    {
+      "file": "supabase/migrations/20260729174554_add_pachanga_market_profiles.sql",
+      "line": 25,
+      "text": "created_at timestamptz not null default now(),"
+    },
+    {
+      "file": "supabase/migrations/20260729174554_add_pachanga_market_profiles.sql",
+      "line": 26,
+      "text": "updated_at timestamptz not null default now()"
+    },
+    {
+      "file": "supabase/migrations/20260729174554_add_pachanga_market_profiles.sql",
+      "line": 134,
+      "text": "updated_at = now()"
+    },
+    {
+      "file": "supabase/migrations/20260729174554_add_pachanga_market_profiles.sql",
+      "line": 252,
+      "text": "updated_at = now()"
+    },
+    {
+      "file": "supabase/migrations/20260730033330_add_market_zones_geo_radius.sql",
+      "line": 81,
+      "text": "updated_at = now()"
+    },
+    {
+      "file": "supabase/migrations/20260730033330_add_market_zones_geo_radius.sql",
+      "line": 251,
+      "text": "updated_at = now()"
+    },
+    {
+      "file": "supabase/migrations/20260730074458_open_matches_public_market.sql",
+      "line": 30,
+      "text": "created_at timestamptz not null default now(),"
+    },
+    {
+      "file": "supabase/migrations/20260730074458_open_matches_public_market.sql",
+      "line": 31,
+      "text": "updated_at timestamptz not null default now(),"
+    },
+    {
+      "file": "supabase/migrations/20260730074458_open_matches_public_market.sql",
+      "line": 135,
+      "text": "updated_at = now()"
+    },
+    {
+      "file": "supabase/migrations/20260730074458_open_matches_public_market.sql",
+      "line": 303,
+      "text": "updated_at = now()"
+    },
+    {
+      "file": "supabase/migrations/20260731065924_universal_player_profile_foundation.sql",
+      "line": 33,
+      "text": "created_at timestamptz not null default now(),"
+    },
+    {
+      "file": "supabase/migrations/20260731065924_universal_player_profile_foundation.sql",
+      "line": 34,
+      "text": "updated_at timestamptz not null default now(),"
+    },
+    {
+      "file": "supabase/migrations/20260731065924_universal_player_profile_foundation.sql",
+      "line": 312,
+      "text": "updated_at = now()"
+    },
+    {
+      "file": "supabase/migrations/20260731065924_universal_player_profile_foundation.sql",
+      "line": 425,
+      "text": "updated_at = now()"
+    },
+    {
+      "file": "supabase/migrations/20260731070303_universal_player_profile_profile_rpcs.sql",
+      "line": 526,
+      "text": "updated_at = now()"
+    },
+    {
+      "file": "supabase/migrations/20260731070303_universal_player_profile_profile_rpcs.sql",
+      "line": 715,
+      "text": "updated_at = now()"
+    },
+    {
+      "file": "supabase/migrations/20260731070614_universal_player_profile_public_requests_and_votes.sql",
+      "line": 106,
+      "text": "decided_at = now(),"
+    },
+    {
+      "file": "supabase/migrations/20260731070614_universal_player_profile_public_requests_and_votes.sql",
+      "line": 107,
+      "text": "updated_at = now()"
+    },
+    {
+      "file": "supabase/migrations/20260731070614_universal_player_profile_public_requests_and_votes.sql",
+      "line": 182,
+      "text": "'importedRatingAt', to_char(now() at time zone 'UTC', 'YYYY-MM-DD\"T\"HH24:MI:SS.MS\"Z\"'),"
+    },
+    {
+      "file": "supabase/migrations/20260731070614_universal_player_profile_public_requests_and_votes.sql",
+      "line": 303,
+      "text": "decided_at = now(),"
+    },
+    {
+      "file": "supabase/migrations/20260731070614_universal_player_profile_public_requests_and_votes.sql",
+      "line": 304,
+      "text": "updated_at = now()"
+    },
+    {
+      "file": "supabase/migrations/20260731070614_universal_player_profile_public_requests_and_votes.sql",
+      "line": 311,
+      "text": "updated_at = now()"
+    },
+    {
+      "file": "supabase/migrations/20260731070614_universal_player_profile_public_requests_and_votes.sql",
+      "line": 459,
+      "text": "'createdAt', to_char(now() at time zone 'UTC', 'YYYY-MM-DD\"T\"HH24:MI:SS.MS\"Z\"'),"
+    },
+    {
+      "file": "supabase/migrations/20260731070614_universal_player_profile_public_requests_and_votes.sql",
+      "line": 471,
+      "text": "updated_at = now()"
+    },
+    {
+      "file": "supabase/migrations/20260731080014_player_assessment_schema.sql",
+      "line": 17,
+      "text": "completed_at timestamptz not null default now(),"
+    },
+    {
+      "file": "supabase/migrations/20260731080014_player_assessment_schema.sql",
+      "line": 18,
+      "text": "created_at timestamptz not null default now(),"
+    },
+    {
+      "file": "supabase/migrations/20260731080131_player_assessment_profile_upsert.sql",
+      "line": 193,
+      "text": "updated_at = now()"
+    },
+    {
+      "file": "supabase/migrations/20260731080506_player_assessment_engine_functions.sql",
+      "line": 115,
+      "text": "calculated_at text := coalesce(assessment_input ->> 'calculatedAt', to_char(now() at time zone 'UTC', 'YYYY-MM-DD\"T\"HH24:MI:SS.MS\"Z\"'));"
+    },
+    {
+      "file": "supabase/migrations/20260731080506_player_assessment_engine_functions.sql",
+      "line": 299,
+      "text": "calculated_at text := coalesce(assessment_input ->> 'calculatedAt', to_char(now() at time zone 'UTC', 'YYYY-MM-DD\"T\"HH24:MI:SS.MS\"Z\"'));"
+    },
+    {
+      "file": "supabase/migrations/20260731080715_player_assessment_completion_rpcs.sql",
+      "line": 48,
+      "text": "completed_at timestamptz := now();"
+    },
+    {
+      "file": "supabase/migrations/20260731080715_player_assessment_completion_rpcs.sql",
+      "line": 165,
+      "text": "updated_at = now()"
+    },
+    {
+      "file": "supabase/migrations/20260731080715_player_assessment_completion_rpcs.sql",
+      "line": 211,
+      "text": "completed_at timestamptz := now();"
+    },
+    {
+      "file": "supabase/migrations/20260731080715_player_assessment_completion_rpcs.sql",
+      "line": 347,
+      "text": "updated_at = now()"
+    },
+    {
+      "file": "supabase/migrations/20260803053357_rating_system_v2_schema.sql",
+      "line": 63,
+      "text": "created_at timestamptz not null default now(),"
+    },
+    {
+      "file": "supabase/migrations/20260803053357_rating_system_v2_schema.sql",
+      "line": 94,
+      "text": "created_at timestamptz not null default now(),"
+    },
+    {
+      "file": "supabase/migrations/20260803053357_rating_system_v2_schema.sql",
+      "line": 120,
+      "text": "created_at timestamptz not null default now(),"
+    },
+    {
+      "file": "supabase/migrations/20260803053357_rating_system_v2_schema.sql",
+      "line": 140,
+      "text": "finalized_at timestamptz not null default now(),"
+    },
+    {
+      "file": "supabase/migrations/20260803053357_rating_system_v2_schema.sql",
+      "line": 158,
+      "text": "created_at timestamptz not null default now(),"
+    },
+    {
+      "file": "supabase/migrations/20260803053357_rating_system_v2_schema.sql",
+      "line": 181,
+      "text": "created_at timestamptz not null default now(),"
+    },
+    {
+      "file": "supabase/migrations/20260803053357_rating_system_v2_schema.sql",
+      "line": 182,
+      "text": "updated_at timestamptz not null default now(),"
+    },
+    {
+      "file": "supabase/migrations/20260803053357_rating_system_v2_schema.sql",
+      "line": 218,
+      "text": "created_at timestamptz not null default now(),"
+    },
+    {
+      "file": "supabase/migrations/20260803053357_rating_system_v2_schema.sql",
+      "line": 232,
+      "text": "created_at timestamptz not null default now(),"
+    },
+    {
+      "file": "supabase/migrations/20260803053357_rating_system_v2_schema.sql",
+      "line": 233,
+      "text": "updated_at timestamptz not null default now(),"
+    },
+    {
+      "file": "supabase/migrations/20260803053357_rating_system_v2_schema.sql",
+      "line": 256,
+      "text": "created_at timestamptz not null default now(),"
+    },
+    {
+      "file": "supabase/migrations/20260803053357_rating_system_v2_schema.sql",
+      "line": 289,
+      "text": "created_at timestamptz not null default now(),"
+    },
+    {
+      "file": "supabase/migrations/20260803053357_rating_system_v2_schema.sql",
+      "line": 290,
+      "text": "updated_at timestamptz not null default now(),"
+    },
+    {
+      "file": "supabase/migrations/20260803053357_rating_system_v2_schema.sql",
+      "line": 316,
+      "text": "created_at timestamptz not null default now(),"
+    },
+    {
+      "file": "supabase/migrations/20260803053357_rating_system_v2_schema.sql",
+      "line": 332,
+      "text": "created_at timestamptz not null default now(),"
+    },
+    {
+      "file": "supabase/migrations/20260803053439_rating_system_v2_functions.sql",
+      "line": 388,
+      "text": "rating_recalculated_at = now(),"
+    },
+    {
+      "file": "supabase/migrations/20260803053439_rating_system_v2_functions.sql",
+      "line": 390,
+      "text": "updated_at = now()"
+    },
+    {
+      "file": "supabase/migrations/20260803053439_rating_system_v2_functions.sql",
+      "line": 521,
+      "text": "set state = 'superseded', superseded_at = now()"
+    },
+    {
+      "file": "supabase/migrations/20260803053439_rating_system_v2_functions.sql",
+      "line": 597,
+      "text": "set state = 'void', voided_at = now(), voided_by = current_user_id, void_reason = trim(reason)"
+    },
+    {
+      "file": "supabase/migrations/20260803053439_rating_system_v2_functions.sql",
+      "line": 675,
+      "text": "set linked_user_id = target_user_id, link_state = 'linked', updated_at = now()"
+    },
+    {
+      "file": "supabase/migrations/20260803053439_rating_system_v2_functions.sql",
+      "line": 707,
+      "text": "set linked_user_id = null, link_state = 'reversed', updated_at = now()"
+    },
+    {
+      "file": "supabase/migrations/20260803053439_rating_system_v2_functions.sql",
+      "line": 850,
+      "text": "updated_at = now()"
+    },
+    {
+      "file": "supabase/migrations/20260803053439_rating_system_v2_functions.sql",
+      "line": 859,
+      "text": "), updated_at = now()"
+    },
+    {
+      "file": "supabase/migrations/20260803053439_rating_system_v2_functions.sql",
+      "line": 866,
+      "text": "), updated_at = now()"
+    },
+    {
+      "file": "supabase/migrations/20260803053439_rating_system_v2_functions.sql",
+      "line": 895,
+      "text": "set claim_token_hash = md5(plain_token), updated_at = now()"
+    },
+    {
+      "file": "supabase/migrations/20260803053439_rating_system_v2_functions.sql",
+      "line": 1015,
+      "text": "updated_at = now()"
+    },
+    {
+      "file": "supabase/migrations/20260803053439_rating_system_v2_functions.sql",
+      "line": 1028,
+      "text": "create or replace function public.pachanga_group_level_v2(target_group_id uuid, at_time timestamptz default now())"
+    },
+    {
+      "file": "supabase/migrations/20260803053439_rating_system_v2_functions.sql",
+      "line": 1094,
+      "text": "match_time timestamptz := now();"
+    },
+    {
+      "file": "supabase/migrations/20260803053439_rating_system_v2_functions.sql",
+      "line": 1156,
+      "text": "do update set display_name = excluded.display_name, updated_at = now()"
+    },
+    {
+      "file": "supabase/migrations/20260803053439_rating_system_v2_functions.sql",
+      "line": 1252,
+      "text": "set state = 'void', voided_at = now(), void_reason = 'Match removed or no longer finalized in the source payload'"
+    },
+    {
+      "file": "supabase/migrations/20260803053451_rating_system_v2_assessments.sql",
+      "line": 25,
+      "text": "completed_at timestamptz := now();"
+    },
+    {
+      "file": "supabase/migrations/20260803053451_rating_system_v2_assessments.sql",
+      "line": 136,
+      "text": "updated_at = now()"
+    },
+    {
+      "file": "supabase/migrations/20260803053456_rating_system_v2_hardening.sql",
+      "line": 37,
+      "text": "created_at timestamptz not null default now(),"
+    },
+    {
+      "file": "supabase/migrations/20260803053456_rating_system_v2_hardening.sql",
+      "line": 49,
+      "text": "expires_at timestamptz not null,"
+    },
+    {
+      "file": "supabase/migrations/20260803053456_rating_system_v2_hardening.sql",
+      "line": 55,
+      "text": "created_at timestamptz not null default now(),"
+    },
+    {
+      "file": "supabase/migrations/20260803053456_rating_system_v2_hardening.sql",
+      "line": 57,
+      "text": "check (expires_at > created_at)"
+    },
+    {
+      "file": "supabase/migrations/20260803053456_rating_system_v2_hardening.sql",
+      "line": 61,
+      "text": "on public.pachanga_guest_rating_tokens(group_id, match_id, guest_identity_id, expires_at desc);"
+    },
+    {
+      "file": "supabase/migrations/20260803053456_rating_system_v2_hardening.sql",
+      "line": 73,
+      "text": "calculated_at timestamptz not null default now(),"
+    },
+    {
+      "file": "supabase/migrations/20260803053456_rating_system_v2_hardening.sql",
+      "line": 213,
+      "text": "set ratings_enabled = coalesce(next_enabled, true), updated_at = now()"
+    },
+    {
+      "file": "supabase/migrations/20260803053538_rating_v2_authority_foundation.sql",
+      "line": 86,
+      "text": "confirmed_at timestamptz := clock_timestamp();"
+    },
+    {
+      "file": "supabase/migrations/20260803053705_rating_v2_global_calibration.sql",
+      "line": 82,
+      "text": "updated_at = clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260803053705_rating_v2_global_calibration.sql",
+      "line": 115,
+      "text": "updated_at = clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260803053705_rating_v2_global_calibration.sql",
+      "line": 128,
+      "text": "at_time timestamptz default clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260803053705_rating_v2_global_calibration.sql",
+      "line": 213,
+      "text": "at_time timestamptz default clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260803053705_rating_v2_global_calibration.sql",
+      "line": 255,
+      "text": "updated_at = clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260803053710_rating_v2_registered_opponents.sql",
+      "line": 9,
+      "text": "created_at timestamptz not null default now(),"
+    },
+    {
+      "file": "supabase/migrations/20260803053710_rating_v2_registered_opponents.sql",
+      "line": 10,
+      "text": "updated_at timestamptz not null default now(),"
+    },
+    {
+      "file": "supabase/migrations/20260803053710_rating_v2_registered_opponents.sql",
+      "line": 79,
+      "text": "updated_at = clock_timestamp();"
+    },
+    {
+      "file": "supabase/migrations/20260803053710_rating_v2_registered_opponents.sql",
+      "line": 81,
+      "text": "update public.pachanga_groups set updated_at = clock_timestamp() where id = target_group_id;"
+    },
+    {
+      "file": "supabase/migrations/20260803053813_rating_v2_global_authority.sql",
+      "line": 91,
+      "text": "updated_at = clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260803053813_rating_v2_global_authority.sql",
+      "line": 95,
+      "text": "update public.pachanga_groups set updated_at = clock_timestamp() where id = target_group_id;"
+    },
+    {
+      "file": "supabase/migrations/20260803053813_rating_v2_global_authority.sql",
+      "line": 249,
+      "text": "created_at = clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260803053813_rating_v2_global_authority.sql",
+      "line": 260,
+      "text": "calibration_result := public.pachanga_recalculate_external_team_level_v2(target_external_team_id, clock_timestamp());"
+    },
+    {
+      "file": "supabase/migrations/20260803053813_rating_v2_global_authority.sql",
+      "line": 262,
+      "text": "calibration_result := public.pachanga_recalculate_group_external_level_v2(rated_group_id, clock_timestamp());"
+    },
+    {
+      "file": "supabase/migrations/20260803053813_rating_v2_global_authority.sql",
+      "line": 265,
+      "text": "update public.pachanga_groups set updated_at = clock_timestamp() where id = target_group_id;"
+    },
+    {
+      "file": "supabase/migrations/20260803053818_rating_v2_guest_tokens.sql",
+      "line": 29,
+      "text": "token_expires_at timestamptz;"
+    },
+    {
+      "file": "supabase/migrations/20260803053818_rating_v2_guest_tokens.sql",
+      "line": 64,
+      "text": "token_expires_at := clock_timestamp() + make_interval(mins => least(10080, greatest(5, coalesce(expires_in_minutes, 1440))));"
+    },
+    {
+      "file": "supabase/migrations/20260803053818_rating_v2_guest_tokens.sql",
+      "line": 67,
+      "text": "set revoked_at = clock_timestamp(), revoked_by = auth.uid()"
+    },
+    {
+      "file": "supabase/migrations/20260803053818_rating_v2_guest_tokens.sql",
+      "line": 75,
+      "text": "token_hash, group_id, match_id, guest_identity_id, action, issued_by, expires_at"
+    },
+    {
+      "file": "supabase/migrations/20260803053818_rating_v2_guest_tokens.sql",
+      "line": 78,
+      "text": "'rate_host_team', auth.uid(), token_expires_at"
+    },
+    {
+      "file": "supabase/migrations/20260803053818_rating_v2_guest_tokens.sql",
+      "line": 81,
+      "text": "update public.pachanga_groups set updated_at = clock_timestamp() where id = target_group_id;"
+    },
+    {
+      "file": "supabase/migrations/20260803053818_rating_v2_guest_tokens.sql",
+      "line": 84,
+      "text": "jsonb_build_object('tokenId', token_id, 'expiresAt', token_expires_at),"
+    },
+    {
+      "file": "supabase/migrations/20260803053818_rating_v2_guest_tokens.sql",
+      "line": 89,
+      "text": "jsonb_build_object('tokenId', token_id, 'expiresAt', token_expires_at, 'tokenIssued', true),"
+    },
+    {
+      "file": "supabase/migrations/20260803053818_rating_v2_guest_tokens.sql",
+      "line": 128,
+      "text": "set revoked_at = coalesce(revoked_at, clock_timestamp()),"
+    },
+    {
+      "file": "supabase/migrations/20260803053818_rating_v2_guest_tokens.sql",
+      "line": 132,
+      "text": "update public.pachanga_groups set updated_at = clock_timestamp() where id = target_group_id;"
+    },
+    {
+      "file": "supabase/migrations/20260803053818_rating_v2_guest_tokens.sql",
+      "line": 166,
+      "text": "or selected_token.expires_at <= clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260803053818_rating_v2_guest_tokens.sql",
+      "line": 185,
+      "text": "'expiresAt', selected_token.expires_at"
+    },
+    {
+      "file": "supabase/migrations/20260803053818_rating_v2_guest_tokens.sql",
+      "line": 226,
+      "text": "or selected_token.expires_at <= clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260803053818_rating_v2_guest_tokens.sql",
+      "line": 295,
+      "text": "selected_token.group_id, clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260803053818_rating_v2_guest_tokens.sql",
+      "line": 311,
+      "text": "'confirmedAt', clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260803053818_rating_v2_guest_tokens.sql",
+      "line": 317,
+      "text": "set consumed_at = clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260803053858_rating_v2_secondary_match_authority.sql",
+      "line": 150,
+      "text": "stable_level := public.pachanga_group_level_v2(target_group_id, clock_timestamp());"
+    },
+    {
+      "file": "supabase/migrations/20260803053858_rating_v2_secondary_match_authority.sql",
+      "line": 278,
+      "text": "'confirmedAt', clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260803053904_rating_v2_guest_authority.sql",
+      "line": 39,
+      "text": "update public.pachanga_groups set updated_at = clock_timestamp() where id = target_group_id;"
+    },
+    {
+      "file": "supabase/migrations/20260803053904_rating_v2_guest_authority.sql",
+      "line": 94,
+      "text": "update public.pachanga_groups set updated_at = clock_timestamp() where id = target_group_id;"
+    },
+    {
+      "file": "supabase/migrations/20260803053904_rating_v2_guest_authority.sql",
+      "line": 147,
+      "text": "update public.pachanga_groups set updated_at = clock_timestamp() where id = target_group_id;"
+    },
+    {
+      "file": "supabase/migrations/20260803053908_rating_v2_snapshot_assignment_fix.sql",
+      "line": 22,
+      "text": "match_time timestamptz := now();"
+    },
+    {
+      "file": "supabase/migrations/20260803053908_rating_v2_snapshot_assignment_fix.sql",
+      "line": 84,
+      "text": "do update set display_name = excluded.display_name, updated_at = now()"
+    },
+    {
+      "file": "supabase/migrations/20260803053912_rating_v2_restoration_semantics.sql",
+      "line": 21,
+      "text": "alter column opinion_created_at set default now(),"
+    },
+    {
+      "file": "supabase/migrations/20260803053912_rating_v2_restoration_semantics.sql",
+      "line": 69,
+      "text": "transition_at := coalesce(synthetic.restored_at, synthetic.created_at, clock_timestamp());"
+    },
+    {
+      "file": "supabase/migrations/20260803053912_rating_v2_restoration_semantics.sql",
+      "line": 269,
+      "text": "emitted_at timestamptz := clock_timestamp();"
+    },
+    {
+      "file": "supabase/migrations/20260803053912_rating_v2_restoration_semantics.sql",
+      "line": 452,
+      "text": "transition_at timestamptz := clock_timestamp();"
+    },
+    {
+      "file": "supabase/migrations/20260803110628_private_team_challenges_foundation.sql",
+      "line": 12,
+      "text": "updated_at timestamptz not null default now(),"
+    },
+    {
+      "file": "supabase/migrations/20260803110628_private_team_challenges_foundation.sql",
+      "line": 39,
+      "text": "created_at timestamptz not null default now(),"
+    },
+    {
+      "file": "supabase/migrations/20260803110628_private_team_challenges_foundation.sql",
+      "line": 40,
+      "text": "updated_at timestamptz not null default now(),"
+    },
+    {
+      "file": "supabase/migrations/20260803110628_private_team_challenges_foundation.sql",
+      "line": 72,
+      "text": "created_at timestamptz not null default now(),"
+    },
+    {
+      "file": "supabase/migrations/20260803110628_private_team_challenges_foundation.sql",
+      "line": 92,
+      "text": "created_at timestamptz not null default now(),"
+    },
+    {
+      "file": "supabase/migrations/20260803110628_private_team_challenges_foundation.sql",
+      "line": 108,
+      "text": "updated_at timestamptz not null default now(),"
+    },
+    {
+      "file": "supabase/migrations/20260803110628_private_team_challenges_foundation.sql",
+      "line": 336,
+      "text": "select distinct group_id, 1, target_server_sequence, clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260803110628_private_team_challenges_foundation.sql",
+      "line": 368,
+      "text": "'confirmedAt', clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260803110628_private_team_challenges_foundation.sql",
+      "line": 482,
+      "text": "if target_scheduled_at is null or target_scheduled_at <= clock_timestamp() then"
+    },
+    {
+      "file": "supabase/migrations/20260803110628_private_team_challenges_foundation.sql",
+      "line": 628,
+      "text": "if target_scheduled_at is null or target_scheduled_at <= clock_timestamp() then"
+    },
+    {
+      "file": "supabase/migrations/20260803110628_private_team_challenges_foundation.sql",
+      "line": 666,
+      "text": "accepted_at = case when target_action = 'accept' then clock_timestamp() else challenges.accepted_at end,"
+    },
+    {
+      "file": "supabase/migrations/20260803110628_private_team_challenges_foundation.sql",
+      "line": 667,
+      "text": "rejected_at = case when target_action = 'reject' then clock_timestamp() else challenges.rejected_at end,"
+    },
+    {
+      "file": "supabase/migrations/20260803110628_private_team_challenges_foundation.sql",
+      "line": 668,
+      "text": "cancelled_at = case when target_action = 'cancel' then clock_timestamp() else challenges.cancelled_at end,"
+    },
+    {
+      "file": "supabase/migrations/20260803110628_private_team_challenges_foundation.sql",
+      "line": 670,
+      "text": "updated_at = clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260803110628_private_team_challenges_foundation.sql",
+      "line": 762,
+      "text": "(first_group_id, second_group_id, encounter_count, first_at, last_at, latest_match_id, 1, clock_timestamp()),"
+    },
+    {
+      "file": "supabase/migrations/20260803110628_private_team_challenges_foundation.sql",
+      "line": 763,
+      "text": "(second_group_id, first_group_id, encounter_count, first_at, last_at, latest_match_id, 1, clock_timestamp())"
+    },
+    {
+      "file": "supabase/migrations/20260803124125_challengeable_team_profiles.sql",
+      "line": 14,
+      "text": "calculated_at timestamptz not null default now(),"
+    },
+    {
+      "file": "supabase/migrations/20260803124125_challengeable_team_profiles.sql",
+      "line": 33,
+      "text": "created_at timestamptz not null default now(),"
+    },
+    {
+      "file": "supabase/migrations/20260803124125_challengeable_team_profiles.sql",
+      "line": 34,
+      "text": "updated_at timestamptz not null default now(),"
+    },
+    {
+      "file": "supabase/migrations/20260803124125_challengeable_team_profiles.sql",
+      "line": 81,
+      "text": "updated_at timestamptz not null default now(),"
+    },
+    {
+      "file": "supabase/migrations/20260803124125_challengeable_team_profiles.sql",
+      "line": 89,
+      "text": "updated_at timestamptz not null default now(),"
+    },
+    {
+      "file": "supabase/migrations/20260803124125_challengeable_team_profiles.sql",
+      "line": 107,
+      "text": "created_at timestamptz not null default now(),"
+    },
+    {
+      "file": "supabase/migrations/20260803124125_challengeable_team_profiles.sql",
+      "line": 127,
+      "text": "created_at timestamptz not null default now(),"
+    },
+    {
+      "file": "supabase/migrations/20260803124125_challengeable_team_profiles.sql",
+      "line": 216,
+      "text": "public.pachanga_group_level_v2(groups.id, clock_timestamp()),"
+    },
+    {
+      "file": "supabase/migrations/20260803124125_challengeable_team_profiles.sql",
+      "line": 219,
+      "text": "clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260803124125_challengeable_team_profiles.sql",
+      "line": 248,
+      "text": "next_level := public.pachanga_group_level_v2(target_group_id, clock_timestamp());"
+    },
+    {
+      "file": "supabase/migrations/20260803124125_challengeable_team_profiles.sql",
+      "line": 263,
+      "text": "target_group_id, next_level, 1, next_sequence, clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260803124125_challengeable_team_profiles.sql",
+      "line": 274,
+      "text": "updated_at = clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260803124125_challengeable_team_profiles.sql",
+      "line": 279,
+      "text": "updated_at = clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260803124125_challengeable_team_profiles.sql",
+      "line": 582,
+      "text": "'confirmedAt', clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260803124125_challengeable_team_profiles.sql",
+      "line": 782,
+      "text": "clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260803124125_challengeable_team_profiles.sql",
+      "line": 817,
+      "text": "updated_at = clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260803124125_challengeable_team_profiles.sql",
+      "line": 823,
+      "text": "updated_at = clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260803190301_match_guest_invitations_notifications.sql",
+      "line": 36,
+      "text": "created_at timestamptz not null default clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260803190301_match_guest_invitations_notifications.sql",
+      "line": 37,
+      "text": "updated_at timestamptz not null default clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260803190301_match_guest_invitations_notifications.sql",
+      "line": 53,
+      "text": "created_at timestamptz not null default clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260803190301_match_guest_invitations_notifications.sql",
+      "line": 78,
+      "text": "created_at timestamptz not null default clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260803190301_match_guest_invitations_notifications.sql",
+      "line": 81,
+      "text": "updated_at timestamptz not null default clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260803190301_match_guest_invitations_notifications.sql",
+      "line": 105,
+      "text": "accepted_at timestamptz not null default clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260803190301_match_guest_invitations_notifications.sql",
+      "line": 107,
+      "text": "updated_at timestamptz not null default clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260803190301_match_guest_invitations_notifications.sql",
+      "line": 127,
+      "text": "updated_at timestamptz not null default clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260803190301_match_guest_invitations_notifications.sql",
+      "line": 145,
+      "text": "occurred_at timestamptz not null default clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260803190301_match_guest_invitations_notifications.sql",
+      "line": 148,
+      "text": "updated_at timestamptz not null default clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260803190301_match_guest_invitations_notifications.sql",
+      "line": 241,
+      "text": "updated_at = clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260803190301_match_guest_invitations_notifications.sql",
+      "line": 404,
+      "text": "when open_matches.source_payload_revision is distinct from target_payload_revision then clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260803190301_match_guest_invitations_notifications.sql",
+      "line": 432,
+      "text": "updated_at = clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260803190301_match_guest_invitations_notifications.sql",
+      "line": 449,
+      "text": "revoked_at = coalesce(access.revoked_at, clock_timestamp()),"
+    },
+    {
+      "file": "supabase/migrations/20260803190301_match_guest_invitations_notifications.sql",
+      "line": 450,
+      "text": "updated_at = clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260803190301_match_guest_invitations_notifications.sql",
+      "line": 702,
+      "text": "'importedRatingAt', to_char(clock_timestamp() at time zone 'UTC', 'YYYY-MM-DD\"T\"HH24:MI:SS.MS\"Z\"'),"
+    },
+    {
+      "file": "supabase/migrations/20260803190301_match_guest_invitations_notifications.sql",
+      "line": 755,
+      "text": "'joinedAt', to_char(coalesce(target_joined_at, clock_timestamp()) at time zone 'UTC', 'YYYY-MM-DD\"T\"HH24:MI:SS.MS\"Z\"')"
+    },
+    {
+      "file": "supabase/migrations/20260803190301_match_guest_invitations_notifications.sql",
+      "line": 795,
+      "text": "updated_at = clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260803190301_match_guest_invitations_notifications.sql",
+      "line": 827,
+      "text": "accepted_at = clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260803190301_match_guest_invitations_notifications.sql",
+      "line": 829,
+      "text": "updated_at = clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260803190301_match_guest_invitations_notifications.sql",
+      "line": 1003,
+      "text": "new.updated_at := clock_timestamp();"
+    },
+    {
+      "file": "supabase/migrations/20260803190301_match_guest_invitations_notifications.sql",
+      "line": 1080,
+      "text": "decided_at = clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260803190301_match_guest_invitations_notifications.sql",
+      "line": 1135,
+      "text": "decided_at = clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260803190301_match_guest_invitations_notifications.sql",
+      "line": 1220,
+      "text": "'confirmedAt', clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260803190301_match_guest_invitations_notifications.sql",
+      "line": 1377,
+      "text": "'confirmedAt', clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260803190301_match_guest_invitations_notifications.sql",
+      "line": 1491,
+      "text": "responded_at = clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260803190301_match_guest_invitations_notifications.sql",
+      "line": 1492,
+      "text": "updated_at = clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260803190301_match_guest_invitations_notifications.sql",
+      "line": 1531,
+      "text": "'confirmedAt', clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260803190301_match_guest_invitations_notifications.sql",
+      "line": 1614,
+      "text": "cancelled_at = clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260803190301_match_guest_invitations_notifications.sql",
+      "line": 1615,
+      "text": "updated_at = clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260803190301_match_guest_invitations_notifications.sql",
+      "line": 1636,
+      "text": "'confirmedAt', clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260803190301_match_guest_invitations_notifications.sql",
+      "line": 1781,
+      "text": "set read_at = clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260803190301_match_guest_invitations_notifications.sql",
+      "line": 1784,
+      "text": "updated_at = clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260803190301_match_guest_invitations_notifications.sql",
+      "line": 1791,
+      "text": "'confirmedAt', clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260803190301_match_guest_invitations_notifications.sql",
+      "line": 2038,
+      "text": "revoked_at = clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260803190301_match_guest_invitations_notifications.sql",
+      "line": 2039,
+      "text": "updated_at = clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260803190301_match_guest_invitations_notifications.sql",
+      "line": 2047,
+      "text": "decided_at = clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260803190301_match_guest_invitations_notifications.sql",
+      "line": 2058,
+      "text": "updated_at = clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260803190301_match_guest_invitations_notifications.sql",
+      "line": 2127,
+      "text": "'confirmedAt', clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260803190301_match_guest_invitations_notifications.sql",
+      "line": 2218,
+      "text": "reviewed_at = clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260803190301_match_guest_invitations_notifications.sql",
+      "line": 2219,
+      "text": "updated_at = clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260803190301_match_guest_invitations_notifications.sql",
+      "line": 2250,
+      "text": "'confirmedAt', clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260803190301_match_guest_invitations_notifications.sql",
+      "line": 2483,
+      "text": "decided_at = clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260803190301_match_guest_invitations_notifications.sql",
+      "line": 2498,
+      "text": "'confirmedAt', clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260804023455_external_match_results_mvp.sql",
+      "line": 12,
+      "text": "updated_at timestamptz not null default clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260804023455_external_match_results_mvp.sql",
+      "line": 40,
+      "text": "auto_confirmation_blocked boolean not null default false,"
+    },
+    {
+      "file": "supabase/migrations/20260804023455_external_match_results_mvp.sql",
+      "line": 49,
+      "text": "created_at timestamptz not null default clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260804023455_external_match_results_mvp.sql",
+      "line": 50,
+      "text": "updated_at timestamptz not null default clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260804023455_external_match_results_mvp.sql",
+      "line": 88,
+      "text": "created_at timestamptz not null default clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260804023455_external_match_results_mvp.sql",
+      "line": 105,
+      "text": "created_at timestamptz not null default clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260804023455_external_match_results_mvp.sql",
+      "line": 125,
+      "text": "created_at timestamptz not null default clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260804023455_external_match_results_mvp.sql",
+      "line": 144,
+      "text": "created_at timestamptz not null default clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260804023455_external_match_results_mvp.sql",
+      "line": 165,
+      "text": "created_at timestamptz not null default clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260804023455_external_match_results_mvp.sql",
+      "line": 192,
+      "text": "created_at timestamptz not null default clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260804023455_external_match_results_mvp.sql",
+      "line": 203,
+      "text": "updated_at timestamptz not null default clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260804023455_external_match_results_mvp.sql",
+      "line": 396,
+      "text": "'autoConfirmationBlocked', matches.auto_confirmation_blocked,"
+    },
+    {
+      "file": "supabase/migrations/20260804023455_external_match_results_mvp.sql",
+      "line": 470,
+      "text": "'updatedAt', clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260804023455_external_match_results_mvp.sql",
+      "line": 523,
+      "text": "updated_at = clock_timestamp();"
+    },
+    {
+      "file": "supabase/migrations/20260804023455_external_match_results_mvp.sql",
+      "line": 562,
+      "text": "updated_at = clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260804023455_external_match_results_mvp.sql",
+      "line": 595,
+      "text": "'confirmedAt', clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260804023455_external_match_results_mvp.sql",
+      "line": 902,
+      "text": "official_at = clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260804023455_external_match_results_mvp.sql",
+      "line": 903,
+      "text": "updated_at = clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260804023455_external_match_results_mvp.sql",
+      "line": 983,
+      "text": "updated_at = clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260804023455_external_match_results_mvp.sql",
+      "line": 1137,
+      "text": "initial_proposal_at = coalesce(matches.initial_proposal_at, clock_timestamp()),"
+    },
+    {
+      "file": "supabase/migrations/20260804023455_external_match_results_mvp.sql",
+      "line": 1138,
+      "text": "response_deadline = clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260804023455_external_match_results_mvp.sql",
+      "line": 1139,
+      "text": "+ make_interval(hours => settings.confirmation_timeout_hours),"
+    },
+    {
+      "file": "supabase/migrations/20260804023455_external_match_results_mvp.sql",
+      "line": 1141,
+      "text": "auto_confirmation_blocked = selected.active_version is not null,"
+    },
+    {
+      "file": "supabase/migrations/20260804023455_external_match_results_mvp.sql",
+      "line": 1142,
+      "text": "updated_at = clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260804023455_external_match_results_mvp.sql",
+      "line": 1264,
+      "text": "response_deadline = clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260804023455_external_match_results_mvp.sql",
+      "line": 1265,
+      "text": "+ make_interval(hours => settings.confirmation_timeout_hours),"
+    },
+    {
+      "file": "supabase/migrations/20260804023455_external_match_results_mvp.sql",
+      "line": 1267,
+      "text": "auto_confirmation_blocked = true,"
+    },
+    {
+      "file": "supabase/migrations/20260804023455_external_match_results_mvp.sql",
+      "line": 1268,
+      "text": "updated_at = clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260804023455_external_match_results_mvp.sql",
+      "line": 1425,
+      "text": "disputed_at = clock_timestamp(), updated_at = clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260804023455_external_match_results_mvp.sql",
+      "line": 1499,
+      "text": "cancelled_at = clock_timestamp(), updated_at = clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260804023455_external_match_results_mvp.sql",
+      "line": 1572,
+      "text": "updated_at = clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260804023455_external_match_results_mvp.sql",
+      "line": 1598,
+      "text": "target_now timestamptz default clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260804023455_external_match_results_mvp.sql",
+      "line": 1626,
+      "text": "if selected.state = 'pending_rival' and not selected.auto_confirmation_blocked then"
+    },
+    {
+      "file": "supabase/migrations/20260804023455_external_match_results_mvp.sql",
+      "line": 1647,
+      "text": "disputed_at = target_now, updated_at = clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260804023455_external_match_results_mvp.sql",
+      "line": 1662,
+      "text": "target_now timestamptz default clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260804023455_external_match_results_mvp.sql",
+      "line": 1703,
+      "text": "and not matches.auto_confirmation_blocked"
+    },
+    {
+      "file": "supabase/migrations/20260804023455_external_match_results_mvp.sql",
+      "line": 1707,
+      "text": "+ make_interval(hours => settings.reminder_before_hours)"
+    },
+    {
+      "file": "supabase/migrations/20260804023455_external_match_results_mvp.sql",
+      "line": 1718,
+      "text": "updated_at = clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260804023520_achievement_reward_engine_mvp.sql",
+      "line": 19,
+      "text": "created_at timestamptz not null default clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260804023520_achievement_reward_engine_mvp.sql",
+      "line": 45,
+      "text": "created_at timestamptz not null default clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260804023520_achievement_reward_engine_mvp.sql",
+      "line": 92,
+      "text": "applied_at timestamptz not null default clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260804023520_achievement_reward_engine_mvp.sql",
+      "line": 125,
+      "text": "created_at timestamptz not null default clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260804023520_achievement_reward_engine_mvp.sql",
+      "line": 158,
+      "text": "updated_at timestamptz not null default clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260804023520_achievement_reward_engine_mvp.sql",
+      "line": 183,
+      "text": "updated_at timestamptz not null default clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260804023520_achievement_reward_engine_mvp.sql",
+      "line": 201,
+      "text": "awarded_at timestamptz not null default clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260804023520_achievement_reward_engine_mvp.sql",
+      "line": 220,
+      "text": "unlocked_at timestamptz not null default clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260804023520_achievement_reward_engine_mvp.sql",
+      "line": 234,
+      "text": "unlocked_at timestamptz not null default clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260804023520_achievement_reward_engine_mvp.sql",
+      "line": 250,
+      "text": "granted_at timestamptz not null default clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260804023520_achievement_reward_engine_mvp.sql",
+      "line": 264,
+      "text": "snapshot_at timestamptz not null default clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260804023520_achievement_reward_engine_mvp.sql",
+      "line": 283,
+      "text": "created_at timestamptz not null default clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260804023520_achievement_reward_engine_mvp.sql",
+      "line": 300,
+      "text": "updated_at timestamptz not null default clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260804023520_achievement_reward_engine_mvp.sql",
+      "line": 308,
+      "text": "updated_at timestamptz not null default clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260804023520_achievement_reward_engine_mvp.sql",
+      "line": 321,
+      "text": "created_at timestamptz not null default clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260804023520_achievement_reward_engine_mvp.sql",
+      "line": 603,
+      "text": "updated_at = clock_timestamp();"
+    },
+    {
+      "file": "supabase/migrations/20260804023520_achievement_reward_engine_mvp.sql",
+      "line": 626,
+      "text": "updated_at = clock_timestamp();"
+    },
+    {
+      "file": "supabase/migrations/20260804023520_achievement_reward_engine_mvp.sql",
+      "line": 774,
+      "text": "updated_at = clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260804023520_achievement_reward_engine_mvp.sql",
+      "line": 870,
+      "text": "updated_at = clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260804023520_achievement_reward_engine_mvp.sql",
+      "line": 1031,
+      "text": "unlocked_at = clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260804023520_achievement_reward_engine_mvp.sql",
+      "line": 1077,
+      "text": "unlocked_at = clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260804023520_achievement_reward_engine_mvp.sql",
+      "line": 1549,
+      "text": "set state = 'revoked', revoked_at = clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260804023520_achievement_reward_engine_mvp.sql",
+      "line": 1559,
+      "text": "set state = 'revoked', revoked_at = clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260804023520_achievement_reward_engine_mvp.sql",
+      "line": 1563,
+      "text": "set status = 'revoked', revoked_at = clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260804023520_achievement_reward_engine_mvp.sql",
+      "line": 1583,
+      "text": "set state = 'revoked', revoked_at = clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260804023520_achievement_reward_engine_mvp.sql",
+      "line": 1600,
+      "text": "set state = 'revoked', revoked_at = clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260804023520_achievement_reward_engine_mvp.sql",
+      "line": 1683,
+      "text": "set state = 'revoked', revoked_at = clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260804023520_achievement_reward_engine_mvp.sql",
+      "line": 1687,
+      "text": "set state = 'revoked', revoked_at = clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260804023520_achievement_reward_engine_mvp.sql",
+      "line": 1770,
+      "text": "updated_at = clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260804023520_achievement_reward_engine_mvp.sql",
+      "line": 1784,
+      "text": "'confirmedAt', clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260804023520_achievement_reward_engine_mvp.sql",
+      "line": 2011,
+      "text": "'updatedAt', clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260804023520_achievement_reward_engine_mvp.sql",
+      "line": 2069,
+      "text": "set status = 'opened', opened_at = clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260804023520_achievement_reward_engine_mvp.sql",
+      "line": 2093,
+      "text": "'confirmedAt', clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260804023534_team_crest_identity_mvp.sql",
+      "line": 23,
+      "text": "updated_at timestamptz not null default clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260804023534_team_crest_identity_mvp.sql",
+      "line": 48,
+      "text": "published_at timestamptz not null default clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260804023534_team_crest_identity_mvp.sql",
+      "line": 65,
+      "text": "updated_at timestamptz not null default clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260804023534_team_crest_identity_mvp.sql",
+      "line": 79,
+      "text": "created_at timestamptz not null default clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260804023534_team_crest_identity_mvp.sql",
+      "line": 101,
+      "text": "created_at timestamptz not null default clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260804023534_team_crest_identity_mvp.sql",
+      "line": 435,
+      "text": "'updatedAt', coalesce(selected_state.updated_at, selected_group.updated_at, clock_timestamp())"
+    },
+    {
+      "file": "supabase/migrations/20260804023534_team_crest_identity_mvp.sql",
+      "line": 507,
+      "text": "updated_at = clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260804023534_team_crest_identity_mvp.sql",
+      "line": 515,
+      "text": "updated_at = clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260804023534_team_crest_identity_mvp.sql",
+      "line": 530,
+      "text": "'confirmedAt', clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260804023534_team_crest_identity_mvp.sql",
+      "line": 625,
+      "text": "updated_at = clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260804023534_team_crest_identity_mvp.sql",
+      "line": 629,
+      "text": "updated_at = clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260804023534_team_crest_identity_mvp.sql",
+      "line": 669,
+      "text": "'confirmedAt', clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260804111513_match_link_invitation_role_hardening.sql",
+      "line": 15,
+      "text": "expires_at timestamptz not null default (clock_timestamp() + interval '7 days'),"
+    },
+    {
+      "file": "supabase/migrations/20260804111513_match_link_invitation_role_hardening.sql",
+      "line": 16,
+      "text": "created_at timestamptz not null default clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260804111513_match_link_invitation_role_hardening.sql",
+      "line": 18,
+      "text": "updated_at timestamptz not null default clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260804111513_match_link_invitation_role_hardening.sql",
+      "line": 97,
+      "text": "'confirmedAt', clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260804111513_match_link_invitation_role_hardening.sql",
+      "line": 105,
+      "text": "'expiresAt', saved_invitation.expires_at"
+    },
+    {
+      "file": "supabase/migrations/20260804111513_match_link_invitation_role_hardening.sql",
+      "line": 160,
+      "text": "when selected_invitation.status = 'pending' and selected_invitation.expires_at <= statement_timestamp() then 'expired'"
+    },
+    {
+      "file": "supabase/migrations/20260804111513_match_link_invitation_role_hardening.sql",
+      "line": 165,
+      "text": "'expiresAt', selected_invitation.expires_at"
+    },
+    {
+      "file": "supabase/migrations/20260804111513_match_link_invitation_role_hardening.sql",
+      "line": 242,
+      "text": "if selected_invitation.expires_at <= clock_timestamp() then raise exception 'La invitación ha caducado'; end if;"
+    },
+    {
+      "file": "supabase/migrations/20260804111513_match_link_invitation_role_hardening.sql",
+      "line": 304,
+      "text": "clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260804111513_match_link_invitation_role_hardening.sql",
+      "line": 323,
+      "text": "responded_at = clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260804111513_match_link_invitation_role_hardening.sql",
+      "line": 324,
+      "text": "updated_at = clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260804111513_match_link_invitation_role_hardening.sql",
+      "line": 344,
+      "text": "'confirmedAt', clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260804144819_notification_foundation.sql",
+      "line": 33,
+      "text": "updated_at timestamptz not null default clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260804144819_notification_foundation.sql",
+      "line": 65,
+      "text": "updated_at timestamptz not null default clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260804144819_notification_foundation.sql",
+      "line": 80,
+      "text": "available_at timestamptz not null default clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260804144819_notification_foundation.sql",
+      "line": 84,
+      "text": "created_at timestamptz not null default clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260804144819_notification_foundation.sql",
+      "line": 85,
+      "text": "updated_at timestamptz not null default clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260804144819_notification_foundation.sql",
+      "line": 103,
+      "text": "created_at timestamptz not null default clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260804144819_notification_foundation.sql",
+      "line": 256,
+      "text": "updated_at = clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260804144819_notification_foundation.sql",
+      "line": 407,
+      "text": "updated_at = clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260804144819_notification_foundation.sql",
+      "line": 412,
+      "text": "'confirmedAt', clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260804144819_notification_foundation.sql",
+      "line": 558,
+      "text": "selected_created_at timestamptz := coalesce(new.created_at, old.created_at, clock_timestamp());"
+    },
+    {
+      "file": "supabase/migrations/20260808175351_individual_achievements_catalog_v1.sql",
+      "line": 165,
+      "text": "updated_at = clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260808175352_collective_reward_boxes_v2.sql",
+      "line": 145,
+      "text": "generated_at timestamptz not null default clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260808175352_collective_reward_boxes_v2.sql",
+      "line": 249,
+      "text": "set status = 'revoked', revoked_at = coalesce(recipients.revoked_at, clock_timestamp()),"
+    },
+    {
+      "file": "supabase/migrations/20260808175352_collective_reward_boxes_v2.sql",
+      "line": 259,
+      "text": "set state = 'revoked', revoked_at = coalesce(rewards.revoked_at, clock_timestamp())"
+    },
+    {
+      "file": "supabase/migrations/20260808175352_collective_reward_boxes_v2.sql",
+      "line": 266,
+      "text": "set state = 'revoked', revoked_at = coalesce(inventory.revoked_at, clock_timestamp())"
+    },
+    {
+      "file": "supabase/migrations/20260808175352_collective_reward_boxes_v2.sql",
+      "line": 370,
+      "text": "updated_at = clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260808175352_collective_reward_boxes_v2.sql",
+      "line": 1064,
+      "text": "set status = 'opened', opened_at = clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260808175352_collective_reward_boxes_v2.sql",
+      "line": 1065,
+      "text": "reward_granted_at = clock_timestamp(), revealed_payload = sealed,"
+    },
+    {
+      "file": "supabase/migrations/20260808175352_collective_reward_boxes_v2.sql",
+      "line": 1077,
+      "text": "state = 'unlocked', unlocked_at = clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260808175352_collective_reward_boxes_v2.sql",
+      "line": 1100,
+      "text": "'confirmedAt', clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260808175352_collective_reward_boxes_v2.sql",
+      "line": 1235,
+      "text": "set state = 'revoked', revoked_at = clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260808175352_collective_reward_boxes_v2.sql",
+      "line": 1252,
+      "text": "revoked_at = case when recipients.status = 'pending' then clock_timestamp() else recipients.revoked_at end,"
+    },
+    {
+      "file": "supabase/migrations/20260808175352_collective_reward_boxes_v2.sql",
+      "line": 1257,
+      "text": "'recordedAt', clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260808175352_collective_reward_boxes_v2.sql",
+      "line": 1269,
+      "text": "revoked_at = case when opened_count > 0 then rewards.revoked_at else clock_timestamp() end,"
+    },
+    {
+      "file": "supabase/migrations/20260808175352_collective_reward_boxes_v2.sql",
+      "line": 1294,
+      "text": "set state = 'revoked', revoked_at = clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260808175352_collective_reward_boxes_v2.sql",
+      "line": 1531,
+      "text": "'updatedAt', clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260808175352_collective_reward_boxes_v2.sql",
+      "line": 1612,
+      "text": "then clock_timestamp() else recipients.revoked_at end,"
+    },
+    {
+      "file": "supabase/migrations/20260808175352_collective_reward_boxes_v2.sql",
+      "line": 1618,
+      "text": "'recordedAt', clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260808175352_collective_reward_boxes_v2.sql",
+      "line": 1626,
+      "text": "set state = 'revoked', revoked_at = clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260808175354_reward_economy_v1.sql",
+      "line": 11,
+      "text": "created_at timestamptz not null default clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260808175354_reward_economy_v1.sql",
+      "line": 36,
+      "text": "created_at timestamptz not null default clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260808175354_reward_economy_v1.sql",
+      "line": 58,
+      "text": "created_at timestamptz not null default clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260808175354_reward_economy_v1.sql",
+      "line": 85,
+      "text": "created_at timestamptz not null default clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260808175354_reward_economy_v1.sql",
+      "line": 112,
+      "text": "updated_at timestamptz not null default clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260808175354_reward_economy_v1.sql",
+      "line": 138,
+      "text": "created_at timestamptz not null default clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260808175354_reward_economy_v1.sql",
+      "line": 219,
+      "text": "add column if not exists sealed_at timestamptz not null default clock_timestamp();"
+    },
+    {
+      "file": "supabase/migrations/20260808175354_reward_economy_v1.sql",
+      "line": 236,
+      "text": "), clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260808175354_reward_economy_v1.sql",
+      "line": 462,
+      "text": "updated_at = clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260808175354_reward_economy_v1.sql",
+      "line": 622,
+      "text": "target_box_id, payload, active_version, md5(payload::text), clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260808175354_reward_economy_v1.sql",
+      "line": 881,
+      "text": "grant_row.id, selected.box_id, 'unlocked', clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260808175354_reward_economy_v1.sql",
+      "line": 882,
+      "text": "clock_timestamp(), jsonb_build_object("
+    },
+    {
+      "file": "supabase/migrations/20260808175354_reward_economy_v1.sql",
+      "line": 930,
+      "text": "state = 'unlocked', unlocked_at = clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260808175354_reward_economy_v1.sql",
+      "line": 936,
+      "text": "set status = 'opened', opened_at = clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260808175354_reward_economy_v1.sql",
+      "line": 937,
+      "text": "reward_granted_at = clock_timestamp(), revealed_payload = sealed,"
+    },
+    {
+      "file": "supabase/migrations/20260808175354_reward_economy_v1.sql",
+      "line": 966,
+      "text": "'confirmedAt', clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260808175354_reward_economy_v1.sql",
+      "line": 1205,
+      "text": "'updatedAt', clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260808185802_achievement_catalog_v2.sql",
+      "line": 549,
+      "text": "updated_at = clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260808185802_achievement_catalog_v2.sql",
+      "line": 1589,
+      "text": "updated_at = clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260808205638_achievement_catalog_v3.sql",
+      "line": 486,
+      "text": "updated_at = clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260808205638_achievement_catalog_v3.sql",
+      "line": 875,
+      "text": "target_box_id, payload, active_version, md5(payload::text), clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260809162859_conduct_reports_no_show_v1.sql",
+      "line": 27,
+      "text": "updated_at timestamptz not null default clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260809162859_conduct_reports_no_show_v1.sql",
+      "line": 48,
+      "text": "updated_at timestamptz not null default clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260809162859_conduct_reports_no_show_v1.sql",
+      "line": 57,
+      "text": "updated_at timestamptz not null default clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260809162859_conduct_reports_no_show_v1.sql",
+      "line": 72,
+      "text": "created_at timestamptz not null default clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260809162859_conduct_reports_no_show_v1.sql",
+      "line": 91,
+      "text": "created_at timestamptz not null default clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260809162859_conduct_reports_no_show_v1.sql",
+      "line": 92,
+      "text": "updated_at timestamptz not null default clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260809162859_conduct_reports_no_show_v1.sql",
+      "line": 117,
+      "text": "created_at timestamptz not null default clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260809162859_conduct_reports_no_show_v1.sql",
+      "line": 118,
+      "text": "updated_at timestamptz not null default clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260809162859_conduct_reports_no_show_v1.sql",
+      "line": 141,
+      "text": "submitted_at timestamptz not null default clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260809162859_conduct_reports_no_show_v1.sql",
+      "line": 143,
+      "text": "updated_at timestamptz not null default clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260809162859_conduct_reports_no_show_v1.sql",
+      "line": 164,
+      "text": "created_at timestamptz not null default clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260809162859_conduct_reports_no_show_v1.sql",
+      "line": 190,
+      "text": "first_reported_at timestamptz not null default clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260809162859_conduct_reports_no_show_v1.sql",
+      "line": 191,
+      "text": "last_reported_at timestamptz not null default clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260809162859_conduct_reports_no_show_v1.sql",
+      "line": 193,
+      "text": "updated_at timestamptz not null default clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260809162859_conduct_reports_no_show_v1.sql",
+      "line": 221,
+      "text": "first_reported_at timestamptz not null default clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260809162859_conduct_reports_no_show_v1.sql",
+      "line": 222,
+      "text": "last_reported_at timestamptz not null default clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260809162859_conduct_reports_no_show_v1.sql",
+      "line": 246,
+      "text": "created_at timestamptz not null default clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260809162859_conduct_reports_no_show_v1.sql",
+      "line": 270,
+      "text": "created_at timestamptz not null default clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260809162859_conduct_reports_no_show_v1.sql",
+      "line": 284,
+      "text": "issued_at timestamptz not null default clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260809162859_conduct_reports_no_show_v1.sql",
+      "line": 301,
+      "text": "applied_at timestamptz not null default clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260809162859_conduct_reports_no_show_v1.sql",
+      "line": 330,
+      "text": "created_at timestamptz not null default clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260809162859_conduct_reports_no_show_v1.sql",
+      "line": 531,
+      "text": "updated_at = clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260809162859_conduct_reports_no_show_v1.sql",
+      "line": 553,
+      "text": "updated_at = clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260809162859_conduct_reports_no_show_v1.sql",
+      "line": 728,
+      "text": "count(*) filter (where attendance.updated_at >= clock_timestamp() - make_interval(days => settings.no_show_reminder_window_days)),"
+    },
+    {
+      "file": "supabase/migrations/20260809162859_conduct_reports_no_show_v1.sql",
+      "line": 729,
+      "text": "count(*) filter (where attendance.updated_at >= clock_timestamp() - make_interval(days => settings.no_show_review_window_days))"
+    },
+    {
+      "file": "supabase/migrations/20260809162859_conduct_reports_no_show_v1.sql",
+      "line": 741,
+      "text": "and attendance.updated_at >= clock_timestamp() - make_interval(days => settings.late_cancellation_window_days);"
+    },
+    {
+      "file": "supabase/migrations/20260809162859_conduct_reports_no_show_v1.sql",
+      "line": 786,
+      "text": "updated_at = clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260809162859_conduct_reports_no_show_v1.sql",
+      "line": 904,
+      "text": "if match_time is null or match_time > clock_timestamp() then"
+    },
+    {
+      "file": "supabase/migrations/20260809162859_conduct_reports_no_show_v1.sql",
+      "line": 907,
+      "text": "if clock_timestamp() > match_time + make_interval(hours => settings.attendance_closure_window_hours) then"
+    },
+    {
+      "file": "supabase/migrations/20260809162859_conduct_reports_no_show_v1.sql",
+      "line": 979,
+      "text": "then clock_timestamp() + make_interval(hours => settings.attendance_dispute_window_hours) else null end,"
+    },
+    {
+      "file": "supabase/migrations/20260809162859_conduct_reports_no_show_v1.sql",
+      "line": 1022,
+      "text": "closed_by = current_user_id, closed_at = clock_timestamp(), updated_at = clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260809162859_conduct_reports_no_show_v1.sql",
+      "line": 1087,
+      "text": "if attendance.dispute_deadline is null or clock_timestamp() > attendance.dispute_deadline then"
+    },
+    {
+      "file": "supabase/migrations/20260809162859_conduct_reports_no_show_v1.sql",
+      "line": 1095,
+      "text": "responded_at = clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260809162859_conduct_reports_no_show_v1.sql",
+      "line": 1098,
+      "text": "updated_at = clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260809162859_conduct_reports_no_show_v1.sql",
+      "line": 1107,
+      "text": "server_sequence = nextval('public.pachanga_conduct_sequence'), updated_at = clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260809162859_conduct_reports_no_show_v1.sql",
+      "line": 1214,
+      "text": "revision = revision + 1, server_sequence = event_sequence, updated_at = clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260809162859_conduct_reports_no_show_v1.sql",
+      "line": 1218,
+      "text": "resolved_by = current_user_id, resolved_at = clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260809162859_conduct_reports_no_show_v1.sql",
+      "line": 1220,
+      "text": "updated_at = clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260809162859_conduct_reports_no_show_v1.sql",
+      "line": 1225,
+      "text": "server_sequence = event_sequence, updated_at = clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260809162859_conduct_reports_no_show_v1.sql",
+      "line": 1229,
+      "text": "resolved_by = current_user_id, resolved_at = clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260809162859_conduct_reports_no_show_v1.sql",
+      "line": 1231,
+      "text": "updated_at = clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260809162859_conduct_reports_no_show_v1.sql",
+      "line": 1251,
+      "text": "server_sequence = nextval('public.pachanga_conduct_sequence'), updated_at = clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260809162859_conduct_reports_no_show_v1.sql",
+      "line": 1255,
+      "text": "resolved_by = current_user_id, resolved_at = clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260809162859_conduct_reports_no_show_v1.sql",
+      "line": 1257,
+      "text": "updated_at = clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260809162859_conduct_reports_no_show_v1.sql",
+      "line": 1311,
+      "text": "target_now timestamptz default clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260809162859_conduct_reports_no_show_v1.sql",
+      "line": 1336,
+      "text": "server_sequence = nextval('public.pachanga_conduct_sequence'), updated_at = clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260809162859_conduct_reports_no_show_v1.sql",
+      "line": 1696,
+      "text": "and reports.created_at >= clock_timestamp() - interval '14 days'"
+    },
+    {
+      "file": "supabase/migrations/20260809162859_conduct_reports_no_show_v1.sql",
+      "line": 1714,
+      "text": "last_reported_at = clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260809162859_conduct_reports_no_show_v1.sql",
+      "line": 1719,
+      "text": "updated_at = clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260809162859_conduct_reports_no_show_v1.sql",
+      "line": 1737,
+      "text": "last_reported_at = clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260809162859_conduct_reports_no_show_v1.sql",
+      "line": 1768,
+      "text": "last_reported_at = clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260809162859_conduct_reports_no_show_v1.sql",
+      "line": 1769,
+      "text": "updated_at = clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260809162859_conduct_reports_no_show_v1.sql",
+      "line": 1830,
+      "text": "state = 'expired', ended_at = clock_timestamp(), revision = revision + 1,"
+    },
+    {
+      "file": "supabase/migrations/20260809162859_conduct_reports_no_show_v1.sql",
+      "line": 1834,
+      "text": "and restrictions.effective_until <= clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260809162859_conduct_reports_no_show_v1.sql",
+      "line": 1869,
+      "text": "and (restrictions.effective_until is null or restrictions.effective_until > clock_timestamp())"
+    },
+    {
+      "file": "supabase/migrations/20260809162859_conduct_reports_no_show_v1.sql",
+      "line": 1896,
+      "text": "and (restrictions.effective_until is null or restrictions.effective_until > clock_timestamp())"
+    },
+    {
+      "file": "supabase/migrations/20260809162859_conduct_reports_no_show_v1.sql",
+      "line": 1898,
+      "text": "'serverTime', clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260809162859_conduct_reports_no_show_v1.sql",
+      "line": 2283,
+      "text": "and (restrictions.effective_until is null or restrictions.effective_until > clock_timestamp())"
+    },
+    {
+      "file": "supabase/migrations/20260809162859_conduct_reports_no_show_v1.sql",
+      "line": 2290,
+      "text": "case when duration_days is null then null else clock_timestamp() + make_interval(days => duration_days) end,"
+    },
+    {
+      "file": "supabase/migrations/20260809162859_conduct_reports_no_show_v1.sql",
+      "line": 2307,
+      "text": "state = 'corrected', ended_at = clock_timestamp(), revision = revision + 1,"
+    },
+    {
+      "file": "supabase/migrations/20260809162859_conduct_reports_no_show_v1.sql",
+      "line": 2320,
+      "text": "resolved_at = case when next_state in ('dismissed', 'corrected', 'closed') then clock_timestamp() else resolved_at end,"
+    },
+    {
+      "file": "supabase/migrations/20260809162859_conduct_reports_no_show_v1.sql",
+      "line": 2323,
+      "text": "updated_at = clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260809162859_conduct_reports_no_show_v1.sql",
+      "line": 2449,
+      "text": "updated_at = clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260809162859_conduct_reports_no_show_v1.sql",
+      "line": 2530,
+      "text": "update private.pachanga_social_restrictions set state = 'corrected', ended_at = clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260809162859_conduct_reports_no_show_v1.sql",
+      "line": 2549,
+      "text": "resolved_at = clock_timestamp(), revision = revision + 1,"
+    },
+    {
+      "file": "supabase/migrations/20260809162859_conduct_reports_no_show_v1.sql",
+      "line": 2556,
+      "text": "updated_at = clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260809162859_conduct_reports_no_show_v1.sql",
+      "line": 2604,
+      "text": "return jsonb_build_object('expired', expired_count, 'serverTime', clock_timestamp());"
+    },
+    {
+      "file": "supabase/migrations/20260809203000_conduct_triage_v1_1.sql",
+      "line": 27,
+      "text": "updated_at timestamptz not null default clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260809203000_conduct_triage_v1_1.sql",
+      "line": 48,
+      "text": "updated_at = clock_timestamp();"
+    },
+    {
+      "file": "supabase/migrations/20260809203000_conduct_triage_v1_1.sql",
+      "line": 98,
+      "text": "created_at timestamptz not null default clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260809203000_conduct_triage_v1_1.sql",
+      "line": 148,
+      "text": "updated_at = clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260809203000_conduct_triage_v1_1.sql",
+      "line": 186,
+      "text": "evaluated_at timestamptz := clock_timestamp();"
+    },
+    {
+      "file": "supabase/migrations/20260809203000_conduct_triage_v1_1.sql",
+      "line": 214,
+      "text": "and reports.created_at >= evaluated_at - make_interval(days => policy.active_window_days);"
+    },
+    {
+      "file": "supabase/migrations/20260809203000_conduct_triage_v1_1.sql",
+      "line": 225,
+      "text": "and reports.created_at >= evaluated_at - make_interval(days => policy.active_window_days);"
+    },
+    {
+      "file": "supabase/migrations/20260809203000_conduct_triage_v1_1.sql",
+      "line": 266,
+      "text": "when 'urgent_review' then evaluated_at + make_interval(hours => settings.triage_urgent_sla_hours)"
+    },
+    {
+      "file": "supabase/migrations/20260809203000_conduct_triage_v1_1.sql",
+      "line": 267,
+      "text": "when 'priority_review' then evaluated_at + make_interval(hours => settings.triage_priority_sla_hours)"
+    },
+    {
+      "file": "supabase/migrations/20260809203000_conduct_triage_v1_1.sql",
+      "line": 268,
+      "text": "when 'review' then evaluated_at + make_interval(hours => settings.triage_review_sla_hours)"
+    },
+    {
+      "file": "supabase/migrations/20260809203000_conduct_triage_v1_1.sql",
+      "line": 279,
+      "text": "active_window_started_at = evaluated_at - make_interval(days => policy.active_window_days),"
+    },
+    {
+      "file": "supabase/migrations/20260809203000_conduct_triage_v1_1.sql",
+      "line": 280,
+      "text": "active_window_ends_at = selected_case.last_reported_at + make_interval(days => policy.active_window_days),"
+    },
+    {
+      "file": "supabase/migrations/20260809203000_conduct_triage_v1_1.sql",
+      "line": 601,
+      "text": "resolved_at = clock_timestamp(), updated_at = clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260809214500_core_social_flows_closure_v1.sql",
+      "line": 140,
+      "text": "'confirmedAt', clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260809214500_core_social_flows_closure_v1.sql",
+      "line": 213,
+      "text": "selected_group.payload, target_user_id, clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260809214500_core_social_flows_closure_v1.sql",
+      "line": 233,
+      "text": "and (matches.value ->> 'date')::timestamptz > clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260809214500_core_social_flows_closure_v1.sql",
+      "line": 450,
+      "text": "selected_created_at timestamptz := coalesce(new.created_at, old.created_at, clock_timestamp());"
+    },
+    {
+      "file": "supabase/migrations/20260809214500_core_social_flows_closure_v1.sql",
+      "line": 550,
+      "text": "add column if not exists updated_at timestamptz not null default clock_timestamp();"
+    },
+    {
+      "file": "supabase/migrations/20260809214500_core_social_flows_closure_v1.sql",
+      "line": 603,
+      "text": "'confirmedAt', clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260809214500_core_social_flows_closure_v1.sql",
+      "line": 619,
+      "text": "if selected_invite.expires_at <= clock_timestamp() then raise exception 'Admin invite has expired'; end if;"
+    },
+    {
+      "file": "supabase/migrations/20260809214500_core_social_flows_closure_v1.sql",
+      "line": 632,
+      "text": "accepted_at = clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260809214500_core_social_flows_closure_v1.sql",
+      "line": 635,
+      "text": "updated_at = clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260809214500_core_social_flows_closure_v1.sql",
+      "line": 657,
+      "text": "'confirmedAt', clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260809214500_core_social_flows_closure_v1.sql",
+      "line": 725,
+      "text": "updated_at timestamptz not null default clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260809214500_core_social_flows_closure_v1.sql",
+      "line": 764,
+      "text": "if clock_timestamp() < selected.scheduled_at + coalesce(config.expiry_grace, interval '0 minutes') then"
+    },
+    {
+      "file": "supabase/migrations/20260809214500_core_social_flows_closure_v1.sql",
+      "line": 776,
+      "text": "expired_at = clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260809214500_core_social_flows_closure_v1.sql",
+      "line": 777,
+      "text": "updated_at = clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260809214500_core_social_flows_closure_v1.sql",
+      "line": 846,
+      "text": "if clock_timestamp() >= old.scheduled_at + coalesce(grace, interval '0 minutes') then"
+    },
+    {
+      "file": "supabase/migrations/20260809214500_core_social_flows_closure_v1.sql",
+      "line": 998,
+      "text": "and challenges.scheduled_at + settings.expiry_grace <= clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260809214500_core_social_flows_closure_v1.sql",
+      "line": 1007,
+      "text": "return jsonb_build_object('expiredCount', processed, 'confirmedAt', clock_timestamp());"
+    },
+    {
+      "file": "supabase/migrations/20260809214500_core_social_flows_closure_v1.sql",
+      "line": 1092,
+      "text": "and challenges.scheduled_at + settings.expiry_grace <= clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260809214500_core_social_flows_closure_v1.sql",
+      "line": 1168,
+      "text": "updated_at = clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260809214500_core_social_flows_closure_v1.sql",
+      "line": 1173,
+      "text": "or open_matches.date <= clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260809214500_core_social_flows_closure_v1.sql",
+      "line": 1194,
+      "text": "decided_at = clock_timestamp(),"
+    },
+    {
+      "file": "supabase/migrations/20260809214500_core_social_flows_closure_v1.sql",
+      "line": 1196,
+      "text": "updated_at = clock_timestamp()"
+    },
+    {
+      "file": "supabase/migrations/20260809214500_core_social_flows_closure_v1.sql",
+      "line": 1310,
+      "text": "if selected_date is null or selected_date <= clock_timestamp() then"
+    },
+    {
+      "file": "supabase/migrations/20260809214500_core_social_flows_closure_v1.sql",
+      "line": 1368,
+      "text": "open_matches.active and open_matches.open_slots > 0 and open_matches.date > clock_timestamp()"
+    }
+  ]
+}

@@ -1,0 +1,225 @@
+{
+  "baseline": {
+    "id": "season-score-v3-55-30-15",
+    "label": "55/30/15 · recent30 · V3 evidence lab",
+    "weights": {
+      "competition": 30,
+      "opposition": 15,
+      "quality": 55
+    },
+    "eligibility": {
+      "minimumRatingReliability": 0.45,
+      "minimumUniqueOpponents": 6,
+      "minimumValidChallenges": 15,
+      "recentActivityWeeks": 12
+    },
+    "opponentDecay": [
+      1,
+      1,
+      0.5,
+      0.25,
+      0
+    ],
+    "volumeModel": "recent_30",
+    "ratingConfidenceModel": "full",
+    "integrityMode": "weighted",
+    "densityTop10Minimum": 50
+  },
+  "certificationWindows": [
+    {
+      "automaticCapacity": 720,
+      "hours": 24,
+      "manualProfiles": 0,
+      "pendingProfiles": 0,
+      "viable": true
+    },
+    {
+      "automaticCapacity": 1440,
+      "hours": 48,
+      "manualProfiles": 0,
+      "pendingProfiles": 0,
+      "viable": true
+    },
+    {
+      "automaticCapacity": 5040,
+      "hours": 168,
+      "manualProfiles": 0,
+      "pendingProfiles": 0,
+      "viable": true
+    }
+  ],
+  "churn": {
+    "mean": 0.1625,
+    "p50": 0.1,
+    "p90": 0.3,
+    "territories": 48
+  },
+  "cutoffTelemetry": {
+    "closeWithinOnePoint": 17,
+    "territories": 52
+  },
+  "exactTies": 0,
+  "falsePositiveHighRiskRate": 0,
+  "identityEligibilityRows": [
+    {
+      "id": "legitimate-club-player",
+      "logicalOpponentEligible": false,
+      "logicalOpponents": 4,
+      "teamIdEligible": false,
+      "teamIds": 4
+    },
+    {
+      "id": "fake-farm-beneficiary",
+      "logicalOpponentEligible": false,
+      "logicalOpponents": 1,
+      "teamIdEligible": true,
+      "teamIds": 10
+    }
+  ],
+  "leaveOneOut": {
+    "categories": [
+      {
+        "category": "low_confidence",
+        "dependencies": 0,
+        "dependencyRate": 0,
+        "removals": 0
+      },
+      {
+        "category": "low_independence",
+        "dependencies": 0,
+        "dependencyRate": 0,
+        "removals": 0
+      },
+      {
+        "category": "normal",
+        "dependencies": 99,
+        "dependencyRate": 0.0949,
+        "removals": 1043
+      },
+      {
+        "category": "repeated_opponent",
+        "dependencies": 188,
+        "dependencyRate": 0.0802,
+        "removals": 2345
+      },
+      {
+        "category": "strong_opponent",
+        "dependencies": 16,
+        "dependencyRate": 0.1127,
+        "removals": 142
+      }
+    ],
+    "dependentPlayers": 25,
+    "playerDependencyRate": 0.2083,
+    "players": 120
+  },
+  "mainSeed": {
+    "communityNdcg10": {
+      "mean": 0.6999,
+      "p10": 0.4689,
+      "p50": 0.7448,
+      "p90": 0.8386
+    },
+    "communityRecall20": {
+      "mean": 0.8,
+      "p10": 0.6,
+      "p50": 0.8,
+      "p90": 1
+    },
+    "provinceNdcg10": {
+      "mean": 0.7729,
+      "p10": 0.5928,
+      "p50": 0.7602,
+      "p90": 0.9224
+    },
+    "provinceRecall20": {
+      "mean": 0.8625,
+      "p10": 0.7,
+      "p50": 0.9,
+      "p90": 1
+    }
+  },
+  "minimumCutoffAttack": null,
+  "multiSeed": {
+    "communityNdcg10": {
+      "mean": 0.7398,
+      "p5": 0.6865,
+      "p50": 0.7307,
+      "p95": 0.7966
+    },
+    "communityRecall20": {
+      "mean": 0.8033,
+      "p5": 0.7,
+      "p50": 0.8,
+      "p95": 0.9
+    },
+    "contamination5pct": {
+      "mean": 0,
+      "p5": 0,
+      "p50": 0,
+      "p95": 0
+    },
+    "nationalTop100Ndcg": {
+      "mean": 0.872,
+      "p5": 0.7917,
+      "p50": 0.8751,
+      "p95": 0.9015
+    },
+    "nationalTop10Ndcg": {
+      "mean": 0.418,
+      "p5": 0.1211,
+      "p50": 0.3841,
+      "p95": 0.6513
+    },
+    "predictiveUplift": {
+      "mean": 12.2514,
+      "p5": 11.5464,
+      "p50": 12.2814,
+      "p95": 12.7681
+    },
+    "provinceNdcg10": {
+      "mean": 0.7896,
+      "p5": 0.7602,
+      "p50": 0.7892,
+      "p95": 0.8162
+    },
+    "provinceRecall20": {
+      "mean": 0.89,
+      "p5": 0.8,
+      "p50": 0.9,
+      "p95": 0.9
+    }
+  },
+  "productionModified": false,
+  "ratingV2Modified": false,
+  "readiness": {
+    "autonomousCommunity": false,
+    "province": true,
+    "spain": false
+  },
+  "recommendedStrategy": "exclusion_and_hold",
+  "top10ContaminationAt5Pct": 0,
+  "trophyContaminationAt5Pct": 0,
+  "volumeAdvantage": 0.0202,
+  "workload": {
+    "deduplicatedProfiles": 0,
+    "nominations": 0
+  },
+  "awardPolicyRows": [
+    {
+      "policy": "no_promotion",
+      "promoteRank11": false,
+      "trophyStatus": "withheld"
+    },
+    {
+      "policy": "provisional_promotion",
+      "promoteRank11": true,
+      "trophyStatus": "provisional"
+    },
+    {
+      "policy": "trophy_pending",
+      "promoteRank11": false,
+      "trophyStatus": "pending"
+    }
+  ]
+}

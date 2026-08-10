@@ -1,0 +1,85 @@
+{
+  "decision": "another_lab_iteration",
+  "finalist": {
+    "id": "elite-weight-55-30-15",
+    "label": "elite-weight-55-30-15",
+    "weights": {
+      "competition": 30,
+      "opposition": 15,
+      "quality": 55
+    },
+    "eligibility": {
+      "minimumValidChallenges": 15,
+      "minimumUniqueOpponents": 6,
+      "minimumRatingReliability": 0.45,
+      "recentActivityWeeks": 12
+    },
+    "opponentDecay": [
+      1,
+      1,
+      0.5,
+      0.25,
+      0
+    ],
+    "volumeModel": "recent_30",
+    "ratingConfidenceModel": "full",
+    "integrityMode": "weighted",
+    "densityTop10Minimum": 50
+  },
+  "multiSeedSummary": {
+    "futureNdcg10": {
+      "mean": 0.6116,
+      "p5": 0.5588,
+      "p50": 0.6157,
+      "p95": 0.6416,
+      "std": 0.0236
+    },
+    "futureRecall20": {
+      "mean": 0.7,
+      "p5": 0.6,
+      "p50": 0.7,
+      "p95": 0.7,
+      "std": 0.0316
+    },
+    "ndcg10": {
+      "mean": 0.7071,
+      "p5": 0.6509,
+      "p50": 0.7032,
+      "p95": 0.7571,
+      "std": 0.0278
+    },
+    "predictiveUplift": {
+      "mean": 12.2718,
+      "p5": 11.2526,
+      "p50": 12.2933,
+      "p95": 12.816,
+      "std": 0.4495
+    },
+    "rankError": {
+      "mean": 9.52,
+      "p5": 8.3,
+      "p50": 9.4,
+      "p95": 11,
+      "std": 0.8698
+    },
+    "recall20": {
+      "mean": 0.785,
+      "p5": 0.7,
+      "p50": 0.8,
+      "p95": 0.8,
+      "std": 0.0357
+    }
+  },
+  "proposedGates": {
+    "candidateRecall20Minimum": 0.7,
+    "cheaterContaminationMaximum": 0.2,
+    "falsePositiveMaximum": 0.01,
+    "ndcg10Minimum": 0.65,
+    "predictiveUpliftMinimum": 11,
+    "rankErrorMaximum": 11
+  },
+  "protectedContamination5": 0.6,
+  "falsePositiveRate": 0,
+  "sameBandRate": 1,
+  "leaveOneOutDependency": 0.28823529411764703
+}

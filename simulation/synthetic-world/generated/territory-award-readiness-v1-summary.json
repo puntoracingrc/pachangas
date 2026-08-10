@@ -1,0 +1,3035 @@
+{
+  "contract": {
+    "awardBaseline": {
+      "competitiveConfidence": 0.72,
+      "logicalOpponents": 10,
+      "ratingReliability": 0.55,
+      "recentActivityWeeks": 12,
+      "validChallenges": 25
+    },
+    "formula": {
+      "competition": 30,
+      "opposition": 15,
+      "quality": 55,
+      "window": "recent_30"
+    },
+    "individualIntegritySeparate": true,
+    "policy": {
+      "award": {
+        "minimumActiveTeams": 11,
+        "minimumAwardCandidates": 10,
+        "minimumHistoryWeeks": 20,
+        "minimumIndependentOpponentEdges": 20,
+        "minimumIndependentTeamCoverage": 0.7,
+        "minimumRankingPopulation": 10,
+        "minimumValidChallenges": 250
+      },
+      "hysteresis": {
+        "demotionWindows": 3,
+        "promotionWindows": {
+          "ranking_active": 2,
+          "trophy_not_ready": 2,
+          "trophy_ready": 3
+        }
+      },
+      "ranking": {
+        "minimumActiveTeams": 4,
+        "minimumHistoryWeeks": 4,
+        "minimumIndependentOpponentEdges": 4,
+        "minimumRankingPopulation": 5,
+        "minimumValidChallenges": 75
+      }
+    },
+    "rankingEligibility": {
+      "logicalOpponents": 6,
+      "ratingReliability": 0.45,
+      "recentActivityWeeks": 12,
+      "validChallenges": 15
+    },
+    "territoryMultipliers": false
+  },
+  "featureFlags": {
+    "provincialAwardsEnabled": false,
+    "provincialRankingsEnabled": true
+  },
+  "featureFlagKeys": {
+    "awards": "provincial_awards_enabled",
+    "rankings": "provincial_rankings_enabled"
+  },
+  "growth": {
+    "healthy": [
+      {
+        "snapshot": {
+          "calculatedAt": "2027-01-01T12:00:00.000Z",
+          "observedReasons": [
+            "insufficient_active_teams",
+            "insufficient_award_candidates"
+          ],
+          "observedState": "trophy_not_ready",
+          "policyVersion": "territory-award-readiness-v1",
+          "readinessState": "trophy_not_ready",
+          "revision": 1,
+          "season": "2026-27",
+          "signals": {
+            "activePlayers": 10,
+            "activeTeams": 10,
+            "awardCandidatePlayers": 0,
+            "independentOpponentEdges": 45,
+            "independentTeamCoverage": 1,
+            "logicalOpponentEdges": 45,
+            "medianChallenges": 30,
+            "medianCompetitiveConfidence": 0.9177,
+            "medianLogicalOpponents": 9,
+            "observedHistoryWeeks": 46,
+            "rankingEligiblePlayers": 10,
+            "validChallenges": 300
+          },
+          "stability": {
+            "direction": "stable",
+            "observedWindows": 1,
+            "requiredWindows": 1
+          },
+          "territory": "08"
+        },
+        "teamCount": 10
+      },
+      {
+        "snapshot": {
+          "calculatedAt": "2027-01-29T12:00:00.000Z",
+          "observedReasons": [
+            "ready"
+          ],
+          "observedState": "trophy_ready",
+          "policyVersion": "territory-award-readiness-v1",
+          "readinessState": "trophy_not_ready",
+          "revision": 2,
+          "season": "2026-27",
+          "signals": {
+            "activePlayers": 20,
+            "activeTeams": 20,
+            "awardCandidatePlayers": 20,
+            "independentOpponentEdges": 141,
+            "independentTeamCoverage": 1,
+            "logicalOpponentEdges": 141,
+            "medianChallenges": 30,
+            "medianCompetitiveConfidence": 0.9256,
+            "medianLogicalOpponents": 14,
+            "observedHistoryWeeks": 46,
+            "rankingEligiblePlayers": 20,
+            "validChallenges": 600
+          },
+          "stability": {
+            "direction": "promotion_pending",
+            "observedWindows": 1,
+            "requiredWindows": 3
+          },
+          "territory": "08"
+        },
+        "teamCount": 20
+      },
+      {
+        "snapshot": {
+          "calculatedAt": "2027-02-26T12:00:00.000Z",
+          "observedReasons": [
+            "ready"
+          ],
+          "observedState": "trophy_ready",
+          "policyVersion": "territory-award-readiness-v1",
+          "readinessState": "trophy_not_ready",
+          "revision": 3,
+          "season": "2026-27",
+          "signals": {
+            "activePlayers": 30,
+            "activeTeams": 30,
+            "awardCandidatePlayers": 30,
+            "independentOpponentEdges": 214,
+            "independentTeamCoverage": 1,
+            "logicalOpponentEdges": 214,
+            "medianChallenges": 30,
+            "medianCompetitiveConfidence": 0.9273,
+            "medianLogicalOpponents": 14,
+            "observedHistoryWeeks": 46,
+            "rankingEligiblePlayers": 30,
+            "validChallenges": 900
+          },
+          "stability": {
+            "direction": "promotion_pending",
+            "observedWindows": 2,
+            "requiredWindows": 3
+          },
+          "territory": "08"
+        },
+        "teamCount": 30
+      },
+      {
+        "snapshot": {
+          "calculatedAt": "2027-03-26T12:00:00.000Z",
+          "observedReasons": [
+            "ready"
+          ],
+          "observedState": "trophy_ready",
+          "policyVersion": "territory-award-readiness-v1",
+          "readinessState": "trophy_ready",
+          "revision": 4,
+          "season": "2026-27",
+          "signals": {
+            "activePlayers": 50,
+            "activeTeams": 50,
+            "awardCandidatePlayers": 50,
+            "independentOpponentEdges": 363,
+            "independentTeamCoverage": 1,
+            "logicalOpponentEdges": 363,
+            "medianChallenges": 30,
+            "medianCompetitiveConfidence": 0.9273,
+            "medianLogicalOpponents": 14,
+            "observedHistoryWeeks": 46,
+            "rankingEligiblePlayers": 50,
+            "validChallenges": 1500
+          },
+          "stability": {
+            "direction": "stable",
+            "observedWindows": 3,
+            "requiredWindows": 3
+          },
+          "territory": "08"
+        },
+        "teamCount": 50
+      },
+      {
+        "snapshot": {
+          "calculatedAt": "2027-04-23T12:00:00.000Z",
+          "observedReasons": [
+            "ready"
+          ],
+          "observedState": "trophy_ready",
+          "policyVersion": "territory-award-readiness-v1",
+          "readinessState": "trophy_ready",
+          "revision": 5,
+          "season": "2026-27",
+          "signals": {
+            "activePlayers": 75,
+            "activeTeams": 75,
+            "awardCandidatePlayers": 75,
+            "independentOpponentEdges": 547,
+            "independentTeamCoverage": 1,
+            "logicalOpponentEdges": 547,
+            "medianChallenges": 30,
+            "medianCompetitiveConfidence": 0.9273,
+            "medianLogicalOpponents": 14,
+            "observedHistoryWeeks": 46,
+            "rankingEligiblePlayers": 75,
+            "validChallenges": 2250
+          },
+          "stability": {
+            "direction": "stable",
+            "observedWindows": 1,
+            "requiredWindows": 1
+          },
+          "territory": "08"
+        },
+        "teamCount": 75
+      },
+      {
+        "snapshot": {
+          "calculatedAt": "2027-05-21T12:00:00.000Z",
+          "observedReasons": [
+            "ready"
+          ],
+          "observedState": "trophy_ready",
+          "policyVersion": "territory-award-readiness-v1",
+          "readinessState": "trophy_ready",
+          "revision": 6,
+          "season": "2026-27",
+          "signals": {
+            "activePlayers": 100,
+            "activeTeams": 100,
+            "awardCandidatePlayers": 100,
+            "independentOpponentEdges": 724,
+            "independentTeamCoverage": 1,
+            "logicalOpponentEdges": 724,
+            "medianChallenges": 30,
+            "medianCompetitiveConfidence": 0.9273,
+            "medianLogicalOpponents": 14,
+            "observedHistoryWeeks": 46,
+            "rankingEligiblePlayers": 100,
+            "validChallenges": 3000
+          },
+          "stability": {
+            "direction": "stable",
+            "observedWindows": 1,
+            "requiredWindows": 1
+          },
+          "territory": "08"
+        },
+        "teamCount": 100
+      },
+      {
+        "snapshot": {
+          "calculatedAt": "2027-06-18T12:00:00.000Z",
+          "observedReasons": [
+            "ready"
+          ],
+          "observedState": "trophy_ready",
+          "policyVersion": "territory-award-readiness-v1",
+          "readinessState": "trophy_ready",
+          "revision": 7,
+          "season": "2026-27",
+          "signals": {
+            "activePlayers": 150,
+            "activeTeams": 150,
+            "awardCandidatePlayers": 150,
+            "independentOpponentEdges": 1111,
+            "independentTeamCoverage": 1,
+            "logicalOpponentEdges": 1111,
+            "medianChallenges": 30,
+            "medianCompetitiveConfidence": 0.9291,
+            "medianLogicalOpponents": 15,
+            "observedHistoryWeeks": 46,
+            "rankingEligiblePlayers": 150,
+            "validChallenges": 4500
+          },
+          "stability": {
+            "direction": "stable",
+            "observedWindows": 1,
+            "requiredWindows": 1
+          },
+          "territory": "08"
+        },
+        "teamCount": 150
+      }
+    ],
+    "manipulated": [
+      {
+        "snapshot": {
+          "calculatedAt": "2027-01-01T12:00:00.000Z",
+          "observedReasons": [
+            "insufficient_ranking_population"
+          ],
+          "observedState": "ranking_inactive",
+          "policyVersion": "territory-award-readiness-v1",
+          "readinessState": "ranking_inactive",
+          "revision": 1,
+          "season": "2026-27",
+          "signals": {
+            "activePlayers": 7,
+            "activeTeams": 10,
+            "awardCandidatePlayers": 0,
+            "independentOpponentEdges": 18,
+            "independentTeamCoverage": 1,
+            "logicalOpponentEdges": 19,
+            "medianChallenges": 30,
+            "medianCompetitiveConfidence": 0.921,
+            "medianLogicalOpponents": 5,
+            "observedHistoryWeeks": 46,
+            "rankingEligiblePlayers": 1,
+            "validChallenges": 210
+          },
+          "stability": {
+            "direction": "stable",
+            "observedWindows": 1,
+            "requiredWindows": 1
+          },
+          "territory": "08"
+        },
+        "teamCount": 10
+      },
+      {
+        "snapshot": {
+          "calculatedAt": "2027-01-29T12:00:00.000Z",
+          "observedReasons": [
+            "ready"
+          ],
+          "observedState": "trophy_ready",
+          "policyVersion": "territory-award-readiness-v1",
+          "readinessState": "ranking_inactive",
+          "revision": 2,
+          "season": "2026-27",
+          "signals": {
+            "activePlayers": 15,
+            "activeTeams": 20,
+            "awardCandidatePlayers": 14,
+            "independentOpponentEdges": 96,
+            "independentTeamCoverage": 1,
+            "logicalOpponentEdges": 97,
+            "medianChallenges": 30,
+            "medianCompetitiveConfidence": 0.9164,
+            "medianLogicalOpponents": 13,
+            "observedHistoryWeeks": 46,
+            "rankingEligiblePlayers": 14,
+            "validChallenges": 450
+          },
+          "stability": {
+            "direction": "promotion_pending",
+            "observedWindows": 1,
+            "requiredWindows": 3
+          },
+          "territory": "08"
+        },
+        "teamCount": 20
+      },
+      {
+        "snapshot": {
+          "calculatedAt": "2027-02-26T12:00:00.000Z",
+          "observedReasons": [
+            "ready"
+          ],
+          "observedState": "trophy_ready",
+          "policyVersion": "territory-award-readiness-v1",
+          "readinessState": "ranking_inactive",
+          "revision": 3,
+          "season": "2026-27",
+          "signals": {
+            "activePlayers": 22,
+            "activeTeams": 30,
+            "awardCandidatePlayers": 21,
+            "independentOpponentEdges": 156,
+            "independentTeamCoverage": 1,
+            "logicalOpponentEdges": 158,
+            "medianChallenges": 30,
+            "medianCompetitiveConfidence": 0.9262,
+            "medianLogicalOpponents": 14,
+            "observedHistoryWeeks": 46,
+            "rankingEligiblePlayers": 21,
+            "validChallenges": 660
+          },
+          "stability": {
+            "direction": "promotion_pending",
+            "observedWindows": 2,
+            "requiredWindows": 3
+          },
+          "territory": "08"
+        },
+        "teamCount": 30
+      },
+      {
+        "snapshot": {
+          "calculatedAt": "2027-03-26T12:00:00.000Z",
+          "observedReasons": [
+            "ready"
+          ],
+          "observedState": "trophy_ready",
+          "policyVersion": "territory-award-readiness-v1",
+          "readinessState": "trophy_ready",
+          "revision": 4,
+          "season": "2026-27",
+          "signals": {
+            "activePlayers": 37,
+            "activeTeams": 50,
+            "awardCandidatePlayers": 36,
+            "independentOpponentEdges": 270,
+            "independentTeamCoverage": 1,
+            "logicalOpponentEdges": 274,
+            "medianChallenges": 30,
+            "medianCompetitiveConfidence": 0.927,
+            "medianLogicalOpponents": 14,
+            "observedHistoryWeeks": 46,
+            "rankingEligiblePlayers": 36,
+            "validChallenges": 1110
+          },
+          "stability": {
+            "direction": "stable",
+            "observedWindows": 3,
+            "requiredWindows": 3
+          },
+          "territory": "08"
+        },
+        "teamCount": 50
+      },
+      {
+        "snapshot": {
+          "calculatedAt": "2027-04-23T12:00:00.000Z",
+          "observedReasons": [
+            "ready"
+          ],
+          "observedState": "trophy_ready",
+          "policyVersion": "territory-award-readiness-v1",
+          "readinessState": "trophy_ready",
+          "revision": 5,
+          "season": "2026-27",
+          "signals": {
+            "activePlayers": 63,
+            "activeTeams": 75,
+            "awardCandidatePlayers": 62,
+            "independentOpponentEdges": 457,
+            "independentTeamCoverage": 1,
+            "logicalOpponentEdges": 461,
+            "medianChallenges": 30,
+            "medianCompetitiveConfidence": 0.9273,
+            "medianLogicalOpponents": 14,
+            "observedHistoryWeeks": 46,
+            "rankingEligiblePlayers": 62,
+            "validChallenges": 1890
+          },
+          "stability": {
+            "direction": "stable",
+            "observedWindows": 1,
+            "requiredWindows": 1
+          },
+          "territory": "08"
+        },
+        "teamCount": 75
+      },
+      {
+        "snapshot": {
+          "calculatedAt": "2027-05-21T12:00:00.000Z",
+          "observedReasons": [
+            "ready"
+          ],
+          "observedState": "trophy_ready",
+          "policyVersion": "territory-award-readiness-v1",
+          "readinessState": "trophy_ready",
+          "revision": 6,
+          "season": "2026-27",
+          "signals": {
+            "activePlayers": 89,
+            "activeTeams": 100,
+            "awardCandidatePlayers": 87,
+            "independentOpponentEdges": 651,
+            "independentTeamCoverage": 1,
+            "logicalOpponentEdges": 659,
+            "medianChallenges": 30,
+            "medianCompetitiveConfidence": 0.9273,
+            "medianLogicalOpponents": 15,
+            "observedHistoryWeeks": 46,
+            "rankingEligiblePlayers": 87,
+            "validChallenges": 2670
+          },
+          "stability": {
+            "direction": "stable",
+            "observedWindows": 1,
+            "requiredWindows": 1
+          },
+          "territory": "08"
+        },
+        "teamCount": 100
+      },
+      {
+        "snapshot": {
+          "calculatedAt": "2027-06-18T12:00:00.000Z",
+          "observedReasons": [
+            "ready"
+          ],
+          "observedState": "trophy_ready",
+          "policyVersion": "territory-award-readiness-v1",
+          "readinessState": "trophy_ready",
+          "revision": 7,
+          "season": "2026-27",
+          "signals": {
+            "activePlayers": 142,
+            "activeTeams": 150,
+            "awardCandidatePlayers": 139,
+            "independentOpponentEdges": 1020,
+            "independentTeamCoverage": 1,
+            "logicalOpponentEdges": 1032,
+            "medianChallenges": 30,
+            "medianCompetitiveConfidence": 0.9273,
+            "medianLogicalOpponents": 14,
+            "observedHistoryWeeks": 46,
+            "rankingEligiblePlayers": 139,
+            "validChallenges": 4260
+          },
+          "stability": {
+            "direction": "stable",
+            "observedWindows": 1,
+            "requiredWindows": 1
+          },
+          "territory": "08"
+        },
+        "teamCount": 150
+      }
+    ]
+  },
+  "m3": "experimental_reference",
+  "scopes": {
+    "autonomousCommunity": "lab_only",
+    "national": "lab_only",
+    "province": "pilot_ready"
+  },
+  "seasonClose": {
+    "archived": true,
+    "awards": [
+      {
+        "playerId": "rank-1-clean",
+        "rank": 1,
+        "status": "certified"
+      },
+      {
+        "playerId": "rank-8-pending",
+        "rank": 8,
+        "status": "pending_integrity_review"
+      }
+    ],
+    "classification": "archived_with_awards",
+    "grantedAwardsPreserved": true,
+    "promotedRank11": false
+  },
+  "seasonClosePhases": [
+    "season_active",
+    "season_frozen",
+    "territory_readiness_final",
+    "integrity_reconciliation",
+    "award_certification",
+    "season_closed"
+  ],
+  "source": {
+    "eventSequence": 69458,
+    "hashAfter": "5b1d72085eb81cab92fb89bdd547e6020771868044172ac0b548d3903c2f66b1",
+    "hashBefore": "5b1d72085eb81cab92fb89bdd547e6020771868044172ac0b548d3903c2f66b1",
+    "revision": 313,
+    "worldId": "3df9494d-3b8c-4447-96e8-d5244892af78"
+  },
+  "sourceTerritories": [
+    {
+      "provinceCode": "08",
+      "ranking": [
+        {
+          "displayName": "SIM · Alex F. 609",
+          "logicalOpponents": 19,
+          "movement": 0,
+          "playerId": "agent-609",
+          "rank": 1,
+          "score": 749.05,
+          "validChallenges": 41
+        },
+        {
+          "displayName": "SIM · Paula N. 416",
+          "logicalOpponents": 14,
+          "movement": 0,
+          "playerId": "agent-416",
+          "rank": 2,
+          "score": 743.1,
+          "validChallenges": 20
+        },
+        {
+          "displayName": "SIM · Sofía F. 054",
+          "logicalOpponents": 9,
+          "movement": 0,
+          "playerId": "agent-054",
+          "rank": 3,
+          "score": 736.56,
+          "validChallenges": 27
+        },
+        {
+          "displayName": "SIM · Lina R. 173",
+          "logicalOpponents": 12,
+          "movement": 0,
+          "playerId": "agent-173",
+          "rank": 4,
+          "score": 725.23,
+          "validChallenges": 23
+        },
+        {
+          "displayName": "SIM · Hugo V. 445",
+          "logicalOpponents": 10,
+          "movement": 0,
+          "playerId": "agent-445",
+          "rank": 5,
+          "score": 715.82,
+          "validChallenges": 37
+        },
+        {
+          "displayName": "SIM · Lina N. 061",
+          "logicalOpponents": 14,
+          "movement": 0,
+          "playerId": "agent-061",
+          "rank": 6,
+          "score": 712.18,
+          "validChallenges": 35
+        },
+        {
+          "displayName": "SIM · Marc R. 205",
+          "logicalOpponents": 20,
+          "movement": 0,
+          "playerId": "agent-205",
+          "rank": 7,
+          "score": 703.89,
+          "validChallenges": 56
+        },
+        {
+          "displayName": "SIM · Marta M. 503",
+          "logicalOpponents": 10,
+          "movement": 0,
+          "playerId": "agent-503",
+          "rank": 8,
+          "score": 703.23,
+          "validChallenges": 27
+        },
+        {
+          "displayName": "SIM · Hugo F. 103",
+          "logicalOpponents": 10,
+          "movement": 0,
+          "playerId": "agent-103",
+          "rank": 9,
+          "score": 675.5,
+          "validChallenges": 21
+        },
+        {
+          "displayName": "SIM · Nico C. 123",
+          "logicalOpponents": 17,
+          "movement": 0,
+          "playerId": "agent-123",
+          "rank": 10,
+          "score": 669.65,
+          "validChallenges": 26
+        },
+        {
+          "displayName": "SIM · Pablo F. 480",
+          "logicalOpponents": 14,
+          "movement": 0,
+          "playerId": "agent-480",
+          "rank": 11,
+          "score": 667.04,
+          "validChallenges": 30
+        },
+        {
+          "displayName": "SIM · Bruno L. 314",
+          "logicalOpponents": 13,
+          "movement": 0,
+          "playerId": "agent-314",
+          "rank": 12,
+          "score": 663.91,
+          "validChallenges": 39
+        },
+        {
+          "displayName": "SIM · Sergio V. 282",
+          "logicalOpponents": 10,
+          "movement": 0,
+          "playerId": "agent-282",
+          "rank": 13,
+          "score": 658.11,
+          "validChallenges": 34
+        },
+        {
+          "displayName": "SIM · Leo S. 049",
+          "logicalOpponents": 14,
+          "movement": 0,
+          "playerId": "agent-049",
+          "rank": 14,
+          "score": 653.99,
+          "validChallenges": 28
+        },
+        {
+          "displayName": "SIM · Marta D. 420",
+          "logicalOpponents": 13,
+          "movement": -1,
+          "playerId": "agent-420",
+          "rank": 15,
+          "score": 653.79,
+          "validChallenges": 25
+        },
+        {
+          "displayName": "SIM · Pablo P. 588",
+          "logicalOpponents": 14,
+          "movement": 0,
+          "playerId": "agent-588",
+          "rank": 16,
+          "score": 644.06,
+          "validChallenges": 31
+        },
+        {
+          "displayName": "SIM · Sofía G. 371",
+          "logicalOpponents": 18,
+          "movement": 0,
+          "playerId": "agent-371",
+          "rank": 17,
+          "score": 643.98,
+          "validChallenges": 28
+        },
+        {
+          "displayName": "SIM · Joel F. 460",
+          "logicalOpponents": 18,
+          "movement": 0,
+          "playerId": "agent-460",
+          "rank": 18,
+          "score": 639.77,
+          "validChallenges": 48
+        },
+        {
+          "displayName": "SIM · Pablo B. 564",
+          "logicalOpponents": 13,
+          "movement": 0,
+          "playerId": "agent-564",
+          "rank": 19,
+          "score": 631.34,
+          "validChallenges": 23
+        },
+        {
+          "displayName": "SIM · Marta F. 471",
+          "logicalOpponents": 13,
+          "movement": 0,
+          "playerId": "agent-471",
+          "rank": 20,
+          "score": 629.86,
+          "validChallenges": 20
+        },
+        {
+          "displayName": "SIM · Noa P. 194",
+          "logicalOpponents": 10,
+          "movement": 0,
+          "playerId": "agent-194",
+          "rank": 21,
+          "score": 623.66,
+          "validChallenges": 36
+        },
+        {
+          "displayName": "SIM · Lina G. 086",
+          "logicalOpponents": 12,
+          "movement": 0,
+          "playerId": "agent-086",
+          "rank": 22,
+          "score": 623.5,
+          "validChallenges": 25
+        },
+        {
+          "displayName": "SIM · Marta S. 060",
+          "logicalOpponents": 13,
+          "movement": 0,
+          "playerId": "agent-060",
+          "rank": 23,
+          "score": 622.78,
+          "validChallenges": 21
+        },
+        {
+          "displayName": "SIM · Marc M. 468",
+          "logicalOpponents": 24,
+          "movement": 0,
+          "playerId": "agent-468",
+          "rank": 24,
+          "score": 611.72,
+          "validChallenges": 64
+        },
+        {
+          "displayName": "SIM · Irene V. 288",
+          "logicalOpponents": 11,
+          "movement": 0,
+          "playerId": "agent-288",
+          "rank": 25,
+          "score": 610.13,
+          "validChallenges": 24
+        },
+        {
+          "displayName": "SIM · Vera C. 264",
+          "logicalOpponents": 39,
+          "movement": 0,
+          "playerId": "agent-264",
+          "rank": 26,
+          "score": 609.86,
+          "validChallenges": 250
+        },
+        {
+          "displayName": "SIM · Eva R. 565",
+          "logicalOpponents": 8,
+          "movement": 0,
+          "playerId": "agent-565",
+          "rank": 27,
+          "score": 606.39,
+          "validChallenges": 28
+        },
+        {
+          "displayName": "SIM · Vera P. 545",
+          "logicalOpponents": 18,
+          "movement": 0,
+          "playerId": "agent-545",
+          "rank": 28,
+          "score": 605.49,
+          "validChallenges": 41
+        },
+        {
+          "displayName": "SIM · Uri T. 481",
+          "logicalOpponents": 16,
+          "movement": 0,
+          "playerId": "agent-481",
+          "rank": 29,
+          "score": 596.15,
+          "validChallenges": 27
+        },
+        {
+          "displayName": "SIM · Irene F. 407",
+          "logicalOpponents": 17,
+          "movement": 0,
+          "playerId": "agent-407",
+          "rank": 30,
+          "score": 593.16,
+          "validChallenges": 36
+        },
+        {
+          "displayName": "SIM · Sergio F. 585",
+          "logicalOpponents": 19,
+          "movement": 0,
+          "playerId": "agent-585",
+          "rank": 31,
+          "score": 593.02,
+          "validChallenges": 35
+        },
+        {
+          "displayName": "SIM · Vera D. 596",
+          "logicalOpponents": 15,
+          "movement": 0,
+          "playerId": "agent-596",
+          "rank": 32,
+          "score": 591.42,
+          "validChallenges": 26
+        },
+        {
+          "displayName": "SIM · Alex D. 003",
+          "logicalOpponents": 19,
+          "movement": 0,
+          "playerId": "agent-003",
+          "rank": 33,
+          "score": 576.97,
+          "validChallenges": 36
+        },
+        {
+          "displayName": "SIM · Leo V. 260",
+          "logicalOpponents": 13,
+          "movement": 0,
+          "playerId": "agent-260",
+          "rank": 34,
+          "score": 574.79,
+          "validChallenges": 21
+        },
+        {
+          "displayName": "SIM · Pablo G. 338",
+          "logicalOpponents": 13,
+          "movement": 0,
+          "playerId": "agent-338",
+          "rank": 35,
+          "score": 569.35,
+          "validChallenges": 51
+        },
+        {
+          "displayName": "SIM · Víctor B. 327",
+          "logicalOpponents": 14,
+          "movement": 0,
+          "playerId": "agent-327",
+          "rank": 36,
+          "score": 563.86,
+          "validChallenges": 20
+        },
+        {
+          "displayName": "SIM · Uri S. 263",
+          "logicalOpponents": 16,
+          "movement": 0,
+          "playerId": "agent-263",
+          "rank": 37,
+          "score": 559.2,
+          "validChallenges": 30
+        },
+        {
+          "displayName": "SIM · Hugo F. 289",
+          "logicalOpponents": 14,
+          "movement": 0,
+          "playerId": "agent-289",
+          "rank": 38,
+          "score": 550.05,
+          "validChallenges": 24
+        },
+        {
+          "displayName": "SIM · Víctor C. 321",
+          "logicalOpponents": 7,
+          "movement": -1,
+          "playerId": "agent-321",
+          "rank": 39,
+          "score": 547.97,
+          "validChallenges": 22
+        },
+        {
+          "displayName": "SIM · Nico V. 225",
+          "logicalOpponents": 12,
+          "movement": 0,
+          "playerId": "agent-225",
+          "rank": 40,
+          "score": 540.82,
+          "validChallenges": 22
+        },
+        {
+          "displayName": "SIM · Noa C. 378",
+          "logicalOpponents": 19,
+          "movement": 0,
+          "playerId": "agent-378",
+          "rank": 41,
+          "score": 536.3,
+          "validChallenges": 42
+        },
+        {
+          "displayName": "SIM · Eva M. 319",
+          "logicalOpponents": 13,
+          "movement": 0,
+          "playerId": "agent-319",
+          "rank": 42,
+          "score": 521.12,
+          "validChallenges": 25
+        },
+        {
+          "displayName": "SIM · Irene G. 007",
+          "logicalOpponents": 8,
+          "movement": -1,
+          "playerId": "agent-007",
+          "rank": 43,
+          "score": 516.73,
+          "validChallenges": 26
+        },
+        {
+          "displayName": "SIM · Sofía T. 414",
+          "logicalOpponents": 13,
+          "movement": 0,
+          "playerId": "agent-414",
+          "rank": 44,
+          "score": 487.64,
+          "validChallenges": 22
+        }
+      ],
+      "snapshot": {
+        "calculatedAt": "2027-06-30T00:00:00+00:00",
+        "observedReasons": [
+          "insufficient_award_candidates"
+        ],
+        "observedState": "trophy_not_ready",
+        "policyVersion": "territory-award-readiness-v1",
+        "readinessState": "trophy_not_ready",
+        "revision": 1,
+        "season": "2026-27",
+        "signals": {
+          "activePlayers": 191,
+          "activeTeams": 14,
+          "awardCandidatePlayers": 8,
+          "independentOpponentEdges": 24,
+          "independentTeamCoverage": 0.9286,
+          "logicalOpponentEdges": 24,
+          "medianChallenges": 12,
+          "medianCompetitiveConfidence": 0.7005,
+          "medianLogicalOpponents": 8,
+          "observedHistoryWeeks": 41,
+          "rankingEligiblePlayers": 44,
+          "validChallenges": 3170
+        },
+        "stability": {
+          "direction": "stable",
+          "observedWindows": 1,
+          "requiredWindows": 1
+        },
+        "territory": "08"
+      },
+      "unranked": [
+        {
+          "displayName": "SIM · Rai G. 005",
+          "missingChallenges": 5,
+          "missingLogicalOpponents": 0,
+          "playerId": "agent-005"
+        },
+        {
+          "displayName": "SIM · Carla T. 006",
+          "missingChallenges": 7,
+          "missingLogicalOpponents": 1,
+          "playerId": "agent-006"
+        },
+        {
+          "displayName": "SIM · Lina L. 009",
+          "missingChallenges": 0,
+          "missingLogicalOpponents": 0,
+          "playerId": "agent-009"
+        },
+        {
+          "displayName": "SIM · Irene V. 022",
+          "missingChallenges": 3,
+          "missingLogicalOpponents": 0,
+          "playerId": "agent-022"
+        },
+        {
+          "displayName": "SIM · Uri P. 025",
+          "missingChallenges": 3,
+          "missingLogicalOpponents": 0,
+          "playerId": "agent-025"
+        },
+        {
+          "displayName": "SIM · Eva N. 028",
+          "missingChallenges": 5,
+          "missingLogicalOpponents": 1,
+          "playerId": "agent-028"
+        },
+        {
+          "displayName": "SIM · Pablo G. 029",
+          "missingChallenges": 3,
+          "missingLogicalOpponents": 0,
+          "playerId": "agent-029"
+        },
+        {
+          "displayName": "SIM · Paula N. 033",
+          "missingChallenges": 4,
+          "missingLogicalOpponents": 0,
+          "playerId": "agent-033"
+        },
+        {
+          "displayName": "SIM · Sofía B. 038",
+          "missingChallenges": 0,
+          "missingLogicalOpponents": 0,
+          "playerId": "agent-038"
+        },
+        {
+          "displayName": "SIM · Pablo A. 041",
+          "missingChallenges": 5,
+          "missingLogicalOpponents": 1,
+          "playerId": "agent-041"
+        },
+        {
+          "displayName": "SIM · Dani F. 056",
+          "missingChallenges": 11,
+          "missingLogicalOpponents": 2,
+          "playerId": "agent-056"
+        },
+        {
+          "displayName": "SIM · Eric B. 058",
+          "missingChallenges": 14,
+          "missingLogicalOpponents": 5,
+          "playerId": "agent-058"
+        }
+      ],
+      "provinceName": "Barcelona",
+      "publicSurface": {
+        "awardsAvailable": false,
+        "message": "El ranking está activo. Los premios de temporada se habilitarán cuando exista suficiente actividad competitiva en la zona.",
+        "rankingVisible": true
+      }
+    },
+    {
+      "provinceCode": "15",
+      "ranking": [
+        {
+          "displayName": "SIM · Irene B. 586",
+          "logicalOpponents": 28,
+          "movement": 0,
+          "playerId": "agent-586",
+          "rank": 1,
+          "score": 725.99,
+          "validChallenges": 79
+        },
+        {
+          "displayName": "SIM · Vera C. 159",
+          "logicalOpponents": 15,
+          "movement": 0,
+          "playerId": "agent-159",
+          "rank": 2,
+          "score": 709.89,
+          "validChallenges": 29
+        },
+        {
+          "displayName": "SIM · Vera S. 192",
+          "logicalOpponents": 20,
+          "movement": 0,
+          "playerId": "agent-192",
+          "rank": 3,
+          "score": 700.03,
+          "validChallenges": 38
+        },
+        {
+          "displayName": "SIM · Dani R. 366",
+          "logicalOpponents": 18,
+          "movement": 0,
+          "playerId": "agent-366",
+          "rank": 4,
+          "score": 693.14,
+          "validChallenges": 34
+        },
+        {
+          "displayName": "SIM · Lina L. 612",
+          "logicalOpponents": 19,
+          "movement": 0,
+          "playerId": "agent-612",
+          "rank": 5,
+          "score": 669.05,
+          "validChallenges": 38
+        },
+        {
+          "displayName": "SIM · Víctor B. 384",
+          "logicalOpponents": 19,
+          "movement": 0,
+          "playerId": "agent-384",
+          "rank": 6,
+          "score": 639.55,
+          "validChallenges": 38
+        },
+        {
+          "displayName": "SIM · Rai M. 222",
+          "logicalOpponents": 18,
+          "movement": 0,
+          "playerId": "agent-222",
+          "rank": 7,
+          "score": 604.04,
+          "validChallenges": 48
+        }
+      ],
+      "snapshot": {
+        "calculatedAt": "2027-06-30T00:00:00+00:00",
+        "observedReasons": [
+          "insufficient_active_teams",
+          "insufficient_independent_competition"
+        ],
+        "observedState": "ranking_inactive",
+        "policyVersion": "territory-award-readiness-v1",
+        "readinessState": "ranking_inactive",
+        "revision": 1,
+        "season": "2026-27",
+        "signals": {
+          "activePlayers": 20,
+          "activeTeams": 3,
+          "awardCandidatePlayers": 2,
+          "independentOpponentEdges": 1,
+          "independentTeamCoverage": 0.6667,
+          "logicalOpponentEdges": 1,
+          "medianChallenges": 26.5,
+          "medianCompetitiveConfidence": 0.6918,
+          "medianLogicalOpponents": 14.5,
+          "observedHistoryWeeks": 19,
+          "rankingEligiblePlayers": 7,
+          "validChallenges": 586
+        },
+        "stability": {
+          "direction": "stable",
+          "observedWindows": 1,
+          "requiredWindows": 1
+        },
+        "territory": "15"
+      },
+      "unranked": [
+        {
+          "displayName": "SIM · Marc F. 020",
+          "missingChallenges": 5,
+          "missingLogicalOpponents": 0,
+          "playerId": "agent-020"
+        },
+        {
+          "displayName": "SIM · Sofía V. 044",
+          "missingChallenges": 0,
+          "missingLogicalOpponents": 0,
+          "playerId": "agent-044"
+        },
+        {
+          "displayName": "SIM · Rai R. 167",
+          "missingChallenges": 15,
+          "missingLogicalOpponents": 6,
+          "playerId": "agent-167"
+        },
+        {
+          "displayName": "SIM · Joel T. 265",
+          "missingChallenges": 3,
+          "missingLogicalOpponents": 0,
+          "playerId": "agent-265"
+        },
+        {
+          "displayName": "SIM · Sara N. 266",
+          "missingChallenges": 0,
+          "missingLogicalOpponents": 0,
+          "playerId": "agent-266"
+        },
+        {
+          "displayName": "SIM · Vera S. 269",
+          "missingChallenges": 0,
+          "missingLogicalOpponents": 0,
+          "playerId": "agent-269"
+        },
+        {
+          "displayName": "SIM · Leo R. 370",
+          "missingChallenges": 0,
+          "missingLogicalOpponents": 0,
+          "playerId": "agent-370"
+        },
+        {
+          "displayName": "SIM · Marta T. 376",
+          "missingChallenges": 0,
+          "missingLogicalOpponents": 0,
+          "playerId": "agent-376"
+        },
+        {
+          "displayName": "SIM · Marta B. 411",
+          "missingChallenges": 15,
+          "missingLogicalOpponents": 6,
+          "playerId": "agent-411"
+        },
+        {
+          "displayName": "SIM · Joel D. 454",
+          "missingChallenges": 15,
+          "missingLogicalOpponents": 6,
+          "playerId": "agent-454"
+        },
+        {
+          "displayName": "SIM · Alex M. 572",
+          "missingChallenges": 7,
+          "missingLogicalOpponents": 0,
+          "playerId": "agent-572"
+        },
+        {
+          "displayName": "SIM · Alma G. 611",
+          "missingChallenges": 0,
+          "missingLogicalOpponents": 0,
+          "playerId": "agent-611"
+        }
+      ],
+      "provinceName": "A Coruña",
+      "publicSurface": {
+        "awardsAvailable": false,
+        "message": "La clasificación se mostrará cuando exista suficiente actividad competitiva en la zona.",
+        "rankingVisible": false
+      }
+    },
+    {
+      "provinceCode": "17",
+      "ranking": [
+        {
+          "displayName": "SIM · Bruno B. 127",
+          "logicalOpponents": 14,
+          "movement": 0,
+          "playerId": "agent-127",
+          "rank": 1,
+          "score": 719.47,
+          "validChallenges": 26
+        },
+        {
+          "displayName": "SIM · Sara S. 432",
+          "logicalOpponents": 17,
+          "movement": 0,
+          "playerId": "agent-432",
+          "rank": 2,
+          "score": 670.48,
+          "validChallenges": 35
+        },
+        {
+          "displayName": "SIM · Dani D. 286",
+          "logicalOpponents": 20,
+          "movement": 0,
+          "playerId": "agent-286",
+          "rank": 3,
+          "score": 571.97,
+          "validChallenges": 47
+        },
+        {
+          "displayName": "SIM · Marc C. 325",
+          "logicalOpponents": 16,
+          "movement": 0,
+          "playerId": "agent-325",
+          "rank": 4,
+          "score": 560.2,
+          "validChallenges": 27
+        },
+        {
+          "displayName": "SIM · Alma F. 595",
+          "logicalOpponents": 14,
+          "movement": 0,
+          "playerId": "agent-595",
+          "rank": 5,
+          "score": 557.36,
+          "validChallenges": 23
+        },
+        {
+          "displayName": "SIM · Marc R. 162",
+          "logicalOpponents": 14,
+          "movement": 0,
+          "playerId": "agent-162",
+          "rank": 6,
+          "score": 553.27,
+          "validChallenges": 22
+        },
+        {
+          "displayName": "SIM · Eva A. 014",
+          "logicalOpponents": 13,
+          "movement": 0,
+          "playerId": "agent-014",
+          "rank": 7,
+          "score": 550.25,
+          "validChallenges": 17
+        }
+      ],
+      "snapshot": {
+        "calculatedAt": "2027-06-30T00:00:00+00:00",
+        "observedReasons": [
+          "insufficient_independent_competition"
+        ],
+        "observedState": "ranking_inactive",
+        "policyVersion": "territory-award-readiness-v1",
+        "readinessState": "ranking_inactive",
+        "revision": 1,
+        "season": "2026-27",
+        "signals": {
+          "activePlayers": 53,
+          "activeTeams": 4,
+          "awardCandidatePlayers": 1,
+          "independentOpponentEdges": 1,
+          "independentTeamCoverage": 0.5,
+          "logicalOpponentEdges": 1,
+          "medianChallenges": 8.5,
+          "medianCompetitiveConfidence": 0.703,
+          "medianLogicalOpponents": 6,
+          "observedHistoryWeeks": 27,
+          "rankingEligiblePlayers": 7,
+          "validChallenges": 580
+        },
+        "stability": {
+          "direction": "stable",
+          "observedWindows": 1,
+          "requiredWindows": 1
+        },
+        "territory": "17"
+      },
+      "unranked": [
+        {
+          "displayName": "SIM · Pablo A. 001",
+          "missingChallenges": 15,
+          "missingLogicalOpponents": 6,
+          "playerId": "agent-001"
+        },
+        {
+          "displayName": "SIM · Paula T. 019",
+          "missingChallenges": 0,
+          "missingLogicalOpponents": 0,
+          "playerId": "agent-019"
+        },
+        {
+          "displayName": "SIM · Alex A. 023",
+          "missingChallenges": 3,
+          "missingLogicalOpponents": 0,
+          "playerId": "agent-023"
+        },
+        {
+          "displayName": "SIM · Noa A. 034",
+          "missingChallenges": 15,
+          "missingLogicalOpponents": 6,
+          "playerId": "agent-034"
+        },
+        {
+          "displayName": "SIM · Eric G. 040",
+          "missingChallenges": 10,
+          "missingLogicalOpponents": 2,
+          "playerId": "agent-040"
+        },
+        {
+          "displayName": "SIM · Marta L. 050",
+          "missingChallenges": 7,
+          "missingLogicalOpponents": 0,
+          "playerId": "agent-050"
+        },
+        {
+          "displayName": "SIM · Noa R. 052",
+          "missingChallenges": 15,
+          "missingLogicalOpponents": 6,
+          "playerId": "agent-052"
+        },
+        {
+          "displayName": "SIM · Leo S. 062",
+          "missingChallenges": 12,
+          "missingLogicalOpponents": 3,
+          "playerId": "agent-062"
+        },
+        {
+          "displayName": "SIM · Noa R. 067",
+          "missingChallenges": 15,
+          "missingLogicalOpponents": 6,
+          "playerId": "agent-067"
+        },
+        {
+          "displayName": "SIM · Marc C. 068",
+          "missingChallenges": 1,
+          "missingLogicalOpponents": 0,
+          "playerId": "agent-068"
+        },
+        {
+          "displayName": "SIM · Eva M. 088",
+          "missingChallenges": 13,
+          "missingLogicalOpponents": 4,
+          "playerId": "agent-088"
+        },
+        {
+          "displayName": "SIM · Dani A. 102",
+          "missingChallenges": 5,
+          "missingLogicalOpponents": 1,
+          "playerId": "agent-102"
+        }
+      ],
+      "provinceName": "Girona",
+      "publicSurface": {
+        "awardsAvailable": false,
+        "message": "La clasificación se mostrará cuando exista suficiente actividad competitiva en la zona.",
+        "rankingVisible": false
+      }
+    },
+    {
+      "provinceCode": "28",
+      "ranking": [
+        {
+          "displayName": "SIM · Hugo A. 064",
+          "logicalOpponents": 14,
+          "movement": 0,
+          "playerId": "agent-064",
+          "rank": 1,
+          "score": 741.6,
+          "validChallenges": 43
+        },
+        {
+          "displayName": "SIM · Hugo G. 430",
+          "logicalOpponents": 20,
+          "movement": 0,
+          "playerId": "agent-430",
+          "rank": 2,
+          "score": 716.94,
+          "validChallenges": 56
+        },
+        {
+          "displayName": "SIM · Leo D. 391",
+          "logicalOpponents": 9,
+          "movement": 0,
+          "playerId": "agent-391",
+          "rank": 3,
+          "score": 710.58,
+          "validChallenges": 42
+        },
+        {
+          "displayName": "SIM · Hugo M. 069",
+          "logicalOpponents": 13,
+          "movement": 0,
+          "playerId": "agent-069",
+          "rank": 4,
+          "score": 704.16,
+          "validChallenges": 26
+        },
+        {
+          "displayName": "SIM · Rai V. 421",
+          "logicalOpponents": 14,
+          "movement": 0,
+          "playerId": "agent-421",
+          "rank": 5,
+          "score": 703.31,
+          "validChallenges": 25
+        },
+        {
+          "displayName": "SIM · Irene F. 138",
+          "logicalOpponents": 9,
+          "movement": 0,
+          "playerId": "agent-138",
+          "rank": 6,
+          "score": 699.06,
+          "validChallenges": 36
+        },
+        {
+          "displayName": "SIM · Rai R. 343",
+          "logicalOpponents": 9,
+          "movement": 0,
+          "playerId": "agent-343",
+          "rank": 7,
+          "score": 697.96,
+          "validChallenges": 29
+        },
+        {
+          "displayName": "SIM · Nico V. 337",
+          "logicalOpponents": 17,
+          "movement": 0,
+          "playerId": "agent-337",
+          "rank": 8,
+          "score": 695.87,
+          "validChallenges": 39
+        },
+        {
+          "displayName": "SIM · Alex D. 236",
+          "logicalOpponents": 14,
+          "movement": 0,
+          "playerId": "agent-236",
+          "rank": 9,
+          "score": 693.53,
+          "validChallenges": 23
+        },
+        {
+          "displayName": "SIM · Eva R. 271",
+          "logicalOpponents": 15,
+          "movement": 0,
+          "playerId": "agent-271",
+          "rank": 10,
+          "score": 691.73,
+          "validChallenges": 26
+        },
+        {
+          "displayName": "SIM · Lina S. 488",
+          "logicalOpponents": 9,
+          "movement": 0,
+          "playerId": "agent-488",
+          "rank": 11,
+          "score": 688.3,
+          "validChallenges": 29
+        },
+        {
+          "displayName": "SIM · Hugo M. 310",
+          "logicalOpponents": 20,
+          "movement": 0,
+          "playerId": "agent-310",
+          "rank": 12,
+          "score": 688.25,
+          "validChallenges": 47
+        },
+        {
+          "displayName": "SIM · Irene S. 209",
+          "logicalOpponents": 14,
+          "movement": 0,
+          "playerId": "agent-209",
+          "rank": 13,
+          "score": 674.55,
+          "validChallenges": 93
+        },
+        {
+          "displayName": "SIM · Leo B. 250",
+          "logicalOpponents": 20,
+          "movement": 0,
+          "playerId": "agent-250",
+          "rank": 14,
+          "score": 671.71,
+          "validChallenges": 40
+        },
+        {
+          "displayName": "SIM · Víctor V. 452",
+          "logicalOpponents": 13,
+          "movement": 0,
+          "playerId": "agent-452",
+          "rank": 15,
+          "score": 665.95,
+          "validChallenges": 24
+        },
+        {
+          "displayName": "SIM · Marta A. 536",
+          "logicalOpponents": 12,
+          "movement": 0,
+          "playerId": "agent-536",
+          "rank": 16,
+          "score": 661.08,
+          "validChallenges": 19
+        },
+        {
+          "displayName": "SIM · Eva S. 580",
+          "logicalOpponents": 15,
+          "movement": -1,
+          "playerId": "agent-580",
+          "rank": 17,
+          "score": 660.03,
+          "validChallenges": 27
+        },
+        {
+          "displayName": "SIM · Nico T. 524",
+          "logicalOpponents": 7,
+          "movement": -1,
+          "playerId": "agent-524",
+          "rank": 18,
+          "score": 648.27,
+          "validChallenges": 23
+        },
+        {
+          "displayName": "SIM · Marc P. 190",
+          "logicalOpponents": 8,
+          "movement": -1,
+          "playerId": "agent-190",
+          "rank": 19,
+          "score": 644.86,
+          "validChallenges": 38
+        },
+        {
+          "displayName": "SIM · Alex T. 302",
+          "logicalOpponents": 14,
+          "movement": -1,
+          "playerId": "agent-302",
+          "rank": 20,
+          "score": 642.91,
+          "validChallenges": 41
+        },
+        {
+          "displayName": "SIM · Irene S. 154",
+          "logicalOpponents": 16,
+          "movement": -1,
+          "playerId": "agent-154",
+          "rank": 21,
+          "score": 641.77,
+          "validChallenges": 32
+        },
+        {
+          "displayName": "SIM · Nico N. 135",
+          "logicalOpponents": 10,
+          "movement": -1,
+          "playerId": "agent-135",
+          "rank": 22,
+          "score": 641.31,
+          "validChallenges": 47
+        },
+        {
+          "displayName": "SIM · Dani N. 356",
+          "logicalOpponents": 16,
+          "movement": -1,
+          "playerId": "agent-356",
+          "rank": 23,
+          "score": 637.05,
+          "validChallenges": 25
+        },
+        {
+          "displayName": "SIM · Bruno F. 527",
+          "logicalOpponents": 17,
+          "movement": -1,
+          "playerId": "agent-527",
+          "rank": 24,
+          "score": 630.92,
+          "validChallenges": 33
+        },
+        {
+          "displayName": "SIM · Víctor A. 388",
+          "logicalOpponents": 14,
+          "movement": -1,
+          "playerId": "agent-388",
+          "rank": 25,
+          "score": 619.78,
+          "validChallenges": 32
+        },
+        {
+          "displayName": "SIM · Paula P. 065",
+          "logicalOpponents": 15,
+          "movement": -1,
+          "playerId": "agent-065",
+          "rank": 26,
+          "score": 618.19,
+          "validChallenges": 40
+        },
+        {
+          "displayName": "SIM · Sofía F. 514",
+          "logicalOpponents": 18,
+          "movement": -1,
+          "playerId": "agent-514",
+          "rank": 27,
+          "score": 612.71,
+          "validChallenges": 41
+        },
+        {
+          "displayName": "SIM · Alex B. 579",
+          "logicalOpponents": 14,
+          "movement": -1,
+          "playerId": "agent-579",
+          "rank": 28,
+          "score": 607.57,
+          "validChallenges": 69
+        },
+        {
+          "displayName": "SIM · Dani A. 300",
+          "logicalOpponents": 18,
+          "movement": -1,
+          "playerId": "agent-300",
+          "rank": 29,
+          "score": 603.6,
+          "validChallenges": 37
+        },
+        {
+          "displayName": "SIM · Joel N. 188",
+          "logicalOpponents": 16,
+          "movement": -1,
+          "playerId": "agent-188",
+          "rank": 30,
+          "score": 599.4,
+          "validChallenges": 32
+        },
+        {
+          "displayName": "SIM · Carla L. 335",
+          "logicalOpponents": 9,
+          "movement": -1,
+          "playerId": "agent-335",
+          "rank": 31,
+          "score": 597.25,
+          "validChallenges": 52
+        },
+        {
+          "displayName": "SIM · Marc S. 317",
+          "logicalOpponents": 10,
+          "movement": -1,
+          "playerId": "agent-317",
+          "rank": 32,
+          "score": 586.75,
+          "validChallenges": 41
+        },
+        {
+          "displayName": "SIM · Víctor S. 413",
+          "logicalOpponents": 18,
+          "movement": -1,
+          "playerId": "agent-413",
+          "rank": 33,
+          "score": 586.51,
+          "validChallenges": 31
+        },
+        {
+          "displayName": "SIM · Paula A. 614",
+          "logicalOpponents": 15,
+          "movement": -1,
+          "playerId": "agent-614",
+          "rank": 34,
+          "score": 585.88,
+          "validChallenges": 34
+        },
+        {
+          "displayName": "SIM · Noa B. 309",
+          "logicalOpponents": 10,
+          "movement": -1,
+          "playerId": "agent-309",
+          "rank": 35,
+          "score": 580.56,
+          "validChallenges": 76
+        },
+        {
+          "displayName": "SIM · Marta V. 569",
+          "logicalOpponents": 15,
+          "movement": -1,
+          "playerId": "agent-569",
+          "rank": 36,
+          "score": 579.7,
+          "validChallenges": 31
+        },
+        {
+          "displayName": "SIM · Lina V. 303",
+          "logicalOpponents": 21,
+          "movement": -1,
+          "playerId": "agent-303",
+          "rank": 37,
+          "score": 575.16,
+          "validChallenges": 66
+        },
+        {
+          "displayName": "SIM · Paula B. 367",
+          "logicalOpponents": 21,
+          "movement": -1,
+          "playerId": "agent-367",
+          "rank": 38,
+          "score": 572.9,
+          "validChallenges": 58
+        },
+        {
+          "displayName": "SIM · Marc T. 525",
+          "logicalOpponents": 15,
+          "movement": -1,
+          "playerId": "agent-525",
+          "rank": 39,
+          "score": 565.44,
+          "validChallenges": 30
+        },
+        {
+          "displayName": "SIM · Joel N. 516",
+          "logicalOpponents": 18,
+          "movement": -1,
+          "playerId": "agent-516",
+          "rank": 40,
+          "score": 557.6,
+          "validChallenges": 35
+        },
+        {
+          "displayName": "SIM · Sara R. 071",
+          "logicalOpponents": 18,
+          "movement": -1,
+          "playerId": "agent-071",
+          "rank": 41,
+          "score": 549.5,
+          "validChallenges": 52
+        },
+        {
+          "displayName": "SIM · Irene N. 087",
+          "logicalOpponents": 12,
+          "movement": -1,
+          "playerId": "agent-087",
+          "rank": 42,
+          "score": 545.83,
+          "validChallenges": 23
+        },
+        {
+          "displayName": "SIM · Marta N. 278",
+          "logicalOpponents": 10,
+          "movement": -1,
+          "playerId": "agent-278",
+          "rank": 43,
+          "score": 530.03,
+          "validChallenges": 41
+        },
+        {
+          "displayName": "SIM · Nico F. 199",
+          "logicalOpponents": 13,
+          "movement": -1,
+          "playerId": "agent-199",
+          "rank": 44,
+          "score": 521.01,
+          "validChallenges": 18
+        },
+        {
+          "displayName": "SIM · Sara L. 373",
+          "logicalOpponents": 16,
+          "movement": -1,
+          "playerId": "agent-373",
+          "rank": 45,
+          "score": 520.06,
+          "validChallenges": 27
+        },
+        {
+          "displayName": "SIM · Alma M. 002",
+          "logicalOpponents": 19,
+          "movement": -1,
+          "playerId": "agent-002",
+          "rank": 46,
+          "score": 515.41,
+          "validChallenges": 41
+        },
+        {
+          "displayName": "SIM · Nico C. 112",
+          "logicalOpponents": 12,
+          "movement": -1,
+          "playerId": "agent-112",
+          "rank": 47,
+          "score": 509.43,
+          "validChallenges": 25
+        },
+        {
+          "displayName": "SIM · Pablo D. 537",
+          "logicalOpponents": 10,
+          "movement": -1,
+          "playerId": "agent-537",
+          "rank": 48,
+          "score": 509.36,
+          "validChallenges": 53
+        },
+        {
+          "displayName": "SIM · Joel A. 604",
+          "logicalOpponents": 16,
+          "movement": -1,
+          "playerId": "agent-604",
+          "rank": 49,
+          "score": 503.38,
+          "validChallenges": 44
+        },
+        {
+          "displayName": "SIM · Pablo G. 530",
+          "logicalOpponents": 10,
+          "movement": -1,
+          "playerId": "agent-530",
+          "rank": 50,
+          "score": 497.98,
+          "validChallenges": 29
+        }
+      ],
+      "snapshot": {
+        "calculatedAt": "2027-06-30T00:00:00+00:00",
+        "observedReasons": [
+          "insufficient_award_candidates"
+        ],
+        "observedState": "trophy_not_ready",
+        "policyVersion": "territory-award-readiness-v1",
+        "readinessState": "trophy_not_ready",
+        "revision": 1,
+        "season": "2026-27",
+        "signals": {
+          "activePlayers": 151,
+          "activeTeams": 15,
+          "awardCandidatePlayers": 5,
+          "independentOpponentEdges": 26,
+          "independentTeamCoverage": 0.8667,
+          "logicalOpponentEdges": 32,
+          "medianChallenges": 17,
+          "medianCompetitiveConfidence": 0.6834,
+          "medianLogicalOpponents": 9,
+          "observedHistoryWeeks": 42,
+          "rankingEligiblePlayers": 52,
+          "validChallenges": 3476
+        },
+        "stability": {
+          "direction": "stable",
+          "observedWindows": 1,
+          "requiredWindows": 1
+        },
+        "territory": "28"
+      },
+      "unranked": [
+        {
+          "displayName": "SIM · Bruno R. 004",
+          "missingChallenges": 10,
+          "missingLogicalOpponents": 3,
+          "playerId": "agent-004"
+        },
+        {
+          "displayName": "SIM · Lina R. 008",
+          "missingChallenges": 0,
+          "missingLogicalOpponents": 0,
+          "playerId": "agent-008"
+        },
+        {
+          "displayName": "SIM · Joel N. 012",
+          "missingChallenges": 2,
+          "missingLogicalOpponents": 0,
+          "playerId": "agent-012"
+        },
+        {
+          "displayName": "SIM · Noa G. 013",
+          "missingChallenges": 2,
+          "missingLogicalOpponents": 0,
+          "playerId": "agent-013"
+        },
+        {
+          "displayName": "SIM · Nico N. 018",
+          "missingChallenges": 0,
+          "missingLogicalOpponents": 1,
+          "playerId": "agent-018"
+        },
+        {
+          "displayName": "SIM · Eric N. 026",
+          "missingChallenges": 0,
+          "missingLogicalOpponents": 0,
+          "playerId": "agent-026"
+        },
+        {
+          "displayName": "SIM · Eric S. 027",
+          "missingChallenges": 0,
+          "missingLogicalOpponents": 1,
+          "playerId": "agent-027"
+        },
+        {
+          "displayName": "SIM · Leo B. 032",
+          "missingChallenges": 3,
+          "missingLogicalOpponents": 1,
+          "playerId": "agent-032"
+        },
+        {
+          "displayName": "SIM · Carla B. 036",
+          "missingChallenges": 0,
+          "missingLogicalOpponents": 1,
+          "playerId": "agent-036"
+        },
+        {
+          "displayName": "SIM · Marc G. 042",
+          "missingChallenges": 0,
+          "missingLogicalOpponents": 0,
+          "playerId": "agent-042"
+        },
+        {
+          "displayName": "SIM · Paula V. 043",
+          "missingChallenges": 15,
+          "missingLogicalOpponents": 6,
+          "playerId": "agent-043"
+        },
+        {
+          "displayName": "SIM · Rai D. 055",
+          "missingChallenges": 8,
+          "missingLogicalOpponents": 1,
+          "playerId": "agent-055"
+        }
+      ],
+      "provinceName": "Madrid",
+      "publicSurface": {
+        "awardsAvailable": false,
+        "message": "El ranking está activo. Los premios de temporada se habilitarán cuando exista suficiente actividad competitiva en la zona.",
+        "rankingVisible": true
+      }
+    },
+    {
+      "provinceCode": "41",
+      "ranking": [
+        {
+          "displayName": "SIM · Alex N. 170",
+          "logicalOpponents": 9,
+          "movement": 0,
+          "playerId": "agent-170",
+          "rank": 1,
+          "score": 720.03,
+          "validChallenges": 24
+        },
+        {
+          "displayName": "SIM · Noa F. 635",
+          "logicalOpponents": 10,
+          "movement": 0,
+          "playerId": "agent-635",
+          "rank": 2,
+          "score": 659.55,
+          "validChallenges": 37
+        },
+        {
+          "displayName": "SIM · Marta V. 198",
+          "logicalOpponents": 10,
+          "movement": 0,
+          "playerId": "agent-198",
+          "rank": 3,
+          "score": 651.31,
+          "validChallenges": 37
+        },
+        {
+          "displayName": "SIM · Marta B. 448",
+          "logicalOpponents": 10,
+          "movement": 0,
+          "playerId": "agent-448",
+          "rank": 4,
+          "score": 640.08,
+          "validChallenges": 65
+        },
+        {
+          "displayName": "SIM · Uri A. 142",
+          "logicalOpponents": 10,
+          "movement": 0,
+          "playerId": "agent-142",
+          "rank": 5,
+          "score": 625.56,
+          "validChallenges": 36
+        },
+        {
+          "displayName": "SIM · Leo R. 143",
+          "logicalOpponents": 13,
+          "movement": 0,
+          "playerId": "agent-143",
+          "rank": 6,
+          "score": 608.41,
+          "validChallenges": 37
+        },
+        {
+          "displayName": "SIM · Marta S. 156",
+          "logicalOpponents": 10,
+          "movement": 0,
+          "playerId": "agent-156",
+          "rank": 7,
+          "score": 597.66,
+          "validChallenges": 46
+        },
+        {
+          "displayName": "SIM · Eva V. 467",
+          "logicalOpponents": 8,
+          "movement": 0,
+          "playerId": "agent-467",
+          "rank": 8,
+          "score": 592.03,
+          "validChallenges": 33
+        },
+        {
+          "displayName": "SIM · Paula G. 566",
+          "logicalOpponents": 10,
+          "movement": 0,
+          "playerId": "agent-566",
+          "rank": 9,
+          "score": 550.35,
+          "validChallenges": 53
+        },
+        {
+          "displayName": "SIM · Lina N. 247",
+          "logicalOpponents": 10,
+          "movement": 0,
+          "playerId": "agent-247",
+          "rank": 10,
+          "score": 468.75,
+          "validChallenges": 45
+        },
+        {
+          "displayName": "SIM · Nico F. 108",
+          "logicalOpponents": 10,
+          "movement": 0,
+          "playerId": "agent-108",
+          "rank": 11,
+          "score": 455.9,
+          "validChallenges": 40
+        }
+      ],
+      "snapshot": {
+        "calculatedAt": "2027-06-30T00:00:00+00:00",
+        "observedReasons": [
+          "insufficient_independent_competition"
+        ],
+        "observedState": "ranking_inactive",
+        "policyVersion": "territory-award-readiness-v1",
+        "readinessState": "ranking_inactive",
+        "revision": 1,
+        "season": "2026-27",
+        "signals": {
+          "activePlayers": 75,
+          "activeTeams": 4,
+          "awardCandidatePlayers": 1,
+          "independentOpponentEdges": 3,
+          "independentTeamCoverage": 0.75,
+          "logicalOpponentEdges": 3,
+          "medianChallenges": 13,
+          "medianCompetitiveConfidence": 0.6786,
+          "medianLogicalOpponents": 5,
+          "observedHistoryWeeks": 30,
+          "rankingEligiblePlayers": 11,
+          "validChallenges": 1185
+        },
+        "stability": {
+          "direction": "stable",
+          "observedWindows": 1,
+          "requiredWindows": 1
+        },
+        "territory": "41"
+      },
+      "unranked": [
+        {
+          "displayName": "SIM · Paula S. 021",
+          "missingChallenges": 0,
+          "missingLogicalOpponents": 1,
+          "playerId": "agent-021"
+        },
+        {
+          "displayName": "SIM · Leo V. 030",
+          "missingChallenges": 0,
+          "missingLogicalOpponents": 1,
+          "playerId": "agent-030"
+        },
+        {
+          "displayName": "SIM · Sofía R. 045",
+          "missingChallenges": 0,
+          "missingLogicalOpponents": 0,
+          "playerId": "agent-045"
+        },
+        {
+          "displayName": "SIM · Vera F. 051",
+          "missingChallenges": 15,
+          "missingLogicalOpponents": 6,
+          "playerId": "agent-051"
+        },
+        {
+          "displayName": "SIM · Carla R. 053",
+          "missingChallenges": 15,
+          "missingLogicalOpponents": 6,
+          "playerId": "agent-053"
+        },
+        {
+          "displayName": "SIM · Lina S. 057",
+          "missingChallenges": 2,
+          "missingLogicalOpponents": 1,
+          "playerId": "agent-057"
+        },
+        {
+          "displayName": "SIM · Hugo P. 059",
+          "missingChallenges": 0,
+          "missingLogicalOpponents": 1,
+          "playerId": "agent-059"
+        },
+        {
+          "displayName": "SIM · Alex C. 072",
+          "missingChallenges": 0,
+          "missingLogicalOpponents": 0,
+          "playerId": "agent-072"
+        },
+        {
+          "displayName": "SIM · Sergio G. 074",
+          "missingChallenges": 8,
+          "missingLogicalOpponents": 0,
+          "playerId": "agent-074"
+        },
+        {
+          "displayName": "SIM · Bruno B. 077",
+          "missingChallenges": 5,
+          "missingLogicalOpponents": 2,
+          "playerId": "agent-077"
+        },
+        {
+          "displayName": "SIM · Marta P. 078",
+          "missingChallenges": 9,
+          "missingLogicalOpponents": 2,
+          "playerId": "agent-078"
+        },
+        {
+          "displayName": "SIM · Noa C. 084",
+          "missingChallenges": 15,
+          "missingLogicalOpponents": 6,
+          "playerId": "agent-084"
+        }
+      ],
+      "provinceName": "Sevilla",
+      "publicSurface": {
+        "awardsAvailable": false,
+        "message": "La clasificación se mostrará cuando exista suficiente actividad competitiva en la zona.",
+        "rankingVisible": false
+      }
+    },
+    {
+      "provinceCode": "46",
+      "ranking": [
+        {
+          "displayName": "SIM · Sergio N. 274",
+          "logicalOpponents": 39,
+          "movement": 0,
+          "playerId": "agent-274",
+          "rank": 1,
+          "score": 720.66,
+          "validChallenges": 405
+        },
+        {
+          "displayName": "SIM · Lina L. 267",
+          "logicalOpponents": 16,
+          "movement": 0,
+          "playerId": "agent-267",
+          "rank": 2,
+          "score": 665.38,
+          "validChallenges": 54
+        },
+        {
+          "displayName": "SIM · Noa C. 473",
+          "logicalOpponents": 39,
+          "movement": -1,
+          "playerId": "agent-473",
+          "rank": 3,
+          "score": 656.21,
+          "validChallenges": 492
+        },
+        {
+          "displayName": "SIM · Alex L. 089",
+          "logicalOpponents": 15,
+          "movement": 0,
+          "playerId": "agent-089",
+          "rank": 4,
+          "score": 650.12,
+          "validChallenges": 32
+        },
+        {
+          "displayName": "SIM · Sara N. 130",
+          "logicalOpponents": 37,
+          "movement": -1,
+          "playerId": "agent-130",
+          "rank": 5,
+          "score": 636.69,
+          "validChallenges": 272
+        },
+        {
+          "displayName": "SIM · Bruno C. 599",
+          "logicalOpponents": 12,
+          "movement": 0,
+          "playerId": "agent-599",
+          "rank": 6,
+          "score": 618.91,
+          "validChallenges": 46
+        },
+        {
+          "displayName": "SIM · Leo V. 010",
+          "logicalOpponents": 16,
+          "movement": 0,
+          "playerId": "agent-010",
+          "rank": 7,
+          "score": 608.53,
+          "validChallenges": 31
+        },
+        {
+          "displayName": "SIM · Marta N. 048",
+          "logicalOpponents": 39,
+          "movement": -1,
+          "playerId": "agent-048",
+          "rank": 8,
+          "score": 566.46,
+          "validChallenges": 461
+        },
+        {
+          "displayName": "SIM · Irene F. 249",
+          "logicalOpponents": 39,
+          "movement": -1,
+          "playerId": "agent-249",
+          "rank": 9,
+          "score": 560.5,
+          "validChallenges": 429
+        },
+        {
+          "displayName": "SIM · Lina G. 287",
+          "logicalOpponents": 39,
+          "movement": -1,
+          "playerId": "agent-287",
+          "rank": 10,
+          "score": 560.19,
+          "validChallenges": 369
+        },
+        {
+          "displayName": "SIM · Nico G. 640",
+          "logicalOpponents": 16,
+          "movement": 0,
+          "playerId": "agent-640",
+          "rank": 11,
+          "score": 544.5,
+          "validChallenges": 25
+        }
+      ],
+      "snapshot": {
+        "calculatedAt": "2027-06-30T00:00:00+00:00",
+        "observedReasons": [
+          "insufficient_active_teams",
+          "insufficient_award_candidates",
+          "insufficient_independent_competition"
+        ],
+        "observedState": "trophy_not_ready",
+        "policyVersion": "territory-award-readiness-v1",
+        "readinessState": "trophy_not_ready",
+        "revision": 1,
+        "season": "2026-27",
+        "signals": {
+          "activePlayers": 86,
+          "activeTeams": 7,
+          "awardCandidatePlayers": 0,
+          "independentOpponentEdges": 6,
+          "independentTeamCoverage": 0.8571,
+          "logicalOpponentEdges": 6,
+          "medianChallenges": 23,
+          "medianCompetitiveConfidence": 0.6272,
+          "medianLogicalOpponents": 5,
+          "observedHistoryWeeks": 40,
+          "rankingEligiblePlayers": 11,
+          "validChallenges": 4828
+        },
+        "stability": {
+          "direction": "stable",
+          "observedWindows": 1,
+          "requiredWindows": 1
+        },
+        "territory": "46"
+      },
+      "unranked": [
+        {
+          "displayName": "SIM · Alma N. 016",
+          "missingChallenges": 0,
+          "missingLogicalOpponents": 1,
+          "playerId": "agent-016"
+        },
+        {
+          "displayName": "SIM · Uri R. 017",
+          "missingChallenges": 0,
+          "missingLogicalOpponents": 1,
+          "playerId": "agent-017"
+        },
+        {
+          "displayName": "SIM · Paula V. 024",
+          "missingChallenges": 0,
+          "missingLogicalOpponents": 0,
+          "playerId": "agent-024"
+        },
+        {
+          "displayName": "SIM · Irene F. 031",
+          "missingChallenges": 0,
+          "missingLogicalOpponents": 0,
+          "playerId": "agent-031"
+        },
+        {
+          "displayName": "SIM · Alma F. 035",
+          "missingChallenges": 0,
+          "missingLogicalOpponents": 1,
+          "playerId": "agent-035"
+        },
+        {
+          "displayName": "SIM · Sara S. 037",
+          "missingChallenges": 3,
+          "missingLogicalOpponents": 2,
+          "playerId": "agent-037"
+        },
+        {
+          "displayName": "SIM · Eva C. 046",
+          "missingChallenges": 0,
+          "missingLogicalOpponents": 0,
+          "playerId": "agent-046"
+        },
+        {
+          "displayName": "SIM · Joel B. 047",
+          "missingChallenges": 0,
+          "missingLogicalOpponents": 1,
+          "playerId": "agent-047"
+        },
+        {
+          "displayName": "SIM · Hugo C. 066",
+          "missingChallenges": 0,
+          "missingLogicalOpponents": 1,
+          "playerId": "agent-066"
+        },
+        {
+          "displayName": "SIM · Hugo L. 070",
+          "missingChallenges": 15,
+          "missingLogicalOpponents": 6,
+          "playerId": "agent-070"
+        },
+        {
+          "displayName": "SIM · Carla A. 079",
+          "missingChallenges": 0,
+          "missingLogicalOpponents": 0,
+          "playerId": "agent-079"
+        },
+        {
+          "displayName": "SIM · Bruno A. 080",
+          "missingChallenges": 0,
+          "missingLogicalOpponents": 1,
+          "playerId": "agent-080"
+        }
+      ],
+      "provinceName": "Valencia/València",
+      "publicSurface": {
+        "awardsAvailable": false,
+        "message": "El ranking está activo. Los premios de temporada se habilitarán cuando exista suficiente actividad competitiva en la zona.",
+        "rankingVisible": true
+      }
+    },
+    {
+      "provinceCode": "50",
+      "ranking": [
+        {
+          "displayName": "SIM · Hugo D. 181",
+          "logicalOpponents": 10,
+          "movement": 0,
+          "playerId": "agent-181",
+          "rank": 1,
+          "score": 454.27,
+          "validChallenges": 44
+        }
+      ],
+      "snapshot": {
+        "calculatedAt": "2027-06-30T00:00:00+00:00",
+        "observedReasons": [
+          "insufficient_active_teams",
+          "insufficient_ranking_population",
+          "insufficient_independent_competition",
+          "insufficient_history"
+        ],
+        "observedState": "ranking_inactive",
+        "policyVersion": "territory-award-readiness-v1",
+        "readinessState": "ranking_inactive",
+        "revision": 1,
+        "season": "2026-27",
+        "signals": {
+          "activePlayers": 23,
+          "activeTeams": 3,
+          "awardCandidatePlayers": 0,
+          "independentOpponentEdges": 0,
+          "independentTeamCoverage": 0,
+          "logicalOpponentEdges": 0,
+          "medianChallenges": 24,
+          "medianCompetitiveConfidence": 0.6896,
+          "medianLogicalOpponents": 5,
+          "observedHistoryWeeks": 0,
+          "rankingEligiblePlayers": 1,
+          "validChallenges": 580
+        },
+        "stability": {
+          "direction": "stable",
+          "observedWindows": 1,
+          "requiredWindows": 1
+        },
+        "territory": "50"
+      },
+      "unranked": [
+        {
+          "displayName": "SIM · Marta T. 015",
+          "missingChallenges": 0,
+          "missingLogicalOpponents": 1,
+          "playerId": "agent-015"
+        },
+        {
+          "displayName": "SIM · Vera S. 039",
+          "missingChallenges": 7,
+          "missingLogicalOpponents": 1,
+          "playerId": "agent-039"
+        },
+        {
+          "displayName": "SIM · Uri D. 063",
+          "missingChallenges": 0,
+          "missingLogicalOpponents": 0,
+          "playerId": "agent-063"
+        },
+        {
+          "displayName": "SIM · Sofía A. 093",
+          "missingChallenges": 6,
+          "missingLogicalOpponents": 1,
+          "playerId": "agent-093"
+        },
+        {
+          "displayName": "SIM · Sara T. 106",
+          "missingChallenges": 0,
+          "missingLogicalOpponents": 1,
+          "playerId": "agent-106"
+        },
+        {
+          "displayName": "SIM · Pablo T. 109",
+          "missingChallenges": 0,
+          "missingLogicalOpponents": 0,
+          "playerId": "agent-109"
+        },
+        {
+          "displayName": "SIM · Rai M. 128",
+          "missingChallenges": 15,
+          "missingLogicalOpponents": 6,
+          "playerId": "agent-128"
+        },
+        {
+          "displayName": "SIM · Lina N. 174",
+          "missingChallenges": 0,
+          "missingLogicalOpponents": 1,
+          "playerId": "agent-174"
+        },
+        {
+          "displayName": "SIM · Rai S. 175",
+          "missingChallenges": 0,
+          "missingLogicalOpponents": 1,
+          "playerId": "agent-175"
+        },
+        {
+          "displayName": "SIM · Vera L. 185",
+          "missingChallenges": 15,
+          "missingLogicalOpponents": 6,
+          "playerId": "agent-185"
+        },
+        {
+          "displayName": "SIM · Carla R. 216",
+          "missingChallenges": 3,
+          "missingLogicalOpponents": 0,
+          "playerId": "agent-216"
+        },
+        {
+          "displayName": "SIM · Sofía D. 279",
+          "missingChallenges": 2,
+          "missingLogicalOpponents": 0,
+          "playerId": "agent-279"
+        }
+      ],
+      "provinceName": "Zaragoza",
+      "publicSurface": {
+        "awardsAvailable": false,
+        "message": "La clasificación se mostrará cuando exista suficiente actividad competitiva en la zona.",
+        "rankingVisible": false
+      }
+    }
+  ],
+  "telemetry": [
+    {
+      "calculatedAt": "2027-06-30T00:00:00+00:00",
+      "observedReasons": [
+        "insufficient_award_candidates"
+      ],
+      "observedState": "trophy_not_ready",
+      "readinessState": "trophy_not_ready",
+      "revision": 1,
+      "season": "2026-27",
+      "signals": {
+        "activePlayers": 191,
+        "activeTeams": 14,
+        "awardCandidatePlayers": 8,
+        "independentOpponentEdges": 24,
+        "independentTeamCoverage": 0.9286,
+        "logicalOpponentEdges": 24,
+        "medianChallenges": 12,
+        "medianCompetitiveConfidence": 0.7005,
+        "medianLogicalOpponents": 8,
+        "observedHistoryWeeks": 41,
+        "rankingEligiblePlayers": 44,
+        "validChallenges": 3170
+      },
+      "territory": "08"
+    },
+    {
+      "calculatedAt": "2027-06-30T00:00:00+00:00",
+      "observedReasons": [
+        "insufficient_active_teams",
+        "insufficient_independent_competition"
+      ],
+      "observedState": "ranking_inactive",
+      "readinessState": "ranking_inactive",
+      "revision": 1,
+      "season": "2026-27",
+      "signals": {
+        "activePlayers": 20,
+        "activeTeams": 3,
+        "awardCandidatePlayers": 2,
+        "independentOpponentEdges": 1,
+        "independentTeamCoverage": 0.6667,
+        "logicalOpponentEdges": 1,
+        "medianChallenges": 26.5,
+        "medianCompetitiveConfidence": 0.6918,
+        "medianLogicalOpponents": 14.5,
+        "observedHistoryWeeks": 19,
+        "rankingEligiblePlayers": 7,
+        "validChallenges": 586
+      },
+      "territory": "15"
+    },
+    {
+      "calculatedAt": "2027-06-30T00:00:00+00:00",
+      "observedReasons": [
+        "insufficient_independent_competition"
+      ],
+      "observedState": "ranking_inactive",
+      "readinessState": "ranking_inactive",
+      "revision": 1,
+      "season": "2026-27",
+      "signals": {
+        "activePlayers": 53,
+        "activeTeams": 4,
+        "awardCandidatePlayers": 1,
+        "independentOpponentEdges": 1,
+        "independentTeamCoverage": 0.5,
+        "logicalOpponentEdges": 1,
+        "medianChallenges": 8.5,
+        "medianCompetitiveConfidence": 0.703,
+        "medianLogicalOpponents": 6,
+        "observedHistoryWeeks": 27,
+        "rankingEligiblePlayers": 7,
+        "validChallenges": 580
+      },
+      "territory": "17"
+    },
+    {
+      "calculatedAt": "2027-06-30T00:00:00+00:00",
+      "observedReasons": [
+        "insufficient_award_candidates"
+      ],
+      "observedState": "trophy_not_ready",
+      "readinessState": "trophy_not_ready",
+      "revision": 1,
+      "season": "2026-27",
+      "signals": {
+        "activePlayers": 151,
+        "activeTeams": 15,
+        "awardCandidatePlayers": 5,
+        "independentOpponentEdges": 26,
+        "independentTeamCoverage": 0.8667,
+        "logicalOpponentEdges": 32,
+        "medianChallenges": 17,
+        "medianCompetitiveConfidence": 0.6834,
+        "medianLogicalOpponents": 9,
+        "observedHistoryWeeks": 42,
+        "rankingEligiblePlayers": 52,
+        "validChallenges": 3476
+      },
+      "territory": "28"
+    },
+    {
+      "calculatedAt": "2027-06-30T00:00:00+00:00",
+      "observedReasons": [
+        "insufficient_independent_competition"
+      ],
+      "observedState": "ranking_inactive",
+      "readinessState": "ranking_inactive",
+      "revision": 1,
+      "season": "2026-27",
+      "signals": {
+        "activePlayers": 75,
+        "activeTeams": 4,
+        "awardCandidatePlayers": 1,
+        "independentOpponentEdges": 3,
+        "independentTeamCoverage": 0.75,
+        "logicalOpponentEdges": 3,
+        "medianChallenges": 13,
+        "medianCompetitiveConfidence": 0.6786,
+        "medianLogicalOpponents": 5,
+        "observedHistoryWeeks": 30,
+        "rankingEligiblePlayers": 11,
+        "validChallenges": 1185
+      },
+      "territory": "41"
+    },
+    {
+      "calculatedAt": "2027-06-30T00:00:00+00:00",
+      "observedReasons": [
+        "insufficient_active_teams",
+        "insufficient_award_candidates",
+        "insufficient_independent_competition"
+      ],
+      "observedState": "trophy_not_ready",
+      "readinessState": "trophy_not_ready",
+      "revision": 1,
+      "season": "2026-27",
+      "signals": {
+        "activePlayers": 86,
+        "activeTeams": 7,
+        "awardCandidatePlayers": 0,
+        "independentOpponentEdges": 6,
+        "independentTeamCoverage": 0.8571,
+        "logicalOpponentEdges": 6,
+        "medianChallenges": 23,
+        "medianCompetitiveConfidence": 0.6272,
+        "medianLogicalOpponents": 5,
+        "observedHistoryWeeks": 40,
+        "rankingEligiblePlayers": 11,
+        "validChallenges": 4828
+      },
+      "territory": "46"
+    },
+    {
+      "calculatedAt": "2027-06-30T00:00:00+00:00",
+      "observedReasons": [
+        "insufficient_active_teams",
+        "insufficient_ranking_population",
+        "insufficient_independent_competition",
+        "insufficient_history"
+      ],
+      "observedState": "ranking_inactive",
+      "readinessState": "ranking_inactive",
+      "revision": 1,
+      "season": "2026-27",
+      "signals": {
+        "activePlayers": 23,
+        "activeTeams": 3,
+        "awardCandidatePlayers": 0,
+        "independentOpponentEdges": 0,
+        "independentTeamCoverage": 0,
+        "logicalOpponentEdges": 0,
+        "medianChallenges": 24,
+        "medianCompetitiveConfidence": 0.6896,
+        "medianLogicalOpponents": 5,
+        "observedHistoryWeeks": 0,
+        "rankingEligiblePlayers": 1,
+        "validChallenges": 580
+      },
+      "territory": "50"
+    }
+  ],
+  "temporalHistory": [
+    {
+      "calculatedAt": "2027-01-01T12:00:00.000Z",
+      "observedReasons": [
+        "insufficient_active_teams",
+        "insufficient_ranking_population",
+        "insufficient_valid_challenges",
+        "insufficient_independent_competition",
+        "insufficient_history"
+      ],
+      "observedState": "ranking_inactive",
+      "policyVersion": "territory-award-readiness-v1",
+      "readinessState": "ranking_inactive",
+      "revision": 1,
+      "season": "2026-27",
+      "signals": {
+        "activePlayers": 24,
+        "activeTeams": 3,
+        "awardCandidatePlayers": 0,
+        "independentOpponentEdges": 2,
+        "independentTeamCoverage": 0.67,
+        "logicalOpponentEdges": 3,
+        "medianChallenges": 2,
+        "medianCompetitiveConfidence": 0.81,
+        "medianLogicalOpponents": 2,
+        "observedHistoryWeeks": 2,
+        "rankingEligiblePlayers": 0,
+        "validChallenges": 12
+      },
+      "stability": {
+        "direction": "stable",
+        "observedWindows": 1,
+        "requiredWindows": 1
+      },
+      "territory": "08"
+    },
+    {
+      "calculatedAt": "2027-01-29T12:00:00.000Z",
+      "observedReasons": [
+        "insufficient_active_teams",
+        "insufficient_ranking_population",
+        "insufficient_award_candidates",
+        "insufficient_independent_competition",
+        "insufficient_valid_challenges",
+        "insufficient_history"
+      ],
+      "observedState": "ranking_active",
+      "policyVersion": "territory-award-readiness-v1",
+      "readinessState": "ranking_inactive",
+      "revision": 2,
+      "season": "2026-27",
+      "signals": {
+        "activePlayers": 54,
+        "activeTeams": 6,
+        "awardCandidatePlayers": 0,
+        "independentOpponentEdges": 8,
+        "independentTeamCoverage": 1,
+        "logicalOpponentEdges": 9,
+        "medianChallenges": 16,
+        "medianCompetitiveConfidence": 0.82,
+        "medianLogicalOpponents": 6,
+        "observedHistoryWeeks": 7,
+        "rankingEligiblePlayers": 7,
+        "validChallenges": 90
+      },
+      "stability": {
+        "direction": "promotion_pending",
+        "observedWindows": 1,
+        "requiredWindows": 2
+      },
+      "territory": "08"
+    },
+    {
+      "calculatedAt": "2027-02-26T12:00:00.000Z",
+      "observedReasons": [
+        "insufficient_active_teams",
+        "insufficient_ranking_population",
+        "insufficient_award_candidates",
+        "insufficient_independent_competition",
+        "insufficient_valid_challenges",
+        "insufficient_history"
+      ],
+      "observedState": "ranking_active",
+      "policyVersion": "territory-award-readiness-v1",
+      "readinessState": "ranking_active",
+      "revision": 3,
+      "season": "2026-27",
+      "signals": {
+        "activePlayers": 54,
+        "activeTeams": 6,
+        "awardCandidatePlayers": 0,
+        "independentOpponentEdges": 8,
+        "independentTeamCoverage": 1,
+        "logicalOpponentEdges": 9,
+        "medianChallenges": 16,
+        "medianCompetitiveConfidence": 0.82,
+        "medianLogicalOpponents": 6,
+        "observedHistoryWeeks": 7,
+        "rankingEligiblePlayers": 7,
+        "validChallenges": 90
+      },
+      "stability": {
+        "direction": "stable",
+        "observedWindows": 2,
+        "requiredWindows": 2
+      },
+      "territory": "08"
+    },
+    {
+      "calculatedAt": "2027-03-26T12:00:00.000Z",
+      "observedReasons": [
+        "insufficient_active_teams",
+        "insufficient_award_candidates",
+        "insufficient_independent_competition",
+        "insufficient_valid_challenges",
+        "insufficient_history"
+      ],
+      "observedState": "trophy_not_ready",
+      "policyVersion": "territory-award-readiness-v1",
+      "readinessState": "ranking_active",
+      "revision": 4,
+      "season": "2026-27",
+      "signals": {
+        "activePlayers": 82,
+        "activeTeams": 10,
+        "awardCandidatePlayers": 0,
+        "independentOpponentEdges": 18,
+        "independentTeamCoverage": 1,
+        "logicalOpponentEdges": 22,
+        "medianChallenges": 20,
+        "medianCompetitiveConfidence": 0.83,
+        "medianLogicalOpponents": 8,
+        "observedHistoryWeeks": 12,
+        "rankingEligiblePlayers": 12,
+        "validChallenges": 180
+      },
+      "stability": {
+        "direction": "promotion_pending",
+        "observedWindows": 1,
+        "requiredWindows": 2
+      },
+      "territory": "08"
+    },
+    {
+      "calculatedAt": "2027-04-23T12:00:00.000Z",
+      "observedReasons": [
+        "insufficient_active_teams",
+        "insufficient_award_candidates",
+        "insufficient_independent_competition",
+        "insufficient_valid_challenges",
+        "insufficient_history"
+      ],
+      "observedState": "trophy_not_ready",
+      "policyVersion": "territory-award-readiness-v1",
+      "readinessState": "trophy_not_ready",
+      "revision": 5,
+      "season": "2026-27",
+      "signals": {
+        "activePlayers": 82,
+        "activeTeams": 10,
+        "awardCandidatePlayers": 0,
+        "independentOpponentEdges": 18,
+        "independentTeamCoverage": 1,
+        "logicalOpponentEdges": 22,
+        "medianChallenges": 20,
+        "medianCompetitiveConfidence": 0.83,
+        "medianLogicalOpponents": 8,
+        "observedHistoryWeeks": 12,
+        "rankingEligiblePlayers": 12,
+        "validChallenges": 180
+      },
+      "stability": {
+        "direction": "stable",
+        "observedWindows": 2,
+        "requiredWindows": 2
+      },
+      "territory": "08"
+    },
+    {
+      "calculatedAt": "2027-05-21T12:00:00.000Z",
+      "observedReasons": [
+        "ready"
+      ],
+      "observedState": "trophy_ready",
+      "policyVersion": "territory-award-readiness-v1",
+      "readinessState": "trophy_not_ready",
+      "revision": 6,
+      "season": "2026-27",
+      "signals": {
+        "activePlayers": 151,
+        "activeTeams": 21,
+        "awardCandidatePlayers": 15,
+        "independentOpponentEdges": 53,
+        "independentTeamCoverage": 1,
+        "logicalOpponentEdges": 57,
+        "medianChallenges": 30,
+        "medianCompetitiveConfidence": 0.85,
+        "medianLogicalOpponents": 13,
+        "observedHistoryWeeks": 30,
+        "rankingEligiblePlayers": 34,
+        "validChallenges": 448
+      },
+      "stability": {
+        "direction": "promotion_pending",
+        "observedWindows": 1,
+        "requiredWindows": 3
+      },
+      "territory": "08"
+    },
+    {
+      "calculatedAt": "2027-06-18T12:00:00.000Z",
+      "observedReasons": [
+        "ready"
+      ],
+      "observedState": "trophy_ready",
+      "policyVersion": "territory-award-readiness-v1",
+      "readinessState": "trophy_not_ready",
+      "revision": 7,
+      "season": "2026-27",
+      "signals": {
+        "activePlayers": 151,
+        "activeTeams": 21,
+        "awardCandidatePlayers": 15,
+        "independentOpponentEdges": 53,
+        "independentTeamCoverage": 1,
+        "logicalOpponentEdges": 57,
+        "medianChallenges": 30,
+        "medianCompetitiveConfidence": 0.85,
+        "medianLogicalOpponents": 13,
+        "observedHistoryWeeks": 30,
+        "rankingEligiblePlayers": 34,
+        "validChallenges": 448
+      },
+      "stability": {
+        "direction": "promotion_pending",
+        "observedWindows": 2,
+        "requiredWindows": 3
+      },
+      "territory": "08"
+    },
+    {
+      "calculatedAt": "2027-07-16T12:00:00.000Z",
+      "observedReasons": [
+        "ready"
+      ],
+      "observedState": "trophy_ready",
+      "policyVersion": "territory-award-readiness-v1",
+      "readinessState": "trophy_ready",
+      "revision": 8,
+      "season": "2026-27",
+      "signals": {
+        "activePlayers": 151,
+        "activeTeams": 21,
+        "awardCandidatePlayers": 15,
+        "independentOpponentEdges": 53,
+        "independentTeamCoverage": 1,
+        "logicalOpponentEdges": 57,
+        "medianChallenges": 30,
+        "medianCompetitiveConfidence": 0.85,
+        "medianLogicalOpponents": 13,
+        "observedHistoryWeeks": 30,
+        "rankingEligiblePlayers": 34,
+        "validChallenges": 448
+      },
+      "stability": {
+        "direction": "stable",
+        "observedWindows": 3,
+        "requiredWindows": 3
+      },
+      "territory": "08"
+    }
+  ]
+}

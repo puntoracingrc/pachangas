@@ -1,0 +1,263 @@
+{
+  "attacks": [
+    {
+      "attack": "collusion",
+      "protectedRisk": 8.57,
+      "protectedScore": 719.82,
+      "scoreIncreaseWithoutProtection": 108.95,
+      "unprotectedScore": 829.01
+    },
+    {
+      "attack": "fake_matches",
+      "protectedRisk": 21.53,
+      "protectedScore": 748.96,
+      "scoreIncreaseWithoutProtection": 131.67,
+      "unprotectedScore": 851.73
+    },
+    {
+      "attack": "fake_participation",
+      "protectedRisk": 13.47,
+      "protectedScore": 749.62,
+      "scoreIncreaseWithoutProtection": 68.63,
+      "unprotectedScore": 788.69
+    },
+    {
+      "attack": "ghost_teams",
+      "protectedRisk": 38.5,
+      "protectedScore": 430.71,
+      "scoreIncreaseWithoutProtection": 169.69,
+      "unprotectedScore": 889.75
+    },
+    {
+      "attack": "impossible_volume",
+      "protectedRisk": 18,
+      "protectedScore": 793.09,
+      "scoreIncreaseWithoutProtection": 90.73,
+      "unprotectedScore": 810.79
+    },
+    {
+      "attack": "opponent_boost",
+      "protectedRisk": 11.38,
+      "protectedScore": 703.37,
+      "scoreIncreaseWithoutProtection": 138.94,
+      "unprotectedScore": 859
+    },
+    {
+      "attack": "rating_boost",
+      "protectedRisk": 8.14,
+      "protectedScore": 614.7,
+      "scoreIncreaseWithoutProtection": 23.18,
+      "unprotectedScore": 743.24
+    },
+    {
+      "attack": "repeated_opponent",
+      "protectedRisk": 33.72,
+      "protectedScore": 516.13,
+      "scoreIncreaseWithoutProtection": 69.51,
+      "unprotectedScore": 789.57
+    },
+    {
+      "attack": "sacrifice_accounts",
+      "protectedRisk": 51.41,
+      "protectedScore": 354.08,
+      "scoreIncreaseWithoutProtection": 208.97,
+      "unprotectedScore": 929.03
+    },
+    {
+      "attack": "simultaneous_matches",
+      "protectedRisk": 25.66,
+      "protectedScore": 665.25,
+      "scoreIncreaseWithoutProtection": 48.62,
+      "unprotectedScore": 768.68
+    },
+    {
+      "attack": "smurf",
+      "protectedRisk": 5,
+      "protectedScore": 644.32,
+      "scoreIncreaseWithoutProtection": -93.38,
+      "unprotectedScore": 626.68
+    },
+    {
+      "attack": "sybil",
+      "protectedRisk": 54.15,
+      "protectedScore": 344.55,
+      "scoreIncreaseWithoutProtection": 189.93,
+      "unprotectedScore": 909.99
+    },
+    {
+      "attack": "team_hopping",
+      "protectedRisk": 6.57,
+      "protectedScore": 717.69,
+      "scoreIncreaseWithoutProtection": 44.92,
+      "unprotectedScore": 764.98
+    },
+    {
+      "attack": "territory_gaming",
+      "protectedRisk": 11.5,
+      "protectedScore": 714.5,
+      "scoreIncreaseWithoutProtection": 41.75,
+      "unprotectedScore": 761.81
+    }
+  ],
+  "contaminationRows": [
+    {
+      "cheaterTop10Penetration": 0,
+      "cheaters": 0,
+      "mode": "minimal",
+      "populationRate": 0,
+      "top10OccupiedByCheaters": 0
+    },
+    {
+      "cheaterTop10Penetration": 0,
+      "cheaters": 0,
+      "mode": "integrity",
+      "populationRate": 0,
+      "top10OccupiedByCheaters": 0
+    },
+    {
+      "cheaterTop10Penetration": 0.8,
+      "cheaters": 10,
+      "mode": "minimal",
+      "populationRate": 0.01,
+      "top10OccupiedByCheaters": 0.8
+    },
+    {
+      "cheaterTop10Penetration": 0,
+      "cheaters": 10,
+      "mode": "integrity",
+      "populationRate": 0.01,
+      "top10OccupiedByCheaters": 0
+    },
+    {
+      "cheaterTop10Penetration": 0.5,
+      "cheaters": 20,
+      "mode": "minimal",
+      "populationRate": 0.02,
+      "top10OccupiedByCheaters": 1
+    },
+    {
+      "cheaterTop10Penetration": 0,
+      "cheaters": 20,
+      "mode": "integrity",
+      "populationRate": 0.02,
+      "top10OccupiedByCheaters": 0
+    },
+    {
+      "cheaterTop10Penetration": 0.2,
+      "cheaters": 50,
+      "mode": "minimal",
+      "populationRate": 0.05,
+      "top10OccupiedByCheaters": 1
+    },
+    {
+      "cheaterTop10Penetration": 0,
+      "cheaters": 50,
+      "mode": "integrity",
+      "populationRate": 0.05,
+      "top10OccupiedByCheaters": 0
+    },
+    {
+      "cheaterTop10Penetration": 0.1,
+      "cheaters": 100,
+      "mode": "minimal",
+      "populationRate": 0.1,
+      "top10OccupiedByCheaters": 1
+    },
+    {
+      "cheaterTop10Penetration": 0,
+      "cheaters": 100,
+      "mode": "integrity",
+      "populationRate": 0.1,
+      "top10OccupiedByCheaters": 0
+    }
+  ],
+  "falsePositiveRate": 0,
+  "formulaMetrics": [
+    {
+      "candidateId": "candidate_a_full_rating",
+      "eligiblePlayers": 9852,
+      "rankCorrelation": 0.8506,
+      "scoreSkillCorrelation": 0.8321,
+      "top10Precision": 0,
+      "top50Precision": 0.2,
+      "top100Precision": 0.31,
+      "volumeAdvantage": 0.0853
+    },
+    {
+      "candidateId": "candidate_b_competitive_recent25",
+      "eligiblePlayers": 9812,
+      "rankCorrelation": 0.8133,
+      "scoreSkillCorrelation": 0.767,
+      "top10Precision": 0,
+      "top50Precision": 0.16,
+      "top100Precision": 0.27,
+      "volumeAdvantage": 0.2978
+    },
+    {
+      "candidateId": "candidate_c_integrity_saturated",
+      "eligiblePlayers": 9838,
+      "rankCorrelation": 0.8231,
+      "scoreSkillCorrelation": 0.7733,
+      "top10Precision": 0,
+      "top50Precision": 0.1,
+      "top100Precision": 0.26,
+      "volumeAdvantage": 0.3103
+    },
+    {
+      "candidateId": "candidate_d_best20_control",
+      "eligiblePlayers": 9726,
+      "rankCorrelation": 0.7714,
+      "scoreSkillCorrelation": 0.7548,
+      "top10Precision": 0,
+      "top50Precision": 0.02,
+      "top100Precision": 0.11,
+      "volumeAdvantage": 0.6072
+    },
+    {
+      "candidateId": "candidate_e_recent20",
+      "eligiblePlayers": 9257,
+      "rankCorrelation": 0.7947,
+      "scoreSkillCorrelation": 0.7248,
+      "top10Precision": 0,
+      "top50Precision": 0.16,
+      "top100Precision": 0.25,
+      "volumeAdvantage": 0.0695
+    }
+  ],
+  "recommendedCandidate": {
+    "id": "candidate_e_recent20",
+    "label": "40/45/15 · Últimos 20",
+    "weights": {
+      "quality": 40,
+      "competition": 45,
+      "opposition": 15
+    },
+    "eligibility": {
+      "minimumValidChallenges": 15,
+      "minimumUniqueOpponents": 6,
+      "minimumRatingReliability": 0.45,
+      "recentActivityWeeks": 12
+    },
+    "opponentDecay": [
+      1,
+      1,
+      0.5,
+      0.25,
+      0
+    ],
+    "volumeModel": "recent_20",
+    "ratingConfidenceModel": "competitive",
+    "integrityMode": "weighted",
+    "densityTop10Minimum": 50
+  },
+  "seed": 20260809,
+  "territory": {
+    "autonomousCommunities": 17,
+    "baseTerritories": 52
+  },
+  "world": {
+    "players": 10000,
+    "seasons": 3,
+    "teams": 1000
+  }
+}

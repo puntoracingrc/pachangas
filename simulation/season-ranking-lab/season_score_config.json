@@ -1,0 +1,71 @@
+{
+  "schemaVersion": 1,
+  "seed": 20260809,
+  "population": {
+    "players": 10000,
+    "seasons": 3,
+    "teamSize": 10
+  },
+  "candidates": [
+    {
+      "id": "candidate_a_full_rating",
+      "label": "50/35/15 · Rating completo · saturación global",
+      "weights": { "quality": 50, "competition": 35, "opposition": 15 },
+      "eligibility": { "minimumValidChallenges": 8, "minimumUniqueOpponents": 4, "minimumRatingReliability": 0.45, "recentActivityWeeks": null },
+      "opponentDecay": [1, 1, 1, 0.5, 0],
+      "volumeModel": "all_saturated",
+      "ratingConfidenceModel": "full",
+      "integrityMode": "none",
+      "densityTop10Minimum": 30
+    },
+    {
+      "id": "candidate_b_competitive_recent25",
+      "label": "45/40/15 · Desbloqueo gradual · últimos 25",
+      "weights": { "quality": 45, "competition": 40, "opposition": 15 },
+      "eligibility": { "minimumValidChallenges": 10, "minimumUniqueOpponents": 5, "minimumRatingReliability": 0.45, "recentActivityWeeks": 16 },
+      "opponentDecay": [1, 1, 0.75, 0.5, 0.25, 0],
+      "volumeModel": "recent_25",
+      "ratingConfidenceModel": "graduated",
+      "integrityMode": "none",
+      "densityTop10Minimum": 30
+    },
+    {
+      "id": "candidate_c_integrity_saturated",
+      "label": "45/40/15 · Confianza competitiva · integridad",
+      "weights": { "quality": 45, "competition": 40, "opposition": 15 },
+      "eligibility": { "minimumValidChallenges": 8, "minimumUniqueOpponents": 4, "minimumRatingReliability": 0.45, "recentActivityWeeks": 16 },
+      "opponentDecay": [1, 1, 0.5, 0.25, 0],
+      "volumeModel": "all_saturated",
+      "ratingConfidenceModel": "competitive",
+      "integrityMode": "weighted",
+      "densityTop10Minimum": 30
+    },
+    {
+      "id": "candidate_d_best20_control",
+      "label": "50/30/20 · Mejores 20 (control de cherry-picking)",
+      "weights": { "quality": 50, "competition": 30, "opposition": 20 },
+      "eligibility": { "minimumValidChallenges": 12, "minimumUniqueOpponents": 5, "minimumRatingReliability": 0.45, "recentActivityWeeks": null },
+      "opponentDecay": [1, 1, 0.75, 0.5, 0.25, 0],
+      "volumeModel": "best_20",
+      "ratingConfidenceModel": "graduated",
+      "integrityMode": "none",
+      "densityTop10Minimum": 50
+    },
+    {
+      "id": "candidate_e_recent20",
+      "label": "40/45/15 · Últimos 20",
+      "weights": { "quality": 40, "competition": 45, "opposition": 15 },
+      "eligibility": { "minimumValidChallenges": 15, "minimumUniqueOpponents": 6, "minimumRatingReliability": 0.45, "recentActivityWeeks": 12 },
+      "opponentDecay": [1, 1, 0.5, 0.25, 0],
+      "volumeModel": "recent_20",
+      "ratingConfidenceModel": "competitive",
+      "integrityMode": "weighted",
+      "densityTop10Minimum": 50
+    }
+  ],
+  "comparisonAxes": {
+    "eligibility": [[6, 3], [8, 4], [10, 5], [12, 5], [15, 6]],
+    "opponentDecay": [[1, 1, 1, 0.5, 0], [1, 1, 0.75, 0.5, 0.25, 0], [1, 1, 0.5, 0.25, 0]],
+    "volumeModels": ["all_saturated", "recent_20", "recent_25", "best_20"]
+  }
+}

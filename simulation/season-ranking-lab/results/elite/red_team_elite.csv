@@ -1,0 +1,15 @@
+attack,protectedRisk,protectedScore,scoreIncreaseWithoutProtection,unprotectedScore
+collusion,8.57,804.07,108.95,829.01
+fake_matches,21.53,817.26,131.67,851.73
+fake_participation,13.47,786.54,68.63,788.69
+ghost_teams,38.5,595.5,169.69,889.75
+impossible_volume,18,807.75,90.73,810.79
+opponent_boost,11.38,806.24,138.94,859
+rating_boost,8.14,766.14,23.18,743.24
+repeated_opponent,33.72,642.21,69.51,789.57
+sacrifice_accounts,51.41,498.64,208.97,929.03
+simultaneous_matches,25.66,731.56,48.62,768.68
+smurf,5,604.79,-93.38,626.68
+sybil,54.15,494.27,189.93,909.99
+team_hopping,6.57,776.04,44.92,764.98
+territory_gaming,11.5,771.61,41.75,761.81

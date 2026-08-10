@@ -1,0 +1,70 @@
+{
+  "generatedAt": "2026-08-09T17:08:48.498Z",
+  "summary": {
+    "implemented": 9,
+    "notImplemented": 0,
+    "partiallyImplemented": 3
+  },
+  "rows": [
+    {
+      "capability": "General player reports",
+      "classification": "implemented",
+      "evidence": "Context-bound, idempotent reports create clustered moderation cases without automatic sanctions."
+    },
+    {
+      "capability": "Guest voluntary withdrawal",
+      "classification": "implemented",
+      "evidence": "leave_pachanga_guest_match_v1 revokes access, frees the place and creates one review."
+    },
+    {
+      "capability": "Guest withdrawal admin review",
+      "classification": "implemented",
+      "evidence": "Admin confirms or dismisses; idempotent, revisioned, private identities, affectsSportRating=false."
+    },
+    {
+      "capability": "Canonical no-show distinction",
+      "classification": "partially_implemented",
+      "evidence": "A complete post-match roster closure distinguishes played, excused absence, late cancellation and unexcused no-show."
+    },
+    {
+      "capability": "Attendance joined notification",
+      "classification": "implemented",
+      "evidence": "Only transition into voy notifies; retries do not duplicate."
+    },
+    {
+      "capability": "Attendance cancellation notification",
+      "classification": "implemented",
+      "evidence": "Only voy to no notifies; direct no does not imply misconduct or notify."
+    },
+    {
+      "capability": "Injury and recovery notifications",
+      "classification": "implemented",
+      "evidence": "Profile injured transition emits unavailable/available without medical detail."
+    },
+    {
+      "capability": "Notification preferences",
+      "classification": "implemented",
+      "evidence": "Six categories; in-app, push and email preferences are revisioned through RPC."
+    },
+    {
+      "capability": "Mandatory administrative notices",
+      "classification": "implemented",
+      "evidence": "Security/warning/sanction kinds are mandatory in-app even when a category is disabled."
+    },
+    {
+      "capability": "Warnings and sanctions engine",
+      "classification": "implemented",
+      "evidence": "Warnings, explicit moderator restrictions, expiry and appeals are canonical; social restrictions remain independently flag-gated."
+    },
+    {
+      "capability": "Independent-source weighting and report abuse defense",
+      "classification": "partially_implemented",
+      "evidence": "Reports share source clusters by team/context while different teams increase independent-source count."
+    },
+    {
+      "capability": "Conduct effect isolation from Rating V2",
+      "classification": "partially_implemented",
+      "evidence": "Guest withdrawal and Conduct V1 responses explicitly return affectsSportRating=false; no conduct path writes sport tables."
+    }
+  ]
+}

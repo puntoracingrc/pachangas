@@ -1,0 +1,4 @@
+policy,promoteRank11,trophyStatus
+no_promotion,false,withheld
+provisional_promotion,true,provisional
+trophy_pending,false,pending

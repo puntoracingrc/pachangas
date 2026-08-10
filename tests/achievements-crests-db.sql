@@ -34,7 +34,8 @@ begin
     created_by, updated_by
   ) values (
     challenge_uuid, home_group_uuid, away_group_uuid, 'proposed', 1, 1,
-    scheduled, 'futbol7', 'Campo de prueba', 'Carrer de la Prova, 1',
+    greatest(scheduled, clock_timestamp() + interval '1 day'),
+    'futbol7', 'Campo de prueba', 'Carrer de la Prova, 1',
     home_group_uuid, actor_uuid, actor_uuid
   );
   update public.pachanga_team_challenges
@@ -44,6 +45,9 @@ begin
   select matches.id into strict saved_match_id
   from public.pachanga_external_matches matches
   where matches.challenge_id = challenge_uuid;
+  update public.pachanga_external_matches
+  set scheduled_at = scheduled
+  where id = saved_match_id;
   return saved_match_id;
 end;
 $$;
@@ -247,7 +251,7 @@ select pg_temp.assert_true(
   (select count(*) from public.pachanga_achievement_grants grants
    join public.pachanga_achievement_definitions definitions on definitions.id = grants.definition_id
    where grants.group_id = '82000000-0000-0000-0000-000000000001'
-     and definitions.achievement_key in ('team.external.matches.001','team.external.wins.001')
+     and definitions.achievement_key in ('team.matches.001','team.external.wins.001')
      and grants.state = 'active') = 2,
   'The first external win must award the match and win achievements once'
 );
