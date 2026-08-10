@@ -13,6 +13,8 @@
 | Producción | No modificada |
 | Supabase | No consultado ni modificado |
 | Staging | No usado; Preview Vercel es suficiente para este laboratorio aislado |
+| PR borrador | `#131` |
+| Preview | `https://pachangas-git-codex-team-aca328-persianas-almar-web-s-projects.vercel.app/laboratorio-cosmeticos-escudo-3d` |
 
 ## Alcance
 
@@ -130,6 +132,8 @@ Resultados:
 - tasa local aproximada del bucle: 121 frames en 1 segundo en una pantalla de alta frecuencia;
 - reduced motion: 0 frames adicionales en 700 ms;
 - consola después de corregir hidratación: sin errores; solo se corrigió un aviso LCP de la corona de 5 KB.
+
+La QA se repitió en la Preview de Vercel del PR #131: pipeline A inició con cero canvases, pipeline C creó exactamente un canvas no vacío y los viewports 390 x 844 y 844 x 390 permanecieron sin overflow. Con movimiento reducido activo, el contador de frames no avanzó durante 800 ms.
 
 La cifra de frames no sustituye una medición física en Android/iPhone. Sirve para demostrar que el modelo no satura el equipo de desarrollo y que el bucle se detiene realmente en reduced motion.
 
