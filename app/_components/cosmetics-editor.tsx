@@ -3,6 +3,14 @@ import { PLAYER_COSMETIC_RARITY_LABELS, PLAYER_COSMETIC_SLOT_LABELS } from "../p
 import type { PlayerCosmeticItem, PlayerCosmeticSlot } from "../player-cosmetics-contract";
 import styles from "./cosmetics-editor.module.css";
 
+export type CosmeticEditorOption = {
+  key: string;
+  material?: string | null;
+  meta?: string;
+  name: string;
+  new?: boolean;
+};
+
 export function CosmeticEditorShell({
   actions,
   children,
@@ -51,6 +59,35 @@ export function CosmeticCategoryTabs({
   );
 }
 
+export function CosmeticCategoryNav<T extends string>({
+  active,
+  ariaLabel,
+  items,
+  onChange,
+}: {
+  active: T;
+  ariaLabel: string;
+  items: Array<{ count?: number; key: T; label: string }>;
+  onChange: (key: T) => void;
+}) {
+  return (
+    <nav className={styles.tabs} aria-label={ariaLabel}>
+      {items.map((item) => (
+        <button
+          aria-pressed={active === item.key}
+          className={active === item.key ? styles.activeTab : ""}
+          key={item.key}
+          type="button"
+          onClick={() => onChange(item.key)}
+        >
+          <span>{item.label}</span>
+          {item.count ? <NewBadge count={item.count} /> : null}
+        </button>
+      ))}
+    </nav>
+  );
+}
+
 export function NewBadge({ count }: { count?: number }) {
   return <small className={styles.newBadge}>{typeof count === "number" ? count : "Nuevo"}</small>;
 }
@@ -89,8 +126,47 @@ export function OwnedCosmeticSelector({
   );
 }
 
-export function MaterialSwatch({ material }: { material: string | null }) {
-  const style = { "--swatch-material": material ?? "original" } as CSSProperties;
+export function CosmeticOptionSelector({
+  items,
+  noneLabel,
+  onChange,
+  selectedKeys,
+}: {
+  items: CosmeticEditorOption[];
+  noneLabel?: string;
+  onChange: (key: string | null) => void;
+  selectedKeys: string[];
+}) {
+  return (
+    <div className={styles.optionGrid}>
+      {noneLabel ? (
+        <button className={!selectedKeys.length ? styles.selectedOption : ""} type="button" onClick={() => onChange(null)}>
+          <span className={styles.originalPreview}>IQ</span>
+          <strong>{noneLabel}</strong>
+        </button>
+      ) : null}
+      {items.map((item) => (
+        <button
+          className={selectedKeys.includes(item.key) ? styles.selectedOption : ""}
+          key={item.key}
+          type="button"
+          onClick={() => onChange(item.key)}
+        >
+          <MaterialSwatch material={item.material ?? null} />
+          <strong>{item.name}</strong>
+          {item.meta ? <small>{item.meta}</small> : null}
+          {item.new ? <NewBadge /> : null}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+export function MaterialSwatch({ color, material }: { color?: string | null; material: string | null }) {
+  const style = {
+    "--swatch-color": color ?? "transparent",
+    "--swatch-material": material ?? "original",
+  } as CSSProperties;
   return <span className={styles.materialSwatch} data-material={material ?? "original"} style={style} aria-hidden="true" />;
 }
 
@@ -119,10 +195,10 @@ export function EditorActions({
   );
 }
 
-export function UnsavedChanges({ dirty }: { dirty: boolean }) {
+export function UnsavedChanges({ dirty, synchronizedLabel = "Ficha sincronizada" }: { dirty: boolean; synchronizedLabel?: string }) {
   return (
     <span className={`${styles.unsaved} ${dirty ? styles.unsavedActive : ""}`} aria-live="polite">
-      {dirty ? "Cambios sin guardar" : "Ficha sincronizada"}
+      {dirty ? "Cambios sin guardar" : synchronizedLabel}
     </span>
   );
 }

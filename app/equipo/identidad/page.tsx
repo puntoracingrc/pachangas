@@ -2,8 +2,16 @@
 
 import Link from "next/link";
 import dynamic from "next/dynamic";
-import { type CSSProperties, useCallback, useEffect, useRef, useState } from "react";
-import { EditorActions, UnsavedChanges } from "../../_components/cosmetics-editor";
+import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  CosmeticCategoryNav,
+  CosmeticEditorShell,
+  CosmeticOptionSelector,
+  EditorActions,
+  MaterialSwatch,
+  UnsavedChanges,
+} from "../../_components/cosmetics-editor";
+import { TeamShieldView } from "../../_components/team-shield-view";
 import { CLIENT_VERSION } from "../../client-version-contract";
 import {
   normalizePlayerCosmeticsSnapshot,
@@ -12,18 +20,22 @@ import {
 import { currentClientDisplayMode } from "../../pwa-client-bridge";
 import { supabase } from "../../supabaseClient";
 import {
+  teamShieldDesignEquals,
+  type TeamShieldConfig,
+  type TeamShieldCosmeticSlot,
+} from "../../team-shield-contract";
+import {
   normalizePendingReward,
   normalizeProgressionSnapshot,
-  normalizeTeamCrestSnapshot,
+  normalizeTeamShieldSnapshot,
   opensPendingRewardSequence,
   readTeamIdentityCache,
   writeTeamIdentityCache,
   type CrestCatalogItem,
-  type CrestDesign,
   type PendingReward,
   type ProgressionAchievement,
   type ProgressionSnapshot,
-  type TeamCrestSnapshot,
+  type TeamShieldSnapshot,
 } from "../../team-identity-contract";
 import styles from "./page.module.css";
 
@@ -40,9 +52,27 @@ type Membership = {
 
 type ProgressView = "achievements" | "records" | "stats";
 
-type CrestCss = CSSProperties & {
-  "--crest-primary": string;
-  "--crest-secondary": string;
+const teamShieldCategoryLabels: Record<TeamShieldCosmeticSlot, string> = {
+  background: "Fondo",
+  border: "Borde",
+  bottom_ornament: "Base",
+  effect: "Efecto",
+  pattern: "Trama",
+  primary_symbol: "Símbolo",
+  secondary_symbol: "Símbolo 2",
+  shape: "Forma",
+  side_ornament: "Laterales",
+  top_ornament: "Corona",
+};
+
+const teamShieldCategories = Object.keys(teamShieldCategoryLabels) as TeamShieldCosmeticSlot[];
+
+const rarityLabels: Record<CrestCatalogItem["rarity"], string> = {
+  common: "Común",
+  epic: "Épico",
+  legendary: "Legendario",
+  rare: "Raro",
+  uncommon: "Poco común",
 };
 
 const familyLabels: Partial<Record<CrestCatalogItem["family"], string>> = {
@@ -112,86 +142,203 @@ function grantedPlayerCosmetic(reward: PendingReward | null) {
   return grant.cosmeticKey;
 }
 
-function symbolLabel(key: string | null) {
-  if (key === "symbol.ball") return "⚽";
-  if (key === "symbol.lightning") return "ϟ";
-  if (key === "symbol.crown") return "♛";
-  return "";
+function teamShieldItemsForSlot(catalog: CrestCatalogItem[], slot: TeamShieldCosmeticSlot) {
+  if (slot === "secondary_symbol") return catalog.filter((item) => item.family === "symbol");
+  return catalog.filter((item) => item.slot === slot);
 }
 
-function colorHex(catalog: CrestCatalogItem[], key: string, fallback: string) {
-  const item = catalog.find((entry) => entry.key === key);
-  return typeof item?.render.hex === "string" ? item.render.hex : fallback;
-}
-
-function CrestPreview({ catalog, design, compact = false }: { catalog: CrestCatalogItem[]; compact?: boolean; design: CrestDesign }) {
-  const palette = design.paletteKey ? catalog.find((item) => item.key === design.paletteKey) : null;
-  const paletteColors = Array.isArray(palette?.render.palette) ? palette.render.palette.filter((value): value is string => typeof value === "string") : [];
-  const primary = paletteColors[0] ?? colorHex(catalog, design.primaryColorKey, "#16a34a");
-  const secondary = paletteColors[1] ?? colorHex(catalog, design.secondaryColorKey, "#f8fafc");
-  const crestStyle: CrestCss = { "--crest-primary": primary, "--crest-secondary": secondary };
-  const shape = design.shapeKey.split(".")[1] ?? "classic";
-  const pattern = design.patternKey.split(".")[1] ?? "solid";
-  const border = design.borderKey.split(".")[1] ?? "standard";
-  return (
-    <div
-      className={`${styles.crestPreview} ${styles[`shape_${shape}`] ?? ""} ${styles[`pattern_${pattern}`] ?? ""} ${styles[`border_${border}`] ?? ""} ${design.effectKey === "effect.glow" ? styles.glow : ""} ${compact ? styles.compactCrest : ""}`.trim()}
-      style={crestStyle}
-      role="img"
-      aria-label={`Escudo ${design.initials}`}
-    >
-      {design.adornmentKey === "adornment.star" ? <span className={styles.crestTop}>★</span> : null}
-      <span className={styles.crestSymbol}>{symbolLabel(design.symbolKey)}</span>
-      <strong>{design.initials}</strong>
-      {design.adornmentKey === "adornment.ribbon" ? <span className={styles.crestRibbon}>PACHANGAS IQ</span> : null}
-    </div>
-  );
-}
-
-function CatalogOptions({
-  catalog,
-  design,
-  family,
-  onChange,
-}: {
-  catalog: CrestCatalogItem[];
-  design: CrestDesign;
-  family: Exclude<CrestCatalogItem["family"], "color">;
-  onChange: (key: string | null) => void;
-}) {
-  const keyForFamily: Record<Exclude<CrestCatalogItem["family"], "color">, keyof CrestDesign> = {
-    adornment: "adornmentKey",
-    border: "borderKey",
-    effect: "effectKey",
-    palette: "paletteKey",
-    pattern: "patternKey",
-    shape: "shapeKey",
-    symbol: "symbolKey",
+function selectedTeamShieldKeys(config: TeamShieldConfig, slot: TeamShieldCosmeticSlot) {
+  const keys: Record<TeamShieldCosmeticSlot, string | null> = {
+    background: config.backgroundKey,
+    border: config.borderKey,
+    bottom_ornament: config.bottomOrnamentKey,
+    effect: config.effectKey,
+    pattern: config.patternKey,
+    primary_symbol: config.primarySymbolKey,
+    secondary_symbol: config.secondarySymbolKey,
+    shape: config.shapeKey,
+    side_ornament: config.sideOrnamentKey,
+    top_ornament: config.topOrnamentKey,
   };
-  const selectedKey = design[keyForFamily[family]];
-  const optional = family === "adornment" || family === "effect" || family === "palette" || family === "symbol";
+  return keys[slot] ? [keys[slot] as string] : [];
+}
+
+function updateTeamShieldSlot(
+  config: TeamShieldConfig,
+  slot: TeamShieldCosmeticSlot,
+  key: string | null,
+): TeamShieldConfig {
+  if (slot === "shape" && key) return { ...config, shapeKey: key };
+  if (slot === "border" && key) return { ...config, borderKey: key };
+  if (slot === "background" && key) return { ...config, backgroundKey: key };
+  if (slot === "pattern") return { ...config, patternKey: key };
+  if (slot === "primary_symbol" && key) return { ...config, primarySymbolKey: key };
+  if (slot === "secondary_symbol") return { ...config, secondarySymbolKey: key };
+  if (slot === "top_ornament") return { ...config, topOrnamentKey: key };
+  if (slot === "side_ornament") return { ...config, sideOrnamentKey: key };
+  if (slot === "bottom_ornament") return { ...config, bottomOrnamentKey: key };
+  if (slot === "effect") return { ...config, effectKey: key };
+  return config;
+}
+
+function TeamShieldCosmeticsEditor({
+  activeCategory,
+  busy,
+  catalog,
+  config,
+  dirty,
+  isOnline,
+  onCategoryChange,
+  onChange,
+  onReset,
+  onSave,
+  revision,
+}: {
+  activeCategory: TeamShieldCosmeticSlot;
+  busy: boolean;
+  catalog: CrestCatalogItem[];
+  config: TeamShieldConfig;
+  dirty: boolean;
+  isOnline: boolean;
+  onCategoryChange: (slot: TeamShieldCosmeticSlot) => void;
+  onChange: (config: TeamShieldConfig) => void;
+  onReset: () => void;
+  onSave: () => void;
+  revision: number;
+}) {
+  const colors = catalog.filter((item) => item.family === "color");
+  const items = teamShieldItemsForSlot(catalog, activeCategory);
+  const selectedKeys = selectedTeamShieldKeys(config, activeCategory);
+  const counts = Object.fromEntries(teamShieldCategories.map((slot) => [
+    slot,
+    teamShieldItemsForSlot(catalog, slot).filter((item) => item.acquiredAt && !item.seenAt).length,
+  ])) as Record<TeamShieldCosmeticSlot, number>;
+  const optional = activeCategory === "effect" || activeCategory === "pattern"
+    || activeCategory === "secondary_symbol" || activeCategory === "top_ornament"
+    || activeCategory === "side_ornament" || activeCategory === "bottom_ornament";
+
   return (
-    <fieldset className={styles.optionFieldset}>
-      <legend>{familyLabels[family]}</legend>
-      <div className={styles.optionGrid}>
-        {optional ? (
-          <button className={selectedKey === null ? styles.selectedOption : ""} type="button" onClick={() => onChange(null)}>Ninguno</button>
-        ) : null}
-        {catalog.filter((item) => item.family === family).map((item) => (
-          <button
-            className={selectedKey === item.key ? styles.selectedOption : ""}
-            disabled={!item.unlocked}
-            key={item.key}
-            type="button"
-            onClick={() => onChange(item.key)}
-            title={item.unlocked ? item.description : `${item.description} · Bloqueado`}
-          >
-            <span>{item.name}</span>
-            {!item.unlocked ? <small>Bloqueado</small> : null}
-          </button>
+    <CosmeticEditorShell
+      className={styles.teamCosmeticEditor}
+      preview={(
+        <div className={styles.previewStage}>
+          <TeamShieldView catalog={catalog} className={styles.identityShield} config={config} />
+          <div>
+            <span>Escudo oficial</span>
+            <strong>{config.initials}</strong>
+            <small>Revisión confirmada {revision}</small>
+          </div>
+        </div>
+      )}
+      actions={(
+        <>
+          <EditorActions
+            busy={busy}
+            onPrimary={onSave}
+            onReset={onReset}
+            primaryDisabled={!dirty || !isOnline}
+            primaryLabel={busy ? "Guardando…" : isOnline ? "Guardar escudo" : "Sin conexión"}
+            resetLabel="Deshacer cambios"
+          />
+          <UnsavedChanges dirty={dirty} synchronizedLabel="Escudo sincronizado" />
+        </>
+      )}
+    >
+      <CosmeticCategoryNav
+        active={activeCategory}
+        ariaLabel="Partes del escudo"
+        items={teamShieldCategories.map((slot) => ({
+          count: counts[slot],
+          key: slot,
+          label: teamShieldCategoryLabels[slot],
+        }))}
+        onChange={onCategoryChange}
+      />
+      <div className={styles.identityFields}>
+        <label>
+          Iniciales
+          <input
+            maxLength={4}
+            value={config.initials}
+            onChange={(event) => onChange({
+              ...config,
+              initials: event.target.value.toUpperCase().replace(/\s/g, ""),
+            })}
+          />
+        </label>
+        <label>
+          Año
+          <input
+            inputMode="numeric"
+            maxLength={4}
+            placeholder="Opcional"
+            value={config.foundationYear}
+            onChange={(event) => onChange({
+              ...config,
+              foundationYear: event.target.value.replace(/\D/g, "").slice(0, 4),
+            })}
+          />
+        </label>
+      </div>
+      <div className={styles.teamColorRows}>
+        {(["primaryColorKey", "secondaryColorKey"] as const).map((field) => (
+          <div className={styles.teamColorRow} key={field}>
+            <span>{field === "primaryColorKey" ? "Principal" : "Secundario"}</span>
+            <div>
+              {colors.map((item) => (
+                <button
+                  aria-label={`${field === "primaryColorKey" ? "Color principal" : "Color secundario"} ${item.name}`}
+                  aria-pressed={config[field] === item.key}
+                  className={config[field] === item.key ? styles.activeSwatch : ""}
+                  key={`${field}-${item.key}`}
+                  type="button"
+                  onClick={() => onChange({ ...config, [field]: item.key })}
+                >
+                  <MaterialSwatch
+                    color={typeof item.render.hex === "string" ? item.render.hex : null}
+                    material={item.material ?? null}
+                  />
+                </button>
+              ))}
+            </div>
+          </div>
         ))}
       </div>
-    </fieldset>
+      {activeCategory === "primary_symbol" ? (
+        <div className={styles.symbolControls}>
+          <label>
+            Tamaño
+            <span>
+              <button type="button" onClick={() => onChange({ ...config, primarySymbolScale: Math.max(0.8, config.primarySymbolScale - 0.05) })}>−</button>
+              <strong>{Math.round(config.primarySymbolScale * 100)}%</strong>
+              <button type="button" onClick={() => onChange({ ...config, primarySymbolScale: Math.min(1.2, config.primarySymbolScale + 0.05) })}>+</button>
+            </span>
+          </label>
+          <label>
+            Giro
+            <span>
+              <button type="button" onClick={() => onChange({ ...config, primarySymbolRotation: Math.max(-12, config.primarySymbolRotation - 3) })}>−</button>
+              <strong>{config.primarySymbolRotation}°</strong>
+              <button type="button" onClick={() => onChange({ ...config, primarySymbolRotation: Math.min(12, config.primarySymbolRotation + 3) })}>+</button>
+            </span>
+          </label>
+        </div>
+      ) : null}
+      {items.length ? (
+        <CosmeticOptionSelector
+          items={items.map((item) => ({
+            key: item.key,
+            material: item.material,
+            meta: `${rarityLabels[item.rarity]}${item.collection ? ` · ${item.collection.replaceAll("_", " ")}` : ""}`,
+            name: item.name,
+            new: Boolean(item.acquiredAt && !item.seenAt),
+          }))}
+          noneLabel={optional ? "Ninguno" : undefined}
+          onChange={(key) => onChange(updateTeamShieldSlot(config, activeCategory, key))}
+          selectedKeys={selectedKeys}
+        />
+      ) : <p className={styles.emptyCategory}>No hay piezas disponibles en esta categoría.</p>}
+    </CosmeticEditorShell>
   );
 }
 
@@ -199,9 +346,12 @@ export default function TeamIdentityPage() {
   const [memberships, setMemberships] = useState<Membership[]>([]);
   const [selectedGroupId, setSelectedGroupId] = useState("");
   const [userId, setUserId] = useState("");
-  const [crest, setCrest] = useState<TeamCrestSnapshot | null>(null);
+  const [crest, setCrest] = useState<TeamShieldSnapshot | null>(null);
   const [progression, setProgression] = useState<ProgressionSnapshot | null>(null);
-  const [draftDesign, setDraftDesign] = useState<CrestDesign | null>(null);
+  const [draftDesign, setDraftDesign] = useState<TeamShieldConfig | null>(null);
+  const [confirmedDesign, setConfirmedDesign] = useState<TeamShieldConfig | null>(null);
+  const [activeShieldCategory, setActiveShieldCategory] = useState<TeamShieldCosmeticSlot>("shape");
+  const [isOnline, setIsOnline] = useState(true);
   const [busy, setBusy] = useState("");
   const [message, setMessage] = useState(supabase ? "" : "Supabase no está configurado.");
   const [rewardSequence, setRewardSequence] = useState<PendingReward[]>([]);
@@ -221,10 +371,10 @@ export default function TeamIdentityPage() {
     if (canonical) setPlayerCosmetics(canonical);
   }, [userId]);
 
-  const persistCache = useCallback((nextCrest: TeamCrestSnapshot | null, nextProgression: ProgressionSnapshot | null) => {
+  const persistCache = useCallback((nextShield: TeamShieldSnapshot | null, nextProgression: ProgressionSnapshot | null) => {
     if (!userId || !selectedGroupId) return;
     try {
-      writeTeamIdentityCache(window.localStorage, userId, selectedGroupId, nextCrest, nextProgression);
+      writeTeamIdentityCache(window.localStorage, userId, selectedGroupId, nextShield, nextProgression);
     } catch {
       // Cache is derived and optional.
     }
@@ -232,12 +382,12 @@ export default function TeamIdentityPage() {
 
   const loadCrest = useCallback(async () => {
     if (!supabase || !selectedGroupId) return;
-    const result = await supabase.rpc("get_pachanga_team_crest_snapshot_v1", { target_group_id: selectedGroupId });
+    const result = await supabase.rpc("get_pachanga_team_shield_snapshot_v1", { target_group_id: selectedGroupId });
     if (result.error) {
       setMessage(result.error.message);
       return;
     }
-    const canonical = normalizeTeamCrestSnapshot(result.data);
+    const canonical = normalizeTeamShieldSnapshot(result.data);
     if (!canonical || canonical.group.groupId !== selectedGroupId) {
       setMessage("El servidor devolvió un escudo no válido.");
       return;
@@ -323,8 +473,10 @@ export default function TeamIdentityPage() {
     window.localStorage.setItem("pachangas-identity-selected-group", selectedGroupId);
     const cached = readTeamIdentityCache(window.localStorage, userId, selectedGroupId);
     queueMicrotask(() => {
-      setCrest(cached?.crest ?? null);
+      setCrest(cached?.shield ?? null);
       setProgression(cached?.progression ?? null);
+      setDraftDesign(null);
+      setConfirmedDesign(null);
       setMessage("");
     });
     queueMicrotask(() => void Promise.all([loadCrest(), loadProgression()]));
@@ -337,10 +489,27 @@ export default function TeamIdentityPage() {
 
   useEffect(() => {
     if (!crest) return;
-    queueMicrotask(() => setDraftDesign(crest.canManage
-      ? crest.draft?.design ?? crest.published?.design ?? crest.defaultDesign
-      : crest.published?.design ?? crest.defaultDesign));
-  }, [crest]);
+    const nextConfirmed = crest.config;
+    queueMicrotask(() => {
+      setDraftDesign((current) => (
+        !current || !confirmedDesign || teamShieldDesignEquals(current, confirmedDesign)
+          ? nextConfirmed
+          : current
+      ));
+      setConfirmedDesign(nextConfirmed);
+    });
+  }, [confirmedDesign, crest]);
+
+  useEffect(() => {
+    const syncOnlineState = () => setIsOnline(navigator.onLine);
+    syncOnlineState();
+    window.addEventListener("online", syncOnlineState);
+    window.addEventListener("offline", syncOnlineState);
+    return () => {
+      window.removeEventListener("online", syncOnlineState);
+      window.removeEventListener("offline", syncOnlineState);
+    };
+  }, []);
 
   useEffect(() => {
     if (!supabase || !selectedGroupId || !userId) return;
@@ -349,7 +518,27 @@ export default function TeamIdentityPage() {
       .channel(`pachanga-crest-${selectedGroupId}`)
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "pachanga_team_crest_state", filter: `group_id=eq.${selectedGroupId}` },
+        { event: "*", schema: "public", table: "pachanga_team_shield_state", filter: `group_id=eq.${selectedGroupId}` },
+        () => void loadCrest(),
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "pachanga_team_cosmetic_inventory", filter: `group_id=eq.${selectedGroupId}` },
+        () => void loadCrest(),
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "pachanga_team_cosmetic_seen", filter: `group_id=eq.${selectedGroupId}` },
+        () => void loadCrest(),
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "pachanga_team_shield_loadouts", filter: `group_id=eq.${selectedGroupId}` },
+        () => void loadCrest(),
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "pachanga_team_shield_public", filter: `group_id=eq.${selectedGroupId}` },
         () => void loadCrest(),
       )
       .subscribe();
@@ -387,6 +576,22 @@ export default function TeamIdentityPage() {
     return () => window.removeEventListener("pachangas:reward-deep-link", openRewardDeepLink);
   }, [loadProgression, selectedGroupId]);
 
+  useEffect(() => {
+    const dirty = Boolean(
+      crest?.teamCosmeticsEnabled
+      && draftDesign
+      && confirmedDesign
+      && !teamShieldDesignEquals(draftDesign, confirmedDesign),
+    );
+    if (!dirty) return;
+    const warnBeforeLeaving = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    window.addEventListener("beforeunload", warnBeforeLeaving);
+    return () => window.removeEventListener("beforeunload", warnBeforeLeaving);
+  }, [confirmedDesign, crest?.teamCosmeticsEnabled, draftDesign]);
+
   function operationIdFor(fingerprint: string) {
     const existing = operationIds.current.get(fingerprint);
     if (existing) return existing;
@@ -396,47 +601,60 @@ export default function TeamIdentityPage() {
   }
 
   function acceptCrestCommit(value: unknown) {
-    const canonical = normalizeTeamCrestSnapshot(value);
+    const canonical = normalizeTeamShieldSnapshot(value);
     if (!canonical || canonical.group.groupId !== selectedGroupId) return false;
     setCrest(canonical);
     persistCache(canonical, progression);
     return true;
   }
 
-  async function saveDraft() {
-    if (!supabase || !crest?.canManage || !draftDesign || busy) return;
-    const fingerprint = `crest-save:${selectedGroupId}:${crest.crestRevision}:${JSON.stringify(draftDesign)}`;
+  async function saveTeamShield() {
+    if (!supabase || !crest?.canManage || !crest.teamCosmeticsEnabled || !draftDesign || busy) return;
+    if (!navigator.onLine) {
+      setMessage("Sin conexión: el diseño queda como borrador local y no se ha guardado.");
+      return;
+    }
+    const fingerprint = `team-shield-save:${selectedGroupId}:${crest.revision}:${JSON.stringify(draftDesign)}`;
     const operationId = operationIdFor(fingerprint);
-    setBusy("save");
+    setBusy("team-shield-save");
     setMessage("");
-    const result = await supabase.rpc("save_pachanga_team_crest_draft_v1", {
+    const result = await supabase.rpc("save_pachanga_team_shield_loadout_v1", {
       client_metadata: clientMetadata(),
-      expected_revision: crest.crestRevision,
+      expected_revision: crest.revision,
       operation_id: operationId,
-      target_design: draftDesign,
+      target_config: draftDesign,
       target_group_id: selectedGroupId,
     });
     setBusy("");
     if (result.error) {
       setMessage(result.error.message);
-      if (result.error.code === "PT409") await loadCrest();
+      if (result.error.code === "PT409") {
+        setDraftDesign(null);
+        setConfirmedDesign(null);
+        await loadCrest();
+      }
       return;
     }
     operationIds.current.delete(fingerprint);
     if (!acceptCrestCommit(result.data)) await loadCrest();
-    setMessage("Borrador confirmado por el servidor.");
+    setMessage("Escudo confirmado y publicado por el servidor.");
   }
 
-  async function publishCrest() {
-    if (!supabase || !crest?.canManage || !draftDesign || busy) return;
-    const fingerprint = `crest-publish:${selectedGroupId}:${crest.crestRevision}:${crest.draft?.draftRevision ?? 0}`;
+  async function markTeamCosmeticsSeen(slot: TeamShieldCosmeticSlot) {
+    setActiveShieldCategory(slot);
+    if (!supabase || !crest?.canManage || !crest.teamCosmeticsEnabled || busy || !navigator.onLine) return;
+    const unseenKeys = teamShieldItemsForSlot(crest.catalog, slot)
+      .filter((item) => item.acquiredAt && !item.seenAt)
+      .map((item) => item.key);
+    if (!unseenKeys.length) return;
+    const fingerprint = `team-shield-seen:${selectedGroupId}:${crest.seenRevision}:${unseenKeys.join(",")}`;
     const operationId = operationIdFor(fingerprint);
-    setBusy("publish");
-    setMessage("");
-    const result = await supabase.rpc("publish_pachanga_team_crest_v1", {
+    setBusy("team-shield-seen");
+    const result = await supabase.rpc("mark_pachanga_team_cosmetics_seen_v1", {
       client_metadata: clientMetadata(),
-      expected_revision: crest.crestRevision,
+      expected_revision: crest.seenRevision,
       operation_id: operationId,
+      target_cosmetic_keys: unseenKeys,
       target_group_id: selectedGroupId,
     });
     setBusy("");
@@ -447,7 +665,6 @@ export default function TeamIdentityPage() {
     }
     operationIds.current.delete(fingerprint);
     if (!acceptCrestCommit(result.data)) await loadCrest();
-    setMessage("Escudo publicado para todo el equipo.");
   }
 
   async function openReward(reward: PendingReward) {
@@ -531,7 +748,12 @@ export default function TeamIdentityPage() {
     closeRewardSequence();
   }
 
-  const designIsSaved = Boolean(crest?.draft && draftDesign && JSON.stringify(crest.draft.design) === JSON.stringify(draftDesign));
+  const teamDesignIsDirty = Boolean(
+    crest?.teamCosmeticsEnabled
+    && draftDesign
+    && confirmedDesign
+    && !teamShieldDesignEquals(draftDesign, confirmedDesign),
+  );
   const activeTeamAchievements = progression?.teamAchievements.filter((item) => item.state === "active") ?? [];
   const activePersonalAchievements = progression?.personalAchievements.filter((item) => item.state === "active") ?? [];
   const personalAchievementCatalog = progression?.personalAchievementCatalog ?? [];
@@ -572,81 +794,36 @@ export default function TeamIdentityPage() {
       {!selectedGroupId ? <p className={styles.empty}>Necesitas pertenecer a un grupo para abrir su identidad.</p> : null}
       {crest && draftDesign ? (
         <>
-          <section className={styles.crestBand}>
+          {crest.canManage && crest.teamCosmeticsEnabled ? (
+            <TeamShieldCosmeticsEditor
+              activeCategory={activeShieldCategory}
+              busy={Boolean(busy)}
+              catalog={crest.catalog}
+              config={draftDesign}
+              dirty={teamDesignIsDirty}
+              isOnline={isOnline}
+              onCategoryChange={(slot) => void markTeamCosmeticsSeen(slot)}
+              onChange={setDraftDesign}
+              onReset={() => setDraftDesign(confirmedDesign)}
+              onSave={() => void saveTeamShield()}
+              revision={crest.revision}
+            />
+          ) : <section className={styles.crestBand}>
             <div className={styles.previewStage}>
-              <CrestPreview catalog={crest.catalog} design={draftDesign} />
+              <TeamShieldView catalog={crest.catalog} className={styles.identityShield} config={draftDesign} />
               <div>
-                <span>{crest.published ? `Versión publicada ${crest.published.version}` : "Todavía sin publicar"}</span>
+                <span>Escudo oficial</span>
                 <strong>{draftDesign.initials}</strong>
-                <small>Revisión confirmada {crest.crestRevision}</small>
+                <small>Revisión confirmada {crest.revision}</small>
               </div>
             </div>
-
-            {crest.canManage ? (
-              <div className={styles.editor}>
-                <div className={styles.initialsRow}>
-                  <label>Iniciales<input maxLength={4} value={draftDesign.initials} onChange={(event) => setDraftDesign((current) => current ? { ...current, initials: event.target.value.toUpperCase().replace(/\s/g, "") } : current)} /></label>
-                  <div className={styles.colorGroup}>
-                    <span>Color principal</span>
-                    <div>{crest.catalog.filter((item) => item.family === "color").map((item) => (
-                      <button
-                        aria-label={`Color principal ${item.name}`}
-                        className={draftDesign.primaryColorKey === item.key ? styles.activeSwatch : ""}
-                        key={`primary-${item.key}`}
-                        style={{ background: typeof item.render.hex === "string" ? item.render.hex : "#fff" }}
-                        type="button"
-                        onClick={() => setDraftDesign((current) => current ? { ...current, primaryColorKey: item.key } : current)}
-                      />
-                    ))}</div>
-                  </div>
-                  <div className={styles.colorGroup}>
-                    <span>Color secundario</span>
-                    <div>{crest.catalog.filter((item) => item.family === "color").map((item) => (
-                      <button
-                        aria-label={`Color secundario ${item.name}`}
-                        className={draftDesign.secondaryColorKey === item.key ? styles.activeSwatch : ""}
-                        key={`secondary-${item.key}`}
-                        style={{ background: typeof item.render.hex === "string" ? item.render.hex : "#fff" }}
-                        type="button"
-                        onClick={() => setDraftDesign((current) => current ? { ...current, secondaryColorKey: item.key } : current)}
-                      />
-                    ))}</div>
-                  </div>
-                </div>
-                {(["shape", "pattern", "border", "symbol", "adornment", "palette", "effect"] as const).map((family) => (
-                  <CatalogOptions
-                    catalog={crest.catalog}
-                    design={draftDesign}
-                    family={family}
-                    key={family}
-                    onChange={(key) => setDraftDesign((current) => current ? {
-                      ...current,
-                      [family === "shape" ? "shapeKey"
-                        : family === "pattern" ? "patternKey"
-                          : family === "border" ? "borderKey"
-                            : family === "symbol" ? "symbolKey"
-                              : family === "adornment" ? "adornmentKey"
-                                : family === "palette" ? "paletteKey" : "effectKey"]: key,
-                    } : current)}
-                  />
-                ))}
-                <EditorActions
-                  busy={Boolean(busy)}
-                  onPrimary={() => void publishCrest()}
-                  onReset={() => void saveDraft()}
-                  primaryDisabled={!designIsSaved}
-                  primaryLabel={busy === "publish" ? "Publicando…" : "Publicar escudo"}
-                  resetLabel={busy === "save" ? "Guardando…" : "Guardar borrador"}
-                />
-                <UnsavedChanges dirty={!designIsSaved} />
-              </div>
-            ) : (
-              <div className={styles.memberCrestCopy}>
-                <strong>Escudo oficial</strong>
-                <p>El historial y las piezas desbloqueadas pertenecen al equipo. Solo owner y admins pueden publicar cambios.</p>
-              </div>
-            )}
-          </section>
+            <div className={styles.memberCrestCopy}>
+              <strong>{crest.canManage ? "Personalización en preparación" : "Escudo oficial"}</strong>
+              <p>{crest.canManage
+                ? "La nueva personalización de escudos todavía no está activada para este entorno."
+                : "La colección pertenece al equipo. Solo owner y admins pueden guardar cambios."}</p>
+            </div>
+          </section>}
 
           {pendingRewards.length ? (
             <section className={styles.rewardsBand}>
@@ -854,8 +1031,8 @@ export default function TeamIdentityPage() {
             <div className={styles.historyRail}>
               {crest.history.map((version) => (
                 <article key={version.id}>
-                  <CrestPreview catalog={crest.catalog} compact design={version.design} />
-                  <div><strong>Versión {version.version}</strong><small>{dateLabel(version.publishedAt)}</small></div>
+                  <TeamShieldView catalog={crest.catalog} config={version.config} size={82} />
+                  <div><strong>Versión {version.version}</strong><small>{dateLabel(version.createdAt)}</small></div>
                 </article>
               ))}
               {!crest.history.length ? <p className={styles.empty}>La primera publicación quedará guardada aquí.</p> : null}

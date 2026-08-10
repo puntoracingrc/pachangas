@@ -1,0 +1,562 @@
+.stage {
+  --shield-border-accent: #b4c6c1;
+  --shield-border-base: #e9f0ec;
+  --shield-border-highlight: #fff;
+  --shield-primary: #071b31;
+  --shield-secondary: #33d6dd;
+  --symbol-rotation: 0deg;
+  --symbol-scale: 1;
+  position: relative;
+  isolation: isolate;
+  width: var(--shield-size, 210px);
+  max-width: 100%;
+  aspect-ratio: 0.82;
+  color: #fff;
+  filter: drop-shadow(0 calc(var(--shield-size, 210px) * 0.06) calc(var(--shield-size, 210px) * 0.08) rgba(0, 0, 0, 0.42));
+}
+
+.shieldBody,
+.shieldFace,
+.innerLine,
+.backgroundLayer,
+.patternLayer,
+.effectLayer {
+  position: absolute;
+  inset: 0;
+  clip-path: inherit;
+}
+
+.shieldBody {
+  inset: 8% 8% 4%;
+  overflow: hidden;
+  background:
+    linear-gradient(128deg, var(--shield-border-highlight) -8%, var(--shield-border-base) 22%, var(--shield-border-accent) 63%, var(--shield-border-highlight) 82%, var(--shield-border-base)),
+    var(--shield-border-base);
+}
+
+.shieldBody::before,
+.shieldBody::after {
+  position: absolute;
+  z-index: 0;
+  content: "";
+  pointer-events: none;
+}
+
+.shieldBody::before {
+  inset: 0;
+  background: repeating-linear-gradient(104deg, transparent 0 9px, rgba(255, 255, 255, 0.12) 10px, transparent 11px 18px);
+  mix-blend-mode: soft-light;
+  opacity: 0.48;
+}
+
+.shieldBody::after {
+  inset: 1.8%;
+  border: max(1px, calc(var(--shield-size, 210px) * 0.006)) solid color-mix(in srgb, var(--shield-border-highlight) 48%, transparent);
+  box-shadow: inset 0 0 calc(var(--shield-size, 210px) * 0.035) rgba(0, 0, 0, 0.34);
+  clip-path: inherit;
+}
+
+.stage[data-material="copper"] .shieldBody::before,
+.stage[data-material="bronze"] .shieldBody::before {
+  background:
+    repeating-linear-gradient(96deg, transparent 0 6px, rgba(255, 230, 196, 0.16) 7px, transparent 8px 14px),
+    radial-gradient(circle at 76% 20%, rgba(255, 241, 210, 0.32), transparent 24%);
+}
+
+.stage[data-material="silver"] .shieldBody,
+.stage[data-material="steel"] .shieldBody {
+  background: linear-gradient(122deg, var(--shield-border-accent), var(--shield-border-highlight) 26%, var(--shield-border-base) 49%, var(--shield-border-accent) 72%, var(--shield-border-highlight));
+}
+
+.stage[data-material="gold"] .shieldBody {
+  background: linear-gradient(128deg, #765009, var(--shield-border-highlight) 24%, var(--shield-border-base) 44%, #7a5205 67%, #ffe998 82%, var(--shield-border-base));
+}
+
+.stage[data-material="chrome"] .shieldBody {
+  background: linear-gradient(135deg, #222a31, #fff 18%, #65717a 34%, #f9ffff 48%, #313c46 65%, #fff 83%, #69747d);
+}
+
+.stage[data-material="chrome"] .shieldBody::before {
+  background: linear-gradient(115deg, transparent 24%, rgba(107, 223, 255, 0.35) 43%, rgba(255, 203, 238, 0.34) 57%, transparent 76%);
+  opacity: 0.72;
+}
+
+.stage[data-material="carbon"] .shieldBody,
+.stage[data-material="black_matte"] .shieldBody {
+  background: linear-gradient(138deg, var(--shield-border-highlight), var(--shield-border-base) 18%, var(--shield-border-accent) 56%, var(--shield-border-base) 78%);
+}
+
+.stage[data-material="carbon"] .shieldBody::before {
+  background:
+    linear-gradient(45deg, rgba(255, 255, 255, 0.1) 25%, transparent 25% 75%, rgba(255, 255, 255, 0.1) 75%) 0 0 / 9px 9px,
+    linear-gradient(-45deg, rgba(0, 0, 0, 0.22) 25%, transparent 25% 75%, rgba(0, 0, 0, 0.22) 75%) 0 0 / 9px 9px;
+  opacity: 0.55;
+}
+
+.stage[data-material="black_matte"] .shieldBody::before {
+  background: radial-gradient(circle at 32% 24%, rgba(255, 255, 255, 0.12), transparent 38%);
+  opacity: 0.42;
+}
+
+.stage[data-material="pearl"] .shieldBody::before {
+  background: linear-gradient(115deg, rgba(117, 217, 222, 0.2), transparent 34%, rgba(255, 216, 246, 0.25) 62%, transparent 82%);
+  opacity: 0.7;
+}
+
+.shieldFace {
+  inset: 5.5%;
+  overflow: hidden;
+  background: var(--shield-primary);
+  box-shadow: inset 0 0 calc(var(--shield-size, 210px) * 0.1) rgba(0, 0, 0, 0.28);
+}
+
+.stage[data-shape="classic_iq"] .shieldBody,
+.stage[data-shape="classic_iq"] .shieldFace,
+.stage[data-shape="classic_iq"] .innerLine {
+  clip-path: polygon(12% 1%, 88% 1%, 98% 15%, 90% 72%, 50% 99%, 10% 72%, 2% 15%);
+}
+
+.stage[data-shape="round"] .shieldBody,
+.stage[data-shape="round"] .shieldFace,
+.stage[data-shape="round"] .innerLine {
+  clip-path: circle(49% at 50% 50%);
+}
+
+.stage[data-shape="round"] .shieldBody {
+  inset: 11% 6% auto;
+  aspect-ratio: 1;
+}
+
+.stage[data-shape="tall"] .shieldBody,
+.stage[data-shape="tall"] .shieldFace,
+.stage[data-shape="tall"] .innerLine {
+  clip-path: polygon(16% 0, 84% 0, 96% 11%, 87% 76%, 50% 100%, 13% 76%, 4% 11%);
+}
+
+.stage[data-shape="swiss"] .shieldBody,
+.stage[data-shape="swiss"] .shieldFace,
+.stage[data-shape="swiss"] .innerLine {
+  clip-path: polygon(5% 2%, 95% 2%, 95% 66%, 50% 100%, 5% 66%);
+}
+
+.stage[data-shape="hex_iq"] .shieldBody,
+.stage[data-shape="hex_iq"] .shieldFace,
+.stage[data-shape="hex_iq"] .innerLine {
+  clip-path: polygon(21% 0, 79% 0, 99% 22%, 88% 78%, 50% 100%, 12% 78%, 1% 22%);
+}
+
+.stage[data-shape="diamond"] .shieldBody,
+.stage[data-shape="diamond"] .shieldFace,
+.stage[data-shape="diamond"] .innerLine {
+  clip-path: polygon(50% 0, 97% 31%, 78% 80%, 50% 100%, 22% 80%, 3% 31%);
+}
+
+.stage[data-shape="modern"] .shieldBody,
+.stage[data-shape="modern"] .shieldFace,
+.stage[data-shape="modern"] .innerLine {
+  clip-path: polygon(15% 1%, 85% 1%, 99% 19%, 83% 83%, 50% 99%, 17% 83%, 1% 19%);
+  border-radius: 22% 22% 38% 38% / 16% 16% 29% 29%;
+}
+
+.stage[data-shape="barrio"] .shieldBody,
+.stage[data-shape="barrio"] .shieldFace,
+.stage[data-shape="barrio"] .innerLine {
+  clip-path: polygon(6% 0, 94% 0, 100% 62%, 73% 88%, 50% 100%, 27% 88%, 0 62%);
+}
+
+.backgroundLayer {
+  z-index: 0;
+  background: var(--shield-primary);
+}
+
+.stage[data-background="duotone"] .backgroundLayer {
+  background: linear-gradient(118deg, var(--shield-primary) 0 54%, var(--shield-secondary) 54% 100%);
+}
+
+.stage[data-background="split"] .backgroundLayer {
+  background: linear-gradient(90deg, var(--shield-primary) 0 50%, var(--shield-secondary) 50% 100%);
+}
+
+.patternLayer {
+  z-index: 1;
+  opacity: 0.78;
+}
+
+.stage[data-pattern="diagonal"] .patternLayer {
+  background: linear-gradient(136deg, transparent 0 40%, color-mix(in srgb, var(--shield-secondary) 82%, white) 40% 55%, transparent 55%);
+}
+
+.stage[data-pattern="stripes"] .patternLayer {
+  background: repeating-linear-gradient(90deg, transparent 0 15%, color-mix(in srgb, var(--shield-secondary) 72%, transparent) 15% 29%);
+}
+
+.stage[data-pattern="chevron"] .patternLayer {
+  background:
+    linear-gradient(138deg, transparent 45%, color-mix(in srgb, var(--shield-secondary) 70%, transparent) 45% 53%, transparent 53%),
+    linear-gradient(222deg, transparent 45%, color-mix(in srgb, var(--shield-secondary) 70%, transparent) 45% 53%, transparent 53%);
+}
+
+.stage[data-pattern="grid_iq"] .patternLayer {
+  background:
+    linear-gradient(color-mix(in srgb, var(--shield-secondary) 24%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--shield-secondary) 24%, transparent) 1px, transparent 1px);
+  background-size: 12% 12%;
+}
+
+.stage[data-pattern="retro"] .patternLayer {
+  background: repeating-linear-gradient(90deg, transparent 0 8%, color-mix(in srgb, var(--shield-secondary) 75%, transparent) 8% 12%, transparent 12% 20%);
+}
+
+.stage[data-pattern="chalk"] .patternLayer {
+  background: repeating-linear-gradient(17deg, rgba(255, 255, 255, 0.07) 0 1px, transparent 1px 9px);
+}
+
+.stage[data-pattern="honeycomb"] .patternLayer {
+  background:
+    radial-gradient(circle at 50% 50%, transparent 0 36%, color-mix(in srgb, var(--shield-secondary) 24%, transparent) 38% 42%, transparent 44%) 0 0 / 18% 16%;
+}
+
+.innerLine {
+  z-index: 2;
+  inset: 7%;
+  border: max(1px, calc(var(--shield-size, 210px) * 0.008)) solid color-mix(in srgb, var(--shield-border-highlight) 78%, transparent);
+  opacity: 0.82;
+}
+
+.stage[data-border="double"] .innerLine {
+  inset: 9%;
+  border-width: max(2px, calc(var(--shield-size, 210px) * 0.014));
+  border-style: double;
+}
+
+.primarySymbol,
+.secondarySymbol,
+.initials,
+.foundationYear {
+  position: absolute;
+  z-index: 4;
+  left: 50%;
+  transform: translateX(-50%);
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.58));
+}
+
+.primarySymbol {
+  top: 24%;
+  width: 33%;
+  aspect-ratio: 1;
+  transform: translateX(-50%) rotate(var(--symbol-rotation)) scale(var(--symbol-scale));
+}
+
+.primarySymbol svg,
+.secondarySymbol svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  fill: none;
+  stroke: color-mix(in srgb, white 92%, var(--shield-secondary));
+  stroke-width: 3.25;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.primarySymbol .solidSymbol,
+.secondarySymbol .solidSymbol {
+  fill: color-mix(in srgb, white 88%, var(--shield-secondary));
+  stroke: color-mix(in srgb, white 96%, var(--shield-secondary));
+}
+
+.monogram {
+  display: grid;
+  height: 100%;
+  place-items: center;
+  font-size: calc(var(--shield-size, 210px) * 0.13);
+  line-height: 1;
+}
+
+.secondarySymbol {
+  left: auto;
+  right: 24%;
+  bottom: 26%;
+  width: 14%;
+  transform: none;
+}
+
+.initials {
+  top: 55%;
+  font-size: max(0.5rem, calc(var(--shield-size, 210px) * 0.14));
+  font-weight: 950;
+  line-height: 1;
+}
+
+.foundationYear {
+  bottom: 17%;
+  font-size: max(0.3rem, calc(var(--shield-size, 210px) * 0.039));
+  font-weight: 850;
+}
+
+.topOrnament,
+.sideOrnament,
+.bottomOrnament {
+  position: absolute;
+  z-index: 5;
+  display: grid;
+  place-items: center;
+  color: var(--shield-border-highlight);
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.7));
+  pointer-events: none;
+}
+
+.topOrnament {
+  top: -2%;
+  left: 24%;
+  width: 52%;
+  height: 22%;
+}
+
+.sideOrnament {
+  top: 23%;
+  left: -3%;
+  width: 106%;
+  height: 58%;
+  z-index: -1;
+}
+
+.bottomOrnament {
+  bottom: 0;
+  left: 14%;
+  width: 72%;
+  min-height: 14%;
+}
+
+.topOrnament svg,
+.sideOrnament svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  fill: var(--shield-border-base);
+  stroke: var(--shield-border-highlight);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.topOrnament[data-ornament="crown"] svg {
+  fill: color-mix(in srgb, var(--shield-border-base) 88%, transparent);
+  stroke-width: 3.6;
+}
+
+.sideOrnament[data-ornament="laurels"] svg {
+  fill: none;
+  stroke-width: 5;
+}
+
+.sideOrnament[data-ornament="wings"] svg {
+  fill: color-mix(in srgb, var(--shield-border-base) 34%, transparent);
+  stroke-width: 4;
+}
+
+.stars {
+  color: var(--shield-border-base);
+  font-size: calc(var(--shield-size, 210px) * 0.115);
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.banner,
+.plate {
+  width: 100%;
+  border: max(1px, calc(var(--shield-size, 210px) * 0.007)) solid var(--shield-border-highlight);
+  border-radius: 3px;
+  background: linear-gradient(180deg, var(--shield-border-base), var(--shield-border-accent));
+  padding: 3% 8%;
+  color: #07110d;
+  font-size: max(0.28rem, calc(var(--shield-size, 210px) * 0.032));
+  font-weight: 950;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.plate {
+  clip-path: polygon(7% 0, 93% 0, 100% 50%, 93% 100%, 7% 100%, 0 50%);
+}
+
+.effectLayer {
+  z-index: 6;
+  pointer-events: none;
+}
+
+.effectLayer::before,
+.effectLayer::after {
+  position: absolute;
+  inset: 0;
+  content: "";
+  pointer-events: none;
+}
+
+.stage[data-effect="edge_glow"] .shieldBody {
+  filter:
+    drop-shadow(0 0 calc(var(--shield-size, 210px) * 0.035) color-mix(in srgb, var(--shield-secondary) 92%, white))
+    drop-shadow(0 0 calc(var(--shield-size, 210px) * 0.075) color-mix(in srgb, var(--shield-secondary) 62%, transparent));
+}
+
+.stage[data-effect="edge_glow"] .innerLine {
+  border-color: color-mix(in srgb, var(--shield-secondary) 80%, white);
+  box-shadow: inset 0 0 calc(var(--shield-size, 210px) * 0.04) color-mix(in srgb, var(--shield-secondary) 48%, transparent);
+}
+
+.stage[data-effect="glint"] .effectLayer {
+  background: linear-gradient(118deg, transparent 29%, rgba(255, 245, 204, 0.16) 45%, rgba(255, 255, 255, 0.27) 50%, transparent 66%);
+}
+
+.stage[data-effect="glint"] .effectLayer::before {
+  background: linear-gradient(118deg, transparent 34%, rgba(255, 249, 217, 0.82) 47%, rgba(255, 255, 255, 0.96) 50%, transparent 61%);
+  animation: shieldGlint 4.8s cubic-bezier(0.45, 0, 0.2, 1) infinite;
+}
+
+.stage[data-effect="scan"] .effectLayer {
+  background:
+    linear-gradient(90deg, transparent 49%, rgba(106, 245, 255, 0.16) 50%, transparent 51%),
+    repeating-linear-gradient(180deg, transparent 0 9%, rgba(68, 228, 237, 0.07) 9% 10%);
+}
+
+.stage[data-effect="scan"] .effectLayer::before {
+  inset: -30% 0;
+  background: linear-gradient(180deg, transparent 44%, rgba(177, 251, 255, 0.16) 47%, rgba(54, 229, 241, 0.92) 50%, rgba(177, 251, 255, 0.22) 53%, transparent 56%);
+  animation: shieldScan 3.2s linear infinite;
+}
+
+.stage[data-effect="holo"] .effectLayer {
+  background:
+    linear-gradient(112deg, rgba(72, 203, 255, 0.18), rgba(184, 255, 112, 0.24), rgba(255, 158, 223, 0.24), rgba(255, 224, 114, 0.16), rgba(72, 203, 255, 0.18));
+  background-size: 260% 100%;
+  mix-blend-mode: screen;
+  animation: shieldHolo 5.2s ease-in-out infinite;
+}
+
+.stage[data-effect="holo"] .shieldBody::before {
+  background: linear-gradient(115deg, rgba(77, 201, 255, 0.2), rgba(198, 255, 126, 0.45), rgba(255, 170, 226, 0.5), rgba(255, 224, 127, 0.36), rgba(77, 201, 255, 0.2));
+  background-size: 230% 100%;
+  mix-blend-mode: screen;
+  opacity: 0.78;
+  animation: shieldHolo 5.2s ease-in-out infinite;
+}
+
+.stage[data-effect="holo"] .effectLayer::after {
+  inset: 6%;
+  border: max(1px, calc(var(--shield-size, 210px) * 0.01)) solid rgba(159, 242, 255, 0.7);
+  box-shadow: inset 0 0 calc(var(--shield-size, 210px) * 0.055) rgba(255, 171, 231, 0.38);
+  clip-path: inherit;
+}
+
+@keyframes shieldGlint {
+  0%, 58%, 100% { opacity: 0; transform: translateX(-72%); }
+  68% { opacity: 0.92; }
+  86% { opacity: 0; transform: translateX(72%); }
+}
+
+@keyframes shieldScan {
+  from { transform: translateY(-38%); }
+  to { transform: translateY(38%); }
+}
+
+@keyframes shieldHolo {
+  0%, 100% { opacity: 0.16; background-position: 0 0; }
+  50% { opacity: 0.5; background-position: 100% 0; }
+}
+
+.stage[data-size="24"] .secondarySymbol,
+.stage[data-size="24"] .foundationYear,
+.stage[data-size="24"] .initials,
+.stage[data-size="24"] .topOrnament,
+.stage[data-size="24"] .sideOrnament,
+.stage[data-size="24"] .bottomOrnament,
+.stage[data-size="32"] .secondarySymbol,
+.stage[data-size="32"] .foundationYear,
+.stage[data-size="32"] .sideOrnament,
+.stage[data-size="32"] .bottomOrnament,
+.stage[data-size="48"] .sideOrnament {
+  display: none;
+}
+
+.stage[data-size="24"] .shieldBody,
+.stage[data-size="32"] .shieldBody {
+  inset: 5%;
+}
+
+.stage[data-size="24"] .shieldFace,
+.stage[data-size="32"] .shieldFace {
+  inset: 8%;
+}
+
+.stage[data-size="24"] .innerLine,
+.stage[data-size="32"] .innerLine {
+  display: none;
+}
+
+.stage[data-size="24"] .primarySymbol {
+  top: 29%;
+  width: 43%;
+}
+
+.stage[data-size="24"] .primarySymbol svg {
+  stroke-width: 5.5;
+}
+
+.stage[data-size="32"] .primarySymbol {
+  top: 19%;
+  width: 38%;
+}
+
+.stage[data-size="32"] .primarySymbol svg {
+  stroke-width: 4.5;
+}
+
+.stage[data-size="32"] .initials {
+  top: 58%;
+  font-size: 0.5rem;
+}
+
+.stage[data-size="24"][data-effect="glint"] .effectLayer::before,
+.stage[data-size="32"][data-effect="glint"] .effectLayer::before,
+.stage[data-size="24"][data-effect="scan"] .effectLayer::before,
+.stage[data-size="32"][data-effect="scan"] .effectLayer::before {
+  animation: none;
+  opacity: 0.65;
+  transform: none;
+}
+
+.stage[data-motion="reduced"] .effectLayer,
+.stage[data-motion="reduced"] .effectLayer::before,
+.stage[data-motion="reduced"] .effectLayer::after,
+.stage[data-motion="reduced"][data-effect="holo"] .shieldBody::before {
+  animation: none;
+}
+
+.stage[data-motion="reduced"][data-effect="glint"] .effectLayer::before,
+.stage[data-motion="reduced"][data-effect="scan"] .effectLayer::before {
+  opacity: 0.72;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .effectLayer,
+  .effectLayer::before,
+  .effectLayer::after,
+  .stage[data-effect="holo"] .shieldBody::before {
+    animation: none !important;
+  }
+
+  .stage[data-effect="glint"] .effectLayer::before,
+  .stage[data-effect="scan"] .effectLayer::before {
+    opacity: 0.72;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .effectLayer {
+    animation: none !important;
+    opacity: 0.26;
+    transform: none !important;
+  }
+}
