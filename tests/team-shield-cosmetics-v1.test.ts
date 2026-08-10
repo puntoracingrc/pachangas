@@ -34,12 +34,12 @@ const sharedEditorStyles = readFileSync(new URL("../app/_components/cosmetics-ed
 const shieldRenderer = readFileSync(new URL("../app/_components/team-shield-view.tsx", import.meta.url), "utf8");
 const shieldRendererStyles = readFileSync(new URL("../app/_components/team-shield-view.module.css", import.meta.url), "utf8");
 
-test("the new base library is complete before rewards and the lab selects 16 V1 candidates", () => {
+test("the new base library is complete before rewards and the lab selects 17 V1 candidates", () => {
   assert.equal(TEAM_SHIELD_BASE_CATALOG.length, 28);
   assert.equal(TEAM_SHIELD_COSMETIC_PROTOTYPES.length, 31);
-  assert.equal(TEAM_SHIELD_COSMETIC_V1_CANDIDATES.length, 16);
+  assert.equal(TEAM_SHIELD_COSMETIC_V1_CANDIDATES.length, 17);
   assert.equal(new Set(TEAM_SHIELD_BASE_CATALOG.map(({ key }) => key)).size, 28);
-  assert.equal(new Set(TEAM_SHIELD_COSMETIC_V1_CANDIDATES.map(({ key }) => key)).size, 16);
+  assert.equal(new Set(TEAM_SHIELD_COSMETIC_V1_CANDIDATES.map(({ key }) => key)).size, 17);
   assert.equal(TEAM_SHIELD_BASE_CATALOG.filter(({ slot }) => slot === "shape").length, 8);
   assert.equal(TEAM_SHIELD_BASE_CATALOG.filter(({ key }) => key.startsWith("team.shield.color.")).length, 6);
   assert.ok(TEAM_SHIELD_BASE_CATALOG.filter(({ key }) => key.startsWith("team.shield.color.")).every(({ slot }) => slot === null));
