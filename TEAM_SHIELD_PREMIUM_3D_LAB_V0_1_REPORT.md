@@ -160,3 +160,19 @@ La combinación recomendada es:
 4. `TeamShieldView` intacto en 24/32 px y en listados densos.
 
 El siguiente paso realista es revisar la silueta de la corona, probar el sensor en un iPhone y un Android físicos desde Preview y, solo después, definir un contrato premium/fallback sin asignarle todavía economía ni rareza.
+
+## Actualización RC V1 (2026-08-10)
+
+La fase posterior se ha implementado en `codex/team-shield-premium-3d-v1-rc`, partiendo exactamente del head `384069febd4d16f1f2b4d651727137e4a9bfd220` de este laboratorio.
+
+Las conclusiones originales se mantienen, con estas concreciones:
+
+- Balón Premium: se conserva el pipeline B de ocho vistas, ahora integrado en `TeamShieldView` con activación explícita de `DeviceOrientation`, neutro calibrado, dead zone, clamp, smoothing, hysteresis, rotación de pantalla, pausa fuera de vista/background y fallback estático.
+- `DeviceMotion`: descartado formalmente de V1.
+- Cobre, Plata y Oro: promovidos a candidatos de catálogo en staging, sin recompensas ni ventaja deportiva.
+- Cromo, Carbono premium 3D, Corona y GLB: continúan siendo exclusivamente laboratorio.
+- 24/32 px: representación 2D simplificada; 48/64 px: prerender estático; interacción multivista solo en superficies medias/grandes visibles.
+- Assets productivos: nombres con hash de contenido y caché immutable; precarga de frames solo al activar el premium visible.
+- Pruebas físicas: iOS sigue pendiente. Android se comprobará contra la Preview HTTPS del RC antes de cerrar su estado.
+
+El detalle técnico, staging E2E, rendimiento, capturas, regresiones y veredictos por pieza se documenta en `TEAM_SHIELD_PREMIUM_3D_V1_RC_REPORT.md`. Esta actualización no borra ni sustituye las conclusiones V0.1.

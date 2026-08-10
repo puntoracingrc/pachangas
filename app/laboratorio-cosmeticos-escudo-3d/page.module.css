@@ -11,7 +11,8 @@
 .header,
 .comparisonBand > header,
 .materialBand > header,
-.lodBand > header {
+.lodBand > header,
+.rcBand > header {
   display: flex;
   align-items: end;
   justify-content: space-between;
@@ -23,7 +24,8 @@
 .header span,
 .comparisonBand header span,
 .materialBand header span,
-.lodBand header span {
+.lodBand header span,
+.rcBand header span {
   color: #65dbe0;
   font-size: 0.7rem;
   font-weight: 900;
@@ -306,14 +308,16 @@
 
 .comparisonBand,
 .materialBand,
-.lodBand {
+.lodBand,
+.rcBand {
   width: min(1180px, 100%);
   margin: clamp(36px, 6vw, 72px) auto 0;
 }
 
 .comparisonBand h2,
 .materialBand h2,
-.lodBand h2 {
+.lodBand h2,
+.rcBand h2 {
   margin: 0;
   font-size: clamp(1.1rem, 2.4vw, 1.65rem);
   letter-spacing: 0;
@@ -423,6 +427,99 @@
   text-align: center;
 }
 
+.rcInteractive {
+  display: grid;
+  grid-template-columns: minmax(230px, 0.7fr) minmax(240px, 1fr);
+  align-items: center;
+  gap: 24px;
+  min-height: 360px;
+  margin-top: 15px;
+  border-block: 1px solid rgba(166, 206, 202, 0.18);
+  background: rgba(4, 15, 19, 0.34);
+  padding: 22px;
+}
+
+.rcInteractive > div:last-child {
+  display: grid;
+  gap: 7px;
+}
+
+.rcInteractive strong,
+.rcComparison strong,
+.rcContactSheet strong {
+  color: #eef8f5;
+}
+
+.rcInteractive small {
+  max-width: 48ch;
+  color: #96aaa5;
+  line-height: 1.55;
+}
+
+.rcComparison {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 15px;
+}
+
+.rcComparison article {
+  display: grid;
+  min-height: 330px;
+  place-items: center;
+  align-content: center;
+  gap: 12px;
+  border: 1px solid rgba(166, 206, 202, 0.18);
+  background: rgba(7, 20, 24, 0.62);
+}
+
+.rcContactSheet {
+  display: grid;
+  gap: 12px;
+  margin-top: 15px;
+}
+
+.rcContactSheet > article {
+  border: 1px solid rgba(166, 206, 202, 0.18);
+  background: rgba(7, 20, 24, 0.52);
+  padding: 12px;
+}
+
+.rcContactSheet > article > header {
+  margin-bottom: 10px;
+}
+
+.rcContactSheet > article > div,
+.rcSensorSheet {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  align-items: end;
+  gap: 8px;
+}
+
+.rcContactSheet figure,
+.rcSensorSheet figure {
+  display: grid;
+  min-width: 0;
+  min-height: 245px;
+  place-items: center;
+  align-content: end;
+  gap: 8px;
+  margin: 0;
+}
+
+.rcContactSheet figcaption,
+.rcSensorSheet figcaption {
+  color: #96aaa5;
+  font-size: 0.62rem;
+  text-align: center;
+}
+
+.rcSensorSheet {
+  margin-top: 12px;
+  border-block: 1px solid rgba(166, 206, 202, 0.18);
+}
+
 @media (max-width: 760px) {
   .header {
     align-items: start;
@@ -476,6 +573,21 @@
 
   .pipelineGrid {
     grid-template-columns: 1fr;
+  }
+
+  .rcInteractive,
+  .rcComparison {
+    grid-template-columns: 1fr;
+  }
+
+  .rcContactSheet > article > div,
+  .rcSensorSheet {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .rcContactSheet figure,
+  .rcSensorSheet figure {
+    min-height: 220px;
   }
 
   .miniPreview {

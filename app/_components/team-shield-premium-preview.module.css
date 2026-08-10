@@ -1,0 +1,51 @@
+.preview {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+}
+
+.controls {
+  display: grid;
+  justify-items: center;
+  gap: 5px;
+}
+
+.controls button {
+  min-height: 40px;
+  border: 1px solid rgba(101, 219, 224, 0.5);
+  border-radius: 6px;
+  background: rgba(5, 20, 25, 0.86);
+  padding: 8px 13px;
+  color: #eef8f5;
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.controls button:disabled {
+  cursor: not-allowed;
+  opacity: 0.52;
+}
+
+.controls small {
+  color: #9eb1a7;
+  font-size: 0.65rem;
+}
+
+@media (orientation: landscape) and (max-height: 560px) {
+  .preview {
+    gap: 7px;
+  }
+
+  .controls {
+    grid-template-columns: auto auto;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .controls button {
+    min-height: 34px;
+    padding-block: 5px;
+  }
+}

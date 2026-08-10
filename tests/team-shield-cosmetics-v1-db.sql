@@ -42,6 +42,52 @@ as $$
   );
 $$;
 
+select pg_temp.assert_true(
+  (select count(*)
+   from public.pachanga_cosmetic_catalog
+   where cosmetic_key in (
+     'team.shield.symbol.ball_premium',
+     'team.shield.border.copper',
+     'team.shield.border.silver',
+     'team.shield.border.gold'
+   )
+     and active
+     and owner_scope = 'team') = 4,
+  'The Premium RC promotes exactly the ball and Copper Silver Gold team cosmetics'
+);
+select pg_temp.assert_true(
+  (select slot = 'primary_symbol'
+          and render_contract ->> 'premiumPipeline' = 'multiview-8-v1'
+   from public.pachanga_cosmetic_catalog
+   where cosmetic_key = 'team.shield.symbol.ball_premium'),
+  'The Premium Ball uses the canonical primary symbol slot and multiview contract'
+);
+select pg_temp.assert_true(
+  (select count(*)
+   from public.pachanga_cosmetic_catalog
+   where cosmetic_key in (
+     'team.shield.border.copper',
+     'team.shield.border.silver',
+     'team.shield.border.gold'
+   )
+     and slot = 'border'
+     and render_contract ->> 'premiumBorder' = 'prerender-material-v1') = 3,
+  'Copper Silver and Gold use the canonical premium border contract'
+);
+select pg_temp.assert_true(
+  not exists (
+    select 1
+    from public.pachanga_reward_pool_catalog
+    where cosmetic_key in (
+      'team.shield.symbol.ball_premium',
+      'team.shield.border.copper',
+      'team.shield.border.silver',
+      'team.shield.border.gold'
+    )
+  ),
+  'The Premium RC does not activate any reward mapping'
+);
+
 insert into auth.users(id, email) values
   ('e5100000-0000-0000-0000-000000000001', 'shield-owner@example.test'),
   ('e5100000-0000-0000-0000-000000000002', 'shield-admin@example.test'),
