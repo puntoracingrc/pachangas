@@ -181,7 +181,7 @@ IQ Scan y Glint Oro, sin regresion sostenida.
   `CLIENT_UPDATE_REQUIRED` y lecturas disponibles.
 - Cliente `2.0.0+2f98e40`: escritura permitida.
 - `/api/client-policy`: `private, no-store, max-age=0, must-revalidate`.
-- Service Worker final: `2.0.0+sw.2f98e406780d`.
+- Service Worker verificado en el deployment funcional: `2.0.0+sw.2f98e406780d`.
 - `/sw.js`: `no-cache, no-store, must-revalidate`.
 
 ## Logs y advisors
