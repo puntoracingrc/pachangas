@@ -37,6 +37,7 @@
     "test:player-cosmetics": "tsx --test tests/player-cosmetics-v1.test.ts",
     "test:player-cosmetics:db": "psql -X -w \"$PLAYER_COSMETICS_DATABASE_URL\" -v ON_ERROR_STOP=1 -f tests/player-cosmetics-v1-db.sql",
     "test:player-cosmetics:concurrency": "node tests/player-cosmetics-v1-concurrency.mjs",
+    "test:player-cosmetics:staging": "node tests/player-cosmetics-v1-staging-e2e.mjs",
     "test:notifications:db": "psql -X -w \"$NOTIFICATION_DATABASE_URL\" -v ON_ERROR_STOP=1 -f tests/notification-foundation-db.sql",
     "test:season-ranking-lab": "tsx --test tests/season-ranking-engine.test.ts tests/season-ranking-attacks.test.ts",
     "test:season-ranking-elite": "tsx --test tests/season-ranking-elite.test.ts tests/season-ranking-v3.test.ts",
