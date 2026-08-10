@@ -36,6 +36,15 @@ test("builds Pachangas IQ HTML", async () => {
   assert.doesNotMatch(html, /Your site is taking shape|Building your site|react-loading-skeleton/i);
 });
 
+test("keeps the player card laboratory out of search indexes", async () => {
+  const html = await readFile(
+    new URL("../.next/server/app/laboratorio-ficha-jugador.html", import.meta.url),
+    "utf8",
+  );
+  assert.match(html, /<meta name="robots" content="noindex, nofollow"/i);
+  assert.match(html, />Laboratorio<\/span>/);
+});
+
 test("keeps Synthetic World funnel rows keyed independently from duplicate labels", async () => {
   const dashboard = await readFile(new URL("../app/admin/simulation-world/simulation-world-dashboard.tsx", import.meta.url), "utf8");
   assert.match(dashboard, /audit\.funnel\.map\(\(row, index\) => <div key=\{`\$\{index\}-\$\{row\.label\}`\}>/);

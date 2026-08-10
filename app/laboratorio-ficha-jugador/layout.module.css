@@ -1,0 +1,17 @@
+.labBadge {
+  position: fixed;
+  z-index: 30;
+  top: max(8px, env(safe-area-inset-top));
+  right: max(8px, env(safe-area-inset-right));
+  padding: 5px 8px;
+  border: 1px solid rgba(157, 230, 87, 0.55);
+  border-radius: 6px;
+  background: rgba(7, 18, 14, 0.82);
+  color: #d9ff9e;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1;
+  text-transform: uppercase;
+  pointer-events: none;
+  backdrop-filter: blur(8px);
+}
