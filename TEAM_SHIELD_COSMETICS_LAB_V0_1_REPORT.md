@@ -20,15 +20,15 @@ simulados y nunca modifican PostgreSQL.
 
 ## Propuestas V0.1
 
-Total: 28.
+Total: 31.
 
 | Decision | Cantidad |
 | --- | ---: |
 | MANTENER | 16 |
-| REVISAR | 12 |
+| REVISAR | 15 |
 | DESCARTAR | 0 |
 
-LAB ONLY: Cromo, Alas y Holo.
+LAB ONLY: Cromo, Alas, Holo, Corona IQ, Escudo Interior y Orbita IQ.
 
 ## Candidatas V1
 
@@ -52,7 +52,8 @@ Las 16 candidatas reales son:
 16. Edge Glow
 
 Bronce, Oro, Negro Mate, Cromo, Perla, Pizarra, Hex Mesh, Doble Rayo, Alas,
-Rayos Laterales, Placa y Holo quedan en REVISAR.
+Rayos Laterales, Placa, Holo, Corona IQ, Escudo Interior y Orbita IQ quedan en
+REVISAR.
 
 ## Evaluacion
 
@@ -72,15 +73,25 @@ Rayos Laterales, Placa y Holo quedan en REVISAR.
 - `artifacts/team-shield-cosmetics-qa/lab-landscape-844x390.png`.
 - `artifacts/team-shield-cosmetics-qa/lab-landscape-reduced-motion.png`.
 - `artifacts/team-shield-cosmetics-qa/lab-full-catalog.png`.
+- `artifacts/team-shield-cosmetics-qa/polish-overview-desktop-1440x900.png`.
+- `artifacts/team-shield-cosmetics-qa/contact-sheet-families-1440x900.png`.
+- `artifacts/team-shield-cosmetics-qa/contact-sheet-materials-1440x900.png`.
+- `artifacts/team-shield-cosmetics-qa/contact-sheet-symbols-1440x900.png`.
+- `artifacts/team-shield-cosmetics-qa/contact-sheet-effects-1440x900.png`.
+- `artifacts/team-shield-cosmetics-qa/contact-sheet-ornaments-1440x900.png`.
+- `artifacts/team-shield-cosmetics-qa/contact-sheet-lod-reduced-motion-1440x900.png`.
+- `artifacts/team-shield-cosmetics-qa/polish-portrait-390x844.png`.
+- `artifacts/team-shield-cosmetics-qa/polish-landscape-844x390.png`.
 
-La Vercel Preview `dpl_Es9eQsUuiWbYucwJhLk88v1haVWt` reproduce el
-laboratorio en el commit funcional `e9e045d3f693364089b8886037be7658fdb82985`.
-La QA remota confirma `200`, `noindex`, cero overflow de documento, cero
-warnings/errores de consola y ausencia de solapes en 844x390 tras compactar la
-navegacion de categorias a dos filas.
+La Vercel Preview del PR #130 reproduce el laboratorio del HEAD publicado. La
+QA remota y su deployment exacto se registran en el cierre del PR, evitando que
+este informe conserve un identificador de Preview obsoleto.
 
 Las capturas prueban Base IQ, Barrio, Future IQ, Noche, materiales, patrones,
 complementos, efectos, catalogo y LOD 24/32/48/64.
+
+El detalle de la pasada de pulido, la clasificacion provisional y los hallazgos
+corregidos esta en `TEAM_SHIELD_COSMETICS_VISUAL_POLISH_REPORT.md`.
 
 ## Decision Pendiente
 

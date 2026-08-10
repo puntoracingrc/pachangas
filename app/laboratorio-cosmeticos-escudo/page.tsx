@@ -40,6 +40,18 @@ const labels: Record<TeamShieldCosmeticSlot, string> = {
 const tabs = (Object.keys(labels) as TeamShieldCosmeticSlot[]).map((key) => ({ key, label: labels[key] }));
 const colors = TEAM_SHIELD_BASE_CATALOG.filter((item) => item.key.startsWith("team.shield.color."));
 
+type ShieldSample = {
+  config: TeamShieldConfig;
+  density?: "LIMPIO" | "MEDIO" | "CARGADO";
+  family?: string;
+  label: string;
+  note?: string;
+};
+
+function sampleConfig(overrides: Partial<TeamShieldConfig>): TeamShieldConfig {
+  return { ...TEAM_SHIELD_DEFAULT_CONFIG, ...overrides };
+}
+
 const presets: Array<{ config: TeamShieldConfig; label: string }> = [
   {
     label: "Base IQ",
@@ -73,8 +85,7 @@ const presets: Array<{ config: TeamShieldConfig; label: string }> = [
   },
   {
     label: "Noche",
-    config: {
-      ...TEAM_SHIELD_DEFAULT_CONFIG,
+    config: sampleConfig({
       borderKey: "team.shield.border.gold",
       effectKey: "team.shield.effect.glint",
       foundationYear: "2026",
@@ -84,9 +95,116 @@ const presets: Array<{ config: TeamShieldConfig; label: string }> = [
       secondaryColorKey: "team.shield.color.amber",
       shapeKey: "team.shield.shape.tall",
       topOrnamentKey: "team.shield.ornament.crown",
-    },
+    }),
+  },
+  {
+    label: "Retro",
+    config: sampleConfig({
+      borderKey: "team.shield.border.silver",
+      foundationYear: "1986",
+      initials: "CRT",
+      patternKey: "team.shield.pattern.retro",
+      primaryColorKey: "team.shield.color.emerald",
+      primarySymbolKey: "team.shield.symbol.ball_iq",
+      secondaryColorKey: "team.shield.color.ivory",
+      shapeKey: "team.shield.shape.swiss",
+      topOrnamentKey: "team.shield.ornament.three_stars",
+    }),
   },
 ];
+
+const familySamples: ShieldSample[] = [
+  { label: "Base limpio", family: "Clásico", density: "LIMPIO", config: sampleConfig({ initials: "PIQ", patternKey: null }) },
+  { label: "Clásico plata", family: "Clásico", density: "MEDIO", config: sampleConfig({ borderKey: "team.shield.border.silver", initials: "CLB", patternKey: "team.shield.pattern.stripes", primaryColorKey: "team.shield.color.crimson", secondaryColorKey: "team.shield.color.ivory", shapeKey: "team.shield.shape.round" }) },
+  { label: "Clásico gala", family: "Clásico", density: "CARGADO", config: sampleConfig({ borderKey: "team.shield.border.gold", bottomOrnamentKey: "team.shield.ornament.banner", effectKey: "team.shield.effect.glint", initials: "G11", primaryColorKey: "team.shield.color.midnight", secondaryColorKey: "team.shield.color.amber", sideOrnamentKey: "team.shield.ornament.laurels", topOrnamentKey: "team.shield.ornament.crown" }) },
+  { label: "Torre de barrio", family: "Barrio", density: "MEDIO", config: presets[1].config },
+  { label: "Pizarra local", family: "Barrio", density: "LIMPIO", config: sampleConfig({ borderKey: "team.shield.border.black_matte", initials: "SUR", patternKey: "team.shield.pattern.chalk", primaryColorKey: "team.shield.color.midnight", primarySymbolKey: "team.shield.symbol.monogram", secondaryColorKey: "team.shield.color.amber", shapeKey: "team.shield.shape.barrio" }) },
+  { label: "Barrio laureado", family: "Barrio", density: "CARGADO", config: sampleConfig({ borderKey: "team.shield.border.bronze", bottomOrnamentKey: "team.shield.ornament.banner", foundationYear: "2004", initials: "BCN", patternKey: "team.shield.pattern.stripes", primaryColorKey: "team.shield.color.crimson", primarySymbolKey: "team.shield.symbol.tower", secondaryColorKey: "team.shield.color.ivory", sideOrnamentKey: "team.shield.ornament.laurels", topOrnamentKey: "team.shield.ornament.three_stars" }) },
+  { label: "Future Scan", family: "Future IQ", density: "MEDIO", config: presets[2].config },
+  { label: "Órbita Carbono", family: "Future IQ", density: "LIMPIO", config: sampleConfig({ borderKey: "team.shield.border.carbon", effectKey: "team.shield.effect.edge_glow", initials: "FX", patternKey: "team.shield.pattern.honeycomb", primaryColorKey: "team.shield.color.midnight", primarySymbolKey: "team.shield.symbol.orbit_ball", secondaryColorKey: "team.shield.color.cyan", shapeKey: "team.shield.shape.modern" }) },
+  { label: "Future Holo", family: "Future IQ", density: "CARGADO", config: sampleConfig({ borderKey: "team.shield.border.chrome", bottomOrnamentKey: "team.shield.ornament.plate", effectKey: "team.shield.effect.holo", initials: "IQX", patternKey: "team.shield.pattern.grid_iq", primaryColorKey: "team.shield.color.midnight", primarySymbolKey: "team.shield.symbol.nested_badge", secondaryColorKey: "team.shield.color.cyan", shapeKey: "team.shield.shape.hex_iq", sideOrnamentKey: "team.shield.ornament.wings" }) },
+  { label: "Noche Glint", family: "Noche", density: "MEDIO", config: presets[3].config },
+  { label: "Noche Mate", family: "Noche", density: "LIMPIO", config: sampleConfig({ borderKey: "team.shield.border.black_matte", effectKey: "team.shield.effect.edge_glow", initials: "N8", patternKey: null, primaryColorKey: "team.shield.color.midnight", primarySymbolKey: "team.shield.symbol.bolt", secondaryColorKey: "team.shield.color.crimson", shapeKey: "team.shield.shape.diamond" }) },
+  { label: "Noche eléctrica", family: "Noche", density: "CARGADO", config: sampleConfig({ borderKey: "team.shield.border.gold", effectKey: "team.shield.effect.glint", initials: "RAY", patternKey: "team.shield.pattern.chevron", primaryColorKey: "team.shield.color.midnight", primarySymbolKey: "team.shield.symbol.twin_bolt", secondaryColorKey: "team.shield.color.amber", shapeKey: "team.shield.shape.tall", sideOrnamentKey: "team.shield.ornament.side_bolts", topOrnamentKey: "team.shield.ornament.crown" }) },
+  { label: "Retro 1986", family: "Retro", density: "MEDIO", config: presets[4].config },
+  { label: "Retro Cromo", family: "Retro", density: "LIMPIO", config: sampleConfig({ borderKey: "team.shield.border.chrome", foundationYear: "1992", initials: "R92", patternKey: "team.shield.pattern.retro", primaryColorKey: "team.shield.color.crimson", primarySymbolKey: "team.shield.symbol.nested_badge", secondaryColorKey: "team.shield.color.ivory", shapeKey: "team.shield.shape.round" }) },
+  { label: "Retro campeón", family: "Retro", density: "CARGADO", config: sampleConfig({ borderKey: "team.shield.border.silver", bottomOrnamentKey: "team.shield.ornament.banner", foundationYear: "1978", initials: "LEY", patternKey: "team.shield.pattern.retro", primaryColorKey: "team.shield.color.emerald", primarySymbolKey: "team.shield.symbol.ball_iq", secondaryColorKey: "team.shield.color.ivory", shapeKey: "team.shield.shape.swiss", sideOrnamentKey: "team.shield.ornament.laurels", topOrnamentKey: "team.shield.ornament.three_stars" }) },
+];
+
+const materialSamples: ShieldSample[] = [
+  ["Acero", "steel"], ["Cobre", "copper"], ["Plata", "silver"], ["Oro", "gold"], ["Navy", "navy"],
+  ["Carbono", "carbon"], ["Cromo", "chrome"], ["Negro mate", "black_matte"], ["Perla", "pearl"],
+].map(([label, key]) => ({
+  label,
+  config: sampleConfig({
+    borderKey: `team.shield.border.${key}`,
+    initials: label.slice(0, 2).toUpperCase(),
+    patternKey: null,
+    primarySymbolKey: "team.shield.symbol.star_iq",
+    shapeKey: "team.shield.shape.classic_iq",
+  }),
+}));
+
+const symbolSamples: ShieldSample[] = [
+  ["Balón IQ", "ball_iq"], ["Monograma", "monogram"], ["Estrella IQ", "star_iq"], ["Rayo", "bolt"],
+  ["Torre", "tower"], ["Torre Elite", "tower_elite"], ["Estrella Future", "iq_star"], ["Corona IQ", "crown_iq"],
+  ["Escudo interior", "nested_badge"], ["Órbita IQ", "orbit_ball"],
+].map(([label, key]) => ({
+  label,
+  config: sampleConfig({
+    borderKey: "team.shield.border.navy",
+    initials: key === "monogram" ? "IQ" : "SYM",
+    patternKey: "team.shield.pattern.grid_iq",
+    primarySymbolKey: `team.shield.symbol.${key}`,
+    shapeKey: "team.shield.shape.hex_iq",
+  }),
+}));
+
+const effectSamples: ShieldSample[] = [
+  ["Sin efecto", null], ["Glint", "glint"], ["Scan", "scan"], ["Edge Glow", "edge_glow"], ["Holo", "holo"],
+].map(([label, key]) => ({
+  label: label as string,
+  config: sampleConfig({
+    borderKey: key === "glint" ? "team.shield.border.gold" : "team.shield.border.navy",
+    effectKey: key ? `team.shield.effect.${key}` : null,
+    initials: "FX",
+    patternKey: "team.shield.pattern.grid_iq",
+    primarySymbolKey: "team.shield.symbol.iq_star",
+    shapeKey: "team.shield.shape.hex_iq",
+  }),
+}));
+
+const ornamentSamples: ShieldSample[] = [
+  ["Corona", "topOrnamentKey", "crown"], ["Tres estrellas", "topOrnamentKey", "three_stars"],
+  ["Laureles", "sideOrnamentKey", "laurels"], ["Alas", "sideOrnamentKey", "wings"],
+  ["Rayos laterales", "sideOrnamentKey", "side_bolts"], ["Banner", "bottomOrnamentKey", "banner"],
+  ["Placa", "bottomOrnamentKey", "plate"],
+].map(([label, field, key]) => ({
+  label,
+  config: sampleConfig({
+    borderKey: "team.shield.border.gold",
+    initials: "ORN",
+    patternKey: null,
+    primarySymbolKey: "team.shield.symbol.star_iq",
+    [field]: `team.shield.ornament.${key}`,
+  }),
+}));
+
+function ContactSheet({ id, samples, title, eyebrow }: { id: string; samples: ShieldSample[]; title: string; eyebrow: string }) {
+  return (
+    <section className={styles.contactBand} id={id}>
+      <header><span>{eyebrow}</span><strong>{title}</strong></header>
+      <div className={styles.contactGrid}>
+        {samples.map((sample) => (
+          <article data-density={sample.density ?? "LIMPIO"} key={`${sample.family ?? "sample"}-${sample.label}`}>
+            <TeamShieldView catalog={TEAM_SHIELD_RENDER_CATALOG} config={sample.config} size={82} />
+            <div><span>{sample.family ?? eyebrow}</span><strong>{sample.label}</strong>{sample.density ? <small>{sample.density}</small> : null}</div>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
 
 function optionsFor(slot: TeamShieldCosmeticSlot) {
   const direct = TEAM_SHIELD_RENDER_CATALOG.filter((item) => item.slot === slot);
@@ -139,6 +257,7 @@ export default function TeamShieldCosmeticsLab() {
   const [activeCategory, setActiveCategory] = useState<TeamShieldCosmeticSlot>("shape");
   const [config, setConfig] = useState<TeamShieldConfig>(presets[0].config);
   const [savedConfig, setSavedConfig] = useState<TeamShieldConfig>(presets[0].config);
+  const [previewMotion, setPreviewMotion] = useState<"auto" | "reduced">("auto");
   const options = useMemo(() => optionsFor(activeCategory).map(option), [activeCategory]);
   const dirty = !teamShieldDesignEquals(config, savedConfig);
   const optional = activeCategory === "pattern" || activeCategory === "secondary_symbol"
@@ -158,7 +277,7 @@ export default function TeamShieldCosmeticsLab() {
 
       <CosmeticEditorShell
         className={styles.editorShell}
-        preview={<div className={styles.previewStage}><TeamShieldView catalog={TEAM_SHIELD_RENDER_CATALOG} config={config} /><small>Preview local · servidor sin modificar</small></div>}
+        preview={<div className={styles.previewStage}><TeamShieldView catalog={TEAM_SHIELD_RENDER_CATALOG} config={config} motion={previewMotion} /><div className={styles.motionControl} aria-label="Movimiento del efecto"><button className={previewMotion === "auto" ? styles.activeMotion : ""} type="button" onClick={() => setPreviewMotion("auto")}>Activo</button><button className={previewMotion === "reduced" ? styles.activeMotion : ""} type="button" onClick={() => setPreviewMotion("reduced")}>Reducido</button></div><small>Preview local · servidor sin modificar</small></div>}
         actions={<div className={styles.actionRow}><UnsavedChanges dirty={dirty} synchronizedLabel="Escudo sincronizado" /><EditorActions primaryDisabled={!dirty} primaryLabel="Simular guardado" onPrimary={() => setSavedConfig(config)} onReset={() => setConfig(savedConfig)} /></div>}
       >
         <CosmeticCategoryNav active={activeCategory} ariaLabel="Capas del escudo" items={tabs} onChange={setActiveCategory} />
@@ -182,12 +301,25 @@ export default function TeamShieldCosmeticsLab() {
         {presets.slice(0, 3).map((preset) => <article key={preset.label}><TeamShieldView catalog={TEAM_SHIELD_RENDER_CATALOG} config={preset.config} /><div><strong>{preset.label}</strong><small>TeamShieldConfig V1</small></div></article>)}
       </section>
 
-      <section className={styles.sizeBand}>
+      <ContactSheet id="contact-sheet-families" samples={familySamples} eyebrow="Contact sheet general" title="5 familias · 15 combinaciones" />
+      <ContactSheet id="contact-sheet-materials" samples={materialSamples} eyebrow="Materiales" title="9 acabados al mismo tamaño" />
+      <ContactSheet id="contact-sheet-symbols" samples={symbolSamples} eyebrow="Símbolos SVG" title="Barrio, fútbol, heráldica y Future IQ" />
+      <ContactSheet id="contact-sheet-effects" samples={effectSamples} eyebrow="Efectos" title="Referencia sin efecto + 4 tratamientos" />
+      <ContactSheet id="contact-sheet-ornaments" samples={ornamentSamples} eyebrow="Ornamentos" title="Superior, laterales e inferior" />
+
+      <section className={styles.sizeBand} id="contact-sheet-lod">
         <header><span>LOD real</span><strong>24 / 32 / 48 / 64 px</strong></header>
         {[24, 32, 48, 64].map((size) => <article key={size}><TeamShieldView catalog={TEAM_SHIELD_RENDER_CATALOG} config={config} size={size as 24 | 32 | 48 | 64} /><small>{size}px</small></article>)}
       </section>
 
-      <section className={styles.catalogBand}>
+      <section className={styles.motionBand} id="contact-sheet-reduced-motion">
+        <header><span>Reduced motion</span><strong>Estado estático reconocible</strong></header>
+        <div>
+          {effectSamples.slice(1).map((sample) => <article key={`reduced-${sample.label}`}><TeamShieldView catalog={TEAM_SHIELD_RENDER_CATALOG} config={sample.config} motion="reduced" size={82} /><strong>{sample.label}</strong><small>Sin animación</small></article>)}
+        </div>
+      </section>
+
+      <section className={styles.catalogBand} id="catalog-decisions">
         <header><span>Propuestas V0.1</span><strong>{TEAM_SHIELD_COSMETIC_PROTOTYPES.length}</strong></header>
         <div className={styles.catalogGrid}>
           {TEAM_SHIELD_COSMETIC_PROTOTYPES.map((item) => (

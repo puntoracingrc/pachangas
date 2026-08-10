@@ -31,10 +31,12 @@ const foreignKeyIndexes = readFileSync(
 const shieldLab = readFileSync(new URL("../app/laboratorio-cosmeticos-escudo/page.tsx", import.meta.url), "utf8");
 const shieldLabStyles = readFileSync(new URL("../app/laboratorio-cosmeticos-escudo/page.module.css", import.meta.url), "utf8");
 const sharedEditorStyles = readFileSync(new URL("../app/_components/cosmetics-editor.module.css", import.meta.url), "utf8");
+const shieldRenderer = readFileSync(new URL("../app/_components/team-shield-view.tsx", import.meta.url), "utf8");
+const shieldRendererStyles = readFileSync(new URL("../app/_components/team-shield-view.module.css", import.meta.url), "utf8");
 
 test("the new base library is complete before rewards and the lab selects 16 V1 candidates", () => {
   assert.equal(TEAM_SHIELD_BASE_CATALOG.length, 28);
-  assert.equal(TEAM_SHIELD_COSMETIC_PROTOTYPES.length, 28);
+  assert.equal(TEAM_SHIELD_COSMETIC_PROTOTYPES.length, 31);
   assert.equal(TEAM_SHIELD_COSMETIC_V1_CANDIDATES.length, 16);
   assert.equal(new Set(TEAM_SHIELD_BASE_CATALOG.map(({ key }) => key)).size, 28);
   assert.equal(new Set(TEAM_SHIELD_COSMETIC_V1_CANDIDATES.map(({ key }) => key)).size, 16);
@@ -45,6 +47,13 @@ test("the new base library is complete before rewards and the lab selects 16 V1 
     "shape", "background", "pattern", "primary_symbol", "secondary_symbol",
     "border", "top_ornament", "side_ornament", "bottom_ornament", "effect",
   ]));
+  const newSymbolStudies = TEAM_SHIELD_COSMETIC_PROTOTYPES.filter(({ key }) => [
+    "team.shield.symbol.crown_iq",
+    "team.shield.symbol.nested_badge",
+    "team.shield.symbol.orbit_ball",
+  ].includes(key));
+  assert.equal(newSymbolStudies.length, 3);
+  assert.ok(newSymbolStudies.every(({ decision, prototype }) => decision === "REVISAR" && prototype));
 });
 
 test("TeamShieldConfig V1 rejects legacy payloads and normalizes bounded visual controls", () => {
@@ -65,16 +74,37 @@ test("TeamShieldConfig V1 rejects legacy payloads and normalizes bounded visual 
 });
 
 test("TeamShieldView is the only renderer and has no legacy design adapter", () => {
-  const renderer = readFileSync(new URL("../app/_components/team-shield-view.tsx", import.meta.url), "utf8");
   const identity = readFileSync(new URL("../app/equipo/identidad/page.tsx", import.meta.url), "utf8");
-  assert.match(renderer, /export function TeamShieldView/);
-  assert.match(renderer, /config: TeamShieldConfig/);
-  assert.doesNotMatch(renderer, /design\?: TeamShieldConfig|legacy|CrestPreview/);
+  assert.match(shieldRenderer, /export function TeamShieldView/);
+  assert.match(shieldRenderer, /config: TeamShieldConfig/);
+  assert.doesNotMatch(shieldRenderer, /design\?: TeamShieldConfig|legacy|CrestPreview/);
   assert.match(identity, /<TeamShieldView/);
   assert.doesNotMatch(identity, /function CrestPreview|save_pachanga_team_crest_draft_v1|publish_pachanga_team_crest_v1/);
   assert.match(shieldLab, /item\.slot \? item\.slot\.replaceAll\("_", " "\) : "palette"/);
   assert.match(sharedEditorStyles, /var\(--cosmetics-editor-landscape-offset, 88px\)/);
   assert.match(shieldLabStyles, /--cosmetics-editor-landscape-offset: 108px/);
+});
+
+test("the visual polish lab covers families, materials, symbols, effects, ornaments and LOD", () => {
+  for (const section of [
+    "contact-sheet-families",
+    "contact-sheet-materials",
+    "contact-sheet-symbols",
+    "contact-sheet-effects",
+    "contact-sheet-ornaments",
+    "contact-sheet-lod",
+    "contact-sheet-reduced-motion",
+  ]) assert.match(shieldLab, new RegExp(section));
+  assert.match(shieldLab, /5 familias · 15 combinaciones/);
+  assert.match(shieldLab, /9 acabados al mismo tamaño/);
+  assert.match(shieldLab, /motion="reduced"/);
+  assert.match(shieldRenderer, /data-material=\{borderMaterial\}/);
+  assert.match(shieldRenderer, /data-motion=\{motion\}/);
+  assert.match(shieldRenderer, /crown_iq|nested_badge|orbit_ball/);
+  assert.match(shieldRendererStyles, /data-material="chrome"/);
+  assert.match(shieldRendererStyles, /data-effect="edge_glow"/);
+  assert.match(shieldRendererStyles, /prefers-reduced-motion: reduce/);
+  assert.match(shieldRendererStyles, /data-size="24"[^}]+primarySymbol/s);
 });
 
 test("the migration creates an independent authoritative shield model and closes legacy writes", () => {
