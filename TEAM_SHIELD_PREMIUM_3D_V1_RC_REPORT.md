@@ -7,6 +7,8 @@ Fecha de cierre tecnico local: 2026-08-10 (Europe/Madrid)
 - Rama: `codex/team-shield-premium-3d-v1-rc`.
 - Base exacta: `384069febd4d16f1f2b4d651727137e4a9bfd220` (head comprobado de PR #131 al iniciar).
 - PR base: #131, apilado a su vez sobre #130.
+- PR borrador del RC: #132.
+- Preview Vercel: `https://pachangas-git-codex-team-8ccab6-persianas-almar-web-s-projects.vercel.app`.
 - Produccion: no modificada.
 - Supabase de produccion: no consultado ni modificado durante el RC.
 - Staging Supabase: `iozcjirlfytryzrcmrnq` (`pwa-bridge-staging`).
@@ -99,6 +101,7 @@ Configuracion comprobada:
 - `team_cosmetic_rewards_enabled = false`.
 - Cuatro piezas premium promovidas.
 - Cero asociaciones al pool de recompensas.
+- Supabase Advisors despues de la migracion: cero avisos de seguridad y cero avisos de rendimiento.
 
 E2E controlado sobre el fixture sintetico `Raval FC`:
 
@@ -142,12 +145,20 @@ Las capturas locales verifican desktop 1440x900, movil portrait 390x844 y landsc
 
 La comparacion BASE 2D vs PREMIUM utiliza exactamente el mismo escudo y no introduce una corona u otro adorno que falsee el valor visual del balon.
 
+La Preview HTTPS del PR #132 se comprobo en las tres superficies pedidas:
+
+- `/laboratorio-cosmeticos-escudo`: carga correcta, cero imagenes rotas, cero overflow horizontal y cero errores/avisos de consola.
+- `/laboratorio-cosmeticos-escudo-3d`: renderer RC visible, boton `Activar movimiento`, fallback estatico correcto, cero canvas en el pipeline inicial, cero imagenes rotas, cero overflow y cero errores/avisos de consola.
+- `/equipo/identidad`: carga correcta; una sesion publica sin grupo recibe el bloqueo de pertenencia esperado. El flujo autenticado de inventario/equipado se cubrio con el E2E de staging.
+
+En la Preview protegida, un frame y el borde Oro respondieron `200 image/webp`, `Cache-Control: public, max-age=31536000, immutable` y `x-vercel-cache: HIT` despues de autenticar la sesion de QA.
+
 ## QA fisica
 
 | Plataforma | Estado | Evidencia |
 | --- | --- | --- |
 | iPhone / iOS Safari | PENDING | No hay un iPhone fisico conectado; no se declara PASS. |
-| Android / Chrome | PENDING | Se detecto un Redmi Note 14 5G fisico autorizado. La prueba HTTPS de la Preview se completa despues de publicar este RC. |
+| Android / Chrome | PENDING | Redmi Note 14 5G, Android 16, Chrome 150, detectado y autorizado por USB. El dispositivo estaba bloqueado y el sistema impidio inyectar la interaccion necesaria; no se pudo inclinar ni observar el sensor en primer plano, por lo que no se declara PASS. |
 
 Mientras cualquiera de estas filas siga pendiente, el Balon Premium conserva el veredicto `READY_PENDING_PHYSICAL_QA` y el conjunto no se presenta como listo para produccion.
 

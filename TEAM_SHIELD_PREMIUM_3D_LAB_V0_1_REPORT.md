@@ -173,6 +173,6 @@ Las conclusiones originales se mantienen, con estas concreciones:
 - Cromo, Carbono premium 3D, Corona y GLB: continúan siendo exclusivamente laboratorio.
 - 24/32 px: representación 2D simplificada; 48/64 px: prerender estático; interacción multivista solo en superficies medias/grandes visibles.
 - Assets productivos: nombres con hash de contenido y caché immutable; precarga de frames solo al activar el premium visible.
-- Pruebas físicas: iOS sigue pendiente. Android se comprobará contra la Preview HTTPS del RC antes de cerrar su estado.
+- Pruebas físicas: iOS sigue pendiente. Se detectó un Android físico, pero su pantalla bloqueada y la restricción de interacción ADB impidieron una prueba honesta de inclinación en primer plano; Android también queda pendiente.
 
 El detalle técnico, staging E2E, rendimiento, capturas, regresiones y veredictos por pieza se documenta en `TEAM_SHIELD_PREMIUM_3D_V1_RC_REPORT.md`. Esta actualización no borra ni sustituye las conclusiones V0.1.
