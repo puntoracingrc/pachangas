@@ -15,5 +15,17 @@ export function normalizeSyntheticWorldState(state: SyntheticWorldState): Synthe
     const currentPlayed = current.finalOutcome === "played" && participants.includes(current.agentId);
     if (candidatePlayed || !currentPlayed) attendance.set(candidate.id, candidate);
   }
-  return { ...state, attendanceRecords: [...attendance.values()], teams };
+  const cosmeticInventory = new Map(
+    (state.playerCosmeticInventory ?? []).map((item) => [`${item.agentId}:${item.cosmeticKey}`, item]),
+  );
+  const cosmeticLoadouts = new Map(
+    (state.playerCosmeticLoadouts ?? []).map((item) => [item.agentId, item]),
+  );
+  return {
+    ...state,
+    attendanceRecords: [...attendance.values()],
+    playerCosmeticInventory: [...cosmeticInventory.values()],
+    playerCosmeticLoadouts: [...cosmeticLoadouts.values()],
+    teams,
+  };
 }

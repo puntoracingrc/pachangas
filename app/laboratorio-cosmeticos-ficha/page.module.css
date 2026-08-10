@@ -19,10 +19,37 @@
 .header,
 .presetBar,
 .workspace,
+.labEditor,
 .gallery,
 .futureFlow {
   width: min(1380px, 100%);
   margin-inline: auto;
+}
+
+.labEditor {
+  min-height: min(560px, calc(100svh - 170px));
+  border: 1px solid var(--lab-line);
+  border-radius: 8px;
+  background: rgba(8, 14, 12, 0.76);
+  padding: clamp(14px, 2vw, 24px);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(18px);
+}
+
+.badgeOptions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.badgeOptions button {
+  min-height: 44px;
+  border: 1px solid var(--lab-line);
+  border-radius: 6px;
+  background: rgba(12, 19, 16, 0.72);
+  color: var(--lab-bone);
+  font: inherit;
+  font-weight: 800;
 }
 
 .header {
@@ -505,6 +532,10 @@
   background: rgba(15, 22, 19, 0.8);
 }
 
+.sampleCard[data-selected="true"] {
+  border-color: rgba(200, 239, 93, 0.52);
+}
+
 .compactCardStage {
   width: 92px;
   padding: 3px;
@@ -818,6 +849,48 @@
   .cardStage {
     width: min(190px, 27vw);
     padding: 5px;
+  }
+
+  .cardStage:not(.compactCardStage) :global(.fifa-player-card) {
+    grid-template-rows: 30px 1fr auto auto;
+    border-radius: 16px 16px 22px 22px;
+    padding: 10px 9px 9px;
+  }
+
+  .cardStage:not(.compactCardStage) :global(.fifa-score) {
+    top: 14px;
+    left: 13px;
+    font-size: 28px;
+  }
+
+  .cardStage:not(.compactCardStage) :global(.fifa-position) {
+    top: 43px;
+    left: 15px;
+    font-size: 11px;
+  }
+
+  .cardStage:not(.compactCardStage) :global(.fifa-player-card > strong) {
+    padding-top: 6px;
+    font-size: 15px;
+  }
+
+  .cardStage:not(.compactCardStage) :global(.fifa-card-meta) {
+    margin-top: 2px;
+    font-size: 9px;
+  }
+
+  .cardStage:not(.compactCardStage) :global(.fifa-facets) {
+    gap: 2px 4px;
+    margin-top: 5px;
+  }
+
+  .cardStage:not(.compactCardStage) :global(.fifa-facets span) {
+    gap: 2px;
+    font-size: 8px;
+  }
+
+  .cardStage:not(.compactCardStage) :global(.fifa-facets b) {
+    font-size: 12px;
   }
 
   .cardComparison {

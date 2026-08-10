@@ -1,94 +1,31 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { PlayerCardView } from "../_components/player-card-view";
+import {
+  CosmeticCategoryTabs,
+  CosmeticEditorShell,
+  EditorActions,
+  OwnedCosmeticSelector,
+} from "../_components/cosmetics-editor";
+import { PlayerCosmeticCard } from "../_components/player-cosmetic-card";
+import {
+  PLAYER_COSMETIC_CATALOG,
+  PLAYER_COSMETIC_PROTOTYPES,
+  PLAYER_COSMETIC_RARITY_LABELS,
+  PLAYER_COSMETIC_SLOT_LABELS,
+} from "../player-cosmetics-catalog";
+import {
+  EMPTY_PLAYER_COSMETIC_LOADOUT,
+  cosmeticKeyForSlot,
+  withCosmeticKey,
+  type PlayerCosmeticItem,
+  type PlayerCosmeticLoadout,
+  type PlayerCosmeticSlot,
+  type PlayerFeaturedBadge,
+} from "../player-cosmetics-contract";
 import styles from "./page.module.css";
 
-type FrameId = "none" | "barrio-acero" | "retro-cromo" | "future-iq";
-type BackgroundId = "none" | "asfalto-nocturno" | "papel-liga" | "grid-iq";
-type EffectId = "none" | "focos" | "iq-scan";
-type TitleId = "none" | "de-toda-la-vida" | "motor-del-equipo";
-type BadgeId = "none" | "hat-trick" | "primera-conquista" | "poker";
-type CosmeticSlot = "card_frame" | "card_background" | "card_effect" | "player_title";
-
-type Selection = {
-  background: BackgroundId;
-  badge: BadgeId;
-  effect: EffectId;
-  frame: FrameId;
-  title: TitleId;
-};
-
-type CosmeticSample = {
-  collection: "Fútbol de Barrio" | "Noche de Partido" | "Retro" | "Future IQ";
-  id: Exclude<FrameId | BackgroundId | EffectId | TitleId, "none">;
-  name: string;
-  rarity: "Común" | "Poco común" | "Raro";
-  release: "collectible" | "merit_locked" | "prestige";
-  slot: CosmeticSlot;
-};
-
-const ORIGINAL_SELECTION: Selection = {
-  background: "none",
-  badge: "none",
-  effect: "none",
-  frame: "none",
-  title: "none",
-};
-
-const COSMETICS: CosmeticSample[] = [
-  { id: "barrio-acero", name: "Barrio Acero", collection: "Fútbol de Barrio", slot: "card_frame", rarity: "Común", release: "collectible" },
-  { id: "retro-cromo", name: "Retro Cromo", collection: "Retro", slot: "card_frame", rarity: "Poco común", release: "collectible" },
-  { id: "future-iq", name: "Future IQ", collection: "Future IQ", slot: "card_frame", rarity: "Raro", release: "prestige" },
-  { id: "asfalto-nocturno", name: "Asfalto Nocturno", collection: "Noche de Partido", slot: "card_background", rarity: "Común", release: "collectible" },
-  { id: "papel-liga", name: "Papel de Liga", collection: "Retro", slot: "card_background", rarity: "Común", release: "collectible" },
-  { id: "grid-iq", name: "Grid IQ", collection: "Future IQ", slot: "card_background", rarity: "Poco común", release: "collectible" },
-  { id: "focos", name: "Focos", collection: "Noche de Partido", slot: "card_effect", rarity: "Poco común", release: "collectible" },
-  { id: "iq-scan", name: "IQ Scan", collection: "Future IQ", slot: "card_effect", rarity: "Raro", release: "prestige" },
-  { id: "de-toda-la-vida", name: "De toda la vida", collection: "Fútbol de Barrio", slot: "player_title", rarity: "Común", release: "collectible" },
-  { id: "motor-del-equipo", name: "Motor del equipo", collection: "Noche de Partido", slot: "player_title", rarity: "Raro", release: "merit_locked" },
-];
-
-const FRAME_OPTIONS: Array<{ id: FrameId; label: string }> = [
-  { id: "none", label: "Original" },
-  { id: "barrio-acero", label: "Barrio Acero" },
-  { id: "retro-cromo", label: "Retro Cromo" },
-  { id: "future-iq", label: "Future IQ" },
-];
-
-const BACKGROUND_OPTIONS: Array<{ id: BackgroundId; label: string }> = [
-  { id: "none", label: "Original" },
-  { id: "asfalto-nocturno", label: "Asfalto Nocturno" },
-  { id: "papel-liga", label: "Papel de Liga" },
-  { id: "grid-iq", label: "Grid IQ" },
-];
-
-const EFFECT_OPTIONS: Array<{ id: EffectId; label: string }> = [
-  { id: "none", label: "Sin efecto" },
-  { id: "focos", label: "Focos" },
-  { id: "iq-scan", label: "IQ Scan" },
-];
-
-const TITLE_OPTIONS: Array<{ id: TitleId; label: string }> = [
-  { id: "none", label: "Sin título" },
-  { id: "de-toda-la-vida", label: "De toda la vida" },
-  { id: "motor-del-equipo", label: "Motor del equipo" },
-];
-
-const BADGE_OPTIONS: Array<{ id: BadgeId; label: string }> = [
-  { id: "none", label: "Sin logro" },
-  { id: "hat-trick", label: "Hat-trick" },
-  { id: "primera-conquista", label: "Primera conquista" },
-  { id: "poker", label: "Póker" },
-];
-
-const PRESETS: Array<{ id: string; label: string; selection: Selection }> = [
-  { id: "original", label: "Original", selection: ORIGINAL_SELECTION },
-  { id: "barrio", label: "Barrio", selection: { frame: "barrio-acero", background: "none", effect: "none", title: "de-toda-la-vida", badge: "hat-trick" } },
-  { id: "noche", label: "Noche", selection: { frame: "none", background: "asfalto-nocturno", effect: "focos", title: "motor-del-equipo", badge: "primera-conquista" } },
-  { id: "retro", label: "Retro", selection: { frame: "retro-cromo", background: "papel-liga", effect: "none", title: "none", badge: "hat-trick" } },
-  { id: "future", label: "Future IQ", selection: { frame: "future-iq", background: "grid-iq", effect: "iq-scan", title: "none", badge: "poker" } },
-];
+type EditorCategory = PlayerCosmeticSlot | "badge";
 
 const FACETS = [
   { key: "ritmo", value: 78, label: "RIT" },
@@ -99,180 +36,146 @@ const FACETS = [
   { key: "fisico", value: 76, label: "FÍS" },
 ];
 
-const frameClasses: Record<FrameId, string> = {
-  none: "",
-  "barrio-acero": styles.frameBarrio,
-  "retro-cromo": styles.frameRetro,
-  "future-iq": styles.frameFuture,
-};
+const LAB_BADGES: PlayerFeaturedBadge[] = [
+  { achievementKey: "player.hat_trick", grantId: "lab-hat-trick", rarity: "rare", title: "Hat-trick" },
+  { achievementKey: "player.first_win", grantId: "lab-first-win", rarity: "common", title: "Primera conquista" },
+  { achievementKey: "player.poker", grantId: "lab-poker", rarity: "epic", title: "Póker" },
+];
 
-const backgroundClasses: Record<BackgroundId, string> = {
-  none: "",
-  "asfalto-nocturno": styles.backgroundAsphalt,
-  "papel-liga": styles.backgroundPaper,
-  "grid-iq": styles.backgroundGrid,
-};
+const ORIGINAL = { ...EMPTY_PLAYER_COSMETIC_LOADOUT };
 
-const effectClasses: Record<EffectId, string> = {
-  none: "",
-  focos: styles.effectLights,
-  "iq-scan": styles.effectScan,
-};
+const PRESETS: Array<{ id: string; label: string; loadout: PlayerCosmeticLoadout }> = [
+  { id: "original", label: "Original", loadout: ORIGINAL },
+  { id: "barrio", label: "Barrio", loadout: { ...ORIGINAL, accentKey: "player.accent.copper", frameKey: "player.frame.barrio.steel", titleKey: "player.title.old_school", featuredBadgeGrantId: "lab-hat-trick" } },
+  { id: "noche", label: "Noche", loadout: { ...ORIGINAL, backgroundKey: "player.background.asphalt_night", effectKey: "player.effect.spotlights", titleKey: "player.title.team_engine", featuredBadgeGrantId: "lab-first-win" } },
+  { id: "retro", label: "Retro", loadout: { ...ORIGINAL, backgroundKey: "prototype.background.paper_league", frameKey: "player.frame.retro.chrome", featuredBadgeGrantId: "lab-hat-trick" } },
+  { id: "future", label: "Future IQ", loadout: { ...ORIGINAL, accentKey: "player.accent.navy", backgroundKey: "player.background.grid_iq", effectKey: "player.effect.iq_scan", frameKey: "player.frame.future.navy", featuredBadgeGrantId: "lab-poker" } },
+];
 
-const titleLabels: Record<TitleId, string | undefined> = {
-  none: undefined,
-  "de-toda-la-vida": "De toda la vida",
-  "motor-del-equipo": "Motor del equipo",
-};
+const LAB_ITEMS: PlayerCosmeticItem[] = PLAYER_COSMETIC_PROTOTYPES.map((entry, index) => ({
+  acquiredAt: "2026-08-10T00:00:00.000Z",
+  collection: entry.collection,
+  description: entry.description,
+  key: entry.key,
+  layerOrder: index,
+  material: entry.material,
+  name: entry.name,
+  rarity: entry.rarity,
+  render: entry.render,
+  seenAt: "2026-08-10T00:00:00.000Z",
+  serverSequence: index + 1,
+  slot: entry.slot,
+  sourceBoxId: null,
+}));
 
-const badgeLabels: Record<BadgeId, string | undefined> = {
-  none: undefined,
-  "hat-trick": "Hat-trick",
-  "primera-conquista": "Primera conquista",
-  poker: "Póker",
-};
-
-function selectionForSample(sample: CosmeticSample): Selection {
-  const selection = { ...ORIGINAL_SELECTION };
-  if (sample.slot === "card_frame") selection.frame = sample.id as FrameId;
-  if (sample.slot === "card_background") selection.background = sample.id as BackgroundId;
-  if (sample.slot === "card_effect") selection.effect = sample.id as EffectId;
-  if (sample.slot === "player_title") selection.title = sample.id as TitleId;
-  return selection;
+function sampleLoadout(slot: PlayerCosmeticSlot, key: string) {
+  return withCosmeticKey({ ...ORIGINAL }, slot, key);
 }
 
-function CosmeticCard({ compact = false, name, selection }: { compact?: boolean; name: string; selection: Selection }) {
-  const title = titleLabels[selection.title];
-  const badge = badgeLabels[selection.badge];
-  const stageClassName = [
-    styles.cardStage,
-    compact ? styles.compactCardStage : "",
-    frameClasses[selection.frame],
-    backgroundClasses[selection.background],
-    effectClasses[selection.effect],
-  ].filter(Boolean).join(" ");
-
+function PreviewCard({ compact = false, loadout, name }: { compact?: boolean; loadout: PlayerCosmeticLoadout; name: string }) {
+  const featuredAchievement = LAB_BADGES.find((badge) => badge.grantId === loadout.featuredBadgeGrantId) ?? null;
   return (
-    <div className={stageClassName} data-effect={selection.effect}>
-      <PlayerCardView
+    <div className={`${styles.cardStage} ${compact ? styles.compactCardStage : ""}`}>
+      <PlayerCosmeticCard
         ariaLabel={`Ficha de preview de ${name}`}
         className={`fifa-card-gold readonly-card ${styles.cosmeticCard}`}
+        cosmetics={LAB_ITEMS}
         facets={FACETS}
-        featuredBadge={badge ? (
-          <span className={styles.featuredBadge} title="Logro real usado solo como preview">
-            <span aria-hidden="true">★</span>
-            {badge}
-          </span>
-        ) : undefined}
+        featuredAchievement={featuredAchievement}
+        loadout={loadout}
         meta="14 Goles · 28 PJ · 29 años"
         name={name}
         photoAlt={`Retrato de preview de ${name}`}
         photoSrc="/lab/player-card-preview.jpg"
         position="MC"
         score={78}
-        title={title ? <span className={styles.playerTitle}>{title}</span> : undefined}
       />
-      <span className={styles.effectLayer} aria-hidden="true" />
     </div>
   );
 }
 
-function SelectControl<T extends string>({ label, onChange, options, value }: { label: string; onChange: (value: T) => void; options: Array<{ id: T; label: string }>; value: T }) {
-  return (
-    <label className={styles.selectControl}>
-      <span>{label}</span>
-      <select value={value} onChange={(event) => onChange(event.target.value as T)}>
-        {options.map((option) => <option key={option.id} value={option.id}>{option.label}</option>)}
-      </select>
-    </label>
-  );
-}
-
 export default function PlayerCardCosmeticsLabPage() {
-  const [selection, setSelection] = useState<Selection>(PRESETS[1].selection);
+  const [activeCategory, setActiveCategory] = useState<EditorCategory>("frame");
   const [compareOriginal, setCompareOriginal] = useState(false);
+  const [loadout, setLoadout] = useState<PlayerCosmeticLoadout>(PRESETS[1].loadout);
   const [playerName, setPlayerName] = useState("Marc");
-  const activePreset = useMemo(() => PRESETS.find((preset) => JSON.stringify(preset.selection) === JSON.stringify(selection))?.id ?? "custom", [selection]);
-
-  function updateSelection<Key extends keyof Selection>(key: Key, value: Selection[Key]) {
-    setSelection((current) => ({ ...current, [key]: value }));
-  }
+  const activePreset = useMemo(
+    () => PRESETS.find((preset) => JSON.stringify(preset.loadout) === JSON.stringify(loadout))?.id ?? "custom",
+    [loadout],
+  );
+  const items = activeCategory === "badge" ? [] : LAB_ITEMS.filter((item) => item.slot === activeCategory);
+  const counts = { accent: 0, background: 0, badge: 0, effect: 0, frame: 0, title: 0 };
 
   return (
     <main className={styles.page}>
       <header className={styles.header}>
-        <div>
-          <span className={styles.labLabel}>Laboratorio visual</span>
-          <h1>Cosméticos de ficha</h1>
-        </div>
-        <strong>No es catálogo definitivo</strong>
+        <div><span className={styles.labLabel}>Laboratorio visual V0.2</span><h1>Cosméticos de ficha</h1></div>
+        <strong>{PLAYER_COSMETIC_PROTOTYPES.length} prototipos · {PLAYER_COSMETIC_CATALOG.length} seleccionados</strong>
       </header>
 
       <nav className={styles.presetBar} aria-label="Colecciones de preview">
         {PRESETS.map((preset) => (
-          <button key={preset.id} className={activePreset === preset.id ? styles.activePreset : ""} type="button" onClick={() => setSelection(preset.selection)}>
+          <button className={activePreset === preset.id ? styles.activePreset : ""} key={preset.id} type="button" onClick={() => setLoadout(preset.loadout)}>
             {preset.label}
           </button>
         ))}
       </nav>
 
-      <section className={styles.workspace} aria-label="Configurador de cosméticos">
-        <aside className={styles.controls}>
-          <div className={styles.panelHeading}>
-            <span>Composición</span>
-            <b>{activePreset === "custom" ? "Personalizada" : PRESETS.find((preset) => preset.id === activePreset)?.label}</b>
-          </div>
-          <SelectControl label="Marco" value={selection.frame} options={FRAME_OPTIONS} onChange={(value) => updateSelection("frame", value)} />
-          <SelectControl label="Fondo" value={selection.background} options={BACKGROUND_OPTIONS} onChange={(value) => updateSelection("background", value)} />
-          <SelectControl label="Efecto" value={selection.effect} options={EFFECT_OPTIONS} onChange={(value) => updateSelection("effect", value)} />
-          <SelectControl label="Título" value={selection.title} options={TITLE_OPTIONS} onChange={(value) => updateSelection("title", value)} />
-          <SelectControl label="Badge" value={selection.badge} options={BADGE_OPTIONS} onChange={(value) => updateSelection("badge", value)} />
-          <SelectControl label="Nombre de prueba" value={playerName} options={[{ id: "Marc", label: "Marc" }, { id: "Alejandro Martínez", label: "Alejandro Martínez" }]} onChange={setPlayerName} />
-          <div className={styles.controlActions}>
-            <button type="button" onClick={() => setSelection(ORIGINAL_SELECTION)}>Restablecer</button>
-            <label className={styles.compareToggle}>
-              <input type="checkbox" checked={compareOriginal} onChange={(event) => setCompareOriginal(event.target.checked)} />
-              <span>Comparar con original</span>
-            </label>
-          </div>
-        </aside>
-
-        <div className={styles.previewPanel}>
-          <div className={styles.panelHeading}>
-            <span>Carta en tiempo real</span>
-            <b>Preview local</b>
-          </div>
-          <div className={`${styles.cardComparison} ${compareOriginal ? styles.comparing : ""}`}>
-            {compareOriginal ? (
-              <figure>
-                <CosmeticCard name={playerName} selection={ORIGINAL_SELECTION} />
-                <figcaption>Original</figcaption>
-              </figure>
-            ) : null}
-            <figure>
-              <CosmeticCard name={playerName} selection={selection} />
-              <figcaption>{activePreset === "original" ? "Original" : "Cosmética"}</figcaption>
-            </figure>
-          </div>
-        </div>
-      </section>
+      <div className={styles.labEditor}>
+        <CosmeticEditorShell
+          actions={(
+            <EditorActions
+              onPrimary={() => setCompareOriginal((current) => !current)}
+              onReset={() => setLoadout({ ...ORIGINAL })}
+              primaryLabel={compareOriginal ? "Ocultar original" : "Comparar original"}
+            />
+          )}
+          preview={(
+            <div className={`${styles.cardComparison} ${compareOriginal ? styles.comparing : ""}`}>
+              {compareOriginal ? <figure><PreviewCard loadout={ORIGINAL} name={playerName} /><figcaption>Original</figcaption></figure> : null}
+              <figure><PreviewCard loadout={loadout} name={playerName} /><figcaption>{activePreset === "custom" ? "Personalizada" : activePreset}</figcaption></figure>
+            </div>
+          )}
+        >
+          <CosmeticCategoryTabs active={activeCategory} counts={counts} onChange={setActiveCategory} />
+          <label className={styles.selectControl}>
+            <span>Nombre de prueba</span>
+            <select value={playerName} onChange={(event) => setPlayerName(event.target.value)}>
+              <option>Marc</option><option>Alejandro Martínez</option>
+            </select>
+          </label>
+          {activeCategory === "badge" ? (
+            <div className={styles.badgeOptions}>
+              <button type="button" onClick={() => setLoadout((current) => ({ ...current, featuredBadgeGrantId: null }))}>Sin logro</button>
+              {LAB_BADGES.map((badge) => <button key={badge.grantId} type="button" onClick={() => setLoadout((current) => ({ ...current, featuredBadgeGrantId: badge.grantId }))}>{badge.title}</button>)}
+            </div>
+          ) : (
+            <OwnedCosmeticSelector
+              items={items}
+              noneLabel={activeCategory === "effect" || activeCategory === "title" ? "Ninguno" : "Original"}
+              onChange={(key) => setLoadout((current) => withCosmeticKey(current, activeCategory, key))}
+              selectedKey={cosmeticKeyForSlot(loadout, activeCategory)}
+            />
+          )}
+        </CosmeticEditorShell>
+      </div>
 
       <section className={styles.gallery} aria-labelledby="gallery-title">
         <div className={styles.sectionHeading}>
-          <span>10 muestras</span>
-          <h2 id="gallery-title">Galería por pieza</h2>
+          <span>{PLAYER_COSMETIC_PROTOTYPES.length} muestras</span>
+          <h2 id="gallery-title">Exploración por pieza</h2>
         </div>
         <div className={styles.galleryGrid}>
-          {COSMETICS.map((sample) => (
-            <article className={styles.sampleCard} key={sample.id}>
-              <CosmeticCard compact name="Marc" selection={selectionForSample(sample)} />
+          {PLAYER_COSMETIC_PROTOTYPES.map((sample) => (
+            <article className={styles.sampleCard} data-selected={!sample.prototype} key={sample.key}>
+              <PreviewCard compact loadout={sampleLoadout(sample.slot, sample.key)} name="Marc" />
               <div className={styles.sampleCopy}>
                 <span>{sample.collection}</span>
                 <h3>{sample.name}</h3>
                 <div>
-                  <small>{sample.slot}</small>
-                  <small>{sample.rarity}</small>
-                  <small>{sample.release}</small>
+                  <small>{PLAYER_COSMETIC_SLOT_LABELS[sample.slot]}</small>
+                  <small>{PLAYER_COSMETIC_RARITY_LABELS[sample.rarity]}</small>
+                  <small>{sample.prototype ? "Prototipo" : "Catálogo V1"}</small>
                 </div>
               </div>
             </article>
@@ -280,12 +183,10 @@ export default function PlayerCardCosmeticsLabPage() {
         </div>
       </section>
 
-      <section className={styles.futureFlow} aria-label="Conexión futura no implementada">
-        <span>Siguiente fase</span>
-        <div>
-          <b>achievement</b><i>→</i><b>box</b><i>→</i><b>cosmetic reward</b><i>→</i><b>inventory</b><i>→</i><b>loadout</b><i>→</i><b>player card</b>
-        </div>
-        <small>Contrato conceptual · sin propiedad ni equipamiento</small>
+      <section className={styles.futureFlow} aria-label="Flujo real de cosméticos">
+        <span>Arquitectura conectada</span>
+        <div><b>achievement</b><i>→</i><b>box</b><i>→</i><b>inventory</b><i>→</i><b>loadout</b><i>→</i><b>public card</b></div>
+        <small>{PLAYER_COSMETIC_CATALOG.length} piezas reales; el resto permanece solo en laboratorio.</small>
       </section>
     </main>
   );

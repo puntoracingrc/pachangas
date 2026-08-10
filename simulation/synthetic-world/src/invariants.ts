@@ -58,6 +58,12 @@ export function dailyInvariantChecks(world: SyntheticWorld): Check[] {
   const achievementKeys = world.state.achievements.map(({ agentId, key, teamId }) => `${teamId}:${agentId ?? "team"}:${key}`);
   const duplicateRosterIds = world.state.teams.flatMap((team) => duplicateValues(team.playerIds).map((agentId) => `${team.id}:${agentId}`));
   const duplicateAttendanceIds = duplicateValues(world.state.attendanceRecords.map(({ id }) => id));
+  const cosmeticOwnershipKeys = world.state.playerCosmeticInventory.map(({ agentId, cosmeticKey }) => `${agentId}:${cosmeticKey}`);
+  const cosmeticOwnership = new Set(cosmeticOwnershipKeys);
+  const invalidCosmeticLoadouts = world.state.playerCosmeticLoadouts.filter((loadout) => (
+    [loadout.frameKey, loadout.backgroundKey, loadout.accentKey, loadout.effectKey, loadout.titleKey]
+      .some((key) => key !== null && !cosmeticOwnership.has(`${loadout.agentId}:${key}`))
+  ));
   return [
     { actual: duplicateValues(world.state.agents.map(({ id }) => id)), expected: [], name: "agents.unique_ids", pass: duplicateValues(world.state.agents.map(({ id }) => id)).length === 0 },
     { actual: duplicateValues(world.state.teams.map(({ id }) => id)), expected: [], name: "teams.unique_ids", pass: duplicateValues(world.state.teams.map(({ id }) => id)).length === 0 },
@@ -67,6 +73,9 @@ export function dailyInvariantChecks(world: SyntheticWorld): Check[] {
     { actual: duplicateValues(activeOpinionKeys), expected: [], name: "rating.one_active_opinion_per_pair", pass: duplicateValues(activeOpinionKeys).length === 0 },
     { actual: duplicateValues(achievementKeys), expected: [], name: "achievements.unique_award", pass: duplicateValues(achievementKeys).length === 0 },
     { actual: duplicateAttendanceIds, expected: [], name: "attendance.unique_record_ids", pass: duplicateAttendanceIds.length === 0 },
+    { actual: duplicateValues(cosmeticOwnershipKeys), expected: [], name: "cosmetics.unique_inventory", pass: cosmeticOwnership.size === world.state.playerCosmeticInventory.length },
+    { actual: invalidCosmeticLoadouts.map(({ agentId }) => agentId), expected: [], name: "cosmetics.loadout_requires_ownership", pass: invalidCosmeticLoadouts.length === 0, severity: "critical" },
+    { actual: world.state.playerCosmeticLoadouts.filter(({ revision }) => revision < 1).map(({ agentId }) => agentId), expected: [], name: "cosmetics.monotonic_revision", pass: world.state.playerCosmeticLoadouts.every(({ revision }) => revision >= 1) },
     { actual: world.state.matches.filter(({ confidence }) => confidence < 0 || confidence > 1).map(({ id }) => id), expected: [], name: "matches.confidence_bounds", pass: world.state.matches.every(({ confidence }) => confidence >= 0 && confidence <= 1) },
     { actual: world.state.challenges.filter(({ homeTeamId, awayTeamId }) => homeTeamId === awayTeamId).map(({ id }) => id), expected: [], name: "challenges.distinct_teams", pass: world.state.challenges.every(({ homeTeamId, awayTeamId }) => homeTeamId !== awayTeamId) },
   ];
@@ -84,6 +93,7 @@ export function weeklyInvariantChecks(world: SyntheticWorld): Check[] {
     { actual: duplicateValues(operationIds), expected: [], name: "events.idempotent_operation_ids", pass: duplicateValues(operationIds).length === 0, severity: "critical" },
     { actual: badRankingGroups, expected: [], name: "ranking.unique_province_positions", pass: badRankingGroups.length === 0 },
     { actual: world.state.boxes.filter(({ points }) => points !== null && points < 0).map(({ id }) => id), expected: [], name: "rewards.non_negative_points", pass: world.state.boxes.every(({ points }) => points === null || points >= 0) },
+    { actual: world.state.boxes.filter(({ cosmeticGranted, duplicatePoints }) => cosmeticGranted === true && duplicatePoints !== 0).map(({ id }) => id), expected: [], name: "cosmetics.new_item_has_no_duplicate_points", pass: world.state.boxes.every(({ cosmeticGranted, duplicatePoints }) => cosmeticGranted !== true || duplicatePoints === 0) },
     { actual: world.state.events.some(({ payload }) => JSON.stringify(payload).includes("service_role")), expected: false, name: "events.no_service_role_secret", pass: !world.state.events.some(({ payload }) => JSON.stringify(payload).includes("service_role")), severity: "critical" },
   ];
 }

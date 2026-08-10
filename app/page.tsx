@@ -3,7 +3,7 @@
 import { type CSSProperties, type Dispatch, type FormEvent, Fragment, type MouseEvent as ReactMouseEvent, type PointerEvent as ReactPointerEvent, type SetStateAction, type WheelEvent as ReactWheelEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import dynamic from "next/dynamic";
-import { PlayerCardView } from "./_components/player-card-view";
+import { PlayerCosmeticCard } from "./_components/player-cosmetic-card";
 import { attachVenueAutocomplete, type VenuePlace } from "./googlePlacesClient";
 import { GlobalRatingPanel } from "./global-rating-panel";
 import {
@@ -32,6 +32,10 @@ import {
 } from "./laboratorio-ficha-jugador/_engine/player-rating-engine";
 import { useAdminViewPreview } from "./admin-view-preview";
 import { AdminViewPreviewButton, MobileAppNav, type MobileAppTab } from "./mobile-app-nav";
+import {
+  normalizePublicPlayerCosmeticsSnapshot,
+  type PublicPlayerCosmeticsSnapshot,
+} from "./player-cosmetics-contract";
 import { clientWriteFetch, PWA_WRITE_REJECTED_EVENT } from "./pwa-client-bridge";
 import {
   OUTFIELD_FACET_LABELS,
@@ -3466,6 +3470,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
   const [matchPhotoPreview, setMatchPhotoPreview] = useState<{ src: string; title: string } | null>(null);
   const [profileSaveMessage, setProfileSaveMessage] = useState("");
   const [profileSaving, setProfileSaving] = useState(false);
+  const [selectedPlayerCosmetics, setSelectedPlayerCosmetics] = useState<PublicPlayerCosmeticsSnapshot | null>(null);
   const [playerAssessment, setPlayerAssessment] = useState<PlayerAssessmentFlow | null>(null);
   const [playerAssessmentMessage, setPlayerAssessmentMessage] = useState("");
   const [matchWeather, setMatchWeather] = useState<MatchWeather | null>(null);
@@ -6176,6 +6181,37 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
   }, [selectedPlayerId]);
 
   useEffect(() => {
+    if (!supabase || !isRegisteredUser || !selectedPlayer?.globalPlayerProfileId) {
+      queueMicrotask(() => setSelectedPlayerCosmetics(null));
+      return;
+    }
+    const client = supabase;
+    const profileId = selectedPlayer.globalPlayerProfileId;
+    let active = true;
+    const loadCosmetics = async () => {
+      const result = await client.rpc("get_pachanga_public_player_card_cosmetics_v1", {
+        target_player_profile_id: profileId,
+      });
+      if (!active || result.error) return;
+      const canonical = normalizePublicPlayerCosmeticsSnapshot(result.data);
+      setSelectedPlayerCosmetics(canonical?.playerProfileId === profileId ? canonical : null);
+    };
+    void loadCosmetics();
+    const channel = client
+      .channel(`public-player-cosmetics-${profileId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "pachanga_player_cosmetic_public_cards", filter: `player_profile_id=eq.${profileId}` },
+        () => void loadCosmetics(),
+      )
+      .subscribe();
+    return () => {
+      active = false;
+      void client.removeChannel(channel);
+    };
+  }, [isRegisteredUser, selectedPlayer?.globalPlayerProfileId]);
+
+  useEffect(() => {
     let cancelled = false;
     const updateEligibility = (eligibility: RatingEligibility | null | undefined, loading: boolean) => {
       queueMicrotask(() => {
@@ -8666,8 +8702,9 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
 
     return (
       <div className="fifa-card-shell">
-        <PlayerCardView
+        <PlayerCosmeticCard
           className={`${cardCanEdit ? "" : "readonly-card"} ${cardTierClass(selectedPeerScore)} ${avatarDragging && cardCanAdjustAvatar ? "avatar-dragging" : ""}`}
+          cosmetics={selectedPlayerCosmetics?.enabled ? selectedPlayerCosmetics.equipped : undefined}
           facets={selectedRatingFacets.map((facet) => ({
             key: facet.key,
             label: facet.short,
@@ -8675,6 +8712,8 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
           }))}
           meta={`${selectedPlayer.goals} Goles · ${selectedPlayer.appearances} PJ${selectedPlayerAge !== null ? ` · ${selectedPlayerAge} años` : ""}`}
           name={playerDisplayName(selectedPlayer)}
+          featuredAchievement={selectedPlayerCosmetics?.enabled ? selectedPlayerCosmetics.featuredBadge : null}
+          loadout={selectedPlayerCosmetics?.enabled ? selectedPlayerCosmetics.loadout : null}
           photoAction={cardCanEdit ? (
             <label className="fifa-photo-action" title={selectedAvatarPreview ? "Cambiar foto" : "Añadir foto"}>
               {selectedAvatarPreview ? "Cambiar foto" : "Añadir foto"}
@@ -10634,6 +10673,11 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
                 <a className="profile-notifications-link" href="/perfil/conducta">
                   <span>Avisos y conducta</span>
                   <small>Asistencia, medidas y apelaciones</small>
+                  <b aria-hidden="true">›</b>
+                </a>
+                <a className="profile-notifications-link" href="/personalizar-carta">
+                  <span>Personalizar ficha</span>
+                  <small>Tu colección, efectos y logro destacado</small>
                   <b aria-hidden="true">›</b>
                 </a>
               </>

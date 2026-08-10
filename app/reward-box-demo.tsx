@@ -15,7 +15,10 @@ type RewardBoxDemoProps = {
   eyebrow?: string;
   onAction?: () => void;
   onClose: () => void;
+  onSecondaryAction?: () => void;
   open: boolean;
+  secondaryActionDisabled?: boolean;
+  secondaryActionLabel?: string;
   title?: string;
 };
 
@@ -48,7 +51,10 @@ export function RewardBoxDemo({
   eyebrow,
   onAction,
   onClose,
+  onSecondaryAction,
   open,
+  secondaryActionDisabled = false,
+  secondaryActionLabel,
   title,
 }: RewardBoxDemoProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -243,7 +249,14 @@ export function RewardBoxDemo({
             {title ? <strong>{title}</strong> : null}
             {description ? <p>{description}</p> : null}
             {actionLabel && onAction ? (
-              <button type="button" disabled={actionDisabled} onClick={onAction}>{actionLabel}</button>
+              <div className={styles.revealActions}>
+                <button type="button" disabled={actionDisabled} onClick={onAction}>{actionLabel}</button>
+                {secondaryActionLabel && onSecondaryAction ? (
+                  <button className={styles.secondaryAction} type="button" disabled={secondaryActionDisabled} onClick={onSecondaryAction}>
+                    {secondaryActionLabel}
+                  </button>
+                ) : null}
+              </div>
             ) : null}
           </div>
         ) : null}

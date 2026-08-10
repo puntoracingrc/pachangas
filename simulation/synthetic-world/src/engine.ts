@@ -1,4 +1,5 @@
 import { canonicalContract } from "./canonical-contracts";
+import { PLAYER_COSMETIC_CATALOG } from "../../../app/player-cosmetics-catalog";
 import { addVirtualDays, atVirtualHour, eachVirtualDayExclusive, virtualDaysBetween, virtualWeek } from "./clock";
 import { evaluateInvariants } from "./invariants";
 import { calculateRankings, SYNTHETIC_PROVINCE_TROPHY_RULE } from "./ranking";
@@ -11,6 +12,8 @@ import type {
   SyntheticConductScenario,
   SyntheticEvent,
   SyntheticMatch,
+  SyntheticPlayerCosmeticInventoryItem,
+  SyntheticPlayerCosmeticLoadout,
   SyntheticRatingOpinion,
   SyntheticTeam,
   SyntheticWorld,
@@ -386,7 +389,17 @@ function awardAchievement(world: SyntheticWorld, achievement: SyntheticAchieveme
   world.state.achievements.push(achievement);
   const recipient = achievement.agentId ?? world.state.teams.find(({ id }) => id === achievement.teamId)?.ownerAgentId ?? null;
   const boxId = deterministicUuid(`${world.id}:achievement-box`, achievement.id);
-  world.state.boxes.push({ agentId: achievement.agentId, createdAt: achievement.earnedAt, id: boxId, openedAt: null, points: null, teamId: achievement.teamId });
+  world.state.boxes.push({
+    agentId: achievement.agentId,
+    cosmeticGranted: null,
+    cosmeticKey: null,
+    createdAt: achievement.earnedAt,
+    duplicatePoints: 0,
+    id: boxId,
+    openedAt: null,
+    points: null,
+    teamId: achievement.teamId,
+  });
   if (recipient) notify(world, achievement.earnedAt, recipient, "achievement_unlocked", achievement.id, `achievement:${achievement.id}:${recipient}`);
   recordEvent(world, {
     actorAgentId: null,
@@ -1175,8 +1188,123 @@ function processNotificationsAndBoxes(world: SyntheticWorld, date: string, rando
     const agent = agentId ? world.state.agents.find(({ id }) => id === agentId) : null;
     if (!agent || agent.status === "dormant" || virtualDaysBetween(box.createdAt, date) < random.integer(1, 5)) continue;
     box.openedAt = date;
-    box.points = random.weighted([{ value: 25, weight: 45 }, { value: 50, weight: 33 }, { value: 100, weight: 17 }, { value: 250, weight: 5 }]);
-    recordEvent(world, { actorAgentId: agent.id, entityIds: [box.id], eventType: "reward_box_opened", flow: "reward.open_box", key: `box-open:${box.id}`, payload: { points: box.points }, virtualDate: date });
+    if (random.bool(0.25)) {
+      const cosmetic = random.weighted(PLAYER_COSMETIC_CATALOG.map((entry) => ({
+        value: entry,
+        weight: entry.rarity === "common" ? 40
+          : entry.rarity === "uncommon" ? 27
+            : entry.rarity === "rare" ? 18
+              : entry.rarity === "epic" ? 10 : 5,
+      })));
+      const owned = world.state.playerCosmeticInventory.find((item) => (
+        item.agentId === agent.id && item.cosmeticKey === cosmetic.key
+      ));
+      const duplicatePoints = cosmetic.rarity === "common" ? 4
+        : cosmetic.rarity === "uncommon" ? 8
+          : cosmetic.rarity === "rare" ? 16
+            : cosmetic.rarity === "epic" ? 28 : 45;
+      box.cosmeticKey = cosmetic.key;
+      box.cosmeticGranted = !owned;
+      box.duplicatePoints = owned ? duplicatePoints : 0;
+      box.points = owned ? duplicatePoints : 0;
+
+      if (!owned) {
+        const inventoryItem: SyntheticPlayerCosmeticInventoryItem = {
+          acquiredAt: date,
+          agentId: agent.id,
+          cosmeticKey: cosmetic.key,
+          seenAt: null,
+          sourceBoxId: box.id,
+        };
+        world.state.playerCosmeticInventory.push(inventoryItem);
+        recordEvent(world, {
+          actorAgentId: agent.id,
+          entityIds: [box.id, cosmetic.key],
+          eventType: "player_cosmetic_inventory_granted",
+          flow: "cosmetic.inventory_grant",
+          key: `cosmetic-grant:${box.id}:${cosmetic.key}`,
+          payload: { cosmeticKey: cosmetic.key, duplicateConverted: false, seen: false },
+          virtualDate: date,
+        });
+        notify(world, date, agent.id, "player_reward_cosmetic_unlocked", box.id, `player-cosmetic:${agent.id}:${cosmetic.key}`);
+
+        if (random.bool(0.7)) {
+          inventoryItem.seenAt = date;
+          recordEvent(world, {
+            actorAgentId: agent.id,
+            entityIds: [cosmetic.key],
+            eventType: "player_cosmetic_marked_seen",
+            flow: "cosmetic.mark_seen",
+            key: `cosmetic-seen:${box.id}:${cosmetic.key}`,
+            payload: { cosmeticKey: cosmetic.key, expectedRevision: 1 },
+            virtualDate: date,
+          });
+        }
+
+        if (random.bool(0.52)) {
+          let loadout: SyntheticPlayerCosmeticLoadout | undefined = world.state.playerCosmeticLoadouts.find((item) => item.agentId === agent.id);
+          if (!loadout) {
+            loadout = { accentKey: null, agentId: agent.id, backgroundKey: null, effectKey: null, frameKey: null, revision: 1, titleKey: null, updatedAt: date };
+            world.state.playerCosmeticLoadouts.push(loadout);
+          }
+          const expectedRevision = loadout.revision;
+          if (cosmetic.slot === "frame") loadout.frameKey = cosmetic.key;
+          else if (cosmetic.slot === "background") loadout.backgroundKey = cosmetic.key;
+          else if (cosmetic.slot === "accent") loadout.accentKey = cosmetic.key;
+          else if (cosmetic.slot === "effect") loadout.effectKey = cosmetic.key;
+          else loadout.titleKey = cosmetic.key;
+          loadout.revision += 1;
+          loadout.updatedAt = date;
+          inventoryItem.seenAt ??= date;
+          recordEvent(world, {
+            actorAgentId: agent.id,
+            entityIds: [box.id, cosmetic.key],
+            eventType: "player_cosmetic_equipped_from_box",
+            flow: "cosmetic.equip_from_box",
+            key: `cosmetic-equip:${box.id}:${cosmetic.key}`,
+            payload: { confirmedRevision: loadout.revision, expectedRevision, realtimeConverged: true },
+            virtualDate: date,
+          });
+          if (random.bool(0.08)) {
+            recordEvent(world, {
+              actorAgentId: agent.id,
+              entityIds: [agent.id],
+              eventType: "player_cosmetic_stale_revision_rejected",
+              flow: "cosmetic.save_loadout",
+              key: `cosmetic-stale:${box.id}:${cosmetic.key}`,
+              payload: { attemptedRevision: expectedRevision, canonicalRevision: loadout.revision, optimisticStateRemoved: true },
+              virtualDate: date,
+            });
+          }
+        }
+      } else {
+        recordEvent(world, {
+          actorAgentId: agent.id,
+          entityIds: [box.id, cosmetic.key],
+          eventType: "player_cosmetic_duplicate_converted",
+          flow: "cosmetic.inventory_grant",
+          key: `cosmetic-duplicate:${box.id}:${cosmetic.key}`,
+          payload: { cosmeticKey: cosmetic.key, duplicateConverted: true, duplicatePoints, originalSeenAt: owned.seenAt },
+          virtualDate: date,
+        });
+      }
+    } else {
+      box.points = random.weighted([{ value: 25, weight: 45 }, { value: 50, weight: 33 }, { value: 100, weight: 17 }, { value: 250, weight: 5 }]);
+    }
+    recordEvent(world, {
+      actorAgentId: agent.id,
+      entityIds: [box.id],
+      eventType: "reward_box_opened",
+      flow: "reward.open_box",
+      key: `box-open:${box.id}`,
+      payload: {
+        cosmeticGranted: box.cosmeticGranted,
+        cosmeticKey: box.cosmeticKey,
+        duplicatePoints: box.duplicatePoints,
+        points: box.points,
+      },
+      virtualDate: date,
+    });
   }
 }
 
@@ -1328,6 +1456,10 @@ export function syntheticWorldSummary(world: SyntheticWorld) {
     activeAgents: world.state.agents.filter(({ status }) => status === "active").length,
     attendanceCancellations: world.state.attendanceRecords.filter(({ finalOutcome }) => finalOutcome === "cancelled_early" || finalOutcome === "cancelled_late").length,
     boxes: world.state.boxes.length,
+    cosmeticDuplicates: world.state.boxes.filter(({ cosmeticGranted, cosmeticKey }) => cosmeticKey && cosmeticGranted === false).length,
+    cosmeticInventory: world.state.playerCosmeticInventory.length,
+    cosmeticLoadouts: world.state.playerCosmeticLoadouts.length,
+    cosmeticUnseen: world.state.playerCosmeticInventory.filter(({ seenAt }) => !seenAt).length,
     challenges: world.state.challenges.length,
     confirmedMatches: confirmed.length,
     conductScenariosNeedingProduct: world.state.conductScenarios.filter(({ productCapability }) => productCapability === "not_implemented").length,

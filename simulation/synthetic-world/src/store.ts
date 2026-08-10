@@ -69,6 +69,14 @@ function mapWorld(row: WorldRow): SyntheticWorld {
       mandatoryInApp: notification.mandatoryInApp ?? false,
       visibleInApp: notification.visibleInApp ?? true,
     })),
+    playerCosmeticInventory: row.state.playerCosmeticInventory ?? [],
+    playerCosmeticLoadouts: row.state.playerCosmeticLoadouts ?? [],
+    boxes: row.state.boxes.map((box) => ({
+      ...box,
+      cosmeticGranted: box.cosmeticGranted ?? null,
+      cosmeticKey: box.cosmeticKey ?? null,
+      duplicatePoints: box.duplicatePoints ?? 0,
+    })),
   } as SyntheticWorld["state"]);
   return mergeKnownIncidents({
     config: row.config,

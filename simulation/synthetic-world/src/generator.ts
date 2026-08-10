@@ -326,6 +326,8 @@ export function createSyntheticWorld(options: {
       ],
       matches: [],
       notifications: [],
+      playerCosmeticInventory: [],
+      playerCosmeticLoadouts: [],
       ratingOpinions: [],
       rankings: [],
       teams,
