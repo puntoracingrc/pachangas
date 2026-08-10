@@ -34,6 +34,8 @@ test("all three pipelines share generated assets and expose explicit LOD", async
   assert.match(page, /ssr: false/);
   assert.match(page, /data-frame-count="8"/);
   assert.match(page, /ball-premium-frame-\$\{frame\}\.webp/);
+  assert.match(page, /<PipelineView crown=\{crown\} eager material=/);
+  assert.match(page, /loading=\{eager \|\| material === "gold" \? "eager" : "lazy"\}/);
   assert.match(page, /48 · render/);
   assert.match(page, /64 · sprite/);
   assert.match(page, /Editor · GLB en vista principal/);

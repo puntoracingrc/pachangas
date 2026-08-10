@@ -49,6 +49,7 @@ function crownSource(crown: PremiumCrownMaterial) {
 
 function LayeredShield({
   crown,
+  eager = false,
   material,
   pipeline,
   reduced,
@@ -56,6 +57,7 @@ function LayeredShield({
   tilt,
 }: {
   crown: PremiumCrownMaterial;
+  eager?: boolean;
   material: PremiumFrameMaterial;
   pipeline: "A" | "B";
   reduced: boolean;
@@ -80,21 +82,23 @@ function LayeredShield({
       style={shieldStyle}
     >
       {/* Assets transparentes generados por Blender; no son estado de producto. */}
-      <Image alt="" aria-hidden="true" fill sizes={size ? `${size}px` : "(max-width: 760px) 82vw, 530px"} src={`/team-shield-premium-3d/shield-premium-${material}-base.webp`} unoptimized />
-      {crownSource(crown) ? <Image alt="" aria-hidden="true" className={styles.crownLayer} fill loading="eager" sizes={size ? `${size}px` : "(max-width: 760px) 82vw, 530px"} src={crownSource(crown) ?? ""} unoptimized /> : null}
-      <Image alt="" aria-hidden="true" className={styles.ballFrame} fill sizes={size ? `${Math.ceil(size / 3)}px` : "180px"} src={`/team-shield-premium-3d/ball-premium-frame-${frame}.webp`} unoptimized />
+      <Image alt="" aria-hidden="true" fill loading={eager || material === "gold" ? "eager" : "lazy"} sizes={size ? `${size}px` : "(max-width: 760px) 82vw, 530px"} src={`/team-shield-premium-3d/shield-premium-${material}-base.webp`} unoptimized />
+      {crownSource(crown) ? <Image alt="" aria-hidden="true" className={styles.crownLayer} fill loading={eager || crown === "gold" ? "eager" : "lazy"} sizes={size ? `${size}px` : "(max-width: 760px) 82vw, 530px"} src={crownSource(crown) ?? ""} unoptimized /> : null}
+      <Image alt="" aria-hidden="true" className={styles.ballFrame} fill loading={eager ? "eager" : "lazy"} sizes={size ? `${Math.ceil(size / 3)}px` : "180px"} src={`/team-shield-premium-3d/ball-premium-frame-${frame}.webp`} unoptimized />
     </div>
   );
 }
 
 function PipelineView({
   crown,
+  eager,
   material,
   pipeline,
   reduced,
   tilt,
 }: {
   crown: PremiumCrownMaterial;
+  eager?: boolean;
   material: PremiumFrameMaterial;
   pipeline: Pipeline;
   reduced: boolean;
@@ -103,7 +107,7 @@ function PipelineView({
   if (pipeline === "C") {
     return <PremiumShield3D crown={crown} material={material} reduced={reduced} tilt={tilt} />;
   }
-  return <LayeredShield crown={crown} material={material} pipeline={pipeline} reduced={reduced} tilt={tilt} />;
+  return <LayeredShield crown={crown} eager={eager} material={material} pipeline={pipeline} reduced={reduced} tilt={tilt} />;
 }
 
 export default function TeamShieldPremium3DLabPage() {
@@ -255,7 +259,7 @@ export default function TeamShieldPremium3DLabPage() {
         </aside>
 
         <div className={styles.heroStage}>
-          <PipelineView crown={crown} material={material} pipeline={pipeline} reduced={reduced} tilt={motion.tilt} />
+          <PipelineView crown={crown} eager material={material} pipeline={pipeline} reduced={reduced} tilt={motion.tilt} />
           <div className={styles.readout}>
             <b>Pipeline {pipeline}</b>
             <span>{MATERIALS.find((entry) => entry.key === material)?.label}</span>

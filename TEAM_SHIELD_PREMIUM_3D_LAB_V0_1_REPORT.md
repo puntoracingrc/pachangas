@@ -131,7 +131,7 @@ Resultados:
 - horizontal 844 x 390: sin overflow horizontal;
 - tasa local aproximada del bucle: 121 frames en 1 segundo en una pantalla de alta frecuencia;
 - reduced motion: 0 frames adicionales en 700 ms;
-- consola después de corregir hidratación: sin errores; solo se corrigió un aviso LCP de la corona de 5 KB.
+- carga limpia en servidor reiniciado: sin errores, mismatch de hidratación, avisos LCP ni assets 404 después de priorizar las capas visibles y mantener lazy las variantes no repetidas.
 
 La QA se repitió en la Preview de Vercel del PR #131: pipeline A inició con cero canvases, pipeline C creó exactamente un canvas no vacío y los viewports 390 x 844 y 844 x 390 permanecieron sin overflow. Con movimiento reducido activo, el contador de frames no avanzó durante 800 ms.
 

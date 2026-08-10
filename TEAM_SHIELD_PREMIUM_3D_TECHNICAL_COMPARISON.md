@@ -31,7 +31,7 @@ Los 624,958 B no se descargan de una vez en un uso real: el navegador solicita e
 
 | Chunk | Raw | Gzip | Observación |
 | --- | ---: | ---: | --- |
-| UI inicial del laboratorio | 59,106 B | 16,614 B | A/B, controles y composición; sin canvas C |
+| UI inicial del laboratorio | 59,225 B | 16,646 B | A/B, controles y composición; sin canvas C |
 | Wrapper dinámico de C | 4,297 B | 2,013 B | Visor, materiales y ciclo de vida |
 | Three.js + GLTFLoader | 591,563 B | 147,378 B | Motor compartido por la carga dinámica de C |
 | Total JS diferido de C | 595,860 B | 149,391 B | Se solicita únicamente al elegir `C GLB` |
