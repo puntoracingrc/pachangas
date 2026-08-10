@@ -72,6 +72,16 @@
   background: linear-gradient(128deg, #765009, var(--shield-border-highlight) 24%, var(--shield-border-base) 44%, #7a5205 67%, #ffe998 82%, var(--shield-border-base));
 }
 
+.stage[data-premium-border="true"] .shieldBody::before {
+  background-image:
+    linear-gradient(128deg, rgba(255, 255, 255, 0.2), transparent 28% 68%, rgba(255, 255, 255, 0.16)),
+    var(--shield-premium-texture);
+  background-position: center;
+  background-size: cover;
+  mix-blend-mode: soft-light;
+  opacity: 0.68;
+}
+
 .stage[data-material="chrome"] .shieldBody {
   background: linear-gradient(135deg, #222a31, #fff 18%, #65717a 34%, #f9ffff 48%, #313c46 65%, #fff 83%, #69747d);
 }

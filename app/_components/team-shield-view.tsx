@@ -1,6 +1,7 @@
 import type { CSSProperties } from "react";
 import { PLAYER_COSMETIC_MATERIALS } from "../player-cosmetics-catalog";
 import { teamShieldCatalogEntry } from "../team-shield-cosmetics-catalog";
+import { TEAM_SHIELD_PREMIUM_BORDER_TEXTURES } from "../team-shield-premium-border-assets";
 import type { TeamShieldConfig, TeamShieldRenderableItem } from "../team-shield-contract";
 import styles from "./team-shield-view.module.css";
 
@@ -11,6 +12,7 @@ type ShieldStyle = CSSProperties & {
   "--shield-primary": string;
   "--shield-secondary": string;
   "--shield-size"?: string;
+  "--shield-premium-texture"?: string;
   "--symbol-rotation": string;
   "--symbol-scale": number;
 };
@@ -119,6 +121,13 @@ export function TeamShieldView({
   const border = renderValue(borderItem, "border", "clean");
   const borderMaterial = materialKey(borderItem);
   const material = materialValue(borderItem);
+  const premiumBorderEnabled = renderValue(borderItem, "premiumBorder", "") === "prerender-material-v1"
+    && borderMaterial in TEAM_SHIELD_PREMIUM_BORDER_TEXTURES
+    && size !== 24
+    && size !== 32;
+  const premiumBorderTexture = premiumBorderEnabled
+    ? TEAM_SHIELD_PREMIUM_BORDER_TEXTURES[borderMaterial as keyof typeof TEAM_SHIELD_PREMIUM_BORDER_TEXTURES]
+    : null;
   const effect = renderValue(findItem(catalog, selected.effectKey), "effect", "none");
   const topOrnament = renderValue(findItem(catalog, selected.topOrnamentKey), "ornament", "none");
   const sideOrnament = renderValue(findItem(catalog, selected.sideOrnamentKey), "ornament", "none");
@@ -130,6 +139,7 @@ export function TeamShieldView({
     "--shield-primary": colorValue(catalog, selected.primaryColorKey, "#071b31"),
     "--shield-secondary": colorValue(catalog, selected.secondaryColorKey, "#33d6dd"),
     "--shield-size": size ? `${size}px` : undefined,
+    "--shield-premium-texture": premiumBorderTexture ? `url("${premiumBorderTexture}")` : undefined,
     "--symbol-rotation": `${selected.primarySymbolRotation}deg`,
     "--symbol-scale": selected.primarySymbolScale,
   };
@@ -144,6 +154,7 @@ export function TeamShieldView({
       data-material={borderMaterial}
       data-motion={motion}
       data-pattern={pattern}
+      data-premium-border={premiumBorderEnabled}
       data-shape={shape}
       data-size={size ?? "fluid"}
       role="img"
