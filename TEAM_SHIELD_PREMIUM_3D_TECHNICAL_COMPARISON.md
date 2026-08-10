@@ -132,6 +132,8 @@ No se solicita permiso al cargar. El usuario pulsa `Activar sensor`; después:
 
 La fórmula de inclinación limita beta/gamma a +/-6 grados. No existe rotación autónoma ni acumulativa.
 
+La especificación W3C diferencia `deviceorientation` (ángulos físicos alpha/beta/gamma) de `devicemotion` (aceleración y velocidad angular). Ambos viven en contexto seguro y dependen de permisos de acelerómetro y giroscopio; la solicitud de permiso necesita activación transitoria cuando el navegador debe mostrar un prompt. V0.1 usa únicamente `DeviceOrientationEvent` porque el efecto necesita la postura estable del dispositivo, no detectar sacudidas ni integrar velocidad. No registrar `devicemotion` evita incorporar una señal más ruidosa y datos que el producto no necesita. Referencia: [Device Orientation and Motion, W3C](https://www.w3.org/TR/orientation-event/).
+
 ## Fallos encontrados durante QA
 
 | Hallazgo | Causa | Corrección | Regresión |

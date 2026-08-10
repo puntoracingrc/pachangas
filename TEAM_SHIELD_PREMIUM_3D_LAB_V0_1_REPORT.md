@@ -76,6 +76,7 @@ Oro comunica premio y mantiene buena lectura en grande. La geometría actual es 
 - El sensor solo se activa tras una acción explícita del usuario.
 - En iOS se usa `DeviceOrientationEvent.requestPermission()` cuando existe.
 - En otros navegadores se registra `deviceorientation` después del botón de activación.
+- `DeviceMotion` se evaluó, pero no se escucha en V0.1: aporta aceleración y velocidad angular, mientras este efecto solo necesita una orientación estable. Evitarlo reduce ruido, datos innecesarios y complejidad de permisos.
 - La inclinación se limita a +/-6 grados.
 - Permiso denegado, sensor ausente o error: fallback estático.
 - El laboratorio incluye controles de simulación para QA sin hardware.

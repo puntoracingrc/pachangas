@@ -50,6 +50,7 @@ test("orientation permission is user initiated and reduced motion stays static",
 
   assert.match(motion, /constructor\.requestPermission \? await constructor\.requestPermission\(\)/);
   assert.match(motion, /window\.addEventListener\("deviceorientation"/);
+  assert.doesNotMatch(motion, /addEventListener\("devicemotion"/);
   assert.match(motion, /sensorPermission !== "granted"/);
   assert.match(renderer, /if \(!reduced\) animate\(\)/);
   assert.match(renderer, /preserveDrawingBuffer: true/);
