@@ -73,6 +73,12 @@ Rayos Laterales, Placa y Holo quedan en REVISAR.
 - `artifacts/team-shield-cosmetics-qa/lab-landscape-reduced-motion.png`.
 - `artifacts/team-shield-cosmetics-qa/lab-full-catalog.png`.
 
+La Vercel Preview `dpl_Es9eQsUuiWbYucwJhLk88v1haVWt` reproduce el
+laboratorio en el commit funcional `e9e045d3f693364089b8886037be7658fdb82985`.
+La QA remota confirma `200`, `noindex`, cero overflow de documento, cero
+warnings/errores de consola y ausencia de solapes en 844x390 tras compactar la
+navegacion de categorias a dos filas.
+
 Las capturas prueban Base IQ, Barrio, Future IQ, Noche, materiales, patrones,
 complementos, efectos, catalogo y LOD 24/32/48/64.
 

@@ -1,6 +1,6 @@
 # Team Shield Cosmetics V1
 
-Estado: RELEASE CANDIDATE. STAGING SUPERADO; PREVIEW PENDIENTE.
+Estado: RELEASE CANDIDATE. STAGING Y VERCEL PREVIEW SUPERADOS.
 
 ## Checkpoint
 
@@ -159,15 +159,30 @@ de producto limpia y haria fallar la salud de PostgREST antes del baseline.
   La heuristica de anonymous-auth persiste por el rol, pero SQL/RLS verifica el
   rechazo real mediante `is_registered_pachanga_user()`.
 
+## Evidencia Vercel Preview
+
+- URL protegida: `https://pachangas-git-codex-team-5d95c6-persianas-almar-web-s-projects.vercel.app`.
+- Deployment funcional validado: `dpl_Es9eQsUuiWbYucwJhLk88v1haVWt`.
+- Commit funcional exacto: `e9e045d3f693364089b8886037be7658fdb82985`.
+- Target `preview`, estado `READY`, respuesta autenticada `200` y `noindex`.
+- Desktop 1440x900 y movil 390x844 sin overflow horizontal.
+- En 844x390 la QA remota detecto una superposicion entre controles y acciones.
+  La rejilla compartida se corrigio con una fila acotada y cinco categorias por
+  fila; la repeticion remota confirma 844/844 px, campos hasta 298 px, acciones
+  desde 320 px y cero solapes.
+- Interaccion Barrio + iniciales + guardado simulado: PASS.
+- Consola tras la QA final: 0 warnings y 0 errores.
+
 ## Invariantes Deportivas
 
 La migracion no escribe perfiles, Rating V2, facetas, Season Score, TOPS,
 partidos, retos, logros ni evidencias deportivas. Synthetic World y la bateria
 cruzada confirman `ratingChanges: 0`.
 
-## Pendiente Remoto
+## Estado de Activacion
 
-- Publicar y verificar una Vercel Preview exacta del commit final.
 - Mantener ambos feature flags desactivados por defecto fuera de staging.
+- `team_cosmetics_enabled` permanece activado solo en la rama Supabase de
+  staging; `team_cosmetic_rewards_enabled` permanece desactivado.
 
 No se autoriza merge ni despliegue a produccion en esta fase.
