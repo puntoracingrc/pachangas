@@ -359,6 +359,10 @@ select pg_temp.assert_true(
   and (public.get_my_pachanga_platform_access_v1() -> 'capabilities') ? 'labs.read',
   'Platform owner must have owner-only capabilities'
 );
+select pg_temp.assert_true(
+  (public.get_pachanga_platform_overview_v1('today') #>> '{moderation,restrictedUsers}')::bigint = 1,
+  'Platform overview must read active restrictions from canonical effective_until'
+);
 
 -- PII is role-gated in the database, not merely hidden by React.
 select set_config('request.jwt.claims', '{"sub":"aa100000-0000-4000-8000-000000000003","role":"authenticated"}', true);

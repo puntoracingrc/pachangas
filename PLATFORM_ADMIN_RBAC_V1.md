@@ -79,3 +79,11 @@ Los componentes retienen el mismo `operationId` durante un retry del mismo inten
 El ledger privado registra `actor_user_id`, rol, acción, objetivo, motivo, before/after, respuesta canónica, `operation_id`, `server_sequence` y fecha. Las repeticiones de la misma operación convergen y una operación no puede reutilizarse para otra acción/objetivo.
 
 Las pruebas SQL cubren visitor, usuario normal, admin de equipo, moderator, support, finance, ops, platform_admin y platform_owner, además de accesos adversariales y último owner.
+
+## Evidencia de staging
+
+- 52 comprobaciones HTTP autenticadas cubrieron los nueve actores y todas las capacidades del panel.
+- Un admin de equipo sin rol global recibió `403` en APIs y no obtuvo acceso de plataforma.
+- Moderación no pudo leer Stripe, Finanzas no pudo modificar Conducta, Soporte no pudo escribir flags y un usuario normal no pudo abrir el panel.
+- Las tablas y funciones `private` conservan cero grants para `anon` y `authenticated`.
+- Suspensión, reactivación, cambio/restauración de flag y anuncio generaron exactamente un evento por `operationId`.

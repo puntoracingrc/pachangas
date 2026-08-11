@@ -63,7 +63,7 @@ Se muestran event ID, tipo, estado, fecha y error sanitizado. Nunca se expone el
 
 No se muestran PAN, CVC, payment method raw ni datos PCI. Customer/subscription IDs solo llegan a roles con `billing.read`.
 
-## QA de staging pendiente
+## Contrato de QA Stripe test
 
 Fixtures esperadas en Stripe test mode:
 
@@ -77,4 +77,4 @@ Fixtures esperadas en Stripe test mode:
 8. local active + Stripe canceled = `MISMATCH`;
 9. webhook failed = alerta.
 
-No se ejecutará contra producción en esta fase.
+El Preview validado no tiene configurada una clave restringida de Stripe test. Por tanto, en esta fase se comprobó el comportamiento obligatorio `UNKNOWN`, la continuidad de Billing local, la redacción de webhooks y los permisos por rol, pero no se simularon llamadas externas de checkout/pago/cancelación. No se usó Stripe live ni producción.

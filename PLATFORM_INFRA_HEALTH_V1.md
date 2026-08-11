@@ -85,3 +85,7 @@ STRIPE_ADMIN_RESTRICTED_KEY=<rk_test read-only>
 ```
 
 Si cualquiera falta, el resto del Control Center sigue funcionando. Ninguna variable administrativa usa `NEXT_PUBLIC_`.
+
+## Resultado de Preview
+
+El deployment de staging se validó sin credenciales administrativas de Stripe, Supabase Management o Vercel expuestas al runtime del navegador. Los conectores ausentes muestran `UNKNOWN` y el resto del panel continúa operativo. La salud PostgreSQL canónica, la versión de aplicación, el contrato PWA y el historial de migraciones sí se consultaron. La PWA real en app mode confirmó manifest, Service Worker activo/controlador y cero overflow o errores runtime.

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { sanitizeClientErrorRoute } from "./api/client-error-telemetry/_contract";
 import { CLIENT_VERSION } from "./client-version-contract";
 
 const sentAt = new Map<string, number>();
@@ -32,6 +33,8 @@ async function fingerprint(value: string) {
 
 async function report(category: "network" | "promise" | "render" | "resource" | "unknown", material: string) {
   if (!navigator.onLine) return;
+  const route = sanitizeClientErrorRoute(window.location.pathname);
+  if (!route) return;
   const errorFingerprint = await fingerprint(`${category}|${material}`);
   const now = Date.now();
   if (now - (sentAt.get(errorFingerprint) ?? 0) < 60_000) return;
@@ -44,7 +47,7 @@ async function report(category: "network" | "promise" | "render" | "resource" | 
       fingerprint: errorFingerprint,
       operationId: crypto.randomUUID(),
       platform: platformFamily(),
-      route: window.location.pathname.slice(0, 240) || "/",
+      route,
     }),
     headers: { "Content-Type": "application/json" },
     keepalive: true,

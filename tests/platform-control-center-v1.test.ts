@@ -3,7 +3,7 @@ import { spawnSync } from "node:child_process";
 import { readFile, readdir } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
-import { sanitizeClientErrorTelemetry } from "../app/api/client-error-telemetry/_contract";
+import { sanitizeClientErrorRoute, sanitizeClientErrorTelemetry } from "../app/api/client-error-telemetry/_contract";
 
 const root = new URL("../", import.meta.url);
 
@@ -113,7 +113,10 @@ test("the administrative ledger is server-paginated", async () => {
 });
 
 test("overview metrics consume the canonical response keys", async () => {
-  const overview = await source("app/admin/page.tsx");
+  const [overview, repair] = await Promise.all([
+    source("app/admin/page.tsx"),
+    source("supabase/migrations/20260811172700_platform_control_center_overview_restriction_fix.sql"),
+  ]);
   assert.match(overview, /const market = record\(overview\.market\)/);
   assert.match(overview, /count\(matches, "total"\)/);
   assert.match(overview, /count\(matches, "changedInPeriod"\)/);
@@ -121,6 +124,8 @@ test("overview metrics consume the canonical response keys", async () => {
   assert.match(overview, /count\(market, "players"\)/);
   assert.doesNotMatch(overview, /count\(matches, "created"\)/);
   assert.doesNotMatch(overview, /count\(players, "market"\)/);
+  assert.match(repair, /restrictions\.effective_until/);
+  assert.doesNotMatch(repair, /restrictions\.ends_at/);
 });
 
 test("client telemetry accepts only a bounded non-PII contract", () => {
@@ -138,6 +143,14 @@ test("client telemetry accepts only a bounded non-PII contract", () => {
   assert.equal(sanitizeClientErrorTelemetry({ ...valid, message: "contenido escrito por una persona" }), null);
   assert.equal(sanitizeClientErrorTelemetry({ ...valid, route: "/partido?token=secret" }), null);
   assert.equal(sanitizeClientErrorTelemetry({ ...valid, fingerprint: "raw stack trace" }), null);
+  assert.equal(sanitizeClientErrorRoute("/invitacion/grupo/sensitive-invitation-token"), "/invitacion/grupo/:token");
+  assert.equal(sanitizeClientErrorRoute("/partido/A4A5E5B5/private-match-id"), "/partido/:teamCode/:matchId");
+  assert.equal(sanitizeClientErrorRoute("/admin/users/173da3e5-3dbc-4045-a194-91833823a587"), "/admin/users/:userId");
+  assert.equal(sanitizeClientErrorRoute("/support/person@example.test"), "/support/:segment");
+  assert.equal(
+    sanitizeClientErrorTelemetry({ ...valid, route: "/invitacion/partido/sensitive-invitation-token" })?.route,
+    "/invitacion/partido/:token",
+  );
 });
 
 test("administrative secrets remain server-only", async () => {
@@ -219,6 +232,7 @@ test("the shell is responsive without turning platform tools into team admin", a
   assert.match(styles, /@media \(max-width: 760px\)/);
   assert.match(styles, /@media \(orientation: landscape\) and \(max-height:/);
   assert.match(styles, /overflow-x: hidden/);
+  assert.match(styles, /\.adminRoot :is\(button, a, input, select, textarea\):focus-visible/);
   assert.match(shell, /environmentBadge/);
   assert.match(shell, /platformNavigation\.filter/);
   assert.match(conduct, /requirePlatformPage\("moderation\.read"\)/);
