@@ -1,0 +1,4556 @@
+[
+  {
+    "surface": "demo-inicio-admin",
+    "path": "/?demo=1&mobile=inicio",
+    "userMode": "demo-admin",
+    "viewport": "1440x900",
+    "metrics": {
+      "title": "Pachangas IQ",
+      "theme": "light",
+      "textLength": 6037,
+      "overflowX": 0,
+      "overflowY": 4014,
+      "failedImages": [],
+      "smallTargets": [
+        {
+          "tag": "select",
+          "text": "Todas2025-2026",
+          "className": "",
+          "width": 186,
+          "height": 34
+        },
+        {
+          "tag": "input",
+          "text": "",
+          "className": "",
+          "width": 18,
+          "height": 18
+        },
+        {
+          "tag": "button",
+          "text": "Mario(60) · Forma 96% · 0 Goles",
+          "className": "player-name",
+          "width": 576,
+          "height": 24
+        },
+        {
+          "tag": "button",
+          "text": "Valoraciones abiertas",
+          "className": "rating-badge rating-open",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Voy",
+          "className": "selected",
+          "width": 175,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Duda",
+          "className": "",
+          "width": 175,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "No",
+          "className": "",
+          "width": 175,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Mover al equipo 2",
+          "className": "team-move to-b",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Pedro(60) · Forma 100% · 7 Goles",
+          "className": "player-name",
+          "width": 576,
+          "height": 24
+        },
+        {
+          "tag": "button",
+          "text": "Valoraciones abiertas",
+          "className": "rating-badge rating-open",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Voy",
+          "className": "selected",
+          "width": 175,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Duda",
+          "className": "",
+          "width": 175,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "No",
+          "className": "",
+          "width": 175,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Mover al equipo 2",
+          "className": "team-move to-b",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Alex(60) · Forma 99% · 4 Goles",
+          "className": "player-name",
+          "width": 576,
+          "height": 24
+        },
+        {
+          "tag": "button",
+          "text": "Valoraciones abiertas",
+          "className": "rating-badge rating-open",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Voy",
+          "className": "selected",
+          "width": 175,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Duda",
+          "className": "",
+          "width": 175,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "No",
+          "className": "",
+          "width": 175,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Mover al equipo 2",
+          "className": "team-move to-b",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Manu(69) · Forma 100% · 10 Goles",
+          "className": "player-name",
+          "width": 576,
+          "height": 24
+        },
+        {
+          "tag": "button",
+          "text": "Valoraciones abiertas",
+          "className": "rating-badge rating-open",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Voy",
+          "className": "selected",
+          "width": 175,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Duda",
+          "className": "",
+          "width": 175,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "No",
+          "className": "",
+          "width": 175,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Mover al equipo 2",
+          "className": "team-move to-b",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Dani(55) · Forma 99% · 6 Goles",
+          "className": "player-name",
+          "width": 576,
+          "height": 24
+        },
+        {
+          "tag": "button",
+          "text": "Valoraciones abiertas",
+          "className": "rating-badge rating-open",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Voy",
+          "className": "selected",
+          "width": 175,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Duda",
+          "className": "",
+          "width": 175,
+          "height": 34
+        }
+      ],
+      "viewportViolations": [],
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "demo-inicio-player",
+    "path": "/?demo=1&mobile=inicio&qaPlayer=1",
+    "userMode": "demo-player",
+    "viewport": "1440x900",
+    "metrics": {
+      "title": "Pachangas IQ",
+      "theme": "light",
+      "textLength": 5803,
+      "overflowX": 0,
+      "overflowY": 3862,
+      "failedImages": [],
+      "smallTargets": [
+        {
+          "tag": "select",
+          "text": "Todas2025-2026",
+          "className": "",
+          "width": 186,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Mario(60) · Forma 96% · 0 Goles",
+          "className": "player-name",
+          "width": 576,
+          "height": 24
+        },
+        {
+          "tag": "button",
+          "text": "Valoraciones abiertas",
+          "className": "rating-badge rating-open",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Pedro(60) · Forma 100% · 7 Goles",
+          "className": "player-name",
+          "width": 576,
+          "height": 24
+        },
+        {
+          "tag": "button",
+          "text": "Valoraciones abiertas",
+          "className": "rating-badge rating-open",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Alex(60) · Forma 99% · 4 Goles",
+          "className": "player-name",
+          "width": 576,
+          "height": 24
+        },
+        {
+          "tag": "button",
+          "text": "Valoraciones abiertas",
+          "className": "rating-badge rating-open",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Manu(69) · Forma 100% · 10 Goles",
+          "className": "player-name",
+          "width": 576,
+          "height": 24
+        },
+        {
+          "tag": "button",
+          "text": "Valoraciones abiertas",
+          "className": "rating-badge rating-open",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Dani(55) · Forma 99% · 6 Goles",
+          "className": "player-name",
+          "width": 576,
+          "height": 24
+        },
+        {
+          "tag": "button",
+          "text": "Valoraciones abiertas",
+          "className": "rating-badge rating-open",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Alberto(50) · Forma 99% · 0 Goles",
+          "className": "player-name",
+          "width": 576,
+          "height": 24
+        },
+        {
+          "tag": "button",
+          "text": "Valoraciones cerradas: faltan 2 partidos",
+          "className": "rating-badge rating-closed",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Carlos(75) · Forma 100% · 18 Goles",
+          "className": "player-name",
+          "width": 576,
+          "height": 24
+        },
+        {
+          "tag": "button",
+          "text": "Valoraciones abiertas",
+          "className": "rating-badge rating-open",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Rafa(65) · Forma 100% · 1 Goles",
+          "className": "player-name",
+          "width": 576,
+          "height": 24
+        },
+        {
+          "tag": "button",
+          "text": "Valoraciones abiertas",
+          "className": "rating-badge rating-open",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Pablo(58) · Forma 94% · 5 Goles",
+          "className": "player-name",
+          "width": 576,
+          "height": 24
+        },
+        {
+          "tag": "button",
+          "text": "Valoraciones abiertas",
+          "className": "rating-badge rating-open",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Javi(53) · Forma 95% · 3 Goles",
+          "className": "player-name",
+          "width": 576,
+          "height": 24
+        },
+        {
+          "tag": "button",
+          "text": "Valoraciones abiertas",
+          "className": "rating-badge rating-open",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Vicente(50) · Forma 98% · 1 Goles",
+          "className": "player-name",
+          "width": 576,
+          "height": 24
+        },
+        {
+          "tag": "button",
+          "text": "Valoraciones abiertas",
+          "className": "rating-badge rating-open",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Sergio(71) · Forma 100% · 15 Goles",
+          "className": "player-name",
+          "width": 576,
+          "height": 24
+        },
+        {
+          "tag": "button",
+          "text": "Valoraciones abiertas",
+          "className": "rating-badge rating-open",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Óscar(70) · Forma 100% · 12 Goles",
+          "className": "player-name",
+          "width": 576,
+          "height": 24
+        },
+        {
+          "tag": "button",
+          "text": "Valoraciones abiertas",
+          "className": "rating-badge rating-open",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Carlitos(60) · Forma 100% · 9 Goles",
+          "className": "player-name",
+          "width": 576,
+          "height": 24
+        },
+        {
+          "tag": "button",
+          "text": "Valoraciones abiertas",
+          "className": "rating-badge rating-open",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Nico(50) · Forma 88% · 2 Goles",
+          "className": "player-name",
+          "width": 576,
+          "height": 24
+        }
+      ],
+      "viewportViolations": [],
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "demo-partido",
+    "path": "/?demo=1&mobile=partido",
+    "userMode": "demo-admin",
+    "viewport": "1440x900",
+    "metrics": {
+      "title": "Pachangas IQ",
+      "theme": "light",
+      "textLength": 6037,
+      "overflowX": 0,
+      "overflowY": 4014,
+      "failedImages": [],
+      "smallTargets": [
+        {
+          "tag": "select",
+          "text": "Todas2025-2026",
+          "className": "",
+          "width": 186,
+          "height": 34
+        },
+        {
+          "tag": "input",
+          "text": "",
+          "className": "",
+          "width": 18,
+          "height": 18
+        },
+        {
+          "tag": "button",
+          "text": "Mario(60) · Forma 96% · 0 Goles",
+          "className": "player-name",
+          "width": 576,
+          "height": 24
+        },
+        {
+          "tag": "button",
+          "text": "Valoraciones abiertas",
+          "className": "rating-badge rating-open",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Voy",
+          "className": "selected",
+          "width": 175,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Duda",
+          "className": "",
+          "width": 175,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "No",
+          "className": "",
+          "width": 175,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Mover al equipo 2",
+          "className": "team-move to-b",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Pedro(60) · Forma 100% · 7 Goles",
+          "className": "player-name",
+          "width": 576,
+          "height": 24
+        },
+        {
+          "tag": "button",
+          "text": "Valoraciones abiertas",
+          "className": "rating-badge rating-open",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Voy",
+          "className": "selected",
+          "width": 175,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Duda",
+          "className": "",
+          "width": 175,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "No",
+          "className": "",
+          "width": 175,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Mover al equipo 2",
+          "className": "team-move to-b",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Alex(60) · Forma 99% · 4 Goles",
+          "className": "player-name",
+          "width": 576,
+          "height": 24
+        },
+        {
+          "tag": "button",
+          "text": "Valoraciones abiertas",
+          "className": "rating-badge rating-open",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Voy",
+          "className": "selected",
+          "width": 175,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Duda",
+          "className": "",
+          "width": 175,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "No",
+          "className": "",
+          "width": 175,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Mover al equipo 2",
+          "className": "team-move to-b",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Manu(69) · Forma 100% · 10 Goles",
+          "className": "player-name",
+          "width": 576,
+          "height": 24
+        },
+        {
+          "tag": "button",
+          "text": "Valoraciones abiertas",
+          "className": "rating-badge rating-open",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Voy",
+          "className": "selected",
+          "width": 175,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Duda",
+          "className": "",
+          "width": 175,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "No",
+          "className": "",
+          "width": 175,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Mover al equipo 2",
+          "className": "team-move to-b",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Dani(55) · Forma 99% · 6 Goles",
+          "className": "player-name",
+          "width": 576,
+          "height": 24
+        },
+        {
+          "tag": "button",
+          "text": "Valoraciones abiertas",
+          "className": "rating-badge rating-open",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Voy",
+          "className": "selected",
+          "width": 175,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Duda",
+          "className": "",
+          "width": 175,
+          "height": 34
+        }
+      ],
+      "viewportViolations": [],
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "demo-mercado",
+    "path": "/?demo=1&mobile=mercado",
+    "userMode": "demo-admin",
+    "viewport": "1440x900",
+    "metrics": {
+      "title": "Pachangas IQ",
+      "theme": "light",
+      "textLength": 6037,
+      "overflowX": 0,
+      "overflowY": 4014,
+      "failedImages": [],
+      "smallTargets": [
+        {
+          "tag": "select",
+          "text": "Todas2025-2026",
+          "className": "",
+          "width": 186,
+          "height": 34
+        },
+        {
+          "tag": "input",
+          "text": "",
+          "className": "",
+          "width": 18,
+          "height": 18
+        },
+        {
+          "tag": "button",
+          "text": "Mario(60) · Forma 96% · 0 Goles",
+          "className": "player-name",
+          "width": 576,
+          "height": 24
+        },
+        {
+          "tag": "button",
+          "text": "Valoraciones abiertas",
+          "className": "rating-badge rating-open",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Voy",
+          "className": "selected",
+          "width": 175,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Duda",
+          "className": "",
+          "width": 175,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "No",
+          "className": "",
+          "width": 175,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Mover al equipo 2",
+          "className": "team-move to-b",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Pedro(60) · Forma 100% · 7 Goles",
+          "className": "player-name",
+          "width": 576,
+          "height": 24
+        },
+        {
+          "tag": "button",
+          "text": "Valoraciones abiertas",
+          "className": "rating-badge rating-open",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Voy",
+          "className": "selected",
+          "width": 175,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Duda",
+          "className": "",
+          "width": 175,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "No",
+          "className": "",
+          "width": 175,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Mover al equipo 2",
+          "className": "team-move to-b",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Alex(60) · Forma 99% · 4 Goles",
+          "className": "player-name",
+          "width": 576,
+          "height": 24
+        },
+        {
+          "tag": "button",
+          "text": "Valoraciones abiertas",
+          "className": "rating-badge rating-open",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Voy",
+          "className": "selected",
+          "width": 175,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Duda",
+          "className": "",
+          "width": 175,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "No",
+          "className": "",
+          "width": 175,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Mover al equipo 2",
+          "className": "team-move to-b",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Manu(69) · Forma 100% · 10 Goles",
+          "className": "player-name",
+          "width": 576,
+          "height": 24
+        },
+        {
+          "tag": "button",
+          "text": "Valoraciones abiertas",
+          "className": "rating-badge rating-open",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Voy",
+          "className": "selected",
+          "width": 175,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Duda",
+          "className": "",
+          "width": 175,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "No",
+          "className": "",
+          "width": 175,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Mover al equipo 2",
+          "className": "team-move to-b",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Dani(55) · Forma 99% · 6 Goles",
+          "className": "player-name",
+          "width": 576,
+          "height": 24
+        },
+        {
+          "tag": "button",
+          "text": "Valoraciones abiertas",
+          "className": "rating-badge rating-open",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Voy",
+          "className": "selected",
+          "width": 175,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Duda",
+          "className": "",
+          "width": 175,
+          "height": 34
+        }
+      ],
+      "viewportViolations": [],
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "demo-equipo",
+    "path": "/?demo=1&mobile=equipo",
+    "userMode": "demo-admin",
+    "viewport": "1440x900",
+    "metrics": {
+      "title": "Pachangas IQ",
+      "theme": "light",
+      "textLength": 6037,
+      "overflowX": 0,
+      "overflowY": 4014,
+      "failedImages": [],
+      "smallTargets": [
+        {
+          "tag": "select",
+          "text": "Todas2025-2026",
+          "className": "",
+          "width": 186,
+          "height": 34
+        },
+        {
+          "tag": "input",
+          "text": "",
+          "className": "",
+          "width": 18,
+          "height": 18
+        },
+        {
+          "tag": "button",
+          "text": "Mario(60) · Forma 96% · 0 Goles",
+          "className": "player-name",
+          "width": 576,
+          "height": 24
+        },
+        {
+          "tag": "button",
+          "text": "Valoraciones abiertas",
+          "className": "rating-badge rating-open",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Voy",
+          "className": "selected",
+          "width": 175,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Duda",
+          "className": "",
+          "width": 175,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "No",
+          "className": "",
+          "width": 175,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Mover al equipo 2",
+          "className": "team-move to-b",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Pedro(60) · Forma 100% · 7 Goles",
+          "className": "player-name",
+          "width": 576,
+          "height": 24
+        },
+        {
+          "tag": "button",
+          "text": "Valoraciones abiertas",
+          "className": "rating-badge rating-open",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Voy",
+          "className": "selected",
+          "width": 175,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Duda",
+          "className": "",
+          "width": 175,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "No",
+          "className": "",
+          "width": 175,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Mover al equipo 2",
+          "className": "team-move to-b",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Alex(60) · Forma 99% · 4 Goles",
+          "className": "player-name",
+          "width": 576,
+          "height": 24
+        },
+        {
+          "tag": "button",
+          "text": "Valoraciones abiertas",
+          "className": "rating-badge rating-open",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Voy",
+          "className": "selected",
+          "width": 175,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Duda",
+          "className": "",
+          "width": 175,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "No",
+          "className": "",
+          "width": 175,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Mover al equipo 2",
+          "className": "team-move to-b",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Manu(69) · Forma 100% · 10 Goles",
+          "className": "player-name",
+          "width": 576,
+          "height": 24
+        },
+        {
+          "tag": "button",
+          "text": "Valoraciones abiertas",
+          "className": "rating-badge rating-open",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Voy",
+          "className": "selected",
+          "width": 175,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Duda",
+          "className": "",
+          "width": 175,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "No",
+          "className": "",
+          "width": 175,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Mover al equipo 2",
+          "className": "team-move to-b",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Dani(55) · Forma 99% · 6 Goles",
+          "className": "player-name",
+          "width": 576,
+          "height": 24
+        },
+        {
+          "tag": "button",
+          "text": "Valoraciones abiertas",
+          "className": "rating-badge rating-open",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Voy",
+          "className": "selected",
+          "width": 175,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Duda",
+          "className": "",
+          "width": 175,
+          "height": 34
+        }
+      ],
+      "viewportViolations": [],
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "demo-perfil",
+    "path": "/?demo=1&mobile=perfil",
+    "userMode": "demo-admin",
+    "viewport": "1440x900",
+    "metrics": {
+      "title": "Pachangas IQ",
+      "theme": "light",
+      "textLength": 6037,
+      "overflowX": 0,
+      "overflowY": 4014,
+      "failedImages": [],
+      "smallTargets": [
+        {
+          "tag": "select",
+          "text": "Todas2025-2026",
+          "className": "",
+          "width": 186,
+          "height": 34
+        },
+        {
+          "tag": "input",
+          "text": "",
+          "className": "",
+          "width": 18,
+          "height": 18
+        },
+        {
+          "tag": "button",
+          "text": "Mario(60) · Forma 96% · 0 Goles",
+          "className": "player-name",
+          "width": 576,
+          "height": 24
+        },
+        {
+          "tag": "button",
+          "text": "Valoraciones abiertas",
+          "className": "rating-badge rating-open",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Voy",
+          "className": "selected",
+          "width": 175,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Duda",
+          "className": "",
+          "width": 175,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "No",
+          "className": "",
+          "width": 175,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Mover al equipo 2",
+          "className": "team-move to-b",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Pedro(60) · Forma 100% · 7 Goles",
+          "className": "player-name",
+          "width": 576,
+          "height": 24
+        },
+        {
+          "tag": "button",
+          "text": "Valoraciones abiertas",
+          "className": "rating-badge rating-open",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Voy",
+          "className": "selected",
+          "width": 175,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Duda",
+          "className": "",
+          "width": 175,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "No",
+          "className": "",
+          "width": 175,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Mover al equipo 2",
+          "className": "team-move to-b",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Alex(60) · Forma 99% · 4 Goles",
+          "className": "player-name",
+          "width": 576,
+          "height": 24
+        },
+        {
+          "tag": "button",
+          "text": "Valoraciones abiertas",
+          "className": "rating-badge rating-open",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Voy",
+          "className": "selected",
+          "width": 175,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Duda",
+          "className": "",
+          "width": 175,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "No",
+          "className": "",
+          "width": 175,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Mover al equipo 2",
+          "className": "team-move to-b",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Manu(69) · Forma 100% · 10 Goles",
+          "className": "player-name",
+          "width": 576,
+          "height": 24
+        },
+        {
+          "tag": "button",
+          "text": "Valoraciones abiertas",
+          "className": "rating-badge rating-open",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Voy",
+          "className": "selected",
+          "width": 175,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Duda",
+          "className": "",
+          "width": 175,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "No",
+          "className": "",
+          "width": 175,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Mover al equipo 2",
+          "className": "team-move to-b",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Dani(55) · Forma 99% · 6 Goles",
+          "className": "player-name",
+          "width": 576,
+          "height": 24
+        },
+        {
+          "tag": "button",
+          "text": "Valoraciones abiertas",
+          "className": "rating-badge rating-open",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Voy",
+          "className": "selected",
+          "width": 175,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Duda",
+          "className": "",
+          "width": 175,
+          "height": 34
+        }
+      ],
+      "viewportViolations": [],
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased mob"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "mercado",
+    "path": "/mercado",
+    "userMode": "visitor",
+    "viewport": "1440x900",
+    "metrics": {
+      "title": "Pachangas IQ",
+      "theme": "light",
+      "textLength": 1287,
+      "overflowX": 0,
+      "overflowY": 0,
+      "failedImages": [],
+      "smallTargets": [
+        {
+          "tag": "a",
+          "text": "Volver",
+          "className": "manual-back-button",
+          "width": 44,
+          "height": 24
+        },
+        {
+          "tag": "button",
+          "text": "Jugadores disponibles",
+          "className": "selected",
+          "width": 202,
+          "height": 36
+        },
+        {
+          "tag": "button",
+          "text": "Partidos abiertos",
+          "className": "",
+          "width": 159,
+          "height": 36
+        },
+        {
+          "tag": "button",
+          "text": "Retos privados",
+          "className": "",
+          "width": 144,
+          "height": 36
+        },
+        {
+          "tag": "button",
+          "text": "Equipos retables",
+          "className": "",
+          "width": 157,
+          "height": 36
+        },
+        {
+          "tag": "a",
+          "text": "Aviso legal",
+          "className": "",
+          "width": 85,
+          "height": 34
+        },
+        {
+          "tag": "a",
+          "text": "Privacidad",
+          "className": "",
+          "width": 83,
+          "height": 34
+        },
+        {
+          "tag": "a",
+          "text": "Cookies",
+          "className": "",
+          "width": 69,
+          "height": 34
+        },
+        {
+          "tag": "a",
+          "text": "Condiciones",
+          "className": "",
+          "width": 94,
+          "height": 34
+        },
+        {
+          "tag": "a",
+          "text": "Condiciones de venta",
+          "className": "",
+          "width": 146,
+          "height": 34
+        }
+      ],
+      "viewportViolations": [],
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "personalizar-carta",
+    "path": "/personalizar-carta",
+    "userMode": "visitor",
+    "viewport": "1440x900",
+    "metrics": {
+      "title": "Pachangas IQ",
+      "theme": "light",
+      "textLength": 458,
+      "overflowX": 0,
+      "overflowY": 112,
+      "failedImages": [],
+      "smallTargets": [
+        {
+          "tag": "a",
+          "text": "Volver",
+          "className": "",
+          "width": 48,
+          "height": 24
+        },
+        {
+          "tag": "a",
+          "text": "Aviso legal",
+          "className": "",
+          "width": 85,
+          "height": 34
+        },
+        {
+          "tag": "a",
+          "text": "Privacidad",
+          "className": "",
+          "width": 83,
+          "height": 34
+        },
+        {
+          "tag": "a",
+          "text": "Cookies",
+          "className": "",
+          "width": 69,
+          "height": 34
+        },
+        {
+          "tag": "a",
+          "text": "Condiciones",
+          "className": "",
+          "width": 94,
+          "height": 34
+        },
+        {
+          "tag": "a",
+          "text": "Condiciones de venta",
+          "className": "",
+          "width": 146,
+          "height": 34
+        }
+      ],
+      "viewportViolations": [],
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "equipo-identidad",
+    "path": "/equipo/identidad",
+    "userMode": "visitor-no-team",
+    "viewport": "1440x900",
+    "metrics": {
+      "title": "Pachangas IQ",
+      "theme": "light",
+      "textLength": 312,
+      "overflowX": 0,
+      "overflowY": 112,
+      "failedImages": [],
+      "smallTargets": [
+        {
+          "tag": "a",
+          "text": "Inicio",
+          "className": "",
+          "width": 628,
+          "height": 24
+        },
+        {
+          "tag": "a",
+          "text": "Rivales",
+          "className": "",
+          "width": 52,
+          "height": 24
+        },
+        {
+          "tag": "a",
+          "text": "Aviso legal",
+          "className": "",
+          "width": 85,
+          "height": 34
+        },
+        {
+          "tag": "a",
+          "text": "Privacidad",
+          "className": "",
+          "width": 83,
+          "height": 34
+        },
+        {
+          "tag": "a",
+          "text": "Cookies",
+          "className": "",
+          "width": 69,
+          "height": 34
+        },
+        {
+          "tag": "a",
+          "text": "Condiciones",
+          "className": "",
+          "width": 94,
+          "height": 34
+        },
+        {
+          "tag": "a",
+          "text": "Condiciones de venta",
+          "className": "",
+          "width": 146,
+          "height": 34
+        }
+      ],
+      "viewportViolations": [],
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "avisos",
+    "path": "/perfil/avisos",
+    "userMode": "visitor",
+    "viewport": "1440x900",
+    "metrics": {
+      "title": "Pachangas IQ",
+      "theme": "light",
+      "textLength": 342,
+      "overflowX": 0,
+      "overflowY": 112,
+      "failedImages": [],
+      "smallTargets": [
+        {
+          "tag": "a",
+          "text": "Volver al perfil",
+          "className": "",
+          "width": 109,
+          "height": 17
+        },
+        {
+          "tag": "a",
+          "text": "Aviso legal",
+          "className": "",
+          "width": 85,
+          "height": 34
+        },
+        {
+          "tag": "a",
+          "text": "Privacidad",
+          "className": "",
+          "width": 83,
+          "height": 34
+        },
+        {
+          "tag": "a",
+          "text": "Cookies",
+          "className": "",
+          "width": 69,
+          "height": 34
+        },
+        {
+          "tag": "a",
+          "text": "Condiciones",
+          "className": "",
+          "width": 94,
+          "height": 34
+        },
+        {
+          "tag": "a",
+          "text": "Condiciones de venta",
+          "className": "",
+          "width": 146,
+          "height": 34
+        }
+      ],
+      "viewportViolations": [],
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "conducta",
+    "path": "/perfil/conducta",
+    "userMode": "visitor",
+    "viewport": "1440x900",
+    "metrics": {
+      "title": "Pachangas IQ",
+      "theme": "light",
+      "textLength": 702,
+      "overflowX": 0,
+      "overflowY": 112,
+      "failedImages": [],
+      "smallTargets": [
+        {
+          "tag": "a",
+          "text": "Volver",
+          "className": "",
+          "width": 48,
+          "height": 24
+        },
+        {
+          "tag": "a",
+          "text": "Aviso legal",
+          "className": "",
+          "width": 85,
+          "height": 34
+        },
+        {
+          "tag": "a",
+          "text": "Privacidad",
+          "className": "",
+          "width": 83,
+          "height": 34
+        },
+        {
+          "tag": "a",
+          "text": "Cookies",
+          "className": "",
+          "width": 69,
+          "height": 34
+        },
+        {
+          "tag": "a",
+          "text": "Condiciones",
+          "className": "",
+          "width": 94,
+          "height": 34
+        },
+        {
+          "tag": "a",
+          "text": "Condiciones de venta",
+          "className": "",
+          "width": 146,
+          "height": 34
+        }
+      ],
+      "viewportViolations": [],
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "partido-invitado",
+    "path": "/partido-invitado",
+    "userMode": "visitor",
+    "viewport": "1440x900",
+    "metrics": {
+      "title": "Pachangas IQ",
+      "theme": "light",
+      "textLength": 288,
+      "overflowX": 0,
+      "overflowY": 112,
+      "failedImages": [],
+      "smallTargets": [
+        {
+          "tag": "a",
+          "text": "Aviso legal",
+          "className": "",
+          "width": 85,
+          "height": 34
+        },
+        {
+          "tag": "a",
+          "text": "Privacidad",
+          "className": "",
+          "width": 83,
+          "height": 34
+        },
+        {
+          "tag": "a",
+          "text": "Cookies",
+          "className": "",
+          "width": 69,
+          "height": 34
+        },
+        {
+          "tag": "a",
+          "text": "Condiciones",
+          "className": "",
+          "width": 94,
+          "height": 34
+        },
+        {
+          "tag": "a",
+          "text": "Condiciones de venta",
+          "className": "",
+          "width": 146,
+          "height": 34
+        }
+      ],
+      "viewportViolations": [],
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "invitacion-partido",
+    "path": "/invitacion-partido",
+    "userMode": "visitor",
+    "viewport": "1440x900",
+    "metrics": {
+      "title": "Pachangas IQ",
+      "theme": "light",
+      "textLength": 218,
+      "overflowX": 0,
+      "overflowY": 112,
+      "failedImages": [],
+      "smallTargets": [
+        {
+          "tag": "a",
+          "text": "Aviso legal",
+          "className": "",
+          "width": 85,
+          "height": 34
+        },
+        {
+          "tag": "a",
+          "text": "Privacidad",
+          "className": "",
+          "width": 83,
+          "height": 34
+        },
+        {
+          "tag": "a",
+          "text": "Cookies",
+          "className": "",
+          "width": 69,
+          "height": 34
+        },
+        {
+          "tag": "a",
+          "text": "Condiciones",
+          "className": "",
+          "width": 94,
+          "height": 34
+        },
+        {
+          "tag": "a",
+          "text": "Condiciones de venta",
+          "className": "",
+          "width": 146,
+          "height": 34
+        }
+      ],
+      "viewportViolations": [],
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "valorar-equipo",
+    "path": "/valorar-equipo",
+    "userMode": "visitor",
+    "viewport": "1440x900",
+    "metrics": {
+      "title": "Pachangas IQ",
+      "theme": "light",
+      "textLength": 409,
+      "overflowX": 0,
+      "overflowY": 112,
+      "failedImages": [],
+      "smallTargets": [
+        {
+          "tag": "a",
+          "text": "Aviso legal",
+          "className": "",
+          "width": 85,
+          "height": 34
+        },
+        {
+          "tag": "a",
+          "text": "Privacidad",
+          "className": "",
+          "width": 83,
+          "height": 34
+        },
+        {
+          "tag": "a",
+          "text": "Cookies",
+          "className": "",
+          "width": 69,
+          "height": 34
+        },
+        {
+          "tag": "a",
+          "text": "Condiciones",
+          "className": "",
+          "width": 94,
+          "height": 34
+        },
+        {
+          "tag": "a",
+          "text": "Condiciones de venta",
+          "className": "",
+          "width": 146,
+          "height": 34
+        }
+      ],
+      "viewportViolations": [],
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "lab-escudos",
+    "path": "/laboratorio-cosmeticos-escudo",
+    "userMode": "lab",
+    "viewport": "1440x900",
+    "metrics": {
+      "title": "Laboratorio de escudos | Pachangas IQ",
+      "theme": "light",
+      "textLength": 4952,
+      "overflowX": 0,
+      "overflowY": 2986,
+      "failedImages": [],
+      "smallTargets": [
+        {
+          "tag": "button",
+          "text": "Principal Midnight",
+          "className": "page-module__k0Ylvq__activeSwatch",
+          "width": 39,
+          "height": 30
+        },
+        {
+          "tag": "button",
+          "text": "Principal Cian IQ",
+          "className": "",
+          "width": 39,
+          "height": 30
+        },
+        {
+          "tag": "button",
+          "text": "Principal Marfil",
+          "className": "",
+          "width": 39,
+          "height": 30
+        },
+        {
+          "tag": "button",
+          "text": "Principal Carmesí",
+          "className": "",
+          "width": 39,
+          "height": 30
+        },
+        {
+          "tag": "button",
+          "text": "Principal Esmeralda",
+          "className": "",
+          "width": 39,
+          "height": 30
+        },
+        {
+          "tag": "button",
+          "text": "Principal Ámbar",
+          "className": "",
+          "width": 39,
+          "height": 30
+        },
+        {
+          "tag": "button",
+          "text": "Secundario Midnight",
+          "className": "",
+          "width": 39,
+          "height": 30
+        },
+        {
+          "tag": "button",
+          "text": "Secundario Cian IQ",
+          "className": "page-module__k0Ylvq__activeSwatch",
+          "width": 39,
+          "height": 30
+        },
+        {
+          "tag": "button",
+          "text": "Secundario Marfil",
+          "className": "",
+          "width": 39,
+          "height": 30
+        },
+        {
+          "tag": "button",
+          "text": "Secundario Carmesí",
+          "className": "",
+          "width": 39,
+          "height": 30
+        },
+        {
+          "tag": "button",
+          "text": "Secundario Esmeralda",
+          "className": "",
+          "width": 39,
+          "height": 30
+        },
+        {
+          "tag": "button",
+          "text": "Secundario Ámbar",
+          "className": "",
+          "width": 39,
+          "height": 30
+        },
+        {
+          "tag": "button",
+          "text": "Activo",
+          "className": "page-module__k0Ylvq__activeMotion",
+          "width": 76,
+          "height": 32
+        },
+        {
+          "tag": "button",
+          "text": "Reducido",
+          "className": "",
+          "width": 76,
+          "height": 32
+        },
+        {
+          "tag": "a",
+          "text": "Aviso legal",
+          "className": "",
+          "width": 85,
+          "height": 34
+        },
+        {
+          "tag": "a",
+          "text": "Privacidad",
+          "className": "",
+          "width": 83,
+          "height": 34
+        },
+        {
+          "tag": "a",
+          "text": "Cookies",
+          "className": "",
+          "width": 69,
+          "height": 34
+        },
+        {
+          "tag": "a",
+          "text": "Condiciones",
+          "className": "",
+          "width": 94,
+          "height": 34
+        },
+        {
+          "tag": "a",
+          "text": "Condiciones de venta",
+          "className": "",
+          "width": 146,
+          "height": 34
+        }
+      ],
+      "viewportViolations": [],
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "lab-cartas",
+    "path": "/laboratorio-cosmeticos-ficha",
+    "userMode": "lab",
+    "viewport": "1440x900",
+    "metrics": {
+      "title": "Pachangas IQ",
+      "theme": "light",
+      "textLength": 2823,
+      "overflowX": 0,
+      "overflowY": 1329,
+      "failedImages": [],
+      "smallTargets": [
+        {
+          "tag": "button",
+          "text": "Original",
+          "className": "",
+          "width": 73,
+          "height": 36
+        },
+        {
+          "tag": "button",
+          "text": "Barrio",
+          "className": "page-module__8saHxq__activePreset",
+          "width": 63,
+          "height": 36
+        },
+        {
+          "tag": "button",
+          "text": "Noche",
+          "className": "",
+          "width": 65,
+          "height": 36
+        },
+        {
+          "tag": "button",
+          "text": "Retro",
+          "className": "",
+          "width": 59,
+          "height": 36
+        },
+        {
+          "tag": "button",
+          "text": "Future IQ",
+          "className": "",
+          "width": 81,
+          "height": 36
+        },
+        {
+          "tag": "a",
+          "text": "Aviso legal",
+          "className": "",
+          "width": 85,
+          "height": 34
+        },
+        {
+          "tag": "a",
+          "text": "Privacidad",
+          "className": "",
+          "width": 83,
+          "height": 34
+        },
+        {
+          "tag": "a",
+          "text": "Cookies",
+          "className": "",
+          "width": 69,
+          "height": 34
+        },
+        {
+          "tag": "a",
+          "text": "Condiciones",
+          "className": "",
+          "width": 94,
+          "height": 34
+        },
+        {
+          "tag": "a",
+          "text": "Condiciones de venta",
+          "className": "",
+          "width": 146,
+          "height": 34
+        }
+      ],
+      "viewportViolations": [],
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "lab-rating",
+    "path": "/laboratorio-ficha-jugador",
+    "userMode": "lab",
+    "viewport": "1440x900",
+    "metrics": {
+      "title": "Laboratorio de ficha de jugador · Pachangas IQ",
+      "theme": "light",
+      "textLength": 125,
+      "overflowX": 0,
+      "overflowY": 0,
+      "failedImages": [],
+      "smallTargets": [],
+      "viewportViolations": [],
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased pla"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "lab-ranking",
+    "path": "/laboratorio-ranking-provincial",
+    "userMode": "lab",
+    "viewport": "1440x900",
+    "metrics": {
+      "title": "Ranking provincial · Pachangas IQ Lab",
+      "theme": "light",
+      "textLength": 2755,
+      "overflowX": 0,
+      "overflowY": 288,
+      "failedImages": [],
+      "smallTargets": [
+        {
+          "tag": "a",
+          "text": "Aviso legal",
+          "className": "",
+          "width": 85,
+          "height": 34
+        },
+        {
+          "tag": "a",
+          "text": "Privacidad",
+          "className": "",
+          "width": 83,
+          "height": 34
+        },
+        {
+          "tag": "a",
+          "text": "Cookies",
+          "className": "",
+          "width": 69,
+          "height": 34
+        },
+        {
+          "tag": "a",
+          "text": "Condiciones",
+          "className": "",
+          "width": 94,
+          "height": 34
+        },
+        {
+          "tag": "a",
+          "text": "Condiciones de venta",
+          "className": "",
+          "width": 146,
+          "height": 34
+        }
+      ],
+      "viewportViolations": [],
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "demo-inicio-admin",
+    "path": "/?demo=1&mobile=inicio",
+    "userMode": "demo-admin",
+    "viewport": "390x844",
+    "metrics": {
+      "title": "Pachangas IQ",
+      "theme": "dark",
+      "textLength": 935,
+      "overflowX": 0,
+      "overflowY": 709,
+      "failedImages": [],
+      "smallTargets": [
+        {
+          "tag": "select",
+          "text": "Todas2025-2026",
+          "className": "",
+          "width": 296,
+          "height": 34
+        }
+      ],
+      "viewportViolations": [],
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "demo-inicio-player",
+    "path": "/?demo=1&mobile=inicio&qaPlayer=1",
+    "userMode": "demo-player",
+    "viewport": "390x844",
+    "metrics": {
+      "title": "Pachangas IQ",
+      "theme": "dark",
+      "textLength": 937,
+      "overflowX": 0,
+      "overflowY": 709,
+      "failedImages": [],
+      "smallTargets": [
+        {
+          "tag": "select",
+          "text": "Todas2025-2026",
+          "className": "",
+          "width": 296,
+          "height": 34
+        }
+      ],
+      "viewportViolations": [],
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "demo-partido",
+    "path": "/?demo=1&mobile=partido",
+    "userMode": "demo-admin",
+    "viewport": "390x844",
+    "metrics": {
+      "title": "Pachangas IQ",
+      "theme": "dark",
+      "textLength": 3222,
+      "overflowX": 0,
+      "overflowY": 5301,
+      "failedImages": [],
+      "smallTargets": [
+        {
+          "tag": "input",
+          "text": "",
+          "className": "",
+          "width": 18,
+          "height": 44
+        },
+        {
+          "tag": "button",
+          "text": "Mario(60) · Forma 96% · 0 Goles",
+          "className": "player-name",
+          "width": 230,
+          "height": 24
+        },
+        {
+          "tag": "button",
+          "text": "Valoraciones abiertas",
+          "className": "rating-badge rating-open",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Voy",
+          "className": "selected",
+          "width": 73,
+          "height": 32
+        },
+        {
+          "tag": "button",
+          "text": "Duda",
+          "className": "",
+          "width": 73,
+          "height": 32
+        },
+        {
+          "tag": "button",
+          "text": "No",
+          "className": "",
+          "width": 73,
+          "height": 32
+        },
+        {
+          "tag": "button",
+          "text": "Mover al equipo 2",
+          "className": "team-move to-b",
+          "width": 92,
+          "height": 36
+        },
+        {
+          "tag": "button",
+          "text": "Pedro(60) · Forma 100% · 7 Goles",
+          "className": "player-name",
+          "width": 230,
+          "height": 24
+        },
+        {
+          "tag": "button",
+          "text": "Valoraciones abiertas",
+          "className": "rating-badge rating-open",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Voy",
+          "className": "selected",
+          "width": 73,
+          "height": 32
+        },
+        {
+          "tag": "button",
+          "text": "Duda",
+          "className": "",
+          "width": 73,
+          "height": 32
+        },
+        {
+          "tag": "button",
+          "text": "No",
+          "className": "",
+          "width": 73,
+          "height": 32
+        },
+        {
+          "tag": "button",
+          "text": "Mover al equipo 2",
+          "className": "team-move to-b",
+          "width": 92,
+          "height": 36
+        },
+        {
+          "tag": "button",
+          "text": "Alex(60) · Forma 99% · 4 Goles",
+          "className": "player-name",
+          "width": 230,
+          "height": 24
+        },
+        {
+          "tag": "button",
+          "text": "Valoraciones abiertas",
+          "className": "rating-badge rating-open",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Voy",
+          "className": "selected",
+          "width": 73,
+          "height": 32
+        },
+        {
+          "tag": "button",
+          "text": "Duda",
+          "className": "",
+          "width": 73,
+          "height": 32
+        },
+        {
+          "tag": "button",
+          "text": "No",
+          "className": "",
+          "width": 73,
+          "height": 32
+        },
+        {
+          "tag": "button",
+          "text": "Mover al equipo 2",
+          "className": "team-move to-b",
+          "width": 92,
+          "height": 36
+        },
+        {
+          "tag": "button",
+          "text": "Manu(69) · Forma 100% · 10 Goles",
+          "className": "player-name",
+          "width": 230,
+          "height": 24
+        },
+        {
+          "tag": "button",
+          "text": "Valoraciones abiertas",
+          "className": "rating-badge rating-open",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Voy",
+          "className": "selected",
+          "width": 73,
+          "height": 32
+        },
+        {
+          "tag": "button",
+          "text": "Duda",
+          "className": "",
+          "width": 73,
+          "height": 32
+        },
+        {
+          "tag": "button",
+          "text": "No",
+          "className": "",
+          "width": 73,
+          "height": 32
+        },
+        {
+          "tag": "button",
+          "text": "Mover al equipo 2",
+          "className": "team-move to-b",
+          "width": 92,
+          "height": 36
+        },
+        {
+          "tag": "button",
+          "text": "Dani(55) · Forma 99% · 6 Goles",
+          "className": "player-name",
+          "width": 230,
+          "height": 24
+        },
+        {
+          "tag": "button",
+          "text": "Valoraciones abiertas",
+          "className": "rating-badge rating-open",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Voy",
+          "className": "selected",
+          "width": 73,
+          "height": 32
+        },
+        {
+          "tag": "button",
+          "text": "Duda",
+          "className": "",
+          "width": 73,
+          "height": 32
+        },
+        {
+          "tag": "button",
+          "text": "No",
+          "className": "",
+          "width": 73,
+          "height": 32
+        }
+      ],
+      "viewportViolations": [],
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "demo-mercado",
+    "path": "/?demo=1&mobile=mercado",
+    "userMode": "demo-admin",
+    "viewport": "390x844",
+    "metrics": {
+      "title": "Pachangas IQ",
+      "theme": "dark",
+      "textLength": 935,
+      "overflowX": 0,
+      "overflowY": 709,
+      "failedImages": [],
+      "smallTargets": [
+        {
+          "tag": "select",
+          "text": "Todas2025-2026",
+          "className": "",
+          "width": 296,
+          "height": 34
+        }
+      ],
+      "viewportViolations": [],
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "demo-equipo",
+    "path": "/?demo=1&mobile=equipo",
+    "userMode": "demo-admin",
+    "viewport": "390x844",
+    "metrics": {
+      "title": "Pachangas IQ",
+      "theme": "dark",
+      "textLength": 1926,
+      "overflowX": 0,
+      "overflowY": 2162,
+      "failedImages": [],
+      "smallTargets": [
+        {
+          "tag": "button",
+          "text": "Media",
+          "className": "selected",
+          "width": 86,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Goles",
+          "className": "",
+          "width": 86,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Partidos",
+          "className": "",
+          "width": 86,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Ganados",
+          "className": "",
+          "width": 86,
+          "height": 38
+        }
+      ],
+      "viewportViolations": [],
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "demo-perfil",
+    "path": "/?demo=1&mobile=perfil",
+    "userMode": "demo-admin",
+    "viewport": "390x844",
+    "metrics": {
+      "title": "Pachangas IQ",
+      "theme": "dark",
+      "textLength": 2795,
+      "overflowX": 0,
+      "overflowY": 2162,
+      "failedImages": [],
+      "smallTargets": [
+        {
+          "tag": "button",
+          "text": "Media",
+          "className": "selected",
+          "width": 86,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Goles",
+          "className": "",
+          "width": 86,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Partidos",
+          "className": "",
+          "width": 86,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Ganados",
+          "className": "",
+          "width": 86,
+          "height": 38
+        }
+      ],
+      "viewportViolations": [],
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased mob"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "mercado",
+    "path": "/mercado",
+    "userMode": "visitor",
+    "viewport": "390x844",
+    "metrics": {
+      "title": "Pachangas IQ",
+      "theme": "dark",
+      "textLength": 1169,
+      "overflowX": 0,
+      "overflowY": 425,
+      "failedImages": [],
+      "smallTargets": [
+        {
+          "tag": "a",
+          "text": "Volver",
+          "className": "manual-back-button",
+          "width": 36,
+          "height": 20
+        }
+      ],
+      "viewportViolations": [],
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "personalizar-carta",
+    "path": "/personalizar-carta",
+    "userMode": "visitor",
+    "viewport": "390x844",
+    "metrics": {
+      "title": "Pachangas IQ",
+      "theme": "dark",
+      "textLength": 302,
+      "overflowX": 0,
+      "overflowY": 114,
+      "failedImages": [],
+      "smallTargets": [
+        {
+          "tag": "a",
+          "text": "Volver",
+          "className": "",
+          "width": 48,
+          "height": 24
+        }
+      ],
+      "viewportViolations": [],
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "equipo-identidad",
+    "path": "/equipo/identidad",
+    "userMode": "visitor-no-team",
+    "viewport": "390x844",
+    "metrics": {
+      "title": "Pachangas IQ",
+      "theme": "dark",
+      "textLength": 156,
+      "overflowX": 0,
+      "overflowY": 78,
+      "failedImages": [],
+      "smallTargets": [
+        {
+          "tag": "a",
+          "text": "Inicio",
+          "className": "",
+          "width": 37,
+          "height": 24
+        },
+        {
+          "tag": "a",
+          "text": "Rivales",
+          "className": "",
+          "width": 52,
+          "height": 24
+        }
+      ],
+      "viewportViolations": [],
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "avisos",
+    "path": "/perfil/avisos",
+    "userMode": "visitor",
+    "viewport": "390x844",
+    "metrics": {
+      "title": "Pachangas IQ",
+      "theme": "dark",
+      "textLength": 186,
+      "overflowX": 0,
+      "overflowY": 78,
+      "failedImages": [],
+      "smallTargets": [
+        {
+          "tag": "a",
+          "text": "Volver al perfil",
+          "className": "",
+          "width": 109,
+          "height": 17
+        }
+      ],
+      "viewportViolations": [],
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "conducta",
+    "path": "/perfil/conducta",
+    "userMode": "visitor",
+    "viewport": "390x844",
+    "metrics": {
+      "title": "Pachangas IQ",
+      "theme": "dark",
+      "textLength": 546,
+      "overflowX": 0,
+      "overflowY": 78,
+      "failedImages": [],
+      "smallTargets": [
+        {
+          "tag": "a",
+          "text": "Volver",
+          "className": "",
+          "width": 48,
+          "height": 24
+        }
+      ],
+      "viewportViolations": [],
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "partido-invitado",
+    "path": "/partido-invitado",
+    "userMode": "visitor",
+    "viewport": "390x844",
+    "metrics": {
+      "title": "Pachangas IQ",
+      "theme": "dark",
+      "textLength": 133,
+      "overflowX": 0,
+      "overflowY": 78,
+      "failedImages": [],
+      "smallTargets": [],
+      "viewportViolations": [],
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "invitacion-partido",
+    "path": "/invitacion-partido",
+    "userMode": "visitor",
+    "viewport": "390x844",
+    "metrics": {
+      "title": "Pachangas IQ",
+      "theme": "dark",
+      "textLength": 63,
+      "overflowX": 0,
+      "overflowY": 78,
+      "failedImages": [],
+      "smallTargets": [],
+      "viewportViolations": [],
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "valorar-equipo",
+    "path": "/valorar-equipo",
+    "userMode": "visitor",
+    "viewport": "390x844",
+    "metrics": {
+      "title": "Pachangas IQ",
+      "theme": "dark",
+      "textLength": 253,
+      "overflowX": 0,
+      "overflowY": 78,
+      "failedImages": [],
+      "smallTargets": [],
+      "viewportViolations": [],
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "lab-escudos",
+    "path": "/laboratorio-cosmeticos-escudo",
+    "userMode": "lab",
+    "viewport": "390x844",
+    "metrics": {
+      "title": "Laboratorio de escudos | Pachangas IQ",
+      "theme": "dark",
+      "textLength": 4797,
+      "overflowX": 0,
+      "overflowY": 11033,
+      "failedImages": [],
+      "smallTargets": [
+        {
+          "tag": "button",
+          "text": "Principal Midnight",
+          "className": "page-module__k0Ylvq__activeSwatch",
+          "width": 40,
+          "height": 30
+        },
+        {
+          "tag": "button",
+          "text": "Principal Cian IQ",
+          "className": "",
+          "width": 40,
+          "height": 30
+        },
+        {
+          "tag": "button",
+          "text": "Principal Marfil",
+          "className": "",
+          "width": 40,
+          "height": 30
+        },
+        {
+          "tag": "button",
+          "text": "Principal Carmesí",
+          "className": "",
+          "width": 40,
+          "height": 30
+        },
+        {
+          "tag": "button",
+          "text": "Principal Esmeralda",
+          "className": "",
+          "width": 40,
+          "height": 30
+        },
+        {
+          "tag": "button",
+          "text": "Principal Ámbar",
+          "className": "",
+          "width": 40,
+          "height": 30
+        },
+        {
+          "tag": "button",
+          "text": "Secundario Midnight",
+          "className": "",
+          "width": 40,
+          "height": 30
+        },
+        {
+          "tag": "button",
+          "text": "Secundario Cian IQ",
+          "className": "page-module__k0Ylvq__activeSwatch",
+          "width": 40,
+          "height": 30
+        },
+        {
+          "tag": "button",
+          "text": "Secundario Marfil",
+          "className": "",
+          "width": 40,
+          "height": 30
+        },
+        {
+          "tag": "button",
+          "text": "Secundario Carmesí",
+          "className": "",
+          "width": 40,
+          "height": 30
+        },
+        {
+          "tag": "button",
+          "text": "Secundario Esmeralda",
+          "className": "",
+          "width": 40,
+          "height": 30
+        },
+        {
+          "tag": "button",
+          "text": "Secundario Ámbar",
+          "className": "",
+          "width": 40,
+          "height": 30
+        },
+        {
+          "tag": "button",
+          "text": "Activo",
+          "className": "page-module__k0Ylvq__activeMotion",
+          "width": 76,
+          "height": 32
+        },
+        {
+          "tag": "button",
+          "text": "Reducido",
+          "className": "",
+          "width": 76,
+          "height": 32
+        }
+      ],
+      "viewportViolations": [],
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "lab-cartas",
+    "path": "/laboratorio-cosmeticos-ficha",
+    "userMode": "lab",
+    "viewport": "390x844",
+    "metrics": {
+      "title": "Pachangas IQ",
+      "theme": "dark",
+      "textLength": 2668,
+      "overflowX": 0,
+      "overflowY": 12009,
+      "failedImages": [],
+      "smallTargets": [
+        {
+          "tag": "button",
+          "text": "Original",
+          "className": "",
+          "width": 73,
+          "height": 36
+        },
+        {
+          "tag": "button",
+          "text": "Barrio",
+          "className": "page-module__8saHxq__activePreset",
+          "width": 63,
+          "height": 36
+        },
+        {
+          "tag": "button",
+          "text": "Noche",
+          "className": "",
+          "width": 65,
+          "height": 36
+        },
+        {
+          "tag": "button",
+          "text": "Retro",
+          "className": "",
+          "width": 59,
+          "height": 36
+        },
+        {
+          "tag": "button",
+          "text": "Future IQ",
+          "className": "",
+          "width": 81,
+          "height": 36
+        }
+      ],
+      "viewportViolations": [],
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "lab-rating",
+    "path": "/laboratorio-ficha-jugador",
+    "userMode": "lab",
+    "viewport": "390x844",
+    "metrics": {
+      "title": "Laboratorio de ficha de jugador · Pachangas IQ",
+      "theme": "dark",
+      "textLength": 125,
+      "overflowX": 0,
+      "overflowY": 0,
+      "failedImages": [],
+      "smallTargets": [],
+      "viewportViolations": [],
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased pla"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "lab-ranking",
+    "path": "/laboratorio-ranking-provincial",
+    "userMode": "lab",
+    "viewport": "390x844",
+    "metrics": {
+      "title": "Ranking provincial · Pachangas IQ Lab",
+      "theme": "dark",
+      "textLength": 2600,
+      "overflowX": 0,
+      "overflowY": 1077,
+      "failedImages": [],
+      "smallTargets": [],
+      "viewportViolations": [],
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "demo-inicio-admin",
+    "path": "/?demo=1&mobile=inicio",
+    "userMode": "demo-admin",
+    "viewport": "844x390",
+    "metrics": {
+      "title": "Pachangas IQ",
+      "theme": "light",
+      "textLength": 487,
+      "overflowX": 0,
+      "overflowY": 0,
+      "failedImages": [],
+      "smallTargets": [],
+      "viewportViolations": [],
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "demo-inicio-player",
+    "path": "/?demo=1&mobile=inicio&qaPlayer=1",
+    "userMode": "demo-player",
+    "viewport": "844x390",
+    "metrics": {
+      "title": "Pachangas IQ",
+      "theme": "light",
+      "textLength": 489,
+      "overflowX": 0,
+      "overflowY": 0,
+      "failedImages": [],
+      "smallTargets": [],
+      "viewportViolations": [],
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "demo-partido",
+    "path": "/?demo=1&mobile=partido",
+    "userMode": "demo-admin",
+    "viewport": "844x390",
+    "metrics": {
+      "title": "Pachangas IQ",
+      "theme": "light",
+      "textLength": 1696,
+      "overflowX": 0,
+      "overflowY": 0,
+      "failedImages": [],
+      "smallTargets": [
+        {
+          "tag": "button",
+          "text": "Próximo",
+          "className": "active",
+          "width": 87,
+          "height": 35
+        },
+        {
+          "tag": "button",
+          "text": "Alineación",
+          "className": "",
+          "width": 87,
+          "height": 35
+        },
+        {
+          "tag": "button",
+          "text": "Resultado",
+          "className": "",
+          "width": 87,
+          "height": 35
+        },
+        {
+          "tag": "button",
+          "text": "Admin",
+          "className": "",
+          "width": 87,
+          "height": 35
+        },
+        {
+          "tag": "button",
+          "text": "Cerrar alineación",
+          "className": "match-context-status-button",
+          "width": 114,
+          "height": 21
+        },
+        {
+          "tag": "button",
+          "text": "Mario(60) · Forma 96% · 0 Goles",
+          "className": "player-name",
+          "width": 192,
+          "height": 15
+        },
+        {
+          "tag": "button",
+          "text": "Más acciones de Mario",
+          "className": "player-action-menu-trigger",
+          "width": 24,
+          "height": 24
+        },
+        {
+          "tag": "button",
+          "text": "Pedro(60) · Forma 100% · 7 Goles",
+          "className": "player-name",
+          "width": 192,
+          "height": 15
+        },
+        {
+          "tag": "button",
+          "text": "Más acciones de Pedro",
+          "className": "player-action-menu-trigger",
+          "width": 24,
+          "height": 24
+        },
+        {
+          "tag": "button",
+          "text": "Alex(60) · Forma 99% · 4 Goles",
+          "className": "player-name",
+          "width": 192,
+          "height": 15
+        },
+        {
+          "tag": "button",
+          "text": "Más acciones de Alex",
+          "className": "player-action-menu-trigger",
+          "width": 24,
+          "height": 24
+        },
+        {
+          "tag": "button",
+          "text": "Manu(69) · Forma 100% · 10 Goles",
+          "className": "player-name",
+          "width": 192,
+          "height": 15
+        },
+        {
+          "tag": "button",
+          "text": "Más acciones de Manu",
+          "className": "player-action-menu-trigger",
+          "width": 24,
+          "height": 24
+        },
+        {
+          "tag": "button",
+          "text": "Dani(55) · Forma 99% · 6 Goles",
+          "className": "player-name",
+          "width": 192,
+          "height": 15
+        },
+        {
+          "tag": "button",
+          "text": "Más acciones de Dani",
+          "className": "player-action-menu-trigger",
+          "width": 24,
+          "height": 24
+        },
+        {
+          "tag": "button",
+          "text": "Alberto(50) · Forma 99% · 0 Goles",
+          "className": "player-name",
+          "width": 192,
+          "height": 15
+        },
+        {
+          "tag": "button",
+          "text": "Más acciones de Alberto",
+          "className": "player-action-menu-trigger",
+          "width": 24,
+          "height": 24
+        },
+        {
+          "tag": "button",
+          "text": "Carlos(75) · Forma 100% · 18 Goles",
+          "className": "player-name",
+          "width": 192,
+          "height": 15
+        },
+        {
+          "tag": "button",
+          "text": "Más acciones de Carlos",
+          "className": "player-action-menu-trigger",
+          "width": 24,
+          "height": 24
+        },
+        {
+          "tag": "button",
+          "text": "Rafa(65) · Forma 100% · 1 Goles",
+          "className": "player-name",
+          "width": 192,
+          "height": 15
+        },
+        {
+          "tag": "button",
+          "text": "Más acciones de Rafa",
+          "className": "player-action-menu-trigger",
+          "width": 24,
+          "height": 24
+        },
+        {
+          "tag": "button",
+          "text": "Pablo(58) · Forma 94% · 5 Goles",
+          "className": "player-name",
+          "width": 192,
+          "height": 15
+        },
+        {
+          "tag": "button",
+          "text": "Más acciones de Pablo",
+          "className": "player-action-menu-trigger",
+          "width": 24,
+          "height": 24
+        },
+        {
+          "tag": "button",
+          "text": "Javi(53) · Forma 95% · 3 Goles",
+          "className": "player-name",
+          "width": 192,
+          "height": 15
+        },
+        {
+          "tag": "button",
+          "text": "Más acciones de Javi",
+          "className": "player-action-menu-trigger",
+          "width": 24,
+          "height": 24
+        },
+        {
+          "tag": "button",
+          "text": "Vicente(50) · Forma 98% · 1 Goles",
+          "className": "player-name",
+          "width": 192,
+          "height": 15
+        },
+        {
+          "tag": "button",
+          "text": "Más acciones de Vicente",
+          "className": "player-action-menu-trigger",
+          "width": 24,
+          "height": 24
+        },
+        {
+          "tag": "button",
+          "text": "Sergio(71) · Forma 100% · 15 Goles",
+          "className": "player-name",
+          "width": 192,
+          "height": 15
+        },
+        {
+          "tag": "button",
+          "text": "Más acciones de Sergio",
+          "className": "player-action-menu-trigger",
+          "width": 24,
+          "height": 24
+        },
+        {
+          "tag": "button",
+          "text": "Óscar(70) · Forma 100% · 12 Goles",
+          "className": "player-name",
+          "width": 192,
+          "height": 15
+        }
+      ],
+      "viewportViolations": [],
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "demo-mercado",
+    "path": "/?demo=1&mobile=mercado",
+    "userMode": "demo-admin",
+    "viewport": "844x390",
+    "metrics": {
+      "title": "Pachangas IQ",
+      "theme": "light",
+      "textLength": 487,
+      "overflowX": 0,
+      "overflowY": 0,
+      "failedImages": [],
+      "smallTargets": [],
+      "viewportViolations": [],
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "demo-equipo",
+    "path": "/?demo=1&mobile=equipo",
+    "userMode": "demo-admin",
+    "viewport": "844x390",
+    "metrics": {
+      "title": "Pachangas IQ",
+      "theme": "light",
+      "textLength": 1217,
+      "overflowX": 0,
+      "overflowY": 0,
+      "failedImages": [],
+      "smallTargets": [
+        {
+          "tag": "button",
+          "text": "Media",
+          "className": "selected",
+          "width": 92,
+          "height": 32
+        },
+        {
+          "tag": "button",
+          "text": "Goles",
+          "className": "",
+          "width": 92,
+          "height": 32
+        },
+        {
+          "tag": "button",
+          "text": "Partidos",
+          "className": "",
+          "width": 92,
+          "height": 32
+        },
+        {
+          "tag": "button",
+          "text": "Ganados",
+          "className": "",
+          "width": 92,
+          "height": 32
+        }
+      ],
+      "viewportViolations": [],
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "demo-perfil",
+    "path": "/?demo=1&mobile=perfil",
+    "userMode": "demo-admin",
+    "viewport": "844x390",
+    "metrics": {
+      "title": "Pachangas IQ",
+      "theme": "light",
+      "textLength": 1445,
+      "overflowX": 0,
+      "overflowY": 0,
+      "failedImages": [],
+      "smallTargets": [
+        {
+          "tag": "button",
+          "text": "Volver",
+          "className": "profile-return-button",
+          "width": 48,
+          "height": 28
+        },
+        {
+          "tag": "button",
+          "text": "Eliminar jugador",
+          "className": "trash-icon-button profile-delete-button",
+          "width": 38,
+          "height": 38
+        },
+        {
+          "tag": "select",
+          "text": "CarlosManuPabloRafaDaniAlexSergioJaviNicoPedroAlbertoCarlitosVicenteMarioHugoRub",
+          "className": "",
+          "width": 186,
+          "height": 26
+        },
+        {
+          "tag": "input",
+          "text": "",
+          "className": "",
+          "width": 186,
+          "height": 26
+        },
+        {
+          "tag": "input",
+          "text": "",
+          "className": "",
+          "width": 186,
+          "height": 26
+        },
+        {
+          "tag": "input",
+          "text": "",
+          "className": "",
+          "width": 133,
+          "height": 26
+        },
+        {
+          "tag": "select",
+          "text": "PorteroDefensa centralLateral derechoLateral izquierdoCarrileroPivote defensivoI",
+          "className": "",
+          "width": 38,
+          "height": 26
+        },
+        {
+          "tag": "button",
+          "text": "Guardar ficha",
+          "className": "profile-save-button",
+          "width": 168,
+          "height": 26
+        },
+        {
+          "tag": "input",
+          "text": "",
+          "className": "",
+          "width": 18,
+          "height": 13
+        },
+        {
+          "tag": "input",
+          "text": "",
+          "className": "",
+          "width": 18,
+          "height": 13
+        },
+        {
+          "tag": "button",
+          "text": "Mucho peor",
+          "className": "",
+          "width": 35,
+          "height": 59
+        },
+        {
+          "tag": "button",
+          "text": "Peor",
+          "className": "",
+          "width": 35,
+          "height": 59
+        },
+        {
+          "tag": "button",
+          "text": "Parecido",
+          "className": "selected",
+          "width": 35,
+          "height": 59
+        },
+        {
+          "tag": "button",
+          "text": "Mejor",
+          "className": "",
+          "width": 35,
+          "height": 59
+        },
+        {
+          "tag": "button",
+          "text": "Mucho mejor",
+          "className": "",
+          "width": 35,
+          "height": 59
+        },
+        {
+          "tag": "button",
+          "text": "Mucho peor",
+          "className": "",
+          "width": 35,
+          "height": 59
+        },
+        {
+          "tag": "button",
+          "text": "Peor",
+          "className": "",
+          "width": 35,
+          "height": 59
+        },
+        {
+          "tag": "button",
+          "text": "Parecido",
+          "className": "selected",
+          "width": 35,
+          "height": 59
+        },
+        {
+          "tag": "button",
+          "text": "Mejor",
+          "className": "",
+          "width": 35,
+          "height": 59
+        },
+        {
+          "tag": "button",
+          "text": "Mucho mejor",
+          "className": "",
+          "width": 35,
+          "height": 59
+        },
+        {
+          "tag": "button",
+          "text": "Mucho peor",
+          "className": "",
+          "width": 35,
+          "height": 59
+        },
+        {
+          "tag": "button",
+          "text": "Peor",
+          "className": "",
+          "width": 35,
+          "height": 59
+        },
+        {
+          "tag": "button",
+          "text": "Parecido",
+          "className": "selected",
+          "width": 35,
+          "height": 59
+        },
+        {
+          "tag": "button",
+          "text": "Mejor",
+          "className": "",
+          "width": 35,
+          "height": 59
+        },
+        {
+          "tag": "button",
+          "text": "Mucho mejor",
+          "className": "",
+          "width": 35,
+          "height": 59
+        },
+        {
+          "tag": "button",
+          "text": "Mucho peor",
+          "className": "",
+          "width": 35,
+          "height": 59
+        },
+        {
+          "tag": "button",
+          "text": "Peor",
+          "className": "",
+          "width": 35,
+          "height": 59
+        },
+        {
+          "tag": "button",
+          "text": "Parecido",
+          "className": "selected",
+          "width": 35,
+          "height": 59
+        },
+        {
+          "tag": "button",
+          "text": "Mejor",
+          "className": "",
+          "width": 35,
+          "height": 59
+        },
+        {
+          "tag": "button",
+          "text": "Mucho mejor",
+          "className": "",
+          "width": 35,
+          "height": 59
+        }
+      ],
+      "viewportViolations": [],
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "mercado",
+    "path": "/mercado",
+    "userMode": "visitor",
+    "viewport": "844x390",
+    "metrics": {
+      "title": "Pachangas IQ",
+      "theme": "light",
+      "textLength": 1130,
+      "overflowX": 0,
+      "overflowY": 0,
+      "failedImages": [],
+      "smallTargets": [
+        {
+          "tag": "button",
+          "text": "Jugadores",
+          "className": "active",
+          "width": 87,
+          "height": 35
+        },
+        {
+          "tag": "button",
+          "text": "Partidos",
+          "className": "",
+          "width": 87,
+          "height": 35
+        },
+        {
+          "tag": "button",
+          "text": "Retos",
+          "className": "",
+          "width": 87,
+          "height": 35
+        },
+        {
+          "tag": "button",
+          "text": "Equipos",
+          "className": "",
+          "width": 87,
+          "height": 35
+        },
+        {
+          "tag": "a",
+          "text": "Volver",
+          "className": "manual-back-button",
+          "width": 44,
+          "height": 24
+        },
+        {
+          "tag": "input",
+          "text": "",
+          "className": "",
+          "width": 272,
+          "height": 28
+        },
+        {
+          "tag": "select",
+          "text": "TodosLunesMartesMiércolesJuevesViernesSábadoDomingo",
+          "className": "",
+          "width": 136,
+          "height": 28
+        },
+        {
+          "tag": "select",
+          "text": "TodasFútbol 11Fútbol 7Fútbol sala",
+          "className": "",
+          "width": 136,
+          "height": 28
+        },
+        {
+          "tag": "select",
+          "text": "TodasPorteroDefensaMedioAtaque",
+          "className": "",
+          "width": 136,
+          "height": 28
+        }
+      ],
+      "viewportViolations": [],
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "personalizar-carta",
+    "path": "/personalizar-carta",
+    "userMode": "visitor",
+    "viewport": "844x390",
+    "metrics": {
+      "title": "Pachangas IQ",
+      "theme": "light",
+      "textLength": 302,
+      "overflowX": 0,
+      "overflowY": 71,
+      "failedImages": [],
+      "smallTargets": [
+        {
+          "tag": "a",
+          "text": "Volver",
+          "className": "",
+          "width": 48,
+          "height": 24
+        },
+        {
+          "tag": "button",
+          "text": "Marco",
+          "className": "cosmetics-editor-module__M5YtSq__activeTab",
+          "width": 62,
+          "height": 36
+        },
+        {
+          "tag": "button",
+          "text": "Fondo",
+          "className": "",
+          "width": 62,
+          "height": 36
+        },
+        {
+          "tag": "button",
+          "text": "Acento",
+          "className": "",
+          "width": 62,
+          "height": 36
+        },
+        {
+          "tag": "button",
+          "text": "Efecto",
+          "className": "",
+          "width": 62,
+          "height": 36
+        },
+        {
+          "tag": "button",
+          "text": "Título",
+          "className": "",
+          "width": 62,
+          "height": 36
+        },
+        {
+          "tag": "button",
+          "text": "Logro",
+          "className": "",
+          "width": 62,
+          "height": 36
+        }
+      ],
+      "viewportViolations": [],
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "equipo-identidad",
+    "path": "/equipo/identidad",
+    "userMode": "visitor-no-team",
+    "viewport": "844x390",
+    "metrics": {
+      "title": "Pachangas IQ",
+      "theme": "light",
+      "textLength": 156,
+      "overflowX": 0,
+      "overflowY": 0,
+      "failedImages": [],
+      "smallTargets": [
+        {
+          "tag": "a",
+          "text": "Inicio",
+          "className": "",
+          "width": 37,
+          "height": 24
+        },
+        {
+          "tag": "a",
+          "text": "Rivales",
+          "className": "",
+          "width": 52,
+          "height": 24
+        }
+      ],
+      "viewportViolations": [],
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "avisos",
+    "path": "/perfil/avisos",
+    "userMode": "visitor",
+    "viewport": "844x390",
+    "metrics": {
+      "title": "Pachangas IQ",
+      "theme": "light",
+      "textLength": 186,
+      "overflowX": 0,
+      "overflowY": 0,
+      "failedImages": [],
+      "smallTargets": [
+        {
+          "tag": "a",
+          "text": "Volver al perfil",
+          "className": "",
+          "width": 109,
+          "height": 17
+        }
+      ],
+      "viewportViolations": [],
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "conducta",
+    "path": "/perfil/conducta",
+    "userMode": "visitor",
+    "viewport": "844x390",
+    "metrics": {
+      "title": "Pachangas IQ",
+      "theme": "light",
+      "textLength": 546,
+      "overflowX": 0,
+      "overflowY": 207,
+      "failedImages": [],
+      "smallTargets": [
+        {
+          "tag": "a",
+          "text": "Volver",
+          "className": "",
+          "width": 48,
+          "height": 24
+        }
+      ],
+      "viewportViolations": [],
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "partido-invitado",
+    "path": "/partido-invitado",
+    "userMode": "visitor",
+    "viewport": "844x390",
+    "metrics": {
+      "title": "Pachangas IQ",
+      "theme": "light",
+      "textLength": 133,
+      "overflowX": 0,
+      "overflowY": 0,
+      "failedImages": [],
+      "smallTargets": [],
+      "viewportViolations": [],
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "invitacion-partido",
+    "path": "/invitacion-partido",
+    "userMode": "visitor",
+    "viewport": "844x390",
+    "metrics": {
+      "title": "Pachangas IQ",
+      "theme": "light",
+      "textLength": 63,
+      "overflowX": 0,
+      "overflowY": 0,
+      "failedImages": [],
+      "smallTargets": [],
+      "viewportViolations": [],
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "valorar-equipo",
+    "path": "/valorar-equipo",
+    "userMode": "visitor",
+    "viewport": "844x390",
+    "metrics": {
+      "title": "Pachangas IQ",
+      "theme": "light",
+      "textLength": 253,
+      "overflowX": 0,
+      "overflowY": 99,
+      "failedImages": [],
+      "smallTargets": [],
+      "viewportViolations": [],
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "lab-escudos",
+    "path": "/laboratorio-cosmeticos-escudo",
+    "userMode": "lab",
+    "viewport": "844x390",
+    "metrics": {
+      "title": "Laboratorio de escudos | Pachangas IQ",
+      "theme": "light",
+      "textLength": 4797,
+      "overflowX": 0,
+      "overflowY": 4210,
+      "failedImages": [],
+      "smallTargets": [
+        {
+          "tag": "button",
+          "text": "Base IQ",
+          "className": "",
+          "width": 92,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Barrio",
+          "className": "",
+          "width": 79,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Future IQ",
+          "className": "",
+          "width": 103,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Noche",
+          "className": "",
+          "width": 81,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Retro",
+          "className": "",
+          "width": 74,
+          "height": 34
+        },
+        {
+          "tag": "button",
+          "text": "Fondo",
+          "className": "",
+          "width": 63,
+          "height": 36
+        },
+        {
+          "tag": "button",
+          "text": "Borde",
+          "className": "",
+          "width": 63,
+          "height": 36
+        },
+        {
+          "tag": "button",
+          "text": "Inferior",
+          "className": "",
+          "width": 63,
+          "height": 36
+        },
+        {
+          "tag": "button",
+          "text": "Efecto",
+          "className": "",
+          "width": 63,
+          "height": 36
+        },
+        {
+          "tag": "button",
+          "text": "Patrón",
+          "className": "",
+          "width": 63,
+          "height": 36
+        },
+        {
+          "tag": "input",
+          "text": "",
+          "className": "",
+          "width": 166,
+          "height": 36
+        },
+        {
+          "tag": "input",
+          "text": "",
+          "className": "",
+          "width": 166,
+          "height": 36
+        },
+        {
+          "tag": "button",
+          "text": "Principal Midnight",
+          "className": "page-module__k0Ylvq__activeSwatch",
+          "width": 24,
+          "height": 24
+        },
+        {
+          "tag": "button",
+          "text": "Principal Cian IQ",
+          "className": "",
+          "width": 24,
+          "height": 24
+        },
+        {
+          "tag": "button",
+          "text": "Principal Marfil",
+          "className": "",
+          "width": 24,
+          "height": 24
+        },
+        {
+          "tag": "button",
+          "text": "Principal Carmesí",
+          "className": "",
+          "width": 24,
+          "height": 24
+        },
+        {
+          "tag": "button",
+          "text": "Principal Esmeralda",
+          "className": "",
+          "width": 24,
+          "height": 24
+        },
+        {
+          "tag": "button",
+          "text": "Principal Ámbar",
+          "className": "",
+          "width": 24,
+          "height": 24
+        },
+        {
+          "tag": "button",
+          "text": "Secundario Midnight",
+          "className": "",
+          "width": 24,
+          "height": 24
+        },
+        {
+          "tag": "button",
+          "text": "Secundario Cian IQ",
+          "className": "page-module__k0Ylvq__activeSwatch",
+          "width": 24,
+          "height": 24
+        },
+        {
+          "tag": "button",
+          "text": "Secundario Marfil",
+          "className": "",
+          "width": 24,
+          "height": 24
+        },
+        {
+          "tag": "button",
+          "text": "Secundario Carmesí",
+          "className": "",
+          "width": 24,
+          "height": 24
+        },
+        {
+          "tag": "button",
+          "text": "Secundario Esmeralda",
+          "className": "",
+          "width": 24,
+          "height": 24
+        },
+        {
+          "tag": "button",
+          "text": "Secundario Ámbar",
+          "className": "",
+          "width": 24,
+          "height": 24
+        },
+        {
+          "tag": "button",
+          "text": "Activo",
+          "className": "page-module__k0Ylvq__activeMotion",
+          "width": 76,
+          "height": 32
+        },
+        {
+          "tag": "button",
+          "text": "Reducido",
+          "className": "",
+          "width": 76,
+          "height": 32
+        }
+      ],
+      "viewportViolations": [],
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "lab-cartas",
+    "path": "/laboratorio-cosmeticos-ficha",
+    "userMode": "lab",
+    "viewport": "844x390",
+    "metrics": {
+      "title": "Pachangas IQ",
+      "theme": "light",
+      "textLength": 2668,
+      "overflowX": 0,
+      "overflowY": 3226,
+      "failedImages": [],
+      "smallTargets": [
+        {
+          "tag": "button",
+          "text": "Original",
+          "className": "",
+          "width": 73,
+          "height": 30
+        },
+        {
+          "tag": "button",
+          "text": "Barrio",
+          "className": "page-module__8saHxq__activePreset",
+          "width": 63,
+          "height": 30
+        },
+        {
+          "tag": "button",
+          "text": "Noche",
+          "className": "",
+          "width": 65,
+          "height": 30
+        },
+        {
+          "tag": "button",
+          "text": "Retro",
+          "className": "",
+          "width": 59,
+          "height": 30
+        },
+        {
+          "tag": "button",
+          "text": "Future IQ",
+          "className": "",
+          "width": 81,
+          "height": 30
+        },
+        {
+          "tag": "button",
+          "text": "Marco",
+          "className": "cosmetics-editor-module__M5YtSq__activeTab",
+          "width": 60,
+          "height": 36
+        },
+        {
+          "tag": "button",
+          "text": "Fondo",
+          "className": "",
+          "width": 60,
+          "height": 36
+        },
+        {
+          "tag": "button",
+          "text": "Acento",
+          "className": "",
+          "width": 60,
+          "height": 36
+        },
+        {
+          "tag": "button",
+          "text": "Efecto",
+          "className": "",
+          "width": 60,
+          "height": 36
+        },
+        {
+          "tag": "button",
+          "text": "Título",
+          "className": "",
+          "width": 60,
+          "height": 36
+        },
+        {
+          "tag": "button",
+          "text": "Logro",
+          "className": "",
+          "width": 60,
+          "height": 36
+        },
+        {
+          "tag": "select",
+          "text": "MarcAlejandro Martínez",
+          "className": "",
+          "width": 325,
+          "height": 32
+        }
+      ],
+      "viewportViolations": [],
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "lab-rating",
+    "path": "/laboratorio-ficha-jugador",
+    "userMode": "lab",
+    "viewport": "844x390",
+    "metrics": {
+      "title": "Laboratorio de ficha de jugador · Pachangas IQ",
+      "theme": "light",
+      "textLength": 125,
+      "overflowX": 0,
+      "overflowY": 0,
+      "failedImages": [],
+      "smallTargets": [],
+      "viewportViolations": [],
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased pla"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "lab-ranking",
+    "path": "/laboratorio-ranking-provincial",
+    "userMode": "lab",
+    "viewport": "844x390",
+    "metrics": {
+      "title": "Ranking provincial · Pachangas IQ Lab",
+      "theme": "light",
+      "textLength": 2600,
+      "overflowX": 0,
+      "overflowY": 596,
+      "failedImages": [],
+      "smallTargets": [],
+      "viewportViolations": [],
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  }
+]

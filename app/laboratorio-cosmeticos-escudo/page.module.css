@@ -72,7 +72,7 @@
 }
 
 .motionControl button {
-  min-height: 32px;
+  min-height: 40px;
   border: 0;
   background: rgba(7, 20, 15, 0.8);
   color: #b8c9c0;
@@ -96,7 +96,7 @@
 .identityControls input { min-width: 0; min-height: 42px; padding: 0 10px; font: inherit; font-size: 1rem; }
 
 .swatches { display: grid; grid-template-columns: repeat(4, minmax(28px, 1fr)); gap: 5px; }
-.swatches button { min-width: 30px; min-height: 30px; border: 2px solid transparent; border-radius: 4px; }
+.swatches button { min-width: 40px; min-height: 40px; border: 2px solid transparent; border-radius: 4px; }
 .swatches .activeSwatch { border-color: #d5f46d; box-shadow: 0 0 0 1px #07140e; }
 
 .symbolControls {
@@ -255,12 +255,12 @@
   .header h1 { font-size: 1.35rem; }
   .header span { font-size: 0.58rem; }
   .presetRail { margin: 7px 0; }
-  .presetRail button { min-height: 34px; }
+  .presetRail button { min-height: 40px; }
   .previewStage { min-height: 230px; }
   .identityControls { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; padding: 4px 0; }
-  .identityControls input { min-height: 36px; }
+  .identityControls input { min-height: 40px; }
   .identityControls .swatches { grid-template-columns: repeat(6, minmax(20px, 1fr)); }
-  .identityControls .swatches button { min-width: 20px; min-height: 24px; }
+  .identityControls .swatches button { min-width: 40px; min-height: 40px; }
   .baselineBand article { min-height: 210px; }
   .contactGrid { grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); }
 }

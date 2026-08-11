@@ -11,6 +11,7 @@ import {
   UnsavedChanges,
 } from "../_components/cosmetics-editor";
 import { PlayerCosmeticCard } from "../_components/player-cosmetic-card";
+import { ProductFeedback, ProductState } from "../_components/product-state";
 import { CLIENT_VERSION } from "../client-version-contract";
 import { currentClientDisplayMode } from "../pwa-client-bridge";
 import {
@@ -28,6 +29,7 @@ import {
   type PlayerCosmeticsSnapshot,
 } from "../player-cosmetics-contract";
 import { supabase } from "../supabaseClient";
+import { SERVICE_UNAVAILABLE_MESSAGE, userFacingError } from "../user-facing-error";
 import styles from "./page.module.css";
 
 type EditorCategory = PlayerCosmeticSlot | "badge";
@@ -103,8 +105,9 @@ export default function PlayerCosmeticsPage() {
   const [activeCategory, setActiveCategory] = useState<EditorCategory>("frame");
   const [busy, setBusy] = useState("");
   const [draft, setDraft] = useState<PlayerCosmeticLoadout>({ ...EMPTY_PLAYER_COSMETIC_LOADOUT });
-  const [message, setMessage] = useState(supabase ? "" : "Supabase no está configurado.");
+  const [message, setMessage] = useState(supabase ? "" : SERVICE_UNAVAILABLE_MESSAGE);
   const [profile, setProfile] = useState<PlayerCardProfile | null>(null);
+  const [sessionResolved, setSessionResolved] = useState(!supabase);
   const [snapshot, setSnapshot] = useState<PlayerCosmeticsSnapshot | null>(null);
   const [userId, setUserId] = useState("");
   const operationIds = useRef(new Map<string, string>());
@@ -136,7 +139,7 @@ export default function PlayerCosmeticsPage() {
     if (!supabase) return;
     const result = await supabase.rpc("get_pachanga_player_cosmetics_snapshot_v1");
     if (result.error) {
-      setMessage(result.error.message);
+      setMessage(userFacingError(result.error, "No pudimos recuperar tu colección. Vuelve a intentarlo."));
       return;
     }
     if (!acceptSnapshot(result.data, preserveDraft)) setMessage("El servidor devolvió una colección no válida.");
@@ -151,9 +154,12 @@ export default function PlayerCosmeticsPage() {
       if (!active) return;
       if (!user) {
         setMessage("Inicia sesión para personalizar tu ficha.");
+        setSessionResolved(true);
         return;
       }
+      setMessage("");
       setUserId(user.id);
+      setSessionResolved(true);
       try {
         const cached = readPlayerCosmeticsCache(window.localStorage, user.id);
         if (cached) {
@@ -180,7 +186,9 @@ export default function PlayerCosmeticsPage() {
         .eq("user_id", userId)
         .maybeSingle();
       if (!active) return;
-      if (profileResult.error) setMessage(profileResult.error.message);
+      if (profileResult.error) {
+        setMessage(userFacingError(profileResult.error, "No pudimos recuperar tu ficha. Vuelve a intentarlo."));
+      }
       else setProfile(profileFromRow(profileResult.data));
       await loadSnapshot(false);
     })();
@@ -248,7 +256,7 @@ export default function PlayerCosmeticsPage() {
     });
     setBusy("");
     if (result.error) {
-      setMessage(result.error.message);
+      setMessage(userFacingError(result.error));
       if (result.error.code === "PT409") await loadSnapshot();
       return;
     }
@@ -275,7 +283,7 @@ export default function PlayerCosmeticsPage() {
     });
     setBusy("");
     if (result.error) {
-      setMessage(result.error.message);
+      setMessage(userFacingError(result.error));
       if (result.error.code === "PT409") await loadSnapshot();
       return;
     }
@@ -288,6 +296,37 @@ export default function PlayerCosmeticsPage() {
     label,
     value: Math.round(profile?.currentFacets[key] ?? 50),
   }));
+  const pageState = !supabase
+    ? {
+        description: SERVICE_UNAVAILABLE_MESSAGE,
+        eyebrow: "Servicio no disponible",
+        title: "Tu colección sigue a salvo",
+      }
+    : !sessionResolved
+      ? {
+          description: "Estamos recuperando tu ficha y tu colección confirmada.",
+          eyebrow: "Sincronizando",
+          title: "Cargando tu ficha",
+        }
+      : !userId
+        ? {
+            description: "Entra con tu cuenta para ver las piezas que has conseguido y guardar cambios.",
+            eyebrow: "Sesión necesaria",
+            title: "Personaliza tu ficha",
+          }
+        : !snapshot && message
+          ? {
+              description: message,
+              eyebrow: "No se pudo cargar",
+              title: "Tu colección no está disponible",
+            }
+          : !snapshot
+            ? {
+                description: "Estamos recuperando la última revisión confirmada por el servidor.",
+                eyebrow: "Sincronizando",
+                title: "Cargando tu colección",
+              }
+            : null;
 
   return (
     <main className={styles.page}>
@@ -308,11 +347,22 @@ export default function PlayerCosmeticsPage() {
         </div>
       </header>
 
-      {snapshot && !snapshot.enabled ? (
-        <p className={styles.notice}>La colección está preparada, pero todavía no se ha activado para este entorno.</p>
-      ) : null}
+      {pageState ? (
+        <ProductState
+          actions={sessionResolved && !userId ? <Link href="/">Ir a Inicio</Link> : undefined}
+          busy={!sessionResolved || Boolean(userId && !snapshot && !message)}
+          description={pageState.description}
+          eyebrow={pageState.eyebrow}
+          surface="dark"
+          title={pageState.title}
+        />
+      ) : snapshot ? (
+        <>
+          {!snapshot.enabled ? (
+            <p className={styles.notice}>La colección está preparada, pero todavía no se ha activado para este entorno.</p>
+          ) : null}
 
-      <CosmeticEditorShell
+          <CosmeticEditorShell
         actions={(
           <EditorActions
             busy={Boolean(busy)}
@@ -366,9 +416,13 @@ export default function PlayerCosmeticsPage() {
             selectedKey={cosmeticKeyForSlot(draft, activeCategory)}
           />
         )}
-      </CosmeticEditorShell>
+          </CosmeticEditorShell>
+        </>
+      ) : null}
 
-      {message ? <p className={styles.message} aria-live="polite">{message}</p> : null}
+      {snapshot && message ? (
+        <ProductFeedback tone={message.includes("confirmada") ? "success" : "error"}>{message}</ProductFeedback>
+      ) : null}
     </main>
   );
 }

@@ -89,7 +89,8 @@ export function CosmeticCategoryNav<T extends string>({
 }
 
 export function NewBadge({ count }: { count?: number }) {
-  return <small className={styles.newBadge}>{typeof count === "number" ? count : "Nuevo"}</small>;
+  const label = typeof count === "number" ? `${count} piezas nuevas` : "Pieza nueva";
+  return <small aria-label={label} className={styles.newBadge} title={label}>{typeof count === "number" ? count : "Nuevo"}</small>;
 }
 
 export function OwnedCosmeticSelector({

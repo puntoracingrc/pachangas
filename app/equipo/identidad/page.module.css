@@ -32,7 +32,11 @@
 }
 
 .topbar a {
+  display: inline-flex;
+  min-height: 40px;
+  align-items: center;
   color: #c9d8d0;
+  padding-inline: 8px;
   text-decoration: none;
 }
 
@@ -177,14 +181,14 @@
 
 .symbolControls label > span {
   display: grid;
-  grid-template-columns: 38px minmax(64px, 1fr) 38px;
+  grid-template-columns: 40px minmax(64px, 1fr) 40px;
   align-items: center;
   text-align: center;
 }
 
 .symbolControls button,
 .symbolControls strong {
-  min-height: 38px;
+  min-height: 40px;
   display: grid;
   place-items: center;
   border: 1px solid rgba(179, 205, 191, 0.3);
@@ -561,25 +565,10 @@
   color: #aebfb6;
 }
 
-.message {
-  box-sizing: border-box;
-  position: fixed;
-  right: max(16px, env(safe-area-inset-right));
-  bottom: max(16px, env(safe-area-inset-bottom));
-  z-index: 30;
-  max-width: min(440px, calc(100vw - 32px));
-  border: 1px solid #6e8a7c;
-  border-radius: 8px;
-  background: #17251f;
-  color: #edf4ef;
-  padding: 12px 15px;
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
-}
-
 .rewardModalBackdrop {
   position: fixed;
   inset: 0;
-  z-index: 80;
+  z-index: var(--z-modal);
   display: grid;
   place-items: center;
   background: rgba(2, 8, 5, 0.82);

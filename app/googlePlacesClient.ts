@@ -63,6 +63,7 @@ type GooglePlace = {
 };
 
 type GooglePlaceAutocompleteElement = HTMLElement & {
+  includedPrimaryTypes?: string[];
   includedRegionCodes?: string[];
   placeholder?: string;
 };
@@ -258,15 +259,18 @@ export async function loadGooglePlaces(apiKey: string) {
 function attachNewPlaceAutocomplete({
   input,
   onPlace,
+  types,
 }: {
   input: HTMLInputElement;
   onPlace: (place: VenuePlace) => void;
+  types?: string[];
 }) {
   const PlaceAutocompleteElement = googleMapsWindow().google?.maps?.places?.PlaceAutocompleteElement;
   if (!PlaceAutocompleteElement || typeof customElements === "undefined") return null;
 
   const autocompleteElement = new PlaceAutocompleteElement();
   autocompleteElement.classList.add("pachangas-place-autocomplete");
+  if (types?.length) autocompleteElement.includedPrimaryTypes = types;
   autocompleteElement.includedRegionCodes = ["es"];
   autocompleteElement.placeholder = input.placeholder || "Busca con Google Places";
   input.style.display = "none";
@@ -311,10 +315,11 @@ export async function attachVenueAutocomplete({
 }) {
   await loadGooglePlaces(apiKey);
 
+  const newPlacesCleanup = attachNewPlaceAutocomplete({ input, onPlace, types });
+  if (newPlacesCleanup) return newPlacesCleanup;
+
   const Autocomplete = googleMapsWindow().google?.maps?.places?.Autocomplete;
   if (!Autocomplete) {
-    const newPlacesCleanup = attachNewPlaceAutocomplete({ input, onPlace });
-    if (newPlacesCleanup) return newPlacesCleanup;
     throw new Error("Google Places no está disponible.");
   }
 

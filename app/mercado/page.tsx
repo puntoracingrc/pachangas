@@ -7,6 +7,7 @@ import { useAdminViewPreview } from "../admin-view-preview";
 import { AdminViewPreviewButton, MobileAppNav } from "../mobile-app-nav";
 import { supabase } from "../supabaseClient";
 import type { TeamSummary } from "../team-social-contract";
+import { SERVICE_UNAVAILABLE_MESSAGE, userFacingError } from "../user-facing-error";
 import { ChallengeableTeamsPanel } from "./challengeable-teams-panel";
 import { TeamChallengesPanel } from "./team-challenges-panel";
 
@@ -909,7 +910,7 @@ export default function MarketPage() {
 
   useEffect(() => {
     if (!googleMapsApiKey) {
-      setZonePlaceMessage("Google Places pendiente.");
+      setZonePlaceMessage("");
       return;
     }
 
@@ -941,7 +942,8 @@ export default function MarketPage() {
       })
       .catch((error: unknown) => {
         if (disposed) return;
-        setZonePlaceMessage(error instanceof Error ? error.message : "No se pudo cargar Google Places.");
+        console.info("Market location suggestions unavailable", error);
+        setZonePlaceMessage("Puedes escribir la ciudad manualmente.");
       });
 
     return () => {
@@ -1008,7 +1010,7 @@ export default function MarketPage() {
         });
 
     if (result.error) {
-      setInviteMessage(result.error.message);
+      setInviteMessage(userFacingError(result.error));
       setMarketRefresh((value) => value + 1);
       return;
     }
@@ -1046,7 +1048,7 @@ export default function MarketPage() {
 
   async function requestOpenMatch(match: OpenMarketMatch) {
     if (!supabase) {
-      setInviteMessage("Supabase no está configurado para enviar solicitudes.");
+      setInviteMessage(SERVICE_UNAVAILABLE_MESSAGE);
       return;
     }
 
@@ -1064,7 +1066,7 @@ export default function MarketPage() {
     });
 
     if (result.error) {
-      setInviteMessage(result.error.message);
+      setInviteMessage(userFacingError(result.error));
       return;
     }
 
@@ -1100,7 +1102,7 @@ export default function MarketPage() {
       target_request_id: request.id,
     });
     if (result.error) {
-      setInviteMessage(result.error.message);
+      setInviteMessage(userFacingError(result.error));
       setMarketRefresh((value) => value + 1);
       return;
     }
@@ -1185,7 +1187,7 @@ export default function MarketPage() {
                 setZoneFilter(event.target.value);
                 setZonePlace(null);
               }}
-              placeholder="Busca ciudad con Google Places"
+              placeholder="Ciudad o zona"
             />
             {zonePlaceMessage ? <small>{zonePlaceMessage}</small> : null}
           </label>
@@ -1287,7 +1289,7 @@ export default function MarketPage() {
                 disabled={!canUseMarketAdminControls || !marketContext || !profile.openToGuest || invitationAccepted}
               >
                 {!canUseMarketAdminControls
-                  ? "Solo admins invitan"
+                  ? <><span className="market-invite-label-full">Solo admins invitan</span><span className="market-invite-label-compact">Solo admins</span></>
                   : !marketContext
                     ? "Invitar desde un partido"
                     : !profile.openToGuest

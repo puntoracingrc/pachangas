@@ -1,0 +1,139 @@
+.state {
+  box-sizing: border-box;
+  display: grid;
+  width: min(680px, 100%);
+  min-height: 190px;
+  align-content: center;
+  justify-items: start;
+  gap: 8px;
+  margin: 18px auto;
+  border: 1px solid color-mix(in srgb, var(--green) 28%, var(--line));
+  border-radius: 8px;
+  background:
+    linear-gradient(145deg, color-mix(in srgb, var(--green) 7%, transparent), transparent 45%),
+    color-mix(in srgb, var(--panel) 96%, transparent);
+  padding: clamp(20px, 5vw, 34px);
+  color: var(--ink);
+}
+
+.state[data-surface="dark"] {
+  border-color: rgba(188, 211, 199, 0.2);
+  background:
+    linear-gradient(145deg, rgba(183, 244, 82, 0.07), transparent 45%),
+    rgba(9, 25, 19, 0.82);
+  color: #edf4ef;
+}
+
+.eyebrow {
+  color: color-mix(in srgb, var(--green) 78%, var(--ink));
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.state[data-surface="dark"] .eyebrow {
+  color: #b7f452;
+}
+
+.state h2,
+.state p {
+  margin: 0;
+}
+
+.state h2 {
+  max-width: 24ch;
+  font-size: clamp(1.2rem, 4vw, 1.7rem);
+  letter-spacing: 0;
+}
+
+.state p {
+  max-width: 58ch;
+  color: var(--ink-soft);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.state[data-surface="dark"] p {
+  color: #aebfb6;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.actions :is(a, button) {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid color-mix(in srgb, var(--green) 58%, var(--line));
+  border-radius: 6px;
+  background: var(--lime);
+  padding: 0 14px;
+  color: #17200f;
+  font: inherit;
+  font-weight: 900;
+  text-decoration: none;
+}
+
+.actions :is(a, button) + :is(a, button) {
+  background: transparent;
+  color: inherit;
+}
+
+.feedback {
+  box-sizing: border-box;
+  position: fixed;
+  z-index: var(--z-toast, 60);
+  right: max(16px, env(safe-area-inset-right));
+  bottom: max(16px, env(safe-area-inset-bottom));
+  width: min(440px, calc(100vw - 32px));
+  margin: 0;
+  border: 1px solid rgba(146, 183, 163, 0.46);
+  border-radius: 8px;
+  background: rgba(13, 31, 23, 0.96);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.32);
+  padding: 12px 15px;
+  color: #edf4ef;
+  font-size: 0.84rem;
+  line-height: 1.4;
+}
+
+.feedback[data-tone="error"] {
+  border-color: rgba(255, 118, 107, 0.58);
+}
+
+.feedback[data-tone="success"] {
+  border-color: rgba(183, 244, 82, 0.58);
+}
+
+@media (max-width: 520px) {
+  .state {
+    min-height: 170px;
+    margin-block: 10px;
+  }
+
+  .actions,
+  .actions :is(a, button) {
+    width: 100%;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 650px) {
+  .state {
+    min-height: 0;
+    margin-block: 8px;
+    padding: 16px 18px;
+  }
+
+  .state h2 {
+    font-size: 1.15rem;
+  }
+
+  .actions :is(a, button) {
+    min-height: 40px;
+  }
+}
