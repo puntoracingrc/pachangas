@@ -5,7 +5,9 @@
 - Initial `main`: `a26786d3982ac69c1b0169441fc681e6a51dd6b9`
 - Branch: `codex/team-cosmetic-rewards-v1`
 - Implementation commit: `7906def2c445cddcca1f2c405889e7c4d58ac605`
-- Pull request: [#136](https://github.com/puntoracingrc/pachangas/pull/136)
+- Release-hardening commit: `5368b1f2ba88f79b3b95e32650b8c5ecfe8b2ebe`
+- Pull request: [#136](https://github.com/puntoracingrc/pachangas/pull/136), merged as
+  `ad3b297e08b21e8ac5521ec06c9d07d03cdb0e79`
 - Policy key: `team_cosmetic_rewards_v1`
 - Policy version: `1`
 - Migrations: `20260811033931_team_cosmetic_rewards_v1.sql`,
@@ -70,7 +72,7 @@ evidence remains immutable in the private ledger.
 | --- | --- | --- | --- |
 | Local disposable/bootstrap | Tested on and off | Ephemeral test frontier | Verified |
 | Staging | Enabled after controlled QA | `2026-08-11 04:22:46.170096+00` | `1747` |
-| Production | Must start off | Pending activation | Pending activation |
+| Production | Enabled after controlled QA | `2026-08-11 04:45:21.957778+00` | `1` |
 
 ## Inventory, NEW and notifications
 
@@ -168,7 +170,42 @@ exists, which is expected before activation.
 
 ## Production evidence
 
-Pending. Release order is migration with flag off, smoke checks, audited
-activation, then immediate monitoring for historical bursts, notification
-storms, `already_owned` storms, RPC errors and Rating V2 mutations. Operational
-rollback is flag off; no destructive down migration is planned.
+PR #136 was merged into `main` as
+`ad3b297e08b21e8ac5521ec06c9d07d03cdb0e79`. Vercel production deployment
+`dpl_ELbSVmNGDpN19MqwYTKFnzKiCdTQ` reached `READY`, serving
+`https://pachangasiq.com`. Supabase production applied the two canonical
+forward-only migrations and now reports exactly 87 migrations, matching the
+repository.
+
+The release was first checked with the feature flag off. The five mappings,
+private policy, client privilege revocations and five foreign-key indexes were
+present while ledger and inventory remained empty. Policy version 1 was then
+activated with operation ID `2236943c-dcfc-4c56-9492-7e9fa4e70e2f`, effective
+at `2026-08-11 04:45:21.957778+00` with progression frontier `1`. Existing
+facts were not backfilled.
+
+Authenticated production QA with two eligible admins, a late admin, a member
+and an outsider confirmed all five canonical stories, replay idempotency,
+`already_owned`, independent seen state, no historical `NEW` for the late
+admin, sanitized member reads, outsider denial, Realtime inventory and loadout
+events, and public-shield convergence only after explicit equip. A later
+canonical correction revoked sporting evidence while preserving the cosmetic
+and its immutable reward ledger.
+
+The final controlled fixture state contains 7 ledger decisions: 6 grants and 1
+`already_owned`, with 12 notifications for the two eligible admins. Six grants
+are correct because the clean-sheet fixture was also a valid first external
+win, so one canonical 2-0 match unlocked both independently approved rewards.
+The late admin received zero historical notifications. Currency granted stayed
+at zero. Rating V2 remained unchanged: one profile, rating 5, base/current/
+calibrated overall 50 and reliability 0.
+
+The five synthetic Auth users were password-randomized, banned until 2099 and
+left with zero sessions. Their immutable QA evidence remains explicitly tagged
+`qaFixture=team-cosmetic-rewards-v1`. Desktop, 390x844 portrait and 844x390
+landscape checks passed without horizontal overflow or browser console errors.
+Vercel reported no runtime error clusters and no `error`/`fatal` logs after the
+deployment. Supabase added no security warning attributable to this release;
+private reward tables intentionally remain deny-all to clients, and the five
+new indexes currently appear only as unused. Operational rollback remains the
+audited feature flag; no destructive down migration is required.
