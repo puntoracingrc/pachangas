@@ -96,7 +96,7 @@
 
 .presetBar button,
 .controlActions button {
-  min-height: 36px;
+  min-height: 40px;
   border: 1px solid var(--lab-line);
   border-radius: 6px;
   padding: 0 13px;
@@ -774,7 +774,7 @@
   }
 
   .presetBar button {
-    min-height: 30px;
+    min-height: 40px;
   }
 
   .workspace {
@@ -811,7 +811,7 @@
   }
 
   .selectControl select {
-    min-height: 32px;
+    min-height: 40px;
     padding: 0 18px 0 7px;
     font-size: 9px;
   }

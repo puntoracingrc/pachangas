@@ -11,7 +11,7 @@
   --sim-coral: #ff776c;
   --sim-gold: #ffd36b;
   position: fixed;
-  z-index: 2000;
+  z-index: var(--z-internal-lab);
   inset: 0;
   overflow: auto;
   background:

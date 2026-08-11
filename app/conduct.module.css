@@ -9,7 +9,7 @@
 
 .shell { width: min(1080px, 100%); margin: 0 auto; }
 .topbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 20px; }
-.topbar a { color: #9fe4bf; text-decoration: none; font-weight: 700; }
+.topbar a { align-items: center; color: #9fe4bf; display: inline-flex; min-height: 40px; padding-inline: 8px; text-decoration: none; font-weight: 700; }
 .title span { color: #75c99e; font-size: .74rem; text-transform: uppercase; font-weight: 800; }
 .title h1 { margin: 4px 0 0; font-size: clamp(1.45rem, 4vw, 2.3rem); letter-spacing: 0; }
 .title p { margin: 8px 0 0; max-width: 720px; color: #b9c8c2; line-height: 1.45; }

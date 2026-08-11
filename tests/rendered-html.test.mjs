@@ -174,7 +174,7 @@ test("builds the transfer market as a separated page", async () => {
   assert.match(css, /\.market-page \.market-manager-subnav/);
   assert.match(css, /grid-template-columns: var\(--game-side-nav-width\) minmax\(0, 1fr\)/);
   assert.match(css, /\.market-page \.market-tabs\s*\{\s*display: none/);
-  assert.match(css, /\.market-page \.market-context-summary\s*\{[\s\S]*min-height:\s*32px/);
+  assert.match(css, /\.market-page \.market-context-summary\s*\{[\s\S]*min-height:\s*40px/);
   assert.match(css, /\.market-page \.market-context-summary strong,[\s\S]*font-size:\s*12px[\s\S]*white-space:\s*nowrap/);
   assert.match(css, /linear-gradient\(135deg, #071923 0%, #145038 48%, #202847 100%\)/);
   assert.match(css, /\.market-page \.market-titlebar,[\s\S]*rgba\(16, 29, 24, 0\.8\)/);
@@ -983,7 +983,7 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(globalsCss, /\.pitch-modal-fullscreen-backdrop/);
   assert.match(globalsCss, /html:fullscreen,\s*[\s\S]*html:fullscreen body/);
   assert.match(globalsCss, /html:fullscreen \.pitch-modal-fullscreen-backdrop/);
-  assert.match(globalsCss, /z-index:\s*220/);
+  assert.match(globalsCss, /z-index:\s*var\(--z-fullscreen\)/);
   assert.match(globalsCss, /\.pitch-modal-fullscreen \.match-pitch\.match-pitch-horizontal\.match-pitch-zoomed/);
   assert.match(globalsCss, /html:fullscreen \.pitch-modal-fullscreen \.match-pitch\.match-pitch-horizontal\.match-pitch-zoomed/);
   assert.match(globalsCss, /data-match-manager-pane="alineacion"[\s\S]*\.lineup-panel > \.team\s*\{\s*display:\s*none/);

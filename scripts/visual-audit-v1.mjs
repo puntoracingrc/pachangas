@@ -1,4 +1,5 @@
 import { spawn } from "node:child_process";
+import { once } from "node:events";
 import { mkdir, rm, writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { platform } from "node:os";
@@ -11,17 +12,33 @@ const outputRoot = path.resolve(process.env.VISUAL_AUDIT_OUTPUT ?? "artifacts/vi
 const chromePath = process.env.CHROME_PATH ?? findChromePath();
 const captureScreenshots = process.env.VISUAL_AUDIT_SCREENSHOTS !== "0";
 
+function requestedKeys(name) {
+  return new Set((process.env[name] ?? "").split(",").map((key) => key.trim()).filter(Boolean));
+}
+
 const viewports = [
-  { key: "desktop", width: 1440, height: 900 },
-  { key: "portrait", width: 390, height: 844 },
-  { key: "landscape", width: 844, height: 390 },
+  { key: "desktop", width: 1440, height: 900, capture: true },
+  { key: "desktop-wide", width: 1920, height: 1080, capture: false },
+  { key: "portrait", width: 390, height: 844, capture: true },
+  { key: "portrait-small", width: 360, height: 800, capture: false },
+  { key: "landscape", width: 844, height: 390, capture: true },
+  { key: "pwa-portrait", width: 390, height: 844, capture: true, displayMode: "standalone" },
+  { key: "zoom-125", width: 1152, height: 720, capture: false, surfaceKeys: ["demo-inicio-admin", "mercado", "personalizar-carta", "equipo-identidad"] },
+  { key: "zoom-150", width: 960, height: 600, capture: false, surfaceKeys: ["demo-inicio-admin", "mercado", "personalizar-carta", "equipo-identidad"] },
+  { key: "zoom-200", width: 720, height: 450, capture: false, surfaceKeys: ["demo-inicio-admin", "mercado", "personalizar-carta", "equipo-identidad"] },
+  { key: "reduced-motion", width: 1440, height: 900, capture: false, reducedMotion: true, surfaceKeys: ["demo-inicio-admin", "personalizar-carta", "equipo-identidad", "lab-premium-art"] },
 ];
 
 const surfaces = [
   { key: "demo-inicio-admin", path: "/?demo=1&mobile=inicio", userMode: "demo-admin", capture: true },
   { key: "demo-inicio-player", path: "/?demo=1&mobile=inicio&qaPlayer=1", userMode: "demo-player", capture: false },
   { key: "demo-partido", path: "/?demo=1&mobile=partido", userMode: "demo-admin", capture: true },
+  { key: "demo-partido-alineacion", path: "/?demo=1&mobile=partido", userMode: "demo-admin", clickSelector: ".match-manager-subnav button", clickText: "Alineación", capture: true },
+  { key: "demo-partido-resultado", path: "/?demo=1&mobile=partido", userMode: "demo-admin", clickSelector: ".match-manager-subnav button", clickText: "Resultado", capture: true },
+  { key: "demo-partido-admin", path: "/?demo=1&mobile=partido", userMode: "demo-admin", clickSelector: ".match-manager-subnav button", clickText: "Admin", capture: true },
   { key: "demo-mercado", path: "/?demo=1&mobile=mercado", userMode: "demo-admin", capture: false },
+  { key: "mercado-partidos", path: "/mercado", userMode: "visitor", clickSelector: ".market-manager-subnav button", clickText: "Partidos", capture: false },
+  { key: "mercado-retos", path: "/mercado", userMode: "visitor", clickSelector: ".market-manager-subnav button", clickText: "Retos", capture: false },
   { key: "demo-equipo", path: "/?demo=1&mobile=equipo", userMode: "demo-admin", capture: false },
   { key: "demo-perfil", path: "/?demo=1&mobile=perfil", userMode: "demo-admin", capture: false },
   { key: "mercado", path: "/mercado", userMode: "visitor", capture: true },
@@ -36,7 +53,15 @@ const surfaces = [
   { key: "lab-cartas", path: "/laboratorio-cosmeticos-ficha", userMode: "lab", capture: false },
   { key: "lab-rating", path: "/laboratorio-ficha-jugador", userMode: "lab", capture: false },
   { key: "lab-ranking", path: "/laboratorio-ranking-provincial", userMode: "lab", capture: false },
+  { key: "lab-premium-art", path: "/laboratorio-premium-art-pack", userMode: "lab", capture: true },
+  { key: "demo-inicio-light", path: "/?demo=1&mobile=inicio&qaTheme=light", userMode: "demo-admin-light", capture: false },
+  { key: "demo-inicio-dark", path: "/?demo=1&mobile=inicio&qaTheme=dark", userMode: "demo-admin-dark", capture: false },
 ];
+
+const viewportFilter = requestedKeys("VISUAL_AUDIT_VIEWPORTS");
+const surfaceFilter = requestedKeys("VISUAL_AUDIT_SURFACES");
+const selectedViewports = viewportFilter.size ? viewports.filter(({ key }) => viewportFilter.has(key)) : viewports;
+const selectedSurfaces = surfaceFilter.size ? surfaces.filter(({ key }) => surfaceFilter.has(key)) : surfaces;
 
 function findChromePath() {
   const candidates = platform() === "darwin"
@@ -145,9 +170,18 @@ function auditExpression() {
       const text = (element.getAttribute("aria-label") || element.textContent || "").trim().replace(/\\s+/g, " ").slice(0, 80);
       return { tag: element.tagName.toLowerCase(), text, className: String(element.className || "").slice(0, 100) };
     };
+    const interactiveRect = (element) => {
+      const rect = element.getBoundingClientRect();
+      if (element instanceof HTMLInputElement && (element.type === "checkbox" || element.type === "radio")) {
+        const explicitLabel = element.id ? document.querySelector('label[for="' + CSS.escape(element.id) + '"]') : null;
+        const label = element.closest("label") || explicitLabel;
+        if (label && visible(label)) return label.getBoundingClientRect();
+      }
+      return rect;
+    };
     const controls = [...document.querySelectorAll("button, a[href], input, select, textarea, [role='button'], [role='tab']")]
       .filter(visible)
-      .map((element) => ({ element, rect: element.getBoundingClientRect() }));
+      .map((element) => ({ element, rect: interactiveRect(element) }));
     const smallTargets = controls
       .filter(({ element, rect }) => !element.hasAttribute("disabled") && (rect.width < 40 || rect.height < 40))
       .slice(0, 30)
@@ -163,9 +197,34 @@ function auditExpression() {
         ...descriptor(element),
         left: Math.round(rect.left), right: Math.round(rect.right), top: Math.round(rect.top), bottom: Math.round(rect.bottom),
       }));
+    const gameChromeViolations = [...document.querySelectorAll(
+      ".mobile-app-nav a, .mobile-app-nav button, .match-manager-subnav button, .lineup-side-tools button"
+    )]
+      .filter(visible)
+      .map((element) => ({ element, rect: interactiveRect(element) }))
+      .filter(({ rect }) => rect.left < -2 || rect.right > viewport.width + 2 || rect.top < -2 || rect.bottom > viewport.height + 2)
+      .slice(0, 20)
+      .map(({ element, rect }) => ({
+        ...descriptor(element),
+        left: Math.round(rect.left), right: Math.round(rect.right), top: Math.round(rect.top), bottom: Math.round(rect.bottom),
+      }));
     const failedImages = [...document.images]
       .filter((image) => image.complete && image.naturalWidth === 0)
       .map((image) => image.currentSrc || image.src || image.alt || "unknown");
+    const rectOf = (selector) => {
+      const element = document.querySelector(selector);
+      if (!element) return null;
+      const rect = element.getBoundingClientRect();
+      return {
+        bottom: Math.round(rect.bottom),
+        display: getComputedStyle(element).display,
+        height: Math.round(rect.height),
+        left: Math.round(rect.left),
+        right: Math.round(rect.right),
+        top: Math.round(rect.top),
+        width: Math.round(rect.width),
+      };
+    };
     return {
       title: document.title,
       theme: doc.dataset.theme || getComputedStyle(doc).colorScheme || "",
@@ -175,8 +234,31 @@ function auditExpression() {
       failedImages,
       smallTargets,
       viewportViolations,
+      gameChromeViolations,
+      gameLayout: {
+        activeContext: rectOf(".match-active-context"),
+        appShell: rectOf(".app-shell"),
+        main: rectOf("main[data-mobile-tab]"),
+        mainScrollTop: document.querySelector("main[data-mobile-tab]")?.scrollTop ?? null,
+        mobileNav: rectOf(".mobile-app-nav"),
+        scrollY: Math.round(window.scrollY),
+      },
       activeElement: descriptor(document.activeElement || body),
     };
+  })()`;
+}
+
+function resetScrollExpression() {
+  return `(() => {
+    document.documentElement.style.scrollBehavior = "auto";
+    document.body.style.scrollBehavior = "auto";
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    for (const element of document.querySelectorAll("*")) {
+      if (element.scrollTop > 0) element.scrollTop = 0;
+      if (element.scrollLeft > 0) element.scrollLeft = 0;
+    }
   })()`;
 }
 
@@ -184,17 +266,18 @@ function markdownReport(results) {
   const rows = results.map((result) => {
     const status = result.navigationError || result.consoleErrors.length || result.failedRequests.length
       || result.metrics.failedImages.length || result.metrics.overflowX > 2 || result.metrics.viewportViolations.length
+      || result.metrics.gameChromeViolations.length
       ? "REVIEW"
       : "PASS";
-    return `| ${result.surface} | ${result.userMode} | ${result.viewport} | ${status} | ${result.metrics.overflowX} | ${result.consoleErrors.length} | ${result.consoleWarnings.length} | ${result.metrics.failedImages.length} | ${result.metrics.smallTargets.length} |`;
+    return `| ${result.surface} | ${result.userMode} | ${result.viewport} | ${status} | ${result.metrics.overflowX} | ${result.consoleErrors.length} | ${result.consoleWarnings.length} | ${result.metrics.failedImages.length} | ${result.metrics.smallTargets.length} | ${result.metrics.gameChromeViolations.length} |`;
   });
   return [
     `# Visual Audit ${label}`,
     "",
     `Base URL: \`${baseUrl}\``,
     "",
-    "| Route | User mode | Viewport | Result | Overflow X | Console errors | Warnings | Broken images | Small targets |",
-    "| --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: |",
+    "| Route | User mode | Viewport | Result | Overflow X | Console errors | Warnings | Broken images | Small targets | Game chrome |",
+    "| --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |",
     ...rows,
     "",
   ].join("\n");
@@ -229,7 +312,7 @@ async function main() {
       client.send("Network.enable"),
     ]);
     await client.send("Page.addScriptToEvaluateOnNewDocument", {
-      source: `if (new URL(location.href).searchParams.has("qaPlayer")) sessionStorage.setItem("pachangas-admin-view-preview", "player"); else sessionStorage.removeItem("pachangas-admin-view-preview");`,
+      source: `try { if (new URL(location.href).searchParams.has("qaPlayer")) sessionStorage.setItem("pachangas-admin-view-preview", "player"); else sessionStorage.removeItem("pachangas-admin-view-preview"); } catch {}`,
     });
 
     let consoleErrors = [];
@@ -250,14 +333,21 @@ async function main() {
     });
 
     const results = [];
-    for (const viewport of viewports) {
+    for (const viewport of selectedViewports) {
+      await client.send("Emulation.setEmulatedMedia", {
+        features: [
+          ...(viewport.displayMode ? [{ name: "display-mode", value: viewport.displayMode }] : []),
+          ...(viewport.reducedMotion ? [{ name: "prefers-reduced-motion", value: "reduce" }] : []),
+        ],
+      });
       await client.send("Emulation.setDeviceMetricsOverride", {
         deviceScaleFactor: 1,
         height: viewport.height,
         mobile: viewport.width < 900,
         width: viewport.width,
       });
-      for (const surface of surfaces) {
+      for (const surface of selectedSurfaces) {
+        if (viewport.surfaceKeys && !viewport.surfaceKeys.includes(surface.key)) continue;
         consoleErrors = [];
         consoleWarnings = [];
         failedRequests = [];
@@ -267,6 +357,38 @@ async function main() {
           await client.send("Page.navigate", { url });
           await delay(650);
           await evaluate(client, "document.fonts?.ready ?? Promise.resolve()");
+          const qaTheme = new URL(surface.path, baseUrl).searchParams.get("qaTheme");
+          if (qaTheme === "light" || qaTheme === "dark") {
+            await evaluate(client, `(() => {
+              for (const element of [document.documentElement, document.body]) {
+                element.dataset.theme = ${JSON.stringify(qaTheme)};
+                element.style.colorScheme = ${JSON.stringify(qaTheme)};
+              }
+            })()`);
+          }
+          if (surface.clickText) {
+            const clicked = await evaluate(client, `(() => {
+              const expected = ${JSON.stringify(surface.clickText)};
+              const target = [...document.querySelectorAll(${JSON.stringify(surface.clickSelector ?? "button, a[href], [role='tab']")})]
+                .find((element) => (element.textContent || "").trim() === expected);
+              if (!target) return false;
+              target.click();
+              return true;
+            })()`);
+            if (!clicked) throw new Error(`Post-navigation action not found: ${surface.clickText}`);
+            await delay(300);
+            const actionConfirmed = await evaluate(client, `(() => {
+              const expected = ${JSON.stringify(surface.clickText)};
+              const target = [...document.querySelectorAll(${JSON.stringify(surface.clickSelector ?? "button, a[href], [role='tab']")})]
+                .find((element) => (element.textContent || "").trim() === expected);
+              return Boolean(target && (target.matches(".active, .selected") || target.getAttribute("aria-current") === "page"));
+            })()`);
+            if (!actionConfirmed) throw new Error(`Post-navigation action did not become active: ${surface.clickText}`);
+          }
+          await evaluate(client, resetScrollExpression());
+          await evaluate(client, "new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)))");
+          await evaluate(client, resetScrollExpression());
+          await delay(50);
         } catch (error) {
           navigationError = error instanceof Error ? error.message : String(error);
         }
@@ -275,6 +397,7 @@ async function main() {
           surface: surface.key,
           path: surface.path,
           userMode: surface.userMode,
+          viewportKey: viewport.key,
           viewport: `${viewport.width}x${viewport.height}`,
           metrics,
           consoleErrors: [...new Set(consoleErrors)],
@@ -284,8 +407,11 @@ async function main() {
         };
         results.push(result);
 
-        if (captureScreenshots && surface.capture) {
+        if (captureScreenshots && surface.capture && viewport.capture) {
+          await evaluate(client, resetScrollExpression());
+          await evaluate(client, "new Promise((resolve) => requestAnimationFrame(resolve))");
           const screenshot = await client.send("Page.captureScreenshot", {
+            captureBeyondViewport: false,
             format: "jpeg",
             fromSurface: true,
             quality: 84,
@@ -298,13 +424,42 @@ async function main() {
       }
     }
 
+    if (captureScreenshots) {
+      await client.send("Emulation.setEmulatedMedia", { features: [] });
+      await client.send("Emulation.setDeviceMetricsOverride", {
+        deviceScaleFactor: 1,
+        height: 900,
+        mobile: false,
+        width: 1440,
+      });
+      await client.send("Page.navigate", { url: new URL("/laboratorio-premium-art-pack", baseUrl).toString() });
+      await delay(900);
+      await evaluate(client, "document.fonts?.ready ?? Promise.resolve()");
+      const layout = await client.send("Page.getLayoutMetrics");
+      const contentSize = layout.cssContentSize ?? layout.contentSize;
+      const contactSheet = await client.send("Page.captureScreenshot", {
+        captureBeyondViewport: true,
+        clip: { x: 0, y: 0, width: Math.min(1440, contentSize.width), height: contentSize.height, scale: 1 },
+        format: "jpeg",
+        fromSurface: true,
+        quality: 88,
+      });
+      await writeFile(
+        path.join(outputRoot, "premium-art-pack-contact-sheet.jpg"),
+        Buffer.from(contactSheet.data, "base64"),
+      );
+    }
+
     await writeFile(path.join(outputRoot, "results.json"), `${JSON.stringify(results, null, 2)}\n`);
     await writeFile(path.join(outputRoot, "matrix.md"), markdownReport(results));
     client.close();
     console.log(JSON.stringify({ outputRoot, results: results.length }, null, 2));
   } finally {
     browser.kill();
-    await rm(userDataDir, { force: true, recursive: true });
+    if (browser.exitCode === null) {
+      await Promise.race([once(browser, "exit"), delay(2_000)]);
+    }
+    await rm(userDataDir, { force: true, maxRetries: 8, recursive: true, retryDelay: 120 });
   }
 }
 

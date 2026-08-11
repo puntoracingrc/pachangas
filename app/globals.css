@@ -25,7 +25,7 @@
   --safe-bottom: env(safe-area-inset-bottom);
   --safe-left: env(safe-area-inset-left);
   --tap-target: 44px;
-  --tap-target-compact: 36px;
+  --tap-target-compact: 40px;
   --mobile-nav-height: 64px;
   --mobile-nav-height-tight: 58px;
   --game-nav-height: 40px;
@@ -40,6 +40,16 @@
   --game-panel-radius: 8px;
   --content-measure: min(100%, 1320px);
   --card-min-mobile: minmax(0, 1fr);
+  --z-content: 0;
+  --z-nav: 40;
+  --z-toast: 60;
+  --z-backdrop: 70;
+  --z-modal: 80;
+  --z-reward: 90;
+  --z-fullscreen: 100;
+  --z-notification: 110;
+  --z-update-required: 120;
+  --z-internal-lab: 130;
 }
 
 :root[data-theme="light"] {
@@ -86,7 +96,7 @@
 
 .pwa-bridge-notice {
   position: fixed;
-  z-index: 1200;
+  z-index: var(--z-update-required);
   right: max(12px, var(--safe-right));
   bottom: max(12px, var(--safe-bottom));
   display: flex;
@@ -142,7 +152,7 @@
 
 .notification-center {
   position: fixed;
-  z-index: 1150;
+  z-index: var(--z-notification);
   right: max(12px, var(--safe-right));
   bottom: max(12px, var(--safe-bottom));
 }
@@ -208,7 +218,7 @@
 
 .notification-panel > header a {
   display: inline-flex;
-  min-height: 34px;
+  min-height: 40px;
   align-items: center;
   padding: 0 8px;
   border-radius: 5px;
@@ -219,8 +229,8 @@
 }
 
 .notification-panel > header button {
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   border: 0;
   background: transparent;
   color: var(--ink);
@@ -243,7 +253,7 @@
 
 .notification-filters button {
   flex: 0 0 auto;
-  min-height: 34px;
+  min-height: 40px;
   padding: 0 10px;
   border: 1px solid var(--line);
   border-radius: 6px;
@@ -329,7 +339,7 @@
 .notification-actions button,
 .notification-actions a {
   display: inline-flex;
-  min-height: 36px;
+  min-height: 40px;
   align-items: center;
   justify-content: center;
   padding: 0 11px;
@@ -373,8 +383,11 @@
 
 .notification-preferences-page > nav a,
 .profile-notifications-link {
+  align-items: center;
   color: var(--ink);
+  display: inline-flex;
   font-weight: 850;
+  min-height: 40px;
   text-decoration: none;
 }
 
@@ -1092,7 +1105,7 @@
 
   .mobile-app-nav {
     position: fixed;
-    z-index: 80;
+    z-index: var(--z-nav);
     right: 0;
     bottom: 0;
     left: 0;
@@ -1250,7 +1263,7 @@
 
   .mobile-account-backdrop {
     position: fixed;
-    z-index: 95;
+    z-index: var(--z-backdrop);
     inset: 0;
     display: block;
     border: 0;
@@ -1260,7 +1273,7 @@
 
   .mobile-account-sheet {
     position: fixed;
-    z-index: 96;
+    z-index: var(--z-modal);
     right: 0;
     bottom: 0;
     left: 0;
@@ -2599,7 +2612,10 @@ h1 {
 
 .google-signin-button:disabled {
   cursor: not-allowed;
-  opacity: 0.45;
+  background: #f1f5f9;
+  border-color: #aeb8c5;
+  color: #506781;
+  opacity: 1;
 }
 
 .google-signout-button {
@@ -3768,6 +3784,8 @@ h1 {
 .manual-back-button {
   align-items: center;
   display: inline-flex;
+  min-height: 40px;
+  padding-inline: 8px;
   text-decoration: none;
 }
 
@@ -4198,10 +4216,10 @@ body.player-evaluation-lab-body .legal-footer {
   color: #102219;
   cursor: pointer;
   display: inline-flex;
-  height: clamp(30px, 8cqw, 38px);
+  height: clamp(40px, 8cqw, 44px);
   justify-content: center;
   padding: 0;
-  width: clamp(30px, 8cqw, 38px);
+  width: clamp(40px, 8cqw, 44px);
 }
 
 .pitch-zoom-button:hover,
@@ -4267,7 +4285,7 @@ body.player-evaluation-lab-body .legal-footer {
   color: #d9f25f;
   font-size: 12px;
   font-weight: 900;
-  min-height: 34px;
+  min-height: 40px;
   padding: 0 10px;
 }
 
@@ -4292,8 +4310,8 @@ body.player-evaluation-lab-body .legal-footer {
 }
 
 .profile-delete-button {
-  min-height: 34px;
-  width: 38px;
+  min-height: 40px;
+  width: 40px;
 }
 
 .profile-claim {
@@ -4438,7 +4456,7 @@ body.player-evaluation-lab-body .legal-footer {
   color: var(--foreground);
   font-size: 13px;
   font-weight: 850;
-  min-height: 34px;
+  min-height: 40px;
   padding: 0 9px;
 }
 
@@ -4510,7 +4528,7 @@ body.player-evaluation-lab-body .legal-footer {
   color: #991b1b;
   display: flex;
   justify-content: center;
-  min-height: 38px;
+  min-height: 40px;
   padding: 0;
 }
 
@@ -5902,10 +5920,10 @@ select:disabled {
   display: flex;
   font-size: 16px;
   font-weight: 950;
-  height: 34px;
+  height: 40px;
   justify-content: center;
   padding: 0;
-  width: 34px;
+  width: 40px;
 }
 
 .rating-badge.rating-open {
@@ -5927,6 +5945,7 @@ select:disabled {
   color: var(--foreground);
   display: flex;
   gap: 8px;
+  min-height: 40px;
   padding: 0;
   text-align: left;
   width: 100%;
@@ -6139,11 +6158,11 @@ select:disabled {
   font-size: 18px;
   font-weight: 950;
   gap: 4px;
-  height: 34px;
+  height: 40px;
   justify-content: center;
-  min-height: 34px;
+  min-height: 40px;
   padding: 0;
-  width: 34px;
+  width: 40px;
 }
 
 .team-move-label {
@@ -6172,7 +6191,7 @@ select:disabled {
   background: #f1efe6;
   border: 1px solid var(--line);
   border-radius: 8px;
-  min-height: 34px;
+  min-height: 40px;
   padding: 0 8px;
   white-space: nowrap;
 }
@@ -6527,14 +6546,14 @@ select:disabled {
   justify-content: center;
   padding: 18px;
   position: fixed;
-  z-index: 90;
+  z-index: var(--z-modal);
 }
 
 .pitch-modal-fullscreen-backdrop {
   align-items: stretch;
   background: #07100d;
   padding: max(6px, var(--safe-top)) max(6px, var(--safe-right)) max(6px, var(--safe-bottom)) max(6px, var(--safe-left));
-  z-index: 220;
+  z-index: var(--z-fullscreen);
 }
 
 html:fullscreen .pitch-modal-fullscreen-backdrop {
@@ -7092,6 +7111,7 @@ html:fullscreen .pitch-modal-fullscreen .match-pitch.match-pitch-horizontal.matc
   text-align: center;
   transform: translate(-50%, -50%);
   transition: box-shadow 160ms ease, filter 160ms ease, transform 160ms ease;
+  min-width: 40px;
   width: var(--pitch-card-width, clamp(34px, 9.5cqw, 58px));
   z-index: 3;
 }
@@ -7770,7 +7790,7 @@ html:fullscreen .pitch-modal-fullscreen .match-pitch.match-pitch-horizontal.matc
   color: var(--ink-soft);
   font-size: 12px;
   font-weight: 950;
-  min-height: 32px;
+  min-height: 40px;
   padding: 0 6px;
 }
 
@@ -8792,6 +8812,7 @@ html:fullscreen .pitch-modal-fullscreen .match-pitch.match-pitch-horizontal.matc
   font-size: 13px;
   font-weight: 850;
   min-height: 30px;
+  min-width: 40px;
   padding: 0 4px;
 }
 
@@ -9759,7 +9780,7 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
 }
 
 .market-filters small {
-  color: #a3332a;
+  color: var(--ink-soft);
   font-size: 11px;
   font-weight: 850;
   line-height: 1.25;
@@ -9911,7 +9932,7 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
   font-size: 11px;
   font-weight: 900;
   justify-content: center;
-  min-height: 32px;
+  min-height: 40px;
   padding: 0 9px;
   text-decoration: none;
 }
@@ -9995,7 +10016,13 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
   color: #fff;
   cursor: pointer;
   font-weight: 900;
-  min-height: 36px;
+  min-height: 40px;
+  padding-inline: 9px;
+  white-space: nowrap;
+}
+
+.market-invite-label-compact {
+  display: none;
 }
 
 .market-player-info button:disabled {
@@ -10531,7 +10558,7 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
   }
 
   .status-buttons button {
-    min-height: 32px;
+    min-height: 40px;
     padding: 0 6px;
   }
 
@@ -10559,8 +10586,8 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
 
   .player-actions .team-move,
   .player-actions .paid-button {
-    height: 36px;
-    min-height: 36px;
+    height: 40px;
+    min-height: 40px;
   }
 
   .player-actions .team-move {
@@ -10575,7 +10602,7 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
     border-radius: 50%;
     font-size: 16px;
     justify-self: start;
-    width: 36px;
+    width: 40px;
   }
 
   .player-actions .team-move-label {
@@ -11709,7 +11736,7 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
 
   .mobile-app-nav {
     position: fixed;
-    z-index: 90;
+    z-index: var(--z-nav);
     top: 0;
     right: 0;
     bottom: auto;
@@ -12357,8 +12384,8 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
     color: #f5f2e8;
     font-size: 11px;
     font-weight: 850;
-    height: 28px;
-    min-height: 28px;
+    height: var(--tap-target-compact);
+    min-height: var(--tap-target-compact);
     padding: 0 8px;
   }
 
@@ -12965,11 +12992,12 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
     display: inline-flex;
     font-size: 17px;
     font-weight: 950;
-    height: 24px;
+    height: 40px;
     justify-content: center;
     line-height: 1;
     padding: 0 0 2px;
-    width: 24px;
+    min-height: 40px;
+    width: 40px;
   }
 
   main[data-mobile-tab="partido"] .player-action-menu-backdrop {
@@ -13594,11 +13622,11 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
       inset 0 1px 0 rgba(255, 255, 255, 0.06),
       0 14px 32px rgba(0, 0, 0, 0.16);
     display: grid;
-    gap: 5px;
+    gap: 3px;
     grid-column: 1;
     grid-row: 1 / span 2;
     min-height: 0;
-    padding: 6px;
+    padding: 4px;
   }
 
   main[data-mobile-tab="partido"] .match-active-context {
@@ -13650,8 +13678,12 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
   }
 
   main[data-mobile-tab="partido"] .match-active-context .match-context-status-button {
+    align-items: center;
     cursor: pointer;
+    display: inline-flex;
     font-family: inherit;
+    justify-content: center;
+    min-height: 40px;
   }
 
   main[data-mobile-tab="partido"] .match-active-context .match-context-status-button:hover,
@@ -13702,7 +13734,7 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
     font-weight: 950;
     justify-content: flex-start;
     line-height: 1;
-    min-height: 35px;
+    min-height: 40px;
     overflow: hidden;
     padding: 0 8px;
     text-align: left;
@@ -13794,9 +13826,9 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
     border: 1px solid rgba(200, 239, 93, 0.2);
     border-radius: 8px;
     display: grid;
-    gap: 6px;
-    margin-top: 8px;
-    padding: 7px;
+    gap: 3px;
+    margin-top: 4px;
+    padding: 4px;
   }
 
   main[data-mobile-tab="partido"] .lineup-side-tools-kicker {
@@ -13815,7 +13847,7 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
 
   main[data-mobile-tab="partido"] .lineup-side-actions {
     display: grid;
-    gap: 5px;
+    gap: 3px;
   }
 
   main[data-mobile-tab="partido"] .lineup-side-actions button {
@@ -13824,7 +13856,7 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
     color: #f5f2e8;
     cursor: pointer;
     justify-content: center;
-    min-height: 30px;
+    min-height: var(--tap-target-compact);
     padding: 0 6px;
     text-align: center;
   }
@@ -14193,7 +14225,7 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
     font-size: 11px;
     font-weight: 900;
     justify-content: center;
-    min-height: 34px;
+    min-height: var(--tap-target-compact);
     min-width: 0;
     padding: 0 10px;
     text-align: center;
@@ -14667,7 +14699,7 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
   main[data-mobile-tab="perfil"] .profile-return-button {
     border-radius: 6px;
     font-size: 10px;
-    min-height: 28px;
+    min-height: 40px;
     padding: 0 8px;
     white-space: nowrap;
   }
@@ -14760,13 +14792,13 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
   main[data-mobile-tab="perfil"] .profile-top select,
   main[data-mobile-tab="perfil"] .profile-position-row,
   main[data-mobile-tab="perfil"] .profile-save-area {
-    min-height: 26px;
+    min-height: 40px;
   }
 
   main[data-mobile-tab="perfil"] .profile-top input,
   main[data-mobile-tab="perfil"] .profile-top select {
     font-size: 11px;
-    height: 26px;
+    height: 40px;
     padding: 0 7px;
   }
 
@@ -14808,7 +14840,7 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
   main[data-mobile-tab="perfil"] .profile-save-button,
   main[data-mobile-tab="perfil"] .theme-preference-button {
     font-size: 10px;
-    min-height: 26px;
+    min-height: 40px;
     padding: 0 7px;
   }
 
@@ -14852,8 +14884,12 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
 
   main[data-mobile-tab="perfil"] .theme-preference-options button {
     font-size: 9px;
-    min-height: 24px;
+    min-height: 40px;
     padding: 0 4px;
+  }
+
+  main[data-mobile-tab="perfil"] .relative-rating-options {
+    grid-template-columns: repeat(3, minmax(40px, 1fr));
   }
 
   main[data-mobile-tab="perfil"] .avatar-prompt-help,
@@ -15247,7 +15283,7 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
     font-weight: 950;
     justify-content: flex-start;
     line-height: 1.1;
-    min-height: 35px;
+    min-height: 40px;
     overflow: hidden;
     padding: 0 8px;
     text-align: left;
@@ -15300,7 +15336,7 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
 
   .market-page .market-titlebar {
     margin: 0;
-    min-height: 36px;
+    min-height: 40px;
     padding: 7px 9px;
   }
 
@@ -15322,7 +15358,7 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
   .market-page .market-context-summary {
     flex: 0 0 auto;
     gap: 5px;
-    min-height: 32px;
+    min-height: 40px;
     padding: 6px 9px;
   }
 
@@ -15343,8 +15379,8 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
     border-color: rgba(255, 255, 255, 0.16);
     color: #f5f2e8;
     font-size: 11px;
-    height: 28px;
-    min-height: 28px;
+    height: 40px;
+    min-height: 40px;
   }
 
   .market-page .market-grid {
@@ -15410,6 +15446,23 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
     -webkit-line-clamp: 1;
   }
 
+  .market-page .market-player-info p {
+    display: none;
+  }
+
+  .market-page .market-player-info button {
+    min-height: 40px;
+    font-size: 10px;
+  }
+
+  .market-page .market-invite-label-full {
+    display: none;
+  }
+
+  .market-page .market-invite-label-compact {
+    display: inline;
+  }
+
   .market-page .market-tags {
     max-height: 22px;
     overflow: hidden;
@@ -15441,7 +15494,7 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
   main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="admin"] .match-admin-actions-row a,
   main[data-mobile-tab="partido"] > .app-shell[data-match-manager-pane="admin"] .match-admin-actions-row button {
     font-size: 10px;
-    min-height: 30px;
+    min-height: var(--tap-target-compact);
     padding: 0 7px;
   }
 
@@ -15465,7 +15518,7 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
     --game-side-nav-width: var(--game-side-nav-width-tight);
     --game-shell-padding: 6px;
     --game-shell-gap: 6px;
-    --tap-target-compact: 32px;
+    --tap-target-compact: 40px;
   }
 
   .mobile-app-nav-item {
@@ -15480,13 +15533,13 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
     height: 14px;
   }
 
-  main[data-mobile-tab="partido"] .match-manager-subnav {
-    gap: 4px;
-    padding: 5px;
+  main[data-mobile-tab="partido"] > .app-shell > .match-manager-subnav {
+    gap: 2px;
+    padding: 3px;
   }
 
   main[data-mobile-tab="partido"] .match-manager-subnav button {
-    min-height: 31px;
+    min-height: 40px;
     padding: 0 6px;
     font-size: 9px;
   }
@@ -15512,12 +15565,16 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
   }
 
   main[data-mobile-tab="partido"] .lineup-side-tools {
-    gap: 5px;
-    padding: 6px;
+    gap: 3px;
+    padding: 4px;
+  }
+
+  main[data-mobile-tab="partido"] .lineup-side-actions {
+    gap: 3px;
   }
 
   main[data-mobile-tab="partido"] .lineup-side-actions button {
-    min-height: 28px;
+    min-height: var(--tap-target-compact);
     font-size: 9px;
   }
 
@@ -15563,8 +15620,8 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
   main[data-mobile-tab="partido"] .player-status-chip,
   main[data-mobile-tab="partido"] .paid-button,
   main[data-mobile-tab="partido"] .player-action-menu-trigger {
-    height: 22px;
-    min-height: 22px;
+    height: 40px;
+    min-height: 40px;
   }
 
   main[data-mobile-tab="partido"] .player-status-chip {
@@ -16569,7 +16626,7 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
   }
 
   main[data-mobile-tab] .ranking-toolbar :is(select, button) {
-    min-height: 38px;
+    min-height: 40px;
   }
 
   main[data-mobile-tab] .ranking-sort-buttons {

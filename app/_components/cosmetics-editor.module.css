@@ -33,7 +33,10 @@
   display: flex;
   gap: 6px;
   overflow-x: auto;
-  padding: 0 0 8px;
+  overscroll-behavior-inline: contain;
+  padding: 6px 12px 8px 2px;
+  scroll-padding-inline: 2px 16px;
+  scrollbar-color: rgba(183, 244, 82, 0.5) rgba(8, 23, 18, 0.35);
   scrollbar-width: thin;
 }
 
@@ -242,7 +245,7 @@
   }
 
   .tabs > button {
-    min-height: 36px;
+    min-height: 40px;
     padding: 6px 9px;
   }
 

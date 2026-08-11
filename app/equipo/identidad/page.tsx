@@ -11,6 +11,7 @@ import {
   MaterialSwatch,
   UnsavedChanges,
 } from "../../_components/cosmetics-editor";
+import { ProductFeedback, ProductState } from "../../_components/product-state";
 import { TeamShieldView } from "../../_components/team-shield-view";
 import { CLIENT_VERSION } from "../../client-version-contract";
 import {
@@ -38,6 +39,7 @@ import {
   type TeamShieldSnapshot,
 } from "../../team-identity-contract";
 import styles from "./page.module.css";
+import { SERVICE_UNAVAILABLE_MESSAGE, userFacingError } from "../../user-facing-error";
 
 const RewardBoxDemo = dynamic(
   () => import("../../reward-box-demo").then((module) => module.RewardBoxDemo),
@@ -353,7 +355,10 @@ export default function TeamIdentityPage() {
   const [activeShieldCategory, setActiveShieldCategory] = useState<TeamShieldCosmeticSlot>("shape");
   const [isOnline, setIsOnline] = useState(true);
   const [busy, setBusy] = useState("");
-  const [message, setMessage] = useState(supabase ? "" : "Supabase no está configurado.");
+  const [message, setMessage] = useState(supabase ? "" : SERVICE_UNAVAILABLE_MESSAGE);
+  const [membershipStatus, setMembershipStatus] = useState<"error" | "loading" | "no-team" | "ready" | "signed-out" | "unavailable">(
+    supabase ? "loading" : "unavailable",
+  );
   const [rewardSequence, setRewardSequence] = useState<PendingReward[]>([]);
   const [rewardSequenceIndex, setRewardSequenceIndex] = useState(0);
   const [openedReward, setOpenedReward] = useState<PendingReward | null>(null);
@@ -385,7 +390,7 @@ export default function TeamIdentityPage() {
     if (!supabase || !selectedGroupId) return;
     const result = await supabase.rpc("get_pachanga_team_shield_snapshot_v1", { target_group_id: selectedGroupId });
     if (result.error) {
-      setMessage(result.error.message);
+      setMessage(userFacingError(result.error, "No pudimos recuperar el escudo del equipo."));
       return;
     }
     const canonical = normalizeTeamShieldSnapshot(result.data);
@@ -404,7 +409,7 @@ export default function TeamIdentityPage() {
     if (!supabase || !selectedGroupId) return;
     const result = await supabase.rpc("get_pachanga_progression_snapshot_v1", { target_group_id: selectedGroupId });
     if (result.error) {
-      setMessage(result.error.message);
+      setMessage(userFacingError(result.error, "No pudimos recuperar la progresión del equipo."));
       return;
     }
     const canonical = normalizeProgressionSnapshot(result.data);
@@ -441,6 +446,7 @@ export default function TeamIdentityPage() {
       if (!active) return;
       if (!user) {
         setMessage("Inicia sesión para ver la identidad de tu equipo.");
+        setMembershipStatus("signed-out");
         return;
       }
       setUserId(user.id);
@@ -451,11 +457,14 @@ export default function TeamIdentityPage() {
         .order("created_at", { ascending: true });
       if (!active) return;
       if (result.error) {
-        setMessage(result.error.message);
+        setMessage(userFacingError(result.error, "No pudimos recuperar tus equipos."));
+        setMembershipStatus("error");
         return;
       }
       const groups = membershipsFromRows(result.data);
       setMemberships(groups);
+      setMessage("");
+      setMembershipStatus(groups.length ? "ready" : "no-team");
       const queryGroupId = new URLSearchParams(window.location.search).get("grupo") ?? "";
       const cachedGroupId = window.localStorage.getItem("pachangas-identity-selected-group") ?? "";
       const preferred = groups.find((group) => group.groupId === queryGroupId)?.groupId
@@ -641,7 +650,7 @@ export default function TeamIdentityPage() {
     });
     setBusy("");
     if (result.error) {
-      setMessage(result.error.message);
+      setMessage(userFacingError(result.error));
       if (result.error.code === "PT409") {
         setDraftDesign(null);
         setConfirmedDesign(null);
@@ -673,7 +682,7 @@ export default function TeamIdentityPage() {
     });
     setBusy("");
     if (result.error) {
-      setMessage(result.error.message);
+      setMessage(userFacingError(result.error));
       if (result.error.code === "PT409") await loadCrest();
       return;
     }
@@ -695,7 +704,7 @@ export default function TeamIdentityPage() {
     });
     setBusy("");
     if (result.error) {
-      setMessage(result.error.message);
+      setMessage(userFacingError(result.error));
       if (result.error.code === "PT409") await loadProgression();
       return;
     }
@@ -721,7 +730,7 @@ export default function TeamIdentityPage() {
     });
     setBusy("");
     if (result.error) {
-      setMessage(result.error.message);
+      setMessage(userFacingError(result.error));
       if (result.error.code === "PT409") await loadPlayerCosmetics();
       return;
     }
@@ -781,6 +790,37 @@ export default function TeamIdentityPage() {
   const rewardEconomy = progression?.rewardEconomy ?? null;
   const currentSequenceReward = rewardSequence[rewardSequenceIndex] ?? null;
   const openedCosmeticKey = grantedPlayerCosmetic(openedReward);
+  const membershipState = membershipStatus === "unavailable"
+    ? {
+        description: SERVICE_UNAVAILABLE_MESSAGE,
+        eyebrow: "Servicio no disponible",
+        title: "La identidad del equipo sigue a salvo",
+      }
+    : membershipStatus === "loading"
+      ? {
+          description: "Estamos recuperando tus equipos y la última revisión confirmada.",
+          eyebrow: "Sincronizando",
+          title: "Cargando identidad",
+        }
+      : membershipStatus === "signed-out"
+        ? {
+            description: "Entra con tu cuenta para ver el escudo, la colección y la progresión de tu equipo.",
+            eyebrow: "Sesión necesaria",
+            title: "Identidad del equipo",
+          }
+        : membershipStatus === "no-team"
+          ? {
+              description: "Cuando formes parte de un equipo, aquí aparecerán su escudo, logros, estadísticas y colección.",
+              eyebrow: "Sin equipo",
+              title: "Aún no perteneces a un equipo",
+            }
+          : membershipStatus === "error"
+            ? {
+                description: message || "No pudimos recuperar tus equipos. Vuelve a intentarlo.",
+                eyebrow: "No se pudo cargar",
+                title: "Identidad no disponible",
+              }
+            : null;
 
   return (
     <main className={styles.page}>
@@ -805,7 +845,18 @@ export default function TeamIdentityPage() {
         ) : null}
       </header>
 
-      {!selectedGroupId ? <p className={styles.empty}>Necesitas pertenecer a un grupo para abrir su identidad.</p> : null}
+      {membershipState ? (
+        <ProductState
+          actions={membershipStatus === "no-team"
+            ? <><Link href="/">Ir a Inicio</Link><Link href="/mercado?section=equipos">Explorar equipos</Link></>
+            : membershipStatus === "signed-out" ? <Link href="/">Ir a Inicio</Link> : undefined}
+          busy={membershipStatus === "loading"}
+          description={membershipState.description}
+          eyebrow={membershipState.eyebrow}
+          surface="dark"
+          title={membershipState.title}
+        />
+      ) : null}
       {crest && draftDesign ? (
         <>
           {crest.canManage && crest.teamCosmeticsEnabled ? (
@@ -1055,7 +1106,11 @@ export default function TeamIdentityPage() {
         </>
       ) : null}
 
-      {message ? <p className={styles.message} aria-live="polite">{message}</p> : null}
+      {membershipStatus === "ready" && message ? (
+        <ProductFeedback tone={message.includes("confirmado") || message.includes("equipado") ? "success" : "error"}>
+          {message}
+        </ProductFeedback>
+      ) : null}
 
       <RewardBoxDemo
         open={Boolean(currentSequenceReward)}

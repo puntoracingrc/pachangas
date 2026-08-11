@@ -8,7 +8,7 @@ Pachangas IQ is a compact football operations app that can become a game-like in
 
 | Token | Contract |
 | --- | --- |
-| Page background | Theme-aware `--background`; game mode uses the established dark field surface |
+| Page background | Theme-aware `--background` (`#f7f6f0` light, `#0b1210` dark); game mode uses the established dark field surface |
 | Panel | `--panel` or a translucent mix of it; never white floating cards inside cards |
 | Primary ink | `--ink` |
 | Secondary ink | `--ink-soft`, with readable contrast in both themes |
@@ -19,6 +19,8 @@ Pachangas IQ is a compact football operations app that can become a game-like in
 | Touch target | 44px preferred, 40px absolute practical floor in compact game mode |
 | Focus | Visible 2px outline using lime/green contrast, never color change alone |
 | Motion | Short feedback only; disabled or reduced under `prefers-reduced-motion` |
+
+The canonical layout primitives are `--app-viewport-height`, the four `--safe-*` insets, `--mobile-page-padding`, `--game-shell-padding`, `--game-shell-gap`, `--game-side-nav-width`, `--tap-target` and `--tap-target-compact`. New mobile controls must consume these tokens before adding route-specific dimensions.
 
 ## Type hierarchy
 
@@ -77,10 +79,20 @@ Equivalent commands use the same verbs: `Guardar`, `Restablecer`, `Cancelar`, `C
 - Offline cached reads remain visible with an explicit stale/offline label.
 - Server writes are disabled offline and never appear confirmed before canonical acknowledgement.
 - Feature flags off remove the unavailable command or replace the whole surface with a deliberate unavailable state.
+- Standalone product tools use the shared `ProductState` composition: eyebrow, title, concise explanation and up to two useful actions.
+- Save feedback uses one fixed, non-blocking product toast. Success, error and stale states keep stable geometry and differ by copy plus color, not color alone.
+
+## Forms and editors
+
+- Inputs, selects and buttons use a 44px preferred height and never fall below 40px on touch layouts.
+- Labels remain visible; placeholders are examples, not substitutes for labels.
+- A disabled field keeps readable contrast and must not be confused with a loading state.
+- Player and team cosmetic editors share tabs, `NEW`, save/error feedback and unavailable states while retaining their domain-specific layer counts.
+- Virtual-keyboard layouts keep their scrolling owner explicit so `Guardar` remains reachable.
 
 ## Overlays
 
-- Product overlay levels are documented as page `0`, sticky navigation `20`, floating actions `30`, drawer/backdrop `60`, modal `80`, critical full-screen reward `100`.
+- Product overlay levels are `content 0`, `navigation 40`, `toast 60`, `backdrop 70`, `modal 80`, `reward 90`, `fullscreen 100`, `notification 110`, `required update 120` and `internal lab 130`.
 - Overlays lock background scroll where appropriate and keep Close inside all safe areas.
 - Toasts do not cover primary actions or bottom navigation.
 
@@ -91,6 +103,23 @@ Equivalent commands use the same verbs: `Guardar`, `Restablecer`, `Cancelar`, `C
 - Use dynamic viewport units and `env(safe-area-inset-*)` for fixed navigation and overlays.
 - Standalone PWA and browser mode share layout; only browser chrome/fullscreen behavior differs.
 - Zoom at 125%, 150% and 200% may reflow but cannot hide primary navigation or actions.
+
+## Game mode / landscape
+
+- `844x390` is a first-class operational surface, not a scaled portrait page.
+- The top product rail stays stable while Partido and Mercado use a contextual left submenu.
+- Compactness comes from shorter copy, fewer decorative gaps and explicit scroll owners; it does not reduce touch targets below 40px.
+- Partido subpanes (`Proximo`, `Alineacion`, `Resultado`, `Admin`) are independent QA surfaces even though they share a URL.
+- Alineacion keeps the pitch as the primary object. Fullscreen controls respect safe areas, and historic matches remain read-only snapshots.
+- Horizontal scrolling is allowed only for clearly bounded rails such as match histories or roster groups, never for the document body.
+
+## Accessibility contract
+
+- Every icon-only action has an accessible name and visible keyboard focus.
+- Checkbox/radio controls may render a compact mark only when their complete label is the 40px+ interactive target.
+- `NEW` announces `Nuevo` through an accessible label/title and is never represented only by a red dot.
+- Player and shield effects become static under `prefers-reduced-motion: reduce`.
+- Team colors supplement labels and names; they never carry the only meaning.
 
 ## Cosmetics
 

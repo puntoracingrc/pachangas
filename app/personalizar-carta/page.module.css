@@ -13,8 +13,7 @@
 .topbar,
 .header,
 .page > section,
-.notice,
-.message {
+.notice {
   width: min(1120px, 100%);
   margin-inline: auto;
 }
@@ -28,6 +27,9 @@
 }
 
 .topbar a {
+  display: inline-flex;
+  min-height: 40px;
+  align-items: center;
   justify-self: start;
   color: #b7f452;
   font-weight: 850;
@@ -127,8 +129,7 @@
   box-shadow: inset 0 0 0 1px rgba(183, 244, 82, 0.25);
 }
 
-.notice,
-.message {
+.notice {
   margin-top: 12px;
   border: 1px solid rgba(255, 210, 112, 0.42);
   border-radius: 6px;
@@ -136,12 +137,6 @@
   padding: 10px 12px;
   color: #ffe4a5;
   font-size: 0.82rem;
-}
-
-.message {
-  border-color: rgba(159, 187, 173, 0.34);
-  background: rgba(8, 24, 18, 0.72);
-  color: #d6e4dc;
 }
 
 @media (max-width: 600px) {
