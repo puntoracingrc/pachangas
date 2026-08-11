@@ -164,7 +164,7 @@ function normalizeQueue(value: unknown): QueueSnapshot {
   };
 }
 
-export function ConductAdminClient({ initialGroupId, initialMatchId }: { initialGroupId: string; initialMatchId: string }) {
+export function ConductAdminClient({ canModerate, initialGroupId, initialMatchId }: { canModerate: boolean; initialGroupId: string; initialMatchId: string }) {
   const [groupId, setGroupId] = useState(initialGroupId);
   const [matchId, setMatchId] = useState(initialMatchId);
   const [attendance, setAttendance] = useState<AdminAttendanceSnapshot | null>(null);
@@ -175,7 +175,7 @@ export function ConductAdminClient({ initialGroupId, initialMatchId }: { initial
   const [shadowMode, setShadowMode] = useState(true);
   const [selectedReference, setSelectedReference] = useState("");
   const [evidence, setEvidence] = useState<Record<string, unknown> | null>(null);
-  const [moderator, setModerator] = useState(false);
+  const moderator = canModerate;
   const [note, setNote] = useState("");
   const [duration, setDuration] = useState<"7" | "30" | "90" | "indefinite">("7");
   const [restrictionTypes, setRestrictionTypes] = useState<string[]>(["public_match_access"]);
@@ -218,14 +218,6 @@ export function ConductAdminClient({ initialGroupId, initialMatchId }: { initial
     setSelectedReference((current) => current && next.cases.some((item) => item.caseReference === current)
       ? current : next.cases[0]?.caseReference ?? "");
   }, [moderator, queueFilter]);
-
-  useEffect(() => {
-    if (!supabase) return;
-    void supabase.auth.getSession().then(({ data }) => {
-      const role = String(data.session?.user.app_metadata?.pachangas_security_role ?? "");
-      setModerator(role === "moderator" || role === "security_admin");
-    });
-  }, []);
 
   useEffect(() => {
     const task = window.setTimeout(() => void loadAttendance(), 0);
