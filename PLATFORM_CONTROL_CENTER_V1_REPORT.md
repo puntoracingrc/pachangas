@@ -10,7 +10,8 @@ Estado: implementación, Supabase staging y Preview autenticada validados; PR bo
 - PR borrador: [#141](https://github.com/puntoracingrc/pachangas/pull/141).
 - Worktree aislado: `/Users/macbookpro14/.codex/worktrees/pachangas-platform-control-center-v1`.
 - Migraciones V1: `20260811150309_platform_control_center_v1.sql` y reparación aditiva `20260811172700_platform_control_center_overview_restriction_fix.sql`.
-- Preview autenticada: `https://pachangas-nqu44pvnj-persianas-almar-web-s-projects.vercel.app` (`dpl_GYuXW4FJvgRBu8zP9bpBanM6SmY5`).
+- Preview aislada y autenticada contra staging: `https://pachangas-nqu44pvnj-persianas-almar-web-s-projects.vercel.app` (`dpl_GYuXW4FJvgRBu8zP9bpBanM6SmY5`, commit funcional `26496f4`).
+- Preview exacta del HEAD final: `https://pachangas-erejlk08z-persianas-almar-web-s-projects.vercel.app` (`dpl_ExtuLEZKqPvbJk5A2xpmDRdr2nX6`, commit `afa221c`). El Preview Git ordinario no se conectó a staging ni se usó con cuentas o datos de producción.
 - Supabase staging: branch project `iozcjirlfytryzrcmrnq`; producción no se usó para migraciones ni QA.
 - Producción modificada: **NO**.
 - Demo World V1: fuera de esta rama.
@@ -111,7 +112,8 @@ No se usa el término DAU. No se inventan históricos, límites ni porcentajes.
 | Privacidad staging | PASS: PII por capability, IDs Stripe redacted, payload de grupo ausente, búsqueda segura y cero grants cliente sobre `private`. |
 | Responsive | PASS en las 17 superficies principales a 1440x900, 1920x1080, 390x844 y 844x390; cero overflow global y cero imágenes rotas. |
 | PWA standalone | PASS real en Chromium app mode 390x816: manifest, Service Worker activo/controlador, sesión owner, `/admin` y cero errores runtime. |
-| Preview/QA autenticada | PASS en el deployment indicado; búsqueda global, detalles cruzados, Synthetic World cerrado con 404 y consola sin errores. |
+| Preview/QA autenticada | PASS en el Preview aislado de staging; búsqueda global, detalles cruzados, Synthetic World cerrado con 404 y consola sin errores. |
+| Preview exacta del HEAD final | PASS para `afa221c`: deployment `READY`, `/`, manifest y Service Worker responden correctamente; `/admin` conserva `private/no-store` y `noindex,nofollow`; API sin sesión devuelve `401 ADMIN_ACCESS_DENIED`; cero warnings/errors en runtime. La QA autenticada no se repitió contra el Preview Git porque su entorno estándar no apunta a staging. |
 
 ## Límites conocidos
 
