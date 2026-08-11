@@ -48,7 +48,7 @@ Every finding was recorded before its corrective patch. `FIXED_REGRESSION_VERIFI
 
 | Findings | P0 | P1 | P2 | P3 | Fixed and verified | Mitigated | Open |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| 20 | 0 | 3 | 17 | 0 | 18 | 1 | 1 |
+| 20 | 0 | 3 | 17 | 0 | 19 | 1 | 0 |
 
 | ID | Route/surface | User mode | Viewport | Type | Severity | Description | Correction and evidence | Status |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -71,7 +71,7 @@ Every finding was recorded before its corrective patch. `FIXED_REGRESSION_VERIFI
 | GVC-017 | visual QA theme fixture | internal QA | all | DEUDA_ESTRUCTURAL | P2 | Applying theme before hydration created a harness-only hydration mismatch. | Theme fixture now applies after hydration; final console errors/warnings are zero. | FIXED_REGRESSION_VERIFIED |
 | GVC-018 | visual QA subpane actions | internal QA | all | DEUDA_ESTRUCTURAL | P2 | Text-only actions could select global Admin and captures could preserve compositor scroll. | Scoped selectors, active-state assertion, two-frame scroll reset and viewport-only capture. | FIXED_REGRESSION_VERIFIED |
 | GVC-019 | shared product errors | disconnected visitor/member | all | BUG_VISUAL | P1 | Browser wording `Failed to fetch` used the inverse word order of the sanitizer pattern and could escape as raw technical copy. | Both word orders and common network wording are sanitized; focused regression test. | FIXED_REGRESSION_VERIFIED |
-| GVC-020 | Google Places inputs | authenticated Preview | desktop/mobile | DEUDA_ESTRUCTURAL | P2 | The remote Google library warned that the active `google.maps.places.Autocomplete` widget is legacy and unavailable to new customers. | Registered from exact-SHA Preview console before correction. Migration and remote regression pending. | OPEN |
+| GVC-020 | Google Places inputs | authenticated Preview | desktop/mobile | DEUDA_ESTRUCTURAL | P2 | The remote Google library warned that the active `google.maps.places.Autocomplete` widget is legacy and unavailable to new customers. | Registered in commit `466f3b3` before correction. `PlaceAutocompleteElement` is now primary, `(cities)` and Spain restrictions are preserved, and the legacy widget remains fallback-only. Source regression plus warning-free authenticated Preview at 390x844 and 844x390. | FIXED_REGRESSION_VERIFIED |
 
 ## Final matrix
 
@@ -182,8 +182,16 @@ Focused reruns can use comma-separated `VISUAL_AUDIT_VIEWPORTS` and `VISUAL_AUDI
 - Mercado focused ESLint: two pre-existing `react-hooks/set-state-in-effect` findings and one pre-existing `no-img-element` warning. The affected state-setting structure and image were already present in initial `main`; this pass changes only neutral copy and error sanitization around them.
 - Final browser matrix: **172/172 combinations completed**, with zero horizontal overflow, console errors, console warnings, failed images, failed requests, navigation failures, viewport escapes or clipped game controls.
 - Asset budget: **13 dedicated assets / 52,702 bytes**, with no GLB, Three.js or permanent WebGL runtime.
-- Final branch scope: **112 changed paths** versus initial `main`, including baseline/final evidence and delivery assets.
+- Final branch scope: **113 changed paths** versus initial `main`, including baseline/final evidence and delivery assets.
 - `git diff --check`: **passing** immediately before publication.
+
+## Authenticated Preview QA
+
+- The first exact-SHA Preview (`3125fb4`) completed **20 high-signal authenticated states** across 1440x900, 390x844 and 844x390: Inicio, Partido and its Alineación/Resultado/Admin panes, Mercado and its Jugadores/Partidos/Retos panes, Avisos, both cosmetic editors and Premium Art.
+- Those 20 states had zero horizontal overflow, broken images, raw technical copy, clipped game controls or sub-40px mobile targets. The production build also had no Next.js development overlay.
+- The first pass exposed only GVC-020: two Google-owned warnings from the legacy Places widget. The finding was committed before its corrective patch.
+- The corrective exact-SHA Preview (`db288ec`) renders the new widget at 390x844 and 844x390 with zero overflow, zero broken images and **zero console errors/warnings**.
+- Vercel Deployment Protection requires an authenticated browser session. The anonymous full-matrix attempt was discarded because it reached Vercel Login rather than Pachangas IQ; it is not counted as product evidence.
 
 ## Remaining visual debt
 
