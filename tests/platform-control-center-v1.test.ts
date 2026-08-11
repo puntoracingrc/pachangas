@@ -180,14 +180,35 @@ test("unknown database errors are not reflected to the browser", async () => {
   assert.doesNotMatch(auth, /message\.slice\(0, 240\)/);
 });
 
-test("owner bootstrap refuses production before reading credentials", async () => {
+test("owner bootstrap requires an explicit production release contract before reading credentials", async () => {
   const script = fileURLToPath(new URL("scripts/platform-admin/bootstrap-owner.mjs", root));
   const result = spawnSync(process.execPath, [script], {
     encoding: "utf8",
     env: { ...process.env, PACHANGAS_ENVIRONMENT: "production", VERCEL_ENV: "production" },
   });
   assert.notEqual(result.status, 0);
-  assert.match(`${result.stdout}\n${result.stderr}`, /disabled for production/);
+  assert.match(`${result.stdout}\n${result.stderr}`, /requires explicit confirmation/);
+
+  const incomplete = spawnSync(process.execPath, [
+    script,
+    "--confirm-production-bootstrap", "I_UNDERSTAND_PRODUCTION",
+  ], {
+    encoding: "utf8",
+    env: { ...process.env, PACHANGAS_ENVIRONMENT: "production", VERCEL_ENV: "production" },
+  });
+  assert.notEqual(incomplete.status, 0);
+  assert.match(`${incomplete.stdout}\n${incomplete.stderr}`, /valid --email/);
+
+  const sourceText = await source("scripts/platform-admin/bootstrap-owner.mjs");
+  assert.match(sourceText, /--expected-project-ref/);
+  assert.match(sourceText, /Production bootstrap requires an explicit --operation-id UUID/);
+  assert.match(sourceText, /auth\.admin\.listUsers/);
+  assert.match(sourceText, /user\.email === email/);
+  assert.match(sourceText, /identity\.provider\?\.toLowerCase\(\) === provider/);
+  assert.match(sourceText, /email_confirmed_at/);
+  assert.match(sourceText, /Bootstrap replay did not converge/);
+  assert.match(sourceText, /get_pachanga_platform_access_service_v1/);
+  assert.doesNotMatch(sourceText, /puntoracingrc@gmail\.com/);
 });
 
 test("admin responses and routes are private and noindex", async () => {

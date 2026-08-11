@@ -37,7 +37,7 @@ Un `team owner` o `team admin` sin fila global activa obtiene 404 en páginas y 
 
 ## Bootstrap del primer owner
 
-Solo local/staging, nunca producción en V1:
+Local y staging aceptan un UUID Auth ya verificado:
 
 ```bash
 PACHANGAS_ENVIRONMENT=staging \
@@ -50,7 +50,22 @@ npm run platform-admin:bootstrap-owner -- \
 
 El script genera un `operationId` si no se aporta. La RPC exige `service_role`, bloquea la tabla, comprueba que el usuario exista, rechaza un segundo bootstrap y escribe exactamente un evento de auditoría. Ningún UUID personal vive en la migración.
 
-Para producción se diseñará un procedimiento independiente después de aprobar staging; el script actual falla antes de leer credenciales cuando detecta producción.
+Producción exige resolver la identidad mediante Auth y fijar de antemano proyecto y operación:
+
+```bash
+PACHANGAS_ENVIRONMENT=production \
+NEXT_PUBLIC_SUPABASE_URL='https://<production-ref>.supabase.co' \
+SUPABASE_SERVICE_ROLE_KEY='<production-server-secret>' \
+npm run platform-admin:bootstrap-owner -- \
+  --email '<owner-email-exacto>' \
+  --required-provider google \
+  --expected-project-ref '<production-ref>' \
+  --operation-id '<uuid-release-estable>' \
+  --confirm-production-bootstrap I_UNDERSTAND_PRODUCTION \
+  --reason 'Bootstrap inicial del Control Center en producción'
+```
+
+El modo producción no acepta `--user-id`. Enumera Auth server-side, exige exactamente una coincidencia de email, email confirmado, identidad del proveedor requerido, usuario activo y proyecto coincidente. Ejecuta dos veces la misma operación y comprueba que ambas respuestas converjan; la comprobación final del ledger debe confirmar un único evento. El secreto de servidor no se imprime ni se guarda en Git.
 
 ## Mutaciones
 
