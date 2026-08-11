@@ -11,6 +11,10 @@ const migration = readFileSync(
   "supabase/migrations/20260811033931_team_cosmetic_rewards_v1.sql",
   "utf8",
 );
+const indexMigration = readFileSync(
+  "supabase/migrations/20260811042657_team_cosmetic_rewards_fk_indexes.sql",
+  "utf8",
+);
 const identityPage = readFileSync("app/equipo/identidad/page.tsx", "utf8");
 
 test("Team Cosmetic Reward Policy V1 contains exactly the five approved mappings", () => {
@@ -36,6 +40,18 @@ test("the policy is server-only, flag-gated and non-retroactive", () => {
   assert.match(migration, /after insert on public\.pachanga_achievement_grants/);
   assert.match(migration, /revoke all on function private\.pachanga_apply_team_cosmetic_reward_v1\(uuid\)[\s\S]+from public, anon, authenticated/);
   assert.doesNotMatch(migration, /grant execute on function private\.pachanga_apply_team_cosmetic_reward_v1[^;]+authenticated/);
+});
+
+test("every reward foreign key reported by Supabase advisors has a covering index", () => {
+  for (const column of [
+    "achievement_definition_id",
+    "cosmetic_key",
+    "origin_match_fact_id",
+    "policy_version",
+  ]) {
+    assert.match(indexMigration, new RegExp(`\\(${column}\\)`));
+  }
+  assert.doesNotMatch(indexMigration, /insert|update|delete|grant|reward.*trigger/i);
 });
 
 test("10 Retos gets a new active V3 authority row without reviving V1 or V2", () => {

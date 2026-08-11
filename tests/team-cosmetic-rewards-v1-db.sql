@@ -177,12 +177,22 @@ select pg_temp.assert_true(
     join public.pachanga_achievement_definitions definitions on definitions.id = grants.definition_id
     where grants.group_id = 'f1200000-0000-0000-0000-000000000001'
       and definitions.achievement_key = 'team.external.wins.001'
+  ),
+  'The canonical pre-activation achievement must still be emitted'
+);
+select pg_temp.assert_true(
+  not exists (
+    select 1 from private.pachanga_team_cosmetic_reward_ledger
+    where group_id = 'f1200000-0000-0000-0000-000000000001'
+      and mapping_key = 'first_challenge_win'
   ) and not exists (
     select 1 from public.pachanga_team_cosmetic_inventory
     where group_id = 'f1200000-0000-0000-0000-000000000001'
       and cosmetic_key = 'team.shield.border.copper'
+      and source_kind = 'achievement'
+      and metadata ->> 'policyVersion' = '1'
   ),
-  'Pre-activation achievements must not receive a cosmetic'
+  'The pre-activation achievement must not enter the reward bridge'
 );
 
 do $$

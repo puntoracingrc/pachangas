@@ -4,13 +4,14 @@
 
 - Initial `main`: `a26786d3982ac69c1b0169441fc681e6a51dd6b9`
 - Branch: `codex/team-cosmetic-rewards-v1`
-- Commit: pending
-- Pull request: pending
+- Implementation commit: `7906def2c445cddcca1f2c405889e7c4d58ac605`
+- Pull request: [#136](https://github.com/puntoracingrc/pachangas/pull/136)
 - Policy key: `team_cosmetic_rewards_v1`
 - Policy version: `1`
-- Migration: `20260811033931_team_cosmetic_rewards_v1.sql`
+- Migrations: `20260811033931_team_cosmetic_rewards_v1.sql`,
+  `20260811042657_team_cosmetic_rewards_fk_indexes.sql`
 - Production migration count before this release: 85
-- Release migration count: 1 forward-only migration
+- Release migration count: 2 forward-only migrations
 
 ## Approved mappings
 
@@ -68,7 +69,7 @@ evidence remains immutable in the private ledger.
 | Environment | Flag | Effective from | Server sequence |
 | --- | --- | --- | --- |
 | Local disposable/bootstrap | Tested on and off | Ephemeral test frontier | Verified |
-| Staging | Pending | Pending | Pending |
+| Staging | Enabled after controlled QA | `2026-08-11 04:22:46.170096+00` | `1747` |
 | Production | Must start off | Pending activation | Pending activation |
 
 ## Inventory, NEW and notifications
@@ -89,12 +90,12 @@ write classification and cannot present a server reward as an offline success.
 
 | Check | Result |
 | --- | --- |
-| Focused TypeScript contract tests | PASS, 6/6 |
+| Focused TypeScript contract tests | PASS, 7/7 |
 | Reward SQL/RLS suite | PASS |
 | Reward concurrency | PASS, 2 consumers, 1 ledger row and 1 inventory row |
 | Synthetic World | PASS, 250 teams |
-| Empty database bootstrap | PASS, 86 migrations installed |
-| Full product test command | PASS, build plus 221 tests |
+| Empty database bootstrap | PASS, 87 migrations installed |
+| Full product test command | PASS, build plus 222 tests |
 | Typecheck | PASS |
 | Focused lint | PASS |
 | `git diff --check` | PASS |
@@ -120,7 +121,12 @@ Synthetic World totals:
 
 Regression suites confirmed locally: Achievements V3, Team Shield Cosmetics,
 Player Cosmetics, Rating V2, Core Social, Conduct and Notifications. PWA and the
-remaining product TypeScript tests are included in the 221-test full command.
+remaining product TypeScript tests are included in the 222-test full command.
+
+The SQL regression separates the canonical pre-activation achievement from the
+reward-bridge effect. It passes from the minimum fresh progression-sequence
+frontier and proves that the achievement is emitted while policy ledger and
+policy-originated inventory remain empty.
 
 Two older standalone SQL scripts are stale against current production contracts
 and remain pre-existing debt outside this release: the legacy Reward Boxes
@@ -134,10 +140,31 @@ Focused lint over every touched TypeScript/JavaScript/TSX file passes.
 
 ## Staging evidence
 
-Pending. The controlled suite will verify the five canonical 9-to-10,
-24-to-25, 49-to-50, first external win and first clean-sheet stories, plus flag
-off, replay, already-owned, per-admin NEW, late admin, notification, RLS,
-Realtime, equip and the public read model.
+Policy version 1 was activated in staging at `2026-08-11 04:22:46.170096+00`
+with progression server-sequence frontier `1747`. Controlled authenticated QA
+passed the five canonical 9-to-10, 24-to-25, 49-to-50, first external win and
+first clean-sheet stories. It also confirmed:
+
+- flag off: achievement 1, cosmetic 0;
+- historical partido 25 before activation: achievement 1, cosmetic 0;
+- five grants plus one `already_owned` ledger outcome;
+- replay returns the same canonical result and adds no row;
+- ten idempotent notifications for the two eligible admins;
+- zero reward notifications and zero historical NEW for the late admin;
+- owner and admin seen state are independent;
+- member snapshot is sanitized and outsider private access is denied;
+- Realtime inventory INSERT and shield-state UPDATE both arrive;
+- the public shield remains unchanged until equip, then every client converges;
+- a later canonical correction revokes sporting evidence but preserves the
+  unlocked cosmetic and its private reward ledger;
+- currency granted is zero and historical/flag-off inventory remains zero.
+
+Supabase Security advisors added no warning attributable to this phase. The
+Performance advisor identified five new unindexed foreign keys; the second
+forward-only migration covers all five. Staging was rechecked after applying it:
+there are no remaining unindexed foreign-key findings attributable to this
+release. Newly created indexes appear only as unused until production workload
+exists, which is expected before activation.
 
 ## Production evidence
 
