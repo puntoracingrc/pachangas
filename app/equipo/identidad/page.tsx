@@ -362,6 +362,7 @@ export default function TeamIdentityPage() {
   const [progressView, setProgressView] = useState<ProgressView>("achievements");
   const operationIds = useRef(new Map<string, string>());
   const handledRewardDeepLinks = useRef(new Set<string>());
+  const handledTeamCosmeticDeepLinks = useRef(new Set<string>());
 
   const loadPlayerCosmetics = useCallback(async () => {
     if (!supabase || !userId) return;
@@ -499,6 +500,19 @@ export default function TeamIdentityPage() {
       setConfirmedDesign(nextConfirmed);
     });
   }, [confirmedDesign, crest]);
+
+  useEffect(() => {
+    if (!crest?.canManage) return;
+    const cosmeticKey = new URLSearchParams(window.location.search).get("cosmetic") ?? "";
+    const item = crest.catalog.find((candidate) => (
+      candidate.key === cosmeticKey && candidate.unlocked && candidate.slot
+    ));
+    if (!item?.slot) return;
+    const fingerprint = `${crest.group.groupId}:${item.key}`;
+    if (handledTeamCosmeticDeepLinks.current.has(fingerprint)) return;
+    handledTeamCosmeticDeepLinks.current.add(fingerprint);
+    setActiveShieldCategory(item.slot);
+  }, [crest]);
 
   useEffect(() => {
     const syncOnlineState = () => setIsOnline(navigator.onLine);

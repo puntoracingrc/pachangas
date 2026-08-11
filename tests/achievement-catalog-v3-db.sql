@@ -119,8 +119,8 @@ where id = 'b3600000-0000-0000-0000-000000000001';
 select pg_temp.assert_true(
   (select count(*) from public.pachanga_achievement_definitions
    where active and catalog_key = 'achievement_catalog_v3'
-     and subject_type = 'team') = 60,
-  'V3 must expose exactly 60 active collective definitions'
+     and subject_type = 'team') = 61,
+  'V3 must expose 60 catalog definitions plus the Team Rewards 10-Retos milestone'
 );
 select pg_temp.assert_true(
   (select count(*) from public.pachanga_achievement_definitions
@@ -131,9 +131,14 @@ select pg_temp.assert_true(
 select pg_temp.assert_true(
   not exists (
     select 1 from public.pachanga_achievement_definitions
-    where active and family_key in ('team.internal.matches', 'team.external.matches')
-  ),
-  'Split match milestones must be inactive after the global trajectory activates'
+    where active and family_key = 'team.internal.matches'
+  ) and (
+    select count(*) from public.pachanga_achievement_definitions
+    where active and family_key = 'team.external.matches'
+      and achievement_key = 'team.external.matches.010'
+      and version = 3
+  ) = 1,
+  'Only the approved 10-Retos milestone may coexist with the global match trajectory'
 );
 
 create temporary table expected_goal_components(
