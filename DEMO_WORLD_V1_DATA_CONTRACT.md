@@ -70,7 +70,7 @@ La unica persistencia de interaccion usa `sessionStorage` bajo `pachangas-demo-w
 
 ## Contrato read-only
 
-La carga publica solo permite `GET`, usa `credentials: "omit"` y no importa el cliente de Supabase. Se bloquean contractualmente:
+La carga publica solo permite `GET`, usa `credentials: "same-origin"` para que los snapshots funcionen tambien en Previews protegidas de Vercel y no importa el cliente de Supabase. Las URLs de chunks son relativas al propio despliegue; nunca se envian credenciales a otro origen. Se bloquean contractualmente:
 
 - `POST`, `PUT`, `PATCH` y `DELETE`;
 - RPC;

@@ -15,7 +15,7 @@ Este registro es permanente. Una incidencia no se elimina al corregirse; se actu
 | ID | Clase | Estado | Hallazgo original | Correccion | Regresion |
 | --- | --- | --- | --- | --- | --- |
 | DW-001 | DEMO_DATA_BUG | fixed + regression_verified | La demo heredada incluia campos de telefono y mezclaba datos de presentacion con el payload local historico. | Snapshot publico V1 saneado, con namespace `demo_*` y sin PII ni datos privados. | `tests/demo-world-v1.test.ts`: rechazo recursivo de PII y campos privados. |
-| DW-002 | DEMO_ADAPTER_BUG | fixed + regression_verified | `?demo=1` activaba el gran payload de la aplicacion real y podia montar superficies conectadas a Supabase. | Ruta aislada `/demo`, carga estatica con credenciales omitidas y bloqueo del centro global de notificaciones dentro de Demo World. | `tests/demo-world-v1.test.ts`: redireccion heredada y prueba de cero mutaciones remotas. |
+| DW-002 | DEMO_ADAPTER_BUG | fixed + regression_verified | `?demo=1` activaba el gran payload de la aplicacion real y podia montar superficies conectadas a Supabase. | Ruta aislada `/demo`, carga estatica same-origin y bloqueo del centro global de notificaciones dentro de Demo World. | `tests/demo-world-v1.test.ts`: redireccion heredada y prueba de cero mutaciones remotas. |
 | DW-003 | TESTABILITY_GAP | fixed + regression_verified | No existia una invariante ejecutable que demostrase cero escrituras remotas en toda accion demo. | Contrato `assertDemoWorldLocalIntent` y estado efimero exclusivo de `sessionStorage`. | `tests/demo-world-v1.test.ts`: POST/PUT/PATCH/DELETE, RPC e inserts/updates/deletes rechazados. |
 | DW-004 | DEMO_ADAPTER_BUG | fixed + regression_verified | La inicializacion de `tab` y perspectiva desde URL/sessionStorage hacia `setState` sincrono dentro de un efecto, rechazado por el lint de React 19. | Inicializacion perezosa unica; la URL prevalece sobre sessionStorage sin render intermedio. | `tests/demo-world-v1.test.ts`: URL valida/invalida y precedencia de perspectiva. |
 | DW-005 | VISUAL_BUG | fixed + regression_verified | En 360–390 px el escudo principal de 210 px escalado conservaba su caja original y quedaba recortado aproximadamente un 28%; la primera correccion redujo la escala pero seguia dejando 26 px fuera al transformar desde el centro. | Escala movil `0.58` desde el borde interior de la columna. | QA DOM: `right=342` en 360 px y `right=372` en 390 px, sin overflow. |
@@ -31,7 +31,7 @@ Este registro es permanente. Una incidencia no se elimina al corregirse; se actu
 | DW-015 | VISUAL_BUG | fixed + regression_verified | Los botones `Abrir demo` de cajas median 38 px en desktop, portrait, landscape y PWA. | Minimo tactil de 44 px aplicado a las acciones de caja. | Visual Audit final: cero targets pequenos en 130 checks Demo. |
 | DW-016 | TESTABILITY_GAP | fixed + regression_verified | El auditor buscaba texto exacto y no podia activar `Avisos` porque el contador accesible forma parte del texto del boton. | El contrato de superficie admite `clickTextPrefix` y evita acoplarse al numero de avisos. | La superficie Avisos se abre en seis viewports sin error de navegacion. |
 | DW-017 | PRODUCT_BUG | open; baseline outside Demo World | La matriz final mantiene 222 targets menores de 40 px en 38 combinaciones de superficies productivas ajenas a Demo World, concentrados en tabs desktop de Mercado y enlaces del footer legal. | No se modifica en este PR para evitar mezclar una correccion global no relacionada. | Demo World tiene cero targets pequenos y no degrada los 172 checks existentes. |
-| DW-018 | DEMO_ADAPTER_BUG | open | La Preview protegida de Vercel sirve `/demo`, pero los cuatro chunks estaticos fallan porque `credentials: "omit"` excluye tambien la cookie de proteccion del mismo origen. La UI queda detenida en `Preparando el Mundo Demo`. | Pendiente: permitir credenciales solo en los `GET` estaticos same-origin, sin Supabase, Auth de producto ni escrituras. | Pendiente: contrato automatizado y QA sobre la Preview protegida. |
+| DW-018 | DEMO_ADAPTER_BUG | fixed; regression pending Preview | La Preview protegida de Vercel sirve `/demo`, pero los cuatro chunks estaticos fallaban porque `credentials: "omit"` excluia tambien la cookie de proteccion del mismo origen. La UI quedaba detenida en `Preparando el Mundo Demo`. | Los chunks usan `credentials: "same-origin"`; siguen siendo rutas relativas, `GET` estaticos, sin Supabase, Auth de producto ni escrituras. | Contrato automatizado PASS; pendiente confirmar el nuevo deployment protegido. |
 
 ## Estado del cierre
 
@@ -114,7 +114,7 @@ La unica persistencia es `sessionStorage`. Reset borra asistencia, cajas abierta
 
 - Cero PII y cero campos privados tras validacion recursiva.
 - Identificadores `demo_*` sin colision con produccion.
-- `credentials: "omit"` en la carga.
+- `credentials: "same-origin"` solo en los `GET` estaticos y relativos, necesario para Previews protegidas; nunca `include` ni credenciales cross-origin.
 - Sin import de cliente Supabase ni `service_role`.
 - Sin Google Places para ubicaciones demo.
 - Sin datos de conducta, moderacion, reporters, riesgo, recibos o internals de Synthetic World.

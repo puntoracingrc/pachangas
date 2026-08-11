@@ -17,7 +17,7 @@ const DEMO_WORLD_PRIMARY_TABS: DemoWorldPrimaryTab[] = ["inicio", "partido", "me
 async function loadChunk<T>(path: string): Promise<T> {
   const response = await fetch(path, {
     cache: "force-cache",
-    credentials: "omit",
+    credentials: "same-origin",
     method: "GET",
   });
   if (!response.ok) throw new Error(`No se pudo cargar el mundo demo (${response.status}).`);

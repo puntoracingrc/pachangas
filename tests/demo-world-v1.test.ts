@@ -187,7 +187,8 @@ test("Demo World has no remote mutation capability and all simulated state stays
   assert.doesNotMatch(sources, /supabaseClient|\.rpc\(|service_role|credentials:\s*["']include/);
   assert.doesNotMatch(sources, /method:\s*["'](?:POST|PUT|PATCH|DELETE)/);
   assert.match(sources, /sessionStorage/);
-  assert.match(sources, /credentials:\s*["']omit/);
+  assert.match(sources, /credentials:\s*["']same-origin/);
+  assert.doesNotMatch(sources, /credentials:\s*["']omit/);
 });
 
 test("ephemeral session round-trips and reset restores the frozen default", () => {
