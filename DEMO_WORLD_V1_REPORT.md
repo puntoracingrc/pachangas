@@ -31,7 +31,7 @@ Este registro es permanente. Una incidencia no se elimina al corregirse; se actu
 | DW-015 | VISUAL_BUG | fixed + regression_verified | Los botones `Abrir demo` de cajas median 38 px en desktop, portrait, landscape y PWA. | Minimo tactil de 44 px aplicado a las acciones de caja. | Visual Audit final: cero targets pequenos en 130 checks Demo. |
 | DW-016 | TESTABILITY_GAP | fixed + regression_verified | El auditor buscaba texto exacto y no podia activar `Avisos` porque el contador accesible forma parte del texto del boton. | El contrato de superficie admite `clickTextPrefix` y evita acoplarse al numero de avisos. | La superficie Avisos se abre en seis viewports sin error de navegacion. |
 | DW-017 | PRODUCT_BUG | open; baseline outside Demo World | La matriz final mantiene 222 targets menores de 40 px en 38 combinaciones de superficies productivas ajenas a Demo World, concentrados en tabs desktop de Mercado y enlaces del footer legal. | No se modifica en este PR para evitar mezclar una correccion global no relacionada. | Demo World tiene cero targets pequenos y no degrada los 172 checks existentes. |
-| DW-018 | DEMO_ADAPTER_BUG | fixed; regression pending Preview | La Preview protegida de Vercel sirve `/demo`, pero los cuatro chunks estaticos fallaban porque `credentials: "omit"` excluia tambien la cookie de proteccion del mismo origen. La UI quedaba detenida en `Preparando el Mundo Demo`. | Los chunks usan `credentials: "same-origin"`; siguen siendo rutas relativas, `GET` estaticos, sin Supabase, Auth de producto ni escrituras. | Contrato automatizado PASS; pendiente confirmar el nuevo deployment protegido. |
+| DW-018 | DEMO_ADAPTER_BUG | fixed + regression_verified | La Preview protegida de Vercel sirve `/demo`, pero los cuatro chunks estaticos fallaban porque `credentials: "omit"` excluia tambien la cookie de proteccion del mismo origen. La UI quedaba detenida en `Preparando el Mundo Demo`. | Los chunks usan `credentials: "same-origin"`; siguen siendo rutas relativas, `GET` estaticos, sin Supabase, Auth de producto ni escrituras. | Contrato automatizado PASS; Preview protegida `f3f32e8` carga en frio en 330 ms y supera 84 checks remotos sin peticiones fallidas. |
 
 ## Estado del cierre
 
@@ -155,6 +155,8 @@ Auditoria inicial Demo World: 67 combinaciones de superficie/viewport, con cero 
 
 Visual Audit V1 final: 232 checks, cero errores de navegacion/consola, warnings, solicitudes fallidas, imagenes rotas, overflow, violaciones de viewport o chrome de juego. Conserva los 172 checks anteriores y anade 60 para las diez superficies profundas. Demo World aporta 130 checks y todos tienen cero targets pequenos. Los 222 targets pequenos restantes pertenecen a 38 combinaciones productivas preexistentes y quedan registrados como DW-017.
 
+QA de Preview protegida Vercel sobre `f3f32e8`: 84 combinaciones Demo (21 superficies por desktop 1440x900, portrait 390x844, landscape 844x390 y PWA standalone), con cero errores de navegacion/consola, warnings, solicitudes fallidas, imagenes rotas, overflow, targets pequenos o violaciones de chrome. Un arranque frio con cache desactivada alcanzo el contenido navegable en 330 ms. El recorrido de admin, asistencia, cambio de perspectiva, apertura/guardado de caja, avisos y reset genero nueve solicitudes, todas `GET`, sin RPC, REST de Supabase ni mutaciones remotas.
+
 Tema explicito: Claro `rgb(238, 242, 239)` / texto `rgb(16, 32, 26)` y Oscuro `rgb(7, 17, 15)` / texto `rgb(241, 246, 242)`, ambos sin overflow, errores, warnings o targets pequenos.
 
 Spot checks manuales ya realizados:
@@ -188,15 +190,16 @@ Recorrido de diez minutos: permite cambiar perspectiva, abrir fichas, recorrer h
 | `npm run typecheck` | PASS |
 | `npm run build` | PASS |
 | Visual Audit V1 completo | PASS, 232/232; 130 Demo sin targets pequenos |
+| Preview Vercel protegida | PASS, 84/84; arranque frio 330 ms; cero writes |
 | Global lint | deuda previa: 23 errores y 20 warnings fuera de los modulos Demo |
 | `git diff --check` | PASS |
 
 ## Publicacion
 
 - Rama: `codex/demo-world-v1`.
-- Commit final: pendiente.
-- PR draft: pendiente.
-- Preview Vercel exacta: pendiente.
+- Commit de implementacion validado: `f3f32e88be537fce4ac0af16c45f29af98330132`.
+- PR draft: `https://github.com/puntoracingrc/pachangas/pull/140`.
+- Preview Vercel exacta validada: `https://pachangas-m9xm8jbow-persianas-almar-web-s-projects.vercel.app/demo`.
 - Merge: no.
 - Produccion modificada: no.
 - Supabase modificado: no.
