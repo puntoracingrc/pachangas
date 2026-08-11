@@ -48,7 +48,7 @@ Every finding was recorded before its corrective patch. `FIXED_REGRESSION_VERIFI
 
 | Findings | P0 | P1 | P2 | P3 | Fixed and verified | Mitigated | Open |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| 19 | 0 | 3 | 16 | 0 | 18 | 1 | 0 |
+| 20 | 0 | 3 | 17 | 0 | 18 | 1 | 1 |
 
 | ID | Route/surface | User mode | Viewport | Type | Severity | Description | Correction and evidence | Status |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -71,6 +71,7 @@ Every finding was recorded before its corrective patch. `FIXED_REGRESSION_VERIFI
 | GVC-017 | visual QA theme fixture | internal QA | all | DEUDA_ESTRUCTURAL | P2 | Applying theme before hydration created a harness-only hydration mismatch. | Theme fixture now applies after hydration; final console errors/warnings are zero. | FIXED_REGRESSION_VERIFIED |
 | GVC-018 | visual QA subpane actions | internal QA | all | DEUDA_ESTRUCTURAL | P2 | Text-only actions could select global Admin and captures could preserve compositor scroll. | Scoped selectors, active-state assertion, two-frame scroll reset and viewport-only capture. | FIXED_REGRESSION_VERIFIED |
 | GVC-019 | shared product errors | disconnected visitor/member | all | BUG_VISUAL | P1 | Browser wording `Failed to fetch` used the inverse word order of the sanitizer pattern and could escape as raw technical copy. | Both word orders and common network wording are sanitized; focused regression test. | FIXED_REGRESSION_VERIFIED |
+| GVC-020 | Google Places inputs | authenticated Preview | desktop/mobile | DEUDA_ESTRUCTURAL | P2 | The remote Google library warned that the active `google.maps.places.Autocomplete` widget is legacy and unavailable to new customers. | Registered from exact-SHA Preview console before correction. Migration and remote regression pending. | OPEN |
 
 ## Final matrix
 
