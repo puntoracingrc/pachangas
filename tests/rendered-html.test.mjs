@@ -451,12 +451,13 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(googlePlacesClient, /PlaceAutocompleteElement/);
   assert.match(googlePlacesClient, /gmp-select/);
   assert.match(googlePlacesClient, /includedRegionCodes = \["es"\]/);
+  assert.match(googlePlacesClient, /includedPrimaryTypes = types/);
   assert.match(googlePlacesClient, /Autocomplete/);
   assert.match(googlePlacesClient, /componentRestrictions: \{ country: "es" \}/);
   assert.ok(
-    googlePlacesClient.indexOf("const Autocomplete = googleMapsWindow().google?.maps?.places?.Autocomplete") <
-      googlePlacesClient.indexOf("const newPlacesCleanup = attachNewPlaceAutocomplete"),
-    "Google Places should keep the normal input as the primary autocomplete path",
+    googlePlacesClient.indexOf("const newPlacesCleanup = attachNewPlaceAutocomplete") <
+      googlePlacesClient.indexOf("const Autocomplete = googleMapsWindow().google?.maps?.places?.Autocomplete"),
+    "Google Places should prefer PlaceAutocompleteElement and keep the legacy widget as fallback",
   );
   assert.match(globalsCss, /\.pachangas-place-autocomplete/);
   assert.match(marketPage, /pachanga_market_profiles/);
