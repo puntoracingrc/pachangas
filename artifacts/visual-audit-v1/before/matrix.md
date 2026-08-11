@@ -1,0 +1,60 @@
+# Visual Audit before
+
+Base URL: `http://127.0.0.1:3093`
+
+| Route | User mode | Viewport | Result | Overflow X | Console errors | Warnings | Broken images | Small targets |
+| --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: |
+| demo-inicio-admin | demo-admin | 1440x900 | PASS | 0 | 0 | 0 | 0 | 30 |
+| demo-inicio-player | demo-player | 1440x900 | PASS | 0 | 0 | 0 | 0 | 30 |
+| demo-partido | demo-admin | 1440x900 | PASS | 0 | 0 | 0 | 0 | 30 |
+| demo-mercado | demo-admin | 1440x900 | PASS | 0 | 0 | 0 | 0 | 30 |
+| demo-equipo | demo-admin | 1440x900 | PASS | 0 | 0 | 0 | 0 | 30 |
+| demo-perfil | demo-admin | 1440x900 | PASS | 0 | 0 | 0 | 0 | 30 |
+| mercado | visitor | 1440x900 | PASS | 0 | 0 | 0 | 0 | 10 |
+| personalizar-carta | visitor | 1440x900 | PASS | 0 | 0 | 0 | 0 | 6 |
+| equipo-identidad | visitor-no-team | 1440x900 | PASS | 0 | 0 | 0 | 0 | 7 |
+| avisos | visitor | 1440x900 | PASS | 0 | 0 | 0 | 0 | 6 |
+| conducta | visitor | 1440x900 | PASS | 0 | 0 | 0 | 0 | 6 |
+| partido-invitado | visitor | 1440x900 | PASS | 0 | 0 | 0 | 0 | 5 |
+| invitacion-partido | visitor | 1440x900 | PASS | 0 | 0 | 0 | 0 | 5 |
+| valorar-equipo | visitor | 1440x900 | PASS | 0 | 0 | 0 | 0 | 5 |
+| lab-escudos | lab | 1440x900 | PASS | 0 | 0 | 0 | 0 | 19 |
+| lab-cartas | lab | 1440x900 | PASS | 0 | 0 | 0 | 0 | 10 |
+| lab-rating | lab | 1440x900 | PASS | 0 | 0 | 0 | 0 | 0 |
+| lab-ranking | lab | 1440x900 | PASS | 0 | 0 | 0 | 0 | 5 |
+| demo-inicio-admin | demo-admin | 390x844 | PASS | 0 | 0 | 0 | 0 | 1 |
+| demo-inicio-player | demo-player | 390x844 | PASS | 0 | 0 | 0 | 0 | 1 |
+| demo-partido | demo-admin | 390x844 | PASS | 0 | 0 | 0 | 0 | 30 |
+| demo-mercado | demo-admin | 390x844 | PASS | 0 | 0 | 0 | 0 | 1 |
+| demo-equipo | demo-admin | 390x844 | PASS | 0 | 0 | 0 | 0 | 4 |
+| demo-perfil | demo-admin | 390x844 | PASS | 0 | 0 | 0 | 0 | 4 |
+| mercado | visitor | 390x844 | PASS | 0 | 0 | 0 | 0 | 1 |
+| personalizar-carta | visitor | 390x844 | PASS | 0 | 0 | 0 | 0 | 1 |
+| equipo-identidad | visitor-no-team | 390x844 | PASS | 0 | 0 | 0 | 0 | 2 |
+| avisos | visitor | 390x844 | PASS | 0 | 0 | 0 | 0 | 1 |
+| conducta | visitor | 390x844 | PASS | 0 | 0 | 0 | 0 | 1 |
+| partido-invitado | visitor | 390x844 | PASS | 0 | 0 | 0 | 0 | 0 |
+| invitacion-partido | visitor | 390x844 | PASS | 0 | 0 | 0 | 0 | 0 |
+| valorar-equipo | visitor | 390x844 | PASS | 0 | 0 | 0 | 0 | 0 |
+| lab-escudos | lab | 390x844 | PASS | 0 | 0 | 0 | 0 | 14 |
+| lab-cartas | lab | 390x844 | PASS | 0 | 0 | 0 | 0 | 5 |
+| lab-rating | lab | 390x844 | PASS | 0 | 0 | 0 | 0 | 0 |
+| lab-ranking | lab | 390x844 | PASS | 0 | 0 | 0 | 0 | 0 |
+| demo-inicio-admin | demo-admin | 844x390 | PASS | 0 | 0 | 0 | 0 | 0 |
+| demo-inicio-player | demo-player | 844x390 | PASS | 0 | 0 | 0 | 0 | 0 |
+| demo-partido | demo-admin | 844x390 | PASS | 0 | 0 | 0 | 0 | 30 |
+| demo-mercado | demo-admin | 844x390 | PASS | 0 | 0 | 0 | 0 | 0 |
+| demo-equipo | demo-admin | 844x390 | PASS | 0 | 0 | 0 | 0 | 4 |
+| demo-perfil | demo-admin | 844x390 | PASS | 0 | 0 | 0 | 0 | 30 |
+| mercado | visitor | 844x390 | PASS | 0 | 0 | 0 | 0 | 9 |
+| personalizar-carta | visitor | 844x390 | PASS | 0 | 0 | 0 | 0 | 7 |
+| equipo-identidad | visitor-no-team | 844x390 | PASS | 0 | 0 | 0 | 0 | 2 |
+| avisos | visitor | 844x390 | PASS | 0 | 0 | 0 | 0 | 1 |
+| conducta | visitor | 844x390 | PASS | 0 | 0 | 0 | 0 | 1 |
+| partido-invitado | visitor | 844x390 | PASS | 0 | 0 | 0 | 0 | 0 |
+| invitacion-partido | visitor | 844x390 | PASS | 0 | 0 | 0 | 0 | 0 |
+| valorar-equipo | visitor | 844x390 | PASS | 0 | 0 | 0 | 0 | 0 |
+| lab-escudos | lab | 844x390 | PASS | 0 | 0 | 0 | 0 | 26 |
+| lab-cartas | lab | 844x390 | PASS | 0 | 0 | 0 | 0 | 12 |
+| lab-rating | lab | 844x390 | PASS | 0 | 0 | 0 | 0 | 0 |
+| lab-ranking | lab | 844x390 | PASS | 0 | 0 | 0 | 0 | 0 |
