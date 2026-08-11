@@ -91,6 +91,7 @@ function normalizeNotifications(value: unknown): UserNotification[] {
 }
 
 export function NotificationCenter() {
+  const demoWorldRoute = typeof window !== "undefined" && window.location.pathname.startsWith("/demo");
   const [notifications, setNotifications] = useState<UserNotification[]>([]);
   const [open, setOpen] = useState(false);
   const [authenticated, setAuthenticated] = useState(false);
@@ -119,6 +120,7 @@ export function NotificationCenter() {
   }
 
   useEffect(() => {
+    if (window.location.pathname.startsWith("/demo")) return;
     const client = supabase;
     if (!client) return;
     let disposed = false;
@@ -258,7 +260,7 @@ export function NotificationCenter() {
     setBusyId(null);
   }
 
-  if (!supabase || !authenticated) return null;
+  if (demoWorldRoute || !supabase || !authenticated) return null;
 
   return (
     <aside className={`notification-center ${open ? "open" : ""}`}>

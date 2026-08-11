@@ -4240,9 +4240,13 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
     setProfileName(localStorage.getItem(profileNameKey) ?? "");
     const params = new URLSearchParams(window.location.search);
     if (params.get("demo") === "1") {
-      setPreviewDemoMode(true);
-      applyPayload(defaultPayload());
-      setLocalHydrated(true);
+      const nextParams = new URLSearchParams();
+      const requestedTab = params.get("mobile");
+      if (requestedTab === "inicio" || requestedTab === "partido" || requestedTab === "mercado" || requestedTab === "equipo" || requestedTab === "perfil") {
+        nextParams.set("tab", requestedTab);
+      }
+      if (params.get("qaPlayer") === "1") nextParams.set("perspective", "player");
+      window.location.replace(`/demo${nextParams.size ? `?${nextParams.toString()}` : ""}`);
       return;
     }
 
@@ -7466,27 +7470,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
   }
 
   function enterPreviewDemo() {
-    const demoPayload = defaultPayload();
-    resetTeamScopedUi();
-    setPreviewDemoMode(true);
-    setRemoteReady(false);
-    setRemoteRevision(null);
-    setTeamMembers([]);
-    setSyncStatus("local");
-    setSyncError("");
-    applyPayload(demoPayload);
-
-    const params = new URLSearchParams(window.location.search);
-    params.set("demo", "1");
-    params.delete("equipo");
-    params.delete("grupo");
-    params.delete("i");
-    params.delete("invite");
-    params.delete("a");
-    params.delete("admin");
-    params.delete("p");
-    params.delete("partido");
-    window.history.replaceState(null, "", `${window.location.pathname}?${params.toString()}`);
+    window.location.assign("/demo");
   }
 
   function selectTeam(teamId: string) {
@@ -9144,7 +9128,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
             {remoteTeams.length > 0 || previewDemoMode || isRegisteredUser ? (
               <select value={previewDemoMode ? demoTeamOptionId : remoteGroupId ?? ""} onChange={(event) => selectTeam(event.target.value)}>
                 <option value="" disabled>Elige grupo o demo</option>
-                <option value={demoTeamOptionId}>Demo interactiva</option>
+                <option value={demoTeamOptionId}>Mundo Demo</option>
                 {remoteTeams.map((team) => (
                   <option key={team.id} value={team.id}>{groupOptionLabel(team)}</option>
                 ))}

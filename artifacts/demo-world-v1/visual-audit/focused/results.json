@@ -1,0 +1,4401 @@
+[
+  {
+    "surface": "demo-inicio-admin",
+    "path": "/demo?tab=inicio&perspective=admin",
+    "userMode": "demo-admin",
+    "viewportKey": "desktop",
+    "viewport": "1440x900",
+    "metrics": {
+      "title": "Mundo Demo | Pachangas IQ",
+      "theme": "light",
+      "textLength": 2139,
+      "overflowX": 0,
+      "overflowY": 998,
+      "failedImages": [],
+      "smallTargets": [
+        {
+          "tag": "button",
+          "text": "Reiniciar",
+          "className": "",
+          "width": 71,
+          "height": 28
+        },
+        {
+          "tag": "a",
+          "text": "Salir",
+          "className": "",
+          "width": 46,
+          "height": 28
+        },
+        {
+          "tag": "a",
+          "text": "Pachangas IQ Mundo Demo",
+          "className": "demo-world-module__MMjxMW__brand",
+          "width": 504,
+          "height": 36
+        }
+      ],
+      "viewportViolations": [],
+      "gameChromeViolations": [],
+      "gameLayout": {
+        "activeContext": null,
+        "appShell": null,
+        "main": null,
+        "mainScrollTop": null,
+        "mobileNav": {
+          "bottom": 0,
+          "display": "none",
+          "height": 0,
+          "left": 0,
+          "right": 0,
+          "top": 0,
+          "width": 0
+        },
+        "scrollY": 0
+      },
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased dem"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "demo-inicio-player",
+    "path": "/demo?tab=inicio&perspective=player",
+    "userMode": "demo-player",
+    "viewportKey": "desktop",
+    "viewport": "1440x900",
+    "metrics": {
+      "title": "Mundo Demo | Pachangas IQ",
+      "theme": "light",
+      "textLength": 2141,
+      "overflowX": 0,
+      "overflowY": 998,
+      "failedImages": [],
+      "smallTargets": [
+        {
+          "tag": "button",
+          "text": "Reiniciar",
+          "className": "",
+          "width": 71,
+          "height": 28
+        },
+        {
+          "tag": "a",
+          "text": "Salir",
+          "className": "",
+          "width": 46,
+          "height": 28
+        },
+        {
+          "tag": "a",
+          "text": "Pachangas IQ Mundo Demo",
+          "className": "demo-world-module__MMjxMW__brand",
+          "width": 504,
+          "height": 36
+        }
+      ],
+      "viewportViolations": [],
+      "gameChromeViolations": [],
+      "gameLayout": {
+        "activeContext": null,
+        "appShell": null,
+        "main": null,
+        "mainScrollTop": null,
+        "mobileNav": {
+          "bottom": 0,
+          "display": "none",
+          "height": 0,
+          "left": 0,
+          "right": 0,
+          "top": 0,
+          "width": 0
+        },
+        "scrollY": 0
+      },
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased dem"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "demo-partido",
+    "path": "/demo?tab=partido&perspective=admin",
+    "userMode": "demo-admin",
+    "viewportKey": "desktop",
+    "viewport": "1440x900",
+    "metrics": {
+      "title": "Mundo Demo | Pachangas IQ",
+      "theme": "light",
+      "textLength": 660,
+      "overflowX": 0,
+      "overflowY": 39,
+      "failedImages": [],
+      "smallTargets": [
+        {
+          "tag": "button",
+          "text": "Reiniciar",
+          "className": "",
+          "width": 71,
+          "height": 28
+        },
+        {
+          "tag": "a",
+          "text": "Salir",
+          "className": "",
+          "width": 46,
+          "height": 28
+        },
+        {
+          "tag": "a",
+          "text": "Pachangas IQ Mundo Demo",
+          "className": "demo-world-module__MMjxMW__brand",
+          "width": 504,
+          "height": 36
+        }
+      ],
+      "viewportViolations": [],
+      "gameChromeViolations": [],
+      "gameLayout": {
+        "activeContext": null,
+        "appShell": null,
+        "main": null,
+        "mainScrollTop": null,
+        "mobileNav": {
+          "bottom": 0,
+          "display": "none",
+          "height": 0,
+          "left": 0,
+          "right": 0,
+          "top": 0,
+          "width": 0
+        },
+        "scrollY": 0
+      },
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased dem"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "demo-partido-alineacion",
+    "path": "/demo?tab=partido&perspective=admin",
+    "userMode": "demo-admin",
+    "viewportKey": "desktop",
+    "viewport": "1440x900",
+    "metrics": {
+      "title": "Mundo Demo | Pachangas IQ",
+      "theme": "light",
+      "textLength": 561,
+      "overflowX": 0,
+      "overflowY": 39,
+      "failedImages": [],
+      "smallTargets": [
+        {
+          "tag": "button",
+          "text": "Reiniciar",
+          "className": "",
+          "width": 71,
+          "height": 28
+        },
+        {
+          "tag": "a",
+          "text": "Salir",
+          "className": "",
+          "width": 46,
+          "height": 28
+        },
+        {
+          "tag": "a",
+          "text": "Pachangas IQ Mundo Demo",
+          "className": "demo-world-module__MMjxMW__brand",
+          "width": 504,
+          "height": 36
+        }
+      ],
+      "viewportViolations": [],
+      "gameChromeViolations": [],
+      "gameLayout": {
+        "activeContext": null,
+        "appShell": null,
+        "main": null,
+        "mainScrollTop": null,
+        "mobileNav": {
+          "bottom": 0,
+          "display": "none",
+          "height": 0,
+          "left": 0,
+          "right": 0,
+          "top": 0,
+          "width": 0
+        },
+        "scrollY": 0
+      },
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased dem"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "demo-partido-resultado",
+    "path": "/demo?tab=partido&perspective=admin",
+    "userMode": "demo-admin",
+    "viewportKey": "desktop",
+    "viewport": "1440x900",
+    "metrics": {
+      "title": "Mundo Demo | Pachangas IQ",
+      "theme": "light",
+      "textLength": 517,
+      "overflowX": 0,
+      "overflowY": 39,
+      "failedImages": [],
+      "smallTargets": [
+        {
+          "tag": "button",
+          "text": "Reiniciar",
+          "className": "",
+          "width": 71,
+          "height": 28
+        },
+        {
+          "tag": "a",
+          "text": "Salir",
+          "className": "",
+          "width": 46,
+          "height": 28
+        },
+        {
+          "tag": "a",
+          "text": "Pachangas IQ Mundo Demo",
+          "className": "demo-world-module__MMjxMW__brand",
+          "width": 504,
+          "height": 36
+        }
+      ],
+      "viewportViolations": [],
+      "gameChromeViolations": [],
+      "gameLayout": {
+        "activeContext": null,
+        "appShell": null,
+        "main": null,
+        "mainScrollTop": null,
+        "mobileNav": {
+          "bottom": 0,
+          "display": "none",
+          "height": 0,
+          "left": 0,
+          "right": 0,
+          "top": 0,
+          "width": 0
+        },
+        "scrollY": 0
+      },
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased dem"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "demo-partido-admin",
+    "path": "/demo?tab=partido&perspective=admin",
+    "userMode": "demo-admin",
+    "viewportKey": "desktop",
+    "viewport": "1440x900",
+    "metrics": {
+      "title": "Mundo Demo | Pachangas IQ",
+      "theme": "light",
+      "textLength": 655,
+      "overflowX": 0,
+      "overflowY": 39,
+      "failedImages": [],
+      "smallTargets": [
+        {
+          "tag": "button",
+          "text": "Reiniciar",
+          "className": "",
+          "width": 71,
+          "height": 28
+        },
+        {
+          "tag": "a",
+          "text": "Salir",
+          "className": "",
+          "width": 46,
+          "height": 28
+        },
+        {
+          "tag": "a",
+          "text": "Pachangas IQ Mundo Demo",
+          "className": "demo-world-module__MMjxMW__brand",
+          "width": 504,
+          "height": 36
+        }
+      ],
+      "viewportViolations": [],
+      "gameChromeViolations": [],
+      "gameLayout": {
+        "activeContext": null,
+        "appShell": null,
+        "main": null,
+        "mainScrollTop": null,
+        "mobileNav": {
+          "bottom": 0,
+          "display": "none",
+          "height": 0,
+          "left": 0,
+          "right": 0,
+          "top": 0,
+          "width": 0
+        },
+        "scrollY": 0
+      },
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased dem"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "demo-mercado",
+    "path": "/demo?tab=mercado&perspective=admin",
+    "userMode": "demo-admin",
+    "viewportKey": "desktop",
+    "viewport": "1440x900",
+    "metrics": {
+      "title": "Mundo Demo | Pachangas IQ",
+      "theme": "light",
+      "textLength": 3171,
+      "overflowX": 0,
+      "overflowY": 1229,
+      "failedImages": [],
+      "smallTargets": [
+        {
+          "tag": "button",
+          "text": "Reiniciar",
+          "className": "",
+          "width": 71,
+          "height": 28
+        },
+        {
+          "tag": "a",
+          "text": "Salir",
+          "className": "",
+          "width": 46,
+          "height": 28
+        },
+        {
+          "tag": "a",
+          "text": "Pachangas IQ Mundo Demo",
+          "className": "demo-world-module__MMjxMW__brand",
+          "width": 504,
+          "height": 36
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        }
+      ],
+      "viewportViolations": [],
+      "gameChromeViolations": [],
+      "gameLayout": {
+        "activeContext": null,
+        "appShell": null,
+        "main": null,
+        "mainScrollTop": null,
+        "mobileNav": {
+          "bottom": 0,
+          "display": "none",
+          "height": 0,
+          "left": 0,
+          "right": 0,
+          "top": 0,
+          "width": 0
+        },
+        "scrollY": 0
+      },
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased dem"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "demo-equipo",
+    "path": "/demo?tab=equipo&perspective=admin",
+    "userMode": "demo-admin",
+    "viewportKey": "desktop",
+    "viewport": "1440x900",
+    "metrics": {
+      "title": "Mundo Demo | Pachangas IQ",
+      "theme": "light",
+      "textLength": 1912,
+      "overflowX": 0,
+      "overflowY": 1496,
+      "failedImages": [],
+      "smallTargets": [
+        {
+          "tag": "button",
+          "text": "Reiniciar",
+          "className": "",
+          "width": 71,
+          "height": 28
+        },
+        {
+          "tag": "a",
+          "text": "Salir",
+          "className": "",
+          "width": 46,
+          "height": 28
+        },
+        {
+          "tag": "a",
+          "text": "Pachangas IQ Mundo Demo",
+          "className": "demo-world-module__MMjxMW__brand",
+          "width": 504,
+          "height": 36
+        }
+      ],
+      "viewportViolations": [],
+      "gameChromeViolations": [],
+      "gameLayout": {
+        "activeContext": null,
+        "appShell": null,
+        "main": null,
+        "mainScrollTop": null,
+        "mobileNav": {
+          "bottom": 0,
+          "display": "none",
+          "height": 0,
+          "left": 0,
+          "right": 0,
+          "top": 0,
+          "width": 0
+        },
+        "scrollY": 0
+      },
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased dem"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "demo-perfil",
+    "path": "/demo?tab=perfil&perspective=player",
+    "userMode": "demo-player",
+    "viewportKey": "desktop",
+    "viewport": "1440x900",
+    "metrics": {
+      "title": "Mundo Demo | Pachangas IQ",
+      "theme": "light",
+      "textLength": 827,
+      "overflowX": 0,
+      "overflowY": 39,
+      "failedImages": [],
+      "smallTargets": [
+        {
+          "tag": "button",
+          "text": "Reiniciar",
+          "className": "",
+          "width": 71,
+          "height": 28
+        },
+        {
+          "tag": "a",
+          "text": "Salir",
+          "className": "",
+          "width": 46,
+          "height": 28
+        },
+        {
+          "tag": "a",
+          "text": "Pachangas IQ Mundo Demo",
+          "className": "demo-world-module__MMjxMW__brand",
+          "width": 504,
+          "height": 36
+        }
+      ],
+      "viewportViolations": [],
+      "gameChromeViolations": [],
+      "gameLayout": {
+        "activeContext": null,
+        "appShell": null,
+        "main": null,
+        "mainScrollTop": null,
+        "mobileNav": {
+          "bottom": 0,
+          "display": "none",
+          "height": 0,
+          "left": 0,
+          "right": 0,
+          "top": 0,
+          "width": 0
+        },
+        "scrollY": 0
+      },
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased dem"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "demo-inicio-light",
+    "path": "/demo?tab=inicio&perspective=admin&qaTheme=light",
+    "userMode": "demo-admin-light",
+    "viewportKey": "desktop",
+    "viewport": "1440x900",
+    "metrics": {
+      "title": "Mundo Demo | Pachangas IQ",
+      "theme": "light",
+      "textLength": 2139,
+      "overflowX": 0,
+      "overflowY": 998,
+      "failedImages": [],
+      "smallTargets": [
+        {
+          "tag": "button",
+          "text": "Reiniciar",
+          "className": "",
+          "width": 71,
+          "height": 28
+        },
+        {
+          "tag": "a",
+          "text": "Salir",
+          "className": "",
+          "width": 46,
+          "height": 28
+        },
+        {
+          "tag": "a",
+          "text": "Pachangas IQ Mundo Demo",
+          "className": "demo-world-module__MMjxMW__brand",
+          "width": 504,
+          "height": 36
+        }
+      ],
+      "viewportViolations": [],
+      "gameChromeViolations": [],
+      "gameLayout": {
+        "activeContext": null,
+        "appShell": null,
+        "main": null,
+        "mainScrollTop": null,
+        "mobileNav": {
+          "bottom": 0,
+          "display": "none",
+          "height": 0,
+          "left": 0,
+          "right": 0,
+          "top": 0,
+          "width": 0
+        },
+        "scrollY": 0
+      },
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased dem"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "demo-inicio-dark",
+    "path": "/demo?tab=inicio&perspective=admin&qaTheme=dark",
+    "userMode": "demo-admin-dark",
+    "viewportKey": "desktop",
+    "viewport": "1440x900",
+    "metrics": {
+      "title": "Mundo Demo | Pachangas IQ",
+      "theme": "dark",
+      "textLength": 2139,
+      "overflowX": 0,
+      "overflowY": 998,
+      "failedImages": [],
+      "smallTargets": [
+        {
+          "tag": "button",
+          "text": "Reiniciar",
+          "className": "",
+          "width": 71,
+          "height": 28
+        },
+        {
+          "tag": "a",
+          "text": "Salir",
+          "className": "",
+          "width": 46,
+          "height": 28
+        },
+        {
+          "tag": "a",
+          "text": "Pachangas IQ Mundo Demo",
+          "className": "demo-world-module__MMjxMW__brand",
+          "width": 504,
+          "height": 36
+        }
+      ],
+      "viewportViolations": [],
+      "gameChromeViolations": [],
+      "gameLayout": {
+        "activeContext": null,
+        "appShell": null,
+        "main": null,
+        "mainScrollTop": null,
+        "mobileNav": {
+          "bottom": 0,
+          "display": "none",
+          "height": 0,
+          "left": 0,
+          "right": 0,
+          "top": 0,
+          "width": 0
+        },
+        "scrollY": 0
+      },
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased dem"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "demo-inicio-admin",
+    "path": "/demo?tab=inicio&perspective=admin",
+    "userMode": "demo-admin",
+    "viewportKey": "desktop-wide",
+    "viewport": "1920x1080",
+    "metrics": {
+      "title": "Mundo Demo | Pachangas IQ",
+      "theme": "light",
+      "textLength": 2139,
+      "overflowX": 0,
+      "overflowY": 818,
+      "failedImages": [],
+      "smallTargets": [
+        {
+          "tag": "button",
+          "text": "Reiniciar",
+          "className": "",
+          "width": 71,
+          "height": 28
+        },
+        {
+          "tag": "a",
+          "text": "Salir",
+          "className": "",
+          "width": 46,
+          "height": 28
+        },
+        {
+          "tag": "a",
+          "text": "Pachangas IQ Mundo Demo",
+          "className": "demo-world-module__MMjxMW__brand",
+          "width": 744,
+          "height": 36
+        }
+      ],
+      "viewportViolations": [],
+      "gameChromeViolations": [],
+      "gameLayout": {
+        "activeContext": null,
+        "appShell": null,
+        "main": null,
+        "mainScrollTop": null,
+        "mobileNav": {
+          "bottom": 0,
+          "display": "none",
+          "height": 0,
+          "left": 0,
+          "right": 0,
+          "top": 0,
+          "width": 0
+        },
+        "scrollY": 0
+      },
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased dem"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "demo-inicio-player",
+    "path": "/demo?tab=inicio&perspective=player",
+    "userMode": "demo-player",
+    "viewportKey": "desktop-wide",
+    "viewport": "1920x1080",
+    "metrics": {
+      "title": "Mundo Demo | Pachangas IQ",
+      "theme": "light",
+      "textLength": 2141,
+      "overflowX": 0,
+      "overflowY": 818,
+      "failedImages": [],
+      "smallTargets": [
+        {
+          "tag": "button",
+          "text": "Reiniciar",
+          "className": "",
+          "width": 71,
+          "height": 28
+        },
+        {
+          "tag": "a",
+          "text": "Salir",
+          "className": "",
+          "width": 46,
+          "height": 28
+        },
+        {
+          "tag": "a",
+          "text": "Pachangas IQ Mundo Demo",
+          "className": "demo-world-module__MMjxMW__brand",
+          "width": 744,
+          "height": 36
+        }
+      ],
+      "viewportViolations": [],
+      "gameChromeViolations": [],
+      "gameLayout": {
+        "activeContext": null,
+        "appShell": null,
+        "main": null,
+        "mainScrollTop": null,
+        "mobileNav": {
+          "bottom": 0,
+          "display": "none",
+          "height": 0,
+          "left": 0,
+          "right": 0,
+          "top": 0,
+          "width": 0
+        },
+        "scrollY": 0
+      },
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased dem"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "demo-partido",
+    "path": "/demo?tab=partido&perspective=admin",
+    "userMode": "demo-admin",
+    "viewportKey": "desktop-wide",
+    "viewport": "1920x1080",
+    "metrics": {
+      "title": "Mundo Demo | Pachangas IQ",
+      "theme": "light",
+      "textLength": 660,
+      "overflowX": 0,
+      "overflowY": 39,
+      "failedImages": [],
+      "smallTargets": [
+        {
+          "tag": "button",
+          "text": "Reiniciar",
+          "className": "",
+          "width": 71,
+          "height": 28
+        },
+        {
+          "tag": "a",
+          "text": "Salir",
+          "className": "",
+          "width": 46,
+          "height": 28
+        },
+        {
+          "tag": "a",
+          "text": "Pachangas IQ Mundo Demo",
+          "className": "demo-world-module__MMjxMW__brand",
+          "width": 744,
+          "height": 36
+        }
+      ],
+      "viewportViolations": [],
+      "gameChromeViolations": [],
+      "gameLayout": {
+        "activeContext": null,
+        "appShell": null,
+        "main": null,
+        "mainScrollTop": null,
+        "mobileNav": {
+          "bottom": 0,
+          "display": "none",
+          "height": 0,
+          "left": 0,
+          "right": 0,
+          "top": 0,
+          "width": 0
+        },
+        "scrollY": 0
+      },
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased dem"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "demo-partido-alineacion",
+    "path": "/demo?tab=partido&perspective=admin",
+    "userMode": "demo-admin",
+    "viewportKey": "desktop-wide",
+    "viewport": "1920x1080",
+    "metrics": {
+      "title": "Mundo Demo | Pachangas IQ",
+      "theme": "light",
+      "textLength": 561,
+      "overflowX": 0,
+      "overflowY": 39,
+      "failedImages": [],
+      "smallTargets": [
+        {
+          "tag": "button",
+          "text": "Reiniciar",
+          "className": "",
+          "width": 71,
+          "height": 28
+        },
+        {
+          "tag": "a",
+          "text": "Salir",
+          "className": "",
+          "width": 46,
+          "height": 28
+        },
+        {
+          "tag": "a",
+          "text": "Pachangas IQ Mundo Demo",
+          "className": "demo-world-module__MMjxMW__brand",
+          "width": 744,
+          "height": 36
+        }
+      ],
+      "viewportViolations": [],
+      "gameChromeViolations": [],
+      "gameLayout": {
+        "activeContext": null,
+        "appShell": null,
+        "main": null,
+        "mainScrollTop": null,
+        "mobileNav": {
+          "bottom": 0,
+          "display": "none",
+          "height": 0,
+          "left": 0,
+          "right": 0,
+          "top": 0,
+          "width": 0
+        },
+        "scrollY": 0
+      },
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased dem"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "demo-partido-resultado",
+    "path": "/demo?tab=partido&perspective=admin",
+    "userMode": "demo-admin",
+    "viewportKey": "desktop-wide",
+    "viewport": "1920x1080",
+    "metrics": {
+      "title": "Mundo Demo | Pachangas IQ",
+      "theme": "light",
+      "textLength": 517,
+      "overflowX": 0,
+      "overflowY": 39,
+      "failedImages": [],
+      "smallTargets": [
+        {
+          "tag": "button",
+          "text": "Reiniciar",
+          "className": "",
+          "width": 71,
+          "height": 28
+        },
+        {
+          "tag": "a",
+          "text": "Salir",
+          "className": "",
+          "width": 46,
+          "height": 28
+        },
+        {
+          "tag": "a",
+          "text": "Pachangas IQ Mundo Demo",
+          "className": "demo-world-module__MMjxMW__brand",
+          "width": 744,
+          "height": 36
+        }
+      ],
+      "viewportViolations": [],
+      "gameChromeViolations": [],
+      "gameLayout": {
+        "activeContext": null,
+        "appShell": null,
+        "main": null,
+        "mainScrollTop": null,
+        "mobileNav": {
+          "bottom": 0,
+          "display": "none",
+          "height": 0,
+          "left": 0,
+          "right": 0,
+          "top": 0,
+          "width": 0
+        },
+        "scrollY": 0
+      },
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased dem"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "demo-partido-admin",
+    "path": "/demo?tab=partido&perspective=admin",
+    "userMode": "demo-admin",
+    "viewportKey": "desktop-wide",
+    "viewport": "1920x1080",
+    "metrics": {
+      "title": "Mundo Demo | Pachangas IQ",
+      "theme": "light",
+      "textLength": 655,
+      "overflowX": 0,
+      "overflowY": 39,
+      "failedImages": [],
+      "smallTargets": [
+        {
+          "tag": "button",
+          "text": "Reiniciar",
+          "className": "",
+          "width": 71,
+          "height": 28
+        },
+        {
+          "tag": "a",
+          "text": "Salir",
+          "className": "",
+          "width": 46,
+          "height": 28
+        },
+        {
+          "tag": "a",
+          "text": "Pachangas IQ Mundo Demo",
+          "className": "demo-world-module__MMjxMW__brand",
+          "width": 744,
+          "height": 36
+        }
+      ],
+      "viewportViolations": [],
+      "gameChromeViolations": [],
+      "gameLayout": {
+        "activeContext": null,
+        "appShell": null,
+        "main": null,
+        "mainScrollTop": null,
+        "mobileNav": {
+          "bottom": 0,
+          "display": "none",
+          "height": 0,
+          "left": 0,
+          "right": 0,
+          "top": 0,
+          "width": 0
+        },
+        "scrollY": 0
+      },
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased dem"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "demo-mercado",
+    "path": "/demo?tab=mercado&perspective=admin",
+    "userMode": "demo-admin",
+    "viewportKey": "desktop-wide",
+    "viewport": "1920x1080",
+    "metrics": {
+      "title": "Mundo Demo | Pachangas IQ",
+      "theme": "light",
+      "textLength": 3171,
+      "overflowX": 0,
+      "overflowY": 611,
+      "failedImages": [],
+      "smallTargets": [
+        {
+          "tag": "button",
+          "text": "Reiniciar",
+          "className": "",
+          "width": 71,
+          "height": 28
+        },
+        {
+          "tag": "a",
+          "text": "Salir",
+          "className": "",
+          "width": 46,
+          "height": 28
+        },
+        {
+          "tag": "a",
+          "text": "Pachangas IQ Mundo Demo",
+          "className": "demo-world-module__MMjxMW__brand",
+          "width": 744,
+          "height": 36
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        }
+      ],
+      "viewportViolations": [],
+      "gameChromeViolations": [],
+      "gameLayout": {
+        "activeContext": null,
+        "appShell": null,
+        "main": null,
+        "mainScrollTop": null,
+        "mobileNav": {
+          "bottom": 0,
+          "display": "none",
+          "height": 0,
+          "left": 0,
+          "right": 0,
+          "top": 0,
+          "width": 0
+        },
+        "scrollY": 0
+      },
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased dem"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "demo-equipo",
+    "path": "/demo?tab=equipo&perspective=admin",
+    "userMode": "demo-admin",
+    "viewportKey": "desktop-wide",
+    "viewport": "1920x1080",
+    "metrics": {
+      "title": "Mundo Demo | Pachangas IQ",
+      "theme": "light",
+      "textLength": 1912,
+      "overflowX": 0,
+      "overflowY": 1316,
+      "failedImages": [],
+      "smallTargets": [
+        {
+          "tag": "button",
+          "text": "Reiniciar",
+          "className": "",
+          "width": 71,
+          "height": 28
+        },
+        {
+          "tag": "a",
+          "text": "Salir",
+          "className": "",
+          "width": 46,
+          "height": 28
+        },
+        {
+          "tag": "a",
+          "text": "Pachangas IQ Mundo Demo",
+          "className": "demo-world-module__MMjxMW__brand",
+          "width": 744,
+          "height": 36
+        }
+      ],
+      "viewportViolations": [],
+      "gameChromeViolations": [],
+      "gameLayout": {
+        "activeContext": null,
+        "appShell": null,
+        "main": null,
+        "mainScrollTop": null,
+        "mobileNav": {
+          "bottom": 0,
+          "display": "none",
+          "height": 0,
+          "left": 0,
+          "right": 0,
+          "top": 0,
+          "width": 0
+        },
+        "scrollY": 0
+      },
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased dem"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "demo-perfil",
+    "path": "/demo?tab=perfil&perspective=player",
+    "userMode": "demo-player",
+    "viewportKey": "desktop-wide",
+    "viewport": "1920x1080",
+    "metrics": {
+      "title": "Mundo Demo | Pachangas IQ",
+      "theme": "light",
+      "textLength": 827,
+      "overflowX": 0,
+      "overflowY": 39,
+      "failedImages": [],
+      "smallTargets": [
+        {
+          "tag": "button",
+          "text": "Reiniciar",
+          "className": "",
+          "width": 71,
+          "height": 28
+        },
+        {
+          "tag": "a",
+          "text": "Salir",
+          "className": "",
+          "width": 46,
+          "height": 28
+        },
+        {
+          "tag": "a",
+          "text": "Pachangas IQ Mundo Demo",
+          "className": "demo-world-module__MMjxMW__brand",
+          "width": 744,
+          "height": 36
+        }
+      ],
+      "viewportViolations": [],
+      "gameChromeViolations": [],
+      "gameLayout": {
+        "activeContext": null,
+        "appShell": null,
+        "main": null,
+        "mainScrollTop": null,
+        "mobileNav": {
+          "bottom": 0,
+          "display": "none",
+          "height": 0,
+          "left": 0,
+          "right": 0,
+          "top": 0,
+          "width": 0
+        },
+        "scrollY": 0
+      },
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased dem"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "demo-inicio-light",
+    "path": "/demo?tab=inicio&perspective=admin&qaTheme=light",
+    "userMode": "demo-admin-light",
+    "viewportKey": "desktop-wide",
+    "viewport": "1920x1080",
+    "metrics": {
+      "title": "Mundo Demo | Pachangas IQ",
+      "theme": "light",
+      "textLength": 2139,
+      "overflowX": 0,
+      "overflowY": 818,
+      "failedImages": [],
+      "smallTargets": [
+        {
+          "tag": "button",
+          "text": "Reiniciar",
+          "className": "",
+          "width": 71,
+          "height": 28
+        },
+        {
+          "tag": "a",
+          "text": "Salir",
+          "className": "",
+          "width": 46,
+          "height": 28
+        },
+        {
+          "tag": "a",
+          "text": "Pachangas IQ Mundo Demo",
+          "className": "demo-world-module__MMjxMW__brand",
+          "width": 744,
+          "height": 36
+        }
+      ],
+      "viewportViolations": [],
+      "gameChromeViolations": [],
+      "gameLayout": {
+        "activeContext": null,
+        "appShell": null,
+        "main": null,
+        "mainScrollTop": null,
+        "mobileNav": {
+          "bottom": 0,
+          "display": "none",
+          "height": 0,
+          "left": 0,
+          "right": 0,
+          "top": 0,
+          "width": 0
+        },
+        "scrollY": 0
+      },
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased dem"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "demo-inicio-dark",
+    "path": "/demo?tab=inicio&perspective=admin&qaTheme=dark",
+    "userMode": "demo-admin-dark",
+    "viewportKey": "desktop-wide",
+    "viewport": "1920x1080",
+    "metrics": {
+      "title": "Mundo Demo | Pachangas IQ",
+      "theme": "dark",
+      "textLength": 2139,
+      "overflowX": 0,
+      "overflowY": 818,
+      "failedImages": [],
+      "smallTargets": [
+        {
+          "tag": "button",
+          "text": "Reiniciar",
+          "className": "",
+          "width": 71,
+          "height": 28
+        },
+        {
+          "tag": "a",
+          "text": "Salir",
+          "className": "",
+          "width": 46,
+          "height": 28
+        },
+        {
+          "tag": "a",
+          "text": "Pachangas IQ Mundo Demo",
+          "className": "demo-world-module__MMjxMW__brand",
+          "width": 744,
+          "height": 36
+        }
+      ],
+      "viewportViolations": [],
+      "gameChromeViolations": [],
+      "gameLayout": {
+        "activeContext": null,
+        "appShell": null,
+        "main": null,
+        "mainScrollTop": null,
+        "mobileNav": {
+          "bottom": 0,
+          "display": "none",
+          "height": 0,
+          "left": 0,
+          "right": 0,
+          "top": 0,
+          "width": 0
+        },
+        "scrollY": 0
+      },
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased dem"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "demo-inicio-admin",
+    "path": "/demo?tab=inicio&perspective=admin",
+    "userMode": "demo-admin",
+    "viewportKey": "portrait",
+    "viewport": "390x844",
+    "metrics": {
+      "title": "Mundo Demo | Pachangas IQ",
+      "theme": "dark",
+      "textLength": 1901,
+      "overflowX": 0,
+      "overflowY": 1519,
+      "failedImages": [],
+      "smallTargets": [],
+      "viewportViolations": [],
+      "gameChromeViolations": [],
+      "gameLayout": {
+        "activeContext": null,
+        "appShell": null,
+        "main": null,
+        "mainScrollTop": null,
+        "mobileNav": {
+          "bottom": 844,
+          "display": "block",
+          "height": 66,
+          "left": 0,
+          "right": 390,
+          "top": 778,
+          "width": 390
+        },
+        "scrollY": 0
+      },
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased dem"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "demo-inicio-player",
+    "path": "/demo?tab=inicio&perspective=player",
+    "userMode": "demo-player",
+    "viewportKey": "portrait",
+    "viewport": "390x844",
+    "metrics": {
+      "title": "Mundo Demo | Pachangas IQ",
+      "theme": "dark",
+      "textLength": 1903,
+      "overflowX": 0,
+      "overflowY": 1519,
+      "failedImages": [],
+      "smallTargets": [],
+      "viewportViolations": [],
+      "gameChromeViolations": [],
+      "gameLayout": {
+        "activeContext": null,
+        "appShell": null,
+        "main": null,
+        "mainScrollTop": null,
+        "mobileNav": {
+          "bottom": 844,
+          "display": "block",
+          "height": 66,
+          "left": 0,
+          "right": 390,
+          "top": 778,
+          "width": 390
+        },
+        "scrollY": 0
+      },
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased dem"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "demo-partido",
+    "path": "/demo?tab=partido&perspective=admin",
+    "userMode": "demo-admin",
+    "viewportKey": "portrait",
+    "viewport": "390x844",
+    "metrics": {
+      "title": "Mundo Demo | Pachangas IQ",
+      "theme": "dark",
+      "textLength": 610,
+      "overflowX": 0,
+      "overflowY": 410,
+      "failedImages": [],
+      "smallTargets": [],
+      "viewportViolations": [],
+      "gameChromeViolations": [],
+      "gameLayout": {
+        "activeContext": null,
+        "appShell": null,
+        "main": null,
+        "mainScrollTop": null,
+        "mobileNav": {
+          "bottom": 844,
+          "display": "block",
+          "height": 66,
+          "left": 0,
+          "right": 390,
+          "top": 778,
+          "width": 390
+        },
+        "scrollY": 0
+      },
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased dem"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "demo-partido-alineacion",
+    "path": "/demo?tab=partido&perspective=admin",
+    "userMode": "demo-admin",
+    "viewportKey": "portrait",
+    "viewport": "390x844",
+    "metrics": {
+      "title": "Mundo Demo | Pachangas IQ",
+      "theme": "dark",
+      "textLength": 512,
+      "overflowX": 0,
+      "overflowY": 159,
+      "failedImages": [],
+      "smallTargets": [],
+      "viewportViolations": [],
+      "gameChromeViolations": [],
+      "gameLayout": {
+        "activeContext": null,
+        "appShell": null,
+        "main": null,
+        "mainScrollTop": null,
+        "mobileNav": {
+          "bottom": 844,
+          "display": "block",
+          "height": 66,
+          "left": 0,
+          "right": 390,
+          "top": 778,
+          "width": 390
+        },
+        "scrollY": 0
+      },
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased dem"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "demo-partido-resultado",
+    "path": "/demo?tab=partido&perspective=admin",
+    "userMode": "demo-admin",
+    "viewportKey": "portrait",
+    "viewport": "390x844",
+    "metrics": {
+      "title": "Mundo Demo | Pachangas IQ",
+      "theme": "dark",
+      "textLength": 468,
+      "overflowX": 0,
+      "overflowY": 159,
+      "failedImages": [],
+      "smallTargets": [],
+      "viewportViolations": [],
+      "gameChromeViolations": [],
+      "gameLayout": {
+        "activeContext": null,
+        "appShell": null,
+        "main": null,
+        "mainScrollTop": null,
+        "mobileNav": {
+          "bottom": 844,
+          "display": "block",
+          "height": 66,
+          "left": 0,
+          "right": 390,
+          "top": 778,
+          "width": 390
+        },
+        "scrollY": 0
+      },
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased dem"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "demo-partido-admin",
+    "path": "/demo?tab=partido&perspective=admin",
+    "userMode": "demo-admin",
+    "viewportKey": "portrait",
+    "viewport": "390x844",
+    "metrics": {
+      "title": "Mundo Demo | Pachangas IQ",
+      "theme": "dark",
+      "textLength": 605,
+      "overflowX": 0,
+      "overflowY": 159,
+      "failedImages": [],
+      "smallTargets": [],
+      "viewportViolations": [],
+      "gameChromeViolations": [],
+      "gameLayout": {
+        "activeContext": null,
+        "appShell": null,
+        "main": null,
+        "mainScrollTop": null,
+        "mobileNav": {
+          "bottom": 844,
+          "display": "block",
+          "height": 66,
+          "left": 0,
+          "right": 390,
+          "top": 778,
+          "width": 390
+        },
+        "scrollY": 0
+      },
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased dem"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "demo-mercado",
+    "path": "/demo?tab=mercado&perspective=admin",
+    "userMode": "demo-admin",
+    "viewportKey": "portrait",
+    "viewport": "390x844",
+    "metrics": {
+      "title": "Mundo Demo | Pachangas IQ",
+      "theme": "dark",
+      "textLength": 3102,
+      "overflowX": 0,
+      "overflowY": 5000,
+      "failedImages": [],
+      "smallTargets": [
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        }
+      ],
+      "viewportViolations": [],
+      "gameChromeViolations": [],
+      "gameLayout": {
+        "activeContext": null,
+        "appShell": null,
+        "main": null,
+        "mainScrollTop": null,
+        "mobileNav": {
+          "bottom": 844,
+          "display": "block",
+          "height": 66,
+          "left": 0,
+          "right": 390,
+          "top": 778,
+          "width": 390
+        },
+        "scrollY": 0
+      },
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased dem"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "demo-equipo",
+    "path": "/demo?tab=equipo&perspective=admin",
+    "userMode": "demo-admin",
+    "viewportKey": "portrait",
+    "viewport": "390x844",
+    "metrics": {
+      "title": "Mundo Demo | Pachangas IQ",
+      "theme": "dark",
+      "textLength": 1853,
+      "overflowX": 0,
+      "overflowY": 1788,
+      "failedImages": [],
+      "smallTargets": [],
+      "viewportViolations": [],
+      "gameChromeViolations": [],
+      "gameLayout": {
+        "activeContext": null,
+        "appShell": null,
+        "main": null,
+        "mainScrollTop": null,
+        "mobileNav": {
+          "bottom": 844,
+          "display": "block",
+          "height": 66,
+          "left": 0,
+          "right": 390,
+          "top": 778,
+          "width": 390
+        },
+        "scrollY": 0
+      },
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased dem"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "demo-perfil",
+    "path": "/demo?tab=perfil&perspective=player",
+    "userMode": "demo-player",
+    "viewportKey": "portrait",
+    "viewport": "390x844",
+    "metrics": {
+      "title": "Mundo Demo | Pachangas IQ",
+      "theme": "dark",
+      "textLength": 761,
+      "overflowX": 0,
+      "overflowY": 770,
+      "failedImages": [],
+      "smallTargets": [],
+      "viewportViolations": [],
+      "gameChromeViolations": [],
+      "gameLayout": {
+        "activeContext": null,
+        "appShell": null,
+        "main": null,
+        "mainScrollTop": null,
+        "mobileNav": {
+          "bottom": 844,
+          "display": "block",
+          "height": 66,
+          "left": 0,
+          "right": 390,
+          "top": 778,
+          "width": 390
+        },
+        "scrollY": 0
+      },
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased dem"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "demo-inicio-light",
+    "path": "/demo?tab=inicio&perspective=admin&qaTheme=light",
+    "userMode": "demo-admin-light",
+    "viewportKey": "portrait",
+    "viewport": "390x844",
+    "metrics": {
+      "title": "Mundo Demo | Pachangas IQ",
+      "theme": "light",
+      "textLength": 1901,
+      "overflowX": 0,
+      "overflowY": 1519,
+      "failedImages": [],
+      "smallTargets": [],
+      "viewportViolations": [],
+      "gameChromeViolations": [],
+      "gameLayout": {
+        "activeContext": null,
+        "appShell": null,
+        "main": null,
+        "mainScrollTop": null,
+        "mobileNav": {
+          "bottom": 844,
+          "display": "block",
+          "height": 66,
+          "left": 0,
+          "right": 390,
+          "top": 778,
+          "width": 390
+        },
+        "scrollY": 0
+      },
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased dem"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "demo-inicio-dark",
+    "path": "/demo?tab=inicio&perspective=admin&qaTheme=dark",
+    "userMode": "demo-admin-dark",
+    "viewportKey": "portrait",
+    "viewport": "390x844",
+    "metrics": {
+      "title": "Mundo Demo | Pachangas IQ",
+      "theme": "dark",
+      "textLength": 1901,
+      "overflowX": 0,
+      "overflowY": 1519,
+      "failedImages": [],
+      "smallTargets": [],
+      "viewportViolations": [],
+      "gameChromeViolations": [],
+      "gameLayout": {
+        "activeContext": null,
+        "appShell": null,
+        "main": null,
+        "mainScrollTop": null,
+        "mobileNav": {
+          "bottom": 844,
+          "display": "block",
+          "height": 66,
+          "left": 0,
+          "right": 390,
+          "top": 778,
+          "width": 390
+        },
+        "scrollY": 0
+      },
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased dem"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "demo-inicio-admin",
+    "path": "/demo?tab=inicio&perspective=admin",
+    "userMode": "demo-admin",
+    "viewportKey": "portrait-small",
+    "viewport": "360x800",
+    "metrics": {
+      "title": "Mundo Demo | Pachangas IQ",
+      "theme": "dark",
+      "textLength": 1901,
+      "overflowX": 0,
+      "overflowY": 1619,
+      "failedImages": [],
+      "smallTargets": [],
+      "viewportViolations": [],
+      "gameChromeViolations": [],
+      "gameLayout": {
+        "activeContext": null,
+        "appShell": null,
+        "main": null,
+        "mainScrollTop": null,
+        "mobileNav": {
+          "bottom": 800,
+          "display": "block",
+          "height": 62,
+          "left": 0,
+          "right": 360,
+          "top": 738,
+          "width": 360
+        },
+        "scrollY": 0
+      },
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased dem"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "demo-inicio-player",
+    "path": "/demo?tab=inicio&perspective=player",
+    "userMode": "demo-player",
+    "viewportKey": "portrait-small",
+    "viewport": "360x800",
+    "metrics": {
+      "title": "Mundo Demo | Pachangas IQ",
+      "theme": "dark",
+      "textLength": 1903,
+      "overflowX": 0,
+      "overflowY": 1619,
+      "failedImages": [],
+      "smallTargets": [],
+      "viewportViolations": [],
+      "gameChromeViolations": [],
+      "gameLayout": {
+        "activeContext": null,
+        "appShell": null,
+        "main": null,
+        "mainScrollTop": null,
+        "mobileNav": {
+          "bottom": 800,
+          "display": "block",
+          "height": 62,
+          "left": 0,
+          "right": 360,
+          "top": 738,
+          "width": 360
+        },
+        "scrollY": 0
+      },
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased dem"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "demo-partido",
+    "path": "/demo?tab=partido&perspective=admin",
+    "userMode": "demo-admin",
+    "viewportKey": "portrait-small",
+    "viewport": "360x800",
+    "metrics": {
+      "title": "Mundo Demo | Pachangas IQ",
+      "theme": "dark",
+      "textLength": 610,
+      "overflowX": 0,
+      "overflowY": 448,
+      "failedImages": [],
+      "smallTargets": [],
+      "viewportViolations": [],
+      "gameChromeViolations": [],
+      "gameLayout": {
+        "activeContext": null,
+        "appShell": null,
+        "main": null,
+        "mainScrollTop": null,
+        "mobileNav": {
+          "bottom": 800,
+          "display": "block",
+          "height": 62,
+          "left": 0,
+          "right": 360,
+          "top": 738,
+          "width": 360
+        },
+        "scrollY": 0
+      },
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased dem"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "demo-partido-alineacion",
+    "path": "/demo?tab=partido&perspective=admin",
+    "userMode": "demo-admin",
+    "viewportKey": "portrait-small",
+    "viewport": "360x800",
+    "metrics": {
+      "title": "Mundo Demo | Pachangas IQ",
+      "theme": "dark",
+      "textLength": 512,
+      "overflowX": 0,
+      "overflowY": 153,
+      "failedImages": [],
+      "smallTargets": [],
+      "viewportViolations": [],
+      "gameChromeViolations": [],
+      "gameLayout": {
+        "activeContext": null,
+        "appShell": null,
+        "main": null,
+        "mainScrollTop": null,
+        "mobileNav": {
+          "bottom": 800,
+          "display": "block",
+          "height": 62,
+          "left": 0,
+          "right": 360,
+          "top": 738,
+          "width": 360
+        },
+        "scrollY": 0
+      },
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased dem"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "demo-partido-resultado",
+    "path": "/demo?tab=partido&perspective=admin",
+    "userMode": "demo-admin",
+    "viewportKey": "portrait-small",
+    "viewport": "360x800",
+    "metrics": {
+      "title": "Mundo Demo | Pachangas IQ",
+      "theme": "dark",
+      "textLength": 468,
+      "overflowX": 0,
+      "overflowY": 153,
+      "failedImages": [],
+      "smallTargets": [],
+      "viewportViolations": [],
+      "gameChromeViolations": [],
+      "gameLayout": {
+        "activeContext": null,
+        "appShell": null,
+        "main": null,
+        "mainScrollTop": null,
+        "mobileNav": {
+          "bottom": 800,
+          "display": "block",
+          "height": 62,
+          "left": 0,
+          "right": 360,
+          "top": 738,
+          "width": 360
+        },
+        "scrollY": 0
+      },
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased dem"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "demo-partido-admin",
+    "path": "/demo?tab=partido&perspective=admin",
+    "userMode": "demo-admin",
+    "viewportKey": "portrait-small",
+    "viewport": "360x800",
+    "metrics": {
+      "title": "Mundo Demo | Pachangas IQ",
+      "theme": "dark",
+      "textLength": 605,
+      "overflowX": 0,
+      "overflowY": 153,
+      "failedImages": [],
+      "smallTargets": [],
+      "viewportViolations": [],
+      "gameChromeViolations": [],
+      "gameLayout": {
+        "activeContext": null,
+        "appShell": null,
+        "main": null,
+        "mainScrollTop": null,
+        "mobileNav": {
+          "bottom": 800,
+          "display": "block",
+          "height": 62,
+          "left": 0,
+          "right": 360,
+          "top": 738,
+          "width": 360
+        },
+        "scrollY": 0
+      },
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased dem"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "demo-mercado",
+    "path": "/demo?tab=mercado&perspective=admin",
+    "userMode": "demo-admin",
+    "viewportKey": "portrait-small",
+    "viewport": "360x800",
+    "metrics": {
+      "title": "Mundo Demo | Pachangas IQ",
+      "theme": "dark",
+      "textLength": 3102,
+      "overflowX": 0,
+      "overflowY": 5038,
+      "failedImages": [],
+      "smallTargets": [
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        }
+      ],
+      "viewportViolations": [],
+      "gameChromeViolations": [],
+      "gameLayout": {
+        "activeContext": null,
+        "appShell": null,
+        "main": null,
+        "mainScrollTop": null,
+        "mobileNav": {
+          "bottom": 800,
+          "display": "block",
+          "height": 62,
+          "left": 0,
+          "right": 360,
+          "top": 738,
+          "width": 360
+        },
+        "scrollY": 0
+      },
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased dem"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "demo-equipo",
+    "path": "/demo?tab=equipo&perspective=admin",
+    "userMode": "demo-admin",
+    "viewportKey": "portrait-small",
+    "viewport": "360x800",
+    "metrics": {
+      "title": "Mundo Demo | Pachangas IQ",
+      "theme": "dark",
+      "textLength": 1853,
+      "overflowX": 0,
+      "overflowY": 1826,
+      "failedImages": [],
+      "smallTargets": [],
+      "viewportViolations": [],
+      "gameChromeViolations": [],
+      "gameLayout": {
+        "activeContext": null,
+        "appShell": null,
+        "main": null,
+        "mainScrollTop": null,
+        "mobileNav": {
+          "bottom": 800,
+          "display": "block",
+          "height": 62,
+          "left": 0,
+          "right": 360,
+          "top": 738,
+          "width": 360
+        },
+        "scrollY": 0
+      },
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased dem"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "demo-perfil",
+    "path": "/demo?tab=perfil&perspective=player",
+    "userMode": "demo-player",
+    "viewportKey": "portrait-small",
+    "viewport": "360x800",
+    "metrics": {
+      "title": "Mundo Demo | Pachangas IQ",
+      "theme": "dark",
+      "textLength": 761,
+      "overflowX": 0,
+      "overflowY": 808,
+      "failedImages": [],
+      "smallTargets": [],
+      "viewportViolations": [],
+      "gameChromeViolations": [],
+      "gameLayout": {
+        "activeContext": null,
+        "appShell": null,
+        "main": null,
+        "mainScrollTop": null,
+        "mobileNav": {
+          "bottom": 800,
+          "display": "block",
+          "height": 62,
+          "left": 0,
+          "right": 360,
+          "top": 738,
+          "width": 360
+        },
+        "scrollY": 0
+      },
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased dem"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "demo-inicio-light",
+    "path": "/demo?tab=inicio&perspective=admin&qaTheme=light",
+    "userMode": "demo-admin-light",
+    "viewportKey": "portrait-small",
+    "viewport": "360x800",
+    "metrics": {
+      "title": "Mundo Demo | Pachangas IQ",
+      "theme": "light",
+      "textLength": 1901,
+      "overflowX": 0,
+      "overflowY": 1619,
+      "failedImages": [],
+      "smallTargets": [],
+      "viewportViolations": [],
+      "gameChromeViolations": [],
+      "gameLayout": {
+        "activeContext": null,
+        "appShell": null,
+        "main": null,
+        "mainScrollTop": null,
+        "mobileNav": {
+          "bottom": 800,
+          "display": "block",
+          "height": 62,
+          "left": 0,
+          "right": 360,
+          "top": 738,
+          "width": 360
+        },
+        "scrollY": 0
+      },
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased dem"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "demo-inicio-dark",
+    "path": "/demo?tab=inicio&perspective=admin&qaTheme=dark",
+    "userMode": "demo-admin-dark",
+    "viewportKey": "portrait-small",
+    "viewport": "360x800",
+    "metrics": {
+      "title": "Mundo Demo | Pachangas IQ",
+      "theme": "dark",
+      "textLength": 1901,
+      "overflowX": 0,
+      "overflowY": 1619,
+      "failedImages": [],
+      "smallTargets": [],
+      "viewportViolations": [],
+      "gameChromeViolations": [],
+      "gameLayout": {
+        "activeContext": null,
+        "appShell": null,
+        "main": null,
+        "mainScrollTop": null,
+        "mobileNav": {
+          "bottom": 800,
+          "display": "block",
+          "height": 62,
+          "left": 0,
+          "right": 360,
+          "top": 738,
+          "width": 360
+        },
+        "scrollY": 0
+      },
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased dem"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "demo-inicio-admin",
+    "path": "/demo?tab=inicio&perspective=admin",
+    "userMode": "demo-admin",
+    "viewportKey": "landscape",
+    "viewport": "844x390",
+    "metrics": {
+      "title": "Mundo Demo | Pachangas IQ",
+      "theme": "light",
+      "textLength": 1992,
+      "overflowX": 0,
+      "overflowY": 0,
+      "failedImages": [],
+      "smallTargets": [],
+      "viewportViolations": [],
+      "gameChromeViolations": [],
+      "gameLayout": {
+        "activeContext": null,
+        "appShell": null,
+        "main": null,
+        "mainScrollTop": null,
+        "mobileNav": {
+          "bottom": 41,
+          "display": "block",
+          "height": 41,
+          "left": 0,
+          "right": 844,
+          "top": 0,
+          "width": 844
+        },
+        "scrollY": 0
+      },
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased dem"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "demo-inicio-player",
+    "path": "/demo?tab=inicio&perspective=player",
+    "userMode": "demo-player",
+    "viewportKey": "landscape",
+    "viewport": "844x390",
+    "metrics": {
+      "title": "Mundo Demo | Pachangas IQ",
+      "theme": "light",
+      "textLength": 1994,
+      "overflowX": 0,
+      "overflowY": 0,
+      "failedImages": [],
+      "smallTargets": [],
+      "viewportViolations": [],
+      "gameChromeViolations": [],
+      "gameLayout": {
+        "activeContext": null,
+        "appShell": null,
+        "main": null,
+        "mainScrollTop": null,
+        "mobileNav": {
+          "bottom": 41,
+          "display": "block",
+          "height": 41,
+          "left": 0,
+          "right": 844,
+          "top": 0,
+          "width": 844
+        },
+        "scrollY": 0
+      },
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased dem"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "demo-partido",
+    "path": "/demo?tab=partido&perspective=admin",
+    "userMode": "demo-admin",
+    "viewportKey": "landscape",
+    "viewport": "844x390",
+    "metrics": {
+      "title": "Mundo Demo | Pachangas IQ",
+      "theme": "light",
+      "textLength": 513,
+      "overflowX": 0,
+      "overflowY": 0,
+      "failedImages": [],
+      "smallTargets": [],
+      "viewportViolations": [],
+      "gameChromeViolations": [],
+      "gameLayout": {
+        "activeContext": null,
+        "appShell": null,
+        "main": null,
+        "mainScrollTop": null,
+        "mobileNav": {
+          "bottom": 41,
+          "display": "block",
+          "height": 41,
+          "left": 0,
+          "right": 844,
+          "top": 0,
+          "width": 844
+        },
+        "scrollY": 0
+      },
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased dem"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "demo-partido-alineacion",
+    "path": "/demo?tab=partido&perspective=admin",
+    "userMode": "demo-admin",
+    "viewportKey": "landscape",
+    "viewport": "844x390",
+    "metrics": {
+      "title": "Mundo Demo | Pachangas IQ",
+      "theme": "light",
+      "textLength": 339,
+      "overflowX": 0,
+      "overflowY": 0,
+      "failedImages": [],
+      "smallTargets": [],
+      "viewportViolations": [],
+      "gameChromeViolations": [],
+      "gameLayout": {
+        "activeContext": null,
+        "appShell": null,
+        "main": null,
+        "mainScrollTop": null,
+        "mobileNav": {
+          "bottom": 41,
+          "display": "block",
+          "height": 41,
+          "left": 0,
+          "right": 844,
+          "top": 0,
+          "width": 844
+        },
+        "scrollY": 0
+      },
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased dem"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "demo-partido-resultado",
+    "path": "/demo?tab=partido&perspective=admin",
+    "userMode": "demo-admin",
+    "viewportKey": "landscape",
+    "viewport": "844x390",
+    "metrics": {
+      "title": "Mundo Demo | Pachangas IQ",
+      "theme": "light",
+      "textLength": 371,
+      "overflowX": 0,
+      "overflowY": 0,
+      "failedImages": [],
+      "smallTargets": [],
+      "viewportViolations": [],
+      "gameChromeViolations": [],
+      "gameLayout": {
+        "activeContext": null,
+        "appShell": null,
+        "main": null,
+        "mainScrollTop": null,
+        "mobileNav": {
+          "bottom": 41,
+          "display": "block",
+          "height": 41,
+          "left": 0,
+          "right": 844,
+          "top": 0,
+          "width": 844
+        },
+        "scrollY": 0
+      },
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased dem"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "demo-partido-admin",
+    "path": "/demo?tab=partido&perspective=admin",
+    "userMode": "demo-admin",
+    "viewportKey": "landscape",
+    "viewport": "844x390",
+    "metrics": {
+      "title": "Mundo Demo | Pachangas IQ",
+      "theme": "light",
+      "textLength": 508,
+      "overflowX": 0,
+      "overflowY": 0,
+      "failedImages": [],
+      "smallTargets": [],
+      "viewportViolations": [],
+      "gameChromeViolations": [],
+      "gameLayout": {
+        "activeContext": null,
+        "appShell": null,
+        "main": null,
+        "mainScrollTop": null,
+        "mobileNav": {
+          "bottom": 41,
+          "display": "block",
+          "height": 41,
+          "left": 0,
+          "right": 844,
+          "top": 0,
+          "width": 844
+        },
+        "scrollY": 0
+      },
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased dem"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "demo-mercado",
+    "path": "/demo?tab=mercado&perspective=admin",
+    "userMode": "demo-admin",
+    "viewportKey": "landscape",
+    "viewport": "844x390",
+    "metrics": {
+      "title": "Mundo Demo | Pachangas IQ",
+      "theme": "light",
+      "textLength": 3024,
+      "overflowX": 0,
+      "overflowY": 0,
+      "failedImages": [],
+      "smallTargets": [
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        }
+      ],
+      "viewportViolations": [],
+      "gameChromeViolations": [],
+      "gameLayout": {
+        "activeContext": null,
+        "appShell": null,
+        "main": null,
+        "mainScrollTop": null,
+        "mobileNav": {
+          "bottom": 41,
+          "display": "block",
+          "height": 41,
+          "left": 0,
+          "right": 844,
+          "top": 0,
+          "width": 844
+        },
+        "scrollY": 0
+      },
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased dem"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "demo-equipo",
+    "path": "/demo?tab=equipo&perspective=admin",
+    "userMode": "demo-admin",
+    "viewportKey": "landscape",
+    "viewport": "844x390",
+    "metrics": {
+      "title": "Mundo Demo | Pachangas IQ",
+      "theme": "light",
+      "textLength": 1675,
+      "overflowX": 0,
+      "overflowY": 0,
+      "failedImages": [],
+      "smallTargets": [],
+      "viewportViolations": [],
+      "gameChromeViolations": [],
+      "gameLayout": {
+        "activeContext": null,
+        "appShell": null,
+        "main": null,
+        "mainScrollTop": null,
+        "mobileNav": {
+          "bottom": 41,
+          "display": "block",
+          "height": 41,
+          "left": 0,
+          "right": 844,
+          "top": 0,
+          "width": 844
+        },
+        "scrollY": 0
+      },
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased dem"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "demo-perfil",
+    "path": "/demo?tab=perfil&perspective=player",
+    "userMode": "demo-player",
+    "viewportKey": "landscape",
+    "viewport": "844x390",
+    "metrics": {
+      "title": "Mundo Demo | Pachangas IQ",
+      "theme": "light",
+      "textLength": 680,
+      "overflowX": 0,
+      "overflowY": 0,
+      "failedImages": [],
+      "smallTargets": [],
+      "viewportViolations": [],
+      "gameChromeViolations": [],
+      "gameLayout": {
+        "activeContext": null,
+        "appShell": null,
+        "main": null,
+        "mainScrollTop": null,
+        "mobileNav": {
+          "bottom": 41,
+          "display": "block",
+          "height": 41,
+          "left": 0,
+          "right": 844,
+          "top": 0,
+          "width": 844
+        },
+        "scrollY": 0
+      },
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased dem"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "demo-inicio-light",
+    "path": "/demo?tab=inicio&perspective=admin&qaTheme=light",
+    "userMode": "demo-admin-light",
+    "viewportKey": "landscape",
+    "viewport": "844x390",
+    "metrics": {
+      "title": "Mundo Demo | Pachangas IQ",
+      "theme": "light",
+      "textLength": 1992,
+      "overflowX": 0,
+      "overflowY": 0,
+      "failedImages": [],
+      "smallTargets": [],
+      "viewportViolations": [],
+      "gameChromeViolations": [],
+      "gameLayout": {
+        "activeContext": null,
+        "appShell": null,
+        "main": null,
+        "mainScrollTop": null,
+        "mobileNav": {
+          "bottom": 41,
+          "display": "block",
+          "height": 41,
+          "left": 0,
+          "right": 844,
+          "top": 0,
+          "width": 844
+        },
+        "scrollY": 0
+      },
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased dem"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "demo-inicio-dark",
+    "path": "/demo?tab=inicio&perspective=admin&qaTheme=dark",
+    "userMode": "demo-admin-dark",
+    "viewportKey": "landscape",
+    "viewport": "844x390",
+    "metrics": {
+      "title": "Mundo Demo | Pachangas IQ",
+      "theme": "dark",
+      "textLength": 1992,
+      "overflowX": 0,
+      "overflowY": 0,
+      "failedImages": [],
+      "smallTargets": [],
+      "viewportViolations": [],
+      "gameChromeViolations": [],
+      "gameLayout": {
+        "activeContext": null,
+        "appShell": null,
+        "main": null,
+        "mainScrollTop": null,
+        "mobileNav": {
+          "bottom": 41,
+          "display": "block",
+          "height": 41,
+          "left": 0,
+          "right": 844,
+          "top": 0,
+          "width": 844
+        },
+        "scrollY": 0
+      },
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased dem"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "demo-inicio-admin",
+    "path": "/demo?tab=inicio&perspective=admin",
+    "userMode": "demo-admin",
+    "viewportKey": "pwa-portrait",
+    "viewport": "390x844",
+    "metrics": {
+      "title": "Mundo Demo | Pachangas IQ",
+      "theme": "dark",
+      "textLength": 1901,
+      "overflowX": 0,
+      "overflowY": 1519,
+      "failedImages": [],
+      "smallTargets": [],
+      "viewportViolations": [],
+      "gameChromeViolations": [],
+      "gameLayout": {
+        "activeContext": null,
+        "appShell": null,
+        "main": null,
+        "mainScrollTop": null,
+        "mobileNav": {
+          "bottom": 844,
+          "display": "block",
+          "height": 66,
+          "left": 0,
+          "right": 390,
+          "top": 778,
+          "width": 390
+        },
+        "scrollY": 0
+      },
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased dem"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "demo-inicio-player",
+    "path": "/demo?tab=inicio&perspective=player",
+    "userMode": "demo-player",
+    "viewportKey": "pwa-portrait",
+    "viewport": "390x844",
+    "metrics": {
+      "title": "Mundo Demo | Pachangas IQ",
+      "theme": "dark",
+      "textLength": 1903,
+      "overflowX": 0,
+      "overflowY": 1519,
+      "failedImages": [],
+      "smallTargets": [],
+      "viewportViolations": [],
+      "gameChromeViolations": [],
+      "gameLayout": {
+        "activeContext": null,
+        "appShell": null,
+        "main": null,
+        "mainScrollTop": null,
+        "mobileNav": {
+          "bottom": 844,
+          "display": "block",
+          "height": 66,
+          "left": 0,
+          "right": 390,
+          "top": 778,
+          "width": 390
+        },
+        "scrollY": 0
+      },
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased dem"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "demo-partido",
+    "path": "/demo?tab=partido&perspective=admin",
+    "userMode": "demo-admin",
+    "viewportKey": "pwa-portrait",
+    "viewport": "390x844",
+    "metrics": {
+      "title": "Mundo Demo | Pachangas IQ",
+      "theme": "dark",
+      "textLength": 610,
+      "overflowX": 0,
+      "overflowY": 410,
+      "failedImages": [],
+      "smallTargets": [],
+      "viewportViolations": [],
+      "gameChromeViolations": [],
+      "gameLayout": {
+        "activeContext": null,
+        "appShell": null,
+        "main": null,
+        "mainScrollTop": null,
+        "mobileNav": {
+          "bottom": 844,
+          "display": "block",
+          "height": 66,
+          "left": 0,
+          "right": 390,
+          "top": 778,
+          "width": 390
+        },
+        "scrollY": 0
+      },
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased dem"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "demo-partido-alineacion",
+    "path": "/demo?tab=partido&perspective=admin",
+    "userMode": "demo-admin",
+    "viewportKey": "pwa-portrait",
+    "viewport": "390x844",
+    "metrics": {
+      "title": "Mundo Demo | Pachangas IQ",
+      "theme": "dark",
+      "textLength": 512,
+      "overflowX": 0,
+      "overflowY": 159,
+      "failedImages": [],
+      "smallTargets": [],
+      "viewportViolations": [],
+      "gameChromeViolations": [],
+      "gameLayout": {
+        "activeContext": null,
+        "appShell": null,
+        "main": null,
+        "mainScrollTop": null,
+        "mobileNav": {
+          "bottom": 844,
+          "display": "block",
+          "height": 66,
+          "left": 0,
+          "right": 390,
+          "top": 778,
+          "width": 390
+        },
+        "scrollY": 0
+      },
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased dem"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "demo-partido-resultado",
+    "path": "/demo?tab=partido&perspective=admin",
+    "userMode": "demo-admin",
+    "viewportKey": "pwa-portrait",
+    "viewport": "390x844",
+    "metrics": {
+      "title": "Mundo Demo | Pachangas IQ",
+      "theme": "dark",
+      "textLength": 468,
+      "overflowX": 0,
+      "overflowY": 159,
+      "failedImages": [],
+      "smallTargets": [],
+      "viewportViolations": [],
+      "gameChromeViolations": [],
+      "gameLayout": {
+        "activeContext": null,
+        "appShell": null,
+        "main": null,
+        "mainScrollTop": null,
+        "mobileNav": {
+          "bottom": 844,
+          "display": "block",
+          "height": 66,
+          "left": 0,
+          "right": 390,
+          "top": 778,
+          "width": 390
+        },
+        "scrollY": 0
+      },
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased dem"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "demo-partido-admin",
+    "path": "/demo?tab=partido&perspective=admin",
+    "userMode": "demo-admin",
+    "viewportKey": "pwa-portrait",
+    "viewport": "390x844",
+    "metrics": {
+      "title": "Mundo Demo | Pachangas IQ",
+      "theme": "dark",
+      "textLength": 605,
+      "overflowX": 0,
+      "overflowY": 159,
+      "failedImages": [],
+      "smallTargets": [],
+      "viewportViolations": [],
+      "gameChromeViolations": [],
+      "gameLayout": {
+        "activeContext": null,
+        "appShell": null,
+        "main": null,
+        "mainScrollTop": null,
+        "mobileNav": {
+          "bottom": 844,
+          "display": "block",
+          "height": 66,
+          "left": 0,
+          "right": 390,
+          "top": 778,
+          "width": 390
+        },
+        "scrollY": 0
+      },
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased dem"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "demo-mercado",
+    "path": "/demo?tab=mercado&perspective=admin",
+    "userMode": "demo-admin",
+    "viewportKey": "pwa-portrait",
+    "viewport": "390x844",
+    "metrics": {
+      "title": "Mundo Demo | Pachangas IQ",
+      "theme": "dark",
+      "textLength": 3102,
+      "overflowX": 0,
+      "overflowY": 5000,
+      "failedImages": [],
+      "smallTargets": [
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Invitar",
+          "className": "",
+          "width": 70,
+          "height": 38
+        }
+      ],
+      "viewportViolations": [],
+      "gameChromeViolations": [],
+      "gameLayout": {
+        "activeContext": null,
+        "appShell": null,
+        "main": null,
+        "mainScrollTop": null,
+        "mobileNav": {
+          "bottom": 844,
+          "display": "block",
+          "height": 66,
+          "left": 0,
+          "right": 390,
+          "top": 778,
+          "width": 390
+        },
+        "scrollY": 0
+      },
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased dem"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "demo-equipo",
+    "path": "/demo?tab=equipo&perspective=admin",
+    "userMode": "demo-admin",
+    "viewportKey": "pwa-portrait",
+    "viewport": "390x844",
+    "metrics": {
+      "title": "Mundo Demo | Pachangas IQ",
+      "theme": "dark",
+      "textLength": 1853,
+      "overflowX": 0,
+      "overflowY": 1788,
+      "failedImages": [],
+      "smallTargets": [],
+      "viewportViolations": [],
+      "gameChromeViolations": [],
+      "gameLayout": {
+        "activeContext": null,
+        "appShell": null,
+        "main": null,
+        "mainScrollTop": null,
+        "mobileNav": {
+          "bottom": 844,
+          "display": "block",
+          "height": 66,
+          "left": 0,
+          "right": 390,
+          "top": 778,
+          "width": 390
+        },
+        "scrollY": 0
+      },
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased dem"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "demo-perfil",
+    "path": "/demo?tab=perfil&perspective=player",
+    "userMode": "demo-player",
+    "viewportKey": "pwa-portrait",
+    "viewport": "390x844",
+    "metrics": {
+      "title": "Mundo Demo | Pachangas IQ",
+      "theme": "dark",
+      "textLength": 761,
+      "overflowX": 0,
+      "overflowY": 770,
+      "failedImages": [],
+      "smallTargets": [],
+      "viewportViolations": [],
+      "gameChromeViolations": [],
+      "gameLayout": {
+        "activeContext": null,
+        "appShell": null,
+        "main": null,
+        "mainScrollTop": null,
+        "mobileNav": {
+          "bottom": 844,
+          "display": "block",
+          "height": 66,
+          "left": 0,
+          "right": 390,
+          "top": 778,
+          "width": 390
+        },
+        "scrollY": 0
+      },
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased dem"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "demo-inicio-light",
+    "path": "/demo?tab=inicio&perspective=admin&qaTheme=light",
+    "userMode": "demo-admin-light",
+    "viewportKey": "pwa-portrait",
+    "viewport": "390x844",
+    "metrics": {
+      "title": "Mundo Demo | Pachangas IQ",
+      "theme": "light",
+      "textLength": 1901,
+      "overflowX": 0,
+      "overflowY": 1519,
+      "failedImages": [],
+      "smallTargets": [],
+      "viewportViolations": [],
+      "gameChromeViolations": [],
+      "gameLayout": {
+        "activeContext": null,
+        "appShell": null,
+        "main": null,
+        "mainScrollTop": null,
+        "mobileNav": {
+          "bottom": 844,
+          "display": "block",
+          "height": 66,
+          "left": 0,
+          "right": 390,
+          "top": 778,
+          "width": 390
+        },
+        "scrollY": 0
+      },
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased dem"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "demo-inicio-dark",
+    "path": "/demo?tab=inicio&perspective=admin&qaTheme=dark",
+    "userMode": "demo-admin-dark",
+    "viewportKey": "pwa-portrait",
+    "viewport": "390x844",
+    "metrics": {
+      "title": "Mundo Demo | Pachangas IQ",
+      "theme": "dark",
+      "textLength": 1901,
+      "overflowX": 0,
+      "overflowY": 1519,
+      "failedImages": [],
+      "smallTargets": [],
+      "viewportViolations": [],
+      "gameChromeViolations": [],
+      "gameLayout": {
+        "activeContext": null,
+        "appShell": null,
+        "main": null,
+        "mainScrollTop": null,
+        "mobileNav": {
+          "bottom": 844,
+          "display": "block",
+          "height": 66,
+          "left": 0,
+          "right": 390,
+          "top": 778,
+          "width": 390
+        },
+        "scrollY": 0
+      },
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased dem"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "demo-inicio-admin",
+    "path": "/demo?tab=inicio&perspective=admin",
+    "userMode": "demo-admin",
+    "viewportKey": "reduced-motion",
+    "viewport": "1440x900",
+    "metrics": {
+      "title": "Mundo Demo | Pachangas IQ",
+      "theme": "light",
+      "textLength": 2139,
+      "overflowX": 0,
+      "overflowY": 998,
+      "failedImages": [],
+      "smallTargets": [
+        {
+          "tag": "button",
+          "text": "Reiniciar",
+          "className": "",
+          "width": 71,
+          "height": 28
+        },
+        {
+          "tag": "a",
+          "text": "Salir",
+          "className": "",
+          "width": 46,
+          "height": 28
+        },
+        {
+          "tag": "a",
+          "text": "Pachangas IQ Mundo Demo",
+          "className": "demo-world-module__MMjxMW__brand",
+          "width": 504,
+          "height": 36
+        }
+      ],
+      "viewportViolations": [],
+      "gameChromeViolations": [],
+      "gameLayout": {
+        "activeContext": null,
+        "appShell": null,
+        "main": null,
+        "mainScrollTop": null,
+        "mobileNav": {
+          "bottom": 0,
+          "display": "none",
+          "height": 0,
+          "left": 0,
+          "right": 0,
+          "top": 0,
+          "width": 0
+        },
+        "scrollY": 0
+      },
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased dem"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  }
+]
