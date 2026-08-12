@@ -488,21 +488,21 @@ from (values
   (:'cosmetic_box_id'::uuid, jsonb_build_object(
     'schemaVersion', 1, 'catalogVersion', 1, 'boxType', 'collective.common',
     'reward', jsonb_build_object(
-      'kind', 'player_cosmetic', 'points', 0, 'cosmeticKey', 'symbol.ball',
+      'kind', 'player_cosmetic', 'points', 0, 'cosmeticKey', 'player.frame.barrio.steel',
       'duplicateConversionPoints', 4
     )
   )),
   (:'combination_box_id'::uuid, jsonb_build_object(
     'schemaVersion', 1, 'catalogVersion', 1, 'boxType', 'collective.common',
     'reward', jsonb_build_object(
-      'kind', 'combination', 'points', 5, 'cosmeticKey', 'pattern.stripes',
+      'kind', 'combination', 'points', 5, 'cosmeticKey', 'player.background.asphalt_night',
       'duplicateConversionPoints', 4
     )
   )),
   (:'duplicate_box_id'::uuid, jsonb_build_object(
     'schemaVersion', 1, 'catalogVersion', 1, 'boxType', 'collective.common',
     'reward', jsonb_build_object(
-      'kind', 'player_cosmetic', 'points', 0, 'cosmeticKey', 'symbol.ball',
+      'kind', 'player_cosmetic', 'points', 0, 'cosmeticKey', 'player.frame.barrio.steel',
       'duplicateConversionPoints', 4
     )
   ))

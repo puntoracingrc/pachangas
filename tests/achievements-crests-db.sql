@@ -564,121 +564,26 @@ select pg_temp.assert_true(
     and (:'opened_reward'::jsonb ->> 'status') = 'opened',
   'Opening a box must reveal its server-sealed payload'
 );
--- Crest drafts and publications remain server-authoritative.
-set local role authenticated;
-select set_config('request.jwt.claim.sub', '81000000-0000-0000-0000-000000000001', true);
-select public.save_pachanga_team_crest_draft_v1(
-  '82000000-0000-0000-0000-000000000001',
-  '{"shapeKey":"shape.classic","primaryColorKey":"color.green","secondaryColorKey":"color.white","patternKey":"pattern.solid","borderKey":"border.standard","symbolKey":null,"adornmentKey":null,"paletteKey":null,"effectKey":null,"initials":"ELA"}'::jsonb,
-  '84000000-0000-0000-0000-000000000021', 0, '{}'::jsonb
-) as crest_saved \gset
-reset role;
-
-update public.pachanga_team_crest_drafts
-set symbol_key = 'symbol.crown'
-where group_id = '82000000-0000-0000-0000-000000000001';
-set local role authenticated;
-select set_config('request.jwt.claim.sub', '81000000-0000-0000-0000-000000000001', true);
-do $$
-begin
-  perform public.publish_pachanga_team_crest_v1(
-    '82000000-0000-0000-0000-000000000001',
-    '84000000-0000-0000-0000-000000000022', 1, '{}'::jsonb
-  );
-  raise exception 'A locked cosmetic unexpectedly published';
-exception when others then
-  if sqlerrm = 'A locked cosmetic unexpectedly published' then raise; end if;
-  if sqlerrm <> 'COSMETIC_LOCKED: symbol.crown' then raise; end if;
-end;
-$$;
-reset role;
-update public.pachanga_team_crest_drafts
-set symbol_key = 'symbol.lightning'
-where group_id = '82000000-0000-0000-0000-000000000001';
-insert into public.pachanga_team_cosmetic_inventory(
-  group_id, cosmetic_key, source_grant_id
-) values (
-  '82000000-0000-0000-0000-000000000001', 'symbol.lightning',
-  :'owner_achievement_grant_id'::uuid
-) on conflict (group_id, cosmetic_key) do update set
-  state = 'unlocked', revoked_at = null;
-
-set local role authenticated;
-select set_config('request.jwt.claim.sub', '81000000-0000-0000-0000-000000000001', true);
-select public.publish_pachanga_team_crest_v1(
-  '82000000-0000-0000-0000-000000000001',
-  '84000000-0000-0000-0000-000000000023', 1, '{}'::jsonb
-) as crest_published \gset
-select public.publish_pachanga_team_crest_v1(
-  '82000000-0000-0000-0000-000000000001',
-  '84000000-0000-0000-0000-000000000023', 1, '{}'::jsonb
-) as crest_replayed \gset
-reset role;
+-- Team Shield Cosmetics V1 replaced the legacy editor. Final-chain regression
+-- must prove old writes stay closed while the canonical loadout RPC stays open.
 select pg_temp.assert_true(
-  :'crest_published'::jsonb = :'crest_replayed'::jsonb,
-  'Crest publication must replay idempotently'
+  not has_function_privilege(
+    'authenticated',
+    'public.save_pachanga_team_crest_draft_v1(uuid,jsonb,uuid,bigint,jsonb)',
+    'EXECUTE'
+  )
+  and not has_function_privilege(
+    'authenticated',
+    'public.publish_pachanga_team_crest_v1(uuid,uuid,bigint,jsonb)',
+    'EXECUTE'
+  )
+  and has_function_privilege(
+    'authenticated',
+    'public.save_pachanga_team_shield_loadout_v1(uuid,jsonb,uuid,bigint,jsonb)',
+    'EXECUTE'
+  ),
+  'Legacy crest writes must stay closed and the canonical shield write must remain reachable'
 );
-select pg_temp.assert_true(
-  (select count(*) from public.pachanga_team_crest_versions
-   where group_id = '82000000-0000-0000-0000-000000000001') = 1,
-  'One publish operation must create one immutable crest version'
-);
-do $$
-begin
-  update public.pachanga_team_crest_versions
-  set initials = 'BAD'
-  where group_id = '82000000-0000-0000-0000-000000000001';
-  raise exception 'A published crest version unexpectedly changed';
-exception when others then
-  if sqlerrm = 'A published crest version unexpectedly changed' then raise; end if;
-  if sqlerrm <> 'Published crest versions are immutable' then raise; end if;
-end;
-$$;
-
-set local role authenticated;
-select set_config('request.jwt.claim.sub', '81000000-0000-0000-0000-000000000004', true);
-select public.get_pachanga_team_crest_snapshot_v1(
-  '82000000-0000-0000-0000-000000000001'
-) as member_crest \gset
-do $$
-begin
-  perform public.save_pachanga_team_crest_draft_v1(
-    '82000000-0000-0000-0000-000000000001',
-    '{"shapeKey":"shape.classic","primaryColorKey":"color.green","secondaryColorKey":"color.white","patternKey":"pattern.solid","borderKey":"border.standard","initials":"NO"}'::jsonb,
-    '84000000-0000-0000-0000-000000000024', 2, '{}'::jsonb
-  );
-  raise exception 'A normal member unexpectedly edited the crest';
-exception when others then
-  if sqlerrm = 'A normal member unexpectedly edited the crest' then raise; end if;
-  if sqlerrm <> 'Only team administrators can edit the official crest' then raise; end if;
-end;
-$$;
-reset role;
-select pg_temp.assert_true(
-  (:'member_crest'::jsonb ->> 'canManage')::boolean = false
-    and :'member_crest'::jsonb -> 'draft' = 'null'::jsonb,
-  'Members may read the published crest but never the private draft'
-);
-
-set local role authenticated;
-select set_config('request.jwt.claim.sub', '81000000-0000-0000-0000-000000000005', true);
-do $$
-begin
-  perform public.get_pachanga_team_crest_snapshot_v1(
-    '82000000-0000-0000-0000-000000000001'
-  );
-  raise exception 'A third team unexpectedly read the crest snapshot';
-exception when others then
-  if sqlerrm = 'A third team unexpectedly read the crest snapshot' then raise; end if;
-  if sqlerrm <> 'Group membership required' then raise; end if;
-end;
-$$;
-select pg_temp.assert_true(
-  (select count(*) from public.pachanga_team_crest_versions
-   where group_id = '82000000-0000-0000-0000-000000000001') = 0,
-  'RLS must hide published crest rows from a third team'
-);
-reset role;
 
 -- The internal path consumes Rating V2 snapshots and does not modify the rating card.
 insert into public.pachanga_match_rating_snapshots(

@@ -82,6 +82,44 @@ test("sensitive mutations are revisioned, reasoned, idempotent and audited", asy
   assert.doesNotMatch(migration, /delete from auth\.users|delete from public\.pachanga_groups|delete from public\.pachanga_match_read_model/i);
 });
 
+test("feature readiness and non-retroactive activation are canonical server contracts", async () => {
+  const [migration, flagsPage] = await Promise.all([
+    source("supabase/migrations/20260812062731_production_feature_activation_v1.sql"),
+    source("app/admin/flags/page.tsx"),
+  ]);
+  for (const classification of [
+    "ACTIVE_PRODUCT",
+    "READY_FOR_ACTIVATION",
+    "READY_WITH_GUARDS",
+    "SHADOW_ONLY",
+    "NEEDS_PRODUCTIZATION",
+    "BLOCKED",
+  ]) assert.match(migration, new RegExp(`'${classification}'`));
+  for (const key of [
+    "attendance",
+    "conduct",
+    "social_restrictions",
+    "triage",
+    "player_cosmetics",
+    "team_cosmetics",
+    "team_cosmetic_rewards",
+    "season_score_v3",
+    "provincial_rankings",
+    "provincial_awards",
+    "premium_ball",
+  ]) assert.match(migration, new RegExp(`'key', '${key}'`));
+  assert.match(migration, /attendance_effective_from/);
+  assert.match(migration, /conduct_effective_from/);
+  assert.match(migration, /Match predates Attendance activation/);
+  assert.match(migration, /Sporting context predates Conduct activation/);
+  assert.match(migration, /when flag_key in \('attendance', 'conduct'\) and next_enabled and not current_enabled/);
+  assert.match(migration, /automaticRestriction|sin sanción automática|no sanciona/i);
+  assert.match(flagsPage, /flag\.classification/);
+  assert.match(flagsPage, /flag\.readinessReason/);
+  assert.match(flagsPage, /flag\.dependency/);
+  assert.match(flagsPage, /flag\.effectiveFrom/);
+});
+
 test("large lists are bounded and filtered before reaching the browser", async () => {
   const [migration, data] = await Promise.all([
     source("supabase/migrations/20260811150309_platform_control_center_v1.sql"),

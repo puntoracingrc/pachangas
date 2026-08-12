@@ -117,8 +117,73 @@ select public.sync_pachanga_match_read_model(
 update private.pachanga_conduct_settings set
   attendance_closure_enabled = true,
   conduct_reports_enabled = true,
+  attendance_effective_from = clock_timestamp(),
+  conduct_effective_from = clock_timestamp(),
   social_restrictions_enabled = false,
   updated_at = clock_timestamp()
+where singleton;
+
+create temporary table feature_activation_zero_backfill_before as
+select jsonb_build_object(
+  'closures', (select count(*) from private.pachanga_attendance_closures),
+  'attendance', (select count(*) from private.pachanga_post_match_attendance),
+  'reports', (select count(*) from private.pachanga_conduct_reports),
+  'cases', (select count(*) from private.pachanga_moderation_cases),
+  'notifications', (select count(*) from public.pachanga_user_notifications),
+  'receipts', (select count(*) from private.pachanga_conduct_operation_receipts)
+) as snapshot;
+
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '91000000-0000-0000-0000-000000000001', true);
+do $$
+begin
+  perform public.close_pachanga_post_match_attendance_v1(
+    '93000000-0000-0000-0000-000000000001',
+    'conduct-match-1',
+    '[{"playerId":"owner-player","outcome":"played"},{"playerId":"target-player","outcome":"unexcused_no_show"},{"playerId":"third-player","outcome":"excused_absence"}]'::jsonb,
+    '94000000-0000-0000-0000-000000000025', 0, '{}'::jsonb
+  );
+  raise exception 'Historical attendance unexpectedly crossed its activation frontier';
+exception when others then
+  if sqlerrm = 'Historical attendance unexpectedly crossed its activation frontier' then raise; end if;
+  if sqlerrm <> 'Match predates Attendance activation' then raise; end if;
+end;
+$$;
+do $$
+begin
+  perform public.submit_pachanga_conduct_report_v1(
+    '92000000-0000-0000-0000-000000000002',
+    '93000000-0000-0000-0000-000000000001',
+    '93000000-0000-0000-0000-000000000001',
+    'match', 'conduct-match-1', 'other', null,
+    '94000000-0000-0000-0000-000000000026',
+    (select greatest(match_version, 1) from public.pachanga_match_read_model
+      where group_id = '93000000-0000-0000-0000-000000000001' and match_id = 'conduct-match-1'),
+    '{}'::jsonb
+  );
+  raise exception 'Historical conduct unexpectedly crossed its activation frontier';
+exception when others then
+  if sqlerrm = 'Historical conduct unexpectedly crossed its activation frontier' then raise; end if;
+  if sqlerrm <> 'Sporting context predates Conduct activation' then raise; end if;
+end;
+$$;
+reset role;
+
+select pg_temp.assert_true(
+  (select snapshot from feature_activation_zero_backfill_before) = jsonb_build_object(
+    'closures', (select count(*) from private.pachanga_attendance_closures),
+    'attendance', (select count(*) from private.pachanga_post_match_attendance),
+    'reports', (select count(*) from private.pachanga_conduct_reports),
+    'cases', (select count(*) from private.pachanga_moderation_cases),
+    'notifications', (select count(*) from public.pachanga_user_notifications),
+    'receipts', (select count(*) from private.pachanga_conduct_operation_receipts)
+  ),
+  'Activation frontiers must reject historical writes without facts, cases, notifications or receipts'
+);
+
+update private.pachanga_conduct_settings set
+  attendance_effective_from = clock_timestamp() - interval '3 hours',
+  conduct_effective_from = clock_timestamp() - interval '3 hours'
 where singleton;
 
 create temporary table conduct_sport_before as
@@ -198,6 +263,104 @@ select set_config('conduct_test.attendance_id', (
   select facts.value ->> 'id' from jsonb_array_elements(:'attendance_closed'::jsonb -> 'facts') facts(value)
   where facts.value ->> 'playerId' = 'target-player'
 ), true);
+
+-- Regression PFA-002/PFA-003: the real reliability path must count only the
+-- selected user and upsert one open case when the third no-show is confirmed.
+insert into private.pachanga_attendance_closures(
+  id, group_id, match_id, match_occurred_at, state, policy_version, revision,
+  opened_by, closed_by, closed_at
+) values
+  ('95100000-0000-0000-0000-000000000001', '93000000-0000-0000-0000-000000000001', 'reliability-1', clock_timestamp() - interval '1 hour', 'closed', 'conduct-v1-experimental', 1, '91000000-0000-0000-0000-000000000001', '91000000-0000-0000-0000-000000000001', clock_timestamp()),
+  ('95100000-0000-0000-0000-000000000002', '93000000-0000-0000-0000-000000000001', 'reliability-2', clock_timestamp() - interval '1 hour', 'closed', 'conduct-v1-experimental', 1, '91000000-0000-0000-0000-000000000001', '91000000-0000-0000-0000-000000000001', clock_timestamp()),
+  ('95100000-0000-0000-0000-000000000003', '93000000-0000-0000-0000-000000000001', 'reliability-3', clock_timestamp() - interval '1 hour', 'closed', 'conduct-v1-experimental', 1, '91000000-0000-0000-0000-000000000001', '91000000-0000-0000-0000-000000000001', clock_timestamp()),
+  ('95100000-0000-0000-0000-000000000004', '93000000-0000-0000-0000-000000000001', 'reliability-other', clock_timestamp() - interval '1 hour', 'closed', 'conduct-v1-experimental', 1, '91000000-0000-0000-0000-000000000001', '91000000-0000-0000-0000-000000000001', clock_timestamp());
+
+insert into private.pachanga_post_match_attendance(
+  id, closure_id, group_id, match_id, local_player_id, target_profile_id,
+  target_user_id, display_name_snapshot, initial_match_status, original_outcome,
+  current_outcome, response_state, dispute_deadline, responded_at, certified_by
+) values
+  ('95200000-0000-0000-0000-000000000001', '95100000-0000-0000-0000-000000000001', '93000000-0000-0000-0000-000000000001', 'reliability-1', 'target-reliability-1', '92000000-0000-0000-0000-000000000002', '91000000-0000-0000-0000-000000000002', 'Conduct Target', 'voy', 'unexcused_no_show', 'unexcused_no_show', 'agreed', clock_timestamp() + interval '1 day', clock_timestamp(), '91000000-0000-0000-0000-000000000001'),
+  ('95200000-0000-0000-0000-000000000002', '95100000-0000-0000-0000-000000000002', '93000000-0000-0000-0000-000000000001', 'reliability-2', 'target-reliability-2', '92000000-0000-0000-0000-000000000002', '91000000-0000-0000-0000-000000000002', 'Conduct Target', 'voy', 'unexcused_no_show', 'unexcused_no_show', 'agreed', clock_timestamp() + interval '1 day', clock_timestamp(), '91000000-0000-0000-0000-000000000001'),
+  ('95200000-0000-0000-0000-000000000003', '95100000-0000-0000-0000-000000000003', '93000000-0000-0000-0000-000000000001', 'reliability-3', 'target-reliability-3', '92000000-0000-0000-0000-000000000002', '91000000-0000-0000-0000-000000000002', 'Conduct Target', 'voy', 'unexcused_no_show', 'unexcused_no_show', 'pending', clock_timestamp() + interval '1 day', null, '91000000-0000-0000-0000-000000000001'),
+  ('95200000-0000-0000-0000-000000000004', '95100000-0000-0000-0000-000000000001', '93000000-0000-0000-0000-000000000001', 'reliability-1', 'third-reliability-1', '92000000-0000-0000-0000-000000000003', '91000000-0000-0000-0000-000000000003', 'Conduct Third', 'voy', 'unexcused_no_show', 'unexcused_no_show', 'agreed', clock_timestamp() + interval '1 day', clock_timestamp(), '91000000-0000-0000-0000-000000000001'),
+  ('95200000-0000-0000-0000-000000000005', '95100000-0000-0000-0000-000000000002', '93000000-0000-0000-0000-000000000001', 'reliability-2', 'third-reliability-2', '92000000-0000-0000-0000-000000000003', '91000000-0000-0000-0000-000000000003', 'Conduct Third', 'voy', 'unexcused_no_show', 'unexcused_no_show', 'agreed', clock_timestamp() + interval '1 day', clock_timestamp(), '91000000-0000-0000-0000-000000000001'),
+  ('95200000-0000-0000-0000-000000000006', '95100000-0000-0000-0000-000000000003', '93000000-0000-0000-0000-000000000001', 'reliability-3', 'third-reliability-3', '92000000-0000-0000-0000-000000000003', '91000000-0000-0000-0000-000000000003', 'Conduct Third', 'voy', 'unexcused_no_show', 'unexcused_no_show', 'agreed', clock_timestamp() + interval '1 day', clock_timestamp(), '91000000-0000-0000-0000-000000000001'),
+  ('95200000-0000-0000-0000-000000000007', '95100000-0000-0000-0000-000000000004', '93000000-0000-0000-0000-000000000001', 'reliability-other', 'third-reliability-4', '92000000-0000-0000-0000-000000000003', '91000000-0000-0000-0000-000000000003', 'Conduct Third', 'voy', 'unexcused_no_show', 'unexcused_no_show', 'agreed', clock_timestamp() + interval '1 day', clock_timestamp(), '91000000-0000-0000-0000-000000000001'),
+  ('95200000-0000-0000-0000-000000000008', '95100000-0000-0000-0000-000000000001', '93000000-0000-0000-0000-000000000001', 'reliability-1', 'target-dispute-1', '92000000-0000-0000-0000-000000000002', '91000000-0000-0000-0000-000000000002', 'Conduct Target', 'voy', 'unexcused_no_show', 'unexcused_no_show', 'under_review', clock_timestamp() + interval '1 day', clock_timestamp(), '91000000-0000-0000-0000-000000000001'),
+  ('95200000-0000-0000-0000-000000000009', '95100000-0000-0000-0000-000000000002', '93000000-0000-0000-0000-000000000001', 'reliability-2', 'target-dispute-2', '92000000-0000-0000-0000-000000000002', '91000000-0000-0000-0000-000000000002', 'Conduct Target', 'voy', 'unexcused_no_show', 'unexcused_no_show', 'under_review', clock_timestamp() + interval '1 day', clock_timestamp(), '91000000-0000-0000-0000-000000000001');
+
+insert into private.pachanga_attendance_reviews(id, attendance_id, target_user_id, state, player_note)
+values
+  ('95300000-0000-0000-0000-000000000001', '95200000-0000-0000-0000-000000000008', '91000000-0000-0000-0000-000000000002', 'submitted', 'Synthetic dispute one'),
+  ('95300000-0000-0000-0000-000000000002', '95200000-0000-0000-0000-000000000009', '91000000-0000-0000-0000-000000000002', 'submitted', 'Synthetic dispute two');
+
+select private.pachanga_evaluate_attendance_reliability_v1(
+  '91000000-0000-0000-0000-000000000002',
+  '95000000-0000-0000-0000-000000000001'
+);
+select pg_temp.assert_true(
+  not exists (select 1 from private.pachanga_moderation_cases
+    where target_user_id = '91000000-0000-0000-0000-000000000002'
+      and source_type = 'attendance_reliability'),
+  'No-shows from another user must not push the target over the review threshold'
+);
+
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '91000000-0000-0000-0000-000000000002', true);
+select public.respond_pachanga_post_match_attendance_v1(
+  '95200000-0000-0000-0000-000000000003', 'agree', null,
+  '95000000-0000-0000-0000-000000000002', 1, '{}'
+) as reliability_threshold_confirmed \gset
+reset role;
+
+select pg_temp.assert_true(
+  (select count(*) from private.pachanga_moderation_cases
+    where target_user_id = '91000000-0000-0000-0000-000000000002'
+      and source_type = 'attendance_reliability') = 1,
+  'The third confirmed no-show must create one review case'
+);
+select private.pachanga_evaluate_attendance_reliability_v1(
+  '91000000-0000-0000-0000-000000000002',
+  '95000000-0000-0000-0000-000000000003'
+);
+select pg_temp.assert_true(
+  (select count(*) = 1 and min(revision) = 2
+    from private.pachanga_moderation_cases
+    where target_user_id = '91000000-0000-0000-0000-000000000002'
+      and source_type = 'attendance_reliability')
+  and (select count(*) from private.pachanga_moderation_events events
+    join private.pachanga_moderation_cases cases on cases.id = events.case_id
+    where cases.target_user_id = '91000000-0000-0000-0000-000000000002'
+      and cases.source_type = 'attendance_reliability'
+      and events.event_type = 'attendance_review_recommended') = 2
+  and (select count(*) from public.pachanga_user_notifications
+    where recipient_user_id = '91000000-0000-0000-0000-000000000002'
+      and kind = 'attendance_warning_reminder') = 1
+  and (select count(*) from private.pachanga_social_restrictions) = 0,
+  'Repeated reliability evaluation must update one case, deduplicate reminders and never auto-restrict'
+);
+
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '91000000-0000-0000-0000-000000000001', true);
+select public.resolve_pachanga_attendance_review_v1(
+  '95300000-0000-0000-0000-000000000001', 'escalate', null,
+  'Escalation regression one', '95000000-0000-0000-0000-000000000004', 1, '{}'
+) as attendance_escalation_one \gset
+select public.resolve_pachanga_attendance_review_v1(
+  '95300000-0000-0000-0000-000000000002', 'escalate', null,
+  'Escalation regression two', '95000000-0000-0000-0000-000000000005', 1, '{}'
+) as attendance_escalation_two \gset
+reset role;
+
+select pg_temp.assert_true(
+  (select count(*) = 1 and min(revision) = 2
+    from private.pachanga_moderation_cases
+    where target_user_id = '91000000-0000-0000-0000-000000000002'
+      and source_type = 'attendance_dispute')
+  and (select count(*) from private.pachanga_social_restrictions) = 0,
+  'Repeated dispute escalation must update one open case and never auto-restrict'
+);
 
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '91000000-0000-0000-0000-000000000002', true);
