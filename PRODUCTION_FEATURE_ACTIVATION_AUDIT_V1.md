@@ -324,6 +324,8 @@ Faltan: tablas/read model PostgreSQL, proceso idempotente de refresh/rebuild, ci
 | PostgreSQL lint del alcance | PASS; desaparecen los dos errores de Attendance, con tres errores basales ajenos documentados |
 | Supabase Security Advisors | Sin hallazgo nuevo atribuible a la migracion; staging 253 y produccion 248 avisos basales. Las cinco diferencias pertenecen a cuatro RPC historicas exclusivas de staging |
 | Supabase Performance Advisors | Sin hallazgo nuevo atribuible a la migracion; staging 203 y produccion 211 avisos basales. La diferencia son contadores `unused_index` dependientes de trafico/fixtures |
+| Preview responsive | PASS publico: 1440x900, 390x844 y 844x390; cero overflow global, imagenes rotas o errores de consola en partido demo, perfil de conducta y reporte contextual |
+| Preview PWA | PASS estructural/runtime: manifest `fullscreen` con fallbacks, Service Worker `2.0.0+sw.7e3a479fca38` activo, `sw.js` no-store y client policy `private, no-store` con minimo `2.0.0` |
 | `git diff --check` | PASS en ultima ejecucion; se repetira al cierre |
 
 Incidencia de entorno: el arranque completo de Supabase local intenta exponer el schema `simulation` antes de que exista, mientras el bootstrap productivo exige que ese schema no forme parte del producto. El bootstrap DB-only fue el camino limpio y completo. No es un fallo de la migracion ni se ha relajado el contrato para ocultarlo.
@@ -393,11 +395,33 @@ Incidencia de entorno: el arranque completo de Supabase local intenta exponer el
 - Correccion: se instalo el schema de simulacion solo en el contenedor desechable, se ejecuto el contrato y se retiro con `DROP SCHEMA`; el ledger productivo termino con 90 migraciones y `simulation` ausente.
 - Regresion: `test:synthetic-world:db` pasa RLS, guard interno, idempotencia, revision obsoleta y orden por `server_sequence`.
 
+`PFA-008` - `ENVIRONMENT_ISSUE` - OAuth de Google no admite el dominio efimero de Preview - **open, mitigated by canonical-production QA**.
+
+- Estado: registrado antes de cerrar la QA visual; no se cambio configuracion OAuth.
+- Esperado: la Preview permite validar superficies publicas y el guard de sesion; la QA administrativa necesita un origen registrado.
+- Actual: Google rechaza `https://pachangas-76cybzuou-persianas-almar-web-s-projects.vercel.app/auth/google` con `redirect_uri_mismatch`. `/admin`, `/admin/flags` y `/admin/conduct` responden correctamente con `Sesion necesaria`, sin fugas ni errores de consola.
+- Impacto: impide la QA autenticada del Control Center en la URL efimera; no afecta `pachangasiq.com`, staging SQL/RLS ni la activacion por RPC.
+- Mitigacion de release: completar la QA administrativa autenticada en el dominio canonico despues del deployment y antes de cerrar la tarea. Una futura Preview autenticada exige dominio de staging estable y callback Google registrado; no se permiten callbacks efimeros a ciegas.
+- Regresion disponible: rutas publicas afectadas pasan escritorio, portrait y landscape; tests de RBAC/API y read model pasan localmente y contra staging.
+
 El linter PostgreSQL posterior ya no informa de `resolve_pachanga_attendance_review_v1` ni de `private.pachanga_evaluate_attendance_reliability_v1`. Conserva tres errores basales fuera del diff (`ensure_pachanga_external_team_authoritative_v2_impl`, `get_pachanga_global_rating_context_v2` y `open_pachanga_reward_box_v2`) y warnings historicos; no se han ocultado ni corregido dentro de esta activacion.
 
 Los Advisors remotos se compararon por tipo, nivel, schema y objeto. La migracion no incorpora nuevas tablas ni RPC expuestas que aparezcan solo en staging. Las diferencias de seguridad son `create_pachanga_admin_invite`, `finalize_pachanga_match_if_current`, `patch_pachanga_match_player_paid` y `sync_pachanga_open_match`, todas procedentes de divergencias historicas de staging anteriores a esta rama. No se amplian ACL dentro de esta activacion. Referencias de remediacion: [Security Definer ejecutable](https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable), [RLS sin policy](https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy) e [indices no utilizados](https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index).
 
-Pendientes de cierre: Preview responsive/PWA, backup recuperable, preflight y activacion escalonada productiva, smoke de produccion y documento de release.
+## Preflight productivo y backup recuperable
+
+- Proyecto confirmado: `qonbngfrnrqgmxbdfbea` (`Pachangas`), PostgreSQL 17.6, Pro, `ACTIVE_HEALTHY`.
+- Backup fisico recuperable mas reciente: `2026-08-12T00:16:24Z`, visible en Dashboard con accion Restore. PITR no esta contratado.
+- La ultima mutacion aplicativa localizada fue el alta del `platform_owner` a `2026-08-11T20:43:10.337474Z`, anterior al backup. Los unicos timestamps posteriores pertenecen a migraciones internas de Storage y refresco de sesion Auth; por tanto el backup contiene el estado de negocio y schema previos a esta activacion.
+- Tamano DB: `31.804.563` bytes (~30 MB). En la inspeccion previa: CPU 3%, disco 20%, RAM 40% y 5/90 conexiones.
+- Historial remoto antes de esta migracion: **89** entradas, desde `20260728051437_create_pachanga_groups` hasta `20260811172700_platform_control_center_overview_restriction_fix`. Coincide exactamente con las 89 migraciones de `main`; la nueva `20260812062731_production_feature_activation_v1` debe elevar el total a 90. No existe historial que reparar.
+- Flags antes: Attendance OFF, Conduct OFF, Social Restrictions OFF, Triage OFF + shadow ON, revision global 1; Player Cosmetics ON revision 1; Team Cosmetics y Team Rewards ON revision 1.
+- Estado historico antes: 0 cierres/eventos/revisiones de asistencia; 0 reportes/casos/eventos/warnings/restricciones/recibos de conducta; 32 notificaciones generales preexistentes.
+- Invariantes antes, `filas/hash`: Rating snapshots `1/ce838b082d476871c05aa6df5cdf589c`; evidencia Rating `0/d41d8cd98f00b204e9800998ecf8427e`; perfiles `1/409014b9d4ddecb23cfd41600719ceda`; achievement grants `17/e18b5bba8bc92a1c129b6e8a07c7cda8`; reward grants `17/f8c950d847b867804d4b51b9cee70971`; inventario player `0/d41d8cd98f00b204e9800998ecf8427e`; inventario team `7/e5a3c62aa06218156930e31eab7cab7d`; mappings team `5/43ec6570d18b53b719152b81445a991e`; billing `11/f4d7dc5191a199d51dd9e32d520f74a4`.
+- Los cinco mappings productivos coinciden exactamente con el contrato. Premium Ball mantiene 0 filas de catalogo, inventario, loadout, mapping y reward ledger.
+- Realtime incluye `pachanga_attendance_group_state`, `pachanga_conduct_subject_state` y `pachanga_user_notifications`.
+
+Pendientes de cierre: aplicar la migracion atomica, deployment, activacion escalonada, QA administrativa canonica, smoke de produccion y documento de release.
 
 ## Secuencia productiva autorizada si staging queda verde
 
