@@ -1,6 +1,6 @@
 # Production Feature Activation Audit V1
 
-Estado: `AUDITADO LOCALMENTE / STAGING PENDIENTE`. Este documento no autoriza por si solo una activacion si falla alguno de los gates de staging o produccion.
+Estado: `STAGING VALIDADO / PRODUCCION PENDIENTE`. Este documento no autoriza por si solo una activacion si falla alguno de los gates productivos.
 
 ## Trazabilidad
 
@@ -11,7 +11,7 @@ Estado: `AUDITADO LOCALMENTE / STAGING PENDIENTE`. Este documento no autoriza po
 - Worktree aislado: `/Users/macbookpro14/.codex/worktrees/pachangas-production-feature-activation-audit-v1`.
 - Checkout principal: no utilizado porque contiene cambios ajenos del laboratorio.
 - Entorno local: macOS, Node 22 o superior, Supabase CLI `2.107.0`, PostgreSQL local en Docker.
-- Fuentes externas consultadas: Supabase produccion `qonbngfrnrqgmxbdfbea`, staging `iozcjirlfytryzrcmrnq`, Vercel Production y GitHub. Las consultas remotas de esta fase de auditoria han sido exclusivamente de lectura.
+- Fuentes externas consultadas: Supabase produccion `qonbngfrnrqgmxbdfbea`, staging `iozcjirlfytryzrcmrnq`, Vercel Production y GitHub. Produccion permanece en solo lectura; staging recibio la migracion y los fixtures controlados descritos abajo.
 - Ultima revalidacion de `origin/main`: 2026-08-12; sigue en el SHA base y el PR es fusionable sin conflicto.
 
 ## Alcance y criterio de inventario
@@ -205,7 +205,7 @@ Con los flags OFF no existe procesamiento automatico. Sin embargo, al encenderlo
 
 ### Correccion forward-only
 
-La migracion `20260812054232_production_feature_activation_v1.sql`:
+La migracion `20260812062731_production_feature_activation_v1.sql`:
 
 1. Anade `attendance_effective_from` y `conduct_effective_from`.
 2. La RPC administrativa fija fecha del servidor en cada transicion OFF -> ON.
@@ -246,15 +246,41 @@ closures/facts/events/reports/cases/warnings/restrictions/notifications: 0
 
 Staging contiene una migracion historica adicional `20260810201451_team_shield_premium_3d_v1_catalog` y un fixture `team.shield.symbol.ball_premium` en catalogo/inventario, sin mapping ni reward ledger. No existe en repositorio vigente ni en produccion. Se documenta como divergencia de laboratorio y no se copia, activa ni elimina destructivamente en esta release.
 
-Pendiente antes de marcar el PR ready:
+La migracion quedo registrada como `20260812062731_production_feature_activation_v1`; el archivo del repositorio y todas sus referencias se alinearon a esa version antes de continuar. No se duplico ni reaplico SQL.
 
-1. Aplicar solo la nueva migracion en staging.
-2. Activar Attendance mediante `set_pachanga_platform_flag_v1` con revision, motivo y `operationId`.
-3. Probar todos jugaron, ausencia justificada, cancelacion tardia, no-show, disputa y correccion con fixtures posteriores a la frontera.
-4. Activar Conduct y probar valido, duplicado, invalido, auto-reporte, correlacion, independencia y reciprocidad.
-5. Probar tecnicamente Social Restrictions y devolverlo a OFF.
-6. Verificar recomendaciones de triage con autoridad OFF/sombra ON.
-7. Retirar fixtures sinteticos, conservar solo ledgers de activacion auditables.
+| Paso | Operacion | Revision | Frontera / resultado |
+| --- | --- | ---: | --- |
+| Attendance ON | `a8120000-0000-4000-8000-000000000001` | 3 -> 4 | `2026-08-12T06:30:11.441792Z` |
+| Conduct ON | `a8120000-0000-4000-8000-000000000002` | 4 -> 5 | `2026-08-12T06:33:51.210587Z` |
+| Social Restrictions ON, solo rehearsal | `a8120000-0000-4000-8000-000000000003` | 5 -> 6 | una restriccion `public_market` manual y sintetica |
+| Social Restrictions OFF | `a8120000-0000-4000-8000-000000000004` | 6 -> 7 | medida corregida; gate final vacio |
+
+Resultado Attendance:
+
+- Activar el flag produjo `0` cierres, hechos, casos y avisos historicos.
+- Un partido posterior a la frontera genero exactamente `played=1`, `excused_absence=1`, `late_cancellation=1` y `unexcused_no_show=1`.
+- El replay devolvio el mismo recibo; hubo una disputa y una correccion. El hecho original se conserva y el resultado canonico termina como ausencia justificada.
+- Se emitieron cuatro avisos esperados: no-show, cancelacion tardia, disputa y correccion; `0` fugas del texto privado.
+- El estado Realtime avanzo a revision 3 y las tablas `pachanga_attendance_group_state`, `pachanga_conduct_subject_state` y `pachanga_user_notifications` estan publicadas.
+
+Resultado Conduct:
+
+- Activar el flag produjo `0` reportes, casos, restricciones y avisos historicos.
+- El contexto anterior a la frontera fue rechazado. Tambien se rechazaron outsider, auto-reporte y duplicado; ninguno dejo recibo o caso parcial.
+- Cuatro reportes validos crearon dos casos. El principal consolida `3` opiniones en `2` fuentes independientes y `1` correlacionada; el reciproco queda marcado `mutualRetaliation=true`.
+- El denunciado no ve IDs ni evidencia. Un admin de grupo no puede leer evidencia; el rol interno de seguridad si puede reconstruir las tres identidades.
+- Triage termino `enabled=false`, `shadow=true`, con dos recomendaciones `review`; warnings `0`, restricciones automaticas `0`.
+
+Invariantes staging:
+
+- El cohorte anterior a la frontera conserva los hashes iniciales: Rating snapshots `d41d8cd98f00b204e9800998ecf8427e`, achievements `6e216b3837ec3975a83f8f970d37a8a9` y rewards `45f10b09cb2d492d5bd2ebfa42dab53b`.
+- Los fixtures nuevos activaron mecanismos ordinarios de alta y generaron 4 snapshots, 13 grants y 3 rewards propios. Se separaron por timestamp y no son efectos del cambio de flag.
+- Los cinco mappings mantienen hash `f7ad71f1a8825a1dccbf5ec66ff2bc68`; billing de los 17 grupos preexistentes mantiene hash `0923bdbe8bbefe7cb5774a2c9b899c72`.
+- Premium Ball sigue siendo el fixture historico de staging: una fila de catalogo, cero mappings.
+
+Los fixtures `a812...` se conservan exclusivamente en staging como conjunto reproducible de QA. Estan aislados por IDs y timestamps, no contienen PII real y no deben copiarse ni recrearse en produccion. Su retirada no justifica una cascada destructiva sobre una base compartida.
+
+Pendiente antes de marcar el PR ready: repetir invariantes, completar full regression/Preview responsive y comprobar el diff final.
 
 ## Rankings: estado exacto
 

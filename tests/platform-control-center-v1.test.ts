@@ -84,7 +84,7 @@ test("sensitive mutations are revisioned, reasoned, idempotent and audited", asy
 
 test("feature readiness and non-retroactive activation are canonical server contracts", async () => {
   const [migration, flagsPage] = await Promise.all([
-    source("supabase/migrations/20260812054232_production_feature_activation_v1.sql"),
+    source("supabase/migrations/20260812062731_production_feature_activation_v1.sql"),
     source("app/admin/flags/page.tsx"),
   ]);
   for (const classification of [
