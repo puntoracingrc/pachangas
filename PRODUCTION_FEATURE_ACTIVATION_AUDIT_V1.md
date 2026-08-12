@@ -312,15 +312,18 @@ Faltan: tablas/read model PostgreSQL, proceso idempotente de refresh/rebuild, ci
 | Gate | Resultado actual |
 | --- | --- |
 | Instalacion vacia completa | PASS, 90 migraciones y `BOOTSTRAP_COMPLETE` |
-| Conduct SQL/RLS | PASS |
-| Conduct concurrencia/idempotencia | PASS |
+| Regresion completa de producto | PASS: Rating V2, Core Social, invitados, Conduct, logros V2/V3, cajas, Player Cosmetics, Team Shield, Team Rewards, avisos, triage y Platform Control Center; SQL/RLS e idempotencia/concurrencia |
 | Regresion umbral de no-show y disputas | PASS; filtro por usuario, un caso abierto por fuente, reminder deduplicado y cero restricciones automaticas |
-| Platform Control Center SQL/RLS | PASS |
-| Platform flag concurrencia | PASS |
-| Tests TS focalizados | PASS, 20/20 |
+| `npm test` | PASS: 20/20 estructurales y 242/242 TS/TSX |
 | Typecheck | PASS |
+| Build | PASS |
 | Lint focalizado | PASS |
-| PostgreSQL advisors del alcance | PASS; desaparecen los dos errores de Attendance, con deuda basal ajena documentada |
+| Lint global | 43 problemas basales: 23 errores y 20 warnings; ninguno procede del diff |
+| Synthetic World soak | PASS: 30 seeds, 35 dias/seed, 4.721 partidos, 309.193 eventos, 24.635 ms, 23,46 ms/dia virtual y 376,2 MB de pico |
+| Platform Control Center volumen | PASS: 10.000 usuarios y 1.000 equipos, 0 locks en espera; pagina de usuarios 37,50/44,28 ms y equipos 9,34 ms frente a umbral 10.000 ms |
+| PostgreSQL lint del alcance | PASS; desaparecen los dos errores de Attendance, con tres errores basales ajenos documentados |
+| Supabase Security Advisors | Sin hallazgo nuevo atribuible a la migracion; staging 253 y produccion 248 avisos basales. Las cinco diferencias pertenecen a cuatro RPC historicas exclusivas de staging |
+| Supabase Performance Advisors | Sin hallazgo nuevo atribuible a la migracion; staging 203 y produccion 211 avisos basales. La diferencia son contadores `unused_index` dependientes de trafico/fixtures |
 | `git diff --check` | PASS en ultima ejecucion; se repetira al cierre |
 
 Incidencia de entorno: el arranque completo de Supabase local intenta exponer el schema `simulation` antes de que exista, mientras el bootstrap productivo exige que ese schema no forme parte del producto. El bootstrap DB-only fue el camino limpio y completo. No es un fallo de la migracion ni se ha relajado el contrato para ocultarlo.
@@ -354,9 +357,47 @@ Incidencia de entorno: el arranque completo de Supabase local intenta exponer el
 - Correccion: copiar el parametro a `evaluated_user_id` y usar esa referencia inequivoca en todas las consultas y notificaciones.
 - Regresion: cuatro no-shows confirmados de otro usuario no elevan al objetivo; solo su tercer no-show confirmado abre el caso. El reminder obligatorio queda deduplicado a una notificacion.
 
+`PFA-004` - `TESTABILITY_GAP` - la regresion integrada de logros seguia invocando escrituras de escudo legado - **fixed + regression_verified**.
+
+- Estado: registrado antes de corregir la prueba; regresion verificada sobre el bootstrap completo.
+- Esperado: una instalacion final debe mantener revocadas `save_pachanga_team_crest_draft_v1` y `publish_pachanga_team_crest_v1`; el flujo productivo se prueba mediante `save_pachanga_team_shield_loadout_v1`.
+- Actual: `tests/achievements-crests-db.sql` aun intentaba guardar y publicar con las RPC legado, por lo que el bootstrap completo respondio correctamente `permission denied`.
+- Impacto: solo la regresion integrada; las ACL productivas son las esperadas y la nueva RPC autoritativa conserva permiso `authenticated`.
+- Correccion: se sustituyo el recorrido de escritura legado por una asercion explicita de cierre y se mantuvo la cobertura funcional activa en `test:team-shield:db`.
+- Regresion: `test:achievements-crests:db` pasa sobre las 90 migraciones y confirma simultaneamente RPC legado sin `EXECUTE` y RPC canonica alcanzable para `authenticated`.
+
+`PFA-005` - `TESTABILITY_GAP` - la regresion V2 esperaba 60 logros colectivos despues de incorporar Team Rewards - **fixed + regression_verified**.
+
+- Estado: registrado antes de corregir la prueba; regresion verificada sobre el bootstrap completo.
+- Esperado: el catalogo final contiene las 60 definiciones colectivas V3 y el hito autoritativo adicional de 10 Retos, total `61`.
+- Actual: `tests/achievement-catalog-v2-db.sql` seguia exigiendo exactamente `60`, aunque la suite V3 y la migracion Team Rewards ya definen `60 + 1`.
+- Impacto: solo la regresion integrada; el bootstrap contiene las 61 filas activas esperadas y no hay grants retroactivos.
+- Correccion: se alineo la asercion V2 con el contrato final `60 V3 + 1 Team Rewards`, sin modificar catalogo, economia ni datos.
+- Regresion: `test:achievement-catalog:db` cuenta `61` definiciones colectivas activas y mantiene las 45 individuales V2.
+
+`PFA-006` - `TESTABILITY_GAP` - la regresion V2 exigia una box rule incluso a logros V3 con componentes autoritativos - **fixed + regression_verified**.
+
+- Estado: registrado antes de corregir la prueba; regresion verificada sobre el bootstrap completo.
+- Esperado: cada logro colectivo resuelve su caja mediante `reward_components` ordenados o una `pachanga_achievement_box_rules` activa.
+- Actual: la asercion solo aceptaba la segunda ruta; `team.external.matches.010` utiliza la primera y quedaba falsamente marcado como incompleto.
+- Impacto: solo la regresion integrada; el sellado V3 ya consume componentes y Team Rewards prueba el desbloqueo exacto 9 -> 10 -> 11.
+- Correccion: se comprueba la disyuncion canonica componentes/regla, manteniendo obligatorios rareza, animacion y presentacion.
+- Regresion: `test:achievement-catalog:db` recorre grants, cajas, anulacion e invariantes Rating sin rechazar el componente V3 de 10 Retos.
+
+`PFA-007` - `ENVIRONMENT_ISSUE` - Synthetic World se lanzo inicialmente contra el bootstrap productivo sin schema `simulation` - **fixed + regression_verified**.
+
+- Estado: registrado antes de repetir la prueba en un schema local desechable.
+- Esperado: el bootstrap productivo rechaza cualquier fuga de `simulation`; Synthetic World se ejecuta en su base local aislada.
+- Actual: el primer comando reutilizo la URL del bootstrap limpio y fallo con `schema "simulation" does not exist` antes de generar datos.
+- Impacto: ninguno sobre producto; la transaccion aborto y las 90 migraciones productivas permanecen limpias.
+- Correccion: se instalo el schema de simulacion solo en el contenedor desechable, se ejecuto el contrato y se retiro con `DROP SCHEMA`; el ledger productivo termino con 90 migraciones y `simulation` ausente.
+- Regresion: `test:synthetic-world:db` pasa RLS, guard interno, idempotencia, revision obsoleta y orden por `server_sequence`.
+
 El linter PostgreSQL posterior ya no informa de `resolve_pachanga_attendance_review_v1` ni de `private.pachanga_evaluate_attendance_reliability_v1`. Conserva tres errores basales fuera del diff (`ensure_pachanga_external_team_authoritative_v2_impl`, `get_pachanga_global_rating_context_v2` y `open_pachanga_reward_box_v2`) y warnings historicos; no se han ocultado ni corregido dentro de esta activacion.
 
-Pendientes de cierre: suite completa, lint focalizado/global, Synthetic World soak, advisors, Preview responsive, rehearsal remoto, backup recuperable, activacion escalonada, smoke productivo y documento de release.
+Los Advisors remotos se compararon por tipo, nivel, schema y objeto. La migracion no incorpora nuevas tablas ni RPC expuestas que aparezcan solo en staging. Las diferencias de seguridad son `create_pachanga_admin_invite`, `finalize_pachanga_match_if_current`, `patch_pachanga_match_player_paid` y `sync_pachanga_open_match`, todas procedentes de divergencias historicas de staging anteriores a esta rama. No se amplian ACL dentro de esta activacion. Referencias de remediacion: [Security Definer ejecutable](https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable), [RLS sin policy](https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy) e [indices no utilizados](https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index).
+
+Pendientes de cierre: Preview responsive/PWA, backup recuperable, preflight y activacion escalonada productiva, smoke de produccion y documento de release.
 
 ## Secuencia productiva autorizada si staging queda verde
 
