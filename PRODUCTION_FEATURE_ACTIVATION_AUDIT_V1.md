@@ -1,6 +1,6 @@
 # Production Feature Activation Audit V1
 
-Estado: `STAGING VALIDADO / PRODUCCION PENDIENTE`. Este documento no autoriza por si solo una activacion si falla alguno de los gates productivos.
+Estado: `PRODUCCION ACTIVADA Y VERIFICADA`. Attendance y Conduct estan activos; Social Restrictions sigue OFF y Triage conserva solo autoridad shadow.
 
 ## Trazabilidad
 
@@ -11,8 +11,9 @@ Estado: `STAGING VALIDADO / PRODUCCION PENDIENTE`. Este documento no autoriza po
 - Worktree aislado: `/Users/macbookpro14/.codex/worktrees/pachangas-production-feature-activation-audit-v1`.
 - Checkout principal: no utilizado porque contiene cambios ajenos del laboratorio.
 - Entorno local: macOS, Node 22 o superior, Supabase CLI `2.107.0`, PostgreSQL local en Docker.
-- Fuentes externas consultadas: Supabase produccion `qonbngfrnrqgmxbdfbea`, staging `iozcjirlfytryzrcmrnq`, Vercel Production y GitHub. Produccion permanece en solo lectura; staging recibio la migracion y los fixtures controlados descritos abajo.
-- Ultima revalidacion de `origin/main`: 2026-08-12; sigue en el SHA base y el PR es fusionable sin conflicto.
+- Fuentes externas consultadas: Supabase produccion `qonbngfrnrqgmxbdfbea`, staging `iozcjirlfytryzrcmrnq`, Vercel Production, GitHub y QA autenticada en Chrome. Produccion recibio exclusivamente la migracion versionada, dos cambios de flag por RPC autoritativa y sus dos entradas de ledger descritas abajo.
+- PR funcional: [#142](https://github.com/puntoracingrc/pachangas/pull/142), fusionado en `main` como `3ef0322cf4bb20ae1e8750b96dee4da47e147927`.
+- Deployment productivo: `dpl_6u6MVL18K2wd6dmZPLvqTeEKSsSj`, estado `READY`, SHA exacto `3ef0322cf4bb20ae1e8750b96dee4da47e147927` y alias canonico `pachangasiq.com`.
 
 ## Alcance y criterio de inventario
 
@@ -37,8 +38,8 @@ No se ha localizado un flag global independiente para Core Social, billing o inv
 
 | Capacidad | Antes en produccion | Clasificacion | Riesgo/dependencia | Recomendacion | Accion prevista | Despues |
 | --- | --- | --- | --- | --- | --- | --- |
-| Asistencia | OFF, revision 1 | `READY_FOR_ACTIVATION` | Requiere frontera no retroactiva | Activar primero | Migracion + RPC auditada | Pendiente |
-| Conducta/reportes | OFF, revision 1 | `READY_WITH_GUARDS` | Moderacion humana y privacidad | Activar tras Asistencia | Migracion + RPC auditada | Pendiente |
+| Asistencia | OFF, revision 1 | `ACTIVE_PRODUCT` | Frontera no retroactiva instalada | Activar primero | Migracion + RPC auditada | ON, revision global 3 |
+| Conducta/reportes | OFF, revision 1 | `ACTIVE_PRODUCT` | Moderacion humana y privacidad | Activar tras Asistencia | Migracion + RPC auditada | ON, revision global 3 |
 | Restricciones sociales | OFF, revision 1 | `READY_WITH_GUARDS` | Necesita experiencia real de moderacion | Mantener OFF | Ninguna activacion | OFF obligatorio |
 | Triage | OFF; shadow ON | `SHADOW_ONLY` | No tiene autoridad automatica | Mantener laboratorio/sombra | Ninguna promocion | SHADOW/LAB |
 | Player Cosmetics | ON, revision 1 | `ACTIVE_PRODUCT` | Ninguna nueva | No modificar | Ninguna | ON |
@@ -55,8 +56,8 @@ Las cifras `x/y` significan filas activas sobre filas existentes. `N/A` indica q
 
 | # | Feature / key real | Fuente y default | Valor produccion antes | Rev. | Clasificacion | Consumidor, escrituras y avisos | Dependencia / backfill / rollback / test |
 | ---: | --- | --- | --- | ---: | --- | --- | --- |
-| 1 | Asistencia / `attendance_closure_enabled` | `private.pachanga_conduct_settings`; `false` | OFF | 1 | `READY_FOR_ACTIVATION` | RPC de cierre, disputa, revision y correccion; avisos in-app obligatorios solo tras un cierre negativo | Requiere `attendance_effective_from`; cero backfill; OFF por RPC; SQL/RLS, concurrencia, PWA y Synthetic World |
-| 2 | Conducta / `conduct_reports_enabled` | misma tabla; `false` | OFF | 1 | `READY_WITH_GUARDS` | Alta privada de reportes, casos y cola humana; avisos internos/objetivo sin identidad denunciante | Requiere `conduct_effective_from` y capacidad humana; cero backfill; OFF por RPC; SQL/RLS, concurrencia y Synthetic World |
+| 1 | Asistencia / `attendance_closure_enabled` | `private.pachanga_conduct_settings`; `false` | OFF | 1 | `ACTIVE_PRODUCT` | RPC de cierre, disputa, revision y correccion; avisos in-app obligatorios solo tras un cierre negativo | `attendance_effective_from` instalado; cero backfill; OFF por RPC; SQL/RLS, concurrencia, PWA y Synthetic World |
+| 2 | Conducta / `conduct_reports_enabled` | misma tabla; `false` | OFF | 1 | `ACTIVE_PRODUCT` | Alta privada de reportes, casos y cola humana; avisos internos/objetivo sin identidad denunciante | `conduct_effective_from` instalado y moderacion humana obligatoria; cero backfill; OFF por RPC; SQL/RLS, concurrencia y Synthetic World |
 | 3 | Restricciones / `social_restrictions_enabled` | misma tabla; `false` | OFF | 1 | `READY_WITH_GUARDS` | Permite aplicar, nunca inferir, restricciones a Mercado/Retos/partidos publicos/invitaciones | Datos reales + decision humana; sin Rating/rewards; OFF por RPC; tests de enforcement y apelacion |
 | 4 | Triage / `conduct_triage_enabled` | misma tabla; `false` | OFF | 1 | `SHADOW_ONLY` | Calcula prioridad operacional cuando se active; no sanciona | Debe seguir sin autoridad; OFF por RPC; pruebas V1.1 |
 | 5 | Triage sombra / `conduct_triage_shadow_mode` | misma tabla; `true` | ON | 1 | `SHADOW_ONLY` | Calcula recomendaciones pero conserva cola humana V1 | No es mutable desde el Control Center general; rollback = conservar ON; SQL y simulacion |
@@ -156,7 +157,7 @@ attendance event -> automatic social restriction = 0
 
 `unexcused_no_show` es un hecho privado. Dos o tres hechos pueden producir recordatorio o recomendacion de revision humana segun la politica experimental; nunca ban, restriccion, bajada de Rating o sancion automatica.
 
-Clasificacion: `READY_FOR_ACTIVATION`, condicionada a instalar y probar `attendance_effective_from`.
+Readiness previa: `READY_FOR_ACTIVATION`. Clasificacion final tras instalar y probar `attendance_effective_from`: `ACTIVE_PRODUCT`.
 
 ## Conducta y reportes
 
@@ -187,7 +188,7 @@ varias fuentes independientes -> prioridad humana posible -> 0 sanciones automat
 
 El objetivo no ve identidad denunciante, informacion medica, evidencia privada ni texto interno. Los admins ordinarios de grupo tampoco obtienen esa identidad.
 
-Clasificacion: `READY_WITH_GUARDS`, condicionada a `conduct_effective_from`, capacidad humana de moderacion y smoke privado en staging.
+Readiness previa: `READY_WITH_GUARDS`. Clasificacion final tras `conduct_effective_from`, smoke privado y conservacion de la moderacion humana: `ACTIVE_PRODUCT`.
 
 ## Restricciones sociales y triage
 
@@ -280,7 +281,7 @@ Invariantes staging:
 
 Los fixtures `a812...` se conservan exclusivamente en staging como conjunto reproducible de QA. Estan aislados por IDs y timestamps, no contienen PII real y no deben copiarse ni recrearse en produccion. Su retirada no justifica una cascada destructiva sobre una base compartida.
 
-Pendiente antes de marcar el PR ready: repetir invariantes, completar full regression/Preview responsive y comprobar el diff final.
+Los invariantes, la regresion completa, Preview responsive y el diff final pasaron antes de marcar el PR ready.
 
 ## Rankings: estado exacto
 
@@ -323,7 +324,7 @@ Faltan: tablas/read model PostgreSQL, proceso idempotente de refresh/rebuild, ci
 | Platform Control Center volumen | PASS: 10.000 usuarios y 1.000 equipos, 0 locks en espera; pagina de usuarios 37,50/44,28 ms y equipos 9,34 ms frente a umbral 10.000 ms |
 | PostgreSQL lint del alcance | PASS; desaparecen los dos errores de Attendance, con tres errores basales ajenos documentados |
 | Supabase Security Advisors | Sin hallazgo nuevo atribuible a la migracion; staging 253 y produccion 248 avisos basales. Las cinco diferencias pertenecen a cuatro RPC historicas exclusivas de staging |
-| Supabase Performance Advisors | Sin hallazgo nuevo atribuible a la migracion; staging 203 y produccion 211 avisos basales. La diferencia son contadores `unused_index` dependientes de trafico/fixtures |
+| Supabase Performance Advisors | Sin hallazgo nuevo atribuible a la migracion; staging 203 y produccion 210 avisos basales tras aplicarla. La diferencia son contadores `unused_index` dependientes de trafico/fixtures |
 | Preview responsive | PASS publico: 1440x900, 390x844 y 844x390; cero overflow global, imagenes rotas o errores de consola en partido demo, perfil de conducta y reporte contextual |
 | Preview PWA | PASS estructural/runtime: manifest `fullscreen` con fallbacks, Service Worker `2.0.0+sw.7e3a479fca38` activo, `sw.js` no-store y client policy `private, no-store` con minimo `2.0.0` |
 | `git diff --check` | PASS en ultima ejecucion; se repetira al cierre |
@@ -395,14 +396,14 @@ Incidencia de entorno: el arranque completo de Supabase local intenta exponer el
 - Correccion: se instalo el schema de simulacion solo en el contenedor desechable, se ejecuto el contrato y se retiro con `DROP SCHEMA`; el ledger productivo termino con 90 migraciones y `simulation` ausente.
 - Regresion: `test:synthetic-world:db` pasa RLS, guard interno, idempotencia, revision obsoleta y orden por `server_sequence`.
 
-`PFA-008` - `ENVIRONMENT_ISSUE` - OAuth de Google no admite el dominio efimero de Preview - **open, mitigated by canonical-production QA**.
+`PFA-008` - `ENVIRONMENT_ISSUE` - OAuth de Google no admite el dominio efimero de Preview - **closed for release by canonical-production QA**.
 
 - Estado: registrado antes de cerrar la QA visual; no se cambio configuracion OAuth.
 - Esperado: la Preview permite validar superficies publicas y el guard de sesion; la QA administrativa necesita un origen registrado.
 - Actual: Google rechaza `https://pachangas-76cybzuou-persianas-almar-web-s-projects.vercel.app/auth/google` con `redirect_uri_mismatch`. `/admin`, `/admin/flags` y `/admin/conduct` responden correctamente con `Sesion necesaria`, sin fugas ni errores de consola.
 - Impacto: impide la QA autenticada del Control Center en la URL efimera; no afecta `pachangasiq.com`, staging SQL/RLS ni la activacion por RPC.
-- Mitigacion de release: completar la QA administrativa autenticada en el dominio canonico despues del deployment y antes de cerrar la tarea. Una futura Preview autenticada exige dominio de staging estable y callback Google registrado; no se permiten callbacks efimeros a ciegas.
-- Regresion disponible: rutas publicas afectadas pasan escritorio, portrait y landscape; tests de RBAC/API y read model pasan localmente y contra staging.
+- Cierre de release: la QA administrativa autenticada se completo en `pachangasiq.com/admin/flags` con el `platform_owner`; la UI mostro Attendance y Conduct activos, Social Restrictions OFF y Triage LAB/SHADOW.
+- Regresion: rutas publicas afectadas pasan escritorio, portrait, landscape y PWA; tests de RBAC/API y read model pasan localmente, staging y dominio canonico. Una futura Preview autenticada sigue necesitando dominio de staging estable y callback Google registrado.
 
 El linter PostgreSQL posterior ya no informa de `resolve_pachanga_attendance_review_v1` ni de `private.pachanga_evaluate_attendance_reliability_v1`. Conserva tres errores basales fuera del diff (`ensure_pachanga_external_team_authoritative_v2_impl`, `get_pachanga_global_rating_context_v2` y `open_pachanga_reward_box_v2`) y warnings historicos; no se han ocultado ni corregido dentro de esta activacion.
 
@@ -421,21 +422,21 @@ Los Advisors remotos se compararon por tipo, nivel, schema y objeto. La migracio
 - Los cinco mappings productivos coinciden exactamente con el contrato. Premium Ball mantiene 0 filas de catalogo, inventario, loadout, mapping y reward ledger.
 - Realtime incluye `pachanga_attendance_group_state`, `pachanga_conduct_subject_state` y `pachanga_user_notifications`.
 
-Pendientes de cierre: aplicar la migracion atomica, deployment, activacion escalonada, QA administrativa canonica, smoke de produccion y documento de release.
+La migracion se aplico de forma atomica y el historial remoto paso de 89 a 90 entradas. El SQL almacenado para `20260812062731_production_feature_activation_v1` coincide exactamente con el archivo local (`md5 b74207ab78ad026618c5a1a235b33eb1`). Deployment, activacion escalonada, QA administrativa canonica y smoke productivo quedaron completados sin activar ningun gate no autorizado.
 
-## Secuencia productiva autorizada si staging queda verde
+## Secuencia productiva ejecutada
 
-1. Backup recuperable y snapshot de migraciones, flags, hashes Rating/rewards/billing y contadores.
-2. Aplicar migracion forward-only con flags aun OFF.
-3. Desplegar el Control Center/read model actualizado.
-4. Activar solo Attendance por RPC con motivo `Production Feature Activation Audit V1 - Attendance activation`.
-5. Smoke inmediato y comparar invariantes. Ante backfill, burst, 500, fuga RLS, Rating o reward inesperado: Attendance OFF por RPC y stop.
-6. Si verde, activar Conduct por RPC con motivo `Production Feature Activation Audit V1 - Conduct activation`.
-7. Repetir smoke e invariantes.
-8. Confirmar Social Restrictions OFF, Triage OFF + shadow ON, rankings LAB, awards OFF y Premium Ball ausente.
+1. Backup fisico `2026-08-12T00:16:24Z` y snapshot de migraciones, flags, hashes y contadores: PASS.
+2. Migracion forward-only con flags aun OFF: PASS; revision 1.
+3. Deployment del Control Center/read model actualizado: `READY`.
+4. Attendance ON por RPC: revision 1 -> 2, `serverSequence=2`, frontera `2026-08-12T07:53:14.023506Z`.
+5. Smoke Attendance: cero backfill, burst, 500, fuga RLS, Rating o reward inesperado.
+6. Conduct ON por RPC: revision 2 -> 3, `serverSequence=3`, frontera `2026-08-12T07:56:33.639969Z`.
+7. Smoke Conduct: cero casos historicos, sanciones, restricciones o mutaciones colaterales.
+8. Estado final confirmado: Social Restrictions OFF, Triage OFF + shadow ON, rankings LAB, awards OFF y Premium Ball ausente.
 
 ## Estado de los documentos
 
 - `PRODUCTION_FEATURE_ACTIVATION_AUDIT_V1.md`: este inventario y auditoria.
 - `RANKING_PRODUCTIZATION_NEXT_STEPS.md`: plan de producto sin implementacion.
-- `PRODUCTION_FEATURE_ACTIVATION_V1_RELEASE.md`: se creara solo si las activaciones llegan realmente a produccion.
+- `PRODUCTION_FEATURE_ACTIVATION_V1_RELEASE.md`: evidencia exacta del release y de las dos activaciones productivas.
