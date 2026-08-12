@@ -15,7 +15,7 @@ Estado: `RELEASE PRODUCTIVA VERIFICADA`.
 | Proyecto Supabase | `qonbngfrnrqgmxbdfbea` (`Pachangas`) |
 | Migracion | `20260812062731_production_feature_activation_v1` |
 
-La rama documental que contiene este informe se publicara y fusionara separadamente. No contiene codigo, migraciones ni cambios de datos.
+El cierre documental se publica en el PR [#143](https://github.com/puntoracingrc/pachangas/pull/143). No contiene codigo, migraciones ni cambios de datos.
 
 ## Backup y migracion
 
