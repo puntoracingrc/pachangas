@@ -512,7 +512,109 @@ select public.set_pachanga_platform_user_state_v1(
   'aa420000-0000-4000-8000-000000000005', 'Admin suspension reversed'
 );
 
+-- Activating product candidates is non-retroactive and fully auditable.
+reset role;
+create temporary table production_activation_before as
+select
+  jsonb_build_object(
+    'closures', (select count(*) from private.pachanga_attendance_closures),
+    'attendance', (select count(*) from private.pachanga_post_match_attendance),
+    'reports', (select count(*) from private.pachanga_conduct_reports),
+    'cases', (select count(*) from private.pachanga_moderation_cases),
+    'notifications', (select count(*) from public.pachanga_user_notifications),
+    'ratingEvidence', (select count(*) from public.pachanga_individual_rating_evidence),
+    'ratingSnapshots', (select count(*) from public.pachanga_player_rating_snapshots),
+    'rewards', (select count(*) from public.pachanga_reward_grants),
+    'billingEvents', (select count(*) from public.pachanga_stripe_webhook_events)
+  ) as snapshot,
+  (select platform_revision from private.pachanga_conduct_settings where singleton) as revision;
+grant select on production_activation_before to authenticated;
+
+set local role authenticated;
+select set_config('request.jwt.claims', '{"sub":"aa100000-0000-4000-8000-000000000001","role":"authenticated"}', true);
+
+create temporary table attendance_activation as
+select public.set_pachanga_platform_flag_v1(
+  'attendance', true, revision,
+  'aa430000-0000-4000-8000-000000000010',
+  'Production Feature Activation Audit V1 - Attendance staging activation'
+) as response
+from production_activation_before;
+
+create temporary table conduct_activation as
+select public.set_pachanga_platform_flag_v1(
+  'conduct', true, (select (response ->> 'revision')::bigint from attendance_activation),
+  'aa430000-0000-4000-8000-000000000011',
+  'Production Feature Activation Audit V1 - Conduct staging activation'
+) as response;
+
+reset role;
+select pg_temp.assert_true(
+  (select snapshot from production_activation_before) = jsonb_build_object(
+    'closures', (select count(*) from private.pachanga_attendance_closures),
+    'attendance', (select count(*) from private.pachanga_post_match_attendance),
+    'reports', (select count(*) from private.pachanga_conduct_reports),
+    'cases', (select count(*) from private.pachanga_moderation_cases),
+    'notifications', (select count(*) from public.pachanga_user_notifications),
+    'ratingEvidence', (select count(*) from public.pachanga_individual_rating_evidence),
+    'ratingSnapshots', (select count(*) from public.pachanga_player_rating_snapshots),
+    'rewards', (select count(*) from public.pachanga_reward_grants),
+    'billingEvents', (select count(*) from public.pachanga_stripe_webhook_events)
+  ),
+  'Turning Attendance and Conduct on must not backfill or mutate sport, reward, billing or notifications'
+);
+select pg_temp.assert_true(
+  (select response ->> 'effectiveFrom' is not null from attendance_activation)
+  and (select response ->> 'effectiveFrom' is not null from conduct_activation)
+  and (select attendance_effective_from is not null and conduct_effective_from is not null
+    from private.pachanga_conduct_settings where singleton),
+  'Both production candidates must receive authoritative activation frontiers'
+);
+
+set local role authenticated;
+select set_config('request.jwt.claims', '{"sub":"aa100000-0000-4000-8000-000000000001","role":"authenticated"}', true);
+select pg_temp.assert_true(
+  exists (
+    select 1 from jsonb_array_elements(public.get_pachanga_platform_flags_v1()) flag
+    where flag ->> 'key' = 'attendance'
+      and flag ->> 'classification' = 'ACTIVE_PRODUCT'
+      and flag ->> 'effectiveFrom' is not null
+  )
+  and exists (
+    select 1 from jsonb_array_elements(public.get_pachanga_platform_flags_v1()) flag
+    where flag ->> 'key' = 'conduct'
+      and flag ->> 'classification' = 'ACTIVE_PRODUCT'
+      and flag ->> 'effectiveFrom' is not null
+  ),
+  'Control Center must render the real DB state and activation frontiers'
+);
+select pg_temp.assert_true(
+  pg_temp.platform_ledger_count('aa430000-0000-4000-8000-000000000010') = 1
+  and pg_temp.platform_ledger_count('aa430000-0000-4000-8000-000000000011') = 1,
+  'Each activation must emit one authoritative audit event'
+);
+
+create temporary table conduct_deactivation as
+select public.set_pachanga_platform_flag_v1(
+  'conduct', false, (select (response ->> 'revision')::bigint from conduct_activation),
+  'aa430000-0000-4000-8000-000000000012', 'Controlled Conduct rollback test'
+) as response;
+select public.set_pachanga_platform_flag_v1(
+  'attendance', false, (select (response ->> 'revision')::bigint from conduct_deactivation),
+  'aa430000-0000-4000-8000-000000000013', 'Controlled Attendance rollback test'
+);
+
+reset role;
+select pg_temp.assert_true(
+  (select not attendance_closure_enabled and not conduct_reports_enabled
+    and attendance_effective_from is not null and conduct_effective_from is not null
+    from private.pachanga_conduct_settings where singleton),
+  'Rollback must disable writes while preserving activation evidence'
+);
+
 -- Sensitive flag change delegates Team Rewards to its canonical policy helper.
+set local role authenticated;
+select set_config('request.jwt.claims', '{"sub":"aa100000-0000-4000-8000-000000000001","role":"authenticated"}', true);
 create temporary table platform_flag_before as
 select
   (flag ->> 'enabled')::boolean as enabled,

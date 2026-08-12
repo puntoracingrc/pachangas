@@ -130,7 +130,9 @@ update public.pachanga_player_profiles set source_group_id = ${sqlText(groupId)}
 where id in (${sqlText(ownerProfileId)}::uuid, ${sqlText(targetProfileId)}::uuid);
 select public.sync_pachanga_match_read_model(${sqlText(groupId)}::uuid, ${sqlJson(matchPayload)}, 1);
 update private.pachanga_conduct_settings set
-  attendance_closure_enabled = true, conduct_reports_enabled = true, social_restrictions_enabled = true
+  attendance_closure_enabled = true, conduct_reports_enabled = true, social_restrictions_enabled = true,
+  attendance_effective_from = clock_timestamp() - interval '1 day',
+  conduct_effective_from = clock_timestamp() - interval '1 day'
 where singleton;
 `;
 
