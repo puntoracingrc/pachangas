@@ -18,18 +18,20 @@ Estado: PRODUCCIÓN ACTIVA PARA BARCELONA. SEASON SCORE ON, RANKING PROVINCIAL O
 | Merge R1-R6 | `989d645ac57d80c9cd180259ba733c2b22865577` |
 | Hotfix vacío | [#146](https://github.com/puntoracingrc/pachangas/pull/146), merge `c241e005f35d391c54af64caead7013ff746e167` |
 | Deployment funcional | `dpl_ptQ4ke3jCQ8xqVoYKBPteMJWHvXn`, `READY` |
+| Fix salud inactiva | [#148](https://github.com/puntoracingrc/pachangas/pull/148), commit `e4fc1f82ccfc06606f280c6d0dd10eb40f5ade69`, merge `9a12bf1665cbcd0f2e3201e6108235959518a460` |
+| Deployment R8 | `dpl_ixGi2ASmg31sMRgWhPjWA5MQWtxg`, `READY` |
 | URL productiva | `https://pachangasiq.com` |
 
 ## Estado de gates
 
 | Gate | Estado | Evidencia |
 | --- | --- | --- |
-| Fresh install | PASS local | baseline + 97 migraciones |
-| Upgrade remoto | PASS staging | R1-R7, ledger sincronizado |
+| Fresh install | PASS local | baseline + 98 migraciones |
+| Upgrade remoto | PASS staging | R1-R8, ledger sincronizado |
 | SQL/RLS | PASS local + staging | `RANKING_PRODUCTIZATION_V1_DB_OK`, grants legacy cerrados |
 | Concurrencia | PASS local + staging | replay, `PT409`, lifecycle, `SKIP LOCKED` |
 | Escala | PASS local | 10k jugadores, 1k equipos, 3 provincias |
-| App tests | PASS | 251/251 |
+| App tests | PASS | 252/252 |
 | Typecheck | PASS | TypeScript sin errores |
 | Build | PASS | Next 16.2.6 Turbopack, 31/31 rutas estáticas |
 | Lint focalizado | PASS | archivos nuevos y data layer |
@@ -38,7 +40,7 @@ Estado: PRODUCCIÓN ACTIVA PARA BARCELONA. SEASON SCORE ON, RANKING PROVINCIAL O
 | PWA instalada | PASS | aplicación Chrome instalada real, ventana standalone y `/ranking` canónico revisión 2 |
 | Staging autenticado | PASS | owner x2, usuario, outsider, anónimo y Realtime |
 | Backup producción | PASS | backup físico Supabase disponible + dump lógico restaurado íntegramente en instancia aislada |
-| Producción | PASS | R1-R7, rebuild/publicación R2, flags `true / true / false`, health `OK` |
+| Producción | PASS | R1-R8, rebuild/publicación R2, flags `true / true / false`, health `OK` |
 
 ## Migraciones forward-only
 
@@ -51,21 +53,26 @@ Aplicar exactamente en este orden:
 5. `20260820182038_ranking_productization_r5_http_conflicts.sql`
 6. `20260820184126_ranking_productization_r6_legacy_surface_hardening.sql`
 7. `20260820204159_ranking_productization_r7_empty_publication.sql`
+8. `20260820213930_ranking_productization_r8_idle_health.sql`
 
 Cada migración configura `lock_timeout = 5s` y `statement_timeout = 5min`. No reescribir ni reparar silenciosamente versiones existentes. Antes de aplicar, comparar `supabase migration list --linked` con el repositorio; cualquier divergencia del ledger es un blocker hasta sincronizarla explícitamente.
 
-## Incidencia de activación registrada
+## Incidencias de activación registradas
 
 `PRODUCT_BUG`: el 20 de agosto de 2026, el primer rebuild real de producción produjo correctamente cero candidatos y checksum determinista `4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945`. La publicación quedó auditada con cero grants, rewards y notificaciones, pero R4 solo creaba filas territoriales desde entradas existentes. Un piloto legítimo con cero jugadores no obtenía fila de publicación para Barcelona y el health gate permanecía `false`.
 
 Estado: `fixed + regression_verified` en local, staging y producción. R7 hace que cada territorio habilitado reciba una publicación canónica, incluso con cero entradas. Producción devuelve Barcelona disponible, revisión 2, lista vacía y checksum determinista `4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945`. No se añadieron datos sintéticos ni se forzó el health gate.
+
+`PRODUCT_BUG`: después de la activación, una temporada abierta y correctamente publicada pasaba a `WARNING / RANKING_REFRESH_STALE` tras quince minutos sin nueva evidencia. La regla R4 miraba únicamente la edad de `last_refresh_at`, aunque la cola estuviera vacía. Esto convertía una inactividad legítima en una alerta permanente.
+
+Estado: `fixed + regression_verified` en local, staging y producción. R8 exige trabajo `queued` de la propia temporada activa para declarar stale. La regresión SQL prueba cola vacía y cola pendiente; staging la ejecutó en una transacción revertida. Producción pasó de `WARNING` a `OK` con la misma revisión 2, checksum, publicación y flags, cola 0 y sin recalcular el ranking.
 
 ## Runbook de staging
 
 1. Confirmar proyecto/`project_ref`, rama y entorno. No asumir que la pestaña abierta corresponde a Pachangas IQ.
 2. Capturar ledger, versión PostgreSQL, tamaño de tablas relevantes, locks y CPU iniciales.
 3. Verificar que el frontend de staging contiene las RPC y rutas V1 de ranking.
-4. Aplicar las siete migraciones forward-only con flags aún `false / false / false`.
+4. Aplicar las ocho migraciones forward-only con flags aún `false / false / false`.
 5. Verificar readback del checksum de fórmula y settings.
 6. Desplegar frontend/backend RC; configurar `CRON_SECRET` únicamente en servidor.
 7. Crear temporada de QA explícita y mappings de campos de prueba.
@@ -200,6 +207,7 @@ Registrar tras release:
 staging_url: https://pachangas-nl50tlf5g-persianas-almar-web-s-projects.vercel.app
 staging_qa: PASS, incluida PWA instalada real
 staging_r7: PASS, ledger 20260820204159 y regresión transaccional sin residuos
+staging_r8: PASS, ledger 20260820213930, salud idle/queued y rollback sin residuos
 hotfix_preview: https://pachangas-8bmk0kh4r-persianas-almar-web-s-projects.vercel.app
 production_backup: PASS, backup físico disponible y restore lógico aislado verificado
 pilot_season_id: 20bad54c-7b29-4a88-9a7e-a1f80f8ef8eb
@@ -212,8 +220,8 @@ eligible_real_players: 0
 pending_integrity_real_players: 0
 ranking_grants_created: 0
 ranking_sanctions_created: 0
-production_deployment: dpl_ptQ4ke3jCQ8xqVoYKBPteMJWHvXn
-production_main_sha: c241e005f35d391c54af64caead7013ff746e167
+production_deployment: dpl_ixGi2ASmg31sMRgWhPjWA5MQWtxg
+production_main_sha: 9a12bf1665cbcd0f2e3201e6108235959518a460
 pachangasiq.com_smoke: PASS, ranking desktop/portrait/landscape y rutas /, /mercado, /admin/rankings
 runtime_errors: 0
 broken_images: 0
@@ -244,7 +252,7 @@ La misma consulta determinista se ejecutó inmediatamente antes de R7 y después
 | Rewards / cosmetics | 42 | 735 | `572e138afbf8b68b71a4cb00fd19038f` |
 | Billing | 1 | 0 | `43e4837531a6231f35f06665c16ffbd9` |
 
-El ledger remoto incluye R1-R7 y la función privada de publicación continúa sin `EXECUTE` para `authenticated`. El CLI emitió un warning posterior al apply al intentar actualizar su caché `pg-delta` sin certificado temporal; la migración devolvió éxito, aparece en el ledger y el readback funcional confirma su código fuente.
+El ledger remoto incluye R1-R8. Las funciones privadas de publicación y salud continúan sin `EXECUTE` para `authenticated`. El CLI emitió un warning posterior al apply al intentar actualizar su caché `pg-delta` sin certificado temporal; ambas migraciones afectadas devolvieron éxito, aparecen en el ledger y el readback funcional confirma su código fuente.
 
 ## Smoke productivo final
 
@@ -252,5 +260,5 @@ El ledger remoto incluye R1-R7 y la función privada de publicación continúa s
 - Viewports `1440x900`, `390x844` y `844x390`: sin overflow horizontal, imágenes rotas ni logs de consola.
 - `/` y `/mercado`: desktop, portrait y landscape sin overflow ni imágenes rotas.
 - `/admin/rankings` sin sesión: guard correcto, sin fuga de datos administrativos.
-- PWA: manifest `fullscreen` y Service Worker `2.0.0+sw.c241e005f35d` servidos desde producción; la instalación standalone se validó previamente en staging.
-- Vercel: deployment exacto `READY`, SHA `c241e005f35d391c54af64caead7013ff746e167`, aliases `pachangasiq.com` y `www.pachangasiq.com`, cero runtime errors en la ventana de release.
+- PWA: manifest `fullscreen` y Service Worker versionado por build; el smoke funcional R8 sirvió `2.0.0+sw.9a12bf1665cb`. La instalación standalone se validó previamente en staging.
+- Vercel: deployment exacto `dpl_ixGi2ASmg31sMRgWhPjWA5MQWtxg` `READY`, SHA `9a12bf1665cbcd0f2e3201e6108235959518a460`, aliases `pachangasiq.com` y `www.pachangasiq.com`, cero runtime errors en la ventana de release.
