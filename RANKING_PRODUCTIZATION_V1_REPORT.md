@@ -1,8 +1,8 @@
 # Ranking Productization V1 Report
 
-Estado: RELEASE CANDIDATE VALIDADA. Producción pendiente.
+Estado: PRODUCCIÓN CON FLAGS OFF. HOTFIX DE PILOTO VACÍO VALIDADO EN STAGING Y PENDIENTE DE PRODUCCIÓN.
 
-Actualizado: 2026-08-20 22:20 CEST.
+Actualizado: 2026-08-20 23:06 CEST.
 
 ## Trazabilidad
 
@@ -19,8 +19,11 @@ Actualizado: 2026-08-20 22:20 CEST.
 | Rutas del cambio | 26 antes del commit final |
 | Supabase staging | `iozcjirlfytryzrcmrnq` |
 | Preview Vercel | `pachangas-nl50tlf5g-persianas-almar-web-s-projects.vercel.app` |
+| Merge productivo | `989d645ac57d80c9cd180259ba733c2b22865577` |
+| Hotfix | [#146](https://github.com/puntoracingrc/pachangas/pull/146), `0ebcd93be4e30edfba96e5de82b2b5d8445663b4` |
+| Preview hotfix | `pachangas-m1jfz3v4z-persianas-almar-web-s-projects.vercel.app` |
 
-Se han aplicado y verificado las seis migraciones exclusivamente en Supabase staging. El Preview de la rama usa ese proyecto. Producción no se ha modificado.
+R1-R6 y el frontend se han desplegado en producción con los tres flags Ranking apagados. La activación se detuvo al detectar el caso real de una publicación provincial sin jugadores. R7 ya está aplicada y validada en staging; producción todavía no la ha recibido.
 
 ## Resultado por fase
 
@@ -76,6 +79,13 @@ Se han aplicado y verificado las seis migraciones exclusivamente en Supabase sta
 - Mantiene como única superficie cliente la RPC versionada que valida actor, revisión, `operationId` y motivo.
 - Incluye verificación SQL y llamada autenticada negativa contra staging.
 
+### R7: publicación territorial vacía
+
+- `PRODUCT_BUG` registrado antes de la corrección: una temporada con cero candidatos calculaba y auditaba `SHA-256([])`, pero no creaba la fila de publicación de su territorio.
+- R7 publica una fila canónica por territorio habilitado aunque todavía tenga cero entradas.
+- No crea jugadores, evidencia, grants, rewards, sanciones ni notificaciones.
+- Estado actual: `fixed + regression_verified` en local y staging. Pasan la regresión SQL, la batería completa de 251 tests, build, typecheck, lint focalizado, concurrencia y escala 10.000/1.000. La prueba transaccional remota confirmó una publicación Barcelona vacía y disponible con `SHA-256([])`, cero efectos secundarios y cero residuos después del rollback.
+
 ## Objetos principales
 
 ### Migraciones
@@ -86,6 +96,7 @@ Se han aplicado y verificado las seis migraciones exclusivamente en Supabase sta
 4. `20260820075326_ranking_productization_r4_provincial_product.sql`
 5. `20260820182038_ranking_productization_r5_http_conflicts.sql`
 6. `20260820184126_ranking_productization_r6_legacy_surface_hardening.sql`
+7. `20260820204159_ranking_productization_r7_empty_publication.sql`
 
 Son forward-only y posteriores a las 90 migraciones existentes. No se ha reescrito ninguna migración ya desplegada.
 
@@ -124,15 +135,15 @@ El read model directo no tiene `SELECT` para `anon` ni `authenticated`. Las RPC 
 
 | Gate | Resultado |
 | --- | --- |
-| Fresh bootstrap | PASS, baseline + 96 migraciones |
-| Upgrade local | PASS, 94 -> 96 |
+| Fresh bootstrap | PASS, baseline + 97 migraciones |
+| Upgrade local | PASS, R7 sobre R1-R6 |
 | SQL/RLS/ACL | PASS, `RANKING_PRODUCTIZATION_V1_DB_OK` |
-| Test estático focalizado | PASS, 8/8 |
+| Test estático focalizado | PASS, 9/9 |
 | Concurrencia | PASS, un lifecycle winner, replay convergente, stale revision rechazada, cola `SKIP LOCKED` |
 | Volumen | PASS, 10.000 jugadores, 1.000 equipos, 3 provincias |
 | Typecheck | PASS |
 | Build oficial Turbopack | PASS, 31 páginas; última ejecución compile 3,7 s y TypeScript 8,2 s |
-| Batería global | PASS, 250/250 |
+| Batería global | PASS, 251/251 |
 | Lint focalizado nuevo | PASS |
 | Lint global heredado | 43 incidencias: 23 errores y 20 warnings; ninguna en los archivos nuevos focalizados |
 | `git diff --check` | PASS antes de actualizar informes; se repite al cierre |
