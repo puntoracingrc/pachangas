@@ -1,6 +1,6 @@
 # Ranking Productization V1 Production Release
 
-Estado: PRODUCCIÓN DESPLEGADA CON FLAGS OFF. HOTFIX R7 VALIDADO EN STAGING Y PENDIENTE DE PRODUCCIÓN.
+Estado: PRODUCCIÓN ACTIVA PARA BARCELONA. SEASON SCORE ON, RANKING PROVINCIAL ON, AWARDS OFF.
 
 ## Identidad de release
 
@@ -8,15 +8,17 @@ Estado: PRODUCCIÓN DESPLEGADA CON FLAGS OFF. HOTFIX R7 VALIDADO EN STAGING Y PE
 | --- | --- |
 | `main` inicial | `cce6d5e68a34b10c3ae6cb2f8bbdb1d567465aeb` |
 | Rama | `codex/ranking-productization-v1` |
-| PR | [#145 draft](https://github.com/puntoracingrc/pachangas/pull/145) |
+| PR | [#145](https://github.com/puntoracingrc/pachangas/pull/145), fusionado |
 | Commit inicial | `b6d91cc` |
 | Commit RC | `d97c0719317f7dd0755f271238158af0d291e2fe` antes de incorporar esta evidencia |
 | Fórmula | `season_score_v3` V1 |
 | Formula checksum | `e7b1788fa2d6d7ce2c37cd00f8fa55d78a87539bfa68c76a383bb3500ac388a4` |
 | Provincia piloto | Barcelona `08` |
 | Premios | OFF por constraint |
-| Merge productivo | `989d645ac57d80c9cd180259ba733c2b22865577` |
-| Hotfix vacío | [#146](https://github.com/puntoracingrc/pachangas/pull/146), `0ebcd93be4e30edfba96e5de82b2b5d8445663b4` |
+| Merge R1-R6 | `989d645ac57d80c9cd180259ba733c2b22865577` |
+| Hotfix vacío | [#146](https://github.com/puntoracingrc/pachangas/pull/146), merge `c241e005f35d391c54af64caead7013ff746e167` |
+| Deployment funcional | `dpl_ptQ4ke3jCQ8xqVoYKBPteMJWHvXn`, `READY` |
+| URL productiva | `https://pachangasiq.com` |
 
 ## Estado de gates
 
@@ -36,7 +38,7 @@ Estado: PRODUCCIÓN DESPLEGADA CON FLAGS OFF. HOTFIX R7 VALIDADO EN STAGING Y PE
 | PWA instalada | PASS | aplicación Chrome instalada real, ventana standalone y `/ranking` canónico revisión 2 |
 | Staging autenticado | PASS | owner x2, usuario, outsider, anónimo y Realtime |
 | Backup producción | PASS | backup físico Supabase disponible + dump lógico restaurado íntegramente en instancia aislada |
-| Producción | FLAGS OFF | R1-R6 y frontend desplegados; activación detenida antes del primer flag |
+| Producción | PASS | R1-R7, rebuild/publicación R2, flags `true / true / false`, health `OK` |
 
 ## Migraciones forward-only
 
@@ -56,14 +58,14 @@ Cada migración configura `lock_timeout = 5s` y `statement_timeout = 5min`. No r
 
 `PRODUCT_BUG`: el 20 de agosto de 2026, el primer rebuild real de producción produjo correctamente cero candidatos y checksum determinista `4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945`. La publicación quedó auditada con cero grants, rewards y notificaciones, pero R4 solo creaba filas territoriales desde entradas existentes. Un piloto legítimo con cero jugadores no obtenía fila de publicación para Barcelona y el health gate permanecía `false`.
 
-Estado: `fixed + regression_verified` en local y staging. R7 hace que cada territorio habilitado reciba una publicación canónica, incluso con cero entradas. La regresión transaccional de staging reprodujo el escenario original y confirmó publicación disponible, lista vacía, checksum determinista `4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945` y cero awards, rewards o notificaciones; el rollback dejó cero datos de prueba. La activación sigue detenida con los tres flags Ranking de producción en `false`; no se añadieron datos sintéticos ni se forzó el health gate.
+Estado: `fixed + regression_verified` en local, staging y producción. R7 hace que cada territorio habilitado reciba una publicación canónica, incluso con cero entradas. Producción devuelve Barcelona disponible, revisión 2, lista vacía y checksum determinista `4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945`. No se añadieron datos sintéticos ni se forzó el health gate.
 
 ## Runbook de staging
 
 1. Confirmar proyecto/`project_ref`, rama y entorno. No asumir que la pestaña abierta corresponde a Pachangas IQ.
 2. Capturar ledger, versión PostgreSQL, tamaño de tablas relevantes, locks y CPU iniciales.
 3. Verificar que el frontend de staging contiene las RPC y rutas V1 de ranking.
-4. Aplicar las seis migraciones forward-only con flags aún `false / false / false`.
+4. Aplicar las siete migraciones forward-only con flags aún `false / false / false`.
 5. Verificar readback del checksum de fórmula y settings.
 6. Desplegar frontend/backend RC; configurar `CRON_SECRET` únicamente en servidor.
 7. Crear temporada de QA explícita y mappings de campos de prueba.
@@ -153,11 +155,11 @@ La release de frontend y migraciones debe coordinarse. Un frontend anterior no c
 
 ## Activación y fail-closed
 
-Estado inicial de migración:
+Estado final confirmado:
 
 ```text
-season_score_product_enabled = false
-provincial_rankings_product_enabled = false
+season_score_product_enabled = true
+provincial_rankings_product_enabled = true
 provincial_awards_enabled = false
 pilot_province_codes = ['08']
 ```
@@ -198,17 +200,24 @@ Registrar tras release:
 staging_url: https://pachangas-nl50tlf5g-persianas-almar-web-s-projects.vercel.app
 staging_qa: PASS, incluida PWA instalada real
 staging_r7: PASS, ledger 20260820204159 y regresión transaccional sin residuos
-hotfix_preview: https://pachangas-m1jfz3v4z-persianas-almar-web-s-projects.vercel.app
+hotfix_preview: https://pachangas-8bmk0kh4r-persianas-almar-web-s-projects.vercel.app
 production_backup: PASS, backup físico disponible y restore lógico aislado verificado
-pilot_season_id: PENDING
-pilot_period: PENDING
-initial_snapshot_checksum: PENDING
-initial_rebuild_checksum: PENDING
-eligible_real_players: PENDING
-pending_integrity_real_players: PENDING
-production_deployment: PENDING
-production_main_sha: PENDING
-pachangasiq.com_smoke: PENDING
+pilot_season_id: 20bad54c-7b29-4a88-9a7e-a1f80f8ef8eb
+pilot_period: 2026-08-20T20:40:00Z -> 2026-12-31T23:59:59Z
+initial_snapshot_checksum: no hay snapshots individuales; conjunto vacío SHA-256 4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945
+initial_rebuild_checksum: 4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945
+published_rebuild_id: d227df1b-9db0-4112-995c-cf9cb4c4e97f
+published_rebuild_checksum: 7da7104898f9628072e23b1e3971980e5b991e3c414288100955bd0e6a39ce85
+eligible_real_players: 0
+pending_integrity_real_players: 0
+ranking_grants_created: 0
+ranking_sanctions_created: 0
+production_deployment: dpl_ptQ4ke3jCQ8xqVoYKBPteMJWHvXn
+production_main_sha: c241e005f35d391c54af64caead7013ff746e167
+pachangasiq.com_smoke: PASS, ranking desktop/portrait/landscape y rutas /, /mercado, /admin/rankings
+runtime_errors: 0
+broken_images: 0
+horizontal_overflow: 0
 ```
 
 ## Invariantes de release
@@ -222,3 +231,26 @@ pachangasiq.com_smoke: PENDING
 - España: LAB.
 - Grants creados por ranking: 0.
 - Sanciones creadas por ranking: 0.
+
+## Huellas protegidas de producción
+
+La misma consulta determinista se ejecutó inmediatamente antes de R7 y después de rebuild, publicación y activación. Los cinco resultados son idénticos:
+
+| Sistema | Tablas | Filas | Checksum |
+| --- | ---: | ---: | --- |
+| Rating / assessments | 14 | 3 | `b683a4e04daa90d6abb6eaca24692f5c` |
+| Conduct / Attendance | 16 | 9 | `2f73b1228d0618db1ab2e2ea505d1f3b` |
+| Notifications | 6 | 34 | `0b6feb65ed17140469430afc0a68e3e7` |
+| Rewards / cosmetics | 42 | 735 | `572e138afbf8b68b71a4cb00fd19038f` |
+| Billing | 1 | 0 | `43e4837531a6231f35f06665c16ffbd9` |
+
+El ledger remoto incluye R1-R7 y la función privada de publicación continúa sin `EXECUTE` para `authenticated`. El CLI emitió un warning posterior al apply al intentar actualizar su caché `pg-delta` sin certificado temporal; la migración devolvió éxito, aparece en el ledger y el readback funcional confirma su código fuente.
+
+## Smoke productivo final
+
+- `/ranking`: Barcelona, temporada piloto, fórmula `55 / 30 / 15`, revisión 2 y 0 jugadores reales; no muestra estado inactivo.
+- Viewports `1440x900`, `390x844` y `844x390`: sin overflow horizontal, imágenes rotas ni logs de consola.
+- `/` y `/mercado`: desktop, portrait y landscape sin overflow ni imágenes rotas.
+- `/admin/rankings` sin sesión: guard correcto, sin fuga de datos administrativos.
+- PWA: manifest `fullscreen` y Service Worker `2.0.0+sw.c241e005f35d` servidos desde producción; la instalación standalone se validó previamente en staging.
+- Vercel: deployment exacto `READY`, SHA `c241e005f35d391c54af64caead7013ff746e167`, aliases `pachangasiq.com` y `www.pachangasiq.com`, cero runtime errors en la ventana de release.

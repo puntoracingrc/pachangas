@@ -1,17 +1,18 @@
 # Ranking Productization V1 Report
 
-Estado: PRODUCCIÓN CON FLAGS OFF. HOTFIX DE PILOTO VACÍO VALIDADO EN STAGING Y PENDIENTE DE PRODUCCIÓN.
+Estado: PRODUCCIÓN ACTIVA PARA EL PILOTO BARCELONA. SEASON SCORE Y RANKING PROVINCIAL ON; PREMIOS OFF.
 
-Actualizado: 2026-08-20 23:06 CEST.
+Actualizado: 2026-08-20 23:25 CEST.
 
 ## Trazabilidad
 
 | Campo | Valor |
 | --- | --- |
 | Base real | `origin/main` `cce6d5e68a34b10c3ae6cb2f8bbdb1d567465aeb` |
-| Rama | `codex/ranking-productization-v1` |
+| Rama funcional | `codex/ranking-productization-v1` |
+| Rama de cierre | `codex/ranking-productization-v1-production-closeout` |
 | Commit inicial | `b6d91cc` |
-| PR draft | [#145](https://github.com/puntoracingrc/pachangas/pull/145) |
+| PR funcional | [#145](https://github.com/puntoracingrc/pachangas/pull/145), fusionado |
 | Worktree | `/private/tmp/pachangas-ranking-productization-v1` |
 | Fórmula | `season_score_v3` V1 |
 | Checksum | `e7b1788fa2d6d7ce2c37cd00f8fa55d78a87539bfa68c76a383bb3500ac388a4` |
@@ -19,11 +20,13 @@ Actualizado: 2026-08-20 23:06 CEST.
 | Rutas del cambio | 26 antes del commit final |
 | Supabase staging | `iozcjirlfytryzrcmrnq` |
 | Preview Vercel | `pachangas-nl50tlf5g-persianas-almar-web-s-projects.vercel.app` |
-| Merge productivo | `989d645ac57d80c9cd180259ba733c2b22865577` |
-| Hotfix | [#146](https://github.com/puntoracingrc/pachangas/pull/146), `0ebcd93be4e30edfba96e5de82b2b5d8445663b4` |
-| Preview hotfix | `pachangas-m1jfz3v4z-persianas-almar-web-s-projects.vercel.app` |
+| Merge R1-R6 | `989d645ac57d80c9cd180259ba733c2b22865577` |
+| Hotfix | [#146](https://github.com/puntoracingrc/pachangas/pull/146), merge `c241e005f35d391c54af64caead7013ff746e167` |
+| Preview hotfix final | `pachangas-8bmk0kh4r-persianas-almar-web-s-projects.vercel.app` |
+| Deployment funcional | `dpl_ptQ4ke3jCQ8xqVoYKBPteMJWHvXn`, `READY` |
+| Dominio | `https://pachangasiq.com` |
 
-R1-R6 y el frontend se han desplegado en producción con los tres flags Ranking apagados. La activación se detuvo al detectar el caso real de una publicación provincial sin jugadores. R7 ya está aplicada y validada en staging; producción todavía no la ha recibido.
+R1-R7, backend y frontend están desplegados. El piloto real Barcelona está abierto y publicado con una lista canónica vacía: no existen todavía jugadores reales elegibles y no se han creado datos sintéticos para aparentar contenido. La salud operativa es `OK` y la lectura pública devuelve revisión 2.
 
 ## Resultado por fase
 
@@ -84,7 +87,7 @@ R1-R6 y el frontend se han desplegado en producción con los tres flags Ranking 
 - `PRODUCT_BUG` registrado antes de la corrección: una temporada con cero candidatos calculaba y auditaba `SHA-256([])`, pero no creaba la fila de publicación de su territorio.
 - R7 publica una fila canónica por territorio habilitado aunque todavía tenga cero entradas.
 - No crea jugadores, evidencia, grants, rewards, sanciones ni notificaciones.
-- Estado actual: `fixed + regression_verified` en local y staging. Pasan la regresión SQL, la batería completa de 251 tests, build, typecheck, lint focalizado, concurrencia y escala 10.000/1.000. La prueba transaccional remota confirmó una publicación Barcelona vacía y disponible con `SHA-256([])`, cero efectos secundarios y cero residuos después del rollback.
+- Estado actual: `fixed + regression_verified` en local, staging y producción. Pasan la regresión SQL, la batería completa de 251 tests, build, typecheck, lint focalizado, concurrencia y escala 10.000/1.000. Producción publica Barcelona con revisión 2, cero entradas y `SHA-256([])` sin grants, sanciones, rewards ni notificaciones.
 
 ## Objetos principales
 
@@ -165,7 +168,7 @@ Dataset transaccional y reversible:
 10.000 filas publicadas
 ```
 
-Última ejecución sobre bootstrap limpio de 96 migraciones:
+Última ejecución sobre bootstrap limpio de 97 migraciones:
 
 | Medida | Resultado |
 | --- | ---: |
@@ -221,10 +224,31 @@ El plan usa `pachanga_provincial_ranking_position_idx`. La CTE de ordenación es
 - Checksums de perfiles, snapshots/evidencia Rating, assessments, flags Rating, Conduct, grants y Team Cosmetics: idénticos.
 - El primer intento con una versión local antigua de Auth falló por una columna administrada por Supabase; la transacción se revirtió y la regresión de entorno quedó verificada usando las versiones remotas exactas.
 
-## Pendiente remoto
+## Producción cerrada
 
-1. Incorporar esta evidencia al PR y esperar el Preview del SHA final.
-2. Ejecutar la release coordinada schema/backend/frontend con flags OFF.
-3. Hacer smoke preactivación, crear temporada piloto explícita y activar gradualmente si la salud sigue verde.
+| Evidencia | Resultado |
+| --- | --- |
+| Ledger remoto | R1-R7 presentes; última versión `20260820204159` |
+| Fórmula | `season_score_v3` V1, checksum `e7b1788fa2d6d7ce2c37cd00f8fa55d78a87539bfa68c76a383bb3500ac388a4` |
+| Pesos / ventana | `55 / 30 / 15`, `recent_30` |
+| Temporada | `20bad54c-7b29-4a88-9a7e-a1f80f8ef8eb`, abierta, revisión 2 |
+| Rebuild publicado | `d227df1b-9db0-4112-995c-cf9cb4c4e97f`, revisión 2 |
+| Candidato vacío | `4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945` |
+| Publicación | Barcelona `08`, revisión 2, 0 entradas, disponible |
+| Flags finales | Season Score ON; ranking provincial ON; awards OFF |
+| Salud | `OK`, sin reason codes, cola 0, fallos 0, integridad pendiente 0 |
+| Efectos secundarios | 0 grants, 0 sanciones, 0 notificaciones de ranking |
+| QA web | `/`, `/mercado`, `/ranking` y guard de `/admin/rankings`; sin overflow, imágenes rotas ni errores de consola |
+| PWA | Manifest `fullscreen`, Service Worker `2.0.0+sw.c241e005f35d`, QA instalada previa PASS |
 
-No se declarará producción completada hasta registrar esos resultados en `RANKING_PRODUCTIZATION_V1_PRODUCTION_RELEASE.md`.
+Hashes protegidos antes y después de R7, rebuild, publicación y activación:
+
+| Sistema | Tablas | Filas | Checksum estable |
+| --- | ---: | ---: | --- |
+| Rating / assessments | 14 | 3 | `b683a4e04daa90d6abb6eaca24692f5c` |
+| Conduct / Attendance | 16 | 9 | `2f73b1228d0618db1ab2e2ea505d1f3b` |
+| Notifications | 6 | 34 | `0b6feb65ed17140469430afc0a68e3e7` |
+| Rewards / cosmetics | 42 | 735 | `572e138afbf8b68b71a4cb00fd19038f` |
+| Billing | 1 | 0 | `43e4837531a6231f35f06665c16ffbd9` |
+
+El cierre detallado y el rollback operativo quedan registrados en `RANKING_PRODUCTIZATION_V1_PRODUCTION_RELEASE.md`.
