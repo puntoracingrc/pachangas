@@ -1124,7 +1124,7 @@ export default function MarketPage() {
   }
 
   return (
-    <main className="market-page">
+    <main className="market-page" data-mobile-tab="mercado">
       <nav className="market-manager-subnav" aria-label="Secciones del mercado en modo juego">
         <button className={activeTab === "jugadores" ? "active" : ""} type="button" onClick={() => selectMarketTab("jugadores")}>
           Jugadores
