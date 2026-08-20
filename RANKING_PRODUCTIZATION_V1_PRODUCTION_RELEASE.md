@@ -1,6 +1,6 @@
 # Ranking Productization V1 Production Release
 
-Estado: STAGING RC. Producción no modificada.
+Estado: RELEASE CANDIDATE VALIDADA. Producción no modificada todavía.
 
 ## Identidad de release
 
@@ -10,7 +10,7 @@ Estado: STAGING RC. Producción no modificada.
 | Rama | `codex/ranking-productization-v1` |
 | PR | [#145 draft](https://github.com/puntoracingrc/pachangas/pull/145) |
 | Commit inicial | `b6d91cc` |
-| Commit RC | Pendiente del cierre de esta ronda |
+| Commit RC | `d97c0719317f7dd0755f271238158af0d291e2fe` antes de incorporar esta evidencia |
 | Fórmula | `season_score_v3` V1 |
 | Formula checksum | `e7b1788fa2d6d7ce2c37cd00f8fa55d78a87539bfa68c76a383bb3500ac388a4` |
 | Provincia piloto | Barcelona `08` |
@@ -31,9 +31,9 @@ Estado: STAGING RC. Producción no modificada.
 | Lint focalizado | PASS | archivos nuevos y data layer |
 | Lint global | DEUDA PREEXISTENTE | 23 errores, 20 warnings; ninguno focalizado nuevo |
 | Preview visual | PASS | cinco viewports, sin overflow/error/imagen rota |
-| PWA instalada | PENDING | contrato y Service Worker PASS; falta prueba instalada real |
+| PWA instalada | PASS | aplicación Chrome instalada real, ventana standalone y `/ranking` canónico revisión 2 |
 | Staging autenticado | PASS | owner x2, usuario, outsider, anónimo y Realtime |
-| Backup producción | PENDING | obligatorio antes de migrar |
+| Backup producción | PASS | backup físico Supabase disponible + dump lógico restaurado íntegramente en instancia aislada |
 | Producción | NOT TOUCHED | no se ha aplicado nada remoto |
 
 ## Migraciones forward-only
@@ -72,7 +72,7 @@ Cada migración configura `lock_timeout = 5s` y `statement_timeout = 5min`. No r
 19. Ejecutar viewports `1440x900`, `1920x1080`, `390x844`, `360x800`, `844x390` y PWA standalone; revisar light/dark y reduced motion.
 20. Confirmar 0 errores runtime, imágenes rotas, overflow y recálculo cliente.
 
-Resultado ejecutado: PASS salvo la apertura en una PWA realmente instalada, que sigue siendo gate previo a producción. El Preview público muestra la publicación canónica de Barcelona con siete entradas y revisión 2. La E2E autenticada confirma permisos, posición propia, `PT409`, idempotencia, Realtime y refetch canónico.
+Resultado ejecutado: PASS. La PWA se instaló desde el Preview exacto, abrió en una ventana standalone y mostró la publicación canónica de Barcelona con siete entradas y revisión 2. La E2E autenticada confirma permisos, posición propia, `PT409`, idempotencia, Realtime y refetch canónico.
 
 ## Criterios de parada en staging
 
@@ -101,16 +101,26 @@ Antes de cualquier migración productiva:
 5. Leer y registrar flags actuales.
 6. Verificar restauración en un entorno aislado; un archivo existente sin restore test no cuenta como backup validado.
 
-Campos pendientes:
+Evidencia capturada antes de migrar:
 
 ```text
-backup_timestamp: PENDING
-backup_reference: PENDING
-restore_verified: PENDING
-production_ledger_before: PENDING
-production_schema_checksum_before: PENDING
-production_flags_before: PENDING
+backup_timestamp: 2026-08-20T20:09:32Z
+managed_physical_backup: 2026-08-20T00:19:36Z, Supabase Dashboard, estado Physical/Restore disponible
+backup_reference: roles.sql + schema.sql + data.sql, dump oficial Supabase CLI
+backup_sha256_roles: 168a95a9c745af5ed4679751f90419ac9dc434240a213b03e32a06d5664c2308
+backup_sha256_schema: 212cd31291aeec488e1b7050054762569298954cdfa7b4f9ea800e4547f222b2
+backup_sha256_data: b13cc3c2f4693bf768670c4563da1674daa84f67a795f9dab5a2f06fd945e81b
+restore_verified: PASS, Supabase local aislado PostgreSQL 17.6 con versiones remotas Auth 2.195.0 / REST 14.5 / Storage 1.70.4
+production_ledger_before: 90 versiones remotas coinciden con las 90 primeras locales; solo R1-R6 pendientes
+production_schema_checksum_before_columns: 4af306f0335dacf2c7b3ab9239ba6951
+production_schema_checksum_before_constraints: 2984d75cb2b5a648d3cb9ac97509e20d
+production_schema_checksum_before_indexes: 8fe4766b0a37424ff0c95d32ef356ea5
+production_schema_checksum_before_functions: 17b08ad4a7db874544cc86f12eece28c
+production_schema_checksum_before_policies: 8c9f7b40e17abc3755275d193e1e9ff5
+production_flags_before: Attendance ON, Conduct ON, triage shadow, social restrictions OFF, Player Cosmetics ON, Team Cosmetics ON, Team Rewards ON; tablas/flags Ranking aún ausentes
 ```
+
+La primera restauración local se revirtió completa porque el contenedor local de Auth no coincidía con producción. La repetición utilizó las versiones exactas declaradas por el proyecto remoto y restauró, en una sola transacción, roles, esquema y datos. Los recuentos exactos de todas las tablas `public`, `auth` y `storage`, los cinco checksums de esquema y los checksums de Rating, assessments, Conduct, rewards y Team Cosmetics coincidieron con producción.
 
 ## Despliegue coordinado de producción
 
@@ -176,9 +186,9 @@ rebuild mismatch                0
 Registrar tras release:
 
 ```text
-staging_url: https://pachangas-5215gr27e-persianas-almar-web-s-projects.vercel.app
-staging_qa: PASS, pendiente únicamente PWA instalada real
-production_backup: PENDING
+staging_url: https://pachangas-nl50tlf5g-persianas-almar-web-s-projects.vercel.app
+staging_qa: PASS, incluida PWA instalada real
+production_backup: PASS, backup físico disponible y restore lógico aislado verificado
 pilot_season_id: PENDING
 pilot_period: PENDING
 initial_snapshot_checksum: PENDING

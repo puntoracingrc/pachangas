@@ -1,8 +1,8 @@
 # Ranking Productization V1 Report
 
-Estado: STAGING RELEASE CANDIDATE. Producción pendiente.
+Estado: RELEASE CANDIDATE VALIDADA. Producción pendiente.
 
-Actualizado: 2026-08-20 21:05 CEST.
+Actualizado: 2026-08-20 22:20 CEST.
 
 ## Trazabilidad
 
@@ -18,7 +18,7 @@ Actualizado: 2026-08-20 21:05 CEST.
 | Piloto | Barcelona, `08` |
 | Rutas del cambio | 26 antes del commit final |
 | Supabase staging | `iozcjirlfytryzrcmrnq` |
-| Preview Vercel | `pachangas-5215gr27e-persianas-almar-web-s-projects.vercel.app` |
+| Preview Vercel | `pachangas-nl50tlf5g-persianas-almar-web-s-projects.vercel.app` |
 
 Se han aplicado y verificado las seis migraciones exclusivamente en Supabase staging. El Preview de la rama usa ese proyecto. Producción no se ha modificado.
 
@@ -137,7 +137,7 @@ El read model directo no tiene `SELECT` para `anon` ni `authenticated`. Las RPC 
 | Lint global heredado | 43 incidencias: 23 errores y 20 warnings; ninguna en los archivos nuevos focalizados |
 | `git diff --check` | PASS antes de actualizar informes; se repite al cierre |
 | Visual Preview | PASS: 1920x1080, 1440x900, 390x844, 360x800 y 844x390; sin overflow, imágenes rotas ni errores de consola |
-| PWA | Contrato, manifest, Service Worker y regresiones PASS; validación instalada real aún pendiente |
+| PWA | PASS: contrato, manifest, Service Worker, regresiones y aplicación instalada real en ventana standalone |
 
 El primer build dentro del sandbox quedó esperando resolución de Google Fonts. Repetido con acceso de red, el build oficial pasó. Un diagnóstico alternativo con Webpack señaló dos selectores CSS globales heredados; Vercel/Next usa el build Turbopack que pasa.
 
@@ -199,12 +199,21 @@ El plan usa `pachanga_provincial_ranking_position_idx`. La CTE de ordenación es
 - Los tres intentos sintéticos incompletos anteriores se eliminaron únicamente en staging tras verificar que no contenían snapshots, eventos, receipts, entradas ni publicaciones. Las ejecuciones completas posteriores se archivan mediante el lifecycle autoritativo.
 - `TESTABILITY_GAP` detectado y corregido: la primera versión de la E2E comparaba dos propiedades de revisión inexistentes. La regresión exige ahora `publication.revision === publishedRevision`, ambas enteras y monotónicas; `fixed + regression_verified` contra staging con revisión 2.
 
+## Backup y ledger de producción previos
+
+- `supabase migration list --linked` se ejecutó contra el `project_ref` de Pachangas: las 90 versiones remotas coinciden con las 90 primeras del repositorio y únicamente R1-R6 aparecen pendientes.
+- Supabase muestra un backup físico recuperable del 20 de agosto de 2026 a las 00:19:36 UTC.
+- Se generó además el set lógico oficial `roles.sql` + `schema.sql` + `data.sql` a las 20:09:32 UTC.
+- La restauración se ejecutó en un Supabase local aislado PostgreSQL 17.6, alineado con Auth 2.195.0, REST 14.5 y Storage 1.70.4 del remoto.
+- Recuentos exactos de todas las tablas `public`, `auth` y `storage`: idénticos entre producción y restore.
+- Checksum de columnas, constraints, índices, funciones y políticas: idénticos entre producción y restore.
+- Checksums de perfiles, snapshots/evidencia Rating, assessments, flags Rating, Conduct, grants y Team Cosmetics: idénticos.
+- El primer intento con una versión local antigua de Auth falló por una columna administrada por Supabase; la transacción se revirtió y la regresión de entorno quedó verificada usando las versiones remotas exactas.
+
 ## Pendiente remoto
 
-1. Confirmar en una PWA instalada real que `/ranking` conserva navegación, actualización y estado canónico.
-2. Crear y restaurar un backup físico recuperable antes de producción.
-3. Comparar el ledger de producción con las 96 versiones locales y detener ante cualquier divergencia.
-4. Actualizar el PR con el commit final y esperar el Preview de ese SHA.
-5. Release coordinada schema/backend/frontend, smoke con flags OFF, temporada piloto y activación gradual.
+1. Incorporar esta evidencia al PR y esperar el Preview del SHA final.
+2. Ejecutar la release coordinada schema/backend/frontend con flags OFF.
+3. Hacer smoke preactivación, crear temporada piloto explícita y activar gradualmente si la salud sigue verde.
 
 No se declarará producción completada hasta registrar esos resultados en `RANKING_PRODUCTIZATION_V1_PRODUCTION_RELEASE.md`.
