@@ -570,3 +570,7 @@ export async function getPlatformFlags(session: VerifiedPlatformSession) {
 export async function getPlatformDatabaseHealth(session: VerifiedPlatformSession) {
   return rpcOrThrow<JsonRecord>(session.client, "get_pachanga_platform_database_health_v1");
 }
+
+export async function getRankingAdminOverview(session: VerifiedPlatformSession) {
+  return rpcOrThrow<JsonRecord>(session.client, "get_pachanga_ranking_admin_overview_v1");
+}

@@ -560,6 +560,31 @@
 .primaryButton:disabled,
 .dangerButton:disabled { opacity: 0.55; cursor: wait; }
 .formMessage { margin: 0; color: var(--admin-amber); font-size: 11px; }
+.rankingAdminGrid {
+  margin-bottom: 14px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+.rankingAdminGrid > section { margin-bottom: 0; }
+.rankingForm { padding: 13px; display: grid; gap: 10px; }
+.rankingFormColumns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
+.rankingReason { margin: 0 0 14px; padding: 12px; border: 1px solid var(--admin-border); background: var(--admin-panel); }
+.rankingActionRow { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.rankingActionRow button {
+  min-height: 32px;
+  padding: 0 9px;
+  border: 1px solid var(--admin-border);
+  border-radius: 4px;
+  background: var(--admin-panel-strong);
+  color: var(--admin-text);
+  font: inherit;
+  font-size: 11px;
+  font-weight: 800;
+}
+.rankingActionRow button:disabled { opacity: 0.5; cursor: wait; }
+.rankingInvariantRow { min-height: 58px; padding: 12px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.rankingInvariantRow > span:last-child { margin-left: auto; color: var(--admin-muted); font-size: 11px; }
 .helpText { margin: -4px 0 12px; color: var(--admin-muted); font-size: 11px; line-height: 1.45; }
 .inlineAction { min-width: 260px; max-width: 420px; padding: 10px; border: 1px solid var(--admin-amber); border-radius: 5px; background: #1d1b15; display: grid; gap: 8px; }
 .inlineAction > strong { color: var(--admin-amber); font-size: 11px; line-height: 1.35; }
@@ -608,6 +633,9 @@
 
 @media (max-width: 760px) {
   .adminRoot { display: block; min-height: 100dvh; }
+  .rankingAdminGrid,
+  .rankingFormColumns { grid-template-columns: 1fr; }
+  .rankingInvariantRow > span:last-child { width: 100%; margin-left: 0; }
   .mobileBar {
     position: sticky;
     top: 0;

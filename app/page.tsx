@@ -10680,6 +10680,11 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
                   <small>Tu colección, efectos y logro destacado</small>
                   <b aria-hidden="true">›</b>
                 </a>
+                <a className="profile-notifications-link" href="/ranking">
+                  <span>Ranking provincial</span>
+                  <small>Season Score oficial y posición publicada</small>
+                  <b aria-hidden="true">›</b>
+                </a>
               </>
             ) : null}
             {!ownPlayer && selectedPlayer && !selectedPlayer.ownerUserId && hasRealTeam && isRegisteredUser ? (
@@ -11167,6 +11172,9 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
                 >
                   <span>Ranking</span><small>Media, goles, partidos y victorias</small><b aria-hidden="true">›</b>
                 </button>
+                <Link href="/ranking">
+                  <span>Ranking provincial</span><small>Season Score y clasificación oficial</small><b aria-hidden="true">›</b>
+                </Link>
                 <Link href="/mercado">
                   <span>Mercado</span><small>Jugadores disponibles y partidos abiertos</small><b aria-hidden="true">›</b>
                 </Link>
