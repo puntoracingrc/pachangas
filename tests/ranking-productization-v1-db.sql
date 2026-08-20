@@ -361,7 +361,7 @@ begin
     'Reject stale ranking publication'
   );
   raise exception 'Stale ranking publication should have failed';
-exception when sqlstate '40001' then
+exception when sqlstate 'PT409' then
   null;
 end;
 $$;
@@ -414,7 +414,7 @@ begin
     'Reject stale season revision'
   );
   raise exception 'Stale season revision should have failed';
-exception when sqlstate '40001' then
+exception when sqlstate 'PT409' then
   null;
 end;
 $$;
@@ -526,6 +526,17 @@ end;
 $$;
 reset role;
 select set_config('request.jwt.claim.sub', :'owner_user_id', true);
+
+select pg_temp.assert_true(not has_function_privilege(
+  'authenticated',
+  'public.get_pachanga_platform_flags_pre_ranking_v1()',
+  'EXECUTE'
+), 'Legacy pre-ranking flag reader must not be client executable');
+select pg_temp.assert_true(not has_function_privilege(
+  'authenticated',
+  'public.set_pachanga_platform_flag_pre_ranking_v1(text,boolean,bigint,uuid,text)',
+  'EXECUTE'
+), 'Legacy pre-ranking flag writer must not be client executable');
 
 do $$
 begin

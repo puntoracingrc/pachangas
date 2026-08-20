@@ -1,6 +1,6 @@
 # Ranking Productization V1 Production Release
 
-Estado: LOCAL RC. Staging y producción no modificados.
+Estado: STAGING RC. Producción no modificada.
 
 ## Identidad de release
 
@@ -10,7 +10,7 @@ Estado: LOCAL RC. Staging y producción no modificados.
 | Rama | `codex/ranking-productization-v1` |
 | PR | [#145 draft](https://github.com/puntoracingrc/pachangas/pull/145) |
 | Commit inicial | `b6d91cc` |
-| Commit RC | Pendiente |
+| Commit RC | Pendiente del cierre de esta ronda |
 | Fórmula | `season_score_v3` V1 |
 | Formula checksum | `e7b1788fa2d6d7ce2c37cd00f8fa55d78a87539bfa68c76a383bb3500ac388a4` |
 | Provincia piloto | Barcelona `08` |
@@ -20,17 +20,19 @@ Estado: LOCAL RC. Staging y producción no modificados.
 
 | Gate | Estado | Evidencia |
 | --- | --- | --- |
-| Fresh install | PASS local | baseline + 94 migraciones |
-| Upgrade remoto | PENDING | ejecutar primero en staging |
-| SQL/RLS | PASS local | `RANKING_PRODUCTIZATION_V1_DB_OK` |
-| Concurrencia | PASS local | replay, stale revision, lifecycle, `SKIP LOCKED` |
+| Fresh install | PASS local | baseline + 96 migraciones |
+| Upgrade remoto | PASS staging | R1-R6, ledger sincronizado |
+| SQL/RLS | PASS local + staging | `RANKING_PRODUCTIZATION_V1_DB_OK`, grants legacy cerrados |
+| Concurrencia | PASS local + staging | replay, `PT409`, lifecycle, `SKIP LOCKED` |
 | Escala | PASS local | 10k jugadores, 1k equipos, 3 provincias |
-| App tests | PASS | 248/248 |
+| App tests | PASS | 250/250 |
 | Typecheck | PASS | TypeScript sin errores |
-| Build | PASS | Next 16.2.6 Turbopack |
+| Build | PASS | Next 16.2.6 Turbopack, 31/31 rutas estáticas |
 | Lint focalizado | PASS | archivos nuevos y data layer |
-| Preview visual/PWA | PENDING | requiere deployment |
-| Staging autenticado | PENDING | requiere proyecto de staging |
+| Lint global | DEUDA PREEXISTENTE | 23 errores, 20 warnings; ninguno focalizado nuevo |
+| Preview visual | PASS | cinco viewports, sin overflow/error/imagen rota |
+| PWA instalada | PENDING | contrato y Service Worker PASS; falta prueba instalada real |
+| Staging autenticado | PASS | owner x2, usuario, outsider, anónimo y Realtime |
 | Backup producción | PENDING | obligatorio antes de migrar |
 | Producción | NOT TOUCHED | no se ha aplicado nada remoto |
 
@@ -42,6 +44,8 @@ Aplicar exactamente en este orden:
 2. `20260820075323_ranking_productization_r2_refresh_read_model.sql`
 3. `20260820075324_ranking_productization_r3_integrity_eligibility.sql`
 4. `20260820075326_ranking_productization_r4_provincial_product.sql`
+5. `20260820182038_ranking_productization_r5_http_conflicts.sql`
+6. `20260820184126_ranking_productization_r6_legacy_surface_hardening.sql`
 
 Cada migración configura `lock_timeout = 5s` y `statement_timeout = 5min`. No reescribir ni reparar silenciosamente versiones existentes. Antes de aplicar, comparar `supabase migration list --linked` con el repositorio; cualquier divergencia del ledger es un blocker hasta sincronizarla explícitamente.
 
@@ -50,7 +54,7 @@ Cada migración configura `lock_timeout = 5s` y `statement_timeout = 5min`. No r
 1. Confirmar proyecto/`project_ref`, rama y entorno. No asumir que la pestaña abierta corresponde a Pachangas IQ.
 2. Capturar ledger, versión PostgreSQL, tamaño de tablas relevantes, locks y CPU iniciales.
 3. Verificar que el frontend de staging contiene las RPC y rutas V1 de ranking.
-4. Aplicar las cuatro migraciones forward-only con flags aún `false / false / false`.
+4. Aplicar las seis migraciones forward-only con flags aún `false / false / false`.
 5. Verificar readback del checksum de fórmula y settings.
 6. Desplegar frontend/backend RC; configurar `CRON_SECRET` únicamente en servidor.
 7. Crear temporada de QA explícita y mappings de campos de prueba.
@@ -67,6 +71,8 @@ Cada migración configura `lock_timeout = 5s` y `statement_timeout = 5min`. No r
 18. Validar `/ranking`, `/admin/rankings`, posición propia, mensajes seguros y ausencia de UUID/risk/graph.
 19. Ejecutar viewports `1440x900`, `1920x1080`, `390x844`, `360x800`, `844x390` y PWA standalone; revisar light/dark y reduced motion.
 20. Confirmar 0 errores runtime, imágenes rotas, overflow y recálculo cliente.
+
+Resultado ejecutado: PASS salvo la apertura en una PWA realmente instalada, que sigue siendo gate previo a producción. El Preview público muestra la publicación canónica de Barcelona con siete entradas y revisión 2. La E2E autenticada confirma permisos, posición propia, `PT409`, idempotencia, Realtime y refetch canónico.
 
 ## Criterios de parada en staging
 
@@ -110,7 +116,7 @@ production_flags_before: PENDING
 
 1. Poner la release en ventana controlada; evitar cambios sociales simultáneos.
 2. Aplicar schema/RPC de Ranking con flags OFF.
-3. Readback: cuatro versiones presentes, fórmula/checksum exactos, awards false.
+3. Readback: seis versiones presentes, fórmula/checksum exactos, awards false.
 4. Desplegar backend/frontend Vercel compatible.
 5. Smoke preactivación de Rating, Retos, Attendance, Conduct, Rewards, Billing, PWA y Control Center.
 6. Crear temporada piloto explícita, no retroactiva globalmente.
@@ -170,8 +176,8 @@ rebuild mismatch                0
 Registrar tras release:
 
 ```text
-staging_url: PENDING
-staging_qa: PENDING
+staging_url: https://pachangas-5215gr27e-persianas-almar-web-s-projects.vercel.app
+staging_qa: PASS, pendiente únicamente PWA instalada real
 production_backup: PENDING
 pilot_season_id: PENDING
 pilot_period: PENDING

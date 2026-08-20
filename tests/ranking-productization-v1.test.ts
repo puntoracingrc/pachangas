@@ -13,6 +13,8 @@ const migrationPaths = [
   "supabase/migrations/20260820075323_ranking_productization_r2_refresh_read_model.sql",
   "supabase/migrations/20260820075324_ranking_productization_r3_integrity_eligibility.sql",
   "supabase/migrations/20260820075326_ranking_productization_r4_provincial_product.sql",
+  "supabase/migrations/20260820182038_ranking_productization_r5_http_conflicts.sql",
+  "supabase/migrations/20260820184126_ranking_productization_r6_legacy_surface_hardening.sql",
 ] as const;
 
 test("Season Score V3 is frozen with the approved product formula", async () => {
@@ -55,6 +57,7 @@ test("all ranking writes are revisioned, idempotent and serialized by operationI
   assert.match(combined, /ranking-operation:/);
   assert.match(combined, /operationId already belongs to a different ranking action/);
   assert.match(combined, /using errcode = '40001'/);
+  assert.match(combined, /replace\(definition, '''40001''', '''PT409'''\)/);
   assert.match(combined, /for update skip locked/);
   assert.match(combined, /with ordered as materialized/);
   assert.match(combined, /expected_season_revision/);
@@ -78,6 +81,14 @@ test("public ranking reads are minimized and direct internal reads remain closed
   assert.match(publicReader, /'components'/);
   assert.doesNotMatch(publicReader, /'playerProfileId'|'networkDiversity'|'competitiveConfidence'|'trophyReadiness'/);
   assert.match(migration, /grant select on table public\.pachanga_provincial_ranking_publications to authenticated/);
+});
+
+test("legacy pre-ranking flag RPCs are unreachable from clients", async () => {
+  const hardening = await source(migrationPaths[5]);
+  assert.match(hardening, /revoke all on function public\.get_pachanga_platform_flags_pre_ranking_v1\(\)/);
+  assert.match(hardening, /revoke all on function public\.set_pachanga_platform_flag_pre_ranking_v1/);
+  assert.match(hardening, /from public, anon, authenticated, service_role/);
+  assert.match(hardening, /has_function_privilege/);
 });
 
 test("the browser consumes canonical snapshots and invalidates only by publication revision", async () => {
