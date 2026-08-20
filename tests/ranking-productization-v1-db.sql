@@ -566,5 +566,84 @@ select pg_temp.assert_true((select row(before.*) = row(after.*)
       (select count(*) from public.pachanga_team_cosmetic_inventory) as team_inventory
   ) after), 'Ranking flow must not mutate Rating V2, conduct, rewards or cosmetics');
 
+select private.pachanga_ranking_stable_uuid_v1('ranking-empty-freeze') as empty_freeze_operation_id,
+  private.pachanga_ranking_stable_uuid_v1('ranking-empty-close') as empty_close_operation_id,
+  private.pachanga_ranking_stable_uuid_v1('ranking-empty-create') as empty_create_operation_id,
+  private.pachanga_ranking_stable_uuid_v1('ranking-empty-open') as empty_open_operation_id,
+  private.pachanga_ranking_stable_uuid_v1('ranking-empty-rebuild') as empty_rebuild_operation_id,
+  private.pachanga_ranking_stable_uuid_v1('ranking-empty-publish') as empty_publish_operation_id
+\gset
+
+set local role authenticated;
+select public.transition_pachanga_ranking_season_v1(
+  :'season_id'::uuid, 'frozen', :open_revision,
+  :'empty_freeze_operation_id'::uuid,
+  'Freeze the populated season before the empty-pilot regression'
+) as empty_freeze_response \gset
+select public.transition_pachanga_ranking_season_v1(
+  :'season_id'::uuid, 'closed',
+  (:'empty_freeze_response'::jsonb ->> 'revision')::bigint,
+  :'empty_close_operation_id'::uuid,
+  'Close the populated season before the empty-pilot regression'
+) as empty_close_response \gset
+select public.create_pachanga_ranking_season_v1(
+  'ranking-empty-pilot-test', 'Empty provincial pilot',
+  timestamptz '2099-01-01 00:00:00+00', timestamptz '2099-12-31 23:59:59+00',
+  array['08']::text[], :'empty_create_operation_id'::uuid,
+  'Create an empty canonical pilot without synthetic evidence'
+) as empty_create_response \gset
+select public.transition_pachanga_ranking_season_v1(
+  (:'empty_create_response'::jsonb ->> 'seasonId')::uuid,
+  'open', 1, :'empty_open_operation_id'::uuid,
+  'Open the empty canonical pilot'
+) as empty_open_response \gset
+select public.rebuild_pachanga_provincial_ranking_v1(
+  (:'empty_create_response'::jsonb ->> 'seasonId')::uuid,
+  (:'empty_open_response'::jsonb ->> 'revision')::bigint,
+  :'empty_rebuild_operation_id'::uuid,
+  'Build the empty canonical pilot'
+) as empty_rebuild_response \gset
+select public.publish_pachanga_provincial_ranking_v1(
+  (:'empty_rebuild_response'::jsonb ->> 'rebuildId')::uuid,
+  (:'empty_open_response'::jsonb ->> 'revision')::bigint,
+  :'empty_rebuild_response'::jsonb ->> 'candidateChecksum',
+  :'empty_publish_operation_id'::uuid,
+  'Publish the empty canonical pilot'
+) as empty_publish_response \gset
+reset role;
+
+select pg_temp.assert_true(
+  :'empty_rebuild_response'::jsonb ->> 'candidateChecksum' =
+    encode(extensions.digest(convert_to('[]', 'UTF8'), 'sha256'), 'hex'),
+  'The empty candidate checksum must be deterministic'
+);
+select pg_temp.assert_true((
+  select count(*) = 1
+    and min(publications.entry_count) = 0
+    and min(publications.ranked_count) = 0
+    and min(publications.publication_checksum) =
+      encode(extensions.digest(convert_to('[]', 'UTF8'), 'sha256'), 'hex')
+  from public.pachanga_provincial_ranking_publications publications
+  where publications.season_id = (:'empty_create_response'::jsonb ->> 'seasonId')::uuid
+    and publications.province_code = '08'
+), 'An empty pilot must publish exactly one canonical Barcelona revision');
+select pg_temp.assert_true(
+  (:'empty_publish_response'::jsonb ->> 'awardsGranted')::integer = 0
+    and (:'empty_publish_response'::jsonb ->> 'rewardsGranted')::integer = 0
+    and (:'empty_publish_response'::jsonb ->> 'notificationsSent')::integer = 0,
+  'Publishing an empty pilot must not create side effects'
+);
+
+set local role anon;
+select public.get_pachanga_provincial_ranking_v1('08', 0, 10) as empty_public_ranking \gset
+reset role;
+select pg_temp.assert_true((:'empty_public_ranking'::jsonb ->> 'available')::boolean,
+  'An activated empty pilot must be a valid public read model');
+select pg_temp.assert_true(jsonb_array_length(:'empty_public_ranking'::jsonb -> 'items') = 0,
+  'An empty pilot must return an empty item list without synthetic players');
+select pg_temp.assert_true(
+  :'empty_public_ranking'::jsonb -> 'season' ->> 'key' = 'ranking-empty-pilot-test',
+  'Public reads must select the newly published empty pilot');
+
 select 'RANKING_PRODUCTIZATION_V1_DB_OK' as result;
 rollback;

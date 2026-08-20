@@ -15,6 +15,7 @@ const migrationPaths = [
   "supabase/migrations/20260820075326_ranking_productization_r4_provincial_product.sql",
   "supabase/migrations/20260820182038_ranking_productization_r5_http_conflicts.sql",
   "supabase/migrations/20260820184126_ranking_productization_r6_legacy_surface_hardening.sql",
+  "supabase/migrations/20260820204159_ranking_productization_r7_empty_publication.sql",
 ] as const;
 
 test("Season Score V3 is frozen with the approved product formula", async () => {
@@ -133,4 +134,14 @@ test("Control Center exposes fail-closed operational ranking health", async () =
   assert.match(product, /RANKING_REBUILD_DIFF_PENDING/);
   assert.match(product, /RANKING_INTEGRITY_BACKLOG/);
   assert.match(product, /PILOT_PUBLICATION_MISSING/);
+});
+
+test("an empty pilot still publishes a canonical territorial revision", async () => {
+  const migration = await source(migrationPaths[6]);
+  assert.match(migration, /insert into public\.pachanga_provincial_ranking_publications/);
+  assert.match(migration, /from private\.pachanga_ranking_season_territories territories/);
+  assert.match(migration, /territories\.product_enabled/);
+  assert.match(migration, /pachanga_ranking_json_checksum_v1\('\[\]'::jsonb\)/);
+  assert.match(migration, /entry_count, ranked_count/);
+  assert.match(migration, /Private ranking publisher became client executable/);
 });

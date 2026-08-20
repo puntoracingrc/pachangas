@@ -1,6 +1,6 @@
 # Ranking Productization V1 Production Release
 
-Estado: RELEASE CANDIDATE VALIDADA. Producción no modificada todavía.
+Estado: PRODUCCIÓN DESPLEGADA CON FLAGS OFF. HOTFIX R7 VALIDADO LOCALMENTE Y PENDIENTE DE STAGING.
 
 ## Identidad de release
 
@@ -15,6 +15,8 @@ Estado: RELEASE CANDIDATE VALIDADA. Producción no modificada todavía.
 | Formula checksum | `e7b1788fa2d6d7ce2c37cd00f8fa55d78a87539bfa68c76a383bb3500ac388a4` |
 | Provincia piloto | Barcelona `08` |
 | Premios | OFF por constraint |
+| Merge productivo | `989d645ac57d80c9cd180259ba733c2b22865577` |
+| Hotfix vacío | `codex/ranking-empty-pilot-publication-fix` |
 
 ## Estado de gates
 
@@ -34,7 +36,7 @@ Estado: RELEASE CANDIDATE VALIDADA. Producción no modificada todavía.
 | PWA instalada | PASS | aplicación Chrome instalada real, ventana standalone y `/ranking` canónico revisión 2 |
 | Staging autenticado | PASS | owner x2, usuario, outsider, anónimo y Realtime |
 | Backup producción | PASS | backup físico Supabase disponible + dump lógico restaurado íntegramente en instancia aislada |
-| Producción | NOT TOUCHED | no se ha aplicado nada remoto |
+| Producción | FLAGS OFF | R1-R6 y frontend desplegados; activación detenida antes del primer flag |
 
 ## Migraciones forward-only
 
@@ -46,8 +48,15 @@ Aplicar exactamente en este orden:
 4. `20260820075326_ranking_productization_r4_provincial_product.sql`
 5. `20260820182038_ranking_productization_r5_http_conflicts.sql`
 6. `20260820184126_ranking_productization_r6_legacy_surface_hardening.sql`
+7. `20260820204159_ranking_productization_r7_empty_publication.sql`
 
 Cada migración configura `lock_timeout = 5s` y `statement_timeout = 5min`. No reescribir ni reparar silenciosamente versiones existentes. Antes de aplicar, comparar `supabase migration list --linked` con el repositorio; cualquier divergencia del ledger es un blocker hasta sincronizarla explícitamente.
+
+## Incidencia de activación registrada
+
+`PRODUCT_BUG`: el 20 de agosto de 2026, el primer rebuild real de producción produjo correctamente cero candidatos y checksum determinista `4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945`. La publicación quedó auditada con cero grants, rewards y notificaciones, pero R4 solo creaba filas territoriales desde entradas existentes. Un piloto legítimo con cero jugadores no obtenía fila de publicación para Barcelona y el health gate permanecía `false`.
+
+Estado: `fixed + regression_verified` en local. R7 hace que cada territorio habilitado reciba una publicación canónica, incluso con cero entradas. La regresión SQL reproduce el escenario original y confirma publicación disponible, lista vacía, checksum determinista y cero efectos secundarios. La activación sigue detenida con los tres flags Ranking en `false`; no se añadieron datos sintéticos ni se forzó el health gate.
 
 ## Runbook de staging
 
