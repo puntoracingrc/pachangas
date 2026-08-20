@@ -3,6 +3,7 @@
 import { type CSSProperties, type Dispatch, type FormEvent, Fragment, type MouseEvent as ReactMouseEvent, type PointerEvent as ReactPointerEvent, type SetStateAction, type WheelEvent as ReactWheelEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import dynamic from "next/dynamic";
+import Link from "next/link";
 import { PlayerCosmeticCard } from "./_components/player-cosmetic-card";
 import { attachVenueAutocomplete, type VenuePlace } from "./googlePlacesClient";
 import { GlobalRatingPanel } from "./global-rating-panel";
@@ -4926,7 +4927,6 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
     setActiveMobileTab(tabId);
 
     if (tabId === "mercado") {
-      window.location.assign(canUseAdminControls && matchConfigured ? marketScoutUrl("jugadores") : "/mercado");
       return;
     }
 
@@ -9022,9 +9022,9 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
                 Identidad
               </a>
             ) : null}
-            <a className="secondary-button market-link-button" href="/mercado">
+            <Link className="secondary-button market-link-button" href="/mercado">
               Mercado
-            </a>
+            </Link>
             <div className="create-menu desktop-create-menu" ref={createMenuRef}>
               <button
                 className="primary-button create-menu-button"
@@ -9240,7 +9240,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
               </p>
             </div>
             <div className="market-admin-header-actions">
-              <a href={marketScoutUrl("jugadores")}>Ver mercado público</a>
+              <Link href={marketScoutUrl("jugadores")}>Ver mercado público</Link>
               <button type="button" onClick={() => navigateMobileTab("partido")}>
                 Volver al partido
               </button>
@@ -9347,13 +9347,13 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
                 </div>
 
                 <div className="market-scout-actions market-admin-actions">
-                  <a href={marketScoutUrl("jugadores")}>Buscar jugadores</a>
+                  <Link href={marketScoutUrl("jugadores")}>Buscar jugadores</Link>
                   <button type="button" onClick={() => void publishOpenMatch()} disabled={missing <= 0 && !activeMatch.publicOpen}>
                     {activeMatch.publicOpen ? "Actualizar público" : "Abrir partido al público"}
                   </button>
                   {activeMatch.publicOpen ? (
                     <>
-                      <a href={marketScoutUrl("partidos")}>Ver anuncio</a>
+                      <Link href={marketScoutUrl("partidos")}>Ver anuncio</Link>
                       <button className="ghost-scout-button" type="button" onClick={() => void closeOpenMatch()}>
                         Cerrar público
                       </button>
@@ -10058,7 +10058,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
                     </div>
                   </div>
                   <div className="match-admin-actions-row">
-                    <a
+                    <Link
                       className={!matchConfigured ? "disabled" : ""}
                       href={marketScoutUrl("jugadores")}
                       aria-disabled={!matchConfigured}
@@ -10067,7 +10067,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
                       }}
                     >
                       Buscar jugadores
-                    </a>
+                    </Link>
                     <button
                       type="button"
                       onClick={() => void publishOpenMatch()}
@@ -10664,6 +10664,11 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
                   <small>Tu colección, efectos y logro destacado</small>
                   <b aria-hidden="true">›</b>
                 </a>
+                <a className="profile-notifications-link" href="/ranking">
+                  <span>Ranking provincial</span>
+                  <small>Season Score oficial y posición publicada</small>
+                  <b aria-hidden="true">›</b>
+                </a>
               </>
             ) : null}
             {!ownPlayer && selectedPlayer && !selectedPlayer.ownerUserId && hasRealTeam && isRegisteredUser ? (
@@ -11151,9 +11156,12 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
                 >
                   <span>Ranking</span><small>Media, goles, partidos y victorias</small><b aria-hidden="true">›</b>
                 </button>
-                <a href="/mercado">
+                <Link href="/ranking">
+                  <span>Ranking provincial</span><small>Season Score y clasificación oficial</small><b aria-hidden="true">›</b>
+                </Link>
+                <Link href="/mercado">
                   <span>Mercado</span><small>Jugadores disponibles y partidos abiertos</small><b aria-hidden="true">›</b>
-                </a>
+                </Link>
               </div>
 
               <div className="mobile-account-group">
@@ -11265,6 +11273,9 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
         <MobileAppNav
           active={activeMobileTab}
           adminViewPreview={canPreviewPlayerView ? { active: playerPreviewActive, onToggle: toggleAdminPlayerView } : undefined}
+          links={{
+            mercado: canUseAdminControls && matchConfigured ? marketScoutUrl("jugadores") : "/mercado",
+          }}
           onNavigate={navigatePrimaryMobile}
         />
       ) : null}

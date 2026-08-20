@@ -121,8 +121,8 @@ select pg_temp.assert_true(
 select pg_temp.assert_true(
   (select count(*) from public.pachanga_achievement_definitions
    where active and catalog_key = 'achievement_catalog_v3'
-     and subject_type = 'team') = 60,
-  'The integrated catalog must expose all 60 active collective V3 definitions'
+     and subject_type = 'team') = 61,
+  'The integrated catalog must expose 60 collective V3 definitions plus the Team Rewards 10-Retos milestone'
 );
 select pg_temp.assert_true(
   not exists (
@@ -142,9 +142,13 @@ select pg_temp.assert_true(
      and rules.active
     where definitions.active and definitions.subject_type = 'team'
       and (definitions.box_rarity is null or definitions.animation_key is null
-        or definitions.presentation_key is null or rules.achievement_key is null)
+        or definitions.presentation_key is null
+        or (
+          jsonb_array_length(coalesce(definitions.reward_components, '[]'::jsonb)) = 0
+          and rules.achievement_key is null
+        ))
   ),
-  'Every collective achievement must resolve to a versioned box rule'
+  'Every collective achievement must resolve through ordered components or a versioned box rule'
 );
 
 -- A pre-activation fact updates history but cannot create retroactive grants or boxes.
