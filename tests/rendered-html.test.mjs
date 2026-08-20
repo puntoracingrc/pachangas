@@ -170,7 +170,9 @@ test("builds the transfer market as a separated page", async () => {
   assert.match(source, /setDayFilter\("Todos"\)[\s\S]*setModalityFilter\("Todas"\)[\s\S]*setZoneFilter\(""\)/);
   assert.match(page, /requestedMatchPane === "admin"/);
   assert.match(page, /setActiveMatchManagerPane\("admin"\)/);
-  assert.match(page, /window\.location\.assign\(canUseAdminControls && matchConfigured \? marketScoutUrl\("jugadores"\) : "\/mercado"\)/);
+  assert.match(source, /<main className="market-page" data-mobile-tab="mercado">/);
+  assert.match(page, /links=\{\{[\s\S]*mercado: canUseAdminControls && matchConfigured \? marketScoutUrl\("jugadores"\) : "\/mercado"/);
+  assert.doesNotMatch(page, /window\.location\.assign\(canUseAdminControls && matchConfigured \? marketScoutUrl/);
   assert.match(css, /\.market-page \.market-manager-subnav/);
   assert.match(css, /grid-template-columns: var\(--game-side-nav-width\) minmax\(0, 1fr\)/);
   assert.match(css, /\.market-page \.market-tabs\s*\{\s*display: none/);
@@ -415,7 +417,9 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /Lesionados/);
   assert.match(page, /function openRankingPanel/);
   assert.match(page, /function openMarketConfiguration/);
-  assert.match(page, /if \(tabId === "mercado"\) \{\s*window\.location\.assign\(canUseAdminControls && matchConfigured \? marketScoutUrl\("jugadores"\) : "\/mercado"\);/);
+  assert.match(page, /if \(tabId === "mercado"\) \{\s*return;/);
+  assert.match(page, /links=\{\{[\s\S]*mercado: canUseAdminControls && matchConfigured \? marketScoutUrl\("jugadores"\) : "\/mercado"/);
+  assert.doesNotMatch(page, /window\.location\.assign\(canUseAdminControls && matchConfigured \? marketScoutUrl/);
   assert.match(page, /if \(requestedTab === "perfil"\) \{[\s\S]*setProfilePane\("ficha"\);[\s\S]*setSelectedPlayerId\(ownPlayer\?\.id \?\? selectedPlayerId \?\? players\[0\]\?\.id \?\? ""\)/);
   assert.match(page, /\/api\/ratings\/assessment/);
   assert.match(page, /record_pachanga_individual_rating_authoritative_v2/);
