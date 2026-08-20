@@ -1,6 +1,6 @@
 # Ranking Productization V1 Production Release
 
-Estado: PRODUCCIÓN DESPLEGADA CON FLAGS OFF. HOTFIX R7 VALIDADO LOCALMENTE Y PENDIENTE DE STAGING.
+Estado: PRODUCCIÓN DESPLEGADA CON FLAGS OFF. HOTFIX R7 VALIDADO EN STAGING Y PENDIENTE DE PRODUCCIÓN.
 
 ## Identidad de release
 
@@ -16,18 +16,18 @@ Estado: PRODUCCIÓN DESPLEGADA CON FLAGS OFF. HOTFIX R7 VALIDADO LOCALMENTE Y PE
 | Provincia piloto | Barcelona `08` |
 | Premios | OFF por constraint |
 | Merge productivo | `989d645ac57d80c9cd180259ba733c2b22865577` |
-| Hotfix vacío | `codex/ranking-empty-pilot-publication-fix` |
+| Hotfix vacío | [#146](https://github.com/puntoracingrc/pachangas/pull/146), `0ebcd93be4e30edfba96e5de82b2b5d8445663b4` |
 
 ## Estado de gates
 
 | Gate | Estado | Evidencia |
 | --- | --- | --- |
-| Fresh install | PASS local | baseline + 96 migraciones |
-| Upgrade remoto | PASS staging | R1-R6, ledger sincronizado |
+| Fresh install | PASS local | baseline + 97 migraciones |
+| Upgrade remoto | PASS staging | R1-R7, ledger sincronizado |
 | SQL/RLS | PASS local + staging | `RANKING_PRODUCTIZATION_V1_DB_OK`, grants legacy cerrados |
 | Concurrencia | PASS local + staging | replay, `PT409`, lifecycle, `SKIP LOCKED` |
 | Escala | PASS local | 10k jugadores, 1k equipos, 3 provincias |
-| App tests | PASS | 250/250 |
+| App tests | PASS | 251/251 |
 | Typecheck | PASS | TypeScript sin errores |
 | Build | PASS | Next 16.2.6 Turbopack, 31/31 rutas estáticas |
 | Lint focalizado | PASS | archivos nuevos y data layer |
@@ -56,7 +56,7 @@ Cada migración configura `lock_timeout = 5s` y `statement_timeout = 5min`. No r
 
 `PRODUCT_BUG`: el 20 de agosto de 2026, el primer rebuild real de producción produjo correctamente cero candidatos y checksum determinista `4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945`. La publicación quedó auditada con cero grants, rewards y notificaciones, pero R4 solo creaba filas territoriales desde entradas existentes. Un piloto legítimo con cero jugadores no obtenía fila de publicación para Barcelona y el health gate permanecía `false`.
 
-Estado: `fixed + regression_verified` en local. R7 hace que cada territorio habilitado reciba una publicación canónica, incluso con cero entradas. La regresión SQL reproduce el escenario original y confirma publicación disponible, lista vacía, checksum determinista y cero efectos secundarios. La activación sigue detenida con los tres flags Ranking en `false`; no se añadieron datos sintéticos ni se forzó el health gate.
+Estado: `fixed + regression_verified` en local y staging. R7 hace que cada territorio habilitado reciba una publicación canónica, incluso con cero entradas. La regresión transaccional de staging reprodujo el escenario original y confirmó publicación disponible, lista vacía, checksum determinista `4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945` y cero awards, rewards o notificaciones; el rollback dejó cero datos de prueba. La activación sigue detenida con los tres flags Ranking de producción en `false`; no se añadieron datos sintéticos ni se forzó el health gate.
 
 ## Runbook de staging
 
@@ -135,7 +135,7 @@ La primera restauración local se revirtió completa porque el contenedor local 
 
 1. Poner la release en ventana controlada; evitar cambios sociales simultáneos.
 2. Aplicar schema/RPC de Ranking con flags OFF.
-3. Readback: seis versiones presentes, fórmula/checksum exactos, awards false.
+3. Readback: siete versiones presentes, fórmula/checksum exactos, awards false.
 4. Desplegar backend/frontend Vercel compatible.
 5. Smoke preactivación de Rating, Retos, Attendance, Conduct, Rewards, Billing, PWA y Control Center.
 6. Crear temporada piloto explícita, no retroactiva globalmente.
@@ -197,6 +197,8 @@ Registrar tras release:
 ```text
 staging_url: https://pachangas-nl50tlf5g-persianas-almar-web-s-projects.vercel.app
 staging_qa: PASS, incluida PWA instalada real
+staging_r7: PASS, ledger 20260820204159 y regresión transaccional sin residuos
+hotfix_preview: https://pachangas-m1jfz3v4z-persianas-almar-web-s-projects.vercel.app
 production_backup: PASS, backup físico disponible y restore lógico aislado verificado
 pilot_season_id: PENDING
 pilot_period: PENDING
