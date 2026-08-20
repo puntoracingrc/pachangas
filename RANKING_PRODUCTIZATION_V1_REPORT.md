@@ -2,7 +2,7 @@
 
 Estado: PRODUCCIÓN ACTIVA PARA EL PILOTO BARCELONA. SEASON SCORE Y RANKING PROVINCIAL ON; PREMIOS OFF.
 
-Actualizado: 2026-08-20 23:25 CEST.
+Actualizado: 2026-08-21 00:08 CEST.
 
 ## Trazabilidad
 
@@ -24,9 +24,12 @@ Actualizado: 2026-08-20 23:25 CEST.
 | Hotfix | [#146](https://github.com/puntoracingrc/pachangas/pull/146), merge `c241e005f35d391c54af64caead7013ff746e167` |
 | Preview hotfix final | `pachangas-8bmk0kh4r-persianas-almar-web-s-projects.vercel.app` |
 | Deployment funcional | `dpl_ptQ4ke3jCQ8xqVoYKBPteMJWHvXn`, `READY` |
+| Corrección de salud inactiva | [#148](https://github.com/puntoracingrc/pachangas/pull/148), commit `e4fc1f82ccfc06606f280c6d0dd10eb40f5ade69`, merge `9a12bf1665cbcd0f2e3201e6108235959518a460` |
+| Preview R8 | `pachangas-pep4kao9t-persianas-almar-web-s-projects.vercel.app`, deployment `dpl_EwTryEi8Afvmx5Zgb7jeKcHgzyrE` |
+| Deployment R8 | `dpl_ixGi2ASmg31sMRgWhPjWA5MQWtxg`, `READY` |
 | Dominio | `https://pachangasiq.com` |
 
-R1-R7, backend y frontend están desplegados. El piloto real Barcelona está abierto y publicado con una lista canónica vacía: no existen todavía jugadores reales elegibles y no se han creado datos sintéticos para aparentar contenido. La salud operativa es `OK` y la lectura pública devuelve revisión 2.
+R1-R8, backend y frontend están desplegados. El piloto real Barcelona está abierto y publicado con una lista canónica vacía: no existen todavía jugadores reales elegibles y no se han creado datos sintéticos para aparentar contenido. La salud operativa es `OK` y la lectura pública devuelve revisión 2.
 
 ## Resultado por fase
 
@@ -89,6 +92,13 @@ R1-R7, backend y frontend están desplegados. El piloto real Barcelona está abi
 - No crea jugadores, evidencia, grants, rewards, sanciones ni notificaciones.
 - Estado actual: `fixed + regression_verified` en local, staging y producción. Pasan la regresión SQL, la batería completa de 251 tests, build, typecheck, lint focalizado, concurrencia y escala 10.000/1.000. Producción publica Barcelona con revisión 2, cero entradas y `SHA-256([])` sin grants, sanciones, rewards ni notificaciones.
 
+### R8: salud correcta durante inactividad
+
+- `PRODUCT_BUG` registrado antes de la corrección: una temporada abierta pasaba a `WARNING / RANKING_REFRESH_STALE` quince minutos después del último refresh aunque su cola estuviera vacía y la publicación siguiera siendo canónica.
+- R8 exige que exista trabajo `queued` de la propia temporada activa antes de declarar el refresh obsoleto. Una temporada sin cambios pendientes permanece sana; una temporada con trabajo pendiente antiguo continúa generando el aviso.
+- La migración solo sustituye la función privada de observabilidad. No recalcula Season Score, no modifica publicaciones y no contiene escrituras sobre Rating V2, assessments, facetas, Conduct, notificaciones, rewards, cosmetics o billing.
+- Estado actual: `fixed + regression_verified` en local, staging y producción. Staging verificó ambos casos dentro de una transacción revertida. En producción, el mismo estado previo cambió de `WARNING` a `OK` con cola 0, revisión 2, checksum y flags intactos.
+
 ## Objetos principales
 
 ### Migraciones
@@ -100,8 +110,9 @@ R1-R7, backend y frontend están desplegados. El piloto real Barcelona está abi
 5. `20260820182038_ranking_productization_r5_http_conflicts.sql`
 6. `20260820184126_ranking_productization_r6_legacy_surface_hardening.sql`
 7. `20260820204159_ranking_productization_r7_empty_publication.sql`
+8. `20260820213930_ranking_productization_r8_idle_health.sql`
 
-Son forward-only y posteriores a las 90 migraciones existentes. No se ha reescrito ninguna migración ya desplegada.
+Son forward-only y posteriores a las 90 migraciones existentes: el ledger final contiene 98 versiones. No se ha reescrito ninguna migración ya desplegada.
 
 ### Lecturas públicas
 
@@ -138,15 +149,15 @@ El read model directo no tiene `SELECT` para `anon` ni `authenticated`. Las RPC 
 
 | Gate | Resultado |
 | --- | --- |
-| Fresh bootstrap | PASS, baseline + 97 migraciones |
-| Upgrade local | PASS, R7 sobre R1-R6 |
+| Fresh bootstrap | PASS, baseline + 98 migraciones |
+| Upgrade local | PASS, R8 aplicada después de R1-R7 |
 | SQL/RLS/ACL | PASS, `RANKING_PRODUCTIZATION_V1_DB_OK` |
-| Test estático focalizado | PASS, 9/9 |
+| Test estático focalizado | PASS, 10/10 |
 | Concurrencia | PASS, un lifecycle winner, replay convergente, stale revision rechazada, cola `SKIP LOCKED` |
 | Volumen | PASS, 10.000 jugadores, 1.000 equipos, 3 provincias |
 | Typecheck | PASS |
-| Build oficial Turbopack | PASS, 31 páginas; última ejecución compile 3,7 s y TypeScript 8,2 s |
-| Batería global | PASS, 251/251 |
+| Build oficial Turbopack | PASS, 31 páginas; última ejecución compile 5,5 s y TypeScript 8,0 s |
+| Batería global | PASS, 252/252 |
 | Lint focalizado nuevo | PASS |
 | Lint global heredado | 43 incidencias: 23 errores y 20 warnings; ninguna en los archivos nuevos focalizados |
 | `git diff --check` | PASS antes de actualizar informes; se repite al cierre |
@@ -168,15 +179,15 @@ Dataset transaccional y reversible:
 10.000 filas publicadas
 ```
 
-Última ejecución sobre bootstrap limpio de 97 migraciones:
+Última ejecución sobre bootstrap limpio de 98 migraciones:
 
 | Medida | Resultado |
 | --- | ---: |
-| Finalizar candidato + publicar | 1.233,641 ms |
-| 100 lecturas Top 10 | 55,08 ms total |
-| Consulta Top 10 indexada | 0,021 ms |
+| Finalizar candidato + publicar | 1.344,162 ms |
+| 100 lecturas Top 10 | 57,33 ms total |
+| Consulta Top 10 indexada | 0,035 ms |
 | Filas devueltas | 10 |
-| Índices de snapshots/candidatos/read model | 8.282.112 bytes |
+| Índices de snapshots/candidatos/read model | 8.257.536 bytes |
 
 El plan usa `pachanga_provincial_ranking_position_idx`. La CTE de ordenación está materializada una sola vez; antes de esa corrección el mismo flujo tardaba aproximadamente 149 segundos.
 
@@ -201,7 +212,7 @@ El plan usa `pachanga_provincial_ranking_position_idx`. La CTE de ordenación es
 
 ## Staging remoto
 
-- Ledger remoto sincronizado con R1-R6.
+- Ledger remoto sincronizado con R1-R8; última versión `20260820213930`.
 - Fórmula leída con checksum exacto `e7b1788fa2d6d7ce2c37cd00f8fa55d78a87539bfa68c76a383bb3500ac388a4`.
 - Temporada sintética activa final: `f73f8a4e-000d-4781-bc7c-742eabe317d0`, publicación canónica 2.
 - E2E autenticada con owner en dos clientes, usuario normal, outsider y anónimo: PASS.
@@ -212,6 +223,7 @@ El plan usa `pachanga_provincial_ranking_position_idx`. La CTE de ordenación es
 - La lectura legacy de flags y su escritura directa quedan denegadas incluso al owner autenticado.
 - Los tres intentos sintéticos incompletos anteriores se eliminaron únicamente en staging tras verificar que no contenían snapshots, eventos, receipts, entradas ni publicaciones. Las ejecuciones completas posteriores se archivan mediante el lifecycle autoritativo.
 - `TESTABILITY_GAP` detectado y corregido: la primera versión de la E2E comparaba dos propiedades de revisión inexistentes. La regresión exige ahora `publication.revision === publishedRevision`, ambas enteras y monotónicas; `fixed + regression_verified` contra staging con revisión 2.
+- R8: regresión transaccional `RANKING_R8_STAGING_REGRESSION_OK`; cola vacía no genera stale, cola pendiente con refresh antiguo sí lo genera y el rollback deja health `OK`, cola 0 y cero residuos.
 
 ## Backup y ledger de producción previos
 
@@ -228,7 +240,7 @@ El plan usa `pachanga_provincial_ranking_position_idx`. La CTE de ordenación es
 
 | Evidencia | Resultado |
 | --- | --- |
-| Ledger remoto | R1-R7 presentes; última versión `20260820204159` |
+| Ledger remoto | R1-R8 presentes; última versión `20260820213930` |
 | Fórmula | `season_score_v3` V1, checksum `e7b1788fa2d6d7ce2c37cd00f8fa55d78a87539bfa68c76a383bb3500ac388a4` |
 | Pesos / ventana | `55 / 30 / 15`, `recent_30` |
 | Temporada | `20bad54c-7b29-4a88-9a7e-a1f80f8ef8eb`, abierta, revisión 2 |
@@ -239,7 +251,7 @@ El plan usa `pachanga_provincial_ranking_position_idx`. La CTE de ordenación es
 | Salud | `OK`, sin reason codes, cola 0, fallos 0, integridad pendiente 0 |
 | Efectos secundarios | 0 grants, 0 sanciones, 0 notificaciones de ranking |
 | QA web | `/`, `/mercado`, `/ranking` y guard de `/admin/rankings`; sin overflow, imágenes rotas ni errores de consola |
-| PWA | Manifest `fullscreen`, Service Worker `2.0.0+sw.c241e005f35d`, QA instalada previa PASS |
+| PWA | Manifest `fullscreen`; Service Worker versionado por build, validado en R8 como `2.0.0+sw.9a12bf1665cb` |
 
 Hashes protegidos antes y después de R7, rebuild, publicación y activación:
 
