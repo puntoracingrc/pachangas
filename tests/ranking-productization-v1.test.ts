@@ -16,6 +16,7 @@ const migrationPaths = [
   "supabase/migrations/20260820182038_ranking_productization_r5_http_conflicts.sql",
   "supabase/migrations/20260820184126_ranking_productization_r6_legacy_surface_hardening.sql",
   "supabase/migrations/20260820204159_ranking_productization_r7_empty_publication.sql",
+  "supabase/migrations/20260820213930_ranking_productization_r8_idle_health.sql",
 ] as const;
 
 test("Season Score V3 is frozen with the approved product formula", async () => {
@@ -144,4 +145,14 @@ test("an empty pilot still publishes a canonical territorial revision", async ()
   assert.match(migration, /pachanga_ranking_json_checksum_v1\('\[\]'::jsonb\)/);
   assert.match(migration, /entry_count, ranked_count/);
   assert.match(migration, /Private ranking publisher became client executable/);
+});
+
+test("an idle open season is stale only while its own queue has pending work", async () => {
+  const migration = await source(migrationPaths[7]);
+  assert.match(migration, /pachanga_ranking_operational_health_v1/);
+  assert.match(migration, /pending_queue\.season_id = active_season\.id/);
+  assert.match(migration, /pending_queue\.state = ''queued''/);
+  assert.match(migration, /RANKING_REFRESH_STALE/);
+  assert.match(migration, /Ranking idle-health protection was not installed/);
+  assert.match(migration, /Private ranking health function became client executable/);
 });

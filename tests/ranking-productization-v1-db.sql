@@ -510,6 +510,41 @@ select pg_temp.assert_true(not (:'ranking_admin_overview'::jsonb -> 'health' -> 
   'RANKING_QUEUE_DEAD_LETTER', 'PILOT_PUBLICATION_MISSING'
 ]), 'A verified publication must expose no critical ranking health reasons');
 
+update private.pachanga_ranking_seasons
+set last_refresh_at = clock_timestamp() - interval '1 hour'
+where id = :'season_id'::uuid;
+select pg_temp.assert_true(not exists (
+  select 1
+  from private.pachanga_ranking_refresh_queue queue
+  where queue.season_id = :'season_id'::uuid
+    and queue.state = 'queued'
+), 'Idle-health regression requires an open season with no queued work');
+select public.get_pachanga_ranking_admin_overview_v1() as idle_ranking_admin_overview \gset
+select pg_temp.assert_true(not (
+  :'idle_ranking_admin_overview'::jsonb -> 'health' -> 'reasonCodes' ? 'RANKING_REFRESH_STALE'
+), 'An idle canonical ranking must not become stale merely because no evidence changed');
+
+select private.pachanga_enqueue_ranking_refresh_v1(
+  :'season_id'::uuid,
+  null,
+  'season',
+  'Verify stale health with pending work',
+  'ranking_health_regression',
+  'ranking-health-pending-work',
+  null,
+  private.pachanga_ranking_stable_uuid_v1('ranking-health-pending-work')
+) as pending_health_queue_id \gset
+select public.get_pachanga_ranking_admin_overview_v1() as pending_ranking_admin_overview \gset
+select pg_temp.assert_true(
+  :'pending_ranking_admin_overview'::jsonb -> 'health' -> 'reasonCodes' ? 'RANKING_REFRESH_STALE',
+  'An open season with old refresh evidence and queued work must report stale health'
+);
+delete from private.pachanga_ranking_refresh_queue
+where id = :'pending_health_queue_id'::uuid;
+update private.pachanga_ranking_seasons
+set last_refresh_at = clock_timestamp()
+where id = :'season_id'::uuid;
+
 select set_config(
   'request.jwt.claim.sub',
   private.pachanga_ranking_stable_uuid_v1('ranking-user:2')::text,
