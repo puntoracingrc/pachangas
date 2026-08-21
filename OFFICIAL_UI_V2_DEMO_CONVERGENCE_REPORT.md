@@ -8,7 +8,8 @@
 - Rama: `codex/official-ui-v2-demo-convergence`.
 - PR draft: [#158](https://github.com/puntoracingrc/pachangas/pull/158).
 - HEAD final: commit que contiene este informe; SHA exacto en el PR y en la entrega final.
-- Preview exacta: `PENDING_VERCEL_PREVIEW`.
+- Preview de rama: [Official UI V2](https://pachangas-git-codex-offic-7de519-persianas-almar-web-s-projects.vercel.app).
+- Deployment funcional verificado: [Vercel Preview `a1d04708`](https://pachangas-kfstmay7i-persianas-almar-web-s-projects.vercel.app), estado `READY`.
 - Producción modificada: **NO**.
 - Supabase producción: **NO**.
 - Supabase staging: **NO**.
@@ -98,6 +99,16 @@ La matriz landscape midió cuatro superficies críticas en los seis tamaños: 24
 - Capturas After con lienzo incompleto: `0/50`.
 - Overflow horizontal documental: `0` en la matriz medida.
 - Controles fuera del viewport sin scroller intencional: `0`.
+
+### Preview Vercel
+
+- Commit funcional desplegado: `a1d04708d58a24fc62ecb44140797805baca3100`.
+- Estado Vercel: `READY`; checks del PR `Vercel` y `Vercel Preview Comments`: PASS.
+- Laboratorio revisado en `1440x900`, `390x844` y `844x390`: modos `DESKTOP`, `MOBILE_PORTRAIT` y `MOBILE_GAME_LANDSCAPE` correctos.
+- Dieciocho comprobaciones visuales sobre Inicio, Partido, Mercado, Ranking, Avisos, Equipo y Carta: `0` overflow, `0` controles cortados y `0` imágenes rotas.
+- Navegación real: `/`, Mercado, Ranking, Avisos, Identidad, Personalizar carta, cuatro vistas del laboratorio, `/demo` y `/admin`: PASS.
+- `/laboratorio-official-ui-v2`, `/demo` y `/admin` mantienen `noindex,nofollow`.
+- La Preview está protegida por Vercel Authentication; la validación se realizó con acceso temporal de Preview, sin alterar producción.
 
 ## PWA
 
