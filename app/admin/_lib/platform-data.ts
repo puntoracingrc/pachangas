@@ -574,3 +574,30 @@ export async function getPlatformDatabaseHealth(session: VerifiedPlatformSession
 export async function getRankingAdminOverview(session: VerifiedPlatformSession) {
   return rpcOrThrow<JsonRecord>(session.client, "get_pachanga_ranking_admin_overview_v1");
 }
+
+export async function getPlatformCompetitionFoundation(
+  session: VerifiedPlatformSession,
+  page: number,
+  pageSize: number,
+) {
+  const data = await rpcOrThrow<JsonRecord>(
+    session.client,
+    "get_pachanga_platform_competition_foundation_v1",
+    {
+      page_offset: (page - 1) * pageSize,
+      page_size: pageSize,
+    },
+  );
+  return {
+    bindingHealth: asRecord(data.bindingHealth),
+    entitlements: asArray(data.entitlements).map(asRecord),
+    events: asArray(data.events).map(asRecord),
+    flags: asRecord(data.flags),
+    items: asArray(data.items).map(asRecord),
+    metrics: asRecord(data.metrics),
+    page,
+    pageSize,
+    reviews: asArray(data.reviews).map(asRecord),
+    total: Number(data.total) || 0,
+  };
+}

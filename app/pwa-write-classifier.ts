@@ -30,6 +30,8 @@ const v2WriteRpcNames = new Set([
   "cancel_my_pachanga_open_match_request_v1",
   "cancel_pachanga_match_invitation_v1",
   "complete_pachanga_external_scorers_v1",
+  "command_pachanga_competition_foundation_v1",
+  "command_pachanga_competition_platform_v1",
   "close_pachanga_post_match_attendance_v1",
   "confirm_pachanga_external_result_v1",
   "create_pachanga_team_challenge_authoritative",
@@ -100,6 +102,7 @@ const v1ApplicationWriteOperations = new Set([
 ]);
 const v2ApplicationWriteOperations = new Set([
   "api:ratings-assessment",
+  "api:platform-admin-competitions",
 ]);
 const clientApplicationWriteOperations = new Set([
   ...v1ApplicationWriteOperations,
