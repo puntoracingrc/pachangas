@@ -220,7 +220,7 @@ Recorrido de diez minutos: permite cambiar perspectiva incluso en modo juego, ab
 ## Publicacion
 
 - Rama: `codex/demo-world-v1`.
-- Commit de implementacion validado: pendiente del cierre local.
+- Commit de implementacion validado: `2af987832e59a321ddf8c177dfca4fea2c38ded1`.
 - PR draft: `https://github.com/puntoracingrc/pachangas/pull/140`.
 - Preview Vercel exacta validada: pendiente del commit final.
 - Merge: no.
