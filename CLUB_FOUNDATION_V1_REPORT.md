@@ -8,13 +8,13 @@ Estado: `READY FOR REVIEW`
 | --- | --- |
 | Rama | `codex/club-foundation-v1` |
 | Base real | `82fbb7933b51a5cef3267ae71e1ca8dc9f63cd8c` |
-| PR | [#155](https://github.com/puntoracingrc/pachangas/pull/155) (draft) |
+| PR | [#155](https://github.com/puntoracingrc/pachangas/pull/155) (`READY FOR REVIEW`) |
 | Inicio R2 | `2026-08-21` |
 | Cierre local documentado | `2026-08-21 16:45 CEST` |
 | Entorno local | Worktree aislado, Node 24, PostgreSQL/Supabase local dedicado |
 | Supabase staging | `iozcjirlfytryzrcmrnq`, upgrade `106 -> 110` y E2E completados |
 | Supabase produccion | `qonbngfrnrqgmxbdfbea`, no modificado |
-| Preview | [branch Preview](https://pachangas-git-codex-club-0041db-persianas-almar-web-s-projects.vercel.app) |
+| Preview | [branch Preview](https://pachangas-git-codex-club-0041db-persianas-almar-web-s-projects.vercel.app), actualizada y revalidada para el HEAD final en el PR |
 | Merge | No realizado |
 
 El checkout principal tenia cambios ajenos y no se utilizo para implementar R2.
@@ -202,8 +202,9 @@ exista trafico real.
 
 ## Preview y QA visual
 
-La Preview Git exacta del candidato visual `d73dc4c` alcanzo `READY`; el commit
-documental final se vuelve a desplegar y someter a smoke antes de cerrar el PR.
+La Preview Git del HEAD final debe alcanzar `READY` y superar el smoke antes de
+fusionar; su SHA y URL inmutables se registran en el cuerpo del PR para no
+reutilizar evidencia de un commit anterior.
 La Preview normal usa su configuracion habitual y, sin una sesion autorizada,
 falla cerrada como permite el contrato: laboratorio visible pero deshabilitado,
 Control Center con acceso bloqueado y perfil publico no disponible con flags

@@ -54,9 +54,13 @@ Una creacion confirmada produce exactamente los objetos R1:
 
 - Competition draft `LEAGUE` o `TOURNAMENT`;
 - Edition draft;
-- RuleSet y revision inicial;
+- RuleSet inicial;
 - operation receipt;
 - event e invalidacion.
+
+No se crea una `CompetitionRuleRevision` vacia. La revision se creara
+posteriormente cuando el organizador aporte un documento de reglas
+`competition_rules.v1` valido.
 
 Si crea un `club_competition_manager`, la misma transaccion le asigna
 `competition_director`. No se convierte en owner y la gestion posterior sigue
