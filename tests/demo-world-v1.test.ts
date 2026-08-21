@@ -387,8 +387,18 @@ test("Demo World honors the explicit product theme over the system preference", 
 });
 
 test("legacy demo entry redirects to the isolated public Demo World", async () => {
-  const homeSource = await readFile(path.join(root, "app/page.tsx"), "utf8");
+  const [homeSource, styles] = await Promise.all([
+    readFile(path.join(root, "app/page.tsx"), "utf8"),
+    readFile(path.join(root, "app/globals.css"), "utf8"),
+  ]);
   assert.match(homeSource, /window\.location\.replace\(`\/demo/);
   assert.match(homeSource, /window\.location\.assign\("\/demo"\)/);
+  assert.match(homeSource, /if \(isDemoMode\) \{[\s\S]*data-product-entry="no-team"/);
+  assert.match(homeSource, /href="\/demo">Probar Mundo Demo<\/Link>/);
   assert.match(homeSource, /Mundo Demo/);
+  assert.doesNotMatch(homeSource, /Lo que ves son datos de ejemplo/);
+  assert.doesNotMatch(homeSource, /Crear mi grupo limpio/);
+  assert.ok(homeSource.indexOf('data-product-entry="no-team"') < homeSource.indexOf("data-mobile-tab={activeMobileTab}"));
+  assert.match(styles, /@media \(orientation: landscape\) and \(max-height: 560px\)[\s\S]*\.demo-world-entry-shell \.hero/);
+  assert.match(styles, /\.demo-world-entry-shell > \.demo-world-entry/);
 });

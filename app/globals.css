@@ -3331,6 +3331,63 @@ h1 {
   margin: 6px 0 0;
 }
 
+.demo-entry-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.demo-entry-actions > :is(a, button) {
+  align-items: center;
+  display: inline-flex;
+  justify-content: center;
+  min-height: 44px;
+  text-align: center;
+}
+
+@media (orientation: landscape) and (max-height: 560px) and (max-width: 1368px) {
+  .demo-world-entry-shell .hero {
+    gap: 12px;
+    grid-template-columns: minmax(0, 1fr) auto;
+    padding: 10px 12px;
+  }
+
+  .demo-world-entry-shell .brand-hero-logo {
+    max-height: 42px;
+    max-width: 240px;
+  }
+
+  .demo-world-entry-shell .hero h1 {
+    font-size: 30px;
+    line-height: 1;
+  }
+
+  .demo-world-entry-shell .hero-copy {
+    font-size: 12px;
+    line-height: 1.25;
+    margin-top: 6px;
+  }
+
+  .demo-world-entry-shell .hero-action-stack {
+    gap: 6px;
+  }
+
+  .demo-world-entry-shell .hero-account-row .google-signin-button,
+  .demo-world-entry-shell .demo-entry-actions > :is(a, button) {
+    min-height: 40px;
+  }
+
+  .demo-world-entry-shell > .demo-world-entry {
+    margin: 6px 12px;
+    padding: 10px 12px;
+  }
+
+  .demo-world-entry-shell .demo-world-entry p {
+    display: none;
+  }
+}
+
 .shared-link-gate {
   align-items: center;
   background: #eef8df;
@@ -10311,6 +10368,17 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
   .demo-banner,
   .shared-link-gate {
     grid-template-columns: 1fr;
+  }
+
+  .demo-entry-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    justify-content: stretch;
+    width: 100%;
+  }
+
+  body:has(.demo-world-entry-shell) {
+    padding-bottom: var(--safe-bottom);
   }
 
   .ranking-toolbar {
