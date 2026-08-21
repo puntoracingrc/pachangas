@@ -267,11 +267,11 @@ operationId conflictivo falla y revision concurrente produce un unico ganador.
 
 Lectura final:
 
-- flags restaurados a `OFF`, revision `21`;
+- flags restaurados a `OFF`, revision `25` tras el rerun final;
 - grants fixture activos `0`;
 - staff fixture activo `0`;
 - owner del Grupo A restaurado;
-- health no stale, revision `38`, server sequence `312`;
+- health inicializado por los backfills de staging, no stale, revision `42`, server sequence `358`;
 - 48 bindings, 26 canonical matches, 1 context, 1 fuente no vinculada, 1 review
   ambigua, 0 conflictos duplicados y 0 canonical huerfanos;
 - Realtime invalidation recibida por el segundo cliente y seguida de refetch.
@@ -343,6 +343,7 @@ Cada fallo se registro antes de corregirse. Ninguno se oculto para continuar.
 | R1-VAL-037 | `PRODUCT_BUG` | El refresh de instalacion dejaba health `stale=false` y el Control Center mostraba `Canonico` sin haber ejecutado backfill. | `fixed`: migracion `20260821102613` con estado `NOT_INITIALIZED` y UI explicita. | `regression_verified`: bootstrap, upgrade incremental y receipt del primer backfill. |
 | R1-VAL-038 | `SIMULATION_BUG` | Un `supabase db reset` generico no aplico migraciones porque el producto desactiva deliberadamente el cargador automatico. | `fixed`: uso del bootstrap guardado oficial del repositorio. | `regression_verified`: ledger fresco exacto `106/106`. |
 | R1-VAL-039 | `SIMULATION_BUG` | La primera asercion nueva intento leer un helper privado bajo `authenticated`. | `fixed`: la prueba usa la RPC publica protegida del platform owner. | `regression_verified`: SQL/RLS completo y schema `private` sigue denegado. |
+| R1-VAL-040 | `ENVIRONMENT_ISSUE` | La repeticion de cierre del E2E remoto con la clave publishable moderna completo la suscripcion, pero Realtime no entrego la invalidacion de entitlement antes del timeout; la fila persistida y su policy eran legibles por el owner. | `fixed`: el E2E usa la clave `anon` legacy que configura actualmente el producto; no cambia el contrato ni la seguridad RLS. | `regression_verified`: historia autenticada completa sobre las 106 migraciones, incluido evento Realtime y refetch del segundo cliente. |
 
 ## Entrega 1-73
 
