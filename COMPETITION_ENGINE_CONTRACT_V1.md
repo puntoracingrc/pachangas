@@ -1,6 +1,6 @@
 # Competition Engine Contract V1
 
-Estado: `CONTRATO NORMATIVO R0 - SIN IMPLEMENTACION PRODUCTIVA`
+Estado: `R0 RECONCILIADO - CONTENIDO CERRADO, REVISION HUMANA EN PR PENDIENTE`
 
 ## 1. Alcance y lenguaje normativo
 
@@ -128,28 +128,57 @@ No se permite sincronizar dos copias por last-write-wins.
 
 | Agregado / entidad | Responsabilidad | Revisión propia |
 | --- | --- | ---: |
-| `Competition` | Identidad, modalidad, organizador, temporada y lifecycle | Sí |
+| `Competition` | Identidad estable, modalidad, organizador y familia competitiva | Sí |
+| `CompetitionEdition` | Temporada/edición concreta y lifecycle operativo | Sí |
 | `CompetitionRuleSet` | Familia lógica de reglas | Sí |
 | `CompetitionRuleRevision` | Configuración inmutable y fecha efectiva | Sí |
 | `CompetitionCategory` | Edad/género/nivel y reglas aplicables | Sí |
-| `CompetitionStage` | Grupo, liga, knockout, serie o participación | Sí |
+| `CompetitionStage` | Stage o split: liga, grupos, knockout, serie o participación | Sí |
+| `CompetitionDivision` | Nivel deportivo contextual dentro de una edición/stage | Sí |
+| `CompetitionGroup` | Agrupación competitiva dentro de stage/división | Sí |
+| `CompetitionStageMembership` | Pertenencia histórica de una entrada a stage/división/grupo | Sí |
 | `CompetitionEntry` | Solicitud/aceptación de un equipo | Sí |
+| `CompetitionTeamDelegate` | Representación del equipo limitada a esa inscripción/competición | Sí |
 | `CompetitionRoster` | Plantilla del equipo para categoría/temporada | Sí |
 | `CompetitionRosterMember` | Elegibilidad contextual del jugador | Sí |
+| `CompetitionMatchSquad` | Convocatoria/acta propuesta para un partido concreto | Sí |
+| `CompetitionTemporaryPlayerPermit` | Autorización excepcional y temporal por partido | Sí |
+| `PlayerCompetitionCredential` | Estado de verificación e identidad mínima, sin documento completo por defecto | Sí |
+| `CompetitionTeamKit` | Equipaciones y colores declarados por edición | Sí |
+| `CompetitionPlayerJerseyNumber` | Dorsal contextual y vigencia | Sí |
+| `TeamAvailabilityConstraint` | Restricción dura que el calendario no puede infringir sin decisión | Sí |
+| `TeamSchedulePreference` | Preferencia ponderada de día, hora o sede | Sí |
 | `CompetitionRound` | Jornada o ronda programable | Sí |
 | `CompetitionMatchContext` | Enlace entre partido canónico, fase, ronda y reglas | Sí |
 | `MatchSheet` | Participantes, oficiales y hechos del partido | Sí |
+| `RefereeMatchReport` | Informe arbitral versionado y firmado sobre el encuentro | Sí |
+| `PostponementRequest` | Solicitud, respuestas, deadline y resolución de aplazamiento | Sí |
+| `LateArrivalIncident` | Llegada tardía y transición posible hacia no-show | Sí |
+| `MatchSuspension` | Hecho de suspensión/abandono, minuto, marcador y evidencia | Sí |
+| `VenueConditionDecision` | Inspección de clima/campo y autoridad que decide | Sí |
 | `OfficialResultDecision` | Resultado que computa y su procedencia | Sí |
 | `StandingSnapshot` | Tabla materializada y reconstruible | Sí |
+| `BracketSnapshot` | Cuadro y avance materializados y reconstruibles | Sí |
+| `CompetitionSportsmanshipSnapshot` | Clasificación opcional con fórmula/versiones explícitas | Sí |
 | `DisciplinaryEvent` | Tarjeta u otro hecho deportivo original | Sí |
+| `DisciplinaryCycle` | Ámbito y vigencia de acumulación por stage/split/edición | Sí |
+| `DisciplinaryCounter` | Acumulación materializada y reconstruible | Sí |
 | `CompetitionSanction` | Consecuencia consumible del reglamento/comité | Sí |
+| `SanctionServiceEvent` | Consumo, reversión o cumplimiento de una sanción | No mutable |
+| `SanctionAppeal` | Expediente de recurso, deadline, estado e historial | Sí |
 | `AdministrativeDecision` | Excepción motivada que produce efectos | Sí |
 | `RefereeProfile` | Faceta arbitral universal, separada de jugador | Sí |
 | `RefereeAssignment` | Designación para partido y estado | Sí |
 | `Club` | Organización que puede agrupar equipos y staff | Sí |
 | `ClubMembership` | Relación persona-club con ámbito | Sí |
 | `CompetitionStaffAssignment` | Rol de organización en una competición | Sí |
+| `VenueStaffAssignment` | Delegado de campo, auxiliar o coordinador en sede/turno | Sí |
 | `CompetitionEntitlement` | Capacidad comercial/operativa concedida | Sí |
+| `CompetitionFeePolicy` | Conceptos económicos declarativos y versionados | Sí |
+| `CompetitionCharge` | Cargo futuro originado por una regla/decisión, sin ejecutar cobro en R1 | Sí |
+| `CompetitionCredit` | Crédito o descuento futuro con causa y vigencia | Sí |
+| `CompetitionMedicalCoveragePolicy` | Cobertura opcional asociada a licencia/edición | Sí |
+| `MatchInjuryIncident` | Incidente mínimo para un futuro flujo de cobertura | Sí |
 | `CompetitionOperationReceipt` | Replay idempotente de un comando | No mutable |
 | `CompetitionEvent` | Evento ordenado para auditoría e invalidación | No mutable |
 
@@ -174,6 +203,24 @@ confirmedAt
 reasonCode
 ```
 
+### 4.1 Jerarquía obligatoria
+
+La estructura navegable y auditable es:
+
+```text
+Competition
+  -> CompetitionEdition
+    -> CompetitionStage (incluye split)
+      -> CompetitionDivision y/o CompetitionGroup
+        -> CompetitionRound (jornada/ronda)
+          -> CompetitionMatchContext -> CanonicalMatch
+```
+
+Una entrada puede cambiar de división o grupo entre stages mediante una nueva
+`CompetitionStageMembership` con vigencia. Nunca se reescribe su pertenencia anterior.
+Un playoff posterior es otro stage del mismo grafo, no una copia del campeonato ni
+un segundo partido deportivo.
+
 ## 5. Identidades y snapshots
 
 ### 5.1 Persona y jugador
@@ -190,6 +237,24 @@ no copia la ficha viva como una segunda identidad. Conserva:
 
 Un snapshot histórico puede conservar nombre deportivo, posición y datos visibles
 entonces. No puede convertirse en una ruta de escritura hacia la ficha universal.
+
+Las tres capas operativas son obligatoriamente distintas:
+
+```text
+equipo habitual (`pachanga_groups`)
+  -> `CompetitionRoster` de la edición
+    -> `CompetitionMatchSquad` / participantes efectivos del partido
+```
+
+Un `CompetitionTemporaryPlayerPermit` puede habilitar a una persona para un único
+partido sin convertirla silenciosamente en miembro permanente o roster estable. El
+servidor valida máximo, autorización excepcional, credential, cobertura y revisión de
+reglas. Precio o cargo, si existe, es un efecto económico declarativo separado.
+
+`PlayerCompetitionCredential` debe poder expresar `unverified`, `verified`,
+`expired`, `rejected` o `revoked`, método y autoridad. Por defecto conserva el estado
+y una referencia opaca a evidencia protegida, no las dos caras del DNI ni una copia
+descargable por organizadores ordinarios.
 
 ### 5.2 Equipo y club
 
@@ -208,6 +273,16 @@ organizador de Competición D
 
 Cada permiso se resuelve por asignación y ámbito, nunca por el rol más alto que tenga
 la persona en otro agregado.
+
+`CompetitionTeamDelegate` representa al equipo únicamente en su entrada y edición.
+Puede recibir acciones como gestionar roster, declarar equipación, responder a un
+horario o presentar recurso, pero no hereda automáticamente `owner/admin` global ni
+puede actuar por otro equipo. Su vigencia, sustitución y categorías/fases se auditan.
+
+La equipación también es contextual: `CompetitionTeamKit` conserva colores y tipo de
+kit por edición, mientras `CompetitionPlayerJerseyNumber` conserva dorsal y vigencia.
+Un conflicto de colores o un periodo de gracia se resuelve con la política congelada
+o una decisión, nunca cambiando la identidad global del equipo o jugador.
 
 ### 5.3 Árbitro
 
@@ -255,10 +330,15 @@ registration
   registrationPolicy
   identityRequirements
   rosterPolicy
+  temporaryPlayerPolicy
   matchSheetPolicy
+  kitPolicy
 
 structure
+  editionPolicy
   stageGraph
+  divisionAndGroupPolicy
+  stageReassignmentPolicy
   roundGenerationPolicy
   advancementRules
 
@@ -270,21 +350,41 @@ results
 
 operations
   postponementPolicy
+  lateArrivalPolicy
   noShowPolicy
   suspendedMatchPolicy
+  venueConditionPolicy
+  hardAvailabilityPolicy
+  schedulePreferencePolicy
   withdrawalPolicy
 
 discipline
   cardTypeCatalog
+  temporaryDismissalPolicy
+  disciplinaryContextPolicy
+  disciplinaryCycles
   accumulationRules
   dismissalPolicy
+  sanctionRangePolicy
+  sanctionServicePolicy
   sanctionCarryPolicy
 
 governance
   authorityPolicy
+  teamDelegatePolicy
+  venueStaffPolicy
   claimPolicy
   appealPolicy
   refereeAssignmentPolicy
+
+publication
+  publicSanctionPolicy
+  playerDataVisibilityPolicy
+  sportsmanshipPolicy
+
+futureCapabilities
+  feePolicy
+  medicalCoveragePolicy
 ```
 
 ### 6.3 Validación estructural
@@ -297,11 +397,23 @@ Antes de publicar, el servidor DEBE comprobar al menos:
 - la puntuación y los desempates son deterministas;
 - el último criterio de desempate termina o crea una decisión persistida;
 - los mínimos no superan los máximos de roster/acta/campo;
+- todo stage pertenece a una edición y toda membership tiene vigencia no ambigua;
+- una reasignación de división conserva el stage anterior y no mueve resultados ya
+  disputados;
 - las ventanas no se solapan de forma ambigua;
+- una restricción dura y una preferencia no comparten semántica ni prioridad;
 - cada tarjeta activa tiene efecto inmediato definido;
+- una tarjeta azul activa define condiciones de liberación (`duration`,
+  `opponent_goal`, ambas o ninguna) y sustitución;
+- cada ciclo disciplinario declara ámbito, reset y política de arrastre;
 - toda sanción tiene alcance y forma de consumo;
+- todo rango de sanción que requiera juicio termina en comité, no en máximo/mínimo
+  escogido por el cliente;
 - toda excepción tiene una autoridad capaz de resolverla;
+- toda apelación tiene deadline calculable con hora del servidor, estados y autoridad;
 - una categoría sin tabla no publica standings ni concede avance por clasificación;
+- el read model público disciplinario no referencia evidencia privada;
+- una fórmula de deportividad ausente u opaca no puede publicarse como calculada;
 - no existen referencias a un preset mutable en tiempo de ejecución.
 
 ### 6.4 Cambio excepcional tras iniciar
@@ -342,7 +454,7 @@ elegibilidad o sanciones. Puede agruparlos y explicar sus efectos.
 
 ## 8. Estados canónicos
 
-### 8.1 Competición
+### 8.1 Competición y edición
 
 ```text
 draft
@@ -364,6 +476,10 @@ scheduled/active        -> suspended -> active | cancelled
 `archived` es de solo lectura. `completed` solo se alcanza cuando partidos,
 decisiones pendientes y clasificación final son coherentes.
 
+`Competition` puede conservar identidad estable mientras cada `CompetitionEdition`
+recorre este lifecycle. Una edición cerrada no se reutiliza para la temporada
+siguiente ni se reabre para simular un split nuevo.
+
 ### 8.2 Inscripción de equipo
 
 ```text
@@ -384,6 +500,18 @@ locked -> amended (solo decisión autorizada)
 
 Cada enmienda conserva la plantilla anterior y su fecha efectiva.
 
+La convocatoria y el permiso provisional tienen lifecycles propios:
+
+```text
+CompetitionMatchSquad: draft -> submitted -> validated -> locked
+                                      \-> rejected
+CompetitionTemporaryPlayerPermit: requested -> approved -> consumed
+                                           \-> rejected | cancelled | expired
+```
+
+Consumir un permiso no incorpora al jugador al roster. Repetir la operación devuelve
+el mismo receipt y no crea un segundo permiso, cargo o participante.
+
 ### 8.4 Jornada/ronda
 
 ```text
@@ -397,23 +525,37 @@ Una ronda `locked` solo cambia mediante decisión administrativa y rebuild.
 El contexto amplía, no sustituye, los estados canónicos existentes:
 
 ```text
-scheduled
-postponed
-ready
-in_progress
-played
-suspended
-abandoned
-result_pending
-official
-cancelled
+scheduled -> postponed -> scheduled
+scheduled -> ready -> in_progress -> played
+ready/in_progress -> suspended -> scheduled | in_progress | abandoned | cancelled
+played/abandoned -> result_pending -> official
+scheduled/postponed -> cancelled
 ```
 
 La traducción entre estos estados y los estados actuales
 `draft/published/lineup_open/lineup_closed/played/finalized/historical` debe definirse
 en R1 como una máquina explícita, sin inferencias por fecha.
 
-### 8.6 Asignación arbitral
+`postponed` conserva la obligación de disputar el encuentro y espera nueva fecha;
+`suspended` conserva minuto, marcador y causa para reanudar o resolver; `cancelled`
+termina el encuentro sin fingir un resultado deportivo. `abandoned` significa que se
+inició y no terminó. Ninguno equivale por sí mismo a una derrota administrativa.
+
+### 8.6 Estado del resultado
+
+El lifecycle del encuentro y el del resultado son ortogonales:
+
+```text
+none -> sporting_submitted -> sporting_confirmed
+     -> disputed -> administrative_review
+     -> official
+official -> superseded | annulled (solo decisión autorizada)
+```
+
+Así, un partido suspendido puede conservar un `SportingResult` parcial sin tener
+`OfficialResultDecision`, y un partido jugado puede esperar una resolución oficial.
+
+### 8.7 Asignación arbitral
 
 ```text
 proposed -> accepted -> confirmed -> completed
@@ -483,8 +625,11 @@ cualquier previsualización por ese snapshot.
 
 ```text
 competitionId
+editionId
 categoryId
 stageId
+divisionId?
+groupId?
 roundId?
 canonicalMatchId
 homeEntryId
@@ -496,7 +641,7 @@ status
 revision
 ```
 
-También puede conservar `legNumber`, `seriesId`, `groupId`, `bracketSlotId` o
+También puede conservar `legNumber`, `seriesId`, `bracketSlotId` o
 `displayOrder`, pero esos campos no crean una identidad deportiva nueva.
 
 ### 10.1 Propiedad de datos
@@ -523,6 +668,8 @@ misma operación:
 - documentación o dispensa requerida;
 - ausencia de sanción aplicable no consumida;
 - límites de convocatoria y modalidad;
+- permiso provisional válido si la persona no pertenece al roster ordinario;
+- dorsal y equipación exigibles en esa revisión;
 - incompatibilidad con otro equipo/partido si la regla lo prohíbe;
 - revisión actual de roster, contexto y partido.
 
@@ -582,6 +729,31 @@ Una decisión que afecta resultados ya computados emite un evento de rebuild con
 
 El rebuild no se ejecuta en el navegador ni durante cada lectura.
 
+### 11.4 Retraso, no-show, aplazamiento y suspensión
+
+Los flujos no se colapsan en un botón de marcador:
+
+```text
+PostponementRequest
+  requested -> awaiting_response -> approved | denied | expired | withdrawn
+
+LateArrivalIncident
+  reported -> arrived_within_policy | arrived_late | escalated_to_no_show
+
+MatchSuspension
+  reported -> confirmed -> resume | replay | administrative_resolution | cancelled
+```
+
+Un cambio de asistencia `voy -> no voy` no crea por sí solo un no-show. El no-show
+competitivo requiere partido, hora del servidor, obligación válida, evidencia y la
+autoridad definida. Retraso, incomparecencia, clima, estado del campo y fuerza mayor
+usan `reasonCode` distintos.
+
+Una decisión sobre el terreno puede requerir árbitro y delegado de campo; una
+resolución posterior puede corresponder al organizador o comité. Esa separación es
+configurable en `authorityPolicy`. Los minutos de cortesía y cualquier resultado
+administrativo proceden de la revisión o decisión, nunca de constantes universales.
+
 ## 12. Calendario y grafo de fases
 
 ### 12.1 Grafo
@@ -610,6 +782,12 @@ El servidor genera un borrador reproducible a partir de:
 - sedes/disponibilidad si existen;
 - semilla persistida si hay sorteo;
 - versión del generador.
+
+`TeamAvailabilityConstraint` es una restricción dura: un borrador que la infringe es
+inválido salvo `AdministrativeDecision` explícita. `TeamSchedulePreference` es un
+objetivo ponderado: el generador intenta satisfacerlo, registra cumplimiento y puede
+publicar una opción que no lo cumpla. Día, hora y sede preferidos nunca se traducen
+automáticamente en indisponibilidad.
 
 Publicar el calendario es una operación distinta de generarlo. Una regeneración
 posterior crea una versión y muestra el diff; no sobrescribe partidos ya jugados.
@@ -661,6 +839,14 @@ omite, falla o requiere decisión; no puede caer silenciosamente a un `id` arbit
 El orden técnico estable por ID solo sirve para serialización. Nunca decide una plaza
 deportiva salvo que la regla publicada lo declare como sorteo ya persistido.
 
+### 13.4 Deportividad opcional
+
+La deportividad es un read model distinto de standings. Solo puede materializarse si
+la revisión publica eventos, pesos, fórmula, ámbito y versión. Si una competición
+externa muestra una puntuación sin explicar el cálculo, Pachangas IQ no la copia ni
+la deduce. `CompetitionSportsmanshipSnapshot` queda desactivado hasta existir una
+fórmula aprobada y reproducible.
+
 ## 14. Competition Discipline
 
 ### 14.1 Hecho disciplinario
@@ -669,6 +855,8 @@ deportiva salvo que la regla publicada lo declare como sorteo ya persistido.
 
 ```text
 competitionId
+editionId
+stageId
 canonicalMatchId
 teamEntryId
 playerProfileId?
@@ -676,6 +864,7 @@ officialId?
 cardType
 reasonCode
 minute?
+disciplinaryContext: pre_match | in_match | interval | post_match | venue
 reportedByAssignmentId
 status: active | corrected | cancelled
 revision
@@ -683,6 +872,21 @@ supersedesId?
 ```
 
 Corregir jugador, minuto o tarjeta crea una revisión/evento. No se borra el original.
+
+Cada tipo de tarjeta activo define efectos sin asumir semántica por color. Para una
+azul, `temporaryDismissalPolicy` puede declarar:
+
+```text
+playerRemovedForRemainder
+replacementAllowed
+releaseConditions:
+  - elapsedDuration?
+  - opponentGoal?
+releaseMode: first_condition | all_conditions | fixed_only | no_replacement
+```
+
+Por ello son compatibles azul desactivada, tiempo fijo o liberación por tiempo/gol.
+Ninguna variante queda seleccionada como universal en R0.
 
 ### 14.2 Sanción
 
@@ -692,13 +896,28 @@ requiera comité, la propuesta no se vuelve ejecutable hasta una decisión autor
 Una sanción distingue:
 
 - causa y eventos fuente;
-- alcance por competición/categoría/fase;
-- partidos a cumplir o ventana temporal;
+- alcance por competición/edición/categoría/stage/split/equipo;
+- unidad en partidos, jornadas, semanas, fase o expulsión de la competición;
 - estado provisional, activa, cumplida, anulada o corregida;
 - autoridad y posibilidad de recurso;
 - consumos concretos por partido.
 
-### 14.3 Consumo
+Una regla puede producir una sanción fija o un rango recomendado. Si produce rango,
+el servidor crea una propuesta y el comité elige dentro de sus límites con artículo,
+factores, motivo y auditoría. No se elige automáticamente el mínimo, el máximo o una
+cifra enviada por el cliente.
+
+### 14.3 Ciclos y arrastre
+
+`DisciplinaryCycle` define el ámbito de acumulación y puede coincidir con stage,
+split, competición o edición. Un reset abre un ciclo nuevo: no borra eventos ni anula
+una sanción ya generada. `sanctionCarryPolicy` determina explícitamente si una
+consecuencia cruza stage, equipo, competición o temporada.
+
+La fecha de un evento y la pertenencia efectiva del jugador determinan el contador;
+no se usa la ficha actual para reinterpretar una temporada histórica.
+
+### 14.4 Consumo
 
 “Siguiente partido” significa el siguiente encuentro elegible que la regla determine,
 no el siguiente registro por `created_at`. El servidor consume la sanción al confirmar
@@ -706,7 +925,30 @@ participación/cierre del partido aplicable, con operación idempotente.
 
 Aplazamientos, cancelaciones y byes no consumen una sanción salvo regla explícita.
 
-### 14.4 Frontera con Conduct y Rating
+Cada consumo crea un `SanctionServiceEvent` inmutable con unidad, ámbito, partido o
+periodo aplicado, revisión y secuencia. Una corrección revierte mediante otro evento;
+no incrementa peso ni reinicia contadores como si fuese una sanción nueva.
+
+### 14.5 Apelaciones y visibilidad
+
+`SanctionAppeal` conserva solicitante autorizado, decisión recurrida, deadline exacto
+calculado por el servidor, estado, evidencias, historial, resolución, autoridad y
+efecto suspensivo. Su lifecycle mínimo es:
+
+```text
+draft -> submitted -> admissible -> under_review -> upheld | modified | overturned
+                   \-> inadmissible | withdrawn
+```
+
+Una apelación fuera de plazo se rechaza explícitamente y permanece auditable. Ningún
+plazo concreto, incluido 72 horas, es universal.
+
+El expediente privado conserva evento, evidencia, identidad de actores, artículo,
+propuesta, decisión y apelación. `PublicSanctionReadModel` solo publica los campos
+permitidos por `publicSanctionPolicy`, por ejemplo estado, ámbito y unidades restantes,
+sin evidencias, documentos ni notas privadas. Realtime no expone el expediente.
+
+### 14.6 Frontera con Conduct y Rating
 
 Competition Discipline puede bloquear una alineación. No puede:
 
@@ -718,7 +960,7 @@ Competition Discipline puede bloquear una alineación. No puede:
 
 ## 15. Excepciones administrativas
 
-Toda excepción de la matriz A01-A12 se representa mediante:
+Toda excepción de la matriz A01-A20 se representa mediante:
 
 ```text
 AdministrativeDecision
@@ -752,10 +994,23 @@ DEDUCT_POINTS
 GRANT_ELIGIBILITY_DISPENSATION
 DISQUALIFY_ENTRY
 REBUILD_STAGE
+CREATE_SANCTION
+REVERSE_SANCTION_SERVICE
+CREATE_COMPETITION_CHARGE
+CREATE_COMPETITION_CREDIT
 ```
 
 Una decisión no puede producir efectos fuera de las potestades del actor ni del
 catálogo permitido para esa competición.
+
+Marcador, puntos, sanción, reincidencia, multa y crédito son efectos independientes.
+Una resolución puede producir varios, pero ninguno se infiere de otro. Los dos
+efectos económicos solo crean registros declarativos preparados para R10: R1-R6 no
+capturan pagos, no modifican saldos ni llaman a Stripe.
+
+Cuota de equipo, licencia/ficha, permiso temporal, multa, crédito y descuento usan
+conceptos distintos, revisión propia y enlace a la regla o decisión de origen. La
+exención también es una decisión auditada; nunca un borrado del cargo.
 
 ## 16. Roles y autoridad
 
@@ -764,6 +1019,11 @@ catálogo permitido para esa competición.
 `owner/admin` de un equipo permite representar a ese equipo donde la política lo
 autorice. No permite crear reglas, asignarse árbitro, resolver una protesta o cambiar
 el resultado de otro equipo.
+
+El actor que representa al equipo en una edición es `CompetitionTeamDelegate`. La
+asignación puede originarse en un owner/admin, una invitación aceptada o una decisión
+del organizador, pero siempre tiene permisos contextuales, vigencia y revocación
+propios. Aceptarla no eleva al actor dentro de `pachanga_groups`.
 
 ### 16.2 Roles de competición
 
@@ -779,11 +1039,20 @@ disciplinary_committee
 appeal_committee
 result_official
 read_only_auditor
+venue_delegate
+venue_assistant
+referee_coordinator
 ```
 
 Cada asignación declara competición, categorías/fases opcionales, acciones permitidas,
 vigencia, concedente y revisión. Los roles pueden combinarse, pero RLS valida cada
 capacidad concreta.
+
+`venue_delegate`, `venue_assistant` y `referee_coordinator` se materializan mediante
+`VenueStaffAssignment` limitado por sede, fecha/turno y acciones. Revisar credenciales,
+registrar estado del campo o coordinar una sustitución arbitral no concede potestad
+para fijar una sanción. `disciplinary_committee` y `appeal_committee` permanecen
+separados incluso cuando una misma persona ocupe ambos roles.
 
 ### 16.3 Árbitro
 
@@ -822,6 +1091,20 @@ Requisitos:
 - periodo de gracia y estado de solo lectura cuando corresponda;
 - ninguna limitación comercial puede anular derechos de reclamación ya abiertos.
 
+### 17.1 Capacidades futuras preparadas, no activadas
+
+El contrato reserva identidades para economía competitiva y cobertura médica porque
+las reglas reales pueden vincularlas a licencias, provisionales o incidencias. Esto no
+autoriza su implementación en R1:
+
+- `CompetitionFeePolicy`, `CompetitionCharge` y `CompetitionCredit` solo describen
+  conceptos y causa hasta R10;
+- `CompetitionMedicalCoveragePolicy` y `MatchInjuryIncident` son opcionales y exigen
+  análisis jurídico, sanitario, de minimización y retención;
+- ni el estado deportivo ni una decisión administrativa ejecutan pagos o diagnostican
+  lesiones;
+- Billing, Stripe y proveedores médicos siguen siendo autoridades separadas.
+
 ## 18. RLS, privacidad y exposición
 
 ### 18.1 Principio de mínimo privilegio
@@ -834,14 +1117,26 @@ Requisitos:
 - Documentos, fecha de nacimiento completa y verificaciones viven en esquema/tabla
   privada y se exponen por RPC mínima.
 
-### 18.2 Menores
+### 18.2 Identidad y documentos
+
+El organizador ordinario consulta el resultado mínimo de verificación necesario para
+esa edición, no el documento bruto. Pachangas IQ debe soportar `BASIC`, `PHOTO`,
+`VERIFIED_IDENTITY` y, solo tras decisión jurídica y de seguridad, `DOCUMENT_REQUIRED`.
+
+El modo recomendado por defecto guarda `verificationStatus`, `verifiedAt`,
+`verifiedBy`, `verificationMethod` y una evidencia opaca protegida. No conserva DNI
+completo ni lo incluye en snapshots, Realtime, logs, exportaciones generales o caché
+local. La fotografía obligatoria y la conservación documental continúan como
+decisiones de producto pendientes.
+
+### 18.3 Menores
 
 Antes de almacenar documentos de menores, R1/R4 requiere una decisión formal de
 minimización, finalidad, retención, acceso, borrado legal y base de legitimación. El
 motor debe poder guardar un estado `verified` y evidencia opaca sin exponer el
 documento a organizadores ordinarios.
 
-### 18.3 Realtime
+### 18.4 Realtime
 
 Realtime publica invalidadores mínimos:
 
@@ -960,10 +1255,14 @@ simula éxito con una tabla calculada por el cliente.
 ### R1 - Competition & Organizer Foundation
 
 1. Resolver identidad/binding canónico de partido.
-2. Crear competición, categorías, reglas/revisiones, roles y entitlements.
-3. Crear receipts, eventos, RLS y read models mínimos.
-4. Implementar lifecycle sin generar todavía liga o torneo.
-5. Añadir presets solo como borradores versionados y no activos por defecto.
+2. Crear `Competition`, `CompetitionEdition`, categorías y reglas/revisiones.
+3. Modelar stages/splits, divisiones, grupos y memberships históricas sin generar
+   todavía calendario ni cuadro.
+4. Crear organizadores, `CompetitionTeamDelegate`, staff de sede, permisos y
+   entitlements con ámbito.
+5. Crear receipts, eventos, RLS y read models mínimos.
+6. Implementar lifecycles y estados operativos sin generar todavía liga o torneo.
+7. Añadir presets solo como borradores versionados y no activos por defecto.
 
 ### R2 - Club Foundation
 
@@ -980,16 +1279,16 @@ simula éxito con una tabla calculada por el cliente.
 
 ### R4 - League Engine
 
-1. Entradas y rosters.
-2. Generador de jornadas reproducible.
+1. Entradas, rosters, convocatorias, provisionales y equipaciones.
+2. Restricciones duras, preferencias y generador de jornadas reproducible.
 3. Resultado oficial y standings versionados.
-4. Aplazamientos, retiradas y rebuild administrativo.
+4. Retrasos, aplazamientos, clima/campo, retiradas y rebuild administrativo.
 
 ### R5 - Competition Discipline
 
-1. Catálogo de tarjetas y acta.
-2. Acumulación/sanciones configurables.
-3. Correcciones, recursos y bloqueo de alineación.
+1. Catálogo de tarjetas, azul configurable y acta.
+2. Ciclos, contadores, unidades y ámbitos de sanción configurables.
+3. Rangos de comité, correcciones, apelaciones y bloqueo de alineación.
 4. Prueba explícita de cero cambios en Rating V2 y Conduct.
 
 ### R6 - Tournament Engine
@@ -1031,6 +1330,9 @@ Control Center y privacidad
 - Realtime invalida solo la entidad afectada;
 - reglamento congelado no admite `UPDATE` ni RPC equivalente;
 - un partido de Reto y uno de grupo no pueden duplicar identidad canónica.
+- una edición con dos splits conserva memberships distintas al reasignar división;
+- delegado de equipo no hereda owner/admin y staff de sede no obtiene potestad de comité;
+- no puede publicarse un preset o autoridad que siga pendiente de decisión de producto.
 
 ### 24.3 Casos mínimos R4
 
@@ -1039,6 +1341,10 @@ Control Center y privacidad
 - varios snapshots en la misma transacción eligen el mismo canónico;
 - resultado propuesto, disputado, corregido y anulado;
 - no-show normal, fuerza mayor, reincidencia y retirada;
+- retraso no se convierte en no-show antes de cumplir la regla y la evidencia;
+- indisponibilidad dura bloquea; una preferencia incumplida solo queda explicada;
+- permiso provisional repetido no duplica jugador, participante ni cargo;
+- conflicto de colores y periodo de gracia proceden de la revisión vigente;
 - rebuild por decisión sin modificar marcador deportivo;
 - dos resultados concurrentes producen un ganador y un conflicto explícito;
 - todos los clientes convergen tras recarga.
@@ -1047,7 +1353,13 @@ Control Center y privacidad
 
 - doble amarilla con y sin suspensión posterior;
 - amarillas sin acumulación y con varios umbrales;
+- ciclos que se mantienen o reinician entre splits sin borrar sanciones emitidas;
+- azul desactivada, fija y liberada por tiempo o gol;
 - roja automática, revisada, ampliada y anulada;
+- sanción por partido y por semana con consumos inequívocos;
+- comité decide dentro de rango y deja motivo/auditoría;
+- apelación dentro/fuera de plazo, modificada y anulada, con historial;
+- read model público no expone expediente, documentos ni evidencia;
 - sanción no consumida por aplazamiento/cancelación;
 - alineación rechazada por sanción;
 - corrección conserva el evento original;
@@ -1086,7 +1398,8 @@ evidencias históricas.
 
 R0 se considera cerrado porque:
 
-- existe investigación trazable de once referencias oficiales;
+- existe investigación trazable de doce referencias oficiales principales y dos
+  contrastes complementarios;
 - las 19 áreas mínimas y áreas adicionales están clasificadas;
 - `COMMON`, `CONFIGURABLE`, `PRESET` y `ADMINISTRATIVE_EXCEPTION` tienen registros
   explícitos;
@@ -1095,9 +1408,48 @@ R0 se considera cerrado porque:
 - toda escritura futura exige `operationId` y revisión esperada;
 - Realtime y caché se mantienen como lectura derivada;
 - Rating V2, Conduct, Rewards y Billing conservan fronteras explícitas;
+- la edición admite stages/splits, divisiones, reasignación y playoff sin duplicar
+  partidos;
+- delegado de equipo, staff de sede, árbitro, organizador y comité tienen ámbitos
+  distintos;
+- roster, convocatoria y permiso temporal tienen identidades y estados propios;
+- retraso, no-show, aplazamiento, suspensión, cancelación, resultado deportivo y
+  resultado oficial no se confunden;
+- ciclos, rangos, consumos, apelaciones y publicación disciplinaria están modelados;
 - quedan documentadas las decisiones de producto pendientes.
 
-## 27. Decisiones que R1 debe elevar antes de implementar
+## 27. Trazabilidad normativa del contrato
+
+La matriz conserva el inventario exhaustivo. Esta tabla enlaza las decisiones que
+modifican directamente este contrato. `Cerrada como capacidad` no selecciona cifras.
+
+| Regla | Fuente o fuentes | Clasificación | Aplica a liga / torneo / ambas | Decisión cerrada o pendiente |
+| --- | --- | --- | --- | --- |
+| Partido canónico con contexto | Todas + arquitectura Pachangas | `COMMON` | Ambas | Cerrada |
+| Edición -> stage/split -> división/grupo -> ronda -> partido | `RFEF-FS`, `HC`, `FV7` | `COMMON` + `CONFIGURABLE` | Ambas | Cerrada |
+| Reasignación de división y playoff | `RFEF-FS`, `FV7` | `CONFIGURABLE` | Liga | Capacidad cerrada; política pendiente |
+| Delegado contextual del equipo | `FV7` | `COMMON` + `CONFIGURABLE` | Ambas | Cerrada |
+| Staff de sede con permisos separados | `FV7`, `FCF` | `COMMON` + `CONFIGURABLE` | Ambas | Autoridad exacta pendiente |
+| Equipo -> roster -> convocatoria | `DC`, `IC`, `GC`, `PSG`, `FV7` | `COMMON` | Ambas | Cerrada |
+| Permiso temporal por partido | `FV7` | `CONFIGURABLE` + `ADMINISTRATIVE_EXCEPTION` | Ambas | Capacidad cerrada; valores pendientes |
+| Identidad sin DNI completo por defecto | `IC`, `GC`, `PSG`, `FV7` | `CONFIGURABLE` | Ambas | Principio cerrado; política documental pendiente |
+| Equipación, dorsal, conflicto y gracia | `GC`, `MIC`, `FV7` | `CONFIGURABLE` / `PRESET` | Ambas | Valores pendientes |
+| Disponibilidad dura distinta de preferencia | `FV7` | `COMMON` + `CONFIGURABLE` | Ambas | Cerrada |
+| Retraso distinto de no-show | `FV7` | `COMMON` + `CONFIGURABLE` | Ambas | Cerrada; valores pendientes |
+| Clima/campo y fuerza mayor | `IFAB`, `FV7`, `FCF` | `CONFIGURABLE` + `ADMINISTRATIVE_EXCEPTION` | Ambas | Workflow cerrado; autoridad pendiente |
+| Resultado deportivo distinto del oficial | `IC`, `GC`, `MIC`, `DANA`, `MAD`, `FV7` | `COMMON` | Ambas | Cerrada |
+| Efectos administrativos separados | `IC`, `MAD`, `FV7` | `COMMON` + `ADMINISTRATIVE_EXCEPTION` | Ambas | Cerrada; valores pendientes |
+| Tarjeta azul por tiempo o gol | `MIC`, `FV7`, `FA` | `CONFIGURABLE` / `PRESET` | Ambas | Variantes pendientes |
+| Cinco amarillas y reset entre splits | `FV7` | `CONFIGURABLE` / `PRESET` | Ambas | No adoptado como universal |
+| Sanciones por distintas unidades/ámbitos | `FV7`, `FCF` | `CONFIGURABLE` | Ambas | Capacidad cerrada; catálogo pendiente |
+| Comité elige dentro de rango | `MIC`, `RFEF-C`, `FV7` | `CONFIGURABLE` + `ADMINISTRATIVE_EXCEPTION` | Ambas | Autoridad exacta pendiente |
+| Apelación con deadline e historial | `IC`, `DANA`, `MAD`, `FV7` | `COMMON` + `CONFIGURABLE` | Ambas | Workflow cerrado; plazo pendiente |
+| Read model público y expediente privado | `FV7` + privacidad Pachangas | `COMMON` + `CONFIGURABLE` | Ambas | Cerrada; campos públicos pendientes |
+| Deportividad reproducible | `DC`, `FV7` | `CONFIGURABLE` | Ambas | Fórmula pendiente; desactivada |
+| Economía competitiva separada | `IC`, `MAD`, `FV7` | `CONFIGURABLE` + `ADMINISTRATIVE_EXCEPTION` | Ambas | Preparada; diferida a R10 |
+| Cobertura médica | `FV7` | `CONFIGURABLE` | Ambas | Capacidad futura opcional |
+
+## 28. Decisiones que deben elevarse antes de implementar
 
 1. Elegir el mecanismo exacto de identidad/binding canónico de partido.
 2. Aprobar taxonomía y alcance de roles de competición.
@@ -1107,14 +1459,30 @@ R0 se considera cerrado porque:
 6. Definir qué entitlements existen y cómo se conceden sin acoplarlos a Stripe.
 7. Decidir los límites de corrección retroactiva y quién puede aprobar un rebuild.
 8. Definir visibilidad pública de disciplina, decisiones y actas.
+9. Elegir, si existe, el preset seleccionado por defecto.
+10. Decidir si un jugador puede participar con varios equipos y en qué ámbito.
+11. Decidir cuándo la fotografía es obligatoria.
+12. Autorizar o descartar el almacenamiento de documentos de identidad completos.
+13. Decidir si una sanción puede pasar a otra fase, competición o temporada.
+14. Precisar por acción la autoridad de árbitro, organizador, staff de sede y comité.
+15. Elegir qué variantes de tarjeta azul se ofrecerán, sin activar una por defecto.
+16. Decidir si existen tasas de reclamación y mantener el recurso aunque no haya cobro.
+17. Decidir qué consecuencias económicas pueden automatizarse en R10.
+18. Definir qué datos de jugadores, actas y sanciones pueden ser públicos.
+19. Decidir si se habilita deportividad y aprobar una fórmula reproducible.
+20. Decidir si existe cobertura médica y su contrato jurídico/operativo.
 
-Estas decisiones deben resolverse dentro de R1/R3/R4 según corresponda. No justifican
+Estas decisiones deben resolverse en la fase indicada por su dominio. No justifican
 crear antes una pantalla de “Crear torneo” ni hardcodear una política provisional.
 
-## 28. Veredicto
+## 29. Veredicto
 
-**Gate R0 aprobado. League Engine y Tournament Engine siguen sin implementar.**
+**Gate de contenido R0 aprobado. Gate de integración pendiente de PR y revisión
+humana. League Engine y Tournament Engine siguen sin implementar.**
 
-El siguiente bloque autorizado por el roadbook es R1, empezando por Competition &
-Organizer Foundation y Competition Entitlements. R1 deberá demostrar en tests que
-extiende las autoridades actuales y no crea una segunda fuente de verdad.
+R1 no queda autorizado por este commit. Después de revisar y fusionar el PR
+exclusivamente documental, el siguiente bloque será Competition & Organizer
+Foundation: reglamentos versionados, ediciones, stages/splits, divisiones,
+organizadores, permisos y entitlements. R1 deberá demostrar en tests que extiende las
+autoridades actuales y no crea una segunda fuente de verdad; no comenzará por el
+calendario ni por una pantalla “Crear torneo”.

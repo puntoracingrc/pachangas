@@ -1,6 +1,6 @@
 # Competition Rules Research V1
 
-Estado: `R0 COMPLETADO - INVESTIGACION Y CONTRATO, SIN BACKEND PRODUCTIVO`
+Estado: `R0 RECONCILIADO - CONTENIDO CERRADO, REVISION HUMANA EN PR PENDIENTE`
 
 ## 1. Trazabilidad
 
@@ -39,8 +39,10 @@ ser datos versionados, nunca constantes repartidas por el frontend o SQL.
 
 ## 3. Método
 
-- Se seleccionaron once referencias oficiales de torneos internacionales, fútbol
+- Se seleccionaron doce referencias oficiales principales de torneos internacionales, fútbol
   base, fútbol amateur municipal, fútbol sala federativo y las Laws of the Game.
+- Se añadieron como contraste complementario el Reglamento General de la Federación
+  Catalana y las reglas de fútbol reducido de The FA.
 - Se compararon reglas de inscripción, identidad, plantilla, acta, puntuación,
   desempates, fases, disciplina, incomparecencias, partidos suspendidos,
   reclamaciones y autoridad.
@@ -68,6 +70,15 @@ Todas las fuentes se consultaron el 21 de agosto de 2026.
 | `RFEF-C` | RFEF | Reglamento de Competiciones 2025 | Marco organizativo, órganos y potestad reglamentaria | [Reglamentos RFEF](https://rfef.es/es/federacion/normativas-y-circulares/reglamentos) |
 | `RFEF-FS` | RFEF Liga Prime Futsal | 2026/27 | Liga por aperturas, playoffs, elegibilidad y desempates de fase | [Normas Primera División FS](https://rfef.es/sites/default/files/2026-06/1._FS_-_Primera_Division.pdf) |
 | `MAD` | Juegos Deportivos Municipales de Madrid | 2026/27 | Liga amateur, aplazamientos, no-show, alineación indebida y recursos | [Normativa 47 JDM](https://sede.madrid.es/csvfiles/UnidadesDescentralizadas/UDCBOAM/Contenidos/Boletin/2026/Julio/Ficheros%20PDF/BOAM_10181_30072026134637088.pdf) |
+| `FV7` | Fundació Valldor7 | 2025/26 y reglamentos publicados | Splits, divisiones, delegados, operación semanal, provisionales, disciplina y economía | [Competiciones](https://virtual.fundaciovalldor7.com/competicions), [documentos](https://virtual.fundaciovalldor7.com/santa-perpetua-es-24-25/documentos), [reglamento interno](https://fundaciovalldor7.com/?download_id=4604&sdm_process_download=1) y [condiciones](https://virtual.fundaciovalldor7.com/cornella-hospitalet-f7-es-25-26_ca/competicio/inscripcio) |
+
+Fuentes oficiales complementarias, usadas para contrastar autoridad y variantes pero
+no contadas dentro de la muestra principal de doce:
+
+| Código | Autoridad | Aporta | Fuente oficial |
+| --- | --- | --- | --- |
+| `FCF` | Federación Catalana de Fútbol | Suspensión, fuerza mayor y decisión del órgano competente | [Reglament General](https://files.fcf.cat/documentos/reglamentgeneral14.pdf) |
+| `FA` | The Football Association | Tarjeta azul como exclusión temporal en small-sided football | [Law 12: Fouls and Misconduct](https://www.thefa.com/football-rules-governance/lawsandrules/laws/football-5-5/law-12---fouls-and-misconduct) |
 
 ## 5. Evidencia por referencia
 
@@ -240,6 +251,66 @@ Todas las fuentes se consultaron el 21 de agosto de 2026.
   y sanciones, pero el resultado previo puede influir en la corrección concreta.
 - Las tarifas y la cantidad de árbitros cambian por modalidad.
 
+### 5.12 Fundació Valldor7 (`FV7`)
+
+Valldor7 es la referencia más próxima al funcionamiento semanal que Pachangas IQ
+quiere soportar. Combina ligas largas, torneos, varias sedes, F7 y fútbol sala con un
+portal público de resultados, equipos, sanciones y estadísticas.
+
+- Una edición puede contener dos splits, divisiones/grupos distintos y un playoff
+  posterior. La jerarquía necesaria es `CompetitionEdition -> Stage/Split ->
+  Division/Group -> Matchday/Round -> CanonicalMatch`.
+- El delegado de un equipo dentro de una competición es una responsabilidad propia.
+  No tiene por qué ser owner global del equipo ni recibir todos sus permisos.
+- Se distinguen equipo habitual, plantilla inscrita y convocatoria de partido.
+  Además existe un permiso de jugador provisional por encuentro.
+- Los reglamentos publicados muestran que límites y precios de provisionales han
+  cambiado entre versiones. Esto confirma que máximo, coste, identidad y cobertura
+  pertenecen a la revisión de la edición, no al código.
+- La web pública expone split, división, grupo, jornada, instalación, campo,
+  participantes, no participantes, cuerpo técnico, uniformes y eventos del partido.
+- Disponibilidad obligatoria y preferencia de día, hora o sede son datos distintos.
+- Delegado de campo, auxiliares, coordinador arbitral y comité necesitan permisos
+  acotados que no equivalen a editar resultado o sanción.
+- Un retraso puede iniciar el cronómetro y dejar al rival u organización elegir entre
+  jugar menos tiempo o una resolución administrativa. No todo retraso es no-show.
+- Una incomparecencia puede producir a la vez resultado oficial, ajuste de puntos,
+  multa, crédito y contador de reincidencia. El marcador no puede representar por sí
+  solo todos esos efectos.
+- La política meteorológica y la suspensión sobre el terreno pueden exigir decisión
+  conjunta de delegado de campo y árbitro.
+- La tarjeta azul publicada permite sustitución al cumplirse una duración o al
+  recibirse un gol. No se modela correctamente con un único número de minutos.
+- La acumulación puede reiniciarse entre splits sin borrar una sanción ya generada.
+- Una sanción puede medirse en partidos o en semanas, y su ámbito puede depender de
+  si una persona participa en varios equipos.
+- Los artículos sancionadores usan rangos que requieren decisión motivada de comité,
+  no siempre una consecuencia automática fija.
+- La disciplina puede abarcar prepartido, descanso, postpartido, instalaciones y
+  espectadores asociados a un equipo.
+- El portal separa una lista pública de sancionados y partidos restantes del detalle
+  privado de evidencia, artículo, decisión y apelación.
+- Valldor7 publica deportividad, pero no se localizó su fórmula. Pachangas IQ puede
+  preparar un snapshot opcional, pero no copiar ni deducir una puntuación opaca.
+- Cuota de equipo, fichas, provisionales, multas, créditos y descuentos demuestran
+  que la economía futura necesita conceptos separados y versionados.
+- La cobertura médica ligada a la ficha es una capacidad opcional futura, no parte
+  del núcleo de League Engine V1.
+
+Dos límites de evidencia quedan expresos. No se localizó el contenido vigente y
+completo de su reglamento específico de aplazamientos, por lo que no se adopta ningún
+plazo atribuido a Valldor7. Tampoco se conoce la fórmula pública de deportividad.
+
+### 5.13 Contrastes complementarios (`FCF`, `FA`)
+
+- La FCF confirma que el árbitro puede suspender por estado del campo,
+  incomparecencia, inferioridad, incidentes, retirada o fuerza mayor, mientras el
+  órgano competente revisa y resuelve las consecuencias.
+- The FA usa tarjeta azul como exclusión temporal de dos minutos en su reglamento de
+  fútbol reducido. Frente a la variante por duración o gol de Valldor7 y la ausencia
+  de azul en MIC, demuestra que “tarjeta azul” es una familia configurable, no una
+  semántica universal.
+
 ## 6. Comparación transversal
 
 | Área | Patrón común | Variación demostrada | Consecuencia de diseño |
@@ -256,6 +327,38 @@ Todas las fuentes se consultaron el 21 de agosto de 2026.
 | Partido interrumpido | No siempre tiene resultado deportivo final | Reanudar, repetir, tanda, fijar resultado, derrota | Resultado deportivo separado del resultado oficial |
 | Protesta | Hay plazo y autoridad | Depósito, canal, hechos no recurribles, uno o dos niveles | Flujo configurable y resolución inmutable |
 | Organizador | Puede resolver excepciones | Calendario, sedes, dispensas, fuerza mayor, exclusiones | Roles de competición y decisiones auditadas |
+| Edición y splits | Una temporada puede contener fases sucesivas | Dos splits, divisiones reasignadas y playoff | Jerarquía versionada por edición y memberships históricos |
+| Delegados y staff | Hay responsables operativos con ámbito | Delegado de equipo, campo, auxiliar, coordinador, comité | Asignaciones y permisos separados del admin global |
+| Provisionales | Un jugador puntual requiere elegibilidad | Máximo, coste, documento, cobertura y excepción varían | Permiso por partido, revisionado y auditable |
+| Equipaciones | Uniforme y dorsal pueden ser requisito | Periodo de gracia y resolución de colores cambian | Kits contextuales y conflicto previo al partido |
+| Calendario semanal | Restricción y preferencia no son lo mismo | Días, horas, sedes y pesos | Restricciones duras separadas de objetivos de optimización |
+| Retraso | Es un incidente previo al no-show | Cortesía, reloj, partido acortado o walkover | Workflow propio y autoridad configurable |
+| Tarjeta azul | El tipo no determina un único efecto | Desactivada, tiempo fijo, tiempo o gol, sustitución | Política de evento y liberación por condiciones |
+| Sanción | La consecuencia tiene unidad y ámbito | Partidos, jornadas, semanas, fase o expulsión | Ledger y consumos, no un solo contador global |
+| Visibilidad disciplinaria | Parte del estado puede ser público | Lista resumida frente a expediente privado | Read models público y privado separados |
+| Economía | Una resolución puede tener efectos no deportivos | Cuota, ficha, multa, crédito y descuento | Efectos declarativos preparados para R10, no cobro en R1 |
+
+### 6.1 Trazabilidad de decisiones reconciliadas
+
+La tabla completa y estable está en `COMPETITION_RULES_MATRIX_V1.md`. Esta síntesis
+demuestra que ninguna cifra observada se convierte en regla universal.
+
+| Regla o decisión | Fuente(s) | Clasificación | Ámbito | Estado |
+| --- | --- | --- | --- | --- |
+| Partido canónico con contexto competitivo | Todas + arquitectura Pachangas | `COMMON` | Liga y torneo | Cerrada |
+| Edición con stages/splits y divisiones | `RFEF-FS`, `HC`, `FV7` | `COMMON` + `CONFIGURABLE` | Ambas | Cerrada |
+| Delegado por inscripción | `FV7` | `COMMON` + `CONFIGURABLE` | Ambas | Cerrada |
+| Plantilla, roster y convocatoria separados | `GC`, `IC`, `PSG`, `FV7` | `COMMON` | Ambas | Cerrada |
+| Jugador provisional | `FV7` | `CONFIGURABLE` | Ambas | Cerrada como capacidad; valores pendientes |
+| Verificación sin guardar DNI por defecto | `IC`, `GC`, `FV7` | `CONFIGURABLE` | Ambas | Cerrada como principio; política legal pendiente |
+| Disponibilidad distinta de preferencia | `FV7` | `COMMON` + `CONFIGURABLE` | Ambas | Cerrada |
+| Tarjeta azul | `MIC`, `FV7`, `FA` | `CONFIGURABLE` / `PRESET` | Ambas | Variantes de producto pendientes |
+| Cinco amarillas y reset entre splits | `FV7` | `CONFIGURABLE` / `PRESET` | Ambas | No es default; pendiente de catálogo |
+| Resultado y consecuencias administrativas | `IC`, `MAD`, `FV7` | `COMMON` + `ADMINISTRATIVE_EXCEPTION` | Ambas | Cerrada la separación; valores pendientes |
+| Sanción en partidos o semanas | `FV7`, `FCF` | `CONFIGURABLE` | Ambas | Cerrada como capacidad |
+| Deportividad | `DC`, `FV7` | `CONFIGURABLE` | Ambas | Fórmula pendiente; no activar |
+| Cuotas, multas y créditos | `IC`, `MAD`, `FV7` | `CONFIGURABLE` + `ADMINISTRATIVE_EXCEPTION` | Ambas | Diferido a R10 |
+| Cobertura médica | `FV7` | `CONFIGURABLE` | Ambas | Capacidad futura opcional |
 
 ## 7. Auditoría de la base actual de Pachangas IQ
 
@@ -347,10 +450,21 @@ Estas decisiones no bloquean R0, pero deben resolverse antes del bloque indicado
 | Privacidad y verificación del árbitro | R3 | Perfil público frente a documentación privada |
 | Disponibilidad de recurso/apelación por plan | R4/R5 | No sacrificar justicia por implementación comercial |
 | Premios y efectos de campeón | R10 | Rewards permanece fuera del contrato de competición inicial |
+| Preset seleccionado por defecto | R1 | Es una decisión de producto, no una conclusión reglamentaria |
+| Participación con dos equipos | R1/R4 | Debe definirse por ámbito y edición |
+| Fotografía obligatoria | R1/R4 | Varía por categoría, control y base jurídica |
+| Almacenamiento de documentos de identidad | R1/R4 | Requiere análisis jurídico y de seguridad específico |
+| Arrastre entre competiciones o temporadas | R5 | No se infiere de un único organizador |
+| Potestad exacta de árbitro, organizador y comité | R1/R3/R5 | Debe aprobarse por acción y ámbito |
+| Variantes de tarjeta azul ofrecidas | R5 | Valldor7, The FA y MIC muestran semánticas incompatibles |
+| Tasas de reclamación | R5/R10 | El expediente no depende de activar un cobro |
+| Consecuencias económicas automáticas | R10 | Requieren contrato, billing y autoridad separados |
+| Datos públicos de jugadores y sanciones | R1/R5 | Deben minimizarse y configurarse con base jurídica |
 
 ## 10. Resultado del Gate R0
 
-**Gate R0: APROBADO.**
+**Gate de contenido R0: APROBADO. Gate de integración: PENDIENTE DE PR Y REVISION
+HUMANA.**
 
 La investigación permite identificar de manera explícita:
 
@@ -360,6 +474,9 @@ La investigación permite identificar de manera explícita:
 - `ADMINISTRATIVE_EXCEPTION`: decisiones humanas extraordinarias, motivadas y
   auditadas.
 
-La aprobación del gate no implementa ni activa League Engine o Tournament Engine.
-Solo autoriza diseñar R1 sobre el contrato cerrado, manteniendo PostgreSQL como única
-fuente de verdad y el partido canónico como núcleo compartido.
+La aprobación documental no implementa ni activa League Engine o Tournament Engine.
+R1 permanece sin autorización hasta que el PR exclusivamente documental sea revisado
+y fusionado en `main`. Después deberá comenzar por reglamentos versionados,
+ediciones/stages/splits, divisiones, organizadores, permisos y entitlements; no por el
+calendario ni por una pantalla “Crear torneo”. PostgreSQL seguirá siendo la única
+fuente de verdad y el partido canónico el núcleo compartido.
