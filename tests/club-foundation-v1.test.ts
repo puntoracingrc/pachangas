@@ -184,10 +184,12 @@ test("PWA protects Club writes, records known operations and never treats reads 
 });
 
 test("Club UI caches only read models and refetches after scoped Realtime invalidation", async () => {
-  const [lab, route, publicLayout, adminPage] = await Promise.all([
+  const [lab, labStyles, route, publicLayout, publicStyles, adminPage] = await Promise.all([
     source("app/laboratorio-club-foundation/page.tsx"),
+    source("app/laboratorio-club-foundation/page.module.css"),
     source("app/api/clubs/command/route.ts"),
     source("app/clubes/[slug]/layout.tsx"),
+    source("app/clubes/[slug]/public-club.module.css"),
     source("app/admin/clubs/page.tsx"),
   ]);
   assert.match(lab, /pachangas-club-foundation-read-v1/);
@@ -211,6 +213,10 @@ test("Club UI caches only read models and refetches after scoped Realtime invali
   assert.doesNotMatch(route, /SUPABASE_SERVICE_ROLE_KEY/);
   assert.match(publicLayout, /robots: \{ follow: false, index: false \}/);
   assert.match(adminPage, /requirePlatformPage\("clubs\.read"\)/);
+  for (const inset of ["top", "right", "bottom", "left"]) {
+    assert.match(labStyles, new RegExp(`env\\(safe-area-inset-${inset}\\)`));
+    assert.match(publicStyles, new RegExp(`env\\(safe-area-inset-${inset}\\)`));
+  }
 });
 
 test("the generic Control Center read model understands both organizer kinds", async () => {
