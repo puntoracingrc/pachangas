@@ -597,6 +597,35 @@
 .healthSummary { min-height: 58px; padding: 12px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; color: var(--admin-muted); font-size: 11px; }
 .healthSummary strong { color: var(--admin-amber); }
 
+.competitionControlGrid {
+  padding: 13px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+.competitionControl {
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--admin-border);
+  border-radius: 6px;
+  background: var(--admin-panel-strong);
+  display: grid;
+  align-content: start;
+  gap: 9px;
+}
+.competitionControl h3,
+.competitionEntitlementActions h3 { margin: 0; font-size: 13px; }
+.competitionControl p { margin: 0; color: var(--admin-muted); font-size: 11px; line-height: 1.45; }
+.competitionControlMessage { grid-column: 1 / -1; margin: 0; color: var(--admin-green); font-size: 12px; }
+.competitionEntitlementActions { grid-column: 1 / -1; display: grid; gap: 7px; }
+.competitionEntitlementActions > div { min-height: 48px; padding: 6px 8px; border-top: 1px solid var(--admin-border); display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.competitionEntitlementActions span { display: grid; gap: 2px; }
+.competitionEntitlementActions small { color: var(--admin-muted); }
+.competitionHealthGrid { padding: 13px; display: grid; grid-template-columns: repeat(5, minmax(110px, 1fr)); gap: 8px; }
+.competitionHealthGrid div { min-width: 0; padding: 10px; border-left: 2px solid var(--admin-blue); background: var(--admin-panel-strong); }
+.competitionHealthGrid span { display: block; color: var(--admin-muted); font-size: 10px; overflow-wrap: anywhere; }
+.competitionHealthGrid strong { display: block; margin-top: 5px; font-size: 20px; }
+
 .adminRoot :is(button, a, input, select, textarea):focus-visible {
   outline: 2px solid var(--admin-green);
   outline-offset: 2px;
@@ -618,6 +647,8 @@
 
 @media (max-width: 1180px) {
   .metricGrid { grid-template-columns: repeat(3, minmax(130px, 1fr)); }
+  .competitionControlGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .competitionHealthGrid { grid-template-columns: repeat(3, minmax(110px, 1fr)); }
   .detailGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
@@ -693,6 +724,8 @@
   .segmented { width: 100%; overflow-x: auto; }
   .composerGrid { grid-template-columns: minmax(0, 1fr); }
   .inlineAction { min-width: 220px; }
+  .competitionControlGrid,
+  .competitionHealthGrid { grid-template-columns: minmax(0, 1fr); }
 }
 
 @media (orientation: landscape) and (max-height: 520px) and (max-width: 1000px) {
