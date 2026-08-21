@@ -3,6 +3,7 @@
 import { type CSSProperties, type Dispatch, type FormEvent, Fragment, type MouseEvent as ReactMouseEvent, type PointerEvent as ReactPointerEvent, type SetStateAction, type WheelEvent as ReactWheelEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import dynamic from "next/dynamic";
+import NextImage from "next/image";
 import Link from "next/link";
 import { PlayerCosmeticCard } from "./_components/player-cosmetic-card";
 import { attachVenueAutocomplete, type VenuePlace } from "./googlePlacesClient";
@@ -8964,6 +8965,64 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
     );
   }
 
+  function renderTopTeamForm() {
+    if (openQuickForm !== "team") return null;
+
+    return (
+      <form className="top-panel quick-create-form team-create-form top-team-form" ref={teamFormRef} onSubmit={createTeam}>
+        <input value={newTeamName} onChange={(event) => setNewTeamName(event.target.value)} placeholder="Nombre del grupo de pachangas" />
+        <button type="submit" disabled={!canCreateTeam}>Crear grupo</button>
+        {!canCreateTeam ? (
+          <GoogleSignInButton label="Continuar con Google" onClick={() => void signInWithGoogle()} disabled={!supabase || !googleClientId} />
+        ) : null}
+        <button className="ghost-form-button" type="button" onClick={() => setOpenQuickForm(null)}>Cerrar</button>
+      </form>
+    );
+  }
+
+  if (isDemoMode) {
+    return (
+      <main className="min-h-screen bg-[#f7f6f0] text-[#1d2521] demo-world-entry-shell" data-product-entry="no-team" style={teamColorStyle}>
+        <section className="hero demo-hero" id="inicio">
+          <div>
+            <div className="brand-lockup" aria-label={siteSettings.brand}>
+              <NextImage className="brand-hero-logo" src="/brand/pachangas-logo-hero.png" alt={siteSettings.brand} width={960} height={268} priority />
+            </div>
+            <h1>{siteSettings.title}</h1>
+            <p className="hero-copy">{siteSettings.subtitle}</p>
+          </div>
+          <div className="hero-action-stack">
+            <div className="hero-account-row">
+              {isRegisteredUser ? (
+                <GoogleSignInButton className="google-signout-button" label="Cerrar sesión" onClick={() => void signOut()} />
+              ) : (
+                <GoogleSignInButton label={googleButtonText} onClick={() => void signInWithGoogle()} disabled={!supabase || !googleClientId} />
+              )}
+            </div>
+            <div className="hero-actions">
+              <a className="manual-link-button" href="/manual">Manual</a>
+              <Link className="secondary-button market-link-button" href="/mercado">Mercado</Link>
+            </div>
+          </div>
+        </section>
+
+        {renderTopTeamForm()}
+
+        <section className="top-panel demo-banner demo-world-entry" aria-labelledby="demo-world-entry-title">
+          <div>
+            <span>Mundo Demo V1</span>
+            <strong id="demo-world-entry-title">Explora Pachangas IQ con una comunidad ficticia completa.</strong>
+            <p>Equipos, cartas, partidos, Retos, Mercado, logros y ranking provincial sin crear una cuenta ni modificar datos reales.</p>
+          </div>
+          <div className="demo-entry-actions">
+            <Link className="primary-button" href="/demo">Probar Mundo Demo</Link>
+            <button className="secondary-button" type="button" onClick={() => showQuickForm("team")}>Crear mi grupo</button>
+          </div>
+        </section>
+      </main>
+    );
+  }
+
   return (
     <main className="min-h-screen bg-[#f7f6f0] text-[#1d2521]" data-mobile-tab={activeMobileTab} style={teamColorStyle}>
       <section className={isDemoMode ? "hero demo-hero" : "hero team-hero"} id="inicio">
@@ -9110,16 +9169,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
         </form>
       ) : null}
 
-      {openQuickForm === "team" ? (
-        <form className="top-panel quick-create-form team-create-form top-team-form" ref={teamFormRef} onSubmit={createTeam}>
-          <input value={newTeamName} onChange={(event) => setNewTeamName(event.target.value)} placeholder="Nombre del grupo de pachangas" />
-          <button type="submit" disabled={!canCreateTeam}>Crear grupo</button>
-          {!canCreateTeam ? (
-            <GoogleSignInButton label="Continuar con Google" onClick={() => void signInWithGoogle()} disabled={!supabase || !googleClientId} />
-          ) : null}
-          <button className="ghost-form-button" type="button" onClick={() => setOpenQuickForm(null)}>Cerrar</button>
-        </form>
-      ) : null}
+      {renderTopTeamForm()}
 
       {showGroupAccessPanel ? (
         <section className="top-panel team-access-panel" ref={teamAccessPanelRef}>
@@ -9178,21 +9228,6 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
           <small className={`sync-status sync-${syncStatus}`}>
             {previewDemoMode ? "Demo local: no modifica tu grupo real" : syncStatus === "live" ? "Grupo privado sincronizado" : syncStatus === "connecting" ? "Conectando..." : syncStatus === "error" ? `Sin sync: ${syncError}` : "Crea un grupo o entra con invitación"}
           </small>
-        </section>
-      ) : null}
-
-      {isDemoMode ? (
-        <section className="top-panel demo-banner">
-          <div>
-            <span>Demo interactiva</span>
-            <strong>Lo que ves son datos de ejemplo.</strong>
-            <p>
-              Puedes tocar jugadores, cambiar asistencia, revisar reservas, pagos, alineaciones, valoraciones y fichas. Cuando crees tu grupo real, la web empieza limpia.
-            </p>
-          </div>
-          <button className="primary-button" type="button" onClick={() => showQuickForm("team")}>
-            Crear mi grupo limpio
-          </button>
         </section>
       ) : null}
 
@@ -11227,8 +11262,8 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
                     <span>Crear campo</span><small>Dirección, precio y modalidad</small><b aria-hidden="true">›</b>
                   </button>
                   <button type="button" onClick={() => runMobileAccountAction(() => showQuickForm("team"))}>
-                    <span>{isDemoMode ? "Crear mi grupo limpio" : "Crear grupo de pachangas"}</span>
-                    <small>{isDemoMode ? "Salir de la demo y empezar desde cero" : "Empieza un grupo nuevo"}</small>
+                    <span>Crear grupo de pachangas</span>
+                    <small>Empieza un grupo nuevo</small>
                     <b aria-hidden="true">›</b>
                   </button>
                   {canUseAdminControls ? (
