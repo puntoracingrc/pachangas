@@ -1,6 +1,6 @@
 # Competition & Organizer Foundation V1 Report
 
-Estado: `CLOSING VALIDATION`
+Estado: `READY FOR REVIEW`
 
 ## Trazabilidad
 
@@ -187,7 +187,37 @@ plataforma existente.
 | ESLint focalizado | PASS, `0` incidencias en 11 rutas TS/TSX/MJS modificadas |
 | ESLint global | FAIL historico, `43` incidencias (`23` errores, `20` warnings), ninguna en rutas R1 |
 | DB lint R1 | PASS, `0` warnings funcionales R1 tras la migracion de volatilidad |
-| `git diff --check` | Se repite en el cierre final del PR |
+| `git diff --check` | PASS |
+
+## Preview y responsive
+
+Preview funcional auditada: `pachangas-2y0mhbnx8-persianas-almar-web-s-projects.vercel.app`, deployment
+`dpl_BJ9ZGVB73fGvzYz6x4Jcwii6x975`, correspondiente a `c3da2e2`.
+
+Matriz sobre `/`, `/laboratorio-competition-foundation` y
+`/admin/competitions`:
+
+| Modo | Viewport | Resultado |
+| --- | --- | --- |
+| Desktop | `1440x900` | PASS |
+| Desktop wide | `1920x1080` | PASS |
+| Portrait | `390x844` | PASS |
+| Portrait small | `360x800` | PASS |
+| Landscape | `844x390` | PASS |
+| PWA standalone | `390x844` | PASS |
+
+Resultado consolidado: `0` overflow horizontal, `0` imagenes rotas, `0`
+controles fixed/sticky fuera del viewport, `0` errores de consola y `0`
+peticiones fallidas. El laboratorio y Control Center conservan
+`noindex,nofollow` y muestran un gate claro sin sesion. La experiencia interna
+autenticada completa se valido localmente; la autoridad se valido con actores
+autenticados en staging, mientras Preview permanece fail-closed frente al
+entorno productivo no migrado.
+
+En la emulacion PWA, `matchMedia('(display-mode: standalone)')` y
+`data-display-mode` devolvieron `standalone`; manifest y Service Worker
+respondieron `200`, el manifest declara `fullscreen` y el worker quedo
+registrado.
 
 ## Rendimiento
 
@@ -301,6 +331,7 @@ Cada fallo se registro antes de corregirse. Ninguno se oculto para continuar.
 | R1-VAL-032 | `TESTABILITY_GAP` | `SUBSCRIBED` podia preceder la inicializacion de replicacion del tenant. | `fixed`: cola unica y probe de entitlement antes del evento objetivo. | `regression_verified`: E2E Realtime completo. |
 | R1-VAL-033 | `SIMULATION_BUG` | Diagnostico invoco helper RLS con aridad incorrecta. | `fixed`: tres argumentos reales. | `regression_verified`: publication activa, authenticated si, anon no. |
 | R1-VAL-034 | `ENVIRONMENT_ISSUE` | Tras reanudar la sesion, el primer gate SQL no heredo `COMPETITION_FOUNDATION_DATABASE_URL` y `psql` intento el socket 5432. | `fixed`: URL local explicita del contenedor R1 en cada comando. | `regression_verified`: SQL/RLS, concurrencia y escala salen 0; no hubo escritura remota. |
+| R1-VAL-035 | `TESTABILITY_GAP` | El navegador integrado acepto `Emulation.setEmulatedMedia`, pero no activo `display-mode: standalone`; su raw CDP tampoco permite inyectar el init script. | `fixed`: auditor headless temporal con el mismo patron CDP del repositorio y perfil aislado. | `regression_verified`: standalone emulado en runtime, manifest/SW 200 y registrados, 0 errores/overflow. |
 
 ## Entrega 1-73
 
@@ -310,7 +341,7 @@ Cada fallo se registro antes de corregirse. Ninguno se oculto para continuar.
 | 2 | Main posterior R0 | `0ea46f1c...` |
 | 3 | Rama R1 | `codex/competition-organizer-foundation-v1` |
 | 4 | PR R1 | #153, sin merge. |
-| 5 | HEAD final | Se comunica con el cierre del PR tras el ultimo commit. |
+| 5 | HEAD final | Se comunica en la entrega tras el commit documental de cierre. |
 | 6 | Migraciones | Seis forward-only. |
 | 7 | Tablas/entidades | Inventario en este informe. |
 | 8 | Canonical Match | Implementado y probado. |
@@ -363,7 +394,7 @@ Cada fallo se registro antes de corregirse. Ninguno se oculto para continuar.
 | 55 | Scale | 10k/1k/500. |
 | 56 | Performance | p50/p95 registrados. |
 | 57 | Advisors | Revisados, deuda R1 explicada. |
-| 58 | Responsive | Se cierra sobre Preview final. |
+| 58 | Responsive | PASS en seis modos/viewports. |
 | 59 | Rating | Checksum identico. |
 | 60 | Results | Checksum identico. |
 | 61 | Rewards | Checksum identico. |
@@ -374,14 +405,14 @@ Cada fallo se registro antes de corregirse. Ninguno se oculto para continuar.
 | 66 | Typecheck | PASS. |
 | 67 | Tests | 288/288 PASS. |
 | 68 | Lint focalizado | PASS; lint global historico documentado. |
-| 69 | Preview | Se cierra sobre el HEAD publicado final. |
+| 69 | Preview | PASS; deployment y matriz documentados. |
 | 70 | Staging | E2E autenticado PASS. |
 | 71 | Produccion | **NO modificada**. |
 | 72 | Merge R1 | **NO realizado**. |
 | 73 | Worktree | Conservado mientras #153 siga sin fusionar. |
 
-## Cierre pendiente
+## Conclusion
 
-Antes de cambiar el estado a `READY FOR REVIEW`: consolidar el commit de cierre,
-publicarlo, ejecutar `git diff --check`, esperar checks/Preview del HEAD exacto y
-repetir la matriz responsive solicitada. No queda trabajo funcional pendiente.
+R1 cumple el criterio de exito y queda `READY FOR REVIEW`. El PR permanece sin
+merge, los flags productivos siguen inactivos, no se ejecuto backfill productivo
+y el worktree se conserva porque #153 sigue abierto.
