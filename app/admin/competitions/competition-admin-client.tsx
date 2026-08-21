@@ -80,7 +80,9 @@ export function CompetitionAdminClient({
   }
 
   function organizerRevision(targetGroupId: string) {
-    const matching = entitlements.find((item) => text(item.organizerGroupId) === targetGroupId);
+    const matching = entitlements.find((item) => (
+      text(item.organizerKind) === "TEAM" && text(item.organizerGroupId) === targetGroupId
+    ));
     return matching ? number(matching.organizerRevision) : 0;
   }
 
@@ -117,10 +119,10 @@ export function CompetitionAdminClient({
 
       {message ? <p className={styles.competitionControlMessage} role="status">{message}</p> : null}
 
-      {entitlements.filter((item) => text(item.status) === "active").length ? (
+      {entitlements.filter((item) => text(item.status) === "active" && text(item.organizerKind) === "TEAM").length ? (
         <section className={styles.competitionEntitlementActions}>
           <h3>Revocar grants activos</h3>
-          {entitlements.filter((item) => text(item.status) === "active").map((item) => (
+          {entitlements.filter((item) => text(item.status) === "active" && text(item.organizerKind) === "TEAM").map((item) => (
             <div key={text(item.id)}>
               <span><strong>{text(item.organizerName)}</strong><small>{text(item.capability)}</small></span>
               <button className={styles.dangerButton} type="button" disabled={busy} onClick={() => {

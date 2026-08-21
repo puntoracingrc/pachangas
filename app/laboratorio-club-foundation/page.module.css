@@ -1,0 +1,75 @@
+.page { min-height: 100dvh; padding: 24px clamp(14px, 3vw, 40px) 60px; background: #0b1110; color: #edf5f1; letter-spacing: 0; }
+.header { max-width: 1320px; margin: 0 auto 18px; display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; }
+.header p, .clubHeader p { margin: 0 0 4px; color: #64d399; font-size: 10px; font-weight: 800; text-transform: uppercase; }
+.header h1 { margin: 0; font-size: 38px; line-height: 1; }
+.header span, .clubHeader span { color: #91a39c; font-size: 11px; }
+.headerActions { display: flex; gap: 8px; }
+.headerActions button, .headerActions a, .panel button, .formGrid button, .stack button, .controlLink { min-height: 36px; padding: 0 11px; border: 1px solid #33423d; border-radius: 5px; background: #18211e; color: #edf5f1; display: inline-flex; align-items: center; justify-content: center; font: inherit; font-size: 11px; font-weight: 800; text-decoration: none; }
+.headerActions button:hover, .headerActions a:hover, .panel button:hover { border-color: #64d399; }
+.message, .secret { max-width: 1320px; margin: 0 auto 10px; padding: 10px 12px; border-left: 3px solid #64d399; background: #151d1b; color: #c8d4cf; font-size: 12px; }
+.secret { border-left-color: #efbd64; display: grid; gap: 6px; }
+.secret code { overflow-wrap: anywhere; color: #efbd64; }
+.flags { max-width: 1320px; margin: 0 auto 14px; display: grid; grid-template-columns: repeat(5, minmax(110px, 1fr)); gap: 6px; }
+.flags span { min-height: 48px; padding: 8px; border-left: 2px solid #72a7ef; background: #151d1b; display: grid; align-content: center; gap: 3px; color: #91a39c; font-size: 10px; }
+.flags strong { color: #edf5f1; }
+.layout { max-width: 1320px; margin: auto; display: grid; grid-template-columns: 210px minmax(0, 1fr); gap: 12px; align-items: start; }
+.sidebar { position: sticky; top: 12px; padding: 10px; border: 1px solid #2d3a36; background: #111816; display: grid; gap: 5px; }
+.sidebar h2, .panel h2 { margin: 0 0 6px; font-size: 14px; }
+.sidebar button { min-height: 48px; padding: 7px 9px; border: 1px solid transparent; background: transparent; color: #9fb0aa; text-align: left; display: grid; gap: 2px; }
+.sidebar button[data-active="true"] { border-color: #315a49; background: #1b3028; color: #edf5f1; }
+.sidebar button span, .sidebar p { color: #82938d; font-size: 10px; }
+.content { min-width: 0; display: grid; gap: 12px; }
+.panel { min-width: 0; padding: 13px; border-top: 1px solid #2d3a36; border-bottom: 1px solid #2d3a36; background: #151d1b; }
+.panelTitle, .clubHeader { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.clubHeader { min-height: 82px; padding: 12px 14px; border-left: 3px solid #64d399; background: #17201d; }
+.clubHeader h2 { margin: 0; font-size: 25px; }
+.clubHeader > div:last-child { display: flex; gap: 5px; flex-wrap: wrap; justify-content: flex-end; }
+.status { width: fit-content; padding: 4px 6px; border: 1px solid #72a7ef; color: #a9cbfa; font-size: 9px; font-weight: 800; text-transform: uppercase; }
+.status[data-status="active"], .status[data-status="verified"] { border-color: #64d399; color: #64d399; }
+.status[data-status="suspended"], .status[data-status="rejected"], .status[data-status="revoked"] { border-color: #ef7b72; color: #ef7b72; }
+.formGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
+.formGrid label, .stack label { min-width: 0; display: grid; gap: 4px; color: #9fb0aa; font-size: 10px; font-weight: 700; }
+.formGrid input, .formGrid select, .formGrid textarea, .stack input, .stack select, .invitationAction input { min-width: 0; width: 100%; min-height: 36px; border: 1px solid #33423d; border-radius: 4px; background: #0f1614; color: #edf5f1; padding: 7px 9px; font: inherit; font-size: 12px; }
+.formGrid textarea { resize: vertical; }
+.wide, .formGrid button { grid-column: 1 / -1; }
+.formGrid button { justify-self: start; background: #64d399; color: #08110d; }
+.split { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.stack { display: grid; gap: 8px; }
+.stack button { justify-self: start; }
+.inlineForm { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)) auto; align-items: end; gap: 8px; }
+.inlineForm label { min-width: 0; display: grid; gap: 4px; color: #9fb0aa; font-size: 10px; font-weight: 700; }
+.inlineForm input, .inlineForm select { min-width: 0; width: 100%; min-height: 36px; border: 1px solid #33423d; border-radius: 4px; background: #0f1614; color: #edf5f1; padding: 7px 9px; font: inherit; font-size: 12px; }
+.inlineForm .check { grid-template-columns: auto 1fr; align-items: center; align-self: center; }
+.inlineForm .check input { width: 18px; min-height: 18px; }
+.rows { display: grid; }
+.rows article { min-width: 0; min-height: 55px; padding: 8px 2px; border-top: 1px solid #2d3a36; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.rows article > span:first-child { min-width: 0; display: grid; gap: 3px; }
+.rows strong, .rows small { overflow-wrap: anywhere; }
+.rows small, .empty { color: #91a39c; font-size: 10px; }
+.rowActions, .invitationAction { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; justify-content: flex-end; }
+.invitationAction input { width: 180px; }
+.entitlement { margin-bottom: 10px; display: flex; gap: 18px; flex-wrap: wrap; color: #91a39c; font-size: 11px; }
+.entitlement strong { color: #edf5f1; }
+button:disabled { opacity: .45; cursor: not-allowed; }
+.page :is(button, a, input, select, textarea):focus-visible { outline: 2px solid #64d399; outline-offset: 2px; }
+@media (max-width: 860px) {
+  .flags { grid-template-columns: repeat(3, minmax(100px, 1fr)); }
+  .layout { grid-template-columns: 1fr; }
+  .sidebar { position: static; display: flex; overflow-x: auto; }
+  .sidebar h2 { display: none; }
+  .sidebar button { flex: 0 0 170px; }
+  .inlineForm { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 620px) {
+  .page { padding: 16px 10px calc(50px + env(safe-area-inset-bottom)); }
+  .header { align-items: flex-start; }
+  .header h1 { font-size: 28px; }
+  .flags { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .formGrid, .split { grid-template-columns: 1fr; }
+  .inlineForm { grid-template-columns: 1fr; }
+  .wide, .formGrid button { grid-column: auto; }
+  .clubHeader { align-items: flex-start; }
+  .rows article { align-items: flex-start; flex-direction: column; }
+  .rowActions, .invitationAction { width: 100%; justify-content: flex-start; }
+  .invitationAction input { width: 100%; }
+}
