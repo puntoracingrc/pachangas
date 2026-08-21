@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { OfficialProductShellV2 } from "../_components/official-product-shell-v2";
 import { attachVenueAutocomplete, type VenuePlace } from "../googlePlacesClient";
 import { useAdminViewPreview } from "../admin-view-preview";
-import { AdminViewPreviewButton, MobileAppNav } from "../mobile-app-nav";
+import { AdminViewPreviewButton } from "../mobile-app-nav";
 import { supabase } from "../supabaseClient";
 import type { TeamSummary } from "../team-social-contract";
 import { SERVICE_UNAVAILABLE_MESSAGE, userFacingError } from "../user-facing-error";
@@ -1144,7 +1145,24 @@ export default function MarketPage() {
   }
 
   return (
-    <main className="market-page" data-mobile-tab="mercado">
+    <OfficialProductShellV2
+      active="mercado"
+      adminViewPreview={canInvite ? { active: playerPreviewActive, onToggle: toggleAdminViewPreview } : undefined}
+      context={{
+        detail: activeTab === "jugadores" && marketContext ? `${marketContext.missing || "0"} plazas libres` : activeTab,
+        eyebrow: "Mercado",
+        status: supabase ? "En directo" : "Vista local",
+        title: activeTab === "jugadores" ? "Jugadores" : activeTab === "partidos" ? "Partidos abiertos" : activeTab === "retos" ? "Retos" : "Equipos",
+      }}
+      links={{
+        equipo: "/?mobile=equipo",
+        inicio: "/",
+        mercado: "/mercado",
+        partido: "/?mobile=partido",
+        perfil: "/?mobile=perfil",
+      }}
+    >
+    <main className="market-page official-ui-v2-market" data-mobile-tab="mercado">
       <nav className="market-manager-subnav" aria-label="Secciones del mercado en modo juego">
         <button className={activeTab === "jugadores" ? "active" : ""} type="button" onClick={() => selectMarketTab("jugadores")}>
           Jugadores
@@ -1401,17 +1419,7 @@ export default function MarketPage() {
         />
       )}
       </div>
-      <MobileAppNav
-        active="mercado"
-        adminViewPreview={canInvite ? { active: playerPreviewActive, onToggle: toggleAdminViewPreview } : undefined}
-        links={{
-          inicio: "/",
-          partido: "/?mobile=partido",
-          mercado: "/mercado",
-          equipo: "/?mobile=equipo",
-          perfil: "/?mobile=perfil",
-        }}
-      />
     </main>
+    </OfficialProductShellV2>
   );
 }

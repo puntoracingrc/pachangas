@@ -15,7 +15,7 @@
 }
 
 .topbar {
-  display: flex;
+  display: none;
   align-items: center;
   justify-content: space-between;
   gap: 18px;
@@ -228,11 +228,11 @@
 }
 
 @media (orientation: landscape) and (max-height: 560px) {
-  .shell { height: 100dvh; min-height: 0; overflow: hidden; padding-block: max(8px, env(safe-area-inset-top)); }
+  .shell { height: 100%; min-height: 0; overflow: hidden; padding-block: 6px; }
   .topbar { min-height: 42px; }
   .statusbar { min-height: 42px; grid-template-columns: 1fr 1.5fr auto; padding-block: 5px; }
   .statusbar div:nth-child(3), .statusbar small { display: none; }
-  .layout { height: calc(100dvh - 104px); grid-template-columns: minmax(0, 1fr) 250px; margin-top: 8px; }
+  .layout { height: calc(100% - 54px); grid-template-columns: minmax(0, 1fr) 250px; margin-top: 8px; }
   .rankingPanel, .side { min-height: 0; }
   .rankingPanel > header { min-height: 44px; padding-block: 6px; }
   .list { max-height: calc(100dvh - 150px); padding-bottom: 28px; }

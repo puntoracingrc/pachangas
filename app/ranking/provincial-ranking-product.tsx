@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
+import { OfficialProductShellV2 } from "../_components/official-product-shell-v2";
 import { supabase } from "../supabaseClient";
 import { ProvincialRankingBoard } from "./provincial-ranking-board";
 import {
@@ -177,7 +178,16 @@ export function ProvincialRankingProduct() {
   const publishedLabel = formatPublishedAt(ranking?.publication?.publishedAt);
 
   return (
-    <main className={styles.shell}>
+    <OfficialProductShellV2
+      active="equipo"
+      context={{
+        detail: ranking?.season?.label ?? "Sin temporada activa",
+        eyebrow: "Competición",
+        status: cached ? "Caché confirmada" : "En directo",
+        title: "Ranking provincial",
+      }}
+    >
+    <main className={styles.shell} data-official-surface="ranking">
       <header className={styles.topbar}>
         <div>
           <Link href="/" className={styles.back}>Volver</Link>
@@ -200,5 +210,6 @@ export function ProvincialRankingProduct() {
 
       <ProvincialRankingBoard loading={loading} ownRank={ownRank} ranking={ranking} />
     </main>
+    </OfficialProductShellV2>
   );
 }

@@ -5,6 +5,7 @@ import type { User } from "@supabase/supabase-js";
 import dynamic from "next/dynamic";
 import NextImage from "next/image";
 import Link from "next/link";
+import { OfficialProductShellV2 } from "./_components/official-product-shell-v2";
 import { PlayerCosmeticCard } from "./_components/player-cosmetic-card";
 import { attachVenueAutocomplete, type VenuePlace } from "./googlePlacesClient";
 import { GlobalRatingPanel } from "./global-rating-panel";
@@ -33,7 +34,7 @@ import {
   type PlayerPosition as AssessmentPosition,
 } from "./laboratorio-ficha-jugador/_engine/player-rating-engine";
 import { useAdminViewPreview } from "./admin-view-preview";
-import { AdminViewPreviewButton, MobileAppNav, type MobileAppTab } from "./mobile-app-nav";
+import { AdminViewPreviewButton, type MobileAppTab } from "./mobile-app-nav";
 import {
   normalizePublicPlayerCosmeticsSnapshot,
   type PublicPlayerCosmeticsSnapshot,
@@ -9024,7 +9025,20 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
   }
 
   return (
-    <main className="min-h-screen bg-[#f7f6f0] text-[#1d2521]" data-mobile-tab={activeMobileTab} style={teamColorStyle}>
+    <OfficialProductShellV2
+      active={activeMobileTab}
+      adminViewPreview={canPreviewPlayerView ? { active: playerPreviewActive, onToggle: toggleAdminPlayerView } : undefined}
+      context={{
+        detail: activeMobileTab === "partido" ? `Partido · ${selectedMatchManagerPane}` : memberRoleLabel(displayedRole),
+        eyebrow: hasRealTeam ? "Equipo activo" : "Pachangas IQ",
+        status: previewDemoMode ? "Demo" : syncStatus === "live" ? "En directo" : syncStatus === "connecting" ? "Conectando" : syncStatus === "error" ? "Sin conexión" : "Local",
+        title: currentTeamName,
+      }}
+      links={{ mercado: canUseAdminControls && matchConfigured ? marketScoutUrl("jugadores") : "/mercado" }}
+      navigationEnabled={!needsLoginForSharedLink}
+      onNavigate={navigatePrimaryMobile}
+    >
+    <main className="min-h-screen bg-[#f7f6f0] text-[#1d2521] official-ui-v2-product" data-mobile-tab={activeMobileTab} style={teamColorStyle}>
       <section className={isDemoMode ? "hero demo-hero" : "hero team-hero"} id="inicio">
         <div>
           {isDemoMode ? (
@@ -11304,18 +11318,9 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
           </section>
         </>
       ) : null}
-      {!needsLoginForSharedLink ? (
-        <MobileAppNav
-          active={activeMobileTab}
-          adminViewPreview={canPreviewPlayerView ? { active: playerPreviewActive, onToggle: toggleAdminPlayerView } : undefined}
-          links={{
-            mercado: canUseAdminControls && matchConfigured ? marketScoutUrl("jugadores") : "/mercado",
-          }}
-          onNavigate={navigatePrimaryMobile}
-        />
-      ) : null}
       <RewardBoxDemo open={rewardBoxDemoOpen && canUseAdminControls} onClose={() => setRewardBoxDemoOpen(false)} />
     </main>
+    </OfficialProductShellV2>
   );
 }
 
