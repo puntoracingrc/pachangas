@@ -64,6 +64,7 @@
     "test:competition-foundation:db": "psql -X -w \"$COMPETITION_FOUNDATION_DATABASE_URL\" -v ON_ERROR_STOP=1 -f tests/competition-organizer-foundation-v1-db.sql",
     "test:competition-foundation:concurrency": "node tests/competition-organizer-foundation-v1-concurrency.mjs",
     "test:competition-foundation:scale": "psql -X -w \"$COMPETITION_FOUNDATION_DATABASE_URL\" -v ON_ERROR_STOP=1 -f tests/competition-organizer-foundation-v1-scale.sql",
+    "test:competition-foundation:staging": "node tests/competition-organizer-foundation-v1-staging-e2e.mjs",
     "lab:season-ranking": "tsx simulation/season-ranking-lab/run.ts",
     "lab:season-ranking:elite": "tsx simulation/season-ranking-lab/run-elite.ts",
     "lab:season-ranking:v3": "tsx simulation/season-ranking-lab/run-v3.ts",

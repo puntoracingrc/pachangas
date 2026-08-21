@@ -258,6 +258,10 @@ insert into r1_responses values (
   )
 );
 select pg_temp.assert_true(
+  (select (body #>> '{snapshot,canCreate}')::boolean from r1_responses where label = 'entitlement'),
+  'A newly confirmed entitlement must be active inside its own canonical receipt'
+);
+select pg_temp.assert_true(
   not (pg_temp.competition_receipt_metadata('c1600000-0000-4000-8000-000000000002') ? 'token'),
   'Receipts must discard unknown or secret client metadata'
 );
@@ -448,6 +452,14 @@ select pg_temp.expect_failure(
 select (body #>> '{snapshot,competition,id}')::uuid as competition_id
 from r1_responses where label = 'competition' \gset
 
+select pg_temp.assert_true(
+  exists (
+    select 1 from public.pachanga_competition_invalidations invalidations
+    where invalidations.competition_id = :'competition_id'::uuid
+  ),
+  'The organizer owner must read its Realtime invalidation through RLS'
+);
+
 insert into r1_responses values (
   'edition',
   public.command_pachanga_competition_foundation_v1(
@@ -621,6 +633,13 @@ select set_config('request.jwt.claims', '{"sub":"c1100000-0000-4000-8000-0000000
 select pg_temp.expect_failure(
   format('select public.get_pachanga_competition_foundation_snapshot_v1(%L)', :'competition_id'),
   'COMPETITION_ACCESS_DENIED'
+);
+select pg_temp.assert_true(
+  not exists (
+    select 1 from public.pachanga_competition_invalidations invalidations
+    where invalidations.competition_id = :'competition_id'::uuid
+  ),
+  'A normal team admin must not read organizer invalidations without explicit competition staff'
 );
 select set_config('request.jwt.claims', '{"sub":"c1100000-0000-4000-8000-000000000005","role":"authenticated"}', true);
 select pg_temp.assert_true(

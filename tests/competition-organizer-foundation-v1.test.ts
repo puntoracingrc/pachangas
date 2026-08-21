@@ -8,6 +8,9 @@ const migrationPaths = [
   "supabase/migrations/20260821054224_competition_canonical_match_foundation_v1.sql",
   "supabase/migrations/20260821054225_competition_organizer_core_v1.sql",
   "supabase/migrations/20260821054227_competition_platform_access_v1.sql",
+  "supabase/migrations/20260821074741_competition_entitlement_clock_consistency_v1.sql",
+  "supabase/migrations/20260821075245_competition_realtime_rls_execution_v1.sql",
+  "supabase/migrations/20260821082136_competition_organizer_read_model_volatility_v1.sql",
 ] as const;
 
 async function source(path: string) {
@@ -100,7 +103,12 @@ test("all writes use command envelopes, receipts and monotonic server events", a
 });
 
 test("team ownership, entitlements and staff are resolved by PostgreSQL", async () => {
-  const [core, platform] = await Promise.all([source(migrationPaths[1]), source(migrationPaths[2])]);
+  const [core, platform, clockFix, readModelVolatility] = await Promise.all([
+    source(migrationPaths[1]),
+    source(migrationPaths[2]),
+    source(migrationPaths[3]),
+    source(migrationPaths[5]),
+  ]);
   assert.match(core, /group_row\.owner_id <> actor_id/);
   assert.match(core, /COMPETITION_OWNER_REQUIRED/);
   assert.match(core, /COMPETITION_ENTITLEMENT_REQUIRED/);
@@ -113,6 +121,13 @@ test("team ownership, entitlements and staff are resolved by PostgreSQL", async 
   assert.match(platform, /platform_grant/);
   assert.match(platform, /pachanga_platform_require_v1\('competitions\.manage'\)/);
   assert.doesNotMatch(platform, /stripe|billing_status|subscription/i);
+  assert.match(clockFix, /with authority_time as materialized/);
+  assert.match(clockFix, /select clock_timestamp\(\) as checked_at/);
+  assert.doesNotMatch(clockFix, /statement_timestamp\(\)/);
+  assert.match(
+    readModelVolatility,
+    /alter function public\.get_my_pachanga_competition_foundation_v1\(\) volatile/,
+  );
 });
 
 test("foundation tables reject direct client writes and expose only scoped read paths", async () => {
@@ -144,7 +159,10 @@ test("PWA blocks unconfirmed competition writes while reads remain ordinary read
 });
 
 test("Realtime invalidates a user-scoped local read cache and refetches the canonical model", async () => {
-  const lab = await source("app/laboratorio-competition-foundation/page.tsx");
+  const [lab, realtimeAcl] = await Promise.all([
+    source("app/laboratorio-competition-foundation/page.tsx"),
+    source(migrationPaths[4]),
+  ]);
   assert.match(lab, /pachangas-competition-foundation-read-v1/);
   assert.match(lab, /get_my_pachanga_competition_foundation_v1/);
   assert.match(lab, /pachanga_competition_invalidations/);
@@ -152,6 +170,12 @@ test("Realtime invalidates a user-scoped local read cache and refetches the cano
   assert.match(lab, /command_pachanga_competition_foundation_v1/);
   assert.doesNotMatch(lab, /\.from\("pachanga_competitions"\)\.(?:insert|update|delete)/);
   assert.doesNotMatch(lab, /setData\([^)]*payload\.new/);
+  assert.match(realtimeAcl, /grant execute on function private\.pachanga_competition_can_read_invalidation_v1/);
+  assert.match(realtimeAcl, /to authenticated/);
+  assert.doesNotMatch(
+    realtimeAcl,
+    /grant execute on function private\.pachanga_competition_can_read_invalidation_v1\([^;]+\)\s+to anon\s*;/,
+  );
 });
 
 test("the internal UI is protected, noindex and absent from public navigation", async () => {
@@ -206,4 +230,33 @@ test("R1 leaves Rating, results, rewards, conduct, billing, ranking and Demo Wor
   }
   assert.doesNotMatch(combined, /stripe_products|stripe_prices|create subscription/i);
   assert.doesNotMatch(combined, /demo-world|synthetic_world/i);
+});
+
+test("the authenticated staging story covers the complete R1 authority boundary", async () => {
+  const staging = await source("tests/competition-organizer-foundation-v1-staging-e2e.mjs");
+  for (const contract of [
+    "canonical.bind",
+    "canonical.backfill",
+    "competition.create",
+    "edition.create",
+    "rule_set.create",
+    "rule_revision.create",
+    "rule_revision.validate",
+    "rule_revision.publish",
+    "rule_revision.freeze",
+    "stage.create",
+    "stage_edge.create",
+    "division.create",
+    "group.create",
+    "staff.grant",
+    "staff.revoke",
+    "competition_match_context.bind",
+    "transfer_pachanga_group_ownership_authoritative_v1",
+    "pachanga_competition_invalidations",
+  ]) assert.match(staging, new RegExp(contract.replaceAll(".", "\\.")));
+  assert.match(staging, /IDEMPOTENCY_KEY_REUSED/);
+  assert.match(staging, /STALE_REVISION/);
+  assert.match(staging, /COMPETITION_ENTITLEMENT_REQUIRED/);
+  assert.match(staging, /normalizeFixtureControlState/);
+  assert.doesNotMatch(staging, /service[_-]?role/i);
 });
