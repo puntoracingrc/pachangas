@@ -1,6 +1,6 @@
 # Club Foundation V1 Report
 
-Estado: `PREVIEW PENDING`
+Estado: `READY FOR REVIEW`
 
 ## Trazabilidad
 
@@ -14,6 +14,7 @@ Estado: `PREVIEW PENDING`
 | Entorno local | Worktree aislado, Node 24, PostgreSQL/Supabase local dedicado |
 | Supabase staging | `iozcjirlfytryzrcmrnq`, upgrade `106 -> 110` y E2E completados |
 | Supabase produccion | `qonbngfrnrqgmxbdfbea`, no modificado |
+| Preview | [branch Preview](https://pachangas-git-codex-club-0041db-persianas-almar-web-s-projects.vercel.app) |
 | Merge | No realizado |
 
 El checkout principal tenia cambios ajenos y no se utilizo para implementar R2.
@@ -199,8 +200,30 @@ carga representativa no justifico indices especulativos: todos los p95 R2
 quedaron por debajo de `27 ms`; se conserva el warning para observarlo cuando
 exista trafico real.
 
-## Pendiente antes de READY FOR REVIEW
+## Preview y QA visual
 
-- Preview Vercel del HEAD final y matriz visual/PWA solicitada.
+La Preview Git exacta del candidato visual `d73dc4c` alcanzo `READY`; el commit
+documental final se vuelve a desplegar y someter a smoke antes de cerrar el PR.
+La Preview normal usa su configuracion habitual y, sin una sesion autorizada,
+falla cerrada como permite el contrato: laboratorio visible pero deshabilitado,
+Control Center con acceso bloqueado y perfil publico no disponible con flags
+OFF.
+
+| Superficie | `1440x900` | `1920x1080` | `390x844` | `360x800` | `844x390` |
+| --- | --- | --- | --- | --- | --- |
+| Laboratorio | PASS | PASS | PASS | PASS | PASS |
+| Control Center / acceso cerrado | PASS | PASS | PASS | PASS | PASS |
+| Perfil publico gated | PASS | PASS | PASS | PASS | PASS |
+
+En todas las comprobaciones: `0` overflow horizontal, `0` controles recortados,
+`0` imagenes rotas y `0` errores de consola. Las tres rutas declaran
+`noindex,nofollow`.
+
+La superficie PWA usa el mismo layout responsive probado, respeta safe areas y
+su manifest declara `fullscreen` con fallback `standalone`, `minimal-ui` y
+`browser`. La Preview sirve un Service Worker versionado con el SHA del commit,
+precarga solo el app shell/catalogos y mantiene API/datos sensibles fuera de la
+cache. El bridge clasifica las operaciones Club como escrituras protegidas y
+el E2E envia `installedMode=standalone` sin permitir confirmacion offline.
 
 Produccion modificada: **NO**. Supabase produccion: **NO**. Merge: **NO**.

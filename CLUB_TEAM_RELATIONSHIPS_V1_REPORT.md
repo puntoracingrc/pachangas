@@ -1,6 +1,6 @@
 # Club-Team Relationships V1 Report
 
-Estado: `STAGING PASS / PREVIEW PENDING`
+Estado: `READY FOR REVIEW`
 
 ## Separacion de autoridades
 

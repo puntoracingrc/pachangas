@@ -1,6 +1,6 @@
 # Club Competition Organizer Adapter V1 Report
 
-Estado: `STAGING PASS / PREVIEW PENDING`
+Estado: `READY FOR REVIEW`
 
 ## Evolucion del organizer
 

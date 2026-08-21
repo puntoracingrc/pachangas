@@ -1,6 +1,6 @@
 # Club Membership and Invitations V1 Report
 
-Estado: `STAGING PASS / PREVIEW PENDING`
+Estado: `READY FOR REVIEW`
 
 ## Modelo de membership
 
