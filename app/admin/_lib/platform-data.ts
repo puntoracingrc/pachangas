@@ -582,7 +582,7 @@ export async function getPlatformCompetitionFoundation(
 ) {
   const data = await rpcOrThrow<JsonRecord>(
     session.client,
-    "get_pachanga_platform_competition_foundation_v1",
+    "get_pachanga_platform_competition_foundation_v2",
     {
       page_offset: (page - 1) * pageSize,
       page_size: pageSize,
@@ -599,5 +599,41 @@ export async function getPlatformCompetitionFoundation(
     pageSize,
     reviews: asArray(data.reviews).map(asRecord),
     total: Number(data.total) || 0,
+  };
+}
+
+export async function getPlatformClubs(
+  session: VerifiedPlatformSession,
+  page: number,
+  pageSize: number,
+) {
+  const data = await rpcOrThrow<JsonRecord>(session.client, "get_pachanga_platform_clubs_v1", {
+    page_offset: (page - 1) * pageSize,
+    page_size: pageSize,
+  });
+  return {
+    events: asArray(data.recentEvents).map(asRecord),
+    flags: asRecord(data.flags),
+    items: asArray(data.items).map(asRecord),
+    metrics: asRecord(data.metrics),
+    page,
+    pageSize,
+    total: Number(data.total) || 0,
+  };
+}
+
+export async function getPlatformClub(session: VerifiedPlatformSession, clubId: string) {
+  const data = await rpcOrThrow<JsonRecord>(session.client, "get_pachanga_platform_club_v1", {
+    target_club_id: clubId,
+  });
+  return {
+    capabilities: asRecord(data.capabilities),
+    club: asRecord(data.club),
+    competitions: asArray(data.competitions).map(asRecord),
+    entitlements: asRecord(data.entitlements),
+    memberships: asArray(data.memberships).map(asRecord),
+    pendingInvitations: asArray(data.pendingInvitations).map(asRecord),
+    recentEvents: asArray(data.recentEvents).map(asRecord),
+    teamRelationships: asArray(data.teamRelationships).map(asRecord),
   };
 }

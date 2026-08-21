@@ -21,6 +21,9 @@ type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 function first(value: string | string[] | undefined) { return Array.isArray(value) ? value[0] ?? "" : value ?? ""; }
 function n(value: unknown) { const parsed = Number(value); return Number.isFinite(parsed) ? parsed : 0; }
 function s(value: unknown) { return typeof value === "string" ? value : ""; }
+function organizerId(item: Record<string, unknown>) {
+  return s(item.organizerKind) === "CLUB" ? s(item.organizerClubId) : s(item.organizerGroupId);
+}
 
 export default async function PlatformCompetitionsPage({ searchParams }: { searchParams: SearchParams }) {
   const session = await requirePlatformPage("competitions.read");
@@ -56,12 +59,12 @@ export default async function PlatformCompetitionsPage({ searchParams }: { searc
       </Panel>
 
       <Panel title="Competiciones draft">
-        {data.items.length ? <DataTable label="Competiciones"><thead><tr><th>Competición</th><th>Organizador</th><th>Estado</th><th>Ediciones</th><th>Reglas</th><th>Staff</th><th>Contexts</th><th>Revisión</th></tr></thead><tbody>{data.items.map((item) => <tr key={s(item.id)}><td><strong>{s(item.name)}</strong><small>{s(item.type)} · {s(item.slug)}</small><Identifier value={s(item.id)} /></td><td>{s(item.organizerName)}<small><Identifier value={s(item.organizerGroupId)} /></small></td><td><StatusBadge>{s(item.status)}</StatusBadge><small>{s(item.visibility)}</small></td><td>{n(item.editionCount)}</td><td>{n(item.ruleRevisionCount)}<small>última v{n(item.latestRuleVersion)}</small></td><td>{n(item.staffCount)}</td><td>{n(item.contextCount)}</td><td>{n(item.revision)}<small>{formatAdminDate(item.updatedAt)}</small></td></tr>)}</tbody></DataTable> : <EmptyState>No hay competiciones creadas.</EmptyState>}
+        {data.items.length ? <DataTable label="Competiciones"><thead><tr><th>Competición</th><th>Organizador</th><th>Estado</th><th>Ediciones</th><th>Reglas</th><th>Staff</th><th>Contexts</th><th>Revisión</th></tr></thead><tbody>{data.items.map((item) => <tr key={s(item.id)}><td><strong>{s(item.name)}</strong><small>{s(item.type)} · {s(item.slug)}</small><Identifier value={s(item.id)} /></td><td>{s(item.organizerName)}<small>{s(item.organizerKind)} · <Identifier value={organizerId(item)} /></small></td><td><StatusBadge>{s(item.status)}</StatusBadge><small>{s(item.visibility)}</small></td><td>{n(item.editionCount)}</td><td>{n(item.ruleRevisionCount)}<small>última v{n(item.latestRuleVersion)}</small></td><td>{n(item.staffCount)}</td><td>{n(item.contextCount)}</td><td>{n(item.revision)}<small>{formatAdminDate(item.updatedAt)}</small></td></tr>)}</tbody></DataTable> : <EmptyState>No hay competiciones creadas.</EmptyState>}
         <Pagination page={data.page} pageSize={data.pageSize} total={data.total} path="/admin/competitions" />
       </Panel>
 
       <Panel title="Entitlements">
-        {data.entitlements.length ? <DataTable label="Entitlements de competición"><thead><tr><th>Organizador</th><th>Capacidad</th><th>Estado</th><th>Origen</th><th>Vigencia</th><th>Revisión</th></tr></thead><tbody>{data.entitlements.map((item) => <tr key={s(item.id)}><td>{s(item.organizerName)}<small><Identifier value={s(item.organizerGroupId)} /></small></td><td>{s(item.capability)}</td><td><StatusBadge>{s(item.status)}</StatusBadge></td><td>{s(item.source)}</td><td>{formatAdminDate(item.validFrom)}<small>{item.expiresAt ? `Hasta ${formatAdminDate(item.expiresAt)}` : "Sin caducidad"}</small></td><td>{n(item.revision)}</td></tr>)}</tbody></DataTable> : <EmptyState>No hay grants de competición.</EmptyState>}
+        {data.entitlements.length ? <DataTable label="Entitlements de competición"><thead><tr><th>Organizador</th><th>Capacidad</th><th>Estado</th><th>Origen</th><th>Vigencia</th><th>Revisión</th></tr></thead><tbody>{data.entitlements.map((item) => <tr key={s(item.id)}><td>{s(item.organizerName)}<small>{s(item.organizerKind)} · <Identifier value={organizerId(item)} /></small></td><td>{s(item.capability)}</td><td><StatusBadge>{s(item.status)}</StatusBadge></td><td>{s(item.source)}</td><td>{formatAdminDate(item.validFrom)}<small>{item.expiresAt ? `Hasta ${formatAdminDate(item.expiresAt)}` : "Sin caducidad"}</small></td><td>{n(item.revision)}</td></tr>)}</tbody></DataTable> : <EmptyState>No hay grants de competición.</EmptyState>}
       </Panel>
 
       <Panel title="Salud del registro canónico">

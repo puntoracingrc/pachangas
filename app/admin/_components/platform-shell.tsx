@@ -113,7 +113,7 @@ export function PlatformShell({
                 type="search"
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
-                placeholder="Usuario, equipo, partido, Reto, caso o Stripe..."
+                placeholder="Usuario, equipo, club, partido, Reto, caso o Stripe..."
                 autoComplete="off"
               />
               {searching ? <span className={styles.searching}>Buscando</span> : null}

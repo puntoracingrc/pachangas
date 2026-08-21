@@ -932,5 +932,7 @@ try {
   if (realtimeChannel && clients[2]) await clients[2].removeChannel(realtimeChannel);
   for (const supabase of clients) {
     await supabase.auth.signOut({ scope: "local" }).catch(() => undefined);
+    await supabase.realtime.disconnect();
   }
 }
+process.exit(0);
