@@ -30,6 +30,11 @@ export default async function PlatformCompetitionsPage({ searchParams }: { searc
   const { page, pageSize } = paginationFromSearchParams(params);
   const data = await getPlatformCompetitionFoundation(session, page, pageSize);
   const canWrite = hasPlatformCapability(session.access, "competitions.manage");
+  const canonicalHealthLabel = s(data.bindingHealth.status) === "NOT_INITIALIZED"
+    ? "Pendiente de inicialización"
+    : data.bindingHealth.stale
+      ? "Pendiente de actualización"
+      : "Canónico";
 
   return (
     <>
@@ -68,7 +73,7 @@ export default async function PlatformCompetitionsPage({ searchParams }: { searc
           <div><span>Conflictos duplicados</span><strong>{n(data.bindingHealth.duplicateConflicts)}</strong></div>
           <div><span>Canónicos huérfanos</span><strong>{n(data.bindingHealth.orphanCanonicalMatches)}</strong></div>
           <div><span>Contexts vinculados</span><strong>{n(data.bindingHealth.contextsLinked)}</strong></div>
-          <div><span>Snapshot</span><strong>{data.bindingHealth.stale ? "Pendiente de backfill" : "Canónico"}</strong></div>
+          <div><span>Snapshot</span><strong>{canonicalHealthLabel}</strong></div>
         </div>
       </Panel>
 

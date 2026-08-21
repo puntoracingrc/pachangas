@@ -12,7 +12,7 @@ Estado: `READY FOR REVIEW`
 | Implementacion auditada | `47649d8` mas las correcciones y evidencias de cierre de este informe |
 | PR R1 | [#153](https://github.com/puntoracingrc/pachangas/pull/153) |
 | Inicio | `2026-08-21 07:39:27 CEST` |
-| Entorno | Worktree Git aislado, Node 22, PostgreSQL/Supabase local y Supabase staging |
+| Entorno | Worktree Git aislado, Node 24, PostgreSQL/Supabase local y Supabase staging |
 | Supabase staging | `iozcjirlfytryzrcmrnq` |
 | Supabase produccion | `qonbngfrnrqgmxbdfbea`, no modificado |
 | Merge R1 | No realizado |
@@ -44,9 +44,13 @@ de esos motores devuelven `FEATURE_NOT_AVAILABLE`.
 | `20260821074741` | Consistencia temporal de grants con una muestra de reloj autoritativa. |
 | `20260821075245` | Permiso minimo del helper RLS para entrega Realtime autenticada; `anon` sigue revocado. |
 | `20260821082136` | Volatilidad correcta del read model que resuelve entitlements temporales. |
+| `20260821101510` | Compatibilidad de capabilities: conserva `rankings.write` y añade únicamente acceso R1 a owner/admin de plataforma. |
+| `20260821102613` | Estado explícito de inicialización canónica; evita presentar un registro sin backfill como saludable. |
 
-Las seis versiones estan aplicadas en staging. El ledger local y el remoto
-contienen exactamente `104` migraciones y terminan en `20260821082136`. La CLI
+Las seis versiones originales estan aplicadas en staging y permanecen
+inmutables. Las dos correcciones de release son migraciones forward-only nuevas.
+El fresh bootstrap local contiene exactamente `106` migraciones y termina en
+`20260821102613`; el ledger productivo previo contiene `98` y no incluye R1. La CLI
 `supabase migration list --linked` no puede usar el perfil global de esta
 maquina (`Unsupported Config Type ""`); la equivalencia se comprobo mediante
 ledger local de la CLI y ledger remoto de la API de Supabase. No se reescribio
@@ -151,6 +155,9 @@ orden estable, no la hora del dispositivo.
   staff y estado del entitlement.
 - Platform read model: competiciones, organizer, grants, staff, revisiones,
   health canonico, eventos y errores agregados.
+- El health canonico permanece `NOT_INITIALIZED` hasta que un
+  `canonical.backfill` confirmado por servidor marque su inicializacion; una
+  instalacion vacia ya no puede mostrarse como un falso estado saludable.
 - El laboratorio conserva solo read models derivados en cache local.
 - Offline permite un borrador visual, nunca una Competition confirmada ni una
   cola deportiva.
@@ -176,12 +183,12 @@ plataforma existente.
 
 | Gate | Resultado |
 | --- | --- |
-| Tests focalizados TypeScript | PASS, `14/14` |
+| Tests focalizados TypeScript | PASS, `15/15` |
 | SQL/RLS story | PASS, `23` eventos y `23` receipts; lifecycle, RBAC, RLS, idempotencia e invariantes |
 | Concurrencia | PASS, un ganador + un stale; replay converge; revision final `3` |
-| Fresh bootstrap | PASS, `104` migraciones desde baseline `20260731080738` hasta `20260821082136` |
+| Fresh bootstrap | PASS, `106` migraciones desde baseline `20260731080738` hasta `20260821102613` |
 | Synthetic World / escala | PASS, 1.000 equipos, 10.000 bindings, 500 competitions y 100 publicaciones |
-| `npm test` | PASS, `288/288`, incluido build integrado |
+| `npm test` | PASS, `289/289`, incluido build integrado |
 | `npm run typecheck` | PASS |
 | `npm run build` | PASS, `34` paginas y ambas rutas R1 |
 | ESLint focalizado | PASS, `0` incidencias en 11 rutas TS/TSX/MJS modificadas |
@@ -223,15 +230,15 @@ registrado.
 
 | Medicion | p50 | p95 |
 | --- | ---: | ---: |
-| Binding lookup | `0.285 ms` | `0.438 ms` |
-| Organizer read model | `150.550 ms` | `154.338 ms` |
-| Admin competitions | `11.629 ms` | `12.576 ms` |
-| Rule publish | `1.347 ms` | `1.874 ms` |
+| Binding lookup | `0.299 ms` | `0.500 ms` |
+| Organizer read model | `172.776 ms` | `298.482 ms` |
+| Admin competitions | `12.661 ms` | `16.825 ms` |
+| Rule publish | `1.449 ms` | `2.099 ms` |
 
 La prueba produjo 100 receipts y 100 eventos de publicacion. Los planes usan
 `pachanga_canonical_match_active_source_idx` y
 `pachanga_competitions_organizer_idx`; los indices del dominio medido ocupan
-`6.750.208 bytes` en la base local inicializada.
+`3.407.872 bytes` en la base local inicializada.
 
 Advisors remotos R1: 24 avisos de seguridad documentados (15 tablas privadas
 RLS sin policy general, 8 RPC security-definer con RBAC interno, 1 configuracion
@@ -297,8 +304,8 @@ Cada fallo se registro antes de corregirse. Ninguno se oculto para continuar.
 
 | ID | Clase | Escenario original | Resolucion | Regresion |
 | --- | --- | --- | --- | --- |
-| R1-VAL-001 | `PRODUCT_BUG` | Health recalculaba 10.000 fuentes en cada lectura. | `fixed`: snapshot materializado e invalidacion. | `regression_verified`: admin p95 `12.576 ms`. |
-| R1-VAL-002 | `SIMULATION_BUG` | Escala media un indice como `authenticated` pese a estar revocado. | `fixed`: medicion interna separada. | `regression_verified`: lookup p95 `0.438 ms`, ACL cerrada. |
+| R1-VAL-001 | `PRODUCT_BUG` | Health recalculaba 10.000 fuentes en cada lectura. | `fixed`: snapshot materializado e invalidacion. | `regression_verified`: admin p95 final `16.825 ms`. |
+| R1-VAL-002 | `SIMULATION_BUG` | Escala media un indice como `authenticated` pese a estar revocado. | `fixed`: medicion interna separada. | `regression_verified`: lookup p95 final `0.500 ms`, ACL cerrada. |
 | R1-VAL-003 | `SIMULATION_BUG` | Fixture `validated` no incluia `effective_from`. | `fixed`: fixture conforme al contrato. | `regression_verified`: 100 publicaciones. |
 | R1-VAL-004 | `PRODUCT_BUG` | Avisos flotante solapaba el laboratorio en portrait. | `fixed`: oculto solo en la superficie R1. | `regression_verified`: 390x844, 360x800 y standalone. |
 | R1-VAL-005 | `PRODUCT_BUG` | Control Center leia claves health inexistentes. | `fixed`: contrato canonico exacto. | `regression_verified`: tests y QA visual. |
@@ -317,7 +324,7 @@ Cada fallo se registro antes de corregirse. Ninguno se oculto para continuar.
 | R1-VAL-018 | `SIMULATION_BUG` | E2E esperaba `22023`, contrato devuelve `PT409`. | `fixed`: asercion alineada. | `regression_verified`: conflicto idempotente remoto. |
 | R1-VAL-019 | `PRODUCT_BUG` | Realtime no podia ejecutar helper RLS. | `fixed`: migracion `20260821075245`. | `regression_verified`: evento + refetch; anon denegado. |
 | R1-VAL-020 | `SIMULATION_BUG` | Diagnostico ordenaba invalidaciones por `id` inexistente. | `fixed`: server sequence + claves estables. | `regression_verified`: lectura remota consistente. |
-| R1-VAL-021 | `SIMULATION_BUG` | Test ACL confundia comentario/REVOKE con GRANT a anon. | `fixed`: regex sobre concesion real. | `regression_verified`: 14/14 focales. |
+| R1-VAL-021 | `SIMULATION_BUG` | Test ACL confundia comentario/REVOKE con GRANT a anon. | `fixed`: regex sobre concesion real. | `regression_verified`: 15/15 focales. |
 | R1-VAL-022 | `SIMULATION_BUG` | Consulta de invariantes uso tablas supuestas. | `fixed`: misma consulta exacta del baseline. | `regression_verified`: checksums identicos. |
 | R1-VAL-023 | `TESTABILITY_GAP` | Staging no tenia OPEN_MATCH para probar link exacto ni huerfano. | `fixed`: dos fixtures deportivos sinteticos minimos. | `regression_verified`: mismo canonical + review sin fusion + replay. |
 | R1-VAL-024 | `SIMULATION_BUG` | Repeticion intentaba crear segundo context activo. | `fixed`: reutiliza contexto persistido. | `regression_verified`: unicidad conservada. |
@@ -332,6 +339,10 @@ Cada fallo se registro antes de corregirse. Ninguno se oculto para continuar.
 | R1-VAL-033 | `SIMULATION_BUG` | Diagnostico invoco helper RLS con aridad incorrecta. | `fixed`: tres argumentos reales. | `regression_verified`: publication activa, authenticated si, anon no. |
 | R1-VAL-034 | `ENVIRONMENT_ISSUE` | Tras reanudar la sesion, el primer gate SQL no heredo `COMPETITION_FOUNDATION_DATABASE_URL` y `psql` intento el socket 5432. | `fixed`: URL local explicita del contenedor R1 en cada comando. | `regression_verified`: SQL/RLS, concurrencia y escala salen 0; no hubo escritura remota. |
 | R1-VAL-035 | `TESTABILITY_GAP` | El navegador integrado acepto `Emulation.setEmulatedMedia`, pero no activo `display-mode: standalone`; su raw CDP tampoco permite inyectar el init script. | `fixed`: auditor headless temporal con el mismo patron CDP del repositorio y perfil aislado. | `regression_verified`: standalone emulado en runtime, manifest/SW 200 y registrados, 0 errores/overflow. |
+| R1-VAL-036 | `PRODUCT_BUG` | La migracion de acceso R1 partia de una matriz anterior a Ranking Productization y retiraba `rankings.write` a owner/admin. | `fixed`: migracion forward-only `20260821101510`, sin editar las seis ya aplicadas. | `regression_verified`: upgrade productivo simulado y SQL comprueban matriz anterior mas solo `competitions.read/manage`. |
+| R1-VAL-037 | `PRODUCT_BUG` | El refresh de instalacion dejaba health `stale=false` y el Control Center mostraba `Canonico` sin haber ejecutado backfill. | `fixed`: migracion `20260821102613` con estado `NOT_INITIALIZED` y UI explicita. | `regression_verified`: bootstrap, upgrade incremental y receipt del primer backfill. |
+| R1-VAL-038 | `SIMULATION_BUG` | Un `supabase db reset` generico no aplico migraciones porque el producto desactiva deliberadamente el cargador automatico. | `fixed`: uso del bootstrap guardado oficial del repositorio. | `regression_verified`: ledger fresco exacto `106/106`. |
+| R1-VAL-039 | `SIMULATION_BUG` | La primera asercion nueva intento leer un helper privado bajo `authenticated`. | `fixed`: la prueba usa la RPC publica protegida del platform owner. | `regression_verified`: SQL/RLS completo y schema `private` sigue denegado. |
 
 ## Entrega 1-73
 
@@ -342,7 +353,7 @@ Cada fallo se registro antes de corregirse. Ninguno se oculto para continuar.
 | 3 | Rama R1 | `codex/competition-organizer-foundation-v1` |
 | 4 | PR R1 | #153, sin merge. |
 | 5 | HEAD final | Se comunica en la entrega tras el commit documental de cierre. |
-| 6 | Migraciones | Seis forward-only. |
+| 6 | Migraciones | Seis originales inmutables y dos correcciones forward-only de release. |
 | 7 | Tablas/entidades | Inventario en este informe. |
 | 8 | Canonical Match | Implementado y probado. |
 | 9 | Binding | Implementado, unico e idempotente. |
@@ -387,7 +398,7 @@ Cada fallo se registro antes de corregirse. Ninguno se oculto para continuar.
 | 48 | Platform read model | Implementado y medido. |
 | 49 | `/admin/competitions` | Implementado, interno. |
 | 50 | Laboratorio | Implementado, noindex/nofollow. |
-| 51 | Bootstrap | 104 migraciones, PASS. |
+| 51 | Bootstrap | 106 migraciones, PASS. |
 | 52 | SQL/RLS | PASS. |
 | 53 | Concurrencia | PASS. |
 | 54 | Synthetic World | PASS aislado. |
@@ -403,7 +414,7 @@ Cada fallo se registro antes de corregirse. Ninguno se oculto para continuar.
 | 64 | Ranking | 0 cambios R1. |
 | 65 | Build | PASS. |
 | 66 | Typecheck | PASS. |
-| 67 | Tests | 288/288 PASS. |
+| 67 | Tests | 289/289 PASS. |
 | 68 | Lint focalizado | PASS; lint global historico documentado. |
 | 69 | Preview | PASS; deployment y matriz documentados. |
 | 70 | Staging | E2E autenticado PASS. |

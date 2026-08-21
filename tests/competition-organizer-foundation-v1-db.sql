@@ -267,6 +267,11 @@ select pg_temp.assert_true(
 );
 
 -- The canonical backfill uses exact structural relations and is repeatable.
+select pg_temp.assert_true(
+  public.get_pachanga_platform_canonical_match_health_v1() ->> 'status' = 'NOT_INITIALIZED'
+  and not (public.get_pachanga_platform_canonical_match_health_v1() ->> 'initialized')::boolean,
+  'An installed registry must remain explicitly uninitialized before canonical.backfill'
+);
 insert into r1_responses values (
   'backfill-1',
   public.command_pachanga_competition_platform_v1(
@@ -284,6 +289,12 @@ insert into r1_responses values (
   )
 );
 reset role;
+select pg_temp.assert_true(
+  (select body #>> '{snapshot,health,status}' from r1_responses where label = 'backfill-1') = 'READY'
+  and (select (body #>> '{snapshot,health,initialized}')::boolean from r1_responses where label = 'backfill-1')
+  and (select initialized_at is not null from private.pachanga_canonical_match_health_state where singleton),
+  'A confirmed canonical.backfill must initialize both its receipt snapshot and canonical health read model'
+);
 select pg_temp.assert_true(
   (select body #>> '{snapshot,backfill,canonicalMatchesCreated}' from r1_responses where label = 'backfill-2') = '0',
   'A repeated canonical backfill must not create matches'
@@ -780,6 +791,24 @@ select pg_temp.assert_true(
 );
 reset role;
 
+-- Platform access adds Competition R1 without deleting the Ranking Productization write capability.
+select pg_temp.assert_true(
+  private.pachanga_platform_capabilities_v1('platform_owner') ? 'rankings.write'
+  and private.pachanga_platform_capabilities_v1('platform_owner') ? 'competitions.read'
+  and private.pachanga_platform_capabilities_v1('platform_owner') ? 'competitions.manage'
+  and private.pachanga_platform_capabilities_v1('platform_admin') ? 'rankings.write'
+  and private.pachanga_platform_capabilities_v1('platform_admin') ? 'competitions.read'
+  and private.pachanga_platform_capabilities_v1('platform_admin') ? 'competitions.manage',
+  'Competition R1 must preserve Ranking Productization capabilities'
+);
+select pg_temp.assert_true(
+  not (private.pachanga_platform_capabilities_v1('moderator') ? 'competitions.read')
+  and not (private.pachanga_platform_capabilities_v1('support') ? 'competitions.read')
+  and not (private.pachanga_platform_capabilities_v1('finance') ? 'competitions.read')
+  and not (private.pachanga_platform_capabilities_v1('ops') ? 'competitions.read'),
+  'Competition access must remain limited to platform owner and platform admin'
+);
+
 -- Platform admin has the bounded global read/manage capability; moderator-style roles do not.
 set local role authenticated;
 select set_config('request.jwt.claims', '{"sub":"c1100000-0000-4000-8000-000000000008","role":"authenticated"}', true);
@@ -829,6 +858,7 @@ select pg_temp.assert_true(
 
 select jsonb_build_object(
   'canonicalBackfillIdempotent', true,
+  'canonicalHealthInitializationExplicit', true,
   'competitionId', :'competition_id',
   'contextCanonicalMatchId', :'canonical_match_id',
   'entitlementBoundToGroup', true,

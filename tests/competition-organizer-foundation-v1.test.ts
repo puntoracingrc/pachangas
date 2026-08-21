@@ -11,6 +11,8 @@ const migrationPaths = [
   "supabase/migrations/20260821074741_competition_entitlement_clock_consistency_v1.sql",
   "supabase/migrations/20260821075245_competition_realtime_rls_execution_v1.sql",
   "supabase/migrations/20260821082136_competition_organizer_read_model_volatility_v1.sql",
+  "supabase/migrations/20260821101510_competition_platform_capabilities_preserve_ranking_v1.sql",
+  "supabase/migrations/20260821102613_competition_canonical_health_initialization_v1.sql",
 ] as const;
 
 async function source(path: string) {
@@ -36,7 +38,7 @@ test("canonical match bindings preserve exact source identity and fail ambiguous
 });
 
 test("canonical health is materialized, invalidated by source events and never recalculated by reads", async () => {
-  const platform = await source(migrationPaths[2]);
+  const [platform, initialization] = await Promise.all([source(migrationPaths[2]), source(migrationPaths[7])]);
   assert.match(platform, /create table if not exists private\.pachanga_canonical_match_health_state/);
   assert.match(platform, /create or replace function private\.pachanga_compute_canonical_match_health_v1/);
   assert.match(platform, /create or replace function private\.pachanga_refresh_canonical_match_health_v1/);
@@ -48,6 +50,21 @@ test("canonical health is materialized, invalidated by source events and never r
     platform.match(/create or replace function public\.get_pachanga_platform_canonical_match_health_v1\(\)[\s\S]*?\$\$;/)?.[0] ?? "",
     /pachanga_compute_canonical_match_health_v1/,
   );
+  assert.match(initialization, /add column if not exists initialized_at timestamptz/);
+  assert.match(initialization, /when state\.initialized_at is null then 'NOT_INITIALIZED'/);
+  assert.match(initialization, /when state\.dirty then 'DIRTY'/);
+  assert.match(initialization, /target_action = 'canonical\.backfill'/);
+  assert.match(initialization, /target_snapshot := jsonb_set\(/);
+});
+
+test("competition access preserves every existing ranking write capability", async () => {
+  const compatibility = await source(migrationPaths[6]);
+  assert.match(compatibility, /when 'platform_owner'[\s\S]*?'rankings\.write'[\s\S]*?'competitions\.read', 'competitions\.manage'/);
+  assert.match(compatibility, /when 'platform_admin'[\s\S]*?'rankings\.write'[\s\S]*?'competitions\.read', 'competitions\.manage'/);
+  for (const role of ["moderator", "support", "finance", "ops"]) {
+    const roleBlock = compatibility.match(new RegExp(`when '${role}'[\\s\\S]*?(?=when '|else)`))?.[0] ?? "";
+    assert.doesNotMatch(roleBlock, /competitions\.(?:read|manage)/);
+  }
 });
 
 test("competition foundation is versioned and does not create a league or tournament engine", async () => {
@@ -212,6 +229,8 @@ test("Control Center consumes the exact canonical health contract", async () => 
     "contextsLinked",
   ]) assert.match(adminPage, new RegExp(`bindingHealth\\.${key}`));
   assert.match(adminPage, /bindingHealth\.stale/);
+  assert.match(adminPage, /bindingHealth\.status/);
+  assert.match(adminPage, /Pendiente de inicialización/);
   assert.doesNotMatch(adminPage, /bindingHealth\.(?:activeBindings|reviewsOpen)/);
 });
 
