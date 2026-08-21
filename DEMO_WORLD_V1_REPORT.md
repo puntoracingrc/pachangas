@@ -4,10 +4,12 @@
 
 - Auditoria iniciada: 2026-08-11 (Europe/Madrid).
 - Base inicial: `851418d688e4078d9fb9166174b961dc5c22d4d9` (`origin/main` al abrir la rama).
-- Main integrado para el cierre: `7e7cfdf110110d63b92dfee2d5529ffa284c92e5`.
-- Rama: `codex/demo-world-v1`.
+- Main integrado para el cierre inicial: `7e7cfdf110110d63b92dfee2d5529ffa284c92e5`.
+- Main funcional publicado: `087cc03668b33c3f42dc77ec06e2bc597a6f1904`.
+- Ramas: `codex/demo-world-v1` y follow-up `codex/demo-world-v1-release-fix`.
 - Worktree aislado: `/Users/macbookpro14/.codex/worktrees/pachangas-demo-world-v1`.
-- Produccion y Supabase: no modificados.
+- Produccion web: modificada mediante los PR #140 y #150.
+- Supabase: no modificado; cero migraciones y cero escrituras Demo.
 
 ## Registro de incidencias
 
@@ -220,11 +222,15 @@ Recorrido de diez minutos: permite cambiar perspectiva incluso en modo juego, ab
 
 ## Publicacion
 
-- Rama: `codex/demo-world-v1`.
+- Ramas: `codex/demo-world-v1` y `codex/demo-world-v1-release-fix`.
 - Commit de implementacion validado: `2af987832e59a321ddf8c177dfca4fea2c38ded1`.
-- PR draft: `https://github.com/puntoracingrc/pachangas/pull/140`.
+- PR de implementacion: `https://github.com/puntoracingrc/pachangas/pull/140`, fusionado en `b4c13e9a6c4d750b617c2c8dac63759d0b6c2e06`.
+- PR de sustitucion de la demo heredada: `https://github.com/puntoracingrc/pachangas/pull/150`, fusionado en `087cc03668b33c3f42dc77ec06e2bc597a6f1904`.
 - Preview Vercel de implementacion validada: `https://pachangas-inra7ez0e-persianas-almar-web-s-projects.vercel.app/demo` (`59f8ed4b83ff4d73628bd7b4411684284fd8d80a`).
-- QA remota: carga fria solo de `core`, chunks secundarios al abrir Equipo, cero writes, navegacion completa, 390x844 y 844x390 sin overflow, caja 3D diferida y ciclo guardar/equipar/reiniciar correcto.
-- Merge: no.
-- Produccion modificada: no.
+- Preview del follow-up: deployment `dpl_83Jf7KAXvZbWWPwJpJQdqLhi4kk9`, SHA `02cb59904c017224bf540e0821b8ba85be980207`, READY.
+- Produccion: deployment `dpl_DpUWtVzWEZXcocT1Qd1BfXUv2SfP`, SHA `087cc03668b33c3f42dc77ec06e2bc597a6f1904`, READY y servido por `https://pachangasiq.com`.
+- QA remota: carga fria solo de `core`, chunks secundarios al abrir Equipo, cero writes, cinco areas navegables, 390x844 y 844x390 sin overflow, cuenta real aislada, caja 3D diferida y ciclo guardar/equipar/reiniciar correcto.
+- Merge: si, PR #140 y PR #150.
+- Produccion modificada: si, exclusivamente frontend, snapshot estatico y Service Worker/PWA de Demo World.
 - Supabase modificado: no.
+- Informe de release: `DEMO_WORLD_V1_PRODUCTION_RELEASE.md`.
