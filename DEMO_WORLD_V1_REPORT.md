@@ -213,7 +213,7 @@ Recorrido de diez minutos: permite cambiar perspectiva incluso en modo juego, ab
 | `npm run typecheck` | PASS |
 | `npm run build` | PASS, Next.js 16.2.6, 33 paginas estaticas generadas |
 | Visual Audit V1 focalizado | PASS, 114/114 |
-| Preview Vercel exacta | Pendiente del commit final |
+| Preview Vercel exacta | PASS en `59f8ed4b83ff4d73628bd7b4411684284fd8d80a`: `/demo` publico protegido, acceso legado redirigido, cinco secciones, portrait, landscape y caja 3D bajo demanda |
 | Global lint | deuda previa: 23 errores y 20 warnings fuera de los modulos Demo |
 | `git diff --check` | PASS antes de commit; se repite al cerrar |
 
@@ -222,7 +222,8 @@ Recorrido de diez minutos: permite cambiar perspectiva incluso en modo juego, ab
 - Rama: `codex/demo-world-v1`.
 - Commit de implementacion validado: `2af987832e59a321ddf8c177dfca4fea2c38ded1`.
 - PR draft: `https://github.com/puntoracingrc/pachangas/pull/140`.
-- Preview Vercel exacta validada: pendiente del commit final.
+- Preview Vercel de implementacion validada: `https://pachangas-inra7ez0e-persianas-almar-web-s-projects.vercel.app/demo` (`59f8ed4b83ff4d73628bd7b4411684284fd8d80a`).
+- QA remota: carga fria solo de `core`, chunks secundarios al abrir Equipo, cero writes, navegacion completa, 390x844 y 844x390 sin overflow, caja 3D diferida y ciclo guardar/equipar/reiniciar correcto.
 - Merge: no.
 - Produccion modificada: no.
 - Supabase modificado: no.
