@@ -1,0 +1,37 @@
+import Link from "next/link";
+import { DataTable, EmptyState, Identifier, Metric, MetricGrid, PageHeader, Pagination, Panel, StatusBadge, formatAdminDate } from "../_components/platform-ui";
+import { requirePlatformPage } from "../_lib/platform-auth";
+import { hasPlatformCapability } from "../_lib/platform-contract";
+import { getPlatformReferee, getPlatformRefereeHealth, getPlatformReferees, paginationFromSearchParams } from "../_lib/platform-data";
+import { refereeArray, refereeNumber, refereeRecord, refereeText } from "../../referee-platform-contract";
+import styles from "../platform-admin.module.css";
+import { RefereeAdminClient } from "./referee-admin-client";
+
+type SearchParams = Promise<Record<string, string | string[] | undefined>>;
+function first(value: string | string[] | undefined) { return Array.isArray(value) ? value[0] ?? "" : value ?? ""; }
+
+export default async function PlatformRefereesPage({ searchParams }: { searchParams: SearchParams }) {
+  const session = await requirePlatformPage("referees.read");
+  const raw = await searchParams;
+  const params = new URLSearchParams(); Object.entries(raw).forEach(([key, value]) => params.set(key, first(value)));
+  const { page, pageSize } = paginationFromSearchParams(params);
+  const filters = { area: first(raw.area), marketplace: first(raw.marketplace), modality: first(raw.modality), query: first(raw.q), status: first(raw.status), verification: first(raw.verification) };
+  const selectedId = first(raw.profile);
+  const [data, health, selected] = await Promise.all([
+    getPlatformReferees(session, filters, page, pageSize),
+    getPlatformRefereeHealth(session),
+    selectedId ? getPlatformReferee(session, selectedId) : Promise.resolve(null),
+  ]);
+  const healthProfiles = refereeRecord(health.profiles); const healthAssignments = refereeRecord(health.assignments); const healthRelationships = refereeRecord(health.relationships);
+  const selectedProfile = selected ? { ...selected.profile, statisticsRevision: refereeNumber(selected.statistics.revision) } : null;
+  return <>
+    <PageHeader title="Árbitros" subtitle="Perfiles, relaciones con Clubs, asignaciones canónicas y salud operativa." actions={hasPlatformCapability(session.access, "labs.read") ? <Link className={styles.secondaryButton} href="/laboratorio-referee-platform">Abrir laboratorio</Link> : null} />
+    <MetricGrid><Metric label="Perfiles" value={refereeNumber(healthProfiles.total)} /><Metric label="Activos" value={refereeNumber(healthProfiles.active)} tone="good" /><Metric label="En Mercado" value={refereeNumber(healthProfiles.listed)} /><Metric label="Relaciones pendientes" value={refereeNumber(healthRelationships.pending)} tone={refereeNumber(healthRelationships.pending) ? "warning" : "neutral"} /><Metric label="Asignaciones activas" value={refereeNumber(healthAssignments.accepted) + refereeNumber(healthAssignments.confirmed)} /></MetricGrid>
+    <Panel title="Controles de plataforma"><RefereeAdminClient canWrite={hasPlatformCapability(session.access, "referees.manage")} flags={data.flags} selected={selectedProfile} /></Panel>
+    <Panel title="Registro arbitral" toolbar={<form className={styles.filters}><label>Buscar<input name="q" defaultValue={filters.query} /></label><label>Estado<select name="status" defaultValue={filters.status}><option value="">Todos</option><option value="draft">Draft</option><option value="active">Activo</option><option value="suspended">Suspendido</option><option value="archived">Archivado</option></select></label><label>Verificación<select name="verification" defaultValue={filters.verification}><option value="">Todas</option><option value="unverified">No verificado</option><option value="pending">Pendiente</option><option value="verified">Verificado</option><option value="rejected">Rechazado</option><option value="revoked">Revocado</option></select></label><button type="submit">Filtrar</button></form>}>
+      {data.items.length ? <DataTable label="Árbitros canónicos"><thead><tr><th>Árbitro</th><th>Estado</th><th>Modalidades</th><th>Zonas</th><th>Clubs</th><th>Asignaciones</th><th>Partidos</th><th>Revisión</th></tr></thead><tbody>{data.items.map((item) => <tr key={refereeText(item.id)}><td><Link href={`/admin/referees?profile=${refereeText(item.id)}`}><strong>{refereeText(item.displayName)}</strong></Link><small>@{refereeText(item.slug)}</small><Identifier value={refereeText(item.id)} /></td><td><StatusBadge>{refereeText(item.operationalStatus)}</StatusBadge><small>{refereeText(item.verificationStatus)} · {refereeText(item.marketplaceStatus)}</small></td><td>{refereeArray(item.modalities).map((m) => refereeText(m)).join(", ") || "-"}</td><td>{refereeArray(item.areas).map((a) => refereeText(a.generalArea)).join(", ") || "-"}</td><td>{refereeNumber(item.activeClubs)}</td><td>{refereeNumber(item.activeAssignments)}</td><td>{refereeNumber(item.matchesCompleted)}</td><td>{refereeNumber(item.revision)}<small>{formatAdminDate(item.updatedAt)}</small></td></tr>)}</tbody></DataTable> : <EmptyState>No hay perfiles arbitrales con estos filtros.</EmptyState>}
+      <Pagination page={data.page} pageSize={data.pageSize} total={data.total} path="/admin/referees" query={{ q: filters.query, status: filters.status, verification: filters.verification }} />
+    </Panel>
+    {selected ? <><Panel title={`Relaciones de ${refereeText(selected.profile.displayName)}`}>{selected.relationships.length ? <DataTable label="Relaciones arbitrales"><thead><tr><th>Club</th><th>Tipo</th><th>Estado</th><th>Visibilidad</th><th>Revisión</th></tr></thead><tbody>{selected.relationships.map((item) => <tr key={refereeText(item.id)}><td>{refereeText(item.clubName)}<small><Identifier value={refereeText(item.clubId)} /></small></td><td>{refereeText(item.relationshipType)}</td><td><StatusBadge>{refereeText(item.status)}</StatusBadge></td><td>Árbitro {item.showOnRefereeProfile ? "sí" : "no"} · Club {item.showOnClubProfile ? "sí" : "no"}</td><td>{refereeNumber(item.revision)}</td></tr>)}</tbody></DataTable> : <EmptyState>Sin relaciones.</EmptyState>}</Panel><Panel title="Asignaciones">{selected.assignments.length ? <DataTable label="Asignaciones arbitrales"><thead><tr><th>Partido canónico</th><th>Rol</th><th>Origen</th><th>Horario</th><th>Estado</th><th>Revisión</th></tr></thead><tbody>{selected.assignments.map((item) => <tr key={refereeText(item.id)}><td><Identifier value={refereeText(item.canonicalMatchId)} /></td><td>{refereeText(item.assignmentRole)}</td><td>{refereeText(item.requesterKind)} · {refereeText(item.sourceKind)}</td><td>{formatAdminDate(item.scheduledStart)}<small>{refereeText(item.timezone)}</small></td><td><StatusBadge>{refereeText(item.status)}</StatusBadge></td><td>{refereeNumber(item.revision)}</td></tr>)}</tbody></DataTable> : <EmptyState>Sin asignaciones.</EmptyState>}</Panel><Panel title="Eventos">{selected.events.length ? <DataTable label="Eventos arbitrales"><thead><tr><th>Acción</th><th>Agregado</th><th>Revisión</th><th>Secuencia</th><th>Fecha</th></tr></thead><tbody>{selected.events.map((item) => <tr key={refereeText(item.id)}><td>{refereeText(item.action)}<small>{refereeText(item.reasonCode)}</small></td><td>{refereeText(item.aggregateType)}</td><td>{refereeNumber(item.aggregateRevision)}</td><td>{refereeNumber(item.serverSequence)}</td><td>{formatAdminDate(item.confirmedAt)}</td></tr>)}</tbody></DataTable> : <EmptyState>Sin eventos.</EmptyState>}</Panel></> : null}
+  </>;
+}

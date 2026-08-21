@@ -637,3 +637,44 @@ export async function getPlatformClub(session: VerifiedPlatformSession, clubId: 
     teamRelationships: asArray(data.teamRelationships).map(asRecord),
   };
 }
+
+export async function getPlatformReferees(
+  session: VerifiedPlatformSession,
+  filters: JsonRecord,
+  page: number,
+  pageSize: number,
+) {
+  const data = await rpcOrThrow<JsonRecord>(session.client, "get_pachanga_platform_referees_v1", {
+    target_filters: filters,
+    target_page: page,
+    target_page_size: pageSize,
+  });
+  return {
+    flags: asRecord(data.flags),
+    items: asArray(data.items).map(asRecord),
+    page: Number(data.page) || page,
+    pageSize: Number(data.pageSize) || pageSize,
+    total: Number(data.total) || 0,
+  };
+}
+
+export async function getPlatformReferee(session: VerifiedPlatformSession, profileId: string) {
+  const data = await rpcOrThrow<JsonRecord>(session.client, "get_pachanga_platform_referee_v1", {
+    target_profile_id: profileId,
+  });
+  return {
+    areas: asArray(data.areas).map(asRecord),
+    assignments: asArray(data.assignments).map(asRecord),
+    availability: asRecord(data.availability),
+    capabilities: asRecord(data.capabilities),
+    events: asArray(data.events).map(asRecord),
+    modalities: asArray(data.modalities).map(asRecord),
+    profile: asRecord(data.profile),
+    relationships: asArray(data.relationships).map(asRecord),
+    statistics: asRecord(data.statistics),
+  };
+}
+
+export async function getPlatformRefereeHealth(session: VerifiedPlatformSession) {
+  return rpcOrThrow<JsonRecord>(session.client, "get_pachanga_platform_referee_health_v1");
+}

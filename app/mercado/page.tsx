@@ -9,6 +9,7 @@ import { supabase } from "../supabaseClient";
 import type { TeamSummary } from "../team-social-contract";
 import { SERVICE_UNAVAILABLE_MESSAGE, userFacingError } from "../user-facing-error";
 import { ChallengeableTeamsPanel } from "./challengeable-teams-panel";
+import { RefereeMarketplacePanel } from "./referee-marketplace-panel";
 import { TeamChallengesPanel } from "./team-challenges-panel";
 
 const googleMapsApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
@@ -330,7 +331,7 @@ type MarketMatchContext = {
   zone: string;
 };
 
-type MarketTab = "equipos" | "jugadores" | "partidos" | "retos";
+type MarketTab = "arbitros" | "equipos" | "jugadores" | "partidos" | "retos";
 
 function marketTabFromParam(value: string | null): MarketTab {
   if (value === "equipos" || value === "partidos" || value === "retos") return value;
@@ -667,6 +668,8 @@ export default function MarketPage() {
   const [modalityFilter, setModalityFilter] = useState("Todas");
   const [positionFilter, setPositionFilter] = useState("Todas");
   const [canInvite, setCanInvite] = useState(false);
+  const [canProposeReferee, setCanProposeReferee] = useState(false);
+  const [refereeMarketplaceEnabled, setRefereeMarketplaceEnabled] = useState(false);
   const { previewRequested, toggleAdminViewPreview } = useAdminViewPreview();
   const [inviteMessage, setInviteMessage] = useState("");
   const [marketRefresh, setMarketRefresh] = useState(0);
@@ -752,6 +755,7 @@ export default function MarketPage() {
       const user = session?.data.session?.user ?? null;
 
       let exactCanInvite = false;
+      let exactCanProposeReferee = false;
       if (user && marketContext?.groupId) {
         const membership = await supabase
           ?.from("pachanga_group_members")
@@ -760,8 +764,24 @@ export default function MarketPage() {
           .eq("user_id", user.id)
           .maybeSingle();
         exactCanInvite = !membership?.error && ["owner", "admin"].includes(String(membership?.data?.role));
+        exactCanProposeReferee = !membership?.error && String(membership?.data?.role) === "owner";
       }
-      if (active) setCanInvite(exactCanInvite);
+      if (active) {
+        setCanInvite(exactCanInvite);
+        setCanProposeReferee(exactCanProposeReferee);
+      }
+
+      const refereeFlags = await supabase?.rpc("get_pachanga_referee_foundation_flags_v1") as {
+        data: { marketplaceEnabled?: boolean } | null;
+        error: { message: string } | null;
+      } | undefined;
+      const marketplaceEnabled = !refereeFlags?.error && refereeFlags?.data?.marketplaceEnabled === true;
+      if (active) {
+        setRefereeMarketplaceEnabled(marketplaceEnabled);
+        const requestedTab = new URLSearchParams(window.location.search).get("tab");
+        if (requestedTab === "arbitros" && marketplaceEnabled) setActiveTab("arbitros");
+        if (requestedTab === "arbitros" && !marketplaceEnabled) setActiveTab("jugadores");
+      }
 
       const marketColumns =
         "id, display_name, avatar, avatar_offset_x, avatar_offset_y, birth_date, position, goalkeeper_only, media, appearances, goals, wins, zones, zones_geo, availability_text, modalities, open_to_guest, open_to_group, bio, active, group_name";
@@ -1145,6 +1165,9 @@ export default function MarketPage() {
         <button className={activeTab === "equipos" ? "active" : ""} type="button" onClick={() => selectMarketTab("equipos")}>
           Equipos
         </button>
+        {refereeMarketplaceEnabled ? <button className={activeTab === "arbitros" ? "active" : ""} type="button" onClick={() => selectMarketTab("arbitros")}>
+          Árbitros
+        </button> : null}
         {canUseMarketAdminControls && marketContext?.matchUrl ? (
           <Link className="market-manager-admin-link" href={marketAdminMatchUrl(marketContext.matchUrl)}>
             Configurar partido
@@ -1239,9 +1262,17 @@ export default function MarketPage() {
         <button className={activeTab === "equipos" ? "selected" : ""} type="button" onClick={() => selectMarketTab("equipos")}>
           Equipos retables
         </button>
+        {refereeMarketplaceEnabled ? <button className={activeTab === "arbitros" ? "selected" : ""} type="button" onClick={() => selectMarketTab("arbitros")}>
+          Árbitros
+        </button> : null}
       </div>
 
-      {activeTab === "jugadores" ? (
+      {activeTab === "arbitros" && refereeMarketplaceEnabled ? (
+        <RefereeMarketplacePanel
+          canPropose={canProposeReferee}
+          context={marketContext ? { groupId: marketContext.groupId, matchId: marketContext.matchId, title: marketContext.title } : null}
+        />
+      ) : activeTab === "jugadores" ? (
       <section className="market-grid" aria-label="Jugadores del mercado">
         {filteredProfiles.map((profile) => {
           const age = ageFromBirthDate(profile.birthDate);

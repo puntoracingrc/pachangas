@@ -32,6 +32,7 @@ export const platformNavigation = [
   { capability: "users.read", href: "/admin/users", label: "Usuarios" },
   { capability: "teams.read", href: "/admin/teams", label: "Equipos" },
   { capability: "clubs.read", href: "/admin/clubs", label: "Clubes" },
+  { capability: "referees.read", href: "/admin/referees", label: "Árbitros" },
   { capability: "matches.read", href: "/admin/matches", label: "Partidos" },
   { capability: "competitions.read", href: "/admin/competitions", label: "Competiciones" },
   { capability: "challenges.read", href: "/admin/challenges", label: "Retos" },
