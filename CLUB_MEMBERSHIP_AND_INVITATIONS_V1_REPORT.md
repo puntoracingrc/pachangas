@@ -1,6 +1,6 @@
 # Club Membership and Invitations V1 Report
 
-Estado: `STAGING PENDING`
+Estado: `STAGING PASS / PREVIEW PENDING`
 
 ## Modelo de membership
 
@@ -48,8 +48,10 @@ Se soportan:
 
 El token se genera con 32 bytes aleatorios en PostgreSQL, se devuelve una unica
 vez y solo se persiste su SHA-256. Los eventos, read models, notificaciones y
-logs no contienen token plano ni email objetivo. La expiracion predeterminada
-es siete dias y no puede superar treinta dias.
+logs no contienen token plano ni email objetivo. Una migracion de hardening
+forward-only envuelve la RPC para que ninguna accion salvo `membership.invite`
+pueda devolver `oneTimeToken`, `invitationId` o `tokenReturnedOnce`. La
+expiracion predeterminada es siete dias y no puede superar treinta dias.
 
 Para email se conserva temporalmente el valor normalizado y su hash en tabla
 privada. `retention_until` se fija a expiracion + 90 dias; una funcion de purga
@@ -97,5 +99,15 @@ invalidacion RLS-scoped y el cliente hace refetch del snapshot.
 - Dos aceptaciones concurrentes: un ganador, un stale/conflict y una membership.
 - Replay de create/invite/accept/transfer: un efecto canonico.
 
-La historia autenticada completa y la limpieza de fixtures quedan pendientes de
-ejecucion en staging antes de cambiar el estado a `READY FOR REVIEW`.
+Durante el primer E2E staging se detecto que la respuesta inicial de
+`membership.accept` repetia el token presentado por el propio cliente, aunque
+el receipt y el replay ya lo omitian. Se registro y corrigio mediante una
+migracion adicional sin alterar las tres migraciones aplicadas. La regresion
+exige que primera respuesta y replay de accept sean identicas y no contengan el
+token.
+
+El E2E autenticado de staging cubrio invitacion a usuario registrado y por
+email, aceptacion, expiracion, revocacion, token inventado/alterado/reutilizado,
+replay y carreras concurrentes. Primera respuesta y replay de accept omiten el
+token; la membresia se materializa una sola vez. La limpieza final dejo `0`
+invitaciones pendientes y `0` staff fixture activo no requerido.

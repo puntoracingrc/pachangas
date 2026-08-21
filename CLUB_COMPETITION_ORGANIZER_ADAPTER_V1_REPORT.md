@@ -1,6 +1,6 @@
 # Club Competition Organizer Adapter V1 Report
 
-Estado: `STAGING PENDING`
+Estado: `STAGING PASS / PREVIEW PENDING`
 
 ## Evolucion del organizer
 
@@ -95,8 +95,11 @@ organizers TEAM/CLUB sin exponer entitlements publicamente.
 | TEAM path R1 | PASS |
 | Competition create replay | PASS |
 | Grant race | un ganador + un stale |
-| Organizer CLUB scale p95 | `0.694 ms` |
+| Organizer CLUB scale p95 | `0.703 ms` |
 
-Pendiente antes de cierre: aplicar las tres migraciones sobre staging `106`,
-ejecutar el recorrido CLUB autenticado y repetir el E2E TEAM R1. Produccion y
-Canonical Match permanecen sin modificar.
+Staging se actualizo de `106` a `110` con cuatro migraciones forward-only. El
+recorrido CLUB autenticado creo una Competition draft R1 y materializo al
+manager como `competition_director`; despues revoco el assignment durante la
+limpieza. El E2E TEAM R1 volvio a pasar sobre ese mismo schema, incluidos owner,
+admin rechazado, transfer, expiry y revocation. Produccion y Canonical Match
+permanecen sin modificar.

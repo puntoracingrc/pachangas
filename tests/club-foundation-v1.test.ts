@@ -5,9 +5,10 @@ import { classifySupabaseWrite, isKnownClientWriteOperation } from "../app/pwa-w
 
 const root = new URL("../", import.meta.url);
 const migrations = [
-  "supabase/migrations/20260821124120_club_foundation_v1.sql",
-  "supabase/migrations/20260821124124_club_competition_organizer_adapter_v1.sql",
-  "supabase/migrations/20260821124128_club_platform_access_v1.sql",
+  "supabase/migrations/20260821141114_club_foundation_v1.sql",
+  "supabase/migrations/20260821141121_club_competition_organizer_adapter_v1.sql",
+  "supabase/migrations/20260821141129_club_platform_access_v1.sql",
+  "supabase/migrations/20260821142109_club_invitation_response_token_hardening_v1.sql",
 ] as const;
 
 async function source(path: string) { return readFile(new URL(path, root), "utf8"); }
@@ -60,6 +61,7 @@ test("staff roles fail closed and future reserved roles remain unavailable", asy
 
 test("Club invitations store only token hashes and are one-use, expiring and email-bound", async () => {
   const core = await source(migrations[0]);
+  const hardening = await source(migrations[3]);
   assert.match(core, /private\.pachanga_club_invitation_secrets/);
   assert.match(core, /extensions\.gen_random_bytes\(32\)/);
   assert.match(core, /extensions\.digest\(one_time_token, 'sha256'\)/);
@@ -69,6 +71,10 @@ test("Club invitations store only token hashes and are one-use, expiring and ema
   assert.match(core, /target_email_normalized = null/);
   assert.match(core, /CLUB_INVITATION_TOKEN_INVALID/);
   assert.doesNotMatch(core, /one_time_token\s+text[^;]+public\.pachanga_club_invitations/i);
+  assert.match(hardening, /command_pachanga_club_foundation_v1_internal_r2/);
+  assert.match(hardening, /if command_action = 'membership\.invite' then/);
+  assert.match(hardening, /response[\s\S]*- 'oneTimeToken'[\s\S]*- 'invitationId'[\s\S]*- 'tokenReturnedOnce'/);
+  assert.match(hardening, /revoke all on function public\.command_pachanga_club_foundation_v1_internal_r2[\s\S]*authenticated/);
 });
 
 test("Club-Team links require a two-sided handshake and never transfer Team authority", async () => {

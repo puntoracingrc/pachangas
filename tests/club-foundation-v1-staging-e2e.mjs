@@ -133,13 +133,26 @@ function competitionCommand(supabase, {
 
 async function commandOk(supabase, name, input) {
   const result = await command(supabase, name, input);
-  if (result.error) throw result.error;
+  if (result.error) {
+    throw new Error(
+      `${name}:${input.action}:${input.aggregateId}@${input.expectedRevision} failed `
+      + `[${result.error.code ?? "UNKNOWN"}] ${result.error.message}`,
+      { cause: result.error },
+    );
+  }
   return result.data;
 }
 
 async function competitionCommandOk(supabase, input) {
   const result = await competitionCommand(supabase, input);
-  if (result.error) throw result.error;
+  if (result.error) {
+    throw new Error(
+      `command_pachanga_competition_foundation_v2:${input.action}:`
+      + `${input.aggregateId}@${input.expectedRevision} failed `
+      + `[${result.error.code ?? "UNKNOWN"}] ${result.error.message}`,
+      { cause: result.error },
+    );
+  }
   return result.data;
 }
 
@@ -284,6 +297,7 @@ async function bestEffort(label, action) {
 const clients = [];
 const fixtureClubs = [];
 const fixtureOwners = new Map();
+const fixtureCompetitionAssignments = [];
 const channels = [];
 let platformOwner;
 let ownerDesktop;
@@ -707,6 +721,9 @@ try {
     operationId: adminAcceptOperation,
     payload: { reason: "R2 accept Club admin", token: adminInvite.oneTimeToken },
   });
+  for (const field of ["oneTimeToken", "invitationId", "tokenReturnedOnce"]) {
+    assert.equal(field in adminAccepted, false, `membership.accept must not return ${field}`);
+  }
   const adminAcceptedReplay = await commandOk(adminA, "command_pachanga_club_foundation_v1", {
     action: "membership.accept",
     aggregateId: adminInvite.invitationId,
@@ -1035,10 +1052,11 @@ try {
   assert.deepEqual(teamBOwnerView.memberships, []);
   assert.deepEqual(teamBOwnerView.pendingInvitations, []);
   assert.deepEqual(teamBOwnerView.entitlements, []);
-  assert.deepEqual(
-    teamBOwnerView.teamRelationships.map((item) => item.groupId),
-    [GROUP_B],
-  );
+  assert.ok(teamBOwnerView.teamRelationships.length >= 1);
+  assert.ok(teamBOwnerView.teamRelationships.every((item) => item.groupId === GROUP_B));
+  assert.ok(teamBOwnerView.teamRelationships.some((item) => (
+    item.id === activeTeamB.id && item.status === "active"
+  )));
 
   const teamBEnded = await commandOk(ownerB, "command_pachanga_club_foundation_v1", {
     action: "team_relationship.end",
@@ -1272,10 +1290,11 @@ try {
   });
   expectRpcError(noGrantCreate, /COMPETITION_ENTITLEMENT_REQUIRED/, "42501");
 
+  const clubBBeforePartnership = await clubSnapshot(playerA, clubBId);
   clubBPlatform = await commandOk(platformOwner, "command_pachanga_club_platform_v1", {
     action: "club.partnership.set",
     aggregateId: clubBId,
-    expectedRevision: clubBPlatform.snapshot.club.revision,
+    expectedRevision: clubBBeforePartnership.club.revision,
     payload: { reason: "R2 activate Club B partnership", status: "active" },
   });
   assert.equal(clubBPlatform.snapshot.entitlements.canCreate, false);
@@ -1386,11 +1405,16 @@ try {
   assert.equal(createdCompetition.snapshot.competition.organizerClubId, clubAId);
   assert.equal(createdCompetition.snapshot.editions.length, 1);
   assert.equal(createdCompetition.snapshot.ruleSets.length, 1);
-  assert.ok(createdCompetition.snapshot.staff.some((assignment) => (
+  const createdDirectorAssignment = createdCompetition.snapshot.staff.find((assignment) => (
     assignment.userId === USERS.staffA.id
-    && assignment.staffRole === "competition_director"
+    && assignment.role === "competition_director"
     && assignment.status === "active"
-  )));
+  ));
+  assert.ok(createdDirectorAssignment);
+  fixtureCompetitionAssignments.push({
+    competitionId: createdCompetition.snapshot.competition.id,
+    staffAssignmentId: createdDirectorAssignment.id,
+  });
 
   const platformCompetitions = await rpc(platformOwner, "get_pachanga_platform_competition_foundation_v2", {
     page_offset: 0,
@@ -1503,6 +1527,37 @@ try {
       }, "R2 staging cleanup window");
     });
 
+    if (fixtureCompetitionAssignments.length > 0) {
+      await bestEffort("enable-r1-for-cleanup", async () => {
+        await setCompetitionFlags(platformOwner, {
+          contextBindingEnabled: false,
+          creationEnabled: true,
+          foundationEnabled: true,
+        }, "R2 staging Competition staff cleanup window");
+      });
+      for (const assignment of fixtureCompetitionAssignments) {
+        await bestEffort(`revoke-competition-staff-${assignment.staffAssignmentId}`, async () => {
+          const snapshot = await rpc(ownerDesktop, "get_pachanga_competition_foundation_snapshot_v1", {
+            target_competition_id: assignment.competitionId,
+          });
+          const activeAssignment = snapshot.staff.find((item) => (
+            item.id === assignment.staffAssignmentId && item.status === "active"
+          ));
+          if (!activeAssignment) return;
+          await commandOk(ownerDesktop, "command_pachanga_competition_foundation_v1", {
+            action: "staff.revoke",
+            aggregateId: assignment.competitionId,
+            expectedRevision: snapshot.competition.revision,
+            payload: {
+              reason: "R2 staging Competition staff cleanup",
+              staffAssignmentId: activeAssignment.id,
+            },
+            surface: "club-foundation-staging-cleanup",
+          });
+        });
+      }
+    }
+
     for (const clubId of fixtureClubs) {
       const ownerClient = fixtureOwners.get(clubId) === USERS.playerA.id ? playerA : ownerDesktop;
       if (ownerClient) {
@@ -1537,7 +1592,11 @@ try {
   }
   for (const supabase of clients) {
     await bestEffort("sign-out", () => supabase.auth.signOut());
+    await bestEffort("disconnect-realtime", async () => {
+      await supabase.realtime.disconnect();
+    });
   }
 }
 
 assert.equal(completed, true, "R2 staging story did not complete");
+process.exit(0);

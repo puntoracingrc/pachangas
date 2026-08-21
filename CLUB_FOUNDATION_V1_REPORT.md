@@ -1,6 +1,6 @@
 # Club Foundation V1 Report
 
-Estado: `STAGING PENDING`
+Estado: `PREVIEW PENDING`
 
 ## Trazabilidad
 
@@ -10,9 +10,9 @@ Estado: `STAGING PENDING`
 | Base real | `82fbb7933b51a5cef3267ae71e1ca8dc9f63cd8c` |
 | PR | [#155](https://github.com/puntoracingrc/pachangas/pull/155) (draft) |
 | Inicio R2 | `2026-08-21` |
-| Cierre local documentado | `2026-08-21 16:08:17 CEST` |
+| Cierre local documentado | `2026-08-21 16:45 CEST` |
 | Entorno local | Worktree aislado, Node 24, PostgreSQL/Supabase local dedicado |
-| Supabase staging | `iozcjirlfytryzrcmrnq`, pendiente de aplicar R2 |
+| Supabase staging | `iozcjirlfytryzrcmrnq`, upgrade `106 -> 110` y E2E completados |
 | Supabase produccion | `qonbngfrnrqgmxbdfbea`, no modificado |
 | Merge | No realizado |
 
@@ -36,15 +36,18 @@ CRON, Canonical Match ni datos productivos.
 
 | Version | Contenido |
 | --- | --- |
-| `20260821124120` | Entidad Club, ownership, memberships, invitaciones seguras, relaciones Club-Team, receipts, eventos, RLS, read models e invalidaciones. |
-| `20260821124124` | Organizer adapter TEAM/CLUB, integridad XOR, entitlements Club y command V2 compatible con R1. |
-| `20260821124128` | Flags y operaciones de plataforma, Control Center, busqueda global y capabilities `clubs.read`/`clubs.manage`. |
+| `20260821141114` | Entidad Club, ownership, memberships, invitaciones seguras, relaciones Club-Team, receipts, eventos, RLS, read models e invalidaciones. |
+| `20260821141121` | Organizer adapter TEAM/CLUB, integridad XOR, entitlements Club y command V2 compatible con R1. |
+| `20260821141129` | Flags y operaciones de plataforma, Control Center, busqueda global y capabilities `clubs.read`/`clubs.manage`. |
+| `20260821142109` | Hardening forward-only: el token de invitacion solo puede salir de `membership.invite`. |
 
 Las migraciones R1 `20260821054224`, `20260821054225`, `20260821054227`,
 `20260821074741`, `20260821075245` y `20260821082136` no se modifican. El
-bootstrap local desde cero aplica `109` migraciones y termina en
-`20260821124128` con `BOOTSTRAP_COMPLETE`. El upgrade remoto se validara sobre
-el ledger staging de `106` antes de declarar R2 revisable.
+bootstrap local desde cero aplica `110` migraciones y termina en
+`20260821142109` con `BOOTSTRAP_COMPLETE`. Al aplicar inicialmente por la API de
+Supabase, staging asigno estas tres versiones UTC; los archivos locales
+provisionales se renombraron antes de continuar para que repositorio y ledger
+remoto sean identicos. No se altero el SQL ya ejecutado.
 
 ## Modelo Club
 
@@ -136,11 +139,15 @@ entitlement implicitamente y una Competition draft de Club no crea partidos.
 | Idempotencia | PASS |
 | Concurrencia Club | PASS, un ganador + un stale en seis carreras |
 | Concurrencia TEAM R1 | PASS al ejecutarse serialmente |
-| Fresh bootstrap | PASS, `109` migraciones |
+| Fresh bootstrap | PASS, `110` migraciones y `BOOTSTRAP_COMPLETE` |
+| Upgrade desde ledger productivo | PASS en staging, `106 -> 110` forward-only |
+| E2E autenticado Club staging | PASS, dos clientes, permisos, privacidad, notificaciones y Realtime/refetch |
+| E2E TEAM R1 sobre staging R2 | PASS, compatibilidad completa |
 | Escala | PASS, 1.000 Clubs, 10.100 memberships, 5.000 links, 10.000 invitaciones y 500 Competition drafts |
 | `npm run typecheck` | PASS |
-| `npm run build` | PASS, incluido en `npm test` |
+| `npm run build` | PASS, Next.js genera `35/35` paginas |
 | ESLint focalizado | PASS |
+| ESLint global | Deuda heredada: `43` hallazgos (`23` errores, `20` warnings), ninguno en rutas R2 |
 | DB lint R2 | PASS, `0` findings R2; deuda heredada fuera de alcance |
 | `git diff --check` | PASS |
 
@@ -148,24 +155,52 @@ entitlement implicitamente y una Competition draft de Club no crea partidos.
 
 | Medicion | p50 | p95 |
 | --- | ---: | ---: |
-| Admin Clubs | `15.734 ms` | `26.289 ms` |
-| Club read model | `1.638 ms` | `2.164 ms` |
-| Organizer CLUB | no registrado | `0.694 ms` |
-| Invitation accept | `2.802 ms` | `3.667 ms` |
-| Team relationship lookup | no registrado | `0.021 ms` |
+| Admin Clubs | `16.631 ms` | `26.271 ms` |
+| Club read model | `1.591 ms` | `2.031 ms` |
+| Organizer CLUB | no registrado | `0.703 ms` |
+| Invitation accept | `2.787 ms` | `3.447 ms` |
+| Team relationship lookup | no registrado | `0.023 ms` |
 
-Los indices R2 ocupan `6,356,992` bytes en la carga representativa. Los arrays
+Los indices R2 ocupan `6,275,072` bytes en la carga representativa. Los arrays
 del read model estan acotados y ordenados de forma estable: memberships e
 invitaciones `200`, relaciones `200`, competitions `100`, Clubs del actor `50`
 y sus invitaciones pendientes `100`.
 
+## Staging y limpieza
+
+El recorrido autenticado cubrio alta, aprobacion, staff registrado/email,
+tokens invalidos/expirados/revocados/reutilizados, invitacion y solicitud de
+Team, rechazo, cancelacion, finalizacion, multi-Club, transferencia de owner,
+partnership, grants, expiry/revocation y creacion CLUB. Realtime entrego una
+invalidacion y ambos clientes convergieron mediante refetch. La repeticion R1
+TEAM paso despues de la limpieza R2.
+
+Estado final del staging aislado:
+
+- flags R1 y R2: todos `false`;
+- Clubs fixture activos: `0`;
+- invitaciones pendientes: `0`;
+- relaciones actuales: `0`;
+- grants Club activos: `0`;
+- assignments Competition fixture activos: `0`;
+- `32` Clubs de ejecuciones QA quedan archivados, sin autoridad ni capacidad.
+
+## Advisors
+
+Security mantiene hallazgos informativos intencionados para tablas R2 con RLS
+sin politicas de escritura directa: los grants cliente estan revocados y el
+acceso se realiza exclusivamente por RPC canonica. Las funciones
+`SECURITY DEFINER` autenticadas son la frontera autoritativa, fijan
+`search_path` y resuelven actor/capabilities en servidor. La policy de
+invalidaciones solo entrega eventos RLS-scoped y no snapshots privados.
+
+Performance informa FKs auxiliares sin indice e indices todavia no usados. La
+carga representativa no justifico indices especulativos: todos los p95 R2
+quedaron por debajo de `27 ms`; se conserva el warning para observarlo cuando
+exista trafico real.
+
 ## Pendiente antes de READY FOR REVIEW
 
-- Upgrade staging `106 -> 109` y E2E autenticado completo.
-- Repeticion del E2E TEAM R1 en el esquema R2.
-- Advisors Security/Performance y clasificacion de hallazgos.
-- Limpieza y verificacion de fixtures/flags staging.
 - Preview Vercel del HEAD final y matriz visual/PWA solicitada.
-- Actualizacion de este informe con HEAD, deployment y resultados finales.
 
 Produccion modificada: **NO**. Supabase produccion: **NO**. Merge: **NO**.

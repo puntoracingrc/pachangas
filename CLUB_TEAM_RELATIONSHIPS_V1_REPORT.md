@@ -1,6 +1,6 @@
 # Club-Team Relationships V1 Report
 
-Estado: `STAGING PENDING`
+Estado: `STAGING PASS / PREVIEW PENDING`
 
 ## Separacion de autoridades
 
@@ -75,7 +75,10 @@ payload de Realtime como estado.
 - Privacidad del Team owner vinculado: PASS.
 - Dos respuestas concurrentes: un ganador y un stale/conflict: PASS.
 - Tabla directa protegida y RLS por actor: PASS.
-- Lookup de relacion a escala p95: `0.021 ms` con 5.000 relaciones.
+- Lookup de relacion a escala p95: `0.023 ms` con 5.000 relaciones.
 
-El E2E de dos clientes autenticados, notificaciones, Realtime y cleanup remoto
-queda pendiente de staging.
+El E2E de staging con dos clientes autenticados confirmo audiencia de
+notificaciones, privacidad, invalidacion Realtime seguida de refetch y
+convergencia. Tambien ejercito invitacion, solicitud, rechazo, cancelacion,
+finalizacion por ambos lados, owner transfer y multi-Club. La limpieza final
+dejo `0` relaciones actuales y conserva unicamente historia archivada de QA.
