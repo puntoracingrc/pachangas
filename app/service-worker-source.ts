@@ -1,5 +1,7 @@
 const precacheUrls = [
   "/",
+  "/demo",
+  "/demo-world/v1/manifest.json",
   "/manifest.webmanifest",
   "/favicon.svg",
   "/favicon-16.png",
@@ -27,7 +29,7 @@ const PRECACHE_URLS = ${encodedPrecache};
 const STATIC_DESTINATIONS = new Set(["font", "image", "manifest", "script", "style"]);
 const STATIC_FILE_EXTENSIONS = /\\.(?:css|js|mjs|png|jpg|jpeg|webp|svg|ico|woff2?)$/i;
 const LIVE_SERVICE_HOST_PARTS = ["supabase.co", "stripe.com", "googleapis.com", "google.com", "gstatic.com", "weather.googleapis.com"];
-const CACHEABLE_NAVIGATION_PATHS = new Set(["/", "/aviso-legal", "/condiciones", "/condiciones-venta", "/cookies", "/manual", "/mercado", "/privacidad"]);
+const CACHEABLE_NAVIGATION_PATHS = new Set(["/", "/aviso-legal", "/condiciones", "/condiciones-venta", "/cookies", "/demo", "/manual", "/mercado", "/privacidad"]);
 
 function isSameOrigin(url) {
   return url.origin === self.location.origin;
@@ -46,7 +48,8 @@ function shouldCacheNavigation(url) {
 }
 
 function shouldCacheStaticRequest(request, url) {
-  return isSameOrigin(url) && !isSensitivePath(url.pathname) && !url.search &&
+  const isImmutableDemoChunk = url.pathname.startsWith("/demo-world/v1/") && url.pathname.endsWith(".json") && url.searchParams.has("h");
+  return isSameOrigin(url) && !isSensitivePath(url.pathname) && (!url.search || isImmutableDemoChunk) &&
     (url.pathname.startsWith("/_next/static/") || STATIC_DESTINATIONS.has(request.destination) || STATIC_FILE_EXTENSIONS.test(url.pathname));
 }
 

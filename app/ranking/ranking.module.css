@@ -94,6 +94,11 @@
   margin-top: 14px;
 }
 
+.layout[data-embedded="true"] {
+  width: 100%;
+  margin-top: 0;
+}
+
 .rankingPanel,
 .ownPanel,
 .formulaPanel {

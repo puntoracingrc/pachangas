@@ -957,6 +957,20 @@
 .marketPlayer small { color: var(--demo-muted); font-size: 0.68rem; }
 .marketPlayer button { justify-self: start; min-height: 40px; padding: 6px 10px; }
 
+.marketPager {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 14px;
+  color: var(--demo-muted);
+  font-size: 0.75rem;
+}
+
+.marketPager button { min-height: 44px; }
+
+.gamePerspectiveSelect { display: none; }
+
 .publicMatchGrid { grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); }
 .publicMatch { min-height: 142px; }
 
@@ -1054,6 +1068,33 @@
 }
 
 .rankingTable { overflow-x: auto; }
+
+.provincialRanking {
+  min-width: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.rankingShowcases {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.rankingShowcases button {
+  min-height: 40px;
+  border: 1px solid var(--demo-line);
+  border-radius: 5px;
+  background: var(--demo-panel-soft);
+  padding: 6px 10px;
+  color: var(--demo-muted);
+  font-weight: 800;
+}
+
+.rankingShowcases button[aria-pressed="true"] {
+  border-color: var(--demo-lime);
+  color: var(--demo-ink);
+}
 
 .rankingHead {
   min-height: 36px;
@@ -1197,6 +1238,28 @@
 .profileDetails dd,
 .playerModal dd { margin: 0; overflow-wrap: anywhere; font-size: 0.76rem; }
 
+.attendanceSummary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1px;
+  background: var(--demo-line);
+}
+
+.attendanceSummary strong {
+  grid-column: 1 / -1;
+  background: var(--demo-panel-soft);
+  padding: 8px 10px;
+  font-size: 0.72rem;
+}
+
+.attendanceSummary span {
+  background: var(--demo-panel);
+  padding: 8px;
+  color: var(--demo-muted);
+  font-size: 0.64rem;
+  text-align: center;
+}
+
 .relatedPlayers {
   min-width: 0;
   display: grid;
@@ -1226,12 +1289,14 @@
 }
 
 .boxGrid article[data-state="pending"] { border-color: rgba(200, 239, 93, 0.45); }
+.boxGrid article[data-new="true"] { border-color: var(--demo-cyan); box-shadow: inset 3px 0 0 var(--demo-cyan); }
 .boxGlyph { width: 54px; height: 54px; display: grid; place-items: center; border: 2px solid var(--demo-cyan); background: #0e2c35; color: #d8fbff; font-weight: 950; transform: perspective(120px) rotateY(-12deg); }
 .boxGrid article > div { min-width: 0; display: grid; gap: 3px; }
 .boxGrid small,
 .boxGrid p { margin: 0; overflow-wrap: anywhere; color: var(--demo-muted); font-size: 0.65rem; }
 .boxGrid article > span:last-child { color: var(--demo-muted); font-size: 0.67rem; }
 .boxGrid button { min-height: 44px; border: 1px solid var(--demo-lime); border-radius: 5px; background: var(--demo-lime); padding: 6px 9px; color: #17210d; font-weight: 900; }
+.boxGrid button:disabled { cursor: default; border-color: var(--demo-line); background: transparent; color: var(--demo-muted); }
 
 .notificationRow {
   min-width: 0;
@@ -1344,6 +1409,18 @@
 .loadingPanel { min-height: 100dvh; border: 0; }
 .loadingMark { width: 58px; height: 58px; display: grid; place-items: center; border: 1px solid var(--demo-lime); color: var(--demo-lime); font-weight: 950; }
 
+.secondaryLoading {
+  min-height: calc(100dvh - 150px);
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 10px;
+  color: var(--demo-muted);
+  text-align: center;
+}
+
+.secondaryLoading p { margin: 0; }
+
 @media (max-width: 980px) {
   .header { grid-template-columns: auto 1fr; }
   .desktopNav { order: 3; grid-column: 1 / -1; justify-content: center; border-top: 1px solid var(--demo-line); padding-top: 6px; }
@@ -1419,6 +1496,7 @@
   .profileLayout { min-height: 0; grid-template-columns: 1fr; gap: 22px; }
   .profileDetails dl,
   .playerModal dl { grid-template-columns: 1fr; }
+  .attendanceSummary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .relatedPlayers { grid-template-columns: 1fr; }
   .boxGrid { grid-template-columns: 1fr; }
   .boxGrid article { grid-template-columns: 50px minmax(0, 1fr); }
@@ -1459,6 +1537,15 @@
   .sideSubnav > button[aria-current="page"] { border-bottom: 0; border-left-color: var(--demo-lime); }
   .sideTitle { padding: 4px 8px 7px; }
   .sideMeta { padding: 7px 8px; font-size: 0.58rem; }
+  .gamePerspectiveSelect {
+    display: grid;
+    gap: 3px;
+    padding: 5px 8px;
+    color: var(--demo-muted);
+    font-size: 0.56rem;
+    text-transform: uppercase;
+  }
+  .gamePerspectiveSelect select { min-width: 0; min-height: 40px; padding: 4px 6px; font-size: 0.62rem; text-transform: none; }
   .managerContent { height: 100%; overflow-y: auto; padding: 8px 10px 14px; }
   .matchContext,
   .marketHeader,
@@ -1532,6 +1619,7 @@
   .profileDetails h1 { margin: 2px 0; font-size: 1.25rem; }
   .profileDetails p { font-size: 0.67rem; }
   .profileDetails dl { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .attendanceSummary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .profileDetails dl div { padding: 6px; }
   .relatedPlayers button { min-height: 42px; padding: 3px 6px; }
   .boxGrid article { min-height: 78px; padding: 7px; }

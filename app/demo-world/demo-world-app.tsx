@@ -1,43 +1,45 @@
 "use client";
 
-import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { PlayerCosmeticCard } from "../_components/player-cosmetic-card";
 import { TeamShieldView } from "../_components/team-shield-view";
 import { MobileAppNav, type MobileAppTab } from "../mobile-app-nav";
+import { PLAYER_COSMETIC_CATALOG, catalogEntry } from "../player-cosmetics-catalog";
+import { withCosmeticKey } from "../player-cosmetics-contract";
+import { ProvincialRankingBoard } from "../ranking/provincial-ranking-board";
 import { TEAM_SHIELD_RENDER_CATALOG } from "../team-shield-cosmetics-catalog";
 import {
   type DemoMatchKind,
   type DemoWorldAchievement,
   type DemoWorldChallenge,
+  type DemoWorldCoreChunk,
   type DemoWorldManifest,
   type DemoWorldMatch,
+  type DemoWorldMatchPane,
   type DemoWorldNotification,
   type DemoWorldPerspective,
   type DemoWorldPlayer,
   type DemoWorldPrimaryTab,
+  type DemoWorldRankingShowcaseId,
   type DemoWorldRewardBox,
   type DemoWorldSessionState,
   type DemoWorldSnapshot,
   type DemoWorldTeam,
   canDemoWorldInvite,
   demoWorldMatchAdminActions,
+  demoWorldMatchPaneForRole,
 } from "./demo-world-contract";
 import {
   demoAvatarDataUri,
   demoWorldTabFromSearch,
+  loadDemoWorldCore,
   loadDemoWorldSnapshot,
   readInitialDemoWorldSession,
   resetDemoWorldSession,
   writeDemoWorldSession,
 } from "./demo-world-client-state";
 import styles from "./demo-world.module.css";
-
-const RewardBoxDemo = dynamic(
-  () => import("../reward-box-demo").then((module) => module.RewardBoxDemo),
-  { ssr: false },
-);
 
 const primaryTabs: Array<{ id: DemoWorldPrimaryTab; label: string }> = [
   { id: "inicio", label: "Inicio" },
@@ -71,6 +73,8 @@ const challengeStatusLabels: Record<DemoWorldChallenge["status"], string> = {
   rejected: "Rechazado",
 };
 
+const DEMO_WORLD_MARKET_PAGE_SIZE = 12;
+
 function dateLabel(value: string, withYear = false) {
   return new Intl.DateTimeFormat("es-ES", {
     day: "2-digit",
@@ -96,6 +100,29 @@ function initials(name: string) {
 
 function ratingScore(player: DemoWorldPlayer) {
   return player.rating.currentOverall === null ? "POR" : Math.round(player.rating.currentOverall);
+}
+
+function playerWithDemoCosmetics(player: DemoWorldPlayer, equippedCosmeticKeys: string[]) {
+  const cosmetics = equippedCosmeticKeys.reduce((loadout, cosmeticKey) => {
+    const item = catalogEntry(cosmeticKey);
+    return item && !item.prototype ? withCosmeticKey(loadout, item.slot, item.key) : loadout;
+  }, player.cosmetics);
+  return { ...player, cosmetics };
+}
+
+function previewSnapshot(manifest: DemoWorldManifest, core: DemoWorldCoreChunk): DemoWorldSnapshot {
+  return {
+    activity: {
+      achievements: [],
+      notifications: core.preview.notifications,
+      rewardBoxes: [],
+      teamRewardMappings: [],
+    },
+    core,
+    manifest,
+    matches: { attendance: [], challenges: [], matches: core.preview.matches },
+    players: { players: core.preview.players },
+  };
 }
 
 function PlayerCard({ compact = false, onClick, player }: { compact?: boolean; onClick?: () => void; player: DemoWorldPlayer }) {
@@ -358,7 +385,8 @@ function MatchView({
   snapshot: DemoWorldSnapshot;
   teamMatches: DemoWorldMatch[];
 }) {
-  const [pane, setPane] = useState<"admin" | "alineacion" | "historico" | "proximo" | "resultado">("proximo");
+  const [pane, setPane] = useState<DemoWorldMatchPane>("proximo");
+  const visiblePane = demoWorldMatchPaneForRole(pane, perspective.role);
   const playerById = useMemo(() => new Map(snapshot.players.players.map((player) => [player.id, player])), [snapshot]);
   const venue = match ? snapshot.core.venues.find((entry) => entry.id === match.venueId) : null;
   const matchPanes = perspective.role === "admin"
@@ -369,11 +397,11 @@ function MatchView({
   if (!match) return <EmptyState title="Sin partido seleccionado" body="Elige un partido público desde Mercado." />;
 
   return (
-    <div className={styles.managerLayout} data-match-pane={pane} data-tour-target="demo-match">
+    <div className={styles.managerLayout} data-match-pane={visiblePane} data-tour-target="demo-match">
       <aside className={styles.sideSubnav} aria-label="Secciones del partido">
         <div className={styles.sideTitle}><span>Partido</span><strong>{match.status === "finalized" ? "Histórico" : "Activo"}</strong></div>
         {matchPanes.map((entry) => (
-          <button aria-current={pane === entry ? "page" : undefined} key={entry} type="button" onClick={() => setPane(entry)}>
+          <button aria-current={visiblePane === entry ? "page" : undefined} key={entry} type="button" onClick={() => setPane(entry)}>
             {entry === "proximo" ? (match.status === "finalized" ? "Partido" : "Próximo") : entry === "alineacion" ? "Alineación" : entry === "resultado" ? "Resultado" : entry === "historico" ? "Histórico" : "Admin"}
           </button>
         ))}
@@ -389,7 +417,7 @@ function MatchView({
           <span>{dateLabel(match.date)} · {venue?.label}</span>
         </div>
 
-        {pane === "proximo" ? (
+        {visiblePane === "proximo" ? (
           <div className={styles.nextMatchGrid}>
             <div className={styles.scoreboard}>
               <span>{match.homeLabel}</span>
@@ -423,7 +451,7 @@ function MatchView({
           </div>
         ) : null}
 
-        {pane === "alineacion" ? (
+        {visiblePane === "alineacion" ? (
           <div className={styles.pitchWrap}>
             <div className={styles.pitch} data-tour-target="demo-lineup">
               <span className={styles.pitchCenterLine} aria-hidden="true" />
@@ -448,7 +476,7 @@ function MatchView({
           </div>
         ) : null}
 
-        {pane === "resultado" ? (
+        {visiblePane === "resultado" ? (
           <div className={styles.resultLayout} data-tour-target="demo-result">
             <div className={styles.largeScore}>
               <span>{match.homeLabel}</span><strong>{match.result ? `${match.result.home} : ${match.result.away}` : "Pendiente"}</strong><span>{match.awayLabel}</span><small>{dateLabel(match.date, true)}</small>
@@ -463,13 +491,13 @@ function MatchView({
           </div>
         ) : null}
 
-        {pane === "historico" ? (
+        {visiblePane === "historico" ? (
           <div className={styles.historyGrid}>
             {history.slice(0, 24).map((entry) => <button key={entry.id} type="button" onClick={() => onMatch(entry.id)}><span>{shortDateLabel(entry.date)} · {matchKindLabels[entry.kind]}</span><strong>{entry.homeLabel}<b>{entry.result?.home} : {entry.result?.away}</b>{entry.awayLabel}</strong></button>)}
           </div>
         ) : null}
 
-        {pane === "admin" && perspective.role === "admin" ? (
+        {visiblePane === "admin" && perspective.role === "admin" ? (
           <div className={styles.adminTools} data-tour-target="demo-admin">
             <div><span className={styles.eyebrow}>Simulación local</span><h2>Herramientas del partido</h2><p>Estos controles enseñan el flujo de admin, pero no ejecutan RPC ni cambian datos reales.</p></div>
             <div className={styles.adminActionGrid}>
@@ -501,11 +529,13 @@ function MarketView({
 }) {
   const [pane, setPane] = useState<"equipos" | "jugadores" | "partidos" | "retos">("jugadores");
   const [query, setQuery] = useState("");
+  const [visiblePlayerCount, setVisiblePlayerCount] = useState(DEMO_WORLD_MARKET_PAGE_SIZE);
   const normalizedQuery = query.trim().toLocaleLowerCase("es");
   const marketPlayers = snapshot.players.players.filter((player) => player.market.openToGuest && player.id !== currentPlayer.id && (!normalizedQuery || `${player.name} ${player.position.label} ${player.market.zones.join(" ")}`.toLocaleLowerCase("es").includes(normalizedQuery)));
   const publicMatches = snapshot.matches.matches.filter((match) => match.status === "scheduled" && match.publicOpenSlots > 0);
   const challenges = snapshot.matches.challenges.slice().sort((left, right) => Date.parse(right.date) - Date.parse(left.date));
   const teams = snapshot.core.teams.filter((team) => team.openToChallenges && (!normalizedQuery || `${team.name} ${team.publicLocation} ${team.territory}`.toLocaleLowerCase("es").includes(normalizedQuery)));
+
   return (
     <div className={styles.managerLayout} data-market-pane={pane} data-tour-target="demo-market">
       <aside className={styles.sideSubnav} aria-label="Secciones de Mercado">
@@ -517,10 +547,13 @@ function MarketView({
       <section className={styles.managerContent}>
         <div className={styles.marketHeader}><div><span className={styles.eyebrow}>Explorar</span><h1>Mercado</h1></div><Link href="/">Volver a Pachangas IQ</Link></div>
         {pane === "jugadores" ? <div className={styles.marketMatchFilter}>Filtrado por perfil demo: <strong>{currentPlayer.position.label}</strong> · {currentPlayer.market.zones.join(" / ")}</div> : null}
-        <label className={styles.searchLine}><span>Buscar</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={pane === "jugadores" ? "Nombre, posición o zona" : "Equipo o territorio"} /></label>
+        <label className={styles.searchLine}><span>Buscar</span><input value={query} onChange={(event) => { setQuery(event.target.value); setVisiblePlayerCount(DEMO_WORLD_MARKET_PAGE_SIZE); }} placeholder={pane === "jugadores" ? "Nombre, posición o zona" : "Equipo o territorio"} /></label>
 
         {pane === "jugadores" ? (
-          <div className={styles.playerMarketGrid}>{marketPlayers.slice(0, 24).map((player) => <div className={styles.marketPlayer} key={player.id}><PlayerCard compact onClick={() => onPlayer(player.id)} player={player} /><div><strong>{player.name}</strong><span>{player.position.label} · {player.market.zones[0]}</span><small>{player.market.availability}</small>{canDemoWorldInvite(perspective.role) ? <button type="button" onClick={() => setMessage(`Invitación a ${player.name}: simulada, no enviada.`)}>Invitar</button> : null}</div></div>)}</div>
+          <>
+            <div className={styles.playerMarketGrid}>{marketPlayers.slice(0, visiblePlayerCount).map((player) => <div className={styles.marketPlayer} key={player.id}><PlayerCard compact onClick={() => onPlayer(player.id)} player={player} /><div><strong>{player.name}</strong><span>{player.position.label} · {player.market.zones[0]}</span><small>{player.market.availability}</small>{canDemoWorldInvite(perspective.role) ? <button type="button" onClick={() => setMessage(`Invitación a ${player.name}: simulada, no enviada.`)}>Invitar</button> : null}</div></div>)}</div>
+            {visiblePlayerCount < marketPlayers.length ? <div className={styles.marketPager}><span>{Math.min(visiblePlayerCount, marketPlayers.length)} de {marketPlayers.length}</span><button type="button" onClick={() => setVisiblePlayerCount((current) => current + DEMO_WORLD_MARKET_PAGE_SIZE)}>Mostrar más</button></div> : null}
+          </>
         ) : null}
         {pane === "partidos" ? (
           <div className={styles.publicMatchGrid}>{publicMatches.map((match) => <button className={styles.publicMatch} key={match.id} type="button" onClick={() => onMatch(match.id)}><span>{dateLabel(match.date)} · {matchKindLabels[match.kind]}</span><strong>{match.homeLabel}<b>vs</b>{match.awayLabel}</strong><small>{snapshot.core.venues.find((venue) => venue.id === match.venueId)?.publicLocation} · {match.publicOpenSlots} plazas</small></button>)}</div>
@@ -554,6 +587,7 @@ function TeamView({
   snapshot: DemoWorldSnapshot;
 }) {
   const [pane, setPane] = useState<"escudo" | "logros" | "plantilla" | "ranking">("ranking");
+  const [rankingShowcase, setRankingShowcase] = useState<DemoWorldRankingShowcaseId>("my-rank");
   const roster = snapshot.players.players.filter((player) => player.teamId === selectedTeam.id).sort((left, right) => (right.rating.currentOverall ?? 0) - (left.rating.currentOverall ?? 0));
   const achievements = snapshot.activity.achievements.filter((achievement) => achievement.subjectId === selectedTeam.id);
   return (
@@ -566,13 +600,26 @@ function TeamView({
       <section className={styles.managerContent}>
         <div className={styles.teamViewHeader}><TeamIdentity team={selectedTeam} /><label><span>Cambiar equipo</span><select value={selectedTeam.id} onChange={(event) => onTeam(event.target.value)}>{snapshot.core.teams.map((team) => <option key={team.id} value={team.id}>{team.name}</option>)}</select></label></div>
         {pane === "ranking" ? (
-          <div className={styles.rankingTable}>
-            <div className={styles.rankingIntro}><div><span className={styles.eyebrow}>No oficial</span><h1>Clasificación Demo</h1><p>Ordenada solo con los resultados ficticios visibles. No concede TOPS ni premios reales.</p></div><span>Temporada {snapshot.manifest.season}</span></div>
-            <div className={styles.rankingHead}><span>#</span><span>Equipo</span><span>PJ</span><span>G</span><span>E</span><span>P</span><span>GF</span><span>GC</span><strong>PTS</strong></div>
-            {snapshot.core.rankings.map((row) => {
-              const team = snapshot.core.teams.find((entry) => entry.id === row.teamId)!;
-              return <button aria-current={team.id === selectedTeam.id ? "true" : undefined} className={styles.rankingRow} key={row.teamId} type="button" onClick={() => onTeam(team.id)}><span>{row.position}</span><TeamIdentity compact team={team} /><span>{row.played}</span><span>{row.wins}</span><span>{row.draws}</span><span>{row.losses}</span><span>{row.goalsFor}</span><span>{row.goalsAgainst}</span><strong>{row.points}</strong></button>;
-            })}
+          <div className={styles.provincialRanking}>
+            <div className={styles.rankingIntro}>
+              <div><span className={styles.eyebrow}>Ranking Provincial Demo</span><h1>Season Score V3</h1><p>Read model congelado con la misma fórmula y estados públicos que el producto. No concede TOPS ni premios.</p></div>
+              <span>Premios provinciales OFF</span>
+            </div>
+            <div className={styles.rankingShowcases} aria-label="Casos de ranking simulados">
+              {([
+                ["my-rank", "Mi #27"],
+                ["ineligible", "No elegible"],
+                ["provisional", "Provisional"],
+                ["pending-review", "Pendiente"],
+              ] as Array<[DemoWorldRankingShowcaseId, string]>).map(([id, label]) => (
+                <button aria-pressed={rankingShowcase === id} key={id} type="button" onClick={() => setRankingShowcase(id)}>{label}</button>
+              ))}
+            </div>
+            <ProvincialRankingBoard
+              embedded
+              ownRank={snapshot.core.provincialRanking.showcases[rankingShowcase]}
+              ranking={snapshot.core.provincialRanking.ranking}
+            />
           </div>
         ) : null}
         {pane === "plantilla" ? <div className={styles.rosterCardGrid}>{roster.map((player) => <PlayerCard compact key={player.id} onClick={() => onPlayer(player.id)} player={player} />)}</div> : null}
@@ -596,38 +643,46 @@ function ProfileView({
   currentPlayer,
   currentTeam,
   notifications,
+  onEquipCosmetic,
   onOpenBox,
+  onPerspective,
   onPlayer,
   onRead,
   perspective,
+  perspectives,
   session,
   snapshot,
 }: {
   currentPlayer: DemoWorldPlayer;
   currentTeam: DemoWorldTeam | null;
   notifications: DemoWorldNotification[];
+  onEquipCosmetic: (cosmeticKey: string) => void;
   onOpenBox: (box: DemoWorldRewardBox) => void;
+  onPerspective: (perspectiveId: DemoWorldPerspective["id"]) => void;
   onPlayer: (playerId: string) => void;
   onRead: (notificationId: string) => void;
   perspective: DemoWorldPerspective;
+  perspectives: DemoWorldPerspective[];
   session: DemoWorldSessionState;
   snapshot: DemoWorldSnapshot;
 }) {
   const [pane, setPane] = useState<"avisos" | "ficha" | "recompensas">("ficha");
   const achievements = snapshot.activity.achievements.filter((achievement) => achievement.subjectId === currentPlayer.id || (currentTeam && achievement.subjectId === currentTeam.id));
   const boxes = snapshot.activity.rewardBoxes.filter((box) => box.ownerId === currentPlayer.id || (currentTeam && box.ownerId === currentTeam.id));
+  const attendance = snapshot.matches.attendance.filter((entry) => entry.playerId === currentPlayer.id);
   return (
     <div className={styles.managerLayout} data-profile-pane={pane} data-tour-target="demo-profile">
       <aside className={styles.sideSubnav} aria-label="Secciones de Perfil">
         <div className={styles.sideTitle}><span>Perfil</span><strong>{currentPlayer.name}</strong></div>
         {(["ficha", "recompensas", "avisos"] as const).map((entry) => <button aria-current={pane === entry ? "page" : undefined} key={entry} type="button" onClick={() => setPane(entry)}>{entry[0].toUpperCase() + entry.slice(1)}{entry === "avisos" ? <b>{notifications.filter((notification) => !session.readNotificationIds.includes(notification.id)).length}</b> : null}</button>)}
+        <label className={styles.gamePerspectiveSelect}><span>Perspectiva</span><select aria-label="Perspectiva en modo juego" value={perspective.id} onChange={(event) => onPerspective(event.target.value as DemoWorldPerspective["id"])}>{perspectives.map((entry) => <option key={entry.id} value={entry.id}>{entry.label}</option>)}</select></label>
         <div className={styles.sideMeta}><span>{perspective.label}</span><span>{currentTeam?.name ?? "Sin equipo"}</span><small>Perfil ficticio</small></div>
       </aside>
       <section className={styles.managerContent}>
         {pane === "ficha" ? (
           <div className={styles.profileLayout}>
             <PlayerCard player={currentPlayer} />
-            <div className={styles.profileDetails}><span className={styles.eyebrow}>Ficha universal demo</span><h1>{currentPlayer.name}</h1><p>{currentPlayer.market.publicBio}</p><div className={styles.profileStats}><Stat label="Partidos" value={currentPlayer.appearances} /><Stat label="Goles" value={currentPlayer.goals} /><Stat label="Asistencias" value={currentPlayer.assists} /><Stat label="Fiabilidad" value={`${currentPlayer.rating.reliability}%`} /></div><dl><div><dt>Posición</dt><dd>{currentPlayer.position.label}</dd></div><div><dt>Motor</dt><dd>{currentPlayer.rating.engineVersion}</dd></div><div><dt>Evaluadores</dt><dd>{currentPlayer.rating.evaluatorCount}</dd></div><div><dt>Zonas públicas</dt><dd>{currentPlayer.market.zones.join(" · ")}</dd></div></dl><small>La ficha usa el read model de Rating V2. La demo no recalcula ni persiste valoraciones.</small></div>
+            <div className={styles.profileDetails}><span className={styles.eyebrow}>Ficha universal demo</span><h1>{currentPlayer.name}</h1><p>{currentPlayer.market.publicBio}</p><div className={styles.profileStats}><Stat label="Partidos" value={currentPlayer.appearances} /><Stat label="Goles" value={currentPlayer.goals} /><Stat label="Asistencias" value={currentPlayer.assists} /><Stat label="Fiabilidad" value={`${currentPlayer.rating.reliability}%`} /></div><dl><div><dt>Posición</dt><dd>{currentPlayer.position.label}</dd></div><div><dt>Motor</dt><dd>{currentPlayer.rating.engineVersion}</dd></div><div><dt>Evaluadores</dt><dd>{currentPlayer.rating.evaluatorCount}</dd></div><div><dt>Zonas públicas</dt><dd>{currentPlayer.market.zones.join(" · ")}</dd></div></dl><div className={styles.attendanceSummary}><strong>Asistencia histórica</strong><span>{attendance.filter((entry) => entry.status === "played").length} jugados</span><span>{attendance.filter((entry) => entry.status === "excused_absence").length} bajas justificadas</span><span>{attendance.filter((entry) => entry.status === "late_cancellation").length} cancelaciones tardías</span><span>{attendance.filter((entry) => entry.status === "unexcused_no_show").length} no-show</span></div><small>La ficha usa el read model de Rating V2. La demo no recalcula ni persiste valoraciones.</small></div>
             <div className={styles.relatedPlayers}><h2>Compañeros</h2>{snapshot.players.players.filter((player) => player.teamId && player.teamId === currentPlayer.teamId && player.id !== currentPlayer.id).slice(0, 5).map((player) => <button key={player.id} type="button" onClick={() => onPlayer(player.id)}><span>{initials(player.name)}</span><strong>{player.name}</strong><small>{player.position.abbreviation} · {ratingScore(player)}</small></button>)}</div>
           </div>
         ) : null}
@@ -636,7 +691,10 @@ function ProfileView({
             <div className={styles.sectionHeading}><div><span className={styles.eyebrow}>Economía demo</span><h1>Cajas y recompensas</h1></div><span>{boxes.filter((box) => box.state === "pending" && !session.openedBoxIds.includes(box.id)).length} pendientes</span></div>
             <div className={styles.boxGrid}>{boxes.map((box) => {
               const opened = box.state === "opened" || session.openedBoxIds.includes(box.id);
-              return <article key={box.id} data-state={opened ? "opened" : "pending"}><span className={styles.boxGlyph}>IQ</span><div><small>{box.rarity}</small><strong>{opened ? "Caja abierta" : "Caja pendiente"}</strong><p>{opened ? box.rewardCosmeticKey : "Recompensa oculta hasta abrir"}</p></div>{opened ? <span>Abierta</span> : <button type="button" onClick={() => onOpenBox(box)}>Abrir demo</button>}</article>;
+              const cosmetic = PLAYER_COSMETIC_CATALOG.find((item) => item.key === box.rewardCosmeticKey);
+              const isNew = session.newCosmeticKeys.includes(box.rewardCosmeticKey);
+              const equipped = session.equippedCosmeticKeys.includes(box.rewardCosmeticKey);
+              return <article key={box.id} data-new={isNew || undefined} data-state={opened ? "opened" : "pending"}><span className={styles.boxGlyph}>IQ</span><div><small>{box.rarity}{isNew ? " · NEW" : ""}</small><strong>{opened ? cosmetic?.name ?? "Caja abierta" : "Caja pendiente"}</strong><p>{opened ? cosmetic?.description ?? box.rewardCosmeticKey : "Recompensa oculta hasta abrir"}</p></div>{!opened ? <button type="button" onClick={() => onOpenBox(box)}>Abrir demo</button> : cosmetic ? <button disabled={equipped} type="button" onClick={() => onEquipCosmetic(cosmetic.key)}>{equipped ? "Equipado" : "Equipar"}</button> : <span>Escudo</span>}</article>;
             })}</div>
             <AchievementList achievements={achievements} />
           </div>
@@ -668,7 +726,9 @@ function PlayerModal({ onClose, player }: { onClose: () => void; player: DemoWor
 }
 
 export function DemoWorldApp({ manifest }: { manifest: DemoWorldManifest }) {
+  const [core, setCore] = useState<DemoWorldCoreChunk | null>(null);
   const [snapshot, setSnapshot] = useState<DemoWorldSnapshot | null>(null);
+  const [loadingFullWorld, setLoadingFullWorld] = useState(false);
   const [session, setSession] = useState<DemoWorldSessionState>(() => readInitialDemoWorldSession(
     typeof window === "undefined" ? "" : window.location.search,
     typeof window === "undefined" ? undefined : window.sessionStorage,
@@ -677,12 +737,27 @@ export function DemoWorldApp({ manifest }: { manifest: DemoWorldManifest }) {
     typeof window === "undefined" ? "" : window.location.search,
   ));
   const initialPerspectiveId = useRef(session.perspectiveId);
+  const fullWorldRequest = useRef<Promise<DemoWorldSnapshot | null> | null>(null);
   const [selectedMatchId, setSelectedMatchId] = useState<string | null>(null);
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
   const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null);
   const [openedBox, setOpenedBox] = useState<DemoWorldRewardBox | null>(null);
+  const [RewardBoxComponent, setRewardBoxComponent] = useState<
+    (typeof import("../reward-box-demo"))["RewardBoxDemo"] | null
+  >(null);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+
+  const openRewardBox = (box: DemoWorldRewardBox) => {
+    setOpenedBox(box);
+    if (RewardBoxComponent) return;
+    void import("../reward-box-demo")
+      .then((module) => setRewardBoxComponent(() => module.RewardBoxDemo))
+      .catch(() => {
+        setOpenedBox(null);
+        setError("No se pudo cargar la animación de la caja.");
+      });
+  };
 
   useEffect(() => {
     document.body.classList.add("demo-world-active");
@@ -691,14 +766,14 @@ export function DemoWorldApp({ manifest }: { manifest: DemoWorldManifest }) {
 
   useEffect(() => {
     let disposed = false;
-    void loadDemoWorldSnapshot(manifest)
-      .then((world) => {
+    void loadDemoWorldCore(manifest)
+      .then((loadedCore) => {
         if (disposed) return;
-        const perspective = world.core.perspectives.find((entry) => entry.id === initialPerspectiveId.current) ?? world.core.perspectives[0]!;
-        const teamId = perspective.teamId ?? world.core.teams[0]!.id;
-        const teamMatches = world.matches.matches.filter((match) => match.homeTeamId === teamId || match.awayTeamId === teamId);
+        const perspective = loadedCore.perspectives.find((entry) => entry.id === initialPerspectiveId.current) ?? loadedCore.perspectives[0]!;
+        const teamId = perspective.teamId ?? loadedCore.teams[0]!.id;
+        const teamMatches = loadedCore.preview.matches.filter((match) => match.homeTeamId === teamId || match.awayTeamId === teamId);
         const nextMatch = teamMatches.filter((match) => match.status === "scheduled").sort((left, right) => Date.parse(left.date) - Date.parse(right.date))[0] ?? teamMatches[0];
-        setSnapshot(world);
+        setCore(loadedCore);
         setSelectedTeamId(teamId);
         setSelectedPlayerId(null);
         setSelectedMatchId(nextMatch?.id ?? null);
@@ -706,6 +781,22 @@ export function DemoWorldApp({ manifest }: { manifest: DemoWorldManifest }) {
       .catch((caught) => setError(caught instanceof Error ? caught.message : "No se pudo cargar el Mundo Demo."));
     return () => { disposed = true; };
   }, [manifest]);
+
+  useEffect(() => {
+    if (!core || snapshot || activeTab === "inicio" || fullWorldRequest.current) return;
+    setLoadingFullWorld(true);
+    const request = loadDemoWorldSnapshot(manifest, core)
+      .then((world) => {
+        setSnapshot(world);
+        return world;
+      })
+      .catch((caught) => {
+        setError(caught instanceof Error ? caught.message : "No se pudo cargar esta sección del Mundo Demo.");
+        return null;
+      })
+      .finally(() => setLoadingFullWorld(false));
+    fullWorldRequest.current = request;
+  }, [activeTab, core, manifest, snapshot]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -719,18 +810,22 @@ export function DemoWorldApp({ manifest }: { manifest: DemoWorldManifest }) {
   }, [message]);
 
   if (error) return <main className={styles.shell}><div className={styles.errorPanel}><strong>No se pudo abrir el Mundo Demo</strong><p>{error}</p><Link href="/">Volver</Link></div></main>;
-  if (!snapshot) return <LoadingWorld manifest={manifest} />;
+  if (!core) return <LoadingWorld manifest={manifest} />;
 
-  const world = snapshot;
+  const world = snapshot ?? previewSnapshot(manifest, core);
   const perspective = world.core.perspectives.find((entry) => entry.id === session.perspectiveId) ?? world.core.perspectives[0]!;
-  const currentPlayer = world.players.players.find((player) => player.id === perspective.playerId)!;
+  const baseCurrentPlayer = world.players.players.find((player) => player.id === perspective.playerId)!;
+  const currentPlayer = playerWithDemoCosmetics(baseCurrentPlayer, session.equippedCosmeticKeys);
   const currentTeam = perspective.teamId ? world.core.teams.find((team) => team.id === perspective.teamId) ?? null : null;
   const selectedTeam = world.core.teams.find((team) => team.id === selectedTeamId) ?? currentTeam ?? world.core.teams[0]!;
   const teamMatches = world.matches.matches.filter((match) => currentTeam
     ? match.homeTeamId === currentTeam.id || match.awayTeamId === currentTeam.id
     : match.status === "scheduled" && match.publicOpenSlots > 0);
   const selectedMatch = world.matches.matches.find((match) => match.id === selectedMatchId) ?? teamMatches[0] ?? null;
-  const selectedPlayer = world.players.players.find((player) => player.id === selectedPlayerId) ?? null;
+  const selectedPlayerSource = world.players.players.find((player) => player.id === selectedPlayerId) ?? null;
+  const selectedPlayer = selectedPlayerSource?.id === currentPlayer.id
+    ? currentPlayer
+    : selectedPlayerSource;
   const notifications = world.activity.notifications;
 
   function updateSession(next: (current: DemoWorldSessionState) => DemoWorldSessionState) {
@@ -744,6 +839,21 @@ export function DemoWorldApp({ manifest }: { manifest: DemoWorldManifest }) {
     params.set("perspective", session.perspectiveId);
     window.history.replaceState(null, "", `/demo?${params.toString()}`);
     window.scrollTo({ behavior: "smooth", top: 0 });
+  }
+
+  function equipCosmetic(cosmeticKey: string) {
+    const item = PLAYER_COSMETIC_CATALOG.find((entry) => entry.key === cosmeticKey);
+    if (!item) return;
+    updateSession((current) => ({
+      ...current,
+      equippedCosmeticKeys: [
+        ...current.equippedCosmeticKeys.filter((key) => PLAYER_COSMETIC_CATALOG.find((entry) => entry.key === key)?.slot !== item.slot),
+        item.key,
+      ],
+      inventoryCosmeticKeys: [...new Set([...current.inventoryCosmeticKeys, item.key])],
+      newCosmeticKeys: current.newCosmeticKeys.filter((key) => key !== item.key),
+    }));
+    setMessage(`${item.name} equipado en tu ficha demo.`);
   }
 
   function choosePerspective(perspectiveId: DemoWorldPerspective["id"]) {
@@ -788,27 +898,32 @@ export function DemoWorldApp({ manifest }: { manifest: DemoWorldManifest }) {
       <DemoHeader activeTab={activeTab} manifest={manifest} onReset={resetWorld} onTab={navigate} perspective={perspective} perspectives={world.core.perspectives} setPerspective={choosePerspective} />
       <div className={styles.content}>
         {activeTab === "inicio" ? <WorldHome currentPlayer={currentPlayer} currentTeam={currentTeam} notifications={notifications} onMatch={openMatch} onPlayer={setSelectedPlayerId} onTab={navigate} perspective={perspective} snapshot={world} teamMatches={teamMatches} /> : null}
-        {activeTab === "partido" ? <MatchView currentPlayer={currentPlayer} currentTeam={currentTeam} match={selectedMatch} onLocalAttendance={(status) => { if (!selectedMatch) return; updateSession((current) => ({ ...current, attendanceByMatch: { ...current.attendanceByMatch, [selectedMatch.id]: status } })); setMessage(`Asistencia ${status === "voy" ? "confirmada" : status === "duda" ? "en duda" : "cancelada"} solo en esta sesión demo.`); }} onMatch={openMatch} onPlayer={setSelectedPlayerId} perspective={perspective} session={session} setMessage={setMessage} snapshot={world} teamMatches={teamMatches} /> : null}
-        {activeTab === "mercado" ? <MarketView currentPlayer={currentPlayer} onMatch={openMatch} onPlayer={setSelectedPlayerId} onTeam={openTeam} perspective={perspective} setMessage={setMessage} snapshot={world} /> : null}
-        {activeTab === "equipo" ? <TeamView currentTeam={currentTeam} onPlayer={setSelectedPlayerId} onTeam={setSelectedTeamId} selectedTeam={selectedTeam} snapshot={world} /> : null}
-        {activeTab === "perfil" ? <ProfileView currentPlayer={currentPlayer} currentTeam={currentTeam} notifications={notifications} onOpenBox={setOpenedBox} onPlayer={setSelectedPlayerId} onRead={(notificationId) => updateSession((current) => ({ ...current, readNotificationIds: [...new Set([...current.readNotificationIds, notificationId])] }))} perspective={perspective} session={session} snapshot={world} /> : null}
+        {activeTab !== "inicio" && !snapshot ? <div className={styles.secondaryLoading} role="status"><span className={styles.loadingMark}>IQ</span><strong>{loadingFullWorld ? "Cargando esta sección" : "Preparando datos"}</strong><p>Solo descargamos el dominio que acabas de abrir.</p></div> : null}
+        {snapshot && activeTab === "partido" ? <MatchView currentPlayer={currentPlayer} currentTeam={currentTeam} key={perspective.id} match={selectedMatch} onLocalAttendance={(status) => { if (!selectedMatch) return; updateSession((current) => ({ ...current, attendanceByMatch: { ...current.attendanceByMatch, [selectedMatch.id]: status } })); setMessage(`Asistencia ${status === "voy" ? "confirmada" : status === "duda" ? "en duda" : "cancelada"} solo en esta sesión demo.`); }} onMatch={openMatch} onPlayer={setSelectedPlayerId} perspective={perspective} session={session} setMessage={setMessage} snapshot={snapshot} teamMatches={teamMatches} /> : null}
+        {snapshot && activeTab === "mercado" ? <MarketView currentPlayer={currentPlayer} onMatch={openMatch} onPlayer={setSelectedPlayerId} onTeam={openTeam} perspective={perspective} setMessage={setMessage} snapshot={snapshot} /> : null}
+        {snapshot && activeTab === "equipo" ? <TeamView currentTeam={currentTeam} onPlayer={setSelectedPlayerId} onTeam={setSelectedTeamId} selectedTeam={selectedTeam} snapshot={snapshot} /> : null}
+        {snapshot && activeTab === "perfil" ? <ProfileView currentPlayer={currentPlayer} currentTeam={currentTeam} notifications={notifications} onEquipCosmetic={equipCosmetic} onOpenBox={openRewardBox} onPerspective={choosePerspective} onPlayer={setSelectedPlayerId} onRead={(notificationId) => updateSession((current) => ({ ...current, readNotificationIds: [...new Set([...current.readNotificationIds, notificationId])] }))} perspective={perspective} perspectives={world.core.perspectives} session={session} snapshot={snapshot} /> : null}
       </div>
       <MobileAppNav active={activeTab as MobileAppTab} onNavigate={(tab) => navigate(tab as DemoWorldPrimaryTab)} />
       {selectedPlayer ? <PlayerModal onClose={() => setSelectedPlayerId(null)} player={selectedPlayer} /> : null}
-      <RewardBoxDemo
-        actionLabel={openedBox ? "Guardar en esta demo" : undefined}
-        description={openedBox ? `Recompensa local: ${openedBox.rewardCosmeticKey}` : undefined}
+      {openedBox && RewardBoxComponent ? <RewardBoxComponent
+        actionLabel="Guardar en esta demo"
+        description={`Recompensa local: ${openedBox.rewardCosmeticKey}`}
         eyebrow="Caja de logro · Mundo Demo"
         onAction={() => {
-          if (!openedBox) return;
-          updateSession((current) => ({ ...current, openedBoxIds: [...new Set([...current.openedBoxIds, openedBox.id])] }));
+          updateSession((current) => ({
+            ...current,
+            inventoryCosmeticKeys: [...new Set([...current.inventoryCosmeticKeys, openedBox.rewardCosmeticKey])],
+            newCosmeticKeys: [...new Set([...current.newCosmeticKeys, openedBox.rewardCosmeticKey])],
+            openedBoxIds: [...new Set([...current.openedBoxIds, openedBox.id])],
+          }));
           setOpenedBox(null);
-          setMessage("Recompensa guardada solo en esta sesión demo.");
+          setMessage("Pieza nueva guardada en la sesión demo. Ya puedes equiparla.");
         }}
         onClose={() => setOpenedBox(null)}
-        open={Boolean(openedBox)}
+        open
         title="Recompensa descubierta"
-      />
+      /> : null}
       {message ? <div className={styles.toast} role="status">{message}</div> : null}
     </main>
   );

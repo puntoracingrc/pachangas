@@ -13,8 +13,8 @@ Demo World V1 es un read model publico, ficticio y congelado de Pachangas IQ. Ex
 | Modo | `demo-world-read-only` |
 | Seed | `pachangas-iq-demo-world-v1-2026-27` |
 | `demoNow` | `2027-03-18T18:00:00.000Z` |
-| Hash SHA-256 | `cef767f201a00f9f36fdaad8b27a195e9c767147651153717dabf043b71d16d3` |
-| Payload canonico | 567.068 bytes, sin contar el manifest |
+| Hash SHA-256 | `34158b4f56a3011c9010b0952f74043435e9f896f0b7ea5fd90e0dfacdfac3ae` |
+| Payload canonico | 603.252 bytes, sin contar el manifest |
 
 `demoNow` sustituye a la hora del dispositivo al construir historias. El generador no usa `Date.now()` ni fechas variables.
 
@@ -23,14 +23,14 @@ Demo World V1 es un read model publico, ficticio y congelado de Pachangas IQ. Ex
 | Recurso | Contenido | Bytes |
 | --- | --- | ---: |
 | `manifest.json` | version, seed, hash, conteos y URLs | 635 |
-| `core.json` | equipos, campos, perspectivas, ranking e historias | 36.678 |
-| `players.json` | 365 perfiles, Rating V2 y loadouts | 355.011 |
-| `matches.json` | partidos, alineaciones, resultados, goleadores y Retos | 141.645 |
-| `activity.json` | logros, cajas, avisos y mappings de equipo | 33.695 |
+| `core.json` | preview inicial, equipos, campos, perspectivas, Ranking Provincial e historias | 76.158 |
+| `players.json` | 331 perfiles, Rating V2 y loadouts | 323.156 |
+| `matches.json` | partidos, asistencia, alineaciones, resultados, goleadores y Retos | 169.906 |
+| `activity.json` | logros, cajas, avisos y mappings de equipo | 34.032 |
 
-Los cuatro chunks de dominio se descargan en paralelo y se validan como una unidad antes de mostrar el mundo. V1 no hace carga diferida por pestana: el payload completo queda por debajo del presupuesto de 700 KB y esta decision evita esperas al cambiar de seccion. La separacion permite introducir carga lazy en V2 sin cambiar el contrato de las entidades.
+Inicio descarga y valida solo `core.json`. La primera navegacion a Partido, Mercado, Equipo o Perfil solicita una unica vez `activity.json`, `matches.json` y `players.json`, valida el hash comun y reutiliza desde entonces el snapshot completo. La carga secundaria no bloquea Inicio ni ejecuta escrituras.
 
-Cada URL de chunk lleva `?h=cef767f201a00f9f`. El navegador puede conservarla con `force-cache` sin mezclar una version nueva del manifest con datos anteriores.
+Cada URL de chunk lleva `?h=34158b4f56a3011c`. El navegador puede conservarla con cache larga sin mezclar una version nueva del manifest con datos anteriores. El Service Worker conserva `/demo`, el manifest y los chunks inmutables por hash; nunca encola acciones deportivas offline.
 
 ## Entidades publicas
 
@@ -39,11 +39,13 @@ Cada URL de chunk lleva `?h=cef767f201a00f9f`. El navegador puede conservarla co
 | Equipo | `demo_team_*` | identidad, territorio publico, plantilla, estadisticas, escudo y cosméticos desbloqueados |
 | Jugador | `demo_player_*` | nombre ficticio, ano de nacimiento, posicion, Rating V2, estadisticas, mercado y carta |
 | Partido | `demo_match_*` | revision, estado, modalidad, equipos, alineacion, reservas, marcador y goleadores |
+| Asistencia | `demo_attendance_*` | partido, jugador, estado publico y fecha estable del registro |
 | Reto | `demo_challenge_*` | equipos, propuesta, estado y partido canonico cuando procede |
 | Logro | `demo_achievement_*` | sujeto, clave real, fecha y evidencia legible |
 | Caja | `demo_reward_box_*` | propietario demo, logro de origen, estado y recompensa determinista |
 | Aviso | `demo_notification_*` | categoria, obligatoriedad, destino y fecha |
 | Historia | `demo_story_*` | titulo, cuerpo y referencias canonicas |
+| Ranking provincial | `demo_ranking_entry_*` | read model Season Score V3, revision publicada y estado de elegibilidad |
 
 No existen paginas indexables por jugador o equipo. `/demo` y `/demo/contact-sheet` heredan `noindex,nofollow`.
 
@@ -64,6 +66,9 @@ La unica persistencia de interaccion usa `sessionStorage` bajo `pachangas-demo-w
 - perspectiva activa;
 - asistencia simulada por partido;
 - cajas abiertas en la sesion;
+- piezas cosmeticas guardadas en el inventario;
+- piezas marcadas como nuevas;
+- piezas equipadas en la sesion;
 - avisos leidos en la sesion.
 
 `Reiniciar demo` elimina esa clave y restaura el snapshot. No existe cola offline ni sincronizacion posterior.
@@ -101,10 +106,12 @@ Antes de servir el mundo se comprueba que:
 - el contador de plantilla coincide con sus jugadores;
 - cada participante, reserva y goleador existe;
 - cada goleador participo y la suma coincide con el marcador;
+- cada asistencia referencia un jugador y partido existentes y usa uno de los cuatro estados publicos permitidos;
 - un Reto aceptado enlaza un partido programado;
 - un Reto completado enlaza un partido finalizado;
 - los demas estados de Reto no enlazan partido;
 - logros, cajas, ranking e historias resuelven sujetos y referencias existentes;
+- el Ranking Provincial conserva la formula 55/30/15, los umbrales de elegibilidad, la revision publicada y premios desactivados;
 - no aparece ningun campo prohibido.
 
 ## Rating y cosmeticos
@@ -112,6 +119,23 @@ Antes de servir el mundo se comprueba que:
 Las cartas de campo se calculan mediante `calculateRatingCardLayers` y declaran `pachangas-rating-v2`. Los porteros conservan explicitamente `currentOverall: null` porque su dominio V2 sigue pendiente; no se inventa una formula alternativa.
 
 La UI reutiliza `PlayerCosmeticCard` y `TeamShieldView` con los catalogos activos. No hay piezas prototype, Premium Ball ni propuestas del Premium Art Pack tratadas como posesiones.
+
+La caja destacada nace de un hat-trick canonico, desbloquea `player.frame.barrio.copper` y reproduce localmente el ciclo abrir, guardar, NEW y equipar. Este inventario es efimero y `Reiniciar demo` lo elimina por completo.
+
+## Ranking Provincial
+
+El snapshot reutiliza el mismo contrato y componente publico que `/ranking`. Su read model esta congelado y no recalcula Season Score en el navegador:
+
+- formula V3: calidad 55 %, competicion 30 % y oposicion 15 %;
+- minimo de 15 Retos validos, 6 rivales logicos y fiabilidad 0,45;
+- Top 10 paginado sobre 32 entradas ficticias;
+- ficha propia en posicion 27;
+- casos no elegible, provisional y pendiente de verificacion;
+- `awardsEnabled: false`, sin conceder trofeos ni recompensas.
+
+## Asistencia
+
+Hay 168 evidencias publicas ficticias: 126 `played`, 14 `excused_absence`, 14 `late_cancellation` y 14 `unexcused_no_show`. Son historial descriptivo de asistencia, no reportes ni sanciones. Una baja justificada o tardia no se convierte automaticamente en mala conducta.
 
 Los cinco mappings de equipo son exactamente:
 

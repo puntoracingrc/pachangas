@@ -1,5 +1,6 @@
 import type { AttributeRatings } from "../laboratorio-ficha-jugador/_engine/player-rating-engine";
 import type { PlayerCosmeticLoadout, PlayerCosmeticRarity } from "../player-cosmetics-contract";
+import type { ProvincialOwnRank, ProvincialRankingPayload } from "../ranking/provincial-ranking-contract";
 import type { TeamShieldConfig } from "../team-shield-contract";
 
 export const DEMO_WORLD_VERSION = 1 as const;
@@ -11,6 +12,9 @@ export type DemoWorldPrimaryTab = "inicio" | "partido" | "mercado" | "equipo" | 
 export type DemoMatchKind = "sala" | "futbol7" | "futbol11";
 export type DemoMatchScope = "challenge" | "internal";
 export type DemoMatchStatus = "finalized" | "scheduled";
+export type DemoWorldAttendanceStatus = "excused_absence" | "late_cancellation" | "played" | "unexcused_no_show";
+export type DemoWorldMatchPane = "admin" | "alineacion" | "historico" | "proximo" | "resultado";
+export type DemoWorldRankingShowcaseId = "ineligible" | "my-rank" | "pending-review" | "provisional";
 
 export type DemoWorldManifest = {
   chunks: {
@@ -156,6 +160,14 @@ export type DemoWorldChallenge = {
   status: "accepted" | "cancelled" | "completed" | "countered" | "pending" | "rejected";
 };
 
+export type DemoWorldAttendanceRecord = {
+  id: string;
+  matchId: string;
+  playerId: string;
+  recordedAt: string;
+  status: DemoWorldAttendanceStatus;
+};
+
 export type DemoWorldRankingRow = {
   draws: number;
   goalsAgainst: number;
@@ -207,11 +219,32 @@ export type DemoWorldStory = {
   id: string;
   referenceIds: string[];
   title: string;
-  type: "achievement" | "challenge" | "match" | "market" | "team";
+  type: "achievement" | "attendance" | "challenge" | "match" | "market" | "ranking" | "reward" | "team";
+};
+
+export type DemoWorldProvincialRanking = {
+  awardsEnabled: false;
+  formula: {
+    activityWindowWeeks: 12;
+    minimumLogicalOpponents: 6;
+    minimumRatingReliability: 0.45;
+    minimumValidChallenges: 15;
+    weights: { competition: 0.3; opposition: 0.15; quality: 0.55 };
+  };
+  ranking: ProvincialRankingPayload;
+  showcases: Record<DemoWorldRankingShowcaseId, ProvincialOwnRank>;
+};
+
+export type DemoWorldHomePreview = {
+  matches: DemoWorldMatch[];
+  notifications: DemoWorldNotification[];
+  players: DemoWorldPlayer[];
 };
 
 export type DemoWorldCoreChunk = {
   perspectives: DemoWorldPerspective[];
+  preview: DemoWorldHomePreview;
+  provincialRanking: DemoWorldProvincialRanking;
   rankings: DemoWorldRankingRow[];
   stories: DemoWorldStory[];
   teams: DemoWorldTeam[];
@@ -223,6 +256,7 @@ export type DemoWorldPlayersChunk = {
 };
 
 export type DemoWorldMatchesChunk = {
+  attendance: DemoWorldAttendanceRecord[];
   challenges: DemoWorldChallenge[];
   matches: DemoWorldMatch[];
 };
@@ -250,6 +284,9 @@ export type DemoWorldSnapshot = {
 
 export type DemoWorldSessionState = {
   attendanceByMatch: Record<string, "duda" | "no" | "voy">;
+  equippedCosmeticKeys: string[];
+  inventoryCosmeticKeys: string[];
+  newCosmeticKeys: string[];
   openedBoxIds: string[];
   perspectiveId: DemoWorldPerspectiveId;
   readNotificationIds: string[];
@@ -257,6 +294,9 @@ export type DemoWorldSessionState = {
 
 export const DEFAULT_DEMO_WORLD_SESSION: DemoWorldSessionState = {
   attendanceByMatch: {},
+  equippedCosmeticKeys: [],
+  inventoryCosmeticKeys: [],
+  newCosmeticKeys: [],
   openedBoxIds: [],
   perspectiveId: "player",
   readNotificationIds: [],
@@ -291,6 +331,13 @@ export function canDemoWorldInvite(role: DemoWorldPerspective["role"]) {
   return role === "admin";
 }
 
+export function demoWorldMatchPaneForRole(
+  pane: DemoWorldMatchPane,
+  role: DemoWorldPerspective["role"],
+): DemoWorldMatchPane {
+  return pane === "admin" && role !== "admin" ? "proximo" : pane;
+}
+
 const forbiddenKeyPatterns = [
   /(^|_)(email|phone|telephone|mobile)($|_)/i,
   /(^|_)(auth_id|auth_user_id|owner_user_id|service_role)($|_)/i,
@@ -320,6 +367,7 @@ export function demoWorldIntegrityErrors(snapshot: DemoWorldSnapshot): string[] 
   const players = new Map(snapshot.players.players.map((player) => [player.id, player]));
   const matches = new Map(snapshot.matches.matches.map((match) => [match.id, match]));
   const achievements = new Map(snapshot.activity.achievements.map((achievement) => [achievement.id, achievement]));
+  const attendance = new Map(snapshot.matches.attendance.map((entry) => [entry.id, entry]));
 
   for (const team of teams.values()) {
     if (!team.id.startsWith("demo_team_")) errors.push(`Team id is not namespaced: ${team.id}`);
@@ -368,6 +416,15 @@ export function demoWorldIntegrityErrors(snapshot: DemoWorldSnapshot): string[] 
     }
   }
 
+  for (const record of attendance.values()) {
+    const match = matches.get(record.matchId);
+    if (!match || match.status !== "finalized") errors.push(`Invalid attendance match ${record.matchId} for ${record.id}`);
+    if (!players.has(record.playerId)) errors.push(`Unknown attendance player ${record.playerId} for ${record.id}`);
+    if (match && !match.homePlayerIds.includes(record.playerId) && !match.awayPlayerIds.includes(record.playerId) && record.status === "played") {
+      errors.push(`Played attendance ${record.id} is not in the canonical lineup`);
+    }
+  }
+
   for (const achievement of achievements.values()) {
     const validSubject = achievement.subjectType === "team" ? teams.has(achievement.subjectId) : players.has(achievement.subjectId);
     if (!validSubject) errors.push(`Unknown achievement subject ${achievement.subjectId}`);
@@ -385,6 +442,10 @@ export function demoWorldIntegrityErrors(snapshot: DemoWorldSnapshot): string[] 
     ...matches.keys(),
     ...snapshot.matches.challenges.map((challenge) => challenge.id),
     ...achievements.keys(),
+    ...attendance.keys(),
+    ...snapshot.activity.rewardBoxes.map((box) => box.id),
+    ...snapshot.core.provincialRanking.ranking.items.map((entry) => entry.entryKey),
+    ...Object.values(snapshot.core.provincialRanking.showcases).flatMap((entry) => entry.entryKey ? [entry.entryKey] : []),
   ]);
   for (const story of snapshot.core.stories) {
     for (const referenceId of story.referenceIds) {

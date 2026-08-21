@@ -11,6 +11,7 @@ import {
   type DemoMatchKind,
   type DemoWorldAchievement,
   type DemoWorldActivityChunk,
+  type DemoWorldAttendanceRecord,
   type DemoWorldChallenge,
   type DemoWorldCoreChunk,
   type DemoWorldManifest,
@@ -19,6 +20,7 @@ import {
   type DemoWorldNotification,
   type DemoWorldPlayer,
   type DemoWorldPlayersChunk,
+  type DemoWorldProvincialRanking,
   type DemoWorldRankingRow,
   type DemoWorldRewardBox,
   type DemoWorldSnapshot,
@@ -40,6 +42,8 @@ import { TEAM_SHIELD_DEFAULT_CONFIG, type TeamShieldConfig } from "../../app/tea
 export const DEMO_WORLD_SEED = "pachangas-iq-demo-world-v1-2026-27";
 export const DEMO_WORLD_NOW = "2027-03-18T18:00:00.000Z";
 const DEMO_WORLD_GENERATED_AT = "2026-08-11T10:00:00.000Z";
+const DEMO_WORLD_PLAYER_PERSPECTIVE_ID = "demo_player_006";
+const DEMO_WORLD_ADMIN_PERSPECTIVE_ID = "demo_player_002";
 
 type Random = () => number;
 
@@ -139,6 +143,8 @@ const teamDefinitions: TeamDefinition[] = [
   { name: "Nord Masnou", territory: "Maresme", location: "El Masnou · Ocata", identity: "Grupo joven con mucha llegada desde segunda línea." },
   { name: "Blau Vilassar", territory: "Maresme", location: "Vilassar · Centre", identity: "Plantilla equilibrada y abierta a nuevos rivales." },
   { name: "Riera Arenys", territory: "Maresme", location: "Arenys · Centre", identity: "Juego directo, buena portería y mucho compromiso." },
+  { name: "Delta Castelldefels", territory: "Barcelona", location: "Castelldefels · Centre", identity: "Salida limpia, extremos rápidos y retos de proximidad." },
+  { name: "Bosc Cardedeu", territory: "Vallès", location: "Cardedeu · Centre", identity: "Plantilla nueva que construye su identidad partido a partido." },
 ];
 
 const venues: DemoWorldVenue[] = [
@@ -183,8 +189,6 @@ const positions: PositionDefinition[] = [
   { abbreviation: "EI", engine: "winger", label: "Extremo izquierdo" },
   { abbreviation: "DC", engine: "striker", label: "Delantero centro" },
   { abbreviation: "DFC", engine: "centre_back", label: "Defensa central" },
-  { abbreviation: "MC", engine: "central_midfielder", label: "Interior" },
-  { abbreviation: "DC", engine: "striker", label: "Segundo delantero" },
 ];
 
 const positionBoosts: Record<PlayerPosition, Partial<AttributeRatings>> = {
@@ -316,7 +320,7 @@ function buildTeams(): DemoWorldTeam[] {
     foundedYear: String(2012 + index % 13),
     id: `demo_team_${pad(index + 1)}`,
     identity: definition.identity,
-    memberCount: 13,
+    memberCount: positions.length,
     name: definition.name,
     openToChallenges: index % 5 !== 4,
     publicLocation: definition.location,
@@ -345,7 +349,7 @@ function buildPlayers(random: Random, teams: DemoWorldTeam[]): DemoWorldPlayer[]
       market: {
         availability: pick(random, ["Entre semana por la noche", "Viernes noche", "Fines de semana", "Martes y jueves", "Con aviso de 48 horas"]),
         modalities: rosterIndex % 4 === 0 ? ["sala", "futbol7"] : rosterIndex % 5 === 0 ? ["futbol7", "futbol11"] : ["futbol7"],
-        openToGuest: rosterIndex % 4 !== 3,
+        openToGuest: playerIndex % 7 === 0,
         publicBio: pick(random, [
           "Me gusta jugar fácil y mantener el equipo ordenado.",
           "Disponible para completar partidos igualados por la zona.",
@@ -456,7 +460,10 @@ function makeExternalMatch(random: Random, index: number, matchIndex: number, ho
   const sideSize = lineupSize(kind);
   const homeRoster = shuffled(random, playersForTeam(players, homeTeam.id));
   const awayRoster = shuffled(random, playersForTeam(players, awayTeam.id));
-  const homePlayerIds = homeRoster.slice(0, sideSize).map((player) => player.id);
+  const featuredPlayer = index === 0 ? homeRoster.find((player) => player.id === DEMO_WORLD_PLAYER_PERSPECTIVE_ID) : null;
+  const homePlayerIds = featuredPlayer
+    ? [featuredPlayer, ...homeRoster.filter((player) => player.id !== featuredPlayer.id)].slice(0, sideSize).map((player) => player.id)
+    : homeRoster.slice(0, sideSize).map((player) => player.id);
   const awayPlayerIds = awayRoster.slice(0, sideSize).map((player) => player.id);
   const forced = index === 0 ? { home: 3, away: 0 } : index === 10 ? { home: 2, away: 1 } : null;
   const home = forced?.home ?? Math.floor(random() * 6);
@@ -477,10 +484,12 @@ function makeExternalMatch(random: Random, index: number, matchIndex: number, ho
     result: { away, home },
     revision: 5 + index % 13,
     scope: "challenge",
-    scorers: [
-      ...scorerRows(random, homePlayerIds, home, "home"),
-      ...scorerRows(random, awayPlayerIds, away, "away"),
-    ],
+    scorers: index === 0
+      ? [{ goals: 3, playerId: DEMO_WORLD_PLAYER_PERSPECTIVE_ID, side: "home" }]
+      : [
+        ...scorerRows(random, homePlayerIds, home, "home"),
+        ...scorerRows(random, awayPlayerIds, away, "away"),
+      ],
     status: "finalized",
     title: `${homeTeam.name} vs ${awayTeam.name}`,
     venueId: venues.find((venue) => venue.territory === homeTeam.territory)?.id ?? venues[0]!.id,
@@ -498,8 +507,9 @@ function buildMatches(random: Random, teams: DemoWorldTeam[], players: DemoWorld
   for (let index = 0; index < 10; index += 1) pairs.push([0, 2 + index]);
   for (let index = 0; index < 10; index += 1) pairs.push([1, 12 + index]);
   for (let index = 0; index < 25; index += 1) {
-    const home = 2 + index % 26;
-    const away = 2 + (index * 7 + 5) % 26;
+    const nonFeaturedTeamCount = teams.length - 2;
+    const home = 2 + index % nonFeaturedTeamCount;
+    const away = 2 + (index * 7 + 5) % nonFeaturedTeamCount;
     pairs.push(home === away ? [home, (away + 1) % teams.length] : [home, away]);
   }
   pairs.forEach(([home, away], index) => {
@@ -619,6 +629,160 @@ function rankingsFor(teams: DemoWorldTeam[]): DemoWorldRankingRow[] {
     .map((entry, index) => ({ ...entry, position: index + 1 }));
 }
 
+function seasonScore(quality: number, competition: number, opposition: number) {
+  return Number((quality * 0.55 + competition * 0.3 + opposition * 0.15).toFixed(2));
+}
+
+function provincialRankingFor(players: DemoWorldPlayer[]): DemoWorldProvincialRanking {
+  const perspectivePlayer = players.find((player) => player.id === DEMO_WORLD_PLAYER_PERSPECTIVE_ID)!;
+  const candidates = players.filter((player) => player.rating.domain === "field" && player.id !== perspectivePlayer.id);
+  const ordered = [...candidates.slice(0, 26), perspectivePlayer, ...candidates.slice(26, 31)];
+  const entries = ordered.map((player, index) => {
+    const position = index + 1;
+    const quality = Number((94 - position * 0.62).toFixed(2));
+    const competition = Number((91 - position * 0.68).toFixed(2));
+    const opposition = Number((89 - position * 0.48).toFixed(2));
+    return {
+      components: { competition, opposition, quality },
+      displayName: player.name,
+      eligibilityState: "eligible" as const,
+      entryKey: `demo_ranking_entry_${pad(position, 2)}`,
+      logicalOpponents: 6 + position % 9,
+      position,
+      recentActivityWeeks: 1 + position % 10,
+      reliability: Math.max(45, player.rating.reliability) / 100,
+      score: seasonScore(quality, competition, opposition),
+      validChallenges: 15 + position % 12,
+    };
+  });
+  const ownEntry = entries.find((entry) => entry.position === 27)!;
+  const showcasePlayers = candidates.slice(40, 43);
+  const publication = {
+    checksum: canonicalHash(entries),
+    publishedAt: isoAtOffset(-1, 8, 0),
+    revision: 17,
+  };
+  return {
+    awardsEnabled: false,
+    formula: {
+      activityWindowWeeks: 12,
+      minimumLogicalOpponents: 6,
+      minimumRatingReliability: 0.45,
+      minimumValidChallenges: 15,
+      weights: { competition: 0.3, opposition: 0.15, quality: 0.55 },
+    },
+    ranking: {
+      available: true,
+      items: entries.slice(0, 10),
+      pagination: { offset: 0, pageSize: 10, total: entries.length },
+      publication,
+      season: {
+        endsAt: "2027-06-30T21:59:59.000Z",
+        formulaKey: "season_score_v3",
+        formulaVersion: 3,
+        id: "demo_season_2026_27",
+        key: "2026-27",
+        label: DEMO_WORLD_SEASON,
+        startsAt: "2026-07-01T00:00:00.000Z",
+        status: "active",
+      },
+      territory: { provinceCode: "08", provinceName: "Barcelona" },
+    },
+    showcases: {
+      "my-rank": {
+        available: true,
+        displayName: perspectivePlayer.name,
+        entryKey: ownEntry.entryKey,
+        eligibilityState: "eligible",
+        logicalOpponents: ownEntry.logicalOpponents,
+        position: 27,
+        provinceCode: "08",
+        publicationRevision: publication.revision,
+        recentActivityWeeks: ownEntry.recentActivityWeeks,
+        reliability: ownEntry.reliability,
+        score: ownEntry.score,
+        validChallenges: ownEntry.validChallenges,
+      },
+      ineligible: {
+        available: true,
+        displayName: showcasePlayers[0]!.name,
+        eligibilityState: "ineligible",
+        logicalOpponents: 4,
+        position: null,
+        provinceCode: "08",
+        publicationRevision: publication.revision,
+        reasonCodes: ["ranking_evidence_incomplete"],
+        recentActivityWeeks: 5,
+        reliability: 0.62,
+        score: 0,
+        validChallenges: 9,
+      },
+      provisional: {
+        available: true,
+        displayName: showcasePlayers[1]!.name,
+        eligibilityState: "provisional",
+        logicalOpponents: 5,
+        position: null,
+        provinceCode: "08",
+        publicationRevision: publication.revision,
+        reasonCodes: ["ranking_evidence_incomplete"],
+        recentActivityWeeks: 2,
+        reliability: 0.71,
+        score: 61.24,
+        validChallenges: 13,
+      },
+      "pending-review": {
+        available: true,
+        displayName: showcasePlayers[2]!.name,
+        eligibilityState: "pending_integrity_review",
+        logicalOpponents: 8,
+        position: null,
+        provinceCode: "08",
+        publicationRevision: publication.revision,
+        reasonCodes: ["ranking_review_pending"],
+        recentActivityWeeks: 3,
+        reliability: 0.78,
+        score: 67.18,
+        validChallenges: 19,
+      },
+    },
+  };
+}
+
+function attendanceFor(matches: DemoWorldMatch[], players: DemoWorldPlayer[]): DemoWorldAttendanceRecord[] {
+  const rosterByTeam = new Map<string, DemoWorldPlayer[]>();
+  for (const player of players) {
+    if (!player.teamId) continue;
+    rosterByTeam.set(player.teamId, [...(rosterByTeam.get(player.teamId) ?? []), player]);
+  }
+  const records: DemoWorldAttendanceRecord[] = [];
+  const absenceStatuses = ["excused_absence", "late_cancellation", "unexcused_no_show"] as const;
+  for (const [matchIndex, match] of matches.filter((entry) => entry.status === "finalized").slice(0, 42).entries()) {
+    const playedIds = [...match.homePlayerIds.slice(0, 2), ...match.awayPlayerIds.slice(0, 1)];
+    for (const playerId of playedIds) {
+      records.push({
+        id: `demo_attendance_${pad(records.length + 1)}`,
+        matchId: match.id,
+        playerId,
+        recordedAt: match.date,
+        status: "played",
+      });
+    }
+    const absentPlayer = (rosterByTeam.get(match.homeTeamId) ?? []).find((player) => !match.homePlayerIds.includes(player.id));
+    if (absentPlayer) {
+      if (!match.confirmedPlayerIds.includes(absentPlayer.id)) match.confirmedPlayerIds.push(absentPlayer.id);
+      records.push({
+        id: `demo_attendance_${pad(records.length + 1)}`,
+        matchId: match.id,
+        playerId: absentPlayer.id,
+        recordedAt: match.date,
+        status: absenceStatuses[matchIndex % absenceStatuses.length]!,
+      });
+    }
+  }
+  return records;
+}
+
 function teamAchievements(teams: DemoWorldTeam[]) {
   const achievements: DemoWorldAchievement[] = [];
   let index = 0;
@@ -651,12 +815,17 @@ function teamAchievements(teams: DemoWorldTeam[]) {
 function playerAchievements(players: DemoWorldPlayer[]) {
   const achievements: DemoWorldAchievement[] = [];
   let index = 0;
-  for (const player of players.filter((entry) => entry.teamId).sort((left, right) => right.appearances - left.appearances).slice(0, 42)) {
+  const eligible = players.filter((entry) => entry.teamId).sort((left, right) => right.appearances - left.appearances);
+  const featured = eligible.find((player) => player.id === DEMO_WORLD_PLAYER_PERSPECTIVE_ID)!;
+  const ordered = [featured, ...eligible.filter((player) => player.id !== featured.id)].slice(0, 42);
+  for (const player of ordered) {
     index += 1;
     const goalAchievement = player.goals >= 3;
     achievements.push({
       description: goalAchievement ? "Marcó tres o más goles en un partido confirmado." : "Superó cinco partidos confirmados con su grupo.",
-      evidence: goalAchievement ? `${player.goals} goles acumulados en el snapshot.` : `${player.appearances} apariciones confirmadas.`,
+      evidence: player.id === DEMO_WORLD_PLAYER_PERSPECTIVE_ID
+        ? "3 goles confirmados en demo_match_076."
+        : goalAchievement ? `${player.goals} goles acumulados en el snapshot.` : `${player.appearances} apariciones confirmadas.`,
       id: `demo_achievement_player_${pad(index)}`,
       key: goalAchievement ? "player.all.hat_tricks.001" : "player.internal.matches.005",
       occurredAt: isoAtOffset(-45 + index % 35),
@@ -671,7 +840,9 @@ function playerAchievements(players: DemoWorldPlayer[]) {
 
 function rewardBoxesFor(achievements: DemoWorldAchievement[]): DemoWorldRewardBox[] {
   const playerRewards = PLAYER_COSMETIC_CATALOG.map((item) => item.key);
-  return achievements.slice(0, 28).map((achievement, index) => {
+  const featuredAchievement = achievements.find((achievement) => achievement.subjectId === DEMO_WORLD_PLAYER_PERSPECTIVE_ID && achievement.key === "player.all.hat_tricks.001")!;
+  const ordered = [featuredAchievement, ...achievements.filter((achievement) => achievement.id !== featuredAchievement.id)].slice(0, 28);
+  return ordered.map((achievement, index) => {
     const mapping = achievement.subjectType === "team"
       ? DEMO_WORLD_TEAM_REWARD_MAPPINGS.find((entry) => entry.achievementKey === achievement.key)
       : null;
@@ -681,7 +852,7 @@ function rewardBoxesFor(achievements: DemoWorldAchievement[]): DemoWorldRewardBo
       ownerId: achievement.subjectId,
       ownerType: achievement.subjectType,
       rarity: achievement.rarity,
-      rewardCosmeticKey: mapping?.cosmeticKey ?? playerRewards[index % playerRewards.length]!,
+      rewardCosmeticKey: achievement.id === featuredAchievement.id ? "player.frame.barrio.copper" : mapping?.cosmeticKey ?? playerRewards[index % playerRewards.length]!,
       state: index % 4 === 0 ? "pending" : "opened",
     };
   });
@@ -690,7 +861,7 @@ function rewardBoxesFor(achievements: DemoWorldAchievement[]): DemoWorldRewardBo
 function challengesFor(matches: DemoWorldMatch[]) {
   return matches
     .filter((match) => match.scope === "challenge" && match.awayTeamId)
-    .slice(0, 26)
+    .slice(0, 48)
     .map((match, index): DemoWorldChallenge => {
       const openStatuses = ["countered", "pending", "accepted", "rejected", "cancelled"] as const;
       const status: DemoWorldChallenge["status"] = match.status === "finalized" ? "completed" : openStatuses[index % openStatuses.length]!;
@@ -712,12 +883,13 @@ function challengesFor(matches: DemoWorldMatch[]) {
     });
 }
 
-function notificationsFor(matches: DemoWorldMatch[], achievements: DemoWorldAchievement[], challenges: DemoWorldChallenge[]): DemoWorldNotification[] {
+function notificationsFor(matches: DemoWorldMatch[], achievements: DemoWorldAchievement[], challenges: DemoWorldChallenge[], players: DemoWorldPlayer[]): DemoWorldNotification[] {
   const upcoming = matches.find((match) => match.status === "scheduled")!;
   const firstAchievement = achievements.find((entry) => entry.subjectId === "demo_team_001")!;
   const acceptedChallenge = challenges.find((challenge) => challenge.status === "accepted")!;
   const completedChallenge = challenges.find((challenge) => challenge.status === "completed")!;
   const counteredChallenge = challenges.find((challenge) => challenge.status === "countered")!;
+  const freeAgent = players.find((player) => !player.teamId)!;
   const rows: Array<Omit<DemoWorldNotification, "createdAt" | "id">> = [
     { title: "Se apunta un jugador", body: "Joel Ferrer ha confirmado que va al próximo partido.", category: "match", mandatory: false, targetId: upcoming.id, targetTab: "partido" },
     { title: "Cambio de asistencia", body: "Un jugador confirmado ha cancelado con antelación.", category: "match", mandatory: false, targetId: upcoming.id, targetTab: "partido" },
@@ -729,40 +901,83 @@ function notificationsFor(matches: DemoWorldMatch[], achievements: DemoWorldAchi
     { title: "Nuevo logro desbloqueado", body: "El equipo tiene una recompensa pendiente de reclamar.", category: "achievement", mandatory: false, targetId: firstAchievement.id, targetTab: "perfil" },
     { title: "Caja pendiente", body: "La caja de logro sigue cerrada y conserva su recompensa.", category: "achievement", mandatory: false, targetId: "demo_reward_box_001", targetTab: "perfil" },
     { title: "Resultado confirmado", body: "Los dos equipos han confirmado el marcador del último reto.", category: "challenge", mandatory: true, targetId: completedChallenge.id, targetTab: "partido" },
-    { title: "Perfil de Mercado visto", body: "Dos equipos han guardado este perfil como posible refuerzo.", category: "market", mandatory: false, targetId: "demo_player_365", targetTab: "mercado" },
+    { title: "Perfil de Mercado visto", body: "Dos equipos han guardado este perfil como posible refuerzo.", category: "market", mandatory: false, targetId: freeAgent.id, targetTab: "mercado" },
     { title: "Aviso de seguridad de demo", body: "Las acciones de este mundo son simuladas y nunca escriben datos reales.", category: "security", mandatory: true, targetId: null, targetTab: "inicio" },
   ];
   return rows.map((row, index) => ({ ...row, createdAt: isoAtOffset(-index, 17, 15), id: `demo_notification_${pad(index + 1)}` }));
 }
 
-function storiesFor(matches: DemoWorldMatch[], teams: DemoWorldTeam[], achievements: DemoWorldAchievement[], challenges: DemoWorldChallenge[]): DemoWorldStory[] {
+function storiesFor(
+  matches: DemoWorldMatch[],
+  teams: DemoWorldTeam[],
+  players: DemoWorldPlayer[],
+  achievements: DemoWorldAchievement[],
+  challenges: DemoWorldChallenge[],
+  attendance: DemoWorldAttendanceRecord[],
+  rewardBoxes: DemoWorldRewardBox[],
+  provincialRanking: DemoWorldProvincialRanking,
+): DemoWorldStory[] {
   const completed = matches.filter((match) => match.scope === "challenge" && match.status === "finalized");
   const upcoming = matches.filter((match) => match.status === "scheduled");
   const counteredChallenge = challenges.find((challenge) => challenge.status === "countered")!;
   const rejectedChallenge = challenges.find((challenge) => challenge.status === "rejected")!;
+  const featuredAchievement = achievements.find((achievement) => achievement.subjectId === DEMO_WORLD_PLAYER_PERSPECTIVE_ID && achievement.key === "player.all.hat_tricks.001")!;
+  const featuredBox = rewardBoxes.find((box) => box.achievementId === featuredAchievement.id)!;
+  const featuredAttendance = attendance.find((entry) => entry.playerId === DEMO_WORLD_PLAYER_PERSPECTIVE_ID && entry.status === "played")!;
+  const freeAgent = players.find((player) => !player.teamId)!;
+  const ownRank = provincialRanking.showcases["my-rank"];
   return [
     { id: "demo_story_001", type: "match", title: "Un 3-0 abrió el mapa de rivales", body: `${completed[0]!.homeLabel} logró su primera portería a cero ante ${completed[0]!.awayLabel}.`, date: completed[0]!.date, referenceIds: [completed[0]!.id, completed[0]!.homeTeamId, completed[0]!.awayTeamId!] },
     { id: "demo_story_002", type: "achievement", title: "Cobre para la primera victoria", body: "La recompensa aparece solo porque el resultado externo está confirmado.", date: achievements[0]!.occurredAt, referenceIds: [achievements[0]!.id, achievements[0]!.subjectId] },
     { id: "demo_story_003", type: "team", title: "Una plantilla que ya tiene memoria", body: `${teams[0]!.name} conserva más de cincuenta partidos y una identidad visual ganada.`, date: isoAtOffset(-20), referenceIds: [teams[0]!.id] },
     { id: "demo_story_004", type: "challenge", title: "La contrapropuesta evitó cancelar", body: "Dos equipos movieron la hora y mantuvieron el reto vivo.", date: counteredChallenge.date, referenceIds: [counteredChallenge.id, counteredChallenge.homeTeamId, counteredChallenge.awayTeamId] },
-    { id: "demo_story_005", type: "market", title: "Un mediocentro busca grupo", body: "Nico Valira aparece en Mercado sin revelar datos privados.", date: isoAtOffset(-4), referenceIds: ["demo_player_365"] },
-    { id: "demo_story_006", type: "match", title: "El próximo partido aún cambia", body: "Confirmados y reservas muestran el estado actual sin fingir que la plaza está cerrada.", date: upcoming[0]!.date, referenceIds: [upcoming[0]!.id, upcoming[0]!.homeTeamId, upcoming[0]!.awayTeamId!] },
+    { id: "demo_story_005", type: "market", title: "Un mediocentro busca grupo", body: `${freeAgent.name} aparece en Mercado sin revelar datos privados.`, date: isoAtOffset(-4), referenceIds: [freeAgent.id] },
+    { id: "demo_story_006", type: "attendance", title: "Confirmó y estuvo en el campo", body: "La asistencia histórica distingue jugar de cancelar o no presentarse, sin convertir una baja normal en sanción.", date: featuredAttendance.recordedAt, referenceIds: [featuredAttendance.id, featuredAttendance.matchId, featuredAttendance.playerId] },
     { id: "demo_story_007", type: "team", title: "Girona entra en la red", body: `${teams[16]!.name} ya tiene rivales conocidos fuera de su municipio.`, date: isoAtOffset(-35), referenceIds: [teams[16]!.id] },
     { id: "demo_story_008", type: "achievement", title: "Los laureles exigen evidencia", body: "El hito de 25 partidos se muestra con el contador que lo respalda.", date: achievements.find((entry) => entry.key === "team.matches.025")!.occurredAt, referenceIds: [achievements.find((entry) => entry.key === "team.matches.025")!.id, teams[0]!.id] },
     { id: "demo_story_009", type: "challenge", title: "Un rechazo no rompe la agenda", body: "El historial conserva la propuesta y permite buscar otro rival.", date: rejectedChallenge.date, referenceIds: [rejectedChallenge.id, rejectedChallenge.homeTeamId, rejectedChallenge.awayTeamId] },
     { id: "demo_story_010", type: "market", title: "Partidos públicos con contexto", body: "Las plazas, modalidad y zona se ven antes de solicitar acceso.", date: upcoming[2]!.date, referenceIds: [upcoming[2]!.id] },
+    { id: "demo_story_011", type: "reward", title: "Tres goles, una caja y una pieza nueva", body: "El hat-trick confirmado abre una caja local; la pieza aparece como NEW hasta equiparla en la ficha.", date: featuredAchievement.occurredAt, referenceIds: [featuredAchievement.id, featuredBox.id, featuredAchievement.subjectId] },
+    { id: "demo_story_012", type: "ranking", title: "El #27 ya tiene contexto", body: `${ownRank.displayName} entra en el ranking provincial con ${ownRank.validChallenges} retos válidos y ${ownRank.logicalOpponents} rivales.`, date: provincialRanking.ranking.publication!.publishedAt, referenceIds: [DEMO_WORLD_PLAYER_PERSPECTIVE_ID, ownRank.entryKey!] },
   ];
 }
 
-function buildCore(teams: DemoWorldTeam[], matches: DemoWorldMatch[], achievements: DemoWorldAchievement[], challenges: DemoWorldChallenge[]): DemoWorldCoreChunk {
+function buildCore(
+  teams: DemoWorldTeam[],
+  players: DemoWorldPlayer[],
+  matches: DemoWorldMatch[],
+  achievements: DemoWorldAchievement[],
+  challenges: DemoWorldChallenge[],
+  attendance: DemoWorldAttendanceRecord[],
+  rewardBoxes: DemoWorldRewardBox[],
+  notifications: DemoWorldNotification[],
+  provincialRanking: DemoWorldProvincialRanking,
+): DemoWorldCoreChunk {
+  const freeAgent = players.find((player) => !player.teamId)!;
+  const previewPlayerIds = new Set([
+    DEMO_WORLD_PLAYER_PERSPECTIVE_ID,
+    DEMO_WORLD_ADMIN_PERSPECTIVE_ID,
+    freeAgent.id,
+    ...players.filter((player) => player.teamId === "demo_team_001").map((player) => player.id),
+  ]);
+  const previewMatches = [
+    ...matches.filter((match) => match.status === "scheduled"),
+    ...matches.filter((match) => match.status === "finalized" && (match.homeTeamId === "demo_team_001" || match.awayTeamId === "demo_team_001")).slice(0, 10),
+  ];
   return {
     perspectives: [
-      { id: "player", label: "Jugador del grupo", playerId: "demo_player_001", role: "player", summary: "Ve su equipo, confirma asistencia y consulta su ficha.", teamId: "demo_team_001" },
-      { id: "admin", label: "Admin del grupo", playerId: "demo_player_002", role: "admin", summary: "Revisa alineación, solicitudes y configuración simulada.", teamId: "demo_team_001" },
-      { id: "free-agent", label: "Jugador sin equipo", playerId: "demo_player_365", role: "visitor", summary: "Explora Mercado, partidos públicos y equipos retables.", teamId: null },
+      { id: "player", label: "Jugador del grupo", playerId: DEMO_WORLD_PLAYER_PERSPECTIVE_ID, role: "player", summary: "Ve su equipo, confirma asistencia y consulta su ficha.", teamId: "demo_team_001" },
+      { id: "admin", label: "Admin del grupo", playerId: DEMO_WORLD_ADMIN_PERSPECTIVE_ID, role: "admin", summary: "Revisa alineación, solicitudes y configuración simulada.", teamId: "demo_team_001" },
+      { id: "free-agent", label: "Jugador sin equipo", playerId: freeAgent.id, role: "visitor", summary: "Explora Mercado, partidos públicos y equipos retables.", teamId: null },
     ],
+    preview: {
+      matches: previewMatches,
+      notifications,
+      players: players.filter((player) => previewPlayerIds.has(player.id)),
+    },
+    provincialRanking,
     rankings: rankingsFor(teams),
-    stories: storiesFor(matches, teams, achievements, challenges),
+    stories: storiesFor(matches, teams, players, achievements, challenges, attendance, rewardBoxes, provincialRanking),
     teams,
     venues,
   };
@@ -786,19 +1001,22 @@ export function generateDemoWorld(): DemoWorldSnapshot {
   const players = buildPlayers(random, teams);
   const matches = buildMatches(random, teams, players);
   applyMatchStats(teams, players, matches);
+  const attendance = attendanceFor(matches, players);
   const challenges = challengesFor(matches);
   const achievements = [...teamAchievements(teams), ...playerAchievements(players)];
   const rewardBoxes = rewardBoxesFor(achievements);
+  const notifications = notificationsFor(matches, achievements, challenges, players);
+  const provincialRanking = provincialRankingFor(players);
   const rankings = rankingsFor(teams);
   updateTeamRankingLabels(teams, rankings);
 
-  const core = buildCore(teams, matches, achievements, challenges);
+  const core = buildCore(teams, players, matches, achievements, challenges, attendance, rewardBoxes, notifications, provincialRanking);
   core.rankings = rankings;
   const playersChunk: DemoWorldPlayersChunk = { players };
-  const matchesChunk: DemoWorldMatchesChunk = { challenges, matches };
+  const matchesChunk: DemoWorldMatchesChunk = { attendance, challenges, matches };
   const activity: DemoWorldActivityChunk = {
     achievements,
-    notifications: notificationsFor(matches, achievements, challenges),
+    notifications,
     rewardBoxes,
     teamRewardMappings: DEMO_WORLD_TEAM_REWARD_MAPPINGS.map((entry) => ({ ...entry })),
   };

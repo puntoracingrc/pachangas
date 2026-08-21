@@ -1,6 +1,6 @@
-# Visual Audit demo-world-v1-final
+# Visual Audit demo-world-v1-final-local-v4
 
-Base URL: `http://127.0.0.1:3091`
+Base URL: `http://localhost:3092`
 
 | Route | User mode | Viewport | Result | Overflow X | Console errors | Warnings | Broken images | Small targets | Game chrome |
 | --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
@@ -16,8 +16,6 @@ Base URL: `http://127.0.0.1:3091`
 | demo-mercado-partidos | demo-admin | 1440x900 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
 | demo-mercado-retos | demo-admin | 1440x900 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
 | demo-mercado-equipos | demo-free-agent | 1440x900 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
-| mercado-partidos | visitor | 1440x900 | PASS | 0 | 0 | 0 | 0 | 9 | 0 |
-| mercado-retos | visitor | 1440x900 | PASS | 0 | 0 | 0 | 0 | 9 | 0 |
 | demo-equipo | demo-admin | 1440x900 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
 | demo-equipo-plantilla | demo-admin | 1440x900 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
 | demo-equipo-logros | demo-admin | 1440x900 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -25,21 +23,6 @@ Base URL: `http://127.0.0.1:3091`
 | demo-perfil | demo-player | 1440x900 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
 | demo-perfil-recompensas | demo-player | 1440x900 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
 | demo-perfil-avisos | demo-player | 1440x900 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
-| mercado | visitor | 1440x900 | PASS | 0 | 0 | 0 | 0 | 9 | 0 |
-| personalizar-carta | visitor | 1440x900 | PASS | 0 | 0 | 0 | 0 | 5 | 0 |
-| equipo-identidad | visitor-no-team | 1440x900 | PASS | 0 | 0 | 0 | 0 | 5 | 0 |
-| avisos | visitor | 1440x900 | PASS | 0 | 0 | 0 | 0 | 5 | 0 |
-| conducta | visitor | 1440x900 | PASS | 0 | 0 | 0 | 0 | 5 | 0 |
-| partido-invitado | visitor | 1440x900 | PASS | 0 | 0 | 0 | 0 | 5 | 0 |
-| invitacion-partido | visitor | 1440x900 | PASS | 0 | 0 | 0 | 0 | 5 | 0 |
-| valorar-equipo | visitor | 1440x900 | PASS | 0 | 0 | 0 | 0 | 5 | 0 |
-| lab-escudos | lab | 1440x900 | PASS | 0 | 0 | 0 | 0 | 5 | 0 |
-| lab-cartas | lab | 1440x900 | PASS | 0 | 0 | 0 | 0 | 5 | 0 |
-| lab-rating | lab | 1440x900 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
-| lab-ranking | lab | 1440x900 | PASS | 0 | 0 | 0 | 0 | 5 | 0 |
-| lab-premium-art | lab | 1440x900 | PASS | 0 | 0 | 0 | 0 | 5 | 0 |
-| demo-inicio-light | demo-admin-light | 1440x900 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
-| demo-inicio-dark | demo-admin-dark | 1440x900 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
 | demo-inicio-admin | demo-admin | 1920x1080 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
 | demo-inicio-player | demo-player | 1920x1080 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
 | demo-inicio-free-agent | demo-free-agent | 1920x1080 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -52,8 +35,6 @@ Base URL: `http://127.0.0.1:3091`
 | demo-mercado-partidos | demo-admin | 1920x1080 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
 | demo-mercado-retos | demo-admin | 1920x1080 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
 | demo-mercado-equipos | demo-free-agent | 1920x1080 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
-| mercado-partidos | visitor | 1920x1080 | PASS | 0 | 0 | 0 | 0 | 9 | 0 |
-| mercado-retos | visitor | 1920x1080 | PASS | 0 | 0 | 0 | 0 | 9 | 0 |
 | demo-equipo | demo-admin | 1920x1080 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
 | demo-equipo-plantilla | demo-admin | 1920x1080 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
 | demo-equipo-logros | demo-admin | 1920x1080 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -61,21 +42,6 @@ Base URL: `http://127.0.0.1:3091`
 | demo-perfil | demo-player | 1920x1080 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
 | demo-perfil-recompensas | demo-player | 1920x1080 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
 | demo-perfil-avisos | demo-player | 1920x1080 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
-| mercado | visitor | 1920x1080 | PASS | 0 | 0 | 0 | 0 | 9 | 0 |
-| personalizar-carta | visitor | 1920x1080 | PASS | 0 | 0 | 0 | 0 | 5 | 0 |
-| equipo-identidad | visitor-no-team | 1920x1080 | PASS | 0 | 0 | 0 | 0 | 5 | 0 |
-| avisos | visitor | 1920x1080 | PASS | 0 | 0 | 0 | 0 | 5 | 0 |
-| conducta | visitor | 1920x1080 | PASS | 0 | 0 | 0 | 0 | 5 | 0 |
-| partido-invitado | visitor | 1920x1080 | PASS | 0 | 0 | 0 | 0 | 5 | 0 |
-| invitacion-partido | visitor | 1920x1080 | PASS | 0 | 0 | 0 | 0 | 5 | 0 |
-| valorar-equipo | visitor | 1920x1080 | PASS | 0 | 0 | 0 | 0 | 5 | 0 |
-| lab-escudos | lab | 1920x1080 | PASS | 0 | 0 | 0 | 0 | 5 | 0 |
-| lab-cartas | lab | 1920x1080 | PASS | 0 | 0 | 0 | 0 | 5 | 0 |
-| lab-rating | lab | 1920x1080 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
-| lab-ranking | lab | 1920x1080 | PASS | 0 | 0 | 0 | 0 | 5 | 0 |
-| lab-premium-art | lab | 1920x1080 | PASS | 0 | 0 | 0 | 0 | 5 | 0 |
-| demo-inicio-light | demo-admin-light | 1920x1080 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
-| demo-inicio-dark | demo-admin-dark | 1920x1080 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
 | demo-inicio-admin | demo-admin | 390x844 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
 | demo-inicio-player | demo-player | 390x844 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
 | demo-inicio-free-agent | demo-free-agent | 390x844 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -88,8 +54,6 @@ Base URL: `http://127.0.0.1:3091`
 | demo-mercado-partidos | demo-admin | 390x844 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
 | demo-mercado-retos | demo-admin | 390x844 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
 | demo-mercado-equipos | demo-free-agent | 390x844 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
-| mercado-partidos | visitor | 390x844 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
-| mercado-retos | visitor | 390x844 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
 | demo-equipo | demo-admin | 390x844 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
 | demo-equipo-plantilla | demo-admin | 390x844 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
 | demo-equipo-logros | demo-admin | 390x844 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -97,21 +61,6 @@ Base URL: `http://127.0.0.1:3091`
 | demo-perfil | demo-player | 390x844 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
 | demo-perfil-recompensas | demo-player | 390x844 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
 | demo-perfil-avisos | demo-player | 390x844 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
-| mercado | visitor | 390x844 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
-| personalizar-carta | visitor | 390x844 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
-| equipo-identidad | visitor-no-team | 390x844 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
-| avisos | visitor | 390x844 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
-| conducta | visitor | 390x844 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
-| partido-invitado | visitor | 390x844 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
-| invitacion-partido | visitor | 390x844 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
-| valorar-equipo | visitor | 390x844 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
-| lab-escudos | lab | 390x844 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
-| lab-cartas | lab | 390x844 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
-| lab-rating | lab | 390x844 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
-| lab-ranking | lab | 390x844 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
-| lab-premium-art | lab | 390x844 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
-| demo-inicio-light | demo-admin-light | 390x844 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
-| demo-inicio-dark | demo-admin-dark | 390x844 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
 | demo-inicio-admin | demo-admin | 360x800 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
 | demo-inicio-player | demo-player | 360x800 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
 | demo-inicio-free-agent | demo-free-agent | 360x800 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -124,8 +73,6 @@ Base URL: `http://127.0.0.1:3091`
 | demo-mercado-partidos | demo-admin | 360x800 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
 | demo-mercado-retos | demo-admin | 360x800 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
 | demo-mercado-equipos | demo-free-agent | 360x800 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
-| mercado-partidos | visitor | 360x800 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
-| mercado-retos | visitor | 360x800 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
 | demo-equipo | demo-admin | 360x800 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
 | demo-equipo-plantilla | demo-admin | 360x800 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
 | demo-equipo-logros | demo-admin | 360x800 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -133,21 +80,6 @@ Base URL: `http://127.0.0.1:3091`
 | demo-perfil | demo-player | 360x800 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
 | demo-perfil-recompensas | demo-player | 360x800 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
 | demo-perfil-avisos | demo-player | 360x800 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
-| mercado | visitor | 360x800 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
-| personalizar-carta | visitor | 360x800 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
-| equipo-identidad | visitor-no-team | 360x800 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
-| avisos | visitor | 360x800 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
-| conducta | visitor | 360x800 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
-| partido-invitado | visitor | 360x800 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
-| invitacion-partido | visitor | 360x800 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
-| valorar-equipo | visitor | 360x800 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
-| lab-escudos | lab | 360x800 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
-| lab-cartas | lab | 360x800 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
-| lab-rating | lab | 360x800 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
-| lab-ranking | lab | 360x800 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
-| lab-premium-art | lab | 360x800 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
-| demo-inicio-light | demo-admin-light | 360x800 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
-| demo-inicio-dark | demo-admin-dark | 360x800 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
 | demo-inicio-admin | demo-admin | 844x390 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
 | demo-inicio-player | demo-player | 844x390 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
 | demo-inicio-free-agent | demo-free-agent | 844x390 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -160,8 +92,6 @@ Base URL: `http://127.0.0.1:3091`
 | demo-mercado-partidos | demo-admin | 844x390 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
 | demo-mercado-retos | demo-admin | 844x390 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
 | demo-mercado-equipos | demo-free-agent | 844x390 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
-| mercado-partidos | visitor | 844x390 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
-| mercado-retos | visitor | 844x390 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
 | demo-equipo | demo-admin | 844x390 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
 | demo-equipo-plantilla | demo-admin | 844x390 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
 | demo-equipo-logros | demo-admin | 844x390 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -169,21 +99,6 @@ Base URL: `http://127.0.0.1:3091`
 | demo-perfil | demo-player | 844x390 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
 | demo-perfil-recompensas | demo-player | 844x390 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
 | demo-perfil-avisos | demo-player | 844x390 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
-| mercado | visitor | 844x390 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
-| personalizar-carta | visitor | 844x390 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
-| equipo-identidad | visitor-no-team | 844x390 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
-| avisos | visitor | 844x390 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
-| conducta | visitor | 844x390 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
-| partido-invitado | visitor | 844x390 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
-| invitacion-partido | visitor | 844x390 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
-| valorar-equipo | visitor | 844x390 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
-| lab-escudos | lab | 844x390 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
-| lab-cartas | lab | 844x390 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
-| lab-rating | lab | 844x390 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
-| lab-ranking | lab | 844x390 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
-| lab-premium-art | lab | 844x390 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
-| demo-inicio-light | demo-admin-light | 844x390 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
-| demo-inicio-dark | demo-admin-dark | 844x390 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
 | demo-inicio-admin | demo-admin | 390x844 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
 | demo-inicio-player | demo-player | 390x844 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
 | demo-inicio-free-agent | demo-free-agent | 390x844 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -196,8 +111,6 @@ Base URL: `http://127.0.0.1:3091`
 | demo-mercado-partidos | demo-admin | 390x844 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
 | demo-mercado-retos | demo-admin | 390x844 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
 | demo-mercado-equipos | demo-free-agent | 390x844 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
-| mercado-partidos | visitor | 390x844 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
-| mercado-retos | visitor | 390x844 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
 | demo-equipo | demo-admin | 390x844 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
 | demo-equipo-plantilla | demo-admin | 390x844 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
 | demo-equipo-logros | demo-admin | 390x844 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -205,34 +118,3 @@ Base URL: `http://127.0.0.1:3091`
 | demo-perfil | demo-player | 390x844 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
 | demo-perfil-recompensas | demo-player | 390x844 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
 | demo-perfil-avisos | demo-player | 390x844 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
-| mercado | visitor | 390x844 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
-| personalizar-carta | visitor | 390x844 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
-| equipo-identidad | visitor-no-team | 390x844 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
-| avisos | visitor | 390x844 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
-| conducta | visitor | 390x844 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
-| partido-invitado | visitor | 390x844 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
-| invitacion-partido | visitor | 390x844 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
-| valorar-equipo | visitor | 390x844 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
-| lab-escudos | lab | 390x844 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
-| lab-cartas | lab | 390x844 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
-| lab-rating | lab | 390x844 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
-| lab-ranking | lab | 390x844 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
-| lab-premium-art | lab | 390x844 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
-| demo-inicio-light | demo-admin-light | 390x844 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
-| demo-inicio-dark | demo-admin-dark | 390x844 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
-| demo-inicio-admin | demo-admin | 1152x720 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
-| mercado | visitor | 1152x720 | PASS | 0 | 0 | 0 | 0 | 9 | 0 |
-| personalizar-carta | visitor | 1152x720 | PASS | 0 | 0 | 0 | 0 | 5 | 0 |
-| equipo-identidad | visitor-no-team | 1152x720 | PASS | 0 | 0 | 0 | 0 | 5 | 0 |
-| demo-inicio-admin | demo-admin | 960x600 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
-| mercado | visitor | 960x600 | PASS | 0 | 0 | 0 | 0 | 9 | 0 |
-| personalizar-carta | visitor | 960x600 | PASS | 0 | 0 | 0 | 0 | 5 | 0 |
-| equipo-identidad | visitor-no-team | 960x600 | PASS | 0 | 0 | 0 | 0 | 5 | 0 |
-| demo-inicio-admin | demo-admin | 720x450 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
-| mercado | visitor | 720x450 | PASS | 0 | 0 | 0 | 0 | 5 | 0 |
-| personalizar-carta | visitor | 720x450 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
-| equipo-identidad | visitor-no-team | 720x450 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
-| demo-inicio-admin | demo-admin | 1440x900 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
-| personalizar-carta | visitor | 1440x900 | PASS | 0 | 0 | 0 | 0 | 5 | 0 |
-| equipo-identidad | visitor-no-team | 1440x900 | PASS | 0 | 0 | 0 | 0 | 5 | 0 |
-| lab-premium-art | lab | 1440x900 | PASS | 0 | 0 | 0 | 0 | 5 | 0 |

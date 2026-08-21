@@ -24,10 +24,14 @@ async function loadChunk<T>(path: string): Promise<T> {
   return response.json() as Promise<T>;
 }
 
-export async function loadDemoWorldSnapshot(manifest: DemoWorldManifest): Promise<DemoWorldSnapshot> {
+export function loadDemoWorldCore(manifest: DemoWorldManifest): Promise<DemoWorldCoreChunk> {
+  return loadChunk<DemoWorldCoreChunk>(manifest.chunks.core);
+}
+
+export async function loadDemoWorldSnapshot(manifest: DemoWorldManifest, loadedCore?: DemoWorldCoreChunk): Promise<DemoWorldSnapshot> {
   const [activity, core, matches, players] = await Promise.all([
     loadChunk<DemoWorldActivityChunk>(manifest.chunks.activity),
-    loadChunk<DemoWorldCoreChunk>(manifest.chunks.core),
+    loadedCore ? Promise.resolve(loadedCore) : loadDemoWorldCore(manifest),
     loadChunk<DemoWorldMatchesChunk>(manifest.chunks.matches),
     loadChunk<DemoWorldPlayersChunk>(manifest.chunks.players),
   ]);
@@ -51,6 +55,9 @@ export function readDemoWorldSession(storage: Pick<Storage, "getItem">): DemoWor
       : {};
     return {
       attendanceByMatch,
+      equippedCosmeticKeys: normalizedStringArray(value.equippedCosmeticKeys),
+      inventoryCosmeticKeys: normalizedStringArray(value.inventoryCosmeticKeys),
+      newCosmeticKeys: normalizedStringArray(value.newCosmeticKeys),
       openedBoxIds: normalizedStringArray(value.openedBoxIds),
       perspectiveId,
       readNotificationIds: normalizedStringArray(value.readNotificationIds),

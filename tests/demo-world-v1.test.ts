@@ -11,6 +11,7 @@ import {
   assertDemoWorldLocalIntent,
   assertDemoWorldSnapshot,
   canDemoWorldInvite,
+  demoWorldMatchPaneForRole,
   demoWorldMatchAdminActions,
   demoWorldForbiddenPaths,
   demoWorldIntegrityErrors,
@@ -19,11 +20,15 @@ import {
 } from "../app/demo-world/demo-world-contract";
 import {
   demoWorldTabFromSearch,
+  loadDemoWorldCore,
+  loadDemoWorldSnapshot,
   readDemoWorldSession,
   readInitialDemoWorldSession,
   resetDemoWorldSession,
   writeDemoWorldSession,
 } from "../app/demo-world/demo-world-client-state";
+import { PROVINCIAL_RANKING_REASON_LABELS } from "../app/ranking/provincial-ranking-contract";
+import { buildServiceWorkerSource } from "../app/service-worker-source";
 import { PLAYER_COSMETIC_CATALOG } from "../app/player-cosmetics-catalog";
 import { RATING_SYSTEM_V2_ENGINE_VERSION } from "../app/rating-system-v2";
 import { TEAM_SHIELD_RENDER_CATALOG } from "../app/team-shield-cosmetics-catalog";
@@ -50,7 +55,7 @@ test("Demo World V1 is deterministic and committed chunks match its recorded has
   assert.deepEqual(committed, generated);
   const payload = { activity: committed.activity, core: committed.core, matches: committed.matches, players: committed.players };
   assert.equal(createHash("sha256").update(JSON.stringify(payload)).digest("hex"), committed.manifest.hash);
-  assert.equal(committed.manifest.hash, "cef767f201a00f9f36fdaad8b27a195e9c767147651153717dabf043b71d16d3");
+  assert.equal(committed.manifest.hash, "34158b4f56a3011c9010b0952f74043435e9f896f0b7ea5fd90e0dfacdfac3ae");
   assert.equal(committed.manifest.mode, DEMO_WORLD_MODE);
   for (const chunk of Object.values(committed.manifest.chunks)) {
     assert.match(chunk, new RegExp(`\\?h=${committed.manifest.hash.slice(0, 16)}$`));
@@ -59,11 +64,11 @@ test("Demo World V1 is deterministic and committed chunks match its recorded has
 
 test("snapshot has a believable navigable world within the V1 size budget", async () => {
   const world = assertDemoWorldSnapshot(await committedSnapshot());
-  assert.equal(world.core.teams.length, 28);
-  assert.equal(world.players.players.length, 365);
+  assert.equal(world.core.teams.length, 30);
+  assert.equal(world.players.players.length, 331);
   assert.equal(world.matches.matches.length, 128);
-  assert.equal(world.matches.challenges.length, 26);
-  assert.equal(world.core.stories.length, 10);
+  assert.equal(world.matches.challenges.length, 48);
+  assert.equal(world.core.stories.length, 12);
   assert.equal(world.activity.notifications.length, 12);
   assert.equal(world.core.perspectives.length, 3);
   assert.deepEqual(new Set(world.core.perspectives.map(({ id }) => id)), new Set(["admin", "player", "free-agent"]));
@@ -72,7 +77,44 @@ test("snapshot has a believable navigable world within the V1 size budget", asyn
   assert.ok(world.matches.matches.some(({ scope }) => scope === "internal"));
   assert.ok(world.matches.matches.some(({ scope }) => scope === "challenge"));
   assert.ok(new Set(world.core.teams.map(({ territory }) => territory)).size >= 4);
+  assert.ok(world.players.players.filter(({ market }) => market.openToGuest).length >= 30);
+  assert.ok(world.players.players.filter(({ market }) => market.openToGuest).length <= 60);
   assert.ok(Buffer.byteLength(JSON.stringify({ activity: world.activity, core: world.core, matches: world.matches, players: world.players })) < 700_000);
+  assert.ok(Buffer.byteLength(JSON.stringify(world.core)) < 100_000);
+});
+
+test("initial navigation loads only the compact core and secondary domains stay lazy", async () => {
+  const world = await committedSnapshot();
+  const chunks = new Map([
+    [world.manifest.chunks.activity, world.activity],
+    [world.manifest.chunks.core, world.core],
+    [world.manifest.chunks.matches, world.matches],
+    [world.manifest.chunks.players, world.players],
+  ]);
+  const calls: string[] = [];
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = (async (input: string | URL | Request) => {
+    const target = typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
+    calls.push(target);
+    const payload = chunks.get(target);
+    return payload
+      ? new Response(JSON.stringify(payload), { status: 200 })
+      : new Response("not found", { status: 404 });
+  }) as typeof fetch;
+  try {
+    const core = await loadDemoWorldCore(world.manifest);
+    assert.deepEqual(core, world.core);
+    assert.deepEqual(calls, [world.manifest.chunks.core]);
+    await loadDemoWorldSnapshot(world.manifest, core);
+    assert.deepEqual(new Set(calls.slice(1)), new Set([
+      world.manifest.chunks.activity,
+      world.manifest.chunks.matches,
+      world.manifest.chunks.players,
+    ]));
+    assert.equal(calls.includes(world.manifest.chunks.core, 1), false);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
 });
 
 test("public snapshot rejects PII, private moderation and unsafe identifiers", async () => {
@@ -168,6 +210,72 @@ test("stories, scorers, challenges, rewards and rankings resolve to canonical en
   assert.equal(challengeById.get(world.core.stories.find(({ id }) => id === "demo_story_009")!.referenceIds[0]!)?.status, "rejected");
   assert.deepEqual(world.core.rankings.map(({ position }) => position), Array.from({ length: world.core.teams.length }, (_, index) => index + 1));
   assert.ok(world.activity.achievements.every(({ evidence }) => evidence.trim().length > 0));
+  assert.ok(world.core.stories.some(({ type }) => type === "attendance"));
+  assert.ok(world.core.stories.some(({ type }) => type === "ranking"));
+  assert.ok(world.core.stories.some(({ type }) => type === "reward"));
+});
+
+test("provincial ranking mirrors Season Score V3 without activating awards", async () => {
+  const world = await committedSnapshot();
+  const provincial = world.core.provincialRanking;
+  assert.equal(provincial.awardsEnabled, false);
+  assert.deepEqual(provincial.formula.weights, { competition: 0.3, opposition: 0.15, quality: 0.55 });
+  assert.equal(provincial.formula.minimumValidChallenges, 15);
+  assert.equal(provincial.formula.minimumLogicalOpponents, 6);
+  assert.equal(provincial.formula.minimumRatingReliability, 0.45);
+  assert.equal(provincial.formula.activityWindowWeeks, 12);
+  assert.equal(provincial.ranking.items.length, 10);
+  assert.equal(provincial.ranking.pagination?.total, 32);
+  for (const item of provincial.ranking.items) {
+    const calculated = Number((item.components.quality * 0.55 + item.components.competition * 0.3 + item.components.opposition * 0.15).toFixed(2));
+    assert.equal(item.score, calculated);
+  }
+  assert.equal(provincial.showcases["my-rank"].position, 27);
+  assert.equal(provincial.showcases["my-rank"].entryKey, "demo_ranking_entry_27");
+  assert.equal(provincial.showcases["my-rank"].eligibilityState, "eligible");
+  assert.equal(provincial.showcases.ineligible.eligibilityState, "ineligible");
+  assert.equal(provincial.showcases.provisional.eligibilityState, "provisional");
+  assert.equal(provincial.showcases["pending-review"].eligibilityState, "pending_integrity_review");
+  assert.deepEqual(provincial.showcases["pending-review"].reasonCodes, ["ranking_review_pending"]);
+  assert.equal(PROVINCIAL_RANKING_REASON_LABELS.ranking_review_pending, "Pendiente de verificación.");
+  const rankingStory = world.core.stories.find(({ id }) => id === "demo_story_012")!;
+  assert.deepEqual(rankingStory.referenceIds, ["demo_player_006", "demo_ranking_entry_27"]);
+});
+
+test("attendance history distinguishes played, justified absence, late cancellation and no-show", async () => {
+  const world = await committedSnapshot();
+  assert.ok(world.matches.attendance.length >= 120);
+  assert.deepEqual(
+    new Set(world.matches.attendance.map(({ status }) => status)),
+    new Set(["played", "excused_absence", "late_cancellation", "unexcused_no_show"]),
+  );
+  const matches = new Map(world.matches.matches.map((match) => [match.id, match]));
+  for (const record of world.matches.attendance) {
+    assert.equal(matches.get(record.matchId)?.status, "finalized");
+  }
+});
+
+test("hat-trick reward supports the local NEW and equip lifecycle", async () => {
+  const world = await committedSnapshot();
+  const perspective = world.core.perspectives.find(({ id }) => id === "player")!;
+  const achievement = world.activity.achievements.find(({ key, subjectId }) => key === "player.all.hat_tricks.001" && subjectId === perspective.playerId)!;
+  const box = world.activity.rewardBoxes.find(({ achievementId }) => achievementId === achievement.id)!;
+  assert.equal(box.state, "pending");
+  assert.equal(box.rewardCosmeticKey, "player.frame.barrio.copper");
+  assert.match(achievement.evidence, /3 goles confirmados/);
+  const source = await readFile(path.join(root, "app/demo-world/demo-world-app.tsx"), "utf8");
+  assert.match(source, /newCosmeticKeys/);
+  assert.match(source, /equippedCosmeticKeys/);
+  assert.match(source, /Equipar/);
+});
+
+test("the PWA caches Demo World navigation and immutable hashed chunks without offline writes", () => {
+  const source = buildServiceWorkerSource("demo-world-test");
+  assert.match(source, /"\/demo"/);
+  assert.match(source, /\/demo-world\/v1\/manifest\.json/);
+  assert.match(source, /isImmutableDemoChunk/);
+  assert.match(source, /url\.searchParams\.has\("h"\)/);
+  assert.match(source, /request\.method !== "GET"/);
 });
 
 test("Demo World has no remote mutation capability and all simulated state stays in session storage", async () => {
@@ -200,6 +308,9 @@ test("ephemeral session round-trips and reset restores the frozen default", () =
   };
   const changed = {
     attendanceByMatch: { demo_match_121: "voy" as const },
+    equippedCosmeticKeys: ["player.frame.barrio.copper"],
+    inventoryCosmeticKeys: ["player.frame.barrio.copper"],
+    newCosmeticKeys: [],
     openedBoxIds: ["demo_reward_box_001"],
     perspectiveId: "admin" as const,
     readNotificationIds: ["demo_notification_001"],
@@ -214,6 +325,9 @@ test("URL and sessionStorage initialize once with URL precedence", () => {
   const storage = {
     getItem: () => JSON.stringify({
       attendanceByMatch: {},
+      equippedCosmeticKeys: [],
+      inventoryCosmeticKeys: [],
+      newCosmeticKeys: [],
       openedBoxIds: [],
       perspectiveId: "player",
       readNotificationIds: [],
@@ -241,6 +355,29 @@ test("only the demo admin perspective can simulate invitations", () => {
   assert.equal(canDemoWorldInvite("admin"), true);
   assert.equal(canDemoWorldInvite("player"), false);
   assert.equal(canDemoWorldInvite("visitor"), false);
+});
+
+test("leaving the admin perspective restores a visible match pane", () => {
+  assert.equal(demoWorldMatchPaneForRole("admin", "player"), "proximo");
+  assert.equal(demoWorldMatchPaneForRole("admin", "visitor"), "proximo");
+  assert.equal(demoWorldMatchPaneForRole("admin", "admin"), "admin");
+  assert.equal(demoWorldMatchPaneForRole("alineacion", "player"), "alineacion");
+});
+
+test("the player market is progressively revealed instead of rendering an endless initial list", async () => {
+  const source = await readFile(path.join(root, "app/demo-world/demo-world-app.tsx"), "utf8");
+  assert.match(source, /DEMO_WORLD_MARKET_PAGE_SIZE = 12/);
+  assert.match(source, /marketPlayers\.slice\(0, visiblePlayerCount\)/);
+  assert.match(source, /Mostrar más/);
+});
+
+test("game mode keeps perspective switching reachable from Profile", async () => {
+  const appSource = await readFile(path.join(root, "app/demo-world/demo-world-app.tsx"), "utf8");
+  const styles = await readFile(path.join(root, "app/demo-world/demo-world.module.css"), "utf8");
+  assert.match(appSource, /Perspectiva en modo juego/);
+  assert.match(appSource, /onPerspective=\{choosePerspective\}/);
+  assert.match(styles, /\.gamePerspectiveSelect\s*\{\s*display:\s*none/);
+  assert.match(styles, /\.gamePerspectiveSelect\s*\{\s*display:\s*grid/);
 });
 
 test("Demo World honors the explicit product theme over the system preference", async () => {

@@ -1,13 +1,13 @@
 # Demo World V1 Stories
 
-Las diez historias se generan desde entidades canonicas del snapshot. No son textos independientes: cada una conserva IDs resolubles y una fecha estable dentro de la temporada Demo 2026/27.
+Las doce historias se generan desde entidades canonicas del snapshot. No son textos independientes: cada una conserva IDs resolubles y una fecha estable dentro de la temporada Demo 2026/27.
 
 ## Story 01 - Un 3-0 abrió el mapa de rivales
 
 - Equipo: Cobalto Raval y Brúixola Sants.
 - Partido: `demo_match_076`, finalizado 3-0 el 12 de marzo de 2027.
-- Jugadores: `demo_player_006` marco dos goles y `demo_player_009` uno.
-- Funcion que ensena: Reto completado, resultado, goleadores y primera porteria a cero.
+- Jugador: Bruno Quer, `demo_player_006`, marco los tres goles.
+- Funcion que ensena: Reto completado, resultado, hat-trick y primera porteria a cero.
 
 ## Story 02 - Cobre para la primera victoria
 
@@ -19,7 +19,7 @@ Las diez historias se generan desde entidades canonicas del snapshot. No son tex
 ## Story 03 - Una plantilla que ya tiene memoria
 
 - Equipo: Cobalto Raval.
-- Evidencia: 60 partidos finalizados, 10 Retos y una plantilla de 13 jugadores.
+- Evidencia: 60 partidos finalizados, 10 Retos y una plantilla de 11 jugadores.
 - Funcion que ensena: identidad de equipo, estadisticas acumuladas, ranking y escudo evolucionado.
 
 ## Story 04 - La contrapropuesta evitó cancelar
@@ -30,16 +30,14 @@ Las diez historias se generan desde entidades canonicas del snapshot. No son tex
 
 ## Story 05 - Un mediocentro busca grupo
 
-- Jugador: Nico Valira, `demo_player_365`.
+- Jugador: Nico Valira, `demo_player_331`.
 - Perfil: agente libre, mediocentro, fútbol sala/fútbol 7, zona pública Barcelona/Vallès.
 - Funcion que ensena: Mercado de jugadores, carta Rating V2 y privacidad sin datos de contacto.
 
-## Story 06 - El proximo partido aun cambia
+## Story 06 - Confirmo y estuvo en el campo
 
-- Equipos: Vértice Gràcia y Brúixola Sants.
-- Partido: `demo_match_128`, programado para el 3 de abril de 2027.
-- Estado: nueve confirmados, dos reservas y tres plazas publicas.
-- Funcion que ensena: proximo partido, asistencia, reservas, alineacion y snapshot revisionado.
+- Evidencia: `demo_attendance_005` enlaza `demo_player_006` con `demo_match_076` como `played`.
+- Funcion que ensena: diferencia entre asistencia real, baja justificada, cancelacion tardia y no-show.
 
 ## Story 07 - Girona entra en la red
 
@@ -67,6 +65,19 @@ Las diez historias se generan desde entidades canonicas del snapshot. No son tex
 - Estado: modalidad futbol 7, zona publica, nueve confirmados, dos reservas y tres plazas.
 - Funcion que ensena: Mercado de partidos con contexto antes de una solicitud simulada.
 
+## Story 11 - Tres goles, una caja y una pieza nueva
+
+- Jugador: Bruno Quer, `demo_player_006`.
+- Evidencia: `demo_achievement_player_001` nace del hat-trick de `demo_match_076` y sella `demo_reward_box_001`.
+- Recompensa: `player.frame.barrio.copper`.
+- Funcion que ensena: abrir caja 3D bajo demanda, guardar en inventario, distintivo NEW y equipar localmente.
+
+## Story 12 - El #27 ya tiene contexto
+
+- Jugador: Bruno Quer, `demo_player_006`.
+- Ranking: `demo_ranking_entry_27` representa su read model publico en la posicion 27.
+- Funcion que ensena: Ranking Provincial Season Score V3, elegibilidad, revision publicada y premios desactivados.
+
 ## Cobertura conjunta
 
-El recorrido de las historias permite descubrir equipo, carta, partido, alineacion, marcador, goleadores, Retos, Mercado, ranking, logros, cajas, escudos y cosmeticos sin tutorial lineal ni datos productivos.
+El recorrido de las historias permite descubrir equipo, carta, partido, asistencia, alineacion, marcador, goleadores, Retos, Mercado, Ranking Provincial, logros, cajas, inventario, escudos y cosmeticos sin tutorial lineal ni datos productivos.

@@ -6,7 +6,7 @@ import { platform } from "node:os";
 import path from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 
-const baseUrl = process.env.VISUAL_AUDIT_BASE_URL ?? "http://127.0.0.1:3000";
+const baseUrl = process.env.VISUAL_AUDIT_BASE_URL ?? "http://localhost:3000";
 const label = (process.env.VISUAL_AUDIT_LABEL ?? "current").replace(/[^a-z0-9_-]/gi, "-");
 const outputRoot = path.resolve(process.env.VISUAL_AUDIT_OUTPUT ?? "artifacts/visual-audit-v1", label);
 const chromePath = process.env.CHROME_PATH ?? findChromePath();
@@ -163,6 +163,14 @@ async function evaluate(client, expression) {
     throw new Error(result.exceptionDetails.exception?.description ?? result.exceptionDetails.text ?? "Evaluation failed");
   }
   return result.result.value;
+}
+
+async function waitForPageCondition(client, expression, attempts = 100) {
+  for (let attempt = 0; attempt < attempts; attempt += 1) {
+    if (await evaluate(client, expression)) return;
+    await delay(100);
+  }
+  throw new Error(`Page condition did not become true: ${expression}`);
 }
 
 function auditExpression() {
@@ -373,6 +381,9 @@ async function main() {
           await client.send("Page.navigate", { url });
           await delay(650);
           await evaluate(client, "document.fonts?.ready ?? Promise.resolve()");
+          if (new URL(surface.path, baseUrl).pathname === "/demo") {
+            await waitForPageCondition(client, `Boolean(document.querySelector("[data-demo-world='ready']"))`);
+          }
           const qaTheme = new URL(surface.path, baseUrl).searchParams.get("qaTheme");
           if (qaTheme === "light" || qaTheme === "dark") {
             await evaluate(client, `(() => {

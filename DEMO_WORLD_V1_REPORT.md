@@ -3,7 +3,8 @@
 ## Checkpoint
 
 - Auditoria iniciada: 2026-08-11 (Europe/Madrid).
-- Base exacta: `851418d688e4078d9fb9166174b961dc5c22d4d9` (`origin/main`).
+- Base inicial: `851418d688e4078d9fb9166174b961dc5c22d4d9` (`origin/main` al abrir la rama).
+- Main integrado para el cierre: `7e7cfdf110110d63b92dfee2d5529ffa284c92e5`.
 - Rama: `codex/demo-world-v1`.
 - Worktree aislado: `/Users/macbookpro14/.codex/worktrees/pachangas-demo-world-v1`.
 - Produccion y Supabase: no modificados.
@@ -32,12 +33,26 @@ Este registro es permanente. Una incidencia no se elimina al corregirse; se actu
 | DW-016 | TESTABILITY_GAP | fixed + regression_verified | El auditor buscaba texto exacto y no podia activar `Avisos` porque el contador accesible forma parte del texto del boton. | El contrato de superficie admite `clickTextPrefix` y evita acoplarse al numero de avisos. | La superficie Avisos se abre en seis viewports sin error de navegacion. |
 | DW-017 | PRODUCT_BUG | open; baseline outside Demo World | La matriz final mantiene 222 targets menores de 40 px en 38 combinaciones de superficies productivas ajenas a Demo World, concentrados en tabs desktop de Mercado y enlaces del footer legal. | No se modifica en este PR para evitar mezclar una correccion global no relacionada. | Demo World tiene cero targets pequenos y no degrada los 172 checks existentes. |
 | DW-018 | DEMO_ADAPTER_BUG | fixed + regression_verified | La Preview protegida de Vercel sirve `/demo`, pero los cuatro chunks estaticos fallaban porque `credentials: "omit"` excluia tambien la cookie de proteccion del mismo origen. La UI quedaba detenida en `Preparando el Mundo Demo`. | Los chunks usan `credentials: "same-origin"`; siguen siendo rutas relativas, `GET` estaticos, sin Supabase, Auth de producto ni escrituras. | Contrato automatizado PASS; Preview protegida `f3f32e8` carga en frio en 330 ms y supera 84 checks remotos sin peticiones fallidas. |
+| DW-019 | PERFORMANCE_BUG | fixed + regression_verified | La entrada a `/demo` descargaba `core`, `players`, `matches` y `activity` en paralelo, aunque Inicio solo necesita una parte del mundo. | `core` incorpora el preview inicial; los tres dominios secundarios se solicitan una sola vez al abrir una seccion profunda. | Test de carga diferida + red fria: Inicio solo solicita `core`; Equipo solicita despues los otros tres chunks, todo por `GET`. |
+| DW-020 | DEMO_DATA_BUG | fixed + regression_verified | Equipo mostraba una clasificacion por equipos propia de la demo, pero no reproducia el Ranking Provincial ni los estados de elegibilidad de Season Score V3. | Read model V3 congelado y tablero compartido con `/ranking`: 55/30/15, Top 10, #27 y tres estados no clasificados. | Regresion de formula, umbrales, revision, premios OFF y texto `Pendiente de verificación`. |
+| DW-021 | DEMO_DATA_BUG | fixed + regression_verified | Los partidos incluian convocados y reservas, pero no una evidencia canonica de asistencia que diferenciase jugo, baja justificada, cancelacion tardia y no-show. | Se anaden 168 evidencias publicas con cuatro estados explicitos, sin sanciones automaticas. | Regresion de distribucion, referencias a partido/jugador y pertenencia de `played` a la alineacion canonica. |
+| DW-022 | DEMO_ADAPTER_BUG | fixed + regression_verified | Abrir una caja solo cambiaba su estado local a guardada; no existia el ciclo visible pieza nueva, inventario y equipar en la carta. | Inventario efimero, distintivo NEW y equipamiento local reversible mediante Reiniciar. | Regresion de hat-trick/caja/pieza + QA manual abrir, guardar, NEW, equipar y reset. |
+| DW-023 | DEMO_DATA_BUG | fixed + regression_verified | Las historias no cubrian de extremo a extremo hat-trick, caja, pieza nueva, equipamiento, asistencia y entrada al ranking. | Catalogo ampliado a 12 historias enlazadas a evidencias canonicas. | Regresion de tipos, referencias resolubles y cobertura de asistencia, reward y ranking. |
+| DW-024 | PERFORMANCE_BUG | fixed + regression_verified | El Service Worker no reconocia `/demo` como navegacion cacheable ni los chunks con query de hash como recursos estaticos. | `/demo` y manifest entran en precache; chunks hasheados usan stale-while-revalidate y las escrituras se ignoran. | Regresion sobre el codigo generado del Service Worker. |
+| DW-025 | PERFORMANCE_BUG | fixed + regression_verified | La carga real de Inicio solicitaba los chunks JavaScript de Three.js y de la caja aunque ninguna caja estuviese abierta. | El modulo 3D se importa al seleccionar una caja, no al montar Perfil. | Red fria sin Three/GLB/Draco; tras abrir, canvas visible y assets 3D cargados bajo demanda. |
+| DW-026 | DEMO_ADAPTER_BUG | fixed + regression_verified | Al cambiar desde Admin a Jugador con Admin de partido abierto, desaparecia el permiso pero el panel seguia apuntando a `admin` y quedaba vacio. | El panel visible se deriva de rol/estado y `MatchView` se reinicia por perspectiva. | Regresion unitaria + QA Admin a Jugador: reaparece `Mi asistencia`. |
+| DW-027 | DEMO_UX_BUG | fixed + regression_verified | Mercado renderizaba 48 fichas a la vez y producia mas de 11.000 px de scroll en 360x800. | Primera pagina de 12 y accion local `Mostrar más` en bloques de 12; buscar reinicia el limite. | Regresion de fuente + QA 360x800: 12, 24 y filtro restaurado sin writes. |
+| DW-028 | DEMO_UX_BUG | fixed + regression_verified | El modo juego ocultaba la cabecera y con ella el unico selector de perspectiva. | Perfil incorpora `Perspectiva en modo juego` dentro del submenu visible en apaisado tactil. | QA 844x390 cambia a Admin sin overflow ni salir de Demo World. |
+| DW-029 | TESTABILITY_GAP | fixed + regression_verified | `visual-audit-v1` esperaba 650 ms y podia medir `/demo` antes de que el snapshot inicial estuviese listo. | El auditor espera `[data-demo-world='ready']` antes de acciones y metricas. | Matriz final 114/114 sin falsos fallos de navegacion. |
+| DW-030 | ENVIRONMENT_ISSUE | fixed + regression_verified | En `next dev`, el Chrome aislado recibia HTML y `core.json` desde `127.0.0.1` pero no hidrataba; `localhost` si. | `localhost` pasa a ser el origen local canonico del auditor. | Diagnostico A/B conservado + matriz final completa en `localhost`: 114/114. |
+| DW-031 | CODE_QUALITY_BUG | fixed + regression_verified | React 19 rechazo dos `setState` sincronicos dentro de efectos: panel Admin y paginacion de busqueda. | Panel derivado y reinicio de pagina dentro del evento de busqueda. | Lint focalizado PASS + regresiones de rol y paginacion + QA manual. |
+| DW-032 | DEMO_DATA_BUG | fixed + regression_verified | La historia del puesto 27 enlazaba `demo_ranking_entry_01`, que identifica la primera fila del Top 10, porque el showcase propio no exponia su `entryKey`. | El read model propio conserva `demo_ranking_entry_27` y la historia enlaza esa evidencia. | Regresion exacta de historia, jugador, `entryKey` y posicion 27; 22/22 pruebas Demo PASS. |
 
 ## Estado del cierre
 
 ## Arquitectura elegida
 
-`/demo` es una aplicacion publica aislada que carga un manifest versionado y cuatro chunks JSON estaticos. El generador reutiliza Rating V2 y los catalogos productivos de cosmeticos; el cliente reutiliza `PlayerCosmeticCard`, `TeamShieldView`, `RewardBoxDemo` y `MobileAppNav`.
+`/demo` es una aplicacion publica aislada que carga un manifest versionado y cuatro chunks JSON estaticos. Inicio recibe solo un preview canonico desde `core`; los tres dominios secundarios se cargan una vez al entrar en cualquier seccion profunda. El generador reutiliza Rating V2 y los catalogos productivos de cosmeticos; el cliente reutiliza `PlayerCosmeticCard`, `TeamShieldView`, `RewardBoxDemo`, `MobileAppNav` y el mismo tablero de Ranking Provincial que produccion.
 
 El modo heredado `?demo=1` redirige al nuevo mundo. El centro global de notificaciones conectado y el footer real no se montan en `/demo`. No se han creado usuarios Auth, tablas, migraciones, funciones RPC ni filas ficticias.
 
@@ -45,25 +60,26 @@ El modo heredado `?demo=1` redirige al nuevo mundo. El centro global de notifica
 
 | Metrica | Resultado |
 | --- | ---: |
-| Equipos | 28 |
-| Jugadores | 365 |
+| Equipos | 30 |
+| Jugadores | 331 |
 | Partidos | 128 |
-| Retos | 26 |
-| Logros | 74 |
+| Retos | 48 |
+| Evidencias de asistencia | 168 |
+| Logros | 75 |
 | Cajas | 28 |
 | Avisos | 12 |
-| Historias | 10 |
+| Historias | 12 |
 | Perspectivas | 3 |
 
-Territorios: Barcelona 8 equipos, Valles 8, Girona 6 y Maresme 6. Hay 120 partidos finalizados y 8 programados; 53 son externos/Reto y 75 internos. Los 26 Retos cubren `countered` (2), `pending` (2), `accepted` (2), `rejected` (1), `cancelled` (1) y `completed` (18).
+Territorios: Barcelona 9 equipos, Valles 9, Girona 6 y Maresme 6. Hay 120 partidos finalizados y 8 programados; 53 son externos/Reto y 75 internos. Los 48 Retos cubren `countered` (2), `pending` (2), `accepted` (2), `rejected` (1), `cancelled` (1) y `completed` (40).
 
-Mercado incluye 281 perfiles abiertos a invitaciones demo, un agente libre, 23 equipos retables y 8 partidos con plazas publicas. El ranking contiene los 28 equipos y se presenta siempre como Ranking Demo, no como TOP oficial.
+Mercado incluye 48 perfiles publicos abiertos, un agente libre, 24 equipos retables y 8 partidos con plazas. El Ranking Provincial muestra el Top 10 sobre 32 entradas y permite comprobar una ficha #27, otra no elegible, una provisional y una pendiente de verificacion. Los premios territoriales permanecen desactivados.
 
 ## Rating y progresion
 
 - Jugadores de campo: read models calculados con `pachangas-rating-v2`.
 - Porteros: GRL `null` bajo dominio `goalkeeper_legacy`; no se inventa la formula pendiente.
-- Season Score: no se recalcula ni se presenta una formula alternativa.
+- Season Score: read model canonico V3 con formula 55/30/15, sin recalculo cliente ni formula alternativa.
 - Team Rewards: los cinco mappings productivos siguen exactos y cada grant tiene evidencia.
 - Premium Ball: ausente y no activado.
 - Premium Art Pack: ninguna de sus 29 propuestas se declara propiedad o reward.
@@ -72,13 +88,13 @@ Mercado incluye 281 perfiles abiertos a invitaciones demo, un agente libre, 23 e
 
 | Indicador | Resultado |
 | --- | ---: |
-| Loadouts de jugador unicos | 197 de 365 |
-| Base/casi base, 0-1 piezas | 96 (26,3 %) |
-| Ligera, 2 piezas | 54 (14,8 %) |
-| Media, 3 piezas | 99 (27,1 %) |
-| Alta, 4-5 piezas | 116 (31,8 %) |
+| Loadouts de jugador unicos | 187 de 331 |
+| Base/casi base, 0-1 piezas | 77 (23,3 %) |
+| Ligera, 2 piezas | 62 (18,7 %) |
+| Media, 3 piezas | 78 (23,6 %) |
+| Alta, 4-5 piezas | 114 (34,4 %) |
 | Piezas Premium/Oro equipadas | 0 |
-| Escudos unicos | 28 de 28 |
+| Escudos unicos | 30 de 30 |
 | Formas | 8 |
 | Fondos | 2 |
 | Patrones | 4 |
@@ -105,10 +121,12 @@ Las tres perspectivas son estado local y no sesiones Auth. Al cambiarlas se rest
 - Invitar solo desde la perspectiva Admin.
 - Herramientas Admin compatibles con el estado del partido.
 - Leer avisos.
-- Abrir una caja determinista y guardar la pieza en la sesion demo.
+- Abrir una caja 3D determinista, guardar la pieza, verla como NEW y equiparla localmente.
+- Recorrer 48 jugadores de Mercado en paginas locales de 12.
+- Comparar Top 10, #27, no elegible, provisional y pendiente de verificacion.
 - Reiniciar el mundo.
 
-La unica persistencia es `sessionStorage`. Reset borra asistencia, cajas abiertas, avisos leidos y perspectiva. La red se audito en navegador recorriendo esas acciones: 33 solicitudes, todas `GET`, cero mutaciones.
+La unica persistencia es `sessionStorage`. Reset borra asistencia, cajas abiertas, inventario, marcas NEW, equipamiento, avisos leidos y perspectiva. Las acciones nunca se representan como confirmaciones del servidor ni generan una cola offline.
 
 ## Privacidad y aislamiento
 
@@ -125,19 +143,19 @@ La unica persistencia es `sessionStorage`. Reset borra asistencia, cajas abierta
 | Recurso | Bytes |
 | --- | ---: |
 | Manifest | 635 |
-| Core | 36.678 |
-| Players | 355.011 |
-| Matches | 141.645 |
-| Activity | 33.695 |
-| Payload canonico total | 567.068 |
+| Core | 76.158 |
+| Players | 323.156 |
+| Matches | 169.906 |
+| Activity | 34.032 |
+| Payload canonico total | 603.252 |
 
-El manifest y los cuatro chunks ocupan 58.390 bytes con gzip y 46.603 con Brotli. El HTML prerenderizado ocupa 15.389 bytes (3.758 gzip). Los assets iniciales referenciados por `/demo` suman 982.783 bytes de JS (279.345 gzip), 437.914 de CSS compartido (69.286 gzip) y 52.396 de fuentes. Estas cifras incluyen runtime y estilos globales compartidos, no solo codigo exclusivo de Demo World.
+El manifest y los cuatro chunks ocupan 62.650 bytes con gzip y 49.244 con Brotli. El presupuesto canonico total sigue por debajo de 700 KB sin comprimir.
 
-V1 usa chunks de dominio cargados en paralelo y cacheados por hash. No existe lazy loading por pestana en esta version: el payload queda bajo 700 KB y se prioriza navegacion instantanea posterior. La caja 3D mantiene su modulo separado mediante import dinamico y el GLB de 563.072 bytes solo se solicita al abrirla. Los avatares son SVG deterministas inline y no dependen de hosts remotos.
+Inicio solicita solo `core.json`; la primera seccion profunda solicita `activity`, `matches` y `players`, todos cacheados por hash. La caja 3D no solicita Three.js, GLB ni Draco hasta que el usuario la abre. El Service Worker conserva la navegacion Demo y chunks inmutables, pero nunca mutaciones. Los avatares son SVG deterministas inline y no dependen de hosts remotos.
 
 Seed: `pachangas-iq-demo-world-v1-2026-27`.
 
-Hash: `cef767f201a00f9f36fdaad8b27a195e9c767147651153717dabf043b71d16d3`.
+Hash: `34158b4f56a3011c9010b0952f74043435e9f896f0b7ea5fd90e0dfacdfac3ae`.
 
 ## SEO y accesibilidad
 
@@ -153,9 +171,9 @@ Hash: `cef767f201a00f9f36fdaad8b27a195e9c767147651153717dabf043b71d16d3`.
 
 Auditoria inicial Demo World: 67 combinaciones de superficie/viewport, con cero errores de consola, warnings, imagenes rotas, overflow horizontal o chrome fuera de pantalla. El hallazgo de targets pequenos se registro como DW-011, se corrigio y su regresion paso en 13 combinaciones adicionales.
 
-Visual Audit V1 final: 232 checks, cero errores de navegacion/consola, warnings, solicitudes fallidas, imagenes rotas, overflow, violaciones de viewport o chrome de juego. Conserva los 172 checks anteriores y anade 60 para las diez superficies profundas. Demo World aporta 130 checks y todos tienen cero targets pequenos. Los 222 targets pequenos restantes pertenecen a 38 combinaciones productivas preexistentes y quedan registrados como DW-017.
+Visual Audit final del HEAD local: 114 combinaciones, 19 superficies Demo por seis viewports (`1440x900`, `1920x1080`, `390x844`, `360x800`, `844x390` y PWA portrait). Resultado: cero errores de navegacion/consola, warnings, solicitudes fallidas, imagenes rotas, overflow horizontal, targets pequenos, violaciones de viewport o chrome de juego. Evidencia canonica: `artifacts/demo-world-v1/visual-audit/demo-world-v1-final/` y capturas en `artifacts/demo-world-v1/visual-audit/focused/`.
 
-QA de Preview protegida Vercel sobre `f3f32e8`: 84 combinaciones Demo (21 superficies por desktop 1440x900, portrait 390x844, landscape 844x390 y PWA standalone), con cero errores de navegacion/consola, warnings, solicitudes fallidas, imagenes rotas, overflow, targets pequenos o violaciones de chrome. Un arranque frio con cache desactivada alcanzo el contenido navegable en 330 ms. El recorrido de admin, asistencia, cambio de perspectiva, apertura/guardado de caja, avisos y reset genero nueve solicitudes, todas `GET`, sin RPC, REST de Supabase ni mutaciones remotas.
+La red se comprobo tambien en frio: Inicio solicita el manifest y solo `core`; al entrar en Equipo llegan `activity`, `matches` y `players`. No aparece ninguna peticion distinta de `GET`. Three.js, GLB y Draco no se descargan antes de abrir una caja y si se cargan al pulsarla, con canvas visible.
 
 Tema explicito: Claro `rgb(238, 242, 239)` / texto `rgb(16, 32, 26)` y Oscuro `rgb(7, 17, 15)` / texto `rgb(241, 246, 242)`, ambos sin overflow, errores, warnings o targets pequenos.
 
@@ -164,14 +182,19 @@ Spot checks manuales ya realizados:
 - desktop 1440x900;
 - portrait 390x844 y 360x800;
 - landscape 844x390 con modo juego;
-- PWA standalone simulada;
+- tablet tactil 1024x768 con modo juego;
+- PWA standalone;
+- Ranking Provincial Top 10, #27, no elegible, provisional y pendiente;
+- cambio Admin a Jugador con panel Admin abierto;
+- Mercado 12 a 24 y busqueda con restauracion del limite;
+- caja abrir, guardar, NEW, equipar y Reiniciar;
 - contact sheets de cartas y escudos.
 
 ## Experiencia de descubrimiento
 
-Recorrido de dos minutos: Inicio expone equipo/carta, proximo partido, ranking, historias y avisos; la navegacion superior/inferior permite llegar a Partido, Retos y Mercado sin modal obligatorio.
+Recorrido de dos minutos: Inicio expone equipo/carta, proximo partido, Ranking Provincial, historias y avisos sin descargar aun el mundo completo; la navegacion superior/inferior permite llegar a Partido, Retos y Mercado sin modal obligatorio.
 
-Recorrido de diez minutos: permite cambiar perspectiva, abrir fichas, recorrer historicos, alineacion y goleadores, comparar equipos/escudos, revisar logros y abrir una caja. La principal decision de rendimiento es cargar el snapshot completo al entrar; no se observo espera funcional en local, pero V2 puede cargar Players/Matches por demanda si el mundo crece.
+Recorrido de diez minutos: permite cambiar perspectiva incluso en modo juego, abrir fichas, recorrer historicos, alineacion y goleadores, comparar equipos/escudos, revisar logros, asistencia y estados de ranking, y completar el ciclo de caja, inventario NEW y equipamiento. Mercado entrega primero 12 perfiles y revela el resto de 12 en 12.
 
 ## Documentos relacionados
 
@@ -183,23 +206,23 @@ Recorrido de diez minutos: permite cambiar perspectiva, abrir fichas, recorrer h
 
 | Gate | Estado |
 | --- | --- |
-| `npm run test:demo-world` | PASS, 14/14 |
+| `npm run test:demo-world` | PASS, 22/22 |
 | Red de navegador, cero writes | PASS |
 | Focused lint | PASS |
-| `npm test` | PASS, 241/241 |
+| `npm test` | PASS: build + 20/20 base + 274/274 funcionales |
 | `npm run typecheck` | PASS |
-| `npm run build` | PASS |
-| Visual Audit V1 completo | PASS, 232/232; 130 Demo sin targets pequenos |
-| Preview Vercel protegida | PASS, 84/84; arranque frio 330 ms; cero writes |
+| `npm run build` | PASS, Next.js 16.2.6, 33 paginas estaticas generadas |
+| Visual Audit V1 focalizado | PASS, 114/114 |
+| Preview Vercel exacta | Pendiente del commit final |
 | Global lint | deuda previa: 23 errores y 20 warnings fuera de los modulos Demo |
-| `git diff --check` | PASS |
+| `git diff --check` | PASS antes de commit; se repite al cerrar |
 
 ## Publicacion
 
 - Rama: `codex/demo-world-v1`.
-- Commit de implementacion validado: `f3f32e88be537fce4ac0af16c45f29af98330132`.
+- Commit de implementacion validado: pendiente del cierre local.
 - PR draft: `https://github.com/puntoracingrc/pachangas/pull/140`.
-- Preview Vercel exacta validada: `https://pachangas-m9xm8jbow-persianas-almar-web-s-projects.vercel.app/demo`.
+- Preview Vercel exacta validada: pendiente del commit final.
 - Merge: no.
 - Produccion modificada: no.
 - Supabase modificado: no.
