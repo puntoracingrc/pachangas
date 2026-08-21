@@ -1,0 +1,111 @@
+.sheet {
+  min-height: 100vh;
+  background: #07110f;
+  padding: 36px;
+  color: #f1f6f2;
+  font-family: Arial, sans-serif;
+}
+
+.sheet * {
+  box-sizing: border-box;
+  letter-spacing: 0;
+}
+
+.sheet header {
+  max-width: 1320px;
+  margin: 0 auto 24px;
+  border-bottom: 1px solid rgba(217, 234, 225, 0.16);
+  padding-bottom: 18px;
+}
+
+.sheet header span,
+.sheet header p {
+  color: #a9bbb2;
+}
+
+.sheet h1 {
+  margin: 5px 0;
+  font-size: 2rem;
+}
+
+.sheet p {
+  margin: 0;
+}
+
+.teamGrid,
+.playerGrid {
+  max-width: 1320px;
+  display: grid;
+  margin: 0 auto;
+}
+
+.teamGrid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.teamItem {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 90px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  min-height: 112px;
+  border: 1px solid rgba(217, 234, 225, 0.14);
+  background: rgba(18, 29, 26, 0.9);
+  padding: 14px;
+}
+
+.teamItem div {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.teamItem strong,
+.teamItem span,
+.teamItem small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.teamItem span,
+.teamItem small,
+.playerItem > span {
+  color: #a9bbb2;
+  font-size: 0.72rem;
+}
+
+.playerGrid {
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 14px 10px;
+}
+
+.playerItem {
+  min-width: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.playerItem > span {
+  overflow: hidden;
+  padding: 0 4px;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 900px) {
+  .sheet {
+    padding: 20px;
+  }
+
+  .teamGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .playerGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}

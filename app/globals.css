@@ -1033,6 +1033,15 @@
   display: none;
 }
 
+body.demo-world-active {
+  padding-bottom: 0 !important;
+}
+
+body.demo-world-active .legal-footer,
+body.demo-world-active .notification-center {
+  display: none !important;
+}
+
 .admin-view-preview-button {
   align-items: center;
   justify-content: center;

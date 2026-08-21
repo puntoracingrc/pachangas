@@ -6,7 +6,7 @@ import { platform } from "node:os";
 import path from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 
-const baseUrl = process.env.VISUAL_AUDIT_BASE_URL ?? "http://127.0.0.1:3000";
+const baseUrl = process.env.VISUAL_AUDIT_BASE_URL ?? "http://localhost:3000";
 const label = (process.env.VISUAL_AUDIT_LABEL ?? "current").replace(/[^a-z0-9_-]/gi, "-");
 const outputRoot = path.resolve(process.env.VISUAL_AUDIT_OUTPUT ?? "artifacts/visual-audit-v1", label);
 const chromePath = process.env.CHROME_PATH ?? findChromePath();
@@ -30,17 +30,27 @@ const viewports = [
 ];
 
 const surfaces = [
-  { key: "demo-inicio-admin", path: "/?demo=1&mobile=inicio", userMode: "demo-admin", capture: true },
-  { key: "demo-inicio-player", path: "/?demo=1&mobile=inicio&qaPlayer=1", userMode: "demo-player", capture: false },
-  { key: "demo-partido", path: "/?demo=1&mobile=partido", userMode: "demo-admin", capture: true },
-  { key: "demo-partido-alineacion", path: "/?demo=1&mobile=partido", userMode: "demo-admin", clickSelector: ".match-manager-subnav button", clickText: "Alineación", capture: true },
-  { key: "demo-partido-resultado", path: "/?demo=1&mobile=partido", userMode: "demo-admin", clickSelector: ".match-manager-subnav button", clickText: "Resultado", capture: true },
-  { key: "demo-partido-admin", path: "/?demo=1&mobile=partido", userMode: "demo-admin", clickSelector: ".match-manager-subnav button", clickText: "Admin", capture: true },
-  { key: "demo-mercado", path: "/?demo=1&mobile=mercado", userMode: "demo-admin", capture: false },
+  { key: "demo-inicio-admin", path: "/demo?tab=inicio&perspective=admin", userMode: "demo-admin", capture: true },
+  { key: "demo-inicio-player", path: "/demo?tab=inicio&perspective=player", userMode: "demo-player", capture: false },
+  { key: "demo-inicio-free-agent", path: "/demo?tab=inicio&perspective=free-agent", userMode: "demo-free-agent", capture: false },
+  { key: "demo-player-modal", path: "/demo?tab=inicio&perspective=player", userMode: "demo-player", clickSelector: "button", clickText: "Abrir mi ficha", expectedSelector: "[role='dialog']", capture: false },
+  { key: "demo-partido", path: "/demo?tab=partido&perspective=admin", userMode: "demo-admin", capture: true },
+  { key: "demo-partido-alineacion", path: "/demo?tab=partido&perspective=admin", userMode: "demo-admin", clickSelector: "aside[aria-label='Secciones del partido'] button", clickText: "Alineación", capture: true },
+  { key: "demo-partido-resultado", path: "/demo?tab=partido&perspective=admin", userMode: "demo-admin", clickSelector: "aside[aria-label='Secciones del partido'] button", clickText: "Resultado", capture: true },
+  { key: "demo-partido-admin", path: "/demo?tab=partido&perspective=admin", userMode: "demo-admin", clickSelector: "aside[aria-label='Secciones del partido'] button", clickText: "Admin", capture: true },
+  { key: "demo-mercado", path: "/demo?tab=mercado&perspective=admin", userMode: "demo-admin", capture: false },
+  { key: "demo-mercado-partidos", path: "/demo?tab=mercado&perspective=admin", userMode: "demo-admin", clickSelector: "aside[aria-label='Secciones de Mercado'] button", clickText: "Partidos", capture: false },
+  { key: "demo-mercado-retos", path: "/demo?tab=mercado&perspective=admin", userMode: "demo-admin", clickSelector: "aside[aria-label='Secciones de Mercado'] button", clickText: "Retos", capture: false },
+  { key: "demo-mercado-equipos", path: "/demo?tab=mercado&perspective=free-agent", userMode: "demo-free-agent", clickSelector: "aside[aria-label='Secciones de Mercado'] button", clickText: "Equipos", capture: false },
   { key: "mercado-partidos", path: "/mercado", userMode: "visitor", clickSelector: ".market-manager-subnav button", clickText: "Partidos", capture: false },
   { key: "mercado-retos", path: "/mercado", userMode: "visitor", clickSelector: ".market-manager-subnav button", clickText: "Retos", capture: false },
-  { key: "demo-equipo", path: "/?demo=1&mobile=equipo", userMode: "demo-admin", capture: false },
-  { key: "demo-perfil", path: "/?demo=1&mobile=perfil", userMode: "demo-admin", capture: false },
+  { key: "demo-equipo", path: "/demo?tab=equipo&perspective=admin", userMode: "demo-admin", capture: false },
+  { key: "demo-equipo-plantilla", path: "/demo?tab=equipo&perspective=admin", userMode: "demo-admin", clickSelector: "aside[aria-label='Secciones de Equipo'] button", clickText: "Plantilla", capture: false },
+  { key: "demo-equipo-logros", path: "/demo?tab=equipo&perspective=admin", userMode: "demo-admin", clickSelector: "aside[aria-label='Secciones de Equipo'] button", clickText: "Logros", capture: false },
+  { key: "demo-equipo-escudo", path: "/demo?tab=equipo&perspective=admin", userMode: "demo-admin", clickSelector: "aside[aria-label='Secciones de Equipo'] button", clickText: "Escudo", capture: false },
+  { key: "demo-perfil", path: "/demo?tab=perfil&perspective=player", userMode: "demo-player", capture: false },
+  { key: "demo-perfil-recompensas", path: "/demo?tab=perfil&perspective=player", userMode: "demo-player", clickSelector: "aside[aria-label='Secciones de Perfil'] button", clickText: "Recompensas", capture: false },
+  { key: "demo-perfil-avisos", path: "/demo?tab=perfil&perspective=player", userMode: "demo-player", clickSelector: "aside[aria-label='Secciones de Perfil'] button", clickTextPrefix: "Avisos", capture: false },
   { key: "mercado", path: "/mercado", userMode: "visitor", capture: true },
   { key: "personalizar-carta", path: "/personalizar-carta", userMode: "visitor", capture: true },
   { key: "equipo-identidad", path: "/equipo/identidad", userMode: "visitor-no-team", capture: true },
@@ -54,8 +64,8 @@ const surfaces = [
   { key: "lab-rating", path: "/laboratorio-ficha-jugador", userMode: "lab", capture: false },
   { key: "lab-ranking", path: "/laboratorio-ranking-provincial", userMode: "lab", capture: false },
   { key: "lab-premium-art", path: "/laboratorio-premium-art-pack", userMode: "lab", capture: true },
-  { key: "demo-inicio-light", path: "/?demo=1&mobile=inicio&qaTheme=light", userMode: "demo-admin-light", capture: false },
-  { key: "demo-inicio-dark", path: "/?demo=1&mobile=inicio&qaTheme=dark", userMode: "demo-admin-dark", capture: false },
+  { key: "demo-inicio-light", path: "/demo?tab=inicio&perspective=admin&qaTheme=light", userMode: "demo-admin-light", capture: false },
+  { key: "demo-inicio-dark", path: "/demo?tab=inicio&perspective=admin&qaTheme=dark", userMode: "demo-admin-dark", capture: false },
 ];
 
 const viewportFilter = requestedKeys("VISUAL_AUDIT_VIEWPORTS");
@@ -155,6 +165,14 @@ async function evaluate(client, expression) {
   return result.result.value;
 }
 
+async function waitForPageCondition(client, expression, attempts = 100) {
+  for (let attempt = 0; attempt < attempts; attempt += 1) {
+    if (await evaluate(client, expression)) return;
+    await delay(100);
+  }
+  throw new Error(`Page condition did not become true: ${expression}`);
+}
+
 function auditExpression() {
   return `(() => {
     const doc = document.documentElement;
@@ -211,6 +229,11 @@ function auditExpression() {
     const failedImages = [...document.images]
       .filter((image) => image.complete && image.naturalWidth === 0)
       .map((image) => image.currentSrc || image.src || image.alt || "unknown");
+    const demoShell = document.querySelector("main[data-demo-world]");
+    const demoPalette = demoShell ? {
+      backgroundColor: getComputedStyle(demoShell).backgroundColor,
+      color: getComputedStyle(demoShell).color,
+    } : null;
     const rectOf = (selector) => {
       const element = document.querySelector(selector);
       if (!element) return null;
@@ -232,6 +255,7 @@ function auditExpression() {
       overflowX: Math.max(doc.scrollWidth, body.scrollWidth) - Math.max(doc.clientWidth, window.innerWidth),
       overflowY: Math.max(doc.scrollHeight, body.scrollHeight) - Math.max(doc.clientHeight, window.innerHeight),
       failedImages,
+      demoPalette,
       smallTargets,
       viewportViolations,
       gameChromeViolations,
@@ -357,6 +381,9 @@ async function main() {
           await client.send("Page.navigate", { url });
           await delay(650);
           await evaluate(client, "document.fonts?.ready ?? Promise.resolve()");
+          if (new URL(surface.path, baseUrl).pathname === "/demo") {
+            await waitForPageCondition(client, `Boolean(document.querySelector("[data-demo-world='ready']"))`);
+          }
           const qaTheme = new URL(surface.path, baseUrl).searchParams.get("qaTheme");
           if (qaTheme === "light" || qaTheme === "dark") {
             await evaluate(client, `(() => {
@@ -366,24 +393,35 @@ async function main() {
               }
             })()`);
           }
-          if (surface.clickText) {
+          const actionText = surface.clickText ?? surface.clickTextPrefix;
+          if (actionText) {
             const clicked = await evaluate(client, `(() => {
-              const expected = ${JSON.stringify(surface.clickText)};
+              const expected = ${JSON.stringify(actionText)};
+              const prefix = ${JSON.stringify(Boolean(surface.clickTextPrefix))};
               const target = [...document.querySelectorAll(${JSON.stringify(surface.clickSelector ?? "button, a[href], [role='tab']")})]
-                .find((element) => (element.textContent || "").trim() === expected);
+                .find((element) => {
+                  const text = (element.textContent || "").trim();
+                  return prefix ? text.startsWith(expected) : text === expected;
+                });
               if (!target) return false;
               target.click();
               return true;
             })()`);
-            if (!clicked) throw new Error(`Post-navigation action not found: ${surface.clickText}`);
+            if (!clicked) throw new Error(`Post-navigation action not found: ${actionText}`);
             await delay(300);
-            const actionConfirmed = await evaluate(client, `(() => {
-              const expected = ${JSON.stringify(surface.clickText)};
-              const target = [...document.querySelectorAll(${JSON.stringify(surface.clickSelector ?? "button, a[href], [role='tab']")})]
-                .find((element) => (element.textContent || "").trim() === expected);
-              return Boolean(target && (target.matches(".active, .selected") || target.getAttribute("aria-current") === "page"));
-            })()`);
-            if (!actionConfirmed) throw new Error(`Post-navigation action did not become active: ${surface.clickText}`);
+            const actionConfirmed = surface.expectedSelector
+              ? await evaluate(client, `Boolean(document.querySelector(${JSON.stringify(surface.expectedSelector)}))`)
+              : await evaluate(client, `(() => {
+                const expected = ${JSON.stringify(actionText)};
+                const prefix = ${JSON.stringify(Boolean(surface.clickTextPrefix))};
+                const target = [...document.querySelectorAll(${JSON.stringify(surface.clickSelector ?? "button, a[href], [role='tab']")})]
+                  .find((element) => {
+                    const text = (element.textContent || "").trim();
+                    return prefix ? text.startsWith(expected) : text === expected;
+                  });
+                return Boolean(target && (target.matches(".active, .selected") || target.getAttribute("aria-current") === "page"));
+              })()`);
+            if (!actionConfirmed) throw new Error(`Post-navigation action did not become active: ${actionText}`);
           }
           await evaluate(client, resetScrollExpression());
           await evaluate(client, "new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)))");
