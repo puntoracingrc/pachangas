@@ -53,11 +53,16 @@ export function refereeAvailabilityLabel(value: unknown) {
   return refereeAvailabilityLabels[status] ?? "Sin disponibilidad publicada";
 }
 
-export function refereeDateLabel(value: unknown) {
+export function refereeDateLabel(value: unknown, timeZone: unknown = "Europe/Madrid") {
   if (typeof value !== "string" || !value) return "Sin fecha";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "Sin fecha";
-  return new Intl.DateTimeFormat("es-ES", { dateStyle: "medium", timeStyle: "short" }).format(date);
+  const zone = refereeText(timeZone) || "Europe/Madrid";
+  try {
+    return new Intl.DateTimeFormat("es-ES", { dateStyle: "medium", timeStyle: "short", timeZone: zone }).format(date);
+  } catch {
+    return new Intl.DateTimeFormat("es-ES", { dateStyle: "medium", timeStyle: "short", timeZone: "Europe/Madrid" }).format(date);
+  }
 }
 
 export function refereeStatusTone(value: unknown): "danger" | "good" | "info" | "muted" | "warning" {

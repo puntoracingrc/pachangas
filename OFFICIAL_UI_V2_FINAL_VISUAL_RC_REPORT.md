@@ -46,8 +46,9 @@ No se han anadido League Engine, Tournament Engine, Discipline, funciones arbitr
 | Mercado arbitral exponia una jerarquia ARIA `listbox/option` invalida | Grupo semantico y botones nativos con `aria-pressed` | Axe + test R3/UI |
 | Texto secundario del Control Center quedaba por debajo del contraste minimo | Color semantico de texto admin | Axe + test R3/UI |
 | Colores fijos del laboratorio arbitral y perfiles no convergian entre temas | Superficies, controles, estados y detalle usan tokens Official UI V2 | Matriz clara/oscura |
+| Perfil privado y asignacion arbitral hidrataban la fecha con zonas horarias distintas en servidor y navegador | Formato determinista con la zona canonica de la asignacion y fallback `Europe/Madrid` | Test R3/UI + consola de Preview |
 
-El pulido modifica 18 rutas de codigo/tests antes de incorporar este informe y las cinco hojas de evidencia. No introduce dependencias ni nuevos chunks de JavaScript.
+El pulido modifica 19 rutas de codigo/tests antes de incorporar este informe y las cinco hojas de evidencia. No introduce dependencias ni nuevos chunks de JavaScript.
 
 ## 4. Conclusion de revision humana
 
@@ -149,10 +150,10 @@ Estas cifras son una referencia local de RC, no Web Vitals de usuarios reales.
 | Gate | Resultado |
 | --- | --- |
 | `npm ci` | PASS en reintento tras limpiar solo caches regenerables del worktree; 522 paquetes |
-| `npm test` | PASS, **341/341** tests actuales |
+| `npm test` | PASS, **342/342** tests actuales |
 | `npm run typecheck` | PASS |
 | `npm run build` | PASS |
-| Official UI V2 + integracion visual R3 focal | PASS, 15/15 |
+| Official UI V2 + integracion visual R3 focal | PASS, 16/16 |
 | R1/R2/R3 + UI/PWA focal | PASS, 86/86 |
 | Rendered HTML | PASS, 9/9 |
 | SQL/RLS R3 + adversarial | PASS en Supabase local |
@@ -162,7 +163,7 @@ Estas cifras son una referencia local de RC, no Web Vitals de usuarios reales.
 | Lint global | 43 heredados: 23 errores y 20 warnings; 0 nuevos del RC |
 | `git diff --check` | PASS |
 
-La orden esperaba 360 tests o mas, pero la suite actual del repositorio contiene 341. No se han inventado tests para alcanzar una cifra nominal: los 341 pasan y las baterias focales anteriores tambien pasan. `npm audit` informa 21 vulnerabilidades de dependencia heredadas (1 low, 4 moderate, 16 high); no se aplico `npm audit fix` fuera de alcance.
+La orden esperaba 360 tests o mas, pero la suite actual del repositorio contiene 342. No se han inventado tests para alcanzar una cifra nominal: los 342 pasan y las baterias focales anteriores tambien pasan. `npm audit` informa 21 vulnerabilidades de dependencia heredadas (1 low, 4 moderate, 16 high); no se aplico `npm audit fix` fuera de alcance.
 
 ## 12. Invariantes funcionales
 

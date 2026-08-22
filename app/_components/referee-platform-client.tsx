@@ -418,7 +418,7 @@ export function RefereePlatformClient({ focusSection, laboratory = false, previe
               const requester = refereeText(item.requesterName) || refereeText(item.requesterKind);
               return <article className={styles.assignmentCard} key={refereeText(item.id)}>
                 <div className={styles.assignmentContext}>
-                  <span><strong>{title}</strong><small>{refereeDateLabel(item.scheduledStart)}{refereeText(item.timezone) ? ` · ${refereeText(item.timezone)}` : ""}</small></span>
+                  <span><strong>{title}</strong><small>{refereeDateLabel(item.scheduledStart, item.timezone)}{refereeText(item.timezone) ? ` · ${refereeText(item.timezone)}` : ""}</small></span>
                   <div className={styles.assignmentFacts}>
                     <span><b>Modalidad</b>{modality ? refereeModalityLabel(modality) : "Definida por el partido"}</span>
                     <span><b>Zona</b>{zone || "Ubicación canónica"}</span>

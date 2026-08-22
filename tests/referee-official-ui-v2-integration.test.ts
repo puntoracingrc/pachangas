@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
+import { refereeDateLabel } from "../app/referee-platform-contract";
 
 const root = new URL("../", import.meta.url);
 const source = (path: string) => readFile(new URL(path, root), "utf8");
@@ -84,6 +85,11 @@ test("assignment presentation preserves every R3 command and translates schedule
   assert.match(client, /REFEREE_ASSIGNMENT_TIME_CONFLICT/);
   assert.match(client, /partido en conflicto/i);
   assert.doesNotMatch(client, /conflict[\s\S]{0,120}(?:rating|valoración)/i);
+});
+
+test("referee schedule labels hydrate from the canonical timezone", () => {
+  assert.equal(refereeDateLabel("2026-08-26T19:00:00.000Z", "Europe/Madrid"), "26 ago 2026, 21:00");
+  assert.equal(refereeDateLabel("2026-08-26T19:00:00.000Z", "Invalid/Zone"), "26 ago 2026, 21:00");
 });
 
 test("rotation changes layout without remounting or duplicating the R3 functional tree", async () => {
