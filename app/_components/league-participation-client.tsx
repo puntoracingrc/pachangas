@@ -45,7 +45,11 @@ function dateLabel(value: unknown) {
   const parsed = new Date(leagueText(value));
   return Number.isNaN(parsed.getTime())
     ? "Sin fecha"
-    : new Intl.DateTimeFormat("es-ES", { dateStyle: "medium", timeStyle: "short" }).format(parsed);
+    : new Intl.DateTimeFormat("es-ES", {
+      dateStyle: "medium",
+      timeStyle: "short",
+      timeZone: "Europe/Madrid",
+    }).format(parsed);
 }
 
 function cacheKey(surface: LeagueParticipationSurface, id: string, userId: string) {
