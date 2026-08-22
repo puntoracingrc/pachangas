@@ -18,10 +18,13 @@ function requestedKeys(name) {
 
 const viewports = [
   { key: "desktop", width: 1440, height: 900, capture: true },
-  { key: "desktop-wide", width: 1920, height: 1080, capture: false },
+  { key: "desktop-wide", width: 1920, height: 1080, capture: true },
   { key: "portrait", width: 390, height: 844, capture: true },
-  { key: "portrait-small", width: 360, height: 800, capture: false },
+  { key: "portrait-small", width: 360, height: 800, capture: true },
+  { key: "landscape-small", width: 667, height: 375, capture: true },
+  { key: "landscape-low", width: 740, height: 360, capture: true },
   { key: "landscape", width: 844, height: 390, capture: true },
+  { key: "landscape-wide", width: 932, height: 430, capture: true },
   { key: "pwa-portrait", width: 390, height: 844, capture: true, displayMode: "standalone" },
   { key: "zoom-125", width: 1152, height: 720, capture: false, surfaceKeys: ["demo-inicio-admin", "mercado", "personalizar-carta", "equipo-identidad"] },
   { key: "zoom-150", width: 960, height: 600, capture: false, surfaceKeys: ["demo-inicio-admin", "mercado", "personalizar-carta", "equipo-identidad"] },
@@ -30,6 +33,7 @@ const viewports = [
 ];
 
 const surfaces = [
+  { key: "home-visitor", path: "/", userMode: "visitor", capture: true },
   { key: "demo-inicio-admin", path: "/demo?tab=inicio&perspective=admin", userMode: "demo-admin", capture: true },
   { key: "demo-inicio-player", path: "/demo?tab=inicio&perspective=player", userMode: "demo-player", capture: false },
   { key: "demo-inicio-free-agent", path: "/demo?tab=inicio&perspective=free-agent", userMode: "demo-free-agent", capture: false },
@@ -38,12 +42,12 @@ const surfaces = [
   { key: "demo-partido-alineacion", path: "/demo?tab=partido&perspective=admin", userMode: "demo-admin", clickSelector: "aside[aria-label='Secciones del partido'] button", clickText: "Alineación", capture: true },
   { key: "demo-partido-resultado", path: "/demo?tab=partido&perspective=admin", userMode: "demo-admin", clickSelector: "aside[aria-label='Secciones del partido'] button", clickText: "Resultado", capture: true },
   { key: "demo-partido-admin", path: "/demo?tab=partido&perspective=admin", userMode: "demo-admin", clickSelector: "aside[aria-label='Secciones del partido'] button", clickText: "Admin", capture: true },
-  { key: "demo-mercado", path: "/demo?tab=mercado&perspective=admin", userMode: "demo-admin", capture: false },
+  { key: "demo-mercado", path: "/demo?tab=mercado&perspective=admin", userMode: "demo-admin", capture: true },
   { key: "demo-mercado-partidos", path: "/demo?tab=mercado&perspective=admin", userMode: "demo-admin", clickSelector: "aside[aria-label='Secciones de Mercado'] button", clickText: "Partidos", capture: false },
   { key: "demo-mercado-retos", path: "/demo?tab=mercado&perspective=admin", userMode: "demo-admin", clickSelector: "aside[aria-label='Secciones de Mercado'] button", clickText: "Retos", capture: false },
   { key: "demo-mercado-equipos", path: "/demo?tab=mercado&perspective=free-agent", userMode: "demo-free-agent", clickSelector: "aside[aria-label='Secciones de Mercado'] button", clickText: "Equipos", capture: false },
-  { key: "mercado-partidos", path: "/mercado", userMode: "visitor", clickSelector: ".market-manager-subnav button", clickText: "Partidos", capture: false },
-  { key: "mercado-retos", path: "/mercado", userMode: "visitor", clickSelector: ".market-manager-subnav button", clickText: "Retos", capture: false },
+  { key: "mercado-partidos", path: "/mercado", userMode: "visitor", clickSelector: "[data-official-market-navigation='single'] button", clickText: "Partidos", capture: false },
+  { key: "mercado-retos", path: "/mercado", userMode: "visitor", clickSelector: "[data-official-market-navigation='single'] button", clickText: "Retos", capture: false },
   { key: "demo-equipo", path: "/demo?tab=equipo&perspective=admin", userMode: "demo-admin", capture: false },
   { key: "demo-equipo-plantilla", path: "/demo?tab=equipo&perspective=admin", userMode: "demo-admin", clickSelector: "aside[aria-label='Secciones de Equipo'] button", clickText: "Plantilla", capture: false },
   { key: "demo-equipo-logros", path: "/demo?tab=equipo&perspective=admin", userMode: "demo-admin", clickSelector: "aside[aria-label='Secciones de Equipo'] button", clickText: "Logros", capture: false },
@@ -55,6 +59,8 @@ const surfaces = [
   { key: "personalizar-carta", path: "/personalizar-carta", userMode: "visitor", capture: true },
   { key: "equipo-identidad", path: "/equipo/identidad", userMode: "visitor-no-team", capture: true },
   { key: "avisos", path: "/perfil/avisos", userMode: "visitor", capture: true },
+  { key: "ranking", path: "/ranking", userMode: "visitor", capture: true },
+  { key: "referee-profile", path: "/perfil/arbitro", userMode: "visitor", capture: false },
   { key: "conducta", path: "/perfil/conducta", userMode: "visitor", capture: false },
   { key: "partido-invitado", path: "/partido-invitado", userMode: "visitor", capture: false },
   { key: "invitacion-partido", path: "/invitacion-partido", userMode: "visitor", capture: false },
@@ -66,6 +72,22 @@ const surfaces = [
   { key: "lab-premium-art", path: "/laboratorio-premium-art-pack", userMode: "lab", capture: true },
   { key: "demo-inicio-light", path: "/demo?tab=inicio&perspective=admin&qaTheme=light", userMode: "demo-admin-light", capture: false },
   { key: "demo-inicio-dark", path: "/demo?tab=inicio&perspective=admin&qaTheme=dark", userMode: "demo-admin-dark", capture: false },
+  { key: "v21-home", path: "/laboratorio-official-ui-v2-1?surface=inicio&role=admin&state=upcoming&capture=1", userMode: "lab-admin", capture: true },
+  { key: "v21-home-player", path: "/laboratorio-official-ui-v2-1?surface=inicio&role=player&state=upcoming&capture=1", userMode: "lab-player", capture: false },
+  { key: "v21-home-no-team", path: "/laboratorio-official-ui-v2-1?surface=inicio&role=player&state=no-team&capture=1", userMode: "lab-no-team", capture: false },
+  { key: "v21-home-offline", path: "/laboratorio-official-ui-v2-1?surface=inicio&role=player&state=offline&capture=1", userMode: "lab-offline", capture: false },
+  { key: "v21-match-next", path: "/laboratorio-official-ui-v2-1?surface=partido&pane=proximo&role=admin&capture=1", userMode: "lab-admin", capture: true },
+  { key: "v21-match-lineup", path: "/laboratorio-official-ui-v2-1?surface=partido&pane=alineacion&role=admin&capture=1", userMode: "lab-admin", capture: true },
+  { key: "v21-match-result", path: "/laboratorio-official-ui-v2-1?surface=partido&pane=resultado&role=admin&capture=1", userMode: "lab-admin", capture: true },
+  { key: "v21-match-admin", path: "/laboratorio-official-ui-v2-1?surface=partido&pane=admin&role=admin&capture=1", userMode: "lab-admin", capture: true },
+  { key: "v21-market", path: "/laboratorio-official-ui-v2-1?surface=mercado&role=admin&capture=1", userMode: "lab-admin", capture: true },
+  { key: "v21-ranking", path: "/laboratorio-official-ui-v2-1?surface=ranking&capture=1", userMode: "lab-player", capture: true },
+  { key: "v21-notifications", path: "/laboratorio-official-ui-v2-1?surface=avisos&capture=1", userMode: "lab-player", capture: true },
+  { key: "v21-card", path: "/laboratorio-official-ui-v2-1?surface=carta&capture=1", userMode: "lab-player", capture: true },
+  { key: "v21-shield", path: "/laboratorio-official-ui-v2-1?surface=escudo&capture=1", userMode: "lab-admin", capture: true },
+  { key: "v21-team", path: "/laboratorio-official-ui-v2-1?surface=equipo&capture=1", userMode: "lab-player", capture: false },
+  { key: "v21-referee", path: "/laboratorio-official-ui-v2-1?surface=arbitro&capture=1", userMode: "lab-referee", capture: false },
+  { key: "v21-home-light", path: "/laboratorio-official-ui-v2-1?surface=inicio&theme=light&capture=1", userMode: "lab-light", capture: false },
 ];
 
 const viewportFilter = requestedKeys("VISUAL_AUDIT_VIEWPORTS");
@@ -234,6 +256,8 @@ function auditExpression() {
       backgroundColor: getComputedStyle(demoShell).backgroundColor,
       color: getComputedStyle(demoShell).color,
     } : null;
+    const navigation = performance.getEntriesByType("navigation")[0];
+    const firstContentfulPaint = performance.getEntriesByName("first-contentful-paint")[0];
     const rectOf = (selector) => {
       const element = document.querySelector(selector);
       if (!element) return null;
@@ -256,6 +280,14 @@ function auditExpression() {
       overflowY: Math.max(doc.scrollHeight, body.scrollHeight) - Math.max(doc.clientHeight, window.innerHeight),
       failedImages,
       demoPalette,
+      performance: {
+        cls: Number((globalThis.__pachangasVisualAuditCls || 0).toFixed(4)),
+        domContentLoadedMs: Math.round(navigation?.domContentLoadedEventEnd || 0),
+        firstContentfulPaintMs: Math.round(firstContentfulPaint?.startTime || 0),
+        loadMs: Math.round(navigation?.loadEventEnd || 0),
+        resourceCount: performance.getEntriesByType("resource").length,
+        transferBytes: Math.round(performance.getEntriesByType("resource").reduce((total, entry) => total + (entry.transferSize || 0), 0)),
+      },
       smallTargets,
       viewportViolations,
       gameChromeViolations,
@@ -335,8 +367,22 @@ async function main() {
       client.send("Runtime.enable"),
       client.send("Network.enable"),
     ]);
+    await client.send("Network.setCacheDisabled", { cacheDisabled: true });
     await client.send("Page.addScriptToEvaluateOnNewDocument", {
-      source: `try { if (new URL(location.href).searchParams.has("qaPlayer")) sessionStorage.setItem("pachangas-admin-view-preview", "player"); else sessionStorage.removeItem("pachangas-admin-view-preview"); } catch {}`,
+      source: `
+        globalThis.__pachangasVisualAuditCls = 0;
+        try {
+          new PerformanceObserver((list) => {
+            for (const entry of list.getEntries()) {
+              if (!entry.hadRecentInput) globalThis.__pachangasVisualAuditCls += entry.value;
+            }
+          }).observe({ type: "layout-shift", buffered: true });
+        } catch {}
+        try {
+          if (new URL(location.href).searchParams.has("qaPlayer")) sessionStorage.setItem("pachangas-admin-view-preview", "player");
+          else sessionStorage.removeItem("pachangas-admin-view-preview");
+        } catch {}
+      `,
     });
 
     let consoleErrors = [];

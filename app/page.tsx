@@ -5,6 +5,12 @@ import type { User } from "@supabase/supabase-js";
 import dynamic from "next/dynamic";
 import NextImage from "next/image";
 import Link from "next/link";
+import {
+  OfficialHomeGameDashboard,
+  OfficialSecondaryActions,
+  OfficialTeamAccess,
+} from "./_components/official-home-game-dashboard";
+import { OfficialMatchGameHub } from "./_components/official-match-game-hub";
 import { OfficialProductShellV2 } from "./_components/official-product-shell-v2";
 import { PlayerCosmeticCard } from "./_components/player-cosmetic-card";
 import { attachVenueAutocomplete, type VenuePlace } from "./googlePlacesClient";
@@ -34,7 +40,7 @@ import {
   type PlayerPosition as AssessmentPosition,
 } from "./laboratorio-ficha-jugador/_engine/player-rating-engine";
 import { useAdminViewPreview } from "./admin-view-preview";
-import { AdminViewPreviewButton, type MobileAppTab } from "./mobile-app-nav";
+import { type MobileAppTab } from "./mobile-app-nav";
 import {
   normalizePublicPlayerCosmeticsSnapshot,
   type PublicPlayerCosmeticsSnapshot,
@@ -3421,7 +3427,6 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
   const [marketZonePlaceMessage, setMarketZonePlaceMessage] = useState("");
   const [marketZonePlaceStatus, setMarketZonePlaceStatus] = useState<"error" | "idle" | "loading" | "missing-key" | "ready">("idle");
   const [openQuickForm, setOpenQuickForm] = useState<"venue" | "team" | null>(null);
-  const [createMenuOpen, setCreateMenuOpen] = useState(false);
   const [selectedImportCandidateKey, setSelectedImportCandidateKey] = useState<string | null>(null);
   const [showImportChoices, setShowImportChoices] = useState(false);
   const [teamGalleryOpen, setTeamGalleryOpen] = useState(false);
@@ -3501,7 +3506,6 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
   const autosaveInFlightRef = useRef(false);
   const remotePayloadRevisionRef = useRef<number | null>(null);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const createMenuRef = useRef<HTMLDivElement>(null);
   const teamAccessPanelRef = useRef<HTMLElement>(null);
   const matchPanelRef = useRef<HTMLElement>(null);
   const settingsPanelRef = useRef<HTMLElement>(null);
@@ -3611,26 +3615,6 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
       }
     };
   }, []);
-
-  useEffect(() => {
-    if (!createMenuOpen) return;
-
-    function closeCreateMenu(event: PointerEvent) {
-      if (createMenuRef.current?.contains(event.target as Node)) return;
-      setCreateMenuOpen(false);
-    }
-
-    function closeCreateMenuWithKeyboard(event: KeyboardEvent) {
-      if (event.key === "Escape") setCreateMenuOpen(false);
-    }
-
-    document.addEventListener("pointerdown", closeCreateMenu);
-    document.addEventListener("keydown", closeCreateMenuWithKeyboard);
-    return () => {
-      document.removeEventListener("pointerdown", closeCreateMenu);
-      document.removeEventListener("keydown", closeCreateMenuWithKeyboard);
-    };
-  }, [createMenuOpen]);
 
   useEffect(() => {
     if (openQuickForm !== "venue") return;
@@ -4923,7 +4907,6 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
   }
 
   function navigatePrimaryMobile(tabId: MobileAppTab) {
-    setCreateMenuOpen(false);
     setMobileAccountOpen(false);
     lockMobileNavigationTab(tabId);
     setActiveMobileTab(tabId);
@@ -4965,7 +4948,6 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
   }
 
   function openMarketConfiguration() {
-    setCreateMenuOpen(false);
     setMobileAccountOpen(false);
     lockMobileNavigationTab("mercado");
     setActiveMobileTab("mercado");
@@ -5111,11 +5093,6 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
       setBillingMessage(error instanceof Error ? error.message : "No se pudo abrir el portal.");
       setBillingLoading(false);
     }
-  }
-
-  function runCreateAction(action: () => void) {
-    setCreateMenuOpen(false);
-    action();
   }
 
   function selectMatch(matchId: string) {
@@ -6006,7 +5983,6 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
 
   function toggleAdminPlayerView() {
     if (!previewRequested) {
-      setCreateMenuOpen(false);
       setOpenQuickForm(null);
       setRewardBoxDemoOpen(false);
       setShowBillingPanel(false);
@@ -7458,7 +7434,6 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
     setTeamGalleryOpen(false);
     teamGalleryReturnScrollYRef.current = null;
     setOpenQuickForm(null);
-    setCreateMenuOpen(false);
     setSelectedImportCandidateKey(null);
     setShowImportChoices(false);
     setShowSettings(false);
@@ -8404,6 +8379,80 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
     "--team-b-muted": `color-mix(in srgb, ${siteSettings.teamBColor} 38%, white)`,
   } as CSSProperties;
   const currentTeamName = currentTeam?.name ?? displayName(siteSettings.brand) ?? "Pachangas IQ";
+  const homeNextMatch = openMatches[0];
+  const homeDraftMatch = matches.find((match) => !match.configured && !match.closed && match.scoreA === undefined);
+  const homeObjectPlayer = ownPlayer ?? activeGroupPlayers[0];
+  const homeNextMatchOwnStatus = homeNextMatch && ownPlayer
+    ? homeNextMatch.players.find((entry) => entry.playerId === ownPlayer.id)?.status
+    : undefined;
+  const homeNextAction = homeNextMatch
+    ? canUseAdminControls && homeNextMatch.lineupClosed
+      ? {
+          detail: `${matchDayLabel(homeNextMatch.date)} · ${matchTimeLabel(homeNextMatch.date)}`,
+          eyebrow: "Resultado pendiente",
+          label: "Introducir resultado",
+          onClick: () => openMatchFromInicio(homeNextMatch.id, "resultado"),
+        }
+      : canUseAdminControls
+        ? {
+            detail: `${orderedGoingPlayers(homeNextMatch).slice(0, homeNextMatch.targetPlayers).length} confirmados · ${matchKinds[homeNextMatch.kind ?? "futbol7"].label}`,
+            eyebrow: "Siguiente tarea",
+            label: "Preparar alineación",
+            onClick: () => openMatchFromInicio(homeNextMatch.id, "alineacion"),
+          }
+        : homeNextMatchOwnStatus !== "voy" && ownPlayer
+          ? {
+              detail: `${matchDayLabel(homeNextMatch.date)} · ${matchTimeLabel(homeNextMatch.date)}`,
+              eyebrow: "Tu asistencia",
+              label: "Confirmar asistencia",
+              onClick: () => openMatchFromInicio(homeNextMatch.id, "proximo"),
+            }
+          : {
+              detail: `${matchDayLabel(homeNextMatch.date)} · ${matchTimeLabel(homeNextMatch.date)}`,
+              eyebrow: "Próximo partido",
+              label: "Ver próximo partido",
+              onClick: () => openMatchFromInicio(homeNextMatch.id, "proximo"),
+            }
+    : homeDraftMatch && canUseAdminControls
+      ? {
+          detail: "Completa campo, fecha, modalidad y plazas.",
+          eyebrow: "Borrador pendiente",
+          label: "Continuar partido",
+          onClick: () => openMatchFromInicio(homeDraftMatch.id, "admin"),
+        }
+      : canUseAdminControls
+        ? {
+            detail: "Programa el siguiente encuentro del equipo.",
+            eyebrow: "Sin partido",
+            label: "Crear partido",
+            onClick: createMatch,
+          }
+        : {
+            detail: "Explora partidos abiertos y equipos de tu zona.",
+            eyebrow: "Sin partido",
+            href: "/mercado",
+            label: "Buscar partido",
+          };
+  const homeUpcomingMatches = openMatches.slice(0, 8).map((match) => {
+    const confirmed = orderedGoingPlayers(match).slice(0, match.targetPlayers).length;
+    const places = Math.max(match.targetPlayers - confirmed, 0);
+    return {
+      context: matchKinds[match.kind ?? "futbol7"].label,
+      date: `${matchDayLabel(match.date)} · ${matchTimeLabel(match.date)}`,
+      id: match.id,
+      meta: `${confirmed}/${match.targetPlayers} confirmados · ${places} plaza${places === 1 ? "" : "s"}`,
+      onOpen: () => openMatchFromInicio(match.id, "proximo"),
+      title: matchTitleWithoutTrailingTime(match.title) || match.place || "Próximo partido",
+    };
+  });
+  const homeActivity = closedMatches.slice(0, 8).map((match) => ({
+    detail: `${matchSummaryDate(match.date)} · ${match.place || "Campo sin nombre"}`,
+    id: `result-${match.id}`,
+    label: "Resultado",
+    onOpen: () => openMatchFromInicio(match.id, "resultado"),
+    title: `${match.scoreA ?? "-"} - ${match.scoreB ?? "-"} · ${matchTitleWithoutTrailingTime(match.title) || matchKinds[match.kind ?? "futbol7"].label}`,
+    tone: "accent" as const,
+  }));
   const statusConfirmationPlayer = statusConfirmation ? players.find((player) => player.id === statusConfirmation.playerId) : undefined;
   const statusConfirmationPlayerName = statusConfirmationPlayer ? playerDisplayName(statusConfirmationPlayer) : "este jugador";
   const statusConfirmationTargetLabel = statusConfirmation?.nextStatus === "duda" ? "Duda" : "No voy";
@@ -9039,100 +9088,99 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
       onNavigate={navigatePrimaryMobile}
     >
     <main className="min-h-screen bg-[#f7f6f0] text-[#1d2521] official-ui-v2-product" data-mobile-tab={activeMobileTab} style={teamColorStyle}>
-      <section className={isDemoMode ? "hero demo-hero" : "hero team-hero"} id="inicio">
-        <div>
-          {isDemoMode ? (
-            <>
-              <div className="brand-lockup" aria-label={siteSettings.brand}>
-                <img className="brand-hero-logo" src="/brand/pachangas-logo-hero.png" alt={siteSettings.brand} />
-              </div>
-              <h1>{siteSettings.title}</h1>
-            </>
-          ) : (
-            <div className="team-brand-block" aria-label={`Equipo ${currentTeamName}`}>
-              <img className="team-hero-logo" src="/brand/pachangas-logo-hero.png" alt="Pachangas IQ" />
-              <span>Equipo: {currentTeamName}</span>
-            </div>
-          )}
-          <p className="hero-copy">{siteSettings.subtitle}</p>
-        </div>
-        <div className="hero-action-stack">
-          {isRegisteredUser || !needsLoginForSharedLink ? (
-            <div className="hero-account-row">
-              {isRegisteredUser ? (
-                <GoogleSignInButton className="google-signout-button" label="Cerrar sesión" onClick={() => void signOut()} />
-              ) : (
-                <GoogleSignInButton label={googleButtonText} onClick={() => void signInWithGoogle()} disabled={!supabase || !googleClientId} />
-              )}
-            </div>
-          ) : null}
-          <div className="hero-actions">
-            {canPreviewPlayerView ? (
-              <AdminViewPreviewButton
-                active={playerPreviewActive}
-                className="admin-view-preview-desktop secondary-button"
-                onToggle={toggleAdminPlayerView}
-              />
-            ) : null}
-            <a className="manual-link-button" href="/manual" title="Manual de usuario" aria-label="Abrir manual de usuario">
-              <svg aria-hidden="true" viewBox="0 0 24 24">
-                <path d="M6 3h10.5A2.5 2.5 0 0 1 19 5.5V21l-3-1.8L13 21l-3-1.8L7 21l-3-1.8V5A2 2 0 0 1 6 3Zm0 2v12.6l1 .6 3-1.8 3 1.8 3-1.8 1 .6V5.5a.5.5 0 0 0-.5-.5H6Zm2 3h7v2H8V8Zm0 4h7v2H8v-2Z" />
-              </svg>
-            </a>
-            <button
-              className="secondary-button personal-action-button"
-              type="button"
-              onClick={() => void openOwnPlayerProfile()}
-              disabled={!hasRealTeam || !isRegisteredUser || needsLoginForSharedLink}
-            >
-              Mi ficha
-            </button>
-            <button className="secondary-button" type="button" onClick={openTeamGallery} disabled={needsLoginForSharedLink}>
-              Mi equipo
-            </button>
-            {hasRealTeam && isRegisteredUser ? (
-              <a className="secondary-button" href={`/equipo/identidad${remoteGroupId ? `?grupo=${remoteGroupId}` : ""}`}>
-                Identidad
-              </a>
-            ) : null}
-            <Link className="secondary-button market-link-button" href="/mercado">
-              Mercado
-            </Link>
-            <div className="create-menu desktop-create-menu" ref={createMenuRef}>
-              <button
-                className="primary-button create-menu-button"
-                type="button"
-                aria-expanded={createMenuOpen}
-                aria-haspopup="menu"
-                onClick={() => setCreateMenuOpen((open) => !open)}
+      {activeMobileTab === "inicio" ? (
+        <section id="inicio" ref={teamAccessPanelRef}>
+          <OfficialHomeGameDashboard
+            access={showGroupAccessPanel ? (
+              <OfficialTeamAccess
+                selector={(
+                  <label className="official-home-team-selector">
+                    <span>Equipo activo</span>
+                    <select value={previewDemoMode ? demoTeamOptionId : remoteGroupId ?? ""} onChange={(event) => selectTeam(event.target.value)}>
+                      <option value="" disabled>Elige grupo o demo</option>
+                      <option value={demoTeamOptionId}>Mundo Demo</option>
+                      {remoteTeams.map((team) => <option key={team.id} value={team.id}>{groupOptionLabel(team)}</option>)}
+                    </select>
+                  </label>
+                )}
               >
-                Crear <span aria-hidden="true">⌄</span>
+                <dl className="official-home-team-access-details">
+                  <div><dt>Código</dt><dd>{previewDemoMode ? "DEMO" : currentTeam?.teamCode ?? "-"}</dd></div>
+                  <div><dt>Rol</dt><dd>{previewDemoMode ? "Demo" : memberRoleLabel(displayedRole)}</dd></div>
+                  <div><dt>Nivel</dt><dd>{groupLevel === null ? "-" : overallScore(groupLevel)}</dd></div>
+                  <div><dt>Plantilla</dt><dd>{activeRosterCount}</dd></div>
+                </dl>
+                {showTeamAdminPanel ? (
+                  <div className="official-home-team-access-actions">
+                    <button type="button" onClick={() => void copyTeamInvite()} disabled={!currentTeamInviteUrl()}>Copiar invitación</button>
+                    <button type="button" onClick={shareTeamInviteWhatsApp} disabled={!currentTeamInviteUrl()}>Enviar por WhatsApp</button>
+                    <button className="danger-light-button" disabled={!remoteGroupId || !canManageTeam} onClick={() => void deleteCurrentTeam()} type="button">Eliminar grupo</button>
+                  </div>
+                ) : null}
+                <small className={`sync-status sync-${syncStatus}`}>
+                  {syncStatus === "live" ? "Grupo privado sincronizado" : syncStatus === "connecting" ? "Conectando..." : syncStatus === "error" ? `Sin sync: ${syncError}` : "Copia local de lectura"}
+                </small>
+              </OfficialTeamAccess>
+            ) : undefined}
+            activity={homeActivity}
+            identity={{
+              context: siteSettings.subtitle,
+              name: currentTeamName,
+              role: memberRoleLabel(displayedRole),
+              status: previewDemoMode ? "Demo" : syncStatus === "live" ? "En directo" : syncStatus === "connecting" ? "Conectando" : syncStatus === "error" ? "Sin conexión" : "Local",
+            }}
+            metrics={[
+              { label: "Partidos", value: closedMatches.length },
+              { label: "Próximos", value: openMatches.length },
+              { label: "Plantilla", value: activeRosterCount },
+              { label: "Nivel", value: groupLevel === null ? "-" : overallScore(groupLevel) },
+            ]}
+            nextAction={homeNextAction}
+            object={homeObjectPlayer ? (
+              <button className="official-home-player-object" type="button" onClick={() => openPlayerProfile(homeObjectPlayer.id)} aria-label={`Abrir ficha de ${playerDisplayName(homeObjectPlayer)}`}>
+                <PlayerCosmeticCard
+                  className={`readonly-card ${cardTierClass(peerAverage(homeObjectPlayer))}`}
+                  facets={ratingFacets.map((facet) => ({
+                    key: facet.key,
+                    label: facet.short,
+                    value: overallScore(facetAverage(homeObjectPlayer, facet.key)),
+                  }))}
+                  meta={`${homeObjectPlayer.goals} Goles · ${homeObjectPlayer.appearances} PJ`}
+                  name={playerDisplayName(homeObjectPlayer)}
+                  photoAlt={`Foto de ${playerDisplayName(homeObjectPlayer)}`}
+                  photoSrc={homeObjectPlayer.avatar}
+                  photoStyle={avatarImageStyle(homeObjectPlayer)}
+                  position={positionShort(homeObjectPlayer)}
+                  score={overallScore(peerAverage(homeObjectPlayer))}
+                  trend={renderRatingTrendChip(homeObjectPlayer)}
+                />
               </button>
-              {createMenuOpen ? (
-                <div className="create-menu-panel" role="menu">
-                  <button type="button" role="menuitem" onClick={() => runCreateAction(createMatch)} disabled={!canUseAdminControls}>
-                    Partido
-                  </button>
-                  <button type="button" role="menuitem" onClick={() => runCreateAction(() => void openCreatePlayerProfile())} disabled={!canUseAdminControls && (!hasRealTeam || !isRegisteredUser)}>
-                    Ficha jugador
-                  </button>
-                  <button type="button" role="menuitem" onClick={() => runCreateAction(() => showQuickForm("venue"))} disabled={!canUseAdminControls}>
-                    Campo
-                  </button>
-                  <button type="button" role="menuitem" onClick={() => runCreateAction(() => showQuickForm("team"))}>
-                    Grupo de pachangas
-                  </button>
-                </div>
-              ) : null}
-            </div>
-            {canUseAdminControls ? (
-              <button className="secondary-button" onClick={toggleSettingsPanel}>
-                Configurar
-              </button>
-            ) : null}
-          </div>
-        </div>
-      </section>
+            ) : (
+              <div className="official-home-object-placeholder">
+                <NextImage src="/icon-512.png" alt="Pachangas IQ" width={180} height={180} priority />
+                <small>Crea tu ficha para completar el vestuario.</small>
+              </div>
+            )}
+            secondaryActions={(
+              <OfficialSecondaryActions>
+                {canPreviewPlayerView ? <button type="button" onClick={toggleAdminPlayerView}>{playerPreviewActive ? "Volver a vista admin" : "Ver como jugador"}</button> : null}
+                <button type="button" onClick={() => void openOwnPlayerProfile()} disabled={!hasRealTeam || !isRegisteredUser}>Mi ficha</button>
+                <button type="button" onClick={openTeamGallery}>Mi equipo</button>
+                {hasRealTeam ? <Link href={`/equipo/identidad${remoteGroupId ? `?grupo=${remoteGroupId}` : ""}`}>Identidad</Link> : null}
+                <Link href="/mercado">Mercado</Link>
+                {canUseAdminControls ? <button type="button" onClick={createMatch}>Crear partido</button> : null}
+                {canUseAdminControls ? <button type="button" onClick={() => void openCreatePlayerProfile()}>Crear ficha</button> : null}
+                {canUseAdminControls ? <button type="button" onClick={() => showQuickForm("venue")}>Crear campo</button> : null}
+                <button type="button" onClick={() => showQuickForm("team")}>Crear grupo</button>
+                {canUseAdminControls ? <button type="button" onClick={toggleSettingsPanel}>Configurar</button> : null}
+                <Link href="/manual">Manual</Link>
+                {isRegisteredUser ? <button type="button" onClick={() => void signOut()}>Cerrar sesión</button> : null}
+              </OfficialSecondaryActions>
+            )}
+            upcoming={homeUpcomingMatches}
+          />
+        </section>
+      ) : null}
 
       {openQuickForm === "venue" ? (
         <form className="top-panel quick-create-form top-venue-form" ref={venueFormRef} onSubmit={addVenue}>
@@ -9184,66 +9232,6 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
       ) : null}
 
       {renderTopTeamForm()}
-
-      {showGroupAccessPanel ? (
-        <section className="top-panel team-access-panel" ref={teamAccessPanelRef}>
-          <div className="team-access-current">
-            <span>Grupo de Pachangas</span>
-            {remoteTeams.length > 0 || previewDemoMode || isRegisteredUser ? (
-              <select value={previewDemoMode ? demoTeamOptionId : remoteGroupId ?? ""} onChange={(event) => selectTeam(event.target.value)}>
-                <option value="" disabled>Elige grupo o demo</option>
-                <option value={demoTeamOptionId}>Mundo Demo</option>
-                {remoteTeams.map((team) => (
-                  <option key={team.id} value={team.id}>{groupOptionLabel(team)}</option>
-                ))}
-              </select>
-            ) : (
-              <strong>Sin grupo todavía</strong>
-            )}
-          </div>
-          <div className="team-access-meta">
-            <span>ID grupo</span>
-            <strong>{previewDemoMode ? "DEMO" : currentTeam?.teamCode ?? "-"}</strong>
-          </div>
-          <div className="team-access-meta team-access-role">
-            <span>Rol</span>
-            <strong>{previewDemoMode ? (playerPreviewActive ? "Jugador (vista)" : "Demo") : memberRoleLabel(displayedRole)}</strong>
-          </div>
-          <div className="team-access-meta team-access-level">
-            <span>Nivel del equipo</span>
-            <strong>{groupLevel === null ? "-" : overallScore(groupLevel)}</strong>
-            {groupLevel !== null ? <small>{activeRosterCount} jugador{activeRosterCount === 1 ? "" : "es"} activos</small> : null}
-          </div>
-          {showTeamAdminPanel ? (
-            <>
-              <div className="team-invite-link">
-                <span>Invitar al grupo</span>
-                <div className="team-invite-actions">
-                  <button className="copy-icon-button" type="button" onClick={() => void copyTeamInvite()} disabled={!currentTeamInviteUrl()} title="Copiar invitación" aria-label="Copiar invitación">
-                    <CopyLogo />
-                  </button>
-                  <button className="whatsapp-icon-button" type="button" onClick={shareTeamInviteWhatsApp} disabled={!currentTeamInviteUrl()} title="Enviar por WhatsApp" aria-label="Enviar por WhatsApp">
-                    <WhatsAppLogo />
-                  </button>
-                </div>
-              </div>
-              <button
-                className="trash-icon-button team-delete-button"
-                disabled={!remoteGroupId || !canManageTeam}
-                onClick={() => void deleteCurrentTeam()}
-                title="Eliminar grupo"
-                type="button"
-                aria-label="Eliminar grupo"
-              >
-                <TrashLogo />
-              </button>
-            </>
-          ) : null}
-          <small className={`sync-status sync-${syncStatus}`}>
-            {previewDemoMode ? "Demo local: no modifica tu grupo real" : syncStatus === "live" ? "Grupo privado sincronizado" : syncStatus === "connecting" ? "Conectando..." : syncStatus === "error" ? `Sin sync: ${syncError}` : "Crea un grupo o entra con invitación"}
-          </small>
-        </section>
-      ) : null}
 
       {needsLoginForSharedLink ? (
         <section className="top-panel shared-link-gate">
@@ -9799,60 +9787,50 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
         </section>
       ) : null}
 
-      <section className={sharedLinkContentBlocked ? "app-shell gated-shell" : "app-shell"} data-match-manager-pane={selectedMatchManagerPane}>
-        <nav className="match-manager-subnav" aria-label="Secciones del partido en modo juego">
-          {matchManagerPanes.map((pane) => (
-            <button
-              aria-current={selectedMatchManagerPane === pane ? "page" : undefined}
-              className={selectedMatchManagerPane === pane ? "active" : ""}
-              key={pane}
-              onClick={() => setActiveMatchManagerPane(pane)}
-              type="button"
-            >
-              <span>{matchManagerPaneLabel(pane)}</span>
-            </button>
-          ))}
-          {selectedMatchManagerPane === "alineacion" && !matchFinalized ? (
+      <section
+        className={sharedLinkContentBlocked ? "app-shell gated-shell" : "app-shell"}
+        data-match-manager-pane={selectedMatchManagerPane}
+        data-official-match-hub="v2.1"
+      >
+        <OfficialMatchGameHub
+          activePane={selectedMatchManagerPane}
+          context={{
+            date: matchSummaryDate(activeMatch.date),
+            finalized: matchFinalized,
+            kind: matchKinds[activeKind].label,
+            label: matchContextKind,
+            place: activeMatch.place,
+            status: canToggleLineupFromContext ? (
+              <button
+                aria-label={lineupClosed ? "Abrir alineación" : "Cerrar alineación"}
+                aria-pressed={lineupClosed}
+                className="match-context-status-button"
+                onClick={() => void toggleLineupClosed()}
+                type="button"
+              >
+                {matchContextStatus}
+              </button>
+            ) : <b>{matchContextStatus}</b>,
+            title: activeMatch.title || matchKinds[activeKind].label,
+          }}
+          onSelectPane={(pane) => setActiveMatchManagerPane(pane as MatchManagerPane)}
+          panes={matchManagerPanes.map((pane) => ({ id: pane, label: matchManagerPaneLabel(pane) }))}
+          tools={selectedMatchManagerPane === "alineacion" && !matchFinalized ? (
             <div className="lineup-side-tools" aria-label="Herramientas de alineación">
               <span className="lineup-side-tools-kicker">Herramientas</span>
               <div className="lineup-side-actions">
                 <button type="button" onClick={applyRandomTeams} disabled={!canEditLineup}>Aleatorio</button>
                 <button type="button" onClick={applyBalancedTeams} disabled={!canEditLineup}>Equilibrado</button>
-                {canUseAdminControls && matchConfigured && !matchFinalized ? (
-                  <button type="button" onClick={() => void toggleLineupClosed()}>
-                    {lineupClosed ? "Abrir" : "Cerrar"}
-                  </button>
+                {canUseAdminControls && matchConfigured ? (
+                  <button type="button" onClick={() => void toggleLineupClosed()}>{lineupClosed ? "Abrir" : "Cerrar"}</button>
                 ) : null}
               </div>
             </div>
-          ) : null}
-          {selectedMatchManagerPane === "proximo" && matchMemberShareBox ? (
-            <div className="match-side-share" aria-label="Compartir partido">
-              {matchMemberShareBox}
-            </div>
-          ) : null}
-        </nav>
-        <div className={matchFinalized ? "match-active-context finalized" : "match-active-context"} aria-label="Partido activo">
-          <span>{matchContextKind}</span>
-          <span className="match-active-kind">{matchKinds[activeKind].label}</span>
-          <div>
-            <strong>{activeMatch.title || matchKinds[activeKind].label}</strong>
-            <small>{matchSummaryDate(activeMatch.date)} · {activeMatch.place}</small>
-          </div>
-          {canToggleLineupFromContext ? (
-            <button
-              aria-label={lineupClosed ? "Abrir alineación" : "Cerrar alineación"}
-              aria-pressed={lineupClosed}
-              className="match-context-status-button"
-              onClick={() => void toggleLineupClosed()}
-              type="button"
-            >
-              {matchContextStatus}
-            </button>
-          ) : (
-            <b>{matchContextStatus}</b>
-          )}
-        </div>
+          ) : undefined}
+          share={selectedMatchManagerPane === "proximo" && matchMemberShareBox ? (
+            <div className="match-side-share" aria-label="Compartir partido">{matchMemberShareBox}</div>
+          ) : undefined}
+        />
         <aside className="panel match-list" aria-label="Partidos">
           <div className="panel-title">
             <span>Próximos partidos</span>

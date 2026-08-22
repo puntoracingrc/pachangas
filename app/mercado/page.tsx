@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { OfficialMarketGameView, type OfficialMarketTab } from "../_components/official-market-game-view";
 import { OfficialProductShellV2 } from "../_components/official-product-shell-v2";
 import { attachVenueAutocomplete, type VenuePlace } from "../googlePlacesClient";
 import { useAdminViewPreview } from "../admin-view-preview";
@@ -1144,6 +1145,32 @@ export default function MarketPage() {
     setInviteMessage("Solicitud cancelada. El admin ha recibido el cambio.");
   }
 
+  const marketGameTabs: OfficialMarketTab[] = [
+    { id: "jugadores", label: "Jugadores", onSelect: () => selectMarketTab("jugadores") },
+    { id: "partidos", label: "Partidos", onSelect: () => selectMarketTab("partidos") },
+    {
+      id: "retos",
+      label: "Retos",
+      onSelect: () => {
+        setPreparedRival(null);
+        selectMarketTab("retos");
+      },
+    },
+    { id: "equipos", label: "Equipos", onSelect: () => selectMarketTab("equipos") },
+    ...(refereeMarketplaceEnabled
+      ? [{ id: "arbitros", label: "Árbitros", onSelect: () => selectMarketTab("arbitros") }]
+      : []),
+  ];
+  const marketViewTitle = activeTab === "jugadores"
+    ? "Jugadores disponibles"
+    : activeTab === "partidos"
+      ? "Partidos abiertos"
+      : activeTab === "retos"
+        ? "Retos privados"
+        : activeTab === "arbitros"
+          ? "Árbitros"
+          : "Equipos retables";
+
   return (
     <OfficialProductShellV2
       active="mercado"
@@ -1167,40 +1194,9 @@ export default function MarketPage() {
       }}
     >
     <main className="market-page official-ui-v2-market" data-mobile-tab="mercado">
-      <nav className="market-manager-subnav" aria-label="Secciones del mercado en modo juego">
-        <button className={activeTab === "jugadores" ? "active" : ""} type="button" onClick={() => selectMarketTab("jugadores")}>
-          Jugadores
-        </button>
-        <button className={activeTab === "partidos" ? "active" : ""} type="button" onClick={() => selectMarketTab("partidos")}>
-          Partidos
-        </button>
-        <button
-          className={activeTab === "retos" ? "active" : ""}
-          type="button"
-          onClick={() => {
-            setPreparedRival(null);
-            selectMarketTab("retos");
-          }}
-        >
-          Retos
-        </button>
-        <button className={activeTab === "equipos" ? "active" : ""} type="button" onClick={() => selectMarketTab("equipos")}>
-          Equipos
-        </button>
-        {refereeMarketplaceEnabled ? <button className={activeTab === "arbitros" ? "active" : ""} type="button" onClick={() => selectMarketTab("arbitros")}>
-          Árbitros
-        </button> : null}
-        {canUseMarketAdminControls && marketContext?.matchUrl ? (
-          <Link className="market-manager-admin-link" href={marketAdminMatchUrl(marketContext.matchUrl)}>
-            Configurar partido
-          </Link>
-        ) : null}
-      </nav>
-
-      <div className="market-manager-content">
-        <header className="market-titlebar">
-          <h1>Mercado</h1>
-          <div className="market-titlebar-actions">
+      <OfficialMarketGameView
+        actions={(
+          <>
             {canInvite ? (
               <AdminViewPreviewButton
                 active={playerPreviewActive}
@@ -1209,20 +1205,18 @@ export default function MarketPage() {
               />
             ) : null}
             <Link className="manual-back-button" href="/">Volver</Link>
-          </div>
-        </header>
-
-      {activeTab === "jugadores" && marketContext ? (
-        <section className="market-panel market-context-panel market-context-summary" aria-label="Partido usado para buscar jugadores">
-          <strong>Filtrado por próximo partido:</strong>
-          <span>
-            {marketContext.missing || "0"} plaza{marketContext.missing === "1" ? "" : "s"} libre{marketContext.missing === "1" ? "" : "s"}.
-          </span>
-        </section>
-      ) : null}
-
-      {activeTab === "jugadores" || activeTab === "partidos" ? (
-        <section className="market-panel market-filters" aria-label="Filtros del mercado">
+          </>
+        )}
+        activeTab={activeTab}
+        adminHref={canUseMarketAdminControls && marketContext?.matchUrl ? marketAdminMatchUrl(marketContext.matchUrl) : undefined}
+        context={activeTab === "jugadores" && marketContext ? (
+          <section className="market-panel market-context-panel market-context-summary" aria-label="Partido usado para buscar jugadores">
+            <strong>Filtrado por próximo partido:</strong>
+            <span>{marketContext.missing || "0"} plaza{marketContext.missing === "1" ? "" : "s"} libre{marketContext.missing === "1" ? "" : "s"}.</span>
+          </section>
+        ) : undefined}
+        filters={activeTab === "jugadores" || activeTab === "partidos" ? (
+          <section className="market-panel market-filters" aria-label="Filtros del mercado">
           <label>
             Zona
             <input
@@ -1261,33 +1255,11 @@ export default function MarketPage() {
               ))}
             </select>
           </label>
-        </section>
-      ) : null}
-
-      <div className="market-tabs" aria-label="Tipo de mercado">
-        <button className={activeTab === "jugadores" ? "selected" : ""} type="button" onClick={() => selectMarketTab("jugadores")}>
-          Jugadores disponibles
-        </button>
-        <button className={activeTab === "partidos" ? "selected" : ""} type="button" onClick={() => selectMarketTab("partidos")}>
-          Partidos abiertos
-        </button>
-        <button
-          className={activeTab === "retos" ? "selected" : ""}
-          type="button"
-          onClick={() => {
-            setPreparedRival(null);
-            selectMarketTab("retos");
-          }}
-        >
-          Retos privados
-        </button>
-        <button className={activeTab === "equipos" ? "selected" : ""} type="button" onClick={() => selectMarketTab("equipos")}>
-          Equipos retables
-        </button>
-        {refereeMarketplaceEnabled ? <button className={activeTab === "arbitros" ? "selected" : ""} type="button" onClick={() => selectMarketTab("arbitros")}>
-          Árbitros
-        </button> : null}
-      </div>
+          </section>
+        ) : undefined}
+        tabs={marketGameTabs}
+        title={marketViewTitle}
+      >
 
       {activeTab === "arbitros" && refereeMarketplaceEnabled ? (
         <RefereeMarketplacePanel
@@ -1422,7 +1394,7 @@ export default function MarketPage() {
           }}
         />
       )}
-      </div>
+      </OfficialMarketGameView>
     </main>
     </OfficialProductShellV2>
   );

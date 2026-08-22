@@ -107,6 +107,23 @@
   background: rgb(21 31 29 / 88%);
 }
 
+.layout > .ownPanel {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: minmax(190px, 0.55fr) minmax(0, 1.45fr);
+  align-items: stretch;
+  border-left: 4px solid #72d9a7;
+  padding: 0;
+}
+
+.layout > .ownPanel > header {
+  min-height: 96px;
+  align-items: start;
+  align-content: center;
+  border-right: 1px solid rgb(255 255 255 / 9%);
+  border-bottom: 0;
+}
+
 .rankingPanel > header,
 .ownPanel > header {
   display: flex;
@@ -204,6 +221,18 @@
 .ownPanel p,
 .ownPanel small { display: block; margin: 7px 16px 0; color: #9aaba4; font-size: 0.74rem; }
 .ownPanel small { color: #e0bc6b; }
+.ownSummary {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(170px, 0.45fr) minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  padding-right: 16px;
+}
+.ownSummary .ownScore { min-width: 0; padding-block: 10px; }
+.ownSummary h2 { margin: 0; }
+.ownSummary p,
+.ownSummary small { margin-left: 0; }
 
 .formulaPanel { padding: 16px; }
 .formulaPanel dl { display: grid; gap: 7px; margin: 14px 0; }
@@ -220,7 +249,10 @@
   .statusbar div:nth-child(2) { grid-column: 1 / -1; grid-row: 2; }
   .statusbar small { display: none; }
   .layout { grid-template-columns: 1fr; }
-  .side { grid-row: 1; grid-template-columns: 1fr; }
+  .layout > .ownPanel { grid-column: 1; grid-template-columns: 1fr; }
+  .layout > .ownPanel > header { min-height: 48px; border-right: 0; border-bottom: 1px solid rgb(255 255 255 / 9%); }
+  .ownSummary { grid-template-columns: 112px minmax(0, 1fr); padding-right: 10px; }
+  .side { grid-template-columns: 1fr; }
   .formulaPanel { display: none; }
   .list { max-height: none; }
   .list li { grid-template-columns: 28px minmax(0, 1fr) 46px; min-height: 54px; padding-inline: 6px; }
@@ -232,7 +264,16 @@
   .topbar { min-height: 42px; }
   .statusbar { min-height: 42px; grid-template-columns: 1fr 1.5fr auto; padding-block: 5px; }
   .statusbar div:nth-child(3), .statusbar small { display: none; }
-  .layout { height: calc(100% - 54px); grid-template-columns: minmax(0, 1fr) 250px; margin-top: 8px; }
+  .layout { height: calc(100% - 54px); grid-template-columns: minmax(0, 1fr) 250px; grid-template-rows: 66px minmax(0, 1fr); margin-top: 8px; }
+  .layout > .ownPanel { min-height: 0; grid-template-columns: 150px minmax(0, 1fr); overflow: hidden; }
+  .layout > .ownPanel > header { min-height: 0; padding-block: 4px; }
+  .ownSummary { grid-template-columns: 120px minmax(0, 1fr); }
+  .ownSummary .ownScore { padding: 3px 9px; }
+  .ownScore strong { font-size: 1.35rem; }
+  .ownScore output { font-size: 1rem; }
+  .ownSummary h2 { font-size: 0.72rem; }
+  .ownSummary p,
+  .ownSummary small { margin-top: 2px; font-size: 0.55rem; }
   .rankingPanel, .side { min-height: 0; }
   .rankingPanel > header { min-height: 44px; padding-block: 6px; }
   .list { max-height: calc(100dvh - 150px); padding-bottom: 28px; }

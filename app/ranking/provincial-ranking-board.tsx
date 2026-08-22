@@ -25,6 +25,21 @@ export function ProvincialRankingBoard({
 
   return (
     <div className={styles.layout} data-embedded={embedded || undefined}>
+      <section className={styles.ownPanel} data-own-ranking="first">
+        <header><span>Mi posición</span><b data-state={ownRank?.eligibilityState}>{provincialRankingStatusText(ownRank?.eligibilityState)}</b></header>
+        {ownRank?.available ? <div className={styles.ownSummary}>
+          <div className={styles.ownScore}>
+            <strong>{ownRank.position ? `#${ownRank.position}` : "--"}</strong>
+            <output>{ownRank.score ?? 0}</output>
+          </div>
+          <div>
+            <h2>{ownRank.displayName}</h2>
+            <p>{ownRank.validChallenges} retos válidos · {ownRank.logicalOpponents} rivales</p>
+            {ownMessage && <small>{ownMessage}</small>}
+          </div>
+        </div> : <div className={styles.ownEmpty}>{ownMessage ?? "Inicia sesión para consultar tu posición."}</div>}
+      </section>
+
       <section className={styles.rankingPanel} aria-busy={loading}>
         <header>
           <div><span>Clasificación oficial</span><h2>Top {ranking?.territory?.provinceName ?? "provincial"}</h2></div>
@@ -52,19 +67,6 @@ export function ProvincialRankingBoard({
       </section>
 
       <aside className={styles.side}>
-        <section className={styles.ownPanel}>
-          <header><span>Mi posición</span><b data-state={ownRank?.eligibilityState}>{provincialRankingStatusText(ownRank?.eligibilityState)}</b></header>
-          {ownRank?.available ? <>
-            <div className={styles.ownScore}>
-              <strong>{ownRank.position ? `#${ownRank.position}` : "--"}</strong>
-              <output>{ownRank.score ?? 0}</output>
-            </div>
-            <h2>{ownRank.displayName}</h2>
-            <p>{ownRank.validChallenges} retos válidos · {ownRank.logicalOpponents} rivales</p>
-            {ownMessage && <small>{ownMessage}</small>}
-          </> : <div className={styles.ownEmpty}>{ownMessage ?? "Inicia sesión para consultar tu posición."}</div>}
-        </section>
-
         <section className={styles.formulaPanel}>
           <span>Season Score V3</span>
           <h2>Una puntuación, tres señales</h2>

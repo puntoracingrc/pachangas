@@ -127,13 +127,16 @@ test("builds the user manual as its own page", async () => {
 });
 
 test("builds the transfer market as a separated page", async () => {
-  const [html, source, page, css] = await Promise.all([
+  const [html, source, page, css, marketView, marketViewCss] = await Promise.all([
     readFile(new URL("../.next/server/app/mercado.html", import.meta.url), "utf8"),
     readFile(new URL("../app/mercado/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
+    readFile(new URL("../app/_components/official-market-game-view.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/_components/official-market-game-view.module.css", import.meta.url), "utf8"),
   ]);
-  assert.match(html, /<h1>Mercado<\/h1>/);
+  assert.match(html, /<span>Mercado<\/span><h1>Jugadores disponibles<\/h1>/);
+  assert.match(html, /data-official-market-navigation="single"/);
   assert.match(html, /Filtros del mercado/);
   assert.doesNotMatch(html, /Jugadores disponibles por zona y horario/);
   assert.doesNotMatch(html, /Un escaparate separado del grupo privado/);
@@ -142,23 +145,25 @@ test("builds the transfer market as a separated page", async () => {
   assert.match(html, /Modalidad/);
   assert.match(html, /Posición/);
   assert.match(html, /Jugadores disponibles/);
-  assert.match(html, /Partidos abiertos/);
-  assert.match(html, /Retos privados/);
-  assert.match(html, /Equipos retables/);
+  assert.match(source, /Partidos abiertos/);
+  assert.match(source, /Retos privados/);
+  assert.match(source, /Equipos retables/);
   assert.match(html, /38 años/);
   assert.match(html, /Solo admins invitan/);
   assert.match(html, /Invitado puntual/);
   assert.doesNotMatch(html, /\/brand\/pachangas-logo-wide\.png/);
-  assert.match(source, /className="market-manager-subnav"/);
+  assert.match(marketView, /data-official-market-navigation="single"/);
   assert.match(source, /Jugadores/);
   assert.match(source, /Partidos/);
   assert.match(source, /Retos/);
   assert.match(source, /Equipos/);
   assert.match(source, /canUseMarketAdminControls && marketContext\?\.matchUrl/);
-  assert.match(source, /Configurar partido/);
+  assert.match(marketView, /Configurar partido/);
   assert.match(source, /marketAdminMatchUrl\(marketContext\.matchUrl\)/);
   assert.match(source, /mobile=partido&pane=admin/);
-  assert.match(source, /<h1>Mercado<\/h1>[\s\S]*className="manual-back-button"[\s\S]*Volver/);
+  assert.match(marketView, /className=\{styles\.titlebar\}/);
+  assert.match(source, /title=\{marketViewTitle\}/);
+  assert.match(source, /className="manual-back-button"[\s\S]*Volver/);
   assert.match(source, /activeTab === "jugadores" && marketContext/);
   assert.match(source, /Filtrado por próximo partido:/);
   assert.match(source, /function selectMarketTab\(nextTab: MarketTab\)/);
@@ -170,13 +175,12 @@ test("builds the transfer market as a separated page", async () => {
   assert.match(source, /<main className="market-page official-ui-v2-market" data-mobile-tab="mercado">/);
   assert.match(page, /links=\{\{[\s\S]*mercado: canUseAdminControls && matchConfigured \? marketScoutUrl\("jugadores"\) : "\/mercado"/);
   assert.doesNotMatch(page, /window\.location\.assign\(canUseAdminControls && matchConfigured \? marketScoutUrl/);
-  assert.match(css, /\.market-page \.market-manager-subnav/);
-  assert.match(css, /grid-template-columns: var\(--game-side-nav-width\) minmax\(0, 1fr\)/);
-  assert.match(css, /\.market-page \.market-tabs\s*\{\s*display: none/);
-  assert.match(css, /\.market-page \.market-context-summary\s*\{[\s\S]*min-height:\s*40px/);
-  assert.match(css, /\.market-page \.market-context-summary strong,[\s\S]*font-size:\s*12px[\s\S]*white-space:\s*nowrap/);
-  assert.match(css, /linear-gradient\(135deg, #071923 0%, #145038 48%, #202847 100%\)/);
-  assert.match(css, /\.market-page \.market-titlebar,[\s\S]*rgba\(16, 29, 24, 0\.8\)/);
+  assert.match(marketViewCss, /grid-template-columns: 176px minmax\(0, 1fr\)/);
+  assert.match(marketViewCss, /max-width: 760px[\s\S]*orientation: portrait/);
+  assert.match(marketViewCss, /orientation: landscape[\s\S]*max-height: 600px/);
+  assert.match(marketViewCss, /\.results \{ min-height: 0; overflow: auto/);
+  assert.match(marketViewCss, /background: var\(--official-canvas/);
+  assert.match(marketViewCss, /backdrop-filter: blur\(18px\)/);
   assert.match(css, /\.market-page \.market-open-match,[\s\S]*rgba\(16, 29, 24, 0\.8\)/);
   assert.match(source, /className="open-match-heading"/);
   assert.match(source, /className="open-match-facts"/);
@@ -249,6 +253,7 @@ test("keeps the project wired to the Pachangas app", async () => {
     envExample,
     googlePlacesClient,
     marketPage,
+    matchGameHub,
     weatherRoute,
     manifest,
     pwaRuntime,
@@ -280,6 +285,7 @@ test("keeps the project wired to the Pachangas app", async () => {
     readFile(new URL("../.env.example", import.meta.url), "utf8"),
     readFile(new URL("../app/googlePlacesClient.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/mercado/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/_components/official-match-game-hub.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/api/weather/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/manifest.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/pwa-runtime.tsx", import.meta.url), "utf8"),
@@ -311,21 +317,21 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /gated-shell/);
   assert.doesNotMatch(page, /match-focus-card/);
   assert.doesNotMatch(page, /Resumen del partido/);
-  assert.match(page, /create-menu/);
-  assert.match(page, /create-menu-panel/);
-  assert.match(page, /createMenuRef/);
-  assert.match(page, /document\.addEventListener\("pointerdown", closeCreateMenu\)/);
-  assert.match(page, /document\.addEventListener\("keydown", closeCreateMenuWithKeyboard\)/);
-  assert.match(page, /event\.key === "Escape"/);
-  assert.match(page, /aria-haspopup="menu"/);
-  assert.match(page, /personal-action-button/);
+  assert.match(page, /OfficialSecondaryActions/);
+  assert.match(page, /Crear partido/);
+  assert.match(page, /Crear ficha/);
+  assert.match(page, /Crear campo/);
+  assert.doesNotMatch(page, /create-menu-panel/);
+  assert.doesNotMatch(page, /createMenuRef/);
+  assert.match(page, /<OfficialHomeGameDashboard/);
+  assert.match(page, /nextAction=\{homeNextAction\}/);
   assert.match(page, /Mi ficha/);
   assert.match(page, /Mi equipo/);
   assert.match(page, /openGroupSwitcher/);
   assert.match(page, /teamAccessPanelRef/);
   assert.match(page, /team-move-label/);
   assert.match(page, /Equipo 2/);
-  assert.match(page, /Ficha jugador/);
+  assert.match(page, /Ficha de jugador/);
   assert.match(page, /Grupo de pachangas/);
   assert.match(page, /mobile-account-sheet/);
   assert.match(page, /Perfil y ajustes/);
@@ -346,11 +352,11 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /matchManagerPaneLabels/);
   assert.match(page, /activeMatchManagerPane/);
   assert.match(page, /data-match-manager-pane=\{selectedMatchManagerPane\}/);
-  assert.match(page, /className="match-manager-subnav"/);
+  assert.match(matchGameHub, /data-official-match-navigation="single"/);
   assert.match(page, /const matchManagerPaneLabel = \(pane: MatchManagerPane\) => \(pane === "proximo" && matchFinalized \? "Histórico" : matchManagerPaneLabels\[pane\]\)/);
-  assert.match(page, /className=\{matchFinalized \? "match-active-context finalized" : "match-active-context"\}/);
-  assert.match(page, /<span>\{matchContextKind\}<\/span>/);
-  assert.match(page, /className="match-active-kind">\{matchKinds\[activeKind\]\.label\}/);
+  assert.match(matchGameHub, /data-official-match-context="persistent"/);
+  assert.match(matchGameHub, /<span>\{context\.label\}<\/span>/);
+  assert.match(matchGameHub, /className=\{styles\.kind\}>\{context\.kind\}/);
   assert.match(page, /const canToggleLineupFromContext = canUseAdminControls && matchConfigured && registrationOpen && !matchFinalized/);
   assert.match(page, /canToggleLineupFromContext \? \(/);
   assert.match(page, /className="match-context-status-button"/);
@@ -362,7 +368,8 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /historicalPlayerSnapshot\(player, activeMatch, matches\)/);
   assert.match(page, /selectedMatchManagerPane === "alineacion" && !matchFinalized/);
   assert.match(page, /setActiveMatchManagerPane\(pane\)/);
-  assert.match(page, /<span>\{matchManagerPaneLabel\(pane\)\}<\/span>/);
+  assert.match(page, /panes=\{matchManagerPanes\.map\(\(pane\) => \(\{ id: pane, label: matchManagerPaneLabel\(pane\) \}\)\)\}/);
+  assert.match(matchGameHub, /<span>\{pane\.label\}<\/span>/);
   assert.match(page, /className="lineup-side-tools"/);
   assert.match(page, /Herramientas/);
   assert.doesNotMatch(page, /className="lineup-side-balance"/);
@@ -423,10 +430,10 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /Este test crea tu ficha real y solo se puede completar una vez por usuario/);
   assert.match(page, /Mejorar precisión de mi ficha/);
   assert.match(page, /openCreatePlayerProfile/);
-  assert.match(page, /runCreateAction\(\(\) => void openCreatePlayerProfile\(\)\)/);
+  assert.match(page, /<OfficialSecondaryActions>[\s\S]*onClick=\{\(\) => void openCreatePlayerProfile\(\)\}>Crear ficha<\/button>/);
   assert.match(page, /showQuickForm\("venue"\)/);
   assert.match(page, /showQuickForm\("team"\)/);
-  assert.match(page, /runCreateAction\(createMatch\)/);
+  assert.match(page, /<OfficialSecondaryActions>[\s\S]*onClick=\{createMatch\}>Crear partido<\/button>/);
   assert.match(page, /attachVenueAutocomplete/);
   assert.match(page, /NEXT_PUBLIC_GOOGLE_MAPS_API_KEY/);
   assert.match(page, /selectedVenuePlace/);
@@ -505,7 +512,7 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(globalsCss, /\.saved-venues-panel/);
   assert.match(globalsCss, /\.saved-venue-list/);
   assert.match(globalsCss, /\.quick-create-form/);
-  assert.ok(page.indexOf("top-panel quick-create-form top-venue-form") < page.indexOf("team-access-panel"));
+  assert.match(page, /access=\{showGroupAccessPanel \? \([\s\S]*<OfficialTeamAccess/);
   assert.match(globalsCss, /\.create-menu-panel/);
   assert.doesNotMatch(globalsCss, /\.top-player-form/);
   assert.match(page, /OfficialProductShellV2/);
@@ -814,7 +821,7 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(globalsCss, /\.status-confirm-backdrop/);
   assert.match(globalsCss, /\.status-confirm-dialog/);
   assert.match(globalsCss, /overflow-x:\s*hidden/);
-  assert.match(page, /Grupo de Pachangas/);
+  assert.match(page, /<span>Equipo activo<\/span>/);
   assert.match(page, /groupOptionLabel/);
   assert.match(page, /compactUuid/);
   assert.match(page, /expandCompactUuid/);
@@ -854,7 +861,7 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /Mundo Demo V1/);
   assert.match(page, /Probar Mundo Demo/);
   assert.match(page, /href="\/demo"/);
-  assert.match(page, /Demo local: no modifica tu grupo real/);
+  assert.match(page, /previewOnly: previewDemoMode/);
   assert.doesNotMatch(page, /Lo que ves son datos de ejemplo/);
   assert.doesNotMatch(page, /Crear mi grupo limpio/);
   assert.doesNotMatch(page, /Salir de la demo y empezar desde cero/);
@@ -1091,8 +1098,8 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(globalsCss, /background:\s*#64748b/);
   assert.match(globalsCss, /font-size:\s*9px/);
   assert.match(globalsCss, /min-height:\s*16px/);
-  assert.match(page, /team-hero-logo/);
-  assert.match(page, /Equipo: \{currentTeamName\}/);
+  assert.match(page, /identity=\{\{[\s\S]*name: currentTeamName/);
+  assert.match(page, /context: siteSettings\.subtitle/);
   assert.match(page, /Instrucciones/);
   assert.match(page, /Copias de seguridad/);
   assert.match(page, /create_pachanga_group_backup/);
@@ -1318,7 +1325,7 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /Solicitudes del mercado/);
   assert.match(page, /Aceptar/);
   assert.match(page, /Rechazar/);
-  assert.match(page, /Nivel del equipo/);
+  assert.match(page, /\{ label: "Nivel", value: groupLevel === null \? "-" : overallScore\(groupLevel\) \}/);
   assert.match(page, /teamLevelScore/);
   assert.match(page, /Pago por persona/);
   assert.match(page, /type MatchWeather/);

@@ -12,7 +12,7 @@ test("Mercado keeps R3 authority inside the Official UI V2 shell", async () => {
   assert.match(market, /active="mercado"/);
   assert.match(market, /MarketTab[^;]+"arbitros"/s);
   assert.match(market, /get_pachanga_referee_foundation_flags_v1/);
-  assert.match(market, /refereeMarketplaceEnabled \? <button[^>]+activeTab === "arbitros"/s);
+  assert.match(market, /refereeMarketplaceEnabled[\s\S]*\? \[\{ id: "arbitros", label: "Árbitros", onSelect: \(\) => selectMarketTab\("arbitros"\) \}\]/);
   assert.match(market, /activeTab === "arbitros" && refereeMarketplaceEnabled \? \(/);
   assert.match(market, /<RefereeMarketplacePanel/);
   assert.match(market, /String\(membership\?\.data\?\.role\) === "owner"/);
