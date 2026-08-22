@@ -31,7 +31,7 @@ La aprobacion visual no equivale a una prueba fisica:
 | Hotfix reproducible | [#160](https://github.com/puntoracingrc/pachangas/pull/160) |
 | HEAD del hotfix | `4f136e73aa70acade923ed0e9f8e95b96feb7635` |
 | Merge SHA tras hotfix | `a3a820f653f649afd4575f62cf80811879626870` |
-| PR documental | Se completara antes de fusionar este informe |
+| PR documental | [#161](https://github.com/puntoracingrc/pachangas/pull/161) |
 
 El unico ajuste posterior a la aprobacion fue un defecto objetivo de contraste:
 tres valores de acceso al grupo se renderizaban con texto casi blanco sobre
