@@ -1,0 +1,31 @@
+.reviewPage, .surfacePage { width: min(1380px, 100%); min-height: 100%; margin-inline: auto; padding: 0 max(16px, env(safe-area-inset-right)) max(32px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); }
+.reviewGrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; padding-top: 12px; }
+.reviewGrid a { min-height: 112px; display: grid; align-content: center; gap: 5px; border: 1px solid var(--official-line, rgba(217, 234, 225, .16)); border-left: 3px solid var(--official-cyan, #51cfdf); border-radius: 8px; background: var(--official-surface, rgba(18, 29, 26, .9)); padding: 12px; color: var(--official-text, #f1f6f2); text-decoration: none; }
+.reviewGrid span { font-weight: 900; }
+.reviewGrid small { color: var(--official-muted, #a9bbb2); }
+.reviewMetrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; margin-top: 10px; }
+.surfacePage { height: 100%; display: grid; grid-template-rows: auto minmax(0, 1fr); gap: 7px; padding-top: 7px; }
+.labNav { min-height: 36px; display: flex; align-items: center; justify-content: space-between; gap: 8px; border-bottom: 1px solid var(--official-line, rgba(217, 234, 225, .16)); }
+.labNav a { color: var(--official-accent-text, #c8ef5d); font-size: 11px; font-weight: 850; text-decoration: none; }
+.labNav strong { font-size: 12px; }
+.adminControls { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.adminControls section { min-width: 0; border: 1px solid rgba(21, 37, 31, .14); border-radius: 6px; padding: 10px; }
+.adminControls p { color: var(--admin-muted, #9fb0aa); font-size: 12px; }
+.adminControls button { min-height: 38px; border: 1px solid #31443b; border-radius: 5px; background: #173c2d; padding: 0 10px; color: #fff; font-weight: 800; }
+
+@media (max-width: 760px) and (orientation: portrait) {
+  .reviewGrid { grid-template-columns: minmax(0, 1fr); }
+  .reviewMetrics, .adminControls { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (orientation: landscape) and (max-height: 600px) {
+  .reviewPage, .surfacePage { height: 100%; min-height: 0; overflow: auto; padding: 4px max(7px, env(safe-area-inset-right)) max(6px, env(safe-area-inset-bottom)) max(7px, env(safe-area-inset-left)); }
+  .reviewPage > header { display: none; }
+  .reviewGrid { grid-template-columns: repeat(4, minmax(120px, 1fr)); gap: 5px; padding-top: 0; }
+  .reviewGrid a { min-height: 76px; padding: 7px; font-size: 10px; }
+  .reviewGrid small { font-size: 7px; }
+  .reviewMetrics { margin-top: 5px; }
+  .labNav { display: none; }
+  .surfacePage { display: block; overflow: hidden; }
+  .surfacePage > section { height: 100%; }
+}

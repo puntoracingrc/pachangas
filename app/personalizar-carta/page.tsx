@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { OfficialProductShellV2 } from "../_components/official-product-shell-v2";
 import {
   CosmeticCategoryTabs,
   CosmeticEditorShell,
@@ -329,7 +330,16 @@ export default function PlayerCosmeticsPage() {
             : null;
 
   return (
-    <main className={styles.page}>
+    <OfficialProductShellV2
+      active="perfil"
+      context={{
+        detail: dirty ? "Cambios sin guardar" : `${snapshot?.owned.length ?? 0} piezas`,
+        eyebrow: "Mi ficha",
+        status: snapshot ? `Revisión ${snapshot.revision}` : "Sincronizando",
+        title: "Personalizar carta",
+      }}
+    >
+    <main className={styles.page} data-official-surface="player-card">
       <nav className={styles.topbar}>
         <Link href="/?mobile=perfil">Volver</Link>
         <strong>Mi ficha</strong>
@@ -424,5 +434,6 @@ export default function PlayerCosmeticsPage() {
         <ProductFeedback tone={message.includes("confirmada") ? "success" : "error"}>{message}</ProductFeedback>
       ) : null}
     </main>
+    </OfficialProductShellV2>
   );
 }

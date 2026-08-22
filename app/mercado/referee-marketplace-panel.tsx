@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import { RefereeProfileCard } from "../_components/referee-profile-card";
+import { ProductFeedback, ResponsiveActionBar, SectionHeader, StatusChip } from "../_components/official-ui-v2-primitives";
 import { clientWriteFetch } from "../pwa-client-bridge";
 import {
   refereeArray,
@@ -55,28 +56,32 @@ function queryFromForm(form: HTMLFormElement) {
 export function RefereeMarketplacePanel({
   canPropose,
   context,
+  previewItems,
 }: {
   canPropose: boolean;
   context: RefereeMatchContext | null;
+  previewItems?: RefereeJson[];
 }) {
   const [accessToken, setAccessToken] = useState("");
-  const [items, setItems] = useState<RefereeJson[]>([]);
+  const [items, setItems] = useState<RefereeJson[]>(previewItems ?? []);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(18);
-  const [total, setTotal] = useState(0);
+  const [total, setTotal] = useState(previewItems?.length ?? 0);
   const [query, setQuery] = useState(() => new URLSearchParams({ page: "1", pageSize: "18" }));
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!previewItems);
   const [message, setMessage] = useState("");
   const [pendingProfile, setPendingProfile] = useState("");
+  const [selectedProfileId, setSelectedProfileId] = useState(() => refereeText(previewItems?.[0]?.refereeProfileId));
 
   useEffect(() => {
+    if (previewItems) return;
     let active = true;
     void supabase?.auth.getSession().then(({ data }) => {
       if (!active) return;
       setAccessToken(data.session?.access_token ?? "");
     });
     return () => { active = false; };
-  }, []);
+  }, [previewItems]);
 
   const load = useCallback(async (nextQuery: URLSearchParams, token: string) => {
     if (!token) {
@@ -107,9 +112,10 @@ export function RefereeMarketplacePanel({
   }, []);
 
   useEffect(() => {
+    if (previewItems) return;
     const timer = window.setTimeout(() => void load(query, accessToken), 0);
     return () => window.clearTimeout(timer);
-  }, [accessToken, load, query]);
+  }, [accessToken, load, previewItems, query]);
 
   function submitFilters(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -160,10 +166,13 @@ export function RefereeMarketplacePanel({
   }
 
   const lastPage = useMemo(() => Math.max(1, Math.ceil(total / pageSize)), [pageSize, total]);
+  const selectedProfile = items.find((item) => refereeText(item.refereeProfileId) === selectedProfileId) ?? items[0] ?? null;
+  const resolvedSelectedProfileId = refereeText(selectedProfile?.refereeProfileId);
 
   return (
-    <section className={styles.surface} aria-label="Mercado de árbitros">
-      <form className={styles.filters} onSubmit={submitFilters}>
+    <section className={styles.surface} aria-label="Mercado de árbitros" data-referee-market-v2="true">
+      <form className={styles.filters} onSubmit={submitFilters} aria-label="Filtros de árbitros">
+        <SectionHeader eyebrow="Mercado" title="Filtros" />
         <label>Zona<input name="zone" placeholder="Barcelona, Vallès..." /></label>
         <label>Provincia<input name="province" placeholder="Barcelona" /></label>
         <label>Municipio<input name="municipality" placeholder="Sabadell" /></label>
@@ -178,31 +187,44 @@ export function RefereeMarketplacePanel({
         <button type="submit">Aplicar filtros</button>
       </form>
 
-      {context ? <p className={styles.context}>Propuesta para <strong>{context.title}</strong>. Solo el owner del equipo puede enviarla.</p> : null}
-      {message ? <p className={styles.message} role="status">{message}</p> : null}
-      {loading ? <p className={styles.empty}>Consultando el estado canónico...</p> : null}
-      {!loading && !items.length ? <p className={styles.empty}>No hay árbitros que encajen con estos filtros.</p> : null}
+      <div className={styles.resultsPane}>
+        <SectionHeader eyebrow={`${total} resultado${total === 1 ? "" : "s"}`} title="Árbitros disponibles" />
+        {context ? <ProductFeedback tone="info">Propuesta para <strong>{context.title}</strong>. Solo el owner del equipo puede enviarla.</ProductFeedback> : null}
+        {message ? <ProductFeedback tone={/confirmada/i.test(message) ? "success" : /no |error/i.test(message) ? "danger" : "warning"}>{message}</ProductFeedback> : null}
+        {loading ? <p className={styles.empty}>Consultando el estado canónico...</p> : null}
+        {!loading && !items.length ? <p className={styles.empty}>No hay árbitros que encajen con estos filtros.</p> : null}
 
-      <div className={styles.grid}>
-        {items.map((profile) => {
-          const profileId = refereeText(profile.refereeProfileId);
-          return <article className={styles.result} key={profileId || refereeText(profile.slug)}>
-            <RefereeProfileCard compact profile={profile} />
-            <div className={styles.actions}>
-              <Link href={`/arbitros/${refereeText(profile.slug)}`}>Ver ficha</Link>
-              <button type="button" disabled={!canPropose || !context || pendingProfile === profileId} onClick={() => void propose(profile)}>
-                {pendingProfile === profileId ? "Enviando..." : context ? "Proponer arbitraje" : "Abre un partido para proponer"}
+        <div className={styles.grid} role="group" aria-label="Resultados del mercado arbitral">
+          {items.map((profile) => {
+            const profileId = refereeText(profile.refereeProfileId);
+            const selected = resolvedSelectedProfileId === profileId;
+            return <article className={styles.result} data-selected={selected || undefined} key={profileId || refereeText(profile.slug)}>
+              <button aria-pressed={selected} className={styles.selector} type="button" onClick={() => setSelectedProfileId(profileId)}>
+                <span>{refereeText(profile.displayName) || "Árbitro"}</span>
+                <small>{refereeText(profile.availabilityStatus).replaceAll("_", " ") || "Sin disponibilidad"}</small>
+                <StatusChip tone={refereeText(profile.verificationStatus) === "verified" ? "success" : "neutral"}>{refereeText(profile.verificationStatus) === "verified" ? "Verificado" : "Perfil"}</StatusChip>
               </button>
-            </div>
-          </article>;
-        })}
+              <div className={styles.cardResult}><RefereeProfileCard compact profile={profile} />
+                <ResponsiveActionBar className={styles.actions}>
+                  <Link href={`/arbitros/${refereeText(profile.slug)}`}>Ver ficha</Link>
+                  <button type="button" disabled={!canPropose || !context || pendingProfile === profileId} onClick={() => void propose(profile)}>{pendingProfile === profileId ? "Enviando..." : context ? "Proponer arbitraje" : "Abre un partido para proponer"}</button>
+                </ResponsiveActionBar>
+              </div>
+            </article>;
+          })}
+        </div>
+
+        {total > pageSize ? <nav className={styles.pagination} aria-label="Páginas de árbitros">
+          <button type="button" disabled={page <= 1} onClick={() => movePage(page - 1)}>Anterior</button>
+          <span>{page} de {lastPage} · {total} árbitros</span>
+          <button type="button" disabled={page >= lastPage} onClick={() => movePage(page + 1)}>Siguiente</button>
+        </nav> : null}
       </div>
 
-      {total > pageSize ? <nav className={styles.pagination} aria-label="Páginas de árbitros">
-        <button type="button" disabled={page <= 1} onClick={() => movePage(page - 1)}>Anterior</button>
-        <span>{page} de {lastPage} · {total} árbitros</span>
-        <button type="button" disabled={page >= lastPage} onClick={() => movePage(page + 1)}>Siguiente</button>
-      </nav> : null}
+      <aside className={styles.detailPane} aria-label="Detalle y propuesta">
+        <SectionHeader eyebrow="Selección" title={selectedProfile ? refereeText(selectedProfile.displayName) || "Árbitro" : "Sin selección"} />
+        {selectedProfile ? <><RefereeProfileCard adaptive compact profile={selectedProfile} /><ResponsiveActionBar className={styles.detailActions}><Link href={`/arbitros/${refereeText(selectedProfile.slug)}`}>Ver ficha</Link><button type="button" disabled={!canPropose || !context || pendingProfile === refereeText(selectedProfile.refereeProfileId)} onClick={() => void propose(selectedProfile)}>{pendingProfile === refereeText(selectedProfile.refereeProfileId) ? "Enviando..." : "Proponer"}</button></ResponsiveActionBar></> : <p className={styles.empty}>Selecciona un árbitro.</p>}
+      </aside>
     </section>
   );
 }

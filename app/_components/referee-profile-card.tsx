@@ -10,7 +10,7 @@ import {
 } from "../referee-platform-contract";
 import styles from "./referee-profile-card.module.css";
 
-export function RefereeProfileCard({ compact = false, profile }: { compact?: boolean; profile: RefereeJson }) {
+export function RefereeProfileCard({ adaptive = false, compact = false, profile }: { adaptive?: boolean; compact?: boolean; profile: RefereeJson }) {
   const modalities = refereeArray(profile.modalities);
   const areas = refereeArray(profile.areas);
   const clubs = refereeArray(profile.clubs);
@@ -20,7 +20,7 @@ export function RefereeProfileCard({ compact = false, profile }: { compact?: boo
   const avatar = refereeText(profile.avatar);
 
   return (
-    <article className={styles.card} data-compact={compact || undefined} aria-label={`Ficha arbitral de ${name}`}>
+    <article className={styles.card} data-adaptive={adaptive || undefined} data-compact={compact || undefined} aria-label={`Ficha arbitral de ${name}`}>
       <header className={styles.header}>
         <span>Árbitro</span>
         <strong data-verified={refereeText(profile.verificationStatus) === "verified" || undefined}>

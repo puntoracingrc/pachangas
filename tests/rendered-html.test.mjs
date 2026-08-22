@@ -166,7 +166,8 @@ test("builds the transfer market as a separated page", async () => {
   assert.match(source, /setDayFilter\("Todos"\)[\s\S]*setModalityFilter\("Todas"\)[\s\S]*setZoneFilter\(""\)/);
   assert.match(page, /requestedMatchPane === "admin"/);
   assert.match(page, /setActiveMatchManagerPane\("admin"\)/);
-  assert.match(source, /<main className="market-page" data-mobile-tab="mercado">/);
+  assert.match(source, /<OfficialProductShellV2/);
+  assert.match(source, /<main className="market-page official-ui-v2-market" data-mobile-tab="mercado">/);
   assert.match(page, /links=\{\{[\s\S]*mercado: canUseAdminControls && matchConfigured \? marketScoutUrl\("jugadores"\) : "\/mercado"/);
   assert.doesNotMatch(page, /window\.location\.assign\(canUseAdminControls && matchConfigured \? marketScoutUrl/);
   assert.match(css, /\.market-page \.market-manager-subnav/);
@@ -507,7 +508,7 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.ok(page.indexOf("top-panel quick-create-form top-venue-form") < page.indexOf("team-access-panel"));
   assert.match(globalsCss, /\.create-menu-panel/);
   assert.doesNotMatch(globalsCss, /\.top-player-form/);
-  assert.match(page, /MobileAppNav/);
+  assert.match(page, /OfficialProductShellV2/);
   assert.match(page, /mobileNavigationTabs/);
   assert.match(page, /activeMobileTab/);
   assert.match(page, /navigateMobileTab/);

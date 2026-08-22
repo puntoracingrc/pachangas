@@ -38,7 +38,7 @@ export function PublicClubProfile({ slug }: { slug: string }) {
   return (
     <main className={styles.page}>
       <header className={styles.header}>
-        <Link href="/" aria-label="Pachangas IQ"><Image src="/icon-monochrome.svg" alt="" width={42} height={42} /></Link>
+        <Link href="/" aria-label="Pachangas IQ"><Image src="/icon-192.png" alt="" width={42} height={42} unoptimized /></Link>
         <span>Club verificado por Pachangas IQ</span>
       </header>
       <section className={styles.identity}>

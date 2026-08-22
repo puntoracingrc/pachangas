@@ -3,6 +3,7 @@
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { OfficialProductShellV2 } from "../../_components/official-product-shell-v2";
 import {
   CosmeticCategoryNav,
   CosmeticEditorShell,
@@ -823,7 +824,16 @@ export default function TeamIdentityPage() {
             : null;
 
   return (
-    <main className={styles.page}>
+    <OfficialProductShellV2
+      active="equipo"
+      context={{
+        detail: memberships.find((membership) => membership.groupId === selectedGroupId)?.role ?? "Equipo",
+        eyebrow: "Identidad y progresión",
+        status: crest ? `Revisión ${crest.revision}` : "Sincronizando",
+        title: crest?.group.name ?? "Pachangas IQ",
+      }}
+    >
+    <main className={styles.page} data-official-surface="team-identity">
       <nav className={styles.topbar}>
         <Link href="/">Inicio</Link>
         <strong>Identidad del equipo</strong>
@@ -1156,5 +1166,6 @@ export default function TeamIdentityPage() {
         </div>
       ) : null}
     </main>
+    </OfficialProductShellV2>
   );
 }

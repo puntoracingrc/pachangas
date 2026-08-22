@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { OFFICIAL_UI_V2_VERSION } from "../../_design-v2/official-ui-v2-contract";
 import {
   hasPlatformCapability,
   platformNavigation,
@@ -60,7 +61,11 @@ export function PlatformShell({
   }, [access, query]);
 
   return (
-    <div className={styles.adminRoot}>
+    <div
+      className={styles.adminRoot}
+      data-official-ui-version={OFFICIAL_UI_V2_VERSION}
+      data-shell-variant="PLATFORM_ADMIN"
+    >
       <header className={styles.mobileBar}>
         <button
           className={styles.iconButton}
@@ -78,7 +83,7 @@ export function PlatformShell({
       {menuOpen ? <button className={styles.drawerBackdrop} type="button" aria-label="Cerrar menú" onClick={() => setMenuOpen(false)} /> : null}
       <aside className={`${styles.sidebar} ${menuOpen ? styles.sidebarOpen : ""}`}>
         <div className={styles.brand}>
-          <Image src="/icon-monochrome.svg" alt="" width={38} height={38} priority />
+          <Image src="/icon-192.png" alt="" width={38} height={38} priority unoptimized />
           <div>
             <strong>Pachangas IQ</strong>
             <span>Control Center</span>
