@@ -180,3 +180,31 @@ Inventario previo al commit: 95 rutas, incluidas 69 capturas PNG y 3 contact she
 - Merge realizado: **NO**.
 - QA física Android: `PHYSICAL_QA_PENDING`.
 - QA física iPhone: `PHYSICAL_QA_PENDING`.
+
+## Integration Gate R3
+
+El 22 de agosto de 2026 Official UI V2 se apiló sobre Referee Platform V1
+(`PR #157`, HEAD `557423b4b9ed6e0eac65bc5184d520f26c83610e`) sin modificar sus
+migraciones, RPC, RLS, receipts, eventos ni fórmulas. El commit funcional de
+adaptación es `e53f7cb53a82e632124ead595ed7ed927df82f04`.
+
+Se incorporaron al contrato visual:
+
+- Mercado → Árbitros con gate, owner-only proposal y composición de tres
+  paneles en Mobile Game Landscape;
+- perfil arbitral privado y público con `RefereeProfileCard`, sin reutilizar la
+  carta Rating;
+- estados de propuesta y confirmación, mensajes de horario y contexto canónico
+  del partido;
+- Control Center de árbitros en variante `PLATFORM_ADMIN`;
+- laboratorio noindex con fixtures exclusivamente visuales.
+
+La matriz añadida cubre 60 combinaciones de superficie/viewport y conserva el
+estado al girar sin remount ni nuevas peticiones. El E2E autenticado de staging
+pasó con dos dispositivos, Realtime y lifecycle completo; el cierre dejó los
+seis flags OFF y cero entidades R3 activas. Véase
+`REFEREE_PLATFORM_OFFICIAL_UI_V2_INTEGRATION_REPORT.md` y la evidencia bajo
+`docs/referee-platform-official-ui-v2/`.
+
+La integración continúa en draft y con QA física Android/iPhone pendiente. No
+se ha fusionado ni desplegado a producción.

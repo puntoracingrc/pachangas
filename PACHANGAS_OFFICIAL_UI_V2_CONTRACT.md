@@ -199,3 +199,29 @@ Esta capa no puede modificar fórmulas, tablas, RPC, migraciones ni contratos de
 - El giro conserva el estado.
 - Demo World y el laboratorio no escriben en producción.
 - `MOBILE_GAME_LANDSCAPE` parece un HUD de fútbol, no desktop reducido.
+
+## Extensión Referee Platform R3
+
+Referee Platform usa el mismo shell y tokens, pero conserva una identidad de
+producto propia:
+
+- `RefereeProfileCard` es el único protagonista arbitral; nunca se sustituye
+  por una carta de jugador sin GRL.
+- La ficha arbitral no muestra GRL, facetas, estrellas ni ranking arbitral.
+- Mercado → Árbitros solo existe si el flag canónico está activo; con el flag
+  OFF no monta el panel ni lanza su lectura.
+- Proponer un árbitro continúa limitado por la autoridad owner que resuelve R3.
+- Mobile Game Landscape usa filtros, lista y detalle/acción como paneles
+  independientes; portrait y desktop cambian composición, no lógica.
+- El giro preserva filtros, selección, borradores y paneles abiertos sin
+  repetir requests o comandos.
+- `MATCH_SCHEDULE_CHANGED` y conflictos horarios se traducen a feedback de
+  producto sin alterar el resultado canónico.
+- Las estadísticas disciplinarias permanecen `NOT_AVAILABLE` hasta que exista
+  la autoridad futura correspondiente.
+- `/admin/referees` utiliza `PLATFORM_ADMIN`, no el HUD del usuario.
+- `/laboratorio-referee-platform` es noindex,nofollow, visual-only y no puede
+  abrir Auth, Supabase, Realtime ni escrituras.
+
+Official UI V2 presenta snapshots R3 confirmados; PostgreSQL/RPC sigue siendo
+la única autoridad sobre perfil, relaciones, asignaciones y estadísticas.
