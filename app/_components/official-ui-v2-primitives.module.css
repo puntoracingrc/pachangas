@@ -10,6 +10,10 @@
 .statusChip[data-tone="info"] { border-color: rgba(81,207,223,.42); color: #51cfdf; }
 .statusChip[data-tone="warning"] { border-color: rgba(239,189,100,.44); color: #efbd64; }
 .statusChip[data-tone="danger"] { border-color: rgba(214,83,92,.5); color: #f08b92; }
+.feedback { margin: 0; border-left: 3px solid var(--official-cyan, #51cfdf); background: rgba(7,17,15,.62); padding: 9px 11px; color: var(--official-text, #f1f6f2); font-size: .72rem; line-height: 1.4; }
+.feedback[data-tone="success"] { border-left-color: var(--official-accent, #c8ef5d); }
+.feedback[data-tone="warning"] { border-left-color: #efbd64; }
+.feedback[data-tone="danger"] { border-left-color: #d6535c; }
 .metric { min-width: 0; display: grid; gap: 4px; border-left: 2px solid rgba(200,239,93,.42); background: rgba(255,255,255,.04); padding: 9px 11px; }
 .metric span { color: var(--official-muted, #a9bbb2); font-size: .63rem; font-weight: 800; text-transform: uppercase; }
 .metric strong { overflow: hidden; color: var(--official-text, #f1f6f2); font-size: 1.05rem; text-overflow: ellipsis; white-space: nowrap; }

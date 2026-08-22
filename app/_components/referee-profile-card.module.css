@@ -47,4 +47,18 @@
   .avatar { width: 88px; }
   .identity h2 { font-size: 23px; }
 }
+@media (orientation: landscape) and (max-height: 600px) {
+  .card[data-adaptive="true"] { width: min(100%, 286px); min-height: 0; height: 100%; max-height: none; padding: 10px; grid-template-rows: auto auto auto 1fr auto; gap: 8px; }
+  .card[data-adaptive="true"] .identity { grid-template-columns: 66px minmax(0, 1fr); gap: 9px; }
+  .card[data-adaptive="true"] .avatar { width: 66px; }
+  .card[data-adaptive="true"] .identity h2 { font-size: 18px; }
+  .card[data-adaptive="true"] .identity p { margin-top: 4px; font-size: 9px; }
+  .card[data-adaptive="true"] .metrics div { padding: 6px 2px; }
+  .card[data-adaptive="true"] .metrics dt { font-size: 7px; }
+  .card[data-adaptive="true"] .metrics dd { margin-top: 2px; font-size: 13px; }
+  .card[data-adaptive="true"] .tags { gap: 4px; overflow: hidden; }
+  .card[data-adaptive="true"] .tags span { padding: 3px 5px; font-size: 7px; }
+  .card[data-adaptive="true"] .bio { display: none; }
+  .card[data-adaptive="true"] footer { font-size: 7px; }
+}
 @media (prefers-reduced-motion: reduce) { .card { scroll-behavior: auto; } }

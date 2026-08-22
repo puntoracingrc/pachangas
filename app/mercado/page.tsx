@@ -1149,10 +1149,14 @@ export default function MarketPage() {
       active="mercado"
       adminViewPreview={canInvite ? { active: playerPreviewActive, onToggle: toggleAdminViewPreview } : undefined}
       context={{
-        detail: activeTab === "jugadores" && marketContext ? `${marketContext.missing || "0"} plazas libres` : activeTab,
+        detail: activeTab === "jugadores" && marketContext
+          ? `${marketContext.missing || "0"} plazas libres`
+          : activeTab === "arbitros"
+            ? marketContext ? `Propuesta para ${marketContext.title}` : "Zona · modalidad · disponibilidad"
+            : activeTab,
         eyebrow: "Mercado",
         status: supabase ? "En directo" : "Vista local",
-        title: activeTab === "jugadores" ? "Jugadores" : activeTab === "partidos" ? "Partidos abiertos" : activeTab === "retos" ? "Retos" : "Equipos",
+        title: activeTab === "jugadores" ? "Jugadores" : activeTab === "partidos" ? "Partidos abiertos" : activeTab === "retos" ? "Retos" : activeTab === "arbitros" ? "Árbitros" : "Equipos",
       }}
       links={{
         equipo: "/?mobile=equipo",

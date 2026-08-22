@@ -1,57 +1,52 @@
 .surface {
   min-width: 0;
   display: grid;
-  gap: 12px;
+  gap: 10px;
 }
 
 .filters {
   display: grid;
   grid-template-columns: repeat(6, minmax(110px, 1fr));
-  gap: 8px;
-  padding: 10px;
-  border: 1px solid rgba(186, 206, 198, 0.24);
-  border-radius: 7px;
-  background: rgba(15, 24, 21, 0.72);
+  gap: 7px;
+  border: 1px solid var(--official-line, rgba(186, 206, 198, .24));
+  border-radius: 8px;
+  background: var(--official-surface, rgba(15, 24, 21, .72));
+  padding: 9px;
 }
 
-.filters label {
-  min-width: 0;
-  display: grid;
-  gap: 4px;
-  color: #aebdb7;
-  font-size: 10px;
-  font-weight: 800;
-}
-
+.filters > header { grid-column: 1 / -1; }
+.filters label { min-width: 0; display: grid; gap: 4px; color: var(--official-muted, #aebdb7); font-size: 9px; font-weight: 800; }
 .filters input,
 .filters select,
 .filters button,
 .actions a,
 .actions button,
+.detailActions a,
+.detailActions button,
 .pagination button {
   min-height: 38px;
-  border: 1px solid rgba(174, 201, 190, 0.34);
+  border: 1px solid var(--official-line, rgba(174, 201, 190, .34));
   border-radius: 5px;
   background: #121c18;
-  color: #edf6f2;
+  color: var(--official-text, #edf6f2);
   font: inherit;
 }
+.filters input, .filters select { width: 100%; padding: 7px 8px; color-scheme: dark; }
+.filters button { align-self: end; padding: 7px 12px; border-color: var(--official-accent, #c8ef5d); background: rgba(200, 239, 93, .9); color: #17210d; font-weight: 900; }
 
-.filters input,
-.filters select { width: 100%; padding: 7px 8px; color-scheme: dark; }
-.filters button { align-self: end; padding: 7px 12px; border-color: #55b98a; background: #286f50; font-weight: 900; }
-.context, .message, .empty { margin: 0; padding: 8px 10px; border-left: 3px solid #5dc795; background: rgba(11, 18, 15, 0.54); color: #cbd8d2; font-size: 12px; }
-.message { border-left-color: #d2ab55; }
-.empty { min-height: 100px; display: grid; place-items: center; border-left: 0; color: #91a39b; }
-.grid { min-width: 0; display: grid; grid-template-columns: repeat(4, minmax(220px, 1fr)); gap: 10px; }
-.result { min-width: 0; display: grid; gap: 7px; }
-.actions { display: grid; grid-template-columns: minmax(0, 0.7fr) minmax(0, 1.3fr); gap: 6px; }
-.actions a, .actions button { display: grid; place-items: center; padding: 7px 8px; text-align: center; text-decoration: none; font-size: 11px; font-weight: 900; }
-.actions button { border-color: #55b98a; background: #286f50; }
-.actions button:disabled { border-color: #405049; background: #1b2521; color: #73837c; }
-.pagination { display: flex; align-items: center; justify-content: center; gap: 12px; color: #b8c7c1; font-size: 11px; }
+.resultsPane { min-width: 0; display: grid; align-content: start; gap: 8px; }
+.empty { min-height: 96px; display: grid; place-items: center; margin: 0; color: var(--official-muted, #91a39b); font-size: 11px; }
+.grid { min-width: 0; display: grid; grid-template-columns: repeat(4, minmax(220px, 1fr)); gap: 9px; }
+.result, .cardResult { min-width: 0; display: grid; gap: 7px; }
+.selector { display: none; }
+.actions, .detailActions { position: static !important; display: grid !important; grid-template-columns: minmax(0, .7fr) minmax(0, 1.3fr); gap: 6px; border-top: 0 !important; background: transparent !important; padding: 0 !important; }
+.actions a, .actions button, .detailActions a, .detailActions button { display: grid; place-items: center; padding: 7px 8px; text-align: center; text-decoration: none; font-size: 10px; font-weight: 900; }
+.actions button, .detailActions button { border-color: var(--official-accent, #c8ef5d); background: rgba(200, 239, 93, .88); color: #17210d; }
+.actions button:disabled, .detailActions button:disabled { border-color: #405049; background: #1b2521; color: #73837c; }
+.detailPane { display: none; }
+.pagination { display: flex; align-items: center; justify-content: center; gap: 12px; color: var(--official-muted, #b8c7c1); font-size: 11px; }
 .pagination button { min-width: 88px; padding: 6px 10px; }
-.pagination button:disabled { opacity: 0.45; }
+.pagination button:disabled { opacity: .45; }
 
 @media (max-width: 1100px) {
   .filters { grid-template-columns: repeat(4, minmax(100px, 1fr)); }
@@ -64,20 +59,47 @@
 }
 
 @media (max-width: 430px) {
-  .filters { grid-template-columns: 1fr 1fr; }
-  .grid { grid-template-columns: 1fr; overflow: visible; }
+  .grid { grid-template-columns: minmax(0, 1fr); overflow: visible; }
 }
 
-@media (orientation: landscape) and (max-height: 560px),
-  (orientation: landscape) and (pointer: coarse) and (min-width: 768px) and (max-width: 1368px) and (max-height: 1024px) {
-  .surface { gap: 7px; }
-  .filters { grid-template-columns: repeat(6, minmax(92px, 1fr)); padding: 7px; gap: 5px; }
-  .filters label { font-size: 8px; }
-  .filters input, .filters select, .filters button { min-height: 31px; padding: 4px 6px; font-size: 10px; }
-  .grid { display: flex; overflow-x: auto; overflow-y: hidden; gap: 8px; padding: 0 0 8px; scroll-snap-type: x proximity; }
-  .result { flex: 0 0 clamp(205px, 29vw, 260px); scroll-snap-align: start; }
+@media (orientation: landscape) and (max-height: 600px),
+  (orientation: landscape) and (pointer: coarse) and (min-width: 768px) and (max-width: 1368px) and (max-height: 1024px),
+  (orientation: landscape) and (any-pointer: coarse) and (min-width: 768px) and (max-width: 1368px) and (max-height: 1024px) {
+  .surface { height: 100%; min-height: 0; grid-template-columns: clamp(150px, 20vw, 205px) minmax(170px, .72fr) minmax(210px, 1fr); align-items: stretch; gap: 6px; overflow: hidden; }
+  .filters { min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr); align-content: start; gap: 4px; overflow-y: auto; padding: 6px; }
+  .filters > header { grid-column: auto; }
+  .filters label { font-size: 7px; }
+  .filters input, .filters select, .filters button { min-height: 29px; padding: 3px 5px; font-size: 9px; }
+  .resultsPane { min-height: 0; overflow-y: auto; gap: 5px; }
+  .grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 4px; overflow: visible; padding: 0; }
+  .result { display: block; }
+  .selector { width: 100%; min-height: 52px; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 2px 6px; border: 1px solid var(--official-line, rgba(174, 201, 190, .34)); border-left: 3px solid transparent; border-radius: 6px; background: rgba(18, 29, 26, .84); padding: 6px 7px; color: var(--official-text, #edf6f2); text-align: left; }
+  .selector > span { overflow: hidden; font-size: 10px; font-weight: 900; text-overflow: ellipsis; white-space: nowrap; }
+  .selector small { grid-column: 1; color: var(--official-muted, #91a39b); font-size: 7px; text-transform: uppercase; }
+  .selector > :last-child { grid-column: 2; grid-row: 1 / span 2; }
+  .result[data-selected="true"] .selector { border-left-color: var(--official-accent, #c8ef5d); background: rgba(200, 239, 93, .08); }
+  .cardResult { display: none; }
+  .detailPane { min-height: 0; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; gap: 5px; overflow: hidden; border: 1px solid var(--official-line, rgba(174, 201, 190, .24)); border-radius: 8px; background: rgba(7, 17, 15, .38); padding: 6px; }
+  .detailPane > article { min-height: 0; align-self: stretch; }
+  .detailActions { grid-template-columns: .72fr 1fr; }
+  .detailActions :is(a, button) { min-height: 31px; padding: 4px; font-size: 9px; }
+  .pagination { gap: 5px; font-size: 8px; }
+  .pagination button { min-width: 58px; min-height: 29px; padding: 3px; font-size: 8px; }
+  .empty { min-height: 60px; font-size: 9px; }
+}
+
+@media (orientation: landscape) and (max-height: 600px) and (max-width: 740px) {
+  .surface { grid-template-columns: 105px 126px minmax(150px, 1fr); gap: 4px; }
+  .filters { padding: 4px; }
+  .filters > header { display: none; }
+  .filters label { gap: 2px; font-size: 6px; }
+  .filters input, .filters select, .filters button { min-height: 27px; font-size: 8px; }
+  .resultsPane > header { min-height: 34px; }
+  .selector { min-height: 46px; padding: 4px; }
+  .selector > span { font-size: 8px; }
+  .detailPane { padding: 4px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .grid { scroll-behavior: auto; }
+  .grid, .resultsPane, .filters { scroll-behavior: auto; }
 }

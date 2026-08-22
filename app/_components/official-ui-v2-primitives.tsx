@@ -9,6 +9,10 @@ export function StatusChip({ children, tone = "neutral" }: { children: ReactNode
   return <span className={styles.statusChip} data-tone={tone}>{children}</span>;
 }
 
+export function ProductFeedback({ children, tone = "info" }: { children: ReactNode; tone?: "danger" | "info" | "success" | "warning" }) {
+  return <p className={styles.feedback} data-tone={tone} role="status">{children}</p>;
+}
+
 export function MetricTile({ label, value }: { label: string; value: ReactNode }) {
   return <div className={styles.metric}><span>{label}</span><strong>{value}</strong></div>;
 }
