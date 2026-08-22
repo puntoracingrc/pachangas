@@ -213,6 +213,7 @@ test("Official UI V2 surfaces are noindex, gated and distinguish hard constraint
   assert.match(client, /OfficialProductShellV2/);
   assert.match(client, /NO PUEDO JUGAR/);
   assert.match(client, /PREFERIRÍA JUGAR/);
+  assert.match(client, /timeZone: "Europe\/Madrid"/);
   assert.match(css, /data-kind="soft"/);
   assert.match(css, /orientation: landscape/);
   assert.match(labLayout, /follow: false, index: false/);

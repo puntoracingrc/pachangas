@@ -15,7 +15,7 @@ Estado: `READY FOR REVIEW`
 | Entorno | Node `24`, Next.js `16.2.6`, Supabase CLI `2.107.0`, PostgreSQL local y Supabase staging |
 | Staging | `iozcjirlfytryzrcmrnq` (`pwa-bridge-staging`) |
 | Produccion Supabase | `qonbngfrnrqgmxbdfbea`, no modificada |
-| Preview final | Se adjunta al PR #162 tras publicar el commit final |
+| Preview final | [Vercel Preview de la rama](https://pachangas-git-codex-leagu-ff144a-persianas-almar-web-s-projects.vercel.app), revalidada contra el HEAD final del PR #162 |
 
 El checkout principal contenia trabajo ajeno y no se utilizo para implementar R4A.
 El worktree se conserva porque el PR permanece abierto y sin fusionar.
@@ -198,6 +198,12 @@ La matriz final cubre `1440x900`, `1920x1080`, `390x844`, `360x800`,
 El ajuste visual final corrigio la quinta tarjeta fuera de pantalla en landscape
 y elevo `Abrir plantilla` a un objetivo tactil de 40 px.
 
+La primera Preview de cierre revelo una discrepancia de hidratacion: Vercel
+renderizaba las fechas en UTC y el navegador en Europe/Madrid. Se corrigio
+fijando `timeZone: "Europe/Madrid"` en el formateador compartido y se anadio una
+regresion focalizada. La Preview del HEAD final se volvio a recorrer con consola
+limpia.
+
 ## Invariantes
 
 Las migraciones y pruebas no escriben en Rating V2, facetas, evidencias de
@@ -287,7 +293,7 @@ Team Cosmetic Rewards quedan intactos.
 | 75 | Build | PASS, 40/40 |
 | 76 | Lint focalizado | PASS |
 | 77 | Visual QA | Matriz completa PASS |
-| 78 | Preview | Se verifica sobre HEAD final del PR |
+| 78 | Preview | PASS sobre HEAD final del PR, incluida regresion de hidratacion |
 | 79 | Staging limpio | Flags OFF, entidades activas 0 |
 | 80 | Produccion modificada | NO |
 | 81 | Merge | NO |
