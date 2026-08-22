@@ -276,6 +276,8 @@ test("the PWA caches Demo World navigation and immutable hashed chunks without o
   assert.match(source, /isImmutableDemoChunk/);
   assert.match(source, /url\.searchParams\.has\("h"\)/);
   assert.match(source, /request\.method !== "GET"/);
+  assert.match(source, /url\.search \? await cache\.match\(url\.pathname\)/);
+  assert.match(source, /cachedPage \|\| cachedRoute \|\| cache\.match\(APP_SHELL_URL\)/);
 });
 
 test("Demo World has no remote mutation capability and all simulated state stays in session storage", async () => {

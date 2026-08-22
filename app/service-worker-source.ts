@@ -71,7 +71,8 @@ async function networkFirstNavigation(request, preloadResponsePromise) {
     return response;
   } catch {
     const cachedPage = await cache.match(request);
-    return cachedPage || cache.match(APP_SHELL_URL);
+    const cachedRoute = url.search ? await cache.match(url.pathname) : undefined;
+    return cachedPage || cachedRoute || cache.match(APP_SHELL_URL);
   }
 }
 
