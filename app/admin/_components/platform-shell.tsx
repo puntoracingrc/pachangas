@@ -83,7 +83,7 @@ export function PlatformShell({
       {menuOpen ? <button className={styles.drawerBackdrop} type="button" aria-label="Cerrar menú" onClick={() => setMenuOpen(false)} /> : null}
       <aside className={`${styles.sidebar} ${menuOpen ? styles.sidebarOpen : ""}`}>
         <div className={styles.brand}>
-          <Image src="/icon-monochrome.svg" alt="" width={38} height={38} priority />
+          <Image src="/icon-192.png" alt="" width={38} height={38} priority unoptimized />
           <div>
             <strong>Pachangas IQ</strong>
             <span>Control Center</span>

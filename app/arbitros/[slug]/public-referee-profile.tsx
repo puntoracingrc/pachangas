@@ -44,7 +44,7 @@ export function PublicRefereeProfile({ previewProfile = null, slug }: { previewP
       <GamePageHeader actions={<Link href="/mercado?tab=arbitros">Volver a Mercado</Link>} eyebrow="Ficha pública" summary="Información arbitral publicada por su titular y confirmada por el servidor." title={refereeText(profile.displayName)} />
       <div className={styles.layout}>
         <div className={styles.cardStage}><RefereeProfileCard adaptive profile={profile} /></div>
-        <div className={styles.details}>
+        <div aria-label="Detalle del perfil arbitral" className={styles.details} role="region" tabIndex={0}>
           <section><SectionHeader eyebrow="Perfil arbitral" title={refereeText(profile.displayName)} /><p>{refereeText(profile.experienceSummary) || refereeText(profile.bio) || "Sin presentación pública."}</p><div className={styles.metrics}><MetricTile label="Partidos concluidos" value={refereeNumber(statistics.matchesCompleted)} /><MetricTile label="Modalidades" value={modalities.length} /><MetricTile label="Zonas" value={areas.length} /></div></section>
           <section><SectionHeader eyebrow="Cobertura" title="Modalidades y zonas" /><div className={styles.rows}>{modalities.map((item) => <span key={refereeText(item.modality)}>{refereeModalityLabel(item.modality)}</span>)}{areas.map((item, index) => <span key={`${refereeText(item.generalArea)}:${index}`}>{refereeText(item.generalArea) || refereeText(item.municipality)}</span>)}</div></section>
           <section className={styles.discipline}><SectionHeader eyebrow="R5 pendiente" title="Estadísticas disciplinarias" /><StatusChip tone="neutral">NOT_AVAILABLE</StatusChip><p>Disponibles cuando se active el motor de disciplina.</p></section>

@@ -74,9 +74,9 @@
 .publicState { display: grid; align-content: start; gap: 8px; }
 .state, .unavailable { max-width: 620px; margin: 20vh auto; }
 .state { color: var(--official-muted, #a8b7b0); }
-.unavailable span { color: var(--official-accent, #c8ef5d); font-size: 11px; font-weight: 800; text-transform: uppercase; }
+.unavailable span { color: var(--official-accent-text, #c8ef5d); font-size: 11px; font-weight: 800; text-transform: uppercase; }
 .unavailable h1 { margin: 8px 0 20px; }
-.unavailable a { color: var(--official-accent, #c8ef5d); font-size: 12px; font-weight: 800; }
+.unavailable a { color: var(--official-accent-text, #c8ef5d); font-size: 12px; font-weight: 800; }
 
 @media (max-width: 980px) {
   .layout { grid-template-columns: minmax(260px, 340px) minmax(0, 1fr); }

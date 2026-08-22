@@ -132,7 +132,7 @@ export function OfficialProductShellV2({
     >
       <header className={styles.desktopHeader}>
         <Link className={styles.brand} href="/" aria-label="Pachangas IQ, Inicio">
-          <Image src="/icon-monochrome.svg" alt="" width={36} height={36} />
+          <Image src="/icon-192.png" alt="" width={36} height={36} priority unoptimized />
           <span><strong>Pachangas IQ</strong><small>{context.title}</small></span>
         </Link>
         {navigationEnabled ? <nav className={styles.desktopNav} aria-label="Navegación principal">

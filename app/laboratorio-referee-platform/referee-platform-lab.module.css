@@ -6,11 +6,11 @@
 .reviewMetrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; margin-top: 10px; }
 .surfacePage { height: 100%; display: grid; grid-template-rows: auto minmax(0, 1fr); gap: 7px; padding-top: 7px; }
 .labNav { min-height: 36px; display: flex; align-items: center; justify-content: space-between; gap: 8px; border-bottom: 1px solid var(--official-line, rgba(217, 234, 225, .16)); }
-.labNav a { color: var(--official-accent, #c8ef5d); font-size: 11px; font-weight: 850; text-decoration: none; }
+.labNav a { color: var(--official-accent-text, #c8ef5d); font-size: 11px; font-weight: 850; text-decoration: none; }
 .labNav strong { font-size: 12px; }
 .adminControls { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 .adminControls section { min-width: 0; border: 1px solid rgba(21, 37, 31, .14); border-radius: 6px; padding: 10px; }
-.adminControls p { color: #57665f; font-size: 12px; }
+.adminControls p { color: var(--admin-muted, #9fb0aa); font-size: 12px; }
 .adminControls button { min-height: 38px; border: 1px solid #31443b; border-radius: 5px; background: #173c2d; padding: 0 10px; color: #fff; font-weight: 800; }
 
 @media (max-width: 760px) and (orientation: portrait) {

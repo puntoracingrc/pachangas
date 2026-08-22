@@ -7,9 +7,15 @@
   --official-text: #f1f6f2;
   --official-muted: #a9bbb2;
   --official-accent: #c8ef5d;
+  --official-accent-text: #c8ef5d;
   --official-cyan: #51cfdf;
+  --official-cyan-text: #51cfdf;
   --official-blue: #4d82d8;
   --official-danger: #d6535c;
+  --official-danger-text: #f08b92;
+  --official-success-text: #6bd6a0;
+  --official-warning-text: #efbd64;
+  --official-overlay: rgba(7, 17, 15, 0.9);
   min-width: 0;
   min-height: 100dvh;
   overflow-x: clip;
@@ -28,7 +34,7 @@
 }
 
 .shell :is(a, button, input, select, textarea):focus-visible {
-  outline: 2px solid var(--official-cyan);
+  outline: 2px solid var(--official-cyan-text);
   outline-offset: 2px;
 }
 
@@ -59,10 +65,8 @@
 .brand img {
   width: 36px;
   height: 36px;
-  border: 1px solid rgba(200, 239, 93, 0.55);
-  background: #111c17;
-  padding: 5px;
-  filter: brightness(0) invert(1);
+  border-radius: 6px;
+  object-fit: contain;
 }
 
 .brand > span {
@@ -136,7 +140,7 @@
 
 .desktopUtilities span {
   border-color: rgba(200, 239, 93, 0.34);
-  color: var(--official-accent);
+  color: var(--official-accent-text);
 }
 
 .gameFrame { min-width: 0; }
@@ -169,7 +173,7 @@
 }
 
 .contextBar span {
-  color: var(--official-cyan);
+  color: var(--official-cyan-text);
   font-size: 0.65rem;
   font-weight: 900;
   text-transform: uppercase;
@@ -189,7 +193,7 @@
 
 .contextBar > b {
   flex: 0 0 auto;
-  color: var(--official-accent);
+  color: var(--official-accent-text);
   font-size: 0.66rem;
   text-transform: uppercase;
 }
@@ -376,7 +380,7 @@
     text-decoration: none;
   }
   .gameRail nav b {
-    color: var(--official-cyan);
+    color: var(--official-cyan-text);
     font-size: 0.58rem;
   }
   .gameRail nav :is(a, button)[aria-current="page"] {
@@ -489,6 +493,12 @@
   --official-line: rgba(17, 43, 34, 0.16);
   --official-text: #10201a;
   --official-muted: #53675e;
+  --official-accent-text: #476b00;
+  --official-cyan-text: #086875;
+  --official-danger-text: #a42634;
+  --official-success-text: #19714b;
+  --official-warning-text: #8a5700;
+  --official-overlay: rgba(255, 255, 255, 0.94);
   background:
     linear-gradient(160deg, rgba(82, 142, 115, 0.12), transparent 40%),
     repeating-linear-gradient(90deg, rgba(15, 35, 28, 0.025) 0 1px, transparent 1px 48px),
@@ -502,5 +512,4 @@
   background: rgba(238, 242, 239, 0.94);
 }
 
-:global(:root[data-theme="light"]) .brand img { filter: none; }
 :global(:root[data-theme="light"]) .content :global(:is(input, select, textarea)) { background: #fff !important; }

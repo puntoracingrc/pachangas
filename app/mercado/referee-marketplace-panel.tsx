@@ -194,12 +194,12 @@ export function RefereeMarketplacePanel({
         {loading ? <p className={styles.empty}>Consultando el estado canónico...</p> : null}
         {!loading && !items.length ? <p className={styles.empty}>No hay árbitros que encajen con estos filtros.</p> : null}
 
-        <div className={styles.grid} role="listbox" aria-label="Resultados del mercado arbitral">
+        <div className={styles.grid} role="group" aria-label="Resultados del mercado arbitral">
           {items.map((profile) => {
             const profileId = refereeText(profile.refereeProfileId);
             const selected = resolvedSelectedProfileId === profileId;
             return <article className={styles.result} data-selected={selected || undefined} key={profileId || refereeText(profile.slug)}>
-              <button className={styles.selector} type="button" role="option" aria-selected={selected} onClick={() => setSelectedProfileId(profileId)}>
+              <button aria-pressed={selected} className={styles.selector} type="button" onClick={() => setSelectedProfileId(profileId)}>
                 <span>{refereeText(profile.displayName) || "Árbitro"}</span>
                 <small>{refereeText(profile.availabilityStatus).replaceAll("_", " ") || "Sin disponibilidad"}</small>
                 <StatusChip tone={refereeText(profile.verificationStatus) === "verified" ? "success" : "neutral"}>{refereeText(profile.verificationStatus) === "verified" ? "Verificado" : "Perfil"}</StatusChip>

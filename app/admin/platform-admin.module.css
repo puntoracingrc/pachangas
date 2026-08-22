@@ -45,7 +45,8 @@
 .brand img {
   width: 38px;
   height: 38px;
-  filter: brightness(0) invert(1);
+  border-radius: 6px;
+  object-fit: contain;
 }
 
 .brand div {

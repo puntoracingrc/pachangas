@@ -35,10 +35,15 @@ test("referee marketplace uses a real three-pane game-landscape composition", as
   assert.match(panel, /className={styles\.filters}/);
   assert.match(panel, /className={styles\.resultsPane}/);
   assert.match(panel, /className={styles\.detailPane}/);
+  assert.match(panel, /role="group" aria-label="Resultados del mercado arbitral"/);
+  assert.match(panel, /aria-pressed={selected}/);
+  assert.doesNotMatch(panel, /role="listbox"|role="option"/);
   assert.match(panel, /selectedProfileId/);
   assert.match(css, /grid-template-columns: clamp\(150px, 20vw, 205px\) minmax\(170px, \.72fr\) minmax\(210px, 1fr\)/);
   assert.match(css, /max-width: 740px/);
   assert.match(css, /105px 126px minmax\(150px, 1fr\)/);
+  assert.match(css, /var\(--official-surface-solid/);
+  assert.match(css, /color-scheme: inherit/);
   assert.doesNotMatch(css, /table/);
 });
 
@@ -57,7 +62,16 @@ test("private and public referee surfaces share the shell but retain the dedicat
   assert.match(privateProfile, /data-referee-section="statistics"/);
   assert.match(publicProfile, /Estadísticas disciplinarias/);
   assert.match(publicProfile, /NOT_AVAILABLE/);
+  assert.match(publicProfile, /aria-label="Detalle del perfil arbitral"[\s\S]*role="region"[\s\S]*tabIndex=\{0\}/);
   assert.doesNotMatch(publicProfile, /(?:GRL|Rating|estrellas|amarillas|rojas|azules)/i);
+});
+
+test("referee controls inherit the Official UI theme instead of forcing dark fields", async () => {
+  const css = await source("app/_components/referee-platform-client.module.css");
+  assert.match(css, /var\(--official-surface-solid/);
+  assert.match(css, /var\(--official-surface-soft/);
+  assert.match(css, /var\(--official-text/);
+  assert.match(css, /var\(--official-muted/);
 });
 
 test("assignment presentation preserves every R3 command and translates schedule conflicts", async () => {
@@ -86,16 +100,18 @@ test("rotation changes layout without remounting or duplicating the R3 functiona
 });
 
 test("the referee lab is noindex and offers isolated visual-review fixtures", async () => {
-  const [layout, page, fixtures] = await Promise.all([
+  const [layout, page, fixtures, css] = await Promise.all([
     source("app/laboratorio-referee-platform/layout.tsx"),
     source("app/laboratorio-referee-platform/page.tsx"),
     source("app/laboratorio-referee-platform/referee-platform-fixtures.ts"),
+    source("app/laboratorio-referee-platform/referee-platform-lab.module.css"),
   ]);
   assert.match(layout, /robots: \{ follow: false, index: false \}/);
   for (const surface of ["market", "private", "public", "proposed", "confirmed", "admin"]) assert.match(page, new RegExp(`"${surface}"`));
   assert.match(page, /previewItems={refereeMarketFixtures}/);
   assert.match(page, /previewData={refereePrivateFixture/);
   assert.match(page, /data-shell-variant="PLATFORM_ADMIN"|PlatformShell/);
+  assert.match(css, /adminControls p \{ color: var\(--admin-muted, #9fb0aa\)/);
   assert.doesNotMatch(fixtures, /supabase|\.rpc\(|fetch\(|localStorage|indexedDB/);
 });
 

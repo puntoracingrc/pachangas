@@ -44,9 +44,10 @@ test("keeps a semantic Demo-derived token layer", () => {
 });
 
 test("the shell changes composition without remounting route content", async () => {
-  const [component, css] = await Promise.all([
+  const [component, css, icon] = await Promise.all([
     source("app/_components/official-product-shell-v2.tsx"),
     source("app/_components/official-product-shell-v2.module.css"),
+    source("public/icon-monochrome.svg"),
   ]);
 
   assert.match(component, /visualViewport/);
@@ -55,12 +56,16 @@ test("the shell changes composition without remounting route content", async () 
   assert.equal(component.match(/\{children\}/g)?.length, 1);
   assert.match(component, /data-layout-mode=\{mode\}/);
   assert.match(component, /Navegación de modo juego/);
+  assert.match(component, /src="\/icon-192\.png"/);
   assert.match(css, /100dvh/);
   assert.match(css, /display-mode: standalone/);
   assert.match(css, /env\(safe-area-inset-left\)/);
   assert.match(css, /env\(safe-area-inset-right\)/);
   assert.match(css, /prefers-reduced-motion: reduce/);
   assert.match(css, /orientation: landscape/);
+  assert.match(css, /--official-accent-text: #476b00/);
+  assert.match(css, /--official-overlay: rgba\(255, 255, 255, 0\.94\)/);
+  assert.equal(icon.match(/fill-rule="evenodd"/g)?.length, 2);
   assert.doesNotMatch(css, /\b100vh\b/);
 });
 
@@ -93,8 +98,11 @@ test("the visual lab is isolated, noindex and free from productive/demo data aut
   assert.match(page, /follow: false, index: false/);
   assert.match(page, /Fixtures visuales · sin Supabase/);
   assert.match(page, /data-capture/);
+  assert.match(page, />Finalizar partido</);
   assert.doesNotMatch(page, /supabaseClient|\.rpc\(|localStorage|indexedDB|demo-world.*json/i);
   assert.match(css, /data-capture="true"/);
+  assert.match(css, /var\(--official-surface/);
+  assert.match(css, /var\(--official-accent-text/);
   assert.match(css, /orientation:landscape/);
   assert.match(css, /max-width:760px/);
 });

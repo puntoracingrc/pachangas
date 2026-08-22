@@ -56,7 +56,7 @@ export function AdminSessionBootstrap() {
   return (
     <main className={styles.accessPage}>
       <section className={styles.accessPanel} aria-live="polite">
-        <Image src="/icon-monochrome.svg" alt="" width={44} height={44} priority />
+        <Image src="/icon-192.png" alt="" width={44} height={44} priority unoptimized />
         <p className={styles.eyebrow}>Pachangas IQ</p>
         <h1>{content[0]}</h1>
         <p>{content[1]}</p>
