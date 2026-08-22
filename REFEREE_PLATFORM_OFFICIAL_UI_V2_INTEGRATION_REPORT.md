@@ -188,6 +188,36 @@ Estado final leído desde PostgreSQL:
 - secretos de invitación vigentes: `0`;
 - tres perfiles de QA permanecen archivados como historial sintético.
 
+## Preview Combinada Exacta
+
+La integración publicada para revisión visual corresponde al HEAD
+`d920227916ad052831433c29d1cdc14312403f83` y al deployment Vercel Preview
+`dpl_DTpH8UogB9sdXoxFN4LS9QsmR6CZ`, en estado `READY`:
+
+- URL inmutable: `https://pachangas-qpikopuv4-persianas-almar-web-s-projects.vercel.app`;
+- alias de la rama: `https://pachangas-git-codex-offic-7de519-persianas-almar-web-s-projects.vercel.app`;
+- ruta de entrada visual:
+  `/laboratorio-referee-platform?surface=market`.
+
+El artefacto remoto se inspeccionó desde una sesión autorizada de Preview. Sus
+chunks contienen el project ref de staging `iozcjirlfytryzrcmrnq` y no
+contienen el project ref productivo `qonbngfrnrqgmxbdfbea`. El laboratorio
+continúa siendo visual-only y no abre conexiones ni escrituras.
+
+La smoke remota cubrió Mercado, perfil privado, perfil público, propuesta,
+confirmación y administración en `1440×900`, `390×844` y `844×390`: `18`
+combinaciones, sin overflow horizontal documental, imágenes visibles rotas,
+error overlay ni navegación duplicada. El admin conserva su variante
+`PLATFORM_ADMIN`; las demás superficies resolvieron respectivamente
+`DESKTOP`, `MOBILE_PORTRAIT` y `MOBILE_GAME_LANDSCAPE`.
+
+En el artefacto remoto, el giro `844×390 → 390×844 → 844×390` conservó el
+filtro `Sabadell`, la modalidad `Fútbol 7` y la selección de Marc Vidal. El
+manifest respondió como `application/manifest+json`, `/sw.js` como JavaScript,
+el Service Worker quedó registrado y controlando la página, y el log de
+errores Runtime de Vercel para el deployment permaneció vacío durante la QA.
+La instalación física sigue clasificada como `PHYSICAL_QA_PENDING`.
+
 ## PWA
 
 En build de producción local:
