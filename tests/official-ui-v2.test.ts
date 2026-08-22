@@ -100,7 +100,12 @@ test("the visual lab is isolated, noindex and free from productive/demo data aut
 });
 
 test("Control Center retains the explicit platform-admin shell", async () => {
-  const adminShell = await source("app/admin/_components/platform-shell.tsx");
+  const [adminShell, adminStyles] = await Promise.all([
+    source("app/admin/_components/platform-shell.tsx"),
+    source("app/admin/platform-admin.module.css"),
+  ]);
   assert.match(adminShell, /data-shell-variant="PLATFORM_ADMIN"/);
   assert.doesNotMatch(adminShell, /OfficialProductShellV2/);
+  assert.match(adminStyles, /\.sidebar \{[\s\S]*visibility: hidden;[\s\S]*pointer-events: none;/);
+  assert.match(adminStyles, /\.sidebarOpen \{[\s\S]*visibility: visible;[\s\S]*pointer-events: auto;/);
 });
