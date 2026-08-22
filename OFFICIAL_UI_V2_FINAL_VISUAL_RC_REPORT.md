@@ -153,7 +153,7 @@ Estas cifras son una referencia local de RC, no Web Vitals de usuarios reales.
 | Gate | Resultado |
 | --- | --- |
 | `npm ci` | PASS en reintento tras limpiar solo caches regenerables del worktree; 522 paquetes |
-| `npm test` | PASS, **342/342** tests actuales |
+| `npm test` | PASS, **362/362** tests canonicos: 20 Node + 342 TSX |
 | `npm run typecheck` | PASS |
 | `npm run build` | PASS |
 | Official UI V2 + integracion visual R3 focal | PASS, 16/16 |
@@ -166,7 +166,7 @@ Estas cifras son una referencia local de RC, no Web Vitals de usuarios reales.
 | Lint global | 43 heredados: 23 errores y 20 warnings; 0 nuevos del RC |
 | `git diff --check` | PASS |
 
-La orden esperaba 360 tests o mas, pero la suite actual del repositorio contiene 342. No se han inventado tests para alcanzar una cifra nominal: los 342 pasan y las baterias focales anteriores tambien pasan. `npm audit` informa 21 vulnerabilidades de dependencia heredadas (1 low, 4 moderate, 16 high); no se aplico `npm audit fix` fuera de alcance.
+La cifra 342 era solo el subtotal del segundo runner (`tsx --test`). El script `npm test` imprime antes otro resumen de 20 tests Node. Los checkpoints `fc2fe94` y `2f8fa73` tenian 360 tests (20 + 340); el HEAD funcional suma dos regresiones R3 y tiene 362 (20 + 342). No se ha perdido cobertura. La conciliacion completa esta en `OFFICIAL_UI_V2_TEST_COUNT_RECONCILIATION.md`. `npm audit` informa 21 vulnerabilidades de dependencia heredadas (1 low, 4 moderate, 16 high); no se aplico `npm audit fix` fuera de alcance.
 
 ## 12. Invariantes funcionales
 
@@ -203,6 +203,8 @@ Las capturas individuales temporales se eliminaron despues de componer las hojas
 
 El RC no se declara `READY FOR PRODUCTION`. La futura release necesita QA fisica o un waiver humano explicito.
 
+El procedimiento reproducible y los campos de dispositivo estan en `OFFICIAL_UI_V2_PHYSICAL_QA_CHECKLIST.md`. La revision visual breve para Alberto esta en `OFFICIAL_UI_V2_ALBERTO_REVIEW_GUIDE.md`.
+
 Decisiones visuales reservadas a aprobacion humana:
 
 1. Densidad final del Inicio.
@@ -217,4 +219,4 @@ El candidato cumple el objetivo visual: desktop se comporta como producto cohere
 
 Estado objetivo tras publicar y validar la Preview final:
 
-`OPEN / DRAFT / BASE main / CLEAN / MERGEABLE / VERCEL SUCCESS / READY FOR HUMAN VISUAL APPROVAL`.
+`OPEN / DRAFT / BASE main / CLEAN / MERGEABLE / VERCEL SUCCESS / PHYSICAL QA PENDING / AWAITING ALBERTO APPROVAL`.
