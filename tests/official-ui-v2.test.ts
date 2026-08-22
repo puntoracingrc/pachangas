@@ -89,6 +89,14 @@ test("priority production routes share the official shell without replacing thei
   assert.match(market, /\.rpc\(/);
 });
 
+test("the productive home metadata keeps readable contrast inside the dark Official UI shell", async () => {
+  const css = await source("app/globals.css");
+  assert.match(
+    css,
+    /\.official-ui-v2-product \.team-access-meta strong \{[\s\S]*background: #14211d;[\s\S]*color: #f1f6f2;/,
+  );
+});
+
 test("the visual lab is isolated, noindex and free from productive/demo data authority", async () => {
   const [page, css] = await Promise.all([
     source("app/laboratorio-official-ui-v2/page.tsx"),
