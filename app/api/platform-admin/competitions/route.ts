@@ -4,7 +4,9 @@ import {
   requirePlatformRequest,
   requireSameOriginMutation,
 } from "../../../admin/_lib/platform-auth";
-import { getPlatformCompetitionFoundation } from "../../../admin/_lib/platform-data";
+import { getPlatformCompetitionFoundation, getPlatformLeagueParticipation } from "../../../admin/_lib/platform-data";
+import { clientWriteGateResponse } from "../../client-policy/_contract";
+import { leagueParticipationFlagsAggregateId } from "../../../league-participation-contract";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -43,6 +45,21 @@ function optionalTimestamp(value: unknown) {
 }
 
 function commandPayload(action: string, input: Record<string, unknown>) {
+  if (action === "league_participation_flags.set") {
+    const payload: Record<string, unknown> = { reason: reasonFrom(input) };
+    for (const key of [
+      "foundationEnabled",
+      "registrationEnabled",
+      "publicRegistrationEnabled",
+      "delegatesEnabled",
+      "rostersEnabled",
+      "schedulePreferencesEnabled",
+    ] as const) {
+      if (typeof input[key] === "boolean") payload[key] = input[key];
+    }
+    if (Object.keys(payload).length === 1) throw new Error("No hay cambios de flags R4A");
+    return payload;
+  }
   if (action === "foundation_flags.set") {
     const payload: Record<string, unknown> = { reason: reasonFrom(input) };
     for (const key of ["foundationEnabled", "creationEnabled", "contextBindingEnabled"] as const) {
@@ -71,6 +88,7 @@ function commandPayload(action: string, input: Record<string, unknown>) {
 }
 
 function aggregateIdFor(action: string, body: Record<string, unknown>) {
+  if (action === "league_participation_flags.set") return leagueParticipationFlagsAggregateId;
   if (action === "foundation_flags.set") return flagsAggregateId;
   if (action === "canonical.backfill") return registryAggregateId;
   const aggregateId = typeof body.aggregateId === "string" ? body.aggregateId : "";
@@ -93,7 +111,11 @@ export async function GET(request: Request) {
     const page = boundedInteger(url.searchParams.get("page"), 1, 100000);
     const pageSize = boundedInteger(url.searchParams.get("pageSize"), 30, 100);
     const session = await requirePlatformRequest(request, "competitions.read");
-    return platformJson(await getPlatformCompetitionFoundation(session, page, pageSize));
+    const [foundation, leagueParticipation] = await Promise.all([
+      getPlatformCompetitionFoundation(session, page, pageSize),
+      getPlatformLeagueParticipation(session, page, pageSize),
+    ]);
+    return platformJson({ ...foundation, leagueParticipation });
   } catch (error) {
     return platformErrorResponse(error);
   }
@@ -102,6 +124,8 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     requireSameOriginMutation(request);
+    const gated = clientWriteGateResponse(request);
+    if (gated) return gated;
     const session = await requirePlatformRequest(request, "competitions.manage");
     const body = record(await request.json());
     const action = typeof body.action === "string" ? body.action : "";
@@ -110,14 +134,24 @@ export async function POST(request: Request) {
     if (!uuidPattern.test(operationId) || !Number.isInteger(expectedRevision) || expectedRevision < 0) {
       throw new Error("Envelope de operación no válido");
     }
-    const result = await session.client.rpc("command_pachanga_competition_platform_v1", {
-      aggregate_id: aggregateIdFor(action, body),
-      client_metadata: clientMetadata(request),
-      command_action: action,
-      command_payload: commandPayload(action, record(body.payload)),
-      expected_revision: expectedRevision,
-      operation_id: operationId,
-    });
+    const aggregateId = aggregateIdFor(action, body);
+    const payload = commandPayload(action, record(body.payload));
+    const result = action === "league_participation_flags.set"
+      ? await session.client.rpc("command_pachanga_league_participation_platform_v1", {
+        aggregate_id: aggregateId,
+        client_metadata: clientMetadata(request),
+        command_payload: payload,
+        expected_revision: expectedRevision,
+        operation_id: operationId,
+      })
+      : await session.client.rpc("command_pachanga_competition_platform_v1", {
+        aggregate_id: aggregateId,
+        client_metadata: clientMetadata(request),
+        command_action: action,
+        command_payload: payload,
+        expected_revision: expectedRevision,
+        operation_id: operationId,
+      });
     if (result.error) throw new Error(result.error.message);
     return platformJson({ canonical: result.data });
   } catch (error) {
