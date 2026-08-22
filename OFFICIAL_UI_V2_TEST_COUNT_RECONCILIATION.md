@@ -137,4 +137,3 @@ El repositorio tambien conserva suites SQL, RLS, adversariales, de concurrencia,
 | Hay tests skipped/todo/cancelled | **NO** en las ejecuciones conciliadas. |
 | Total correcto en `fc2fe94` y `2f8fa73` | **360**. |
 | Total canonico actual | **362**. |
-
