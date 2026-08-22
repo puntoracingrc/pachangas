@@ -1,0 +1,83 @@
+.surface {
+  min-width: 0;
+  display: grid;
+  gap: 12px;
+}
+
+.filters {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(110px, 1fr));
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid rgba(186, 206, 198, 0.24);
+  border-radius: 7px;
+  background: rgba(15, 24, 21, 0.72);
+}
+
+.filters label {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+  color: #aebdb7;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.filters input,
+.filters select,
+.filters button,
+.actions a,
+.actions button,
+.pagination button {
+  min-height: 38px;
+  border: 1px solid rgba(174, 201, 190, 0.34);
+  border-radius: 5px;
+  background: #121c18;
+  color: #edf6f2;
+  font: inherit;
+}
+
+.filters input,
+.filters select { width: 100%; padding: 7px 8px; color-scheme: dark; }
+.filters button { align-self: end; padding: 7px 12px; border-color: #55b98a; background: #286f50; font-weight: 900; }
+.context, .message, .empty { margin: 0; padding: 8px 10px; border-left: 3px solid #5dc795; background: rgba(11, 18, 15, 0.54); color: #cbd8d2; font-size: 12px; }
+.message { border-left-color: #d2ab55; }
+.empty { min-height: 100px; display: grid; place-items: center; border-left: 0; color: #91a39b; }
+.grid { min-width: 0; display: grid; grid-template-columns: repeat(4, minmax(220px, 1fr)); gap: 10px; }
+.result { min-width: 0; display: grid; gap: 7px; }
+.actions { display: grid; grid-template-columns: minmax(0, 0.7fr) minmax(0, 1.3fr); gap: 6px; }
+.actions a, .actions button { display: grid; place-items: center; padding: 7px 8px; text-align: center; text-decoration: none; font-size: 11px; font-weight: 900; }
+.actions button { border-color: #55b98a; background: #286f50; }
+.actions button:disabled { border-color: #405049; background: #1b2521; color: #73837c; }
+.pagination { display: flex; align-items: center; justify-content: center; gap: 12px; color: #b8c7c1; font-size: 11px; }
+.pagination button { min-width: 88px; padding: 6px 10px; }
+.pagination button:disabled { opacity: 0.45; }
+
+@media (max-width: 1100px) {
+  .filters { grid-template-columns: repeat(4, minmax(100px, 1fr)); }
+  .grid { grid-template-columns: repeat(3, minmax(210px, 1fr)); }
+}
+
+@media (max-width: 700px) {
+  .filters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .grid { grid-template-columns: repeat(2, minmax(190px, 1fr)); overflow-x: auto; overscroll-behavior-inline: contain; padding-bottom: 8px; }
+}
+
+@media (max-width: 430px) {
+  .filters { grid-template-columns: 1fr 1fr; }
+  .grid { grid-template-columns: 1fr; overflow: visible; }
+}
+
+@media (orientation: landscape) and (max-height: 560px),
+  (orientation: landscape) and (pointer: coarse) and (min-width: 768px) and (max-width: 1368px) and (max-height: 1024px) {
+  .surface { gap: 7px; }
+  .filters { grid-template-columns: repeat(6, minmax(92px, 1fr)); padding: 7px; gap: 5px; }
+  .filters label { font-size: 8px; }
+  .filters input, .filters select, .filters button { min-height: 31px; padding: 4px 6px; font-size: 10px; }
+  .grid { display: flex; overflow-x: auto; overflow-y: hidden; gap: 8px; padding: 0 0 8px; scroll-snap-type: x proximity; }
+  .result { flex: 0 0 clamp(205px, 29vw, 260px); scroll-snap-align: start; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .grid { scroll-behavior: auto; }
+}

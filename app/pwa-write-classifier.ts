@@ -35,6 +35,9 @@ const v2WriteRpcNames = new Set([
   "command_pachanga_competition_foundation_v1",
   "command_pachanga_competition_foundation_v2",
   "command_pachanga_competition_platform_v1",
+  "command_pachanga_referee_platform_v1",
+  "command_pachanga_referee_platform_admin_v1",
+  "command_pachanga_club_referee_manager_v1",
   "close_pachanga_post_match_attendance_v1",
   "confirm_pachanga_external_result_v1",
   "create_pachanga_team_challenge_authoritative",
@@ -61,6 +64,7 @@ const v2WriteRpcNames = new Set([
   "propose_pachanga_external_result_change_v1",
   "publish_pachanga_external_result_v1",
   "publish_pachanga_team_crest_v1",
+  "reconcile_pachanga_referee_assignment_v1",
   "record_pachanga_global_rating_authoritative_v2",
   "record_pachanga_guest_team_rating_token_v2",
   "record_pachanga_individual_rating_authoritative_v2",
@@ -108,6 +112,8 @@ const v2ApplicationWriteOperations = new Set([
   "api:ratings-assessment",
   "api:platform-admin-clubs",
   "api:platform-admin-competitions",
+  "api:platform-admin-referees",
+  "api:referee-command",
 ]);
 const clientApplicationWriteOperations = new Set([
   ...v1ApplicationWriteOperations,
