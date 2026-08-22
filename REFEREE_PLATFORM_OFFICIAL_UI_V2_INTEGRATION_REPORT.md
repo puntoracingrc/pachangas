@@ -190,11 +190,11 @@ Estado final leído desde PostgreSQL:
 
 ## Preview Combinada Exacta
 
-La integración publicada para revisión visual corresponde al HEAD
-`d920227916ad052831433c29d1cdc14312403f83` y al deployment Vercel Preview
-`dpl_DTpH8UogB9sdXoxFN4LS9QsmR6CZ`, en estado `READY`:
+La implementación publicada para revisión visual corresponde al HEAD
+`70a67bdf9f2c4f9515c26dd1e74788c0eaa7cbc7` y al deployment Vercel Preview
+`dpl_BnQXiHSUwKYXpGrWUCYoXBmvbCty`, en estado `READY`:
 
-- URL inmutable: `https://pachangas-qpikopuv4-persianas-almar-web-s-projects.vercel.app`;
+- URL inmutable: `https://pachangas-5709n6g6o-persianas-almar-web-s-projects.vercel.app`;
 - alias de la rama: `https://pachangas-git-codex-offic-7de519-persianas-almar-web-s-projects.vercel.app`;
 - ruta de entrada visual:
   `/laboratorio-referee-platform?surface=market`.
@@ -210,6 +210,12 @@ combinaciones, sin overflow horizontal documental, imágenes visibles rotas,
 error overlay ni navegación duplicada. El admin conserva su variante
 `PLATFORM_ADMIN`; las demás superficies resolvieron respectivamente
 `DESKTOP`, `MOBILE_PORTRAIT` y `MOBILE_GAME_LANDSCAPE`.
+
+La primera smoke remota detectó que el drawer cerrado del Control Center estaba
+fuera del lienzo, pero sus enlaces seguían siendo enfocables. Se corrigió solo
+en el breakpoint móvil con `visibility` y `pointer-events`; desktop no cambió.
+La regresión focal y la comprobación remota confirman que el drawer cerrado es
+inerte y el abierto vuelve a ser visible y operable.
 
 En el artefacto remoto, el giro `844×390 → 390×844 → 844×390` conservó el
 filtro `Sabadell`, la modalidad `Fútbol 7` y la selección de Marc Vidal. El

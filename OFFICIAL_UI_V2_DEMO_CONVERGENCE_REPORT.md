@@ -207,8 +207,8 @@ seis flags OFF y cero entidades R3 activas. Véase
 `docs/referee-platform-official-ui-v2/`.
 
 La Preview combinada verificada es
-`https://pachangas-qpikopuv4-persianas-almar-web-s-projects.vercel.app`
-(`dpl_DTpH8UogB9sdXoxFN4LS9QsmR6CZ`, `READY`). El bundle remoto referencia
+`https://pachangas-5709n6g6o-persianas-almar-web-s-projects.vercel.app`
+(`dpl_BnQXiHSUwKYXpGrWUCYoXBmvbCty`, `READY`). El bundle remoto referencia
 exclusivamente el Supabase staging `iozcjirlfytryzrcmrnq` y no el project ref
 productivo. Manifest, Service Worker, matriz remota de 18 combinaciones y giro
 con estado preservado: PASS.
