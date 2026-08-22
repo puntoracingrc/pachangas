@@ -22,7 +22,7 @@
 | Deployment Vercel | `dpl_CGzJECgarR59JW58KPcRUfa1UUVt` |
 | Deployment URL | `pachangas-5jj3dr4k1-persianas-almar-web-s-projects.vercel.app` |
 | Estado / alias | `READY` a `2026-08-22T04:30:22Z`; `pachangasiq.com` y `www.pachangasiq.com` |
-| PR documental | Pendiente de asignacion al crear este informe |
+| PR documental | [#159](https://github.com/puntoracingrc/pachangas/pull/159) |
 
 La rama remota y el worktree funcional R3 se conservaron tras el merge porque
 Official UI V2 (#158) seguia apilada sobre `codex/referee-platform-v1`.
@@ -256,4 +256,3 @@ facetas, assessments, partidos, resultados, goleadores, Attendance, Conduct,
 Achievements, cajas, Player/Team Cosmetics, Team Rewards, Billing, Season
 Score, Ranking, Competition, Club Foundation y Canonical Match permanecen
 intactos.
-
