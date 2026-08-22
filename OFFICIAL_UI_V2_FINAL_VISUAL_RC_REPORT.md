@@ -14,10 +14,12 @@ Fecha de cierre local: 2026-08-22 09:14 CEST
 | Divergencia inicial con `main` | `0 behind / 9 ahead` |
 | Estado inicial PR | `OPEN`, `DRAFT`, `CLEAN`, `MERGEABLE`, Vercel `SUCCESS` |
 | Preview inicial | `https://pachangas-og9v1mrce-persianas-almar-web-s-projects.vercel.app` |
-| HEAD funcional final | Se completa en el PR tras publicar este informe y las evidencias |
+| HEAD funcional auditado | `d35250faf66a6462c2190c67f09fcb6c22a3e59b` |
 | Produccion modificada | **NO** |
 | Supabase staging/produccion modificado | **NO** |
 | Merge realizado | **NO** |
+| Preview funcional auditada | `https://pachangas-n202afbi5-persianas-almar-web-s-projects.vercel.app` |
+| Deployment auditado | `dpl_ANP3QURrovDkWxNXvbUYiqd44D2i` (`READY`) |
 
 La rama seguia basada exactamente en el `main` conocido al comenzar y `origin/main` no avanzo durante el cierre. No fue necesario rebase ni merge de actualizacion.
 
@@ -86,6 +88,7 @@ Los estados vacios genericos, offline y permiso insuficiente se revisaron visual
 - Portrait: 390x844 y 360x800.
 - Landscape: 667x375, 740x360, 812x375, 844x390, 896x414 y 932x430.
 - Matriz automatizada: 221 combinaciones principales entre rutas, viewports y temas, sin fallo duro.
+- Smoke del deployment final: 51/51 combinaciones, 17 superficies en 1440x900, 390x844 y 844x390; 0 fallos, 0 imagenes rotas, 0 overflow y 0 errores o warnings de consola.
 - Resultado: 0 overflow de `body`, 0 imagenes rotas, 0 footer, 0 doble navegacion y 0 CTA principal fuera de pantalla.
 - En las seis anchuras landscape, el shell oficial declara `MOBILE_GAME_LANDSCAPE`; no reutiliza una sidebar desktop comprimida.
 - La alineacion conserva un campo realmente horizontal, circulo central circular, banquillo lateral y accion de cierre visible.
@@ -210,7 +213,7 @@ Decisiones visuales reservadas a aprobacion humana:
 
 ## 15. Conclusion
 
-El candidato cumple el objetivo visual: desktop se comporta como producto coherente, portrait como aplicacion completa y landscape como un modo de juego propio. Queda preparado para una Preview exacta del HEAD publicado y aprobacion visual humana, manteniendo el PR abierto y en draft.
+El candidato cumple el objetivo visual: desktop se comporta como producto coherente, portrait como aplicacion completa y landscape como un modo de juego propio. La Preview exacta del HEAD funcional auditado esta `READY` y queda preparada para aprobacion visual humana, manteniendo el PR abierto y en draft. El commit documental que contiene este propio informe se registra de forma autoritativa en el PR #158 para evitar una referencia circular dentro del archivo.
 
 Estado objetivo tras publicar y validar la Preview final:
 
