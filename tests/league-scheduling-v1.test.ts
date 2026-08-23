@@ -311,5 +311,8 @@ test("bootstrap, concurrency, scale, performance and staging remain explicit rel
   assert.match(performance, /teamCount: 32/);
   assert.match(performance, /get_pachanga_public_league_calendar_v1/);
   assert.match(staging, /R4B_STAGING_PRODUCTION_TARGET_FORBIDDEN/);
+  assert.match(staging, /async function selectClubOwner/);
+  assert.match(staging, /activeDrafts < 3 && recentCreations < 5/);
+  assert.match(staging, /R4B_STAGING_CLUB_CREATOR_POOL_EXHAUSTED/);
   assert.match(packageJson, /test:league-scheduling:bootstrap/);
 });

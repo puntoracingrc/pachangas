@@ -179,6 +179,34 @@ async function ensureRegular(platform, regular, account) {
   });
 }
 
+async function selectClubOwner(candidates) {
+  const candidateIds = candidates.map(({ account }) => account.id);
+  const result = await fixtureAdmin
+    .from("pachanga_clubs")
+    .select("created_at,created_by,operational_status")
+    .in("created_by", candidateIds);
+  if (result.error) throw result.error;
+
+  const recentCutoff = Date.now() - (24 * 60 * 60 * 1000);
+  const availability = candidates.map((candidate, stableOrder) => {
+    const actorClubs = result.data.filter(({ created_by }) => created_by === candidate.account.id);
+    return {
+      ...candidate,
+      activeDrafts: actorClubs.filter(({ operational_status }) => ["draft", "pending_review"].includes(operational_status)).length,
+      recentCreations: actorClubs.filter(({ created_at }) => new Date(created_at).getTime() >= recentCutoff).length,
+      stableOrder,
+    };
+  }).filter(({ activeDrafts, recentCreations }) => activeDrafts < 3 && recentCreations < 5)
+    .sort((left, right) => (
+      left.recentCreations - right.recentCreations
+      || left.activeDrafts - right.activeDrafts
+      || left.stableOrder - right.stableOrder
+    ));
+
+  if (!availability.length) throw new Error("R4B_STAGING_CLUB_CREATOR_POOL_EXHAUSTED");
+  return availability[0];
+}
+
 const clubSnapshot = (supabase, id) => rpc(supabase, "get_pachanga_club_foundation_snapshot_v1", { target_club_id: id });
 const competitionSnapshot = (supabase, id) => rpc(supabase, "get_pachanga_competition_foundation_snapshot_v1", { target_competition_id: id });
 const entrySnapshot = (supabase, id) => rpc(supabase, "get_pachanga_competition_entry_v1", { target_entry_id: id });
@@ -343,6 +371,13 @@ try {
   for (let index = 0; index < TEAMS.length; index += 1) {
     await ensureRegular(platform, teamClients[index], TEAMS[index].owner);
   }
+  const clubOwner = await selectClubOwner([
+    { account: USERS.ownerA, client: ownerA },
+    { account: USERS.ownerB, client: ownerB },
+    { account: USERS.ownerC, client: ownerC },
+    { account: USERS.adminA, client: adminA },
+    { account: USERS.playerA, client: playerA },
+  ]);
   await ensureTeams();
   countsBefore = await counts();
   const initialFlags = await scheduleFlags(platform);
@@ -378,7 +413,7 @@ try {
 
   const tag = `${Date.now()}-${randomUUID().slice(0, 8)}`;
   created.clubId = randomUUID();
-  const clubCreated = await club(ownerA, {
+  const clubCreated = await club(clubOwner.client, {
     action: "club.create",
     aggregateId: created.clubId,
     expectedRevision: 0,
@@ -393,7 +428,7 @@ try {
       visibility: "private",
     },
   });
-  const clubSubmitted = await club(ownerA, {
+  const clubSubmitted = await club(clubOwner.client, {
     action: "club.review.submit",
     aggregateId: created.clubId,
     expectedRevision: clubCreated.snapshot.club.revision,
@@ -405,8 +440,8 @@ try {
     expectedRevision: clubSubmitted.snapshot.club.revision,
     payload: { reason: "R4B staging Club activation", status: "active" },
   }, true);
-  let clubState = await clubSnapshot(ownerA, created.clubId);
-  const managerInvitation = await club(ownerA, {
+  let clubState = await clubSnapshot(clubOwner.client, created.clubId);
+  const managerInvitation = await club(clubOwner.client, {
     action: "membership.invite",
     aggregateId: created.clubId,
     expectedRevision: clubState.club.revision,
