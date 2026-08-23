@@ -310,7 +310,7 @@ function RegistrationDesk({ busy, data, onCommand }: { busy: boolean; data: Leag
       {items.map((item) => <article className={styles.deskItem} key={leagueText(item.id)}>
         <div><span>{leagueText(item.categoryName)}</span><h3>{leagueText(item.teamName)}</h3><small>{leagueText(item.source).replaceAll("_", " ")}</small></div>
         <div className={styles.deskHealth}>{status(item.status)}{status(item.rosterStatus || "sin roster")}<small>{leagueNumber(item.memberCount)} jugadores · {leagueNumber(item.warningCount)} avisos</small></div>
-        <ResponsiveActionBar>
+        <ResponsiveActionBar className={styles.deskActions}>
           <Link href={`/competiciones/${leagueText(data.competitionId)}/equipos/${leagueText(item.id)}`}>Abrir</Link>
           {leagueText(item.status) === "submitted" ? <>
             <button type="button" disabled={busy} onClick={() => onCommand("entry.accept", leagueText(item.id), leagueNumber(item.revision), { reason: "Solicitud revisada y aceptada" })}>Aceptar</button>

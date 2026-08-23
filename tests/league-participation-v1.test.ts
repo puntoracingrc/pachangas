@@ -216,6 +216,10 @@ test("Official UI V2 surfaces are noindex, gated and distinguish hard constraint
   assert.match(client, /timeZone: "Europe\/Madrid"/);
   assert.match(css, /data-kind="soft"/);
   assert.match(css, /orientation: landscape/);
+  assert.match(client, /className=\{styles\.deskActions\}/);
+  assert.match(css, /\.deskActions\s*\{[^}]*position:\s*static/);
+  assert.match(css, /\.entryActions\s*\{\s*bottom:\s*calc\(70px \+ env\(safe-area-inset-bottom\)\)/);
+  assert.match(css, /repeat\(3, minmax\(180px, 1fr\)\) minmax\(320px, 1\.6fr\)/);
   assert.match(labLayout, /follow: false, index: false/);
   assert.doesNotMatch(mainPage, /laboratorio-league-participation/);
   assert.doesNotMatch(mobileNav, /laboratorio-league-participation/);
