@@ -41,14 +41,14 @@ authenticated contact sheet.
 
 | Measure | Value |
 | --- | ---: |
-| Files under `docs/official-ui-v2-1` | 82 |
-| Bytes under `docs/official-ui-v2-1` | 9,978,764 |
-| Capture files | 75 |
-| Capture bytes | 6,199,773 |
-| Canonical authenticated staging captures | 9 |
-| Canonical authenticated staging bytes | 501,832 |
+| Files under `docs/official-ui-v2-1` | 93 |
+| Bytes under `docs/official-ui-v2-1` | 10,109,744 |
+| Capture files | 86 |
+| Capture bytes | 6,720,376 |
+| Canonical authenticated staging captures | 18 |
+| Canonical authenticated staging bytes | 1,018,575 |
 | Contact sheets | 6 |
-| Contact-sheet bytes | 3,776,779 |
+| Contact-sheet bytes | 3,387,156 |
 
 The final Git diff size is recalculated after the closing commit; the PR body
 is the authoritative location for that final number because the commit cannot
@@ -60,5 +60,6 @@ contain its own blob accounting.
 - Full Markdown/JSON matrices and rotation results.
 - Representative desktop, portrait and low-landscape images.
 - Owner/player/offline fixture images labelled as fixtures.
-- Nine canonical staging images without PII.
+- Eighteen canonical staging images without PII: nine no-team/no-profile and
+  nine owner/base-shield/configured-shield captures.
 - Regression and performance summaries.

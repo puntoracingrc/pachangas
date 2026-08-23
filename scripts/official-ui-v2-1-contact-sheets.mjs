@@ -102,7 +102,9 @@ async function createSheet(filename, title, subtitle, rows, options = {}) {
 }
 
 function v21(surface, viewport) {
-  return path.join(parityRoot, `${surface}--${viewport}.jpg`);
+  const name = `${surface}--${viewport}.jpg`;
+  const current = path.join(parityRoot, name);
+  return existsSync(current) ? current : path.join(capturesRoot, "v2-1", name);
 }
 
 function demo(surface, viewport) {
@@ -127,14 +129,18 @@ function authenticatedStaging(name) {
   return path.join(capturesRoot, "authenticated-staging-final", `${name}.png`);
 }
 
+function canonicalRole(name) {
+  return path.join(capturesRoot, "canonical-role-final", `${name}.png`);
+}
+
 function parityRow(label, height, demoSource, currentSource, proposedSource) {
   return {
     label,
     height,
     cells: [
-      { source: demoSource, title: "A. Demo World" },
-      { source: currentSource, title: "B. Official UI V2" },
-      { source: proposedSource, title: "C. Official UI V2.1" },
+      { source: demoSource, title: "A. DEMO WORLD", subtitle: `${label} · curated baseline` },
+      { source: currentSource, title: "B. PRODUCTION V2" },
+      { source: proposedSource, title: "C. V2.1 PROPOSAL" },
     ],
   };
 }
@@ -187,6 +193,7 @@ async function copyEvidence() {
 await mkdir(outputRoot, { recursive: true });
 
 const authenticatedOnly = process.env.OFFICIAL_UI_AUTHENTICATED_ONLY === "1";
+const parityEssentialsOnly = process.env.OFFICIAL_UI_PARITY_ESSENTIALS_ONLY === "1";
 
 if (!authenticatedOnly) {
 await createSheet(
@@ -214,6 +221,7 @@ for (const surface of matchSurfaces) {
     parityRow(`${surface.label} - landscape 844x390`, 350, demo(surface.demo, "landscape"), officialV2(surface.official, "landscape"), v21(surface.proposed, "landscape")),
   );
 }
+if (!parityEssentialsOnly) {
 await createSheet(
   "OFFICIAL_UI_V2_1_MATCH_PARITY_CONTACT_SHEET.png",
   "Official UI V2.1 - Match Hub parity",
@@ -231,9 +239,14 @@ await createSheet(
     parityRow("Landscape 844x390", 350, demo("demo-mercado", "landscape"), officialV2("mercado", "landscape"), v21("v21-market", "landscape")),
   ],
 );
+}
 
-const mobileViewports = ["landscape-small", "landscape", "landscape-wide"];
-const mobileLabels = ["667x375", "844x390", "932x430"];
+const mobileViewports = parityEssentialsOnly
+  ? ["landscape"]
+  : ["landscape-small", "landscape", "landscape-wide"];
+const mobileLabels = parityEssentialsOnly
+  ? ["844x390"]
+  : ["667x375", "844x390", "932x430"];
 const mobileSurfaces = [
   ["Inicio", "v21-home"],
   ["Proximo", "v21-match-next"],
@@ -251,7 +264,7 @@ await createSheet(
     height: 350,
     cells: mobileViewports.map((viewport, index) => ({
       source: v21(surface, viewport),
-      title: `${label} - ${mobileLabels[index]}`,
+      title: `V2.1 PROPOSAL - ${label} - ${mobileLabels[index]}`,
     })),
   })),
 );
@@ -263,9 +276,11 @@ const comparisonSurfaces = [
   ["Resultado", "demo-partido-resultado", "resultado", "v21-match-result"],
   ["Admin", "demo-partido-admin", "admin-partido", "v21-match-admin"],
   ["Mercado", "demo-mercado", "mercado", "v21-market"],
+  ...(!parityEssentialsOnly ? [
   ["Ranking", null, "ranking", "v21-ranking"],
   ["Avisos", null, "avisos", "v21-notifications"],
   ["Carta", null, "carta", "v21-card"],
+  ] : []),
 ];
 const legacyDemoRoot = path.join(root, "docs", "official-ui-v2", "captures", "demo");
 await createSheet(
@@ -280,10 +295,11 @@ await createSheet(
         source: demoKey
           ? demo(demoKey, "landscape")
           : path.join(legacyDemoRoot, `landscape-844x390-${officialKey}.png`),
-        title: `Demo - ${label}`,
+        title: `DEMO WORLD - ${label}`,
+        subtitle: "Curated baseline; responsive hotfix documented separately",
       },
-      { source: officialV2(officialKey, "landscape"), title: `Official V2 - ${label}` },
-      { source: v21(proposedKey, "landscape"), title: `V2.1 - ${label}` },
+      { source: officialV2(officialKey, "landscape"), title: `PRODUCTION V2 - ${label}` },
+      { source: v21(proposedKey, "landscape"), title: `V2.1 PROPOSAL - ${label}` },
     ],
   })),
 );
@@ -292,42 +308,69 @@ await createSheet(
 await createSheet(
   "OFFICIAL_UI_V2_1_AUTHENTICATED_FINAL_CONTACT_SHEET.png",
   "Official UI V2.1 - Authenticated staging review",
-  "OAuth staging canonico sin PII; estados owner/player de fixture identificados expresamente",
+  "Lecturas canonicas separadas de fixtures visuales; sin PII ni estados inventados",
   [
     {
       label: "Lectura canonica staging - usuario sin equipo",
       height: 460,
       cells: [
-        { source: authenticatedStaging("no-team--desktop-1440x900"), title: "Staging real - 1440x900" },
-        { source: authenticatedStaging("no-team--portrait-390x844"), title: "Staging real - 390x844" },
-        { source: authenticatedStaging("no-team--landscape-844x390"), title: "Staging real - 844x390" },
+        { source: authenticatedStaging("no-team--desktop-1440x900"), title: "CANONICAL STAGING - 1440x900" },
+        { source: authenticatedStaging("no-team--portrait-390x844"), title: "CANONICAL STAGING - 390x844" },
+        { source: authenticatedStaging("no-team--landscape-844x390"), title: "CANONICAL STAGING - 844x390" },
       ],
     },
     {
       label: "Estados canonicos staging",
       height: 460,
       cells: [
-        { source: authenticatedStaging("no-team-identity--desktop-1440x900"), title: "Equipo vacio - staging real" },
-        { source: authenticatedStaging("no-team-card--desktop-1440x900"), title: "Carta pendiente - staging real" },
-        { source: authenticatedStaging("no-team-ranking--desktop-1440x900"), title: "Ranking - staging real" },
+        { source: authenticatedStaging("no-team-identity--desktop-1440x900"), title: "CANONICAL STAGING - equipo vacio" },
+        { source: authenticatedStaging("no-team-card--desktop-1440x900"), title: "CANONICAL STAGING - carta pendiente" },
+        { source: authenticatedStaging("no-team-ranking--desktop-1440x900"), title: "CANONICAL STAGING - ranking" },
       ],
     },
     {
       label: "Avisos y portrait canonicos",
       height: 460,
       cells: [
-        { source: authenticatedStaging("no-team-notifications--desktop-1440x900"), title: "Preferencias - staging real" },
-        { source: authenticatedStaging("no-team-notifications-empty--desktop-1440x900"), title: "Avisos vacios - staging real" },
-        { source: authenticatedStaging("no-team-card--portrait-390x844"), title: "Carta pendiente - portrait real" },
+        { source: authenticatedStaging("no-team-notifications--desktop-1440x900"), title: "CANONICAL STAGING - preferencias" },
+        { source: authenticatedStaging("no-team-notifications-empty--desktop-1440x900"), title: "CANONICAL STAGING - avisos vacios" },
+        { source: authenticatedStaging("no-team-card--portrait-390x844"), title: "CANONICAL STAGING - carta portrait" },
+      ],
+    },
+    {
+      label: "Owner real sin ficha - escudo protagonista",
+      height: 460,
+      cells: [
+        { source: canonicalRole("owner-no-profile-home--desktop-1440x900"), title: "CANONICAL STAGING - owner 1440x900" },
+        { source: canonicalRole("owner-no-profile-home--portrait-390x844"), title: "CANONICAL STAGING - owner 390x844" },
+        { source: canonicalRole("owner-no-profile-home--landscape-844x390"), title: "CANONICAL STAGING - owner 844x390" },
+      ],
+    },
+    {
+      label: "Escudo canonico base",
+      height: 460,
+      cells: [
+        { source: canonicalRole("owner-base-shield--desktop-1440x900"), title: "CANONICAL STAGING - base 1440x900" },
+        { source: canonicalRole("owner-base-shield--portrait-390x844"), title: "CANONICAL STAGING - base 390x844" },
+        { source: canonicalRole("owner-base-shield--landscape-844x390"), title: "CANONICAL STAGING - base 844x390" },
+      ],
+    },
+    {
+      label: "Escudo canonico configurado - revision 1",
+      height: 460,
+      cells: [
+        { source: canonicalRole("owner-configured-shield--desktop-1440x900"), title: "CANONICAL STAGING - configurado 1440x900" },
+        { source: canonicalRole("owner-configured-shield--portrait-390x844"), title: "CANONICAL STAGING - configurado 390x844" },
+        { source: canonicalRole("owner-configured-shield--landscape-844x390"), title: "CANONICAL STAGING - configurado 844x390" },
       ],
     },
     {
       label: "Cobertura visual de roles - no es lectura canonica",
       height: 460,
       cells: [
-        { source: authenticated("home-owner", "desktop"), title: "Owner - fixture visual" },
-        { source: authenticated("home-player", "desktop"), title: "Jugador - fixture visual" },
-        { source: authenticated("home-offline", "desktop"), title: "Offline - fixture visual" },
+        { source: authenticated("home-owner", "desktop"), title: "FIXTURE VISUAL - owner" },
+        { source: authenticated("home-player", "desktop"), title: "FIXTURE VISUAL - jugador" },
+        { source: authenticated("home-offline", "desktop"), title: "FIXTURE VISUAL - offline" },
       ],
     },
   ],

@@ -1,0 +1,43 @@
+{
+  "documentedAt": "2026-08-23",
+  "environment": "Supabase staging / Vercel Preview",
+  "stableOAuthAlias": "https://pachangas-git-codex-offic-85e5c1-persianas-almar-web-s-projects.vercel.app",
+  "validationDeploymentId": "dpl_4B2WHBUBhZLkJubHTqKop5R5KWRK",
+  "validationDeploymentUrl": "https://pachangas-lkbg8mbv1-persianas-almar-web-s-projects.vercel.app",
+  "fixture": "QA team with long name, owner without profile, 12 UI-created player rows",
+  "containsPii": false,
+  "containsInvitationToken": false,
+  "containsServiceKey": false,
+  "summary": {
+    "captures": 9,
+    "documentOverflowX": 0,
+    "brokenShieldImages": 0,
+    "consoleAudit": "not repeated independently for every new screenshot",
+    "ownerWithoutProfile": "pass",
+    "baseShieldRevision": 0,
+    "configuredShieldRevision": 1,
+    "ownerWithProfile": "blocked_existing_rating_v2_onboarding",
+    "normalPlayer": "pending_second_identity",
+    "installedStandalonePwa": "pending",
+    "physicalAndroid": "pending",
+    "physicalIphone": "pending"
+  },
+  "authority": {
+    "fixtureCreation": "official product UI/API/RPC",
+    "directDatabaseFixtureMutation": false,
+    "productionModified": false,
+    "ratingV2Modified": false,
+    "rewardInventoryGranted": false
+  },
+  "captures": [
+    { "name": "owner-no-profile-home--desktop-1440x900", "expectedState": true, "overflowX": false, "brokenShieldImages": 0 },
+    { "name": "owner-no-profile-home--portrait-390x844", "expectedState": true, "overflowX": false, "brokenShieldImages": 0 },
+    { "name": "owner-no-profile-home--landscape-844x390", "expectedState": true, "overflowX": false, "brokenShieldImages": 0 },
+    { "name": "owner-base-shield--desktop-1440x900", "expectedState": true, "overflowX": false, "brokenShieldImages": 0 },
+    { "name": "owner-base-shield--portrait-390x844", "expectedState": true, "overflowX": false, "brokenShieldImages": 0 },
+    { "name": "owner-base-shield--landscape-844x390", "expectedState": true, "overflowX": false, "brokenShieldImages": 0 },
+    { "name": "owner-configured-shield--desktop-1440x900", "expectedState": true, "overflowX": false, "brokenShieldImages": 0 },
+    { "name": "owner-configured-shield--portrait-390x844", "expectedState": true, "overflowX": false, "brokenShieldImages": 0 },
+    { "name": "owner-configured-shield--landscape-844x390", "expectedState": true, "overflowX": false, "brokenShieldImages": 0 }
+  ]
+}

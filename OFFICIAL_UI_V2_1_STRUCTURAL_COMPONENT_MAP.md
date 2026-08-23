@@ -52,7 +52,9 @@ The pane bodies were not rewritten into a second functional tree. V2.1 changes t
 ## Deliberately Unchanged
 
 - `OfficialProductShellV2` and its single-tree orientation behavior.
-- Demo World source and fixtures.
+- Demo World data, fixtures, authority and visual design. The only Demo World
+  source adjustment is the separately documented responsive identity-band
+  height hotfix for Mobile Game Landscape.
 - Control Center `PLATFORM_ADMIN` shell.
 - Rating V2, attendance, lineup, result, notification, Market, ranking and cosmetics contracts.
 - Supabase paths, SQL, migrations, RPC, RLS and remote flags.

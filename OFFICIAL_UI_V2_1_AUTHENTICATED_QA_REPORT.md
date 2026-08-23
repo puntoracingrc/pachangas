@@ -4,172 +4,195 @@
 
 - Base: `origin/main` at `a4f2468d9b779db6a4391df7cec4cc34e4162fbe`.
 - Branch: `codex/official-ui-v2-1-deep-demo-parity`.
-- Actual starting HEAD: `c6733f6cb39c950ff70c590c5a6072e562554ea7`.
+- Starting HEAD for this gate: `a1b6f5223f6d2ec70e390073aa2a030755732b28`.
+- Closing code HEAD: `d1b44b4490f943a0e4f0792a392e0380ef845589`.
 - PR: [#163](https://github.com/puntoracingrc/pachangas/pull/163), OPEN and DRAFT.
-- Final HEAD: the final `headRefOid` recorded in PR #163 after the closing push.
+- Stable OAuth Preview:
+  `https://pachangas-git-codex-offic-85e5c1-persianas-almar-web-s-projects.vercel.app`.
+- Exact validated deployment:
+  `https://pachangas-lkbg8mbv1-persianas-almar-web-s-projects.vercel.app`
+  (`dpl_4B2WHBUBhZLkJubHTqKop5R5KWRK`).
 - Production: not modified.
 - R4A PR #162: not modified.
 
+The final evidence-only commit is recorded in PR #163 after the closing push;
+the report cannot embed the SHA of the commit that contains itself.
+
 ## OAuth Audit
 
-The application uses flow B:
+The application uses the following flow:
 
 ```text
 Google -> stable Preview /auth/google -> Supabase signInWithIdToken -> original route
 ```
 
-The old Google client did not authorize this exact callback:
+The separate staging OAuth client authorizes only the stable Preview origin and
+its `/auth/google` callback. Supabase staging project `iozcjirlfytryzrcmrnq`
+has that staging client enabled. No password was guessed and no account
+identity, cookie, token or OAuth client secret is stored in Git or evidence.
 
-`https://pachangas-git-codex-offic-85e5c1-persianas-almar-web-s-projects.vercel.app/auth/google`
+The branch-scoped Vercel Preview environment contains the three public staging
+variables plus one server-only `SUPABASE_SERVICE_ROLE_KEY` required by the
+authenticated assessment API. The key value was streamed directly from the
+staging CLI to Vercel, was not printed or written to disk, and is absent from
+the browser bundle. Production variables were not changed.
 
-That caused `redirect_uri_mismatch`. The fix uses a separate OAuth client named
-`Pachangas IQ Preview Staging` with:
-
-- public client ID:
-  `539843550578-tr4f8l63bcgl0aheubteq55lpagbsent.apps.googleusercontent.com`;
-- authorized JavaScript origin:
-  `https://pachangas-git-codex-offic-85e5c1-persianas-almar-web-s-projects.vercel.app`;
-- authorized redirect URI: the same origin plus `/auth/google`.
-
-Supabase staging project `iozcjirlfytryzrcmrnq` has that staging client enabled
-for Google login. Skip nonce checks remain disabled and users without email
-remain disabled. No secret, token, cookie or account identity is stored in the
-repository or evidence.
-
-Branch-scoped Vercel Preview overrides are limited to:
-
-- `NEXT_PUBLIC_GOOGLE_CLIENT_ID`;
-- `NEXT_PUBLIC_SUPABASE_URL`;
-- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`.
-
-Production Vercel variables, production Supabase Auth and the productive Google
-client were not changed.
-
-## Isolation
-
-| Check | Result |
+| Isolation check | Result |
 | --- | --- |
-| Login against stable Preview | PASS |
+| Login/logout against stable Preview | PASS |
 | Supabase project after login | staging `iozcjirlfytryzrcmrnq` |
 | Production project in active bundle | absent |
-| Token in final URL | absent |
-| Token in logs/evidence | absent |
-| Logout | PASS |
-| OAuth loop | none |
+| Token in final URL, logs or evidence | absent |
 | Service-role key in browser | absent |
+| OAuth loop | none |
 
-A manual Preview deployment initially inherited the general Preview environment
-instead of branch overrides. The client mismatch was detected at the Google
-boundary, the stable alias was restored immediately, and no authentication or
-write completed through that artifact. All subsequent validation uses a local
-prebuild generated from the branch-specific Preview environment.
+## Deep-Link And Menu Return
 
-## Deep-Link Return
-
-| Entry route | Result |
+| Entry or action | Result |
 | --- | --- |
 | `/` | PASS |
 | `/?mobile=partido` | PASS; valid query retained |
-| `/mercado` | public route; no login gate, route retained |
-| `/ranking` | public route; no login gate, route retained |
-| `/equipo/identidad` | PASS; returns to exact protected route |
-| `/personalizar-carta?slot=frame` | PASS; protected route and query retained |
+| `/mercado` and `/ranking` | PASS; public route retained |
+| `/equipo/identidad` | PASS; protected route restored after login |
+| `/personalizar-carta?slot=frame` | PASS; route and query restored |
+| Desktop `Perfil` | PASS; opens the own profile flow |
+| Portrait `Inicio`, `Partido`, `Equipo`, `Perfil` | PASS; invoke in-app navigation |
+| Portrait `Mercado` | PASS; remains the explicit `/mercado` route |
 
-The return helper accepts only same-origin paths and rejects external targets or
-the OAuth callback itself.
+The final menu regression is covered in `tests/official-ui-v2-1.test.ts`.
 
 ## Canonical Staging Cases
 
 | Case | Status | Evidence |
 | --- | --- | --- |
-| Authorized authenticated user without team/profile | PASS | real staging readback, 9 captures |
-| Owner with team and no profile | PENDING_SECOND_IDENTITY | fixture/source regression only |
-| Owner with team and profile | PENDING_SECOND_IDENTITY | fixture/source regression only |
-| Normal player | PENDING_SECOND_IDENTITY | fixture/source regression only |
-| Configured team shield | PENDING_SECOND_IDENTITY | canonical component/source plus fixture |
-| Base team shield | PENDING_SECOND_IDENTITY | canonical component/source plus fixture |
-| Long team name, wide roster, several matches | PENDING_SECOND_IDENTITY | exhaustive visual fixture matrix |
+| Authorized user without team/profile | PASS | 9 prior canonical captures |
+| Owner with team and no profile | PASS | desktop, portrait and landscape |
+| Base team shield | PASS | canonical snapshot revision 0; three viewports |
+| Configured team shield | PASS | canonical snapshot revision 1; three viewports |
+| Owner with profile | BLOCKED_EXISTING_RATING_V2_ONBOARDING | server rejected the first assessment before profile creation |
+| Normal player | PENDING_SECOND_IDENTITY | no synthetic membership or fabricated PASS |
+| Long team name | PASS | canonical owner Home |
+| Wide roster | PASS | 12 QA player rows created through the official UI |
+| Several upcoming/closed matches | PENDING | not manufactured after the onboarding blocker |
 
-The second authorized Google actor reached device verification twice, but both
-requests expired before human approval. No password was guessed, no synthetic
-membership was altered and no staging data was created to manufacture a PASS.
+The configured shield was saved through the existing authoritative product
+flow and read back from the server. No reward, inventory or production cosmetic
+was granted. The Home keeps `TeamShieldView` as the protagonist and does not
+substitute a `PlayerCardView` for the team shield.
 
-## Authenticated Defects Closed
+## Existing Rating V2 Blocker
 
-1. Signed-out protected Card and Shield routes had no direct login action and
-   therefore could not return to the original route.
-2. A user without `PlayerProfile` saw the server message `Player profile
-   required`; the product now shows `Tu carta aún no está creada` with the sole
-   action `Crear mi ficha`.
-3. The first deep-link implementation dropped `?slot=frame`; browser QA
-   reproduced it and the final implementation preserves the current valid
-   query.
-4. The missing-profile state no longer remains in an indefinite busy state.
+The owner assessment reached the staging server and returned:
 
-All changes are minimal and covered by `tests/official-ui-v2-1.test.ts`.
+```text
+Complete the initial player assessment before creating a new profile
+```
 
-## Visual Matrix
+This is not an Official UI V2.1 visual defect. The existing Rating V2 function
+`persist_pachanga_player_assessment_v2` invokes
+`upsert_pachanga_own_player_profile` before inserting the initial assessment.
+The profile upsert simultaneously requires that initial assessment to exist
+when neither a global profile nor selected player exists. A genuinely
+profile-less user therefore cannot complete the first assessment through the
+current ordering.
 
-Canonical staging evidence contains 9 captures. Result: 0 document overflow,
-0 broken images, 0 console warnings/errors and 0 technical error leaks. It
-covers Home at `1440x900`, `390x844`, `844x390`, plus Team Identity, Card,
-Ranking, Notification Preferences and empty Notifications.
+No SQL, migration, Rating formula, assessment row or direct database workaround
+was introduced in this gate. No partial assessment was persisted. The owner
+with-profile row remains blocked until Rating V2 is corrected in its own scope.
 
-The final contact sheet explicitly labels owner/player/offline frames as
-`fixture visual`; they are not presented as canonical authenticated readbacks.
+## Role Boundary
 
-## Theme And Orientation
+- Owner controls and private Team Access: canonical PASS.
+- Owner shield editing: canonical PASS.
+- Player controls absent for a normal member: fixture/regression PASS,
+  canonical `PENDING_SECOND_IDENTITY`.
+- A second actor must authenticate and accept the real invitation before the
+  player row can become PASS. Device verification or browser reconnection must
+  not be replaced by direct membership writes.
 
-- Authenticated user without an explicit preference: dark default PASS.
-- Explicit light/dark persistence: source and regression PASS; canonical second
-  identity pending.
-- Portrait -> landscape -> portrait: visual matrix and rotation regression PASS.
-- No duplicate sports write was issued during QA.
-- No local preview was presented as server confirmation.
+## Defects Closed In This Gate
+
+1. Signed-out protected Card and Shield routes lacked a direct login action.
+2. The no-profile state leaked a technical server message and could remain busy.
+3. The Card OAuth return dropped `?slot=frame`.
+4. Desktop `Perfil` opened a mobile account sheet hidden by the desktop shell.
+5. Portrait shell destinations became static links and bypassed the internal
+   product navigation callback after the first transition.
+
+The two menu defects were reproduced on the canonical Preview, fixed minimally
+in commit `d1b44b4490f943a0e4f0792a392e0380ef845589`, and covered by regression.
+
+## Visual Evidence
+
+There are 18 canonical staging captures in total: nine prior no-team/no-profile
+captures and nine new owner/shield captures. The new set has exact dimensions
+`1440x900`, `390x844` and `844x390`, no horizontal overflow and no broken shield
+image. The earlier nine-capture set retained its recorded zero console/error
+result. Console counters were not re-invented for screenshots where a separate
+console audit was not repeated.
+
+The authenticated contact sheet labels canonical staging separately from the
+owner/player/offline fixture row. Fixture images are never presented as server
+readback.
+
+## Match, Market, Theme And Orientation
+
+- Match and Market exhaustive fixture/regression matrices: PASS.
+- Owner/player canonical permission comparison in Match and Market:
+  `PENDING_SECOND_IDENTITY`.
+- Default dark theme for the canonical actor: PASS.
+- Explicit light/dark persistence: regression PASS; second-actor canonical
+  replay pending.
+- Portrait, landscape and portrait layouts: canonical viewport captures PASS.
+- Same-page state retention and absence of duplicate sporting writes:
+  regression PASS.
+
+No sporting write was presented as confirmed while offline.
 
 ## PWA
 
 | Check | Result |
 | --- | --- |
-| Manifest | PASS, `/manifest.webmanifest` |
-| Service Worker controller | PASS |
+| Manifest and Service Worker | PASS |
 | Cached shell under simulated network offline | PASS |
-| Sports operation shown as confirmed offline | NO |
 | Reconnect and canonical refresh | PASS |
 | Exact installed standalone Preview | PENDING |
 | Physical Android | PENDING |
 | Physical iPhone | PENDING |
 
-Browser emulation does not substitute an installed PWA or a physical device, so
-those states remain pending.
+Browser emulation is not reported as an installed PWA or a physical device.
 
-## Data Boundary
+## Data And Cleanup Boundary
 
-- Supabase Auth staging configuration: modified only for the separate Google
-  staging client.
-- Supabase schema paths in Git diff: 0.
-- Migrations: 0.
-- SQL/RPC/RLS changes: 0.
-- Staging product rows created/updated/deleted: 0.
-- Supabase production: not modified.
-- Vercel production: not modified.
+- Supabase production, Vercel production and production OAuth: not modified.
+- Supabase schema, migration, SQL, RPC and RLS paths changed by this gate: 0.
+- Staging product fixture: one clearly named QA team, 12 QA players and shield
+  revision 1, all created through product flows.
+- Rating, rewards, Conduct and billing fixture mutations: 0.
+- Pending invitation and QA team cleanup: PENDING while the required
+  second-identity flow remains open. Destructive removal must use the official
+  product action and explicit confirmation; no direct table deletion is used.
+- Pending sporting/offline operations: 0.
 
 ## Closing Gates
 
 - `npm ci`: PASS.
-- `npm test`: PASS, 354/354 tests; includes the production build.
+- `npm test`: PASS, **374/374** total (**20 Node + 354 TSX**).
 - `npm run typecheck`: PASS.
-- Focused ESLint for the new helper, protected routes, regression suite and
-  evidence generator: PASS.
-- Source-only global ESLint: inherited baseline remains at 22 errors and 18
-  warnings; no out-of-scope lint debt was changed.
-- `git diff --check`: PASS.
+- `npm run build`: PASS.
+- Focused Official UI/OAuth/PWA/Demo/R3/rendered HTML suite: PASS.
+- Focused ESLint: PASS.
+- Global lint baseline: 22 inherited errors and 18 inherited warnings.
+- `git diff --check`: PASS at the recorded gate; repeated after final evidence.
+
+See `OFFICIAL_UI_V2_1_TEST_COUNT_RECONCILIATION.md` for the runner inventory.
 
 ## Evidence
 
 - `docs/official-ui-v2-1/OFFICIAL_UI_V2_1_AUTHENTICATED_FINAL_CONTACT_SHEET.png`
 - `docs/official-ui-v2-1/captures/authenticated-staging-final/matrix.md`
-- `docs/official-ui-v2-1/captures/authenticated-staging-final/results.json`
-- `docs/official-ui-v2-1/OFFICIAL_UI_V2_1_EVIDENCE_INVENTORY.md`
+- `docs/official-ui-v2-1/captures/canonical-role-final/matrix.md`
+- `docs/official-ui-v2-1/captures/canonical-role-final/results.json`
 
-All committed screenshots were reviewed for PII before inclusion.
+All committed evidence is sanitized: no email, personal name, invitation token,
+cookie, service key or internal group identifier is included.

@@ -4,117 +4,120 @@
 
 - Base: `origin/main` `a4f2468d9b779db6a4391df7cec4cc34e4162fbe`.
 - Branch: `codex/official-ui-v2-1-deep-demo-parity`.
-- Starting HEAD for the authenticated gate:
-  `c6733f6cb39c950ff70c590c5a6072e562554ea7`.
+- Starting HEAD for this gate:
+  `a1b6f5223f6d2ec70e390073aa2a030755732b28`.
+- Closing code HEAD: `d1b44b4490f943a0e4f0792a392e0380ef845589`.
 - Draft PR: [#163](https://github.com/puntoracingrc/pachangas/pull/163).
-- Final HEAD: PR #163 `headRefOid` after the closing push.
 - Merge: NO.
-- Production: not modified.
+- Production and Supabase production: not modified.
 - R4A PR #162: not modified.
 
 ## Product Story
 
 Official Home follows the accepted Demo World hierarchy without importing demo
-authority:
-
-1. canonical team identity and `TeamShieldView`;
-2. one primary sporting action and compact real metrics;
-3. upcoming matches;
-4. real season activity.
-
-The player's own card is secondary. A team owner without a personal profile
-never inherits another roster member's card. Team selection is integrated in
-identity controls and detailed Team Access stays in a permission-guarded drawer.
+authority: canonical team identity, `TeamShieldView`, one primary sporting
+action, compact metrics, upcoming matches and season activity. The player's own
+card remains secondary. Team selection stays integrated and private Team Access
+lives in its permission-guarded drawer.
 
 Match remains one hub with Proximo, Alineacion, Resultado and Admin. Market,
 Ranking, Notifications, Card and Shield retain their existing read models,
-permissions and server-backed writes. Demo World remains isolated.
+permissions and server-backed writes.
 
-## OAuth And Authenticated QA
+## Demo World Boundary
 
-The Preview now uses a separate staging Google client and exact stable callback.
-Login, logout, staging isolation and deep-link return pass for a real authorized
-staging account without team/profile. Browser QA found and closed three concrete
-defects: missing protected-route login, a leaked technical no-profile error and
-loss of the Card query during OAuth return.
+Demo World received no data, fixture, authority or redesign changes. It did
+receive one bounded responsive hotfix in
+`app/demo-world/demo-world.module.css`: the Mobile Game Landscape identity band
+changed from `min-height: 100%` to
+`min-height: calc(100dvh - var(--game-nav-height, 48px))`. The regression lives
+in `tests/demo-world-v1.test.ts`.
 
-Canonical owner/player sessions remain pending because the second authorized
-Google actor's device verification expired. Fixture coverage remains clearly
-labelled and is not promoted to canonical evidence. Full detail is in
-`OFFICIAL_UI_V2_1_AUTHENTICATED_QA_REPORT.md`.
+The A/B/C contact sheet keeps the curated Demo baseline for structural
+comparison. It must not be read as a fresh canonical staging readback or as a
+claim that Demo World was wholly untouched.
 
-## Visual QA
+## Canonical Staging QA
 
-The pre-existing exhaustive V2.1 matrix covers 16 surfaces across seven
-viewports, including `667x375`, `740x360`, `844x390`, `932x430` and PWA-emulated
-portrait. Its recorded result remains 0 navigation errors, console issues,
-failed requests, broken images, document overflow, viewport violations and game
-chrome violations.
+The stable Preview uses staging OAuth and Supabase project
+`iozcjirlfytryzrcmrnq`. Canonical readback confirms:
 
-The new canonical staging pass adds nine PII-free captures:
+- user without team/profile: PASS;
+- owner with team and no profile: PASS;
+- base shield revision 0: PASS;
+- configured shield revision 1: PASS;
+- long team name: PASS;
+- 12-player QA roster created through the official UI: PASS.
 
-| Captures | Console warnings/errors | Broken images | Overflow X | Technical leaks |
-| ---: | ---: | ---: | ---: | ---: |
-| 9 | 0 | 0 | 0 | 0 |
+Owner with profile is `BLOCKED_EXISTING_RATING_V2_ONBOARDING`: the current SQL
+orders profile creation before inserting the initial assessment while the
+profile gate requires that assessment. No Rating code or database state was
+changed to hide the blocker. Normal-player QA remains
+`PENDING_SECOND_IDENTITY` and no direct membership write was used.
 
-It covers Home desktop/portrait/landscape, no-team identity, no-profile Card,
-Ranking, Notification Preferences and empty Notifications.
+## Canonical Navigation Defect Closed
+
+Preview QA reproduced two related menu defects:
+
+1. desktop `Perfil` opened a mobile account sheet hidden by the desktop shell;
+2. portrait shell destinations became static links and bypassed the in-app
+   navigation callback after the first transition.
+
+Commit `d1b44b4490f943a0e4f0792a392e0380ef845589` applies the minimal fix and
+adds regression coverage. No palette, density or navigation model was
+redesigned.
+
+## Visual Evidence
+
+The prior canonical no-team set contains nine sanitized captures. The owner and
+shield pass adds nine more at `1440x900`, `390x844` and `844x390`, for 18
+canonical staging captures total. The current authenticated contact sheet
+separates these rows from the explicitly labelled fixture owner/player/offline
+row.
+
+The new owner/shield images show no horizontal overflow or broken shield image.
+The pre-existing exhaustive fixture matrix still covers 16 product surfaces and
+seven viewports with zero recorded violations.
 
 ## PWA And Orientation
 
-- Manifest: PASS.
-- Service Worker controlled: PASS.
-- Cached shell under simulated network offline: PASS.
-- Reconnect and canonical state: PASS.
+- Manifest and Service Worker: PASS.
+- Cached shell under simulated offline: PASS.
+- Reconnect and canonical refresh: PASS.
 - Installed standalone Preview: PENDING.
 - Physical Android/iPhone: PENDING.
-- Market and Match rotation state: regression PASS with one navigation and no
-  duplicate sporting write.
+- Product state-retention and no duplicate sporting write on rotation:
+  regression PASS.
 
-## Evidence Hygiene
-
-Before hygiene, the PR contained 249 V2.1 evidence files and 19,372,386 bytes,
-including 243 raw captures. The cleanup removed 179 raw files and 9,400,725
-bytes while retaining all final contact sheets, Markdown/JSON matrices,
-representative viewport evidence and canonical staging captures.
-
-After hygiene:
-
-- 82 evidence files;
-- 9,978,764 bytes total;
-- 75 capture/matrix files;
-- 6,199,773 capture bytes;
-- six contact sheets;
-- nine canonical staging screenshots.
-
-See `docs/official-ui-v2-1/OFFICIAL_UI_V2_1_EVIDENCE_INVENTORY.md`.
+Emulation is not reported as installed or physical QA.
 
 ## Engineering Gates
 
-The closing run completed `npm ci`, the complete test suite, typecheck,
-production build, focused lint and `git diff --check` after all
-report/evidence changes. Results: 354/354 tests PASS (including the production
-build), typecheck PASS, focused lint PASS and diff check PASS. Source-only
-global lint still reports the documented out-of-scope baseline of 40 problems
-(22 errors and 18 warnings); the generated Vercel output is excluded from that
-baseline. The authoritative final HEAD/deployment is recorded in PR #163 and
-the final handoff.
+- `npm ci`: PASS.
+- Complete `npm test`: 374/374 PASS (20 Node + 354 TSX).
+- Typecheck: PASS.
+- Production build: PASS.
+- Focused lint: PASS.
+- Global inherited lint baseline: 22 errors and 18 warnings.
+- `git diff --check`: PASS at the recorded gate and repeated after final
+  evidence edits.
 
-The focused OAuth/V2.1 suite passes 10/10. No Supabase, migration, SQL, RPC, RLS
-or `app/api` path was added by this gate.
+The reconciled test inventory is in
+`OFFICIAL_UI_V2_1_TEST_COUNT_RECONCILIATION.md`.
 
-## Evidence
+## Evidence Hygiene
 
-- `docs/official-ui-v2-1/OFFICIAL_UI_V2_1_AUTHENTICATED_FINAL_CONTACT_SHEET.png`
-- `docs/official-ui-v2-1/OFFICIAL_UI_V2_1_HOME_PARITY_CONTACT_SHEET.png`
-- `docs/official-ui-v2-1/OFFICIAL_UI_V2_1_MATCH_PARITY_CONTACT_SHEET.png`
-- `docs/official-ui-v2-1/OFFICIAL_UI_V2_1_MARKET_PARITY_CONTACT_SHEET.png`
-- `docs/official-ui-v2-1/OFFICIAL_UI_V2_1_MOBILE_GAME_CONTACT_SHEET.png`
-- `docs/official-ui-v2-1/OFFICIAL_UI_V2_1_DEMO_OFFICIAL_COMPARISON.png`
+The retained set consists of final contact sheets, compact machine-readable
+matrices and representative captures. No email, personal name, cookie, token,
+invitation URL, service key or internal group identifier is committed.
+
+Staging currently retains the QA team, 12 QA players and its pending invitation
+because second-identity QA is not complete. Cleanup remains pending and must use
+the official product action with explicit destructive confirmation.
 
 ## Gate
 
-PR #163 stays OPEN and DRAFT. OAuth staging and the no-team canonical case pass.
-The PR must not be described as fully authenticated until the owner/player
-second-identity rows are completed or Alberto explicitly accepts that limitation.
-No merge or production deployment is authorized by this report.
+PR #163 stays OPEN and DRAFT. The owner/shield visual slice is ready for Alberto
+to inspect, but the overall authenticated gate is not fully closed: normal
+player, owner-with-profile, installed PWA and physical devices remain pending or
+blocked as stated above. Merge and production deployment are not authorized.

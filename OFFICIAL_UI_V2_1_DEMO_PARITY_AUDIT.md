@@ -83,7 +83,9 @@ V2.1 may transform presentation only. It must not change RPC names, payloads, re
 
 - The clean local worktree has no private environment file, so authenticated local state is validated through official source/read-model branches and tracked Official UI V2 captures. Authenticated Preview QA will use the Vercel environment without performing destructive actions.
 - Reward activity is not duplicated into `app/page.tsx`; Home must not invent pending rewards if the canonical read model is unavailable there.
-- Demo World remains untouched and is never used as an authority adapter.
+- Demo World remains untouched in data, fixtures and authority and is never
+  used as an authority adapter. A later bounded CSS hotfix corrects only the
+  Mobile Game Landscape identity-band height.
 
 ## Post-implementation Verification
 
@@ -91,9 +93,18 @@ V2.1 may transform presentation only. It must not change RPC names, payloads, re
 - Match now exposes one persistent contextual navigation and one persistent match context. The existing lineup, result and administration bodies keep their original callbacks and guards.
 - Market now has one navigation and one compact context/filter/results workspace. Existing Market queries, feature flags and mutations remain in `app/mercado/page.tsx`.
 - Ranking renders the canonical own-position result before the public table without changing its contract or formula.
-- Demo World and Control Center received no source changes.
+- Demo World received no data, fixture, authority or redesign change. Its only
+  source change is the responsive `identityBand` height fix from `100%` to
+  `calc(100dvh - var(--game-nav-height, 48px))`, covered by
+  `tests/demo-world-v1.test.ts`. Control Center received no source changes.
 - The visual lab is explicitly noindex/nofollow and imports no Demo fixtures, Supabase client, RPC, localStorage or IndexedDB.
 - The final local matrix covered 279 surface/viewport combinations: 144 V2.1 proposal combinations and 135 product/Demo regression combinations. All automated violation counters finished at zero.
 - A same-page browser rotation test retained the selected Market tab and Match pane through portrait -> landscape -> portrait, with one contextual navigation after each change.
 
-The authenticated product cannot be populated locally because this clean worktree intentionally has no private environment file. Canonical authenticated readback therefore remains a final Preview QA item; no local fixture is presented as proof of server behavior.
+The clean worktree still contains no private local environment. Canonical
+authenticated readback was therefore performed only against the isolated
+staging Preview: owner without profile, base shield and configured shield now
+have sanitized canonical evidence. Owner with profile is blocked by the
+pre-existing Rating V2 assessment/profile ordering, and normal-player readback
+remains pending a second authenticated identity. No local fixture is presented
+as proof of server behavior.
