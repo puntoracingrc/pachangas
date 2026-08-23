@@ -1,31 +1,32 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 
-type ThemePreference = "system" | "light" | "dark";
+export type ThemePreference = "system" | "light" | "dark";
 
 const themePreferenceKey = "pachanga-iq-theme";
+const themePreferenceEvent = "pachangas:theme-preference-change";
 const themePreferenceOptions: Array<{ value: ThemePreference; label: string }> = [
   { value: "system", label: "Sistema" },
   { value: "light", label: "Claro" },
   { value: "dark", label: "Oscuro" },
 ];
 
-function normalizeThemePreference(value: string | null): ThemePreference {
-  return value === "light" || value === "dark" ? value : "system";
+export function resolveThemePreference(value: string | null, fallback: ThemePreference = "system"): ThemePreference {
+  return value === "light" || value === "dark" || value === "system" ? value : fallback;
 }
 
-function getStoredThemePreference(): ThemePreference {
-  if (typeof window === "undefined") return "system";
+function getStoredThemePreference(fallback: ThemePreference): ThemePreference {
+  if (typeof window === "undefined") return fallback;
 
   try {
-    return normalizeThemePreference(window.localStorage.getItem(themePreferenceKey));
+    return resolveThemePreference(window.localStorage.getItem(themePreferenceKey), fallback);
   } catch {
-    return "system";
+    return fallback;
   }
 }
 
-function applyThemePreference(preference: ThemePreference) {
+export function applyThemePreference(preference: ThemePreference) {
   if (typeof document === "undefined") return;
 
   const themedElements: HTMLElement[] = [document.documentElement, document.body].filter(
@@ -46,25 +47,37 @@ function applyThemePreference(preference: ThemePreference) {
   });
 }
 
-export function ThemeToggle() {
-  const [themePreference, setThemePreference] = useState<ThemePreference>("system");
-  const [isMounted, setIsMounted] = useState(false);
+function subscribeThemePreference(listener: () => void) {
+  if (typeof window === "undefined") return () => undefined;
+  const onStorage = (event: StorageEvent) => {
+    if (event.key === themePreferenceKey) listener();
+  };
+  window.addEventListener("storage", onStorage);
+  window.addEventListener(themePreferenceEvent, listener);
+  return () => {
+    window.removeEventListener("storage", onStorage);
+    window.removeEventListener(themePreferenceEvent, listener);
+  };
+}
 
+export function AuthenticatedThemeDefault() {
   useEffect(() => {
-    const storedPreference = getStoredThemePreference();
-    setThemePreference(storedPreference);
-    applyThemePreference(storedPreference);
-    setIsMounted(true);
+    applyThemePreference(getStoredThemePreference("dark"));
   }, []);
 
-  useEffect(() => {
-    if (!isMounted) return;
+  return null;
+}
 
-    try {
-      window.localStorage.setItem(themePreferenceKey, themePreference);
-    } catch {}
+export function ThemeToggle({ defaultPreference = "system" }: { defaultPreference?: ThemePreference }) {
+  const themePreference = useSyncExternalStore(
+    subscribeThemePreference,
+    () => getStoredThemePreference(defaultPreference),
+    () => defaultPreference,
+  );
+
+  useEffect(() => {
     applyThemePreference(themePreference);
-  }, [isMounted, themePreference]);
+  }, [themePreference]);
 
   useEffect(() => {
     if (themePreference !== "system") return;
@@ -77,8 +90,11 @@ export function ThemeToggle() {
   }, [themePreference]);
 
   const handleThemeChange = (preference: ThemePreference) => {
-    setThemePreference(preference);
+    try {
+      window.localStorage.setItem(themePreferenceKey, preference);
+    } catch {}
     applyThemePreference(preference);
+    window.dispatchEvent(new Event(themePreferenceEvent));
   };
 
   return (
@@ -89,8 +105,8 @@ export function ThemeToggle() {
           <button
             key={option.value}
             type="button"
-            className={isMounted && themePreference === option.value ? "active" : ""}
-            aria-pressed={isMounted && themePreference === option.value}
+            className={themePreference === option.value ? "active" : ""}
+            aria-pressed={themePreference === option.value}
             onClick={() => handleThemeChange(option.value)}
           >
             {option.label}

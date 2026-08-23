@@ -1,0 +1,259 @@
+[
+  {
+    "surface": "v21-match-lineup",
+    "path": "/laboratorio-official-ui-v2-1?surface=partido&pane=alineacion&role=admin&capture=1",
+    "userMode": "lab-admin",
+    "viewportKey": "landscape-low",
+    "viewport": "740x360",
+    "metrics": {
+      "title": "Official UI V2.1 Deep Demo Parity Lab | Pachangas IQ",
+      "theme": "dark",
+      "textLength": 451,
+      "overflowX": 0,
+      "overflowY": 0,
+      "failedImages": [],
+      "demoPalette": null,
+      "smallTargets": [
+        {
+          "tag": "a",
+          "text": "Pachangas IQ, Inicio",
+          "className": "official-product-shell-v2-module__UxqvlW__gameMark",
+          "width": 69,
+          "height": 34
+        },
+        {
+          "tag": "a",
+          "text": "INInicio",
+          "className": "",
+          "width": 69,
+          "height": 37
+        },
+        {
+          "tag": "a",
+          "text": "PAPartido",
+          "className": "",
+          "width": 69,
+          "height": 37
+        },
+        {
+          "tag": "a",
+          "text": "MEMercado",
+          "className": "",
+          "width": 69,
+          "height": 37
+        },
+        {
+          "tag": "a",
+          "text": "EQEquipo",
+          "className": "",
+          "width": 69,
+          "height": 37
+        },
+        {
+          "tag": "a",
+          "text": "PFPerfil",
+          "className": "",
+          "width": 69,
+          "height": 37
+        },
+        {
+          "tag": "a",
+          "text": "Avisos",
+          "className": "",
+          "width": 33,
+          "height": 28
+        },
+        {
+          "tag": "a",
+          "text": "Ranking",
+          "className": "",
+          "width": 33,
+          "height": 28
+        },
+        {
+          "tag": "button",
+          "text": "Próximo",
+          "className": "",
+          "width": 109,
+          "height": 28
+        },
+        {
+          "tag": "button",
+          "text": "Alineación",
+          "className": "official-match-game-hub-module__LFYbAa__active active",
+          "width": 109,
+          "height": 28
+        },
+        {
+          "tag": "button",
+          "text": "Resultado",
+          "className": "",
+          "width": 109,
+          "height": 28
+        },
+        {
+          "tag": "button",
+          "text": "Admin",
+          "className": "",
+          "width": 109,
+          "height": 28
+        },
+        {
+          "tag": "button",
+          "text": "Aleatorio",
+          "className": "",
+          "width": 109,
+          "height": 27
+        },
+        {
+          "tag": "button",
+          "text": "Equilibrado",
+          "className": "",
+          "width": 109,
+          "height": 27
+        },
+        {
+          "tag": "button",
+          "text": "Cerrar",
+          "className": "",
+          "width": 109,
+          "height": 27
+        },
+        {
+          "tag": "button",
+          "text": "Alineación abierta",
+          "className": "official-ui-v2-1-lab-module__uCVHrW__statusButton",
+          "width": 89,
+          "height": 24
+        },
+        {
+          "tag": "button",
+          "text": "PORAlberto",
+          "className": "official-ui-v2-1-lab-module__uCVHrW__player",
+          "width": 56,
+          "height": 36
+        },
+        {
+          "tag": "button",
+          "text": "MCMarta",
+          "className": "official-ui-v2-1-lab-module__uCVHrW__player",
+          "width": 56,
+          "height": 36
+        },
+        {
+          "tag": "button",
+          "text": "MCSergio",
+          "className": "official-ui-v2-1-lab-module__uCVHrW__player",
+          "width": 56,
+          "height": 36
+        },
+        {
+          "tag": "button",
+          "text": "DELNuria",
+          "className": "official-ui-v2-1-lab-module__uCVHrW__player",
+          "width": 56,
+          "height": 36
+        },
+        {
+          "tag": "button",
+          "text": "MCDani",
+          "className": "official-ui-v2-1-lab-module__uCVHrW__player",
+          "width": 56,
+          "height": 36
+        },
+        {
+          "tag": "button",
+          "text": "PORPaula",
+          "className": "official-ui-v2-1-lab-module__uCVHrW__player",
+          "width": 56,
+          "height": 36
+        },
+        {
+          "tag": "button",
+          "text": "DELIván",
+          "className": "official-ui-v2-1-lab-module__uCVHrW__player",
+          "width": 56,
+          "height": 36
+        },
+        {
+          "tag": "button",
+          "text": "MCLucía",
+          "className": "official-ui-v2-1-lab-module__uCVHrW__player",
+          "width": 56,
+          "height": 36
+        },
+        {
+          "tag": "button",
+          "text": "MCÁlex",
+          "className": "official-ui-v2-1-lab-module__uCVHrW__player",
+          "width": 56,
+          "height": 36
+        },
+        {
+          "tag": "button",
+          "text": "DELCarla",
+          "className": "official-ui-v2-1-lab-module__uCVHrW__player",
+          "width": 56,
+          "height": 36
+        },
+        {
+          "tag": "button",
+          "text": "RESHugo",
+          "className": "",
+          "width": 135,
+          "height": 30
+        },
+        {
+          "tag": "button",
+          "text": "RESSara",
+          "className": "",
+          "width": 135,
+          "height": 30
+        }
+      ],
+      "viewportViolations": [],
+      "gameChromeViolations": [],
+      "gameLayout": {
+        "activeContext": {
+          "bottom": 122,
+          "display": "grid",
+          "height": 52,
+          "left": 200,
+          "right": 740,
+          "top": 70,
+          "width": 540
+        },
+        "appShell": null,
+        "main": {
+          "bottom": 394,
+          "display": "grid",
+          "height": 360,
+          "left": 82,
+          "right": 740,
+          "top": 34,
+          "width": 658
+        },
+        "mainScrollTop": 0,
+        "mobileNav": {
+          "bottom": 0,
+          "display": "block",
+          "height": 0,
+          "left": 0,
+          "right": 0,
+          "top": 0,
+          "width": 0
+        },
+        "scrollY": 0
+      },
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  }
+]

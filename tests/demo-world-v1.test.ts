@@ -382,6 +382,17 @@ test("game mode keeps perspective switching reachable from Profile", async () =>
   assert.match(styles, /\.gamePerspectiveSelect\s*\{\s*display:\s*grid/);
 });
 
+test("game landscape keeps the team identity in its own viewport row", async () => {
+  const styles = await readFile(path.join(root, "app/demo-world/demo-world.module.css"), "utf8");
+  const landscape = styles.slice(styles.indexOf("@media (orientation: landscape)"));
+
+  assert.match(
+    landscape,
+    /\.identityBand\s*\{\s*min-height:\s*calc\(100dvh - var\(--game-nav-height, 48px\)\)/,
+  );
+  assert.doesNotMatch(landscape, /\.identityBand\s*\{\s*min-height:\s*100%/);
+});
+
 test("Demo World honors the explicit product theme over the system preference", async () => {
   const styles = await readFile(path.join(root, "app/demo-world/demo-world.module.css"), "utf8");
   assert.match(styles, /:global\(:root\[data-theme="light"\]\) \.shell/);

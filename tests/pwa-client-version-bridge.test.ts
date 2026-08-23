@@ -266,6 +266,7 @@ test("the write bridge classifies every browser RPC without treating reads as wr
     "get_pachanga_guest_rating_token_context_v2",
     "get_pachanga_rating_eligibility",
     "get_pachanga_team_social_snapshot",
+    "get_pachanga_team_shield_snapshot_v1",
     "get_pachanga_challengeable_team_profile",
     "get_pachanga_guest_match_snapshot_v1",
     "get_pachanga_match_link_invitation_v1",

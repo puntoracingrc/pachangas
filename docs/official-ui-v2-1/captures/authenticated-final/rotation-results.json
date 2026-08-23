@@ -1,0 +1,33 @@
+{
+  "market": {
+    "portrait": {
+      "className": "official-market-game-view-module__TnuGxa__active active",
+      "ariaPressed": null,
+      "navs": 1
+    },
+    "landscape": {
+      "className": "official-market-game-view-module__TnuGxa__active active",
+      "ariaPressed": null,
+      "navs": 1
+    },
+    "portraitBack": {
+      "className": "official-market-game-view-module__TnuGxa__active active",
+      "ariaPressed": null,
+      "navs": 1
+    }
+  },
+  "match": {
+    "portrait": {
+      "className": "official-match-game-hub-module__LFYbAa__active active",
+      "navs": 1
+    },
+    "landscape": {
+      "className": "official-match-game-hub-module__LFYbAa__active active",
+      "navs": 1
+    },
+    "portraitBack": {
+      "className": "official-match-game-hub-module__LFYbAa__active active",
+      "navs": 1
+    }
+  }
+}

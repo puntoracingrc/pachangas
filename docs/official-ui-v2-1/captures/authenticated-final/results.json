@@ -1,0 +1,398 @@
+[
+  {
+    "surface": "home-owner",
+    "viewport": [
+      1440,
+      900
+    ],
+    "brokenImages": 0,
+    "identityBands": 1,
+    "navigations": 0,
+    "overflowX": false,
+    "theme": "dark"
+  },
+  {
+    "surface": "home-player",
+    "viewport": [
+      1440,
+      900
+    ],
+    "brokenImages": 0,
+    "identityBands": 1,
+    "navigations": 0,
+    "overflowX": false,
+    "theme": "dark"
+  },
+  {
+    "surface": "home-no-team",
+    "viewport": [
+      1440,
+      900
+    ],
+    "brokenImages": 0,
+    "identityBands": 1,
+    "navigations": 0,
+    "overflowX": false,
+    "theme": "dark"
+  },
+  {
+    "surface": "home-offline",
+    "viewport": [
+      1440,
+      900
+    ],
+    "brokenImages": 0,
+    "identityBands": 1,
+    "navigations": 0,
+    "overflowX": false,
+    "theme": "dark"
+  },
+  {
+    "surface": "match-next",
+    "viewport": [
+      1440,
+      900
+    ],
+    "brokenImages": 0,
+    "identityBands": 0,
+    "navigations": 0,
+    "overflowX": false,
+    "theme": "dark"
+  },
+  {
+    "surface": "match-lineup",
+    "viewport": [
+      1440,
+      900
+    ],
+    "brokenImages": 0,
+    "identityBands": 0,
+    "navigations": 0,
+    "overflowX": false,
+    "theme": "dark"
+  },
+  {
+    "surface": "match-result",
+    "viewport": [
+      1440,
+      900
+    ],
+    "brokenImages": 0,
+    "identityBands": 0,
+    "navigations": 0,
+    "overflowX": false,
+    "theme": "dark"
+  },
+  {
+    "surface": "market",
+    "viewport": [
+      1440,
+      900
+    ],
+    "brokenImages": 0,
+    "identityBands": 0,
+    "navigations": 0,
+    "overflowX": false,
+    "theme": "dark"
+  },
+  {
+    "surface": "ranking",
+    "viewport": [
+      1440,
+      900
+    ],
+    "brokenImages": 0,
+    "identityBands": 0,
+    "navigations": 0,
+    "overflowX": false,
+    "theme": "dark"
+  },
+  {
+    "surface": "card",
+    "viewport": [
+      1440,
+      900
+    ],
+    "brokenImages": 0,
+    "identityBands": 0,
+    "navigations": 0,
+    "overflowX": false,
+    "theme": "dark"
+  },
+  {
+    "surface": "shield",
+    "viewport": [
+      1440,
+      900
+    ],
+    "brokenImages": 0,
+    "identityBands": 0,
+    "navigations": 0,
+    "overflowX": false,
+    "theme": "dark"
+  },
+  {
+    "surface": "home-owner",
+    "viewport": [
+      390,
+      844
+    ],
+    "brokenImages": 0,
+    "identityBands": 1,
+    "navigations": 0,
+    "overflowX": false,
+    "theme": "dark"
+  },
+  {
+    "surface": "home-player",
+    "viewport": [
+      390,
+      844
+    ],
+    "brokenImages": 0,
+    "identityBands": 1,
+    "navigations": 0,
+    "overflowX": false,
+    "theme": "dark"
+  },
+  {
+    "surface": "home-no-team",
+    "viewport": [
+      390,
+      844
+    ],
+    "brokenImages": 0,
+    "identityBands": 1,
+    "navigations": 0,
+    "overflowX": false,
+    "theme": "dark"
+  },
+  {
+    "surface": "home-offline",
+    "viewport": [
+      390,
+      844
+    ],
+    "brokenImages": 0,
+    "identityBands": 1,
+    "navigations": 0,
+    "overflowX": false,
+    "theme": "dark"
+  },
+  {
+    "surface": "match-next",
+    "viewport": [
+      390,
+      844
+    ],
+    "brokenImages": 0,
+    "identityBands": 0,
+    "navigations": 0,
+    "overflowX": false,
+    "theme": "dark"
+  },
+  {
+    "surface": "match-lineup",
+    "viewport": [
+      390,
+      844
+    ],
+    "brokenImages": 0,
+    "identityBands": 0,
+    "navigations": 0,
+    "overflowX": false,
+    "theme": "dark"
+  },
+  {
+    "surface": "match-result",
+    "viewport": [
+      390,
+      844
+    ],
+    "brokenImages": 0,
+    "identityBands": 0,
+    "navigations": 0,
+    "overflowX": false,
+    "theme": "dark"
+  },
+  {
+    "surface": "market",
+    "viewport": [
+      390,
+      844
+    ],
+    "brokenImages": 0,
+    "identityBands": 0,
+    "navigations": 0,
+    "overflowX": false,
+    "theme": "dark"
+  },
+  {
+    "surface": "ranking",
+    "viewport": [
+      390,
+      844
+    ],
+    "brokenImages": 0,
+    "identityBands": 0,
+    "navigations": 0,
+    "overflowX": false,
+    "theme": "dark"
+  },
+  {
+    "surface": "card",
+    "viewport": [
+      390,
+      844
+    ],
+    "brokenImages": 0,
+    "identityBands": 0,
+    "navigations": 0,
+    "overflowX": false,
+    "theme": "dark"
+  },
+  {
+    "surface": "shield",
+    "viewport": [
+      390,
+      844
+    ],
+    "brokenImages": 0,
+    "identityBands": 0,
+    "navigations": 0,
+    "overflowX": false,
+    "theme": "dark"
+  },
+  {
+    "surface": "home-owner",
+    "viewport": [
+      844,
+      390
+    ],
+    "brokenImages": 0,
+    "identityBands": 1,
+    "navigations": 0,
+    "overflowX": false,
+    "theme": "dark"
+  },
+  {
+    "surface": "home-player",
+    "viewport": [
+      844,
+      390
+    ],
+    "brokenImages": 0,
+    "identityBands": 1,
+    "navigations": 0,
+    "overflowX": false,
+    "theme": "dark"
+  },
+  {
+    "surface": "home-no-team",
+    "viewport": [
+      844,
+      390
+    ],
+    "brokenImages": 0,
+    "identityBands": 1,
+    "navigations": 0,
+    "overflowX": false,
+    "theme": "dark"
+  },
+  {
+    "surface": "home-offline",
+    "viewport": [
+      844,
+      390
+    ],
+    "brokenImages": 0,
+    "identityBands": 1,
+    "navigations": 0,
+    "overflowX": false,
+    "theme": "dark"
+  },
+  {
+    "surface": "match-next",
+    "viewport": [
+      844,
+      390
+    ],
+    "brokenImages": 0,
+    "identityBands": 0,
+    "navigations": 0,
+    "overflowX": false,
+    "theme": "dark"
+  },
+  {
+    "surface": "match-lineup",
+    "viewport": [
+      844,
+      390
+    ],
+    "brokenImages": 0,
+    "identityBands": 0,
+    "navigations": 0,
+    "overflowX": false,
+    "theme": "dark"
+  },
+  {
+    "surface": "match-result",
+    "viewport": [
+      844,
+      390
+    ],
+    "brokenImages": 0,
+    "identityBands": 0,
+    "navigations": 0,
+    "overflowX": false,
+    "theme": "dark"
+  },
+  {
+    "surface": "market",
+    "viewport": [
+      844,
+      390
+    ],
+    "brokenImages": 0,
+    "identityBands": 0,
+    "navigations": 0,
+    "overflowX": false,
+    "theme": "dark"
+  },
+  {
+    "surface": "ranking",
+    "viewport": [
+      844,
+      390
+    ],
+    "brokenImages": 0,
+    "identityBands": 0,
+    "navigations": 0,
+    "overflowX": false,
+    "theme": "dark"
+  },
+  {
+    "surface": "card",
+    "viewport": [
+      844,
+      390
+    ],
+    "brokenImages": 0,
+    "identityBands": 0,
+    "navigations": 0,
+    "overflowX": false,
+    "theme": "dark"
+  },
+  {
+    "surface": "shield",
+    "viewport": [
+      844,
+      390
+    ],
+    "brokenImages": 0,
+    "identityBands": 0,
+    "navigations": 0,
+    "overflowX": false,
+    "theme": "dark"
+  }
+]

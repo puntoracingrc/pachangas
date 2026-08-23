@@ -1,0 +1,1496 @@
+[
+  {
+    "surface": "v21-home",
+    "path": "/laboratorio-official-ui-v2-1?surface=inicio&role=admin&state=upcoming&capture=1",
+    "userMode": "lab-admin",
+    "viewportKey": "desktop",
+    "viewport": "1440x900",
+    "metrics": {
+      "title": "Official UI V2.1 Deep Demo Parity Lab | Pachangas IQ",
+      "theme": "dark",
+      "textLength": 1025,
+      "overflowX": 0,
+      "overflowY": 264,
+      "failedImages": [],
+      "demoPalette": null,
+      "performance": {
+        "cls": 0,
+        "domContentLoadedMs": 135,
+        "firstContentfulPaintMs": 172,
+        "loadMs": 244,
+        "resourceCount": 30,
+        "transferBytes": 1275903
+      },
+      "smallTargets": [
+        {
+          "tag": "a",
+          "text": "Ranking",
+          "className": "",
+          "width": 64,
+          "height": 36
+        },
+        {
+          "tag": "a",
+          "text": "Avisos",
+          "className": "",
+          "width": 56,
+          "height": 36
+        },
+        {
+          "tag": "button",
+          "text": "Mi ficha",
+          "className": "",
+          "width": 244,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Mi equipo",
+          "className": "",
+          "width": 244,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Configurar",
+          "className": "",
+          "width": 244,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Manual",
+          "className": "",
+          "width": 244,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Cerrar sesión",
+          "className": "",
+          "width": 244,
+          "height": 38
+        },
+        {
+          "tag": "select",
+          "text": "Los del Miércoles",
+          "className": "",
+          "width": 180,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Copiar invitación",
+          "className": "",
+          "width": 141,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Identidad",
+          "className": "",
+          "width": 141,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Ajustes",
+          "className": "",
+          "width": 141,
+          "height": 38
+        },
+        {
+          "tag": "a",
+          "text": "Aviso legal",
+          "className": "",
+          "width": 85,
+          "height": 34
+        },
+        {
+          "tag": "a",
+          "text": "Privacidad",
+          "className": "",
+          "width": 83,
+          "height": 34
+        },
+        {
+          "tag": "a",
+          "text": "Cookies",
+          "className": "",
+          "width": 69,
+          "height": 34
+        },
+        {
+          "tag": "a",
+          "text": "Condiciones",
+          "className": "",
+          "width": 94,
+          "height": 34
+        },
+        {
+          "tag": "a",
+          "text": "Condiciones de venta",
+          "className": "",
+          "width": 146,
+          "height": 34
+        }
+      ],
+      "viewportViolations": [],
+      "gameChromeViolations": [],
+      "gameLayout": {
+        "activeContext": null,
+        "appShell": null,
+        "main": null,
+        "mainScrollTop": null,
+        "mobileNav": {
+          "bottom": 0,
+          "display": "none",
+          "height": 0,
+          "left": 0,
+          "right": 0,
+          "top": 0,
+          "width": 0
+        },
+        "scrollY": 0
+      },
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "v21-match-lineup",
+    "path": "/laboratorio-official-ui-v2-1?surface=partido&pane=alineacion&role=admin&capture=1",
+    "userMode": "lab-admin",
+    "viewportKey": "desktop",
+    "viewport": "1440x900",
+    "metrics": {
+      "title": "Official UI V2.1 Deep Demo Parity Lab | Pachangas IQ",
+      "theme": "dark",
+      "textLength": 640,
+      "overflowX": 0,
+      "overflowY": 113,
+      "failedImages": [],
+      "demoPalette": null,
+      "performance": {
+        "cls": 0,
+        "domContentLoadedMs": 116,
+        "firstContentfulPaintMs": 148,
+        "loadMs": 257,
+        "resourceCount": 29,
+        "transferBytes": 1272870
+      },
+      "smallTargets": [
+        {
+          "tag": "a",
+          "text": "Ranking",
+          "className": "",
+          "width": 64,
+          "height": 36
+        },
+        {
+          "tag": "a",
+          "text": "Avisos",
+          "className": "",
+          "width": 56,
+          "height": 36
+        },
+        {
+          "tag": "button",
+          "text": "Aleatorio",
+          "className": "",
+          "width": 159,
+          "height": 32
+        },
+        {
+          "tag": "button",
+          "text": "Equilibrado",
+          "className": "",
+          "width": 159,
+          "height": 32
+        },
+        {
+          "tag": "button",
+          "text": "Cerrar",
+          "className": "",
+          "width": 159,
+          "height": 32
+        },
+        {
+          "tag": "button",
+          "text": "Alineación abierta",
+          "className": "official-ui-v2-1-lab-module__uCVHrW__statusButton",
+          "width": 105,
+          "height": 30
+        },
+        {
+          "tag": "button",
+          "text": "RESHugo",
+          "className": "",
+          "width": 209,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "RESSara",
+          "className": "",
+          "width": 209,
+          "height": 38
+        },
+        {
+          "tag": "a",
+          "text": "Aviso legal",
+          "className": "",
+          "width": 85,
+          "height": 34
+        },
+        {
+          "tag": "a",
+          "text": "Privacidad",
+          "className": "",
+          "width": 83,
+          "height": 34
+        },
+        {
+          "tag": "a",
+          "text": "Cookies",
+          "className": "",
+          "width": 69,
+          "height": 34
+        },
+        {
+          "tag": "a",
+          "text": "Condiciones",
+          "className": "",
+          "width": 94,
+          "height": 34
+        },
+        {
+          "tag": "a",
+          "text": "Condiciones de venta",
+          "className": "",
+          "width": 146,
+          "height": 34
+        }
+      ],
+      "viewportViolations": [],
+      "gameChromeViolations": [],
+      "gameLayout": {
+        "activeContext": {
+          "bottom": 187,
+          "display": "grid",
+          "height": 73,
+          "left": 176,
+          "right": 1440,
+          "top": 114,
+          "width": 1264
+        },
+        "appShell": null,
+        "main": {
+          "bottom": 900,
+          "display": "grid",
+          "height": 786,
+          "left": 0,
+          "right": 1440,
+          "top": 114,
+          "width": 1440
+        },
+        "mainScrollTop": 0,
+        "mobileNav": {
+          "bottom": 0,
+          "display": "none",
+          "height": 0,
+          "left": 0,
+          "right": 0,
+          "top": 0,
+          "width": 0
+        },
+        "scrollY": 0
+      },
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "v21-market",
+    "path": "/laboratorio-official-ui-v2-1?surface=mercado&role=admin&capture=1",
+    "userMode": "lab-admin",
+    "viewportKey": "desktop",
+    "viewport": "1440x900",
+    "metrics": {
+      "title": "Official UI V2.1 Deep Demo Parity Lab | Pachangas IQ",
+      "theme": "dark",
+      "textLength": 1010,
+      "overflowX": 0,
+      "overflowY": 163,
+      "failedImages": [],
+      "demoPalette": null,
+      "performance": {
+        "cls": 0,
+        "domContentLoadedMs": 127,
+        "firstContentfulPaintMs": 148,
+        "loadMs": 196,
+        "resourceCount": 29,
+        "transferBytes": 1272870
+      },
+      "smallTargets": [
+        {
+          "tag": "a",
+          "text": "Ranking",
+          "className": "",
+          "width": 64,
+          "height": 36
+        },
+        {
+          "tag": "a",
+          "text": "Avisos",
+          "className": "",
+          "width": 56,
+          "height": 36
+        },
+        {
+          "tag": "a",
+          "text": "Volver",
+          "className": "official-ui-v2-1-lab-module__uCVHrW__backLink",
+          "width": 50,
+          "height": 32
+        },
+        {
+          "tag": "input",
+          "text": "",
+          "className": "",
+          "width": 297,
+          "height": 36
+        },
+        {
+          "tag": "select",
+          "text": "Todos",
+          "className": "",
+          "width": 297,
+          "height": 36
+        },
+        {
+          "tag": "select",
+          "text": "Fútbol 7",
+          "className": "",
+          "width": 297,
+          "height": 36
+        },
+        {
+          "tag": "select",
+          "text": "Todas",
+          "className": "",
+          "width": 297,
+          "height": 36
+        },
+        {
+          "tag": "button",
+          "text": "Invitar al partido",
+          "className": "official-ui-v2-1-lab-module__uCVHrW__accentButton",
+          "width": 97,
+          "height": 32
+        },
+        {
+          "tag": "a",
+          "text": "Aviso legal",
+          "className": "",
+          "width": 85,
+          "height": 34
+        },
+        {
+          "tag": "a",
+          "text": "Privacidad",
+          "className": "",
+          "width": 83,
+          "height": 34
+        },
+        {
+          "tag": "a",
+          "text": "Cookies",
+          "className": "",
+          "width": 69,
+          "height": 34
+        },
+        {
+          "tag": "a",
+          "text": "Condiciones",
+          "className": "",
+          "width": 94,
+          "height": 34
+        },
+        {
+          "tag": "a",
+          "text": "Condiciones de venta",
+          "className": "",
+          "width": 146,
+          "height": 34
+        }
+      ],
+      "viewportViolations": [],
+      "gameChromeViolations": [],
+      "gameLayout": {
+        "activeContext": null,
+        "appShell": null,
+        "main": {
+          "bottom": 950,
+          "display": "block",
+          "height": 836,
+          "left": 0,
+          "right": 1440,
+          "top": 114,
+          "width": 1440
+        },
+        "mainScrollTop": 0,
+        "mobileNav": {
+          "bottom": 0,
+          "display": "none",
+          "height": 0,
+          "left": 0,
+          "right": 0,
+          "top": 0,
+          "width": 0
+        },
+        "scrollY": 0
+      },
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "v21-home",
+    "path": "/laboratorio-official-ui-v2-1?surface=inicio&role=admin&state=upcoming&capture=1",
+    "userMode": "lab-admin",
+    "viewportKey": "portrait",
+    "viewport": "390x844",
+    "metrics": {
+      "title": "Official UI V2.1 Deep Demo Parity Lab | Pachangas IQ",
+      "theme": "dark",
+      "textLength": 813,
+      "overflowX": 0,
+      "overflowY": 415,
+      "failedImages": [],
+      "demoPalette": null,
+      "performance": {
+        "cls": 0,
+        "domContentLoadedMs": 148,
+        "firstContentfulPaintMs": 164,
+        "loadMs": 245,
+        "resourceCount": 29,
+        "transferBytes": 1272870
+      },
+      "smallTargets": [
+        {
+          "tag": "button",
+          "text": "Mi ficha",
+          "className": "",
+          "width": 244,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Mi equipo",
+          "className": "",
+          "width": 244,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Configurar",
+          "className": "",
+          "width": 244,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Manual",
+          "className": "",
+          "width": 244,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Cerrar sesión",
+          "className": "",
+          "width": 244,
+          "height": 38
+        },
+        {
+          "tag": "select",
+          "text": "Los del Miércoles",
+          "className": "",
+          "width": 366,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Copiar invitación",
+          "className": "",
+          "width": 101,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Identidad",
+          "className": "",
+          "width": 101,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Ajustes",
+          "className": "",
+          "width": 101,
+          "height": 38
+        }
+      ],
+      "viewportViolations": [],
+      "gameChromeViolations": [],
+      "gameLayout": {
+        "activeContext": null,
+        "appShell": null,
+        "main": null,
+        "mainScrollTop": null,
+        "mobileNav": {
+          "bottom": 844,
+          "display": "block",
+          "height": 65,
+          "left": 0,
+          "right": 390,
+          "top": 779,
+          "width": 390
+        },
+        "scrollY": 0
+      },
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "v21-match-lineup",
+    "path": "/laboratorio-official-ui-v2-1?surface=partido&pane=alineacion&role=admin&capture=1",
+    "userMode": "lab-admin",
+    "viewportKey": "portrait",
+    "viewport": "390x844",
+    "metrics": {
+      "title": "Official UI V2.1 Deep Demo Parity Lab | Pachangas IQ",
+      "theme": "dark",
+      "textLength": 385,
+      "overflowX": 0,
+      "overflowY": 298,
+      "failedImages": [],
+      "demoPalette": null,
+      "performance": {
+        "cls": 0,
+        "domContentLoadedMs": 115,
+        "firstContentfulPaintMs": 128,
+        "loadMs": 202,
+        "resourceCount": 29,
+        "transferBytes": 1272870
+      },
+      "smallTargets": [
+        {
+          "tag": "button",
+          "text": "Próximo",
+          "className": "",
+          "width": 80,
+          "height": 36
+        },
+        {
+          "tag": "button",
+          "text": "Alineación",
+          "className": "official-match-game-hub-module__LFYbAa__active active",
+          "width": 80,
+          "height": 36
+        },
+        {
+          "tag": "button",
+          "text": "Resultado",
+          "className": "",
+          "width": 80,
+          "height": 36
+        },
+        {
+          "tag": "button",
+          "text": "Admin",
+          "className": "",
+          "width": 80,
+          "height": 36
+        },
+        {
+          "tag": "button",
+          "text": "Alineación abierta",
+          "className": "official-ui-v2-1-lab-module__uCVHrW__statusButton",
+          "width": 105,
+          "height": 30
+        },
+        {
+          "tag": "button",
+          "text": "RESHugo",
+          "className": "",
+          "width": 183,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "RESSara",
+          "className": "",
+          "width": 183,
+          "height": 38
+        }
+      ],
+      "viewportViolations": [],
+      "gameChromeViolations": [],
+      "gameLayout": {
+        "activeContext": {
+          "bottom": 224,
+          "display": "grid",
+          "height": 106,
+          "left": 0,
+          "right": 390,
+          "top": 118,
+          "width": 390
+        },
+        "appShell": null,
+        "main": {
+          "bottom": 994,
+          "display": "block",
+          "height": 925,
+          "left": 0,
+          "right": 390,
+          "top": 69,
+          "width": 390
+        },
+        "mainScrollTop": 0,
+        "mobileNav": {
+          "bottom": 844,
+          "display": "block",
+          "height": 65,
+          "left": 0,
+          "right": 390,
+          "top": 779,
+          "width": 390
+        },
+        "scrollY": 0
+      },
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "v21-market",
+    "path": "/laboratorio-official-ui-v2-1?surface=mercado&role=admin&capture=1",
+    "userMode": "lab-admin",
+    "viewportKey": "portrait",
+    "viewport": "390x844",
+    "metrics": {
+      "title": "Official UI V2.1 Deep Demo Parity Lab | Pachangas IQ",
+      "theme": "dark",
+      "textLength": 797,
+      "overflowX": 0,
+      "overflowY": 516,
+      "failedImages": [],
+      "demoPalette": null,
+      "performance": {
+        "cls": 0,
+        "domContentLoadedMs": 105,
+        "firstContentfulPaintMs": 116,
+        "loadMs": 181,
+        "resourceCount": 29,
+        "transferBytes": 1272870
+      },
+      "smallTargets": [
+        {
+          "tag": "button",
+          "text": "Jugadores",
+          "className": "official-market-game-view-module__TnuGxa__active active",
+          "width": 92,
+          "height": 36
+        },
+        {
+          "tag": "button",
+          "text": "Partidos",
+          "className": "",
+          "width": 92,
+          "height": 36
+        },
+        {
+          "tag": "button",
+          "text": "Retos",
+          "className": "",
+          "width": 92,
+          "height": 36
+        },
+        {
+          "tag": "button",
+          "text": "Equipos",
+          "className": "",
+          "width": 92,
+          "height": 36
+        },
+        {
+          "tag": "button",
+          "text": "Arbitros",
+          "className": "",
+          "width": 92,
+          "height": 36
+        },
+        {
+          "tag": "a",
+          "text": "Configurar partido",
+          "className": "official-market-game-view-module__TnuGxa__adminLink",
+          "width": 92,
+          "height": 36
+        },
+        {
+          "tag": "a",
+          "text": "Volver",
+          "className": "official-ui-v2-1-lab-module__uCVHrW__backLink",
+          "width": 50,
+          "height": 32
+        },
+        {
+          "tag": "input",
+          "text": "",
+          "className": "",
+          "width": 182,
+          "height": 36
+        },
+        {
+          "tag": "select",
+          "text": "Todos",
+          "className": "",
+          "width": 182,
+          "height": 36
+        },
+        {
+          "tag": "select",
+          "text": "Fútbol 7",
+          "className": "",
+          "width": 182,
+          "height": 36
+        },
+        {
+          "tag": "select",
+          "text": "Todas",
+          "className": "",
+          "width": 182,
+          "height": 36
+        },
+        {
+          "tag": "button",
+          "text": "Invitar al partido",
+          "className": "official-ui-v2-1-lab-module__uCVHrW__accentButton",
+          "width": 97,
+          "height": 32
+        }
+      ],
+      "viewportViolations": [],
+      "gameChromeViolations": [],
+      "gameLayout": {
+        "activeContext": null,
+        "appShell": null,
+        "main": {
+          "bottom": 1212,
+          "display": "block",
+          "height": 1143,
+          "left": 0,
+          "right": 390,
+          "top": 69,
+          "width": 390
+        },
+        "mainScrollTop": 0,
+        "mobileNav": {
+          "bottom": 844,
+          "display": "block",
+          "height": 65,
+          "left": 0,
+          "right": 390,
+          "top": 779,
+          "width": 390
+        },
+        "scrollY": 0
+      },
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "v21-home",
+    "path": "/laboratorio-official-ui-v2-1?surface=inicio&role=admin&state=upcoming&capture=1",
+    "userMode": "lab-admin",
+    "viewportKey": "landscape",
+    "viewport": "844x390",
+    "metrics": {
+      "title": "Official UI V2.1 Deep Demo Parity Lab | Pachangas IQ",
+      "theme": "dark",
+      "textLength": 837,
+      "overflowX": 0,
+      "overflowY": 0,
+      "failedImages": [],
+      "demoPalette": null,
+      "performance": {
+        "cls": 0,
+        "domContentLoadedMs": 103,
+        "firstContentfulPaintMs": 120,
+        "loadMs": 164,
+        "resourceCount": 29,
+        "transferBytes": 1272870
+      },
+      "smallTargets": [
+        {
+          "tag": "a",
+          "text": "Pachangas IQ, Inicio",
+          "className": "official-product-shell-v2-module__UxqvlW__gameMark",
+          "width": 69,
+          "height": 34
+        },
+        {
+          "tag": "a",
+          "text": "INInicio",
+          "className": "",
+          "width": 69,
+          "height": 37
+        },
+        {
+          "tag": "a",
+          "text": "PAPartido",
+          "className": "",
+          "width": 69,
+          "height": 37
+        },
+        {
+          "tag": "a",
+          "text": "MEMercado",
+          "className": "",
+          "width": 69,
+          "height": 37
+        },
+        {
+          "tag": "a",
+          "text": "EQEquipo",
+          "className": "",
+          "width": 69,
+          "height": 37
+        },
+        {
+          "tag": "a",
+          "text": "PFPerfil",
+          "className": "",
+          "width": 69,
+          "height": 37
+        },
+        {
+          "tag": "a",
+          "text": "Avisos",
+          "className": "",
+          "width": 33,
+          "height": 28
+        },
+        {
+          "tag": "a",
+          "text": "Ranking",
+          "className": "",
+          "width": 33,
+          "height": 28
+        },
+        {
+          "tag": "button",
+          "text": "Mi ficha",
+          "className": "",
+          "width": 244,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Mi equipo",
+          "className": "",
+          "width": 244,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Configurar",
+          "className": "",
+          "width": 244,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Manual",
+          "className": "",
+          "width": 244,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Cerrar sesión",
+          "className": "",
+          "width": 244,
+          "height": 38
+        },
+        {
+          "tag": "select",
+          "text": "Los del Miércoles",
+          "className": "",
+          "width": 140,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Copiar invitación",
+          "className": "",
+          "width": 141,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Identidad",
+          "className": "",
+          "width": 141,
+          "height": 38
+        },
+        {
+          "tag": "button",
+          "text": "Ajustes",
+          "className": "",
+          "width": 141,
+          "height": 38
+        }
+      ],
+      "viewportViolations": [],
+      "gameChromeViolations": [],
+      "gameLayout": {
+        "activeContext": null,
+        "appShell": null,
+        "main": null,
+        "mainScrollTop": null,
+        "mobileNav": {
+          "bottom": 0,
+          "display": "block",
+          "height": 0,
+          "left": 0,
+          "right": 0,
+          "top": 0,
+          "width": 0
+        },
+        "scrollY": 0
+      },
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "v21-match-lineup",
+    "path": "/laboratorio-official-ui-v2-1?surface=partido&pane=alineacion&role=admin&capture=1",
+    "userMode": "lab-admin",
+    "viewportKey": "landscape",
+    "viewport": "844x390",
+    "metrics": {
+      "title": "Official UI V2.1 Deep Demo Parity Lab | Pachangas IQ",
+      "theme": "dark",
+      "textLength": 451,
+      "overflowX": 0,
+      "overflowY": 0,
+      "failedImages": [],
+      "demoPalette": null,
+      "performance": {
+        "cls": 0,
+        "domContentLoadedMs": 109,
+        "firstContentfulPaintMs": 132,
+        "loadMs": 193,
+        "resourceCount": 29,
+        "transferBytes": 1272870
+      },
+      "smallTargets": [
+        {
+          "tag": "a",
+          "text": "Pachangas IQ, Inicio",
+          "className": "official-product-shell-v2-module__UxqvlW__gameMark",
+          "width": 69,
+          "height": 34
+        },
+        {
+          "tag": "a",
+          "text": "INInicio",
+          "className": "",
+          "width": 69,
+          "height": 37
+        },
+        {
+          "tag": "a",
+          "text": "PAPartido",
+          "className": "",
+          "width": 69,
+          "height": 37
+        },
+        {
+          "tag": "a",
+          "text": "MEMercado",
+          "className": "",
+          "width": 69,
+          "height": 37
+        },
+        {
+          "tag": "a",
+          "text": "EQEquipo",
+          "className": "",
+          "width": 69,
+          "height": 37
+        },
+        {
+          "tag": "a",
+          "text": "PFPerfil",
+          "className": "",
+          "width": 69,
+          "height": 37
+        },
+        {
+          "tag": "a",
+          "text": "Avisos",
+          "className": "",
+          "width": 33,
+          "height": 28
+        },
+        {
+          "tag": "a",
+          "text": "Ranking",
+          "className": "",
+          "width": 33,
+          "height": 28
+        },
+        {
+          "tag": "button",
+          "text": "Próximo",
+          "className": "",
+          "width": 126,
+          "height": 28
+        },
+        {
+          "tag": "button",
+          "text": "Alineación",
+          "className": "official-match-game-hub-module__LFYbAa__active active",
+          "width": 126,
+          "height": 28
+        },
+        {
+          "tag": "button",
+          "text": "Resultado",
+          "className": "",
+          "width": 126,
+          "height": 28
+        },
+        {
+          "tag": "button",
+          "text": "Admin",
+          "className": "",
+          "width": 126,
+          "height": 28
+        },
+        {
+          "tag": "button",
+          "text": "Aleatorio",
+          "className": "",
+          "width": 126,
+          "height": 27
+        },
+        {
+          "tag": "button",
+          "text": "Equilibrado",
+          "className": "",
+          "width": 126,
+          "height": 27
+        },
+        {
+          "tag": "button",
+          "text": "Cerrar",
+          "className": "",
+          "width": 126,
+          "height": 27
+        },
+        {
+          "tag": "button",
+          "text": "Alineación abierta",
+          "className": "official-ui-v2-1-lab-module__uCVHrW__statusButton",
+          "width": 89,
+          "height": 24
+        },
+        {
+          "tag": "button",
+          "text": "PORAlberto",
+          "className": "official-ui-v2-1-lab-module__uCVHrW__player",
+          "width": 63,
+          "height": 36
+        },
+        {
+          "tag": "button",
+          "text": "MCMarta",
+          "className": "official-ui-v2-1-lab-module__uCVHrW__player",
+          "width": 63,
+          "height": 36
+        },
+        {
+          "tag": "button",
+          "text": "MCSergio",
+          "className": "official-ui-v2-1-lab-module__uCVHrW__player",
+          "width": 63,
+          "height": 36
+        },
+        {
+          "tag": "button",
+          "text": "DELNuria",
+          "className": "official-ui-v2-1-lab-module__uCVHrW__player",
+          "width": 63,
+          "height": 36
+        },
+        {
+          "tag": "button",
+          "text": "MCDani",
+          "className": "official-ui-v2-1-lab-module__uCVHrW__player",
+          "width": 63,
+          "height": 36
+        },
+        {
+          "tag": "button",
+          "text": "PORPaula",
+          "className": "official-ui-v2-1-lab-module__uCVHrW__player",
+          "width": 63,
+          "height": 36
+        },
+        {
+          "tag": "button",
+          "text": "DELIván",
+          "className": "official-ui-v2-1-lab-module__uCVHrW__player",
+          "width": 63,
+          "height": 36
+        },
+        {
+          "tag": "button",
+          "text": "MCLucía",
+          "className": "official-ui-v2-1-lab-module__uCVHrW__player",
+          "width": 63,
+          "height": 36
+        },
+        {
+          "tag": "button",
+          "text": "MCÁlex",
+          "className": "official-ui-v2-1-lab-module__uCVHrW__player",
+          "width": 63,
+          "height": 36
+        },
+        {
+          "tag": "button",
+          "text": "DELCarla",
+          "className": "official-ui-v2-1-lab-module__uCVHrW__player",
+          "width": 63,
+          "height": 36
+        },
+        {
+          "tag": "button",
+          "text": "RESHugo",
+          "className": "",
+          "width": 154,
+          "height": 30
+        },
+        {
+          "tag": "button",
+          "text": "RESSara",
+          "className": "",
+          "width": 154,
+          "height": 30
+        }
+      ],
+      "viewportViolations": [],
+      "gameChromeViolations": [],
+      "gameLayout": {
+        "activeContext": {
+          "bottom": 134,
+          "display": "grid",
+          "height": 60,
+          "left": 217,
+          "right": 844,
+          "top": 74,
+          "width": 627
+        },
+        "appShell": null,
+        "main": {
+          "bottom": 424,
+          "display": "grid",
+          "height": 390,
+          "left": 82,
+          "right": 844,
+          "top": 34,
+          "width": 762
+        },
+        "mainScrollTop": 0,
+        "mobileNav": {
+          "bottom": 0,
+          "display": "block",
+          "height": 0,
+          "left": 0,
+          "right": 0,
+          "top": 0,
+          "width": 0
+        },
+        "scrollY": 0
+      },
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  },
+  {
+    "surface": "v21-market",
+    "path": "/laboratorio-official-ui-v2-1?surface=mercado&role=admin&capture=1",
+    "userMode": "lab-admin",
+    "viewportKey": "landscape",
+    "viewport": "844x390",
+    "metrics": {
+      "title": "Official UI V2.1 Deep Demo Parity Lab | Pachangas IQ",
+      "theme": "dark",
+      "textLength": 821,
+      "overflowX": 0,
+      "overflowY": 0,
+      "failedImages": [],
+      "demoPalette": null,
+      "performance": {
+        "cls": 0,
+        "domContentLoadedMs": 100,
+        "firstContentfulPaintMs": 120,
+        "loadMs": 168,
+        "resourceCount": 29,
+        "transferBytes": 1272870
+      },
+      "smallTargets": [
+        {
+          "tag": "a",
+          "text": "Pachangas IQ, Inicio",
+          "className": "official-product-shell-v2-module__UxqvlW__gameMark",
+          "width": 69,
+          "height": 34
+        },
+        {
+          "tag": "a",
+          "text": "INInicio",
+          "className": "",
+          "width": 69,
+          "height": 37
+        },
+        {
+          "tag": "a",
+          "text": "PAPartido",
+          "className": "",
+          "width": 69,
+          "height": 37
+        },
+        {
+          "tag": "a",
+          "text": "MEMercado",
+          "className": "",
+          "width": 69,
+          "height": 37
+        },
+        {
+          "tag": "a",
+          "text": "EQEquipo",
+          "className": "",
+          "width": 69,
+          "height": 37
+        },
+        {
+          "tag": "a",
+          "text": "PFPerfil",
+          "className": "",
+          "width": 69,
+          "height": 37
+        },
+        {
+          "tag": "a",
+          "text": "Avisos",
+          "className": "",
+          "width": 33,
+          "height": 28
+        },
+        {
+          "tag": "a",
+          "text": "Ranking",
+          "className": "",
+          "width": 33,
+          "height": 28
+        },
+        {
+          "tag": "button",
+          "text": "Jugadores",
+          "className": "official-market-game-view-module__TnuGxa__active active",
+          "width": 126,
+          "height": 31
+        },
+        {
+          "tag": "button",
+          "text": "Partidos",
+          "className": "",
+          "width": 126,
+          "height": 31
+        },
+        {
+          "tag": "button",
+          "text": "Retos",
+          "className": "",
+          "width": 126,
+          "height": 31
+        },
+        {
+          "tag": "button",
+          "text": "Equipos",
+          "className": "",
+          "width": 126,
+          "height": 31
+        },
+        {
+          "tag": "button",
+          "text": "Arbitros",
+          "className": "",
+          "width": 126,
+          "height": 31
+        },
+        {
+          "tag": "a",
+          "text": "Configurar partido",
+          "className": "official-market-game-view-module__TnuGxa__adminLink",
+          "width": 126,
+          "height": 31
+        },
+        {
+          "tag": "a",
+          "text": "Volver",
+          "className": "official-ui-v2-1-lab-module__uCVHrW__backLink",
+          "width": 46,
+          "height": 28
+        },
+        {
+          "tag": "input",
+          "text": "",
+          "className": "",
+          "width": 150,
+          "height": 28
+        },
+        {
+          "tag": "select",
+          "text": "Todos",
+          "className": "",
+          "width": 150,
+          "height": 28
+        },
+        {
+          "tag": "select",
+          "text": "Fútbol 7",
+          "className": "",
+          "width": 150,
+          "height": 28
+        },
+        {
+          "tag": "select",
+          "text": "Todas",
+          "className": "",
+          "width": 150,
+          "height": 28
+        },
+        {
+          "tag": "button",
+          "text": "Invitar al partido",
+          "className": "official-ui-v2-1-lab-module__uCVHrW__accentButton",
+          "width": 97,
+          "height": 32
+        }
+      ],
+      "viewportViolations": [],
+      "gameChromeViolations": [],
+      "gameLayout": {
+        "activeContext": null,
+        "appShell": null,
+        "main": {
+          "bottom": 424,
+          "display": "block",
+          "height": 390,
+          "left": 82,
+          "right": 844,
+          "top": 34,
+          "width": 762
+        },
+        "mainScrollTop": 0,
+        "mobileNav": {
+          "bottom": 0,
+          "display": "block",
+          "height": 0,
+          "left": 0,
+          "right": 0,
+          "top": 0,
+          "width": 0
+        },
+        "scrollY": 0
+      },
+      "activeElement": {
+        "tag": "body",
+        "text": "(() => { try { const preference = localStorage.getItem(\"pachanga-iq-theme\"); if ",
+        "className": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased"
+      }
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "navigationError": ""
+  }
+]
