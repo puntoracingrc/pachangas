@@ -36,19 +36,19 @@ repopulating every raw capture on the next run.
 
 ## After Hygiene
 
-Measured after adding the canonical staging matrix and rebuilding the
-authenticated contact sheet.
+Measured after adding the canonical owner/player staging matrix and rebuilding
+the authenticated contact sheet.
 
 | Measure | Value |
 | --- | ---: |
-| Files under `docs/official-ui-v2-1` | 93 |
-| Bytes under `docs/official-ui-v2-1` | 10,109,744 |
-| Capture files | 86 |
-| Capture bytes | 6,720,376 |
-| Canonical authenticated staging captures | 18 |
-| Canonical authenticated staging bytes | 1,018,575 |
+| Files under `docs/official-ui-v2-1` | 96 |
+| Bytes under `docs/official-ui-v2-1` | 10,380,223 |
+| Capture files | 89 |
+| Capture bytes | 6,889,556 |
+| Canonical authenticated staging captures | 21 |
+| Canonical authenticated staging bytes | 1,185,689 |
 | Contact sheets | 6 |
-| Contact-sheet bytes | 3,387,156 |
+| Contact-sheet bytes | 3,488,366 |
 
 The final Git diff size is recalculated after the closing commit; the PR body
 is the authoritative location for that final number because the commit cannot
@@ -60,6 +60,6 @@ contain its own blob accounting.
 - Full Markdown/JSON matrices and rotation results.
 - Representative desktop, portrait and low-landscape images.
 - Owner/player/offline fixture images labelled as fixtures.
-- Eighteen canonical staging images without PII: nine no-team/no-profile and
-  nine owner/base-shield/configured-shield captures.
+- Twenty-one canonical staging images without PII: nine no-team/no-profile,
+  nine owner/base-shield/configured-shield and three normal-player captures.
 - Regression and performance summaries.
