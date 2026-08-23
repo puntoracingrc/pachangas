@@ -76,6 +76,32 @@ test("Market has one navigation while retaining authoritative operations", async
   assert.match(css, /\.official-ui-v2-market/);
 });
 
+test("product primary navigation has one canonical destination per menu item", async () => {
+  const [shell, page, market] = await Promise.all([
+    source("app/_components/official-product-shell-v2.tsx"),
+    source("app/page.tsx"),
+    source("app/mercado/page.tsx"),
+  ]);
+
+  for (const [tab, href] of [
+    ["inicio", "/?mobile=inicio"],
+    ["partido", "/?mobile=partido"],
+    ["mercado", "/mercado"],
+    ["equipo", "/?mobile=equipo"],
+    ["perfil", "/?mobile=perfil"],
+  ]) {
+    assert.match(shell, new RegExp(`${tab}: "${href.replace(/[?]/g, "\\?")}"`));
+  }
+
+  assert.match(page, /links=\{\{ mercado: "\/mercado" \}\}/);
+  assert.match(page, /const openMatches = openMatchesByDate\(matches\)/);
+  assert.match(page, /requestsNextMatchFromPrimaryNavigation\(currentEntrySearch\(\), entryRoute\)/);
+  assert.match(page, /setActiveMatchManagerPane\(requestedMatchPane === "admin" \? "admin" : "proximo"\)/);
+  assert.match(page, /if \(managerLandscape && ownPlayer\)[\s\S]*setSelectedPlayerId\(ownPlayer\.id\)/);
+  assert.doesNotMatch(page, /setSelectedPlayerId\(ownPlayer\?\.id \?\? selectedPlayerId \?\? players\[0\]\?\.id/);
+  assert.doesNotMatch(market, /<OfficialProductShellV2[\s\S]*links=\{\{/);
+});
+
 test("Ranking renders the own position before the public table", async () => {
   const board = await source("app/ranking/provincial-ranking-board.tsx");
   const ownIndex = board.indexOf("data-own-ranking=\"first\"");

@@ -1185,13 +1185,6 @@ export default function MarketPage() {
         status: supabase ? "En directo" : "Vista local",
         title: activeTab === "jugadores" ? "Jugadores" : activeTab === "partidos" ? "Partidos abiertos" : activeTab === "retos" ? "Retos" : activeTab === "arbitros" ? "Árbitros" : "Equipos",
       }}
-      links={{
-        equipo: "/?mobile=equipo",
-        inicio: "/",
-        mercado: "/mercado",
-        partido: "/?mobile=partido",
-        perfil: "/?mobile=perfil",
-      }}
     >
     <main className="market-page official-ui-v2-market" data-mobile-tab="mercado">
       <OfficialMarketGameView

@@ -170,10 +170,11 @@ test("builds the transfer market as a separated page", async () => {
   assert.match(source, /activeMarketTarget\(zonePlace, null, zoneQuery\)/);
   assert.match(source, /setDayFilter\("Todos"\)[\s\S]*setModalityFilter\("Todas"\)[\s\S]*setZoneFilter\(""\)/);
   assert.match(page, /requestedMatchPane === "admin"/);
-  assert.match(page, /setActiveMatchManagerPane\("admin"\)/);
+  assert.match(page, /setActiveMatchManagerPane\(requestedMatchPane === "admin" \? "admin" : "proximo"\)/);
   assert.match(source, /<OfficialProductShellV2/);
   assert.match(source, /<main className="market-page official-ui-v2-market" data-mobile-tab="mercado">/);
-  assert.match(page, /links=\{\{[\s\S]*mercado: canUseAdminControls && matchConfigured \? marketScoutUrl\("jugadores"\) : "\/mercado"/);
+  assert.match(page, /links=\{\{ mercado: "\/mercado" \}\}/);
+  assert.doesNotMatch(page, /links=\{\{[\s\S]*mercado: canUseAdminControls && matchConfigured \? marketScoutUrl\("jugadores"\)/);
   assert.doesNotMatch(page, /window\.location\.assign\(canUseAdminControls && matchConfigured \? marketScoutUrl/);
   assert.match(marketViewCss, /grid-template-columns: 176px minmax\(0, 1fr\)/);
   assert.match(marketViewCss, /max-width: 760px[\s\S]*orientation: portrait/);
@@ -422,9 +423,11 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /function openRankingPanel/);
   assert.match(page, /function openMarketConfiguration/);
   assert.match(page, /if \(tabId === "mercado"\) \{\s*return;/);
-  assert.match(page, /links=\{\{[\s\S]*mercado: canUseAdminControls && matchConfigured \? marketScoutUrl\("jugadores"\) : "\/mercado"/);
+  assert.match(page, /links=\{\{ mercado: "\/mercado" \}\}/);
+  assert.doesNotMatch(page, /links=\{\{[\s\S]*mercado: canUseAdminControls && matchConfigured \? marketScoutUrl\("jugadores"\)/);
   assert.doesNotMatch(page, /window\.location\.assign\(canUseAdminControls && matchConfigured \? marketScoutUrl/);
-  assert.match(page, /if \(requestedTab === "perfil"\) \{[\s\S]*setProfilePane\("ficha"\);[\s\S]*setSelectedPlayerId\(ownPlayer\?\.id \?\? selectedPlayerId \?\? players\[0\]\?\.id \?\? ""\)/);
+  assert.match(page, /if \(requestedTab === "perfil"\) \{[\s\S]*setProfilePane\("ficha"\);[\s\S]*setSelectedPlayerId\(null\)/);
+  assert.doesNotMatch(page, /setSelectedPlayerId\(ownPlayer\?\.id \?\? selectedPlayerId \?\? players\[0\]\?\.id/);
   assert.match(page, /\/api\/ratings\/assessment/);
   assert.match(page, /record_pachanga_individual_rating_authoritative_v2/);
   assert.match(page, /Este test crea tu ficha real y solo se puede completar una vez por usuario/);
@@ -519,7 +522,8 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /mobileNavigationTabs/);
   assert.match(page, /activeMobileTab/);
   assert.match(page, /navigateMobileTab/);
-  assert.match(page, /const openMatches = \[\.\.\.matches\][\s\S]*\.filter\(\(match\) => match\.configured && match\.scoreA === undefined && !match\.closed\)[\s\S]*\.sort\(\(a, b\) => \{[\s\S]*new Date\(a\.date\)\.getTime\(\) - new Date\(b\.date\)\.getTime\(\)/);
+  assert.match(page, /function openMatchesByDate\(matches: Match\[\]\) \{[\s\S]*\.filter\(\(match\) => match\.configured && match\.scoreA === undefined && !match\.closed\)[\s\S]*new Date\(a\.date\)\.getTime\(\) - new Date\(b\.date\)\.getTime\(\)/);
+  assert.match(page, /const openMatches = openMatchesByDate\(matches\)/);
   assert.match(page, /if \(tabId === "partido"\) \{[\s\S]*const nextOpenMatch = openMatches\[0\];[\s\S]*if \(nextOpenMatch\) setActiveMatchId\(nextOpenMatch\.id\);[\s\S]*setActiveMatchManagerPane\("proximo"\);[\s\S]*navigateMobileTab\("partido"\);[\s\S]*return;[\s\S]*\}/);
   assert.match(page, /next-match-rail/);
   assert.match(page, /function openMatchFromInicio\(matchId: string, pane: MatchManagerPane = "proximo"\) \{[\s\S]*setActiveMatchId\(matchId\);[\s\S]*setActiveMatchManagerPane\(pane\);[\s\S]*navigateMobileTab\("partido"\);[\s\S]*\}/);

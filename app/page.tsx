@@ -1298,6 +1298,22 @@ function incomingSharedLinkFromSearch(search: string): IncomingSharedLink {
   };
 }
 
+function openMatchesByDate(matches: Match[]) {
+  return [...matches]
+    .filter((match) => match.configured && match.scoreA === undefined && !match.closed)
+    .sort((a, b) => {
+      const dateDelta = new Date(a.date).getTime() - new Date(b.date).getTime();
+      if (dateDelta !== 0) return dateDelta;
+      return (a.title || a.id).localeCompare(b.title || b.id, "es");
+    });
+}
+
+function requestsNextMatchFromPrimaryNavigation(search: string, entryRoute?: HomeEntryRoute) {
+  if (entryRoute?.matchId) return false;
+  const params = new URLSearchParams(search);
+  return params.get("mobile") === "partido" && !params.get("p") && !params.get("partido");
+}
+
 function nextMatchDate(previousDate: string) {
   const base = new Date(previousDate);
   const next = Number.isNaN(base.getTime()) ? new Date() : base;
@@ -3563,7 +3579,11 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
     if (requestedTab === "partido") {
       lockMobileNavigationTab("partido");
       setActiveMobileTab("partido");
-      if (requestedMatchPane === "admin") setActiveMatchManagerPane("admin");
+      setActiveMatchManagerPane(requestedMatchPane === "admin" ? "admin" : "proximo");
+      if (!entryRoute?.matchId) {
+        const nextOpenMatch = openMatchesByDate(matches)[0];
+        if (nextOpenMatch) setActiveMatchId(nextOpenMatch.id);
+      }
       window.requestAnimationFrame(() => {
         document.getElementById("partido")?.scrollIntoView({ behavior: "smooth", block: "start" });
       });
@@ -3584,9 +3604,9 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
       if (managerLandscape) {
         setPlayerProfileMode("edit");
         setProfilePane("ficha");
-        setSelectedPlayerId(ownPlayer?.id ?? selectedPlayerId ?? players[0]?.id ?? "");
+        setSelectedPlayerId(null);
       }
-      setMobileAccountOpen(!managerLandscape);
+      setMobileAccountOpen(true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- mobile entry is intentionally handled once from the initial URL.
   }, []);
@@ -4074,6 +4094,16 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
     const sharedMatchId = expandCompactUuid(currentParams.get("p") ?? currentParams.get("partido"));
     if (sharedMatchId && selectedTeam.payload.matches.some((match) => match.id === sharedMatchId)) {
       setActiveMatchId(sharedMatchId);
+    } else if (requestsNextMatchFromPrimaryNavigation(currentEntrySearch(), entryRoute)) {
+      const nextOpenMatch = openMatchesByDate(selectedTeam.payload.matches)[0];
+      if (nextOpenMatch) setActiveMatchId(nextOpenMatch.id);
+    }
+    if (currentParams.get("mobile") === "perfil") {
+      const remoteOwnPlayer = selectedTeam.payload.players.find((player) => player.ownerUserId === memberUserId);
+      setPlayerProfileMode("edit");
+      setProfilePane("ficha");
+      setSelectedPlayerId(remoteOwnPlayer?.id ?? null);
+      setMobileAccountOpen(!remoteOwnPlayer);
     }
     setRemoteReady(true);
     setSyncStatus("live");
@@ -4248,6 +4278,10 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
 
     const saved = localStorage.getItem(storageKey);
     if (!saved) {
+      if (requestsNextMatchFromPrimaryNavigation(currentEntrySearch(), entryRoute)) {
+        const nextOpenMatch = openMatchesByDate(seedMatches)[0];
+        if (nextOpenMatch) setActiveMatchId(nextOpenMatch.id);
+      }
       setLocalHydrated(true);
       return;
     }
@@ -4259,7 +4293,10 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
       setVenues(payload.venues);
       setSiteSettings(payload.siteSettings);
       setMatches(payload.matches);
-      setActiveMatchId(payload.activeMatchId);
+      const nextOpenMatch = requestsNextMatchFromPrimaryNavigation(currentEntrySearch(), entryRoute)
+        ? openMatchesByDate(payload.matches)[0]
+        : undefined;
+      setActiveMatchId(nextOpenMatch?.id ?? payload.activeMatchId);
     } catch {
       localStorage.removeItem(storageKey);
     }
@@ -4564,13 +4601,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
   const confirmedPlayers = matchPlayersForDisplay.filter((player) => confirmedIds.includes(player.id));
   const reservePlayers = reserveIds.map((playerId) => matchPlayersById.get(playerId)).filter((player): player is Player => Boolean(player));
   const waitingPlayers = waitingIds.map((playerId) => matchPlayersById.get(playerId)).filter((player): player is Player => Boolean(player));
-  const openMatches = [...matches]
-    .filter((match) => match.configured && match.scoreA === undefined && !match.closed)
-    .sort((a, b) => {
-      const dateDelta = new Date(a.date).getTime() - new Date(b.date).getTime();
-      if (dateDelta !== 0) return dateDelta;
-      return (a.title || a.id).localeCompare(b.title || b.id, "es");
-    });
+  const openMatches = openMatchesByDate(matches);
   const closedMatches = matches
     .filter((match) => match.scoreA !== undefined)
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
@@ -4941,14 +4972,15 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
     }
 
     if (tabId === "perfil") {
-      if (managerLandscape) {
+      if (managerLandscape && ownPlayer) {
         rememberPlayerProfileReturnTarget();
         setMobileAccountOpen(false);
         setPlayerProfileMode("edit");
         setProfilePane("ficha");
-        setSelectedPlayerId(ownPlayer?.id ?? selectedPlayerId ?? players[0]?.id ?? "");
+        setSelectedPlayerId(ownPlayer.id);
         return;
       }
+      setSelectedPlayerId(null);
       setMobileAccountOpen(true);
       return;
     }
@@ -9151,7 +9183,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
         status: previewDemoMode ? "Demo" : syncStatus === "live" ? "En directo" : syncStatus === "connecting" ? "Conectando" : syncStatus === "error" ? "Sin conexión" : "Local",
         title: activeMobileTab === "inicio" ? "Inicio" : currentTeamName,
       }}
-      links={{ mercado: canUseAdminControls && matchConfigured ? marketScoutUrl("jugadores") : "/mercado" }}
+      links={{ mercado: "/mercado" }}
       navigationEnabled={!needsLoginForSharedLink}
       onNavigate={navigatePrimaryMobile}
     >
