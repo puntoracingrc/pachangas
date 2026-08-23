@@ -11,7 +11,7 @@ DRAFT and unmerged. Production is not authorized by this gate.
 - Stable OAuth Preview:
   `https://pachangas-git-codex-offic-85e5c1-persianas-almar-web-s-projects.vercel.app`.
 - Exact validated deployment:
-  `https://pachangas-lkbg8mbv1-persianas-almar-web-s-projects.vercel.app`.
+  `https://pachangas-6r1p3rqn6-persianas-almar-web-s-projects.vercel.app`.
 
 The evidence commit SHA and its deployment are recorded in the PR body after
 the closing push.
@@ -27,17 +27,17 @@ the closing push.
 | Base shield | PASS, canonical revision 0 |
 | Configured shield | PASS, canonical revision 1 |
 | Owner with profile | BLOCKED_EXISTING_RATING_V2_ONBOARDING |
-| Normal player | PENDING_SECOND_IDENTITY |
+| Normal player | PASS, second Google identity and canonical `Jugador` readback |
 | 12-player roster | PASS through official UI |
-| Several canonical matches/results | PENDING |
+| Several canonical matches/results | BLOCKED_PREVIEW_GOOGLE_PLACES_SELECTION |
 | Installed standalone Preview | PENDING |
 | Physical Android | PENDING |
 | Physical iPhone | PENDING |
 
 The Rating V2 blocker is a circular ordering between initial assessment
 persistence and profile creation. It is documented, not repaired or bypassed
-inside this visual PR. The player result is likewise not fabricated without a
-second authenticated actor.
+inside this visual PR. The player result comes from a second authenticated
+Google actor and canonical role readback, not from a fabricated membership.
 
 ## Requested Delivery Matrix
 
@@ -47,7 +47,7 @@ second authenticated actor.
 | 2 | Initial HEAD | `a1b6f5223f6d2ec70e390073aa2a030755732b28` |
 | 3 | Final HEAD | closing evidence commit in PR #163 |
 | 4 | Stable Preview | URL above |
-| 5 | Exact deployment | `pachangas-lkbg8mbv1-...vercel.app`, deployment `dpl_4B2WHBUBhZLkJubHTqKop5R5KWRK` before evidence-only push |
+| 5 | Exact deployment | `pachangas-6r1p3rqn6-...vercel.app`, deployment `dpl_A4QJjWdzm6e21dwC3kC7dYnDrdNE` before the player-evidence push |
 | 6 | Node tests | 20/20 PASS |
 | 7 | TSX tests | 354/354 PASS |
 | 8 | Canonical total | 374/374 PASS |
@@ -57,19 +57,19 @@ second authenticated actor.
 | 12 | Base shield | canonical PASS, revision 0 |
 | 13 | Configured shield | canonical PASS, revision 1 |
 | 14 | Owner with profile | BLOCKED_EXISTING_RATING_V2_ONBOARDING |
-| 15 | Second identity | PENDING_SECOND_IDENTITY |
-| 16 | Normal player | PENDING_SECOND_IDENTITY |
-| 17 | Controls by role | owner PASS; player fixture/regression PASS, canonical pending |
-| 18 | Wide data | long name and 12-player roster PASS; several matches pending |
-| 19 | Match | exhaustive fixture/regression PASS; role-canonical pending |
-| 20 | Market | public/runtime and regression PASS; role-canonical pending |
+| 15 | Second identity | PASS after Google device verification |
+| 16 | Normal player | PASS; official invitation flow returned canonical role `Jugador` |
+| 17 | Controls by role | PASS; owner actions present only for owner, player admin/invite/delete/edit actions absent |
+| 18 | Wide data | long name and 12-player roster PASS; matches blocked because the official Preview venue form returned no selectable Places prediction |
+| 19 | Match | player Proximo/Alineacion/Resultado PASS with Admin absent; owner Admin and save controls present |
+| 20 | Market | player Jugadores/Partidos/Retos/Equipos PASS with admin and Referees absent; owner active-match configuration not reachable without a saved match |
 | 21 | Theme | dark default PASS; explicit persistence regression PASS |
 | 22 | Rotation | canonical viewports and state-retention regression PASS |
 | 23 | Installed PWA | PENDING |
 | 24 | Android | PHYSICAL_QA_PENDING |
 | 25 | iPhone | PHYSICAL_QA_PENDING |
 | 26 | OAuth security | PASS; no secret/token/PII in bundle or evidence |
-| 27 | Staging cleanup | PENDING until second-identity QA ends; no direct DB cleanup |
+| 27 | Staging cleanup | PASS; invitation consumed, team removed through official owner action, clean readback and both temporary sessions signed out |
 | 28 | Canonical contact sheet | UPDATED; canonical and fixture rows labelled |
 | 29 | PR | OPEN / DRAFT / MERGEABLE; body updated after final push |
 | 30 | Production modified | NO |
@@ -88,7 +88,7 @@ second authenticated actor.
 
 ## Approval Boundary
 
-The visual owner/shield slice is reviewable. The PR must not be described as a
-fully closed authenticated release gate until the normal-player case is
-completed or Alberto grants an explicit waiver. The owner-with-profile blocker
-also requires a separate Rating V2 correction before that row can pass.
+The owner/shield and normal-player visual slices are reviewable. The remaining
+authenticated product blocker is owner-with-profile, which requires a separate
+Rating V2 correction before that row can pass. Installed PWA and physical
+Android/iPhone QA remain explicitly pending.

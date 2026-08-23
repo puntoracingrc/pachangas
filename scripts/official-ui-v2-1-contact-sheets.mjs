@@ -365,6 +365,15 @@ await createSheet(
       ],
     },
     {
+      label: "Jugador real - permisos canonicos de jugador",
+      height: 460,
+      cells: [
+        { source: canonicalRole("player-canonical-home--desktop-1440x900"), title: "CANONICAL STAGING - jugador 1440x900" },
+        { source: canonicalRole("player-canonical-home--portrait-390x844"), title: "CANONICAL STAGING - jugador 390x844" },
+        { source: canonicalRole("player-canonical-home--landscape-844x390"), title: "CANONICAL STAGING - jugador 844x390" },
+      ],
+    },
+    {
       label: "Cobertura visual de roles - no es lectura canonica",
       height: 460,
       cells: [

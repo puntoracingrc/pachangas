@@ -10,8 +10,8 @@
 - Stable OAuth Preview:
   `https://pachangas-git-codex-offic-85e5c1-persianas-almar-web-s-projects.vercel.app`.
 - Exact validated deployment:
-  `https://pachangas-lkbg8mbv1-persianas-almar-web-s-projects.vercel.app`
-  (`dpl_4B2WHBUBhZLkJubHTqKop5R5KWRK`).
+  `https://pachangas-6r1p3rqn6-persianas-almar-web-s-projects.vercel.app`
+  (`dpl_A4QJjWdzm6e21dwC3kC7dYnDrdNE`).
 - Production: not modified.
 - R4A PR #162: not modified.
 
@@ -70,10 +70,10 @@ The final menu regression is covered in `tests/official-ui-v2-1.test.ts`.
 | Base team shield | PASS | canonical snapshot revision 0; three viewports |
 | Configured team shield | PASS | canonical snapshot revision 1; three viewports |
 | Owner with profile | BLOCKED_EXISTING_RATING_V2_ONBOARDING | server rejected the first assessment before profile creation |
-| Normal player | PENDING_SECOND_IDENTITY | no synthetic membership or fabricated PASS |
+| Normal player | PASS | second Google actor joined through the official invitation flow and read back as `Jugador` |
 | Long team name | PASS | canonical owner Home |
 | Wide roster | PASS | 12 QA player rows created through the official UI |
-| Several upcoming/closed matches | PENDING | not manufactured after the onboarding blocker |
+| Several upcoming/closed matches | BLOCKED_PREVIEW_GOOGLE_PLACES_SELECTION | official venue form returned no selectable prediction, so save remained disabled; no direct fixture write used |
 
 The configured shield was saved through the existing authoritative product
 flow and read back from the server. No reward, inventory or production cosmetic
@@ -104,11 +104,13 @@ with-profile row remains blocked until Rating V2 is corrected in its own scope.
 
 - Owner controls and private Team Access: canonical PASS.
 - Owner shield editing: canonical PASS.
-- Player controls absent for a normal member: fixture/regression PASS,
-  canonical `PENDING_SECOND_IDENTITY`.
-- A second actor must authenticate and accept the real invitation before the
-  player row can become PASS. Device verification or browser reconnection must
-  not be replaced by direct membership writes.
+- Second Google identity and normal-player membership: canonical PASS.
+- The OAuth return completed the existing invitation through the official
+  product path; canonical readback reported `Jugador`, never owner/admin.
+- Player invitation, deletion, match administration, Market configuration and
+  shield editing controls: absent. Team selector, role and read-only shield:
+  present.
+- No direct membership write or synthetic role override was used.
 
 ## Defects Closed In This Gate
 
@@ -124,12 +126,12 @@ in commit `d1b44b4490f943a0e4f0792a392e0380ef845589`, and covered by regression.
 
 ## Visual Evidence
 
-There are 18 canonical staging captures in total: nine prior no-team/no-profile
-captures and nine new owner/shield captures. The new set has exact dimensions
-`1440x900`, `390x844` and `844x390`, no horizontal overflow and no broken shield
-image. The earlier nine-capture set retained its recorded zero console/error
-result. Console counters were not re-invented for screenshots where a separate
-console audit was not repeated.
+There are 21 canonical staging captures in total: nine prior no-team/no-profile
+captures, nine owner/shield captures and three normal-player captures. The role
+sets have exact dimensions `1440x900`, `390x844` and `844x390`, no observed
+horizontal overflow and no broken shield image. The earlier nine-capture set
+retained its recorded zero console/error result. Console counters were not
+re-invented for screenshots where a separate console audit was not repeated.
 
 The authenticated contact sheet labels canonical staging separately from the
 owner/player/offline fixture row. Fixture images are never presented as server
@@ -138,12 +140,20 @@ readback.
 ## Match, Market, Theme And Orientation
 
 - Match and Market exhaustive fixture/regression matrices: PASS.
-- Owner/player canonical permission comparison in Match and Market:
-  `PENDING_SECOND_IDENTITY`.
+- Normal-player canonical Match: Proximo, Alineacion and Resultado PASS; Admin
+  absent; result mutation controls remain disabled.
+- Owner canonical Match: Admin and match-save controls present as expected.
+- Normal-player canonical Market: Jugadores, Partidos, Retos and Equipos PASS;
+  admin configuration and Referees absent.
+- Owner Market remains in its public sections because there is no saved active
+  match to configure. The canonical match fixture could not be created while
+  the Preview Places selector returned no selectable prediction.
 - Default dark theme for the canonical actor: PASS.
-- Explicit light/dark persistence: regression PASS; second-actor canonical
-  replay pending.
-- Portrait, landscape and portrait layouts: canonical viewport captures PASS.
+- Explicit light/dark persistence: regression PASS. The canonical actors have
+  no PlayerProfile because of the documented Rating V2 onboarding blocker, so
+  the profile-scoped theme control cannot be replayed without bypassing it.
+- Portrait, landscape and portrait layouts: canonical viewport captures PASS;
+  the second actor retained Market Partidos plus the selected day and modality.
 - Same-page state retention and absence of duplicate sporting writes:
   regression PASS.
 
@@ -166,13 +176,23 @@ Browser emulation is not reported as an installed PWA or a physical device.
 
 - Supabase production, Vercel production and production OAuth: not modified.
 - Supabase schema, migration, SQL, RPC and RLS paths changed by this gate: 0.
-- Staging product fixture: one clearly named QA team, 12 QA players and shield
-  revision 1, all created through product flows.
+- Staging product fixture used for QA: one clearly named QA team, 12 QA players
+  and shield revision 1, all created through product flows and removed at the
+  end of the gate.
 - Rating, rewards, Conduct and billing fixture mutations: 0.
-- Pending invitation and QA team cleanup: PENDING while the required
-  second-identity flow remains open. Destructive removal must use the official
-  product action and explicit confirmation; no direct table deletion is used.
+- Pending invitation: none; it was consumed by the official second-identity
+  flow.
+- QA team cleanup: PASS through the official owner delete action. The post-delete
+  canonical reload showed no team selector, owner role, delete control or QA
+  team. Both temporary sessions were signed out.
 - Pending sporting/offline operations: 0.
+- Remaining QA team/player fixture rows in staging: 0 after owner deletion.
+
+The wide-match row is not presented as a product PASS. The official create-field
+surface accepted the QA search text but never produced a selectable Google
+Places prediction; `Guardar campo` stayed disabled, which also prevented a
+canonical saved match. No RPC, table or local payload was used to bypass this
+guard.
 
 ## Closing Gates
 

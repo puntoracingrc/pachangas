@@ -49,11 +49,18 @@ The stable Preview uses staging OAuth and Supabase project
 - long team name: PASS;
 - 12-player QA roster created through the official UI: PASS.
 
+Several upcoming and closed matches remain
+`BLOCKED_PREVIEW_GOOGLE_PLACES_SELECTION`. The official create-field form
+accepted the QA search text but returned no selectable Google Places prediction,
+so `Guardar campo` and then `Guardar partido` stayed disabled. No direct API,
+table or local-payload fixture was used to manufacture this state.
+
 Owner with profile is `BLOCKED_EXISTING_RATING_V2_ONBOARDING`: the current SQL
 orders profile creation before inserting the initial assessment while the
 profile gate requires that assessment. No Rating code or database state was
-changed to hide the blocker. Normal-player QA remains
-`PENDING_SECOND_IDENTITY` and no direct membership write was used.
+changed to hide the blocker. Normal-player QA is PASS: a second Google actor
+completed device verification and the official invitation flow returned role
+`Jugador`. No direct membership write or role override was used.
 
 ## Canonical Navigation Defect Closed
 
@@ -70,10 +77,10 @@ redesigned.
 ## Visual Evidence
 
 The prior canonical no-team set contains nine sanitized captures. The owner and
-shield pass adds nine more at `1440x900`, `390x844` and `844x390`, for 18
-canonical staging captures total. The current authenticated contact sheet
-separates these rows from the explicitly labelled fixture owner/player/offline
-row.
+shield pass adds nine more, and the real normal-player pass adds three at
+`1440x900`, `390x844` and `844x390`, for 21 canonical staging captures total.
+The current authenticated contact sheet separates these rows from the
+explicitly labelled fixture owner/player/offline row.
 
 The new owner/shield images show no horizontal overflow or broken shield image.
 The pre-existing exhaustive fixture matrix still covers 16 product surfaces and
@@ -111,13 +118,15 @@ The retained set consists of final contact sheets, compact machine-readable
 matrices and representative captures. No email, personal name, cookie, token,
 invitation URL, service key or internal group identifier is committed.
 
-Staging currently retains the QA team, 12 QA players and its pending invitation
-because second-identity QA is not complete. Cleanup remains pending and must use
-the official product action with explicit destructive confirmation.
+The invitation was consumed by the official flow. The QA team, its 12 QA
+players and normal-player membership were then removed through the official
+owner delete action. A canonical reload showed no team selector, owner role or
+QA team, and both temporary sessions were signed out. No direct database
+deletion was used.
 
 ## Gate
 
-PR #163 stays OPEN and DRAFT. The owner/shield visual slice is ready for Alberto
-to inspect, but the overall authenticated gate is not fully closed: normal
-player, owner-with-profile, installed PWA and physical devices remain pending or
-blocked as stated above. Merge and production deployment are not authorized.
+PR #163 stays OPEN and DRAFT. The owner/shield and normal-player slices are
+ready for human review. Owner-with-profile remains blocked by the existing
+Rating V2 onboarding order; installed PWA and physical devices remain pending.
+Merge and production deployment are not authorized.
