@@ -4976,6 +4976,15 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
     }
 
     if (tabId === "perfil") {
+      const compactProfileNavigation =
+        window.matchMedia("(max-width: 760px)").matches ||
+        window.matchMedia("(pointer: coarse)").matches ||
+        window.matchMedia("(any-pointer: coarse)").matches ||
+        navigator.maxTouchPoints > 0;
+      if (!compactProfileNavigation && !managerLandscape) {
+        void openOwnPlayerProfile();
+        return;
+      }
       if (managerLandscape && ownPlayer) {
         rememberPlayerProfileReturnTarget();
         setMobileAccountOpen(false);

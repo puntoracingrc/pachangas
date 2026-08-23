@@ -194,7 +194,7 @@ export function OfficialProductShellV2({
         <MobileAppNav
           active={active}
           adminViewPreview={adminViewPreview}
-          links={destinations}
+          links={onNavigate ? links : destinations}
           onNavigate={onNavigate}
         />
       </div> : null}

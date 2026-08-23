@@ -130,8 +130,11 @@ test("product primary navigation has one canonical destination per menu item", a
   assert.match(page, /const openMatches = openMatchesByDate\(matches\)/);
   assert.match(page, /requestsNextMatchFromPrimaryNavigation\(currentEntrySearch\(\), entryRoute\)/);
   assert.match(page, /setActiveMatchManagerPane\(requestedMatchPane === "admin" \? "admin" : "proximo"\)/);
+  assert.match(page, /const compactProfileNavigation =/);
+  assert.match(page, /if \(!compactProfileNavigation && !managerLandscape\) \{[\s\S]*void openOwnPlayerProfile\(\)/);
   assert.match(page, /if \(managerLandscape && ownPlayer\)[\s\S]*setSelectedPlayerId\(ownPlayer\.id\)/);
   assert.doesNotMatch(page, /setSelectedPlayerId\(ownPlayer\?\.id \?\? selectedPlayerId \?\? players\[0\]\?\.id/);
+  assert.match(shell, /links=\{onNavigate \? links : destinations\}/);
   assert.doesNotMatch(market, /<OfficialProductShellV2[\s\S]*links=\{\{/);
 });
 
@@ -164,7 +167,7 @@ test("V2.1 lab is noindex, dark by default and isolated from product authority",
   assert.match(css, /prefers-reduced-motion: reduce/);
 });
 
-test("Demo World and Platform Admin remain outside the V2.1 implementation", async () => {
+test("Demo World authority and Platform Admin remain outside V2.1 presentation components", async () => {
   const [lab, demo, admin] = await Promise.all([
     source("app/laboratorio-official-ui-v2-1/lab-client.tsx"),
     source("app/demo-world/demo-world-app.tsx"),
