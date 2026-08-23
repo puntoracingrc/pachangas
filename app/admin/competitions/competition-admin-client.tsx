@@ -20,10 +20,12 @@ export function CompetitionAdminClient({
   canWrite,
   entitlements,
   flags,
+  leagueFlags,
 }: {
   canWrite: boolean;
   entitlements: JsonRecord[];
   flags: JsonRecord;
+  leagueFlags: JsonRecord;
 }) {
   const router = useRouter();
   const operationId = useRef<string | null>(null);
@@ -38,6 +40,13 @@ export function CompetitionAdminClient({
   const [expiresAt, setExpiresAt] = useState("");
   const [grantReason, setGrantReason] = useState("");
   const [backfillReason, setBackfillReason] = useState("");
+  const [leagueFoundationEnabled, setLeagueFoundationEnabled] = useState(Boolean(leagueFlags.foundationEnabled));
+  const [leagueRegistrationEnabled, setLeagueRegistrationEnabled] = useState(Boolean(leagueFlags.registrationEnabled));
+  const [leaguePublicRegistrationEnabled, setLeaguePublicRegistrationEnabled] = useState(Boolean(leagueFlags.publicRegistrationEnabled));
+  const [leagueDelegatesEnabled, setLeagueDelegatesEnabled] = useState(Boolean(leagueFlags.delegatesEnabled));
+  const [leagueRostersEnabled, setLeagueRostersEnabled] = useState(Boolean(leagueFlags.rostersEnabled));
+  const [leagueSchedulePreferencesEnabled, setLeagueSchedulePreferencesEnabled] = useState(Boolean(leagueFlags.schedulePreferencesEnabled));
+  const [leagueFlagReason, setLeagueFlagReason] = useState("");
 
   function resetOperation() {
     operationId.current = null;
@@ -99,6 +108,27 @@ export function CompetitionAdminClient({
         <label className={styles.checkField}><input type="checkbox" checked={contextBindingEnabled} onChange={(event) => { resetOperation(); setContextBindingEnabled(event.target.checked); }} disabled={busy} />Binding de contexto</label>
         <label className={styles.formField}>Motivo<textarea rows={2} value={flagReason} onChange={(event) => { resetOperation(); setFlagReason(event.target.value); }} disabled={busy} /></label>
         <button className={styles.primaryButton} type="button" disabled={busy} onClick={() => void run("foundation_flags.set", null, number(flags.revision), { contextBindingEnabled, creationEnabled, foundationEnabled, reason: flagReason })}>Guardar flags</button>
+      </section>
+
+      <section className={styles.competitionControl}>
+        <h3>League Participation R4A</h3>
+        <p>Inscripciones, delegados, plantillas y elegibilidad. No genera jornadas ni partidos.</p>
+        <label className={styles.checkField}><input type="checkbox" checked={leagueFoundationEnabled} onChange={(event) => { resetOperation(); setLeagueFoundationEnabled(event.target.checked); }} disabled={busy} />Fundación de participación</label>
+        <label className={styles.checkField}><input type="checkbox" checked={leagueRegistrationEnabled} onChange={(event) => { resetOperation(); setLeagueRegistrationEnabled(event.target.checked); }} disabled={busy} />Inscripciones</label>
+        <label className={styles.checkField}><input type="checkbox" checked={leaguePublicRegistrationEnabled} onChange={(event) => { resetOperation(); setLeaguePublicRegistrationEnabled(event.target.checked); }} disabled={busy} />Inscripción pública</label>
+        <label className={styles.checkField}><input type="checkbox" checked={leagueDelegatesEnabled} onChange={(event) => { resetOperation(); setLeagueDelegatesEnabled(event.target.checked); }} disabled={busy} />Delegados</label>
+        <label className={styles.checkField}><input type="checkbox" checked={leagueRostersEnabled} onChange={(event) => { resetOperation(); setLeagueRostersEnabled(event.target.checked); }} disabled={busy} />Plantillas</label>
+        <label className={styles.checkField}><input type="checkbox" checked={leagueSchedulePreferencesEnabled} onChange={(event) => { resetOperation(); setLeagueSchedulePreferencesEnabled(event.target.checked); }} disabled={busy} />Restricciones y preferencias</label>
+        <label className={styles.formField}>Motivo<textarea rows={2} value={leagueFlagReason} onChange={(event) => { resetOperation(); setLeagueFlagReason(event.target.value); }} disabled={busy} /></label>
+        <button className={styles.primaryButton} type="button" disabled={busy} onClick={() => void run("league_participation_flags.set", null, number(leagueFlags.revision), {
+          delegatesEnabled: leagueDelegatesEnabled,
+          foundationEnabled: leagueFoundationEnabled,
+          publicRegistrationEnabled: leaguePublicRegistrationEnabled,
+          reason: leagueFlagReason,
+          registrationEnabled: leagueRegistrationEnabled,
+          rostersEnabled: leagueRostersEnabled,
+          schedulePreferencesEnabled: leagueSchedulePreferencesEnabled,
+        })}>Guardar flags R4A</button>
       </section>
 
       <section className={styles.competitionControl}>

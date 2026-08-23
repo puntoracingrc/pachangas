@@ -13,7 +13,7 @@ import {
 } from "../_components/platform-ui";
 import { requirePlatformPage } from "../_lib/platform-auth";
 import { hasPlatformCapability } from "../_lib/platform-contract";
-import { getPlatformCompetitionFoundation, paginationFromSearchParams } from "../_lib/platform-data";
+import { getPlatformCompetitionFoundation, getPlatformLeagueParticipation, paginationFromSearchParams } from "../_lib/platform-data";
 import styles from "../platform-admin.module.css";
 import { CompetitionAdminClient } from "./competition-admin-client";
 
@@ -31,7 +31,10 @@ export default async function PlatformCompetitionsPage({ searchParams }: { searc
   const params = new URLSearchParams();
   Object.entries(raw).forEach(([key, value]) => params.set(key, first(value)));
   const { page, pageSize } = paginationFromSearchParams(params);
-  const data = await getPlatformCompetitionFoundation(session, page, pageSize);
+  const [data, leagueParticipation] = await Promise.all([
+    getPlatformCompetitionFoundation(session, page, pageSize),
+    getPlatformLeagueParticipation(session, page, pageSize),
+  ]);
   const canWrite = hasPlatformCapability(session.access, "competitions.manage");
   const canonicalHealthLabel = s(data.bindingHealth.status) === "NOT_INITIALIZED"
     ? "Pendiente de inicialización"
@@ -54,8 +57,23 @@ export default async function PlatformCompetitionsPage({ searchParams }: { searc
         <Metric label="Bindings activos" value={n(data.bindingHealth.bindingsTotal)} hint={`${n(data.bindingHealth.ambiguousBindings)} revisiones abiertas`} tone={n(data.bindingHealth.ambiguousBindings) ? "warning" : "neutral"} />
       </MetricGrid>
 
+      <Panel title="League Participation">
+        <MetricGrid>
+          <Metric label="Ediciones abiertas" value={n(leagueParticipation.metrics.registrationOpenEditions)} />
+          <Metric label="Inscripciones" value={n(leagueParticipation.metrics.entries)} />
+          <Metric label="Plantillas" value={n(leagueParticipation.metrics.rosters)} />
+          <Metric label="Delegados activos" value={n(leagueParticipation.metrics.activeDelegates)} />
+          <Metric label="Alertas de elegibilidad" value={n(leagueParticipation.metrics.eligibilityWarnings)} tone={n(leagueParticipation.metrics.eligibilityWarnings) ? "warning" : "neutral"} />
+          <Metric label="Conflictos duplicados" value={n(leagueParticipation.metrics.duplicateConflicts)} tone={n(leagueParticipation.metrics.duplicateConflicts) ? "warning" : "good"} />
+        </MetricGrid>
+      </Panel>
+
       <Panel title="Controles de plataforma">
-        <CompetitionAdminClient canWrite={canWrite} entitlements={data.entitlements} flags={data.flags} />
+        <CompetitionAdminClient canWrite={canWrite} entitlements={data.entitlements} flags={data.flags} leagueFlags={leagueParticipation.flags} />
+      </Panel>
+
+      <Panel title="Participaciones recientes">
+        {leagueParticipation.items.length ? <DataTable label="Participaciones de Liga"><thead><tr><th>Equipo</th><th>Competición</th><th>Categoría</th><th>Entrada</th><th>Plantilla</th><th>Elegibilidad</th><th>Revisión</th></tr></thead><tbody>{leagueParticipation.items.map((item) => <tr key={s(item.id)}><td><strong>{s(item.teamName)}</strong><small><Identifier value={s(item.teamId)} /></small></td><td>{s(item.competitionName)}<small>{s(item.editionName)}</small></td><td>{s(item.categoryName)}</td><td><StatusBadge>{s(item.status)}</StatusBadge><small>{s(item.source)}</small></td><td><StatusBadge>{s(item.rosterStatus) || "sin roster"}</StatusBadge><small>{n(item.memberCount)} jugadores</small></td><td>{JSON.stringify(item.eligibilityHealth ?? {})}</td><td>{n(item.revision)}<small>{formatAdminDate(item.updatedAt)}</small></td></tr>)}</tbody></DataTable> : <EmptyState>No hay participaciones R4A.</EmptyState>}
       </Panel>
 
       <Panel title="Competiciones draft">

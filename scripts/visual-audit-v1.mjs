@@ -11,6 +11,7 @@ const label = (process.env.VISUAL_AUDIT_LABEL ?? "current").replace(/[^a-z0-9_-]
 const outputRoot = path.resolve(process.env.VISUAL_AUDIT_OUTPUT ?? "artifacts/visual-audit-v1", label);
 const chromePath = process.env.CHROME_PATH ?? findChromePath();
 const captureScreenshots = process.env.VISUAL_AUDIT_SCREENSHOTS !== "0";
+const appMode = process.env.VISUAL_AUDIT_APP_MODE === "1";
 
 function requestedKeys(name) {
   return new Set((process.env[name] ?? "").split(",").map((key) => key.trim()).filter(Boolean));
@@ -70,6 +71,12 @@ const surfaces = [
   { key: "lab-rating", path: "/laboratorio-ficha-jugador", userMode: "lab", capture: false },
   { key: "lab-ranking", path: "/laboratorio-ranking-provincial", userMode: "lab", capture: false },
   { key: "lab-premium-art", path: "/laboratorio-premium-art-pack", userMode: "lab", capture: true },
+  { key: "lab-league-index", path: "/laboratorio-league-participation", userMode: "lab-r4a", capture: false },
+  { key: "lab-league-public", path: "/laboratorio-league-participation?surface=public", userMode: "lab-r4a", capture: true },
+  { key: "lab-league-mine", path: "/laboratorio-league-participation?surface=mine", userMode: "lab-r4a", capture: false },
+  { key: "lab-league-desk", path: "/laboratorio-league-participation?surface=desk", userMode: "lab-r4a", capture: true },
+  { key: "lab-league-entry", path: "/laboratorio-league-participation?surface=entry", userMode: "lab-r4a", capture: false },
+  { key: "lab-league-roster", path: "/laboratorio-league-participation?surface=roster", userMode: "lab-r4a", capture: true },
   { key: "demo-inicio-light", path: "/demo?tab=inicio&perspective=admin&qaTheme=light", userMode: "demo-admin-light", capture: false },
   { key: "demo-inicio-dark", path: "/demo?tab=inicio&perspective=admin&qaTheme=dark", userMode: "demo-admin-dark", capture: false },
   { key: "v21-home", path: "/laboratorio-official-ui-v2-1?surface=inicio&role=admin&state=upcoming&capture=1", userMode: "lab-admin", capture: true },
@@ -169,7 +176,18 @@ function connectSocket(url) {
   });
 }
 
-async function openPage(port) {
+async function openPage(port, preferExistingPage = false) {
+  if (preferExistingPage) {
+    for (let attempt = 0; attempt < 60; attempt += 1) {
+      const targets = await fetch(`http://127.0.0.1:${port}/json/list`)
+        .then((response) => response.json())
+        .catch(() => []);
+      const target = targets.find((item) => item.type === "page" && item.webSocketDebuggerUrl);
+      if (target) return connectSocket(target.webSocketDebuggerUrl);
+      await delay(100);
+    }
+    throw new Error("Chrome app-mode page target was not created.");
+  }
   const target = await fetch(`http://127.0.0.1:${port}/json/new?about:blank`, { method: "PUT" })
     .then((response) => response.json());
   return connectSocket(target.webSocketDebuggerUrl);
@@ -275,6 +293,11 @@ function auditExpression() {
     return {
       title: document.title,
       theme: doc.dataset.theme || getComputedStyle(doc).colorScheme || "",
+      displayMode: matchMedia("(display-mode: standalone)").matches
+        ? "standalone"
+        : matchMedia("(display-mode: fullscreen)").matches ? "fullscreen" : "browser",
+      manifestHref: document.querySelector('link[rel="manifest"]')?.getAttribute("href") || null,
+      serviceWorkerControlled: Boolean(navigator.serviceWorker?.controller),
       textLength: (body.innerText || "").trim().length,
       overflowX: Math.max(doc.scrollWidth, body.scrollWidth) - Math.max(doc.clientWidth, window.innerWidth),
       overflowY: Math.max(doc.scrollHeight, body.scrollHeight) - Math.max(doc.clientHeight, window.innerHeight),
@@ -323,6 +346,8 @@ function markdownReport(results) {
     const status = result.navigationError || result.consoleErrors.length || result.failedRequests.length
       || result.metrics.failedImages.length || result.metrics.overflowX > 2 || result.metrics.viewportViolations.length
       || result.metrics.gameChromeViolations.length
+      || (result.viewportKey === "pwa-portrait" && result.metrics.displayMode !== "standalone")
+      || (result.viewportKey === "pwa-portrait" && !result.metrics.serviceWorkerControlled)
       ? "REVIEW"
       : "PASS";
     return `| ${result.surface} | ${result.userMode} | ${result.viewport} | ${status} | ${result.metrics.overflowX} | ${result.consoleErrors.length} | ${result.consoleWarnings.length} | ${result.metrics.failedImages.length} | ${result.metrics.smallTargets.length} | ${result.metrics.gameChromeViolations.length} |`;
@@ -356,12 +381,12 @@ async function main() {
     "--no-default-browser-check",
     `--remote-debugging-port=${port}`,
     `--user-data-dir=${userDataDir}`,
-    "about:blank",
+    appMode ? `--app=${baseUrl}` : "about:blank",
   ], { stdio: "ignore" });
 
   try {
     await waitForJson(`http://127.0.0.1:${port}/json/version`);
-    const client = await openPage(port);
+    const client = await openPage(port, appMode);
     await Promise.all([
       client.send("Page.enable"),
       client.send("Runtime.enable"),
@@ -427,6 +452,18 @@ async function main() {
           await client.send("Page.navigate", { url });
           await delay(650);
           await evaluate(client, "document.fonts?.ready ?? Promise.resolve()");
+          if (viewport.displayMode) {
+            const workerReady = await evaluate(client, `(async () => {
+              if (!("serviceWorker" in navigator)) return false;
+              await navigator.serviceWorker.ready;
+              return true;
+            })()`);
+            if (workerReady && !(await evaluate(client, "Boolean(navigator.serviceWorker.controller)"))) {
+              await client.send("Page.reload", { ignoreCache: true });
+              await delay(650);
+              await evaluate(client, "document.fonts?.ready ?? Promise.resolve()");
+            }
+          }
           if (new URL(surface.path, baseUrl).pathname === "/demo") {
             await waitForPageCondition(client, `Boolean(document.querySelector("[data-demo-world='ready']"))`);
           }
