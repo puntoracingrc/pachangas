@@ -51,8 +51,8 @@ export function OfficialTeamIdentityBand({
   context: string;
   name: string;
   object: ReactNode;
-  role: string;
-  status: string;
+  role?: string;
+  status?: string;
 }) {
   return (
     <section className={styles.identityBand} data-official-identity-band="true">
@@ -60,7 +60,7 @@ export function OfficialTeamIdentityBand({
         <span>Vestuario</span>
         <h1>{name}</h1>
         <p>{context}</p>
-        <div className={styles.identityMeta}><b>{role}</b><small>{status}</small></div>
+        {role || status ? <div className={styles.identityMeta}>{role ? <b>{role}</b> : null}{status ? <small>{status}</small> : null}</div> : null}
       </div>
       <div className={styles.objectStage}>{object}</div>
       {actions ? <div className={styles.identityActions}>{actions}</div> : null}
@@ -120,15 +120,15 @@ export function OfficialActivityRail({ items }: { items: OfficialActivityItem[] 
   );
 }
 
-export function OfficialTeamAccess({ children, selector }: { children: ReactNode; selector: ReactNode }) {
+export function OfficialTeamAccess({ children, selector }: { children?: ReactNode; selector: ReactNode }) {
   return (
-    <div className={styles.teamAccess} data-official-team-access="compact">
-      <div>{selector}</div>
-      <details>
-        <summary>Administrar equipo</summary>
-        <div className={styles.teamAccessDrawer}>{children}</div>
-      </details>
-    </div>
+    <details className={styles.teamAccess} data-official-team-access="identity">
+      <summary aria-label="Cambiar o administrar equipo">Equipo</summary>
+      <div className={styles.teamAccessDrawer}>
+        <div className={styles.teamSelectorSlot}>{selector}</div>
+        {children}
+      </div>
+    </details>
   );
 }
 
@@ -153,7 +153,7 @@ export function OfficialHomeGameDashboard({
 }: {
   access?: ReactNode;
   activity: OfficialActivityItem[];
-  identity: { context: string; name: string; role: string; status: string };
+  identity: { context: string; name: string; role?: string; status?: string };
   metrics: OfficialHomeMetric[];
   nextAction: OfficialHomeAction;
   object: ReactNode;
@@ -163,7 +163,7 @@ export function OfficialHomeGameDashboard({
   return (
     <div className={styles.dashboard} data-official-home-dashboard="v2.1">
       <OfficialTeamIdentityBand
-        actions={secondaryActions}
+        actions={access || secondaryActions ? <div className={styles.identityControlGroup} data-official-identity-controls="integrated">{access}{secondaryActions}</div> : undefined}
         context={identity.context}
         name={identity.name}
         object={object}
@@ -174,7 +174,6 @@ export function OfficialHomeGameDashboard({
         <ActionControl action={nextAction} />
         <OfficialSeasonMetrics metrics={metrics} />
       </div>
-      {access}
       <OfficialUpcomingMatchesRail matches={upcoming} />
       <OfficialActivityRail items={activity} />
     </div>

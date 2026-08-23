@@ -12,7 +12,9 @@ import { OfficialMarketGameView, type OfficialMarketTab } from "../_components/o
 import { OfficialMatchGameHub } from "../_components/official-match-game-hub";
 import { OfficialProductShellV2 } from "../_components/official-product-shell-v2";
 import { PlayerCosmeticCard } from "../_components/player-cosmetic-card";
+import { TeamShieldView } from "../_components/team-shield-view";
 import type { MobileAppTab } from "../mobile-app-nav";
+import { TEAM_SHIELD_DEFAULT_CONFIG } from "../team-shield-contract";
 import styles from "./official-ui-v2-1-lab.module.css";
 
 type LabSurface = "arbitro" | "avisos" | "carta" | "equipo" | "escudo" | "inicio" | "mercado" | "partido" | "ranking";
@@ -104,7 +106,6 @@ function LabPlayerCard() {
 
 function HomeSurface({ role, state }: { role: string; state: string }) {
   const noTeam = state === "no-team";
-  const offline = state === "offline";
   return (
     <OfficialHomeGameDashboard
       access={!noTeam ? (
@@ -121,8 +122,6 @@ function HomeSurface({ role, state }: { role: string; state: string }) {
       identity={{
         context: noTeam ? "Crea o encuentra un equipo para entrar en el vestuario." : "Temporada 2026/27 · Barcelona · Fútbol 7",
         name: noTeam ? "Tu próximo equipo" : "Los del Miércoles",
-        role: noTeam ? "Sin equipo" : role,
-        status: offline ? "Solo lectura" : "En directo",
       }}
       metrics={noTeam ? [
         { label: "Partidos", value: "-" }, { label: "Próximos", value: "-" }, { label: "Plantilla", value: "-" }, { label: "Nivel", value: "-" },
@@ -132,7 +131,7 @@ function HomeSurface({ role, state }: { role: string; state: string }) {
       nextAction={noTeam
         ? { detail: "Una sola acción válida para comenzar.", eyebrow: "Primer paso", label: "Encontrar equipo", onClick: () => undefined }
         : { detail: "Miércoles 26 · 21:00 · Can Caralleu", eyebrow: "Tu asistencia", label: "Confirmar asistencia", onClick: () => undefined }}
-      object={noTeam ? <div className={styles.emptyObject}><Image src="/icon-512.png" alt="Pachangas IQ" width={180} height={180} priority /><small>El objeto del equipo aparecerá aquí.</small></div> : <LabPlayerCard />}
+      object={noTeam ? <div className={styles.emptyObject}><Image src="/icon-512.png" alt="Pachangas IQ" width={180} height={180} priority /><small>El objeto del equipo aparecerá aquí.</small></div> : <TeamShieldView className="official-home-team-shield" config={{ ...TEAM_SHIELD_DEFAULT_CONFIG, initials: "LDM" }} label="Escudo de Los del Miércoles" />}
       secondaryActions={<OfficialSecondaryActions><button type="button">Mi ficha</button><button type="button">Mi equipo</button><button type="button">Configurar</button><button type="button">Manual</button><button type="button">Cerrar sesión</button></OfficialSecondaryActions>}
       upcoming={noTeam ? [] : [
         { context: "Fútbol 7", date: "Mié 26 · 21:00", id: "m1", meta: "12/14 confirmados · 2 plazas", onOpen: () => undefined, title: "Can Caralleu" },

@@ -13,6 +13,7 @@ import {
 import { OfficialMatchGameHub } from "./_components/official-match-game-hub";
 import { OfficialProductShellV2 } from "./_components/official-product-shell-v2";
 import { PlayerCosmeticCard } from "./_components/player-cosmetic-card";
+import { TeamShieldView } from "./_components/team-shield-view";
 import { attachVenueAutocomplete, type VenuePlace } from "./googlePlacesClient";
 import { GlobalRatingPanel } from "./global-rating-panel";
 import {
@@ -54,7 +55,14 @@ import {
   type RatingComparison,
 } from "./rating-system-v2";
 import { supabase } from "./supabaseClient";
-import { ThemeToggle } from "./theme-toggle";
+import {
+  normalizeTeamShieldSnapshot,
+  readTeamIdentityCache,
+  writeTeamIdentityCache,
+  type TeamShieldSnapshot,
+} from "./team-identity-contract";
+import { TEAM_SHIELD_DEFAULT_CONFIG } from "./team-shield-contract";
+import { AuthenticatedThemeDefault, ThemeToggle } from "./theme-toggle";
 
 const RewardBoxDemo = dynamic(
   () => import("./reward-box-demo").then((module) => module.RewardBoxDemo),
@@ -3479,6 +3487,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
   const [profileSaveMessage, setProfileSaveMessage] = useState("");
   const [profileSaving, setProfileSaving] = useState(false);
   const [selectedPlayerCosmetics, setSelectedPlayerCosmetics] = useState<PublicPlayerCosmeticsSnapshot | null>(null);
+  const [homeTeamShield, setHomeTeamShield] = useState<TeamShieldSnapshot | null>(null);
   const [playerAssessment, setPlayerAssessment] = useState<PlayerAssessmentFlow | null>(null);
   const [playerAssessmentMessage, setPlayerAssessmentMessage] = useState("");
   const [matchWeather, setMatchWeather] = useState<MatchWeather | null>(null);
@@ -5974,7 +5983,51 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
       cleanup?.();
     };
   }, [marketZoneRadiusKm, selectedPlayer?.id, selectedPlayer?.marketEnabled, selectedPlayer?.marketZonesGeo, selectedPlayerIsOwn]);
-  const showGroupAccessPanel = isRegisteredUser && canUseAdminControls;
+
+  useEffect(() => {
+    if (!supabase || !hasRealTeam || !remoteGroupId || !currentUserId) {
+      queueMicrotask(() => setHomeTeamShield(null));
+      return;
+    }
+
+    const client = supabase;
+    let active = true;
+    const cached = readTeamIdentityCache(window.localStorage, currentUserId, remoteGroupId);
+    queueMicrotask(() => {
+      if (active) setHomeTeamShield(cached?.shield ?? null);
+    });
+
+    const loadCanonicalShield = async () => {
+      const result = await client.rpc("get_pachanga_team_shield_snapshot_v1", { target_group_id: remoteGroupId });
+      if (!active || result.error) return;
+      const canonical = normalizeTeamShieldSnapshot(result.data);
+      if (!canonical || canonical.group.groupId !== remoteGroupId) return;
+      setHomeTeamShield(canonical);
+      try {
+        const latestCache = readTeamIdentityCache(window.localStorage, currentUserId, remoteGroupId);
+        writeTeamIdentityCache(window.localStorage, currentUserId, remoteGroupId, canonical, latestCache?.progression ?? null);
+      } catch {
+        // The local snapshot is only a read cache; the RPC remains authoritative.
+      }
+    };
+
+    void loadCanonicalShield();
+    const channel = client
+      .channel(`pachanga-home-shield-${remoteGroupId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "pachanga_team_shield_public", filter: `group_id=eq.${remoteGroupId}` },
+        () => void loadCanonicalShield(),
+      )
+      .subscribe();
+
+    return () => {
+      active = false;
+      void client.removeChannel(channel);
+    };
+  }, [currentUserId, hasRealTeam, remoteGroupId]);
+
+  const showGroupAccessPanel = isRegisteredUser && (previewDemoMode || remoteTeams.length > 0);
   const showTeamAdminPanel = canManageTeam;
   const showMatchAdminPanel = canUseAdminControls;
   const canEditMatchSettings = canUseAdminControls && !matchFinalized;
@@ -8381,7 +8434,21 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
   const currentTeamName = currentTeam?.name ?? displayName(siteSettings.brand) ?? "Pachangas IQ";
   const homeNextMatch = openMatches[0];
   const homeDraftMatch = matches.find((match) => !match.configured && !match.closed && match.scoreA === undefined);
-  const homeObjectPlayer = ownPlayer ?? activeGroupPlayers[0];
+  const hasHomeTeamIdentity = hasRealTeam || previewDemoMode;
+  const homeObjectPlayer = hasHomeTeamIdentity ? undefined : ownPlayer;
+  const canonicalHomeTeamShield = homeTeamShield?.group.groupId === remoteGroupId ? homeTeamShield : null;
+  const homeTeamInitials = currentTeamName
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 4)
+    .map((part) => part[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 4) || "PIQ";
+  const homeTeamShieldConfig = canonicalHomeTeamShield?.config ?? {
+    ...TEAM_SHIELD_DEFAULT_CONFIG,
+    initials: homeTeamInitials,
+  };
   const homeNextMatchOwnStatus = homeNextMatch && ownPlayer
     ? homeNextMatch.players.find((entry) => entry.playerId === ownPlayer.id)?.status
     : undefined;
@@ -9033,6 +9100,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
   if (isDemoMode) {
     return (
       <main className="min-h-screen bg-[#f7f6f0] text-[#1d2521] demo-world-entry-shell" data-product-entry="no-team" style={teamColorStyle}>
+        {isRegisteredUser ? <AuthenticatedThemeDefault /> : null}
         <section className="hero demo-hero" id="inicio">
           <div>
             <div className="brand-lockup" aria-label={siteSettings.brand}>
@@ -9079,14 +9147,15 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
       adminViewPreview={canPreviewPlayerView ? { active: playerPreviewActive, onToggle: toggleAdminPlayerView } : undefined}
       context={{
         detail: activeMobileTab === "partido" ? `Partido · ${selectedMatchManagerPane}` : memberRoleLabel(displayedRole),
-        eyebrow: hasRealTeam ? "Equipo activo" : "Pachangas IQ",
+        eyebrow: activeMobileTab === "inicio" ? "Vestuario" : hasRealTeam ? "Equipo activo" : "Pachangas IQ",
         status: previewDemoMode ? "Demo" : syncStatus === "live" ? "En directo" : syncStatus === "connecting" ? "Conectando" : syncStatus === "error" ? "Sin conexión" : "Local",
-        title: currentTeamName,
+        title: activeMobileTab === "inicio" ? "Inicio" : currentTeamName,
       }}
       links={{ mercado: canUseAdminControls && matchConfigured ? marketScoutUrl("jugadores") : "/mercado" }}
       navigationEnabled={!needsLoginForSharedLink}
       onNavigate={navigatePrimaryMobile}
     >
+    <AuthenticatedThemeDefault />
     <main className="min-h-screen bg-[#f7f6f0] text-[#1d2521] official-ui-v2-product" data-mobile-tab={activeMobileTab} style={teamColorStyle}>
       {activeMobileTab === "inicio" ? (
         <section id="inicio" ref={teamAccessPanelRef}>
@@ -9126,8 +9195,6 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
             identity={{
               context: siteSettings.subtitle,
               name: currentTeamName,
-              role: memberRoleLabel(displayedRole),
-              status: previewDemoMode ? "Demo" : syncStatus === "live" ? "En directo" : syncStatus === "connecting" ? "Conectando" : syncStatus === "error" ? "Sin conexión" : "Local",
             }}
             metrics={[
               { label: "Partidos", value: closedMatches.length },
@@ -9136,7 +9203,14 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
               { label: "Nivel", value: groupLevel === null ? "-" : overallScore(groupLevel) },
             ]}
             nextAction={homeNextAction}
-            object={homeObjectPlayer ? (
+            object={hasHomeTeamIdentity ? (
+              <TeamShieldView
+                catalog={canonicalHomeTeamShield?.catalog ?? []}
+                className="official-home-team-shield"
+                config={homeTeamShieldConfig}
+                label={`Escudo de ${currentTeamName}`}
+              />
+            ) : homeObjectPlayer ? (
               <button className="official-home-player-object" type="button" onClick={() => openPlayerProfile(homeObjectPlayer.id)} aria-label={`Abrir ficha de ${playerDisplayName(homeObjectPlayer)}`}>
                 <PlayerCosmeticCard
                   className={`readonly-card ${cardTierClass(peerAverage(homeObjectPlayer))}`}
@@ -9164,9 +9238,9 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
             secondaryActions={(
               <OfficialSecondaryActions>
                 {canPreviewPlayerView ? <button type="button" onClick={toggleAdminPlayerView}>{playerPreviewActive ? "Volver a vista admin" : "Ver como jugador"}</button> : null}
-                <button type="button" onClick={() => void openOwnPlayerProfile()} disabled={!hasRealTeam || !isRegisteredUser}>Mi ficha</button>
+                <button type="button" onClick={() => void openOwnPlayerProfile()} disabled={!hasRealTeam || !isRegisteredUser}>Mi carta</button>
                 <button type="button" onClick={openTeamGallery}>Mi equipo</button>
-                {hasRealTeam ? <Link href={`/equipo/identidad${remoteGroupId ? `?grupo=${remoteGroupId}` : ""}`}>Identidad</Link> : null}
+                {hasRealTeam ? <Link href={`/equipo/identidad${remoteGroupId ? `?grupo=${remoteGroupId}` : ""}`}>{canManageTeam && !canonicalHomeTeamShield ? "Personalizar escudo" : "Escudo del equipo"}</Link> : null}
                 <Link href="/mercado">Mercado</Link>
                 {canUseAdminControls ? <button type="button" onClick={createMatch}>Crear partido</button> : null}
                 {canUseAdminControls ? <button type="button" onClick={() => void openCreatePlayerProfile()}>Crear ficha</button> : null}
@@ -10818,7 +10892,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
                       {profileSaving ? "Guardando..." : "Guardar ficha"}
                     </button>
                     {profileSaveMessage ? <small className="profile-save-message">{profileSaveMessage}</small> : null}
-                    <ThemeToggle />
+                    <ThemeToggle defaultPreference="dark" />
                   </div>
                 </div>
               </div>

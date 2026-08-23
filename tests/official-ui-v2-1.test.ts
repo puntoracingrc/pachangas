@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
+import { resolveThemePreference } from "../app/theme-toggle";
 
 const source = (path: string) => readFile(new URL(`../${path}`, import.meta.url), "utf8");
 
@@ -15,8 +16,30 @@ test("official Home exposes one primary action and one visual authority per cont
   assert.equal(component.match(/data-official-identity-band="true"/g)?.length, 1);
   assert.equal(component.match(/data-official-upcoming-rail="true"/g)?.length, 1);
   assert.equal(component.match(/data-official-activity-rail="true"/g)?.length, 1);
+  assert.equal(component.match(/data-official-identity-controls="integrated"/g)?.length, 1);
+  assert.equal(component.match(/data-official-team-access="identity"/g)?.length, 1);
   assert.match(page, /<OfficialHomeGameDashboard/);
   assert.match(page, /<OfficialTeamAccess/);
+  assert.doesNotMatch(component, /<\/div>\s*\{access\}\s*<OfficialUpcomingMatchesRail/);
+});
+
+test("official Home uses the canonical team shield and never another roster card as its team object", async () => {
+  const page = await source("app/page.tsx");
+
+  assert.match(page, /const hasHomeTeamIdentity = hasRealTeam \|\| previewDemoMode/);
+  assert.match(page, /get_pachanga_team_shield_snapshot_v1/);
+  assert.match(page, /hasHomeTeamIdentity \? \(\s*<TeamShieldView/);
+  assert.match(page, /: homeObjectPlayer \? \([\s\S]*<PlayerCosmeticCard/);
+  assert.match(page, /const homeObjectPlayer = hasHomeTeamIdentity \? undefined : ownPlayer/);
+  assert.doesNotMatch(page, /ownPlayer \?\? activeGroupPlayers\[0\]/);
+  assert.match(page, />Mi carta<\/button>/);
+});
+
+test("authenticated theme defaults to dark without overriding explicit preferences", () => {
+  assert.equal(resolveThemePreference(null, "dark"), "dark");
+  assert.equal(resolveThemePreference("light", "dark"), "light");
+  assert.equal(resolveThemePreference("dark", "system"), "dark");
+  assert.equal(resolveThemePreference("system", "dark"), "system");
 });
 
 test("Match is a single persistent game hub without changing its callbacks", async () => {

@@ -826,7 +826,7 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /compactUuid/);
   assert.match(page, /expandCompactUuid/);
   assert.match(page, /remoteInviteToken/);
-  assert.match(page, /showGroupAccessPanel\s*=\s*isRegisteredUser\s*&&\s*canUseAdminControls/);
+  assert.match(page, /showGroupAccessPanel\s*=\s*isRegisteredUser\s*&&\s*\(previewDemoMode\s*\|\|\s*remoteTeams\.length\s*>\s*0\)/);
   assert.match(page, /actualCanManageTeam\s*=\s*Boolean\(hasRealTeam\s*&&\s*isRegisteredUser/);
   assert.match(page, /canManageTeam\s*=\s*actualCanManageTeam\s*&&\s*!playerPreviewActive/);
   assert.match(page, /canUseAdminControls\s*=\s*canPreviewPlayerView\s*&&\s*!playerPreviewActive/);
