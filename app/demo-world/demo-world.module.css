@@ -1517,7 +1517,7 @@
   .header { display: none; }
   .content { height: calc(100dvh - var(--game-nav-height, 48px)); min-height: 0; overflow: hidden; }
   .pageStack { height: 100%; overflow-y: auto; }
-  .identityBand { min-height: 100%; grid-template-columns: minmax(260px, 1.3fr) minmax(150px, 0.6fr) minmax(110px, 0.4fr); gap: 12px; padding: 14px max(14px, env(safe-area-inset-right)) 14px max(14px, env(safe-area-inset-left)); }
+  .identityBand { min-height: calc(100dvh - var(--game-nav-height, 48px)); grid-template-columns: minmax(260px, 1.3fr) minmax(150px, 0.6fr) minmax(110px, 0.4fr); gap: 12px; padding: 14px max(14px, env(safe-area-inset-right)) 14px max(14px, env(safe-area-inset-left)); }
   .identityBand h1 { margin: 3px 0 5px; font-size: clamp(1.3rem, 5vh, 2rem); }
   .identityBand p { font-size: 0.72rem; line-height: 1.35; }
   .identityVisual { max-height: calc(100dvh - 86px); overflow: hidden; }
