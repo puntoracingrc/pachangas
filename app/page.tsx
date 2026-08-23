@@ -16,6 +16,7 @@ import { PlayerCosmeticCard } from "./_components/player-cosmetic-card";
 import { TeamShieldView } from "./_components/team-shield-view";
 import { attachVenueAutocomplete, type VenuePlace } from "./googlePlacesClient";
 import { GlobalRatingPanel } from "./global-rating-panel";
+import { resolveGoogleAuthReturnHref } from "./google-auth-return";
 import {
   ADVANCED_TEST_VERSION,
   ATTRIBUTE_KEYS,
@@ -3914,7 +3915,10 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
     const rawNonce = createGoogleRawNonce();
     const hashedNonce = await sha256Hex(rawNonce);
     localStorage.setItem(googleAuthNonceKey, rawNonce);
-    localStorage.setItem(googleAuthReturnKey, window.location.href);
+    localStorage.setItem(
+      googleAuthReturnKey,
+      resolveGoogleAuthReturnHref(window.location.href, window.location.origin),
+    );
 
     const authUrl = new URL("https://accounts.google.com/o/oauth2/v2/auth");
     authUrl.searchParams.set("client_id", googleClientId);

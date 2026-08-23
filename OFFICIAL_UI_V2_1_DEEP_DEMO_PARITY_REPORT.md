@@ -2,186 +2,119 @@
 
 ## Release State
 
-- Initial `origin/main`: `a4f2468d9b779db6a4391df7cec4cc34e4162fbe`.
+- Base: `origin/main` `a4f2468d9b779db6a4391df7cec4cc34e4162fbe`.
 - Branch: `codex/official-ui-v2-1-deep-demo-parity`.
+- Starting HEAD for the authenticated gate:
+  `c6733f6cb39c950ff70c590c5a6072e562554ea7`.
 - Draft PR: [#163](https://github.com/puntoracingrc/pachangas/pull/163).
-- Contract checkpoint: `b78ac9695a896fcad8842198b4a285d4e9124acf`.
-- Actual branch HEAD when this closure resumed: `7e02e1111fb1617534f06e5f2b2e5fb2f82e6ac3`.
-- Final product checkpoint: `65577f21ba838c52e4b36fa3af849011936951d3`.
-- Final report/evidence HEAD: the exact `headRefOid` of PR #163 after the closing push.
-- Production modified: NO.
-- Supabase modified: NO.
-- Migrations, SQL, RPC or RLS changes: 0.
+- Final HEAD: PR #163 `headRefOid` after the closing push.
 - Merge: NO.
-- R4A modified: NO.
+- Production: not modified.
+- R4A PR #162: not modified.
 
-## Final Product Story
+## Product Story
 
-The authenticated Home now tells the same story as Demo World while retaining
-real product authority:
+Official Home follows the accepted Demo World hierarchy without importing demo
+authority:
 
-1. team identity and canonical shield;
-2. one primary sporting action and compact metrics;
+1. canonical team identity and `TeamShieldView`;
+2. one primary sporting action and compact real metrics;
 3. upcoming matches;
 4. real season activity.
 
-Administrative metadata no longer interrupts that sequence. Team selection is
-integrated into the identity controls and detailed Team Access data remains in
-a bounded drawer.
+The player's own card is secondary. A team owner without a personal profile
+never inherits another roster member's card. Team selection is integrated in
+identity controls and detailed Team Access stays in a permission-guarded drawer.
 
-## Canonical Identity Hierarchy
+Match remains one hub with Proximo, Alineacion, Resultado and Admin. Market,
+Ranking, Notifications, Card and Shield retain their existing read models,
+permissions and server-backed writes. Demo World remains isolated.
 
-| Context | Protagonist | Result |
-| --- | --- | --- |
-| User with a team | canonical `TeamShieldView` | IMPLEMENTED |
-| Team without configured cosmetics | canonical base team shield | IMPLEMENTED |
-| Owner/admin without own player profile | team shield, never the first roster player | IMPLEMENTED |
-| User without team and with own profile | own player card | IMPLEMENTED |
-| User without team and without profile | stable Pachangas IQ placeholder | IMPLEMENTED |
+## OAuth And Authenticated QA
 
-The Home reads the existing
-`get_pachanga_team_shield_snapshot_v1` snapshot. A versioned local read cache is
-derived from that response and Realtime invalidates/refetches it. No new shield
-renderer, fixture authority, write path or sports state was introduced.
+The Preview now uses a separate staging Google client and exact stable callback.
+Login, logout, staging isolation and deep-link return pass for a real authorized
+staging account without team/profile. Browser QA found and closed three concrete
+defects: missing protected-route login, a leaked technical no-profile error and
+loss of the Card query during OAuth return.
 
-The player's card remains available through the compact `Mi carta` secondary
-action and does not compete with the team shield.
+Canonical owner/player sessions remain pending because the second authorized
+Google actor's device verification expired. Fixture coverage remains clearly
+labelled and is not promoted to canonical evidence. Full detail is in
+`OFFICIAL_UI_V2_1_AUTHENTICATED_QA_REPORT.md`.
 
-## Team Selector And Access
+## Visual QA
 
-- The standalone Team Access row was removed.
-- Team selection is available inside the identity controls for registered users
-  who have teams.
-- Role, code, level, roster, synchronization, invite and destructive controls
-  remain permission guarded inside one details drawer.
-- Team name, role, connection state, level and selector each have one visual
-  owner instead of being repeated across the product shell and Home.
+The pre-existing exhaustive V2.1 matrix covers 16 surfaces across seven
+viewports, including `667x375`, `740x360`, `844x390`, `932x430` and PWA-emulated
+portrait. Its recorded result remains 0 navigation errors, console issues,
+failed requests, broken images, document overflow, viewport violations and game
+chrome violations.
 
-## Authenticated Theme Default
+The new canonical staging pass adds nine PII-free captures:
 
-`AuthenticatedThemeDefault` selects dark only when the authenticated user has
-no saved preference. It does not persist that fallback.
+| Captures | Console warnings/errors | Broken images | Overflow X | Technical leaks |
+| ---: | ---: | ---: | ---: | ---: |
+| 9 | 0 | 0 | 0 | 0 |
 
-| Saved preference | Result |
-| --- | --- |
-| none | dark |
-| `light` | light |
-| `dark` | dark |
-| explicit `system` | system |
+It covers Home desktop/portrait/landscape, no-team identity, no-profile Card,
+Ranking, Notification Preferences and empty Notifications.
 
-Manual changes persist and remain authoritative. The theme is not changed by
-orientation. Public landing behavior and Control Center preference handling
-were not replaced.
+## PWA And Orientation
 
-## Scope Preserved
+- Manifest: PASS.
+- Service Worker controlled: PASS.
+- Cached shell under simulated network offline: PASS.
+- Reconnect and canonical state: PASS.
+- Installed standalone Preview: PENDING.
+- Physical Android/iPhone: PENDING.
+- Market and Match rotation state: regression PASS with one navigation and no
+  duplicate sporting write.
 
-- Match keeps its single navigation, persistent context, pitch, result and
-  grouped Admin composition.
-- Market keeps its single navigation, compact filters and current functional
-  panels.
-- Ranking, Clubs, Referee Platform, Rating V2, Demo World and Control Center are
-  unchanged in authority.
-- No attendance, lineup, result, Market, ranking, rating or cosmetics write
-  contract was replaced.
+## Evidence Hygiene
 
-## Automated Visual QA
+Before hygiene, the PR contained 249 V2.1 evidence files and 19,372,386 bytes,
+including 243 raw captures. The cleanup removed 179 raw files and 9,400,725
+bytes while retaining all final contact sheets, Markdown/JSON matrices,
+representative viewport evidence and canonical staging captures.
 
-### Local exhaustive matrix
+After hygiene:
 
-The focused V2.1 matrix covers 16 surfaces across 7 viewports, including low
-landscape and PWA-emulated portrait.
+- 82 evidence files;
+- 9,978,764 bytes total;
+- 75 capture/matrix files;
+- 6,199,773 capture bytes;
+- six contact sheets;
+- nine canonical staging screenshots.
 
-| Captures | Navigation errors | Console errors | Warnings | Failed requests | Broken images | Overflow X | Viewport violations | Game chrome violations |
-| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| 112 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+See `docs/official-ui-v2-1/OFFICIAL_UI_V2_1_EVIDENCE_INVENTORY.md`.
 
-Theme coverage is 105 dark captures and 7 explicit light captures.
+## Engineering Gates
 
-Low-landscape checks include `667x375`, `740x360`, `844x390` and `932x430`.
-The final composition keeps the shield visible, the primary action reachable,
-one navigation, no footer and no document-level horizontal overflow.
+The closing run completed `npm ci`, the complete test suite, typecheck,
+production build, focused lint and `git diff --check` after all
+report/evidence changes. Results: 354/354 tests PASS (including the production
+build), typecheck PASS, focused lint PASS and diff check PASS. Source-only
+global lint still reports the documented out-of-scope baseline of 40 problems
+(22 errors and 18 warnings); the generated Vercel output is excluded from that
+baseline. The authoritative final HEAD/deployment is recorded in PR #163 and
+the final handoff.
 
-### Exact deployed Preview
-
-Preview:
-`https://pachangas-git-codex-offic-85e5c1-persianas-almar-web-s-projects.vercel.app`
-
-The exact deployed Preview was captured on 11 representative surfaces at
-`1440x900`, `390x844` and `844x390`.
-
-| Captures | Broken images | Overflow X | Console warnings/errors | Theme |
-| ---: | ---: | ---: | ---: | --- |
-| 33 | 0 | 0 | 0 | dark |
-
-Surfaces: Home owner, Home player, Home without team, Home offline, Match next,
-Lineup, Result, Market, Ranking, Card and Shield.
-
-These are deployed visual fixtures, not a substitute for an authenticated
-canonical staging readback.
-
-## Orientation
-
-The deployed Preview retained the selected `Retos` Market tab through portrait
--> landscape -> portrait with one Market navigation. It also retained the
-selected `Alineacion` pane through the same rotation with one Match navigation.
-No sporting write was issued.
-
-## Authenticated Preview Blocker
-
-An authorized Google sign-in was attempted on the exact Preview. Google rejected
-the callback with `Error 400: redirect_uri_mismatch` for:
-
-`https://pachangas-git-codex-offic-85e5c1-persianas-almar-web-s-projects.vercel.app/auth/google`
-
-No Google Cloud, Supabase Auth or production configuration was changed because
-that is outside this visual-only release. Consequently these canonical staging
-cases remain BLOCKED, not passed:
-
-- real owner and player sessions;
-- long real team name and wide real roster;
-- configured and unconfigured canonical shields;
-- owner with a team and no player profile;
-- authenticated offline/read-only state;
-- exact installed-PWA session.
-
-The lab fixtures exercise the layout and hierarchy for those cases, but they are
-reported only as visual/source evidence.
+The focused OAuth/V2.1 suite passes 10/10. No Supabase, migration, SQL, RPC, RLS
+or `app/api` path was added by this gate.
 
 ## Evidence
 
+- `docs/official-ui-v2-1/OFFICIAL_UI_V2_1_AUTHENTICATED_FINAL_CONTACT_SHEET.png`
 - `docs/official-ui-v2-1/OFFICIAL_UI_V2_1_HOME_PARITY_CONTACT_SHEET.png`
 - `docs/official-ui-v2-1/OFFICIAL_UI_V2_1_MATCH_PARITY_CONTACT_SHEET.png`
 - `docs/official-ui-v2-1/OFFICIAL_UI_V2_1_MARKET_PARITY_CONTACT_SHEET.png`
 - `docs/official-ui-v2-1/OFFICIAL_UI_V2_1_MOBILE_GAME_CONTACT_SHEET.png`
 - `docs/official-ui-v2-1/OFFICIAL_UI_V2_1_DEMO_OFFICIAL_COMPARISON.png`
-- `docs/official-ui-v2-1/OFFICIAL_UI_V2_1_AUTHENTICATED_FINAL_CONTACT_SHEET.png`
 
-The last sheet is intentionally labelled as a final Preview review with the
-authentication blocker; it does not claim that canonical authentication passed.
-Its 33 source captures and machine-readable results are under
-`docs/official-ui-v2-1/captures/authenticated-final`.
+## Gate
 
-## Engineering Validation
-
-| Gate | Result |
-| --- | --- |
-| `npm test` | PASS: production build plus 372 tests (20 bootstrap/HTML and 352 functional) |
-| `npm run typecheck` | PASS |
-| Production build | PASS: 39 static pages, including the isolated V2.1 lab |
-| Focused lint | PASS on changed clean modules and tests |
-| Legacy monolith lint | inherited debt only: `app/page.tsx` has 13 errors/17 warnings and `app/mercado/page.tsx` has 2 errors/1 warning; combined 15/18 |
-| `git diff --check` | PASS |
-| Supabase/SQL paths in diff | 0 |
-
-The final commands are repeated after documentation/evidence is committed. Any
-updated count or gate result must be taken from that closing run.
-
-## Human Review Gate
-
-PR #163 remains OPEN and DRAFT. It is ready for Alberto's final visual review of
-the exact Preview, with two explicit limitations:
-
-- authenticated canonical Preview QA: BLOCKED by the OAuth redirect allowlist;
-- physical Android/iPhone and installed-PWA QA: PENDING.
-
+PR #163 stays OPEN and DRAFT. OAuth staging and the no-team canonical case pass.
+The PR must not be described as fully authenticated until the owner/player
+second-identity rows are completed or Alberto explicitly accepts that limitation.
 No merge or production deployment is authorized by this report.

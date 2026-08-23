@@ -1,0 +1,43 @@
+{
+  "capturedAt": "2026-08-23T12:37:03+02:00",
+  "environment": "Supabase staging / Vercel Preview",
+  "stagingProjectRef": "iozcjirlfytryzrcmrnq",
+  "validationDeploymentId": "dpl_CfENp5ftWPAc1zV4hoDVJz9AsynU",
+  "validationDeploymentUrl": "https://pachangas-52sll2yyn-persianas-almar-web-s-projects.vercel.app",
+  "stableOAuthAlias": "https://pachangas-git-codex-offic-85e5c1-persianas-almar-web-s-projects.vercel.app",
+  "actor": "authorized staging user without team or player profile",
+  "containsPii": false,
+  "summary": {
+    "captures": 9,
+    "brokenImages": 0,
+    "consoleWarningsOrErrors": 0,
+    "documentOverflowX": 0,
+    "technicalErrorLeaks": 0
+  },
+  "deepLinks": {
+    "root": "pass",
+    "mobilePartido": "pass",
+    "teamIdentity": "pass",
+    "playerCardWithQuery": "pass",
+    "market": "public-route-no-login-gate",
+    "ranking": "public-route-no-login-gate"
+  },
+  "pwa": {
+    "manifest": "pass",
+    "serviceWorkerControlled": true,
+    "networkOfflineShell": "pass",
+    "reconnect": "pass",
+    "installedStandalone": "pending"
+  },
+  "captures": [
+    { "name": "no-team--desktop-1440x900", "expectedState": true, "overflowX": false, "brokenImages": 0, "consoleIssues": 0 },
+    { "name": "no-team--portrait-390x844", "expectedState": true, "overflowX": false, "brokenImages": 0, "consoleIssues": 0 },
+    { "name": "no-team--landscape-844x390", "expectedState": true, "overflowX": false, "brokenImages": 0, "consoleIssues": 0 },
+    { "name": "no-team-identity--desktop-1440x900", "expectedState": true, "overflowX": false, "brokenImages": 0, "consoleIssues": 0 },
+    { "name": "no-team-card--desktop-1440x900", "expectedState": true, "overflowX": false, "brokenImages": 0, "consoleIssues": 0 },
+    { "name": "no-team-card--portrait-390x844", "expectedState": true, "overflowX": false, "brokenImages": 0, "consoleIssues": 0 },
+    { "name": "no-team-ranking--desktop-1440x900", "expectedState": true, "overflowX": false, "brokenImages": 0, "consoleIssues": 0 },
+    { "name": "no-team-notifications--desktop-1440x900", "expectedState": true, "overflowX": false, "brokenImages": 0, "consoleIssues": 0 },
+    { "name": "no-team-notifications-empty--desktop-1440x900", "expectedState": true, "overflowX": false, "brokenImages": 0, "consoleIssues": 0 }
+  ]
+}

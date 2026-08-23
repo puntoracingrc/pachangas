@@ -15,6 +15,7 @@ import {
 import { ProductFeedback, ProductState } from "../../_components/product-state";
 import { TeamShieldView } from "../../_components/team-shield-view";
 import { CLIENT_VERSION } from "../../client-version-contract";
+import { googleAuthEntryHref } from "../../google-auth-return";
 import {
   normalizePlayerCosmeticsSnapshot,
   type PlayerCosmeticsSnapshot,
@@ -859,7 +860,9 @@ export default function TeamIdentityPage() {
         <ProductState
           actions={membershipStatus === "no-team"
             ? <><Link href="/">Ir a Inicio</Link><Link href="/mercado?section=equipos">Explorar equipos</Link></>
-            : membershipStatus === "signed-out" ? <Link href="/">Ir a Inicio</Link> : undefined}
+            : membershipStatus === "signed-out"
+              ? <Link href={googleAuthEntryHref("/equipo/identidad")}>Iniciar sesión</Link>
+              : undefined}
           busy={membershipStatus === "loading"}
           description={membershipState.description}
           eyebrow={membershipState.eyebrow}

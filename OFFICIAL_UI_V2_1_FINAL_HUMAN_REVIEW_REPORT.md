@@ -2,103 +2,112 @@
 
 ## Decision Gate
 
-PR [#163](https://github.com/puntoracingrc/pachangas/pull/163) remains OPEN
-and DRAFT. The product code and deployed visual fixtures are ready for Alberto's
-final visual review. This report does not authorize merge or production.
+PR [#163](https://github.com/puntoracingrc/pachangas/pull/163) remains OPEN and
+DRAFT. Merge and production are not authorized.
 
-Exact Preview:
+Stable OAuth Preview:
 `https://pachangas-git-codex-offic-85e5c1-persianas-almar-web-s-projects.vercel.app`
 
-## What To Review
+The exact immutable Preview and final `headRefOid` are recorded in the PR body
+after the closing push.
 
-1. Home immediately reads as team + shield + next action + season.
-2. The shield, not a roster player's card, is the protagonist for team users.
-3. `Mi carta` remains compact and secondary.
-4. The team selector is integrated in identity controls.
-5. Team code, role, invite and destructive actions remain inside the drawer.
-6. Desktop, portrait and landscape retain one navigation and no document-level
-   horizontal overflow.
-7. Market and Match retain their existing product structure.
-8. Explicit light/dark/system preferences still win over the authenticated dark
-   fallback.
+## Review Focus
 
-## Evidence Status
+1. Home reads as team identity, shield, next action and season.
+2. `Mi carta` remains secondary.
+3. Team selector is integrated and Team Access stays in its drawer.
+4. Match and Market use one navigation and retain context.
+5. Desktop, portrait and landscape have no document overflow.
+6. Empty/no-profile states use product language and one next action.
+7. Explicit theme choices continue to override dark default.
 
-| Area | Status | Evidence |
-| --- | --- | --- |
-| Product implementation | PASS | committed checkpoint `65577f21ba838c52e4b36fa3af849011936951d3` |
-| Local visual matrix | PASS | 112 captures; 0 navigation errors, console errors, warnings, failed requests, broken images, overflow or viewport/game violations |
-| Exact deployed Preview fixtures | PASS | 33 captures; 11 surfaces x 3 viewports; 0 broken images and 0 overflow |
-| Preview console check | PASS | 0 warnings and 0 errors during the final fixture pass |
-| Rotation state | PASS | Market `Retos` and Match `Alineacion` retained portrait -> landscape -> portrait with one navigation |
-| Authenticated canonical Preview | BLOCKED | Google `Error 400: redirect_uri_mismatch` on the exact Preview callback |
-| Installed PWA on exact Preview | PENDING | no authenticated installed Preview session was available |
-| Physical Android | PENDING | no real-device claim made |
-| Physical iPhone | PENDING | no real-device claim made |
+## Current Gate Status
 
-## Authentication Blocker
+| Area | Status |
+| --- | --- |
+| Separate Google OAuth staging client | PASS |
+| Login/logout and staging isolation | PASS |
+| Protected deep-link return and query | PASS |
+| Canonical no-team/no-profile user | PASS |
+| Canonical owner without profile | PENDING_SECOND_IDENTITY |
+| Canonical owner with profile | PENDING_SECOND_IDENTITY |
+| Canonical normal player | PENDING_SECOND_IDENTITY |
+| Canonical configured/base shield | PENDING_SECOND_IDENTITY |
+| Local exhaustive visual matrix | PASS |
+| Canonical staging visual matrix | PASS, 9 captures and 0 issues |
+| Manifest/Service Worker/offline/reconnect | PASS |
+| Exact installed standalone Preview | PENDING |
+| Physical Android | PENDING |
+| Physical iPhone | PENDING |
 
-The rejected callback is:
-
-`https://pachangas-git-codex-offic-85e5c1-persianas-almar-web-s-projects.vercel.app/auth/google`
-
-The blocker prevented a real canonical readback of owner/player sessions, long
-team names, wide rosters, configured/unconfigured shields and an owner without a
-player profile. No auth, Supabase or production setting was changed to bypass it.
-Lab fixtures cover the visual hierarchy only.
-
-## Contact Sheets
-
-- `docs/official-ui-v2-1/OFFICIAL_UI_V2_1_AUTHENTICATED_FINAL_CONTACT_SHEET.png`
-- `docs/official-ui-v2-1/OFFICIAL_UI_V2_1_HOME_PARITY_CONTACT_SHEET.png`
-- `docs/official-ui-v2-1/OFFICIAL_UI_V2_1_MOBILE_GAME_CONTACT_SHEET.png`
-- `docs/official-ui-v2-1/OFFICIAL_UI_V2_1_DEMO_OFFICIAL_COMPARISON.png`
-- `docs/official-ui-v2-1/OFFICIAL_UI_V2_1_MATCH_PARITY_CONTACT_SHEET.png`
-- `docs/official-ui-v2-1/OFFICIAL_UI_V2_1_MARKET_PARITY_CONTACT_SHEET.png`
+The pending identity is a human Google device-verification dependency, not an
+OAuth configuration failure. It is not silently converted into PASS.
 
 ## Requested Delivery Matrix
 
 | # | Item | Result |
 | ---: | --- | --- |
 | 1 | `origin/main` | `a4f2468d9b779db6a4391df7cec4cc34e4162fbe` |
-| 2 | Initial HEAD | `7e02e1111fb1617534f06e5f2b2e5fb2f82e6ac3`; contract checkpoint was `b78ac9695a896fcad8842198b4a285d4e9124acf` |
-| 3 | Final HEAD | PR #163 exact `headRefOid` after the closing push |
-| 4 | Exact Preview | URL above |
-| 5 | Shield protagonist | PASS |
-| 6 | `TeamShieldView` reused | PASS |
-| 7 | Owner without profile | source/regression PASS; canonical Preview BLOCKED |
-| 8 | User without team | source/regression PASS; canonical Preview BLOCKED |
-| 9 | Secondary card | PASS |
-| 10 | Team selector integrated | PASS |
-| 11 | Team Access drawer | PASS |
-| 12 | Context not duplicated | PASS |
-| 13 | Preview dark default | PASS |
-| 14 | Explicit light respected | PASS |
-| 15 | Explicit dark respected | PASS |
-| 16 | Authenticated owner Home | visual fixture PASS; canonical login BLOCKED |
-| 17 | Player Home | visual fixture PASS; canonical login BLOCKED |
-| 18 | No-team Home | visual fixture PASS; canonical login BLOCKED |
-| 19 | Match | PASS visual/source |
-| 20 | Market | PASS visual/source |
-| 21 | Portrait | PASS visual |
-| 22 | Landscape | PASS visual |
-| 23 | Rotation | PASS |
-| 24 | Long canonical data | lab visual PASS; canonical login BLOCKED |
-| 25 | Authenticated contact sheet | CREATED and explicitly blocker-labelled |
-| 26 | Demo / production / V2.1 comparison | UPDATED |
-| 27 | Tests | PASS, 372 total |
-| 28 | Typecheck | PASS |
-| 29 | Build | PASS, 39 static pages |
-| 30 | Focused lint | PASS on changed clean modules/tests; inherited `app/page.tsx` and `app/mercado/page.tsx` debt documented |
-| 31 | Visual QA | local and deployed fixture passes above |
-| 32 | Supabase modified | NO |
-| 33 | Production modified | NO |
-| 34 | Merge | NO |
-| 35 | R4A modified | NO |
-| 36 | Worktree | preserved while the PR is unmerged; must be clean at handoff |
+| 2 | Initial HEAD | `c6733f6cb39c950ff70c590c5a6072e562554ea7` |
+| 3 | Final HEAD | PR #163 `headRefOid` after final push |
+| 4 | Mismatch cause | old Google client lacked exact stable Preview `/auth/google` callback |
+| 5 | URI sent to Google | exact stable alias plus `/auth/google` |
+| 6 | OAuth client | `Pachangas IQ Preview Staging` |
+| 7 | Google staging config | exact origin and redirect only |
+| 8 | Supabase Auth staging | staging client enabled; nonce checks retained |
+| 9 | Vercel Preview vars | three branch-scoped public variables |
+| 10 | Production OAuth modified | NO |
+| 11 | Login Preview | PASS |
+| 12 | Logout Preview | PASS |
+| 13 | Deep-link return | PASS, including Card query |
+| 14 | Supabase staging ref | `iozcjirlfytryzrcmrnq` |
+| 15 | Owner without profile | fixture PASS; canonical PENDING_SECOND_IDENTITY |
+| 16 | Owner with profile | fixture PASS; canonical PENDING_SECOND_IDENTITY |
+| 17 | Player | fixture PASS; canonical PENDING_SECOND_IDENTITY |
+| 18 | User without team | canonical PASS |
+| 19 | Configured shield | component/fixture PASS; canonical PENDING_SECOND_IDENTITY |
+| 20 | Base shield | component/fixture PASS; canonical PENDING_SECOND_IDENTITY |
+| 21 | Secondary card | PASS |
+| 22 | Integrated selector | PASS regression |
+| 23 | Team Access drawer | PASS regression |
+| 24 | Dark default | PASS |
+| 25 | Light preference | PASS regression; canonical actor pending |
+| 26 | Dark preference | PASS regression; canonical actor pending |
+| 27 | Authenticated Home desktop | no-team canonical PASS |
+| 28 | Home portrait | canonical PASS |
+| 29 | Home landscape | canonical PASS |
+| 30 | Match | exhaustive fixture/regression PASS |
+| 31 | Lineup | exhaustive fixture/regression PASS |
+| 32 | Result | exhaustive fixture/regression PASS |
+| 33 | Market | public/runtime and regression PASS |
+| 34 | Ranking | canonical PASS |
+| 35 | Notifications | canonical empty/preferences PASS |
+| 36 | Card | canonical no-profile PASS |
+| 37 | Shield | canonical no-team PASS |
+| 38 | Rotation | regression PASS |
+| 39 | PWA | manifest/SW/offline PASS; installed standalone PENDING |
+| 40 | Physical Android | PENDING |
+| 41 | Physical iPhone | PENDING |
+| 42 | Evidence size | 19,372,386 -> 9,978,764 bytes |
+| 43 | Evidence removed | 179 raw files / 9,400,725 bytes |
+| 44 | Authenticated contact sheet | UPDATED, canonical vs fixture labelled |
+| 45 | Stable Preview | URL above |
+| 46 | Exact deployment | PR body after closing deployment |
+| 47 | PR body | updated after closing push |
+| 48 | Tests | PASS, 354/354 |
+| 49 | Typecheck | PASS |
+| 50 | Build | PASS, included in complete test run |
+| 51 | Focused lint | PASS; global inherited baseline 22 errors / 18 warnings |
+| 52 | Visual QA | canonical 9 captures: 0 issues |
+| 53 | Supabase schema modified | NO |
+| 54 | Supabase production modified | NO |
+| 55 | Vercel production modified | NO |
+| 56 | Merge | NO |
+| 57 | R4A modified | NO |
+| 58 | Worktree | retained while PR remains unmerged; clean at handoff |
 
 ## Approval Boundary
 
-The valid next human action is visual approval or a concrete reproducible defect
-report. Authenticated canonical and physical-device limitations remain visible;
-they must not be silently converted into PASS.
+Alberto may review the visual RC now. Full authenticated approval still requires
+the owner/player second identity or an explicit human waiver of that canonical
+coverage. Physical-device claims remain pending independently.

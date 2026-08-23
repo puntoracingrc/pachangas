@@ -1,84 +1,69 @@
 # Official UI V2.1 Visual Decisions
 
-## Accepted For Final Review
+## Frozen Decisions
 
-| Decision | Reason | Product effect |
-| --- | --- | --- |
-| Team shield is the Home protagonist | team identity must precede an individual roster member | authenticated users with a team see the canonical `TeamShieldView` |
-| Strict fallback hierarchy | the first roster player is not a team identity | no team uses the own card, then a stable Pachangas IQ placeholder |
-| Own card is secondary | personal identity remains useful without competing with the team | compact `Mi carta` action remains available |
-| One dominant Home action | Demo World establishes a clear next sporting step | real state selects attendance, lineup, result, draft, creation or Market |
-| Selector integrated in identity | switching teams is context, not a separate sporting section | the former Team Access row no longer interrupts Home |
-| Team Access details drawer | code, invite and destructive controls are necessary but secondary | detailed administration opens on demand and stays permission guarded |
-| Horizontal agenda and activity rails | repeated items scan better without page-section cards | real open and closed matches only; no synthetic activity |
-| One persistent Match Hub | Next, Lineup, Result and Admin are modes of one match | context and navigation do not repeat inside each pane |
-| Pitch and score as protagonists | sporting state precedes secondary forms | existing interactive field and result controls are retained |
-| Market list/detail hierarchy | landscape needs filters, scan list and action detail | existing tabs, filters and server-backed panels remain intact |
-| Own ranking first | users first need to understand their eligibility | canonical own-rank payload stays ahead of the public table |
+| Decision | Product effect |
+| --- | --- |
+| Team shield is Home's protagonist | team users see canonical `TeamShieldView`, never a roster member as identity |
+| Own card is secondary | `Mi carta` remains accessible without competing with team identity |
+| One dominant action | real match/attendance state selects the next step |
+| Selector integrated in identity | switching teams does not interrupt the agenda |
+| Team Access in a bounded drawer | code, role, invite and destructive controls remain permission guarded |
+| One Match Hub | Proximo, Alineacion, Resultado and Admin preserve one context/navigation |
+| Market list/detail hierarchy | filters, scan list and contextual action remain compact |
+| Own ranking first | eligibility is shown before the public table |
+| Dark authenticated fallback | dark applies only when no explicit preference exists |
 
-## Canonical Identity Ownership
+## Identity Fallback
 
-- Team name and shield: identity band.
-- Team selector: identity controls.
-- Role, code, synchronization and invite actions: Team Access drawer.
-- Team level and roster count: compact metrics, not repeated prose.
-- Connection state: one status location when it is relevant.
+1. User with team: canonical team shield.
+2. Team without cosmetic loadout: canonical base shield.
+3. User without team and with profile: own player card.
+4. User without team/profile: stable Pachangas IQ placeholder and one next action.
 
-The product shell no longer repeats the identity-band metadata. The Home does
-not derive its protagonist from `activeGroupPlayers[0]`.
+The fallback never reads `activeGroupPlayers[0]` as team identity.
 
-## Density And Geometry
+## Geometry
 
-- Panels use the existing Official UI V2 semantic colors and a maximum radius
-  of 8px.
-- Desktop keeps the current header and constrained workspace.
-- Portrait keeps one bottom navigation and natural vertical scrolling.
-- Mobile Game Landscape keeps the current side HUD and a bounded internal
-  workspace rather than a compressed desktop page.
-- Shield sizing is responsive and bounded: prominent on desktop, compact enough
-  to retain the action and metrics in portrait and low landscape.
-- Horizontal scrolling is limited to intentional rails and result collections;
-  the document itself does not overflow horizontally.
-- Stable grid tracks, tool heights and bounded drawers prevent controls or cards
-  from resizing the layout.
+- Official V2 semantic palette and radii no larger than 8px.
+- Desktop uses the existing constrained workspace.
+- Portrait uses one bottom navigation and natural vertical scrolling.
+- Mobile Game Landscape uses the side HUD and bounded internal scrolling.
+- Document-level horizontal overflow is forbidden.
+- Horizontal rails are limited to intentionally repeated content.
+- Stable tracks and bounded drawers prevent control movement.
 
-## Theme Decision
+## Theme
 
-Authenticated users without an explicit preference default to dark. This is a
-runtime fallback, not a stored preference.
+Authenticated users without a stored choice default to dark without persisting
+that fallback. Explicit `light`, `dark` and supported `system` preferences remain
+authoritative. Orientation does not change theme.
 
-Explicit `light`, `dark` and supported `system` choices remain authoritative and
-persist across reload and orientation. Public landing and Control Center theme
-behavior were not globally rewritten.
+## Empty, Offline And Error States
 
-## Empty And Offline States
+- Empty states expose at most one primary next action.
+- Offline is read-only and never confirms a sporting write.
+- Server diagnostics are mapped to product language.
+- A missing player profile shows `Tu carta aún no está creada`, not the RPC
+  message.
+- Protected Card and Shield routes offer login and preserve their deep link.
 
-- A team without configured cosmetics receives the canonical base team shield.
-- A user without a team receives the own card when available, otherwise the
-  stable Pachangas IQ placeholder.
-- Empty sections expose at most one valid next step.
-- Home Activity does not fabricate notifications, rewards or team changes.
-- Offline remains read-only and never presents a sports write as confirmed.
+## Evidence Semantics
 
-## Secondary Surfaces
+The authenticated contact sheet separates:
 
-Card, Shield, Notifications, Team and Referee Profile retain their existing
-authority. V2.1 validates them in the shared lab and regression matrix rather
-than creating parallel product state. Demo World remains unchanged.
+- canonical Supabase staging readback;
+- visual owner/player/offline fixtures;
+- Demo World;
+- current Official V2;
+- V2.1 proposal.
 
-## Evidence
+Fixture rows are labelled and never count as canonical authentication. The six
+final contact sheets are under `docs/official-ui-v2-1`; raw evidence retention is
+defined by `OFFICIAL_UI_V2_1_EVIDENCE_INVENTORY.md`.
 
-- `docs/official-ui-v2-1/OFFICIAL_UI_V2_1_HOME_PARITY_CONTACT_SHEET.png`
-- `docs/official-ui-v2-1/OFFICIAL_UI_V2_1_MATCH_PARITY_CONTACT_SHEET.png`
-- `docs/official-ui-v2-1/OFFICIAL_UI_V2_1_MARKET_PARITY_CONTACT_SHEET.png`
-- `docs/official-ui-v2-1/OFFICIAL_UI_V2_1_MOBILE_GAME_CONTACT_SHEET.png`
-- `docs/official-ui-v2-1/OFFICIAL_UI_V2_1_DEMO_OFFICIAL_COMPARISON.png`
-- `docs/official-ui-v2-1/OFFICIAL_UI_V2_1_AUTHENTICATED_FINAL_CONTACT_SHEET.png`
+## Scope Boundary
 
-The authenticated-final sheet records exact deployed Preview fixture captures
-and explicitly labels the Google `redirect_uri_mismatch` blocker. It is not a
-claim that canonical staging authentication passed.
-
-The target is structural parity in hierarchy, composition, density, object
-prominence and next action. Pixel identity is not required, and Demo/lab
-fixtures never become product data.
+No visual decision changes sports authority, Rating V2, Team Rewards, Player
+Cosmetics, Team Cosmetics, Market permissions, Demo World authority or Control
+Center access. R4A #162 remains untouched.

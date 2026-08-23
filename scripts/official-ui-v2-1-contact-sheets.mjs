@@ -1,5 +1,5 @@
 import { existsSync } from "node:fs";
-import { cp, mkdir, readdir } from "node:fs/promises";
+import { cp, mkdir } from "node:fs/promises";
 import path from "node:path";
 import sharp from "sharp";
 
@@ -117,7 +117,14 @@ function officialV2(surface, viewport) {
 }
 
 function authenticated(surface, viewport) {
-  return path.join(authenticatedRoot, `${surface}--${viewport}.png`);
+  const current = path.join(authenticatedRoot, `${surface}--${viewport}.png`);
+  return existsSync(current)
+    ? current
+    : path.join(capturesRoot, "authenticated-final", `${surface}--${viewport}.png`);
+}
+
+function authenticatedStaging(name) {
+  return path.join(capturesRoot, "authenticated-staging-final", `${name}.png`);
 }
 
 function parityRow(label, height, demoSource, currentSource, proposedSource) {
@@ -133,36 +140,55 @@ function parityRow(label, height, demoSource, currentSource, proposedSource) {
 }
 
 async function copyEvidence() {
-  await mkdir(path.join(capturesRoot, "v2-1"), { recursive: true });
-  await mkdir(path.join(capturesRoot, "product-regression"), { recursive: true });
-  await mkdir(path.join(capturesRoot, "fix-regression"), { recursive: true });
-  await mkdir(path.join(capturesRoot, "fix-regression-final"), { recursive: true });
-  await mkdir(path.join(capturesRoot, "performance"), { recursive: true });
-  await mkdir(path.join(capturesRoot, "authenticated-final"), { recursive: true });
-  for (const [sourceRoot, destination] of [
-    [parityRoot, path.join(capturesRoot, "v2-1")],
-    [regressionRoot, path.join(capturesRoot, "product-regression")],
-    [fixRegressionRoot, path.join(capturesRoot, "fix-regression")],
-    [finalFixRegressionRoot, path.join(capturesRoot, "fix-regression-final")],
-    [performanceRoot, path.join(capturesRoot, "performance")],
-    [authenticatedRoot, path.join(capturesRoot, "authenticated-final")],
-  ]) {
-    for (const name of await readdir(sourceRoot).catch(() => [])) {
-      if (
-        !name.endsWith(".jpg") &&
-        !name.endsWith(".png") &&
-        name !== "results.json" &&
-        name !== "rotation-results.json" &&
-        name !== "matrix.md"
-      ) continue;
-      if (name === "premium-art-pack-contact-sheet.jpg") continue;
-      await cp(path.join(sourceRoot, name), path.join(destination, name));
+  const curatedEvidence = [
+    [parityRoot, "v2-1", [
+      "matrix.md", "results.json",
+      "v21-home--desktop.jpg", "v21-home--portrait.jpg", "v21-home--landscape.jpg",
+      "v21-home--landscape-small.jpg", "v21-home--landscape-wide.jpg",
+      "v21-match-next--desktop.jpg", "v21-match-next--portrait.jpg", "v21-match-next--landscape.jpg",
+      "v21-match-next--landscape-small.jpg", "v21-match-next--landscape-wide.jpg",
+      "v21-match-lineup--landscape.jpg", "v21-match-result--landscape.jpg", "v21-match-admin--landscape.jpg",
+      "v21-market--desktop.jpg", "v21-market--portrait.jpg", "v21-market--landscape.jpg",
+      "v21-ranking--desktop.jpg", "v21-card--desktop.jpg", "v21-shield--desktop.jpg",
+      "v21-notifications--desktop.jpg",
+    ]],
+    [regressionRoot, "product-regression", [
+      "matrix.md", "results.json",
+      "demo-inicio-admin--desktop.jpg", "demo-inicio-admin--portrait.jpg", "demo-inicio-admin--landscape.jpg",
+      "demo-mercado--desktop.jpg", "demo-mercado--portrait.jpg", "demo-mercado--landscape.jpg",
+      "demo-partido--landscape.jpg", "demo-partido-alineacion--landscape.jpg",
+      "demo-partido-resultado--landscape.jpg", "demo-partido-admin--landscape.jpg",
+      "equipo-identidad--desktop.jpg", "home-visitor--portrait.jpg", "mercado--desktop.jpg",
+      "personalizar-carta--desktop.jpg", "ranking--desktop.jpg", "avisos--desktop.jpg",
+    ]],
+    [fixRegressionRoot, "fix-regression", ["matrix.md", "results.json"]],
+    [finalFixRegressionRoot, "fix-regression-final", ["matrix.md", "results.json"]],
+    [performanceRoot, "performance", ["matrix.md", "results.json"]],
+    [authenticatedRoot, "authenticated-final", [
+      "results.json", "rotation-results.json",
+      "home-owner--desktop.png", "home-owner--portrait.png", "home-owner--landscape.png",
+      "home-player--desktop.png", "home-player--portrait.png", "home-player--landscape.png",
+      "home-offline--desktop.png", "home-offline--portrait.png", "home-offline--landscape.png",
+      "match-next--desktop.png", "match-lineup--landscape.png", "match-result--landscape.png",
+      "market--landscape.png", "ranking--desktop.png", "card--desktop.png", "shield--desktop.png",
+    ]],
+  ];
+
+  for (const [sourceRoot, destinationName, names] of curatedEvidence) {
+    const destination = path.join(capturesRoot, destinationName);
+    await mkdir(destination, { recursive: true });
+    for (const name of names) {
+      const source = path.join(sourceRoot, name);
+      if (existsSync(source)) await cp(source, path.join(destination, name));
     }
   }
 }
 
 await mkdir(outputRoot, { recursive: true });
 
+const authenticatedOnly = process.env.OFFICIAL_UI_AUTHENTICATED_ONLY === "1";
+
+if (!authenticatedOnly) {
 await createSheet(
   "OFFICIAL_UI_V2_1_HOME_PARITY_CONTACT_SHEET.png",
   "Official UI V2.1 - Home parity",
@@ -261,33 +287,50 @@ await createSheet(
     ],
   })),
 );
+}
 
-const authenticatedSurfaces = [
-  ["Inicio owner", "home-owner"],
-  ["Inicio jugador", "home-player"],
-  ["Inicio sin equipo", "home-no-team"],
-  ["Inicio offline", "home-offline"],
-  ["Partido proximo", "match-next"],
-  ["Alineacion", "match-lineup"],
-  ["Resultado", "match-result"],
-  ["Mercado", "market"],
-  ["Ranking", "ranking"],
-  ["Carta", "card"],
-  ["Escudo", "shield"],
-];
 await createSheet(
   "OFFICIAL_UI_V2_1_AUTHENTICATED_FINAL_CONTACT_SHEET.png",
-  "Official UI V2.1 - Final Preview review",
-  "HEAD exacto desplegado; login real bloqueado por Google redirect_uri_mismatch",
-  authenticatedSurfaces.map(([label, surface]) => ({
-    label,
-    height: 400,
-    cells: [
-      { source: authenticated(surface, "desktop"), title: `${label} - 1440x900` },
-      { source: authenticated(surface, "portrait"), title: `${label} - 390x844` },
-      { source: authenticated(surface, "landscape"), title: `${label} - 844x390` },
-    ],
-  })),
+  "Official UI V2.1 - Authenticated staging review",
+  "OAuth staging canonico sin PII; estados owner/player de fixture identificados expresamente",
+  [
+    {
+      label: "Lectura canonica staging - usuario sin equipo",
+      height: 460,
+      cells: [
+        { source: authenticatedStaging("no-team--desktop-1440x900"), title: "Staging real - 1440x900" },
+        { source: authenticatedStaging("no-team--portrait-390x844"), title: "Staging real - 390x844" },
+        { source: authenticatedStaging("no-team--landscape-844x390"), title: "Staging real - 844x390" },
+      ],
+    },
+    {
+      label: "Estados canonicos staging",
+      height: 460,
+      cells: [
+        { source: authenticatedStaging("no-team-identity--desktop-1440x900"), title: "Equipo vacio - staging real" },
+        { source: authenticatedStaging("no-team-card--desktop-1440x900"), title: "Carta pendiente - staging real" },
+        { source: authenticatedStaging("no-team-ranking--desktop-1440x900"), title: "Ranking - staging real" },
+      ],
+    },
+    {
+      label: "Avisos y portrait canonicos",
+      height: 460,
+      cells: [
+        { source: authenticatedStaging("no-team-notifications--desktop-1440x900"), title: "Preferencias - staging real" },
+        { source: authenticatedStaging("no-team-notifications-empty--desktop-1440x900"), title: "Avisos vacios - staging real" },
+        { source: authenticatedStaging("no-team-card--portrait-390x844"), title: "Carta pendiente - portrait real" },
+      ],
+    },
+    {
+      label: "Cobertura visual de roles - no es lectura canonica",
+      height: 460,
+      cells: [
+        { source: authenticated("home-owner", "desktop"), title: "Owner - fixture visual" },
+        { source: authenticated("home-player", "desktop"), title: "Jugador - fixture visual" },
+        { source: authenticated("home-offline", "desktop"), title: "Offline - fixture visual" },
+      ],
+    },
+  ],
   { columns: 3, cellWidth: 580 },
 );
 

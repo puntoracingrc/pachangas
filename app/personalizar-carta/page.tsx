@@ -14,6 +14,7 @@ import {
 import { PlayerCosmeticCard } from "../_components/player-cosmetic-card";
 import { ProductFeedback, ProductState } from "../_components/product-state";
 import { CLIENT_VERSION } from "../client-version-contract";
+import { googleAuthEntryHref } from "../google-auth-return";
 import { currentClientDisplayMode } from "../pwa-client-bridge";
 import {
   EMPTY_PLAYER_COSMETIC_LOADOUT,
@@ -56,6 +57,12 @@ const FACET_LABELS = [
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
+function playerProfileRequired(value: unknown) {
+  return isRecord(value)
+    && typeof value.message === "string"
+    && /player profile required/i.test(value.message);
 }
 
 function profileFromRow(value: unknown): PlayerCardProfile | null {
@@ -107,6 +114,7 @@ export default function PlayerCosmeticsPage() {
   const [busy, setBusy] = useState("");
   const [draft, setDraft] = useState<PlayerCosmeticLoadout>({ ...EMPTY_PLAYER_COSMETIC_LOADOUT });
   const [message, setMessage] = useState(supabase ? "" : SERVICE_UNAVAILABLE_MESSAGE);
+  const [missingProfile, setMissingProfile] = useState(false);
   const [profile, setProfile] = useState<PlayerCardProfile | null>(null);
   const [sessionResolved, setSessionResolved] = useState(!supabase);
   const [snapshot, setSnapshot] = useState<PlayerCosmeticsSnapshot | null>(null);
@@ -140,9 +148,16 @@ export default function PlayerCosmeticsPage() {
     if (!supabase) return;
     const result = await supabase.rpc("get_pachanga_player_cosmetics_snapshot_v1");
     if (result.error) {
+      if (playerProfileRequired(result.error)) {
+        setMissingProfile(true);
+        setMessage("");
+        return;
+      }
+      setMissingProfile(false);
       setMessage(userFacingError(result.error, "No pudimos recuperar tu colección. Vuelve a intentarlo."));
       return;
     }
+    setMissingProfile(false);
     if (!acceptSnapshot(result.data, preserveDraft)) setMessage("El servidor devolvió una colección no válida.");
   }, [acceptSnapshot]);
 
@@ -315,7 +330,13 @@ export default function PlayerCosmeticsPage() {
             eyebrow: "Sesión necesaria",
             title: "Personaliza tu ficha",
           }
-        : !snapshot && message
+        : missingProfile
+          ? {
+              description: "Crea primero tu ficha de jugador para acceder a tu colección personal.",
+              eyebrow: "Ficha pendiente",
+              title: "Tu carta aún no está creada",
+            }
+          : !snapshot && message
           ? {
               description: message,
               eyebrow: "No se pudo cargar",
@@ -359,8 +380,20 @@ export default function PlayerCosmeticsPage() {
 
       {pageState ? (
         <ProductState
-          actions={sessionResolved && !userId ? <Link href="/">Ir a Inicio</Link> : undefined}
-          busy={!sessionResolved || Boolean(userId && !snapshot && !message)}
+          actions={sessionResolved && !userId
+            ? (
+                <Link
+                  href={googleAuthEntryHref("/personalizar-carta")}
+                  onClick={(event) => {
+                    event.preventDefault();
+                    window.location.assign(googleAuthEntryHref(`${window.location.pathname}${window.location.search}`));
+                  }}
+                >
+                  Iniciar sesión
+                </Link>
+              )
+            : missingProfile ? <Link href="/?mobile=perfil">Crear mi ficha</Link> : undefined}
+          busy={!sessionResolved || Boolean(userId && !snapshot && !message && !missingProfile)}
           description={pageState.description}
           eyebrow={pageState.eyebrow}
           surface="dark"

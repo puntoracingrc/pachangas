@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
+import { googleAuthEntryHref, resolveGoogleAuthReturnHref } from "../app/google-auth-return";
 import { resolveThemePreference } from "../app/theme-toggle";
 
 const source = (path: string) => readFile(new URL(`../${path}`, import.meta.url), "utf8");
@@ -40,6 +41,38 @@ test("authenticated theme defaults to dark without overriding explicit preferenc
   assert.equal(resolveThemePreference("light", "dark"), "light");
   assert.equal(resolveThemePreference("dark", "system"), "dark");
   assert.equal(resolveThemePreference("system", "dark"), "system");
+});
+
+test("protected V2.1 deep links survive the Google OAuth round trip", async () => {
+  const [home, shield, card] = await Promise.all([
+    source("app/page.tsx"),
+    source("app/equipo/identidad/page.tsx"),
+    source("app/personalizar-carta/page.tsx"),
+  ]);
+  const origin = "https://preview.example.test";
+
+  assert.equal(
+    googleAuthEntryHref("/equipo/identidad"),
+    "/?authReturn=%2Fequipo%2Fidentidad",
+  );
+  assert.equal(
+    resolveGoogleAuthReturnHref(
+      `${origin}/?authReturn=%2Fpersonalizar-carta%3Fslot%3Dframe`,
+      origin,
+    ),
+    `${origin}/personalizar-carta?slot=frame`,
+  );
+  assert.equal(
+    resolveGoogleAuthReturnHref(`${origin}/?authReturn=https%3A%2F%2Fevil.example`, origin),
+    `${origin}/`,
+  );
+  assert.match(home, /resolveGoogleAuthReturnHref\(window\.location\.href, window\.location\.origin\)/);
+  assert.match(shield, /googleAuthEntryHref\("\/equipo\/identidad"\)/);
+  assert.match(card, /window\.location\.assign\(googleAuthEntryHref\(`\$\{window\.location\.pathname\}\$\{window\.location\.search\}`\)\)/);
+  assert.match(card, /playerProfileRequired\(result\.error\)/);
+  assert.match(card, />Crear mi ficha<\/Link>/);
+  assert.match(card, /!message && !missingProfile/);
+  assert.doesNotMatch(card, /description: message,[\s\S]*Player profile required/);
 });
 
 test("Match is a single persistent game hub without changing its callbacks", async () => {
