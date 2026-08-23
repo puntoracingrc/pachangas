@@ -1,15 +1,18 @@
-import { cp, mkdir, readdir, rm } from "node:fs/promises";
+import { existsSync } from "node:fs";
+import { cp, mkdir, readdir } from "node:fs/promises";
 import path from "node:path";
 import sharp from "sharp";
 
 const root = process.cwd();
 const outputRoot = path.join(root, "docs", "official-ui-v2-1");
 const capturesRoot = path.join(outputRoot, "captures");
+const regressionArchiveRoot = path.join(capturesRoot, "product-regression");
 const parityRoot = path.join(root, "artifacts", "visual-audit-v1", "official-ui-v2-1-deep-parity");
 const regressionRoot = path.join(root, "artifacts", "visual-audit-v1", "official-ui-v2-1-product-regression");
 const fixRegressionRoot = path.join(root, "artifacts", "visual-audit-v1", "official-ui-v2-1-regression");
 const finalFixRegressionRoot = path.join(root, "artifacts", "visual-audit-v1", "official-ui-v2-1-regression-2");
 const performanceRoot = path.join(root, "artifacts", "visual-audit-v1", "official-ui-v2-1-performance");
+const authenticatedRoot = path.join(root, "artifacts", "visual-audit-v1", "official-ui-v2-1-final-preview-manual");
 const officialV2Root = path.join(root, "docs", "official-ui-v2", "captures", "after");
 
 const palette = {
@@ -103,12 +106,18 @@ function v21(surface, viewport) {
 }
 
 function demo(surface, viewport) {
-  return path.join(regressionRoot, `${surface}--${viewport}.jpg`);
+  const name = `${surface}--${viewport}.jpg`;
+  const current = path.join(regressionRoot, name);
+  return existsSync(current) ? current : path.join(regressionArchiveRoot, name);
 }
 
 function officialV2(surface, viewport) {
   const prefix = viewport === "desktop" ? "desktop-1440x900" : viewport === "portrait" ? "portrait-390x844" : "landscape-844x390";
   return path.join(officialV2Root, `${prefix}-${surface}.png`);
+}
+
+function authenticated(surface, viewport) {
+  return path.join(authenticatedRoot, `${surface}--${viewport}.png`);
 }
 
 function parityRow(label, height, demoSource, currentSource, proposedSource) {
@@ -124,21 +133,28 @@ function parityRow(label, height, demoSource, currentSource, proposedSource) {
 }
 
 async function copyEvidence() {
-  await rm(capturesRoot, { recursive: true, force: true });
   await mkdir(path.join(capturesRoot, "v2-1"), { recursive: true });
   await mkdir(path.join(capturesRoot, "product-regression"), { recursive: true });
   await mkdir(path.join(capturesRoot, "fix-regression"), { recursive: true });
   await mkdir(path.join(capturesRoot, "fix-regression-final"), { recursive: true });
   await mkdir(path.join(capturesRoot, "performance"), { recursive: true });
+  await mkdir(path.join(capturesRoot, "authenticated-final"), { recursive: true });
   for (const [sourceRoot, destination] of [
     [parityRoot, path.join(capturesRoot, "v2-1")],
     [regressionRoot, path.join(capturesRoot, "product-regression")],
     [fixRegressionRoot, path.join(capturesRoot, "fix-regression")],
     [finalFixRegressionRoot, path.join(capturesRoot, "fix-regression-final")],
     [performanceRoot, path.join(capturesRoot, "performance")],
+    [authenticatedRoot, path.join(capturesRoot, "authenticated-final")],
   ]) {
-    for (const name of await readdir(sourceRoot)) {
-      if (!name.endsWith(".jpg") && name !== "results.json" && name !== "matrix.md") continue;
+    for (const name of await readdir(sourceRoot).catch(() => [])) {
+      if (
+        !name.endsWith(".jpg") &&
+        !name.endsWith(".png") &&
+        name !== "results.json" &&
+        name !== "rotation-results.json" &&
+        name !== "matrix.md"
+      ) continue;
       if (name === "premium-art-pack-contact-sheet.jpg") continue;
       await cp(path.join(sourceRoot, name), path.join(destination, name));
     }
@@ -244,6 +260,35 @@ await createSheet(
       { source: v21(proposedKey, "landscape"), title: `V2.1 - ${label}` },
     ],
   })),
+);
+
+const authenticatedSurfaces = [
+  ["Inicio owner", "home-owner"],
+  ["Inicio jugador", "home-player"],
+  ["Inicio sin equipo", "home-no-team"],
+  ["Inicio offline", "home-offline"],
+  ["Partido proximo", "match-next"],
+  ["Alineacion", "match-lineup"],
+  ["Resultado", "match-result"],
+  ["Mercado", "market"],
+  ["Ranking", "ranking"],
+  ["Carta", "card"],
+  ["Escudo", "shield"],
+];
+await createSheet(
+  "OFFICIAL_UI_V2_1_AUTHENTICATED_FINAL_CONTACT_SHEET.png",
+  "Official UI V2.1 - Final Preview review",
+  "HEAD exacto desplegado; login real bloqueado por Google redirect_uri_mismatch",
+  authenticatedSurfaces.map(([label, surface]) => ({
+    label,
+    height: 400,
+    cells: [
+      { source: authenticated(surface, "desktop"), title: `${label} - 1440x900` },
+      { source: authenticated(surface, "portrait"), title: `${label} - 390x844` },
+      { source: authenticated(surface, "landscape"), title: `${label} - 844x390` },
+    ],
+  })),
+  { columns: 3, cellWidth: 580 },
 );
 
 await copyEvidence();

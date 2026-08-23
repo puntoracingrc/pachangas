@@ -1,6 +1,6 @@
 # Visual Audit official-ui-v2-1-deep-parity
 
-Base URL: `http://127.0.0.1:3096`
+Base URL: `http://127.0.0.1:3098`
 
 | Route | User mode | Viewport | Result | Overflow X | Console errors | Warnings | Broken images | Small targets | Game chrome |
 | --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
@@ -20,22 +20,6 @@ Base URL: `http://127.0.0.1:3096`
 | v21-team | lab-player | 1440x900 | PASS | 0 | 0 | 0 | 0 | 8 | 0 |
 | v21-referee | lab-referee | 1440x900 | PASS | 0 | 0 | 0 | 0 | 7 | 0 |
 | v21-home-light | lab-light | 1440x900 | PASS | 0 | 0 | 0 | 0 | 16 | 0 |
-| v21-home | lab-admin | 1920x1080 | PASS | 0 | 0 | 0 | 0 | 16 | 0 |
-| v21-home-player | lab-player | 1920x1080 | PASS | 0 | 0 | 0 | 0 | 16 | 0 |
-| v21-home-no-team | lab-no-team | 1920x1080 | PASS | 0 | 0 | 0 | 0 | 12 | 0 |
-| v21-home-offline | lab-offline | 1920x1080 | PASS | 0 | 0 | 0 | 0 | 16 | 0 |
-| v21-match-next | lab-admin | 1920x1080 | PASS | 0 | 0 | 0 | 0 | 12 | 0 |
-| v21-match-lineup | lab-admin | 1920x1080 | PASS | 0 | 0 | 0 | 0 | 13 | 0 |
-| v21-match-result | lab-admin | 1920x1080 | PASS | 0 | 0 | 0 | 0 | 21 | 0 |
-| v21-match-admin | lab-admin | 1920x1080 | PASS | 0 | 0 | 0 | 0 | 8 | 0 |
-| v21-market | lab-admin | 1920x1080 | PASS | 0 | 0 | 0 | 0 | 13 | 0 |
-| v21-ranking | lab-player | 1920x1080 | PASS | 0 | 0 | 0 | 0 | 7 | 0 |
-| v21-notifications | lab-player | 1920x1080 | PASS | 0 | 0 | 0 | 0 | 17 | 0 |
-| v21-card | lab-player | 1920x1080 | PASS | 0 | 0 | 0 | 0 | 15 | 0 |
-| v21-shield | lab-admin | 1920x1080 | PASS | 0 | 0 | 0 | 0 | 14 | 0 |
-| v21-team | lab-player | 1920x1080 | PASS | 0 | 0 | 0 | 0 | 8 | 0 |
-| v21-referee | lab-referee | 1920x1080 | PASS | 0 | 0 | 0 | 0 | 7 | 0 |
-| v21-home-light | lab-light | 1920x1080 | PASS | 0 | 0 | 0 | 0 | 16 | 0 |
 | v21-home | lab-admin | 390x844 | PASS | 0 | 0 | 0 | 0 | 9 | 0 |
 | v21-home-player | lab-player | 390x844 | PASS | 0 | 0 | 0 | 0 | 9 | 0 |
 | v21-home-no-team | lab-no-team | 390x844 | PASS | 0 | 0 | 0 | 0 | 5 | 0 |
@@ -52,22 +36,6 @@ Base URL: `http://127.0.0.1:3096`
 | v21-team | lab-player | 390x844 | PASS | 0 | 0 | 0 | 0 | 1 | 0 |
 | v21-referee | lab-referee | 390x844 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
 | v21-home-light | lab-light | 390x844 | PASS | 0 | 0 | 0 | 0 | 9 | 0 |
-| v21-home | lab-admin | 360x800 | PASS | 0 | 0 | 0 | 0 | 9 | 0 |
-| v21-home-player | lab-player | 360x800 | PASS | 0 | 0 | 0 | 0 | 9 | 0 |
-| v21-home-no-team | lab-no-team | 360x800 | PASS | 0 | 0 | 0 | 0 | 5 | 0 |
-| v21-home-offline | lab-offline | 360x800 | PASS | 0 | 0 | 0 | 0 | 9 | 0 |
-| v21-match-next | lab-admin | 360x800 | PASS | 0 | 0 | 0 | 0 | 8 | 0 |
-| v21-match-lineup | lab-admin | 360x800 | PASS | 0 | 0 | 0 | 0 | 7 | 0 |
-| v21-match-result | lab-admin | 360x800 | PASS | 0 | 0 | 0 | 0 | 18 | 0 |
-| v21-match-admin | lab-admin | 360x800 | PASS | 0 | 0 | 0 | 0 | 5 | 0 |
-| v21-market | lab-admin | 360x800 | PASS | 0 | 0 | 0 | 0 | 12 | 0 |
-| v21-ranking | lab-player | 360x800 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
-| v21-notifications | lab-player | 360x800 | PASS | 0 | 0 | 0 | 0 | 10 | 0 |
-| v21-card | lab-player | 360x800 | PASS | 0 | 0 | 0 | 0 | 8 | 0 |
-| v21-shield | lab-admin | 360x800 | PASS | 0 | 0 | 0 | 0 | 7 | 0 |
-| v21-team | lab-player | 360x800 | PASS | 0 | 0 | 0 | 0 | 1 | 0 |
-| v21-referee | lab-referee | 360x800 | PASS | 0 | 0 | 0 | 0 | 0 | 0 |
-| v21-home-light | lab-light | 360x800 | PASS | 0 | 0 | 0 | 0 | 9 | 0 |
 | v21-home | lab-admin | 667x375 | PASS | 0 | 0 | 0 | 0 | 17 | 0 |
 | v21-home-player | lab-player | 667x375 | PASS | 0 | 0 | 0 | 0 | 17 | 0 |
 | v21-home-no-team | lab-no-team | 667x375 | PASS | 0 | 0 | 0 | 0 | 13 | 0 |
