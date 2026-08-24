@@ -97,6 +97,7 @@
     "test:league-match-operations:bootstrap": "node tests/league-match-operations-v1-bootstrap.mjs",
     "test:league-match-operations:concurrency": "node tests/league-match-operations-v1-concurrency.mjs",
     "test:league-match-operations:scale": "node tests/league-match-operations-v1-scale.mjs",
+    "test:league-match-operations:staging": "node tests/league-match-operations-v1-staging-e2e.mjs",
     "lab:season-ranking": "tsx simulation/season-ranking-lab/run.ts",
     "lab:season-ranking:elite": "tsx simulation/season-ranking-lab/run-elite.ts",
     "lab:season-ranking:v3": "tsx simulation/season-ranking-lab/run-v3.ts",

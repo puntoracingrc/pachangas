@@ -39,7 +39,7 @@ begin
        = (to_jsonb(old) - array['revision', 'server_sequence', 'updated_at']) then
     return new;
   end if;
-  if old.status = 'published'
+  if old.status in ('published', 'in_progress', 'completed', 'locked')
      and new.status = 'cancelled'
      and current_setting('pachangas.r4b_qa_archive', true) = 'on'
      and private.pachanga_competition_is_service_authority_v1() then
@@ -85,6 +85,225 @@ $$;
 
 revoke all on function private.pachanga_league_schedule_round_guard_v1()
   from public, anon, authenticated;
+
+-- R4B cleanup originally retired only contexts that were still scheduled. R4C
+-- advances those same authorities to official and can lock their rounds, so the
+-- service-only QA archive must retire every active context and invalidate the
+-- derived standings without deleting sporting evidence.
+create or replace function public.archive_pachanga_league_schedule_qa_v1(
+  operation_id uuid,
+  target_schedule_plan_id uuid,
+  expected_revision bigint,
+  reason text,
+  client_metadata jsonb default '{}'::jsonb
+)
+returns jsonb
+language plpgsql
+security definer
+set search_path = pg_catalog
+as $$
+declare
+  action_name constant text := 'league_schedule.qa_archive';
+  plan_row public.pachanga_competition_schedule_plans%rowtype;
+  competition_slug text;
+  organizer_group_id uuid;
+  organizer_club_id uuid;
+  request_hash text;
+  replay jsonb;
+  metadata jsonb;
+  sequence_value bigint;
+  confirmed_at timestamptz := clock_timestamp();
+  confirmed_revision bigint;
+  response jsonb;
+  payload jsonb;
+  retired_contexts integer := 0;
+  retired_bindings integer := 0;
+  retired_canonical_matches integer := 0;
+  retired_slots integer := 0;
+  cancelled_rounds integer := 0;
+  stale_standing_states integer := 0;
+begin
+  if not private.pachanga_competition_is_service_authority_v1() then
+    raise exception 'SERVICE_AUTHORITY_REQUIRED' using errcode = '42501';
+  end if;
+  if operation_id is null or target_schedule_plan_id is null
+     or expected_revision is null or expected_revision < 1
+     or reason is null or trim(reason) !~ '^R4B_STAGING_QA_ARCHIVE:'
+     or jsonb_typeof(coalesce(client_metadata, '{}'::jsonb)) <> 'object' then
+    raise exception 'INVALID_R4B_QA_ARCHIVE_COMMAND' using errcode = '22023';
+  end if;
+  payload := jsonb_build_object('reason', left(trim(reason), 240));
+  request_hash := private.pachanga_competition_request_hash_v1(
+    action_name, target_schedule_plan_id, expected_revision, payload
+  );
+  perform pg_advisory_xact_lock(hashtextextended('r4b-qa-archive:' || operation_id::text, 0));
+  replay := private.pachanga_competition_replay_v1(
+    operation_id, null, 'service_authority', action_name,
+    target_schedule_plan_id, request_hash
+  );
+  if replay is not null then return replay; end if;
+  perform pg_advisory_xact_lock(hashtextextended('r4b-schedule:' || target_schedule_plan_id::text, 0));
+
+  select * into plan_row
+  from public.pachanga_competition_schedule_plans plans
+  where plans.id = target_schedule_plan_id
+  for update;
+  if not found then raise exception 'SCHEDULE_PLAN_NOT_FOUND' using errcode = 'P0002'; end if;
+  select competitions.slug, competitions.organizer_group_id, competitions.organizer_club_id
+  into competition_slug, organizer_group_id, organizer_club_id
+  from public.pachanga_competitions competitions
+  where competitions.id = plan_row.competition_id;
+  if competition_slug not like 'r4b-qa-%' and competition_slug not like 'r4c-qa-%' then
+    raise exception 'R4B_QA_ARCHIVE_SCOPE_FORBIDDEN' using errcode = '42501';
+  end if;
+  if plan_row.revision <> expected_revision then
+    raise exception 'STALE_REVISION' using errcode = 'PT409';
+  end if;
+  if plan_row.status not in ('draft', 'generated', 'validated', 'published', 'cancelled') then
+    raise exception 'R4B_QA_ARCHIVE_STATUS_FORBIDDEN' using errcode = '22023';
+  end if;
+
+  sequence_value := nextval('private.pachanga_competition_sequence');
+  metadata := private.pachanga_competition_client_metadata_v1(client_metadata);
+  perform set_config('pachangas.r4b_qa_archive', 'on', true);
+
+  update public.pachanga_competition_match_contexts contexts set
+    status = 'retired', revision = contexts.revision + 1,
+    server_sequence = sequence_value, updated_at = confirmed_at
+  where contexts.status <> 'retired'
+    and contexts.schedule_item_id in (
+      select items.id from public.pachanga_competition_schedule_items items
+      where items.schedule_revision_id = plan_row.current_revision_id
+    );
+  get diagnostics retired_contexts = row_count;
+
+  update public.pachanga_canonical_match_bindings bindings set
+    binding_status = 'retired', revision = bindings.revision + 1,
+    server_sequence = sequence_value
+  where bindings.source_kind = 'competition_generated'
+    and bindings.binding_status = 'active'
+    and bindings.source_id in (
+      select items.id::text from public.pachanga_competition_schedule_items items
+      where items.schedule_revision_id = plan_row.current_revision_id
+    );
+  get diagnostics retired_bindings = row_count;
+
+  update public.pachanga_canonical_matches canonical_matches set
+    status = 'retired', revision = canonical_matches.revision + 1,
+    server_sequence = sequence_value
+  where canonical_matches.status = 'active'
+    and canonical_matches.id in (
+      select items.canonical_match_id
+      from public.pachanga_competition_schedule_items items
+      where items.schedule_revision_id = plan_row.current_revision_id
+        and items.canonical_match_id is not null
+    )
+    and not exists (
+      select 1 from public.pachanga_canonical_match_bindings bindings
+      where bindings.canonical_match_id = canonical_matches.id
+        and bindings.binding_status = 'active'
+    );
+  get diagnostics retired_canonical_matches = row_count;
+
+  update public.pachanga_competition_schedule_slots slots set
+    status = 'retired', retired_by = null, retired_at = confirmed_at,
+    revision = slots.revision + 1, server_sequence = sequence_value
+  where slots.status <> 'retired'
+    and slots.competition_id = plan_row.competition_id
+    and slots.edition_id = plan_row.edition_id
+    and slots.stage_id = plan_row.stage_id
+    and slots.division_id is not distinct from plan_row.division_id
+    and slots.competition_group_id is not distinct from plan_row.competition_group_id;
+  get diagnostics retired_slots = row_count;
+
+  update public.pachanga_competition_rounds rounds set
+    status = 'cancelled', revision = rounds.revision + 1,
+    server_sequence = sequence_value, updated_at = confirmed_at
+  where rounds.schedule_revision_id = plan_row.current_revision_id
+    and rounds.status <> 'cancelled';
+  get diagnostics cancelled_rounds = row_count;
+
+  update public.pachanga_competition_standing_states states set
+    health_status = 'STALE', revision = states.revision + 1,
+    server_sequence = sequence_value, updated_at = confirmed_at
+  where states.competition_id = plan_row.competition_id
+    and states.edition_id = plan_row.edition_id
+    and states.stage_id = plan_row.stage_id
+    and states.division_id is not distinct from plan_row.division_id
+    and states.competition_group_id is not distinct from plan_row.competition_group_id
+    and states.health_status <> 'STALE';
+  get diagnostics stale_standing_states = row_count;
+
+  update public.pachanga_competition_schedule_revisions revisions set
+    status = 'cancelled', revision = revisions.revision + 1,
+    server_sequence = sequence_value
+  where revisions.id = plan_row.current_revision_id
+    and revisions.status in ('generated', 'validated', 'published');
+
+  update public.pachanga_competition_schedule_plans plans set
+    status = 'cancelled', cancelled_by = null, cancelled_at = confirmed_at,
+    revision = plans.revision + 1, server_sequence = sequence_value
+  where plans.id = plan_row.id
+  returning plans.revision into confirmed_revision;
+
+  response := jsonb_build_object(
+    'operationId', operation_id,
+    'confirmedRevision', confirmed_revision,
+    'confirmedAt', confirmed_at,
+    'serverSequence', sequence_value,
+    'snapshot', jsonb_build_object(
+      'planId', plan_row.id,
+      'status', 'cancelled',
+      'retiredContexts', retired_contexts,
+      'retiredBindings', retired_bindings,
+      'retiredCanonicalMatches', retired_canonical_matches,
+      'retiredSlots', retired_slots,
+      'cancelledRounds', cancelled_rounds,
+      'staleStandingStates', stale_standing_states
+    ),
+    'invalidations', jsonb_build_array(jsonb_build_object(
+      'entityType', 'league_schedule', 'entityId', plan_row.id,
+      'revision', confirmed_revision
+    ))
+  );
+  insert into private.pachanga_competition_events(
+    operation_id, actor_id, actor_kind, aggregate_type, aggregate_id,
+    competition_id, action, aggregate_revision, server_sequence,
+    reason_code, event_payload, confirmed_at
+  ) values (
+    operation_id, null, 'service_authority', 'league_schedule', plan_row.id::text,
+    plan_row.competition_id, action_name, confirmed_revision, sequence_value,
+    left(trim(reason), 120), response -> 'snapshot', confirmed_at
+  );
+  insert into public.pachanga_competition_invalidations(
+    server_sequence, competition_id, organizer_group_id, organizer_club_id,
+    target_group_id, target_user_id, entity_type, entity_id, revision, created_at
+  ) values (
+    sequence_value, plan_row.competition_id, organizer_group_id, organizer_club_id, null, null,
+    'league_schedule', plan_row.id::text, confirmed_revision, confirmed_at
+  );
+  insert into private.pachanga_competition_operation_receipts(
+    operation_id, actor_id, actor_kind, action, aggregate_type, aggregate_id,
+    request_hash, confirmed_revision, server_sequence, client_metadata,
+    response, created_at
+  ) values (
+    operation_id, null, 'service_authority', action_name,
+    'league_schedule', plan_row.id::text, request_hash, confirmed_revision,
+    sequence_value, metadata, response, confirmed_at
+  );
+  return response;
+end;
+$$;
+
+revoke all on function public.archive_pachanga_league_schedule_qa_v1(
+  uuid, uuid, bigint, text, jsonb
+) from public, anon, authenticated, service_role;
+grant execute on function public.archive_pachanga_league_schedule_qa_v1(
+  uuid, uuid, bigint, text, jsonb
+) to service_role;
+
+comment on function public.archive_pachanga_league_schedule_qa_v1(uuid, uuid, bigint, text, jsonb) is
+  'Service-only idempotent cleanup for tagged R4B/R4C staging schedules. It retires active match authorities, cancels rounds, marks standings stale and preserves all sporting evidence.';
 
 create or replace function private.pachanga_notification_policy_v1(target_kind text)
 returns jsonb

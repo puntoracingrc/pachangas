@@ -113,6 +113,16 @@ test("official decisions and standings rebuild commit as one coordinated server 
   assert.match(commands, /join public\.pachanga_competition_official_result_decisions decisions[\s\S]+decisions\.id = sheets\.active_official_decision_id/);
   assert.match(commands, /PERSISTED_DRAW_LOT/);
   assert.match(commands, /HEAD_TO_HEAD_POINTS/);
+  assert.match(commands, /or official_result is not null then[\s\S]+?'entityType', 'standings'/);
+  assert.match(commands, /action_name like 'official_result\.%' or official_result is not null[\s\S]+?'entityType', 'round'/);
+  assert.match(
+    commands,
+    /update pg_temp\.r4c_standings_work work set criterion_value = case criterion[\s\S]+?end\s+where work\.entry_id is not null;/,
+  );
+  assert.match(
+    commands,
+    /tie_break_values = work\.tie_break_values[\s\S]+?where work\.entry_id is not null;/,
+  );
 });
 
 test("canonical snapshots expose safe roster context and permission-aware actions without private evidence", async () => {
@@ -237,4 +247,17 @@ test("R4C does not write Rating, rewards, Conduct, billing, referee assignments 
     /(?:insert into|update|delete from)\s+(?:public\.)?pachanga_competition_discipline/i,
   ]) assert.doesNotMatch(sql, forbiddenWrite);
   assert.match(sql, /discipline_validation_status text not null default 'NOT_AVAILABLE'/);
+});
+
+test("R4C QA cleanup retires official contexts and invalidates derived standings without deleting evidence", async () => {
+  const hardening = await source(paths.hardening);
+  const archiveStart = hardening.indexOf("create or replace function public.archive_pachanga_league_schedule_qa_v1");
+  const archiveEnd = hardening.indexOf("revoke all on function public.archive_pachanga_league_schedule_qa_v1", archiveStart);
+  const archive = hardening.slice(archiveStart, archiveEnd);
+  assert.match(archive, /where contexts\.status <> 'retired'/);
+  assert.match(archive, /update public\.pachanga_competition_standing_states states set[\s\S]+health_status = 'STALE'/);
+  assert.match(archive, /staleStandingStates/);
+  assert.match(archive, /competition_slug not like 'r4b-qa-%' and competition_slug not like 'r4c-qa-%'/);
+  assert.doesNotMatch(archive, /delete from public\.pachanga_competition_(?:sporting|official|standing_snapshot)/i);
+  assert.match(hardening, /old\.status in \('published', 'in_progress', 'completed', 'locked'\)[\s\S]+new\.status = 'cancelled'/);
 });

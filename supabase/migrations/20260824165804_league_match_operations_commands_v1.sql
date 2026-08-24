@@ -1124,7 +1124,8 @@ begin
       when 'GOALS_FOR' then work.goals_for
       when 'WINS' then work.wins
       else 0
-    end;
+    end
+    where work.entry_id is not null;
 
     for group_row in
       select work.sort_key,
@@ -1223,7 +1224,8 @@ begin
       sort_key = work.sort_key || (-work.criterion_value),
       tie_break_values = work.tie_break_values || jsonb_build_array(jsonb_build_object(
         'criterion', criterion, 'value', work.criterion_value
-      ));
+      ))
+    where work.entry_id is not null;
   end loop;
 
   if not allow_shared and exists (
@@ -2466,6 +2468,10 @@ begin
     end if;
     select * into context_row from public.pachanga_competition_match_contexts contexts
     where contexts.id = aggregate_id;
+    if official_result is not null then
+      select * into round_row from public.pachanga_competition_rounds rounds
+      where rounds.id = context_row.round_id;
+    end if;
     event_payload := jsonb_build_object('sportingResultId', result_row.id, 'response', action_name);
 
   elsif action_name in ('official_result.publish', 'official_result.supersede', 'official_result.annul') then
@@ -2658,13 +2664,15 @@ begin
         'revision', context_row.revision
       ));
     end if;
-    if action_name like 'official_result.%' or action_name like 'standings.%' then
+    if action_name like 'official_result.%'
+       or action_name like 'standings.%'
+       or official_result is not null then
       invalidations := invalidations || jsonb_build_array(jsonb_build_object(
         'entityType', 'standings', 'entityId', context_row.stage_id,
         'revision', confirmed_revision
       ));
     end if;
-    if action_name like 'official_result.%' then
+    if action_name like 'official_result.%' or official_result is not null then
       invalidations := invalidations || jsonb_build_array(jsonb_build_object(
         'entityType', 'round', 'entityId', round_row.id,
         'revision', round_row.revision

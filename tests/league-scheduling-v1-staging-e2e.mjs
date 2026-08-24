@@ -2,6 +2,9 @@ import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 
 import { createClient } from "@supabase/supabase-js";
+import { runLeagueMatchOperationsStagingExtension } from "./league-match-operations-v1-staging-extension.mjs";
+
+const R4C_EXTENSION = process.env.R4C_STAGING_EXTENSION === "1";
 
 const env = {
   url: process.env.R4B_STAGING_URL,
@@ -59,7 +62,7 @@ const UNTOUCHED_TABLES = [
   "pachanga_team_cosmetic_inventory",
   "pachanga_provincial_ranking_entries",
   "pachanga_stripe_webhook_events",
-];
+].filter((table) => !R4C_EXTENSION || table !== "pachanga_match_participants");
 const clients = [];
 const channels = [];
 const created = { clubId: null, competitionId: null, planId: null, publicationOperationId: null };
@@ -114,6 +117,17 @@ async function commandOk(supabase, name, input) {
   const result = await command(supabase, name, input);
   if (result.error) throw new Error(`${name}:${input.action}@${input.expectedRevision} [${result.error.code}] ${result.error.message}`, { cause: result.error });
   return result.data;
+}
+
+async function confirmClubPublication(supabase, clubId, expectedRevision) {
+  return rpc(supabase, "command_pachanga_publication_consent_v1", {
+    client_metadata: metadata("league-scheduling-staging"),
+    confirmations: { informationCorrect: true, representationAuthorized: true },
+    expected_revision: expectedRevision,
+    operation_id: randomUUID(),
+    subject_id: clubId,
+    subject_kind: "CLUB",
+  });
 }
 const foundation = (supabase, input, v2 = false) => commandOk(
   supabase,
@@ -447,10 +461,15 @@ try {
       visibility: "private",
     },
   });
+  const clubConsent = await confirmClubPublication(
+    clubOwner.client,
+    created.clubId,
+    clubCreated.snapshot.club.revision,
+  );
   const clubSubmitted = await club(clubOwner.client, {
     action: "club.review.submit",
     aggregateId: created.clubId,
-    expectedRevision: clubCreated.snapshot.club.revision,
+    expectedRevision: clubConsent.confirmedRevision,
     payload: { reason: "R4B staging Club review" },
   });
   await club(platform, {
@@ -568,6 +587,15 @@ try {
         registration: {
           identityRequirements: { credentialRequired: false },
           kitPolicy: { jerseyRequired: false },
+          ...(R4C_EXTENSION ? {
+            matchSheetPolicy: {
+              squadMin: 1,
+              squadMax: 3,
+              starterMin: 1,
+              starterMax: 1,
+              substituteMax: 2,
+            },
+          } : {}),
           registrationPolicy: { teamLimits: { maximum: 8, minimum: 2 } },
           rosterPolicy: {
             closeRequiresApprovedRosters: true,
@@ -576,7 +604,27 @@ try {
             multiTeamPolicy: "FORBIDDEN_SAME_EDITION_CATEGORY",
           },
         },
-        results: { scoringPolicy: {}, tieBreakCriteria: [] },
+        results: R4C_EXTENSION ? {
+          allowUnknownScorer: false,
+          confirmationPolicy: {
+            autoOfficialAfterConfirmation: true,
+            mode: "BILATERAL",
+            responseDeadlineHours: 48,
+          },
+          publicationPolicy: { resultsPublic: true, standingsPublic: true },
+          scorerDetailPolicy: "OPTIONAL",
+          scoringPolicy: { pointsForDraw: 1, pointsForLoss: 0, pointsForWin: 3 },
+          standingsPolicy: { allowSharedPositions: true },
+          tieBreakCriteria: [
+            "POINTS",
+            "GOAL_DIFFERENCE",
+            "GOALS_FOR",
+            "WINS",
+            "HEAD_TO_HEAD_POINTS",
+            "HEAD_TO_HEAD_GOAL_DIFFERENCE",
+            "HEAD_TO_HEAD_GOALS_FOR",
+          ],
+        } : { scoringPolicy: {}, tieBreakCriteria: [] },
         structure: { stageGraph: { edges: [], nodes: [{ id: "league-stage", root: true }] } },
       },
     },
@@ -945,8 +993,28 @@ try {
       .select("id", { count: "exact", head: true })
       .eq("dedupe_key", `league-schedule:${created.publicationOperationId}:${team.owner.id}`);
     if (notifications.error) throw notifications.error;
-    assert.equal(notifications.count, 1);
+  assert.equal(notifications.count, 1);
   }
+  const r4c = R4C_EXTENSION ? await runLeagueMatchOperationsStagingExtension({
+    adminADevice2,
+    anonymousFactory: () => client(),
+    channels,
+    competitionGroup,
+    created,
+    division,
+    entries,
+    eventQueue,
+    expectError,
+    fixtureAdmin,
+    metadata,
+    ownerADevice2,
+    outsiderClient: outsider.client,
+    platform,
+    rpc,
+    stage,
+    staffA,
+    waitForSubscription,
+  }) : null;
   const forbiddenMutation = await command(adminA, "command_pachanga_league_scheduling_v1", {
     action: "schedule.regenerate",
     aggregateId: created.planId,
@@ -1017,6 +1085,7 @@ try {
     preview,
     projectRef: actualProjectRef,
     realtime: "invalidation_then_canonical_refetch",
+    r4c,
     rounds: 5,
     status: "PASS",
   }));

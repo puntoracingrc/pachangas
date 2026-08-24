@@ -949,6 +949,84 @@ select pg_temp.expect_failure(
 );
 reset role;
 
+set local role authenticated;
+select pg_temp.actor('c4010000-0000-4000-8000-000000000006');
+select pg_temp.assert_true(
+  exists (
+    select 1 from public.pachanga_competition_invalidations invalidations
+    where invalidations.competition_id = 'c4200000-0000-4000-8000-000000000001'
+      and invalidations.entity_type = 'standings'
+      and invalidations.entity_id = 'c4200000-0000-4000-8000-000000000006'
+  ),
+  'Eligible away player could not read the standings invalidation'
+);
+reset role;
+
+set local role service_role;
+select set_config('request.jwt.claims', '{"role":"service_role"}', true);
+do $body$
+declare
+  archive_response jsonb;
+  replay_response jsonb;
+  decisions_before bigint;
+  evidence_before bigint;
+begin
+  select count(*) into decisions_before
+  from public.pachanga_competition_official_result_decisions
+  where competition_match_context_id = 'c4400000-0000-4000-8000-000000000008';
+  select count(*) into evidence_before
+  from private.pachanga_competition_official_result_evidence evidence
+  join public.pachanga_competition_official_result_decisions decisions
+    on decisions.id = evidence.official_result_decision_id
+  where decisions.competition_match_context_id = 'c4400000-0000-4000-8000-000000000008';
+
+  archive_response := public.archive_pachanga_league_schedule_qa_v1(
+    'c4500000-0000-4000-8000-000000000029',
+    'c4400000-0000-4000-8000-000000000001',
+    2,
+    'R4B_STAGING_QA_ARCHIVE: R4C official cleanup regression',
+    '{"clientVersion":"4.0.0+r4c-db","surface":"r4c_db_cleanup"}'::jsonb
+  );
+  replay_response := public.archive_pachanga_league_schedule_qa_v1(
+    'c4500000-0000-4000-8000-000000000029',
+    'c4400000-0000-4000-8000-000000000001',
+    2,
+    'R4B_STAGING_QA_ARCHIVE: R4C official cleanup regression',
+    '{"clientVersion":"4.0.0+r4c-db","surface":"r4c_db_cleanup"}'::jsonb
+  );
+
+  perform pg_temp.assert_true(archive_response = replay_response, 'R4C QA archive replay diverged');
+  perform pg_temp.assert_true(
+    archive_response #>> '{snapshot,status}' = 'cancelled'
+      and (archive_response #>> '{snapshot,retiredContexts}')::integer = 1
+      and (archive_response #>> '{snapshot,cancelledRounds}')::integer = 1
+      and (archive_response #>> '{snapshot,staleStandingStates}')::integer = 1,
+    'R4C QA archive did not retire official authorities'
+  );
+  perform pg_temp.assert_true(
+    (select status from public.pachanga_competition_match_contexts
+      where id = 'c4400000-0000-4000-8000-000000000008') = 'retired'
+      and (select status from public.pachanga_competition_rounds
+        where id = 'c4400000-0000-4000-8000-000000000003') = 'cancelled'
+      and (select health_status from public.pachanga_competition_standing_states
+        where stage_id = 'c4200000-0000-4000-8000-000000000006') = 'STALE',
+    'R4C QA archive left active match, round or standings authority'
+  );
+  perform pg_temp.assert_true(
+    decisions_before = (select count(*)
+      from public.pachanga_competition_official_result_decisions
+      where competition_match_context_id = 'c4400000-0000-4000-8000-000000000008')
+      and evidence_before = (select count(*)
+        from private.pachanga_competition_official_result_evidence evidence
+        join public.pachanga_competition_official_result_decisions decisions
+          on decisions.id = evidence.official_result_decision_id
+        where decisions.competition_match_context_id = 'c4400000-0000-4000-8000-000000000008'),
+    'R4C QA archive deleted official lineage or private evidence'
+  );
+end;
+$body$;
+reset role;
+
 do $body$
 declare target_table regclass;
 begin
