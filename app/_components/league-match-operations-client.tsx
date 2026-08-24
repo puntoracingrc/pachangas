@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { clientWriteFetch } from "../pwa-client-bridge";
 import { supabase } from "../supabaseClient";
 import {
@@ -47,8 +47,6 @@ type Command = (
   payload?: LeagueMatchOperationsJson,
   aggregateOverride?: string,
 ) => Promise<void>;
-
-const managedScopes = new Set(["TEAM_OWNER", "PRIMARY_DELEGATE", "ROSTER_MANAGER"]);
 
 function endpointFor(props: Props) {
   if (props.surface === "match") {

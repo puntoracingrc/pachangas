@@ -21,6 +21,7 @@ export default function LeagueMatchOperationsLabPage() {
     <nav aria-label="Escenarios de laboratorio"><strong>Laboratorio R4C</strong>{scenarios.map((item) => <button aria-current={item.id === scenario ? "page" : undefined} key={item.id} onClick={() => setScenario(item.id)} type="button">{item.label}</button>)}</nav>
     <LeagueMatchOperationsClient
       competitionId="d4c00000-0000-4000-8000-000000000001"
+      key={scenario}
       matchId="d4c00000-0000-4000-8000-000000000004"
       previewData={leagueMatchOperationsFixtures[scenario]}
       stageId="d4c00000-0000-4000-8000-000000000006"
