@@ -1558,6 +1558,8 @@ declare squads_json jsonb;
 declare attendance_json jsonb;
 declare scorers_json jsonb;
 declare responses_json jsonb;
+declare home_roster_json jsonb;
+declare away_roster_json jsonb;
 declare next_actions jsonb := '[]'::jsonb;
 begin
   context_row := private.pachanga_league_match_context_v1(target_context_id);
@@ -1605,6 +1607,38 @@ begin
   from public.pachanga_competition_match_squads squads
   where squads.competition_match_context_id = target_context_id;
   select coalesce(jsonb_agg(jsonb_build_object(
+    'rosterMemberId', members.id,
+    'playerProfileId', members.player_profile_id,
+    'eligibilityStatus', members.eligibility_status,
+    'player', members.public_snapshot
+  ) order by members.public_snapshot ->> 'displayName', members.server_sequence, members.id), '[]'::jsonb)
+  into home_roster_json
+  from public.pachanga_competition_rosters rosters
+  join public.pachanga_competition_roster_members members
+    on members.roster_id = rosters.id
+    and members.roster_revision_id = rosters.current_revision_id
+  where rosters.entry_id = context_row.home_entry_id
+    and rosters.status in ('approved', 'locked')
+    and rosters.rule_revision_id = context_row.rule_revision_id
+    and members.eligibility_status in ('eligible', 'waived')
+    and (members.effective_until is null or members.effective_until > clock_timestamp());
+  select coalesce(jsonb_agg(jsonb_build_object(
+    'rosterMemberId', members.id,
+    'playerProfileId', members.player_profile_id,
+    'eligibilityStatus', members.eligibility_status,
+    'player', members.public_snapshot
+  ) order by members.public_snapshot ->> 'displayName', members.server_sequence, members.id), '[]'::jsonb)
+  into away_roster_json
+  from public.pachanga_competition_rosters rosters
+  join public.pachanga_competition_roster_members members
+    on members.roster_id = rosters.id
+    and members.roster_revision_id = rosters.current_revision_id
+  where rosters.entry_id = context_row.away_entry_id
+    and rosters.status in ('approved', 'locked')
+    and rosters.rule_revision_id = context_row.rule_revision_id
+    and members.eligibility_status in ('eligible', 'waived')
+    and (members.effective_until is null or members.effective_until > clock_timestamp());
+  select coalesce(jsonb_agg(jsonb_build_object(
     'entryId', participants.competition_entry_id,
     'rosterMemberId', participants.roster_member_id,
     'playerProfileId', participants.player_profile_id,
@@ -1641,13 +1675,28 @@ begin
   from public.pachanga_competition_result_responses responses
   where responses.sporting_result_id = result_row.id;
 
-  if context_row.status = 'scheduled' then next_actions := next_actions || '"match.mark_ready"'::jsonb; end if;
-  if context_row.status = 'ready' then next_actions := next_actions || '"match.start"'::jsonb; end if;
-  if context_row.status = 'in_progress' then next_actions := next_actions || '"match.mark_played"'::jsonb; end if;
-  if context_row.status = 'played' and result_row.id is null then
+  if context_row.status = 'scheduled'
+     and private.pachanga_competition_can_v1(context_row.competition_id, target_actor_id, 'results_manage') then
+    next_actions := next_actions || '"match.mark_ready"'::jsonb;
+  end if;
+  if context_row.status = 'ready'
+     and private.pachanga_competition_can_v1(context_row.competition_id, target_actor_id, 'results_manage') then
+    next_actions := next_actions || '"match.start"'::jsonb;
+  end if;
+  if context_row.status = 'in_progress'
+     and private.pachanga_competition_can_v1(context_row.competition_id, target_actor_id, 'results_manage') then
+    next_actions := next_actions || '"match.mark_played"'::jsonb;
+  end if;
+  if context_row.status = 'played' and result_row.id is null
+     and (home_scope in ('TEAM_OWNER', 'PRIMARY_DELEGATE', 'ROSTER_MANAGER')
+       or away_scope in ('TEAM_OWNER', 'PRIMARY_DELEGATE', 'ROSTER_MANAGER')) then
     next_actions := next_actions || '"sporting_result.submit"'::jsonb;
   end if;
-  if result_row.state in ('submitted', 'change_proposed') then
+  if result_row.state in ('submitted', 'change_proposed')
+     and ((result_row.pending_response_from_entry_id = context_row.home_entry_id
+         and home_scope in ('TEAM_OWNER', 'PRIMARY_DELEGATE', 'ROSTER_MANAGER'))
+       or (result_row.pending_response_from_entry_id = context_row.away_entry_id
+         and away_scope in ('TEAM_OWNER', 'PRIMARY_DELEGATE', 'ROSTER_MANAGER'))) then
     next_actions := next_actions || '["sporting_result.accept","sporting_result.propose_change","sporting_result.dispute"]'::jsonb;
   end if;
   if result_row.state in ('confirmed', 'disputed')
@@ -1659,6 +1708,30 @@ begin
     'kind', 'LeagueCanonicalMatchView',
     'revision', context_row.revision,
     'serverSequence', context_row.server_sequence,
+    'competition', (select jsonb_build_object(
+      'id', competitions.id, 'name', competitions.name, 'slug', competitions.slug,
+      'type', competitions.competition_type, 'visibility', competitions.visibility,
+      'status', competitions.status
+    ) from public.pachanga_competitions competitions where competitions.id = context_row.competition_id),
+    'edition', (select jsonb_build_object(
+      'id', editions.id, 'name', editions.name, 'seasonLabel', editions.season_label,
+      'status', editions.status
+    ) from public.pachanga_competition_editions editions where editions.id = context_row.edition_id),
+    'stage', (select jsonb_build_object(
+      'id', stages.id, 'name', stages.name, 'type', stages.stage_type,
+      'status', stages.status
+    ) from public.pachanga_competition_stages stages where stages.id = context_row.stage_id),
+    'division', (select jsonb_build_object(
+      'id', divisions.id, 'name', divisions.name, 'levelLabel', divisions.level_label,
+      'status', divisions.status
+    ) from public.pachanga_competition_divisions divisions where divisions.id = context_row.division_id),
+    'competitionGroup', (select jsonb_build_object(
+      'id', groups.id, 'name', groups.name, 'status', groups.status
+    ) from public.pachanga_competition_groups groups where groups.id = context_row.competition_group_id),
+    'ruleRevision', (select jsonb_build_object(
+      'id', revisions.id, 'version', revisions.version, 'schemaVersion', revisions.schema_version,
+      'checksum', revisions.checksum, 'status', revisions.status
+    ) from public.pachanga_competition_rule_revisions revisions where revisions.id = context_row.rule_revision_id),
     'context', jsonb_build_object(
       'id', context_row.id,
       'canonicalMatchId', context_row.canonical_match_id,
@@ -1692,6 +1765,10 @@ begin
       join public.pachanga_groups groups on groups.id = entries.team_id
       where entries.id = context_row.away_entry_id),
     'squads', squads_json,
+    'eligibleRoster', jsonb_build_object(
+      'home', home_roster_json,
+      'away', away_roster_json
+    ),
     'attendance', jsonb_build_object(
       'homeClosedAt', sheet_row.home_attendance_closed_at,
       'awayClosedAt', sheet_row.away_attendance_closed_at,
@@ -1700,6 +1777,9 @@ begin
     'sportingResult', case when result_row.id is null then null else jsonb_build_object(
       'id', result_row.id, 'state', result_row.state, 'revision', result_row.revision,
       'currentRevisionId', result_revision.id,
+      'proposedByEntryId', result_row.proposed_by_entry_id,
+      'pendingResponseFromEntryId', result_row.pending_response_from_entry_id,
+      'confirmationPolicy', result_row.confirmation_policy,
       'scoreHome', result_revision.score_home, 'scoreAway', result_revision.score_away,
       'scorerDetailPolicy', result_revision.scorer_detail_policy,
       'scorers', scorers_json, 'responses', responses_json,
