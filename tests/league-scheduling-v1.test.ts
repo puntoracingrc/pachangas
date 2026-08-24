@@ -314,5 +314,10 @@ test("bootstrap, concurrency, scale, performance and staging remain explicit rel
   assert.match(staging, /async function selectClubOwner/);
   assert.match(staging, /activeDrafts < 3 && recentCreations < 5/);
   assert.match(staging, /R4B_STAGING_CLUB_CREATOR_POOL_EXHAUSTED/);
+  assert.match(staging, /account\.id !== clubOwner\.account\.id/);
+  assert.match(staging, /payload\.new\?\.entity_type !== "league_team_calendar"/);
+  assert.match(staging, /payload\.new\?\.target_group_id !== TEAMS\[0\]\.groupId/);
+  assert.match(staging, /origin\.searchParams\.has\("_vercel_share"\)/);
+  assert.match(staging, /access\.headers\.get\("set-cookie"\)/);
   assert.match(packageJson, /test:league-scheduling:bootstrap/);
 });

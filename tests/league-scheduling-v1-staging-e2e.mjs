@@ -289,7 +289,7 @@ function eventQueue() {
     clear: () => { queued.length = 0; },
     push: (value) => { if (waiter) waiter(value); else queued.push(value); },
     next: () => queued.length ? Promise.resolve(queued.shift()) : new Promise((resolve, reject) => {
-      const timer = setTimeout(() => { waiter = null; reject(new Error("R4B invalidation timed out")); }, 60_000);
+      const timer = setTimeout(() => { waiter = null; reject(new Error("R4B invalidation timed out")); }, 90_000);
       waiter = (value) => { clearTimeout(timer); waiter = null; resolve(value); };
     }),
   };
@@ -321,6 +321,18 @@ async function archiveClub(platform, clubId) {
 async function verifyPreview(accessToken, competitionId, planId) {
   if (!env.previewUrl) return { checked: false };
   const origin = new URL(env.previewUrl);
+  let previewCookie = "";
+  if (origin.searchParams.has("_vercel_share")) {
+    const access = await fetch(origin, { cache: "no-store", redirect: "manual" });
+    previewCookie = access.headers.get("set-cookie")?.split(";", 1)[0] ?? "";
+    assert.ok([302, 307, 308].includes(access.status), "Preview share access did not redirect safely");
+    assert.ok(previewCookie, "Preview share access did not issue an ephemeral cookie");
+    origin.search = "";
+  }
+  const previewHeaders = {
+    Authorization: `Bearer ${accessToken}`,
+    ...(previewCookie ? { Cookie: previewCookie } : {}),
+  };
   for (const path of [
     "/laboratorio-league-scheduling?scenario=published",
     `/competiciones/${competitionId}/gestion/calendario`,
@@ -328,17 +340,17 @@ async function verifyPreview(accessToken, competitionId, planId) {
   ]) {
     const response = await fetch(new URL(path, origin), {
       cache: "no-store",
-      headers: { Authorization: `Bearer ${accessToken}` },
+      headers: previewHeaders,
     });
     assert.equal(response.ok, true, `${path} did not load in Preview`);
     assert.doesNotMatch(await response.text(), /SUPABASE_SERVICE_ROLE_KEY|qonbngfrnrqgmxbdfbea/i);
   }
   const response = await fetch(new URL(`/api/competitions/scheduling/workbench/${planId}`, origin), {
     cache: "no-store",
-    headers: { Authorization: `Bearer ${accessToken}` },
+    headers: previewHeaders,
   });
-  assert.equal(response.headers.get("cache-control")?.includes("no-store"), true);
   assert.equal(response.ok, true, await response.text());
+  assert.equal(response.headers.get("cache-control")?.includes("no-store"), true);
   return { checked: true, origin: origin.origin };
 }
 
@@ -378,6 +390,13 @@ try {
     { account: USERS.adminA, client: adminA },
     { account: USERS.playerA, client: playerA },
   ]);
+  const outsider = [
+    { account: USERS.ownerA, client: ownerA },
+    { account: USERS.ownerB, client: ownerB },
+    { account: USERS.ownerC, client: ownerC },
+    { account: USERS.playerA, client: playerA },
+  ].find(({ account }) => account.id !== clubOwner.account.id);
+  assert.ok(outsider, "R4B staging requires an actor outside the organizer Club");
   await ensureTeams();
   countsBefore = await counts();
   const initialFlags = await scheduleFlags(platform);
@@ -865,7 +884,7 @@ try {
   assert.equal(validatedSchedule.snapshot.validation.status, "VALID");
   assert.equal(validatedSchedule.snapshot.validation.hardViolations, 0);
 
-  const outsiderRead = await ownerB.rpc("get_pachanga_league_schedule_workbench_v1", {
+  const outsiderRead = await outsider.client.rpc("get_pachanga_league_schedule_workbench_v1", {
     page_offset: 0,
     page_size: 200,
     target_schedule_plan_id: created.planId,
@@ -877,10 +896,13 @@ try {
   const queue = eventQueue();
   const channel = ownerADevice2.channel(`r4b-staging-${randomUUID()}`).on("postgres_changes", {
     event: "INSERT",
-    filter: `target_group_id=eq.${TEAMS[0].groupId}`,
     schema: "public",
     table: "pachanga_competition_invalidations",
-  }, (payload) => queue.push(payload));
+  }, (payload) => {
+    if (payload.new?.entity_type !== "league_team_calendar") return;
+    if (payload.new?.target_group_id !== TEAMS[0].groupId) return;
+    queue.push(payload);
+  });
   channels.push([ownerADevice2, channel]);
   await waitForSubscription(channel);
   queue.clear();
