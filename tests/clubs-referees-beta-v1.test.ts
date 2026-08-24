@@ -8,6 +8,7 @@ const migrationPaths = [
   "supabase/migrations/20260824101500_clubs_referees_beta_publication_consent_schema_v1.sql",
   "supabase/migrations/20260824101501_clubs_referees_beta_authority_v1.sql",
   "supabase/migrations/20260824101502_clubs_referees_beta_read_models_notifications_v1.sql",
+  "supabase/migrations/20260824101503_referee_restore_private_v1.sql",
 ] as const;
 async function source(path: string) { return readFile(new URL(path, root), "utf8"); }
 
@@ -44,6 +45,16 @@ test("server authority rate limits risky Club and referee actions without breaki
   assert.match(authority, /command_action in \('relationship\.invite', 'relationship\.request'\)[\s\S]*?operational_status = 'active'/);
   assert.match(authority, /if not exists \([\s\S]*?pachanga_club_operation_receipts[\s\S]*?perform private\.pachanga_club_rate_limit_v1/);
   assert.match(authority, /replay := private\.pachanga_referee_replay_v1[\s\S]*?if replay is null then[\s\S]*?pachanga_referee_rate_limit_v1/);
+});
+
+test("a suspended referee with stale publication evidence restores privately", async () => {
+  const restore = await source(migrationPaths[3]);
+  assert.match(restore, /old\.operational_status = 'suspended'/);
+  assert.match(restore, /new\.operational_status = 'active'/);
+  assert.match(restore, /new\.visibility := 'private'/);
+  assert.match(restore, /old\.operational_status = 'suspended'[\s\S]*?new\.visibility = 'private'[\s\S]*?pachanga_publication_consent_valid_v1/);
+  assert.match(restore, /create or replace function private\.pachanga_referee_publication_guard_v1/);
+  assert.doesNotMatch(restore, /marketplace_status\s*:=\s*'listed'|available_for_assignments\s*:=\s*true/i);
 });
 
 test("public Club directory is paginated, flag-gated and privacy reduced", async () => {

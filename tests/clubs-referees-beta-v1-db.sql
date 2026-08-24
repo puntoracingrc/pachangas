@@ -241,21 +241,73 @@ begin
     'b4050000-0000-4000-8000-000000000001', profile_revision, 'marketplace.list',
     '{"reason":"list"}', '{}'
   );
+  profile_revision := (response ->> 'confirmedRevision')::bigint;
   perform pg_temp.assert_true((public.search_pachanga_referee_market_v1('{"modality":"FOOTBALL_7","municipality":"Sabadell"}', 1, 24) ->> 'total')::integer = 1, 'Referee missing from marketplace');
-  perform pg_temp.expect_failure($sql$
+
+  perform pg_temp.actor('b4010000-0000-4000-8000-000000000001');
+  response := public.command_pachanga_referee_platform_admin_v1(
+    'b4030000-0000-4000-8000-000000000031',
+    'b4050000-0000-4000-8000-000000000001', profile_revision, 'profile.suspend',
+    '{"reason":"suspend referee for restore regression"}', '{}'
+  );
+  profile_revision := (response ->> 'confirmedRevision')::bigint;
+  perform pg_temp.assert_true(
+    public.get_pachanga_public_referee_v1('alex-arbitro-beta') is null,
+    'Suspended referee remained public'
+  );
+  response := public.command_pachanga_referee_platform_admin_v1(
+    'b4030000-0000-4000-8000-000000000032',
+    'b4050000-0000-4000-8000-000000000001', profile_revision, 'profile.restore',
+    '{"reason":"restore referee privately"}', '{}'
+  );
+  profile_revision := (response ->> 'confirmedRevision')::bigint;
+  perform pg_temp.assert_true(
+    response #>> '{snapshot,profile,visibility}' = 'private'
+      and response #>> '{snapshot,profile,marketplaceStatus}' = 'not_listed'
+      and not (response #>> '{snapshot,profile,availableForAssignments}')::boolean,
+    'Restored referee was not safely private, unlisted and unavailable'
+  );
+
+  perform pg_temp.actor('b4010000-0000-4000-8000-000000000005');
+  response := public.command_pachanga_referee_platform_v1(
+    'b4030000-0000-4000-8000-000000000033',
+    'b4050000-0000-4000-8000-000000000001', profile_revision, 'profile.update',
+    '{"availableForAssignments":true,"reason":"prepare explicit republication"}', '{}'
+  );
+  profile_revision := (response ->> 'confirmedRevision')::bigint;
+  response := public.command_pachanga_publication_consent_v1(
+    'b4030000-0000-4000-8000-000000000034', 'REFEREE_PROFILE',
+    'b4050000-0000-4000-8000-000000000001', profile_revision,
+    '{"informationCorrect":true,"unverifiedNotCertification":true,"publicZonesAvailability":true}', '{}'
+  );
+  profile_revision := (response ->> 'confirmedRevision')::bigint;
+  response := public.command_pachanga_referee_platform_v1(
+    'b4030000-0000-4000-8000-000000000035',
+    'b4050000-0000-4000-8000-000000000001', profile_revision, 'profile.update',
+    '{"visibility":"public","reason":"explicit republication"}', '{}'
+  );
+  profile_revision := (response ->> 'confirmedRevision')::bigint;
+  response := public.command_pachanga_referee_platform_v1(
+    'b4030000-0000-4000-8000-000000000036',
+    'b4050000-0000-4000-8000-000000000001', profile_revision, 'marketplace.list',
+    '{"reason":"relist after explicit republication"}', '{}'
+  );
+  profile_revision := (response ->> 'confirmedRevision')::bigint;
+
+  perform pg_temp.expect_failure(format($sql$
     select public.command_pachanga_referee_platform_v1(
       'b4030000-0000-4000-8000-000000000021',
-      'b4050000-0000-4000-8000-000000000001', 7, 'profile.update',
+      'b4050000-0000-4000-8000-000000000001', %s, 'profile.update',
       '{"bio":"Edit while listed","reason":"should pause"}', '{}'
     )
-  $sql$, 'REFEREE_PUBLICATION_PAUSE_REQUIRED');
-  perform pg_temp.expect_failure($sql$
+  $sql$, profile_revision), 'REFEREE_PUBLICATION_PAUSE_REQUIRED');
+  perform pg_temp.expect_failure(format($sql$
     select public.command_pachanga_referee_platform_v1(
       'b4030000-0000-4000-8000-000000000030',
-      'b4050000-0000-4000-8000-000000000001', 7, 'profile.update',
+      'b4050000-0000-4000-8000-000000000001', %s, 'profile.update',
       '{"availableForAssignments":false,"reason":"market availability needs republishing"}', '{}'
     )
-  $sql$, 'REFEREE_PUBLICATION_PAUSE_REQUIRED');
+  $sql$, profile_revision), 'REFEREE_PUBLICATION_PAUSE_REQUIRED');
   perform pg_temp.expect_failure($sql$
     select public.command_pachanga_referee_platform_v1(
       'b4030000-0000-4000-8000-000000000028',

@@ -78,6 +78,7 @@
     "test:referee-platform:staging": "node tests/referee-platform-v1-staging-e2e.mjs",
     "test:clubs-referees-beta": "tsx --test tests/clubs-referees-beta-v1.test.ts",
     "test:clubs-referees-beta:db": "psql -X -w \"$CLUBS_REFEREES_BETA_DATABASE_URL\" -v ON_ERROR_STOP=1 -c 'begin' -f tests/clubs-referees-beta-v1-db.sql -c 'rollback'",
+    "test:clubs-referees-beta:staging": "node tests/clubs-referees-beta-v1-staging-e2e.mjs",
     "test:league-participation": "tsx --test tests/league-participation-v1.test.ts",
     "test:league-participation:db": "node tests/league-participation-v1-db-runner.mjs",
     "test:league-participation:concurrency": "node tests/league-participation-v1-concurrency.mjs",
