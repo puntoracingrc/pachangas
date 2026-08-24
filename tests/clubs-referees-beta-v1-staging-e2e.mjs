@@ -1080,3 +1080,7 @@ try {
 }
 
 assert.equal(completed, true, "Wave 1 staging story did not complete");
+
+// Realtime can retain an idle transport handle in Node after every channel is closed.
+await new Promise((resolve) => setImmediate(resolve));
+process.exit(0);
