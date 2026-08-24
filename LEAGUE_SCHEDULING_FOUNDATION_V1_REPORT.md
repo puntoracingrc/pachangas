@@ -1,6 +1,6 @@
 # League Scheduling Foundation V1 Report
 
-Estado: `READY FOR REVIEW` cuando se complete la Preview final. R4B permanece apagado por defecto y no se ha desplegado en produccion.
+Estado: `READY FOR REVIEW`. R4B permanece apagado por defecto y no se ha desplegado en produccion.
 
 ## Trazabilidad
 
@@ -15,7 +15,9 @@ Estado: `READY FOR REVIEW` cuando se complete la Preview final. R4B permanece ap
 | Entorno | Node `24.16.0`, Next.js `16.2.6`, PostgreSQL local y Supabase branch |
 | Supabase staging | `iozcjirlfytryzrcmrnq` (`pwa-bridge-staging`) |
 | Supabase produccion | `qonbngfrnrqgmxbdfbea`, no modificada |
-| Preview final | `PENDING_FINAL_HEAD_PREVIEW` |
+| RC funcional | `679e487cd71885500490f125d04b04676184a131` |
+| Preview inmutable del RC | [pachangas-g0kmrm29m](https://pachangas-g0kmrm29m-persianas-almar-web-s-projects.vercel.app) |
+| Alias Preview de la rama | [pachangas-git-codex-leagu-0c75ee](https://pachangas-git-codex-leagu-0c75ee-persianas-almar-web-s-projects.vercel.app) |
 
 ## Resultado
 
@@ -89,13 +91,13 @@ Las dependencias fallan cerradas: generar requiere foundation; editar requiere g
 | Concurrencia | Generate `1 winner / 1 stale`; publish `1 winner / 1 stale` |
 | Escala | PASS, 95.000 items, 95.000 slots, 5.000 constraints y 10.000 preferences |
 | Staging autenticado | PASS, dos sesiones, Realtime y 15 fixtures canonicos |
-| Cleanup staging | PASS: 5 planes QA archivados; 0 planes/slots/rondas/contextos/bindings QA activos |
+| Cleanup staging | PASS: 9 planes QA archivados; 0 planes/slots/rondas actuales/contextos/bindings QA activos |
 | Flags staging | PASS, seis OFF |
 | Tests globales | PASS, `397/397`, sin skips/todo/cancelled |
 | Typecheck | PASS |
 | Build | PASS, `43/43` paginas |
 | Lint focalizado | PASS, 30 archivos, 0 findings |
-| Visual / PWA / Preview | Se fija contra `PENDING_FINAL_HEAD_PREVIEW` |
+| Visual / PWA / Preview | PASS: 16 escenarios browser + 2 PWA standalone reales en la Preview inmutable; 0 overflow X, errores, requests fallidas e imagenes rotas |
 
 ## Advisors
 
@@ -108,7 +110,7 @@ El asesor de staging no informa niveles `ERROR`. Los avisos `SECURITY DEFINER` s
 | 1 | `origin/main` inicial | `382f919e522af43feda7dc393253d3231ec3c44c` |
 | 2 | Rama | `codex/league-scheduling-canonical-fixtures-v1` |
 | 3 | PR | #172, draft durante QA |
-| 4 | HEAD final | Se registra al publicar el RC |
+| 4 | HEAD funcional | `679e487cd71885500490f125d04b04676184a131`; el HEAD documental queda registrado por Git/PR para evitar autoreferencia |
 | 5 | Migraciones | 4 forward-only |
 | 6 | Ledger staging | 123, alineado con filenames locales |
 | 7 | SchedulePlan | Implementado y revisionado |
@@ -164,10 +166,10 @@ El asesor de staging no informa niveles `ERROR`. Los avisos `SECURITY DEFINER` s
 | 57 | Control Center | Salud y seis flags |
 | 58 | Laboratory | Local, noindex/nofollow |
 | 59 | Official UI V2.1 | Componentes y shell existentes reutilizados |
-| 60 | Desktop | Matriz visual contractual |
-| 61 | Portrait | Matriz visual contractual |
-| 62 | Mobile Game Landscape | Matriz visual contractual |
-| 63 | PWA | Writes clasificadas; offline no confirma |
+| 60 | Desktop | PASS a `1440x900` y `1920x1080` |
+| 61 | Portrait | PASS a `390x844` y `360x800` |
+| 62 | Mobile Game Landscape | PASS a `667x375`, `740x360`, `844x390` y `932x430` |
+| 63 | PWA | PASS en Chrome app-mode real: standalone, manifest, Service Worker y offline sin confirmar writes |
 | 64 | Notifications | Resumen de publicacion por equipo |
 | 65 | Zero notification storm | 6 equipos -> 6 notificaciones, no 15xN |
 | 66 | Realtime | Invalidation + canonical refetch |
@@ -198,8 +200,8 @@ El asesor de staging no informa niveles `ERROR`. Los avisos `SECURITY DEFINER` s
 | 91 | Typecheck | PASS |
 | 92 | Build | PASS, 43 paginas |
 | 93 | Lint focalizado | PASS, 30 archivos |
-| 94 | Visual QA | Matriz final registrada en PR |
-| 95 | Preview | URL final registrada en PR |
+| 94 | Visual QA | 18 casos PASS, incluidos published/conflict/five/draft |
+| 95 | Preview | RC inmutable + alias estable registrados |
 | 96 | Staging cleanup | 0 autoridades QA activas; historia archivada |
 | 97 | Produccion modificada | NO |
 | 98 | Merge | NO |

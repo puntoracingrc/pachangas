@@ -118,7 +118,7 @@ Resultado verificado tras staging:
 
 | Dato | Valor |
 | --- | ---: |
-| Planes QA totales/archivados | 5 / 5 |
+| Planes QA totales/archivados | 9 / 9 |
 | Planes QA activos | 0 |
 | Slots QA activos | 0 |
 | Rondas QA actuales activas | 0 |
