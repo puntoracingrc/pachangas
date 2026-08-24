@@ -185,14 +185,16 @@ test("PWA classifies every R3 write and never reports an offline success", () =>
   assert.equal(isKnownClientWriteOperation("api:platform-admin-referees"), true);
 });
 
-test("R3 routes are noindex, server-confirmed and free of service-role browser authority", async () => {
-  const [privateLayout, publicLayout, labLayout, commandRoute, client, market, admin] = await Promise.all([
-    source("app/perfil/arbitro/layout.tsx"), source("app/arbitros/[slug]/layout.tsx"),
+test("R3 routes are server-confirmed, private routes stay noindex and public SEO follows the canonical read model", async () => {
+  const [privateLayout, publicPage, labLayout, commandRoute, client, market, admin] = await Promise.all([
+    source("app/perfil/arbitro/layout.tsx"), source("app/arbitros/[slug]/page.tsx"),
     source("app/laboratorio-referee-platform/layout.tsx"), source("app/api/referees/command/route.ts"),
     source("app/_components/referee-platform-client.tsx"), source("app/mercado/referee-marketplace-panel.tsx"),
     source("app/admin/referees/page.tsx"),
   ]);
-  for (const layout of [privateLayout, publicLayout, labLayout]) assert.match(layout, /robots: \{ follow: false, index: false \}/);
+  for (const layout of [privateLayout, labLayout]) assert.match(layout, /robots: \{ follow: false, index: false \}/);
+  assert.match(publicPage, /getPublicRefereeBySlug/);
+  assert.match(publicPage, /robots: \{ follow: Boolean\(profile\), index: Boolean\(profile\) \}/);
   assert.match(commandRoute, /clientWriteGateResponse|refereeWriteGate/);
   assert.match(commandRoute, /platformUserClient|refereeSession/);
   assert.doesNotMatch(commandRoute + client + market, /SUPABASE_SERVICE_ROLE_KEY/);

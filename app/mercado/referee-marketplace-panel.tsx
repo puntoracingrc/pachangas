@@ -54,12 +54,16 @@ function queryFromForm(form: HTMLFormElement) {
 }
 
 export function RefereeMarketplacePanel({
+  assignmentsEnabled,
   canPropose,
   context,
+  marketplaceEnabled,
   previewItems,
 }: {
+  assignmentsEnabled: boolean;
   canPropose: boolean;
   context: RefereeMatchContext | null;
+  marketplaceEnabled: boolean;
   previewItems?: RefereeJson[];
 }) {
   const [accessToken, setAccessToken] = useState("");
@@ -68,20 +72,31 @@ export function RefereeMarketplacePanel({
   const [pageSize, setPageSize] = useState(18);
   const [total, setTotal] = useState(previewItems?.length ?? 0);
   const [query, setQuery] = useState(() => new URLSearchParams({ page: "1", pageSize: "18" }));
-  const [loading, setLoading] = useState(!previewItems);
+  const [loading, setLoading] = useState(!previewItems && marketplaceEnabled);
   const [message, setMessage] = useState("");
   const [pendingProfile, setPendingProfile] = useState("");
   const [selectedProfileId, setSelectedProfileId] = useState(() => refereeText(previewItems?.[0]?.refereeProfileId));
+  const [publicClubs, setPublicClubs] = useState<RefereeJson[]>([]);
 
   useEffect(() => {
-    if (previewItems) return;
+    if (previewItems || !marketplaceEnabled) return;
     let active = true;
     void supabase?.auth.getSession().then(({ data }) => {
       if (!active) return;
       setAccessToken(data.session?.access_token ?? "");
     });
     return () => { active = false; };
-  }, [previewItems]);
+  }, [marketplaceEnabled, previewItems]);
+
+  useEffect(() => {
+    if (previewItems || !marketplaceEnabled) return;
+    let active = true;
+    void fetch("/api/clubs/directory?page=1&pageSize=60", { cache: "no-store" })
+      .then(async (response) => response.ok ? response.json() as Promise<{ items?: unknown }> : { items: [] })
+      .then((body) => { if (active) setPublicClubs(refereeArray(body.items)); })
+      .catch(() => { if (active) setPublicClubs([]); });
+    return () => { active = false; };
+  }, [marketplaceEnabled, previewItems]);
 
   const load = useCallback(async (nextQuery: URLSearchParams, token: string) => {
     if (!token) {
@@ -112,10 +127,10 @@ export function RefereeMarketplacePanel({
   }, []);
 
   useEffect(() => {
-    if (previewItems) return;
+    if (previewItems || !marketplaceEnabled) return;
     const timer = window.setTimeout(() => void load(query, accessToken), 0);
     return () => window.clearTimeout(timer);
-  }, [accessToken, load, previewItems, query]);
+  }, [accessToken, load, marketplaceEnabled, previewItems, query]);
 
   function submitFilters(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -169,8 +184,20 @@ export function RefereeMarketplacePanel({
   const selectedProfile = items.find((item) => refereeText(item.refereeProfileId) === selectedProfileId) ?? items[0] ?? null;
   const resolvedSelectedProfileId = refereeText(selectedProfile?.refereeProfileId);
 
+  if (!marketplaceEnabled && !previewItems) {
+    return (
+      <section className={styles.onboardingSurface} aria-label="Alta de árbitros" data-referee-market-v2="true">
+        <ProductFeedback tone="info"><strong>BETA.</strong> Esta función está en beta. Puedes usarla con normalidad y ayudarnos a mejorarla.</ProductFeedback>
+        <SectionHeader eyebrow="Ficha arbitral" title="Quiero arbitrar" />
+        <p>Ya puedes crear, completar y publicar tu ficha. El listado público del Mercado se activará por separado.</p>
+        <ResponsiveActionBar className={styles.onboardingActions}><Link href="/perfil/arbitro">Crear mi ficha de árbitro</Link></ResponsiveActionBar>
+      </section>
+    );
+  }
+
   return (
     <section className={styles.surface} aria-label="Mercado de árbitros" data-referee-market-v2="true">
+      <ProductFeedback tone="info"><strong>BETA.</strong> Esta función está en beta. Puedes usarla con normalidad y ayudarnos a mejorarla. <Link href="/perfil/arbitro">Crear mi ficha de árbitro</Link></ProductFeedback>
       <form className={styles.filters} onSubmit={submitFilters} aria-label="Filtros de árbitros">
         <SectionHeader eyebrow="Mercado" title="Filtros" />
         <label>Zona<input name="zone" placeholder="Barcelona, Vallès..." /></label>
@@ -181,7 +208,7 @@ export function RefereeMarketplacePanel({
         <label>Desde<input name="startTime" type="time" /></label>
         <label>Hasta<input name="endTime" type="time" /></label>
         <label>Disponibilidad<select name="availability">{availabilityOptions.map(([value, label]) => <option key={value || "all"} value={value}>{label}</option>)}</select></label>
-        <label>Club vinculado<input name="club" placeholder="ID del Club" /></label>
+        <label>Club vinculado<select name="club"><option value="">Todos</option>{publicClubs.map((club) => <option key={refereeText(club.clubId)} value={refereeText(club.clubId)}>{refereeText(club.name)}</option>)}</select></label>
         <label>Experiencia desde<input name="experienceSince" type="number" min="1950" max={new Date().getFullYear()} /></label>
         <label>Verificación<select name="verified"><option value="">Todas</option><option value="true">Verificado</option><option value="false">No verificado</option></select></label>
         <button type="submit">Aplicar filtros</button>
@@ -189,7 +216,7 @@ export function RefereeMarketplacePanel({
 
       <div className={styles.resultsPane}>
         <SectionHeader eyebrow={`${total} resultado${total === 1 ? "" : "s"}`} title="Árbitros disponibles" />
-        {context ? <ProductFeedback tone="info">Propuesta para <strong>{context.title}</strong>. Solo el owner del equipo puede enviarla.</ProductFeedback> : null}
+        {assignmentsEnabled && context ? <ProductFeedback tone="info">Propuesta para <strong>{context.title}</strong>. Solo el owner del equipo puede enviarla.</ProductFeedback> : null}
         {message ? <ProductFeedback tone={/confirmada/i.test(message) ? "success" : /no |error/i.test(message) ? "danger" : "warning"}>{message}</ProductFeedback> : null}
         {loading ? <p className={styles.empty}>Consultando el estado canónico...</p> : null}
         {!loading && !items.length ? <p className={styles.empty}>No hay árbitros que encajen con estos filtros.</p> : null}
@@ -207,7 +234,7 @@ export function RefereeMarketplacePanel({
               <div className={styles.cardResult}><RefereeProfileCard compact profile={profile} />
                 <ResponsiveActionBar className={styles.actions}>
                   <Link href={`/arbitros/${refereeText(profile.slug)}`}>Ver ficha</Link>
-                  <button type="button" disabled={!canPropose || !context || pendingProfile === profileId} onClick={() => void propose(profile)}>{pendingProfile === profileId ? "Enviando..." : context ? "Proponer arbitraje" : "Abre un partido para proponer"}</button>
+                  {assignmentsEnabled ? <button type="button" disabled={!canPropose || !context || pendingProfile === profileId} onClick={() => void propose(profile)}>{pendingProfile === profileId ? "Enviando..." : context ? "Proponer arbitraje" : "Abre un partido para proponer"}</button> : null}
                 </ResponsiveActionBar>
               </div>
             </article>;
@@ -223,7 +250,7 @@ export function RefereeMarketplacePanel({
 
       <aside className={styles.detailPane} aria-label="Detalle y propuesta">
         <SectionHeader eyebrow="Selección" title={selectedProfile ? refereeText(selectedProfile.displayName) || "Árbitro" : "Sin selección"} />
-        {selectedProfile ? <><RefereeProfileCard adaptive compact profile={selectedProfile} /><ResponsiveActionBar className={styles.detailActions}><Link href={`/arbitros/${refereeText(selectedProfile.slug)}`}>Ver ficha</Link><button type="button" disabled={!canPropose || !context || pendingProfile === refereeText(selectedProfile.refereeProfileId)} onClick={() => void propose(selectedProfile)}>{pendingProfile === refereeText(selectedProfile.refereeProfileId) ? "Enviando..." : "Proponer"}</button></ResponsiveActionBar></> : <p className={styles.empty}>Selecciona un árbitro.</p>}
+        {selectedProfile ? <><RefereeProfileCard adaptive compact profile={selectedProfile} /><ResponsiveActionBar className={styles.detailActions}><Link href={`/arbitros/${refereeText(selectedProfile.slug)}`}>Ver ficha</Link>{assignmentsEnabled ? <button type="button" disabled={!canPropose || !context || pendingProfile === refereeText(selectedProfile.refereeProfileId)} onClick={() => void propose(selectedProfile)}>{pendingProfile === refereeText(selectedProfile.refereeProfileId) ? "Enviando..." : "Proponer"}</button> : null}</ResponsiveActionBar></> : <p className={styles.empty}>Selecciona un árbitro.</p>}
       </aside>
     </section>
   );

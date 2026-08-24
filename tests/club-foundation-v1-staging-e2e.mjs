@@ -143,6 +143,22 @@ async function commandOk(supabase, name, input) {
   return result.data;
 }
 
+async function confirmClubPublication(supabase, clubId, expectedRevision) {
+  return rpc(supabase, "command_pachanga_publication_consent_v1", {
+    client_metadata: {
+      clientVersion: "1.0.0+r2-staging",
+      installedMode: "standalone",
+      serviceWorkerVersion: "1.0.0+r2-staging",
+      surface: "club-foundation-staging",
+    },
+    confirmations: { informationCorrect: true, representationAuthorized: true },
+    expected_revision: expectedRevision,
+    operation_id: randomUUID(),
+    subject_id: clubId,
+    subject_kind: "CLUB",
+  });
+}
+
 async function competitionCommandOk(supabase, input) {
   const result = await competitionCommand(supabase, input);
   if (result.error) {
@@ -607,10 +623,11 @@ try {
   });
   expectRpcError(staleProfile, /STALE_REVISION/, "PT409");
 
+  const clubAConsent = await confirmClubPublication(ownerDesktop, clubAId, profileUpdated.snapshot.club.revision);
   const reviewSubmitted = await commandOk(ownerDesktop, "command_pachanga_club_foundation_v1", {
     action: "club.review.submit",
     aggregateId: clubAId,
-    expectedRevision: profileUpdated.snapshot.club.revision,
+    expectedRevision: clubAConsent.confirmedRevision,
     payload: { reason: "R2 submit Club A review" },
   });
   assert.equal(reviewSubmitted.snapshot.club.operationalStatus, "pending_review");
@@ -637,10 +654,17 @@ try {
   assert.equal(clubAPlatform.snapshot.club.partnershipStatus, "active");
   assert.equal(clubAPlatform.snapshot.entitlements.canCreate, false);
 
+  const clubBConsent = await confirmClubPublication(playerA, clubBId, createdB.snapshot.club.revision);
+  const clubBReview = await commandOk(playerA, "command_pachanga_club_foundation_v1", {
+    action: "club.review.submit",
+    aggregateId: clubBId,
+    expectedRevision: clubBConsent.confirmedRevision,
+    payload: { reason: "R2 submit Club B review" },
+  });
   let clubBPlatform = await commandOk(platformAdmin, "command_pachanga_club_platform_v1", {
     action: "club.status.set",
     aggregateId: clubBId,
-    expectedRevision: createdB.snapshot.club.revision,
+    expectedRevision: clubBReview.snapshot.club.revision,
     payload: { reason: "R2 activate Club B", status: "active" },
   });
 

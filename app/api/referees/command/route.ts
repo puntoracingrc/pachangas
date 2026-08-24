@@ -30,14 +30,24 @@ export async function POST(request: Request) {
         || !Number.isSafeInteger(expectedRevision) || expectedRevision < 0) {
       throw new Error("INVALID_REFEREE_COMMAND");
     }
-    const result = await client.rpc("command_pachanga_referee_platform_v1", {
-      aggregate_id: aggregateId,
-      client_metadata: refereeClientMetadata(request, "referee_profile"),
-      command_action: action,
-      command_payload: refereeCommandPayload(action, refereeRecord(body.payload)),
-      expected_revision: expectedRevision,
-      operation_id: operationId,
-    });
+    const payload = refereeCommandPayload(action, refereeRecord(body.payload));
+    const result = action === "publication.consent"
+      ? await client.rpc("command_pachanga_publication_consent_v1", {
+          client_metadata: refereeClientMetadata(request, "referee_profile"),
+          confirmations: payload,
+          expected_revision: expectedRevision,
+          operation_id: operationId,
+          subject_id: aggregateId,
+          subject_kind: "REFEREE_PROFILE",
+        })
+      : await client.rpc("command_pachanga_referee_platform_v1", {
+          aggregate_id: aggregateId,
+          client_metadata: refereeClientMetadata(request, "referee_profile"),
+          command_action: action,
+          command_payload: payload,
+          expected_revision: expectedRevision,
+          operation_id: operationId,
+        });
     if (result.error) throw new Error(result.error.message);
     return refereeJson({ canonical: result.data });
   } catch (error) {

@@ -6,7 +6,7 @@ export const revalidate = 0;
 export async function GET(request: Request) {
   try {
     const { client } = await refereeSession(request);
-    const result = await client.rpc("get_my_pachanga_referee_platform_v1");
+    const result = await client.rpc("get_my_pachanga_referee_beta_v1");
     if (result.error) throw new Error(result.error.message);
     return refereeJson(result.data);
   } catch (error) {

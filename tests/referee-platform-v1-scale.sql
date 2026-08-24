@@ -76,8 +76,8 @@ select
   'Perfil sintético de escala para validar el dominio arbitral.',
   2000 + (profile_number % 20),
   'Experiencia declarada para pruebas locales de rendimiento.',
-  'active', case when profile_number % 5 = 0 then 'verified' else 'unverified' end,
-  'public', 'listed', case when profile_number % 4 = 0 then 'LIMITED' else 'AVAILABLE' end,
+  'draft', case when profile_number % 5 = 0 then 'verified' else 'unverified' end,
+  'private', 'not_listed', case when profile_number % 4 = 0 then 'LIMITED' else 'AVAILABLE' end,
   true, true, 1, 1000000000 + profile_number
 from generate_series(1, 10000) profile_number;
 
@@ -120,6 +120,29 @@ select
   1030000000 + (profile_number - 1) * 10 + window_number
 from generate_series(1, 10000) profile_number
 cross join generate_series(1, 10) window_number;
+
+insert into private.pachanga_publication_consents(
+  operation_id, subject_kind, subject_id, actor_id, content_fingerprint,
+  information_correct, unverified_not_certification, public_zones_availability,
+  subject_revision
+)
+select
+  pg_temp.r3_scale_uuid('r3-scale-consent', profile_number),
+  'REFEREE_PROFILE',
+  pg_temp.r3_scale_uuid('r3-scale-profile', profile_number),
+  pg_temp.r3_scale_uuid('r3-scale-user', profile_number),
+  private.pachanga_referee_public_content_fingerprint_v1(pg_temp.r3_scale_uuid('r3-scale-profile', profile_number)),
+  true, true, true, 1
+from generate_series(1, 10000) profile_number;
+
+update public.pachanga_referee_profiles profiles
+set operational_status = 'active',
+    visibility = 'public',
+    marketplace_status = 'listed',
+    revision = 2,
+    server_sequence = 1090000000 + numbers.profile_number
+from generate_series(1, 10000) as numbers(profile_number)
+where profiles.id = pg_temp.r3_scale_uuid('r3-scale-profile', numbers.profile_number);
 
 insert into public.pachanga_clubs(
   id, name, slug, description, club_type, primary_owner_id, created_by,

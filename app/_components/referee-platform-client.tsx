@@ -64,6 +64,12 @@ function Badge({ value }: { value: unknown }) {
 }
 
 function userFacingRefereeError(detail: string) {
+  if (/REFEREE_PUBLICATION_PAUSE_REQUIRED/.test(detail)) {
+    return "Pausa y oculta tu ficha antes de editar la información pública. Después podrás confirmar de nuevo la publicación.";
+  }
+  if (/REFEREE_PUBLICATION_CONSENT_REQUIRED/.test(detail)) {
+    return "Confirma la veracidad y el alcance público de la ficha antes de publicarla.";
+  }
   if (/MATCH_SCHEDULE_CHANGED/.test(detail)) {
     return "El horario del partido ha cambiado. Revisa la nueva fecha antes de confirmar.";
   }
@@ -95,6 +101,7 @@ export function RefereePlatformClient({ focusSection, laboratory = false, previe
   const [availabilityExceptionRows, setAvailabilityExceptionRows] = useState(2);
   const [oneTimeToken, setOneTimeToken] = useState<{ id: string; token: string } | null>(null);
   const [externalInvitation, setExternalInvitation] = useState({ id: "", token: "" });
+  const [publicClubs, setPublicClubs] = useState<RefereeJson[]>([]);
   const pending = useRef<{ id: string; key: string } | null>(null);
   const realtimeTimer = useRef<number | null>(null);
 
@@ -144,6 +151,25 @@ export function RefereePlatformClient({ focusSection, laboratory = false, previe
       if (channel) void client.removeChannel(channel);
     };
   }, [loadCanonical, previewData]);
+
+  useEffect(() => {
+    if (previewData) return;
+    let active = true;
+    void fetch("/api/clubs/directory?page=1&pageSize=60", { cache: "no-store" })
+      .then(async (response) => response.ok ? response.json() as Promise<{ items?: unknown }> : { items: [] })
+      .then((body) => { if (active) setPublicClubs(refereeArray(body.items)); })
+      .catch(() => { if (active) setPublicClubs([]); });
+    return () => { active = false; };
+  }, [previewData]);
+
+  useEffect(() => {
+    if (previewData || !data) return;
+    const section = new URLSearchParams(window.location.search).get("section");
+    if (!section || !new Set(["availability", "clubs", "consent", "identity", "marketplace", "modalities", "areas"]).has(section)) return;
+    window.requestAnimationFrame(() => {
+      document.querySelector(`[data-referee-section="${section}"]`)?.scrollIntoView({ block: "start" });
+    });
+  }, [data, previewData]);
 
   async function command(action: string, aggregateId: string, expectedRevision: number, payload: RefereeJson) {
     if (previewData) { setMessage("Fixture visual: la intención no se ha enviado."); return; }
@@ -200,6 +226,7 @@ export function RefereePlatformClient({ focusSection, laboratory = false, previe
 
   const privateProfile = refereeRecord(data?.profile);
   const profile = refereeRecord(privateProfile.profile);
+  const publicationConsent = refereeRecord(privateProfile.publicationConsent);
   const flags = refereeRecord(data?.flags);
   const pendingInvitations = refereeArray(data?.pendingInvitations);
   const modalities = refereeArray(privateProfile.modalities).filter((item) => item.active === true);
@@ -301,6 +328,16 @@ export function RefereePlatformClient({ focusSection, laboratory = false, previe
     });
   }
 
+  function consentPublication(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const form = new FormData(event.currentTarget);
+    void command("publication.consent", profileId, profileRevision, {
+      informationCorrect: form.get("informationCorrect") === "on",
+      publicZonesAvailability: form.get("publicZonesAvailability") === "on",
+      unverifiedNotCertification: form.get("unverifiedNotCertification") === "on",
+    });
+  }
+
   function relationshipInvite(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
@@ -334,7 +371,7 @@ export function RefereePlatformClient({ focusSection, laboratory = false, previe
 
   const shellContext = {
     detail: cached ? "Caché local · actualizando estado canónico" : profileId ? `Revisión ${profileRevision}` : "Servidor canónico",
-    eyebrow: laboratory ? "Laboratorio R3" : "Perfil arbitral",
+    eyebrow: laboratory ? "Laboratorio R3" : "Perfil arbitral · BETA",
     status: previewData ? "Solo visual" : cached ? "Actualizando" : supabase ? "En directo" : "Vista local",
     title: laboratory ? "Referee Platform" : "Mi ficha de árbitro",
   };
@@ -351,11 +388,12 @@ export function RefereePlatformClient({ focusSection, laboratory = false, previe
       <GamePageHeader
         actions={<><button type="button" disabled={!userId || busy} onClick={() => void loadCanonical(userId, accessToken, "manual")}>Actualizar</button><Link href={laboratory ? "/admin/referees" : "/"}>Volver</Link></>}
         eyebrow={laboratory ? "Revisión funcional y visual" : "Identidad arbitral"}
-        summary="Perfil, disponibilidad, Clubs y asignaciones confirmados por el servidor central."
+        summary="Perfil, disponibilidad y Clubs confirmados por el servidor central."
         title={laboratory ? "Referee Platform" : "Mi ficha de árbitro"}
       />
 
       {message ? <ProductFeedback tone={feedbackTone(message)}>{message}</ProductFeedback> : null}
+      {!laboratory ? <ProductFeedback tone="info"><strong>BETA.</strong> Esta función está en beta. Puedes usarla con normalidad y ayudarnos a mejorarla.</ProductFeedback> : null}
       {oneTimeToken ? <section className={styles.secret}><strong>Enlace de un solo uso</strong><code>{`${window.location.origin}/perfil/arbitro#relationship=${oneTimeToken.id}&token=${oneTimeToken.token}`}</code></section> : null}
       {laboratory ? <section className={styles.flags}>{Object.entries(flags).filter(([key]) => key.endsWith("Enabled")).map(([key, value]) => <span key={key}>{key.replace("Enabled", "")} <strong>{value ? "ON" : "OFF"}</strong></span>)}</section> : null}
 
@@ -388,11 +426,11 @@ export function RefereePlatformClient({ focusSection, laboratory = false, previe
               <label>Año de inicio<input name="experienceSinceYear" type="number" defaultValue={refereeText(profile.experienceSinceYear)} /></label>
               <label className={styles.wide}>Bio<textarea name="bio" rows={3} defaultValue={refereeText(profile.bio)} /></label>
               <label className={styles.wide}>Experiencia<textarea name="experienceSummary" rows={3} defaultValue={refereeText(profile.experienceSummary)} /></label>
-              <label className={styles.check}><input name="availableForAssignments" type="checkbox" defaultChecked={profile.availableForAssignments === true} />Acepto propuestas</label>
+              <label className={styles.check}><input name="availableForAssignments" type="checkbox" defaultChecked={profile.availableForAssignments === true} />Disponible en Mercado</label>
               <label className={styles.check}><input name="shareRecurringAvailability" type="checkbox" defaultChecked={profile.shareRecurringAvailability === true} />Publicar ventanas generales</label>
               <button type="submit" disabled={busy}>Guardar perfil</button>
             </form><ResponsiveActionBar className={styles.actions}>
-              {refereeText(profile.operationalStatus) === "draft" ? <button type="button" disabled={busy} onClick={() => void command("profile.activate", profileId, profileRevision, { reason: "referee_profile_activate" })}>Activar</button> : null}
+              {refereeText(profile.operationalStatus) === "draft" ? <button type="button" disabled={busy || publicationConsent.matchesCurrentContent !== true} onClick={() => void command("profile.activate", profileId, profileRevision, { reason: "referee_profile_activate" })}>Activar</button> : null}
             </ResponsiveActionBar></section>
 
             <section className={styles.panel} data-referee-section="modalities"><SectionHeader eyebrow="2 · Cobertura" title="Modalidades" /><form className={styles.checkGrid} onSubmit={updateModalities}>{refereeModalities.map((modality) => <label key={modality}><input type="checkbox" name={modality} defaultChecked={modalities.some((item) => refereeText(item.modality) === modality)} />{refereeModalityLabel(modality)}</label>)}<button type="submit" disabled={busy}>Guardar modalidades</button></form></section>
@@ -405,11 +443,13 @@ export function RefereePlatformClient({ focusSection, laboratory = false, previe
               <button type="submit" disabled={busy}>Guardar disponibilidad</button>
             </form></section>
 
-            <section className={styles.panel} data-referee-section="clubs"><SectionHeader eyebrow="5 · Red" title="Clubs" /><form className={styles.inlineForm} onSubmit={relationshipRequest}><label>Club ID<input name="clubId" required /></label><label>Relación<select name="relationshipType" defaultValue="REGULAR"><option value="REGULAR">Regular</option><option value="COLLABORATOR">Colaborador</option><option value="PREFERRED">Preferente</option></select></label><button type="submit" disabled={busy}>Solicitar vinculación</button></form><div className={styles.rows}>{pendingInvitations.map((item) => <article key={refereeText(item.id)}><span><strong>{refereeText(item.clubName)}</strong><small>Invitación · caduca {refereeDateLabel(item.expiresAt)}</small></span><ResponsiveActionBar><button type="button" disabled={busy} onClick={() => void command("relationship.accept", refereeText(item.id), refereeNumber(item.revision), { reason: "referee_relationship_accept", token: externalInvitation.id === refereeText(item.id) ? externalInvitation.token : "" })}>Aceptar</button><button type="button" disabled={busy} onClick={() => void command("relationship.reject", refereeText(item.id), refereeNumber(item.revision), { reason: "referee_relationship_reject", token: externalInvitation.id === refereeText(item.id) ? externalInvitation.token : "" })}>Rechazar</button></ResponsiveActionBar></article>)}{relationships.map((item) => <article key={refereeText(item.id)}><span><strong>{refereeText(item.clubName)}</strong><small>{refereeText(item.relationshipType)} · {refereeText(item.initiatedBy)}</small></span><ResponsiveActionBar><Badge value={item.status} />{refereeText(item.status) === "active" ? <><button type="button" disabled={busy} onClick={() => void command("relationship.visibility.set", refereeText(item.id), refereeNumber(item.revision), { reason: "referee_relationship_visibility", side: "referee", visible: item.showOnRefereeProfile !== true })}>{item.showOnRefereeProfile === true ? "Ocultar" : "Mostrar"}</button><button type="button" disabled={busy} onClick={() => void command("relationship.end", refereeText(item.id), refereeNumber(item.revision), { reason: "referee_relationship_end" })}>Finalizar</button></> : null}</ResponsiveActionBar></article>)}</div></section>
+            <section className={styles.panel} data-referee-section="consent"><SectionHeader eyebrow="5 · Publicación" title="Consentimiento" />{publicationConsent.matchesCurrentContent === true ? <ProductFeedback tone="success">Consentimiento vigente para el contenido público actual.</ProductFeedback> : <form className={styles.checkGrid} onSubmit={consentPublication}><label><input name="informationCorrect" type="checkbox" required />La información declarada es correcta.</label><label><input name="unverifiedNotCertification" type="checkbox" required />Entiendo que “No verificado” no implica certificación oficial.</label><label><input name="publicZonesAvailability" type="checkbox" required />Acepto que las zonas y disponibilidad seleccionadas sean públicas.</label><button type="submit" disabled={busy}>Confirmar publicación</button></form>}</section>
 
-            <section className={`${styles.panel} ${styles.marketPanel}`} data-referee-section="marketplace"><SectionHeader eyebrow="6 · Mercado" title="Disponibilidad pública" /><p className={styles.sectionCopy}>Controla si los equipos pueden encontrarte. La ficha pública nunca muestra GRL, facetas, estrellas ni Rating.</p><ResponsiveActionBar className={styles.actions}><Badge value={profile.marketplaceStatus} />{refereeText(profile.operationalStatus) === "active" && refereeText(profile.marketplaceStatus) !== "listed" ? <button type="button" disabled={busy} onClick={() => void command("marketplace.list", profileId, profileRevision, { reason: "referee_marketplace_list" })}>Publicar en Mercado</button> : null}{refereeText(profile.marketplaceStatus) === "listed" ? <button type="button" disabled={busy} onClick={() => void command("marketplace.pause", profileId, profileRevision, { reason: "referee_marketplace_pause" })}>Pausar Mercado</button> : null}{refereeText(profile.marketplaceStatus) === "paused" ? <button type="button" disabled={busy} onClick={() => void command("marketplace.list", profileId, profileRevision, { reason: "referee_marketplace_resume" })}>Reanudar Mercado</button> : null}</ResponsiveActionBar></section>
+            <section className={styles.panel} data-referee-section="clubs"><SectionHeader eyebrow="6 · Red" title="Clubs" /><form className={styles.inlineForm} onSubmit={relationshipRequest}><label>Club<select name="clubId" required><option value="">Selecciona un Club</option>{publicClubs.map((item) => <option key={refereeText(item.clubId)} value={refereeText(item.clubId)}>{refereeText(item.name)} · {refereeText(refereeRecord(item.generalArea).municipality) || refereeText(refereeRecord(item.generalArea).province)}</option>)}</select></label><label>Relación<select name="relationshipType" defaultValue="REGULAR"><option value="REGULAR">Regular</option><option value="COLLABORATOR">Colaborador</option><option value="PREFERRED">Preferente</option></select></label><button type="submit" disabled={busy || !publicClubs.length}>Solicitar vinculación</button></form><div className={styles.rows}>{pendingInvitations.map((item) => <article key={refereeText(item.id)}><span><strong>{refereeText(item.clubName)}</strong><small>Invitación · caduca {refereeDateLabel(item.expiresAt)}</small></span><ResponsiveActionBar><button type="button" disabled={busy} onClick={() => void command("relationship.accept", refereeText(item.id), refereeNumber(item.revision), { reason: "referee_relationship_accept", token: externalInvitation.id === refereeText(item.id) ? externalInvitation.token : "" })}>Aceptar</button><button type="button" disabled={busy} onClick={() => void command("relationship.reject", refereeText(item.id), refereeNumber(item.revision), { reason: "referee_relationship_reject", token: externalInvitation.id === refereeText(item.id) ? externalInvitation.token : "" })}>Rechazar</button></ResponsiveActionBar></article>)}{relationships.map((item) => <article key={refereeText(item.id)}><span><strong>{refereeText(item.clubName)}</strong><small>{refereeText(item.relationshipType)} · {refereeText(item.initiatedBy)}</small></span><ResponsiveActionBar><Badge value={item.status} />{refereeText(item.status) === "requested" ? <button type="button" disabled={busy} onClick={() => void command("relationship.cancel", refereeText(item.id), refereeNumber(item.revision), { reason: "referee_relationship_cancel" })}>Cancelar solicitud</button> : null}{refereeText(item.status) === "active" ? <><button type="button" disabled={busy} onClick={() => void command("relationship.visibility.set", refereeText(item.id), refereeNumber(item.revision), { reason: "referee_relationship_visibility", side: "referee", visible: item.showOnRefereeProfile !== true })}>{item.showOnRefereeProfile === true ? "Ocultar" : "Mostrar"}</button><button type="button" disabled={busy} onClick={() => void command("relationship.end", refereeText(item.id), refereeNumber(item.revision), { reason: "referee_relationship_end" })}>Finalizar</button></> : null}</ResponsiveActionBar></article>)}</div></section>
 
-            <section className={styles.panel} data-referee-section="assignments"><SectionHeader eyebrow="7 · Partidos" title="Asignaciones" /><div className={`${styles.rows} ${styles.assignmentRows}`}>{assignments.map((item) => {
+            <section className={`${styles.panel} ${styles.marketPanel}`} data-referee-section="marketplace"><SectionHeader eyebrow="7 · Mercado" title="Disponibilidad pública" /><p className={styles.sectionCopy}>Controla si los Clubs y equipos pueden encontrarte. La ficha pública nunca muestra GRL, facetas, estrellas ni Rating.</p><ResponsiveActionBar className={styles.actions}><Badge value={profile.marketplaceStatus} />{refereeText(profile.operationalStatus) === "active" && refereeText(profile.marketplaceStatus) !== "listed" ? <button type="button" disabled={busy || publicationConsent.matchesCurrentContent !== true} onClick={() => void command("marketplace.list", profileId, profileRevision, { reason: "referee_marketplace_list" })}>Publicar en Mercado</button> : null}{refereeText(profile.marketplaceStatus) === "listed" ? <button type="button" disabled={busy} onClick={() => void command("marketplace.pause", profileId, profileRevision, { reason: "referee_marketplace_pause" })}>Pausar Mercado</button> : null}{refereeText(profile.marketplaceStatus) === "paused" ? <button type="button" disabled={busy || publicationConsent.matchesCurrentContent !== true} onClick={() => void command("marketplace.list", profileId, profileRevision, { reason: "referee_marketplace_resume" })}>Reanudar Mercado</button> : null}</ResponsiveActionBar></section>
+
+            {flags.assignmentsEnabled === true ? <section className={styles.panel} data-referee-section="assignments"><SectionHeader eyebrow="8 · Partidos" title="Asignaciones" /><div className={`${styles.rows} ${styles.assignmentRows}`}>{assignments.map((item) => {
               const home = refereeText(item.homeTeamName);
               const away = refereeText(item.awayTeamName);
               const title = refereeText(item.matchTitle) || (home && away ? `${home} vs ${away}` : "Partido canónico");
@@ -428,14 +468,13 @@ export function RefereePlatformClient({ focusSection, laboratory = false, previe
                 </div>
                 <ResponsiveActionBar className={styles.assignmentActions}><Badge value={item.status} />{refereeText(item.status) === "proposed" ? <><button type="button" disabled={busy} onClick={() => void command("assignment.accept", refereeText(item.id), refereeNumber(item.revision), { reason: "referee_assignment_accept" })}>Aceptar</button><button type="button" disabled={busy} onClick={() => void command("assignment.decline", refereeText(item.id), refereeNumber(item.revision), { reason: "referee_assignment_decline" })}>Rechazar</button></> : null}{new Set(["accepted", "confirmed"]).has(refereeText(item.status)) ? <button type="button" disabled={busy} onClick={() => void command("assignment.cancel", refereeText(item.id), refereeNumber(item.revision), { reason: "referee_assignment_cancel", reasonCode: "referee_cancelled", reasonText: "Cancelado por el árbitro" })}>Cancelar</button> : null}{laboratory && refereeText(item.status) === "confirmed" ? <button type="button" disabled={busy} onClick={() => void adminCommand("assignment.reconcile", refereeText(item.id), refereeNumber(item.revision), { reason: "staging_manual_reconcile" })}>Reconciliar</button> : null}</ResponsiveActionBar>
               </article>;
-            })}{!assignments.length ? <p className={styles.empty}>Sin asignaciones.</p> : null}</div></section>
+            })}{!assignments.length ? <p className={styles.empty}>Sin asignaciones.</p> : null}</div></section> : null}
 
             <section className={styles.panel} data-referee-section="statistics"><SectionHeader eyebrow="8 · Evidencia" title="Estadísticas" /><div className={styles.metricGrid}><MetricTile label="Partidos concluidos" value={refereeNumber(statistics.matchesCompleted)} /><MetricTile label="Revisión" value={refereeNumber(statistics.revision)} /><MetricTile label="Estado disciplinario" value={refereeText(statistics.disciplineStatsStatus) || "NOT_AVAILABLE"} /></div><div className={styles.disciplineUnavailable}><Badge value="NOT_AVAILABLE" /><div><strong>Estadísticas disciplinarias</strong><p>Disponibles cuando se active el motor de disciplina.</p></div></div></section>
 
             {laboratory ? <section className={styles.labGrid}>
               <div className={styles.panel}><h2>Club invita</h2><form className={styles.formGrid} onSubmit={relationshipInvite}><label>Club ID<input name="clubId" required /></label><label>Destino<select name="targetKind" defaultValue="registered_user"><option value="registered_user">Usuario</option><option value="email_target">Email</option></select></label><label className={styles.wide}>Usuario UUID o email<input name="target" required /></label><label>Relación<select name="relationshipType" defaultValue="REGULAR"><option value="REGULAR">Regular</option><option value="COLLABORATOR">Colaborador</option><option value="PREFERRED">Preferente</option></select></label><label>Caduca<input name="expiresAt" type="datetime-local" /></label><button type="submit" disabled={busy}>Invitar</button></form></div>
-              <div className={styles.panel}><h2>Proponer partido</h2><form className={styles.formGrid} onSubmit={assignmentPropose}><label>Árbitro profile ID<input name="refereeProfileId" required /></label><label>Autoridad<select name="requesterKind"><option value="TEAM">Team</option><option value="CLUB">Club</option></select></label><label>Requester ID<input name="requesterId" required /></label><label>Source kind<input name="sourceKind" defaultValue="group_match" required /></label><label>Source group ID<input name="sourceGroupId" /></label><label>Source ID<input name="sourceId" required /></label><label>Deadline<input name="responseDeadline" type="datetime-local" /></label><label className={styles.wide}>Mensaje<input name="message" maxLength={800} /></label><button type="submit" disabled={busy}>Proponer</button></form></div>
-              <div className={styles.panel}><h2>Reemplazar árbitro</h2><form className={styles.formGrid} onSubmit={assignmentReplace}><label>Assignment ID<input name="assignmentId" required /></label><label>Revisión<input name="revision" type="number" min="1" required /></label><label>Nuevo profile ID<input name="newRefereeProfileId" required /></label><label>Deadline<input name="responseDeadline" type="datetime-local" /></label><label className={styles.wide}>Mensaje<input name="message" maxLength={800} /></label><button type="submit" disabled={busy}>Proponer reemplazo</button></form></div>
+              {flags.assignmentsEnabled === true ? <><div className={styles.panel}><h2>Proponer partido</h2><form className={styles.formGrid} onSubmit={assignmentPropose}><label>Árbitro profile ID<input name="refereeProfileId" required /></label><label>Autoridad<select name="requesterKind"><option value="TEAM">Team</option><option value="CLUB">Club</option></select></label><label>Requester ID<input name="requesterId" required /></label><label>Source kind<input name="sourceKind" defaultValue="group_match" required /></label><label>Source group ID<input name="sourceGroupId" /></label><label>Source ID<input name="sourceId" required /></label><label>Deadline<input name="responseDeadline" type="datetime-local" /></label><label className={styles.wide}>Mensaje<input name="message" maxLength={800} /></label><button type="submit" disabled={busy}>Proponer</button></form></div><div className={styles.panel}><h2>Reemplazar árbitro</h2><form className={styles.formGrid} onSubmit={assignmentReplace}><label>Assignment ID<input name="assignmentId" required /></label><label>Revisión<input name="revision" type="number" min="1" required /></label><label>Nuevo profile ID<input name="newRefereeProfileId" required /></label><label>Deadline<input name="responseDeadline" type="datetime-local" /></label><label className={styles.wide}>Mensaje<input name="message" maxLength={800} /></label><button type="submit" disabled={busy}>Proponer reemplazo</button></form></div></> : null}
             </section> : null}
           </div>
         </div>
