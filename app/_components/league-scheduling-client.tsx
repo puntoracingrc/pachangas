@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { clientWriteFetch } from "../pwa-client-bridge";
 import { supabase } from "../supabaseClient";
@@ -501,6 +502,10 @@ function FixtureDetail({ command, data, item, preview, surface }: {
   const slots = scheduleArray(data.slots).filter((slot) => scheduleText(slot.status) === "available");
   const [slotId, setSlotId] = useState("");
   const canEdit = surface === "workbench" && scheduleText(plan.status) !== "published";
+  const canonicalMatchId = scheduleText(item.canonicalMatchId);
+  const competitionId = scheduleText(data.competitionId)
+    || scheduleText(scheduleRecord(data.competition).id)
+    || scheduleText(plan.competitionId);
   return <div className={styles.detailBody}>
     <div className={styles.versus}><strong>{teams.home}</strong><span>VS</span><strong>{teams.away}</strong></div>
     <dl>
@@ -509,6 +514,7 @@ function FixtureDetail({ command, data, item, preview, surface }: {
       <div><dt>Estado</dt><dd>{status(item.status)}</dd></div>
       <div><dt>Zona</dt><dd>{scheduleText(item.timezone) || "Europe/Madrid"}</dd></div>
     </dl>
+    {canonicalMatchId && competitionId ? <Link className={styles.openMatchLink} href={`/competiciones/${competitionId}/partidos/${canonicalMatchId}`}>Abrir operación del partido</Link> : null}
     {canEdit ? <div className={styles.inlineControls}>
       <label>Nuevo slot<select value={slotId} onChange={(event) => setSlotId(event.target.value)}>
         <option value="">Seleccionar</option>

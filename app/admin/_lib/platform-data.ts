@@ -651,6 +651,28 @@ export async function getPlatformLeagueScheduling(
   };
 }
 
+export async function getPlatformLeagueMatchOperations(
+  session: VerifiedPlatformSession,
+  page: number,
+  pageSize: number,
+) {
+  const data = await rpcOrThrow<JsonRecord>(
+    session.client,
+    "get_pachanga_platform_league_match_operations_v1",
+    {
+      page_offset: (page - 1) * pageSize,
+      page_size: pageSize,
+    },
+  );
+  return {
+    counts: asRecord(data.counts),
+    flags: asRecord(data.flags),
+    matches: asArray(data.matches).map(asRecord),
+    recentRebuilds: asArray(data.recentRebuilds).map(asRecord),
+    standingsHealth: asArray(data.standingsHealth).map(asRecord),
+  };
+}
+
 export async function getPlatformClubs(
   session: VerifiedPlatformSession,
   page: number,

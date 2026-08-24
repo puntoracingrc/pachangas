@@ -1,0 +1,33 @@
+.lab { min-width: 0; position: relative; }
+.lab > nav {
+  position: fixed;
+  z-index: 140;
+  right: max(12px, env(safe-area-inset-right));
+  bottom: max(12px, env(safe-area-inset-bottom));
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid rgba(217, 234, 225, 0.22);
+  border-radius: 7px;
+  background: rgba(7, 17, 15, 0.94);
+  padding: 5px;
+  color: #f1f6f2;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.32);
+}
+.lab > nav strong { padding-inline: 7px; color: #51cfdf; font-size: 0.68rem; text-transform: uppercase; }
+.lab > nav button { min-height: 34px; border: 1px solid transparent; border-radius: 5px; background: transparent; padding: 5px 8px; color: #a9bbb2; font: inherit; font-size: 0.68rem; font-weight: 800; }
+.lab > nav button[aria-current="page"] { border-color: rgba(200, 239, 93, 0.45); background: rgba(200, 239, 93, 0.12); color: #c8ef5d; }
+@media (orientation: portrait) and (max-width: 720px) {
+  .lab { padding-top: 44px; }
+  .lab > nav { position: absolute; top: 4px; right: 8px; bottom: auto; left: 8px; overflow-x: auto; }
+  .lab > nav + div { min-height: calc(100dvh - 44px); }
+  .lab > nav strong { display: none; }
+  .lab > nav button { flex: 1 0 auto; }
+}
+@media (orientation: landscape) and (max-height: 560px) {
+  .lab { padding-top: 34px; }
+  .lab > nav { position: absolute; top: 3px; right: 8px; bottom: auto; left: 82px; justify-content: flex-end; }
+  .lab > nav + div { height: calc(100dvh - 34px); min-height: 0; }
+  .lab > nav strong { display: none; }
+  .lab > nav button { min-height: 28px; padding-block: 3px; }
+}

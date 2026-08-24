@@ -21,12 +21,14 @@ export function CompetitionAdminClient({
   entitlements,
   flags,
   leagueFlags,
+  matchOperationsFlags,
   schedulingFlags,
 }: {
   canWrite: boolean;
   entitlements: JsonRecord[];
   flags: JsonRecord;
   leagueFlags: JsonRecord;
+  matchOperationsFlags: JsonRecord;
   schedulingFlags: JsonRecord;
 }) {
   const router = useRouter();
@@ -56,6 +58,15 @@ export function CompetitionAdminClient({
   const [schedulePublicCalendarEnabled, setSchedulePublicCalendarEnabled] = useState(Boolean(schedulingFlags.publicCalendarEnabled));
   const [scheduleCanonicalFixtureCreationEnabled, setScheduleCanonicalFixtureCreationEnabled] = useState(Boolean(schedulingFlags.canonicalFixtureCreationEnabled));
   const [scheduleFlagReason, setScheduleFlagReason] = useState("");
+  const [matchOperationsFoundationEnabled, setMatchOperationsFoundationEnabled] = useState(Boolean(matchOperationsFlags.foundationEnabled));
+  const [matchSquadsEnabled, setMatchSquadsEnabled] = useState(Boolean(matchOperationsFlags.squadsEnabled));
+  const [matchAttendanceEnabled, setMatchAttendanceEnabled] = useState(Boolean(matchOperationsFlags.attendanceEnabled));
+  const [sportingResultsEnabled, setSportingResultsEnabled] = useState(Boolean(matchOperationsFlags.sportingResultsEnabled));
+  const [resultConfirmationEnabled, setResultConfirmationEnabled] = useState(Boolean(matchOperationsFlags.resultConfirmationEnabled));
+  const [officialResultsEnabled, setOfficialResultsEnabled] = useState(Boolean(matchOperationsFlags.officialResultsEnabled));
+  const [standingsEnabled, setStandingsEnabled] = useState(Boolean(matchOperationsFlags.standingsEnabled));
+  const [publicStandingsEnabled, setPublicStandingsEnabled] = useState(Boolean(matchOperationsFlags.publicStandingsEnabled));
+  const [matchOperationsFlagReason, setMatchOperationsFlagReason] = useState("");
 
   function resetOperation() {
     operationId.current = null;
@@ -159,6 +170,31 @@ export function CompetitionAdminClient({
           publicationEnabled: schedulePublicationEnabled,
           reason: scheduleFlagReason,
         })}>Guardar flags R4B</button>
+      </section>
+
+      <section className={styles.competitionControl}>
+        <h3>League Match Operations R4C</h3>
+        <p>Convocatorias, asistencia, resultados oficiales y clasificación. Requiere R4A y R4B activos.</p>
+        <label className={styles.checkField}><input type="checkbox" checked={matchOperationsFoundationEnabled} onChange={(event) => { resetOperation(); setMatchOperationsFoundationEnabled(event.target.checked); }} disabled={busy} />Fundación operativa</label>
+        <label className={styles.checkField}><input type="checkbox" checked={matchSquadsEnabled} onChange={(event) => { resetOperation(); setMatchSquadsEnabled(event.target.checked); }} disabled={busy} />Convocatorias y alineaciones</label>
+        <label className={styles.checkField}><input type="checkbox" checked={matchAttendanceEnabled} onChange={(event) => { resetOperation(); setMatchAttendanceEnabled(event.target.checked); }} disabled={busy} />Asistencia</label>
+        <label className={styles.checkField}><input type="checkbox" checked={sportingResultsEnabled} onChange={(event) => { resetOperation(); setSportingResultsEnabled(event.target.checked); }} disabled={busy} />Resultados deportivos</label>
+        <label className={styles.checkField}><input type="checkbox" checked={resultConfirmationEnabled} onChange={(event) => { resetOperation(); setResultConfirmationEnabled(event.target.checked); }} disabled={busy} />Confirmación bilateral</label>
+        <label className={styles.checkField}><input type="checkbox" checked={officialResultsEnabled} onChange={(event) => { resetOperation(); setOfficialResultsEnabled(event.target.checked); }} disabled={busy} />Decisiones oficiales</label>
+        <label className={styles.checkField}><input type="checkbox" checked={standingsEnabled} onChange={(event) => { resetOperation(); setStandingsEnabled(event.target.checked); }} disabled={busy} />Clasificación</label>
+        <label className={styles.checkField}><input type="checkbox" checked={publicStandingsEnabled} onChange={(event) => { resetOperation(); setPublicStandingsEnabled(event.target.checked); }} disabled={busy} />Clasificación pública</label>
+        <label className={styles.formField}>Motivo<textarea rows={2} value={matchOperationsFlagReason} onChange={(event) => { resetOperation(); setMatchOperationsFlagReason(event.target.value); }} disabled={busy} /></label>
+        <button className={styles.primaryButton} type="button" disabled={busy} onClick={() => void run("league_match_operations_flags.set", null, number(matchOperationsFlags.revision), {
+          attendanceEnabled: matchAttendanceEnabled,
+          foundationEnabled: matchOperationsFoundationEnabled,
+          officialResultsEnabled,
+          publicStandingsEnabled,
+          reason: matchOperationsFlagReason,
+          resultConfirmationEnabled,
+          sportingResultsEnabled,
+          squadsEnabled: matchSquadsEnabled,
+          standingsEnabled,
+        })}>Guardar flags R4C</button>
       </section>
 
       <section className={styles.competitionControl}>

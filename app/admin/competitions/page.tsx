@@ -13,7 +13,7 @@ import {
 } from "../_components/platform-ui";
 import { requirePlatformPage } from "../_lib/platform-auth";
 import { hasPlatformCapability } from "../_lib/platform-contract";
-import { getPlatformCompetitionFoundation, getPlatformLeagueParticipation, getPlatformLeagueScheduling, paginationFromSearchParams } from "../_lib/platform-data";
+import { getPlatformCompetitionFoundation, getPlatformLeagueMatchOperations, getPlatformLeagueParticipation, getPlatformLeagueScheduling, paginationFromSearchParams } from "../_lib/platform-data";
 import styles from "../platform-admin.module.css";
 import { CompetitionAdminClient } from "./competition-admin-client";
 
@@ -31,10 +31,11 @@ export default async function PlatformCompetitionsPage({ searchParams }: { searc
   const params = new URLSearchParams();
   Object.entries(raw).forEach(([key, value]) => params.set(key, first(value)));
   const { page, pageSize } = paginationFromSearchParams(params);
-  const [data, leagueParticipation, leagueScheduling] = await Promise.all([
+  const [data, leagueParticipation, leagueScheduling, leagueMatchOperations] = await Promise.all([
     getPlatformCompetitionFoundation(session, page, pageSize),
     getPlatformLeagueParticipation(session, page, pageSize),
     getPlatformLeagueScheduling(session, page, pageSize),
+    getPlatformLeagueMatchOperations(session, page, pageSize),
   ]);
   const canWrite = hasPlatformCapability(session.access, "competitions.manage");
   const canonicalHealthLabel = s(data.bindingHealth.status) === "NOT_INITIALIZED"
@@ -82,8 +83,33 @@ export default async function PlatformCompetitionsPage({ searchParams }: { searc
         </MetricGrid>
       </Panel>
 
+      <Panel title="League Match Operations R4C">
+        <MetricGrid>
+          <Metric label="Programados" value={n(leagueMatchOperations.counts.scheduled)} />
+          <Metric label="Preparados" value={n(leagueMatchOperations.counts.ready)} />
+          <Metric label="Jugados" value={n(leagueMatchOperations.counts.played)} />
+          <Metric label="Oficiales" value={n(leagueMatchOperations.counts.official)} />
+          <Metric label="Resultados pendientes" value={n(leagueMatchOperations.counts.pendingResults)} tone={n(leagueMatchOperations.counts.pendingResults) ? "warning" : "good"} />
+          <Metric label="Disputas" value={n(leagueMatchOperations.counts.disputes)} tone={n(leagueMatchOperations.counts.disputes) ? "warning" : "good"} />
+          <Metric label="Clasificaciones actuales" value={n(leagueMatchOperations.counts.standingsCurrent)} />
+          <Metric label="Clasificaciones con error" value={n(leagueMatchOperations.counts.standingsErrors)} tone={n(leagueMatchOperations.counts.standingsErrors) ? "warning" : "good"} />
+        </MetricGrid>
+      </Panel>
+
       <Panel title="Controles de plataforma">
-        <CompetitionAdminClient canWrite={canWrite} entitlements={data.entitlements} flags={data.flags} leagueFlags={leagueParticipation.flags} schedulingFlags={leagueScheduling.flags} />
+        <CompetitionAdminClient canWrite={canWrite} entitlements={data.entitlements} flags={data.flags} leagueFlags={leagueParticipation.flags} matchOperationsFlags={leagueMatchOperations.flags} schedulingFlags={leagueScheduling.flags} />
+      </Panel>
+
+      <Panel title="Operaciones de partido recientes">
+        {leagueMatchOperations.matches.length ? <DataTable label="Partidos R4C"><thead><tr><th>Contexto</th><th>Partido</th><th>Estado</th><th>Jornada</th><th>Revisión</th><th>Secuencia</th></tr></thead><tbody>{leagueMatchOperations.matches.map((item) => <tr key={s(item.contextId)}><td><Identifier value={s(item.contextId)} /></td><td><Link href={`/competiciones/${s(item.competitionId)}/partidos/${s(item.canonicalMatchId)}`}>Abrir partido</Link><small><Identifier value={s(item.canonicalMatchId)} /></small></td><td><StatusBadge>{s(item.status)}</StatusBadge></td><td><Identifier value={s(item.roundId)} /></td><td>{n(item.revision)}</td><td>{n(item.serverSequence)}</td></tr>)}</tbody></DataTable> : <EmptyState>No hay operaciones R4C.</EmptyState>}
+      </Panel>
+
+      <Panel title="Salud de clasificaciones">
+        {leagueMatchOperations.standingsHealth.length ? <DataTable label="Clasificaciones R4C"><thead><tr><th>Competición</th><th>Fase</th><th>Estado</th><th>Snapshot</th><th>Revisión</th><th>Secuencia</th></tr></thead><tbody>{leagueMatchOperations.standingsHealth.map((item) => <tr key={s(item.id)}><td><Identifier value={s(item.competitionId)} /></td><td><Identifier value={s(item.stageId)} /></td><td><StatusBadge>{s(item.health)}</StatusBadge></td><td><Identifier value={s(item.currentSnapshotId)} /></td><td>{n(item.revision)}</td><td>{n(item.serverSequence)}</td></tr>)}</tbody></DataTable> : <EmptyState>No hay clasificaciones R4C.</EmptyState>}
+      </Panel>
+
+      <Panel title="Últimas reconstrucciones de clasificación">
+        {leagueMatchOperations.recentRebuilds.length ? <DataTable label="Rebuilds R4C"><thead><tr><th>Snapshot</th><th>Tipo</th><th>Revisión fuente</th><th>Duración</th><th>Checksum</th><th>Secuencia</th></tr></thead><tbody>{leagueMatchOperations.recentRebuilds.map((item) => <tr key={`${s(item.snapshotId)}-${n(item.serverSequence)}`}><td><Identifier value={s(item.snapshotId)} /></td><td><StatusBadge>{s(item.kind)}</StatusBadge></td><td>{n(item.sourceRevision)}</td><td>{n(item.durationMs).toFixed(1)} ms</td><td><Identifier value={s(item.checksum)} /></td><td>{n(item.serverSequence)}</td></tr>)}</tbody></DataTable> : <EmptyState>No hay reconstrucciones R4C.</EmptyState>}
       </Panel>
 
       <Panel title="Planes de calendario">
