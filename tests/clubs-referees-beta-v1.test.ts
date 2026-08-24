@@ -120,12 +120,14 @@ test("Official UI beta surfaces reuse the same canonical directories and hide re
   assert.match(clubDirectory, /\/api\/clubs\/directory/);
   assert.match(clubManager, /\/api\/clubs\/me/);
   assert.match(clubManager, /pachanga_club_invalidations/);
+  assert.match(clubManager, /subscribe\(\(status\) => \{[\s\S]*?status === "SUBSCRIBED"[\s\S]*?reconcileCanonical\(500\)/);
   assert.match(clubManager, /team_relationship\.cancel/);
   assert.match(clubManager, /referee_relationship\.cancel/);
   assert.match(clubManager, /kind: action === "referee_relationship\.invite" \? "referee" : "staff"/);
   assert.match(clubManager, /externalInvitation\.id === text\(item\.id\)/);
   assert.match(clubManager, /CLUB_PUBLICATION_PAUSE_REQUIRED/);
   assert.match(refereeProfile, /publication\.consent/);
+  assert.match(refereeProfile, /subscribe\(\(status\) => \{[\s\S]*?status === "SUBSCRIBED"[\s\S]*?reconcileCanonical\(500\)/);
   assert.match(refereeProfile, /REFEREE_PUBLICATION_PAUSE_REQUIRED/);
   assert.match(refereeProfile, /relationship\.cancel/);
   assert.match(refereeProfile, /flags\.assignmentsEnabled === true/);

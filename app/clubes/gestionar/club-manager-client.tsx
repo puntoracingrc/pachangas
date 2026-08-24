@@ -85,10 +85,18 @@ export function ClubManagerClient() {
       const local = readCache(actorId);
       if (local) { setData(local); setCached(true); setLoading(false); }
       void loadCanonical(actorId, token, "initial");
-      channel = client.channel(`clubs-beta:${actorId}`).on("postgres_changes", { event: "INSERT", schema: "public", table: "pachanga_club_invalidations" }, () => {
+      const reconcileCanonical = (delay = 120) => {
+        if (!active) return;
         if (realtimeTimer.current) clearTimeout(realtimeTimer.current);
-        realtimeTimer.current = window.setTimeout(() => void loadCanonical(actorId, token, "realtime"), 120);
-      }).subscribe();
+        realtimeTimer.current = window.setTimeout(() => {
+          if (active) void loadCanonical(actorId, token, "realtime");
+        }, delay);
+      };
+      channel = client.channel(`clubs-beta:${actorId}`).on("postgres_changes", { event: "INSERT", schema: "public", table: "pachanga_club_invalidations" }, () => {
+        reconcileCanonical();
+      }).subscribe((status) => {
+        if (status === "SUBSCRIBED") reconcileCanonical(500);
+      });
     });
     return () => { active = false; if (realtimeTimer.current) clearTimeout(realtimeTimer.current); if (channel) void client.removeChannel(channel); };
   }, [loadCanonical]);
