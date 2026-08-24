@@ -192,6 +192,29 @@ begin
     'a3050000-0000-4000-8000-000000000001', 'a3010000-0000-4000-8000-000000000011', 'team_links_manage'
   ), 'club_referee_manager gained team management');
 
+  perform pg_temp.actor('a3010000-0000-4000-8000-000000000009');
+  select revision into club_revision
+  from public.pachanga_clubs
+  where id = 'a3050000-0000-4000-8000-000000000001';
+  response := public.command_pachanga_publication_consent_v1(
+    'a3040000-0000-4000-8000-000000000202', 'CLUB',
+    'a3050000-0000-4000-8000-000000000001', club_revision,
+    '{"representationAuthorized":true,"informationCorrect":true}', '{}'
+  );
+  club_revision := (response ->> 'confirmedRevision')::bigint;
+  response := public.command_pachanga_club_foundation_v1(
+    'a3040000-0000-4000-8000-000000000203',
+    'a3050000-0000-4000-8000-000000000001', club_revision,
+    'club.review.submit', '{"reason":"Submit R3 Club fixture for review"}', '{}'
+  );
+  club_revision := (response ->> 'confirmedRevision')::bigint;
+  perform pg_temp.actor('a3010000-0000-4000-8000-000000000001');
+  perform public.command_pachanga_club_platform_v1(
+    'a3040000-0000-4000-8000-000000000204',
+    'a3050000-0000-4000-8000-000000000001', club_revision,
+    'club.status.set', '{"status":"active","reason":"Activate R3 Club fixture"}', '{}'
+  );
+
   perform pg_temp.actor('a3010000-0000-4000-8000-000000000004');
   response := public.command_pachanga_referee_platform_v1(
     'a3040000-0000-4000-8000-000000000006', 'a3070000-0000-4000-8000-000000000001', 0,
@@ -227,6 +250,12 @@ begin
   response := public.command_pachanga_referee_platform_v1(
     'a3040000-0000-4000-8000-000000000010', 'a3070000-0000-4000-8000-000000000001', profile_revision,
     'profile.update', '{"visibility":"public","availabilityStatus":"AVAILABLE","availableForAssignments":true,"shareRecurringAvailability":true,"reason":"Publish profile settings"}', '{}'
+  );
+  profile_revision := (response ->> 'confirmedRevision')::bigint;
+  response := public.command_pachanga_publication_consent_v1(
+    'a3040000-0000-4000-8000-000000000201', 'REFEREE_PROFILE',
+    'a3070000-0000-4000-8000-000000000001', profile_revision,
+    '{"informationCorrect":true,"unverifiedNotCertification":true,"publicZonesAvailability":true}', '{}'
   );
   profile_revision := (response ->> 'confirmedRevision')::bigint;
   response := public.command_pachanga_referee_platform_v1(

@@ -213,6 +213,15 @@ try {
   ]);
   assert.equal(await runOk(`select primary_owner_id from public.pachanga_clubs where id = ${quote(clubId)}::uuid`, "canonical primary owner"), ownerBId);
 
+  const consentRevision = Number(await runOk(`select revision from public.pachanga_clubs where id = ${quote(clubId)}::uuid`, "publication consent revision"));
+  const publicationConsent = lastJson({ label: "confirm Club publication consent", stdout: await runOk(authenticated(ownerBId, `select public.command_pachanga_publication_consent_v1(
+    ${quote(operation())}::uuid, 'CLUB', ${quote(clubId)}::uuid, ${consentRevision},
+    '{"representationAuthorized":true,"informationCorrect":true}',
+    '{"clientVersion":"1.0.0+club-concurrency","surface":"club_concurrency"}'
+  )`), "confirm Club publication consent") });
+  await runOk(clubCommand(ownerBId, operation(), clubId, publicationConsent.confirmedRevision, "club.review.submit", {
+    reason: "submit concurrency Club for review",
+  }), "submit Club review");
   const activateRevision = Number(await runOk(`select revision from public.pachanga_clubs where id = ${quote(clubId)}::uuid`, "activate revision"));
   await runOk(authenticated(platformOwnerId, `select public.command_pachanga_club_platform_v1(
     ${quote(operation())}::uuid, ${quote(clubId)}::uuid, ${activateRevision},
@@ -304,6 +313,7 @@ try {
     begin;
     alter table private.pachanga_club_events disable trigger guard_pachanga_club_events_v1;
     alter table private.pachanga_club_operation_receipts disable trigger guard_pachanga_club_receipts_v1;
+    alter table private.pachanga_publication_consents disable trigger pachanga_publication_consents_immutable_v1;
     alter table private.pachanga_competition_events disable trigger guard_pachanga_competition_events_v1;
     alter table private.pachanga_competition_operation_receipts disable trigger guard_pachanga_competition_receipts_v1;
     alter table public.pachanga_clubs disable trigger pachanga_club_guard_owner_from_club_v1;
@@ -327,6 +337,9 @@ try {
     delete from public.pachanga_club_memberships where club_id = ${quote(clubId)}::uuid;
     delete from private.pachanga_club_events where club_id = ${quote(clubId)}::uuid;
     delete from private.pachanga_club_operation_receipts where operation_id = any(array[${operationIds.map((id) => `${quote(id)}::uuid`).join(",")}]);
+    delete from private.pachanga_publication_consents
+    where subject_id = ${quote(clubId)}::uuid
+       or actor_id in (${[platformOwnerId, ownerAId, ownerBId, managerId, viewerId, teamOwnerId].map((id) => `${quote(id)}::uuid`).join(",")});
     delete from public.pachanga_clubs where id = ${quote(clubId)}::uuid;
     delete from public.pachanga_group_members where group_id = ${quote(groupId)}::uuid;
     delete from public.pachanga_groups where id = ${quote(groupId)}::uuid;
@@ -338,6 +351,7 @@ try {
     alter table private.pachanga_competition_events enable trigger guard_pachanga_competition_events_v1;
     alter table private.pachanga_club_operation_receipts enable trigger guard_pachanga_club_receipts_v1;
     alter table private.pachanga_club_events enable trigger guard_pachanga_club_events_v1;
+    alter table private.pachanga_publication_consents enable trigger pachanga_publication_consents_immutable_v1;
     commit;
   `, "Club concurrency cleanup");
 }

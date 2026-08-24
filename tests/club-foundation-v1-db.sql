@@ -184,8 +184,22 @@ begin
     'membership.accept', jsonb_build_object('token', admin_token, 'reason', 'accept admin'), '{}'
   );
 
-  perform pg_temp.actor('c2100000-0000-4000-8000-000000000007');
+  perform pg_temp.actor('c2100000-0000-4000-8000-000000000001');
   select revision into club_revision from public.pachanga_clubs where id = 'c2400000-0000-4000-8000-000000000001';
+  response := public.command_pachanga_publication_consent_v1(
+    'c2300000-0000-4000-8000-000000000201', 'CLUB',
+    'c2400000-0000-4000-8000-000000000001', club_revision,
+    '{"representationAuthorized":true,"informationCorrect":true}', '{}'
+  );
+  club_revision := (response ->> 'confirmedRevision')::bigint;
+  response := public.command_pachanga_club_foundation_v1(
+    'c2300000-0000-4000-8000-000000000202',
+    'c2400000-0000-4000-8000-000000000001', club_revision,
+    'club.review.submit', '{"reason":"submit test Club for review"}', '{}'
+  );
+  club_revision := (response ->> 'confirmedRevision')::bigint;
+
+  perform pg_temp.actor('c2100000-0000-4000-8000-000000000007');
   perform public.command_pachanga_club_platform_v1(
     'c2300000-0000-4000-8000-000000000007',
     'c2400000-0000-4000-8000-000000000001', club_revision,

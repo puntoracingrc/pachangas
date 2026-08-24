@@ -1,4 +1,4 @@
-import { noStoreHeaders } from "../../client-policy/_contract";
+import { clientWriteGateResponse, noStoreHeaders } from "../../client-policy/_contract";
 import { platformUserClient } from "../../../admin/_lib/platform-auth";
 
 export const dynamic = "force-dynamic";
@@ -9,6 +9,7 @@ const clubTypes = new Set(["FOOTBALL_CLUB", "SPORTS_CENTER", "ASSOCIATION", "IND
 const clubRoles = new Set(["club_owner", "club_admin", "club_competition_manager", "club_viewer"]);
 const relationshipTypes = new Set(["MEMBER", "AFFILIATED", "HOSTED"]);
 const visibilityValues = new Set(["private", "unlisted", "public"]);
+const refereeRelationshipTypes = new Set(["REGULAR", "COLLABORATOR", "PREFERRED"]);
 
 function json(data: unknown, status = 200) {
   return Response.json(data, { headers: noStoreHeaders, status });
@@ -136,6 +137,24 @@ function commandPayload(action: string, input: Record<string, unknown>) {
       visibility,
     };
   }
+  if (action === "publication.consent") {
+    if (input.representationAuthorized !== true || input.informationCorrect !== true) {
+      throw new Error("INVALID_CLUB_COMMAND");
+    }
+    return { informationCorrect: true, representationAuthorized: true };
+  }
+  if (action === "referee_relationship.invite") {
+    const relationshipType = string(input, "relationshipType", 30).toUpperCase();
+    if (!refereeRelationshipTypes.has(relationshipType)) throw new Error("INVALID_CLUB_COMMAND");
+    return { refereeProfileId: uuid(input, "refereeProfileId"), relationshipType };
+  }
+  if (new Set(["referee_relationship.accept", "referee_relationship.reject", "referee_relationship.cancel", "referee_relationship.end"]).has(action)) {
+    return { reason: reason(input, action) };
+  }
+  if (action === "referee_relationship.visibility.set") {
+    if (typeof input.visible !== "boolean") throw new Error("INVALID_CLUB_COMMAND");
+    return { reason: reason(input, action), side: "club", visible: input.visible };
+  }
   throw new Error("INVALID_CLUB_COMMAND");
 }
 
@@ -144,7 +163,7 @@ function metadata(request: Request) {
     clientVersion: request.headers.get("x-pachangas-client-version"),
     installedMode: request.headers.get("x-pachangas-display-mode"),
     serviceWorkerVersion: request.headers.get("x-pachangas-service-worker-version"),
-    surface: "club_foundation_lab",
+    surface: "clubs_beta",
   };
 }
 
@@ -152,6 +171,8 @@ export async function POST(request: Request) {
   try {
     const origin = request.headers.get("origin");
     if (!origin || origin !== new URL(request.url).origin) return json({ error: "CLUB_ORIGIN_REQUIRED" }, 403);
+    const gated = clientWriteGateResponse(request);
+    if (gated) return gated;
     const token = (request.headers.get("authorization") ?? "").replace(/^Bearer\s+/i, "").trim();
     if (!token) return json({ error: "AUTHENTICATION_REQUIRED" }, 401);
     const client = platformUserClient(token);
@@ -163,21 +184,50 @@ export async function POST(request: Request) {
     const aggregateId = uuid(body, "aggregateId");
     const expectedRevision = Number(body.expectedRevision);
     if (!Number.isInteger(expectedRevision) || expectedRevision < 0) throw new Error("INVALID_CLUB_COMMAND");
+    const payload = commandPayload(action, record(body.payload));
     const args = {
       aggregate_id: aggregateId,
       client_metadata: metadata(request),
       command_action: action,
-      command_payload: commandPayload(action, record(body.payload)),
+      command_payload: payload,
       expected_revision: expectedRevision,
       operation_id: operationId,
     };
     const result = action === "competition.create"
       ? await client.rpc("command_pachanga_competition_foundation_v2", { ...args, organizer_kind: "CLUB" })
-      : await client.rpc("command_pachanga_club_foundation_v1", args);
+      : action === "publication.consent"
+        ? await client.rpc("command_pachanga_publication_consent_v1", {
+            client_metadata: metadata(request),
+            confirmations: payload,
+            expected_revision: expectedRevision,
+            operation_id: operationId,
+            subject_id: aggregateId,
+            subject_kind: "CLUB",
+          })
+        : action === "referee_relationship.invite"
+          ? await client.rpc("command_pachanga_club_referee_invite_by_profile_v1", {
+              client_metadata: metadata(request),
+              expected_club_revision: expectedRevision,
+              operation_id: operationId,
+              relationship_type: payload.relationshipType,
+              target_club_id: aggregateId,
+              target_referee_profile_id: payload.refereeProfileId,
+            })
+          : action.startsWith("referee_relationship.")
+            ? await client.rpc("command_pachanga_referee_platform_v1", {
+                aggregate_id: aggregateId,
+                client_metadata: metadata(request),
+                command_action: action.replace("referee_", ""),
+                command_payload: payload,
+                expected_revision: expectedRevision,
+                operation_id: operationId,
+              })
+            : await client.rpc("command_pachanga_club_foundation_v1", args);
     if (result.error) {
       const status = /STALE_REVISION|PT409|CONFLICT/i.test(result.error.message) ? 409
         : /REQUIRED|FORBIDDEN|42501/i.test(result.error.message) ? 403
           : /DISABLED|FEATURE_NOT_AVAILABLE|0A000/i.test(result.error.message) ? 409
+            : /RATE_LIMIT|PT429/i.test(result.error.message) ? 429
             : 400;
       return json({ error: "CLUB_COMMAND_REJECTED", message: result.error.message }, status);
     }

@@ -119,6 +119,26 @@ async function commandOk(supabase, input) {
   return result.data;
 }
 
+async function confirmRefereePublication(supabase, profileId, expectedRevision) {
+  return rpc(supabase, "command_pachanga_publication_consent_v1", {
+    client_metadata: {
+      clientVersion: "1.0.0+r3-staging",
+      installedMode: "standalone",
+      serviceWorkerVersion: "1.0.0+r3-staging",
+      surface: "referee-platform-staging",
+    },
+    confirmations: {
+      informationCorrect: true,
+      publicZonesAvailability: true,
+      unverifiedNotCertification: true,
+    },
+    expected_revision: expectedRevision,
+    operation_id: randomUUID(),
+    subject_id: profileId,
+    subject_kind: "REFEREE_PROFILE",
+  });
+}
+
 function adminCommand(supabase, {
   action,
   aggregateId,
@@ -280,6 +300,7 @@ async function createActiveProfile(supabase, {
       visibility: "public",
     },
   });
+  receipt = await confirmRefereePublication(supabase, id, receipt.confirmedRevision);
   receipt = await commandOk(supabase, {
     action: "profile.activate",
     aggregateId: id,

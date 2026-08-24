@@ -157,6 +157,17 @@ export function refereeCommandPayload(action: string, input: Record<string, unkn
   if (new Set(["profile.activate", "profile.archive", "marketplace.list", "marketplace.pause", "marketplace.unlist"]).has(action)) {
     return { reason: reason(input, action) };
   }
+  if (action === "publication.consent") {
+    if (input.informationCorrect !== true || input.unverifiedNotCertification !== true
+        || input.publicZonesAvailability !== true) {
+      throw new Error("INVALID_REFEREE_COMMAND");
+    }
+    return {
+      informationCorrect: true,
+      publicZonesAvailability: true,
+      unverifiedNotCertification: true,
+    };
+  }
   if (action === "relationship.invite") {
     const targetKind = string(input, "targetKind", 30);
     if (!new Set(["registered_user", "email_target"]).has(targetKind)) throw new Error("INVALID_REFEREE_COMMAND");

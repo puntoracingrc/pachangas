@@ -103,6 +103,34 @@ begin
     '{"name":"Club Adversarial B","slug":"club-adversarial-b","clubType":"ASSOCIATION","countryCode":"ES","province":"Madrid","municipality":"Madrid","generalArea":"Norte","placeId":"private-place-b","visibility":"private","reason":"create B"}', '{}'
   );
 
+  select revision into club_a_revision from public.pachanga_clubs where id = 'd2400000-0000-4000-8000-000000000001';
+  response := public.command_pachanga_publication_consent_v1(
+    'd2300000-0000-4000-8000-000000000201', 'CLUB',
+    'd2400000-0000-4000-8000-000000000001', club_a_revision,
+    '{"representationAuthorized":true,"informationCorrect":true}', '{}'
+  );
+  club_a_revision := (response ->> 'confirmedRevision')::bigint;
+  response := public.command_pachanga_club_foundation_v1(
+    'd2300000-0000-4000-8000-000000000202',
+    'd2400000-0000-4000-8000-000000000001', club_a_revision,
+    'club.review.submit', '{"reason":"submit A for review"}', '{}'
+  );
+  club_a_revision := (response ->> 'confirmedRevision')::bigint;
+
+  select revision into club_b_revision from public.pachanga_clubs where id = 'd2400000-0000-4000-8000-000000000002';
+  response := public.command_pachanga_publication_consent_v1(
+    'd2300000-0000-4000-8000-000000000203', 'CLUB',
+    'd2400000-0000-4000-8000-000000000002', club_b_revision,
+    '{"representationAuthorized":true,"informationCorrect":true}', '{}'
+  );
+  club_b_revision := (response ->> 'confirmedRevision')::bigint;
+  response := public.command_pachanga_club_foundation_v1(
+    'd2300000-0000-4000-8000-000000000204',
+    'd2400000-0000-4000-8000-000000000002', club_b_revision,
+    'club.review.submit', '{"reason":"submit B for review"}', '{}'
+  );
+  club_b_revision := (response ->> 'confirmedRevision')::bigint;
+
   perform pg_temp.actor('d2100000-0000-4000-8000-000000000008');
   select revision into club_a_revision from public.pachanga_clubs where id = 'd2400000-0000-4000-8000-000000000001';
   perform public.command_pachanga_club_platform_v1(
