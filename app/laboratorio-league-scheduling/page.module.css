@@ -1,0 +1,7 @@
+.index { min-height: 100%; padding: clamp(14px, 2vw, 28px); color: var(--official-text, #f1f6f2); }
+.links { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: 9px; margin-top: 14px; }
+.links a { min-height: 86px; display: grid; align-content: center; gap: 5px; border: 1px solid var(--official-line, rgba(217,234,225,.16)); border-left: 3px solid var(--official-cyan-text, #51cfdf); border-radius: 7px; background: var(--official-surface, rgba(18,29,26,.9)); padding: 13px; color: inherit; text-decoration: none; }
+.links span { color: var(--official-muted, #a9bbb2); font-size: .7rem; }
+.metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-top: 12px; }
+@media (max-width: 760px) and (orientation: portrait) { .index { padding: 10px; padding-bottom: 84px; } .links { grid-template-columns: repeat(2, minmax(0, 1fr)); } .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (orientation: landscape) and (max-height: 600px) { .index { padding: 8px; } .links { grid-template-columns: repeat(5, minmax(0, 1fr)); } .links a { min-height: 64px; padding: 8px; } }

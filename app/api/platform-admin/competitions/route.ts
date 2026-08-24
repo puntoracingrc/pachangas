@@ -4,9 +4,10 @@ import {
   requirePlatformRequest,
   requireSameOriginMutation,
 } from "../../../admin/_lib/platform-auth";
-import { getPlatformCompetitionFoundation, getPlatformLeagueParticipation } from "../../../admin/_lib/platform-data";
+import { getPlatformCompetitionFoundation, getPlatformLeagueParticipation, getPlatformLeagueScheduling } from "../../../admin/_lib/platform-data";
 import { clientWriteGateResponse } from "../../client-policy/_contract";
 import { leagueParticipationFlagsAggregateId } from "../../../league-participation-contract";
+import { leagueSchedulingFlagsAggregateId } from "../../../league-scheduling-contract";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -45,6 +46,31 @@ function optionalTimestamp(value: unknown) {
 }
 
 function commandPayload(action: string, input: Record<string, unknown>) {
+  if (action === "league_scheduling_flags.set") {
+    const allowed = new Set([
+      "canonicalFixtureCreationEnabled",
+      "editingEnabled",
+      "foundationEnabled",
+      "generationEnabled",
+      "publicCalendarEnabled",
+      "publicationEnabled",
+      "reason",
+    ]);
+    if (Object.keys(input).some((key) => !allowed.has(key))) throw new Error("Flag R4B no permitido");
+    const payload: Record<string, unknown> = { reason: reasonFrom(input) };
+    for (const key of [
+      "canonicalFixtureCreationEnabled",
+      "editingEnabled",
+      "foundationEnabled",
+      "generationEnabled",
+      "publicCalendarEnabled",
+      "publicationEnabled",
+    ] as const) {
+      if (typeof input[key] === "boolean") payload[key] = input[key];
+    }
+    if (Object.keys(payload).length === 1) throw new Error("No hay cambios de flags R4B");
+    return payload;
+  }
   if (action === "league_participation_flags.set") {
     const payload: Record<string, unknown> = { reason: reasonFrom(input) };
     for (const key of [
@@ -88,6 +114,7 @@ function commandPayload(action: string, input: Record<string, unknown>) {
 }
 
 function aggregateIdFor(action: string, body: Record<string, unknown>) {
+  if (action === "league_scheduling_flags.set") return leagueSchedulingFlagsAggregateId;
   if (action === "league_participation_flags.set") return leagueParticipationFlagsAggregateId;
   if (action === "foundation_flags.set") return flagsAggregateId;
   if (action === "canonical.backfill") return registryAggregateId;
@@ -111,11 +138,12 @@ export async function GET(request: Request) {
     const page = boundedInteger(url.searchParams.get("page"), 1, 100000);
     const pageSize = boundedInteger(url.searchParams.get("pageSize"), 30, 100);
     const session = await requirePlatformRequest(request, "competitions.read");
-    const [foundation, leagueParticipation] = await Promise.all([
+    const [foundation, leagueParticipation, leagueScheduling] = await Promise.all([
       getPlatformCompetitionFoundation(session, page, pageSize),
       getPlatformLeagueParticipation(session, page, pageSize),
+      getPlatformLeagueScheduling(session, page, pageSize),
     ]);
-    return platformJson({ ...foundation, leagueParticipation });
+    return platformJson({ ...foundation, leagueParticipation, leagueScheduling });
   } catch (error) {
     return platformErrorResponse(error);
   }
@@ -136,22 +164,30 @@ export async function POST(request: Request) {
     }
     const aggregateId = aggregateIdFor(action, body);
     const payload = commandPayload(action, record(body.payload));
-    const result = action === "league_participation_flags.set"
-      ? await session.client.rpc("command_pachanga_league_participation_platform_v1", {
+    const result = action === "league_scheduling_flags.set"
+      ? await session.client.rpc("command_pachanga_league_scheduling_platform_v1", {
         aggregate_id: aggregateId,
         client_metadata: clientMetadata(request),
         command_payload: payload,
         expected_revision: expectedRevision,
         operation_id: operationId,
       })
-      : await session.client.rpc("command_pachanga_competition_platform_v1", {
+      : action === "league_participation_flags.set"
+        ? await session.client.rpc("command_pachanga_league_participation_platform_v1", {
+        aggregate_id: aggregateId,
+        client_metadata: clientMetadata(request),
+        command_payload: payload,
+        expected_revision: expectedRevision,
+        operation_id: operationId,
+      })
+        : await session.client.rpc("command_pachanga_competition_platform_v1", {
         aggregate_id: aggregateId,
         client_metadata: clientMetadata(request),
         command_action: action,
         command_payload: payload,
         expected_revision: expectedRevision,
         operation_id: operationId,
-      });
+        });
     if (result.error) throw new Error(result.error.message);
     return platformJson({ canonical: result.data });
   } catch (error) {

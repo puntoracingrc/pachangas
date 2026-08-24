@@ -37,6 +37,8 @@ const v2WriteRpcNames = new Set([
   "command_pachanga_competition_platform_v1",
   "command_pachanga_league_participation_platform_v1",
   "command_pachanga_league_participation_v1",
+  "command_pachanga_league_scheduling_platform_v1",
+  "command_pachanga_league_scheduling_v1",
   "command_pachanga_referee_platform_v1",
   "command_pachanga_referee_platform_admin_v1",
   "command_pachanga_club_referee_manager_v1",
@@ -112,6 +114,7 @@ const v1ApplicationWriteOperations = new Set([
 const v2ApplicationWriteOperations = new Set([
   "api:club-foundation-command",
   "api:league-participation-command",
+  "api:league-scheduling-command",
   "api:ratings-assessment",
   "api:platform-admin-clubs",
   "api:platform-admin-competitions",

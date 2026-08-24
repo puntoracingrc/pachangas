@@ -13,7 +13,7 @@ import {
 } from "../_components/platform-ui";
 import { requirePlatformPage } from "../_lib/platform-auth";
 import { hasPlatformCapability } from "../_lib/platform-contract";
-import { getPlatformCompetitionFoundation, getPlatformLeagueParticipation, paginationFromSearchParams } from "../_lib/platform-data";
+import { getPlatformCompetitionFoundation, getPlatformLeagueParticipation, getPlatformLeagueScheduling, paginationFromSearchParams } from "../_lib/platform-data";
 import styles from "../platform-admin.module.css";
 import { CompetitionAdminClient } from "./competition-admin-client";
 
@@ -31,9 +31,10 @@ export default async function PlatformCompetitionsPage({ searchParams }: { searc
   const params = new URLSearchParams();
   Object.entries(raw).forEach(([key, value]) => params.set(key, first(value)));
   const { page, pageSize } = paginationFromSearchParams(params);
-  const [data, leagueParticipation] = await Promise.all([
+  const [data, leagueParticipation, leagueScheduling] = await Promise.all([
     getPlatformCompetitionFoundation(session, page, pageSize),
     getPlatformLeagueParticipation(session, page, pageSize),
+    getPlatformLeagueScheduling(session, page, pageSize),
   ]);
   const canWrite = hasPlatformCapability(session.access, "competitions.manage");
   const canonicalHealthLabel = s(data.bindingHealth.status) === "NOT_INITIALIZED"
@@ -68,8 +69,25 @@ export default async function PlatformCompetitionsPage({ searchParams }: { searc
         </MetricGrid>
       </Panel>
 
+      <Panel title="League Scheduling R4B">
+        <MetricGrid>
+          <Metric label="Planes en borrador" value={n(leagueScheduling.metrics.draftPlans)} />
+          <Metric label="Entradas obsoletas" value={n(leagueScheduling.metrics.stalePlans)} tone={n(leagueScheduling.metrics.stalePlans) ? "warning" : "good"} />
+          <Metric label="Calendarios inválidos" value={n(leagueScheduling.metrics.invalidSchedules)} tone={n(leagueScheduling.metrics.invalidSchedules) ? "warning" : "good"} />
+          <Metric label="Jornadas publicadas" value={n(leagueScheduling.metrics.publishedRounds)} />
+          <Metric label="Fixtures canónicos" value={n(leagueScheduling.metrics.generatedCanonicalMatches)} />
+          <Metric label="Sin slot" value={n(leagueScheduling.metrics.unassignedItems)} tone={n(leagueScheduling.metrics.unassignedItems) ? "warning" : "good"} />
+          <Metric label="Conflictos duros" value={n(leagueScheduling.metrics.hardConflicts)} tone={n(leagueScheduling.metrics.hardConflicts) ? "warning" : "good"} />
+          <Metric label="Calidad media" value={`${n(leagueScheduling.metrics.averageQualityScore).toFixed(1)}%`} />
+        </MetricGrid>
+      </Panel>
+
       <Panel title="Controles de plataforma">
-        <CompetitionAdminClient canWrite={canWrite} entitlements={data.entitlements} flags={data.flags} leagueFlags={leagueParticipation.flags} />
+        <CompetitionAdminClient canWrite={canWrite} entitlements={data.entitlements} flags={data.flags} leagueFlags={leagueParticipation.flags} schedulingFlags={leagueScheduling.flags} />
+      </Panel>
+
+      <Panel title="Planes de calendario">
+        {leagueScheduling.items.length ? <DataTable label="Planes R4B"><thead><tr><th>Competición</th><th>Fase</th><th>Plan</th><th>Equipos</th><th>Jornadas</th><th>Partidos</th><th>Calidad</th><th>Conflictos</th><th>Revisión</th></tr></thead><tbody>{leagueScheduling.items.map((item) => <tr key={s(item.id)}><td><strong>{s(item.competitionName)}</strong><small>{s(item.editionName)}</small></td><td>{s(item.stageName)}</td><td><StatusBadge>{s(item.status)}</StatusBadge><small>{n(item.legs)} vuelta(s)</small></td><td>{n(item.entryCount)}</td><td>{n(item.roundCount)}</td><td>{n(item.itemCount)}</td><td>{n(item.qualityScore).toFixed(1)}<small>{s(item.validationStatus) || "sin validar"}</small></td><td>{n(item.hardConflicts)}</td><td>{n(item.revision)}<small>{formatAdminDate(item.updatedAt)}</small></td></tr>)}</tbody></DataTable> : <EmptyState>No hay planes R4B.</EmptyState>}
       </Panel>
 
       <Panel title="Participaciones recientes">

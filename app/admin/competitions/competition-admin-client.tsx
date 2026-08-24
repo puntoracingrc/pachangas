@@ -21,11 +21,13 @@ export function CompetitionAdminClient({
   entitlements,
   flags,
   leagueFlags,
+  schedulingFlags,
 }: {
   canWrite: boolean;
   entitlements: JsonRecord[];
   flags: JsonRecord;
   leagueFlags: JsonRecord;
+  schedulingFlags: JsonRecord;
 }) {
   const router = useRouter();
   const operationId = useRef<string | null>(null);
@@ -47,6 +49,13 @@ export function CompetitionAdminClient({
   const [leagueRostersEnabled, setLeagueRostersEnabled] = useState(Boolean(leagueFlags.rostersEnabled));
   const [leagueSchedulePreferencesEnabled, setLeagueSchedulePreferencesEnabled] = useState(Boolean(leagueFlags.schedulePreferencesEnabled));
   const [leagueFlagReason, setLeagueFlagReason] = useState("");
+  const [scheduleFoundationEnabled, setScheduleFoundationEnabled] = useState(Boolean(schedulingFlags.foundationEnabled));
+  const [scheduleGenerationEnabled, setScheduleGenerationEnabled] = useState(Boolean(schedulingFlags.generationEnabled));
+  const [scheduleEditingEnabled, setScheduleEditingEnabled] = useState(Boolean(schedulingFlags.editingEnabled));
+  const [schedulePublicationEnabled, setSchedulePublicationEnabled] = useState(Boolean(schedulingFlags.publicationEnabled));
+  const [schedulePublicCalendarEnabled, setSchedulePublicCalendarEnabled] = useState(Boolean(schedulingFlags.publicCalendarEnabled));
+  const [scheduleCanonicalFixtureCreationEnabled, setScheduleCanonicalFixtureCreationEnabled] = useState(Boolean(schedulingFlags.canonicalFixtureCreationEnabled));
+  const [scheduleFlagReason, setScheduleFlagReason] = useState("");
 
   function resetOperation() {
     operationId.current = null;
@@ -129,6 +138,27 @@ export function CompetitionAdminClient({
           rostersEnabled: leagueRostersEnabled,
           schedulePreferencesEnabled: leagueSchedulePreferencesEnabled,
         })}>Guardar flags R4A</button>
+      </section>
+
+      <section className={styles.competitionControl}>
+        <h3>League Scheduling R4B</h3>
+        <p>Jornadas, slots y publicación de fixtures canónicos. Requiere R4A activo.</p>
+        <label className={styles.checkField}><input type="checkbox" checked={scheduleFoundationEnabled} onChange={(event) => { resetOperation(); setScheduleFoundationEnabled(event.target.checked); }} disabled={busy} />Fundación de calendarios</label>
+        <label className={styles.checkField}><input type="checkbox" checked={scheduleGenerationEnabled} onChange={(event) => { resetOperation(); setScheduleGenerationEnabled(event.target.checked); }} disabled={busy} />Generación</label>
+        <label className={styles.checkField}><input type="checkbox" checked={scheduleEditingEnabled} onChange={(event) => { resetOperation(); setScheduleEditingEnabled(event.target.checked); }} disabled={busy} />Edición de borradores</label>
+        <label className={styles.checkField}><input type="checkbox" checked={schedulePublicationEnabled} onChange={(event) => { resetOperation(); setSchedulePublicationEnabled(event.target.checked); }} disabled={busy} />Publicación</label>
+        <label className={styles.checkField}><input type="checkbox" checked={schedulePublicCalendarEnabled} onChange={(event) => { resetOperation(); setSchedulePublicCalendarEnabled(event.target.checked); }} disabled={busy} />Calendario público</label>
+        <label className={styles.checkField}><input type="checkbox" checked={scheduleCanonicalFixtureCreationEnabled} onChange={(event) => { resetOperation(); setScheduleCanonicalFixtureCreationEnabled(event.target.checked); }} disabled={busy} />Creación canónica</label>
+        <label className={styles.formField}>Motivo<textarea rows={2} value={scheduleFlagReason} onChange={(event) => { resetOperation(); setScheduleFlagReason(event.target.value); }} disabled={busy} /></label>
+        <button className={styles.primaryButton} type="button" disabled={busy} onClick={() => void run("league_scheduling_flags.set", null, number(schedulingFlags.revision), {
+          canonicalFixtureCreationEnabled: scheduleCanonicalFixtureCreationEnabled,
+          editingEnabled: scheduleEditingEnabled,
+          foundationEnabled: scheduleFoundationEnabled,
+          generationEnabled: scheduleGenerationEnabled,
+          publicCalendarEnabled: schedulePublicCalendarEnabled,
+          publicationEnabled: schedulePublicationEnabled,
+          reason: scheduleFlagReason,
+        })}>Guardar flags R4B</button>
       </section>
 
       <section className={styles.competitionControl}>

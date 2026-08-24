@@ -627,6 +627,30 @@ export async function getPlatformLeagueParticipation(
   };
 }
 
+export async function getPlatformLeagueScheduling(
+  session: VerifiedPlatformSession,
+  page: number,
+  pageSize: number,
+) {
+  const data = await rpcOrThrow<JsonRecord>(
+    session.client,
+    "get_pachanga_platform_league_scheduling_v1",
+    {
+      page_offset: (page - 1) * pageSize,
+      page_size: pageSize,
+    },
+  );
+  return {
+    flags: asRecord(data.flags),
+    items: asArray(data.items).map(asRecord),
+    legacyCanonicalHealth: asRecord(data.legacyCanonicalHealth),
+    metrics: asRecord(data.metrics),
+    page,
+    pageSize,
+    total: Number(data.total) || 0,
+  };
+}
+
 export async function getPlatformClubs(
   session: VerifiedPlatformSession,
   page: number,
