@@ -69,6 +69,13 @@ test("public Club directory is paginated, flag-gated and privacy reduced", async
   assert.doesNotMatch(directory, /email|phone|primary_owner_id|target_user_id|target_email|entitlement/i);
 });
 
+test("the public Club directory follows runtime flag activation", async () => {
+  const page = await source("app/clubes/page.tsx");
+  assert.match(page, /export const dynamic = "force-dynamic"/);
+  assert.match(page, /export const revalidate = 0/);
+  assert.match(page, /searchPublicClubs\(\{\}, 1, 24\)/);
+});
+
 test("private beta read models expose choices and relationships without Auth identity or invitation secrets", async () => {
   const reads = await source(migrationPaths[2]);
   const relationships = reads.match(/create or replace function private\.pachanga_club_referee_relationships_snapshot_v1[\s\S]*?\$\$;/)?.[0] ?? "";

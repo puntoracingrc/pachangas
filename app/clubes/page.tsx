@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import { ClubDirectoryClient } from "./club-directory-client";
 import { searchPublicClubs } from "../public-product-data";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export async function generateMetadata(): Promise<Metadata> {
   const data = await searchPublicClubs({}, 1, 1) as { enabled?: unknown } | null;
   const enabled = data?.enabled === true;
