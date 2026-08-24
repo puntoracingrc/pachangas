@@ -138,12 +138,20 @@ export function RefereePlatformClient({ focusSection, laboratory = false, previe
       const local = readCache(actorId);
       if (local) { setData(local); setCached(true); setLoading(false); }
       void loadCanonical(actorId, token, "initial");
+      const reconcileCanonical = (delay = 120) => {
+        if (!active) return;
+        if (realtimeTimer.current) window.clearTimeout(realtimeTimer.current);
+        realtimeTimer.current = window.setTimeout(() => {
+          if (active) void loadCanonical(actorId, token, "realtime");
+        }, delay);
+      };
       channel = client.channel(`referee-platform:${actorId}`)
         .on("postgres_changes", { event: "INSERT", schema: "public", table: "pachanga_referee_invalidations" }, () => {
-          if (realtimeTimer.current) window.clearTimeout(realtimeTimer.current);
-          realtimeTimer.current = window.setTimeout(() => void loadCanonical(actorId, token, "realtime"), 120);
+          reconcileCanonical();
         })
-        .subscribe();
+        .subscribe((status) => {
+          if (status === "SUBSCRIBED") reconcileCanonical(500);
+        });
     });
     return () => {
       active = false;
