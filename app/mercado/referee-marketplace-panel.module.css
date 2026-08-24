@@ -4,6 +4,11 @@
   gap: 10px;
 }
 
+.onboardingSurface { display: grid; gap: 12px; max-width: 720px; min-width: 0; }
+.onboardingSurface p { color: var(--official-muted, #aebdb7); margin: 0; }
+.onboardingActions { position: static !important; }
+.onboardingActions a { align-items: center; background: rgba(200, 239, 93, .9); border: 1px solid var(--official-accent, #c8ef5d); color: #17210d; display: inline-flex; font-weight: 900; justify-content: center; min-height: 40px; padding: 8px 14px; text-decoration: none; }
+
 .filters {
   display: grid;
   grid-template-columns: repeat(6, minmax(110px, 1fr));

@@ -12,19 +12,24 @@ test("Mercado keeps R3 authority inside the Official UI V2 shell", async () => {
   assert.match(market, /active="mercado"/);
   assert.match(market, /MarketTab[^;]+"arbitros"/s);
   assert.match(market, /get_pachanga_referee_foundation_flags_v1/);
-  assert.match(market, /refereeMarketplaceEnabled[\s\S]*\? \[\{ id: "arbitros", label: "Árbitros", onSelect: \(\) => selectMarketTab\("arbitros"\) \}\]/);
-  assert.match(market, /activeTab === "arbitros" && refereeMarketplaceEnabled \? \(/);
+  assert.match(market, /refereeProductEnabled[\s\S]*\? \[\{ id: "arbitros", label: "Árbitros", onSelect: \(\) => selectMarketTab\("arbitros"\) \}\]/);
+  assert.match(market, /activeTab === "arbitros" && refereeProductEnabled \? \(/);
   assert.match(market, /<RefereeMarketplacePanel/);
   assert.match(market, /String\(membership\?\.data\?\.role\) === "owner"/);
-  assert.match(market, /activeTab === "arbitros" \? "Árbitros" : "Equipos"/);
+  assert.match(market, /activeTab === "arbitros"[\s\S]*?\? "Árbitros"[\s\S]*?activeTab === "clubes"[\s\S]*?\? "Clubs"/);
   assert.doesNotMatch(market, /\bMobileAppNav\b/);
 });
 
-test("an unavailable referee market falls back without mounting its request panel", async () => {
-  const market = await source("app/mercado/page.tsx");
-  assert.match(market, /requestedTab === "arbitros" && !marketplaceEnabled\) setActiveTab\("jugadores"\)/);
-  assert.match(market, /activeTab === "arbitros" && refereeMarketplaceEnabled/);
-  assert.doesNotMatch(market, /<RefereeMarketplacePanel[\s\S]*?refereeMarketplaceEnabled={/);
+test("referee self-service stays reachable before the marketplace is enabled", async () => {
+  const [market, panel] = await Promise.all([
+    source("app/mercado/page.tsx"),
+    source("app/mercado/referee-marketplace-panel.tsx"),
+  ]);
+  assert.match(market, /requestedTab === "arbitros" && !refereeEnabled\) setActiveTab\("jugadores"\)/);
+  assert.match(market, /activeTab === "arbitros" && refereeProductEnabled/);
+  assert.match(market, /marketplaceEnabled={refereeMarketplaceEnabled}/);
+  assert.match(panel, /if \(!marketplaceEnabled && !previewItems\)/);
+  assert.match(panel, /Crear mi ficha de árbitro/);
 });
 
 test("referee marketplace uses a real three-pane game-landscape composition", async () => {

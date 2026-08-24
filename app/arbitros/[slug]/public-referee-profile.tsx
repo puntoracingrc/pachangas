@@ -8,12 +8,13 @@ import { GamePageHeader, MetricTile, ProductFeedback, SectionHeader, StatusChip 
 import { refereeArray, refereeModalityLabel, refereeNumber, refereeRecord, refereeText, type RefereeJson } from "../../referee-platform-contract";
 import styles from "./public-referee.module.css";
 
-export function PublicRefereeProfile({ previewProfile = null, slug }: { previewProfile?: RefereeJson | null; slug: string }) {
-  const [profile, setProfile] = useState<RefereeJson | null>(previewProfile);
-  const [loading, setLoading] = useState(!previewProfile);
+export function PublicRefereeProfile({ initialProfile = null, previewProfile = null, slug }: { initialProfile?: RefereeJson | null; previewProfile?: RefereeJson | null; slug: string }) {
+  const resolvedInitial = previewProfile ?? initialProfile;
+  const [profile, setProfile] = useState<RefereeJson | null>(resolvedInitial);
+  const [loading, setLoading] = useState(!resolvedInitial);
 
   useEffect(() => {
-    if (previewProfile) return;
+    if (resolvedInitial) return;
     let active = true;
     void fetch(`/api/referees/public/${encodeURIComponent(slug)}`, { cache: "no-store" })
       .then(async (response) => ({ body: await response.json() as { profile?: unknown }, ok: response.ok }))
@@ -21,12 +22,12 @@ export function PublicRefereeProfile({ previewProfile = null, slug }: { previewP
       .catch(() => { if (active) setProfile(null); })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
-  }, [previewProfile, slug]);
+  }, [resolvedInitial, slug]);
 
   const shellContext = {
     detail: loading ? "Consultando estado canónico" : profile ? refereeText(profile.availabilityStatus).replaceAll("_", " ") : "Producto no disponible",
     eyebrow: "Mercado · Árbitros",
-    status: previewProfile ? "Solo visual" : "Vista pública",
+    status: previewProfile ? "Solo visual" : "BETA",
     title: refereeText(profile?.displayName) || "Perfil arbitral",
   };
 
@@ -41,7 +42,7 @@ export function PublicRefereeProfile({ previewProfile = null, slug }: { previewP
   return (
     <OfficialProductShellV2 active="mercado" context={shellContext}>
     <main className={styles.page} data-mobile-tab="mercado">
-      <GamePageHeader actions={<Link href="/mercado?tab=arbitros">Volver a Mercado</Link>} eyebrow="Ficha pública" summary="Información arbitral publicada por su titular y confirmada por el servidor." title={refereeText(profile.displayName)} />
+      <GamePageHeader actions={<Link href="/mercado?tab=arbitros">Volver a Mercado</Link>} eyebrow="Ficha pública · BETA" summary="Información arbitral declarada por su titular y confirmada por el servidor." title={refereeText(profile.displayName)} />
       <div className={styles.layout}>
         <div className={styles.cardStage}><RefereeProfileCard adaptive profile={profile} /></div>
         <div aria-label="Detalle del perfil arbitral" className={styles.details} role="region" tabIndex={0}>
@@ -52,7 +53,7 @@ export function PublicRefereeProfile({ previewProfile = null, slug }: { previewP
         <aside className={styles.availability}>
           <section><SectionHeader eyebrow="Agenda" title="Disponibilidad publicada" />{windows.length ? <div className={styles.rows}>{windows.map((item, index) => <span key={index}>Día {refereeText(item.weekday)} · {refereeText(item.startLocalTime)}-{refereeText(item.endLocalTime)}</span>)}</div> : <ProductFeedback tone="info">Solo se ha publicado el estado general de disponibilidad.</ProductFeedback>}</section>
           <section><SectionHeader eyebrow="Red" title="Clubs visibles" />{clubs.length ? <div className={styles.rows}>{clubs.map((item, index) => <span key={`${refereeText(item.slug)}:${index}`}>{refereeText(item.name)} · {refereeText(item.relationshipType)}</span>)}</div> : <p>Sin Clubs visibles.</p>}</section>
-          <section className={styles.publicState}><StatusChip tone={refereeText(profile.verificationStatus) === "verified" ? "success" : "neutral"}>{refereeText(profile.verificationStatus) === "verified" ? "Verificado" : "No verificado"}</StatusChip><p>Las propuestas se envían desde un partido y requieren autoridad de owner.</p></section>
+          <section className={styles.publicState}><StatusChip tone={refereeText(profile.verificationStatus) === "verified" ? "success" : "neutral"}>{refereeText(profile.verificationStatus) === "verified" ? "Verificado" : "No verificado"}</StatusChip><p>“No verificado” no implica certificación oficial. No se muestran datos de contacto.</p></section>
         </aside>
         </div>
     </main>

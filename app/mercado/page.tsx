@@ -13,6 +13,7 @@ import { SERVICE_UNAVAILABLE_MESSAGE, userFacingError } from "../user-facing-err
 import { ChallengeableTeamsPanel } from "./challengeable-teams-panel";
 import { RefereeMarketplacePanel } from "./referee-marketplace-panel";
 import { TeamChallengesPanel } from "./team-challenges-panel";
+import { ClubDirectoryClient } from "../clubes/club-directory-client";
 
 const googleMapsApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
 
@@ -333,10 +334,16 @@ type MarketMatchContext = {
   zone: string;
 };
 
-type MarketTab = "arbitros" | "equipos" | "jugadores" | "partidos" | "retos";
+type MarketTab = "arbitros" | "clubes" | "equipos" | "jugadores" | "partidos" | "retos";
 
 function marketTabFromParam(value: string | null): MarketTab {
-  if (value === "equipos" || value === "partidos" || value === "retos") return value;
+  if (
+    value === "arbitros"
+    || value === "clubes"
+    || value === "equipos"
+    || value === "partidos"
+    || value === "retos"
+  ) return value;
   return "jugadores";
 }
 
@@ -671,7 +678,11 @@ export default function MarketPage() {
   const [positionFilter, setPositionFilter] = useState("Todas");
   const [canInvite, setCanInvite] = useState(false);
   const [canProposeReferee, setCanProposeReferee] = useState(false);
+  const [refereeProductEnabled, setRefereeProductEnabled] = useState(false);
   const [refereeMarketplaceEnabled, setRefereeMarketplaceEnabled] = useState(false);
+  const [refereeAssignmentsEnabled, setRefereeAssignmentsEnabled] = useState(false);
+  const [clubProductEnabled, setClubProductEnabled] = useState(false);
+  const [clubDirectoryEnabled, setClubDirectoryEnabled] = useState(false);
   const { previewRequested, toggleAdminViewPreview } = useAdminViewPreview();
   const [inviteMessage, setInviteMessage] = useState("");
   const [marketRefresh, setMarketRefresh] = useState(0);
@@ -774,15 +785,33 @@ export default function MarketPage() {
       }
 
       const refereeFlags = await supabase?.rpc("get_pachanga_referee_foundation_flags_v1") as {
-        data: { marketplaceEnabled?: boolean } | null;
+        data: { assignmentsEnabled?: boolean; foundationEnabled?: boolean; marketplaceEnabled?: boolean; selfServiceEnabled?: boolean } | null;
         error: { message: string } | null;
       } | undefined;
       const marketplaceEnabled = !refereeFlags?.error && refereeFlags?.data?.marketplaceEnabled === true;
+      const assignmentsEnabled = !refereeFlags?.error && refereeFlags?.data?.assignmentsEnabled === true;
+      const refereeEnabled = !refereeFlags?.error
+        && refereeFlags?.data?.foundationEnabled === true
+        && (refereeFlags.data.selfServiceEnabled === true || marketplaceEnabled);
+      const clubFlags = await supabase?.rpc("get_pachanga_club_foundation_flags_v1") as {
+        data: { foundationEnabled?: boolean; publicProfilesEnabled?: boolean; selfServiceCreationEnabled?: boolean } | null;
+        error: { message: string } | null;
+      } | undefined;
+      const directoryEnabled = !clubFlags?.error && clubFlags?.data?.foundationEnabled === true && clubFlags.data.publicProfilesEnabled === true;
+      const clubsEnabled = !clubFlags?.error
+        && clubFlags?.data?.foundationEnabled === true
+        && (clubFlags.data.selfServiceCreationEnabled === true || directoryEnabled);
       if (active) {
+        setRefereeProductEnabled(refereeEnabled);
         setRefereeMarketplaceEnabled(marketplaceEnabled);
+        setRefereeAssignmentsEnabled(assignmentsEnabled);
+        setClubProductEnabled(clubsEnabled);
+        setClubDirectoryEnabled(directoryEnabled);
         const requestedTab = new URLSearchParams(window.location.search).get("tab");
-        if (requestedTab === "arbitros" && marketplaceEnabled) setActiveTab("arbitros");
-        if (requestedTab === "arbitros" && !marketplaceEnabled) setActiveTab("jugadores");
+        if (requestedTab === "arbitros" && refereeEnabled) setActiveTab("arbitros");
+        if (requestedTab === "arbitros" && !refereeEnabled) setActiveTab("jugadores");
+        if (requestedTab === "clubes" && clubsEnabled) setActiveTab("clubes");
+        if (requestedTab === "clubes" && !clubsEnabled) setActiveTab("jugadores");
       }
 
       const marketColumns =
@@ -1157,7 +1186,10 @@ export default function MarketPage() {
       },
     },
     { id: "equipos", label: "Equipos", onSelect: () => selectMarketTab("equipos") },
-    ...(refereeMarketplaceEnabled
+    ...(clubProductEnabled
+      ? [{ id: "clubes", label: "Clubes", onSelect: () => selectMarketTab("clubes") }]
+      : []),
+    ...(refereeProductEnabled
       ? [{ id: "arbitros", label: "Árbitros", onSelect: () => selectMarketTab("arbitros") }]
       : []),
   ];
@@ -1169,6 +1201,8 @@ export default function MarketPage() {
         ? "Retos privados"
         : activeTab === "arbitros"
           ? "Árbitros"
+          : activeTab === "clubes"
+            ? "Clubs"
           : "Equipos retables";
 
   return (
@@ -1179,11 +1213,13 @@ export default function MarketPage() {
         detail: activeTab === "jugadores" && marketContext
           ? `${marketContext.missing || "0"} plazas libres`
           : activeTab === "arbitros"
-            ? marketContext ? `Propuesta para ${marketContext.title}` : "Zona · modalidad · disponibilidad"
+            ? refereeAssignmentsEnabled && marketContext ? `Propuesta para ${marketContext.title}` : "Zona · modalidad · disponibilidad"
+            : activeTab === "clubes"
+              ? "Directorio público"
             : activeTab,
         eyebrow: "Mercado",
         status: supabase ? "En directo" : "Vista local",
-        title: activeTab === "jugadores" ? "Jugadores" : activeTab === "partidos" ? "Partidos abiertos" : activeTab === "retos" ? "Retos" : activeTab === "arbitros" ? "Árbitros" : "Equipos",
+        title: activeTab === "jugadores" ? "Jugadores" : activeTab === "partidos" ? "Partidos abiertos" : activeTab === "retos" ? "Retos" : activeTab === "arbitros" ? "Árbitros" : activeTab === "clubes" ? "Clubs" : "Equipos",
       }}
     >
     <main className="market-page official-ui-v2-market" data-mobile-tab="mercado">
@@ -1254,11 +1290,15 @@ export default function MarketPage() {
         title={marketViewTitle}
       >
 
-      {activeTab === "arbitros" && refereeMarketplaceEnabled ? (
+      {activeTab === "arbitros" && refereeProductEnabled ? (
         <RefereeMarketplacePanel
+          assignmentsEnabled={refereeAssignmentsEnabled}
           canPropose={canProposeReferee}
           context={marketContext ? { groupId: marketContext.groupId, matchId: marketContext.matchId, title: marketContext.title } : null}
+          marketplaceEnabled={refereeMarketplaceEnabled}
         />
+      ) : activeTab === "clubes" && clubProductEnabled ? (
+        <ClubDirectoryClient directoryEnabled={clubDirectoryEnabled} embedded />
       ) : activeTab === "jugadores" ? (
       <section className="market-grid" aria-label="Jugadores del mercado">
         {filteredProfiles.map((profile) => {
