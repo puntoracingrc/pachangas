@@ -23,6 +23,8 @@ partido. Los hechos disciplinarios se enlazan con `CanonicalMatch`,
 | Ledger base | `141` |
 | Ledger R5 inicial | `145` (`141 + 4`) |
 | Ledger con hotfix V2.1 | `146` (`141 + 5`) |
+| Ledger final | `147` (`141 + 6`) |
+| Main productivo R5 final | `0401a127ebd910ccad799b466ad3327782067b37` |
 
 ## Migraciones forward-only
 
@@ -31,6 +33,7 @@ partido. Los hechos disciplinarios se enlazan con `CanonicalMatch`,
 3. `20260825165843_competition_discipline_access_v1.sql`
 4. `20260825165849_competition_discipline_hardening_v1.sql`
 5. `20260825203500_competition_discipline_appeal_service_accounting_v1.sql`
+6. `20260825211825_competition_discipline_private_policy_revoke_v1.sql`
 
 Las siete flags nacen en `false`; instalar las migraciones no activa R5 ni crea
 datos deportivos. `competition_public_discipline_enabled` permanece separado y
@@ -100,6 +103,8 @@ misma Competition se acepten silenciosamente desde el mismo snapshot.
 
 - RLS activada en todas las tablas publicas R5.
 - `anon` y `authenticated` tienen 0 `INSERT`, 0 `UPDATE` y 0 `DELETE` directos.
+- El helper privado de politica no concede `EXECUTE` a `PUBLIC`, `anon` ni
+  `authenticated`; los clientes tampoco tienen `USAGE` del esquema privado.
 - evidencia, notas privadas, identidad de comite y documentos quedan cerrados.
 - actor exclusivamente desde `auth.uid()`.
 - APIs `no-store`, same-origin, payloads por lista blanca y sin service role.
@@ -161,10 +166,10 @@ notificacion.
 
 | Gate | Resultado |
 | --- | --- |
-| R5 focal | `14/14 PASS` |
-| Bateria completa | `507/507 PASS` (`20 Node + 487 TSX`) |
+| R5 focal | `15/15 PASS` |
+| Bateria completa | `508/508 PASS` (`20 Node + 488 TSX`) |
 | SQL/RLS/adversarial | `PASS` |
-| Fresh install reproducible | `141 + 5 / PASS` en PostgreSQL temporal |
+| Fresh install reproducible | `141 + 6 / PASS` en PostgreSQL temporal |
 | Flags y datos al instalar | `OFF / 0 filas de producto` |
 | Idempotencia | mismo receipt, secuencia y efectos |
 | Concurrencia | 7 carreras deterministas |
@@ -192,9 +197,9 @@ Escala local:
 
 | Medida | Resultado |
 | --- | ---: |
-| Duracion total | `1.628 s` |
+| Duracion total | `1.918 s` |
 | Indices R5 | `7,348,224 bytes` |
-| Lookup de evento | `0.480 ms` |
+| Lookup de evento | `1.099 ms` |
 
 ## Historias cubiertas
 
@@ -245,8 +250,9 @@ crea Referee Assignments, no activa pagos y no implementa Tournament Engine.
 
 ## Gate de publicacion
 
-Las cinco migraciones R5 estan publicadas y el ledger remoto contiene `146`
-versiones. La beta privada sigue activa con disciplina publica OFF. El hotfix
-forward-only descubierto por Demo World V2.1 fue aplicado con backup previo,
-privilegios verificados y smoke transaccional con rollback; su readback exacto
-se registra en `COMPETITION_DISCIPLINE_V1_PRODUCTION_RELEASE.md`.
+Las seis migraciones R5 estan publicadas y el ledger remoto contiene `147`
+versiones. La beta privada sigue activa con disciplina publica OFF. Los dos
+hotfixes forward-only descubiertos durante Demo World V2.1 y el readback final
+fueron aplicados con backup previo, privilegios verificados, regresiones reales
+y smoke transaccional con rollback; la evidencia exacta se registra en
+`COMPETITION_DISCIPLINE_V1_PRODUCTION_RELEASE.md`.
