@@ -638,9 +638,11 @@ begin
   ] loop
     execute format('alter table public.%I enable row level security', target_table);
     execute format('revoke all on table public.%I from anon, authenticated', target_table);
+    execute format('grant select, insert, update, delete on table public.%I to service_role', target_table);
   end loop;
   alter table private.pachanga_competition_operational_evidence enable row level security;
   revoke all on table private.pachanga_competition_operational_evidence from anon, authenticated;
+  grant select, insert, update, delete on table private.pachanga_competition_operational_evidence to service_role;
 end;
 $$;
 

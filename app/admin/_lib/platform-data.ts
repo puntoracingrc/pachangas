@@ -673,6 +673,27 @@ export async function getPlatformLeagueMatchOperations(
   };
 }
 
+export async function getPlatformLeagueOperationalExceptions(
+  session: VerifiedPlatformSession,
+  page: number,
+  pageSize: number,
+) {
+  const data = await rpcOrThrow<JsonRecord>(
+    session.client,
+    "get_pachanga_platform_league_operational_exceptions_v1",
+    {
+      page_offset: (page - 1) * pageSize,
+      page_size: pageSize,
+    },
+  );
+  return {
+    counts: asRecord(data.counts),
+    flags: asRecord(data.flags),
+    health: asRecord(data.health),
+    recent: asArray(data.recent).map(asRecord),
+  };
+}
+
 export async function getPlatformClubs(
   session: VerifiedPlatformSession,
   page: number,

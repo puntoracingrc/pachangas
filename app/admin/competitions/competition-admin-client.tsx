@@ -22,6 +22,7 @@ export function CompetitionAdminClient({
   flags,
   leagueFlags,
   matchOperationsFlags,
+  operationalExceptionFlags,
   schedulingFlags,
 }: {
   canWrite: boolean;
@@ -29,6 +30,7 @@ export function CompetitionAdminClient({
   flags: JsonRecord;
   leagueFlags: JsonRecord;
   matchOperationsFlags: JsonRecord;
+  operationalExceptionFlags: JsonRecord;
   schedulingFlags: JsonRecord;
 }) {
   const router = useRouter();
@@ -67,6 +69,16 @@ export function CompetitionAdminClient({
   const [standingsEnabled, setStandingsEnabled] = useState(Boolean(matchOperationsFlags.standingsEnabled));
   const [publicStandingsEnabled, setPublicStandingsEnabled] = useState(Boolean(matchOperationsFlags.publicStandingsEnabled));
   const [matchOperationsFlagReason, setMatchOperationsFlagReason] = useState("");
+  const [operationalFoundationEnabled, setOperationalFoundationEnabled] = useState(Boolean(operationalExceptionFlags.foundationEnabled));
+  const [postponementsEnabled, setPostponementsEnabled] = useState(Boolean(operationalExceptionFlags.postponementsEnabled));
+  const [reschedulingEnabled, setReschedulingEnabled] = useState(Boolean(operationalExceptionFlags.reschedulingEnabled));
+  const [venueChangesEnabled, setVenueChangesEnabled] = useState(Boolean(operationalExceptionFlags.venueChangesEnabled));
+  const [lateArrivalEnabled, setLateArrivalEnabled] = useState(Boolean(operationalExceptionFlags.lateArrivalEnabled));
+  const [noShowEnabled, setNoShowEnabled] = useState(Boolean(operationalExceptionFlags.noShowEnabled));
+  const [matchSuspensionsEnabled, setMatchSuspensionsEnabled] = useState(Boolean(operationalExceptionFlags.matchSuspensionsEnabled));
+  const [administrativeDecisionsEnabled, setAdministrativeDecisionsEnabled] = useState(Boolean(operationalExceptionFlags.administrativeDecisionsEnabled));
+  const [publicExceptionStatusEnabled, setPublicExceptionStatusEnabled] = useState(Boolean(operationalExceptionFlags.publicExceptionStatusEnabled));
+  const [operationalFlagReason, setOperationalFlagReason] = useState("");
 
   function resetOperation() {
     operationId.current = null;
@@ -198,9 +210,36 @@ export function CompetitionAdminClient({
       </section>
 
       <section className={styles.competitionControl}>
+        <h3>League Operational Exceptions R4D</h3>
+        <p>Aplazamientos, cambios efectivos, incidencias y decisiones. Requiere R4A, R4B y R4C activos.</p>
+        <label className={styles.checkField}><input type="checkbox" checked={operationalFoundationEnabled} onChange={(event) => { resetOperation(); setOperationalFoundationEnabled(event.target.checked); }} disabled={busy} />Fundación de excepciones</label>
+        <label className={styles.checkField}><input type="checkbox" checked={postponementsEnabled} onChange={(event) => { resetOperation(); setPostponementsEnabled(event.target.checked); }} disabled={busy} />Aplazamientos</label>
+        <label className={styles.checkField}><input type="checkbox" checked={reschedulingEnabled} onChange={(event) => { resetOperation(); setReschedulingEnabled(event.target.checked); }} disabled={busy} />Reprogramación</label>
+        <label className={styles.checkField}><input type="checkbox" checked={venueChangesEnabled} onChange={(event) => { resetOperation(); setVenueChangesEnabled(event.target.checked); }} disabled={busy} />Cambios de sede</label>
+        <label className={styles.checkField}><input type="checkbox" checked={lateArrivalEnabled} onChange={(event) => { resetOperation(); setLateArrivalEnabled(event.target.checked); }} disabled={busy} />Retrasos</label>
+        <label className={styles.checkField}><input type="checkbox" checked={noShowEnabled} onChange={(event) => { resetOperation(); setNoShowEnabled(event.target.checked); }} disabled={busy} />Incomparecencias</label>
+        <label className={styles.checkField}><input type="checkbox" checked={matchSuspensionsEnabled} onChange={(event) => { resetOperation(); setMatchSuspensionsEnabled(event.target.checked); }} disabled={busy} />Suspensiones</label>
+        <label className={styles.checkField}><input type="checkbox" checked={administrativeDecisionsEnabled} onChange={(event) => { resetOperation(); setAdministrativeDecisionsEnabled(event.target.checked); }} disabled={busy} />Decisiones administrativas</label>
+        <label className={styles.checkField}><input type="checkbox" checked={publicExceptionStatusEnabled} onChange={(event) => { resetOperation(); setPublicExceptionStatusEnabled(event.target.checked); }} disabled={busy} />Estado público</label>
+        <label className={styles.formField}>Motivo<textarea rows={2} value={operationalFlagReason} onChange={(event) => { resetOperation(); setOperationalFlagReason(event.target.value); }} disabled={busy} /></label>
+        <button className={styles.primaryButton} type="button" disabled={busy} onClick={() => void run("league_operational_exceptions_flags.set", null, number(operationalExceptionFlags.revision), {
+          administrativeDecisionsEnabled,
+          foundationEnabled: operationalFoundationEnabled,
+          lateArrivalEnabled,
+          matchSuspensionsEnabled,
+          noShowEnabled,
+          postponementsEnabled,
+          publicExceptionStatusEnabled,
+          reason: operationalFlagReason,
+          reschedulingEnabled,
+          venueChangesEnabled,
+        })}>Guardar flags R4D</button>
+      </section>
+
+      <section className={styles.competitionControl}>
         <h3>Grant de organizador</h3>
         <label className={styles.formField}>Group ID<input value={groupId} onChange={(event) => { resetOperation(); setGroupId(event.target.value); }} placeholder="UUID del equipo" disabled={busy} /></label>
-        <label className={styles.formField}>Capacidad<select value={capability} onChange={(event) => { resetOperation(); setCapability(event.target.value); }} disabled={busy}><option value="competition_create">Crear</option><option value="competition_manage">Gestionar</option><option value="competition_staff">Staff</option><option value="competition_rules">Reglamentos</option></select></label>
+        <label className={styles.formField}>Capacidad<select value={capability} onChange={(event) => { resetOperation(); setCapability(event.target.value); }} disabled={busy}><option value="competition_create">Crear</option><option value="competition_manage">Gestionar</option><option value="competition_staff">Staff</option><option value="competition_rules">Reglamentos</option><option value="competition_operations">Operaciones R4D</option></select></label>
         <label className={styles.formField}>Caduca<input type="datetime-local" value={expiresAt} onChange={(event) => { resetOperation(); setExpiresAt(event.target.value); }} disabled={busy} /></label>
         <label className={styles.formField}>Motivo<textarea rows={2} value={grantReason} onChange={(event) => { resetOperation(); setGrantReason(event.target.value); }} disabled={busy} /></label>
         <button className={styles.primaryButton} type="button" disabled={busy} onClick={() => void run("entitlement.grant", groupId, organizerRevision(groupId), { capability, expiresAt, reason: grantReason })}>Conceder</button>

@@ -989,28 +989,32 @@ begin
     and suspensions.competition_match_context_id = context_row.id
     and suspensions.status = 'administrative_resolution'
   for update;
-  if not found or suspension_row.sporting_result_revision_id is null then
+  if not found then
     raise exception 'R4D_SUSPENSION_PARTIAL_RESULT_REQUIRED' using errcode = '22023';
   end if;
   select * into sheet_row
   from public.pachanga_competition_match_sheets sheets
   where sheets.competition_match_context_id = context_row.id
   for update;
-  if not found or sheet_row.current_sporting_result_id is null
-     or sheet_row.active_official_decision_id is not null then
+  if not found or sheet_row.active_official_decision_id is not null then
     raise exception 'R4D_SUSPENSION_RESULT_CONFLICT' using errcode = 'PT409';
   end if;
-  select * into result_row
-  from public.pachanga_competition_sporting_results results
-  where results.id = sheet_row.current_sporting_result_id
-  for update;
-  select * into result_revision
-  from public.pachanga_competition_sporting_result_revisions revisions
-  where revisions.id = suspension_row.sporting_result_revision_id
-    and revisions.sporting_result_id = result_row.id;
-  if not found or result_revision.score_home <> suspension_row.sporting_score_home
-     or result_revision.score_away <> suspension_row.sporting_score_away then
-    raise exception 'R4D_SUSPENSION_RESULT_SNAPSHOT_MISMATCH' using errcode = 'PT409';
+  if suspension_row.sporting_result_revision_id is not null then
+    if sheet_row.current_sporting_result_id is null then
+      raise exception 'R4D_SUSPENSION_RESULT_CONFLICT' using errcode = 'PT409';
+    end if;
+    select * into result_row
+    from public.pachanga_competition_sporting_results results
+    where results.id = sheet_row.current_sporting_result_id
+    for update;
+    select * into result_revision
+    from public.pachanga_competition_sporting_result_revisions revisions
+    where revisions.id = suspension_row.sporting_result_revision_id
+      and revisions.sporting_result_id = result_row.id;
+    if not found or result_revision.score_home <> suspension_row.sporting_score_home
+       or result_revision.score_away <> suspension_row.sporting_score_away then
+      raise exception 'R4D_SUSPENSION_RESULT_SNAPSHOT_MISMATCH' using errcode = 'PT409';
+    end if;
   end if;
   insert into public.pachanga_competition_official_result_decisions(
     id, canonical_match_id, competition_match_context_id, sporting_result_id,
@@ -1031,12 +1035,12 @@ begin
     official_result_decision_id, evidence, created_by
   ) values (
     decision_id,
-    jsonb_build_object(
+    jsonb_strip_nulls(jsonb_build_object(
       'source', 'R4D_MATCH_SUSPENSION',
       'suspensionId', suspension_row.id,
       'partialResultRevisionId', result_revision.id,
       'ruleRevisionId', context_row.rule_revision_id
-    ),
+    )),
     target_actor_id
   );
   update public.pachanga_competition_match_sheets sheets set
@@ -1045,10 +1049,12 @@ begin
     server_sequence = target_server_sequence,
     updated_at = clock_timestamp()
   where sheets.id = sheet_row.id;
-  update public.pachanga_competition_sporting_results results set
-    state = 'official', revision = results.revision + 1,
-    server_sequence = target_server_sequence, updated_at = clock_timestamp()
-  where results.id = result_row.id;
+  if result_row.id is not null then
+    update public.pachanga_competition_sporting_results results set
+      state = 'official', revision = results.revision + 1,
+      server_sequence = target_server_sequence, updated_at = clock_timestamp()
+    where results.id = result_row.id;
+  end if;
   update public.pachanga_competition_match_contexts contexts set
     status = 'official', revision = contexts.revision + 1,
     server_sequence = target_server_sequence, updated_at = clock_timestamp()
@@ -2046,7 +2052,9 @@ begin
 
   elsif action_name = 'late_arrival.report' then
     perform private.pachanga_league_operational_assert_flags_v1(false, false, false, true, false, false, false);
-    if context_row.status not in ('ready', 'in_progress') or context_row.scheduled_start is null then
+    if context_row.status not in ('ready', 'in_progress')
+       or context_row.scheduled_start is null
+       or server_now < context_row.scheduled_start then
       raise exception 'R4D_LATE_ARRIVAL_NOT_REPORTABLE' using errcode = 'PT409';
     end if;
     selected_entry_id := nullif(payload ->> 'responsibleEntryId', '')::uuid;
@@ -2334,16 +2342,29 @@ begin
     select results.* into result_row
     from public.pachanga_competition_sporting_results results
     where results.competition_match_context_id = context_row.id;
-    if result_row.id is null or result_row.current_revision_id is null then
-      raise exception 'R4D_SERVER_SPORTING_RESULT_REQUIRED' using errcode = '22023';
+    if result_row.id is not null and result_row.current_revision_id is not null then
+      select * into result_revision
+      from public.pachanga_competition_sporting_result_revisions revisions
+      where revisions.id = result_row.current_revision_id;
+      selected_score_home := result_revision.score_home;
+      selected_score_away := result_revision.score_away;
+      if payload ? 'partialScoreHome' and (
+        nullif(payload ->> 'partialScoreHome', '')::integer <> selected_score_home
+        or nullif(payload ->> 'partialScoreAway', '')::integer <> selected_score_away
+      ) then
+        raise exception 'R4D_PARTIAL_SCORE_SNAPSHOT_MISMATCH' using errcode = 'PT409';
+      end if;
+    else
+      begin
+        selected_score_home := nullif(payload ->> 'partialScoreHome', '')::integer;
+        selected_score_away := nullif(payload ->> 'partialScoreAway', '')::integer;
+      exception when others then
+        raise exception 'R4D_PARTIAL_SCORE_INVALID' using errcode = '22023';
+      end;
     end if;
-    select * into result_revision
-    from public.pachanga_competition_sporting_result_revisions revisions
-    where revisions.id = result_row.current_revision_id;
-    selected_score_home := result_revision.score_home;
-    selected_score_away := result_revision.score_away;
     if selected_score_home is null or selected_score_away is null
-       or selected_score_home < 0 or selected_score_away < 0 then
+       or selected_score_home < 0 or selected_score_home > 99
+       or selected_score_away < 0 or selected_score_away > 99 then
       raise exception 'R4D_PARTIAL_SCORE_REQUIRED' using errcode = '22023';
     end if;
     insert into public.pachanga_competition_match_suspensions(

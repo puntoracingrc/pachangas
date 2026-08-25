@@ -1,0 +1,49 @@
+.lab {
+  background: #061011;
+  min-height: 100dvh;
+}
+
+.lab > nav {
+  align-items: center;
+  background: #071517;
+  border-bottom: 1px solid rgba(146, 209, 201, 0.2);
+  display: flex;
+  gap: 6px;
+  min-height: 52px;
+  overflow-x: auto;
+  padding: 7px max(10px, env(safe-area-inset-left));
+}
+
+.lab > nav strong {
+  color: #65d9e8;
+  margin-right: 8px;
+  white-space: nowrap;
+}
+
+.lab > nav button {
+  background: transparent;
+  border: 1px solid rgba(204, 231, 226, 0.2);
+  border-radius: 5px;
+  color: #dce8e5;
+  min-height: 36px;
+  padding: 7px 10px;
+  white-space: nowrap;
+}
+
+.lab > nav button[aria-current="page"] {
+  background: rgba(101, 217, 232, 0.14);
+  border-color: #65d9e8;
+  color: #ffffff;
+}
+
+@media (orientation: landscape) and (max-height: 560px) {
+  .lab > nav {
+    min-height: 42px;
+    padding-block: 4px;
+  }
+
+  .lab > nav button {
+    min-height: 32px;
+    padding-block: 5px;
+  }
+}

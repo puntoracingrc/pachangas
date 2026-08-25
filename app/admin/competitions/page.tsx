@@ -13,7 +13,7 @@ import {
 } from "../_components/platform-ui";
 import { requirePlatformPage } from "../_lib/platform-auth";
 import { hasPlatformCapability } from "../_lib/platform-contract";
-import { getPlatformCompetitionFoundation, getPlatformLeagueMatchOperations, getPlatformLeagueParticipation, getPlatformLeagueScheduling, paginationFromSearchParams } from "../_lib/platform-data";
+import { getPlatformCompetitionFoundation, getPlatformLeagueMatchOperations, getPlatformLeagueOperationalExceptions, getPlatformLeagueParticipation, getPlatformLeagueScheduling, paginationFromSearchParams } from "../_lib/platform-data";
 import styles from "../platform-admin.module.css";
 import { CompetitionAdminClient } from "./competition-admin-client";
 
@@ -31,11 +31,12 @@ export default async function PlatformCompetitionsPage({ searchParams }: { searc
   const params = new URLSearchParams();
   Object.entries(raw).forEach(([key, value]) => params.set(key, first(value)));
   const { page, pageSize } = paginationFromSearchParams(params);
-  const [data, leagueParticipation, leagueScheduling, leagueMatchOperations] = await Promise.all([
+  const [data, leagueParticipation, leagueScheduling, leagueMatchOperations, leagueOperationalExceptions] = await Promise.all([
     getPlatformCompetitionFoundation(session, page, pageSize),
     getPlatformLeagueParticipation(session, page, pageSize),
     getPlatformLeagueScheduling(session, page, pageSize),
     getPlatformLeagueMatchOperations(session, page, pageSize),
+    getPlatformLeagueOperationalExceptions(session, page, pageSize),
   ]);
   const canWrite = hasPlatformCapability(session.access, "competitions.manage");
   const canonicalHealthLabel = s(data.bindingHealth.status) === "NOT_INITIALIZED"
@@ -96,8 +97,27 @@ export default async function PlatformCompetitionsPage({ searchParams }: { searc
         </MetricGrid>
       </Panel>
 
+      <Panel title="League Operational Exceptions R4D">
+        <MetricGrid>
+          <Metric label="Cambios efectivos" value={n(leagueOperationalExceptions.counts.fixtureChanges)} />
+          <Metric label="Aplazamientos" value={n(leagueOperationalExceptions.counts.postponementRequests)} />
+          <Metric label="Deadlines vencidos" value={n(leagueOperationalExceptions.counts.expiredDeadlines)} tone={n(leagueOperationalExceptions.counts.expiredDeadlines) ? "warning" : "good"} />
+          <Metric label="Cambios de sede" value={n(leagueOperationalExceptions.counts.venueDecisions)} />
+          <Metric label="Retrasos" value={n(leagueOperationalExceptions.counts.lateArrivalIncidents)} />
+          <Metric label="No-shows" value={n(leagueOperationalExceptions.counts.noShowIncidents)} />
+          <Metric label="Suspensiones" value={n(leagueOperationalExceptions.counts.matchSuspensions)} />
+          <Metric label="Decisiones" value={n(leagueOperationalExceptions.counts.administrativeDecisions)} />
+          <Metric label="Contexts duplicados" value={n(leagueOperationalExceptions.health.duplicateActiveContexts)} tone={n(leagueOperationalExceptions.health.duplicateActiveContexts) ? "warning" : "good"} />
+          <Metric label="Resultados sin fuente" value={n(leagueOperationalExceptions.health.noShowResultsWithoutSource)} tone={n(leagueOperationalExceptions.health.noShowResultsWithoutSource) ? "warning" : "good"} />
+        </MetricGrid>
+      </Panel>
+
       <Panel title="Controles de plataforma">
-        <CompetitionAdminClient canWrite={canWrite} entitlements={data.entitlements} flags={data.flags} leagueFlags={leagueParticipation.flags} matchOperationsFlags={leagueMatchOperations.flags} schedulingFlags={leagueScheduling.flags} />
+        <CompetitionAdminClient canWrite={canWrite} entitlements={data.entitlements} flags={data.flags} leagueFlags={leagueParticipation.flags} matchOperationsFlags={leagueMatchOperations.flags} operationalExceptionFlags={leagueOperationalExceptions.flags} schedulingFlags={leagueScheduling.flags} />
+      </Panel>
+
+      <Panel title="Excepciones operativas recientes">
+        {leagueOperationalExceptions.recent.length ? <DataTable label="Partidos R4D"><thead><tr><th>Partido</th><th>Estado</th><th>Fecha efectiva</th><th>Revisión</th><th>Secuencia</th></tr></thead><tbody>{leagueOperationalExceptions.recent.map((item) => <tr key={s(item.contextId)}><td><Link href={`/competiciones/${s(item.competitionId)}/partidos/${s(item.canonicalMatchId)}/operaciones`}>Abrir operación</Link><small><Identifier value={s(item.canonicalMatchId)} /></small></td><td><StatusBadge>{s(item.status)}</StatusBadge></td><td>{formatAdminDate(item.scheduledStart)}</td><td>{n(item.revision)}</td><td>{n(item.serverSequence)}</td></tr>)}</tbody></DataTable> : <EmptyState>No hay datos R4D.</EmptyState>}
       </Panel>
 
       <Panel title="Operaciones de partido recientes">

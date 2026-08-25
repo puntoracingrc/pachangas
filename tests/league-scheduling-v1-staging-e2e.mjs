@@ -3,8 +3,11 @@ import { randomUUID } from "node:crypto";
 
 import { createClient } from "@supabase/supabase-js";
 import { runLeagueMatchOperationsStagingExtension } from "./league-match-operations-v1-staging-extension.mjs";
+import { runLeagueOperationalExceptionsStagingExtension } from "./league-operational-exceptions-v1-staging-extension.mjs";
 
 const R4C_EXTENSION = process.env.R4C_STAGING_EXTENSION === "1";
+const R4D_EXTENSION = process.env.R4D_STAGING_EXTENSION === "1";
+const MATCH_OPERATIONS_EXTENSION = R4C_EXTENSION || R4D_EXTENSION;
 
 const env = {
   url: process.env.R4B_STAGING_URL,
@@ -565,6 +568,33 @@ try {
         futureCapabilities: {},
         governance: {},
         operations: {
+          ...(R4D_EXTENSION ? {
+            exceptionPolicy: {
+              gracePeriodMinutes: 10,
+              maximumMatchDurationMinutes: 120,
+              minimumRestHours: 0,
+              noShowLoserScore: 0,
+              noShowOutcome: "NO_SHOW",
+              noShowWinnerScore: 3,
+              organizerApprovalRequired: true,
+              organizerCanInterveneAfterDeadline: true,
+              postponementDeadlinePolicy: "EXPIRE",
+              postponementResponseDeadlineHours: 48,
+              resumptionEligibilityPolicy: {
+                allowOriginalSquad: true,
+                allowReplacementForDocumentedInjury: false,
+                requireOriginalEligibility: true,
+              },
+              resumptionPolicy: "SAME_CANONICAL_MATCH",
+              stageWindowEnd: "2027-12-31T23:59:59Z",
+              stageWindowStart: "2027-01-01T00:00:00Z",
+              venuePolicy: {
+                allowSavedVenue: true,
+                allowTbd: true,
+                allowVenueLabel: true,
+              },
+            },
+          } : {}),
           hardAvailabilityPolicy: { mode: "required" },
           schedulePreferencePolicy: { mode: "preferred" },
           schedulePolicy: {
@@ -587,7 +617,7 @@ try {
         registration: {
           identityRequirements: { credentialRequired: false },
           kitPolicy: { jerseyRequired: false },
-          ...(R4C_EXTENSION ? {
+          ...(MATCH_OPERATIONS_EXTENSION ? {
             matchSheetPolicy: {
               squadMin: 1,
               squadMax: 3,
@@ -604,7 +634,7 @@ try {
             multiTeamPolicy: "FORBIDDEN_SAME_EDITION_CATEGORY",
           },
         },
-        results: R4C_EXTENSION ? {
+        results: MATCH_OPERATIONS_EXTENSION ? {
           allowUnknownScorer: false,
           confirmationPolicy: {
             autoOfficialAfterConfirmation: true,
@@ -1015,6 +1045,21 @@ try {
     staffA,
     waitForSubscription,
   }) : null;
+  const r4d = R4D_EXTENSION ? await runLeagueOperationalExceptionsStagingExtension({
+    anonymousFactory: () => client(),
+    channels,
+    created,
+    entries,
+    expectError,
+    fixtureAdmin,
+    metadata,
+    ownerADevice2,
+    outsiderClient: outsider.client,
+    platform,
+    rpc,
+    staffA,
+    waitForSubscription,
+  }) : null;
   const forbiddenMutation = await command(adminA, "command_pachanga_league_scheduling_v1", {
     action: "schedule.regenerate",
     aggregateId: created.planId,
@@ -1086,6 +1131,7 @@ try {
     projectRef: actualProjectRef,
     realtime: "invalidation_then_canonical_refetch",
     r4c,
+    r4d,
     rounds: 5,
     status: "PASS",
   }));
