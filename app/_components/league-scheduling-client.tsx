@@ -33,6 +33,7 @@ type Props = {
   competitionId?: string;
   embedded?: boolean;
   entryId?: string;
+  onOpenMatch?: (canonicalMatchId: string) => void;
   planId?: string;
   previewData?: LeagueSchedulingJson | null;
   roundId?: string;
@@ -164,6 +165,7 @@ export function LeagueSchedulingClient(props: Props) {
     competitionId,
     embedded = false,
     entryId,
+    onOpenMatch,
     planId,
     previewData = null,
     roundId,
@@ -379,6 +381,7 @@ export function LeagueSchedulingClient(props: Props) {
               command={command}
               data={data}
               item={selectedItem}
+              onOpenMatch={onOpenMatch}
               preview={Boolean(previewData)}
               surface={surface}
             /> : <QualityDetail quality={quality} />}
@@ -413,6 +416,7 @@ export function LeagueSchedulingClient(props: Props) {
                 command={command}
                 data={data}
                 item={selectedItem}
+                onOpenMatch={onOpenMatch}
                 preview={Boolean(previewData)}
                 surface={surface}
               />
@@ -491,10 +495,11 @@ function SetupPlanControls({ busy, command, data }: {
   </section>;
 }
 
-function FixtureDetail({ command, data, item, preview, surface }: {
+function FixtureDetail({ command, data, item, onOpenMatch, preview, surface }: {
   command: Command;
   data: LeagueSchedulingJson;
   item: LeagueSchedulingJson;
+  onOpenMatch?: (canonicalMatchId: string) => void;
   preview: boolean;
   surface: LeagueSchedulingSurface;
 }) {
@@ -515,7 +520,8 @@ function FixtureDetail({ command, data, item, preview, surface }: {
       <div><dt>Estado</dt><dd>{status(item.status)}</dd></div>
       <div><dt>Zona</dt><dd>{scheduleText(item.timezone) || "Europe/Madrid"}</dd></div>
     </dl>
-    {canonicalMatchId && competitionId ? <Link className={styles.openMatchLink} href={`/competiciones/${competitionId}/partidos/${canonicalMatchId}`}>Abrir operación del partido</Link> : null}
+    {canonicalMatchId && onOpenMatch ? <button className={styles.openMatchLink} onClick={() => onOpenMatch(canonicalMatchId)} type="button">Abrir operación del partido</button> : null}
+    {canonicalMatchId && competitionId && !onOpenMatch ? <Link className={styles.openMatchLink} href={`/competiciones/${competitionId}/partidos/${canonicalMatchId}`}>Abrir operación del partido</Link> : null}
     {canEdit ? <div className={styles.inlineControls}>
       <label>Nuevo slot<select value={slotId} onChange={(event) => setSlotId(event.target.value)}>
         <option value="">Seleccionar</option>

@@ -81,3 +81,18 @@ presentan como PASS porque no formaron parte de esta comprobacion automatizada.
 
 Demo World V2 League Private Beta parity queda fusionada y publicada en
 produccion. No quedan migraciones ni cambios de Supabase asociados a esta fase.
+
+## Evolucion V2.1 preparada
+
+El release candidate V2.1 mantiene este mundo y le incorpora Competition
+Discipline V1 con los renderers productivos de Liga, partido y disciplina. El
+snapshot nuevo se genera sobre las `146` migraciones, conserva `0` escrituras
+remotas y obtiene estos hashes deterministas:
+
+- autoridad PostgreSQL:
+  `0ca037a292e643bebd9738e1ae072f776e7e1ecc29da776f9291435b7b35fa6b`;
+- snapshot publico:
+  `f68d9279271275afc262b144cb7784957b5a9606e5fd74df02907ef45f5c1886`.
+
+La publicacion final, deployment, Service Worker y smoke de V2.1 se registran
+en `DEMO_WORLD_V2_1_DISCIPLINE_PARITY_REPORT.md` al completar Wave 3.

@@ -20,6 +20,7 @@ const r5Migrations = [
   "20260825165838_competition_discipline_commands_v1.sql",
   "20260825165843_competition_discipline_access_v1.sql",
   "20260825165849_competition_discipline_hardening_v1.sql",
+  "20260825203500_competition_discipline_appeal_service_accounting_v1.sql",
 ];
 
 if (!["127.0.0.1", "localhost", "::1", "[::1]"].includes(new URL(adminUrl).hostname)) {
@@ -29,8 +30,8 @@ if (!["127.0.0.1", "localhost", "::1", "[::1]"].includes(new URL(adminUrl).hostn
 const migrationNames = readdirSync(resolve(root, "supabase/migrations"))
   .filter((name) => /^\d{14}_.+\.sql$/.test(name))
   .sort();
-assert.equal(migrationNames.length, 145);
-assert.deepEqual(migrationNames.slice(-4), r5Migrations);
+assert.equal(migrationNames.length, 146);
+assert.deepEqual(migrationNames.slice(-5), r5Migrations);
 const preR5Incremental = migrationNames.filter((name) => (
   name.slice(0, 14) > manifest.absorbsThrough && !r5Migrations.includes(name)
 ));
@@ -181,6 +182,18 @@ try {
   assert.equal(report.invariants, "IDENTICAL");
   assert.equal(report.publicDiscipline, false);
 
+  const appealServiceOutput = run(
+    psqlBin,
+    [
+      "-X", "-w", "-v", "ON_ERROR_STOP=1", "-Atq", targetUrl(),
+      "-c", "begin",
+      "-f", resolve(root, "tests/competition-discipline-v1-appeal-service-regression.sql"),
+      "-c", "rollback",
+    ],
+    "R5 appeal reduction after service regression",
+  );
+  assert.match(appealServiceOutput, /R5_APPEAL_SERVICE_REGRESSION\|PASS/);
+
   process.stdout.write(`${JSON.stringify({
     baseLedger: 141,
     database: "temporary",
@@ -189,6 +202,7 @@ try {
     productRowsDefault: 0,
     activationBridge: activation,
     sqlRlsIdempotencyAdversarial: "PASS",
+    appealServiceAccounting: "PASS",
     report,
   })}\n`);
 } finally {

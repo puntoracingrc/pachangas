@@ -91,7 +91,7 @@
 .fixture i { color: var(--official-cyan-text, #51cfdf); font-size: 0.6rem; font-style: normal; text-align: center; }
 .fixture small,
 .fixture em { overflow: hidden; color: var(--official-muted, #a9bbb2); font-size: 0.63rem; font-style: normal; text-overflow: ellipsis; white-space: nowrap; }
-.openMatchLink { display: inline-flex; min-height: 34px; align-items: center; justify-content: center; border: 1px solid rgba(200, 239, 93, 0.35); border-radius: 5px; padding: 6px 9px; color: var(--official-accent, #c8ef5d); font-size: 0.72rem; font-weight: 800; text-decoration: none; }
+.openMatchLink { display: inline-flex; min-height: 34px; align-items: center; justify-content: center; border: 1px solid rgba(200, 239, 93, 0.35); border-radius: 5px; padding: 6px 9px; background: transparent; color: var(--official-accent, #c8ef5d); cursor: pointer; font-family: inherit; font-size: 0.72rem; font-weight: 800; text-decoration: none; }
 
 .detailBody,
 .quality { display: grid; gap: 12px; }

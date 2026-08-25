@@ -29,12 +29,14 @@ if (!["127.0.0.1", "localhost", "::1", "[::1]"].includes(new URL(adminUrl).hostn
 const migrationNames = readdirSync(resolve(root, "supabase/migrations"))
   .filter((name) => /^\d{14}_.+\.sql$/.test(name))
   .sort();
-assert.equal(migrationNames.length, 131);
-assert.deepEqual(migrationNames.slice(-4), r4cMigrations);
-const preR4cIncremental = migrationNames.filter((name) => (
-  name.slice(0, 14) > manifest.absorbsThrough && !r4cMigrations.includes(name)
+const r4cStartIndex = migrationNames.indexOf(r4cMigrations[0]);
+assert.equal(r4cStartIndex, 127);
+assert.deepEqual(migrationNames.slice(r4cStartIndex, r4cStartIndex + 4), r4cMigrations);
+const preR4cMigrations = migrationNames.slice(0, r4cStartIndex);
+const preR4cIncremental = preR4cMigrations.filter((name) => (
+  name.slice(0, 14) > manifest.absorbsThrough
 ));
-assert.equal(migrationNames.filter((name) => !r4cMigrations.includes(name)).length, 127);
+assert.equal(preR4cMigrations.length, 127);
 
 function targetUrl() {
   const value = new URL(adminUrl);

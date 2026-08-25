@@ -90,10 +90,51 @@ un CanonicalMatch, una decision oficial o una relacion publica del snapshot.
 - Descubrimiento: League Scheduling, Match Operations, incidencias y standings
   mediante los mismos renderers productivos que usan las superficies privadas.
 
+## Story 23 - Dos amarillas todavia no sancionan
+
+- Jugador: un perfil ficticio de Cobalto Raval.
+- Estado: dos amarillas activas, dos puntos y cero thresholds.
+- Resultado: `AVAILABLE`; la UI muestra el contador sin fabricar una sancion.
+
+## Story 24 - El threshold bloquea exactamente un partido
+
+- Jugador: perfil primario de Circuit Poblenou.
+- J1-J3: tres amarillas y un threshold.
+- J4: el jugador no entra en el squad; juega el suplente del roster.
+- J5: tras un `SanctionServiceEvent`, el titular vuelve a estar disponible.
+
+## Story 25 - La roja necesita comite
+
+- Evento: roja directa en `demo_league_match_008`.
+- Flujo: provisional, decision motivada y sancion de dos partidos.
+- Autoridad: la regla y el rango proceden de RuleRevision, no del navegador.
+
+## Story 26 - Una correccion no borra el hecho
+
+- Evento: la amarilla de `demo_league_match_015` se corrige a azul.
+- Evidencia: una entidad y dos revisiones; el snapshot solo expone la revision
+  vigente y la sancion anterior queda cancelada.
+
+## Story 27 - Servicio y apelacion conservan la historia
+
+- Jugador: perfil primario de Onze del Clot.
+- Flujo: sancion de dos partidos, una unidad cumplida y apelacion que reduce el
+  total a una.
+- Resultado: `served`, cero unidades pendientes y elegibilidad restaurada.
+- Regresion: reducir el total nunca vuelve a cobrar una unidad ya cumplida.
+
+## Story 28 - Apelar no expone deliberacion
+
+- La prueba de autoridad contiene dos apelaciones finales: `modified` y
+  `upheld`.
+- La Demo publica muestra el efecto agregado sobre sancion y elegibilidad.
+- No publica appellant, evidencia, motivos privados ni deliberacion.
+
 ## Cobertura conjunta
 
 V2 permite recorrer equipo, jugador, partido, asistencia, alineacion,
 resultado, goleadores, Mercado, Retos, Ranking, logros, rewards, Clubs,
-arbitros, Liga, calendario, jornadas, clasificacion e incidencias R4D. Todo el
+arbitros, Liga, calendario, jornadas, clasificacion, incidencias R4D y
+disciplina R5. Todo el
 mundo publico es ficticio y read-only; la autoridad real se utiliza solo para
 generar y verificar el snapshot.

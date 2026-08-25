@@ -9,8 +9,8 @@ propios.
 
 V2 separa de forma explicita dos capas:
 
-1. **Simulation World**: PostgreSQL temporal, las 141 migraciones del producto,
-   flags sinteticas, grant sintetico y RPC reales R1, R4A, R4B, R4C y R4D.
+1. **Simulation World**: PostgreSQL temporal, las 146 migraciones del producto,
+   flags sinteticas, grant sintetico y RPC reales R1, R4A, R4B, R4C, R4D y R5.
 2. **Public Demo Snapshot**: exportacion estatica, sanitizada, versionada y
    servida exclusivamente mediante `GET` desde el mismo despliegue web.
 
@@ -18,14 +18,14 @@ V2 separa de forma explicita dos capas:
 
 | Campo | Valor V2 |
 | --- | --- |
-| Version | `2` |
+| Version | `2.1` |
 | Temporada | `2026/27` |
 | Modo | `demo-world-read-only` |
-| Seed | `pachangas-iq-demo-world-v2-2026-27` |
+| Seed | `pachangas-iq-demo-world-v2-1-2026-27` |
 | `demoNow` | `2027-03-18T18:00:00.000Z` |
-| Hash del snapshot | `f6603605183f1446371ef55b97e7020909fcc91f81533e51e7860f869ca81b3b` |
-| Hash de autoridad PostgreSQL | `9b91cedf18c725086da0fe37abf7c38c9ef8ae690179650b76414b5b69c769c1` |
-| Migraciones aplicadas en simulacion | `141` |
+| Hash del snapshot | `f68d9279271275afc262b144cb7784957b5a9606e5fd74df02907ef45f5c1886` |
+| Hash de autoridad PostgreSQL | `0ca037a292e643bebd9738e1ae072f776e7e1ecc29da776f9291435b7b35fa6b` |
+| Migraciones aplicadas en simulacion | `146` |
 | Escrituras remotas | `0` |
 
 El tiempo, los IDs de operacion y los resultados del escenario son estables.
@@ -40,7 +40,7 @@ La generacion y la verificacion no usan `Date.now()` como autoridad.
 | `players.json` | 331 perfiles ficticios, Rating V2 y cosmeticos |
 | `matches.json` | partidos sociales, asistencia, alineaciones, resultados y Retos V1 conservados |
 | `activity.json` | logros, cajas y avisos ficticios |
-| `competitions.json` | grafo R1-R4D, jornadas, CanonicalMatches, read models de partido y StandingSnapshot |
+| `competitions.json` | grafo R1-R5, jornadas, CanonicalMatches, resultados, StandingSnapshot y read models disciplinarios |
 | `clubs-referees.json` | Clubs, equipos asociados, arbitros publicos y relaciones |
 
 Inicio carga solo `core.json`. Los dominios Liga, Clasificacion y Jornadas
@@ -62,6 +62,8 @@ evidencia deportiva no sensible:
 - decisiones oficiales y marcador;
 - lineage de R4D;
 - StandingSnapshot;
+- eventos, counters, sanciones, servicios y estados de elegibilidad R5;
+- resoluciones de apelacion normalizadas solo en la prueba privada de autoridad;
 - recuentos de recibos idempotentes por familia.
 
 El adaptador publico sustituye UUID sinteticos y perfiles de simulacion por IDs
@@ -81,6 +83,8 @@ PostgreSQL ni compiten con la prueba de autoridad.
 | Rounds | 5 |
 | CanonicalMatches | 15 |
 | resultados oficiales | 15 |
+| eventos disciplinarios | 20 |
+| sanciones / servicios | 4 / 2 |
 | Clubs | 3 |
 | perfiles arbitrales | 8 |
 
@@ -91,6 +95,15 @@ La distribucion R4D es 11 partidos normales, uno de ellos con retraso resuelto
 dentro del margen, un aplazamiento jugado en nueva fecha, un cambio de sede,
 un no-show reglamentario y una suspension/reanudacion sobre el mismo
 CanonicalMatch.
+
+La distribucion R5 es 16 amarillas, 2 rojas y 2 azules. Incluye una
+acumulacion por debajo del umbral, un threshold de tres amarillas, dos rojas
+resueltas por comite, una correccion append-only, dos servicios y dos
+apelaciones resueltas. Las apelaciones no forman parte del snapshot publico.
+
+La cronologia de elegibilidad del jugador objetivo es estable: juega J1-J3,
+queda fuera del squad de J4, cumple la unidad y vuelve a estar disponible en
+J5. Las tarjetas no modifican el StandingSnapshot.
 
 ## Clasificacion
 
@@ -115,7 +128,7 @@ Las perspectivas `player`, `admin`, `free-agent` y `league-organizer` son
 estado local de presentacion. Nunca crean ni suplantan Auth.
 
 La shell unica de `/demo` permite Inicio, Partido, Mercado, Equipo, Perfil,
-Liga, Clasificacion, Jornadas, Club y Arbitros. Liga, jornadas, partidos,
+Liga, Clasificacion, Jornadas, Disciplina, Club y Arbitros. Liga, jornadas, partidos,
 clasificacion, Club y arbitros reutilizan renderers productivos mediante modo
 `embedded`; no existen componentes paralelos `DemoLeagueTable` o
 `DemoLeagueMatch`.
@@ -131,6 +144,10 @@ El snapshot no contiene emails, telefonos, tokens, Auth IDs, `service_role`,
 evidencia privada, reporter IDs ni notas internas. Las ubicaciones son
 ficticias o zonas publicas generales y no consultan Google Places.
 
+La vista publica de disciplina no incluye appeals, appellant, proposals,
+evidence, decision factors, motivos privados ni IDs de operacion. Los estados
+de jugador y las sanciones se publican mediante una allowlist read-only.
+
 ## Integridad ejecutable
 
 `assertDemoWorldV2Snapshot` y `tests/demo-world-v2.test.ts` verifican:
@@ -142,6 +159,9 @@ ficticias o zonas publicas generales y no consultan Google Places.
 - goleadores que suman exactamente el marcador;
 - OfficialResultDecision y StandingSnapshot coherentes;
 - lineage de aplazamiento, sede, no-show y suspension;
+- 20 eventos R5 y distribucion `16/2/2` de amarillas/rojas/azules;
+- cuatro sanciones, dos servicios y cronologia de elegibilidad J1-J5;
+- correccion, apelaciones resueltas en autoridad y ausencia de apelaciones en publico;
 - relaciones Club-Team y Club-Referee;
 - ausencia de assignments arbitrales;
 - hash del snapshot y hash de autoridad;
@@ -150,7 +170,7 @@ ficticias o zonas publicas generales y no consultan Google Places.
 
 ## Regeneracion
 
-- `npm run demo-world:v2:simulate`: crea una base temporal, aplica 141
+- `npm run demo-world:v2:simulate`: crea una base temporal, aplica 146
   migraciones, ejecuta SQL/RLS y RPC reales, exporta prueba y snapshot y elimina
   la base.
 - `npm run demo-world:v2:verify`: repite el mismo mundo y exige identidad exacta

@@ -2,7 +2,76 @@ import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 
-export const DEMO_WORLD_V2_AUTHORITY_PROOF_VERSION = 1 as const;
+export const DEMO_WORLD_V2_AUTHORITY_PROOF_VERSION = 2 as const;
+
+export type DemoWorldV2AuthorityProofPlayerRef = {
+  entryNumber: number;
+  playerSlot: "alternate" | "primary";
+};
+
+export type DemoWorldV2AuthorityProofDisciplineEvent = DemoWorldV2AuthorityProofPlayerRef & {
+  cardTypeCode: "BLUE" | "RED" | "YELLOW";
+  context: "in_match";
+  eventKey: string;
+  matchOrdinal: number;
+  minute: number;
+  publicReasonCategory: string;
+  publicSummary: string;
+  revisionVersion: number;
+  sanction: {
+    remainingUnits: number;
+    status: string;
+    unitType: string;
+  } | null;
+  status: string;
+  temporaryDismissal: Record<string, unknown> | null;
+  visualType: string;
+};
+
+export type DemoWorldV2AuthorityProofDiscipline = {
+  appeals: Array<{
+    sourceEventKey: string;
+    status: string;
+  }>;
+  cardCounts: { BLUE: number; RED: number; YELLOW: number };
+  counters: Array<DemoWorldV2AuthorityProofPlayerRef & {
+    cardTypeCode: "BLUE" | "RED" | "YELLOW";
+    eventCount: number;
+    points: number;
+    thresholdHits: number;
+  }>;
+  eligibilityTimeline: Array<{
+    matchOrdinal: number;
+    primaryAvailable: boolean;
+    roundNumber: number;
+    selectedSlot: "alternate" | "primary";
+  }>;
+  events: DemoWorldV2AuthorityProofDisciplineEvent[];
+  playerStates: Array<DemoWorldV2AuthorityProofPlayerRef & {
+    cards: Record<string, unknown>;
+    remainingUnits: number;
+    status: string;
+    unitType: string | null;
+  }>;
+  sanctions: Array<DemoWorldV2AuthorityProofPlayerRef & {
+    outcome: string;
+    publicReasonCategory: string;
+    publicSummary: string;
+    remainingUnits: number;
+    sourceEventKey: string;
+    status: string;
+    totalUnits: number;
+    unitType: string;
+  }>;
+  serviceEvents: Array<{
+    eventType: "SERVED";
+    matchOrdinal: number;
+    remainingAfter: number;
+    remainingBefore: number;
+    sourceEventKey: string;
+    units: number;
+  }>;
+};
 
 export type DemoWorldV2AuthorityProofMatch = {
   awayEntryNumber: number;
@@ -35,17 +104,19 @@ export type DemoWorldV2AuthorityProofStanding = {
 export type DemoWorldV2AuthorityProof = {
   authorityHash: string;
   database: "temporary-local-postgresql";
+  discipline: DemoWorldV2AuthorityProofDiscipline;
   generatedAt: "2026-08-25T10:00:00.000Z";
   matchCount: 15;
   matches: DemoWorldV2AuthorityProofMatch[];
   migrationCount: number;
   operationReceipts: {
+    discipline: number;
     matchOperations: number;
     operationalExceptions: number;
     scheduling: number;
   };
   remoteWrites: 0;
-  rpcFamilies: ["R1", "R4A", "R4B", "R4C", "R4D"];
+  rpcFamilies: ["R1", "R4A", "R4B", "R4C", "R4D", "R5"];
   roundCount: 5;
   standings: DemoWorldV2AuthorityProofStanding[];
   version: typeof DEMO_WORLD_V2_AUTHORITY_PROOF_VERSION;
@@ -67,6 +138,41 @@ export function assertDemoWorldV2AuthorityProof(value: DemoWorldV2AuthorityProof
   }
   if (value.standings.length !== 6 || value.standings.some((row) => row.played !== 5)) {
     throw new Error("DEMO_WORLD_V2_AUTHORITY_STANDINGS_INVALID");
+  }
+  if (value.discipline.events.length !== 20
+      || value.discipline.cardCounts.YELLOW !== 16
+      || value.discipline.cardCounts.RED !== 2
+      || value.discipline.cardCounts.BLUE !== 2) {
+    throw new Error("DEMO_WORLD_V2_1_AUTHORITY_CARD_DISTRIBUTION_INVALID");
+  }
+  if (value.discipline.sanctions.length !== 4
+      || value.discipline.serviceEvents.length !== 2
+      || value.discipline.appeals.length !== 2) {
+    throw new Error("DEMO_WORLD_V2_1_AUTHORITY_DISCIPLINE_GRAPH_INVALID");
+  }
+  const restoredEligibility = value.discipline.sanctions.find(({ entryNumber, playerSlot }) => (
+    entryNumber === 4 && playerSlot === "primary"
+  ));
+  if (restoredEligibility?.status !== "served"
+      || restoredEligibility.totalUnits !== 1
+      || restoredEligibility.remainingUnits !== 0) {
+    throw new Error("DEMO_WORLD_V2_1_APPEAL_SERVICE_ACCOUNTING_INVALID");
+  }
+  if (value.discipline.events.filter(({ revisionVersion }) => revisionVersion > 1).length !== 1
+      || value.discipline.appeals.some(({ status }) => !["modified", "upheld"].includes(status))) {
+    throw new Error("DEMO_WORLD_V2_1_AUTHORITY_DISCIPLINE_STORIES_INVALID");
+  }
+  if (JSON.stringify(value.discipline.eligibilityTimeline.map(({ primaryAvailable, selectedSlot }) => ({
+    primaryAvailable,
+    selectedSlot,
+  }))) !== JSON.stringify([
+    { primaryAvailable: true, selectedSlot: "primary" },
+    { primaryAvailable: true, selectedSlot: "primary" },
+    { primaryAvailable: true, selectedSlot: "primary" },
+    { primaryAvailable: false, selectedSlot: "alternate" },
+    { primaryAvailable: true, selectedSlot: "primary" },
+  ])) {
+    throw new Error("DEMO_WORLD_V2_1_AUTHORITY_ELIGIBILITY_TIMELINE_INVALID");
   }
   const exceptions = value.matches.reduce<Record<string, number>>((counts, match) => {
     counts[match.exceptionType] = (counts[match.exceptionType] ?? 0) + 1;

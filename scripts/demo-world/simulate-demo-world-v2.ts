@@ -225,6 +225,126 @@ with ordered as (
   join public.pachanga_competition_match_sheets sheets on sheets.competition_match_context_id = contexts.id
   join public.pachanga_competition_official_result_decisions decisions on decisions.id = sheets.active_official_decision_id
   where contexts.competition_id = 'e4040000-0000-4000-8000-000000000001'
+), profile_refs as (
+  select distinct
+    members.player_profile_id,
+    substring(groups.name from '([0-9]+)$')::integer as entry_number,
+    case when members.player_profile_id = md5(
+      'demo-world-v2-profile-alt-' || substring(groups.name from '([0-9]+)$')
+    )::uuid then 'alternate' else 'primary' end as player_slot
+  from public.pachanga_competition_roster_members members
+  join public.pachanga_competition_entries entries on entries.id = members.entry_id
+  join public.pachanga_groups groups on groups.id = entries.team_id
+  where entries.competition_id = 'e4040000-0000-4000-8000-000000000001'
+), discipline_events as (
+  select coalesce(jsonb_agg(jsonb_build_object(
+    'cardTypeCode', revisions.card_type_code,
+    'context', revisions.event_context,
+    'entryNumber', refs.entry_number,
+    'eventKey', events.creation_operation_id,
+    'matchOrdinal', ordered.ordinal,
+    'minute', revisions.match_minute,
+    'playerSlot', refs.player_slot,
+    'publicReasonCategory', revisions.public_reason_category,
+    'publicSummary', revisions.public_summary,
+    'revisionVersion', revisions.version,
+    'sanction', case when sanctions.id is null then null else jsonb_build_object(
+      'remainingUnits', sanctions.remaining_units,
+      'status', sanctions.status,
+      'unitType', sanctions.unit_type
+    ) end,
+    'status', revisions.event_status,
+    'temporaryDismissal', revisions.rule_outcome -> 'temporaryDismissal',
+    'visualType', revisions.rule_outcome ->> 'visualType'
+  ) order by events.server_sequence, events.id), '[]'::jsonb) as value
+  from public.pachanga_competition_disciplinary_events events
+  join public.pachanga_competition_disciplinary_event_revisions revisions
+    on revisions.id = events.current_revision_id
+  join profile_refs refs on refs.player_profile_id = events.player_profile_id
+  join ordered on ordered.canonical_match_id = events.canonical_match_id
+  left join public.pachanga_competition_sanctions sanctions
+    on sanctions.source_event_id = events.id
+  where events.competition_id = 'e4040000-0000-4000-8000-000000000001'
+), discipline_counters as (
+  select coalesce(jsonb_agg(jsonb_build_object(
+    'cardTypeCode', counters.card_type_code,
+    'entryNumber', refs.entry_number,
+    'eventCount', counters.active_event_count,
+    'playerSlot', refs.player_slot,
+    'points', counters.accumulation_points,
+    'thresholdHits', counters.threshold_hits
+  ) order by counters.server_sequence, counters.id), '[]'::jsonb) as value
+  from public.pachanga_competition_disciplinary_counters counters
+  join profile_refs refs on refs.player_profile_id = counters.player_profile_id
+  where counters.competition_id = 'e4040000-0000-4000-8000-000000000001'
+), discipline_sanctions as (
+  select coalesce(jsonb_agg(jsonb_build_object(
+    'entryNumber', refs.entry_number,
+    'outcome', sanctions.sanction_outcome,
+    'playerSlot', refs.player_slot,
+    'publicReasonCategory', revisions.public_reason_category,
+    'publicSummary', revisions.public_summary,
+    'remainingUnits', sanctions.remaining_units,
+    'sourceEventKey', events.creation_operation_id,
+    'status', sanctions.status,
+    'totalUnits', sanctions.total_units,
+    'unitType', sanctions.unit_type
+  ) order by sanctions.server_sequence, sanctions.id), '[]'::jsonb) as value
+  from public.pachanga_competition_sanctions sanctions
+  join public.pachanga_competition_disciplinary_events events on events.id = sanctions.source_event_id
+  join public.pachanga_competition_sanction_revisions revisions on revisions.id = sanctions.current_revision_id
+  join profile_refs refs on refs.player_profile_id = sanctions.player_profile_id
+  where sanctions.competition_id = 'e4040000-0000-4000-8000-000000000001'
+), discipline_service as (
+  select coalesce(jsonb_agg(jsonb_build_object(
+    'eventType', service.event_type,
+    'matchOrdinal', ordered.ordinal,
+    'remainingAfter', service.remaining_after,
+    'remainingBefore', service.remaining_before,
+    'sourceEventKey', events.creation_operation_id,
+    'units', service.units
+  ) order by service.server_sequence, service.id), '[]'::jsonb) as value
+  from public.pachanga_competition_sanction_service_events service
+  join public.pachanga_competition_sanctions sanctions on sanctions.id = service.sanction_id
+  join public.pachanga_competition_disciplinary_events events on events.id = sanctions.source_event_id
+  join ordered on ordered.canonical_match_id = service.canonical_match_id
+  where service.competition_id = 'e4040000-0000-4000-8000-000000000001'
+    and service.event_type = 'SERVED'
+), discipline_appeals as (
+  select coalesce(jsonb_agg(jsonb_build_object(
+    'sourceEventKey', events.creation_operation_id,
+    'status', appeals.status
+  ) order by appeals.server_sequence, appeals.id), '[]'::jsonb) as value
+  from public.pachanga_competition_sanction_appeals appeals
+  join public.pachanga_competition_sanctions sanctions on sanctions.id = appeals.sanction_id
+  join public.pachanga_competition_disciplinary_events events on events.id = sanctions.source_event_id
+  where appeals.competition_id = 'e4040000-0000-4000-8000-000000000001'
+), discipline_states as (
+  select coalesce(jsonb_agg(jsonb_build_object(
+    'cards', states.card_summary,
+    'entryNumber', refs.entry_number,
+    'playerSlot', refs.player_slot,
+    'remainingUnits', states.remaining_units,
+    'status', states.sanction_status,
+    'unitType', states.unit_type
+  ) order by states.server_sequence, states.id), '[]'::jsonb) as value
+  from public.pachanga_competition_discipline_player_states states
+  join profile_refs refs on refs.player_profile_id = states.player_profile_id
+  where states.competition_id = 'e4040000-0000-4000-8000-000000000001'
+), discipline_eligibility as (
+  select jsonb_agg(jsonb_build_object(
+    'matchOrdinal', ordered.ordinal,
+    'primaryAvailable', refs.player_slot = 'primary',
+    'roundNumber', ordered.round_number,
+    'selectedSlot', refs.player_slot
+  ) order by ordered.round_number, ordered.ordinal) as value
+  from ordered
+  join public.pachanga_competition_match_squads squads
+    on squads.competition_match_context_id = ordered.id
+    and squads.entry_id = md5('r4b-entry-2')::uuid
+  join public.pachanga_competition_match_squad_members members
+    on members.squad_revision_id = squads.current_revision_id
+  join profile_refs refs on refs.player_profile_id = members.player_profile_id
 ), matches as (
   select jsonb_agg(jsonb_build_object(
     'awayEntryNumber', away_entry_number,
@@ -269,9 +389,24 @@ with ordered as (
   where states.competition_id = 'e4040000-0000-4000-8000-000000000001'
 )
 select jsonb_build_object(
+  'discipline', jsonb_build_object(
+    'appeals', discipline_appeals.value,
+    'cardCounts', jsonb_build_object(
+      'BLUE', (select count(*) from public.pachanga_competition_disciplinary_events events join public.pachanga_competition_disciplinary_event_revisions revisions on revisions.id = events.current_revision_id where events.competition_id = 'e4040000-0000-4000-8000-000000000001' and revisions.card_type_code = 'BLUE' and revisions.event_status <> 'annulled'),
+      'RED', (select count(*) from public.pachanga_competition_disciplinary_events events join public.pachanga_competition_disciplinary_event_revisions revisions on revisions.id = events.current_revision_id where events.competition_id = 'e4040000-0000-4000-8000-000000000001' and revisions.card_type_code = 'RED' and revisions.event_status <> 'annulled'),
+      'YELLOW', (select count(*) from public.pachanga_competition_disciplinary_events events join public.pachanga_competition_disciplinary_event_revisions revisions on revisions.id = events.current_revision_id where events.competition_id = 'e4040000-0000-4000-8000-000000000001' and revisions.card_type_code = 'YELLOW' and revisions.event_status <> 'annulled')
+    ),
+    'counters', discipline_counters.value,
+    'eligibilityTimeline', discipline_eligibility.value,
+    'events', discipline_events.value,
+    'playerStates', discipline_states.value,
+    'sanctions', discipline_sanctions.value,
+    'serviceEvents', discipline_service.value
+  ),
   'matchCount', (select count(*) from ordered),
   'matches', matches.value,
   'operationReceipts', jsonb_build_object(
+    'discipline', (select count(*) from private.pachanga_competition_operation_receipts where aggregate_type = 'competition_discipline' and client_metadata ->> 'surface' = 'demo_world_v2'),
     'matchOperations', (select count(*) from private.pachanga_competition_operation_receipts where aggregate_type = 'league_match_operations' and client_metadata ->> 'surface' = 'demo_world_v2'),
     'operationalExceptions', (select count(*) from private.pachanga_competition_operation_receipts where aggregate_type = 'league_operational_exceptions' and client_metadata ->> 'surface' = 'demo_world_v2'),
     'scheduling', (select count(*) from private.pachanga_competition_operation_receipts where aggregate_type = 'league_schedule' and client_metadata ->> 'surface' = 'demo_world_v2')
@@ -279,7 +414,9 @@ select jsonb_build_object(
   'roundCount', (select count(distinct round_number) from ordered),
   'standings', standings.value
 )
-from matches, standings;
+from matches, standings, discipline_events, discipline_counters,
+  discipline_sanctions, discipline_service, discipline_appeals,
+  discipline_states, discipline_eligibility;
 `;
   const extracted = JSON.parse(psql(["-At", "-c", sql], "extract Demo World V2 authority proof")) as Omit<DemoWorldV2AuthorityProof, "authorityHash" | "database" | "generatedAt" | "migrationCount" | "remoteWrites" | "rpcFamilies" | "version">;
   const payload: Omit<DemoWorldV2AuthorityProof, "authorityHash"> = {
@@ -288,8 +425,8 @@ from matches, standings;
     generatedAt: "2026-08-25T10:00:00.000Z",
     migrationCount,
     remoteWrites: 0,
-    rpcFamilies: ["R1", "R4A", "R4B", "R4C", "R4D"],
-    version: 1,
+    rpcFamilies: ["R1", "R4A", "R4B", "R4C", "R4D", "R5"],
+    version: 2,
   };
   return assertDemoWorldV2AuthorityProof({
     ...payload,
@@ -334,7 +471,8 @@ async function main() {
     { label: "Clubs and Referees beta bridge", names: incremental.filter((name) => name >= "20260824101500" && name < "20260824165759") },
     { label: "R4C", names: incremental.filter((name) => name >= "20260824165759" && name < "20260824230726") },
     { label: "R4D", names: incremental.filter((name) => name >= "20260824230726" && name < "20260825074304") },
-    { label: "League Private Beta", names: incremental.filter((name) => name >= "20260825074304") },
+    { label: "League Private Beta", names: incremental.filter((name) => name >= "20260825074304" && name < "20260825165834") },
+    { label: "R5", names: incremental.filter((name) => name >= "20260825165834") },
   ];
   assert.equal(migrationBatches.flatMap(({ names }) => names).length, incremental.length);
 
@@ -377,8 +515,9 @@ async function main() {
     psql(["-f", sqlFile("tests/league-operational-exceptions-v1-db.sql")], "R4D real RPC/RLS suite");
     applyBatch(migrationBatches[6]!.label, migrationBatches[6]!.names);
     psql(["-f", sqlFile("tests/league-private-beta-v1-db.sql")], "League Private Beta grant and orchestration suite");
+    applyBatch(migrationBatches[7]!.label, migrationBatches[7]!.names);
     psql([], "create Demo World V2 canonical League through R4B RPCs", await demoWorldV2ScheduleFixtureSql());
-    psql(["-f", sqlFile("scripts/demo-world/demo-world-v2-authority-operations.sql")], "operate Demo World V2 through R4C and R4D RPCs");
+    psql(["-f", sqlFile("scripts/demo-world/demo-world-v2-authority-operations.sql")], "operate Demo World V2 through R4C, R4D and R5 RPCs");
 
     const authorityProof = extractAuthorityProof(migrationNames.length);
     const generated = generateDemoWorldV2(authorityProof);
@@ -400,7 +539,7 @@ async function main() {
       migrations: migrationNames.length,
       mode: verifyOnly ? "verify" : "simulate",
       remoteWrites: 0,
-      rpcFamilies: ["R1", "R4A", "R4B", "R4C", "R4D", "LEAGUE_PRIVATE_BETA_V1"],
+      rpcFamilies: ["R1", "R4A", "R4B", "R4C", "R4D", "R5", "LEAGUE_PRIVATE_BETA_V1"],
       snapshotIdentical: verifyOnly,
     })}\n`);
   } finally {

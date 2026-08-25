@@ -3,6 +3,41 @@
 
 \ir league-match-operations-v1-fixture.sql
 
+-- Upgrade only the rollback-bound R5 fixture to the complete current beta
+-- bundle. The shared R4C fixture remains valid at its historical migration cut.
+update public.pachanga_competition_entitlement_grants set
+  program_key = 'LEAGUE_PRIVATE_BETA_V1',
+  bundle_id = 'c4b00000-0000-4000-8000-000000000001',
+  beta_team_cap = 12,
+  reason = 'LEAGUE_PRIVATE_BETA_V1: R5 rollback fixture',
+  valid_from = '2026-01-01T00:00:00Z',
+  expires_at = '2099-12-31T23:59:59Z'
+where organizer_kind = 'TEAM'
+  and organizer_group_id = 'c4100000-0000-4000-8000-000000000001';
+
+insert into public.pachanga_competition_entitlement_grants(
+  organizer_kind, organizer_group_id, capability, grant_source, status,
+  valid_from, expires_at, reason, granted_by,
+  program_key, bundle_id, beta_team_cap
+) select
+  'TEAM', 'c4100000-0000-4000-8000-000000000001', capabilities.capability,
+  'platform_grant', 'active', '2026-01-01T00:00:00Z', '2099-12-31T23:59:59Z',
+  'LEAGUE_PRIVATE_BETA_V1: R5 rollback fixture',
+  'c4010000-0000-4000-8000-000000000001',
+  'LEAGUE_PRIVATE_BETA_V1', 'c4b00000-0000-4000-8000-000000000001', 12
+from unnest(array[
+  'competition_create',
+  'competition_staff',
+  'competition_rules',
+  'competition_categories_manage',
+  'competition_entries_manage',
+  'competition_rosters_review',
+  'competition_operations',
+  'competition_discipline_manage',
+  'competition_discipline_review',
+  'competition_appeals_manage'
+]::text[]) capabilities(capability);
+
 insert into auth.users(id, email, email_confirmed_at, raw_user_meta_data)
 values (
   'c4010000-0000-4000-8000-000000000010',

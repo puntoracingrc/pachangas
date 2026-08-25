@@ -3,6 +3,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import type { DemoWorldPlayer, DemoWorldTeam } from "../../app/demo-world/demo-world-contract";
+import type { CompetitionDisciplineJson } from "../../app/competition-discipline-contract";
 import {
   DEMO_WORLD_V2_SEED,
   DEMO_WORLD_V2_VERSION,
@@ -20,6 +21,7 @@ import {
   loadDemoWorldV2AuthorityProof,
   type DemoWorldV2AuthorityProof,
   type DemoWorldV2AuthorityProofMatch,
+  type DemoWorldV2AuthorityProofPlayerRef,
 } from "./demo-world-v2-authority";
 import { generateDemoWorld } from "./generate-demo-world";
 
@@ -83,6 +85,205 @@ function rosterMember(entryId: string, player: DemoWorldPlayer, index: number) {
     playerProfileId: player.id,
     rosterMemberId: `${entryId}_member_${String(index + 1).padStart(2, "0")}`,
   };
+}
+
+function buildDisciplinePreviews(
+  authorityProof: DemoWorldV2AuthorityProof,
+  entries: DemoWorldV2LeagueEntry[],
+  matches: DemoWorldV2LeagueMatch[],
+  playerById: Map<string, DemoWorldPlayer>,
+  rosterByEntry: Map<string, string[]>,
+) {
+  const discipline = authorityProof.discipline;
+  const playerFor = (reference: DemoWorldV2AuthorityProofPlayerRef) => {
+    const entry = entries[reference.entryNumber - 1]!;
+    const roster = rosterByEntry.get(entry.id) ?? [];
+    const playerId = roster[reference.playerSlot === "alternate" ? 1 : 0] ?? roster[0]!;
+    return { entry, player: playerById.get(playerId)! };
+  };
+  const eventIdByKey = new Map(discipline.events.map((event, index) => [
+    event.eventKey,
+    id("discipline_event", index + 1),
+  ]));
+  const sanctionIdByKey = new Map(discipline.sanctions.map((sanction, index) => [
+    sanction.sourceEventKey,
+    id("sanction", index + 1),
+  ]));
+  const sanctions = discipline.sanctions.map((sanction) => {
+    const { entry, player } = playerFor(sanction);
+    return {
+      canAppeal: false,
+      cycleId: id("discipline_cycle"),
+      entryId: entry.id,
+      id: sanctionIdByKey.get(sanction.sourceEventKey)!,
+      outcome: sanction.outcome,
+      playerProfileId: player.id,
+      publicReasonCategory: sanction.publicReasonCategory,
+      publicSummary: sanction.publicSummary,
+      remainingUnits: sanction.remainingUnits,
+      revision: sanction.status === "served" ? 4 : 2,
+      sourceEventId: eventIdByKey.get(sanction.sourceEventKey)!,
+      status: sanction.status,
+      targetType: "PLAYER",
+      totalUnits: sanction.totalUnits,
+      unitType: sanction.unitType,
+    };
+  });
+  const sanctionByEventKey = new Map(sanctions.map((sanction) => [
+    discipline.sanctions.find((candidate) => eventIdByKey.get(candidate.sourceEventKey) === sanction.sourceEventId)!.sourceEventKey,
+    sanction,
+  ]));
+  const events = discipline.events.map((event) => {
+    const { entry, player } = playerFor(event);
+    const match = matches[event.matchOrdinal - 1]!;
+    const sanction = sanctionByEventKey.get(event.eventKey);
+    return {
+      canonicalMatchId: match.canonicalMatchId,
+      cardTypeCode: event.cardTypeCode,
+      context: event.context,
+      cycleId: id("discipline_cycle"),
+      entryId: entry.id,
+      id: eventIdByKey.get(event.eventKey)!,
+      label: event.cardTypeCode === "YELLOW" ? "Amarilla" : event.cardTypeCode === "RED" ? "Roja" : "Azul",
+      matchContextId: match.contextId,
+      minute: event.minute,
+      playerDisplay: { displayName: player.name },
+      playerProfileId: player.id,
+      publicReasonCategory: event.publicReasonCategory,
+      publicSummary: event.publicSummary,
+      revision: event.revisionVersion,
+      revisionVersion: event.revisionVersion,
+      sanction: sanction ? {
+        id: sanction.id,
+        outcome: sanction.outcome,
+        remainingUnits: sanction.remainingUnits,
+        status: sanction.status,
+        unitType: sanction.unitType,
+      } : null,
+      status: event.status,
+      temporaryDismissal: event.temporaryDismissal,
+      visualType: event.visualType,
+    };
+  });
+  const serviceEvents = discipline.serviceEvents.map((service, index) => ({
+    canonicalMatchId: matches[service.matchOrdinal - 1]!.canonicalMatchId,
+    createdAt: addDays(DEMO_WORLD_V2_GENERATED_AT, index + 1),
+    eventType: service.eventType,
+    id: id("sanction_service", index + 1),
+    remainingAfter: service.remainingAfter,
+    remainingBefore: service.remainingBefore,
+    reversesServiceEventId: null,
+    sanctionId: sanctionIdByKey.get(service.sourceEventKey)!,
+    units: service.units,
+  }));
+  const counters = discipline.counters.map((counter, index) => {
+    const { player } = playerFor(counter);
+    return {
+      cardTypeCode: counter.cardTypeCode,
+      eventCount: counter.eventCount,
+      id: id("discipline_counter", index + 1),
+      playerProfileId: player.id,
+      points: counter.points,
+      thresholdHits: counter.thresholdHits,
+    };
+  });
+  const playerStates = discipline.playerStates.map((state, index) => {
+    const { entry, player } = playerFor(state);
+    return {
+      cards: state.cards,
+      cycleId: id("discipline_cycle"),
+      display: { displayName: player.name },
+      entryId: entry.id,
+      id: id("discipline_player_state", index + 1),
+      playerProfileId: player.id,
+      remainingUnits: state.remainingUnits,
+      revision: 1,
+      status: state.status,
+      unitType: state.unitType,
+    };
+  });
+  const flags = {
+    appealsEnabled: true,
+    countersEnabled: true,
+    engineVersion: "competition-discipline-v1",
+    eventsEnabled: true,
+    foundationEnabled: true,
+    publicEnabled: false,
+    sanctionsEnabled: true,
+    serviceEnabled: true,
+  };
+  const base: CompetitionDisciplineJson = {
+    appeals: [],
+    competitionId: id("competition"),
+    counters,
+    cycles: [{ id: id("discipline_cycle"), scopeType: "EDITION", status: "active" }],
+    eligibilityTimeline: discipline.eligibilityTimeline,
+    events,
+    flags,
+    health: {
+      activeSanctions: sanctions.filter(({ status }) => ["active", "provisional", "under_review"].includes(status)).length,
+      counterRows: counters.length,
+      latestServerSequence: authorityProof.operationReceipts.discipline,
+      pendingAppeals: 0,
+    },
+    matchContext: {},
+    matchPlayers: [],
+    permissions: { manage: false, manageAppeals: false, read: true, review: false },
+    playerStates,
+    revision: authorityProof.operationReceipts.discipline,
+    ruleCatalog: {
+      cardTypes: [
+        { code: "YELLOW", label: "Amarilla", visualType: "yellow" },
+        { code: "RED", label: "Roja", visualType: "red" },
+        { code: "BLUE", label: "Azul", visualType: "blue" },
+      ],
+      policyVersion: "competition-discipline-v1",
+    },
+    sanctions,
+    serviceEvents,
+  };
+  const matchDisciplinePreviews = Object.fromEntries(matches.map((match) => {
+    const matchEvents = events.filter((event) => event.canonicalMatchId === match.canonicalMatchId);
+    const eventIds = new Set(matchEvents.map((event) => event.id));
+    const matchSanctions = sanctions.filter((sanction) => eventIds.has(sanction.sourceEventId));
+    const sanctionIds = new Set(matchSanctions.map((sanction) => sanction.id));
+    const involvedEntries = new Set([match.homeEntryId, match.awayEntryId]);
+    const matchPlayers = entries
+      .filter((entry) => involvedEntries.has(entry.id))
+      .flatMap((entry) => (rosterByEntry.get(entry.id) ?? []).slice(0, 10).map((playerId) => ({
+        displayName: playerById.get(playerId)!.name,
+        entryId: entry.id,
+        playerProfileId: playerId,
+        side: entry.id === match.homeEntryId ? "HOME" : "AWAY",
+        squadStatus: "locked",
+      })));
+    return [match.id, {
+      ...base,
+      events: matchEvents,
+      filters: { canonicalMatchId: match.canonicalMatchId },
+      health: {
+        activeSanctions: matchSanctions.filter(({ status }) => ["active", "provisional", "under_review"].includes(status)).length,
+        counterRows: counters.length,
+        latestServerSequence: authorityProof.operationReceipts.discipline,
+        pendingAppeals: 0,
+      },
+      matchContext: {
+        awayEntryId: match.awayEntryId,
+        canonicalMatchId: match.canonicalMatchId,
+        homeEntryId: match.homeEntryId,
+        id: match.contextId,
+        scheduledStart: match.scheduledStart,
+        status: match.status,
+        timezone: "Europe/Madrid",
+        venueLabel: match.venueLabel,
+      },
+      matchPlayers,
+      playerStates: playerStates.filter((state) => involvedEntries.has(state.entryId)),
+      sanctions: matchSanctions,
+      serviceEvents: serviceEvents.filter((service) => sanctionIds.has(service.sanctionId)),
+    } satisfies CompetitionDisciplineJson];
+  }));
+  return { disciplinePreview: base, matchDisciplinePreviews };
 }
 
 function buildMatchPreview(
@@ -297,6 +498,13 @@ function buildCompetition(
     revision: 16,
     rows,
   };
+  const { disciplinePreview, matchDisciplinePreviews } = buildDisciplinePreviews(
+    authorityProof,
+    entries,
+    matches,
+    playerById,
+    rosterByEntry,
+  );
   return {
     competition: {
       category: { id: id("category"), name: "Senior", sportFormat: "FOOTBALL_7", status: "active" },
@@ -314,7 +522,9 @@ function buildCompetition(
       visibility: "private",
     },
     delegates: entries.map((entry, index) => ({ entryId: entry.id, id: id("delegate", index + 1), role: "PRIMARY_DELEGATE", status: "active" })),
+    disciplinePreview,
     entries,
+    matchDisciplinePreviews,
     matchPreviews: Object.fromEntries(matches.map((match) => [match.id, buildMatchPreview(match, teamById, playerById, entryById, rosterByEntry)])),
     matches,
     provenance: {
@@ -322,7 +532,7 @@ function buildCompetition(
       database: "temporary-local-postgresql",
       migrations: authorityProof.migrationCount,
       oracle: "independent-basic-standings-v1",
-      rpcFamilies: ["R1", "R4A", "R4B", "R4C", "R4D"],
+      rpcFamilies: ["R1", "R4A", "R4B", "R4C", "R4D", "R5"],
       source: "simulation-world",
       verified: true,
     },

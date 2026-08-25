@@ -1,6 +1,13 @@
 import type { LeagueMatchOperationsJson } from "../league-match-operations-contract";
 import type { LeagueSchedulingJson } from "../league-scheduling-contract";
 import {
+  disciplineArray,
+  disciplineNumber,
+  disciplineRecord,
+  disciplineText,
+  type CompetitionDisciplineJson,
+} from "../competition-discipline-contract";
+import {
   DEMO_WORLD_MODE,
   DEMO_WORLD_SEASON,
   demoWorldForbiddenPaths,
@@ -13,13 +20,14 @@ import {
   type DemoWorldSnapshot,
 } from "./demo-world-contract";
 
-export const DEMO_WORLD_V2_VERSION = 2 as const;
-export const DEMO_WORLD_V2_SEED = "pachangas-iq-demo-world-v2-2026-27" as const;
+export const DEMO_WORLD_V2_VERSION = 2.1 as const;
+export const DEMO_WORLD_V2_SEED = "pachangas-iq-demo-world-v2-1-2026-27" as const;
 
 export type DemoWorldV2PrimaryTab = DemoWorldPrimaryTab
   | "arbitros"
   | "clasificacion"
   | "club"
+  | "disciplina"
   | "jornadas"
   | "liga";
 
@@ -137,15 +145,17 @@ export type DemoWorldV2CompetitionChunk = {
     visibility: "private";
   };
   delegates: Array<{ entryId: string; id: string; role: "PRIMARY_DELEGATE"; status: "active" }>;
+  disciplinePreview: CompetitionDisciplineJson;
   entries: DemoWorldV2LeagueEntry[];
   matchPreviews: Record<string, LeagueMatchOperationsJson>;
+  matchDisciplinePreviews: Record<string, CompetitionDisciplineJson>;
   matches: DemoWorldV2LeagueMatch[];
   provenance: {
     authorityHash: string;
     database: "temporary-local-postgresql";
     migrations: number;
     oracle: "independent-basic-standings-v1";
-    rpcFamilies: ["R1", "R4A", "R4B", "R4C", "R4D"];
+    rpcFamilies: ["R1", "R4A", "R4B", "R4C", "R4D", "R5"];
     source: "simulation-world";
     verified: true;
   };
@@ -284,6 +294,32 @@ export function demoWorldV2IntegrityErrors(snapshot: DemoWorldV2Snapshot): strin
   if (snapshot.clubsReferees.referees.length < 8) errors.push("Demo World V2 requires at least 8 referees");
   if (snapshot.clubsReferees.refereeAssignmentsEnabled) errors.push("Referee assignments must remain disabled");
 
+  const discipline = competition.disciplinePreview;
+  const disciplineEvents = disciplineArray(discipline.events);
+  const disciplineSanctions = disciplineArray(discipline.sanctions);
+  const disciplineService = disciplineArray(discipline.serviceEvents);
+  const disciplineCards = disciplineEvents.reduce<Record<string, number>>((counts, event) => {
+    const code = disciplineText(event.cardTypeCode);
+    counts[code] = (counts[code] ?? 0) + 1;
+    return counts;
+  }, {});
+  if (disciplineEvents.length !== 20 || disciplineCards.YELLOW !== 16
+      || disciplineCards.RED !== 2 || disciplineCards.BLUE !== 2) {
+    errors.push("Demo World V2.1 discipline card distribution is invalid");
+  }
+  if (disciplineSanctions.length !== 4 || disciplineService.length !== 2) {
+    errors.push("Demo World V2.1 discipline sanctions or service history are invalid");
+  }
+  const eligibility = disciplineArray(discipline.eligibilityTimeline);
+  if (JSON.stringify(eligibility.map((item) => disciplineText(item.selectedSlot)))
+      !== JSON.stringify(["primary", "primary", "primary", "alternate", "primary"])) {
+    errors.push("Demo World V2.1 eligibility chronology is invalid");
+  }
+  if (disciplineNumber(disciplineRecord(discipline.health).pendingAppeals) !== 0
+      || disciplineArray(discipline.appeals).length !== 0) {
+    errors.push("Public Demo discipline must not expose appeal records");
+  }
+
   for (const entry of competition.entries) {
     if (!teamIds.has(entry.teamId)) errors.push(`Unknown League team ${entry.teamId}`);
     const roster = competition.rosters.find(({ entryId, id }) => id === entry.rosterId && entryId === entry.id);
@@ -301,6 +337,11 @@ export function demoWorldV2IntegrityErrors(snapshot: DemoWorldV2Snapshot): strin
     const awayGoals = match.scorers.filter(({ side }) => side === "away").reduce((sum, scorer) => sum + scorer.goals, 0);
     if (homeGoals !== match.result.home || awayGoals !== match.result.away) errors.push(`Scorer mismatch in ${match.id}`);
     for (const scorer of match.scorers) if (!playerIds.has(scorer.playerId)) errors.push(`Unknown scorer ${scorer.playerId}`);
+    const matchDiscipline = competition.matchDisciplinePreviews[match.id];
+    if (!matchDiscipline) errors.push(`Missing discipline preview for ${match.id}`);
+    else if (disciplineArray(matchDiscipline.events).some((event) => disciplineText(event.canonicalMatchId) !== match.canonicalMatchId)) {
+      errors.push(`Discipline event belongs to another match in ${match.id}`);
+    }
   }
   for (const round of competition.rounds) {
     if (round.matchIds.length !== 3) errors.push(`${round.id} must contain 3 matches`);

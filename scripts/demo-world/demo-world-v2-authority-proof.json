@@ -369,24 +369,763 @@
       "effectivePoints": 3
     }
   ],
+  "discipline": {
+    "events": [
+      {
+        "minute": 10,
+        "status": "active",
+        "context": "in_match",
+        "eventKey": "5f73a8fb-ce89-7735-43b2-7ab9b2fdb1e0",
+        "sanction": null,
+        "playerSlot": "primary",
+        "visualType": "yellow",
+        "entryNumber": 6,
+        "cardTypeCode": "YELLOW",
+        "matchOrdinal": 1,
+        "publicSummary": "Amarilla de Liga · J1",
+        "revisionVersion": 1,
+        "temporaryDismissal": null,
+        "publicReasonCategory": "accumulation"
+      },
+      {
+        "minute": 55,
+        "status": "active",
+        "context": "in_match",
+        "eventKey": "d6b80518-0990-815a-02cf-090aae62cd91",
+        "sanction": null,
+        "playerSlot": "primary",
+        "visualType": "yellow",
+        "entryNumber": 2,
+        "cardTypeCode": "YELLOW",
+        "matchOrdinal": 1,
+        "publicSummary": "Amarilla acumulada",
+        "revisionVersion": 1,
+        "temporaryDismissal": null,
+        "publicReasonCategory": "accumulation"
+      },
+      {
+        "minute": 12,
+        "status": "active",
+        "context": "in_match",
+        "eventKey": "1a8a292f-bfa0-147a-e605-f1517e236398",
+        "sanction": null,
+        "playerSlot": "primary",
+        "visualType": "yellow",
+        "entryNumber": 3,
+        "cardTypeCode": "YELLOW",
+        "matchOrdinal": 2,
+        "publicSummary": "Amarilla de Liga · J1",
+        "revisionVersion": 1,
+        "temporaryDismissal": null,
+        "publicReasonCategory": "accumulation"
+      },
+      {
+        "minute": 14,
+        "status": "active",
+        "context": "in_match",
+        "eventKey": "3f53abd6-5c08-a0b6-21af-0156234595e6",
+        "sanction": null,
+        "playerSlot": "primary",
+        "visualType": "yellow",
+        "entryNumber": 1,
+        "cardTypeCode": "YELLOW",
+        "matchOrdinal": 3,
+        "publicSummary": "Amarilla de Liga · J1",
+        "revisionVersion": 1,
+        "temporaryDismissal": null,
+        "publicReasonCategory": "accumulation"
+      },
+      {
+        "minute": 16,
+        "status": "active",
+        "context": "in_match",
+        "eventKey": "4861a649-5ec0-6bef-4e8b-07e4fe4909a9",
+        "sanction": null,
+        "playerSlot": "alternate",
+        "visualType": "yellow",
+        "entryNumber": 3,
+        "cardTypeCode": "YELLOW",
+        "matchOrdinal": 4,
+        "publicSummary": "Amarilla de Liga · J2",
+        "revisionVersion": 1,
+        "temporaryDismissal": null,
+        "publicReasonCategory": "accumulation"
+      },
+      {
+        "minute": 56,
+        "status": "active",
+        "context": "in_match",
+        "eventKey": "aa81222e-729b-7ec9-d382-07f1c75ee79b",
+        "sanction": null,
+        "playerSlot": "primary",
+        "visualType": "yellow",
+        "entryNumber": 2,
+        "cardTypeCode": "YELLOW",
+        "matchOrdinal": 4,
+        "publicSummary": "Amarilla acumulada",
+        "revisionVersion": 1,
+        "temporaryDismissal": null,
+        "publicReasonCategory": "accumulation"
+      },
+      {
+        "minute": 18,
+        "status": "active",
+        "context": "in_match",
+        "eventKey": "67864de3-3bcb-dfb2-a238-e9703a653d98",
+        "sanction": null,
+        "playerSlot": "alternate",
+        "visualType": "yellow",
+        "entryNumber": 4,
+        "cardTypeCode": "YELLOW",
+        "matchOrdinal": 5,
+        "publicSummary": "Amarilla de Liga · J2",
+        "revisionVersion": 1,
+        "temporaryDismissal": null,
+        "publicReasonCategory": "accumulation"
+      },
+      {
+        "minute": 20,
+        "status": "active",
+        "context": "in_match",
+        "eventKey": "367f90a1-2b49-4d34-81d2-0d849794e652",
+        "sanction": null,
+        "playerSlot": "alternate",
+        "visualType": "yellow",
+        "entryNumber": 5,
+        "cardTypeCode": "YELLOW",
+        "matchOrdinal": 6,
+        "publicSummary": "Amarilla de Liga · J2",
+        "revisionVersion": 1,
+        "temporaryDismissal": null,
+        "publicReasonCategory": "accumulation"
+      },
+      {
+        "minute": 33,
+        "status": "active",
+        "context": "in_match",
+        "eventKey": "2949615d-1c64-7fae-632f-e8de26f50a67",
+        "sanction": null,
+        "playerSlot": "alternate",
+        "visualType": "blue",
+        "entryNumber": 6,
+        "cardTypeCode": "BLUE",
+        "matchOrdinal": 6,
+        "publicSummary": "Exclusión temporal reglamentaria",
+        "revisionVersion": 1,
+        "temporaryDismissal": {
+          "mode": "BOTH",
+          "durationMinutes": 5,
+          "endOnOpponentGoal": true,
+          "replacementPolicy": "NO_REPLACEMENT"
+        },
+        "publicReasonCategory": "dismissal"
+      },
+      {
+        "minute": 22,
+        "status": "active",
+        "context": "in_match",
+        "eventKey": "2bbeded3-42f1-2968-e719-266a3402e5c3",
+        "sanction": null,
+        "playerSlot": "primary",
+        "visualType": "yellow",
+        "entryNumber": 5,
+        "cardTypeCode": "YELLOW",
+        "matchOrdinal": 7,
+        "publicSummary": "Amarilla de Liga · J3",
+        "revisionVersion": 1,
+        "temporaryDismissal": null,
+        "publicReasonCategory": "accumulation"
+      },
+      {
+        "minute": 57,
+        "status": "active",
+        "context": "in_match",
+        "eventKey": "dac517ca-cb00-0d73-d280-00d12158fe0d",
+        "sanction": {
+          "status": "served",
+          "unitType": "MATCHES",
+          "remainingUnits": 0
+        },
+        "playerSlot": "primary",
+        "visualType": "yellow",
+        "entryNumber": 2,
+        "cardTypeCode": "YELLOW",
+        "matchOrdinal": 7,
+        "publicSummary": "Umbral de acumulación alcanzado",
+        "revisionVersion": 1,
+        "temporaryDismissal": null,
+        "publicReasonCategory": "accumulation"
+      },
+      {
+        "minute": 24,
+        "status": "active",
+        "context": "in_match",
+        "eventKey": "46cfe8ca-968b-962c-8bbb-c3c0483cd7e1",
+        "sanction": null,
+        "playerSlot": "primary",
+        "visualType": "yellow",
+        "entryNumber": 6,
+        "cardTypeCode": "YELLOW",
+        "matchOrdinal": 8,
+        "publicSummary": "Amarilla de Liga · J3",
+        "revisionVersion": 1,
+        "temporaryDismissal": null,
+        "publicReasonCategory": "accumulation"
+      },
+      {
+        "minute": 67,
+        "status": "active",
+        "context": "in_match",
+        "eventKey": "c93c20ca-3cd1-19ac-7f9b-ad8c867bde79",
+        "sanction": {
+          "status": "served",
+          "unitType": "MATCHES",
+          "remainingUnits": 0
+        },
+        "playerSlot": "primary",
+        "visualType": "red",
+        "entryNumber": 4,
+        "cardTypeCode": "RED",
+        "matchOrdinal": 8,
+        "publicSummary": "Expulsión directa pendiente de comité",
+        "revisionVersion": 1,
+        "temporaryDismissal": null,
+        "publicReasonCategory": "dismissal"
+      },
+      {
+        "minute": 26,
+        "status": "active",
+        "context": "in_match",
+        "eventKey": "dba67119-a0f2-f8ea-420e-b021dd30fb11",
+        "sanction": null,
+        "playerSlot": "primary",
+        "visualType": "yellow",
+        "entryNumber": 1,
+        "cardTypeCode": "YELLOW",
+        "matchOrdinal": 9,
+        "publicSummary": "Amarilla de Liga · J3",
+        "revisionVersion": 1,
+        "temporaryDismissal": null,
+        "publicReasonCategory": "accumulation"
+      },
+      {
+        "minute": 28,
+        "status": "active",
+        "context": "in_match",
+        "eventKey": "7a823af1-1158-5d4d-f2c3-ec937862f4fc",
+        "sanction": null,
+        "playerSlot": "alternate",
+        "visualType": "yellow",
+        "entryNumber": 1,
+        "cardTypeCode": "YELLOW",
+        "matchOrdinal": 10,
+        "publicSummary": "Amarilla de Liga · J4",
+        "revisionVersion": 1,
+        "temporaryDismissal": null,
+        "publicReasonCategory": "accumulation"
+      },
+      {
+        "minute": 32,
+        "status": "active",
+        "context": "in_match",
+        "eventKey": "44ca0b63-503a-fffa-66ce-eb0db75b31e3",
+        "sanction": null,
+        "playerSlot": "alternate",
+        "visualType": "yellow",
+        "entryNumber": 3,
+        "cardTypeCode": "YELLOW",
+        "matchOrdinal": 12,
+        "publicSummary": "Amarilla de Liga · J4",
+        "revisionVersion": 1,
+        "temporaryDismissal": null,
+        "publicReasonCategory": "accumulation"
+      },
+      {
+        "minute": 34,
+        "status": "active",
+        "context": "in_match",
+        "eventKey": "b275e235-1191-7924-50f6-24fb06a9afae",
+        "sanction": null,
+        "playerSlot": "alternate",
+        "visualType": "yellow",
+        "entryNumber": 4,
+        "cardTypeCode": "YELLOW",
+        "matchOrdinal": 13,
+        "publicSummary": "Amarilla de Liga · J5",
+        "revisionVersion": 1,
+        "temporaryDismissal": null,
+        "publicReasonCategory": "accumulation"
+      },
+      {
+        "minute": 36,
+        "status": "active",
+        "context": "in_match",
+        "eventKey": "f3d62b07-cb02-927b-88d7-8f44d4ca1a50",
+        "sanction": null,
+        "playerSlot": "primary",
+        "visualType": "yellow",
+        "entryNumber": 5,
+        "cardTypeCode": "YELLOW",
+        "matchOrdinal": 14,
+        "publicSummary": "Amarilla de Liga · J5",
+        "revisionVersion": 1,
+        "temporaryDismissal": null,
+        "publicReasonCategory": "accumulation"
+      },
+      {
+        "minute": 73,
+        "status": "active",
+        "context": "in_match",
+        "eventKey": "be873561-4f05-ce18-c8b7-14b167c0f26b",
+        "sanction": {
+          "status": "active",
+          "unitType": "MATCHES",
+          "remainingUnits": 1
+        },
+        "playerSlot": "primary",
+        "visualType": "red",
+        "entryNumber": 3,
+        "cardTypeCode": "RED",
+        "matchOrdinal": 14,
+        "publicSummary": "Expulsión directa pendiente de comité",
+        "revisionVersion": 1,
+        "temporaryDismissal": null,
+        "publicReasonCategory": "dismissal"
+      },
+      {
+        "minute": 38,
+        "status": "active",
+        "context": "in_match",
+        "eventKey": "b76b5991-9ef7-7ed7-66d0-1f8893a08743",
+        "sanction": {
+          "status": "cancelled",
+          "unitType": "MATCHES",
+          "remainingUnits": 1
+        },
+        "playerSlot": "primary",
+        "visualType": "blue",
+        "entryNumber": 6,
+        "cardTypeCode": "BLUE",
+        "matchOrdinal": 15,
+        "publicSummary": "Corregida a exclusión temporal",
+        "revisionVersion": 2,
+        "temporaryDismissal": {
+          "mode": "BOTH",
+          "durationMinutes": 5,
+          "endOnOpponentGoal": true,
+          "replacementPolicy": "NO_REPLACEMENT"
+        },
+        "publicReasonCategory": "dismissal"
+      }
+    ],
+    "appeals": [
+      {
+        "status": "modified",
+        "sourceEventKey": "c93c20ca-3cd1-19ac-7f9b-ad8c867bde79"
+      },
+      {
+        "status": "upheld",
+        "sourceEventKey": "be873561-4f05-ce18-c8b7-14b167c0f26b"
+      }
+    ],
+    "counters": [
+      {
+        "points": 1,
+        "eventCount": 1,
+        "playerSlot": "alternate",
+        "entryNumber": 5,
+        "cardTypeCode": "YELLOW",
+        "thresholdHits": 0
+      },
+      {
+        "points": 0,
+        "eventCount": 1,
+        "playerSlot": "alternate",
+        "entryNumber": 6,
+        "cardTypeCode": "BLUE",
+        "thresholdHits": 0
+      },
+      {
+        "points": 3,
+        "eventCount": 3,
+        "playerSlot": "primary",
+        "entryNumber": 2,
+        "cardTypeCode": "YELLOW",
+        "thresholdHits": 1
+      },
+      {
+        "points": 0,
+        "eventCount": 1,
+        "playerSlot": "primary",
+        "entryNumber": 4,
+        "cardTypeCode": "RED",
+        "thresholdHits": 0
+      },
+      {
+        "points": 2,
+        "eventCount": 2,
+        "playerSlot": "primary",
+        "entryNumber": 1,
+        "cardTypeCode": "YELLOW",
+        "thresholdHits": 0
+      },
+      {
+        "points": 1,
+        "eventCount": 1,
+        "playerSlot": "alternate",
+        "entryNumber": 1,
+        "cardTypeCode": "YELLOW",
+        "thresholdHits": 0
+      },
+      {
+        "points": 2,
+        "eventCount": 2,
+        "playerSlot": "alternate",
+        "entryNumber": 3,
+        "cardTypeCode": "YELLOW",
+        "thresholdHits": 0
+      },
+      {
+        "points": 2,
+        "eventCount": 2,
+        "playerSlot": "alternate",
+        "entryNumber": 4,
+        "cardTypeCode": "YELLOW",
+        "thresholdHits": 0
+      },
+      {
+        "points": 2,
+        "eventCount": 2,
+        "playerSlot": "primary",
+        "entryNumber": 5,
+        "cardTypeCode": "YELLOW",
+        "thresholdHits": 0
+      },
+      {
+        "points": 0,
+        "eventCount": 1,
+        "playerSlot": "primary",
+        "entryNumber": 3,
+        "cardTypeCode": "RED",
+        "thresholdHits": 0
+      },
+      {
+        "points": 1,
+        "eventCount": 1,
+        "playerSlot": "primary",
+        "entryNumber": 3,
+        "cardTypeCode": "YELLOW",
+        "thresholdHits": 0
+      },
+      {
+        "points": 0,
+        "eventCount": 1,
+        "playerSlot": "primary",
+        "entryNumber": 6,
+        "cardTypeCode": "BLUE",
+        "thresholdHits": 0
+      },
+      {
+        "points": 2,
+        "eventCount": 2,
+        "playerSlot": "primary",
+        "entryNumber": 6,
+        "cardTypeCode": "YELLOW",
+        "thresholdHits": 0
+      }
+    ],
+    "sanctions": [
+      {
+        "status": "served",
+        "outcome": "FIXED_SANCTION",
+        "unitType": "MATCHES",
+        "playerSlot": "primary",
+        "totalUnits": 1,
+        "entryNumber": 2,
+        "publicSummary": "Umbral de acumulación alcanzado",
+        "remainingUnits": 0,
+        "sourceEventKey": "dac517ca-cb00-0d73-d280-00d12158fe0d",
+        "publicReasonCategory": "accumulation"
+      },
+      {
+        "status": "cancelled",
+        "outcome": "FIXED_SANCTION",
+        "unitType": "MATCHES",
+        "playerSlot": "primary",
+        "totalUnits": 1,
+        "entryNumber": 6,
+        "publicSummary": "",
+        "remainingUnits": 1,
+        "sourceEventKey": "b76b5991-9ef7-7ed7-66d0-1f8893a08743",
+        "publicReasonCategory": "dismissal"
+      },
+      {
+        "status": "served",
+        "outcome": "FIXED_SANCTION",
+        "unitType": "MATCHES",
+        "playerSlot": "primary",
+        "totalUnits": 1,
+        "entryNumber": 4,
+        "publicSummary": "Sanción reducida a un partido",
+        "remainingUnits": 0,
+        "sourceEventKey": "c93c20ca-3cd1-19ac-7f9b-ad8c867bde79",
+        "publicReasonCategory": "dismissal"
+      },
+      {
+        "status": "active",
+        "outcome": "FIXED_SANCTION",
+        "unitType": "MATCHES",
+        "playerSlot": "primary",
+        "totalUnits": 1,
+        "entryNumber": 3,
+        "publicSummary": "Sanción confirmada",
+        "remainingUnits": 1,
+        "sourceEventKey": "be873561-4f05-ce18-c8b7-14b167c0f26b",
+        "publicReasonCategory": "dismissal"
+      }
+    ],
+    "cardCounts": {
+      "RED": 2,
+      "BLUE": 2,
+      "YELLOW": 16
+    },
+    "playerStates": [
+      {
+        "cards": {
+          "YELLOW": {
+            "events": 1,
+            "points": 1,
+            "thresholdHits": 0
+          }
+        },
+        "status": "AVAILABLE",
+        "unitType": null,
+        "playerSlot": "alternate",
+        "entryNumber": 5,
+        "remainingUnits": 0
+      },
+      {
+        "cards": {
+          "BLUE": {
+            "events": 1,
+            "points": 0,
+            "thresholdHits": 0
+          }
+        },
+        "status": "AVAILABLE",
+        "unitType": null,
+        "playerSlot": "alternate",
+        "entryNumber": 6,
+        "remainingUnits": 0
+      },
+      {
+        "cards": {
+          "YELLOW": {
+            "events": 2,
+            "points": 2,
+            "thresholdHits": 0
+          }
+        },
+        "status": "AVAILABLE",
+        "unitType": null,
+        "playerSlot": "primary",
+        "entryNumber": 1,
+        "remainingUnits": 0
+      },
+      {
+        "cards": {
+          "YELLOW": {
+            "events": 1,
+            "points": 1,
+            "thresholdHits": 0
+          }
+        },
+        "status": "AVAILABLE",
+        "unitType": null,
+        "playerSlot": "alternate",
+        "entryNumber": 1,
+        "remainingUnits": 0
+      },
+      {
+        "cards": {
+          "YELLOW": {
+            "events": 3,
+            "points": 3,
+            "thresholdHits": 1
+          }
+        },
+        "status": "AVAILABLE",
+        "unitType": null,
+        "playerSlot": "primary",
+        "entryNumber": 2,
+        "remainingUnits": 0
+      },
+      {
+        "cards": {
+          "YELLOW": {
+            "events": 2,
+            "points": 2,
+            "thresholdHits": 0
+          }
+        },
+        "status": "AVAILABLE",
+        "unitType": null,
+        "playerSlot": "alternate",
+        "entryNumber": 3,
+        "remainingUnits": 0
+      },
+      {
+        "cards": {
+          "YELLOW": {
+            "events": 2,
+            "points": 2,
+            "thresholdHits": 0
+          }
+        },
+        "status": "AVAILABLE",
+        "unitType": null,
+        "playerSlot": "alternate",
+        "entryNumber": 4,
+        "remainingUnits": 0
+      },
+      {
+        "cards": {
+          "YELLOW": {
+            "events": 2,
+            "points": 2,
+            "thresholdHits": 0
+          }
+        },
+        "status": "AVAILABLE",
+        "unitType": null,
+        "playerSlot": "primary",
+        "entryNumber": 5,
+        "remainingUnits": 0
+      },
+      {
+        "cards": {
+          "BLUE": {
+            "events": 1,
+            "points": 0,
+            "thresholdHits": 0
+          },
+          "YELLOW": {
+            "events": 2,
+            "points": 2,
+            "thresholdHits": 0
+          }
+        },
+        "status": "AVAILABLE",
+        "unitType": null,
+        "playerSlot": "primary",
+        "entryNumber": 6,
+        "remainingUnits": 0
+      },
+      {
+        "cards": {
+          "RED": {
+            "events": 1,
+            "points": 0,
+            "thresholdHits": 0
+          }
+        },
+        "status": "AVAILABLE",
+        "unitType": null,
+        "playerSlot": "primary",
+        "entryNumber": 4,
+        "remainingUnits": 0
+      },
+      {
+        "cards": {
+          "RED": {
+            "events": 1,
+            "points": 0,
+            "thresholdHits": 0
+          },
+          "YELLOW": {
+            "events": 1,
+            "points": 1,
+            "thresholdHits": 0
+          }
+        },
+        "status": "SUSPENDED",
+        "unitType": "MATCHES",
+        "playerSlot": "primary",
+        "entryNumber": 3,
+        "remainingUnits": 1
+      }
+    ],
+    "serviceEvents": [
+      {
+        "units": 1,
+        "eventType": "SERVED",
+        "matchOrdinal": 10,
+        "remainingAfter": 0,
+        "sourceEventKey": "dac517ca-cb00-0d73-d280-00d12158fe0d",
+        "remainingBefore": 1
+      },
+      {
+        "units": 1,
+        "eventType": "SERVED",
+        "matchOrdinal": 11,
+        "remainingAfter": 1,
+        "sourceEventKey": "c93c20ca-3cd1-19ac-7f9b-ad8c867bde79",
+        "remainingBefore": 2
+      }
+    ],
+    "eligibilityTimeline": [
+      {
+        "roundNumber": 1,
+        "matchOrdinal": 1,
+        "selectedSlot": "primary",
+        "primaryAvailable": true
+      },
+      {
+        "roundNumber": 2,
+        "matchOrdinal": 4,
+        "selectedSlot": "primary",
+        "primaryAvailable": true
+      },
+      {
+        "roundNumber": 3,
+        "matchOrdinal": 7,
+        "selectedSlot": "primary",
+        "primaryAvailable": true
+      },
+      {
+        "roundNumber": 4,
+        "matchOrdinal": 10,
+        "selectedSlot": "alternate",
+        "primaryAvailable": false
+      },
+      {
+        "roundNumber": 5,
+        "matchOrdinal": 13,
+        "selectedSlot": "primary",
+        "primaryAvailable": true
+      }
+    ]
+  },
   "matchCount": 15,
   "roundCount": 5,
   "operationReceipts": {
+    "discipline": 33,
     "scheduling": 5,
     "matchOperations": 266,
     "operationalExceptions": 13
   },
   "database": "temporary-local-postgresql",
   "generatedAt": "2026-08-25T10:00:00.000Z",
-  "migrationCount": 141,
+  "migrationCount": 146,
   "remoteWrites": 0,
   "rpcFamilies": [
     "R1",
     "R4A",
     "R4B",
     "R4C",
-    "R4D"
+    "R4D",
+    "R5"
   ],
-  "version": 1,
-  "authorityHash": "9b91cedf18c725086da0fe37abf7c38c9ef8ae690179650b76414b5b69c769c1"
+  "version": 2,
+  "authorityHash": "0ca037a292e643bebd9738e1ae072f776e7e1ecc29da776f9291435b7b35fa6b"
 }
