@@ -35,6 +35,8 @@ const v2WriteRpcNames = new Set([
   "command_pachanga_club_platform_v1",
   "command_pachanga_competition_foundation_v1",
   "command_pachanga_competition_foundation_v2",
+  "command_pachanga_competition_discipline_platform_v1",
+  "command_pachanga_competition_discipline_v1",
   "command_pachanga_competition_platform_v1",
   "command_pachanga_league_participation_platform_v1",
   "command_pachanga_league_participation_v1",
@@ -43,6 +45,7 @@ const v2WriteRpcNames = new Set([
   "command_pachanga_league_operational_exceptions_platform_v1",
   "command_pachanga_league_operational_exceptions_v1",
   "command_pachanga_league_private_beta_platform_v1",
+  "command_pachanga_league_private_beta_r5_bundle_upgrade_v1",
   "command_pachanga_league_private_beta_v1",
   "command_pachanga_league_scheduling_platform_v1",
   "command_pachanga_league_scheduling_v1",
@@ -121,6 +124,7 @@ const v1ApplicationWriteOperations = new Set([
 ]);
 const v2ApplicationWriteOperations = new Set([
   "api:club-foundation-command",
+  "api:competition-discipline-command",
   "api:league-participation-command",
   "api:league-match-operations-command",
   "api:league-operational-exceptions-command",

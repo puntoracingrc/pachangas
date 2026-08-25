@@ -26,12 +26,15 @@ import {
   SectionHeader,
   StatusChip,
 } from "./official-ui-v2-primitives";
+import { CompetitionDisciplineClient } from "./competition-discipline-client";
+import type { CompetitionDisciplineJson } from "../competition-discipline-contract";
 import styles from "./league-match-operations-client.module.css";
 
 export type LeagueMatchOperationsSurface = "match" | "my" | "results" | "standings";
 
 type Props = {
   competitionId?: string;
+  disciplinePreviewData?: CompetitionDisciplineJson | null;
   divisionId?: string;
   embedded?: boolean;
   groupId?: string;
@@ -541,6 +544,7 @@ export function LeagueMatchOperationsClient(props: Props) {
     { id: "asistencia", label: "Asistencia" },
     { id: "convocatoria", label: "Alineación" },
     { id: "resultado", label: "Resultado" },
+    ...(!previewData || props.disciplinePreviewData ? [{ id: "disciplina", label: "Disciplina" }] : []),
   ];
 
   const content = <main className={styles.page} data-match-operations-surface={surface} data-mobile-tab={surface === "standings" || surface === "my" ? "equipo" : "partido"}>
@@ -558,6 +562,7 @@ export function LeagueMatchOperationsClient(props: Props) {
             {activeSection === "asistencia" ? <AttendancePanel busy={busy} command={command} data={data} /> : null}
             {activeSection === "convocatoria" ? <SquadPanel busy={busy} command={command} data={data} memberRole={memberRole} rosterSelection={rosterSelection} setMemberRole={setMemberRole} setRosterSelection={setRosterSelection} /> : null}
             {activeSection === "resultado" ? <ResultPanel actingEntryId={actingEntryId} busy={busy} command={command} data={data} evidence={evidence} explanation={explanation} reason={reason} scoreAway={scoreAway} scoreHome={scoreHome} scorerGoals={scorerGoals} setActingEntryId={setActingEntryId} setEvidence={setEvidence} setExplanation={setExplanation} setReason={setReason} setScoreAway={setScoreAway} setScoreHome={setScoreHome} setScorerGoals={setScorerGoals} /> : null}
+            {activeSection === "disciplina" ? <CompetitionDisciplineClient competitionId={competitionId} embedded matchId={props.matchId} previewData={props.disciplinePreviewData} surface="match" /> : null}
           </div>
         </div>
       </> : null}
