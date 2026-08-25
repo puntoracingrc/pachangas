@@ -23,6 +23,7 @@ activa; la disciplina publica permanece desactivada.
 | W3-PROD-008 | TESTABILITY_GAP | La cobertura verificaba la RPC de calendario directamente, pero no el contrato de nombres del adaptador HTTP. | Regresion que acopla firma SQL, argumentos HTTP, limites y sanitizacion del mensaje. | fixed + regression_verified |
 | W3-PROD-009 | ENVIRONMENT_ISSUE | Una pestana QA longeva que habia navegado por Preview y dos deployments retuvo un error de evaluacion de modulo y quedo temporalmente sin hidratar. | Una pestana limpia cargo sin error y una recarga controlada recupero la pestana original; consola limpia, Service Worker unico y version final confirmada. | fixed + regression_verified |
 | W3-PROD-010 | PRODUCT_BUG | La funcion estatica `private.pachanga_competition_discipline_default_policy_v1()` heredo `EXECUTE` de `PUBLIC`. `anon` y `authenticated` no tienen `USAGE` del esquema privado y la funcion no era alcanzable, pero faltaba el segundo cierre exigido por el contrato. | Migracion aditiva `20260825211825` revoca `EXECUTE` a `PUBLIC`, `anon` y `authenticated`; regresion textual y PostgreSQL temporal exigen el cierre. | fixed + regression_verified |
+| W3-PROD-011 | ENVIRONMENT_ISSUE | Supabase CLI `2.107.0` aplico la migracion ACL, pero su paso posterior de cache de catalogo `pg-delta` no encontro el certificado temporal `pgdelta-target-ca.crt`. | No se reintento ni reparo historia: `db push` termino, ledger `147/147`, privilegios y datos se verificaron por readback independiente. La actualizacion o reparacion del cache experimental queda fuera del producto. | open / non-blocking |
 
 ## Seguridad del smoke
 
@@ -70,6 +71,8 @@ sigue `false`.
   `20260825203500_competition_discipline_appeal_service_accounting_v1.sql`;
   `20260825211825_competition_discipline_private_policy_revoke_v1.sql`;
 - ledger local/remoto: `147 / 147`, sin versiones exclusivas de ningun lado;
+- `db push` completo en `8.395 s`; el warning posterior de cache `pg-delta`
+  queda registrado como W3-PROD-011 y no afecto al DDL ni a su transaccion;
 - backup previo: `3,950,638 bytes`, SHA-256
   `531cd5ca5c3aa4ee3e32c353528ddffcc4d530a4770ea2857d86f8e02b503e69`;
 - funciones privadas `security definer`, `search_path=pg_catalog` y ejecucion
