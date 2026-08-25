@@ -2,12 +2,12 @@
 
 ## Estado
 
-`RELEASE CANDIDATE / HOTFIX REMOTO APLICADO`
+`LIVE / PRIVATE BETA ACTIVE / PUBLIC DISCIPLINE OFF`
 
 Este informe registra el despliegue coordinado de R5 Competition Discipline
-V1 y su hotfix forward-only de contabilidad de cumplimiento tras una apelacion.
-Los SHA, PR, deployment y smoke visual definitivos se completan al cerrar la
-release.
+V1, el hotfix forward-only de contabilidad de cumplimiento tras una apelacion
+y el cierre de privilegios del helper privado de politica. La beta privada esta
+activa; la disciplina publica permanece desactivada.
 
 ## Incidencias permanentes
 
@@ -51,11 +51,24 @@ readback posterior al `ROLLBACK` devuelve de nuevo `0 / 0 / 0 / 0`; las seis
 flags R5 privadas siguen `true` y `competition_public_discipline_enabled`
 sigue `false`.
 
-## Ledger y migracion
+## Integracion y deployments
 
-- migracion forward-only:
+| Hito | Evidencia |
+| --- | --- |
+| R5 inicial | PR [#191](https://github.com/puntoracingrc/pachangas/pull/191), merge `00dc908be0cb87ed0814becdc7ec06c48ec8102b` |
+| Demo V2.1 + hotfix de servicio | PR [#192](https://github.com/puntoracingrc/pachangas/pull/192), merge `f96b49d06d43725abdec8ef4fc6b1a0d9e69be0d` |
+| Calendario publico | PR [#193](https://github.com/puntoracingrc/pachangas/pull/193), merge `30a4fef063e99c2757ab7c676c033d05ffb36dda` |
+| Cierre ACL R5 | PR [#194](https://github.com/puntoracingrc/pachangas/pull/194), merge `0401a127ebd910ccad799b466ad3327782067b37` |
+| Deployment productivo final de codigo | `dpl_DEugDYDWVWYAnkKehr3syFHmqEnx` |
+| Artefacto | `pachangas-l1qw0r10v-persianas-almar-web-s-projects.vercel.app` |
+| Dominio | [pachangasiq.com](https://pachangasiq.com) |
+
+## Ledger y migraciones
+
+- migraciones forward-only de cierre:
   `20260825203500_competition_discipline_appeal_service_accounting_v1.sql`;
-- ledger local/remoto: `146 / 146`, sin versiones exclusivas de ningun lado;
+  `20260825211825_competition_discipline_private_policy_revoke_v1.sql`;
+- ledger local/remoto: `147 / 147`, sin versiones exclusivas de ningun lado;
 - backup previo: `3,950,638 bytes`, SHA-256
   `531cd5ca5c3aa4ee3e32c353528ddffcc4d530a4770ea2857d86f8e02b503e69`;
 - funciones privadas `security definer`, `search_path=pg_catalog` y ejecucion
@@ -66,8 +79,8 @@ sigue `false`.
 
 | Gate | Resultado |
 | --- | --- |
-| R5 focal | `14/14 PASS` |
-| Bateria completa | `507/507 PASS` |
+| R5 focal | `15/15 PASS` |
+| Bateria completa | `508/508 PASS` (`20 Node + 488 TSX`) |
 | SQL/RLS/idempotencia/adversarial | `PASS` |
 | Concurrencia | `7/7 PASS` |
 | Volumen | `10.000 / 2.000 / 5.000 / 1.000`, rollback `PASS` |
@@ -76,9 +89,44 @@ sigue `false`.
 | Lint global | deuda heredada: `22 errores / 18 warnings` |
 | `git diff --check` | `PASS` |
 
-## Pendiente de cierre
+## Readback productivo final
 
-- fusionar el release candidate a `main`;
-- desplegar Demo World V2.1;
-- QA productiva y Service Worker;
-- readback final y limpieza local.
+| Evidencia | Resultado |
+| --- | --- |
+| Flags R5 privadas | `foundation/events/counters/sanctions/service/appeals = true` |
+| Disciplina publica | `false` |
+| Revision / server sequence de flags | `9 / 115` |
+| Catalogos de reglas historicos | `2` |
+| Eventos / counters / ciclos | `0 / 0 / 0` |
+| Sanciones / servicio / apelaciones | `0 / 0 / 0` |
+| Player states / evidencia privada | `0 / 0` |
+| `EXECUTE` helper privado PUBLIC/anon/auth | `false / false / false` |
+| `USAGE` esquema privado anon/auth | `false / false` |
+| Escrituras deportivas directas de cliente | `0` |
+| Triggers R5 | `11 activos / 0 deshabilitados` |
+
+Los dos catalogos pertenecen a competiciones QA privadas ya canceladas y se
+conservan como evidencia canonica inmutable. No tienen hechos disciplinarios.
+
+## QA productiva
+
+- Demo disciplina muestra 20 eventos con jugador y minuto en `390x844` y
+  `844x390`, sin overflow, imagenes rotas ni errores de consola.
+- manifest V2.1: `0eae1613e2d84fdd5f0821cfc2f7ad77b7bc4193a6c50ee3d58c0431ee493a51`.
+- Service Worker: `2.0.0+sw.0401a127ebd9`, una registration activa, sin
+  worker waiting/installing.
+- offline conserva el snapshot confirmado; la reconexion recupera red y no
+  crea fake success ni cola deportiva.
+- el calendario publico apagado devuelve copy controlada y no filtra la firma
+  PostgREST.
+- Vercel: cero runtime errors; unico 5xx, el `503` heredado de
+  `/api/internal/rankings/refresh` por `CRON_SECRET` pendiente.
+- PostgreSQL registra el `REVOKE` sin error; API y Realtime no muestran una
+  regresion asociada a R5.
+
+## Resultado
+
+R5 queda fusionado, migrado y desplegado en [pachangasiq.com](https://pachangasiq.com)
+como beta privada. Disciplina publica, Referee Assignments, pagos y Tournament
+Engine permanecen OFF. Rating V2, Rewards, Conduct, Billing, Ranking y
+cosmeticos permanecen intactos.

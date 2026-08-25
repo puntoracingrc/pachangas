@@ -2,7 +2,7 @@
 
 ## Estado
 
-`RELEASE CANDIDATE LOCAL / PRODUCTION PENDING`
+`LIVE / PRODUCTION VERIFIED`
 
 Demo World V2.1 extiende el mismo mundo determinista de V2 con la autoridad
 real de Competition Discipline V1. No crea una segunda Liga, no recalcula
@@ -15,11 +15,15 @@ disciplina en el navegador y no escribe en Supabase remoto.
 | Fecha | `2026-08-25` |
 | Base | `00dc908be0cb87ed0814becdc7ec06c48ec8102b` |
 | Rama | `codex/product-demo-parity-wave-3-release` |
+| Main productivo final de codigo | `0401a127ebd910ccad799b466ad3327782067b37` |
+| PR de paridad | [#192](https://github.com/puntoracingrc/pachangas/pull/192) |
+| PR calendario | [#193](https://github.com/puntoracingrc/pachangas/pull/193) |
+| PR cierre ACL | [#194](https://github.com/puntoracingrc/pachangas/pull/194) |
 | Version Demo | `2.1` |
 | Seed | `pachangas-iq-demo-world-v2-1-2026-27` |
-| Migraciones Simulation World | `146` |
-| Hash de autoridad | `0ca037a292e643bebd9738e1ae072f776e7e1ecc29da776f9291435b7b35fa6b` |
-| Hash publico | `f68d9279271275afc262b144cb7784957b5a9606e5fd74df02907ef45f5c1886` |
+| Migraciones Simulation World | `147` |
+| Hash de autoridad | `f833b84f08aa859b14e31a4c11b676b996f8c80ae0813727467f2ae23d6849f9` |
+| Hash publico | `0eae1613e2d84fdd5f0821cfc2f7ad77b7bc4193a6c50ee3d58c0431ee493a51` |
 | Escrituras remotas | `0` |
 
 La simulacion crea PostgreSQL temporal, aplica el ledger completo, ejecuta R1,
@@ -92,8 +96,8 @@ estado deportivo necesarios para explicar la Liga ficticia.
 | --- | --- |
 | `npm run test:demo-world:v2` | `11/11 PASS` |
 | `npm run demo-world:v2:verify` | `PASS / snapshotIdentical=true` |
-| `npm run test:competition-discipline` | `14/14 PASS` |
-| `npm test` | `507/507 PASS` (`20 Node + 487 TSX`) |
+| `npm run test:competition-discipline` | `15/15 PASS` |
+| `npm test` | `508/508 PASS` (`20 Node + 488 TSX`) |
 | SQL/RLS/adversarial | `PASS` |
 | Appeal service accounting | `PASS` |
 | Concurrencia R5 | `7/7 carreras deterministas` |
@@ -131,8 +135,20 @@ sin cambios por tarjetas o sanciones.
 - Referee Assignments, pagos y Tournament Engine permanecen OFF/no
   implementados segun su contrato.
 
-## Cierre pendiente
+## Cierre productivo
 
-La migracion forward-only, el merge, el deployment, la version final del
-Service Worker y el smoke de `pachangasiq.com/demo` se registraran en los
-informes de produccion una vez completado el release coordinado.
+- deployment: `dpl_DEugDYDWVWYAnkKehr3syFHmqEnx`;
+- artefacto: `pachangas-l1qw0r10v-persianas-almar-web-s-projects.vercel.app`;
+- dominio: [pachangasiq.com/demo](https://pachangasiq.com/demo);
+- Service Worker: `2.0.0+sw.0401a127ebd9`;
+- manifest productivo: hash publico exacto y version `2.1`;
+- `390x844` y `844x390`: 20 eventos, jugador/minuto visibles, cero overflow,
+  imagen rota, overlay o error de consola;
+- offline y reconexion: snapshot confirmado conservado, un controller activo,
+  cero workers waiting/installing y cero fake success;
+- Supabase: ledger `147`, flags privadas R5 activas, publica OFF y cero hechos
+  disciplinarios sinteticos persistentes.
+
+Demo World V2.1 queda fusionado y desplegado. Android fisico, iPhone fisico y
+PWA instalada en un dispositivo fisico no se presentan como PASS; el smoke PWA
+automatizado de navegador si queda verificado.
