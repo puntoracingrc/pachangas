@@ -162,7 +162,7 @@ notificacion.
 | Gate | Resultado |
 | --- | --- |
 | R5 focal | `14/14 PASS` |
-| Bateria completa | `506/506 PASS` (`20 Node + 486 TSX`) |
+| Bateria completa | `507/507 PASS` (`20 Node + 487 TSX`) |
 | SQL/RLS/adversarial | `PASS` |
 | Fresh install reproducible | `141 + 5 / PASS` en PostgreSQL temporal |
 | Flags y datos al instalar | `OFF / 0 filas de producto` |

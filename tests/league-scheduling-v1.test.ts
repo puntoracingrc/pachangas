@@ -221,6 +221,22 @@ test("API payloads are whitelisted, no-store and never carry service authority",
   assert.doesNotMatch(shared, /actorId|actor_id|canonicalMatchId|pairings/);
 });
 
+test("the public calendar route matches the canonical RPC signature and hides infrastructure errors", async () => {
+  const [access, route, client] = await Promise.all([
+    source(paths.access),
+    source("app/api/competitions/scheduling/public/[competitionId]/route.ts"),
+    source("app/_components/league-scheduling-client.tsx"),
+  ]);
+  assert.match(access, /get_pachanga_public_league_calendar_v1\(\s*target_competition_id uuid,\s*target_round_from integer default 1,\s*target_round_limit integer default 20/);
+  assert.match(route, /target_round_from: \(page - 1\) \* pageSize \+ 1/);
+  assert.match(route, /target_round_limit: pageSize/);
+  assert.doesNotMatch(route, /page_offset|page_size/);
+  assert.match(route, /bounded\(url\.searchParams\.get\("pageSize"\), 20, 50\)/);
+  assert.match(client, /function scheduleReadFailureMessage/);
+  assert.match(client, /schema cache\|function public\\\./);
+  assert.match(client, /Calendario no disponible para este contexto\./);
+});
+
 test("PWA protects every R4B write and only caches canonical reads", async () => {
   for (const rpc of ["command_pachanga_league_scheduling_v1", "command_pachanga_league_scheduling_platform_v1"]) {
     assert.equal(classifySupabaseWrite(`https://example.supabase.co/rest/v1/rpc/${rpc}`, { method: "POST" }), `rpc:${rpc}`);

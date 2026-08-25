@@ -19,8 +19,8 @@ release.
 | R5-PROD-004 | ENVIRONMENT_ISSUE | El primer relanzamiento del runner R4C no tenia `LEAGUE_MATCH_OPERATIONS_DATABASE_URL`; el segundo apunto al puerto local `54322`, que ya no aceptaba conexiones. Ambos terminaron antes de ejecutar SQL. | Relanzamiento sobre la instancia local aislada estable en `55322`; no se cambia configuracion persistente. | fixed + regression_verified |
 | R5-PROD-005 | TESTABILITY_GAP | El runner historico R4C bloqueaba cualquier ledger distinto de 131 migraciones y, con las 146 actuales, terminaba antes de ejecutar SQL. | Seleccion por el corte historico exacto de R4C: 127 migraciones previas, cuatro migraciones R4C y exclusion explicita de las posteriores. | fixed + regression_verified |
 | R5-PROD-006 | SIMULATION_BUG | La primera adaptacion al guard privado cambio a privada la Competition compartida por el fixture historico R4C y rompio su prueba de standings publicos. | Semantica publica restaurada en R4C; la variante privada se limita al ensamblado transaccional R5 de produccion. | fixed + regression_verified |
-| W3-PROD-007 | PRODUCT_BUG | El adaptador HTTP del calendario publico enviaba `page_offset/page_size`, pero la RPC desplegada exige `target_round_from/target_round_limit`; PostgREST rechazaba la firma y la UI mostraba el mensaje tecnico. | Pendiente de hotfix focalizado sin activar el calendario publico. | open |
-| W3-PROD-008 | TESTABILITY_GAP | La cobertura verificaba la RPC de calendario directamente, pero no el contrato de nombres del adaptador HTTP. | Pendiente de regresion que acople explicitamente route y firma SQL. | open |
+| W3-PROD-007 | PRODUCT_BUG | El adaptador HTTP del calendario publico enviaba `page_offset/page_size`, pero la RPC desplegada exige `target_round_from/target_round_limit`; PostgREST rechazaba la firma y la UI mostraba el mensaje tecnico. | El route usa la firma canonica, pagina por jornadas `1..50` y la lectura traduce codigos o errores de infraestructura a copy de producto sin activar el calendario publico. | fixed + regression_verified |
+| W3-PROD-008 | TESTABILITY_GAP | La cobertura verificaba la RPC de calendario directamente, pero no el contrato de nombres del adaptador HTTP. | Regresion que acopla firma SQL, argumentos HTTP, limites y sanitizacion del mensaje. | fixed + regression_verified |
 
 ## Seguridad del smoke
 
@@ -65,7 +65,7 @@ sigue `false`.
 | Gate | Resultado |
 | --- | --- |
 | R5 focal | `14/14 PASS` |
-| Bateria completa | `506/506 PASS` |
+| Bateria completa | `507/507 PASS` |
 | SQL/RLS/idempotencia/adversarial | `PASS` |
 | Concurrencia | `7/7 PASS` |
 | Volumen | `10.000 / 2.000 / 5.000 / 1.000`, rollback `PASS` |
