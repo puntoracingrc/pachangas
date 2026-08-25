@@ -21,6 +21,7 @@ const r5Migrations = [
   "20260825165843_competition_discipline_access_v1.sql",
   "20260825165849_competition_discipline_hardening_v1.sql",
   "20260825203500_competition_discipline_appeal_service_accounting_v1.sql",
+  "20260825211825_competition_discipline_private_policy_revoke_v1.sql",
 ];
 
 if (!["127.0.0.1", "localhost", "::1", "[::1]"].includes(new URL(adminUrl).hostname)) {
@@ -30,8 +31,8 @@ if (!["127.0.0.1", "localhost", "::1", "[::1]"].includes(new URL(adminUrl).hostn
 const migrationNames = readdirSync(resolve(root, "supabase/migrations"))
   .filter((name) => /^\d{14}_.+\.sql$/.test(name))
   .sort();
-assert.equal(migrationNames.length, 146);
-assert.deepEqual(migrationNames.slice(-5), r5Migrations);
+assert.equal(migrationNames.length, 147);
+assert.deepEqual(migrationNames.slice(-6), r5Migrations);
 const preR5Incremental = migrationNames.filter((name) => (
   name.slice(0, 14) > manifest.absorbsThrough && !r5Migrations.includes(name)
 ));
@@ -142,10 +143,26 @@ try {
       ),
       'directAuthenticatedInsert', has_table_privilege(
         'authenticated', 'public.pachanga_competition_disciplinary_events', 'INSERT'
+      ),
+      'privatePolicyClientExecute', (
+        has_function_privilege(
+          'public', 'private.pachanga_competition_discipline_default_policy_v1()', 'EXECUTE'
+        )
+        or has_function_privilege(
+          'anon', 'private.pachanga_competition_discipline_default_policy_v1()', 'EXECUTE'
+        )
+        or has_function_privilege(
+          'authenticated', 'private.pachanga_competition_discipline_default_policy_v1()', 'EXECUTE'
+        )
       )
     )::text;
   `, "verify inert R5 install"));
-  assert.deepEqual(inactive, { directAuthenticatedInsert: false, flagsOff: true, rows: 0 });
+  assert.deepEqual(inactive, {
+    directAuthenticatedInsert: false,
+    flagsOff: true,
+    privatePolicyClientExecute: false,
+    rows: 0,
+  });
 
   const activationOutput = run(
     psqlBin,

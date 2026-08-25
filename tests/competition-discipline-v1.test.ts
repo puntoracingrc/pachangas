@@ -14,6 +14,7 @@ const paths = {
   appealServiceAccounting: "supabase/migrations/20260825203500_competition_discipline_appeal_service_accounting_v1.sql",
   commands: "supabase/migrations/20260825165838_competition_discipline_commands_v1.sql",
   hardening: "supabase/migrations/20260825165849_competition_discipline_hardening_v1.sql",
+  privatePolicyRevoke: "supabase/migrations/20260825211825_competition_discipline_private_policy_revoke_v1.sql",
   schema: "supabase/migrations/20260825165834_competition_discipline_schema_v1.sql",
 } as const;
 
@@ -77,6 +78,15 @@ test("appeal reductions preserve service already completed and canonical revisio
   assert.match(migration, /new\.status := case when new\.remaining_units = 0 then 'served' else 'active' end/);
   assert.match(migration, /new\.current_revision_id is not distinct from old\.current_revision_id/);
   assert.match(migration, /new\.remaining_units := revision_row\.remaining_units/);
+});
+
+test("the private R5 policy helper has no inherited client execute grant", async () => {
+  const migration = await source(paths.privatePolicyRevoke);
+  assert.match(
+    migration,
+    /revoke all on function private\.pachanga_competition_discipline_default_policy_v1\(\)[\s\S]+from public, anon, authenticated/,
+  );
+  assert.doesNotMatch(migration, /grant\s+execute/i);
 });
 
 test("server command envelope owns actor, rules, counters, deadlines, sequence and idempotency", async () => {
