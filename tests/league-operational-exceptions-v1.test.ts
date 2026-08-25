@@ -233,11 +233,12 @@ test("Realtime uses invalidation plus refetch rather than WAL payload authority"
 });
 
 test("Official UI includes all required product surfaces and an isolated noindex lab", async () => {
-  const [client, css, lab, labLayout] = await Promise.all([
+  const [client, css, lab, labLayout, visualAudit] = await Promise.all([
     source("app/_components/league-operational-exceptions-client.tsx"),
     source("app/_components/league-operational-exceptions-client.module.css"),
     source("app/laboratorio-league-operational-exceptions/page.tsx"),
     source("app/laboratorio-league-operational-exceptions/layout.tsx"),
+    source("scripts/visual-audit-v1.mjs"),
   ]);
   assert.match(client, /OfficialProductShellV2/);
   assert.match(client, /ProductState/);
@@ -254,6 +255,7 @@ test("Official UI includes all required product surfaces and an isolated noindex
   assert.match(css, /\.commandGroups > div[\s\S]+min-width: 0/);
   assert.match(lab, /previewData=/);
   assert.match(labLayout, /index: false/);
+  assert.match(visualAudit, /lab-league-r4d/);
   for (const route of [
     "app/competiciones/[competition]/partidos/[match]/operaciones/page.tsx",
     "app/competiciones/[competition]/partidos/[match]/estado/page.tsx",
