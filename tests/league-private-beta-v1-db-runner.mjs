@@ -20,6 +20,7 @@ const betaMigrations = [
   "20260825074353_league_private_beta_commands_v1.sql",
   "20260825074358_league_private_beta_access_v1.sql",
   "20260825102400_league_private_beta_fk_indexes_v1.sql",
+  "20260825115500_league_private_beta_draft_edition_fix.sql",
 ];
 
 if (!adminUrl) throw new Error("LEAGUE_PRIVATE_BETA_DATABASE_URL is required");
@@ -30,7 +31,7 @@ if (!["127.0.0.1", "localhost", "::1", "[::1]"].includes(new URL(adminUrl).hostn
 const migrationNames = readdirSync(resolve(root, "supabase/migrations"))
   .filter((name) => /^\d{14}_.+\.sql$/.test(name))
   .sort();
-assert.equal(migrationNames.length, 140);
+assert.equal(migrationNames.length, 141);
 assert.deepEqual(migrationNames.slice(-betaMigrations.length), betaMigrations);
 const preBetaMigrations = migrationNames.filter((name) => (
   name.slice(0, 14) > manifest.absorbsThrough && !betaMigrations.includes(name)
