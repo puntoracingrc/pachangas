@@ -31,6 +31,7 @@ export type LeagueSchedulingSurface = "public" | "round" | "team" | "workbench";
 
 type Props = {
   competitionId?: string;
+  embedded?: boolean;
   entryId?: string;
   planId?: string;
   previewData?: LeagueSchedulingJson | null;
@@ -161,6 +162,7 @@ function fixtureTeams(item: LeagueSchedulingJson, surface: LeagueSchedulingSurfa
 export function LeagueSchedulingClient(props: Props) {
   const {
     competitionId,
+    embedded = false,
     entryId,
     planId,
     previewData = null,
@@ -315,8 +317,7 @@ export function LeagueSchedulingClient(props: Props) {
   const organizerAvailable = scheduleText(plan.status) !== "published"
     && (!Array.isArray(data?.nextValidActions) || data.nextValidActions.length > 0);
 
-  return <OfficialProductShellV2 active="equipo" context={context}>
-    <main className={styles.page} data-mobile-tab="equipo" data-scheduling-surface={surface}>
+  const content = <main className={styles.page} data-mobile-tab="equipo" data-scheduling-surface={surface}>
       <GamePageHeader
         eyebrow={surface === "workbench" ? "League Scheduling R4B" : scheduleText(competition.name) || "League Scheduling"}
         title={titleFor(surface)}
@@ -436,8 +437,8 @@ export function LeagueSchedulingClient(props: Props) {
           />
         </> : null}
       </> : null}
-    </main>
-  </OfficialProductShellV2>;
+    </main>;
+  return embedded ? content : <OfficialProductShellV2 active="equipo" context={context}>{content}</OfficialProductShellV2>;
 }
 
 function ConflictSummary({ conflicts }: { conflicts: LeagueSchedulingJson[] }) {

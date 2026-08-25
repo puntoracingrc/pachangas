@@ -1,0 +1,392 @@
+{
+  "matches": [
+    {
+      "result": {
+        "away": 1,
+        "home": 2
+      },
+      "lineage": [
+        "official_result"
+      ],
+      "outcome": "MIRROR_SPORTING_RESULT",
+      "venueLabel": "Pista Demo Liga",
+      "roundNumber": 1,
+      "exceptionType": "none",
+      "partialResult": null,
+      "scheduledStart": "2026-08-01T18:00:00+00:00",
+      "awayEntryNumber": 6,
+      "homeEntryNumber": 2,
+      "lateArrivalStatus": null,
+      "originalScheduledStart": "2026-08-01T18:00:00+00:00"
+    },
+    {
+      "result": {
+        "away": 1,
+        "home": 1
+      },
+      "lineage": [
+        "official_result"
+      ],
+      "outcome": "MIRROR_SPORTING_RESULT",
+      "venueLabel": "Pista Demo Liga",
+      "roundNumber": 1,
+      "exceptionType": "none",
+      "partialResult": null,
+      "scheduledStart": "2026-08-02T18:00:00+00:00",
+      "awayEntryNumber": 4,
+      "homeEntryNumber": 3,
+      "lateArrivalStatus": null,
+      "originalScheduledStart": "2026-08-02T18:00:00+00:00"
+    },
+    {
+      "result": {
+        "away": 2,
+        "home": 0
+      },
+      "lineage": [
+        "postponement",
+        "fixture_change",
+        "official_result"
+      ],
+      "outcome": "MIRROR_SPORTING_RESULT",
+      "venueLabel": "Pista Demo Liga",
+      "roundNumber": 1,
+      "exceptionType": "postponed",
+      "partialResult": null,
+      "scheduledStart": "2026-09-07T18:00:00+00:00",
+      "awayEntryNumber": 5,
+      "homeEntryNumber": 1,
+      "lateArrivalStatus": null,
+      "originalScheduledStart": "2026-08-03T18:00:00+00:00"
+    },
+    {
+      "result": {
+        "away": 1,
+        "home": 3
+      },
+      "lineage": [
+        "official_result"
+      ],
+      "outcome": "MIRROR_SPORTING_RESULT",
+      "venueLabel": "Pista Demo Liga",
+      "roundNumber": 2,
+      "exceptionType": "none",
+      "partialResult": null,
+      "scheduledStart": "2026-08-04T18:00:00+00:00",
+      "awayEntryNumber": 2,
+      "homeEntryNumber": 3,
+      "lateArrivalStatus": null,
+      "originalScheduledStart": "2026-08-04T18:00:00+00:00"
+    },
+    {
+      "result": {
+        "away": 0,
+        "home": 1
+      },
+      "lineage": [
+        "official_result"
+      ],
+      "outcome": "MIRROR_SPORTING_RESULT",
+      "venueLabel": "Pista Demo Liga",
+      "roundNumber": 2,
+      "exceptionType": "none",
+      "partialResult": null,
+      "scheduledStart": "2026-08-05T18:00:00+00:00",
+      "awayEntryNumber": 1,
+      "homeEntryNumber": 4,
+      "lateArrivalStatus": "arrived_within_policy",
+      "originalScheduledStart": "2026-08-05T18:00:00+00:00"
+    },
+    {
+      "result": {
+        "away": 2,
+        "home": 2
+      },
+      "lineage": [
+        "official_result"
+      ],
+      "outcome": "MIRROR_SPORTING_RESULT",
+      "venueLabel": "Pista Demo Liga",
+      "roundNumber": 2,
+      "exceptionType": "none",
+      "partialResult": null,
+      "scheduledStart": "2026-08-06T18:00:00+00:00",
+      "awayEntryNumber": 6,
+      "homeEntryNumber": 5,
+      "lateArrivalStatus": null,
+      "originalScheduledStart": "2026-08-06T18:00:00+00:00"
+    },
+    {
+      "result": {
+        "away": 1,
+        "home": 0
+      },
+      "lineage": [
+        "fixture_change",
+        "official_result"
+      ],
+      "outcome": "MIRROR_SPORTING_RESULT",
+      "venueLabel": "Camp Municipal Besòs",
+      "roundNumber": 3,
+      "exceptionType": "venue_changed",
+      "partialResult": null,
+      "scheduledStart": "2026-08-07T18:00:00+00:00",
+      "awayEntryNumber": 5,
+      "homeEntryNumber": 2,
+      "lateArrivalStatus": null,
+      "originalScheduledStart": "2026-08-07T18:00:00+00:00"
+    },
+    {
+      "result": {
+        "away": 2,
+        "home": 4
+      },
+      "lineage": [
+        "official_result"
+      ],
+      "outcome": "MIRROR_SPORTING_RESULT",
+      "venueLabel": "Pista Demo Liga",
+      "roundNumber": 3,
+      "exceptionType": "none",
+      "partialResult": null,
+      "scheduledStart": "2026-08-08T18:00:00+00:00",
+      "awayEntryNumber": 4,
+      "homeEntryNumber": 6,
+      "lateArrivalStatus": null,
+      "originalScheduledStart": "2026-08-08T18:00:00+00:00"
+    },
+    {
+      "result": {
+        "away": 3,
+        "home": 1
+      },
+      "lineage": [
+        "official_result"
+      ],
+      "outcome": "MIRROR_SPORTING_RESULT",
+      "venueLabel": "Pista Demo Liga",
+      "roundNumber": 3,
+      "exceptionType": "none",
+      "partialResult": null,
+      "scheduledStart": "2026-08-09T18:00:00+00:00",
+      "awayEntryNumber": 3,
+      "homeEntryNumber": 1,
+      "lateArrivalStatus": null,
+      "originalScheduledStart": "2026-08-09T18:00:00+00:00"
+    },
+    {
+      "result": {
+        "away": 0,
+        "home": 2
+      },
+      "lineage": [
+        "official_result"
+      ],
+      "outcome": "MIRROR_SPORTING_RESULT",
+      "venueLabel": "Pista Demo Liga",
+      "roundNumber": 4,
+      "exceptionType": "none",
+      "partialResult": null,
+      "scheduledStart": "2026-08-10T18:00:00+00:00",
+      "awayEntryNumber": 2,
+      "homeEntryNumber": 1,
+      "lateArrivalStatus": null,
+      "originalScheduledStart": "2026-08-10T18:00:00+00:00"
+    },
+    {
+      "result": {
+        "away": 0,
+        "home": 3
+      },
+      "lineage": [
+        "official_result"
+      ],
+      "outcome": "NO_SHOW",
+      "venueLabel": "Pista Demo Liga",
+      "roundNumber": 4,
+      "exceptionType": "no_show",
+      "partialResult": null,
+      "scheduledStart": "2026-08-11T18:00:00+00:00",
+      "awayEntryNumber": 5,
+      "homeEntryNumber": 4,
+      "lateArrivalStatus": null,
+      "originalScheduledStart": "2026-08-11T18:00:00+00:00"
+    },
+    {
+      "result": {
+        "away": 1,
+        "home": 2
+      },
+      "lineage": [
+        "official_result"
+      ],
+      "outcome": "MIRROR_SPORTING_RESULT",
+      "venueLabel": "Pista Demo Liga",
+      "roundNumber": 4,
+      "exceptionType": "none",
+      "partialResult": null,
+      "scheduledStart": "2026-08-12T18:00:00+00:00",
+      "awayEntryNumber": 6,
+      "homeEntryNumber": 3,
+      "lateArrivalStatus": null,
+      "originalScheduledStart": "2026-08-12T18:00:00+00:00"
+    },
+    {
+      "result": {
+        "away": 2,
+        "home": 1
+      },
+      "lineage": [
+        "official_result"
+      ],
+      "outcome": "MIRROR_SPORTING_RESULT",
+      "venueLabel": "Pista Demo Liga",
+      "roundNumber": 5,
+      "exceptionType": "none",
+      "partialResult": null,
+      "scheduledStart": "2026-08-13T18:00:00+00:00",
+      "awayEntryNumber": 4,
+      "homeEntryNumber": 2,
+      "lateArrivalStatus": null,
+      "originalScheduledStart": "2026-08-13T18:00:00+00:00"
+    },
+    {
+      "result": {
+        "away": 0,
+        "home": 3
+      },
+      "lineage": [
+        "official_result"
+      ],
+      "outcome": "MIRROR_SPORTING_RESULT",
+      "venueLabel": "Pista Demo Liga",
+      "roundNumber": 5,
+      "exceptionType": "none",
+      "partialResult": null,
+      "scheduledStart": "2026-08-14T18:00:00+00:00",
+      "awayEntryNumber": 3,
+      "homeEntryNumber": 5,
+      "lateArrivalStatus": null,
+      "originalScheduledStart": "2026-08-14T18:00:00+00:00"
+    },
+    {
+      "result": {
+        "away": 2,
+        "home": 2
+      },
+      "lineage": [
+        "suspension",
+        "resumption",
+        "official_result"
+      ],
+      "outcome": "MIRROR_SPORTING_RESULT",
+      "venueLabel": "Pista Demo Liga",
+      "roundNumber": 5,
+      "exceptionType": "suspended_resumed",
+      "partialResult": {
+        "away": 1,
+        "home": 1,
+        "minute": 38
+      },
+      "scheduledStart": "2026-08-17T18:00:00+00:00",
+      "awayEntryNumber": 1,
+      "homeEntryNumber": 6,
+      "lateArrivalStatus": null,
+      "originalScheduledStart": "2026-08-15T18:00:00+00:00"
+    }
+  ],
+  "standings": [
+    {
+      "wins": 3,
+      "draws": 1,
+      "losses": 1,
+      "played": 5,
+      "goalsFor": 9,
+      "position": 1,
+      "entryNumber": 4,
+      "goalsAgainst": 6,
+      "goalDifference": 3,
+      "effectivePoints": 10
+    },
+    {
+      "wins": 3,
+      "draws": 1,
+      "losses": 1,
+      "played": 5,
+      "goalsFor": 8,
+      "position": 2,
+      "entryNumber": 5,
+      "goalsAgainst": 5,
+      "goalDifference": 3,
+      "effectivePoints": 10
+    },
+    {
+      "wins": 3,
+      "draws": 1,
+      "losses": 1,
+      "played": 5,
+      "goalsFor": 9,
+      "position": 3,
+      "entryNumber": 3,
+      "goalsAgainst": 7,
+      "goalDifference": 2,
+      "effectivePoints": 10
+    },
+    {
+      "wins": 1,
+      "draws": 2,
+      "losses": 2,
+      "played": 5,
+      "goalsFor": 10,
+      "position": 4,
+      "entryNumber": 6,
+      "goalsAgainst": 10,
+      "goalDifference": 0,
+      "effectivePoints": 5
+    },
+    {
+      "wins": 1,
+      "draws": 1,
+      "losses": 3,
+      "played": 5,
+      "goalsFor": 5,
+      "position": 5,
+      "entryNumber": 1,
+      "goalsAgainst": 8,
+      "goalDifference": -3,
+      "effectivePoints": 4
+    },
+    {
+      "wins": 1,
+      "draws": 0,
+      "losses": 4,
+      "played": 5,
+      "goalsFor": 4,
+      "position": 6,
+      "entryNumber": 2,
+      "goalsAgainst": 9,
+      "goalDifference": -5,
+      "effectivePoints": 3
+    }
+  ],
+  "matchCount": 15,
+  "roundCount": 5,
+  "operationReceipts": {
+    "scheduling": 5,
+    "matchOperations": 266,
+    "operationalExceptions": 13
+  },
+  "database": "temporary-local-postgresql",
+  "generatedAt": "2026-08-25T10:00:00.000Z",
+  "migrationCount": 141,
+  "remoteWrites": 0,
+  "rpcFamilies": [
+    "R1",
+    "R4A",
+    "R4B",
+    "R4C",
+    "R4D"
+  ],
+  "version": 1,
+  "authorityHash": "9b91cedf18c725086da0fe37abf7c38c9ef8ae690179650b76414b5b69c769c1"
+}
