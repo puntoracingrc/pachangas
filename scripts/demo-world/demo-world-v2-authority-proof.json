@@ -1116,7 +1116,7 @@
   },
   "database": "temporary-local-postgresql",
   "generatedAt": "2026-08-25T10:00:00.000Z",
-  "migrationCount": 146,
+  "migrationCount": 147,
   "remoteWrites": 0,
   "rpcFamilies": [
     "R1",
@@ -1127,5 +1127,5 @@
     "R5"
   ],
   "version": 2,
-  "authorityHash": "0ca037a292e643bebd9738e1ae072f776e7e1ecc29da776f9291435b7b35fa6b"
+  "authorityHash": "f833b84f08aa859b14e31a4c11b676b996f8c80ae0813727467f2ae23d6849f9"
 }
