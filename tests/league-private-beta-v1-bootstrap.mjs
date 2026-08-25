@@ -21,6 +21,7 @@ const betaMigrations = [
   "20260825074304_league_private_beta_schema_v1.sql",
   "20260825074353_league_private_beta_commands_v1.sql",
   "20260825074358_league_private_beta_access_v1.sql",
+  "20260825102400_league_private_beta_fk_indexes_v1.sql",
 ];
 
 if (!adminUrl) throw new Error("LEAGUE_PRIVATE_BETA_DATABASE_URL is required");
@@ -31,8 +32,8 @@ if (!["127.0.0.1", "localhost", "::1", "[::1]"].includes(new URL(adminUrl).hostn
 const migrationNames = readdirSync(resolve(root, "supabase/migrations"))
   .filter((name) => /^\d{14}_.+\.sql$/.test(name))
   .sort();
-assert.equal(migrationNames.length, 139);
-assert.deepEqual(migrationNames.slice(-3), betaMigrations);
+assert.equal(migrationNames.length, 140);
+assert.deepEqual(migrationNames.slice(-betaMigrations.length), betaMigrations);
 const incrementals = migrationNames.filter((name) => name.slice(0, 14) > manifest.absorbsThrough);
 const preBetaIncrementals = incrementals.filter((name) => !betaMigrations.includes(name));
 assert.equal(migrationNames.filter((name) => !betaMigrations.includes(name)).length, 136);
@@ -142,7 +143,7 @@ try {
   provision(upgradeName);
 
   const baseline = resolve(root, manifest.baselinePath);
-  apply(freshName, [baseline, ...incrementals.map((name) => resolve(root, "supabase/migrations", name))], "fresh 139 bootstrap");
+  apply(freshName, [baseline, ...incrementals.map((name) => resolve(root, "supabase/migrations", name))], "fresh 140 bootstrap");
   apply(upgradeName, [baseline, ...preBetaIncrementals.map((name) => resolve(root, "supabase/migrations", name))], "prepare exact 136 ledger");
   assert.equal(query(upgradeName, "select to_regclass('private.pachanga_league_private_beta_wizards') is null"), "t");
   apply(upgradeName, betaMigrations.map((name) => resolve(root, "supabase/migrations", name)), "upgrade 136 to beta");
@@ -169,9 +170,9 @@ try {
   assert.equal(normalizedSchema(upgradeSchemaDump), normalizedSchema(freshSchemaDump), "Fresh and upgraded beta schemas diverged");
 
   process.stdout.write(`${JSON.stringify({
-    betaMigrations: 3,
+    betaMigrations: 4,
     flagsOff: true,
-    freshLedger: 139,
+    freshLedger: 140,
     productRows: 0,
     schemasEqual: true,
     upgradeFromLedger: 136,

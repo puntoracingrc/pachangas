@@ -14,6 +14,7 @@ const paths = {
   access: "supabase/migrations/20260825074358_league_private_beta_access_v1.sql",
   commands: "supabase/migrations/20260825074353_league_private_beta_commands_v1.sql",
   databaseSuite: "tests/league-private-beta-v1-db.sql",
+  indexes: "supabase/migrations/20260825102400_league_private_beta_fk_indexes_v1.sql",
   schema: "supabase/migrations/20260825074304_league_private_beta_schema_v1.sql",
 } as const;
 
@@ -143,6 +144,19 @@ test("RLS and grants expose reads and RPCs without direct canonical writes", asy
   assert.doesNotMatch(sql, /grant (?:insert|update|delete|all) on table (?:public|private)\.pachanga_league_private_beta_[^;]+ to authenticated/i);
   assert.match(commands, /grant execute on function public\.command_pachanga_league_private_beta_v1/);
   assert.match(commands, /grant execute on function public\.command_pachanga_league_private_beta_platform_v1/);
+});
+
+test("every productization foreign key reported by staging advisors has a covering index", async () => {
+  const indexes = await source(paths.indexes);
+  for (const column of [
+    "actor_id",
+    "competition_id",
+    "organizer_club_id",
+    "organizer_group_id",
+    "wizard_id",
+  ]) assert.match(indexes, new RegExp(`\\(${column}\\)`));
+  assert.equal((indexes.match(/create index if not exists/g) ?? []).length, 8);
+  assert.doesNotMatch(indexes, /insert|update|delete|league_private_beta_enabled\s*=/i);
 });
 
 test("API accepts semantic intent only, is no-store and carries no service role", async () => {

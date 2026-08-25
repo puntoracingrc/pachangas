@@ -25,7 +25,7 @@ const migrations = readdirSync(resolve(root, "supabase/migrations"))
   .filter((name) => /^\d{14}_.+\.sql$/.test(name))
   .sort()
   .filter((name) => name.slice(0, 14) > manifest.absorbsThrough);
-assert.equal(migrations.length + 36, 139);
+assert.equal(migrations.length + 36, 140);
 
 const ownerId = "bc010000-0000-4000-8000-000000000001";
 const platformId = "bc010000-0000-4000-8000-000000000002";

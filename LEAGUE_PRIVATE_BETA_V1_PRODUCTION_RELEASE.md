@@ -13,6 +13,7 @@
 1. `20260825074304_league_private_beta_schema_v1.sql`
 2. `20260825074353_league_private_beta_commands_v1.sql`
 3. `20260825074358_league_private_beta_access_v1.sql`
+4. `20260825102400_league_private_beta_fk_indexes_v1.sql`
 
 They are forward-only units installed after the existing 136-entry ledger. The
 schema reuses canonical Competition entitlements and R1/R4A-R4D entities; it
@@ -31,7 +32,7 @@ does not create a parallel League engine or initialize legacy backfill.
   focal finding.
 - SQL/RLS/idempotency/adversarial: PASS on a temporary local PostgreSQL 17
   database.
-- Bootstrap and upgrade: PASS; exact 136 -> 139 ledger and fresh/upgraded
+- Bootstrap and upgrade: PASS; exact 136 -> 140 ledger and fresh/upgraded
   schemas are equivalent.
 - Concurrency: PASS for replay, competing creates, competing step writes, and
   competing revocations.
@@ -74,3 +75,4 @@ release is closed.
 | --- | --- | --- | --- | --- |
 | LPB-001 | PRODUCT_BUG | Two platform operators raced to revoke the same active beta bundle. Both calls failed because the RPC variable `bundle_id` was ambiguous with the entitlement column. | fixed + regression_verified | `tests/league-private-beta-v1-concurrency.mjs` repeats the two-client revocation and requires one canonical effect plus one explicit stale conflict. |
 | LPB-002 | PRODUCT_BUG | Platform bundles and private organizer/wizard lists were not all bounded, so their read models could grow indefinitely. | fixed + regression_verified | SQL now caps each list at 100 with stable ordering; `tests/league-private-beta-v1-scale.sql` verifies 120 bundles produce a bounded response and accurate global metrics. |
+| LPB-003 | TESTABILITY_GAP | Staging advisor readback exposed eight new foreign keys without dedicated covering indexes before the product had representative traffic. | fixed + regression_verified | A forward-only fourth migration adds all eight indexes; static coverage and a repeated staging advisor readback verify the original warnings disappear. |
