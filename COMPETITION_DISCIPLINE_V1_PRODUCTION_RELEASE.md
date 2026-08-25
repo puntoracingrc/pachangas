@@ -59,6 +59,7 @@ sigue `false`.
 | Demo V2.1 + hotfix de servicio | PR [#192](https://github.com/puntoracingrc/pachangas/pull/192), merge `f96b49d06d43725abdec8ef4fc6b1a0d9e69be0d` |
 | Calendario publico | PR [#193](https://github.com/puntoracingrc/pachangas/pull/193), merge `30a4fef063e99c2757ab7c676c033d05ffb36dda` |
 | Cierre ACL R5 | PR [#194](https://github.com/puntoracingrc/pachangas/pull/194), merge `0401a127ebd910ccad799b466ad3327782067b37` |
+| Cierre documental | PR [#195](https://github.com/puntoracingrc/pachangas/pull/195), solo cuatro informes Markdown |
 | Deployment productivo final de codigo | `dpl_DEugDYDWVWYAnkKehr3syFHmqEnx` |
 | Artefacto | `pachangas-l1qw0r10v-persianas-almar-web-s-projects.vercel.app` |
 | Dominio | [pachangasiq.com](https://pachangasiq.com) |
