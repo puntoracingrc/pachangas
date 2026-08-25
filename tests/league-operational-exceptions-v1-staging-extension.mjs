@@ -91,6 +91,7 @@ export async function runLeagueOperationalExceptionsStagingExtension({
   ownerADevice2,
   outsiderClient,
   platform,
+  privateBeta = false,
   rpc,
   staffA,
   waitForSubscription,
@@ -179,9 +180,15 @@ export async function runLeagueOperationalExceptionsStagingExtension({
   const protectedBefore = await protectedCounts();
   const stories = [];
   try {
-    await setR4c(Object.fromEntries(R4C_FLAG_KEYS.map((key) => [key, true])), "R4D staging dependency window");
+    await setR4c(Object.fromEntries(R4C_FLAG_KEYS.map((key) => [
+      key,
+      privateBeta && key === "publicStandingsEnabled" ? false : true,
+    ])), "R4D staging dependency window");
     r4cEnabled = true;
-    await setR4d(Object.fromEntries(R4D_FLAG_KEYS.map((key) => [key, true])), "R4D authenticated staging window");
+    await setR4d(Object.fromEntries(R4D_FLAG_KEYS.map((key) => [
+      key,
+      privateBeta && key === "publicExceptionStatusEnabled" ? false : true,
+    ])), "R4D authenticated staging window");
     r4dEnabled = true;
 
     const contexts = await fixtureAdmin.from("pachanga_competition_match_contexts")
@@ -306,12 +313,20 @@ export async function runLeagueOperationalExceptionsStagingExtension({
       payload: { publicSummary: "Sede alternativa confirmada.", reasonCode: "PITCH_UNAVAILABLE", venueLabel: "R4D QA Venue", venueStatus: "LABEL" },
     });
     assert.equal(receipt.snapshot.context.venueLabel, "R4D QA Venue");
-    const publicVenue = await rpc(anonymousFactory(), "get_pachanga_public_league_fixture_status_v1", {
+    const publicVenueResult = await anonymousFactory().rpc("get_pachanga_public_league_fixture_status_v1", {
       target_canonical_match_id: venue.canonical_match_id,
       target_competition_id: created.competitionId,
     });
-    assert.equal(publicVenue.effectiveSchedule.venueLabel, "R4D QA Venue");
-    assert.doesNotMatch(JSON.stringify(publicVenue), /reasonText|evidence|reportedBy|decidedBy/i);
+    if (privateBeta) {
+      expectError(publicVenueResult, /LEAGUE_PUBLIC_EXCEPTION_STATUS_DISABLED/, "42501");
+    } else {
+      if (publicVenueResult.error) throw publicVenueResult.error;
+      assert.equal(publicVenueResult.data.effectiveSchedule.venueLabel, "R4D QA Venue");
+      assert.doesNotMatch(
+        JSON.stringify(publicVenueResult.data),
+        /reasonText|evidence|reportedBy|decidedBy/i,
+      );
+    }
     stories.push("venue_change");
 
     const late = fixtures[4];

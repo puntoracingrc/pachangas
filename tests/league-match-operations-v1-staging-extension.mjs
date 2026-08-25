@@ -99,6 +99,7 @@ export async function runLeagueMatchOperationsStagingExtension({
   ownerADevice2,
   outsiderClient,
   platform,
+  privateBeta = false,
   rpc,
   stage,
   staffA,
@@ -120,12 +121,15 @@ export async function runLeagueMatchOperationsStagingExtension({
     return result.data;
   }
 
-  const allEnabled = Object.fromEntries(FLAG_KEYS.map((key) => [key, true]));
+  const allEnabled = Object.fromEntries(FLAG_KEYS.map((key) => [
+    key,
+    privateBeta && key === "publicStandingsEnabled" ? false : true,
+  ]));
   let flagsEnabled = false;
   try {
     const enabled = await setFlags(allEnabled, "R4C authenticated staging window");
     flagsEnabled = true;
-    for (const key of FLAG_KEYS) assert.equal(enabled.snapshot[key], true);
+    for (const key of FLAG_KEYS) assert.equal(enabled.snapshot[key], allEnabled[key]);
 
     const contextsResult = await fixtureAdmin
       .from("pachanga_competition_match_contexts")
@@ -263,6 +267,24 @@ export async function runLeagueMatchOperationsStagingExtension({
         },
       });
       revision = receipt.confirmedRevision;
+      if (privateBeta) {
+        for (let memberIndex = 1; memberIndex < snapshot.eligibleRoster.home.length; memberIndex += 1) {
+          receipt = await operationOk(home.teamClient, metadata, {
+            action: "squad.member.add",
+            aggregateId: fixture.id,
+            expectedRevision: revision,
+            payload: {
+              memberRole: "STARTER",
+              positionOrder: memberIndex + 1,
+              reason: "League Private Beta home starter",
+              rosterMemberId: snapshot.eligibleRoster.home[memberIndex].rosterMemberId,
+              shirtNumber: memberIndex + 10,
+              squadId: homeSquadId,
+            },
+          });
+          revision = receipt.confirmedRevision;
+        }
+      }
       receipt = await operationOk(home.teamClient, metadata, {
         action: "squad.submit",
         aggregateId: fixture.id,
@@ -322,6 +344,24 @@ export async function runLeagueMatchOperationsStagingExtension({
         },
       });
       revision = receipt.confirmedRevision;
+      if (privateBeta) {
+        for (let memberIndex = 1; memberIndex < snapshot.eligibleRoster.away.length; memberIndex += 1) {
+          receipt = await operationOk(away.teamClient, metadata, {
+            action: "squad.member.add",
+            aggregateId: fixture.id,
+            expectedRevision: revision,
+            payload: {
+              memberRole: "STARTER",
+              positionOrder: memberIndex + 1,
+              reason: "League Private Beta away starter",
+              rosterMemberId: snapshot.eligibleRoster.away[memberIndex].rosterMemberId,
+              shirtNumber: memberIndex + 20,
+              squadId: awaySquadId,
+            },
+          });
+          revision = receipt.confirmedRevision;
+        }
+      }
       receipt = await operationOk(away.teamClient, metadata, {
         action: "squad.submit",
         aggregateId: fixture.id,
@@ -810,13 +850,18 @@ export async function runLeagueMatchOperationsStagingExtension({
     ]);
 
     const anonymous = anonymousFactory();
-    const publicStandings = await rpc(anonymous, "get_pachanga_public_league_standings_v1", {
+    const publicStandingsResult = await anonymous.rpc("get_pachanga_public_league_standings_v1", {
       target_competition_id: created.competitionId,
       target_division_id: division.id,
       target_group_id: competitionGroup.id,
       target_stage_id: stage.id,
     });
-    assert.equal(publicStandings.snapshot.rows.length, 6);
+    if (privateBeta) {
+      expectError(publicStandingsResult, /LEAGUE_PUBLIC_STANDINGS_DISABLED/, "42501");
+    } else {
+      if (publicStandingsResult.error) throw publicStandingsResult.error;
+      assert.equal(publicStandingsResult.data.snapshot.rows.length, 6);
+    }
 
     const firstRoundResult = await fixtureAdmin
       .from("pachanga_competition_rounds")

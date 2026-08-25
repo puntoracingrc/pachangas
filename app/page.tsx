@@ -10815,6 +10815,11 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
                   <small>Season Score oficial y posición publicada</small>
                   <b aria-hidden="true">›</b>
                 </a>
+                <a className="profile-notifications-link" href="/ligas">
+                  <span>Ligas (Beta)</span>
+                  <small>Competiciones privadas por invitación</small>
+                  <b aria-hidden="true">›</b>
+                </a>
               </>
             ) : null}
             {!ownPlayer && selectedPlayer && !selectedPlayer.ownerUserId && hasRealTeam && isRegisteredUser ? (
@@ -11307,6 +11312,9 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
                 </Link>
                 <Link href="/mercado">
                   <span>Mercado</span><small>Jugadores disponibles y partidos abiertos</small><b aria-hidden="true">›</b>
+                </Link>
+                <Link href="/ligas">
+                  <span>Ligas (Beta)</span><small>Mis Ligas y acceso de organizador</small><b aria-hidden="true">›</b>
                 </Link>
               </div>
 
