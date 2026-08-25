@@ -108,13 +108,15 @@ insert into r5_invariants values
 select pg_temp.r5_assert(
   (select count(*) = 3
    from jsonb_array_elements((select card_type_catalog
-     from public.pachanga_competition_discipline_rule_catalogs)) cards),
+     from public.pachanga_competition_discipline_rule_catalogs
+     where competition_id = 'c4200000-0000-4000-8000-000000000001')) cards),
   'catalog must expose YELLOW, RED and BLUE'
 );
 select pg_temp.r5_assert(
   (select array_agg(cards ->> 'code' order by cards ->> 'code') = array['BLUE','RED','YELLOW']
    from jsonb_array_elements((select card_type_catalog
-     from public.pachanga_competition_discipline_rule_catalogs)) cards),
+     from public.pachanga_competition_discipline_rule_catalogs
+     where competition_id = 'c4200000-0000-4000-8000-000000000001')) cards),
   'card semantics must come from RuleRevision catalog'
 );
 

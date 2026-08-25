@@ -55,7 +55,7 @@ test("Demo World V2 is deterministic and the committed snapshot matches its hash
     players: committed.players,
   };
   assert.equal(createHash("sha256").update(JSON.stringify(payload)).digest("hex"), committed.manifest.hash);
-  assert.equal(committed.manifest.hash, "f6603605183f1446371ef55b97e7020909fcc91f81533e51e7860f869ca81b3b");
+  assert.equal(committed.manifest.hash, "f68d9279271275afc262b144cb7784957b5a9606e5fd74df02907ef45f5c1886");
   assert.equal(committed.manifest.seed, DEMO_WORLD_V2_SEED);
   assert.deepEqual(demoWorldV2IntegrityErrors(committed), []);
 });
@@ -63,13 +63,14 @@ test("Demo World V2 is deterministic and the committed snapshot matches its hash
 test("the committed authority proof comes from deterministic PostgreSQL operations", async () => {
   const proof = assertDemoWorldV2AuthorityProof(loadDemoWorldV2AuthorityProof());
   const world = await committedSnapshot();
-  assert.equal(proof.authorityHash, "9b91cedf18c725086da0fe37abf7c38c9ef8ae690179650b76414b5b69c769c1");
+  assert.equal(proof.authorityHash, "0ca037a292e643bebd9738e1ae072f776e7e1ecc29da776f9291435b7b35fa6b");
   assert.equal(proof.authorityHash, world.competitions.provenance.authorityHash);
   assert.equal(proof.database, "temporary-local-postgresql");
-  assert.equal(proof.migrationCount, 141);
+  assert.equal(proof.migrationCount, 146);
   assert.equal(proof.remoteWrites, 0);
-  assert.deepEqual(proof.rpcFamilies, ["R1", "R4A", "R4B", "R4C", "R4D"]);
+  assert.deepEqual(proof.rpcFamilies, ["R1", "R4A", "R4B", "R4C", "R4D", "R5"]);
   assert.deepEqual(proof.operationReceipts, {
+    discipline: 33,
     matchOperations: 266,
     operationalExceptions: 13,
     scheduling: 5,
@@ -92,7 +93,7 @@ test("the committed authority proof comes from deterministic PostgreSQL operatio
   );
 });
 
-test("the protagonist League has the complete canonical R1-R4D graph", async () => {
+test("the protagonist League has the complete canonical R1-R5 graph", async () => {
   const world = assertDemoWorldV2Snapshot(await committedSnapshot());
   const league = world.competitions;
   assert.equal(league.competition.name, "LIGA BARRIOS IQ 2026/27");
@@ -112,10 +113,47 @@ test("the protagonist League has the complete canonical R1-R4D graph", async () 
   assert.ok(originalRoundWindows.every((window, index) => (
     index === 0 || originalRoundWindows[index - 1]!.maximum < window.minimum
   )));
-  assert.deepEqual(league.provenance.rpcFamilies, ["R1", "R4A", "R4B", "R4C", "R4D"]);
+  assert.deepEqual(league.provenance.rpcFamilies, ["R1", "R4A", "R4B", "R4C", "R4D", "R5"]);
   assert.equal(league.provenance.verified, true);
-  assert.equal(league.provenance.migrations, 141);
+  assert.equal(league.provenance.migrations, 146);
   assert.equal(league.competition.refereeAssignmentsEnabled, false);
+});
+
+test("R5 discipline is canonical, sparse, calendar-aware and public-safe", async () => {
+  const world = await committedSnapshot();
+  const proof = loadDemoWorldV2AuthorityProof();
+  const discipline = world.competitions.disciplinePreview;
+  const events = discipline.events as Array<Record<string, unknown>>;
+  const sanctions = discipline.sanctions as Array<Record<string, unknown>>;
+  const serviceEvents = discipline.serviceEvents as Array<Record<string, unknown>>;
+  const cardCounts = events.reduce<Record<string, number>>((counts, event) => {
+    const code = String(event.cardTypeCode);
+    counts[code] = (counts[code] ?? 0) + 1;
+    return counts;
+  }, {});
+  assert.deepEqual(cardCounts, { BLUE: 2, RED: 2, YELLOW: 16 });
+  assert.equal(sanctions.length, 4);
+  assert.equal(serviceEvents.length, 2);
+  assert.deepEqual(discipline.appeals, []);
+  assert.equal(events.filter((event) => Number(event.revisionVersion) > 1).length, 1);
+  assert.ok(sanctions.some((sanction) => sanction.status === "served" && sanction.totalUnits === 1 && sanction.remainingUnits === 0));
+  assert.ok(sanctions.some((sanction) => sanction.status === "active" && sanction.publicSummary === "Sanción confirmada"));
+  assert.deepEqual(
+    (discipline.eligibilityTimeline as Array<Record<string, unknown>>).map(({ primaryAvailable, selectedSlot }) => ({ primaryAvailable, selectedSlot })),
+    [
+      { primaryAvailable: true, selectedSlot: "primary" },
+      { primaryAvailable: true, selectedSlot: "primary" },
+      { primaryAvailable: true, selectedSlot: "primary" },
+      { primaryAvailable: false, selectedSlot: "alternate" },
+      { primaryAvailable: true, selectedSlot: "primary" },
+    ],
+  );
+  assert.deepEqual(proof.discipline.appeals.map(({ status }) => status), ["modified", "upheld"]);
+  assert.ok(Object.values(world.competitions.matchDisciplinePreviews).every((preview) => (
+    Array.isArray(preview.events) && Array.isArray(preview.sanctions)
+      && Array.isArray(preview.appeals) && preview.appeals.length === 0
+  )));
+  assert.doesNotMatch(JSON.stringify(discipline), /privateReason|evidenceRefs|appellant|decisionFactors|operationId/i);
 });
 
 test("the independent standings oracle reconstructs the official snapshot", async () => {
@@ -191,26 +229,40 @@ test("V2 chunks stay lazy, GET-only and converge to the validated snapshot", asy
 });
 
 test("the public Demo uses production renderers in one shell and exposes all V2 tabs", async () => {
-  const [appSource, scheduleSource, matchSource, clubSource, demoStyles] = await Promise.all([
+  const [appSource, disciplineSource, disciplineStyles, scheduleSource, matchSource, clubSource, demoStyles] = await Promise.all([
     readFile(path.join(root, "app/demo-world/demo-world-app.tsx"), "utf8"),
+    readFile(path.join(root, "app/_components/competition-discipline-client.tsx"), "utf8"),
+    readFile(path.join(root, "app/_components/competition-discipline-client.module.css"), "utf8"),
     readFile(path.join(root, "app/_components/league-scheduling-client.tsx"), "utf8"),
     readFile(path.join(root, "app/_components/league-match-operations-client.tsx"), "utf8"),
     readFile(path.join(root, "app/clubes/[slug]/public-club-profile.tsx"), "utf8"),
     readFile(path.join(root, "app/demo-world/demo-world.module.css"), "utf8"),
   ]);
-  for (const label of ["Liga", "Clasificación", "Jornadas", "Club", "Árbitros"]) assert.match(appSource, new RegExp(`label: "${label}"`));
+  for (const label of ["Liga", "Clasificación", "Jornadas", "Disciplina", "Club", "Árbitros"]) assert.match(appSource, new RegExp(`label: "${label}"`));
   assert.match(appSource, /LeagueSchedulingClient embedded/);
+  assert.match(appSource, /onOpenMatch=\{\(canonicalMatchId\)/);
+  assert.match(appSource, /entry\.canonicalMatchId === canonicalMatchId/);
   assert.match(appSource, /LeagueMatchOperationsClient embedded/);
+  assert.match(appSource, /CompetitionDisciplineClient competitionId=.*embedded.*surface="public"/);
+  assert.match(appSource, /disciplinePreviewData=\{selectedLeagueMatchDisciplinePreview\}/);
+  assert.match(matchSource, /disciplineAvailable=\{Boolean\(props\.disciplinePreviewData\)\}/);
+  assert.match(matchSource, /disciplineAvailable \? "Disciplina R5" : "Disciplina oficial"/);
+  assert.doesNotMatch(matchSource, /no disponible hasta R5/);
   assert.match(appSource, /PublicClubProfile club=.*embedded/);
   assert.match(appSource, /RefereeProfileCard compact/);
   assert.doesNotMatch(appSource, /DemoLeagueTable|DemoLeagueMatch/);
   assert.match(scheduleSource, /embedded \? content : <OfficialProductShellV2/);
   assert.match(matchSource, /embedded[\s\S]*\? content/);
+  assert.match(disciplineSource, /preview=\{Boolean\(previewData\)\}/);
+  assert.match(disciplineStyles, /\.eventRows article \{ grid-template-columns: 16px minmax\(0, 1fr\) minmax\(86px, auto\); \}/);
+  assert.match(disciplineStyles, /\.eventRows article > span:nth-of-type\(3\) \{ display: none; \}/);
+  assert.doesNotMatch(disciplineStyles, /span:nth-of-type\(2\),\s*\n\s*\.eventRows article > span:nth-of-type\(3\)/);
   assert.match(clubSource, /embedded \? content/);
   assert.match(demoStyles, /\.leagueHero \{ min-height: calc\(100dvh - var\(--game-nav-height, 48px\) - 36px\)/);
   assert.match(demoStyles, /\.demoProductView \{[\s\S]*--official-text: #f1f6f2;/);
   assert.match(demoStyles, /\.demoProductView \.demoDomainHeading h1 \{[\s\S]*color: var\(--official-text\);/);
   assert.equal(demoWorldV2TabFromSearch("?tab=clasificacion"), "clasificacion");
+  assert.equal(demoWorldV2TabFromSearch("?tab=disciplina"), "disciplina");
   assert.equal(demoWorldV2TabFromSearch("?tab=desconocido"), "inicio");
 });
 

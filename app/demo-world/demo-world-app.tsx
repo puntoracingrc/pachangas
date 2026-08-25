@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { CompetitionDisciplineClient } from "../_components/competition-discipline-client";
 import { LeagueMatchOperationsClient } from "../_components/league-match-operations-client";
 import { LeagueSchedulingClient } from "../_components/league-scheduling-client";
 import { PlayerCosmeticCard } from "../_components/player-cosmetic-card";
@@ -66,6 +67,7 @@ const leagueTabs: Array<{ id: DemoWorldV2PrimaryTab; label: string }> = [
   { id: "liga", label: "Liga" },
   { id: "clasificacion", label: "Clasificación" },
   { id: "jornadas", label: "Jornadas" },
+  { id: "disciplina", label: "Disciplina" },
   { id: "club", label: "Club" },
   { id: "arbitros", label: "Árbitros" },
 ];
@@ -982,6 +984,9 @@ export function DemoWorldApp({ manifest }: { manifest: DemoWorldV2Manifest }) {
   const selectedLeagueMatchPreview = selectedLeagueMatchId
     ? snapshot?.competitions.matchPreviews[selectedLeagueMatchId] ?? null
     : null;
+  const selectedLeagueMatchDisciplinePreview = selectedLeagueMatchId
+    ? snapshot?.competitions.matchDisciplinePreviews[selectedLeagueMatchId] ?? null
+    : null;
   const notifications = world.activity.notifications;
 
   function updateSession(next: (current: DemoWorldSessionState) => DemoWorldSessionState) {
@@ -1068,14 +1073,18 @@ export function DemoWorldApp({ manifest }: { manifest: DemoWorldV2Manifest }) {
       <div className={styles.content}>
         {activeTab === "inicio" ? <WorldHome currentPlayer={currentPlayer} currentTeam={currentTeam} notifications={notifications} onMatch={openMatch} onPlayer={setSelectedPlayerId} onTab={navigate} perspective={perspective} snapshot={world} teamMatches={teamMatches} /> : null}
         {activeTab !== "inicio" && !snapshot ? <div className={styles.secondaryLoading} role="status"><span className={styles.loadingMark}>IQ</span><strong>{loadingFullWorld ? "Cargando esta sección" : "Preparando datos"}</strong><p>Solo descargamos el dominio que acabas de abrir.</p></div> : null}
-        {snapshot && activeTab === "partido" && selectedLeagueMatchPreview ? <div className={styles.demoProductView} data-demo-domain="league-match"><LeagueMatchOperationsClient embedded previewData={selectedLeagueMatchPreview} surface="match" /></div> : null}
+        {snapshot && activeTab === "partido" && selectedLeagueMatchPreview ? <div className={styles.demoProductView} data-demo-domain="league-match"><LeagueMatchOperationsClient disciplinePreviewData={selectedLeagueMatchDisciplinePreview} embedded previewData={selectedLeagueMatchPreview} surface="match" /></div> : null}
         {snapshot && activeTab === "partido" && !selectedLeagueMatchPreview ? <MatchView currentPlayer={currentPlayer} currentTeam={currentTeam} key={perspective.id} match={selectedMatch} onLocalAttendance={(status) => { if (!selectedMatch) return; updateSession((current) => ({ ...current, attendanceByMatch: { ...current.attendanceByMatch, [selectedMatch.id]: status } })); setMessage(`Asistencia ${status === "voy" ? "confirmada" : status === "duda" ? "en duda" : "cancelada"} solo en esta sesión demo.`); }} onMatch={openMatch} onPlayer={setSelectedPlayerId} perspective={perspective} session={session} setMessage={setMessage} snapshot={snapshot} teamMatches={teamMatches} /> : null}
         {snapshot && activeTab === "mercado" ? <MarketView currentPlayer={currentPlayer} onMatch={openMatch} onPlayer={setSelectedPlayerId} onTeam={openTeam} perspective={perspective} setMessage={setMessage} snapshot={snapshot} /> : null}
         {snapshot && activeTab === "equipo" ? <TeamView currentTeam={currentTeam} onPlayer={setSelectedPlayerId} onTeam={setSelectedTeamId} selectedTeam={selectedTeam} snapshot={snapshot} /> : null}
         {snapshot && activeTab === "perfil" ? <ProfileView currentPlayer={currentPlayer} currentTeam={currentTeam} notifications={notifications} onEquipCosmetic={equipCosmetic} onOpenBox={openRewardBox} onPerspective={choosePerspective} onPlayer={setSelectedPlayerId} onRead={(notificationId) => updateSession((current) => ({ ...current, readNotificationIds: [...new Set([...current.readNotificationIds, notificationId])] }))} perspective={perspective} perspectives={world.core.perspectives} session={session} snapshot={snapshot} /> : null}
         {snapshot && activeTab === "liga" ? <LeagueOverviewView onClub={openClub} onMatch={openLeagueMatch} onTab={navigate} snapshot={snapshot} /> : null}
         {snapshot && activeTab === "clasificacion" ? <div className={styles.demoProductView} data-demo-domain="standings"><LeagueMatchOperationsClient embedded previewData={snapshot.competitions.standingsPreview} surface="standings" /></div> : null}
-        {snapshot && activeTab === "jornadas" ? <div className={styles.demoProductView} data-demo-domain="rounds"><LeagueSchedulingClient embedded previewData={snapshot.competitions.schedulePreview} surface="public" /></div> : null}
+        {snapshot && activeTab === "jornadas" ? <div className={styles.demoProductView} data-demo-domain="rounds"><LeagueSchedulingClient embedded onOpenMatch={(canonicalMatchId) => {
+          const match = snapshot.competitions.matches.find((entry) => entry.canonicalMatchId === canonicalMatchId);
+          if (match) openLeagueMatch(match.id);
+        }} previewData={snapshot.competitions.schedulePreview} surface="public" /></div> : null}
+        {snapshot && activeTab === "disciplina" ? <div className={styles.demoProductView} data-demo-domain="discipline"><CompetitionDisciplineClient competitionId={snapshot.competitions.competition.id} embedded previewData={snapshot.competitions.disciplinePreview} surface="public" /></div> : null}
         {snapshot && activeTab === "club" && selectedClub ? <DemoClubView club={selectedClub} clubs={snapshot.clubsReferees.clubs} onClub={setSelectedClubId} /> : null}
         {snapshot && activeTab === "arbitros" ? <DemoRefereesView referees={snapshot.clubsReferees.referees} /> : null}
       </div>

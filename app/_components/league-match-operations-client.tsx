@@ -148,7 +148,7 @@ function flagEnabled(data: LeagueMatchOperationsJson | null) {
   return leagueMatchBoolean(leagueMatchRecord(data?.flags).foundationEnabled);
 }
 
-function MatchScoreboard({ data }: { data: LeagueMatchOperationsJson }) {
+function MatchScoreboard({ data, disciplineAvailable }: { data: LeagueMatchOperationsJson; disciplineAvailable: boolean }) {
   const context = leagueMatchRecord(data.context);
   const home = leagueMatchRecord(data.homeEntry);
   const away = leagueMatchRecord(data.awayEntry);
@@ -168,7 +168,7 @@ function MatchScoreboard({ data }: { data: LeagueMatchOperationsJson }) {
       {statusChip(leagueMatchText(official.outcome) || context.status)}
     </div>
     <div className={styles.teamName} data-side="away"><strong>{leagueMatchText(away.name) || "Visitante"}</strong><small>VISITANTE</small></div>
-    <div className={styles.venue}><span>{leagueMatchText(context.venueLabel) || "Sede pendiente"}</span><small>Disciplina: no disponible hasta R5</small></div>
+    <div className={styles.venue}><span>{leagueMatchText(context.venueLabel) || "Sede pendiente"}</span><small>{disciplineAvailable ? "Disciplina R5" : "Disciplina oficial"}</small></div>
   </section>;
 }
 
@@ -554,7 +554,7 @@ export function LeagueMatchOperationsClient(props: Props) {
       {!loading && !data ? <section className={styles.emptyState}><strong>R4C no está disponible para este contexto</strong></section> : null}
       {data && !previewData && !flagEnabled(data) ? <ProductFeedback tone="info">League Match Operations está instalada pero inactiva.</ProductFeedback> : null}
       {data && surface === "match" ? <>
-        <MatchScoreboard data={data} />
+        <MatchScoreboard data={data} disciplineAvailable={Boolean(props.disciplinePreviewData)} />
         <div className={styles.matchWorkspace}>
           <nav className={styles.matchNav} aria-label="Secciones del partido">{tabs.map((tab) => <button aria-current={activeSection === tab.id ? "page" : undefined} key={tab.id} onClick={() => setActiveSection(tab.id)} type="button">{tab.label}</button>)}</nav>
           <div className={styles.matchContent}>

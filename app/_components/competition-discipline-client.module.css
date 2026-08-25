@@ -137,7 +137,7 @@
 }
 
 .sanctionGrid article,
-.playerGrid a {
+.playerGrid :is(a, .playerState) {
   min-width: 0;
   border: 1px solid var(--official-line);
   border-radius: 6px;
@@ -146,7 +146,7 @@
 }
 
 .sanctionGrid article > header,
-.playerGrid a > span {
+.playerGrid :is(a, .playerState) > span {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -156,10 +156,10 @@
 .sanctionGrid article > strong { display: block; margin-top: 10px; color: var(--official-accent-text); font-size: 1.15rem; }
 .sanctionGrid p { min-height: 2.6em; color: var(--official-muted); font-size: 0.74rem; }
 
-.playerGrid a { display: grid; gap: 8px; color: var(--official-text); text-decoration: none; }
+.playerGrid :is(a, .playerState) { display: grid; gap: 8px; color: var(--official-text); text-decoration: none; }
 .playerGrid a:hover { border-color: rgba(200, 239, 93, 0.58); }
-.playerGrid a > small { color: var(--official-muted); }
-.playerGrid a > div { display: flex; flex-wrap: wrap; gap: 10px; }
+.playerGrid :is(a, .playerState) > small { color: var(--official-muted); }
+.playerGrid :is(a, .playerState) > div { display: flex; flex-wrap: wrap; gap: 10px; }
 .playerGrid em { display: inline-flex; align-items: center; gap: 4px; font-size: 0.7rem; font-style: normal; }
 .playerGrid .cardMark { width: 8px; height: 12px; }
 
@@ -189,8 +189,7 @@
   .formGrid,
   .deskInputs { grid-template-columns: 1fr; }
   .wide { grid-column: auto; }
-  .eventRows article { grid-template-columns: 16px minmax(0, 1fr) auto; }
-  .eventRows article > span:nth-of-type(2),
+  .eventRows article { grid-template-columns: 16px minmax(0, 1fr) minmax(86px, auto); }
   .eventRows article > span:nth-of-type(3) { display: none; }
   .eventRows .actions { display: grid; }
   .appealRows article { grid-template-columns: 1fr; }

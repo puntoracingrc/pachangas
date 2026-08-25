@@ -24,6 +24,7 @@ const tabs: DemoWorldV2PrimaryTab[] = [
   "jornadas",
   "club",
   "arbitros",
+  "disciplina",
 ];
 
 async function loadChunk<T>(path: string): Promise<T> {

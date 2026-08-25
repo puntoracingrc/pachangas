@@ -65,6 +65,8 @@ begin
 end;
 $$;
 
+\ir demo-world-v2-discipline-operations.sql
+
 insert into public.pachanga_competition_entitlement_grants(
   organizer_kind, organizer_group_id, capability, grant_source, status,
   reason, granted_by
@@ -186,10 +188,12 @@ begin
     from public.pachanga_competition_entries entries
     join public.pachanga_groups groups on groups.id = entries.team_id
     where entries.id = match_row.away_entry_id;
-    select id into home_member from public.pachanga_competition_roster_members
-    where entry_id = match_row.home_entry_id;
-    select id into away_member from public.pachanga_competition_roster_members
-    where entry_id = match_row.away_entry_id;
+    select pg_temp.demo_v2_roster_member_for_match(
+      match_row.home_entry_id, match_row.canonical_match_id
+    ) into home_member;
+    select pg_temp.demo_v2_roster_member_for_match(
+      match_row.away_entry_id, match_row.canonical_match_id
+    ) into away_member;
 
     if match_row.ordinal = 3 then
       perform pg_temp.demo_v2_exception_command(
@@ -397,7 +401,17 @@ begin
           else '[]'::jsonb end
       )
     );
+    perform pg_temp.demo_v2_discipline_after_match(
+      match_row.id,
+      match_row.canonical_match_id,
+      match_row.round_number,
+      match_row.ordinal,
+      match_row.home_entry_id,
+      match_row.away_entry_id
+    );
   end loop;
+
+  perform pg_temp.demo_v2_discipline_finalize();
 
   if (select count(*) from public.pachanga_competition_match_contexts
       where competition_id = 'e4040000-0000-4000-8000-000000000001' and status = 'official') <> 15 then
@@ -407,6 +421,17 @@ begin
       join public.pachanga_competition_match_contexts contexts on contexts.id = decisions.competition_match_context_id
       where contexts.competition_id = 'e4040000-0000-4000-8000-000000000001') <> 15 then
     raise exception 'DEMO_WORLD_V2_OFFICIAL_RESULT_COUNT_INVALID';
+  end if;
+  if (select count(*) from public.pachanga_competition_disciplinary_events
+      where competition_id = 'e4040000-0000-4000-8000-000000000001') <> 20 then
+    raise exception 'DEMO_WORLD_V2_1_DISCIPLINE_EVENT_COUNT_INVALID';
+  end if;
+  if (select count(*) from public.pachanga_competition_sanctions
+      where competition_id = 'e4040000-0000-4000-8000-000000000001') <> 4 then
+    raise exception 'DEMO_WORLD_V2_1_SANCTION_COUNT_INVALID:%', (
+      select count(*) from public.pachanga_competition_sanctions
+      where competition_id = 'e4040000-0000-4000-8000-000000000001'
+    );
   end if;
 end;
 $demo$;

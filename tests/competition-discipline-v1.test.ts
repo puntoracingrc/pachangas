@@ -11,6 +11,7 @@ import { classifySupabaseWrite, isKnownClientWriteOperation } from "../app/pwa-w
 const root = new URL("../", import.meta.url);
 const paths = {
   access: "supabase/migrations/20260825165843_competition_discipline_access_v1.sql",
+  appealServiceAccounting: "supabase/migrations/20260825203500_competition_discipline_appeal_service_accounting_v1.sql",
   commands: "supabase/migrations/20260825165838_competition_discipline_commands_v1.sql",
   hardening: "supabase/migrations/20260825165849_competition_discipline_hardening_v1.sql",
   schema: "supabase/migrations/20260825165834_competition_discipline_schema_v1.sql",
@@ -66,6 +67,16 @@ test("card semantics are RuleRevision-bound and generic across yellow, red and t
   assert.match(commands, /endOnOpponentGoal/);
   assert.match(commands, /replacementPolicy/);
   assert.match(commands, /NO_SANCTION[\s\S]+FIXED_SANCTION[\s\S]+PROVISIONAL_SANCTION[\s\S]+COMMITTEE_REQUIRED[\s\S]+SANCTION_RANGE/);
+});
+
+test("appeal reductions preserve service already completed and canonical revision alignment", async () => {
+  const migration = await source(paths.appealServiceAccounting);
+  assert.match(migration, /decision_factors ->> 'appealOutcome'[\s\S]+<> 'modified'/);
+  assert.match(migration, /previous_row\.total_units[\s\S]+previous_row\.remaining_units/);
+  assert.match(migration, /new\.remaining_units := greatest\(coalesce\(new\.total_units, 0\) - served_units, 0\)/);
+  assert.match(migration, /new\.status := case when new\.remaining_units = 0 then 'served' else 'active' end/);
+  assert.match(migration, /new\.current_revision_id is not distinct from old\.current_revision_id/);
+  assert.match(migration, /new\.remaining_units := revision_row\.remaining_units/);
 });
 
 test("server command envelope owns actor, rules, counters, deadlines, sequence and idempotency", async () => {
@@ -155,6 +166,7 @@ test("PWA caches reads but blocks all R5 writes while offline", async () => {
   assert.match(client, /clientWriteFetch/);
   assert.match(client, /state === "SUBSCRIBED"/);
   assert.match(client, /loadCanonical\(token, userId, "realtime"\)/);
+  assert.match(client, /\["active", "blocked", "provisional", "suspended"\]/);
   assert.doesNotMatch(client, /setData\([^)]*payload\.new/);
 });
 
@@ -203,4 +215,26 @@ test("the explicit beta upgrade is reachable through canonical platform capabili
   assert.match(hardening, /pachanga_platform_require_v1\('competitions\.manage'\)/);
   assert.match(hardening, /pachanga_platform_require_v1\('flags\.write'\)/);
   assert.doesNotMatch(hardening, /pachanga_platform_require_v1\('entitlements\.write'\)/);
+});
+
+test("the R5 rollback bundle extends the historical public R4C fixture without changing it", async () => {
+  const [fixture, r5Fixture, databaseStory] = await Promise.all([
+    source("tests/league-match-operations-v1-fixture.sql"),
+    source("tests/competition-discipline-v1-fixture.sql"),
+    source("tests/competition-discipline-v1-db.sql"),
+  ]);
+  assert.match(fixture, /'R4C League 2027'[\s\S]+?'LEAGUE', 'public', 'draft'/);
+  assert.match(fixture, /'Senior', 'senior', 'FOOTBALL_7', 'public', 'active'/);
+  assert.equal(
+    (databaseStory.match(/from public\.pachanga_competition_discipline_rule_catalogs\s+where competition_id = 'c4200000-0000-4000-8000-000000000001'/g) ?? []).length,
+    2,
+  );
+  for (const capability of [
+    "competition_discipline_manage",
+    "competition_discipline_review",
+    "competition_appeals_manage",
+  ]) assert.match(r5Fixture, new RegExp(`'${capability}'`));
+  assert.doesNotMatch(fixture, /competition_discipline_manage|LEAGUE_PRIVATE_BETA_V1: R5 rollback fixture/);
+  assert.match(r5Fixture, /bundle_id = 'c4b00000-0000-4000-8000-000000000001'/);
+  assert.match(r5Fixture, /valid_from = '2026-01-01T00:00:00Z',[\s\S]+expires_at = '2099-12-31T23:59:59Z'/);
 });

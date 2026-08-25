@@ -2,7 +2,7 @@
 
 ## Estado
 
-`R5 LOCAL RELEASE CANDIDATE / PRIVATE BETA PENDIENTE DE PUBLICACION`
+`R5 ACTIVE / PRIVATE BETA / PUBLIC DISCIPLINE OFF`
 
 R5 extiende la autoridad canonica R1-R4D sin crear una segunda identidad de
 partido. Los hechos disciplinarios se enlazan con `CanonicalMatch`,
@@ -16,11 +16,13 @@ partido. Los hechos disciplinarios se enlazan con `CanonicalMatch`,
 | Cierre local | `2026-08-25T20:47:59+02:00` |
 | Base inicial | `30ac19ef3091c9668d52c182082cd5263955301d` |
 | Rama | `codex/competition-discipline-v1` |
+| Rama hotfix V2.1 | `codex/product-demo-parity-wave-3-release` |
 | Node | `v24.16.0` |
 | npm | `11.13.0` |
 | Supabase CLI | `2.107.0` |
 | Ledger base | `141` |
-| Ledger R5 previsto | `145` (`141 + 4`) |
+| Ledger R5 inicial | `145` (`141 + 4`) |
+| Ledger con hotfix V2.1 | `146` (`141 + 5`) |
 
 ## Migraciones forward-only
 
@@ -28,6 +30,7 @@ partido. Los hechos disciplinarios se enlazan con `CanonicalMatch`,
 2. `20260825165838_competition_discipline_commands_v1.sql`
 3. `20260825165843_competition_discipline_access_v1.sql`
 4. `20260825165849_competition_discipline_hardening_v1.sql`
+5. `20260825203500_competition_discipline_appeal_service_accounting_v1.sql`
 
 Las siete flags nacen en `false`; instalar las migraciones no activa R5 ni crea
 datos deportivos. `competition_public_discipline_enabled` permanece separado y
@@ -52,6 +55,11 @@ Competition, partido, jugador, regla, ciclo, fecha, secuencia, counters,
 sanciones, elegibilidad y revision global de disciplina en una transaccion.
 Una repeticion valida devuelve el mismo receipt; una intencion concurrente con
 revision anterior recibe conflicto.
+
+El hotfix aditivo de V2.1 conserva las unidades ya cumplidas cuando una
+apelacion reduce el total. La fila canonica se alinea por trigger con su
+revision inmutable vigente; una reduccion de 2 a 1 despues de cumplir 1 termina
+en `served / 0`, nunca en una unidad pendiente nueva.
 
 ## Catalogo V1
 
@@ -153,10 +161,10 @@ notificacion.
 
 | Gate | Resultado |
 | --- | --- |
-| R5 focal | `12/12 PASS` |
-| Bateria completa | `503/503 PASS` (`20 Node + 483 TSX`) |
+| R5 focal | `14/14 PASS` |
+| Bateria completa | `506/506 PASS` (`20 Node + 486 TSX`) |
 | SQL/RLS/adversarial | `PASS` |
-| Fresh install reproducible | `141 + 4 / PASS` en PostgreSQL temporal |
+| Fresh install reproducible | `141 + 5 / PASS` en PostgreSQL temporal |
 | Flags y datos al instalar | `OFF / 0 filas de producto` |
 | Idempotencia | mismo receipt, secuencia y efectos |
 | Concurrencia | 7 carreras deterministas |
@@ -184,9 +192,9 @@ Escala local:
 
 | Medida | Resultado |
 | --- | ---: |
-| Duracion total | `1.608 s` |
+| Duracion total | `1.628 s` |
 | Indices R5 | `7,348,224 bytes` |
-| Lookup de evento | `0.639 ms` |
+| Lookup de evento | `0.480 ms` |
 
 ## Historias cubiertas
 
@@ -218,6 +226,7 @@ Escala local:
 | R5-009 | TESTABILITY_GAP | Solo se cubria apelacion confirmada | regresiones `modified`, `withdrawn` e inadmissible en UI | fixed + regression_verified |
 | R5-010 | SIMULATION_BUG | El rol `anon` no podia guardar el resultado en la tabla temporal del test | grant temporal exclusivo al arnes y revocacion inmediata | fixed + regression_verified |
 | R5-011 | PRODUCT_BUG | El formulario sincronizaba selects con setState dentro de effects | inicializacion por montaje y fallback derivado | fixed + regression_verified |
+| R5-012 | PRODUCT_BUG | Reducir por apelacion una sancion parcialmente cumplida podia volver a exigir una unidad ya servida | preservar servicio neto en la revision y alinear la fila canonica | fixed + regression_verified |
 
 ## Invariantes
 
@@ -236,15 +245,8 @@ crea Referee Assignments, no activa pagos y no implementa Tournament Engine.
 
 ## Gate de publicacion
 
-Pendiente tras este informe:
-
-1. commit y PR R5;
-2. verificar ledger remoto y proyecto Supabase exacto;
-3. aplicar las cuatro migraciones con flags OFF;
-4. smoke inactivo;
-5. upgrade explicito del bundle beta si procede;
-6. activar R5 solo para League Private Beta, con disciplina publica OFF;
-7. E2E autenticado de seis equipos, Realtime y limpieza;
-8. crear `COMPETITION_DISCIPLINE_V1_PRODUCTION_RELEASE.md`.
-
-No se afirma staging ni produccion desde este informe local.
+Las cinco migraciones R5 estan publicadas y el ledger remoto contiene `146`
+versiones. La beta privada sigue activa con disciplina publica OFF. El hotfix
+forward-only descubierto por Demo World V2.1 fue aplicado con backup previo,
+privilegios verificados y smoke transaccional con rollback; su readback exacto
+se registra en `COMPETITION_DISCIPLINE_V1_PRODUCTION_RELEASE.md`.
