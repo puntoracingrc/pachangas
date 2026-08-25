@@ -694,6 +694,35 @@ export async function getPlatformLeagueOperationalExceptions(
   };
 }
 
+export async function getPlatformLeaguePrivateBeta(
+  session: VerifiedPlatformSession,
+  search: string,
+  page: number,
+  pageSize: number,
+) {
+  const data = await rpcOrThrow<JsonRecord>(
+    session.client,
+    "get_pachanga_platform_league_private_beta_v1",
+    {
+      page_offset: (page - 1) * pageSize,
+      page_size: pageSize,
+      search_text: search,
+    },
+  );
+  return {
+    bundles: asArray(data.bundles).map(asRecord),
+    competitions: asArray(data.competitions).map(asRecord),
+    events: asArray(data.events).map(asRecord),
+    flags: asRecord(data.flags),
+    foundation: asRecord(data.foundation),
+    metrics: asRecord(data.metrics),
+    organizers: asArray(data.organizers).map(asRecord),
+    page,
+    pageSize,
+    total: Number(data.total) || 0,
+  };
+}
+
 export async function getPlatformClubs(
   session: VerifiedPlatformSession,
   page: number,

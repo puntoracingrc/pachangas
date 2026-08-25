@@ -91,14 +91,23 @@ export async function runLeagueOperationalExceptionsStagingExtension({
   ownerADevice2,
   outsiderClient,
   platform,
+  privateBeta = false,
   rpc,
   staffA,
   waitForSubscription,
 }) {
   const initialR4c = await rpc(platform, "get_pachanga_league_match_operations_flags_v1");
   const initialR4d = await rpc(platform, "get_pachanga_league_operational_exceptions_flags_v1");
-  for (const key of R4C_FLAG_KEYS) assert.equal(initialR4c[key], false, `R4C ${key} must begin OFF`);
-  for (const key of R4D_FLAG_KEYS) assert.equal(initialR4d[key], false, `R4D ${key} must begin OFF`);
+  const expectedR4c = Object.fromEntries(R4C_FLAG_KEYS.map((key) => [
+    key,
+    privateBeta ? key !== "publicStandingsEnabled" : false,
+  ]));
+  const expectedR4d = Object.fromEntries(R4D_FLAG_KEYS.map((key) => [
+    key,
+    privateBeta ? key !== "publicExceptionStatusEnabled" : false,
+  ]));
+  for (const key of R4C_FLAG_KEYS) assert.equal(initialR4c[key], expectedR4c[key], `R4C ${key} initial gate mismatch`);
+  for (const key of R4D_FLAG_KEYS) assert.equal(initialR4d[key], expectedR4d[key], `R4D ${key} initial gate mismatch`);
 
   async function setFlags(rpcName, aggregateId, currentName, values, reason) {
     const current = await rpc(platform, currentName);
@@ -165,6 +174,24 @@ export async function runLeagueOperationalExceptionsStagingExtension({
     }, { ignoreDuplicates: true, onConflict: "competition_match_context_id" });
     if (result.error) throw result.error;
   }
+  async function currentSportingScore(fixture) {
+    const result = await fixtureAdmin
+      .from("pachanga_competition_sporting_results")
+      .select("current_revision_id")
+      .eq("competition_match_context_id", fixture.id)
+      .single();
+    if (result.error) throw result.error;
+    const revision = await fixtureAdmin
+      .from("pachanga_competition_sporting_result_revisions")
+      .select("score_home,score_away")
+      .eq("id", result.data.current_revision_id)
+      .single();
+    if (revision.error) throw revision.error;
+    return {
+      scoreAway: revision.data.score_away,
+      scoreHome: revision.data.score_home,
+    };
+  }
   async function directUpdate(table, values, filters = []) {
     let query = fixtureAdmin.from(table).update(values).eq("competition_id", created.competitionId);
     for (const [kind, column, value] of filters) {
@@ -179,10 +206,12 @@ export async function runLeagueOperationalExceptionsStagingExtension({
   const protectedBefore = await protectedCounts();
   const stories = [];
   try {
-    await setR4c(Object.fromEntries(R4C_FLAG_KEYS.map((key) => [key, true])), "R4D staging dependency window");
-    r4cEnabled = true;
-    await setR4d(Object.fromEntries(R4D_FLAG_KEYS.map((key) => [key, true])), "R4D authenticated staging window");
-    r4dEnabled = true;
+    if (!privateBeta) {
+      await setR4c(Object.fromEntries(R4C_FLAG_KEYS.map((key) => [key, true])), "R4D staging dependency window");
+      r4cEnabled = true;
+      await setR4d(Object.fromEntries(R4D_FLAG_KEYS.map((key) => [key, true])), "R4D authenticated staging window");
+      r4dEnabled = true;
+    }
 
     const contexts = await fixtureAdmin.from("pachanga_competition_match_contexts")
       .select("id,canonical_match_id,round_id,schedule_item_id,home_entry_id,away_entry_id,status,revision,scheduled_start")
@@ -221,6 +250,7 @@ export async function runLeagueOperationalExceptionsStagingExtension({
     await waitForSubscription(channel);
 
     const accepted = fixtures[0];
+    await stageContext(accepted, "scheduled", new Date("2027-12-01T19:00:00Z"));
     const acceptedRequester = entryById.get(entries[0].entryId);
     const acceptedResponder = entryById.get(accepted.home_entry_id === acceptedRequester.entryId ? accepted.away_entry_id : accepted.home_entry_id);
     const originalItem = await fixtureAdmin.from("pachanga_competition_schedule_items")
@@ -266,6 +296,7 @@ export async function runLeagueOperationalExceptionsStagingExtension({
     stories.push("postponement_approved");
 
     const rejected = fixtures[1];
+    await stageContext(rejected, "scheduled");
     const rejectedHome = entryById.get(rejected.home_entry_id);
     const rejectedAway = entryById.get(rejected.away_entry_id);
     snapshot = await matchSnapshot(rejectedHome.teamClient, rejected);
@@ -282,6 +313,7 @@ export async function runLeagueOperationalExceptionsStagingExtension({
     stories.push("postponement_denied");
 
     const deadline = fixtures[2];
+    await stageContext(deadline, "scheduled");
     const deadlineHome = entryById.get(deadline.home_entry_id);
     snapshot = await matchSnapshot(deadlineHome.teamClient, deadline);
     receipt = await operationOk(deadlineHome.teamClient, metadata, {
@@ -300,18 +332,27 @@ export async function runLeagueOperationalExceptionsStagingExtension({
     stories.push("deadline_expired");
 
     const venue = fixtures[3];
+    await stageContext(venue, "scheduled");
     snapshot = await matchSnapshot(staffA, venue);
     receipt = await operationOk(staffA, metadata, {
       action: "fixture.change_venue", aggregateId: venue.id, expectedRevision: snapshot.revision,
       payload: { publicSummary: "Sede alternativa confirmada.", reasonCode: "PITCH_UNAVAILABLE", venueLabel: "R4D QA Venue", venueStatus: "LABEL" },
     });
     assert.equal(receipt.snapshot.context.venueLabel, "R4D QA Venue");
-    const publicVenue = await rpc(anonymousFactory(), "get_pachanga_public_league_fixture_status_v1", {
+    const publicVenueResult = await anonymousFactory().rpc("get_pachanga_public_league_fixture_status_v1", {
       target_canonical_match_id: venue.canonical_match_id,
       target_competition_id: created.competitionId,
     });
-    assert.equal(publicVenue.effectiveSchedule.venueLabel, "R4D QA Venue");
-    assert.doesNotMatch(JSON.stringify(publicVenue), /reasonText|evidence|reportedBy|decidedBy/i);
+    if (privateBeta) {
+      expectError(publicVenueResult, /LEAGUE_PUBLIC_EXCEPTION_STATUS_DISABLED/, "42501");
+    } else {
+      if (publicVenueResult.error) throw publicVenueResult.error;
+      assert.equal(publicVenueResult.data.effectiveSchedule.venueLabel, "R4D QA Venue");
+      assert.doesNotMatch(
+        JSON.stringify(publicVenueResult.data),
+        /reasonText|evidence|reportedBy|decidedBy/i,
+      );
+    }
     stories.push("venue_change");
 
     const late = fixtures[4];
@@ -380,10 +421,11 @@ export async function runLeagueOperationalExceptionsStagingExtension({
     await stageContext(resumed, "in_progress");
     await ensureMatchSheet(resumed, directorUser.data.user.id);
     const resumedHome = entryById.get(resumed.home_entry_id);
+    const resumedScore = await currentSportingScore(resumed);
     snapshot = await matchSnapshot(resumedHome.teamClient, resumed);
     receipt = await operationOk(resumedHome.teamClient, metadata, {
       action: "suspension.report", aggregateId: resumed.id, expectedRevision: snapshot.revision,
-      payload: { partialScoreAway: 0, partialScoreHome: 1, publicSummary: "Suspendido en el minuto 37.", reasonCode: "SAFETY", reasonText: "Incidencia de seguridad QA.", reportedMinute: 37, reportingEntryId: resumedHome.entryId },
+      payload: { partialScoreAway: resumedScore.scoreAway, partialScoreHome: resumedScore.scoreHome, publicSummary: "Suspendido en el minuto 37.", reasonCode: "SAFETY", reasonText: "Incidencia de seguridad QA.", reportedMinute: 37, reportingEntryId: resumedHome.entryId },
     });
     const resumedSuspension = receipt.snapshot.suspensions[0];
     receipt = await operationOk(staffA, metadata, {
@@ -400,17 +442,21 @@ export async function runLeagueOperationalExceptionsStagingExtension({
     });
     assert.equal(receipt.snapshot.context.canonicalMatchId, resumed.canonical_match_id);
     assert.equal(receipt.snapshot.suspensions[0].status, "resumed");
-    assert.deepEqual([receipt.snapshot.suspensions[0].sportingScoreHome, receipt.snapshot.suspensions[0].sportingScoreAway], [1, 0]);
+    assert.deepEqual(
+      [receipt.snapshot.suspensions[0].sportingScoreHome, receipt.snapshot.suspensions[0].sportingScoreAway],
+      [resumedScore.scoreHome, resumedScore.scoreAway],
+    );
     stories.push("suspension_resumed_same_match");
 
     const replay = fixtures[8];
     await stageContext(replay, "in_progress");
     await ensureMatchSheet(replay, directorUser.data.user.id);
     const replayHome = entryById.get(replay.home_entry_id);
+    const replayScore = await currentSportingScore(replay);
     snapshot = await matchSnapshot(replayHome.teamClient, replay);
     receipt = await operationOk(replayHome.teamClient, metadata, {
       action: "suspension.report", aggregateId: replay.id, expectedRevision: snapshot.revision,
-      payload: { partialScoreAway: 2, partialScoreHome: 0, reasonCode: "SAFETY", reasonText: "Repetición QA.", reportedMinute: 24, reportingEntryId: replayHome.entryId },
+      payload: { partialScoreAway: replayScore.scoreAway, partialScoreHome: replayScore.scoreHome, reasonCode: "SAFETY", reasonText: "Repetición QA.", reportedMinute: 24, reportingEntryId: replayHome.entryId },
     });
     const replaySuspension = receipt.snapshot.suspensions[0];
     receipt = await operationOk(staffA, metadata, {
@@ -433,10 +479,11 @@ export async function runLeagueOperationalExceptionsStagingExtension({
     await stageContext(administrative, "in_progress");
     await ensureMatchSheet(administrative, directorUser.data.user.id);
     const administrativeHome = entryById.get(administrative.home_entry_id);
+    const administrativeScore = await currentSportingScore(administrative);
     snapshot = await matchSnapshot(administrativeHome.teamClient, administrative);
     receipt = await operationOk(administrativeHome.teamClient, metadata, {
       action: "suspension.report", aggregateId: administrative.id, expectedRevision: snapshot.revision,
-      payload: { partialScoreAway: 0, partialScoreHome: 1, reasonCode: "SAFETY", reasonText: "Resolución administrativa QA.", reportedMinute: 37, reportingEntryId: administrativeHome.entryId },
+      payload: { partialScoreAway: administrativeScore.scoreAway, partialScoreHome: administrativeScore.scoreHome, reasonCode: "SAFETY", reasonText: "Resolución administrativa QA.", reportedMinute: 37, reportingEntryId: administrativeHome.entryId },
     });
     const administrativeSuspension = receipt.snapshot.suspensions[0];
     receipt = await operationOk(staffA, metadata, {
@@ -447,14 +494,22 @@ export async function runLeagueOperationalExceptionsStagingExtension({
       action: "suspension.resolve", aggregateId: administrative.id, expectedRevision: receipt.confirmedRevision,
       payload: { reasonCode: "ADMIN_REVIEW", resolutionType: "PENDING_ADMINISTRATIVE_DECISION", suspensionId: administrativeSuspension.id },
     });
-    receipt = await operationOk(staffA, metadata, {
+    const administrativeResultInput = {
       action: "administrative_decision.publish", aggregateId: administrative.id, expectedRevision: receipt.confirmedRevision,
       payload: { decisionType: "SET_OFFICIAL_RESULT", publicSummary: "Resultado parcial declarado oficial.", reasonCode: "PARTIAL_RESULT_CONFIRMED", suspensionId: administrativeSuspension.id },
-    });
-    assert.equal(receipt.snapshot.context.status, "official");
-    stories.push("administrative_partial_result");
+    };
+    if (privateBeta) {
+      const conflict = await operation(staffA, metadata, administrativeResultInput);
+      expectError(conflict, /R4D_SUSPENSION_RESULT_CONFLICT/, "PT409");
+      stories.push("administrative_result_conflict_blocked");
+    } else {
+      receipt = await operationOk(staffA, metadata, administrativeResultInput);
+      assert.equal(receipt.snapshot.context.status, "official");
+      stories.push("administrative_partial_result");
+    }
 
     const raceFixture = fixtures[10];
+    await stageContext(raceFixture, "scheduled");
     snapshot = await matchSnapshot(staffA, raceFixture);
     const raceInput = {
       action: "fixture.reschedule", aggregateId: raceFixture.id, expectedRevision: snapshot.revision,

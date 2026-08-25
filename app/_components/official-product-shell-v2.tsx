@@ -149,6 +149,7 @@ export function OfficialProductShellV2({
           ))}
         </nav> : <span />}
         {navigationEnabled ? <div className={styles.desktopUtilities}>
+          <Link href="/ligas">Ligas</Link>
           <Link href="/ranking">Ranking</Link>
           <Link href="/perfil/avisos">Avisos</Link>
           <span aria-label={`Estado: ${context.status ?? "Conectado"}`}>{context.status ?? "Conectado"}</span>
@@ -172,6 +173,7 @@ export function OfficialProductShellV2({
             ))}
           </nav>
           <div className={styles.gameUtilities}>
+            <Link href="/ligas" aria-label="Ligas (Beta)">LG</Link>
             <Link href="/perfil/avisos" aria-label="Avisos">AV</Link>
             <Link href="/ranking" aria-label="Ranking">RK</Link>
           </div>

@@ -13,9 +13,10 @@ import {
 } from "../_components/platform-ui";
 import { requirePlatformPage } from "../_lib/platform-auth";
 import { hasPlatformCapability } from "../_lib/platform-contract";
-import { getPlatformCompetitionFoundation, getPlatformLeagueMatchOperations, getPlatformLeagueOperationalExceptions, getPlatformLeagueParticipation, getPlatformLeagueScheduling, paginationFromSearchParams } from "../_lib/platform-data";
+import { getPlatformCompetitionFoundation, getPlatformLeagueMatchOperations, getPlatformLeagueOperationalExceptions, getPlatformLeagueParticipation, getPlatformLeaguePrivateBeta, getPlatformLeagueScheduling, paginationFromSearchParams } from "../_lib/platform-data";
 import styles from "../platform-admin.module.css";
 import { CompetitionAdminClient } from "./competition-admin-client";
+import { LeaguePrivateBetaAdminClient } from "./league-private-beta-admin-client";
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 function first(value: string | string[] | undefined) { return Array.isArray(value) ? value[0] ?? "" : value ?? ""; }
@@ -31,12 +32,14 @@ export default async function PlatformCompetitionsPage({ searchParams }: { searc
   const params = new URLSearchParams();
   Object.entries(raw).forEach(([key, value]) => params.set(key, first(value)));
   const { page, pageSize } = paginationFromSearchParams(params);
-  const [data, leagueParticipation, leagueScheduling, leagueMatchOperations, leagueOperationalExceptions] = await Promise.all([
+  const betaSearch = first(raw.betaSearch).trim().slice(0, 160);
+  const [data, leagueParticipation, leagueScheduling, leagueMatchOperations, leagueOperationalExceptions, leaguePrivateBeta] = await Promise.all([
     getPlatformCompetitionFoundation(session, page, pageSize),
     getPlatformLeagueParticipation(session, page, pageSize),
     getPlatformLeagueScheduling(session, page, pageSize),
     getPlatformLeagueMatchOperations(session, page, pageSize),
     getPlatformLeagueOperationalExceptions(session, page, pageSize),
+    getPlatformLeaguePrivateBeta(session, betaSearch, page, pageSize),
   ]);
   const canWrite = hasPlatformCapability(session.access, "competitions.manage");
   const canonicalHealthLabel = s(data.bindingHealth.status) === "NOT_INITIALIZED"
@@ -110,6 +113,26 @@ export default async function PlatformCompetitionsPage({ searchParams }: { searc
           <Metric label="Contexts duplicados" value={n(leagueOperationalExceptions.health.duplicateActiveContexts)} tone={n(leagueOperationalExceptions.health.duplicateActiveContexts) ? "warning" : "good"} />
           <Metric label="Resultados sin fuente" value={n(leagueOperationalExceptions.health.noShowResultsWithoutSource)} tone={n(leagueOperationalExceptions.health.noShowResultsWithoutSource) ? "warning" : "good"} />
         </MetricGrid>
+      </Panel>
+
+      <Panel title="League Private Beta">
+        <MetricGrid>
+          <Metric label="Ligas beta" value={n(leaguePrivateBeta.metrics.competitions)} />
+          <Metric label="Borradores" value={n(leaguePrivateBeta.metrics.drafts)} />
+          <Metric label="Activas" value={n(leaguePrivateBeta.metrics.active)} />
+          <Metric label="Bundles activos" value={n(leaguePrivateBeta.metrics.activeGrantBundles)} tone="good" />
+          <Metric label="Exposición pública" value={n(leaguePrivateBeta.metrics.publicExposureViolations)} tone={n(leaguePrivateBeta.metrics.publicExposureViolations) ? "warning" : "good"} />
+          <Metric label="Límite incumplido" value={n(leaguePrivateBeta.metrics.activeEditionLimitViolations)} tone={n(leaguePrivateBeta.metrics.activeEditionLimitViolations) ? "warning" : "good"} />
+        </MetricGrid>
+        <form className={styles.competitionSearchForm} action="/admin/competitions" method="get">
+          <label className={styles.formField}>Buscar Team o Club<input name="betaSearch" defaultValue={betaSearch} placeholder="Nombre, código o slug" /></label>
+          <button className={styles.secondaryButton} type="submit">Buscar organizador</button>
+        </form>
+        <LeaguePrivateBetaAdminClient bundles={leaguePrivateBeta.bundles} canWrite={canWrite} flags={leaguePrivateBeta.flags} organizers={leaguePrivateBeta.organizers} />
+      </Panel>
+
+      <Panel title="Ligas privadas">
+        {leaguePrivateBeta.competitions.length ? <DataTable label="Ligas privadas beta"><thead><tr><th>Liga</th><th>Estado</th><th>Equipos</th><th>Partidos</th><th>Resultados</th><th>Incidencias</th><th>Clasificación</th></tr></thead><tbody>{leaguePrivateBeta.competitions.map((item) => <tr key={s(item.id)}><td><strong>{s(item.name)}</strong><small>{s(item.organizerKind)} · <Identifier value={s(item.organizerId)} /></small></td><td><StatusBadge>{s(item.status)}</StatusBadge><small>{s(item.visibility)}</small></td><td>{n(item.teamCount)}</td><td>{n(item.matchCount)}</td><td>{n(item.pendingResults)} pendientes<small>{n(item.disputes)} disputas</small></td><td>{n(item.incidents)}</td><td><StatusBadge>{s(item.standingsHealth)}</StatusBadge></td></tr>)}</tbody></DataTable> : <EmptyState>No hay Ligas privadas creadas.</EmptyState>}
       </Panel>
 
       <Panel title="Controles de plataforma">

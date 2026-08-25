@@ -1,0 +1,18 @@
+const aliases = {
+  LEAGUE_PRIVATE_BETA_STAGING_CONFIRM: "R4B_STAGING_CONFIRM",
+  LEAGUE_PRIVATE_BETA_STAGING_PREVIEW_URL: "R4B_STAGING_PREVIEW_URL",
+  LEAGUE_PRIVATE_BETA_STAGING_PROJECT_REF: "R4B_STAGING_PROJECT_REF",
+  LEAGUE_PRIVATE_BETA_STAGING_PUBLISHABLE_KEY: "R4B_STAGING_PUBLISHABLE_KEY",
+  LEAGUE_PRIVATE_BETA_STAGING_SERVICE_ROLE_KEY: "R4B_STAGING_SERVICE_ROLE_KEY",
+  LEAGUE_PRIVATE_BETA_STAGING_URL: "R4B_STAGING_URL",
+};
+
+for (const [source, target] of Object.entries(aliases)) {
+  if (!process.env[target] && process.env[source]) process.env[target] = process.env[source];
+}
+
+process.env.LEAGUE_PRIVATE_BETA_STAGING_EXTENSION = "1";
+process.env.R4C_STAGING_EXTENSION = "1";
+process.env.R4D_STAGING_EXTENSION = "1";
+
+await import("./league-scheduling-v1-staging-e2e.mjs");

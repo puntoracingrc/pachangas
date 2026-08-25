@@ -7,6 +7,7 @@ import { runLeagueOperationalExceptionsStagingExtension } from "./league-operati
 
 const R4C_EXTENSION = process.env.R4C_STAGING_EXTENSION === "1";
 const R4D_EXTENSION = process.env.R4D_STAGING_EXTENSION === "1";
+const PRIVATE_BETA_EXTENSION = process.env.LEAGUE_PRIVATE_BETA_STAGING_EXTENSION === "1";
 const MATCH_OPERATIONS_EXTENSION = R4C_EXTENSION || R4D_EXTENSION;
 
 const env = {
@@ -46,15 +47,42 @@ const TEAMS = [
   ["f1820000-0000-4000-8000-000000000004", "R4B Team D", USERS.adminA, "f1710000-0000-4000-8000-000000000003"],
   ["f1820000-0000-4000-8000-000000000005", "R4B Team E", USERS.playerA, "f1710000-0000-4000-8000-000000000004"],
   ["f1820000-0000-4000-8000-000000000006", "R4B Team F", USERS.staffA, "f1710000-0000-4000-8000-000000000006"],
-].map(([groupId, name, owner, profileId]) => ({ groupId, name, owner, profileId }));
+].map(([groupId, name, owner, profileId], teamIndex) => ({
+  groupId,
+  name,
+  owner,
+  profileId,
+  supplementalMembers: Array.from({ length: 4 }, (_, memberIndex) => {
+    const stableSuffix = String((teamIndex + 1) * 10 + memberIndex + 1).padStart(12, "0");
+    return {
+      email: `r4b-team-${teamIndex + 1}-member-${memberIndex + 2}@pachangasiq.test`,
+      profileId: `f1740000-0000-4000-8000-${stableSuffix}`,
+      userId: `f1730000-0000-4000-8000-${stableSuffix}`,
+    };
+  }),
+}));
 
 const IDS = {
+  betaFlags: "00000000-0000-0000-0000-00000000b201",
   clubFlags: "00000000-0000-0000-0000-00000000c101",
   competitionFlags: "00000000-0000-0000-0000-00000000c001",
   leagueFlags: "00000000-0000-0000-0000-00000000c4a1",
+  matchOperationsFlags: "00000000-0000-0000-0000-00000000c4c1",
+  operationalExceptionsFlags: "00000000-0000-0000-0000-00000000c4d1",
   scheduleFlags: "00000000-0000-0000-0000-00000000c4b1",
   refereeFlags: "00000000-0000-0000-0000-00000000a3f3",
 };
+const MATCH_OPERATIONS_FLAG_KEYS = [
+  "foundationEnabled", "squadsEnabled", "attendanceEnabled",
+  "sportingResultsEnabled", "resultConfirmationEnabled",
+  "officialResultsEnabled", "standingsEnabled", "publicStandingsEnabled",
+];
+const OPERATIONAL_EXCEPTIONS_FLAG_KEYS = [
+  "foundationEnabled", "postponementsEnabled", "reschedulingEnabled",
+  "venueChangesEnabled", "lateArrivalEnabled", "noShowEnabled",
+  "matchSuspensionsEnabled", "administrativeDecisionsEnabled",
+  "publicExceptionStatusEnabled",
+];
 const UNTOUCHED_TABLES = [
   "pachanga_individual_rating_evidence",
   "pachanga_player_rating_snapshots",
@@ -68,7 +96,17 @@ const UNTOUCHED_TABLES = [
 ].filter((table) => !R4C_EXTENSION || table !== "pachanga_match_participants");
 const clients = [];
 const channels = [];
-const created = { clubId: null, competitionId: null, planId: null, publicationOperationId: null };
+const created = {
+  betaBundleId: null,
+  clubId: null,
+  competitionId: null,
+  expiredTeamBundleId: null,
+  planId: null,
+  publicationOperationId: null,
+  supplementalUserIds: [],
+  teamBundleId: null,
+  wizardId: null,
+};
 
 function client(key = env.publishableKey) {
   return createClient(env.url, key, {
@@ -90,19 +128,58 @@ async function rpc(supabase, name, args = {}) {
   if (result.error) throw result.error;
   return result.data;
 }
-async function signIn(account) {
-  const supabase = client();
-  const result = await supabase.auth.signInWithPassword({ email: account.email, password });
-  if (result.error) throw result.error;
-  assert.equal(result.data.user.id, account.id);
-  clients.push(supabase);
-  return supabase;
+async function signIn(account, role) {
+  for (let attempt = 1; attempt <= 5; attempt += 1) {
+    const supabase = client();
+    const result = await supabase.auth.signInWithPassword({ email: account.email, password });
+    if (!result.error) {
+      assert.equal(result.data.user.id, account.id);
+      clients.push(supabase);
+      return supabase;
+    }
+    if (result.error.code !== "invalid_credentials" || attempt === 5) {
+      throw new Error(`R4B_STAGING_SIGN_IN_FAILED:${role}:${result.error.code ?? result.error.status}`, {
+        cause: result.error,
+      });
+    }
+    await new Promise((resolve) => setTimeout(resolve, attempt * 300));
+  }
+  throw new Error(`R4B_STAGING_SIGN_IN_FAILED:${role}:retry_exhausted`);
 }
 async function prepareIdentities() {
   for (const account of Object.values(USERS)) {
     const result = await fixtureAdmin.auth.admin.updateUserById(account.id, { password });
     if (result.error) throw result.error;
   }
+}
+
+function betaCommand(supabase, name, {
+  action,
+  aggregateId,
+  expectedRevision,
+  operationId = randomUUID(),
+  payload = {},
+  surface = "league-private-beta-staging",
+}) {
+  return supabase.rpc(name, {
+    aggregate_id: aggregateId,
+    client_metadata: metadata(surface),
+    command_action: action,
+    command_payload: payload,
+    expected_revision: expectedRevision,
+    operation_id: operationId,
+  });
+}
+
+async function betaCommandOk(supabase, name, input) {
+  const result = await betaCommand(supabase, name, input);
+  if (result.error) {
+    throw new Error(
+      `${name}:${input.action}@${input.expectedRevision} [${result.error.code}] ${result.error.message}`,
+      { cause: result.error },
+    );
+  }
+  return result.data;
 }
 async function command(supabase, name, { action, aggregateId, expectedRevision, operationId = randomUUID(), payload = {}, organizerKind, surface }) {
   const args = {
@@ -172,16 +249,65 @@ async function ensureTeams() {
     const result = await fixtureAdmin.from("pachanga_groups").insert(missing);
     if (result.error) throw result.error;
   }
+  if (PRIVATE_BETA_EXTENSION) {
+    for (const team of TEAMS) {
+      for (const member of team.supplementalMembers) {
+        const existingUser = await fixtureAdmin.auth.admin.getUserById(member.userId);
+        if (existingUser.error) {
+          const createdUser = await fixtureAdmin.auth.admin.createUser({
+            email: member.email,
+            email_confirm: true,
+            id: member.userId,
+            password,
+            user_metadata: { qaFixture: "LEAGUE_PRIVATE_BETA_V1" },
+          });
+          if (createdUser.error) throw createdUser.error;
+          created.supplementalUserIds.push(member.userId);
+        } else {
+          const updatedUser = await fixtureAdmin.auth.admin.updateUserById(member.userId, {
+            password,
+            user_metadata: { qaFixture: "LEAGUE_PRIVATE_BETA_V1" },
+          });
+          if (updatedUser.error) throw updatedUser.error;
+        }
+      }
+    }
+  }
+  const supplementalMemberships = PRIVATE_BETA_EXTENSION
+    ? TEAMS.flatMap((team, teamIndex) => team.supplementalMembers.map((member, memberIndex) => ({
+      display_name: `${team.name} Player`,
+      group_id: team.groupId,
+      role: teamIndex === 1 && memberIndex === 1 ? "admin" : "player",
+      user_id: member.userId,
+    })))
+    : [];
   await upsertMissing("pachanga_group_members", TEAMS.map((team) => ({
     display_name: `${team.name} Owner`, group_id: team.groupId, role: "owner", user_id: team.owner.id,
-  })), "group_id,user_id");
+  })).concat(supplementalMemberships), "group_id,user_id");
+  if (PRIVATE_BETA_EXTENSION) {
+    const teamAdmin = TEAMS[1].supplementalMembers[1];
+    const ensuredAdmin = await fixtureAdmin.from("pachanga_group_members")
+      .update({ role: "admin" })
+      .eq("group_id", TEAMS[1].groupId)
+      .eq("user_id", teamAdmin.userId);
+    if (ensuredAdmin.error) throw ensuredAdmin.error;
+  }
+  const supplementalProfiles = PRIVATE_BETA_EXTENSION
+    ? TEAMS.flatMap((team, teamIndex) => team.supplementalMembers.map((member, memberIndex) => ({
+      birth_date: `199${(teamIndex + memberIndex) % 10}-0${(memberIndex % 4) + 1}-10`,
+      display_name: `${team.name} Player ${memberIndex + 2}`,
+      id: member.profileId,
+      source_group_id: team.groupId,
+      user_id: member.userId,
+    })))
+    : [];
   await upsertMissing("pachanga_player_profiles", TEAMS.map((team, index) => ({
     birth_date: `199${index}-0${index + 1}-10`,
     display_name: `${team.name} Owner`,
     id: team.profileId,
     source_group_id: team.groupId,
     user_id: team.owner.id,
-  })), "user_id");
+  })).concat(supplementalProfiles), "user_id");
 }
 async function ensureRegular(platform, regular, account) {
   const access = await regular.rpc("get_my_pachanga_platform_access_v1");
@@ -254,6 +380,27 @@ async function setParticipationFlags(platform, next, reason) {
   if (result.error) throw result.error;
   return result.data;
 }
+async function betaFlags(supabase) {
+  return rpc(supabase, "get_pachanga_league_private_beta_flags_v1");
+}
+async function setBetaFlags(platform, next, reason) {
+  const current = await betaFlags(platform);
+  return betaCommandOk(platform, "command_pachanga_league_private_beta_platform_v1", {
+    action: "beta.flags.set",
+    aggregateId: IDS.betaFlags,
+    expectedRevision: current.revision,
+    payload: { ...next, reason },
+    surface: "league-private-beta-staging-flags",
+  });
+}
+async function organizerModel(supabase, kind, id) {
+  const model = await rpc(supabase, "get_my_pachanga_league_private_beta_v1");
+  const organizer = model.organizers.find((candidate) => (
+    candidate.kind === kind && candidate.id === id
+  ));
+  assert.ok(organizer, `${kind} organizer ${id} must be present in the private beta read model`);
+  return organizer;
+}
 async function scheduleFlags(platform) {
   return (await rpc(platform, "get_pachanga_platform_league_scheduling_v1", { page_offset: 0, page_size: 50 })).flags;
 }
@@ -269,6 +416,41 @@ async function setScheduleFlags(platform, next, reason) {
   if (result.error) throw result.error;
   return result.data;
 }
+async function setLeagueOperationFlags(platform, {
+  aggregateId,
+  currentRpc,
+  commandRpc,
+  next,
+  reason,
+  surface,
+}) {
+  const current = await rpc(platform, currentRpc);
+  const result = await platform.rpc(commandRpc, {
+    aggregate_id: aggregateId,
+    client_metadata: metadata(surface),
+    command_payload: { ...next, reason },
+    expected_revision: current.revision,
+    operation_id: randomUUID(),
+  });
+  if (result.error) throw result.error;
+  return result.data;
+}
+const setMatchOperationsFlags = (platform, next, reason) => setLeagueOperationFlags(platform, {
+  aggregateId: IDS.matchOperationsFlags,
+  commandRpc: "command_pachanga_league_match_operations_platform_v1",
+  currentRpc: "get_pachanga_league_match_operations_flags_v1",
+  next,
+  reason,
+  surface: "league-private-beta-r4c-flags",
+});
+const setOperationalExceptionsFlags = (platform, next, reason) => setLeagueOperationFlags(platform, {
+  aggregateId: IDS.operationalExceptionsFlags,
+  commandRpc: "command_pachanga_league_operational_exceptions_platform_v1",
+  currentRpc: "get_pachanga_league_operational_exceptions_flags_v1",
+  next,
+  reason,
+  surface: "league-private-beta-r4d-flags",
+});
 async function setRefereeFlagsOff(platform) {
   const current = await rpc(platform, "get_pachanga_referee_foundation_flags_v1");
   const keys = ["assignmentsEnabled", "clubRelationshipsEnabled", "foundationEnabled", "marketplaceEnabled", "publicProfilesEnabled", "selfServiceEnabled"];
@@ -335,6 +517,176 @@ async function archiveClub(platform, clubId) {
     }, true);
   }
 }
+
+async function grantBetaBundle(platform, organizerClient, organizerKind, organizerId, payload = {}) {
+  const organizer = await organizerModel(organizerClient, organizerKind, organizerId);
+  return betaCommandOk(platform, "command_pachanga_league_private_beta_platform_v1", {
+    action: "beta.bundle.grant",
+    aggregateId: organizerId,
+    expectedRevision: organizer.organizerRevision,
+    payload: {
+      maxTeams: 6,
+      organizerKind,
+      reason: "League Private Beta authenticated staging grant",
+      ...payload,
+    },
+    surface: "league-private-beta-staging-grant",
+  });
+}
+
+async function revokeBetaBundle(platform, organizerClient, organizerKind, organizerId, bundleId) {
+  const bundle = await fixtureAdmin
+    .from("pachanga_competition_entitlement_grants")
+    .select("status")
+    .eq("bundle_id", bundleId)
+    .eq("program_key", "LEAGUE_PRIVATE_BETA_V1")
+    .limit(1)
+    .maybeSingle();
+  if (bundle.error) throw bundle.error;
+  if (!bundle.data || bundle.data.status === "revoked") return;
+  const organizer = await organizerModel(organizerClient, organizerKind, organizerId);
+  await betaCommandOk(platform, "command_pachanga_league_private_beta_platform_v1", {
+    action: "beta.bundle.revoke",
+    aggregateId: organizerId,
+    expectedRevision: organizer.organizerRevision,
+    payload: {
+      bundleId,
+      organizerKind,
+      reason: "League Private Beta authenticated staging cleanup",
+    },
+    surface: "league-private-beta-staging-cleanup",
+  });
+}
+
+async function createPrivateBetaLeague(organizerClient, organizerKind, organizerId, tag) {
+  const organizer = await organizerModel(organizerClient, organizerKind, organizerId);
+  const createOperationId = randomUUID();
+  const createInput = {
+    action: "wizard.create",
+    aggregateId: organizerId,
+    expectedRevision: organizer.organizerRevision,
+    operationId: createOperationId,
+    payload: { organizerKind, reason: "Authenticated League Private Beta wizard" },
+  };
+  let receipt = await betaCommandOk(
+    organizerClient,
+    "command_pachanga_league_private_beta_v1",
+    createInput,
+  );
+  assert.deepEqual(
+    await betaCommandOk(organizerClient, "command_pachanga_league_private_beta_v1", createInput),
+    receipt,
+  );
+  let wizard = receipt.snapshot.wizard;
+  const steps = [
+    {
+      description: "Liga privada beta integrada R1-R4D",
+      generalArea: "Barcelona",
+      imageUrl: "",
+      name: `R4B QA League Private Beta ${tag}`,
+      slug: `r4b-qa-private-beta-${tag}`,
+    },
+    { modality: "FUTBOL_5" },
+    {
+      editionName: "Edición privada 2027",
+      endsAt: "2027-12-31",
+      seasonLabel: "2027",
+      startsAt: "2027-01-01",
+      timezone: "Europe/Madrid",
+    },
+    {
+      legs: 1,
+      registrationClosesAt: "2027-11-30T23:00:00Z",
+      registrationMode: "INVITE_ONLY",
+      teamCap: 6,
+    },
+    {
+      closeRequiresApprovedRosters: true,
+      credentialRequired: false,
+      jerseyRequired: false,
+      maximumRosterSize: 5,
+      minimumRosterSize: 5,
+    },
+    {
+      autoOfficialAfterConfirmation: true,
+      matchDurationMinutes: 70,
+      pointsForDraw: 1,
+      pointsForLoss: 0,
+      pointsForWin: 3,
+      requiredBufferMinutes: 10,
+      responseDeadlineHours: 48,
+    },
+    {
+      allowTbd: true,
+      minimumRestMinutes: 0,
+      useDivision: true,
+      venueRequired: false,
+      weeklyPattern: [{ dayOfWeek: 6, startTime: "20:00" }],
+    },
+    {
+      allowSharedPositions: true,
+      allowUnknownScorer: false,
+      scorerDetailPolicy: "OPTIONAL",
+      tieBreakCriteria: [
+        "POINTS",
+        "GOAL_DIFFERENCE",
+        "GOALS_FOR",
+        "WINS",
+        "HEAD_TO_HEAD_POINTS",
+        "HEAD_TO_HEAD_GOAL_DIFFERENCE",
+        "HEAD_TO_HEAD_GOALS_FOR",
+      ],
+    },
+    {
+      gracePeriodMinutes: 10,
+      maximumMatchDurationMinutes: 120,
+      minimumRestHours: 0,
+      noShowLoserScore: 0,
+      noShowOutcome: "NO_SHOW",
+      noShowWinnerScore: 3,
+      postponementDeadlinePolicy: "EXPIRE",
+      postponementResponseDeadlineHours: 48,
+    },
+    { acknowledgeUnavailableFeatures: true, consent: true },
+  ];
+  for (let index = 0; index < steps.length; index += 1) {
+    receipt = await betaCommandOk(
+      organizerClient,
+      "command_pachanga_league_private_beta_v1",
+      {
+        action: "wizard.step.save",
+        aggregateId: wizard.id,
+        expectedRevision: wizard.revision,
+        payload: {
+          data: steps[index],
+          reason: `League Private Beta step ${index + 1}`,
+          step: index + 1,
+        },
+      },
+    );
+    wizard = receipt.snapshot;
+  }
+  const finalized = await betaCommandOk(
+    organizerClient,
+    "command_pachanga_league_private_beta_v1",
+    {
+      action: "wizard.finalize",
+      aggregateId: wizard.id,
+      expectedRevision: wizard.revision,
+      payload: { reason: "League Private Beta staging consent" },
+    },
+  );
+  assert.equal(finalized.snapshot.canonical.registrationMode, "INVITE_ONLY");
+  assert.equal(finalized.snapshot.canonical.visibility, "private");
+  assert.equal(finalized.snapshot.canonical.teamCap, 6);
+  assert.deepEqual(finalized.snapshot.unavailable, [
+    "competition_discipline",
+    "referee_assignments",
+    "payments",
+    "tournaments",
+  ]);
+  return finalized;
+}
 async function verifyPreview(accessToken, competitionId, planId) {
   if (!env.previewUrl) return { checked: false };
   const origin = new URL(env.previewUrl);
@@ -372,6 +724,7 @@ async function verifyPreview(accessToken, competitionId, planId) {
 }
 
 let platform;
+let clubOwner;
 let ownerA;
 let ownerADevice2;
 let ownerB;
@@ -381,26 +734,26 @@ let adminADevice2;
 let playerA;
 let staffA;
 let completed = false;
+let cleanupReadback = null;
 let countsBefore;
+let storySummary = null;
 
 try {
   await prepareIdentities();
-  [platform, ownerA, ownerADevice2, ownerB, ownerC, adminA, adminADevice2, playerA, staffA] = await Promise.all([
-    signIn(USERS.platform),
-    signIn(USERS.ownerA),
-    signIn(USERS.ownerA),
-    signIn(USERS.ownerB),
-    signIn(USERS.ownerC),
-    signIn(USERS.adminA),
-    signIn(USERS.adminA),
-    signIn(USERS.playerA),
-    signIn(USERS.staffA),
-  ]);
+  platform = await signIn(USERS.platform, "platform");
+  ownerA = await signIn(USERS.ownerA, "owner-a");
+  ownerADevice2 = await signIn(USERS.ownerA, "owner-a-device-2");
+  ownerB = await signIn(USERS.ownerB, "owner-b");
+  ownerC = await signIn(USERS.ownerC, "owner-c");
+  adminA = await signIn(USERS.adminA, "admin-a");
+  adminADevice2 = await signIn(USERS.adminA, "admin-a-device-2");
+  playerA = await signIn(USERS.playerA, "player-a");
+  staffA = await signIn(USERS.staffA, "staff-a");
   const teamClients = [ownerA, ownerB, ownerC, adminA, playerA, staffA];
   for (let index = 0; index < TEAMS.length; index += 1) {
     await ensureRegular(platform, teamClients[index], TEAMS[index].owner);
   }
-  const clubOwner = await selectClubOwner([
+  clubOwner = await selectClubOwner([
     { account: USERS.ownerA, client: ownerA },
     { account: USERS.ownerB, client: ownerB },
     { account: USERS.ownerC, client: ownerC },
@@ -415,6 +768,18 @@ try {
   ].find(({ account }) => account.id !== clubOwner.account.id);
   assert.ok(outsider, "R4B staging requires an actor outside the organizer Club");
   await ensureTeams();
+  if (PRIVATE_BETA_EXTENSION) {
+    for (const team of TEAMS) {
+      team.delegateClient = await signIn({
+        email: team.supplementalMembers[0].email,
+        id: team.supplementalMembers[0].userId,
+      }, `${team.name}-delegate`);
+    }
+    TEAMS[1].adminClient = await signIn({
+      email: TEAMS[1].supplementalMembers[1].email,
+      id: TEAMS[1].supplementalMembers[1].userId,
+    }, `${TEAMS[1].name}-admin`);
+  }
   const queue = eventQueue();
   const channel = ownerADevice2.channel(`r4b-staging-${randomUUID()}`).on("postgres_changes", {
     event: "INSERT",
@@ -438,6 +803,16 @@ try {
     "canonicalFixtureCreationEnabled",
   ]) assert.equal(initialFlags[key], false, `${key} must begin OFF`);
 
+  if (PRIVATE_BETA_EXTENSION) {
+    const betaEnabled = await setBetaFlags(platform, {
+      creationEnabled: false,
+      enabled: true,
+      publicDiscoveryEnabled: false,
+    }, "League Private Beta gate enabled before dependencies");
+    assert.equal(betaEnabled.snapshot.enabled, true);
+    assert.equal(betaEnabled.snapshot.creationEnabled, false);
+  }
+
   await setClubFlags(platform, {
     competitionOrganizerEnabled: true,
     foundationEnabled: true,
@@ -453,11 +828,117 @@ try {
   await setParticipationFlags(platform, {
     delegatesEnabled: true,
     foundationEnabled: true,
-    publicRegistrationEnabled: true,
+    publicRegistrationEnabled: !PRIVATE_BETA_EXTENSION,
     registrationEnabled: true,
     rostersEnabled: true,
     schedulePreferencesEnabled: true,
   }, "R4B staging R4A dependency window");
+
+  if (PRIVATE_BETA_EXTENSION) {
+    await setScheduleFlags(platform, {
+      canonicalFixtureCreationEnabled: true,
+      editingEnabled: true,
+      foundationEnabled: true,
+      generationEnabled: true,
+      publicCalendarEnabled: false,
+      publicationEnabled: true,
+    }, "League Private Beta R4B dependency window");
+    await setMatchOperationsFlags(
+      platform,
+      Object.fromEntries(MATCH_OPERATIONS_FLAG_KEYS.map((key) => [
+        key,
+        key !== "publicStandingsEnabled",
+      ])),
+      "League Private Beta R4C dependency window",
+    );
+    await setOperationalExceptionsFlags(
+      platform,
+      Object.fromEntries(OPERATIONAL_EXCEPTIONS_FLAG_KEYS.map((key) => [
+        key,
+        key !== "publicExceptionStatusEnabled",
+      ])),
+      "League Private Beta R4D dependency window",
+    );
+    const betaCreationEnabled = await setBetaFlags(platform, {
+      creationEnabled: true,
+      enabled: true,
+      publicDiscoveryEnabled: false,
+    }, "League Private Beta creation enabled after dependencies");
+    assert.equal(betaCreationEnabled.snapshot.creationEnabled, true);
+    const noGrant = await betaCommand(ownerB, "command_pachanga_league_private_beta_v1", {
+      action: "wizard.create",
+      aggregateId: TEAMS[1].groupId,
+      expectedRevision: (await organizerModel(ownerB, "TEAM", TEAMS[1].groupId)).organizerRevision,
+      payload: { organizerKind: "TEAM", reason: "No grant negative case" },
+    });
+    expectError(noGrant, /LEAGUE_PRIVATE_BETA_GRANT_REQUIRED/, "42501");
+    const teamAdminWithoutGrant = await betaCommand(TEAMS[1].adminClient, "command_pachanga_league_private_beta_v1", {
+      action: "wizard.create",
+      aggregateId: TEAMS[1].groupId,
+      expectedRevision: (await organizerModel(ownerB, "TEAM", TEAMS[1].groupId)).organizerRevision,
+      payload: { organizerKind: "TEAM", reason: "Team admin negative case" },
+    });
+    expectError(teamAdminWithoutGrant, /TEAM_OWNER_REQUIRED/, "42501");
+
+    const expiringBundle = await grantBetaBundle(platform, ownerB, "TEAM", TEAMS[1].groupId, {
+      expiresAt: "2027-12-31T23:59:59Z",
+      reason: "League Private Beta expired grant negative fixture",
+    });
+    created.expiredTeamBundleId = expiringBundle.snapshot.bundle.bundleId;
+    const expiredAt = new Date(Date.now() - 60_000);
+    const expireFixture = await fixtureAdmin.from("pachanga_competition_entitlement_grants")
+      .update({
+        expires_at: expiredAt.toISOString(),
+        valid_from: new Date(expiredAt.getTime() - 60_000).toISOString(),
+      })
+      .eq("bundle_id", created.expiredTeamBundleId)
+      .eq("program_key", "LEAGUE_PRIVATE_BETA_V1");
+    if (expireFixture.error) throw expireFixture.error;
+    const expiredGrant = await betaCommand(ownerB, "command_pachanga_league_private_beta_v1", {
+      action: "wizard.create",
+      aggregateId: TEAMS[1].groupId,
+      expectedRevision: (await organizerModel(ownerB, "TEAM", TEAMS[1].groupId)).organizerRevision,
+      payload: { organizerKind: "TEAM", reason: "Expired grant negative case" },
+    });
+    expectError(expiredGrant, /LEAGUE_PRIVATE_BETA_GRANT_REQUIRED/, "42501");
+    await revokeBetaBundle(
+      platform,
+      ownerB,
+      "TEAM",
+      TEAMS[1].groupId,
+      created.expiredTeamBundleId,
+    );
+    created.expiredTeamBundleId = null;
+
+    const invalidCapacity = await betaCommand(platform, "command_pachanga_league_private_beta_platform_v1", {
+      action: "beta.bundle.grant",
+      aggregateId: TEAMS[0].groupId,
+      expectedRevision: (await organizerModel(ownerA, "TEAM", TEAMS[0].groupId)).organizerRevision,
+      payload: {
+        maxTeams: 21,
+        organizerKind: "TEAM",
+        reason: "Capacity negative case",
+      },
+    });
+    expectError(invalidCapacity, /BETA_CAPACITY_LIMIT/, "22023");
+
+    const teamBundle = await grantBetaBundle(platform, ownerA, "TEAM", TEAMS[0].groupId);
+    created.teamBundleId = teamBundle.snapshot.bundle.bundleId;
+    const teamWizard = await betaCommandOk(ownerA, "command_pachanga_league_private_beta_v1", {
+      action: "wizard.create",
+      aggregateId: TEAMS[0].groupId,
+      expectedRevision: teamBundle.snapshot.organizerRevision,
+      payload: { organizerKind: "TEAM", reason: "Team organizer beta proof" },
+    });
+    await betaCommandOk(ownerA, "command_pachanga_league_private_beta_v1", {
+      action: "wizard.cancel",
+      aggregateId: teamWizard.snapshot.wizard.id,
+      expectedRevision: teamWizard.snapshot.wizard.revision,
+      payload: { reason: "Team organizer beta proof cleanup" },
+    });
+    await revokeBetaBundle(platform, ownerA, "TEAM", TEAMS[0].groupId, created.teamBundleId);
+    created.teamBundleId = null;
+  }
 
   const tag = `${Date.now()}-${randomUUID().slice(0, 8)}`;
   created.clubId = randomUUID();
@@ -487,6 +968,27 @@ try {
     expectedRevision: clubConsent.confirmedRevision,
     payload: { reason: "R4B staging Club review" },
   });
+  if (PRIVATE_BETA_EXTENSION) {
+    const draftBundle = await grantBetaBundle(platform, clubOwner.client, "CLUB", created.clubId);
+    const draftCreate = await betaCommand(
+      clubOwner.client,
+      "command_pachanga_league_private_beta_v1",
+      {
+        action: "wizard.create",
+        aggregateId: created.clubId,
+        expectedRevision: draftBundle.snapshot.organizerRevision,
+        payload: { organizerKind: "CLUB", reason: "Draft Club negative case" },
+      },
+    );
+    expectError(draftCreate, /CLUB_MUST_BE_ACTIVE/, "42501");
+    await revokeBetaBundle(
+      platform,
+      clubOwner.client,
+      "CLUB",
+      created.clubId,
+      draftBundle.snapshot.bundle.bundleId,
+    );
+  }
   await club(platform, {
     action: "club.status.set",
     aggregateId: created.clubId,
@@ -511,6 +1013,67 @@ try {
     expectedRevision: 1,
     payload: { reason: "R4B manager accepts", token: managerInvitation.oneTimeToken },
   });
+  let structure;
+  if (PRIVATE_BETA_EXTENSION) {
+    const bundle = await grantBetaBundle(platform, clubOwner.client, "CLUB", created.clubId);
+    created.betaBundleId = bundle.snapshot.bundle.bundleId;
+    const betaLeague = await createPrivateBetaLeague(
+      clubOwner.client,
+      "CLUB",
+      created.clubId,
+      tag,
+    );
+    created.wizardId = betaLeague.snapshot.wizard.id;
+    created.competitionId = betaLeague.snapshot.canonical.competitionId;
+    let betaCompetitionState = await competitionSnapshot(clubOwner.client, created.competitionId);
+    const director = await foundation(clubOwner.client, {
+      action: "staff.grant",
+      aggregateId: created.competitionId,
+      expectedRevision: betaCompetitionState.competition.revision,
+      payload: { staffRole: "competition_director", userId: USERS.staffA.id },
+    });
+    await foundation(staffA, {
+      action: "staff.grant",
+      aggregateId: created.competitionId,
+      expectedRevision: director.confirmedRevision,
+      payload: { staffRole: "competition_schedule_manager", userId: USERS.adminA.id },
+    });
+    betaCompetitionState = await competitionSnapshot(staffA, created.competitionId);
+    const edition = betaCompetitionState.editions.find(
+      ({ id }) => id === betaLeague.snapshot.canonical.editionId,
+    );
+    const ruleRevision = betaCompetitionState.ruleSets
+      .flatMap(({ revisions }) => revisions)
+      .find(({ id }) => id === betaLeague.snapshot.canonical.ruleRevisionId);
+    const stage = betaCompetitionState.stages.find(
+      ({ id }) => id === betaLeague.snapshot.canonical.stageId,
+    );
+    const division = stage.divisions.find(
+      ({ id }) => id === betaLeague.snapshot.canonical.divisionId,
+    );
+    const competitionGroup = stage.groups.find(
+      ({ id }) => id === betaLeague.snapshot.canonical.groupId,
+    );
+    const categoryReadback = await fixtureAdmin
+      .from("pachanga_competition_categories")
+      .select("id,revision,status,visibility")
+      .eq("id", betaLeague.snapshot.canonical.categoryId)
+      .single();
+    if (categoryReadback.error) throw categoryReadback.error;
+    const category = categoryReadback.data;
+    assert.equal(category.status, "active");
+    assert.equal(category.visibility, "private");
+    assert.ok(edition && ruleRevision && stage && division && competitionGroup && category);
+    structure = {
+      activatedCategory: { snapshot: category },
+      category,
+      competitionGroup,
+      division,
+      edition,
+      ruleRevision,
+      stage,
+    };
+  } else {
   clubState = await clubSnapshot(platform, created.clubId);
   const createGrant = await club(platform, {
     action: "club.entitlement.grant",
@@ -759,33 +1322,113 @@ try {
       ruleRevisionId: ruleRevision.id,
     },
   });
+  structure = {
+    activatedCategory,
+    category,
+    competitionGroup,
+    division,
+    edition,
+    ruleRevision,
+    stage,
+  };
+  }
+  const {
+    activatedCategory,
+    category,
+    competitionGroup,
+    division,
+    edition,
+    ruleRevision,
+    stage,
+  } = structure;
+  let competitionState = await competitionSnapshot(staffA, created.competitionId);
 
   const entries = [];
   for (let index = 0; index < TEAMS.length; index += 1) {
     const team = TEAMS[index];
     const teamClient = teamClients[index];
-    const submitted = await participation(teamClient, {
-      action: "entry.submit",
-      aggregateId: category.id,
-      expectedRevision: activatedCategory.snapshot.revision,
-      payload: { reason: `${team.name} application`, teamId: team.groupId },
-    });
-    const accepted = await participation(staffA, {
-      action: "entry.accept",
-      aggregateId: submitted.snapshot.entry.id,
-      expectedRevision: submitted.snapshot.entry.revision,
-      payload: { reason: `Accept ${team.name}` },
-    });
+    let accepted;
+    if (PRIVATE_BETA_EXTENSION) {
+      if (index === 0) {
+        const publicApplication = await command(
+          teamClient,
+          "command_pachanga_league_participation_v1",
+          {
+            action: "entry.submit",
+            aggregateId: category.id,
+            expectedRevision: activatedCategory.snapshot.revision,
+            payload: { reason: "Public registration negative case", teamId: team.groupId },
+          },
+        );
+        expectError(publicApplication, /LEAGUE_PUBLIC_REGISTRATION_DISABLED/, "42501");
+      }
+      const invitation = await participation(staffA, {
+        action: "entry.invite",
+        aggregateId: category.id,
+        expectedRevision: activatedCategory.snapshot.revision,
+        payload: {
+          expiresAt: "2027-11-15T23:00:00Z",
+          reason: `Private invitation ${team.name}`,
+          teamId: team.groupId,
+        },
+      });
+      accepted = await participation(teamClient, {
+        action: "entry.accept",
+        aggregateId: invitation.snapshot.entry.id,
+        expectedRevision: invitation.snapshot.entry.revision,
+        payload: { reason: `${team.name} owner accepts private invitation` },
+      });
+      const delegateInvitation = await participation(teamClient, {
+        action: "delegate.invite",
+        aggregateId: accepted.snapshot.entry.id,
+        expectedRevision: accepted.snapshot.entry.revision,
+        payload: {
+          reason: `${team.name} appoints primary delegate`,
+          role: "PRIMARY_DELEGATE",
+          userId: team.supplementalMembers[0].userId,
+        },
+      });
+      const invitedDelegate = delegateInvitation.snapshot.delegates.find((delegate) => (
+        delegate.role === "PRIMARY_DELEGATE"
+        && delegate.status === "invited"
+      ));
+      assert.ok(invitedDelegate);
+      assert.equal("userId" in invitedDelegate, false);
+      await participation(team.delegateClient, {
+        action: "delegate.accept",
+        aggregateId: invitedDelegate.id,
+        expectedRevision: invitedDelegate.revision,
+        payload: { reason: `${team.name} delegate accepts` },
+      });
+    } else {
+      const submitted = await participation(teamClient, {
+        action: "entry.submit",
+        aggregateId: category.id,
+        expectedRevision: activatedCategory.snapshot.revision,
+        payload: { reason: `${team.name} application`, teamId: team.groupId },
+      });
+      accepted = await participation(staffA, {
+        action: "entry.accept",
+        aggregateId: submitted.snapshot.entry.id,
+        expectedRevision: submitted.snapshot.entry.revision,
+        payload: { reason: `Accept ${team.name}` },
+      });
+    }
     const entryId = accepted.snapshot.entry.id;
     const rosterId = accepted.snapshot.roster.id;
     let roster = await rosterSnapshot(teamClient, rosterId);
-    await participation(teamClient, {
-      action: "roster.member.add",
-      aggregateId: rosterId,
-      expectedRevision: roster.roster.revision,
-      payload: { playerProfileId: team.profileId, reason: `${team.name} roster` },
-    });
-    roster = await rosterSnapshot(teamClient, rosterId);
+    const rosterProfiles = PRIVATE_BETA_EXTENSION
+      ? [team.profileId, ...team.supplementalMembers.map(({ profileId }) => profileId)]
+      : [team.profileId];
+    for (const playerProfileId of rosterProfiles) {
+      await participation(teamClient, {
+        action: "roster.member.add",
+        aggregateId: rosterId,
+        expectedRevision: roster.roster.revision,
+        payload: { playerProfileId, reason: `${team.name} roster` },
+      });
+      roster = await rosterSnapshot(teamClient, rosterId);
+    }
     await participation(teamClient, {
       action: "roster.submit",
       aggregateId: rosterId,
@@ -863,14 +1506,16 @@ try {
   });
   assert.equal(closed.snapshot.status, "registration_closed");
 
-  await setScheduleFlags(platform, {
-    canonicalFixtureCreationEnabled: true,
-    editingEnabled: true,
-    foundationEnabled: true,
-    generationEnabled: true,
-    publicCalendarEnabled: true,
-    publicationEnabled: true,
-  }, "R4B authenticated staging window");
+  if (!PRIVATE_BETA_EXTENSION) {
+    await setScheduleFlags(platform, {
+      canonicalFixtureCreationEnabled: true,
+      editingEnabled: true,
+      foundationEnabled: true,
+      generationEnabled: true,
+      publicCalendarEnabled: true,
+      publicationEnabled: true,
+    }, "R4B authenticated staging window");
+  }
 
   competitionState = await competitionSnapshot(staffA, created.competitionId);
   const currentStage = competitionState.stages.find(({ id }) => id === stage.id);
@@ -998,7 +1643,7 @@ try {
   assert.deepEqual(await scheduling(adminADevice2, publicationInput), published);
   assert.equal(published.snapshot.publication.canonicalMatchCount, 15);
   assert.equal(published.snapshot.publication.contextCount, 15);
-  assert.equal(published.snapshot.publication.notificationCount, 6);
+  assert.equal(published.snapshot.publication.notificationCount, PRIVATE_BETA_EXTENSION ? 12 : 6);
   assert.equal((await teamInvalidation).new.target_group_id, TEAMS[0].groupId);
 
   const teamCalendar = await rpc(ownerADevice2, "get_pachanga_my_league_schedule_v1", {
@@ -1006,17 +1651,23 @@ try {
   });
   assert.equal(teamCalendar.fixtures.length, 5);
   const anonymous = client();
-  const publicCalendar = await rpc(anonymous, "get_pachanga_public_league_calendar_v1", {
+  const publicCalendarResult = await anonymous.rpc("get_pachanga_public_league_calendar_v1", {
     target_competition_id: created.competitionId,
     target_round_from: 1,
     target_round_limit: 20,
   });
-  assert.equal(publicCalendar.rounds.length, 5);
-  assert.equal(publicCalendar.rounds.reduce((total, round) => total + round.fixtures.length, 0), 15);
-  const roundDetail = await rpc(anonymous, "get_pachanga_league_round_detail_v1", {
-    target_round_id: publicCalendar.rounds[0].id,
-  });
-  assert.equal(roundDetail.fixtures.length, 3);
+  if (PRIVATE_BETA_EXTENSION) {
+    expectError(publicCalendarResult, /PUBLIC_CALENDAR_DISABLED/, "42501");
+  } else {
+    if (publicCalendarResult.error) throw publicCalendarResult.error;
+    const publicCalendar = publicCalendarResult.data;
+    assert.equal(publicCalendar.rounds.length, 5);
+    assert.equal(publicCalendar.rounds.reduce((total, round) => total + round.fixtures.length, 0), 15);
+    const roundDetail = await rpc(anonymous, "get_pachanga_league_round_detail_v1", {
+      target_round_id: publicCalendar.rounds[0].id,
+    });
+    assert.equal(roundDetail.fixtures.length, 3);
+  }
 
   for (const team of TEAMS) {
     const notifications = await fixtureAdmin.from("pachanga_user_notifications")
@@ -1040,6 +1691,7 @@ try {
     ownerADevice2,
     outsiderClient: outsider.client,
     platform,
+    privateBeta: PRIVATE_BETA_EXTENSION,
     rpc,
     stage,
     staffA,
@@ -1056,6 +1708,7 @@ try {
     ownerADevice2,
     outsiderClient: outsider.client,
     platform,
+    privateBeta: PRIVATE_BETA_EXTENSION,
     rpc,
     staffA,
     waitForSubscription,
@@ -1118,7 +1771,7 @@ try {
   });
   assert.equal(workbench.plan.status, "cancelled");
   completed = true;
-  console.log(JSON.stringify({
+  storySummary = {
     canonicalMatches: 15,
     cleanup: "service_authority_archived_with_history",
     competitionId: created.competitionId,
@@ -1134,7 +1787,7 @@ try {
     r4d,
     rounds: 5,
     status: "PASS",
-  }));
+  };
 } finally {
   if (platform) {
     await bestEffort("archive-active-schedule", async () => {
@@ -1161,6 +1814,38 @@ try {
         payload: { reason: "R4B staging cleanup" },
       });
     });
+    if (PRIVATE_BETA_EXTENSION) {
+      await bestEffort("revoke-team-beta-bundle", async () => {
+        if (!created.teamBundleId) return;
+        await revokeBetaBundle(platform, ownerA, "TEAM", TEAMS[0].groupId, created.teamBundleId);
+        created.teamBundleId = null;
+      });
+      await bestEffort("revoke-expired-team-beta-bundle", async () => {
+        if (!created.expiredTeamBundleId) return;
+        await revokeBetaBundle(platform, ownerB, "TEAM", TEAMS[1].groupId, created.expiredTeamBundleId);
+        created.expiredTeamBundleId = null;
+      });
+      await bestEffort("revoke-club-beta-bundle", async () => {
+        if (!created.betaBundleId || !created.clubId) return;
+        await revokeBetaBundle(platform, clubOwner.client, "CLUB", created.clubId, created.betaBundleId);
+        created.betaBundleId = null;
+      });
+      await bestEffort("disable-private-beta", () => setBetaFlags(platform, {
+        creationEnabled: false,
+        enabled: false,
+        publicDiscoveryEnabled: false,
+      }, "League Private Beta staging complete"));
+      await bestEffort("disable-r4d", () => setOperationalExceptionsFlags(
+        platform,
+        Object.fromEntries(OPERATIONAL_EXCEPTIONS_FLAG_KEYS.map((key) => [key, false])),
+        "League Private Beta staging complete",
+      ));
+      await bestEffort("disable-r4c", () => setMatchOperationsFlags(
+        platform,
+        Object.fromEntries(MATCH_OPERATIONS_FLAG_KEYS.map((key) => [key, false])),
+        "League Private Beta staging complete",
+      ));
+    }
     await bestEffort("disable-r4b", () => setScheduleFlags(platform, {
       canonicalFixtureCreationEnabled: false,
       editingEnabled: false,
@@ -1191,6 +1876,56 @@ try {
       creationEnabled: false,
       foundationEnabled: false,
     }, "R4B staging complete"));
+    if (PRIVATE_BETA_EXTENSION) {
+      await bestEffort("private-beta-cleanup-readback", async () => {
+        const [
+          beta,
+          competition,
+          clubFoundation,
+          participationFlags,
+          schedulingFlags,
+          matchOperations,
+          operationalExceptions,
+          activeBundles,
+          competitionRow,
+        ] = await Promise.all([
+          betaFlags(platform),
+          rpc(platform, "get_pachanga_platform_competition_foundation_v1", { page_offset: 0, page_size: 1 }),
+          rpc(platform, "get_pachanga_club_foundation_flags_v1"),
+          rpc(platform, "get_pachanga_league_participation_flags_v1"),
+          scheduleFlags(platform),
+          rpc(platform, "get_pachanga_league_match_operations_flags_v1"),
+          rpc(platform, "get_pachanga_league_operational_exceptions_flags_v1"),
+          fixtureAdmin.from("pachanga_competition_entitlement_grants")
+            .select("bundle_id,organizer_group_id,organizer_club_id")
+            .eq("program_key", "LEAGUE_PRIVATE_BETA_V1")
+            .eq("status", "active"),
+          created.competitionId
+            ? fixtureAdmin.from("pachanga_competitions").select("status").eq("id", created.competitionId).single()
+            : Promise.resolve({ data: null, error: null }),
+        ]);
+        if (activeBundles.error) throw activeBundles.error;
+        if (competitionRow.error) throw competitionRow.error;
+        const qaOrganizerIds = new Set([
+          created.clubId,
+          TEAMS[0].groupId,
+          TEAMS[1].groupId,
+        ].filter(Boolean));
+        cleanupReadback = {
+          activeQaBundles: activeBundles.data.filter((bundle) => (
+            qaOrganizerIds.has(bundle.organizer_group_id) || qaOrganizerIds.has(bundle.organizer_club_id)
+          )).length,
+          beta,
+          clubFoundation,
+          competition: competition.flags,
+          competitionStatus: competitionRow.data?.status ?? null,
+          matchOperations,
+          operationalExceptions,
+          participation: participationFlags,
+          scheduling: schedulingFlags,
+        };
+      });
+    }
   }
   for (const [supabase, channel] of channels) await bestEffort("remove-channel", () => supabase.removeChannel(channel));
   for (const supabase of clients) {
@@ -1200,3 +1935,31 @@ try {
 }
 
 assert.equal(completed, true, "R4B staging story did not complete");
+if (PRIVATE_BETA_EXTENSION) {
+  assert.ok(cleanupReadback, "League Private Beta cleanup readback is required");
+  assert.equal(cleanupReadback.activeQaBundles, 0);
+  assert.equal(cleanupReadback.competitionStatus, "cancelled");
+  assert.equal(cleanupReadback.beta.inviteOnly, true);
+  for (const flags of [
+    cleanupReadback.beta,
+    cleanupReadback.competition,
+    cleanupReadback.clubFoundation,
+    cleanupReadback.participation,
+    cleanupReadback.scheduling,
+    cleanupReadback.matchOperations,
+    cleanupReadback.operationalExceptions,
+  ]) {
+    for (const [key, value] of Object.entries(flags)) {
+      if (key === "inviteOnly") continue;
+      if (typeof value === "boolean") assert.equal(value, false, `${key} must be restored OFF`);
+    }
+  }
+}
+console.log(JSON.stringify({
+  ...storySummary,
+  cleanupReadback: PRIVATE_BETA_EXTENSION ? {
+    activeQaBundles: cleanupReadback.activeQaBundles,
+    competitionStatus: cleanupReadback.competitionStatus,
+    flags: "restored_off",
+  } : null,
+}));

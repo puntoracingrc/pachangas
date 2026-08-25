@@ -749,3 +749,15 @@
 @media (prefers-reduced-motion: reduce) {
   .sidebar { transition: none; }
 }
+.competitionSearchForm {
+  display: flex;
+  align-items: end;
+  gap: 8px;
+  margin: 14px 0;
+}
+
+.competitionSearchForm > label { flex: 1; }
+
+@media (max-width: 720px) {
+  .competitionSearchForm { align-items: stretch; flex-direction: column; }
+}
