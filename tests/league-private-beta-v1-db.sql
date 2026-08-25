@@ -263,6 +263,10 @@ begin
   if response #>> '{snapshot,canonical,registrationMode}' <> 'INVITE_ONLY' then
     raise exception 'Finalized competition is not invite-only';
   end if;
+  if response #>> '{snapshot,canonical,editionStatus}' <> 'draft'
+     or response #>> '{snapshot,nextAction}' <> 'open_registration' then
+    raise exception 'LPB-017: finalize response must require canonical registration opening';
+  end if;
 end;
 $$;
 
@@ -279,6 +283,16 @@ select pg_temp.assert_true(
     where competitions.product_key = 'LEAGUE_PRIVATE_BETA_V1'
       and editions.registration_mode = 'INVITE_ONLY') = 1,
   'Finalize must create one invite-only Edition'
+);
+select pg_temp.assert_true(
+  (select count(*)
+    from public.pachanga_competition_editions editions
+    join public.pachanga_competitions competitions
+      on competitions.id = editions.competition_id
+    where competitions.product_key = 'LEAGUE_PRIVATE_BETA_V1'
+      and editions.status = 'draft'
+      and editions.registration_opens_at is null) = 1,
+  'LPB-017: finalize must keep the Edition draft until registration.open'
 );
 select pg_temp.assert_true(
   (select count(*)

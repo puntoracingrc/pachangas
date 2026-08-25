@@ -14,6 +14,7 @@ const paths = {
   access: "supabase/migrations/20260825074358_league_private_beta_access_v1.sql",
   commands: "supabase/migrations/20260825074353_league_private_beta_commands_v1.sql",
   databaseSuite: "tests/league-private-beta-v1-db.sql",
+  draftEditionFix: "supabase/migrations/20260825115500_league_private_beta_draft_edition_fix.sql",
   indexes: "supabase/migrations/20260825102400_league_private_beta_fk_indexes_v1.sql",
   schema: "supabase/migrations/20260825074304_league_private_beta_schema_v1.sql",
 } as const;
@@ -43,6 +44,17 @@ test("productization installs fully disabled and does not create product data", 
   assert.match(schema, /creates no League, grant or fixture and leaves every gate OFF/i);
   assert.doesNotMatch(schema, /insert into public\.pachanga_competitions\b/i);
   assert.doesNotMatch(schema, /insert into public\.pachanga_competition_entitlement_grants\b/i);
+});
+
+test("wizard finalization keeps the Edition draft until canonical registration opens", async () => {
+  const migration = await source(paths.draftEditionFix);
+  assert.match(migration, /before insert on public\.pachanga_competition_editions/);
+  assert.match(migration, /new\.status := 'draft'/);
+  assert.match(migration, /new\.registration_opens_at := null/);
+  assert.match(migration, /target_action = 'wizard\.finalize'/);
+  assert.match(migration, /open_registration/);
+  assert.match(migration, /editionStatus/);
+  assert.doesNotMatch(migration, /update\s+public\.pachanga_competition_editions/i);
 });
 
 test("the schema reuses canonical entitlements and enforces private League shape", async () => {

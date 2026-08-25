@@ -3,10 +3,12 @@
 ## Release checkpoint
 
 - Initial `origin/main`: `161c152fb0423a87304b1549c15e33184cb0de4d`
-- Branch: `codex/league-private-beta-v1`
-- Status: implementation in progress
-- Production modified: no
-- Supabase production modified: no
+- Initial release PR: `#186`, merged as `cdd11e2790f5f961101234dac9682c7913958744`
+- Closeout branch: `codex/league-private-beta-v1-release-closeout`
+- Closeout PR: `#187` (LPB-017 correction pending merge)
+- Status: first release active; LPB-017 fixed and verified in staging
+- Production modified: yes, by the first four migrations and PR #186
+- Supabase production modified: yes; migration 5 remains pending until #187 is merged
 
 ## Productization migrations
 
@@ -14,6 +16,7 @@
 2. `20260825074353_league_private_beta_commands_v1.sql`
 3. `20260825074358_league_private_beta_access_v1.sql`
 4. `20260825102400_league_private_beta_fk_indexes_v1.sql`
+5. `20260825115500_league_private_beta_draft_edition_fix.sql`
 
 They are forward-only units installed after the existing 136-entry ledger. The
 schema reuses canonical Competition entitlements and R1/R4A-R4D entities; it
@@ -21,10 +24,10 @@ does not create a parallel League engine or initialize legacy backfill.
 
 ## Local release gates
 
-- Node: `v24.16.0` (repository contract `>=22.13.0`).
+- Node: `v24.19.0` (repository contract `>=22.13.0`).
 - Production build: PASS, 49 static pages generated and `/ligas` present.
-- Full suite: PASS, 460/460; skipped/todo/cancelled 0/0/0.
-- Wave 2 contract: PASS, 17/17.
+- Full suite: PASS, 461/461; skipped/todo/cancelled 0/0/0.
+- Wave 2 contract: PASS, 18/18.
 - Typecheck: PASS.
 - Focused lint for every Wave 2 TypeScript/JavaScript route: PASS.
 - Global lint: pre-existing debt remains at 22 errors and 18 warnings in
@@ -32,7 +35,7 @@ does not create a parallel League engine or initialize legacy backfill.
   focal finding.
 - SQL/RLS/idempotency/adversarial: PASS on a temporary local PostgreSQL 17
   database.
-- Bootstrap and upgrade: PASS; exact 136 -> 140 ledger and fresh/upgraded
+- Bootstrap and upgrade: PASS; exact 136 -> 141 ledger and fresh/upgraded
   schemas are equivalent.
 - Concurrency: PASS for replay, competing creates, competing step writes, and
   competing revocations.
@@ -74,14 +77,22 @@ by canonical refetch all converged. Cleanup archived/cancelled the synthetic
 competition, revoked the exact entitlement bundle, restored every mutable flag
 to OFF, and left 0 active QA bundles.
 
-Direct staging readback: 140 migration ledger entries ending at remote version
-`20260825101356`; 0 active beta bundles, 0 active beta wizards, 0 active QA
+Direct staging readback: 141 migration ledger entries ending at canonical version
+`20260825115500`; 0 active beta bundles, 0 active beta wizards, 0 active QA
 competitions, 0 active QA plans, and 0 active QA match contexts. Every R1,
 R4A, R4B, R4C, R4D and private-beta mutable switch was OFF after cleanup;
 `inviteOnly=true` remained the structural invariant.
 
+LPB-017 focal staging story: PASS. A real authenticated organizer completed all
+ten wizard steps; finalization returned and persisted an Edition in `draft`
+with no registration opening timestamp. The separate revisioned
+`registration.open` command then moved it to `registration_open`. Cleanup
+cancelled the Competition before fixtures, revoked its exact bundle, restored
+all competition/Club flags to OFF, and left 0 active QA bundles, wizards and
+competitions.
+
 Preview visual gate: PASS on the exact product commit
-`cebb3756c908feec1283eec5f5c9f3af6c9bd0cd`. `/ligas`, Control Center,
+`dfe317995d8612ec4c9b8ce95e1490602d4e705a`. `/ligas`, Control Center,
 registration, calendar, match, results, standings, and operational-exception
 surfaces were checked at 1440x900, 390x844, and 844x390. Across the 24 route
 and viewport combinations there were 0 horizontal overflows, 0 controls outside
@@ -126,3 +137,4 @@ the final deployment, and final SHAs before the release is closed.
 | LPB-014 | SIMULATION_BUG | The combined story attempted `SET_OFFICIAL_RESULT` for a suspension on a match that already had an active R4C official decision. R4D correctly rejected the second authority with `R4D_SUSPENSION_RESULT_CONFLICT`. | fixed + regression_verified | The integrated private-beta story requires the conflict while the standalone R4D suite retains and passes the successful administrative-result path. |
 | LPB-015 | TESTABILITY_GAP | Grant cleanup derived an organizer revision from the first bounded Control Center page. Repeated QA history could push the target organizer outside that page, making a valid targeted revocation untestable. | fixed + regression_verified | Cleanup reads the organizer's own canonical revision and checks the exact bundle through service-only status readback; final active QA bundles are 0. |
 | LPB-016 | SIMULATION_BUG | Final cleanup treated every boolean in the beta read model as a mutable gate and incorrectly expected the structural invariant `inviteOnly` to become false. | fixed + regression_verified | Final readback requires structural `inviteOnly=true` while every mutable beta/dependency gate is restored to false. |
+| LPB-017 | PRODUCT_BUG | The first production smoke finalized the wizard with the Competition in `draft` but the Edition already in `registration_open`, contrary to the release contract that requires both aggregates to remain drafts until a later canonical registration command. | fixed + regression_verified | A fifth forward-only migration enforces `draft` with no `registration_opens_at`, returns `open_registration`, and the repeated SQL plus authenticated staging story proves only the separate revisioned `registration.open` command opens it. Both QA competitions were cancelled before fixtures and both exact beta bundles were revoked. |

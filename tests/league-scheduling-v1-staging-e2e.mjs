@@ -677,7 +677,9 @@ async function createPrivateBetaLeague(organizerClient, organizerKind, organizer
     },
   );
   assert.equal(finalized.snapshot.canonical.registrationMode, "INVITE_ONLY");
+  assert.equal(finalized.snapshot.canonical.editionStatus, "draft");
   assert.equal(finalized.snapshot.canonical.visibility, "private");
+  assert.equal(finalized.snapshot.nextAction, "open_registration");
   assert.equal(finalized.snapshot.canonical.teamCap, 6);
   assert.deepEqual(finalized.snapshot.unavailable, [
     "competition_discipline",
@@ -1064,12 +1066,27 @@ try {
     assert.equal(category.status, "active");
     assert.equal(category.visibility, "private");
     assert.ok(edition && ruleRevision && stage && division && competitionGroup && category);
+    assert.equal(edition.status, "draft");
+    await participation(staffA, {
+      action: "registration.open",
+      aggregateId: edition.id,
+      expectedRevision: edition.revision,
+      payload: {
+        closesAt: "2027-11-30T23:00:00Z",
+        reason: "Open invite-only League Private Beta registration",
+        registrationMode: "INVITE_ONLY",
+        ruleRevisionId: ruleRevision.id,
+      },
+    });
+    betaCompetitionState = await competitionSnapshot(staffA, created.competitionId);
+    const openedEdition = betaCompetitionState.editions.find(({ id }) => id === edition.id);
+    assert.equal(openedEdition?.status, "registration_open");
     structure = {
       activatedCategory: { snapshot: category },
       category,
       competitionGroup,
       division,
-      edition,
+      edition: openedEdition,
       ruleRevision,
       stage,
     };
