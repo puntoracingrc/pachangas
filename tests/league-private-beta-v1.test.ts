@@ -266,11 +266,39 @@ test("the authenticated staging runner composes R1 through R4D and restores the 
   assert.match(runner, /R4D_STAGING_EXTENSION = "1"/);
   assert.match(packageJson, /test:league-private-beta:staging/);
   assert.match(scheduling, /Expired grant negative case/);
+  assert.match(scheduling, /valid_from: new Date\(expiredAt\.getTime\(\) - 60_000\)/);
   assert.match(scheduling, /Public registration negative case/);
+  assert.match(scheduling, /LEAGUE_PUBLIC_REGISTRATION_DISABLED/);
   assert.match(scheduling, /activeQaBundles/);
   assert.match(scheduling, /PUBLIC_CALENDAR_DISABLED/);
+  assert.match(scheduling, /updateUserById\(member\.userId/);
+  assert.match(scheduling, /R4B_STAGING_SIGN_IN_FAILED:\$\{role\}/);
+  assert.match(scheduling, /from\("pachanga_competition_categories"\)/);
+  assert.doesNotMatch(scheduling, /betaCompetitionState\.categories/);
+  assert.match(scheduling, /"userId" in invitedDelegate, false/);
+  assert.match(scheduling, /r4b-qa-private-beta-/);
+  assert.match(scheduling, /notificationCount, PRIVATE_BETA_EXTENSION \? 12 : 6/);
+  assert.match(scheduling, /organizerModel\(organizerClient, organizerKind, organizerId\)/);
+  assert.match(scheduling, /cleanupReadback\.beta\.inviteOnly, true/);
+  const activationOrder = [
+    "League Private Beta gate enabled before dependencies",
+    "League Private Beta R4B dependency window",
+    "League Private Beta R4C dependency window",
+    "League Private Beta R4D dependency window",
+    "League Private Beta creation enabled after dependencies",
+  ].map((marker) => scheduling.indexOf(marker));
+  assert.equal(activationOrder.every((index) => index >= 0), true);
+  assert.deepEqual([...activationOrder].sort((left, right) => left - right), activationOrder);
+  assert.match(matchOperations, /if \(!privateBeta\)[\s\S]+R4C authenticated staging window/);
+  assert.match(exceptions, /if \(!privateBeta\)[\s\S]+R4D staging dependency window/);
   assert.match(matchOperations, /PUBLIC_STANDINGS_DISABLED/);
   assert.match(exceptions, /PUBLIC_EXCEPTION_STATUS_DISABLED/);
+  assert.match(exceptions, /stageContext\(accepted, "scheduled"/);
+  assert.match(exceptions, /stageContext\(raceFixture, "scheduled"/);
+  assert.match(exceptions, /currentSportingScore\(resumed\)/);
+  assert.match(exceptions, /partialScoreHome: resumedScore\.scoreHome/);
+  assert.match(exceptions, /R4D_SUSPENSION_RESULT_CONFLICT/);
+  assert.match(exceptions, /administrative_result_conflict_blocked/);
 });
 
 test("the scale command provisions an isolated local database instead of trusting a prepared target", async () => {

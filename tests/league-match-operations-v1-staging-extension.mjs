@@ -106,7 +106,13 @@ export async function runLeagueMatchOperationsStagingExtension({
   waitForSubscription,
 }) {
   const initialFlags = await rpc(platform, "get_pachanga_league_match_operations_flags_v1");
-  for (const key of FLAG_KEYS) assert.equal(initialFlags[key], false, `${key} must begin OFF`);
+  const allEnabled = Object.fromEntries(FLAG_KEYS.map((key) => [
+    key,
+    privateBeta && key === "publicStandingsEnabled" ? false : true,
+  ]));
+  for (const key of FLAG_KEYS) {
+    assert.equal(initialFlags[key], privateBeta ? allEnabled[key] : false, `${key} initial gate mismatch`);
+  }
 
   async function setFlags(values, reason) {
     const current = await rpc(platform, "get_pachanga_league_match_operations_flags_v1");
@@ -121,15 +127,13 @@ export async function runLeagueMatchOperationsStagingExtension({
     return result.data;
   }
 
-  const allEnabled = Object.fromEntries(FLAG_KEYS.map((key) => [
-    key,
-    privateBeta && key === "publicStandingsEnabled" ? false : true,
-  ]));
   let flagsEnabled = false;
   try {
-    const enabled = await setFlags(allEnabled, "R4C authenticated staging window");
-    flagsEnabled = true;
-    for (const key of FLAG_KEYS) assert.equal(enabled.snapshot[key], allEnabled[key]);
+    if (!privateBeta) {
+      const enabled = await setFlags(allEnabled, "R4C authenticated staging window");
+      flagsEnabled = true;
+      for (const key of FLAG_KEYS) assert.equal(enabled.snapshot[key], allEnabled[key]);
+    }
 
     const contextsResult = await fixtureAdmin
       .from("pachanga_competition_match_contexts")
@@ -917,12 +921,14 @@ export async function runLeagueMatchOperationsStagingExtension({
     assert.equal(fullStandings.snapshot.checksum, incrementalChecksum);
     assert.deepEqual(fullStandings.snapshot.rows, incrementalRows);
 
-    const finalFlags = await setFlags(
-      Object.fromEntries(FLAG_KEYS.map((key) => [key, initialFlags[key]])),
-      "R4C staging restore",
-    );
-    flagsEnabled = false;
-    for (const key of FLAG_KEYS) assert.equal(finalFlags.snapshot[key], initialFlags[key]);
+    if (!privateBeta) {
+      const finalFlags = await setFlags(
+        Object.fromEntries(FLAG_KEYS.map((key) => [key, initialFlags[key]])),
+        "R4C staging restore",
+      );
+      flagsEnabled = false;
+      for (const key of FLAG_KEYS) assert.equal(finalFlags.snapshot[key], initialFlags[key]);
+    }
 
     return {
       canonicalMatches: fixtures.length,

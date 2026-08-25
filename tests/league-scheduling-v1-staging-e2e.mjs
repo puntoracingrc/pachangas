@@ -67,9 +67,22 @@ const IDS = {
   clubFlags: "00000000-0000-0000-0000-00000000c101",
   competitionFlags: "00000000-0000-0000-0000-00000000c001",
   leagueFlags: "00000000-0000-0000-0000-00000000c4a1",
+  matchOperationsFlags: "00000000-0000-0000-0000-00000000c4c1",
+  operationalExceptionsFlags: "00000000-0000-0000-0000-00000000c4d1",
   scheduleFlags: "00000000-0000-0000-0000-00000000c4b1",
   refereeFlags: "00000000-0000-0000-0000-00000000a3f3",
 };
+const MATCH_OPERATIONS_FLAG_KEYS = [
+  "foundationEnabled", "squadsEnabled", "attendanceEnabled",
+  "sportingResultsEnabled", "resultConfirmationEnabled",
+  "officialResultsEnabled", "standingsEnabled", "publicStandingsEnabled",
+];
+const OPERATIONAL_EXCEPTIONS_FLAG_KEYS = [
+  "foundationEnabled", "postponementsEnabled", "reschedulingEnabled",
+  "venueChangesEnabled", "lateArrivalEnabled", "noShowEnabled",
+  "matchSuspensionsEnabled", "administrativeDecisionsEnabled",
+  "publicExceptionStatusEnabled",
+];
 const UNTOUCHED_TABLES = [
   "pachanga_individual_rating_evidence",
   "pachanga_player_rating_snapshots",
@@ -115,13 +128,23 @@ async function rpc(supabase, name, args = {}) {
   if (result.error) throw result.error;
   return result.data;
 }
-async function signIn(account) {
-  const supabase = client();
-  const result = await supabase.auth.signInWithPassword({ email: account.email, password });
-  if (result.error) throw result.error;
-  assert.equal(result.data.user.id, account.id);
-  clients.push(supabase);
-  return supabase;
+async function signIn(account, role) {
+  for (let attempt = 1; attempt <= 5; attempt += 1) {
+    const supabase = client();
+    const result = await supabase.auth.signInWithPassword({ email: account.email, password });
+    if (!result.error) {
+      assert.equal(result.data.user.id, account.id);
+      clients.push(supabase);
+      return supabase;
+    }
+    if (result.error.code !== "invalid_credentials" || attempt === 5) {
+      throw new Error(`R4B_STAGING_SIGN_IN_FAILED:${role}:${result.error.code ?? result.error.status}`, {
+        cause: result.error,
+      });
+    }
+    await new Promise((resolve) => setTimeout(resolve, attempt * 300));
+  }
+  throw new Error(`R4B_STAGING_SIGN_IN_FAILED:${role}:retry_exhausted`);
 }
 async function prepareIdentities() {
   for (const account of Object.values(USERS)) {
@@ -240,6 +263,12 @@ async function ensureTeams() {
           });
           if (createdUser.error) throw createdUser.error;
           created.supplementalUserIds.push(member.userId);
+        } else {
+          const updatedUser = await fixtureAdmin.auth.admin.updateUserById(member.userId, {
+            password,
+            user_metadata: { qaFixture: "LEAGUE_PRIVATE_BETA_V1" },
+          });
+          if (updatedUser.error) throw updatedUser.error;
         }
       }
     }
@@ -351,12 +380,6 @@ async function setParticipationFlags(platform, next, reason) {
   if (result.error) throw result.error;
   return result.data;
 }
-async function betaOverview(supabase) {
-  return rpc(supabase, "get_pachanga_platform_league_private_beta_v1", {
-    page_offset: 0,
-    page_size: 100,
-  });
-}
 async function betaFlags(supabase) {
   return rpc(supabase, "get_pachanga_league_private_beta_flags_v1");
 }
@@ -393,6 +416,41 @@ async function setScheduleFlags(platform, next, reason) {
   if (result.error) throw result.error;
   return result.data;
 }
+async function setLeagueOperationFlags(platform, {
+  aggregateId,
+  currentRpc,
+  commandRpc,
+  next,
+  reason,
+  surface,
+}) {
+  const current = await rpc(platform, currentRpc);
+  const result = await platform.rpc(commandRpc, {
+    aggregate_id: aggregateId,
+    client_metadata: metadata(surface),
+    command_payload: { ...next, reason },
+    expected_revision: current.revision,
+    operation_id: randomUUID(),
+  });
+  if (result.error) throw result.error;
+  return result.data;
+}
+const setMatchOperationsFlags = (platform, next, reason) => setLeagueOperationFlags(platform, {
+  aggregateId: IDS.matchOperationsFlags,
+  commandRpc: "command_pachanga_league_match_operations_platform_v1",
+  currentRpc: "get_pachanga_league_match_operations_flags_v1",
+  next,
+  reason,
+  surface: "league-private-beta-r4c-flags",
+});
+const setOperationalExceptionsFlags = (platform, next, reason) => setLeagueOperationFlags(platform, {
+  aggregateId: IDS.operationalExceptionsFlags,
+  commandRpc: "command_pachanga_league_operational_exceptions_platform_v1",
+  currentRpc: "get_pachanga_league_operational_exceptions_flags_v1",
+  next,
+  reason,
+  surface: "league-private-beta-r4d-flags",
+});
 async function setRefereeFlagsOff(platform) {
   const current = await rpc(platform, "get_pachanga_referee_foundation_flags_v1");
   const keys = ["assignmentsEnabled", "clubRelationshipsEnabled", "foundationEnabled", "marketplaceEnabled", "publicProfilesEnabled", "selfServiceEnabled"];
@@ -476,14 +534,17 @@ async function grantBetaBundle(platform, organizerClient, organizerKind, organiz
   });
 }
 
-async function revokeBetaBundle(platform, organizerKind, organizerId, bundleId) {
-  const overview = await betaOverview(platform);
-  const bundle = overview.bundles.find((candidate) => candidate.bundleId === bundleId);
-  if (!bundle || bundle.status === "revoked") return;
-  const organizer = overview.organizers.find((candidate) => (
-    candidate.organizerKind === organizerKind && candidate.organizerId === organizerId
-  ));
-  assert.ok(organizer, `${organizerKind} organizer ${organizerId} must be visible to platform`);
+async function revokeBetaBundle(platform, organizerClient, organizerKind, organizerId, bundleId) {
+  const bundle = await fixtureAdmin
+    .from("pachanga_competition_entitlement_grants")
+    .select("status")
+    .eq("bundle_id", bundleId)
+    .eq("program_key", "LEAGUE_PRIVATE_BETA_V1")
+    .limit(1)
+    .maybeSingle();
+  if (bundle.error) throw bundle.error;
+  if (!bundle.data || bundle.data.status === "revoked") return;
+  const organizer = await organizerModel(organizerClient, organizerKind, organizerId);
   await betaCommandOk(platform, "command_pachanga_league_private_beta_platform_v1", {
     action: "beta.bundle.revoke",
     aggregateId: organizerId,
@@ -522,8 +583,8 @@ async function createPrivateBetaLeague(organizerClient, organizerKind, organizer
       description: "Liga privada beta integrada R1-R4D",
       generalArea: "Barcelona",
       imageUrl: "",
-      name: `League Private Beta ${tag}`,
-      slug: `league-private-beta-${tag}`,
+      name: `R4B QA League Private Beta ${tag}`,
+      slug: `r4b-qa-private-beta-${tag}`,
     },
     { modality: "FUTBOL_5" },
     {
@@ -663,6 +724,7 @@ async function verifyPreview(accessToken, competitionId, planId) {
 }
 
 let platform;
+let clubOwner;
 let ownerA;
 let ownerADevice2;
 let ownerB;
@@ -678,22 +740,20 @@ let storySummary = null;
 
 try {
   await prepareIdentities();
-  [platform, ownerA, ownerADevice2, ownerB, ownerC, adminA, adminADevice2, playerA, staffA] = await Promise.all([
-    signIn(USERS.platform),
-    signIn(USERS.ownerA),
-    signIn(USERS.ownerA),
-    signIn(USERS.ownerB),
-    signIn(USERS.ownerC),
-    signIn(USERS.adminA),
-    signIn(USERS.adminA),
-    signIn(USERS.playerA),
-    signIn(USERS.staffA),
-  ]);
+  platform = await signIn(USERS.platform, "platform");
+  ownerA = await signIn(USERS.ownerA, "owner-a");
+  ownerADevice2 = await signIn(USERS.ownerA, "owner-a-device-2");
+  ownerB = await signIn(USERS.ownerB, "owner-b");
+  ownerC = await signIn(USERS.ownerC, "owner-c");
+  adminA = await signIn(USERS.adminA, "admin-a");
+  adminADevice2 = await signIn(USERS.adminA, "admin-a-device-2");
+  playerA = await signIn(USERS.playerA, "player-a");
+  staffA = await signIn(USERS.staffA, "staff-a");
   const teamClients = [ownerA, ownerB, ownerC, adminA, playerA, staffA];
   for (let index = 0; index < TEAMS.length; index += 1) {
     await ensureRegular(platform, teamClients[index], TEAMS[index].owner);
   }
-  const clubOwner = await selectClubOwner([
+  clubOwner = await selectClubOwner([
     { account: USERS.ownerA, client: ownerA },
     { account: USERS.ownerB, client: ownerB },
     { account: USERS.ownerC, client: ownerC },
@@ -713,12 +773,12 @@ try {
       team.delegateClient = await signIn({
         email: team.supplementalMembers[0].email,
         id: team.supplementalMembers[0].userId,
-      });
+      }, `${team.name}-delegate`);
     }
     TEAMS[1].adminClient = await signIn({
       email: TEAMS[1].supplementalMembers[1].email,
       id: TEAMS[1].supplementalMembers[1].userId,
-    });
+    }, `${TEAMS[1].name}-admin`);
   }
   const queue = eventQueue();
   const channel = ownerADevice2.channel(`r4b-staging-${randomUUID()}`).on("postgres_changes", {
@@ -743,6 +803,16 @@ try {
     "canonicalFixtureCreationEnabled",
   ]) assert.equal(initialFlags[key], false, `${key} must begin OFF`);
 
+  if (PRIVATE_BETA_EXTENSION) {
+    const betaEnabled = await setBetaFlags(platform, {
+      creationEnabled: false,
+      enabled: true,
+      publicDiscoveryEnabled: false,
+    }, "League Private Beta gate enabled before dependencies");
+    assert.equal(betaEnabled.snapshot.enabled, true);
+    assert.equal(betaEnabled.snapshot.creationEnabled, false);
+  }
+
   await setClubFlags(platform, {
     competitionOrganizerEnabled: true,
     foundationEnabled: true,
@@ -765,11 +835,36 @@ try {
   }, "R4B staging R4A dependency window");
 
   if (PRIVATE_BETA_EXTENSION) {
-    await setBetaFlags(platform, {
+    await setScheduleFlags(platform, {
+      canonicalFixtureCreationEnabled: true,
+      editingEnabled: true,
+      foundationEnabled: true,
+      generationEnabled: true,
+      publicCalendarEnabled: false,
+      publicationEnabled: true,
+    }, "League Private Beta R4B dependency window");
+    await setMatchOperationsFlags(
+      platform,
+      Object.fromEntries(MATCH_OPERATIONS_FLAG_KEYS.map((key) => [
+        key,
+        key !== "publicStandingsEnabled",
+      ])),
+      "League Private Beta R4C dependency window",
+    );
+    await setOperationalExceptionsFlags(
+      platform,
+      Object.fromEntries(OPERATIONAL_EXCEPTIONS_FLAG_KEYS.map((key) => [
+        key,
+        key !== "publicExceptionStatusEnabled",
+      ])),
+      "League Private Beta R4D dependency window",
+    );
+    const betaCreationEnabled = await setBetaFlags(platform, {
       creationEnabled: true,
       enabled: true,
       publicDiscoveryEnabled: false,
-    }, "League Private Beta authenticated staging window");
+    }, "League Private Beta creation enabled after dependencies");
+    assert.equal(betaCreationEnabled.snapshot.creationEnabled, true);
     const noGrant = await betaCommand(ownerB, "command_pachanga_league_private_beta_v1", {
       action: "wizard.create",
       aggregateId: TEAMS[1].groupId,
@@ -790,8 +885,12 @@ try {
       reason: "League Private Beta expired grant negative fixture",
     });
     created.expiredTeamBundleId = expiringBundle.snapshot.bundle.bundleId;
+    const expiredAt = new Date(Date.now() - 60_000);
     const expireFixture = await fixtureAdmin.from("pachanga_competition_entitlement_grants")
-      .update({ expires_at: new Date(Date.now() - 60_000).toISOString() })
+      .update({
+        expires_at: expiredAt.toISOString(),
+        valid_from: new Date(expiredAt.getTime() - 60_000).toISOString(),
+      })
       .eq("bundle_id", created.expiredTeamBundleId)
       .eq("program_key", "LEAGUE_PRIVATE_BETA_V1");
     if (expireFixture.error) throw expireFixture.error;
@@ -804,6 +903,7 @@ try {
     expectError(expiredGrant, /LEAGUE_PRIVATE_BETA_GRANT_REQUIRED/, "42501");
     await revokeBetaBundle(
       platform,
+      ownerB,
       "TEAM",
       TEAMS[1].groupId,
       created.expiredTeamBundleId,
@@ -836,7 +936,7 @@ try {
       expectedRevision: teamWizard.snapshot.wizard.revision,
       payload: { reason: "Team organizer beta proof cleanup" },
     });
-    await revokeBetaBundle(platform, "TEAM", TEAMS[0].groupId, created.teamBundleId);
+    await revokeBetaBundle(platform, ownerA, "TEAM", TEAMS[0].groupId, created.teamBundleId);
     created.teamBundleId = null;
   }
 
@@ -883,6 +983,7 @@ try {
     expectError(draftCreate, /CLUB_MUST_BE_ACTIVE/, "42501");
     await revokeBetaBundle(
       platform,
+      clubOwner.client,
       "CLUB",
       created.clubId,
       draftBundle.snapshot.bundle.bundleId,
@@ -953,9 +1054,15 @@ try {
     const competitionGroup = stage.groups.find(
       ({ id }) => id === betaLeague.snapshot.canonical.groupId,
     );
-    const category = betaCompetitionState.categories.find(
-      ({ id }) => id === betaLeague.snapshot.canonical.categoryId,
-    );
+    const categoryReadback = await fixtureAdmin
+      .from("pachanga_competition_categories")
+      .select("id,revision,status,visibility")
+      .eq("id", betaLeague.snapshot.canonical.categoryId)
+      .single();
+    if (categoryReadback.error) throw categoryReadback.error;
+    const category = categoryReadback.data;
+    assert.equal(category.status, "active");
+    assert.equal(category.visibility, "private");
     assert.ok(edition && ruleRevision && stage && division && competitionGroup && category);
     structure = {
       activatedCategory: { snapshot: category },
@@ -1253,7 +1360,7 @@ try {
             payload: { reason: "Public registration negative case", teamId: team.groupId },
           },
         );
-        expectError(publicApplication, /PUBLIC_REGISTRATION_NOT_AVAILABLE/, "0A000");
+        expectError(publicApplication, /LEAGUE_PUBLIC_REGISTRATION_DISABLED/, "42501");
       }
       const invitation = await participation(staffA, {
         action: "entry.invite",
@@ -1284,9 +1391,9 @@ try {
       const invitedDelegate = delegateInvitation.snapshot.delegates.find((delegate) => (
         delegate.role === "PRIMARY_DELEGATE"
         && delegate.status === "invited"
-        && delegate.userId === team.supplementalMembers[0].userId
       ));
       assert.ok(invitedDelegate);
+      assert.equal("userId" in invitedDelegate, false);
       await participation(team.delegateClient, {
         action: "delegate.accept",
         aggregateId: invitedDelegate.id,
@@ -1399,14 +1506,16 @@ try {
   });
   assert.equal(closed.snapshot.status, "registration_closed");
 
-  await setScheduleFlags(platform, {
-    canonicalFixtureCreationEnabled: true,
-    editingEnabled: true,
-    foundationEnabled: true,
-    generationEnabled: true,
-    publicCalendarEnabled: !PRIVATE_BETA_EXTENSION,
-    publicationEnabled: true,
-  }, "R4B authenticated staging window");
+  if (!PRIVATE_BETA_EXTENSION) {
+    await setScheduleFlags(platform, {
+      canonicalFixtureCreationEnabled: true,
+      editingEnabled: true,
+      foundationEnabled: true,
+      generationEnabled: true,
+      publicCalendarEnabled: true,
+      publicationEnabled: true,
+    }, "R4B authenticated staging window");
+  }
 
   competitionState = await competitionSnapshot(staffA, created.competitionId);
   const currentStage = competitionState.stages.find(({ id }) => id === stage.id);
@@ -1534,7 +1643,7 @@ try {
   assert.deepEqual(await scheduling(adminADevice2, publicationInput), published);
   assert.equal(published.snapshot.publication.canonicalMatchCount, 15);
   assert.equal(published.snapshot.publication.contextCount, 15);
-  assert.equal(published.snapshot.publication.notificationCount, 6);
+  assert.equal(published.snapshot.publication.notificationCount, PRIVATE_BETA_EXTENSION ? 12 : 6);
   assert.equal((await teamInvalidation).new.target_group_id, TEAMS[0].groupId);
 
   const teamCalendar = await rpc(ownerADevice2, "get_pachanga_my_league_schedule_v1", {
@@ -1708,17 +1817,17 @@ try {
     if (PRIVATE_BETA_EXTENSION) {
       await bestEffort("revoke-team-beta-bundle", async () => {
         if (!created.teamBundleId) return;
-        await revokeBetaBundle(platform, "TEAM", TEAMS[0].groupId, created.teamBundleId);
+        await revokeBetaBundle(platform, ownerA, "TEAM", TEAMS[0].groupId, created.teamBundleId);
         created.teamBundleId = null;
       });
       await bestEffort("revoke-expired-team-beta-bundle", async () => {
         if (!created.expiredTeamBundleId) return;
-        await revokeBetaBundle(platform, "TEAM", TEAMS[1].groupId, created.expiredTeamBundleId);
+        await revokeBetaBundle(platform, ownerB, "TEAM", TEAMS[1].groupId, created.expiredTeamBundleId);
         created.expiredTeamBundleId = null;
       });
       await bestEffort("revoke-club-beta-bundle", async () => {
         if (!created.betaBundleId || !created.clubId) return;
-        await revokeBetaBundle(platform, "CLUB", created.clubId, created.betaBundleId);
+        await revokeBetaBundle(platform, clubOwner.client, "CLUB", created.clubId, created.betaBundleId);
         created.betaBundleId = null;
       });
       await bestEffort("disable-private-beta", () => setBetaFlags(platform, {
@@ -1726,6 +1835,16 @@ try {
         enabled: false,
         publicDiscoveryEnabled: false,
       }, "League Private Beta staging complete"));
+      await bestEffort("disable-r4d", () => setOperationalExceptionsFlags(
+        platform,
+        Object.fromEntries(OPERATIONAL_EXCEPTIONS_FLAG_KEYS.map((key) => [key, false])),
+        "League Private Beta staging complete",
+      ));
+      await bestEffort("disable-r4c", () => setMatchOperationsFlags(
+        platform,
+        Object.fromEntries(MATCH_OPERATIONS_FLAG_KEYS.map((key) => [key, false])),
+        "League Private Beta staging complete",
+      ));
     }
     await bestEffort("disable-r4b", () => setScheduleFlags(platform, {
       canonicalFixtureCreationEnabled: false,
@@ -1820,6 +1939,7 @@ if (PRIVATE_BETA_EXTENSION) {
   assert.ok(cleanupReadback, "League Private Beta cleanup readback is required");
   assert.equal(cleanupReadback.activeQaBundles, 0);
   assert.equal(cleanupReadback.competitionStatus, "cancelled");
+  assert.equal(cleanupReadback.beta.inviteOnly, true);
   for (const flags of [
     cleanupReadback.beta,
     cleanupReadback.competition,
@@ -1830,6 +1950,7 @@ if (PRIVATE_BETA_EXTENSION) {
     cleanupReadback.operationalExceptions,
   ]) {
     for (const [key, value] of Object.entries(flags)) {
+      if (key === "inviteOnly") continue;
       if (typeof value === "boolean") assert.equal(value, false, `${key} must be restored OFF`);
     }
   }
