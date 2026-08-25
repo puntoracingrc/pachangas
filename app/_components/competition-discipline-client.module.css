@@ -1,0 +1,212 @@
+.page {
+  width: min(1440px, calc(100% - 32px));
+  min-height: inherit;
+  margin-inline: auto;
+  padding: 18px 0 42px;
+  color: var(--official-text);
+}
+
+.embedded {
+  width: 100%;
+  min-height: 0;
+  padding: 0;
+}
+
+.page :is(button, input, select) { font: inherit; }
+
+.page button {
+  min-height: 36px;
+  border: 1px solid var(--official-line);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 7px 11px;
+  color: var(--official-text);
+  font-size: 0.72rem;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.page button:hover:not(:disabled) { border-color: rgba(200, 239, 93, 0.58); }
+.page button:disabled { cursor: not-allowed; opacity: 0.45; }
+
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.band,
+.editor,
+.health {
+  min-width: 0;
+  border: 1px solid var(--official-line);
+  background: rgba(14, 27, 23, 0.72);
+  padding: 16px;
+}
+
+.band + .band,
+.editor + .band,
+.band + .health { margin-top: 12px; }
+
+.formGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 9px;
+  margin-top: 14px;
+}
+
+.formGrid label,
+.deskInputs label {
+  min-width: 0;
+  display: grid;
+  gap: 5px;
+  color: var(--official-muted);
+  font-size: 0.67rem;
+  font-weight: 800;
+}
+
+.formGrid :is(input, select),
+.deskInputs input,
+.appealRows input {
+  width: 100%;
+  min-width: 0;
+  min-height: 38px;
+  border: 1px solid var(--official-line);
+  border-radius: 4px;
+  background: #14211d;
+  padding: 8px;
+  color: var(--official-text);
+}
+
+.wide { grid-column: span 2; }
+.primary { border-color: var(--official-accent) !important; background: var(--official-accent) !important; color: #17210d !important; }
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 7px;
+  margin-top: 11px;
+}
+
+.eventRows { margin-top: 12px; }
+.eventRows article {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 20px minmax(130px, 1.1fr) minmax(130px, 1fr) minmax(110px, 0.7fr) auto;
+  align-items: center;
+  gap: 10px;
+  border-bottom: 1px solid rgba(217, 234, 225, 0.09);
+  padding: 9px 0;
+}
+
+.eventRows article > span { min-width: 0; display: grid; gap: 3px; }
+.eventRows strong { overflow-wrap: anywhere; font-size: 0.78rem; }
+.eventRows small,
+.sanctionGrid small,
+.appealRows small { color: var(--official-muted); font-size: 0.65rem; }
+.eventRows .actions { margin-top: 0; }
+
+.cardMark {
+  width: 14px;
+  height: 20px;
+  display: inline-block;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  border-radius: 2px;
+  background: #e9c949;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.28);
+}
+
+.cardMark[data-card-tone*="red"] { background: #e04d55; }
+.cardMark[data-card-tone*="blue"] { background: #4d82d8; }
+
+.deskInputs {
+  display: grid;
+  grid-template-columns: minmax(90px, 0.25fr) minmax(220px, 1fr);
+  gap: 9px;
+  margin-top: 12px;
+}
+
+.sanctionGrid,
+.playerGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 9px;
+  margin-top: 12px;
+}
+
+.sanctionGrid article,
+.playerGrid a {
+  min-width: 0;
+  border: 1px solid var(--official-line);
+  border-radius: 6px;
+  background: rgba(7, 17, 15, 0.54);
+  padding: 12px;
+}
+
+.sanctionGrid article > header,
+.playerGrid a > span {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.sanctionGrid article > strong { display: block; margin-top: 10px; color: var(--official-accent-text); font-size: 1.15rem; }
+.sanctionGrid p { min-height: 2.6em; color: var(--official-muted); font-size: 0.74rem; }
+
+.playerGrid a { display: grid; gap: 8px; color: var(--official-text); text-decoration: none; }
+.playerGrid a:hover { border-color: rgba(200, 239, 93, 0.58); }
+.playerGrid a > small { color: var(--official-muted); }
+.playerGrid a > div { display: flex; flex-wrap: wrap; gap: 10px; }
+.playerGrid em { display: inline-flex; align-items: center; gap: 4px; font-size: 0.7rem; font-style: normal; }
+.playerGrid .cardMark { width: 8px; height: 12px; }
+
+.appealRows { margin-top: 12px; }
+.appealRows article { display: grid; grid-template-columns: minmax(130px, 0.5fr) minmax(180px, 1fr) auto; align-items: center; gap: 9px; border-bottom: 1px solid rgba(217, 234, 225, 0.09); padding: 9px 0; }
+.appealRows article > span { display: grid; gap: 4px; }
+.appealRows .actions { margin-top: 0; }
+
+.health { overflow: hidden; }
+.health pre { max-height: 220px; overflow: auto; border: 1px solid var(--official-line); background: #07110f; padding: 10px; color: var(--official-cyan-text); font-size: 0.65rem; }
+.empty { grid-column: 1 / -1; margin: 10px 0; color: var(--official-muted); font-size: 0.75rem; }
+
+@media (max-width: 920px) {
+  .formGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .sanctionGrid,
+  .playerGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .eventRows article { grid-template-columns: 18px minmax(120px, 1fr) minmax(120px, 1fr) auto; }
+  .eventRows article > span:nth-of-type(3) { display: none; }
+}
+
+@media (orientation: portrait) and (max-width: 720px) {
+  .page { width: 100%; padding: 10px 12px calc(92px + env(safe-area-inset-bottom)); }
+  .embedded { padding: 0; }
+  .metrics,
+  .sanctionGrid,
+  .playerGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .formGrid,
+  .deskInputs { grid-template-columns: 1fr; }
+  .wide { grid-column: auto; }
+  .eventRows article { grid-template-columns: 16px minmax(0, 1fr) auto; }
+  .eventRows article > span:nth-of-type(2),
+  .eventRows article > span:nth-of-type(3) { display: none; }
+  .eventRows .actions { display: grid; }
+  .appealRows article { grid-template-columns: 1fr; }
+  .appealRows .actions { justify-content: start; }
+}
+
+@media (orientation: landscape) and (max-height: 560px),
+  (orientation: landscape) and (pointer: coarse) and (min-width: 768px) and (max-width: 1368px) and (max-height: 1024px) {
+  .page { width: 100%; min-height: 0; padding: 8px 0 12px; }
+  .embedded { padding-top: 0; }
+  .metrics { grid-template-columns: repeat(4, minmax(110px, 1fr)); overflow-x: auto; }
+  .band,
+  .editor,
+  .health { padding: 10px; }
+  .formGrid { grid-template-columns: repeat(4, minmax(120px, 1fr)); }
+  .sanctionGrid,
+  .playerGrid { grid-template-columns: repeat(3, minmax(190px, 1fr)); overflow-x: auto; }
+  .eventRows article { padding-block: 6px; }
+}
