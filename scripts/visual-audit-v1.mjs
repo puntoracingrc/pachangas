@@ -77,6 +77,7 @@ const surfaces = [
   { key: "lab-league-desk", path: "/laboratorio-league-participation?surface=desk", userMode: "lab-r4a", capture: true },
   { key: "lab-league-entry", path: "/laboratorio-league-participation?surface=entry", userMode: "lab-r4a", capture: false },
   { key: "lab-league-roster", path: "/laboratorio-league-participation?surface=roster", userMode: "lab-r4a", capture: true },
+  { key: "lab-league-r4d", path: "/laboratorio-league-operational-exceptions", userMode: "lab-r4d", capture: true },
   { key: "demo-inicio-light", path: "/demo?tab=inicio&perspective=admin&qaTheme=light", userMode: "demo-admin-light", capture: false },
   { key: "demo-inicio-dark", path: "/demo?tab=inicio&perspective=admin&qaTheme=dark", userMode: "demo-admin-dark", capture: false },
   { key: "v21-home", path: "/laboratorio-official-ui-v2-1?surface=inicio&role=admin&state=upcoming&capture=1", userMode: "lab-admin", capture: true },
