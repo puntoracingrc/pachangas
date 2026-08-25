@@ -2,29 +2,31 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { LeagueMatchOperationsClient } from "../_components/league-match-operations-client";
+import { LeagueSchedulingClient } from "../_components/league-scheduling-client";
 import { PlayerCosmeticCard } from "../_components/player-cosmetic-card";
+import { RefereeProfileCard } from "../_components/referee-profile-card";
 import { TeamShieldView } from "../_components/team-shield-view";
+import { PublicClubProfile } from "../clubes/[slug]/public-club-profile";
 import { MobileAppNav, type MobileAppTab } from "../mobile-app-nav";
 import { PLAYER_COSMETIC_CATALOG, catalogEntry } from "../player-cosmetics-catalog";
 import { withCosmeticKey } from "../player-cosmetics-contract";
 import { ProvincialRankingBoard } from "../ranking/provincial-ranking-board";
+import type { RefereeJson } from "../referee-platform-contract";
 import { TEAM_SHIELD_RENDER_CATALOG } from "../team-shield-cosmetics-catalog";
 import {
   type DemoMatchKind,
   type DemoWorldAchievement,
   type DemoWorldChallenge,
   type DemoWorldCoreChunk,
-  type DemoWorldManifest,
   type DemoWorldMatch,
   type DemoWorldMatchPane,
   type DemoWorldNotification,
   type DemoWorldPerspective,
   type DemoWorldPlayer,
-  type DemoWorldPrimaryTab,
   type DemoWorldRankingShowcaseId,
   type DemoWorldRewardBox,
   type DemoWorldSessionState,
-  type DemoWorldSnapshot,
   type DemoWorldTeam,
   canDemoWorldInvite,
   demoWorldMatchAdminActions,
@@ -32,21 +34,40 @@ import {
 } from "./demo-world-contract";
 import {
   demoAvatarDataUri,
-  demoWorldTabFromSearch,
-  loadDemoWorldCore,
-  loadDemoWorldSnapshot,
   readInitialDemoWorldSession,
   resetDemoWorldSession,
   writeDemoWorldSession,
 } from "./demo-world-client-state";
+import {
+  type DemoWorldV2Club,
+  type DemoWorldV2Manifest,
+  type DemoWorldV2PrimaryTab,
+  type DemoWorldV2Referee,
+  type DemoWorldV2Snapshot,
+} from "./demo-world-v2-contract";
+import {
+  demoWorldV2TabFromSearch,
+  loadDemoWorldV2Core,
+  loadDemoWorldV2Snapshot,
+} from "./demo-world-v2-client-state";
 import styles from "./demo-world.module.css";
 
-const primaryTabs: Array<{ id: DemoWorldPrimaryTab; label: string }> = [
+type DemoWorldRenderableSnapshot = Pick<DemoWorldV2Snapshot, "activity" | "core" | "manifest" | "matches" | "players">;
+
+const primaryTabs: Array<{ id: DemoWorldV2PrimaryTab; label: string }> = [
   { id: "inicio", label: "Inicio" },
   { id: "partido", label: "Partido" },
   { id: "mercado", label: "Mercado" },
   { id: "equipo", label: "Equipo" },
   { id: "perfil", label: "Perfil" },
+];
+
+const leagueTabs: Array<{ id: DemoWorldV2PrimaryTab; label: string }> = [
+  { id: "liga", label: "Liga" },
+  { id: "clasificacion", label: "Clasificación" },
+  { id: "jornadas", label: "Jornadas" },
+  { id: "club", label: "Club" },
+  { id: "arbitros", label: "Árbitros" },
 ];
 
 const facetLabels = {
@@ -110,7 +131,7 @@ function playerWithDemoCosmetics(player: DemoWorldPlayer, equippedCosmeticKeys: 
   return { ...player, cosmetics };
 }
 
-function previewSnapshot(manifest: DemoWorldManifest, core: DemoWorldCoreChunk): DemoWorldSnapshot {
+function previewSnapshot(manifest: DemoWorldV2Manifest, core: DemoWorldCoreChunk): DemoWorldRenderableSnapshot {
   return {
     activity: {
       achievements: [],
@@ -179,7 +200,7 @@ function EmptyState({ body, title }: { body: string; title: string }) {
   return <div className={styles.emptyState}><strong>{title}</strong><p>{body}</p></div>;
 }
 
-function LoadingWorld({ manifest }: { manifest: DemoWorldManifest }) {
+function LoadingWorld({ manifest }: { manifest: DemoWorldV2Manifest }) {
   return (
     <main className={styles.shell} data-demo-world="loading">
       <div className={styles.loadingPanel} role="status">
@@ -200,10 +221,10 @@ function DemoHeader({
   perspectives,
   setPerspective,
 }: {
-  activeTab: DemoWorldPrimaryTab;
-  manifest: DemoWorldManifest;
+  activeTab: DemoWorldV2PrimaryTab;
+  manifest: DemoWorldV2Manifest;
   onReset: () => void;
-  onTab: (tab: DemoWorldPrimaryTab) => void;
+  onTab: (tab: DemoWorldV2PrimaryTab) => void;
   perspective: DemoWorldPerspective;
   perspectives: DemoWorldPerspective[];
   setPerspective: (perspectiveId: DemoWorldPerspective["id"]) => void;
@@ -236,6 +257,13 @@ function DemoHeader({
           </select>
         </label>
       </header>
+      <nav className={styles.domainNav} aria-label="Liga, Clubs y árbitros del Mundo Demo">
+        {leagueTabs.map((tab) => (
+          <button aria-current={activeTab === tab.id ? "page" : undefined} key={tab.id} type="button" onClick={() => onTab(tab.id)}>
+            {tab.label}
+          </button>
+        ))}
+      </nav>
     </>
   );
 }
@@ -256,9 +284,9 @@ function WorldHome({
   notifications: DemoWorldNotification[];
   onMatch: (matchId: string) => void;
   onPlayer: (playerId: string) => void;
-  onTab: (tab: DemoWorldPrimaryTab) => void;
+  onTab: (tab: DemoWorldV2PrimaryTab) => void;
   perspective: DemoWorldPerspective;
-  snapshot: DemoWorldSnapshot;
+  snapshot: DemoWorldRenderableSnapshot;
   teamMatches: DemoWorldMatch[];
 }) {
   const upcoming = teamMatches.filter((match) => match.status === "scheduled").sort((left, right) => Date.parse(left.date) - Date.parse(right.date));
@@ -382,7 +410,7 @@ function MatchView({
   perspective: DemoWorldPerspective;
   session: DemoWorldSessionState;
   setMessage: (message: string) => void;
-  snapshot: DemoWorldSnapshot;
+  snapshot: DemoWorldRenderableSnapshot;
   teamMatches: DemoWorldMatch[];
 }) {
   const [pane, setPane] = useState<DemoWorldMatchPane>("proximo");
@@ -525,7 +553,7 @@ function MarketView({
   onTeam: (teamId: string) => void;
   perspective: DemoWorldPerspective;
   setMessage: (message: string) => void;
-  snapshot: DemoWorldSnapshot;
+  snapshot: DemoWorldRenderableSnapshot;
 }) {
   const [pane, setPane] = useState<"equipos" | "jugadores" | "partidos" | "retos">("jugadores");
   const [query, setQuery] = useState("");
@@ -584,7 +612,7 @@ function TeamView({
   onPlayer: (playerId: string) => void;
   onTeam: (teamId: string) => void;
   selectedTeam: DemoWorldTeam;
-  snapshot: DemoWorldSnapshot;
+  snapshot: DemoWorldRenderableSnapshot;
 }) {
   const [pane, setPane] = useState<"escudo" | "logros" | "plantilla" | "ranking">("ranking");
   const [rankingShowcase, setRankingShowcase] = useState<DemoWorldRankingShowcaseId>("my-rank");
@@ -664,7 +692,7 @@ function ProfileView({
   perspective: DemoWorldPerspective;
   perspectives: DemoWorldPerspective[];
   session: DemoWorldSessionState;
-  snapshot: DemoWorldSnapshot;
+  snapshot: DemoWorldRenderableSnapshot;
 }) {
   const [pane, setPane] = useState<"avisos" | "ficha" | "recompensas">("ficha");
   const achievements = snapshot.activity.achievements.filter((achievement) => achievement.subjectId === currentPlayer.id || (currentTeam && achievement.subjectId === currentTeam.id));
@@ -725,19 +753,141 @@ function PlayerModal({ onClose, player }: { onClose: () => void; player: DemoWor
   );
 }
 
-export function DemoWorldApp({ manifest }: { manifest: DemoWorldManifest }) {
+function leagueExceptionLabel(match: DemoWorldV2Snapshot["competitions"]["matches"][number]) {
+  if (match.lateArrivalStatus === "arrived_within_policy") return "Retraso resuelto";
+  if (match.exceptionType === "postponed") return "Aplazado y jugado";
+  if (match.exceptionType === "venue_changed") return "Cambio de sede";
+  if (match.exceptionType === "no_show") return "Incomparecencia";
+  if (match.exceptionType === "suspended_resumed") return "Suspendido y reanudado";
+  return "Resultado oficial";
+}
+
+function LeagueOverviewView({
+  onClub,
+  onMatch,
+  onTab,
+  snapshot,
+}: {
+  onClub: (clubId: string) => void;
+  onMatch: (matchId: string) => void;
+  onTab: (tab: DemoWorldV2PrimaryTab) => void;
+  snapshot: DemoWorldV2Snapshot;
+}) {
+  const league = snapshot.competitions;
+  const teamById = new Map(snapshot.core.teams.map((team) => [team.id, team]));
+  const clubByTeamId = new Map(snapshot.clubsReferees.clubs.flatMap((club) => club.teamIds.map((teamId) => [teamId, club] as const)));
+  const exceptional = league.matches.filter((match) => match.exceptionType !== "none" || match.lateArrivalStatus !== null);
+  return <div className={styles.leagueStack} data-demo-domain="league">
+    <section className={styles.leagueHero}>
+      <div>
+        <span className={styles.eyebrow}>Liga privada · Simulation World verificado</span>
+        <h1>{league.competition.name}</h1>
+        <p>{league.competition.edition.name} · {league.competition.category.name} · {league.competition.group.name}</p>
+        <div className={styles.inlineActions}>
+          <button className={styles.primaryButton} type="button" onClick={() => onTab("clasificacion")}>Ver clasificación</button>
+          <button type="button" onClick={() => onTab("jornadas")}>Abrir jornadas</button>
+        </div>
+      </div>
+      <div className={styles.leagueMetrics}>
+        <Stat label="Equipos" value={league.entries.length} />
+        <Stat label="Jornadas" value={league.rounds.length} />
+        <Stat label="Partidos" value={league.matches.length} />
+        <Stat label="Oficiales" value={league.standingSnapshot.computedResults} />
+      </div>
+    </section>
+
+    <section className={styles.sectionBand}>
+      <div className={styles.sectionHeading}><div><span className={styles.eyebrow}>Participantes</span><h2>Equipos y Clubs</h2></div><span>Plantillas cerradas</span></div>
+      <div className={styles.leagueTeamRail}>
+        {league.entries.map((entry) => {
+          const team = teamById.get(entry.teamId)!;
+          const club = clubByTeamId.get(entry.teamId);
+          return <button key={entry.id} type="button" onClick={() => club && onClub(club.id)}>
+            <TeamIdentity compact team={team} />
+            <small>{club ? club.name : "Equipo independiente"}</small>
+          </button>;
+        })}
+      </div>
+    </section>
+
+    <section className={styles.sectionBand}>
+      <div className={styles.sectionHeading}><div><span className={styles.eyebrow}>Calendario canónico</span><h2>15 partidos oficiales</h2></div><button type="button" onClick={() => onTab("jornadas")}>Cambiar jornada</button></div>
+      <div className={styles.leagueMatchRail}>
+        {league.matches.map((match) => <button key={match.id} type="button" onClick={() => onMatch(match.id)}>
+          <span>J{match.roundNumber} · {shortDateLabel(match.scheduledStart)}</span>
+          <strong>{teamById.get(match.homeTeamId)?.name}<b>{match.result.home} : {match.result.away}</b>{teamById.get(match.awayTeamId)?.name}</strong>
+          <small>{match.venueLabel}</small>
+        </button>)}
+      </div>
+    </section>
+
+    <section className={styles.sectionBand}>
+      <div className={styles.sectionHeading}><div><span className={styles.eyebrow}>R4D</span><h2>Incidencias con trazabilidad</h2></div><span>{exceptional.length} historias</span></div>
+      <div className={styles.incidentGrid}>
+        {exceptional.map((match) => <button key={match.id} type="button" onClick={() => onMatch(match.id)}>
+          <span>{leagueExceptionLabel(match)}</span>
+          <strong>{teamById.get(match.homeTeamId)?.name} · {teamById.get(match.awayTeamId)?.name}</strong>
+          <small>{match.lineage.length} pasos · rev. {match.officialDecision.revision}</small>
+        </button>)}
+      </div>
+    </section>
+  </div>;
+}
+
+function DemoClubView({ club, clubs, onClub }: {
+  club: DemoWorldV2Club;
+  clubs: DemoWorldV2Club[];
+  onClub: (clubId: string) => void;
+}) {
+  return <div className={styles.demoProductView} data-demo-domain="club">
+    <nav className={styles.entityRail} aria-label="Clubs del Mundo Demo">
+      {clubs.map((entry) => <button aria-current={entry.id === club.id ? "page" : undefined} key={entry.id} onClick={() => onClub(entry.id)} type="button">{entry.name}</button>)}
+    </nav>
+    <PublicClubProfile club={club.publicProfile} embedded />
+  </div>;
+}
+
+function demoRefereeProfile(referee: DemoWorldV2Referee, index: number): RefereeJson {
+  return {
+    areas: [{ generalArea: referee.municipality, municipality: referee.municipality }],
+    availabilityStatus: referee.availabilityStatus,
+    bio: referee.publicBio,
+    clubs: referee.clubIds.map((clubId) => ({ id: clubId })),
+    displayName: referee.displayName,
+    experienceSinceYear: String(2012 + (index % 8)),
+    marketplaceStatus: referee.marketplaceStatus,
+    modalities: referee.modalities.map((modality) => ({ modality })),
+    slug: referee.slug,
+    statistics: { matchesCompleted: 38 + index * 9 },
+    verificationStatus: index < 6 ? "verified" : "unverified",
+  };
+}
+
+function DemoRefereesView({ referees }: { referees: DemoWorldV2Referee[] }) {
+  return <div className={styles.demoProductView} data-demo-domain="referees">
+    <section className={styles.demoDomainHeading}>
+      <div><span className={styles.eyebrow}>Mercado · perfiles públicos</span><h1>Árbitros disponibles</h1><p>Perfiles ficticios conectados a Clubs. Las asignaciones a partidos estarán disponibles próximamente.</p></div>
+      <span>{referees.length} perfiles</span>
+    </section>
+    <div className={styles.refereeGrid}>{referees.map((referee, index) => <RefereeProfileCard compact key={referee.id} profile={demoRefereeProfile(referee, index)} />)}</div>
+  </div>;
+}
+
+export function DemoWorldApp({ manifest }: { manifest: DemoWorldV2Manifest }) {
   const [core, setCore] = useState<DemoWorldCoreChunk | null>(null);
-  const [snapshot, setSnapshot] = useState<DemoWorldSnapshot | null>(null);
+  const [snapshot, setSnapshot] = useState<DemoWorldV2Snapshot | null>(null);
   const [loadingFullWorld, setLoadingFullWorld] = useState(false);
   const [session, setSession] = useState<DemoWorldSessionState>(() => readInitialDemoWorldSession(
     typeof window === "undefined" ? "" : window.location.search,
     typeof window === "undefined" ? undefined : window.sessionStorage,
   ));
-  const [activeTab, setActiveTab] = useState<DemoWorldPrimaryTab>(() => demoWorldTabFromSearch(
+  const [activeTab, setActiveTab] = useState<DemoWorldV2PrimaryTab>(() => demoWorldV2TabFromSearch(
     typeof window === "undefined" ? "" : window.location.search,
   ));
   const initialPerspectiveId = useRef(session.perspectiveId);
-  const fullWorldRequest = useRef<Promise<DemoWorldSnapshot | null> | null>(null);
+  const fullWorldRequest = useRef<Promise<DemoWorldV2Snapshot | null> | null>(null);
+  const [selectedClubId, setSelectedClubId] = useState("demo_club_001");
+  const [selectedLeagueMatchId, setSelectedLeagueMatchId] = useState<string | null>(null);
   const [selectedMatchId, setSelectedMatchId] = useState<string | null>(null);
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
   const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null);
@@ -766,7 +916,7 @@ export function DemoWorldApp({ manifest }: { manifest: DemoWorldManifest }) {
 
   useEffect(() => {
     let disposed = false;
-    void loadDemoWorldCore(manifest)
+    void loadDemoWorldV2Core(manifest)
       .then((loadedCore) => {
         if (disposed) return;
         const perspective = loadedCore.perspectives.find((entry) => entry.id === initialPerspectiveId.current) ?? loadedCore.perspectives[0]!;
@@ -785,7 +935,7 @@ export function DemoWorldApp({ manifest }: { manifest: DemoWorldManifest }) {
   useEffect(() => {
     if (!core || snapshot || activeTab === "inicio" || fullWorldRequest.current) return;
     setLoadingFullWorld(true);
-    const request = loadDemoWorldSnapshot(manifest, core)
+    const request = loadDemoWorldV2Snapshot(manifest, core)
       .then((world) => {
         setSnapshot(world);
         return world;
@@ -826,13 +976,20 @@ export function DemoWorldApp({ manifest }: { manifest: DemoWorldManifest }) {
   const selectedPlayer = selectedPlayerSource?.id === currentPlayer.id
     ? currentPlayer
     : selectedPlayerSource;
+  const selectedClub = snapshot?.clubsReferees.clubs.find((club) => club.id === selectedClubId)
+    ?? snapshot?.clubsReferees.clubs[0]
+    ?? null;
+  const selectedLeagueMatchPreview = selectedLeagueMatchId
+    ? snapshot?.competitions.matchPreviews[selectedLeagueMatchId] ?? null
+    : null;
   const notifications = world.activity.notifications;
 
   function updateSession(next: (current: DemoWorldSessionState) => DemoWorldSessionState) {
     setSession((current) => next(current));
   }
 
-  function navigate(tab: DemoWorldPrimaryTab) {
+  function navigate(tab: DemoWorldV2PrimaryTab, preserveLeagueMatch = false) {
+    if (!preserveLeagueMatch) setSelectedLeagueMatchId(null);
     setActiveTab(tab);
     const params = new URLSearchParams(window.location.search);
     params.set("tab", tab);
@@ -876,6 +1033,16 @@ export function DemoWorldApp({ manifest }: { manifest: DemoWorldManifest }) {
     navigate("partido");
   }
 
+  function openLeagueMatch(matchId: string) {
+    setSelectedLeagueMatchId(matchId);
+    navigate("partido", true);
+  }
+
+  function openClub(clubId: string) {
+    setSelectedClubId(clubId);
+    navigate("club");
+  }
+
   function openTeam(teamId: string) {
     setSelectedTeamId(teamId);
     navigate("equipo");
@@ -886,6 +1053,8 @@ export function DemoWorldApp({ manifest }: { manifest: DemoWorldManifest }) {
     setSession(reset);
     setActiveTab("inicio");
     setSelectedPlayerId(null);
+    setSelectedLeagueMatchId(null);
+    setSelectedClubId("demo_club_001");
     setSelectedTeamId("demo_team_001");
     const nextMatch = world.matches.matches.filter((match) => match.homeTeamId === "demo_team_001" && match.status === "scheduled").sort((left, right) => Date.parse(left.date) - Date.parse(right.date))[0];
     setSelectedMatchId(nextMatch?.id ?? null);
@@ -899,12 +1068,18 @@ export function DemoWorldApp({ manifest }: { manifest: DemoWorldManifest }) {
       <div className={styles.content}>
         {activeTab === "inicio" ? <WorldHome currentPlayer={currentPlayer} currentTeam={currentTeam} notifications={notifications} onMatch={openMatch} onPlayer={setSelectedPlayerId} onTab={navigate} perspective={perspective} snapshot={world} teamMatches={teamMatches} /> : null}
         {activeTab !== "inicio" && !snapshot ? <div className={styles.secondaryLoading} role="status"><span className={styles.loadingMark}>IQ</span><strong>{loadingFullWorld ? "Cargando esta sección" : "Preparando datos"}</strong><p>Solo descargamos el dominio que acabas de abrir.</p></div> : null}
-        {snapshot && activeTab === "partido" ? <MatchView currentPlayer={currentPlayer} currentTeam={currentTeam} key={perspective.id} match={selectedMatch} onLocalAttendance={(status) => { if (!selectedMatch) return; updateSession((current) => ({ ...current, attendanceByMatch: { ...current.attendanceByMatch, [selectedMatch.id]: status } })); setMessage(`Asistencia ${status === "voy" ? "confirmada" : status === "duda" ? "en duda" : "cancelada"} solo en esta sesión demo.`); }} onMatch={openMatch} onPlayer={setSelectedPlayerId} perspective={perspective} session={session} setMessage={setMessage} snapshot={snapshot} teamMatches={teamMatches} /> : null}
+        {snapshot && activeTab === "partido" && selectedLeagueMatchPreview ? <div className={styles.demoProductView} data-demo-domain="league-match"><LeagueMatchOperationsClient embedded previewData={selectedLeagueMatchPreview} surface="match" /></div> : null}
+        {snapshot && activeTab === "partido" && !selectedLeagueMatchPreview ? <MatchView currentPlayer={currentPlayer} currentTeam={currentTeam} key={perspective.id} match={selectedMatch} onLocalAttendance={(status) => { if (!selectedMatch) return; updateSession((current) => ({ ...current, attendanceByMatch: { ...current.attendanceByMatch, [selectedMatch.id]: status } })); setMessage(`Asistencia ${status === "voy" ? "confirmada" : status === "duda" ? "en duda" : "cancelada"} solo en esta sesión demo.`); }} onMatch={openMatch} onPlayer={setSelectedPlayerId} perspective={perspective} session={session} setMessage={setMessage} snapshot={snapshot} teamMatches={teamMatches} /> : null}
         {snapshot && activeTab === "mercado" ? <MarketView currentPlayer={currentPlayer} onMatch={openMatch} onPlayer={setSelectedPlayerId} onTeam={openTeam} perspective={perspective} setMessage={setMessage} snapshot={snapshot} /> : null}
         {snapshot && activeTab === "equipo" ? <TeamView currentTeam={currentTeam} onPlayer={setSelectedPlayerId} onTeam={setSelectedTeamId} selectedTeam={selectedTeam} snapshot={snapshot} /> : null}
         {snapshot && activeTab === "perfil" ? <ProfileView currentPlayer={currentPlayer} currentTeam={currentTeam} notifications={notifications} onEquipCosmetic={equipCosmetic} onOpenBox={openRewardBox} onPerspective={choosePerspective} onPlayer={setSelectedPlayerId} onRead={(notificationId) => updateSession((current) => ({ ...current, readNotificationIds: [...new Set([...current.readNotificationIds, notificationId])] }))} perspective={perspective} perspectives={world.core.perspectives} session={session} snapshot={snapshot} /> : null}
+        {snapshot && activeTab === "liga" ? <LeagueOverviewView onClub={openClub} onMatch={openLeagueMatch} onTab={navigate} snapshot={snapshot} /> : null}
+        {snapshot && activeTab === "clasificacion" ? <div className={styles.demoProductView} data-demo-domain="standings"><LeagueMatchOperationsClient embedded previewData={snapshot.competitions.standingsPreview} surface="standings" /></div> : null}
+        {snapshot && activeTab === "jornadas" ? <div className={styles.demoProductView} data-demo-domain="rounds"><LeagueSchedulingClient embedded previewData={snapshot.competitions.schedulePreview} surface="public" /></div> : null}
+        {snapshot && activeTab === "club" && selectedClub ? <DemoClubView club={selectedClub} clubs={snapshot.clubsReferees.clubs} onClub={setSelectedClubId} /> : null}
+        {snapshot && activeTab === "arbitros" ? <DemoRefereesView referees={snapshot.clubsReferees.referees} /> : null}
       </div>
-      <MobileAppNav active={activeTab as MobileAppTab} onNavigate={(tab) => navigate(tab as DemoWorldPrimaryTab)} />
+      <MobileAppNav active={activeTab as MobileAppTab} onNavigate={(tab) => navigate(tab as DemoWorldV2PrimaryTab)} />
       {selectedPlayer ? <PlayerModal onClose={() => setSelectedPlayerId(null)} player={selectedPlayer} /> : null}
       {openedBox && RewardBoxComponent ? <RewardBoxComponent
         actionLabel="Guardar en esta demo"

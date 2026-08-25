@@ -33,6 +33,7 @@ export type LeagueMatchOperationsSurface = "match" | "my" | "results" | "standin
 type Props = {
   competitionId?: string;
   divisionId?: string;
+  embedded?: boolean;
   groupId?: string;
   matchId?: string;
   previewData?: LeagueMatchOperationsJson | null;
@@ -417,7 +418,7 @@ function MyMatchOperations({ data }: { data: LeagueMatchOperationsJson }) {
 }
 
 export function LeagueMatchOperationsClient(props: Props) {
-  const { competitionId = "", previewData = null, surface } = props;
+  const { competitionId = "", embedded = false, previewData = null, surface } = props;
   const endpoint = endpointFor(props);
   const identity = identityFor(props);
   const [data, setData] = useState<LeagueMatchOperationsJson | null>(previewData);
@@ -542,8 +543,7 @@ export function LeagueMatchOperationsClient(props: Props) {
     { id: "resultado", label: "Resultado" },
   ];
 
-  return <OfficialProductShellV2 active={surface === "standings" || surface === "my" ? "equipo" : "partido"} context={shellContext}>
-    <main className={styles.page} data-match-operations-surface={surface} data-mobile-tab={surface === "standings" || surface === "my" ? "equipo" : "partido"}>
+  const content = <main className={styles.page} data-match-operations-surface={surface} data-mobile-tab={surface === "standings" || surface === "my" ? "equipo" : "partido"}>
       <GamePageHeader eyebrow="Competición oficial" title={title} />
       {message ? <ProductFeedback tone={/confirmado|actualizado/i.test(message) ? "success" : /no |error|stale|rechaz|inicia/i.test(message) ? "warning" : "info"}>{message}</ProductFeedback> : null}
       {loading && !data ? <section className={styles.emptyState}><strong>Recuperando snapshot oficial</strong></section> : null}
@@ -564,6 +564,8 @@ export function LeagueMatchOperationsClient(props: Props) {
       {data && surface === "results" ? <ResultDesk competitionId={competitionId} data={data} /> : null}
       {data && surface === "standings" ? <StandingsView data={data} /> : null}
       {data && surface === "my" ? <MyMatchOperations data={data} /> : null}
-    </main>
-  </OfficialProductShellV2>;
+    </main>;
+  return embedded
+    ? content
+    : <OfficialProductShellV2 active={surface === "standings" || surface === "my" ? "equipo" : "partido"} context={shellContext}>{content}</OfficialProductShellV2>;
 }
