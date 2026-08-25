@@ -107,6 +107,15 @@ function titleFor(surface: LeagueSchedulingSurface) {
   return "Calendario de Liga";
 }
 
+function scheduleReadFailureMessage(value: unknown) {
+  const detail = scheduleText(value);
+  if (!detail || /^[A-Z0-9_]+$/.test(detail)
+      || /schema cache|function public\./i.test(detail)) {
+    return "Calendario no disponible para este contexto.";
+  }
+  return detail;
+}
+
 function invalidationMatches(props: Props, value: unknown) {
   const row = scheduleRecord(scheduleRecord(value).new);
   const entityType = scheduleText(row.entity_type);
@@ -194,7 +203,7 @@ export function LeagueSchedulingClient(props: Props) {
         headers: token ? { Authorization: `Bearer ${token}` } : undefined,
       });
       const body = scheduleRecord(await response.json());
-      if (!response.ok) throw new Error(scheduleText(body.message) || "No se pudo recuperar el calendario canónico.");
+      if (!response.ok) throw new Error(scheduleReadFailureMessage(body.message));
       setData(body);
       setCached(false);
       writeCache(cacheKey(surface, identity, actorId), body);

@@ -93,7 +93,7 @@ estado deportivo necesarios para explicar la Liga ficticia.
 | `npm run test:demo-world:v2` | `11/11 PASS` |
 | `npm run demo-world:v2:verify` | `PASS / snapshotIdentical=true` |
 | `npm run test:competition-discipline` | `14/14 PASS` |
-| `npm test` | `506/506 PASS` (`20 Node + 486 TSX`) |
+| `npm test` | `507/507 PASS` (`20 Node + 487 TSX`) |
 | SQL/RLS/adversarial | `PASS` |
 | Appeal service accounting | `PASS` |
 | Concurrencia R5 | `7/7 carreras deterministas` |
@@ -117,7 +117,7 @@ sin cambios por tarjetas o sanciones.
 | DW2.1-006 | PRODUCT_BUG | El detalle de Jornadas en Demo enlazaba IDs ficticios hacia una ruta productiva de Competition. | Navegacion interna inyectable en el renderer compartido, conservando el enlace normal en producto. | fixed + regression_verified |
 | DW2.1-007 | PRODUCT_BUG | El marcador de partido seguia anunciando que Disciplina no estaba disponible aunque R5 ya estuviera cargada. | Etiqueta derivada de la presencia del snapshot R5, con copy neutro en el resto de contextos. | fixed + regression_verified |
 | DW2.1-008 | PRODUCT_BUG | A 390 px la lista compartida de hechos disciplinarios ocultaba jugador, minuto y estado, dejando visible solo la sancion derivada. | La vista portrait conserva jugador y minuto, oculta solo el estado redundante y mantiene la sancion; regresion CSS y QA 390x844. | fixed + regression_verified |
-| DW2.1-009 | ENVIRONMENT_ISSUE | El indicador de Next.js local se superpone a la esquina inferior en QA landscape. | No pertenece al build productivo; cierre pendiente de comprobar su ausencia en el deployment Vercel. | open / production_verification_pending |
+| DW2.1-009 | ENVIRONMENT_ISSUE | El indicador de Next.js local se superpone a la esquina inferior en QA landscape. | Confirmado ausente en Preview y deployment Vercel productivo en 390x844 y 844x390. | fixed + regression_verified |
 
 ## Invariantes
 
