@@ -240,6 +240,9 @@ test("Official UI includes all required product surfaces and an isolated noindex
   assert.match(css, /orientation: portrait/);
   assert.match(css, /orientation: landscape/);
   assert.match(css, /pointer: coarse/);
+  assert.match(css, /\.commandBand[\s\S]+min-width: 0/);
+  assert.match(css, /\.formGrid[\s\S]+max-width: 100%[\s\S]+min-width: 0/);
+  assert.match(css, /\.commandGroups > div[\s\S]+min-width: 0/);
   assert.match(lab, /previewData=/);
   assert.match(labLayout, /index: false/);
   for (const route of [
