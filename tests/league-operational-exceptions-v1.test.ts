@@ -14,6 +14,7 @@ const paths = {
   databaseSuite: "tests/league-operational-exceptions-v1-db.sql",
   hardening: "supabase/migrations/20260824230734_league_operational_exceptions_hardening_v1.sql",
   schema: "supabase/migrations/20260824230726_league_operational_exceptions_schema_v1.sql",
+  venueStatusFix: "supabase/migrations/20260825021800_league_operational_exceptions_venue_status_fix_v1.sql",
 } as const;
 
 async function source(path: string) {
@@ -68,6 +69,14 @@ test("R4D preserves the original R4B schedule and overlays effective revisions",
   assert.match(access, /'effectiveSchedule'/);
   assert.doesNotMatch(commands, /(?:update|delete from)\s+public\.pachanga_competition_schedule_(?:plans|revisions|items|rounds)/i);
   assert.match(commands, /schedule_item_id/);
+});
+
+test("R4D normalizes inherited R4B label-only venues before direct rescheduling", async () => {
+  const venueStatusFix = await source(paths.venueStatusFix);
+  assert.match(venueStatusFix, /normalized_change_type = 'RESCHEDULE'/);
+  assert.match(venueStatusFix, /target_venue_id is not null then 'SAVED'/);
+  assert.match(venueStatusFix, /target_venue_label[\s\S]+then 'LABEL'/);
+  assert.match(venueStatusFix, /else 'TBD'/);
 });
 
 test("the server owns actor, policy, time, sequence, idempotency and stale-write rejection", async () => {

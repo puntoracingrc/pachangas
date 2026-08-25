@@ -20,6 +20,7 @@ const r4dMigrations = [
   "20260824230732_league_operational_exceptions_commands_v1.sql",
   "20260824230733_league_operational_exceptions_access_v1.sql",
   "20260824230734_league_operational_exceptions_hardening_v1.sql",
+  "20260825021800_league_operational_exceptions_venue_status_fix_v1.sql",
 ];
 
 if (!adminUrl) throw new Error("LEAGUE_OPERATIONAL_EXCEPTIONS_DATABASE_URL is required");
@@ -30,8 +31,8 @@ if (!["127.0.0.1", "localhost", "::1", "[::1]"].includes(new URL(adminUrl).hostn
 const migrationNames = readdirSync(resolve(root, "supabase/migrations"))
   .filter((name) => /^\d{14}_.+\.sql$/.test(name))
   .sort();
-assert.equal(migrationNames.length, 135);
-assert.deepEqual(migrationNames.slice(-4), r4dMigrations);
+assert.equal(migrationNames.length, 136);
+assert.deepEqual(migrationNames.slice(-5), r4dMigrations);
 const preR4dIncremental = migrationNames.filter((name) => (
   name.slice(0, 14) > manifest.absorbsThrough && !r4dMigrations.includes(name)
 ));
@@ -168,7 +169,7 @@ try {
   process.stdout.write(`${JSON.stringify({
     baseLedger: 131,
     database: "temporary",
-    r4dMigrations: 4,
+    r4dMigrations: r4dMigrations.length,
     flagsDefaultOff: true,
     productRowsDefault: 0,
     sqlRlsIdempotencyAdversarial: "PASS",

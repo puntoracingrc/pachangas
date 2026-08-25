@@ -317,6 +317,10 @@ test("bootstrap, concurrency, scale, performance and staging remain explicit rel
   assert.match(staging, /account\.id !== clubOwner\.account\.id/);
   assert.match(staging, /payload\.new\?\.entity_type !== "league_team_calendar"/);
   assert.match(staging, /payload\.new\?\.target_group_id !== TEAMS\[0\]\.groupId/);
+  assert.ok(
+    staging.indexOf("channels.push([ownerADevice2, channel]);") < staging.indexOf('action: "schedule.publish"'),
+    "Realtime must be subscribed before the publication flow can race a cold staging tenant",
+  );
   assert.match(staging, /origin\.searchParams\.has\("_vercel_share"\)/);
   assert.match(staging, /access\.headers\.get\("set-cookie"\)/);
   assert.match(packageJson, /test:league-scheduling:bootstrap/);

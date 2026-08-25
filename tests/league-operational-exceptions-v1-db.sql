@@ -499,6 +499,11 @@ begin
         where items.id = 'c4400000-0000-4000-8000-000000000005') = original_item,
     'Approved postponement did not preserve the original R4B fixture'
   );
+  update public.pachanga_competition_match_contexts set
+    venue_id = null,
+    venue_label = 'Campo R4B por etiqueta',
+    venue_status = 'TBD'
+  where id = 'c4400000-0000-4000-8000-000000000008';
   perform pg_temp.command_replay(
     'd4010000-0000-4000-8000-000000000010',
     'd4510000-0000-4000-8000-000000000004', pg_temp.context_revision(),
@@ -517,6 +522,10 @@ begin
       and (select scheduled_start from public.pachanga_competition_match_contexts
         where id = 'c4400000-0000-4000-8000-000000000008') = '2027-03-03T19:00:00Z'::timestamptz
       and (select count(*) from public.pachanga_competition_fixture_change_revisions) = 2
+      and (select venue_status from public.pachanga_competition_match_contexts
+        where id = 'c4400000-0000-4000-8000-000000000008') = 'LABEL'
+      and (select effective_venue_status from public.pachanga_competition_fixture_change_revisions
+        order by server_sequence desc, id desc limit 1) = 'LABEL'
       and (select scheduled_start from public.pachanga_competition_schedule_items
         where id = 'c4400000-0000-4000-8000-000000000005') = '2027-03-01T19:00:00Z'::timestamptz,
     'Rescheduling lost the original schedule or effective revision lineage'

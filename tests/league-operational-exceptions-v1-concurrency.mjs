@@ -16,6 +16,13 @@ const suffix = randomBytes(5).toString("hex");
 const templateDatabase = `pachangas_r4d_concurrency_${suffix}`;
 const infrastructureDump = resolve(tmpdir(), `pachangas-r4d-concurrency-${suffix}.sql`);
 const caseDatabases = new Set();
+const r4dMigrations = [
+  "20260824230726_league_operational_exceptions_schema_v1.sql",
+  "20260824230732_league_operational_exceptions_commands_v1.sql",
+  "20260824230733_league_operational_exceptions_access_v1.sql",
+  "20260824230734_league_operational_exceptions_hardening_v1.sql",
+  "20260825021800_league_operational_exceptions_venue_status_fix_v1.sql",
+];
 
 if (!adminUrl) throw new Error("LEAGUE_OPERATIONAL_EXCEPTIONS_DATABASE_URL is required");
 if (!["127.0.0.1", "localhost", "::1", "[::1]"].includes(new URL(adminUrl).hostname)) {
@@ -26,7 +33,8 @@ const migrations = readdirSync(resolve(root, "supabase/migrations"))
   .filter((name) => /^\d{14}_.+\.sql$/.test(name))
   .sort()
   .filter((name) => name.slice(0, 14) > manifest.absorbsThrough);
-assert.equal(migrations.length + 36, 135);
+assert.equal(migrations.length + 36, 136);
+assert.deepEqual(migrations.slice(-r4dMigrations.length), r4dMigrations);
 
 const contextId = "c4400000-0000-4000-8000-000000000008";
 const homeEntry = "c4200000-0000-4000-8000-000000000011";

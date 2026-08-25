@@ -464,8 +464,11 @@ export async function runLeagueOperationalExceptionsStagingExtension({
       operation(staffA, metadata, { ...raceInput, operationId: randomUUID() }),
       operation(staffA, metadata, { ...raceInput, operationId: randomUUID() }),
     ]);
-    assert.equal(race.filter(({ error }) => !error).length, 1);
-    assert.equal(race.filter(({ error }) => error).length, 1);
+    const raceDiagnostic = race.map(({ error }) => error
+      ? `${error.code ?? "UNKNOWN"}:${error.message ?? "unknown error"}`
+      : "OK").join(" | ");
+    assert.equal(race.filter(({ error }) => !error).length, 1, raceDiagnostic);
+    assert.equal(race.filter(({ error }) => error).length, 1, raceDiagnostic);
     expectError(race.find(({ error }) => error), /STALE_REVISION/, "PT409");
 
     const canonicalIds = contexts.data.map(({ canonical_match_id: canonicalMatchId }) => canonicalMatchId);

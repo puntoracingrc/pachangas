@@ -415,6 +415,18 @@ try {
   ].find(({ account }) => account.id !== clubOwner.account.id);
   assert.ok(outsider, "R4B staging requires an actor outside the organizer Club");
   await ensureTeams();
+  const queue = eventQueue();
+  const channel = ownerADevice2.channel(`r4b-staging-${randomUUID()}`).on("postgres_changes", {
+    event: "INSERT",
+    schema: "public",
+    table: "pachanga_competition_invalidations",
+  }, (payload) => {
+    if (payload.new?.entity_type !== "league_team_calendar") return;
+    if (payload.new?.target_group_id !== TEAMS[0].groupId) return;
+    queue.push(payload);
+  });
+  channels.push([ownerADevice2, channel]);
+  await waitForSubscription(channel);
   countsBefore = await counts();
   const initialFlags = await scheduleFlags(platform);
   for (const key of [
@@ -971,18 +983,6 @@ try {
   const directWrite = await ownerA.from("pachanga_competition_schedule_slots").insert({ id: randomUUID() });
   assert.ok(directWrite.error);
 
-  const queue = eventQueue();
-  const channel = ownerADevice2.channel(`r4b-staging-${randomUUID()}`).on("postgres_changes", {
-    event: "INSERT",
-    schema: "public",
-    table: "pachanga_competition_invalidations",
-  }, (payload) => {
-    if (payload.new?.entity_type !== "league_team_calendar") return;
-    if (payload.new?.target_group_id !== TEAMS[0].groupId) return;
-    queue.push(payload);
-  });
-  channels.push([ownerADevice2, channel]);
-  await waitForSubscription(channel);
   queue.clear();
   const teamInvalidation = queue.next();
 
