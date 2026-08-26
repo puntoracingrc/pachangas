@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 
-export const DEMO_WORLD_V2_AUTHORITY_PROOF_VERSION = 2 as const;
+export const DEMO_WORLD_V2_AUTHORITY_PROOF_VERSION = 3 as const;
 
 export type DemoWorldV2AuthorityProofPlayerRef = {
   entryNumber: number;
@@ -17,6 +17,8 @@ export type DemoWorldV2AuthorityProofDisciplineEvent = DemoWorldV2AuthorityProof
   minute: number;
   publicReasonCategory: string;
   publicSummary: string;
+  refereeAssignmentKey: string | null;
+  reportingRefereeNumber: number | null;
   revisionVersion: number;
   sanction: {
     remainingUnits: number;
@@ -26,6 +28,73 @@ export type DemoWorldV2AuthorityProofDisciplineEvent = DemoWorldV2AuthorityProof
   status: string;
   temporaryDismissal: Record<string, unknown> | null;
   visualType: string;
+};
+
+export type DemoWorldV2AuthorityProofRefereeAssignment = {
+  assignmentKey: string;
+  effectiveScheduledEnd: string;
+  effectiveScheduledStart: string;
+  matchOrdinal: number;
+  reconfirmed: boolean;
+  refereeNumber: number;
+  replacedByAssignmentKey: string | null;
+  replacesAssignmentKey: string | null;
+  revision: number;
+  scheduleState: "CANCELLED" | "CURRENT" | "RECONFIRMATION_REQUIRED" | "STALE_SCHEDULE";
+  scheduledEnd: string;
+  scheduledStart: string;
+  status: "accepted" | "cancelled" | "completed" | "confirmed" | "declined" | "expired" | "proposed" | "replaced";
+};
+
+export type DemoWorldV2AuthorityProofReferee = {
+  availabilityStatus: "AVAILABLE" | "LIMITED";
+  displayName: string;
+  modalities: Array<"FOOTBALL_11" | "FOOTBALL_7" | "FUTSAL">;
+  municipality: string;
+  publicBio: string;
+  publicFee: {
+    currency: string;
+    feeMode: "FIXED" | "FREE" | "NEGOTIABLE" | "VOLUNTEER";
+    fromCents: number | null;
+    paymentManagedByPachangasIq: false;
+  } | null;
+  refereeNumber: number;
+  slug: string;
+  statistics: {
+    assignmentsAccepted: number;
+    assignmentsConfirmed: number;
+    assignmentsDeclined: number;
+    blueCardsShown: number;
+    cancellations: number;
+    leagueMatchesCompleted: number;
+    matchesCompleted: number;
+    proposalsReceived: number;
+    redCardsShown: number;
+    replacements: number;
+    yellowCardsShown: number;
+  };
+  verificationStatus: string;
+};
+
+export type DemoWorldV2AuthorityProofRefereeAssignments = {
+  assignments: DemoWorldV2AuthorityProofRefereeAssignment[];
+  counts: {
+    cancelled: number;
+    completed: number;
+    declined: number;
+    replaced: number;
+    unassignedMatches: number;
+  };
+  noActiveOverlaps: boolean;
+  oneMainRefereePerMatch: boolean;
+  overlapRejected: boolean;
+  profiles: DemoWorldV2AuthorityProofReferee[];
+  r5LinkedEvents: {
+    linked: number;
+    onRefereedMatches: number;
+    unlinkedEventKeys: string[];
+  };
+  statisticsConverged: boolean;
 };
 
 export type DemoWorldV2AuthorityProofDiscipline = {
@@ -105,7 +174,7 @@ export type DemoWorldV2AuthorityProof = {
   authorityHash: string;
   database: "temporary-local-postgresql";
   discipline: DemoWorldV2AuthorityProofDiscipline;
-  generatedAt: "2026-08-25T10:00:00.000Z";
+  generatedAt: "2026-08-26T10:00:00.000Z";
   matchCount: 15;
   matches: DemoWorldV2AuthorityProofMatch[];
   migrationCount: number;
@@ -113,10 +182,14 @@ export type DemoWorldV2AuthorityProof = {
     discipline: number;
     matchOperations: number;
     operationalExceptions: number;
+    refereeAssignments: number;
+    refereeOfficiating: number;
+    refereePlatform: number;
     scheduling: number;
   };
+  refereeAssignments: DemoWorldV2AuthorityProofRefereeAssignments;
   remoteWrites: 0;
-  rpcFamilies: ["R1", "R4A", "R4B", "R4C", "R4D", "R5"];
+  rpcFamilies: ["R1", "R3", "R4A", "R4B", "R4C", "R4D", "R5"];
   roundCount: 5;
   standings: DemoWorldV2AuthorityProofStanding[];
   version: typeof DEMO_WORLD_V2_AUTHORITY_PROOF_VERSION;
@@ -184,6 +257,42 @@ export function assertDemoWorldV2AuthorityProof(value: DemoWorldV2AuthorityProof
   }
   if (value.matches.filter(({ lateArrivalStatus }) => lateArrivalStatus === "arrived_within_policy").length !== 1) {
     throw new Error("DEMO_WORLD_V2_AUTHORITY_LATE_ARRIVAL_INVALID");
+  }
+  if (value.refereeAssignments.profiles.length !== 8
+      || value.refereeAssignments.counts.completed !== 13
+      || value.refereeAssignments.counts.declined !== 1
+      || value.refereeAssignments.counts.cancelled !== 1
+      || value.refereeAssignments.counts.replaced !== 1
+      || value.refereeAssignments.counts.unassignedMatches !== 2) {
+    throw new Error("DEMO_WORLD_V2_2_REFEREE_ASSIGNMENT_DISTRIBUTION_INVALID");
+  }
+  if (!value.refereeAssignments.overlapRejected
+      || !value.refereeAssignments.noActiveOverlaps
+      || !value.refereeAssignments.oneMainRefereePerMatch
+      || !value.refereeAssignments.statisticsConverged) {
+    throw new Error("DEMO_WORLD_V2_2_REFEREE_ASSIGNMENT_AUTHORITY_INVALID");
+  }
+  if (value.refereeAssignments.r5LinkedEvents.onRefereedMatches
+      !== value.refereeAssignments.r5LinkedEvents.linked
+      || value.refereeAssignments.r5LinkedEvents.unlinkedEventKeys.length !== 0) {
+    throw new Error(`DEMO_WORLD_V2_2_REFEREE_R5_LINEAGE_INVALID:${JSON.stringify(value.refereeAssignments.r5LinkedEvents)}`);
+  }
+  const rescheduledAssignment = value.refereeAssignments.assignments.find(({ matchOrdinal, status }) => (
+    matchOrdinal === 3 && status === "completed"
+  ));
+  if (!rescheduledAssignment?.reconfirmed
+      || rescheduledAssignment.scheduledStart === rescheduledAssignment.effectiveScheduledStart
+      || rescheduledAssignment.scheduleState !== "CURRENT") {
+    throw new Error("DEMO_WORLD_V2_2_REFEREE_RECONFIRMATION_INVALID");
+  }
+  const replacement = value.refereeAssignments.assignments.find(({ replacesAssignmentKey }) => replacesAssignmentKey !== null);
+  if (!replacement || replacement.status !== "completed"
+      || !value.refereeAssignments.assignments.some(({ assignmentKey, replacedByAssignmentKey, status }) => (
+        assignmentKey === replacement.replacesAssignmentKey
+        && replacedByAssignmentKey === replacement.assignmentKey
+        && status === "replaced"
+      ))) {
+    throw new Error("DEMO_WORLD_V2_2_REFEREE_REPLACEMENT_INVALID");
   }
   const { authorityHash, ...payload } = value;
   if (authorityHash !== demoWorldV2AuthorityHash(payload)) {

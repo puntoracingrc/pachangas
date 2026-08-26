@@ -195,24 +195,49 @@ create or replace function pg_temp.demo_v2_record_card(
   target_summary text
 )
 returns jsonb language plpgsql as $$
-declare canonical_match_id uuid;
+declare selected_canonical_match_id uuid;
+declare assignment public.pachanga_referee_assignments%rowtype;
+declare referee_user_id uuid;
+declare payload jsonb;
 begin
-  select contexts.canonical_match_id into canonical_match_id
+  select contexts.canonical_match_id into selected_canonical_match_id
   from public.pachanga_competition_match_contexts contexts
   where contexts.id = target_context_id;
+  payload := jsonb_build_object(
+    'playerProfileId', target_player_profile_id,
+    'cardTypeCode', target_card_type,
+    'context', 'in_match',
+    'minute', target_minute,
+    'publicReasonCategory', case when target_card_type = 'YELLOW' then 'accumulation' else 'dismissal' end,
+    'publicSummary', target_summary
+  );
+  select assignments.* into assignment
+  from public.pachanga_referee_assignments assignments
+  where assignments.canonical_match_id = selected_canonical_match_id
+    and assignments.status = 'confirmed'
+    and assignments.schedule_state = 'CURRENT'
+  order by assignments.server_sequence desc, assignments.id desc
+  limit 1;
+  if found then
+    select profiles.user_id into referee_user_id
+    from public.pachanga_referee_profiles profiles
+    where profiles.id = assignment.referee_profile_id;
+    perform pg_temp.demo_v2_actor(referee_user_id);
+    return public.command_pachanga_referee_officiating_v1(
+      md5('demo-world-v2-r5:' || target_operation_key)::uuid,
+      assignment.id,
+      assignment.revision,
+      'discipline.record',
+      payload,
+      '{"clientVersion":"demo-world-v2.2","serviceWorkerVersion":"demo-world-v2.2","installedMode":"simulation","surface":"demo_world_v2"}'::jsonb
+    );
+  end if;
   return pg_temp.demo_v2_discipline_command(
     'e4010000-0000-4000-8000-000000000002',
     target_operation_key,
-    canonical_match_id,
+    selected_canonical_match_id,
     'event.record',
-    jsonb_build_object(
-      'playerProfileId', target_player_profile_id,
-      'cardTypeCode', target_card_type,
-      'context', 'in_match',
-      'minute', target_minute,
-      'publicReasonCategory', case when target_card_type = 'YELLOW' then 'accumulation' else 'dismissal' end,
-      'publicSummary', target_summary
-    )
+    payload
   );
 end;
 $$;

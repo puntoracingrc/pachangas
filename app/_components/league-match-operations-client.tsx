@@ -27,7 +27,9 @@ import {
   StatusChip,
 } from "./official-ui-v2-primitives";
 import { CompetitionDisciplineClient } from "./competition-discipline-client";
+import { RefereeAssignmentsClient } from "./referee-assignments-client";
 import type { CompetitionDisciplineJson } from "../competition-discipline-contract";
+import type { RefereeJson } from "../referee-platform-contract";
 import styles from "./league-match-operations-client.module.css";
 
 export type LeagueMatchOperationsSurface = "match" | "my" | "results" | "standings";
@@ -41,6 +43,7 @@ type Props = {
   matchId?: string;
   previewData?: LeagueMatchOperationsJson | null;
   publicView?: boolean;
+  refereeAssignmentPreviewData?: RefereeJson | null;
   stageId?: string;
   surface: LeagueMatchOperationsSurface;
 };
@@ -420,6 +423,17 @@ function MyMatchOperations({ data }: { data: LeagueMatchOperationsJson }) {
   </>;
 }
 
+function refereePlayerOptions(data: LeagueMatchOperationsJson) {
+  const options = leagueMatchArray(data.squads).flatMap((squad) => leagueMatchArray(squad.members).map((member) => {
+    const player = leagueMatchRecord(member.player);
+    return {
+      id: leagueMatchText(member.playerProfileId) || leagueMatchText(player.id),
+      label: displayName(player),
+    };
+  })).filter((item) => item.id);
+  return Array.from(new Map(options.map((item) => [item.id, item])).values());
+}
+
 export function LeagueMatchOperationsClient(props: Props) {
   const { competitionId = "", embedded = false, previewData = null, surface } = props;
   const endpoint = endpointFor(props);
@@ -544,6 +558,7 @@ export function LeagueMatchOperationsClient(props: Props) {
     { id: "asistencia", label: "Asistencia" },
     { id: "convocatoria", label: "Alineación" },
     { id: "resultado", label: "Resultado" },
+    { id: "arbitraje", label: "Arbitraje" },
     ...(!previewData || props.disciplinePreviewData ? [{ id: "disciplina", label: "Disciplina" }] : []),
   ];
 
@@ -562,6 +577,7 @@ export function LeagueMatchOperationsClient(props: Props) {
             {activeSection === "asistencia" ? <AttendancePanel busy={busy} command={command} data={data} /> : null}
             {activeSection === "convocatoria" ? <SquadPanel busy={busy} command={command} data={data} memberRole={memberRole} rosterSelection={rosterSelection} setMemberRole={setMemberRole} setRosterSelection={setRosterSelection} /> : null}
             {activeSection === "resultado" ? <ResultPanel actingEntryId={actingEntryId} busy={busy} command={command} data={data} evidence={evidence} explanation={explanation} reason={reason} scoreAway={scoreAway} scoreHome={scoreHome} scorerGoals={scorerGoals} setActingEntryId={setActingEntryId} setEvidence={setEvidence} setExplanation={setExplanation} setReason={setReason} setScoreAway={setScoreAway} setScoreHome={setScoreHome} setScorerGoals={setScorerGoals} /> : null}
+            {activeSection === "arbitraje" ? <RefereeAssignmentsClient canonicalMatchId={leagueMatchText(leagueMatchRecord(data.context).canonicalMatchId)} competitionId={competitionId} competitionMatchContextId={leagueMatchText(leagueMatchRecord(data.context).id)} embedded playerOptions={refereePlayerOptions(data)} previewData={props.refereeAssignmentPreviewData} surface="match" /> : null}
             {activeSection === "disciplina" ? <CompetitionDisciplineClient competitionId={competitionId} embedded matchId={props.matchId} previewData={props.disciplinePreviewData} surface="match" /> : null}
           </div>
         </div>

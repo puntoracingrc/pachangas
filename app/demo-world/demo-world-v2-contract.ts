@@ -1,5 +1,6 @@
 import type { LeagueMatchOperationsJson } from "../league-match-operations-contract";
 import type { LeagueSchedulingJson } from "../league-scheduling-contract";
+import type { RefereeJson } from "../referee-platform-contract";
 import {
   disciplineArray,
   disciplineNumber,
@@ -20,8 +21,8 @@ import {
   type DemoWorldSnapshot,
 } from "./demo-world-contract";
 
-export const DEMO_WORLD_V2_VERSION = 2.1 as const;
-export const DEMO_WORLD_V2_SEED = "pachangas-iq-demo-world-v2-1-2026-27" as const;
+export const DEMO_WORLD_V2_VERSION = 2.2 as const;
+export const DEMO_WORLD_V2_SEED = "pachangas-iq-demo-world-v2-2-2026-27" as const;
 
 export type DemoWorldV2PrimaryTab = DemoWorldPrimaryTab
   | "arbitros"
@@ -137,7 +138,7 @@ export type DemoWorldV2CompetitionChunk = {
     id: string;
     name: "LIGA BARRIOS IQ 2026/27";
     privateBeta: true;
-    refereeAssignmentsEnabled: false;
+    refereeAssignmentsEnabled: true;
     ruleRevision: { id: string; status: "frozen"; version: 1 };
     slug: "liga-barrios-iq-2026-27";
     stage: { id: string; name: string; status: "completed"; type: "LEAGUE_STAGE" };
@@ -148,6 +149,8 @@ export type DemoWorldV2CompetitionChunk = {
   disciplinePreview: CompetitionDisciplineJson;
   entries: DemoWorldV2LeagueEntry[];
   matchPreviews: Record<string, LeagueMatchOperationsJson>;
+  refereeAssignmentDeskPreview: RefereeJson;
+  refereeAssignmentPreviews: Record<string, RefereeJson>;
   matchDisciplinePreviews: Record<string, CompetitionDisciplineJson>;
   matches: DemoWorldV2LeagueMatch[];
   provenance: {
@@ -155,7 +158,7 @@ export type DemoWorldV2CompetitionChunk = {
     database: "temporary-local-postgresql";
     migrations: number;
     oracle: "independent-basic-standings-v1";
-    rpcFamilies: ["R1", "R4A", "R4B", "R4C", "R4D", "R5"];
+    rpcFamilies: ["R1", "R3", "R4A", "R4B", "R4C", "R4D", "R5"];
     source: "simulation-world";
     verified: true;
   };
@@ -195,12 +198,33 @@ export type DemoWorldV2Referee = {
   modalities: Array<"FOOTBALL_11" | "FOOTBALL_7" | "FUTSAL">;
   municipality: string;
   publicBio: string;
+  publicFee: {
+    currency: string;
+    feeMode: "FIXED" | "FREE" | "NEGOTIABLE" | "VOLUNTEER";
+    fromCents: number | null;
+    paymentManagedByPachangasIq: false;
+  } | null;
   slug: string;
+  statistics: {
+    assignmentsAccepted: number;
+    assignmentsConfirmed: number;
+    assignmentsDeclined: number;
+    blueCardsShown: number;
+    cancellations: number;
+    leagueMatchesCompleted: number;
+    matchesCompleted: number;
+    proposalsReceived: number;
+    redCardsShown: number;
+    replacements: number;
+    yellowCardsShown: number;
+  };
+  verificationStatus: string;
 };
 
 export type DemoWorldV2ClubsRefereesChunk = {
   clubs: DemoWorldV2Club[];
-  refereeAssignmentsEnabled: false;
+  refereeAssignmentPreview: RefereeJson;
+  refereeAssignmentsEnabled: true;
   referees: DemoWorldV2Referee[];
   relationships: Array<{
     clubId: string;
@@ -292,7 +316,26 @@ export function demoWorldV2IntegrityErrors(snapshot: DemoWorldV2Snapshot): strin
   if (competition.matches.length !== 15) errors.push("League must have exactly 15 canonical matches");
   if (snapshot.clubsReferees.clubs.length < 3) errors.push("Demo World V2 requires at least 3 clubs");
   if (snapshot.clubsReferees.referees.length < 8) errors.push("Demo World V2 requires at least 8 referees");
-  if (snapshot.clubsReferees.refereeAssignmentsEnabled) errors.push("Referee assignments must remain disabled");
+  if (!snapshot.clubsReferees.refereeAssignmentsEnabled
+      || !competition.competition.refereeAssignmentsEnabled) {
+    errors.push("Demo World V2.2 referee assignments must be enabled");
+  }
+  const assignmentItems = Array.isArray(snapshot.clubsReferees.refereeAssignmentPreview.items)
+    ? snapshot.clubsReferees.refereeAssignmentPreview.items as Record<string, unknown>[]
+    : [];
+  const assignmentCounts = assignmentItems.reduce<Record<string, number>>((counts, item) => {
+    const status = String(item.status ?? "");
+    counts[status] = (counts[status] ?? 0) + 1;
+    return counts;
+  }, {});
+  if (assignmentItems.length !== 16 || assignmentCounts.completed !== 13
+      || assignmentCounts.declined !== 1 || assignmentCounts.cancelled !== 1
+      || assignmentCounts.replaced !== 1) {
+    errors.push("Demo World V2.2 assignment distribution is invalid");
+  }
+  if (JSON.stringify(snapshot.clubsReferees.refereeAssignmentPreview).includes("privateTerms")) {
+    errors.push("Demo World V2.2 leaked private referee terms");
+  }
 
   const discipline = competition.disciplinePreview;
   const disciplineEvents = disciplineArray(discipline.events);
@@ -338,9 +381,19 @@ export function demoWorldV2IntegrityErrors(snapshot: DemoWorldV2Snapshot): strin
     if (homeGoals !== match.result.home || awayGoals !== match.result.away) errors.push(`Scorer mismatch in ${match.id}`);
     for (const scorer of match.scorers) if (!playerIds.has(scorer.playerId)) errors.push(`Unknown scorer ${scorer.playerId}`);
     const matchDiscipline = competition.matchDisciplinePreviews[match.id];
+    const refereePreview = competition.refereeAssignmentPreviews[match.id];
+    if (!refereePreview) errors.push(`Missing referee assignment preview for ${match.id}`);
     if (!matchDiscipline) errors.push(`Missing discipline preview for ${match.id}`);
     else if (disciplineArray(matchDiscipline.events).some((event) => disciplineText(event.canonicalMatchId) !== match.canonicalMatchId)) {
       errors.push(`Discipline event belongs to another match in ${match.id}`);
+    } else {
+      const matchAssignments = Array.isArray(refereePreview?.items)
+        ? refereePreview.items as Record<string, unknown>[]
+        : [];
+      const wasRefereed = matchAssignments.some((assignment) => ["completed", "replaced"].includes(String(assignment.status ?? "")));
+      if (wasRefereed && disciplineArray(matchDiscipline.events).some((event) => !disciplineText(event.refereeAssignmentId))) {
+        errors.push(`R5 event lacks referee Assignment lineage in ${match.id}`);
+      }
     }
   }
   for (const round of competition.rounds) {

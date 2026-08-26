@@ -4,9 +4,11 @@ import { randomUUID } from "node:crypto";
 import { createClient } from "@supabase/supabase-js";
 import { runLeagueMatchOperationsStagingExtension } from "./league-match-operations-v1-staging-extension.mjs";
 import { runLeagueOperationalExceptionsStagingExtension } from "./league-operational-exceptions-v1-staging-extension.mjs";
+import { runRefereeAssignmentsPrivateBetaStagingExtension } from "./referee-assignments-private-beta-v1-staging-extension.mjs";
 
 const R4C_EXTENSION = process.env.R4C_STAGING_EXTENSION === "1";
 const R4D_EXTENSION = process.env.R4D_STAGING_EXTENSION === "1";
+const REFEREE_ASSIGNMENTS_EXTENSION = process.env.REFEREE_ASSIGNMENTS_STAGING_EXTENSION === "1";
 const PRIVATE_BETA_EXTENSION = process.env.LEAGUE_PRIVATE_BETA_STAGING_EXTENSION === "1";
 const MATCH_OPERATIONS_EXTENSION = R4C_EXTENSION || R4D_EXTENSION;
 
@@ -83,6 +85,14 @@ const OPERATIONAL_EXCEPTIONS_FLAG_KEYS = [
   "matchSuspensionsEnabled", "administrativeDecisionsEnabled",
   "publicExceptionStatusEnabled",
 ];
+const REFEREE_FLAG_KEYS = [
+  "assignmentsEnabled",
+  "clubRelationshipsEnabled",
+  "foundationEnabled",
+  "marketplaceEnabled",
+  "publicProfilesEnabled",
+  "selfServiceEnabled",
+];
 const UNTOUCHED_TABLES = [
   "pachanga_individual_rating_evidence",
   "pachanga_player_rating_snapshots",
@@ -101,6 +111,7 @@ const created = {
   clubId: null,
   competitionId: null,
   expiredTeamBundleId: null,
+  ephemeralUserIds: [],
   planId: null,
   publicationOperationId: null,
   supplementalUserIds: [],
@@ -148,8 +159,37 @@ async function signIn(account, role) {
 }
 async function prepareIdentities() {
   for (const account of Object.values(USERS)) {
-    const result = await fixtureAdmin.auth.admin.updateUserById(account.id, { password });
+    const existing = await fixtureAdmin.auth.admin.getUserById(account.id);
+    if (existing.error && existing.error.status !== 404 && existing.error.code !== "user_not_found") {
+      throw existing.error;
+    }
+    const result = existing.error
+      ? await fixtureAdmin.auth.admin.createUser({
+        email: account.email,
+        email_confirm: true,
+        id: account.id,
+        password,
+        user_metadata: { qaFixture: "R4B_STAGING_CORE" },
+      })
+      : await fixtureAdmin.auth.admin.updateUserById(account.id, {
+        password,
+        user_metadata: { qaFixture: "R4B_STAGING_CORE" },
+      });
     if (result.error) throw result.error;
+  }
+
+  const access = await fixtureAdmin.rpc("get_pachanga_platform_access_service_v1", {
+    target_user_id: USERS.platform.id,
+  });
+  if (access.error) throw access.error;
+  if (!access.data) {
+    const bootstrap = await fixtureAdmin.rpc("bootstrap_pachanga_platform_owner_v1", {
+      operation_id: randomUUID(),
+      reason: "Wave 4 isolated staging platform fixture",
+      target_user_id: USERS.platform.id,
+    });
+    if (bootstrap.error) throw bootstrap.error;
+    assert.equal(bootstrap.data.role, "platform_owner");
   }
 }
 
@@ -224,8 +264,11 @@ const scheduling = (supabase, input) => commandOk(supabase, "command_pachanga_le
 
 function expectError(result, pattern, code) {
   assert.ok(result.error, `Expected error matching ${pattern}`);
-  if (code) assert.equal(result.error.code, code);
-  assert.match([result.error.message, result.error.details, result.error.hint].filter(Boolean).join(" "), pattern);
+  const diagnostic = [result.error.code, result.error.message, result.error.details, result.error.hint]
+    .filter(Boolean)
+    .join(" ");
+  if (code) assert.equal(result.error.code, code, diagnostic);
+  assert.match(diagnostic, pattern);
 }
 async function bestEffort(label, action) {
   try { await action(); } catch (error) { console.error(`[cleanup:${label}]`, error instanceof Error ? error.message : error); }
@@ -451,15 +494,14 @@ const setOperationalExceptionsFlags = (platform, next, reason) => setLeagueOpera
   reason,
   surface: "league-private-beta-r4d-flags",
 });
-async function setRefereeFlagsOff(platform) {
+async function setRefereeFlags(platform, next, reason) {
   const current = await rpc(platform, "get_pachanga_referee_foundation_flags_v1");
-  const keys = ["assignmentsEnabled", "clubRelationshipsEnabled", "foundationEnabled", "marketplaceEnabled", "publicProfilesEnabled", "selfServiceEnabled"];
-  if (keys.every((key) => !current[key])) return;
+  if (REFEREE_FLAG_KEYS.every((key) => current[key] === next[key])) return;
   const result = await platform.rpc("command_pachanga_referee_platform_admin_v1", {
     aggregate_id: IDS.refereeFlags,
     client_metadata: metadata("r4b-cleanup"),
     command_action: "referee_flags.set",
-    command_payload: { ...Object.fromEntries(keys.map((key) => [key, false])), reason: "R4B staging cleanup" },
+    command_payload: { ...Object.fromEntries(REFEREE_FLAG_KEYS.map((key) => [key, next[key]])), reason },
     expected_revision: current.revision,
     operation_id: randomUUID(),
   });
@@ -704,11 +746,18 @@ async function verifyPreview(accessToken, competitionId, planId) {
     Authorization: `Bearer ${accessToken}`,
     ...(previewCookie ? { Cookie: previewCookie } : {}),
   };
-  for (const path of [
+  const productPaths = [
     "/laboratorio-league-scheduling?scenario=published",
     `/competiciones/${competitionId}/gestion/calendario`,
     `/competiciones/${competitionId}/calendario`,
-  ]) {
+  ];
+  if (REFEREE_ASSIGNMENTS_EXTENSION) productPaths.push(
+    "/laboratorio-referee-platform?surface=confirmed",
+    "/mis-asignaciones-arbitrales",
+    `/competiciones/${competitionId}/gestion/arbitros`,
+    "/mercado?market=referees",
+  );
+  for (const path of productPaths) {
     const response = await fetch(new URL(path, origin), {
       cache: "no-store",
       headers: previewHeaders,
@@ -738,6 +787,7 @@ let staffA;
 let completed = false;
 let cleanupReadback = null;
 let countsBefore;
+let initialFlagState = null;
 let storySummary = null;
 
 try {
@@ -762,13 +812,23 @@ try {
     { account: USERS.adminA, client: adminA },
     { account: USERS.playerA, client: playerA },
   ]);
-  const outsider = [
-    { account: USERS.ownerA, client: ownerA },
-    { account: USERS.ownerB, client: ownerB },
-    { account: USERS.ownerC, client: ownerC },
-    { account: USERS.playerA, client: playerA },
-  ].find(({ account }) => account.id !== clubOwner.account.id);
-  assert.ok(outsider, "R4B staging requires an actor outside the organizer Club");
+  const outsiderAccount = {
+    email: `r4b-outsider-${randomUUID()}@pachangasiq.test`,
+    id: randomUUID(),
+  };
+  const outsiderCreated = await fixtureAdmin.auth.admin.createUser({
+    email: outsiderAccount.email,
+    email_confirm: true,
+    id: outsiderAccount.id,
+    password,
+    user_metadata: { qaFixture: "R4B_STAGING_OUTSIDER" },
+  });
+  if (outsiderCreated.error) throw outsiderCreated.error;
+  created.ephemeralUserIds.push(outsiderAccount.id);
+  const outsider = {
+    account: outsiderAccount,
+    client: await signIn(outsiderAccount, "outsider"),
+  };
   await ensureTeams();
   if (PRIVATE_BETA_EXTENSION) {
     for (const team of TEAMS) {
@@ -776,6 +836,10 @@ try {
         email: team.supplementalMembers[0].email,
         id: team.supplementalMembers[0].userId,
       }, `${team.name}-delegate`);
+      team.participantClient = await signIn({
+        email: team.supplementalMembers[2].email,
+        id: team.supplementalMembers[2].userId,
+      }, `${team.name}-participant`);
     }
     TEAMS[1].adminClient = await signIn({
       email: TEAMS[1].supplementalMembers[1].email,
@@ -795,15 +859,38 @@ try {
   channels.push([ownerADevice2, channel]);
   await waitForSubscription(channel);
   countsBefore = await counts();
-  const initialFlags = await scheduleFlags(platform);
-  for (const key of [
-    "foundationEnabled",
-    "generationEnabled",
-    "editingEnabled",
-    "publicationEnabled",
-    "publicCalendarEnabled",
-    "canonicalFixtureCreationEnabled",
-  ]) assert.equal(initialFlags[key], false, `${key} must begin OFF`);
+  const [
+    initialBeta,
+    initialCompetition,
+    initialClub,
+    initialParticipation,
+    initialScheduling,
+    initialMatchOperations,
+    initialOperationalExceptions,
+    initialReferee,
+    initialDiscipline,
+  ] = await Promise.all([
+    betaFlags(platform),
+    rpc(platform, "get_pachanga_platform_competition_foundation_v1", { page_offset: 0, page_size: 1 }),
+    rpc(platform, "get_pachanga_club_foundation_flags_v1"),
+    rpc(platform, "get_pachanga_league_participation_flags_v1"),
+    scheduleFlags(platform),
+    rpc(platform, "get_pachanga_league_match_operations_flags_v1"),
+    rpc(platform, "get_pachanga_league_operational_exceptions_flags_v1"),
+    rpc(platform, "get_pachanga_referee_foundation_flags_v1"),
+    rpc(platform, "get_pachanga_competition_discipline_flags_v1"),
+  ]);
+  initialFlagState = {
+    beta: initialBeta,
+    clubFoundation: initialClub,
+    competition: initialCompetition.flags,
+    discipline: initialDiscipline,
+    matchOperations: initialMatchOperations,
+    operationalExceptions: initialOperationalExceptions,
+    participation: initialParticipation,
+    referee: initialReferee,
+    scheduling: initialScheduling,
+  };
 
   if (PRIVATE_BETA_EXTENSION) {
     const betaEnabled = await setBetaFlags(platform, {
@@ -1466,7 +1553,13 @@ try {
       payload: { reason: `Lock ${team.name} roster` },
     });
     assert.equal(locked.snapshot.roster.status, "locked");
-    entries.push({ entryId, rosterId, team, teamClient });
+    entries.push({
+      entryId,
+      participantClient: team.participantClient ?? teamClient,
+      rosterId,
+      team,
+      teamClient,
+    });
   }
 
   let teamAEntry = await entrySnapshot(ownerA, entries[0].entryId);
@@ -1730,6 +1823,27 @@ try {
     staffA,
     waitForSubscription,
   }) : null;
+  const refereeAssignments = REFEREE_ASSIGNMENTS_EXTENSION
+    ? await runRefereeAssignmentsPrivateBetaStagingExtension({
+      adminA,
+      adminADevice2,
+      created,
+      entries,
+      expectError,
+      fixtureAdmin,
+      metadata,
+      ownerA,
+      ownerADevice2,
+      ownerB,
+      ownerC,
+      platform,
+      playerA,
+      rpc,
+      staffA,
+      teams: TEAMS,
+      waitForSubscription,
+    })
+    : null;
   const forbiddenMutation = await command(adminA, "command_pachanga_league_scheduling_v1", {
     action: "schedule.regenerate",
     aggregateId: created.planId,
@@ -1802,6 +1916,7 @@ try {
     realtime: "invalidation_then_canonical_refetch",
     r4c,
     r4d,
+    refereeAssignments,
     rounds: 5,
     status: "PASS",
   };
@@ -1847,52 +1962,68 @@ try {
         await revokeBetaBundle(platform, clubOwner.client, "CLUB", created.clubId, created.betaBundleId);
         created.betaBundleId = null;
       });
-      await bestEffort("disable-private-beta", () => setBetaFlags(platform, {
-        creationEnabled: false,
-        enabled: false,
-        publicDiscoveryEnabled: false,
-      }, "League Private Beta staging complete"));
-      await bestEffort("disable-r4d", () => setOperationalExceptionsFlags(
-        platform,
-        Object.fromEntries(OPERATIONAL_EXCEPTIONS_FLAG_KEYS.map((key) => [key, false])),
-        "League Private Beta staging complete",
-      ));
-      await bestEffort("disable-r4c", () => setMatchOperationsFlags(
-        platform,
-        Object.fromEntries(MATCH_OPERATIONS_FLAG_KEYS.map((key) => [key, false])),
-        "League Private Beta staging complete",
-      ));
+      if (initialFlagState) {
+        await bestEffort("restore-private-beta", () => setBetaFlags(platform, {
+          creationEnabled: initialFlagState.beta.creationEnabled,
+          enabled: initialFlagState.beta.enabled,
+          publicDiscoveryEnabled: initialFlagState.beta.publicDiscoveryEnabled,
+        }, "League Private Beta staging restore"));
+        await bestEffort("restore-r4d", () => setOperationalExceptionsFlags(
+          platform,
+          Object.fromEntries(OPERATIONAL_EXCEPTIONS_FLAG_KEYS.map((key) => [
+            key,
+            initialFlagState.operationalExceptions[key],
+          ])),
+          "League Private Beta staging restore",
+        ));
+        await bestEffort("restore-r4c", () => setMatchOperationsFlags(
+          platform,
+          Object.fromEntries(MATCH_OPERATIONS_FLAG_KEYS.map((key) => [
+            key,
+            initialFlagState.matchOperations[key],
+          ])),
+          "League Private Beta staging restore",
+        ));
+      }
     }
-    await bestEffort("disable-r4b", () => setScheduleFlags(platform, {
-      canonicalFixtureCreationEnabled: false,
-      editingEnabled: false,
-      foundationEnabled: false,
-      generationEnabled: false,
-      publicCalendarEnabled: false,
-      publicationEnabled: false,
-    }, "R4B staging complete"));
-    await bestEffort("disable-r4a", () => setParticipationFlags(platform, {
-      delegatesEnabled: false,
-      foundationEnabled: false,
-      publicRegistrationEnabled: false,
-      registrationEnabled: false,
-      rostersEnabled: false,
-      schedulePreferencesEnabled: false,
-    }, "R4B staging complete"));
+    if (initialFlagState) {
+      await bestEffort("restore-r4b", () => setScheduleFlags(platform, {
+        canonicalFixtureCreationEnabled: initialFlagState.scheduling.canonicalFixtureCreationEnabled,
+        editingEnabled: initialFlagState.scheduling.editingEnabled,
+        foundationEnabled: initialFlagState.scheduling.foundationEnabled,
+        generationEnabled: initialFlagState.scheduling.generationEnabled,
+        publicCalendarEnabled: initialFlagState.scheduling.publicCalendarEnabled,
+        publicationEnabled: initialFlagState.scheduling.publicationEnabled,
+      }, "R4B staging restore"));
+      await bestEffort("restore-r4a", () => setParticipationFlags(platform, {
+        delegatesEnabled: initialFlagState.participation.delegatesEnabled,
+        foundationEnabled: initialFlagState.participation.foundationEnabled,
+        publicRegistrationEnabled: initialFlagState.participation.publicRegistrationEnabled,
+        registrationEnabled: initialFlagState.participation.registrationEnabled,
+        rostersEnabled: initialFlagState.participation.rostersEnabled,
+        schedulePreferencesEnabled: initialFlagState.participation.schedulePreferencesEnabled,
+      }, "R4B staging restore"));
+    }
     if (created.clubId) await bestEffort("archive-club", () => archiveClub(platform, created.clubId));
-    await bestEffort("disable-r3", () => setRefereeFlagsOff(platform));
-    await bestEffort("disable-r2", () => setClubFlags(platform, {
-      competitionOrganizerEnabled: false,
-      foundationEnabled: false,
-      publicProfilesEnabled: false,
-      selfServiceCreationEnabled: false,
-      teamRelationshipsEnabled: false,
-    }, "R4B staging complete"));
-    await bestEffort("disable-r1", () => setCompetitionFlags(platform, {
-      contextBindingEnabled: false,
-      creationEnabled: false,
-      foundationEnabled: false,
-    }, "R4B staging complete"));
+    if (initialFlagState) {
+      await bestEffort("restore-r3", () => setRefereeFlags(
+        platform,
+        Object.fromEntries(REFEREE_FLAG_KEYS.map((key) => [key, initialFlagState.referee[key]])),
+        "R4B staging restore",
+      ));
+      await bestEffort("restore-r2", () => setClubFlags(platform, {
+        competitionOrganizerEnabled: initialFlagState.clubFoundation.competitionOrganizerEnabled,
+        foundationEnabled: initialFlagState.clubFoundation.foundationEnabled,
+        publicProfilesEnabled: initialFlagState.clubFoundation.publicProfilesEnabled,
+        selfServiceCreationEnabled: initialFlagState.clubFoundation.selfServiceCreationEnabled,
+        teamRelationshipsEnabled: initialFlagState.clubFoundation.teamRelationshipsEnabled,
+      }, "R4B staging restore"));
+      await bestEffort("restore-r1", () => setCompetitionFlags(platform, {
+        contextBindingEnabled: initialFlagState.competition.contextBindingEnabled,
+        creationEnabled: initialFlagState.competition.creationEnabled,
+        foundationEnabled: initialFlagState.competition.foundationEnabled,
+      }, "R4B staging restore"));
+    }
     if (PRIVATE_BETA_EXTENSION) {
       await bestEffort("private-beta-cleanup-readback", async () => {
         const [
@@ -1903,6 +2034,8 @@ try {
           schedulingFlags,
           matchOperations,
           operationalExceptions,
+          referee,
+          discipline,
           activeBundles,
           competitionRow,
         ] = await Promise.all([
@@ -1913,6 +2046,8 @@ try {
           scheduleFlags(platform),
           rpc(platform, "get_pachanga_league_match_operations_flags_v1"),
           rpc(platform, "get_pachanga_league_operational_exceptions_flags_v1"),
+          rpc(platform, "get_pachanga_referee_foundation_flags_v1"),
+          rpc(platform, "get_pachanga_competition_discipline_flags_v1"),
           fixtureAdmin.from("pachanga_competition_entitlement_grants")
             .select("bundle_id,organizer_group_id,organizer_club_id")
             .eq("program_key", "LEAGUE_PRIVATE_BETA_V1")
@@ -1938,6 +2073,8 @@ try {
           competitionStatus: competitionRow.data?.status ?? null,
           matchOperations,
           operationalExceptions,
+          referee,
+          discipline,
           participation: participationFlags,
           scheduling: schedulingFlags,
         };
@@ -1949,26 +2086,32 @@ try {
     await bestEffort("sign-out", () => supabase.auth.signOut());
     await bestEffort("disconnect-realtime", () => supabase.realtime.disconnect());
   }
+  for (const userId of created.ephemeralUserIds) {
+    await bestEffort("delete-ephemeral-user", () => fixtureAdmin.auth.admin.deleteUser(userId));
+  }
 }
 
 assert.equal(completed, true, "R4B staging story did not complete");
 if (PRIVATE_BETA_EXTENSION) {
   assert.ok(cleanupReadback, "League Private Beta cleanup readback is required");
+  assert.ok(initialFlagState, "League Private Beta initial flag snapshot is required");
   assert.equal(cleanupReadback.activeQaBundles, 0);
   assert.equal(cleanupReadback.competitionStatus, "cancelled");
-  assert.equal(cleanupReadback.beta.inviteOnly, true);
-  for (const flags of [
-    cleanupReadback.beta,
-    cleanupReadback.competition,
-    cleanupReadback.clubFoundation,
-    cleanupReadback.participation,
-    cleanupReadback.scheduling,
-    cleanupReadback.matchOperations,
-    cleanupReadback.operationalExceptions,
+  for (const [label, actual, expected] of [
+    ["beta", cleanupReadback.beta, initialFlagState.beta],
+    ["competition", cleanupReadback.competition, initialFlagState.competition],
+    ["clubFoundation", cleanupReadback.clubFoundation, initialFlagState.clubFoundation],
+    ["participation", cleanupReadback.participation, initialFlagState.participation],
+    ["scheduling", cleanupReadback.scheduling, initialFlagState.scheduling],
+    ["matchOperations", cleanupReadback.matchOperations, initialFlagState.matchOperations],
+    ["operationalExceptions", cleanupReadback.operationalExceptions, initialFlagState.operationalExceptions],
+    ["referee", cleanupReadback.referee, initialFlagState.referee],
+    ["discipline", cleanupReadback.discipline, initialFlagState.discipline],
   ]) {
-    for (const [key, value] of Object.entries(flags)) {
-      if (key === "inviteOnly") continue;
-      if (typeof value === "boolean") assert.equal(value, false, `${key} must be restored OFF`);
+    for (const [key, value] of Object.entries(expected)) {
+      if (typeof value === "boolean") {
+        assert.equal(actual[key], value, `${label}.${key} must match the initial snapshot`);
+      }
     }
   }
 }
@@ -1977,6 +2120,6 @@ console.log(JSON.stringify({
   cleanupReadback: PRIVATE_BETA_EXTENSION ? {
     activeQaBundles: cleanupReadback.activeQaBundles,
     competitionStatus: cleanupReadback.competitionStatus,
-    flags: "restored_off",
+    flags: "restored_initial",
   } : null,
 }));

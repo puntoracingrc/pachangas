@@ -189,10 +189,17 @@ select
   pg_temp.r3_scale_uuid('r3-scale-user', 1)
 from generate_series(1, 100000) assignment_number;
 
+-- Wave 4 resolves and validates the canonical source on every live Assignment
+-- insert. This legacy R3 scale corpus intentionally benchmarks read indexes
+-- over 100,000 synthetic rows without creating 100,000 product fixtures; the
+-- dedicated Wave 4 scale suite below exercises the real canonical lifecycle.
+set local session_replication_role = replica;
 insert into public.pachanga_referee_assignments(
   id, referee_profile_id, canonical_match_id, assignment_role, requester_kind,
   requester_club_id, source_kind, source_id, status, scheduled_start,
   scheduled_end, timezone, schedule_source_revision, proposed_by,
+  effective_scheduled_start, effective_scheduled_end, effective_timezone,
+  effective_schedule_revision, schedule_state,
   authority_used, proposal_message, response_deadline, accepted_at,
   confirmed_at, revision, server_sequence
 )
@@ -207,12 +214,16 @@ select
   timestamptz '2030-01-01 08:00:00+00' + (((profile_number - 1) * 10 + assignment_number) * interval '2 hours'),
   timestamptz '2030-01-01 09:30:00+00' + (((profile_number - 1) * 10 + assignment_number) * interval '2 hours'),
   'Europe/Madrid', 1, pg_temp.r3_scale_uuid('r3-scale-user', 1),
+  timestamptz '2030-01-01 08:00:00+00' + (((profile_number - 1) * 10 + assignment_number) * interval '2 hours'),
+  timestamptz '2030-01-01 09:30:00+00' + (((profile_number - 1) * 10 + assignment_number) * interval '2 hours'),
+  'Europe/Madrid', 1, 'CURRENT',
   'club_owner', '', timestamptz '2029-12-31 00:00:00+00',
   case when assignment_number in (1, 2) then clock_timestamp() else null end,
   case when assignment_number = 2 then clock_timestamp() else null end,
   1, 1070000000 + (profile_number - 1) * 10 + assignment_number
 from generate_series(1, 10000) profile_number
 cross join generate_series(1, 10) assignment_number;
+set local session_replication_role = origin;
 
 insert into public.pachanga_referee_statistics_snapshots(
   referee_profile_id, proposals_received, assignments_accepted,
@@ -235,7 +246,8 @@ update private.pachanga_referee_foundation_settings set
   referee_public_profiles_enabled = true,
   referee_marketplace_enabled = true,
   referee_club_relationships_enabled = true,
-  referee_assignments_enabled = true
+  referee_assignments_enabled = true,
+  referee_assignment_private_beta_enabled = true
 where singleton;
 
 analyze public.pachanga_referee_profiles;

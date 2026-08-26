@@ -1,6 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { clientWriteGateResponse, noStoreHeaders } from "../client-policy/_contract";
 import { platformUserClient } from "../../admin/_lib/platform-auth";
+import { refereeHttpStatus } from "../../referee-error-contract";
 import { refereeAvailabilityStatuses, refereeModalities } from "../../referee-platform-contract";
 
 export const refereeUuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -256,13 +257,14 @@ export function refereeWriteGate(request: Request) {
 }
 
 export function refereeError(error: unknown) {
-  const message = error instanceof Error ? error.message : "REFEREE_REQUEST_FAILED";
-  const status = /AUTHENTICATION_REQUIRED/i.test(message) ? 401
-    : /STALE_REVISION|PT409|CONFLICT|ALREADY|SCHEDULE_CHANGED|SLOT_TAKEN/i.test(message) ? 409
-      : /REQUIRED|FORBIDDEN|42501|NOT_AUTHORIZED|NOT_ALLOWED/i.test(message) ? 403
-        : /NOT_FOUND|P0002/i.test(message) ? 404
-          : /RATE_LIMIT|PT429/i.test(message) ? 429
-            : 400;
+  const details = refereeRecord(error);
+  const message = error instanceof Error
+    ? error.message
+    : typeof details.message === "string"
+      ? details.message
+      : "REFEREE_REQUEST_FAILED";
+  const code = typeof details.code === "string" ? details.code : "";
+  const status = refereeHttpStatus(message, code);
   const safeMessage = /REFEREE_INTEGRATION_NOT_CONFIGURED/.test(message)
     ? "La plataforma arbitral no está configurada en este entorno."
     : message;

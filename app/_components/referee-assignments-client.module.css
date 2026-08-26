@@ -1,0 +1,258 @@
+.page {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+  padding: 18px;
+}
+
+.metrics {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.assignmentList {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+
+.assignmentCard {
+  background: color-mix(in srgb, var(--game-panel, #111b1b) 86%, transparent);
+  border: 1px solid color-mix(in srgb, var(--game-cyan, #42d7de) 24%, transparent);
+  border-radius: 6px;
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+  padding: 14px;
+}
+
+.assignmentCard > header {
+  align-items: start;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+.assignmentCard h3,
+.assignmentCard p {
+  margin: 0;
+}
+
+.assignmentCard h3 {
+  font-size: 1.15rem;
+  line-height: 1.15;
+}
+
+.assignmentCard header span,
+.assignmentCard header small,
+.facts b,
+.facts span {
+  display: block;
+}
+
+.assignmentCard header span,
+.facts b {
+  color: var(--game-cyan, #42d7de);
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.assignmentCard header small,
+.facts span,
+.officiating p {
+  color: color-mix(in srgb, currentColor 72%, transparent);
+  font-size: 0.78rem;
+}
+
+.chips,
+.actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+.facts {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.facts span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.facts b {
+  margin-bottom: 2px;
+}
+
+.actions button,
+.actions a,
+.inlineForm button,
+.officiating button,
+.unassigned a {
+  align-items: center;
+  background: color-mix(in srgb, var(--game-lime, #b7ef3d) 16%, transparent);
+  border: 1px solid color-mix(in srgb, var(--game-lime, #b7ef3d) 48%, transparent);
+  border-radius: 4px;
+  color: inherit;
+  cursor: pointer;
+  display: inline-flex;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 800;
+  justify-content: center;
+  min-height: 38px;
+  padding: 7px 10px;
+  text-decoration: none;
+}
+
+.actions button:disabled,
+.inlineForm button:disabled,
+.officiating button:disabled {
+  cursor: wait;
+  opacity: 0.5;
+}
+
+.inlineForm,
+.officiating form {
+  align-items: end;
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.inlineForm label,
+.officiating label {
+  display: grid;
+  font-size: 0.72rem;
+  gap: 4px;
+}
+
+.inlineForm input,
+.officiating input,
+.officiating select,
+.officiating textarea {
+  background: color-mix(in srgb, #06100f 88%, transparent);
+  border: 1px solid color-mix(in srgb, var(--game-cyan, #42d7de) 28%, transparent);
+  border-radius: 4px;
+  color: inherit;
+  font: inherit;
+  min-height: 38px;
+  min-width: 0;
+  padding: 7px 8px;
+}
+
+.officiating {
+  border-top: 1px solid color-mix(in srgb, currentColor 14%, transparent);
+  padding-top: 10px;
+}
+
+.officiating summary {
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 800;
+  margin-bottom: 10px;
+}
+
+.officiating form + form {
+  border-top: 1px solid color-mix(in srgb, currentColor 14%, transparent);
+  margin-top: 10px;
+  padding-top: 10px;
+}
+
+.wide {
+  grid-column: span 2;
+}
+
+.unassigned {
+  background: color-mix(in srgb, var(--game-panel, #111b1b) 68%, transparent);
+  border-block: 1px solid color-mix(in srgb, var(--game-cyan, #42d7de) 20%, transparent);
+  padding: 12px;
+}
+
+.unassigned > div {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.unassigned article {
+  align-items: center;
+  border-left: 3px solid var(--game-cyan, #42d7de);
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+  min-width: 0;
+  padding: 8px 10px;
+}
+
+.unassigned article span,
+.unassigned article small {
+  display: block;
+  min-width: 0;
+}
+
+.empty {
+  color: color-mix(in srgb, currentColor 64%, transparent);
+  margin: 0;
+  padding: 18px 6px;
+}
+
+@media (max-width: 760px) {
+  .page {
+    gap: 10px;
+    padding: 12px;
+  }
+
+  .metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .assignmentCard > header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .chips,
+  .actions {
+    justify-content: flex-start;
+  }
+
+  .facts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .inlineForm,
+  .officiating form {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (orientation: landscape) and (pointer: coarse) {
+  .page {
+    gap: 8px;
+    padding: 8px 10px 14px;
+  }
+
+  .metrics {
+    grid-template-columns: repeat(5, minmax(92px, 1fr));
+  }
+
+  .assignmentList {
+    grid-template-columns: repeat(auto-fit, minmax(310px, 1fr));
+  }
+
+  .assignmentCard {
+    gap: 8px;
+    padding: 10px;
+  }
+
+  .facts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
