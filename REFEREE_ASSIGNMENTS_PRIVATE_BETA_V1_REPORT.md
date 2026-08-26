@@ -129,7 +129,7 @@ del diff.
 | W4-SIM-024 | SIMULATION_BUG | fixed + regression_verified | La contrapropuesta alcanzó la aceptación, pero el partido sintético conservaba una sede sin localidad compatible y el guard respondió `REFEREE_SERVICE_AREA_INCOMPATIBLE`. Los perfiles declaraban correctamente Barcelona. | La preparación de las seis fixtures fija una sede QA confirmada con etiqueta Barcelona, además de fecha y estado. No amplía el radio ni omite la validación. | PASS: contrapropuesta, aceptación y confirmación completan dos pasadas con zona compatible. |
 | W4-009 | PRODUCT_BUG | fixed + regression_verified | R4D intentó invalidar un acta R5 con `discipline_validation_status='STALE'`, valor permitido por la constraint R5 nueva, pero seguía activa una constraint legacy adicional que solo aceptaba `NOT_AVAILABLE`. La transacción falló con `23514`. | La primera migración Wave 4 retira defensivamente la constraint legacy por su nombre corto real y conserva una sola constraint R5 que admite `NOT_AVAILABLE/PENDING/VALIDATED/BLOCKED/STALE`. | PASS: R4D invalida el acta como `STALE`, conserva evidencia y el readback del ledger 151 confirma una sola constraint de disciplina. |
 | W4-ENV-019 | ENVIRONMENT_ISSUE | fixed + regression_verified | Las pasadas diagnósticas sucesivas sobre el segundo clon con datos alcanzaron el rate limit canónico de creación de Club y la siguiente historia terminó con `CLUB_RATE_LIMITED`. El historial de comandos se conservó intacto. | Destruir la rama de diagnóstico y crear un clon final limpio con todas las correcciones ya incorporadas. | PASS: dos E2E completos en el clon final, sin alterar ventanas ni borrar eventos de rate limit; 0 Clubs QA vivos tras cada cleanup. |
-| W4-ENV-020 | ENVIRONMENT_ISSUE | open | La regresión DB focalizada no llegó a ejecutar SQL porque el PostgreSQL local compartido de `127.0.0.1:55322` ya no estaba activo y Docker Desktop tampoco exponía su socket. | Levantar una instancia PostgreSQL/Supabase efímera propia en otro puerto, ejecutar DB/RLS, concurrencia y bootstrap, y retirarla al terminar. No arrancar ni borrar contenedores de otras tareas. | PENDING: suites locales PASS y cero contenedores/bases residuales Wave 4. |
+| W4-ENV-020 | ENVIRONMENT_ISSUE | open / non-blocking | La regresión DB focalizada posterior no llegó a ejecutar SQL porque el PostgreSQL local compartido de `127.0.0.1:55322` ya no estaba activo y Docker Desktop tampoco exponía su socket. | No arrancar ni borrar contenedores de otras tareas. Mantener separada la batería funcional local ya certificada sobre ledger 151 de la validación remota exacta del hotfix de índices sobre ledger 152. | PASS operativo: SQL/RLS, concurrencia, bootstrap y escala funcionales pasaron sobre 151; el quinto fichero, solo de índices, pasó en el branch Supabase exacto y en producción sobre 152. No se afirma una nueva ejecución local sobre 152. |
 | W4-010 | PRODUCT_BUG | fixed + regression_verified | El cleanup intentó anular una Assignment `completed` mediante la RPC administrativa canónica R3 `assignment.completion.void`, pero el guard legacy Wave 4 no reconocía esa transición y respondió `REFEREE_LEGACY_ASSIGNMENT_WRITE_DISABLED`. Al abortar el bloque quedaron dos Assignments confirmadas. | Admitir en el trigger únicamente el patrón exacto `completed -> cancelled` con `cancel_reason_code='completion_voided'`, `completed_at=null` y actor de cancelación; conservar bloqueadas todas las demás escrituras sin razón Wave 4. | PASS: anulación actualiza historial/estadísticas y dos cleanup consecutivos terminan con 0 Assignments activas. |
 | W4-ENV-021 | ENVIRONMENT_ISSUE | fixed + regression_verified | El primer script de limpieza canónica se lanzó con un shell no-login que resolvió Node 20. `supabase-js` abortó antes de conectar porque ese runtime no ofrece el WebSocket nativo requerido. | Ejecutar herramientas remotas Wave 4 con el runtime Node 24 del worktree; no añadir polyfills al producto para compensar un shell QA incorrecto. | PASS: Node 24.16.0 ejecuta dos E2E completos; el intento Node 20 no realizó escrituras. |
 | W4-TEST-022 | TESTABILITY_GAP | fixed + regression_verified | El primer filtro del script de recuperación aplicó `LIKE` a `referee_profile_id` UUID y PostgREST devolvió `42883`; no se canceló ninguna Assignment. | El runner usa la lista exacta de IDs creados y el readback SQL castea UUID a texto solo en diagnóstico. | PASS: dos cleanup por IDs exactos y readback activo igual a cero. |
@@ -155,6 +155,13 @@ del diff.
 | W4-TEST-037 | TESTABILITY_GAP | fixed + regression_verified | La prueba titulada “every Wave 4 foreign key has a covering index” solo enumeraba 13 índices y omitía las 13 FK que el advisor productivo detectó. El nombre de la prueba daba una garantía más amplia que su corpus real. | Se incorporó la migración hotfix al ledger Wave 4, se enumeraron explícitamente los 13 índices omitidos y se exigen `lock_timeout` y `statement_timeout` antes del DDL. | PASS: regresión focal 27/27 entre Wave 4 y Demo; prueba específica verde con las 26 coberturas FK, ledger 152 y advisor del clon sin ninguna de las 13 alertas originales. |
 | W4-ENV-038 | ENVIRONMENT_ISSUE | open / non-blocking | El push productivo de `20260826105132` completó los 13 `CREATE INDEX`, pero Supabase CLI avisó dos veces `SET LOCAL can only be used in transaction blocks`; el CLI no aplicó los timeouts locales durante este push. | No reescribir una migración ya ejecutada ni reconstruir índices sanos solo para ocultar el aviso. Conservarlo como evidencia de release y exigir readback antes de activar flags. | PASS operativo: push completo en 7,4 s, ledger 152, 13/13 índices `valid/ready`, 0 alertas originales y 0 locks. La protección estática sigue siendo válida en runners `--single-transaction`, pero no se presenta como timeout efectivo del push remoto. |
 | W4-ENV-040 | ENVIRONMENT_ISSUE | fixed + regression_verified | El primer intento de actualizar la descripción del PR interpoló Markdown con backticks dentro de un comando shell; zsh intentó resolver los identificadores como comandos y `gh` no recibió un cuerpo válido. | No reutilizar interpolación shell para Markdown. Se envió el cuerpo literal por `stdin` mediante `--body-file -`, sin crear archivos persistentes ni exponer contenido como comando. | PASS: readback del PR confirma el quinto nombre de migración, ledger 152, HEAD `d6013cc` y estado mergeable. |
+| W4-ENV-041 | ENVIRONMENT_ISSUE | fixed + regression_verified | El primer arranque del controlador de navegador para el smoke productivo agotó 30 s y reinició su proceso antes de abrir `pachangasiq.com`; no hubo petición ni interacción con el producto. | Reintentar una sola vez con un timeout de arranque ampliado y una sesión nueva; si vuelve a fallar, usar el smoke HTTP/runtime y conservar la QA visual Preview ya certificada sin presentar el navegador productivo como PASS. | PASS: la segunda sesión abrió producción y permitió recorrer portada, Demo World V2.2 y Árbitros sin errores de consola, imágenes rotas ni overflow documental. |
+| W4-TEST-042 | TESTABILITY_GAP | fixed + regression_verified | La API documentada del navegador aceptaba `networkidle`, pero el backend activo rechazó ese estado después de abrir la pestaña productiva. | Reutilizar la misma pestaña, esperar `domcontentloaded` y una ventana estable corta; no recargar ni convertir el rechazo del harness en error del producto. | PASS: la espera por `domcontentloaded` más ventana estable permitió inspeccionar las superficies productivas y conservar el mismo estado de navegación. |
+| W4-ENV-043 | ENVIRONMENT_ISSUE | fixed + regression_verified | El primer intento de activación no pudo generar el `operationId` porque el aislado JavaScript del orquestador no expone el global `crypto`. La ejecución terminó antes de invocar Supabase y no produjo ninguna escritura. | Generar el UUID con la herramienta local `uuidgen`, conservarlo como intención del cliente y repetir exactamente la llamada RPC canónica con revisión esperada. | PASS: la beta privada pasó a revisión 5 con Assignments OFF y después a revisión 6 con Assignments ON; cada paso tiene un único recibo y readback independiente. |
+| W4-TEST-044 | TESTABILITY_GAP | fixed + regression_verified | El primer readback independiente buscó el recibo de activación en `public.pachanga_referee_operation_receipts`, una relación inexistente; PostgreSQL rechazó toda la consulta y no hubo escritura. | Localizar en las migraciones el ledger privado realmente usado por `pachanga_referee_store_command_v1` y repetir el readback contra la fuente canónica. | PASS: `private.pachanga_referee_operation_receipts` contiene exactamente los dos recibos de activación y los flags confirman revisión 6. |
+| W4-TEST-045 | TESTABILITY_GAP | fixed + regression_verified | El primer readback conjunto de índices comparó `indexrelid::regclass::text` con nombres cualificados; al estar `public` en el `search_path`, PostgreSQL devolvió nombres sin esquema y el filtro produjo un falso `0/0`. | Resolver nombre y esquema mediante `pg_class` y `pg_namespace`, sin depender de la representación textual de `regclass`. | PASS: 13 esperados, 13 encontrados, 13 `valid/ready`, `missing=[]` e `invalid=[]`. |
+| W4-ENV-046 | ENVIRONMENT_ISSUE | fixed + regression_verified | Una búsqueda auxiliar de flags combinó `rg` con un glob de migraciones inexistente; zsh abortó esa segunda lectura con `no matches found`. No se ejecutó SQL ni se modificó ningún fichero. | Repetir la búsqueda sobre el directorio real de migraciones y filtrar dentro de `rg`, sin delegar la selección al glob de zsh. | PASS: backfill canónico 0/no inicializado, disciplina pública OFF, Payments y Tournament `NOT_IMPLEMENTED`. |
+| W4-TEST-047 | TESTABILITY_GAP | fixed + regression_verified | La revalidación final de Demo llamó `evaluate` como si la pestaña del controlador in-app fuera una página Playwright; esa primitiva no existe y la lectura se rechazó sin recargar ni modificar la página. | Inspeccionar la API real de la pestaña ya abierta y repetir las métricas con `prodTab.playwright.evaluate`, conservando URL y estado. | PASS: Demo World V2.2 productiva mantiene 0 overflow, 0 imágenes rotas, 0 logs, contenido arbitral y estados completado/cancelado/sustituido. |
 
 Toda incidencia encontrada durante la simulacion o el release se anadira aqui
 antes de corregirse con una de estas categorias: `PRODUCT_BUG`,
@@ -169,7 +176,8 @@ antes de corregirse con una de estas categorias: `PRODUCT_BUG`,
 - Disciplina publica: OFF.
 - Canonical legacy backfill: no ejecutado.
 - Rating, Rewards, Conduct y Billing: sin cambios.
-- El flag privado de Wave 4 nacera OFF y se activara solo tras smoke.
+- Los flags nacieron OFF, se mantuvieron OFF durante migración y smoke web, y
+  quedaron activados por RPC canónica en dos revisiones después del readback.
 
 ## Certificacion de volumen local
 
@@ -213,7 +221,8 @@ independientes:
 - upgrade: baseline + 147 migraciones, una Assignment R3 valida y las cuatro
   migraciones Wave 4 sin reescribir ningun fichero historico.
 
-Resultado: ledger `151 = 147 + 4`, esquema y ACL normalizados identicos con
+Resultado de la certificación funcional original: ledger `151 = 147 + 4`,
+esquema y ACL normalizados idénticos con
 SHA-256 `f73ac7881243a1c4632dd87e537605304b6fa46b0ed1cc4ca05945c4d7e62055`.
 La Assignment conserva ID, estado, revision, CanonicalMatch y horario original;
 el backfill crea el horario efectivo equivalente y `schedule_state=CURRENT`.
@@ -221,13 +230,22 @@ Los conteos de Rating, Assessments, Rewards, Conduct y Stripe son identicos ante
 y despues. Los flags nacen OFF, `authenticated` no recupera escritura directa y
 ambas bases junto con sus dumps temporales quedan eliminados.
 
+El quinto fichero `20260826105132_referee_assignment_fk_index_hardening_v1`
+es un hotfix exclusivamente aditivo posterior a esa certificación. Se validó
+en el branch Supabase exacto y en producción: ledger 152, 13/13 índices
+`valid/ready` y cero FK Wave 4 sin índice en Advisors. No se presenta como una
+repetición local del bootstrap funcional ni de la prueba de escala.
+
 ## Estado de ejecucion
 
 ## Implementacion local cerrada
 
-- Cuatro migraciones forward-only amplian R3 sin crear otra autoridad:
+- Cuatro migraciones funcionales forward-only amplían R3 sin crear otra
+  autoridad:
   `20260826014905`, `20260826014910`, `20260826014916` y
   `20260826014920`.
+- Una quinta migración, `20260826105132`, añade únicamente los 13 índices de
+  FK detectados durante el readback productivo.
 - `pachanga_referee_assignments` sigue siendo la unica Assignment y
   `pachanga_canonical_matches` el unico target deportivo.
 - El comando central resuelve actor, requester, binding, disponibilidad,
@@ -261,7 +279,7 @@ ambas bases junto con sus dumps temporales quedan eliminados.
 | lint focal Wave 4 sin Mercado | PASS |
 | lint de Mercado | BASE = WAVE 4: 2 errores + 1 warning heredados, sin delta |
 | lint global | 22 errores + 18 warnings heredados, sin delta |
-| SQL/RLS/idempotencia | PASS sobre 151 migraciones |
+| SQL/RLS/idempotencia | PASS funcional sobre 151; hotfix de índices certificado de forma remota sobre ledger 152 |
 | concurrencia | PASS: 10 carreras, 1 ganador y 1 stale/conflict |
 | fresh/upgrade | PASS: `151 = 147 + 4`, esquema equivalente |
 | escala | PASS: corpus contractual completo y rollback |
@@ -271,7 +289,9 @@ ambas bases junto con sus dumps temporales quedan eliminados.
 | PWA local de produccion | PASS tecnico; instalacion fisica pendiente |
 | `git diff --check` | PASS |
 
-Preview, produccion y la retirada de la rama efimera se registraran en
-`REFEREE_ASSIGNMENTS_PRIVATE_BETA_V1_PRODUCTION_RELEASE.md`. La certificacion
-ha escrito solo en el clon Supabase aislado; Supabase produccion permanece sin
-migraciones Wave 4, sin datos QA y sin flags Wave 4 activos.
+Preview, producción, activación y cleanup se registran en
+`REFEREE_ASSIGNMENTS_PRIVATE_BETA_V1_PRODUCTION_RELEASE.md`. Producción queda
+en ledger 152, sin datos QA residuales y con Referee Assignments Private Beta
+activa en revisión 6. El branch Supabase de certificación y sus variables
+Preview de Vercel fueron retirados; Rating, Rewards, Conduct, Billing y los
+cinco mappings Team Cosmetic Rewards permanecen intactos.
