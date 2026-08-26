@@ -2,7 +2,7 @@
 
 ## Estado
 
-`STAGING CERTIFIED / PRODUCTION RELEASE PENDING`
+`PRODUCTION RELEASE CLOSED / PRIVATE BETA ACTIVE`
 
 Wave 5A incorpora una capa de autoria reutilizable que termina siempre en la
 `RuleRevision` canonica de R1. No crea `LeagueSettings`, `DisciplineSettings` o
@@ -18,7 +18,7 @@ derivado.
 | Fecha local | `2026-08-26` |
 | Base | `4fa505fd7323d72398e4ee637e818205b0d6fdab` |
 | Rama | `codex/competition-configuration-center-v1` |
-| PR | `#202` (draft durante el gate local) |
+| PR | `#202` (fusionado) |
 | Ledger base | `152` |
 | Migraciones Wave 5A | `6` |
 | Ledger local | `158` |
@@ -26,6 +26,9 @@ derivado.
 | Supabase CLI | `2.115.0` |
 | Staging Supabase | `iozcjirlfytryzrcmrnq` |
 | Staging Preview | `4688f08af778d7488e9435ce40563a8817a8e83f` |
+| Main funcional fusionado | `aafd4f8816374bd8ab67951ee9f30d6c8bdbcbf0` |
+| Deployment productivo | `dpl_GtWUh6s1h5EzkyNVVAYzAiqcQiCk` / `READY` |
+| Dominio productivo | `https://pachangasiq.com` |
 
 ## Migraciones forward-only
 
@@ -189,7 +192,9 @@ Las siete carreras focales producen `1 winner / 1 stale o conflict`:
 | Configuration Center | `15/15 PASS` |
 | Concurrencia | `7/7 PASS` |
 | League Wizard V2 | `18/18 PASS` |
-| Bateria completa | `504/504 PASS` |
+| Node | `20/20 PASS` |
+| TS/TSX | `505/505 PASS` |
+| Bateria completa | `525/525 PASS` (`20 + 505`) |
 | SQL/RLS | `PASS` |
 | Regresiones R4A-R4D/R5/Assignments | `PASS` |
 | Fresh bootstrap | `158/158 PASS` |
@@ -214,9 +219,40 @@ Las pruebas protegen Rating V2, assessments, Rewards, Player Cosmetics, Team
 Cosmetics, Conduct y Billing. Wave 5A no cambia formulas, facetas, ratings,
 evidencias sociales, recompensas, pagos ni datos historicos.
 
-## Pendiente del release productivo
+## Reconciliacion del conteo de tests
 
-- fusionar PR y aplicar migraciones productivas forward-only;
-- activar los dos flags privados, manteniendo superficies publicas OFF;
-- smoke efimero y cleanup productivo;
-- deployment y readback final.
+El baseline `509` era el total agregado correcto: `20` tests Node y `489`
+tests TS/TSX. Los valores posteriores `504` y `505` eran subtotales TS/TSX,
+no el total de `npm test`:
+
+| Punto | Node | TS/TSX | Total agregado |
+| --- | ---: | ---: | ---: |
+| Base `4fa505f` | 20 | 489 | 509 |
+| Gate intermedio `cfa47bb` | 20 | 504 | 524 |
+| HEAD funcional `9f8c266` | 20 | 505 | 525 |
+
+Wave 5A anade 20 nombres de prueba y sustituye cuatro contratos antiguos
+equivalentes, para un neto de `+16` TS/TSX. El ultimo incremento `504 -> 505`
+corresponde a la regresion de staging para autoria sencilla/avanzada, freeze,
+revision futura y cleanup. En todos los puntos certificados:
+`skipped/todo/cancelled = 0/0/0`. Un diagnostico aislado del commit base sin
+construir `.next` encontro siete `ENOENT`; se uso solo para contar y no se
+presenta como una ejecucion baseline aprobada.
+
+## Cierre productivo
+
+- las seis migraciones forward-only se aplicaron sobre el ledger `152` y el
+  readback final confirma `158`;
+- los dos flags privados nacieron `false` y se activaron exclusivamente con
+  `command_pachanga_competition_configuration_platform_v1`;
+- Configuration Center, Wizard V2, League Private Beta y League Creation estan
+  activos en privado;
+- discovery, registro, calendario, standings, estado de excepciones y
+  disciplina publicos permanecen `false`;
+- pagos, Tournament Engine y pairing manual/hibrido permanecen no disponibles;
+- el smoke efimero completo valido preset, disciplina BLUE, arbitro obligatorio,
+  resumen y cancelacion; despues revoco los 14 grants y el rol temporal;
+- readback final: 0 drafts activos, 0 competiciones QA activas y 0 fixtures,
+  resultados, eventos disciplinarios o assignments QA;
+- Demo World V2.3, Service Worker, offline/reconexion y los viewports
+  `1440x900`, `390x844` y `844x390` pasaron en produccion.
