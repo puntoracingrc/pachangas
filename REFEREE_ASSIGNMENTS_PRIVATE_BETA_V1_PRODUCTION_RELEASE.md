@@ -197,7 +197,7 @@ documentales de este informe.
 - Cuatro variables Vercel Preview limitadas a la rama Wave 4: eliminadas.
 - Readback Vercel de esa rama: `envs=[]`.
 - Datos sintéticos productivos: 0.
-- Procesos y temporales Wave 4: se retiran al fusionar este informe.
+- Procesos y temporales Wave 4: 0.
 - Worktree Wave 4: se conserva hasta que el PR documental esté fusionado, su
   deployment esté READY y el HEAD sea ancestro de `origin/main`.
 
