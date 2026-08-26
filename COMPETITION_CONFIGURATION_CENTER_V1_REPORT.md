@@ -2,7 +2,7 @@
 
 ## Estado
 
-`LOCAL RELEASE CANDIDATE / REMOTE RELEASE PENDING`
+`STAGING CERTIFIED / PRODUCTION RELEASE PENDING`
 
 Wave 5A incorpora una capa de autoria reutilizable que termina siempre en la
 `RuleRevision` canonica de R1. No crea `LeagueSettings`, `DisciplineSettings` o
@@ -23,7 +23,9 @@ derivado.
 | Migraciones Wave 5A | `6` |
 | Ledger local | `158` |
 | Node | `v24.16.0` |
-| Supabase CLI | `2.107.0` |
+| Supabase CLI | `2.115.0` |
+| Staging Supabase | `iozcjirlfytryzrcmrnq` |
+| Staging Preview | `4688f08af778d7488e9435ce40563a8817a8e83f` |
 
 ## Migraciones forward-only
 
@@ -200,6 +202,11 @@ Las siete carreras focales producen `1 winner / 1 stale o conflict`:
 | Lint global | deuda previa: `22 errores / 18 warnings` |
 | PWA standalone local | `PASS` |
 | Visual | 9 viewports, 0 overflow raiz, 0 imagenes rotas |
+| Staging migrations | `7/7 PASS` (`105132` pendiente historica + 6 Wave 5A) |
+| Staging autenticado | `PASS`, Team + Club, 2 dispositivos y Realtime |
+| Staging canon | 15 partidos, 5 jornadas, 2 RuleRevision Wave 5A |
+| Staging cleanup | 0 bundles QA activos, 0 drafts activos, flags restaurados |
+| Preview staging | rutas producto + API autenticada `PASS` |
 
 ## Invariantes
 
@@ -207,11 +214,8 @@ Las pruebas protegen Rating V2, assessments, Rewards, Player Cosmetics, Team
 Cosmetics, Conduct y Billing. Wave 5A no cambia formulas, facetas, ratings,
 evidencias sociales, recompensas, pagos ni datos historicos.
 
-## Pendiente del release remoto
+## Pendiente del release productivo
 
-- aplicar y leer las seis migraciones en staging;
-- ejecutar `test:competition-configuration:staging`: preset sencillo Team,
-  configuracion avanzada Club, freeze, revision futura, Preview y cleanup;
 - fusionar PR y aplicar migraciones productivas forward-only;
 - activar los dos flags privados, manteniendo superficies publicas OFF;
 - smoke efimero y cleanup productivo;

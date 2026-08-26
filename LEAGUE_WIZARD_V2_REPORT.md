@@ -2,7 +2,7 @@
 
 ## Estado
 
-`V2 IMPLEMENTED / LOCAL RELEASE CANDIDATE`
+`V2 IMPLEMENTED / AUTHENTICATED STAGING PASS`
 
 League Wizard V2 sustituye la autoria de diez pasos por doce secciones sin
 romper el endpoint V1. La compatibilidad V1 delega en la misma autoridad V2 y
@@ -94,6 +94,10 @@ cualquier previsualizacion si la operacion falla.
 | PWA standalone | `PASS` |
 | Controles cortados | `0` |
 | Overflow raiz | `0` |
+| Staging Team preset | `PASS` |
+| Staging Club advanced | `PASS` |
+| Staging idempotencia/concurrencia | `PASS` |
+| Staging cleanup | `PASS`, flags restaurados y 0 drafts activos |
 
 El footer sticky se protege frente a la navegacion movil y la barra de acciones
 reserva espacio lateral en game landscape. Son regresiones visuales cubiertas

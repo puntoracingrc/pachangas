@@ -1109,11 +1109,11 @@ try {
     });
     expectError(invalidCapacity, /BETA_CAPACITY_LIMIT/, "22023");
 
-    const teamBundle = await grantBetaBundle(platform, ownerA, "TEAM", TEAMS[0].groupId);
+    const teamBundle = await grantBetaBundle(platform, ownerC, "TEAM", TEAMS[2].groupId);
     created.teamBundleId = teamBundle.snapshot.bundle.bundleId;
-    let teamWizard = await betaCommandOk(ownerA, "command_pachanga_league_private_beta_v2", {
+    let teamWizard = await betaCommandOk(ownerC, "command_pachanga_league_private_beta_v2", {
       action: "wizard.create",
-      aggregateId: TEAMS[0].groupId,
+      aggregateId: TEAMS[2].groupId,
       expectedRevision: teamBundle.snapshot.organizerRevision,
       payload: {
         authoringMode: "SIMPLE",
@@ -1123,7 +1123,7 @@ try {
       },
     });
     if (CONFIGURATION_EXTENSION) {
-      teamWizard = await betaCommandOk(ownerA, "command_pachanga_league_private_beta_v2", {
+      teamWizard = await betaCommandOk(ownerC, "command_pachanga_league_private_beta_v2", {
         action: "wizard.preset.apply",
         aggregateId: teamWizard.snapshot.wizard.id,
         expectedRevision: teamWizard.snapshot.wizard.revision,
@@ -1133,13 +1133,13 @@ try {
       assert.equal(teamWizard.snapshot.presetKey, "LEAGUE_F7_STANDARD");
       assert.equal(Object.keys(teamWizard.snapshot.steps).length, 12);
     }
-    await betaCommandOk(ownerA, "command_pachanga_league_private_beta_v2", {
+    await betaCommandOk(ownerC, "command_pachanga_league_private_beta_v2", {
       action: "wizard.cancel",
       aggregateId: teamWizard.snapshot.wizard?.id ?? teamWizard.snapshot.id,
       expectedRevision: teamWizard.snapshot.wizard?.revision ?? teamWizard.snapshot.revision,
       payload: { reason: "Team organizer beta proof cleanup" },
     });
-    await revokeBetaBundle(platform, ownerA, "TEAM", TEAMS[0].groupId, created.teamBundleId);
+    await revokeBetaBundle(platform, ownerC, "TEAM", TEAMS[2].groupId, created.teamBundleId);
     created.teamBundleId = null;
   }
 
@@ -2106,7 +2106,7 @@ try {
     if (PRIVATE_BETA_EXTENSION) {
       await bestEffort("revoke-team-beta-bundle", async () => {
         if (!created.teamBundleId) return;
-        await revokeBetaBundle(platform, ownerA, "TEAM", TEAMS[0].groupId, created.teamBundleId);
+        await revokeBetaBundle(platform, ownerC, "TEAM", TEAMS[2].groupId, created.teamBundleId);
         created.teamBundleId = null;
       });
       await bestEffort("revoke-expired-team-beta-bundle", async () => {

@@ -77,6 +77,9 @@ La pestaña Configuracion permite consultar:
 No existe una segunda UI de reglas: la Demo proyecta los mismos contratos y
 campos que el producto, dentro del shell publico de Demo World.
 
+La superficie canonica es `/demo?surface=configuration`. En la Preview exacta
+de staging responde `200`, permanece GET-only y no depende de `/demo-world`.
+
 ## Regresiones
 
 | Gate | Resultado |
@@ -89,6 +92,7 @@ campos que el producto, dentro del shell publico de Demo World.
 | V2.1/V2.2 inmutables | `PASS` |
 | Tarifa privada ausente | `PASS` |
 | PWA cache versionada | `PASS` |
+| Preview staging `/demo` | `PASS` |
 
 ## QA visual
 

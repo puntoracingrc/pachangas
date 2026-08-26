@@ -2,7 +2,7 @@
 
 ## Estado
 
-`PRE-RELEASE GATE COMPLETE / STAGING AND PRODUCTION PENDING`
+`STAGING CERTIFIED / PRODUCTION PENDING`
 
 Este informe se actualizara con readbacks remotos, SHA final, deployment y
 cleanup despues de ejecutar el release coordinado. No interpreta el gate local
@@ -19,7 +19,8 @@ como evidencia de produccion.
 | Main final | `PENDING` |
 | Ledger final | `PENDING` |
 | Deployment Vercel | `PENDING` |
-| Produccion | `NO MODIFICADA EN EL GATE LOCAL` |
+| Staging Preview | `4688f08af778d7488e9435ce40563a8817a8e83f` / `READY` |
+| Produccion | `NO MODIFICADA HASTA EL GATE PRODUCTIVO` |
 
 ## Secuencia autorizada
 
@@ -73,6 +74,26 @@ reescribiendo historia.
 - matriz visual requerida sin overflow ni controles cortados;
 - Demo V2.3 determinista y `remoteWrites=0`.
 
+## Evidencia de staging
+
+- ledger reconciliado e instaladas exactamente siete migraciones: la
+  `20260826105132` que faltaba en la rama y las seis de Wave 5A;
+- flags de Configuration Center y Wizard V2 nacieron `false`;
+- E2E autenticado `PASS` con organizer Team y Club, Wizard V2, preset sencillo,
+  autoria avanzada, freeze, revision futura, 15 partidos y 5 jornadas;
+- carrera de dos dispositivos: un ganador y un `STALE_REVISION`;
+- Realtime: invalidacion seguida de refetch canonico;
+- Preview y API autenticada conectadas al Supabase de staging mediante
+  variables limitadas a la rama;
+- cleanup: competicion cancelada, cero bundles QA activos, cero drafts activos y
+  todos los flags restaurados.
+
+Incidencias cerradas durante staging: orden explicito League Beta -> Referee
+Assignments -> Configuration Center, fixture F11 acotado al grant y al motor
+de calendario QA, ruta canonica `/demo`, y eliminacion del cruce accidental
+entre JWT de staging y API Preview con autoridad distinta. No se borro historial
+auditable para sortear rate limits.
+
 ## Readback final
 
-`PENDING REMOTE RELEASE`.
+`PENDING PRODUCTION RELEASE`.
