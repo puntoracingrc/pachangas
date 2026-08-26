@@ -2,7 +2,7 @@
 
 ## Estado
 
-`V2 IMPLEMENTED / AUTHENTICATED STAGING PASS`
+`V2 ACTIVE IN PRODUCTION / PRIVATE BETA`
 
 League Wizard V2 sustituye la autoria de diez pasos por doce secciones sin
 romper el endpoint V1. La compatibilidad V1 delega en la misma autoridad V2 y
@@ -98,6 +98,10 @@ cualquier previsualizacion si la operacion falla.
 | Staging Club advanced | `PASS` |
 | Staging idempotencia/concurrencia | `PASS` |
 | Staging cleanup | `PASS`, flags restaurados y 0 drafts activos |
+| Produccion | `PASS`, activacion por RPC de plataforma |
+| Smoke productivo | `PASS`, preset + disciplina + arbitro + validacion + cancelacion |
+| Cleanup productivo | `PASS`, 0 drafts activos, 0 grants y roles temporales activos |
+| Demo World V2.3 | `PASS` en `https://pachangasiq.com/demo?surface=configuration` |
 
 El footer sticky se protege frente a la navegacion movil y la barra de acciones
 reserva espacio lateral en game landscape. Son regresiones visuales cubiertas
@@ -112,3 +116,12 @@ por el gate de Wave 5A.
 - Asistentes y mesa arbitral son futuros.
 - Pachangas IQ no procesa la tarifa arbitral.
 - Tournament Engine y Draw/Bracket Engine no se han iniciado.
+
+## Readback productivo
+
+League Wizard V2 nacio OFF con las migraciones y se activo junto al
+Configuration Center exclusivamente mediante la RPC de plataforma. El smoke
+confirmo las doce secciones, modo/preset, disciplina avanzada, arbitro
+obligatorio, health, resumen y cancelacion. Las superficies publicas, pagos,
+torneos y pairing manual/hibrido continuan OFF. No quedan drafts, fixtures,
+resultados, eventos ni assignments QA activos.

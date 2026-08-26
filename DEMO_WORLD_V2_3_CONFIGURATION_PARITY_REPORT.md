@@ -93,6 +93,7 @@ de staging responde `200`, permanece GET-only y no depende de `/demo-world`.
 | Tarifa privada ausente | `PASS` |
 | PWA cache versionada | `PASS` |
 | Preview staging `/demo` | `PASS` |
+| Produccion `/demo?surface=configuration` | `PASS` |
 
 ## QA visual
 
@@ -107,6 +108,12 @@ game landscape y PWA standalone:
 
 Android fisico, iPhone fisico y una instalacion fisica no se presentan como
 PASS; no forman parte de la certificacion automatizada local.
+
+La comprobacion productiva del SHA `aafd4f8816374bd8ab67951ee9f30d6c8bdbcbf0`
+repitio desktop `1440x900`, portrait `390x844` y landscape `844x390`: 0
+overflow raiz, 0 imagenes rotas y 0 errores de consola. El Service Worker
+`2.0.0+sw.aafd4f881637` controlo la ruta, con reload offline y reconexion PASS.
+La Demo mantuvo `remoteWrites=0` y no activo ninguna capacidad futura.
 
 ## Limites
 
