@@ -2,7 +2,70 @@ import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 
-export const DEMO_WORLD_V2_AUTHORITY_PROOF_VERSION = 3 as const;
+export const DEMO_WORLD_V2_AUTHORITY_PROOF_VERSION = 4 as const;
+
+export type DemoWorldV2AuthorityProofConfigurationRevision = {
+  authoringMode: "ADVANCED" | "SIMPLE";
+  blueEnabled: boolean;
+  cardCodes: Array<"BLUE" | "RED" | "YELLOW">;
+  checksum: string;
+  effectiveScope: "future_only" | "future_stage";
+  feeMode: "FIXED" | "FREE" | "NEGOTIABLE" | "VOLUNTEER";
+  feePublicConsent: boolean;
+  healthComplete: boolean;
+  humanDocumentVerified: boolean;
+  matchDurationMinutes: number;
+  noShowLoserScore: number;
+  noShowWinnerScore: number;
+  pointsForDraw: number;
+  pointsForLoss: number;
+  pointsForWin: number;
+  postponementResponseDeadlineHours: number;
+  refereeRequiredBeforeReady: boolean;
+  refereeUsage: "NONE" | "OPTIONAL" | "REQUIRED";
+  revision: number;
+  source: "COMPETITION_CONFIGURATION_CENTER_V1" | "LEAGUE_WIZARD_V2";
+  sourcePresetId: string | null;
+  status: "frozen";
+  yellowThreshold: number;
+};
+
+export type DemoWorldV2AuthorityProofConfiguration = {
+  activeDrafts: 0;
+  comparator: {
+    baseRevision: 1;
+    changedSections: string[];
+    targetRevision: 2;
+  };
+  competitionName: "Liga Wave 5A";
+  currentEditionRevision: 2;
+  futureCapabilities: {
+    discipline: boolean;
+    hybridPairing: false;
+    manualAssistedPairing: false;
+    payments: false;
+    refereeAssignments: boolean;
+    tournaments: false;
+  };
+  health: {
+    complete: true;
+    errors: 0;
+    globallyDisabled: string[];
+    status: "complete";
+    warnings: number;
+  };
+  operationReceipts: number;
+  publishedDrafts: 1;
+  r5CatalogCodes: Array<"BLUE" | "RED" | "YELLOW">;
+  refereePolicyConsumed: {
+    feeMode: "FIXED";
+    publicConsent: false;
+    requiredBeforeReady: true;
+    usage: "REQUIRED";
+  };
+  remoteWrites: 0;
+  revisions: DemoWorldV2AuthorityProofConfigurationRevision[];
+};
 
 export type DemoWorldV2AuthorityProofPlayerRef = {
   entryNumber: number;
@@ -172,6 +235,7 @@ export type DemoWorldV2AuthorityProofStanding = {
 
 export type DemoWorldV2AuthorityProof = {
   authorityHash: string;
+  configuration: DemoWorldV2AuthorityProofConfiguration;
   database: "temporary-local-postgresql";
   discipline: DemoWorldV2AuthorityProofDiscipline;
   generatedAt: "2026-08-26T10:00:00.000Z";
@@ -293,6 +357,60 @@ export function assertDemoWorldV2AuthorityProof(value: DemoWorldV2AuthorityProof
         && status === "replaced"
       ))) {
     throw new Error("DEMO_WORLD_V2_2_REFEREE_REPLACEMENT_INVALID");
+  }
+  if (value.configuration.remoteWrites !== 0
+      || value.configuration.competitionName !== "Liga Wave 5A"
+      || value.configuration.revisions.length !== 2
+      || value.configuration.activeDrafts !== 0
+      || value.configuration.publishedDrafts !== 1
+      || value.configuration.currentEditionRevision !== 2) {
+    throw new Error("DEMO_WORLD_V2_3_CONFIGURATION_GRAPH_INVALID");
+  }
+  const [standardConfiguration, customConfiguration] = value.configuration.revisions;
+  if (!standardConfiguration || !customConfiguration
+      || standardConfiguration.revision !== 1
+      || standardConfiguration.source !== "LEAGUE_WIZARD_V2"
+      || standardConfiguration.authoringMode !== "SIMPLE"
+      || standardConfiguration.sourcePresetId !== "LEAGUE_F7_STANDARD"
+      || standardConfiguration.matchDurationMinutes !== 70
+      || standardConfiguration.pointsForWin !== 3
+      || standardConfiguration.yellowThreshold !== 3
+      || standardConfiguration.blueEnabled
+      || standardConfiguration.refereeUsage !== "OPTIONAL"
+      || standardConfiguration.feeMode !== "NEGOTIABLE"
+      || standardConfiguration.noShowWinnerScore !== 3
+      || standardConfiguration.postponementResponseDeadlineHours !== 48) {
+    throw new Error("DEMO_WORLD_V2_3_STANDARD_CONFIGURATION_INVALID");
+  }
+  if (customConfiguration.revision !== 2
+      || customConfiguration.source !== "COMPETITION_CONFIGURATION_CENTER_V1"
+      || customConfiguration.authoringMode !== "ADVANCED"
+      || customConfiguration.matchDurationMinutes !== 80
+      || customConfiguration.pointsForWin !== 2
+      || customConfiguration.yellowThreshold !== 4
+      || !customConfiguration.blueEnabled
+      || customConfiguration.refereeUsage !== "REQUIRED"
+      || customConfiguration.feeMode !== "FIXED"
+      || customConfiguration.feePublicConsent
+      || customConfiguration.noShowWinnerScore !== 4
+      || customConfiguration.postponementResponseDeadlineHours !== 36
+      || standardConfiguration.checksum === customConfiguration.checksum
+      || value.configuration.r5CatalogCodes.join(",") !== "YELLOW,RED,BLUE") {
+    throw new Error("DEMO_WORLD_V2_3_CUSTOM_CONFIGURATION_INVALID");
+  }
+  if (!value.configuration.health.complete
+      || value.configuration.health.errors !== 0
+      || value.configuration.comparator.baseRevision !== 1
+      || value.configuration.comparator.targetRevision !== 2
+      || !value.configuration.comparator.changedSections.includes("discipline")
+      || !value.configuration.comparator.changedSections.includes("referees")
+      || value.configuration.revisions.some(({ healthComplete, humanDocumentVerified }) => (
+        !healthComplete || !humanDocumentVerified
+      ))) {
+    throw new Error("DEMO_WORLD_V2_3_CONFIGURATION_EVIDENCE_INVALID");
+  }
+  if (JSON.stringify(value.configuration).includes("fixedCents")) {
+    throw new Error("DEMO_WORLD_V2_3_PRIVATE_FEE_LEAK");
   }
   const { authorityHash, ...payload } = value;
   if (authorityHash !== demoWorldV2AuthorityHash(payload)) {

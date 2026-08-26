@@ -1,0 +1,93 @@
+.fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-content: start;
+  gap: 12px;
+}
+
+.fields label {
+  min-width: 0;
+  display: grid;
+  gap: 5px;
+  color: var(--official-muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.fields input:not([type="checkbox"]),
+.fields select,
+.fields textarea {
+  width: 100%;
+  min-height: 42px;
+  border: 1px solid var(--official-line);
+  border-radius: 5px;
+  background: #14211d;
+  padding: 8px 10px;
+  color: var(--official-text);
+}
+
+.fields textarea { resize: vertical; }
+.wide { grid-column: 1 / -1; }
+
+.check {
+  display: flex !important;
+  align-items: center;
+  gap: 8px !important;
+  min-height: 36px;
+}
+
+.check input[type="checkbox"] {
+  flex: 0 0 auto;
+  width: 18px;
+  height: 18px;
+  accent-color: var(--official-accent);
+}
+
+.fields fieldset,
+.policy,
+.summary,
+.future {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 10px;
+  border: 1px solid var(--official-line);
+  border-radius: 6px;
+  background: var(--official-surface-soft);
+  padding: 12px;
+}
+
+.fields legend,
+.policy > strong,
+.summary > strong,
+.future > strong { grid-column: 1 / -1; color: var(--official-text); font-size: 0.78rem; font-weight: 900; }
+.fields fieldset p { grid-column: 1 / -1; margin: 0; color: var(--official-muted); font-size: 0.7rem; }
+.summary span, .future span { color: var(--official-muted); font-size: 0.74rem; }
+.future { border-color: rgba(239, 189, 100, 0.38); }
+
+.notice {
+  grid-column: 1 / -1;
+  margin: 0;
+  border-left: 3px solid var(--official-cyan);
+  padding: 8px 10px;
+  color: var(--official-muted);
+  font-size: 0.74rem;
+}
+
+@media (max-width: 760px) and (orientation: portrait) {
+  .fields,
+  .policy,
+  .fields fieldset { grid-template-columns: 1fr; }
+  .wide,
+  .fields legend,
+  .policy > strong,
+  .summary > strong,
+  .future > strong { grid-column: auto; }
+}
+
+@media (orientation: landscape) and (max-height: 600px) {
+  .fields { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; }
+  .wide, .notice { grid-column: 1 / -1; }
+  .fields input:not([type="checkbox"]), .fields select, .fields textarea { min-height: 34px; padding: 5px 7px; font-size: 0.68rem; }
+  .policy { padding: 8px; gap: 5px; }
+}

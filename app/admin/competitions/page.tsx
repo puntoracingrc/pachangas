@@ -13,7 +13,7 @@ import {
 } from "../_components/platform-ui";
 import { requirePlatformPage } from "../_lib/platform-auth";
 import { hasPlatformCapability } from "../_lib/platform-contract";
-import { getPlatformCompetitionFoundation, getPlatformLeagueMatchOperations, getPlatformLeagueOperationalExceptions, getPlatformLeagueParticipation, getPlatformLeaguePrivateBeta, getPlatformLeagueScheduling, paginationFromSearchParams } from "../_lib/platform-data";
+import { getPlatformCompetitionConfiguration, getPlatformCompetitionFoundation, getPlatformLeagueMatchOperations, getPlatformLeagueOperationalExceptions, getPlatformLeagueParticipation, getPlatformLeaguePrivateBeta, getPlatformLeagueScheduling, paginationFromSearchParams } from "../_lib/platform-data";
 import styles from "../platform-admin.module.css";
 import { CompetitionAdminClient } from "./competition-admin-client";
 import { LeaguePrivateBetaAdminClient } from "./league-private-beta-admin-client";
@@ -33,13 +33,14 @@ export default async function PlatformCompetitionsPage({ searchParams }: { searc
   Object.entries(raw).forEach(([key, value]) => params.set(key, first(value)));
   const { page, pageSize } = paginationFromSearchParams(params);
   const betaSearch = first(raw.betaSearch).trim().slice(0, 160);
-  const [data, leagueParticipation, leagueScheduling, leagueMatchOperations, leagueOperationalExceptions, leaguePrivateBeta] = await Promise.all([
+  const [data, leagueParticipation, leagueScheduling, leagueMatchOperations, leagueOperationalExceptions, leaguePrivateBeta, competitionConfiguration] = await Promise.all([
     getPlatformCompetitionFoundation(session, page, pageSize),
     getPlatformLeagueParticipation(session, page, pageSize),
     getPlatformLeagueScheduling(session, page, pageSize),
     getPlatformLeagueMatchOperations(session, page, pageSize),
     getPlatformLeagueOperationalExceptions(session, page, pageSize),
     getPlatformLeaguePrivateBeta(session, betaSearch, page, pageSize),
+    getPlatformCompetitionConfiguration(session),
   ]);
   const canWrite = hasPlatformCapability(session.access, "competitions.manage");
   const canonicalHealthLabel = s(data.bindingHealth.status) === "NOT_INITIALIZED"
@@ -131,8 +132,21 @@ export default async function PlatformCompetitionsPage({ searchParams }: { searc
         <LeaguePrivateBetaAdminClient bundles={leaguePrivateBeta.bundles} canWrite={canWrite} flags={leaguePrivateBeta.flags} organizers={leaguePrivateBeta.organizers} />
       </Panel>
 
+      <Panel title="Competition Configuration Center V1">
+        <MetricGrid>
+          <Metric label="Borradores" value={n(competitionConfiguration.metrics.drafts)} />
+          <Metric label="Validados" value={n(competitionConfiguration.metrics.validated)} />
+          <Metric label="Revisiones publicadas" value={n(competitionConfiguration.metrics.configurationRuleRevisions)} tone="good" />
+          <Metric label="Errores bloqueantes" value={n(competitionConfiguration.metrics.blockingErrors)} tone={n(competitionConfiguration.metrics.blockingErrors) ? "warning" : "good"} />
+          <Metric label="Advertencias" value={n(competitionConfiguration.metrics.warnings)} tone={n(competitionConfiguration.metrics.warnings) ? "warning" : "good"} />
+          <Metric label="Presets" value={n(competitionConfiguration.metrics.presets)} />
+        </MetricGrid>
+        <p className={styles.helpText}>Centro {competitionConfiguration.flags.configurationCenterEnabled ? "activo" : "apagado"} · Wizard V2 {competitionConfiguration.flags.wizardV2Enabled ? "activo" : "apagado"} · rollback mediante revisión nueva.</p>
+        {competitionConfiguration.drafts.length ? <DataTable label="Configuraciones recientes"><thead><tr><th>Competición</th><th>Estado</th><th>Modo</th><th>Health</th><th>Revisión</th><th>Acción</th></tr></thead><tbody>{competitionConfiguration.drafts.map((item) => { const health = item.health as Record<string, unknown> ?? {}; return <tr key={s(item.id)}><td><strong>{s(item.competitionName)}</strong><small><Identifier value={s(item.competitionId)} /></small></td><td><StatusBadge>{s(item.status)}</StatusBadge><small>{s(item.presetKey)}</small></td><td>{s(item.authoringMode)}</td><td><StatusBadge>{s(health.status)}</StatusBadge></td><td>{n(item.revision)}<small>{formatAdminDate(item.updatedAt)}</small></td><td><Link href={`/competiciones/${s(item.competitionId)}/configuracion`}>Abrir</Link></td></tr>; })}</tbody></DataTable> : <EmptyState>No hay borradores de configuración.</EmptyState>}
+      </Panel>
+
       <Panel title="Ligas privadas">
-        {leaguePrivateBeta.competitions.length ? <DataTable label="Ligas privadas beta"><thead><tr><th>Liga</th><th>Estado</th><th>Equipos</th><th>Partidos</th><th>Resultados</th><th>Incidencias</th><th>Clasificación</th></tr></thead><tbody>{leaguePrivateBeta.competitions.map((item) => <tr key={s(item.id)}><td><strong>{s(item.name)}</strong><small>{s(item.organizerKind)} · <Identifier value={s(item.organizerId)} /></small></td><td><StatusBadge>{s(item.status)}</StatusBadge><small>{s(item.visibility)}</small></td><td>{n(item.teamCount)}</td><td>{n(item.matchCount)}</td><td>{n(item.pendingResults)} pendientes<small>{n(item.disputes)} disputas</small></td><td>{n(item.incidents)}</td><td><StatusBadge>{s(item.standingsHealth)}</StatusBadge></td></tr>)}</tbody></DataTable> : <EmptyState>No hay Ligas privadas creadas.</EmptyState>}
+        {leaguePrivateBeta.competitions.length ? <DataTable label="Ligas privadas beta"><thead><tr><th>Liga</th><th>Estado</th><th>Equipos</th><th>Partidos</th><th>Resultados</th><th>Incidencias</th><th>Clasificación</th><th>Reglas</th></tr></thead><tbody>{leaguePrivateBeta.competitions.map((item) => <tr key={s(item.id)}><td><strong>{s(item.name)}</strong><small>{s(item.organizerKind)} · <Identifier value={s(item.organizerId)} /></small></td><td><StatusBadge>{s(item.status)}</StatusBadge><small>{s(item.visibility)}</small></td><td>{n(item.teamCount)}</td><td>{n(item.matchCount)}</td><td>{n(item.pendingResults)} pendientes<small>{n(item.disputes)} disputas</small></td><td>{n(item.incidents)}</td><td><StatusBadge>{s(item.standingsHealth)}</StatusBadge></td><td><Link href={`/competiciones/${s(item.id)}/configuracion`}>Configurar</Link></td></tr>)}</tbody></DataTable> : <EmptyState>No hay Ligas privadas creadas.</EmptyState>}
       </Panel>
 
       <Panel title="Controles de plataforma">

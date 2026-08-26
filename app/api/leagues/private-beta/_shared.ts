@@ -19,7 +19,9 @@ const stepKeys: Record<number, ReadonlySet<string>> = {
   7: new Set(["allowTbd", "minimumRestMinutes", "useDivision", "venueRequired", "weeklyPattern"]),
   8: new Set(["allowSharedPositions", "allowUnknownScorer", "scorerDetailPolicy", "tieBreakCriteria"]),
   9: new Set(["gracePeriodMinutes", "maximumMatchDurationMinutes", "minimumRestHours", "noShowLoserScore", "noShowOutcome", "noShowWinnerScore", "postponementDeadlinePolicy", "postponementResponseDeadlineHours"]),
-  10: new Set(["acknowledgeUnavailableFeatures", "consent"]),
+  10: new Set(["appeal", "blue", "consent", "cycle", "enabled", "red", "sanction", "secondYellow", "yellow"]),
+  11: new Set(["acceptanceIsSufficient", "authority", "fee", "modalityRequired", "organizerConfirmationRequired", "priorClubRelationshipRequired", "proposerRoles", "reconfirmAfterScheduleChange", "replacementAllowed", "requiredBeforeReady", "responseDeadlineHours", "role", "serviceAreaRequired", "usage"]),
+  12: new Set(["acknowledgeUnavailableFeatures", "authoringMode", "calendarVisibility", "competitionVisibility", "consent", "disciplineVisibility", "incidentVisibility", "paymentsAcknowledged", "sourcePresetKey", "sourcePresetVersion", "standingsVisibility", "tournamentsAcknowledged"]),
 };
 
 export function leagueBetaJson(data: unknown, status = 200) {
@@ -61,11 +63,25 @@ export function leagueBetaCommandPayload(action: LeaguePrivateBetaAction, input:
   if (action === "wizard.create") {
     const organizerKind = boundedText(input.organizerKind, 8).toUpperCase();
     if (!['TEAM', 'CLUB'].includes(organizerKind)) throw new Error("INVALID_LEAGUE_BETA_ORGANIZER");
-    return { organizerKind, reason: reason(input, action) };
+    const authoringMode = boundedText(input.authoringMode, 16).toUpperCase() || "SIMPLE";
+    const presetKey = boundedText(input.presetKey, 32).toUpperCase() || "LEAGUE_F7_STANDARD";
+    if (!["SIMPLE", "ADVANCED"].includes(authoringMode)) throw new Error("INVALID_LEAGUE_BETA_AUTHORING_MODE");
+    if (!["LEAGUE_F5_QUICK", "LEAGUE_F7_STANDARD", "LEAGUE_F11", "LEAGUE_FUTSAL"].includes(presetKey)) throw new Error("INVALID_LEAGUE_BETA_PRESET");
+    return { authoringMode, organizerKind, presetKey, reason: reason(input, action) };
+  }
+  if (action === "wizard.mode.set") {
+    const mode = boundedText(input.mode, 16).toUpperCase();
+    if (!["SIMPLE", "ADVANCED"].includes(mode)) throw new Error("INVALID_LEAGUE_BETA_AUTHORING_MODE");
+    return { mode, reason: reason(input, action) };
+  }
+  if (action === "wizard.preset.apply") {
+    const presetKey = boundedText(input.presetKey, 32).toUpperCase();
+    if (!["LEAGUE_F5_QUICK", "LEAGUE_F7_STANDARD", "LEAGUE_F11", "LEAGUE_FUTSAL"].includes(presetKey)) throw new Error("INVALID_LEAGUE_BETA_PRESET");
+    return { presetKey, reason: reason(input, action) };
   }
   if (action === "wizard.step.save") {
     const step = Number(input.step);
-    if (!Number.isInteger(step) || step < 1 || step > 10) throw new Error("INVALID_LEAGUE_BETA_STEP");
+    if (!Number.isInteger(step) || step < 1 || step > 12) throw new Error("INVALID_LEAGUE_BETA_STEP");
     return { data: safeStepData(step, input.data), reason: reason(input, action), step };
   }
   return { reason: reason(input, action) };

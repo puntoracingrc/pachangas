@@ -23,15 +23,15 @@ async function source(path: string) {
   return readFile(new URL(path, root), "utf8");
 }
 
-test("League Private Beta exposes the four user commands, four platform commands and ten canonical steps", () => {
+test("League Private Beta exposes the six Wizard V2 commands, four platform commands and twelve canonical steps", () => {
   assert.deepEqual(leaguePrivateBetaActions, [
-    "wizard.create", "wizard.step.save", "wizard.cancel", "wizard.finalize",
+    "wizard.create", "wizard.mode.set", "wizard.preset.apply", "wizard.step.save", "wizard.cancel", "wizard.finalize",
   ]);
   assert.deepEqual(leaguePrivateBetaPlatformActions, [
     "beta.flags.set", "beta.kill_switch", "beta.bundle.grant", "beta.bundle.revoke",
   ]);
-  assert.equal(leaguePrivateBetaSteps.length, 10);
-  assert.deepEqual(leaguePrivateBetaSteps.map((step) => step.id), [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+  assert.equal(leaguePrivateBetaSteps.length, 12);
+  assert.deepEqual(leaguePrivateBetaSteps.map((step) => step.id), [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
 });
 
 test("productization installs fully disabled and does not create product data", async () => {
@@ -114,15 +114,21 @@ test("PostgreSQL owns actor, revision, sequence, idempotency and final materiali
   assert.doesNotMatch(commands, /payload\s*->>\s*'(?:actorId|actor_id|serverSequence|confirmedAt|revision)'/i);
 });
 
-test("future domains remain explicitly unavailable", async () => {
-  const [commands, access] = await Promise.all([source(paths.commands), source(paths.access)]);
-  for (const domain of ["discipline", "refereeAssignments", "payments", "tournaments"]) {
+test("payments and tournaments stay unavailable while Wave 5A derives discipline and referee policy", async () => {
+  const [commands, access, rules] = await Promise.all([
+    source(paths.commands),
+    source(paths.access),
+    source("supabase/migrations/20260826123100_competition_configuration_rules_v1.sql"),
+  ]);
+  for (const domain of ["payments", "tournaments"]) {
     assert.match(commands, new RegExp(`['\"]${domain}['\"][^\n]+false`));
   }
   assert.match(access, /competition_discipline/);
   assert.match(access, /referee_assignments/);
   assert.match(access, /payments/);
   assert.match(access, /tournaments/);
+  assert.match(rules, /'refereeAssignments', referee_step ->> 'usage' <> 'NONE'/);
+  assert.match(rules, /'discipline', coalesce\(\(discipline_step ->> 'enabled'\)::boolean, false\)/);
 });
 
 test("private read models are bounded, stable and never ordered by timestamp alone", async () => {
@@ -225,7 +231,7 @@ test("Realtime invalidates and refetches canonical state instead of trusting WAL
   assert.match(access, /alter publication supabase_realtime[\s\S]+add table public\.pachanga_league_private_beta_invalidations/);
 });
 
-test("Official UI provides private eligibility, ten-step wizard and responsive game layouts", async () => {
+test("Official UI provides private eligibility, twelve-step wizard and responsive game layouts", async () => {
   const [page, client, css, shell, adminPage, adminClient] = await Promise.all([
     source("app/ligas/page.tsx"),
     source("app/_components/league-private-beta-client.tsx"),
@@ -238,8 +244,10 @@ test("Official UI provides private eligibility, ten-step wizard and responsive g
   assert.match(client, /OfficialProductShellV2/);
   assert.match(client, /Esta beta está disponible únicamente para organizadores autorizados/);
   assert.match(client, /Liga privada/);
-  assert.match(client, /No disponible en esta beta/);
-  assert.match(client, /Reglas propias congeladas/);
+  assert.match(client, /Fuera de esta fase/);
+  assert.match(client, /Disciplina R5/);
+  assert.match(client, /Árbitros asignados/);
+  assert.match(client, /Reglas configurables, congeladas y auditables/);
   assert.match(client, /pachangas-league-private-beta-read-v1/);
   assert.match(css, /orientation: portrait/);
   assert.match(css, /orientation: landscape/);

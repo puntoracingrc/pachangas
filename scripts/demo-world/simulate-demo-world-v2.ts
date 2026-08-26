@@ -88,7 +88,7 @@ async function demoWorldV2ScheduleFixtureSql() {
   fixture = replaceExactlyOnce(
     fixture,
     '"operations":{"schedulePolicy":',
-    '"operations":{"exceptionPolicy":{"gracePeriodMinutes":10,"maximumMatchDurationMinutes":120,"minimumRestHours":0,"noShowLoserScore":0,"noShowOutcome":"NO_SHOW","noShowWinnerScore":3,"organizerApprovalRequired":true,"organizerCanInterveneAfterDeadline":true,"postponementDeadlinePolicy":"EXPIRE","postponementResponseDeadlineHours":48,"resumptionEligibilityPolicy":{"allowOriginalSquad":true,"allowReplacementForDocumentedInjury":false,"requireOriginalEligibility":true},"resumptionPolicy":"SAME_CANONICAL_MATCH","stageWindowEnd":"2027-06-30T23:59:59Z","stageWindowStart":"2026-07-01T00:00:00Z","venuePolicy":{"allowSavedVenue":true,"allowTbd":true,"allowVenueLabel":true}},"schedulePolicy":',
+    '"operations":{"exceptionPolicy":{"gracePeriodMinutes":10,"maximumMatchDurationMinutes":120,"minimumRestHours":0,"noShowLoserScore":0,"noShowOutcome":"NO_SHOW","noShowWinnerScore":3,"organizerApprovalRequired":true,"organizerCanInterveneAfterDeadline":true,"postponementDeadlinePolicy":"EXPIRE","postponementResponseDeadlineHours":48,"resumptionEligibilityPolicy":{"allowOriginalSquad":true,"allowReplacementForDocumentedInjury":false,"requireOriginalEligibility":true},"resumptionPolicy":"SAME_CANONICAL_MATCH","stageWindowEnd":"2027-06-30T23:59:59Z","stageWindowStart":"2026-07-01T00:00:00Z","venuePolicy":{"allowSavedVenue":true,"allowTbd":true,"allowVenueLabel":true}},"refereePolicy":{"acceptanceIsSufficient":false,"authority":{"observeScore":true,"reportCards":true,"reportIncidents":true},"fee":{"mode":"NEGOTIABLE","paymentProcessing":false,"publicConsent":false,"travelIncluded":false},"modalityRequired":true,"organizerConfirmationRequired":true,"priorClubRelationshipRequired":false,"proposerRoles":["competition_owner","competition_director","competition_referee_manager"],"reconfirmAfterScheduleChange":true,"replacementAllowed":true,"requiredBeforeReady":false,"responseDeadlineHours":72,"role":"MAIN_REFEREE","serviceAreaRequired":true,"usage":"OPTIONAL"},"schedulePolicy":',
     "exception-policy",
   );
   fixture = replaceExactlyOnce(
@@ -186,6 +186,164 @@ async function committedAuthorityProof() {
   return assertDemoWorldV2AuthorityProof(JSON.parse(
     await readFile(authorityProofPath, "utf8"),
   ) as DemoWorldV2AuthorityProof);
+}
+
+function extractConfigurationAuthorityProof(): DemoWorldV2AuthorityProof["configuration"] {
+  const sql = String.raw`
+with target_competition as (
+  select competitions.id, competitions.name
+  from public.pachanga_competitions competitions
+  where competitions.name = 'Liga Wave 5A'
+  order by competitions.server_sequence desc, competitions.id desc
+  limit 1
+), revisions as (
+  select
+    rule_revisions.*,
+    private.pachanga_competition_configuration_human_document_v1(rule_revisions.id) as human_document,
+    case when rule_revisions.version = 1 then (
+      select private.pachanga_competition_configuration_health_v1(wizards.step_data, wizards.completed_steps)
+      from private.pachanga_league_private_beta_wizards wizards
+      where wizards.competition_id = target_competition.id
+      order by wizards.server_sequence desc, wizards.id desc
+      limit 1
+    ) else (
+      select drafts.validation_snapshot
+      from private.pachanga_competition_configuration_drafts drafts
+      where drafts.materialized_rule_revision_id = rule_revisions.id
+      order by drafts.server_sequence desc, drafts.id desc
+      limit 1
+    ) end as health
+  from target_competition
+  join public.pachanga_competition_rule_sets rule_sets
+    on rule_sets.competition_id = target_competition.id
+  join public.pachanga_competition_rule_revisions rule_revisions
+    on rule_revisions.rule_set_id = rule_sets.id
+), base_revision as (
+  select * from revisions where version = 1
+), custom_revision as (
+  select * from revisions where version = 2
+), comparison as (
+  select private.pachanga_competition_configuration_diff_v1(
+    base_revision.rule_document,
+    custom_revision.rule_document
+  ) as value
+  from base_revision, custom_revision
+), public_revisions as (
+  select jsonb_agg(jsonb_build_object(
+    'authoringMode', revisions.rule_document #>> '{identity,authoringMode}',
+    'blueEnabled', exists (
+      select 1
+      from jsonb_array_elements(revisions.rule_document #> '{discipline,policy,cardTypeCatalog}') cards
+      where cards ->> 'code' = 'BLUE'
+    ),
+    'cardCodes', (
+      select jsonb_agg(cards.value ->> 'code' order by ordinal)
+      from jsonb_array_elements(revisions.rule_document #> '{discipline,policy,cardTypeCatalog}')
+        with ordinality cards(value, ordinal)
+    ),
+    'checksum', revisions.checksum,
+    'effectiveScope', revisions.effective_scope,
+    'feeMode', revisions.rule_document #>> '{operations,refereePolicy,fee,mode}',
+    'feePublicConsent', coalesce((revisions.rule_document #>> '{operations,refereePolicy,fee,publicConsent}')::boolean, false),
+    'healthComplete', coalesce((revisions.health ->> 'complete')::boolean, false),
+    'humanDocumentVerified',
+      revisions.human_document #>> '{sections,matches,matchDurationMinutes}'
+        = revisions.rule_document #>> '{operations,schedulePolicy,matchDurationMinutes}'
+      and revisions.human_document #>> '{sections,scoring,pointsForWin}'
+        = revisions.rule_document #>> '{results,scoringPolicy,pointsForWin}'
+      and revisions.human_document #>> '{sections,incidents,noShowWinnerScore}'
+        = revisions.rule_document #>> '{operations,exceptionPolicy,noShowWinnerScore}'
+      and revisions.human_document #>> '{sections,referees,usage}'
+        = revisions.rule_document #>> '{operations,refereePolicy,usage}',
+    'matchDurationMinutes', (revisions.rule_document #>> '{operations,schedulePolicy,matchDurationMinutes}')::integer,
+    'noShowLoserScore', (revisions.rule_document #>> '{operations,exceptionPolicy,noShowLoserScore}')::integer,
+    'noShowWinnerScore', (revisions.rule_document #>> '{operations,exceptionPolicy,noShowWinnerScore}')::integer,
+    'pointsForDraw', (revisions.rule_document #>> '{results,scoringPolicy,pointsForDraw}')::integer,
+    'pointsForLoss', (revisions.rule_document #>> '{results,scoringPolicy,pointsForLoss}')::integer,
+    'pointsForWin', (revisions.rule_document #>> '{results,scoringPolicy,pointsForWin}')::integer,
+    'postponementResponseDeadlineHours', (revisions.rule_document #>> '{operations,exceptionPolicy,postponementResponseDeadlineHours}')::integer,
+    'refereeRequiredBeforeReady', coalesce((revisions.rule_document #>> '{operations,refereePolicy,requiredBeforeReady}')::boolean, false),
+    'refereeUsage', revisions.rule_document #>> '{operations,refereePolicy,usage}',
+    'revision', revisions.version,
+    'source', case when revisions.version = 1 then 'LEAGUE_WIZARD_V2'
+      else 'COMPETITION_CONFIGURATION_CENTER_V1' end,
+    'sourcePresetId', revisions.rule_document #>> '{identity,sourcePresetId}',
+    'status', revisions.status,
+    'yellowThreshold', (
+      select (cards -> 'accumulation' ->> 'threshold')::integer
+      from jsonb_array_elements(revisions.rule_document #> '{discipline,policy,cardTypeCatalog}') cards
+      where cards ->> 'code' = 'YELLOW'
+      limit 1
+    )
+  ) order by revisions.version) as value
+  from revisions
+)
+select jsonb_build_object(
+  'activeDrafts', (
+    select count(*) from private.pachanga_competition_configuration_drafts drafts
+    join target_competition on target_competition.id = drafts.competition_id
+    where drafts.status in ('draft', 'validated')
+  ),
+  'comparator', jsonb_build_object(
+    'baseRevision', 1,
+    'changedSections', (
+      select coalesce(jsonb_agg(items.key order by items.key), '[]'::jsonb)
+      from comparison, jsonb_each(comparison.value) items
+      where coalesce((items.value ->> 'changed')::boolean, false)
+    ),
+    'targetRevision', 2
+  ),
+  'competitionName', (select name from target_competition),
+  'currentEditionRevision', (
+    select revisions.version
+    from target_competition
+    join public.pachanga_competition_editions editions on editions.competition_id = target_competition.id
+    join revisions on revisions.id = editions.rule_revision_id
+    order by editions.server_sequence desc, editions.id desc
+    limit 1
+  ),
+  'futureCapabilities', (select rule_document -> 'futureCapabilities' from custom_revision),
+  'health', (
+    select jsonb_build_object(
+      'complete', coalesce((health ->> 'complete')::boolean, false),
+      'errors', jsonb_array_length(coalesce(health -> 'errors', '[]'::jsonb)),
+      'globallyDisabled', coalesce(health -> 'globallyDisabled', '[]'::jsonb),
+      'status', health ->> 'status',
+      'warnings', jsonb_array_length(coalesce(health -> 'warnings', '[]'::jsonb))
+    ) from custom_revision
+  ),
+  'operationReceipts', (
+    select count(*) from private.pachanga_competition_configuration_receipts receipts
+    where receipts.client_metadata ->> 'surface' = 'demo_world_v2_configuration'
+  ),
+  'publishedDrafts', (
+    select count(*) from private.pachanga_competition_configuration_drafts drafts
+    join target_competition on target_competition.id = drafts.competition_id
+    where drafts.status = 'published'
+  ),
+  'r5CatalogCodes', (
+    select jsonb_agg(cards.value ->> 'code' order by ordinal)
+    from custom_revision
+    join public.pachanga_competition_discipline_rule_catalogs catalogs
+      on catalogs.rule_revision_id = custom_revision.id,
+    jsonb_array_elements(catalogs.card_type_catalog) with ordinality cards(value, ordinal)
+  ),
+  'refereePolicyConsumed', (
+    select jsonb_build_object(
+      'feeMode', policy.value #>> '{fee,mode}',
+      'publicConsent', coalesce((policy.value #>> '{fee,publicConsent}')::boolean, false),
+      'requiredBeforeReady', coalesce((policy.value ->> 'requiredBeforeReady')::boolean, false),
+      'usage', policy.value ->> 'usage'
+    )
+    from custom_revision,
+    lateral (select private.pachanga_competition_referee_policy_v1(custom_revision.id) as value) policy
+  ),
+  'remoteWrites', 0,
+  'revisions', public_revisions.value
+)
+from public_revisions;
+`;
+  return JSON.parse(psql(["-At", "-c", sql], "extract Demo World V2.3 configuration proof")) as DemoWorldV2AuthorityProof["configuration"];
 }
 
 function extractAuthorityProof(migrationCount: number) {
@@ -581,15 +739,16 @@ from matches, standings, discipline_events, discipline_counters,
   discipline_sanctions, discipline_service, discipline_appeals,
   discipline_states, discipline_eligibility, referee_assignment_summary;
 `;
-  const extracted = JSON.parse(psql(["-At", "-c", sql], "extract Demo World V2 authority proof")) as Omit<DemoWorldV2AuthorityProof, "authorityHash" | "database" | "generatedAt" | "migrationCount" | "remoteWrites" | "rpcFamilies" | "version">;
+  const extracted = JSON.parse(psql(["-At", "-c", sql], "extract Demo World V2 authority proof")) as Omit<DemoWorldV2AuthorityProof, "authorityHash" | "configuration" | "database" | "generatedAt" | "migrationCount" | "remoteWrites" | "rpcFamilies" | "version">;
   const payload: Omit<DemoWorldV2AuthorityProof, "authorityHash"> = {
     ...extracted,
+    configuration: extractConfigurationAuthorityProof(),
     database: "temporary-local-postgresql",
     generatedAt: "2026-08-26T10:00:00.000Z",
     migrationCount,
     remoteWrites: 0,
     rpcFamilies: ["R1", "R3", "R4A", "R4B", "R4C", "R4D", "R5"],
-    version: 3,
+    version: 4,
   };
   return assertDemoWorldV2AuthorityProof({
     ...payload,
@@ -599,16 +758,17 @@ from matches, standings, discipline_events, discipline_counters,
 
 async function committedSnapshot(): Promise<DemoWorldV2Snapshot> {
   const read = async <T>(name: string) => JSON.parse(await readFile(path.join(publicRoot, name), "utf8")) as T;
-  const [activity, clubsReferees, competitions, core, manifest, matches, players] = await Promise.all([
+  const [activity, clubsReferees, competitions, configuration, core, manifest, matches, players] = await Promise.all([
     read<DemoWorldV2Snapshot["activity"]>("activity.json"),
     read<DemoWorldV2Snapshot["clubsReferees"]>("clubs-referees.json"),
     read<DemoWorldV2Snapshot["competitions"]>("competitions.json"),
+    read<DemoWorldV2Snapshot["configuration"]>("configuration.json"),
     read<DemoWorldV2Snapshot["core"]>("core.json"),
     read<DemoWorldV2Snapshot["manifest"]>("manifest.json"),
     read<DemoWorldV2Snapshot["matches"]>("matches.json"),
     read<DemoWorldV2Snapshot["players"]>("players.json"),
   ]);
-  return { activity, clubsReferees, competitions, core, manifest, matches, players };
+  return { activity, clubsReferees, competitions, configuration, core, manifest, matches, players };
 }
 
 async function dropDatabase() {
@@ -681,6 +841,8 @@ async function main() {
     applyBatch(migrationBatches[7]!.label, migrationBatches[7]!.names);
     psql([], "create Demo World V2 canonical League through R4B RPCs", await demoWorldV2ScheduleFixtureSql());
     psql(["-f", sqlFile("scripts/demo-world/demo-world-v2-authority-operations.sql")], "operate Demo World V2 through R4C, R4D and R5 RPCs");
+    psql(["-f", sqlFile("tests/competition-configuration-center-v1-fixture.sql")], "create Demo World V2.3 configuration fixture through League Wizard V2");
+    psql(["-f", sqlFile("scripts/demo-world/demo-world-v2-configuration-operations.sql")], "publish Demo World V2.3 custom RuleRevision through Configuration Center V1");
 
     const authorityProof = extractAuthorityProof(migrationNames.length);
     const generated = generateDemoWorldV2(authorityProof);
