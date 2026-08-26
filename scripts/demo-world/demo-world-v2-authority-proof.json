@@ -126,7 +126,7 @@
         "official_result"
       ],
       "outcome": "MIRROR_SPORTING_RESULT",
-      "venueLabel": "Camp Municipal Besòs",
+      "venueLabel": "Camp Municipal Besòs · Barcelona",
       "roundNumber": 3,
       "exceptionType": "venue_changed",
       "partialResult": null,
@@ -385,7 +385,9 @@
         "publicSummary": "Amarilla de Liga · J1",
         "revisionVersion": 1,
         "temporaryDismissal": null,
-        "publicReasonCategory": "accumulation"
+        "publicReasonCategory": "accumulation",
+        "refereeAssignmentKey": "b5657623-9140-1357-721f-f655ab51621b",
+        "reportingRefereeNumber": 1
       },
       {
         "minute": 55,
@@ -401,7 +403,9 @@
         "publicSummary": "Amarilla acumulada",
         "revisionVersion": 1,
         "temporaryDismissal": null,
-        "publicReasonCategory": "accumulation"
+        "publicReasonCategory": "accumulation",
+        "refereeAssignmentKey": "b5657623-9140-1357-721f-f655ab51621b",
+        "reportingRefereeNumber": 1
       },
       {
         "minute": 12,
@@ -417,7 +421,9 @@
         "publicSummary": "Amarilla de Liga · J1",
         "revisionVersion": 1,
         "temporaryDismissal": null,
-        "publicReasonCategory": "accumulation"
+        "publicReasonCategory": "accumulation",
+        "refereeAssignmentKey": "1382838a-023f-1837-8ff1-d097eeddac8e",
+        "reportingRefereeNumber": 2
       },
       {
         "minute": 14,
@@ -433,7 +439,9 @@
         "publicSummary": "Amarilla de Liga · J1",
         "revisionVersion": 1,
         "temporaryDismissal": null,
-        "publicReasonCategory": "accumulation"
+        "publicReasonCategory": "accumulation",
+        "refereeAssignmentKey": "f5cb2ead-6746-b1b1-38e5-5973501346f1",
+        "reportingRefereeNumber": 3
       },
       {
         "minute": 16,
@@ -449,7 +457,9 @@
         "publicSummary": "Amarilla de Liga · J2",
         "revisionVersion": 1,
         "temporaryDismissal": null,
-        "publicReasonCategory": "accumulation"
+        "publicReasonCategory": "accumulation",
+        "refereeAssignmentKey": "cb9dd642-44c5-a4df-d088-bf582da639fb",
+        "reportingRefereeNumber": 8
       },
       {
         "minute": 56,
@@ -465,7 +475,9 @@
         "publicSummary": "Amarilla acumulada",
         "revisionVersion": 1,
         "temporaryDismissal": null,
-        "publicReasonCategory": "accumulation"
+        "publicReasonCategory": "accumulation",
+        "refereeAssignmentKey": "cb9dd642-44c5-a4df-d088-bf582da639fb",
+        "reportingRefereeNumber": 8
       },
       {
         "minute": 18,
@@ -481,7 +493,9 @@
         "publicSummary": "Amarilla de Liga · J2",
         "revisionVersion": 1,
         "temporaryDismissal": null,
-        "publicReasonCategory": "accumulation"
+        "publicReasonCategory": "accumulation",
+        "refereeAssignmentKey": "99674447-813e-53da-f429-90090f8e8725",
+        "reportingRefereeNumber": 5
       },
       {
         "minute": 20,
@@ -497,7 +511,9 @@
         "publicSummary": "Amarilla de Liga · J2",
         "revisionVersion": 1,
         "temporaryDismissal": null,
-        "publicReasonCategory": "accumulation"
+        "publicReasonCategory": "accumulation",
+        "refereeAssignmentKey": "82bde96a-e5b1-0267-eedf-88c726532fa5",
+        "reportingRefereeNumber": 6
       },
       {
         "minute": 33,
@@ -518,7 +534,9 @@
           "endOnOpponentGoal": true,
           "replacementPolicy": "NO_REPLACEMENT"
         },
-        "publicReasonCategory": "dismissal"
+        "publicReasonCategory": "dismissal",
+        "refereeAssignmentKey": "82bde96a-e5b1-0267-eedf-88c726532fa5",
+        "reportingRefereeNumber": 6
       },
       {
         "minute": 22,
@@ -534,7 +552,9 @@
         "publicSummary": "Amarilla de Liga · J3",
         "revisionVersion": 1,
         "temporaryDismissal": null,
-        "publicReasonCategory": "accumulation"
+        "publicReasonCategory": "accumulation",
+        "refereeAssignmentKey": "801d02ff-daa4-9dc0-607c-256bc63b9c73",
+        "reportingRefereeNumber": 7
       },
       {
         "minute": 57,
@@ -554,7 +574,9 @@
         "publicSummary": "Umbral de acumulación alcanzado",
         "revisionVersion": 1,
         "temporaryDismissal": null,
-        "publicReasonCategory": "accumulation"
+        "publicReasonCategory": "accumulation",
+        "refereeAssignmentKey": "801d02ff-daa4-9dc0-607c-256bc63b9c73",
+        "reportingRefereeNumber": 7
       },
       {
         "minute": 24,
@@ -570,7 +592,9 @@
         "publicSummary": "Amarilla de Liga · J3",
         "revisionVersion": 1,
         "temporaryDismissal": null,
-        "publicReasonCategory": "accumulation"
+        "publicReasonCategory": "accumulation",
+        "refereeAssignmentKey": "a2286a83-2375-474f-c4a6-712301b8a8f0",
+        "reportingRefereeNumber": 8
       },
       {
         "minute": 67,
@@ -590,7 +614,9 @@
         "publicSummary": "Expulsión directa pendiente de comité",
         "revisionVersion": 1,
         "temporaryDismissal": null,
-        "publicReasonCategory": "dismissal"
+        "publicReasonCategory": "dismissal",
+        "refereeAssignmentKey": "a2286a83-2375-474f-c4a6-712301b8a8f0",
+        "reportingRefereeNumber": 8
       },
       {
         "minute": 26,
@@ -606,7 +632,9 @@
         "publicSummary": "Amarilla de Liga · J3",
         "revisionVersion": 1,
         "temporaryDismissal": null,
-        "publicReasonCategory": "accumulation"
+        "publicReasonCategory": "accumulation",
+        "refereeAssignmentKey": "2a7db71a-12ea-c266-8398-5683d33f44fa",
+        "reportingRefereeNumber": 1
       },
       {
         "minute": 28,
@@ -622,7 +650,9 @@
         "publicSummary": "Amarilla de Liga · J4",
         "revisionVersion": 1,
         "temporaryDismissal": null,
-        "publicReasonCategory": "accumulation"
+        "publicReasonCategory": "accumulation",
+        "refereeAssignmentKey": "92c29f1a-b45f-323b-81f4-57e0846de2ee",
+        "reportingRefereeNumber": 2
       },
       {
         "minute": 32,
@@ -638,7 +668,9 @@
         "publicSummary": "Amarilla de Liga · J4",
         "revisionVersion": 1,
         "temporaryDismissal": null,
-        "publicReasonCategory": "accumulation"
+        "publicReasonCategory": "accumulation",
+        "refereeAssignmentKey": "2509f1c6-2f7b-b650-512f-0fc8b8637c93",
+        "reportingRefereeNumber": 4
       },
       {
         "minute": 34,
@@ -654,7 +686,9 @@
         "publicSummary": "Amarilla de Liga · J5",
         "revisionVersion": 1,
         "temporaryDismissal": null,
-        "publicReasonCategory": "accumulation"
+        "publicReasonCategory": "accumulation",
+        "refereeAssignmentKey": null,
+        "reportingRefereeNumber": null
       },
       {
         "minute": 36,
@@ -670,7 +704,9 @@
         "publicSummary": "Amarilla de Liga · J5",
         "revisionVersion": 1,
         "temporaryDismissal": null,
-        "publicReasonCategory": "accumulation"
+        "publicReasonCategory": "accumulation",
+        "refereeAssignmentKey": "3316233a-e1db-764f-a45d-41693cdfa478",
+        "reportingRefereeNumber": 5
       },
       {
         "minute": 73,
@@ -690,7 +726,9 @@
         "publicSummary": "Expulsión directa pendiente de comité",
         "revisionVersion": 1,
         "temporaryDismissal": null,
-        "publicReasonCategory": "dismissal"
+        "publicReasonCategory": "dismissal",
+        "refereeAssignmentKey": "3316233a-e1db-764f-a45d-41693cdfa478",
+        "reportingRefereeNumber": 5
       },
       {
         "minute": 38,
@@ -715,7 +753,9 @@
           "endOnOpponentGoal": true,
           "replacementPolicy": "NO_REPLACEMENT"
         },
-        "publicReasonCategory": "dismissal"
+        "publicReasonCategory": "dismissal",
+        "refereeAssignmentKey": null,
+        "reportingRefereeNumber": null
       }
     ],
     "appeals": [
@@ -1112,20 +1152,517 @@
     "discipline": 33,
     "scheduling": 5,
     "matchOperations": 266,
+    "refereePlatform": 80,
+    "refereeAssignments": 61,
+    "refereeOfficiating": 18,
     "operationalExceptions": 13
   },
+  "refereeAssignments": {
+    "counts": {
+      "declined": 1,
+      "replaced": 1,
+      "cancelled": 1,
+      "completed": 13,
+      "unassignedMatches": 2
+    },
+    "profiles": [
+      {
+        "slug": "arbitro-demo-1",
+        "publicBio": "Arbitro ficticio del mundo demostracion de Pachangas IQ.",
+        "publicFee": {
+          "feeMode": "FIXED",
+          "currency": "EUR",
+          "fromCents": 5500,
+          "paymentManagedByPachangasIq": false
+        },
+        "modalities": [
+          "FOOTBALL_11",
+          "FOOTBALL_7"
+        ],
+        "statistics": {
+          "replacements": 0,
+          "cancellations": 1,
+          "redCardsShown": 0,
+          "blueCardsShown": 0,
+          "matchesCompleted": 2,
+          "yellowCardsShown": 3,
+          "proposalsReceived": 3,
+          "assignmentsAccepted": 2,
+          "assignmentsDeclined": 0,
+          "assignmentsConfirmed": 2,
+          "leagueMatchesCompleted": 2
+        },
+        "displayName": "Arbitro Demo 1",
+        "municipality": "Barcelona",
+        "refereeNumber": 1,
+        "availabilityStatus": "AVAILABLE",
+        "verificationStatus": "unverified"
+      },
+      {
+        "slug": "arbitro-demo-2",
+        "publicBio": "Arbitro ficticio del mundo demostracion de Pachangas IQ.",
+        "publicFee": {
+          "feeMode": "NEGOTIABLE",
+          "currency": "EUR",
+          "fromCents": 4500,
+          "paymentManagedByPachangasIq": false
+        },
+        "modalities": [
+          "FOOTBALL_7",
+          "FUTSAL"
+        ],
+        "statistics": {
+          "replacements": 0,
+          "cancellations": 0,
+          "redCardsShown": 0,
+          "blueCardsShown": 0,
+          "matchesCompleted": 2,
+          "yellowCardsShown": 2,
+          "proposalsReceived": 2,
+          "assignmentsAccepted": 2,
+          "assignmentsDeclined": 0,
+          "assignmentsConfirmed": 2,
+          "leagueMatchesCompleted": 2
+        },
+        "displayName": "Arbitro Demo 2",
+        "municipality": "Barcelona",
+        "refereeNumber": 2,
+        "availabilityStatus": "AVAILABLE",
+        "verificationStatus": "unverified"
+      },
+      {
+        "slug": "arbitro-demo-3",
+        "publicBio": "Arbitro ficticio del mundo demostracion de Pachangas IQ.",
+        "publicFee": {
+          "feeMode": "VOLUNTEER",
+          "currency": "EUR",
+          "fromCents": null,
+          "paymentManagedByPachangasIq": false
+        },
+        "modalities": [
+          "FOOTBALL_11",
+          "FOOTBALL_7"
+        ],
+        "statistics": {
+          "replacements": 0,
+          "cancellations": 0,
+          "redCardsShown": 0,
+          "blueCardsShown": 0,
+          "matchesCompleted": 2,
+          "yellowCardsShown": 1,
+          "proposalsReceived": 2,
+          "assignmentsAccepted": 2,
+          "assignmentsDeclined": 0,
+          "assignmentsConfirmed": 2,
+          "leagueMatchesCompleted": 2
+        },
+        "displayName": "Arbitro Demo 3",
+        "municipality": "Sabadell",
+        "refereeNumber": 3,
+        "availabilityStatus": "AVAILABLE",
+        "verificationStatus": "unverified"
+      },
+      {
+        "slug": "arbitro-demo-4",
+        "publicBio": "Arbitro ficticio del mundo demostracion de Pachangas IQ.",
+        "publicFee": null,
+        "modalities": [
+          "FOOTBALL_7",
+          "FUTSAL"
+        ],
+        "statistics": {
+          "replacements": 1,
+          "cancellations": 0,
+          "redCardsShown": 0,
+          "blueCardsShown": 0,
+          "matchesCompleted": 1,
+          "yellowCardsShown": 1,
+          "proposalsReceived": 2,
+          "assignmentsAccepted": 2,
+          "assignmentsDeclined": 0,
+          "assignmentsConfirmed": 2,
+          "leagueMatchesCompleted": 1
+        },
+        "displayName": "Arbitro Demo 4",
+        "municipality": "Barcelona",
+        "refereeNumber": 4,
+        "availabilityStatus": "LIMITED",
+        "verificationStatus": "unverified"
+      },
+      {
+        "slug": "arbitro-demo-5",
+        "publicBio": "Arbitro ficticio del mundo demostracion de Pachangas IQ.",
+        "publicFee": null,
+        "modalities": [
+          "FOOTBALL_11",
+          "FOOTBALL_7"
+        ],
+        "statistics": {
+          "replacements": 0,
+          "cancellations": 0,
+          "redCardsShown": 1,
+          "blueCardsShown": 0,
+          "matchesCompleted": 2,
+          "yellowCardsShown": 2,
+          "proposalsReceived": 3,
+          "assignmentsAccepted": 2,
+          "assignmentsDeclined": 1,
+          "assignmentsConfirmed": 2,
+          "leagueMatchesCompleted": 2
+        },
+        "displayName": "Arbitro Demo 5",
+        "municipality": "Barcelona",
+        "refereeNumber": 5,
+        "availabilityStatus": "AVAILABLE",
+        "verificationStatus": "unverified"
+      },
+      {
+        "slug": "arbitro-demo-6",
+        "publicBio": "Arbitro ficticio del mundo demostracion de Pachangas IQ.",
+        "publicFee": null,
+        "modalities": [
+          "FOOTBALL_7",
+          "FUTSAL"
+        ],
+        "statistics": {
+          "replacements": 0,
+          "cancellations": 0,
+          "redCardsShown": 0,
+          "blueCardsShown": 1,
+          "matchesCompleted": 1,
+          "yellowCardsShown": 1,
+          "proposalsReceived": 1,
+          "assignmentsAccepted": 1,
+          "assignmentsDeclined": 0,
+          "assignmentsConfirmed": 1,
+          "leagueMatchesCompleted": 1
+        },
+        "displayName": "Arbitro Demo 6",
+        "municipality": "Sabadell",
+        "refereeNumber": 6,
+        "availabilityStatus": "AVAILABLE",
+        "verificationStatus": "unverified"
+      },
+      {
+        "slug": "arbitro-demo-7",
+        "publicBio": "Arbitro ficticio del mundo demostracion de Pachangas IQ.",
+        "publicFee": null,
+        "modalities": [
+          "FOOTBALL_11",
+          "FOOTBALL_7"
+        ],
+        "statistics": {
+          "replacements": 0,
+          "cancellations": 0,
+          "redCardsShown": 0,
+          "blueCardsShown": 0,
+          "matchesCompleted": 1,
+          "yellowCardsShown": 2,
+          "proposalsReceived": 1,
+          "assignmentsAccepted": 1,
+          "assignmentsDeclined": 0,
+          "assignmentsConfirmed": 1,
+          "leagueMatchesCompleted": 1
+        },
+        "displayName": "Arbitro Demo 7",
+        "municipality": "Barcelona",
+        "refereeNumber": 7,
+        "availabilityStatus": "LIMITED",
+        "verificationStatus": "unverified"
+      },
+      {
+        "slug": "arbitro-demo-8",
+        "publicBio": "Arbitro ficticio del mundo demostracion de Pachangas IQ.",
+        "publicFee": null,
+        "modalities": [
+          "FOOTBALL_7",
+          "FUTSAL"
+        ],
+        "statistics": {
+          "replacements": 0,
+          "cancellations": 0,
+          "redCardsShown": 1,
+          "blueCardsShown": 0,
+          "matchesCompleted": 2,
+          "yellowCardsShown": 3,
+          "proposalsReceived": 2,
+          "assignmentsAccepted": 2,
+          "assignmentsDeclined": 0,
+          "assignmentsConfirmed": 2,
+          "leagueMatchesCompleted": 2
+        },
+        "displayName": "Arbitro Demo 8",
+        "municipality": "Barcelona",
+        "refereeNumber": 8,
+        "availabilityStatus": "AVAILABLE",
+        "verificationStatus": "unverified"
+      }
+    ],
+    "assignments": [
+      {
+        "status": "declined",
+        "revision": 2,
+        "reconfirmed": false,
+        "matchOrdinal": 13,
+        "scheduledEnd": "2026-08-13T19:30:00+00:00",
+        "assignmentKey": "21be12fd-ce56-72ee-2f45-3a96fc0499b9",
+        "refereeNumber": 5,
+        "scheduleState": "CURRENT",
+        "scheduledStart": "2026-08-13T18:00:00+00:00",
+        "effectiveScheduledEnd": "2026-08-13T19:30:00+00:00",
+        "replacesAssignmentKey": null,
+        "effectiveScheduledStart": "2026-08-13T18:00:00+00:00",
+        "replacedByAssignmentKey": null
+      },
+      {
+        "status": "replaced",
+        "revision": 5,
+        "reconfirmed": false,
+        "matchOrdinal": 4,
+        "scheduledEnd": "2026-08-04T19:30:00+00:00",
+        "assignmentKey": "c537fa7d-337e-3651-7003-103fc561d92c",
+        "refereeNumber": 4,
+        "scheduleState": "CURRENT",
+        "scheduledStart": "2026-08-04T18:00:00+00:00",
+        "effectiveScheduledEnd": "2026-08-04T19:30:00+00:00",
+        "replacesAssignmentKey": null,
+        "effectiveScheduledStart": "2026-08-04T18:00:00+00:00",
+        "replacedByAssignmentKey": "cb9dd642-44c5-a4df-d088-bf582da639fb"
+      },
+      {
+        "status": "cancelled",
+        "revision": 2,
+        "reconfirmed": false,
+        "matchOrdinal": 14,
+        "scheduledEnd": "2026-08-14T19:30:00+00:00",
+        "assignmentKey": "fda68d6b-0142-a73d-6cc7-d5503c956c31",
+        "refereeNumber": 1,
+        "scheduleState": "CURRENT",
+        "scheduledStart": "2026-08-14T18:00:00+00:00",
+        "effectiveScheduledEnd": "2026-08-01T19:30:00+00:00",
+        "replacesAssignmentKey": null,
+        "effectiveScheduledStart": "2026-08-01T18:00:00+00:00",
+        "replacedByAssignmentKey": null
+      },
+      {
+        "status": "completed",
+        "revision": 4,
+        "reconfirmed": false,
+        "matchOrdinal": 11,
+        "scheduledEnd": "2026-08-11T19:30:00+00:00",
+        "assignmentKey": "f8199356-2e8f-79d0-c00c-500413265365",
+        "refereeNumber": 3,
+        "scheduleState": "CURRENT",
+        "scheduledStart": "2026-08-11T18:00:00+00:00",
+        "effectiveScheduledEnd": "2026-08-11T19:30:00+00:00",
+        "replacesAssignmentKey": null,
+        "effectiveScheduledStart": "2026-08-11T18:00:00+00:00",
+        "replacedByAssignmentKey": null
+      },
+      {
+        "status": "completed",
+        "revision": 6,
+        "reconfirmed": false,
+        "matchOrdinal": 1,
+        "scheduledEnd": "2026-08-01T19:30:00+00:00",
+        "assignmentKey": "b5657623-9140-1357-721f-f655ab51621b",
+        "refereeNumber": 1,
+        "scheduleState": "CURRENT",
+        "scheduledStart": "2026-08-01T18:00:00+00:00",
+        "effectiveScheduledEnd": "2026-08-01T19:30:00+00:00",
+        "replacesAssignmentKey": null,
+        "effectiveScheduledStart": "2026-08-01T18:00:00+00:00",
+        "replacedByAssignmentKey": null
+      },
+      {
+        "status": "completed",
+        "revision": 5,
+        "reconfirmed": false,
+        "matchOrdinal": 2,
+        "scheduledEnd": "2026-08-02T19:30:00+00:00",
+        "assignmentKey": "1382838a-023f-1837-8ff1-d097eeddac8e",
+        "refereeNumber": 2,
+        "scheduleState": "CURRENT",
+        "scheduledStart": "2026-08-02T18:00:00+00:00",
+        "effectiveScheduledEnd": "2026-08-02T19:30:00+00:00",
+        "replacesAssignmentKey": null,
+        "effectiveScheduledStart": "2026-08-02T18:00:00+00:00",
+        "replacedByAssignmentKey": null
+      },
+      {
+        "status": "completed",
+        "revision": 8,
+        "reconfirmed": true,
+        "matchOrdinal": 3,
+        "scheduledEnd": "2026-08-03T19:30:00+00:00",
+        "assignmentKey": "f5cb2ead-6746-b1b1-38e5-5973501346f1",
+        "refereeNumber": 3,
+        "scheduleState": "CURRENT",
+        "scheduledStart": "2026-08-03T18:00:00+00:00",
+        "effectiveScheduledEnd": "2026-09-07T19:30:00+00:00",
+        "replacesAssignmentKey": null,
+        "effectiveScheduledStart": "2026-09-07T18:00:00+00:00",
+        "replacedByAssignmentKey": null
+      },
+      {
+        "status": "completed",
+        "revision": 6,
+        "reconfirmed": false,
+        "matchOrdinal": 4,
+        "scheduledEnd": "2026-08-04T19:30:00+00:00",
+        "assignmentKey": "cb9dd642-44c5-a4df-d088-bf582da639fb",
+        "refereeNumber": 8,
+        "scheduleState": "CURRENT",
+        "scheduledStart": "2026-08-04T18:00:00+00:00",
+        "effectiveScheduledEnd": "2026-08-04T19:30:00+00:00",
+        "replacesAssignmentKey": "c537fa7d-337e-3651-7003-103fc561d92c",
+        "effectiveScheduledStart": "2026-08-04T18:00:00+00:00",
+        "replacedByAssignmentKey": null
+      },
+      {
+        "status": "completed",
+        "revision": 5,
+        "reconfirmed": false,
+        "matchOrdinal": 5,
+        "scheduledEnd": "2026-08-05T19:30:00+00:00",
+        "assignmentKey": "99674447-813e-53da-f429-90090f8e8725",
+        "refereeNumber": 5,
+        "scheduleState": "CURRENT",
+        "scheduledStart": "2026-08-05T18:00:00+00:00",
+        "effectiveScheduledEnd": "2026-08-05T19:30:00+00:00",
+        "replacesAssignmentKey": null,
+        "effectiveScheduledStart": "2026-08-05T18:00:00+00:00",
+        "replacedByAssignmentKey": null
+      },
+      {
+        "status": "completed",
+        "revision": 6,
+        "reconfirmed": false,
+        "matchOrdinal": 6,
+        "scheduledEnd": "2026-08-06T19:30:00+00:00",
+        "assignmentKey": "82bde96a-e5b1-0267-eedf-88c726532fa5",
+        "refereeNumber": 6,
+        "scheduleState": "CURRENT",
+        "scheduledStart": "2026-08-06T18:00:00+00:00",
+        "effectiveScheduledEnd": "2026-08-06T19:30:00+00:00",
+        "replacesAssignmentKey": null,
+        "effectiveScheduledStart": "2026-08-06T18:00:00+00:00",
+        "replacedByAssignmentKey": null
+      },
+      {
+        "status": "completed",
+        "revision": 8,
+        "reconfirmed": true,
+        "matchOrdinal": 7,
+        "scheduledEnd": "2026-08-07T19:30:00+00:00",
+        "assignmentKey": "801d02ff-daa4-9dc0-607c-256bc63b9c73",
+        "refereeNumber": 7,
+        "scheduleState": "CURRENT",
+        "scheduledStart": "2026-08-07T18:00:00+00:00",
+        "effectiveScheduledEnd": "2026-08-07T19:30:00+00:00",
+        "replacesAssignmentKey": null,
+        "effectiveScheduledStart": "2026-08-07T18:00:00+00:00",
+        "replacedByAssignmentKey": null
+      },
+      {
+        "status": "completed",
+        "revision": 6,
+        "reconfirmed": false,
+        "matchOrdinal": 8,
+        "scheduledEnd": "2026-08-08T19:30:00+00:00",
+        "assignmentKey": "a2286a83-2375-474f-c4a6-712301b8a8f0",
+        "refereeNumber": 8,
+        "scheduleState": "CURRENT",
+        "scheduledStart": "2026-08-08T18:00:00+00:00",
+        "effectiveScheduledEnd": "2026-08-08T19:30:00+00:00",
+        "replacesAssignmentKey": null,
+        "effectiveScheduledStart": "2026-08-08T18:00:00+00:00",
+        "replacedByAssignmentKey": null
+      },
+      {
+        "status": "completed",
+        "revision": 5,
+        "reconfirmed": false,
+        "matchOrdinal": 9,
+        "scheduledEnd": "2026-08-09T19:30:00+00:00",
+        "assignmentKey": "2a7db71a-12ea-c266-8398-5683d33f44fa",
+        "refereeNumber": 1,
+        "scheduleState": "CURRENT",
+        "scheduledStart": "2026-08-09T18:00:00+00:00",
+        "effectiveScheduledEnd": "2026-08-09T19:30:00+00:00",
+        "replacesAssignmentKey": null,
+        "effectiveScheduledStart": "2026-08-09T18:00:00+00:00",
+        "replacedByAssignmentKey": null
+      },
+      {
+        "status": "completed",
+        "revision": 5,
+        "reconfirmed": false,
+        "matchOrdinal": 10,
+        "scheduledEnd": "2026-08-10T19:30:00+00:00",
+        "assignmentKey": "92c29f1a-b45f-323b-81f4-57e0846de2ee",
+        "refereeNumber": 2,
+        "scheduleState": "CURRENT",
+        "scheduledStart": "2026-08-10T18:00:00+00:00",
+        "effectiveScheduledEnd": "2026-08-10T19:30:00+00:00",
+        "replacesAssignmentKey": null,
+        "effectiveScheduledStart": "2026-08-10T18:00:00+00:00",
+        "replacedByAssignmentKey": null
+      },
+      {
+        "status": "completed",
+        "revision": 5,
+        "reconfirmed": false,
+        "matchOrdinal": 12,
+        "scheduledEnd": "2026-08-12T19:30:00+00:00",
+        "assignmentKey": "2509f1c6-2f7b-b650-512f-0fc8b8637c93",
+        "refereeNumber": 4,
+        "scheduleState": "CURRENT",
+        "scheduledStart": "2026-08-12T18:00:00+00:00",
+        "effectiveScheduledEnd": "2026-08-12T19:30:00+00:00",
+        "replacesAssignmentKey": null,
+        "effectiveScheduledStart": "2026-08-12T18:00:00+00:00",
+        "replacedByAssignmentKey": null
+      },
+      {
+        "status": "completed",
+        "revision": 6,
+        "reconfirmed": false,
+        "matchOrdinal": 14,
+        "scheduledEnd": "2026-08-14T19:30:00+00:00",
+        "assignmentKey": "3316233a-e1db-764f-a45d-41693cdfa478",
+        "refereeNumber": 5,
+        "scheduleState": "CURRENT",
+        "scheduledStart": "2026-08-14T18:00:00+00:00",
+        "effectiveScheduledEnd": "2026-08-14T19:30:00+00:00",
+        "replacesAssignmentKey": null,
+        "effectiveScheduledStart": "2026-08-14T18:00:00+00:00",
+        "replacedByAssignmentKey": null
+      }
+    ],
+    "r5LinkedEvents": {
+      "linked": 18,
+      "onRefereedMatches": 18,
+      "unlinkedEventKeys": []
+    },
+    "overlapRejected": true,
+    "noActiveOverlaps": true,
+    "statisticsConverged": true,
+    "oneMainRefereePerMatch": true
+  },
   "database": "temporary-local-postgresql",
-  "generatedAt": "2026-08-25T10:00:00.000Z",
-  "migrationCount": 147,
+  "generatedAt": "2026-08-26T10:00:00.000Z",
+  "migrationCount": 152,
   "remoteWrites": 0,
   "rpcFamilies": [
     "R1",
+    "R3",
     "R4A",
     "R4B",
     "R4C",
     "R4D",
     "R5"
   ],
-  "version": 2,
-  "authorityHash": "f833b84f08aa859b14e31a4c11b676b996f8c80ae0813727467f2ae23d6849f9"
+  "version": 3,
+  "authorityHash": "a11f5226f9f56ae3b60d0fc418128e3b9c3ab61393f7cd74a2261306174504be"
 }

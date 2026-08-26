@@ -6,6 +6,7 @@ import { CompetitionDisciplineClient } from "../_components/competition-discipli
 import { LeagueMatchOperationsClient } from "../_components/league-match-operations-client";
 import { LeagueSchedulingClient } from "../_components/league-scheduling-client";
 import { PlayerCosmeticCard } from "../_components/player-cosmetic-card";
+import { RefereeAssignmentsClient } from "../_components/referee-assignments-client";
 import { RefereeProfileCard } from "../_components/referee-profile-card";
 import { TeamShieldView } from "../_components/team-shield-view";
 import { PublicClubProfile } from "../clubes/[slug]/public-club-profile";
@@ -231,6 +232,15 @@ function DemoHeader({
   perspectives: DemoWorldPerspective[];
   setPerspective: (perspectiveId: DemoWorldPerspective["id"]) => void;
 }) {
+  const domainNavRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    const navigation = domainNavRef.current;
+    const activeControl = navigation?.querySelector<HTMLElement>('[aria-current="page"]');
+    if (!navigation || !activeControl || navigation.scrollWidth <= navigation.clientWidth + 2) return;
+    activeControl.scrollIntoView({ behavior: "auto", block: "nearest", inline: "center" });
+  }, [activeTab]);
+
   return (
     <>
       <div className={styles.demoBanner} data-tour-target="demo-mode-banner">
@@ -259,7 +269,7 @@ function DemoHeader({
           </select>
         </label>
       </header>
-      <nav className={styles.domainNav} aria-label="Liga, Clubs y árbitros del Mundo Demo">
+      <nav className={styles.domainNav} aria-label="Liga, Clubs y árbitros del Mundo Demo" ref={domainNavRef}>
         {leagueTabs.map((tab) => (
           <button aria-current={activeTab === tab.id ? "page" : undefined} key={tab.id} type="button" onClick={() => onTab(tab.id)}>
             {tab.label}
@@ -859,19 +869,21 @@ function demoRefereeProfile(referee: DemoWorldV2Referee, index: number): Referee
     experienceSinceYear: String(2012 + (index % 8)),
     marketplaceStatus: referee.marketplaceStatus,
     modalities: referee.modalities.map((modality) => ({ modality })),
+    publicFee: referee.publicFee,
     slug: referee.slug,
-    statistics: { matchesCompleted: 38 + index * 9 },
-    verificationStatus: index < 6 ? "verified" : "unverified",
+    statistics: referee.statistics,
+    verificationStatus: referee.verificationStatus,
   };
 }
 
-function DemoRefereesView({ referees }: { referees: DemoWorldV2Referee[] }) {
+function DemoRefereesView({ assignments, referees }: { assignments: RefereeJson; referees: DemoWorldV2Referee[] }) {
   return <div className={styles.demoProductView} data-demo-domain="referees">
     <section className={styles.demoDomainHeading}>
-      <div><span className={styles.eyebrow}>Mercado · perfiles públicos</span><h1>Árbitros disponibles</h1><p>Perfiles ficticios conectados a Clubs. Las asignaciones a partidos estarán disponibles próximamente.</p></div>
+      <div><span className={styles.eyebrow}>Mercado · perfiles públicos</span><h1>Árbitros disponibles</h1><p>Perfiles ficticios conectados a Clubs y a la Liga mediante asignaciones canónicas.</p></div>
       <span>{referees.length} perfiles</span>
     </section>
     <div className={styles.refereeGrid}>{referees.map((referee, index) => <RefereeProfileCard compact key={referee.id} profile={demoRefereeProfile(referee, index)} />)}</div>
+    <RefereeAssignmentsClient embedded previewData={assignments} surface="my" />
   </div>;
 }
 
@@ -987,6 +999,9 @@ export function DemoWorldApp({ manifest }: { manifest: DemoWorldV2Manifest }) {
   const selectedLeagueMatchDisciplinePreview = selectedLeagueMatchId
     ? snapshot?.competitions.matchDisciplinePreviews[selectedLeagueMatchId] ?? null
     : null;
+  const selectedLeagueMatchRefereePreview = selectedLeagueMatchId
+    ? snapshot?.competitions.refereeAssignmentPreviews[selectedLeagueMatchId] ?? null
+    : null;
   const notifications = world.activity.notifications;
 
   function updateSession(next: (current: DemoWorldSessionState) => DemoWorldSessionState) {
@@ -1073,7 +1088,7 @@ export function DemoWorldApp({ manifest }: { manifest: DemoWorldV2Manifest }) {
       <div className={styles.content}>
         {activeTab === "inicio" ? <WorldHome currentPlayer={currentPlayer} currentTeam={currentTeam} notifications={notifications} onMatch={openMatch} onPlayer={setSelectedPlayerId} onTab={navigate} perspective={perspective} snapshot={world} teamMatches={teamMatches} /> : null}
         {activeTab !== "inicio" && !snapshot ? <div className={styles.secondaryLoading} role="status"><span className={styles.loadingMark}>IQ</span><strong>{loadingFullWorld ? "Cargando esta sección" : "Preparando datos"}</strong><p>Solo descargamos el dominio que acabas de abrir.</p></div> : null}
-        {snapshot && activeTab === "partido" && selectedLeagueMatchPreview ? <div className={styles.demoProductView} data-demo-domain="league-match"><LeagueMatchOperationsClient disciplinePreviewData={selectedLeagueMatchDisciplinePreview} embedded previewData={selectedLeagueMatchPreview} surface="match" /></div> : null}
+        {snapshot && activeTab === "partido" && selectedLeagueMatchPreview ? <div className={styles.demoProductView} data-demo-domain="league-match"><LeagueMatchOperationsClient disciplinePreviewData={selectedLeagueMatchDisciplinePreview} embedded previewData={selectedLeagueMatchPreview} refereeAssignmentPreviewData={selectedLeagueMatchRefereePreview} surface="match" /></div> : null}
         {snapshot && activeTab === "partido" && !selectedLeagueMatchPreview ? <MatchView currentPlayer={currentPlayer} currentTeam={currentTeam} key={perspective.id} match={selectedMatch} onLocalAttendance={(status) => { if (!selectedMatch) return; updateSession((current) => ({ ...current, attendanceByMatch: { ...current.attendanceByMatch, [selectedMatch.id]: status } })); setMessage(`Asistencia ${status === "voy" ? "confirmada" : status === "duda" ? "en duda" : "cancelada"} solo en esta sesión demo.`); }} onMatch={openMatch} onPlayer={setSelectedPlayerId} perspective={perspective} session={session} setMessage={setMessage} snapshot={snapshot} teamMatches={teamMatches} /> : null}
         {snapshot && activeTab === "mercado" ? <MarketView currentPlayer={currentPlayer} onMatch={openMatch} onPlayer={setSelectedPlayerId} onTeam={openTeam} perspective={perspective} setMessage={setMessage} snapshot={snapshot} /> : null}
         {snapshot && activeTab === "equipo" ? <TeamView currentTeam={currentTeam} onPlayer={setSelectedPlayerId} onTeam={setSelectedTeamId} selectedTeam={selectedTeam} snapshot={snapshot} /> : null}
@@ -1086,7 +1101,7 @@ export function DemoWorldApp({ manifest }: { manifest: DemoWorldV2Manifest }) {
         }} previewData={snapshot.competitions.schedulePreview} surface="public" /></div> : null}
         {snapshot && activeTab === "disciplina" ? <div className={styles.demoProductView} data-demo-domain="discipline"><CompetitionDisciplineClient competitionId={snapshot.competitions.competition.id} embedded previewData={snapshot.competitions.disciplinePreview} surface="public" /></div> : null}
         {snapshot && activeTab === "club" && selectedClub ? <DemoClubView club={selectedClub} clubs={snapshot.clubsReferees.clubs} onClub={setSelectedClubId} /> : null}
-        {snapshot && activeTab === "arbitros" ? <DemoRefereesView referees={snapshot.clubsReferees.referees} /> : null}
+        {snapshot && activeTab === "arbitros" ? <DemoRefereesView assignments={snapshot.clubsReferees.refereeAssignmentPreview} referees={snapshot.clubsReferees.referees} /> : null}
       </div>
       <MobileAppNav active={activeTab as MobileAppTab} onNavigate={(tab) => navigate(tab as DemoWorldV2PrimaryTab)} />
       {selectedPlayer ? <PlayerModal onClose={() => setSelectedPlayerId(null)} player={selectedPlayer} /> : null}

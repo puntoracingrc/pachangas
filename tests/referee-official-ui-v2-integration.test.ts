@@ -68,8 +68,10 @@ test("private and public referee surfaces share the shell but retain the dedicat
   assert.match(privateProfile, /data-referee-section="statistics"/);
   assert.match(publicProfile, /Estadísticas disciplinarias/);
   assert.match(publicProfile, /NOT_AVAILABLE/);
+  assert.match(publicProfile, /CANONICAL_R5/);
+  for (const card of ["Amarillas", "Rojas", "Azules"]) assert.match(publicProfile, new RegExp(card));
   assert.match(publicProfile, /aria-label="Detalle del perfil arbitral"[\s\S]*role="region"[\s\S]*tabIndex=\{0\}/);
-  assert.doesNotMatch(publicProfile, /(?:GRL|Rating|estrellas|amarillas|rojas|azules)/i);
+  assert.doesNotMatch(publicProfile, /(?:GRL|Rating|estrellas)/i);
 });
 
 test("referee controls inherit the Official UI theme instead of forcing dark fields", async () => {
@@ -80,16 +82,22 @@ test("referee controls inherit the Official UI theme instead of forcing dark fie
   assert.match(css, /var\(--official-muted/);
 });
 
-test("assignment presentation preserves every R3 command and translates schedule conflicts", async () => {
-  const client = await source("app/_components/referee-platform-client.tsx");
+test("assignment presentation preserves the R3/Wave 4 lifecycle and translates schedule conflicts", async () => {
+  const [legacyClient, assignmentClient, assignmentContract, market, api] = await Promise.all([
+    source("app/_components/referee-platform-client.tsx"),
+    source("app/_components/referee-assignments-client.tsx"),
+    source("app/referee-assignment-contract.ts"),
+    source("app/mercado/referee-marketplace-panel.tsx"),
+    source("app/api/referee-assignments/_shared.ts"),
+  ]);
+  const lifecycle = legacyClient + assignmentClient + assignmentContract + market + api;
   for (const action of ["assignment.propose", "assignment.accept", "assignment.decline", "assignment.cancel", "assignment.replace", "assignment.reconcile"]) {
-    assert.match(client, new RegExp(action.replace(".", "\\.")));
+    assert.match(lifecycle, new RegExp(action.replace(".", "\\.")));
   }
-  assert.match(client, /MATCH_SCHEDULE_CHANGED/);
-  assert.match(client, /El horario del partido ha cambiado\. Revisa la nueva fecha antes de confirmar\./);
-  assert.match(client, /REFEREE_ASSIGNMENT_TIME_CONFLICT/);
-  assert.match(client, /partido en conflicto/i);
-  assert.doesNotMatch(client, /conflict[\s\S]{0,120}(?:rating|valoración)/i);
+  assert.match(assignmentClient, /STALE_REVISION\|STALE_SCHEDULE\|MATCH_SCHEDULE_CHANGED/);
+  assert.match(assignmentClient, /REFEREE_ASSIGNMENT_TIME_CONFLICT|TIME_CONFLICT/);
+  assert.match(assignmentClient, /partido que se solapa/i);
+  assert.doesNotMatch(lifecycle, /conflict[\s\S]{0,120}(?:rating|valoración)/i);
 });
 
 test("referee schedule labels hydrate from the canonical timezone", () => {
@@ -111,16 +119,20 @@ test("rotation changes layout without remounting or duplicating the R3 functiona
 });
 
 test("the referee lab is noindex and offers isolated visual-review fixtures", async () => {
-  const [layout, page, fixtures, css] = await Promise.all([
+  const [layout, page, fixtures, css, privateProfile] = await Promise.all([
     source("app/laboratorio-referee-platform/layout.tsx"),
     source("app/laboratorio-referee-platform/page.tsx"),
     source("app/laboratorio-referee-platform/referee-platform-fixtures.ts"),
     source("app/laboratorio-referee-platform/referee-platform-lab.module.css"),
+    source("app/_components/referee-platform-client.tsx"),
   ]);
   assert.match(layout, /robots: \{ follow: false, index: false \}/);
   for (const surface of ["market", "private", "public", "proposed", "confirmed", "admin"]) assert.match(page, new RegExp(`"${surface}"`));
   assert.match(page, /previewItems={refereeMarketFixtures}/);
   assert.match(page, /previewData={refereePrivateFixture/);
+  assert.match(page, /focusSection="assignments"/);
+  assert.match(privateProfile, /const section = focusSection \?\?/);
+  assert.match(privateProfile, /"assignments"/);
   assert.match(page, /data-shell-variant="PLATFORM_ADMIN"|PlatformShell/);
   assert.match(css, /adminControls p \{ color: var\(--admin-muted, #9fb0aa\)/);
   assert.doesNotMatch(fixtures, /supabase|\.rpc\(|fetch\(|localStorage|indexedDB/);

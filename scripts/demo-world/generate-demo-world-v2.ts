@@ -26,7 +26,7 @@ import {
 import { generateDemoWorld } from "./generate-demo-world";
 
 export const DEMO_WORLD_V2_NOW = "2027-03-18T18:00:00.000Z";
-const DEMO_WORLD_V2_GENERATED_AT = "2026-08-25T10:00:00.000Z";
+const DEMO_WORLD_V2_GENERATED_AT = "2026-08-26T10:00:00.000Z";
 const LEAGUE_TEAM_IDS = [
   "demo_team_001",
   "demo_team_002",
@@ -54,7 +54,7 @@ function lineageLabel(type: DemoWorldV2AuthorityProofMatch["lineage"][number], m
   switch (type) {
     case "postponement": return "Aplazamiento solicitado por el equipo local y aceptado por el rival";
     case "fixture_change": return match.exceptionType === "venue_changed"
-      ? "Cambio de sede confirmado: Camp Municipal Besòs"
+      ? "Cambio de sede confirmado: Camp Municipal Besòs · Barcelona"
       : "Nueva fecha confirmada por la organización";
     case "suspension": return "Partido suspendido en el minuto 38 con marcador parcial";
     case "resumption": return "Reanudación sobre el mismo CanonicalMatch";
@@ -87,6 +87,96 @@ function rosterMember(entryId: string, player: DemoWorldPlayer, index: number) {
   };
 }
 
+function buildRefereeAssignmentPreviews(
+  authorityProof: DemoWorldV2AuthorityProof,
+  matches: DemoWorldV2LeagueMatch[],
+  teamById: Map<string, DemoWorldTeam>,
+) {
+  const assignmentIdByKey = new Map(authorityProof.refereeAssignments.assignments.map((assignment, index) => [
+    assignment.assignmentKey,
+    id("referee_assignment", index + 1),
+  ]));
+  const profiles = new Map(authorityProof.refereeAssignments.profiles.map((profile) => [profile.refereeNumber, profile]));
+  const items = authorityProof.refereeAssignments.assignments.map((assignment) => {
+    const match = matches[assignment.matchOrdinal - 1]!;
+    const referee = profiles.get(assignment.refereeNumber)!;
+    return {
+      assignmentRole: "MAIN_REFEREE",
+      canonicalMatchId: match.canonicalMatchId,
+      competitionId: id("competition"),
+      competitionMatchContextId: match.contextId,
+      competitionName: "LIGA BARRIOS IQ 2026/27",
+      effectiveScheduledEnd: assignment.effectiveScheduledEnd,
+      effectiveScheduledStart: assignment.effectiveScheduledStart,
+      effectiveTimezone: "Europe/Madrid",
+      id: assignmentIdByKey.get(assignment.assignmentKey)!,
+      matchTitle: `${teamById.get(match.homeTeamId)!.name} · ${teamById.get(match.awayTeamId)!.name}`,
+      modality: "FOOTBALL_7",
+      reconfirmed: assignment.reconfirmed,
+      referee: {
+        displayName: referee.displayName,
+        id: `demo_referee_${String(referee.refereeNumber).padStart(3, "0")}`,
+        slug: referee.slug,
+      },
+      refereeProfileId: `demo_referee_${String(referee.refereeNumber).padStart(3, "0")}`,
+      replacedByAssignmentId: assignment.replacedByAssignmentKey
+        ? assignmentIdByKey.get(assignment.replacedByAssignmentKey) ?? null
+        : null,
+      replacesAssignmentId: assignment.replacesAssignmentKey
+        ? assignmentIdByKey.get(assignment.replacesAssignmentKey) ?? null
+        : null,
+      requesterCompetitionId: id("competition"),
+      requesterKind: "COMPETITION",
+      requesterName: "Organizacion Liga Barrios IQ",
+      revision: assignment.revision,
+      scheduleState: assignment.scheduleState,
+      scheduledEnd: assignment.scheduledEnd,
+      scheduledStart: assignment.scheduledStart,
+      sourceId: match.contextId,
+      sourceKind: "competition_generated",
+      status: assignment.status,
+      timezone: "Europe/Madrid",
+      venueLabel: match.venueLabel,
+    };
+  });
+  const summary = {
+    accepted: items.filter(({ status }) => status === "accepted").length,
+    cancelled: items.filter(({ status }) => status === "cancelled").length,
+    completed: items.filter(({ status }) => status === "completed").length,
+    confirmed: items.filter(({ status }) => status === "confirmed").length,
+    declined: items.filter(({ status }) => status === "declined").length,
+    pending: items.filter(({ status }) => status === "proposed").length,
+    reconfirmationRequired: items.filter(({ scheduleState }) => scheduleState === "RECONFIRMATION_REQUIRED").length,
+    replaced: items.filter(({ status }) => status === "replaced").length,
+  };
+  const deskMatches = matches.map((match) => ({
+    assignments: items.filter((assignment) => assignment.canonicalMatchId === match.canonicalMatchId),
+    canonicalMatchId: match.canonicalMatchId,
+    competitionMatchContextId: match.contextId,
+    effectiveScheduledStart: match.scheduledStart,
+    effectiveTimezone: "Europe/Madrid",
+    venueLabel: match.venueLabel,
+  }));
+  const base = {
+    capabilities: { manage: false, read: true },
+    flags: { assignmentPrivateBetaEnabled: true, assignmentsEnabled: true },
+    items,
+    matches: deskMatches,
+    revision: authorityProof.operationReceipts.refereeAssignments,
+    summary,
+  };
+  return {
+    desk: base,
+    perMatch: Object.fromEntries(matches.map((match) => [match.id, {
+      capabilities: { manage: false, read: true },
+      flags: base.flags,
+      items: items.filter((assignment) => assignment.canonicalMatchId === match.canonicalMatchId),
+      revision: base.revision,
+      summary,
+    }])),
+  };
+}
+
 function buildDisciplinePreviews(
   authorityProof: DemoWorldV2AuthorityProof,
   entries: DemoWorldV2LeagueEntry[],
@@ -95,6 +185,10 @@ function buildDisciplinePreviews(
   rosterByEntry: Map<string, string[]>,
 ) {
   const discipline = authorityProof.discipline;
+  const refereeAssignmentIdByKey = new Map(authorityProof.refereeAssignments.assignments.map((assignment, index) => [
+    assignment.assignmentKey,
+    id("referee_assignment", index + 1),
+  ]));
   const playerFor = (reference: DemoWorldV2AuthorityProofPlayerRef) => {
     const entry = entries[reference.entryNumber - 1]!;
     const roster = rosterByEntry.get(entry.id) ?? [];
@@ -151,6 +245,12 @@ function buildDisciplinePreviews(
       playerProfileId: player.id,
       publicReasonCategory: event.publicReasonCategory,
       publicSummary: event.publicSummary,
+      refereeAssignmentId: event.refereeAssignmentKey
+        ? refereeAssignmentIdByKey.get(event.refereeAssignmentKey) ?? null
+        : null,
+      reportingRefereeProfileId: event.reportingRefereeNumber
+        ? `demo_referee_${String(event.reportingRefereeNumber).padStart(3, "0")}`
+        : null,
       revision: event.revisionVersion,
       revisionVersion: event.revisionVersion,
       sanction: sanction ? {
@@ -505,6 +605,7 @@ function buildCompetition(
     playerById,
     rosterByEntry,
   );
+  const refereeAssignments = buildRefereeAssignmentPreviews(authorityProof, matches, teamById);
   return {
     competition: {
       category: { id: id("category"), name: "Senior", sportFormat: "FOOTBALL_7", status: "active" },
@@ -514,7 +615,7 @@ function buildCompetition(
       id: id("competition"),
       name: "LIGA BARRIOS IQ 2026/27",
       privateBeta: true,
-      refereeAssignmentsEnabled: false,
+      refereeAssignmentsEnabled: true,
       ruleRevision: { id: id("rules"), status: "frozen", version: 1 },
       slug: "liga-barrios-iq-2026-27",
       stage: { id: id("stage"), name: "Liga regular", status: "completed", type: "LEAGUE_STAGE" },
@@ -532,10 +633,12 @@ function buildCompetition(
       database: "temporary-local-postgresql",
       migrations: authorityProof.migrationCount,
       oracle: "independent-basic-standings-v1",
-      rpcFamilies: ["R1", "R4A", "R4B", "R4C", "R4D", "R5"],
+      rpcFamilies: ["R1", "R3", "R4A", "R4B", "R4C", "R4D", "R5"],
       source: "simulation-world",
       verified: true,
     },
+    refereeAssignmentDeskPreview: refereeAssignments.desk,
+    refereeAssignmentPreviews: refereeAssignments.perMatch,
     rosters,
     rounds,
     schedulePreview,
@@ -555,11 +658,11 @@ function buildCompetition(
   };
 }
 
-function buildClubsReferees(teams: DemoWorldTeam[]): DemoWorldV2ClubsRefereesChunk {
-  const refereeNames = [
-    "Álex Serra", "Nora Vidal", "Dani Pons", "Marta Rius",
-    "Hugo Ferrer", "Laia Bosch", "Nil Costa", "Carla Puig",
-  ];
+function buildClubsReferees(
+  teams: DemoWorldTeam[],
+  authorityProof: DemoWorldV2AuthorityProof,
+  refereeAssignmentPreview: DemoWorldV2CompetitionChunk["refereeAssignmentDeskPreview"],
+): DemoWorldV2ClubsRefereesChunk {
   const clubs = [
     {
       clubType: "FOOTBALL_CLUB" as const,
@@ -610,20 +713,26 @@ function buildClubsReferees(teams: DemoWorldTeam[]): DemoWorldV2ClubsRefereesChu
       verified: club.verified,
     },
   }));
-  const referees = refereeNames.map((displayName, index) => ({
-    availabilityStatus: index % 3 === 2 ? "LIMITED" as const : "AVAILABLE" as const,
-    clubIds: clubs.filter(({ refereeIds }) => refereeIds.includes(`demo_referee_${String(index + 1).padStart(3, "0")}`)).map(({ id: clubId }) => clubId),
-    displayName,
-    id: `demo_referee_${String(index + 1).padStart(3, "0")}`,
+  const referees = authorityProof.refereeAssignments.profiles.map((profile) => {
+    const refereeId = `demo_referee_${String(profile.refereeNumber).padStart(3, "0")}`;
+    return {
+    availabilityStatus: profile.availabilityStatus,
+    clubIds: clubs.filter(({ refereeIds }) => refereeIds.includes(refereeId)).map(({ id: clubId }) => clubId),
+    displayName: profile.displayName,
+    id: refereeId,
     marketplaceStatus: "listed" as const,
-    modalities: index % 2 === 0 ? ["FOOTBALL_7" as const, "FUTSAL" as const] : ["FOOTBALL_11" as const, "FOOTBALL_7" as const],
-    municipality: index < 6 ? "Barcelona" : "Sant Andreu",
-    publicBio: index % 2 === 0 ? "Arbitraje formativo y competiciones de barrio." : "Experiencia en ligas amateur y fútbol base.",
-    slug: displayName.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, ""),
-  }));
+    modalities: profile.modalities,
+    municipality: profile.municipality,
+    publicBio: profile.publicBio,
+    publicFee: profile.publicFee,
+    slug: profile.slug,
+    statistics: profile.statistics,
+    verificationStatus: profile.verificationStatus,
+  }});
   return {
     clubs,
-    refereeAssignmentsEnabled: false,
+    refereeAssignmentPreview,
+    refereeAssignmentsEnabled: true,
     referees,
     relationships: [
       ...clubs.flatMap((club) => club.teamIds.map((teamId, index) => ({ clubId: club.id, id: `${club.id}_team_${index + 1}`, status: "active" as const, teamId, type: "club_team" as const }))),
@@ -637,7 +746,11 @@ export function generateDemoWorldV2(
 ): DemoWorldV2Snapshot {
   const v1 = generateDemoWorld();
   const competitions = buildCompetition(v1.core.teams, v1.players.players, authorityProof);
-  const clubsReferees = buildClubsReferees(v1.core.teams);
+  const clubsReferees = buildClubsReferees(
+    v1.core.teams,
+    authorityProof,
+    competitions.refereeAssignmentDeskPreview,
+  );
   const activity = structuredClone(v1.activity);
   const core = structuredClone(v1.core);
   const matches = structuredClone(v1.matches);

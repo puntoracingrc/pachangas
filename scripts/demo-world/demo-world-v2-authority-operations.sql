@@ -139,6 +139,8 @@ select
   'eligibility.demo_world_v2'
 from generate_series(1, 6) value;
 
+\ir demo-world-v2-referee-assignment-operations.sql
+
 create temporary table demo_v2_results(
   ordinal integer primary key,
   score_home integer not null,
@@ -244,18 +246,20 @@ begin
           'publicSummary', 'Nueva fecha confirmada por la organización.'
         )
       );
+      perform pg_temp.demo_v22_referee_reconfirm(match_row.id);
     elsif match_row.ordinal = 7 then
       perform pg_temp.demo_v2_exception_command(
         match_row.id, 'e4010000-0000-4000-8000-000000000002',
         'venue-change', 'fixture.change_venue',
         jsonb_build_object(
-          'venueLabel', 'Camp Municipal Besòs',
+          'venueLabel', 'Camp Municipal Besòs · Barcelona',
           'venueStatus', 'LABEL',
           'reasonCode', 'PITCH_UNAVAILABLE',
           'reasonText', 'La instalación original no está disponible.',
           'publicSummary', 'Cambio de campo confirmado.'
         )
       );
+      perform pg_temp.demo_v22_referee_reconfirm(match_row.id);
     end if;
 
     if match_row.ordinal = 11 then
@@ -412,6 +416,7 @@ begin
   end loop;
 
   perform pg_temp.demo_v2_discipline_finalize();
+  perform pg_temp.demo_v22_reconcile_assignments();
 
   if (select count(*) from public.pachanga_competition_match_contexts
       where competition_id = 'e4040000-0000-4000-8000-000000000001' and status = 'official') <> 15 then

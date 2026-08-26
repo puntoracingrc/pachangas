@@ -39,6 +39,12 @@ export function PublicRefereeProfile({ initialProfile = null, previewProfile = n
   const areas = refereeArray(profile.areas);
   const modalities = refereeArray(profile.modalities);
   const statistics = refereeRecord(profile.statistics);
+  const publicFee = refereeRecord(profile.publicFee);
+  const feeMode = refereeText(publicFee.feeMode);
+  const feeAmount = refereeNumber(publicFee.fromCents)
+    ? new Intl.NumberFormat("es-ES", { currency: refereeText(publicFee.currency) || "EUR", style: "currency" }).format(refereeNumber(publicFee.fromCents) / 100)
+    : "";
+  const feeLabel = feeMode === "FREE" ? "Sin tarifa" : feeMode === "VOLUNTEER" ? "Voluntario" : feeMode === "FIXED" ? feeAmount || "Tarifa fija" : feeAmount ? `Desde ${feeAmount}` : "Negociable";
   return (
     <OfficialProductShellV2 active="mercado" context={shellContext}>
     <main className={styles.page} data-mobile-tab="mercado">
@@ -48,7 +54,8 @@ export function PublicRefereeProfile({ initialProfile = null, previewProfile = n
         <div aria-label="Detalle del perfil arbitral" className={styles.details} role="region" tabIndex={0}>
           <section><SectionHeader eyebrow="Perfil arbitral" title={refereeText(profile.displayName)} /><p>{refereeText(profile.experienceSummary) || refereeText(profile.bio) || "Sin presentación pública."}</p><div className={styles.metrics}><MetricTile label="Partidos concluidos" value={refereeNumber(statistics.matchesCompleted)} /><MetricTile label="Modalidades" value={modalities.length} /><MetricTile label="Zonas" value={areas.length} /></div></section>
           <section><SectionHeader eyebrow="Cobertura" title="Modalidades y zonas" /><div className={styles.rows}>{modalities.map((item) => <span key={refereeText(item.modality)}>{refereeModalityLabel(item.modality)}</span>)}{areas.map((item, index) => <span key={`${refereeText(item.generalArea)}:${index}`}>{refereeText(item.generalArea) || refereeText(item.municipality)}</span>)}</div></section>
-          <section className={styles.discipline}><SectionHeader eyebrow="R5 pendiente" title="Estadísticas disciplinarias" /><StatusChip tone="neutral">NOT_AVAILABLE</StatusChip><p>Disponibles cuando se active el motor de disciplina.</p></section>
+          {feeMode ? <section><SectionHeader eyebrow="Condición orientativa" title={feeLabel} /><p>El acuerdo concreto y cualquier pago se realizan fuera de Pachangas IQ.</p></section> : null}
+          <section className={styles.discipline}><SectionHeader eyebrow="Evidencia canónica" title="Estadísticas disciplinarias" />{refereeText(statistics.disciplineStatsStatus) === "CANONICAL_R5" ? <div className={styles.metrics}><MetricTile label="Amarillas" value={refereeNumber(statistics.yellowCardsShown)} /><MetricTile label="Rojas" value={refereeNumber(statistics.redCardsShown)} /><MetricTile label="Azules" value={refereeNumber(statistics.blueCardsShown)} /></div> : <><StatusChip tone="neutral">NOT_AVAILABLE</StatusChip><p>Aún no hay estadísticas disciplinarias canónicas.</p></>}</section>
         </div>
         <aside className={styles.availability}>
           <section><SectionHeader eyebrow="Agenda" title="Disponibilidad publicada" />{windows.length ? <div className={styles.rows}>{windows.map((item, index) => <span key={index}>Día {refereeText(item.weekday)} · {refereeText(item.startLocalTime)}-{refereeText(item.endLocalTime)}</span>)}</div> : <ProductFeedback tone="info">Solo se ha publicado el estado general de disponibilidad.</ProductFeedback>}</section>

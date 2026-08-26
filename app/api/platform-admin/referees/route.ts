@@ -11,6 +11,7 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 const flagsAggregateId = "00000000-0000-0000-0000-00000000a3f3";
+const assignmentFlagsAggregateId = "00000000-0000-0000-0000-00000000a4f4";
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 function record(value: unknown) { return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {}; }
@@ -24,6 +25,14 @@ function payloadFor(action: string, input: Record<string, unknown>) {
       if (typeof input[key] === "boolean") payload[key] = input[key];
     }
     if (Object.keys(payload).length === 1) throw new Error("Invalid empty referee flag update");
+    return payload;
+  }
+  if (action === "assignment_beta.flags.set") {
+    const payload: Record<string, unknown> = { reason: reason(input) };
+    for (const key of ["assignmentPrivateBetaEnabled", "assignmentsEnabled"] as const) {
+      if (typeof input[key] === "boolean") payload[key] = input[key];
+    }
+    if (Object.keys(payload).length === 1) throw new Error("Invalid empty referee assignment flag update");
     return payload;
   }
   if (new Set(["profile.activate", "profile.suspend", "profile.restore", "verification.pending", "verification.approve", "verification.reject", "verification.revoke", "stats.rebuild", "assignment.completion.void", "assignment.reconcile"]).has(action)) {
@@ -73,13 +82,18 @@ export async function POST(request: Request) {
     const action = typeof body.action === "string" ? body.action.trim() : "";
     const operationId = typeof body.operationId === "string" ? body.operationId : "";
     const expectedRevision = Number(body.expectedRevision);
-    const aggregateId = action === "referee_flags.set" ? flagsAggregateId : typeof body.aggregateId === "string" ? body.aggregateId : "";
+    const aggregateId = action === "referee_flags.set" ? flagsAggregateId : action === "assignment_beta.flags.set" ? assignmentFlagsAggregateId : typeof body.aggregateId === "string" ? body.aggregateId : "";
     if (!uuidPattern.test(operationId) || !uuidPattern.test(aggregateId) || !Number.isSafeInteger(expectedRevision) || expectedRevision < 0) throw new Error("Invalid referee operation envelope");
     const payload = payloadFor(action, record(body.payload));
     const result = action === "assignment.reconcile"
       ? await session.client.rpc("reconcile_pachanga_referee_assignment_v1", {
           client_metadata: metadata(request), expected_revision: expectedRevision,
           operation_id: operationId, target_assignment_id: aggregateId,
+        })
+      : action === "assignment_beta.flags.set"
+      ? await session.client.rpc("command_pachanga_referee_assignment_beta_admin_v1", {
+          client_metadata: metadata(request), command_action: action,
+          command_payload: payload, expected_revision: expectedRevision, operation_id: operationId,
         })
       : await session.client.rpc("command_pachanga_referee_platform_admin_v1", {
           aggregate_id: aggregateId, client_metadata: metadata(request), command_action: action,

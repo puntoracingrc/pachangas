@@ -171,13 +171,14 @@ export function RefereePlatformClient({ focusSection, laboratory = false, previe
   }, [previewData]);
 
   useEffect(() => {
-    if (previewData || !data) return;
-    const section = new URLSearchParams(window.location.search).get("section");
-    if (!section || !new Set(["availability", "clubs", "consent", "identity", "marketplace", "modalities", "areas"]).has(section)) return;
-    window.requestAnimationFrame(() => {
+    if (!data) return;
+    const section = focusSection ?? (previewData ? null : new URLSearchParams(window.location.search).get("section"));
+    if (!section || !new Set(["availability", "clubs", "consent", "identity", "marketplace", "modalities", "areas", "assignments"]).has(section)) return;
+    const frame = window.requestAnimationFrame(() => {
       document.querySelector(`[data-referee-section="${section}"]`)?.scrollIntoView({ block: "start" });
     });
-  }, [data, previewData]);
+    return () => window.cancelAnimationFrame(frame);
+  }, [data, focusSection, previewData]);
 
   async function command(action: string, aggregateId: string, expectedRevision: number, payload: RefereeJson) {
     if (previewData) { setMessage("Fixture visual: la intención no se ha enviado."); return; }
@@ -207,6 +208,31 @@ export function RefereePlatformClient({ focusSection, laboratory = false, previe
     } catch (error) {
       const detail = error instanceof Error ? error.message : "Operación no confirmada.";
       setMessage(/STALE_REVISION|revision/i.test(detail) ? "La revisión cambió. Se ha recargado el estado canónico." : userFacingRefereeError(detail));
+      if (/STALE_REVISION|revision/i.test(detail)) await loadCanonical(userId, accessToken, "manual");
+    } finally { setBusy(false); }
+  }
+
+  async function publicFeeCommand(action: string, payload: RefereeJson) {
+    if (previewData) { setMessage("Fixture visual: la tarifa no se ha enviado."); return; }
+    if (!accessToken || !userId || !profileId) return;
+    const key = JSON.stringify({ action, aggregateId: profileId, expectedRevision: profileRevision, payload });
+    if (!pending.current || pending.current.key !== key) pending.current = { id: crypto.randomUUID(), key };
+    setBusy(true);
+    setMessage("Esperando confirmación de PostgreSQL...");
+    try {
+      const response = await clientWriteFetch("api:referee-public-fee-command", "/api/referee-assignments/public-fee", {
+        body: JSON.stringify({ action, aggregateId: profileId, expectedRevision: profileRevision, operationId: pending.current.id, payload }),
+        headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+        method: "POST",
+      });
+      const body = await response.json() as { message?: string };
+      if (!response.ok) throw new Error(body.message || "Tarifa no confirmada.");
+      pending.current = null;
+      setMessage("Tarifa confirmada por PostgreSQL.");
+      await loadCanonical(userId, accessToken, "mutation");
+    } catch (error) {
+      const detail = error instanceof Error ? error.message : "Tarifa no confirmada.";
+      setMessage(/STALE_REVISION|revision/i.test(detail) ? "La revisión cambió. Se ha recargado la ficha oficial." : userFacingRefereeError(detail));
       if (/STALE_REVISION|revision/i.test(detail)) await loadCanonical(userId, accessToken, "manual");
     } finally { setBusy(false); }
   }
@@ -246,6 +272,7 @@ export function RefereePlatformClient({ focusSection, laboratory = false, previe
   const statistics = refereeRecord(privateProfile.statistics);
   const profileId = refereeText(profile.id);
   const profileRevision = refereeNumber(profile.revision);
+  const publicFee = refereeRecord(profile.publicFee);
   const cardProfile = { ...profile, areas, clubs: relationships.filter((item) => refereeText(item.status) === "active"), modalities, statistics };
   const renderedWindowRows = Math.max(availabilityWindowRows, windows.length, 1);
   const renderedExceptionRows = Math.max(availabilityExceptionRows, exceptions.length, 1);
@@ -346,6 +373,27 @@ export function RefereePlatformClient({ focusSection, laboratory = false, previe
     });
   }
 
+  function configurePublicFee(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const form = new FormData(event.currentTarget);
+    const mode = input(form, "feeMode");
+    const euros = input(form, "fromEuros");
+    void publicFeeCommand("public_fee.configure", {
+      currency: "EUR",
+      feeMode: mode,
+      fromCents: new Set(["FREE", "VOLUNTEER"]).has(mode) ? "" : euros ? Math.round(Number(euros) * 100) : "",
+    });
+  }
+
+  function publishPublicFee(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const form = new FormData(event.currentTarget);
+    void publicFeeCommand("public_fee.publish", {
+      informationCorrect: form.get("informationCorrect") === "on",
+      outOfPlatformPaymentAcknowledged: form.get("outOfPlatformPaymentAcknowledged") === "on",
+    });
+  }
+
   function relationshipInvite(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
@@ -354,26 +402,6 @@ export function RefereePlatformClient({ focusSection, laboratory = false, previe
       clubId: input(form, "clubId"), expiresAt: input(form, "expiresAt"), reason: "club_referee_invite",
       relationshipType: input(form, "relationshipType"), targetEmail: targetKind === "email_target" ? input(form, "target") : "",
       targetKind, targetUserId: targetKind === "registered_user" ? input(form, "target") : "",
-    });
-  }
-
-  function assignmentPropose(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const form = new FormData(event.currentTarget);
-    void command("assignment.propose", crypto.randomUUID(), 0, {
-      assignmentRole: "MAIN_REFEREE", message: input(form, "message"), reason: "referee_assignment_propose",
-      refereeProfileId: input(form, "refereeProfileId"), requesterId: input(form, "requesterId"),
-      requesterKind: input(form, "requesterKind"), responseDeadline: input(form, "responseDeadline"),
-      sourceGroupId: input(form, "sourceGroupId"), sourceId: input(form, "sourceId"), sourceKind: input(form, "sourceKind"),
-    });
-  }
-
-  function assignmentReplace(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const form = new FormData(event.currentTarget);
-    void command("assignment.replace", input(form, "assignmentId"), Number(input(form, "revision")), {
-      message: input(form, "message"), newAssignmentId: crypto.randomUUID(), newRefereeProfileId: input(form, "newRefereeProfileId"),
-      reason: "referee_assignment_replace", responseDeadline: input(form, "responseDeadline"),
     });
   }
 
@@ -457,7 +485,9 @@ export function RefereePlatformClient({ focusSection, laboratory = false, previe
 
             <section className={`${styles.panel} ${styles.marketPanel}`} data-referee-section="marketplace"><SectionHeader eyebrow="7 · Mercado" title="Disponibilidad pública" /><p className={styles.sectionCopy}>Controla si los Clubs y equipos pueden encontrarte. La ficha pública nunca muestra GRL, facetas, estrellas ni Rating.</p><ResponsiveActionBar className={styles.actions}><Badge value={profile.marketplaceStatus} />{refereeText(profile.operationalStatus) === "active" && refereeText(profile.marketplaceStatus) !== "listed" ? <button type="button" disabled={busy || publicationConsent.matchesCurrentContent !== true} onClick={() => void command("marketplace.list", profileId, profileRevision, { reason: "referee_marketplace_list" })}>Publicar en Mercado</button> : null}{refereeText(profile.marketplaceStatus) === "listed" ? <button type="button" disabled={busy} onClick={() => void command("marketplace.pause", profileId, profileRevision, { reason: "referee_marketplace_pause" })}>Pausar Mercado</button> : null}{refereeText(profile.marketplaceStatus) === "paused" ? <button type="button" disabled={busy || publicationConsent.matchesCurrentContent !== true} onClick={() => void command("marketplace.list", profileId, profileRevision, { reason: "referee_marketplace_resume" })}>Reanudar Mercado</button> : null}</ResponsiveActionBar></section>
 
-            {flags.assignmentsEnabled === true ? <section className={styles.panel} data-referee-section="assignments"><SectionHeader eyebrow="8 · Partidos" title="Asignaciones" /><div className={`${styles.rows} ${styles.assignmentRows}`}>{assignments.map((item) => {
+            <section className={styles.panel} data-referee-section="public-fee"><SectionHeader eyebrow="8 · Condiciones" title="Tarifa pública orientativa" /><p className={styles.sectionCopy}>El acuerdo y el pago se realizan fuera de Pachangas IQ.</p><form className={styles.formGrid} onSubmit={configurePublicFee}><label>Modalidad<select name="feeMode" defaultValue={refereeText(publicFee.feeMode) || "NEGOTIABLE"}><option value="FREE">Sin tarifa</option><option value="FIXED">Fija</option><option value="NEGOTIABLE">Negociable</option><option value="VOLUNTEER">Voluntario</option></select></label><label>Desde (€)<input name="fromEuros" type="number" min="0" step="0.50" defaultValue={refereeNumber(publicFee.fromCents) ? refereeNumber(publicFee.fromCents) / 100 : ""} /></label><button type="submit" disabled={busy}>Guardar sin publicar</button></form>{publicFee.visible === true ? <ResponsiveActionBar className={styles.actions}><Badge value="publicada" /><button type="button" disabled={busy} onClick={() => void publicFeeCommand("public_fee.unpublish", {})}>Ocultar tarifa</button></ResponsiveActionBar> : <form className={styles.checkGrid} onSubmit={publishPublicFee}><label><input name="informationCorrect" type="checkbox" required />La información es correcta.</label><label><input name="outOfPlatformPaymentAcknowledged" type="checkbox" required />Entiendo que Pachangas IQ no gestiona el pago.</label><button type="submit" disabled={busy || !refereeText(publicFee.feeMode)}>Publicar tarifa</button></form>}</section>
+
+            {flags.assignmentsEnabled === true ? <section className={styles.panel} data-referee-section="assignments"><SectionHeader action={<Link href="/mis-asignaciones-arbitrales">Abrir bandeja</Link>} eyebrow="9 · Partidos" title="Asignaciones" /><div className={`${styles.rows} ${styles.assignmentRows}`}>{assignments.map((item) => {
               const home = refereeText(item.homeTeamName);
               const away = refereeText(item.awayTeamName);
               const title = refereeText(item.matchTitle) || (home && away ? `${home} vs ${away}` : "Partido canónico");
@@ -474,15 +504,15 @@ export function RefereePlatformClient({ focusSection, laboratory = false, previe
                     <span><b>Binding</b>{refereeText(item.bindingStatus) || (refereeText(item.canonicalMatchId) ? "Canónico" : "Pendiente")}</span>
                   </div>
                 </div>
-                <ResponsiveActionBar className={styles.assignmentActions}><Badge value={item.status} />{refereeText(item.status) === "proposed" ? <><button type="button" disabled={busy} onClick={() => void command("assignment.accept", refereeText(item.id), refereeNumber(item.revision), { reason: "referee_assignment_accept" })}>Aceptar</button><button type="button" disabled={busy} onClick={() => void command("assignment.decline", refereeText(item.id), refereeNumber(item.revision), { reason: "referee_assignment_decline" })}>Rechazar</button></> : null}{new Set(["accepted", "confirmed"]).has(refereeText(item.status)) ? <button type="button" disabled={busy} onClick={() => void command("assignment.cancel", refereeText(item.id), refereeNumber(item.revision), { reason: "referee_assignment_cancel", reasonCode: "referee_cancelled", reasonText: "Cancelado por el árbitro" })}>Cancelar</button> : null}{laboratory && refereeText(item.status) === "confirmed" ? <button type="button" disabled={busy} onClick={() => void adminCommand("assignment.reconcile", refereeText(item.id), refereeNumber(item.revision), { reason: "staging_manual_reconcile" })}>Reconciliar</button> : null}</ResponsiveActionBar>
+                <ResponsiveActionBar className={styles.assignmentActions}><Badge value={item.status} /><Link href="/mis-asignaciones-arbitrales">Gestionar</Link>{laboratory && refereeText(item.status) === "confirmed" ? <button type="button" disabled={busy} onClick={() => void adminCommand("assignment.reconcile", refereeText(item.id), refereeNumber(item.revision), { reason: "staging_manual_reconcile" })}>Reconciliar</button> : null}</ResponsiveActionBar>
               </article>;
             })}{!assignments.length ? <p className={styles.empty}>Sin asignaciones.</p> : null}</div></section> : null}
 
-            <section className={styles.panel} data-referee-section="statistics"><SectionHeader eyebrow="8 · Evidencia" title="Estadísticas" /><div className={styles.metricGrid}><MetricTile label="Partidos concluidos" value={refereeNumber(statistics.matchesCompleted)} /><MetricTile label="Revisión" value={refereeNumber(statistics.revision)} /><MetricTile label="Estado disciplinario" value={refereeText(statistics.disciplineStatsStatus) || "NOT_AVAILABLE"} /></div><div className={styles.disciplineUnavailable}><Badge value="NOT_AVAILABLE" /><div><strong>Estadísticas disciplinarias</strong><p>Disponibles cuando se active el motor de disciplina.</p></div></div></section>
+            <section className={styles.panel} data-referee-section="statistics"><SectionHeader eyebrow="10 · Evidencia" title="Estadísticas" /><div className={styles.metricGrid}><MetricTile label="Partidos concluidos" value={refereeNumber(statistics.matchesCompleted)} /><MetricTile label="Revisión" value={refereeNumber(statistics.revision)} /><MetricTile label="Estado disciplinario" value={refereeText(statistics.disciplineStatsStatus) || "NOT_AVAILABLE"} /></div><div className={styles.disciplineUnavailable}><Badge value={refereeText(statistics.disciplineStatsStatus) || "NOT_AVAILABLE"} /><div><strong>Estadísticas disciplinarias</strong><p>Reconstruidas desde asignaciones y tarjetas R5 canónicas.</p></div></div></section>
 
             {laboratory ? <section className={styles.labGrid}>
               <div className={styles.panel}><h2>Club invita</h2><form className={styles.formGrid} onSubmit={relationshipInvite}><label>Club ID<input name="clubId" required /></label><label>Destino<select name="targetKind" defaultValue="registered_user"><option value="registered_user">Usuario</option><option value="email_target">Email</option></select></label><label className={styles.wide}>Usuario UUID o email<input name="target" required /></label><label>Relación<select name="relationshipType" defaultValue="REGULAR"><option value="REGULAR">Regular</option><option value="COLLABORATOR">Colaborador</option><option value="PREFERRED">Preferente</option></select></label><label>Caduca<input name="expiresAt" type="datetime-local" /></label><button type="submit" disabled={busy}>Invitar</button></form></div>
-              {flags.assignmentsEnabled === true ? <><div className={styles.panel}><h2>Proponer partido</h2><form className={styles.formGrid} onSubmit={assignmentPropose}><label>Árbitro profile ID<input name="refereeProfileId" required /></label><label>Autoridad<select name="requesterKind"><option value="TEAM">Team</option><option value="CLUB">Club</option></select></label><label>Requester ID<input name="requesterId" required /></label><label>Source kind<input name="sourceKind" defaultValue="group_match" required /></label><label>Source group ID<input name="sourceGroupId" /></label><label>Source ID<input name="sourceId" required /></label><label>Deadline<input name="responseDeadline" type="datetime-local" /></label><label className={styles.wide}>Mensaje<input name="message" maxLength={800} /></label><button type="submit" disabled={busy}>Proponer</button></form></div><div className={styles.panel}><h2>Reemplazar árbitro</h2><form className={styles.formGrid} onSubmit={assignmentReplace}><label>Assignment ID<input name="assignmentId" required /></label><label>Revisión<input name="revision" type="number" min="1" required /></label><label>Nuevo profile ID<input name="newRefereeProfileId" required /></label><label>Deadline<input name="responseDeadline" type="datetime-local" /></label><label className={styles.wide}>Mensaje<input name="message" maxLength={800} /></label><button type="submit" disabled={busy}>Proponer reemplazo</button></form></div></> : null}
+              {flags.assignmentsEnabled === true ? <div className={styles.panel}><h2>Referee Assignments</h2><p>Las propuestas, reemplazos y actas se prueban en la superficie canónica de producto.</p><Link href="/mis-asignaciones-arbitrales">Abrir bandeja arbitral</Link></div> : null}
             </section> : null}
           </div>
         </div>

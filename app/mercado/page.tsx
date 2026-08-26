@@ -319,6 +319,9 @@ const modalityLabels: Record<string, string> = {
 const positionFilters = ["Todas", "Portero", "Defensa", "Medio", "Ataque"];
 
 type MarketMatchContext = {
+  canonicalMatchId?: string;
+  competitionId?: string;
+  competitionMatchContextId?: string;
   dateText: string;
   day: string;
   groupId: string;
@@ -330,6 +333,12 @@ type MarketMatchContext = {
   modality: string;
   placeId?: string;
   revision: number;
+  replaceAssignmentId?: string;
+  replaceRevision?: number;
+  requesterId: string;
+  requesterKind: "CLUB" | "COMPETITION" | "TEAM";
+  sourceId: string;
+  sourceKind: "competition_generated" | "external_match" | "group_match" | "open_match" | "team_challenge";
   title: string;
   zone: string;
 };
@@ -693,6 +702,9 @@ export default function MarketPage() {
   const zoneInputRef = useRef<HTMLInputElement>(null);
   const playerPreviewActive = canInvite && previewRequested;
   const canUseMarketAdminControls = canInvite && !playerPreviewActive;
+  const marketGroupId = marketContext?.groupId ?? "";
+  const marketMatchId = marketContext?.matchId ?? "";
+  const marketRequesterKind = marketContext?.requesterKind;
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -707,11 +719,19 @@ export default function MarketPage() {
     const nextLat = numberParam(params.get("lat"));
     const nextLng = numberParam(params.get("lng"));
     const nextPlaceId = params.get("placeId") ?? undefined;
+    const requesterKindParam = params.get("requesterKind");
+    const requesterKind = requesterKindParam === "CLUB" || requesterKindParam === "COMPETITION" ? requesterKindParam : "TEAM";
+    const sourceKindParam = params.get("sourceKind");
+    const sourceKind = sourceKindParam === "competition_generated" || sourceKindParam === "external_match" || sourceKindParam === "open_match" || sourceKindParam === "team_challenge" ? sourceKindParam : "group_match";
+    const groupId = params.get("grupoId") ?? "";
 
     const nextContext: MarketMatchContext = {
+      canonicalMatchId: params.get("canonicalMatchId") ?? undefined,
+      competitionId: params.get("competitionId") ?? undefined,
+      competitionMatchContextId: params.get("competitionMatchContextId") ?? undefined,
       dateText: params.get("fecha") ?? "",
       day: nextDay,
-      groupId: params.get("grupoId") ?? "",
+      groupId,
       lat: nextLat,
       lng: nextLng,
       matchId,
@@ -720,6 +740,12 @@ export default function MarketPage() {
       modality: nextModality,
       placeId: nextPlaceId,
       revision: Math.max(0, Math.floor(numberParam(params.get("revision")) ?? 0)),
+      replaceAssignmentId: params.get("replaceAssignment") ?? undefined,
+      replaceRevision: Math.max(0, Math.floor(numberParam(params.get("replaceRevision")) ?? 0)),
+      requesterId: params.get("requesterId") ?? groupId,
+      requesterKind,
+      sourceId: params.get("sourceId") ?? matchId,
+      sourceKind,
       title: params.get("titulo") ?? "Partido",
       zone: nextZone,
     };
@@ -769,15 +795,18 @@ export default function MarketPage() {
 
       let exactCanInvite = false;
       let exactCanProposeReferee = false;
-      if (user && marketContext?.groupId) {
+      if (user && marketGroupId && marketRequesterKind === "TEAM") {
         const membership = await supabase
           ?.from("pachanga_group_members")
           .select("role")
-          .eq("group_id", marketContext.groupId)
+          .eq("group_id", marketGroupId)
           .eq("user_id", user.id)
           .maybeSingle();
         exactCanInvite = !membership?.error && ["owner", "admin"].includes(String(membership?.data?.role));
         exactCanProposeReferee = !membership?.error && String(membership?.data?.role) === "owner";
+      } else if (user && marketRequesterKind && marketRequesterKind !== "TEAM") {
+        // Product visibility only. PostgreSQL resolves Club/Competition authority.
+        exactCanProposeReferee = true;
       }
       if (active) {
         setCanInvite(exactCanInvite);
@@ -882,10 +911,10 @@ export default function MarketPage() {
         }
       }
 
-      if (exactCanInvite && marketContext?.groupId && marketContext.matchId) {
+      if (exactCanInvite && marketGroupId && marketMatchId) {
         const invitationState = (await supabase?.rpc("get_pachanga_match_invitation_admin_state_v1", {
-          target_group_id: marketContext.groupId,
-          target_match_id: marketContext.matchId,
+          target_group_id: marketGroupId,
+          target_match_id: marketMatchId,
         })) as { data: unknown; error: { message: string } | null } | undefined;
         if (!invitationState?.error && invitationState?.data && typeof invitationState.data === "object") {
           const payload = invitationState.data as { confirmedRevision?: number; invitations?: MatchInvitationSummary[] };
@@ -913,7 +942,7 @@ export default function MarketPage() {
     return () => {
       active = false;
     };
-  }, [marketContext?.groupId, marketContext?.matchId, marketRefresh]);
+  }, [marketGroupId, marketMatchId, marketRefresh, marketRequesterKind]);
 
   useEffect(() => {
     const client = supabase;
@@ -1294,7 +1323,20 @@ export default function MarketPage() {
         <RefereeMarketplacePanel
           assignmentsEnabled={refereeAssignmentsEnabled}
           canPropose={canProposeReferee}
-          context={marketContext ? { groupId: marketContext.groupId, matchId: marketContext.matchId, title: marketContext.title } : null}
+          context={marketContext ? {
+            canonicalMatchId: marketContext.canonicalMatchId,
+            competitionId: marketContext.competitionId,
+            competitionMatchContextId: marketContext.competitionMatchContextId,
+            groupId: marketContext.groupId,
+            matchId: marketContext.matchId,
+            replaceAssignmentId: marketContext.replaceAssignmentId,
+            replaceRevision: marketContext.replaceRevision,
+            requesterId: marketContext.requesterId,
+            requesterKind: marketContext.requesterKind,
+            sourceId: marketContext.sourceId,
+            sourceKind: marketContext.sourceKind,
+            title: marketContext.title,
+          } : null}
           marketplaceEnabled={refereeMarketplaceEnabled}
         />
       ) : activeTab === "clubes" && clubProductEnabled ? (

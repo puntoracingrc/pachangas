@@ -15,8 +15,17 @@ import { supabase } from "../supabaseClient";
 import styles from "./referee-marketplace-panel.module.css";
 
 type RefereeMatchContext = {
+  canonicalMatchId?: string;
+  competitionId?: string;
+  competitionMatchContextId?: string;
   groupId: string;
   matchId: string;
+  replaceAssignmentId?: string;
+  replaceRevision?: number;
+  requesterId: string;
+  requesterKind: "CLUB" | "COMPETITION" | "TEAM";
+  sourceId: string;
+  sourceKind: "competition_generated" | "external_match" | "group_match" | "open_match" | "team_challenge";
   title: string;
 };
 
@@ -149,22 +158,35 @@ export function RefereeMarketplacePanel({
     setPendingProfile(profileId);
     setMessage("Enviando la propuesta al servidor...");
     try {
-      const response = await clientWriteFetch("api:referee-command", "/api/referees/command", {
+      const replacement = Boolean(context.replaceAssignmentId);
+      const response = await clientWriteFetch("api:referee-assignment-command", "/api/referee-assignments/command", {
         body: JSON.stringify({
-          action: "assignment.propose",
-          aggregateId: crypto.randomUUID(),
-          expectedRevision: 0,
+          action: replacement ? "assignment.replace" : "assignment.propose",
+          aggregateId: replacement ? context.replaceAssignmentId : crypto.randomUUID(),
+          expectedRevision: replacement ? context.replaceRevision : 0,
           operationId: crypto.randomUUID(),
-          payload: {
+          payload: replacement ? {
+            feeMode: "NEGOTIABLE",
+            message: `Propuesta de sustitución para ${context.title}`,
+            newAssignmentId: crypto.randomUUID(),
+            newRefereeProfileId: profileId,
+            privateTermsNote: "",
+            reason: "referee_marketplace_replacement_proposal",
+            travelIncluded: false,
+          } : {
             assignmentRole: "MAIN_REFEREE",
+            currency: "EUR",
+            feeMode: "NEGOTIABLE",
             message: `Propuesta para arbitrar ${context.title}`,
+            privateTermsNote: "",
             reason: "referee_marketplace_assignment_proposal",
             refereeProfileId: profileId,
-            requesterId: context.groupId,
-            requesterKind: "TEAM",
+            requesterId: context.requesterId,
+            requesterKind: context.requesterKind,
             sourceGroupId: context.groupId,
-            sourceId: context.matchId,
-            sourceKind: "group_match",
+            sourceId: context.sourceId,
+            sourceKind: context.sourceKind,
+            travelIncluded: false,
           },
         }),
         headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
@@ -172,7 +194,7 @@ export function RefereeMarketplacePanel({
       });
       const body = await response.json() as { message?: string };
       if (!response.ok) throw new Error(body.message || "La propuesta no ha sido confirmada.");
-      setMessage(`Propuesta confirmada para ${refereeText(profile.displayName) || "el árbitro"}.`);
+      setMessage(`${replacement ? "Sustitución propuesta" : "Propuesta confirmada"} para ${refereeText(profile.displayName) || "el árbitro"}.`);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "La propuesta no ha sido confirmada.");
     } finally {

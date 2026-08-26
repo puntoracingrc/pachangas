@@ -40,7 +40,7 @@ function MarketReview() {
   return <OfficialProductShellV2 active="mercado" context={{ detail: "Barcelona · Fútbol 7 · disponibilidad", eyebrow: "Mercado", status: "Solo visual", title: "Árbitros" }}>
     <main className={styles.surfacePage} data-mobile-tab="mercado">
       <nav className={styles.labNav} aria-label="Superficies del laboratorio"><Link href="?surface=review">Índice</Link><strong>Mercado de árbitros</strong></nav>
-      <RefereeMarketplacePanel assignmentsEnabled canPropose context={{ groupId: "00000000-0000-0000-0000-00000000e301", matchId: "00000000-0000-0000-0000-00000000c301", title: "Atlètic Nord vs Raval United" }} marketplaceEnabled previewItems={refereeMarketFixtures} />
+      <RefereeMarketplacePanel assignmentsEnabled canPropose context={{ groupId: "00000000-0000-0000-0000-00000000e301", matchId: "00000000-0000-0000-0000-00000000c301", requesterId: "00000000-0000-0000-0000-00000000e301", requesterKind: "TEAM", sourceId: "00000000-0000-0000-0000-00000000c301", sourceKind: "group_match", title: "Atlètic Nord vs Raval United" }} marketplaceEnabled previewItems={refereeMarketFixtures} />
     </main>
   </OfficialProductShellV2>;
 }

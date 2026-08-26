@@ -24,6 +24,7 @@ import { generateDemoWorldV2 } from "../scripts/demo-world/generate-demo-world-v
 
 const root = process.cwd();
 const publicRoot = path.join(root, "public/demo-world/v2");
+const historicalV21Root = path.join(root, "public/demo-world/v2-1");
 
 async function jsonFile<T>(name: string): Promise<T> {
   return JSON.parse(await readFile(path.join(publicRoot, name), "utf8")) as T;
@@ -55,7 +56,8 @@ test("Demo World V2 is deterministic and the committed snapshot matches its hash
     players: committed.players,
   };
   assert.equal(createHash("sha256").update(JSON.stringify(payload)).digest("hex"), committed.manifest.hash);
-  assert.equal(committed.manifest.hash, "0eae1613e2d84fdd5f0821cfc2f7ad77b7bc4193a6c50ee3d58c0431ee493a51");
+  assert.equal(committed.manifest.hash, "58074f1cf5892f5730fee4e3af4d62b44f8d551ee4f21f9ec07acebb46a65697");
+  assert.equal(committed.manifest.version, 2.2);
   assert.equal(committed.manifest.seed, DEMO_WORLD_V2_SEED);
   assert.deepEqual(demoWorldV2IntegrityErrors(committed), []);
 });
@@ -63,16 +65,19 @@ test("Demo World V2 is deterministic and the committed snapshot matches its hash
 test("the committed authority proof comes from deterministic PostgreSQL operations", async () => {
   const proof = assertDemoWorldV2AuthorityProof(loadDemoWorldV2AuthorityProof());
   const world = await committedSnapshot();
-  assert.equal(proof.authorityHash, "f833b84f08aa859b14e31a4c11b676b996f8c80ae0813727467f2ae23d6849f9");
+  assert.equal(proof.authorityHash, "a11f5226f9f56ae3b60d0fc418128e3b9c3ab61393f7cd74a2261306174504be");
   assert.equal(proof.authorityHash, world.competitions.provenance.authorityHash);
   assert.equal(proof.database, "temporary-local-postgresql");
-  assert.equal(proof.migrationCount, 147);
+  assert.equal(proof.migrationCount, 152);
   assert.equal(proof.remoteWrites, 0);
-  assert.deepEqual(proof.rpcFamilies, ["R1", "R4A", "R4B", "R4C", "R4D", "R5"]);
+  assert.deepEqual(proof.rpcFamilies, ["R1", "R3", "R4A", "R4B", "R4C", "R4D", "R5"]);
   assert.deepEqual(proof.operationReceipts, {
     discipline: 33,
     matchOperations: 266,
     operationalExceptions: 13,
+    refereeAssignments: 61,
+    refereeOfficiating: 18,
+    refereePlatform: 80,
     scheduling: 5,
   });
   assert.equal(proof.matches.length, world.competitions.matches.length);
@@ -93,7 +98,7 @@ test("the committed authority proof comes from deterministic PostgreSQL operatio
   );
 });
 
-test("the protagonist League has the complete canonical R1-R5 graph", async () => {
+test("the protagonist League has the complete canonical R1-R5 graph including R3 assignments", async () => {
   const world = assertDemoWorldV2Snapshot(await committedSnapshot());
   const league = world.competitions;
   assert.equal(league.competition.name, "LIGA BARRIOS IQ 2026/27");
@@ -113,10 +118,10 @@ test("the protagonist League has the complete canonical R1-R5 graph", async () =
   assert.ok(originalRoundWindows.every((window, index) => (
     index === 0 || originalRoundWindows[index - 1]!.maximum < window.minimum
   )));
-  assert.deepEqual(league.provenance.rpcFamilies, ["R1", "R4A", "R4B", "R4C", "R4D", "R5"]);
+  assert.deepEqual(league.provenance.rpcFamilies, ["R1", "R3", "R4A", "R4B", "R4C", "R4D", "R5"]);
   assert.equal(league.provenance.verified, true);
-  assert.equal(league.provenance.migrations, 147);
-  assert.equal(league.competition.refereeAssignmentsEnabled, false);
+  assert.equal(league.provenance.migrations, 152);
+  assert.equal(league.competition.refereeAssignmentsEnabled, true);
 });
 
 test("R5 discipline is canonical, sparse, calendar-aware and public-safe", async () => {
@@ -193,15 +198,55 @@ test("R4D stories are sparse, canonical and preserve lineage", async () => {
   assert.ok(matches.every((match) => match.scorers.reduce((sum, scorer) => sum + scorer.goals, 0) === match.result.home + match.result.away));
 });
 
-test("Clubs and referee profiles form a public relationship graph without assignments", async () => {
+test("Clubs, referee profiles and assignment read models form one public-safe graph", async () => {
   const world = await committedSnapshot();
+  const proof = loadDemoWorldV2AuthorityProof();
   assert.equal(world.clubsReferees.clubs.length, 3);
   assert.equal(world.clubsReferees.referees.length, 8);
-  assert.equal(world.clubsReferees.refereeAssignmentsEnabled, false);
+  assert.equal(world.clubsReferees.refereeAssignmentsEnabled, true);
   assert.equal(world.clubsReferees.relationships.filter(({ type }) => type === "club_team").length, 6);
   assert.ok(world.clubsReferees.relationships.filter(({ type }) => type === "club_referee").length >= 8);
   assert.ok(world.clubsReferees.clubs.every((club) => club.teamIds.length === 2 && Object.keys(club.publicProfile).length > 0));
   assert.ok(world.clubsReferees.referees.every((referee) => referee.marketplaceStatus === "listed" && referee.publicBio.length > 10));
+  assert.deepEqual(
+    world.clubsReferees.referees.map(({ statistics }) => statistics),
+    proof.refereeAssignments.profiles.map(({ statistics }) => statistics),
+  );
+
+  const assignments = world.clubsReferees.refereeAssignmentPreview.items as Array<Record<string, unknown>>;
+  const counts = assignments.reduce<Record<string, number>>((result, assignment) => {
+    const status = String(assignment.status);
+    result[status] = (result[status] ?? 0) + 1;
+    return result;
+  }, {});
+  assert.equal(assignments.length, 16);
+  assert.deepEqual(counts, { cancelled: 1, completed: 13, declined: 1, replaced: 1 });
+  assert.equal(proof.refereeAssignments.noActiveOverlaps, true);
+  assert.equal(proof.refereeAssignments.oneMainRefereePerMatch, true);
+  assert.equal(proof.refereeAssignments.overlapRejected, true);
+  assert.equal(proof.refereeAssignments.statisticsConverged, true);
+  assert.deepEqual(proof.refereeAssignments.r5LinkedEvents, {
+    linked: 18,
+    onRefereedMatches: 18,
+    unlinkedEventKeys: [],
+  });
+  assert.ok(assignments.some((assignment) => assignment.status === "replaced" && assignment.replacedByAssignmentId));
+  assert.ok(assignments.some((assignment) => assignment.replacesAssignmentId && assignment.status === "completed"));
+  assert.ok(assignments.some((assignment) => assignment.reconfirmed === true && assignment.scheduledStart !== assignment.effectiveScheduledStart));
+  assert.equal(Object.keys(world.competitions.refereeAssignmentPreviews).length, 15);
+  assert.doesNotMatch(JSON.stringify(world.clubsReferees.refereeAssignmentPreview), /privateTerms|privateTermsNote|agreedFee|counterFee|proposedFee/i);
+  assert.ok(world.clubsReferees.referees.some(({ publicFee }) => publicFee?.feeMode === "FIXED"));
+  assert.ok(world.clubsReferees.referees.some(({ publicFee }) => publicFee?.feeMode === "NEGOTIABLE"));
+  assert.ok(world.clubsReferees.referees.some(({ publicFee }) => publicFee?.feeMode === "VOLUNTEER"));
+});
+
+test("the historical V2.1 snapshot remains immutable beside V2.2", async () => {
+  const expectedFiles = ["activity.json", "clubs-referees.json", "competitions.json", "core.json", "manifest.json", "matches.json", "players.json"];
+  await Promise.all(expectedFiles.map((name) => readFile(path.join(historicalV21Root, name), "utf8")));
+  const manifest = JSON.parse(await readFile(path.join(historicalV21Root, "manifest.json"), "utf8")) as Record<string, unknown>;
+  assert.equal(manifest.version, 2.1);
+  assert.equal(manifest.seed, "pachangas-iq-demo-world-v2-1-2026-27");
+  assert.equal(manifest.hash, "0eae1613e2d84fdd5f0821cfc2f7ad77b7bc4193a6c50ee3d58c0431ee493a51");
 });
 
 test("V2 chunks stay lazy, GET-only and converge to the validated snapshot", async () => {
@@ -229,12 +274,13 @@ test("V2 chunks stay lazy, GET-only and converge to the validated snapshot", asy
 });
 
 test("the public Demo uses production renderers in one shell and exposes all V2 tabs", async () => {
-  const [appSource, disciplineSource, disciplineStyles, scheduleSource, matchSource, clubSource, demoStyles] = await Promise.all([
+  const [appSource, disciplineSource, disciplineStyles, scheduleSource, matchSource, assignmentSource, clubSource, demoStyles] = await Promise.all([
     readFile(path.join(root, "app/demo-world/demo-world-app.tsx"), "utf8"),
     readFile(path.join(root, "app/_components/competition-discipline-client.tsx"), "utf8"),
     readFile(path.join(root, "app/_components/competition-discipline-client.module.css"), "utf8"),
     readFile(path.join(root, "app/_components/league-scheduling-client.tsx"), "utf8"),
     readFile(path.join(root, "app/_components/league-match-operations-client.tsx"), "utf8"),
+    readFile(path.join(root, "app/_components/referee-assignments-client.tsx"), "utf8"),
     readFile(path.join(root, "app/clubes/[slug]/public-club-profile.tsx"), "utf8"),
     readFile(path.join(root, "app/demo-world/demo-world.module.css"), "utf8"),
   ]);
@@ -245,11 +291,18 @@ test("the public Demo uses production renderers in one shell and exposes all V2 
   assert.match(appSource, /LeagueMatchOperationsClient embedded/);
   assert.match(appSource, /CompetitionDisciplineClient competitionId=.*embedded.*surface="public"/);
   assert.match(appSource, /disciplinePreviewData=\{selectedLeagueMatchDisciplinePreview\}/);
+  assert.match(appSource, /refereeAssignmentPreviewData=\{selectedLeagueMatchRefereePreview\}/);
+  assert.match(appSource, /RefereeAssignmentsClient embedded previewData=\{assignments\} surface="my"/);
+  assert.match(matchSource, /previewData=\{props\.refereeAssignmentPreviewData\}/);
+  assert.match(assignmentSource, /if \(previewData\) \{ setMessage\("Escenario visual: no se ha enviado ninguna escritura\."\); return; \}/);
   assert.match(matchSource, /disciplineAvailable=\{Boolean\(props\.disciplinePreviewData\)\}/);
   assert.match(matchSource, /disciplineAvailable \? "Disciplina R5" : "Disciplina oficial"/);
   assert.doesNotMatch(matchSource, /no disponible hasta R5/);
   assert.match(appSource, /PublicClubProfile club=.*embedded/);
   assert.match(appSource, /RefereeProfileCard compact/);
+  assert.match(appSource, /const domainNavRef = useRef<HTMLElement>\(null\)/);
+  assert.match(appSource, /navigation\.scrollWidth <= navigation\.clientWidth \+ 2/);
+  assert.match(appSource, /scrollIntoView\(\{ behavior: "auto", block: "nearest", inline: "center" \}\)/);
   assert.doesNotMatch(appSource, /DemoLeagueTable|DemoLeagueMatch/);
   assert.match(scheduleSource, /embedded \? content : <OfficialProductShellV2/);
   assert.match(matchSource, /embedded[\s\S]*\? content/);
