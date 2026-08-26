@@ -85,6 +85,50 @@ export async function runCompetitionConfigurationBeforeRegistration({
   state.configurationDraftIds.push(draftId);
   state.activeDraftRevisions.set(draftId, receipt.confirmedRevision);
 
+  const format = structuredClone(receipt.snapshot.steps["4"]);
+  format.legs = 1;
+  format.teamCap = 6;
+  receipt = await configurationCommandOk(actor, metadata, {
+    action: "draft.section.save",
+    aggregateId: draftId,
+    expectedRevision: receipt.confirmedRevision,
+    payload: { data: format, reason: "Wave 5A staging beta capacity", step: 4 },
+  });
+  state.activeDraftRevisions.set(draftId, receipt.confirmedRevision);
+
+  const roster = structuredClone(receipt.snapshot.steps["5"]);
+  roster.credentialRequired = false;
+  roster.jerseyRequired = false;
+  roster.minimumRosterSize = 5;
+  receipt = await configurationCommandOk(actor, metadata, {
+    action: "draft.section.save",
+    aggregateId: draftId,
+    expectedRevision: receipt.confirmedRevision,
+    payload: { data: roster, reason: "Wave 5A staging roster compatibility", step: 5 },
+  });
+  state.activeDraftRevisions.set(draftId, receipt.confirmedRevision);
+
+  const match = structuredClone(receipt.snapshot.steps["6"]);
+  match.matchDurationMinutes = 70;
+  match.requiredBufferMinutes = 10;
+  receipt = await configurationCommandOk(actor, metadata, {
+    action: "draft.section.save",
+    aggregateId: draftId,
+    expectedRevision: receipt.confirmedRevision,
+    payload: { data: match, reason: "Wave 5A staging slot compatibility", step: 6 },
+  });
+  state.activeDraftRevisions.set(draftId, receipt.confirmedRevision);
+
+  const schedule = structuredClone(receipt.snapshot.steps["7"]);
+  schedule.minimumRestMinutes = 0;
+  receipt = await configurationCommandOk(actor, metadata, {
+    action: "draft.section.save",
+    aggregateId: draftId,
+    expectedRevision: receipt.confirmedRevision,
+    payload: { data: schedule, reason: "Wave 5A staging schedule compatibility", step: 7 },
+  });
+  state.activeDraftRevisions.set(draftId, receipt.confirmedRevision);
+
   const discipline = structuredClone(receipt.snapshot.steps["10"]);
   discipline.yellow.threshold = 4;
   discipline.blue.enabled = true;
@@ -208,12 +252,14 @@ export async function runCompetitionConfigurationAfterRegistration({
   state.configurationDraftIds.push(draftId);
   state.activeDraftRevisions.set(draftId, receipt.confirmedRevision);
 
+  const frozenFormat = structuredClone(receipt.snapshot.steps["4"]);
+  frozenFormat.teamCap = 6;
   const frozenFormatEdit = await configurationCommand(actor, metadata, {
     action: "draft.section.save",
     aggregateId: draftId,
     expectedRevision: receipt.confirmedRevision,
     payload: {
-      data: receipt.snapshot.steps["4"],
+      data: frozenFormat,
       reason: "Wave 5A staging frozen structural edit",
       step: 4,
     },

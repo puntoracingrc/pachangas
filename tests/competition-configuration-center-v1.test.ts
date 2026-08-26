@@ -255,6 +255,8 @@ test("staging exercises standard and advanced authoring, freeze, future revision
   assert.match(runner, /R4B_STAGING_PRODUCTION_TARGET_FORBIDDEN/);
   assert.match(runner, /LEAGUE_F7_STANDARD/);
   assert.match(runner, /completedSteps, \[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12\]/);
+  assert.match(runner, /command_pachanga_referee_assignment_beta_admin_v1/);
+  assert.match(runner, /restore-referee-assignment-beta/);
   assert.match(extension, /draft\.create/);
   assert.match(extension, /draft\.clone/);
   assert.match(extension, /COMPETITION_CONFIGURATION_FROZEN:REGISTRATION_OPEN/);

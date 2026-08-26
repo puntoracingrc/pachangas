@@ -536,6 +536,22 @@ async function setRefereeFlags(platform, next, reason) {
   });
   if (result.error) throw result.error;
 }
+async function setRefereeAssignmentBetaFlags(platform, next, reason) {
+  const current = await rpc(platform, "get_pachanga_referee_foundation_flags_v1");
+  if (
+    current.assignmentPrivateBetaEnabled === next.assignmentPrivateBetaEnabled
+    && current.assignmentsEnabled === next.assignmentsEnabled
+  ) return { snapshot: current };
+  const result = await platform.rpc("command_pachanga_referee_assignment_beta_admin_v1", {
+    client_metadata: metadata("competition-configuration-referee-flags"),
+    command_action: "assignment_beta.flags.set",
+    command_payload: { ...next, reason },
+    expected_revision: current.revision,
+    operation_id: randomUUID(),
+  });
+  if (result.error) throw result.error;
+  return result.data;
+}
 async function counts() {
   return Object.fromEntries(await Promise.all(UNTOUCHED_TABLES.map(async (table) => {
     const result = await fixtureAdmin.from(table).select("*", { count: "exact", head: true });
@@ -803,7 +819,7 @@ async function verifyPreview(accessToken, competitionId, planId) {
   if (CONFIGURATION_EXTENSION) productPaths.push(
     `/competiciones/${competitionId}/configuracion`,
     "/admin/competitions",
-    "/demo-world?surface=configuration",
+    "/demo?surface=configuration",
   );
   if (REFEREE_ASSIGNMENTS_EXTENSION) productPaths.push(
     "/laboratorio-referee-platform?surface=confirmed",
@@ -1014,6 +1030,20 @@ try {
     }, "League Private Beta creation enabled after dependencies");
     assert.equal(betaCreationEnabled.snapshot.creationEnabled, true);
     if (CONFIGURATION_EXTENSION) {
+      await setRefereeFlags(platform, {
+        assignmentsEnabled: initialReferee.assignmentsEnabled,
+        clubRelationshipsEnabled: initialReferee.clubRelationshipsEnabled,
+        foundationEnabled: true,
+        marketplaceEnabled: initialReferee.marketplaceEnabled,
+        publicProfilesEnabled: initialReferee.publicProfilesEnabled,
+        selfServiceEnabled: initialReferee.selfServiceEnabled,
+      }, "Wave 5A staging Referee foundation dependency");
+      const assignmentEnabled = await setRefereeAssignmentBetaFlags(platform, {
+        assignmentPrivateBetaEnabled: true,
+        assignmentsEnabled: true,
+      }, "Wave 5A staging Referee Assignments dependency");
+      assert.equal(assignmentEnabled.snapshot.assignmentPrivateBetaEnabled, true);
+      assert.equal(assignmentEnabled.snapshot.assignmentsEnabled, true);
       const configurationEnabled = await setConfigurationFlags(platform, {
         configurationCenterEnabled: true,
         wizardV2Enabled: true,
@@ -1795,7 +1825,14 @@ try {
       payload: { seed: "r4b-staging-concurrent" },
     }),
   ]);
-  assert.equal(generationResults.filter(({ error }) => !error).length, 1);
+  const generationDiagnostic = generationResults.map(({ error }) => (
+    error ? `[${error.code ?? "UNKNOWN"}] ${error.message}` : "success"
+  )).join(" | ");
+  assert.equal(
+    generationResults.filter(({ error }) => !error).length,
+    1,
+    generationDiagnostic,
+  );
   assert.equal(generationResults.filter(({ error }) => error).length, 1);
   expectError(generationResults.find(({ error }) => error), /STALE_REVISION/, "PT409");
   const generated = generationResults.find(({ error }) => !error).data;
@@ -2088,6 +2125,14 @@ try {
             configurationCenterEnabled: initialFlagState.configuration.configurationCenterEnabled,
             wizardV2Enabled: initialFlagState.configuration.wizardV2Enabled,
           }, "Wave 5A staging restore"));
+          await bestEffort("restore-referee-assignment-beta", () => setRefereeAssignmentBetaFlags(
+            platform,
+            {
+              assignmentPrivateBetaEnabled: initialFlagState.referee.assignmentPrivateBetaEnabled,
+              assignmentsEnabled: initialFlagState.referee.assignmentsEnabled,
+            },
+            "Wave 5A staging Referee Assignments restore",
+          ));
         }
         await bestEffort("restore-private-beta", () => setBetaFlags(platform, {
           creationEnabled: initialFlagState.beta.creationEnabled,
