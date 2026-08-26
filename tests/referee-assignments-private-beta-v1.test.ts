@@ -16,6 +16,7 @@ const migrations = [
   "supabase/migrations/20260826014910_referee_assignment_private_beta_authority_v1.sql",
   "supabase/migrations/20260826014916_referee_match_officiating_commands_v1.sql",
   "supabase/migrations/20260826014920_referee_assignment_private_beta_access_v1.sql",
+  "supabase/migrations/20260826105132_referee_assignment_fk_index_hardening_v1.sql",
 ] as const;
 
 async function source(path: string) { return readFile(new URL(path, root), "utf8"); }
@@ -59,8 +60,12 @@ test("effective R4D schedules, one MAIN slot and referee overlaps fail closed", 
   assert.match(commands, /for update;[\s\S]*?REFEREE_ASSIGNMENT_NOT_FOUND/);
 });
 
-test("every Wave 4 foreign key has a covering index in the canonical schema migration", async () => {
-  const schema = await source(migrations[0]);
+test("every Wave 4 foreign key has a covering index and bounded index DDL", async () => {
+  const [schema, hardening] = await Promise.all([
+    source(migrations[0]),
+    source(migrations[4]),
+  ]);
+  const combined = `${schema}\n${hardening}`;
   for (const indexName of [
     "pachanga_referee_assignments_canonical_binding_idx",
     "pachanga_referee_assignments_competition_context_idx",
@@ -75,9 +80,24 @@ test("every Wave 4 foreign key has a covering index in the canonical schema migr
     "pachanga_referee_assignment_revisions_replaced_by_idx",
     "pachanga_referee_assignment_revisions_actor_idx",
     "pachanga_discipline_reporting_referee_idx",
+    "pachanga_referee_public_fee_consents_actor_idx",
+    "pachanga_referee_result_observations_match_idx",
+    "pachanga_referee_result_observations_creator_idx",
+    "pachanga_referee_result_observations_profile_idx",
+    "pachanga_referee_assignments_cancelled_by_idx",
+    "pachanga_referee_assignments_competition_idx",
+    "pachanga_referee_assignments_proposed_by_idx",
+    "pachanga_referee_assignments_replaced_by_idx",
+    "pachanga_referee_assignments_replacement_pending_idx",
+    "pachanga_referee_assignments_replaces_idx",
+    "pachanga_referee_assignments_requester_club_idx",
+    "pachanga_referee_assignments_requester_team_idx",
+    "pachanga_referee_assignments_source_group_idx",
   ]) {
-    assert.match(schema, new RegExp(`create index if not exists ${indexName}`));
+    assert.match(combined, new RegExp(`create index if not exists ${indexName}`));
   }
+  assert.match(hardening, /set local lock_timeout = '3s'/);
+  assert.match(hardening, /set local statement_timeout = '90s'/);
 });
 
 test("private terms are immutable evidence and never become Pachangas IQ payments", async () => {

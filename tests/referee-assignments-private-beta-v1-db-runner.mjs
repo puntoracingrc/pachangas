@@ -30,12 +30,13 @@ assert.ok(Number.isInteger(scaleDisciplinaryEventCount)
 const migrationNames = readdirSync(resolve(root, "supabase/migrations"))
   .filter((name) => /^\d{14}_.+\.sql$/.test(name))
   .sort();
-assert.equal(migrationNames.length, 151);
-assert.deepEqual(migrationNames.slice(-4), [
+assert.equal(migrationNames.length, 152);
+assert.deepEqual(migrationNames.slice(-5), [
   "20260826014905_referee_assignment_private_beta_schema_v1.sql",
   "20260826014910_referee_assignment_private_beta_authority_v1.sql",
   "20260826014916_referee_match_officiating_commands_v1.sql",
   "20260826014920_referee_assignment_private_beta_access_v1.sql",
+  "20260826105132_referee_assignment_fk_index_hardening_v1.sql",
 ]);
 
 function targetUrl() {
@@ -143,7 +144,7 @@ try {
     ...migrationNames
       .filter((name) => name.slice(0, 14) > manifest.absorbsThrough)
       .map((name) => resolve(root, "supabase/migrations", name)),
-  ], "install exact 151-migration Wave 4 ledger");
+  ], "install exact 152-migration Wave 4 ledger");
 
   const defaultState = JSON.parse(query(`
     select jsonb_build_object(

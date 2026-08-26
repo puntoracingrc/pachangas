@@ -27,6 +27,7 @@ const wave4Migrations = [
   "20260826014910_referee_assignment_private_beta_authority_v1.sql",
   "20260826014916_referee_match_officiating_commands_v1.sql",
   "20260826014920_referee_assignment_private_beta_access_v1.sql",
+  "20260826105132_referee_assignment_fk_index_hardening_v1.sql",
 ];
 const migrationNames = readdirSync(resolve(root, "supabase/migrations"))
   .filter((name) => /^\d{14}_.+\.sql$/.test(name))
@@ -40,9 +41,9 @@ const createdDatabases = new Set();
 if (!["127.0.0.1", "localhost", "::1", "[::1]"].includes(new URL(adminUrl).hostname)) {
   throw new Error("WAVE4_BOOTSTRAP_LOCAL_DATABASE_REQUIRED");
 }
-assert.equal(migrationNames.length, 151);
+assert.equal(migrationNames.length, 152);
 assert.equal(preWave4Migrations.length, 147);
-assert.deepEqual(migrationNames.slice(-4), wave4Migrations);
+assert.deepEqual(migrationNames.slice(-5), wave4Migrations);
 
 function run(binary, args, label) {
   const result = spawnSync(binary, args, {
@@ -289,7 +290,7 @@ try {
   apply(databaseNames.fresh, [
     resolve(root, manifest.baselinePath),
     ...incrementalMigrations.map((name) => resolve(root, "supabase/migrations", name)),
-  ], "install fresh exact 151-migration ledger");
+  ], "install fresh exact 152-migration ledger");
   recordLedger(databaseNames.fresh, migrationNames, "record fresh migration ledger");
 
   createDatabase(databaseNames.upgrade);
@@ -324,7 +325,7 @@ try {
   apply(
     databaseNames.upgrade,
     wave4Migrations.map((name) => resolve(root, "supabase/migrations", name)),
-    "upgrade exact 147 ledger to Wave 4 151",
+    "upgrade exact 147 ledger to Wave 4 152",
   );
   recordLedger(databaseNames.upgrade, wave4Migrations, "record Wave 4 migration ledger");
 
@@ -385,8 +386,8 @@ try {
     directAuthenticatedWrite: false,
     effectiveScheduleColumn: true,
     flagsOff: true,
-    lastMigration: "20260826014920",
-    ledger: 151,
+    lastMigration: "20260826105132",
+    ledger: 152,
     readFunction: true,
     revisionsTable: true,
     termsTable: true,

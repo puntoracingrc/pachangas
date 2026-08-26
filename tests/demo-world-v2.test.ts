@@ -56,7 +56,7 @@ test("Demo World V2 is deterministic and the committed snapshot matches its hash
     players: committed.players,
   };
   assert.equal(createHash("sha256").update(JSON.stringify(payload)).digest("hex"), committed.manifest.hash);
-  assert.equal(committed.manifest.hash, "ed8b30f19fda53d90d6dc75c540bcb454fc428616fc0995d9b02f8a5b9b31b2f");
+  assert.equal(committed.manifest.hash, "58074f1cf5892f5730fee4e3af4d62b44f8d551ee4f21f9ec07acebb46a65697");
   assert.equal(committed.manifest.version, 2.2);
   assert.equal(committed.manifest.seed, DEMO_WORLD_V2_SEED);
   assert.deepEqual(demoWorldV2IntegrityErrors(committed), []);
@@ -65,10 +65,10 @@ test("Demo World V2 is deterministic and the committed snapshot matches its hash
 test("the committed authority proof comes from deterministic PostgreSQL operations", async () => {
   const proof = assertDemoWorldV2AuthorityProof(loadDemoWorldV2AuthorityProof());
   const world = await committedSnapshot();
-  assert.equal(proof.authorityHash, "3087cf6b554f8517b2aff10452d883cb7ffbff52ba1c37f841625210f9f94b2b");
+  assert.equal(proof.authorityHash, "a11f5226f9f56ae3b60d0fc418128e3b9c3ab61393f7cd74a2261306174504be");
   assert.equal(proof.authorityHash, world.competitions.provenance.authorityHash);
   assert.equal(proof.database, "temporary-local-postgresql");
-  assert.equal(proof.migrationCount, 151);
+  assert.equal(proof.migrationCount, 152);
   assert.equal(proof.remoteWrites, 0);
   assert.deepEqual(proof.rpcFamilies, ["R1", "R3", "R4A", "R4B", "R4C", "R4D", "R5"]);
   assert.deepEqual(proof.operationReceipts, {
@@ -120,7 +120,7 @@ test("the protagonist League has the complete canonical R1-R5 graph including R3
   )));
   assert.deepEqual(league.provenance.rpcFamilies, ["R1", "R3", "R4A", "R4B", "R4C", "R4D", "R5"]);
   assert.equal(league.provenance.verified, true);
-  assert.equal(league.provenance.migrations, 151);
+  assert.equal(league.provenance.migrations, 152);
   assert.equal(league.competition.refereeAssignmentsEnabled, true);
 });
 

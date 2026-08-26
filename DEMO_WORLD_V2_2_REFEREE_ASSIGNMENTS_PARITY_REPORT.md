@@ -5,9 +5,9 @@
 - Version: `2.2`.
 - Seed: `pachangas-iq-demo-world-v2-2-2026-27`.
 - Fecha sintetica: `2027-03-18T18:00:00.000Z`.
-- Hash publico: `ed8b30f19fda53d90d6dc75c540bcb454fc428616fc0995d9b02f8a5b9b31b2f`.
-- Hash de autoridad PostgreSQL: `3087cf6b554f8517b2aff10452d883cb7ffbff52ba1c37f841625210f9f94b2b`.
-- Migraciones simuladas: 151.
+- Hash publico: `58074f1cf5892f5730fee4e3af4d62b44f8d551ee4f21f9ec07acebb46a65697`.
+- Hash de autoridad PostgreSQL: `a11f5226f9f56ae3b60d0fc418128e3b9c3ab61393f7cd74a2261306174504be`.
+- Migraciones simuladas: 152.
 - Escrituras remotas: 0.
 - Snapshot historico V2.1: conservado sin reescritura en
   `public/demo-world/v2-1/`.

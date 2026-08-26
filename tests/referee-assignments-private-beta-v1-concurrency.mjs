@@ -65,7 +65,7 @@ if (!["127.0.0.1", "localhost", "::1", "[::1]"].includes(new URL(adminUrl).hostn
 const migrations = readdirSync(resolve(root, "supabase/migrations"))
   .filter((name) => /^\d{14}_.+\.sql$/.test(name))
   .sort();
-assert.equal(migrations.length, 151);
+assert.equal(migrations.length, 152);
 
 function targetUrl(databaseName) {
   const value = new URL(adminUrl);
@@ -463,7 +463,7 @@ try {
   summaries.confirmVsScheduleChange = "schedule winner / stale confirmation / new schedule acceptance required";
   dropDatabase(databaseName);
 
-  process.stdout.write(`${JSON.stringify({ database: "temporary clones", migrations: 151, races: summaries })}\n`);
+  process.stdout.write(`${JSON.stringify({ database: "temporary clones", migrations: 152, races: summaries })}\n`);
 } finally {
   for (const databaseName of [...caseDatabases]) dropDatabase(databaseName);
   if (admin(`select count(*) from pg_database where datname=${quote(templateDatabase)}`, "find Wave 4 template") === "1") {
