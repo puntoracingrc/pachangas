@@ -182,6 +182,9 @@ test("staging Preview covers every Wave 4 product surface", async () => {
     "/gestion/arbitros",
     "/mercado?market=referees",
   ]) assert.match(staging, new RegExp(path.replace(/[?]/g, "\\?")));
+  assert.match(staging, /R4B_STAGING_PROTECTION_BYPASS/);
+  assert.match(staging, /"x-vercel-protection-bypass"/);
+  assert.match(staging, /redirect: "manual"/);
 });
 
 test("staging privacy uses a real player without manager authority", async () => {

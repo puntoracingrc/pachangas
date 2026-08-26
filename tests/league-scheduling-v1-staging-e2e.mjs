@@ -19,9 +19,12 @@ const env = {
   projectRef: process.env.R4B_STAGING_PROJECT_REF,
   confirmation: process.env.R4B_STAGING_CONFIRM,
   previewUrl: process.env.R4B_STAGING_PREVIEW_URL || null,
+  protectionBypass: process.env.R4B_STAGING_PROTECTION_BYPASS || null,
 };
 for (const [key, value] of Object.entries(env)) {
-  if (key !== "previewUrl" && !value) throw new Error(`R4B_STAGING_${key.toUpperCase()} is required`);
+  if (!["previewUrl", "protectionBypass"].includes(key) && !value) {
+    throw new Error(`R4B_STAGING_${key.toUpperCase()} is required`);
+  }
 }
 const actualProjectRef = new URL(env.url).hostname.split(".")[0];
 if (
@@ -744,6 +747,7 @@ async function verifyPreview(accessToken, competitionId, planId) {
   }
   const previewHeaders = {
     Authorization: `Bearer ${accessToken}`,
+    ...(env.protectionBypass ? { "x-vercel-protection-bypass": env.protectionBypass } : {}),
     ...(previewCookie ? { Cookie: previewCookie } : {}),
   };
   const productPaths = [
@@ -761,6 +765,7 @@ async function verifyPreview(accessToken, competitionId, planId) {
     const response = await fetch(new URL(path, origin), {
       cache: "no-store",
       headers: previewHeaders,
+      redirect: "manual",
     });
     assert.equal(response.ok, true, `${path} did not load in Preview`);
     assert.doesNotMatch(await response.text(), /SUPABASE_SERVICE_ROLE_KEY|qonbngfrnrqgmxbdfbea/i);
@@ -768,6 +773,7 @@ async function verifyPreview(accessToken, competitionId, planId) {
   const response = await fetch(new URL(`/api/competitions/scheduling/workbench/${planId}`, origin), {
     cache: "no-store",
     headers: previewHeaders,
+    redirect: "manual",
   });
   assert.equal(response.ok, true, await response.text());
   assert.equal(response.headers.get("cache-control")?.includes("no-store"), true);
