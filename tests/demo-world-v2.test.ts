@@ -25,22 +25,24 @@ import { generateDemoWorldV2 } from "../scripts/demo-world/generate-demo-world-v
 const root = process.cwd();
 const publicRoot = path.join(root, "public/demo-world/v2");
 const historicalV21Root = path.join(root, "public/demo-world/v2-1");
+const historicalV22Root = path.join(root, "public/demo-world/v2-2");
 
 async function jsonFile<T>(name: string): Promise<T> {
   return JSON.parse(await readFile(path.join(publicRoot, name), "utf8")) as T;
 }
 
 async function committedSnapshot(): Promise<DemoWorldV2Snapshot> {
-  const [activity, clubsReferees, competitions, core, manifest, matches, players] = await Promise.all([
+  const [activity, clubsReferees, competitions, configuration, core, manifest, matches, players] = await Promise.all([
     jsonFile<DemoWorldV2Snapshot["activity"]>("activity.json"),
     jsonFile<DemoWorldV2Snapshot["clubsReferees"]>("clubs-referees.json"),
     jsonFile<DemoWorldV2Snapshot["competitions"]>("competitions.json"),
+    jsonFile<DemoWorldV2Snapshot["configuration"]>("configuration.json"),
     jsonFile<DemoWorldV2Snapshot["core"]>("core.json"),
     jsonFile<DemoWorldV2Snapshot["manifest"]>("manifest.json"),
     jsonFile<DemoWorldV2Snapshot["matches"]>("matches.json"),
     jsonFile<DemoWorldV2Snapshot["players"]>("players.json"),
   ]);
-  return { activity, clubsReferees, competitions, core, manifest, matches, players };
+  return { activity, clubsReferees, competitions, configuration, core, manifest, matches, players };
 }
 
 test("Demo World V2 is deterministic and the committed snapshot matches its hash", async () => {
@@ -51,13 +53,14 @@ test("Demo World V2 is deterministic and the committed snapshot matches its hash
     activity: committed.activity,
     clubsReferees: committed.clubsReferees,
     competitions: committed.competitions,
+    configuration: committed.configuration,
     core: committed.core,
     matches: committed.matches,
     players: committed.players,
   };
   assert.equal(createHash("sha256").update(JSON.stringify(payload)).digest("hex"), committed.manifest.hash);
-  assert.equal(committed.manifest.hash, "58074f1cf5892f5730fee4e3af4d62b44f8d551ee4f21f9ec07acebb46a65697");
-  assert.equal(committed.manifest.version, 2.2);
+  assert.equal(committed.manifest.hash, "9dca7d56ef77a17fbc3b625a89bfcd44096afa8e1a0420689531b6573b3bc170");
+  assert.equal(committed.manifest.version, 2.3);
   assert.equal(committed.manifest.seed, DEMO_WORLD_V2_SEED);
   assert.deepEqual(demoWorldV2IntegrityErrors(committed), []);
 });
@@ -65,10 +68,10 @@ test("Demo World V2 is deterministic and the committed snapshot matches its hash
 test("the committed authority proof comes from deterministic PostgreSQL operations", async () => {
   const proof = assertDemoWorldV2AuthorityProof(loadDemoWorldV2AuthorityProof());
   const world = await committedSnapshot();
-  assert.equal(proof.authorityHash, "a11f5226f9f56ae3b60d0fc418128e3b9c3ab61393f7cd74a2261306174504be");
+  assert.equal(proof.authorityHash, "9f016b51e530b01b71f770da7b586a78add043f5231a32793460163376eab3ff");
   assert.equal(proof.authorityHash, world.competitions.provenance.authorityHash);
   assert.equal(proof.database, "temporary-local-postgresql");
-  assert.equal(proof.migrationCount, 152);
+  assert.equal(proof.migrationCount, 158);
   assert.equal(proof.remoteWrites, 0);
   assert.deepEqual(proof.rpcFamilies, ["R1", "R3", "R4A", "R4B", "R4C", "R4D", "R5"]);
   assert.deepEqual(proof.operationReceipts, {
@@ -80,6 +83,13 @@ test("the committed authority proof comes from deterministic PostgreSQL operatio
     refereePlatform: 80,
     scheduling: 5,
   });
+  assert.equal(proof.configuration.operationReceipts, 8);
+  assert.equal(proof.configuration.revisions.length, 2);
+  assert.equal(proof.configuration.revisions[0]?.source, "LEAGUE_WIZARD_V2");
+  assert.equal(proof.configuration.revisions[1]?.source, "COMPETITION_CONFIGURATION_CENTER_V1");
+  assert.deepEqual(proof.configuration.comparator.changedSections, ["discipline", "incidents", "match", "referees", "scoring"]);
+  assert.deepEqual(proof.configuration.r5CatalogCodes, ["YELLOW", "RED", "BLUE"]);
+  assert.doesNotMatch(JSON.stringify(proof.configuration), /fixedCents/);
   assert.equal(proof.matches.length, world.competitions.matches.length);
   assert.deepEqual(
     proof.standings.map(({ entryNumber, ...row }) => ({ ...row, entryId: `demo_league_entry_${String(entryNumber).padStart(3, "0")}` })),
@@ -120,7 +130,7 @@ test("the protagonist League has the complete canonical R1-R5 graph including R3
   )));
   assert.deepEqual(league.provenance.rpcFamilies, ["R1", "R3", "R4A", "R4B", "R4C", "R4D", "R5"]);
   assert.equal(league.provenance.verified, true);
-  assert.equal(league.provenance.migrations, 152);
+  assert.equal(league.provenance.migrations, 158);
   assert.equal(league.competition.refereeAssignmentsEnabled, true);
 });
 
@@ -240,13 +250,58 @@ test("Clubs, referee profiles and assignment read models form one public-safe gr
   assert.ok(world.clubsReferees.referees.some(({ publicFee }) => publicFee?.feeMode === "VOLUNTEER"));
 });
 
-test("the historical V2.1 snapshot remains immutable beside V2.2", async () => {
+test("V2.3 configuration parity exposes two canonical revisions without private referee terms", async () => {
+  const world = await committedSnapshot();
+  const configuration = world.configuration;
+  assert.equal(configuration.readOnly, true);
+  assert.deepEqual(configuration.transport, { methods: ["GET"], remoteWrites: 0 });
+  assert.equal(configuration.currentEditionRevision, 2);
+  assert.equal(configuration.health.complete, true);
+  assert.equal(configuration.health.errors, 0);
+  assert.deepEqual(configuration.comparator.changedSections, ["discipline", "incidents", "match", "referees", "scoring"]);
+  const [standard, custom] = configuration.revisions;
+  assert.deepEqual({
+    blue: standard?.blueEnabled,
+    duration: standard?.matchDurationMinutes,
+    fee: standard?.feeMode,
+    mode: standard?.authoringMode,
+    noShow: standard?.noShowWinnerScore,
+    referee: standard?.refereeUsage,
+    win: standard?.pointsForWin,
+    yellow: standard?.yellowThreshold,
+  }, { blue: false, duration: 70, fee: "NEGOTIABLE", mode: "SIMPLE", noShow: 3, referee: "OPTIONAL", win: 3, yellow: 3 });
+  assert.deepEqual({
+    blue: custom?.blueEnabled,
+    duration: custom?.matchDurationMinutes,
+    fee: custom?.feeMode,
+    mode: custom?.authoringMode,
+    noShow: custom?.noShowWinnerScore,
+    referee: custom?.refereeUsage,
+    win: custom?.pointsForWin,
+    yellow: custom?.yellowThreshold,
+  }, { blue: true, duration: 80, fee: "FIXED", mode: "ADVANCED", noShow: 4, referee: "REQUIRED", win: 2, yellow: 4 });
+  assert.deepEqual(configuration.engineConsumption.r5CatalogCodes, ["YELLOW", "RED", "BLUE"]);
+  assert.equal(configuration.engineConsumption.refereePolicy.publicConsent, false);
+  assert.equal(configuration.futureCapabilities.automaticRoundRobin, true);
+  assert.equal(configuration.futureCapabilities.manualAssistedPairing, false);
+  assert.equal(configuration.futureCapabilities.hybridPairing, false);
+  assert.equal(configuration.futureCapabilities.payments, false);
+  assert.equal(configuration.futureCapabilities.tournaments, false);
+  assert.doesNotMatch(JSON.stringify(configuration), /fixedCents|privateTerms|proposedFee|agreedFee/);
+});
+
+test("the historical V2.1 and V2.2 snapshots remain immutable beside V2.3", async () => {
   const expectedFiles = ["activity.json", "clubs-referees.json", "competitions.json", "core.json", "manifest.json", "matches.json", "players.json"];
   await Promise.all(expectedFiles.map((name) => readFile(path.join(historicalV21Root, name), "utf8")));
   const manifest = JSON.parse(await readFile(path.join(historicalV21Root, "manifest.json"), "utf8")) as Record<string, unknown>;
   assert.equal(manifest.version, 2.1);
   assert.equal(manifest.seed, "pachangas-iq-demo-world-v2-1-2026-27");
   assert.equal(manifest.hash, "0eae1613e2d84fdd5f0821cfc2f7ad77b7bc4193a6c50ee3d58c0431ee493a51");
+  await Promise.all(expectedFiles.map((name) => readFile(path.join(historicalV22Root, name), "utf8")));
+  const v22Manifest = JSON.parse(await readFile(path.join(historicalV22Root, "manifest.json"), "utf8")) as Record<string, unknown>;
+  assert.equal(v22Manifest.version, 2.2);
+  assert.equal(v22Manifest.seed, "pachangas-iq-demo-world-v2-2-2026-27");
+  assert.equal(v22Manifest.hash, "58074f1cf5892f5730fee4e3af4d62b44f8d551ee4f21f9ec07acebb46a65697");
 });
 
 test("V2 chunks stay lazy, GET-only and converge to the validated snapshot", async () => {
@@ -266,7 +321,7 @@ test("V2 chunks stay lazy, GET-only and converge to the validated snapshot", asy
     assert.match(requested[0]!, /core\.json/);
     const loaded = await loadDemoWorldV2Snapshot(world.manifest, core);
     assert.deepEqual(loaded, world);
-    assert.equal(requested.length, 6);
+    assert.equal(requested.length, 7);
     assert.ok(requested.every((url) => /\?h=[0-9a-f]{16}$/.test(url)));
   } finally {
     globalThis.fetch = originalFetch;
@@ -284,7 +339,7 @@ test("the public Demo uses production renderers in one shell and exposes all V2 
     readFile(path.join(root, "app/clubes/[slug]/public-club-profile.tsx"), "utf8"),
     readFile(path.join(root, "app/demo-world/demo-world.module.css"), "utf8"),
   ]);
-  for (const label of ["Liga", "Clasificación", "Jornadas", "Disciplina", "Club", "Árbitros"]) assert.match(appSource, new RegExp(`label: "${label}"`));
+  for (const label of ["Liga", "Configuración", "Clasificación", "Jornadas", "Disciplina", "Club", "Árbitros"]) assert.match(appSource, new RegExp(`label: "${label}"`));
   assert.match(appSource, /LeagueSchedulingClient embedded/);
   assert.match(appSource, /onOpenMatch=\{\(canonicalMatchId\)/);
   assert.match(appSource, /entry\.canonicalMatchId === canonicalMatchId/);
@@ -300,6 +355,8 @@ test("the public Demo uses production renderers in one shell and exposes all V2 
   assert.doesNotMatch(matchSource, /no disponible hasta R5/);
   assert.match(appSource, /PublicClubProfile club=.*embedded/);
   assert.match(appSource, /RefereeProfileCard compact/);
+  assert.match(appSource, /data-demo-domain="configuration" data-demo-read-only="true"/);
+  assert.match(appSource, /Tarifa fija privada/);
   assert.match(appSource, /const domainNavRef = useRef<HTMLElement>\(null\)/);
   assert.match(appSource, /navigation\.scrollWidth <= navigation\.clientWidth \+ 2/);
   assert.match(appSource, /scrollIntoView\(\{ behavior: "auto", block: "nearest", inline: "center" \}\)/);
@@ -314,7 +371,9 @@ test("the public Demo uses production renderers in one shell and exposes all V2 
   assert.match(demoStyles, /\.leagueHero \{ min-height: calc\(100dvh - var\(--game-nav-height, 48px\) - 36px\)/);
   assert.match(demoStyles, /\.demoProductView \{[\s\S]*--official-text: #f1f6f2;/);
   assert.match(demoStyles, /\.demoProductView \.demoDomainHeading h1 \{[\s\S]*color: var\(--official-text\);/);
+  assert.match(demoStyles, /\.configurationRevisionGrid \{/);
   assert.equal(demoWorldV2TabFromSearch("?tab=clasificacion"), "clasificacion");
+  assert.equal(demoWorldV2TabFromSearch("?tab=configuracion"), "configuracion");
   assert.equal(demoWorldV2TabFromSearch("?tab=disciplina"), "disciplina");
   assert.equal(demoWorldV2TabFromSearch("?tab=desconocido"), "inicio");
 });
@@ -322,7 +381,7 @@ test("the public Demo uses production renderers in one shell and exposes all V2 
 test("the V2 public bundle contains no PII, remote write path or product mutation", async () => {
   const world = await committedSnapshot();
   const serialized = JSON.stringify(world).toLowerCase();
-  for (const forbidden of ["@example", "service_role", "access_token", "refresh_token", "phone", "telephone", "private_address"]) {
+  for (const forbidden of ["@example", "service_role", "access_token", "refresh_token", "phone", "telephone", "private_address", "fixedcents"]) {
     assert.doesNotMatch(serialized, new RegExp(forbidden));
   }
   const sources = await Promise.all([

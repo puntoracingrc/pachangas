@@ -21,13 +21,14 @@ import {
   type DemoWorldSnapshot,
 } from "./demo-world-contract";
 
-export const DEMO_WORLD_V2_VERSION = 2.2 as const;
-export const DEMO_WORLD_V2_SEED = "pachangas-iq-demo-world-v2-2-2026-27" as const;
+export const DEMO_WORLD_V2_VERSION = 2.3 as const;
+export const DEMO_WORLD_V2_SEED = "pachangas-iq-demo-world-v2-3-2026-27" as const;
 
 export type DemoWorldV2PrimaryTab = DemoWorldPrimaryTab
   | "arbitros"
   | "clasificacion"
   | "club"
+  | "configuracion"
   | "disciplina"
   | "jornadas"
   | "liga";
@@ -37,6 +38,7 @@ export type DemoWorldV2Manifest = {
     activity: string;
     clubsReferees: string;
     competitions: string;
+    configuration: string;
     core: string;
     matches: string;
     players: string;
@@ -51,6 +53,7 @@ export type DemoWorldV2Manifest = {
     notifications: number;
     players: number;
     referees: number;
+    ruleRevisions: number;
     rewardBoxes: number;
     rounds: number;
     stories: number;
@@ -236,10 +239,85 @@ export type DemoWorldV2ClubsRefereesChunk = {
   }>;
 };
 
+export type DemoWorldV2ConfigurationRevision = {
+  authoringMode: "ADVANCED" | "SIMPLE";
+  blueEnabled: boolean;
+  cardCodes: Array<"BLUE" | "RED" | "YELLOW">;
+  checksum: string;
+  effectiveScope: "future_only" | "future_stage";
+  feeMode: "FIXED" | "FREE" | "NEGOTIABLE" | "VOLUNTEER";
+  feePublicConsent: boolean;
+  healthComplete: boolean;
+  humanDocumentVerified: boolean;
+  matchDurationMinutes: number;
+  noShowLoserScore: number;
+  noShowWinnerScore: number;
+  pointsForDraw: number;
+  pointsForLoss: number;
+  pointsForWin: number;
+  postponementResponseDeadlineHours: number;
+  refereeRequiredBeforeReady: boolean;
+  refereeUsage: "NONE" | "OPTIONAL" | "REQUIRED";
+  revision: number;
+  source: "COMPETITION_CONFIGURATION_CENTER_V1" | "LEAGUE_WIZARD_V2";
+  sourcePresetId: string | null;
+  status: "frozen";
+  yellowThreshold: number;
+};
+
+export type DemoWorldV2ConfigurationChunk = {
+  comparator: {
+    baseRevision: 1;
+    changedSections: string[];
+    targetRevision: 2;
+  };
+  competitionName: "Liga Wave 5A";
+  currentEditionRevision: 2;
+  engineConsumption: {
+    r5CatalogCodes: Array<"BLUE" | "RED" | "YELLOW">;
+    refereePolicy: {
+      feeMode: "FIXED";
+      publicConsent: false;
+      requiredBeforeReady: true;
+      usage: "REQUIRED";
+    };
+  };
+  futureCapabilities: {
+    automaticRoundRobin: true;
+    discipline: boolean;
+    hybridPairing: false;
+    manualAssistedPairing: false;
+    payments: false;
+    refereeAssignments: boolean;
+    tournaments: false;
+  };
+  health: {
+    complete: true;
+    errors: 0;
+    globallyDisabled: string[];
+    status: "complete";
+    warnings: number;
+  };
+  provenance: {
+    authorityHash: string;
+    database: "temporary-local-postgresql";
+    operationReceipts: number;
+    source: "simulation-world";
+    verified: true;
+  };
+  readOnly: true;
+  revisions: DemoWorldV2ConfigurationRevision[];
+  transport: {
+    methods: ["GET"];
+    remoteWrites: 0;
+  };
+};
+
 export type DemoWorldV2Snapshot = {
   activity: DemoWorldActivityChunk;
   clubsReferees: DemoWorldV2ClubsRefereesChunk;
   competitions: DemoWorldV2CompetitionChunk;
+  configuration: DemoWorldV2ConfigurationChunk;
   core: DemoWorldCoreChunk;
   manifest: DemoWorldV2Manifest;
   matches: DemoWorldMatchesChunk;
@@ -303,6 +381,7 @@ export function computeDemoWorldV2Standings(
 export function demoWorldV2IntegrityErrors(snapshot: DemoWorldV2Snapshot): string[] {
   const errors = demoWorldIntegrityErrors(snapshot as unknown as DemoWorldSnapshot);
   const competition = snapshot.competitions;
+  const configuration = snapshot.configuration;
   const teamIds = new Set(snapshot.core.teams.map(({ id }) => id));
   const playerIds = new Set(snapshot.players.players.map(({ id }) => id));
   const entryIds = new Set(competition.entries.map(({ id }) => id));
@@ -319,6 +398,54 @@ export function demoWorldV2IntegrityErrors(snapshot: DemoWorldV2Snapshot): strin
   if (!snapshot.clubsReferees.refereeAssignmentsEnabled
       || !competition.competition.refereeAssignmentsEnabled) {
     errors.push("Demo World V2.2 referee assignments must be enabled");
+  }
+  if (configuration.revisions.length !== 2
+      || configuration.currentEditionRevision !== 2
+      || configuration.transport.remoteWrites !== 0
+      || configuration.transport.methods.join(",") !== "GET"
+      || !configuration.readOnly
+      || !configuration.provenance.verified
+      || configuration.provenance.authorityHash !== competition.provenance.authorityHash) {
+    errors.push("Demo World V2.3 configuration authority is invalid");
+  }
+  const [standardConfiguration, customConfiguration] = configuration.revisions;
+  if (!standardConfiguration || !customConfiguration
+      || standardConfiguration.authoringMode !== "SIMPLE"
+      || standardConfiguration.matchDurationMinutes !== 70
+      || standardConfiguration.pointsForWin !== 3
+      || standardConfiguration.yellowThreshold !== 3
+      || standardConfiguration.blueEnabled
+      || standardConfiguration.refereeUsage !== "OPTIONAL"
+      || standardConfiguration.feeMode !== "NEGOTIABLE"
+      || customConfiguration.authoringMode !== "ADVANCED"
+      || customConfiguration.matchDurationMinutes !== 80
+      || customConfiguration.pointsForWin !== 2
+      || customConfiguration.yellowThreshold !== 4
+      || !customConfiguration.blueEnabled
+      || customConfiguration.refereeUsage !== "REQUIRED"
+      || customConfiguration.feeMode !== "FIXED"
+      || customConfiguration.feePublicConsent
+      || !configuration.comparator.changedSections.includes("discipline")
+      || !configuration.comparator.changedSections.includes("referees")) {
+    errors.push("Demo World V2.3 configuration comparison is invalid");
+  }
+  if (!configuration.health.complete
+      || configuration.health.errors !== 0
+      || configuration.engineConsumption.r5CatalogCodes.join(",") !== "YELLOW,RED,BLUE"
+      || configuration.revisions.some(({ healthComplete, humanDocumentVerified }) => (
+        !healthComplete || !humanDocumentVerified
+      ))) {
+    errors.push("Demo World V2.3 health or engine consumption is invalid");
+  }
+  if (configuration.futureCapabilities.payments
+      || configuration.futureCapabilities.tournaments
+      || configuration.futureCapabilities.manualAssistedPairing
+      || configuration.futureCapabilities.hybridPairing
+      || !configuration.futureCapabilities.automaticRoundRobin) {
+    errors.push("Demo World V2.3 exposes an unavailable competition capability");
+  }
+  if (JSON.stringify(configuration).includes("fixedCents")) {
+    errors.push("Demo World V2.3 leaked a private referee fee");
   }
   const assignmentItems = Array.isArray(snapshot.clubsReferees.refereeAssignmentPreview.items)
     ? snapshot.clubsReferees.refereeAssignmentPreview.items as Record<string, unknown>[]

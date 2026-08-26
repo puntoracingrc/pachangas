@@ -27,17 +27,19 @@ assert.ok(Number.isInteger(scaleAssignmentCount) && scaleAssignmentCount >= 1 &&
 assert.ok(Number.isInteger(scaleDisciplinaryEventCount)
   && scaleDisciplinaryEventCount >= 1 && scaleDisciplinaryEventCount <= 50000);
 
-const migrationNames = readdirSync(resolve(root, "supabase/migrations"))
+const allMigrationNames = readdirSync(resolve(root, "supabase/migrations"))
   .filter((name) => /^\d{14}_.+\.sql$/.test(name))
   .sort();
-assert.equal(migrationNames.length, 152);
-assert.deepEqual(migrationNames.slice(-5), [
+const assignmentMigrations = [
   "20260826014905_referee_assignment_private_beta_schema_v1.sql",
   "20260826014910_referee_assignment_private_beta_authority_v1.sql",
   "20260826014916_referee_match_officiating_commands_v1.sql",
   "20260826014920_referee_assignment_private_beta_access_v1.sql",
   "20260826105132_referee_assignment_fk_index_hardening_v1.sql",
-]);
+];
+const assignmentBoundary = assignmentMigrations.at(-1);
+const migrationNames = allMigrationNames.filter((name) => name <= assignmentBoundary);
+assert.deepEqual(migrationNames.slice(-5), assignmentMigrations);
 
 function targetUrl() {
   const value = new URL(adminUrl);

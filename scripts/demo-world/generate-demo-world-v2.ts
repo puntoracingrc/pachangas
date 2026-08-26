@@ -11,6 +11,7 @@ import {
   computeDemoWorldV2Standings,
   type DemoWorldV2ClubsRefereesChunk,
   type DemoWorldV2CompetitionChunk,
+  type DemoWorldV2ConfigurationChunk,
   type DemoWorldV2LeagueEntry,
   type DemoWorldV2LeagueMatch,
   type DemoWorldV2Manifest,
@@ -741,6 +742,36 @@ function buildClubsReferees(
   };
 }
 
+function buildConfiguration(
+  authorityProof: DemoWorldV2AuthorityProof,
+): DemoWorldV2ConfigurationChunk {
+  const configuration = authorityProof.configuration;
+  return {
+    comparator: structuredClone(configuration.comparator),
+    competitionName: configuration.competitionName,
+    currentEditionRevision: configuration.currentEditionRevision,
+    engineConsumption: {
+      r5CatalogCodes: structuredClone(configuration.r5CatalogCodes),
+      refereePolicy: structuredClone(configuration.refereePolicyConsumed),
+    },
+    futureCapabilities: {
+      automaticRoundRobin: true,
+      ...structuredClone(configuration.futureCapabilities),
+    },
+    health: structuredClone(configuration.health),
+    provenance: {
+      authorityHash: authorityProof.authorityHash,
+      database: authorityProof.database,
+      operationReceipts: configuration.operationReceipts,
+      source: "simulation-world",
+      verified: true,
+    },
+    readOnly: true,
+    revisions: structuredClone(configuration.revisions),
+    transport: { methods: ["GET"], remoteWrites: 0 },
+  };
+}
+
 export function generateDemoWorldV2(
   authorityProof = loadDemoWorldV2AuthorityProof(),
 ): DemoWorldV2Snapshot {
@@ -751,6 +782,7 @@ export function generateDemoWorldV2(
     authorityProof,
     competitions.refereeAssignmentDeskPreview,
   );
+  const configuration = buildConfiguration(authorityProof);
   const activity = structuredClone(v1.activity);
   const core = structuredClone(v1.core);
   const matches = structuredClone(v1.matches);
@@ -763,7 +795,7 @@ export function generateDemoWorldV2(
     summary: "Consulta la competición y sus decisiones públicas sin alterar el snapshot.",
     teamId: "demo_team_001",
   });
-  const payload = { activity, clubsReferees, competitions, core, matches, players };
+  const payload = { activity, clubsReferees, competitions, configuration, core, matches, players };
   const snapshotHash = hash(payload);
   const cacheKey = snapshotHash.slice(0, 16);
   const manifest: DemoWorldV2Manifest = {
@@ -771,6 +803,7 @@ export function generateDemoWorldV2(
       activity: `/demo-world/v2/activity.json?h=${cacheKey}`,
       clubsReferees: `/demo-world/v2/clubs-referees.json?h=${cacheKey}`,
       competitions: `/demo-world/v2/competitions.json?h=${cacheKey}`,
+      configuration: `/demo-world/v2/configuration.json?h=${cacheKey}`,
       core: `/demo-world/v2/core.json?h=${cacheKey}`,
       matches: `/demo-world/v2/matches.json?h=${cacheKey}`,
       players: `/demo-world/v2/players.json?h=${cacheKey}`,
@@ -785,6 +818,7 @@ export function generateDemoWorldV2(
       notifications: activity.notifications.length,
       players: players.players.length,
       referees: clubsReferees.referees.length,
+      ruleRevisions: configuration.revisions.length,
       rewardBoxes: activity.rewardBoxes.length,
       rounds: competitions.rounds.length,
       stories: core.stories.length,
@@ -807,6 +841,7 @@ export async function writeDemoWorldV2(snapshot: DemoWorldV2Snapshot, outputDire
     "activity.json": snapshot.activity,
     "clubs-referees.json": snapshot.clubsReferees,
     "competitions.json": snapshot.competitions,
+    "configuration.json": snapshot.configuration,
     "core.json": snapshot.core,
     "manifest.json": snapshot.manifest,
     "matches.json": snapshot.matches,
@@ -826,6 +861,7 @@ async function main() {
     activity: snapshot.activity,
     clubsReferees: snapshot.clubsReferees,
     competitions: snapshot.competitions,
+    configuration: snapshot.configuration,
     core: snapshot.core,
     matches: snapshot.matches,
     players: snapshot.players,

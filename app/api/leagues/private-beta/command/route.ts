@@ -31,7 +31,7 @@ export async function POST(request: Request) {
       || expectedRevision < 0) {
       throw new Error("INVALID_LEAGUE_BETA_ENVELOPE");
     }
-    const result = await client.rpc("command_pachanga_league_private_beta_v1", {
+    const result = await client.rpc("command_pachanga_league_private_beta_v2", {
       aggregate_id: aggregateId,
       client_metadata: leagueBetaClientMetadata(request, "league_private_beta_wizard"),
       command_action: action,

@@ -2,6 +2,7 @@ import {
   assertDemoWorldV2Snapshot,
   type DemoWorldV2ClubsRefereesChunk,
   type DemoWorldV2CompetitionChunk,
+  type DemoWorldV2ConfigurationChunk,
   type DemoWorldV2Manifest,
   type DemoWorldV2PrimaryTab,
   type DemoWorldV2Snapshot,
@@ -21,6 +22,7 @@ const tabs: DemoWorldV2PrimaryTab[] = [
   "perfil",
   "liga",
   "clasificacion",
+  "configuracion",
   "jornadas",
   "club",
   "arbitros",
@@ -50,13 +52,14 @@ export async function loadDemoWorldV2Snapshot(
   manifest: DemoWorldV2Manifest,
   loadedCore?: DemoWorldCoreChunk,
 ): Promise<DemoWorldV2Snapshot> {
-  const [activity, clubsReferees, competitions, core, matches, players] = await Promise.all([
+  const [activity, clubsReferees, competitions, configuration, core, matches, players] = await Promise.all([
     loadChunk<DemoWorldActivityChunk>(manifest.chunks.activity),
     loadChunk<DemoWorldV2ClubsRefereesChunk>(manifest.chunks.clubsReferees),
     loadChunk<DemoWorldV2CompetitionChunk>(manifest.chunks.competitions),
+    loadChunk<DemoWorldV2ConfigurationChunk>(manifest.chunks.configuration),
     loadedCore ? Promise.resolve(loadedCore) : loadDemoWorldV2Core(manifest),
     loadChunk<DemoWorldMatchesChunk>(manifest.chunks.matches),
     loadChunk<DemoWorldPlayersChunk>(manifest.chunks.players),
   ]);
-  return assertDemoWorldV2Snapshot({ activity, clubsReferees, competitions, core, manifest, matches, players });
+  return assertDemoWorldV2Snapshot({ activity, clubsReferees, competitions, configuration, core, manifest, matches, players });
 }

@@ -723,6 +723,21 @@ export async function getPlatformLeaguePrivateBeta(
   };
 }
 
+export async function getPlatformCompetitionConfiguration(session: VerifiedPlatformSession) {
+  const data = await rpcOrThrow<JsonRecord>(
+    session.client,
+    "get_pachanga_platform_competition_configuration_v1",
+  );
+  return {
+    drafts: asArray(data.drafts).map(asRecord),
+    events: asArray(data.events).map(asRecord),
+    flags: asRecord(data.flags),
+    metrics: asRecord(data.metrics),
+    revisions: asArray(data.revisions).map(asRecord),
+    unavailable: asArray(data.unavailable).map(String),
+  };
+}
+
 export async function getPlatformClubs(
   session: VerifiedPlatformSession,
   page: number,

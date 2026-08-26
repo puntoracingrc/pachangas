@@ -13,11 +13,17 @@ import {
   leagueBetaStatusTone,
   leagueBetaText,
   leaguePrivateBetaCacheVersion,
+  leaguePrivateBetaPresets,
   leaguePrivateBetaRealtimeTable,
   leaguePrivateBetaSteps,
   type LeaguePrivateBetaAction,
   type LeaguePrivateBetaJson,
 } from "../league-private-beta-contract";
+import {
+  CompetitionConfigurationFields,
+  competitionConfigurationStepPayload,
+  type CompetitionAuthoringMode,
+} from "./competition-configuration-fields";
 import { OfficialProductShellV2 } from "./official-product-shell-v2";
 import {
   GamePageHeader,
@@ -82,7 +88,7 @@ function formBoolean(form: FormData, key: string) {
   return form.get(key) === "on";
 }
 
-function stepPayload(step: number, form: FormData): LeaguePrivateBetaJson {
+function stepPayload(step: number, form: FormData, current: LeaguePrivateBetaJson): LeaguePrivateBetaJson {
   if (step === 1) return {
     description: formText(form, "description"),
     generalArea: formText(form, "generalArea"),
@@ -143,17 +149,14 @@ function stepPayload(step: number, form: FormData): LeaguePrivateBetaJson {
     postponementDeadlinePolicy: formText(form, "postponementDeadlinePolicy"),
     postponementResponseDeadlineHours: formNumber(form, "postponementResponseDeadlineHours"),
   };
-  return {
-    acknowledgeUnavailableFeatures: formBoolean(form, "acknowledgeUnavailableFeatures"),
-    consent: formBoolean(form, "consent"),
-  };
+  return competitionConfigurationStepPayload(step, form, current);
 }
 
 function value(step: LeaguePrivateBetaJson, key: string, fallback: string | number | boolean) {
   return step[key] ?? fallback;
 }
 
-function WizardFields({ data, step }: { data: LeaguePrivateBetaJson; step: number }) {
+function WizardFields({ data, mode, step }: { data: LeaguePrivateBetaJson; mode: CompetitionAuthoringMode; step: number }) {
   if (step === 1) return <>
     <label>Nombre<input name="name" required maxLength={120} defaultValue={String(value(data, "name", "Liga privada"))} /></label>
     <label>Slug privado<input name="slug" required maxLength={80} pattern="[a-z0-9]+(?:-[a-z0-9]+)*" defaultValue={String(value(data, "slug", "liga-privada"))} /></label>
@@ -211,15 +214,7 @@ function WizardFields({ data, step }: { data: LeaguePrivateBetaJson; step: numbe
     <label>Marcador ganador no-show<input name="noShowWinnerScore" type="number" min={0} max={99} defaultValue={Number(value(data, "noShowWinnerScore", 3))} /></label>
     <label>Marcador perdedor no-show<input name="noShowLoserScore" type="number" min={0} max={99} defaultValue={Number(value(data, "noShowLoserScore", 0))} /></label>
   </>;
-  return <>
-    <div className={styles.summaryBox}>
-      <strong>Antes de crear</strong>
-      <span>Reglas propias congeladas</span><span>Invitaciones privadas</span><span>Resultados bilaterales</span><span>Clasificación auditable</span>
-    </div>
-    <div className={styles.unavailable}><strong>No disponible en esta beta</strong><span>Tarjetas y sanciones</span><span>Asignación de árbitros</span><span>Pagos</span><span>Torneos</span></div>
-    <label className={`${styles.check} ${styles.wide}`}><input name="acknowledgeUnavailableFeatures" type="checkbox" required defaultChecked={Boolean(value(data, "acknowledgeUnavailableFeatures", false))} />Entiendo qué funciones no están disponibles.</label>
-    <label className={`${styles.check} ${styles.wide}`}><input name="consent" type="checkbox" required defaultChecked={Boolean(value(data, "consent", false))} />Confirmo el reglamento y autorizo la creación canónica.</label>
-  </>;
+  return <CompetitionConfigurationFields data={data} mode={mode} step={step} />;
 }
 
 export function LeaguePrivateBetaClient() {
@@ -232,6 +227,8 @@ export function LeaguePrivateBetaClient() {
   const [cached, setCached] = useState(false);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
+  const [createMode, setCreateMode] = useState<CompetitionAuthoringMode>("SIMPLE");
+  const [createPreset, setCreatePreset] = useState("LEAGUE_F7_STANDARD");
   const pending = useRef<{ id: string; key: string } | null>(null);
   const realtimeTimer = useRef<number | null>(null);
   const wizardRef = useRef<LeaguePrivateBetaJson | null>(null);
@@ -265,7 +262,7 @@ export function LeaguePrivateBetaClient() {
     if (!response.ok) throw new Error(leagueBetaText(body.message) || "No se pudo abrir el borrador.");
     const canonicalWizard = leagueBetaRecord(body.wizard);
     setWizard(canonicalWizard);
-    setActiveStep(Math.min(Math.max(leagueBetaNumber(canonicalWizard.currentStep), 1), 10));
+    setActiveStep(Math.min(Math.max(leagueBetaNumber(canonicalWizard.currentStep), 1), 12));
   }, []);
 
   useEffect(() => {
@@ -359,7 +356,7 @@ export function LeaguePrivateBetaClient() {
         setWizard(null);
       } else if (leagueBetaText(returnedWizard.id)) {
         setWizard(returnedWizard);
-        setActiveStep(Math.min(Math.max(leagueBetaNumber(returnedWizard.currentStep), 1), 10));
+        setActiveStep(Math.min(Math.max(leagueBetaNumber(returnedWizard.currentStep), 1), 12));
       }
     } catch (error) {
       const detail = error instanceof Error ? error.message : "Operación no confirmada.";
@@ -381,12 +378,13 @@ export function LeaguePrivateBetaClient() {
   const eligibleOrganizers = organizers.filter((item) => leagueBetaBoolean(item.canCreate) && !leagueBetaBoolean(item.hasActiveLeague));
   const wizardSteps = leagueBetaRecord(wizard?.steps);
   const currentStepData = leagueBetaRecord(wizardSteps[String(activeStep)]);
+  const wizardMode = (leagueBetaText(wizard?.authoringMode) === "ADVANCED" ? "ADVANCED" : "SIMPLE") as CompetitionAuthoringMode;
 
   function saveStep(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!wizard) return;
     void command("wizard.step.save", leagueBetaText(wizard.id), leagueBetaNumber(wizard.revision), {
-      data: stepPayload(activeStep, new FormData(event.currentTarget)),
+      data: stepPayload(activeStep, new FormData(event.currentTarget), currentStepData),
       reason: `Wizard paso ${activeStep}`,
       step: activeStep,
     });
@@ -405,24 +403,25 @@ export function LeaguePrivateBetaClient() {
 
       {accessToken && !wizard ? <>
         <section className={styles.heroBand}>
-          <div><span>League Private Beta V1</span><h2>Reglas congeladas. Participantes invitados. Historia auditable.</h2><p>La beta no publica el calendario ni la clasificación fuera de sus participantes.</p></div>
+          <div><span>League Wizard V2</span><h2>Reglas configurables, congeladas y auditables.</h2><p>Preset seguro, doce decisiones legibles y una única RuleRevision canónica.</p></div>
           <div className={styles.metrics}><MetricTile label="Mis Ligas" value={competitions.length} /><MetricTile label="Borradores" value={drafts.length} /><MetricTile label="Organizadores" value={organizers.length} /></div>
         </section>
 
-        {eligibleOrganizers.length ? <section className={styles.primaryAction}><SectionHeader eyebrow="Siguiente acción" title="Crear Liga privada" /><p>Se creará una única estructura de Liga, con registro privado y su propia RuleRevision.</p><div className={styles.createGrid}>{eligibleOrganizers.map((organizer) => <button key={`${leagueBetaText(organizer.kind)}:${leagueBetaText(organizer.id)}`} type="button" disabled={busy} onClick={() => void command("wizard.create", leagueBetaText(organizer.id), leagueBetaNumber(organizer.organizerRevision), { organizerKind: leagueBetaText(organizer.kind), reason: "Inicio del wizard privado" })}><strong>{leagueBetaText(organizer.name)}</strong><span>{leagueBetaText(organizer.kind) === "CLUB" ? "Club" : "Equipo"} · hasta {leagueBetaNumber(leagueBetaRecord(organizer.bundle).teamCap)} equipos</span></button>)}</div></section> : organizers.length ? <section className={styles.accessState}><strong>Esta beta está disponible únicamente para organizadores autorizados.</strong><p>Puedes consultar tus Ligas y borradores, pero la creación requiere un bundle activo y no caducado.</p></section> : null}
+        {eligibleOrganizers.length ? <section className={styles.primaryAction}><SectionHeader eyebrow="Siguiente acción" title="Crear Liga privada" /><p>Elige una base y el nivel de detalle. El preset se copia al borrador y deja de ser autoridad.</p><div className={styles.authoringControls}><label>Modo<select value={createMode} onChange={(event) => setCreateMode(event.target.value as CompetitionAuthoringMode)}><option value="SIMPLE">Sencillo</option><option value="ADVANCED">Avanzado</option></select></label><label>Preset<select value={createPreset} onChange={(event) => setCreatePreset(event.target.value)}>{leaguePrivateBetaPresets.map((preset) => <option key={preset.key} value={preset.key}>{preset.label}</option>)}</select></label></div><div className={styles.createGrid}>{eligibleOrganizers.map((organizer) => <button key={`${leagueBetaText(organizer.kind)}:${leagueBetaText(organizer.id)}`} type="button" disabled={busy} onClick={() => void command("wizard.create", leagueBetaText(organizer.id), leagueBetaNumber(organizer.organizerRevision), { authoringMode: createMode, organizerKind: leagueBetaText(organizer.kind), presetKey: createPreset, reason: "Inicio del wizard privado V2" })}><strong>{leagueBetaText(organizer.name)}</strong><span>{leagueBetaText(organizer.kind) === "CLUB" ? "Club" : "Equipo"} · hasta {leagueBetaNumber(leagueBetaRecord(organizer.bundle).teamCap)} equipos</span></button>)}</div></section> : organizers.length ? <section className={styles.accessState}><strong>Esta beta está disponible únicamente para organizadores autorizados.</strong><p>Puedes consultar tus Ligas y borradores, pero la creación requiere un bundle activo y no caducado.</p></section> : null}
 
-        {drafts.length ? <section><SectionHeader eyebrow="Autoría" title="Borradores" /><div className={styles.cardGrid}>{drafts.map((draft) => <article className={styles.card} key={leagueBetaText(draft.id)}><div>{status(draft.status)}<span>Paso {leagueBetaNumber(draft.currentStep)} de 10</span></div><h3>Configuración sin publicar</h3><button type="button" disabled={busy} onClick={() => void loadWizard(leagueBetaText(draft.id), accessToken)}>Continuar</button></article>)}</div></section> : null}
+        {drafts.length ? <section><SectionHeader eyebrow="Autoría" title="Borradores" /><div className={styles.cardGrid}>{drafts.map((draft) => <article className={styles.card} key={leagueBetaText(draft.id)}><div>{status(draft.status)}<span>Paso {leagueBetaNumber(draft.currentStep)} de 12</span></div><h3>Configuración sin publicar</h3><button type="button" disabled={busy} onClick={() => void loadWizard(leagueBetaText(draft.id), accessToken)}>Continuar</button></article>)}</div></section> : null}
 
-        <section><SectionHeader eyebrow="Área privada" title="Mis Ligas" />{competitions.length ? <div className={styles.cardGrid}>{competitions.map((competition) => { const edition = leagueBetaRecord(competition.edition); const id = leagueBetaText(competition.id); return <article className={styles.leagueCard} key={id}><header><div>{status(competition.status)}<span>{leagueBetaText(edition.seasonLabel)}</span></div><h3>{leagueBetaText(competition.name)}</h3><p>{leagueBetaText(competition.generalArea) || "Zona por definir"} · {leagueBetaNumber(competition.entryCount)} equipos</p></header><div className={styles.leagueMetrics}><span><b>{leagueBetaNumber(competition.matchCount)}</b> partidos</span><span><b>{leagueBetaNumber(competition.pendingResultCount)}</b> resultados pendientes</span><span><b>{leagueBetaNumber(competition.incidentCount)}</b> incidencias</span></div><Link className={styles.primaryLink} href={`/competiciones/${id}/gestion/inscripciones`}>{leagueBetaNextActionLabel(competition.nextAction)}</Link><nav aria-label={`Gestión de ${leagueBetaText(competition.name)}`}><Link href={`/competiciones/${id}/gestion/inscripciones`}>Inscripciones</Link><Link href={`/competiciones/${id}/gestion/calendario`}>Calendario</Link><Link href={`/competiciones/${id}/gestion/resultados`}>Resultados</Link><Link href={`/competiciones/${id}/clasificacion`}>Clasificación</Link><Link href={`/competiciones/${id}/gestion/incidencias`}>Incidencias</Link></nav></article>; })}</div> : <div className={styles.empty}><strong>Aún no tienes Ligas.</strong><span>Cuando recibas acceso, la creación aparecerá como única siguiente acción.</span></div>}</section>
+        <section><SectionHeader eyebrow="Área privada" title="Mis Ligas" />{competitions.length ? <div className={styles.cardGrid}>{competitions.map((competition) => { const edition = leagueBetaRecord(competition.edition); const id = leagueBetaText(competition.id); return <article className={styles.leagueCard} key={id}><header><div>{status(competition.status)}<span>{leagueBetaText(edition.seasonLabel)}</span></div><h3>{leagueBetaText(competition.name)}</h3><p>{leagueBetaText(competition.generalArea) || "Zona por definir"} · {leagueBetaNumber(competition.entryCount)} equipos</p></header><div className={styles.leagueMetrics}><span><b>{leagueBetaNumber(competition.matchCount)}</b> partidos</span><span><b>{leagueBetaNumber(competition.pendingResultCount)}</b> resultados pendientes</span><span><b>{leagueBetaNumber(competition.incidentCount)}</b> incidencias</span></div><Link className={styles.primaryLink} href={`/competiciones/${id}/gestion/inscripciones`}>{leagueBetaNextActionLabel(competition.nextAction)}</Link><nav aria-label={`Gestión de ${leagueBetaText(competition.name)}`}><Link href={`/competiciones/${id}/configuracion`}>Configuración</Link><Link href={`/competiciones/${id}/gestion/inscripciones`}>Inscripciones</Link><Link href={`/competiciones/${id}/gestion/calendario`}>Calendario</Link><Link href={`/competiciones/${id}/gestion/resultados`}>Resultados</Link><Link href={`/competiciones/${id}/clasificacion`}>Clasificación</Link><Link href={`/competiciones/${id}/gestion/incidencias`}>Incidencias</Link></nav></article>; })}</div> : <div className={styles.empty}><strong>Aún no tienes Ligas.</strong><span>Cuando recibas acceso, la creación aparecerá como única siguiente acción.</span></div>}</section>
 
-        <section className={styles.limits}><SectionHeader title="Alcance de la beta" /><div><span>4–12 equipos estándar</span><span>Una Liga activa por organizador</span><span>Una o dos vueltas</span><span>Registro por invitación</span></div><div className={styles.unavailable}><strong>Próximamente</strong><span>Disciplina</span><span>Árbitros asignados</span><span>Pagos</span><span>Torneos</span></div></section>
+        <section className={styles.limits}><SectionHeader title="Alcance de la beta" /><div><span>4–20 equipos según bundle</span><span>Una Liga activa por organizador</span><span>Una o dos vueltas</span><span>Registro por invitación</span><span>Disciplina R5</span><span>Árbitros asignados</span></div><div className={styles.unavailable}><strong>Fuera de esta fase</strong><span>Pagos</span><span>Torneos</span><span>Pairing manual o híbrido</span><span>Superficies públicas</span></div></section>
       </> : null}
 
       {wizard ? <section className={styles.wizard}>
-        <header className={styles.wizardHeader}><div><span>Borrador canónico</span><h2>{leaguePrivateBetaSteps[activeStep - 1]?.label}</h2><p>Cada paso se guarda en el servidor con revisión esperada.</p></div>{status(wizard.status)}</header>
+        <header className={styles.wizardHeader}><div><span>Borrador canónico · {wizardMode === "ADVANCED" ? "Avanzado" : "Sencillo"}</span><h2>{leaguePrivateBetaSteps[activeStep - 1]?.label}</h2><p>Cada paso se normaliza en PostgreSQL con revisión esperada.</p></div>{status(wizard.status)}</header>
+        <div className={styles.wizardTools}><div role="group" aria-label="Modo de autoría"><button type="button" aria-pressed={wizardMode === "SIMPLE"} disabled={busy} onClick={() => void command("wizard.mode.set", leagueBetaText(wizard.id), leagueBetaNumber(wizard.revision), { mode: "SIMPLE", reason: "Modo sencillo" })}>Sencillo</button><button type="button" aria-pressed={wizardMode === "ADVANCED"} disabled={busy} onClick={() => void command("wizard.mode.set", leagueBetaText(wizard.id), leagueBetaNumber(wizard.revision), { mode: "ADVANCED", reason: "Modo avanzado" })}>Avanzado</button></div><label>Preset<select value={leagueBetaText(wizard.presetKey)} disabled={busy} onChange={(event) => void command("wizard.preset.apply", leagueBetaText(wizard.id), leagueBetaNumber(wizard.revision), { presetKey: event.target.value, reason: "Preset copiado al borrador" })}>{leaguePrivateBetaPresets.map((preset) => <option key={preset.key} value={preset.key}>{preset.label}</option>)}</select></label></div>
         <div className={styles.wizardBody}>
           <nav className={styles.stepRail} aria-label="Pasos de creación">{leaguePrivateBetaSteps.map((step) => { const done = Array.isArray(wizard.completedSteps) && (wizard.completedSteps as unknown[]).map(Number).includes(step.id); return <button type="button" key={step.id} aria-current={activeStep === step.id ? "step" : undefined} data-complete={done ? "true" : "false"} disabled={busy || step.id > Math.max(leagueBetaNumber(wizard.currentStep), 1)} onClick={() => setActiveStep(step.id)}><b>{step.id}</b><span>{step.label}</span></button>; })}</nav>
-          <form className={styles.stepForm} key={`${leagueBetaText(wizard.id)}:${activeStep}:${leagueBetaNumber(wizard.revision)}`} onSubmit={saveStep}><div className={styles.fields}><WizardFields data={currentStepData} step={activeStep} /></div><footer><button className={styles.secondary} type="button" disabled={busy} onClick={() => void command("wizard.cancel", leagueBetaText(wizard.id), leagueBetaNumber(wizard.revision), { reason: "Borrador cancelado por el organizador" })}>Cancelar borrador</button><button className={styles.primary} type="submit" disabled={busy}>Guardar y continuar</button>{activeStep === 10 && Array.isArray(wizard.completedSteps) && (wizard.completedSteps as unknown[]).map(Number).includes(10) ? <button className={styles.finalize} type="button" disabled={busy} onClick={() => void command("wizard.finalize", leagueBetaText(wizard.id), leagueBetaNumber(wizard.revision), { reason: "Reglamento revisado y consentido" })}>Crear Liga privada</button> : null}</footer></form>
+          <form className={styles.stepForm} key={`${leagueBetaText(wizard.id)}:${activeStep}:${leagueBetaNumber(wizard.revision)}`} onSubmit={saveStep}><div className={styles.fields}><WizardFields data={currentStepData} mode={wizardMode} step={activeStep} /></div><footer><button className={styles.secondary} type="button" disabled={busy} onClick={() => void command("wizard.cancel", leagueBetaText(wizard.id), leagueBetaNumber(wizard.revision), { reason: "Borrador cancelado por el organizador" })}>Cancelar borrador</button><button className={styles.primary} type="submit" disabled={busy}>Guardar y continuar</button>{activeStep === 12 && Array.isArray(wizard.completedSteps) && (wizard.completedSteps as unknown[]).map(Number).includes(12) ? <button className={styles.finalize} type="button" disabled={busy} onClick={() => void command("wizard.finalize", leagueBetaText(wizard.id), leagueBetaNumber(wizard.revision), { reason: "Reglamento V2 revisado y consentido" })}>Crear Liga privada</button> : null}</footer></form>
         </div>
       </section> : null}
     </main>

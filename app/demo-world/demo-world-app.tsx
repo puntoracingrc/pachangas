@@ -42,6 +42,7 @@ import {
 } from "./demo-world-client-state";
 import {
   type DemoWorldV2Club,
+  type DemoWorldV2ConfigurationChunk,
   type DemoWorldV2Manifest,
   type DemoWorldV2PrimaryTab,
   type DemoWorldV2Referee,
@@ -66,6 +67,7 @@ const primaryTabs: Array<{ id: DemoWorldV2PrimaryTab; label: string }> = [
 
 const leagueTabs: Array<{ id: DemoWorldV2PrimaryTab; label: string }> = [
   { id: "liga", label: "Liga" },
+  { id: "configuracion", label: "Configuración" },
   { id: "clasificacion", label: "Clasificación" },
   { id: "jornadas", label: "Jornadas" },
   { id: "disciplina", label: "Disciplina" },
@@ -846,6 +848,73 @@ function LeagueOverviewView({
   </div>;
 }
 
+const configurationSectionLabels: Record<string, string> = {
+  discipline: "Disciplina",
+  format: "Formato",
+  incidents: "Incidencias",
+  match: "Partidos",
+  referees: "Árbitros",
+  roster: "Plantillas",
+  scoring: "Puntuación",
+  visibility: "Visibilidad",
+};
+
+function DemoConfigurationView({ configuration }: { configuration: DemoWorldV2ConfigurationChunk }) {
+  const future = [
+    { active: configuration.futureCapabilities.automaticRoundRobin, label: "Round Robin automático" },
+    { active: configuration.futureCapabilities.discipline, label: "Disciplina R5" },
+    { active: configuration.futureCapabilities.refereeAssignments, label: "Asignación de árbitros" },
+    { active: configuration.futureCapabilities.manualAssistedPairing, label: "Emparejamiento manual asistido" },
+    { active: configuration.futureCapabilities.hybridPairing, label: "Emparejamiento híbrido" },
+    { active: configuration.futureCapabilities.payments, label: "Pagos de competición" },
+    { active: configuration.futureCapabilities.tournaments, label: "Tournament Engine" },
+  ];
+  return <div className={styles.configurationStack} data-demo-domain="configuration" data-demo-read-only="true">
+    <section className={styles.configurationHero}>
+      <div>
+        <span className={styles.eyebrow}>Demo World V2.3 · GET-only</span>
+        <h1>Centro de configuración</h1>
+        <p>Dos RuleRevision reales de {configuration.competitionName}, congeladas por PostgreSQL y proyectadas sin datos privados.</p>
+      </div>
+      <div className={styles.configurationHealth}>
+        <strong>{configuration.health.complete ? "Configuración coherente" : "Revisión necesaria"}</strong>
+        <span>{configuration.health.errors} errores · {configuration.health.warnings} avisos</span>
+        <small>v{configuration.currentEditionRevision} aplicada a la edición</small>
+      </div>
+    </section>
+
+    <section className={styles.sectionBand}>
+      <div className={styles.sectionHeading}><div><span className={styles.eyebrow}>Reglamento humano</span><h2>Estándar frente a personalizada</h2></div><span>Solo lectura</span></div>
+      <div className={styles.configurationRevisionGrid}>
+        {configuration.revisions.map((revision) => <article key={revision.revision}>
+          <header><div><span>RuleRevision v{revision.revision}</span><h3>{revision.authoringMode === "SIMPLE" ? "Liga F7 estándar" : "Liga personalizada"}</h3></div><b>{revision.authoringMode === "SIMPLE" ? "Sencillo" : "Avanzado"}</b></header>
+          <div className={styles.configurationMetrics}>
+            <span><small>Partido</small><strong>{revision.matchDurationMinutes} min</strong></span>
+            <span><small>Puntos</small><strong>{revision.pointsForWin} · {revision.pointsForDraw} · {revision.pointsForLoss}</strong></span>
+            <span><small>No-show</small><strong>{revision.noShowWinnerScore} - {revision.noShowLoserScore}</strong></span>
+            <span><small>Respuesta</small><strong>{revision.postponementResponseDeadlineHours} h</strong></span>
+          </div>
+          <div className={styles.configurationPolicy}>
+            <div><small>Disciplina</small><strong>Amarilla cada {revision.yellowThreshold}</strong><p>{revision.cardCodes.map((code) => <span key={code} data-card={code}>{code}</span>)}</p></div>
+            <div><small>Árbitro</small><strong>{revision.refereeUsage === "REQUIRED" ? "Obligatorio" : "Opcional"}</strong><p>{revision.feeMode === "FIXED" ? "Tarifa fija privada" : "Tarifa negociable"}</p></div>
+          </div>
+          <footer><span>{revision.healthComplete && revision.humanDocumentVerified ? "Health y documento verificados" : "Pendiente"}</span><code>{revision.checksum.slice(0, 12)}</code></footer>
+        </article>)}
+      </div>
+    </section>
+
+    <section className={styles.configurationCompare}>
+      <div><span className={styles.eyebrow}>Comparador</span><h2>v{configuration.comparator.baseRevision} → v{configuration.comparator.targetRevision}</h2><p>La nueva revisión afecta solo a reglas futuras; no reescribe partidos, resultados ni sanciones anteriores.</p></div>
+      <div>{configuration.comparator.changedSections.map((section) => <span key={section}>{configurationSectionLabels[section] ?? section}</span>)}</div>
+    </section>
+
+    <section className={styles.configurationBottom}>
+      <div><span className={styles.eyebrow}>Consumo de motores</span><h2>Regla canónica activa</h2><dl><div><dt>Catálogo R5</dt><dd>{configuration.engineConsumption.r5CatalogCodes.join(" · ")}</dd></div><div><dt>Assignments</dt><dd>Árbitro obligatorio</dd></div><div><dt>Tarifa</dt><dd>Privada, sin importe público</dd></div><div><dt>Recibos RPC</dt><dd>{configuration.provenance.operationReceipts}</dd></div></dl></div>
+      <div><span className={styles.eyebrow}>Capacidades</span><h2>Disponible y próximas fases</h2><ul>{future.map((item) => <li key={item.label} data-active={item.active}><span />{item.label}<b>{item.active ? "Activo" : "Próxima fase"}</b></li>)}</ul></div>
+    </section>
+  </div>;
+}
+
 function DemoClubView({ club, clubs, onClub }: {
   club: DemoWorldV2Club;
   clubs: DemoWorldV2Club[];
@@ -1094,6 +1163,7 @@ export function DemoWorldApp({ manifest }: { manifest: DemoWorldV2Manifest }) {
         {snapshot && activeTab === "equipo" ? <TeamView currentTeam={currentTeam} onPlayer={setSelectedPlayerId} onTeam={setSelectedTeamId} selectedTeam={selectedTeam} snapshot={snapshot} /> : null}
         {snapshot && activeTab === "perfil" ? <ProfileView currentPlayer={currentPlayer} currentTeam={currentTeam} notifications={notifications} onEquipCosmetic={equipCosmetic} onOpenBox={openRewardBox} onPerspective={choosePerspective} onPlayer={setSelectedPlayerId} onRead={(notificationId) => updateSession((current) => ({ ...current, readNotificationIds: [...new Set([...current.readNotificationIds, notificationId])] }))} perspective={perspective} perspectives={world.core.perspectives} session={session} snapshot={snapshot} /> : null}
         {snapshot && activeTab === "liga" ? <LeagueOverviewView onClub={openClub} onMatch={openLeagueMatch} onTab={navigate} snapshot={snapshot} /> : null}
+        {snapshot && activeTab === "configuracion" ? <DemoConfigurationView configuration={snapshot.configuration} /> : null}
         {snapshot && activeTab === "clasificacion" ? <div className={styles.demoProductView} data-demo-domain="standings"><LeagueMatchOperationsClient embedded previewData={snapshot.competitions.standingsPreview} surface="standings" /></div> : null}
         {snapshot && activeTab === "jornadas" ? <div className={styles.demoProductView} data-demo-domain="rounds"><LeagueSchedulingClient embedded onOpenMatch={(canonicalMatchId) => {
           const match = snapshot.competitions.matches.find((entry) => entry.canonicalMatchId === canonicalMatchId);

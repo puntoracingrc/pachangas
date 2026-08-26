@@ -32,9 +32,10 @@ if (!["127.0.0.1", "localhost", "::1", "[::1]"].includes(parsedAdmin.hostname)) 
 const migrationNames = readdirSync(resolve(root, "supabase/migrations"))
   .filter((name) => /^\d{14}_.+\.sql$/.test(name))
   .sort();
-assert.equal(migrationNames.length, 119);
-assert.deepEqual(migrationNames.slice(-6), r4aMigrations);
-const preR4aIncremental = migrationNames.filter((name) => (
+const r4aBoundary = r4aMigrations.at(-1);
+const historicalMigrations = migrationNames.filter((name) => name <= r4aBoundary);
+assert.deepEqual(historicalMigrations.slice(-6), r4aMigrations);
+const preR4aIncremental = historicalMigrations.filter((name) => (
   name.slice(0, 14) > manifest.absorbsThrough && !r4aMigrations.includes(name)
 ));
 
