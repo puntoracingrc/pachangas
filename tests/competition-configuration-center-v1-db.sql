@@ -318,6 +318,13 @@ select pg_temp.wave5_assert(
   'DRAFT publication must bind the new RuleRevision to the current edition'
 );
 select pg_temp.wave5_assert(
+  (select bool_and(categories.rule_revision_id = state.published_rule_revision_id)
+   from wave5_state state
+   join public.pachanga_competition_categories categories on categories.edition_id = state.edition_id
+   where categories.status <> 'cancelled'),
+  'DRAFT publication must keep categories aligned with the current RuleRevision'
+);
+select pg_temp.wave5_assert(
   (select catalogs.card_type_catalog @> '[{"code":"BLUE"}]'::jsonb
    from wave5_state state
    join public.pachanga_competition_discipline_rule_catalogs catalogs
@@ -526,6 +533,90 @@ select pg_temp.wave5_assert(
    where invalidations.user_id = '5a010000-0000-4000-8000-000000000003'),
   'authorized viewer must receive invalidation-only Realtime events'
 );
+
+do $$
+declare response jsonb;
+declare replay jsonb;
+declare current_revision bigint;
+begin
+  perform pg_temp.wave5_actor('5a010000-0000-4000-8000-000000000002');
+  select settings.revision into current_revision
+  from private.pachanga_competition_foundation_settings settings
+  where settings.singleton;
+
+  begin
+    perform public.command_pachanga_competition_configuration_platform_v1(
+      '5a040000-0000-4000-8000-000000000039',
+      null,
+      current_revision,
+      'configuration.flags.set',
+      '{"configurationCenterEnabled":true,"reason":"Reject missing aggregate"}',
+      '{"clientVersion":"5.1.0+wave5-db","surface":"wave5_db"}'
+    );
+    raise exception 'WAVE5_EXPECTED_NULL_AGGREGATE_DENIAL';
+  exception when others then
+    if sqlerrm = 'WAVE5_EXPECTED_NULL_AGGREGATE_DENIAL' then raise; end if;
+    if sqlstate <> '22023' or sqlerrm !~ 'INVALID_COMPETITION_CONFIGURATION_PLATFORM_COMMAND' then
+      raise;
+    end if;
+  end;
+
+  response := public.command_pachanga_competition_configuration_platform_v1(
+    '5a040000-0000-4000-8000-000000000040',
+    '00000000-0000-0000-0000-00000000c5a1',
+    current_revision,
+    'configuration.flags.set',
+    '{"configurationCenterEnabled":true,"wizardV2Enabled":true,"reason":"Wave 5A idempotent platform readback"}',
+    '{"clientVersion":"5.1.0+wave5-db","surface":"wave5_db"}'
+  );
+  replay := public.command_pachanga_competition_configuration_platform_v1(
+    '5a040000-0000-4000-8000-000000000040',
+    '00000000-0000-0000-0000-00000000c5a1',
+    current_revision,
+    'configuration.flags.set',
+    '{"configurationCenterEnabled":true,"wizardV2Enabled":true,"reason":"Wave 5A idempotent platform readback"}',
+    '{"clientVersion":"5.1.0+wave5-db","surface":"wave5_db"}'
+  );
+  perform pg_temp.wave5_assert(response = replay, 'platform flag replay must return one receipt');
+  perform pg_temp.wave5_assert(
+    (select count(*) = 1
+     from private.pachanga_competition_operation_receipts receipts
+     where receipts.operation_id = '5a040000-0000-4000-8000-000000000040'),
+    'platform flag replay must persist exactly one receipt'
+  );
+
+  perform pg_temp.wave5_actor('5a010000-0000-4000-8000-000000000001');
+  begin
+    perform public.command_pachanga_competition_configuration_platform_v1(
+      '5a040000-0000-4000-8000-000000000041',
+      '00000000-0000-0000-0000-00000000c5a1',
+      (response ->> 'confirmedRevision')::bigint,
+      'configuration.kill_switch',
+      '{"reason":"Unauthorized Wave 5A shutdown"}',
+      '{"clientVersion":"5.1.0+wave5-db","surface":"wave5_db"}'
+    );
+    raise exception 'WAVE5_EXPECTED_PLATFORM_DENIAL';
+  exception when others then
+    if sqlerrm = 'WAVE5_EXPECTED_PLATFORM_DENIAL' then raise; end if;
+    if sqlstate <> '42501' then raise; end if;
+  end;
+
+  perform pg_temp.wave5_actor('5a010000-0000-4000-8000-000000000002');
+  response := public.command_pachanga_competition_configuration_platform_v1(
+    '5a040000-0000-4000-8000-000000000042',
+    '00000000-0000-0000-0000-00000000c5a1',
+    (response ->> 'confirmedRevision')::bigint,
+    'configuration.kill_switch',
+    '{"reason":"Wave 5A end-of-test shutdown"}',
+    '{"clientVersion":"5.1.0+wave5-db","surface":"wave5_db"}'
+  );
+  perform pg_temp.wave5_assert(
+    not (response #>> '{snapshot,configurationCenterEnabled}')::boolean
+      and not (response #>> '{snapshot,wizardV2Enabled}')::boolean,
+    'versioned kill switch must disable only Wave 5A authoring flags'
+  );
+end;
+$$;
 
 select pg_temp.wave5_assert(
   (select digest = pg_temp.wave5_table_digest('public.pachanga_player_rating_snapshots')

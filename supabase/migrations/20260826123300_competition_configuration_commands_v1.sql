@@ -818,6 +818,10 @@ begin
         rule_revision_id=new_revision_id,revision=stages.revision+1,
         server_sequence=nextval('private.pachanga_competition_sequence'),updated_at=confirmed_time
       where stages.edition_id=edition.id and stages.status='draft';
+      update public.pachanga_competition_categories categories set
+        rule_revision_id=new_revision_id,revision=categories.revision+1,
+        server_sequence=nextval('private.pachanga_competition_sequence'),updated_at=confirmed_time
+      where categories.edition_id=edition.id and categories.status<>'cancelled';
       applied_to_current := true;
     end if;
     update private.pachanga_competition_configuration_drafts drafts set

@@ -124,6 +124,7 @@
     "test:competition-configuration": "tsx --test tests/competition-configuration-center-v1.test.ts",
     "test:competition-configuration:db": "node tests/competition-configuration-center-v1-db-runner.mjs",
     "test:competition-configuration:concurrency": "node tests/competition-configuration-center-v1-concurrency.mjs",
+    "test:competition-configuration:staging": "node tests/competition-configuration-center-v1-staging-e2e.mjs",
     "lab:season-ranking": "tsx simulation/season-ranking-lab/run.ts",
     "lab:season-ranking:elite": "tsx simulation/season-ranking-lab/run-elite.ts",
     "lab:season-ranking:v3": "tsx simulation/season-ranking-lab/run-v3.ts",

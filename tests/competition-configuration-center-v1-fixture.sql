@@ -94,8 +94,6 @@ update private.pachanga_competition_foundation_settings settings set
   competition_sanctions_enabled = true,
   competition_sanction_service_enabled = true,
   competition_discipline_appeals_enabled = true,
-  competition_configuration_center_enabled = true,
-  league_wizard_v2_enabled = true,
   league_public_registration_enabled = false,
   league_public_calendar_enabled = false,
   league_public_standings_enabled = false,
@@ -107,6 +105,29 @@ update private.pachanga_competition_foundation_settings settings set
   updated_by = '5a010000-0000-4000-8000-000000000002',
   updated_at = clock_timestamp()
 where settings.singleton;
+
+do $$
+declare response jsonb;
+begin
+  perform set_config(
+    'request.jwt.claims',
+    '{"sub":"5a010000-0000-4000-8000-000000000002","role":"authenticated"}',
+    false
+  );
+  response := public.command_pachanga_competition_configuration_platform_v1(
+    '5a030000-0000-4000-8000-000000000003',
+    '00000000-0000-0000-0000-00000000c5a1',
+    (select settings.revision from private.pachanga_competition_foundation_settings settings where settings.singleton),
+    'configuration.flags.set',
+    '{"configurationCenterEnabled":true,"wizardV2Enabled":true,"reason":"Wave 5A local activation"}',
+    '{"clientVersion":"test","surface":"wave5_fixture"}'
+  );
+  if not (response #>> '{snapshot,configurationCenterEnabled}')::boolean
+     or not (response #>> '{snapshot,wizardV2Enabled}')::boolean then
+    raise exception 'WAVE5_PLATFORM_ACTIVATION_FAILED';
+  end if;
+end;
+$$;
 
 update private.pachanga_referee_foundation_settings settings set
   referee_foundation_enabled = true,

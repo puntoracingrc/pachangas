@@ -62,7 +62,7 @@ reescribiendo historia.
 ## Evidencia local previa
 
 - 504/504 tests funcionales;
-- 14/14 Configuration Center;
+- 15/15 Configuration Center;
 - 18/18 Wizard V2;
 - siete carreras con un unico ganador;
 - fresh bootstrap y upgrade 152->158 equivalentes;

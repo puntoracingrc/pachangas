@@ -56,6 +56,11 @@ capability, Competition, Edition, flags, punto de congelacion, referencias,
 hora, secuencia, revision e impacto. El navegador no puede enviar una
 RuleRevision completa ni calculos de autoridad.
 
+La activacion operativa usa
+`command_pachanga_competition_configuration_platform_v1` con el mismo sobre
+idempotente. Control Center y el release no necesitan `UPDATE` manual sobre la
+tabla de flags; `configuration.kill_switch` apaga ambos gates sin borrar datos.
+
 ## Autoridad almacenada
 
 - borradores, receipts y eventos privados;
@@ -143,6 +148,8 @@ silenciosa.
 
 - R4A-R4D toman politicas estructurales, scheduling, resultado e incidencias de
   la revision efectiva.
+- Una publicacion durante `DRAFT` rebindea de forma atomica Edition, Stage y
+  Category; la regresion evita que R4B observe revisiones distintas.
 - R5 materializa el catalogo disciplinario desde la RuleRevision.
 - Referee Assignments valida uso, aceptacion, reconfirmacion, requisitos,
   readiness y tarifa contra la RuleRevision.
@@ -177,7 +184,7 @@ Las siete carreras focales producen `1 winner / 1 stale o conflict`:
 
 | Gate | Resultado |
 | --- | --- |
-| Configuration Center | `14/14 PASS` |
+| Configuration Center | `15/15 PASS` |
 | Concurrencia | `7/7 PASS` |
 | League Wizard V2 | `18/18 PASS` |
 | Bateria completa | `504/504 PASS` |
@@ -186,7 +193,7 @@ Las siete carreras focales producen `1 winner / 1 stale o conflict`:
 | Fresh bootstrap | `158/158 PASS` |
 | Upgrade `152 -> 158` | `PASS` |
 | Equivalencia fresh/upgrade | `PASS` |
-| Hash de esquema | `e2cea456c640dfbd3a73fe2f2a6b9e80738585ac7cdf2ea7d19f17e88f647e0f` |
+| Hash de esquema | `37fd6dd7fd8f7e62caf4faf7defff5844ba062d1d4b93477c7a54f3cdb06d1e2` |
 | Typecheck | `PASS` |
 | Build | `PASS`, 50 rutas |
 | Lint focalizado | `PASS` |
@@ -203,7 +210,8 @@ evidencias sociales, recompensas, pagos ni datos historicos.
 ## Pendiente del release remoto
 
 - aplicar y leer las seis migraciones en staging;
-- completar E2E autenticado y cleanup de staging;
+- ejecutar `test:competition-configuration:staging`: preset sencillo Team,
+  configuracion avanzada Club, freeze, revision futura, Preview y cleanup;
 - fusionar PR y aplicar migraciones productivas forward-only;
 - activar los dos flags privados, manteniendo superficies publicas OFF;
 - smoke efimero y cleanup productivo;

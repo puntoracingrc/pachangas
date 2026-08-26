@@ -105,6 +105,7 @@ test("PostgreSQL owns actor, locking, revisions, idempotency, validation and imm
   assert.match(commands, /insert into public\.pachanga_competition_rule_revisions/);
   assert.match(commands, /effective_scope/);
   assert.match(commands, /status='published',materialized_rule_revision_id=new_revision_id/);
+  assert.match(commands, /update public\.pachanga_competition_categories categories set/);
   assert.doesNotMatch(commands, /payload\s*->>\s*'(?:actorId|actor_id|serverSequence|confirmedRevision)'/i);
   assert.doesNotMatch(commands, /update\s+public\.pachanga_competition_rule_revisions/i);
 });
@@ -180,6 +181,10 @@ test("API, PWA and Realtime enforce server confirmation without an offline sport
     classifySupabaseWrite("https://example.supabase.co/rest/v1/rpc/command_pachanga_referee_incident_observation_v1", { method: "POST" }),
     "rpc:command_pachanga_referee_incident_observation_v1",
   );
+  assert.equal(
+    classifySupabaseWrite("https://example.supabase.co/rest/v1/rpc/command_pachanga_competition_configuration_platform_v1", { method: "POST" }),
+    "rpc:command_pachanga_competition_configuration_platform_v1",
+  );
 });
 
 test("Official UI exposes Configuration Center, twelve-step authoring and Control Center health", async () => {
@@ -212,6 +217,12 @@ test("Control Center remains coupled to League Private Beta and keeps public com
   assert.match(control, /new\.competition_configuration_center_enabled := false/);
   assert.match(control, /new\.league_wizard_v2_enabled := false/);
   assert.match(control, /get_pachanga_platform_competition_configuration_v1/);
+  assert.match(control, /command_pachanga_competition_configuration_platform_v1/);
+  assert.match(control, /configuration\.flags\.set/);
+  assert.match(control, /configuration\.kill_switch/);
+  assert.match(control, /pachanga_platform_require_v1\('flags\.write'\)/);
+  assert.match(control, /pachanga_competition_store_command_v1/);
+  assert.match(control, /aggregate_id is distinct from flags_aggregate_id/);
   assert.match(control, /publicSurfacesOff/);
   assert.match(control, /legacyBackfillCount/);
 });
@@ -230,4 +241,23 @@ test("SQL regression suite protects idempotency, privacy, engines and unrelated 
     "Conduct",
     "Billing",
   ]) assert.match(sql, new RegExp(marker, "i"));
+});
+
+test("staging exercises standard and advanced authoring, freeze, future revision and cleanup off production", async () => {
+  const [wrapper, extension, runner] = await Promise.all([
+    source("tests/competition-configuration-center-v1-staging-e2e.mjs"),
+    source("tests/competition-configuration-center-v1-staging-extension.mjs"),
+    source("tests/league-scheduling-v1-staging-e2e.mjs"),
+  ]);
+  assert.match(wrapper, /COMPETITION_CONFIGURATION_STAGING_ONLY/);
+  assert.match(wrapper, /COMPETITION_CONFIGURATION_STAGING_EXTENSION/);
+  assert.match(runner, /qonbngfrnrqgmxbdfbea/);
+  assert.match(runner, /R4B_STAGING_PRODUCTION_TARGET_FORBIDDEN/);
+  assert.match(runner, /LEAGUE_F7_STANDARD/);
+  assert.match(runner, /completedSteps, \[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12\]/);
+  assert.match(extension, /draft\.create/);
+  assert.match(extension, /draft\.clone/);
+  assert.match(extension, /COMPETITION_CONFIGURATION_FROZEN:REGISTRATION_OPEN/);
+  assert.match(extension, /currentEditionPreserved/);
+  assert.match(extension, /activeDraftRevisions\.delete/);
 });
