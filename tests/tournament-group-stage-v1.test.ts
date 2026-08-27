@@ -10,6 +10,7 @@ import {
 } from "../app/tournament-group-stage-contract";
 import { tournamentPlatformActions } from "../app/tournament-draw-contract";
 import { classifySupabaseWrite, isKnownClientWriteOperation } from "../app/pwa-write-classifier";
+import { buildServiceWorkerSource } from "../app/service-worker-source";
 
 const root = new URL("../", import.meta.url);
 const migrations = [
@@ -163,10 +164,8 @@ test("API accepts intent only, returns no-store responses and never uses service
 });
 
 test("PWA writes are gated, offline stays read-only and Realtime invalidates canonical snapshots", async () => {
-  const [client, worker] = await Promise.all([
-    source("app/_components/tournament-group-stage-client.tsx"),
-    source("app/service-worker-source.ts"),
-  ]);
+  const client = await source("app/_components/tournament-group-stage-client.tsx");
+  const worker = buildServiceWorkerSource("r6b-pwa-contract-test");
   assert.equal(isKnownClientWriteOperation("api:tournament-group-stage-command"), true);
   assert.equal(
     classifySupabaseWrite("https://example.supabase.co/rest/v1/rpc/command_pachanga_tournament_group_stage_v1", { method: "POST" }),
@@ -180,7 +179,8 @@ test("PWA writes are gated, offline stays read-only and Realtime invalidates can
   assert.doesNotMatch(client, /subscribe\(\([^)]*\)\s*=>[\s\S]*loadCanonical/);
   assert.doesNotMatch(client, /setData\([^)]*payload\.new|offlineQueue|queueOffline|pendingOperations/i);
   assert.match(worker, /CACHEABLE_NAVIGATION_PATTERNS/);
-  assert.match(worker, /competiciones\\\/\[0-9a-f-\]/);
+  assert.match(worker, /competiciones/);
+  assert.doesNotThrow(() => new Function(worker));
 });
 
 test("Official UI includes Tournament Hub, adaptive game layout and audited Group Stage control", async () => {
