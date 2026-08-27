@@ -187,7 +187,7 @@
 ## R6A-010 - Supabase CLI default key is not a browser publishable key
 
 - Classification: `ENVIRONMENT_ISSUE`
-- Status: `OPEN`
+- Status: `FIXED`
 - Found by: authenticated staging sign-in before any Tournament command executed
 - Original scenario: obtain the ephemeral branch credentials through `supabase branches get`, wire the field named `SUPABASE_DEFAULT_KEY` to the branch-scoped Preview public key, and start the authenticated E2E.
 - Observed result: the field contains an `sb_secret_...` key, not an `sb_publishable_...` key; Auth rejects it as a public API key. The isolated Preview build therefore received a secret-class branch credential through a `NEXT_PUBLIC_` variable.
@@ -196,7 +196,11 @@
 - Security boundary: never infer browser suitability from a CLI field name; inspect key class without printing the value, fail closed on `sb_secret_`, and recreate the disposable staging boundary from zero.
 - Required correction: select `SUPABASE_ANON_KEY` for the client and independently verify that Supabase exposes an enabled publishable key; keep `SUPABASE_SERVICE_ROLE_KEY` only in the local fixture runner and server-only Preview environment.
 - Required regression: a fresh branch must reject secret-class values from the browser configuration, pass Auth with the public key, expose no secret/service-role value in its client bundle, and complete the authenticated E2E before teardown.
-- Regression status: `PENDING`.
+- Regression status: `REGRESSION_VERIFIED`.
+- Regression evidence: the replacement Git Preview authenticated with the
+  enabled staging public key; all 12 browser chunks contain staging ref
+  `zmjmzgdwovluvakfjggs`, contain neither production nor unrelated-staging
+  refs, and contain no exact service-role value.
 
 ## R6A-011 - Club fixture consumes a revoked private sequence default
 
@@ -557,7 +561,7 @@
 ## R6A-031 - Manual Vercel Preview ignores branch-scoped Supabase variables
 
 - Classification: `ENVIRONMENT_ISSUE`
-- Status: `OPEN`
+- Status: `FIXED`
 - Found by: browser-bundle credential and project-ref scan after the final staging E2E.
 - Original scenario: add three Preview variables scoped to `codex/tournament-foundation-draw-engine-v1` and create a manual CLI deployment from a clean worktree.
 - Observed result: deployment `dpl_Hgu8b98oJyQ1D58UL4qde1WJTrjd` is `READY` at commit `285a05706228384ede174e9dce4f3a3f0be67152`, but its browser chunks contain production ref `qonbngfrnrqgmxbdfbea` and do not contain staging ref `zmjmzgdwovluvakfjggs`. The deployment has no `gitSource`, so Vercel did not select the branch-scoped environment.
@@ -566,4 +570,80 @@
 - Security boundary: do not continue with the mismatched Preview, do not expose service-role material through build variables, and do not modify general Preview or Production variables.
 - Required correction: build and deploy an exact clean artifact with an explicitly pulled branch environment or safe build/runtime overrides, then scan every browser chunk for project refs and the exact service-role secret before rerunning the Preview integration gate.
 - Required regression: the replacement deployment must be `READY` at the exact branch HEAD, contain staging ref `zmjmzgdwovluvakfjggs`, contain neither production nor unrelated-staging refs, contain no service-role value, return the six protected routes as `200` and complete the authenticated E2E against the same staging ref.
-- Regression status: `PENDING`.
+- Regression status: `REGRESSION_VERIFIED`.
+- Regression evidence: automatic Git deployment
+  `dpl_CcoXgisaJH6jQ68vpRcgcU3SaGNR` reached `READY` at exact commit
+  `5cd821c55a009bf4a74e020d60a7228edbb8a2c0`; its bundle contains only the
+  intended staging ref, all six protected routes return HTTP 200 and runtime
+  logs contain zero error/fatal entries.
+
+## R6A-032 - zsh route loop shadows the executable search path
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `FIXED`
+- Found by: six-route smoke on the replacement Git Preview.
+- Original scenario: iterate the protected Preview routes with a zsh variable
+  named `path` and call `vercel curl` inside the loop.
+- Observed result: zsh treats `path` as its special array tied to `PATH`; the
+  assignment removes the executable search path and every iteration reports
+  `command not found: vercel` before sending a request.
+- Expected result: the diagnostic uses a neutral loop variable and returns an
+  explicit HTTP status for each protected route.
+- Product impact: none. No HTTP request, deployment, database command, flag or
+  production action occurred.
+- Security boundary: do not infer route success from blank output and do not
+  bypass Deployment Protection to compensate for a local shell error.
+- Required correction: rename the loop variable, rerun the exact six routes
+  through authenticated `vercel curl` and require six HTTP 200 responses.
+- Regression status: `REGRESSION_VERIFIED`.
+- Regression evidence: the neutral `route_name` variable preserved `PATH` and
+  `/torneos`, `/torneos/crear`, `/laboratorio-tournament-draw`, Demo V2.4,
+  manifest and Service Worker each returned HTTP 200.
+
+## R6A-033 - Read-only browser evaluation does not expose fetch
+
+- Classification: `TESTABILITY_GAP`
+- Status: `FIXED`
+- Found by: responsive/PWA browser smoke on the replacement Git Preview.
+- Original scenario: after validating portrait and landscape DOM geometry,
+  call `fetch` inside the browser runner's read-only evaluation to inspect the
+  manifest and Service Worker responses.
+- Observed result: the isolated evaluation reports `TypeError: fetch is not a
+  function` after the responsive measurements and before returning the grouped
+  result.
+- Expected result: visual DOM checks and HTTP asset checks return independently
+  so a runner capability limitation cannot obscure evidence already collected.
+- Product impact: none. The protected manifest and Service Worker had already
+  returned HTTP 200 through `vercel curl`; no browser or server state changed.
+- Security boundary: do not weaken Deployment Protection or inject a page
+  script solely to add network access to a read-only evaluation.
+- Required correction: read responsive geometry and console state in the
+  browser, and retain the authenticated HTTP evidence for manifest/SW from
+  `vercel curl` as a separate gate.
+- Regression status: `REGRESSION_VERIFIED`.
+- Regression evidence: browser checks independently returned desktop,
+  `390x844` and `844x390` geometry with zero overflow, broken images, overlays
+  or console errors; authenticated HTTP checks independently returned 200 for
+  manifest and Service Worker.
+
+## R6A-034 - Browser runner cannot certify installed standalone display mode
+
+- Classification: `TESTABILITY_GAP`
+- Status: `OPEN`
+- Found by: replacement Git Preview PWA smoke.
+- Original scenario: request `display-mode: standalone` through the available
+  CDP emulated-media command at `390x844` and verify the page media query.
+- Observed result: the page remains in browser display mode even though the DOM
+  is responsive and error-free; the current browser runner does not create an
+  installed PWA application window.
+- Expected result: an installed-PWA run proves the standalone media state and
+  app-shell behavior on the exact release artifact.
+- Product impact: no defect demonstrated. Manifest and Service Worker return
+  HTTP 200, local PWA emulation passed, and browser/portrait/landscape Preview
+  checks are clean.
+- Security boundary: do not fake `matchMedia`, inject state into the page or
+  report physical/installed QA as passed.
+- Required follow-up: retain `PWA instalada fisica: PENDING` and test on a real
+  installed device after release; this is explicitly non-blocking under the
+  R6A release contract.
+- Regression status: `PENDING_PHYSICAL_QA`.

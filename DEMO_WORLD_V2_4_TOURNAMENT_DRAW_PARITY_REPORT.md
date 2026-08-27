@@ -53,9 +53,13 @@ privados.
 
 El mismo snapshot canonico paso el smoke remoto de staging en `/demo` junto a
 `/torneos`, `/torneos/crear`, `/laboratorio-tournament-draw`, manifest y Service
-Worker. La certificacion final de integracion queda condicionada a la nueva
-Preview Git, porque la Preview manual anterior no selecciono las variables
-Supabase limitadas a la rama.
+Worker. La Preview manual anterior no selecciono las variables Supabase
+limitadas a la rama y fue reemplazada por una Preview Git exacta.
+
+La Preview Git de reemplazo quedo `READY` en el commit exacto, cargo el ref de
+staging correcto y devolvio HTTP 200 para Demo V2.4, manifest y Service Worker.
+El smoke visual remoto no encontro overflow, imagenes rotas ni errores de
+consola en desktop, portrait o Mobile Game Landscape.
 
 ## Producto
 
@@ -63,5 +67,6 @@ La superficie Demo permite consultar Tournament, Draw Desk, grupos, seeds,
 quality y audit con el mismo contrato visual que el producto. No activa una
 beta real, no concede grants y no simula partidos de Tournament.
 
-La comprobacion de Preview, PWA instalada y produccion se incorporara al
-readback de release; no se marca como pasada en este estado local.
+La comprobacion de produccion se incorporara al readback de release. La Preview
+esta certificada; la PWA instalada fisica permanece pendiente y no se presenta
+como pasada.

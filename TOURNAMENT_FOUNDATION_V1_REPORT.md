@@ -112,9 +112,16 @@ quedaron resueltos con indices de cobertura. Performance Advisor solo conserva
 un warning heredado de indices duplicados en snapshots de Rating, ajeno a R6A.
 Los logs remotos no contienen 5xx; los 4xx corresponden a negativos esperados.
 
+La Preview Git `dpl_CcoXgisaJH6jQ68vpRcgcU3SaGNR` esta `READY` en el commit
+exacto `5cd821c55a009bf4a74e020d60a7228edbb8a2c0`. El escaneo de sus 12 chunks
+encuentra el ref de staging y cero apariciones de los refs de produccion,
+staging ajeno o del valor exacto de service role. Las seis rutas protegidas
+responden 200. Desktop `1440x900`, portrait `390x844` y landscape `844x390`
+presentan cero overflow raiz, imagenes rotas, overlays o errores de consola.
+La PWA instalada fisica queda pendiente y no se presenta como pasada.
+
 ## Pendiente de cierre
 
-- Preview Git exacta con variables de staging y escaneo de bundle;
 - merge, cinco migraciones y deployment productivo;
 - activacion Private Beta por RPC, canary y readback final;
 - retirada de staging, variables Preview, temporales y worktree.

@@ -45,6 +45,10 @@ directas ni se convierte un payload local en fuente de verdad.
 | Concurrencia | `1 winner / 1 stale PASS` |
 | Advisors | `sin ERROR; indices FK R6A cubiertos` |
 | Logs | `0 5xx; negativos 4xx esperados` |
+| Preview Git | `dpl_CcoXgisaJH6jQ68vpRcgcU3SaGNR / READY / exact SHA` |
+| Bundle Preview | `staging ref presente; production/unrelated/service_role ausentes` |
+| Responsive Preview | `1440x900, 390x844 y 844x390 PASS` |
+| PWA instalada fisica | `PENDING / no bloqueante` |
 | Tournament match contexts | `0` |
 | Produccion | `NO MODIFICADA` |
 
