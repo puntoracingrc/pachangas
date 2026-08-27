@@ -378,3 +378,56 @@
 - Required correction: remove the swap from the automatic plan, perform it on the generated hybrid plan, and accept the canonical non-editable error when probing the already published automatic plan.
 - Required regression: focused tests must prove that the staging script places `draw.entry.swap` only after a `HYBRID` plan has been generated and that a fresh authenticated E2E completes the swap before cleanup.
 - Regression status: `PENDING`.
+
+## R6A-023 - Disposable-branch cleanup readback used stale schema and CLI assumptions
+
+- Classification: `TESTABILITY_GAP`
+- Status: `FIXED`
+- Found by: cleanup preflight after the failed one-shot staging E2E
+- Original scenario: count Tournament rows through a non-existent `competition_kind` column and list branch-scoped Vercel variables with an unsupported `--git-branch` option.
+- Observed result: PostgreSQL returned `42703 column competition_kind does not exist`; Vercel CLI 59.4.0 rejected the option, and the first JSON-shape assumption for `env ls --json` was also invalid.
+- Expected result: readbacks use the canonical `competition_type = 'TOURNAMENT'` discriminator, inspect flags through `private.pachanga_competition_foundation_settings`, and use the documented positional Git-branch argument for Vercel environment commands.
+- Product impact: none. Both failures were read-only diagnostics; no row, flag, migration, deployment or production resource was modified.
+- Security boundary: do not infer environment-variable values from CLI output, expose secrets while inspecting shape, or broaden cleanup beyond the exact disposable branch and its three known Vercel variables.
+- Required correction: derive the readback from the actual information schema and migration functions, remove the exact branch-scoped variables with positional CLI arguments, and tear down only deployment `dpl_44uiDqSoRVb4Eypx2KGmfofupabb` plus Supabase branch `6c23afdf-0853-48e9-a1a7-7c0cdcc53dcf`.
+- Required regression: the corrected readback must prove ledger 163, Tournament flags restored, zero Tournament match contexts, identify any disposable QA rows, and cleanup commands must leave the unrelated `pwa-bridge-staging` branch untouched.
+- Regression status: `REGRESSION_VERIFIED`.
+- Regression evidence:
+  - corrected readback proved ledger `163 / 20260826195040 / 53b5456c21933e614752179568576d18`;
+  - all eleven Tournament flags were restored to `OFF`, with two cancelled disposable Tournaments, one DrawPlan, twenty QA users and zero Tournament match contexts;
+  - the three exact branch-scoped Vercel variables, deployment `dpl_44uiDqSoRVb4Eypx2KGmfofupabb` and branch `6c23afdf-0853-48e9-a1a7-7c0cdcc53dcf` were removed;
+  - `pwa-bridge-staging` remained present and untouched.
+
+## R6A-024 - Incremental reconstruction filter parses the absolute path instead of the migration basename
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `FIXED`
+- Found by: clean fifth staging-branch reconstruction at ledger 36
+- Original scenario: select the 122 post-baseline migrations with an `awk` expression that tries to locate the 14-digit version inside each absolute path.
+- Observed result: the selector returns zero files and the explicit count guard stops with `incremental file count mismatch: 0` before any incremental SQL or migration-history repair runs.
+- Expected result: extract the version from each migration basename, compare it lexicographically with the immutable `absorbsThrough` boundary and require exactly 122 ordered files.
+- Product impact: none. The branch remains at the correctly applied baseline and exact 36-version absorbed ledger; production and the unrelated staging branch are untouched.
+- Security boundary: do not weaken the exact count guard, infer versions from directory names, skip failed migrations or repair history for SQL that did not execute.
+- Required correction: build the ordered file list with a portable basename comparison, execute every migration transactionally, and repair only the 122 versions after all SQL files succeed.
+- Required regression: staging must reach exactly `158 / 20260826123500 / ff75c105ff5fa08802cc004390e29693` before any R6A artifact is applied.
+- Regression status: `REGRESSION_VERIFIED`.
+- Regression evidence:
+  - basename filtering selected exactly 122 ordered post-baseline migrations;
+  - all 122 executed transactionally before migration-history repair;
+  - the branch reached exactly `158 / 20260826123500 / ff75c105ff5fa08802cc004390e29693`;
+  - native branch rebase preserved the same count, last version and digest;
+  - only then did the five reviewed R6A artifacts advance the branch to ledger 163.
+
+## R6A-025 - Preview deployment includes uncommitted incident documentation
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `OPEN`
+- Found by: Vercel deployment metadata preflight before authenticated staging E2E
+- Original scenario: deploy the corrected runtime commit after recording two reconstruction incidents locally but before committing those documentation-only changes.
+- Observed result: deployment `dpl_3gNYzb2YUVzican4io2mTqS6BJcU` is `READY` and reports the intended runtime SHA, but Vercel metadata also reports `gitDirty = 1`.
+- Expected result: the certification Preview is built from a clean, published branch HEAD with `gitDirty = 0`, so its artifact maps unambiguously to one immutable commit.
+- Product impact: none. The only uncommitted paths are the incident ledger; no authenticated E2E or Tournament command has run on the clean fifth Supabase branch.
+- Security boundary: do not ignore dirty provenance, rewrite the existing commit, or run certification against an artifact whose source cannot be reproduced exactly.
+- Required correction: commit and publish the incident evidence, remove the dirty Preview, and deploy the new clean HEAD against the unchanged branch-scoped Supabase environment.
+- Required regression: Vercel must report `READY`, the exact new commit SHA and `gitDirty = 0` before the one-shot E2E begins.
+- Regression status: `PENDING`.
