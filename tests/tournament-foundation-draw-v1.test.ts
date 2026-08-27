@@ -116,6 +116,14 @@ test("RLS exposes sanitized command and read RPCs without direct authenticated t
   assert.match(sql, /Auth identities and private reasons are never exposed/);
 });
 
+test("staging validates the published audit through its public contract without private solver quality", async () => {
+  const runner = await source("tests/tournament-foundation-draw-v1-staging-e2e.mjs");
+  assert.match(runner, /audit\.validationStatus, "VALID"/);
+  assert.match(runner, /audit\.manualOverrideCount, 0/);
+  assert.match(runner, /constraint\.type === "SAME_CLUB_AVOIDANCE" && constraint\.strength === "HARD"/);
+  assert.doesNotMatch(runner, /audit\.quality/);
+});
+
 test("Realtime RLS derives the actor from auth and keeps general authorization private", async () => {
   const [access, commands, regression] = await Promise.all([
     source(migrations.access),

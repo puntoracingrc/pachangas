@@ -489,3 +489,19 @@
   - the baseline reached exactly `36|20260731080738`;
   - basename selection returned exactly 122 ordered incrementals;
   - staging reached exactly `158|20260826123500|ff75c105ff5fa08802cc004390e29693` before any R6A migration.
+
+## R6A-029 - Published audit assertion reads quality from an absent top-level field
+
+- Classification: `SIMULATION_BUG`
+- Status: `OPEN`
+- Found by: authenticated one-shot staging E2E after successful replication-readiness and Realtime invalidation delivery.
+- Original scenario: publish the deterministic seeded draw, load its participant-visible audit read model and assert zero hard violations through `audit.quality.hardViolations`.
+- Observed result: the audit response has no top-level `quality` object and the runner stops with `TypeError: Cannot read properties of undefined (reading 'hardViolations')`.
+- Expected result: the E2E asserts the canonical published-audit contract at its actual stable location, or the product read model explicitly exposes the documented quality field if that field is part of the public contract.
+- Product impact: Realtime transport, deterministic generation and publication completed; certification stopped while interpreting the read model. The disposable branch entered cleanup and production was not addressed.
+- Security boundary: do not expose private solver diagnostics, bypass the participant audit RPC, infer zero violations from successful publication or silently remove the assertion.
+- Required correction: compare the RPC implementation, UI consumer, local SQL contract and actual staging payload to determine the authoritative audit shape before changing either product or runner.
+- Correction implemented: the runner now asserts `validationStatus = VALID`, `manualOverrideCount = 0` and the public hard `SAME_CLUB_AVOIDANCE` constraint. It no longer expects the private solver-quality object. The participant-visible RPC and product UI remain unchanged.
+- Contract evidence: authenticated readback from the disposable branch returned `validationStatus = VALID`, one public hard `SAME_CLUB_AVOIDANCE` constraint, `manualOverrideCount = 0`, 16 placements and no top-level `quality` field.
+- Required regression: a fresh one-shot E2E must validate quality through the canonical audit contract, complete all remaining histories, restore flags and leave zero Tournament matches.
+- Regression status: `PENDING`.

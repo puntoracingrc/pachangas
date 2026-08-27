@@ -869,7 +869,10 @@ try {
   });
   assert.equal(audit.seed, seedA);
   assert.equal(audit.placements.length, 16);
-  assert.equal(audit.quality.hardViolations, 0);
+  assert.equal(audit.validationStatus, "VALID");
+  assert.equal(audit.manualOverrideCount, 0);
+  assert.ok(audit.constraints.some((constraint) =>
+    constraint.type === "SAME_CLUB_AVOIDANCE" && constraint.strength === "HARD"));
 
   const publishedEdit = await rawCommand(organizerOwner, main.id, main.revision, "draw.entry.swap", {
     entryId: audit.placements[0].entryId,
