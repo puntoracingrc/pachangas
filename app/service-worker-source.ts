@@ -31,7 +31,7 @@ const STATIC_DESTINATIONS = new Set(["font", "image", "manifest", "script", "sty
 const STATIC_FILE_EXTENSIONS = /\\.(?:css|js|mjs|png|jpg|jpeg|webp|svg|ico|woff2?)$/i;
 const LIVE_SERVICE_HOST_PARTS = ["supabase.co", "stripe.com", "googleapis.com", "google.com", "gstatic.com", "weather.googleapis.com"];
 const CACHEABLE_NAVIGATION_PATHS = new Set(["/", "/aviso-legal", "/condiciones", "/condiciones-venta", "/cookies", "/demo", "/manual", "/mercado", "/privacidad", "/torneos"]);
-const CACHEABLE_NAVIGATION_PATTERNS = [/^\/competiciones\/[0-9a-f-]{36}\/torneo$/i];
+const CACHEABLE_NAVIGATION_PATTERNS = [/^\\/competiciones\\/[0-9a-f-]{36}\\/torneo$/i];
 
 function isSameOrigin(url) {
   return url.origin === self.location.origin;
@@ -55,7 +55,7 @@ function shouldCacheNavigation(url) {
 function shouldCacheStaticRequest(request, url) {
   const isImmutableDemoChunk = /^\\/demo-world\\/v\\d+\\//.test(url.pathname) && url.pathname.endsWith(".json") && url.searchParams.has("h");
   return isSameOrigin(url) && !isSensitivePath(url.pathname) && (!url.search || isImmutableDemoChunk) &&
-    (url.pathname.startsWith("/_next/static/") || STATIC_DESTINATIONS.has(request.destination) || STATIC_FILE_EXTENSIONS.test(url.pathname));
+    (isImmutableDemoChunk || url.pathname.startsWith("/_next/static/") || STATIC_DESTINATIONS.has(request.destination) || STATIC_FILE_EXTENSIONS.test(url.pathname));
 }
 
 async function trimRuntimeCache(cache) {

@@ -3,6 +3,7 @@ import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
+import { runInNewContext } from "node:vm";
 import { buildServiceWorkerSource } from "../app/service-worker-source";
 import {
   DEMO_WORLD_V2_SEED,
@@ -502,4 +503,64 @@ test("the Service Worker precaches V2 and caches every immutable versioned Demo 
   assert.match(source, /\^\\\/demo-world\\\/v\\d\+\\\//);
   assert.match(source, /request\.method !== "GET"/);
   assert.match(source, /isImmutableDemoChunk/);
+});
+
+test("a warmed immutable Demo chunk remains readable after the network goes offline", async () => {
+  const listeners = new Map<string, (event: Record<string, unknown>) => void>();
+  const entries = new Map<string, Response>();
+  let online = true;
+
+  const cache = {
+    addAll: async () => undefined,
+    delete: async (request: Request | string) => entries.delete(typeof request === "string" ? request : request.url),
+    keys: async () => [...entries.keys()].map((url) => new Request(url)),
+    match: async (request: Request | string) => entries.get(typeof request === "string" ? new URL(request, "https://pachangasiq.com").href : request.url)?.clone(),
+    put: async (request: Request | string, response: Response) => {
+      entries.set(typeof request === "string" ? new URL(request, "https://pachangasiq.com").href : request.url, response.clone());
+    },
+  };
+  const context = {
+    URL,
+    Request,
+    Response,
+    caches: {
+      delete: async () => true,
+      keys: async () => [],
+      open: async () => cache,
+    },
+    fetch: async () => {
+      if (!online) throw new TypeError("Failed to fetch");
+      return new Response(JSON.stringify({ canonical: true, version: 2.5 }), {
+        headers: { "content-type": "application/json" },
+        status: 200,
+      });
+    },
+    self: {
+      addEventListener: (type: string, listener: (event: Record<string, unknown>) => void) => listeners.set(type, listener),
+      clients: { claim: async () => undefined },
+      location: new URL("https://pachangasiq.com/sw.js"),
+      registration: { navigationPreload: { enable: async () => undefined } },
+      skipWaiting: async () => undefined,
+    },
+  };
+  runInNewContext(buildServiceWorkerSource("demo-world-v2-offline-regression"), context);
+
+  const chunkUrl = "https://pachangasiq.com/demo-world/v2/tournament.json?h=675d2992138de425";
+  const dispatchFetch = async () => {
+    let responsePromise: Promise<Response> | undefined;
+    listeners.get("fetch")?.({
+      request: new Request(chunkUrl),
+      respondWith: (response: Promise<Response>) => { responsePromise = response; },
+    });
+    assert.ok(responsePromise, "the immutable Demo JSON request must be handled by the Service Worker");
+    return responsePromise;
+  };
+
+  const onlineResponse = await dispatchFetch();
+  assert.deepEqual(await onlineResponse.json(), { canonical: true, version: 2.5 });
+  assert.equal(entries.has(chunkUrl), true);
+
+  online = false;
+  const offlineResponse = await dispatchFetch();
+  assert.deepEqual(await offlineResponse.json(), { canonical: true, version: 2.5 });
 });
