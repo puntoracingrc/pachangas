@@ -206,7 +206,14 @@ export function TournamentPrivateBetaClient({ competitionId = "", planId = "", p
       }
       await loadCanonical(token, actorId, "initial");
       if (!supabase) return;
-      channel = supabase.channel(`tournament:${surface}:${identity}`)
+      channel = supabase.channel(`tournament:${surface}:${identity}`, {
+        config: { broadcast: { replication_ready: true } },
+      })
+        .on("system", {}, (payload) => {
+          if (payload.extension === "system" && payload.status === "ok") {
+            void loadCanonical(token, actorId, "realtime");
+          }
+        })
         .on("postgres_changes", {
           event: "INSERT",
           schema: "public",

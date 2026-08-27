@@ -421,7 +421,7 @@
 ## R6A-025 - Preview deployment includes uncommitted incident documentation
 
 - Classification: `ENVIRONMENT_ISSUE`
-- Status: `OPEN`
+- Status: `FIXED`
 - Found by: Vercel deployment metadata preflight before authenticated staging E2E
 - Original scenario: deploy the corrected runtime commit after recording two reconstruction incidents locally but before committing those documentation-only changes.
 - Observed result: deployment `dpl_3gNYzb2YUVzican4io2mTqS6BJcU` is `READY` and reports the intended runtime SHA, but Vercel metadata also reports `gitDirty = 1`.
@@ -430,4 +430,43 @@
 - Security boundary: do not ignore dirty provenance, rewrite the existing commit, or run certification against an artifact whose source cannot be reproduced exactly.
 - Required correction: commit and publish the incident evidence, remove the dirty Preview, and deploy the new clean HEAD against the unchanged branch-scoped Supabase environment.
 - Required regression: Vercel must report `READY`, the exact new commit SHA and `gitDirty = 0` before the one-shot E2E begins.
+- Regression status: `REGRESSION_VERIFIED`.
+- Regression evidence:
+  - dirty deployment `dpl_3gNYzb2YUVzican4io2mTqS6BJcU` was removed before certification;
+  - clean deployment `dpl_GgnxzDuq4RqLi14MKQAsjvvQ3QVh` reached `READY` from published commit `a19545455b917a39fa8d8703c22702da2304f303` with no `gitDirty` metadata;
+  - `/torneos`, `/torneos/crear`, `/laboratorio-tournament-draw`, `/demo?demo=1&world=tournament`, `/manifest.webmanifest` and `/sw.js` returned `200` through authenticated Vercel access;
+  - production was not addressed.
+
+## R6A-026 - Tournament invalidation is not delivered after the Realtime RLS correction
+
+- Classification: `PRODUCT_BUG`
+- Status: `OPEN`
+- Found by: final authenticated one-shot staging E2E on the clean ledger-163 branch after the R6A-019 RLS correction.
+- Original scenario: subscribe as the authenticated Tournament organizer, wait for the Supabase client to report `SUBSCRIBED`, accept participants through the canonical command RPC and await the filtered invalidation insert.
+- Observed result: the channel reported `SUBSCRIBED`, but no event reached the callback within 15 seconds and the runner stopped with `R6A_REALTIME_TIMEOUT`. Realtime logs show the disposable tenant starting its stream-replication slot during the same cold-start window and contain no `42501` or `apply_rls` permission error. The server persisted 34 invalidations for the target Tournament, including rows after logical decoding reached a consistent point.
+- Expected result: the client and staging certification must distinguish WebSocket subscription from Postgres replication readiness, refetch canonically at both lifecycle points and prove one real post-readiness event before accepting the transport gate.
+- Product impact: the server-authoritative command state remains canonical, but a Tournament client could refetch too early and miss a change made in the gap between WebSocket subscription and replication readiness until another invalidation or reconnect. The runner entered cleanup and production was not addressed.
+- Security boundary: do not consume WAL payloads as authority, weaken RLS, convert a timeout into a pass, or silently retry the one-shot scenario on the mutated branch.
+- Current diagnostics: an authenticated-role readback with the organizer JWT claims sees all 34 target invalidations through RLS; `authenticated` cannot execute the general capability helper and can execute only the dedicated current-actor Realtime predicate. Supabase protocol and the installed `@supabase/realtime-js` explicitly distinguish `SUBSCRIBED` from the opt-in `system` event emitted by `config.broadcast.replication_ready`.
+- Required correction: opt the Tournament client and staging subscriber into `replication_ready`, refetch the canonical read model on the successful system signal, and prevent the E2E from issuing observed commands until both WebSocket subscription and replication readiness are confirmed.
+- Required regression: a fresh one-shot E2E must observe a real invalidation after the tenant is ready, refetch the canonical snapshot, complete every draw history, restore flags and leave zero Tournament matches.
 - Regression status: `PENDING`.
+
+## R6A-027 - Final staging readback references a non-existent match table
+
+- Classification: `TESTABILITY_GAP`
+- Status: `FIXED`
+- Found by: read-only post-failure staging diagnostic after R6A-026.
+- Original scenario: assemble one consolidated readback for ledger, flags, Tournament fixtures, invalidations, publication and function ACLs.
+- Observed result: PostgreSQL rejected the diagnostic with `42P01 relation public.pachanga_matches does not exist` before returning any readback row.
+- Expected result: the zero-Tournament-match assertion derives its source from the current canonical schema and remains valid across the reconstructed production baseline.
+- Product impact: none. The failed statement was read-only and returned no partial result; flags, fixtures and production were not modified.
+- Security boundary: do not create a compatibility table, infer a zero from the failed query, or weaken the explicit zero-match release gate.
+- Required correction: inspect the current catalog and reuse the same canonical match-context source already exercised by the R6A SQL and staging suites.
+- Required regression: the corrected readback must execute successfully and report the exact ledger, restored flags, Tournament row counts, Realtime ACL/publication state and zero Tournament match contexts.
+- Regression status: `REGRESSION_VERIFIED`.
+- Regression evidence:
+  - the canonical source is `public.pachanga_competition_match_contexts` joined to `public.pachanga_competitions` by `competition_id`;
+  - the corrected readback returned ledger `163 / 20260826195040 / 53b5456c21933e614752179568576d18`;
+  - all eleven Tournament flags were restored to `OFF`, the Realtime publication and narrow helper ACL were present, and Tournament match contexts were exactly zero;
+  - the diagnostic remained read-only and production was not addressed.
