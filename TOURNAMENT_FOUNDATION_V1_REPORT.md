@@ -2,7 +2,7 @@
 
 ## Estado
 
-`STAGING CERTIFIED / RELEASE CANDIDATE`
+`PRODUCTION ACTIVE / PRIVATE BETA`
 
 R6A crea la primera autoridad privada de Tournament sobre las entidades
 canonicas de Competition. No crea partidos, resultados, standings, calendario,
@@ -14,13 +14,14 @@ progresion de bracket, pagos ni inscripcion publica.
 | --- | --- |
 | Fecha | `2026-08-27` |
 | Base | `31d83d5014d19bb6a94960019038f1fa0038bba3` |
-| Rama | `codex/tournament-foundation-draw-engine-v1` |
-| PR | `#204` draft |
+| Rama funcional | `codex/tournament-foundation-draw-engine-v1` |
+| PR funcional | `#204 MERGED` |
+| Main funcional | `68dc360acf5dcce6cd7ffb6be4fa4b4d14d20cd7` |
 | Ledger base | `158` |
 | Migraciones R6A | `5` |
-| Ledger local | `163` |
+| Ledger productivo | `163` |
 | Node | `v24.16.0` |
-| Incidencias | `R6A-001` a `R6A-031`, registradas antes de corregir |
+| Incidencias | `R6A-001` a `R6A-041`, registradas antes de corregir |
 
 ## Autoridad
 
@@ -71,7 +72,7 @@ R6A reutiliza `Competition`, `Edition`, `RuleRevision`, `Stage`,
 La reconstruccion temporal confirma `158 -> 163`, equivalencia de esquema y
 flags OFF. No se modifica ninguna de las 158 migraciones anteriores.
 
-## Gates locales y staging
+## Gates locales, staging y produccion
 
 | Gate | Resultado |
 | --- | --- |
@@ -93,19 +94,21 @@ los catalogos de roles son compartidos por el cluster PostgreSQL local. La
 repeticion serializada confirma `158 -> 163 PASS` y concurrencia `10/10 PASS`;
 la colision inicial queda trazada como `R6A-007 ENVIRONMENT_ISSUE`.
 
-La rama Supabase final fue reconstruida desde el ledger productivo exacto:
+La rama Supabase final fue reconstruida desde el ledger productivo exacto y
+las mismas cinco migraciones se aplicaron despues en produccion:
 
 - pre-R6A: `158 / 20260826123500 / ff75c105ff5fa08802cc004390e29693`;
 - post-R6A: `163 / 20260826195040 / 53b5456c21933e614752179568576d18`;
 - schema hash local: `ed02a2dccac26791336c7dd8d044af8636556e300040e5c535d5379ca527aed4`;
-- cinco migraciones exactas, once flags OFF y cero Tournament match contexts.
+- cinco migraciones exactas, once flags nacidos OFF y cero Tournament match
+  contexts.
 
 El E2E autenticado completo paso Team y Club, determinismo, concurrencia de
 publicacion `1 winner / 1 stale`, modo automatico, manual, HYBRID, knockout con
 byes, restricciones imposibles, retirada que invalida el freeze, 17 negativos
 de seguridad/producto y Realtime con refetch canonico. Tras la prueba quedaron
 los flags OFF, cero grants activos y cero Tournament match contexts; las filas
-QA viven solo en la rama efimera que se retirara al cerrar la release.
+  QA vivieron solo en la rama efimera, retirada al cerrar la release.
 
 Security Advisor no encontro errores. Los 18 hallazgos de foreign keys R6A
 quedaron resueltos con indices de cobertura. Performance Advisor solo conserva
@@ -118,10 +121,38 @@ encuentra el ref de staging y cero apariciones de los refs de produccion,
 staging ajeno o del valor exacto de service role. Las seis rutas protegidas
 responden 200. Desktop `1440x900`, portrait `390x844` y landscape `844x390`
 presentan cero overflow raiz, imagenes rotas, overlays o errores de consola.
-La PWA instalada fisica queda pendiente y no se presenta como pasada.
+La produccion quedo desplegada en `dpl_2CHjktZiXEmimN5AXGeKrdrUFZh7`, READY y
+asociada al SHA exacto `68dc360acf5dcce6cd7ffb6be4fa4b4d14d20cd7`.
+Las cinco migraciones avanzaron el ledger remoto de `158` a `163`, con digest
+`53b5456c21933e614752179568576d18`.
 
-## Pendiente de cierre
+La activacion se ejecuto por `command_pachanga_tournament_platform_v1`, revision
+de settings `11` y secuencia de servidor `1136`. Quedaron ON Foundation,
+Private Beta, Creation, Draw, Automatic, Manual, Hybrid y Publish. Public
+Discovery, Match Generation y Bracket Progression siguen OFF. La repeticion
+del mismo `operationId` produjo un unico evento/receipt y ninguna segunda
+aplicacion.
 
-- merge, cinco migraciones y deployment productivo;
-- activacion Private Beta por RPC, canary y readback final;
-- retirada de staging, variables Preview, temporales y worktree.
+El canary productivo `R6A-PROD-4784A46F4233` se ejecuto en una transaccion con
+`ROLLBACK`: creo el bundle y participantes efimeros, completo HYBRID con dos
+locks, valido el audit canonico y cancelo/revoco antes del rollback. El readback
+independiente confirmo cero Tournaments, plans, placements, grants y Tournament
+match contexts QA persistentes, ademas de cero sesiones Auth creadas.
+
+El smoke productivo cubrio `/torneos`, `/torneos/crear`,
+`/laboratorio-tournament-draw` y `/demo?demo=1&world=tournament` en `1440x900`,
+`390x844` y `844x390`: cero overflow raiz no intencional, imagenes rotas,
+errores de consola o warnings de hidratacion. Manifest, Service Worker,
+controlador activo, cache offline de Demo y reconexion pasaron en navegador.
+La PWA instalada fisica, Android fisico e iPhone fisico quedan pendientes y no
+se presentan como pasados.
+
+## Cierre
+
+- rama Supabase R6A eliminada; `pwa-bridge-staging` conservada intacta;
+- tres variables Vercel limitadas a la rama R6A eliminadas;
+- contenedor de restauracion, dumps, credenciales y temporales R6A eliminados;
+- worktree conservado solo hasta fusionar este informe y retirado despues segun
+  la politica del repositorio;
+- R6B, generacion de partidos, progresion, resultados, pagos y discovery no se
+  iniciaron.

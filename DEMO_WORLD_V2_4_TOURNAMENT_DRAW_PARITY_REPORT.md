@@ -9,7 +9,7 @@
 - Hash de autoridad PostgreSQL:
   `991173f97e638a5ac9d55764284f331d61fffc95c799b60850f156cda23f612f`.
 - Migraciones simuladas: `163`.
-- Escrituras remotas: `0`.
+- Escrituras remotas de Demo: `0`.
 
 ## Torneo sintetico
 
@@ -67,6 +67,9 @@ La superficie Demo permite consultar Tournament, Draw Desk, grupos, seeds,
 quality y audit con el mismo contrato visual que el producto. No activa una
 beta real, no concede grants y no simula partidos de Tournament.
 
-La comprobacion de produccion se incorporara al readback de release. La Preview
-esta certificada; la PWA instalada fisica permanece pendiente y no se presenta
-como pasada.
+La misma superficie se verifico en produccion con el SHA
+`68dc360acf5dcce6cd7ffb6be4fa4b4d14d20cd7`: HTTP 200, cero imagenes rotas,
+errores de consola, warnings de hidratacion u overflow raiz no intencional en
+desktop, portrait y landscape. La navegacion offline de Demo desde el Service
+Worker y la reconexion pasaron en navegador. La PWA instalada fisica permanece
+pendiente y no se presenta como pasada.

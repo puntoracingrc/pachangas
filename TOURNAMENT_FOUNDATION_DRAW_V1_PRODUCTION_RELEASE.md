@@ -2,10 +2,7 @@
 
 ## Estado
 
-`STAGING CERTIFIED / PRODUCTION NOT MODIFIED`
-
-Este documento se completara con readbacks verificables tras staging, merge,
-deployment y smoke. No presenta como PASS ningun gate remoto pendiente.
+`PRODUCTION ACTIVE / PRIVATE BETA / CLEAN READBACK`
 
 ## Release coordinada
 
@@ -50,18 +47,45 @@ directas ni se convierte un payload local en fuente de verdad.
 | Responsive Preview | `1440x900, 390x844 y 844x390 PASS` |
 | PWA instalada fisica | `PENDING / no bloqueante` |
 | Tournament match contexts | `0` |
-| Produccion | `NO MODIFICADA` |
+| Produccion | `ACTIVA / PRIVATE BETA` |
 
-## Readback pendiente
+## Readback productivo
 
 | Dato | Resultado |
 | --- | --- |
-| Main final | `PENDING` |
-| Ledger remoto | `PENDING` |
-| Deployment | `PENDING` |
-| Flags finales | `PENDING` |
-| Advisors | `PENDING` |
-| Smoke productivo | `PENDING` |
-| Tournament QA activo | `PENDING` |
-| Tournament matches QA | `PENDING` |
-| Worktree retirado | `PENDING` |
+| PR funcional | `#204 MERGED` |
+| Main funcional | `68dc360acf5dcce6cd7ffb6be4fa4b4d14d20cd7` |
+| Ledger remoto | `163 / 20260826195040 / 53b5456c21933e614752179568576d18` |
+| Migraciones | `5/5 exactas; historial remoto sincronizado` |
+| Backup | `272 tablas / 1536 filas / 0 diferencias al restaurar` |
+| Deployment | `dpl_2CHjktZiXEmimN5AXGeKrdrUFZh7 / READY / SHA exacto` |
+| Flags ON por RPC | `Foundation, Private Beta, Creation, Draw, Automatic, Manual, Hybrid, Publish` |
+| Flags OFF | `Public Discovery, Match Generation, Bracket Progression` |
+| Idempotencia de activacion | `1 evento + 1 receipt; revision 11 sin doble aplicacion` |
+| Canary | `R6A-PROD-4784A46F4233 / PASS / ROLLBACK` |
+| QA persistente | `0 Tournaments, plans, placements, grants y match contexts` |
+| Advisors | `0 errores; 0 warnings R6A de rendimiento` |
+| Logs | `0 errores runtime Vercel; 0 5xx R6A` |
+| Smoke productivo | `4 rutas x 3 viewports PASS` |
+| Realtime | `invalidacion + refetch canonico; controlador SW activo` |
+| PWA instalada fisica | `PENDING / no bloqueante` |
+| Staging efimero | `ELIMINADO` |
+| Variables Preview R6A | `3/3 ELIMINADAS` |
+| Temporales sensibles | `ELIMINADOS` |
+| Worktree | `RETIRAR TRAS MERGE DE ESTE INFORME` |
+
+## Migraciones productivas
+
+| Version | Archivo | SHA-256 |
+| --- | --- | --- |
+| `20260826195034` | `tournament_foundation_participant_freeze_v1.sql` | `2335bf3edd0aa2c84152977a17f5bca84059058220267e7bbcb90bf15c50191a` |
+| `20260826195036` | `tournament_draw_schema_revisions_v1.sql` | `9810ca5ab4b92b172df7cb01f225e2ac80d9db7833d1a5734f55551cef17931c` |
+| `20260826195037` | `tournament_draw_commands_engine_v1.sql` | `e286eb53a26db2f95621f1427d414436f3dddd5f0b0b1a71f103e97e527afa51` |
+| `20260826195039` | `tournament_draw_access_read_models_v1.sql` | `0091c1d254527ea2c425065d67e58097343da9d8b50ad55e2ece28ffa5d92bb8` |
+| `20260826195040` | `tournament_draw_hardening_indexes_flags_v1.sql` | `4a17e0011884346f9b131f52da33ce0d3b7d0bfad97a1a30c594e705c91ad7d9` |
+
+## Limites conservados
+
+No se inicio R6B. No existen partidos, progresion de bracket, resultados,
+standings, pagos ni discovery publico de Tournament. Rating V2, rewards,
+Conduct, Player Cosmetics, Team Cosmetics y billing permanecen intactos.
