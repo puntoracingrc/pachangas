@@ -3,10 +3,19 @@
 ## Release identity
 
 - Initial `origin/main`: `7f46951fd4144985b05c8029606574b82c655b73`
-- Branch: `codex/tournament-group-stage-match-tracking-v1`
-- Pull request: #206 (draft while release gates are in progress)
-- Certified branch HEAD: `03f4e570c49b3c63faf11284f3732c739f368821`
+- Functional branch: `codex/tournament-group-stage-match-tracking-v1`
+- Functional pull request: #206, merged
+- Certified functional HEAD: `03f4e570c49b3c63faf11284f3732c739f368821`
+- Functional merge: `ed6063ec4a327b9921410c950b7229a48c697ea1`
+- PWA hotfix pull request: #207, merged
+- PWA hotfix merge / production code SHA:
+  `4c9d04379ebe0f9ba0e69aa023e5badba2ea8637`
 - Exact Preview: `https://pachangas-hlbklq6fn-persianas-almar-web-s-projects.vercel.app`
+- Production deployment: `dpl_CQH7sBktL2ESVaKw9yX3fiAhTcow`
+- Production URL:
+  `https://pachangas-npfx9wl4c-persianas-almar-web-s-projects.vercel.app`
+- Public aliases: `https://pachangasiq.com` and
+  `https://www.pachangasiq.com`
 - Diff from `origin/main`: 76 paths
 - Local ledger: 163 base migrations plus 6 R6B migrations = 169
 
@@ -38,8 +47,8 @@ are created.
 - Demo World V2.5 deterministic verification: PASS.
 - Typecheck: PASS.
 - Build: PASS.
-- Tests: 20/20 Node and 537/537 TS/TSX; 0 skipped, todo or
-  cancelled.
+- Tests after the production PWA hotfix: 20/20 Node and 538/538 TS/TSX,
+  558/558 total; 0 skipped, todo or cancelled.
 - Focused lint: PASS (27 changed code/test files).
 - `git diff --check`: PASS.
 
@@ -117,31 +126,104 @@ existing-database path, `supabase migration up --linked`, applied only the six
 immutable R6B files. Linked and Management API readbacks now agree on exactly
 169 versions through `20260827105036` with all names in the table above.
 
-All R6B, knockout, bracket progression and public discovery flags remain OFF.
-The nine new relations contain zero rows, all have RLS, authenticated/anonymous
+The nine new relations contain zero rows after the reversible canary, all have
+RLS, authenticated/anonymous
 roles have zero direct write grants, no R6B index is invalid and Tournament
 invalidations are present in `supabase_realtime`. Advisor warnings for RPC-only
 tables/functions are expected from the deliberate no-direct-table-access and
 authenticated command architecture; optional foreign-key index notices remain
 informational after the certified scale/performance suite.
 
-## Hosted release gates
+## Production activation and canary
 
-The following fields must be replaced with real evidence during this same
-release before closure:
+Activation used only
+`command_pachanga_tournament_group_stage_platform_v1`, never a direct settings
+update. Five idempotent operations advanced the platform settings monotonically
+from revision 11 to 16 and server sequence 1281 to 1285. Replaying the fifth
+operation returned the same receipt and created no duplicate event.
 
-- Preview deployment and responsive visual QA: PASS
-- Staging migration/readback: PASS
-- Two-device authenticated Realtime: PASS
-- Staging teardown: PENDING
-- PR merge and final main SHA: PENDING
-- Production backup/readback: PASS
-- Production migration ledger 169: PASS; flags remain OFF
-- Inactive smoke: PENDING
-- Audited staged activation: PENDING
-- Reversible 4-team production canary: PENDING
-- Demo World V2.5 production smoke: PENDING
-- Service Worker production smoke: PENDING
-- Worktree cleanup: PENDING
+Final flag readback at revision 16 is:
 
-No production state is claimed by this draft section.
+| Capability | State |
+| --- | --- |
+| Tournament Foundation / Private Beta / Draw | ON |
+| Group Stage / Scheduling / Group Match Generation | ON |
+| Tracking / Group Standings / Qualification | ON |
+| Bracket Template | ON |
+| Knockout Match Generation | OFF |
+| Bracket Progression | OFF |
+| Public Tournament Discovery | OFF |
+| Payments | OFF |
+
+The production canary ran inside one transaction with four teams, one Group,
+one leg, three rounds, six fixtures, six CanonicalMatches and six
+CompetitionMatchContexts. Tournament Hub returned one Group projection with
+zero standings rows, while SportingResults and persisted StandingStates stayed
+at zero. The transaction rolled back. Final readback confirms zero QA users,
+roles, grants, tournaments, Group Stage rows, CanonicalMatches, contexts,
+results or standings.
+
+## Demo, visual and PWA production proof
+
+Demo World V2.5 is live with Copa Barrios IQ 2027, 16 teams, four Groups, three
+rounds per Group and 24 deterministic Group fixtures. Its manifest and
+authority hashes are respectively
+`675d2992138de4253a0e9e09eab77d09682cecc708fc06a4f87ed0e6d15e57f8`
+and
+`3d51909498c47762ee6256f6a71e5ab642fbd2a2f2fc953178d537ca54dd06af`.
+Remote Demo writes remain zero.
+
+All ten Tournament tabs passed the required eight-view matrix, 80/80
+combinations, with zero root overflow, clipped active control, broken image,
+pending image, console error or hydration warning. Installed physical Android,
+iPhone and standalone PWA remain truthfully pending; CDP display-mode emulation
+is not presented as physical QA.
+
+PR #207 corrected two Service Worker defects found during the production gate:
+the generated competition-route regex was invalid, and immutable hashed Demo
+JSON was recognized but excluded from runtime caching. Worker
+`2.0.0+sw.4c9d04379ebe` compiled, activated through the existing controlled
+update flow and replaced the previous worker/cache namespace.
+
+The online-to-offline regression warmed the manifest plus all eight V2.5
+chunks, blocked the network, proved an uncached API request failed, and reloaded
+the same Tournament URL. Copa Barrios, Jornada 2 and the bracket message still
+rendered without an error panel, overflow or broken image. Connectivity was
+then restored and canonical online rendering converged again. No offline write,
+queue or fake success exists.
+
+## Operational readback
+
+- `supabase migration list --linked`: 169 local and 169 remote versions aligned
+  through `20260827105036`.
+- PostgreSQL settings: revision 16, server sequence 1285.
+- R6B product/canary rows after rollback: zero.
+- R6B staging branches removed: two; unrelated `pwa-bridge-staging` preserved.
+- Vercel deployment: READY and served by `pachangasiq.com` with exact deployment
+  ID `dpl_CQH7sBktL2ESVaKw9yX3fiAhTcow`.
+- Deployment errors: zero `error`-level entries and zero R6B 5xx.
+- Known unrelated debt: `/api/internal/rankings/refresh` remains fail-closed at
+  503 while server-only `CRON_SECRET` is absent; it predates R6B and is recorded
+  as `R6B-ENVIRONMENT-128`.
+
+## Final matrix
+
+| Result | State |
+| --- | --- |
+| Tournament Group Stage active | YES / PRIVATE BETA |
+| R4B journeys active | YES |
+| Canonical Group matches active | YES |
+| R4C results active | YES |
+| Group standings active | YES |
+| Qualification active | YES |
+| Bracket template active | YES |
+| Knockout matches created | 0 |
+| Bracket progression active | NO |
+| Tournament champion available | NO |
+| Demo World V2.5 live | YES |
+| Simulation World verified | YES |
+| Remote Demo writes | 0 |
+| Functional and PWA PRs merged | YES |
+| Production deployment | READY |
+| Production rollback required | NO |
+| R6C started | NO |
