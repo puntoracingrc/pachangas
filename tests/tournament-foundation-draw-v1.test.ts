@@ -228,6 +228,9 @@ test("authenticated staging covers the ten canonical stories, security negatives
   assert.match(staging, /server_sequence: nextFixtureServerSequence\(\)/);
   assert.match(staging, /command_pachanga_club_foundation_v1/);
   assert.match(staging, /command_pachanga_club_platform_v1/);
+  assert.match(staging, /command_pachanga_publication_consent_v1/);
+  assert.match(staging, /representationAuthorized: true/);
+  assert.match(staging, /informationCorrect: true/);
   assert.match(staging, /command_action: "club\.review\.submit"/);
   assert.match(staging, /command_action: "club\.status\.set"/);
   assert.match(staging, /operationalStatus, "draft"/);

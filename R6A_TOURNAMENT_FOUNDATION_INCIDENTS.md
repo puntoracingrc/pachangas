@@ -296,3 +296,17 @@
   - production and staging matched at `158 / 20260826123500 / ff75c105ff5fa08802cc004390e29693`;
   - the five reviewed R6A migrations then advanced staging to `163 / 20260826195040`;
   - production remained read-only.
+
+## R6A-018 - Canonical Club review requires publication consent
+
+- Classification: `SIMULATION_BUG`
+- Status: `OPEN`
+- Found by: authenticated one-shot staging E2E
+- Original scenario: create the Club canonically and submit it for review immediately from its draft revision.
+- Observed result: the existing Club authority rejects the review with `CLUB_PUBLICATION_CONSENT_REQUIRED` because no owner consent exists for the current public content fingerprint.
+- Expected result: the owner confirms representation authority and content correctness through `command_pachanga_publication_consent_v1`, then submits the exact confirmed revision for review before platform activation.
+- Product impact: none. The guard prevented an unconsented Club from becoming reviewable; no Tournament bundle, Tournament, DrawPlan or match was created.
+- Security boundary: do not bypass the consent fingerprint, update Club status directly, weaken the review guard or fabricate consent in fixture tables.
+- Required correction: extend the staging Club helper to execute `club.create -> publication.consent -> club.review.submit -> club.status.set(active)` with every server-confirmed revision.
+- Required regression: a fresh one-shot E2E must activate both disposable Clubs only after canonical consent, complete Team and Club Tournament histories, restore all temporary flags and leave zero Tournament matches.
+- Regression status: `PENDING`.
