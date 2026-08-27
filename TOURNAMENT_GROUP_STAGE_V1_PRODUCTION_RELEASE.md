@@ -96,6 +96,35 @@ real installed Service Worker. `R6B-ENVIRONMENT-100` keeps that result open and
 requires the public production origin smoke before closure; no PWA success is
 inferred from the protected Preview.
 
+## Production migration gate
+
+Production was read before migration at exactly 163 versions with R6A active,
+R6B absent, zero Tournament rows, zero CanonicalMatches and zero
+CompetitionMatchContexts. Canonical health retained `initializedAt = null`, so
+the legacy backfill was not executed.
+
+Recovery evidence exists in two independent forms: a completed Supabase
+physical backup from `2026-08-27T00:14:33Z`, plus permission-restricted logical
+schema, role and data dumps captured immediately before R6B. Their SHA-256
+checksums are respectively
+`c148fcb7adf63ed7e544d7b545f50b967567c9d48841e58d0e633182917bc1db`,
+`168a95a9c745af5ed4679751f90419ac9dc434240a213b03e32a06d5664c2308`
+and
+`48f9821ea068a20c6e8270100544ecb4b1204c7de99fe064bbe0a87d61a44549`.
+
+The repository intentionally disables generic `db push`; the documented
+existing-database path, `supabase migration up --linked`, applied only the six
+immutable R6B files. Linked and Management API readbacks now agree on exactly
+169 versions through `20260827105036` with all names in the table above.
+
+All R6B, knockout, bracket progression and public discovery flags remain OFF.
+The nine new relations contain zero rows, all have RLS, authenticated/anonymous
+roles have zero direct write grants, no R6B index is invalid and Tournament
+invalidations are present in `supabase_realtime`. Advisor warnings for RPC-only
+tables/functions are expected from the deliberate no-direct-table-access and
+authenticated command architecture; optional foreign-key index notices remain
+informational after the certified scale/performance suite.
+
 ## Hosted release gates
 
 The following fields must be replaced with real evidence during this same
@@ -106,8 +135,8 @@ release before closure:
 - Two-device authenticated Realtime: PASS
 - Staging teardown: PENDING
 - PR merge and final main SHA: PENDING
-- Production backup/readback: PENDING
-- Production migration ledger 169: PENDING
+- Production backup/readback: PASS
+- Production migration ledger 169: PASS; flags remain OFF
 - Inactive smoke: PENDING
 - Audited staged activation: PENDING
 - Reversible 4-team production canary: PENDING

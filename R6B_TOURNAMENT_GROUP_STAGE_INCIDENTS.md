@@ -1987,7 +1987,7 @@ After correction, the entry must include its regression and may only be marked
 ### R6B-ENVIRONMENT-109 - Linked migration push is disabled by project config
 
 - Classification: `ENVIRONMENT_ISSUE`
-- Status: `OPEN`
+- Status: `FIXED / REGRESSION_VERIFIED`
 - Original scenario: run the mandatory linked `db push --dry-run` after proving
   the exact 163-version production baseline.
 - Observed: the CLI connects to the correct project but skips migrations
@@ -1998,7 +1998,30 @@ After correction, the entry must include its regression and may only be marked
 - Planned correction: discover and use the supported Supabase migration API or
   an atomic exact-version path, then prove the six immutable file versions and
   names in the remote ledger before merge.
-- Regression evidence: pending.
+- Regression evidence: the documented existing-database path,
+  `supabase migration up --linked`, applied only the six pending immutable R6B
+  files without changing `config.toml`. A fresh linked list shows exact local
+  and remote versions aligned through `20260827105036`.
+
+### R6B-TEST-110 - Post-migration readback assumes a membership table name
+
+- Classification: `TESTABILITY_GAP`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: verify the 169-version production ledger, OFF defaults,
+  empty R6B relations, RLS, ACL, indexes and Realtime immediately after the six
+  migrations complete.
+- Observed: the diagnostic references
+  `pachanga_tournament_group_memberships`, while the migration uses a different
+  canonical relation name; PostgreSQL rejects the statement with `42P01`.
+- Impact: the migrations remain applied, but no partial readback is accepted
+  and activation remains blocked.
+- Planned correction: enumerate the deployed R6B catalog and rerun one complete
+  readback using only the exact relation names.
+- Regression evidence: the catalog-led replacement confirms 169 migrations,
+  all six exact R6B versions/names, every R6B flag OFF, zero R6B product rows,
+  RLS on all nine relations, zero direct client write grants, zero invalid
+  indexes, Realtime publication present and the platform command unavailable to
+  `anon` while remaining available to authorized RPC roles.
 
 ## Verification closure - 2026-08-27
 
