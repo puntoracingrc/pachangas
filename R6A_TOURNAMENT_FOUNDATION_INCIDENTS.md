@@ -364,3 +364,17 @@
   - 122 immutable `origin/main` incrementals were executed through the session pooler with `ON_ERROR_STOP`;
   - only the 122 successfully executed versions were repaired from their exported filenames;
   - staging now matches production at `158 / 20260826123500 / ff75c105ff5fa08802cc004390e29693` before R6A.
+
+## R6A-022 - Staging runner attempts a manual swap on an automatic draw mode
+
+- Classification: `SIMULATION_BUG`
+- Status: `OPEN`
+- Found by: final authenticated one-shot staging E2E on the clean ledger-163 branch
+- Original scenario: generate and regenerate the main `SEEDED_POTS` draw, then call `draw.entry.swap` on that automatic plan before validation.
+- Observed result: the server correctly rejects the command with `DRAW_MANUAL_EDIT_NOT_AVAILABLE` because manual place, move, swap and remove operations are limited to `MANUAL_ASSISTED` and `HYBRID` plans.
+- Expected result: automatic draw determinism remains tested on the seeded plan, while manual swapping is exercised on an existing generated `HYBRID` plan using two unlocked participants.
+- Product impact: none. The authority rejected the invalid command, the runner entered its cleanup path, restored temporary flags and did not create Tournament matches. Production was not addressed.
+- Security boundary: do not broaden manual editing to automatic modes, weaken draw-plan state checks or change product SQL to accommodate an invalid QA sequence.
+- Required correction: remove the swap from the automatic plan, perform it on the generated hybrid plan, and accept the canonical non-editable error when probing the already published automatic plan.
+- Required regression: focused tests must prove that the staging script places `draw.entry.swap` only after a `HYBRID` plan has been generated and that a fresh authenticated E2E completes the swap before cleanup.
+- Regression status: `PENDING`.

@@ -254,6 +254,11 @@ test("authenticated staging covers the ten canonical stories, security negatives
   assert.match(staging, /operationalStatus, "active"/);
   assert.match(staging, /restore-club-flags/);
   assert.doesNotMatch(staging, /from\("pachanga_clubs"\)\.insert|from\("pachanga_club_memberships"\)\.insert/);
+  const automaticSection = staging.slice(staging.indexOf("const main ="), staging.indexOf("const hybrid ="));
+  const hybridSection = staging.slice(staging.indexOf("const hybrid ="), staging.indexOf("const knockout ="));
+  assert.doesNotMatch(automaticSection, /reason: "R6A manual swap staging"/);
+  assert.match(hybridSection, /draw\.entry\.swap/);
+  assert.match(hybridSection, /planId: hybridPlanId/);
 });
 
 test("staging preflight reports the exact missing project-ref variable", () => {

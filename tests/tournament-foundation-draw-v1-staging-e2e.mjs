@@ -832,24 +832,6 @@ try {
   assert.notEqual(desk.plan.revisionSnapshot.resultChecksum, firstChecksum);
   report.histories.differentSeed = true;
 
-  const samePotPair = desk.plan.placements.find((left) => desk.plan.placements.some((right) => (
-    right.entryId !== left.entryId && right.potNumber === left.potNumber && right.groupNumber !== left.groupNumber
-  )));
-  const samePotOther = desk.plan.placements.find((right) => (
-    right.entryId !== samePotPair.entryId
-    && right.potNumber === samePotPair.potNumber
-    && right.groupNumber !== samePotPair.groupNumber
-  ));
-  await command(organizerOwner, main, "draw.entry.swap", {
-    entryId: samePotPair.entryId,
-    otherEntryId: samePotOther.entryId,
-    planId: mainPlanId,
-    reason: "R6A manual swap staging",
-  });
-  const swappedDesk = await readDesk(organizerOwner, main.id, mainPlanId);
-  assert.equal(swappedDesk.plan.placements.find((item) => item.entryId === samePotPair.entryId).groupNumber, samePotOther.groupNumber);
-  report.histories.manualSwap = true;
-
   await generate(main, mainPlanId, seedA, "draw.regenerate");
   await command(organizerOwner, main, "draw.validate", { planId: mainPlanId, reason: "R6A staging validate" });
   const publishRevision = main.revision;
@@ -881,7 +863,7 @@ try {
     planId: mainPlanId,
     reason: "R6A published edit negative",
   });
-  expectError(publishedEdit, /DRAW_REVISION_NOT_EDITABLE|DRAW_PLAN_NOT_EDITABLE/i, "published draw edit");
+  expectError(publishedEdit, /DRAW_REVISION_NOT_EDITABLE|DRAW_PLAN_NOT_EDITABLE|DRAW_MANUAL_EDIT_NOT_AVAILABLE/i, "published draw edit");
   report.negatives.publishedDrawEdit = true;
 
   const directWrite = await organizerOwner.from("pachanga_competition_draw_placements").insert({
@@ -1029,6 +1011,30 @@ try {
   assert.equal(hybridDesk.plan.placements.find((item) => item.entryId === hybridEntries[0].id).groupNumber, 1);
   assert.equal(hybridDesk.plan.placements.find((item) => item.entryId === hybridEntries[1].id).groupNumber, 2);
   assert.equal(hybridDesk.plan.manualLocks.length, 2);
+
+  const unlockedHybrid = hybridDesk.plan.placements.filter((placement) => (
+    ![hybridEntries[0].id, hybridEntries[1].id].includes(placement.entryId)
+  ));
+  const hybridSwapLeft = unlockedHybrid.find((left) => unlockedHybrid.some((right) => (
+    right.entryId !== left.entryId && right.groupNumber !== left.groupNumber
+  )));
+  const hybridSwapRight = unlockedHybrid.find((right) => (
+    right.entryId !== hybridSwapLeft?.entryId && right.groupNumber !== hybridSwapLeft?.groupNumber
+  ));
+  assert.ok(hybridSwapLeft && hybridSwapRight);
+  await command(organizerOwner, hybrid, "draw.entry.swap", {
+    entryId: hybridSwapLeft.entryId,
+    otherEntryId: hybridSwapRight.entryId,
+    planId: hybridPlanId,
+    reason: "R6A manual swap staging",
+  });
+  hybridDesk = await readDesk(organizerOwner, hybrid.id, hybridPlanId);
+  assert.equal(
+    hybridDesk.plan.placements.find((item) => item.entryId === hybridSwapLeft.entryId).groupNumber,
+    hybridSwapRight.groupNumber,
+  );
+  assert.equal(hybridDesk.plan.manualLocks.length, 2);
+  report.histories.manualSwap = true;
 
   const occupied = hybridDesk.plan.placements.find((item) => item.entryId !== hybridEntries[0].id);
   const positionConflict = await rawCommand(organizerOwner, hybrid.id, hybrid.revision, "draw.entry.move", {
