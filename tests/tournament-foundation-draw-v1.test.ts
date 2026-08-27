@@ -116,6 +116,22 @@ test("RLS exposes sanitized command and read RPCs without direct authenticated t
   assert.match(sql, /Auth identities and private reasons are never exposed/);
 });
 
+test("Realtime RLS derives the actor from auth and keeps general authorization private", async () => {
+  const [access, commands, regression] = await Promise.all([
+    source(migrations.access),
+    source(migrations.commands),
+    source("tests/tournament-foundation-draw-v1-db.sql"),
+  ]);
+  assert.match(access, /pachanga_tournament_realtime_can_read_v1\(\s*target_competition_id uuid/);
+  assert.match(access, /target_competition_id, \(select auth\.uid\(\)\), 'read'/);
+  assert.match(access, /grant execute on function private\.pachanga_tournament_realtime_can_read_v1\(uuid\)\s+to authenticated/);
+  assert.match(access, /or private\.pachanga_tournament_realtime_can_read_v1\(competition_id\)/);
+  assert.match(commands, /revoke all on function %s from public, anon, authenticated/);
+  assert.doesNotMatch(access, /grant execute on function private\.pachanga_tournament_can_v1\(uuid,uuid,text\)/);
+  assert.match(regression, /Realtime RLS must hide invalidations from an outsider without permission errors/);
+  assert.match(regression, /Realtime RLS must expose invalidations to the authorized organizer/);
+});
+
 test("participant command receipts apply the same actor-aware privacy boundary as canonical reads", async () => {
   const [commands, regression] = await Promise.all([
     source(migrations.commands),

@@ -612,6 +612,32 @@ select pg_temp.r6a_expect_error(format(
   (select value ->> 'id' from r6a_state where key='competition')
 ), 'TOURNAMENT_READ_FORBIDDEN');
 
+select set_config(
+  'r6a.competition_id',
+  (select value ->> 'id' from r6a_state where key='competition'), true
+);
+set local role authenticated;
+select pg_temp.r6a_assert(
+  (select count(*) = 0
+   from public.pachanga_tournament_invalidations invalidations
+   where invalidations.competition_id=current_setting('r6a.competition_id')::uuid),
+  'R6A-019: Realtime RLS must hide invalidations from an outsider without permission errors'
+);
+reset role;
+
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"61010000-0000-4000-8000-000000000001","role":"authenticated"}', true
+);
+set local role authenticated;
+select pg_temp.r6a_assert(
+  (select count(*) > 0
+   from public.pachanga_tournament_invalidations invalidations
+   where invalidations.competition_id=current_setting('r6a.competition_id')::uuid),
+  'R6A-019: Realtime RLS must expose invalidations to the authorized organizer'
+);
+reset role;
+
 set local role authenticated;
 select pg_temp.r6a_expect_error(
   $$insert into public.pachanga_competition_draw_placements(

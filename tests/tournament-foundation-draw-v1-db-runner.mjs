@@ -157,6 +157,12 @@ try {
       ),
       'privateSolverClientExecute', has_function_privilege(
         'authenticated', 'private.pachanga_tournament_solve_v1(uuid,text)', 'EXECUTE'
+      ),
+      'generalAuthorizationClientExecute', has_function_privilege(
+        'authenticated', 'private.pachanga_tournament_can_v1(uuid,uuid,text)', 'EXECUTE'
+      ),
+      'realtimeAuthorizationClientExecute', has_function_privilege(
+        'authenticated', 'private.pachanga_tournament_realtime_can_read_v1(uuid)', 'EXECUTE'
       )
     )::text
     from private.pachanga_competition_foundation_settings settings
@@ -168,6 +174,7 @@ try {
     directAuthenticatedInsert: false,
     drawOff: true,
     foundationOff: true,
+    generalAuthorizationClientExecute: false,
     hybridOff: true,
     manualOff: true,
     matchGenerationOff: true,
@@ -176,6 +183,7 @@ try {
     privateSolverClientExecute: false,
     publicDiscoveryOff: true,
     publishOff: true,
+    realtimeAuthorizationClientExecute: true,
     revisions: 0,
   });
 

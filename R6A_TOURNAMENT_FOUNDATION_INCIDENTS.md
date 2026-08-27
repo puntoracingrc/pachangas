@@ -310,3 +310,38 @@
 - Required correction: extend the staging Club helper to execute `club.create -> publication.consent -> club.review.submit -> club.status.set(active)` with every server-confirmed revision.
 - Required regression: a fresh one-shot E2E must activate both disposable Clubs only after canonical consent, complete Team and Club Tournament histories, restore all temporary flags and leave zero Tournament matches.
 - Regression status: `PENDING`.
+
+## R6A-019 - Ephemeral branch does not deliver the Tournament invalidation event
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `OPEN`
+- Found by: authenticated one-shot staging E2E after canonical Club activation and Tournament participant acceptance
+- Original scenario: subscribe as the authenticated organizer to `INSERT` events from `public.pachanga_tournament_invalidations`, filtered by the canonical Tournament `competition_id`, wait for `SUBSCRIBED`, and then accept the invited teams through the Tournament command RPC.
+- Observed result: the channel reached `SUBSCRIBED` and the server persisted 36 invalidation rows with monotonic `server_sequence`, but the filtered callback did not fire within 15 seconds and the runner stopped with `R6A_REALTIME_TIMEOUT`.
+- Expected result: at least one authorized invalidation event is delivered after subscription; the client then discards the transport payload as authority and reloads the canonical Tournament snapshot.
+- Product impact: canonical Tournament state and invalidation evidence were persisted, but the required Realtime transport proof is incomplete. The runner restored flags, cancelled fixtures where possible and left zero Tournament competitions and zero Tournament match contexts.
+- Security boundary: do not treat a direct database read as proof of Realtime, do not consume WAL payloads as canonical state, do not weaken RLS and do not retry the one-shot certification on a previously mutated branch.
+- Current diagnostics: the invalidation table is present in the `supabase_realtime` publication, RLS is enabled, one SELECT policy exists, replica identity is `default`, all published INSERT columns include `competition_id`, and 36 untargeted invalidations were persisted for the filtered Tournament. Supabase Realtime logs identify the exact failure as `42501 permission denied for function pachanga_tournament_can_v1` inside `realtime.apply_rls`.
+- Required correction: expose only a dedicated current-actor read predicate to `authenticated`, derive the actor from `auth.uid()`, keep the general actor/capability helper revoked, and rebuild staging from ledger 158.
+- Required regression: a fresh one-shot E2E must receive the event through Realtime, reload the canonical snapshot, complete all Team and Club Tournament histories, restore temporary flags and leave zero Tournament matches and zero persistent QA entities.
+- Regression status: `PENDING`.
+
+## R6A-020 - Realtime RLS regression reads harness state after assuming the client role
+
+- Classification: `SIMULATION_BUG`
+- Status: `FIXED`
+- Found by: local 158-to-163 SQL/RLS suite for the R6A-019 correction
+- Original scenario: switch the SQL session to `authenticated` and calculate the target Tournament ID with a subquery against the harness temporary table `r6a_state`.
+- Observed result: PostgreSQL correctly rejects the temporary-table read with `permission denied for table r6a_state`, so the assertion stops before exercising `pachanga_tournament_invalidations` RLS.
+- Expected result: fixture state is resolved before assuming the client role; the client-role query touches only the product invalidation table and its RLS predicate.
+- Product impact: none. Both product schemas had already installed equivalently in disposable local databases, and the failure occurred inside a transaction that the test runner discards.
+- Security boundary: do not grant the client role access to fixture tables and do not execute the RLS assertion as a privileged role.
+- Required correction: place the canonical Tournament ID in a transaction-local setting before `SET LOCAL ROLE authenticated`, then use only `current_setting` inside the client-role assertion.
+- Required regression: the outsider must read zero invalidations without an ACL error, while the authorized organizer reads at least one; the general actor/capability helper remains non-executable by clients.
+- Regression status: `REGRESSION_VERIFIED`.
+- Regression evidence:
+  - fixture state is resolved into the transaction-local `r6a.competition_id` before assuming the client role;
+  - the outsider reads zero invalidations without an ACL error;
+  - the authorized organizer reads persisted invalidations through RLS;
+  - `authenticated` can execute only `pachanga_tournament_realtime_can_read_v1(uuid)`, while `pachanga_tournament_can_v1(uuid,uuid,text)` remains revoked;
+  - upgrade and fresh schemas remain identical and the complete SQL/RLS/idempotency suite passes.

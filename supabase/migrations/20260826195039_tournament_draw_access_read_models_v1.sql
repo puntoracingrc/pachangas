@@ -675,14 +675,31 @@ begin
 end;
 $$;
 
+create or replace function private.pachanga_tournament_realtime_can_read_v1(
+  target_competition_id uuid
+)
+returns boolean
+language sql
+stable
+security definer
+set search_path = pg_catalog
+as $$
+  select private.pachanga_tournament_can_v1(
+    target_competition_id, (select auth.uid()), 'read'
+  );
+$$;
+
+revoke all on function private.pachanga_tournament_realtime_can_read_v1(uuid)
+  from public, anon, authenticated;
+grant execute on function private.pachanga_tournament_realtime_can_read_v1(uuid)
+  to authenticated;
+
 create policy pachanga_tournament_invalidations_read_authorized_v1
 on public.pachanga_tournament_invalidations
 for select to authenticated
 using (
   target_user_id = (select auth.uid())
-  or private.pachanga_tournament_can_v1(
-    competition_id, (select auth.uid()), 'read'
-  )
+  or private.pachanga_tournament_realtime_can_read_v1(competition_id)
 );
 
 do $$
