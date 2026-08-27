@@ -2454,7 +2454,15 @@
   .tournamentHero h1 { margin-block: 3px 5px; font-size: clamp(1.35rem, 6vh, 2rem); }
   .tournamentHero p { font-size: 0.66rem; }
   .tournamentMetrics .stat { min-height: 55px; padding: 6px; }
-  .tournamentSubnav { position: sticky; top: 36px; grid-auto-columns: minmax(92px, 1fr); }
+  .tournamentSubnav {
+    position: sticky;
+    top: 36px;
+    min-height: 36px;
+    height: 36px;
+    grid-auto-columns: minmax(92px, 1fr);
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
   .tournamentSubnav button { min-width: 92px; min-height: 36px; font-size: 0.58rem; }
   .tournamentPane { min-height: calc(100dvh - var(--game-nav-height, 48px) - 72px); gap: 8px; padding: 9px 14px 16px; }
   .tournamentPaneHeader { align-items: end; flex-direction: row; gap: 8px; }

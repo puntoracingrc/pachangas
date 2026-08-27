@@ -1760,6 +1760,101 @@ After correction, the entry must include its regression and may only be marked
   only `R6B-TEST-073`, explicitly classified as pre-existing global lint debt
   outside the R6B change surface.
 
+### R6B-ENVIRONMENT-096 - Vercel agent-browser CLI is unavailable
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `OPEN`
+- Original scenario: execute the required responsive Preview matrix with the
+  Vercel `agent-browser` CLI after deployment `9a472e1` reaches READY.
+- Observed: zsh returns `command not found: agent-browser` before launching a
+  browser.
+- Impact: no Preview or product state changes; visual QA still requires an
+  available browser-control surface.
+- Planned correction: use Codex's bundled in-app browser runtime and its
+  Playwright viewport/console APIs against the same immutable deployment,
+  without installing an unpinned package.
+- Regression evidence: pending.
+
+### R6B-ENVIRONMENT-097 - In-app Playwright rejects documented networkidle wait
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `OPEN`
+- Original scenario: open the immutable Vercel Preview at 1440x900 and wait for
+  `networkidle` before the first visual assertion.
+- Observed: the bundled browser runtime reports that
+  `playwright_wait_for_load_state` does not support `networkidle`, despite that
+  value appearing in its local API documentation.
+- Impact: the tab is created, but readiness and visual assertions have not yet
+  been inferred; no page or remote state is mutated.
+- Planned correction: wait for `domcontentloaded`, then verify meaningful DOM,
+  pending resources, framework overlays and console errors explicitly before
+  accepting each viewport.
+- Regression evidence: pending.
+
+### R6B-ENVIRONMENT-098 - Browser evaluation scope omits navigator
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `OPEN`
+- Original scenario: collect desktop DOM, overflow, images, manifest,
+  Service Worker control, resources and framework-overlay evidence in one
+  read-only evaluation.
+- Observed: the browser evaluation sandbox throws while resolving
+  `navigator.serviceWorker`; no combined metrics object is returned.
+- Impact: no state changes and no partial visual result is accepted.
+- Planned correction: keep DOM/resource assertions in the supported evaluation
+  scope and inspect the Service Worker independently through the rendered
+  endpoint/manifest plus a dedicated capability-safe expression.
+- Regression evidence: pending.
+
+### R6B-ENVIRONMENT-099 - Browser evaluation scope also omits performance
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `OPEN`
+- Original scenario: repeat the desktop audit without `navigator` while
+  retaining a pending-resource inventory through `performance`.
+- Observed: the evaluation sandbox also omits `performance` and throws before
+  returning the DOM metrics object.
+- Impact: no state changes; the attempted metrics are discarded.
+- Planned correction: limit page evaluation to supported DOM invariants and
+  verify HTTP resources, logs and Service Worker endpoints separately.
+- Regression evidence: pending.
+
+### R6B-ENVIRONMENT-100 - Protected Preview redirects the Service Worker
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `OPEN`
+- Original scenario: verify the installed/PWA update path on the immutable
+  Vercel Preview while traversing the responsive Tournament Hub.
+- Observed: the page renders normally through the authenticated Preview
+  session, but a direct read of `/sw.js` returns HTTP 302 to Vercel SSO with
+  `cache-control: no-store`; the runtime therefore shows
+  `No se pudo comprobar la actualización automática.`
+- Impact: the protected Preview cannot certify Service Worker installation or
+  update. Tournament UI, navigation and canonical reads remain available, and
+  no success is inferred for PWA until the public production origin is tested.
+- Planned correction: complete visual assertions in Preview, then verify
+  manifest, Service Worker response, controlled update and offline shell on
+  `pachangasiq.com`, where the SSO barrier does not apply.
+- Regression evidence: pending.
+
+### R6B-PRODUCT-101 - Landscape Tournament subnav collapses to one pixel
+
+- Classification: `PRODUCT_BUG`
+- Status: `OPEN`
+- Original scenario: open Demo World V2.5 Tournament Hub at `844x390` and
+  select `Clasificación` from the Tournament subnavigation.
+- Observed: the sticky `tournamentSubnav` has a computed height of `1px` while
+  its buttons remain `36px` high and begin above the rail. They are visually
+  clipped, `elementFromPoint` resolves to the parent rail instead of the
+  button, and the active Tournament view remains `Resumen`.
+- Impact: Mobile Game Landscape cannot navigate reliably between jornadas,
+  partidos, standings, Team Journey, discipline, referees, incidents, rules
+  and bracket even though the underlying content exists.
+- Planned correction: give the Tournament subnavigation an explicit stable
+  track in the landscape grid and preserve its horizontal overflow without
+  collapsing the row.
+- Regression evidence: pending at every required landscape viewport.
+
 ## Verification closure - 2026-08-27
 
 - `R6B-PRODUCT-005`, `R6B-PRODUCT-006`, `R6B-SIMULATION-010`,

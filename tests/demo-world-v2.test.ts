@@ -470,6 +470,7 @@ test("the public Demo uses production renderers in one shell and exposes all V2 
   assert.doesNotMatch(disciplineStyles, /span:nth-of-type\(2\),\s*\n\s*\.eventRows article > span:nth-of-type\(3\)/);
   assert.match(clubSource, /embedded \? content/);
   assert.match(demoStyles, /\.leagueHero \{ min-height: calc\(100dvh - var\(--game-nav-height, 48px\) - 36px\)/);
+  assert.match(demoStyles, /\.tournamentSubnav \{[\s\S]*min-height: 36px;[\s\S]*height: 36px;[\s\S]*overflow-y: hidden;/);
   assert.match(demoStyles, /\.demoProductView \{[\s\S]*--official-text: #f1f6f2;/);
   assert.match(demoStyles, /\.demoProductView \.demoDomainHeading h1 \{[\s\S]*color: var\(--official-text\);/);
   assert.match(demoStyles, /\.configurationRevisionGrid \{/);
