@@ -647,3 +647,23 @@
   installed device after release; this is explicitly non-blocking under the
   R6A release contract.
 - Regression status: `PENDING_PHYSICAL_QA`.
+
+## R6A-035 - GitHub HTTPS push stalls after the local commit
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `OPEN`
+- Found by: publication of the final Preview evidence commit.
+- Original scenario: push commit
+  `396313f` to `codex/tournament-foundation-draw-engine-v1` over the configured
+  GitHub HTTPS remote.
+- Observed result: `git-remote-https` remains blocked for more than one minute
+  without output or completion after the earlier network interruption.
+- Expected result: the remote either accepts the commit or returns an explicit
+  network/authentication error within a bounded interval.
+- Product impact: none. The commit is durable locally; no Supabase, Vercel or
+  production state changed during the stalled transport.
+- Security boundary: do not start concurrent pushes, rewrite the commit or
+  assume remote success without reading the remote branch SHA.
+- Required correction: stop only the stalled process, query the remote branch,
+  retry once if the SHA is absent, and confirm exact remote/local equality.
+- Regression status: `PENDING`.
