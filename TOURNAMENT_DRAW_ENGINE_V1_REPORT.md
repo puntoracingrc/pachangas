@@ -2,7 +2,7 @@
 
 ## Estado
 
-`STAGING CERTIFIED / PRODUCTION PENDING`
+`PRODUCTION ACTIVE / PRIVATE BETA`
 
 ## Contrato del motor
 
@@ -79,6 +79,17 @@ La reconstruccion exacta `158 -> 163` y el E2E de una sola ejecucion confirman:
 - Realtime entrega invalidacion y el cliente relee el snapshot canonico;
 - cero Tournament matches y invariantes de Rating, rewards, Conduct, cosmetics
   y billing intactas.
+
+## Produccion
+
+El motor esta disponible tras el deployment READY del SHA
+`68dc360acf5dcce6cd7ffb6be4fa4b4d14d20cd7`. La activacion por RPC dejo ON
+Draw, Automatic, Manual, Hybrid y Publish, mientras Match Generation y Bracket
+Progression permanecen OFF. El canary transaccional completo en produccion
+confirmo ocho participantes, cuatro pots, movimiento manual, dos locks,
+completion HYBRID, estado `VALID`, ocho placements de audit, cero hard
+violations y cero Tournament matches. El `ROLLBACK` y readback independiente
+dejaron cero evidencia QA persistente.
 
 ## Limite de producto
 

@@ -229,7 +229,11 @@
 - Product impact: none; Tournament flags were still OFF and no Tournament command had executed.
 - Security boundary: do not delete platform audit history, weaken the single-owner bootstrap or reuse unknown credentials.
 - Correction: removed the affected Preview variables, deployment and entire ephemeral branch. The final runner is executed once on a newly reconstructed branch.
-- Regression status: `PENDING` until the fresh one-shot E2E and teardown complete.
+- Regression status: `REGRESSION_VERIFIED`.
+- Regression evidence: the fresh one-shot E2E completed on the rebuilt
+  ledger-163 branch; the branch was then deleted, its three branch-scoped
+  Vercel variables were removed, and readback confirmed that only production
+  and the unrelated `pwa-bridge-staging` branch remain.
 
 ## R6A-013 - Direct Club fixture violates the canonical owner-membership invariant
 
@@ -671,3 +675,196 @@
   flight; `ls-remote` proved the commit absent, one bounded retry succeeded,
   and local/remote now both resolve to
   `841fc60b75ccb537669d9e0fd6da625884393584`.
+
+## R6A-036 - Release worktree has no Supabase linked project ref
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `FIXED`
+- Found by: mandatory production `supabase migration list --linked` preflight.
+- Original scenario: run the linked migration reconciliation from the isolated
+  R6A worktree before any production write.
+- Observed result: Supabase CLI 2.107.0 stops with `Cannot find project ref`;
+  no remote request or database mutation is made.
+- Expected result: the release preflight addresses the known production ref
+  explicitly and proves remote/local history equality before migration.
+- Product impact: none. Production remains at ledger 158 and no migration, flag
+  or data command has run.
+- Security boundary: do not infer a ref from browser state, do not link to the
+  unrelated `pwa-bridge-staging` project and do not continue on a failed list.
+- Required correction: establish only the verified production link or use the
+  explicit production connection for readback, repeat migration reconciliation
+  and require the exact 158-version digest before applying R6A.
+- Correction: linked the isolated worktree explicitly to the verified Pachangas
+  IQ production ref and repeated `supabase migration list --linked`. Local and
+  remote histories match through version `20260826123500`; only the five ordered
+  R6A versions remain local-only.
+- Regression status: `REGRESSION_VERIFIED`.
+
+## R6A-037 - Data-only logical backup reports circular foreign keys
+
+- Classification: `TESTABILITY_GAP`
+- Status: `FIXED`
+- Found by: pre-migration production logical backup.
+- Original scenario: dump the linked production schema and then all application
+  data with `supabase db dump --data-only --use-copy`.
+- Observed result: pg_dump completes extraction but warns that multiple
+  canonical revision/evidence tables have circular foreign keys and that a
+  plain data-only restore may require disabled triggers.
+- Expected result: release evidence proves a usable recovery path rather than
+  treating file creation alone as restoration proof.
+- Product impact: none. The operation is read-only and production remains at
+  ledger 158.
+- Security boundary: keep dumps mode 600, do not print their contents or retain
+  production data beyond the release window, and do not restore over staging or
+  production.
+- Required correction: validate schema plus data in an isolated PostgreSQL
+  target with the documented trigger strategy, or confirm a completed managed
+  backup through the Supabase backup API before applying migrations.
+- Correction: restored the application schema into an isolated PostgreSQL
+  17.6 target after bootstrapping the external Supabase Auth and Realtime
+  primitives that are intentionally outside the application dump. Regenerated
+  the data-only backup with the strict `public,private` schema perimeter and
+  restored it with `session_replication_role = replica` for the load only.
+- Regression evidence: the production dump and restored database contain the
+  same 272 application tables and 1,536 rows, with zero per-table count
+  differences. No staging or production data was modified.
+- Regression status: `REGRESSION_VERIFIED`.
+
+## R6A-038 - CLI cannot cache pg-delta catalog after production push
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `FIXED`
+- Found by: production `supabase db push` after the five reviewed R6A files.
+- Original scenario: apply exactly the five dry-run-approved migrations through
+  the linked CLI release workdir and allow the CLI to refresh its local
+  pg-delta catalog.
+- Observed result: all five migrations report as applied and the command exits
+  successfully, but the optional catalog-cache export warns that its container
+  cannot read the temporary `pgdelta-target-ca.crt` path.
+- Expected result: the database migration and the local catalog refresh both
+  complete without warnings.
+- Product impact: pending direct readback. No flag activation or Tournament data
+  command has run after the warning.
+- Security boundary: do not repair migration history or rerun applied SQL merely
+  to populate a local cache; verify the remote ledger and schema directly.
+- Required correction: prove versions, names, flag defaults, ACL and schema by
+  remote readback, then treat only the disposable local pg-delta cache as stale.
+- Correction: no migration was repeated or history repaired. Direct PostgreSQL
+  readback returned ledger `163 / 20260826195040 /
+  53b5456c21933e614752179568576d18`, the exact five R6A names, all eleven flags
+  OFF, zero Tournament rows, RLS enabled, the invalidation table in Realtime and
+  the reviewed function ACL matrix.
+- Regression status: `REGRESSION_VERIFIED`.
+
+## R6A-039 - Transactional canary assumes Competition Foundation is already active
+
+- Classification: `SIMULATION_BUG`
+- Status: `FIXED`
+- Found by: pre-production rehearsal on the disposable R6A Supabase branch.
+- Original scenario: execute the production rollback canary after the staging
+  certification has restored every feature flag to its original OFF value.
+- Observed result: the canonical `tournament.flags.set` command rejects the
+  attempted private-beta activation with
+  `TOURNAMENT_FOUNDATION_DEPENDENCY_DISABLED` before any Tournament, grant or
+  DrawPlan is created.
+- Expected result: the transaction-scoped canary must establish every existing
+  prerequisite through its canonical platform RPC, independently of the
+  disposable branch's restored flag state, and roll those changes back with the
+  rest of the fixture.
+- Product impact: none. The platform dependency guard behaved correctly, the
+  statement aborted atomically, and neither staging nor production retained a
+  write.
+- Security boundary: do not update settings directly, weaken the dependency
+  guard or persist staging activation merely to make the harness pass.
+- Required correction: call the existing revisioned
+  `foundation_flags.set` platform command inside the same explicit transaction
+  before activating Tournament capabilities.
+- Required regression: the complete canary must pass on the restored-OFF
+  disposable branch, return its evidence row, execute the final `ROLLBACK` and
+  leave the branch at the exact pre-run flag and fixture counts.
+- Correction: the canary now establishes Competition Foundation through
+  `command_pachanga_competition_platform_v1` before the Tournament flag command;
+  no settings table is updated directly.
+- Regression status: `REGRESSION_VERIFIED`.
+- Regression evidence:
+  - the complete RPC-only story returned `PASS` with 8 accepted participants,
+    one freeze, 4 pots, one manual move, 2 active locks, a valid hybrid result,
+    8 audited placements and zero Tournament match contexts;
+  - the final explicit `ROLLBACK` removed the run tag entirely;
+  - independent branch readback returned the exact pre-run state: 5 historical
+    disposable Tournaments, 1 non-cancelled plan, 16 current placements, zero
+    active grants and all eleven Tournament flags OFF.
+
+## R6A-040 - Final production readback references an obsolete notification table
+
+- Classification: `SIMULATION_BUG`
+- Status: `FIXED`
+- Found by: independent readback immediately after the successful production
+  rollback canary.
+- Original scenario: verify that the canary run tag left no notification row by
+  querying `public.pachanga_notifications` alongside Tournament counts, flags
+  and migration history.
+- Observed result: PostgreSQL rejects the read-only statement with `42P01`
+  because that relation does not exist in the canonical production schema.
+- Expected result: the release readback resolves the current notification
+  relation from the repository/catalog and returns every requested count in one
+  successful read-only result.
+- Product impact: none. The failed statement was read-only, the canary had
+  already completed its explicit `ROLLBACK`, and no partial result is treated
+  as evidence.
+- Security boundary: do not create a compatibility table, infer zero from the
+  failed query or omit the notification-residue check silently.
+- Required correction: identify the canonical notification table and its
+  columns from the production catalog, then repeat the complete readback.
+- Required regression: the corrected statement must return ledger 163, the
+  final private-beta flag matrix, zero run-tag residue and zero Tournament
+  competitions, plans, placements, grants and match contexts.
+- Correction: production catalog readback identified
+  `public.pachanga_user_notifications` with canonical `title`, `body` and
+  `payload` fields; the complete diagnostic now uses that relation.
+- Regression status: `REGRESSION_VERIFIED`.
+- Regression evidence:
+  - ledger `163`, last version `20260826195040` and the exact five ordered R6A
+    names;
+  - settings revision `11`, eight private-beta capabilities ON and Public
+    Discovery, Match Generation and Bracket Progression OFF;
+  - zero run-tag competitions, groups and notifications;
+  - zero Tournament competitions, active DrawPlans, current placements, active
+    grants and canonical match contexts;
+  - `pachanga_tournament_invalidations` remains in `supabase_realtime`.
+
+## R6A-041 - Isolated browser evaluation omits the navigator global alias
+
+- Classification: `TESTABILITY_GAP`
+- Status: `FIXED`
+- Found by: production PWA controller readback after the responsive smoke.
+- Original scenario: inspect Service Worker support, controller and
+  registrations with `navigator.serviceWorker` inside the browser runner's
+  read-only evaluation context.
+- Observed result: the runner throws `TypeError` because its isolated context
+  does not expose the bare `navigator` alias, although `window`, the DOM and
+  responsive geometry are available.
+- Expected result: the diagnostic reads the real page-owned browser API without
+  injecting or faking PWA state.
+- Product impact: no product defect demonstrated. Manifest and Service Worker
+  already return HTTP 200, the Service Worker has the exact release SHA and the
+  visual routes remain clean.
+- Security boundary: do not fabricate `matchMedia`, emulate installed mode or
+  present physical PWA QA as passed.
+- Required correction: read the same native object through `window.navigator`
+  or a supported CDP page context, then retain physical installed-PWA QA as
+  `PENDING`.
+- Required regression: the corrected diagnostic must report the production
+  Service Worker registration/controller without altering page state; physical
+  standalone/fullscreen remains explicitly unverified.
+- Correction: the final readback uses the supported CDP page context rather
+  than the runner's isolated evaluator.
+- Regression status: `REGRESSION_VERIFIED`.
+- Regression evidence:
+  - Service Worker support is present;
+  - the active registration and current controller both resolve to
+    `https://pachangasiq.com/sw.js` with root scope;
+  - no worker is waiting or installing;
+  - browser display mode correctly remains neither standalone nor fullscreen;
+  - physical installed-PWA, Android and iPhone QA remain `PENDING` and are not
+    represented as PASS.

@@ -2,7 +2,7 @@
 
 ## Estado
 
-`STAGING AUTHENTICATED CERTIFIED / PRODUCTION PENDING`
+`PRODUCTION ACTIVE / PRIVATE BETA`
 
 ## Acciones manuales
 
@@ -40,8 +40,10 @@ Viewports locales revisados:
 - `667x375`, `740x360`, `844x390`, `932x430`;
 - PWA emulada.
 
-Resultado: cero overflow raiz, controles cortados, imagenes rotas, errores de
-consola o warnings de hidratacion. La PWA instalada real queda para Preview.
+Resultado local, Preview y produccion: cero overflow raiz no intencional,
+controles cortados, imagenes rotas, errores de consola o warnings de
+hidratacion. La PWA instalada fisica, Android fisico e iPhone fisico siguen
+pendientes.
 
 ## Evidencia
 
@@ -57,3 +59,8 @@ El E2E remoto completo intercambio dos participantes desbloqueados dentro de
 un plan HYBRID, conservo dos locks, rechazo la edicion del plan automatico y
 publicado, y convergio por Realtime al snapshot canonico. Ninguna accion manual
 creo partidos ni reescribio revisiones anteriores.
+
+El canary productivo repitio el flujo HYBRID mediante las RPC canonicas dentro
+de una transaccion con rollback. El audit devolvio ocho placements, dos locks y
+cero hard violations; el readback posterior confirmo cero plans, placements,
+grants y match contexts QA persistentes.
