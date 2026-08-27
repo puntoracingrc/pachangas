@@ -51,6 +51,12 @@ privados.
 | Remote writes | `0` |
 | Rating/Rewards/Conduct/Billing | `SIN CAMBIOS` |
 
+El mismo snapshot canonico paso el smoke remoto de staging en `/demo` junto a
+`/torneos`, `/torneos/crear`, `/laboratorio-tournament-draw`, manifest y Service
+Worker. La certificacion final de integracion queda condicionada a la nueva
+Preview Git, porque la Preview manual anterior no selecciono las variables
+Supabase limitadas a la rama.
+
 ## Producto
 
 La superficie Demo permite consultar Tournament, Draw Desk, grupos, seeds,

@@ -170,7 +170,7 @@
 ## R6A-009 - Tournament foreign keys lack covering indexes
 
 - Classification: `PRODUCT_BUG`
-- Status: `OPEN`
+- Status: `FIXED`
 - Found by: Supabase staging Performance Advisor
 - Original scenario: apply the five R6A migrations to an empty ledger-158 staging branch and run the Performance Advisor before any Tournament data exists.
 - Observed result: 18 R6A foreign keys are reported without a covering index, including participant-freeze scope references, DrawPlan references, actor references, manual-lock entries and placement lock lineage.
@@ -179,7 +179,10 @@
 - Security boundary: add indexes only; do not alter authority, RLS, immutable evidence, solver output or public capabilities.
 - Required correction: extend the still-unreleased fifth migration with 18 explicit covering indexes and add a database regression that detects any uncovered R6A foreign key.
 - Required regression: rebuild staging from ledger 158 with the final five artifacts, require zero R6A `unindexed_foreign_keys` Advisor findings and repeat DB/concurrency tests.
-- Regression status: `PENDING`.
+- Regression status: `REGRESSION_VERIFIED`.
+- Regression evidence: the final ledger-163 branch reports zero R6A
+  `unindexed_foreign_keys` findings; all 18 missing leading-column indexes are
+  present and the DB, concurrency and scale gates remain green.
 
 ## R6A-010 - Supabase CLI default key is not a browser publishable key
 
@@ -198,7 +201,7 @@
 ## R6A-011 - Club fixture consumes a revoked private sequence default
 
 - Classification: `SIMULATION_BUG`
-- Status: `OPEN`
+- Status: `FIXED`
 - Found by: authenticated staging E2E while preparing the Club organizer fixture
 - Original scenario: create a disposable Club through `service_role` table access and rely on the table default for `server_sequence`.
 - Observed result: PostgreSQL rejects the fixture with `42501 permission denied for sequence pachanga_club_sequence`; the private sequence is correctly revoked from client roles, including direct `service_role` use through PostgREST.
@@ -207,7 +210,9 @@
 - Security boundary: do not grant sequence access, do not weaken Club RPC security and do not replace Tournament actions with service-role writes.
 - Required correction: assign an explicit monotonic fixture sequence to Club, membership and relationship setup rows.
 - Required regression: the same staging story must create Team and Club organizer fixtures, execute all Tournament actions through authenticated canonical RPCs, and complete with zero sequence grants added.
-- Regression status: `PENDING`.
+- Regression status: `REGRESSION_VERIFIED`.
+- Regression evidence: the final E2E completed Team and Club organizer stories
+  through canonical authority paths with zero client sequence grants.
 
 ## R6A-012 - Failed one-shot staging run leaves the unique platform owner occupied
 
@@ -225,7 +230,7 @@
 ## R6A-013 - Direct Club fixture violates the canonical owner-membership invariant
 
 - Classification: `SIMULATION_BUG`
-- Status: `OPEN`
+- Status: `FIXED`
 - Found by: final authenticated one-shot staging E2E
 - Original scenario: create the disposable Club organizer with two independent PostgREST writes, inserting `pachanga_clubs` first and its `club_owner` membership second.
 - Observed result: the deferred canonical owner guard closes at the end of the first HTTP transaction and correctly rejects the Club row with `23514 CLUB_PRIMARY_OWNER_MEMBERSHIP_REQUIRED`.
@@ -234,12 +239,15 @@
 - Security boundary: do not disable or defer the owner guard across requests, do not grant table or sequence access, and do not fabricate an owner membership after a failed Club insert.
 - Required correction: enable only the existing Club self-service prerequisites in the disposable branch, create the Club through `command_pachanga_club_foundation_v1`, restore the previous Club flags during cleanup and discard the failed one-shot branch.
 - Required regression: a fresh one-shot E2E must create both Team and Club organizers through their valid authority paths, complete the Club Tournament history and restore all Club flags without weakening any Club constraint.
-- Regression status: `PENDING`.
+- Regression status: `REGRESSION_VERIFIED`.
+- Regression evidence: the final E2E created the Club atomically through
+  `command_pachanga_club_foundation_v1` and preserved the owner-membership
+  invariant.
 
 ## R6A-014 - Canonical Club fixture remains in draft and is correctly excluded from Tournament organizers
 
 - Classification: `SIMULATION_BUG`
-- Status: `OPEN`
+- Status: `FIXED`
 - Found by: final authenticated one-shot staging E2E after replacing the direct Club fixture with the canonical creation command.
 - Original scenario: create the disposable Club organizer through `command_pachanga_club_foundation_v1` and immediately request the Tournament organizer read model.
 - Observed result: the Club is absent because canonical self-service creation leaves `operational_status = 'draft'`, while `private.pachanga_tournament_actor_organizers_v1` correctly admits only active Clubs.
@@ -248,12 +256,15 @@
 - Security boundary: do not weaken the active-Club eligibility predicate, do not update the Club table directly and do not fabricate organizer visibility in the client.
 - Required correction: pass the authenticated platform owner into the Club fixture helper, activate the newly created Club with its server-confirmed revision and assert the canonical returned snapshot is active.
 - Required regression: a fresh one-shot E2E must prove that the Club appears in the Tournament organizer read model only after canonical activation, can create and cancel its Tournament, and restores all temporary feature flags before branch teardown.
-- Regression status: `PENDING`.
+- Regression status: `REGRESSION_VERIFIED`.
+- Regression evidence: the Club remained excluded while draft, became visible
+  only after canonical review and activation, and completed its Tournament
+  create/cancel history.
 
 ## R6A-015 - Club platform approval correctly rejects a direct draft-to-active transition
 
 - Classification: `SIMULATION_BUG`
-- Status: `OPEN`
+- Status: `FIXED`
 - Found by: authenticated one-shot staging E2E while applying the R6A-014 correction.
 - Original scenario: create the Club through the canonical foundation RPC and ask the platform owner to set it directly from `draft` to `active`.
 - Observed result: the existing Club transition guard rejects the command with `CLUB_APPROVAL_REQUIRES_PENDING_REVIEW`.
@@ -262,12 +273,14 @@
 - Security boundary: do not bypass the review state, weaken the transition guard, update the table directly or reuse the one-shot branch after a failed platform-owner run.
 - Required correction: extend the canonical Club fixture to perform `club.create -> club.review.submit -> club.status.set(active)`, using each server-confirmed revision and asserting every returned state.
 - Required regression: a fresh one-shot E2E must complete the full Club review transition, expose the active Club to the Tournament organizer read model, execute its create/cancel history and leave zero Tournament matches.
-- Regression status: `PENDING`.
+- Regression status: `REGRESSION_VERIFIED`.
+- Regression evidence: the final Club fixture completed
+  `draft -> pending_review -> active` with each server-confirmed revision.
 
 ## R6A-016 - Staging preflight obscures the missing project-ref variable
 
 - Classification: `TESTABILITY_GAP`
-- Status: `OPEN`
+- Status: `FIXED`
 - Found by: final one-shot staging preflight before any network request
 - Original scenario: invoke the authenticated E2E with an empty `TOURNAMENT_STAGING_PROJECT_REF` because the ephemeral credential file does not export a project-ref variable.
 - Observed result: the runner stops before contacting Supabase, but reports the synthesized name `TOURNAMENT_STAGING_PROJECTREF`; the surrounding diagnostic pipeline also returned the exit code from `tee` instead of Node.
@@ -276,7 +289,10 @@
 - Security boundary: do not infer a project ref from a secret, do not relax the explicit production-target guard and do not reuse a one-shot branch after a failed certification invocation.
 - Required correction: map each preflight field to its exact environment-variable name, run the release command with `set -o pipefail`, discard the current Preview and Supabase branch, and rebuild a fresh ledger-158 branch.
 - Required regression: omission of the project ref must report `TOURNAMENT_STAGING_PROJECT_REF is required`; the fresh one-shot E2E must complete against the explicitly supplied non-production ref and clean up all temporary state.
-- Regression status: `PENDING`.
+- Regression status: `REGRESSION_VERIFIED`.
+- Regression evidence: the negative preflight names
+  `TOURNAMENT_STAGING_PROJECT_REF` exactly and the full E2E completed against
+  explicit non-production ref `zmjmzgdwovluvakfjggs` with `pipefail` enabled.
 
 ## R6A-017 - Branch reconstruction assumes a non-portable shell builtin
 
@@ -300,7 +316,7 @@
 ## R6A-018 - Canonical Club review requires publication consent
 
 - Classification: `SIMULATION_BUG`
-- Status: `OPEN`
+- Status: `FIXED`
 - Found by: authenticated one-shot staging E2E
 - Original scenario: create the Club canonically and submit it for review immediately from its draft revision.
 - Observed result: the existing Club authority rejects the review with `CLUB_PUBLICATION_CONSENT_REQUIRED` because no owner consent exists for the current public content fingerprint.
@@ -309,12 +325,15 @@
 - Security boundary: do not bypass the consent fingerprint, update Club status directly, weaken the review guard or fabricate consent in fixture tables.
 - Required correction: extend the staging Club helper to execute `club.create -> publication.consent -> club.review.submit -> club.status.set(active)` with every server-confirmed revision.
 - Required regression: a fresh one-shot E2E must activate both disposable Clubs only after canonical consent, complete Team and Club Tournament histories, restore all temporary flags and leave zero Tournament matches.
-- Regression status: `PENDING`.
+- Regression status: `REGRESSION_VERIFIED`.
+- Regression evidence: both disposable Clubs obtained canonical publication
+  consent before review and activation; no direct status or consent write was
+  introduced.
 
 ## R6A-019 - Ephemeral branch does not deliver the Tournament invalidation event
 
 - Classification: `ENVIRONMENT_ISSUE`
-- Status: `OPEN`
+- Status: `FIXED`
 - Found by: authenticated one-shot staging E2E after canonical Club activation and Tournament participant acceptance
 - Original scenario: subscribe as the authenticated organizer to `INSERT` events from `public.pachanga_tournament_invalidations`, filtered by the canonical Tournament `competition_id`, wait for `SUBSCRIBED`, and then accept the invited teams through the Tournament command RPC.
 - Observed result: the channel reached `SUBSCRIBED` and the server persisted 36 invalidation rows with monotonic `server_sequence`, but the filtered callback did not fire within 15 seconds and the runner stopped with `R6A_REALTIME_TIMEOUT`.
@@ -324,7 +343,10 @@
 - Current diagnostics: the invalidation table is present in the `supabase_realtime` publication, RLS is enabled, one SELECT policy exists, replica identity is `default`, all published INSERT columns include `competition_id`, and 36 untargeted invalidations were persisted for the filtered Tournament. Supabase Realtime logs identify the exact failure as `42501 permission denied for function pachanga_tournament_can_v1` inside `realtime.apply_rls`.
 - Required correction: expose only a dedicated current-actor read predicate to `authenticated`, derive the actor from `auth.uid()`, keep the general actor/capability helper revoked, and rebuild staging from ledger 158.
 - Required regression: a fresh one-shot E2E must receive the event through Realtime, reload the canonical snapshot, complete all Team and Club Tournament histories, restore temporary flags and leave zero Tournament matches and zero persistent QA entities.
-- Regression status: `PENDING`.
+- Regression status: `REGRESSION_VERIFIED`.
+- Regression evidence: the final E2E waited for PostgreSQL subscription
+  readiness, received a real authorized invalidation and refetched revision 18
+  from the canonical snapshot; the WAL payload remained invalidation-only.
 
 ## R6A-020 - Realtime RLS regression reads harness state after assuming the client role
 
@@ -368,7 +390,7 @@
 ## R6A-022 - Staging runner attempts a manual swap on an automatic draw mode
 
 - Classification: `SIMULATION_BUG`
-- Status: `OPEN`
+- Status: `FIXED`
 - Found by: final authenticated one-shot staging E2E on the clean ledger-163 branch
 - Original scenario: generate and regenerate the main `SEEDED_POTS` draw, then call `draw.entry.swap` on that automatic plan before validation.
 - Observed result: the server correctly rejects the command with `DRAW_MANUAL_EDIT_NOT_AVAILABLE` because manual place, move, swap and remove operations are limited to `MANUAL_ASSISTED` and `HYBRID` plans.
@@ -377,7 +399,10 @@
 - Security boundary: do not broaden manual editing to automatic modes, weaken draw-plan state checks or change product SQL to accommodate an invalid QA sequence.
 - Required correction: remove the swap from the automatic plan, perform it on the generated hybrid plan, and accept the canonical non-editable error when probing the already published automatic plan.
 - Required regression: focused tests must prove that the staging script places `draw.entry.swap` only after a `HYBRID` plan has been generated and that a fresh authenticated E2E completes the swap before cleanup.
-- Regression status: `PENDING`.
+- Regression status: `REGRESSION_VERIFIED`.
+- Regression evidence: the final E2E performed the swap on the generated
+  HYBRID plan, preserved two locks and kept automatic/published plans
+  non-editable.
 
 ## R6A-023 - Disposable-branch cleanup readback used stale schema and CLI assumptions
 
@@ -440,7 +465,7 @@
 ## R6A-026 - Tournament invalidation is not delivered after the Realtime RLS correction
 
 - Classification: `PRODUCT_BUG`
-- Status: `OPEN`
+- Status: `FIXED`
 - Found by: final authenticated one-shot staging E2E on the clean ledger-163 branch after the R6A-019 RLS correction.
 - Original scenario: subscribe as the authenticated Tournament organizer, wait for the Supabase client to report `SUBSCRIBED`, accept participants through the canonical command RPC and await the filtered invalidation insert.
 - Observed result: the channel reported `SUBSCRIBED`, but no event reached the callback within 15 seconds and the runner stopped with `R6A_REALTIME_TIMEOUT`. Realtime logs show the disposable tenant starting its stream-replication slot during the same cold-start window and contain no `42501` or `apply_rls` permission error. The server persisted 34 invalidations for the target Tournament, including rows after logical decoding reached a consistent point.
@@ -451,7 +476,11 @@
 - Current diagnostics: an authenticated-role readback with organizer JWT claims sees the target invalidations through RLS; `authenticated` cannot execute the general capability helper and can execute only the dedicated current-actor Realtime predicate. Realtime and PostgreSQL logs contain no `42501` or `apply_rls` error. A protocol probe captured `SUBSCRIBED`, then `system { extension: postgres_changes, status: ok, message: Subscribed to PostgreSQL }`, then the inserted invalidation. Repeating the probe without `config.broadcast.replication_ready` preserved that ordering and removed the unrelated `extension = system` signal.
 - Required correction: remove the Broadcast readiness option, refetch the Tournament read model only after the successful `postgres_changes` system signal, and prevent the E2E from issuing observed commands until both channel subscription and PostgreSQL subscription readiness are confirmed.
 - Required regression: a fresh one-shot E2E must observe a real invalidation after the tenant is ready, refetch the canonical snapshot, complete every draw history, restore flags and leave zero Tournament matches.
-- Regression status: `PENDING`.
+- Regression status: `REGRESSION_VERIFIED`.
+- Regression evidence: a fresh one-shot E2E observed the
+  `postgres_changes` readiness signal, then a real invalidation, refetched the
+  canonical snapshot, completed every draw history, restored all flags and
+  left zero Tournament match contexts.
 
 ## R6A-027 - Final staging readback references a non-existent match table
 
@@ -494,7 +523,7 @@
 ## R6A-029 - Published audit assertion reads quality from an absent top-level field
 
 - Classification: `SIMULATION_BUG`
-- Status: `OPEN`
+- Status: `FIXED`
 - Found by: authenticated one-shot staging E2E after successful replication-readiness and Realtime invalidation delivery.
 - Original scenario: publish the deterministic seeded draw, load its participant-visible audit read model and assert zero hard violations through `audit.quality.hardViolations`.
 - Observed result: the audit response has no top-level `quality` object and the runner stops with `TypeError: Cannot read properties of undefined (reading 'hardViolations')`.
@@ -505,4 +534,36 @@
 - Correction implemented: the runner now asserts `validationStatus = VALID`, `manualOverrideCount = 0` and the public hard `SAME_CLUB_AVOIDANCE` constraint. It no longer expects the private solver-quality object. The participant-visible RPC and product UI remain unchanged.
 - Contract evidence: authenticated readback from the disposable branch returned `validationStatus = VALID`, one public hard `SAME_CLUB_AVOIDANCE` constraint, `manualOverrideCount = 0`, 16 placements and no top-level `quality` field.
 - Required regression: a fresh one-shot E2E must validate quality through the canonical audit contract, complete all remaining histories, restore flags and leave zero Tournament matches.
+- Regression status: `REGRESSION_VERIFIED`.
+- Regression evidence: the final authenticated E2E validated the published
+  audit through `validationStatus`, public hard constraints and
+  `manualOverrideCount`, then completed all remaining histories and cleanup.
+
+## R6A-030 - Final readback uses the obsolete Tournament discriminator name
+
+- Classification: `SIMULATION_BUG`
+- Status: `FIXED`
+- Found by: post-E2E staging readback and PostgreSQL logs.
+- Original scenario: count Tournament competitions after the final authenticated E2E with `competition_kind = 'TOURNAMENT'`.
+- Observed result: PostgreSQL correctly rejects the read-only diagnostic with `42703 column competition_kind does not exist` because the canonical discriminator is `competition_type`.
+- Expected result: release readbacks use the canonical schema and complete without adding noise to PostgreSQL error logs.
+- Product impact: none. The statement was read-only, returned no partial row and did not change flags, fixtures, migrations or production.
+- Security boundary: do not create a compatibility column, infer a zero from a failed query or alter the canonical Competition schema for a release diagnostic.
+- Correction: the readback now uses `competition_type = 'TOURNAMENT'` and joins Tournament match contexts through `competition_id`.
+- Required regression: the corrected readback must return ledger 163, all Tournament flags OFF, the disposable fixture counts, zero active grants and zero Tournament match contexts.
+- Regression status: `REGRESSION_VERIFIED`.
+- Regression evidence: the corrected readback returned `163 / 20260826195040 / 53b5456c21933e614752179568576d18`, eleven flags OFF, five disposable Tournaments, zero active grants and zero Tournament match contexts.
+
+## R6A-031 - Manual Vercel Preview ignores branch-scoped Supabase variables
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `OPEN`
+- Found by: browser-bundle credential and project-ref scan after the final staging E2E.
+- Original scenario: add three Preview variables scoped to `codex/tournament-foundation-draw-engine-v1` and create a manual CLI deployment from a clean worktree.
+- Observed result: deployment `dpl_Hgu8b98oJyQ1D58UL4qde1WJTrjd` is `READY` at commit `285a05706228384ede174e9dce4f3a3f0be67152`, but its browser chunks contain production ref `qonbngfrnrqgmxbdfbea` and do not contain staging ref `zmjmzgdwovluvakfjggs`. The deployment has no `gitSource`, so Vercel did not select the branch-scoped environment.
+- Expected result: the certification Preview contains only the ephemeral staging project ref and browser publishable key; production and unrelated staging refs are absent, and service-role material remains server-only.
+- Product impact: no Tournament mutation reached production because the Preview smoke was unauthenticated and the authenticated E2E addressed staging directly. The Preview cannot certify product-to-staging integration and must be replaced.
+- Security boundary: do not continue with the mismatched Preview, do not expose service-role material through build variables, and do not modify general Preview or Production variables.
+- Required correction: build and deploy an exact clean artifact with an explicitly pulled branch environment or safe build/runtime overrides, then scan every browser chunk for project refs and the exact service-role secret before rerunning the Preview integration gate.
+- Required regression: the replacement deployment must be `READY` at the exact branch HEAD, contain staging ref `zmjmzgdwovluvakfjggs`, contain neither production nor unrelated-staging refs, contain no service-role value, return the six protected routes as `200` and complete the authenticated E2E against the same staging ref.
 - Regression status: `PENDING`.

@@ -2,7 +2,7 @@
 
 ## Estado
 
-`LOCAL CERTIFIED / REMOTE GATES PENDING`
+`STAGING CERTIFIED / PRODUCTION PENDING`
 
 ## Contrato del motor
 
@@ -64,6 +64,21 @@ cero Tournament matches.
 - publicacion simultanea `1 winner / 1 stale`;
 - resultados y placements falsificados rechazados;
 - edicion de sorteo publicado rechazada.
+
+## Staging autenticado
+
+La reconstruccion exacta `158 -> 163` y el E2E de una sola ejecucion confirman:
+
+- misma seed y distinta seed con checksums reproducibles;
+- publicacion concurrente con un ganador y un rechazo stale;
+- automatico, manual y HYBRID con dos locks preservados;
+- 14 participantes en 16 slots con dos byes;
+- `DRAW_UNSATISFIABLE` ante una restriccion hard imposible;
+- retirada posterior que invalida el participant freeze;
+- audit publicado mediante su contrato publico, sin calidad privada;
+- Realtime entrega invalidacion y el cliente relee el snapshot canonico;
+- cero Tournament matches y invariantes de Rating, rewards, Conduct, cosmetics
+  y billing intactas.
 
 ## Limite de producto
 

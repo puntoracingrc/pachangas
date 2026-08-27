@@ -2,7 +2,7 @@
 
 ## Estado
 
-`PRE-RELEASE / PRODUCTION NOT MODIFIED`
+`STAGING CERTIFIED / PRODUCTION NOT MODIFIED`
 
 Este documento se completara con readbacks verificables tras staging, merge,
 deployment y smoke. No presenta como PASS ningun gate remoto pendiente.
@@ -30,6 +30,23 @@ Antes de publicar un draw se puede cancelar el Tournament o el DrawPlan. Una
 revision publicada es evidencia inmutable y no se borra. La operacion de
 emergencia es kill switch/flags por RPC y roll-forward; no se reabren escrituras
 directas ni se convierte un payload local en fuente de verdad.
+
+## Readback de staging
+
+| Dato | Resultado |
+| --- | --- |
+| Supabase branch | `zmjmzgdwovluvakfjggs / ACTIVE_HEALTHY` |
+| Ledger pre-R6A | `158 / 20260826123500 / ff75c105ff5fa08802cc004390e29693` |
+| Ledger post-R6A | `163 / 20260826195040 / 53b5456c21933e614752179568576d18` |
+| Migraciones | `5/5 exactas` |
+| Flags | `11/11 OFF despues del E2E` |
+| E2E autenticado | `PASS` |
+| Realtime | `postgres_changes listo, evento recibido, refetch canonico PASS` |
+| Concurrencia | `1 winner / 1 stale PASS` |
+| Advisors | `sin ERROR; indices FK R6A cubiertos` |
+| Logs | `0 5xx; negativos 4xx esperados` |
+| Tournament match contexts | `0` |
+| Produccion | `NO MODIFICADA` |
 
 ## Readback pendiente
 

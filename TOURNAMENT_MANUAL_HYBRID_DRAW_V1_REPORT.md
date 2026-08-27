@@ -2,7 +2,7 @@
 
 ## Estado
 
-`LOCAL CERTIFIED / STAGING AUTHENTICATED PENDING`
+`STAGING AUTHENTICATED CERTIFIED / PRODUCTION PENDING`
 
 ## Acciones manuales
 
@@ -52,3 +52,8 @@ consola o warnings de hidratacion. La PWA instalada real queda para Preview.
 - input freshness: `PASS`;
 - validation/publication: `PASS`;
 - revision actual seleccionada por ID/secuencia estable, no solo timestamp.
+
+El E2E remoto completo intercambio dos participantes desbloqueados dentro de
+un plan HYBRID, conservo dos locks, rechazo la edicion del plan automatico y
+publicado, y convergio por Realtime al snapshot canonico. Ninguna accion manual
+creo partidos ni reescribio revisiones anteriores.
