@@ -235,3 +235,17 @@
 - Required correction: enable only the existing Club self-service prerequisites in the disposable branch, create the Club through `command_pachanga_club_foundation_v1`, restore the previous Club flags during cleanup and discard the failed one-shot branch.
 - Required regression: a fresh one-shot E2E must create both Team and Club organizers through their valid authority paths, complete the Club Tournament history and restore all Club flags without weakening any Club constraint.
 - Regression status: `PENDING`.
+
+## R6A-014 - Canonical Club fixture remains in draft and is correctly excluded from Tournament organizers
+
+- Classification: `SIMULATION_BUG`
+- Status: `OPEN`
+- Found by: final authenticated one-shot staging E2E after replacing the direct Club fixture with the canonical creation command.
+- Original scenario: create the disposable Club organizer through `command_pachanga_club_foundation_v1` and immediately request the Tournament organizer read model.
+- Observed result: the Club is absent because canonical self-service creation leaves `operational_status = 'draft'`, while `private.pachanga_tournament_actor_organizers_v1` correctly admits only active Clubs.
+- Expected result: the fixture explicitly completes platform approval through `command_pachanga_club_platform_v1` with `club.status.set = active` and the Club revision confirmed by its creation receipt before requesting Tournament access.
+- Product impact: none. The E2E stopped before the Club Tournament bundle grant or any Club Tournament command. The affected Supabase branch and Preview are disposable one-shot staging resources.
+- Security boundary: do not weaken the active-Club eligibility predicate, do not update the Club table directly and do not fabricate organizer visibility in the client.
+- Required correction: pass the authenticated platform owner into the Club fixture helper, activate the newly created Club with its server-confirmed revision and assert the canonical returned snapshot is active.
+- Required regression: a fresh one-shot E2E must prove that the Club appears in the Tournament organizer read model only after canonical activation, can create and cancel its Tournament, and restores all temporary feature flags before branch teardown.
+- Regression status: `PENDING`.

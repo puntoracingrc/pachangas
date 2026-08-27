@@ -225,6 +225,10 @@ test("authenticated staging covers the ten canonical stories, security negatives
   assert.match(staging, /TOURNAMENT_STAGING_BROWSER_KEY_REQUIRED/);
   assert.match(staging, /server_sequence: nextFixtureServerSequence\(\)/);
   assert.match(staging, /command_pachanga_club_foundation_v1/);
+  assert.match(staging, /command_pachanga_club_platform_v1/);
+  assert.match(staging, /command_action: "club\.status\.set"/);
+  assert.match(staging, /operationalStatus, "draft"/);
+  assert.match(staging, /operationalStatus, "active"/);
   assert.match(staging, /restore-club-flags/);
   assert.doesNotMatch(staging, /from\("pachanga_clubs"\)\.insert|from\("pachanga_club_memberships"\)\.insert/);
 });

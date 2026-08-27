@@ -236,9 +236,9 @@ async function createGroup(owner, name, suffix) {
   return row;
 }
 
-async function createClub(ownerClient, name) {
+async function createClub(ownerClient, platformClient, name) {
   const id = randomUUID();
-  const result = await ownerClient.rpc("command_pachanga_club_foundation_v1", {
+  const createdClub = await ownerClient.rpc("command_pachanga_club_foundation_v1", {
     aggregate_id: id,
     client_metadata: metadata("tournament-staging-club-fixture"),
     command_action: "club.create",
@@ -255,8 +255,24 @@ async function createClub(ownerClient, name) {
     expected_revision: 0,
     operation_id: randomUUID(),
   });
-  if (result.error) throw result.error;
-  assert.equal(result.data.snapshot.club.id, id);
+  if (createdClub.error) throw createdClub.error;
+  assert.equal(createdClub.data.snapshot.club.id, id);
+  assert.equal(createdClub.data.snapshot.club.operationalStatus, "draft");
+
+  const activatedClub = await platformClient.rpc("command_pachanga_club_platform_v1", {
+    aggregate_id: id,
+    client_metadata: metadata("tournament-staging-club-activation"),
+    command_action: "club.status.set",
+    command_payload: {
+      reason: `R6A canonical Club activation ${runId}`,
+      status: "active",
+    },
+    expected_revision: createdClub.data.confirmedRevision,
+    operation_id: randomUUID(),
+  });
+  if (activatedClub.error) throw activatedClub.error;
+  assert.equal(activatedClub.data.snapshot.club.id, id);
+  assert.equal(activatedClub.data.snapshot.club.operationalStatus, "active");
   return { id };
 }
 
@@ -633,8 +649,8 @@ try {
   for (let index = 0; index < teamAccounts.length; index += 1) {
     teams.push(await createGroup(teamAccounts[index], `R6A Team ${index + 1}`, `T${String(index + 1).padStart(2, "0")}`));
   }
-  const organizerClub = await createClub(clubOwner, "R6A Organizer Club");
-  const sharedClub = await createClub(clubOwner, "R6A Shared Club");
+  const organizerClub = await createClub(clubOwner, platform, "R6A Organizer Club");
+  const sharedClub = await createClub(clubOwner, platform, "R6A Shared Club");
   await relateClubTeams(sharedClub.id, teams.slice(0, 2), clubAccount.id);
 
   initialFoundationFlags = await foundationFlags(platform);
