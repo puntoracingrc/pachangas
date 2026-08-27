@@ -345,3 +345,22 @@
   - the authorized organizer reads persisted invalidations through RLS;
   - `authenticated` can execute only `pachanga_tournament_realtime_can_read_v1(uuid)`, while `pachanga_tournament_can_v1(uuid,uuid,text)` remains revoked;
   - upgrade and fresh schemas remain identical and the complete SQL/RLS/idempotency suite passes.
+
+## R6A-021 - Repository configuration disables remote migration push during branch reconstruction
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `FIXED`
+- Found by: clean reconstruction of the fourth disposable Supabase branch
+- Original scenario: apply the immutable baseline, repair the exact 36 absorbed migration versions, and ask `supabase db push --db-url` to replay the remaining `origin/main` migrations.
+- Observed result: the CLI reports `Skipping migrations because it is disabled in config.toml`; the branch remains consistently at the baseline ledger of 36 and no incremental or R6A migration is applied.
+- Expected result: the staging reconstruction reaches the exact production ledger 158 before applying the five R6A artifacts.
+- Product impact: none. Only the disposable branch was addressed, production remained read-only and the stopped branch contains the expected baseline schema and 36-version ledger.
+- Security boundary: do not enable global migration push as a side effect, do not link the worktree to production and do not mark versions that were not actually executed.
+- Required correction: replay the immutable `origin/main` incrementals 37-158 through the session pooler with `psql`, repair only those successfully executed versions from the exported migration filenames, and require exact production/staging version-name digest equality.
+- Required regression: staging must read back `158 / 20260826123500 / ff75c105ff5fa08802cc004390e29693` before any R6A migration, then advance to 163 only through the five reviewed artifacts.
+- Regression status: `REGRESSION_VERIFIED`.
+- Regression evidence:
+  - the baseline ledger remained exactly 36 after the disabled push;
+  - 122 immutable `origin/main` incrementals were executed through the session pooler with `ON_ERROR_STOP`;
+  - only the 122 successfully executed versions were repaired from their exported filenames;
+  - staging now matches production at `158 / 20260826123500 / ff75c105ff5fa08802cc004390e29693` before R6A.
