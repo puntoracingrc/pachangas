@@ -199,11 +199,24 @@ test("Official UI includes Tournament Hub, adaptive game layout and audited Grou
   assert.match(client, /const round = rounds\.some/);
   assert.doesNotMatch(client, /useEffect\(\(\) => \{[\s\S]{0,500}setRound/);
   assert.match(css, /orientation: landscape/);
+  assert.match(css, /\.tabs \{[\s\S]*min-height: 32px;[\s\S]*height: 32px;[\s\S]*overflow-y: hidden;/);
   assert.match(css, /orientation: portrait/);
   assert.match(css, /min-width: 0/);
   assert.match(adminClient, /tournament\.group_stage\.flags\.set/);
   assert.match(adminPage, /Fases de grupo/);
   assert.match(home, /Tournament Hub/);
+});
+
+test("Tournament APIs accept the exact PostgreSQL UUID text domain", async () => {
+  const shared = await source("app/api/tournaments/_shared.ts");
+  assert.match(
+    shared,
+    /tournamentUuidPattern = \/\^\[0-9a-f\]\{8\}-\[0-9a-f\]\{4\}-\[0-9a-f\]\{4\}-\[0-9a-f\]\{4\}-\[0-9a-f\]\{12\}\$\/i/,
+  );
+  assert.doesNotMatch(shared, /tournamentUuidPattern[^\n]+\[1-8\]/);
+  const postgresUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  assert.equal(postgresUuid.test("1b7aace1-057b-ec98-6190-b548f159e017"), true);
+  assert.equal(postgresUuid.test("1b7aace1-057b-ec98-6190-b548f159e01"), false);
 });
 
 test("SQL full story covers 24 canonical fixtures, standings, qualification and zero knockout", async () => {

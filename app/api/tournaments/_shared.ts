@@ -13,7 +13,7 @@ import { clientWriteGateResponse, noStoreHeaders } from "../client-policy/_contr
 
 export { tournamentRecord };
 
-export const tournamentUuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+export const tournamentUuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 const serverFields = new Set([
   "actorId", "actor_id", "algorithmVersion", "confirmedAt", "confirmedRevision",

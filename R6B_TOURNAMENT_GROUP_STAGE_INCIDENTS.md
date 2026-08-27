@@ -1763,7 +1763,7 @@ After correction, the entry must include its regression and may only be marked
 ### R6B-ENVIRONMENT-096 - Vercel agent-browser CLI is unavailable
 
 - Classification: `ENVIRONMENT_ISSUE`
-- Status: `OPEN`
+- Status: `FIXED / REGRESSION_VERIFIED`
 - Original scenario: execute the required responsive Preview matrix with the
   Vercel `agent-browser` CLI after deployment `9a472e1` reaches READY.
 - Observed: zsh returns `command not found: agent-browser` before launching a
@@ -1773,12 +1773,14 @@ After correction, the entry must include its regression and may only be marked
 - Planned correction: use Codex's bundled in-app browser runtime and its
   Playwright viewport/console APIs against the same immutable deployment,
   without installing an unpinned package.
-- Regression evidence: pending.
+- Regression evidence: Codex's in-app browser completed the immutable Preview
+  matrix at all eight required viewport sizes with zero root overflow, broken
+  images, overlays, console errors or hydration warnings.
 
 ### R6B-ENVIRONMENT-097 - In-app Playwright rejects documented networkidle wait
 
 - Classification: `ENVIRONMENT_ISSUE`
-- Status: `OPEN`
+- Status: `FIXED / REGRESSION_VERIFIED`
 - Original scenario: open the immutable Vercel Preview at 1440x900 and wait for
   `networkidle` before the first visual assertion.
 - Observed: the bundled browser runtime reports that
@@ -1789,12 +1791,14 @@ After correction, the entry must include its regression and may only be marked
 - Planned correction: wait for `domcontentloaded`, then verify meaningful DOM,
   pending resources, framework overlays and console errors explicitly before
   accepting each viewport.
-- Regression evidence: pending.
+- Regression evidence: `domcontentloaded` plus meaningful body text, framework
+  overlay, broken-image, root-overflow and browser log checks passed on every
+  Tournament tab and viewport.
 
 ### R6B-ENVIRONMENT-098 - Browser evaluation scope omits navigator
 
 - Classification: `ENVIRONMENT_ISSUE`
-- Status: `OPEN`
+- Status: `FIXED / REGRESSION_VERIFIED`
 - Original scenario: collect desktop DOM, overflow, images, manifest,
   Service Worker control, resources and framework-overlay evidence in one
   read-only evaluation.
@@ -1804,12 +1808,14 @@ After correction, the entry must include its regression and may only be marked
 - Planned correction: keep DOM/resource assertions in the supported evaluation
   scope and inspect the Service Worker independently through the rendered
   endpoint/manifest plus a dedicated capability-safe expression.
-- Regression evidence: pending.
+- Regression evidence: DOM assertions completed in the supported scope;
+  manifest and Service Worker endpoints were inspected separately without
+  treating `SUBSCRIBED`, WAL payloads or unsupported globals as authority.
 
 ### R6B-ENVIRONMENT-099 - Browser evaluation scope also omits performance
 
 - Classification: `ENVIRONMENT_ISSUE`
-- Status: `OPEN`
+- Status: `FIXED / REGRESSION_VERIFIED`
 - Original scenario: repeat the desktop audit without `navigator` while
   retaining a pending-resource inventory through `performance`.
 - Observed: the evaluation sandbox also omits `performance` and throws before
@@ -1817,7 +1823,9 @@ After correction, the entry must include its regression and may only be marked
 - Impact: no state changes; the attempted metrics are discarded.
 - Planned correction: limit page evaluation to supported DOM invariants and
   verify HTTP resources, logs and Service Worker endpoints separately.
-- Regression evidence: pending.
+- Regression evidence: the reduced DOM audit plus HTTP resource checks and
+  console collection completed across the exact Preview without a resource
+  timing dependency.
 
 ### R6B-ENVIRONMENT-100 - Protected Preview redirects the Service Worker
 
@@ -1840,7 +1848,7 @@ After correction, the entry must include its regression and may only be marked
 ### R6B-PRODUCT-101 - Landscape Tournament subnav collapses to one pixel
 
 - Classification: `PRODUCT_BUG`
-- Status: `OPEN`
+- Status: `FIXED / REGRESSION_VERIFIED`
 - Original scenario: open Demo World V2.5 Tournament Hub at `844x390` and
   select `Clasificación` from the Tournament subnavigation.
 - Observed: the sticky `tournamentSubnav` has a computed height of `1px` while
@@ -1853,7 +1861,88 @@ After correction, the entry must include its regression and may only be marked
 - Planned correction: give the Tournament subnavigation an explicit stable
   track in the landscape grid and preserve its horizontal overflow without
   collapsing the row.
-- Regression evidence: pending at every required landscape viewport.
+- Regression evidence: the corrected Preview computes a `36px` rail, its
+  button is the `elementFromPoint` hit target, all ten tabs become current in
+  turn, and `667x375`, `740x360`, `844x390` and `932x430` remain free of root
+  overflow, broken images, overlays and console warnings/errors.
+
+### R6B-TEST-103 - Hosted QA account readback aggregates UUID directly
+
+- Classification: `TESTABILITY_GAP`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: assign a temporary password to the already disposable
+  staging owner and read back a redacted account proof before browser QA of
+  Team Journey and Organizer Desk.
+- Observed: the diagnostic uses `min(id)` on a UUID column; PostgreSQL rejects
+  the statement with `42883 function min(uuid) does not exist`.
+- Impact: the staging request is rejected and no account change is accepted as
+  applied. Production is not targeted.
+- Planned correction: aggregate `id::text`, repeat the guarded staging-only
+  request and require one confirmed disposable account before sign-in.
+- Regression evidence: the corrected staging-only statement updates exactly
+  one disposable account and reads back the expected user ID with confirmed
+  email, without targeting production.
+
+### R6B-ENVIRONMENT-104 - Browser evaluation scope omits localStorage
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: apply a successful staging-only Supabase password session
+  to the local Tournament Hub before authenticated visual QA.
+- Observed: the in-app browser evaluation sandbox reports
+  `Cannot read properties of undefined (reading 'setItem')` because
+  `localStorage` is omitted from that restricted scope.
+- Impact: the authenticated response exists only in the ephemeral Node browser
+  controller; no session is accepted as installed and no product assertion is
+  made from it.
+- Planned correction: use the documented origin-scoped CDP capability to set
+  the single ephemeral Supabase session without printing tokens, reload, and
+  require the canonical Tournament Hub before visual assertions.
+- Regression evidence: origin-scoped CDP installs the ephemeral session without
+  emitting its tokens; the browser subsequently loads the authenticated
+  canonical Hub and all read models.
+
+### R6B-PRODUCT-105 - API rejects canonical PostgreSQL UUID fixture IDs
+
+- Classification: `PRODUCT_BUG`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: load the authenticated Tournament Hub through the real
+  Next.js API for the canonical hosted staging competition after direct RPC
+  access has succeeded for the same actor and aggregate.
+- Observed: the route returns `404 TOURNAMENT_NOT_FOUND` before PostgreSQL is
+  called because `tournamentUuidPattern` accepts only UUID version nibbles
+  `1-8`; the deterministic canonical fixture ID is a valid PostgreSQL UUID
+  whose third segment begins with `e`.
+- Impact: valid UUID aggregates accepted and stored by PostgreSQL can be
+  unreachable through Tournament APIs, and the staging browser path cannot
+  exercise Team Journey or Organizer Desk despite correct RLS.
+- Planned correction: validate the exact PostgreSQL textual UUID shape
+  (`8-4-4-4-12` hexadecimal) without imposing an unrelated version/variant
+  restriction, and add a regression for the previously rejected ID.
+- Regression evidence: focused tests accept the previously rejected exact
+  PostgreSQL UUID, the local API returns HTTP 200 `TournamentGroupStageHub`,
+  and the authenticated browser renders its four groups, Team Journey and
+  Organizer Desk.
+
+### R6B-PRODUCT-106 - Canonical Hub tabs ignore landscape interaction
+
+- Classification: `PRODUCT_BUG`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: traverse all ten tabs of the authenticated production
+  `TournamentGroupStageClient` at `667x375`, `740x360`, `844x390` and
+  `932x430` against the canonical hosted staging snapshot.
+- Observed: desktop and portrait change the active `aria-pressed` tab, while
+  every landscape click leaves `Resumen` active. Root overflow, broken images,
+  framework overlays and console errors remain zero.
+- Impact: the real Mobile Game Landscape Hub cannot open rounds, matches,
+  standings, Team Journey, discipline, referees, incidents, rules or bracket.
+- Planned correction: inspect the rail's computed track and hit target, then
+  assign a stable landscape dimension/stacking contract without changing the
+  canonical data flow.
+- Regression evidence: the real Hub rail computes `32px`, every tab becomes
+  the active `aria-pressed` control at all four required landscape sizes, and
+  the full canonical matrix reports zero overflow, broken images, framework
+  overlays, console errors or warnings.
 
 ## Verification closure - 2026-08-27
 
