@@ -221,3 +221,17 @@
 - Security boundary: do not delete platform audit history, weaken the single-owner bootstrap or reuse unknown credentials.
 - Correction: removed the affected Preview variables, deployment and entire ephemeral branch. The final runner is executed once on a newly reconstructed branch.
 - Regression status: `PENDING` until the fresh one-shot E2E and teardown complete.
+
+## R6A-013 - Direct Club fixture violates the canonical owner-membership invariant
+
+- Classification: `SIMULATION_BUG`
+- Status: `OPEN`
+- Found by: final authenticated one-shot staging E2E
+- Original scenario: create the disposable Club organizer with two independent PostgREST writes, inserting `pachanga_clubs` first and its `club_owner` membership second.
+- Observed result: the deferred canonical owner guard closes at the end of the first HTTP transaction and correctly rejects the Club row with `23514 CLUB_PRIMARY_OWNER_MEMBERSHIP_REQUIRED`.
+- Expected result: fixture setup must use the canonical authenticated `club.create` RPC, which creates the Club and primary-owner membership atomically in one server transaction.
+- Product impact: none. The E2E stopped before enabling Tournament flags, granting a Tournament bundle or issuing a Tournament command; production was unchanged.
+- Security boundary: do not disable or defer the owner guard across requests, do not grant table or sequence access, and do not fabricate an owner membership after a failed Club insert.
+- Required correction: enable only the existing Club self-service prerequisites in the disposable branch, create the Club through `command_pachanga_club_foundation_v1`, restore the previous Club flags during cleanup and discard the failed one-shot branch.
+- Required regression: a fresh one-shot E2E must create both Team and Club organizers through their valid authority paths, complete the Club Tournament history and restore all Club flags without weakening any Club constraint.
+- Regression status: `PENDING`.

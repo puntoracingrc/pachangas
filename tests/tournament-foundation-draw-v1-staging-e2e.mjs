@@ -67,6 +67,7 @@ const report = {
 
 const FLAGS_ID = "00000000-0000-0000-0000-00000000c6a1";
 const FOUNDATION_FLAGS_ID = "00000000-0000-0000-0000-00000000c001";
+const CLUB_FLAGS_ID = "00000000-0000-0000-0000-00000000c101";
 const TOURNAMENT_FLAG_KEYS = [
   "foundationEnabled",
   "privateBetaEnabled",
@@ -81,6 +82,13 @@ const FOUNDATION_FLAG_KEYS = [
   "foundationEnabled",
   "creationEnabled",
   "contextBindingEnabled",
+];
+const CLUB_FLAG_KEYS = [
+  "competitionOrganizerEnabled",
+  "foundationEnabled",
+  "publicProfilesEnabled",
+  "selfServiceCreationEnabled",
+  "teamRelationshipsEnabled",
 ];
 const UNTOUCHED_TABLES = [
   "pachanga_individual_rating_evidence",
@@ -228,31 +236,28 @@ async function createGroup(owner, name, suffix) {
   return row;
 }
 
-async function createClub(owner, name, operationalStatus = "active") {
-  const now = new Date().toISOString();
-  const row = {
-    club_type: "INDEPENDENT_ORGANIZER",
-    created_by: owner.id,
-    id: randomUUID(),
-    name: `${name} ${runId}`,
-    operational_status: operationalStatus,
-    primary_owner_id: owner.id,
-    server_sequence: nextFixtureServerSequence(),
-    slug: `${name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${runId}`,
-    visibility: "private",
-  };
-  const insert = await fixtureAdmin.from("pachanga_clubs").insert(row);
-  if (insert.error) throw insert.error;
-  const membership = await fixtureAdmin.from("pachanga_club_memberships").insert({
-    accepted_at: now,
-    club_id: row.id,
-    role: "club_owner",
-    server_sequence: nextFixtureServerSequence(),
-    status: "active",
-    user_id: owner.id,
+async function createClub(ownerClient, name) {
+  const id = randomUUID();
+  const result = await ownerClient.rpc("command_pachanga_club_foundation_v1", {
+    aggregate_id: id,
+    client_metadata: metadata("tournament-staging-club-fixture"),
+    command_action: "club.create",
+    command_payload: {
+      clubType: "INDEPENDENT_ORGANIZER",
+      countryCode: "ES",
+      municipality: "Barcelona",
+      name: `${name} ${runId}`,
+      province: "Barcelona",
+      reason: `R6A canonical Club fixture ${runId}`,
+      slug: `${name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${runId}`,
+      visibility: "private",
+    },
+    expected_revision: 0,
+    operation_id: randomUUID(),
   });
-  if (membership.error) throw membership.error;
-  return row;
+  if (result.error) throw result.error;
+  assert.equal(result.data.snapshot.club.id, id);
+  return { id };
 }
 
 async function relateClubTeams(clubId, teams, actorId) {
@@ -274,6 +279,24 @@ async function relateClubTeams(clubId, teams, actorId) {
 
 async function tournamentFlags(supabase) {
   return (await rpc(supabase, "get_pachanga_tournament_flags_v1")).flags;
+}
+
+async function clubFlags(supabase) {
+  return rpc(supabase, "get_pachanga_club_foundation_flags_v1");
+}
+
+async function setClubFlags(platformClient, values, reason) {
+  const current = await clubFlags(platformClient);
+  const result = await platformClient.rpc("command_pachanga_club_platform_v1", {
+    aggregate_id: CLUB_FLAGS_ID,
+    client_metadata: metadata("tournament-staging-club-flags"),
+    command_action: "club_flags.set",
+    command_payload: { ...values, reason },
+    expected_revision: current.revision,
+    operation_id: randomUUID(),
+  });
+  if (result.error) throw result.error;
+  return result.data;
 }
 
 async function setTournamentFlags(platform, values, reason) {
@@ -567,8 +590,10 @@ let organizerOwner;
 let clubOwner;
 let initialTournamentFlags;
 let initialFoundationFlags;
+let initialClubFlags;
 let tournamentFlagsChanged = false;
 let foundationFlagsChanged = false;
+let clubFlagsChanged = false;
 
 try {
   const platformAccount = await createAccount("platform");
@@ -589,14 +614,27 @@ try {
     teamClients.push(await signIn(teamAccounts[index], `team-${index + 1}`));
   }
 
+  initialClubFlags = await clubFlags(platform);
+  const requiredClub = {
+    competitionOrganizerEnabled: initialClubFlags.competitionOrganizerEnabled,
+    foundationEnabled: true,
+    publicProfilesEnabled: initialClubFlags.publicProfilesEnabled,
+    selfServiceCreationEnabled: true,
+    teamRelationshipsEnabled: true,
+  };
+  if (CLUB_FLAG_KEYS.some((key) => initialClubFlags[key] !== requiredClub[key])) {
+    await setClubFlags(platform, requiredClub, `R6A staging Club prerequisite ${runId}`);
+    clubFlagsChanged = true;
+  }
+
   const organizerTeam = await createGroup(organizerAccount, "R6A Organizer", "ORG");
   const outsiderTeam = await createGroup(outsiderAccount, "R6A No Grant", "OUT");
   const teams = [];
   for (let index = 0; index < teamAccounts.length; index += 1) {
     teams.push(await createGroup(teamAccounts[index], `R6A Team ${index + 1}`, `T${String(index + 1).padStart(2, "0")}`));
   }
-  const organizerClub = await createClub(clubAccount, "R6A Organizer Club");
-  const sharedClub = await createClub(clubAccount, "R6A Shared Club");
+  const organizerClub = await createClub(clubOwner, "R6A Organizer Club");
+  const sharedClub = await createClub(clubOwner, "R6A Shared Club");
   await relateClubTeams(sharedClub.id, teams.slice(0, 2), clubAccount.id);
 
   initialFoundationFlags = await foundationFlags(platform);
@@ -1031,6 +1069,13 @@ try {
         platform,
         Object.fromEntries(FOUNDATION_FLAG_KEYS.map((key) => [key, initialFoundationFlags[key]])),
         `R6A staging foundation restore ${runId}`,
+      ));
+    }
+    if (clubFlagsChanged && initialClubFlags) {
+      await bestEffort("restore-club-flags", () => setClubFlags(
+        platform,
+        Object.fromEntries(CLUB_FLAG_KEYS.map((key) => [key, initialClubFlags[key]])),
+        `R6A staging Club restore ${runId}`,
       ));
     }
   }
