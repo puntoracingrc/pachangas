@@ -48,6 +48,7 @@ if (env.previewUrl && /(^|\.)pachangasiq\.com$/i.test(new URL(env.previewUrl).ho
 
 const runId = randomUUID().slice(0, 8);
 const password = `R6a-${randomUUID()}-Qa!`;
+let fixtureServerSequence = Date.now() * 1000;
 const clients = [];
 const channels = [];
 const created = {
@@ -100,6 +101,10 @@ function client(key = env.publishableKey) {
 }
 
 const fixtureAdmin = client(env.serviceRoleKey);
+const nextFixtureServerSequence = () => {
+  fixtureServerSequence += 1;
+  return fixtureServerSequence;
+};
 const metadata = (surface = "tournament-staging") => ({
   clientVersion: "6.0.0+r6a-staging",
   installedMode: "standalone",
@@ -232,6 +237,7 @@ async function createClub(owner, name, operationalStatus = "active") {
     name: `${name} ${runId}`,
     operational_status: operationalStatus,
     primary_owner_id: owner.id,
+    server_sequence: nextFixtureServerSequence(),
     slug: `${name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${runId}`,
     visibility: "private",
   };
@@ -241,6 +247,7 @@ async function createClub(owner, name, operationalStatus = "active") {
     accepted_at: now,
     club_id: row.id,
     role: "club_owner",
+    server_sequence: nextFixtureServerSequence(),
     status: "active",
     user_id: owner.id,
   });
@@ -257,6 +264,7 @@ async function relateClubTeams(clubId, teams, actorId) {
     initiated_by: "CLUB",
     reason: `R6A staging ${runId}`,
     relationship_type: "AFFILIATED",
+    server_sequence: nextFixtureServerSequence(),
     started_at: now,
     status: "active",
   }));

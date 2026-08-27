@@ -194,3 +194,30 @@
 - Required correction: select `SUPABASE_ANON_KEY` for the client and independently verify that Supabase exposes an enabled publishable key; keep `SUPABASE_SERVICE_ROLE_KEY` only in the local fixture runner and server-only Preview environment.
 - Required regression: a fresh branch must reject secret-class values from the browser configuration, pass Auth with the public key, expose no secret/service-role value in its client bundle, and complete the authenticated E2E before teardown.
 - Regression status: `PENDING`.
+
+## R6A-011 - Club fixture consumes a revoked private sequence default
+
+- Classification: `SIMULATION_BUG`
+- Status: `OPEN`
+- Found by: authenticated staging E2E while preparing the Club organizer fixture
+- Original scenario: create a disposable Club through `service_role` table access and rely on the table default for `server_sequence`.
+- Observed result: PostgreSQL rejects the fixture with `42501 permission denied for sequence pachanga_club_sequence`; the private sequence is correctly revoked from client roles, including direct `service_role` use through PostgREST.
+- Expected result: fixture-only direct inserts supply their own isolated synthetic sequence and never require access to the private product sequence. Tournament mutations remain authenticated RPC calls.
+- Product impact: none. The E2E stopped before enabling Tournament flags or issuing a Tournament command; production and canonical Club authority were unchanged.
+- Security boundary: do not grant sequence access, do not weaken Club RPC security and do not replace Tournament actions with service-role writes.
+- Required correction: assign an explicit monotonic fixture sequence to Club, membership and relationship setup rows.
+- Required regression: the same staging story must create Team and Club organizer fixtures, execute all Tournament actions through authenticated canonical RPCs, and complete with zero sequence grants added.
+- Regression status: `PENDING`.
+
+## R6A-012 - Failed one-shot staging run leaves the unique platform owner occupied
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `FIXED`
+- Found by: retrying the authenticated E2E after R6A-011 stopped the first run
+- Original scenario: reuse the same disposable Supabase branch after a failed run that had already bootstrapped its single platform owner.
+- Observed result: the new account cannot bootstrap a second owner and PostgreSQL correctly returns `Platform owner already bootstrapped`.
+- Expected result: each certification run starts from an unmodified ledger-158 branch; failed runs are discarded rather than repaired by deleting audit or role history.
+- Product impact: none; Tournament flags were still OFF and no Tournament command had executed.
+- Security boundary: do not delete platform audit history, weaken the single-owner bootstrap or reuse unknown credentials.
+- Correction: removed the affected Preview variables, deployment and entire ephemeral branch. The final runner is executed once on a newly reconstructed branch.
+- Regression status: `PENDING` until the fresh one-shot E2E and teardown complete.
