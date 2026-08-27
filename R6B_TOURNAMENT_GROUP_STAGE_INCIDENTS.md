@@ -1944,6 +1944,62 @@ After correction, the entry must include its regression and may only be marked
   the full canonical matrix reports zero overflow, broken images, framework
   overlays, console errors or warnings.
 
+### R6B-ENVIRONMENT-107 - Concurrent remote dump probes rotate the temporary login
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: inspect schema and data-only logical backup commands in
+  parallel immediately before the production R6B migration gate.
+- Observed: both CLI processes request an ephemeral database login; one probe
+  succeeds while the other is rejected with `28P01` after the temporary
+  credential changes.
+- Impact: no SQL migration or data write is attempted, but a concurrent probe
+  cannot be accepted as backup evidence.
+- Planned correction: run the production schema, role and data dumps
+  sequentially into a permission-restricted release-backup directory, verify
+  every file is non-empty and record checksums before migration.
+- Regression evidence: the schema, role and data-only dumps completed
+  sequentially in the restricted pre-release backup directory. All three are
+  non-empty, mode `0600`, and have recorded SHA-256 checksums; the latest
+  platform physical backup is also `COMPLETED` before R6B is applied.
+
+### R6B-TEST-108 - Production baseline query assumes a backfill marker column
+
+- Classification: `TESTABILITY_GAP`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: collect the read-only production baseline for migration
+  count, Tournament rows and canonical backfill state before R6B.
+- Observed: the diagnostic references
+  `pachanga_competitions.canonical_backfill_status`, which is not part of the
+  deployed 163-migration schema, so PostgreSQL rejects the complete statement
+  with `42703`.
+- Impact: no data or schema change occurs and no partial baseline result is
+  accepted.
+- Planned correction: inspect the deployed catalog first, then derive the
+  backfill proof from the real canonical health/lineage relations and repeat
+  the full readback.
+- Regression evidence: the catalog-led query completed as one read-only
+  snapshot: 163 migrations, R6A active, all later generation/public gates OFF,
+  zero Tournament rows, zero CanonicalMatches/MatchContexts, zero R6B columns
+  and `initializedAt = null` in canonical health, proving the legacy backfill
+  has not run.
+
+### R6B-ENVIRONMENT-109 - Linked migration push is disabled by project config
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `OPEN`
+- Original scenario: run the mandatory linked `db push --dry-run` after proving
+  the exact 163-version production baseline.
+- Observed: the CLI connects to the correct project but skips migrations
+  because remote migration push is disabled in the repository configuration;
+  it therefore reports the database as current despite six local-only files.
+- Impact: no migration is applied. The generic `db push` path cannot provide
+  exact R6B ledger evidence and must not be forced by changing the guardrail.
+- Planned correction: discover and use the supported Supabase migration API or
+  an atomic exact-version path, then prove the six immutable file versions and
+  names in the remote ledger before merge.
+- Regression evidence: pending.
+
 ## Verification closure - 2026-08-27
 
 - `R6B-PRODUCT-005`, `R6B-PRODUCT-006`, `R6B-SIMULATION-010`,
