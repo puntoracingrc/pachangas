@@ -222,4 +222,5 @@ test("authenticated staging covers the ten canonical stories, security negatives
   assert.match(staging, /TOURNAMENT_STAGING_PRODUCTION_TARGET_FORBIDDEN/);
   assert.match(staging, /EPHEMERAL_BRANCH_TEARDOWN_REQUIRED/);
   assert.match(staging, /pachanga_tournament_invalidations/);
+  assert.match(staging, /TOURNAMENT_STAGING_BROWSER_KEY_REQUIRED/);
 });

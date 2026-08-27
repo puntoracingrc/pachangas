@@ -180,3 +180,17 @@
 - Required correction: extend the still-unreleased fifth migration with 18 explicit covering indexes and add a database regression that detects any uncovered R6A foreign key.
 - Required regression: rebuild staging from ledger 158 with the final five artifacts, require zero R6A `unindexed_foreign_keys` Advisor findings and repeat DB/concurrency tests.
 - Regression status: `PENDING`.
+
+## R6A-010 - Supabase CLI default key is not a browser publishable key
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `OPEN`
+- Found by: authenticated staging sign-in before any Tournament command executed
+- Original scenario: obtain the ephemeral branch credentials through `supabase branches get`, wire the field named `SUPABASE_DEFAULT_KEY` to the branch-scoped Preview public key, and start the authenticated E2E.
+- Observed result: the field contains an `sb_secret_...` key, not an `sb_publishable_...` key; Auth rejects it as a public API key. The isolated Preview build therefore received a secret-class branch credential through a `NEXT_PUBLIC_` variable.
+- Expected result: only an enabled `sb_publishable_...` or legacy `anon` key may be used by the browser; secret and service-role credentials must remain server-only.
+- Product impact: no production impact and no successful authenticated request. The affected Preview, its three branch-scoped variables and the whole ephemeral Supabase branch were immediately deleted, invalidating all branch credentials.
+- Security boundary: never infer browser suitability from a CLI field name; inspect key class without printing the value, fail closed on `sb_secret_`, and recreate the disposable staging boundary from zero.
+- Required correction: select `SUPABASE_ANON_KEY` for the client and independently verify that Supabase exposes an enabled publishable key; keep `SUPABASE_SERVICE_ROLE_KEY` only in the local fixture runner and server-only Preview environment.
+- Required regression: a fresh branch must reject secret-class values from the browser configuration, pass Auth with the public key, expose no secret/service-role value in its client bundle, and complete the authenticated E2E before teardown.
+- Regression status: `PENDING`.

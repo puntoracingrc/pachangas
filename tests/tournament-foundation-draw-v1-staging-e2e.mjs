@@ -18,6 +18,23 @@ for (const [key, value] of Object.entries(env)) {
   }
 }
 
+function isBrowserPublicKey(value) {
+  if (/^sb_publishable_/i.test(value)) return true;
+  if (!/^eyJ/i.test(value)) return false;
+  try {
+    const payload = JSON.parse(Buffer.from(value.split(".")[1], "base64url").toString("utf8"));
+    return payload.role === "anon";
+  } catch {
+    return false;
+  }
+}
+
+if (!isBrowserPublicKey(env.publishableKey)
+    || /^sb_secret_/i.test(env.publishableKey)
+    || env.publishableKey === env.serviceRoleKey) {
+  throw new Error("TOURNAMENT_STAGING_BROWSER_KEY_REQUIRED");
+}
+
 const productionRef = "qonbngfrnrqgmxbdfbea";
 const actualRef = new URL(env.url).hostname.split(".")[0];
 if (
