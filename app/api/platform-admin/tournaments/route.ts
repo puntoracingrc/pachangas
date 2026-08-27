@@ -15,6 +15,7 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 const flagsAggregateId = "00000000-0000-0000-0000-00000000c6a1";
+const groupStageFlagsAggregateId = "00000000-0000-0000-0000-00000000c6b1";
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 function reason(input: Record<string, unknown>) {
@@ -42,6 +43,16 @@ function platformPayload(action: string, input: Record<string, unknown>) {
     manualEnabled: input.manualEnabled === true,
     privateBetaEnabled: input.privateBetaEnabled === true,
     publishEnabled: input.publishEnabled === true,
+  };
+  if (action === "tournament.group_stage.flags.set") return {
+    ...base,
+    bracketTemplateEnabled: input.bracketTemplateEnabled === true,
+    groupMatchGenerationEnabled: input.groupMatchGenerationEnabled === true,
+    groupSchedulingEnabled: input.groupSchedulingEnabled === true,
+    groupStageEnabled: input.groupStageEnabled === true,
+    groupStandingsEnabled: input.groupStandingsEnabled === true,
+    groupTrackingEnabled: input.groupTrackingEnabled === true,
+    qualificationEnabled: input.qualificationEnabled === true,
   };
   const organizerKind = typeof input.organizerKind === "string" ? input.organizerKind.toUpperCase() : "";
   if (!['TEAM', 'CLUB'].includes(organizerKind)) throw new Error("INVALID_TOURNAMENT_ORGANIZER");
@@ -92,20 +103,25 @@ export async function POST(request: Request) {
     const operationId = typeof body.operationId === "string" ? body.operationId : "";
     const expectedRevision = Number(body.expectedRevision);
     const aggregateId = action === "tournament.flags.set" || action === "tournament.kill_switch"
-      ? flagsAggregateId
+      ? flagsAggregateId : action === "tournament.group_stage.flags.set" ? groupStageFlagsAggregateId
       : typeof body.aggregateId === "string" ? body.aggregateId : "";
     if (!uuidPattern.test(operationId) || !uuidPattern.test(aggregateId)
         || !Number.isInteger(expectedRevision) || expectedRevision < 0) {
       throw new Error("INVALID_TOURNAMENT_PLATFORM_ENVELOPE");
     }
-    const result = await session.client.rpc("command_pachanga_tournament_platform_v1", {
+    const result = await session.client.rpc(
+      action === "tournament.group_stage.flags.set"
+        ? "command_pachanga_tournament_group_stage_platform_v1"
+        : "command_pachanga_tournament_platform_v1",
+      {
       aggregate_id: aggregateId,
       client_metadata: metadata(request),
       command_action: action,
       command_payload: platformPayload(action, tournamentRecord(body.payload)),
       expected_revision: expectedRevision,
       operation_id: operationId,
-    });
+      },
+    );
     if (result.error) throw new Error(result.error.message);
     return platformJson({ canonical: result.data });
   } catch (error) {

@@ -121,8 +121,8 @@ select public.command_pachanga_competition_platform_v1(
   '00000000-0000-0000-0000-00000000c001',
   (select revision from private.pachanga_competition_foundation_settings where singleton),
   'foundation_flags.set',
-  '{"foundationEnabled":true,"creationEnabled":true,"contextBindingEnabled":true,"reason":"Demo World V2.4 Tournament foundation"}',
-  '{"clientVersion":"demo-world-v2.4","serviceWorkerVersion":"demo-world-v2.4","installedMode":"simulation","surface":"demo_world_v2_tournament"}'
+  '{"foundationEnabled":true,"creationEnabled":true,"contextBindingEnabled":true,"reason":"Demo World V2.5 Tournament foundation"}',
+  '{"clientVersion":"demo-world-v2.5","serviceWorkerVersion":"demo-world-v2.5","installedMode":"simulation","surface":"demo_world_v2_tournament"}'
 );
 
 select public.command_pachanga_tournament_platform_v1(
@@ -130,8 +130,8 @@ select public.command_pachanga_tournament_platform_v1(
   '00000000-0000-0000-0000-00000000c6a1',
   (select revision from private.pachanga_competition_foundation_settings where singleton),
   'tournament.flags.set',
-  '{"foundationEnabled":true,"privateBetaEnabled":true,"creationEnabled":true,"drawEnabled":true,"automaticEnabled":true,"manualEnabled":true,"hybridEnabled":true,"publishEnabled":true,"reason":"Demo World V2.4 Tournament authority"}',
-  '{"clientVersion":"demo-world-v2.4","serviceWorkerVersion":"demo-world-v2.4","installedMode":"simulation","surface":"demo_world_v2_tournament"}'
+  '{"foundationEnabled":true,"privateBetaEnabled":true,"creationEnabled":true,"drawEnabled":true,"automaticEnabled":true,"manualEnabled":true,"hybridEnabled":true,"publishEnabled":true,"reason":"Demo World V2.5 Tournament authority"}',
+  '{"clientVersion":"demo-world-v2.5","serviceWorkerVersion":"demo-world-v2.5","installedMode":"simulation","surface":"demo_world_v2_tournament"}'
 );
 
 select public.command_pachanga_tournament_platform_v1(
@@ -139,8 +139,8 @@ select public.command_pachanga_tournament_platform_v1(
   '64020000-0000-4000-8000-000000000001',
   0,
   'tournament.beta_bundle.grant',
-  '{"organizerKind":"TEAM","maxTeams":32,"expiresAt":"2027-12-31T23:59:59Z","reason":"Demo World V2.4 private beta grant"}',
-  '{"clientVersion":"demo-world-v2.4","serviceWorkerVersion":"demo-world-v2.4","installedMode":"simulation","surface":"demo_world_v2_tournament"}'
+  '{"organizerKind":"TEAM","maxTeams":32,"expiresAt":"2027-12-31T23:59:59Z","reason":"Demo World V2.5 private beta grant"}',
+  '{"clientVersion":"demo-world-v2.5","serviceWorkerVersion":"demo-world-v2.5","installedMode":"simulation","surface":"demo_world_v2_tournament"}'
 );
 
 select set_config(
@@ -155,8 +155,8 @@ select public.command_pachanga_tournament_draw_v1(
   (select revision from public.pachanga_competition_organizer_states
     where organizer_kind='TEAM' and organizer_group_id='64020000-0000-4000-8000-000000000001'),
   'tournament.create',
-  '{"organizerKind":"TEAM","name":"COPA BARRIOS IQ 2027","slug":"copa-barrios-iq-2027","description":"Torneo sintético con sorteo reproducible","generalArea":"Barcelona","modality":"FUTBOL_7","editionName":"Copa Barrios IQ 2027","seasonLabel":"2026/27","startsAt":"2027-05-01","endsAt":"2027-06-30","participantCap":16,"groupCount":4,"qualifiersPerGroup":2,"drawTarget":"GROUP_ASSIGNMENT","drawMode":"SEEDED_POTS","registrationClosesAt":"2027-04-20T20:00:00Z","authoringMode":"ADVANCED","discipline":{"enabled":false},"referees":{"usage":"OPTIONAL"},"reason":"Demo World V2.4 Tournament creation"}',
-  '{"clientVersion":"demo-world-v2.4","serviceWorkerVersion":"demo-world-v2.4","installedMode":"simulation","surface":"demo_world_v2_tournament"}'
+  '{"organizerKind":"TEAM","name":"COPA BARRIOS IQ 2027","slug":"copa-barrios-iq-2027","description":"Torneo sintético con sorteo reproducible","generalArea":"Barcelona","modality":"FUTBOL_7","editionName":"Copa Barrios IQ 2027","seasonLabel":"2026/27","startsAt":"2027-05-01","endsAt":"2027-06-30","participantCap":16,"groupCount":4,"qualifiersPerGroup":2,"drawTarget":"GROUPS_THEN_KNOCKOUT","drawMode":"SEEDED_POTS","registrationClosesAt":"2027-04-20T20:00:00Z","authoringMode":"ADVANCED","discipline":{"enabled":true},"referees":{"usage":"OPTIONAL"},"reason":"Demo World V2.5 Tournament creation"}',
+  '{"clientVersion":"demo-world-v2.5","serviceWorkerVersion":"demo-world-v2.5","installedMode":"simulation","surface":"demo_world_v2_tournament"}'
 );
 
 do $demo_tournament$
@@ -172,8 +172,8 @@ begin
     md5('demo-world-v2-4-authoring-seeded')::uuid, competition_id,
     (select tournament_revision from public.pachanga_competitions where id=competition_id),
     'tournament.authoring.save',
-    '{"name":"COPA BARRIOS IQ 2027","slug":"copa-barrios-iq-2027","description":"Torneo sintético con sorteo reproducible","generalArea":"Barcelona","modality":"FUTBOL_7","editionName":"Copa Barrios IQ 2027","seasonLabel":"2026/27","startsAt":"2027-05-01","endsAt":"2027-06-30","participantCap":16,"groupCount":4,"qualifiersPerGroup":2,"drawTarget":"GROUP_ASSIGNMENT","drawMode":"SEEDED_POTS","registrationClosesAt":"2027-04-20T20:00:00Z","authoringMode":"ADVANCED","discipline":{"enabled":false},"referees":{"usage":"OPTIONAL"},"reason":"Demo World V2.4 canonical Configuration Center revision"}',
-    '{"clientVersion":"demo-world-v2.4","serviceWorkerVersion":"demo-world-v2.4","installedMode":"simulation","surface":"demo_world_v2_tournament"}'
+    '{"name":"COPA BARRIOS IQ 2027","slug":"copa-barrios-iq-2027","description":"Torneo sintético con sorteo reproducible","generalArea":"Barcelona","modality":"FUTBOL_7","editionName":"Copa Barrios IQ 2027","seasonLabel":"2026/27","startsAt":"2027-05-01","endsAt":"2027-06-30","participantCap":16,"groupCount":4,"qualifiersPerGroup":2,"drawTarget":"GROUPS_THEN_KNOCKOUT","drawMode":"SEEDED_POTS","registrationClosesAt":"2027-04-20T20:00:00Z","authoringMode":"ADVANCED","discipline":{"enabled":true},"referees":{"usage":"OPTIONAL"},"reason":"Demo World V2.5 canonical Configuration Center revision"}',
+    '{"clientVersion":"demo-world-v2.5","serviceWorkerVersion":"demo-world-v2.5","installedMode":"simulation","surface":"demo_world_v2_tournament"}'
   );
 
   for team_number in 1..16 loop
@@ -188,9 +188,9 @@ begin
       'participant.invite',
       jsonb_build_object(
         'teamId', ('64020000-0000-4000-8000-' || lpad(team_number::text, 12, '0'))::uuid,
-        'reason', 'Demo World V2.4 invitation'
+        'reason', 'Demo World V2.5 invitation'
       ),
-      '{"clientVersion":"demo-world-v2.4","serviceWorkerVersion":"demo-world-v2.4","installedMode":"simulation","surface":"demo_world_v2_tournament"}'
+      '{"clientVersion":"demo-world-v2.5","serviceWorkerVersion":"demo-world-v2.5","installedMode":"simulation","surface":"demo_world_v2_tournament"}'
     );
     select entries.id into entry_id
     from public.pachanga_competition_entries entries
@@ -208,8 +208,8 @@ begin
       md5('demo-world-v2-4-accept-' || team_number)::uuid, competition_id,
       (select tournament_revision from public.pachanga_competitions where id=competition_id),
       'participant.accept',
-      jsonb_build_object('entryId', entry_id, 'reason', 'Demo World V2.4 acceptance'),
-      '{"clientVersion":"demo-world-v2.4","serviceWorkerVersion":"demo-world-v2.4","installedMode":"simulation","surface":"demo_world_v2_tournament"}'
+      jsonb_build_object('entryId', entry_id, 'reason', 'Demo World V2.5 acceptance'),
+      '{"clientVersion":"demo-world-v2.5","serviceWorkerVersion":"demo-world-v2.5","installedMode":"simulation","surface":"demo_world_v2_tournament"}'
     );
   end loop;
 end;
@@ -242,18 +242,18 @@ begin
         join public.pachanga_competition_editions editions on editions.id=stages.edition_id
         where editions.competition_id=competition_id),
       'ruleRevisionId', (select editions.rule_revision_id from public.pachanga_competition_editions editions where editions.competition_id=competition_id),
-      'targetType','GROUP_ASSIGNMENT','mode','SEEDED_POTS','groupCount',4,
-      'qualifiersPerGroup',2,'reason','Demo World V2.4 automatic draw plan'
+      'targetType','GROUPS_THEN_KNOCKOUT','mode','SEEDED_POTS','groupCount',4,
+      'qualifiersPerGroup',2,'reason','Demo World V2.5 automatic draw plan'
     ),
-    '{"clientVersion":"demo-world-v2.4","serviceWorkerVersion":"demo-world-v2.4","installedMode":"simulation","surface":"demo_world_v2_tournament"}'
+    '{"clientVersion":"demo-world-v2.5","serviceWorkerVersion":"demo-world-v2.5","installedMode":"simulation","surface":"demo_world_v2_tournament"}'
   );
   select plans.id into plan_id from public.pachanga_competition_draw_plans plans
   where plans.competition_id=competition_id order by plans.server_sequence desc, plans.id desc limit 1;
   perform public.command_pachanga_tournament_draw_v1(
     md5('demo-world-v2-4-freeze-automatic')::uuid, competition_id,
     (select tournament_revision from public.pachanga_competitions where id=competition_id),
-    'participants.freeze', jsonb_build_object('planId',plan_id,'reason','Demo World V2.4 automatic participant freeze'),
-    '{"clientVersion":"demo-world-v2.4","serviceWorkerVersion":"demo-world-v2.4","installedMode":"simulation","surface":"demo_world_v2_tournament"}'
+    'participants.freeze', jsonb_build_object('planId',plan_id,'reason','Demo World V2.5 automatic participant freeze'),
+    '{"clientVersion":"demo-world-v2.5","serviceWorkerVersion":"demo-world-v2.5","installedMode":"simulation","surface":"demo_world_v2_tournament"}'
   );
   for pot_number in 1..4 loop
     select jsonb_agg(ranked.entry_id order by ranked.team_level desc, ranked.entry_id) into pot_entries
@@ -271,9 +271,9 @@ begin
       'draw_pot.create', jsonb_build_object(
         'planId',plan_id,'potNumber',pot_number,'label','Bombo ' || pot_number,
         'capacity',4,'entryIds',pot_entries,'seedingPolicy','TEAM_LEVEL_SNAPSHOT',
-        'reason','Demo World V2.4 seeded pot'
+        'reason','Demo World V2.5 seeded pot'
       ),
-      '{"clientVersion":"demo-world-v2.4","serviceWorkerVersion":"demo-world-v2.4","installedMode":"simulation","surface":"demo_world_v2_tournament"}'
+      '{"clientVersion":"demo-world-v2.5","serviceWorkerVersion":"demo-world-v2.5","installedMode":"simulation","surface":"demo_world_v2_tournament"}'
     );
   end loop;
   perform public.command_pachanga_tournament_draw_v1(
@@ -282,7 +282,7 @@ begin
     'draw_constraint.create', jsonb_build_object(
       'planId',plan_id,'constraintType','POT_DISTRIBUTION','strength','HARD','weight',100,
       'scope','DRAW','parameters','{}'::jsonb,'reason','Un equipo de cada bombo por grupo','publicAttribution',true
-    ), '{"clientVersion":"demo-world-v2.4","serviceWorkerVersion":"demo-world-v2.4","installedMode":"simulation","surface":"demo_world_v2_tournament"}'
+    ), '{"clientVersion":"demo-world-v2.5","serviceWorkerVersion":"demo-world-v2.5","installedMode":"simulation","surface":"demo_world_v2_tournament"}'
   );
   perform public.command_pachanga_tournament_draw_v1(
     md5('demo-world-v2-4-constraint-club')::uuid, competition_id,
@@ -290,7 +290,7 @@ begin
     'draw_constraint.create', jsonb_build_object(
       'planId',plan_id,'constraintType','SAME_CLUB_AVOIDANCE','strength','SOFT','weight',20,
       'scope','DRAW','parameters','{}'::jsonb,'reason','Separar equipos afiliados al mismo Club','publicAttribution',true
-    ), '{"clientVersion":"demo-world-v2.4","serviceWorkerVersion":"demo-world-v2.4","installedMode":"simulation","surface":"demo_world_v2_tournament"}'
+    ), '{"clientVersion":"demo-world-v2.5","serviceWorkerVersion":"demo-world-v2.5","installedMode":"simulation","surface":"demo_world_v2_tournament"}'
   );
   perform public.command_pachanga_tournament_draw_v1(
     md5('demo-world-v2-4-constraint-level')::uuid, competition_id,
@@ -299,15 +299,15 @@ begin
       'planId',plan_id,'constraintType','TEAM_LEVEL_BALANCE','strength','SOFT','weight',2,
       'scope','DRAW','parameters',jsonb_build_object('maxGap',12),
       'reason','Preferir grupos equilibrados','publicAttribution',true
-    ), '{"clientVersion":"demo-world-v2.4","serviceWorkerVersion":"demo-world-v2.4","installedMode":"simulation","surface":"demo_world_v2_tournament"}'
+    ), '{"clientVersion":"demo-world-v2.5","serviceWorkerVersion":"demo-world-v2.5","installedMode":"simulation","surface":"demo_world_v2_tournament"}'
   );
   perform public.command_pachanga_tournament_draw_v1(
     md5('demo-world-v2-4-generate-automatic')::uuid, competition_id,
     (select tournament_revision from public.pachanga_competitions where id=competition_id),
     'draw.generate', jsonb_build_object(
       'planId',plan_id,'seedMode','CUSTOM_PUBLIC_SEED','publicSeed','COPA-BARRIOS-IQ-2027-AUTO',
-      'reason','Demo World V2.4 deterministic automatic draw'
-    ), '{"clientVersion":"demo-world-v2.4","serviceWorkerVersion":"demo-world-v2.4","installedMode":"simulation","surface":"demo_world_v2_tournament"}'
+      'reason','Demo World V2.5 deterministic automatic draw'
+    ), '{"clientVersion":"demo-world-v2.5","serviceWorkerVersion":"demo-world-v2.5","installedMode":"simulation","surface":"demo_world_v2_tournament"}'
   );
   select plans.current_revision_id into baseline_revision_id
   from public.pachanga_competition_draw_plans plans where plans.id=plan_id;
@@ -316,14 +316,14 @@ begin
     md5('demo-world-v2-4-authoring-hybrid')::uuid, competition_id,
     (select tournament_revision from public.pachanga_competitions where id=competition_id),
     'tournament.authoring.save',
-    '{"name":"COPA BARRIOS IQ 2027","slug":"copa-barrios-iq-2027","description":"Torneo sintético con sorteo reproducible","generalArea":"Barcelona","modality":"FUTBOL_7","editionName":"Copa Barrios IQ 2027","seasonLabel":"2026/27","startsAt":"2027-05-01","endsAt":"2027-06-30","participantCap":16,"groupCount":4,"qualifiersPerGroup":2,"drawTarget":"GROUP_ASSIGNMENT","drawMode":"HYBRID","registrationClosesAt":"2027-04-20T20:00:00Z","authoringMode":"ADVANCED","discipline":{"enabled":false},"referees":{"usage":"OPTIONAL"},"reason":"Demo World V2.4 hybrid RuleRevision"}',
-    '{"clientVersion":"demo-world-v2.4","serviceWorkerVersion":"demo-world-v2.4","installedMode":"simulation","surface":"demo_world_v2_tournament"}'
+    '{"name":"COPA BARRIOS IQ 2027","slug":"copa-barrios-iq-2027","description":"Torneo sintético con sorteo reproducible","generalArea":"Barcelona","modality":"FUTBOL_7","editionName":"Copa Barrios IQ 2027","seasonLabel":"2026/27","startsAt":"2027-05-01","endsAt":"2027-06-30","participantCap":16,"groupCount":4,"qualifiersPerGroup":2,"drawTarget":"GROUPS_THEN_KNOCKOUT","drawMode":"HYBRID","registrationClosesAt":"2027-04-20T20:00:00Z","authoringMode":"ADVANCED","discipline":{"enabled":true},"referees":{"usage":"OPTIONAL"},"reason":"Demo World V2.5 hybrid RuleRevision"}',
+    '{"clientVersion":"demo-world-v2.5","serviceWorkerVersion":"demo-world-v2.5","installedMode":"simulation","surface":"demo_world_v2_tournament"}'
   );
   perform public.command_pachanga_tournament_draw_v1(
     md5('demo-world-v2-4-freeze-hybrid')::uuid, competition_id,
     (select tournament_revision from public.pachanga_competitions where id=competition_id),
-    'participants.freeze', jsonb_build_object('planId',plan_id,'reason','Demo World V2.4 hybrid participant freeze'),
-    '{"clientVersion":"demo-world-v2.4","serviceWorkerVersion":"demo-world-v2.4","installedMode":"simulation","surface":"demo_world_v2_tournament"}'
+    'participants.freeze', jsonb_build_object('planId',plan_id,'reason','Demo World V2.5 hybrid participant freeze'),
+    '{"clientVersion":"demo-world-v2.5","serviceWorkerVersion":"demo-world-v2.5","installedMode":"simulation","surface":"demo_world_v2_tournament"}'
   );
   for placement in
     select placements.entry_id, placements.group_number, placements.slot_number
@@ -338,8 +338,8 @@ begin
       'draw.lock.create', jsonb_build_object(
         'planId',plan_id,'lockType','ENTRY_TO_SLOT','entryId',placement.entry_id,
         'groupNumber',placement.group_number,'slotNumber',placement.slot_number,
-        'reason','Posición fijada por el organizador en Demo World V2.4'
-      ), '{"clientVersion":"demo-world-v2.4","serviceWorkerVersion":"demo-world-v2.4","installedMode":"simulation","surface":"demo_world_v2_tournament"}'
+        'reason','Posición fijada por el organizador en Demo World V2.5'
+      ), '{"clientVersion":"demo-world-v2.5","serviceWorkerVersion":"demo-world-v2.5","installedMode":"simulation","surface":"demo_world_v2_tournament"}'
     );
   end loop;
   perform public.command_pachanga_tournament_draw_v1(
@@ -347,14 +347,14 @@ begin
     (select tournament_revision from public.pachanga_competitions where id=competition_id),
     'draw.regenerate', jsonb_build_object(
       'planId',plan_id,'seedMode','CUSTOM_PUBLIC_SEED','publicSeed','COPA-BARRIOS-IQ-2027-HYBRID',
-      'reason','Demo World V2.4 hybrid completion'
-    ), '{"clientVersion":"demo-world-v2.4","serviceWorkerVersion":"demo-world-v2.4","installedMode":"simulation","surface":"demo_world_v2_tournament"}'
+      'reason','Demo World V2.5 hybrid completion'
+    ), '{"clientVersion":"demo-world-v2.5","serviceWorkerVersion":"demo-world-v2.5","installedMode":"simulation","surface":"demo_world_v2_tournament"}'
   );
   perform public.command_pachanga_tournament_draw_v1(
     md5('demo-world-v2-4-validate-hybrid')::uuid, competition_id,
     (select tournament_revision from public.pachanga_competitions where id=competition_id),
-    'draw.validate', jsonb_build_object('planId',plan_id,'reason','Demo World V2.4 hybrid validation'),
-    '{"clientVersion":"demo-world-v2.4","serviceWorkerVersion":"demo-world-v2.4","installedMode":"simulation","surface":"demo_world_v2_tournament"}'
+    'draw.validate', jsonb_build_object('planId',plan_id,'reason','Demo World V2.5 hybrid validation'),
+    '{"clientVersion":"demo-world-v2.5","serviceWorkerVersion":"demo-world-v2.5","installedMode":"simulation","surface":"demo_world_v2_tournament"}'
   );
 end;
 $demo_tournament_draw$;
@@ -386,7 +386,7 @@ begin
         'planId',plan_id,'constraintType','FIXED_POSITION','strength','HARD','weight',1000,
         'scope','ENTRY_PAIR','parameters',jsonb_build_object('entryId',entry_id,'groupNumber',1,'slotNumber',1),
         'reason','Dos equipos no pueden ocupar el mismo slot','publicAttribution',true
-      ), '{"clientVersion":"demo-world-v2.4","serviceWorkerVersion":"demo-world-v2.4","installedMode":"simulation","surface":"demo_world_v2_tournament"}'
+      ), '{"clientVersion":"demo-world-v2.5","serviceWorkerVersion":"demo-world-v2.5","installedMode":"simulation","surface":"demo_world_v2_tournament"}'
     );
     select constraints.id into constraint_id
     from public.pachanga_competition_draw_constraints constraints
@@ -403,8 +403,8 @@ begin
       (select tournament_revision from public.pachanga_competitions where id=competition_id),
       'draw.generate', jsonb_build_object(
         'planId',plan_id,'seedMode','CUSTOM_PUBLIC_SEED','publicSeed','COPA-BARRIOS-IQ-2027-CONFLICT',
-        'reason','Demo World V2.4 expected unsatisfiable draw'
-      ), '{"clientVersion":"demo-world-v2.4","serviceWorkerVersion":"demo-world-v2.4","installedMode":"simulation","surface":"demo_world_v2_tournament"}'
+        'reason','Demo World V2.5 expected unsatisfiable draw'
+      ), '{"clientVersion":"demo-world-v2.5","serviceWorkerVersion":"demo-world-v2.5","installedMode":"simulation","surface":"demo_world_v2_tournament"}'
     );
     raise exception 'DEMO_WORLD_TOURNAMENT_EXPECTED_UNSATISFIABLE';
   exception when others then
@@ -421,20 +421,20 @@ begin
       'draw_constraint.remove', jsonb_build_object(
         'planId',plan_id,'constraintId',constraint_id,
         'reason','Retirar escenario imposible después de demostrar DRAW_UNSATISFIABLE'
-      ), '{"clientVersion":"demo-world-v2.4","serviceWorkerVersion":"demo-world-v2.4","installedMode":"simulation","surface":"demo_world_v2_tournament"}'
+      ), '{"clientVersion":"demo-world-v2.5","serviceWorkerVersion":"demo-world-v2.5","installedMode":"simulation","surface":"demo_world_v2_tournament"}'
     );
   end loop;
   perform public.command_pachanga_tournament_draw_v1(
     md5('demo-world-v2-4-revalidate-hybrid')::uuid, competition_id,
     (select tournament_revision from public.pachanga_competitions where id=competition_id),
-    'draw.validate', jsonb_build_object('planId',plan_id,'reason','Demo World V2.4 hybrid revalidation'),
-    '{"clientVersion":"demo-world-v2.4","serviceWorkerVersion":"demo-world-v2.4","installedMode":"simulation","surface":"demo_world_v2_tournament"}'
+    'draw.validate', jsonb_build_object('planId',plan_id,'reason','Demo World V2.5 hybrid revalidation'),
+    '{"clientVersion":"demo-world-v2.5","serviceWorkerVersion":"demo-world-v2.5","installedMode":"simulation","surface":"demo_world_v2_tournament"}'
   );
   perform public.command_pachanga_tournament_draw_v1(
     md5('demo-world-v2-4-publish-hybrid')::uuid, competition_id,
     (select tournament_revision from public.pachanga_competitions where id=competition_id),
-    'draw.publish', jsonb_build_object('planId',plan_id,'reason','Demo World V2.4 hybrid publication'),
-    '{"clientVersion":"demo-world-v2.4","serviceWorkerVersion":"demo-world-v2.4","installedMode":"simulation","surface":"demo_world_v2_tournament"}'
+    'draw.publish', jsonb_build_object('planId',plan_id,'reason','Demo World V2.5 hybrid publication'),
+    '{"clientVersion":"demo-world-v2.5","serviceWorkerVersion":"demo-world-v2.5","installedMode":"simulation","surface":"demo_world_v2_tournament"}'
   );
 end;
 $demo_tournament_conflict$;

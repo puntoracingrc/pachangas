@@ -856,89 +856,166 @@ const tournamentConstraintLabels: Record<string, string> = {
   TEAM_LEVEL_BALANCE: "Equilibrar nivel de los grupos",
 };
 
+type DemoTournamentPane = "arbitros" | "clasificacion" | "cuadro" | "disciplina" | "equipos" | "incidencias" | "jornadas" | "partidos" | "reglamento" | "resumen";
+
+const demoTournamentPanes: Array<{ id: DemoTournamentPane; label: string }> = [
+  { id: "resumen", label: "Resumen" },
+  { id: "jornadas", label: "Jornadas" },
+  { id: "partidos", label: "Partidos" },
+  { id: "clasificacion", label: "Clasificación" },
+  { id: "equipos", label: "Equipos" },
+  { id: "disciplina", label: "Disciplina" },
+  { id: "arbitros", label: "Árbitros" },
+  { id: "incidencias", label: "Incidencias" },
+  { id: "reglamento", label: "Reglamento" },
+  { id: "cuadro", label: "Cuadro" },
+];
+
+const tournamentIncidentLabels = {
+  DISPUTED_CORRECTED: "Disputa corregida",
+  NONE: "Sin incidencia",
+  NO_SHOW: "Incomparecencia",
+  POSTPONED_RESCHEDULED: "Aplazado y reprogramado",
+  SUSPENDED_RESUMED: "Suspendido y reanudado",
+} as const;
+
+function demoTournamentGroupLabel(groupNumber: number) {
+  return `Grupo ${String.fromCharCode(64 + groupNumber)}`;
+}
+
 function DemoTournamentView({ tournament }: { tournament: DemoWorldV2TournamentChunk }) {
+  const [pane, setPane] = useState<DemoTournamentPane>("resumen");
   const [outcomeIndex, setOutcomeIndex] = useState<0 | 1>(1);
+  const [roundNumber, setRoundNumber] = useState(2);
+  const [groupNumber, setGroupNumber] = useState(1);
+  const [matchFilter, setMatchFilter] = useState<"ALL" | "OFFICIAL" | "SCHEDULED">("ALL");
   const outcome = tournament.drawOutcomes[outcomeIndex];
+  const stage = tournament.groupStage;
   const groups = Array.from({ length: tournament.competition.groupCount }, (_, index) => ({
     number: index + 1,
     placements: outcome.placements
       .filter((placement) => placement.groupNumber === index + 1)
       .sort((left, right) => left.slotNumber - right.slotNumber),
   }));
+  const roundMatches = stage.matches.filter((match) => match.roundNumber === roundNumber);
+  const filteredMatches = stage.matches.filter((match) => matchFilter === "ALL" || match.status === matchFilter);
+  const groupStandings = stage.standings
+    .filter((standing) => standing.groupNumber === groupNumber)
+    .sort((left, right) => left.position - right.position);
+  const incidentMatches = stage.matches.filter((match) => match.incidentType !== "NONE");
+  const teamStandings = new Map(stage.standings.map((standing) => [standing.team.id, standing]));
+  const renderMatches = (matches: typeof stage.matches) => <div className={styles.tournamentMatchGrid}>
+    {matches.map((match) => <article className={styles.tournamentMatchCard} key={match.matchKey}>
+      <header>
+        <span>{demoTournamentGroupLabel(match.groupNumber)} · J{match.roundNumber}</span>
+        <b data-status={match.status}>{match.status === "OFFICIAL" ? "Oficial" : "Programado"}</b>
+      </header>
+      <div className={styles.tournamentMatchup}>
+        <strong>{match.homeTeam.name}</strong>
+        <span>{match.score ? `${match.score.home} : ${match.score.away}` : "VS"}</span>
+        <strong>{match.awayTeam.name}</strong>
+      </div>
+      <footer>
+        <span>{shortDateLabel(match.scheduledStart)} · {new Date(match.scheduledStart).toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Madrid" })}</span>
+        <span>{match.refereeNumber ? `Árbitro ${match.refereeNumber}` : "Sin árbitro"}</span>
+        {match.incidentType !== "NONE" ? <em>{tournamentIncidentLabels[match.incidentType]}</em> : null}
+      </footer>
+    </article>)}
+  </div>;
   return <div className={styles.tournamentStack} data-demo-domain="tournament" data-demo-read-only="true">
     <section className={styles.tournamentHero}>
       <div>
-        <span className={styles.eyebrow}>Demo World V2.4 · sorteo autoritativo</span>
+        <span className={styles.eyebrow}>Demo World V2.5 · Group Stage canónica</span>
         <h1>{tournament.competition.name}</h1>
-        <p>Participantes congelados, semilla reproducible y revisión publicada desde PostgreSQL.</p>
+        <p>Jornada 2 completada, calendario R4B y resultados oficiales R4C desde PostgreSQL.</p>
       </div>
       <div className={styles.tournamentMetrics}>
-        <Stat label="Equipos" value={tournament.competition.acceptedParticipants} />
-        <Stat label="Grupos" value={tournament.competition.groupCount} />
-        <Stat label="Bombos" value={tournament.competition.potCount} />
+        <Stat label="Jornada" value={`${stage.currentRound}/${stage.roundCount}`} />
+        <Stat label="Oficiales" value={stage.officialMatches} />
+        <Stat label="Pendientes" value={stage.scheduledMatches} />
         <Stat label="Partidos" value={tournament.nextPhase.tournamentMatches} />
       </div>
     </section>
 
-    <section className={styles.tournamentDesk}>
-      <header className={styles.tournamentToolbar}>
-        <div>
-          <span className={styles.eyebrow}>Revisiones comparables</span>
-          <h2>{outcome.mode === "HYBRID" ? "Sorteo híbrido publicado" : "Sorteo automático inicial"}</h2>
-        </div>
-        <div className={styles.tournamentRevisionSwitch} role="tablist" aria-label="Revisión del sorteo">
-          <button aria-selected={outcomeIndex === 0} role="tab" type="button" onClick={() => setOutcomeIndex(0)}>Automática</button>
-          <button aria-selected={outcomeIndex === 1} role="tab" type="button" onClick={() => setOutcomeIndex(1)}>Híbrida</button>
-        </div>
-      </header>
-      <div className={styles.tournamentAuditStrip}>
-        <span><small>Calidad</small><strong>{outcome.qualityScore.toFixed(1)}</strong></span>
-        <span><small>Hard</small><strong>{outcome.hardViolations}</strong></span>
-        <span><small>Overrides</small><strong>{outcome.manualOverrideCount}</strong></span>
-        <span><small>Seed</small><code>{outcome.seed}</code></span>
-        <span><small>Input</small><code>{outcome.inputChecksum.slice(0, 12)}</code></span>
-        <span><small>Resultado</small><code>{outcome.resultChecksum.slice(0, 12)}</code></span>
-      </div>
-      <div className={styles.tournamentGroups}>
-        {groups.map((group) => <article key={group.number}>
-          <header><span>Grupo {String.fromCharCode(64 + group.number)}</span><small>4 equipos</small></header>
-          <div>{group.placements.map((placement) => <div className={placement.placementSource === "LOCKED" ? styles.tournamentLockedTeam : undefined} key={placement.team.id}>
-            <span className={styles.tournamentPot}>B{placement.potNumber}</span>
-            <strong>{placement.team.name}</strong>
-            <small>{placement.placementSource === "LOCKED" ? "Fijado" : `P${placement.slotNumber}`}</small>
-          </div>)}</div>
-        </article>)}
-      </div>
-    </section>
+    <nav className={styles.tournamentSubnav} aria-label="Secciones del Torneo">
+      {demoTournamentPanes.map((item) => <button aria-current={pane === item.id ? "page" : undefined} key={item.id} type="button" onClick={() => setPane(item.id)}>{item.label}</button>)}
+    </nav>
 
-    <section className={styles.tournamentEvidenceGrid}>
-      <article>
-        <span className={styles.eyebrow}>Reglas activas</span>
-        <h2>Sorteo explicable</h2>
-        <ul>{tournament.constraints.map((constraint) => <li key={constraint.type}>
-          <span>{constraint.strength}</span>
-          <strong>{tournamentConstraintLabels[constraint.type] ?? constraint.type}</strong>
-        </li>)}</ul>
-      </article>
-      <article>
-        <span className={styles.eyebrow}>Automático → híbrido</span>
-        <h2>{tournament.comparison.movedTeams.length} equipos movidos</h2>
-        <p>{tournament.comparison.retainedLocks} posiciones fijadas; el engine completó las otras 14 sin duplicados ni ausencias.</p>
-        <div className={styles.tournamentMoveRail}>{tournament.comparison.movedTeams.slice(0, 8).map((move) => <span key={move.team.id}>
-          <strong>{move.team.name}</strong><small>G{move.fromGroup} → G{move.toGroup}</small>
-        </span>)}</div>
-      </article>
-    </section>
+    <main className={styles.tournamentPane}>
+      {pane === "resumen" ? <>
+        <header className={styles.tournamentPaneHeader}><div><span className={styles.eyebrow}>Seguimiento activo</span><h2>Fase de grupos</h2></div><strong>Clasificación provisional</strong></header>
+        <div className={styles.tournamentOrganizerGrid}>
+          <Stat label="Jugados" value={stage.officialMatches} />
+          <Stat label="Por jugar" value={stage.scheduledMatches} />
+          <Stat label="Árbitros" value={stage.referees.confirmedMatches} />
+          <Stat label="Incidencias" value={incidentMatches.length} />
+          <Stat label="Standings" value={tournament.completionProof.standingSnapshots} />
+          <Stat label="Siguiente" value="J3" />
+        </div>
+        <div className={styles.tournamentSummarySplit}>
+          <section><h3>Jornada 3</h3>{renderMatches(stage.matches.filter((match) => match.roundNumber === 3))}</section>
+          <section><h3>Zona de clasificación</h3><div className={styles.tournamentCompactStandings}>{stage.standings.filter(({ position }) => position <= 2).map((row) => <div key={`${row.groupNumber}-${row.team.id}`}><span>{demoTournamentGroupLabel(row.groupNumber)}</span><strong>{row.position}. {row.team.name}</strong><b>{row.points} pts</b></div>)}</div></section>
+        </div>
+      </> : null}
 
-    <section className={styles.tournamentConflict}>
-      <div><span className={styles.eyebrow}>Escenario no publicado</span><h2>Conflicto detectado, no resultado roto</h2><p>{tournament.conflict.explanation}</p></div>
-      <div><strong>{tournament.conflict.errorCode}</strong><span>{tournament.conflict.attempts} intentos acotados</span><ul>{tournament.conflict.suggestions.map((suggestion) => <li key={suggestion}>{suggestion}</li>)}</ul></div>
-    </section>
+      {pane === "jornadas" ? <>
+        <header className={styles.tournamentPaneHeader}><div><span className={styles.eyebrow}>Calendario</span><h2>Jornada {roundNumber}</h2></div><span>{roundMatches.filter(({ status }) => status === "OFFICIAL").length}/8 oficiales</span></header>
+        <div className={styles.tournamentRoundRail}>{[1, 2, 3].map((round) => <button aria-pressed={roundNumber === round} key={round} type="button" onClick={() => setRoundNumber(round)}>J{round}</button>)}</div>
+        {renderMatches(roundMatches)}
+      </> : null}
+
+      {pane === "partidos" ? <>
+        <header className={styles.tournamentPaneHeader}><div><span className={styles.eyebrow}>24 CanonicalMatches</span><h2>Partidos</h2></div><span>{filteredMatches.length} visibles</span></header>
+        <div className={styles.tournamentRoundRail}>{(["ALL", "SCHEDULED", "OFFICIAL"] as const).map((filter) => <button aria-pressed={matchFilter === filter} key={filter} type="button" onClick={() => setMatchFilter(filter)}>{filter === "ALL" ? "Todos" : filter === "OFFICIAL" ? "Oficiales" : "Próximos"}</button>)}</div>
+        {renderMatches(filteredMatches)}
+      </> : null}
+
+      {pane === "clasificacion" ? <>
+        <header className={styles.tournamentPaneHeader}><div><span className={styles.eyebrow}>R4C StandingSnapshot</span><h2>{demoTournamentGroupLabel(groupNumber)}</h2></div><span>Provisional · J2</span></header>
+        <div className={styles.tournamentRoundRail}>{[1, 2, 3, 4].map((group) => <button aria-pressed={groupNumber === group} key={group} type="button" onClick={() => setGroupNumber(group)}>Grupo {String.fromCharCode(64 + group)}</button>)}</div>
+        <div className={styles.tournamentStandingsWrap}><table><thead><tr><th>Pos</th><th>Equipo</th><th>PJ</th><th>G</th><th>E</th><th>P</th><th>GF</th><th>GC</th><th>DG</th><th>PTS</th></tr></thead><tbody>{groupStandings.map((row) => <tr data-qualified={row.qualificationZone} key={row.team.id}><td>{row.position}</td><td>{row.team.name}</td><td>{row.played}</td><td>{row.wins}</td><td>{row.draws}</td><td>{row.losses}</td><td>{row.goalsFor}</td><td>{row.goalsAgainst}</td><td>{row.goalDifference}</td><td><strong>{row.points}</strong></td></tr>)}</tbody></table></div>
+        <p className={styles.tournamentCriteria}>Criterios: {groupStandings[0]?.criteria.join(" · ") || "Puntos · diferencia de goles · goles a favor"} · revisión {groupStandings[0]?.revision ?? 0}</p>
+      </> : null}
+
+      {pane === "equipos" ? <>
+        <header className={styles.tournamentPaneHeader}><div><span className={styles.eyebrow}>ParticipantFreeze publicado</span><h2>16 equipos</h2></div><span>4 por grupo</span></header>
+        <div className={styles.tournamentTeamGrid}>{groups.flatMap((group) => group.placements.map((placement) => { const standing = teamStandings.get(placement.team.id); return <article key={placement.team.id}><span>{demoTournamentGroupLabel(group.number)}</span><strong>{placement.team.name}</strong><small>{standing ? `${standing.position}.º · ${standing.points} pts` : `Bombo ${placement.potNumber}`}</small></article>; }))}</div>
+      </> : null}
+
+      {pane === "disciplina" ? <>
+        <header className={styles.tournamentPaneHeader}><div><span className={styles.eyebrow}>R5</span><h2>Disciplina pública</h2></div><span>{stage.discipline.length} eventos</span></header>
+        <div className={styles.tournamentEventList}>{stage.discipline.map((event, index) => <article key={`${event.team.id}-${index}`}><b data-card={event.cardType}>{event.cardType}</b><div><strong>{event.team.name}</strong><span>{event.playerLabel}</span></div><small>{event.status}</small></article>)}</div>
+        <div className={styles.tournamentSanctionStrip}>{stage.sanctions.map((sanction, index) => <article key={`${sanction.team.id}-${index}`}><span>Sanción aplicable</span><strong>{sanction.team.name}</strong><small>{sanction.publicSummary} · {sanction.remainingUnits} {sanction.unitType}</small></article>)}</div>
+      </> : null}
+
+      {pane === "arbitros" ? <>
+        <header className={styles.tournamentPaneHeader}><div><span className={styles.eyebrow}>Referee Assignments</span><h2>Árbitros</h2></div><span>{stage.referees.confirmedMatches} confirmados · {stage.referees.unassignedMatches} sin asignar</span></header>
+        {renderMatches(stage.matches.filter((match) => match.refereeNumber !== undefined))}
+      </> : null}
+
+      {pane === "incidencias" ? <>
+        <header className={styles.tournamentPaneHeader}><div><span className={styles.eyebrow}>R4D</span><h2>Incidencias resueltas</h2></div><span>{incidentMatches.length} historias</span></header>
+        {renderMatches(incidentMatches)}
+      </> : null}
+
+      {pane === "reglamento" ? <>
+        <header className={styles.tournamentToolbar}><div><span className={styles.eyebrow}>Sorteo y RuleRevision</span><h2>{outcome.mode === "HYBRID" ? "Sorteo híbrido publicado" : "Sorteo automático inicial"}</h2></div><div className={styles.tournamentRevisionSwitch} role="tablist" aria-label="Revisión del sorteo"><button aria-selected={outcomeIndex === 0} role="tab" type="button" onClick={() => setOutcomeIndex(0)}>Automática</button><button aria-selected={outcomeIndex === 1} role="tab" type="button" onClick={() => setOutcomeIndex(1)}>Híbrida</button></div></header>
+        <div className={styles.tournamentAuditStrip}><span><small>Calidad</small><strong>{outcome.qualityScore.toFixed(1)}</strong></span><span><small>Hard</small><strong>{outcome.hardViolations}</strong></span><span><small>Overrides</small><strong>{outcome.manualOverrideCount}</strong></span><span><small>Seed</small><code>{outcome.seed}</code></span><span><small>Input</small><code>{outcome.inputChecksum.slice(0, 12)}</code></span><span><small>Resultado</small><code>{outcome.resultChecksum.slice(0, 12)}</code></span></div>
+        <div className={styles.tournamentGroups}>{groups.map((group) => <article key={group.number}><header><span>{demoTournamentGroupLabel(group.number)}</span><small>4 equipos</small></header><div>{group.placements.map((placement) => <div className={placement.placementSource === "LOCKED" ? styles.tournamentLockedTeam : undefined} key={placement.team.id}><span className={styles.tournamentPot}>B{placement.potNumber}</span><strong>{placement.team.name}</strong><small>{placement.placementSource === "LOCKED" ? "Fijado" : `P${placement.slotNumber}`}</small></div>)}</div></article>)}</div>
+        <div className={styles.tournamentRuleGrid}><section><h3>Reglas activas</h3>{tournament.constraints.map((constraint) => <p key={constraint.type}><span>{constraint.strength}</span><strong>{tournamentConstraintLabels[constraint.type] ?? constraint.type}</strong></p>)}</section><section><h3>Escenario rechazado</h3><strong>{tournament.conflict.errorCode}</strong><p>{tournament.conflict.explanation}</p></section></div>
+      </> : null}
+
+      {pane === "cuadro" ? <>
+        <header className={styles.tournamentPaneHeader}><div><span className={styles.eyebrow}>QualificationSnapshot verificado</span><h2>Plantilla de cuartos</h2></div><span>{tournament.completionProof.qualifiers} plazas</span></header>
+        <div className={styles.tournamentBracketGrid}>{Array.from({ length: 4 }, (_, index) => index + 1).map((matchNumber) => <article key={matchNumber}><header>Cuarto {matchNumber}</header>{tournament.completionProof.bracketSources.filter((slot) => slot.matchNumber === matchNumber).map((slot) => <div key={slot.slotKey}><span>{slot.side}</span><strong>{demoTournamentGroupLabel(slot.sourceGroupNumber)} · {slot.sourcePosition}.º</strong></div>)}</article>)}</div>
+        <section className={styles.tournamentBracketNotice}><strong>{tournament.nextPhase.message}</strong><span>{tournament.completionProof.knockoutMatches} partidos eliminatorios creados · progresión OFF</span><code>{tournament.completionProof.qualificationChecksum.slice(0, 16)}</code></section>
+      </> : null}
+    </main>
 
     <section className={styles.tournamentNextPhase}>
-      <span>Sorteo y grupos publicados</span>
+      <span>Snapshot público · Jornada 2</span>
       <strong>{tournament.nextPhase.message}</strong>
-      <small>Sin resultados, árbitros, tarjetas, campeón ni progresión inventados.</small>
+      <small>GET-only · 0 escrituras remotas · R6C no iniciado.</small>
     </section>
   </div>;
 }

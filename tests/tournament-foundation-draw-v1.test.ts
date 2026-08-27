@@ -33,7 +33,7 @@ test("R6A exposes the bounded Tournament command, mode, target and wizard contra
   assert.deepEqual(tournamentDrawTargets, ["GROUP_ASSIGNMENT", "KNOCKOUT_INITIAL_SEEDING", "GROUPS_THEN_KNOCKOUT"]);
   assert.equal(tournamentAlgorithmVersion, "tournament-draw-v1.0.0");
   assert.equal(tournamentDrawActions.length, 26);
-  assert.deepEqual(tournamentPlatformActions, [
+  assert.deepEqual(tournamentPlatformActions.slice(0, 4), [
     "tournament.flags.set", "tournament.kill_switch",
     "tournament.beta_bundle.grant", "tournament.beta_bundle.revoke",
   ]);

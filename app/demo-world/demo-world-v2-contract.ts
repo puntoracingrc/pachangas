@@ -21,8 +21,8 @@ import {
   type DemoWorldSnapshot,
 } from "./demo-world-contract";
 
-export const DEMO_WORLD_V2_VERSION = 2.4 as const;
-export const DEMO_WORLD_V2_SEED = "pachangas-iq-demo-world-v2-4-2026-27" as const;
+export const DEMO_WORLD_V2_VERSION = 2.5 as const;
+export const DEMO_WORLD_V2_SEED = "pachangas-iq-demo-world-v2-5-2026-27" as const;
 
 export type DemoWorldV2PrimaryTab = DemoWorldPrimaryTab
   | "arbitros"
@@ -352,6 +352,96 @@ export type DemoWorldV2TournamentOutcome = {
   version: number;
 };
 
+export type DemoWorldV2TournamentTeamRef = { id: string; name: string };
+
+export type DemoWorldV2TournamentGroupMatch = {
+  awayTeam: DemoWorldV2TournamentTeamRef;
+  disciplineEvents: number;
+  groupNumber: number;
+  homeTeam: DemoWorldV2TournamentTeamRef;
+  incidentType: "DISPUTED_CORRECTED" | "NONE" | "NO_SHOW" | "POSTPONED_RESCHEDULED" | "SUSPENDED_RESUMED";
+  matchKey: string;
+  refereeNumber?: number;
+  roundNumber: number;
+  scheduledStart: string;
+  score?: { away: number; home: number };
+  status: "OFFICIAL" | "SCHEDULED";
+  venueLabel: string;
+};
+
+export type DemoWorldV2TournamentGroupStanding = {
+  criteria: string[];
+  draws: number;
+  goalDifference: number;
+  goalsAgainst: number;
+  goalsFor: number;
+  groupNumber: number;
+  losses: number;
+  played: number;
+  points: number;
+  position: number;
+  qualificationZone: boolean;
+  revision: number;
+  status: "PROVISIONAL";
+  team: DemoWorldV2TournamentTeamRef;
+  wins: number;
+};
+
+export type DemoWorldV2TournamentGroupStage = {
+  currentRound: 2;
+  discipline: Array<{
+    cardType: "RED" | "YELLOW";
+    playerLabel: string;
+    status: string;
+    team: DemoWorldV2TournamentTeamRef;
+  }>;
+  fixtureCount: 24;
+  groupCount: 4;
+  incidents: {
+    disputedCorrected: 1;
+    noShow: 1;
+    postponedRescheduled: 1;
+    suspendedResumed: 1;
+  };
+  matches: DemoWorldV2TournamentGroupMatch[];
+  officialMatches: 16;
+  qualificationStatus: "PROVISIONAL";
+  referees: { confirmedMatches: 12; unassignedMatches: 12 };
+  roundCount: 3;
+  sanctions: Array<{
+    publicSummary: string;
+    remainingUnits: number;
+    status: string;
+    team: DemoWorldV2TournamentTeamRef;
+    unitType: string;
+  }>;
+  scheduledMatches: 8;
+  standings: DemoWorldV2TournamentGroupStanding[];
+};
+
+export type DemoWorldV2TournamentCompletionProof = {
+  bracketSize: 8;
+  bracketSources: Array<{
+    matchNumber: number;
+    side: "A" | "B";
+    slotKey: string;
+    sourceGroupNumber: number;
+    sourceKind: "GROUP_POSITION";
+    sourcePosition: number;
+    status: string;
+  }>;
+  bracketStatus: "PUBLISHED";
+  canonicalMatches: 24;
+  eliminated: 8;
+  knockoutMatches: 0;
+  officialMatches: 24;
+  progressionEnabled: false;
+  qualificationChecksum: string;
+  qualificationStatus: "PUBLISHED";
+  qualifiers: 8;
+  standingSnapshots: 4;
+};
+
 export type DemoWorldV2TournamentChunk = {
   comparison: {
     movedTeams: Array<{
@@ -385,17 +475,20 @@ export type DemoWorldV2TournamentChunk = {
     type: "POT_DISTRIBUTION" | "SAME_CLUB_AVOIDANCE" | "TEAM_LEVEL_BALANCE";
     weight: number;
   }>;
+  completionProof: DemoWorldV2TournamentCompletionProof;
   drawOutcomes: [DemoWorldV2TournamentOutcome, DemoWorldV2TournamentOutcome];
+  groupStage: DemoWorldV2TournamentGroupStage;
   nextPhase: {
     bracketProgression: false;
-    message: "Partidos del Torneo: próxima fase";
-    tournamentMatches: 0;
+    knockoutMatches: 0;
+    message: "Cuadro preparado. La fase eliminatoria se activará en la siguiente fase.";
+    tournamentMatches: 24;
   };
   provenance: {
     authorityHash: string;
     database: "temporary-local-postgresql";
     operationReceipts: number;
-    rpcFamilies: ["R1", "CONFIGURATION_CENTER", "ENTRIES", "R6A_DRAW_ENGINE"];
+    rpcFamilies: ["R1", "CONFIGURATION_CENTER", "ENTRIES", "R4B", "R4C", "R4D", "R5", "REFEREES", "R6A_DRAW_ENGINE", "R6B_GROUP_STAGE"];
     source: "simulation-world";
     verified: true;
   };
@@ -552,7 +645,7 @@ export function demoWorldV2IntegrityErrors(snapshot: DemoWorldV2Snapshot): strin
       || tournament.transport.remoteWrites !== 0
       || tournament.transport.methods.join(",") !== "GET"
       || tournament.provenance.authorityHash !== competition.provenance.authorityHash) {
-    errors.push("Demo World V2.4 Tournament authority is invalid");
+    errors.push("Demo World V2.5 Tournament authority is invalid");
   }
   if (tournament.drawOutcomes.length !== 2
       || tournament.drawOutcomes[0]?.mode !== "SEEDED_POTS"
@@ -590,15 +683,87 @@ export function demoWorldV2IntegrityErrors(snapshot: DemoWorldV2Snapshot): strin
       || tournament.conflict.suggestions.length < 2) {
     errors.push("Demo World V2.4 unsatisfiable scenario is invalid");
   }
-  if (tournament.nextPhase.tournamentMatches !== 0
+  const groupStage = tournament.groupStage;
+  if (groupStage.currentRound !== 2
+      || groupStage.roundCount !== 3
+      || groupStage.groupCount !== 4
+      || groupStage.fixtureCount !== 24
+      || groupStage.matches.length !== 24
+      || new Set(groupStage.matches.map(({ matchKey }) => matchKey)).size !== 24
+      || groupStage.officialMatches !== 16
+      || groupStage.scheduledMatches !== 8
+      || groupStage.standings.length !== 16
+      || groupStage.discipline.length !== 4
+      || groupStage.sanctions.length < 1
+      || groupStage.referees.confirmedMatches !== 12
+      || groupStage.referees.unassignedMatches !== 12
+      || groupStage.qualificationStatus !== "PROVISIONAL") {
+    errors.push("Demo World V2.5 Group Stage public graph is invalid");
+  }
+  if (groupStage.matches.filter(({ status }) => status === "OFFICIAL").length !== 16
+      || groupStage.matches.filter(({ status }) => status === "SCHEDULED").length !== 8
+      || groupStage.matches.some((match) => (
+        !teamIds.has(match.homeTeam.id)
+        || !teamIds.has(match.awayTeam.id)
+        || match.homeTeam.id === match.awayTeam.id
+        || (match.status === "OFFICIAL") !== Boolean(match.score)
+      ))) {
+    errors.push("Demo World V2.5 match tracking is invalid");
+  }
+  for (let groupNumber = 1; groupNumber <= 4; groupNumber += 1) {
+    const groupMatches = groupStage.matches.filter((match) => match.groupNumber === groupNumber);
+    const groupStandings = groupStage.standings.filter((row) => row.groupNumber === groupNumber);
+    if (groupMatches.length !== 6
+        || new Set(groupMatches.map(({ roundNumber }) => roundNumber)).size !== 3
+        || [1, 2, 3].some((roundNumber) => (
+          groupMatches.filter((match) => match.roundNumber === roundNumber).length !== 2
+        ))
+        || groupStandings.length !== 4
+        || groupStandings.some((row) => (
+          !teamIds.has(row.team.id) || row.played !== 2 || row.status !== "PROVISIONAL"
+        ))) {
+      errors.push(`Demo World V2.5 Group ${groupNumber} tracking is invalid`);
+    }
+  }
+  if (Object.values(groupStage.incidents).some((count) => count !== 1)
+      || groupStage.discipline.some(({ team }) => !teamIds.has(team.id))
+      || groupStage.sanctions.some(({ team }) => !teamIds.has(team.id))) {
+    errors.push("Demo World V2.5 exception or discipline projection is invalid");
+  }
+  const completion = tournament.completionProof;
+  if (completion.canonicalMatches !== 24
+      || completion.officialMatches !== 24
+      || completion.standingSnapshots !== 4
+      || completion.qualificationStatus !== "PUBLISHED"
+      || completion.qualifiers !== 8
+      || completion.eliminated !== 8
+      || completion.bracketStatus !== "PUBLISHED"
+      || completion.bracketSize !== 8
+      || completion.bracketSources.length !== 8
+      || completion.knockoutMatches !== 0
+      || completion.progressionEnabled
+      || !/^[0-9a-f]{64}$/.test(completion.qualificationChecksum)
+      || completion.bracketSources.some((slot) => (
+        slot.sourceKind !== "GROUP_POSITION"
+        || slot.sourceGroupNumber < 1
+        || slot.sourceGroupNumber > 4
+        || slot.sourcePosition < 1
+        || slot.sourcePosition > 2
+      ))) {
+    errors.push("Demo World V2.5 completion proof is invalid");
+  }
+  if (tournament.nextPhase.tournamentMatches !== 24
       || tournament.nextPhase.bracketProgression
-      || tournament.nextPhase.message !== "Partidos del Torneo: próxima fase") {
-    errors.push("Demo World V2.4 invented Tournament matches or progression");
+      || tournament.nextPhase.knockoutMatches !== 0
+      || tournament.nextPhase.message !== "Cuadro preparado. La fase eliminatoria se activará en la siguiente fase.") {
+    errors.push("Demo World V2.5 invented knockout matches or progression");
   }
   if (snapshot.manifest.counts.tournaments !== 1
       || snapshot.manifest.counts.tournamentGroups !== 4
-      || snapshot.manifest.counts.tournamentDrawRevisions !== 5) {
-    errors.push("Demo World V2.4 Tournament manifest counts are invalid");
+      || snapshot.manifest.counts.tournamentDrawRevisions !== 5
+      || snapshot.manifest.counts.canonicalMatches !== 39
+      || snapshot.manifest.counts.rounds !== 8) {
+    errors.push("Demo World V2.5 Tournament manifest counts are invalid");
   }
   const assignmentItems = Array.isArray(snapshot.clubsReferees.refereeAssignmentPreview.items)
     ? snapshot.clubsReferees.refereeAssignmentPreview.items as Record<string, unknown>[]

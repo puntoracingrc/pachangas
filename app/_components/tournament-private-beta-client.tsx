@@ -317,7 +317,7 @@ function TournamentHome({ data }: { data: TournamentJson }) {
     <GamePageHeader
       actions={creationEnabled ? <Link href="/torneos/crear">Crear Torneo</Link> : undefined}
       eyebrow="Private Beta"
-      summary="Sorteos privados reproducibles, con participantes congelados y publicación auditable. Los partidos llegarán en una fase posterior."
+      summary="Sorteos reproducibles y fases de grupos operadas con partidos, resultados y clasificación canónicos."
       title="Torneos"
     />
     <section className={styles.metrics}>
@@ -339,6 +339,7 @@ function TournamentHome({ data }: { data: TournamentJson }) {
             {tournamentBoolean(item.canManage) ? <Link href={`/competiciones/${id}/gestion/participantes`}>Participantes</Link> : null}
             {tournamentBoolean(item.canDraw) ? <Link href={`/competiciones/${id}/gestion/sorteo`}>Abrir sorteo</Link> : null}
             {tournamentText(drawPlan.status) === "published" ? <Link href={`/competiciones/${id}/sorteo`}>Ver sorteo</Link> : null}
+            {tournamentText(drawPlan.status) === "published" ? <Link href={`/competiciones/${id}/torneo`}>Tournament Hub</Link> : null}
           </footer>
         </article>;
       })}
