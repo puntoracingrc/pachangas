@@ -259,6 +259,20 @@ async function createClub(ownerClient, platformClient, name) {
   assert.equal(createdClub.data.snapshot.club.id, id);
   assert.equal(createdClub.data.snapshot.club.operationalStatus, "draft");
 
+  const submittedClub = await ownerClient.rpc("command_pachanga_club_foundation_v1", {
+    aggregate_id: id,
+    client_metadata: metadata("tournament-staging-club-review"),
+    command_action: "club.review.submit",
+    command_payload: {
+      reason: `R6A canonical Club review ${runId}`,
+    },
+    expected_revision: createdClub.data.confirmedRevision,
+    operation_id: randomUUID(),
+  });
+  if (submittedClub.error) throw submittedClub.error;
+  assert.equal(submittedClub.data.snapshot.club.id, id);
+  assert.equal(submittedClub.data.snapshot.club.operationalStatus, "pending_review");
+
   const activatedClub = await platformClient.rpc("command_pachanga_club_platform_v1", {
     aggregate_id: id,
     client_metadata: metadata("tournament-staging-club-activation"),
@@ -267,7 +281,7 @@ async function createClub(ownerClient, platformClient, name) {
       reason: `R6A canonical Club activation ${runId}`,
       status: "active",
     },
-    expected_revision: createdClub.data.confirmedRevision,
+    expected_revision: submittedClub.data.confirmedRevision,
     operation_id: randomUUID(),
   });
   if (activatedClub.error) throw activatedClub.error;

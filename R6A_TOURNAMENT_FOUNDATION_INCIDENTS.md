@@ -249,3 +249,17 @@
 - Required correction: pass the authenticated platform owner into the Club fixture helper, activate the newly created Club with its server-confirmed revision and assert the canonical returned snapshot is active.
 - Required regression: a fresh one-shot E2E must prove that the Club appears in the Tournament organizer read model only after canonical activation, can create and cancel its Tournament, and restores all temporary feature flags before branch teardown.
 - Regression status: `PENDING`.
+
+## R6A-015 - Club platform approval correctly rejects a direct draft-to-active transition
+
+- Classification: `SIMULATION_BUG`
+- Status: `OPEN`
+- Found by: authenticated one-shot staging E2E while applying the R6A-014 correction.
+- Original scenario: create the Club through the canonical foundation RPC and ask the platform owner to set it directly from `draft` to `active`.
+- Observed result: the existing Club transition guard rejects the command with `CLUB_APPROVAL_REQUIRES_PENDING_REVIEW`.
+- Expected result: the Club owner first submits `club.review.submit`, receives the canonical `pending_review` revision and only then may the platform owner approve that exact revision as `active`.
+- Product impact: none. The E2E stopped before creating a Tournament beta grant, Tournament or DrawPlan; production was not addressed.
+- Security boundary: do not bypass the review state, weaken the transition guard, update the table directly or reuse the one-shot branch after a failed platform-owner run.
+- Required correction: extend the canonical Club fixture to perform `club.create -> club.review.submit -> club.status.set(active)`, using each server-confirmed revision and asserting every returned state.
+- Required regression: a fresh one-shot E2E must complete the full Club review transition, expose the active Club to the Tournament organizer read model, execute its create/cancel history and leave zero Tournament matches.
+- Regression status: `PENDING`.
