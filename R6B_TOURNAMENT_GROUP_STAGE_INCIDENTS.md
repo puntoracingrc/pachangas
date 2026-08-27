@@ -2269,7 +2269,7 @@ After correction, the entry must include its regression and may only be marked
 ### R6B-PRODUCT-123 - Warm Demo Tournament snapshot is unavailable offline
 
 - Classification: `PRODUCT_BUG`
-- Status: `OPEN`
+- Status: `FIXED / REGRESSION_VERIFIED`
 - Original scenario: load Demo World V2.5 Tournament online until the canonical
   heading and bracket message are rendered under an active `sw.js` controller,
   block the network, prove an uncached API request fails, then reload the same
@@ -2284,7 +2284,12 @@ After correction, the entry must include its regression and may only be marked
   the existing PWA read-cache contract, use it only as an offline/read fallback,
   preserve the server/network response as authority when available, and add a
   regression reproducing online warmup followed by an offline reload.
-- Regression evidence: pending.
+- Regression evidence: production worker `2.0.0+sw.4c9d04379ebe` cached the
+  manifest and all eight hashed V2.5 chunks. After CDP blocked the network and
+  an uncached API request failed with `TypeError: Failed to fetch`, reloading
+  the same URL still rendered Copa Barrios, Jornada 2 and the bracket message
+  with no error panel, root overflow or broken image. Connectivity was restored
+  and the same canonical screen loaded online again.
 
 ### R6B-PRODUCT-124 - Generated Service Worker contains an invalid route pattern
 
@@ -2347,6 +2352,44 @@ After correction, the entry must include its regression and may only be marked
   successfully, contains the immutable Demo cache branch and the corrected
   Tournament route pattern. The protected V2.5 manifest also returns the exact
   committed seed and SHA-256 hash.
+
+### R6B-ENVIRONMENT-127 - GitHub CLI merge tries to acquire shared main worktree
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: merge clean PR #207 with `gh pr merge --merge
+  --delete-branch` from the isolated R6B worktree after all checks pass.
+- Observed: the CLI aborts before merging because its local post-merge workflow
+  tries to check out `main`, which is already registered at the untouched shared
+  checkout.
+- Impact: PR #207 remains open and production is unchanged; no Git ref or file
+  is mutated by the failed command.
+- Planned correction: invoke GitHub's remote Pull Request merge API with the
+  exact tested HEAD SHA, then verify ancestry from `origin/main` without
+  switching or modifying the shared checkout.
+- Regression evidence: the remote merge had already completed before the CLI's
+  local cleanup failed. GitHub reports PR #207 merged at
+  `4c9d04379ebe0f9ba0e69aa023e5badba2ea8637`; `origin/main` resolves to that
+  exact commit and the shared checkout was never switched or modified.
+
+### R6B-ENVIRONMENT-128 - Ranking refresh keeps its known missing-secret 503
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `OPEN / PREEXISTING / OUT_OF_SCOPE`
+- Original scenario: inspect 5xx logs for the exact R6B hotfix production
+  deployment after the offline regression passes.
+- Observed: one scheduled GET to `/api/internal/rankings/refresh` returns 503.
+  The route deliberately responds `RANKING_REFRESH_NOT_CONFIGURED` when
+  server-only `CRON_SECRET` is absent; the same debt is documented across prior
+  production releases.
+- Impact: Ranking queue automation remains unavailable. Demo V2.5, Tournament
+  Group Stage, PWA caching and every R6B authority are unaffected.
+- Planned correction: retain this as the existing Ranking operational issue and
+  configure/verify its server-only secret in a dedicated Ranking release. Do
+  not alter Ranking while closing R6B.
+- Regression evidence: Vercel reports zero `error`-level entries and no other
+  5xx for deployment `dpl_CQH7sBktL2ESVaKw9yX3fiAhTcow`; the single 503 path
+  and its fail-closed source contract match the already documented debt.
 
 ## Verification closure - 2026-08-27
 

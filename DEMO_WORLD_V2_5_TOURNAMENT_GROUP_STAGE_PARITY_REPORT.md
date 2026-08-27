@@ -51,9 +51,17 @@ product surface.
 - The Service Worker precaches the V2 entry and caches versioned Demo chunks.
 - Offline Demo remains read-only and never reports a sporting write as success.
 
+Production worker `2.0.0+sw.4c9d04379ebe` was tested with a real controlled
+update and cache namespace replacement. After an online warmup stored the
+manifest and all eight V2.5 chunks, CDP blocked the network and an uncached API
+GET failed. Reloading the same Tournament URL offline still rendered Copa
+Barrios IQ 2027, Jornada 2 and the bracket template message with zero error
+panel, root overflow or broken image. Restoring connectivity converged to the
+same canonical snapshot.
+
 ## Verification
 
 `npm run demo-world:v2:verify` returns `snapshotIdentical=true`, migration
-count 169, zero remote writes and the exact hashes above. The focused Demo,
-R6A and R6B suite passes 44/44; the complete suite passes 556/556 across its
-two runners.
+count 169, zero remote writes and the exact hashes above. The final focused
+Demo/PWA/R6B suite passes 56/56; the complete post-hotfix suite passes 20/20
+Node plus 538/538 TS/TSX, 558/558 total, with zero skipped, todo or cancelled.
