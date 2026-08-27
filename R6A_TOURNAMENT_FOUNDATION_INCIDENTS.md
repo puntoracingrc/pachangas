@@ -277,3 +277,22 @@
 - Required correction: map each preflight field to its exact environment-variable name, run the release command with `set -o pipefail`, discard the current Preview and Supabase branch, and rebuild a fresh ledger-158 branch.
 - Required regression: omission of the project ref must report `TOURNAMENT_STAGING_PROJECT_REF is required`; the fresh one-shot E2E must complete against the explicitly supplied non-production ref and clean up all temporary state.
 - Regression status: `PENDING`.
+
+## R6A-017 - Branch reconstruction assumes a non-portable shell builtin
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `FIXED`
+- Found by: clean staging ledger reconstruction
+- Original scenario: read the 36 absorbed migration versions into an array with `readarray` after applying the immutable baseline.
+- Observed result: macOS Bash 3.2 does not provide `readarray`; execution stops before migration-history repair, leaving the ledger at its inherited 10 rows.
+- Expected result: the reconstruction command works on the repository's supported macOS shell and passes the exact 36 immutable versions without changing their order or content.
+- Product impact: none. The baseline transaction completed, but no history repair, incremental migration, flag change, fixture or product RPC ran.
+- Security boundary: do not mark any migration outside the manifest, do not rewrite production history and do not infer an absorbed version from filenames.
+- Required correction: populate the array with a portable `while read` loop, assert the manifest count is 36, then require exact production/staging ledger equality at 158 before R6A.
+- Required regression: reconstruction must reach 158 with the same version/name array and digest as production, then 163 only after the five reviewed R6A migrations.
+- Regression status: `REGRESSION_VERIFIED`.
+- Regression evidence:
+  - portable manifest read asserted exactly 36 absorbed versions;
+  - production and staging matched at `158 / 20260826123500 / ff75c105ff5fa08802cc004390e29693`;
+  - the five reviewed R6A migrations then advanced staging to `163 / 20260826195040`;
+  - production remained read-only.
