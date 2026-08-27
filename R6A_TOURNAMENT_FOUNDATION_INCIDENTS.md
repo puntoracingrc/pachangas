@@ -470,3 +470,22 @@
   - the corrected readback returned ledger `163 / 20260826195040 / 53b5456c21933e614752179568576d18`;
   - all eleven Tournament flags were restored to `OFF`, the Realtime publication and narrow helper ACL were present, and Tournament match contexts were exactly zero;
   - the diagnostic remained read-only and production was not addressed.
+
+## R6A-028 - JavaScript orchestration expands Bash array-length syntax
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `FIXED`
+- Found by: sixth disposable-branch reconstruction command composition.
+- Original scenario: pass the reviewed portable Bash reconstruction script through the JavaScript tool orchestrator using a template literal.
+- Observed result: JavaScript parsed Bash `${#array[@]}` as template interpolation and stopped with `Private field '#absorbed' must be declared in an enclosing class` before launching the shell.
+- Expected result: the orchestrator forwards Bash parameter expansion verbatim and the shell executes the existing exact-count guards.
+- Product impact: none. No command reached Supabase, no migration or history row was applied, and production was not addressed.
+- Security boundary: do not remove the 36/122 count assertions or replace the exact migration selection with inferred history.
+- Required correction: escape JavaScript template interpolation while preserving the Bash script byte-for-byte at the shell boundary.
+- Required regression: the command must launch, report baseline `36|20260731080738`, select exactly 122 incrementals and reach the exact production digest at ledger 158.
+- Regression status: `REGRESSION_VERIFIED`.
+- Regression evidence:
+  - the escaped command launched under macOS Bash without changing any count guard;
+  - the baseline reached exactly `36|20260731080738`;
+  - basename selection returned exactly 122 ordered incrementals;
+  - staging reached exactly `158|20260826123500|ff75c105ff5fa08802cc004390e29693` before any R6A migration.
