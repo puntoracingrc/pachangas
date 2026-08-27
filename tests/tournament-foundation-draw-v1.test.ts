@@ -203,6 +203,7 @@ test("SQL regression exercises idempotency, deterministic seed, RLS, forged resu
     "permission denied|row-level security", "Tournament matches",
   ]) assert.match(sql, new RegExp(marker, "i"));
   assert.match(sql, /rollback;/i);
+  assert.match(sql, /Every R6A foreign key must have a covering index/);
 });
 
 test("authenticated staging covers the ten canonical stories, security negatives and branch teardown", async () => {

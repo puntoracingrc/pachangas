@@ -144,3 +144,39 @@
   - serialized concurrency suite: `10/10 PASS`;
   - every race produced one winner and one `STALE_REVISION` loser;
   - Tournament matches created: `0`.
+
+## R6A-008 - Supabase preview branch inherits an incomplete migration ledger
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `FIXED`
+- Found by: staging preflight readback
+- Original scenario: create a new Supabase development branch from the healthy Pachangas production project after verifying production contains 158 migrations.
+- Observed result: the branch reports `ACTIVE_HEALTHY` but its canonical `supabase_migrations.schema_migrations` ledger contains only 10 rows and stops at `20260728191429`.
+- Expected result: the ephemeral staging branch inherits the exact production ledger of 158 before any R6A migration is applied.
+- Product impact: applying R6A on this branch would test against a structurally invalid historical base and could produce false confidence.
+- Security boundary: do not repair or backfill production, do not apply R6A over the ten-row branch, and do not rewrite already executed migration history.
+- Required correction: use the official branch rebase/reset path or recreate a staging database from the immutable baseline plus the exact forward migration set; require a 158-row readback before continuing.
+- Required regression: branch readback must report ledger 158 with the exact last Wave 5A migration, then and only then may R6A apply 159-163.
+- Correction: applied the repository's immutable product baseline to the data-free branch, marked only the 36 absorbed historical versions, replayed incrementals 37-158 from an exact `origin/main` export through the session pooler, and then completed a native branch rebase.
+- Regression status: `REGRESSION_VERIFIED`.
+- Regression evidence:
+  - production ledger before R6A: `158`;
+  - staging ledger before R6A: `158`;
+  - production/staging version and migration-name arrays: exact equality;
+  - last version on both: `20260826123500_competition_configuration_control_center_v1`;
+  - branch state after reconciliation: `FUNCTIONS_DEPLOYED / ACTIVE_HEALTHY`;
+  - production was read-only throughout the repair.
+
+## R6A-009 - Tournament foreign keys lack covering indexes
+
+- Classification: `PRODUCT_BUG`
+- Status: `OPEN`
+- Found by: Supabase staging Performance Advisor
+- Original scenario: apply the five R6A migrations to an empty ledger-158 staging branch and run the Performance Advisor before any Tournament data exists.
+- Observed result: 18 R6A foreign keys are reported without a covering index, including participant-freeze scope references, DrawPlan references, actor references, manual-lock entries and placement lock lineage.
+- Expected result: every R6A foreign key has an index whose leading column covers the referenced column, so deletes, validation and relationship reads remain bounded as volume grows.
+- Product impact: referential checks and parent updates/deletes could scan Tournament tables at production volume despite the principal query indexes passing local performance tests.
+- Security boundary: add indexes only; do not alter authority, RLS, immutable evidence, solver output or public capabilities.
+- Required correction: extend the still-unreleased fifth migration with 18 explicit covering indexes and add a database regression that detects any uncovered R6A foreign key.
+- Required regression: rebuild staging from ledger 158 with the final five artifacts, require zero R6A `unindexed_foreign_keys` Advisor findings and repeat DB/concurrency tests.
+- Regression status: `PENDING`.

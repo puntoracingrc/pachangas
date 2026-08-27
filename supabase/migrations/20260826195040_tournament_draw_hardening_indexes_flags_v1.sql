@@ -409,6 +409,49 @@ create index if not exists pachanga_tournament_bye_beneficiary_idx
   on public.pachanga_competition_draw_byes(beneficiary_entry_id, server_sequence desc, id desc)
   where beneficiary_entry_id is not null;
 
+-- Cover every R6A foreign key independently. Composite product-query indexes
+-- above remain useful, but a referenced column must lead an index for bounded
+-- referential checks and parent lifecycle operations.
+create index if not exists pachanga_tournament_freeze_edition_fk_idx
+  on public.pachanga_competition_participant_freezes(edition_id);
+create index if not exists pachanga_tournament_freeze_frozen_by_fk_idx
+  on public.pachanga_competition_participant_freezes(frozen_by);
+create index if not exists pachanga_tournament_freeze_rule_revision_fk_idx
+  on public.pachanga_competition_participant_freezes(rule_revision_id);
+create index if not exists pachanga_tournament_freeze_stage_fk_idx
+  on public.pachanga_competition_participant_freezes(stage_id);
+
+create index if not exists pachanga_tournament_plan_created_by_fk_idx
+  on public.pachanga_competition_draw_plans(created_by);
+create index if not exists pachanga_tournament_plan_edition_fk_idx
+  on public.pachanga_competition_draw_plans(edition_id);
+create index if not exists pachanga_tournament_plan_freeze_fk_idx
+  on public.pachanga_competition_draw_plans(participant_freeze_id);
+create index if not exists pachanga_tournament_plan_rule_revision_fk_idx
+  on public.pachanga_competition_draw_plans(rule_revision_id);
+create index if not exists pachanga_tournament_plan_stage_fk_idx
+  on public.pachanga_competition_draw_plans(stage_id);
+
+create index if not exists pachanga_tournament_revision_generated_by_fk_idx
+  on public.pachanga_competition_draw_revisions(generated_by);
+create index if not exists pachanga_tournament_revision_supersedes_fk_idx
+  on public.pachanga_competition_draw_revisions(supersedes_revision_id);
+create index if not exists pachanga_tournament_pot_created_by_fk_idx
+  on public.pachanga_competition_draw_pots(created_by);
+create index if not exists pachanga_tournament_constraint_created_by_fk_idx
+  on public.pachanga_competition_draw_constraints(created_by);
+
+create index if not exists pachanga_tournament_lock_created_by_fk_idx
+  on public.pachanga_competition_draw_manual_locks(created_by);
+create index if not exists pachanga_tournament_lock_entry_fk_idx
+  on public.pachanga_competition_draw_manual_locks(entry_id);
+create index if not exists pachanga_tournament_lock_related_entry_fk_idx
+  on public.pachanga_competition_draw_manual_locks(related_entry_id);
+create index if not exists pachanga_tournament_lock_released_by_fk_idx
+  on public.pachanga_competition_draw_manual_locks(released_by);
+create index if not exists pachanga_tournament_placement_manual_lock_fk_idx
+  on public.pachanga_competition_draw_placements(manual_lock_id);
+
 alter table private.pachanga_competition_foundation_settings
   drop constraint if exists pachanga_comp_foundation_tournament_phase1_off_check,
   add constraint pachanga_comp_foundation_tournament_phase1_off_check check (

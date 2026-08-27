@@ -33,6 +33,38 @@ select pg_temp.r6a_assert(
   'Tournament flags must install OFF'
 );
 
+select pg_temp.r6a_assert(
+  not exists (
+    select 1
+    from pg_constraint constraints
+    join pg_class relations on relations.oid=constraints.conrelid
+    join pg_namespace namespaces on namespaces.oid=relations.relnamespace
+    where constraints.contype='f'
+      and namespaces.nspname='public'
+      and relations.relname in (
+        'pachanga_competition_participant_freezes',
+        'pachanga_competition_draw_plans',
+        'pachanga_competition_draw_revisions',
+        'pachanga_competition_draw_pots',
+        'pachanga_competition_draw_constraints',
+        'pachanga_competition_draw_manual_locks',
+        'pachanga_competition_draw_placements',
+        'pachanga_competition_draw_byes',
+        'pachanga_competition_draw_quality_snapshots',
+        'pachanga_tournament_invalidations'
+      )
+      and not exists (
+        select 1
+        from pg_index indexes
+        where indexes.indrelid=constraints.conrelid
+          and indexes.indisvalid
+          and indexes.indisready
+          and split_part(indexes.indkey::text, ' ', 1)::smallint=constraints.conkey[1]
+      )
+  ),
+  'Every R6A foreign key must have a covering index'
+);
+
 insert into auth.users(id, email, email_confirmed_at, raw_user_meta_data)
 select
   ('61010000-0000-4000-8000-' || lpad(team_number::text, 12, '0'))::uuid,
