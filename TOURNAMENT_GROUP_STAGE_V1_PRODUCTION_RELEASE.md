@@ -5,6 +5,9 @@
 - Initial `origin/main`: `7f46951fd4144985b05c8029606574b82c655b73`
 - Branch: `codex/tournament-group-stage-match-tracking-v1`
 - Pull request: #206 (draft while release gates are in progress)
+- Certified branch HEAD: `03f4e570c49b3c63faf11284f3732c739f368821`
+- Exact Preview: `https://pachangas-hlbklq6fn-persianas-almar-web-s-projects.vercel.app`
+- Diff from `origin/main`: 76 paths
 - Local ledger: 163 base migrations plus 6 R6B migrations = 169
 
 ## Ordered migrations
@@ -35,7 +38,8 @@ are created.
 - Demo World V2.5 deterministic verification: PASS.
 - Typecheck: PASS.
 - Build: PASS.
-- Tests: 20/20 Node and 536/536 TS/TSX.
+- Tests: 20/20 Node and 537/537 TS/TSX; 0 skipped, todo or
+  cancelled.
 - Focused lint: PASS (27 changed code/test files).
 - `git diff --check`: PASS.
 
@@ -70,12 +74,34 @@ The branch control plane still labels ordinary migration replay as
 `R6B-ENVIRONMENT-076` records that environment limitation. Direct PostgreSQL
 readback, not the label, proves the exact 169 migration schema used above.
 
+## Preview and authenticated visual QA
+
+The exact `03f4e57` Preview traversed all ten Demo World V2.5 Tournament tabs
+at `1440x900`, `1920x1080`, `390x844`, `360x800`, `667x375`, `740x360`,
+`844x390` and `932x430`. Every tab became the active control at every size;
+root overflow, broken images, framework overlays, console errors and hydration
+warnings remained zero.
+
+The real production `TournamentGroupStageClient` was then exercised locally
+against the authenticated canonical hosted staging snapshot. It rendered four
+groups, 24 official CanonicalMatches, current standings, published
+qualification, the eight-slot bracket template, Organizer Desk and the scoped
+Team Journey. The same eight-viewport/tab matrix passed, including the
+landscape rail regression. Control Center displayed the R6B health and gates at
+desktop, portrait and landscape with no root overflow, broken images, console
+errors or private evidence leakage.
+
+The protected Preview redirects `/sw.js` to Vercel SSO, so it cannot certify a
+real installed Service Worker. `R6B-ENVIRONMENT-100` keeps that result open and
+requires the public production origin smoke before closure; no PWA success is
+inferred from the protected Preview.
+
 ## Hosted release gates
 
 The following fields must be replaced with real evidence during this same
 release before closure:
 
-- Preview deployment: PENDING
+- Preview deployment and responsive visual QA: PASS
 - Staging migration/readback: PASS
 - Two-device authenticated Realtime: PASS
 - Staging teardown: PENDING
