@@ -1186,10 +1186,10 @@
           "blueCardsShown": 0,
           "matchesCompleted": 2,
           "yellowCardsShown": 3,
-          "proposalsReceived": 3,
-          "assignmentsAccepted": 2,
+          "proposalsReceived": 5,
+          "assignmentsAccepted": 4,
           "assignmentsDeclined": 0,
-          "assignmentsConfirmed": 2,
+          "assignmentsConfirmed": 4,
           "leagueMatchesCompleted": 2
         },
         "displayName": "Arbitro Demo 1",
@@ -1218,10 +1218,10 @@
           "blueCardsShown": 0,
           "matchesCompleted": 2,
           "yellowCardsShown": 2,
-          "proposalsReceived": 2,
-          "assignmentsAccepted": 2,
+          "proposalsReceived": 4,
+          "assignmentsAccepted": 4,
           "assignmentsDeclined": 0,
-          "assignmentsConfirmed": 2,
+          "assignmentsConfirmed": 4,
           "leagueMatchesCompleted": 2
         },
         "displayName": "Arbitro Demo 2",
@@ -1250,10 +1250,10 @@
           "blueCardsShown": 0,
           "matchesCompleted": 2,
           "yellowCardsShown": 1,
-          "proposalsReceived": 2,
-          "assignmentsAccepted": 2,
+          "proposalsReceived": 4,
+          "assignmentsAccepted": 4,
           "assignmentsDeclined": 0,
-          "assignmentsConfirmed": 2,
+          "assignmentsConfirmed": 4,
           "leagueMatchesCompleted": 2
         },
         "displayName": "Arbitro Demo 3",
@@ -1277,10 +1277,10 @@
           "blueCardsShown": 0,
           "matchesCompleted": 1,
           "yellowCardsShown": 1,
-          "proposalsReceived": 2,
-          "assignmentsAccepted": 2,
+          "proposalsReceived": 4,
+          "assignmentsAccepted": 4,
           "assignmentsDeclined": 0,
-          "assignmentsConfirmed": 2,
+          "assignmentsConfirmed": 4,
           "leagueMatchesCompleted": 1
         },
         "displayName": "Arbitro Demo 4",
@@ -1304,10 +1304,10 @@
           "blueCardsShown": 0,
           "matchesCompleted": 2,
           "yellowCardsShown": 2,
-          "proposalsReceived": 3,
-          "assignmentsAccepted": 2,
+          "proposalsReceived": 4,
+          "assignmentsAccepted": 3,
           "assignmentsDeclined": 1,
-          "assignmentsConfirmed": 2,
+          "assignmentsConfirmed": 3,
           "leagueMatchesCompleted": 2
         },
         "displayName": "Arbitro Demo 5",
@@ -1331,10 +1331,10 @@
           "blueCardsShown": 1,
           "matchesCompleted": 1,
           "yellowCardsShown": 1,
-          "proposalsReceived": 1,
-          "assignmentsAccepted": 1,
+          "proposalsReceived": 2,
+          "assignmentsAccepted": 2,
           "assignmentsDeclined": 0,
-          "assignmentsConfirmed": 1,
+          "assignmentsConfirmed": 2,
           "leagueMatchesCompleted": 1
         },
         "displayName": "Arbitro Demo 6",
@@ -1358,10 +1358,10 @@
           "blueCardsShown": 0,
           "matchesCompleted": 1,
           "yellowCardsShown": 2,
-          "proposalsReceived": 1,
-          "assignmentsAccepted": 1,
+          "proposalsReceived": 2,
+          "assignmentsAccepted": 2,
           "assignmentsDeclined": 0,
-          "assignmentsConfirmed": 1,
+          "assignmentsConfirmed": 2,
           "leagueMatchesCompleted": 1
         },
         "displayName": "Arbitro Demo 7",
@@ -1385,10 +1385,10 @@
           "blueCardsShown": 0,
           "matchesCompleted": 2,
           "yellowCardsShown": 3,
-          "proposalsReceived": 2,
-          "assignmentsAccepted": 2,
+          "proposalsReceived": 3,
+          "assignmentsAccepted": 3,
           "assignmentsDeclined": 0,
-          "assignmentsConfirmed": 2,
+          "assignmentsConfirmed": 3,
           "leagueMatchesCompleted": 2
         },
         "displayName": "Arbitro Demo 8",
@@ -1760,8 +1760,8 @@
     "currentEditionRevision": 2
   },
   "database": "temporary-local-postgresql",
-  "generatedAt": "2026-08-26T10:00:00.000Z",
-  "migrationCount": 163,
+  "generatedAt": "2026-08-27T14:00:00.000Z",
+  "migrationCount": 169,
   "remoteWrites": 0,
   "rpcFamilies": [
     "R1",
@@ -1771,7 +1771,8 @@
     "R4C",
     "R4D",
     "R5",
-    "R6A"
+    "R6A",
+    "R6B"
   ],
   "tournament": {
     "slug": "copa-barrios-iq-2027",
@@ -1950,7 +1951,7 @@
         ],
         "levelBalance": 0,
         "qualityScore": 100,
-        "inputChecksum": "e49b527507229916755dd5cd540e90e4a5f4dbe7f292c550d4b5adde3b2b0e51",
+        "inputChecksum": "6bccd2c1ebe68f290f2b052327ac6010ba7c5d79ca68201006188e6af1005468",
         "hardViolations": 0,
         "resultChecksum": "934e1d39c7b27c9ba3c69676f37cbfc6c93e44173507707e9933261a37214bbd",
         "potDistribution": 100,
@@ -2111,7 +2112,7 @@
         ],
         "levelBalance": 0.5,
         "qualityScore": 99.5,
-        "inputChecksum": "abb05fbfb702cd2513a8dc10a473df39ccdd2633880a513888556f9ca3d8ca2c",
+        "inputChecksum": "02e60ff5088822f7b2cd34d33ca43dc4e809140bb856114dbeac7e05efaf21cf",
         "hardViolations": 0,
         "resultChecksum": "3ecc6d9426bb438704cd5bf6cb53a5644a6f0076b76da032181fa99689761d3a",
         "potDistribution": 100,
@@ -2125,12 +2126,1242 @@
     "remoteWrites": 0,
     "totalRevisions": 5,
     "competitionName": "COPA BARRIOS IQ 2027",
+    "groupStageFinal": {
+      "eliminated": 8,
+      "groupCount": 4,
+      "qualifiers": 8,
+      "bracketSize": 8,
+      "bracketSlots": [
+        {
+          "side": "A",
+          "status": "RESOLVED",
+          "slotKey": "R1-M1-A",
+          "sourceKind": "GROUP_POSITION",
+          "teamNumber": 3,
+          "matchNumber": 1,
+          "sourcePosition": 1,
+          "sourceGroupNumber": 1
+        },
+        {
+          "side": "B",
+          "status": "RESOLVED",
+          "slotKey": "R1-M1-B",
+          "sourceKind": "GROUP_POSITION",
+          "teamNumber": 5,
+          "matchNumber": 1,
+          "sourcePosition": 2,
+          "sourceGroupNumber": 1
+        },
+        {
+          "side": "A",
+          "status": "RESOLVED",
+          "slotKey": "R1-M2-A",
+          "sourceKind": "GROUP_POSITION",
+          "teamNumber": 4,
+          "matchNumber": 2,
+          "sourcePosition": 1,
+          "sourceGroupNumber": 2
+        },
+        {
+          "side": "B",
+          "status": "RESOLVED",
+          "slotKey": "R1-M2-B",
+          "sourceKind": "GROUP_POSITION",
+          "teamNumber": 7,
+          "matchNumber": 2,
+          "sourcePosition": 2,
+          "sourceGroupNumber": 2
+        },
+        {
+          "side": "A",
+          "status": "RESOLVED",
+          "slotKey": "R1-M3-A",
+          "sourceKind": "GROUP_POSITION",
+          "teamNumber": 2,
+          "matchNumber": 3,
+          "sourcePosition": 1,
+          "sourceGroupNumber": 3
+        },
+        {
+          "side": "B",
+          "status": "RESOLVED",
+          "slotKey": "R1-M3-B",
+          "sourceKind": "GROUP_POSITION",
+          "teamNumber": 8,
+          "matchNumber": 3,
+          "sourcePosition": 2,
+          "sourceGroupNumber": 3
+        },
+        {
+          "side": "A",
+          "status": "RESOLVED",
+          "slotKey": "R1-M4-A",
+          "sourceKind": "GROUP_POSITION",
+          "teamNumber": 1,
+          "matchNumber": 4,
+          "sourcePosition": 1,
+          "sourceGroupNumber": 4
+        },
+        {
+          "side": "B",
+          "status": "RESOLVED",
+          "slotKey": "R1-M4-B",
+          "sourceKind": "GROUP_POSITION",
+          "teamNumber": 6,
+          "matchNumber": 4,
+          "sourcePosition": 2,
+          "sourceGroupNumber": 4
+        }
+      ],
+      "fixtureCount": 24,
+      "remoteWrites": 0,
+      "bracketStatus": "PUBLISHED",
+      "finalStandings": [
+        {
+          "wins": 3,
+          "draws": 0,
+          "losses": 0,
+          "played": 3,
+          "points": 9,
+          "goalsFor": 7,
+          "position": 1,
+          "teamNumber": 3,
+          "groupNumber": 1,
+          "goalsAgainst": 1,
+          "goalDifference": 6
+        },
+        {
+          "wins": 2,
+          "draws": 0,
+          "losses": 1,
+          "played": 3,
+          "points": 6,
+          "goalsFor": 5,
+          "position": 2,
+          "teamNumber": 5,
+          "groupNumber": 1,
+          "goalsAgainst": 3,
+          "goalDifference": 2
+        },
+        {
+          "wins": 1,
+          "draws": 0,
+          "losses": 2,
+          "played": 3,
+          "points": 3,
+          "goalsFor": 3,
+          "position": 3,
+          "teamNumber": 11,
+          "groupNumber": 1,
+          "goalsAgainst": 5,
+          "goalDifference": -2
+        },
+        {
+          "wins": 0,
+          "draws": 0,
+          "losses": 3,
+          "played": 3,
+          "points": 0,
+          "goalsFor": 3,
+          "position": 4,
+          "teamNumber": 14,
+          "groupNumber": 1,
+          "goalsAgainst": 9,
+          "goalDifference": -6
+        },
+        {
+          "wins": 3,
+          "draws": 0,
+          "losses": 0,
+          "played": 3,
+          "points": 9,
+          "goalsFor": 8,
+          "position": 1,
+          "teamNumber": 4,
+          "groupNumber": 2,
+          "goalsAgainst": 2,
+          "goalDifference": 6
+        },
+        {
+          "wins": 2,
+          "draws": 0,
+          "losses": 1,
+          "played": 3,
+          "points": 6,
+          "goalsFor": 6,
+          "position": 2,
+          "teamNumber": 7,
+          "groupNumber": 2,
+          "goalsAgainst": 4,
+          "goalDifference": 2
+        },
+        {
+          "wins": 1,
+          "draws": 0,
+          "losses": 2,
+          "played": 3,
+          "points": 3,
+          "goalsFor": 4,
+          "position": 3,
+          "teamNumber": 10,
+          "groupNumber": 2,
+          "goalsAgainst": 6,
+          "goalDifference": -2
+        },
+        {
+          "wins": 0,
+          "draws": 0,
+          "losses": 3,
+          "played": 3,
+          "points": 0,
+          "goalsFor": 2,
+          "position": 4,
+          "teamNumber": 13,
+          "groupNumber": 2,
+          "goalsAgainst": 8,
+          "goalDifference": -6
+        },
+        {
+          "wins": 3,
+          "draws": 0,
+          "losses": 0,
+          "played": 3,
+          "points": 9,
+          "goalsFor": 7,
+          "position": 1,
+          "teamNumber": 2,
+          "groupNumber": 3,
+          "goalsAgainst": 1,
+          "goalDifference": 6
+        },
+        {
+          "wins": 2,
+          "draws": 0,
+          "losses": 1,
+          "played": 3,
+          "points": 6,
+          "goalsFor": 5,
+          "position": 2,
+          "teamNumber": 8,
+          "groupNumber": 3,
+          "goalsAgainst": 3,
+          "goalDifference": 2
+        },
+        {
+          "wins": 1,
+          "draws": 0,
+          "losses": 2,
+          "played": 3,
+          "points": 3,
+          "goalsFor": 5,
+          "position": 3,
+          "teamNumber": 9,
+          "groupNumber": 3,
+          "goalsAgainst": 7,
+          "goalDifference": -2
+        },
+        {
+          "wins": 0,
+          "draws": 0,
+          "losses": 3,
+          "played": 3,
+          "points": 0,
+          "goalsFor": 1,
+          "position": 4,
+          "teamNumber": 16,
+          "groupNumber": 3,
+          "goalsAgainst": 7,
+          "goalDifference": -6
+        },
+        {
+          "wins": 3,
+          "draws": 0,
+          "losses": 0,
+          "played": 3,
+          "points": 9,
+          "goalsFor": 8,
+          "position": 1,
+          "teamNumber": 1,
+          "groupNumber": 4,
+          "goalsAgainst": 2,
+          "goalDifference": 6
+        },
+        {
+          "wins": 2,
+          "draws": 0,
+          "losses": 1,
+          "played": 3,
+          "points": 6,
+          "goalsFor": 7,
+          "position": 2,
+          "teamNumber": 6,
+          "groupNumber": 4,
+          "goalsAgainst": 4,
+          "goalDifference": 3
+        },
+        {
+          "wins": 1,
+          "draws": 0,
+          "losses": 2,
+          "played": 3,
+          "points": 3,
+          "goalsFor": 4,
+          "position": 3,
+          "teamNumber": 12,
+          "groupNumber": 4,
+          "goalsAgainst": 7,
+          "goalDifference": -3
+        },
+        {
+          "wins": 0,
+          "draws": 0,
+          "losses": 3,
+          "played": 3,
+          "points": 0,
+          "goalsFor": 2,
+          "position": 4,
+          "teamNumber": 15,
+          "groupNumber": 4,
+          "goalsAgainst": 8,
+          "goalDifference": -6
+        }
+      ],
+      "knockoutMatches": 0,
+      "officialMatches": 24,
+      "canonicalMatches": 24,
+      "groupStageStatus": "complete",
+      "qualificationRows": [
+        {
+          "outcome": "DIRECT_QUALIFIER",
+          "teamNumber": 3,
+          "groupNumber": 1,
+          "groupPosition": 1,
+          "crossGroupRank": null,
+          "targetBracketSlot": "R1-M1-A"
+        },
+        {
+          "outcome": "DIRECT_QUALIFIER",
+          "teamNumber": 5,
+          "groupNumber": 1,
+          "groupPosition": 2,
+          "crossGroupRank": null,
+          "targetBracketSlot": "R1-M1-B"
+        },
+        {
+          "outcome": "ELIMINATED",
+          "teamNumber": 11,
+          "groupNumber": 1,
+          "groupPosition": 3,
+          "crossGroupRank": null,
+          "targetBracketSlot": null
+        },
+        {
+          "outcome": "ELIMINATED",
+          "teamNumber": 14,
+          "groupNumber": 1,
+          "groupPosition": 4,
+          "crossGroupRank": null,
+          "targetBracketSlot": null
+        },
+        {
+          "outcome": "DIRECT_QUALIFIER",
+          "teamNumber": 4,
+          "groupNumber": 2,
+          "groupPosition": 1,
+          "crossGroupRank": null,
+          "targetBracketSlot": "R1-M2-A"
+        },
+        {
+          "outcome": "DIRECT_QUALIFIER",
+          "teamNumber": 7,
+          "groupNumber": 2,
+          "groupPosition": 2,
+          "crossGroupRank": null,
+          "targetBracketSlot": "R1-M2-B"
+        },
+        {
+          "outcome": "ELIMINATED",
+          "teamNumber": 10,
+          "groupNumber": 2,
+          "groupPosition": 3,
+          "crossGroupRank": null,
+          "targetBracketSlot": null
+        },
+        {
+          "outcome": "ELIMINATED",
+          "teamNumber": 13,
+          "groupNumber": 2,
+          "groupPosition": 4,
+          "crossGroupRank": null,
+          "targetBracketSlot": null
+        },
+        {
+          "outcome": "DIRECT_QUALIFIER",
+          "teamNumber": 2,
+          "groupNumber": 3,
+          "groupPosition": 1,
+          "crossGroupRank": null,
+          "targetBracketSlot": "R1-M3-A"
+        },
+        {
+          "outcome": "DIRECT_QUALIFIER",
+          "teamNumber": 8,
+          "groupNumber": 3,
+          "groupPosition": 2,
+          "crossGroupRank": null,
+          "targetBracketSlot": "R1-M3-B"
+        },
+        {
+          "outcome": "ELIMINATED",
+          "teamNumber": 9,
+          "groupNumber": 3,
+          "groupPosition": 3,
+          "crossGroupRank": null,
+          "targetBracketSlot": null
+        },
+        {
+          "outcome": "ELIMINATED",
+          "teamNumber": 16,
+          "groupNumber": 3,
+          "groupPosition": 4,
+          "crossGroupRank": null,
+          "targetBracketSlot": null
+        },
+        {
+          "outcome": "DIRECT_QUALIFIER",
+          "teamNumber": 1,
+          "groupNumber": 4,
+          "groupPosition": 1,
+          "crossGroupRank": null,
+          "targetBracketSlot": "R1-M4-A"
+        },
+        {
+          "outcome": "DIRECT_QUALIFIER",
+          "teamNumber": 6,
+          "groupNumber": 4,
+          "groupPosition": 2,
+          "crossGroupRank": null,
+          "targetBracketSlot": "R1-M4-B"
+        },
+        {
+          "outcome": "ELIMINATED",
+          "teamNumber": 12,
+          "groupNumber": 4,
+          "groupPosition": 3,
+          "crossGroupRank": null,
+          "targetBracketSlot": null
+        },
+        {
+          "outcome": "ELIMINATED",
+          "teamNumber": 15,
+          "groupNumber": 4,
+          "groupPosition": 4,
+          "crossGroupRank": null,
+          "targetBracketSlot": null
+        }
+      ],
+      "standingSnapshots": 4,
+      "qualificationStatus": "PUBLISHED",
+      "qualificationChecksum": "28e2891e6803b1e2fac558c6237af8f98181d36dc5c14e752e9ef183c8b36932",
+      "bracketProgressionEnabled": false
+    },
+    "groupStagePublic": {
+      "matches": [
+        {
+          "score": {
+            "away": 1,
+            "home": 3
+          },
+          "status": "OFFICIAL",
+          "matchKey": "G1-J1-M1",
+          "venueLabel": "Pista Copa A",
+          "groupNumber": 1,
+          "roundNumber": 1,
+          "incidentType": "NONE",
+          "refereeNumber": 1,
+          "awayTeamNumber": 14,
+          "homeTeamNumber": 5,
+          "scheduledStart": "2027-05-08T16:00:00+00:00",
+          "disciplineEvents": 0
+        },
+        {
+          "score": {
+            "away": 0,
+            "home": 2
+          },
+          "status": "OFFICIAL",
+          "matchKey": "G1-J1-M2",
+          "venueLabel": "Pista Copa A",
+          "groupNumber": 1,
+          "roundNumber": 1,
+          "incidentType": "NONE",
+          "refereeNumber": 2,
+          "awayTeamNumber": 11,
+          "homeTeamNumber": 3,
+          "scheduledStart": "2027-05-08T18:00:00+00:00",
+          "disciplineEvents": 0
+        },
+        {
+          "score": {
+            "away": 3,
+            "home": 1
+          },
+          "status": "OFFICIAL",
+          "matchKey": "G2-J1-M1",
+          "venueLabel": "Pista Copa B",
+          "groupNumber": 2,
+          "roundNumber": 1,
+          "incidentType": "POSTPONED_RESCHEDULED",
+          "refereeNumber": 3,
+          "awayTeamNumber": 7,
+          "homeTeamNumber": 10,
+          "scheduledStart": "2027-05-08T16:00:00+00:00",
+          "disciplineEvents": 0
+        },
+        {
+          "score": {
+            "away": 1,
+            "home": 3
+          },
+          "status": "OFFICIAL",
+          "matchKey": "G2-J1-M2",
+          "venueLabel": "Pista Copa B",
+          "groupNumber": 2,
+          "roundNumber": 1,
+          "incidentType": "NONE",
+          "refereeNumber": 4,
+          "awayTeamNumber": 13,
+          "homeTeamNumber": 4,
+          "scheduledStart": "2027-05-08T18:00:00+00:00",
+          "disciplineEvents": 1
+        },
+        {
+          "score": {
+            "away": 2,
+            "home": 0
+          },
+          "status": "OFFICIAL",
+          "matchKey": "G3-J1-M1",
+          "venueLabel": "Pista Copa C",
+          "groupNumber": 3,
+          "roundNumber": 1,
+          "incidentType": "NONE",
+          "refereeNumber": 5,
+          "awayTeamNumber": 8,
+          "homeTeamNumber": 16,
+          "scheduledStart": "2027-05-08T16:00:00+00:00",
+          "disciplineEvents": 0
+        },
+        {
+          "score": {
+            "away": 3,
+            "home": 1
+          },
+          "status": "OFFICIAL",
+          "matchKey": "G3-J1-M2",
+          "venueLabel": "Pista Copa C",
+          "groupNumber": 3,
+          "roundNumber": 1,
+          "incidentType": "NONE",
+          "refereeNumber": 6,
+          "awayTeamNumber": 2,
+          "homeTeamNumber": 9,
+          "scheduledStart": "2027-05-08T18:00:00+00:00",
+          "disciplineEvents": 0
+        },
+        {
+          "score": {
+            "away": 0,
+            "home": 3
+          },
+          "status": "OFFICIAL",
+          "matchKey": "G4-J1-M1",
+          "venueLabel": "Pista Copa D",
+          "groupNumber": 4,
+          "roundNumber": 1,
+          "incidentType": "NO_SHOW",
+          "refereeNumber": 7,
+          "awayTeamNumber": 12,
+          "homeTeamNumber": 6,
+          "scheduledStart": "2027-05-08T16:00:00+00:00",
+          "disciplineEvents": 0
+        },
+        {
+          "score": {
+            "away": 0,
+            "home": 2
+          },
+          "status": "OFFICIAL",
+          "matchKey": "G4-J1-M2",
+          "venueLabel": "Pista Copa D",
+          "groupNumber": 4,
+          "roundNumber": 1,
+          "incidentType": "NONE",
+          "refereeNumber": 8,
+          "awayTeamNumber": 15,
+          "homeTeamNumber": 1,
+          "scheduledStart": "2027-05-08T18:00:00+00:00",
+          "disciplineEvents": 1
+        },
+        {
+          "score": {
+            "away": 3,
+            "home": 1
+          },
+          "status": "OFFICIAL",
+          "matchKey": "G1-J2-M1",
+          "venueLabel": "Pista Copa A",
+          "groupNumber": 1,
+          "roundNumber": 2,
+          "incidentType": "NONE",
+          "refereeNumber": 1,
+          "awayTeamNumber": 11,
+          "homeTeamNumber": 14,
+          "scheduledStart": "2027-05-15T16:00:00+00:00",
+          "disciplineEvents": 0
+        },
+        {
+          "score": {
+            "away": 2,
+            "home": 0
+          },
+          "status": "OFFICIAL",
+          "matchKey": "G1-J2-M2",
+          "venueLabel": "Pista Copa A",
+          "groupNumber": 1,
+          "roundNumber": 2,
+          "incidentType": "NONE",
+          "refereeNumber": 2,
+          "awayTeamNumber": 3,
+          "homeTeamNumber": 5,
+          "scheduledStart": "2027-05-15T18:00:00+00:00",
+          "disciplineEvents": 0
+        },
+        {
+          "score": {
+            "away": 0,
+            "home": 2
+          },
+          "status": "OFFICIAL",
+          "matchKey": "G2-J2-M1",
+          "venueLabel": "Pista Copa B",
+          "groupNumber": 2,
+          "roundNumber": 2,
+          "incidentType": "SUSPENDED_RESUMED",
+          "refereeNumber": 3,
+          "awayTeamNumber": 10,
+          "homeTeamNumber": 4,
+          "scheduledStart": "2027-05-15T16:00:00+00:00",
+          "disciplineEvents": 0
+        },
+        {
+          "score": {
+            "away": 2,
+            "home": 0
+          },
+          "status": "OFFICIAL",
+          "matchKey": "G2-J2-M2",
+          "venueLabel": "Pista Copa B",
+          "groupNumber": 2,
+          "roundNumber": 2,
+          "incidentType": "NONE",
+          "refereeNumber": 4,
+          "awayTeamNumber": 7,
+          "homeTeamNumber": 13,
+          "scheduledStart": "2027-05-15T18:00:00+00:00",
+          "disciplineEvents": 1
+        },
+        {
+          "score": {
+            "away": 0,
+            "home": 2
+          },
+          "status": "OFFICIAL",
+          "matchKey": "G3-J2-M1",
+          "venueLabel": "Pista Copa C",
+          "groupNumber": 3,
+          "roundNumber": 2,
+          "incidentType": "NONE",
+          "awayTeamNumber": 8,
+          "homeTeamNumber": 2,
+          "scheduledStart": "2027-05-15T16:00:00+00:00",
+          "disciplineEvents": 0
+        },
+        {
+          "score": {
+            "away": 1,
+            "home": 3
+          },
+          "status": "OFFICIAL",
+          "matchKey": "G3-J2-M2",
+          "venueLabel": "Pista Copa C",
+          "groupNumber": 3,
+          "roundNumber": 2,
+          "incidentType": "DISPUTED_CORRECTED",
+          "awayTeamNumber": 16,
+          "homeTeamNumber": 9,
+          "scheduledStart": "2027-05-15T18:00:00+00:00",
+          "disciplineEvents": 0
+        },
+        {
+          "score": {
+            "away": 1,
+            "home": 3
+          },
+          "status": "OFFICIAL",
+          "matchKey": "G4-J2-M1",
+          "venueLabel": "Pista Copa D",
+          "groupNumber": 4,
+          "roundNumber": 2,
+          "incidentType": "NONE",
+          "awayTeamNumber": 6,
+          "homeTeamNumber": 1,
+          "scheduledStart": "2027-05-15T16:00:00+00:00",
+          "disciplineEvents": 0
+        },
+        {
+          "score": {
+            "away": 3,
+            "home": 1
+          },
+          "status": "OFFICIAL",
+          "matchKey": "G4-J2-M2",
+          "venueLabel": "Pista Copa D",
+          "groupNumber": 4,
+          "roundNumber": 2,
+          "incidentType": "NONE",
+          "awayTeamNumber": 12,
+          "homeTeamNumber": 15,
+          "scheduledStart": "2027-05-15T18:00:00+00:00",
+          "disciplineEvents": 1
+        },
+        {
+          "status": "SCHEDULED",
+          "matchKey": "G1-J3-M1",
+          "venueLabel": "Pista Copa A",
+          "groupNumber": 1,
+          "roundNumber": 3,
+          "incidentType": "NONE",
+          "awayTeamNumber": 14,
+          "homeTeamNumber": 3,
+          "scheduledStart": "2027-05-22T16:00:00+00:00",
+          "disciplineEvents": 0
+        },
+        {
+          "status": "SCHEDULED",
+          "matchKey": "G1-J3-M2",
+          "venueLabel": "Pista Copa A",
+          "groupNumber": 1,
+          "roundNumber": 3,
+          "incidentType": "NONE",
+          "awayTeamNumber": 5,
+          "homeTeamNumber": 11,
+          "scheduledStart": "2027-05-22T18:00:00+00:00",
+          "disciplineEvents": 0
+        },
+        {
+          "status": "SCHEDULED",
+          "matchKey": "G2-J3-M1",
+          "venueLabel": "Pista Copa B",
+          "groupNumber": 2,
+          "roundNumber": 3,
+          "incidentType": "NONE",
+          "awayTeamNumber": 13,
+          "homeTeamNumber": 10,
+          "scheduledStart": "2027-05-22T16:00:00+00:00",
+          "disciplineEvents": 0
+        },
+        {
+          "status": "SCHEDULED",
+          "matchKey": "G2-J3-M2",
+          "venueLabel": "Pista Copa B",
+          "groupNumber": 2,
+          "roundNumber": 3,
+          "incidentType": "NONE",
+          "awayTeamNumber": 4,
+          "homeTeamNumber": 7,
+          "scheduledStart": "2027-05-22T18:00:00+00:00",
+          "disciplineEvents": 0
+        },
+        {
+          "status": "SCHEDULED",
+          "matchKey": "G3-J3-M1",
+          "venueLabel": "Pista Copa C",
+          "groupNumber": 3,
+          "roundNumber": 3,
+          "incidentType": "NONE",
+          "awayTeamNumber": 9,
+          "homeTeamNumber": 8,
+          "scheduledStart": "2027-05-22T16:00:00+00:00",
+          "disciplineEvents": 0
+        },
+        {
+          "status": "SCHEDULED",
+          "matchKey": "G3-J3-M2",
+          "venueLabel": "Pista Copa C",
+          "groupNumber": 3,
+          "roundNumber": 3,
+          "incidentType": "NONE",
+          "awayTeamNumber": 2,
+          "homeTeamNumber": 16,
+          "scheduledStart": "2027-05-22T18:00:00+00:00",
+          "disciplineEvents": 0
+        },
+        {
+          "status": "SCHEDULED",
+          "matchKey": "G4-J3-M1",
+          "venueLabel": "Pista Copa D",
+          "groupNumber": 4,
+          "roundNumber": 3,
+          "incidentType": "NONE",
+          "awayTeamNumber": 15,
+          "homeTeamNumber": 6,
+          "scheduledStart": "2027-05-22T16:00:00+00:00",
+          "disciplineEvents": 0
+        },
+        {
+          "status": "SCHEDULED",
+          "matchKey": "G4-J3-M2",
+          "venueLabel": "Pista Copa D",
+          "groupNumber": 4,
+          "roundNumber": 3,
+          "incidentType": "NONE",
+          "awayTeamNumber": 1,
+          "homeTeamNumber": 12,
+          "scheduledStart": "2027-05-22T18:00:00+00:00",
+          "disciplineEvents": 0
+        }
+      ],
+      "referees": {
+        "confirmedMatches": 12,
+        "unassignedMatches": 12
+      },
+      "incidents": {
+        "noShow": 1,
+        "suspendedResumed": 1,
+        "disputedCorrected": 1,
+        "postponedRescheduled": 1
+      },
+      "sanctions": [
+        {
+          "status": "active",
+          "unitType": "MATCHES",
+          "teamNumber": 15,
+          "publicSummary": "Un partido de sanción",
+          "remainingUnits": 1
+        }
+      ],
+      "standings": [
+        {
+          "wins": 2,
+          "draws": 0,
+          "losses": 0,
+          "played": 2,
+          "points": 6,
+          "status": "PROVISIONAL",
+          "criteria": [
+            "POINTS",
+            "GOAL_DIFFERENCE",
+            "GOALS_FOR",
+            "WINS",
+            "PERSISTED_DRAW_LOT"
+          ],
+          "goalsFor": 4,
+          "position": 1,
+          "revision": 3153,
+          "teamNumber": 3,
+          "groupNumber": 1,
+          "goalsAgainst": 0,
+          "goalDifference": 4,
+          "qualificationZone": true
+        },
+        {
+          "wins": 1,
+          "draws": 0,
+          "losses": 1,
+          "played": 2,
+          "points": 3,
+          "status": "PROVISIONAL",
+          "criteria": [
+            "POINTS",
+            "GOAL_DIFFERENCE",
+            "GOALS_FOR",
+            "WINS",
+            "PERSISTED_DRAW_LOT"
+          ],
+          "goalsFor": 3,
+          "position": 2,
+          "revision": 3153,
+          "teamNumber": 11,
+          "groupNumber": 1,
+          "goalsAgainst": 3,
+          "goalDifference": 0,
+          "qualificationZone": true
+        },
+        {
+          "wins": 1,
+          "draws": 0,
+          "losses": 1,
+          "played": 2,
+          "points": 3,
+          "status": "PROVISIONAL",
+          "criteria": [
+            "POINTS",
+            "GOAL_DIFFERENCE",
+            "GOALS_FOR",
+            "WINS",
+            "PERSISTED_DRAW_LOT"
+          ],
+          "goalsFor": 3,
+          "position": 2,
+          "revision": 3153,
+          "teamNumber": 5,
+          "groupNumber": 1,
+          "goalsAgainst": 3,
+          "goalDifference": 0,
+          "qualificationZone": true
+        },
+        {
+          "wins": 0,
+          "draws": 0,
+          "losses": 2,
+          "played": 2,
+          "points": 0,
+          "status": "PROVISIONAL",
+          "criteria": [
+            "POINTS",
+            "GOAL_DIFFERENCE",
+            "GOALS_FOR",
+            "WINS",
+            "PERSISTED_DRAW_LOT"
+          ],
+          "goalsFor": 2,
+          "position": 4,
+          "revision": 3153,
+          "teamNumber": 14,
+          "groupNumber": 1,
+          "goalsAgainst": 6,
+          "goalDifference": -4,
+          "qualificationZone": false
+        },
+        {
+          "wins": 2,
+          "draws": 0,
+          "losses": 0,
+          "played": 2,
+          "points": 6,
+          "status": "PROVISIONAL",
+          "criteria": [
+            "POINTS",
+            "GOAL_DIFFERENCE",
+            "GOALS_FOR",
+            "WINS",
+            "PERSISTED_DRAW_LOT"
+          ],
+          "goalsFor": 5,
+          "position": 1,
+          "revision": 3287,
+          "teamNumber": 4,
+          "groupNumber": 2,
+          "goalsAgainst": 1,
+          "goalDifference": 4,
+          "qualificationZone": true
+        },
+        {
+          "wins": 2,
+          "draws": 0,
+          "losses": 0,
+          "played": 2,
+          "points": 6,
+          "status": "PROVISIONAL",
+          "criteria": [
+            "POINTS",
+            "GOAL_DIFFERENCE",
+            "GOALS_FOR",
+            "WINS",
+            "PERSISTED_DRAW_LOT"
+          ],
+          "goalsFor": 5,
+          "position": 1,
+          "revision": 3287,
+          "teamNumber": 7,
+          "groupNumber": 2,
+          "goalsAgainst": 1,
+          "goalDifference": 4,
+          "qualificationZone": true
+        },
+        {
+          "wins": 0,
+          "draws": 0,
+          "losses": 2,
+          "played": 2,
+          "points": 0,
+          "status": "PROVISIONAL",
+          "criteria": [
+            "POINTS",
+            "GOAL_DIFFERENCE",
+            "GOALS_FOR",
+            "WINS",
+            "PERSISTED_DRAW_LOT"
+          ],
+          "goalsFor": 1,
+          "position": 3,
+          "revision": 3287,
+          "teamNumber": 10,
+          "groupNumber": 2,
+          "goalsAgainst": 5,
+          "goalDifference": -4,
+          "qualificationZone": false
+        },
+        {
+          "wins": 0,
+          "draws": 0,
+          "losses": 2,
+          "played": 2,
+          "points": 0,
+          "status": "PROVISIONAL",
+          "criteria": [
+            "POINTS",
+            "GOAL_DIFFERENCE",
+            "GOALS_FOR",
+            "WINS",
+            "PERSISTED_DRAW_LOT"
+          ],
+          "goalsFor": 1,
+          "position": 3,
+          "revision": 3287,
+          "teamNumber": 13,
+          "groupNumber": 2,
+          "goalsAgainst": 5,
+          "goalDifference": -4,
+          "qualificationZone": false
+        },
+        {
+          "wins": 2,
+          "draws": 0,
+          "losses": 0,
+          "played": 2,
+          "points": 6,
+          "status": "PROVISIONAL",
+          "criteria": [
+            "POINTS",
+            "GOAL_DIFFERENCE",
+            "GOALS_FOR",
+            "WINS",
+            "PERSISTED_DRAW_LOT"
+          ],
+          "goalsFor": 5,
+          "position": 1,
+          "revision": 3405,
+          "teamNumber": 2,
+          "groupNumber": 3,
+          "goalsAgainst": 1,
+          "goalDifference": 4,
+          "qualificationZone": true
+        },
+        {
+          "wins": 1,
+          "draws": 0,
+          "losses": 1,
+          "played": 2,
+          "points": 3,
+          "status": "PROVISIONAL",
+          "criteria": [
+            "POINTS",
+            "GOAL_DIFFERENCE",
+            "GOALS_FOR",
+            "WINS",
+            "PERSISTED_DRAW_LOT"
+          ],
+          "goalsFor": 4,
+          "position": 2,
+          "revision": 3405,
+          "teamNumber": 9,
+          "groupNumber": 3,
+          "goalsAgainst": 4,
+          "goalDifference": 0,
+          "qualificationZone": true
+        },
+        {
+          "wins": 1,
+          "draws": 0,
+          "losses": 1,
+          "played": 2,
+          "points": 3,
+          "status": "PROVISIONAL",
+          "criteria": [
+            "POINTS",
+            "GOAL_DIFFERENCE",
+            "GOALS_FOR",
+            "WINS",
+            "PERSISTED_DRAW_LOT"
+          ],
+          "goalsFor": 2,
+          "position": 3,
+          "revision": 3405,
+          "teamNumber": 8,
+          "groupNumber": 3,
+          "goalsAgainst": 2,
+          "goalDifference": 0,
+          "qualificationZone": false
+        },
+        {
+          "wins": 0,
+          "draws": 0,
+          "losses": 2,
+          "played": 2,
+          "points": 0,
+          "status": "PROVISIONAL",
+          "criteria": [
+            "POINTS",
+            "GOAL_DIFFERENCE",
+            "GOALS_FOR",
+            "WINS",
+            "PERSISTED_DRAW_LOT"
+          ],
+          "goalsFor": 1,
+          "position": 4,
+          "revision": 3405,
+          "teamNumber": 16,
+          "groupNumber": 3,
+          "goalsAgainst": 5,
+          "goalDifference": -4,
+          "qualificationZone": false
+        },
+        {
+          "wins": 2,
+          "draws": 0,
+          "losses": 0,
+          "played": 2,
+          "points": 6,
+          "status": "PROVISIONAL",
+          "criteria": [
+            "POINTS",
+            "GOAL_DIFFERENCE",
+            "GOALS_FOR",
+            "WINS",
+            "PERSISTED_DRAW_LOT"
+          ],
+          "goalsFor": 5,
+          "position": 1,
+          "revision": 3530,
+          "teamNumber": 1,
+          "groupNumber": 4,
+          "goalsAgainst": 1,
+          "goalDifference": 4,
+          "qualificationZone": true
+        },
+        {
+          "wins": 1,
+          "draws": 0,
+          "losses": 1,
+          "played": 2,
+          "points": 3,
+          "status": "PROVISIONAL",
+          "criteria": [
+            "POINTS",
+            "GOAL_DIFFERENCE",
+            "GOALS_FOR",
+            "WINS",
+            "PERSISTED_DRAW_LOT"
+          ],
+          "goalsFor": 4,
+          "position": 2,
+          "revision": 3530,
+          "teamNumber": 6,
+          "groupNumber": 4,
+          "goalsAgainst": 3,
+          "goalDifference": 1,
+          "qualificationZone": true
+        },
+        {
+          "wins": 1,
+          "draws": 0,
+          "losses": 1,
+          "played": 2,
+          "points": 3,
+          "status": "PROVISIONAL",
+          "criteria": [
+            "POINTS",
+            "GOAL_DIFFERENCE",
+            "GOALS_FOR",
+            "WINS",
+            "PERSISTED_DRAW_LOT"
+          ],
+          "goalsFor": 3,
+          "position": 3,
+          "revision": 3530,
+          "teamNumber": 12,
+          "groupNumber": 4,
+          "goalsAgainst": 4,
+          "goalDifference": -1,
+          "qualificationZone": false
+        },
+        {
+          "wins": 0,
+          "draws": 0,
+          "losses": 2,
+          "played": 2,
+          "points": 0,
+          "status": "PROVISIONAL",
+          "criteria": [
+            "POINTS",
+            "GOAL_DIFFERENCE",
+            "GOALS_FOR",
+            "WINS",
+            "PERSISTED_DRAW_LOT"
+          ],
+          "goalsFor": 1,
+          "position": 4,
+          "revision": 3530,
+          "teamNumber": 15,
+          "groupNumber": 4,
+          "goalsAgainst": 5,
+          "goalDifference": -4,
+          "qualificationZone": false
+        }
+      ],
+      "discipline": [
+        {
+          "status": "active",
+          "cardType": "YELLOW",
+          "teamNumber": 4,
+          "playerLabel": "Amonestación"
+        },
+        {
+          "status": "active",
+          "cardType": "RED",
+          "teamNumber": 15,
+          "playerLabel": "Expulsión directa"
+        },
+        {
+          "status": "active",
+          "cardType": "YELLOW",
+          "teamNumber": 13,
+          "playerLabel": "Amonestación"
+        },
+        {
+          "status": "active",
+          "cardType": "YELLOW",
+          "teamNumber": 15,
+          "playerLabel": "Amonestación"
+        }
+      ],
+      "groupCount": 4,
+      "roundCount": 3,
+      "currentRound": 2,
+      "fixtureCount": 24,
+      "remoteWrites": 0,
+      "officialMatches": 16,
+      "scheduledMatches": 8,
+      "qualificationStatus": "PROVISIONAL"
+    },
     "generatedOutcomes": 2,
     "operationReceipts": 56,
     "publishedRevision": 5,
-    "tournamentMatches": 0,
+    "tournamentMatches": 24,
     "acceptedParticipants": 16
   },
-  "version": 5,
-  "authorityHash": "991173f97e638a5ac9d55764284f331d61fffc95c799b60850f156cda23f612f"
+  "version": 6,
+  "authorityHash": "3d51909498c47762ee6256f6a71e5ab642fbd2a2f2fc953178d537ca54dd06af"
 }

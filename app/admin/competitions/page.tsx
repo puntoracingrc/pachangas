@@ -161,10 +161,15 @@ export default async function PlatformCompetitionsPage({ searchParams }: { searc
           <Metric label="Overrides" value={n(tournaments.metrics.manualOverrides)} />
           <Metric label="Tournament matches" value={n(tournaments.metrics.tournamentMatches)} tone={n(tournaments.metrics.tournamentMatches) ? "warning" : "good"} />
           <Metric label="Bracket progression" value={n(tournaments.metrics.bracketProgressions)} tone={n(tournaments.metrics.bracketProgressions) ? "warning" : "good"} />
+          <Metric label="Group Stages" value={n(tournaments.groupStage.metrics.groupStages)} />
+          <Metric label="Fixtures de grupo" value={n(tournaments.groupStage.metrics.publishedFixtures)} />
+          <Metric label="Resultados oficiales" value={n(tournaments.groupStage.metrics.officialFixtures)} />
+          <Metric label="Qualifications" value={n(tournaments.groupStage.metrics.publishedQualifications)} tone="good" />
         </MetricGrid>
-        <p className={styles.helpText}>Descubrimiento público {tournaments.health.publicDiscoveryOff ? "OFF" : "ERROR"} · Match generation {tournaments.health.matchGenerationOff ? "OFF" : "ERROR"} · Bracket progression {tournaments.health.bracketProgressionOff ? "OFF" : "ERROR"}.</p>
-        <TournamentPrivateBetaAdminClient canWrite={canWrite} flags={tournaments.flags} grants={tournaments.grants} />
+        <p className={styles.helpText}>Descubrimiento público {tournaments.health.publicDiscoveryOff ? "OFF" : "ERROR"} · generación genérica limitada a grupos · Knockout {tournaments.groupStage.health.knockoutMatchGenerationOff ? "OFF" : "ERROR"} · Bracket progression {tournaments.groupStage.health.bracketProgressionOff ? "OFF" : "ERROR"}.</p>
+        <TournamentPrivateBetaAdminClient canWrite={canWrite} flags={tournaments.flags} grants={tournaments.grants} groupStage={tournaments.groupStage} />
         {tournaments.recentPlans.length ? <DataTable label="Sorteos recientes"><thead><tr><th>Torneo</th><th>Modo</th><th>Estado</th><th>Revisión</th><th>Secuencia</th><th>Acción</th></tr></thead><tbody>{tournaments.recentPlans.map((item) => <tr key={s(item.id)}><td><strong>{s(item.competitionName)}</strong><small><Identifier value={s(item.competitionId)} /></small></td><td>{s(item.mode)}</td><td><StatusBadge>{s(item.status)}</StatusBadge></td><td>{n(item.revision)}</td><td>{n(item.serverSequence)}</td><td><Link href={`/competiciones/${s(item.competitionId)}/gestion/sorteo?plan=${s(item.id)}`}>Abrir</Link></td></tr>)}</tbody></DataTable> : <EmptyState>No hay DrawPlans de Tournament.</EmptyState>}
+        {tournaments.groupStage.states.length ? <DataTable label="Fases de grupo"><thead><tr><th>Torneo</th><th>Estado</th><th>Grupos</th><th>Fixtures</th><th>Oficiales</th><th>Revisión</th><th>Acción</th></tr></thead><tbody>{tournaments.groupStage.states.map((item) => <tr key={s(item.groupStageStateId)}><td><strong>{s(item.competitionName)}</strong><small><Identifier value={s(item.competitionId)} /></small></td><td><StatusBadge>{s(item.status)}</StatusBadge></td><td>{n(item.groups)}</td><td>{n(item.fixtures)}</td><td>{n(item.officialFixtures)}</td><td>{n(item.revision)}<small>seq {n(item.serverSequence)}</small></td><td><Link href={`/competiciones/${s(item.competitionId)}/torneo`}>Abrir Hub</Link></td></tr>)}</tbody></DataTable> : null}
       </Panel>
 
       <Panel title="Ligas privadas">

@@ -36,6 +36,7 @@ export const tournamentPlatformActions = [
   "tournament.kill_switch",
   "tournament.beta_bundle.grant",
   "tournament.beta_bundle.revoke",
+  "tournament.group_stage.flags.set",
 ] as const;
 
 export type TournamentPlatformAction = typeof tournamentPlatformActions[number];

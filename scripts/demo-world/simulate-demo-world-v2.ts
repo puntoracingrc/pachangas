@@ -422,6 +422,14 @@ with target as (
   from simulation.demo_world_tournament_conflict_evidence evidence
   order by evidence.captured_at desc, evidence.plan_id desc
   limit 1
+), public_group_stage as (
+  select snapshots.snapshot as value
+  from simulation.demo_world_tournament_group_stage_public_snapshot snapshots
+  limit 1
+), final_group_stage as (
+  select proofs.proof as value
+  from simulation.demo_world_tournament_group_stage_final_proof proofs
+  limit 1
 )
 select jsonb_build_object(
   'acceptedParticipants', (
@@ -461,6 +469,8 @@ select jsonb_build_object(
   'drawOutcomes', outcomes.value,
   'generatedOutcomes', (select count(*) from generated),
   'groupCount', (select group_count from plan),
+  'groupStageFinal', (select value from final_group_stage),
+  'groupStagePublic', (select value from public_group_stage),
   'operationReceipts', (
     select count(*)
     from private.pachanga_competition_operation_receipts receipts
@@ -493,7 +503,7 @@ select jsonb_build_object(
 )
 from outcomes;
 `;
-  return JSON.parse(psql(["-At", "-c", sql], "extract Demo World V2.4 Tournament proof")) as DemoWorldV2AuthorityProof["tournament"];
+  return JSON.parse(psql(["-At", "-c", sql], "extract Demo World V2.5 Tournament proof")) as DemoWorldV2AuthorityProof["tournament"];
 }
 
 function extractAuthorityProof(migrationCount: number) {
@@ -894,12 +904,12 @@ from matches, standings, discipline_events, discipline_counters,
     ...extracted,
     configuration: extractConfigurationAuthorityProof(),
     database: "temporary-local-postgresql",
-    generatedAt: "2026-08-26T10:00:00.000Z",
+    generatedAt: "2026-08-27T14:00:00.000Z",
     migrationCount,
     remoteWrites: 0,
-    rpcFamilies: ["R1", "R3", "R4A", "R4B", "R4C", "R4D", "R5", "R6A"],
+    rpcFamilies: ["R1", "R3", "R4A", "R4B", "R4C", "R4D", "R5", "R6A", "R6B"],
     tournament: extractTournamentAuthorityProof(),
-    version: 5,
+    version: 6,
   };
   return assertDemoWorldV2AuthorityProof({
     ...payload,
@@ -957,7 +967,8 @@ async function main() {
     { label: "R4D", names: incremental.filter((name) => name >= "20260824230726" && name < "20260825074304") },
     { label: "League Private Beta", names: incremental.filter((name) => name >= "20260825074304" && name < "20260825165834") },
     { label: "R5 and Configuration Center", names: incremental.filter((name) => name >= "20260825165834" && name < "20260826195034") },
-    { label: "R6A Tournament Foundation", names: incremental.filter((name) => name >= "20260826195034") },
+    { label: "R6A Tournament Foundation", names: incremental.filter((name) => name >= "20260826195034" && name < "20260827105014") },
+    { label: "R6B Tournament Group Stage", names: incremental.filter((name) => name >= "20260827105014") },
   ];
   assert.equal(migrationBatches.flatMap(({ names }) => names).length, incremental.length);
 
@@ -1006,10 +1017,15 @@ async function main() {
     psql(["-f", sqlFile("tests/competition-configuration-center-v1-fixture.sql")], "create Demo World V2.3 configuration fixture through League Wizard V2");
     psql(["-f", sqlFile("scripts/demo-world/demo-world-v2-configuration-operations.sql")], "publish Demo World V2.3 custom RuleRevision through Configuration Center V1");
     applyBatch(migrationBatches[8]!.label, migrationBatches[8]!.names);
+    applyBatch(migrationBatches[9]!.label, migrationBatches[9]!.names);
     psql([
       "-v", "DEMO_WORLD_V2_PERSIST=1",
       "-f", sqlFile("scripts/demo-world/demo-world-v2-tournament-operations.sql"),
-    ], "create Demo World V2.4 Tournament through R1, Entries and R6A RPCs");
+    ], "create Demo World V2.5 Tournament through R1, Entries and R6A RPCs with the R6B rule compiler");
+    psql([
+      "-v", "DEMO_WORLD_V2_PERSIST=1",
+      "-f", sqlFile("scripts/demo-world/demo-world-v2-tournament-group-stage-operations.sql"),
+    ], "operate Demo World V2.5 Tournament through R4B, R4C, R4D, R5, Referees and R6B RPCs");
 
     const authorityProof = extractAuthorityProof(migrationNames.length);
     const generated = generateDemoWorldV2(authorityProof);
@@ -1031,7 +1047,7 @@ async function main() {
       migrations: migrationNames.length,
       mode: verifyOnly ? "verify" : "simulate",
       remoteWrites: 0,
-      rpcFamilies: ["R1", "R3", "R4A", "R4B", "R4C", "R4D", "R5", "R6A", "LEAGUE_PRIVATE_BETA_V1"],
+      rpcFamilies: ["R1", "R3", "R4A", "R4B", "R4C", "R4D", "R5", "R6A", "R6B", "LEAGUE_PRIVATE_BETA_V1"],
       snapshotIdentical: verifyOnly,
     })}\n`);
   } finally {

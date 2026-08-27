@@ -59,6 +59,8 @@ const v2WriteRpcNames = new Set([
   "command_pachanga_referee_incident_observation_v1",
   "command_pachanga_referee_public_fee_v1",
   "command_pachanga_tournament_draw_v1",
+  "command_pachanga_tournament_group_stage_platform_v1",
+  "command_pachanga_tournament_group_stage_v1",
   "command_pachanga_tournament_platform_v1",
   "command_pachanga_publication_consent_v1",
   "command_pachanga_club_referee_manager_v1",
@@ -151,6 +153,7 @@ const v2ApplicationWriteOperations = new Set([
   "api:referee-officiating-command",
   "api:referee-public-fee-command",
   "api:tournament-draw-command",
+  "api:tournament-group-stage-command",
 ]);
 const clientApplicationWriteOperations = new Set([
   ...v1ApplicationWriteOperations,

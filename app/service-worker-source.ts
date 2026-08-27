@@ -30,7 +30,8 @@ const PRECACHE_URLS = ${encodedPrecache};
 const STATIC_DESTINATIONS = new Set(["font", "image", "manifest", "script", "style"]);
 const STATIC_FILE_EXTENSIONS = /\\.(?:css|js|mjs|png|jpg|jpeg|webp|svg|ico|woff2?)$/i;
 const LIVE_SERVICE_HOST_PARTS = ["supabase.co", "stripe.com", "googleapis.com", "google.com", "gstatic.com", "weather.googleapis.com"];
-const CACHEABLE_NAVIGATION_PATHS = new Set(["/", "/aviso-legal", "/condiciones", "/condiciones-venta", "/cookies", "/demo", "/manual", "/mercado", "/privacidad"]);
+const CACHEABLE_NAVIGATION_PATHS = new Set(["/", "/aviso-legal", "/condiciones", "/condiciones-venta", "/cookies", "/demo", "/manual", "/mercado", "/privacidad", "/torneos"]);
+const CACHEABLE_NAVIGATION_PATTERNS = [/^\/competiciones\/[0-9a-f-]{36}\/torneo$/i];
 
 function isSameOrigin(url) {
   return url.origin === self.location.origin;
@@ -45,7 +46,10 @@ function isSensitivePath(pathname) {
 }
 
 function shouldCacheNavigation(url) {
-  return isSameOrigin(url) && !url.search && !isSensitivePath(url.pathname) && CACHEABLE_NAVIGATION_PATHS.has(url.pathname);
+  return isSameOrigin(url) && !url.search && !isSensitivePath(url.pathname) && (
+    CACHEABLE_NAVIGATION_PATHS.has(url.pathname)
+    || CACHEABLE_NAVIGATION_PATTERNS.some((pattern) => pattern.test(url.pathname))
+  );
 }
 
 function shouldCacheStaticRequest(request, url) {

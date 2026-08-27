@@ -9,10 +9,11 @@ type JsonRecord = Record<string, unknown>;
 function text(value: unknown) { return typeof value === "string" ? value : ""; }
 function number(value: unknown) { const parsed = Number(value); return Number.isFinite(parsed) ? parsed : 0; }
 
-export function TournamentPrivateBetaAdminClient({ canWrite, flags, grants }: {
+export function TournamentPrivateBetaAdminClient({ canWrite, flags, grants, groupStage }: {
   canWrite: boolean;
   flags: JsonRecord;
   grants: JsonRecord[];
+  groupStage: JsonRecord;
 }) {
   const router = useRouter();
   const pending = useRef<{ id: string; key: string } | null>(null);
@@ -31,6 +32,14 @@ export function TournamentPrivateBetaAdminClient({ canWrite, flags, grants }: {
   const [manualEnabled, setManualEnabled] = useState(Boolean(flags.manualEnabled));
   const [hybridEnabled, setHybridEnabled] = useState(Boolean(flags.hybridEnabled));
   const [publishEnabled, setPublishEnabled] = useState(Boolean(flags.publishEnabled));
+  const groupFlags = (groupStage.flags && typeof groupStage.flags === "object" ? groupStage.flags : {}) as JsonRecord;
+  const [groupStageEnabled, setGroupStageEnabled] = useState(Boolean(groupFlags.groupStageEnabled));
+  const [groupSchedulingEnabled, setGroupSchedulingEnabled] = useState(Boolean(groupFlags.groupSchedulingEnabled));
+  const [groupMatchGenerationEnabled, setGroupMatchGenerationEnabled] = useState(Boolean(groupFlags.groupMatchGenerationEnabled));
+  const [groupTrackingEnabled, setGroupTrackingEnabled] = useState(Boolean(groupFlags.groupTrackingEnabled));
+  const [groupStandingsEnabled, setGroupStandingsEnabled] = useState(Boolean(groupFlags.groupStandingsEnabled));
+  const [qualificationEnabled, setQualificationEnabled] = useState(Boolean(groupFlags.qualificationEnabled));
+  const [bracketTemplateEnabled, setBracketTemplateEnabled] = useState(Boolean(groupFlags.bracketTemplateEnabled));
 
   async function run(action: string, aggregateId: string | null, expectedRevision: number, payload: JsonRecord) {
     const key = JSON.stringify({ action, aggregateId, expectedRevision, payload });
@@ -75,6 +84,24 @@ export function TournamentPrivateBetaAdminClient({ canWrite, flags, grants }: {
         privateBetaEnabled, publishEnabled, reason,
       })} type="button">Guardar gates</button>
       <button className={styles.dangerButton} disabled={busy} onClick={() => { const value = window.prompt("Motivo del apagado inmediato"); if (value) void run("tournament.kill_switch", null, number(flags.revision), { reason: value }); }} type="button">Apagado inmediato</button>
+    </section>
+
+    <section className={styles.competitionControl}>
+      <h3>Group Stage Private Beta</h3>
+      <p>El gate genérico de partidos queda limitado a GROUP_STAGE. Eliminatorias, progresión y descubrimiento público permanecen OFF.</p>
+      <label className={styles.checkField}><input checked={groupStageEnabled} disabled={busy} onChange={(event) => setGroupStageEnabled(event.target.checked)} type="checkbox" />Fase de grupos</label>
+      <label className={styles.checkField}><input checked={groupSchedulingEnabled} disabled={busy} onChange={(event) => setGroupSchedulingEnabled(event.target.checked)} type="checkbox" />Jornadas R4B</label>
+      <label className={styles.checkField}><input checked={groupMatchGenerationEnabled} disabled={busy} onChange={(event) => setGroupMatchGenerationEnabled(event.target.checked)} type="checkbox" />CanonicalMatches de grupo</label>
+      <label className={styles.checkField}><input checked={groupTrackingEnabled} disabled={busy} onChange={(event) => setGroupTrackingEnabled(event.target.checked)} type="checkbox" />Tracking R4C/R4D/R5</label>
+      <label className={styles.checkField}><input checked={groupStandingsEnabled} disabled={busy} onChange={(event) => setGroupStandingsEnabled(event.target.checked)} type="checkbox" />Clasificación por grupo</label>
+      <label className={styles.checkField}><input checked={qualificationEnabled} disabled={busy} onChange={(event) => setQualificationEnabled(event.target.checked)} type="checkbox" />Qualification</label>
+      <label className={styles.checkField}><input checked={bracketTemplateEnabled} disabled={busy} onChange={(event) => setBracketTemplateEnabled(event.target.checked)} type="checkbox" />Plantilla de cuadro</label>
+      <label className={styles.formField}>Motivo<textarea rows={2} value={reason} onChange={(event) => setReason(event.target.value)} /></label>
+      <button className={styles.primaryButton} disabled={busy || reason.trim().length < 3} onClick={() => void run("tournament.group_stage.flags.set", null, number(groupFlags.revision), {
+        bracketTemplateEnabled, groupMatchGenerationEnabled, groupSchedulingEnabled,
+        groupStageEnabled, groupStandingsEnabled, groupTrackingEnabled,
+        qualificationEnabled, reason,
+      })} type="button">Guardar Group Stage</button>
     </section>
 
     <section className={styles.competitionControl}>

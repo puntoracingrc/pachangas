@@ -5,11 +5,15 @@ import {
   type TournamentDrawAction,
   type TournamentJson,
 } from "../../tournament-draw-contract";
+import {
+  isTournamentGroupStageAction,
+  type TournamentGroupStageAction,
+} from "../../tournament-group-stage-contract";
 import { clientWriteGateResponse, noStoreHeaders } from "../client-policy/_contract";
 
 export { tournamentRecord };
 
-export const tournamentUuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+export const tournamentUuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 const serverFields = new Set([
   "actorId", "actor_id", "algorithmVersion", "confirmedAt", "confirmedRevision",
@@ -142,6 +146,57 @@ export function tournamentWriteGate(request: Request) {
 export function parseTournamentAction(value: unknown) {
   if (!isTournamentDrawAction(value)) throw new Error("INVALID_TOURNAMENT_COMMAND");
   return value;
+}
+
+export function parseTournamentGroupStageAction(value: unknown) {
+  if (!isTournamentGroupStageAction(value)) throw new Error("INVALID_TOURNAMENT_GROUP_STAGE_COMMAND");
+  return value;
+}
+
+export function tournamentGroupStageCommandPayload(action: TournamentGroupStageAction, raw: TournamentJson) {
+  const allowed = action === "group_schedule.create"
+    ? new Set(["groupId", "reason", "slots"])
+    : new Set(["reason"]);
+  if (Object.keys(raw).some((key) => !allowed.has(key) || serverFields.has(key))) {
+    throw new Error("TOURNAMENT_GROUP_STAGE_PAYLOAD_FIELD_NOT_ALLOWED");
+  }
+  const payload = validateNested(raw) as TournamentJson;
+  if (action !== "group_schedule.create") {
+    if (payload.reason != null && (typeof payload.reason !== "string" || String(payload.reason).length > 1100)) {
+      throw new Error("INVALID_TOURNAMENT_GROUP_STAGE_COMMAND");
+    }
+    return payload;
+  }
+  if (!tournamentUuidPattern.test(String(payload.groupId ?? "")) || !Array.isArray(payload.slots)
+      || payload.slots.length < 1 || payload.slots.length > 1000) {
+    throw new Error("INVALID_TOURNAMENT_GROUP_STAGE_COMMAND");
+  }
+  payload.slots = payload.slots.map((value) => {
+    const slot = tournamentRecord(value);
+    const slotKeys = new Set(["endsAt", "startsAt", "timezone", "venueId", "venueLabel"]);
+    if (Object.keys(slot).some((key) => !slotKeys.has(key) || serverFields.has(key))) {
+      throw new Error("TOURNAMENT_GROUP_SLOT_FIELD_NOT_ALLOWED");
+    }
+    const startsAt = typeof slot.startsAt === "string" ? slot.startsAt : "";
+    const endsAt = typeof slot.endsAt === "string" ? slot.endsAt : "";
+    const timezone = typeof slot.timezone === "string" ? slot.timezone.trim() : "";
+    const venueId = typeof slot.venueId === "string" ? slot.venueId : "";
+    const venueLabel = typeof slot.venueLabel === "string" ? slot.venueLabel.trim() : "";
+    if (!Number.isFinite(Date.parse(startsAt)) || !Number.isFinite(Date.parse(endsAt))
+        || Date.parse(endsAt) <= Date.parse(startsAt) || !timezone || timezone.length > 80
+        || (venueId && !tournamentUuidPattern.test(venueId)) || venueLabel.length > 160) {
+      throw new Error("INVALID_TOURNAMENT_GROUP_STAGE_COMMAND");
+    }
+    return {
+      endsAt,
+      startsAt,
+      timezone,
+      ...(venueId ? { venueId } : {}),
+      ...(venueLabel ? { venueLabel } : {}),
+    };
+  });
+  if (JSON.stringify(payload).length > 200_000) throw new Error("TOURNAMENT_PAYLOAD_TOO_LARGE");
+  return payload;
 }
 
 export function tournamentClientMetadata(request: Request, surface: string) {

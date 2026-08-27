@@ -29,7 +29,7 @@ import {
 import { generateDemoWorld } from "./generate-demo-world";
 
 export const DEMO_WORLD_V2_NOW = "2027-03-18T18:00:00.000Z";
-const DEMO_WORLD_V2_GENERATED_AT = "2026-08-26T10:00:00.000Z";
+const DEMO_WORLD_V2_GENERATED_AT = "2026-08-27T14:00:00.000Z";
 const LEAGUE_TEAM_IDS = [
   "demo_team_001",
   "demo_team_002",
@@ -780,6 +780,11 @@ function buildTournament(
 ): DemoWorldV2TournamentChunk {
   const authority = authorityProof.tournament;
   const teamByNumber = new Map(teams.slice(0, 16).map((team, index) => [index + 1, team]));
+  const teamRef = (teamNumber: number) => {
+    const team = teamByNumber.get(teamNumber);
+    if (!team) throw new Error(`DEMO_WORLD_V2_5_TEAM_LINEAGE_INVALID:${teamNumber}`);
+    return { id: team.id, name: team.name };
+  };
   const drawOutcomes = authority.drawOutcomes.map((outcome): DemoWorldV2TournamentOutcome => ({
     ...structuredClone(outcome),
     locks: outcome.locks.map((lock) => {
@@ -817,6 +822,61 @@ function buildTournament(
       toGroup: placement.groupNumber,
     }];
   });
+  const groupStage = {
+    currentRound: authority.groupStagePublic.currentRound,
+    discipline: authority.groupStagePublic.discipline.map((event) => ({
+      cardType: event.cardType,
+      playerLabel: event.playerLabel,
+      status: event.status,
+      team: teamRef(event.teamNumber),
+    })),
+    fixtureCount: authority.groupStagePublic.fixtureCount,
+    groupCount: authority.groupStagePublic.groupCount,
+    incidents: structuredClone(authority.groupStagePublic.incidents),
+    matches: authority.groupStagePublic.matches.map((match) => ({
+      awayTeam: teamRef(match.awayTeamNumber),
+      disciplineEvents: match.disciplineEvents,
+      groupNumber: match.groupNumber,
+      homeTeam: teamRef(match.homeTeamNumber),
+      incidentType: match.incidentType,
+      matchKey: match.matchKey,
+      ...(match.refereeNumber === undefined ? {} : { refereeNumber: match.refereeNumber }),
+      roundNumber: match.roundNumber,
+      scheduledStart: match.scheduledStart,
+      ...(match.score === undefined ? {} : { score: structuredClone(match.score) }),
+      status: match.status,
+      venueLabel: match.venueLabel,
+    })),
+    officialMatches: authority.groupStagePublic.officialMatches,
+    qualificationStatus: authority.groupStagePublic.qualificationStatus,
+    referees: structuredClone(authority.groupStagePublic.referees),
+    roundCount: authority.groupStagePublic.roundCount,
+    sanctions: authority.groupStagePublic.sanctions.map((sanction) => ({
+      publicSummary: sanction.publicSummary,
+      remainingUnits: sanction.remainingUnits,
+      status: sanction.status,
+      team: teamRef(sanction.teamNumber),
+      unitType: sanction.unitType,
+    })),
+    scheduledMatches: authority.groupStagePublic.scheduledMatches,
+    standings: authority.groupStagePublic.standings.map((standing) => ({
+      criteria: structuredClone(standing.criteria ?? []),
+      draws: standing.draws,
+      goalDifference: standing.goalDifference,
+      goalsAgainst: standing.goalsAgainst,
+      goalsFor: standing.goalsFor,
+      groupNumber: standing.groupNumber,
+      losses: standing.losses,
+      played: standing.played,
+      points: standing.points,
+      position: standing.position,
+      qualificationZone: standing.qualificationZone ?? false,
+      revision: standing.revision ?? 0,
+      status: standing.status ?? "PROVISIONAL",
+      team: teamRef(standing.teamNumber),
+      wins: standing.wins,
+    })),
+  } satisfies DemoWorldV2TournamentChunk["groupStage"];
   return {
     comparison: {
       movedTeams,
@@ -837,17 +897,41 @@ function buildTournament(
       explanation: "Dos equipos fueron fijados en la misma posición. El motor rechazó el sorteo y propuso liberar un lock o suavizar una restricción HARD.",
     },
     constraints: structuredClone(authority.constraints),
+    completionProof: {
+      bracketSize: authority.groupStageFinal.bracketSize,
+      bracketSources: authority.groupStageFinal.bracketSlots.map((slot) => ({
+        matchNumber: slot.matchNumber,
+        side: slot.side,
+        slotKey: slot.slotKey,
+        sourceGroupNumber: slot.sourceGroupNumber,
+        sourceKind: slot.sourceKind,
+        sourcePosition: slot.sourcePosition,
+        status: slot.status,
+      })),
+      bracketStatus: authority.groupStageFinal.bracketStatus,
+      canonicalMatches: authority.groupStageFinal.canonicalMatches,
+      eliminated: authority.groupStageFinal.eliminated,
+      knockoutMatches: authority.groupStageFinal.knockoutMatches,
+      officialMatches: authority.groupStageFinal.officialMatches,
+      progressionEnabled: authority.groupStageFinal.bracketProgressionEnabled,
+      qualificationChecksum: authority.groupStageFinal.qualificationChecksum,
+      qualificationStatus: authority.groupStageFinal.qualificationStatus,
+      qualifiers: authority.groupStageFinal.qualifiers,
+      standingSnapshots: authority.groupStageFinal.standingSnapshots,
+    },
     drawOutcomes: drawOutcomes as [DemoWorldV2TournamentOutcome, DemoWorldV2TournamentOutcome],
+    groupStage,
     nextPhase: {
       bracketProgression: false,
-      message: "Partidos del Torneo: próxima fase",
+      knockoutMatches: 0,
+      message: "Cuadro preparado. La fase eliminatoria se activará en la siguiente fase.",
       tournamentMatches: authority.tournamentMatches,
     },
     provenance: {
       authorityHash: authorityProof.authorityHash,
       database: authorityProof.database,
       operationReceipts: authority.operationReceipts,
-      rpcFamilies: ["R1", "CONFIGURATION_CENTER", "ENTRIES", "R6A_DRAW_ENGINE"],
+      rpcFamilies: ["R1", "CONFIGURATION_CENTER", "ENTRIES", "R4B", "R4C", "R4D", "R5", "REFEREES", "R6A_DRAW_ENGINE", "R6B_GROUP_STAGE"],
       source: "simulation-world",
       verified: true,
     },
@@ -896,7 +980,7 @@ export function generateDemoWorldV2(
     },
     counts: {
       achievements: activity.achievements.length,
-      canonicalMatches: competitions.matches.length,
+      canonicalMatches: competitions.matches.length + tournament.groupStage.matches.length,
       challenges: matches.challenges.length,
       clubs: clubsReferees.clubs.length,
       competitions: 1,
@@ -906,7 +990,7 @@ export function generateDemoWorldV2(
       referees: clubsReferees.referees.length,
       ruleRevisions: configuration.revisions.length,
       rewardBoxes: activity.rewardBoxes.length,
-      rounds: competitions.rounds.length,
+      rounds: competitions.rounds.length + tournament.groupStage.roundCount,
       stories: core.stories.length,
       teams: core.teams.length,
       tournamentDrawRevisions: authorityProof.tournament.totalRevisions,
