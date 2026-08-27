@@ -3,20 +3,22 @@ import { randomUUID } from "node:crypto";
 
 import { createClient } from "@supabase/supabase-js";
 
-const env = {
-  confirmation: process.env.TOURNAMENT_STAGING_CONFIRM,
-  previewUrl: process.env.TOURNAMENT_STAGING_PREVIEW_URL || null,
-  projectRef: process.env.TOURNAMENT_STAGING_PROJECT_REF,
-  publishableKey: process.env.TOURNAMENT_STAGING_PUBLISHABLE_KEY,
-  serviceRoleKey: process.env.TOURNAMENT_STAGING_SERVICE_ROLE_KEY,
-  url: process.env.TOURNAMENT_STAGING_URL,
+const envSpec = {
+  confirmation: ["TOURNAMENT_STAGING_CONFIRM", process.env.TOURNAMENT_STAGING_CONFIRM],
+  previewUrl: ["TOURNAMENT_STAGING_PREVIEW_URL", process.env.TOURNAMENT_STAGING_PREVIEW_URL || null],
+  projectRef: ["TOURNAMENT_STAGING_PROJECT_REF", process.env.TOURNAMENT_STAGING_PROJECT_REF],
+  publishableKey: ["TOURNAMENT_STAGING_PUBLISHABLE_KEY", process.env.TOURNAMENT_STAGING_PUBLISHABLE_KEY],
+  serviceRoleKey: ["TOURNAMENT_STAGING_SERVICE_ROLE_KEY", process.env.TOURNAMENT_STAGING_SERVICE_ROLE_KEY],
+  url: ["TOURNAMENT_STAGING_URL", process.env.TOURNAMENT_STAGING_URL],
 };
 
-for (const [key, value] of Object.entries(env)) {
-  if (key !== "previewUrl" && !value) {
-    throw new Error(`TOURNAMENT_STAGING_${key.toUpperCase()} is required`);
-  }
+for (const [key, [variableName, value]] of Object.entries(envSpec)) {
+  if (key !== "previewUrl" && !value) throw new Error(`${variableName} is required`);
 }
+
+const env = Object.fromEntries(
+  Object.entries(envSpec).map(([key, [, value]]) => [key, value]),
+);
 
 function isBrowserPublicKey(value) {
   if (/^sb_publishable_/i.test(value)) return true;

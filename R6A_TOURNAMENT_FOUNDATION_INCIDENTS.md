@@ -263,3 +263,17 @@
 - Required correction: extend the canonical Club fixture to perform `club.create -> club.review.submit -> club.status.set(active)`, using each server-confirmed revision and asserting every returned state.
 - Required regression: a fresh one-shot E2E must complete the full Club review transition, expose the active Club to the Tournament organizer read model, execute its create/cancel history and leave zero Tournament matches.
 - Regression status: `PENDING`.
+
+## R6A-016 - Staging preflight obscures the missing project-ref variable
+
+- Classification: `TESTABILITY_GAP`
+- Status: `OPEN`
+- Found by: final one-shot staging preflight before any network request
+- Original scenario: invoke the authenticated E2E with an empty `TOURNAMENT_STAGING_PROJECT_REF` because the ephemeral credential file does not export a project-ref variable.
+- Observed result: the runner stops before contacting Supabase, but reports the synthesized name `TOURNAMENT_STAGING_PROJECTREF`; the surrounding diagnostic pipeline also returned the exit code from `tee` instead of Node.
+- Expected result: preflight names the exact required variable, the release invocation supplies the known branch ref explicitly, and every diagnostic pipeline preserves the test process exit code.
+- Product impact: none. No Supabase request, flag mutation, fixture, Tournament command or production action occurred.
+- Security boundary: do not infer a project ref from a secret, do not relax the explicit production-target guard and do not reuse a one-shot branch after a failed certification invocation.
+- Required correction: map each preflight field to its exact environment-variable name, run the release command with `set -o pipefail`, discard the current Preview and Supabase branch, and rebuild a fresh ledger-158 branch.
+- Required regression: omission of the project ref must report `TOURNAMENT_STAGING_PROJECT_REF is required`; the fresh one-shot E2E must complete against the explicitly supplied non-production ref and clean up all temporary state.
+- Regression status: `PENDING`.

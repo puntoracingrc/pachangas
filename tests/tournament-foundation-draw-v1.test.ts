@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
+import { fileURLToPath } from "node:url";
 import {
   tournamentAlgorithmVersion,
   tournamentDrawActions,
@@ -233,4 +235,26 @@ test("authenticated staging covers the ten canonical stories, security negatives
   assert.match(staging, /operationalStatus, "active"/);
   assert.match(staging, /restore-club-flags/);
   assert.doesNotMatch(staging, /from\("pachanga_clubs"\)\.insert|from\("pachanga_club_memberships"\)\.insert/);
+});
+
+test("staging preflight reports the exact missing project-ref variable", () => {
+  const result = spawnSync(
+    process.execPath,
+    [fileURLToPath(new URL("tests/tournament-foundation-draw-v1-staging-e2e.mjs", root))],
+    {
+      encoding: "utf8",
+      env: {
+        ...process.env,
+        TOURNAMENT_STAGING_CONFIRM: "TOURNAMENT_STAGING_ONLY",
+        TOURNAMENT_STAGING_PREVIEW_URL: "https://preview.example.test",
+        TOURNAMENT_STAGING_PROJECT_REF: "",
+        TOURNAMENT_STAGING_PUBLISHABLE_KEY: "not-used-before-project-ref-preflight",
+        TOURNAMENT_STAGING_SERVICE_ROLE_KEY: "not-used-before-project-ref-preflight",
+        TOURNAMENT_STAGING_URL: "https://staging.example.test",
+      },
+    },
+  );
+
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /TOURNAMENT_STAGING_PROJECT_REF is required/);
 });
