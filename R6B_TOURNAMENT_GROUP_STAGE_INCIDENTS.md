@@ -2328,6 +2328,26 @@ After correction, the entry must include its regression and may only be marked
   generated Service Worker. The previous false failure is gone and the focused
   R6B plus PWA/Demo suite passes 56/56.
 
+### R6B-ENVIRONMENT-126 - Anonymous Preview probe receives Vercel protection HTML
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: fetch `/sw.js` and the Demo V2.5 manifest from the READY
+  PR #207 Preview URL with a plain Node request before merging the hotfix.
+- Observed: Vercel Deployment Protection responds with its authenticated HTML
+  shell, so compiling the body fails at the first `<` rather than exercising
+  the project worker.
+- Impact: the Preview deployment remains READY and GitHub checks pass, but this
+  anonymous request provides no application-level worker evidence.
+- Planned correction: use an authenticated Vercel/browser channel if available,
+  then require the same syntax, active-controller and online-to-offline checks
+  against the exact production deployment after merge.
+- Regression evidence: `vercel curl` supplied an authenticated protection
+  bypass for the exact READY Preview. Its `/sw.js` body is 4,877 bytes, compiles
+  successfully, contains the immutable Demo cache branch and the corrected
+  Tournament route pattern. The protected V2.5 manifest also returns the exact
+  committed seed and SHA-256 hash.
+
 ## Verification closure - 2026-08-27
 
 - `R6B-PRODUCT-005`, `R6B-PRODUCT-006`, `R6B-SIMULATION-010`,
