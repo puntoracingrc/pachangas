@@ -651,7 +651,7 @@
 ## R6A-035 - GitHub HTTPS push stalls after the local commit
 
 - Classification: `ENVIRONMENT_ISSUE`
-- Status: `OPEN`
+- Status: `FIXED`
 - Found by: publication of the final Preview evidence commit.
 - Original scenario: push commit
   `396313f` to `codex/tournament-foundation-draw-engine-v1` over the configured
@@ -666,4 +666,8 @@
   assume remote success without reading the remote branch SHA.
 - Required correction: stop only the stalled process, query the remote branch,
   retry once if the SHA is absent, and confirm exact remote/local equality.
-- Regression status: `PENDING`.
+- Regression status: `REGRESSION_VERIFIED`.
+- Regression evidence: the stalled process was stopped without another push in
+  flight; `ls-remote` proved the commit absent, one bounded retry succeeded,
+  and local/remote now both resolve to
+  `841fc60b75ccb537669d9e0fd6da625884393584`.
