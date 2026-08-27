@@ -582,9 +582,7 @@ async function invariantCounts() {
 }
 
 async function waitForRealtime(organizerClient, competitionId) {
-  const channel = organizerClient.channel(`r6a-${runId}-${competitionId}`, {
-    config: { broadcast: { replication_ready: true } },
-  });
+  const channel = organizerClient.channel(`r6a-${runId}-${competitionId}`);
   channels.push(channel);
   const eventPromise = new Promise((resolve) => {
     channel.on("postgres_changes", {
@@ -594,24 +592,24 @@ async function waitForRealtime(organizerClient, competitionId) {
       table: "pachanga_tournament_invalidations",
     }, (payload) => resolve(payload.new));
   });
-  let rejectReplication;
-  const replicationPromise = new Promise((resolve, reject) => {
-    rejectReplication = reject;
-    const replicationTimer = setTimeout(
-      () => reject(new Error("R6A_REALTIME_REPLICATION_READY_TIMEOUT")),
+  let rejectPostgres;
+  const postgresPromise = new Promise((resolve, reject) => {
+    rejectPostgres = reject;
+    const postgresTimer = setTimeout(
+      () => reject(new Error("R6A_REALTIME_POSTGRES_READY_TIMEOUT")),
       15_000,
     );
     channel.on("system", {}, (payload) => {
-      if (payload.extension !== "system") return;
-      clearTimeout(replicationTimer);
+      if (payload.extension !== "postgres_changes") return;
+      clearTimeout(postgresTimer);
       if (payload.status === "ok") resolve(payload);
-      else reject(new Error(`R6A_REALTIME_REPLICATION_${String(payload.status).toUpperCase()}`));
+      else reject(new Error(`R6A_REALTIME_POSTGRES_${String(payload.status).toUpperCase()}`));
     });
   });
   const readyPromise = new Promise((resolve, reject) => {
     const readyTimer = setTimeout(() => {
       const error = new Error("R6A_REALTIME_SUBSCRIBE_TIMEOUT");
-      rejectReplication(error);
+      rejectPostgres(error);
       reject(error);
     }, 15_000);
     channel.subscribe((status) => {
@@ -622,12 +620,12 @@ async function waitForRealtime(organizerClient, competitionId) {
       if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
         clearTimeout(readyTimer);
         const error = new Error(`R6A_REALTIME_${status}`);
-        rejectReplication(error);
+        rejectPostgres(error);
         reject(error);
       }
     });
   });
-  await Promise.all([readyPromise, replicationPromise]);
+  await Promise.all([readyPromise, postgresPromise]);
   return {
     event: async () => {
       let timeout;

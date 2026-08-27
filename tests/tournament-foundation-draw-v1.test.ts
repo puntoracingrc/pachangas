@@ -181,9 +181,9 @@ test("PWA blocks Tournament writes offline while Realtime only invalidates canon
   assert.equal(classifySupabaseWrite("https://example.supabase.co/rest/v1/rpc/command_pachanga_tournament_draw_v1", { method: "POST" }), "rpc:command_pachanga_tournament_draw_v1");
   assert.match(client, /clientWriteFetch\("api:tournament-draw-command"/);
   assert.match(client, /state === "SUBSCRIBED"/);
-  assert.match(client, /replication_ready: true/);
+  assert.doesNotMatch(client, /replication_ready: true/);
   assert.match(client, /\.on\("system", \{\},/);
-  assert.match(client, /payload\.extension === "system" && payload\.status === "ok"/);
+  assert.match(client, /payload\.extension === "postgres_changes" && payload\.status === "ok"/);
   assert.match(client, /window\.addEventListener\("online"/);
   assert.match(client, /Sin conexión: puedes consultar la copia local, pero no modificar el Torneo/);
   assert.doesNotMatch(client, /setData\([^)]*payload\.new|offlineQueue|queueOffline|pendingOperations/i);
@@ -251,9 +251,10 @@ test("authenticated staging covers the ten canonical stories, security negatives
   assert.match(staging, /TOURNAMENT_STAGING_PRODUCTION_TARGET_FORBIDDEN/);
   assert.match(staging, /EPHEMERAL_BRANCH_TEARDOWN_REQUIRED/);
   assert.match(staging, /pachanga_tournament_invalidations/);
-  assert.match(staging, /replication_ready: true/);
-  assert.match(staging, /R6A_REALTIME_REPLICATION_READY_TIMEOUT/);
-  assert.match(staging, /await Promise\.all\(\[readyPromise, replicationPromise\]\)/);
+  assert.doesNotMatch(staging, /replication_ready: true/);
+  assert.match(staging, /payload\.extension !== "postgres_changes"/);
+  assert.match(staging, /R6A_REALTIME_POSTGRES_READY_TIMEOUT/);
+  assert.match(staging, /await Promise\.all\(\[readyPromise, postgresPromise\]\)/);
   assert.match(staging, /TOURNAMENT_STAGING_BROWSER_KEY_REQUIRED/);
   assert.match(staging, /server_sequence: nextFixtureServerSequence\(\)/);
   assert.match(staging, /command_pachanga_club_foundation_v1/);
