@@ -16,6 +16,8 @@ import {
   type DemoWorldV2LeagueMatch,
   type DemoWorldV2Manifest,
   type DemoWorldV2Snapshot,
+  type DemoWorldV2TournamentChunk,
+  type DemoWorldV2TournamentOutcome,
 } from "../../app/demo-world/demo-world-v2-contract";
 import { DEMO_WORLD_MODE, DEMO_WORLD_SEASON } from "../../app/demo-world/demo-world-contract";
 import {
@@ -772,6 +774,88 @@ function buildConfiguration(
   };
 }
 
+function buildTournament(
+  teams: DemoWorldTeam[],
+  authorityProof: DemoWorldV2AuthorityProof,
+): DemoWorldV2TournamentChunk {
+  const authority = authorityProof.tournament;
+  const teamByNumber = new Map(teams.slice(0, 16).map((team, index) => [index + 1, team]));
+  const drawOutcomes = authority.drawOutcomes.map((outcome): DemoWorldV2TournamentOutcome => ({
+    ...structuredClone(outcome),
+    locks: outcome.locks.map((lock) => {
+      const team = teamByNumber.get(lock.entryNumber);
+      if (!team || team.name !== lock.teamName) throw new Error("DEMO_WORLD_V2_4_TEAM_LINEAGE_INVALID");
+      return {
+        entryNumber: lock.entryNumber,
+        groupNumber: lock.groupNumber,
+        slotNumber: lock.slotNumber,
+        team: { id: team.id, name: team.name },
+      };
+    }),
+    placements: outcome.placements.map((placement) => {
+      const team = teamByNumber.get(placement.entryNumber);
+      if (!team || team.name !== placement.teamName) throw new Error("DEMO_WORLD_V2_4_TEAM_LINEAGE_INVALID");
+      return {
+        entryNumber: placement.entryNumber,
+        groupNumber: placement.groupNumber,
+        placementSource: placement.placementSource,
+        potNumber: placement.potNumber,
+        slotNumber: placement.slotNumber,
+        team: { id: team.id, name: team.name },
+      };
+    }),
+  }));
+  const automatic = drawOutcomes[0]!;
+  const hybrid = drawOutcomes[1]!;
+  const automaticByTeam = new Map(automatic.placements.map((placement) => [placement.team.id, placement]));
+  const movedTeams = hybrid.placements.flatMap((placement) => {
+    const previous = automaticByTeam.get(placement.team.id);
+    if (!previous || previous.groupNumber === placement.groupNumber) return [];
+    return [{
+      fromGroup: previous.groupNumber,
+      team: structuredClone(placement.team),
+      toGroup: placement.groupNumber,
+    }];
+  });
+  return {
+    comparison: {
+      movedTeams,
+      qualityDelta: Number((hybrid.qualityScore - automatic.qualityScore).toFixed(3)),
+      retainedLocks: hybrid.locks.length,
+    },
+    competition: {
+      acceptedParticipants: authority.acceptedParticipants,
+      groupCount: authority.groupCount,
+      name: authority.competitionName,
+      planStatus: authority.planStatus,
+      potCount: authority.potCount,
+      publishedRevision: authority.publishedRevision,
+      slug: authority.slug,
+    },
+    conflict: {
+      ...structuredClone(authority.conflict),
+      explanation: "Dos equipos fueron fijados en la misma posición. El motor rechazó el sorteo y propuso liberar un lock o suavizar una restricción HARD.",
+    },
+    constraints: structuredClone(authority.constraints),
+    drawOutcomes: drawOutcomes as [DemoWorldV2TournamentOutcome, DemoWorldV2TournamentOutcome],
+    nextPhase: {
+      bracketProgression: false,
+      message: "Partidos del Torneo: próxima fase",
+      tournamentMatches: authority.tournamentMatches,
+    },
+    provenance: {
+      authorityHash: authorityProof.authorityHash,
+      database: authorityProof.database,
+      operationReceipts: authority.operationReceipts,
+      rpcFamilies: ["R1", "CONFIGURATION_CENTER", "ENTRIES", "R6A_DRAW_ENGINE"],
+      source: "simulation-world",
+      verified: true,
+    },
+    readOnly: true,
+    transport: { methods: ["GET"], remoteWrites: 0 },
+  };
+}
+
 export function generateDemoWorldV2(
   authorityProof = loadDemoWorldV2AuthorityProof(),
 ): DemoWorldV2Snapshot {
@@ -783,6 +867,7 @@ export function generateDemoWorldV2(
     competitions.refereeAssignmentDeskPreview,
   );
   const configuration = buildConfiguration(authorityProof);
+  const tournament = buildTournament(v1.core.teams, authorityProof);
   const activity = structuredClone(v1.activity);
   const core = structuredClone(v1.core);
   const matches = structuredClone(v1.matches);
@@ -795,7 +880,7 @@ export function generateDemoWorldV2(
     summary: "Consulta la competición y sus decisiones públicas sin alterar el snapshot.",
     teamId: "demo_team_001",
   });
-  const payload = { activity, clubsReferees, competitions, configuration, core, matches, players };
+  const payload = { activity, clubsReferees, competitions, configuration, core, matches, players, tournament };
   const snapshotHash = hash(payload);
   const cacheKey = snapshotHash.slice(0, 16);
   const manifest: DemoWorldV2Manifest = {
@@ -807,6 +892,7 @@ export function generateDemoWorldV2(
       core: `/demo-world/v2/core.json?h=${cacheKey}`,
       matches: `/demo-world/v2/matches.json?h=${cacheKey}`,
       players: `/demo-world/v2/players.json?h=${cacheKey}`,
+      tournament: `/demo-world/v2/tournament.json?h=${cacheKey}`,
     },
     counts: {
       achievements: activity.achievements.length,
@@ -823,6 +909,9 @@ export function generateDemoWorldV2(
       rounds: competitions.rounds.length,
       stories: core.stories.length,
       teams: core.teams.length,
+      tournamentDrawRevisions: authorityProof.tournament.totalRevisions,
+      tournamentGroups: tournament.competition.groupCount,
+      tournaments: 1,
     },
     demoNow: DEMO_WORLD_V2_NOW,
     generatedAt: DEMO_WORLD_V2_GENERATED_AT,
@@ -846,6 +935,7 @@ export async function writeDemoWorldV2(snapshot: DemoWorldV2Snapshot, outputDire
     "manifest.json": snapshot.manifest,
     "matches.json": snapshot.matches,
     "players.json": snapshot.players,
+    "tournament.json": snapshot.tournament,
   };
   for (const [name, value] of Object.entries(files)) {
     await writeFile(path.join(outputDirectory, name), `${JSON.stringify(value)}\n`, "utf8");
@@ -865,6 +955,7 @@ async function main() {
     core: snapshot.core,
     matches: snapshot.matches,
     players: snapshot.players,
+    tournament: snapshot.tournament,
   }));
   process.stdout.write(`${JSON.stringify({
     counts: snapshot.manifest.counts,

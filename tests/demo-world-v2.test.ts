@@ -32,7 +32,7 @@ async function jsonFile<T>(name: string): Promise<T> {
 }
 
 async function committedSnapshot(): Promise<DemoWorldV2Snapshot> {
-  const [activity, clubsReferees, competitions, configuration, core, manifest, matches, players] = await Promise.all([
+  const [activity, clubsReferees, competitions, configuration, core, manifest, matches, players, tournament] = await Promise.all([
     jsonFile<DemoWorldV2Snapshot["activity"]>("activity.json"),
     jsonFile<DemoWorldV2Snapshot["clubsReferees"]>("clubs-referees.json"),
     jsonFile<DemoWorldV2Snapshot["competitions"]>("competitions.json"),
@@ -41,8 +41,9 @@ async function committedSnapshot(): Promise<DemoWorldV2Snapshot> {
     jsonFile<DemoWorldV2Snapshot["manifest"]>("manifest.json"),
     jsonFile<DemoWorldV2Snapshot["matches"]>("matches.json"),
     jsonFile<DemoWorldV2Snapshot["players"]>("players.json"),
+    jsonFile<DemoWorldV2Snapshot["tournament"]>("tournament.json"),
   ]);
-  return { activity, clubsReferees, competitions, configuration, core, manifest, matches, players };
+  return { activity, clubsReferees, competitions, configuration, core, manifest, matches, players, tournament };
 }
 
 test("Demo World V2 is deterministic and the committed snapshot matches its hash", async () => {
@@ -57,10 +58,11 @@ test("Demo World V2 is deterministic and the committed snapshot matches its hash
     core: committed.core,
     matches: committed.matches,
     players: committed.players,
+    tournament: committed.tournament,
   };
   assert.equal(createHash("sha256").update(JSON.stringify(payload)).digest("hex"), committed.manifest.hash);
-  assert.equal(committed.manifest.hash, "9dca7d56ef77a17fbc3b625a89bfcd44096afa8e1a0420689531b6573b3bc170");
-  assert.equal(committed.manifest.version, 2.3);
+  assert.equal(committed.manifest.hash, "e3fa89f32278fac9d49eca3635ff19255a06f76b7cd65eff12b916c958c0141b");
+  assert.equal(committed.manifest.version, 2.4);
   assert.equal(committed.manifest.seed, DEMO_WORLD_V2_SEED);
   assert.deepEqual(demoWorldV2IntegrityErrors(committed), []);
 });
@@ -68,12 +70,12 @@ test("Demo World V2 is deterministic and the committed snapshot matches its hash
 test("the committed authority proof comes from deterministic PostgreSQL operations", async () => {
   const proof = assertDemoWorldV2AuthorityProof(loadDemoWorldV2AuthorityProof());
   const world = await committedSnapshot();
-  assert.equal(proof.authorityHash, "9f016b51e530b01b71f770da7b586a78add043f5231a32793460163376eab3ff");
+  assert.equal(proof.authorityHash, "991173f97e638a5ac9d55764284f331d61fffc95c799b60850f156cda23f612f");
   assert.equal(proof.authorityHash, world.competitions.provenance.authorityHash);
   assert.equal(proof.database, "temporary-local-postgresql");
-  assert.equal(proof.migrationCount, 158);
+  assert.equal(proof.migrationCount, 163);
   assert.equal(proof.remoteWrites, 0);
-  assert.deepEqual(proof.rpcFamilies, ["R1", "R3", "R4A", "R4B", "R4C", "R4D", "R5"]);
+  assert.deepEqual(proof.rpcFamilies, ["R1", "R3", "R4A", "R4B", "R4C", "R4D", "R5", "R6A"]);
   assert.deepEqual(proof.operationReceipts, {
     discipline: 33,
     matchOperations: 266,
@@ -130,7 +132,7 @@ test("the protagonist League has the complete canonical R1-R5 graph including R3
   )));
   assert.deepEqual(league.provenance.rpcFamilies, ["R1", "R3", "R4A", "R4B", "R4C", "R4D", "R5"]);
   assert.equal(league.provenance.verified, true);
-  assert.equal(league.provenance.migrations, 158);
+  assert.equal(league.provenance.migrations, 163);
   assert.equal(league.competition.refereeAssignmentsEnabled, true);
 });
 
@@ -290,7 +292,63 @@ test("V2.3 configuration parity exposes two canonical revisions without private 
   assert.doesNotMatch(JSON.stringify(configuration), /fixedCents|privateTerms|proposedFee|agreedFee/);
 });
 
-test("the historical V2.1 and V2.2 snapshots remain immutable beside V2.3", async () => {
+test("V2.4 exposes one deterministic Tournament draw and one immutable hybrid comparison", async () => {
+  const world = assertDemoWorldV2Snapshot(await committedSnapshot());
+  const tournament = world.tournament;
+  assert.equal(tournament.readOnly, true);
+  assert.deepEqual(tournament.transport, { methods: ["GET"], remoteWrites: 0 });
+  assert.deepEqual(tournament.competition, {
+    acceptedParticipants: 16,
+    groupCount: 4,
+    name: "COPA BARRIOS IQ 2027",
+    planStatus: "published",
+    potCount: 4,
+    publishedRevision: 5,
+    slug: "copa-barrios-iq-2027",
+  });
+  assert.deepEqual(tournament.constraints.map(({ type, strength }) => ({ strength, type })), [
+    { strength: "HARD", type: "POT_DISTRIBUTION" },
+    { strength: "SOFT", type: "SAME_CLUB_AVOIDANCE" },
+    { strength: "SOFT", type: "TEAM_LEVEL_BALANCE" },
+  ]);
+
+  const [automatic, hybrid] = tournament.drawOutcomes;
+  assert.equal(automatic?.mode, "SEEDED_POTS");
+  assert.equal(automatic?.seed, "COPA-BARRIOS-IQ-2027-AUTO");
+  assert.deepEqual(automatic?.locks, []);
+  assert.equal(hybrid?.mode, "HYBRID");
+  assert.equal(hybrid?.seed, "COPA-BARRIOS-IQ-2027-HYBRID");
+  assert.equal(hybrid?.locks.length, 2);
+  assert.equal(hybrid?.manualOverrideCount, 2);
+
+  for (const outcome of tournament.drawOutcomes) {
+    assert.equal(outcome.placements.length, 16);
+    assert.equal(new Set(outcome.placements.map(({ team }) => team.id)).size, 16);
+    assert.equal(outcome.hardViolations, 0);
+    assert.equal(outcome.sameClubCollisions, 0);
+    assert.equal(outcome.unassignedEntries, 0);
+    for (const groupNumber of [1, 2, 3, 4]) {
+      const group = outcome.placements.filter((placement) => placement.groupNumber === groupNumber);
+      assert.equal(group.length, 4);
+      assert.deepEqual(group.map(({ potNumber }) => potNumber).sort(), [1, 2, 3, 4]);
+    }
+  }
+
+  assert.equal(tournament.comparison.retainedLocks, 2);
+  assert.ok(tournament.comparison.movedTeams.length > 0);
+  assert.equal(tournament.conflict.errorCode, "DRAW_UNSATISFIABLE");
+  assert.equal(tournament.conflict.reasonCode, "GROUP_CONSTRAINTS_UNSATISFIABLE");
+  assert.equal(tournament.conflict.attempts, 128);
+  assert.ok(tournament.conflict.suggestions.length >= 2);
+  assert.deepEqual(tournament.nextPhase, {
+    bracketProgression: false,
+    message: "Partidos del Torneo: próxima fase",
+    tournamentMatches: 0,
+  });
+  assert.doesNotMatch(JSON.stringify(tournament), /[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/i);
+});
+
+test("the historical V2.1 and V2.2 snapshots remain immutable beside V2.4", async () => {
   const expectedFiles = ["activity.json", "clubs-referees.json", "competitions.json", "core.json", "manifest.json", "matches.json", "players.json"];
   await Promise.all(expectedFiles.map((name) => readFile(path.join(historicalV21Root, name), "utf8")));
   const manifest = JSON.parse(await readFile(path.join(historicalV21Root, "manifest.json"), "utf8")) as Record<string, unknown>;
@@ -321,7 +379,7 @@ test("V2 chunks stay lazy, GET-only and converge to the validated snapshot", asy
     assert.match(requested[0]!, /core\.json/);
     const loaded = await loadDemoWorldV2Snapshot(world.manifest, core);
     assert.deepEqual(loaded, world);
-    assert.equal(requested.length, 7);
+    assert.equal(requested.length, 8);
     assert.ok(requested.every((url) => /\?h=[0-9a-f]{16}$/.test(url)));
   } finally {
     globalThis.fetch = originalFetch;
@@ -339,7 +397,7 @@ test("the public Demo uses production renderers in one shell and exposes all V2 
     readFile(path.join(root, "app/clubes/[slug]/public-club-profile.tsx"), "utf8"),
     readFile(path.join(root, "app/demo-world/demo-world.module.css"), "utf8"),
   ]);
-  for (const label of ["Liga", "Configuración", "Clasificación", "Jornadas", "Disciplina", "Club", "Árbitros"]) assert.match(appSource, new RegExp(`label: "${label}"`));
+  for (const label of ["Liga", "Configuración", "Torneo", "Clasificación", "Jornadas", "Disciplina", "Club", "Árbitros"]) assert.match(appSource, new RegExp(`label: "${label}"`));
   assert.match(appSource, /LeagueSchedulingClient embedded/);
   assert.match(appSource, /onOpenMatch=\{\(canonicalMatchId\)/);
   assert.match(appSource, /entry\.canonicalMatchId === canonicalMatchId/);
@@ -374,6 +432,7 @@ test("the public Demo uses production renderers in one shell and exposes all V2 
   assert.match(demoStyles, /\.configurationRevisionGrid \{/);
   assert.equal(demoWorldV2TabFromSearch("?tab=clasificacion"), "clasificacion");
   assert.equal(demoWorldV2TabFromSearch("?tab=configuracion"), "configuracion");
+  assert.equal(demoWorldV2TabFromSearch("?tab=torneo"), "torneo");
   assert.equal(demoWorldV2TabFromSearch("?tab=disciplina"), "disciplina");
   assert.equal(demoWorldV2TabFromSearch("?tab=desconocido"), "inicio");
 });

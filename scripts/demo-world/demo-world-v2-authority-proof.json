@@ -1761,7 +1761,7 @@
   },
   "database": "temporary-local-postgresql",
   "generatedAt": "2026-08-26T10:00:00.000Z",
-  "migrationCount": 158,
+  "migrationCount": 163,
   "remoteWrites": 0,
   "rpcFamilies": [
     "R1",
@@ -1770,8 +1770,367 @@
     "R4B",
     "R4C",
     "R4D",
-    "R5"
+    "R5",
+    "R6A"
   ],
-  "version": 4,
-  "authorityHash": "9f016b51e530b01b71f770da7b586a78add043f5231a32793460163376eab3ff"
+  "tournament": {
+    "slug": "copa-barrios-iq-2027",
+    "conflict": {
+      "attempts": 128,
+      "errorCode": "DRAW_UNSATISFIABLE",
+      "reasonCode": "GROUP_CONSTRAINTS_UNSATISFIABLE",
+      "suggestions": [
+        "Revisa locks que ocupan la misma posición.",
+        "Convierte una separación HARD en SOFT.",
+        "Aumenta el número de grupos o vuelve a congelar participantes."
+      ],
+      "constraintTypes": [
+        "FIXED_POSITION"
+      ]
+    },
+    "potCount": 4,
+    "groupCount": 4,
+    "planStatus": "published",
+    "constraints": [
+      {
+        "type": "POT_DISTRIBUTION",
+        "reason": "Un equipo de cada bombo por grupo",
+        "weight": 100,
+        "strength": "HARD"
+      },
+      {
+        "type": "SAME_CLUB_AVOIDANCE",
+        "reason": "Separar equipos afiliados al mismo Club",
+        "weight": 20,
+        "strength": "SOFT"
+      },
+      {
+        "type": "TEAM_LEVEL_BALANCE",
+        "reason": "Preferir grupos equilibrados",
+        "weight": 2,
+        "strength": "SOFT"
+      }
+    ],
+    "drawOutcomes": [
+      {
+        "mode": "SEEDED_POTS",
+        "seed": "COPA-BARRIOS-IQ-2027-AUTO",
+        "locks": [],
+        "version": 1,
+        "softScore": 100,
+        "placements": [
+          {
+            "teamName": "Metro Rubí",
+            "potNumber": 3,
+            "slotNumber": 1,
+            "entryNumber": 11,
+            "groupNumber": 1,
+            "placementSource": "ENGINE"
+          },
+          {
+            "teamName": "Vector Sant Cugat",
+            "potNumber": 4,
+            "slotNumber": 2,
+            "entryNumber": 14,
+            "groupNumber": 1,
+            "placementSource": "ENGINE"
+          },
+          {
+            "teamName": "Ferro Sant Andreu",
+            "potNumber": 2,
+            "slotNumber": 3,
+            "entryNumber": 6,
+            "groupNumber": 1,
+            "placementSource": "ENGINE"
+          },
+          {
+            "teamName": "Brúixola Sants",
+            "potNumber": 1,
+            "slotNumber": 4,
+            "entryNumber": 3,
+            "groupNumber": 1,
+            "placementSource": "ENGINE"
+          },
+          {
+            "teamName": "Vértice Gràcia",
+            "potNumber": 2,
+            "slotNumber": 1,
+            "entryNumber": 8,
+            "groupNumber": 2,
+            "placementSource": "ENGINE"
+          },
+          {
+            "teamName": "Pols Sabadell",
+            "potNumber": 3,
+            "slotNumber": 2,
+            "entryNumber": 9,
+            "groupNumber": 2,
+            "placementSource": "ENGINE"
+          },
+          {
+            "teamName": "Ronda Mollet",
+            "potNumber": 4,
+            "slotNumber": 3,
+            "entryNumber": 15,
+            "groupNumber": 2,
+            "placementSource": "ENGINE"
+          },
+          {
+            "teamName": "Circuit Poblenou",
+            "potNumber": 1,
+            "slotNumber": 4,
+            "entryNumber": 2,
+            "groupNumber": 2,
+            "placementSource": "ENGINE"
+          },
+          {
+            "teamName": "Nexe Granollers",
+            "potNumber": 3,
+            "slotNumber": 1,
+            "entryNumber": 12,
+            "groupNumber": 3,
+            "placementSource": "ENGINE"
+          },
+          {
+            "teamName": "Marina Fosca",
+            "potNumber": 2,
+            "slotNumber": 2,
+            "entryNumber": 5,
+            "groupNumber": 3,
+            "placementSource": "ENGINE"
+          },
+          {
+            "teamName": "Onze del Clot",
+            "potNumber": 1,
+            "slotNumber": 3,
+            "entryNumber": 4,
+            "groupNumber": 3,
+            "placementSource": "ENGINE"
+          },
+          {
+            "teamName": "Línia Cerdanyola",
+            "potNumber": 4,
+            "slotNumber": 4,
+            "entryNumber": 13,
+            "groupNumber": 3,
+            "placementSource": "ENGINE"
+          },
+          {
+            "teamName": "Diagonal 26",
+            "potNumber": 2,
+            "slotNumber": 1,
+            "entryNumber": 7,
+            "groupNumber": 4,
+            "placementSource": "ENGINE"
+          },
+          {
+            "teamName": "Taller Barberà",
+            "potNumber": 4,
+            "slotNumber": 2,
+            "entryNumber": 16,
+            "groupNumber": 4,
+            "placementSource": "ENGINE"
+          },
+          {
+            "teamName": "Carboni Terrassa",
+            "potNumber": 3,
+            "slotNumber": 3,
+            "entryNumber": 10,
+            "groupNumber": 4,
+            "placementSource": "ENGINE"
+          },
+          {
+            "teamName": "Cobalto Raval",
+            "potNumber": 1,
+            "slotNumber": 4,
+            "entryNumber": 1,
+            "groupNumber": 4,
+            "placementSource": "ENGINE"
+          }
+        ],
+        "levelBalance": 0,
+        "qualityScore": 100,
+        "inputChecksum": "e49b527507229916755dd5cd540e90e4a5f4dbe7f292c550d4b5adde3b2b0e51",
+        "hardViolations": 0,
+        "resultChecksum": "934e1d39c7b27c9ba3c69676f37cbfc6c93e44173507707e9933261a37214bbd",
+        "potDistribution": 100,
+        "algorithmVersion": "tournament-draw-v1.0.0",
+        "groupSizeBalance": 100,
+        "unassignedEntries": 0,
+        "sameClubCollisions": 0,
+        "manualOverrideCount": 0
+      },
+      {
+        "mode": "HYBRID",
+        "seed": "COPA-BARRIOS-IQ-2027-HYBRID",
+        "locks": [
+          {
+            "teamName": "Metro Rubí",
+            "slotNumber": 1,
+            "entryNumber": 11,
+            "groupNumber": 1
+          },
+          {
+            "teamName": "Vector Sant Cugat",
+            "slotNumber": 2,
+            "entryNumber": 14,
+            "groupNumber": 1
+          }
+        ],
+        "version": 2,
+        "softScore": 99.5,
+        "placements": [
+          {
+            "teamName": "Metro Rubí",
+            "potNumber": 3,
+            "slotNumber": 1,
+            "entryNumber": 11,
+            "groupNumber": 1,
+            "placementSource": "LOCKED"
+          },
+          {
+            "teamName": "Vector Sant Cugat",
+            "potNumber": 4,
+            "slotNumber": 2,
+            "entryNumber": 14,
+            "groupNumber": 1,
+            "placementSource": "LOCKED"
+          },
+          {
+            "teamName": "Brúixola Sants",
+            "potNumber": 1,
+            "slotNumber": 3,
+            "entryNumber": 3,
+            "groupNumber": 1,
+            "placementSource": "HYBRID_FILL"
+          },
+          {
+            "teamName": "Marina Fosca",
+            "potNumber": 2,
+            "slotNumber": 4,
+            "entryNumber": 5,
+            "groupNumber": 1,
+            "placementSource": "HYBRID_FILL"
+          },
+          {
+            "teamName": "Onze del Clot",
+            "potNumber": 1,
+            "slotNumber": 1,
+            "entryNumber": 4,
+            "groupNumber": 2,
+            "placementSource": "HYBRID_FILL"
+          },
+          {
+            "teamName": "Diagonal 26",
+            "potNumber": 2,
+            "slotNumber": 2,
+            "entryNumber": 7,
+            "groupNumber": 2,
+            "placementSource": "HYBRID_FILL"
+          },
+          {
+            "teamName": "Línia Cerdanyola",
+            "potNumber": 4,
+            "slotNumber": 3,
+            "entryNumber": 13,
+            "groupNumber": 2,
+            "placementSource": "HYBRID_FILL"
+          },
+          {
+            "teamName": "Carboni Terrassa",
+            "potNumber": 3,
+            "slotNumber": 4,
+            "entryNumber": 10,
+            "groupNumber": 2,
+            "placementSource": "HYBRID_FILL"
+          },
+          {
+            "teamName": "Circuit Poblenou",
+            "potNumber": 1,
+            "slotNumber": 1,
+            "entryNumber": 2,
+            "groupNumber": 3,
+            "placementSource": "HYBRID_FILL"
+          },
+          {
+            "teamName": "Taller Barberà",
+            "potNumber": 4,
+            "slotNumber": 2,
+            "entryNumber": 16,
+            "groupNumber": 3,
+            "placementSource": "HYBRID_FILL"
+          },
+          {
+            "teamName": "Vértice Gràcia",
+            "potNumber": 2,
+            "slotNumber": 3,
+            "entryNumber": 8,
+            "groupNumber": 3,
+            "placementSource": "HYBRID_FILL"
+          },
+          {
+            "teamName": "Pols Sabadell",
+            "potNumber": 3,
+            "slotNumber": 4,
+            "entryNumber": 9,
+            "groupNumber": 3,
+            "placementSource": "HYBRID_FILL"
+          },
+          {
+            "teamName": "Cobalto Raval",
+            "potNumber": 1,
+            "slotNumber": 1,
+            "entryNumber": 1,
+            "groupNumber": 4,
+            "placementSource": "HYBRID_FILL"
+          },
+          {
+            "teamName": "Nexe Granollers",
+            "potNumber": 3,
+            "slotNumber": 2,
+            "entryNumber": 12,
+            "groupNumber": 4,
+            "placementSource": "HYBRID_FILL"
+          },
+          {
+            "teamName": "Ferro Sant Andreu",
+            "potNumber": 2,
+            "slotNumber": 3,
+            "entryNumber": 6,
+            "groupNumber": 4,
+            "placementSource": "HYBRID_FILL"
+          },
+          {
+            "teamName": "Ronda Mollet",
+            "potNumber": 4,
+            "slotNumber": 4,
+            "entryNumber": 15,
+            "groupNumber": 4,
+            "placementSource": "HYBRID_FILL"
+          }
+        ],
+        "levelBalance": 0.5,
+        "qualityScore": 99.5,
+        "inputChecksum": "abb05fbfb702cd2513a8dc10a473df39ccdd2633880a513888556f9ca3d8ca2c",
+        "hardViolations": 0,
+        "resultChecksum": "3ecc6d9426bb438704cd5bf6cb53a5644a6f0076b76da032181fa99689761d3a",
+        "potDistribution": 100,
+        "algorithmVersion": "tournament-draw-v1.0.0",
+        "groupSizeBalance": 100,
+        "unassignedEntries": 0,
+        "sameClubCollisions": 0,
+        "manualOverrideCount": 2
+      }
+    ],
+    "remoteWrites": 0,
+    "totalRevisions": 5,
+    "competitionName": "COPA BARRIOS IQ 2027",
+    "generatedOutcomes": 2,
+    "operationReceipts": 56,
+    "publishedRevision": 5,
+    "tournamentMatches": 0,
+    "acceptedParticipants": 16
+  },
+  "version": 5,
+  "authorityHash": "991173f97e638a5ac9d55764284f331d61fffc95c799b60850f156cda23f612f"
 }
