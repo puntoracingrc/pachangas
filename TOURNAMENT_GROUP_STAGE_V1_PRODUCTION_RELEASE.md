@@ -36,11 +36,39 @@ are created.
 - Typecheck: PASS.
 - Build: PASS.
 - Tests: 20/20 Node and 536/536 TS/TSX.
-- Focused lint: PASS (26 changed code/test files).
+- Focused lint: PASS (27 changed code/test files).
 - `git diff --check`: PASS.
 
 Global lint remains blocked by 40 findings in three files unchanged from main;
 see `R6B-TEST-073`.
+
+## Hosted staging certification
+
+The final one-shot run used the isolated, non-production Supabase branch
+`krljxecwvxbrijmrwbsn`, bootstrapped from the immutable baseline with an exact
+169/169 version-and-name ledger comparison. Before fixture creation it proved
+zero users, zero competitions, all R6B/R6C flags OFF, RLS enabled, one Realtime
+publication and no authenticated direct inserts.
+
+The authenticated 17-story regression then proved:
+
+- 16 entries, 4 Groups, 12 Group rounds and 24 CanonicalMatches;
+- 24 official results, 4 current standings snapshots, 30 locked squads and 30
+  closed Attendance sides;
+- one postponement, one no-show, one suspension/resumption, four disciplinary
+  events and twelve confirmed referee assignments;
+- published QualificationSnapshot and published eight-slot BracketTemplate;
+- exactly zero knockout matches and public discovery still OFF;
+- two authenticated devices at the same revision, one successful completion,
+  one `PT409` stale conflict and one persisted completion receipt;
+- a real PostgreSQL invalidation delivered to both devices, followed by a
+  canonical refetch to the same completed revision 14;
+- byte-equivalent idempotent replay of the winning operation.
+
+The branch control plane still labels ordinary migration replay as
+`MIGRATIONS_FAILED` because it starts with the historical pre-baseline chain.
+`R6B-ENVIRONMENT-076` records that environment limitation. Direct PostgreSQL
+readback, not the label, proves the exact 169 migration schema used above.
 
 ## Hosted release gates
 
@@ -48,8 +76,8 @@ The following fields must be replaced with real evidence during this same
 release before closure:
 
 - Preview deployment: PENDING
-- Staging migration/readback: PENDING
-- Two-device authenticated Realtime: PENDING
+- Staging migration/readback: PASS
+- Two-device authenticated Realtime: PASS
 - Staging teardown: PENDING
 - PR merge and final main SHA: PENDING
 - Production backup/readback: PENDING

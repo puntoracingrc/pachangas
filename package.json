@@ -138,6 +138,7 @@
     "test:tournament-group-stage:scale": "node tests/tournament-group-stage-v1-scale.mjs",
     "test:tournament-group-stage:performance": "node tests/tournament-group-stage-v1-performance.mjs",
     "test:tournament-group-stage:migrations": "node tests/tournament-group-stage-v1-migrations.mjs",
+    "test:tournament-group-stage:staging": "node tests/tournament-group-stage-v1-staging-e2e.mjs",
     "lab:season-ranking": "tsx simulation/season-ranking-lab/run.ts",
     "lab:season-ranking:elite": "tsx simulation/season-ranking-lab/run-elite.ts",
     "lab:season-ranking:v3": "tsx simulation/season-ranking-lab/run-v3.ts",

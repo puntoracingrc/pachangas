@@ -1383,6 +1383,383 @@ After correction, the entry must include its regression and may only be marked
 - Regression evidence: both `git diff --cached --check` and the unstaged
   `git diff --check` complete with no output.
 
+### R6B-ENVIRONMENT-076 - Supabase preview branch automatic migration reports failure
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: create the isolated non-production Supabase branch
+  `r6b-group-stage-staging` from the R6B Git branch.
+- Observed: the branch reaches `ACTIVE_HEALTHY` but its deployment status is
+  `MIGRATIONS_FAILED`.
+- Impact: hosted staging cannot be accepted and production migration is
+  blocked until the exact ledger/statement mismatch is understood.
+- Root cause: the Git-associated Preview bootstrap starts from the historical
+  migration chain even though this repository intentionally disables ordinary
+  migration replay and uses the immutable product baseline for fresh
+  databases. The historical replay stops after ten pre-baseline migrations;
+  the R6B files themselves are not the failing frontier.
+- Correction: on the empty isolated branch, verify the baseline SHA-256, apply
+  it transactionally, apply every post-baseline migration in one transaction,
+  and synchronize the exact version/name ledger without touching production.
+- Regression evidence: the branch now exposes exactly 169 ordered migration
+  version/name pairs through `20260827105036`; all R6B flags are OFF, all R6C
+  and public gates are OFF, product-row counts are zero, and the repository and
+  hosted ledger streams compare with no diff.
+
+### R6B-ENVIRONMENT-077 - Preview direct database hostname is IPv6-only from this host
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: inspect the ephemeral branch migration ledger and dry-run
+  using its generated `POSTGRES_URL_NON_POOLING` connection string.
+- Observed: the direct hostname resolves to IPv6 and both read-only connection
+  attempts time out before PostgreSQL authentication.
+- Impact: no SQL reaches the staging branch, so the attempt neither diagnoses
+  nor changes its schema.
+- Correction: use the branch-generated Supavisor URL in session mode while
+  keeping the credential in a shell variable and out of logs, files and Git.
+- Regression evidence: the session-pooler connection read the original ten-row
+  ledger, applied and verified the isolated baseline/upgrade, and returned the
+  final 169-row readback without exposing a credential.
+
+### R6B-ENVIRONMENT-078 - Staging readback references a non-canonical bracket table name
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: execute the first consolidated hosted-staging readback
+  after applying the immutable baseline plus all incremental migrations.
+- Observed: the diagnostic query references
+  `public.pachanga_competition_bracket_templates`, which is not the canonical
+  relation name, and PostgreSQL stops the read-only statement with
+  `relation does not exist`.
+- Impact: the first consolidated readback produces no evidence; no product row,
+  schema object, ledger entry or flag is changed because the failing statement
+  is read-only.
+- Correction: bind the readback to the committed canonical relation
+  `public.pachanga_tournament_bracket_templates`.
+- Regression evidence: the corrected consolidated readback resolves the table
+  and reports zero bracket-template rows before hosted QA.
+
+### R6B-ENVIRONMENT-079 - Ledger comparison wrapper is rejected before execution
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: compare the 169 hosted-staging ledger names with the
+  repository migration filenames and remove two temporary comparison files on
+  shell exit.
+- Observed: the execution guard rejects the wrapper because it contains an
+  `rm -f` cleanup command. No shell command or database query starts.
+- Impact: no local file, hosted schema, ledger row or product state changes,
+  but the intended exact-name comparison has no evidence.
+- Correction: compare process-substitution streams directly, creating no
+  temporary file and requiring no removal command.
+- Regression evidence: the guarded command runs successfully and the final
+  strict 169-line comparison emits no diff.
+
+### R6B-ENVIRONMENT-080 - Manual incremental application does not populate the migration ledger
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: apply every post-baseline migration transactionally to
+  the empty hosted-staging branch, then compare its migration ledger with the
+  repository.
+- Observed: all 133 incremental SQL files commit successfully, but direct
+  `psql -f` execution does not insert their versions into
+  `supabase_migrations.schema_migrations`; the hosted schema is current while
+  the ledger remains at the 36 baseline-absorbed versions.
+- Impact: staging cannot be certified or used as production-migration evidence
+  until its ledger reflects the exact SQL already applied.
+- Correction: insert the exact 133 repository version/name pairs into the
+  staging ledger, with no SQL migration replay and no production access.
+- Regression evidence: hosted staging and the repository expose the same 169
+  ordered pairs, ending at `20260827105036`; the schema remains on the already
+  committed SQL and every product table is still empty.
+
+### R6B-ENVIRONMENT-081 - Ledger comparison wrapper reports success after a failed diff
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: fail the hosted-staging ledger comparison if any local
+  migration version/name pair is absent or different.
+- Observed: `diff` correctly emits the 133 missing incremental ledger rows, but
+  the shell wrapper continues to a final success marker because strict exit
+  handling was not enabled.
+- Impact: the marker is invalid evidence; the full diff itself exposes the
+  mismatch and no database state is changed by this read-only comparison.
+- Correction: enable strict shell exit handling and make the success marker
+  reachable only after `diff` returns zero.
+- Regression evidence: the strict wrapper reaches
+  `R6B_STAGING_LEDGER_169_EXACT` only after an empty 169-line diff.
+
+### R6B-ENVIRONMENT-082 - Staging readback assumes the wrong invalidation relation name
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: complete the consolidated ledger, flags, RLS, direct
+  privilege and Realtime readback after repairing the hosted-staging ledger.
+- Observed: the diagnostic query references
+  `public.pachanga_tournament_group_invalidations`, while the committed access
+  migration publishes a differently named canonical relation. PostgreSQL
+  aborts the read-only statement before returning the aggregate.
+- Impact: no state is changed, but the consolidated RLS/Realtime evidence is
+  still pending.
+- Correction: use the existing shared Tournament authority relation
+  `public.pachanga_tournament_invalidations`, populated by the canonical store
+  command and published by R6A.
+- Regression evidence: the corrected readback reports RLS enabled, exactly one
+  `supabase_realtime` publication entry and no authenticated direct writes on
+  any R6B authority table.
+
+### R6B-TEST-083 - Hosted proof joins Groups through a non-existent direct competition column
+
+- Classification: `TESTABILITY_GAP`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: after completing the hosted R6A/R6B/R4B-R5/Referee story,
+  collect one canonical aggregate with groups, rounds, matches, results,
+  incidents, discipline, assignments, standings, qualification and bracket.
+- Observed: the staging runner joins `pachanga_competition_groups` through a
+  presumed `competition_id`; the canonical model links Group to Stage and
+  Edition instead, so the read-only proof query fails after all product
+  operations have committed.
+- Impact: the hosted product story is preserved, but proof assertions,
+  authenticated concurrency and Realtime have not yet run. No product command
+  is replayed after this failure.
+- Correction: count Groups through
+  `Group.stage_id -> Stage.edition_id -> Edition.competition_id`, add a guarded
+  resume path for this already-created isolated dataset and execute the
+  remaining proof plus two-device checks exactly once.
+- Regression evidence: the guarded hosted readback resolves exactly 4 Groups,
+  12 rounds and 24 CanonicalMatches without replaying any product command.
+
+### R6B-TEST-084 - Hosted proof assumes the wrong squad context foreign-key name
+
+- Classification: `TESTABILITY_GAP`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: resume the preserved hosted dataset after correcting the
+  Group lineage and count locked R4C squads belonging to the 24 Tournament
+  MatchContexts.
+- Observed: the readback joins squads through `match_context_id`, but the R4C
+  schema uses its canonical context foreign-key name. The read-only aggregate
+  stops before assertions or Realtime.
+- Impact: no command or row is replayed; proof and two-device checks remain
+  pending on the preserved isolated dataset.
+- Correction: bind the join to the exact R4C schema column and rerun
+  only the guarded resume path.
+- Regression evidence: the corrected hosted proof resolves exactly 30 locked
+  squads through `competition_match_context_id`.
+
+### R6B-TEST-085 - Hosted proof reads attendance closure from MatchContext
+
+- Classification: `TESTABILITY_GAP`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: count both closed attendance sides for every Tournament
+  group match after the locked-squad proof has been repaired.
+- Observed: the readback expects `home_attendance_closed_at` and
+  `away_attendance_closed_at` on `CompetitionMatchContext`; R4C deliberately
+  keeps Attendance V1 as its existing authority instead of copying those
+  fields into the context.
+- Impact: the read-only aggregate fails; the hosted story remains unchanged
+  and no operation is replayed.
+- Correction: resolve closure evidence through the canonical R4C
+  attendance/result authority linked by CanonicalMatch and rerun only the
+  resume path.
+- Regression evidence: the corrected hosted proof resolves exactly 30 closed
+  Attendance sides through the canonical CompetitionMatchSheet relation.
+
+### R6B-TEST-086 - Hosted proof assumes an abbreviated R4D postponement foreign key
+
+- Classification: `TESTABILITY_GAP`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: after resolving Attendance through MatchSheet, count the
+  persisted postponement request tied to Tournament MatchContexts.
+- Observed: the diagnostic join uses `requests.match_context_id`; R4D keeps the
+  full canonical context identifier instead. The read-only query stops before
+  the no-show, suspension, discipline and referee assertions.
+- Impact: no hosted command or state changes; the preserved dataset remains the
+  only source for the guarded resume.
+- Correction: audit every remaining readback foreign key directly from
+  R4D, R5 and Referee schema definitions, correct them as one focused change,
+  then rerun the proof without replaying product operations.
+- Regression evidence: the resumed hosted proof reads one postponement, one
+  no-show, one suspension/resumption, four disciplinary events and twelve
+  confirmed referee assignments from their canonical context relationships.
+
+### R6B-TEST-087 - Hosted proof expects every match side to retain a locked squad
+
+- Classification: `TESTABILITY_GAP`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: assert 48 locked squads for 24 completed Tournament group
+  matches after every readback relation resolves successfully.
+- Observed: the canonical hosted graph contains 30 squads in `locked` state,
+  not 48. The assertion stops before Realtime and concurrency.
+- Impact: the runner's cardinality assumption is unproven; product data and
+  operations remain unchanged.
+- Correction: inspect the exact squad-state distribution together with
+  no-show, suspension and result paths, then assert the canonical invariant the
+  product actually guarantees rather than forcing two locked squads onto every
+  exceptional fixture.
+- Regression evidence: the hosted graph proves 30 locked squads and 30 closed
+  Attendance sides for the fixtures that pass through MatchSheet operations;
+  all 24 matches still own one canonical official result and the J3 proof does
+  not fabricate absent MatchSheets.
+
+### R6B-TEST-088 - Both hosted completion intentions are rejected
+
+- Classification: `TESTABILITY_GAP` (provisional until RPC diagnostics are
+  captured)
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: submit `group_stage.complete` concurrently from two
+  authenticated sessions at the same canonical revision and require one
+  winner plus one stale conflict.
+- Observed: both RPC calls return errors, so the runner observes zero winners
+  and stops before waiting for Realtime. The current assertion does not expose
+  the two server diagnostics.
+- Impact: sporting proof passes, but hosted concurrency and Realtime remain
+  unverified. No successful completion mutation is assumed.
+- Correction: capture only code/message diagnostics from both rejected
+  calls, determine whether the action state or client payload is invalid, then
+  apply the smallest runner or product correction with a regression.
+- Regression evidence: after exposing the PostgREST diagnostics and fixing the
+  omitted revision, two authenticated sessions now produce exactly one success
+  and one `PT409` stale-revision conflict.
+
+### R6B-TEST-089 - Hosted concurrency omits expectedRevision from the RPC call
+
+- Classification: `TESTABILITY_GAP`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: expose the exact diagnostics for both rejected
+  `group_stage.complete` calls.
+- Observed: PostgREST reports a five-argument signature lookup that omits
+  `expected_revision`. The runner reads `beforeA.revision`, but the canonical
+  Hub nests the aggregate revision under its Group Stage projection; the
+  resulting `undefined` property is omitted by `supabase-js`.
+- Impact: both requests fail at schema-cache overload resolution before any
+  server command, receipt, event or invalidation is created.
+- Correction: resolve the revision from the typed canonical Hub path,
+  assert it is an integer before issuing either RPC and retain the diagnostic
+  assertion for future drift.
+- Regression evidence: the runner resolves `groupStage.revision`, increments it
+  exactly once, receives one invalidation on each authenticated device,
+  refetches the same completed snapshot and replays the winning operation with
+  the byte-equivalent canonical receipt. The hosted runner exits zero.
+
+### R6B-ENVIRONMENT-090 - Branch creation output is not parseable as requested JSON
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: create a second, non-Git-associated Supabase branch for a
+  one-shot clean hosted regression and parse the CLI response requested with
+  `--output json`.
+- Observed: Supabase creates the branch successfully, but the returned stream
+  contains a non-JSON prefix and `jq` exits before exposing the sanitized branch
+  identity.
+- Impact: no duplicate branch is created and no product or production data is
+  touched; the test cannot use the creation response as machine evidence.
+- Correction: reconcile creation through `supabase branches list`,
+  retrieve the unique branch by ID with `supabase branches get` and never retry
+  creation when the branch already exists.
+- Regression evidence: the inventory contains exactly one branch named
+  `r6b-group-stage-staging-clean`; `branches get` resolves its isolated ref
+  `ukpxcbgnpjlqbttrftpd` and confirms both database and API credentials are
+  available without printing either credential.
+
+### R6B-TEST-091 - Clean hosted bootstrap emits an empty migration ledger value list
+
+- Classification: `TESTABILITY_GAP`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: install the immutable baseline, all 133 incrementals and
+  the exact 169-row migration ledger in one transaction on a fresh hosted
+  branch.
+- Observed: the inline Node ledger generator overescapes its migration filename
+  regular expression, selects zero files and emits `VALUES ON CONFLICT`, so
+  PostgreSQL rejects the final statement.
+- Impact: `ON_ERROR_STOP` and `--single-transaction` roll back the baseline and
+  every migration; no partial schema or ledger can survive. Production is not
+  targeted or modified.
+- Correction: use the exact filename pattern, assert 169 selected files
+  inside the generator and verify the branch remains at its original 10-row
+  ledger before retrying the entire atomic bootstrap.
+- Regression evidence: the failed transaction left the branch at exactly 10
+  ledger rows with the R6B state table absent; the corrected atomic retry
+  installed the immutable baseline plus 133 incrementals and produced an exact
+  169/169 version-and-name diff ending at `20260827105036`, with all R6B flags
+  OFF and zero product rows.
+
+### R6B-ENVIRONMENT-092 - Fresh hosted branch misses one Realtime invalidation delivery
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: run the complete R6B hosted story in one shot on a newly
+  bootstrapped non-Git branch, subscribe two authenticated devices and complete
+  Group Stage concurrently.
+- Observed: the sporting story and concurrent writes reach the event wait, but
+  device A receives no `postgres_changes` invalidation within 20 seconds and
+  the runner exits on `R6B_STAGING_REALTIME_TIMEOUT:device-a`.
+- Impact: the clean one-shot run cannot yet certify two-device Realtime
+  convergence. No success is inferred from the missing client event and no
+  production system is involved.
+- Correction: confirm the single persisted receipt and invalidation first, then
+  require a two-device Realtime readiness probe with its own server sequence
+  before issuing the one-shot sporting completion command. The sporting event
+  remains a separate required delivery and is never substituted by the probe.
+- Regression evidence: the isolated probe reaches both authenticated devices;
+  a subsequent completely fresh branch then runs the 17-story hosted scenario
+  in one pass, delivers the real Tournament invalidation to both devices,
+  refetches the same revision and exits zero.
+
+### R6B-TEST-093 - Realtime diagnostic assumes a generic invalidation ID column
+
+- Classification: `TESTABILITY_GAP`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: reconcile the latest persisted invalidation after the
+  fresh-branch Realtime timeout using an authoritative sequence plus a stable
+  tie-breaker.
+- Observed: the read-only diagnostic orders by a presumed `id` column that the
+  canonical invalidation relation does not expose, so PostgreSQL rejects the
+  statement before returning evidence.
+- Impact: no data changes; server persistence evidence remains pending until
+  the diagnostic binds to the exact schema.
+- Correction: inspect the relation columns first, use
+  `server_sequence` plus the actual stable key and retain the exact-order check
+  as a regression against timestamp-only reads.
+- Regression evidence: schema inspection proves `server_sequence` is the
+  relation primary key; the corrected readback orders by it and confirms one
+  `group_stage.complete` receipt, one latest revision-14 Tournament
+  invalidation and no timestamp-only selection.
+
+### R6B-ENVIRONMENT-094 - zsh reserves the branch polling variable name
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: poll the final ephemeral Supabase branch until its API and
+  Functions are ready, without printing credentials.
+- Observed: the shell wrapper assigns to `status`, a read-only special variable
+  in zsh, and exits before its first poll decision.
+- Impact: branch creation continues independently; no duplicate branch, schema
+  or product operation is issued.
+- Correction: rename the local value to `branch_status`, keep the same
+  bounded polling contract and stop on any explicit failed state.
+- Regression evidence: the corrected wrapper performs its first poll and stops
+  on the explicit `MIGRATIONS_FAILED` state caused by the already documented
+  pre-baseline replay frontier; direct readback confirms the isolated database
+  remains clean at 10 ledger rows, zero users and no R6B state relation.
+
+### R6B-ENVIRONMENT-095 - Markdown backtick breaks the open-incident shell search
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: confirm that the incident ledger contains no unresolved
+  R6B finding other than explicitly accepted pre-existing debt.
+- Observed: a double-quoted zsh pattern contains the Markdown backtick from
+  ``Status: `OPEN`` and terminates with `unmatched "` before `rg` runs.
+- Impact: no file, database or remote state changes; only the auxiliary ledger
+  search lacks evidence.
+- Correction: use a single-quoted fixed-string pattern and repeat the
+  inventory before commit.
+- Regression evidence: the corrected search executes successfully and reports
+  only `R6B-TEST-073`, explicitly classified as pre-existing global lint debt
+  outside the R6B change surface.
+
 ## Verification closure - 2026-08-27
 
 - `R6B-PRODUCT-005`, `R6B-PRODUCT-006`, `R6B-SIMULATION-010`,

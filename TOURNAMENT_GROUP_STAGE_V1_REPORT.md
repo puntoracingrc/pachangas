@@ -80,8 +80,19 @@ bracket progression OFF in R6B.
 - Focused contract tests: 13/13.
 - Full suite: Node 20/20 plus TS/TSX 536/536; zero skipped, todo or cancelled.
 - Typecheck and production build: PASS.
-- Focused ESLint: PASS across all 26 changed TS/TSX/MJS files.
+- Focused ESLint: PASS across all 27 changed TS/TSX/MJS files.
 - Global ESLint: pre-existing debt only, recorded as `R6B-TEST-073`.
+
+## Hosted certification
+
+An isolated Supabase branch completed the full 17-story staging matrix in one
+run. Its exact 169-migration readback produced 4 Groups, 12 rounds, 24
+CanonicalMatches, 24 official results, published Qualification and an eight-slot
+BracketTemplate with zero knockout matches. Two authenticated clients raced the
+same `group_stage.complete` revision: one won, one received `PT409`, both
+received the persisted PostgreSQL invalidation and both refetched revision 14.
+Replaying the winning `operationId` returned the same canonical receipt without
+another write or notification.
 
 The permanent incident ledger is
 `R6B_TOURNAMENT_GROUP_STAGE_INCIDENTS.md`; every R6B correction retains its
