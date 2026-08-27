@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 
-export const DEMO_WORLD_V2_AUTHORITY_PROOF_VERSION = 4 as const;
+export const DEMO_WORLD_V2_AUTHORITY_PROOF_VERSION = 5 as const;
 
 export type DemoWorldV2AuthorityProofConfigurationRevision = {
   authoringMode: "ADVANCED" | "SIMPLE";
@@ -233,6 +233,69 @@ export type DemoWorldV2AuthorityProofStanding = {
   wins: number;
 };
 
+export type DemoWorldV2AuthorityProofTournamentPlacement = {
+  entryNumber: number;
+  groupNumber: number;
+  placementSource: "ENGINE" | "HYBRID_FILL" | "LOCKED" | "MANUAL";
+  potNumber: number;
+  slotNumber: number;
+  teamName: string;
+};
+
+export type DemoWorldV2AuthorityProofTournamentOutcome = {
+  algorithmVersion: string;
+  groupSizeBalance: number;
+  hardViolations: 0;
+  inputChecksum: string;
+  levelBalance: number;
+  locks: Array<{
+    entryNumber: number;
+    groupNumber: number;
+    slotNumber: number;
+    teamName: string;
+  }>;
+  manualOverrideCount: number;
+  mode: "HYBRID" | "SEEDED_POTS";
+  placements: DemoWorldV2AuthorityProofTournamentPlacement[];
+  potDistribution: number;
+  qualityScore: number;
+  resultChecksum: string;
+  sameClubCollisions: number;
+  seed: string;
+  softScore: number;
+  unassignedEntries: 0;
+  version: number;
+};
+
+export type DemoWorldV2AuthorityProofTournament = {
+  acceptedParticipants: 16;
+  competitionName: "COPA BARRIOS IQ 2027";
+  conflict: {
+    attempts: number;
+    constraintTypes: string[];
+    errorCode: "DRAW_UNSATISFIABLE";
+    reasonCode: "GROUP_CONSTRAINTS_UNSATISFIABLE";
+    suggestions: string[];
+  };
+  constraints: Array<{
+    reason: string;
+    strength: "HARD" | "SOFT";
+    type: "POT_DISTRIBUTION" | "SAME_CLUB_AVOIDANCE" | "TEAM_LEVEL_BALANCE";
+    weight: number;
+  }>;
+  drawOutcomes: DemoWorldV2AuthorityProofTournamentOutcome[];
+  generatedOutcomes: 2;
+  groupCount: 4;
+  operationReceipts: number;
+  planStatus: "published";
+  potCount: 4;
+  publishedRevision: 5;
+  remoteWrites: 0;
+  slug: "copa-barrios-iq-2027";
+  totalRevisions: 5;
+  tournamentMatches: 0;
+};
+
 export type DemoWorldV2AuthorityProof = {
   authorityHash: string;
   configuration: DemoWorldV2AuthorityProofConfiguration;
@@ -253,9 +316,10 @@ export type DemoWorldV2AuthorityProof = {
   };
   refereeAssignments: DemoWorldV2AuthorityProofRefereeAssignments;
   remoteWrites: 0;
-  rpcFamilies: ["R1", "R3", "R4A", "R4B", "R4C", "R4D", "R5"];
+  rpcFamilies: ["R1", "R3", "R4A", "R4B", "R4C", "R4D", "R5", "R6A"];
   roundCount: 5;
   standings: DemoWorldV2AuthorityProofStanding[];
+  tournament: DemoWorldV2AuthorityProofTournament;
   version: typeof DEMO_WORLD_V2_AUTHORITY_PROOF_VERSION;
 };
 
@@ -411,6 +475,49 @@ export function assertDemoWorldV2AuthorityProof(value: DemoWorldV2AuthorityProof
   }
   if (JSON.stringify(value.configuration).includes("fixedCents")) {
     throw new Error("DEMO_WORLD_V2_3_PRIVATE_FEE_LEAK");
+  }
+  const tournament = value.tournament;
+  if (tournament.competitionName !== "COPA BARRIOS IQ 2027"
+      || tournament.acceptedParticipants !== 16
+      || tournament.groupCount !== 4
+      || tournament.potCount !== 4
+      || tournament.generatedOutcomes !== 2
+      || tournament.totalRevisions !== 5
+      || tournament.publishedRevision !== 5
+      || tournament.planStatus !== "published"
+      || tournament.tournamentMatches !== 0
+      || tournament.remoteWrites !== 0) {
+    throw new Error("DEMO_WORLD_V2_4_TOURNAMENT_GRAPH_INVALID");
+  }
+  if (tournament.drawOutcomes.length !== 2
+      || tournament.drawOutcomes[0]?.mode !== "SEEDED_POTS"
+      || tournament.drawOutcomes[1]?.mode !== "HYBRID"
+      || tournament.drawOutcomes.some((outcome) => (
+        outcome.placements.length !== 16
+        || outcome.hardViolations !== 0
+        || outcome.unassignedEntries !== 0
+        || new Set(outcome.placements.map(({ entryNumber }) => entryNumber)).size !== 16
+      ))) {
+    throw new Error("DEMO_WORLD_V2_4_DRAW_OUTCOMES_INVALID");
+  }
+  for (const outcome of tournament.drawOutcomes) {
+    for (let groupNumber = 1; groupNumber <= 4; groupNumber += 1) {
+      const group = outcome.placements.filter((placement) => placement.groupNumber === groupNumber);
+      if (group.length !== 4 || new Set(group.map(({ potNumber }) => potNumber)).size !== 4) {
+        throw new Error("DEMO_WORLD_V2_4_POT_DISTRIBUTION_INVALID");
+      }
+    }
+  }
+  if (tournament.drawOutcomes[0]!.locks.length !== 0
+      || tournament.drawOutcomes[1]!.locks.length !== 2
+      || tournament.drawOutcomes[1]!.manualOverrideCount !== 2
+      || tournament.conflict.errorCode !== "DRAW_UNSATISFIABLE"
+      || tournament.conflict.reasonCode !== "GROUP_CONSTRAINTS_UNSATISFIABLE"
+      || tournament.conflict.suggestions.length < 2) {
+    throw new Error("DEMO_WORLD_V2_4_HYBRID_OR_CONFLICT_INVALID");
+  }
+  if (JSON.stringify(tournament).match(/[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/i)) {
+    throw new Error("DEMO_WORLD_V2_4_INTERNAL_ID_LEAK");
   }
   const { authorityHash, ...payload } = value;
   if (authorityHash !== demoWorldV2AuthorityHash(payload)) {

@@ -602,6 +602,21 @@ export async function getPlatformCompetitionFoundation(
   };
 }
 
+export async function getPlatformTournamentControl(session: VerifiedPlatformSession) {
+  const data = await rpcOrThrow<JsonRecord>(
+    session.client,
+    "get_pachanga_platform_tournament_control_v1",
+  );
+  return {
+    flags: asRecord(data.flags),
+    grants: asArray(data.grants).map(asRecord),
+    health: asRecord(data.health),
+    metrics: asRecord(data.metrics),
+    recentPlans: asArray(data.recentPlans).map(asRecord),
+    updatedAt: typeof data.updatedAt === "string" ? data.updatedAt : null,
+  };
+}
+
 export async function getPlatformLeagueParticipation(
   session: VerifiedPlatformSession,
   page: number,

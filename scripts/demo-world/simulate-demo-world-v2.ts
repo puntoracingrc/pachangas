@@ -346,6 +346,156 @@ from public_revisions;
   return JSON.parse(psql(["-At", "-c", sql], "extract Demo World V2.3 configuration proof")) as DemoWorldV2AuthorityProof["configuration"];
 }
 
+function extractTournamentAuthorityProof(): DemoWorldV2AuthorityProof["tournament"] {
+  const sql = String.raw`
+with target as (
+  select competitions.id, competitions.name, competitions.slug
+  from public.pachanga_competitions competitions
+  where competitions.slug = 'copa-barrios-iq-2027'
+  order by competitions.server_sequence desc, competitions.id desc
+  limit 1
+), plan as (
+  select plans.*
+  from target
+  join public.pachanga_competition_draw_plans plans
+    on plans.competition_id = target.id
+), generated as (
+  select revisions.*, quality.hard_violations, quality.soft_score,
+    quality.level_balance, quality.same_club_collisions,
+    quality.pot_distribution, quality.group_size_balance,
+    quality.manual_override_count, quality.unassigned_entries
+  from plan
+  join public.pachanga_competition_draw_revisions revisions
+    on revisions.draw_plan_id = plan.id
+  join public.pachanga_competition_draw_quality_snapshots quality
+    on quality.draw_revision_id = revisions.id
+  where revisions.validation_status = 'PENDING'
+  order by revisions.version
+), outcomes as (
+  select jsonb_agg(jsonb_build_object(
+    'algorithmVersion', generated.algorithm_version,
+    'groupSizeBalance', generated.group_size_balance,
+    'hardViolations', generated.hard_violations,
+    'inputChecksum', generated.input_checksum,
+    'levelBalance', generated.level_balance,
+    'locks', (
+      select coalesce(jsonb_agg(jsonb_build_object(
+        'entryNumber', substring(teams.team_code from 3)::integer,
+        'groupNumber', placements.group_number,
+        'slotNumber', placements.slot_number,
+        'teamName', teams.name
+      ) order by placements.group_number, placements.slot_number, placements.entry_id), '[]'::jsonb)
+      from public.pachanga_competition_draw_placements placements
+      join public.pachanga_competition_entries entries on entries.id = placements.entry_id
+      join public.pachanga_groups teams on teams.id = entries.team_id
+      where placements.draw_revision_id = generated.id
+        and placements.placement_source = 'LOCKED'
+    ),
+    'manualOverrideCount', generated.manual_override_count,
+    'mode', generated.mode,
+    'placements', (
+      select jsonb_agg(jsonb_build_object(
+        'entryNumber', substring(teams.team_code from 3)::integer,
+        'groupNumber', placements.group_number,
+        'placementSource', placements.placement_source,
+        'potNumber', placements.pot_number,
+        'slotNumber', placements.slot_number,
+        'teamName', teams.name
+      ) order by placements.group_number, placements.slot_number, placements.entry_id)
+      from public.pachanga_competition_draw_placements placements
+      join public.pachanga_competition_entries entries on entries.id = placements.entry_id
+      join public.pachanga_groups teams on teams.id = entries.team_id
+      where placements.draw_revision_id = generated.id
+    ),
+    'potDistribution', generated.pot_distribution,
+    'qualityScore', generated.quality_score,
+    'resultChecksum', generated.result_checksum,
+    'sameClubCollisions', generated.same_club_collisions,
+    'seed', generated.seed,
+    'softScore', generated.soft_score,
+    'unassignedEntries', generated.unassigned_entries,
+    'version', generated.version
+  ) order by generated.version) value
+  from generated
+), conflict as (
+  select evidence.error_code, evidence.error_detail
+  from simulation.demo_world_tournament_conflict_evidence evidence
+  order by evidence.captured_at desc, evidence.plan_id desc
+  limit 1
+)
+select jsonb_build_object(
+  'acceptedParticipants', (
+    select count(*) from target
+    join public.pachanga_competition_entries entries on entries.competition_id = target.id
+    where entries.status in ('accepted', 'active')
+  ),
+  'competitionName', (select name from target),
+  'conflict', (
+    select jsonb_build_object(
+      'attempts', (conflict.error_detail ->> 'attempts')::integer,
+      'constraintTypes', (
+        select coalesce(jsonb_agg(types.type order by types.type), '[]'::jsonb)
+        from (
+          select distinct constraint_item.value ->> 'type' type
+          from jsonb_array_elements(conflict.error_detail -> 'constraints') constraint_item(value)
+          where constraint_item.value ->> 'type' = 'FIXED_POSITION'
+        ) types
+      ),
+      'errorCode', conflict.error_code,
+      'reasonCode', conflict.error_detail ->> 'code',
+      'suggestions', conflict.error_detail -> 'suggestions'
+    ) from conflict
+  ),
+  'constraints', (
+    select jsonb_agg(jsonb_build_object(
+      'reason', constraints.reason,
+      'strength', constraints.strength,
+      'type', constraints.constraint_type,
+      'weight', constraints.weight
+    ) order by constraints.constraint_type)
+    from plan
+    join public.pachanga_competition_draw_constraints constraints
+      on constraints.draw_plan_id = plan.id
+    where constraints.status = 'active'
+  ),
+  'drawOutcomes', outcomes.value,
+  'generatedOutcomes', (select count(*) from generated),
+  'groupCount', (select group_count from plan),
+  'operationReceipts', (
+    select count(*)
+    from private.pachanga_competition_operation_receipts receipts
+    where receipts.aggregate_type = 'tournament'
+      and receipts.client_metadata ->> 'surface' = 'demo_world_v2_tournament'
+  ),
+  'planStatus', (select status from plan),
+  'potCount', (
+    select count(*) from plan
+    join public.pachanga_competition_draw_pots pots on pots.draw_plan_id = plan.id
+    where pots.status = 'active'
+  ),
+  'publishedRevision', (
+    select revisions.version from plan
+    join public.pachanga_competition_draw_revisions revisions
+      on revisions.id = plan.current_revision_id
+  ),
+  'remoteWrites', 0,
+  'slug', (select slug from target),
+  'totalRevisions', (
+    select count(*) from plan
+    join public.pachanga_competition_draw_revisions revisions
+      on revisions.draw_plan_id = plan.id
+  ),
+  'tournamentMatches', (
+    select count(*) from target
+    join public.pachanga_competition_match_contexts contexts
+      on contexts.competition_id = target.id
+  )
+)
+from outcomes;
+`;
+  return JSON.parse(psql(["-At", "-c", sql], "extract Demo World V2.4 Tournament proof")) as DemoWorldV2AuthorityProof["tournament"];
+}
+
 function extractAuthorityProof(migrationCount: number) {
   const sql = String.raw`
 with ordered as (
@@ -747,8 +897,9 @@ from matches, standings, discipline_events, discipline_counters,
     generatedAt: "2026-08-26T10:00:00.000Z",
     migrationCount,
     remoteWrites: 0,
-    rpcFamilies: ["R1", "R3", "R4A", "R4B", "R4C", "R4D", "R5"],
-    version: 4,
+    rpcFamilies: ["R1", "R3", "R4A", "R4B", "R4C", "R4D", "R5", "R6A"],
+    tournament: extractTournamentAuthorityProof(),
+    version: 5,
   };
   return assertDemoWorldV2AuthorityProof({
     ...payload,
@@ -758,7 +909,7 @@ from matches, standings, discipline_events, discipline_counters,
 
 async function committedSnapshot(): Promise<DemoWorldV2Snapshot> {
   const read = async <T>(name: string) => JSON.parse(await readFile(path.join(publicRoot, name), "utf8")) as T;
-  const [activity, clubsReferees, competitions, configuration, core, manifest, matches, players] = await Promise.all([
+  const [activity, clubsReferees, competitions, configuration, core, manifest, matches, players, tournament] = await Promise.all([
     read<DemoWorldV2Snapshot["activity"]>("activity.json"),
     read<DemoWorldV2Snapshot["clubsReferees"]>("clubs-referees.json"),
     read<DemoWorldV2Snapshot["competitions"]>("competitions.json"),
@@ -767,14 +918,24 @@ async function committedSnapshot(): Promise<DemoWorldV2Snapshot> {
     read<DemoWorldV2Snapshot["manifest"]>("manifest.json"),
     read<DemoWorldV2Snapshot["matches"]>("matches.json"),
     read<DemoWorldV2Snapshot["players"]>("players.json"),
+    read<DemoWorldV2Snapshot["tournament"]>("tournament.json"),
   ]);
-  return { activity, clubsReferees, competitions, configuration, core, manifest, matches, players };
+  return { activity, clubsReferees, competitions, configuration, core, manifest, matches, players, tournament };
 }
 
 async function dropDatabase() {
   try {
+    if (admin(
+      `select count(*) from pg_database where datname='${databaseName}'`,
+      "inspect Demo World V2 database",
+    ) === "0") return;
     admin(`alter database ${databaseName} with allow_connections false`, "close Demo World V2 database");
-    admin(`select pg_terminate_backend(pid) from pg_stat_activity where datname='${databaseName}' and pid<>pg_backend_pid()`, "terminate Demo World V2 connections");
+    admin(`select pg_terminate_backend(activity.pid)
+      from pg_stat_activity activity
+      join pg_roles roles on roles.rolname=activity.usename
+      where activity.datname='${databaseName}'
+        and activity.pid<>pg_backend_pid()
+        and not roles.rolsuper`, "terminate Demo World V2 connections");
     admin(`drop database if exists ${databaseName}`, "drop Demo World V2 database");
   } catch (error) {
     process.stderr.write(`${error instanceof Error ? error.message : String(error)}\n`);
@@ -795,7 +956,8 @@ async function main() {
     { label: "R4C", names: incremental.filter((name) => name >= "20260824165759" && name < "20260824230726") },
     { label: "R4D", names: incremental.filter((name) => name >= "20260824230726" && name < "20260825074304") },
     { label: "League Private Beta", names: incremental.filter((name) => name >= "20260825074304" && name < "20260825165834") },
-    { label: "R5", names: incremental.filter((name) => name >= "20260825165834") },
+    { label: "R5 and Configuration Center", names: incremental.filter((name) => name >= "20260825165834" && name < "20260826195034") },
+    { label: "R6A Tournament Foundation", names: incremental.filter((name) => name >= "20260826195034") },
   ];
   assert.equal(migrationBatches.flatMap(({ names }) => names).length, incremental.length);
 
@@ -843,6 +1005,11 @@ async function main() {
     psql(["-f", sqlFile("scripts/demo-world/demo-world-v2-authority-operations.sql")], "operate Demo World V2 through R4C, R4D and R5 RPCs");
     psql(["-f", sqlFile("tests/competition-configuration-center-v1-fixture.sql")], "create Demo World V2.3 configuration fixture through League Wizard V2");
     psql(["-f", sqlFile("scripts/demo-world/demo-world-v2-configuration-operations.sql")], "publish Demo World V2.3 custom RuleRevision through Configuration Center V1");
+    applyBatch(migrationBatches[8]!.label, migrationBatches[8]!.names);
+    psql([
+      "-v", "DEMO_WORLD_V2_PERSIST=1",
+      "-f", sqlFile("scripts/demo-world/demo-world-v2-tournament-operations.sql"),
+    ], "create Demo World V2.4 Tournament through R1, Entries and R6A RPCs");
 
     const authorityProof = extractAuthorityProof(migrationNames.length);
     const generated = generateDemoWorldV2(authorityProof);
@@ -864,7 +1031,7 @@ async function main() {
       migrations: migrationNames.length,
       mode: verifyOnly ? "verify" : "simulate",
       remoteWrites: 0,
-      rpcFamilies: ["R1", "R3", "R4A", "R4B", "R4C", "R4D", "R5", "LEAGUE_PRIVATE_BETA_V1"],
+      rpcFamilies: ["R1", "R3", "R4A", "R4B", "R4C", "R4D", "R5", "R6A", "LEAGUE_PRIVATE_BETA_V1"],
       snapshotIdentical: verifyOnly,
     })}\n`);
   } finally {

@@ -47,6 +47,7 @@ import {
   type DemoWorldV2PrimaryTab,
   type DemoWorldV2Referee,
   type DemoWorldV2Snapshot,
+  type DemoWorldV2TournamentChunk,
 } from "./demo-world-v2-contract";
 import {
   demoWorldV2TabFromSearch,
@@ -67,6 +68,7 @@ const primaryTabs: Array<{ id: DemoWorldV2PrimaryTab; label: string }> = [
 
 const leagueTabs: Array<{ id: DemoWorldV2PrimaryTab; label: string }> = [
   { id: "liga", label: "Liga" },
+  { id: "torneo", label: "Torneo" },
   { id: "configuracion", label: "Configuración" },
   { id: "clasificacion", label: "Clasificación" },
   { id: "jornadas", label: "Jornadas" },
@@ -848,6 +850,99 @@ function LeagueOverviewView({
   </div>;
 }
 
+const tournamentConstraintLabels: Record<string, string> = {
+  POT_DISTRIBUTION: "Un equipo de cada bombo",
+  SAME_CLUB_AVOIDANCE: "Separar equipos del mismo Club",
+  TEAM_LEVEL_BALANCE: "Equilibrar nivel de los grupos",
+};
+
+function DemoTournamentView({ tournament }: { tournament: DemoWorldV2TournamentChunk }) {
+  const [outcomeIndex, setOutcomeIndex] = useState<0 | 1>(1);
+  const outcome = tournament.drawOutcomes[outcomeIndex];
+  const groups = Array.from({ length: tournament.competition.groupCount }, (_, index) => ({
+    number: index + 1,
+    placements: outcome.placements
+      .filter((placement) => placement.groupNumber === index + 1)
+      .sort((left, right) => left.slotNumber - right.slotNumber),
+  }));
+  return <div className={styles.tournamentStack} data-demo-domain="tournament" data-demo-read-only="true">
+    <section className={styles.tournamentHero}>
+      <div>
+        <span className={styles.eyebrow}>Demo World V2.4 · sorteo autoritativo</span>
+        <h1>{tournament.competition.name}</h1>
+        <p>Participantes congelados, semilla reproducible y revisión publicada desde PostgreSQL.</p>
+      </div>
+      <div className={styles.tournamentMetrics}>
+        <Stat label="Equipos" value={tournament.competition.acceptedParticipants} />
+        <Stat label="Grupos" value={tournament.competition.groupCount} />
+        <Stat label="Bombos" value={tournament.competition.potCount} />
+        <Stat label="Partidos" value={tournament.nextPhase.tournamentMatches} />
+      </div>
+    </section>
+
+    <section className={styles.tournamentDesk}>
+      <header className={styles.tournamentToolbar}>
+        <div>
+          <span className={styles.eyebrow}>Revisiones comparables</span>
+          <h2>{outcome.mode === "HYBRID" ? "Sorteo híbrido publicado" : "Sorteo automático inicial"}</h2>
+        </div>
+        <div className={styles.tournamentRevisionSwitch} role="tablist" aria-label="Revisión del sorteo">
+          <button aria-selected={outcomeIndex === 0} role="tab" type="button" onClick={() => setOutcomeIndex(0)}>Automática</button>
+          <button aria-selected={outcomeIndex === 1} role="tab" type="button" onClick={() => setOutcomeIndex(1)}>Híbrida</button>
+        </div>
+      </header>
+      <div className={styles.tournamentAuditStrip}>
+        <span><small>Calidad</small><strong>{outcome.qualityScore.toFixed(1)}</strong></span>
+        <span><small>Hard</small><strong>{outcome.hardViolations}</strong></span>
+        <span><small>Overrides</small><strong>{outcome.manualOverrideCount}</strong></span>
+        <span><small>Seed</small><code>{outcome.seed}</code></span>
+        <span><small>Input</small><code>{outcome.inputChecksum.slice(0, 12)}</code></span>
+        <span><small>Resultado</small><code>{outcome.resultChecksum.slice(0, 12)}</code></span>
+      </div>
+      <div className={styles.tournamentGroups}>
+        {groups.map((group) => <article key={group.number}>
+          <header><span>Grupo {String.fromCharCode(64 + group.number)}</span><small>4 equipos</small></header>
+          <div>{group.placements.map((placement) => <div className={placement.placementSource === "LOCKED" ? styles.tournamentLockedTeam : undefined} key={placement.team.id}>
+            <span className={styles.tournamentPot}>B{placement.potNumber}</span>
+            <strong>{placement.team.name}</strong>
+            <small>{placement.placementSource === "LOCKED" ? "Fijado" : `P${placement.slotNumber}`}</small>
+          </div>)}</div>
+        </article>)}
+      </div>
+    </section>
+
+    <section className={styles.tournamentEvidenceGrid}>
+      <article>
+        <span className={styles.eyebrow}>Reglas activas</span>
+        <h2>Sorteo explicable</h2>
+        <ul>{tournament.constraints.map((constraint) => <li key={constraint.type}>
+          <span>{constraint.strength}</span>
+          <strong>{tournamentConstraintLabels[constraint.type] ?? constraint.type}</strong>
+        </li>)}</ul>
+      </article>
+      <article>
+        <span className={styles.eyebrow}>Automático → híbrido</span>
+        <h2>{tournament.comparison.movedTeams.length} equipos movidos</h2>
+        <p>{tournament.comparison.retainedLocks} posiciones fijadas; el engine completó las otras 14 sin duplicados ni ausencias.</p>
+        <div className={styles.tournamentMoveRail}>{tournament.comparison.movedTeams.slice(0, 8).map((move) => <span key={move.team.id}>
+          <strong>{move.team.name}</strong><small>G{move.fromGroup} → G{move.toGroup}</small>
+        </span>)}</div>
+      </article>
+    </section>
+
+    <section className={styles.tournamentConflict}>
+      <div><span className={styles.eyebrow}>Escenario no publicado</span><h2>Conflicto detectado, no resultado roto</h2><p>{tournament.conflict.explanation}</p></div>
+      <div><strong>{tournament.conflict.errorCode}</strong><span>{tournament.conflict.attempts} intentos acotados</span><ul>{tournament.conflict.suggestions.map((suggestion) => <li key={suggestion}>{suggestion}</li>)}</ul></div>
+    </section>
+
+    <section className={styles.tournamentNextPhase}>
+      <span>Sorteo y grupos publicados</span>
+      <strong>{tournament.nextPhase.message}</strong>
+      <small>Sin resultados, árbitros, tarjetas, campeón ni progresión inventados.</small>
+    </section>
+  </div>;
+}
+
 const configurationSectionLabels: Record<string, string> = {
   discipline: "Disciplina",
   format: "Formato",
@@ -1163,6 +1258,7 @@ export function DemoWorldApp({ manifest }: { manifest: DemoWorldV2Manifest }) {
         {snapshot && activeTab === "equipo" ? <TeamView currentTeam={currentTeam} onPlayer={setSelectedPlayerId} onTeam={setSelectedTeamId} selectedTeam={selectedTeam} snapshot={snapshot} /> : null}
         {snapshot && activeTab === "perfil" ? <ProfileView currentPlayer={currentPlayer} currentTeam={currentTeam} notifications={notifications} onEquipCosmetic={equipCosmetic} onOpenBox={openRewardBox} onPerspective={choosePerspective} onPlayer={setSelectedPlayerId} onRead={(notificationId) => updateSession((current) => ({ ...current, readNotificationIds: [...new Set([...current.readNotificationIds, notificationId])] }))} perspective={perspective} perspectives={world.core.perspectives} session={session} snapshot={snapshot} /> : null}
         {snapshot && activeTab === "liga" ? <LeagueOverviewView onClub={openClub} onMatch={openLeagueMatch} onTab={navigate} snapshot={snapshot} /> : null}
+        {snapshot && activeTab === "torneo" ? <DemoTournamentView tournament={snapshot.tournament} /> : null}
         {snapshot && activeTab === "configuracion" ? <DemoConfigurationView configuration={snapshot.configuration} /> : null}
         {snapshot && activeTab === "clasificacion" ? <div className={styles.demoProductView} data-demo-domain="standings"><LeagueMatchOperationsClient embedded previewData={snapshot.competitions.standingsPreview} surface="standings" /></div> : null}
         {snapshot && activeTab === "jornadas" ? <div className={styles.demoProductView} data-demo-domain="rounds"><LeagueSchedulingClient embedded onOpenMatch={(canonicalMatchId) => {

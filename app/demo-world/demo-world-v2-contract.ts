@@ -21,8 +21,8 @@ import {
   type DemoWorldSnapshot,
 } from "./demo-world-contract";
 
-export const DEMO_WORLD_V2_VERSION = 2.3 as const;
-export const DEMO_WORLD_V2_SEED = "pachangas-iq-demo-world-v2-3-2026-27" as const;
+export const DEMO_WORLD_V2_VERSION = 2.4 as const;
+export const DEMO_WORLD_V2_SEED = "pachangas-iq-demo-world-v2-4-2026-27" as const;
 
 export type DemoWorldV2PrimaryTab = DemoWorldPrimaryTab
   | "arbitros"
@@ -31,7 +31,8 @@ export type DemoWorldV2PrimaryTab = DemoWorldPrimaryTab
   | "configuracion"
   | "disciplina"
   | "jornadas"
-  | "liga";
+  | "liga"
+  | "torneo";
 
 export type DemoWorldV2Manifest = {
   chunks: {
@@ -42,6 +43,7 @@ export type DemoWorldV2Manifest = {
     core: string;
     matches: string;
     players: string;
+    tournament: string;
   };
   counts: {
     achievements: number;
@@ -58,6 +60,9 @@ export type DemoWorldV2Manifest = {
     rounds: number;
     stories: number;
     teams: number;
+    tournamentDrawRevisions: number;
+    tournamentGroups: number;
+    tournaments: number;
   };
   demoNow: string;
   generatedAt: string;
@@ -313,6 +318,94 @@ export type DemoWorldV2ConfigurationChunk = {
   };
 };
 
+export type DemoWorldV2TournamentPlacement = {
+  entryNumber: number;
+  groupNumber: number;
+  placementSource: "ENGINE" | "HYBRID_FILL" | "LOCKED" | "MANUAL";
+  potNumber: number;
+  slotNumber: number;
+  team: { id: string; name: string };
+};
+
+export type DemoWorldV2TournamentOutcome = {
+  algorithmVersion: string;
+  groupSizeBalance: number;
+  hardViolations: 0;
+  inputChecksum: string;
+  levelBalance: number;
+  locks: Array<{
+    entryNumber: number;
+    groupNumber: number;
+    slotNumber: number;
+    team: { id: string; name: string };
+  }>;
+  manualOverrideCount: number;
+  mode: "HYBRID" | "SEEDED_POTS";
+  placements: DemoWorldV2TournamentPlacement[];
+  potDistribution: number;
+  qualityScore: number;
+  resultChecksum: string;
+  sameClubCollisions: number;
+  seed: string;
+  softScore: number;
+  unassignedEntries: 0;
+  version: number;
+};
+
+export type DemoWorldV2TournamentChunk = {
+  comparison: {
+    movedTeams: Array<{
+      fromGroup: number;
+      team: { id: string; name: string };
+      toGroup: number;
+    }>;
+    qualityDelta: number;
+    retainedLocks: number;
+  };
+  competition: {
+    acceptedParticipants: 16;
+    groupCount: 4;
+    name: "COPA BARRIOS IQ 2027";
+    planStatus: "published";
+    potCount: 4;
+    publishedRevision: 5;
+    slug: "copa-barrios-iq-2027";
+  };
+  conflict: {
+    attempts: number;
+    constraintTypes: string[];
+    errorCode: "DRAW_UNSATISFIABLE";
+    explanation: string;
+    reasonCode: "GROUP_CONSTRAINTS_UNSATISFIABLE";
+    suggestions: string[];
+  };
+  constraints: Array<{
+    reason: string;
+    strength: "HARD" | "SOFT";
+    type: "POT_DISTRIBUTION" | "SAME_CLUB_AVOIDANCE" | "TEAM_LEVEL_BALANCE";
+    weight: number;
+  }>;
+  drawOutcomes: [DemoWorldV2TournamentOutcome, DemoWorldV2TournamentOutcome];
+  nextPhase: {
+    bracketProgression: false;
+    message: "Partidos del Torneo: próxima fase";
+    tournamentMatches: 0;
+  };
+  provenance: {
+    authorityHash: string;
+    database: "temporary-local-postgresql";
+    operationReceipts: number;
+    rpcFamilies: ["R1", "CONFIGURATION_CENTER", "ENTRIES", "R6A_DRAW_ENGINE"];
+    source: "simulation-world";
+    verified: true;
+  };
+  readOnly: true;
+  transport: {
+    methods: ["GET"];
+    remoteWrites: 0;
+  };
+};
+
 export type DemoWorldV2Snapshot = {
   activity: DemoWorldActivityChunk;
   clubsReferees: DemoWorldV2ClubsRefereesChunk;
@@ -322,6 +415,7 @@ export type DemoWorldV2Snapshot = {
   manifest: DemoWorldV2Manifest;
   matches: DemoWorldMatchesChunk;
   players: DemoWorldPlayersChunk;
+  tournament: DemoWorldV2TournamentChunk;
 };
 
 export function computeDemoWorldV2Standings(
@@ -446,6 +540,65 @@ export function demoWorldV2IntegrityErrors(snapshot: DemoWorldV2Snapshot): strin
   }
   if (JSON.stringify(configuration).includes("fixedCents")) {
     errors.push("Demo World V2.3 leaked a private referee fee");
+  }
+  const tournament = snapshot.tournament;
+  if (tournament.competition.name !== "COPA BARRIOS IQ 2027"
+      || tournament.competition.acceptedParticipants !== 16
+      || tournament.competition.groupCount !== 4
+      || tournament.competition.potCount !== 4
+      || tournament.competition.planStatus !== "published"
+      || tournament.competition.publishedRevision !== 5
+      || !tournament.readOnly
+      || tournament.transport.remoteWrites !== 0
+      || tournament.transport.methods.join(",") !== "GET"
+      || tournament.provenance.authorityHash !== competition.provenance.authorityHash) {
+    errors.push("Demo World V2.4 Tournament authority is invalid");
+  }
+  if (tournament.drawOutcomes.length !== 2
+      || tournament.drawOutcomes[0]?.mode !== "SEEDED_POTS"
+      || tournament.drawOutcomes[1]?.mode !== "HYBRID") {
+    errors.push("Demo World V2.4 must expose automatic and hybrid outcomes");
+  }
+  for (const outcome of tournament.drawOutcomes) {
+    if (outcome.placements.length !== 16
+        || new Set(outcome.placements.map(({ team }) => team.id)).size !== 16
+        || outcome.hardViolations !== 0
+        || outcome.unassignedEntries !== 0
+        || outcome.sameClubCollisions !== 0
+        || !/^[0-9a-f]{64}$/.test(outcome.inputChecksum)
+        || !/^[0-9a-f]{64}$/.test(outcome.resultChecksum)
+        || outcome.seed.length < 8) {
+      errors.push(`Demo World V2.4 draw revision ${outcome.version} is invalid`);
+    }
+    for (let groupNumber = 1; groupNumber <= 4; groupNumber += 1) {
+      const group = outcome.placements.filter((placement) => placement.groupNumber === groupNumber);
+      if (group.length !== 4 || new Set(group.map(({ potNumber }) => potNumber)).size !== 4) {
+        errors.push(`Demo World V2.4 group ${groupNumber} violates pot distribution`);
+      }
+    }
+  }
+  if (tournament.drawOutcomes[0]?.locks.length !== 0
+      || tournament.drawOutcomes[1]?.locks.length !== 2
+      || tournament.drawOutcomes[1]?.manualOverrideCount !== 2
+      || tournament.comparison.retainedLocks !== 2
+      || tournament.comparison.movedTeams.length === 0) {
+    errors.push("Demo World V2.4 hybrid comparison is invalid");
+  }
+  if (tournament.conflict.errorCode !== "DRAW_UNSATISFIABLE"
+      || tournament.conflict.reasonCode !== "GROUP_CONSTRAINTS_UNSATISFIABLE"
+      || !tournament.conflict.constraintTypes.includes("FIXED_POSITION")
+      || tournament.conflict.suggestions.length < 2) {
+    errors.push("Demo World V2.4 unsatisfiable scenario is invalid");
+  }
+  if (tournament.nextPhase.tournamentMatches !== 0
+      || tournament.nextPhase.bracketProgression
+      || tournament.nextPhase.message !== "Partidos del Torneo: próxima fase") {
+    errors.push("Demo World V2.4 invented Tournament matches or progression");
+  }
+  if (snapshot.manifest.counts.tournaments !== 1
+      || snapshot.manifest.counts.tournamentGroups !== 4
+      || snapshot.manifest.counts.tournamentDrawRevisions !== 5) {
+    errors.push("Demo World V2.4 Tournament manifest counts are invalid");
   }
   const assignmentItems = Array.isArray(snapshot.clubsReferees.refereeAssignmentPreview.items)
     ? snapshot.clubsReferees.refereeAssignmentPreview.items as Record<string, unknown>[]

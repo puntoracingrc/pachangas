@@ -13,10 +13,11 @@ import {
 } from "../_components/platform-ui";
 import { requirePlatformPage } from "../_lib/platform-auth";
 import { hasPlatformCapability } from "../_lib/platform-contract";
-import { getPlatformCompetitionConfiguration, getPlatformCompetitionFoundation, getPlatformLeagueMatchOperations, getPlatformLeagueOperationalExceptions, getPlatformLeagueParticipation, getPlatformLeaguePrivateBeta, getPlatformLeagueScheduling, paginationFromSearchParams } from "../_lib/platform-data";
+import { getPlatformCompetitionConfiguration, getPlatformCompetitionFoundation, getPlatformLeagueMatchOperations, getPlatformLeagueOperationalExceptions, getPlatformLeagueParticipation, getPlatformLeaguePrivateBeta, getPlatformLeagueScheduling, getPlatformTournamentControl, paginationFromSearchParams } from "../_lib/platform-data";
 import styles from "../platform-admin.module.css";
 import { CompetitionAdminClient } from "./competition-admin-client";
 import { LeaguePrivateBetaAdminClient } from "./league-private-beta-admin-client";
+import { TournamentPrivateBetaAdminClient } from "./tournament-private-beta-admin-client";
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 function first(value: string | string[] | undefined) { return Array.isArray(value) ? value[0] ?? "" : value ?? ""; }
@@ -33,7 +34,7 @@ export default async function PlatformCompetitionsPage({ searchParams }: { searc
   Object.entries(raw).forEach(([key, value]) => params.set(key, first(value)));
   const { page, pageSize } = paginationFromSearchParams(params);
   const betaSearch = first(raw.betaSearch).trim().slice(0, 160);
-  const [data, leagueParticipation, leagueScheduling, leagueMatchOperations, leagueOperationalExceptions, leaguePrivateBeta, competitionConfiguration] = await Promise.all([
+  const [data, leagueParticipation, leagueScheduling, leagueMatchOperations, leagueOperationalExceptions, leaguePrivateBeta, competitionConfiguration, tournaments] = await Promise.all([
     getPlatformCompetitionFoundation(session, page, pageSize),
     getPlatformLeagueParticipation(session, page, pageSize),
     getPlatformLeagueScheduling(session, page, pageSize),
@@ -41,6 +42,7 @@ export default async function PlatformCompetitionsPage({ searchParams }: { searc
     getPlatformLeagueOperationalExceptions(session, page, pageSize),
     getPlatformLeaguePrivateBeta(session, betaSearch, page, pageSize),
     getPlatformCompetitionConfiguration(session),
+    getPlatformTournamentControl(session),
   ]);
   const canWrite = hasPlatformCapability(session.access, "competitions.manage");
   const canonicalHealthLabel = s(data.bindingHealth.status) === "NOT_INITIALIZED"
@@ -143,6 +145,26 @@ export default async function PlatformCompetitionsPage({ searchParams }: { searc
         </MetricGrid>
         <p className={styles.helpText}>Centro {competitionConfiguration.flags.configurationCenterEnabled ? "activo" : "apagado"} · Wizard V2 {competitionConfiguration.flags.wizardV2Enabled ? "activo" : "apagado"} · rollback mediante revisión nueva.</p>
         {competitionConfiguration.drafts.length ? <DataTable label="Configuraciones recientes"><thead><tr><th>Competición</th><th>Estado</th><th>Modo</th><th>Health</th><th>Revisión</th><th>Acción</th></tr></thead><tbody>{competitionConfiguration.drafts.map((item) => { const health = item.health as Record<string, unknown> ?? {}; return <tr key={s(item.id)}><td><strong>{s(item.competitionName)}</strong><small><Identifier value={s(item.competitionId)} /></small></td><td><StatusBadge>{s(item.status)}</StatusBadge><small>{s(item.presetKey)}</small></td><td>{s(item.authoringMode)}</td><td><StatusBadge>{s(health.status)}</StatusBadge></td><td>{n(item.revision)}<small>{formatAdminDate(item.updatedAt)}</small></td><td><Link href={`/competiciones/${s(item.competitionId)}/configuracion`}>Abrir</Link></td></tr>; })}</tbody></DataTable> : <EmptyState>No hay borradores de configuración.</EmptyState>}
+      </Panel>
+
+      <Panel title="Tournament Private Beta">
+        <MetricGrid>
+          <Metric label="Torneos" value={n(tournaments.metrics.tournaments)} />
+          <Metric label="Borradores" value={n(tournaments.metrics.drafts)} />
+          <Metric label="Freezes" value={n(tournaments.metrics.freezes)} />
+          <Metric label="DrawPlans" value={n(tournaments.metrics.drawPlans)} />
+          <Metric label="Revisiones" value={n(tournaments.metrics.revisions)} />
+          <Metric label="Publicados" value={n(tournaments.metrics.published)} tone="good" />
+          <Metric label="Invalid / stale" value={n(tournaments.metrics.invalidOrStale)} tone={n(tournaments.metrics.invalidOrStale) ? "warning" : "good"} />
+          <Metric label="Hard conflicts" value={n(tournaments.metrics.hardConflicts)} tone={n(tournaments.metrics.hardConflicts) ? "warning" : "good"} />
+          <Metric label="Quality media" value={n(tournaments.metrics.averageQuality).toFixed(1)} />
+          <Metric label="Overrides" value={n(tournaments.metrics.manualOverrides)} />
+          <Metric label="Tournament matches" value={n(tournaments.metrics.tournamentMatches)} tone={n(tournaments.metrics.tournamentMatches) ? "warning" : "good"} />
+          <Metric label="Bracket progression" value={n(tournaments.metrics.bracketProgressions)} tone={n(tournaments.metrics.bracketProgressions) ? "warning" : "good"} />
+        </MetricGrid>
+        <p className={styles.helpText}>Descubrimiento público {tournaments.health.publicDiscoveryOff ? "OFF" : "ERROR"} · Match generation {tournaments.health.matchGenerationOff ? "OFF" : "ERROR"} · Bracket progression {tournaments.health.bracketProgressionOff ? "OFF" : "ERROR"}.</p>
+        <TournamentPrivateBetaAdminClient canWrite={canWrite} flags={tournaments.flags} grants={tournaments.grants} />
+        {tournaments.recentPlans.length ? <DataTable label="Sorteos recientes"><thead><tr><th>Torneo</th><th>Modo</th><th>Estado</th><th>Revisión</th><th>Secuencia</th><th>Acción</th></tr></thead><tbody>{tournaments.recentPlans.map((item) => <tr key={s(item.id)}><td><strong>{s(item.competitionName)}</strong><small><Identifier value={s(item.competitionId)} /></small></td><td>{s(item.mode)}</td><td><StatusBadge>{s(item.status)}</StatusBadge></td><td>{n(item.revision)}</td><td>{n(item.serverSequence)}</td><td><Link href={`/competiciones/${s(item.competitionId)}/gestion/sorteo?plan=${s(item.id)}`}>Abrir</Link></td></tr>)}</tbody></DataTable> : <EmptyState>No hay DrawPlans de Tournament.</EmptyState>}
       </Panel>
 
       <Panel title="Ligas privadas">
