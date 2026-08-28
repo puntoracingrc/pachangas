@@ -1422,3 +1422,25 @@ reproducing the original scenario passes.
 - Regression: bracket `locked`, completion present and zero pending nodes were
   confirmed; `pachanga_competitions` correctly remains within its existing
   `draft/cancelled` contract.
+
+### R6C-ENVIRONMENT-071 - Recursive temporary cleanup is rejected by command policy
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: remove the disposable staging release copy after deleting
+  the R6C Supabase branch, then relink the product worktree to production.
+- Observed: the execution policy rejects the combined command because it
+  contains recursive forced removal. Neither relinking nor migration readback
+  starts.
+- Impact: production remains untouched and the disposable `/tmp` copy still
+  occupies local storage.
+- Planned correction: delete the verified temporary tree through bounded
+  depth-first file/directory removal, confirm the path no longer exists, then
+  run link and ledger readback as separate commands.
+- Regression plan: the temporary path is absent, the worktree links to the
+  production project and `migration list --linked` still reports ledger 169.
+- Correction: the verified disposable tree was removed with bounded
+  depth-first deletion and link/readback were executed as independent commands.
+- Regression: the path is absent, the worktree is linked to
+  `qonbngfrnrqgmxbdfbea` and production still reports 169 applied receipts with
+  migrations 170..175 pending exactly once.

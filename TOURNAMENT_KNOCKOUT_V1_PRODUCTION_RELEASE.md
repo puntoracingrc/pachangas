@@ -49,7 +49,7 @@ pendientes como release completado.
 | Staging efímero creado | PASS | Branch privada full-clone `zsqmpkmvrpeiesbwvbsu`; baseline heredado ledger 169 y autoridades R6B presentes. |
 | Migraciones staging 170..175 | PASS | Dry-run exacto, aplicación única y readback independiente: ledger 175, hashes/nombres coincidentes. |
 | QA autenticada / Realtime | PASS | Dos clientes GoTrue, una invalidación canónica por dispositivo, refetch convergente y escritura directa denegada. |
-| Cleanup staging / branch eliminado | PARTIAL | Datos, flags, grants, usuarios, probes y procesos QA a cero; eliminación de branch pendiente del cierre documental. |
+| Cleanup staging / branch eliminado | PASS | Datos, flags, grants, usuarios, probes y procesos QA a cero; branch R6C eliminado y `pwa-bridge-staging` preservado. |
 | Backup producción recuperable | PENDING | - |
 | Baseline/ledger producción | PENDING | - |
 | Migraciones producción 170..175 | PENDING | - |
@@ -86,7 +86,8 @@ pendientes como release completado.
   escrituras abiertas sobre tablas.
 - Cleanup de datos confirmado: siete flags R6C OFF, bundle beta QA revocado,
   cero grants activos, cero usuarios temporales, cero probes, cero brackets
-  activos y cero procesos de prueba.
+  activos y cero procesos de prueba. El branch efímero y su release copy local
+  se retiraron; el worktree quedó relinkado a producción, todavía en ledger 169.
 
 ## Flags objetivo
 
@@ -112,4 +113,4 @@ directo.
 
 ## Estado actual
 
-`STAGING_CERTIFIED / STAGING_BRANCH_RETIREMENT_PENDING / PRODUCTION_GATES_PENDING`.
+`STAGING_CERTIFIED_AND_RETIRED / PRODUCTION_BASELINE_LEDGER_169 / PRODUCTION_GATES_PENDING`.
