@@ -37,7 +37,7 @@ Resolved incidents must include `fixed` and `regression_verified`.
 ## W7C-001 - Legacy platform command can bypass commercial approval
 
 - Classification: `PRODUCT_BUG`
-- Status: `fixed` / `regression_verified`
+- Status: `open`
 - Found in: `command_pachanga_organizer_billing_platform_v1` and the
   `/api/platform-admin/billing` allowlist.
 - Original scenario: a role holding the broad `billing.write` capability can
@@ -89,7 +89,7 @@ Resolved incidents must include `fixed` and `regression_verified`.
 ## W7C-004 - Stripe Organizer test runtime is not configured for this branch
 
 - Classification: `ENVIRONMENT_ISSUE`
-- Status: `open`
+- Status: `fixed` / `regression_verified`
 - Evidence: Stripe test mode contains zero Pachangas Organizer Products, and
   Vercel has no branch-scoped `STRIPE_TEST_SECRET_KEY` or
   `STRIPE_TEST_WEBHOOK_SECRET` for this worktree branch.
@@ -771,3 +771,145 @@ Resolved incidents must include `fixed` and `regression_verified`.
   confirmation gates. Reconciliation and manual grant assertions remain.
 - Verification: the Wave 7B focused suite passes 12/12 and the Wave 7C focused
   suite passes 9/9; the full repository suite is rerun as a final release gate.
+
+## W7C-045 - Stripe Workbench exposes two controls with the same accessible name
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed` / `regression_verified`
+- Original scenario: while reviewing the TEST Customer Portal, the Stripe
+  Dashboard Workbench overlay exposes two visible controls both named
+  `Cerrar Workbench`.
+- Evidence: strict browser selection reports two matches: the real minimize
+  button and a tray action link.
+- Impact: the first semantic click is intentionally rejected as ambiguous;
+  no Stripe resource or Pachangas IQ state changed.
+- Required correction: select Stripe's stable Workbench minimize test ID and
+  continue read-only Portal inspection.
+- Required regression: the overlay closes once and the Customer Portal page
+  remains in TEST mode.
+- Correction: the browser selected `wb-WorkbenchMinimize`, the uniquely scoped
+  minimize control, rather than either duplicated accessible name.
+- Verification: Workbench closed once; the URL retained `/test/` and exposed
+  the existing default TEST Portal read-only. That shared configuration was
+  not edited; Wave 7C will create its separate metadata-scoped Organizer
+  configuration through the server adapter.
+
+## W7C-046 - Combined Supabase linked checks hang without output
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed` / `regression_verified`
+- Original scenario: the release preflight invoked linked migration parity and
+  branch discovery in one shell process.
+- Evidence: the process produced no stdout or stderr for more than 90 seconds
+  and required an interrupt before either result could be attributed.
+- Impact: no migration, branch or production data changed, but the combined
+  command cannot prove ledger parity or staging availability.
+- Required correction: execute migration parity and branch discovery as
+  separate bounded commands, preserving their individual exit status.
+- Required regression: obtain an explicit linked ledger result and an explicit
+  branch-list result before any remote schema write.
+- Correction: the purpose-built Supabase connector replaced the unauthenticated
+  CLI session for these two read-only checks; no schema command was retried.
+- Verification: production returned the exact 190-row ledger ending at
+  `20260828163756_organizer_billing_hardening_flags_v1`; branch discovery
+  returned the isolated `pwa-bridge-staging` project as `ACTIVE_HEALTHY`.
+
+## W7C-047 - Supabase connector timestamps staging migrations independently
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `open`
+- Original scenario: the six Wave 7C SQL files were applied in the correct
+  order to the disposable staging branch through the Supabase migration
+  connector.
+- Evidence: staging reaches 196 migrations, but the connector records versions
+  `20260828231354` through `20260828231359` instead of the repository versions
+  `20260828205310` through `20260828205317`.
+- Impact: SQL order and branch behavior are correct, but that mechanism cannot
+  be used for production because linked history must preserve exact repository
+  versions. Production remains unchanged at 190.
+- Required correction: treat this branch ledger as ephemeral QA evidence only;
+  use an exact-version migration path for production and retire/reset the
+  staging branch after QA.
+- Required regression: before production, compare local and remote lists by
+  exact version and name; after deployment they must both end at
+  `20260828205317_organizer_commercial_hardening_flags_v1` with 196 rows.
+
+## W7C-048 - In-app tab creation ignores its initial URL argument
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed` / `regression_verified`
+- Original scenario: visual QA requested a new in-app browser tab with the
+  exact Wave 7C Preview URL supplied at creation time.
+- Evidence: the tab was created successfully but remained at `about:blank`.
+- Impact: no application request or remote write occurred; visual QA had not
+  started.
+- Required correction: navigate the already created tab explicitly with
+  `goto` and retain the exact immutable Preview hostname.
+- Required regression: the final URL and title must identify Wave 7C before
+  viewport assertions begin.
+- Correction: the existing tab navigated explicitly to the immutable
+  deployment hostname.
+- Verification: the final URL is the exact Preview `/planes-organizador` and
+  the title is `Planes de organizacion | Pachangas IQ`. The catalog correctly
+  remains unavailable until the branch-specific staging environment is wired.
+
+## W7C-049 - In-app tab wrapper does not expose direct semantic locators
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed` / `regression_verified`
+- Original scenario: the LIVE Stripe catalog verification attempted to call
+  `getByText` directly on the persistent in-app tab wrapper.
+- Evidence: the browser binding reports `getByText is not a function` while
+  the same binding still returns the correct Stripe LIVE URL and page title.
+- Impact: no Stripe resource or Pachangas IQ state changed; the intended
+  read-only product-name assertion did not run.
+- Required correction: use the browser plugin's supported page-inspection API
+  from the existing tab binding, without reading cookies, storage or secrets.
+- Required regression: count both exact Organizer product names on the LIVE
+  catalog and confirm zero matches while the URL remains outside `/test/`.
+- Correction: the assertion now uses the supported `tab.playwright.getByText`
+  surface while preserving the already authenticated LIVE tab.
+- Verification: both exact Organizer product-name counts are zero, the URL is
+  the LIVE `/products` catalog and it does not contain the `/test/` segment.
+
+## W7C-050 - Environment scan included a directory absent from this repository
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed` / `regression_verified`
+- Original scenario: the Preview environment dependency scan included a
+  conventional root `lib` directory alongside the repository's real paths.
+- Evidence: `rg` returned the useful matches but also reported `lib: No such
+  file or directory`.
+- Impact: no file or remote state changed; the partial output is not accepted
+  as the final inventory.
+- Required correction: rerun the same scan against existing repository paths
+  only.
+- Required regression: the corrected command must exit cleanly and retain the
+  Supabase, service-role and Organizer Stripe environment references.
+- Correction: the scan now targets `app`, `scripts`, `tests` and the existing
+  root configuration files only.
+- Verification: the command exits 0 and retains all required public Supabase,
+  server service-role and dedicated Organizer Stripe environment references.
+
+## W7C-051 - Public Organizer catalog unnecessarily requires service role
+
+- Classification: `PRODUCT_BUG`
+- Status: `fixed` / `regression_verified`
+- Original scenario: the isolated Preview receives the public staging URL and
+  publishable key, then requests `/api/billing/organizer/catalog`.
+- Evidence: the route calls `billingServiceClient()`, which fails closed when
+  `SUPABASE_SERVICE_ROLE_KEY` is absent, although
+  `get_pachanga_organizer_plan_catalog_v1()` explicitly grants execution to
+  `anon` and returns a public redacted read model.
+- Impact: the public plans page cannot render its canonical catalog in a
+  least-privilege Preview unless an unrelated privileged secret is supplied.
+- Required correction: execute this read-only public RPC with a server-created
+  Supabase client using the publishable key; retain service role for privileged
+  Organizer commands and Stripe event confirmation only.
+- Required regression: the catalog route must not reference service role and
+  the focused tests must prove the public RPC still drives the canonical page.
+- Correction: the billing server helpers now expose a least-privilege public
+  client and the catalog route uses it for the anonymous canonical RPC.
+- Verification: the Organizer Wave 7B/7C suites pass 22/22, typecheck passes,
+  focused lint passes and the regression rejects any service-role reference in
+  the public catalog route.

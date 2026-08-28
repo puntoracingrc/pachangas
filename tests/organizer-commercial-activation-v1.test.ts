@@ -55,6 +55,18 @@ test("public and owner read models redact Stripe authority and separate modes", 
   assert.doesNotMatch(reads, /'stripeProductId'/);
 });
 
+test("public Organizer catalog uses the anonymous canonical RPC without service role", async () => {
+  const [route, shared, reads] = await Promise.all([
+    source("app/api/billing/organizer/catalog/route.ts"),
+    source("app/api/billing/_shared.ts"),
+    source(`supabase/migrations/${migrations[4]}`),
+  ]);
+  assert.match(route, /publicSupabaseClient\(\)\.rpc\("get_pachanga_organizer_plan_catalog_v1"\)/);
+  assert.doesNotMatch(route, /billingServiceClient|SUPABASE_SERVICE_ROLE_KEY|service_role/);
+  assert.match(shared, /publicSupabaseClient[\s\S]*NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY/);
+  assert.match(reads, /grant execute on function public\.get_pachanga_organizer_plan_catalog_v1\(\) to anon, authenticated, service_role/);
+});
+
 test("Organizer webhook remains distinct from Stripe V1", async () => {
   const [organizer, legacy] = await Promise.all([
     source("app/api/webhooks/stripe/route.ts"),
