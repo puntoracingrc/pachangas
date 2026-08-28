@@ -1255,11 +1255,13 @@ function DemoPublicCompetitionsView({ data }: { data: DemoWorldV2PublicCompetiti
 }
 
 const organizerBillingScenarioLabels: Record<DemoWorldV2OrganizerBillingChunk["scenarios"][number]["id"], string> = {
-  canceled_continuity: "Cancelado con continuidad",
-  club_active: "Club activo",
+  club_annual_active: "Club anual activo",
+  club_canceled_continuity: "Club con continuidad",
+  club_monthly_active: "Club mensual activo",
   club_partner: "Club colaborador",
-  past_due_grace: "Pago pendiente",
   team_active: "Equipo activo",
+  team_checkout_pending: "Checkout pendiente",
+  team_past_due_grace: "Pago pendiente",
 };
 
 function DemoOrganizerBillingView({ billing }: { billing: DemoWorldV2OrganizerBillingChunk }) {
@@ -1277,6 +1279,7 @@ function DemoOrganizerBillingView({ billing }: { billing: DemoWorldV2OrganizerBi
       <header><span>{scenario.organizerKind === "CLUB" ? "Club" : "Equipo"}</span><h2>{scenario.organizerName}</h2><p>{scenario.note}</p></header>
       <div className={styles.organizerBillingStateGrid}>
         <span><small>Plan</small><strong>{scenario.planCode}</strong></span>
+        {scenario.billingInterval ? <span><small>Facturación</small><strong>{scenario.billingInterval === "year" ? "Anual" : "Mensual"}</strong></span> : null}
         <span><small>Cuenta</small><strong>{organizerBillingStatus(scenario.accountStatus)}</strong></span>
         <span><small>Acceso</small><strong>{organizerBillingStatus(scenario.accessStatus)}</strong></span>
         <span><small>Nuevas creaciones</small><strong>{scenario.creationAllowed ? "Permitidas" : "Bloqueadas"}</strong></span>

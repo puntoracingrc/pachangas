@@ -21,8 +21,8 @@ import {
   type DemoWorldSnapshot,
 } from "./demo-world-contract";
 
-export const DEMO_WORLD_V2_VERSION = 2.8 as const;
-export const DEMO_WORLD_V2_SEED = "pachangas-iq-demo-world-v2-8-2026-27" as const;
+export const DEMO_WORLD_V2_VERSION = 2.9 as const;
+export const DEMO_WORLD_V2_SEED = "pachangas-iq-demo-world-v2-9-2026-27" as const;
 
 export type DemoWorldV2PrimaryTab = DemoWorldPrimaryTab
   | "arbitros"
@@ -94,12 +94,14 @@ export type DemoWorldV2OrganizerBillingPlan = {
 };
 
 export type DemoWorldV2OrganizerBillingScenario = {
-  accessStatus: "active" | "continuity" | "grace";
-  accountStatus: "active" | "canceled" | "past_due";
+  accessStatus: "active" | "continuity" | "grace" | "pending";
+  accountStatus: "active" | "canceled" | "checkout_pending" | "past_due";
+  billingInterval: "month" | "year" | null;
   continuityUntil: string | null;
   creationAllowed: boolean;
   graceEndsAt: string | null;
-  id: "canceled_continuity" | "club_active" | "club_partner" | "past_due_grace" | "team_active";
+  id: "club_annual_active" | "club_monthly_active" | "club_partner" | "club_canceled_continuity"
+    | "team_active" | "team_checkout_pending" | "team_past_due_grace";
   note: string;
   organizerKind: "CLUB" | "TEAM";
   organizerName: string;
@@ -120,8 +122,9 @@ export type DemoWorldV2OrganizerBillingChunk = {
     containsStripeSubscriptionId: false;
   };
   provenance: {
-    authority: "canonical-read-model-shape";
-    source: "deterministic-demo";
+    authority: "canonical-postgresql-read-model";
+    operationReceipts: number;
+    source: "simulation-world";
     verified: true;
   };
   readOnly: true;
@@ -788,30 +791,34 @@ export function demoWorldV2IntegrityErrors(snapshot: DemoWorldV2Snapshot): strin
       || organizerBilling.transport.remoteWrites !== 0
       || organizerBilling.transport.methods.join(",") !== "GET"
       || !organizerBilling.provenance.verified
-      || organizerBilling.provenance.authority !== "canonical-read-model-shape"
+      || organizerBilling.provenance.authority !== "canonical-postgresql-read-model"
+      || organizerBilling.provenance.operationReceipts < 20
       || organizerBilling.catalog.liveCheckoutEnabled
       || organizerBilling.catalog.status !== "CATALOG_AVAILABLE") {
-    errors.push("Demo World V2.8 organizer billing authority is invalid");
+    errors.push("Demo World V2.9 organizer billing authority is invalid");
   }
-  if (billingScenarioIds.join(",") !== "club_partner,team_active,club_active,past_due_grace,canceled_continuity"
-      || snapshot.manifest.counts.organizerBillingScenarios !== 5
+  if (billingScenarioIds.join(",") !== "club_partner,club_monthly_active,club_annual_active,team_active,team_checkout_pending,team_past_due_grace,club_canceled_continuity"
+      || snapshot.manifest.counts.organizerBillingScenarios !== 7
       || billingPlanCodes.join(",") !== "CLUB_PARTNER,CLUB_ORGANIZER,TEAM_ORGANIZER_PRO") {
-    errors.push("Demo World V2.8 organizer billing scenarios are incomplete");
+    errors.push("Demo World V2.9 organizer billing scenarios are incomplete");
   }
   const scenarioById = new Map(organizerBilling.scenarios.map((scenario) => [scenario.id, scenario]));
   if (scenarioById.get("club_partner")?.accessStatus !== "active"
+      || scenarioById.get("club_monthly_active")?.billingInterval !== "month"
+      || scenarioById.get("club_annual_active")?.billingInterval !== "year"
       || scenarioById.get("team_active")?.accountStatus !== "active"
-      || scenarioById.get("club_active")?.accountStatus !== "active"
-      || scenarioById.get("past_due_grace")?.accessStatus !== "grace"
-      || scenarioById.get("past_due_grace")?.accountStatus !== "past_due"
-      || scenarioById.get("canceled_continuity")?.accessStatus !== "continuity"
-      || scenarioById.get("canceled_continuity")?.accountStatus !== "canceled") {
-    errors.push("Demo World V2.8 organizer billing lifecycle is invalid");
+      || scenarioById.get("team_checkout_pending")?.accountStatus !== "checkout_pending"
+      || scenarioById.get("team_checkout_pending")?.accessStatus !== "pending"
+      || scenarioById.get("team_past_due_grace")?.accessStatus !== "grace"
+      || scenarioById.get("team_past_due_grace")?.accountStatus !== "past_due"
+      || scenarioById.get("club_canceled_continuity")?.accessStatus !== "continuity"
+      || scenarioById.get("club_canceled_continuity")?.accountStatus !== "canceled") {
+    errors.push("Demo World V2.9 organizer billing lifecycle is invalid");
   }
   if (organizerBilling.catalog.plans.some(({ checkoutAvailable, prices }) => checkoutAvailable || prices.length)
       || Object.values(organizerBilling.privacy).some(Boolean)
       || /"(?:cus|sub|price|prod)_[A-Za-z0-9_]+"|@example|\+34/i.test(JSON.stringify(organizerBilling))) {
-    errors.push("Demo World V2.8 organizer billing leaked commercial or private data");
+    errors.push("Demo World V2.9 organizer billing leaked commercial or private data");
   }
 
   if (competition.entries.length !== 6) errors.push("League must have exactly 6 entries");

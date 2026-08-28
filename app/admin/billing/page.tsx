@@ -2,7 +2,7 @@ import Link from "next/link";
 import { PageHeader } from "../_components/platform-ui";
 import { requirePlatformPage } from "../_lib/platform-auth";
 import { hasPlatformCapability } from "../_lib/platform-contract";
-import { getStripeHealth } from "../_lib/platform-external";
+import { getOrganizerStripeCommercialHealth } from "../../api/billing/organizer/_stripe-commercial";
 import { OrganizerBillingAdminClient } from "./organizer-billing-admin-client";
 import styles from "../platform-admin.module.css";
 
@@ -14,9 +14,10 @@ export default async function PlatformBillingPage({ searchParams }: { searchPara
   const session = await requirePlatformPage("billing.read");
   const raw = await searchParams;
   const refresh = first(raw.refresh) === "1";
-  const [canonicalResult, stripeRaw] = await Promise.all([
+  const [canonicalResult, stripeTest, stripeLive] = await Promise.all([
     session.client.rpc("get_pachanga_platform_organizer_billing_v2", { page_offset: 0, page_size: 100 }),
-    getStripeHealth(refresh),
+    getOrganizerStripeCommercialHealth("test"),
+    getOrganizerStripeCommercialHealth("live"),
   ]);
   if (canonicalResult.error) throw new Error(canonicalResult.error.message);
   return <>
@@ -25,7 +26,7 @@ export default async function PlatformBillingPage({ searchParams }: { searchPara
       canApproveLive={session.access.role === "platform_owner"}
       canWrite={hasPlatformCapability(session.access, "billing.write")}
       canonical={record(canonicalResult.data)}
-      stripe={record(stripeRaw)}
+      stripe={{ live: record(stripeLive), refresh, test: record(stripeTest) }}
     />
   </>;
 }

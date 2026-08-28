@@ -1762,15 +1762,132 @@
   },
   "database": "temporary-local-postgresql",
   "generatedAt": "2026-08-28T14:00:00.000Z",
-  "migrationCount": 183,
+  "migrationCount": 196,
+  "organizerBilling": {
+    "privacy": {
+      "containsPii": false,
+      "containsPriceId": false,
+      "containsStripeCustomerId": false,
+      "containsStripeSubscriptionId": false
+    },
+    "scenarios": [
+      {
+        "id": "club_partner",
+        "note": "Partnership auditada: acceso activo sin cargo ni Checkout.",
+        "planCode": "CLUB_PARTNER",
+        "renewalAt": null,
+        "graceEndsAt": null,
+        "accessStatus": "active",
+        "accountStatus": "active",
+        "organizerKind": "CLUB",
+        "organizerName": "Club A · Llevant Partner",
+        "billingInterval": null,
+        "continuityUntil": null,
+        "creationAllowed": true
+      },
+      {
+        "id": "club_monthly_active",
+        "note": "Suscripcion mensual de Club confirmada por el webhook TEST.",
+        "planCode": "CLUB_ORGANIZER",
+        "renewalAt": "2026-09-28T22:06:36.06565+00:00",
+        "graceEndsAt": null,
+        "accessStatus": "active",
+        "accountStatus": "active",
+        "organizerKind": "CLUB",
+        "organizerName": "Club B · Marina Monthly",
+        "billingInterval": "month",
+        "continuityUntil": null,
+        "creationAllowed": true
+      },
+      {
+        "id": "club_annual_active",
+        "note": "Suscripcion anual de Club confirmada por el webhook TEST.",
+        "planCode": "CLUB_ORGANIZER",
+        "renewalAt": "2027-08-28T22:06:36.06565+00:00",
+        "graceEndsAt": null,
+        "accessStatus": "active",
+        "accountStatus": "active",
+        "organizerKind": "CLUB",
+        "organizerName": "Club C · Besos Annual",
+        "billingInterval": "year",
+        "continuityUntil": null,
+        "creationAllowed": true
+      },
+      {
+        "id": "team_active",
+        "note": "Add-on mensual activo sobre el plan base del equipo.",
+        "planCode": "TEAM_ORGANIZER_PRO",
+        "renewalAt": "2026-09-28T22:06:36.06565+00:00",
+        "graceEndsAt": null,
+        "accessStatus": "active",
+        "accountStatus": "active",
+        "organizerKind": "TEAM",
+        "organizerName": "Team D · Cobalto Raval",
+        "billingInterval": "month",
+        "continuityUntil": null,
+        "creationAllowed": true
+      },
+      {
+        "id": "team_checkout_pending",
+        "note": "Checkout creado; el acceso sigue pendiente hasta el webhook firmado.",
+        "planCode": "TEAM_ORGANIZER_PRO",
+        "renewalAt": null,
+        "graceEndsAt": null,
+        "accessStatus": "pending",
+        "accountStatus": "checkout_pending",
+        "organizerKind": "TEAM",
+        "organizerName": "Team E · Vertice Gracia",
+        "billingInterval": "year",
+        "continuityUntil": null,
+        "creationAllowed": false
+      },
+      {
+        "id": "team_past_due_grace",
+        "note": "Pago pendiente: la politica canonica mantiene temporalmente el acceso durante la gracia.",
+        "planCode": "TEAM_ORGANIZER_PRO",
+        "renewalAt": null,
+        "graceEndsAt": "2026-09-04T22:06:36.103308+00:00",
+        "accessStatus": "grace",
+        "accountStatus": "past_due",
+        "organizerKind": "TEAM",
+        "organizerName": "Team F · Montjuic Nord",
+        "billingInterval": "month",
+        "continuityUntil": null,
+        "creationAllowed": true
+      },
+      {
+        "id": "club_canceled_continuity",
+        "note": "Suscripcion cancelada: la edicion iniciada conserva continuidad sin permitir nuevas creaciones.",
+        "planCode": "CLUB_ORGANIZER",
+        "renewalAt": null,
+        "graceEndsAt": null,
+        "accessStatus": "continuity",
+        "accountStatus": "canceled",
+        "organizerKind": "CLUB",
+        "organizerName": "Club G · Poblenou Continuity",
+        "billingInterval": "year",
+        "continuityUntil": "2026-11-27T00:00:00+00:00",
+        "creationAllowed": false
+      }
+    ],
+    "liveMappings": 0,
+    "remoteWrites": 0,
+    "stripeEvents": 7,
+    "catalogMappings": 4,
+    "testRuntimeReady": true,
+    "livePortalEnabled": false,
+    "operationReceipts": 22,
+    "readModelVerified": true,
+    "liveCheckoutEnabled": false
+  },
   "publicCompetitions": {
     "league": {
       "hub": {
         "kind": "PublicCompetitionView",
         "cache": {
-          "entityId": "9a69412b-3cec-4077-8bfe-6f048297d8f2",
+          "entityId": "e494a27e-10b1-43d0-87c7-725e67b5ab03",
           "revision": 8,
-          "updatedAt": "2026-08-28T09:59:26.846265+00:00",
+          "updatedAt": "2026-08-28T22:06:35.367959+00:00",
           "entityType": "public_competition",
           "serverSequence": 4056
         },
@@ -1783,7 +1900,7 @@
           "waitlist": true,
           "discovery": true,
           "standings": true,
-          "updatedAt": "2026-08-28T09:59:26.54623+00:00",
+          "updatedAt": "2026-08-28T22:06:35.107487+00:00",
           "autoAccept": false,
           "discipline": false,
           "foundation": true,
@@ -1797,14 +1914,14 @@
             "name": "Wave 7A Team 1",
             "status": "accepted",
             "teamId": "d8b02f8e-8dd6-d55b-3589-1bf7712e8e32",
-            "entryId": "42023eb9-4a72-4c0f-b901-57da903a031d",
+            "entryId": "5127717b-bdf3-44b9-b0b8-98004c58d162",
             "teamCode": "W7A00001"
           },
           {
             "name": "Wave 7A Team 2",
             "status": "accepted",
             "teamId": "65fd4d0a-aa31-725a-569d-4280f6aff5e5",
-            "entryId": "ca1c54ab-df8e-4657-8595-83f1731f2ab7",
+            "entryId": "d4c9ecda-f560-47a4-8853-10fd195e4d17",
             "teamCode": "W7A00002"
           }
         ],
@@ -1865,12 +1982,12 @@
           "rulesSummary": "Dos equipos, una vuelta y resultados oficiales."
         },
         "publication": {
-          "id": "9a69412b-3cec-4077-8bfe-6f048297d8f2",
+          "id": "e494a27e-10b1-43d0-87c7-725e67b5ab03",
           "slug": "liga-publica-wave-7a",
           "status": "published",
           "revision": 8,
           "visibility": "public",
-          "publishedAt": "2026-08-28T09:59:26.846265+00:00",
+          "publishedAt": "2026-08-28T22:06:35.367959+00:00",
           "serverSequence": 4056,
           "organizerVerified": false
         },
@@ -1896,14 +2013,14 @@
               "name": "Wave 7A Team 2",
               "status": "accepted",
               "teamId": "65fd4d0a-aa31-725a-569d-4280f6aff5e5",
-              "entryId": "ca1c54ab-df8e-4657-8595-83f1731f2ab7",
+              "entryId": "d4c9ecda-f560-47a4-8853-10fd195e4d17",
               "teamCode": "W7A00002"
             },
             "home": {
               "name": "Wave 7A Team 1",
               "status": "accepted",
               "teamId": "d8b02f8e-8dd6-d55b-3589-1bf7712e8e32",
-              "entryId": "42023eb9-4a72-4c0f-b901-57da903a031d",
+              "entryId": "5127717b-bdf3-44b9-b0b8-98004c58d162",
               "teamCode": "W7A00001"
             },
             "kind": "PublicCompetitionFixture",
@@ -1924,7 +2041,7 @@
             "editionId": "7a070000-0000-4000-8000-000000000001",
             "scheduledEnd": "2027-10-02T19:10:00+00:00",
             "competitionId": "7a040000-0000-4000-8000-000000000001",
-            "publicationId": "9a69412b-3cec-4077-8bfe-6f048297d8f2",
+            "publicationId": "e494a27e-10b1-43d0-87c7-725e67b5ab03",
             "scheduledStart": "2027-10-02T18:00:00+00:00",
             "serverSequence": 4036,
             "canonicalMatchId": "7a200000-0000-4000-8000-000000000001"
@@ -1934,14 +2051,14 @@
               "name": "Wave 7A Team 2",
               "status": "accepted",
               "teamId": "65fd4d0a-aa31-725a-569d-4280f6aff5e5",
-              "entryId": "ca1c54ab-df8e-4657-8595-83f1731f2ab7",
+              "entryId": "d4c9ecda-f560-47a4-8853-10fd195e4d17",
               "teamCode": "W7A00002"
             },
             "home": {
               "name": "Wave 7A Team 1",
               "status": "accepted",
               "teamId": "d8b02f8e-8dd6-d55b-3589-1bf7712e8e32",
-              "entryId": "42023eb9-4a72-4c0f-b901-57da903a031d",
+              "entryId": "5127717b-bdf3-44b9-b0b8-98004c58d162",
               "teamCode": "W7A00001"
             },
             "kind": "PublicCompetitionFixture",
@@ -1962,7 +2079,7 @@
             "editionId": "7a070000-0000-4000-8000-000000000001",
             "scheduledEnd": "2027-10-03T19:10:00+00:00",
             "competitionId": "7a040000-0000-4000-8000-000000000001",
-            "publicationId": "9a69412b-3cec-4077-8bfe-6f048297d8f2",
+            "publicationId": "e494a27e-10b1-43d0-87c7-725e67b5ab03",
             "scheduledStart": "2027-10-03T18:00:00+00:00",
             "serverSequence": 4037,
             "canonicalMatchId": "7a200000-0000-4000-8000-000000000002"
@@ -1972,14 +2089,14 @@
               "name": "Wave 7A Team 2",
               "status": "accepted",
               "teamId": "65fd4d0a-aa31-725a-569d-4280f6aff5e5",
-              "entryId": "ca1c54ab-df8e-4657-8595-83f1731f2ab7",
+              "entryId": "d4c9ecda-f560-47a4-8853-10fd195e4d17",
               "teamCode": "W7A00002"
             },
             "home": {
               "name": "Wave 7A Team 1",
               "status": "accepted",
               "teamId": "d8b02f8e-8dd6-d55b-3589-1bf7712e8e32",
-              "entryId": "42023eb9-4a72-4c0f-b901-57da903a031d",
+              "entryId": "5127717b-bdf3-44b9-b0b8-98004c58d162",
               "teamCode": "W7A00001"
             },
             "kind": "PublicCompetitionFixture",
@@ -2000,7 +2117,7 @@
             "editionId": "7a070000-0000-4000-8000-000000000001",
             "scheduledEnd": "2027-10-04T19:10:00+00:00",
             "competitionId": "7a040000-0000-4000-8000-000000000001",
-            "publicationId": "9a69412b-3cec-4077-8bfe-6f048297d8f2",
+            "publicationId": "e494a27e-10b1-43d0-87c7-725e67b5ab03",
             "scheduledStart": "2027-10-04T18:00:00+00:00",
             "serverSequence": 4038,
             "canonicalMatchId": "7a200000-0000-4000-8000-000000000003"
@@ -2066,9 +2183,9 @@
       "hub": {
         "kind": "PublicCompetitionView",
         "cache": {
-          "entityId": "eb6334d0-2055-4a34-883f-cde78ae87ef8",
+          "entityId": "5693d5df-a976-4130-ad23-d69caa480bb5",
           "revision": 5,
-          "updatedAt": "2026-08-28T09:59:27.017297+00:00",
+          "updatedAt": "2026-08-28T22:06:35.482043+00:00",
           "entityType": "public_competition",
           "serverSequence": 4081
         },
@@ -2081,7 +2198,7 @@
           "waitlist": true,
           "discovery": true,
           "standings": true,
-          "updatedAt": "2026-08-28T09:59:26.54623+00:00",
+          "updatedAt": "2026-08-28T22:06:35.107487+00:00",
           "autoAccept": false,
           "discipline": false,
           "foundation": true,
@@ -2148,12 +2265,12 @@
           "rulesSummary": "Cuadro privado compartido por enlace."
         },
         "publication": {
-          "id": "eb6334d0-2055-4a34-883f-cde78ae87ef8",
+          "id": "5693d5df-a976-4130-ad23-d69caa480bb5",
           "slug": "copa-enlace-demo",
           "status": "published",
           "revision": 5,
           "visibility": "unlisted",
-          "publishedAt": "2026-08-28T09:59:27.017297+00:00",
+          "publishedAt": "2026-08-28T22:06:35.482043+00:00",
           "serverSequence": 4081,
           "organizerVerified": false
         },
@@ -2184,16 +2301,16 @@
     "directory": {
       "kind": "PublicCompetitionDirectory",
       "cache": {
-        "generatedAt": "2026-08-28T09:59:27.386918+00:00",
+        "generatedAt": "2026-08-28T22:06:36.280433+00:00",
         "maxServerSequence": 4281
       },
       "items": [
         {
           "kind": "PublicCompetitionView",
           "cache": {
-            "entityId": "bf3f1dbb-6142-4505-af3b-4a4883ee8ef1",
+            "entityId": "e0675afc-fd63-4fd2-b8f1-3b639fadaef1",
             "revision": 6,
-            "updatedAt": "2026-08-28T09:59:27.192864+00:00",
+            "updatedAt": "2026-08-28T22:06:35.596211+00:00",
             "entityType": "public_competition",
             "serverSequence": 4281
           },
@@ -2206,7 +2323,7 @@
             "waitlist": true,
             "discovery": true,
             "standings": true,
-            "updatedAt": "2026-08-28T09:59:26.54623+00:00",
+            "updatedAt": "2026-08-28T22:06:35.107487+00:00",
             "autoAccept": false,
             "discipline": false,
             "foundation": true,
@@ -2380,7 +2497,7 @@
                       "teamCode": "DW00005"
                     },
                     "advance": {
-                      "decidedAt": "2026-08-28T09:59:25.351708+00:00",
+                      "decidedAt": "2026-08-28T22:06:33.990974+00:00",
                       "loserEntryId": "ed2f95d3-fe91-6a5d-16b7-5b1e2df97739",
                       "winnerEntryId": "8a2ef74e-32e8-ca34-b626-db2740b5069b"
                     },
@@ -2440,7 +2557,7 @@
                       "teamCode": "DW00004"
                     },
                     "advance": {
-                      "decidedAt": "2026-08-28T09:59:25.16539+00:00",
+                      "decidedAt": "2026-08-28T22:06:33.794042+00:00",
                       "loserEntryId": "e86e1a42-becc-ae65-cc7c-7ed29628044c",
                       "winnerEntryId": "db8e0898-c6ef-1bdb-e358-884e692c95ca"
                     },
@@ -2502,7 +2619,7 @@
                       "teamCode": "DW00002"
                     },
                     "advance": {
-                      "decidedAt": "2026-08-28T09:59:25.227497+00:00",
+                      "decidedAt": "2026-08-28T22:06:33.859213+00:00",
                       "loserEntryId": "277fa8fa-ba27-6e5d-7e94-a05be52046bd",
                       "winnerEntryId": "a5aa8a36-27cd-40f8-2030-499302a8094a"
                     },
@@ -2560,7 +2677,7 @@
                       "teamCode": "DW00001"
                     },
                     "advance": {
-                      "decidedAt": "2026-08-28T09:59:25.293877+00:00",
+                      "decidedAt": "2026-08-28T22:06:33.932262+00:00",
                       "loserEntryId": "965ab8fe-762d-1497-1834-0964d616635f",
                       "winnerEntryId": "cbe4c688-93ec-799d-0034-5ad32222e5bc"
                     },
@@ -2626,7 +2743,7 @@
                       "teamCode": "DW00005"
                     },
                     "advance": {
-                      "decidedAt": "2026-08-28T09:59:25.476917+00:00",
+                      "decidedAt": "2026-08-28T22:06:34.110988+00:00",
                       "loserEntryId": "db8e0898-c6ef-1bdb-e358-884e692c95ca",
                       "winnerEntryId": "8a2ef74e-32e8-ca34-b626-db2740b5069b"
                     },
@@ -2691,7 +2808,7 @@
                       "teamCode": "DW00002"
                     },
                     "advance": {
-                      "decidedAt": "2026-08-28T09:59:25.541383+00:00",
+                      "decidedAt": "2026-08-28T22:06:34.170978+00:00",
                       "loserEntryId": "cbe4c688-93ec-799d-0034-5ad32222e5bc",
                       "winnerEntryId": "a5aa8a36-27cd-40f8-2030-499302a8094a"
                     },
@@ -2757,7 +2874,7 @@
                       "teamCode": "DW00005"
                     },
                     "advance": {
-                      "decidedAt": "2026-08-28T09:59:25.689916+00:00",
+                      "decidedAt": "2026-08-28T22:06:34.303123+00:00",
                       "loserEntryId": "a5aa8a36-27cd-40f8-2030-499302a8094a",
                       "winnerEntryId": "8a2ef74e-32e8-ca34-b626-db2740b5069b"
                     },
@@ -2830,7 +2947,7 @@
                       "teamCode": "DW00004"
                     },
                     "advance": {
-                      "decidedAt": "2026-08-28T09:59:25.627718+00:00",
+                      "decidedAt": "2026-08-28T22:06:34.247327+00:00",
                       "loserEntryId": "cbe4c688-93ec-799d-0034-5ad32222e5bc",
                       "winnerEntryId": "db8e0898-c6ef-1bdb-e358-884e692c95ca"
                     },
@@ -3063,11 +3180,11 @@
                 }
               ],
               "health": "CURRENT",
-              "groupId": "57bab5ca-6d48-49f3-baf9-4d273e6aa162",
+              "groupId": "d35c7eb6-ef06-4849-bf27-0cf4db37c9ec",
               "stageId": "356af85b-c964-3f28-5480-e8d5e617270b",
-              "stateId": "bf5612d9-f01d-41ff-9cbe-1304aab78f4e",
-              "snapshotId": "bd32b558-3596-4968-abc7-b45aafc86224",
-              "generatedAt": "2026-08-28T09:59:23.095611+00:00",
+              "stateId": "fd45f00b-b0c6-44d7-bf51-c085e9dcb471",
+              "snapshotId": "437a70d0-bb73-4113-beaf-c86b17d72711",
+              "generatedAt": "2026-08-28T22:06:31.843953+00:00",
               "serverSequence": 3610,
               "sourceRevision": 3610,
               "tieBreakCriteria": [
@@ -3222,11 +3339,11 @@
                 }
               ],
               "health": "CURRENT",
-              "groupId": "9d684310-8bfa-463e-a483-1e89fc38038c",
+              "groupId": "84a13a02-5fcc-4a88-aed4-3177d07a95a1",
               "stageId": "356af85b-c964-3f28-5480-e8d5e617270b",
-              "stateId": "587e7d71-f4db-48ce-9c76-37e51563fb39",
-              "snapshotId": "3fe367eb-4a84-425d-9dc8-8c2187a8326e",
-              "generatedAt": "2026-08-28T09:59:23.051525+00:00",
+              "stateId": "26633819-a226-46d9-9e8e-85849425370b",
+              "snapshotId": "c9e01887-abf8-4c34-b3aa-1e7001a91386",
+              "generatedAt": "2026-08-28T22:06:31.801789+00:00",
               "serverSequence": 3590,
               "sourceRevision": 3590,
               "tieBreakCriteria": [
@@ -3381,11 +3498,11 @@
                 }
               ],
               "health": "CURRENT",
-              "groupId": "93052497-e564-450f-b54d-beaf7d5b48d5",
+              "groupId": "d0dd9ce7-932e-44e6-b6f2-9187fc61029e",
               "stageId": "356af85b-c964-3f28-5480-e8d5e617270b",
-              "stateId": "0e20b20f-8da0-405b-980b-3377ed89960d",
-              "snapshotId": "0dce15da-608a-44e5-9ff7-f681ed37e34c",
-              "generatedAt": "2026-08-28T09:59:23.010486+00:00",
+              "stateId": "3a150cc9-a246-4d6b-a4fd-f049a5049f5d",
+              "snapshotId": "11a89ef5-dd88-488a-8325-b4dc8e45431c",
+              "generatedAt": "2026-08-28T22:06:31.759488+00:00",
               "serverSequence": 3570,
               "sourceRevision": 3570,
               "tieBreakCriteria": [
@@ -3540,11 +3657,11 @@
                 }
               ],
               "health": "CURRENT",
-              "groupId": "eff6cb81-8f3b-4f04-abaf-fde6466cdf3d",
+              "groupId": "8992636b-8f06-4c80-94bc-8571432798f1",
               "stageId": "356af85b-c964-3f28-5480-e8d5e617270b",
-              "stateId": "f5a2a881-e9be-44dd-ac55-094761454924",
-              "snapshotId": "0e796196-567f-4e53-b8d1-4616bcd376da",
-              "generatedAt": "2026-08-28T09:59:22.966562+00:00",
+              "stateId": "ef519839-3fac-48a2-a781-5f3dbab2406a",
+              "snapshotId": "5a555f91-def5-4821-938a-7b959d0216c3",
+              "generatedAt": "2026-08-28T22:06:31.716271+00:00",
               "serverSequence": 3550,
               "sourceRevision": 3550,
               "tieBreakCriteria": [
@@ -3572,19 +3689,19 @@
             "rulesSummary": "Dieciséis equipos, cuatro grupos y eliminatoria a partido único."
           },
           "publication": {
-            "id": "bf3f1dbb-6142-4505-af3b-4a4883ee8ef1",
+            "id": "e0675afc-fd63-4fd2-b8f1-3b639fadaef1",
             "slug": "copa-barrios-iq-2027",
             "status": "published",
             "revision": 6,
             "visibility": "public",
-            "publishedAt": "2026-08-28T09:59:27.192864+00:00",
+            "publishedAt": "2026-08-28T22:06:35.596211+00:00",
             "serverSequence": 4281,
             "organizerVerified": false
           },
           "registration": {
             "mode": "CLOSED",
             "state": "CLOSED",
-            "opensAt": "2026-08-28T09:59:16.800255+00:00",
+            "opensAt": "2026-08-28T22:06:26.194445+00:00",
             "closesAt": "2027-04-20T20:00:00+00:00",
             "teamCount": 16,
             "teamCapacity": 16,
@@ -3595,9 +3712,9 @@
         {
           "kind": "PublicCompetitionView",
           "cache": {
-            "entityId": "9a69412b-3cec-4077-8bfe-6f048297d8f2",
+            "entityId": "e494a27e-10b1-43d0-87c7-725e67b5ab03",
             "revision": 8,
-            "updatedAt": "2026-08-28T09:59:26.846265+00:00",
+            "updatedAt": "2026-08-28T22:06:35.367959+00:00",
             "entityType": "public_competition",
             "serverSequence": 4056
           },
@@ -3610,7 +3727,7 @@
             "waitlist": true,
             "discovery": true,
             "standings": true,
-            "updatedAt": "2026-08-28T09:59:26.54623+00:00",
+            "updatedAt": "2026-08-28T22:06:35.107487+00:00",
             "autoAccept": false,
             "discipline": false,
             "foundation": true,
@@ -3624,14 +3741,14 @@
               "name": "Wave 7A Team 1",
               "status": "accepted",
               "teamId": "d8b02f8e-8dd6-d55b-3589-1bf7712e8e32",
-              "entryId": "42023eb9-4a72-4c0f-b901-57da903a031d",
+              "entryId": "5127717b-bdf3-44b9-b0b8-98004c58d162",
               "teamCode": "W7A00001"
             },
             {
               "name": "Wave 7A Team 2",
               "status": "accepted",
               "teamId": "65fd4d0a-aa31-725a-569d-4280f6aff5e5",
-              "entryId": "ca1c54ab-df8e-4657-8595-83f1731f2ab7",
+              "entryId": "d4c9ecda-f560-47a4-8853-10fd195e4d17",
               "teamCode": "W7A00002"
             }
           ],
@@ -3692,12 +3809,12 @@
             "rulesSummary": "Dos equipos, una vuelta y resultados oficiales."
           },
           "publication": {
-            "id": "9a69412b-3cec-4077-8bfe-6f048297d8f2",
+            "id": "e494a27e-10b1-43d0-87c7-725e67b5ab03",
             "slug": "liga-publica-wave-7a",
             "status": "published",
             "revision": 8,
             "visibility": "public",
-            "publishedAt": "2026-08-28T09:59:26.846265+00:00",
+            "publishedAt": "2026-08-28T22:06:35.367959+00:00",
             "serverSequence": 4056,
             "organizerVerified": false
           },
@@ -3722,9 +3839,9 @@
       "hub": {
         "kind": "PublicCompetitionView",
         "cache": {
-          "entityId": "bf3f1dbb-6142-4505-af3b-4a4883ee8ef1",
+          "entityId": "e0675afc-fd63-4fd2-b8f1-3b639fadaef1",
           "revision": 6,
-          "updatedAt": "2026-08-28T09:59:27.192864+00:00",
+          "updatedAt": "2026-08-28T22:06:35.596211+00:00",
           "entityType": "public_competition",
           "serverSequence": 4281
         },
@@ -3737,7 +3854,7 @@
           "waitlist": true,
           "discovery": true,
           "standings": true,
-          "updatedAt": "2026-08-28T09:59:26.54623+00:00",
+          "updatedAt": "2026-08-28T22:06:35.107487+00:00",
           "autoAccept": false,
           "discipline": false,
           "foundation": true,
@@ -3911,7 +4028,7 @@
                     "teamCode": "DW00005"
                   },
                   "advance": {
-                    "decidedAt": "2026-08-28T09:59:25.351708+00:00",
+                    "decidedAt": "2026-08-28T22:06:33.990974+00:00",
                     "loserEntryId": "ed2f95d3-fe91-6a5d-16b7-5b1e2df97739",
                     "winnerEntryId": "8a2ef74e-32e8-ca34-b626-db2740b5069b"
                   },
@@ -3971,7 +4088,7 @@
                     "teamCode": "DW00004"
                   },
                   "advance": {
-                    "decidedAt": "2026-08-28T09:59:25.16539+00:00",
+                    "decidedAt": "2026-08-28T22:06:33.794042+00:00",
                     "loserEntryId": "e86e1a42-becc-ae65-cc7c-7ed29628044c",
                     "winnerEntryId": "db8e0898-c6ef-1bdb-e358-884e692c95ca"
                   },
@@ -4033,7 +4150,7 @@
                     "teamCode": "DW00002"
                   },
                   "advance": {
-                    "decidedAt": "2026-08-28T09:59:25.227497+00:00",
+                    "decidedAt": "2026-08-28T22:06:33.859213+00:00",
                     "loserEntryId": "277fa8fa-ba27-6e5d-7e94-a05be52046bd",
                     "winnerEntryId": "a5aa8a36-27cd-40f8-2030-499302a8094a"
                   },
@@ -4091,7 +4208,7 @@
                     "teamCode": "DW00001"
                   },
                   "advance": {
-                    "decidedAt": "2026-08-28T09:59:25.293877+00:00",
+                    "decidedAt": "2026-08-28T22:06:33.932262+00:00",
                     "loserEntryId": "965ab8fe-762d-1497-1834-0964d616635f",
                     "winnerEntryId": "cbe4c688-93ec-799d-0034-5ad32222e5bc"
                   },
@@ -4157,7 +4274,7 @@
                     "teamCode": "DW00005"
                   },
                   "advance": {
-                    "decidedAt": "2026-08-28T09:59:25.476917+00:00",
+                    "decidedAt": "2026-08-28T22:06:34.110988+00:00",
                     "loserEntryId": "db8e0898-c6ef-1bdb-e358-884e692c95ca",
                     "winnerEntryId": "8a2ef74e-32e8-ca34-b626-db2740b5069b"
                   },
@@ -4222,7 +4339,7 @@
                     "teamCode": "DW00002"
                   },
                   "advance": {
-                    "decidedAt": "2026-08-28T09:59:25.541383+00:00",
+                    "decidedAt": "2026-08-28T22:06:34.170978+00:00",
                     "loserEntryId": "cbe4c688-93ec-799d-0034-5ad32222e5bc",
                     "winnerEntryId": "a5aa8a36-27cd-40f8-2030-499302a8094a"
                   },
@@ -4288,7 +4405,7 @@
                     "teamCode": "DW00005"
                   },
                   "advance": {
-                    "decidedAt": "2026-08-28T09:59:25.689916+00:00",
+                    "decidedAt": "2026-08-28T22:06:34.303123+00:00",
                     "loserEntryId": "a5aa8a36-27cd-40f8-2030-499302a8094a",
                     "winnerEntryId": "8a2ef74e-32e8-ca34-b626-db2740b5069b"
                   },
@@ -4361,7 +4478,7 @@
                     "teamCode": "DW00004"
                   },
                   "advance": {
-                    "decidedAt": "2026-08-28T09:59:25.627718+00:00",
+                    "decidedAt": "2026-08-28T22:06:34.247327+00:00",
                     "loserEntryId": "cbe4c688-93ec-799d-0034-5ad32222e5bc",
                     "winnerEntryId": "db8e0898-c6ef-1bdb-e358-884e692c95ca"
                   },
@@ -4594,11 +4711,11 @@
               }
             ],
             "health": "CURRENT",
-            "groupId": "57bab5ca-6d48-49f3-baf9-4d273e6aa162",
+            "groupId": "d35c7eb6-ef06-4849-bf27-0cf4db37c9ec",
             "stageId": "356af85b-c964-3f28-5480-e8d5e617270b",
-            "stateId": "bf5612d9-f01d-41ff-9cbe-1304aab78f4e",
-            "snapshotId": "bd32b558-3596-4968-abc7-b45aafc86224",
-            "generatedAt": "2026-08-28T09:59:23.095611+00:00",
+            "stateId": "fd45f00b-b0c6-44d7-bf51-c085e9dcb471",
+            "snapshotId": "437a70d0-bb73-4113-beaf-c86b17d72711",
+            "generatedAt": "2026-08-28T22:06:31.843953+00:00",
             "serverSequence": 3610,
             "sourceRevision": 3610,
             "tieBreakCriteria": [
@@ -4753,11 +4870,11 @@
               }
             ],
             "health": "CURRENT",
-            "groupId": "9d684310-8bfa-463e-a483-1e89fc38038c",
+            "groupId": "84a13a02-5fcc-4a88-aed4-3177d07a95a1",
             "stageId": "356af85b-c964-3f28-5480-e8d5e617270b",
-            "stateId": "587e7d71-f4db-48ce-9c76-37e51563fb39",
-            "snapshotId": "3fe367eb-4a84-425d-9dc8-8c2187a8326e",
-            "generatedAt": "2026-08-28T09:59:23.051525+00:00",
+            "stateId": "26633819-a226-46d9-9e8e-85849425370b",
+            "snapshotId": "c9e01887-abf8-4c34-b3aa-1e7001a91386",
+            "generatedAt": "2026-08-28T22:06:31.801789+00:00",
             "serverSequence": 3590,
             "sourceRevision": 3590,
             "tieBreakCriteria": [
@@ -4912,11 +5029,11 @@
               }
             ],
             "health": "CURRENT",
-            "groupId": "93052497-e564-450f-b54d-beaf7d5b48d5",
+            "groupId": "d0dd9ce7-932e-44e6-b6f2-9187fc61029e",
             "stageId": "356af85b-c964-3f28-5480-e8d5e617270b",
-            "stateId": "0e20b20f-8da0-405b-980b-3377ed89960d",
-            "snapshotId": "0dce15da-608a-44e5-9ff7-f681ed37e34c",
-            "generatedAt": "2026-08-28T09:59:23.010486+00:00",
+            "stateId": "3a150cc9-a246-4d6b-a4fd-f049a5049f5d",
+            "snapshotId": "11a89ef5-dd88-488a-8325-b4dc8e45431c",
+            "generatedAt": "2026-08-28T22:06:31.759488+00:00",
             "serverSequence": 3570,
             "sourceRevision": 3570,
             "tieBreakCriteria": [
@@ -5071,11 +5188,11 @@
               }
             ],
             "health": "CURRENT",
-            "groupId": "eff6cb81-8f3b-4f04-abaf-fde6466cdf3d",
+            "groupId": "8992636b-8f06-4c80-94bc-8571432798f1",
             "stageId": "356af85b-c964-3f28-5480-e8d5e617270b",
-            "stateId": "f5a2a881-e9be-44dd-ac55-094761454924",
-            "snapshotId": "0e796196-567f-4e53-b8d1-4616bcd376da",
-            "generatedAt": "2026-08-28T09:59:22.966562+00:00",
+            "stateId": "ef519839-3fac-48a2-a781-5f3dbab2406a",
+            "snapshotId": "5a555f91-def5-4821-938a-7b959d0216c3",
+            "generatedAt": "2026-08-28T22:06:31.716271+00:00",
             "serverSequence": 3550,
             "sourceRevision": 3550,
             "tieBreakCriteria": [
@@ -5103,19 +5220,19 @@
           "rulesSummary": "Dieciséis equipos, cuatro grupos y eliminatoria a partido único."
         },
         "publication": {
-          "id": "bf3f1dbb-6142-4505-af3b-4a4883ee8ef1",
+          "id": "e0675afc-fd63-4fd2-b8f1-3b639fadaef1",
           "slug": "copa-barrios-iq-2027",
           "status": "published",
           "revision": 6,
           "visibility": "public",
-          "publishedAt": "2026-08-28T09:59:27.192864+00:00",
+          "publishedAt": "2026-08-28T22:06:35.596211+00:00",
           "serverSequence": 4281,
           "organizerVerified": false
         },
         "registration": {
           "mode": "CLOSED",
           "state": "CLOSED",
-          "opensAt": "2026-08-28T09:59:16.800255+00:00",
+          "opensAt": "2026-08-28T22:06:26.194445+00:00",
           "closesAt": "2027-04-20T20:00:00+00:00",
           "teamCount": 16,
           "teamCapacity": 16,
@@ -5175,7 +5292,7 @@
                   "teamCode": "DW00005"
                 },
                 "advance": {
-                  "decidedAt": "2026-08-28T09:59:25.351708+00:00",
+                  "decidedAt": "2026-08-28T22:06:33.990974+00:00",
                   "loserEntryId": "ed2f95d3-fe91-6a5d-16b7-5b1e2df97739",
                   "winnerEntryId": "8a2ef74e-32e8-ca34-b626-db2740b5069b"
                 },
@@ -5235,7 +5352,7 @@
                   "teamCode": "DW00004"
                 },
                 "advance": {
-                  "decidedAt": "2026-08-28T09:59:25.16539+00:00",
+                  "decidedAt": "2026-08-28T22:06:33.794042+00:00",
                   "loserEntryId": "e86e1a42-becc-ae65-cc7c-7ed29628044c",
                   "winnerEntryId": "db8e0898-c6ef-1bdb-e358-884e692c95ca"
                 },
@@ -5297,7 +5414,7 @@
                   "teamCode": "DW00002"
                 },
                 "advance": {
-                  "decidedAt": "2026-08-28T09:59:25.227497+00:00",
+                  "decidedAt": "2026-08-28T22:06:33.859213+00:00",
                   "loserEntryId": "277fa8fa-ba27-6e5d-7e94-a05be52046bd",
                   "winnerEntryId": "a5aa8a36-27cd-40f8-2030-499302a8094a"
                 },
@@ -5355,7 +5472,7 @@
                   "teamCode": "DW00001"
                 },
                 "advance": {
-                  "decidedAt": "2026-08-28T09:59:25.293877+00:00",
+                  "decidedAt": "2026-08-28T22:06:33.932262+00:00",
                   "loserEntryId": "965ab8fe-762d-1497-1834-0964d616635f",
                   "winnerEntryId": "cbe4c688-93ec-799d-0034-5ad32222e5bc"
                 },
@@ -5421,7 +5538,7 @@
                   "teamCode": "DW00005"
                 },
                 "advance": {
-                  "decidedAt": "2026-08-28T09:59:25.476917+00:00",
+                  "decidedAt": "2026-08-28T22:06:34.110988+00:00",
                   "loserEntryId": "db8e0898-c6ef-1bdb-e358-884e692c95ca",
                   "winnerEntryId": "8a2ef74e-32e8-ca34-b626-db2740b5069b"
                 },
@@ -5486,7 +5603,7 @@
                   "teamCode": "DW00002"
                 },
                 "advance": {
-                  "decidedAt": "2026-08-28T09:59:25.541383+00:00",
+                  "decidedAt": "2026-08-28T22:06:34.170978+00:00",
                   "loserEntryId": "cbe4c688-93ec-799d-0034-5ad32222e5bc",
                   "winnerEntryId": "a5aa8a36-27cd-40f8-2030-499302a8094a"
                 },
@@ -5552,7 +5669,7 @@
                   "teamCode": "DW00005"
                 },
                 "advance": {
-                  "decidedAt": "2026-08-28T09:59:25.689916+00:00",
+                  "decidedAt": "2026-08-28T22:06:34.303123+00:00",
                   "loserEntryId": "a5aa8a36-27cd-40f8-2030-499302a8094a",
                   "winnerEntryId": "8a2ef74e-32e8-ca34-b626-db2740b5069b"
                 },
@@ -5625,7 +5742,7 @@
                   "teamCode": "DW00004"
                 },
                 "advance": {
-                  "decidedAt": "2026-08-28T09:59:25.627718+00:00",
+                  "decidedAt": "2026-08-28T22:06:34.247327+00:00",
                   "loserEntryId": "cbe4c688-93ec-799d-0034-5ad32222e5bc",
                   "winnerEntryId": "db8e0898-c6ef-1bdb-e358-884e692c95ca"
                 },
@@ -5694,7 +5811,7 @@
             },
             "kind": "PublicCompetitionFixture",
             "round": {
-              "id": "a6d24073-5b22-4491-910c-49a13b7c2e24",
+              "id": "12f9d8e3-760a-4a02-976d-96102544f226",
               "name": "Jornada 1",
               "number": 1,
               "status": "in_progress"
@@ -5702,10 +5819,10 @@
             "result": {
               "status": "OFFICIAL",
               "outcome": "MIRROR_SPORTING_RESULT",
-              "decidedAt": "2026-08-28T09:59:19.812041+00:00",
+              "decidedAt": "2026-08-28T22:06:28.983403+00:00",
               "scoreAway": 1,
               "scoreHome": 3,
-              "decisionId": "faf5cb23-b588-467d-88e5-e78dd3ee302c",
+              "decisionId": "eb506bd5-be0c-48fb-8663-96cbb08b6b32",
               "explanation": "Resultado confirmado por ambos equipos.",
               "serverSequence": 2638
             },
@@ -5721,14 +5838,14 @@
             "stageId": "356af85b-c964-3f28-5480-e8d5e617270b",
             "revision": 33,
             "timezone": "Europe/Madrid",
-            "contextId": "3b295d06-045a-4802-a2f8-91fb12e29e6f",
+            "contextId": "3c3415aa-cb23-469b-8c55-7957e2371594",
             "editionId": "90975a2e-d8d8-73eb-ab49-32807ed10f61",
             "scheduledEnd": "2027-05-08T17:20:00+00:00",
             "competitionId": "1b7aace1-057b-ec98-6190-b548f159e017",
-            "publicationId": "bf3f1dbb-6142-4505-af3b-4a4883ee8ef1",
+            "publicationId": "e0675afc-fd63-4fd2-b8f1-3b639fadaef1",
             "scheduledStart": "2027-05-08T16:00:00+00:00",
             "serverSequence": 2638,
-            "canonicalMatchId": "f6cd9a0d-07b2-4e1a-acef-f0a1cbc04c05"
+            "canonicalMatchId": "876f880c-6f23-4d3a-8f2c-4bde29b0f3f8"
           },
           {
             "away": {
@@ -5747,7 +5864,7 @@
             },
             "kind": "PublicCompetitionFixture",
             "round": {
-              "id": "db5d2e71-02aa-4965-80d5-266e7a9b81ad",
+              "id": "7acf31dd-5822-4a9e-8b68-7e90c354bf2d",
               "name": "Jornada 1",
               "number": 1,
               "status": "in_progress"
@@ -5755,10 +5872,10 @@
             "result": {
               "status": "OFFICIAL",
               "outcome": "MIRROR_SPORTING_RESULT",
-              "decidedAt": "2026-08-28T09:59:20.72761+00:00",
+              "decidedAt": "2026-08-28T22:06:29.790034+00:00",
               "scoreAway": 2,
               "scoreHome": 0,
-              "decisionId": "7d68f878-046f-47b2-a930-908f428f6023",
+              "decisionId": "bffaf840-0556-4948-a43d-ac4e2683d548",
               "explanation": "Resultado confirmado por ambos equipos.",
               "serverSequence": 2893
             },
@@ -5774,14 +5891,14 @@
             "stageId": "356af85b-c964-3f28-5480-e8d5e617270b",
             "revision": 33,
             "timezone": "Europe/Madrid",
-            "contextId": "95c7f1b3-6e15-4f5e-9177-84e3c1f0d61f",
+            "contextId": "f5a01b00-8bdc-4b83-b565-ebb5a844fa46",
             "editionId": "90975a2e-d8d8-73eb-ab49-32807ed10f61",
             "scheduledEnd": "2027-05-08T17:20:00+00:00",
             "competitionId": "1b7aace1-057b-ec98-6190-b548f159e017",
-            "publicationId": "bf3f1dbb-6142-4505-af3b-4a4883ee8ef1",
+            "publicationId": "e0675afc-fd63-4fd2-b8f1-3b639fadaef1",
             "scheduledStart": "2027-05-08T16:00:00+00:00",
             "serverSequence": 2893,
-            "canonicalMatchId": "39362bc3-f2a0-45c6-a008-ad290cc214fb"
+            "canonicalMatchId": "10bc4039-dc7a-4db2-ae23-f2801c3d2c65"
           },
           {
             "away": {
@@ -5800,7 +5917,7 @@
             },
             "kind": "PublicCompetitionFixture",
             "round": {
-              "id": "df3ca637-771e-4001-b7f1-9d8d0953be10",
+              "id": "c2fca708-b7fb-41d1-b93d-4bcbcf21a6ed",
               "name": "Jornada 1",
               "number": 1,
               "status": "in_progress"
@@ -5808,10 +5925,10 @@
             "result": {
               "status": "OFFICIAL",
               "outcome": "FORFEIT",
-              "decidedAt": "2026-08-28T09:59:20.933611+00:00",
+              "decidedAt": "2026-08-28T22:06:29.993245+00:00",
               "scoreAway": 0,
               "scoreHome": 3,
-              "decisionId": "99de839e-2273-4180-8a9a-270e37b57846",
+              "decisionId": "077eba46-fb39-4e4f-8e02-261de84c3ea4",
               "explanation": "Incomparecencia confirmada.",
               "serverSequence": 2958
             },
@@ -5827,14 +5944,14 @@
             "stageId": "356af85b-c964-3f28-5480-e8d5e617270b",
             "revision": 3,
             "timezone": "Europe/Madrid",
-            "contextId": "bfef4221-c824-4af3-a555-d32501c6d145",
+            "contextId": "65cb719f-b8d2-4289-9a5d-90dfce2ec523",
             "editionId": "90975a2e-d8d8-73eb-ab49-32807ed10f61",
             "scheduledEnd": "2027-05-08T17:20:00+00:00",
             "competitionId": "1b7aace1-057b-ec98-6190-b548f159e017",
-            "publicationId": "bf3f1dbb-6142-4505-af3b-4a4883ee8ef1",
+            "publicationId": "e0675afc-fd63-4fd2-b8f1-3b639fadaef1",
             "scheduledStart": "2027-05-08T16:00:00+00:00",
             "serverSequence": 2958,
-            "canonicalMatchId": "0538a3ea-65d7-49d5-af95-a37e96bc5024"
+            "canonicalMatchId": "e9a94568-9d30-491d-9c81-a5c78caae450"
           },
           {
             "away": {
@@ -5853,7 +5970,7 @@
             },
             "kind": "PublicCompetitionFixture",
             "round": {
-              "id": "a6d24073-5b22-4491-910c-49a13b7c2e24",
+              "id": "12f9d8e3-760a-4a02-976d-96102544f226",
               "name": "Jornada 1",
               "number": 1,
               "status": "in_progress"
@@ -5861,10 +5978,10 @@
             "result": {
               "status": "OFFICIAL",
               "outcome": "MIRROR_SPORTING_RESULT",
-              "decidedAt": "2026-08-28T09:59:20.015099+00:00",
+              "decidedAt": "2026-08-28T22:06:29.164179+00:00",
               "scoreAway": 0,
               "scoreHome": 2,
-              "decisionId": "6014db09-c144-4d57-bbcb-255ffd506060",
+              "decisionId": "a63882f3-ae43-4cd6-8d5e-37b4ccc67223",
               "explanation": "Resultado confirmado por ambos equipos.",
               "serverSequence": 2697
             },
@@ -5880,14 +5997,14 @@
             "stageId": "356af85b-c964-3f28-5480-e8d5e617270b",
             "revision": 33,
             "timezone": "Europe/Madrid",
-            "contextId": "7e745fe1-555c-4164-b4d4-3a4a9f19694e",
+            "contextId": "c4cfa713-cc4e-4ded-9367-4946e0611f3e",
             "editionId": "90975a2e-d8d8-73eb-ab49-32807ed10f61",
             "scheduledEnd": "2027-05-08T19:20:00+00:00",
             "competitionId": "1b7aace1-057b-ec98-6190-b548f159e017",
-            "publicationId": "bf3f1dbb-6142-4505-af3b-4a4883ee8ef1",
+            "publicationId": "e0675afc-fd63-4fd2-b8f1-3b639fadaef1",
             "scheduledStart": "2027-05-08T18:00:00+00:00",
             "serverSequence": 2697,
-            "canonicalMatchId": "bf2ac89a-1408-4951-9362-eac05edfb081"
+            "canonicalMatchId": "5901f342-2d52-4a31-b9f6-91e36664c88d"
           },
           {
             "away": {
@@ -5906,7 +6023,7 @@
             },
             "kind": "PublicCompetitionFixture",
             "round": {
-              "id": "5782cb4e-aae4-4081-b70a-2ac91ae03dcf",
+              "id": "9048966d-d6c5-458c-bd23-69c776abeef2",
               "name": "Jornada 1",
               "number": 1,
               "status": "in_progress"
@@ -5914,10 +6031,10 @@
             "result": {
               "status": "OFFICIAL",
               "outcome": "MIRROR_SPORTING_RESULT",
-              "decidedAt": "2026-08-28T09:59:20.502677+00:00",
+              "decidedAt": "2026-08-28T22:06:29.604848+00:00",
               "scoreAway": 1,
               "scoreHome": 3,
-              "decisionId": "15f1ae2d-6516-4236-8e1d-34d539a81b0f",
+              "decisionId": "2973acef-e40d-47ed-b017-dfb882d453b0",
               "explanation": "Resultado confirmado por ambos equipos.",
               "serverSequence": 2834
             },
@@ -5933,14 +6050,14 @@
             "stageId": "356af85b-c964-3f28-5480-e8d5e617270b",
             "revision": 33,
             "timezone": "Europe/Madrid",
-            "contextId": "9c213bd0-34d3-41c2-9202-d9ce80ce48e9",
+            "contextId": "05d88e7c-f93e-443f-b220-2fbd916aee04",
             "editionId": "90975a2e-d8d8-73eb-ab49-32807ed10f61",
             "scheduledEnd": "2027-05-08T19:20:00+00:00",
             "competitionId": "1b7aace1-057b-ec98-6190-b548f159e017",
-            "publicationId": "bf3f1dbb-6142-4505-af3b-4a4883ee8ef1",
+            "publicationId": "e0675afc-fd63-4fd2-b8f1-3b639fadaef1",
             "scheduledStart": "2027-05-08T18:00:00+00:00",
             "serverSequence": 2834,
-            "canonicalMatchId": "62a7347b-ed6c-4088-92ee-09a17c531d2b"
+            "canonicalMatchId": "d454a571-ea13-4d75-84c7-8745d8d821da"
           },
           {
             "away": {
@@ -5959,7 +6076,7 @@
             },
             "kind": "PublicCompetitionFixture",
             "round": {
-              "id": "db5d2e71-02aa-4965-80d5-266e7a9b81ad",
+              "id": "7acf31dd-5822-4a9e-8b68-7e90c354bf2d",
               "name": "Jornada 1",
               "number": 1,
               "status": "in_progress"
@@ -5967,10 +6084,10 @@
             "result": {
               "status": "OFFICIAL",
               "outcome": "MIRROR_SPORTING_RESULT",
-              "decidedAt": "2026-08-28T09:59:20.911313+00:00",
+              "decidedAt": "2026-08-28T22:06:29.972809+00:00",
               "scoreAway": 3,
               "scoreHome": 1,
-              "decisionId": "ab5dd551-6ebb-4508-9901-c3e08573c436",
+              "decisionId": "48204353-f006-421a-9ce3-4b4aac3c7783",
               "explanation": "Resultado confirmado por ambos equipos.",
               "serverSequence": 2952
             },
@@ -5986,14 +6103,14 @@
             "stageId": "356af85b-c964-3f28-5480-e8d5e617270b",
             "revision": 33,
             "timezone": "Europe/Madrid",
-            "contextId": "139d926b-360a-4ca9-a358-01622073e52d",
+            "contextId": "fcfc3a45-acfe-4e94-bf2e-c6a41d2c5be4",
             "editionId": "90975a2e-d8d8-73eb-ab49-32807ed10f61",
             "scheduledEnd": "2027-05-08T19:20:00+00:00",
             "competitionId": "1b7aace1-057b-ec98-6190-b548f159e017",
-            "publicationId": "bf3f1dbb-6142-4505-af3b-4a4883ee8ef1",
+            "publicationId": "e0675afc-fd63-4fd2-b8f1-3b639fadaef1",
             "scheduledStart": "2027-05-08T18:00:00+00:00",
             "serverSequence": 2952,
-            "canonicalMatchId": "fb0d55f2-4c5a-4cf1-9b8f-140a0755b1dc"
+            "canonicalMatchId": "e4aeaafc-ca4a-4c47-a66c-84c360d1c462"
           },
           {
             "away": {
@@ -6012,7 +6129,7 @@
             },
             "kind": "PublicCompetitionFixture",
             "round": {
-              "id": "df3ca637-771e-4001-b7f1-9d8d0953be10",
+              "id": "c2fca708-b7fb-41d1-b93d-4bcbcf21a6ed",
               "name": "Jornada 1",
               "number": 1,
               "status": "in_progress"
@@ -6020,10 +6137,10 @@
             "result": {
               "status": "OFFICIAL",
               "outcome": "MIRROR_SPORTING_RESULT",
-              "decidedAt": "2026-08-28T09:59:21.166392+00:00",
+              "decidedAt": "2026-08-28T22:06:30.182445+00:00",
               "scoreAway": 0,
               "scoreHome": 2,
-              "decisionId": "412a33de-f867-4644-a8fd-831cc8b10525",
+              "decisionId": "ee4ca97b-4c03-4873-8c5a-e5eafcae619d",
               "explanation": "Resultado confirmado por ambos equipos.",
               "serverSequence": 3035
             },
@@ -6039,14 +6156,14 @@
             "stageId": "356af85b-c964-3f28-5480-e8d5e617270b",
             "revision": 33,
             "timezone": "Europe/Madrid",
-            "contextId": "cc5a918c-8b63-45ab-bc3b-9318ebd66195",
+            "contextId": "964be845-3335-4039-9571-e75a1480dd06",
             "editionId": "90975a2e-d8d8-73eb-ab49-32807ed10f61",
             "scheduledEnd": "2027-05-08T19:20:00+00:00",
             "competitionId": "1b7aace1-057b-ec98-6190-b548f159e017",
-            "publicationId": "bf3f1dbb-6142-4505-af3b-4a4883ee8ef1",
+            "publicationId": "e0675afc-fd63-4fd2-b8f1-3b639fadaef1",
             "scheduledStart": "2027-05-08T18:00:00+00:00",
             "serverSequence": 3035,
-            "canonicalMatchId": "441797fa-f17e-454b-a14d-a40e607e7a57"
+            "canonicalMatchId": "428dcba8-3baf-43d7-a7fb-2e480d99cf2f"
           },
           {
             "away": {
@@ -6065,7 +6182,7 @@
             },
             "kind": "PublicCompetitionFixture",
             "round": {
-              "id": "5782cb4e-aae4-4081-b70a-2ac91ae03dcf",
+              "id": "9048966d-d6c5-458c-bd23-69c776abeef2",
               "name": "Jornada 1",
               "number": 1,
               "status": "in_progress"
@@ -6073,10 +6190,10 @@
             "result": {
               "status": "OFFICIAL",
               "outcome": "MIRROR_SPORTING_RESULT",
-              "decidedAt": "2026-08-28T09:59:20.279721+00:00",
+              "decidedAt": "2026-08-28T22:06:29.408095+00:00",
               "scoreAway": 3,
               "scoreHome": 1,
-              "decisionId": "40b6b005-024a-434d-9d1d-eee8d3549608",
+              "decisionId": "febef997-bad4-4b4b-ab8a-1fc7785b9a5d",
               "explanation": "Resultado confirmado por ambos equipos.",
               "serverSequence": 2766
             },
@@ -6092,14 +6209,14 @@
             "stageId": "356af85b-c964-3f28-5480-e8d5e617270b",
             "revision": 37,
             "timezone": "Europe/Madrid",
-            "contextId": "4dc7cc9c-7576-4710-89cb-aa32a5fea179",
+            "contextId": "fd2280d9-fd34-4ae7-b7e7-e44ada80a8d0",
             "editionId": "90975a2e-d8d8-73eb-ab49-32807ed10f61",
             "scheduledEnd": "2027-05-11T17:20:00+00:00",
             "competitionId": "1b7aace1-057b-ec98-6190-b548f159e017",
-            "publicationId": "bf3f1dbb-6142-4505-af3b-4a4883ee8ef1",
+            "publicationId": "e0675afc-fd63-4fd2-b8f1-3b639fadaef1",
             "scheduledStart": "2027-05-11T16:00:00+00:00",
             "serverSequence": 2766,
-            "canonicalMatchId": "5534193a-a47f-412c-88e9-1f939c86317a"
+            "canonicalMatchId": "cac52694-eeb0-4912-846d-780325cfbbed"
           },
           {
             "away": {
@@ -6118,7 +6235,7 @@
             },
             "kind": "PublicCompetitionFixture",
             "round": {
-              "id": "cf7a9a88-a902-4966-bfc7-376f02dbfb4e",
+              "id": "3264c0b5-9a49-40c4-95ff-2b25e2a4de2d",
               "name": "Jornada 2",
               "number": 2,
               "status": "in_progress"
@@ -6126,10 +6243,10 @@
             "result": {
               "status": "OFFICIAL",
               "outcome": "MIRROR_SPORTING_RESULT",
-              "decidedAt": "2026-08-28T09:59:21.378776+00:00",
+              "decidedAt": "2026-08-28T22:06:30.356169+00:00",
               "scoreAway": 3,
               "scoreHome": 1,
-              "decisionId": "251adf18-be6d-4b37-82ee-96b1152fda10",
+              "decisionId": "72175077-9bfc-4e51-acc2-0ac494599b90",
               "explanation": "Resultado confirmado por ambos equipos.",
               "serverSequence": 3094
             },
@@ -6145,14 +6262,14 @@
             "stageId": "356af85b-c964-3f28-5480-e8d5e617270b",
             "revision": 33,
             "timezone": "Europe/Madrid",
-            "contextId": "4cbe4feb-96c6-4eb4-b6fb-9d3c8fb9f043",
+            "contextId": "ef05f589-39cb-4e7d-a2db-47b66098e515",
             "editionId": "90975a2e-d8d8-73eb-ab49-32807ed10f61",
             "scheduledEnd": "2027-05-15T17:20:00+00:00",
             "competitionId": "1b7aace1-057b-ec98-6190-b548f159e017",
-            "publicationId": "bf3f1dbb-6142-4505-af3b-4a4883ee8ef1",
+            "publicationId": "e0675afc-fd63-4fd2-b8f1-3b639fadaef1",
             "scheduledStart": "2027-05-15T16:00:00+00:00",
             "serverSequence": 3094,
-            "canonicalMatchId": "c3c85e81-689e-4537-836f-138e861433bb"
+            "canonicalMatchId": "b7581198-7c3e-45e9-813f-ce1e5e24e9e3"
           },
           {
             "away": {
@@ -6171,7 +6288,7 @@
             },
             "kind": "PublicCompetitionFixture",
             "round": {
-              "id": "415b69c6-f8cc-4d52-95e6-0f5806c28744",
+              "id": "dbb2944f-a2e3-447d-895e-ecbcc08e5a42",
               "name": "Jornada 2",
               "number": 2,
               "status": "in_progress"
@@ -6179,10 +6296,10 @@
             "result": {
               "status": "OFFICIAL",
               "outcome": "MIRROR_SPORTING_RESULT",
-              "decidedAt": "2026-08-28T09:59:22.258582+00:00",
+              "decidedAt": "2026-08-28T22:06:31.108557+00:00",
               "scoreAway": 0,
               "scoreHome": 2,
-              "decisionId": "3bbdacdd-a072-455c-b607-7ffa72ef535b",
+              "decisionId": "a412df2d-f3ff-4a4c-acb0-3af929e7f941",
               "explanation": "Resultado confirmado por ambos equipos.",
               "serverSequence": 3346
             },
@@ -6190,14 +6307,14 @@
             "stageId": "356af85b-c964-3f28-5480-e8d5e617270b",
             "revision": 33,
             "timezone": "Europe/Madrid",
-            "contextId": "2dd8a73a-fbbf-46d2-aaf0-4c0eef1a7a21",
+            "contextId": "b1e70fe4-2871-43b2-8ea7-a4cffb07a0ed",
             "editionId": "90975a2e-d8d8-73eb-ab49-32807ed10f61",
             "scheduledEnd": "2027-05-15T17:20:00+00:00",
             "competitionId": "1b7aace1-057b-ec98-6190-b548f159e017",
-            "publicationId": "bf3f1dbb-6142-4505-af3b-4a4883ee8ef1",
+            "publicationId": "e0675afc-fd63-4fd2-b8f1-3b639fadaef1",
             "scheduledStart": "2027-05-15T16:00:00+00:00",
             "serverSequence": 3346,
-            "canonicalMatchId": "96df02a7-1038-4d47-bfc3-30e3067ad9db"
+            "canonicalMatchId": "d12670d6-2d19-4732-ad0d-7703e602dfaa"
           },
           {
             "away": {
@@ -6216,7 +6333,7 @@
             },
             "kind": "PublicCompetitionFixture",
             "round": {
-              "id": "89f28420-959e-4680-ac59-ea58bc789d34",
+              "id": "2056953c-86b5-499e-88b3-9dbf85c2f686",
               "name": "Jornada 2",
               "number": 2,
               "status": "in_progress"
@@ -6224,10 +6341,10 @@
             "result": {
               "status": "OFFICIAL",
               "outcome": "MIRROR_SPORTING_RESULT",
-              "decidedAt": "2026-08-28T09:59:22.663855+00:00",
+              "decidedAt": "2026-08-28T22:06:31.464253+00:00",
               "scoreAway": 1,
               "scoreHome": 3,
-              "decisionId": "b2be25f0-fbdf-4c15-841a-6972bedadcf9",
+              "decisionId": "211fdb5e-e18b-446a-b82f-158aff99a744",
               "explanation": "Resultado confirmado por ambos equipos.",
               "serverSequence": 3464
             },
@@ -6235,14 +6352,14 @@
             "stageId": "356af85b-c964-3f28-5480-e8d5e617270b",
             "revision": 33,
             "timezone": "Europe/Madrid",
-            "contextId": "645b0b16-7dfd-4168-b640-c356ca72f529",
+            "contextId": "dac55021-6e52-4d2b-9e09-75c42a9160d5",
             "editionId": "90975a2e-d8d8-73eb-ab49-32807ed10f61",
             "scheduledEnd": "2027-05-15T17:20:00+00:00",
             "competitionId": "1b7aace1-057b-ec98-6190-b548f159e017",
-            "publicationId": "bf3f1dbb-6142-4505-af3b-4a4883ee8ef1",
+            "publicationId": "e0675afc-fd63-4fd2-b8f1-3b639fadaef1",
             "scheduledStart": "2027-05-15T16:00:00+00:00",
             "serverSequence": 3464,
-            "canonicalMatchId": "e3b93b32-3faf-4f47-9cf7-5f8115da1b0b"
+            "canonicalMatchId": "9f549e2d-f5ff-427c-8b02-c639e356cc77"
           },
           {
             "away": {
@@ -6261,7 +6378,7 @@
             },
             "kind": "PublicCompetitionFixture",
             "round": {
-              "id": "cf7a9a88-a902-4966-bfc7-376f02dbfb4e",
+              "id": "3264c0b5-9a49-40c4-95ff-2b25e2a4de2d",
               "name": "Jornada 2",
               "number": 2,
               "status": "in_progress"
@@ -6269,10 +6386,10 @@
             "result": {
               "status": "OFFICIAL",
               "outcome": "MIRROR_SPORTING_RESULT",
-              "decidedAt": "2026-08-28T09:59:21.576882+00:00",
+              "decidedAt": "2026-08-28T22:06:30.530164+00:00",
               "scoreAway": 2,
               "scoreHome": 0,
-              "decisionId": "ba8ef872-e0ff-4d1e-9dc4-6768f71be269",
+              "decisionId": "74bd00da-8bfa-4b2f-b475-220fa2177457",
               "explanation": "Resultado confirmado por ambos equipos.",
               "serverSequence": 3153
             },
@@ -6288,14 +6405,14 @@
             "stageId": "356af85b-c964-3f28-5480-e8d5e617270b",
             "revision": 33,
             "timezone": "Europe/Madrid",
-            "contextId": "4f307304-c4cd-4ba8-b4d2-bc1f04c3516c",
+            "contextId": "056e8c61-fff6-4249-990c-688840dedd0a",
             "editionId": "90975a2e-d8d8-73eb-ab49-32807ed10f61",
             "scheduledEnd": "2027-05-15T19:20:00+00:00",
             "competitionId": "1b7aace1-057b-ec98-6190-b548f159e017",
-            "publicationId": "bf3f1dbb-6142-4505-af3b-4a4883ee8ef1",
+            "publicationId": "e0675afc-fd63-4fd2-b8f1-3b639fadaef1",
             "scheduledStart": "2027-05-15T18:00:00+00:00",
             "serverSequence": 3153,
-            "canonicalMatchId": "ee30a4bb-3005-4b61-b501-79566530206f"
+            "canonicalMatchId": "bfefaeeb-e6da-4f40-a505-f47328255d69"
           },
           {
             "away": {
@@ -6314,7 +6431,7 @@
             },
             "kind": "PublicCompetitionFixture",
             "round": {
-              "id": "7196494b-b24b-4725-bdf4-2fe3ad05d68b",
+              "id": "56b2b63e-3d76-4a3d-8470-55811651a7d1",
               "name": "Jornada 2",
               "number": 2,
               "status": "in_progress"
@@ -6322,10 +6439,10 @@
             "result": {
               "status": "OFFICIAL",
               "outcome": "MIRROR_SPORTING_RESULT",
-              "decidedAt": "2026-08-28T09:59:22.047615+00:00",
+              "decidedAt": "2026-08-28T22:06:30.933096+00:00",
               "scoreAway": 2,
               "scoreHome": 0,
-              "decisionId": "67788530-3d01-45f7-ac3a-cf98ad292868",
+              "decisionId": "bbe8d384-d079-4ba0-afec-a057332b0d30",
               "explanation": "Resultado confirmado por ambos equipos.",
               "serverSequence": 3287
             },
@@ -6341,14 +6458,14 @@
             "stageId": "356af85b-c964-3f28-5480-e8d5e617270b",
             "revision": 33,
             "timezone": "Europe/Madrid",
-            "contextId": "dc2b9952-0c78-405f-bc40-4604a0a72de3",
+            "contextId": "0dedd13e-ab40-4711-a863-a28a5eb820b6",
             "editionId": "90975a2e-d8d8-73eb-ab49-32807ed10f61",
             "scheduledEnd": "2027-05-15T19:20:00+00:00",
             "competitionId": "1b7aace1-057b-ec98-6190-b548f159e017",
-            "publicationId": "bf3f1dbb-6142-4505-af3b-4a4883ee8ef1",
+            "publicationId": "e0675afc-fd63-4fd2-b8f1-3b639fadaef1",
             "scheduledStart": "2027-05-15T18:00:00+00:00",
             "serverSequence": 3287,
-            "canonicalMatchId": "f66c353f-f598-4740-b077-f0a48fe84a98"
+            "canonicalMatchId": "c5221274-56e0-4a81-ad3c-3a762afc0354"
           },
           {
             "away": {
@@ -6367,7 +6484,7 @@
             },
             "kind": "PublicCompetitionFixture",
             "round": {
-              "id": "415b69c6-f8cc-4d52-95e6-0f5806c28744",
+              "id": "dbb2944f-a2e3-447d-895e-ecbcc08e5a42",
               "name": "Jornada 2",
               "number": 2,
               "status": "in_progress"
@@ -6375,10 +6492,10 @@
             "result": {
               "status": "OFFICIAL",
               "outcome": "CORRECTED_EFFECTIVE_SCORE",
-              "decidedAt": "2026-08-28T09:59:22.453454+00:00",
+              "decidedAt": "2026-08-28T22:06:31.287456+00:00",
               "scoreAway": 1,
               "scoreHome": 3,
-              "decisionId": "b7634b32-1857-4668-9969-c540e1fff8e2",
+              "decisionId": "85a1e895-97c4-4604-896c-c66676e224d5",
               "explanation": "Resultado corregido según el acta oficial.",
               "serverSequence": 3405
             },
@@ -6386,14 +6503,14 @@
             "stageId": "356af85b-c964-3f28-5480-e8d5e617270b",
             "revision": 33,
             "timezone": "Europe/Madrid",
-            "contextId": "eb4d5365-6887-4b33-bcbf-2eb534be1787",
+            "contextId": "adcade65-dbca-4922-8040-936105c8e60c",
             "editionId": "90975a2e-d8d8-73eb-ab49-32807ed10f61",
             "scheduledEnd": "2027-05-15T19:20:00+00:00",
             "competitionId": "1b7aace1-057b-ec98-6190-b548f159e017",
-            "publicationId": "bf3f1dbb-6142-4505-af3b-4a4883ee8ef1",
+            "publicationId": "e0675afc-fd63-4fd2-b8f1-3b639fadaef1",
             "scheduledStart": "2027-05-15T18:00:00+00:00",
             "serverSequence": 3405,
-            "canonicalMatchId": "0a1dc403-da89-4894-83a1-f5d817a7f86d"
+            "canonicalMatchId": "dde6602a-6811-4d0c-8f17-af0f02de377d"
           },
           {
             "away": {
@@ -6412,7 +6529,7 @@
             },
             "kind": "PublicCompetitionFixture",
             "round": {
-              "id": "89f28420-959e-4680-ac59-ea58bc789d34",
+              "id": "2056953c-86b5-499e-88b3-9dbf85c2f686",
               "name": "Jornada 2",
               "number": 2,
               "status": "in_progress"
@@ -6420,10 +6537,10 @@
             "result": {
               "status": "OFFICIAL",
               "outcome": "MIRROR_SPORTING_RESULT",
-              "decidedAt": "2026-08-28T09:59:22.899441+00:00",
+              "decidedAt": "2026-08-28T22:06:31.648129+00:00",
               "scoreAway": 3,
               "scoreHome": 1,
-              "decisionId": "72a0095e-00b8-4228-80b6-d10651e19180",
+              "decisionId": "62666376-4a07-43a2-a1e4-32131c9cdce2",
               "explanation": "Resultado confirmado por ambos equipos.",
               "serverSequence": 3530
             },
@@ -6431,14 +6548,14 @@
             "stageId": "356af85b-c964-3f28-5480-e8d5e617270b",
             "revision": 33,
             "timezone": "Europe/Madrid",
-            "contextId": "2bf9c6d9-0000-4014-840e-ed6f76c5cc26",
+            "contextId": "9d696188-a7e3-4376-b944-008a1f6666b7",
             "editionId": "90975a2e-d8d8-73eb-ab49-32807ed10f61",
             "scheduledEnd": "2027-05-15T19:20:00+00:00",
             "competitionId": "1b7aace1-057b-ec98-6190-b548f159e017",
-            "publicationId": "bf3f1dbb-6142-4505-af3b-4a4883ee8ef1",
+            "publicationId": "e0675afc-fd63-4fd2-b8f1-3b639fadaef1",
             "scheduledStart": "2027-05-15T18:00:00+00:00",
             "serverSequence": 3530,
-            "canonicalMatchId": "8fe09481-e66e-47c9-a613-f15883e5c701"
+            "canonicalMatchId": "75453840-76ac-4c74-a667-2c132a48caa1"
           },
           {
             "away": {
@@ -6457,7 +6574,7 @@
             },
             "kind": "PublicCompetitionFixture",
             "round": {
-              "id": "7196494b-b24b-4725-bdf4-2fe3ad05d68b",
+              "id": "56b2b63e-3d76-4a3d-8470-55811651a7d1",
               "name": "Jornada 2",
               "number": 2,
               "status": "in_progress"
@@ -6465,10 +6582,10 @@
             "result": {
               "status": "OFFICIAL",
               "outcome": "MIRROR_SPORTING_RESULT",
-              "decidedAt": "2026-08-28T09:59:21.829271+00:00",
+              "decidedAt": "2026-08-28T22:06:30.747198+00:00",
               "scoreAway": 0,
               "scoreHome": 2,
-              "decisionId": "8c9b9f92-dfe4-4838-814d-149210319cfd",
+              "decisionId": "3191d052-283d-4d67-ae1e-721abb8f6b53",
               "explanation": "Resultado confirmado por ambos equipos.",
               "serverSequence": 3221
             },
@@ -6484,14 +6601,14 @@
             "stageId": "356af85b-c964-3f28-5480-e8d5e617270b",
             "revision": 37,
             "timezone": "Europe/Madrid",
-            "contextId": "09cc68cb-aa95-4b7c-b3f5-e62e345cb710",
+            "contextId": "39557a5a-f900-437e-92c1-02aa4fd55849",
             "editionId": "90975a2e-d8d8-73eb-ab49-32807ed10f61",
             "scheduledEnd": "2027-05-16T17:20:00+00:00",
             "competitionId": "1b7aace1-057b-ec98-6190-b548f159e017",
-            "publicationId": "bf3f1dbb-6142-4505-af3b-4a4883ee8ef1",
+            "publicationId": "e0675afc-fd63-4fd2-b8f1-3b639fadaef1",
             "scheduledStart": "2027-05-16T16:00:00+00:00",
             "serverSequence": 3221,
-            "canonicalMatchId": "adb5dd83-479d-4428-a180-5337f104c952"
+            "canonicalMatchId": "36912875-94dc-4ca2-b2ab-da98c262e56a"
           },
           {
             "away": {
@@ -6510,7 +6627,7 @@
             },
             "kind": "PublicCompetitionFixture",
             "round": {
-              "id": "168ae3ee-97f8-4c68-82b8-cb36f40875c7",
+              "id": "9c104f8c-83f8-447a-9fe7-ec214bb4bf97",
               "name": "Jornada 3",
               "number": 3,
               "status": "published"
@@ -6518,10 +6635,10 @@
             "result": {
               "status": "OFFICIAL",
               "outcome": "MIRROR_SPORTING_RESULT",
-              "decidedAt": "2026-08-28T09:59:22.934489+00:00",
+              "decidedAt": "2026-08-28T22:06:31.681437+00:00",
               "scoreAway": 1,
               "scoreHome": 3,
-              "decisionId": "023d3a01-742c-4599-b7b3-a9bd11dd69dc",
+              "decisionId": "d96b0a23-5773-459f-951c-f7a9943dea3e",
               "explanation": "Resultado confirmado por ambos equipos.",
               "serverSequence": 3540
             },
@@ -6529,14 +6646,14 @@
             "stageId": "356af85b-c964-3f28-5480-e8d5e617270b",
             "revision": 5,
             "timezone": "Europe/Madrid",
-            "contextId": "fc1c3743-dc81-4c82-a9bc-c72332bed62e",
+            "contextId": "a5f46a7a-c60a-4efd-99fc-3f950b19e0ad",
             "editionId": "90975a2e-d8d8-73eb-ab49-32807ed10f61",
             "scheduledEnd": "2027-05-22T17:20:00+00:00",
             "competitionId": "1b7aace1-057b-ec98-6190-b548f159e017",
-            "publicationId": "bf3f1dbb-6142-4505-af3b-4a4883ee8ef1",
+            "publicationId": "e0675afc-fd63-4fd2-b8f1-3b639fadaef1",
             "scheduledStart": "2027-05-22T16:00:00+00:00",
             "serverSequence": 3540,
-            "canonicalMatchId": "e935ccb5-de70-426b-ab78-f90eaead5bed"
+            "canonicalMatchId": "c66d673a-41d2-4557-b692-616c69e067d0"
           },
           {
             "away": {
@@ -6555,7 +6672,7 @@
             },
             "kind": "PublicCompetitionFixture",
             "round": {
-              "id": "e7a57cb8-06e3-4a1f-96d5-57774ee2b9c4",
+              "id": "453ce4ac-eac4-4c53-87ff-43d93ba07788",
               "name": "Jornada 3",
               "number": 3,
               "status": "published"
@@ -6563,10 +6680,10 @@
             "result": {
               "status": "OFFICIAL",
               "outcome": "MIRROR_SPORTING_RESULT",
-              "decidedAt": "2026-08-28T09:59:22.977753+00:00",
+              "decidedAt": "2026-08-28T22:06:31.728241+00:00",
               "scoreAway": 1,
               "scoreHome": 3,
-              "decisionId": "f19d9168-ba41-4d93-bb32-0c5ef4f1097a",
+              "decisionId": "6d7fb9bc-e280-4914-a802-0b7c1b00af59",
               "explanation": "Resultado confirmado por ambos equipos.",
               "serverSequence": 3560
             },
@@ -6574,14 +6691,14 @@
             "stageId": "356af85b-c964-3f28-5480-e8d5e617270b",
             "revision": 5,
             "timezone": "Europe/Madrid",
-            "contextId": "b4256f85-8e47-428c-908b-8f717b52e96a",
+            "contextId": "7d9f30ab-5352-474f-bfba-faea20485641",
             "editionId": "90975a2e-d8d8-73eb-ab49-32807ed10f61",
             "scheduledEnd": "2027-05-22T17:20:00+00:00",
             "competitionId": "1b7aace1-057b-ec98-6190-b548f159e017",
-            "publicationId": "bf3f1dbb-6142-4505-af3b-4a4883ee8ef1",
+            "publicationId": "e0675afc-fd63-4fd2-b8f1-3b639fadaef1",
             "scheduledStart": "2027-05-22T16:00:00+00:00",
             "serverSequence": 3560,
-            "canonicalMatchId": "0781dd5c-694f-4249-ba86-4b045548c370"
+            "canonicalMatchId": "999b010f-2abe-41e8-886d-449e10a887f4"
           },
           {
             "away": {
@@ -6600,7 +6717,7 @@
             },
             "kind": "PublicCompetitionFixture",
             "round": {
-              "id": "3cdb8d8e-9d60-49fb-b765-a5839ee7fcbe",
+              "id": "f2e3ec50-1626-4699-a41d-3e33f9dec0d1",
               "name": "Jornada 3",
               "number": 3,
               "status": "published"
@@ -6608,10 +6725,10 @@
             "result": {
               "status": "OFFICIAL",
               "outcome": "MIRROR_SPORTING_RESULT",
-              "decidedAt": "2026-08-28T09:59:23.02194+00:00",
+              "decidedAt": "2026-08-28T22:06:31.770213+00:00",
               "scoreAway": 1,
               "scoreHome": 3,
-              "decisionId": "a8ecbe6a-40f0-4dd3-aa24-95e5f971dfd5",
+              "decisionId": "30f74c7f-7d58-4965-8d41-d5057f3de3f8",
               "explanation": "Resultado confirmado por ambos equipos.",
               "serverSequence": 3580
             },
@@ -6619,14 +6736,14 @@
             "stageId": "356af85b-c964-3f28-5480-e8d5e617270b",
             "revision": 5,
             "timezone": "Europe/Madrid",
-            "contextId": "9b0e547e-6784-4b7b-8b4e-b11ed2b199de",
+            "contextId": "ecdae529-df6d-4438-9685-516af1ee79d2",
             "editionId": "90975a2e-d8d8-73eb-ab49-32807ed10f61",
             "scheduledEnd": "2027-05-22T17:20:00+00:00",
             "competitionId": "1b7aace1-057b-ec98-6190-b548f159e017",
-            "publicationId": "bf3f1dbb-6142-4505-af3b-4a4883ee8ef1",
+            "publicationId": "e0675afc-fd63-4fd2-b8f1-3b639fadaef1",
             "scheduledStart": "2027-05-22T16:00:00+00:00",
             "serverSequence": 3580,
-            "canonicalMatchId": "85f25d3e-c86b-4047-ba46-b8c80c497743"
+            "canonicalMatchId": "3128c966-aa8e-4f63-a408-660e7ffba6cc"
           },
           {
             "away": {
@@ -6645,7 +6762,7 @@
             },
             "kind": "PublicCompetitionFixture",
             "round": {
-              "id": "81f69b41-f780-4072-bf05-941e989818d0",
+              "id": "52b05a75-e42f-4cfb-acad-f9c9257137a5",
               "name": "Jornada 3",
               "number": 3,
               "status": "published"
@@ -6653,10 +6770,10 @@
             "result": {
               "status": "OFFICIAL",
               "outcome": "MIRROR_SPORTING_RESULT",
-              "decidedAt": "2026-08-28T09:59:23.063011+00:00",
+              "decidedAt": "2026-08-28T22:06:31.811934+00:00",
               "scoreAway": 1,
               "scoreHome": 3,
-              "decisionId": "74bcd466-9b72-4a6b-a278-f07723e5fd6e",
+              "decisionId": "595d2fa7-e987-4707-b128-92db161fdc50",
               "explanation": "Resultado confirmado por ambos equipos.",
               "serverSequence": 3600
             },
@@ -6664,14 +6781,14 @@
             "stageId": "356af85b-c964-3f28-5480-e8d5e617270b",
             "revision": 5,
             "timezone": "Europe/Madrid",
-            "contextId": "83d6f1cb-191e-473a-82bb-dd597baddae2",
+            "contextId": "3b4cf9e4-2e5f-42c4-929a-11c2ed2dcf93",
             "editionId": "90975a2e-d8d8-73eb-ab49-32807ed10f61",
             "scheduledEnd": "2027-05-22T17:20:00+00:00",
             "competitionId": "1b7aace1-057b-ec98-6190-b548f159e017",
-            "publicationId": "bf3f1dbb-6142-4505-af3b-4a4883ee8ef1",
+            "publicationId": "e0675afc-fd63-4fd2-b8f1-3b639fadaef1",
             "scheduledStart": "2027-05-22T16:00:00+00:00",
             "serverSequence": 3600,
-            "canonicalMatchId": "2a686865-31ea-4bee-bd56-b25bd7ae964d"
+            "canonicalMatchId": "25345a07-dd23-44fe-8576-cd7a86abfdbb"
           },
           {
             "away": {
@@ -6690,7 +6807,7 @@
             },
             "kind": "PublicCompetitionFixture",
             "round": {
-              "id": "168ae3ee-97f8-4c68-82b8-cb36f40875c7",
+              "id": "9c104f8c-83f8-447a-9fe7-ec214bb4bf97",
               "name": "Jornada 3",
               "number": 3,
               "status": "published"
@@ -6698,10 +6815,10 @@
             "result": {
               "status": "OFFICIAL",
               "outcome": "MIRROR_SPORTING_RESULT",
-              "decidedAt": "2026-08-28T09:59:22.957341+00:00",
+              "decidedAt": "2026-08-28T22:06:31.70545+00:00",
               "scoreAway": 2,
               "scoreHome": 0,
-              "decisionId": "d95bef4f-e164-4343-9429-6dd1b974f000",
+              "decisionId": "c8c10aee-6970-4a69-89cb-6912167528f5",
               "explanation": "Resultado confirmado por ambos equipos.",
               "serverSequence": 3550
             },
@@ -6709,14 +6826,14 @@
             "stageId": "356af85b-c964-3f28-5480-e8d5e617270b",
             "revision": 5,
             "timezone": "Europe/Madrid",
-            "contextId": "4f223879-78eb-4164-a27a-4c9f04079f44",
+            "contextId": "92116090-731c-4638-8d39-bf64681e4803",
             "editionId": "90975a2e-d8d8-73eb-ab49-32807ed10f61",
             "scheduledEnd": "2027-05-22T19:20:00+00:00",
             "competitionId": "1b7aace1-057b-ec98-6190-b548f159e017",
-            "publicationId": "bf3f1dbb-6142-4505-af3b-4a4883ee8ef1",
+            "publicationId": "e0675afc-fd63-4fd2-b8f1-3b639fadaef1",
             "scheduledStart": "2027-05-22T18:00:00+00:00",
             "serverSequence": 3550,
-            "canonicalMatchId": "ec624b02-a3b8-4ade-be87-0448792c0e4b"
+            "canonicalMatchId": "fafc936e-60fc-4058-96b2-baeba453bbf6"
           },
           {
             "away": {
@@ -6735,7 +6852,7 @@
             },
             "kind": "PublicCompetitionFixture",
             "round": {
-              "id": "e7a57cb8-06e3-4a1f-96d5-57774ee2b9c4",
+              "id": "453ce4ac-eac4-4c53-87ff-43d93ba07788",
               "name": "Jornada 3",
               "number": 3,
               "status": "published"
@@ -6743,10 +6860,10 @@
             "result": {
               "status": "OFFICIAL",
               "outcome": "MIRROR_SPORTING_RESULT",
-              "decidedAt": "2026-08-28T09:59:23.000294+00:00",
+              "decidedAt": "2026-08-28T22:06:31.749328+00:00",
               "scoreAway": 3,
               "scoreHome": 1,
-              "decisionId": "8debea71-9c12-4e21-8aaa-0dacd0fccede",
+              "decisionId": "65f4034b-836d-45e6-8ddb-ef605b508dff",
               "explanation": "Resultado confirmado por ambos equipos.",
               "serverSequence": 3570
             },
@@ -6754,14 +6871,14 @@
             "stageId": "356af85b-c964-3f28-5480-e8d5e617270b",
             "revision": 5,
             "timezone": "Europe/Madrid",
-            "contextId": "47df7ae5-721c-4d07-9fd2-694c785e1ec4",
+            "contextId": "0375f246-0319-4fe5-8aec-76490d74ccde",
             "editionId": "90975a2e-d8d8-73eb-ab49-32807ed10f61",
             "scheduledEnd": "2027-05-22T19:20:00+00:00",
             "competitionId": "1b7aace1-057b-ec98-6190-b548f159e017",
-            "publicationId": "bf3f1dbb-6142-4505-af3b-4a4883ee8ef1",
+            "publicationId": "e0675afc-fd63-4fd2-b8f1-3b639fadaef1",
             "scheduledStart": "2027-05-22T18:00:00+00:00",
             "serverSequence": 3570,
-            "canonicalMatchId": "a07cfc44-677f-495b-943c-47e0bb5cdebd"
+            "canonicalMatchId": "6a9ce6fa-0d7a-43b2-ac8c-7d9616194a4d"
           },
           {
             "away": {
@@ -6780,7 +6897,7 @@
             },
             "kind": "PublicCompetitionFixture",
             "round": {
-              "id": "3cdb8d8e-9d60-49fb-b765-a5839ee7fcbe",
+              "id": "f2e3ec50-1626-4699-a41d-3e33f9dec0d1",
               "name": "Jornada 3",
               "number": 3,
               "status": "published"
@@ -6788,10 +6905,10 @@
             "result": {
               "status": "OFFICIAL",
               "outcome": "MIRROR_SPORTING_RESULT",
-              "decidedAt": "2026-08-28T09:59:23.042303+00:00",
+              "decidedAt": "2026-08-28T22:06:31.791712+00:00",
               "scoreAway": 2,
               "scoreHome": 0,
-              "decisionId": "0369a65b-dd38-44a3-90d4-9d3301bae0fa",
+              "decisionId": "6d761d47-c96d-4c33-99d7-ed6267750680",
               "explanation": "Resultado confirmado por ambos equipos.",
               "serverSequence": 3590
             },
@@ -6799,14 +6916,14 @@
             "stageId": "356af85b-c964-3f28-5480-e8d5e617270b",
             "revision": 5,
             "timezone": "Europe/Madrid",
-            "contextId": "b63d71d8-ac9b-4b0a-b75b-7c05ada6a360",
+            "contextId": "a93e0430-059c-4d33-bb0d-c742eef5b70f",
             "editionId": "90975a2e-d8d8-73eb-ab49-32807ed10f61",
             "scheduledEnd": "2027-05-22T19:20:00+00:00",
             "competitionId": "1b7aace1-057b-ec98-6190-b548f159e017",
-            "publicationId": "bf3f1dbb-6142-4505-af3b-4a4883ee8ef1",
+            "publicationId": "e0675afc-fd63-4fd2-b8f1-3b639fadaef1",
             "scheduledStart": "2027-05-22T18:00:00+00:00",
             "serverSequence": 3590,
-            "canonicalMatchId": "4f73aa1c-4c6f-4771-9fb2-d4a1915936aa"
+            "canonicalMatchId": "1f55c005-3b1b-4daf-89af-4d5f494ffb1e"
           },
           {
             "away": {
@@ -6825,7 +6942,7 @@
             },
             "kind": "PublicCompetitionFixture",
             "round": {
-              "id": "81f69b41-f780-4072-bf05-941e989818d0",
+              "id": "52b05a75-e42f-4cfb-acad-f9c9257137a5",
               "name": "Jornada 3",
               "number": 3,
               "status": "published"
@@ -6833,10 +6950,10 @@
             "result": {
               "status": "OFFICIAL",
               "outcome": "MIRROR_SPORTING_RESULT",
-              "decidedAt": "2026-08-28T09:59:23.086093+00:00",
+              "decidedAt": "2026-08-28T22:06:31.833+00:00",
               "scoreAway": 3,
               "scoreHome": 1,
-              "decisionId": "466fb495-9a7a-489c-a57d-0dba44fdac20",
+              "decisionId": "20d869da-1552-44aa-a943-e19bef4383f9",
               "explanation": "Resultado confirmado por ambos equipos.",
               "serverSequence": 3610
             },
@@ -6844,14 +6961,14 @@
             "stageId": "356af85b-c964-3f28-5480-e8d5e617270b",
             "revision": 5,
             "timezone": "Europe/Madrid",
-            "contextId": "de811f0c-dc02-4aa1-9430-6d923c19a351",
+            "contextId": "8681f900-6714-4b57-8948-16b12617f366",
             "editionId": "90975a2e-d8d8-73eb-ab49-32807ed10f61",
             "scheduledEnd": "2027-05-22T19:20:00+00:00",
             "competitionId": "1b7aace1-057b-ec98-6190-b548f159e017",
-            "publicationId": "bf3f1dbb-6142-4505-af3b-4a4883ee8ef1",
+            "publicationId": "e0675afc-fd63-4fd2-b8f1-3b639fadaef1",
             "scheduledStart": "2027-05-22T18:00:00+00:00",
             "serverSequence": 3610,
-            "canonicalMatchId": "ea09cb0b-61aa-4dc7-9ae4-66539768be6b"
+            "canonicalMatchId": "a0f2b879-8b76-473e-aa5f-28c5e64e937a"
           },
           {
             "away": {
@@ -6878,10 +6995,10 @@
             "result": {
               "status": "OFFICIAL",
               "outcome": "CORRECTED_EFFECTIVE_SCORE",
-              "decidedAt": "2026-08-28T09:59:25.341971+00:00",
+              "decidedAt": "2026-08-28T22:06:33.980589+00:00",
               "scoreAway": 2,
               "scoreHome": 0,
-              "decisionId": "08511a2a-195a-4540-b348-3678c766f37a",
+              "decisionId": "62584eea-e435-401b-a533-f59615fca095",
               "explanation": "El acta oficial corrige el ganador del cuarto.",
               "serverSequence": 3852
             },
@@ -6893,7 +7010,7 @@
             "editionId": "90975a2e-d8d8-73eb-ab49-32807ed10f61",
             "scheduledEnd": "2027-06-01T17:30:00+00:00",
             "competitionId": "1b7aace1-057b-ec98-6190-b548f159e017",
-            "publicationId": "bf3f1dbb-6142-4505-af3b-4a4883ee8ef1",
+            "publicationId": "e0675afc-fd63-4fd2-b8f1-3b639fadaef1",
             "scheduledStart": "2027-06-01T16:00:00+00:00",
             "serverSequence": 3852,
             "canonicalMatchId": "015bd9db-ab27-7eb1-21a6-1ba8a6d17655"
@@ -6923,10 +7040,10 @@
             "result": {
               "status": "OFFICIAL",
               "outcome": "MIRROR_SPORTING_RESULT",
-              "decidedAt": "2026-08-28T09:59:25.158558+00:00",
+              "decidedAt": "2026-08-28T22:06:33.787294+00:00",
               "scoreAway": 1,
               "scoreHome": 2,
-              "decisionId": "8f20d14a-290e-4bbe-9ccf-0f8435a1194d",
+              "decisionId": "f94b32c7-c050-486f-b922-6c3ec55c2e8f",
               "explanation": "Resultado eliminatorio confirmado.",
               "serverSequence": 3807
             },
@@ -6938,7 +7055,7 @@
             "editionId": "90975a2e-d8d8-73eb-ab49-32807ed10f61",
             "scheduledEnd": "2027-06-01T19:30:00+00:00",
             "competitionId": "1b7aace1-057b-ec98-6190-b548f159e017",
-            "publicationId": "bf3f1dbb-6142-4505-af3b-4a4883ee8ef1",
+            "publicationId": "e0675afc-fd63-4fd2-b8f1-3b639fadaef1",
             "scheduledStart": "2027-06-01T18:00:00+00:00",
             "serverSequence": 3807,
             "canonicalMatchId": "1e8d825c-69fc-8e37-dc16-0495ce450a67"
@@ -6968,10 +7085,10 @@
             "result": {
               "status": "OFFICIAL",
               "outcome": "MIRROR_SPORTING_RESULT",
-              "decidedAt": "2026-08-28T09:59:25.220705+00:00",
+              "decidedAt": "2026-08-28T22:06:33.852172+00:00",
               "scoreAway": 1,
               "scoreHome": 1,
-              "decisionId": "620e76b2-632e-4123-a546-1a707578d317",
+              "decisionId": "864e2135-3265-464c-8dea-2cad7c179798",
               "explanation": "Resultado eliminatorio confirmado.",
               "serverSequence": 3825
             },
@@ -6983,7 +7100,7 @@
             "editionId": "90975a2e-d8d8-73eb-ab49-32807ed10f61",
             "scheduledEnd": "2027-06-01T21:30:00+00:00",
             "competitionId": "1b7aace1-057b-ec98-6190-b548f159e017",
-            "publicationId": "bf3f1dbb-6142-4505-af3b-4a4883ee8ef1",
+            "publicationId": "e0675afc-fd63-4fd2-b8f1-3b639fadaef1",
             "scheduledStart": "2027-06-01T20:00:00+00:00",
             "serverSequence": 3825,
             "canonicalMatchId": "90be9805-48d9-de5f-52f0-f5b4964823ee"
@@ -7013,10 +7130,10 @@
             "result": {
               "status": "OFFICIAL",
               "outcome": "FORFEIT",
-              "decidedAt": "2026-08-28T09:59:25.286115+00:00",
+              "decidedAt": "2026-08-28T22:06:33.923002+00:00",
               "scoreAway": 0,
               "scoreHome": 3,
-              "decisionId": "f3285ecc-4003-4036-8bc3-3ce861177d15",
+              "decisionId": "dba8b46a-7a24-4bab-a784-13751ae40037",
               "explanation": "Incomparecencia confirmada.",
               "serverSequence": 3839
             },
@@ -7028,7 +7145,7 @@
             "editionId": "90975a2e-d8d8-73eb-ab49-32807ed10f61",
             "scheduledEnd": "2027-06-01T23:30:00+00:00",
             "competitionId": "1b7aace1-057b-ec98-6190-b548f159e017",
-            "publicationId": "bf3f1dbb-6142-4505-af3b-4a4883ee8ef1",
+            "publicationId": "e0675afc-fd63-4fd2-b8f1-3b639fadaef1",
             "scheduledStart": "2027-06-01T22:00:00+00:00",
             "serverSequence": 3839,
             "canonicalMatchId": "0e4f9901-00aa-e6b1-ad0f-a21ad3546f23"
@@ -7058,10 +7175,10 @@
             "result": {
               "status": "OFFICIAL",
               "outcome": "MIRROR_SPORTING_RESULT",
-              "decidedAt": "2026-08-28T09:59:25.470664+00:00",
+              "decidedAt": "2026-08-28T22:06:34.105265+00:00",
               "scoreAway": 0,
               "scoreHome": 2,
-              "decisionId": "d9494635-d5d1-48ef-9941-c089488e87a7",
+              "decisionId": "534240bb-aab8-4e1c-9a89-aff6fdc25164",
               "explanation": "Resultado eliminatorio confirmado.",
               "serverSequence": 3877
             },
@@ -7081,7 +7198,7 @@
             "editionId": "90975a2e-d8d8-73eb-ab49-32807ed10f61",
             "scheduledEnd": "2027-06-08T17:30:00+00:00",
             "competitionId": "1b7aace1-057b-ec98-6190-b548f159e017",
-            "publicationId": "bf3f1dbb-6142-4505-af3b-4a4883ee8ef1",
+            "publicationId": "e0675afc-fd63-4fd2-b8f1-3b639fadaef1",
             "scheduledStart": "2027-06-08T16:00:00+00:00",
             "serverSequence": 3877,
             "canonicalMatchId": "71782299-14b9-5af3-68d5-e88c5d9ddbf9"
@@ -7111,10 +7228,10 @@
             "result": {
               "status": "OFFICIAL",
               "outcome": "MIRROR_SPORTING_RESULT",
-              "decidedAt": "2026-08-28T09:59:25.535847+00:00",
+              "decidedAt": "2026-08-28T22:06:34.166136+00:00",
               "scoreAway": 0,
               "scoreHome": 2,
-              "decisionId": "1769c66f-b5df-463a-a99b-09d984fe2400",
+              "decisionId": "de34d62f-8044-420b-8dc5-5fce7e27211c",
               "explanation": "Resultado eliminatorio confirmado.",
               "serverSequence": 3896
             },
@@ -7126,7 +7243,7 @@
             "editionId": "90975a2e-d8d8-73eb-ab49-32807ed10f61",
             "scheduledEnd": "2027-06-08T19:30:00+00:00",
             "competitionId": "1b7aace1-057b-ec98-6190-b548f159e017",
-            "publicationId": "bf3f1dbb-6142-4505-af3b-4a4883ee8ef1",
+            "publicationId": "e0675afc-fd63-4fd2-b8f1-3b639fadaef1",
             "scheduledStart": "2027-06-08T18:00:00+00:00",
             "serverSequence": 3896,
             "canonicalMatchId": "41fedcdf-e8e7-4f49-38cd-15a603a05e03"
@@ -7156,10 +7273,10 @@
             "result": {
               "status": "OFFICIAL",
               "outcome": "MIRROR_SPORTING_RESULT",
-              "decidedAt": "2026-08-28T09:59:25.622336+00:00",
+              "decidedAt": "2026-08-28T22:06:34.24366+00:00",
               "scoreAway": 0,
               "scoreHome": 2,
-              "decisionId": "12c81000-2d20-429b-a3f7-73426bfc5d74",
+              "decisionId": "ccaf4e32-7272-462e-b605-ef256ed92e91",
               "explanation": "Resultado eliminatorio confirmado.",
               "serverSequence": 3917
             },
@@ -7171,7 +7288,7 @@
             "editionId": "90975a2e-d8d8-73eb-ab49-32807ed10f61",
             "scheduledEnd": "2027-06-15T17:30:00+00:00",
             "competitionId": "1b7aace1-057b-ec98-6190-b548f159e017",
-            "publicationId": "bf3f1dbb-6142-4505-af3b-4a4883ee8ef1",
+            "publicationId": "e0675afc-fd63-4fd2-b8f1-3b639fadaef1",
             "scheduledStart": "2027-06-15T16:00:00+00:00",
             "serverSequence": 3917,
             "canonicalMatchId": "0d97b31b-73fc-557a-e3b4-9749954fab77"
@@ -7201,10 +7318,10 @@
             "result": {
               "status": "OFFICIAL",
               "outcome": "MIRROR_SPORTING_RESULT",
-              "decidedAt": "2026-08-28T09:59:25.68534+00:00",
+              "decidedAt": "2026-08-28T22:06:34.298711+00:00",
               "scoreAway": 0,
               "scoreHome": 2,
-              "decisionId": "8c6b1e3d-187e-4871-abd7-d856f2c4fcd0",
+              "decisionId": "aedd38a0-a3bb-4e58-b70c-5a3847a61358",
               "explanation": "Resultado eliminatorio confirmado.",
               "serverSequence": 3932
             },
@@ -7224,7 +7341,7 @@
             "editionId": "90975a2e-d8d8-73eb-ab49-32807ed10f61",
             "scheduledEnd": "2027-06-15T17:30:00+00:00",
             "competitionId": "1b7aace1-057b-ec98-6190-b548f159e017",
-            "publicationId": "bf3f1dbb-6142-4505-af3b-4a4883ee8ef1",
+            "publicationId": "e0675afc-fd63-4fd2-b8f1-3b639fadaef1",
             "scheduledStart": "2027-06-15T16:00:00+00:00",
             "serverSequence": 3932,
             "canonicalMatchId": "ef9fdedd-bcab-148e-41f9-c7f5ad9757ef"
@@ -7385,11 +7502,11 @@
               }
             ],
             "health": "CURRENT",
-            "groupId": "57bab5ca-6d48-49f3-baf9-4d273e6aa162",
+            "groupId": "d35c7eb6-ef06-4849-bf27-0cf4db37c9ec",
             "stageId": "356af85b-c964-3f28-5480-e8d5e617270b",
-            "stateId": "bf5612d9-f01d-41ff-9cbe-1304aab78f4e",
-            "snapshotId": "bd32b558-3596-4968-abc7-b45aafc86224",
-            "generatedAt": "2026-08-28T09:59:23.095611+00:00",
+            "stateId": "fd45f00b-b0c6-44d7-bf51-c085e9dcb471",
+            "snapshotId": "437a70d0-bb73-4113-beaf-c86b17d72711",
+            "generatedAt": "2026-08-28T22:06:31.843953+00:00",
             "serverSequence": 3610,
             "sourceRevision": 3610,
             "tieBreakCriteria": [
@@ -7544,11 +7661,11 @@
               }
             ],
             "health": "CURRENT",
-            "groupId": "9d684310-8bfa-463e-a483-1e89fc38038c",
+            "groupId": "84a13a02-5fcc-4a88-aed4-3177d07a95a1",
             "stageId": "356af85b-c964-3f28-5480-e8d5e617270b",
-            "stateId": "587e7d71-f4db-48ce-9c76-37e51563fb39",
-            "snapshotId": "3fe367eb-4a84-425d-9dc8-8c2187a8326e",
-            "generatedAt": "2026-08-28T09:59:23.051525+00:00",
+            "stateId": "26633819-a226-46d9-9e8e-85849425370b",
+            "snapshotId": "c9e01887-abf8-4c34-b3aa-1e7001a91386",
+            "generatedAt": "2026-08-28T22:06:31.801789+00:00",
             "serverSequence": 3590,
             "sourceRevision": 3590,
             "tieBreakCriteria": [
@@ -7703,11 +7820,11 @@
               }
             ],
             "health": "CURRENT",
-            "groupId": "93052497-e564-450f-b54d-beaf7d5b48d5",
+            "groupId": "d0dd9ce7-932e-44e6-b6f2-9187fc61029e",
             "stageId": "356af85b-c964-3f28-5480-e8d5e617270b",
-            "stateId": "0e20b20f-8da0-405b-980b-3377ed89960d",
-            "snapshotId": "0dce15da-608a-44e5-9ff7-f681ed37e34c",
-            "generatedAt": "2026-08-28T09:59:23.010486+00:00",
+            "stateId": "3a150cc9-a246-4d6b-a4fd-f049a5049f5d",
+            "snapshotId": "11a89ef5-dd88-488a-8325-b4dc8e45431c",
+            "generatedAt": "2026-08-28T22:06:31.759488+00:00",
             "serverSequence": 3570,
             "sourceRevision": 3570,
             "tieBreakCriteria": [
@@ -7862,11 +7979,11 @@
               }
             ],
             "health": "CURRENT",
-            "groupId": "eff6cb81-8f3b-4f04-abaf-fde6466cdf3d",
+            "groupId": "8992636b-8f06-4c80-94bc-8571432798f1",
             "stageId": "356af85b-c964-3f28-5480-e8d5e617270b",
-            "stateId": "f5a2a881-e9be-44dd-ac55-094761454924",
-            "snapshotId": "0e796196-567f-4e53-b8d1-4616bcd376da",
-            "generatedAt": "2026-08-28T09:59:22.966562+00:00",
+            "stateId": "ef519839-3fac-48a2-a781-5f3dbab2406a",
+            "snapshotId": "5a555f91-def5-4821-938a-7b959d0216c3",
+            "generatedAt": "2026-08-28T22:06:31.716271+00:00",
             "serverSequence": 3550,
             "sourceRevision": 3550,
             "tieBreakCriteria": [
@@ -7888,9 +8005,9 @@
       "hub": {
         "kind": "PublicCompetitionView",
         "cache": {
-          "entityId": "52e440eb-2119-44a8-8f52-4ec8b5e80771",
+          "entityId": "c690ba9d-13de-48bc-9b0d-e7767cd1659d",
           "revision": 1,
-          "updatedAt": "2026-08-28T09:59:27.029385+00:00",
+          "updatedAt": "2026-08-28T22:06:35.490078+00:00",
           "entityType": "public_competition",
           "serverSequence": 4082
         },
@@ -7903,7 +8020,7 @@
           "waitlist": true,
           "discovery": true,
           "standings": true,
-          "updatedAt": "2026-08-28T09:59:26.54623+00:00",
+          "updatedAt": "2026-08-28T22:06:35.107487+00:00",
           "autoAccept": false,
           "discipline": false,
           "foundation": true,
@@ -7969,7 +8086,7 @@
           "rulesSummary": "Configuración privada pendiente de revisión."
         },
         "publication": {
-          "id": "52e440eb-2119-44a8-8f52-4ec8b5e80771",
+          "id": "c690ba9d-13de-48bc-9b0d-e7767cd1659d",
           "slug": "liga-privada-organizador-demo",
           "status": "draft",
           "revision": 1,
@@ -8002,7 +8119,8 @@
     "R6A",
     "R6B",
     "R6C",
-    "PUBLIC_COMPETITIONS"
+    "PUBLIC_COMPETITIONS",
+    "ORGANIZER_BILLING"
   ],
   "tournament": {
     "slug": "copa-barrios-iq-2027",
@@ -10119,6 +10237,6 @@
     "tournamentMatches": 24,
     "acceptedParticipants": 16
   },
-  "version": 8,
-  "authorityHash": "eedee3d55d597dfc0c9037192c22c79457d4fdf5ebd22ccb41b7667d0a797c03"
+  "version": 9,
+  "authorityHash": "b9ee4eee8398d338891771eed13c6573deca1d532c01229b668e495fbd10f36a"
 }

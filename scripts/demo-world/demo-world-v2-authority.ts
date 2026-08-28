@@ -2,7 +2,42 @@ import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 
-export const DEMO_WORLD_V2_AUTHORITY_PROOF_VERSION = 8 as const;
+export const DEMO_WORLD_V2_AUTHORITY_PROOF_VERSION = 9 as const;
+
+export type DemoWorldV2AuthorityProofOrganizerBillingScenario = {
+  accessStatus: "active" | "continuity" | "grace" | "pending";
+  accountStatus: "active" | "canceled" | "checkout_pending" | "past_due";
+  billingInterval: "month" | "year" | null;
+  continuityUntil: string | null;
+  creationAllowed: boolean;
+  graceEndsAt: string | null;
+  id: "club_annual_active" | "club_monthly_active" | "club_partner" | "club_canceled_continuity"
+    | "team_active" | "team_checkout_pending" | "team_past_due_grace";
+  note: string;
+  organizerKind: "CLUB" | "TEAM";
+  organizerName: string;
+  planCode: "CLUB_ORGANIZER" | "CLUB_PARTNER" | "TEAM_ORGANIZER_PRO";
+  renewalAt: string | null;
+};
+
+export type DemoWorldV2AuthorityProofOrganizerBilling = {
+  catalogMappings: 4;
+  liveCheckoutEnabled: false;
+  liveMappings: 0;
+  livePortalEnabled: false;
+  operationReceipts: number;
+  privacy: {
+    containsPii: false;
+    containsPriceId: false;
+    containsStripeCustomerId: false;
+    containsStripeSubscriptionId: false;
+  };
+  readModelVerified: true;
+  remoteWrites: 0;
+  scenarios: DemoWorldV2AuthorityProofOrganizerBillingScenario[];
+  stripeEvents: number;
+  testRuntimeReady: true;
+};
 
 export type DemoWorldV2AuthorityProofConfigurationRevision = {
   authoringMode: "ADVANCED" | "SIMPLE";
@@ -614,10 +649,11 @@ export type DemoWorldV2AuthorityProof = {
     refereePlatform: number;
     scheduling: number;
   };
+  organizerBilling: DemoWorldV2AuthorityProofOrganizerBilling;
   refereeAssignments: DemoWorldV2AuthorityProofRefereeAssignments;
   publicCompetitions: DemoWorldV2AuthorityProofPublicCompetitions;
   remoteWrites: 0;
-  rpcFamilies: ["R1", "R3", "R4A", "R4B", "R4C", "R4D", "R5", "R6A", "R6B", "R6C", "PUBLIC_COMPETITIONS"];
+  rpcFamilies: ["R1", "R3", "R4A", "R4B", "R4C", "R4D", "R5", "R6A", "R6B", "R6C", "PUBLIC_COMPETITIONS", "ORGANIZER_BILLING"];
   roundCount: 5;
   standings: DemoWorldV2AuthorityProofStanding[];
   tournament: DemoWorldV2AuthorityProofTournament;
@@ -1031,6 +1067,27 @@ export function assertDemoWorldV2AuthorityProof(value: DemoWorldV2AuthorityProof
   }
   if (!value.rpcFamilies.includes("PUBLIC_COMPETITIONS")) {
     throw new Error("DEMO_WORLD_V2_7_RPC_FAMILY_MISSING");
+  }
+  const organizerBilling = value.organizerBilling;
+  if (organizerBilling.scenarios.map(({ id }) => id).join(",")
+      !== "club_partner,club_monthly_active,club_annual_active,team_active,team_checkout_pending,team_past_due_grace,club_canceled_continuity"
+      || organizerBilling.catalogMappings !== 4
+      || organizerBilling.liveMappings !== 0
+      || organizerBilling.liveCheckoutEnabled
+      || organizerBilling.livePortalEnabled
+      || !organizerBilling.testRuntimeReady
+      || !organizerBilling.readModelVerified
+      || organizerBilling.remoteWrites !== 0
+      || organizerBilling.operationReceipts < 20
+      || organizerBilling.stripeEvents !== 7
+      || Object.values(organizerBilling.privacy).some(Boolean)) {
+    throw new Error("DEMO_WORLD_V2_9_ORGANIZER_BILLING_AUTHORITY_INVALID");
+  }
+  if (!value.rpcFamilies.includes("ORGANIZER_BILLING")) {
+    throw new Error("DEMO_WORLD_V2_9_RPC_FAMILY_MISSING");
+  }
+  if (/(?:cus|sub|price|prod)_[A-Za-z0-9_]+|@example|\+34/i.test(JSON.stringify(organizerBilling))) {
+    throw new Error("DEMO_WORLD_V2_9_ORGANIZER_BILLING_PRIVATE_FIELD_LEAK");
   }
   if (JSON.stringify(tournament).match(/[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/i)) {
     throw new Error("DEMO_WORLD_V2_4_INTERNAL_ID_LEAK");

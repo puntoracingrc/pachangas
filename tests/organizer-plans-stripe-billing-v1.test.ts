@@ -177,12 +177,19 @@ test("Control Center keeps live approval and reconciliation on dedicated platfor
     source("app/admin/billing/organizer-billing-admin-client.tsx"),
     source("app/api/platform-admin/billing/route.ts"),
   ]);
-  assert.match(client, /priceMode === "live" && priceApproved && !canApproveLive/);
+  assert.match(client, /commercial_decision\.approve/);
+  assert.match(client, /disabled=\{!canApproveLive[^\n]+decisionStatus !== "pending_approval"/);
+  assert.match(client, /stripe_catalog\.provision/);
+  assert.match(client, /disabled=\{!canApproveLive[^\n]+decisionStatus !== "approved"[^\n]+LIVE_READY/);
+  assert.match(client, /live_checkout\.activate/);
+  assert.match(client, /disabled=\{!canApproveLive[^\n]+!liveGateReady[^\n]+!liveConfirmation/);
   assert.match(client, /reconciliation\.request/);
   assert.match(client, /manual\.grant/);
   assert.match(client, /manual\.revoke/);
   assert.match(client, /manual\.renew/);
   assert.match(route, /request_pachanga_billing_reconciliation_platform_v1/);
+  assert.match(route, /command_pachanga_organizer_commercial_decision_v1/);
+  assert.match(route, /activate_pachanga_organizer_live_checkout_platform_v1/);
   assert.match(route, /command_pachanga_organizer_billing_platform_v1/);
   assert.doesNotMatch(client, /service_role|stripeCustomerId|stripeSubscriptionId/);
 });

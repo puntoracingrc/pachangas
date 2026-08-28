@@ -42,12 +42,18 @@ function priceContent(plan: OrganizerBillingJson) {
   if (!prices.length) {
     return <><strong>Precio pendiente de publicacion</strong><small>No se abrira Checkout hasta que producto, precio e impuestos esten aprobados.</small></>;
   }
+  const monthly = prices.find((price) => organizerBillingText(price.interval) === "month");
+  const annual = prices.find((price) => organizerBillingText(price.interval) === "year");
+  const annualSaving = monthly && annual
+    && organizerBillingText(monthly.currency).toLowerCase() === organizerBillingText(annual.currency).toLowerCase()
+    ? Math.max(0, Number(monthly.unitAmount) * 12 - Number(annual.unitAmount))
+    : 0;
   return <div className={styles.priceRows}>{prices.map((price) => (
     <span key={`${organizerBillingText(price.interval)}-${organizerBillingText(price.currency)}`}>
       <b>{organizerBillingMoney(price.unitAmount, price.currency)} / {organizerBillingText(price.interval) === "year" ? "ano" : "mes"}</b>
       <small>{organizerBillingText(price.taxBehavior) === "inclusive" ? "Impuestos incluidos" : organizerBillingText(price.taxBehavior) === "exclusive" ? "Impuestos no incluidos" : "Fiscalidad pendiente"}</small>
     </span>
-  ))}</div>;
+  ))}{annualSaving && annual ? <span><b>Ahorro anual</b><small>{organizerBillingMoney(annualSaving, annual.currency)} frente al pago mensual</small></span> : null}</div>;
 }
 
 function PlanCard({ plan }: { plan: OrganizerBillingJson }) {

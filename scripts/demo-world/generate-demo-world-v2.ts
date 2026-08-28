@@ -1041,7 +1041,9 @@ function buildPublicCompetitions(
   };
 }
 
-function buildOrganizerBilling(): DemoWorldV2OrganizerBillingChunk {
+function buildOrganizerBilling(
+  authorityProof: DemoWorldV2AuthorityProof,
+): DemoWorldV2OrganizerBillingChunk {
   const sharedFeatures = [
     "competition_create",
     "competition_manage",
@@ -1114,78 +1116,13 @@ function buildOrganizerBilling(): DemoWorldV2OrganizerBillingChunk {
       containsStripeSubscriptionId: false,
     },
     provenance: {
-      authority: "canonical-read-model-shape",
-      source: "deterministic-demo",
+      authority: "canonical-postgresql-read-model",
+      operationReceipts: authorityProof.organizerBilling.operationReceipts,
+      source: "simulation-world",
       verified: true,
     },
     readOnly: true,
-    scenarios: [
-      {
-        accessStatus: "active",
-        accountStatus: "active",
-        continuityUntil: null,
-        creationAllowed: true,
-        graceEndsAt: null,
-        id: "club_partner",
-        note: "Partnership auditada: acceso activo sin cargo ni Checkout.",
-        organizerKind: "CLUB",
-        organizerName: "Club Esportiu Llevant",
-        planCode: "CLUB_PARTNER",
-        renewalAt: null,
-      },
-      {
-        accessStatus: "active",
-        accountStatus: "active",
-        continuityUntil: null,
-        creationAllowed: true,
-        graceEndsAt: null,
-        id: "team_active",
-        note: "Add-on activo sobre el plan base del equipo.",
-        organizerKind: "TEAM",
-        organizerName: "Cobalto Raval",
-        planCode: "TEAM_ORGANIZER_PRO",
-        renewalAt: "2027-04-18T18:00:00.000Z",
-      },
-      {
-        accessStatus: "active",
-        accountStatus: "active",
-        continuityUntil: null,
-        creationAllowed: true,
-        graceEndsAt: null,
-        id: "club_active",
-        note: "Suscripcion de Club activa y read model confirmado.",
-        organizerKind: "CLUB",
-        organizerName: "Associacio Esportiva Besos",
-        planCode: "CLUB_ORGANIZER",
-        renewalAt: "2027-04-18T18:00:00.000Z",
-      },
-      {
-        accessStatus: "grace",
-        accountStatus: "past_due",
-        continuityUntil: null,
-        creationAllowed: false,
-        graceEndsAt: "2027-03-25T18:00:00.000Z",
-        id: "past_due_grace",
-        note: "Pago pendiente: se conserva el acceso existente durante la gracia, sin nuevas creaciones.",
-        organizerKind: "CLUB",
-        organizerName: "Club Esportiu Montjuic",
-        planCode: "CLUB_ORGANIZER",
-        renewalAt: null,
-      },
-      {
-        accessStatus: "continuity",
-        accountStatus: "canceled",
-        continuityUntil: "2027-06-30T21:59:59.000Z",
-        creationAllowed: false,
-        graceEndsAt: null,
-        id: "canceled_continuity",
-        note: "Suscripcion cancelada: la edicion iniciada conserva continuidad, pero no se crean competiciones nuevas.",
-        organizerKind: "TEAM",
-        organizerName: "Vertice Gracia",
-        planCode: "TEAM_ORGANIZER_PRO",
-        renewalAt: null,
-      },
-    ],
+    scenarios: structuredClone(authorityProof.organizerBilling.scenarios),
     transport: { methods: ["GET"], remoteWrites: 0 },
   };
 }
@@ -1206,7 +1143,7 @@ export function generateDemoWorldV2(
   const activity = structuredClone(v1.activity);
   const core = structuredClone(v1.core);
   const matches = structuredClone(v1.matches);
-  const organizerBilling = buildOrganizerBilling();
+  const organizerBilling = buildOrganizerBilling(authorityProof);
   const players = structuredClone(v1.players);
   core.perspectives.push({
     id: "league-organizer",

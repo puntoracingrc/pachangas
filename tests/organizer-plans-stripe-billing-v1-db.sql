@@ -60,10 +60,14 @@ security definer
 set search_path = pg_catalog
 as $$
 declare settings_revision bigint;
+declare response jsonb;
 begin
   select revision into settings_revision
   from private.pachanga_organizer_billing_settings where singleton;
-  return public.command_pachanga_organizer_billing_platform_v1(
+  if flag_name = 'portal_enabled' then
+    perform set_config('pachangas.billing_settings_authority', 'wave7b-regression-fixture', true);
+  end if;
+  response := public.command_pachanga_organizer_billing_platform_v1(
     gen_random_uuid(),
     '7b000000-0000-4000-8000-000000000099',
     settings_revision,
@@ -71,7 +75,43 @@ begin
     jsonb_build_object('flagKey', flag_name, 'enabled', true, 'reason', 'Wave 7B database test activation'),
     '{"clientVersion":"7.1.0+db","serviceWorkerVersion":"sw-wave7b","installedMode":"browser","surface":"wave7b_db","secret":"discard-me"}'
   );
+  if flag_name = 'portal_enabled' then
+    perform set_config('pachangas.billing_settings_authority', '', true);
+  end if;
+  return response;
+exception when others then
+  perform set_config('pachangas.billing_settings_authority', '', true);
+  raise;
 end;
+$$;
+
+create or replace function pg_temp.commercial_setting(action_name text, payload jsonb)
+returns jsonb
+language plpgsql
+security definer
+set search_path = pg_catalog
+as $$
+declare settings_revision bigint;
+begin
+  select revision into settings_revision
+  from private.pachanga_organizer_billing_settings where singleton;
+  return public.command_pachanga_organizer_commercial_settings_v1(
+    gen_random_uuid(), settings_revision, action_name, payload,
+    '{"clientVersion":"7.3.0+wave7b-regression","surface":"wave7b_db"}'::jsonb
+  );
+end;
+$$;
+
+create or replace function pg_temp.commercial_decision_id(target_plan_code text)
+returns uuid
+language sql
+stable
+security definer
+set search_path = pg_catalog
+as $$
+  select id
+  from private.pachanga_organizer_commercial_decisions_v1
+  where plan_code = target_plan_code
 $$;
 
 create temporary table wave7b_state(
@@ -137,6 +177,7 @@ select pg_temp.assert_true(
 );
 
 -- Test-mode price mapping is an explicit fixture and never activates live commerce.
+select set_config('pachangas.billing_mapping_authority', 'wave7b-regression-fixture', true);
 set local role authenticated;
 select pg_temp.actor('7b000000-0000-4000-8000-000000000003');
 select public.command_pachanga_organizer_billing_platform_v1(
@@ -152,6 +193,7 @@ select public.command_pachanga_organizer_billing_platform_v1(
   '{"clientVersion":"7.1.0+db","surface":"wave7b_control_center"}'
 );
 reset role;
+select set_config('pachangas.billing_mapping_authority', '', true);
 
 -- A billing-linked partnership bundle coexists with a pre-existing legacy grant.
 insert into public.pachanga_competition_entitlement_grants(
@@ -256,6 +298,65 @@ select pg_temp.expect_failure(
     'CLUB', '7b000000-0000-4000-8000-000000000020'
   )$$,
   'BILLING_OWNER_REQUIRED'
+);
+reset role;
+
+-- Wave 7C TEST evidence is prepared through its real authority path so the
+-- historical Checkout assertions cannot bypass catalog or runtime readback.
+set local role authenticated;
+select pg_temp.actor('7b000000-0000-4000-8000-000000000003');
+select pg_temp.commercial_setting(
+  'settings.feature_flag_v2',
+  '{"flagKey":"commercial_decision_workflow_enabled","enabled":true,"reason":"Wave 7B regression on Wave 7C schema"}'
+);
+select public.prepare_pachanga_organizer_stripe_catalog_platform_v1(
+  '7b190000-0000-4000-8000-000000000001',
+  pg_temp.commercial_decision_id('TEAM_ORGANIZER_PRO'),
+  1, 'test', 'Wave 7B regression Team TEST catalog', '{"surface":"wave7b_db"}'
+);
+select public.prepare_pachanga_organizer_stripe_catalog_platform_v1(
+  '7b190000-0000-4000-8000-000000000002',
+  pg_temp.commercial_decision_id('CLUB_ORGANIZER'),
+  1, 'test', 'Wave 7B regression Club TEST catalog', '{"surface":"wave7b_db"}'
+);
+reset role;
+
+set local role service_role;
+select pg_temp.actor('7b000000-0000-4000-8000-000000000003', 'service_role');
+select public.confirm_pachanga_organizer_stripe_catalog_service_v1(
+  '7b190000-0000-4000-8000-000000000001', 'prod_wave7b_test_team',
+  'price_wave7b_test_month', 'price_wave7b_test_year', 'eur', 990, 9900,
+  'unspecified',
+  '{"product_family":"organizer","plan_code":"TEAM_ORGANIZER_PRO","organizer_kind":"team","environment":"test","catalog_revision":"organizer-plan-v1"}',
+  'organizer-plan-v1'
+);
+select public.confirm_pachanga_organizer_stripe_catalog_service_v1(
+  '7b190000-0000-4000-8000-000000000002', 'prod_wave7b_test_club',
+  'price_wave7b_test_club_month', 'price_wave7b_test_club_year', 'eur', 2900, 29000,
+  'unspecified',
+  '{"product_family":"organizer","plan_code":"CLUB_ORGANIZER","organizer_kind":"club","environment":"test","catalog_revision":"organizer-plan-v1"}',
+  'organizer-plan-v1'
+);
+select public.record_pachanga_organizer_stripe_runtime_health_service_v1(
+  gen_random_uuid(), 'test',
+  (select revision from private.pachanga_organizer_stripe_runtime_health_v1 where stripe_mode='test'),
+  true, true, true, true, '/api/webhooks/stripe', 'wave7b-regression-runtime-v1', null
+);
+reset role;
+
+set local role authenticated;
+select pg_temp.actor('7b000000-0000-4000-8000-000000000003');
+select pg_temp.commercial_setting(
+  'settings.tax_health_v2',
+  '{"taxHealth":"TEST_READY","confirmation":"CONFIRM_ORGANIZER_TAX_HEALTH","reason":"Wave 7B regression TEST tax state"}'
+);
+select pg_temp.commercial_setting(
+  'settings.feature_flag_v2',
+  '{"flagKey":"stripe_test_checkout_enabled","enabled":true,"reason":"Wave 7B regression TEST Checkout"}'
+);
+select pg_temp.commercial_setting(
+  'settings.feature_flag_v2',
+  '{"flagKey":"stripe_test_portal_enabled","enabled":true,"reason":"Wave 7B regression TEST Portal"}'
 );
 reset role;
 
