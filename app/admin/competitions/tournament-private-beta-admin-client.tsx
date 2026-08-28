@@ -9,11 +9,12 @@ type JsonRecord = Record<string, unknown>;
 function text(value: unknown) { return typeof value === "string" ? value : ""; }
 function number(value: unknown) { const parsed = Number(value); return Number.isFinite(parsed) ? parsed : 0; }
 
-export function TournamentPrivateBetaAdminClient({ canWrite, flags, grants, groupStage }: {
+export function TournamentPrivateBetaAdminClient({ canWrite, flags, grants, groupStage, knockout }: {
   canWrite: boolean;
   flags: JsonRecord;
   grants: JsonRecord[];
   groupStage: JsonRecord;
+  knockout: JsonRecord;
 }) {
   const router = useRouter();
   const pending = useRef<{ id: string; key: string } | null>(null);
@@ -40,6 +41,14 @@ export function TournamentPrivateBetaAdminClient({ canWrite, flags, grants, grou
   const [groupStandingsEnabled, setGroupStandingsEnabled] = useState(Boolean(groupFlags.groupStandingsEnabled));
   const [qualificationEnabled, setQualificationEnabled] = useState(Boolean(groupFlags.qualificationEnabled));
   const [bracketTemplateEnabled, setBracketTemplateEnabled] = useState(Boolean(groupFlags.bracketTemplateEnabled));
+  const knockoutFlags = (knockout.flags && typeof knockout.flags === "object" ? knockout.flags : {}) as JsonRecord;
+  const [knockoutFoundationEnabled, setKnockoutFoundationEnabled] = useState(Boolean(knockoutFlags.knockoutFoundationEnabled));
+  const [knockoutMatchGenerationEnabled, setKnockoutMatchGenerationEnabled] = useState(Boolean(knockoutFlags.knockoutMatchGenerationEnabled));
+  const [bracketProgressionEnabled, setBracketProgressionEnabled] = useState(Boolean(knockoutFlags.bracketProgressionEnabled));
+  const [extraTimeEnabled, setExtraTimeEnabled] = useState(Boolean(knockoutFlags.extraTimeEnabled));
+  const [penaltyShootoutEnabled, setPenaltyShootoutEnabled] = useState(Boolean(knockoutFlags.penaltyShootoutEnabled));
+  const [thirdPlaceEnabled, setThirdPlaceEnabled] = useState(Boolean(knockoutFlags.thirdPlaceEnabled));
+  const [completionEnabled, setCompletionEnabled] = useState(Boolean(knockoutFlags.completionEnabled));
 
   async function run(action: string, aggregateId: string | null, expectedRevision: number, payload: JsonRecord) {
     const key = JSON.stringify({ action, aggregateId, expectedRevision, payload });
@@ -88,7 +97,7 @@ export function TournamentPrivateBetaAdminClient({ canWrite, flags, grants, grou
 
     <section className={styles.competitionControl}>
       <h3>Group Stage Private Beta</h3>
-      <p>El gate genérico de partidos queda limitado a GROUP_STAGE. Eliminatorias, progresión y descubrimiento público permanecen OFF.</p>
+      <p>Fase de grupos, clasificación y plantilla inicial. Las eliminatorias se gobiernan en su gate independiente.</p>
       <label className={styles.checkField}><input checked={groupStageEnabled} disabled={busy} onChange={(event) => setGroupStageEnabled(event.target.checked)} type="checkbox" />Fase de grupos</label>
       <label className={styles.checkField}><input checked={groupSchedulingEnabled} disabled={busy} onChange={(event) => setGroupSchedulingEnabled(event.target.checked)} type="checkbox" />Jornadas R4B</label>
       <label className={styles.checkField}><input checked={groupMatchGenerationEnabled} disabled={busy} onChange={(event) => setGroupMatchGenerationEnabled(event.target.checked)} type="checkbox" />CanonicalMatches de grupo</label>
@@ -102,6 +111,24 @@ export function TournamentPrivateBetaAdminClient({ canWrite, flags, grants, grou
         groupStageEnabled, groupStandingsEnabled, groupTrackingEnabled,
         qualificationEnabled, reason,
       })} type="button">Guardar Group Stage</button>
+    </section>
+
+    <section className={styles.competitionControl}>
+      <h3>Knockout Private Beta</h3>
+      <p>Cuadro a partido único. Ida y vuelta, doble eliminación, descubrimiento público y pagos permanecen apagados.</p>
+      <label className={styles.checkField}><input checked={knockoutFoundationEnabled} disabled={busy} onChange={(event) => setKnockoutFoundationEnabled(event.target.checked)} type="checkbox" />Fundación del cuadro</label>
+      <label className={styles.checkField}><input checked={knockoutMatchGenerationEnabled} disabled={busy} onChange={(event) => setKnockoutMatchGenerationEnabled(event.target.checked)} type="checkbox" />CanonicalMatches knockout</label>
+      <label className={styles.checkField}><input checked={bracketProgressionEnabled} disabled={busy} onChange={(event) => setBracketProgressionEnabled(event.target.checked)} type="checkbox" />Progresión</label>
+      <label className={styles.checkField}><input checked={extraTimeEnabled} disabled={busy} onChange={(event) => setExtraTimeEnabled(event.target.checked)} type="checkbox" />Prórroga</label>
+      <label className={styles.checkField}><input checked={penaltyShootoutEnabled} disabled={busy} onChange={(event) => setPenaltyShootoutEnabled(event.target.checked)} type="checkbox" />Penaltis</label>
+      <label className={styles.checkField}><input checked={thirdPlaceEnabled} disabled={busy} onChange={(event) => setThirdPlaceEnabled(event.target.checked)} type="checkbox" />Tercer puesto configurable</label>
+      <label className={styles.checkField}><input checked={completionEnabled} disabled={busy} onChange={(event) => setCompletionEnabled(event.target.checked)} type="checkbox" />Campeón y cierre</label>
+      <label className={styles.formField}>Motivo<textarea rows={2} value={reason} onChange={(event) => setReason(event.target.value)} /></label>
+      <button className={styles.primaryButton} disabled={busy || reason.trim().length < 3} onClick={() => void run("tournament.knockout.flags.set", null, number(knockoutFlags.revision), {
+        bracketProgressionEnabled, completionEnabled, extraTimeEnabled,
+        knockoutFoundationEnabled, knockoutMatchGenerationEnabled,
+        penaltyShootoutEnabled, reason, thirdPlaceEnabled,
+      })} type="button">Guardar Knockout</button>
     </section>
 
     <section className={styles.competitionControl}>

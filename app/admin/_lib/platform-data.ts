@@ -603,9 +603,11 @@ export async function getPlatformCompetitionFoundation(
 }
 
 export async function getPlatformTournamentControl(session: VerifiedPlatformSession) {
-  const [data, groupStageData] = await Promise.all([
+  const [data, groupStageData, knockoutData] = await Promise.all([
     rpcOrThrow<JsonRecord>(session.client, "get_pachanga_platform_tournament_control_v1"),
     rpcOrThrow<JsonRecord>(session.client, "get_pachanga_platform_tournament_group_stage_control_v1")
+      .catch(() => ({} as JsonRecord)),
+    rpcOrThrow<JsonRecord>(session.client, "get_pachanga_platform_tournament_knockout_control_v1")
       .catch(() => ({} as JsonRecord)),
   ]);
   return {
@@ -620,6 +622,12 @@ export async function getPlatformTournamentControl(session: VerifiedPlatformSess
       metrics: asRecord(groupStageData.metrics),
       states: asArray(groupStageData.states).map(asRecord),
       updatedAt: typeof groupStageData.updatedAt === "string" ? groupStageData.updatedAt : null,
+    },
+    knockout: {
+      flags: asRecord(knockoutData.flags),
+      health: asRecord(knockoutData.health),
+      metrics: asRecord(knockoutData.metrics),
+      updatedAt: typeof knockoutData.updatedAt === "string" ? knockoutData.updatedAt : null,
     },
     updatedAt: typeof data.updatedAt === "string" ? data.updatedAt : null,
   };

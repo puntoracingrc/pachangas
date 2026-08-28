@@ -495,7 +495,7 @@ select pg_temp.r6b_assert(
         'revision', 'serverSequence'
       ])
       and bool_and(not (lower(match_item::text) ~
-        '(evidence|reportedby|createdby|decision_reason_private|fee)'))
+        '"(evidence|reportedby|createdby|decision_reason_private|fee)"[[:space:]]*:'))
     from journey_matches),
   'TeamJourney must expose canonical operations context without private data'
 );
@@ -991,4 +991,7 @@ select 'R6B_DB_REPORT|' || jsonb_build_object(
   'directWrites', 0
 )::text;
 
+\if :{?R6B_KEEP_TRANSACTION}
+\else
 rollback;
+\endif

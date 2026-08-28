@@ -785,6 +785,13 @@ function buildTournament(
     if (!team) throw new Error(`DEMO_WORLD_V2_5_TEAM_LINEAGE_INVALID:${teamNumber}`);
     return { id: team.id, name: team.name };
   };
+  const authorityTeamRef = (source: { name: string; teamNumber: number }) => {
+    const team = teamRef(source.teamNumber);
+    if (team.name !== source.name) {
+      throw new Error(`DEMO_WORLD_V2_6_TEAM_LINEAGE_INVALID:${source.teamNumber}`);
+    }
+    return team;
+  };
   const drawOutcomes = authority.drawOutcomes.map((outcome): DemoWorldV2TournamentOutcome => ({
     ...structuredClone(outcome),
     locks: outcome.locks.map((lock) => {
@@ -877,6 +884,80 @@ function buildTournament(
       wins: standing.wins,
     })),
   } satisfies DemoWorldV2TournamentChunk["groupStage"];
+  const knockout = {
+    authority: {
+      activeMatches: authority.knockoutProof.matches.active,
+      advanceDecisions: authority.knockoutProof.progression.advanceDecisions,
+      completionSnapshots: authority.knockoutProof.completion.snapshots,
+      correction: {
+        nodeHistoryRetained: authority.knockoutProof.correction.nodeHistoryRetained,
+        oldContextRetired: authority.knockoutProof.correction.oldContextRetired,
+        oldMatchRetired: authority.knockoutProof.correction.oldMatchRetired,
+        replacementCreated: authority.knockoutProof.correction.replacementCreated,
+      },
+      dependencyImpacts: authority.knockoutProof.progression.dependencyImpacts,
+      historicalMatches: authority.knockoutProof.matches.historical,
+      integrity: {
+        billingUnchanged: authority.knockoutProof.integrity.billingUnchanged,
+        conductUnchanged: authority.knockoutProof.integrity.conductUnchanged,
+        ratingV2Unchanged: authority.knockoutProof.integrity.ratingV2Unchanged,
+        rewardsUnchanged: authority.knockoutProof.integrity.rewardsUnchanged,
+      },
+      invalidations: authority.knockoutProof.progression.invalidations,
+      noShowResolutionLinked: authority.knockoutProof.r4d.knockoutNoShowResolution,
+      penaltySeparation: {
+        groupStandingsUnchanged: authority.knockoutProof.penaltySeparation.groupStandingsUnchanged,
+        shootoutGoalsAddedToSportingScore: authority.knockoutProof.penaltySeparation.shootoutGoalsAddedToSportingScore,
+      },
+      readModelCanonical: authority.knockoutProof.readModel.serverSequencePresent
+        && authority.knockoutProof.readModel.checksumPresent,
+      retiredMatches: authority.knockoutProof.matches.retired,
+    },
+    discipline: {
+      blockedFromSemifinal: authority.knockoutPublic.discipline.blockedFromSemifinal,
+      playerLabel: authority.knockoutPublic.discipline.playerLabel,
+      ratingChanged: authority.knockoutPublic.discipline.ratingChanged,
+      sanctionApplies: authority.knockoutPublic.discipline.sanctionApplies,
+      team: teamRef(authority.knockoutPublic.discipline.teamNumber),
+    },
+    format: authority.knockoutPublic.format,
+    nodes: authority.knockoutPublic.nodes.map((node) => ({
+      awayTeam: authorityTeamRef(node.awayTeam),
+      ...(node.extraTime === undefined ? {} : { extraTime: structuredClone(node.extraTime) }),
+      homeTeam: authorityTeamRef(node.homeTeam),
+      loserTeamId: teamRef(node.loserTeamNumber).id,
+      nodeKey: node.nodeKey,
+      nodeOrder: node.nodeOrder,
+      ...(node.referee === undefined ? {} : { referee: structuredClone(node.referee) }),
+      regulationScore: structuredClone(node.regulationScore),
+      resolutionKind: node.resolutionKind,
+      roundCode: node.roundCode,
+      roundOrder: node.roundOrder,
+      scheduledStart: node.scheduledStart,
+      score: structuredClone(node.score),
+      ...(node.shootout === undefined ? {} : { shootout: structuredClone(node.shootout) }),
+      status: node.status,
+      venueLabel: node.venueLabel,
+      winnerTeamId: teamRef(node.winnerTeamNumber).id,
+    })),
+    organizerDesk: structuredClone(authority.knockoutPublic.organizerDesk),
+    podium: {
+      champion: authorityTeamRef(authority.knockoutPublic.podium.champion),
+      fourthPlace: authorityTeamRef(authority.knockoutPublic.podium.fourthPlace),
+      runnerUp: authorityTeamRef(authority.knockoutPublic.podium.runnerUp),
+      thirdPlace: authorityTeamRef(authority.knockoutPublic.podium.thirdPlace),
+    },
+    referees: structuredClone(authority.knockoutProof.referees),
+    rounds: structuredClone(authority.knockoutPublic.rounds),
+    status: authority.knockoutPublic.status,
+    teamJourneys: authority.knockoutPublic.teamJourneys.map((journey) => ({
+      finalPosition: journey.finalPosition,
+      path: structuredClone(journey.path),
+      status: journey.status,
+      team: authorityTeamRef({ name: journey.teamName, teamNumber: journey.teamNumber }),
+    })),
+    thirdPlaceEnabled: authority.knockoutPublic.thirdPlaceEnabled,
+  } satisfies DemoWorldV2TournamentChunk["knockout"];
   return {
     comparison: {
       movedTeams,
@@ -921,17 +1002,18 @@ function buildTournament(
     },
     drawOutcomes: drawOutcomes as [DemoWorldV2TournamentOutcome, DemoWorldV2TournamentOutcome],
     groupStage,
+    knockout,
     nextPhase: {
-      bracketProgression: false,
-      knockoutMatches: 0,
-      message: "Cuadro preparado. La fase eliminatoria se activará en la siguiente fase.",
-      tournamentMatches: authority.tournamentMatches,
+      bracketProgression: true,
+      knockoutMatches: authority.knockoutProof.matches.active,
+      message: "Torneo completado y cuadro bloqueado por PostgreSQL.",
+      tournamentMatches: authority.tournamentMatches + authority.knockoutProof.matches.active,
     },
     provenance: {
       authorityHash: authorityProof.authorityHash,
       database: authorityProof.database,
       operationReceipts: authority.operationReceipts,
-      rpcFamilies: ["R1", "CONFIGURATION_CENTER", "ENTRIES", "R4B", "R4C", "R4D", "R5", "REFEREES", "R6A_DRAW_ENGINE", "R6B_GROUP_STAGE"],
+      rpcFamilies: ["R1", "CONFIGURATION_CENTER", "ENTRIES", "R4B", "R4C", "R4D", "R5", "REFEREES", "R6A_DRAW_ENGINE", "R6B_GROUP_STAGE", "R6C_KNOCKOUT"],
       source: "simulation-world",
       verified: true,
     },
@@ -980,7 +1062,10 @@ export function generateDemoWorldV2(
     },
     counts: {
       achievements: activity.achievements.length,
-      canonicalMatches: competitions.matches.length + tournament.groupStage.matches.length,
+      canonicalMatches: competitions.matches.length
+        + tournament.groupStage.matches.length
+        + tournament.knockout.nodes.length
+        + tournament.knockout.authority.retiredMatches,
       challenges: matches.challenges.length,
       clubs: clubsReferees.clubs.length,
       competitions: 1,
@@ -990,7 +1075,9 @@ export function generateDemoWorldV2(
       referees: clubsReferees.referees.length,
       ruleRevisions: configuration.revisions.length,
       rewardBoxes: activity.rewardBoxes.length,
-      rounds: competitions.rounds.length + tournament.groupStage.roundCount,
+      rounds: competitions.rounds.length
+        + tournament.groupStage.roundCount
+        + tournament.knockout.rounds.length,
       stories: core.stories.length,
       teams: core.teams.length,
       tournamentDrawRevisions: authorityProof.tournament.totalRevisions,

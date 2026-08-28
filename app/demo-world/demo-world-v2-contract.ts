@@ -21,8 +21,8 @@ import {
   type DemoWorldSnapshot,
 } from "./demo-world-contract";
 
-export const DEMO_WORLD_V2_VERSION = 2.5 as const;
-export const DEMO_WORLD_V2_SEED = "pachangas-iq-demo-world-v2-5-2026-27" as const;
+export const DEMO_WORLD_V2_VERSION = 2.6 as const;
+export const DEMO_WORLD_V2_SEED = "pachangas-iq-demo-world-v2-6-2026-27" as const;
 
 export type DemoWorldV2PrimaryTab = DemoWorldPrimaryTab
   | "arbitros"
@@ -442,6 +442,104 @@ export type DemoWorldV2TournamentCompletionProof = {
   standingSnapshots: 4;
 };
 
+export type DemoWorldV2TournamentKnockoutNode = {
+  awayTeam: DemoWorldV2TournamentTeamRef;
+  extraTime?: { away: number; home: number };
+  homeTeam: DemoWorldV2TournamentTeamRef;
+  loserTeamId: string;
+  nodeKey: string;
+  nodeOrder: number;
+  referee?: { refereeNumber: number; status: "COMPLETED" | "CONFIRMED" };
+  regulationScore: { away: number; home: number };
+  resolutionKind: "ADMINISTRATIVE_DECISION" | "EXTRA_TIME" | "FORFEIT" | "NO_SHOW" | "PENALTY_SHOOTOUT" | "SPORTING_RESULT";
+  roundCode: "FINAL" | "QUARTERFINAL" | "SEMIFINAL" | "THIRD_PLACE";
+  roundOrder: number;
+  scheduledStart: string;
+  score: { away: number; home: number };
+  shootout?: { away: number; home: number };
+  status: "OFFICIAL";
+  venueLabel: string;
+  winnerTeamId: string;
+};
+
+export type DemoWorldV2TournamentKnockout = {
+  authority: {
+    activeMatches: 8;
+    advanceDecisions: number;
+    completionSnapshots: 2;
+    correction: {
+      nodeHistoryRetained: true;
+      oldContextRetired: true;
+      oldMatchRetired: true;
+      replacementCreated: true;
+    };
+    dependencyImpacts: 3;
+    historicalMatches: 9;
+    integrity: {
+      billingUnchanged: true;
+      conductUnchanged: true;
+      ratingV2Unchanged: true;
+      rewardsUnchanged: true;
+    };
+    invalidations: 1;
+    noShowResolutionLinked: true;
+    penaltySeparation: {
+      groupStandingsUnchanged: true;
+      shootoutGoalsAddedToSportingScore: false;
+    };
+    readModelCanonical: true;
+    retiredMatches: 1;
+  };
+  discipline: {
+    blockedFromSemifinal: true;
+    playerLabel: string;
+    ratingChanged: false;
+    sanctionApplies: true;
+    team: DemoWorldV2TournamentTeamRef;
+  };
+  format: "SINGLE_MATCH_KNOCKOUT";
+  nodes: DemoWorldV2TournamentKnockoutNode[];
+  organizerDesk: {
+    bracketHealth: "HEALTHY";
+    completionHealth: "COMPLETE";
+    correctionsWithImpact: 1;
+    nextAction: "TOURNAMENT_LOCKED";
+    pendingResults: 0;
+    unassignedFinals: 0;
+    unresolvedNodes: 0;
+    unscheduledMatches: 0;
+  };
+  podium: {
+    champion: DemoWorldV2TournamentTeamRef;
+    fourthPlace: DemoWorldV2TournamentTeamRef;
+    runnerUp: DemoWorldV2TournamentTeamRef;
+    thirdPlace: DemoWorldV2TournamentTeamRef;
+  };
+  referees: {
+    final: { refereeNumber: number; status: "confirmed" };
+    semifinalReplacement: {
+      lineageLinked: true;
+      originalRefereeNumber: number;
+      originalStatus: "replaced";
+      replacementRefereeNumber: number;
+      replacementStatus: "confirmed";
+    };
+  };
+  rounds: Array<{
+    code: DemoWorldV2TournamentKnockoutNode["roundCode"];
+    label: string;
+    matches: number;
+  }>;
+  status: "LOCKED";
+  teamJourneys: Array<{
+    finalPosition: number | null;
+    path: string[];
+    status: "CHAMPION" | "ELIMINATED" | "FOURTH_PLACE" | "RUNNER_UP" | "THIRD_PLACE";
+    team: DemoWorldV2TournamentTeamRef;
+  }>;
+  thirdPlaceEnabled: true;
+};
+
 export type DemoWorldV2TournamentChunk = {
   comparison: {
     movedTeams: Array<{
@@ -478,17 +576,18 @@ export type DemoWorldV2TournamentChunk = {
   completionProof: DemoWorldV2TournamentCompletionProof;
   drawOutcomes: [DemoWorldV2TournamentOutcome, DemoWorldV2TournamentOutcome];
   groupStage: DemoWorldV2TournamentGroupStage;
+  knockout: DemoWorldV2TournamentKnockout;
   nextPhase: {
-    bracketProgression: false;
-    knockoutMatches: 0;
-    message: "Cuadro preparado. La fase eliminatoria se activará en la siguiente fase.";
-    tournamentMatches: 24;
+    bracketProgression: true;
+    knockoutMatches: 8;
+    message: "Torneo completado y cuadro bloqueado por PostgreSQL.";
+    tournamentMatches: 32;
   };
   provenance: {
     authorityHash: string;
     database: "temporary-local-postgresql";
     operationReceipts: number;
-    rpcFamilies: ["R1", "CONFIGURATION_CENTER", "ENTRIES", "R4B", "R4C", "R4D", "R5", "REFEREES", "R6A_DRAW_ENGINE", "R6B_GROUP_STAGE"];
+    rpcFamilies: ["R1", "CONFIGURATION_CENTER", "ENTRIES", "R4B", "R4C", "R4D", "R5", "REFEREES", "R6A_DRAW_ENGINE", "R6B_GROUP_STAGE", "R6C_KNOCKOUT"];
     source: "simulation-world";
     verified: true;
   };
@@ -752,18 +851,93 @@ export function demoWorldV2IntegrityErrors(snapshot: DemoWorldV2Snapshot): strin
       ))) {
     errors.push("Demo World V2.5 completion proof is invalid");
   }
-  if (tournament.nextPhase.tournamentMatches !== 24
-      || tournament.nextPhase.bracketProgression
-      || tournament.nextPhase.knockoutMatches !== 0
-      || tournament.nextPhase.message !== "Cuadro preparado. La fase eliminatoria se activará en la siguiente fase.") {
-    errors.push("Demo World V2.5 invented knockout matches or progression");
+  const knockout = tournament.knockout;
+  if (knockout.status !== "LOCKED"
+      || knockout.format !== "SINGLE_MATCH_KNOCKOUT"
+      || !knockout.thirdPlaceEnabled
+      || knockout.nodes.length !== 8
+      || new Set(knockout.nodes.map(({ nodeKey }) => nodeKey)).size !== 8
+      || knockout.rounds.length !== 4
+      || knockout.teamJourneys.length !== 8
+      || new Set(knockout.teamJourneys.map(({ team }) => team.id)).size !== 8
+      || knockout.organizerDesk.bracketHealth !== "HEALTHY"
+      || knockout.organizerDesk.completionHealth !== "COMPLETE"
+      || knockout.organizerDesk.unresolvedNodes !== 0
+      || knockout.organizerDesk.unscheduledMatches !== 0
+      || knockout.organizerDesk.pendingResults !== 0) {
+    errors.push("Demo World V2.6 knockout public graph is invalid");
+  }
+  const knockoutRoundCounts = new Map(knockout.rounds.map(({ code, matches }) => [code, matches]));
+  if (knockoutRoundCounts.get("QUARTERFINAL") !== 4
+      || knockoutRoundCounts.get("SEMIFINAL") !== 2
+      || knockoutRoundCounts.get("FINAL") !== 1
+      || knockoutRoundCounts.get("THIRD_PLACE") !== 1
+      || knockout.nodes.filter(({ roundCode }) => roundCode === "QUARTERFINAL").length !== 4
+      || knockout.nodes.filter(({ roundCode }) => roundCode === "SEMIFINAL").length !== 2
+      || knockout.nodes.filter(({ roundCode }) => roundCode === "FINAL").length !== 1
+      || knockout.nodes.filter(({ roundCode }) => roundCode === "THIRD_PLACE").length !== 1
+      || !knockout.nodes.some(({ resolutionKind }) => resolutionKind === "EXTRA_TIME")
+      || !knockout.nodes.some(({ resolutionKind }) => resolutionKind === "PENALTY_SHOOTOUT")
+      || !knockout.nodes.some(({ resolutionKind }) => resolutionKind === "FORFEIT" || resolutionKind === "NO_SHOW")
+      || knockout.nodes.some((node) => (
+        !teamIds.has(node.homeTeam.id)
+        || !teamIds.has(node.awayTeam.id)
+        || !teamIds.has(node.winnerTeamId)
+        || !teamIds.has(node.loserTeamId)
+        || node.homeTeam.id === node.awayTeam.id
+        || node.winnerTeamId === node.loserTeamId
+      ))) {
+    errors.push("Demo World V2.6 knockout match story is invalid");
+  }
+  const podiumIds = [
+    knockout.podium.champion.id,
+    knockout.podium.runnerUp.id,
+    knockout.podium.thirdPlace.id,
+    knockout.podium.fourthPlace.id,
+  ];
+  if (new Set(podiumIds).size !== 4
+      || podiumIds.some((teamId) => !teamIds.has(teamId))
+      || knockout.teamJourneys.filter(({ status }) => status === "CHAMPION").length !== 1
+      || knockout.teamJourneys.filter(({ status }) => status === "RUNNER_UP").length !== 1
+      || knockout.teamJourneys.filter(({ status }) => status === "THIRD_PLACE").length !== 1
+      || !knockout.discipline.sanctionApplies
+      || !knockout.discipline.blockedFromSemifinal
+      || knockout.discipline.ratingChanged
+      || !knockout.referees.semifinalReplacement.lineageLinked
+      || knockout.referees.semifinalReplacement.originalStatus !== "replaced"
+      || knockout.referees.semifinalReplacement.replacementStatus !== "confirmed"
+      || knockout.referees.final.status !== "confirmed") {
+    errors.push("Demo World V2.6 linked tournament stories are invalid");
+  }
+  if (knockout.authority.activeMatches !== 8
+      || knockout.authority.historicalMatches !== 9
+      || knockout.authority.retiredMatches !== 1
+      || knockout.authority.invalidations !== 1
+      || knockout.authority.dependencyImpacts !== 3
+      || knockout.authority.completionSnapshots !== 2
+      || !knockout.authority.correction.oldMatchRetired
+      || !knockout.authority.correction.oldContextRetired
+      || !knockout.authority.correction.replacementCreated
+      || !knockout.authority.correction.nodeHistoryRetained
+      || !knockout.authority.noShowResolutionLinked
+      || !knockout.authority.penaltySeparation.groupStandingsUnchanged
+      || knockout.authority.penaltySeparation.shootoutGoalsAddedToSportingScore
+      || !knockout.authority.readModelCanonical
+      || Object.values(knockout.authority.integrity).some((valid) => !valid)) {
+    errors.push("Demo World V2.6 knockout authority proof is invalid");
+  }
+  if (tournament.nextPhase.tournamentMatches !== 32
+      || !tournament.nextPhase.bracketProgression
+      || tournament.nextPhase.knockoutMatches !== 8
+      || tournament.nextPhase.message !== "Torneo completado y cuadro bloqueado por PostgreSQL.") {
+    errors.push("Demo World V2.6 knockout completion state is invalid");
   }
   if (snapshot.manifest.counts.tournaments !== 1
       || snapshot.manifest.counts.tournamentGroups !== 4
       || snapshot.manifest.counts.tournamentDrawRevisions !== 5
-      || snapshot.manifest.counts.canonicalMatches !== 39
-      || snapshot.manifest.counts.rounds !== 8) {
-    errors.push("Demo World V2.5 Tournament manifest counts are invalid");
+      || snapshot.manifest.counts.canonicalMatches !== 48
+      || snapshot.manifest.counts.rounds !== 12) {
+    errors.push("Demo World V2.6 Tournament manifest counts are invalid");
   }
   const assignmentItems = Array.isArray(snapshot.clubsReferees.refereeAssignmentPreview.items)
     ? snapshot.clubsReferees.refereeAssignmentPreview.items as Record<string, unknown>[]

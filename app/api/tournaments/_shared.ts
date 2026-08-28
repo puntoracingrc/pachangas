@@ -9,6 +9,10 @@ import {
   isTournamentGroupStageAction,
   type TournamentGroupStageAction,
 } from "../../tournament-group-stage-contract";
+import {
+  isTournamentKnockoutAction,
+  type TournamentKnockoutAction,
+} from "../../tournament-knockout-contract";
 import { clientWriteGateResponse, noStoreHeaders } from "../client-policy/_contract";
 
 export { tournamentRecord };
@@ -153,6 +157,11 @@ export function parseTournamentGroupStageAction(value: unknown) {
   return value;
 }
 
+export function parseTournamentKnockoutAction(value: unknown) {
+  if (!isTournamentKnockoutAction(value)) throw new Error("INVALID_TOURNAMENT_KNOCKOUT_COMMAND");
+  return value;
+}
+
 export function tournamentGroupStageCommandPayload(action: TournamentGroupStageAction, raw: TournamentJson) {
   const allowed = action === "group_schedule.create"
     ? new Set(["groupId", "reason", "slots"])
@@ -196,6 +205,55 @@ export function tournamentGroupStageCommandPayload(action: TournamentGroupStageA
     };
   });
   if (JSON.stringify(payload).length > 200_000) throw new Error("TOURNAMENT_PAYLOAD_TOO_LARGE");
+  return payload;
+}
+
+export function tournamentKnockoutCommandPayload(action: TournamentKnockoutAction, raw: TournamentJson) {
+  const allowed = action === "bracket.reserve_slot"
+    ? new Set(["nodeId", "startsAt", "endsAt", "timezone", "venueId", "venueLabel", "resourceKey", "reason"])
+    : ["bracket.node.resolve", "bracket.node.generate_match", "bracket.node.invalidate", "bracket.admin.replace_downstream"].includes(action)
+      ? new Set(["nodeId", "reason"])
+      : ["bracket.result.advance", "bracket.result.recompute"].includes(action)
+        ? new Set(["officialDecisionId", "reason"])
+        : ["bracket.complete_round", "bracket.lock_round"].includes(action)
+          ? new Set(["roundCode", "reason"])
+          : new Set(["reason"]);
+  if (Object.keys(raw).some((key) => !allowed.has(key) || serverFields.has(key))) {
+    throw new Error("TOURNAMENT_KNOCKOUT_PAYLOAD_FIELD_NOT_ALLOWED");
+  }
+  const payload = validateNested(raw) as TournamentJson;
+  for (const key of ["nodeId", "officialDecisionId", "venueId"] as const) {
+    const value = payload[key];
+    if (value != null && value !== "" && !tournamentUuidPattern.test(String(value))) {
+      throw new Error("INVALID_TOURNAMENT_KNOCKOUT_COMMAND");
+    }
+  }
+  if (action === "bracket.reserve_slot") {
+    const startsAt = typeof payload.startsAt === "string" ? payload.startsAt : "";
+    const endsAt = typeof payload.endsAt === "string" ? payload.endsAt : "";
+    const timezone = typeof payload.timezone === "string" ? payload.timezone.trim() : "";
+    const venueLabel = typeof payload.venueLabel === "string" ? payload.venueLabel.trim() : "";
+    const resourceKey = typeof payload.resourceKey === "string" ? payload.resourceKey.trim() : "";
+    if (!tournamentUuidPattern.test(String(payload.nodeId ?? ""))
+        || !Number.isFinite(Date.parse(startsAt)) || !Number.isFinite(Date.parse(endsAt))
+        || Date.parse(endsAt) <= Date.parse(startsAt)
+        || !timezone || timezone.length > 80 || venueLabel.length > 160
+        || resourceKey.length < 1 || resourceKey.length > 180) {
+      throw new Error("INVALID_TOURNAMENT_KNOCKOUT_RESERVATION");
+    }
+  }
+  if (typeof payload.reason !== "string" || payload.reason.trim().length < 3
+      || payload.reason.length > 1200) {
+    throw new Error("TOURNAMENT_KNOCKOUT_REASON_REQUIRED");
+  }
+  if (typeof payload.roundCode === "string") {
+    const roundCode = payload.roundCode.trim().toUpperCase();
+    if (roundCode.length < 2 || roundCode.length > 40) {
+      throw new Error("INVALID_TOURNAMENT_KNOCKOUT_COMMAND");
+    }
+    payload.roundCode = roundCode;
+  }
+  if (JSON.stringify(payload).length > 12_000) throw new Error("TOURNAMENT_PAYLOAD_TOO_LARGE");
   return payload;
 }
 

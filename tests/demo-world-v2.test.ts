@@ -29,6 +29,7 @@ const historicalV21Root = path.join(root, "public/demo-world/v2-1");
 const historicalV22Root = path.join(root, "public/demo-world/v2-2");
 const historicalV23Root = path.join(root, "public/demo-world/v2-3");
 const historicalV24Root = path.join(root, "public/demo-world/v2-4");
+const historicalV25Root = path.join(root, "public/demo-world/v2-5");
 
 async function jsonFile<T>(name: string): Promise<T> {
   return JSON.parse(await readFile(path.join(publicRoot, name), "utf8")) as T;
@@ -64,8 +65,8 @@ test("Demo World V2 is deterministic and the committed snapshot matches its hash
     tournament: committed.tournament,
   };
   assert.equal(createHash("sha256").update(JSON.stringify(payload)).digest("hex"), committed.manifest.hash);
-  assert.equal(committed.manifest.hash, "675d2992138de4253a0e9e09eab77d09682cecc708fc06a4f87ed0e6d15e57f8");
-  assert.equal(committed.manifest.version, 2.5);
+  assert.equal(committed.manifest.hash, "27941ed3c5087c44d7804b4ba817a230db52ab3da353aae85121f23898e00ecb");
+  assert.equal(committed.manifest.version, 2.6);
   assert.equal(committed.manifest.seed, DEMO_WORLD_V2_SEED);
   assert.deepEqual(demoWorldV2IntegrityErrors(committed), []);
 });
@@ -73,12 +74,13 @@ test("Demo World V2 is deterministic and the committed snapshot matches its hash
 test("the committed authority proof comes from deterministic PostgreSQL operations", async () => {
   const proof = assertDemoWorldV2AuthorityProof(loadDemoWorldV2AuthorityProof());
   const world = await committedSnapshot();
-  assert.equal(proof.authorityHash, "3d51909498c47762ee6256f6a71e5ab642fbd2a2f2fc953178d537ca54dd06af");
+  assert.equal(proof.authorityHash, "726ce4616cdab7224018b0d3eb9061e9418fc991db552daeea022935c105fc1d");
   assert.equal(proof.authorityHash, world.competitions.provenance.authorityHash);
   assert.equal(proof.database, "temporary-local-postgresql");
-  assert.equal(proof.migrationCount, 169);
+  assert.equal(proof.migrationCount, 175);
   assert.equal(proof.remoteWrites, 0);
-  assert.deepEqual(proof.rpcFamilies, ["R1", "R3", "R4A", "R4B", "R4C", "R4D", "R5", "R6A", "R6B"]);
+  assert.deepEqual(proof.rpcFamilies, ["R1", "R3", "R4A", "R4B", "R4C", "R4D", "R5", "R6A", "R6B", "R6C"]);
+  assert.deepEqual(proof.refereeAssignments.unconvergedRefereeNumbers, []);
   assert.deepEqual(proof.operationReceipts, {
     discipline: 33,
     matchOperations: 266,
@@ -135,7 +137,7 @@ test("the protagonist League has the complete canonical R1-R5 graph including R3
   )));
   assert.deepEqual(league.provenance.rpcFamilies, ["R1", "R3", "R4A", "R4B", "R4C", "R4D", "R5"]);
   assert.equal(league.provenance.verified, true);
-  assert.equal(league.provenance.migrations, 169);
+  assert.equal(league.provenance.migrations, 175);
   assert.equal(league.competition.refereeAssignmentsEnabled, true);
 });
 
@@ -295,7 +297,7 @@ test("V2.3 configuration parity exposes two canonical revisions without private 
   assert.doesNotMatch(JSON.stringify(configuration), /fixedCents|privateTerms|proposedFee|agreedFee/);
 });
 
-test("V2.5 exposes the deterministic draw plus canonical Group Stage tracking", async () => {
+test("V2.6 preserves Group Stage and exposes the canonical knockout bracket", async () => {
   const world = assertDemoWorldV2Snapshot(await committedSnapshot());
   const tournament = world.tournament;
   assert.equal(tournament.readOnly, true);
@@ -344,10 +346,10 @@ test("V2.5 exposes the deterministic draw plus canonical Group Stage tracking", 
   assert.equal(tournament.conflict.attempts, 128);
   assert.ok(tournament.conflict.suggestions.length >= 2);
   assert.deepEqual(tournament.nextPhase, {
-    bracketProgression: false,
-    knockoutMatches: 0,
-    message: "Cuadro preparado. La fase eliminatoria se activará en la siguiente fase.",
-    tournamentMatches: 24,
+    bracketProgression: true,
+    knockoutMatches: 8,
+    message: "Torneo completado y cuadro bloqueado por PostgreSQL.",
+    tournamentMatches: 32,
   });
   assert.equal(tournament.groupStage.matches.length, 24);
   assert.equal(tournament.groupStage.officialMatches, 16);
@@ -368,12 +370,52 @@ test("V2.5 exposes the deterministic draw plus canonical Group Stage tracking", 
   assert.equal(tournament.completionProof.bracketSources.length, 8);
   assert.equal(tournament.completionProof.knockoutMatches, 0);
   assert.equal(tournament.completionProof.progressionEnabled, false);
-  assert.equal(world.manifest.counts.canonicalMatches, 39);
-  assert.equal(world.manifest.counts.rounds, 8);
+  assert.equal(tournament.knockout.nodes.length, 8);
+  assert.equal(new Set(tournament.knockout.nodes.map(({ nodeKey }) => nodeKey)).size, 8);
+  assert.deepEqual(tournament.knockout.rounds.map(({ code, matches }) => ({ code, matches })), [
+    { code: "QUARTERFINAL", matches: 4 },
+    { code: "SEMIFINAL", matches: 2 },
+    { code: "THIRD_PLACE", matches: 1 },
+    { code: "FINAL", matches: 1 },
+  ]);
+  assert.equal(tournament.knockout.nodes.filter(({ roundCode }) => roundCode === "QUARTERFINAL").length, 4);
+  assert.equal(tournament.knockout.nodes.filter(({ roundCode }) => roundCode === "SEMIFINAL").length, 2);
+  assert.equal(tournament.knockout.nodes.filter(({ roundCode }) => roundCode === "THIRD_PLACE").length, 1);
+  assert.equal(tournament.knockout.nodes.filter(({ roundCode }) => roundCode === "FINAL").length, 1);
+  assert.equal(tournament.knockout.nodes.filter(({ resolutionKind }) => resolutionKind === "EXTRA_TIME").length, 1);
+  const shootout = tournament.knockout.nodes.find(({ resolutionKind }) => resolutionKind === "PENALTY_SHOOTOUT");
+  assert.deepEqual(shootout?.regulationScore, { away: 1, home: 1 });
+  assert.deepEqual(shootout?.shootout, { away: 4, home: 5 });
+  assert.equal(tournament.knockout.authority.penaltySeparation.groupStandingsUnchanged, true);
+  assert.equal(tournament.knockout.authority.penaltySeparation.shootoutGoalsAddedToSportingScore, false);
+  assert.equal(tournament.knockout.authority.noShowResolutionLinked, true);
+  assert.deepEqual(tournament.knockout.authority.correction, {
+    nodeHistoryRetained: true,
+    oldContextRetired: true,
+    oldMatchRetired: true,
+    replacementCreated: true,
+  });
+  assert.equal(tournament.knockout.authority.activeMatches, 8);
+  assert.equal(tournament.knockout.authority.historicalMatches, 9);
+  assert.equal(tournament.knockout.authority.retiredMatches, 1);
+  assert.equal(tournament.knockout.referees.semifinalReplacement.originalStatus, "replaced");
+  assert.equal(tournament.knockout.referees.semifinalReplacement.replacementStatus, "confirmed");
+  assert.equal(tournament.knockout.referees.semifinalReplacement.lineageLinked, true);
+  assert.equal(tournament.knockout.referees.final.status, "confirmed");
+  assert.equal(tournament.knockout.discipline.blockedFromSemifinal, true);
+  assert.equal(tournament.knockout.discipline.ratingChanged, false);
+  assert.equal(new Set([
+    tournament.knockout.podium.champion.id,
+    tournament.knockout.podium.runnerUp.id,
+    tournament.knockout.podium.thirdPlace.id,
+    tournament.knockout.podium.fourthPlace.id,
+  ]).size, 4);
+  assert.equal(world.manifest.counts.canonicalMatches, 48);
+  assert.equal(world.manifest.counts.rounds, 12);
   assert.doesNotMatch(JSON.stringify(tournament), /[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/i);
 });
 
-test("the historical V2.1 through V2.4 snapshots remain immutable beside V2.5", async () => {
+test("the historical V2.1 through V2.5 snapshots remain immutable beside V2.6", async () => {
   const expectedFiles = ["activity.json", "clubs-referees.json", "competitions.json", "core.json", "manifest.json", "matches.json", "players.json"];
   await Promise.all(expectedFiles.map((name) => readFile(path.join(historicalV21Root, name), "utf8")));
   const manifest = JSON.parse(await readFile(path.join(historicalV21Root, "manifest.json"), "utf8")) as Record<string, unknown>;
@@ -397,6 +439,11 @@ test("the historical V2.1 through V2.4 snapshots remain immutable beside V2.5", 
   assert.equal(v24Manifest.version, 2.4);
   assert.equal(v24Manifest.seed, "pachangas-iq-demo-world-v2-4-2026-27");
   assert.equal(v24Manifest.hash, "e3fa89f32278fac9d49eca3635ff19255a06f76b7cd65eff12b916c958c0141b");
+  await Promise.all(v24Files.map((name) => readFile(path.join(historicalV25Root, name), "utf8")));
+  const v25Manifest = JSON.parse(await readFile(path.join(historicalV25Root, "manifest.json"), "utf8")) as Record<string, unknown>;
+  assert.equal(v25Manifest.version, 2.5);
+  assert.equal(v25Manifest.seed, "pachangas-iq-demo-world-v2-5-2026-27");
+  assert.equal(v25Manifest.hash, "675d2992138de4253a0e9e09eab77d09682cecc708fc06a4f87ed0e6d15e57f8");
 });
 
 test("V2 chunks stay lazy, GET-only and converge to the validated snapshot", async () => {
@@ -455,9 +502,12 @@ test("the public Demo uses production renderers in one shell and exposes all V2 
   for (const label of ["Resumen", "Jornadas", "Partidos", "Clasificación", "Equipos", "Disciplina", "Árbitros", "Incidencias", "Reglamento", "Cuadro"]) {
     assert.match(appSource, new RegExp(`label: "${label}"`));
   }
-  assert.match(appSource, /24 CanonicalMatches/);
-  assert.match(appSource, /QualificationSnapshot verificado/);
-  assert.match(appSource, /R6C no iniciado/);
+  assert.match(appSource, /32 CanonicalMatches activos/);
+  assert.match(appSource, /R6C · Single leg/);
+  assert.match(appSource, /R6C verificado/);
+  assert.match(appSource, /Cuadro oficial/);
+  assert.match(appSource, /Recorrido por equipo/);
+  assert.match(appSource, /Prórroga, penaltis, no-show y corrección trazados/);
   assert.match(appSource, /Tarifa fija privada/);
   assert.match(appSource, /const domainNavRef = useRef<HTMLElement>\(null\)/);
   assert.match(appSource, /navigation\.scrollWidth <= navigation\.clientWidth \+ 2/);
@@ -530,7 +580,7 @@ test("a warmed immutable Demo chunk remains readable after the network goes offl
     },
     fetch: async () => {
       if (!online) throw new TypeError("Failed to fetch");
-      return new Response(JSON.stringify({ canonical: true, version: 2.5 }), {
+      return new Response(JSON.stringify({ canonical: true, version: 2.6 }), {
         headers: { "content-type": "application/json" },
         status: 200,
       });
@@ -557,10 +607,10 @@ test("a warmed immutable Demo chunk remains readable after the network goes offl
   };
 
   const onlineResponse = await dispatchFetch();
-  assert.deepEqual(await onlineResponse.json(), { canonical: true, version: 2.5 });
+  assert.deepEqual(await onlineResponse.json(), { canonical: true, version: 2.6 });
   assert.equal(entries.has(chunkUrl), true);
 
   online = false;
   const offlineResponse = await dispatchFetch();
-  assert.deepEqual(await offlineResponse.json(), { canonical: true, version: 2.5 });
+  assert.deepEqual(await offlineResponse.json(), { canonical: true, version: 2.6 });
 });

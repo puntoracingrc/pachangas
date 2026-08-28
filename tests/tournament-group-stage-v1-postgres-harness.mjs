@@ -9,6 +9,26 @@ import { fileURLToPath } from "node:url";
 export const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
 export function createR6bPostgresHarness(label) {
+  return createTournamentPostgresHarness(label, {
+    suite: "R6B",
+    expectedLedgerSize: 169,
+    throughVersion: "20260827105036",
+  });
+}
+
+export function createR6cPostgresHarness(label) {
+  return createTournamentPostgresHarness(label, {
+    suite: "R6C",
+    expectedLedgerSize: 175,
+    throughVersion: "20260827205409",
+  });
+}
+
+function createTournamentPostgresHarness(label, {
+  suite,
+  expectedLedgerSize,
+  throughVersion,
+}) {
   const manifest = JSON.parse(readFileSync(resolve(root, "supabase/baselines/manifest.json"), "utf8"));
   const adminUrl = process.env.TOURNAMENT_GROUP_STAGE_DATABASE_URL
     || "postgresql://postgres:postgres@127.0.0.1:55322/postgres";
@@ -18,18 +38,19 @@ export function createR6bPostgresHarness(label) {
   }
 
   const suffix = randomBytes(5).toString("hex");
-  const prefix = `pachangas_r6b_${safeIdentifier(label)}_${suffix}`;
+  const prefix = `pachangas_${suite.toLowerCase()}_${safeIdentifier(label)}_${suffix}`;
   const infrastructureDump = resolve(tmpdir(), `${prefix}-infrastructure.sql`);
   const databases = new Set();
   const allMigrations = readdirSync(resolve(root, "supabase/migrations"))
     .filter((name) => /^\d{14}_.+\.sql$/.test(name))
+    .filter((name) => name.slice(0, 14) <= throughVersion)
     .sort();
   const migrations = allMigrations.filter((name) => name.slice(0, 14) > manifest.absorbsThrough);
 
   assert.equal(
     migrations.length + manifest.absorbedMigrations.length,
-    169,
-    "R6B must bootstrap the exact 169-migration repository ledger",
+    expectedLedgerSize,
+    `${suite} must bootstrap the exact ${expectedLedgerSize}-migration repository ledger`,
   );
 
   function run(binary, args, step, input = undefined) {
@@ -107,8 +128,8 @@ export function createR6bPostgresHarness(label) {
     `, "record R6B ephemeral migration ledger");
     assert.equal(
       Number(query(databaseNameValue, "select count(*) from supabase_migrations.schema_migrations;")),
-      169,
-      "R6B bootstrap ledger mismatch",
+      expectedLedgerSize,
+      `${suite} bootstrap ledger mismatch`,
     );
     return databaseNameValue;
   }

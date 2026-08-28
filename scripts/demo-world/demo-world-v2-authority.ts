@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 
-export const DEMO_WORLD_V2_AUTHORITY_PROOF_VERSION = 6 as const;
+export const DEMO_WORLD_V2_AUTHORITY_PROOF_VERSION = 7 as const;
 
 export type DemoWorldV2AuthorityProofConfigurationRevision = {
   authoringMode: "ADVANCED" | "SIMPLE";
@@ -158,6 +158,7 @@ export type DemoWorldV2AuthorityProofRefereeAssignments = {
     unlinkedEventKeys: string[];
   };
   statisticsConverged: boolean;
+  unconvergedRefereeNumbers: number[];
 };
 
 export type DemoWorldV2AuthorityProofDiscipline = {
@@ -370,6 +371,165 @@ export type DemoWorldV2AuthorityProofTournamentGroupStageFinal = {
   standingSnapshots: 4;
 };
 
+export type DemoWorldV2AuthorityProofTournamentKnockoutTeam = {
+  name: string;
+  teamNumber: number;
+};
+
+export type DemoWorldV2AuthorityProofTournamentKnockoutNode = {
+  awayTeam: DemoWorldV2AuthorityProofTournamentKnockoutTeam;
+  extraTime?: { away: number; home: number };
+  homeTeam: DemoWorldV2AuthorityProofTournamentKnockoutTeam;
+  loserTeamNumber: number;
+  nodeKey: string;
+  nodeOrder: number;
+  referee?: { refereeNumber: number; status: "COMPLETED" | "CONFIRMED" };
+  regulationScore: { away: number; home: number };
+  resolutionKind: "ADMINISTRATIVE_DECISION" | "EXTRA_TIME" | "FORFEIT" | "NO_SHOW" | "PENALTY_SHOOTOUT" | "SPORTING_RESULT";
+  roundCode: "FINAL" | "QUARTERFINAL" | "SEMIFINAL" | "THIRD_PLACE";
+  roundOrder: number;
+  scheduledStart: string;
+  score: { away: number; home: number };
+  shootout?: { away: number; home: number };
+  status: "OFFICIAL";
+  venueLabel: string;
+  winnerTeamNumber: number;
+};
+
+export type DemoWorldV2AuthorityProofTournamentKnockoutPublic = {
+  competitionName: "COPA BARRIOS IQ 2027";
+  discipline: {
+    blockedFromSemifinal: true;
+    playerLabel: string;
+    ratingChanged: false;
+    sanctionApplies: true;
+    teamNumber: number;
+  };
+  format: "SINGLE_MATCH_KNOCKOUT";
+  nodes: DemoWorldV2AuthorityProofTournamentKnockoutNode[];
+  organizerDesk: {
+    bracketHealth: "HEALTHY";
+    completionHealth: "COMPLETE";
+    correctionsWithImpact: 1;
+    nextAction: "TOURNAMENT_LOCKED";
+    pendingResults: 0;
+    unassignedFinals: 0;
+    unresolvedNodes: 0;
+    unscheduledMatches: 0;
+  };
+  podium: {
+    champion: DemoWorldV2AuthorityProofTournamentKnockoutTeam;
+    fourthPlace: DemoWorldV2AuthorityProofTournamentKnockoutTeam;
+    runnerUp: DemoWorldV2AuthorityProofTournamentKnockoutTeam;
+    thirdPlace: DemoWorldV2AuthorityProofTournamentKnockoutTeam;
+  };
+  publicSafe: true;
+  rounds: Array<{
+    code: "FINAL" | "QUARTERFINAL" | "SEMIFINAL" | "THIRD_PLACE";
+    label: string;
+    matches: number;
+  }>;
+  status: "LOCKED";
+  teamJourneys: Array<{
+    finalPosition: number | null;
+    path: string[];
+    status: "CHAMPION" | "ELIMINATED" | "FOURTH_PLACE" | "RUNNER_UP" | "THIRD_PLACE";
+    teamName: string;
+    teamNumber: number;
+  }>;
+  thirdPlaceEnabled: true;
+  transport: { methods: ["GET"]; remoteWrites: 0 };
+};
+
+export type DemoWorldV2AuthorityProofTournamentKnockout = {
+  bracket: {
+    advancedNodes: number;
+    currentSlots: number;
+    fixtureReservations: number;
+    nodeCount: number;
+    revision: number;
+    revisionCount: number;
+    roundCount: number;
+    size: number;
+    slotRevisions: number;
+    status: "locked";
+    thirdPlaceEnabled: true;
+  };
+  completion: {
+    championTeamNumber: number;
+    fourthPlaceTeamNumber: number;
+    rewardGrants: number | string;
+    runnerUpTeamNumber: number;
+    snapshots: number;
+    thirdPlaceTeamNumber: number;
+  };
+  correction: {
+    nodeHistoryRetained: true;
+    oldContextRetired: true;
+    oldMatchKey: string;
+    oldMatchRetired: true;
+    replacementCreated: true;
+    replacementMatchKey: string;
+  };
+  integrity: {
+    billingUnchanged: true;
+    conductUnchanged: true;
+    ratingV2Unchanged: true;
+    remoteWrites: 0;
+    rewardsUnchanged: true;
+  };
+  matches: {
+    active: number;
+    finals: number;
+    historical: number;
+    quarterfinals: number;
+    retired: number;
+    semifinals: number;
+    thirdPlace: number;
+  };
+  penaltySeparation: {
+    extraTimeAway: number;
+    extraTimeHome: number;
+    groupStandingsUnchanged: true;
+    regulationAway: number;
+    regulationHome: number;
+    shootoutAway: number;
+    shootoutGoalsAddedToSportingScore: false;
+    shootoutHome: number;
+  };
+  policy: Record<string, unknown>;
+  progression: {
+    activeAdvanceDecisions: number;
+    advanceDecisions: number;
+    dependencyImpacts: number;
+    invalidations: number;
+    resolutionKinds: Partial<Record<
+      "ADMINISTRATIVE_DECISION" | "EXTRA_TIME" | "FORFEIT" | "NO_SHOW" | "PENALTY_SHOOTOUT" | "SPORTING_RESULT",
+      number
+    >>;
+  };
+  r4d: { confirmedNoShows: number; knockoutNoShowResolution: true };
+  r5: {
+    blockedFromSemifinal: true;
+    playerLabel: string;
+    ratingChanged: false;
+    sanctionApplies: true;
+    teamNumber: number;
+  };
+  readModel: { checksumPresent: true; revision: number; serverSequencePresent: true };
+  referees: {
+    final: { refereeNumber: number; status: "confirmed" };
+    semifinalReplacement: {
+      lineageLinked: true;
+      originalRefereeNumber: number;
+      originalStatus: "replaced";
+      replacementRefereeNumber: number;
+      replacementStatus: "confirmed";
+    };
+  };
+  remoteWrites: 0;
+};
+
 export type DemoWorldV2AuthorityProofTournament = {
   acceptedParticipants: 16;
   competitionName: "COPA BARRIOS IQ 2027";
@@ -391,6 +551,8 @@ export type DemoWorldV2AuthorityProofTournament = {
   groupCount: 4;
   groupStageFinal: DemoWorldV2AuthorityProofTournamentGroupStageFinal;
   groupStagePublic: DemoWorldV2AuthorityProofTournamentGroupStagePublic;
+  knockoutProof: DemoWorldV2AuthorityProofTournamentKnockout;
+  knockoutPublic: DemoWorldV2AuthorityProofTournamentKnockoutPublic;
   operationReceipts: number;
   planStatus: "published";
   potCount: 4;
@@ -421,7 +583,7 @@ export type DemoWorldV2AuthorityProof = {
   };
   refereeAssignments: DemoWorldV2AuthorityProofRefereeAssignments;
   remoteWrites: 0;
-  rpcFamilies: ["R1", "R3", "R4A", "R4B", "R4C", "R4D", "R5", "R6A", "R6B"];
+  rpcFamilies: ["R1", "R3", "R4A", "R4B", "R4C", "R4D", "R5", "R6A", "R6B", "R6C"];
   roundCount: 5;
   standings: DemoWorldV2AuthorityProofStanding[];
   tournament: DemoWorldV2AuthorityProofTournament;
@@ -503,7 +665,13 @@ export function assertDemoWorldV2AuthorityProof(value: DemoWorldV2AuthorityProof
       || !value.refereeAssignments.noActiveOverlaps
       || !value.refereeAssignments.oneMainRefereePerMatch
       || !value.refereeAssignments.statisticsConverged) {
-    throw new Error("DEMO_WORLD_V2_2_REFEREE_ASSIGNMENT_AUTHORITY_INVALID");
+    throw new Error(`DEMO_WORLD_V2_2_REFEREE_ASSIGNMENT_AUTHORITY_INVALID:${JSON.stringify({
+      noActiveOverlaps: value.refereeAssignments.noActiveOverlaps,
+      oneMainRefereePerMatch: value.refereeAssignments.oneMainRefereePerMatch,
+      overlapRejected: value.refereeAssignments.overlapRejected,
+      statisticsConverged: value.refereeAssignments.statisticsConverged,
+      unconvergedRefereeNumbers: value.refereeAssignments.unconvergedRefereeNumbers,
+    })}`);
   }
   if (value.refereeAssignments.r5LinkedEvents.onRefereedMatches
       !== value.refereeAssignments.r5LinkedEvents.linked
@@ -671,6 +839,109 @@ export function assertDemoWorldV2AuthorityProof(value: DemoWorldV2AuthorityProof
       || tournament.conflict.reasonCode !== "GROUP_CONSTRAINTS_UNSATISFIABLE"
       || tournament.conflict.suggestions.length < 2) {
     throw new Error("DEMO_WORLD_V2_4_HYBRID_OR_CONFLICT_INVALID");
+  }
+  const knockout = tournament.knockoutPublic;
+  if (knockout.competitionName !== "COPA BARRIOS IQ 2027"
+      || knockout.status !== "LOCKED"
+      || knockout.format !== "SINGLE_MATCH_KNOCKOUT"
+      || !knockout.thirdPlaceEnabled
+      || !knockout.publicSafe
+      || knockout.transport.remoteWrites !== 0
+      || knockout.nodes.length !== 8
+      || knockout.teamJourneys.length !== 8
+      || knockout.rounds.length !== 4
+      || knockout.organizerDesk.bracketHealth !== "HEALTHY"
+      || knockout.organizerDesk.completionHealth !== "COMPLETE"
+      || knockout.organizerDesk.unresolvedNodes !== 0
+      || knockout.organizerDesk.unscheduledMatches !== 0
+      || knockout.organizerDesk.pendingResults !== 0) {
+    throw new Error("DEMO_WORLD_V2_6_PUBLIC_KNOCKOUT_INVALID");
+  }
+  const roundCounts = new Map(knockout.rounds.map(({ code, matches }) => [code, matches]));
+  if (roundCounts.get("QUARTERFINAL") !== 4
+      || roundCounts.get("SEMIFINAL") !== 2
+      || roundCounts.get("FINAL") !== 1
+      || roundCounts.get("THIRD_PLACE") !== 1
+      || knockout.nodes.some(({ status }) => status !== "OFFICIAL")
+      || knockout.nodes.filter(({ roundCode }) => roundCode === "QUARTERFINAL").length !== 4
+      || knockout.nodes.filter(({ roundCode }) => roundCode === "SEMIFINAL").length !== 2
+      || knockout.nodes.filter(({ roundCode }) => roundCode === "FINAL").length !== 1
+      || knockout.nodes.filter(({ roundCode }) => roundCode === "THIRD_PLACE").length !== 1
+      || !knockout.nodes.some(({ resolutionKind }) => resolutionKind === "EXTRA_TIME")
+      || !knockout.nodes.some(({ resolutionKind }) => resolutionKind === "PENALTY_SHOOTOUT")
+      || !knockout.nodes.some(({ resolutionKind }) => resolutionKind === "FORFEIT" || resolutionKind === "NO_SHOW")
+      || new Set(knockout.teamJourneys.map(({ teamNumber }) => teamNumber)).size !== 8
+      || knockout.teamJourneys.filter(({ status }) => status === "CHAMPION").length !== 1
+      || knockout.teamJourneys.filter(({ status }) => status === "RUNNER_UP").length !== 1
+      || knockout.teamJourneys.filter(({ status }) => status === "THIRD_PLACE").length !== 1) {
+    throw new Error("DEMO_WORLD_V2_6_PUBLIC_BRACKET_STORY_INVALID");
+  }
+  const knockoutProof = tournament.knockoutProof;
+  const noShowResolutions = (knockoutProof.progression.resolutionKinds.NO_SHOW ?? 0)
+    + (knockoutProof.progression.resolutionKinds.FORFEIT ?? 0);
+  if (knockoutProof.bracket.status !== "locked"
+      || knockoutProof.bracket.size !== 8
+      || knockoutProof.bracket.nodeCount !== 8
+      || knockoutProof.bracket.advancedNodes !== 8
+      || knockoutProof.bracket.currentSlots !== 16
+      || knockoutProof.bracket.fixtureReservations !== 8
+      || !knockoutProof.bracket.thirdPlaceEnabled
+      || knockoutProof.matches.active !== 8
+      || knockoutProof.matches.historical !== 9
+      || knockoutProof.matches.retired !== 1
+      || knockoutProof.matches.quarterfinals !== 4
+      || knockoutProof.matches.semifinals !== 2
+      || knockoutProof.matches.finals !== 1
+      || knockoutProof.matches.thirdPlace !== 1
+      || knockoutProof.progression.activeAdvanceDecisions !== 8
+      || knockoutProof.progression.invalidations !== 1
+      || knockoutProof.progression.dependencyImpacts !== 3
+      || knockoutProof.progression.resolutionKinds.EXTRA_TIME !== 1
+      || knockoutProof.progression.resolutionKinds.PENALTY_SHOOTOUT !== 1
+      || knockoutProof.progression.resolutionKinds.ADMINISTRATIVE_DECISION !== 1
+      || noShowResolutions !== 1) {
+    throw new Error("DEMO_WORLD_V2_6_KNOCKOUT_AUTHORITY_INVALID");
+  }
+  if (!knockoutProof.penaltySeparation.groupStandingsUnchanged
+      || knockoutProof.penaltySeparation.regulationHome !== 1
+      || knockoutProof.penaltySeparation.regulationAway !== 1
+      || knockoutProof.penaltySeparation.shootoutHome !== 5
+      || knockoutProof.penaltySeparation.shootoutAway !== 4
+      || knockoutProof.penaltySeparation.shootoutGoalsAddedToSportingScore
+      || !knockoutProof.correction.oldMatchRetired
+      || !knockoutProof.correction.oldContextRetired
+      || !knockoutProof.correction.replacementCreated
+      || !knockoutProof.correction.nodeHistoryRetained
+      || !knockoutProof.r4d.knockoutNoShowResolution
+      || !knockoutProof.r5.sanctionApplies
+      || !knockoutProof.r5.blockedFromSemifinal
+      || knockoutProof.r5.ratingChanged
+      || knockoutProof.referees.semifinalReplacement.originalStatus !== "replaced"
+      || knockoutProof.referees.semifinalReplacement.replacementStatus !== "confirmed"
+      || !knockoutProof.referees.semifinalReplacement.lineageLinked
+      || knockoutProof.referees.final.status !== "confirmed") {
+    throw new Error("DEMO_WORLD_V2_6_LINKED_AUTHORITY_INVALID");
+  }
+  if (knockoutProof.completion.snapshots !== 2
+      || Number(knockoutProof.completion.rewardGrants) !== 0
+      || new Set([
+        knockoutProof.completion.championTeamNumber,
+        knockoutProof.completion.runnerUpTeamNumber,
+        knockoutProof.completion.thirdPlaceTeamNumber,
+        knockoutProof.completion.fourthPlaceTeamNumber,
+      ]).size !== 4
+      || !knockoutProof.integrity.ratingV2Unchanged
+      || !knockoutProof.integrity.rewardsUnchanged
+      || !knockoutProof.integrity.conductUnchanged
+      || !knockoutProof.integrity.billingUnchanged
+      || knockoutProof.integrity.remoteWrites !== 0
+      || !knockoutProof.readModel.serverSequencePresent
+      || !knockoutProof.readModel.checksumPresent
+      || knockoutProof.remoteWrites !== 0) {
+    throw new Error("DEMO_WORLD_V2_6_COMPLETION_OR_INTEGRITY_INVALID");
+  }
+  if (!value.rpcFamilies.includes("R6C")) {
+    throw new Error("DEMO_WORLD_V2_6_RPC_FAMILY_MISSING");
   }
   if (JSON.stringify(tournament).match(/[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/i)) {
     throw new Error("DEMO_WORLD_V2_4_INTERNAL_ID_LEAK");
