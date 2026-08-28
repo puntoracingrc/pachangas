@@ -402,3 +402,133 @@
 - Correction: invoke the idempotent server-clock expiration RPC at the beginning of the existing hourly billing reconciliation cron, failing closed before claiming reconciliations when expiration cannot run.
 - Regression evidence: the focused source suite requires both `process_pachanga_billing_expirations_service_v1` and `claim_pachanga_billing_reconciliation_service_v1` in the one scheduled route, while SQL/RLS keeps both RPCs service-only.
 - Product impact: none; the route and migrations are not deployed and no remote database was modified.
+
+## INC-W7B-032 - Platform reconciliation request was routed to the generic command RPC
+
+- Classification: `PRODUCT_BUG`
+- Status: `fixed`
+- Regression: `regression_verified`
+- Detected at: 2026-08-28 20:43 CEST
+- Surface: pre-UI review of `POST /api/platform-admin/billing` before exposing the Control Center V2 reconciliation action.
+- Original scenario: an administrator submitting `reconciliation.request` would pass through the generic command dispatcher, whose allowlist does not implement reconciliation requests, instead of reaching the dedicated server-authoritative reconciliation RPC.
+- Root cause: the HTTP adapter did not branch the dedicated reconciliation contract before validating and dispatching generic settings, Price mapping and manual-grant commands.
+- Correction: validate the reconciliation envelope separately and invoke `request_pachanga_billing_reconciliation_platform_v1` with the authenticated actor, expected account revision, idempotent operation ID and sanitized reason.
+- Regression evidence: the focused source suite now requires the dedicated reconciliation branch and RPC, confirms the billing account identifier is server-bound, and passes all 9 contracts with zero skips, todos or cancellations.
+- Product impact: none; no Control Center action exposes this path yet and Wave 7B is not deployed.
+
+## INC-W7B-033 - Billing status fallback mixed nullish and boolean precedence
+
+- Classification: `PRODUCT_BUG`
+- Status: `fixed`
+- Regression: `regression_verified`
+- Detected at: 2026-08-28 20:49 CEST
+- Surface: first TypeScript pass after adding the Organizer Plans and owner Billing clients.
+- Original scenario: the shared status formatter combined `??` and `||` without an explicit grouping, so TypeScript correctly refused to compile the client contract.
+- Root cause: the fallback expression encoded two precedence rules in one ungrouped statement.
+- Correction: compute the humanized fallback separately and then apply the nullish fallback.
+- Regression evidence: the repeated strict TypeScript pass compiles the formatter and both new product surfaces successfully.
+- Product impact: none; the UI exists only in the unshipped Wave 7B worktree.
+
+## INC-W7B-034 - Realtime cleanup retained a nullable Supabase reference
+
+- Classification: `PRODUCT_BUG`
+- Status: `fixed`
+- Regression: `regression_verified`
+- Detected at: 2026-08-28 20:49 CEST
+- Surface: first TypeScript pass after adding the owner Billing Realtime invalidation subscriber.
+- Original scenario: TypeScript could not prove that the module-level nullable Supabase singleton remained non-null inside the effect cleanup closure.
+- Root cause: the effect narrowed the singleton at entry but did not capture the narrowed client in a stable local constant.
+- Correction: capture the configured client once and use that exact reference for channel creation and removal.
+- Regression evidence: the repeated strict TypeScript pass verifies channel subscription and cleanup use the same non-null client reference.
+- Product impact: none; the UI exists only in the unshipped Wave 7B worktree.
+
+## INC-W7B-035 - Demo privacy guard mistook a pricing status for a Stripe identifier
+
+- Classification: `SIMULATION_BUG`
+- Status: `fixed`
+- Regression: `regression_verified`
+- Detected at: 2026-08-28 22:54 CEST
+- Surface: first deterministic Demo World V2.8 generation with organizer billing scenarios.
+- Original scenario: the read-only catalog used the legitimate status `AWAITING_PRICE_APPROVAL`, but the privacy guard interpreted the `PRICE_` substring as if it were a live Stripe `price_*` identifier and rejected the snapshot.
+- Root cause: the detector searched for identifier prefixes anywhere inside any JSON string rather than restricting the match to actual serialized identifier values.
+- Correction: constrain the guard to exact serialized string values beginning with `cus_`, `sub_`, `price_` or `prod_`.
+- Regression evidence: the 17/17 Demo World V2 suite accepts `AWAITING_PRICE_APPROVAL`, rejects actual Stripe-style values, verifies five canonical lifecycle scenarios, and confirms the immutable chunk remains GET-only and readable offline.
+- Product impact: none; generation failed locally before any snapshot was written and no remote service was contacted.
+
+## INC-W7B-036 - Billing clients synchronously derived local state inside effects
+
+- Classification: `PRODUCT_BUG`
+- Status: `fixed`
+- Regression: `regression_verified`
+- Detected at: 2026-08-28 23:03 CEST
+- Surface: first focused ESLint pass across the new Organizer Plans and owner Billing clients.
+- Original scenario: the catalog cache, initial online state, missing-Supabase message and selected-organizer snapshot could call React state setters synchronously from an effect body. The first lint pass exposed three failures; after those were removed, a fourth failure of the same root cause became reachable.
+- Root cause: local-cache hydration and the first snapshot call were started directly in effects even though they synchronize with browser or network state.
+- Correction: schedule browser-state hydration, configuration messaging and the initial snapshot call through cancelable microtask callbacks while preserving cache-as-read-model semantics and the same canonical server refetch.
+- Regression evidence: the focused ESLint pass across all new TS/TSX surfaces completes with zero warnings and zero errors; the source contract continues to require read-only cache, offline write blocking and canonical Realtime refetch.
+- Product impact: none; both clients are unshipped and the failure was detected before browser QA or deployment.
+
+## INC-W7B-037 - Organizer plan surfaces were not discoverable from Profile
+
+- Classification: `PRODUCT_BUG`
+- Status: `fixed`
+- Regression: `regression_verified`
+- Detected at: 2026-08-28 23:12 CEST
+- Surface: product-contract review after the Plans, owner Billing and Control Center screens compiled.
+- Original scenario: `/planes-organizador` and `/ajustes/facturacion` existed, but the normal desktop/mobile Profile navigation had no entry to either surface. The plan card also lacked a generic unavailable-capabilities section and its future approved Price row did not expose canonical tax behavior.
+- Root cause: route implementation and product navigation were completed in separate slices, while optional catalog fields had only their empty-state rendering.
+- Correction: expose public Plans from desktop/mobile Profile, expose owner Billing only to the team owner, render unavailable capabilities when present, and label the tax behavior supplied by the canonical approved Price mapping.
+- Regression evidence: the 12/12 organizer billing source suite requires both Profile links and the owner-only condition, canonical tax labels, unavailable capabilities, and the permanent PWA write boundary.
+- Product impact: none; the routes are unshipped and remain protected server-side regardless of client navigation.
+
+## INC-W7B-038 - Legacy app page prevents a zero-error whole-file focal lint
+
+- Classification: `TESTABILITY_GAP`
+- Status: `open_preexisting`
+- Regression: `baseline_verified`
+- Detected at: 2026-08-28 23:17 CEST
+- Surface: focused ESLint pass after adding two Profile navigation links to the existing 500 KB `app/page.tsx`.
+- Original scenario: linting all touched TS/TSX files reports 30 findings in `app/page.tsx` (13 errors and 17 warnings), while every new Wave 7B file passes.
+- Root cause: the legacy page already contains the same hook, purity, dependency and unused-value debt before the two declarative links were added.
+- Evidence: running ESLint against `git show HEAD:app/page.tsx` through stdin produces the same 30 findings and the same 13/17 split; none points to a Wave 7B line.
+- Resolution boundary: do not rewrite the unrelated legacy page inside Billing. Keep the exact baseline visible in the release report and require zero findings for all Wave 7B-owned TS/TSX files.
+- Product impact: no new lint regression; the pre-existing debt remains outside this release scope.
+
+## INC-W7B-039 - Integrated browser does not support network-idle waits
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed`
+- Regression: `regression_verified`
+- Detected at: 2026-08-28 23:22 CEST
+- Surface: first local desktop browser QA of `/planes-organizador`.
+- Original scenario: the integrated browser rejected `waitForLoadState({ state: "networkidle" })` before the screenshot and diagnostics could run. Its read-only evaluation scope also omits `fetch`, so it cannot inspect an API response body directly.
+- Root cause: this browser transport supports `load` and `domcontentloaded`, but not Playwright's `networkidle` state, and intentionally restricts evaluated page capabilities.
+- Correction: wait for `load`, then use a bounded settling delay and explicit DOM/loading diagnostics; inspect read-only HTTP responses with terminal `curl` when needed.
+- Regression evidence: subsequent viewport checks use the supported wait contract and inspect content, overlays, console and overflow directly.
+- Product impact: none; the page had already navigated and no product code or remote service was affected.
+
+## INC-W7B-040 - Local PostgREST cannot load its configured simulation schema
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed`
+- Regression: `regression_verified`
+- Detected at: 2026-08-28 23:24 CEST
+- Surface: local desktop browser QA of `/planes-organizador`.
+- Original scenario: the route, shell and responsive layout rendered without overflow, but `GET /api/billing/organizer/catalog` returned a guarded 400. Direct PostgreSQL readback confirmed all 190 migrations and the catalog RPC, while direct PostgREST returned `PGRST002` because it could not refresh its schema cache.
+- Root cause: `supabase/config.toml` correctly exposes `public`, `graphql_public` and the test-only `simulation` schema, but the preserved local database volume no longer contains `simulation`. PostgREST 14.13 therefore rejects the complete schema cache with PostgreSQL `3F000 schema "simulation" does not exist` and fails its health check. This is not a missing Wave 7B migration or frontend-contract failure.
+- Recovery evidence: a clean `supabase start -x edge-runtime,imgproxy,logflare,vector` connects PostgREST to PostgreSQL 17.6 successfully, then deterministically fails only while loading the absent configured schema.
+- Correction: start the local stack without PostgREST, recreate the empty test-only `simulation` namespace, preserve it in the local Docker volume, then restart the complete API stack. No repository configuration or remote database was changed.
+- Regression evidence: PostgREST passes its health check and the anonymous HTTP call to `get_pachanga_organizer_plan_catalog_v1` returns `200` with the canonical `NOT_AVAILABLE` state while all Wave 7B flags remain deliberately OFF.
+- Product impact: none; production is unchanged and the UI correctly displays an explicit unavailable state instead of a false success.
+
+## INC-W7B-041 - An installed PWA display mode is not reproducible in browser emulation
+
+- Classification: `TESTABILITY_GAP`
+- Status: `open_environment_boundary`
+- Regression: `contract_verified`
+- Detected at: 2026-08-28 23:58 CEST
+- Surface: local responsive and PWA QA of Organizer Plans and owner Billing.
+- Original scenario: Chrome viewport emulation verifies the exact portrait and landscape dimensions, but CDP media emulation cannot turn a normal browser tab into an installed `display-mode: standalone` application. The local development origin also has no active Service Worker registration, as expected for this development run.
+- Evidence: desktop, `390x844` and `844x390` browser checks have zero horizontal overflow and zero console errors; the manifest link is present. The source contract and focused regression suite verify the Service Worker caches only the public plan catalog, never caches owner billing, never queues sporting or billing writes, and keeps rejected/offline actions unconfirmed.
+- Resolution boundary: validate a genuinely installed PWA against the deployed Preview/production origin after deployment. Do not claim physical Android, iPhone or installed-PWA PASS from emulation alone.
+- Product impact: none; this is an evidence boundary, not a runtime failure.

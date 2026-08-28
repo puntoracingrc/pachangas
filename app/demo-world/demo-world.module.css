@@ -2310,6 +2310,100 @@
 
 .refereeGrid > article { max-width: none; }
 
+.organizerBillingDemo { overflow-y: auto; padding-bottom: 88px; }
+
+.organizerBillingScenarioRail {
+  display: grid;
+  grid-auto-columns: minmax(175px, 0.24fr);
+  grid-auto-flow: column;
+  gap: 8px;
+  overflow-x: auto;
+  border-bottom: 1px solid var(--official-line);
+  padding: 10px max(24px, calc((100vw - 1320px) / 2));
+  overscroll-behavior-inline: contain;
+  scroll-snap-type: x proximity;
+}
+
+.organizerBillingScenarioRail button {
+  min-height: 42px;
+  border: 1px solid var(--official-line);
+  border-radius: 5px;
+  background: transparent;
+  color: var(--official-muted);
+  font-size: 0.7rem;
+  font-weight: 800;
+  scroll-snap-align: start;
+}
+
+.organizerBillingScenarioRail button[aria-pressed="true"] {
+  border-color: var(--official-accent);
+  background: rgba(200, 239, 93, 0.09);
+  color: var(--official-text);
+}
+
+.organizerBillingScenario {
+  display: grid;
+  grid-template-columns: minmax(240px, 0.72fr) minmax(0, 1.28fr);
+  gap: 22px;
+  border-bottom: 1px solid var(--official-line);
+  padding: 22px max(24px, calc((100vw - 1320px) / 2));
+}
+
+.organizerBillingScenario header { align-self: center; }
+.organizerBillingScenario header > span { color: var(--official-cyan); font-size: 0.62rem; font-weight: 900; text-transform: uppercase; }
+.organizerBillingScenario h2 { margin: 5px 0 7px; color: var(--official-text); font-size: 1.35rem; }
+.organizerBillingScenario p { margin: 0; color: var(--official-muted); font-size: 0.74rem; line-height: 1.45; }
+
+.organizerBillingStateGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1px;
+  border: 1px solid var(--official-line);
+  background: var(--official-line);
+}
+
+.organizerBillingStateGrid > span {
+  min-width: 0;
+  min-height: 64px;
+  display: grid;
+  align-content: center;
+  gap: 4px;
+  background: rgba(8, 20, 17, 0.96);
+  padding: 9px;
+}
+
+.organizerBillingStateGrid small { color: var(--official-muted); font-size: 0.56rem; text-transform: uppercase; }
+.organizerBillingStateGrid strong { color: var(--official-text); font-size: 0.69rem; overflow-wrap: anywhere; }
+
+.organizerBillingPlanGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  padding: 18px max(24px, calc((100vw - 1320px) / 2));
+}
+
+.organizerBillingPlanGrid article {
+  min-width: 0;
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  border: 1px solid var(--official-line);
+  border-radius: 6px;
+  background: var(--official-surface-soft);
+  padding: 15px;
+}
+
+.organizerBillingPlanGrid header { display: grid; gap: 4px; }
+.organizerBillingPlanGrid header span { color: var(--official-cyan); font-size: 0.58rem; font-weight: 900; text-transform: uppercase; }
+.organizerBillingPlanGrid header strong { color: var(--official-text); font-size: 0.95rem; }
+.organizerBillingPlanGrid p { min-height: 42px; margin: 0; color: var(--official-muted); font-size: 0.68rem; line-height: 1.4; }
+.organizerBillingPlanGrid b { color: var(--official-accent); font-size: 0.62rem; }
+.organizerBillingPlanGrid ul { display: grid; gap: 4px; margin: 0; padding: 0; list-style: none; }
+.organizerBillingPlanGrid li { border-bottom: 1px solid var(--official-line); padding-bottom: 4px; color: var(--official-text); font-size: 0.64rem; }
+.organizerBillingPlanGrid footer { display: grid; gap: 3px; margin-top: auto; }
+.organizerBillingPlanGrid footer span { color: var(--official-warning-text); font-size: 0.62rem; font-weight: 850; }
+.organizerBillingPlanGrid footer small { color: var(--official-muted); font-size: 0.56rem; }
+
 @media (max-width: 980px) {
   .header { grid-template-columns: auto 1fr; }
   .desktopNav { order: 3; grid-column: 1 / -1; justify-content: center; border-top: 1px solid var(--demo-line); padding-top: 6px; }
@@ -2338,11 +2432,17 @@
   .tournamentEvidenceGrid { grid-template-columns: 1fr; }
   .tournamentEvidenceGrid > article { padding: 22px; }
   .tournamentEvidenceGrid > article:last-child { padding-left: 22px; }
+  .organizerBillingScenario { grid-template-columns: 1fr; }
+  .organizerBillingPlanGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 @media (max-width: 760px) {
   .shell { padding-bottom: calc(var(--mobile-nav-height, 64px) + env(safe-area-inset-bottom)); }
   .demoBanner { align-items: flex-start; flex-direction: column; gap: 5px; padding: 6px 10px; }
+  .organizerBillingScenario { gap: 14px; padding: 16px 14px; }
+  .organizerBillingStateGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .organizerBillingPlanGrid { grid-template-columns: 1fr; padding: 14px; }
+  .organizerBillingScenarioRail { grid-auto-columns: minmax(150px, 72%); padding-inline: 14px; }
   .bannerActions { align-self: stretch; }
   .bannerActions button,
   .bannerActions a { min-height: 44px; flex: 1; text-align: center; }
@@ -2661,6 +2761,22 @@
   .demoDomainHeading h1 { font-size: 1.45rem; }
   .refereeGrid { grid-auto-columns: minmax(250px, 31%); grid-auto-flow: column; grid-template-columns: none; height: calc(100% - 96px); overflow-x: auto; padding: 10px 14px 14px; }
   .entityRail { grid-auto-columns: minmax(170px, 28%); padding: 6px 10px; }
+  .organizerBillingDemo .demoDomainHeading { min-height: 62px; align-items: center; padding: 8px 14px; }
+  .organizerBillingDemo .demoDomainHeading h1 { margin: 2px 0 3px; font-size: 1.1rem; }
+  .organizerBillingDemo .demoDomainHeading p { font-size: 0.62rem; }
+  .organizerBillingScenarioRail { grid-auto-columns: minmax(145px, 0.25fr); padding: 5px 14px; }
+  .organizerBillingScenarioRail button { min-height: 34px; font-size: 0.58rem; }
+  .organizerBillingScenario { grid-template-columns: minmax(210px, 0.55fr) minmax(0, 1.45fr); gap: 8px; padding: 8px 14px; }
+  .organizerBillingScenario h2 { margin: 2px 0 3px; font-size: 0.95rem; }
+  .organizerBillingScenario p { font-size: 0.59rem; }
+  .organizerBillingStateGrid { grid-template-columns: repeat(7, minmax(78px, 1fr)); overflow-x: auto; }
+  .organizerBillingStateGrid > span { min-height: 48px; padding: 5px 7px; }
+  .organizerBillingStateGrid strong { font-size: 0.59rem; }
+  .organizerBillingPlanGrid { grid-template-columns: repeat(3, minmax(220px, 1fr)); gap: 6px; padding: 7px 14px 14px; }
+  .organizerBillingPlanGrid article { gap: 5px; padding: 8px; }
+  .organizerBillingPlanGrid header strong { font-size: 0.75rem; }
+  .organizerBillingPlanGrid p { min-height: 0; font-size: 0.57rem; }
+  .organizerBillingPlanGrid li { padding-bottom: 2px; font-size: 0.55rem; }
 }
 
 @media (prefers-color-scheme: light) {

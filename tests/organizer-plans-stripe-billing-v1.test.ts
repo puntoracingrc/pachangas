@@ -79,9 +79,10 @@ test("Checkout redirect never grants access and signed webhook owns projection",
 });
 
 test("reconciliation is service-only, revisioned and cannot beat a concurrent webhook", async () => {
-  const [sql, route] = await Promise.all([
+  const [sql, route, platformRoute] = await Promise.all([
     source(migrations[4]),
     source("app/api/internal/billing/reconcile/route.ts"),
+    source("app/api/platform-admin/billing/route.ts"),
   ]);
   assert.match(sql, /localProjectionRevision/);
   assert.match(sql, /expected_projection_revision bigint default 0/);
@@ -96,6 +97,10 @@ test("reconciliation is service-only, revisioned and cannot beat a concurrent we
   assert.match(route, /organizerSubscriptionDifferenceCodes/);
   assert.match(route, /apply_pachanga_billing_reconciliation_snapshot_service_v1/);
   assert.doesNotMatch(route, /\.from\(/);
+  assert.match(platformRoute, /action === "reconciliation\.request"/);
+  assert.match(platformRoute, /request_pachanga_billing_reconciliation_platform_v1/);
+  assert.match(platformRoute, /billing_account_id: aggregateId/);
+  assert.doesNotMatch(platformRoute, /commandPayload\("reconciliation\.request"/);
 });
 
 test("owner and platform read models keep full Stripe identities private", async () => {
@@ -131,4 +136,53 @@ test("Vercel invokes canonical billing reconciliation hourly", async () => {
     path: "/api/internal/billing/reconcile",
     schedule: "17 * * * *",
   });
+});
+
+test("public plans cache only canonical GET data and never invent a checkout", async () => {
+  const [client, serviceWorker, home] = await Promise.all([
+    source("app/_components/organizer-plans-client.tsx"),
+    source("app/service-worker-source.ts"),
+    source("app/page.tsx"),
+  ]);
+  assert.match(client, /fetch\("\/api\/billing\/organizer\/catalog", \{ cache: "no-store" \}\)/);
+  assert.match(client, /storeCatalogCache\(canonical\)/);
+  assert.match(client, /Precio pendiente de publicacion/);
+  assert.match(client, /checkoutAvailable/);
+  assert.match(client, /Solicitar acceso/);
+  assert.match(client, /No incluidas/);
+  assert.match(client, /Impuestos incluidos/);
+  assert.doesNotMatch(client, /clientWriteFetch|method:\s*"POST"|offlineQueue/i);
+  assert.match(serviceWorker, /"\/planes-organizador"/);
+  assert.doesNotMatch(serviceWorker, /"\/ajustes\/facturacion"/);
+  assert.match(home, /href="\/planes-organizador"/);
+  assert.match(home, /currentRole === "owner" \? <(?:a|Link)[^>]+href="\/ajustes\/facturacion"/);
+});
+
+test("owner billing treats local state as read-only and refetches after invalidation", async () => {
+  const client = await source("app/_components/organizer-billing-client.tsx");
+  assert.match(client, /Copia guardada, solo lectura/);
+  assert.match(client, /const actionDisabled = busy \|\| fromCache \|\| !online/);
+  assert.match(client, /las operaciones de facturacion no se guardan ni se ponen en cola/);
+  assert.match(client, /clientWriteFetch\(`api:organizer-billing-\$\{kind\}`/);
+  assert.match(client, /operationFor\(pending, key\)/);
+  assert.match(client, /pachanga_organizer_billing_invalidations_v1/);
+  assert.match(client, /loadSnapshot\(selected, token, false\)/);
+  assert.match(client, /canonical\.entitlementActive/);
+  assert.match(client, /El retorno de Stripe no concede acceso/);
+  assert.doesNotMatch(client, /\.rpc\(|service_role|offlineQueue/i);
+});
+
+test("Control Center keeps live approval and reconciliation on dedicated platform commands", async () => {
+  const [client, route] = await Promise.all([
+    source("app/admin/billing/organizer-billing-admin-client.tsx"),
+    source("app/api/platform-admin/billing/route.ts"),
+  ]);
+  assert.match(client, /priceMode === "live" && priceApproved && !canApproveLive/);
+  assert.match(client, /reconciliation\.request/);
+  assert.match(client, /manual\.grant/);
+  assert.match(client, /manual\.revoke/);
+  assert.match(client, /manual\.renew/);
+  assert.match(route, /request_pachanga_billing_reconciliation_platform_v1/);
+  assert.match(route, /command_pachanga_organizer_billing_platform_v1/);
+  assert.doesNotMatch(client, /service_role|stripeCustomerId|stripeSubscriptionId/);
 });

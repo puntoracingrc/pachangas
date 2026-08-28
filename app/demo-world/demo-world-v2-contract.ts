@@ -21,8 +21,8 @@ import {
   type DemoWorldSnapshot,
 } from "./demo-world-contract";
 
-export const DEMO_WORLD_V2_VERSION = 2.7 as const;
-export const DEMO_WORLD_V2_SEED = "pachangas-iq-demo-world-v2-7-2026-27" as const;
+export const DEMO_WORLD_V2_VERSION = 2.8 as const;
+export const DEMO_WORLD_V2_SEED = "pachangas-iq-demo-world-v2-8-2026-27" as const;
 
 export type DemoWorldV2PrimaryTab = DemoWorldPrimaryTab
   | "arbitros"
@@ -32,6 +32,7 @@ export type DemoWorldV2PrimaryTab = DemoWorldPrimaryTab
   | "disciplina"
   | "jornadas"
   | "liga"
+  | "planes"
   | "competiciones"
   | "torneo";
 
@@ -43,6 +44,7 @@ export type DemoWorldV2Manifest = {
     configuration: string;
     core: string;
     matches: string;
+    organizerBilling: string;
     players: string;
     publicCompetitions: string;
     tournament: string;
@@ -55,6 +57,7 @@ export type DemoWorldV2Manifest = {
     competitions: number;
     matches: number;
     notifications: number;
+    organizerBillingScenarios: number;
     players: number;
     publicCompetitions: number;
     referees: number;
@@ -75,6 +78,58 @@ export type DemoWorldV2Manifest = {
   season: typeof DEMO_WORLD_SEASON;
   seed: typeof DEMO_WORLD_V2_SEED;
   version: typeof DEMO_WORLD_V2_VERSION;
+};
+
+export type DemoWorldV2OrganizerBillingPlan = {
+  accessModel: "PARTNERSHIP" | "SUBSCRIPTION";
+  checkoutAvailable: false;
+  description: string;
+  displayName: string;
+  features: string[];
+  limits: Record<string, number | null>;
+  organizerKind: "CLUB" | "TEAM";
+  planCode: "CLUB_ORGANIZER" | "CLUB_PARTNER" | "TEAM_ORGANIZER_PRO";
+  prices: [];
+  pricingStatus: "AWAITING_PRICE_APPROVAL" | "PARTNERSHIP_REVIEW";
+};
+
+export type DemoWorldV2OrganizerBillingScenario = {
+  accessStatus: "active" | "continuity" | "grace";
+  accountStatus: "active" | "canceled" | "past_due";
+  continuityUntil: string | null;
+  creationAllowed: boolean;
+  graceEndsAt: string | null;
+  id: "canceled_continuity" | "club_active" | "club_partner" | "past_due_grace" | "team_active";
+  note: string;
+  organizerKind: "CLUB" | "TEAM";
+  organizerName: string;
+  planCode: DemoWorldV2OrganizerBillingPlan["planCode"];
+  renewalAt: string | null;
+};
+
+export type DemoWorldV2OrganizerBillingChunk = {
+  catalog: {
+    liveCheckoutEnabled: false;
+    plans: DemoWorldV2OrganizerBillingPlan[];
+    status: "CATALOG_AVAILABLE";
+  };
+  privacy: {
+    containsPii: false;
+    containsPriceId: false;
+    containsStripeCustomerId: false;
+    containsStripeSubscriptionId: false;
+  };
+  provenance: {
+    authority: "canonical-read-model-shape";
+    source: "deterministic-demo";
+    verified: true;
+  };
+  readOnly: true;
+  scenarios: DemoWorldV2OrganizerBillingScenario[];
+  transport: {
+    methods: ["GET"];
+    remoteWrites: 0;
+  };
 };
 
 export type DemoWorldV2LeagueEntry = {
@@ -655,6 +710,7 @@ export type DemoWorldV2Snapshot = {
   core: DemoWorldCoreChunk;
   manifest: DemoWorldV2Manifest;
   matches: DemoWorldMatchesChunk;
+  organizerBilling: DemoWorldV2OrganizerBillingChunk;
   players: DemoWorldPlayersChunk;
   publicCompetitions: DemoWorldV2PublicCompetitionsChunk;
   tournament: DemoWorldV2TournamentChunk;
@@ -719,11 +775,44 @@ export function demoWorldV2IntegrityErrors(snapshot: DemoWorldV2Snapshot): strin
   const competition = snapshot.competitions;
   const configuration = snapshot.configuration;
   const publicCompetitions = snapshot.publicCompetitions;
+  const organizerBilling = snapshot.organizerBilling;
   const teamIds = new Set(snapshot.core.teams.map(({ id }) => id));
   const playerIds = new Set(snapshot.players.players.map(({ id }) => id));
   const entryIds = new Set(competition.entries.map(({ id }) => id));
   const roundIds = new Set(competition.rounds.map(({ id }) => id));
   const canonicalIds = new Set<string>();
+
+  const billingScenarioIds = organizerBilling.scenarios.map(({ id }) => id);
+  const billingPlanCodes = organizerBilling.catalog.plans.map(({ planCode }) => planCode);
+  if (!organizerBilling.readOnly
+      || organizerBilling.transport.remoteWrites !== 0
+      || organizerBilling.transport.methods.join(",") !== "GET"
+      || !organizerBilling.provenance.verified
+      || organizerBilling.provenance.authority !== "canonical-read-model-shape"
+      || organizerBilling.catalog.liveCheckoutEnabled
+      || organizerBilling.catalog.status !== "CATALOG_AVAILABLE") {
+    errors.push("Demo World V2.8 organizer billing authority is invalid");
+  }
+  if (billingScenarioIds.join(",") !== "club_partner,team_active,club_active,past_due_grace,canceled_continuity"
+      || snapshot.manifest.counts.organizerBillingScenarios !== 5
+      || billingPlanCodes.join(",") !== "CLUB_PARTNER,CLUB_ORGANIZER,TEAM_ORGANIZER_PRO") {
+    errors.push("Demo World V2.8 organizer billing scenarios are incomplete");
+  }
+  const scenarioById = new Map(organizerBilling.scenarios.map((scenario) => [scenario.id, scenario]));
+  if (scenarioById.get("club_partner")?.accessStatus !== "active"
+      || scenarioById.get("team_active")?.accountStatus !== "active"
+      || scenarioById.get("club_active")?.accountStatus !== "active"
+      || scenarioById.get("past_due_grace")?.accessStatus !== "grace"
+      || scenarioById.get("past_due_grace")?.accountStatus !== "past_due"
+      || scenarioById.get("canceled_continuity")?.accessStatus !== "continuity"
+      || scenarioById.get("canceled_continuity")?.accountStatus !== "canceled") {
+    errors.push("Demo World V2.8 organizer billing lifecycle is invalid");
+  }
+  if (organizerBilling.catalog.plans.some(({ checkoutAvailable, prices }) => checkoutAvailable || prices.length)
+      || Object.values(organizerBilling.privacy).some(Boolean)
+      || /"(?:cus|sub|price|prod)_[A-Za-z0-9_]+"|@example|\+34/i.test(JSON.stringify(organizerBilling))) {
+    errors.push("Demo World V2.8 organizer billing leaked commercial or private data");
+  }
 
   if (competition.entries.length !== 6) errors.push("League must have exactly 6 entries");
   if (competition.delegates.length !== 6) errors.push("League must have exactly 6 delegates");

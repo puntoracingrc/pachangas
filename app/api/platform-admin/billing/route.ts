@@ -129,6 +129,17 @@ export async function POST(request: Request) {
     const expectedRevision = Number(body.expectedRevision);
     if (!uuidPattern.test(operationId) || !uuidPattern.test(aggregateId)
         || !Number.isSafeInteger(expectedRevision) || expectedRevision < 0) throw new Error("Invalid billing envelope");
+    if (action === "reconciliation.request") {
+      const result = await session.client.rpc("request_pachanga_billing_reconciliation_platform_v1", {
+        billing_account_id: aggregateId,
+        client_metadata: clientMetadata(request),
+        expected_revision: expectedRevision,
+        operation_id: operationId,
+        reason: reason(record(body.payload).reason),
+      });
+      if (result.error) throw new Error(result.error.message);
+      return platformJson({ canonical: result.data });
+    }
     const result = await session.client.rpc("command_pachanga_organizer_billing_platform_v1", {
       aggregate_id: aggregateId,
       client_metadata: clientMetadata(request),
