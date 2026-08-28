@@ -1341,3 +1341,387 @@ regression result marked `FIXED / REGRESSION_VERIFIED`.
 - Regression verified: the original hub rendered from a server process forced
   to `TZ=UTC` into a Europe/Madrid browser with zero warnings or errors, and the
   focused suite now asserts the explicit product timezone.
+
+### W7A-ENVIRONMENT-011 - Staging rerun read a nonexistent branch JSON field
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: rerun the authenticated E2E against the corrected staging
+  Preview using values returned by `supabase branches get`.
+- Observed: the shell command read `.project_ref`, which is not present in the
+  CLI payload, and the runner stopped at its production-target guard.
+- Impact: no staging data, flag or production resource changed; the fail-closed
+  branch identity check worked as designed.
+- Planned correction: pass the already verified hard-coded ephemeral branch ref
+  expected by the runner and retain all URL/database cross-checks.
+- Regression plan: the complete E2E must pass against the corrected Preview and
+  report the same non-production ref in its result.
+- Correction: the rerun supplied the verified ref `cvoeasffqzpnbcnbgssn`
+  explicitly while continuing to derive and cross-check URLs, keys and the
+  pooler connection from the branch payload.
+- Regression verified: the complete authenticated E2E passed against deployment
+  `dpl_6NwtvkDfWA9AvuUKS61oXPWvJsjH` and reported the expected project ref,
+  including Auth, RLS, idempotency, concurrency, Realtime and privacy.
+
+### W7A-TESTABILITY-041 - PWA probe used an unavailable global navigator binding
+
+- Classification: `TESTABILITY_GAP`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: inspect standalone display mode, Service Worker control and
+  public-directory overflow through the in-app browser evaluator.
+- Observed: the evaluator rejected the unqualified `navigator.serviceWorker`
+  access even though the page and browser remained healthy.
+- Impact: the first PWA probe returned no evidence and made no application or
+  environment change.
+- Planned correction: use the page-scoped `window.navigator` binding and retain
+  the same standalone, manifest, controller and runtime-log checks.
+- Regression plan: the corrected probe must return all PWA fields and the page
+  must remain controlled by the registered Service Worker.
+- Correction: the probe reads browser globals through a page-scoped CDP runtime
+  expression instead of the restricted semantic evaluator.
+- Regression verified: the manifest, active Service Worker controller and zero
+  root overflow were read successfully; an uncached API request failed offline,
+  the cached directory still rendered and canonical online reload recovered.
+
+### W7A-TESTABILITY-042 - In-app browser cannot emulate native standalone display mode
+
+- Classification: `TESTABILITY_GAP`
+- Status: `DOCUMENTED / PHYSICAL_QA_PENDING`
+- Original scenario: force `(display-mode: standalone)` before document startup
+  so the installed-PWA media path can be captured in the staging browser.
+- Observed: native CDP media emulation ignores `display-mode`, and the browser
+  explicitly rejects `Page.addScriptToEvaluateOnNewDocument` through raw CDP.
+- Impact: installed-shell chrome cannot be emulated by this QA surface; this does
+  not affect manifest installation, Service Worker control, cached reads,
+  offline write blocking, responsive layout or reconnection evidence.
+- Resolution: retain standalone CSS/source coverage plus the 390x844 installed
+  viewport visual, and report physical installed-PWA validation as pending rather
+  than manufacturing a PASS.
+
+### W7A-TESTABILITY-043 - Staging flag diagnostic assumed a nonexistent Tournament settings table
+
+- Classification: `TESTABILITY_GAP`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: inspect the isolated staging branch's Foundation,
+  Tournament and Club flags before adding the missing unlisted Tournament story.
+- Observed: the read-only query referenced
+  `private.pachanga_tournament_foundation_settings`, which is not a relation in
+  the canonical schema, and PostgreSQL stopped the statement before returning
+  any values. Catalog discovery then found Tournament flags on the shared
+  Competition settings row, but the first corrected attempt also inferred a
+  nonexistent Club column named `foundation_enabled`; PostgreSQL again stopped
+  the read-only statement before returning data.
+- Impact: no row, flag or environment changed; the diagnostic supplied no
+  Tournament prerequisite evidence.
+- Planned correction: discover the exact settings relation from `pg_catalog`,
+  rebuild the read-only query with that canonical name and retain redacted
+  output.
+- Regression plan: the corrected query must return all three flag families from
+  the same non-production branch without exposing credentials or mutating data.
+- Correction: schema discovery established that Tournament flags are columns on
+  `private.pachanga_competition_foundation_settings` and that Club columns carry
+  the `club_` prefix; the diagnostic now calls the canonical Tournament and
+  public-competition snapshot functions and selects the exact Club columns.
+- Regression verified: the corrected query returned all three flag families
+  from project `cvoeasffqzpnbcnbgssn`, retained unsafe public flags OFF and
+  exposed neither a credential nor a production reference.
+
+### W7A-ENVIRONMENT-012 - zsh expanded an optional README glob before repository search
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: locate the canonical Demo World Tournament execution order
+  across package scripts, tests and optional README files.
+- Observed: zsh rejected the unmatched `scripts/demo-world/README*` token before
+  `rg` executed. The first correction then stored every concrete path in one
+  shell variable; zsh preserved it as a single argument and `rg` rejected that
+  synthetic filename as too long.
+- Impact: no repository, database or environment state changed; the search
+  returned no evidence.
+- Planned correction: enumerate tracked files with `rg --files -0` and pass
+  concrete paths through a NUL-safe `xargs -0` pipeline.
+- Regression plan: the corrected search returns the available Tournament/Demo
+  orchestration references and exits successfully.
+- Correction: the repository file list now flows through `rg --files -0` and
+  `xargs -0`, with no shell glob or newline-based argument construction.
+- Regression verified: the corrected search exited successfully and located the
+  canonical R6A, R6B, R6C and Demo World V2.7 execution references.
+
+### W7A-ENVIRONMENT-013 - Branch metadata diagnostic assumed a nested environment object
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: read only the Supabase branch identity and the names of its
+  environment fields before running the isolated Tournament staging story.
+- Observed: the CLI payload did not contain an `environment` object and `jq`
+  stopped while attempting to enumerate keys from `null`.
+- Impact: no database, branch, flag or repository state changed; the diagnostic
+  returned no branch metadata.
+- Planned correction: inspect only the top-level key names first, then select the
+  exact current CLI fields without ever printing credential values.
+- Regression plan: the corrected diagnostic identifies the expected ephemeral
+  branch and credential field names while keeping every secret redacted.
+- Correction: the diagnostic now enumerates only top-level keys and treats the
+  branch payload as a credential envelope, while the immutable branch ID and
+  project ref remain separate verified inputs to the guarded runner.
+- Regression verified: Supabase returned only the expected URL/key/database
+  field names; no credential value was printed and the branch guard still pins
+  project `cvoeasffqzpnbcnbgssn`.
+
+### W7A-ENVIRONMENT-014 - Branch default key was not accepted by hosted Auth
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: authenticate the canonical Tournament owner after the R6A,
+  R6B and R6C fixture completed on the isolated staging branch.
+- Observed: the runner received the CLI `SUPABASE_DEFAULT_KEY` and hosted Auth
+  returned `Invalid API key` before any Wave 7A publication command ran.
+- Impact: the canonical Tournament fixture exists in the disposable branch, but
+  it has not been published by Wave 7A; production remains untouched.
+- Planned correction: use the branch's explicit legacy-compatible
+  `SUPABASE_ANON_KEY`, which is the same browser key already proven by the main
+  authenticated staging suite, and resume without reseeding the Tournament.
+- Regression plan: both owner and independent platform reviewer authenticate,
+  the unlisted publication completes and anonymous read models pass.
+- Correction: the guarded invocation now passes `SUPABASE_ANON_KEY`, matching
+  the previously certified authenticated staging suite.
+- Regression verified: owner and independent platform reviewer authenticated,
+  then prepared, consented, reviewed, approved and published the canonical
+  Tournament as `unlisted` before the later privacy assertion ran.
+
+### W7A-TESTABILITY-044 - Privacy assertion matched an unidentified substring in a large public snapshot
+
+- Classification: `TESTABILITY_GAP`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: scan the combined anonymous Tournament directory, hub,
+  calendar, standings, bracket and sitemap JSON for private-field words.
+- Observed: a broad case-insensitive text expression matched one of
+  `privateReason`, `evidenceRefs`, `operationId`, `email`, `phone` or
+  `attendance`, but the assertion printed more than 100 KB of otherwise
+  public-safe Tournament data and did not identify the JSON key or value.
+- Impact: the runner cannot yet distinguish a real private-field leak from a
+  benign substring; the unlisted publication is complete only on disposable
+  staging and production remains untouched.
+- Planned correction: inspect the exact matching context read-only, then replace
+  substring matching with recursive forbidden-key validation plus targeted PII
+  value patterns.
+- Regression plan: every anonymous read model passes recursive key checks, PII
+  value checks, canonical privacy booleans and the Preview HTML safety check.
+- Diagnosis: the match was the intentionally public safety contract
+  `privacy.containsAttendance: false`; no attendance payload was present.
+- Correction: the runner now walks every JSON object recursively, rejects exact
+  forbidden keys and separately rejects real email and Spanish phone patterns.
+- Regression verified: the read-only diagnostic found no match in calendar,
+  standings or bracket and only the expected `containsAttendance` key in the
+  hub; the corrected runner must pass the complete anonymous matrix.
+
+### W7A-PRODUCT-018 - Unlisted Tournament Preview response appeared to omit noindex
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: request the published `unlisted` Tournament route from the
+  branch-bound Preview after canonical anonymous read models passed.
+- Observed: the route returned HTTP 200 but its HTML contained no `noindex`
+  marker, despite the page metadata contract deriving robots from canonical
+  publication visibility.
+- Impact: a link-only competition could become indexable; this is a release
+  blocker and no production migration, activation or deployment may proceed.
+- Planned correction: verify the deployment/backend binding and rendered page
+  state, then correct the smallest reproducible cause without broadening scope.
+- Regression plan: the exact unlisted route must render `noindex`, remain absent
+  from directory and sitemap, and a public League must remain indexable.
+- Diagnosis: unauthenticated `curl` received HTTP 302 and followed Vercel
+  Deployment Protection to its login document (`dpl_DeY1ng...`), not the app
+  deployment (`dpl_6Nwtvk...`).
+- Correction: the runner detects a protected redirect and uses authenticated
+  `vercel curl` against the same immutable deployment; direct public Previews
+  continue to use ordinary `fetch`.
+- Regression verified: the real branch deployment rendered the canonical Copa
+  title and `<meta name="robots" content="noindex, nofollow"/>`; the unlisted
+  slug remains absent from directory and sitemap.
+
+### W7A-ENVIRONMENT-015 - Combined runner and ledger patch used the wrong file context
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: update the staging runner and reclassify the diagnosed
+  Vercel Deployment Protection incident in one patch.
+- Observed: the patch looked for a ledger heading inside the runner file and
+  `apply_patch` rejected the complete edit during context verification.
+- Impact: no file changed and no staging or production resource was touched.
+- Planned correction: split the runner and ledger updates into independent
+  patches with file-local context.
+- Regression plan: both patches apply, runner syntax passes and the protected
+  Preview assertion succeeds.
+- Correction: the runner and ledger were patched independently with file-local
+  anchors.
+- Regression verified: both edits applied without partial state; runner syntax
+  and the protected Preview assertion are re-executed by the staging gate.
+
+### W7A-TESTABILITY-045 - In-app browser does not support networkidle waits
+
+- Classification: `TESTABILITY_GAP`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: wait for `networkidle` after opening the unlisted
+  Tournament in the protected Preview before responsive inspection.
+- Observed: the browser controller rejected `networkidle` as an unsupported load
+  state.
+- Impact: navigation occurred, but that probe returned no DOM evidence and made
+  no product or database change.
+- Planned correction: use `domcontentloaded`, a bounded settling delay and
+  explicit title, robots, image, overflow and content checks.
+- Regression plan: the same Tournament route reaches its canonical rendered
+  state and supplies complete responsive evidence without relying on
+  `networkidle`.
+- Correction: navigation now waits for `domcontentloaded`, then uses a bounded
+  settle and explicit DOM assertions for title, robots, images and overflow.
+- Regression verified: the canonical Tournament route completed the desktop,
+  portrait and landscape matrix without a `networkidle` dependency.
+
+### W7A-PRODUCT-019 - Tournament eyebrow uses the feminine public label
+
+- Classification: `PRODUCT_BUG`
+- Status: `FIXED / REGRESSION_PENDING`
+- Original scenario: inspect the canonical unlisted Tournament hub at 1440x900.
+- Observed: the page eyebrow renders `TORNEO PÚBLICA`.
+- Impact: no authority or privacy defect exists, but the public product copy is
+  grammatically incorrect and visibly weakens the release candidate.
+- Planned correction: derive the adjective from the competition type, preserving
+  the existing League wording and every navigation/data contract.
+- Regression plan: Tournament renders `TORNEO PÚBLICO`, League remains
+  `LIGA PÚBLICA`, and the focused suite covers both labels.
+- Correction: the public shell now derives the adjective from the canonical
+  competition type while leaving the existing type label and routing intact.
+
+### W7A-TESTABILITY-046 - Responsive diagnostic rejected an interpolated viewport label
+
+- Classification: `TESTABILITY_GAP`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: collect overflow, image, robots and clipping metrics across
+  eight required viewports in one browser pass.
+- Observed: the browser execution wrapper rejected the template-literal label
+  with a syntax error before running the matrix.
+- Impact: no page or external state changed and no responsive evidence was
+  produced by that attempt.
+- Planned correction: use ordinary string concatenation while preserving all
+  viewport checks.
+- Regression plan: the eight-view matrix completes and reports a result for
+  every exact width and height.
+- Correction: the diagnostic labels use ordinary string concatenation.
+- Regression verified: all eight exact viewports returned overflow, image,
+  robots and clipping evidence.
+
+### W7A-TESTABILITY-020 - First landscape screenshot captured an unsettled resize frame
+
+- Classification: `TESTABILITY_GAP`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: inspect the canonical Tournament hub at 844x390 after the
+  numeric responsive matrix reported zero document overflow.
+- Observed: the application ends roughly 80 px before the right viewport edge,
+  leaving a solid white strip equal to the landscape sidebar width.
+- Impact: the first image suggested a product regression even though the DOM
+  metrics reported a full-width application and zero overflow.
+- Planned correction: inspect computed widths for html, body and top-level
+  shells and repeat the screenshot after the resize settles.
+- Regression plan: 667x375, 740x360, 844x390 and 932x430 fill the viewport with
+  zero right gap, zero root overflow and intact sidebar navigation.
+- Correction: the browser pass now waits after each resize before capture and
+  checks the rightmost viewport point against the rendered application.
+- Regression verified: the settled 844x390 capture filled the screen;
+  `html`, `body` and the application shell measured 844 px and
+  `elementFromPoint(843, 200)` resolved inside the page.
+
+### W7A-PRODUCT-021 - Tournament start date clips at 667x375
+
+- Classification: `PRODUCT_BUG`
+- Status: `FIXED / REGRESSION_PENDING`
+- Original scenario: inspect the canonical Tournament hub in the smallest
+  required Mobile Game Landscape viewport, 667x375.
+- Observed: the right-hand `INICIO` stat displays `01 may 20`, clipping the final
+  year digits inside its own bounded panel.
+- Impact: the competition date is ambiguous on a supported landscape size even
+  though the document itself has no horizontal overflow.
+- Planned correction: compact the start-date presentation at the narrow
+  landscape breakpoint without hiding the stat or changing canonical data.
+- Regression plan: the complete date remains readable at 667x375, 740x360,
+  844x390 and 932x430 with stable panel dimensions.
+- Correction: the narrow landscape breakpoint now uses three bounded columns,
+  permits the content column to shrink and compacts only the metric panel.
+
+### W7A-TESTABILITY-047 - Isolated browser runtime rejected the sharp package shorthand
+
+- Classification: `TESTABILITY_GAP`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: decode the 844x390 browser screenshot and sample pixels on
+  both sides of the apparent white strip.
+- Observed: the isolated module loader rejected `sharp` because its package
+  entry resolves through `package.json`, while only explicit JavaScript module
+  paths are supported.
+- Impact: the first pixel probe returned no evidence and changed no state.
+- Planned correction: import the installed package through its explicit
+  JavaScript entry point.
+- Regression plan: decode the same screenshot and report its dimensions and
+  right-edge RGB samples.
+- Follow-up: the explicit CommonJS entry also requires a `require` binding that
+  the isolated browser runtime intentionally does not expose.
+- Resolution: stop this decoder path after two incompatible import attempts and
+  use `document.elementFromPoint` plus computed rectangles/backgrounds at the
+  same right-edge coordinates.
+- Regression verified: the DOM fallback resolved the page at the last viewport
+  pixel and the settled screenshot agreed with the full-width rectangles.
+
+### W7A-TESTABILITY-048 - Browser evaluator requires page-qualified screen globals
+
+- Classification: `TESTABILITY_GAP`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: compare CSS viewport, visual viewport, device ratio and
+  computed zoom against the screenshot dimensions.
+- Observed: the evaluator exposed no unqualified `screen` binding and stopped
+  before returning scale evidence.
+- Impact: no page state changed and the apparent right strip remains under
+  diagnosis.
+- Planned correction: read the same values from explicit `window` bindings.
+- Regression plan: return the complete scale tuple and reconcile it with the
+  844x389 screenshot dimensions.
+- Correction: the probe reads `window.screen`, `window.visualViewport` and
+  `window.devicePixelRatio` explicitly.
+- Regression verified: the returned viewport was 844x390 at scale 1 and DPR 1,
+  matching the settled browser capture.
+
+### W7A-ENVIRONMENT-016 - Final visual-fix patch used a stale ledger anchor
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: apply the Tournament copy, compact-landscape CSS, focused
+  regression tests and incident-state reconciliation in one combined patch.
+- Observed: `apply_patch` could not find the expected incident heading in the
+  final ledger hunk and rejected the complete patch during context validation.
+- Impact: no source, test, ledger, staging or production state changed.
+- Planned correction: record this failure independently and apply source, CSS,
+  tests and ledger reconciliation as separate file-local patches.
+- Regression plan: every patch applies independently, focused tests pass and
+  `git diff --check` reports no whitespace errors.
+- Correction: source, CSS, tests and ledger reconciliation were applied through
+  independent file-local patches.
+- Regression verified: runner syntax, the 20-test focused suite and
+  `git diff --check` all passed after the independent edits.
+
+### W7A-ENVIRONMENT-017 - Diagnostic search interpreted Markdown backticks as shell syntax
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: compare open incident statuses in the working ledger and
+  the committed baseline with `rg`.
+- Observed: a double-quoted shell pattern containing Markdown backticks invoked
+  the macOS `open` command through command substitution before `rg` ran.
+- Impact: the diagnostic output included `open` usage text; no repository,
+  browser, staging or production state changed.
+- Planned correction: avoid shell interpolation and update the two known status
+  lines through heading-qualified patches.
+- Regression plan: `W7A-TESTABILITY-038` returns to its previous state,
+  `W7A-TESTABILITY-045` carries the verified state and a literal status search
+  completes without invoking another command.
+- Correction: the verification uses a single-quoted literal pattern and the
+  status edits are anchored by their complete incident headings.
+- Regression verified: the search returned exactly incidents `038`, `045` and
+  `017`; `038` is `OPEN`, `045` is verified and no shell command was expanded.

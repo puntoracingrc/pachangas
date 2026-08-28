@@ -251,6 +251,28 @@ test("public layouts adapt across portrait, landscape and PWA safe areas", async
   assert.match(css, /pointer: coarse/);
   assert.match(css, /env\(safe-area-inset-bottom\)/);
   assert.match(css, /min-width: 0/);
+  assert.match(css, /max-width: 740px/);
+  assert.match(css, /grid-template-columns: 165px minmax\(0, 1fr\) 115px/);
+});
+
+test("public competition shell agrees with League and Tournament grammatical gender", async () => {
+  const hub = await source("app/competiciones/[competition]/public-competition-hub.tsx");
+  assert.match(hub, /=== "TOURNAMENT" \? "público" : "pública"/);
+  assert.doesNotMatch(hub, /`\$\{publicCompetitionTypeLabel\(competition\.type\)\} pública`/);
+});
+
+test("isolated staging Tournament runner proves unlisted discovery and canonical R6 read models", async () => {
+  const runner = await source("tests/public-competitions-v1-staging-tournament-e2e.mjs");
+  assert.match(runner, /expectedProjectRef = "cvoeasffqzpnbcnbgssn"/);
+  assert.match(runner, /PUBLIC_COMPETITIONS_STAGING_PRODUCTION_TARGET_FORBIDDEN/);
+  assert.match(runner, /demo-world-v2-tournament-operations\.sql/);
+  assert.match(runner, /demo-world-v2-tournament-group-stage-operations\.sql/);
+  assert.match(runner, /demo-world-v2-tournament-knockout-operations\.sql/);
+  assert.match(runner, /visibility: "unlisted"/);
+  assert.match(runner, /registration\.configure[\s\S]+mode: "CLOSED"/);
+  assert.match(runner, /get_pachanga_public_competition_sitemap_v1/);
+  assert.match(runner, /assert\.equal\(directory\.items\.some/);
+  assert.match(runner, /assert\.match\(html, \/noindex\/i/);
 });
 
 test("Wave 7A does not mutate Rating, Rewards, Conduct or Billing domains", async () => {

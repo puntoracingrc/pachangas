@@ -153,6 +153,7 @@
     "test:public-competitions:scale": "node tests/public-competitions-v1-scale-runner.mjs",
     "test:public-competitions:staging-bootstrap": "node tests/public-competitions-v1-staging-bootstrap.mjs",
     "test:public-competitions:staging": "node tests/public-competitions-v1-staging-e2e.mjs",
+    "test:public-competitions:staging-tournament": "node tests/public-competitions-v1-staging-tournament-e2e.mjs",
     "lab:season-ranking": "tsx simulation/season-ranking-lab/run.ts",
     "lab:season-ranking:elite": "tsx simulation/season-ranking-lab/run-elite.ts",
     "lab:season-ranking:v3": "tsx simulation/season-ranking-lab/run-v3.ts",

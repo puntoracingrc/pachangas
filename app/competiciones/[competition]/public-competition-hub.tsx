@@ -272,6 +272,7 @@ export function PublicCompetitionHub({
 
   const name = publicCompetitionText(competition.name) || "Competición";
   const image = publicCompetitionText(competition.image);
+  const shellEyebrow = `${publicCompetitionTypeLabel(competition.type)} ${publicCompetitionText(competition.type) === "TOURNAMENT" ? "público" : "pública"}`;
   const calendarItems = publicCompetitionArray(related.calendar?.items);
   const standingsGroups = publicCompetitionArray(related.standings?.items ?? snapshot.standings);
   const bracket = publicCompetitionRecord(related.bracket ?? snapshot.bracket);
@@ -300,5 +301,5 @@ export function PublicCompetitionHub({
       {activeTab === "registration" ? <section className={styles.detailBand}><SectionHeader eyebrow={publicCompetitionText(registration.mode).replaceAll("_", " ")} title="Inscripción de equipo" /><RegistrationPanel accessToken={accessToken} busy={busy} competitionId={competitionId} onCommand={command} publication={publication} requests={requests} teams={teams} /><OrganizerQueue busy={busy} items={queue} onCommand={command} /></section> : null}
       <details className={styles.report}><summary>Reportar información de esta competición</summary><form onSubmit={(event: FormEvent<HTMLFormElement>) => { event.preventDefault(); const form = new FormData(event.currentTarget); void command("competition.report", publicCompetitionText(publication.id), publicCompetitionNumber(publication.revision), { category: String(form.get("category") ?? "OTHER"), reason: "Reporte de competición", summary: String(form.get("summary") ?? "") }); }}><label>Motivo<select name="category"><option value="MISLEADING">Información incorrecta</option><option value="IMPERSONATION">Suplantación</option><option value="PRIVACY">Privacidad</option><option value="ABUSE">Abuso</option><option value="OTHER">Otro</option></select></label><label>Descripción<textarea name="summary" required minLength={3} maxLength={1000} rows={3} /></label><button type="submit" disabled={busy || !accessToken}>Enviar a moderación</button></form></details>
     </div>;
-  return embedded ? content : <OfficialProductShellV2 active="mercado" context={{ detail: publicCompetitionText(edition.name), eyebrow: `${publicCompetitionTypeLabel(competition.type)} pública`, status: publicCompetitionStateLabel(competition.publicState), title: name }}>{content}</OfficialProductShellV2>;
+  return embedded ? content : <OfficialProductShellV2 active="mercado" context={{ detail: publicCompetitionText(edition.name), eyebrow: shellEyebrow, status: publicCompetitionStateLabel(competition.publicState), title: name }}>{content}</OfficialProductShellV2>;
 }
