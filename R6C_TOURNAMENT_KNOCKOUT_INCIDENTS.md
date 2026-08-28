@@ -1971,3 +1971,27 @@ reproducing the original scenario passes.
   the deployed SHA contains migration count 176, `remoteWrites = 0` and
   authority hash
   `da9aac991d30eb0dcfe3b7934122385bddbdcffa10fc316cc25c1a044addf8f9`.
+
+### R6C-ENVIRONMENT-096 - Final smoke shell does not provide curl
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: repeat the final public HTTP smoke after the documentation
+  readback PR deployment for `/`, `/demo`, `/torneos`, the web manifest, the
+  Service Worker and the Demo World V2 manifest.
+- Observed: the isolated shell returned `command not found: curl` for every
+  route before issuing any HTTP request.
+- Impact: production, Supabase and local product files were not modified; the
+  attempted command provides no valid final smoke evidence.
+- Planned correction: execute the same read-only route matrix with the Node.js
+  runtime already required by the repository, validating status, Demo manifest
+  identity and Service Worker cache policy without adding dependencies.
+- Regression plan: require HTTP 200 for all six routes, Demo World version 2.6
+  with its immutable snapshot hash, and a no-store Service Worker response.
+- Correction: the route matrix now uses native Node.js `fetch`; no dependency,
+  local project link, browser state or production mutation is required.
+- Regression: all six routes returned HTTP 200. Demo World returned version 2.6
+  and hash
+  `3b770ddde8a3d3599581e963f836b28e00d9ce8496d9127facdaa091f3aa68d9`;
+  `/sw.js` returned `no-cache, no-store, must-revalidate` and version
+  `2.0.0+sw.1a8c3af88b2f`.
