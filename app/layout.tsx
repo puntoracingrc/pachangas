@@ -31,6 +31,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://pachangasiq.com"),
   title: "Pachangas IQ",
   description: "Organiza pachangas, confirma jugadores y equilibra equipos con historial.",
   applicationName: "Pachangas IQ",

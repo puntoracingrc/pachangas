@@ -1,8 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { CompetitionDisciplineClient } from "../_components/competition-discipline-client";
+import { CompetitionDirectoryClient } from "../competiciones/competition-directory-client";
+import { PublicCompetitionHub } from "../competiciones/[competition]/public-competition-hub";
 import { LeagueMatchOperationsClient } from "../_components/league-match-operations-client";
 import { LeagueSchedulingClient } from "../_components/league-scheduling-client";
 import { PlayerCosmeticCard } from "../_components/player-cosmetic-card";
@@ -45,6 +47,7 @@ import {
   type DemoWorldV2ConfigurationChunk,
   type DemoWorldV2Manifest,
   type DemoWorldV2PrimaryTab,
+  type DemoWorldV2PublicCompetitionsChunk,
   type DemoWorldV2Referee,
   type DemoWorldV2Snapshot,
   type DemoWorldV2TournamentChunk,
@@ -69,6 +72,7 @@ const primaryTabs: Array<{ id: DemoWorldV2PrimaryTab; label: string }> = [
 const leagueTabs: Array<{ id: DemoWorldV2PrimaryTab; label: string }> = [
   { id: "liga", label: "Liga" },
   { id: "torneo", label: "Torneo" },
+  { id: "competiciones", label: "Públicas" },
   { id: "configuracion", label: "Configuración" },
   { id: "clasificacion", label: "Clasificación" },
   { id: "jornadas", label: "Jornadas" },
@@ -1180,6 +1184,69 @@ function DemoRefereesView({ assignments, referees }: { assignments: RefereeJson;
   </div>;
 }
 
+type DemoPublicCompetitionPane = "directory" | "league" | "organizer" | "participant" | "request" | "tournament" | "unlisted" | "waitlist";
+
+const demoPublicCompetitionPanes: Array<{ id: DemoPublicCompetitionPane; label: string }> = [
+  { id: "directory", label: "Directorio" },
+  { id: "league", label: "Liga pública" },
+  { id: "tournament", label: "Torneo público" },
+  { id: "request", label: "Solicitudes" },
+  { id: "waitlist", label: "Lista de espera" },
+  { id: "unlisted", label: "No listada" },
+  { id: "organizer", label: "Organizador" },
+  { id: "participant", label: "Participante" },
+];
+
+function DemoPublicCompetitionsView({ data }: { data: DemoWorldV2PublicCompetitionsChunk }) {
+  const [pane, setPane] = useState<DemoPublicCompetitionPane>("directory");
+  const requests = data.requests.map((request, index) => ({
+    ...request,
+    id: `demo-public-request-${index + 1}`,
+    revision: request.status === "waitlisted" ? 2 : 1,
+  }));
+  const leagueCompetition = (data.league.hub.competition ?? {}) as Record<string, unknown>;
+  const leagueCompetitionId = String(leagueCompetition.id ?? "demo-public-league");
+  const requestFor = (status: DemoWorldV2PublicCompetitionsChunk["requests"][number]["status"]) => {
+    const request = requests.find((entry) => entry.status === status);
+    return request ? [{ ...request, competitionId: leagueCompetitionId }] : [];
+  };
+  const related = (view: DemoWorldV2PublicCompetitionsChunk["league"]) => ({
+    bracket: (view.bracket ?? {}) as Record<string, unknown>,
+    calendar: view.calendar,
+    standings: view.standings,
+  });
+  const openFromDirectory = (slug: string) => {
+    if (slug === data.tournament.slug) setPane("tournament");
+    else setPane("league");
+  };
+
+  let content: ReactNode;
+  if (pane === "directory") {
+    content = <CompetitionDirectoryClient embedded initialData={data.directory} onOpen={openFromDirectory} />;
+  } else if (pane === "tournament") {
+    content = <PublicCompetitionHub embedded initialRelated={related(data.tournament)} initialSnapshot={data.tournament.hub} slug={data.tournament.slug} />;
+  } else if (pane === "unlisted") {
+    content = <PublicCompetitionHub embedded initialRelated={related(data.unlisted)} initialSnapshot={data.unlisted.hub} slug={data.unlisted.slug} />;
+  } else if (pane === "organizer") {
+    content = <PublicCompetitionHub embedded embeddedAuthenticated initialSnapshot={data.organizerPrivate.hub} slug={data.organizerPrivate.slug} />;
+  } else if (pane === "request") {
+    content = <PublicCompetitionHub embedded embeddedAuthenticated initialQueue={requests.map((request) => ({ ...request, competitionId: leagueCompetitionId }))} initialRelated={related(data.league)} initialSnapshot={data.league.hub} initialTab="registration" slug={data.league.slug} />;
+  } else if (pane === "waitlist") {
+    content = <PublicCompetitionHub embedded embeddedAuthenticated initialRelated={related(data.league)} initialRequests={requestFor("waitlisted")} initialSnapshot={data.league.hub} initialTab="registration" slug={data.league.slug} />;
+  } else if (pane === "participant") {
+    content = <PublicCompetitionHub embedded embeddedAuthenticated initialRelated={related(data.league)} initialRequests={requestFor("accepted")} initialSnapshot={data.league.hub} initialTab="registration" slug={data.league.slug} />;
+  } else {
+    content = <PublicCompetitionHub embedded initialRelated={related(data.league)} initialSnapshot={data.league.hub} slug={data.league.slug} />;
+  }
+
+  return <div className={styles.demoProductView} data-demo-domain="public-competitions" data-demo-read-only="true">
+    <nav className={styles.publicCompetitionSubnav} aria-label="Escenarios de competiciones públicas">
+      {demoPublicCompetitionPanes.map((entry) => <button aria-pressed={pane === entry.id} key={entry.id} type="button" onClick={() => setPane(entry.id)}>{entry.label}</button>)}
+    </nav>
+    <div key={pane}>{content}</div>
+  </div>;
+}
+
 export function DemoWorldApp({ manifest }: { manifest: DemoWorldV2Manifest }) {
   const [core, setCore] = useState<DemoWorldCoreChunk | null>(null);
   const [snapshot, setSnapshot] = useState<DemoWorldV2Snapshot | null>(null);
@@ -1388,6 +1455,7 @@ export function DemoWorldApp({ manifest }: { manifest: DemoWorldV2Manifest }) {
         {snapshot && activeTab === "perfil" ? <ProfileView currentPlayer={currentPlayer} currentTeam={currentTeam} notifications={notifications} onEquipCosmetic={equipCosmetic} onOpenBox={openRewardBox} onPerspective={choosePerspective} onPlayer={setSelectedPlayerId} onRead={(notificationId) => updateSession((current) => ({ ...current, readNotificationIds: [...new Set([...current.readNotificationIds, notificationId])] }))} perspective={perspective} perspectives={world.core.perspectives} session={session} snapshot={snapshot} /> : null}
         {snapshot && activeTab === "liga" ? <LeagueOverviewView onClub={openClub} onMatch={openLeagueMatch} onTab={navigate} snapshot={snapshot} /> : null}
         {snapshot && activeTab === "torneo" ? <DemoTournamentView tournament={snapshot.tournament} /> : null}
+        {snapshot && activeTab === "competiciones" ? <DemoPublicCompetitionsView data={snapshot.publicCompetitions} /> : null}
         {snapshot && activeTab === "configuracion" ? <DemoConfigurationView configuration={snapshot.configuration} /> : null}
         {snapshot && activeTab === "clasificacion" ? <div className={styles.demoProductView} data-demo-domain="standings"><LeagueMatchOperationsClient embedded previewData={snapshot.competitions.standingsPreview} surface="standings" /></div> : null}
         {snapshot && activeTab === "jornadas" ? <div className={styles.demoProductView} data-demo-domain="rounds"><LeagueSchedulingClient embedded onOpenMatch={(canonicalMatchId) => {

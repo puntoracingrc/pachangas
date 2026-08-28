@@ -21,8 +21,8 @@ import {
   type DemoWorldSnapshot,
 } from "./demo-world-contract";
 
-export const DEMO_WORLD_V2_VERSION = 2.6 as const;
-export const DEMO_WORLD_V2_SEED = "pachangas-iq-demo-world-v2-6-2026-27" as const;
+export const DEMO_WORLD_V2_VERSION = 2.7 as const;
+export const DEMO_WORLD_V2_SEED = "pachangas-iq-demo-world-v2-7-2026-27" as const;
 
 export type DemoWorldV2PrimaryTab = DemoWorldPrimaryTab
   | "arbitros"
@@ -32,6 +32,7 @@ export type DemoWorldV2PrimaryTab = DemoWorldPrimaryTab
   | "disciplina"
   | "jornadas"
   | "liga"
+  | "competiciones"
   | "torneo";
 
 export type DemoWorldV2Manifest = {
@@ -43,6 +44,7 @@ export type DemoWorldV2Manifest = {
     core: string;
     matches: string;
     players: string;
+    publicCompetitions: string;
     tournament: string;
   };
   counts: {
@@ -54,7 +56,9 @@ export type DemoWorldV2Manifest = {
     matches: number;
     notifications: number;
     players: number;
+    publicCompetitions: number;
     referees: number;
+    registrationRequests: number;
     ruleRevisions: number;
     rewardBoxes: number;
     rounds: number;
@@ -598,6 +602,51 @@ export type DemoWorldV2TournamentChunk = {
   };
 };
 
+export type DemoWorldV2PublicCompetitionView = {
+  bracket: Record<string, unknown> | null;
+  calendar: Record<string, unknown>;
+  hub: Record<string, unknown>;
+  slug: string;
+  standings: Record<string, unknown>;
+};
+
+export type DemoWorldV2PublicCompetitionsChunk = {
+  directory: Record<string, unknown>;
+  league: DemoWorldV2PublicCompetitionView;
+  organizerPrivate: {
+    hub: Record<string, unknown>;
+    slug: "liga-privada-organizador-demo";
+  };
+  operationReceipts: number;
+  privacy: {
+    containsContactData: false;
+    containsOwnerIdentity: false;
+    containsPrivateReason: false;
+    containsRequestMessage: false;
+  };
+  provenance: {
+    authorityHash: string;
+    database: "temporary-local-postgresql";
+    rpcFamilies: ["PUBLICATION", "REGISTRATION_REQUESTS", "WAITLIST", "PUBLIC_READ_MODELS"];
+    source: "simulation-world";
+    verified: true;
+  };
+  readOnly: true;
+  remoteWrites: 0;
+  requests: Array<{
+    entryCreated: boolean;
+    status: "accepted" | "rejected" | "waitlisted" | "withdrawn";
+    team: { name: string };
+    waitlistPosition: number | null;
+  }>;
+  tournament: DemoWorldV2PublicCompetitionView;
+  transport: {
+    methods: ["GET"];
+    remoteWrites: 0;
+  };
+  unlisted: DemoWorldV2PublicCompetitionView;
+};
+
 export type DemoWorldV2Snapshot = {
   activity: DemoWorldActivityChunk;
   clubsReferees: DemoWorldV2ClubsRefereesChunk;
@@ -607,6 +656,7 @@ export type DemoWorldV2Snapshot = {
   manifest: DemoWorldV2Manifest;
   matches: DemoWorldMatchesChunk;
   players: DemoWorldPlayersChunk;
+  publicCompetitions: DemoWorldV2PublicCompetitionsChunk;
   tournament: DemoWorldV2TournamentChunk;
 };
 
@@ -668,6 +718,7 @@ export function demoWorldV2IntegrityErrors(snapshot: DemoWorldV2Snapshot): strin
   const errors = demoWorldIntegrityErrors(snapshot as unknown as DemoWorldSnapshot);
   const competition = snapshot.competitions;
   const configuration = snapshot.configuration;
+  const publicCompetitions = snapshot.publicCompetitions;
   const teamIds = new Set(snapshot.core.teams.map(({ id }) => id));
   const playerIds = new Set(snapshot.players.players.map(({ id }) => id));
   const entryIds = new Set(competition.entries.map(({ id }) => id));
@@ -732,6 +783,55 @@ export function demoWorldV2IntegrityErrors(snapshot: DemoWorldV2Snapshot): strin
   }
   if (JSON.stringify(configuration).includes("fixedCents")) {
     errors.push("Demo World V2.3 leaked a private referee fee");
+  }
+  const directoryItems = Array.isArray(publicCompetitions.directory.items)
+    ? publicCompetitions.directory.items as Array<Record<string, unknown>>
+    : [];
+  const directorySlugs = directoryItems.map((item) => String(
+    (item.publication as Record<string, unknown> | undefined)?.slug ?? "",
+  ));
+  const registrationStatuses = new Map(publicCompetitions.requests.map((request) => [request.status, request]));
+  if (!publicCompetitions.readOnly
+      || publicCompetitions.remoteWrites !== 0
+      || publicCompetitions.transport.remoteWrites !== 0
+      || publicCompetitions.transport.methods.join(",") !== "GET"
+      || publicCompetitions.provenance.authorityHash !== competition.provenance.authorityHash
+      || publicCompetitions.operationReceipts < 16) {
+    errors.push("Demo World V2.7 public competition authority is invalid");
+  }
+  if (directoryItems.length !== 2
+      || !directorySlugs.includes("liga-publica-wave-7a")
+      || !directorySlugs.includes("copa-barrios-iq-2027")
+      || directorySlugs.includes("copa-enlace-demo")
+      || directorySlugs.includes("liga-privada-organizador-demo")) {
+    errors.push("Demo World V2.7 public directory visibility is invalid");
+  }
+  if (registrationStatuses.get("accepted")?.entryCreated !== true
+      || registrationStatuses.get("waitlisted")?.entryCreated !== false
+      || !registrationStatuses.get("waitlisted")?.waitlistPosition
+      || registrationStatuses.get("rejected")?.entryCreated !== false
+      || registrationStatuses.get("withdrawn")?.entryCreated !== false) {
+    errors.push("Demo World V2.7 registration stories are invalid");
+  }
+  const publicPublication = (publicCompetitions.league.hub.publication ?? {}) as Record<string, unknown>;
+  const tournamentPublication = (publicCompetitions.tournament.hub.publication ?? {}) as Record<string, unknown>;
+  const unlistedPublication = (publicCompetitions.unlisted.hub.publication ?? {}) as Record<string, unknown>;
+  const privatePublication = (publicCompetitions.organizerPrivate.hub.publication ?? {}) as Record<string, unknown>;
+  if (publicPublication.visibility !== "public" || publicPublication.status !== "published"
+      || tournamentPublication.visibility !== "public" || tournamentPublication.status !== "published"
+      || unlistedPublication.visibility !== "unlisted" || unlistedPublication.status !== "published"
+      || privatePublication.visibility !== "private" || privatePublication.status !== "draft") {
+    errors.push("Demo World V2.7 public competition lifecycle is invalid");
+  }
+  if (Object.values(publicCompetitions.privacy).some(Boolean)) {
+    errors.push("Demo World V2.7 public competition privacy diagnostics failed");
+  }
+  const publicCompetitionPayload: Record<string, unknown> = { ...publicCompetitions };
+  delete publicCompetitionPayload.privacy;
+  if (/@example|\+34|privateReason|requestedBy|ownerId|owner_id|"message"/i.test(
+    JSON.stringify(publicCompetitionPayload),
+  )) {
+    errors.push("Demo World V2.7 public competition payload leaked private data");
   }
   const tournament = snapshot.tournament;
   if (tournament.competition.name !== "COPA BARRIOS IQ 2027"
@@ -933,6 +1033,8 @@ export function demoWorldV2IntegrityErrors(snapshot: DemoWorldV2Snapshot): strin
     errors.push("Demo World V2.6 knockout completion state is invalid");
   }
   if (snapshot.manifest.counts.tournaments !== 1
+      || snapshot.manifest.counts.publicCompetitions !== 4
+      || snapshot.manifest.counts.registrationRequests !== 4
       || snapshot.manifest.counts.tournamentGroups !== 4
       || snapshot.manifest.counts.tournamentDrawRevisions !== 5
       || snapshot.manifest.counts.canonicalMatches !== 48

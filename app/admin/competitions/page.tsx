@@ -13,10 +13,11 @@ import {
 } from "../_components/platform-ui";
 import { requirePlatformPage } from "../_lib/platform-auth";
 import { hasPlatformCapability } from "../_lib/platform-contract";
-import { getPlatformCompetitionConfiguration, getPlatformCompetitionFoundation, getPlatformLeagueMatchOperations, getPlatformLeagueOperationalExceptions, getPlatformLeagueParticipation, getPlatformLeaguePrivateBeta, getPlatformLeagueScheduling, getPlatformTournamentControl, paginationFromSearchParams } from "../_lib/platform-data";
+import { getPlatformCompetitionConfiguration, getPlatformCompetitionFoundation, getPlatformLeagueMatchOperations, getPlatformLeagueOperationalExceptions, getPlatformLeagueParticipation, getPlatformLeaguePrivateBeta, getPlatformLeagueScheduling, getPlatformPublicCompetitions, getPlatformTournamentControl, paginationFromSearchParams } from "../_lib/platform-data";
 import styles from "../platform-admin.module.css";
 import { CompetitionAdminClient } from "./competition-admin-client";
 import { LeaguePrivateBetaAdminClient } from "./league-private-beta-admin-client";
+import { PublicCompetitionAdminClient } from "./public-competition-admin-client";
 import { TournamentPrivateBetaAdminClient } from "./tournament-private-beta-admin-client";
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
@@ -34,7 +35,7 @@ export default async function PlatformCompetitionsPage({ searchParams }: { searc
   Object.entries(raw).forEach(([key, value]) => params.set(key, first(value)));
   const { page, pageSize } = paginationFromSearchParams(params);
   const betaSearch = first(raw.betaSearch).trim().slice(0, 160);
-  const [data, leagueParticipation, leagueScheduling, leagueMatchOperations, leagueOperationalExceptions, leaguePrivateBeta, competitionConfiguration, tournaments] = await Promise.all([
+  const [data, leagueParticipation, leagueScheduling, leagueMatchOperations, leagueOperationalExceptions, leaguePrivateBeta, competitionConfiguration, tournaments, publicCompetitions] = await Promise.all([
     getPlatformCompetitionFoundation(session, page, pageSize),
     getPlatformLeagueParticipation(session, page, pageSize),
     getPlatformLeagueScheduling(session, page, pageSize),
@@ -43,6 +44,7 @@ export default async function PlatformCompetitionsPage({ searchParams }: { searc
     getPlatformLeaguePrivateBeta(session, betaSearch, page, pageSize),
     getPlatformCompetitionConfiguration(session),
     getPlatformTournamentControl(session),
+    getPlatformPublicCompetitions(session, first(raw.publicationStatus), first(raw.reportStatus)),
   ]);
   const canWrite = hasPlatformCapability(session.access, "competitions.manage");
   const canonicalHealthLabel = s(data.bindingHealth.status) === "NOT_INITIALIZED"
@@ -65,6 +67,25 @@ export default async function PlatformCompetitionsPage({ searchParams }: { searc
         <Metric label="Entitlements" value={n(data.metrics.activeEntitlements)} tone="good" />
         <Metric label="Bindings activos" value={n(data.bindingHealth.bindingsTotal)} hint={`${n(data.bindingHealth.ambiguousBindings)} revisiones abiertas`} tone={n(data.bindingHealth.ambiguousBindings) ? "warning" : "neutral"} />
       </MetricGrid>
+
+      <Panel title="Public Competition Control Center">
+        <MetricGrid>
+          <Metric label="En revisión" value={n(publicCompetitions.health.publications.pendingReview)} tone={n(publicCompetitions.health.publications.pendingReview) ? "warning" : "neutral"} />
+          <Metric label="Publicadas" value={n(publicCompetitions.health.publications.published)} tone="good" />
+          <Metric label="Indexables" value={n(publicCompetitions.health.publications.indexable)} />
+          <Metric label="Solicitudes abiertas" value={n(publicCompetitions.health.registration.submitted)} />
+          <Metric label="En espera" value={n(publicCompetitions.health.registration.waitlisted)} />
+          <Metric label="Reportes abiertos" value={n(publicCompetitions.health.reports.open)} tone={n(publicCompetitions.health.reports.open) ? "warning" : "good"} />
+          <Metric label="Read models stale" value={n(publicCompetitions.health.readModels.stale)} tone={n(publicCompetitions.health.readModels.stale) ? "warning" : "good"} />
+          <Metric label="Fallos de privacidad" value={n(publicCompetitions.health.readModels.privacyViolations)} tone={n(publicCompetitions.health.readModels.privacyViolations) ? "warning" : "good"} />
+        </MetricGrid>
+        <PublicCompetitionAdminClient
+          canManage={hasPlatformCapability(session.access, "competitions.manage")}
+          canModerate={hasPlatformCapability(session.access, "moderation.write")}
+          canWriteFlags={hasPlatformCapability(session.access, "flags.write")}
+          data={publicCompetitions}
+        />
+      </Panel>
 
       <Panel title="League Participation">
         <MetricGrid>

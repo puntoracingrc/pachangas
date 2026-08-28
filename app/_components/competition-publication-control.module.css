@@ -1,0 +1,23 @@
+.surface { border-top: 1px solid rgba(116, 211, 180, .22); display: grid; gap: 13px; padding-top: 16px; }
+.status { align-items: center; display: flex; gap: 12px; justify-content: space-between; }
+.status > div { display: flex; flex-wrap: wrap; gap: 6px; }
+.status > a { border: 1px solid rgba(185, 234, 72, .5); color: #d9f58c; font-size: .78rem; font-weight: 800; padding: 8px 11px; text-decoration: none; }
+.grid { display: grid; gap: 9px; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.grid label, .registration label { color: #9eaca7; display: grid; font-size: .68rem; gap: 5px; text-transform: uppercase; }
+.grid input, .grid select, .grid textarea, .registration input, .registration select { background: #091310; border: 1px solid rgba(203, 231, 220, .2); color: #f4f8f6; min-height: 38px; min-width: 0; padding: 8px; }
+.wide { grid-column: span 2; }
+.sections { border: 1px solid rgba(116, 211, 180, .16); display: flex; flex-wrap: wrap; gap: 10px 16px; padding: 12px; }
+.sections legend { color: #b9ea48; font-size: .72rem; padding: 0 7px; text-transform: uppercase; }
+.sections label, .consent label { align-items: center; color: #c8d2ce; display: flex; font-size: .78rem; gap: 6px; }
+.sections .disabled { opacity: .55; }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.actions button, .registration button { background: #b9ea48; border: 0; color: #10170d; font-weight: 850; min-height: 38px; padding: 0 13px; }
+.actions button:nth-child(n+2) { background: transparent; border: 1px solid rgba(185, 234, 72, .42); color: #d9f58c; }
+.actions button:disabled, .registration button:disabled { opacity: .42; }
+.consent, .registration { background: rgba(12, 27, 23, .58); border: 1px solid rgba(116, 211, 180, .15); display: grid; gap: 10px; padding: 12px; }
+.consent h3, .registration h3 { color: #eef4f1; font-size: .9rem; margin: 0; }
+.consent > div:first-of-type { display: grid; gap: 7px; grid-template-columns: 1fr 1fr; }
+.registration > div { align-items: end; display: grid; gap: 9px; grid-template-columns: repeat(3, minmax(0, 1fr)) auto; }
+@media (max-width: 850px) { .grid { grid-template-columns: 1fr 1fr; } .registration > div { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 560px) { .grid, .consent > div:first-of-type, .registration > div { grid-template-columns: 1fr; } .wide { grid-column: auto; } }
+@media (orientation: landscape) and (pointer: coarse), (orientation: landscape) and (max-height: 560px) { .surface { gap: 9px; } .grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } .grid input, .grid select, .registration input, .registration select { min-height: 32px; } .wide { grid-column: span 2; } }

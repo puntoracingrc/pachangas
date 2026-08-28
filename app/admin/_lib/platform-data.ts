@@ -602,6 +602,38 @@ export async function getPlatformCompetitionFoundation(
   };
 }
 
+export async function getPlatformPublicCompetitions(
+  session: VerifiedPlatformSession,
+  publicationStatus?: string,
+  reportStatus?: string,
+) {
+  const publicationStatuses = new Set([
+    "draft", "pending_review", "approved", "rejected", "changes_requested",
+    "published", "suspended", "archived",
+  ]);
+  const reportStatuses = new Set(["submitted", "under_review", "resolved", "dismissed"]);
+  const [control, health] = await Promise.all([
+    rpcOrThrow<JsonRecord>(session.client, "get_pachanga_public_competition_control_center_v1", {
+      page_size: 100,
+      publication_status: publicationStatuses.has(publicationStatus ?? "") ? publicationStatus : null,
+      report_status: reportStatuses.has(reportStatus ?? "") ? reportStatus : null,
+    }),
+    rpcOrThrow<JsonRecord>(session.client, "get_pachanga_public_competition_platform_health_v1"),
+  ]);
+  return {
+    flags: asRecord(health.flags),
+    generatedAt: typeof health.generatedAt === "string" ? health.generatedAt : null,
+    health: {
+      publications: asRecord(health.publications),
+      readModels: asRecord(health.readModels),
+      registration: asRecord(health.registration),
+      reports: asRecord(health.reports),
+    },
+    publications: asArray(control.publications).map(asRecord),
+    reports: asArray(control.reports).map(asRecord),
+  };
+}
+
 export async function getPlatformTournamentControl(session: VerifiedPlatformSession) {
   const [data, groupStageData, knockoutData] = await Promise.all([
     rpcOrThrow<JsonRecord>(session.client, "get_pachanga_platform_tournament_control_v1"),
