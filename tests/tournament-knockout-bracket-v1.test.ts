@@ -19,6 +19,8 @@ const migrations = [
   "supabase/migrations/20260827205403_tournament_knockout_access_realtime_v1.sql",
   "supabase/migrations/20260827205409_tournament_knockout_hardening_flags_v1.sql",
 ] as const;
+const compatibilityMigration =
+  "supabase/migrations/20260828045324_tournament_knockout_flag_authority_compatibility_v1.sql";
 
 function source(path: string) {
   return readFile(new URL(`../${path}`, import.meta.url), "utf8");
@@ -36,6 +38,16 @@ test("R6C owns exactly six forward migrations after ledger 169", async () => {
     "pachanga_tournament_completion_snapshots",
   ]) assert.match(sql, new RegExp(`create table public\\.${entity}`));
   assert.doesNotMatch(sql, /create table (?:public\.)?(?:TournamentMatch|TournamentResult|TournamentReferee|TournamentDiscipline|TournamentPlayer)/i);
+});
+
+test("the post-release compatibility migration preserves R6C flags across legacy platform writes", async () => {
+  const sql = await source(compatibilityMigration);
+  assert.match(sql, /coalesce\(\s*current_setting\('pachangas\.r6c_flag_authority', true\) = 'on',\s*false\s*\)/);
+  assert.match(sql, /previous_r6c_authority text := current_setting/);
+  assert.match(sql, /set_config\('pachangas\.r6c_flag_authority', 'on', true\)/);
+  assert.match(sql, /set_config\(\s*'pachangas\.r6c_flag_authority',\s*coalesce\(previous_r6c_authority, 'off'\),\s*true\s*\)/);
+  assert.match(sql, /new\.tournament_knockout_foundation_enabled := old\.tournament_knockout_foundation_enabled/);
+  assert.doesNotMatch(sql, /grant (?:insert|update|delete|all) on table/i);
 });
 
 test("the client exposes only the thirteen semantic knockout commands", () => {

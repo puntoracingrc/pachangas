@@ -46,7 +46,7 @@ try {
   assert.deepEqual(counts(), baseline, "R6C scale transaction did not roll back fully");
   process.stdout.write(`R6C_SCALE_RUNNER_REPORT|${JSON.stringify({
     ...report,
-    migrations: 175,
+    migrations: 176,
     rollback: true,
   })}\n`);
 } finally {
