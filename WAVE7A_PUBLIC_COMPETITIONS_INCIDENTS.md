@@ -1957,3 +1957,82 @@ regression result marked `FIXED / REGRESSION_VERIFIED`.
 - Correction: the probe uses fixed-string searches with shell-safe quoting.
 - Regression verified: diff-check passes and the ledger contains zero OPEN
   statuses; the only non-fixed status is the documented physical PWA QA gap.
+
+### W7A-ENVIRONMENT-022 - Isolated worktree has no Supabase project link
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: print the linked project ref and run
+  `supabase migration list --linked` before production.
+- Observed: `supabase/.temp/project-ref` did not exist in the isolated worktree,
+  so the guarded command stopped before querying any project.
+- Impact: no remote project was read or modified; production migration
+  reconciliation remained pending.
+- Planned correction: inspect current CLI help, link this worktree explicitly
+  to production ref `qonbngfrnrqgmxbdfbea`, read back that exact ref and only
+  then list migrations.
+- Regression plan: the local link reports the expected project ref and the
+  remote migration list reconciles to the expected baseline before any push.
+- Correction: the isolated worktree was linked explicitly to the expected
+  production project without borrowing another checkout's `.temp` state.
+- Regression verified: `supabase/.temp/project-ref` reads
+  `qonbngfrnrqgmxbdfbea`; the remote list contains 176 applied migrations and
+  exactly the seven Wave 7A versions pending locally.
+
+### W7A-ENVIRONMENT-023 - Supabase connector rejected the aggregate baseline query
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: read migration, protected digests, competition counts and
+  platform settings through one aggregate `execute_sql` call.
+- Observed: the connector returned `INVALID_ARGUMENT` without executing a
+  query or exposing database output.
+- Impact: production remained unchanged; baseline evidence was not collected
+  through that connector.
+- Planned correction: use `psql` through the CLI-created pooler URL for the
+  same read-only SQL, keeping connection data out of stdout.
+- Regression plan: the linked PostgreSQL session reports the expected project
+  database, 176 migrations and bounded aggregate-only evidence.
+- Correction: the supported CLI Management API query path replaced the
+  connector call after direct `psql` proved that the local URL omits secrets.
+- Regression verified: the aggregate readback completed against database
+  `postgres`, migration 176, without exposing a credential.
+
+### W7A-ENVIRONMENT-024 - Linked pooler URL omits the temporary login password
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: run the aggregate baseline with local `psql` against
+  `supabase/.temp/pooler-url`.
+- Observed: the URL identifies the exact production pooler but intentionally
+  contains no password; `psql` stopped at authentication before SQL execution.
+- Impact: no query or mutation reached PostgreSQL and baseline evidence remained
+  pending.
+- Planned correction: inspect and use the supported `supabase db query --linked`
+  path, which provisions the temporary login through the authenticated CLI.
+- Regression plan: the CLI executes the read-only baseline file against the
+  expected linked ref without printing credentials.
+- Correction: `supabase db query --linked --file ...` now provisions the login
+  role through the authenticated Management API.
+- Regression verified: the query returned only aggregate evidence and no
+  password, token or connection string.
+
+### W7A-SIMULATION-028 - Production baseline used the public schema for private settings
+
+- Classification: `SIMULATION_BUG`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: execute the aggregate baseline through
+  `supabase db query --linked`.
+- Observed: PostgreSQL rejected the statement because the diagnostic referenced
+  `public.pachanga_competition_foundation_settings`; the canonical table is in
+  the `private` schema.
+- Impact: the whole read-only statement aborted and no baseline or mutation was
+  committed.
+- Planned correction: qualify the settings table with its canonical `private`
+  schema and rerun the same aggregate-only probe.
+- Regression plan: the query returns migration count, settings digest,
+  competition counts and protected digests from production.
+- Correction: the diagnostic now reads
+  `private.pachanga_competition_foundation_settings`.
+- Regression verified: production returned 176 migrations, three
+  competitions/editions, zero Entries/matches and all eight protected digests.

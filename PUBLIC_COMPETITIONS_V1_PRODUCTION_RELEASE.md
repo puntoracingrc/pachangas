@@ -16,10 +16,13 @@ campo pendiente de esta version se presenta como hecho.
 | Main inicial | `8807ed66548b4b2ea749f46c27f71dcf855057f0` |
 | PR funcional | `#215` |
 | Branch | `codex/public-competitions-registration-v1` |
+| Supabase | `Pachangas`, `qonbngfrnrqgmxbdfbea`, PostgreSQL 17.6, `ACTIVE_HEALTHY` |
 | Ledger inicial esperado | `176` |
 | Migraciones Wave 7A | `7`, forward-only |
 | Ledger objetivo | `183` |
 | Schema hash fresh/upgrade | `7273cef0f24cc4881179475c81c7196dde8d084c9af39316ecf250a33e8e708d` |
+| Backup fisico previo | `1499793836`, `COMPLETED`, `2026-08-28T00:18:34.331Z` |
+| Dump logico previo | `5,088,476 bytes`, SHA-256 `841d39ca9b5d0b1bbb3266ce220f9f5ee48364461ba110c4750aa590fa2a837a` |
 | Produccion | `NO MODIFICADA AUN POR WAVE 7A` |
 
 ## Migraciones candidatas exactas
@@ -45,6 +48,27 @@ campo pendiente de esta version se presenta como hecho.
 - Service Worker exacto: `2.0.0+sw.15049e0ee32f`;
 - visual: ocho viewports, 0 overflow raiz, 0 imagenes rotas, 0 consola;
 - PWA instalada fisica: PENDING, no es bloqueo autorizado de esta release.
+
+## Baseline productivo protegido
+
+El readback por Management API confirma database `postgres`, 176 migraciones y
+ultima version `20260828045324`. Existen tres Competitions y tres Editions, con
+cero CompetitionEntries y cero canonical match contexts.
+
+| Dominio protegido | Filas | Digest previo |
+| --- | ---: | --- |
+| Rating snapshots | 1 | `ce838b082d476871c05aa6df5cdf589c` |
+| Reward grants | 17 | `f8c950d847b867804d4b51b9cee70971` |
+| Player cosmetic loadouts | 0 | `d41d8cd98f00b204e9800998ecf8427e` |
+| Team cosmetic inventory | 7 | `e5a3c62aa06218156930e31eab7cab7d` |
+| Team reward mappings | 5 | `43ec6570d18b53b719152b81445a991e` |
+| Conduct reports | 0 | `d41d8cd98f00b204e9800998ecf8427e` |
+| Billing webhooks | 0 | `d41d8cd98f00b204e9800998ecf8427e` |
+| Provincial ranking entries | 0 | `d41d8cd98f00b204e9800998ecf8427e` |
+
+PITR esta deshabilitado; WAL-G y backups fisicos estan disponibles. El backup
+fisico anterior y el dump logico se conservaran hasta terminar canary y
+readback final.
 
 ## Secuencia de produccion
 
@@ -77,4 +101,3 @@ backup previo se conserva hasta cerrar smoke y readback.
 - canary y conteos finales;
 - Demo V2.7 LIVE;
 - cleanup de staging, Preview, temporales y worktree.
-
