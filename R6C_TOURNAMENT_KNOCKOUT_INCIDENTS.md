@@ -1906,3 +1906,68 @@ reproducing the original scenario passes.
 - Regression: the corrected command returned only this not-yet-updated 092
   entry with exit code 0; all earlier incidents were already closed. After
   applying this status transition the same audit must return an empty result.
+
+### R6C-ENVIRONMENT-093 - Release worktree has no local Vercel project link
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: read `.vercel/project.json` after merging PR #211 to obtain
+  project and team identifiers for the exact production deployment readback.
+- Observed: this isolated release worktree has no `.vercel/project.json`.
+- Impact: Git, Vercel and production remain unchanged, but the local-link lookup
+  cannot identify the deployment.
+- Planned correction: use the already authenticated Vercel connector or CLI
+  project discovery without creating, copying or mutating a local link.
+- Regression plan: identify the Pachangas project unambiguously, find a READY
+  production deployment whose Git SHA is the merged `main`, and prove the
+  `pachangasiq.com` alias resolves to it.
+- Correction: the read-only project identifier came from the existing main
+  checkout link; the release worktree remained unlinked and unchanged.
+- Regression: project `prj_MchVSIo1S3AkM8o7LeA6PA3v1sWB` resolved to production
+  deployment `dpl_JDGnReANFenYnqia1BuDNLDqFpNz`, Git SHA
+  `05538528d7d5555961f2aea9a28b3160f4618b9c`, READY with the expected aliases.
+
+### R6C-ENVIRONMENT-094 - Vercel connector project listing failed
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: resolve the Pachangas project through the authenticated
+  Vercel connector after it returned the expected team
+  `team_igEbPlyUgBxnP6cO2sUObD5a`.
+- Observed: `list_projects` returned only `Failed to list projects`.
+- Impact: no deployment or configuration changed; project/deployment readback
+  remains pending.
+- Planned correction: use the already authenticated Vercel CLI with the known
+  team scope and project name, without linking this worktree.
+- Regression plan: retrieve the production deployment, Git SHA, READY state and
+  aliases through CLI read-only commands, then smoke the public domain.
+- Correction: the already known project/team IDs were passed directly to the
+  deployment endpoints, avoiding the failing project-list operation.
+- Regression: deployment and domain lookups independently returned the same
+  READY production ID/SHA and `aliasError = null`; `/`, Demo, `/torneos`,
+  manifest and Service Worker then returned HTTP 200.
+
+### R6C-SIMULATION-095 - Demo manifest hash projection assumed top-level fields
+
+- Classification: `SIMULATION_BUG`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: fetch the live Demo World V2 manifest after the final
+  deployment and project version, migration count, authority hash, snapshot
+  hash and remote-write count.
+- Observed: version 2.6 was returned, but the diagnostic projected the remaining
+  values from the document root and produced undefined fields.
+- Impact: the manifest is reachable and valid JSON; only the final hash
+  readback is incomplete.
+- Planned correction: inspect the manifest keys once, then project the existing
+  nested provenance fields without guessing aliases.
+- Regression plan: prove live version 2.6, migration count 176, both documented
+  hashes and zero remote writes from the production manifest.
+- Correction: the public manifest is treated according to its actual contract:
+  it exposes version, immutable snapshot hash and hash-addressed chunks. Ledger,
+  authority hash and remote-write proof are read from the committed authority
+  proof of the exact deployed Git SHA rather than invented public fields.
+- Regression: production returned version 2.6 and hash
+  `3b770ddde8a3d3599581e963f836b28e00d9ce8496d9127facdaa091f3aa68d9`;
+  the deployed SHA contains migration count 176, `remoteWrites = 0` and
+  authority hash
+  `da9aac991d30eb0dcfe3b7934122385bddbdcffa10fc316cc25c1a044addf8f9`.

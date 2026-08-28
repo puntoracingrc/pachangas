@@ -6,6 +6,8 @@
 - Rama: `codex/tournament-knockout-bracket-champion-v1`.
 - PR funcional: #209.
 - PR de compatibilidad post-activación: #210.
+- PR de cierre documental: #211, merge
+  `05538528d7d5555961f2aea9a28b3160f4618b9c`.
 - Supabase producción esperado antes de R6C: ledger 169.
 - Objetivo: seis migraciones funcionales hasta ledger 175 y un hotfix
   forward-only de compatibilidad en ledger 176, con activación invite-only
@@ -62,7 +64,7 @@ pendientes como release completado.
 | Flags nacen OFF | PASS | Siete flags R6C false; two-leg, double elimination y public discovery false; flags R6B preservados. |
 | PR #209 fusionado | PASS | Merge `94edebf1d470b92fc57988696a144567d2dc9d38`, 2026-08-28 02:34:44Z. |
 | PR #210 fusionado | PASS | Merge `41c8280b55bdabd201da4169fbf524561bc9ee24`, 2026-08-28 03:14:57Z. |
-| Deployment Vercel SHA exacto READY | PASS | `pachangas-319jsjkrf-persianas-almar-web-s-projects.vercel.app`, deployment `dpl_AH3CJhTQ25tXQU5QjrbqdTb3t9Bv`, target production y alias `pachangasiq.com`. |
+| Deployment Vercel SHA exacto READY | PASS | Runtime R6C `dpl_AH3CJhTQ25tXQU5QjrbqdTb3t9Bv` / SHA `41c8280b55bdabd201da4169fbf524561bc9ee24`; cierre documental `dpl_JDGnReANFenYnqia1BuDNLDqFpNz` / SHA `05538528d7d5555961f2aea9a28b3160f4618b9c`; ambos target production y alias `pachangasiq.com`. |
 | Smoke productivo | PASS | `/`, Demo World V2.6 y `/torneos` responden; R6C permanece invite-only y no hay discovery público. |
 | Activación Private Beta por RPC | PASS | Operación `83b2493b-5a54-4981-a4c0-620bc82686da`, actor `service_authority`, revision 17 / sequence 1853; siete flags R6C ON y formatos avanzados OFF. |
 | Canario 4 equipos reversible | PASS | 1 bracket de 4, 3 nodes, 2 semifinales, 2 CanonicalMatches distintos, 0 resultados y Hub/bracket válidos dentro de una transacción terminada en rollback. |
@@ -173,6 +175,10 @@ pendientes como release completado.
   raíz/cuerpo, 0 imágenes rotas y 0 warnings/errors de consola.
 - Demo World V2.6 muestra campeón Marina Fosca, 8 partidos y 1 predecesor
   retirado en los tres viewports.
+- El manifest productivo expone versión 2.6 y snapshot hash
+  `3b770ddde8a3d3599581e963f836b28e00d9ce8496d9127facdaa091f3aa68d9`;
+  el authority proof del mismo SHA fija ledger 176, `remoteWrites=0` y hash
+  `da9aac991d30eb0dcfe3b7934122385bddbdcffa10fc316cc25c1a044addf8f9`.
 - Manifest installable fullscreen; Service Worker activo
   `2.0.0+sw.41c8280b55bd`, respuesta `no-cache, no-store, must-revalidate`, carga
   offline completa y reconexión al snapshot canónico.
