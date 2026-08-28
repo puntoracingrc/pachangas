@@ -1265,7 +1265,7 @@ regression result marked `FIXED / REGRESSION_VERIFIED`.
 ### W7A-TESTABILITY-038 - Staging runner restored flags before visual QA
 
 - Classification: `TESTABILITY_GAP`
-- Status: `OPEN`
+- Status: `FIXED / REGRESSION_VERIFIED`
 - Original scenario: open the branch-bound Preview after the authenticated suite
   completed with its default flag rollback.
 - Observed: the public directory correctly rendered zero competitions because
@@ -1278,6 +1278,11 @@ regression result marked `FIXED / REGRESSION_VERIFIED`.
   disposable branch for final rollback.
 - Regression plan: the Preview exposes the canonical fixtures while visual QA
   runs, production remains untouched and the branch is deleted at cleanup.
+- Correction: the guarded staging rerun retained only the safe Wave 7A flags on
+  branch `cvoeasffqzpnbcnbgssn`; the disposable branch remains the rollback
+  boundary.
+- Regression verified: League and Tournament surfaces completed authenticated,
+  responsive, privacy, Realtime and PWA QA while production stayed untouched.
 
 ### W7A-TESTABILITY-039 - Public-hub tab sweep exceeded a selector deadline
 
@@ -1581,7 +1586,7 @@ regression result marked `FIXED / REGRESSION_VERIFIED`.
 ### W7A-PRODUCT-019 - Tournament eyebrow uses the feminine public label
 
 - Classification: `PRODUCT_BUG`
-- Status: `FIXED / REGRESSION_PENDING`
+- Status: `FIXED / REGRESSION_VERIFIED`
 - Original scenario: inspect the canonical unlisted Tournament hub at 1440x900.
 - Observed: the page eyebrow renders `TORNEO PÚBLICA`.
 - Impact: no authority or privacy defect exists, but the public product copy is
@@ -1592,6 +1597,9 @@ regression result marked `FIXED / REGRESSION_VERIFIED`.
   `LIGA PÚBLICA`, and the focused suite covers both labels.
 - Correction: the public shell now derives the adjective from the canonical
   competition type while leaving the existing type label and routing intact.
+- Regression verified: Preview `dpl_Bsfej2bpJrpWETSXLKPozFcbS6kV` renders
+  `TORNEO PÚBLICO`, never `TORNEO PÚBLICA`, in all seven final viewports; the
+  focused source contract also passes.
 
 ### W7A-TESTABILITY-046 - Responsive diagnostic rejected an interpolated viewport label
 
@@ -1634,7 +1642,7 @@ regression result marked `FIXED / REGRESSION_VERIFIED`.
 ### W7A-PRODUCT-021 - Tournament start date clips at 667x375
 
 - Classification: `PRODUCT_BUG`
-- Status: `FIXED / REGRESSION_PENDING`
+- Status: `FIXED / REGRESSION_VERIFIED`
 - Original scenario: inspect the canonical Tournament hub in the smallest
   required Mobile Game Landscape viewport, 667x375.
 - Observed: the right-hand `INICIO` stat displays `01 may 20`, clipping the final
@@ -1647,6 +1655,8 @@ regression result marked `FIXED / REGRESSION_VERIFIED`.
   844x390 and 932x430 with stable panel dimensions.
 - Correction: the narrow landscape breakpoint now uses three bounded columns,
   permits the content column to shrink and compacts only the metric panel.
+- Regression verified: the complete `01 may 2027` value has zero internal
+  overflow at 667x375, 740x360, 844x390 and 932x430.
 
 ### W7A-TESTABILITY-047 - Isolated browser runtime rejected the sharp package shorthand
 
@@ -1749,7 +1759,7 @@ regression result marked `FIXED / REGRESSION_VERIFIED`.
 ### W7A-ENVIRONMENT-019 - New Preview cannot resolve the canonical staging Tournament
 
 - Classification: `ENVIRONMENT_ISSUE`
-- Status: `OPEN`
+- Status: `FIXED / REGRESSION_VERIFIED`
 - Original scenario: open the canonical unlisted Tournament in deployment
   `dpl_DstnUjKXQeUs7foohXMSikLjhZtJ` after the staging runner passed.
 - Observed: the browser title is `Competición no disponible | Pachangas IQ`
@@ -1762,6 +1772,12 @@ regression result marked `FIXED / REGRESSION_VERIFIED`.
   only if the deployment targets the wrong backend.
 - Regression plan: the exact Preview route renders `Copa Barrios IQ 2027`,
   preserves `noindex` and exposes no private payload before responsive QA.
+- Correction: an isolated deployment was built with the ephemeral branch's
+  public URL/key scoped only to that deployment; no persistent Preview or
+  Production variable was created.
+- Regression verified: deployment `dpl_Bsfej2bpJrpWETSXLKPozFcbS6kV` renders
+  the canonical title, passes the Tournament runner, remains `unlisted` and
+  emits `noindex, nofollow`.
 
 ### W7A-TESTABILITY-049 - Browser tab does not expose a direct evaluate method
 
@@ -1805,7 +1821,7 @@ regression result marked `FIXED / REGRESSION_VERIFIED`.
 ### W7A-ENVIRONMENT-020 - Manual Vercel build has no Git directory
 
 - Classification: `ENVIRONMENT_ISSUE`
-- Status: `OPEN`
+- Status: `FIXED / REGRESSION_VERIFIED`
 - Original scenario: build the exact Wave 7A HEAD as an isolated Preview with
   deployment-scoped staging Supabase variables.
 - Observed: Vercel reported `fatal: not a git repository` twice while the remote
@@ -1818,11 +1834,17 @@ regression result marked `FIXED / REGRESSION_VERIFIED`.
   version is invalid.
 - Regression plan: Preview reports a valid immutable client/worker version,
   controls the page and completes one controlled reload without fake success.
+- Correction: the final isolated deployment receives the full HEAD through
+  `VERCEL_GIT_COMMIT_SHA` at build and runtime, avoiding Git discovery entirely.
+- Regression verified: the deployed worker reports
+  `2.0.0+sw.15049e0ee32f`, matching HEAD `15049e0ee32f...`; manifest is
+  fullscreen, the app reports Service Worker support and the clean reload has
+  no update notice or current-host console error.
 
 ### W7A-PRODUCT-022 - Tournament start date exceeds its metric tile in portrait
 
 - Classification: `PRODUCT_BUG`
-- Status: `FIXED / REGRESSION_PENDING`
+- Status: `FIXED / REGRESSION_VERIFIED`
 - Original scenario: run the canonical Tournament hub at 390x844 and 360x800.
 - Observed: the full date remains in the DOM, but its `strong` element exceeds
   the metric tile by 18 px and 28 px respectively.
@@ -1835,6 +1857,8 @@ regression result marked `FIXED / REGRESSION_VERIFIED`.
 - Correction: only the final date metric uses a compact `.75rem` value at the
   existing portrait breakpoint; canonical text and the other metrics are
   unchanged.
+- Regression verified: all three metrics have zero internal overflow at
+  360x800 and 390x844, while the complete date remains visible.
 
 ### W7A-TESTABILITY-051 - Raw viewport detector counts horizontally scrollable controls as clipped
 
@@ -1854,3 +1878,82 @@ regression result marked `FIXED / REGRESSION_VERIFIED`.
   excludes only elements inside a horizontally scrollable container.
 - Regression verified: every reported control belonged to the public hub tab
   scroller; the refined eight-viewport matrix found zero inaccessible controls.
+
+### W7A-TESTABILITY-052 - New browser tab ignored its initial URL option
+
+- Classification: `TESTABILITY_GAP`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: open a fresh tab directly on the exact Preview to isolate
+  console logs from earlier deployments.
+- Observed: `browser.tabs.new({ url })` created a tab at `about:blank` and
+  ignored the supplied initial URL.
+- Impact: the first clean-tab smoke returned no product evidence and changed no
+  application or external state.
+- Planned correction: create the blank tab, then navigate explicitly with its
+  supported `goto` method and wait for `domcontentloaded`.
+- Regression plan: the fresh tab reaches the canonical Tournament and reports
+  zero warnings/errors for the exact deployment host.
+- Correction: the new tab navigates explicitly with `goto` and waits for
+  `domcontentloaded` plus a bounded settle.
+- Regression verified: the clean tab rendered the Tournament with zero root
+  overflow and zero console warnings/errors.
+
+### W7A-TESTABILITY-053 - Playwright evaluator hides window.navigator
+
+- Classification: `TESTABILITY_GAP`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: inspect the fresh tab's Service Worker registration,
+  controller and installed display mode.
+- Observed: `document` remained available but `window.navigator` was undefined
+  inside the constrained evaluator.
+- Impact: this probe cannot directly certify controller state; the page,
+  deployment and staging backend remain healthy.
+- Planned correction: use observable PWA runtime state and the deployed worker
+  contract, retaining physical standalone mode as pending where the browser
+  cannot emulate it.
+- Regression plan: verify manifest, exact worker version, app-side controller
+  state or update event, one controlled reload and zero current-host errors.
+- Correction: the QA uses document-observable app datasets plus the immutable
+  `/sw.js` response and keeps native standalone emulation outside this tool's
+  claims.
+- Regression verified: `supportsServiceWorker=yes`, manifest `/manifest.webmanifest`,
+  exact worker SHA, no PWA notice and zero clean-tab warnings/errors agree.
+
+### W7A-TESTABILITY-054 - Playwright evaluator hides window.performance
+
+- Classification: `TESTABILITY_GAP`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: reload the fresh Preview once and inspect Navigation Timing
+  `workerStart` as evidence that the active Service Worker handled navigation.
+- Observed: the reload completed, but `window.performance` was undefined in the
+  constrained evaluator.
+- Impact: Navigation Timing cannot be used as controller evidence in this QA
+  surface; no product or external state changed beyond the intended page reload.
+- Planned correction: retain the app dataset, exact deployed worker/version,
+  reload count, clean current-host logs and the already passed offline/reconnect
+  gate; keep physical standalone validation pending.
+- Regression plan: all observable PWA evidence agrees on the exact SHA and no
+  update-required, offline fake-success or console error appears.
+- Correction: Navigation Timing is omitted from this browser gate; the exact
+  worker contract, app datasets, single reload and prior offline/reconnection
+  scenario provide the supported evidence.
+- Regression verified: the page returned after one reload with its canonical
+  title, no bridge notice, zero current-host logs and matching worker SHA.
+
+### W7A-ENVIRONMENT-021 - Shell interpreted backticks in the incident-status probe
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: combine `git diff --check`, an incident-ledger search and
+  `git status` in one diagnostic command.
+- Observed: the double-quoted search pattern contained Markdown backticks, so
+  zsh evaluated `OPEN` as command substitution and invoked macOS `open`.
+- Impact: the status search was invalid and printed unrelated matching lines;
+  no file, product data or external state changed.
+- Planned correction: repeat each diagnostic with a single-quoted literal that
+  cannot invoke command substitution.
+- Regression plan: `git diff --check` succeeds and a literal search finds no
+  incident whose status is OPEN.
+- Correction: the probe uses fixed-string searches with shell-safe quoting.
+- Regression verified: diff-check passes and the ledger contains zero OPEN
+  statuses; the only non-fixed status is the documented physical PWA QA gap.
