@@ -546,3 +546,43 @@
 - Correction: linked this worktree explicitly to the known Pachangas IQ project without supplying or persisting a database password.
 - Regression evidence: `supabase migration list --linked` connected successfully and proved 183 matching local/remote migrations through `20260828072053`; the only local-only rows are the seven intentional Wave 7B versions `20260828163750` through `20260828163756`.
 - Product impact: none; no application or database request was executed.
+
+## INC-W7B-043 - Remote rollback readback used a non-canonical diagnostic contract
+
+- Classification: `SIMULATION_BUG`
+- Status: `fixed`
+- Regression: `regression_verified`
+- Detected at: 2026-08-28 22:10 CEST
+- Surface: post-rollback production smoke readback.
+- Original scenario: the first diagnostic invocation used the unsupported local CLI option `supabase db query --sql`; the corrected invocation then filtered the grant table by a non-existent `source` column instead of its canonical `access_source` field.
+- Root cause: the ad hoc readback mixed syntax from a different CLI revision with an abbreviated field name not present in the deployed schema.
+- Correction: inspect `information_schema.columns`, use positional SQL supported by the installed CLI, filter by `access_source`, and address the exact smoke `operation_id`.
+- Regression evidence: the repeated linked readback returned platform grants `0`, billing-derived entitlements `0`, smoke receipts `0` and smoke events `0`.
+- Product impact: none; both failed statements were read-only and PostgreSQL rejected them before returning data.
+
+## INC-W7B-044 - Sensitive Vercel Cron secret cannot be exported for manual replay
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed`
+- Regression: `regression_verified`
+- Detected at: 2026-08-28 22:10 CEST
+- Surface: production `/api/internal/billing/reconcile` scheduled smoke.
+- Original scenario: Vercel correctly returns a redacted placeholder when a sensitive Production variable is pulled, so that placeholder cannot authenticate an external manual replay of the cron request.
+- Root cause: deliberate non-exportability of sensitive Vercel values, not an application defect.
+- Evidence: the unauthenticated production route returns explicit `403 BILLING_RECONCILIATION_FORBIDDEN`; the deployment contains the hourly `17 * * * *` schedule and the sensitive variable exists without being printed or committed.
+- Correction: preserve the sensitive variable and validate the route through the next platform-originated scheduled invocation instead of exporting or rotating the secret.
+- Regression evidence: Vercel invoked the exact production deployment at `2026-08-28T20:17:40Z` and returned `200`; PostgreSQL retained the two expected no-op audit receipts and readback remained at 0 reconciliation rows, 0 billing accounts, 0 Stripe events and 0 access grants.
+- Product impact: none; the scheduled no-op created no reconciliation work, billing account, Stripe event, access grant or entitlement.
+
+## INC-W7B-045 - Broad documentation patch changed the wrong evidence status
+
+- Classification: `SIMULATION_BUG`
+- Status: `fixed`
+- Regression: `regression_verified`
+- Detected at: 2026-08-28 22:19 CEST
+- Surface: final incident-ledger update.
+- Original scenario: a context-light patch intended to close the Cron evidence boundary matched the earlier PWA boundary and temporarily marked installed-PWA validation as fixed in the uncommitted diff.
+- Root cause: both incident sections shared identical status lines and the patch did not anchor the replacement to the incident heading.
+- Correction: restore INC-W7B-041 to `open_environment_boundary / contract_verified`, close only INC-W7B-044, and use heading-scoped patch contexts.
+- Regression evidence: the final diff explicitly retains physical installed PWA, Android and iPhone as pending while recording the scheduled Cron invocation as `200`.
+- Product impact: none; the accidental edit was found before commit and never reached GitHub or production.
