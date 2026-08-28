@@ -208,6 +208,21 @@ directo.
   nodes, matches, resultados, assignments y grants QA activos.
 - Ninguna reversión convierte payload local en fuente de verdad.
 
+## Readback documental final
+
+- PR de readback #212 fusionado en
+  `1a8c3af88b2f13079ea9aaedd639571f11871a2b`.
+- Deployment productivo exacto `dpl_75Mw2mHMhPZ8tF6iGh5ryUt9mRDZ`, READY,
+  con `pachangasiq.com` y `www.pachangasiq.com` resolviendo al mismo ID y sin
+  error de alias.
+- Smoke posterior: `/`, `/demo`, `/torneos`, `/manifest.webmanifest`, `/sw.js`
+  y `/demo-world/v2/manifest.json` devolvieron HTTP 200.
+- El Service Worker desplegado es `2.0.0+sw.1a8c3af88b2f` y conserva
+  `no-cache, no-store, must-revalidate`.
+- Readback PostgreSQL final: ledger 176, revision 17 / sequence 1853, 13 tablas
+  R6C vacias y autoridades protegidas en 1 Rating / 17 Rewards / 0 Conduct /
+  0 Billing.
+
 ## Estado actual
 
 `R6C_INVITE_ONLY_ACTIVE / LEDGER_176 / PRODUCTION_CANARY_PASS / DEMO_WORLD_V2_6_LIVE / SERVICE_WORKER_PASS`.
