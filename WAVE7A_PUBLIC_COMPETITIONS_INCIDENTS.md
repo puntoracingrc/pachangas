@@ -1801,3 +1801,20 @@ regression result marked `FIXED / REGRESSION_VERIFIED`.
 - Regression verified: the exact deployment returned HTTP application JSON
   `PUBLIC_COMPETITION_NOT_FOUND`, proving the runtime mismatch without leaking
   an environment value.
+
+### W7A-ENVIRONMENT-020 - Manual Vercel build has no Git directory
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `OPEN`
+- Original scenario: build the exact Wave 7A HEAD as an isolated Preview with
+  deployment-scoped staging Supabase variables.
+- Observed: Vercel reported `fatal: not a git repository` twice while the remote
+  build continued and finished `READY`.
+- Impact: application compilation succeeded, but generated client and Service
+  Worker version metadata must be checked before using this deployment as PWA
+  evidence.
+- Planned correction: inspect the build-time version fallback and the deployed
+  client policy/worker metadata; do not alter product code unless the resulting
+  version is invalid.
+- Regression plan: Preview reports a valid immutable client/worker version,
+  controls the page and completes one controlled reload without fake success.
