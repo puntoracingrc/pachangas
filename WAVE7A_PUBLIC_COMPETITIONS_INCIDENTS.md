@@ -2082,3 +2082,237 @@ regression result marked `FIXED / REGRESSION_VERIFIED`.
   `20260828072053`, all seven R6C indexes valid/ready, all Wave 7A flags OFF,
   deny-by-default table grants, Realtime invalidations and source refresh
   triggers present, with zero waiting or exclusive locks.
+
+### W7A-SIMULATION-029 - HTTP smoke loop shadowed zsh PATH
+
+- Classification: `SIMULATION_BUG`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: request the production root, public competitions, Demo and
+  API surfaces in a compact `zsh` loop after the exact deployment became READY.
+- Observed: naming the loop variable `path` mutated zsh's special `path` array,
+  so subsequent `curl` and `tr` invocations were reported as missing.
+- Impact: the probe produced no valid page status evidence; the application was
+  not implicated and no production state changed.
+- Planned correction: rename the loop variable to `route` and rerun the same
+  requests.
+- Regression plan: the corrected probe must resolve its binaries normally and
+  record an HTTP status and response size for every requested route.
+- Correction: the loop variable was renamed to `route`.
+- Regression verified: the corrected probe resolved `curl`, `wc` and `tr` and
+  returned an HTTP status and response size for all four requested paths.
+
+### W7A-SIMULATION-030 - Inactive smoke assumed an HTTP directory endpoint
+
+- Classification: `SIMULATION_BUG`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: include `/api/public-competition-directory` in the
+  deployment smoke beside the three actual page routes.
+- Observed: the deployment returned `404`; the public directory contract may be
+  a Supabase RPC rather than a Next HTTP route.
+- Impact: the page smoke passed, but this invented path is not valid evidence
+  for the read-model API.
+- Planned correction: inspect the shipped route/RPC contract and probe the real
+  public entrypoint without adding a compatibility endpoint by assumption.
+- Regression plan: the actual anonymous read entrypoint returns a canonical
+  flags-aware response while disabled.
+- Correction: the probe now targets the shipped endpoint
+  `/api/competitions/public/directory`.
+- Regression verified: with all Wave 7A flags OFF, production returned the
+  explicit canonical `503 PUBLIC_COMPETITION_DIRECTORY_UNAVAILABLE`; the three
+  page routes returned `200` and no false success was inferred.
+
+### W7A-ENVIRONMENT-031 - Activation orchestrator has no Web Crypto global
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: generate the first production activation `operationId`
+  with `crypto.randomUUID()` inside the V8 orchestration isolate.
+- Observed: the isolate raised `ReferenceError: crypto is not defined` before
+  constructing or sending any SQL command.
+- Impact: no RPC reached PostgreSQL and the production flag revision remained
+  17 with every Wave 7A capability OFF.
+- Planned correction: generate each UUID with the local system `uuidgen`, then
+  invoke the same staged RPC command with a fresh key.
+- Regression plan: every stage returns its expected confirmed revision and all
+  four operation IDs are distinct and present once in the platform ledger.
+- Correction: all activation UUIDs were generated with system `uuidgen` and
+  normalized to lowercase before the SQL files were executed.
+- Regression verified: revisions advanced `17 -> 18 -> 19 -> 20 -> 21`; the
+  four replacement operation IDs are distinct and each appears exactly once as
+  `public_competitions.flags.set` in the platform ledger.
+
+### W7A-SIMULATION-032 - Shell expanded the SQL dollar-quote delimiter
+
+- Classification: `SIMULATION_BUG`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: pass the stage-one anonymous block as an inline shell
+  argument to `supabase db query --linked`.
+- Observed: the double-quoted argument expanded `$wave7a` before the CLI sent
+  it, leaving an invalid `do $ ... $` statement; PostgreSQL returned syntax
+  error `42601`.
+- Impact: the RPC body never ran and production remained at flag revision 17
+  with all Wave 7A capabilities OFF.
+- Planned correction: execute reviewed temporary SQL files through `--file`,
+  avoiding shell interpolation entirely.
+- Regression plan: the four staged files each commit one canonical RPC call,
+  return the expected readback and are deleted after release closure.
+- Correction: each stage was executed through `supabase db query --file`; the
+  shell no longer interpolated SQL delimiters.
+- Regression verified: every file committed one canonical RPC call and
+  returned its expected revision. Their deletion remains part of final release
+  cleanup, not product state.
+
+### W7A-SIMULATION-033 - Activation probe used a nonexistent role timestamp
+
+- Classification: `SIMULATION_BUG`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: select the single active platform owner inside the first
+  reviewed activation file before invoking the canonical flags RPC.
+- Observed: the temporary query ordered by `created_at`, while
+  `pachanga_platform_admin_roles` exposes `granted_at` and `updated_at`.
+  PostgreSQL returned `42703` before the RPC call.
+- Impact: the anonymous block rolled back in full, no platform ledger row was
+  created and production remained at revision 17 with all Wave 7A flags OFF.
+- Planned correction: order by the canonical `granted_at` column and replace
+  all four unused operation IDs before retrying stage one.
+- Regression plan: the four stage readbacks advance revisions 17 through 21
+  and the platform ledger contains exactly one row per replacement ID.
+- Correction: the selector now orders the single active platform owner by
+  `granted_at, user_id`; all four previously unused IDs were replaced.
+- Regression verified: all four stages passed, revision is 21, sequence is
+  2614 and the platform ledger contains exactly one row per replacement ID.
+
+### W7A-SIMULATION-034 - Multiline readiness SQL was passed as a literal escape
+
+- Classification: `SIMULATION_BUG`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: query aggregate production-canary readiness through an
+  inline multiline argument after activation.
+- Observed: shell/CLI argument handling preserved the leading `\\n` escape and
+  PostgreSQL rejected it with syntax error `42601`.
+- Impact: the readiness query did not execute and no production row changed.
+- Planned correction: use the already established reviewed temporary-file path
+  for every remaining multiline diagnostic and canary command.
+- Regression plan: the same aggregate query succeeds from a file without
+  exposing actor identity or changing data.
+- Correction: the aggregate readiness query was moved to
+  `/tmp/wave7a-canary-readiness.sql` and executed with `--file`.
+- Regression verified: it returned only non-PII counts: 12 groups, two owned by
+  the platform owner, zero of those with a create entitlement, zero owned Clubs
+  and ten distinct non-platform-owner groups eligible for the canary.
+
+### W7A-SIMULATION-035 - Canary omitted the League Private Beta bundle prerequisite
+
+- Classification: `SIMULATION_BUG`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: create the ephemeral production canary with an eligible
+  QA/demo group, then continue its setup as `pachanga_groups.owner_id`.
+- Observed: `competition.create` succeeded inside the transaction, but the next
+  `edition.create` command raised `COMPETITION_ACCESS_DENIED`. Readback proved
+  that the actor resolved as `competition_owner`; the missing prerequisite was
+  an active `LEAGUE_PRIVATE_BETA_V1` capability bundle.
+- Impact: the anonymous block rolled back in full. No canary competition,
+  publication, registration request, Entry or temporary entitlement committed.
+- Planned correction: grant one temporary beta bundle through
+  `command_pachanga_league_private_beta_platform_v1`; do not add a second
+  `competition_create` entitlement because the bundle already contains it.
+- Regression plan: first prove zero residue from the failed transaction, then
+  run the corrected canary once and confirm the organizer can complete the
+  canonical workflow, the platform actor performs independent review and final
+  cleanup leaves only cancelled/archived audit evidence with no active grant or
+  indexable public row.
+- Correction: the canary used only `beta.bundle.grant` with a one-hour expiry,
+  kept organizer and platform actors distinct and revoked the bundle through
+  `beta.bundle.revoke` after cleanup.
+- Regression verified: the owner completed the organizer workflow, the platform
+  approved and published independently, and final readback reported cancelled,
+  archived, zero active bundle and zero indexable row.
+
+### W7A-SIMULATION-036 - Canary batched organizer and platform authority in one SQL block
+
+- Classification: `SIMULATION_BUG`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: create, submit, approve, publish and retire the ephemeral
+  Competition inside one management-API SQL block while changing JWT claims
+  between organizer and platform actors.
+- Observed: the first platform moderation command raised
+  `PUBLIC_COMPETITION_MODERATION_CONFLICT`; the transaction rolled back in full.
+- Impact: no publication or beta bundle from the failed block committed and no
+  public or indexable QA surface remained. Product clients do not batch these
+  actors into one request.
+- Planned correction: preserve one server-authoritative request per actor and
+  command boundary: commit organizer submission first, then approve, publish,
+  assert anonymous privacy, unpublish, archive, cancel and revoke the temporary
+  beta bundle through separate canonical calls.
+- Regression plan: each call returns its next canonical revision; anonymous
+  readback sees an unlisted/noindex/closed Competition with no private fields;
+  final readback reports archived publication, cancelled Competition, zero
+  active requests, zero Entries, zero indexable slug and zero active bundle.
+- Correction: organizer submission committed first; approve, publish, anonymous
+  read, unpublish, archive, cancel and revoke each ran as a separate canonical
+  request with a fresh operation ID and current expected revision.
+- Regression verified: all boundaries passed; the canary contains 16
+  server-ordered competition events, no private field reached the anonymous
+  projection and cleanup left no active public or entitlement state.
+
+### W7A-SIMULATION-037 - Final canary readback contained a stray diff marker
+
+- Classification: `SIMULATION_BUG`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: run the aggregate-only final readback after every canary
+  command and cleanup RPC had succeeded.
+- Observed: the generated SQL contained a stray leading `+` before the closing
+  `jsonb_build_object`, so PostgreSQL returned syntax error `42601`.
+- Impact: no write was attempted by the failed statement. The Competition had
+  already been cancelled, its publication archived and its beta bundle revoked.
+- Planned correction: remove the stray marker and rerun only the read-only
+  aggregate query.
+- Regression plan: the corrected query returns the cancelled/archived state,
+  zero active requests, Entries, fixtures, indexable slugs and beta bundle,
+  together with the stable server-ordered operation evidence.
+- Correction: the stray marker was removed and only the aggregate readback was
+  repeated; no command RPC was replayed.
+- Regression verified: the query returned cancelled Competition, archived
+  unlisted publication, CLOSED registration and zero fixtures, requests,
+  Entries, indexable slugs and active beta bundle.
+
+### W7A-SIMULATION-038 - Browser diagnostic object was parsed as a bare identifier
+
+- Classification: `SIMULATION_BUG`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: aggregate URL, title, overflow, broken images, headings and
+  links in one `agent-browser eval` object after loading `/competiciones`.
+- Observed: the CLI evaluated one object key as a bare `h1` identifier and
+  raised `ReferenceError`; navigation and the interactive snapshot had already
+  loaded successfully.
+- Impact: no product action or production state changed; the combined metrics
+  expression produced no evidence.
+- Planned correction: split the probe into simple array-based evaluations and
+  independent console/error commands.
+- Regression plan: desktop, portrait and landscape probes return explicit URL,
+  title, overflow and broken-image values, and the browser reports no uncaught
+  page errors.
+- Correction: JavaScript evaluation was moved out of the batch tokenizer and
+  passed as one safely quoted standalone expression.
+- Regression verified: `/competiciones` returned exact viewport/root widths at
+  1440, 390 and 844 pixels, zero broken images and no browser console or page
+  errors; Demo V2.7 returned the same clean metrics.
+
+### W7A-SIMULATION-039 - Backticks in a shell search pattern invoked macOS open
+
+- Classification: `SIMULATION_BUG`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: search incident headings and the literal Markdown status
+  `` `OPEN` `` with one double-quoted `rg` command.
+- Observed: `zsh` treated the backticks as command substitution and invoked the
+  system `open` command before `rg` printed the matching ledger lines.
+- Impact: no repository, database, deployment or browser state changed.
+- Planned correction: avoid shell interpolation for literal Markdown searches
+  and inspect the known section by line range.
+- Regression plan: the incident section is read without invoking any auxiliary
+  process and all actionable incident statuses are closed.
+- Correction: subsequent ledger inspection uses literal-safe arguments and
+  direct line ranges.
+- Regression verified: the four canary/browser incidents are now recorded as
+  `FIXED / REGRESSION_VERIFIED`; only the explicitly documented physical-device
+  QA item remains pending.
