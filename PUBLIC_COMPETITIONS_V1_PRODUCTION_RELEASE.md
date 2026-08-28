@@ -2,12 +2,12 @@
 
 ## Estado
 
-`MIGRATIONS APPLIED / FLAGS OFF / MERGE PENDING`
+`LIVE / MERGED / DEPLOYED / CANARY CLEAN`
 
-Este documento se incorpora al PR funcional para conservar el plan y la
-evidencia previa. Se cerrara mediante un follow-up documental con SHA, ledger,
-deployment, activacion, canary y cleanup realmente leidos de produccion. Ningun
-campo pendiente de esta version se presenta como hecho.
+Wave 7A esta activa en produccion con autoridad PostgreSQL, publicacion
+moderada, directorio y solicitudes controladas por flags. La evidencia que
+sigue procede de GitHub, Vercel y readbacks directos de PostgreSQL; no presenta
+como realizada la QA fisica que sigue pendiente.
 
 ## Baseline
 
@@ -23,7 +23,8 @@ campo pendiente de esta version se presenta como hecho.
 | Schema hash fresh/upgrade | `7273cef0f24cc4881179475c81c7196dde8d084c9af39316ecf250a33e8e708d` |
 | Backup fisico previo | `1499793836`, `COMPLETED`, `2026-08-28T00:18:34.331Z` |
 | Dump logico previo | `5,088,476 bytes`, SHA-256 `841d39ca9b5d0b1bbb3266ce220f9f5ee48364461ba110c4750aa590fa2a837a` |
-| Produccion | `SCHEMA 183 / FLAGS WAVE 7A OFF` |
+| Main funcional final | `a8fa127901fcb32e60bd5cc096770f5ee1737a3d` |
+| Produccion | `SCHEMA 183 / FLAGS WAVE 7A ACTIVE / revision 21` |
 
 ## Migraciones candidatas exactas
 
@@ -48,6 +49,18 @@ campo pendiente de esta version se presenta como hecho.
 - Service Worker exacto: `2.0.0+sw.15049e0ee32f`;
 - visual: ocho viewports, 0 overflow raiz, 0 imagenes rotas, 0 consola;
 - PWA instalada fisica: PENDING, no es bloqueo autorizado de esta release.
+
+## Merge y deployment
+
+- PR funcional: `#215`, fusionado sin reescribir migraciones;
+- merge SHA: `a8fa127901fcb32e60bd5cc096770f5ee1737a3d`;
+- deployment Vercel: `dpl_DGfk1Q9M5X9QXPmk2BMqmsdvikve`;
+- URL exacta: `pachangas-phre49c5g-persianas-almar-web-s-projects.vercel.app`;
+- target/estado: `production / READY`;
+- aliases: `pachangasiq.com` y `www.pachangasiq.com`;
+- Service Worker productivo: `2.0.0+sw.a8fa127901fc`;
+- manifest y Service Worker: `200`, con politica `no-cache/no-store` para el
+  worker y controller activo tras recarga.
 
 ## Migracion productiva
 
@@ -75,12 +88,57 @@ como evidencia ni provoco un reintento. El readback independiente confirma:
 | `20260828072052` | `public_competition_access_realtime_v1` | 28 | `b504e40c9e89b047a04d4ed36af9b55eca1aa232829f6dda29950133c3bc5cb6` |
 | `20260828072053` | `public_competition_product_flags_hardening_v1` | 20 | `03a1443f3df6847c083e58160280e55f6bf49b365db5a1ee5972ce2bd09ede25` |
 
+## Activacion escalonada
+
+Toda activacion paso por la RPC de plataforma con `operationId`, revision
+esperada y secuencia de servidor. Cada ID aparece exactamente una vez en el
+ledger de plataforma.
+
+| Etapa | Operation ID | Revision | Sequence |
+| --- | --- | --- | ---: |
+| Foundation + publication | `e9cd07e2-1592-4937-bf67-310556c6da9b` | `17 -> 18` | 2611 |
+| Discovery | `cefe548c-9172-4b29-9095-9974e27bf593` | `18 -> 19` | 2612 |
+| Requests + waitlist | `a178595e-64e2-46d4-a408-b50244def6f2` | `19 -> 20` | 2613 |
+| Read models publicos seguros | `b9e897f1-9a44-46c8-a929-db0ff996e971` | `20 -> 21` | 2614 |
+
+Flags ON: foundation, publication, discovery, registration requests, waitlist,
+calendar, results, standings, bracket, exception status y referees. Permanecen
+OFF: discipline y autoaccept. Payments, billing, two-leg y double elimination
+no se activaron.
+
+El smoke previo devolvio el `503 PUBLIC_COMPETITION_DIRECTORY_UNAVAILABLE`
+esperado con flags OFF. Tras discovery, el mismo endpoint devolvio `200` y un
+directorio canonico vacio.
+
+## Canary productivo
+
+El canary uso un Team QA/demo sin usuarios nuevos. El bundle beta temporal,
+Competition, Edition, regla, categoria, publicacion y cleanup pasaron por sus
+RPC canonicas con revision esperada e IDs idempotentes distintos.
+
+- ciclo: create -> submit -> approve -> publish -> anonymous read -> unpublish
+  -> archive -> cancel -> revoke;
+- separacion: propietario organizador y platform owner distintos;
+- visibilidad: `UNLISTED`, `noindex` y ausente del directorio/sitemap;
+- registro: `CLOSED`;
+- privacidad anonima: sin email, telefono, attendance, evidencias ni motivos
+  privados;
+- resultado final: Competition `cancelled`, publication `archived`;
+- evidencia: 16 eventos de Competition ordenados por `server_sequence`;
+- residuos activos: 0 fixtures, 0 requests, 0 Entries, 0 slugs indexables y 0
+  bundles/grants activos;
+- notificaciones QA: tres avisos historicos, marcados como leidos mediante RPC;
+- intentos fallidos previos: transacciones revertidas o Competition incompleta
+  cancelada y grant revocado; cero superficie activa.
+
 ## Advisors productivos
 
-El Advisor de rendimiento devuelve 820 avisos globales preexistentes o
+El Advisor de seguridad devuelve 551 avisos globales revisados; las superficies
+Wave 7A mantienen RLS y grants directos cerrados y exponen solo RPC/read models
+intencionales. El Advisor de rendimiento devuelve 820 avisos globales preexistentes o
 informativos: 588 FK sin indice, 230 indices aun sin uso, un indice duplicado y
 un aviso de conexiones Auth. Para Wave 7A aparecen 18 FK informativas y 12
-indices nuevos aun sin uso, coherente con tablas vacias y flags OFF.
+indices nuevos aun sin uso, coherente con su estreno sin datos publicos reales.
 
 Los dos avisos R6C residuales corresponden a `source_group_id` y
 `resolved_entry_id` de `pachanga_tournament_bracket_slots`. No existe una ruta
@@ -113,23 +171,43 @@ cero CompetitionEntries y cero canonical match contexts.
 | Billing webhooks | 0 | `d41d8cd98f00b204e9800998ecf8427e` |
 | Provincial ranking entries | 0 | `d41d8cd98f00b204e9800998ecf8427e` |
 
+El readback posterior al canary devolvio exactamente los mismos ocho conteos y
+digests. Rating V2, Rewards, Player Cosmetics, Team Cosmetics, Conduct, Billing
+y Ranking no fueron modificados por Wave 7A.
+
 PITR esta deshabilitado; WAL-G y backups fisicos estan disponibles. El backup
-fisico anterior y el dump logico se conservaran hasta terminar canary y
-readback final.
+fisico anterior y el dump logico quedaron verificados como evidencia previa al
+release; no fue necesario restaurar ni ejecutar rollback.
 
-## Secuencia de produccion
+## Secuencia ejecutada
 
-1. Conciliar `supabase migration list --linked`.
-2. Crear backup recuperable y registrar baseline.
-3. Aplicar exactamente las siete migraciones con flags naciendo OFF.
-4. Confirmar ledger 183, hashes, ACL, indices y Advisors.
-5. Fusionar PR #215 y esperar deployment READY del SHA exacto.
-6. Hacer smoke inactivo.
-7. Activar escalonadamente mediante `set_pachanga_public_competition_flags_v1`.
-8. Mantener discipline, autoaccept, payments, billing, two-leg y double
-   elimination OFF.
-9. Ejecutar canary unlisted/noindex/closed sin usuarios reales y limpiarlo.
-10. Verificar Demo World V2.7, dominio, Service Worker y readback final.
+1. Se concilio `supabase migration list --linked`.
+2. Se creo backup recuperable y se registro el baseline.
+3. Se aplicaron exactamente las siete migraciones con flags naciendo OFF.
+4. Se confirmaron ledger 183, hashes, ACL, indices y Advisors.
+5. Se fusiono PR #215 y se espero el deployment READY del SHA exacto.
+6. Se ejecuto el smoke inactivo.
+7. Se activo escalonadamente mediante RPC de plataforma.
+8. Discipline, autoaccept, payments, billing, two-leg y double elimination
+   permanecieron OFF.
+9. Se ejecuto y limpio el canary unlisted/noindex/closed sin usuarios nuevos.
+10. Se verificaron Demo World V2.7, dominio, Service Worker y readback final.
+
+## QA productiva
+
+- `/`, `/competiciones` y `/demo`: HTTP/navegacion correctos;
+- `/competiciones`: 1440x900, 390x844 y 844x390 sin overflow raiz, controles
+  cortados, imagenes rotas, errores de consola ni excepciones de pagina;
+- Demo V2.7: portrait y landscape limpios; escenarios Directorio, Liga publica,
+  Torneo, Solicitudes, Waitlist, No listada, Organizador y Participante
+  accesibles, con Liga publica navegable;
+- PWA: manifest presente, Service Worker controller activo, shell recargable
+  offline, fetch `no-store` bloqueado sin red y `200` tras reconexion;
+- instalacion fisica Android/iPhone/PWA: `PENDING`, no declarada como PASS;
+- Vercel: cero clusters de runtime error en dos horas;
+- logs del deployment: `200/304`; el unico 503 del directorio corresponde al
+  smoke deliberado con flags OFF. Los 503 restantes son la deuda separada y
+  preexistente de Ranking `CRON_SECRET`.
 
 ## Rollback
 
@@ -138,13 +216,18 @@ con flags OFF. Despues de activar, desactivar via RPC de plataforma y hacer
 roll-forward; no reabrir tablas ni convertir read models en autoridad. El
 backup previo se conserva hasta cerrar smoke y readback.
 
-## Campos a cerrar tras produccion
+Rollback ejecutado: **NO**. La ruta disponible sigue siendo desactivar mediante
+RPC de plataforma y hacer roll-forward; nunca reabrir tablas ni convertir read
+models en autoridad.
 
-- main final y merge SHA;
-- backup y baseline exactos;
-- ledger remoto y hashes;
-- deployment Vercel y dominio;
-- operacion/revision/secuencia de flags;
-- canary y conteos finales;
-- Demo V2.7 LIVE;
-- cleanup de staging, Preview, temporales y worktree.
+## Cierre
+
+- Demo World V2.7: `LIVE`, hash de snapshot
+  `e4830ff25db5318a169e0e8da5cf7ffb8820beee8616cc6e88e8cf6a05a2b7dd`;
+- remote writes de Demo: `0`;
+- ledger remoto: `183`, ultima migracion `20260828072053`;
+- QA activa: 0 Competitions, 0 publications, 0 requests, 0 Entries, 0 slugs
+  indexables y 0 grants/bundles del canary;
+- locks finales: 0 waiting, 0 exclusive;
+- Wave 7B: **NO INICIADA**;
+- formatos avanzados: **NO INICIADOS**.
