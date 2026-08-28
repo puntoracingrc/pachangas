@@ -1,0 +1,27 @@
+.page { display: grid; gap: 16px; min-height: 100%; min-width: 0; padding: 18px max(18px, env(safe-area-inset-right)) calc(88px + env(safe-area-inset-bottom)) max(18px, env(safe-area-inset-left)); }
+.filters { align-items: end; background: color-mix(in srgb, #0b1815 84%, transparent); border: 1px solid rgba(116, 211, 180, .2); display: grid; gap: 9px; grid-template-columns: minmax(180px, 1.5fr) repeat(5, minmax(115px, 1fr)) auto; padding: 11px; }
+.filters label { color: #aebbb6; display: grid; font-size: .68rem; gap: 5px; text-transform: uppercase; }
+.filters input, .filters select { background: #091310; border: 1px solid rgba(203, 231, 220, .22); color: #f4f8f6; min-height: 39px; min-width: 0; padding: 0 9px; }
+.filters button, .pagination button { background: #b9ea48; border: 0; color: #10170d; font-weight: 850; min-height: 39px; padding: 0 13px; }
+.grid { display: grid; gap: 12px; grid-template-columns: repeat(3, minmax(0, 1fr)); min-width: 0; }
+.card { background: color-mix(in srgb, #10201c 90%, transparent); border: 1px solid rgba(116, 211, 180, .2); display: grid; grid-template-columns: 118px minmax(0, 1fr); min-height: 224px; min-width: 0; overflow: hidden; }
+.visual { background: #0a2420; min-height: 100%; overflow: hidden; position: relative; }
+.visual::after { background: linear-gradient(180deg, transparent 48%, rgba(2, 10, 8, .88)); content: ""; inset: 0; position: absolute; }
+.visual img { object-fit: cover; }
+.visual > span { align-items: center; color: rgba(185, 234, 72, .92); display: flex; font-size: 2rem; font-weight: 900; inset: 0; justify-content: center; position: absolute; }
+.visual > b { bottom: 10px; color: #fff; font-size: .68rem; left: 10px; position: absolute; text-transform: uppercase; z-index: 1; }
+.cardBody { display: grid; gap: 9px; min-width: 0; padding: 13px; }
+.chips { display: flex; flex-wrap: wrap; gap: 5px; }
+.card h2 { color: #f5f8f6; font-size: 1.05rem; margin: 0; overflow-wrap: anywhere; }
+.card p { color: #aebbb6; font-size: .8rem; margin: 0; }
+.card dl { display: grid; gap: 5px; grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 0; }
+.card dl div { min-width: 0; }
+.card dt { color: #70817a; font-size: .58rem; text-transform: uppercase; }
+.card dd { color: #e8efec; font-size: .72rem; margin: 2px 0 0; overflow-wrap: anywhere; }
+.open { align-items: center; align-self: end; background: transparent; border: 1px solid rgba(185, 234, 72, .46); color: #d9f58c; cursor: pointer; display: inline-flex; font: inherit; font-size: .78rem; font-weight: 800; justify-content: center; min-height: 34px; padding: 0 10px; text-decoration: none; }
+.empty, .pagination { color: #aebbb6; }
+.pagination { align-items: center; display: flex; gap: 12px; justify-content: center; }
+.pagination button:disabled { opacity: .45; }
+@media (max-width: 1180px) { .filters { grid-template-columns: repeat(4, minmax(0, 1fr)); } .search { grid-column: span 2; } .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 620px) { .page { padding: 12px 12px calc(84px + env(safe-area-inset-bottom)); } .filters { grid-template-columns: 1fr 1fr; } .search { grid-column: 1 / -1; } .grid { grid-template-columns: 1fr; } .card { grid-template-columns: 92px minmax(0, 1fr); min-height: 206px; } .card dl { grid-template-columns: 1fr 1fr; } }
+@media (orientation: landscape) and (pointer: coarse), (orientation: landscape) and (max-height: 560px) { .page { gap: 9px; padding: 9px; } .filters { grid-template-columns: repeat(7, minmax(0, 1fr)); padding: 7px; } .search { grid-column: auto; } .filters input, .filters select, .filters button { min-height: 32px; } .grid { grid-auto-columns: minmax(290px, 31%); grid-auto-flow: column; grid-template-columns: none; overflow-x: auto; overscroll-behavior-inline: contain; padding-bottom: 6px; scroll-snap-type: x proximity; } .card { min-height: 184px; scroll-snap-align: start; } }

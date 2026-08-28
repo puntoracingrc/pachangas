@@ -15,6 +15,7 @@ import {
   type DemoWorldV2LeagueEntry,
   type DemoWorldV2LeagueMatch,
   type DemoWorldV2Manifest,
+  type DemoWorldV2PublicCompetitionsChunk,
   type DemoWorldV2Snapshot,
   type DemoWorldV2TournamentChunk,
   type DemoWorldV2TournamentOutcome,
@@ -29,7 +30,7 @@ import {
 import { generateDemoWorld } from "./generate-demo-world";
 
 export const DEMO_WORLD_V2_NOW = "2027-03-18T18:00:00.000Z";
-const DEMO_WORLD_V2_GENERATED_AT = "2026-08-27T14:00:00.000Z";
+const DEMO_WORLD_V2_GENERATED_AT = "2026-08-28T14:00:00.000Z";
 const LEAGUE_TEAM_IDS = [
   "demo_team_001",
   "demo_team_002",
@@ -1022,6 +1023,23 @@ function buildTournament(
   };
 }
 
+function buildPublicCompetitions(
+  authorityProof: DemoWorldV2AuthorityProof,
+): DemoWorldV2PublicCompetitionsChunk {
+  return {
+    ...structuredClone(authorityProof.publicCompetitions),
+    provenance: {
+      authorityHash: authorityProof.authorityHash,
+      database: authorityProof.database,
+      rpcFamilies: ["PUBLICATION", "REGISTRATION_REQUESTS", "WAITLIST", "PUBLIC_READ_MODELS"],
+      source: "simulation-world",
+      verified: true,
+    },
+    readOnly: true,
+    transport: { methods: ["GET"], remoteWrites: 0 },
+  };
+}
+
 export function generateDemoWorldV2(
   authorityProof = loadDemoWorldV2AuthorityProof(),
 ): DemoWorldV2Snapshot {
@@ -1033,6 +1051,7 @@ export function generateDemoWorldV2(
     competitions.refereeAssignmentDeskPreview,
   );
   const configuration = buildConfiguration(authorityProof);
+  const publicCompetitions = buildPublicCompetitions(authorityProof);
   const tournament = buildTournament(v1.core.teams, authorityProof);
   const activity = structuredClone(v1.activity);
   const core = structuredClone(v1.core);
@@ -1046,7 +1065,7 @@ export function generateDemoWorldV2(
     summary: "Consulta la competición y sus decisiones públicas sin alterar el snapshot.",
     teamId: "demo_team_001",
   });
-  const payload = { activity, clubsReferees, competitions, configuration, core, matches, players, tournament };
+  const payload = { activity, clubsReferees, competitions, configuration, core, matches, players, publicCompetitions, tournament };
   const snapshotHash = hash(payload);
   const cacheKey = snapshotHash.slice(0, 16);
   const manifest: DemoWorldV2Manifest = {
@@ -1058,6 +1077,7 @@ export function generateDemoWorldV2(
       core: `/demo-world/v2/core.json?h=${cacheKey}`,
       matches: `/demo-world/v2/matches.json?h=${cacheKey}`,
       players: `/demo-world/v2/players.json?h=${cacheKey}`,
+      publicCompetitions: `/demo-world/v2/public-competitions.json?h=${cacheKey}`,
       tournament: `/demo-world/v2/tournament.json?h=${cacheKey}`,
     },
     counts: {
@@ -1072,7 +1092,9 @@ export function generateDemoWorldV2(
       matches: matches.matches.length,
       notifications: activity.notifications.length,
       players: players.players.length,
+      publicCompetitions: 4,
       referees: clubsReferees.referees.length,
+      registrationRequests: publicCompetitions.requests.length,
       ruleRevisions: configuration.revisions.length,
       rewardBoxes: activity.rewardBoxes.length,
       rounds: competitions.rounds.length
@@ -1106,6 +1128,7 @@ export async function writeDemoWorldV2(snapshot: DemoWorldV2Snapshot, outputDire
     "manifest.json": snapshot.manifest,
     "matches.json": snapshot.matches,
     "players.json": snapshot.players,
+    "public-competitions.json": snapshot.publicCompetitions,
     "tournament.json": snapshot.tournament,
   };
   for (const [name, value] of Object.entries(files)) {
@@ -1126,6 +1149,7 @@ async function main() {
     core: snapshot.core,
     matches: snapshot.matches,
     players: snapshot.players,
+    publicCompetitions: snapshot.publicCompetitions,
     tournament: snapshot.tournament,
   }));
   process.stdout.write(`${JSON.stringify({

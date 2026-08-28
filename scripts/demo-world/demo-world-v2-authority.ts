@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 
-export const DEMO_WORLD_V2_AUTHORITY_PROOF_VERSION = 7 as const;
+export const DEMO_WORLD_V2_AUTHORITY_PROOF_VERSION = 8 as const;
 
 export type DemoWorldV2AuthorityProofConfigurationRevision = {
   authoringMode: "ADVANCED" | "SIMPLE";
@@ -563,12 +563,45 @@ export type DemoWorldV2AuthorityProofTournament = {
   tournamentMatches: 24;
 };
 
+export type DemoWorldV2AuthorityProofPublicCompetitionView = {
+  bracket: Record<string, unknown> | null;
+  calendar: Record<string, unknown>;
+  hub: Record<string, unknown>;
+  slug: string;
+  standings: Record<string, unknown>;
+};
+
+export type DemoWorldV2AuthorityProofPublicCompetitions = {
+  directory: Record<string, unknown>;
+  league: DemoWorldV2AuthorityProofPublicCompetitionView;
+  organizerPrivate: {
+    hub: Record<string, unknown>;
+    slug: "liga-privada-organizador-demo";
+  };
+  operationReceipts: number;
+  privacy: {
+    containsContactData: false;
+    containsOwnerIdentity: false;
+    containsPrivateReason: false;
+    containsRequestMessage: false;
+  };
+  remoteWrites: 0;
+  requests: Array<{
+    entryCreated: boolean;
+    status: "accepted" | "rejected" | "waitlisted" | "withdrawn";
+    team: { name: string };
+    waitlistPosition: number | null;
+  }>;
+  tournament: DemoWorldV2AuthorityProofPublicCompetitionView;
+  unlisted: DemoWorldV2AuthorityProofPublicCompetitionView;
+};
+
 export type DemoWorldV2AuthorityProof = {
   authorityHash: string;
   configuration: DemoWorldV2AuthorityProofConfiguration;
   database: "temporary-local-postgresql";
   discipline: DemoWorldV2AuthorityProofDiscipline;
-  generatedAt: "2026-08-27T14:00:00.000Z";
+  generatedAt: "2026-08-28T14:00:00.000Z";
   matchCount: 15;
   matches: DemoWorldV2AuthorityProofMatch[];
   migrationCount: number;
@@ -582,8 +615,9 @@ export type DemoWorldV2AuthorityProof = {
     scheduling: number;
   };
   refereeAssignments: DemoWorldV2AuthorityProofRefereeAssignments;
+  publicCompetitions: DemoWorldV2AuthorityProofPublicCompetitions;
   remoteWrites: 0;
-  rpcFamilies: ["R1", "R3", "R4A", "R4B", "R4C", "R4D", "R5", "R6A", "R6B", "R6C"];
+  rpcFamilies: ["R1", "R3", "R4A", "R4B", "R4C", "R4D", "R5", "R6A", "R6B", "R6C", "PUBLIC_COMPETITIONS"];
   roundCount: 5;
   standings: DemoWorldV2AuthorityProofStanding[];
   tournament: DemoWorldV2AuthorityProofTournament;
@@ -942,6 +976,61 @@ export function assertDemoWorldV2AuthorityProof(value: DemoWorldV2AuthorityProof
   }
   if (!value.rpcFamilies.includes("R6C")) {
     throw new Error("DEMO_WORLD_V2_6_RPC_FAMILY_MISSING");
+  }
+  const publicCompetitions = value.publicCompetitions;
+  const directoryItems = Array.isArray(publicCompetitions.directory.items)
+    ? publicCompetitions.directory.items as Array<Record<string, unknown>>
+    : [];
+  const directorySlugs = directoryItems.map((item) => String(
+    (item.publication as Record<string, unknown> | undefined)?.slug ?? "",
+  ));
+  if (directoryItems.length !== 2
+      || !directorySlugs.includes("liga-publica-wave-7a")
+      || !directorySlugs.includes("copa-barrios-iq-2027")
+      || directorySlugs.includes("copa-enlace-demo")
+      || directorySlugs.includes("liga-privada-organizador-demo")) {
+    throw new Error("DEMO_WORLD_V2_7_PUBLIC_DIRECTORY_INVALID");
+  }
+  const publicViews = [publicCompetitions.league, publicCompetitions.tournament];
+  if (publicViews.some(({ hub }) => {
+    const publication = (hub.publication ?? {}) as Record<string, unknown>;
+    return publication.visibility !== "public" || publication.status !== "published";
+  })) {
+    throw new Error("DEMO_WORLD_V2_7_PUBLIC_HUB_INVALID");
+  }
+  const unlistedPublication = (publicCompetitions.unlisted.hub.publication ?? {}) as Record<string, unknown>;
+  const privatePublication = (publicCompetitions.organizerPrivate.hub.publication ?? {}) as Record<string, unknown>;
+  if (unlistedPublication.visibility !== "unlisted" || unlistedPublication.status !== "published"
+      || privatePublication.visibility !== "private" || privatePublication.status !== "draft") {
+    throw new Error("DEMO_WORLD_V2_7_VISIBILITY_INVALID");
+  }
+  const statuses = new Map(publicCompetitions.requests.map((request) => [request.status, request]));
+  if (!["accepted", "waitlisted", "rejected", "withdrawn"].every((status) => statuses.has(status as never))
+      || statuses.get("accepted")?.entryCreated !== true
+      || statuses.get("waitlisted")?.entryCreated !== false
+      || !statuses.get("waitlisted")?.waitlistPosition
+      || statuses.get("rejected")?.entryCreated !== false
+      || statuses.get("withdrawn")?.entryCreated !== false) {
+    throw new Error("DEMO_WORLD_V2_7_REGISTRATION_STORIES_INVALID");
+  }
+  if (publicCompetitions.remoteWrites !== 0) {
+    throw new Error("DEMO_WORLD_V2_7_REMOTE_WRITES_INVALID");
+  }
+  if (publicCompetitions.operationReceipts < 16) {
+    throw new Error("DEMO_WORLD_V2_7_OPERATION_RECEIPTS_INVALID");
+  }
+  if (Object.values(publicCompetitions.privacy).some(Boolean)) {
+    throw new Error("DEMO_WORLD_V2_7_PRIVACY_FLAGS_INVALID");
+  }
+  const publicCompetitionPayload: Record<string, unknown> = { ...publicCompetitions };
+  delete publicCompetitionPayload.privacy;
+  if (/@example|\+34|privateReason|requestedBy|ownerId|owner_id|"message"/i.test(
+    JSON.stringify(publicCompetitionPayload),
+  )) {
+    throw new Error("DEMO_WORLD_V2_7_PRIVATE_FIELD_LEAK");
+  }
+  if (!value.rpcFamilies.includes("PUBLIC_COMPETITIONS")) {
+    throw new Error("DEMO_WORLD_V2_7_RPC_FAMILY_MISSING");
   }
   if (JSON.stringify(tournament).match(/[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/i)) {
     throw new Error("DEMO_WORLD_V2_4_INTERNAL_ID_LEAK");

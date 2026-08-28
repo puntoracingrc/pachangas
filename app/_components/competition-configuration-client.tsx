@@ -18,6 +18,7 @@ import { leaguePrivateBetaPresets, leaguePrivateBetaSteps } from "../league-priv
 import { clientWriteFetch } from "../pwa-client-bridge";
 import { supabase } from "../supabaseClient";
 import { CompetitionConfigurationFields, competitionConfigurationStepPayload, type CompetitionAuthoringMode } from "./competition-configuration-fields";
+import { CompetitionPublicationControl } from "./competition-publication-control";
 import { OfficialProductShellV2 } from "./official-product-shell-v2";
 import { GamePageHeader, MetricTile, ProductFeedback, SectionHeader, StatusChip } from "./official-ui-v2-primitives";
 import styles from "./competition-configuration-client.module.css";
@@ -242,6 +243,7 @@ export function CompetitionConfigurationClient({ competitionId }: { competitionI
           <Impact impact={impact} />
           <div className={styles.releaseBar}>{configurationText(draft.status) === "validated" ? <><label><input type="checkbox" checked={publishConfirmed} onChange={(event) => setPublishConfirmed(event.target.checked)} />He revisado el resumen y el impacto.</label><button className={styles.publish} type="button" disabled={busy || !publishConfirmed} onClick={() => void command("draft.publish", configurationText(draft.id), configurationNumber(draft.revision), { confirmImpact: true, confirmRuleSummary: true, reason: "Nueva RuleRevision confirmada" })}>Publicar RuleRevision</button></> : <button className={styles.validate} type="button" disabled={busy || !configurationBoolean(health.complete)} onClick={() => void command("draft.validate", configurationText(draft.id), configurationNumber(draft.revision), { effectiveFrom: new Date(Date.now() + 60_000).toISOString(), effectiveScope: "FUTURE_ONLY", reason: "Validación previa a publicación" })}>Validar configuración</button>}</div>
         </section>}
+        {canEdit ? <CompetitionPublicationControl competitionId={competitionId} competitionName={configurationText(competition.name)} /> : null}
       </> : null}
     </main>
   </OfficialProductShellV2>;

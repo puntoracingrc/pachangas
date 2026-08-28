@@ -182,6 +182,41 @@ $demo$;
 `;
 }
 
+async function demoWorldV27PublicFixtureSql() {
+  const fixture = await readFile(sqlFile("tests/public-competitions-v1-fixture.sql"), "utf8");
+  const adapted = replaceExactlyOnce(
+    fixture,
+    "'Senior', 'senior', 'FOOTBALL_7', 'public', 'active',",
+    "'Senior', 'senior', 'FOOTBALL_7', 'private', 'active',",
+    "Wave 7A category remains private below the reviewed public projection",
+  );
+  const suite = await readFile(sqlFile("tests/public-competitions-v1-db.sql"), "utf8");
+  const canonicalBetaGrant = String.raw`
+do $demo_world_v2_7_league_grant$
+declare response jsonb;
+begin
+  perform set_config(
+    'request.jwt.claims',
+    jsonb_build_object('sub', md5('wave7a-user-10')::uuid, 'role', 'authenticated')::text,
+    true
+  );
+  response := public.command_pachanga_league_private_beta_platform_v1(
+    md5('demo-world-v2-7-league-beta-grant')::uuid,
+    md5('wave7a-team-0')::uuid,
+    0,
+    'beta.bundle.grant',
+    '{"organizerKind":"TEAM","maxTeams":12,"expiresAt":"2028-12-31T23:59:59Z","reason":"Demo World V2.7 composed League capability"}'::jsonb,
+    '{"clientVersion":"demo-world-v2.7","serviceWorkerVersion":"demo-world-v2.7","installedMode":"simulation","surface":"demo_world_v2_public"}'::jsonb
+  );
+  if response #>> '{snapshot,bundle,status}' <> 'active' then
+    raise exception 'DEMO_WORLD_V2_7_LEAGUE_BUNDLE_NOT_ACTIVE';
+  end if;
+end;
+$demo_world_v2_7_league_grant$;
+`;
+  return `${adapted}\n${canonicalBetaGrant}\n${suite}`;
+}
+
 async function committedAuthorityProof() {
   return assertDemoWorldV2AuthorityProof(JSON.parse(
     await readFile(authorityProofPath, "utf8"),
@@ -344,6 +379,78 @@ select jsonb_build_object(
 from public_revisions;
 `;
   return JSON.parse(psql(["-At", "-c", sql], "extract Demo World V2.3 configuration proof")) as DemoWorldV2AuthorityProof["configuration"];
+}
+
+function extractPublicCompetitionAuthorityProof(): DemoWorldV2AuthorityProof["publicCompetitions"] {
+  const sql = `
+with safe_requests as (
+  select distinct on (requests.status)
+    requests.status,
+    jsonb_build_object('name', requests.team_snapshot ->> 'name') as team,
+    requests.waitlist_position,
+    requests.entry_id is not null as entry_created
+  from public.pachanga_competition_registration_requests requests
+  where requests.competition_id = '7a040000-0000-4000-8000-000000000001'
+    and requests.status in ('accepted', 'waitlisted', 'rejected', 'withdrawn')
+  order by requests.status, requests.server_sequence, requests.id
+), payload as (
+  select jsonb_build_object(
+    'directory', public.get_pachanga_public_competition_directory_v1(),
+    'league', jsonb_build_object(
+      'slug', 'liga-publica-wave-7a',
+      'hub', public.get_pachanga_public_competition_v1('liga-publica-wave-7a'),
+      'calendar', public.get_pachanga_public_competition_calendar_v1('liga-publica-wave-7a'),
+      'standings', public.get_pachanga_public_competition_standings_v1('liga-publica-wave-7a'),
+      'bracket', null
+    ),
+    'tournament', jsonb_build_object(
+      'slug', 'copa-barrios-iq-2027',
+      'hub', public.get_pachanga_public_competition_v1('copa-barrios-iq-2027'),
+      'calendar', public.get_pachanga_public_competition_calendar_v1('copa-barrios-iq-2027'),
+      'standings', public.get_pachanga_public_competition_standings_v1('copa-barrios-iq-2027'),
+      'bracket', public.get_pachanga_public_competition_bracket_v1('copa-barrios-iq-2027')
+    ),
+    'unlisted', jsonb_build_object(
+      'slug', 'copa-enlace-demo',
+      'hub', public.get_pachanga_public_competition_v1('copa-enlace-demo'),
+      'calendar', public.get_pachanga_public_competition_calendar_v1('copa-enlace-demo'),
+      'standings', '{}'::jsonb,
+      'bracket', null
+    ),
+    'organizerPrivate', jsonb_build_object(
+      'slug', 'liga-privada-organizador-demo',
+      'hub', (select models.public_snapshot
+        from public.pachanga_public_competition_read_models models
+        where models.slug = 'liga-privada-organizador-demo')
+    ),
+    'requests', (select coalesce(jsonb_agg(jsonb_build_object(
+      'status', requests.status,
+      'team', requests.team,
+      'waitlistPosition', requests.waitlist_position,
+      'entryCreated', requests.entry_created
+    ) order by array_position(array['accepted','waitlisted','rejected','withdrawn'], requests.status)), '[]'::jsonb)
+      from safe_requests requests),
+    'operationReceipts', (select count(*)
+      from private.pachanga_competition_operation_receipts receipts
+      where receipts.aggregate_type in (
+        'competition_publication', 'competition_registration_request', 'competition_report'
+      )),
+    'remoteWrites', 0
+  ) as value
+), safe_payload as (
+  select payload.value, payload.value::text as text_value from payload
+)
+select (value || jsonb_build_object(
+  'privacy', jsonb_build_object(
+    'containsContactData', text_value ~* '(@example|\\+34|phone|telephone)',
+    'containsOwnerIdentity', text_value ~* '(ownerId|owner_id|requestedBy|requested_by)',
+    'containsPrivateReason', text_value ~* '(privateReason|private_reason)',
+    'containsRequestMessage', text_value ~* '(requestMessage|request_message|"message")'
+  )
+))::text
+from safe_payload;
+`;
+  return JSON.parse(psql(["-At", "-c", sql], "extract Demo World V2.7 public competition proof")) as DemoWorldV2AuthorityProof["publicCompetitions"];
 }
 
 function extractTournamentAuthorityProof(): DemoWorldV2AuthorityProof["tournament"] {
@@ -928,17 +1035,18 @@ from matches, standings, discipline_events, discipline_counters,
   discipline_sanctions, discipline_service, discipline_appeals,
   discipline_states, discipline_eligibility, referee_assignment_summary;
 `;
-  const extracted = JSON.parse(psql(["-At", "-c", sql], "extract Demo World V2 authority proof")) as Omit<DemoWorldV2AuthorityProof, "authorityHash" | "configuration" | "database" | "generatedAt" | "migrationCount" | "remoteWrites" | "rpcFamilies" | "version">;
+  const extracted = JSON.parse(psql(["-At", "-c", sql], "extract Demo World V2 authority proof")) as Omit<DemoWorldV2AuthorityProof, "authorityHash" | "configuration" | "database" | "generatedAt" | "migrationCount" | "publicCompetitions" | "remoteWrites" | "rpcFamilies" | "version">;
   const payload: Omit<DemoWorldV2AuthorityProof, "authorityHash"> = {
     ...extracted,
     configuration: extractConfigurationAuthorityProof(),
     database: "temporary-local-postgresql",
-    generatedAt: "2026-08-27T14:00:00.000Z",
+    generatedAt: "2026-08-28T14:00:00.000Z",
     migrationCount,
+    publicCompetitions: extractPublicCompetitionAuthorityProof(),
     remoteWrites: 0,
-    rpcFamilies: ["R1", "R3", "R4A", "R4B", "R4C", "R4D", "R5", "R6A", "R6B", "R6C"],
+    rpcFamilies: ["R1", "R3", "R4A", "R4B", "R4C", "R4D", "R5", "R6A", "R6B", "R6C", "PUBLIC_COMPETITIONS"],
     tournament: extractTournamentAuthorityProof(),
-    version: 7,
+    version: 8,
   };
   return assertDemoWorldV2AuthorityProof({
     ...payload,
@@ -948,7 +1056,7 @@ from matches, standings, discipline_events, discipline_counters,
 
 async function committedSnapshot(): Promise<DemoWorldV2Snapshot> {
   const read = async <T>(name: string) => JSON.parse(await readFile(path.join(publicRoot, name), "utf8")) as T;
-  const [activity, clubsReferees, competitions, configuration, core, manifest, matches, players, tournament] = await Promise.all([
+  const [activity, clubsReferees, competitions, configuration, core, manifest, matches, players, publicCompetitions, tournament] = await Promise.all([
     read<DemoWorldV2Snapshot["activity"]>("activity.json"),
     read<DemoWorldV2Snapshot["clubsReferees"]>("clubs-referees.json"),
     read<DemoWorldV2Snapshot["competitions"]>("competitions.json"),
@@ -957,9 +1065,43 @@ async function committedSnapshot(): Promise<DemoWorldV2Snapshot> {
     read<DemoWorldV2Snapshot["manifest"]>("manifest.json"),
     read<DemoWorldV2Snapshot["matches"]>("matches.json"),
     read<DemoWorldV2Snapshot["players"]>("players.json"),
+    read<DemoWorldV2Snapshot["publicCompetitions"]>("public-competitions.json"),
     read<DemoWorldV2Snapshot["tournament"]>("tournament.json"),
   ]);
-  return { activity, clubsReferees, competitions, configuration, core, manifest, matches, players, tournament };
+  return { activity, clubsReferees, competitions, configuration, core, manifest, matches, players, publicCompetitions, tournament };
+}
+
+function demoWorldVerificationProjection(value: unknown): unknown {
+  const uuidAliases = new Map<string, string>();
+  const volatileTimestampKeys = new Set([
+    "acceptedAt", "approvedAt", "assignedAt", "cancelledAt", "confirmedAt",
+    "createdAt", "decidedAt", "generatedAt", "grantedAt", "opensAt",
+    "publishedAt", "rejectedAt", "resolvedAt", "reviewedAt", "submittedAt",
+    "updatedAt", "withdrawnAt",
+  ]);
+  const digestKey = /(?:authority[_-]?)?hash$|checksum|fingerprint/i;
+  const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+  const visit = (input: unknown, key = ""): unknown => {
+    if (Array.isArray(input)) return input.map((item) => visit(item));
+    if (input && typeof input === "object") {
+      return Object.fromEntries(Object.entries(input as Record<string, unknown>)
+        .map(([entryKey, entryValue]) => [entryKey, visit(entryValue, entryKey)]));
+    }
+    if (typeof input !== "string") return input;
+    if (volatileTimestampKeys.has(key)) return "<server-time>";
+    if (digestKey.test(key)) return "<digest>";
+    if (uuidPattern.test(input)) {
+      const existing = uuidAliases.get(input);
+      if (existing) return existing;
+      const alias = `00000000-0000-4000-8000-${String(uuidAliases.size + 1).padStart(12, "0")}`;
+      uuidAliases.set(input, alias);
+      return alias;
+    }
+    return input.replace(/\?h=[0-9a-f]+$/i, "?h=<digest>");
+  };
+
+  return visit(value);
 }
 
 async function dropDatabase() {
@@ -998,7 +1140,8 @@ async function main() {
     { label: "R5 and Configuration Center", names: incremental.filter((name) => name >= "20260825165834" && name < "20260826195034") },
     { label: "R6A Tournament Foundation", names: incremental.filter((name) => name >= "20260826195034" && name < "20260827105014") },
     { label: "R6B Tournament Group Stage", names: incremental.filter((name) => name >= "20260827105014" && name < "20260827205347") },
-    { label: "R6C Tournament Knockout", names: incremental.filter((name) => name >= "20260827205347") },
+    { label: "R6C Tournament Knockout", names: incremental.filter((name) => name >= "20260827205347" && name < "20260828072045") },
+    { label: "Wave 7A Public Competitions", names: incremental.filter((name) => name >= "20260828072045") },
   ];
   assert.equal(migrationBatches.flatMap(({ names }) => names).length, incremental.length);
 
@@ -1062,12 +1205,26 @@ async function main() {
       "-o", "/dev/null",
       "-f", sqlFile("scripts/demo-world/demo-world-v2-tournament-knockout-operations.sql"),
     ], "operate Demo World V2.6 Tournament through R4B, R4C, R4D, R5, Referees and R6C RPCs");
+    applyBatch(migrationBatches[11]!.label, migrationBatches[11]!.names);
+    psql([], "operate Demo World V2.7 League registration stories through real Wave 7A RPCs",
+      await demoWorldV27PublicFixtureSql());
+    psql([
+      "-f", sqlFile("scripts/demo-world/demo-world-v2-public-competition-operations.sql"),
+    ], "publish Demo World V2.7 public, unlisted and organizer-only canonical competitions");
 
     const authorityProof = extractAuthorityProof(migrationNames.length);
     const generated = generateDemoWorldV2(authorityProof);
     if (verifyOnly) {
-      assert.deepEqual(authorityProof, await committedAuthorityProof(), "DEMO_WORLD_V2_AUTHORITY_PROOF_DRIFT");
-      assert.deepEqual(generated, await committedSnapshot(), "DEMO_WORLD_V2_SNAPSHOT_DRIFT");
+      assert.deepEqual(
+        demoWorldVerificationProjection(authorityProof),
+        demoWorldVerificationProjection(await committedAuthorityProof()),
+        "DEMO_WORLD_V2_AUTHORITY_PROOF_DRIFT",
+      );
+      assert.deepEqual(
+        demoWorldVerificationProjection(generated),
+        demoWorldVerificationProjection(await committedSnapshot()),
+        "DEMO_WORLD_V2_SNAPSHOT_DRIFT",
+      );
     } else {
       await writeFile(authorityProofPath, `${JSON.stringify(authorityProof, null, 2)}\n`, "utf8");
       await writeDemoWorldV2(generated, publicRoot);
