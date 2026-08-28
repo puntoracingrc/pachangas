@@ -39,8 +39,8 @@ function dateLabel(value: unknown, includeTime = false) {
   const source = publicCompetitionText(value);
   if (!source) return "Por confirmar";
   return new Intl.DateTimeFormat("es-ES", includeTime
-    ? { day: "2-digit", hour: "2-digit", minute: "2-digit", month: "short" }
-    : { day: "2-digit", month: "short", year: "numeric" }).format(new Date(source));
+    ? { day: "2-digit", hour: "2-digit", minute: "2-digit", month: "short", timeZone: "Europe/Madrid" }
+    : { day: "2-digit", month: "short", year: "numeric", timeZone: "Europe/Madrid" }).format(new Date(source));
 }
 function teamName(value: unknown, fallback = "Por confirmar") { return publicCompetitionText(publicCompetitionRecord(value).name) || fallback; }
 

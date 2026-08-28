@@ -36,7 +36,7 @@ function storeCache(data: Record<string, unknown>) {
 function dateLabel(value: unknown) {
   const source = publicCompetitionText(value);
   if (!source) return "Fecha por confirmar";
-  return new Intl.DateTimeFormat("es-ES", { day: "2-digit", month: "short", year: "numeric" }).format(new Date(source));
+  return new Intl.DateTimeFormat("es-ES", { day: "2-digit", month: "short", year: "numeric", timeZone: "Europe/Madrid" }).format(new Date(source));
 }
 
 export function CompetitionDirectoryClient({

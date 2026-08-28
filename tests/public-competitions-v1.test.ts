@@ -192,6 +192,15 @@ test("public directory, hub, filters and product management surfaces are wired",
   assert.match(admin, /flags\.set/);
 });
 
+test("public competition dates hydrate deterministically in the product timezone", async () => {
+  const [directory, hub] = await Promise.all([
+    source("app/competiciones/competition-directory-client.tsx"),
+    source("app/competiciones/[competition]/public-competition-hub.tsx"),
+  ]);
+  assert.match(directory, /timeZone: "Europe\/Madrid"/);
+  assert.equal((hub.match(/timeZone: "Europe\/Madrid"/g) ?? []).length, 2);
+});
+
 test("Realtime invalidates and refetches canonical state without applying WAL as authority", async () => {
   const clients = (await Promise.all([
     source("app/competiciones/[competition]/public-competition-hub.tsx"),

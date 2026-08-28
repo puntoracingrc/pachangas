@@ -905,3 +905,439 @@ regression result marked `FIXED / REGRESSION_VERIFIED`.
   unused response value.
 - Regression verified: all Wave 7A sources lint clean and the complete race
   matrix passes again.
+
+### W7A-ENVIRONMENT-007 - Direct staging database hostname timed out over IPv6
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: read the migration ledger of the dedicated Supabase
+  preview branch before applying Wave 7A.
+- Observed: the non-pooling database hostname resolved to IPv6 and timed out on
+  port 5432 from the current network.
+- Impact: no SQL ran and neither staging nor production was modified by the
+  failed connection.
+- Planned correction: use the branch-specific official pooler URL on port 6543
+  for readback and migration execution.
+- Regression plan: confirm the branch ledger is exactly 176 before applying
+  migrations and exactly 183 afterward.
+- Correction: all branch SQL and schema exports use the official pooler URL;
+  the production ref is rejected before connecting.
+- Regression verified: the pooler readback proves the canonical 176 prefix,
+  exact ledger 183 and schema hash `7273cef0f24cc4881179475c81c7196dde8d084c9af39316ecf250a33e8e708d`.
+
+### W7A-ENVIRONMENT-008 - New preview branch inherited an obsolete migration ledger
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: verify that the data-free Supabase preview branch starts
+  from the production ledger 176.
+- Observed: the branch reported only 10 historical migration versions, ending
+  at `20260728191429`.
+- Impact: applying only the seven Wave 7A migrations would create a false and
+  non-reproducible staging environment, so no migration was applied.
+- Planned correction: rebuild this isolated branch with the repository's
+  canonical fresh-schema baseline and every forward migration through 176,
+  then apply exactly the seven Wave 7A migrations.
+- Regression plan: compare the reconstructed branch ledger and schema with the
+  locally verified 176-to-183 path before any staging product QA.
+- Correction: the guarded bootstrap installed the canonical product baseline,
+  every forward migration through 176 and exactly the seven Wave migrations.
+- Regression verified: the 183 ordered ledger entries and normalized schema
+  match the repository and the locally certified 176-to-183 result.
+
+### W7A-TESTABILITY-029 - Staging dependency diagnostic used an ambiguous type
+
+- Classification: `TESTABILITY_GAP`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: inspect the three legacy public objects and any managed
+  schema dependencies before rebuilding the isolated staging branch.
+- Observed: the diagnostic concatenated PostgreSQL's internal `char` relation
+  kind directly with text, which has no unique concatenation operator.
+- Impact: the read-only query stopped before returning dependency evidence; no
+  schema or data was modified.
+- Planned correction: cast the internal relation kind to text explicitly and
+  preserve the corrected query in the guarded staging bootstrap regression.
+- Regression plan: the diagnostic returns the complete object, extension and
+  cross-schema dependency inventory before any reset is allowed.
+- Correction: relation kinds are cast to text in the permanent diagnostic.
+- Regression verified: the inventory returned three legacy tables, 16 routines,
+  zero cross-schema dependencies and the managed extension set before reset.
+
+### W7A-TESTABILITY-030 - Production-guard shell probe used a reserved zsh name
+
+- Classification: `TESTABILITY_GAP`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: prove that the remote staging bootstrap rejects the
+  production Supabase project before opening a database connection.
+- Observed: the shell probe assigned the child exit code to zsh's read-only
+  `status` parameter and stopped before evaluating the bootstrap guard.
+- Impact: no database connection or SQL execution occurred; the intended
+  negative assertion did not run.
+- Planned correction: capture the exit code in an unreserved variable and
+  require the explicit production-target rejection.
+- Regression plan: a production-shaped URL fails with
+  `PUBLIC_COMPETITIONS_STAGING_PRODUCTION_TARGET_FORBIDDEN` before networking.
+- Correction: the shell probe captures the child exit code in an unreserved
+  variable.
+- Regression verified: a production-shaped URL is rejected with the expected
+  guard error before any connection attempt.
+
+### W7A-ENVIRONMENT-009 - Preview database role cannot recreate managed default ACLs
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: reset only the product schemas of the isolated Supabase
+  branch before installing the canonical baseline.
+- Observed: dropping and recreating `public` reached the attempt to restore
+  `supabase_admin` default privileges, which the branch `postgres` role cannot
+  alter.
+- Impact: the reset transaction rolled back in full; the branch remains on its
+  original ten migrations and no product or managed data changed.
+- Planned correction: preserve the managed `public` schema and its default ACLs
+  while removing only the three known legacy product tables and their routines.
+- Regression plan: compare all managed infrastructure and public schema ACLs
+  before and after the canonical bootstrap, in addition to ledger and schema
+  equivalence.
+- Correction: the bootstrap preserves `public` and removes only its known
+  product relations and routines, retaining all managed default ACLs.
+- Regression verified: Auth, Storage, Realtime, schema owner, schema ACL and all
+  six default ACL rows remained identical after bootstrap.
+
+### W7A-TESTABILITY-031 - Reset completeness assertion was outside PL/pgSQL
+
+- Classification: `TESTABILITY_GAP`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: statically review the revised object-only staging reset
+  before its second remote execution.
+- Observed: the completeness assertion used procedural `IF` syntax directly in
+  the SQL command stream instead of inside a `DO` block.
+- Impact: caught before execution; the staging branch remains unchanged on its
+  original ten-migration ledger.
+- Planned correction: wrap the assertion in a named PL/pgSQL `DO` block within
+  the same reset transaction.
+- Regression plan: the guarded reset executes atomically and refuses to proceed
+  if any relation or routine remains in `public`.
+- Correction: the completeness assertion runs in a named PL/pgSQL `DO` block.
+- Regression verified: the reset completed and the baseline was accepted only
+  after the public product object inventory reached zero.
+
+### W7A-TESTABILITY-032 - Infrastructure readback treated a product extension as drift
+
+- Classification: `TESTABILITY_GAP`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: compare managed Supabase infrastructure before and after
+  the complete 10-to-176-to-183 staging bootstrap.
+- Observed: the historical League Scheduling migration correctly installed the
+  `btree_gist` extension, but the readback required an unchanged extension list.
+- Impact: the canonical ledger reached 183 with all seven Wave migrations and
+  zero QA rows, then the diagnostic rejected the intentional product extension.
+- Planned correction: compare Auth, Storage, Realtime and public-schema ACLs
+  exactly while separately requiring `btree_gist` as the sole expected added
+  product extension.
+- Regression plan: verification mode reads the existing ledger 183 without
+  writes, proves the exact 176 prefix and seven Wave suffix, then validates the
+  final schema hash and OFF flags.
+- Correction: managed infrastructure equality excludes extension inventory,
+  while the final extension set separately requires `btree_gist` and the six
+  original managed extensions.
+- Regression verified: infrastructure and ACL equality pass, with `btree_gist`
+  traced to `20260823224156_league_scheduling_schema_v1.sql`.
+
+### W7A-SIMULATION-023 - Baseline ledger used placeholder migration names
+
+- Classification: `SIMULATION_BUG`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: inspect the exact 183-row staging migration ledger after
+  the canonical baseline bootstrap.
+- Observed: the first 36 absorbed versions were recorded with the placeholder
+  name `absorbed_by_product_baseline` instead of each repository migration name.
+- Impact: schema and versions were correct, but staging migration history was
+  not metadata-equivalent to the repository and therefore was not releasable
+  evidence.
+- Planned correction: derive absorbed ledger rows from the actual 36 migration
+  filenames and reconcile only the known placeholder names on this hard-coded
+  data-free preview branch.
+- Regression plan: all 183 ordered `version|name` pairs must exactly equal the
+  repository inventory before product QA starts.
+- Correction: absorbed rows now derive from the real migration filenames; the
+  data-free branch's 36 known placeholders were reconciled in place.
+- Regression verified: zero placeholders remain and all 183 ordered
+  `version|name` pairs exactly match the repository inventory.
+
+### W7A-TESTABILITY-033 - Staging flag readback used a non-canonical referee column
+
+- Classification: `TESTABILITY_GAP`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: verify that all Wave 7A flags remain OFF after the exact
+  staging ledger was reconciled.
+- Observed: the readback selected `public_competition_referees_enabled`, which
+  is not the canonical column name installed by the migration.
+- Impact: all 183 ledger names were reconciled successfully, then the read-only
+  flag query stopped; no product row or flag was changed.
+- Planned correction: derive the referee flag name from the migration contract
+  and assert that exact column.
+- Regression plan: the complete OFF-state readback and schema hash pass on the
+  existing staging schema without further migration writes.
+- Correction: the readback uses
+  `public_competition_referee_display_enabled`, matching the migration contract.
+- Regression verified: all 13 public competition flags read back OFF and the
+  normalized schema hash matches the local certificate.
+
+### W7A-ENVIRONMENT-010 - Remote SQL suite emitted redundant Auth grant warnings
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: run the complete SQL/RLS/privacy/idempotency suite inside a
+  rolled-back transaction on the isolated Supabase branch.
+- Observed: the branch already exposed `auth.uid()` and `auth.jwt()` as required,
+  so three unconditional fixture grants emitted `no privileges were granted`
+  warnings before the suite passed.
+- Impact: `PUBLIC_COMPETITIONS_V1_DB_OK` passed and all fixture rows rolled back;
+  the warnings were setup noise rather than a product or RLS failure.
+- Planned correction: grant only when the target role does not already hold the
+  required schema/function privilege.
+- Regression plan: repeat the complete remote SQL suite with the same PASS
+  marker and no permission warnings.
+- Correction: the fixture grants schema and function access per role only when
+  the privilege is absent.
+- Regression verified: the remote suite again returned
+  `PUBLIC_COMPETITIONS_V1_DB_OK`, emitted no permission warning and rolled back
+  every synthetic row.
+
+### W7A-SIMULATION-024 - Authenticated directory assertion read the wrong snapshot path
+
+- Classification: `SIMULATION_BUG`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: create a canonical League on the isolated Supabase branch,
+  prepare its public projection, configure `REQUEST_APPROVAL`, record consent,
+  submit it, approve it with a different platform actor and publish it through
+  the production RPCs using real authenticated sessions.
+- Observed: the moderation command returned lifecycle `published`, but the test
+  looked for `item.slug`; the canonical directory contract returns the slug at
+  `item.publication.slug`.
+- Impact: the staging runner stopped before registration even though PostgreSQL
+  had already created a `published`, `public`, `indexable=true` read model.
+- Diagnosis: a read-only database query confirmed matching publication and
+  read-model revisions at server sequence 245, proving that product projection
+  and anonymous discovery were correct.
+- Correction: assert the documented nested publication path in both directory
+  and public-hub snapshots.
+- Regression plan: the same authenticated lifecycle must expose the nested slug
+  and continue through registration, concurrency and Realtime.
+- Regression verified: the corrected runner discovered the published slug
+  anonymously and completed all downstream registration stories.
+
+### W7A-TESTABILITY-034 - Directory diagnosis assumed read-model `created_at`
+
+- Classification: `TESTABILITY_GAP`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: inspect the failed authenticated publication without
+  mutating the staging fixture.
+- Observed: the diagnostic ordered public read models by `created_at`, a column
+  that is intentionally absent from the canonical read-model contract.
+- Impact: the first diagnostic stopped before returning evidence; no database
+  row or flag changed.
+- Planned correction: order the readback by `server_sequence` and stable ID,
+  matching the authoritative ordering contract.
+- Regression plan: the revised read-only query returns publication, read-model
+  and flag evidence from the existing staging fixture.
+- Correction: the diagnostic ordered by `server_sequence` and used the stable
+  publication identity rather than a nonexistent timestamp.
+- Regression verified: the revised query returned publication, read model and
+  flag state without mutation, including `indexable=true` for the failed run.
+
+### W7A-SIMULATION-025 - Staging rerun could not bootstrap a second platform owner
+
+- Classification: `SIMULATION_BUG`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: rerun the authenticated staging suite after a prior run
+  stopped beyond account creation on the same disposable Supabase branch.
+- Observed: `bootstrap_pachanga_platform_owner_v1` correctly rejected the new QA
+  account because the branch already contained the first run's platform owner.
+- Impact: the product's singleton-owner invariant worked, but the staging runner
+  was not repeatable after an interrupted run.
+- Planned correction: when an owner already exists, grant the current QA actor a
+  temporary `platform_admin` fixture role only on the hard-coded ephemeral branch
+  and revoke that grant in `finally`; all product actions continue through RPCs.
+- Regression plan: a rerun on the dirty ephemeral branch completes Auth, RLS,
+  publication, registration, concurrency and Realtime, then removes the temporary
+  platform role.
+- Correction: the runner grants only the current QA account a temporary
+  `platform_admin` role when the singleton owner already exists and revokes that
+  exact role in `finally`.
+- Regression verified: the rerun reached the Realtime gate and a direct readback
+  confirmed zero active temporary `platform_admin` roles after exit.
+
+### W7A-SIMULATION-026 - Realtime runner did not await postgres_changes readiness
+
+- Classification: `SIMULATION_BUG`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: subscribe an authenticated competition organizer to
+  `pachanga_competition_invalidations`, wait for `SUBSCRIBED`, then submit a
+  registration request from a different authenticated Team owner.
+- Observed: the RPC confirmed the request, but the runner only awaited channel
+  `SUBSCRIBED`, did not wait for the `postgres_changes` system extension to be
+  ready and compared the revision bigint without normalization.
+- Impact: the runner timed out even though PostgreSQL persisted a safe scoped
+  invalidation and RLS allowed the organizer to read it.
+- Diagnosis: readback found the request invalidation at server sequence 265,
+  publication membership was active and an organizer JWT saw all scoped rows.
+- Correction: wait for both channel and postgres extension readiness, normalize
+  the revision bigint and retain a bounded 30-second event timeout.
+- Regression plan: organizer and target Team both receive a safe invalidation,
+  then independently refetch the confirmed request state without trusting WAL.
+- Regression verified: both organizer and target Team received safe events;
+  neither payload contained messages, private reasons, email or phone, and both
+  clients converged after canonical RPC refetch.
+
+### W7A-TESTABILITY-035 - Realtime diagnosis assumed an invalidation `id`
+
+- Classification: `TESTABILITY_GAP`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: inspect the persisted invalidation after the Realtime
+  timeout without mutating staging.
+- Observed: the diagnostic selected `pachanga_competition_invalidations.id`, but
+  this append-only invalidation contract is keyed by server sequence and entity
+  fields and has no generic `id` column.
+- Impact: the first readback stopped before distinguishing WAL delivery from row
+  creation; no state changed.
+- Planned correction: select only canonical invalidation fields and order by
+  `server_sequence` plus stable entity identity.
+- Regression plan: the revised query returns request and invalidation evidence,
+  publication membership and temporary-role cleanup state.
+- Correction: the readback uses `server_sequence`, `entity_type` and
+  `entity_id`, with deterministic ordering.
+- Regression verified: it found the submitted request invalidation at server
+  sequence 265, confirmed Realtime publication membership and proved the
+  organizer can select all eight scoped invalidations through RLS.
+
+### W7A-SIMULATION-027 - Successful Realtime suite kept a WebSocket process alive
+
+- Classification: `SIMULATION_BUG`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: complete the authenticated staging flow after receiving
+  organizer and Team invalidations and unsubscribing all channels.
+- Observed: the runner printed the complete PASS report but Node remained alive
+  because a Supabase Realtime transport was still connected.
+- Impact: product behavior passed, but CI could hang indefinitely and leave a
+  local process behind.
+- Planned correction: disconnect each client's Realtime transport explicitly
+  after channel removal and sign-out.
+- Regression plan: the complete suite exits with status 0 immediately after the
+  report and no session remains running.
+- Correction: every authenticated, anonymous and service client now disconnects
+  its Realtime transport explicitly after channel unsubscribe and sign-out.
+- Regression verified: the full authenticated suite printed its report and
+  exited normally with status 0 in 24 seconds, without a retained exec session.
+
+### W7A-TESTABILITY-036 - New staging incidents reused existing simulation IDs
+
+- Classification: `TESTABILITY_GAP`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: reconcile the permanent incident ledger before closing the
+  authenticated staging gate.
+- Observed: five later staging entries reused `W7A-SIMULATION-005` through `009`,
+  identifiers already assigned to earlier scale and concurrency incidents.
+- Impact: evidence remained readable but incident references were ambiguous.
+- Planned correction: renumber only the later staging entries to the next free
+  simulation sequence while preserving their text and chronology.
+- Regression plan: every `W7A-*` identifier is unique across the complete ledger.
+- Correction: the later entries now use the free simulation identifiers 023
+  through 027; earlier incident identifiers and content were preserved.
+- Regression verified: sorting all `W7A-*` headings and checking duplicates
+  returns an empty result.
+
+### W7A-TESTABILITY-037 - Vercel 59 deployment summary used a legacy JSON path
+
+- Classification: `TESTABILITY_GAP`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: parse the final status of the isolated Wave 7A Preview
+  deployment without exposing environment values.
+- Observed: the diagnostic read top-level `id`, `url` and `readyState`, while
+  Vercel CLI 59 returns them below `deployment`.
+- Impact: the build and deployment completed successfully, but the first compact
+  summary printed null fields.
+- Correction: read `.deployment.id`, `.deployment.url` and
+  `.deployment.readyState` from the captured non-secret response.
+- Regression verified: deployment `dpl_4zqPthzZfEFntFqW5sYWiCxaAk8N` reads back
+  `READY` at the isolated Preview URL.
+
+### W7A-TESTABILITY-038 - Staging runner restored flags before visual QA
+
+- Classification: `TESTABILITY_GAP`
+- Status: `OPEN`
+- Original scenario: open the branch-bound Preview after the authenticated suite
+  completed with its default flag rollback.
+- Observed: the public directory correctly rendered zero competitions because
+  discovery had already returned to OFF, leaving no active product surface for
+  viewport certification.
+- Impact: safety behavior was correct, but visual QA could not exercise the
+  public cards, hub or registration controls.
+- Planned correction: add an explicit staging-only `KEEP_FLAGS` mode, protected
+  by the same hard-coded non-production project ref, and rely on deletion of the
+  disposable branch for final rollback.
+- Regression plan: the Preview exposes the canonical fixtures while visual QA
+  runs, production remains untouched and the branch is deleted at cleanup.
+
+### W7A-TESTABILITY-039 - Public-hub tab sweep exceeded a selector deadline
+
+- Classification: `TESTABILITY_GAP`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: click Calendar, Results, Standings, Referees and
+  Registration in one browser sweep, then read the active main content.
+- Observed: one semantic selector exceeded its deadline after the base hub had
+  already loaded without root overflow or broken images.
+- Impact: the bulk visual sweep stopped without identifying whether the missing
+  target was a tab button or the assumed `main` landmark.
+- Planned correction: inspect exact button counts and page landmarks, then use
+  the actual accessible structure for each tab.
+- Regression plan: every applicable tab opens and yields bounded content and
+  zero root overflow at the original viewport.
+- Correction: the sweep reads the actual page `body` after each accessible tab
+  button rather than assuming a `main` landmark.
+- Regression verified: Calendar, Results, Standings, Referees and Registration
+  all opened at 1440x900 with zero root overflow and zero broken images.
+
+### W7A-TESTABILITY-040 - Responsive matrix treated a private R4A route as the public registration tab
+
+- Classification: `TESTABILITY_GAP`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: include `/competiciones/{slug}/inscripcion` in the public
+  Wave 7A responsive route matrix.
+- Observed: that path is the pre-existing authenticated R4A participation
+  surface and correctly returned `COMPETITION_NOT_FOUND` for the public slug;
+  the Wave 7A registration experience is a tab inside the public hub.
+- Impact: the first matrix attributed a private-route response to the public
+  registration surface even though the public action had not failed.
+- Correction: exercise the accessible `Inscripción` and `Ver inscripción`
+  controls on the public hub and keep the R4A route outside the Wave 7A visual
+  matrix.
+- Regression verified: both public controls switch the canonical hub to
+  `REQUEST APPROVAL` without navigation, expose the signed-out login state and
+  retain zero root overflow at 390x844.
+
+### W7A-PRODUCT-017 - Public surfaces emit a React text hydration mismatch
+
+- Classification: `PRODUCT_BUG`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: navigate repeatedly through the public directory, public
+  hub and Demo World in the deployed staging Preview across desktop, portrait
+  and landscape viewports.
+- Observed: the browser console records minified React error `#418` with the
+  `text` mismatch argument on page hydration.
+- Impact: the visible UI recovers, but the release gate requires zero runtime
+  errors and server/client text divergence can replace canonical markup during
+  hydration.
+- Planned correction: isolate the route and unstable rendered value, make the
+  server and first client render deterministic, then add a regression that
+  exercises the original path.
+- Regression plan: a fresh browser context must navigate the affected staging
+  route with zero hydration errors at desktop, portrait and landscape sizes.
+- Diagnosis: Vercel rendered the registration close at `01 ene, 00:00` in UTC,
+  while the browser formatted the same timestamp as `01 ene, 01:00` in the
+  Europe/Madrid timezone.
+- Correction: public directory and hub date formatters now declare
+  `Europe/Madrid` explicitly for both server and client rendering.
+- Regression verified: the original hub rendered from a server process forced
+  to `TZ=UTC` into a Europe/Madrid browser with zero warnings or errors, and the
+  focused suite now asserts the explicit product timezone.

@@ -1,8 +1,21 @@
 \set ON_ERROR_STOP on
 
-grant usage on schema auth to authenticated, anon;
-grant execute on function auth.uid() to authenticated, anon;
-grant execute on function auth.jwt() to authenticated, anon;
+do $permissions$
+declare target_role text;
+begin
+  foreach target_role in array array['authenticated', 'anon'] loop
+    if not has_schema_privilege(target_role, 'auth', 'USAGE') then
+      execute format('grant usage on schema auth to %I', target_role);
+    end if;
+    if not has_function_privilege(target_role, 'auth.uid()', 'EXECUTE') then
+      execute format('grant execute on function auth.uid() to %I', target_role);
+    end if;
+    if not has_function_privilege(target_role, 'auth.jwt()', 'EXECUTE') then
+      execute format('grant execute on function auth.jwt() to %I', target_role);
+    end if;
+  end loop;
+end;
+$permissions$;
 
 create or replace function pg_temp.assert_true(condition boolean, message text)
 returns void language plpgsql as $$
