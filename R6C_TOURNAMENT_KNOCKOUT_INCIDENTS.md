@@ -1708,7 +1708,7 @@ reproducing the original scenario passes.
 ### R6C-PRODUCT-084 - R6A tournament flag RPC conflicts with active R6C flags
 
 - Classification: `PRODUCT_BUG`
-- Status: `OPEN`
+- Status: `FIXED / REGRESSION_VERIFIED`
 - Original scenario: run the already locally certified reversible canary in
   production after R6C activation, using the canonical R6A fixture path.
 - Observed: `command_pachanga_tournament_platform_v1` attempts to set
@@ -1723,6 +1723,16 @@ reproducing the original scenario passes.
   from group plus knockout generation, without permitting V1 to alter R6C.
 - Regression plan: prove R6A flag writes preserve all seven R6C flags, then run
   the exact local and production canary with complete rollback cleanup.
+- Correction: forward-only migration 176 preserves every R6C-owned flag when
+  the legacy R6A/R6B writer runs, derives aggregate match generation from group
+  plus knockout generation and restores the transaction-local authority marker
+  before returning. No client grant, product row or prior migration changed.
+- Regression: production accepted the legacy-RPC rollback probe without
+  changing the seven R6C flags, then completed the four-team canary with 3
+  nodes, 2 distinct CanonicalMatches, 0 sporting/official results and valid
+  Hub/bracket projections. The independent post-rollback readback returned
+  revision 17 / sequence 1853, 0 fixture users, competitions, receipts, events
+  and R6C rows, plus unchanged protected counts 1 / 17 / 0 / 0.
 
 ### R6C-SIMULATION-085 - Demo World snapshot hash expectation remained on ledger 175
 
@@ -1750,3 +1760,149 @@ reproducing the original scenario passes.
 - Regression: `demo-world:v2:verify` reports `snapshotIdentical=true`, migration
   count 176 and `remoteWrites=0`; all 15 focused Demo World tests pass with the
   same authority and snapshot hashes.
+
+### R6C-SIMULATION-086 - Production readback guessed a nonexistent binding table
+
+- Classification: `SIMULATION_BUG`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: collect the post-176 flags, protected counts, RLS, function
+  definitions and zero-QA-row evidence in one read-only production query.
+- Observed: the diagnostic referenced
+  `public.pachanga_tournament_knockout_match_bindings`, which is not one of the
+  thirteen R6C relations, and PostgreSQL rejected the complete SELECT.
+- Impact: no production data or schema changed, but the aggregate readback
+  returned no evidence and cannot be used for release closure.
+- Planned correction: derive every relation name from the six applied feature
+  migrations and rerun the read-only projection with no inferred aliases.
+- Regression plan: obtain one complete response proving ledger-176 functions,
+  all thirteen exact R6C tables with RLS, zero client write grants, protected
+  counts unchanged and zero product rows before the canary.
+- Correction: the readback now enumerates exactly the thirteen relations
+  declared by migrations 170..173; no schema statement was retried.
+- Regression: production returned 13 tables, 13 with RLS, 0 client write grants,
+  0 R6C rows and protected counts 1 Rating / 17 Rewards / 0 Conduct / 0 Billing.
+
+### R6C-SIMULATION-087 - Function readback depended on normalized cast formatting
+
+- Classification: `SIMULATION_BUG`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: prove the two compatibility changes by matching complete
+  textual fragments inside `pg_get_functiondef` after migration 176.
+- Observed: the database returned both booleans false because PostgreSQL
+  normalized casts and whitespace differently from the literal diagnostic,
+  although the migration receipt and all other readback fields were valid.
+- Impact: no product state changed, but the textual assertion does not yet prove
+  the deployed trigger coalesces an unset marker or the command restores it.
+- Planned correction: inspect only the relevant normalized function fragments
+  and assert stable semantic markers rather than one formatter-specific string.
+- Regression plan: require both production functions to contain their complete
+  authority-marker lifecycle and then execute the legacy-RPC rollback probe.
+- Correction: the query normalizes whitespace and asserts stable declarations,
+  marker names and lifecycle calls instead of PostgreSQL's optional casts.
+- Regression: production shows the trigger's coalesced default, the command's
+  previous-marker capture and restore, and two `set_config` calls. The legacy
+  R6A RPC advanced to revision 18 only inside the probe, preserved every R6C
+  flag, then rolled back to revision 17 / sequence 1853 with 0 receipts/events.
+
+### R6C-ENVIRONMENT-088 - Browser QA backend does not support networkidle
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: open the exact production Demo World V2.6 deployment at
+  1440x900 and wait for Playwright `networkidle` before measuring overflow,
+  broken images and console errors.
+- Observed: the isolated browser controller rejects `networkidle` as an
+  unsupported wait state before collecting evidence.
+- Impact: no application or browser state changed, but that first responsive
+  QA attempt produced no valid viewport evidence.
+- Planned correction: use supported `domcontentloaded`, then an explicit short
+  stabilization wait and `HTMLImageElement.decode()` for every observed image.
+- Regression plan: complete desktop, portrait and landscape audits with exact
+  viewport dimensions, zero root/body overflow, zero broken images and zero
+  console errors, then reset the temporary viewport override.
+- Correction: the QA waits for `domcontentloaded`, adds a bounded stabilization
+  delay and decodes every observed image before collecting layout evidence.
+- Regression: production passed at 1440x900, 390x844 and 844x390 with exact
+  viewport dimensions, zero root/body overflow, zero broken images and zero
+  console warnings/errors. Champion, eight-match bracket and correction lineage
+  remained visible in every layout.
+
+### R6C-SIMULATION-089 - PWA diagnostic contained an invalid regular expression
+
+- Classification: `SIMULATION_BUG`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: fetch the production manifest and Service Worker, then
+  identify lifecycle handlers and cache/version markers without changing PWA
+  state.
+- Observed: the orchestration script contained a malformed escaped regular
+  expression and stopped before issuing either HTTP request.
+- Impact: production and the PWA were untouched, but the first diagnostic
+  produced no evidence.
+- Planned correction: replace the fragile expressions with literal string
+  checks and parse the manifest independently.
+- Regression plan: require a valid installable manifest, Service Worker
+  install/activate/fetch lifecycle, controlled activation markers and successful
+  HTTP responses before marking product PWA QA complete.
+- Correction: the diagnostic parses `manifest.webmanifest` as JSON and checks
+  literal Service Worker lifecycle/version markers without a regex parser.
+- Regression: production returned an installable fullscreen manifest and
+  `sw.js` 200 with `no-cache, no-store, must-revalidate`, version
+  `2.0.0+sw.41c8280b55bd`, install/activate/fetch, `skipWaiting` and
+  `clients.claim`.
+
+### R6C-ENVIRONMENT-090 - Browser evaluator omits navigator as a direct global
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: inspect the active production Service Worker registration
+  before toggling the isolated QA tab offline.
+- Observed: the browser evaluator exposed `navigator` as undefined when it was
+  referenced directly, so the read-only registration probe stopped.
+- Impact: the previously fetched manifest and `sw.js` remain valid and no
+  browser/network state changed, but active-controller evidence is pending.
+- Planned correction: address the same browser API through `window.navigator`
+  and keep the probe read-only.
+- Regression plan: prove active scope/controller, load the already cached Demo
+  while offline, restore connectivity, reload and confirm canonical content and
+  zero console errors.
+- Correction: the registration readback uses read-only CDP in the real page
+  context rather than the isolated high-level evaluator.
+- Regression: Chrome reports Service Worker support, an active controller at
+  `https://pachangasiq.com/sw.js`, successful cached Demo load while offline and
+  canonical reload after reconnect, with zero console errors.
+
+### R6C-SIMULATION-091 - CDP Service Worker probe used a malformed nested string
+
+- Classification: `SIMULATION_BUG`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: use read-only CDP `Runtime.evaluate` to inspect the real
+  page navigator hidden by the higher-level evaluator.
+- Observed: the orchestration source embedded an unescaped nested template
+  literal and failed to parse before sending a CDP command.
+- Impact: no command reached Chrome and no browser or product state changed.
+- Planned correction: send one plain escaped JavaScript expression to CDP.
+- Regression plan: read a serializable Service Worker controller snapshot from
+  the real page context, then complete and revert the offline network probe.
+- Correction: CDP receives one plain escaped expression and returns only a
+  serializable controller snapshot.
+- Regression: the active production controller was read successfully; the
+  isolated network was then set offline, Demo World loaded from cache, network
+  conditions were restored in `finally`, and the online reload converged.
+
+### R6C-ENVIRONMENT-092 - Markdown backticks were expanded by the shell audit
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: search the incident ledger for any remaining `OPEN`,
+  `BLOCKED` or `PENDING` status before release closure.
+- Observed: a double-quoted shell pattern treated Markdown backticks as command
+  substitutions and emitted unrelated `open` command help.
+- Impact: no file changed, but that status audit is not valid evidence.
+- Planned correction: repeat the search with a single-quoted literal pattern.
+- Regression plan: require zero unresolved incident status lines and a clean
+  command exit/output suitable for the release report.
+- Correction: the status audit now uses a single-quoted AWK expression, so
+  Markdown backticks remain literal data.
+- Regression: the corrected command returned only this not-yet-updated 092
+  entry with exit code 0; all earlier incidents were already closed. After
+  applying this status transition the same audit must return an empty result.

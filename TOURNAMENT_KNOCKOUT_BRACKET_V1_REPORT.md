@@ -6,7 +6,8 @@
 - Alcance activo: eliminatoria a partido único.
 - Base auditada: `origin/main` `659511e41cbab57440ba23124f8e339110aed9c5`.
 - Rama: `codex/tournament-knockout-bracket-champion-v1`.
-- Ledger local: 169 -> 175 migraciones.
+- Cierre de compatibilidad: `codex/r6c-flag-authority-hotfix`.
+- Ledger certificado: 169 -> 176 migraciones.
 - Fuente de verdad: PostgreSQL/Supabase.
 - Cliente: intención semántica, `operationId`, revisión esperada y refetch del snapshot confirmado.
 
@@ -101,19 +102,32 @@ goles o recompensas.
 
 | Gate | Resultado |
 | --- | --- |
-| Contrato R6C | 13/13 PASS |
-| R6B + R6C focalizado | 27/27 PASS |
+| Contrato R6C | 14/14 PASS |
+| R6B + R6C focalizado | PASS |
 | Formatos | 4, 8, 16 y 14/16 con dos byes; tercer puesto ON/OFF |
 | Negativos | 16/16 fail-closed |
 | Concurrencia | 11 carreras, `ONE_WINNER_ONE_CONFLICT` |
 | Invariantes | 0 ganadores inválidos, matches/contextos/avances/completions duplicados |
 | Escala | 10.000 brackets, 100.000 nodes y 100.000 slots; rollback |
-| Migraciones | fresh/upgrade/equivalencia PASS; schema hash `c75464ec12235e07a3e2c02a40a26b6f7ee04f88b7c6b7a310d3a8d42150ee0f` |
-| Batería global | 20 Node + 551 TS/TSX = 571/571 PASS |
+| Migraciones | fresh/upgrade/equivalencia PASS; schema hash `3f813724b1e65e21d66ba345131d42a0ca7f42bee3b294d58e8dcd8b03ed6eb7` |
+| Batería global | 20 Node + 552 TS/TSX = 572/572 PASS |
 | Build/typecheck/lint focalizado | PASS |
 
 El lint global conserva 40 incidencias preexistentes en `app/legal-data.tsx`,
 `app/mercado/page.tsx` y `app/page.tsx`; ningún archivo R6C añade errores.
+
+## Cierre productivo
+
+- PR #209: merge `94edebf1d470b92fc57988696a144567d2dc9d38`.
+- Compatibilidad post-activación PR #210: merge
+  `41c8280b55bdabd201da4169fbf524561bc9ee24`.
+- Supabase producción: ledger 176, siete flags R6C ON y formatos avanzados OFF.
+- Canario reversible: 1 bracket de 4, 3 nodes, 2 CanonicalMatches distintos,
+  cero resultados y read models Hub/bracket válidos.
+- Readback posterior al rollback: cero filas R6C/QA y dominios protegidos
+  `Rating / Rewards / Conduct / Billing = 1 / 17 / 0 / 0`.
+- Producción web: deployment `dpl_AH3CJhTQ25tXQU5QjrbqdTb3t9Bv`, READY en
+  `pachangasiq.com`.
 
 ## Límites V1
 
