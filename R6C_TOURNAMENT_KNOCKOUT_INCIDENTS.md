@@ -1995,3 +1995,23 @@ reproducing the original scenario passes.
   `3b770ddde8a3d3599581e963f836b28e00d9ce8496d9127facdaa091f3aa68d9`;
   `/sw.js` returned `no-cache, no-store, must-revalidate` and version
   `2.0.0+sw.1a8c3af88b2f`.
+
+### R6C-ENVIRONMENT-097 - Final evidence grep exposed an unquoted shell glob
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: read already merged Simulation World, scale and snapshot
+  evidence from the R6C reports while preparing the concise final response.
+- Observed: zsh expanded an unquoted `TOURNAMENT_KNOCKOUT_*_REPORT.md` before
+  `git grep` ran and returned `no matches found`.
+- Impact: no repository, deployment, Supabase or product state changed; the
+  failed command is not release evidence.
+- Planned correction: pass every report pathspec to Git as a quoted literal so
+  Git, rather than zsh, performs repository-aware matching.
+- Regression plan: retrieve the requested merged report evidence with exit code
+  zero and without shell expansion errors.
+- Correction: the wildcard report pathspec is now single-quoted and the fixed
+  filenames remain explicit Git pathspecs.
+- Regression: the command exited zero and returned the merged evidence for
+  Demo `remoteWrites = 0`, 10.000 completion snapshots and the 10.000 bracket /
+  100.000 node / 100.000 slot scale gate without a zsh error.
