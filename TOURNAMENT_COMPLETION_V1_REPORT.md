@@ -72,3 +72,15 @@ R6C no concede cajas, cosméticos, premios, dinero, Season Score o Ranking.
 
 La activación remota y el canario reversible se documentan en el informe de
 release.
+
+## Cierre productivo
+
+- `tournament_completion_enabled`: ON dentro del bundle invite-only R6C.
+- El canario de publicación no fabrica campeón: genera únicamente las dos
+  semifinales y confirma 0 resultados y 0 completion snapshots antes del
+  rollback.
+- Demo World V2.6 sí contiene una historia completa generada por PostgreSQL:
+  campeón Marina Fosca, subcampeón Circuit Poblenou, tercer puesto Onze del
+  Clot y una corrección con lineage preservado.
+- Supabase producción permanece con 0 filas de completion R6C reales y 0 reward
+  grants derivados del canario.

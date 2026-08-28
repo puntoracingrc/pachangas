@@ -4,7 +4,8 @@
 
 - Base inicial: `659511e41cbab57440ba23124f8e339110aed9c5`.
 - Rama: `codex/tournament-knockout-bracket-champion-v1`.
-- PR: #209 (Draft durante gates).
+- PR funcional: #209.
+- PR de compatibilidad post-activación: #210.
 - Supabase producción esperado antes de R6C: ledger 169.
 - Objetivo: seis migraciones funcionales hasta ledger 175 y un hotfix
   forward-only de compatibilidad en ledger 176, con activación invite-only
@@ -57,16 +58,17 @@ pendientes como release completado.
 | Baseline/ledger producción | PASS | 169 receipts, último `20260827105036`, 0 locks exclusivos, 54.693.011 bytes y relaciones R6C ausentes. |
 | Migraciones producción 170..175 | PASS | Aplicación forward-only única; ledger 175 y seis nombres exactos confirmados por CLI y API. |
 | Hotfix 176 local | PASS | Bootstrap y upgrade equivalentes; la regresión del RPC R6A conserva los siete flags R6C y el canario local revierte íntegramente. |
-| Hotfix 176 producción | PENDING | No se aplica hasta fusionar y desplegar el PR de compatibilidad. |
+| Hotfix 176 producción | PASS | Aplicación forward-only única; ledger local/remoto 176 y definición funcional confirmada. El warning opcional de cache pg-delta apareció después del SQL y no se reintentó. |
 | Flags nacen OFF | PASS | Siete flags R6C false; two-leg, double elimination y public discovery false; flags R6B preservados. |
 | PR #209 fusionado | PASS | Merge `94edebf1d470b92fc57988696a144567d2dc9d38`, 2026-08-28 02:34:44Z. |
-| Deployment Vercel SHA exacto READY | PASS | `pachangas-e271eh6qx-persianas-almar-web-s-projects.vercel.app`, target production, alias `pachangasiq.com`. |
-| Smoke inactivo | PASS | `/` y `/demo?demo=1&world=tournament` 200; `/torneos` permanece Private Beta no disponible sin sesión; 0 errores de consola. |
+| PR #210 fusionado | PASS | Merge `41c8280b55bdabd201da4169fbf524561bc9ee24`, 2026-08-28 03:14:57Z. |
+| Deployment Vercel SHA exacto READY | PASS | `pachangas-319jsjkrf-persianas-almar-web-s-projects.vercel.app`, deployment `dpl_AH3CJhTQ25tXQU5QjrbqdTb3t9Bv`, target production y alias `pachangasiq.com`. |
+| Smoke productivo | PASS | `/`, Demo World V2.6 y `/torneos` responden; R6C permanece invite-only y no hay discovery público. |
 | Activación Private Beta por RPC | PASS | Operación `83b2493b-5a54-4981-a4c0-620bc82686da`, actor `service_authority`, revision 17 / sequence 1853; siete flags R6C ON y formatos avanzados OFF. |
-| Canario 4 equipos reversible | BLOCKED | El intento inicial revirtió antes de crear datos por `R6C-PRODUCT-084`; el mismo canario pasa localmente con 176 y queda pendiente de repetición productiva. |
-| Readback y cleanup productivo | PENDING | - |
+| Canario 4 equipos reversible | PASS | 1 bracket de 4, 3 nodes, 2 semifinales, 2 CanonicalMatches distintos, 0 resultados y Hub/bracket válidos dentro de una transacción terminada en rollback. |
+| Readback y cleanup productivo | PASS | Revision 17 / sequence 1853; 0 usuarios, competiciones, receipts, eventos y filas R6C QA; protegidos 1 / 17 / 0 / 0. |
 | Demo World V2.6 LIVE | PASS | Cuadro completo, ocho partidos, campeón único, lineage de corrección y `remoteWrites=0` visibles en producción. |
-| Service Worker productivo | PENDING | - |
+| Service Worker productivo | PASS | `2.0.0+sw.41c8280b55bd`, controlador activo, `no-store`, Demo disponible offline y reconexión convergente sin errores. |
 
 ## Certificación de staging
 
@@ -116,9 +118,11 @@ pendientes como release completado.
 
 ## Readback posterior a migraciones
 
-- Ledger: 175 receipts; último `20260827205409` con los seis nombres y hashes
-  documentados. El warning opcional de cache pg-delta apareció después de la
-  aplicación y no se reintentó ningún SQL.
+- Ledger: 176 receipts; último `20260828045324` con nombre y hash
+  `df6c601489dcad556c8fd475559f99f4aaf799c4982f274a4304bc196a560aec`.
+  El warning opcional de cache pg-delta apareció después de la aplicación; el
+  comando salió con código 0, el readback independiente confirmó la migración y
+  no se reintentó ningún SQL.
 - Las trece relaciones R6C existen, tienen RLS, están vacías y no conceden
   `INSERT`, `UPDATE`, `DELETE`, `TRUNCATE`, `TRIGGER` ni `REFERENCES` a `anon`
   o `authenticated`.
@@ -129,13 +133,14 @@ pendientes como release completado.
   siguen OFF.
 - Baseline protegido sin cambios: 1 Rating snapshot, 17 reward grants,
   0 conduct reports y 0 billing events. Locks exclusivos ajenos: 0.
-- Security Advisor: 13 INFO `RLS enabled/no policy`, intencionales como deny-all
-  sobre tablas, y 4 WARN en los entrypoints `SECURITY DEFINER`. Los cuatro
-  revocan `anon`, comprueban identidad/capacidad dentro de la función y son el
-  API previsto. Remediación de referencia:
+- Security Advisor sobre el alcance exacto R6C: 13 INFO `RLS enabled/no policy`,
+  intencionales como deny-all sobre tablas, y 5 WARN en los entrypoints
+  `SECURITY DEFINER` (command, plataforma, lectura del cuadro, Hub y control de
+  plataforma). Revocan `anon`, comprueban identidad/capacidad dentro de la
+  función y son el API previsto. Remediación de referencia:
   https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable
-- Performance Advisor: 71 INFO de FK sin índice en 12 tablas append-only y
-  10 INFO de índices todavía no usados por estar las tablas vacías. No es un
+- Performance Advisor sobre las 13 tablas exactas R6C: 71 INFO de FK sin índice
+  y 3 INFO de índices todavía no usados por estar las tablas vacías. No es un
   stop condition: el scale gate de 10.000 brackets / 100.000 nodes y las
   latencias certificadas pasan. Se registra como deuda explícita sin reescribir
   una migración aplicada. Remediación de referencia:
@@ -146,11 +151,34 @@ pendientes como release completado.
 - La activación R6C quedó confirmada en foundation revision 17 / sequence 1853.
 - El primer canario productivo se revirtió antes de crear el torneo QA porque
   el RPC R6A de flags intentaba escribir agregados incompatibles con R6C activo.
-- `R6C-PRODUCT-084` permanece abierto hasta aplicar ledger 176 y repetir en
-  producción tanto la llamada antigua como el canario completo.
 - La migración 176 no abre tablas, no concede permisos y no cambia datos:
   restaura el marcador transaccional de autoridad y obliga a los escritores
   R6A/R6B a preservar los siete flags propiedad de R6C.
+- El probe productivo del RPC legado avanzó solo dentro de la transacción hasta
+  revision 18, mantuvo todos los flags R6C y volvió por rollback a revision 17 /
+  sequence 1853 con cero receipts/events.
+- `R6C-PRODUCT-084`: `FIXED / REGRESSION_VERIFIED` después de ese probe y del
+  canario productivo completo.
+
+## Canario, PWA y smoke final
+
+- Canario productivo: 1 bracket, 3 nodes, 2 semifinales, 1 final, 2
+  CanonicalMatches distintos, 0 resultados deportivos/oficiales y snapshots Hub
+  y bracket válidos; transacción finalizada con `ROLLBACK`.
+- Readback independiente: 13 relaciones R6C, 0 filas totales; cero usuarios
+  `r6a-fixture-*`, competición `r6a-concurrency-fixture`, receipts y eventos.
+- Protegidos sin cambios: 1 Rating snapshot, 17 Reward grants, 0 Conduct reports
+  y 0 Billing events.
+- Responsive en producción: 1440x900, 390x844 y 844x390 con 0 overflow
+  raíz/cuerpo, 0 imágenes rotas y 0 warnings/errors de consola.
+- Demo World V2.6 muestra campeón Marina Fosca, 8 partidos y 1 predecesor
+  retirado en los tres viewports.
+- Manifest installable fullscreen; Service Worker activo
+  `2.0.0+sw.41c8280b55bd`, respuesta `no-cache, no-store, must-revalidate`, carga
+  offline completa y reconexión al snapshot canónico.
+- Logs posteriores al canario: sin nuevos errores PostgreSQL, API o Realtime.
+  El único ERROR en el intervalo corresponde al readback inválido ya registrado
+  y cerrado como `R6C-SIMULATION-086`.
 
 ## Flags objetivo
 
@@ -176,4 +204,4 @@ directo.
 
 ## Estado actual
 
-`R6C_ACTIVE_LEDGER_175 / COMPATIBILITY_LEDGER_176_LOCAL_CERTIFIED / PRODUCTION_CANARY_PENDING`.
+`R6C_INVITE_ONLY_ACTIVE / LEDGER_176 / PRODUCTION_CANARY_PASS / DEMO_WORLD_V2_6_LIVE / SERVICE_WORKER_PASS`.

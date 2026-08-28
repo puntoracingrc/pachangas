@@ -90,3 +90,15 @@ Rendimiento local:
 | Invalidación downstream | 62,78 ms | 71,42 ms |
 | Bracket view | 31,29 ms | 43,19 ms |
 | Organizer Desk | 50,93 ms | 54,11 ms |
+
+## Cierre productivo
+
+- Flags de progresión, prórroga, penaltis, tercer puesto y completion: ON por
+  RPC de plataforma en revision 17 / sequence 1853.
+- Two-leg y double elimination: OFF.
+- El canario productivo resolvió las fuentes de 2 semifinales sin duplicar
+  ganador, node, match ni contexto y terminó en rollback.
+- El readback posterior confirmó 0 `AdvanceDecision`, invalidaciones o impactos
+  de dependencia persistidos por QA.
+- `R6C-PRODUCT-084` queda `FIXED / REGRESSION_VERIFIED` tras probar en producción
+  el escritor legado y el canario completo.

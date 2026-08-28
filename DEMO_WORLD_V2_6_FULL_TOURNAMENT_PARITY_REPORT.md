@@ -5,9 +5,9 @@
 - Nombre: `Demo World V2.6 - Full Tournament Parity`.
 - Torneo: `COPA BARRIOS IQ 2027`.
 - Seed: `pachangas-iq-demo-world-v2-6-2026-27`.
-- Manifest hash: `27941ed3c5087c44d7804b4ba817a230db52ab3da353aae85121f23898e00ecb`.
-- Authority hash: `726ce4616cdab7224018b0d3eb9061e9418fc991db552daeea022935c105fc1d`.
-- Ledger de simulación: 175.
+- Manifest hash: `3b770ddde8a3d3599581e963f836b28e00d9ce8496d9127facdaa091f3aa68d9`.
+- Authority hash: `da9aac991d30eb0dcfe3b7934122385bddbdcffa10fc316cc25c1a044addf8f9`.
+- Ledger de simulación: 176.
 - Remote writes: 0.
 
 V2.1, V2.2, V2.3, V2.4 y V2.5 permanecen inmutables en directorios
@@ -69,8 +69,8 @@ regression_verified en `R6C_TOURNAMENT_KNOCKOUT_INCIDENTS.md`.
 ## PWA
 
 - Manifest presente.
-- `/sw.js` controla el build de producción local.
-- Cache versionada `pachangas-iq-pwa-2.0.0-sw.<sha>`.
+- `/sw.js` controla el build productivo `41c8280b55bd`.
+- Cache versionada `pachangas-iq-pwa-2.0.0-sw.41c8280b55bd`.
 - Chunk de torneo lazy cacheado tras primera visita.
 - Reload offline conserva `COPA BARRIOS IQ 2027` y `Cuadro`.
 - Reconexión conserva el snapshot y no genera errores.
@@ -82,11 +82,12 @@ regression_verified en `R6C_TOURNAMENT_KNOCKOUT_INCIDENTS.md`.
 - `demo-world:v2:verify`: `snapshotIdentical = true`.
 - `test:demo-world:v2`: 15/15 PASS.
 - Proof y snapshot usan el mismo authority hash.
-- La batería global completa pasa 571/571.
+- La batería global completa pasa 572/572.
 
 ## Paridad remota en staging
 
-- El fixture canónico se ejecutó sobre un full-clone privado con ledger 175.
+- El fixture canónico se ejecutó sobre un full-clone privado con ledger 175;
+  después se regeneró de forma determinista y se publicó con provenance 176.
 - Resultado: 8 nodes vigentes, 8 matches activos, 9 históricos, 1 retirado,
   campeón único y tercer puesto resuelto.
 - Dos clientes autenticados recibieron el evento de invalidación y recargaron
@@ -98,6 +99,12 @@ regression_verified en `R6C_TOURNAMENT_KNOCKOUT_INCIDENTS.md`.
 
 ## Estado remoto
 
-La publicación en `pachangasiq.com`, el Service Worker productivo y el smoke
-final se registran en `TOURNAMENT_KNOCKOUT_V1_PRODUCTION_RELEASE.md` después del
-deployment del SHA fusionado.
+- `pachangasiq.com`: LIVE sobre merge `41c8280b55bdabd201da4169fbf524561bc9ee24`.
+- Responsive productivo 1440x900, 390x844 y 844x390: 0 overflow raíz/cuerpo,
+  0 imágenes rotas y 0 errores o warnings de consola.
+- Service Worker: activo, `no-store`, install/activate/fetch, `skipWaiting` y
+  `clients.claim`; Demo completa disponible offline y convergente tras reconexión.
+- Campeón, ocho partidos y evidencia de corrección visibles en los tres
+  viewports.
+- Android físico, iPhone físico y PWA instalada física permanecen PENDING y no
+  se presentan como PASS.

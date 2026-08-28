@@ -97,5 +97,12 @@ límite aislado de 240 s y revierte todo.
 
 ## Estado remoto
 
-Staging, Supabase producción y canario se consignan en
-`TOURNAMENT_KNOCKOUT_V1_PRODUCTION_RELEASE.md` cuando se ejecutan.
+- Staging autenticado y Realtime: PASS.
+- Supabase producción: migraciones 170..176 aplicadas una sola vez y ledger
+  reconciliado.
+- Compatibilidad del escritor R6A/R6B: PASS; conserva los siete flags R6C.
+- Canario productivo reversible: 2 semifinales materializadas como 2
+  `CanonicalMatch` distintos, cero resultados deportivos/oficiales y rollback
+  íntegro.
+- Readback: cero fixtures, receipts, eventos, usuarios o competiciones QA.
+- Detalle de release: `TOURNAMENT_KNOCKOUT_V1_PRODUCTION_RELEASE.md`.
