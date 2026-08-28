@@ -52,6 +52,34 @@ select pg_temp.r6c_assert(
   'R6C flags must activate narrowly while advanced formats, discovery and payments remain off'
 );
 
+-- R6C-PRODUCT-084: an older R6A flag write must preserve every R6C-owned
+-- capability and derive aggregate match generation instead of conflicting with
+-- the R6C dependency constraint.
+select public.command_pachanga_tournament_platform_v1(
+  '65030000-0000-4000-8000-000000000101',
+  '00000000-0000-0000-0000-00000000c6a1',
+  (select revision from private.pachanga_competition_foundation_settings where singleton),
+  'tournament.flags.set',
+  '{"foundationEnabled":true,"privateBetaEnabled":true,"creationEnabled":true,"drawEnabled":true,"automaticEnabled":true,"manualEnabled":true,"hybridEnabled":true,"publishEnabled":true,"reason":"R6C compatibility regression"}',
+  '{"clientVersion":"6.3.0+r6c-regression","surface":"sql"}'
+);
+
+select pg_temp.r6c_assert(
+  (select tournament_knockout_foundation_enabled
+      and tournament_knockout_match_generation_enabled
+      and tournament_bracket_progression_enabled
+      and tournament_extra_time_enabled
+      and tournament_penalty_shootout_enabled
+      and tournament_third_place_enabled
+      and tournament_completion_enabled
+      and tournament_match_generation_enabled
+      and not tournament_two_leg_enabled
+      and not tournament_double_elimination_enabled
+      and not tournament_public_discovery_enabled
+    from private.pachanga_competition_foundation_settings where singleton),
+  'R6A tournament flag command must preserve active R6C capabilities'
+);
+
 select set_config(
   'request.jwt.claims',
   '{"sub":"63010000-0000-4000-8000-000000000001","role":"authenticated"}',

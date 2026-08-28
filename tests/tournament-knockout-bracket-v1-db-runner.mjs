@@ -39,7 +39,7 @@ try {
   `)), 0, "transactional R6C story leaked its bracket");
   process.stdout.write(`R6C_DB_RUNNER_REPORT|${JSON.stringify({
     ...report,
-    migrations: 175,
+    migrations: 176,
     rollback: true,
   })}\n`);
 } finally {

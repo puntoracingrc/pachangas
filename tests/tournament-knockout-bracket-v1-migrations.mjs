@@ -14,7 +14,7 @@ const suffix = randomBytes(5).toString("hex");
 const freshDatabase = `pachangas_r6c_fresh_${suffix}`;
 const upgradeDatabase = `pachangas_r6c_upgrade_${suffix}`;
 const infrastructureDump = resolve(tmpdir(), `pachangas-r6c-migrations-${suffix}.sql`);
-const waveMigrations = [
+const featureMigrations = [
   "20260827205347_tournament_knockout_bracket_authority_v1.sql",
   "20260827205351_tournament_knockout_progression_results_v1.sql",
   "20260827205356_tournament_knockout_canonical_match_adapter_v1.sql",
@@ -22,6 +22,10 @@ const waveMigrations = [
   "20260827205403_tournament_knockout_access_realtime_v1.sql",
   "20260827205409_tournament_knockout_hardening_flags_v1.sql",
 ];
+const compatibilityMigrations = [
+  "20260828045324_tournament_knockout_flag_authority_compatibility_v1.sql",
+];
+const waveMigrations = [...featureMigrations, ...compatibilityMigrations];
 
 if (!["127.0.0.1", "localhost", "::1", "[::1]"].includes(new URL(adminUrl).hostname)) {
   throw new Error("R6C_MIGRATION_LOCAL_DATABASE_REQUIRED");
@@ -29,9 +33,9 @@ if (!["127.0.0.1", "localhost", "::1", "[::1]"].includes(new URL(adminUrl).hostn
 
 const migrationNames = readdirSync(resolve(root, "supabase/migrations"))
   .filter((name) => /^\d{14}_.+\.sql$/.test(name))
-  .filter((name) => name.slice(0, 14) <= "20260827205409")
+  .filter((name) => name.slice(0, 14) <= "20260828045324")
   .sort();
-assert.equal(migrationNames.length, 175);
+assert.equal(migrationNames.length, 176);
 assert.deepEqual(migrationNames.slice(-waveMigrations.length), waveMigrations);
 const preWave = migrationNames.filter((name) => !waveMigrations.includes(name));
 assert.equal(preWave.length, 169);
@@ -120,7 +124,7 @@ try {
   ], "export R6C Supabase infrastructure");
 
   provision(freshDatabase);
-  apply(freshDatabase, migrationNames, "fresh bootstrap to exact ledger 175");
+  apply(freshDatabase, migrationNames, "fresh bootstrap to exact ledger 176");
 
   provision(upgradeDatabase);
   apply(upgradeDatabase, preWave, "prepare exact ledger 169");
@@ -129,11 +133,11 @@ try {
     "select to_regclass('public.pachanga_tournament_brackets') is null;",
     "verify R6C tables absent at ledger 169",
   ), "t");
-  apply(upgradeDatabase, waveMigrations, "upgrade exact R6C wave 169 to 175", false);
+  apply(upgradeDatabase, waveMigrations, "upgrade exact R6C wave 169 to 176", false);
 
   const freshSchema = normalizedSchema(freshDatabase);
   const upgradeSchema = normalizedSchema(upgradeDatabase);
-  assert.equal(upgradeSchema, freshSchema, "fresh and 169-to-175 R6C schemas diverged");
+  assert.equal(upgradeSchema, freshSchema, "fresh and 169-to-176 R6C schemas diverged");
   const schemaHash = createHash("sha256").update(freshSchema).digest("hex");
 
   const defaults = JSON.parse(query(freshDatabase, `
@@ -181,7 +185,9 @@ try {
 
   process.stdout.write(`R6C_MIGRATION_REPORT|${JSON.stringify({
     baseLedger: 169,
-    finalLedger: 175,
+    compatibilityMigrations,
+    featureMigrations,
+    finalLedger: 176,
     flagsDefaultOff: true,
     productRowsDefault: 0,
     schemaEquivalence: "PASS",

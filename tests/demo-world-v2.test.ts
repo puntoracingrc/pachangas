@@ -65,7 +65,7 @@ test("Demo World V2 is deterministic and the committed snapshot matches its hash
     tournament: committed.tournament,
   };
   assert.equal(createHash("sha256").update(JSON.stringify(payload)).digest("hex"), committed.manifest.hash);
-  assert.equal(committed.manifest.hash, "27941ed3c5087c44d7804b4ba817a230db52ab3da353aae85121f23898e00ecb");
+  assert.equal(committed.manifest.hash, "3b770ddde8a3d3599581e963f836b28e00d9ce8496d9127facdaa091f3aa68d9");
   assert.equal(committed.manifest.version, 2.6);
   assert.equal(committed.manifest.seed, DEMO_WORLD_V2_SEED);
   assert.deepEqual(demoWorldV2IntegrityErrors(committed), []);
@@ -74,10 +74,10 @@ test("Demo World V2 is deterministic and the committed snapshot matches its hash
 test("the committed authority proof comes from deterministic PostgreSQL operations", async () => {
   const proof = assertDemoWorldV2AuthorityProof(loadDemoWorldV2AuthorityProof());
   const world = await committedSnapshot();
-  assert.equal(proof.authorityHash, "726ce4616cdab7224018b0d3eb9061e9418fc991db552daeea022935c105fc1d");
+  assert.equal(proof.authorityHash, "da9aac991d30eb0dcfe3b7934122385bddbdcffa10fc316cc25c1a044addf8f9");
   assert.equal(proof.authorityHash, world.competitions.provenance.authorityHash);
   assert.equal(proof.database, "temporary-local-postgresql");
-  assert.equal(proof.migrationCount, 175);
+  assert.equal(proof.migrationCount, 176);
   assert.equal(proof.remoteWrites, 0);
   assert.deepEqual(proof.rpcFamilies, ["R1", "R3", "R4A", "R4B", "R4C", "R4D", "R5", "R6A", "R6B", "R6C"]);
   assert.deepEqual(proof.refereeAssignments.unconvergedRefereeNumbers, []);
@@ -137,7 +137,7 @@ test("the protagonist League has the complete canonical R1-R5 graph including R3
   )));
   assert.deepEqual(league.provenance.rpcFamilies, ["R1", "R3", "R4A", "R4B", "R4C", "R4D", "R5"]);
   assert.equal(league.provenance.verified, true);
-  assert.equal(league.provenance.migrations, 175);
+  assert.equal(league.provenance.migrations, 176);
   assert.equal(league.competition.refereeAssignmentsEnabled, true);
 });
 

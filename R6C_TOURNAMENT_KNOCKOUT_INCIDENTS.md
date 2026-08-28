@@ -1570,3 +1570,183 @@ reproducing the original scenario passes.
   append-only authority tables and 10 unused-index INFO notices on fresh
   tables. Scale/performance remains within the certified bounds; the debt is
   documented and no applied migration is rewritten.
+
+### R6C-ENVIRONMENT-078 - Vercel connector cannot list team projects
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: locate the production project ID after merge so the exact
+  `main` SHA deployment can be followed to READY.
+- Observed: the connector lists the correct Vercel team but project discovery
+  returns a generic failure.
+- Impact: GitHub merge and automatic deployment are unaffected; connector-based
+  inspection is temporarily unavailable.
+- Planned correction: use the authenticated Vercel CLI and the Git check target
+  to identify the project/deployment without creating or redeploying anything.
+- Regression plan: identify one production deployment for merge SHA
+  `94edebf1d470b92fc57988696a144567d2dc9d38`, require READY and verify the
+  `pachangasiq.com` alias points to that artifact.
+- Correction: the authenticated Vercel CLI identified deployment
+  `pachangas-e271eh6qx-persianas-almar-web-s-projects.vercel.app` without
+  creating or redeploying an artifact.
+- Regression: that deployment is `READY`, has target `production`, carries the
+  exact merge SHA, and `pachangasiq.com` resolves to the same deployment.
+
+### R6C-SIMULATION-079 - Production flag readback used a nonexistent settings column
+
+- Classification: `SIMULATION_BUG`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: prove the complete pre-activation flag matrix directly in
+  production after the exact Vercel deployment became READY.
+- Observed: the diagnostic query selected
+  `tournament_standings_enabled`, which is not a column of
+  `private.pachanga_competition_foundation_settings`; PostgreSQL rejected the
+  read-only statement before returning any rows.
+- Impact: no data changed and R6C was not activated, but the broad flag readback
+  is not valid yet.
+- Planned correction: derive the exact foundation column names from the applied
+  migration contract and rerun a read-only projection without guessing aliases.
+- Regression plan: obtain one unambiguous row with revision, sequence, every
+  prior tournament flag and every R6C/advanced-format flag before activation.
+- Correction: the readback now serializes the single canonical settings row
+  with `to_jsonb(settings)`, preserving the exact applied schema without guessed
+  aliases.
+- Regression: revision 16 / sequence 1285 was returned with all prior R6A/R6B
+  tournament capabilities ON, all seven R6C capabilities OFF, and two-leg,
+  double-elimination and public discovery OFF.
+
+### R6C-ENVIRONMENT-080 - agent-browser CLI is unavailable for production smoke
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: open the production Demo World V2.6 with the repository's
+  preferred browser automation CLI after HTTP smoke passed.
+- Observed: the shell reports `agent-browser: command not found` before opening
+  any browser session.
+- Impact: no product or browser state changed, but this specific automation
+  route cannot provide the visual evidence.
+- Planned correction: use the already available Codex in-app browser control
+  against the same production URL, without installing dependencies or changing
+  the repository.
+- Regression plan: load the production demo, inspect its interactive tree,
+  capture runtime/asset/overflow evidence and close the QA session cleanly.
+- Correction: the smoke used the Codex in-app browser against the same
+  production domain; no repository dependency was installed.
+- Regression: Demo World V2.6 loaded its complete canonical knockout bracket,
+  champion, retired-match evidence and authority digest; desktop root overflow,
+  broken images and console errors all remained zero.
+
+### R6C-SIMULATION-081 - Activation orchestrator assumed Web Crypto was global
+
+- Classification: `SIMULATION_BUG`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: generate a unique operation ID immediately before invoking
+  the production flag RPC at expected revision 16.
+- Observed: the orchestration isolate raised `ReferenceError: crypto is not
+  defined` before the Supabase tool was called.
+- Impact: zero remote writes occurred and the production flags remain OFF, but
+  activation has not yet been attempted against PostgreSQL.
+- Planned correction: generate the UUID with the local system command, then
+  invoke the exact RPC once with that immutable identifier.
+- Regression plan: the system-generated immutable UUID reaches the production
+  RPC; receipt and flag readback remain part of the activation gate.
+- Correction: operation ID `83b2493b-5a54-4981-a4c0-620bc82686da` was generated
+  by the local system and reused unchanged.
+- Regression: the request reached the PostgreSQL RPC and its authentication
+  guard, proving UUID construction no longer fails in the orchestrator.
+
+### R6C-ENVIRONMENT-082 - Connected SQL channel lacks service-authority context
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: invoke the platform flag command over the connected
+  Supabase SQL channel with revision 16 and a canonical operation ID.
+- Observed: PostgreSQL returned `AUTHENTICATION_REQUIRED` from the RPC before
+  locking or updating the settings row.
+- Impact: the authorization guard works and production remains unchanged, but
+  R6C activation is not complete.
+- Planned correction: identify the platform's existing service-authority
+  mechanism or an authenticated holder of `competitions.manage` plus
+  `flags.write`, then invoke the same RPC without direct table writes.
+- Regression plan: obtain one canonical command receipt at revision 17 and
+  independently prove the actor path, operation ID, server sequence and flags.
+- Correction: the release transaction set the existing PostgREST-compatible
+  `service_role` claim locally, then invoked the same platform RPC; no table
+  update was used.
+- Regression: one `service_authority` receipt exists for operation
+  `83b2493b-5a54-4981-a4c0-620bc82686da`, confirmed revision 17 / sequence 1853;
+  an independent readback proves the seven R6C flags ON and advanced flags OFF.
+
+### R6C-ENVIRONMENT-083 - Stale local database retained an obsolete match generator
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: validate the reversible four-team production canary
+  locally before sending it to Supabase production: activate two semifinals and
+  one final, reserve all nodes, then generate the two semifinal matches.
+- Observed: the first `bracket.node.generate_match` reaches
+  `private.pachanga_tournament_knockout_generate_match_v1` and PostgreSQL rejects
+  `canonical_match_id = canonical_match_id` because the right-hand identifier
+  can refer to either the PL/pgSQL variable or the table column.
+- Impact: the entire local canary transaction rolled back and production was not
+  exercised. A direct production definition readback proves the deployed
+  function already uses `generated_canonical_match_id` and has no ambiguous
+  assignment, so no product hotfix or migration is warranted.
+- Planned correction: discard the stale local schema as evidence and validate
+  the canary in a fresh ephemeral database bootstrapped from the current 175
+  migrations.
+- Regression plan: rerun the exact four-team canary in that fresh database and
+  then in production;
+  require 3 nodes, 2 unique CanonicalMatches, 0 results, valid Hub/bracket and
+  complete rollback cleanup.
+- Correction: a fresh isolated database was bootstrapped from the exact 175
+  migrations and the stale shared local schema was not modified.
+- Regression: the reversible canary produced 3 nodes, 2 unique semifinal
+  CanonicalMatches, 0 sporting/official results and valid Hub/bracket before
+  rollback; the ephemeral database was removed.
+
+### R6C-PRODUCT-084 - R6A tournament flag RPC conflicts with active R6C flags
+
+- Classification: `PRODUCT_BUG`
+- Status: `OPEN`
+- Original scenario: run the already locally certified reversible canary in
+  production after R6C activation, using the canonical R6A fixture path.
+- Observed: `command_pachanga_tournament_platform_v1` attempts to set
+  `tournament_match_generation_enabled` and
+  `tournament_bracket_progression_enabled` to false even though the seven R6C
+  flags are active; the R6C consistency check rejects the row.
+- Impact: the production canary transaction rolled back before creating a QA
+  tournament. More importantly, the older platform flag command cannot safely
+  coexist with active R6C and could fail for a legitimate control-center action.
+- Planned correction: add a forward-only compatibility migration so the R6A
+  flag RPC preserves R6C-owned fields and derives aggregate match generation
+  from group plus knockout generation, without permitting V1 to alter R6C.
+- Regression plan: prove R6A flag writes preserve all seven R6C flags, then run
+  the exact local and production canary with complete rollback cleanup.
+
+### R6C-SIMULATION-085 - Demo World snapshot hash expectation remained on ledger 175
+
+- Classification: `SIMULATION_BUG`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: regenerate Demo World V2.6 after adding the forward-only
+  R6C flag-authority compatibility migration and execute its focused test.
+- Observed: PostgreSQL reproduced authority hash
+  `da9aac991d30eb0dcfe3b7934122385bddbdcffa10fc316cc25c1a044addf8f9`
+  and snapshot hash
+  `3b770ddde8a3d3599581e963f836b28e00d9ce8496d9127facdaa091f3aa68d9`,
+  but the test still expected the ledger-175 snapshot hash
+  `27941ed3c5087c44d7804b4ba817a230db52ab3da353aae85121f23898e00ecb`.
+- Impact: the committed V2.6 chunks are internally consistent and remote writes
+  remain zero, but the deterministic snapshot regression fails after the
+  migration-count provenance legitimately changes from 175 to 176.
+- Planned correction: update only the immutable expected snapshot hash to the
+  value regenerated twice from ledger 176; do not alter Demo content or product
+  behavior.
+- Regression plan: require `demo-world:v2:verify` plus the focused Demo World
+  suite to agree on migration count 176, authority hash, snapshot hash and zero
+  remote writes.
+- Correction: the test now pins the twice-reproduced ledger-176 snapshot hash;
+  no Demo content, canonical operation or runtime behavior was changed.
+- Regression: `demo-world:v2:verify` reports `snapshotIdentical=true`, migration
+  count 176 and `remoteWrites=0`; all 15 focused Demo World tests pass with the
+  same authority and snapshot hashes.

@@ -19,8 +19,8 @@ export function createR6bPostgresHarness(label) {
 export function createR6cPostgresHarness(label) {
   return createTournamentPostgresHarness(label, {
     suite: "R6C",
-    expectedLedgerSize: 175,
-    throughVersion: "20260827205409",
+    expectedLedgerSize: 176,
+    throughVersion: "20260828045324",
   });
 }
 
