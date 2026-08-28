@@ -532,3 +532,17 @@
 - Evidence: desktop, `390x844` and `844x390` browser checks have zero horizontal overflow and zero console errors; the manifest link is present. The source contract and focused regression suite verify the Service Worker caches only the public plan catalog, never caches owner billing, never queues sporting or billing writes, and keeps rejected/offline actions unconfirmed.
 - Resolution boundary: validate a genuinely installed PWA against the deployed Preview/production origin after deployment. Do not claim physical Android, iPhone or installed-PWA PASS from emulation alone.
 - Product impact: none; this is an evidence boundary, not a runtime failure.
+
+## INC-W7B-042 - Isolated worktree did not inherit the Supabase project link
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed`
+- Regression: `regression_verified`
+- Detected at: 2026-08-28 21:52 CEST
+- Surface: mandatory pre-deployment `supabase migration list --linked` readback.
+- Original scenario: the command exited before contacting the remote database with `Cannot find project ref` because the isolated Git worktree does not inherit the ignored `supabase/.temp` link metadata from another checkout.
+- Root cause: Supabase CLI project-link state is local, ignored workspace metadata rather than committed repository state.
+- Safety evidence: the failure occurred before any remote query or mutation; production ledger and schema remain unchanged.
+- Correction: linked this worktree explicitly to the known Pachangas IQ project without supplying or persisting a database password.
+- Regression evidence: `supabase migration list --linked` connected successfully and proved 183 matching local/remote migrations through `20260828072053`; the only local-only rows are the seven intentional Wave 7B versions `20260828163750` through `20260828163756`.
+- Product impact: none; no application or database request was executed.
