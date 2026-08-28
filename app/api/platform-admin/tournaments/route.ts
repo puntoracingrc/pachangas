@@ -16,7 +16,8 @@ export const revalidate = 0;
 
 const flagsAggregateId = "00000000-0000-0000-0000-00000000c6a1";
 const groupStageFlagsAggregateId = "00000000-0000-0000-0000-00000000c6b1";
-const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const knockoutFlagsAggregateId = "00000000-0000-0000-0000-00000000c6c1";
+const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function reason(input: Record<string, unknown>) {
   const value = typeof input.reason === "string" ? input.reason.trim() : "";
@@ -53,6 +54,16 @@ function platformPayload(action: string, input: Record<string, unknown>) {
     groupStandingsEnabled: input.groupStandingsEnabled === true,
     groupTrackingEnabled: input.groupTrackingEnabled === true,
     qualificationEnabled: input.qualificationEnabled === true,
+  };
+  if (action === "tournament.knockout.flags.set") return {
+    ...base,
+    bracketProgressionEnabled: input.bracketProgressionEnabled === true,
+    completionEnabled: input.completionEnabled === true,
+    extraTimeEnabled: input.extraTimeEnabled === true,
+    knockoutFoundationEnabled: input.knockoutFoundationEnabled === true,
+    knockoutMatchGenerationEnabled: input.knockoutMatchGenerationEnabled === true,
+    penaltyShootoutEnabled: input.penaltyShootoutEnabled === true,
+    thirdPlaceEnabled: input.thirdPlaceEnabled === true,
   };
   const organizerKind = typeof input.organizerKind === "string" ? input.organizerKind.toUpperCase() : "";
   if (!['TEAM', 'CLUB'].includes(organizerKind)) throw new Error("INVALID_TOURNAMENT_ORGANIZER");
@@ -104,6 +115,7 @@ export async function POST(request: Request) {
     const expectedRevision = Number(body.expectedRevision);
     const aggregateId = action === "tournament.flags.set" || action === "tournament.kill_switch"
       ? flagsAggregateId : action === "tournament.group_stage.flags.set" ? groupStageFlagsAggregateId
+        : action === "tournament.knockout.flags.set" ? knockoutFlagsAggregateId
       : typeof body.aggregateId === "string" ? body.aggregateId : "";
     if (!uuidPattern.test(operationId) || !uuidPattern.test(aggregateId)
         || !Number.isInteger(expectedRevision) || expectedRevision < 0) {
@@ -112,6 +124,8 @@ export async function POST(request: Request) {
     const result = await session.client.rpc(
       action === "tournament.group_stage.flags.set"
         ? "command_pachanga_tournament_group_stage_platform_v1"
+        : action === "tournament.knockout.flags.set"
+          ? "command_pachanga_tournament_knockout_platform_v1"
         : "command_pachanga_tournament_platform_v1",
       {
       aggregate_id: aggregateId,

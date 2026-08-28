@@ -879,18 +879,49 @@ const tournamentIncidentLabels = {
   SUSPENDED_RESUMED: "Suspendido y reanudado",
 } as const;
 
+const tournamentKnockoutResolutionLabels = {
+  ADMINISTRATIVE_DECISION: "Decisión administrativa",
+  EXTRA_TIME: "Prórroga",
+  FORFEIT: "Incomparecencia",
+  NO_SHOW: "Incomparecencia",
+  PENALTY_SHOOTOUT: "Penaltis",
+  SPORTING_RESULT: "Resultado deportivo",
+} as const;
+
 function demoTournamentGroupLabel(groupNumber: number) {
   return `Grupo ${String.fromCharCode(64 + groupNumber)}`;
 }
 
 function DemoTournamentView({ tournament }: { tournament: DemoWorldV2TournamentChunk }) {
-  const [pane, setPane] = useState<DemoTournamentPane>("resumen");
+  const [pane, setPane] = useState<DemoTournamentPane>("cuadro");
+  const tournamentSubnavRef = useRef<HTMLElement>(null);
+  const activeTournamentPaneRef = useRef<HTMLButtonElement>(null);
   const [outcomeIndex, setOutcomeIndex] = useState<0 | 1>(1);
   const [roundNumber, setRoundNumber] = useState(2);
   const [groupNumber, setGroupNumber] = useState(1);
   const [matchFilter, setMatchFilter] = useState<"ALL" | "OFFICIAL" | "SCHEDULED">("ALL");
   const outcome = tournament.drawOutcomes[outcomeIndex];
   const stage = tournament.groupStage;
+  const knockout = tournament.knockout;
+  const [selectedJourneyTeamId, setSelectedJourneyTeamId] = useState(knockout.podium.champion.id);
+  const selectedJourney = knockout.teamJourneys.find(({ team }) => team.id === selectedJourneyTeamId)
+    ?? knockout.teamJourneys[0];
+  useEffect(() => {
+    const rail = tournamentSubnavRef.current;
+    const revealActivePane = () => {
+      const activePane = activeTournamentPaneRef.current;
+      if (!rail || !activePane) return;
+      const railRect = rail.getBoundingClientRect();
+      const activeRect = activePane.getBoundingClientRect();
+      if (activeRect.left < railRect.left) rail.scrollLeft += activeRect.left - railRect.left;
+      else if (activeRect.right > railRect.right) rail.scrollLeft += activeRect.right - railRect.right;
+    };
+    revealActivePane();
+    if (!rail || typeof ResizeObserver === "undefined") return;
+    const resizeObserver = new ResizeObserver(revealActivePane);
+    resizeObserver.observe(rail);
+    return () => resizeObserver.disconnect();
+  }, [pane]);
   const groups = Array.from({ length: tournament.competition.groupCount }, (_, index) => ({
     number: index + 1,
     placements: outcome.placements
@@ -922,39 +953,46 @@ function DemoTournamentView({ tournament }: { tournament: DemoWorldV2TournamentC
       </footer>
     </article>)}
   </div>;
+  const renderKnockoutNode = (node: typeof knockout.nodes[number]) => <article className={styles.tournamentKnockoutNode} data-resolution={node.resolutionKind} key={node.nodeKey}>
+    <header><span>{node.nodeKey}</span><b>{tournamentKnockoutResolutionLabels[node.resolutionKind]}</b></header>
+    <div data-winner={node.winnerTeamId === node.homeTeam.id}><strong>{node.homeTeam.name}</strong><b>{node.score.home}</b></div>
+    <div data-winner={node.winnerTeamId === node.awayTeam.id}><strong>{node.awayTeam.name}</strong><b>{node.score.away}</b></div>
+    {node.shootout ? <p>Penaltis · {node.shootout.home}-{node.shootout.away}</p> : node.extraTime ? <p>Prórroga · {node.extraTime.home}-{node.extraTime.away}</p> : null}
+    <footer><span>{shortDateLabel(node.scheduledStart)}</span><span>{node.referee ? `Árbitro ${node.referee.refereeNumber}` : node.venueLabel}</span></footer>
+  </article>;
   return <div className={styles.tournamentStack} data-demo-domain="tournament" data-demo-read-only="true">
     <section className={styles.tournamentHero}>
       <div>
-        <span className={styles.eyebrow}>Demo World V2.5 · Group Stage canónica</span>
+        <span className={styles.eyebrow}>Demo World V2.6 · Torneo canónico completo</span>
         <h1>{tournament.competition.name}</h1>
-        <p>Jornada 2 completada, calendario R4B y resultados oficiales R4C desde PostgreSQL.</p>
+        <p>Fase de grupos, cuadro eliminatorio, árbitros, disciplina y campeón confirmados por PostgreSQL.</p>
       </div>
       <div className={styles.tournamentMetrics}>
-        <Stat label="Jornada" value={`${stage.currentRound}/${stage.roundCount}`} />
-        <Stat label="Oficiales" value={stage.officialMatches} />
-        <Stat label="Pendientes" value={stage.scheduledMatches} />
+        <Stat label="Estado" value="Bloqueado" />
+        <Stat label="Campeón" value={knockout.podium.champion.name} />
+        <Stat label="Eliminatorias" value={knockout.nodes.length} />
         <Stat label="Partidos" value={tournament.nextPhase.tournamentMatches} />
       </div>
     </section>
 
-    <nav className={styles.tournamentSubnav} aria-label="Secciones del Torneo">
-      {demoTournamentPanes.map((item) => <button aria-current={pane === item.id ? "page" : undefined} key={item.id} type="button" onClick={() => setPane(item.id)}>{item.label}</button>)}
+    <nav ref={tournamentSubnavRef} className={styles.tournamentSubnav} aria-label="Secciones del Torneo">
+      {demoTournamentPanes.map((item) => <button ref={pane === item.id ? activeTournamentPaneRef : undefined} aria-current={pane === item.id ? "page" : undefined} key={item.id} type="button" onClick={() => setPane(item.id)}>{item.label}</button>)}
     </nav>
 
     <main className={styles.tournamentPane}>
       {pane === "resumen" ? <>
-        <header className={styles.tournamentPaneHeader}><div><span className={styles.eyebrow}>Seguimiento activo</span><h2>Fase de grupos</h2></div><strong>Clasificación provisional</strong></header>
+        <header className={styles.tournamentPaneHeader}><div><span className={styles.eyebrow}>Cierre canónico</span><h2>Torneo completado</h2></div><strong>Cuadro bloqueado</strong></header>
         <div className={styles.tournamentOrganizerGrid}>
-          <Stat label="Jugados" value={stage.officialMatches} />
-          <Stat label="Por jugar" value={stage.scheduledMatches} />
-          <Stat label="Árbitros" value={stage.referees.confirmedMatches} />
-          <Stat label="Incidencias" value={incidentMatches.length} />
-          <Stat label="Standings" value={tournament.completionProof.standingSnapshots} />
-          <Stat label="Siguiente" value="J3" />
+          <Stat label="Grupos" value={tournament.completionProof.officialMatches} />
+          <Stat label="Eliminatorias" value={knockout.authority.activeMatches} />
+          <Stat label="Históricos" value={knockout.authority.historicalMatches} />
+          <Stat label="Correcciones" value={knockout.organizerDesk.correctionsWithImpact} />
+          <Stat label="Sin resolver" value={knockout.organizerDesk.unresolvedNodes} />
+          <Stat label="Snapshots" value={knockout.authority.completionSnapshots} />
         </div>
         <div className={styles.tournamentSummarySplit}>
-          <section><h3>Jornada 3</h3>{renderMatches(stage.matches.filter((match) => match.roundNumber === 3))}</section>
-          <section><h3>Zona de clasificación</h3><div className={styles.tournamentCompactStandings}>{stage.standings.filter(({ position }) => position <= 2).map((row) => <div key={`${row.groupNumber}-${row.team.id}`}><span>{demoTournamentGroupLabel(row.groupNumber)}</span><strong>{row.position}. {row.team.name}</strong><b>{row.points} pts</b></div>)}</div></section>
+          <section><h3>Final</h3>{knockout.nodes.filter(({ roundCode }) => roundCode === "FINAL").map(renderKnockoutNode)}</section>
+          <section><h3>Podio</h3><div className={styles.tournamentCompactStandings}><div><span>1.º</span><strong>{knockout.podium.champion.name}</strong><b>Campeón</b></div><div><span>2.º</span><strong>{knockout.podium.runnerUp.name}</strong><b>Finalista</b></div><div><span>3.º</span><strong>{knockout.podium.thirdPlace.name}</strong><b>Podio</b></div></div></section>
         </div>
       </> : null}
 
@@ -965,9 +1003,10 @@ function DemoTournamentView({ tournament }: { tournament: DemoWorldV2TournamentC
       </> : null}
 
       {pane === "partidos" ? <>
-        <header className={styles.tournamentPaneHeader}><div><span className={styles.eyebrow}>24 CanonicalMatches</span><h2>Partidos</h2></div><span>{filteredMatches.length} visibles</span></header>
+        <header className={styles.tournamentPaneHeader}><div><span className={styles.eyebrow}>32 CanonicalMatches activos</span><h2>Partidos</h2></div><span>{filteredMatches.length + knockout.nodes.length} visibles</span></header>
         <div className={styles.tournamentRoundRail}>{(["ALL", "SCHEDULED", "OFFICIAL"] as const).map((filter) => <button aria-pressed={matchFilter === filter} key={filter} type="button" onClick={() => setMatchFilter(filter)}>{filter === "ALL" ? "Todos" : filter === "OFFICIAL" ? "Oficiales" : "Próximos"}</button>)}</div>
         {renderMatches(filteredMatches)}
+        {matchFilter !== "SCHEDULED" ? <><h3 className={styles.tournamentSectionTitle}>Eliminatorias</h3><div className={styles.tournamentMatchGrid}>{knockout.nodes.map(renderKnockoutNode)}</div></> : null}
       </> : null}
 
       {pane === "clasificacion" ? <>
@@ -986,6 +1025,7 @@ function DemoTournamentView({ tournament }: { tournament: DemoWorldV2TournamentC
         <header className={styles.tournamentPaneHeader}><div><span className={styles.eyebrow}>R5</span><h2>Disciplina pública</h2></div><span>{stage.discipline.length} eventos</span></header>
         <div className={styles.tournamentEventList}>{stage.discipline.map((event, index) => <article key={`${event.team.id}-${index}`}><b data-card={event.cardType}>{event.cardType}</b><div><strong>{event.team.name}</strong><span>{event.playerLabel}</span></div><small>{event.status}</small></article>)}</div>
         <div className={styles.tournamentSanctionStrip}>{stage.sanctions.map((sanction, index) => <article key={`${sanction.team.id}-${index}`}><span>Sanción aplicable</span><strong>{sanction.team.name}</strong><small>{sanction.publicSummary} · {sanction.remainingUnits} {sanction.unitType}</small></article>)}</div>
+        <div className={styles.tournamentSanctionStrip}><article><span>Aplicada en eliminatorias</span><strong>{knockout.discipline.team.name}</strong><small>{knockout.discipline.playerLabel} no fue elegible para la semifinal · Rating intacto</small></article></div>
       </> : null}
 
       {pane === "arbitros" ? <>
@@ -1006,16 +1046,28 @@ function DemoTournamentView({ tournament }: { tournament: DemoWorldV2TournamentC
       </> : null}
 
       {pane === "cuadro" ? <>
-        <header className={styles.tournamentPaneHeader}><div><span className={styles.eyebrow}>QualificationSnapshot verificado</span><h2>Plantilla de cuartos</h2></div><span>{tournament.completionProof.qualifiers} plazas</span></header>
-        <div className={styles.tournamentBracketGrid}>{Array.from({ length: 4 }, (_, index) => index + 1).map((matchNumber) => <article key={matchNumber}><header>Cuarto {matchNumber}</header>{tournament.completionProof.bracketSources.filter((slot) => slot.matchNumber === matchNumber).map((slot) => <div key={slot.slotKey}><span>{slot.side}</span><strong>{demoTournamentGroupLabel(slot.sourceGroupNumber)} · {slot.sourcePosition}.º</strong></div>)}</article>)}</div>
-        <section className={styles.tournamentBracketNotice}><strong>{tournament.nextPhase.message}</strong><span>{tournament.completionProof.knockoutMatches} partidos eliminatorios creados · progresión OFF</span><code>{tournament.completionProof.qualificationChecksum.slice(0, 16)}</code></section>
+        <header className={styles.tournamentPaneHeader}><div><span className={styles.eyebrow}>R6C · Single leg</span><h2>Cuadro oficial</h2></div><span>8 clasificados · 8 partidos</span></header>
+        <div className={styles.tournamentKnockoutWorkspace}>
+          <div className={styles.tournamentKnockoutBoard} aria-label="Cuadro eliminatorio completo">
+            <section><header>Cuartos</header>{knockout.nodes.filter(({ roundCode }) => roundCode === "QUARTERFINAL").map(renderKnockoutNode)}</section>
+            <section><header>Semifinales</header>{knockout.nodes.filter(({ roundCode }) => roundCode === "SEMIFINAL").map(renderKnockoutNode)}</section>
+            <section><header>Finales</header>{knockout.nodes.filter(({ roundCode }) => roundCode === "FINAL" || roundCode === "THIRD_PLACE").map(renderKnockoutNode)}</section>
+          </div>
+          <aside className={styles.tournamentKnockoutAside}>
+            <div className={styles.tournamentChampion}><span>Campeón</span><strong>{knockout.podium.champion.name}</strong><small>{knockout.podium.runnerUp.name} · subcampeón</small></div>
+            <div><span className={styles.eyebrow}>Recorrido por equipo</span><select aria-label="Equipo del recorrido" value={selectedJourney?.team.id} onChange={(event) => setSelectedJourneyTeamId(event.target.value)}>{knockout.teamJourneys.map((journey) => <option key={journey.team.id} value={journey.team.id}>{journey.team.name}</option>)}</select></div>
+            {selectedJourney ? <div className={styles.tournamentJourney}><strong>{selectedJourney.status.replaceAll("_", " ")}</strong><span>{selectedJourney.path.join(" → ")}</span>{selectedJourney.finalPosition ? <b>{selectedJourney.finalPosition}.º</b> : null}</div> : null}
+            <dl className={styles.tournamentKnockoutEvidence}><div><dt>Corrección</dt><dd>{knockout.authority.retiredMatches} retirado</dd></div><div><dt>Árbitro final</dt><dd>#{knockout.referees.final.refereeNumber}</dd></div><div><dt>Disciplina</dt><dd>Aplicada</dd></div><div><dt>Integridad</dt><dd>Canónica</dd></div></dl>
+          </aside>
+        </div>
+        <section className={styles.tournamentBracketNotice}><strong>{tournament.nextPhase.message}</strong><span>Prórroga, penaltis, no-show y corrección trazados</span><code>{tournament.completionProof.qualificationChecksum.slice(0, 16)}</code></section>
       </> : null}
     </main>
 
     <section className={styles.tournamentNextPhase}>
-      <span>Snapshot público · Jornada 2</span>
+      <span>Snapshot público · Torneo cerrado</span>
       <strong>{tournament.nextPhase.message}</strong>
-      <small>GET-only · 0 escrituras remotas · R6C no iniciado.</small>
+      <small>GET-only · 0 escrituras remotas · R6C verificado.</small>
     </section>
   </div>;
 }

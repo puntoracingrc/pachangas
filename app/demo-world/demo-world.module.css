@@ -2004,6 +2004,120 @@
 .tournamentBracketNotice span { color: var(--demo-muted); font-size: 0.62rem; }
 .tournamentBracketNotice code { color: var(--demo-cyan); font-size: 0.58rem; }
 
+.tournamentSectionTitle { margin: 8px 0 0; color: var(--demo-ink); font-size: 0.88rem; }
+
+.tournamentKnockoutWorkspace {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(230px, 0.3fr);
+  gap: 10px;
+}
+
+.tournamentKnockoutBoard {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(220px, 1fr));
+  gap: 8px;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  scroll-snap-type: x proximity;
+}
+
+.tournamentKnockoutBoard > section {
+  min-width: 220px;
+  display: grid;
+  align-content: start;
+  gap: 7px;
+  scroll-snap-align: start;
+}
+
+.tournamentKnockoutBoard > section > header {
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid rgba(81, 207, 223, 0.34);
+  color: var(--demo-cyan);
+  font-size: 0.62rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.tournamentKnockoutNode {
+  min-width: 0;
+  display: grid;
+  border: 1px solid var(--demo-line);
+  border-radius: 6px;
+  overflow: hidden;
+  background: rgba(9, 23, 19, 0.92);
+}
+
+.tournamentKnockoutNode[data-resolution="PENALTY_SHOOTOUT"] { border-color: rgba(239, 189, 100, 0.52); }
+.tournamentKnockoutNode[data-resolution="EXTRA_TIME"] { border-color: rgba(81, 207, 223, 0.5); }
+.tournamentKnockoutNode[data-resolution="FORFEIT"],
+.tournamentKnockoutNode[data-resolution="NO_SHOW"] { border-color: rgba(239, 115, 115, 0.46); }
+
+.tournamentKnockoutNode > header {
+  min-height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 7px;
+  border-bottom: 1px solid var(--demo-line);
+  padding: 5px 7px;
+}
+
+.tournamentKnockoutNode > header span { color: var(--demo-cyan); font-size: 0.56rem; font-weight: 900; }
+.tournamentKnockoutNode > header b { overflow: hidden; color: var(--demo-muted); font-size: 0.5rem; text-overflow: ellipsis; white-space: nowrap; }
+
+.tournamentKnockoutNode > div {
+  min-width: 0;
+  min-height: 34px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 28px;
+  align-items: center;
+  gap: 7px;
+  border-bottom: 1px solid var(--demo-line);
+  padding: 4px 7px;
+}
+
+.tournamentKnockoutNode > div[data-winner="true"] { box-shadow: inset 3px 0 var(--demo-lime); }
+.tournamentKnockoutNode > div strong { overflow: hidden; color: var(--demo-ink); font-size: 0.62rem; text-overflow: ellipsis; white-space: nowrap; }
+.tournamentKnockoutNode > div b { color: var(--demo-lime); font-size: 0.82rem; text-align: center; }
+.tournamentKnockoutNode > p { margin: 0; background: rgba(239, 189, 100, 0.08); padding: 5px 7px; color: #efbd64; font-size: 0.54rem; }
+
+.tournamentKnockoutNode > footer {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 6px;
+  padding: 5px 7px;
+}
+
+.tournamentKnockoutNode > footer span { overflow: hidden; color: var(--demo-muted); font-size: 0.5rem; text-overflow: ellipsis; white-space: nowrap; }
+
+.tournamentKnockoutAside {
+  min-width: 0;
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  border-left: 1px solid var(--demo-line);
+  padding-left: 10px;
+}
+
+.tournamentChampion { min-height: 92px; display: grid; align-content: center; gap: 3px; border: 1px solid rgba(200, 239, 93, 0.42); border-radius: 6px; background: rgba(200, 239, 93, 0.07); padding: 12px; }
+.tournamentChampion span { color: var(--demo-lime); font-size: 0.56rem; font-weight: 900; text-transform: uppercase; }
+.tournamentChampion strong { overflow-wrap: anywhere; color: var(--demo-ink); font-size: 1rem; }
+.tournamentChampion small { color: var(--demo-muted); font-size: 0.56rem; }
+.tournamentKnockoutAside select { width: 100%; min-height: 38px; margin-top: 5px; border: 1px solid var(--demo-line); border-radius: 5px; background: rgba(9, 23, 19, 0.96); padding: 6px 8px; color: var(--demo-ink); }
+.tournamentJourney { min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 5px 8px; border: 1px solid var(--demo-line); border-radius: 6px; padding: 9px; }
+.tournamentJourney strong { color: var(--demo-cyan); font-size: 0.6rem; }
+.tournamentJourney span { grid-column: 1 / -1; overflow-wrap: anywhere; color: var(--demo-muted); font-size: 0.56rem; }
+.tournamentJourney b { grid-column: 2; grid-row: 1; color: var(--demo-lime); }
+.tournamentKnockoutEvidence { display: grid; margin: 0; border-top: 1px solid var(--demo-line); }
+.tournamentKnockoutEvidence > div { min-height: 34px; display: flex; align-items: center; justify-content: space-between; gap: 8px; border-bottom: 1px solid var(--demo-line); }
+.tournamentKnockoutEvidence dt { color: var(--demo-muted); font-size: 0.54rem; }
+.tournamentKnockoutEvidence dd { margin: 0; color: var(--demo-ink); font-size: 0.58rem; font-weight: 850; }
+
 .tournamentDesk {
   min-width: 0;
   display: grid;
@@ -2184,6 +2298,9 @@
   .tournamentSummarySplit { grid-template-columns: 1fr; }
   .tournamentTeamGrid,
   .tournamentBracketGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .tournamentKnockoutWorkspace { grid-template-columns: minmax(0, 1fr); }
+  .tournamentKnockoutAside { grid-template-columns: repeat(2, minmax(0, 1fr)); border-top: 1px solid var(--demo-line); border-left: 0; padding: 10px 0 0; }
+  .tournamentKnockoutEvidence { grid-column: 1 / -1; }
   .tournamentEvidenceGrid { grid-template-columns: 1fr; }
   .tournamentEvidenceGrid > article { padding: 22px; }
   .tournamentEvidenceGrid > article:last-child { padding-left: 22px; }
@@ -2283,6 +2400,9 @@
   .tournamentMatchGrid { grid-template-columns: 1fr; }
   .tournamentTeamGrid,
   .tournamentBracketGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .tournamentKnockoutBoard { grid-template-columns: repeat(3, minmax(238px, 78vw)); }
+  .tournamentKnockoutAside { grid-template-columns: minmax(0, 1fr); }
+  .tournamentKnockoutEvidence { grid-column: auto; }
   .tournamentRuleGrid { grid-template-columns: 1fr; }
   .tournamentBracketNotice { grid-template-columns: 1fr; gap: 5px; }
   .tournamentDesk { padding: 20px 14px; }
@@ -2477,6 +2597,13 @@
   .tournamentBracketGrid { grid-template-columns: repeat(4, minmax(175px, 1fr)); gap: 6px; }
   .tournamentTeamGrid,
   .tournamentBracketGrid { overflow-x: auto; }
+  .tournamentKnockoutWorkspace { grid-template-columns: minmax(0, 1fr) minmax(190px, 0.3fr); gap: 7px; }
+  .tournamentKnockoutBoard { grid-template-columns: repeat(3, minmax(205px, 1fr)); gap: 5px; }
+  .tournamentKnockoutAside { display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; border-top: 0; border-left: 1px solid var(--demo-line); padding: 0 0 0 7px; }
+  .tournamentChampion { min-height: 64px; padding: 7px; }
+  .tournamentKnockoutAside select { min-height: 34px; }
+  .tournamentKnockoutEvidence > div { min-height: 27px; }
+  .tournamentKnockoutNode > div { min-height: 28px; }
   .tournamentStandingsWrap th,
   .tournamentStandingsWrap td { padding: 6px; }
   .tournamentDesk { gap: 8px; padding: 9px 14px; }

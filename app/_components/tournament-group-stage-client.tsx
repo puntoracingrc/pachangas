@@ -28,9 +28,14 @@ import {
   type TournamentGroupStageAction,
   type TournamentGroupStageTab,
 } from "../tournament-group-stage-contract";
+import { tournamentKnockoutRevision } from "../tournament-knockout-contract";
 import { clientWriteFetch } from "../pwa-client-bridge";
 import { supabase } from "../supabaseClient";
 import { OfficialProductShellV2 } from "./official-product-shell-v2";
+import {
+  TournamentKnockoutBracket,
+  type TournamentKnockoutCommandOptions,
+} from "./tournament-knockout-bracket";
 import {
   GamePageHeader,
   MetricTile,
@@ -277,6 +282,54 @@ export function TournamentGroupStageClient({ competitionId }: Props) {
     }
   }, [accessToken, competitionId, data, loadCanonical, userId]);
 
+  const knockoutCommand = useCallback(async ({ action, payload = {} }: TournamentKnockoutCommandOptions) => {
+    if (!accessToken || !data) {
+      setMessage("No hay sesión o snapshot canónico para esta operación.");
+      return false;
+    }
+    if (typeof navigator !== "undefined" && !navigator.onLine) {
+      setMessage("Sin conexión: el cuadro cacheado sigue disponible, pero no se permiten operaciones deportivas.");
+      return false;
+    }
+    const expectedRevision = tournamentKnockoutRevision(data);
+    const key = JSON.stringify({ action, competitionId, expectedRevision, payload });
+    if (!pending.current || pending.current.key !== key) pending.current = { id: crypto.randomUUID(), key };
+    setBusy(true);
+    setMessage("Esperando confirmación de PostgreSQL...");
+    try {
+      const response = await clientWriteFetch(
+        "api:tournament-knockout-command",
+        "/api/tournaments/knockout/command",
+        {
+          body: JSON.stringify({
+            action,
+            aggregateId: competitionId,
+            expectedRevision,
+            operationId: pending.current.id,
+            payload,
+          }),
+          headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+          method: "POST",
+        },
+      );
+      const body = tournamentRecord(await response.json());
+      if (!response.ok) throw new Error(messageFrom(body, "Operación eliminatoria no confirmada."));
+      pending.current = null;
+      await loadCanonical(accessToken, userId, "mutation");
+      setMessage("Cambio eliminatorio confirmado por PostgreSQL.");
+      return true;
+    } catch (error) {
+      const detail = error instanceof Error ? error.message : "Operación eliminatoria no confirmada.";
+      setMessage(/STALE|revision/i.test(detail)
+        ? "Otro dispositivo cambió el cuadro. Se ha recuperado el estado oficial."
+        : detail);
+      if (/STALE|revision/i.test(detail)) await loadCanonical(accessToken, userId, "mutation");
+      return false;
+    } finally {
+      setBusy(false);
+    }
+  }, [accessToken, competitionId, data, loadCanonical, userId]);
+
   const competition = tournamentRecord(data?.competition);
   const groupStage = tournamentRecord(data?.groupStage);
   const isSetup = tournamentText(data?.kind) === "TournamentGroupStageSetup";
@@ -306,7 +359,7 @@ export function TournamentGroupStageClient({ competitionId }: Props) {
         <nav className={styles.tabs} aria-label="Tournament Hub">
           {tournamentGroupStageTabs.map((item) => <button aria-pressed={tab === item} key={item} onClick={() => setTab(item)} type="button">{tabLabels[item]}</button>)}
         </nav>
-        <HubView busy={busy} command={command} competitionId={competitionId} data={data} tab={tab} />
+        <HubView busy={busy} command={command} competitionId={competitionId} data={data} knockoutCommand={knockoutCommand} tab={tab} />
       </> : null}
     </main>
   </OfficialProductShellV2>;
@@ -337,11 +390,12 @@ function SetupPanel({ busy, command, data }: {
   </>;
 }
 
-function HubView({ busy, command, competitionId, data, tab }: {
+function HubView({ busy, command, competitionId, data, knockoutCommand, tab }: {
   busy: boolean;
   command: (options: CommandOptions) => Promise<boolean>;
   competitionId: string;
   data: TournamentJson;
+  knockoutCommand: (options: TournamentKnockoutCommandOptions) => Promise<boolean>;
   tab: TournamentGroupStageTab;
 }) {
   const groups = tournamentArray(data.groups).map(tournamentRecord);
@@ -351,6 +405,7 @@ function HubView({ busy, command, competitionId, data, tab }: {
   const organizer = tournamentRecord(data.organizerDesk);
   const qualification = tournamentRecord(data.qualification);
   const bracket = tournamentRecord(data.bracketTemplate);
+  const knockout = tournamentRecord(data.knockout);
   const [requestedRound, setRound] = useState(() => tournamentNumber(rounds[0]?.roundNumber, 1));
   const round = rounds.some((item) => tournamentNumber(item.roundNumber) === requestedRound)
     ? requestedRound
@@ -365,7 +420,16 @@ function HubView({ busy, command, competitionId, data, tab }: {
   if (tab === "referees") return <OperationalList empty="Todavía no hay árbitros asignados." matches={matches} mode="referees" />;
   if (tab === "incidents") return <OperationalList empty="No hay incidencias públicas activas." matches={matches} mode="incidents" />;
   if (tab === "rules") return <RulesView data={data} />;
-  if (tab === "bracket") return <BracketView bracket={bracket} groups={groups} qualification={qualification} />;
+  if (tab === "bracket") return <BracketView
+    bracket={bracket}
+    busy={busy}
+    competitionId={competitionId}
+    data={data}
+    groups={groups}
+    knockout={knockout}
+    knockoutCommand={knockoutCommand}
+    qualification={qualification}
+  />;
 
   return null;
 }
@@ -501,6 +565,7 @@ function LifecycleActions({ bracket, busy, command, data, qualification, state }
     const legs = Math.max(1, tournamentNumber(tournamentRecord(tournamentRecord(data.rules).schedulePolicy).legs, 1));
     return tournamentNumber(schedule.slotCount) >= entries * (entries - 1) / 2 * legs;
   });
+  const groupStage = tournamentRecord(data.groupStage);
   function run(action: TournamentGroupStageAction, reason: string) {
     void command({ action, payload: { reason } });
   }
@@ -513,6 +578,7 @@ function LifecycleActions({ bracket, busy, command, data, qualification, state }
       {tournamentBoolean(permissions.manageSchedule) && state === "scheduling" ? <button disabled={busy} onClick={() => run("group_schedule.validate", "Validación global desde Tournament Hub")} type="button">Validar calendario</button> : null}
       {tournamentBoolean(permissions.publishSchedule) && state === "schedule_validated" ? <button disabled={busy} onClick={() => run("group_schedule.publish", "Publicación atómica desde Tournament Hub")} type="button">Publicar partidos</button> : null}
       {tournamentBoolean(permissions.manageSchedule) && state === "schedule_published" ? <button disabled={busy} onClick={() => run("group_stage.activate", "Activación operativa desde Tournament Hub")} type="button">Activar liguilla</button> : null}
+      {tournamentBoolean(permissions.manageOperations) && state === "complete" && tournamentText(qualification.status) === "PUBLISHED" && !tournamentText(groupStage.completedAt) ? <button disabled={busy} onClick={() => run("group_stage.complete", "Cierre de liguilla tras clasificación publicada")} type="button">Cerrar liguilla</button> : null}
       {tournamentBoolean(permissions.manageQualification) && ["schedule_published", "active", "complete"].includes(state) && tournamentText(qualification.status) !== "PUBLISHED" ? <button disabled={busy} onClick={() => run("qualification.rebuild", "Cálculo de clasificados desde standings canónicas")} type="button">Actualizar clasificados</button> : null}
       {tournamentBoolean(permissions.manageQualification) && tournamentText(qualification.status) === "READY" ? <button disabled={busy} onClick={() => run("qualification.validate", "Validación final de clasificados")} type="button">Validar clasificados</button> : null}
       {tournamentBoolean(permissions.publishQualification) && tournamentText(qualification.status) === "READY" ? <button disabled={busy} onClick={() => run("qualification.publish", "Publicación final de clasificados")} type="button">Publicar clasificados</button> : null}
@@ -627,7 +693,19 @@ function RulesView({ data }: { data: TournamentJson }) {
   return <section className={styles.ruleGrid}><div className={styles.panel}><SectionHeader eyebrow="Calendario" title="Round-robin R4B" /><dl><Info label="Vueltas" value={tournamentNumber(schedule.legs)} /><Info label="Duración" value={`${tournamentNumber(schedule.matchDurationMinutes)} min`} /><Info label="Descanso" value={`${tournamentNumber(schedule.minimumRestMinutes)} min`} /><Info label="Sede obligatoria" value={tournamentBoolean(schedule.venueRequired) ? "Sí" : "No"} /></dl></div><div className={styles.panel}><SectionHeader eyebrow="Clasificación" title={tournamentText(qualification.kind).replaceAll("_", " ")} /><dl><Info label="Directos por grupo" value={tournamentNumber(qualification.directQualifiersPerGroup)} /><Info label="Extras" value={tournamentNumber(qualification.extraQualifierCount)} /><Info label="Grupos iguales" value={tournamentBoolean(qualification.equalGroupSizeRequired) ? "Obligatorio" : "No"} /><Info label="Empate final" value={tournamentText(qualification.tieResolutionPolicy).replaceAll("_", " ")} /></dl></div><div className={styles.panel}><SectionHeader eyebrow="Linaje" title="RuleRevision congelada" /><p className={styles.hash}>{tournamentText(rules.ruleRevisionId)}<br />{tournamentText(rules.checksum)}</p></div></section>;
 }
 
-function BracketView({ bracket, groups, qualification }: { bracket: TournamentJson; groups: TournamentJson[]; qualification: TournamentJson }) {
+function BracketView({ bracket, busy, competitionId, data, groups, knockout, knockoutCommand, qualification }: {
+  bracket: TournamentJson;
+  busy: boolean;
+  competitionId: string;
+  data: TournamentJson;
+  groups: TournamentJson[];
+  knockout: TournamentJson;
+  knockoutCommand: (options: TournamentKnockoutCommandOptions) => Promise<boolean>;
+  qualification: TournamentJson;
+}) {
+  if (tournamentText(knockout.kind) === "TournamentBracketView") {
+    return <TournamentKnockoutBracket busy={busy} command={knockoutCommand} competitionId={competitionId} data={knockout} />;
+  }
   const slots = tournamentArray(bracket.slots).map(tournamentRecord);
   const groupEntries = new Map(groups.flatMap((group) => tournamentArray(group.entries).map((entry) => { const item = tournamentRecord(entry); return [tournamentText(item.entryId), tournamentText(item.name)] as const; })));
   if (!tournamentText(bracket.id)) return <section className={styles.empty}>La plantilla del cuadro aparecerá después de publicar la clasificación final.</section>;
@@ -635,6 +713,7 @@ function BracketView({ bracket, groups, qualification }: { bracket: TournamentJs
   return <>
     <section className={styles.bracketHeader}><div><span>Qualification {tournamentText(qualification.status, "pendiente")}</span><h2>Cuadro inicial</h2></div>{statusChip(bracket.status)}</section>
     <section className={styles.bracket}>{matches.map((matchNumber) => <article key={matchNumber}><header>Partido {matchNumber}</header>{slots.filter((slot) => tournamentNumber(slot.matchNumber) === matchNumber).map((slot) => <div key={tournamentText(slot.key)}><span>{tournamentText(slot.side)}</span><strong>{groupEntries.get(tournamentText(slot.resolvedEntryId)) || `${groupName(groups, slot.sourceGroupId)} · ${tournamentNumber(slot.sourcePosition)}º`}</strong><small>{tournamentText(slot.sourceKind).replaceAll("_", " ")}</small></div>)}</article>)}</section>
+    {tournamentText(bracket.status) === "PUBLISHED" && tournamentBoolean(tournamentRecord(data.permissions).manageBracket) && tournamentText(tournamentRecord(data.groupStage).completedAt) ? <ResponsiveActionBar><button disabled={busy} onClick={() => void knockoutCommand({ action: "bracket.activate", payload: { reason: "Activar cuadro desde Tournament Hub" } })} type="button">Activar eliminatorias</button></ResponsiveActionBar> : null}
     <ProductFeedback tone="info">{tournamentText(bracket.message, "Cuadro preparado. La fase eliminatoria se activará en la siguiente fase.")}</ProductFeedback>
   </>;
 }

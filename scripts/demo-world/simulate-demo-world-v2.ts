@@ -430,6 +430,14 @@ with target as (
   select proofs.proof as value
   from simulation.demo_world_tournament_group_stage_final_proof proofs
   limit 1
+), knockout_public as (
+  select snapshots.snapshot as value
+  from simulation.demo_world_tournament_knockout_public_snapshot snapshots
+  limit 1
+), knockout_proof as (
+  select proofs.proof as value
+  from simulation.demo_world_tournament_knockout_proof proofs
+  limit 1
 )
 select jsonb_build_object(
   'acceptedParticipants', (
@@ -471,6 +479,8 @@ select jsonb_build_object(
   'groupCount', (select group_count from plan),
   'groupStageFinal', (select value from final_group_stage),
   'groupStagePublic', (select value from public_group_stage),
+  'knockoutProof', (select value from knockout_proof),
+  'knockoutPublic', (select value from knockout_public),
   'operationReceipts', (
     select count(*)
     from private.pachanga_competition_operation_receipts receipts
@@ -499,6 +509,7 @@ select jsonb_build_object(
     select count(*) from target
     join public.pachanga_competition_match_contexts contexts
       on contexts.competition_id = target.id
+    where contexts.schedule_item_id is not null
   )
 )
 from outcomes;
@@ -606,6 +617,11 @@ with ordered as (
   from referee_refs refs
   left join public.pachanga_referee_statistics_snapshots stats
     on stats.referee_profile_id = refs.id
+), league_referee_assignment_rows as (
+  select assignments.*
+  from public.pachanga_referee_assignments assignments
+  join ordered on ordered.canonical_match_id = assignments.canonical_match_id
+  where assignments.competition_id = 'e4040000-0000-4000-8000-000000000001'
 ), referee_assignments as (
   select coalesce(jsonb_agg(jsonb_build_object(
     'assignmentKey', assignments.id,
@@ -622,50 +638,45 @@ with ordered as (
     'scheduledStart', assignments.scheduled_start,
     'status', assignments.status
   ) order by assignments.server_sequence, assignments.id), '[]'::jsonb) as value
-  from public.pachanga_referee_assignments assignments
+  from league_referee_assignment_rows assignments
   join ordered on ordered.canonical_match_id = assignments.canonical_match_id
   join referee_refs refs on refs.id = assignments.referee_profile_id
-  where assignments.competition_id = 'e4040000-0000-4000-8000-000000000001'
 ), referee_assignment_summary as (
   select jsonb_build_object(
     'assignments', referee_assignments.value,
     'counts', jsonb_build_object(
-      'cancelled', (select count(*) from public.pachanga_referee_assignments assignments where assignments.competition_id = 'e4040000-0000-4000-8000-000000000001' and assignments.status = 'cancelled'),
-      'completed', (select count(*) from public.pachanga_referee_assignments assignments where assignments.competition_id = 'e4040000-0000-4000-8000-000000000001' and assignments.status = 'completed'),
-      'declined', (select count(*) from public.pachanga_referee_assignments assignments where assignments.competition_id = 'e4040000-0000-4000-8000-000000000001' and assignments.status = 'declined'),
-      'replaced', (select count(*) from public.pachanga_referee_assignments assignments where assignments.competition_id = 'e4040000-0000-4000-8000-000000000001' and assignments.status = 'replaced'),
+      'cancelled', (select count(*) from league_referee_assignment_rows assignments where assignments.status = 'cancelled'),
+      'completed', (select count(*) from league_referee_assignment_rows assignments where assignments.status = 'completed'),
+      'declined', (select count(*) from league_referee_assignment_rows assignments where assignments.status = 'declined'),
+      'replaced', (select count(*) from league_referee_assignment_rows assignments where assignments.status = 'replaced'),
       'unassignedMatches', (select count(*) from ordered where not exists (
-        select 1 from public.pachanga_referee_assignments assignments
+        select 1 from league_referee_assignment_rows assignments
         where assignments.canonical_match_id = ordered.canonical_match_id
           and assignments.status in ('accepted', 'confirmed', 'completed')
       ))
     ),
     'noActiveOverlaps', not exists (
       select 1
-      from public.pachanga_referee_assignments first_assignment
-      join public.pachanga_referee_assignments second_assignment
+      from league_referee_assignment_rows first_assignment
+      join league_referee_assignment_rows second_assignment
         on second_assignment.referee_profile_id = first_assignment.referee_profile_id
         and second_assignment.id > first_assignment.id
         and second_assignment.status in ('accepted', 'confirmed', 'completed')
         and tstzrange(second_assignment.effective_scheduled_start, second_assignment.effective_scheduled_end, '[)')
           && tstzrange(first_assignment.effective_scheduled_start, first_assignment.effective_scheduled_end, '[)')
-      where first_assignment.competition_id = 'e4040000-0000-4000-8000-000000000001'
-        and second_assignment.competition_id = first_assignment.competition_id
-        and first_assignment.status in ('accepted', 'confirmed', 'completed')
+      where first_assignment.status in ('accepted', 'confirmed', 'completed')
     ),
     'oneMainRefereePerMatch', not exists (
       select assignments.canonical_match_id
-      from public.pachanga_referee_assignments assignments
-      where assignments.competition_id = 'e4040000-0000-4000-8000-000000000001'
-        and assignments.assignment_role = 'MAIN_REFEREE'
+      from league_referee_assignment_rows assignments
+      where assignments.assignment_role = 'MAIN_REFEREE'
         and assignments.status in ('accepted', 'confirmed', 'completed')
       group by assignments.canonical_match_id
       having count(*) > 1
     ),
     'overlapRejected', exists (
-      select 1 from public.pachanga_referee_assignments assignments
-      where assignments.competition_id = 'e4040000-0000-4000-8000-000000000001'
-        and assignments.status = 'cancelled'
+      select 1 from league_referee_assignment_rows assignments
+      where assignments.status = 'cancelled'
         and assignments.cancel_reason_code = 'demo_conflict_rejected'
     ),
     'profiles', referee_profiles.value,
@@ -675,13 +686,17 @@ with ordered as (
         from public.pachanga_competition_disciplinary_events events
         where events.competition_id = 'e4040000-0000-4000-8000-000000000001'
           and events.referee_assignment_id is not null
+          and exists (
+            select 1 from ordered
+            where ordered.canonical_match_id = events.canonical_match_id
+          )
       ),
       'onRefereedMatches', (
         select count(*)
         from public.pachanga_competition_disciplinary_events events
         where events.competition_id = 'e4040000-0000-4000-8000-000000000001'
           and exists (
-            select 1 from public.pachanga_referee_assignments assignments
+            select 1 from league_referee_assignment_rows assignments
             where assignments.canonical_match_id = events.canonical_match_id
               and assignments.status in ('completed', 'replaced')
           )
@@ -692,7 +707,11 @@ with ordered as (
         where events.competition_id = 'e4040000-0000-4000-8000-000000000001'
           and events.referee_assignment_id is null
           and exists (
-            select 1 from public.pachanga_referee_assignments assignments
+            select 1 from ordered
+            where ordered.canonical_match_id = events.canonical_match_id
+          )
+          and exists (
+            select 1 from league_referee_assignment_rows assignments
             where assignments.canonical_match_id = events.canonical_match_id
               and assignments.status in ('completed', 'replaced')
           )
@@ -707,7 +726,17 @@ with ordered as (
         private.pachanga_referee_statistics_document_v1(refs.id)::text,
         'UTF8'
       ), 'sha256'), 'hex')
-    )
+    ),
+    'unconvergedRefereeNumbers', coalesce((
+      select jsonb_agg(refs.referee_number order by refs.referee_number)
+      from referee_refs refs
+      join public.pachanga_referee_statistics_snapshots stats
+        on stats.referee_profile_id = refs.id
+      where stats.checksum <> encode(extensions.digest(convert_to(
+        private.pachanga_referee_statistics_document_v1(refs.id)::text,
+        'UTF8'
+      ), 'sha256'), 'hex')
+    ), '[]'::jsonb)
   ) as value
   from referee_assignments, referee_profiles
 ), discipline_events as (
@@ -907,9 +936,9 @@ from matches, standings, discipline_events, discipline_counters,
     generatedAt: "2026-08-27T14:00:00.000Z",
     migrationCount,
     remoteWrites: 0,
-    rpcFamilies: ["R1", "R3", "R4A", "R4B", "R4C", "R4D", "R5", "R6A", "R6B"],
+    rpcFamilies: ["R1", "R3", "R4A", "R4B", "R4C", "R4D", "R5", "R6A", "R6B", "R6C"],
     tournament: extractTournamentAuthorityProof(),
-    version: 6,
+    version: 7,
   };
   return assertDemoWorldV2AuthorityProof({
     ...payload,
@@ -968,7 +997,8 @@ async function main() {
     { label: "League Private Beta", names: incremental.filter((name) => name >= "20260825074304" && name < "20260825165834") },
     { label: "R5 and Configuration Center", names: incremental.filter((name) => name >= "20260825165834" && name < "20260826195034") },
     { label: "R6A Tournament Foundation", names: incremental.filter((name) => name >= "20260826195034" && name < "20260827105014") },
-    { label: "R6B Tournament Group Stage", names: incremental.filter((name) => name >= "20260827105014") },
+    { label: "R6B Tournament Group Stage", names: incremental.filter((name) => name >= "20260827105014" && name < "20260827205347") },
+    { label: "R6C Tournament Knockout", names: incremental.filter((name) => name >= "20260827205347") },
   ];
   assert.equal(migrationBatches.flatMap(({ names }) => names).length, incremental.length);
 
@@ -1018,6 +1048,7 @@ async function main() {
     psql(["-f", sqlFile("scripts/demo-world/demo-world-v2-configuration-operations.sql")], "publish Demo World V2.3 custom RuleRevision through Configuration Center V1");
     applyBatch(migrationBatches[8]!.label, migrationBatches[8]!.names);
     applyBatch(migrationBatches[9]!.label, migrationBatches[9]!.names);
+    applyBatch(migrationBatches[10]!.label, migrationBatches[10]!.names);
     psql([
       "-v", "DEMO_WORLD_V2_PERSIST=1",
       "-f", sqlFile("scripts/demo-world/demo-world-v2-tournament-operations.sql"),
@@ -1026,6 +1057,11 @@ async function main() {
       "-v", "DEMO_WORLD_V2_PERSIST=1",
       "-f", sqlFile("scripts/demo-world/demo-world-v2-tournament-group-stage-operations.sql"),
     ], "operate Demo World V2.5 Tournament through R4B, R4C, R4D, R5, Referees and R6B RPCs");
+    psql([
+      "-v", "DEMO_WORLD_V2_PERSIST=1",
+      "-o", "/dev/null",
+      "-f", sqlFile("scripts/demo-world/demo-world-v2-tournament-knockout-operations.sql"),
+    ], "operate Demo World V2.6 Tournament through R4B, R4C, R4D, R5, Referees and R6C RPCs");
 
     const authorityProof = extractAuthorityProof(migrationNames.length);
     const generated = generateDemoWorldV2(authorityProof);
@@ -1047,7 +1083,7 @@ async function main() {
       migrations: migrationNames.length,
       mode: verifyOnly ? "verify" : "simulate",
       remoteWrites: 0,
-      rpcFamilies: ["R1", "R3", "R4A", "R4B", "R4C", "R4D", "R5", "R6A", "R6B", "LEAGUE_PRIVATE_BETA_V1"],
+      rpcFamilies: ["R1", "R3", "R4A", "R4B", "R4C", "R4D", "R5", "R6A", "R6B", "R6C", "LEAGUE_PRIVATE_BETA_V1"],
       snapshotIdentical: verifyOnly,
     })}\n`);
   } finally {

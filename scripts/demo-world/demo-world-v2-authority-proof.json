@@ -1325,16 +1325,16 @@
           "FUTSAL"
         ],
         "statistics": {
-          "replacements": 0,
+          "replacements": 1,
           "cancellations": 0,
           "redCardsShown": 0,
           "blueCardsShown": 1,
           "matchesCompleted": 1,
           "yellowCardsShown": 1,
-          "proposalsReceived": 2,
-          "assignmentsAccepted": 2,
+          "proposalsReceived": 3,
+          "assignmentsAccepted": 3,
           "assignmentsDeclined": 0,
-          "assignmentsConfirmed": 2,
+          "assignmentsConfirmed": 3,
           "leagueMatchesCompleted": 1
         },
         "displayName": "Arbitro Demo 6",
@@ -1358,10 +1358,10 @@
           "blueCardsShown": 0,
           "matchesCompleted": 1,
           "yellowCardsShown": 2,
-          "proposalsReceived": 2,
-          "assignmentsAccepted": 2,
+          "proposalsReceived": 3,
+          "assignmentsAccepted": 3,
           "assignmentsDeclined": 0,
-          "assignmentsConfirmed": 2,
+          "assignmentsConfirmed": 3,
           "leagueMatchesCompleted": 1
         },
         "displayName": "Arbitro Demo 7",
@@ -1385,10 +1385,10 @@
           "blueCardsShown": 0,
           "matchesCompleted": 2,
           "yellowCardsShown": 3,
-          "proposalsReceived": 3,
-          "assignmentsAccepted": 3,
+          "proposalsReceived": 4,
+          "assignmentsAccepted": 4,
           "assignmentsDeclined": 0,
-          "assignmentsConfirmed": 3,
+          "assignmentsConfirmed": 4,
           "leagueMatchesCompleted": 2
         },
         "displayName": "Arbitro Demo 8",
@@ -1648,7 +1648,8 @@
     "overlapRejected": true,
     "noActiveOverlaps": true,
     "statisticsConverged": true,
-    "oneMainRefereePerMatch": true
+    "oneMainRefereePerMatch": true,
+    "unconvergedRefereeNumbers": []
   },
   "configuration": {
     "health": {
@@ -1761,7 +1762,7 @@
   },
   "database": "temporary-local-postgresql",
   "generatedAt": "2026-08-27T14:00:00.000Z",
-  "migrationCount": 169,
+  "migrationCount": 175,
   "remoteWrites": 0,
   "rpcFamilies": [
     "R1",
@@ -1772,7 +1773,8 @@
     "R4D",
     "R5",
     "R6A",
-    "R6B"
+    "R6B",
+    "R6C"
   ],
   "tournament": {
     "slug": "copa-barrios-iq-2027",
@@ -2124,6 +2126,533 @@
       }
     ],
     "remoteWrites": 0,
+    "knockoutProof": {
+      "r5": {
+        "teamNumber": 4,
+        "playerLabel": "Jugador Copa 4.1",
+        "ratingChanged": false,
+        "sanctionApplies": true,
+        "blockedFromSemifinal": true
+      },
+      "r4d": {
+        "confirmedNoShows": 2,
+        "knockoutNoShowResolution": true
+      },
+      "policy": {
+        "byePolicy": "EXPLICIT_ADVANCE",
+        "tieFormat": "SINGLE_MATCH",
+        "schemaVersion": "tournament_knockout_policy.v1",
+        "advancedFormats": {
+          "awayGoals": false,
+          "replayMatch": false,
+          "loserBracket": false,
+          "twoLegAggregate": false,
+          "doubleElimination": false,
+          "consolationBracket": false
+        },
+        "extraTimePolicy": "EXTRA_TIME_THEN_PENALTIES",
+        "extraTimeHalfCount": 2,
+        "roundSchedulePolicy": "RESERVATIONS_BEFORE_PARTICIPANTS",
+        "extraTimeHalfMinutes": 15,
+        "disciplineCarryPolicy": {
+          "beforeKnockout": "KEEP_COUNTERS",
+          "extraTimeCards": "COUNT_AS_MATCH",
+          "fromGroupStage": "CARRY_ACTIVE_SANCTIONS",
+          "beforeSemifinal": "KEEP_COUNTERS",
+          "substitutionsDuringExtraTime": "RULE_CONTRACT_ONLY"
+        },
+        "extraTimeBreakMinutes": 5,
+        "penaltyShootoutPolicy": "PENALTIES_AFTER_EXTRA_TIME",
+        "thirdPlaceMatchEnabled": true,
+        "winnerAdvancementPolicy": "OFFICIAL_DECISION_ONLY",
+        "qualificationSourcePolicy": "PUBLISHED_SNAPSHOT_ONLY"
+      },
+      "bracket": {
+        "size": 8,
+        "status": "locked",
+        "revision": 29,
+        "nodeCount": 8,
+        "roundCount": 3,
+        "currentSlots": 16,
+        "advancedNodes": 8,
+        "revisionCount": 3,
+        "slotRevisions": 25,
+        "thirdPlaceEnabled": true,
+        "fixtureReservations": 8
+      },
+      "matches": {
+        "active": 8,
+        "finals": 1,
+        "retired": 1,
+        "historical": 9,
+        "semifinals": 2,
+        "thirdPlace": 1,
+        "quarterfinals": 4
+      },
+      "referees": {
+        "final": {
+          "status": "confirmed",
+          "refereeNumber": 7
+        },
+        "semifinalReplacement": {
+          "lineageLinked": true,
+          "originalStatus": "replaced",
+          "replacementStatus": "confirmed",
+          "originalRefereeNumber": 6,
+          "replacementRefereeNumber": 8
+        }
+      },
+      "integrity": {
+        "remoteWrites": 0,
+        "billingUnchanged": true,
+        "conductUnchanged": true,
+        "rewardsUnchanged": true,
+        "ratingV2Unchanged": true
+      },
+      "readModel": {
+        "revision": 34,
+        "checksumPresent": true,
+        "serverSequencePresent": true
+      },
+      "completion": {
+        "snapshots": 2,
+        "rewardGrants": "0",
+        "championTeamNumber": 5,
+        "runnerUpTeamNumber": 2,
+        "thirdPlaceTeamNumber": 4,
+        "fourthPlaceTeamNumber": 1
+      },
+      "correction": {
+        "oldMatchKey": "SF1-v1",
+        "oldMatchRetired": true,
+        "oldContextRetired": true,
+        "replacementCreated": true,
+        "nodeHistoryRetained": true,
+        "replacementMatchKey": "SF1-v2"
+      },
+      "progression": {
+        "invalidations": 1,
+        "resolutionKinds": {
+          "FORFEIT": 1,
+          "EXTRA_TIME": 1,
+          "SPORTING_RESULT": 5,
+          "PENALTY_SHOOTOUT": 1,
+          "ADMINISTRATIVE_DECISION": 1
+        },
+        "advanceDecisions": 9,
+        "dependencyImpacts": 3,
+        "activeAdvanceDecisions": 8
+      },
+      "remoteWrites": 0,
+      "penaltySeparation": {
+        "shootoutAway": 4,
+        "shootoutHome": 5,
+        "extraTimeAway": 1,
+        "extraTimeHome": 1,
+        "regulationAway": 1,
+        "regulationHome": 1,
+        "groupStandingsUnchanged": true,
+        "shootoutGoalsAddedToSportingScore": false
+      }
+    },
+    "knockoutPublic": {
+      "nodes": [
+        {
+          "score": {
+            "away": 2,
+            "home": 0
+          },
+          "status": "OFFICIAL",
+          "nodeKey": "QF1",
+          "awayTeam": {
+            "name": "Marina Fosca",
+            "teamNumber": 5
+          },
+          "homeTeam": {
+            "name": "Brúixola Sants",
+            "teamNumber": 3
+          },
+          "nodeOrder": 1,
+          "roundCode": "QUARTERFINAL",
+          "roundOrder": 1,
+          "venueLabel": "Estadi Copa IQ Barcelona · Quarterfinal",
+          "resolutionKind": "ADMINISTRATIVE_DECISION",
+          "scheduledStart": "2027-06-01T16:00:00+00:00",
+          "loserTeamNumber": 3,
+          "regulationScore": {
+            "away": 2,
+            "home": 0
+          },
+          "winnerTeamNumber": 5
+        },
+        {
+          "score": {
+            "away": 1,
+            "home": 2
+          },
+          "status": "OFFICIAL",
+          "nodeKey": "QF2",
+          "awayTeam": {
+            "name": "Diagonal 26",
+            "teamNumber": 7
+          },
+          "homeTeam": {
+            "name": "Onze del Clot",
+            "teamNumber": 4
+          },
+          "extraTime": {
+            "away": 1,
+            "home": 2
+          },
+          "nodeOrder": 2,
+          "roundCode": "QUARTERFINAL",
+          "roundOrder": 1,
+          "venueLabel": "Estadi Copa IQ Barcelona · Quarterfinal",
+          "resolutionKind": "EXTRA_TIME",
+          "scheduledStart": "2027-06-01T18:00:00+00:00",
+          "loserTeamNumber": 7,
+          "regulationScore": {
+            "away": 1,
+            "home": 1
+          },
+          "winnerTeamNumber": 4
+        },
+        {
+          "score": {
+            "away": 1,
+            "home": 1
+          },
+          "status": "OFFICIAL",
+          "nodeKey": "QF3",
+          "awayTeam": {
+            "name": "Vértice Gràcia",
+            "teamNumber": 8
+          },
+          "homeTeam": {
+            "name": "Circuit Poblenou",
+            "teamNumber": 2
+          },
+          "shootout": {
+            "away": 4,
+            "home": 5
+          },
+          "extraTime": {
+            "away": 1,
+            "home": 1
+          },
+          "nodeOrder": 3,
+          "roundCode": "QUARTERFINAL",
+          "roundOrder": 1,
+          "venueLabel": "Estadi Copa IQ Barcelona · Quarterfinal",
+          "resolutionKind": "PENALTY_SHOOTOUT",
+          "scheduledStart": "2027-06-01T20:00:00+00:00",
+          "loserTeamNumber": 8,
+          "regulationScore": {
+            "away": 1,
+            "home": 1
+          },
+          "winnerTeamNumber": 2
+        },
+        {
+          "score": {
+            "away": 0,
+            "home": 3
+          },
+          "status": "OFFICIAL",
+          "nodeKey": "QF4",
+          "awayTeam": {
+            "name": "Ferro Sant Andreu",
+            "teamNumber": 6
+          },
+          "homeTeam": {
+            "name": "Cobalto Raval",
+            "teamNumber": 1
+          },
+          "nodeOrder": 4,
+          "roundCode": "QUARTERFINAL",
+          "roundOrder": 1,
+          "venueLabel": "Estadi Copa IQ Barcelona · Quarterfinal",
+          "resolutionKind": "FORFEIT",
+          "scheduledStart": "2027-06-01T22:00:00+00:00",
+          "loserTeamNumber": 6,
+          "regulationScore": {
+            "away": 0,
+            "home": 3
+          },
+          "winnerTeamNumber": 1
+        },
+        {
+          "score": {
+            "away": 0,
+            "home": 2
+          },
+          "status": "OFFICIAL",
+          "nodeKey": "SF1",
+          "referee": {
+            "status": "CONFIRMED",
+            "refereeNumber": 8
+          },
+          "awayTeam": {
+            "name": "Onze del Clot",
+            "teamNumber": 4
+          },
+          "homeTeam": {
+            "name": "Marina Fosca",
+            "teamNumber": 5
+          },
+          "nodeOrder": 1,
+          "roundCode": "SEMIFINAL",
+          "roundOrder": 2,
+          "venueLabel": "Estadi Copa IQ Barcelona · Semifinal",
+          "resolutionKind": "SPORTING_RESULT",
+          "scheduledStart": "2027-06-08T16:00:00+00:00",
+          "loserTeamNumber": 4,
+          "regulationScore": {
+            "away": 0,
+            "home": 2
+          },
+          "winnerTeamNumber": 5
+        },
+        {
+          "score": {
+            "away": 0,
+            "home": 2
+          },
+          "status": "OFFICIAL",
+          "nodeKey": "SF2",
+          "awayTeam": {
+            "name": "Cobalto Raval",
+            "teamNumber": 1
+          },
+          "homeTeam": {
+            "name": "Circuit Poblenou",
+            "teamNumber": 2
+          },
+          "nodeOrder": 2,
+          "roundCode": "SEMIFINAL",
+          "roundOrder": 2,
+          "venueLabel": "Estadi Copa IQ Barcelona · Semifinal",
+          "resolutionKind": "SPORTING_RESULT",
+          "scheduledStart": "2027-06-08T18:00:00+00:00",
+          "loserTeamNumber": 1,
+          "regulationScore": {
+            "away": 0,
+            "home": 2
+          },
+          "winnerTeamNumber": 2
+        },
+        {
+          "score": {
+            "away": 0,
+            "home": 2
+          },
+          "status": "OFFICIAL",
+          "nodeKey": "THIRD",
+          "awayTeam": {
+            "name": "Cobalto Raval",
+            "teamNumber": 1
+          },
+          "homeTeam": {
+            "name": "Onze del Clot",
+            "teamNumber": 4
+          },
+          "nodeOrder": 1,
+          "roundCode": "THIRD_PLACE",
+          "roundOrder": 3,
+          "venueLabel": "Estadi Copa IQ Barcelona · Third place",
+          "resolutionKind": "SPORTING_RESULT",
+          "scheduledStart": "2027-06-15T16:00:00+00:00",
+          "loserTeamNumber": 1,
+          "regulationScore": {
+            "away": 0,
+            "home": 2
+          },
+          "winnerTeamNumber": 4
+        },
+        {
+          "score": {
+            "away": 0,
+            "home": 2
+          },
+          "status": "OFFICIAL",
+          "nodeKey": "FINAL",
+          "referee": {
+            "status": "CONFIRMED",
+            "refereeNumber": 7
+          },
+          "awayTeam": {
+            "name": "Circuit Poblenou",
+            "teamNumber": 2
+          },
+          "homeTeam": {
+            "name": "Marina Fosca",
+            "teamNumber": 5
+          },
+          "nodeOrder": 1,
+          "roundCode": "FINAL",
+          "roundOrder": 3,
+          "venueLabel": "Estadi Copa IQ Barcelona · Final",
+          "resolutionKind": "SPORTING_RESULT",
+          "scheduledStart": "2027-06-15T16:00:00+00:00",
+          "loserTeamNumber": 2,
+          "regulationScore": {
+            "away": 0,
+            "home": 2
+          },
+          "winnerTeamNumber": 5
+        }
+      ],
+      "format": "SINGLE_MATCH_KNOCKOUT",
+      "podium": {
+        "champion": {
+          "name": "Marina Fosca",
+          "teamNumber": 5
+        },
+        "runnerUp": {
+          "name": "Circuit Poblenou",
+          "teamNumber": 2
+        },
+        "thirdPlace": {
+          "name": "Onze del Clot",
+          "teamNumber": 4
+        },
+        "fourthPlace": {
+          "name": "Cobalto Raval",
+          "teamNumber": 1
+        }
+      },
+      "rounds": [
+        {
+          "code": "QUARTERFINAL",
+          "label": "Cuartos",
+          "matches": 4
+        },
+        {
+          "code": "SEMIFINAL",
+          "label": "Semifinales",
+          "matches": 2
+        },
+        {
+          "code": "THIRD_PLACE",
+          "label": "Tercer puesto",
+          "matches": 1
+        },
+        {
+          "code": "FINAL",
+          "label": "Final",
+          "matches": 1
+        }
+      ],
+      "status": "LOCKED",
+      "transport": {
+        "methods": [
+          "GET"
+        ],
+        "remoteWrites": 0
+      },
+      "discipline": {
+        "teamNumber": 4,
+        "playerLabel": "Jugador Copa 4.1",
+        "ratingChanged": false,
+        "sanctionApplies": true,
+        "blockedFromSemifinal": true
+      },
+      "publicSafe": true,
+      "teamJourneys": [
+        {
+          "path": [
+            "QF4",
+            "SF2",
+            "THIRD"
+          ],
+          "status": "FOURTH_PLACE",
+          "teamName": "Cobalto Raval",
+          "teamNumber": 1,
+          "finalPosition": 4
+        },
+        {
+          "path": [
+            "QF3",
+            "SF2",
+            "FINAL"
+          ],
+          "status": "RUNNER_UP",
+          "teamName": "Circuit Poblenou",
+          "teamNumber": 2,
+          "finalPosition": 2
+        },
+        {
+          "path": [
+            "QF1"
+          ],
+          "status": "ELIMINATED",
+          "teamName": "Brúixola Sants",
+          "teamNumber": 3,
+          "finalPosition": null
+        },
+        {
+          "path": [
+            "QF2",
+            "SF1",
+            "THIRD"
+          ],
+          "status": "THIRD_PLACE",
+          "teamName": "Onze del Clot",
+          "teamNumber": 4,
+          "finalPosition": 3
+        },
+        {
+          "path": [
+            "QF1",
+            "SF1",
+            "FINAL"
+          ],
+          "status": "CHAMPION",
+          "teamName": "Marina Fosca",
+          "teamNumber": 5,
+          "finalPosition": 1
+        },
+        {
+          "path": [
+            "QF4"
+          ],
+          "status": "ELIMINATED",
+          "teamName": "Ferro Sant Andreu",
+          "teamNumber": 6,
+          "finalPosition": null
+        },
+        {
+          "path": [
+            "QF2"
+          ],
+          "status": "ELIMINATED",
+          "teamName": "Diagonal 26",
+          "teamNumber": 7,
+          "finalPosition": null
+        },
+        {
+          "path": [
+            "QF3"
+          ],
+          "status": "ELIMINATED",
+          "teamName": "Vértice Gràcia",
+          "teamNumber": 8,
+          "finalPosition": null
+        }
+      ],
+      "organizerDesk": {
+        "nextAction": "TOURNAMENT_LOCKED",
+        "bracketHealth": "HEALTHY",
+        "pendingResults": 0,
+        "unresolvedNodes": 0,
+        "completionHealth": "COMPLETE",
+        "unassignedFinals": 0,
+        "unscheduledMatches": 0,
+        "correctionsWithImpact": 1
+      },
+      "competitionName": "COPA BARRIOS IQ 2027",
+      "thirdPlaceEnabled": true
+    },
     "totalRevisions": 5,
     "competitionName": "COPA BARRIOS IQ 2027",
     "groupStageFinal": {
@@ -2562,7 +3091,7 @@
       ],
       "standingSnapshots": 4,
       "qualificationStatus": "PUBLISHED",
-      "qualificationChecksum": "28e2891e6803b1e2fac558c6237af8f98181d36dc5c14e752e9ef183c8b36932",
+      "qualificationChecksum": "8b0bbe9069950aaa880cff70f9162c63361d25ca649cba07ee6e3a12bea1dd13",
       "bracketProgressionEnabled": false
     },
     "groupStagePublic": {
@@ -3362,6 +3891,6 @@
     "tournamentMatches": 24,
     "acceptedParticipants": 16
   },
-  "version": 6,
-  "authorityHash": "3d51909498c47762ee6256f6a71e5ab642fbd2a2f2fc953178d537ca54dd06af"
+  "version": 7,
+  "authorityHash": "726ce4616cdab7224018b0d3eb9061e9418fc991db552daeea022935c105fc1d"
 }

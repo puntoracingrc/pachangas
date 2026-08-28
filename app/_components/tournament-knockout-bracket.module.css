@@ -1,0 +1,85 @@
+.root { min-width: 0; display: grid; gap: 9px; }
+.champion,
+.organizerDesk,
+.roundBoard,
+.roundRail,
+.node { border: 1px solid var(--official-line); border-radius: 8px; background: color-mix(in srgb, var(--official-surface) 87%, transparent); }
+.champion { min-height: 86px; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; border-color: rgba(200, 239, 93, .48); animation: championReveal 420ms ease-out both; }
+.champion > div { min-width: 0; display: grid; gap: 2px; }
+.champion span { color: var(--official-accent-text); font-size: .62rem; font-weight: 900; text-transform: uppercase; }
+.champion strong { overflow: hidden; color: var(--official-text); font-size: 1.25rem; text-overflow: ellipsis; white-space: nowrap; }
+.champion small { color: var(--official-muted); font-size: .64rem; }
+.metrics { min-width: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 7px; }
+.workspace { min-width: 0; min-height: 540px; display: grid; grid-template-columns: 112px minmax(430px, 1fr) minmax(220px, .38fr); gap: 7px; }
+.roundRail { min-width: 0; display: flex; flex-direction: column; gap: 5px; padding: 6px; overflow-y: auto; }
+.roundRail button { min-height: 54px; display: grid; place-items: center; gap: 2px; padding: 5px; }
+.roundRail strong { font-size: .63rem; text-align: center; }
+.roundRail small { color: var(--official-muted); font-size: .56rem; }
+.roundBoard,
+.organizerDesk { min-width: 0; min-height: 0; display: grid; align-content: start; gap: 9px; padding: 11px; overflow-y: auto; }
+.nodeGrid { min-width: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 8px; }
+.node { min-width: 0; display: grid; align-content: start; overflow: hidden; }
+.node[data-status="advanced"] { border-color: rgba(200, 239, 93, .4); }
+.node header { min-height: 38px; display: flex; align-items: center; justify-content: space-between; gap: 8px; border-bottom: 1px solid var(--official-line); padding: 6px 9px; color: var(--official-cyan-text); font-size: .59rem; }
+.team { min-width: 0; min-height: 38px; display: grid; grid-template-columns: minmax(0, 1fr) 32px; align-items: center; gap: 8px; border-bottom: 1px solid var(--official-line); padding: 5px 9px; }
+.team[data-winner="true"] { box-shadow: inset 3px 0 var(--official-accent-text); }
+.team span { overflow: hidden; font-size: .7rem; font-weight: 850; text-overflow: ellipsis; white-space: nowrap; }
+.team b { color: var(--official-accent-text); font-size: .95rem; text-align: center; }
+.result { min-height: 34px; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 5px 9px; background: var(--official-surface-soft); }
+.result strong { color: var(--official-text); font-size: .68rem; }
+.result small { color: var(--official-muted); font-size: .53rem; text-align: right; }
+.node footer { min-width: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 5px; border-top: 1px solid var(--official-line); padding: 7px 9px; color: var(--official-muted); font-size: .53rem; }
+.node footer span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.node > a { min-height: 34px; display: grid; place-items: center; border-top: 1px solid var(--official-line); color: var(--official-cyan-text); font-size: .61rem; font-weight: 900; text-decoration: none; }
+.nodeActions { display: flex; flex-wrap: wrap; gap: 5px; border-top: 1px solid var(--official-line); padding: 7px; }
+.nodeActions button { min-height: 34px; flex: 1 1 90px; font-size: .59rem; }
+.reservationForm { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; gap: 6px; align-items: end; border-top: 1px solid var(--official-line); padding: 8px; }
+.reservationForm label { min-width: 0; display: grid; gap: 3px; color: var(--official-muted); font-size: .55rem; }
+.reservationForm input { width: 100%; min-width: 0; min-height: 36px; border: 1px solid var(--official-line); border-radius: 6px; background: #13221e; padding: 5px 7px; color: var(--official-text); }
+.reservationForm button { min-height: 36px; }
+.organizerDesk dl { display: grid; margin: 0; }
+.organizerDesk dl div { min-height: 34px; display: flex; align-items: center; justify-content: space-between; gap: 8px; border-bottom: 1px solid var(--official-line); }
+.organizerDesk dt { color: var(--official-muted); font-size: .58rem; }
+.organizerDesk dd { margin: 0; font-size: .68rem; font-weight: 900; }
+
+@media (max-width: 900px) and (orientation: portrait) {
+  .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .workspace { min-height: 0; grid-template-columns: minmax(0, 1fr); }
+  .roundRail { flex-direction: row; overflow-x: auto; overflow-y: hidden; }
+  .roundRail button { flex: 0 0 112px; }
+  .roundBoard,
+  .organizerDesk { overflow: visible; }
+}
+
+@media (orientation: landscape) and (max-height: 560px),
+  (orientation: landscape) and (hover: none) and (pointer: coarse) and (min-width: 768px) and (max-width: 1368px) and (max-height: 1024px) {
+  .root { gap: 6px; }
+  .champion { min-height: 54px; padding: 6px 10px; }
+  .champion strong { font-size: .9rem; }
+  .metrics { display: none; }
+  .workspace { height: calc(100dvh - 126px); min-height: 250px; grid-template-columns: 96px minmax(410px, 1fr) minmax(190px, .34fr); gap: 5px; }
+  .roundBoard,
+  .organizerDesk { padding: 7px; }
+  .roundRail button { min-height: 45px; }
+  .nodeGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+  .node header { min-height: 31px; }
+  .team { min-height: 31px; }
+  .result { min-height: 28px; }
+  .node footer { padding-block: 4px; }
+}
+
+@media (max-width: 380px) {
+  .champion { padding-inline: 10px; }
+  .nodeGrid { grid-template-columns: minmax(0, 1fr); }
+  .reservationForm { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .root * { scroll-behavior: auto; }
+  .champion { animation: none; }
+}
+
+@keyframes championReveal {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
