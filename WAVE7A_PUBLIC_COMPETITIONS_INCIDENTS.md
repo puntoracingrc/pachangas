@@ -2036,3 +2036,49 @@ regression result marked `FIXED / REGRESSION_VERIFIED`.
   `private.pachanga_competition_foundation_settings`.
 - Regression verified: production returned 176 migrations, three
   competitions/editions, zero Entries/matches and all eight protected digests.
+
+### W7A-ENVIRONMENT-025 - Supabase config disables automatic migration push
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: run `supabase db push --linked --dry-run` after the exact
+  176-to-183 ledger reconciliation.
+- Observed: CLI skipped all pending files because migrations are disabled in
+  `supabase/config.toml` and then printed `Remote database is up to date`.
+- Impact: no migration ran during that failed preflight; treating that final
+  line as truth would have incorrectly skipped Wave 7A.
+- Planned correction: inspect the repository's intentional migration-release
+  mechanism and use a versioned path that applies each exact file and records
+  its version/name without permanently altering config.
+- Regression plan: preflight enumerates exactly the seven expected versions,
+  application reaches ledger 183 and local/remote history is identical.
+- Correction: a disposable release copy enabled the repository migration path
+  without changing `supabase/config.toml`; its dry-run enumerated only the seven
+  reviewed Wave 7A files before the linked push.
+- Regression verified: the linked push exited zero, production reached ledger
+  183 and `supabase migration list --linked` now pairs every Wave 7A version on
+  both the local and remote sides.
+
+### W7A-ENVIRONMENT-026 - Optional pg-delta cache cannot read its temporary CA
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: apply the seven reviewed Wave 7A migrations through the
+  disposable release copy after an exact dry-run.
+- Observed: every migration applied and `db push` exited zero, then the optional
+  catalog-cache phase failed to read
+  `/workspace/supabase/.temp/pgdelta/pgdelta-target-ca.crt`.
+- Impact: migration application reports success, but the CLI cache warning
+  cannot be used as ledger evidence and SQL must not be retried blindly.
+- Planned correction: perform independent linked-list and SQL readbacks for
+  ledger, flags, relations, grants, triggers and indexes; leave the optional
+  CLI cache defect outside product code.
+- Regression plan: production reports exactly 183 migrations and all seven
+  Wave 7A objects healthy with flags OFF before merge.
+- Correction: the optional cache warning was not treated as application
+  authority and no migration was retried. Independent linked-list and SQL
+  readbacks were run after the successful push.
+- Regression verified: production reports exactly 183 migrations, last version
+  `20260828072053`, all seven R6C indexes valid/ready, all Wave 7A flags OFF,
+  deny-by-default table grants, Realtime invalidations and source refresh
+  triggers present, with zero waiting or exclusive locks.

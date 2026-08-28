@@ -2,7 +2,7 @@
 
 ## Estado
 
-`PRE-PRODUCTION GATES COMPLETE / PRODUCTION PENDING`
+`MIGRATIONS APPLIED / FLAGS OFF / MERGE PENDING`
 
 Este documento se incorpora al PR funcional para conservar el plan y la
 evidencia previa. Se cerrara mediante un follow-up documental con SHA, ledger,
@@ -23,7 +23,7 @@ campo pendiente de esta version se presenta como hecho.
 | Schema hash fresh/upgrade | `7273cef0f24cc4881179475c81c7196dde8d084c9af39316ecf250a33e8e708d` |
 | Backup fisico previo | `1499793836`, `COMPLETED`, `2026-08-28T00:18:34.331Z` |
 | Dump logico previo | `5,088,476 bytes`, SHA-256 `841d39ca9b5d0b1bbb3266ce220f9f5ee48364461ba110c4750aa590fa2a837a` |
-| Produccion | `NO MODIFICADA AUN POR WAVE 7A` |
+| Produccion | `SCHEMA 183 / FLAGS WAVE 7A OFF` |
 
 ## Migraciones candidatas exactas
 
@@ -48,6 +48,53 @@ campo pendiente de esta version se presenta como hecho.
 - Service Worker exacto: `2.0.0+sw.15049e0ee32f`;
 - visual: ocho viewports, 0 overflow raiz, 0 imagenes rotas, 0 consola;
 - PWA instalada fisica: PENDING, no es bloqueo autorizado de esta release.
+
+## Migracion productiva
+
+El push vinculado aplico una sola vez las siete migraciones revisadas y termino
+con codigo cero. El aviso posterior del cache opcional `pg-delta` no se uso
+como evidencia ni provoco un reintento. El readback independiente confirma:
+
+- ledger `176 -> 183`, ultima version `20260828072053`;
+- las siete versiones aparecen emparejadas en
+  `supabase migration list --linked`;
+- los siete indices R6C estan `valid` y `ready`;
+- las nueve tablas nuevas estan vacias y con RLS activa;
+- `anon` y `authenticated` no tienen lectura ni escritura directa en ellas;
+- invalidaciones Realtime y diez triggers de refresco canonico presentes;
+- cero locks en espera y cero locks exclusivos;
+- todos los flags Wave 7A nacieron OFF.
+
+| Version | Nombre remoto | Sentencias | Hash remoto de sentencias |
+| --- | --- | ---: | --- |
+| `20260828072045` | `tournament_knockout_fk_index_hardening_v1` | 11 | `24540e86ab6d0dd9f3deb75de703361413b5199bcb9a1e5552a8bcf994220d4d` |
+| `20260828072047` | `public_competition_publication_consent_v1` | 17 | `2dd031853b5de562e236e394bb1b4ec2a84d3d294095f971362230809e80aa32` |
+| `20260828072048` | `competition_registration_requests_waitlist_v1` | 18 | `4881909abd2b193c4b7aedff30dcd0c66dbb85a2d3f58288743e544dc8075412` |
+| `20260828072049` | `public_competition_read_models_directory_v1` | 39 | `e3d88c3c3daa0a873e46570783d843cab370beef7a88f6ecacded9916572430d` |
+| `20260828072051` | `public_competition_commands_authority_v1` | 45 | `6730867af9f2aba8b173e946168c4e98419948114760fde28e4f2c31340296f3` |
+| `20260828072052` | `public_competition_access_realtime_v1` | 28 | `b504e40c9e89b047a04d4ed36af9b55eca1aa232829f6dda29950133c3bc5cb6` |
+| `20260828072053` | `public_competition_product_flags_hardening_v1` | 20 | `03a1443f3df6847c083e58160280e55f6bf49b365db5a1ee5972ce2bd09ede25` |
+
+## Advisors productivos
+
+El Advisor de rendimiento devuelve 820 avisos globales preexistentes o
+informativos: 588 FK sin indice, 230 indices aun sin uso, un indice duplicado y
+un aviso de conexiones Auth. Para Wave 7A aparecen 18 FK informativas y 12
+indices nuevos aun sin uso, coherente con tablas vacias y flags OFF.
+
+Los dos avisos R6C residuales corresponden a `source_group_id` y
+`resolved_entry_id` de `pachanga_tournament_bracket_slots`. No existe una ruta
+productiva que entre por esas columnas: los flujos auditados filtran primero
+por `bracket_template_id`, cuyo indice ya cubre el acceso. Por tanto, la deuda
+R6C accionable permanece en `0`; no se crean indices redundantes para maquillar
+el Advisor.
+
+Los avisos de seguridad RPC-only permanecen revisados: RLS deny-by-default,
+grants directos revocados, `auth.uid()` y capabilities resueltos en PostgreSQL,
+`search_path` fijo y read models publicos sin PII. Referencias de remediacion:
+[RLS sin policy](https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy),
+[Security Definer anon](https://supabase.com/docs/guides/database/database-linter?lint=0028_anon_security_definer_function_executable) y
+[Security Definer authenticated](https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable).
 
 ## Baseline productivo protegido
 
