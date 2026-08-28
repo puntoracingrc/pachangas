@@ -253,6 +253,7 @@ test("public layouts adapt across portrait, landscape and PWA safe areas", async
   assert.match(css, /min-width: 0/);
   assert.match(css, /max-width: 740px/);
   assert.match(css, /grid-template-columns: 165px minmax\(0, 1fr\) 115px/);
+  assert.match(css, /heroMetrics > div:last-child strong \{ font-size: \.75rem; \}/);
 });
 
 test("public competition shell agrees with League and Tournament grammatical gender", async () => {

@@ -1818,3 +1818,39 @@ regression result marked `FIXED / REGRESSION_VERIFIED`.
   version is invalid.
 - Regression plan: Preview reports a valid immutable client/worker version,
   controls the page and completes one controlled reload without fake success.
+
+### W7A-PRODUCT-022 - Tournament start date exceeds its metric tile in portrait
+
+- Classification: `PRODUCT_BUG`
+- Status: `FIXED / REGRESSION_PENDING`
+- Original scenario: run the canonical Tournament hub at 390x844 and 360x800.
+- Observed: the full date remains in the DOM, but its `strong` element exceeds
+  the metric tile by 18 px and 28 px respectively.
+- Impact: the date can collide with adjacent metrics on supported portrait
+  phones even though the document has no root overflow.
+- Planned correction: inspect the portrait capture and compact or wrap only the
+  date metric without altering canonical content or landscape sizing.
+- Regression plan: all three hero metrics remain readable and bounded at
+  360x800, 390x844 and the four required landscape widths.
+- Correction: only the final date metric uses a compact `.75rem` value at the
+  existing portrait breakpoint; canonical text and the other metrics are
+  unchanged.
+
+### W7A-TESTABILITY-051 - Raw viewport detector counts horizontally scrollable controls as clipped
+
+- Classification: `TESTABILITY_GAP`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: count every interactive element whose bounding rectangle
+  extends beyond the viewport in the eight-size responsive matrix.
+- Observed: the detector reported between five and eight controls on small
+  viewports despite zero root overflow.
+- Impact: the metric does not distinguish a real inaccessible control from a
+  tab or navigation item intentionally located inside an overflow scroller.
+- Planned correction: enumerate the elements and their nearest overflow
+  ancestor, then count only controls clipped without an accessible scroll path.
+- Regression plan: the refined detector reports the intentional scroller items
+  separately and zero incoherently clipped controls.
+- Correction: the detector now walks each off-screen control's ancestors and
+  excludes only elements inside a horizontally scrollable container.
+- Regression verified: every reported control belonged to the public hub tab
+  scroller; the refined eight-viewport matrix found zero inaccessible controls.
