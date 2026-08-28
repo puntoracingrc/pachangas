@@ -7,6 +7,16 @@ alter table private.pachanga_stripe_billing_reconciliations_v1
   add column if not exists claim_operation_id uuid,
   add column if not exists last_attempt_at timestamptz;
 
+alter table private.pachanga_stripe_subscription_projections_v1
+  add column if not exists projection_source text not null default 'STRIPE_WEBHOOK',
+  add column if not exists last_reconciled_at timestamptz;
+
+alter table private.pachanga_stripe_subscription_projections_v1
+  drop constraint if exists pachanga_stripe_subscription_projection_source_ck;
+alter table private.pachanga_stripe_subscription_projections_v1
+  add constraint pachanga_stripe_subscription_projection_source_ck
+  check (projection_source in ('STRIPE_WEBHOOK', 'STRIPE_RECONCILIATION'));
+
 create index if not exists pachanga_stripe_reconciliation_claim_idx
   on private.pachanga_stripe_billing_reconciliations_v1(claim_operation_id, server_sequence, id)
   where claim_operation_id is not null;
@@ -197,6 +207,8 @@ begin
         'currentPeriodEnd', subscriptions.current_period_end,
         'cancelAtPeriodEnd', subscriptions.cancel_at_period_end,
         'graceEndsAt', subscriptions.grace_ends_at,
+        'projectionSource', subscriptions.projection_source,
+        'lastReconciledAt', subscriptions.last_reconciled_at,
         'revision', subscriptions.revision
       ) end,
       'revision', billing_accounts.revision,
@@ -299,6 +311,47 @@ begin
     'accessGrants', accesses,
     'invoices', invoices,
     'continuity', continuity,
+    'revision', settings.revision,
+    'updatedAt', settings.updated_at
+  );
+end;
+$$;
+
+create or replace function public.get_my_pachanga_billing_organizers_v1()
+returns jsonb
+language plpgsql
+security definer
+stable
+set search_path = pg_catalog
+as $$
+declare actor_id uuid := (select auth.uid());
+declare settings private.pachanga_organizer_billing_settings%rowtype;
+declare organizers jsonb;
+begin
+  if actor_id is null then
+    raise exception 'AUTHENTICATION_REQUIRED' using errcode = '42501';
+  end if;
+  select * into settings from private.pachanga_organizer_billing_settings where singleton;
+  select coalesce(jsonb_agg(rows.item order by rows.kind, rows.name, rows.id), '[]'::jsonb)
+    into organizers
+  from (
+    select 'TEAM'::text kind, groups.name, groups.id, jsonb_build_object(
+      'kind', 'TEAM', 'id', groups.id, 'name', groups.name,
+      'owner', true, 'updatedAt', groups.updated_at
+    ) item
+    from public.pachanga_groups groups
+    where groups.owner_id = actor_id
+    union all
+    select 'CLUB'::text kind, clubs.name, clubs.id, jsonb_build_object(
+      'kind', 'CLUB', 'id', clubs.id, 'name', clubs.name,
+      'owner', true, 'updatedAt', clubs.updated_at
+    ) item
+    from public.pachanga_clubs clubs
+    where clubs.primary_owner_id = actor_id and clubs.operational_status = 'active'
+  ) rows;
+  return jsonb_build_object(
+    'enabled', settings.organizer_ui_enabled,
+    'items', organizers,
     'revision', settings.revision,
     'updatedAt', settings.updated_at
   );
@@ -619,6 +672,16 @@ begin
       'mode', claimed.stripe_mode,
       'customerId', accounts.stripe_customer_id,
       'subscriptionId', subscriptions.stripe_subscription_id,
+      'localSubscriptionStatus', subscriptions.status,
+      'localPriceId', subscriptions.stripe_price_id,
+      'localBillingInterval', subscriptions.billing_interval,
+      'localCurrentPeriodStart', subscriptions.current_period_start,
+      'localCurrentPeriodEnd', subscriptions.current_period_end,
+      'localCancelAtPeriodEnd', subscriptions.cancel_at_period_end,
+      'localCanceledAt', subscriptions.canceled_at,
+      'localLastEventCreatedAt', subscriptions.last_event_created_at,
+      'localLastEventId', subscriptions.last_event_id,
+      'localProjectionRevision', coalesce(subscriptions.revision, 0),
       'revision', claimed.revision
     ) order by claimed.server_sequence, claimed.id), '[]'::jsonb)
   ), coalesce(max(claimed.revision), 0)
@@ -626,7 +689,7 @@ begin
   from claimed
   join private.pachanga_organizer_billing_accounts accounts on accounts.id = claimed.billing_account_id
   left join lateral (
-    select projections.stripe_subscription_id
+    select projections.*
     from private.pachanga_stripe_subscription_projections_v1 projections
     where projections.billing_account_id = accounts.id
     order by projections.server_sequence desc, projections.id desc
@@ -698,7 +761,9 @@ begin
     status = normalized_outcome,
     difference_codes = normalized_differences,
     safe_error_code = case when normalized_outcome = 'FAILED'
-      then private.pachanga_billing_safe_error_v1(safe_error_code) else null end,
+      then private.pachanga_billing_safe_error_v1(
+        complete_pachanga_billing_reconciliation_service_v1.safe_error_code
+      ) else null end,
     completed_at = case when normalized_outcome in ('HEALTHY', 'REPAIRED') then clock_timestamp() else null end,
     revision = rows.revision + 1,
     server_sequence = sequence_value,
@@ -725,6 +790,258 @@ begin
 end;
 $$;
 
+drop function if exists public.apply_pachanga_billing_reconciliation_snapshot_service_v1(
+  uuid, uuid, bigint, timestamptz, text, text, text, text, text,
+  timestamptz, timestamptz, boolean, timestamptz, text[]
+);
+
+create or replace function public.apply_pachanga_billing_reconciliation_snapshot_service_v1(
+  operation_id uuid,
+  reconciliation_id uuid,
+  expected_revision bigint,
+  observed_at timestamptz,
+  stripe_customer_id text,
+  stripe_subscription_id text,
+  stripe_price_id text,
+  subscription_status text,
+  billing_interval text,
+  current_period_start timestamptz,
+  current_period_end timestamptz,
+  cancel_at_period_end boolean default false,
+  canceled_at timestamptz default null,
+  difference_codes text[] default '{}'::text[],
+  expected_projection_revision bigint default 0
+)
+returns jsonb
+language plpgsql
+security definer
+set search_path = pg_catalog
+as $$
+declare normalized_status text := lower(trim(coalesce(subscription_status, '')));
+declare normalized_interval text := lower(trim(coalesce(billing_interval, '')));
+declare normalized_differences text[] := coalesce(difference_codes, '{}'::text[]);
+declare settings private.pachanga_organizer_billing_settings%rowtype;
+declare reconciliation private.pachanga_stripe_billing_reconciliations_v1%rowtype;
+declare account private.pachanga_organizer_billing_accounts%rowtype;
+declare mapping private.pachanga_organizer_plan_price_mappings%rowtype;
+declare subscription private.pachanga_stripe_subscription_projections_v1%rowtype;
+declare competing_subscription private.pachanga_stripe_subscription_projections_v1%rowtype;
+declare prior private.pachanga_organizer_billing_operation_receipts_v1%rowtype;
+declare request_hash text;
+declare sequence_value bigint;
+declare synthetic_event_id text := 'evt_reconcile_' || replace(operation_id::text, '-', '');
+declare grace_ends timestamptz;
+declare response jsonb;
+declare code text;
+begin
+  perform private.pachanga_billing_require_service_v1();
+  if operation_id is null or reconciliation_id is null or expected_revision is null or observed_at is null
+     or expected_projection_revision is null or expected_projection_revision < 0
+     or stripe_customer_id !~ '^cus_[A-Za-z0-9_]+' or stripe_subscription_id !~ '^sub_[A-Za-z0-9_]+'
+     or stripe_price_id !~ '^price_[A-Za-z0-9_]+'
+     or normalized_status not in ('incomplete', 'incomplete_expired', 'trialing', 'active', 'past_due', 'unpaid', 'paused', 'canceled')
+     or normalized_interval not in ('month', 'year')
+     or (current_period_start is not null and current_period_end is not null and current_period_end <= current_period_start)
+     or observed_at > clock_timestamp() + interval '5 minutes' then
+    raise exception 'BILLING_INVALID_RECONCILIATION_SNAPSHOT' using errcode = '22023';
+  end if;
+  foreach code in array normalized_differences loop
+    if code !~ '^[A-Z0-9_]{3,80}$' then
+      raise exception 'BILLING_INVALID_RECONCILIATION_SNAPSHOT' using errcode = '22023';
+    end if;
+  end loop;
+  request_hash := private.pachanga_billing_request_hash_v1(
+    'reconciliation.snapshot', reconciliation_id::text, expected_revision,
+    jsonb_build_object(
+      'observedAt', observed_at, 'customerId', stripe_customer_id,
+      'subscriptionId', stripe_subscription_id, 'priceId', stripe_price_id,
+      'status', normalized_status, 'billingInterval', normalized_interval,
+      'currentPeriodStart', current_period_start, 'currentPeriodEnd', current_period_end,
+      'cancelAtPeriodEnd', coalesce(cancel_at_period_end, false), 'canceledAt', canceled_at,
+      'differenceCodes', to_jsonb(normalized_differences),
+      'expectedProjectionRevision', expected_projection_revision
+    )
+  );
+  perform pg_advisory_xact_lock(hashtextextended(operation_id::text, 77030));
+  select * into prior
+  from private.pachanga_organizer_billing_operation_receipts_v1 receipts
+  where receipts.operation_id = apply_pachanga_billing_reconciliation_snapshot_service_v1.operation_id;
+  if found then
+    if prior.request_hash <> request_hash then
+      raise exception 'BILLING_OPERATION_ID_REUSED' using errcode = 'PT409';
+    end if;
+    return prior.response || jsonb_build_object('replayed', true);
+  end if;
+
+  select * into settings from private.pachanga_organizer_billing_settings where singleton;
+  if not settings.reconciliation_enabled then
+    raise exception 'BILLING_RECONCILIATION_DISABLED' using errcode = '0A000';
+  end if;
+  select * into reconciliation
+  from private.pachanga_stripe_billing_reconciliations_v1 rows
+  where rows.id = reconciliation_id
+  for update;
+  if not found then raise exception 'BILLING_RECONCILIATION_NOT_FOUND' using errcode = 'P0002'; end if;
+  if reconciliation.revision <> expected_revision or reconciliation.status <> 'RUNNING' then
+    raise exception 'STALE_REVISION' using errcode = 'PT409';
+  end if;
+  select * into account
+  from private.pachanga_organizer_billing_accounts accounts
+  where accounts.id = reconciliation.billing_account_id
+  for update;
+  if not found or account.stripe_mode <> reconciliation.stripe_mode
+     or account.stripe_customer_id is distinct from stripe_customer_id then
+    raise exception 'BILLING_RECONCILIATION_ACCOUNT_MISMATCH' using errcode = '22023';
+  end if;
+  select * into mapping
+  from private.pachanga_organizer_plan_price_mappings mappings
+  where mappings.stripe_mode = reconciliation.stripe_mode
+    and mappings.stripe_price_id = apply_pachanga_billing_reconciliation_snapshot_service_v1.stripe_price_id
+    and mappings.active
+    and (reconciliation.stripe_mode = 'test' or mappings.approved)
+  for share;
+  if not found then raise exception 'BILLING_UNKNOWN_PRICE' using errcode = '22023'; end if;
+
+  select * into subscription
+  from private.pachanga_stripe_subscription_projections_v1 projections
+  where projections.stripe_mode = reconciliation.stripe_mode
+    and projections.stripe_subscription_id = apply_pachanga_billing_reconciliation_snapshot_service_v1.stripe_subscription_id
+  for update;
+  if found and subscription.billing_account_id <> account.id then
+    raise exception 'BILLING_RECONCILIATION_SUBSCRIPTION_MISMATCH' using errcode = '22023';
+  end if;
+  if coalesce(subscription.revision, 0) <> expected_projection_revision then
+    raise exception 'STALE_REVISION' using errcode = 'PT409';
+  end if;
+
+  sequence_value := nextval('private.pachanga_organizer_billing_sequence');
+  if found and subscription.last_event_created_at >= observed_at then
+    if not ('STALE_OBSERVATION_IGNORED' = any(normalized_differences)) then
+      normalized_differences := array_append(normalized_differences, 'STALE_OBSERVATION_IGNORED');
+    end if;
+    update private.pachanga_stripe_billing_reconciliations_v1 rows set
+      status = 'HEALTHY', difference_codes = normalized_differences,
+      safe_error_code = null, completed_at = clock_timestamp(),
+      revision = rows.revision + 1, server_sequence = sequence_value,
+      updated_at = clock_timestamp()
+    where rows.id = reconciliation.id
+    returning * into reconciliation;
+    response := jsonb_build_object(
+      'replayed', false, 'reconciliationId', reconciliation.id,
+      'status', reconciliation.status, 'applied', false,
+      'differenceCodes', to_jsonb(reconciliation.difference_codes),
+      'confirmedRevision', reconciliation.revision,
+      'projectionRevision', subscription.revision,
+      'serverSequence', reconciliation.server_sequence
+    );
+    perform private.pachanga_billing_store_receipt_v1(
+      operation_id, null, 'service_authority', 'reconciliation.snapshot',
+      'billing_reconciliation', reconciliation.id::text, request_hash,
+      reconciliation.revision, sequence_value, '{}'::jsonb, response,
+      'RECONCILIATION_STALE_OBSERVATION_IGNORED',
+      jsonb_build_object('differenceCodes', to_jsonb(reconciliation.difference_codes))
+    );
+    return response;
+  end if;
+
+  if subscription.id is null then
+    select * into competing_subscription
+    from private.pachanga_stripe_subscription_projections_v1 projections
+    where projections.billing_account_id = account.id
+      and projections.stripe_mode = reconciliation.stripe_mode
+      and projections.subscription_family = 'ORGANIZER'
+      and projections.status not in ('canceled', 'incomplete_expired')
+    order by projections.server_sequence desc, projections.id desc
+    limit 1
+    for update;
+    if found then
+      raise exception 'BILLING_RECONCILIATION_SUBSCRIPTION_MISMATCH' using errcode = 'PT409';
+    end if;
+  end if;
+
+  grace_ends := case
+    when normalized_status = 'past_due' and subscription.status = 'past_due' and subscription.grace_ends_at is not null
+      then subscription.grace_ends_at
+    when normalized_status = 'past_due' then observed_at + make_interval(days => settings.grace_period_days)
+    else null
+  end;
+  if subscription.id is null then
+    insert into private.pachanga_stripe_subscription_projections_v1(
+      billing_account_id, stripe_mode, stripe_subscription_id, stripe_customer_id,
+      plan_revision_id, stripe_price_id, status, billing_interval,
+      current_period_start, current_period_end, cancel_at_period_end, canceled_at,
+      grace_ends_at, last_event_created_at, last_event_id, revision, server_sequence,
+      projection_source, last_reconciled_at
+    ) values (
+      account.id, reconciliation.stripe_mode, stripe_subscription_id, stripe_customer_id,
+      mapping.plan_revision_id, stripe_price_id, normalized_status, normalized_interval,
+      current_period_start, current_period_end, coalesce(cancel_at_period_end, false), canceled_at,
+      grace_ends, observed_at, synthetic_event_id, 1, sequence_value,
+      'STRIPE_RECONCILIATION', clock_timestamp()
+    ) returning * into subscription;
+  else
+    update private.pachanga_stripe_subscription_projections_v1 projections set
+      stripe_customer_id = apply_pachanga_billing_reconciliation_snapshot_service_v1.stripe_customer_id,
+      plan_revision_id = mapping.plan_revision_id,
+      stripe_price_id = apply_pachanga_billing_reconciliation_snapshot_service_v1.stripe_price_id,
+      status = normalized_status,
+      billing_interval = normalized_interval,
+      current_period_start = apply_pachanga_billing_reconciliation_snapshot_service_v1.current_period_start,
+      current_period_end = apply_pachanga_billing_reconciliation_snapshot_service_v1.current_period_end,
+      cancel_at_period_end = coalesce(apply_pachanga_billing_reconciliation_snapshot_service_v1.cancel_at_period_end, false),
+      canceled_at = apply_pachanga_billing_reconciliation_snapshot_service_v1.canceled_at,
+      grace_ends_at = grace_ends,
+      last_event_created_at = observed_at,
+      last_event_id = synthetic_event_id,
+      revision = projections.revision + 1,
+      server_sequence = sequence_value,
+      projection_source = 'STRIPE_RECONCILIATION',
+      last_reconciled_at = clock_timestamp(),
+      updated_at = clock_timestamp()
+    where projections.id = subscription.id
+    returning * into subscription;
+  end if;
+  perform private.pachanga_billing_sync_entitlement_v1(
+    subscription.id, 'Stripe reconciliation snapshot ' || reconciliation.id::text
+  );
+
+  if coalesce(array_length(normalized_differences, 1), 0) = 0 then
+    normalized_differences := array['PROJECTION_DRIFT'];
+  end if;
+  update private.pachanga_stripe_billing_reconciliations_v1 rows set
+    status = 'REPAIRED', difference_codes = normalized_differences,
+    safe_error_code = null, completed_at = clock_timestamp(),
+    revision = rows.revision + 1, server_sequence = sequence_value,
+    updated_at = clock_timestamp()
+  where rows.id = reconciliation.id
+  returning * into reconciliation;
+  response := jsonb_build_object(
+    'replayed', false, 'reconciliationId', reconciliation.id,
+    'status', reconciliation.status, 'applied', true,
+    'differenceCodes', to_jsonb(reconciliation.difference_codes),
+    'confirmedRevision', reconciliation.revision,
+    'projectionRevision', subscription.revision,
+    'serverSequence', reconciliation.server_sequence
+  );
+  perform private.pachanga_billing_store_receipt_v1(
+    operation_id, null, 'service_authority', 'reconciliation.snapshot',
+    'billing_reconciliation', reconciliation.id::text, request_hash,
+    reconciliation.revision, sequence_value, '{}'::jsonb, response,
+    'RECONCILIATION_REPAIRED',
+    jsonb_build_object(
+      'differenceCodes', to_jsonb(reconciliation.difference_codes),
+      'projectionId', subscription.id,
+      'projectionRevision', subscription.revision,
+      'projectionSource', subscription.projection_source
+    )
+  );
+  return response;
+exception
+  when serialization_failure or deadlock_detected or lock_not_available then
+    raise exception 'STALE_REVISION' using errcode = 'PT409';
+end;
+$$;
+
 revoke all on function private.pachanga_billing_redact_stripe_id_v1(text) from public, anon, authenticated;
 
 revoke all on function public.get_pachanga_organizer_plan_catalog_v1() from public, anon, authenticated, service_role;
@@ -732,6 +1049,9 @@ grant execute on function public.get_pachanga_organizer_plan_catalog_v1() to ano
 
 revoke all on function public.get_my_pachanga_organizer_billing_v1(text, uuid) from public, anon, authenticated, service_role;
 grant execute on function public.get_my_pachanga_organizer_billing_v1(text, uuid) to authenticated, service_role;
+
+revoke all on function public.get_my_pachanga_billing_organizers_v1() from public, anon, authenticated, service_role;
+grant execute on function public.get_my_pachanga_billing_organizers_v1() to authenticated, service_role;
 
 revoke all on function public.get_pachanga_platform_organizer_billing_v2(integer, integer) from public, anon, authenticated, service_role;
 grant execute on function public.get_pachanga_platform_organizer_billing_v2(integer, integer) to authenticated, service_role;
@@ -745,9 +1065,14 @@ grant execute on function public.claim_pachanga_billing_reconciliation_service_v
 revoke all on function public.complete_pachanga_billing_reconciliation_service_v1(uuid, uuid, bigint, text, text[], text) from public, anon, authenticated, service_role;
 grant execute on function public.complete_pachanga_billing_reconciliation_service_v1(uuid, uuid, bigint, text, text[], text) to service_role;
 
+revoke all on function public.apply_pachanga_billing_reconciliation_snapshot_service_v1(uuid, uuid, bigint, timestamptz, text, text, text, text, text, timestamptz, timestamptz, boolean, timestamptz, text[], bigint) from public, anon, authenticated, service_role;
+grant execute on function public.apply_pachanga_billing_reconciliation_snapshot_service_v1(uuid, uuid, bigint, timestamptz, text, text, text, text, text, timestamptz, timestamptz, boolean, timestamptz, text[], bigint) to service_role;
+
 comment on function public.get_pachanga_organizer_plan_catalog_v1() is
   'Public plan read model. It never exposes Stripe Product or Price identifiers and invents no commercial amount.';
 comment on function public.get_my_pachanga_organizer_billing_v1(text, uuid) is
   'Owner-only canonical billing read model. Stripe IDs stay private; invoice URLs are visible only to the organizer owner.';
+comment on function public.get_my_pachanga_billing_organizers_v1() is
+  'Owner-only organizer selector for Billing UI. It contains no financial or Stripe identifier.';
 comment on function public.get_pachanga_platform_organizer_billing_v2(integer, integer) is
   'Billing Control Center V2 with stable ordering, redacted Stripe references and no customer PII.';

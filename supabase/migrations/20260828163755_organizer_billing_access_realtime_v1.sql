@@ -236,6 +236,7 @@ for each row execute function private.pachanga_billing_invalidate_projection_tri
 
 alter table public.pachanga_organizer_billing_invalidations_v1 enable row level security;
 alter table public.pachanga_organizer_billing_invalidations_v1 force row level security;
+alter table public.pachanga_organizer_billing_invalidations_v1 replica identity full;
 
 drop policy if exists pachanga_billing_invalidation_select_v1 on public.pachanga_organizer_billing_invalidations_v1;
 create policy pachanga_billing_invalidation_select_v1

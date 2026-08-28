@@ -80,6 +80,7 @@ create temporary table wave7b_state(
   billing_account_id uuid,
   account_revision bigint,
   subscription_id uuid,
+  subscription_revision bigint,
   continuity_id uuid
 );
 insert into wave7b_state default values;
@@ -233,12 +234,23 @@ reset role;
 set local role authenticated;
 select pg_temp.actor('7b000000-0000-4000-8000-000000000004');
 select pg_temp.assert_true(
+  jsonb_array_length(public.get_my_pachanga_billing_organizers_v1() -> 'items') = 1
+    and public.get_my_pachanga_billing_organizers_v1() -> 'items' -> 0 ->> 'kind' = 'CLUB'
+    and public.get_my_pachanga_billing_organizers_v1() -> 'items' -> 0 ->> 'id'
+      = '7b000000-0000-4000-8000-000000000020',
+  'Organizer selector must expose only the Club owned by the current actor'
+);
+select pg_temp.assert_true(
   jsonb_array_length(public.get_my_pachanga_organizer_billing_v1(
     'CLUB', '7b000000-0000-4000-8000-000000000020'
   ) -> 'accessGrants') = 1,
   'Club owner must see the canonical partner access bundle'
 );
 select pg_temp.actor('7b000000-0000-4000-8000-000000000002');
+select pg_temp.assert_true(
+  jsonb_array_length(public.get_my_pachanga_billing_organizers_v1() -> 'items') = 0,
+  'Organizer selector must not expose teams merely because the actor is a member'
+);
 select pg_temp.expect_failure(
   $$select public.get_my_pachanga_organizer_billing_v1(
     'CLUB', '7b000000-0000-4000-8000-000000000020'
@@ -522,6 +534,20 @@ select pg_temp.expect_failure(
 reset role;
 
 -- Reconciliation is claimed once and completes with expected revision.
+update wave7b_state state set account_revision = accounts.revision
+from private.pachanga_organizer_billing_accounts accounts
+where accounts.id = state.billing_account_id;
+set local role authenticated;
+select pg_temp.actor('7b000000-0000-4000-8000-000000000003');
+select public.request_pachanga_billing_reconciliation_platform_v1(
+  '7b400000-0000-4000-8000-000000000010',
+  (select billing_account_id from wave7b_state),
+  (select account_revision from wave7b_state),
+  'Verify the canceled projection against Stripe',
+  '{"clientVersion":"7.1.0+db","surface":"wave7b_control_center"}'
+);
+reset role;
+
 set local role service_role;
 select pg_temp.actor('7b000000-0000-4000-8000-000000000003', 'service_role');
 select pg_temp.assert_true(
@@ -535,6 +561,147 @@ select pg_temp.assert_true(
     '7b400000-0000-4000-8000-000000000001', 25
   ) ->> 'replayed')::boolean,
   'Reconciliation claim must replay exactly'
+);
+select pg_temp.assert_true(
+  (public.apply_pachanga_billing_reconciliation_snapshot_service_v1(
+    '7b400000-0000-4000-8000-000000000011',
+    (select id from private.pachanga_stripe_billing_reconciliations_v1
+      where operation_id = '7b400000-0000-4000-8000-000000000010'),
+    (select revision from private.pachanga_stripe_billing_reconciliations_v1
+      where operation_id = '7b400000-0000-4000-8000-000000000010'),
+    '2026-08-28T12:08:00Z', 'cus_wave7b_001', 'sub_wave7b_001',
+    'price_wave7b_test_month', 'active', 'month',
+    '2026-08-28T12:01:00Z', '2026-09-28T12:01:00Z', false, null,
+    array['STATUS_MISMATCH'],
+    (select revision from private.pachanga_stripe_subscription_projections_v1
+      where id = (select subscription_id from wave7b_state))
+  ) ->> 'applied')::boolean,
+  'A newer server-side Stripe snapshot must repair the canonical projection'
+);
+select pg_temp.assert_true(
+  (select status = 'active' and projection_source = 'STRIPE_RECONCILIATION'
+      and last_event_id like 'evt_reconcile_%'
+    from private.pachanga_stripe_subscription_projections_v1
+    where id = (select subscription_id from wave7b_state))
+  and not exists (
+    select 1 from private.pachanga_stripe_webhook_events_v2 events
+    where events.stripe_event_id like 'evt_reconcile_%'
+  ),
+  'Reconciliation must be auditable without fabricating a signed webhook event'
+);
+select pg_temp.assert_true(
+  (public.apply_pachanga_billing_reconciliation_snapshot_service_v1(
+    '7b400000-0000-4000-8000-000000000011',
+    (select id from private.pachanga_stripe_billing_reconciliations_v1
+      where operation_id = '7b400000-0000-4000-8000-000000000010'),
+    (select revision - 1 from private.pachanga_stripe_billing_reconciliations_v1
+      where operation_id = '7b400000-0000-4000-8000-000000000010'),
+    '2026-08-28T12:08:00Z', 'cus_wave7b_001', 'sub_wave7b_001',
+    'price_wave7b_test_month', 'active', 'month',
+    '2026-08-28T12:01:00Z', '2026-09-28T12:01:00Z', false, null,
+    array['STATUS_MISMATCH'],
+    (select revision - 1 from private.pachanga_stripe_subscription_projections_v1
+      where id = (select subscription_id from wave7b_state))
+  ) ->> 'replayed')::boolean,
+  'Applied reconciliation snapshots must replay without a second entitlement mutation'
+);
+reset role;
+
+update wave7b_state state set account_revision = accounts.revision
+from private.pachanga_organizer_billing_accounts accounts
+where accounts.id = state.billing_account_id;
+set local role authenticated;
+select pg_temp.actor('7b000000-0000-4000-8000-000000000003');
+select public.request_pachanga_billing_reconciliation_platform_v1(
+  '7b400000-0000-4000-8000-000000000020',
+  (select billing_account_id from wave7b_state),
+  (select account_revision from wave7b_state),
+  'Prove that a stale Stripe observation cannot beat newer authority',
+  '{"clientVersion":"7.1.0+db","surface":"wave7b_control_center"}'
+);
+reset role;
+set local role service_role;
+select pg_temp.actor('7b000000-0000-4000-8000-000000000003', 'service_role');
+select public.claim_pachanga_billing_reconciliation_service_v1(
+  '7b400000-0000-4000-8000-000000000021', 25
+);
+select pg_temp.assert_true(
+  not (public.apply_pachanga_billing_reconciliation_snapshot_service_v1(
+    '7b400000-0000-4000-8000-000000000022',
+    (select id from private.pachanga_stripe_billing_reconciliations_v1
+      where operation_id = '7b400000-0000-4000-8000-000000000020'),
+    (select revision from private.pachanga_stripe_billing_reconciliations_v1
+      where operation_id = '7b400000-0000-4000-8000-000000000020'),
+    '2026-08-28T12:07:30Z', 'cus_wave7b_001', 'sub_wave7b_001',
+    'price_wave7b_test_month', 'canceled', 'month',
+    '2026-07-01T00:00:00Z', '2026-08-01T00:00:00Z', false,
+    '2026-08-28T12:07:00Z', array['STATUS_MISMATCH'],
+    (select revision from private.pachanga_stripe_subscription_projections_v1
+      where id = (select subscription_id from wave7b_state))
+  ) ->> 'applied')::boolean
+  and (select status = 'active' and last_event_created_at = '2026-08-28T12:08:00Z'
+    from private.pachanga_stripe_subscription_projections_v1
+    where id = (select subscription_id from wave7b_state)),
+  'An older reconciliation snapshot must never overwrite the newer canonical projection'
+);
+reset role;
+
+update wave7b_state state set
+  account_revision = accounts.revision,
+  subscription_revision = subscriptions.revision
+from private.pachanga_organizer_billing_accounts accounts,
+  private.pachanga_stripe_subscription_projections_v1 subscriptions
+where accounts.id = state.billing_account_id
+  and subscriptions.id = state.subscription_id;
+set local role authenticated;
+select pg_temp.actor('7b000000-0000-4000-8000-000000000003');
+select public.request_pachanga_billing_reconciliation_platform_v1(
+  '7b400000-0000-4000-8000-000000000030',
+  (select billing_account_id from wave7b_state),
+  (select account_revision from wave7b_state),
+  'Prove projection revision protects a concurrent webhook',
+  '{"clientVersion":"7.1.0+db","surface":"wave7b_control_center"}'
+);
+reset role;
+set local role service_role;
+select pg_temp.actor('7b000000-0000-4000-8000-000000000003', 'service_role');
+select public.claim_pachanga_billing_reconciliation_service_v1(
+  '7b400000-0000-4000-8000-000000000031', 25
+);
+select public.ingest_pachanga_stripe_event_v1(
+  '7b400000-0000-4000-8000-000000000032', 'test', 'evt_wave7b_reconciliation_race',
+  'customer.subscription.updated', '2026-06-30.basil', '2026-08-28T12:09:00Z',
+  repeat('4', 64),
+  '{"objectType":"subscription","objectId":"sub_wave7b_001","customerId":"cus_wave7b_001","subscriptionId":"sub_wave7b_001","priceId":"price_wave7b_test_month","subscriptionStatus":"past_due","billingInterval":"month","currentPeriodStart":"2026-08-28T12:01:00Z","currentPeriodEnd":"2026-09-28T12:01:00Z","cancelAtPeriodEnd":false}',
+  'req-wave7b-reconciliation-race'
+);
+select pg_temp.expect_failure(
+  $$select public.apply_pachanga_billing_reconciliation_snapshot_service_v1(
+    '7b400000-0000-4000-8000-000000000033',
+    (select id from private.pachanga_stripe_billing_reconciliations_v1
+      where operation_id = '7b400000-0000-4000-8000-000000000030'),
+    (select revision from private.pachanga_stripe_billing_reconciliations_v1
+      where operation_id = '7b400000-0000-4000-8000-000000000030'),
+    '2026-08-28T12:10:00Z', 'cus_wave7b_001', 'sub_wave7b_001',
+    'price_wave7b_test_month', 'active', 'month',
+    '2026-08-28T12:01:00Z', '2026-09-28T12:01:00Z', false, null,
+    array['STATUS_MISMATCH'], (select subscription_revision from wave7b_state)
+  )$$,
+  'STALE_REVISION'
+);
+select pg_temp.assert_true(
+  (select status = 'past_due' and last_event_id = 'evt_wave7b_reconciliation_race'
+    from private.pachanga_stripe_subscription_projections_v1
+    where id = (select subscription_id from wave7b_state)),
+  'A webhook processed after claim must remain the canonical projection'
+);
+select public.complete_pachanga_billing_reconciliation_service_v1(
+  '7b400000-0000-4000-8000-000000000034',
+  (select id from private.pachanga_stripe_billing_reconciliations_v1
+    where operation_id = '7b400000-0000-4000-8000-000000000030'),
+  (select revision from private.pachanga_stripe_billing_reconciliations_v1
+    where operation_id = '7b400000-0000-4000-8000-000000000030'),
+  'FAILED', array['PROJECTION_CHANGED_AFTER_CLAIM'], 'STALE_REVISION'
 );
 reset role;
 

@@ -140,6 +140,9 @@ const v1ApplicationWriteOperations = new Set([
   "api:billing-portal",
 ]);
 const v2ApplicationWriteOperations = new Set([
+  "api:organizer-billing-checkout",
+  "api:organizer-billing-portal",
+  "api:platform-admin-billing",
   "api:club-foundation-command",
   "api:competition-discipline-command",
   "api:competition-configuration-command",
