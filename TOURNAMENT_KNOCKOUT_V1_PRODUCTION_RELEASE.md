@@ -50,8 +50,8 @@ pendientes como release completado.
 | Migraciones staging 170..175 | PASS | Dry-run exacto, aplicación única y readback independiente: ledger 175, hashes/nombres coincidentes. |
 | QA autenticada / Realtime | PASS | Dos clientes GoTrue, una invalidación canónica por dispositivo, refetch convergente y escritura directa denegada. |
 | Cleanup staging / branch eliminado | PASS | Datos, flags, grants, usuarios, probes y procesos QA a cero; branch R6C eliminado y `pwa-bridge-staging` preservado. |
-| Backup producción recuperable | PENDING | - |
-| Baseline/ledger producción | PENDING | - |
+| Backup producción recuperable | PASS | Full-clone con datos creado desde producción, abierto en PostgreSQL 17.6, validado con historias canónicas y retirado tras cleanup. |
+| Baseline/ledger producción | PASS | 169 receipts, último `20260827105036`, 0 locks exclusivos, 54.693.011 bytes y relaciones R6C ausentes. |
 | Migraciones producción 170..175 | PENDING | - |
 | Flags nacen OFF | PENDING | - |
 | PR #209 fusionado | PENDING | - |
@@ -88,6 +88,25 @@ pendientes como release completado.
   cero grants activos, cero usuarios temporales, cero probes, cero brackets
   activos y cero procesos de prueba. El branch efímero y su release copy local
   se retiraron; el worktree quedó relinkado a producción, todavía en ledger 169.
+
+## Baseline de producción
+
+- Recoverability: el full-clone privado con datos arrancó saludable desde el
+  estado productivo, expuso ledger 169 y permitió ejecutar las historias
+  canónicas antes de ser eliminado. Es una prueba real de restauración, no una
+  mera comprobación de que exista un fichero de backup.
+- PostgreSQL `17.6`, tamaño 54.693.011 bytes y cero locks exclusivos ajenos en
+  el checkpoint previo.
+- Foundation revision 16 / server sequence 1285. Foundation, Private Beta,
+  Draw, Group Stage, Group Match Generation, Tracking, Standings,
+  Qualification y Bracket Template estaban ON; Public Discovery estaba OFF.
+- Baseline protegido: 1 Rating snapshot, 17 reward grants, 0 conduct reports y
+  0 billing events. Se comparará de nuevo después de migrar y activar.
+- Las tablas de brackets, nodes, advances y completion R6C no existían antes del
+  release.
+- La copia de release difiere del repositorio exclusivamente en
+  `db.migrations.enabled = true`. `db push --dry-run` enumera exactamente los
+  seis archivos 170..175 y ningún SQL adicional.
 
 ## Flags objetivo
 

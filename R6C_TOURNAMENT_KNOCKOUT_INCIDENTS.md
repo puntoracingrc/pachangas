@@ -1444,3 +1444,81 @@ reproducing the original scenario passes.
 - Regression: the path is absent, the worktree is linked to
   `qonbngfrnrqgmxbdfbea` and production still reports 169 applied receipts with
   migrations 170..175 pending exactly once.
+
+### R6C-ENVIRONMENT-072 - Web reader rejects the Supabase Markdown changelog
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: refresh Supabase release guidance before the production
+  migration gate by opening the official `changelog.md` endpoint.
+- Observed: the web reader returns `400 Unsupported content-type: text/markdown`.
+- Impact: no product or remote state changes; the required compatibility review
+  is still pending.
+- Planned correction: fetch the same official HTTPS endpoint with a direct HTTP
+  client and search the returned changelog for migration, Postgres, CLI and
+  breaking-change entries relevant to this release.
+- Regression plan: obtain an official response, identify any applicable
+  breaking change and continue only if the six forward migrations remain safe.
+- Correction: the same official endpoint was fetched by HTTPS and filtered
+  locally without following any third-party instruction.
+- Regression: current database, CLI, Realtime and Data API changes were read;
+  none conflicts with R6C's explicit grants, RLS, Node 22 or forward migrations.
+
+### R6C-ENVIRONMENT-073 - Authenticated Chrome binding times out
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: supplement the recoverability gate by reading the
+  production backup panel from the user's already-open browser session.
+- Observed: the in-app browser is unauthenticated and the Chrome binding times
+  out before a tab can be inspected.
+- Impact: no credential is entered and no remote state changes; dashboard-only
+  backup metadata is unavailable through this browser path.
+- Planned correction: rely on the authenticated Supabase CLI/API evidence and
+  the completed full-data clone restoration, rather than weakening browser
+  authentication or asking for credentials.
+- Regression plan: require a healthy full-data clone at ledger 169, successful
+  canonical readback on that clone, production baseline 169 and zero production
+  locks before migration.
+- Correction: the release gate uses the full-clone restoration already tested
+  plus authenticated CLI/API readback; no browser authentication was bypassed.
+- Regression: the restored clone was healthy and executable, while production
+  reports ledger 169, zero exclusive locks and all R6C relations absent.
+
+### R6C-SIMULATION-074 - Temporary config edit targets the wrong enabled field
+
+- Classification: `SIMULATION_BUG`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: enable migrations only in the disposable production
+  release copy and request a dry-run against ledger 169.
+- Observed: `db push --dry-run` reports migrations disabled because the broad
+  one-line edit changed an earlier `enabled = false`, not the value nested under
+  `[db.migrations]`.
+- Impact: no SQL is applied and production remains at ledger 169; the dry-run
+  provides no migration-plan evidence.
+- Planned correction: restore the accidental temporary edit, patch the exact
+  `[db.migrations]` block with contextual lines and repeat the read-only plan.
+- Regression plan: the original config and release copy differ only at
+  `db.migrations.enabled`, and dry-run lists exactly migrations 170..175.
+- Correction: local TLS was restored to its original value and the contextual
+  `[db.migrations]` block alone was enabled in the disposable copy.
+- Regression: config diff contains exactly one line and the independent dry-run
+  lists only the six R6C migrations in ledger order.
+
+### R6C-SIMULATION-075 - Diff guard short-circuits the second dry-run
+
+- Classification: `SIMULATION_BUG`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: prove the release copy differs only in migration enablement
+  and immediately rerun the production migration dry-run.
+- Observed: the shell condition exits when `diff` reports no change, so the
+  subsequent dry-run is never invoked and emits no output.
+- Impact: no remote state changes; production remains at ledger 169 and the
+  migration plan still requires confirmation.
+- Planned correction: inspect the exact config block, apply the contextual edit
+  if absent, and execute config comparison and dry-run as separate commands.
+- Regression plan: direct readback shows migrations enabled only in the release
+  copy and the independent dry-run lists six pending files.
+- Correction: config comparison and `db push --dry-run` were run independently.
+- Regression: migration enablement is the sole temporary diff and the CLI
+  reports exactly files 170, 171, 172, 173, 174 and 175 as pending.
