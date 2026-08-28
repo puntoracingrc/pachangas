@@ -15,6 +15,7 @@ import {
   type DemoWorldV2LeagueEntry,
   type DemoWorldV2LeagueMatch,
   type DemoWorldV2Manifest,
+  type DemoWorldV2OrganizerBillingChunk,
   type DemoWorldV2PublicCompetitionsChunk,
   type DemoWorldV2Snapshot,
   type DemoWorldV2TournamentChunk,
@@ -1040,6 +1041,155 @@ function buildPublicCompetitions(
   };
 }
 
+function buildOrganizerBilling(): DemoWorldV2OrganizerBillingChunk {
+  const sharedFeatures = [
+    "competition_create",
+    "competition_manage",
+    "competition_staff",
+    "competition_rules",
+    "competition_referees",
+    "competition_discipline",
+    "competition_schedule",
+    "competition_results",
+    "competition_standings",
+    "tournament_create",
+    "tournament_manage",
+    "tournament_draw",
+  ];
+  const pendingLimits = {
+    activeCompetitions: null,
+    activeEditions: null,
+    maxTeamsPerCompetition: null,
+    refereeAssignments: null,
+    scheduledMatches: null,
+    staffSeats: null,
+  };
+  return {
+    catalog: {
+      liveCheckoutEnabled: false,
+      plans: [
+        {
+          accessModel: "PARTNERSHIP",
+          checkoutAvailable: false,
+          description: "Acceso de organizacion concedido por una partnership auditada, sin cobro.",
+          displayName: "Club colaborador",
+          features: [...sharedFeatures],
+          limits: { ...pendingLimits },
+          organizerKind: "CLUB",
+          planCode: "CLUB_PARTNER",
+          prices: [],
+          pricingStatus: "PARTNERSHIP_REVIEW",
+        },
+        {
+          accessModel: "SUBSCRIPTION",
+          checkoutAvailable: false,
+          description: "Plan de organizacion para Clubs. El precio live permanece pendiente de aprobacion.",
+          displayName: "Club Organizer",
+          features: [...sharedFeatures],
+          limits: { ...pendingLimits },
+          organizerKind: "CLUB",
+          planCode: "CLUB_ORGANIZER",
+          prices: [],
+          pricingStatus: "AWAITING_PRICE_APPROVAL",
+        },
+        {
+          accessModel: "SUBSCRIPTION",
+          checkoutAvailable: false,
+          description: "Add-on de organizacion para el owner de un equipo. No sustituye el plan base.",
+          displayName: "Team Organizer Pro",
+          features: [...sharedFeatures],
+          limits: { ...pendingLimits },
+          organizerKind: "TEAM",
+          planCode: "TEAM_ORGANIZER_PRO",
+          prices: [],
+          pricingStatus: "AWAITING_PRICE_APPROVAL",
+        },
+      ],
+      status: "CATALOG_AVAILABLE",
+    },
+    privacy: {
+      containsPii: false,
+      containsPriceId: false,
+      containsStripeCustomerId: false,
+      containsStripeSubscriptionId: false,
+    },
+    provenance: {
+      authority: "canonical-read-model-shape",
+      source: "deterministic-demo",
+      verified: true,
+    },
+    readOnly: true,
+    scenarios: [
+      {
+        accessStatus: "active",
+        accountStatus: "active",
+        continuityUntil: null,
+        creationAllowed: true,
+        graceEndsAt: null,
+        id: "club_partner",
+        note: "Partnership auditada: acceso activo sin cargo ni Checkout.",
+        organizerKind: "CLUB",
+        organizerName: "Club Esportiu Llevant",
+        planCode: "CLUB_PARTNER",
+        renewalAt: null,
+      },
+      {
+        accessStatus: "active",
+        accountStatus: "active",
+        continuityUntil: null,
+        creationAllowed: true,
+        graceEndsAt: null,
+        id: "team_active",
+        note: "Add-on activo sobre el plan base del equipo.",
+        organizerKind: "TEAM",
+        organizerName: "Cobalto Raval",
+        planCode: "TEAM_ORGANIZER_PRO",
+        renewalAt: "2027-04-18T18:00:00.000Z",
+      },
+      {
+        accessStatus: "active",
+        accountStatus: "active",
+        continuityUntil: null,
+        creationAllowed: true,
+        graceEndsAt: null,
+        id: "club_active",
+        note: "Suscripcion de Club activa y read model confirmado.",
+        organizerKind: "CLUB",
+        organizerName: "Associacio Esportiva Besos",
+        planCode: "CLUB_ORGANIZER",
+        renewalAt: "2027-04-18T18:00:00.000Z",
+      },
+      {
+        accessStatus: "grace",
+        accountStatus: "past_due",
+        continuityUntil: null,
+        creationAllowed: false,
+        graceEndsAt: "2027-03-25T18:00:00.000Z",
+        id: "past_due_grace",
+        note: "Pago pendiente: se conserva el acceso existente durante la gracia, sin nuevas creaciones.",
+        organizerKind: "CLUB",
+        organizerName: "Club Esportiu Montjuic",
+        planCode: "CLUB_ORGANIZER",
+        renewalAt: null,
+      },
+      {
+        accessStatus: "continuity",
+        accountStatus: "canceled",
+        continuityUntil: "2027-06-30T21:59:59.000Z",
+        creationAllowed: false,
+        graceEndsAt: null,
+        id: "canceled_continuity",
+        note: "Suscripcion cancelada: la edicion iniciada conserva continuidad, pero no se crean competiciones nuevas.",
+        organizerKind: "TEAM",
+        organizerName: "Vertice Gracia",
+        planCode: "TEAM_ORGANIZER_PRO",
+        renewalAt: null,
+      },
+    ],
+    transport: { methods: ["GET"], remoteWrites: 0 },
+  };
+}
+
 export function generateDemoWorldV2(
   authorityProof = loadDemoWorldV2AuthorityProof(),
 ): DemoWorldV2Snapshot {
@@ -1056,6 +1206,7 @@ export function generateDemoWorldV2(
   const activity = structuredClone(v1.activity);
   const core = structuredClone(v1.core);
   const matches = structuredClone(v1.matches);
+  const organizerBilling = buildOrganizerBilling();
   const players = structuredClone(v1.players);
   core.perspectives.push({
     id: "league-organizer",
@@ -1065,7 +1216,7 @@ export function generateDemoWorldV2(
     summary: "Consulta la competición y sus decisiones públicas sin alterar el snapshot.",
     teamId: "demo_team_001",
   });
-  const payload = { activity, clubsReferees, competitions, configuration, core, matches, players, publicCompetitions, tournament };
+  const payload = { activity, clubsReferees, competitions, configuration, core, matches, organizerBilling, players, publicCompetitions, tournament };
   const snapshotHash = hash(payload);
   const cacheKey = snapshotHash.slice(0, 16);
   const manifest: DemoWorldV2Manifest = {
@@ -1076,6 +1227,7 @@ export function generateDemoWorldV2(
       configuration: `/demo-world/v2/configuration.json?h=${cacheKey}`,
       core: `/demo-world/v2/core.json?h=${cacheKey}`,
       matches: `/demo-world/v2/matches.json?h=${cacheKey}`,
+      organizerBilling: `/demo-world/v2/organizer-billing.json?h=${cacheKey}`,
       players: `/demo-world/v2/players.json?h=${cacheKey}`,
       publicCompetitions: `/demo-world/v2/public-competitions.json?h=${cacheKey}`,
       tournament: `/demo-world/v2/tournament.json?h=${cacheKey}`,
@@ -1091,6 +1243,7 @@ export function generateDemoWorldV2(
       competitions: 1,
       matches: matches.matches.length,
       notifications: activity.notifications.length,
+      organizerBillingScenarios: organizerBilling.scenarios.length,
       players: players.players.length,
       publicCompetitions: 4,
       referees: clubsReferees.referees.length,
@@ -1127,6 +1280,7 @@ export async function writeDemoWorldV2(snapshot: DemoWorldV2Snapshot, outputDire
     "core.json": snapshot.core,
     "manifest.json": snapshot.manifest,
     "matches.json": snapshot.matches,
+    "organizer-billing.json": snapshot.organizerBilling,
     "players.json": snapshot.players,
     "public-competitions.json": snapshot.publicCompetitions,
     "tournament.json": snapshot.tournament,
@@ -1148,6 +1302,7 @@ async function main() {
     configuration: snapshot.configuration,
     core: snapshot.core,
     matches: snapshot.matches,
+    organizerBilling: snapshot.organizerBilling,
     players: snapshot.players,
     publicCompetitions: snapshot.publicCompetitions,
     tournament: snapshot.tournament,

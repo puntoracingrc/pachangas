@@ -13,6 +13,11 @@ import { RefereeProfileCard } from "../_components/referee-profile-card";
 import { TeamShieldView } from "../_components/team-shield-view";
 import { PublicClubProfile } from "../clubes/[slug]/public-club-profile";
 import { MobileAppNav, type MobileAppTab } from "../mobile-app-nav";
+import {
+  organizerBillingDate,
+  organizerBillingStatus,
+  organizerFeatureLabels,
+} from "../organizer-billing-contract";
 import { PLAYER_COSMETIC_CATALOG, catalogEntry } from "../player-cosmetics-catalog";
 import { withCosmeticKey } from "../player-cosmetics-contract";
 import { ProvincialRankingBoard } from "../ranking/provincial-ranking-board";
@@ -46,6 +51,7 @@ import {
   type DemoWorldV2Club,
   type DemoWorldV2ConfigurationChunk,
   type DemoWorldV2Manifest,
+  type DemoWorldV2OrganizerBillingChunk,
   type DemoWorldV2PrimaryTab,
   type DemoWorldV2PublicCompetitionsChunk,
   type DemoWorldV2Referee,
@@ -79,6 +85,7 @@ const leagueTabs: Array<{ id: DemoWorldV2PrimaryTab; label: string }> = [
   { id: "disciplina", label: "Disciplina" },
   { id: "club", label: "Club" },
   { id: "arbitros", label: "Árbitros" },
+  { id: "planes", label: "Planes" },
 ];
 
 const facetLabels = {
@@ -1247,6 +1254,49 @@ function DemoPublicCompetitionsView({ data }: { data: DemoWorldV2PublicCompetiti
   </div>;
 }
 
+const organizerBillingScenarioLabels: Record<DemoWorldV2OrganizerBillingChunk["scenarios"][number]["id"], string> = {
+  canceled_continuity: "Cancelado con continuidad",
+  club_active: "Club activo",
+  club_partner: "Club colaborador",
+  past_due_grace: "Pago pendiente",
+  team_active: "Equipo activo",
+};
+
+function DemoOrganizerBillingView({ billing }: { billing: DemoWorldV2OrganizerBillingChunk }) {
+  const [scenarioId, setScenarioId] = useState<DemoWorldV2OrganizerBillingChunk["scenarios"][number]["id"]>("club_partner");
+  const scenario = billing.scenarios.find(({ id }) => id === scenarioId) ?? billing.scenarios[0]!;
+  return <div className={`${styles.demoProductView} ${styles.organizerBillingDemo}`} data-demo-domain="organizer-billing" data-demo-read-only="true">
+    <section className={styles.demoDomainHeading}>
+      <div><span className={styles.eyebrow}>ORGANIZER PLANS V1</span><h1>Planes y continuidad</h1><p>Estados canónicos de ejemplo sin cobros, datos personales ni escrituras remotas.</p></div>
+      <span>Demo GET · Checkout live desactivado</span>
+    </section>
+    <nav className={styles.organizerBillingScenarioRail} aria-label="Escenarios ficticios de facturación">
+      {billing.scenarios.map((entry) => <button aria-pressed={scenario.id === entry.id} key={entry.id} type="button" onClick={() => setScenarioId(entry.id)}>{organizerBillingScenarioLabels[entry.id]}</button>)}
+    </nav>
+    <section className={styles.organizerBillingScenario}>
+      <header><span>{scenario.organizerKind === "CLUB" ? "Club" : "Equipo"}</span><h2>{scenario.organizerName}</h2><p>{scenario.note}</p></header>
+      <div className={styles.organizerBillingStateGrid}>
+        <span><small>Plan</small><strong>{scenario.planCode}</strong></span>
+        <span><small>Cuenta</small><strong>{organizerBillingStatus(scenario.accountStatus)}</strong></span>
+        <span><small>Acceso</small><strong>{organizerBillingStatus(scenario.accessStatus)}</strong></span>
+        <span><small>Nuevas creaciones</small><strong>{scenario.creationAllowed ? "Permitidas" : "Bloqueadas"}</strong></span>
+        {scenario.renewalAt ? <span><small>Renovación</small><strong>{organizerBillingDate(scenario.renewalAt)}</strong></span> : null}
+        {scenario.graceEndsAt ? <span><small>Gracia hasta</small><strong>{organizerBillingDate(scenario.graceEndsAt)}</strong></span> : null}
+        {scenario.continuityUntil ? <span><small>Continuidad hasta</small><strong>{organizerBillingDate(scenario.continuityUntil)}</strong></span> : null}
+      </div>
+    </section>
+    <section className={styles.organizerBillingPlanGrid} aria-label="Catálogo ficticio de planes">
+      {billing.catalog.plans.map((plan) => <article key={plan.planCode}>
+        <header><span>{plan.organizerKind === "CLUB" ? "Club" : "Equipo"}</span><strong>{plan.displayName}</strong></header>
+        <p>{plan.description}</p>
+        {plan.planCode === "TEAM_ORGANIZER_PRO" ? <b>Add-on · conserva el plan base</b> : null}
+        <ul>{plan.features.slice(0, 4).map((feature) => <li key={feature}>{organizerFeatureLabels[feature] ?? feature}</li>)}</ul>
+        <footer><span>{organizerBillingStatus(plan.pricingStatus)}</span><small>{plan.features.length} capacidades · límites pendientes</small></footer>
+      </article>)}
+    </section>
+  </div>;
+}
+
 export function DemoWorldApp({ manifest }: { manifest: DemoWorldV2Manifest }) {
   const [core, setCore] = useState<DemoWorldCoreChunk | null>(null);
   const [snapshot, setSnapshot] = useState<DemoWorldV2Snapshot | null>(null);
@@ -1465,6 +1515,7 @@ export function DemoWorldApp({ manifest }: { manifest: DemoWorldV2Manifest }) {
         {snapshot && activeTab === "disciplina" ? <div className={styles.demoProductView} data-demo-domain="discipline"><CompetitionDisciplineClient competitionId={snapshot.competitions.competition.id} embedded previewData={snapshot.competitions.disciplinePreview} surface="public" /></div> : null}
         {snapshot && activeTab === "club" && selectedClub ? <DemoClubView club={selectedClub} clubs={snapshot.clubsReferees.clubs} onClub={setSelectedClubId} /> : null}
         {snapshot && activeTab === "arbitros" ? <DemoRefereesView assignments={snapshot.clubsReferees.refereeAssignmentPreview} referees={snapshot.clubsReferees.referees} /> : null}
+        {snapshot && activeTab === "planes" ? <DemoOrganizerBillingView billing={snapshot.organizerBilling} /> : null}
       </div>
       <MobileAppNav active={activeTab as MobileAppTab} onNavigate={(tab) => navigate(tab as DemoWorldV2PrimaryTab)} />
       {selectedPlayer ? <PlayerModal onClose={() => setSelectedPlayerId(null)} player={selectedPlayer} /> : null}

@@ -31,13 +31,14 @@ const historicalV23Root = path.join(root, "public/demo-world/v2-3");
 const historicalV24Root = path.join(root, "public/demo-world/v2-4");
 const historicalV25Root = path.join(root, "public/demo-world/v2-5");
 const historicalV26Root = path.join(root, "public/demo-world/v2-6");
+const historicalV27Root = path.join(root, "public/demo-world/v2-7");
 
 async function jsonFile<T>(name: string): Promise<T> {
   return JSON.parse(await readFile(path.join(publicRoot, name), "utf8")) as T;
 }
 
 async function committedSnapshot(): Promise<DemoWorldV2Snapshot> {
-  const [activity, clubsReferees, competitions, configuration, core, manifest, matches, players, publicCompetitions, tournament] = await Promise.all([
+  const [activity, clubsReferees, competitions, configuration, core, manifest, matches, organizerBilling, players, publicCompetitions, tournament] = await Promise.all([
     jsonFile<DemoWorldV2Snapshot["activity"]>("activity.json"),
     jsonFile<DemoWorldV2Snapshot["clubsReferees"]>("clubs-referees.json"),
     jsonFile<DemoWorldV2Snapshot["competitions"]>("competitions.json"),
@@ -45,11 +46,12 @@ async function committedSnapshot(): Promise<DemoWorldV2Snapshot> {
     jsonFile<DemoWorldV2Snapshot["core"]>("core.json"),
     jsonFile<DemoWorldV2Snapshot["manifest"]>("manifest.json"),
     jsonFile<DemoWorldV2Snapshot["matches"]>("matches.json"),
+    jsonFile<DemoWorldV2Snapshot["organizerBilling"]>("organizer-billing.json"),
     jsonFile<DemoWorldV2Snapshot["players"]>("players.json"),
     jsonFile<DemoWorldV2Snapshot["publicCompetitions"]>("public-competitions.json"),
     jsonFile<DemoWorldV2Snapshot["tournament"]>("tournament.json"),
   ]);
-  return { activity, clubsReferees, competitions, configuration, core, manifest, matches, players, publicCompetitions, tournament };
+  return { activity, clubsReferees, competitions, configuration, core, manifest, matches, organizerBilling, players, publicCompetitions, tournament };
 }
 
 test("Demo World V2 is deterministic and the committed snapshot matches its hash", async () => {
@@ -63,13 +65,14 @@ test("Demo World V2 is deterministic and the committed snapshot matches its hash
     configuration: committed.configuration,
     core: committed.core,
     matches: committed.matches,
+    organizerBilling: committed.organizerBilling,
     players: committed.players,
     publicCompetitions: committed.publicCompetitions,
     tournament: committed.tournament,
   };
   assert.equal(createHash("sha256").update(JSON.stringify(payload)).digest("hex"), committed.manifest.hash);
-  assert.equal(committed.manifest.hash, "e4830ff25db5318a169e0e8da5cf7ffb8824beee8616cc6e88e8cf6a05a2b7dd");
-  assert.equal(committed.manifest.version, 2.7);
+  assert.equal(committed.manifest.hash, "aae6c0c04a6049537fccbd4ffc8b45f811b9b50f7686b69ae1cd2e3205208640");
+  assert.equal(committed.manifest.version, 2.8);
   assert.equal(committed.manifest.seed, DEMO_WORLD_V2_SEED);
   assert.deepEqual(demoWorldV2IntegrityErrors(committed), []);
 });
@@ -425,7 +428,7 @@ test("V2.6 preserves Group Stage and exposes the canonical knockout bracket", as
   assert.doesNotMatch(JSON.stringify(tournament), /[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/i);
 });
 
-test("the historical V2.1 through V2.6 snapshots remain immutable beside V2.7", async () => {
+test("the historical V2.1 through V2.7 snapshots remain immutable beside V2.8", async () => {
   const expectedFiles = ["activity.json", "clubs-referees.json", "competitions.json", "core.json", "manifest.json", "matches.json", "players.json"];
   await Promise.all(expectedFiles.map((name) => readFile(path.join(historicalV21Root, name), "utf8")));
   const manifest = JSON.parse(await readFile(path.join(historicalV21Root, "manifest.json"), "utf8")) as Record<string, unknown>;
@@ -459,6 +462,12 @@ test("the historical V2.1 through V2.6 snapshots remain immutable beside V2.7", 
   assert.equal(v26Manifest.version, 2.6);
   assert.equal(v26Manifest.seed, "pachangas-iq-demo-world-v2-6-2026-27");
   assert.equal(v26Manifest.hash, "3b770ddde8a3d3599581e963f836b28e00d9ce8496d9127facdaa091f3aa68d9");
+  const v27Files = [...v24Files, "public-competitions.json"];
+  await Promise.all(v27Files.map((name) => readFile(path.join(historicalV27Root, name), "utf8")));
+  const v27Manifest = JSON.parse(await readFile(path.join(historicalV27Root, "manifest.json"), "utf8")) as Record<string, unknown>;
+  assert.equal(v27Manifest.version, 2.7);
+  assert.equal(v27Manifest.seed, "pachangas-iq-demo-world-v2-7-2026-27");
+  assert.equal(v27Manifest.hash, "e4830ff25db5318a169e0e8da5cf7ffb8824beee8616cc6e88e8cf6a05a2b7dd");
 });
 
 test("V2.7 public competitions preserve publication, registration and privacy authority", async () => {
@@ -507,6 +516,41 @@ test("V2.7 public competitions preserve publication, registration and privacy au
   assert.ok(publicCompetitions.tournament.bracket);
 });
 
+test("V2.8 organizer billing shows canonical lifecycle scenarios without commercial authority", async () => {
+  const billing = (await committedSnapshot()).organizerBilling;
+  assert.equal(billing.readOnly, true);
+  assert.deepEqual(billing.transport, { methods: ["GET"], remoteWrites: 0 });
+  assert.equal(billing.catalog.liveCheckoutEnabled, false);
+  assert.equal(billing.catalog.status, "CATALOG_AVAILABLE");
+  assert.deepEqual(billing.catalog.plans.map(({ planCode }) => planCode), [
+    "CLUB_PARTNER",
+    "CLUB_ORGANIZER",
+    "TEAM_ORGANIZER_PRO",
+  ]);
+  assert.ok(billing.catalog.plans.every(({ checkoutAvailable, prices }) => !checkoutAvailable && prices.length === 0));
+  assert.deepEqual(billing.scenarios.map(({ id }) => id), [
+    "club_partner",
+    "team_active",
+    "club_active",
+    "past_due_grace",
+    "canceled_continuity",
+  ]);
+  const scenarios = new Map(billing.scenarios.map((scenario) => [scenario.id, scenario]));
+  assert.equal(scenarios.get("past_due_grace")?.creationAllowed, false);
+  assert.equal(scenarios.get("past_due_grace")?.accessStatus, "grace");
+  assert.equal(scenarios.get("canceled_continuity")?.creationAllowed, false);
+  assert.equal(scenarios.get("canceled_continuity")?.accessStatus, "continuity");
+  assert.deepEqual(billing.privacy, {
+    containsPii: false,
+    containsPriceId: false,
+    containsStripeCustomerId: false,
+    containsStripeSubscriptionId: false,
+  });
+  const serialized = JSON.stringify(billing);
+  assert.match(serialized, /AWAITING_PRICE_APPROVAL/);
+  assert.doesNotMatch(serialized, /"(?:cus|sub|price|prod)_[A-Za-z0-9_]+"|@example|\+34/i);
+});
+
 test("V2 chunks stay lazy, GET-only and converge to the validated snapshot", async () => {
   const world = await committedSnapshot();
   const requested: string[] = [];
@@ -524,7 +568,7 @@ test("V2 chunks stay lazy, GET-only and converge to the validated snapshot", asy
     assert.match(requested[0]!, /core\.json/);
     const loaded = await loadDemoWorldV2Snapshot(world.manifest, core);
     assert.deepEqual(loaded, world);
-    assert.equal(requested.length, 9);
+    assert.equal(requested.length, 10);
     assert.ok(requested.every((url) => /\?h=[0-9a-f]{16}$/.test(url)));
   } finally {
     globalThis.fetch = originalFetch;
@@ -542,7 +586,7 @@ test("the public Demo uses production renderers in one shell and exposes all V2 
     readFile(path.join(root, "app/clubes/[slug]/public-club-profile.tsx"), "utf8"),
     readFile(path.join(root, "app/demo-world/demo-world.module.css"), "utf8"),
   ]);
-  for (const label of ["Liga", "Torneo", "Públicas", "Configuración", "Clasificación", "Jornadas", "Disciplina", "Club", "Árbitros"]) assert.match(appSource, new RegExp(`label: "${label}"`));
+  for (const label of ["Liga", "Torneo", "Públicas", "Configuración", "Clasificación", "Jornadas", "Disciplina", "Club", "Árbitros", "Planes"]) assert.match(appSource, new RegExp(`label: "${label}"`));
   assert.match(appSource, /LeagueSchedulingClient embedded/);
   assert.match(appSource, /onOpenMatch=\{\(canonicalMatchId\)/);
   assert.match(appSource, /entry\.canonicalMatchId === canonicalMatchId/);
@@ -593,10 +637,14 @@ test("the public Demo uses production renderers in one shell and exposes all V2 
   assert.match(demoStyles, /\.demoProductView \{[\s\S]*--official-text: #f1f6f2;/);
   assert.match(demoStyles, /\.demoProductView \.demoDomainHeading h1 \{[\s\S]*color: var\(--official-text\);/);
   assert.match(demoStyles, /\.configurationRevisionGrid \{/);
+  assert.match(appSource, /data-demo-domain="organizer-billing" data-demo-read-only="true"/);
+  assert.match(appSource, /Checkout live desactivado/);
+  assert.match(demoStyles, /\.organizerBillingScenarioRail \{/);
   assert.equal(demoWorldV2TabFromSearch("?tab=clasificacion"), "clasificacion");
   assert.equal(demoWorldV2TabFromSearch("?tab=configuracion"), "configuracion");
   assert.equal(demoWorldV2TabFromSearch("?tab=torneo"), "torneo");
   assert.equal(demoWorldV2TabFromSearch("?tab=disciplina"), "disciplina");
+  assert.equal(demoWorldV2TabFromSearch("?tab=planes"), "planes");
   assert.equal(demoWorldV2TabFromSearch("?tab=desconocido"), "inicio");
 });
 
@@ -648,7 +696,7 @@ test("a warmed immutable Demo chunk remains readable after the network goes offl
     },
     fetch: async () => {
       if (!online) throw new TypeError("Failed to fetch");
-      return new Response(JSON.stringify({ canonical: true, version: 2.7 }), {
+      return new Response(JSON.stringify({ canonical: true, version: 2.8 }), {
         headers: { "content-type": "application/json" },
         status: 200,
       });
@@ -663,7 +711,7 @@ test("a warmed immutable Demo chunk remains readable after the network goes offl
   };
   runInNewContext(buildServiceWorkerSource("demo-world-v2-offline-regression"), context);
 
-  const chunkUrl = "https://pachangasiq.com/demo-world/v2/public-competitions.json?h=e4830ff25db5318a";
+  const chunkUrl = "https://pachangasiq.com/demo-world/v2/organizer-billing.json?h=aae6c0c04a604953";
   const dispatchFetch = async () => {
     let responsePromise: Promise<Response> | undefined;
     listeners.get("fetch")?.({
@@ -675,10 +723,10 @@ test("a warmed immutable Demo chunk remains readable after the network goes offl
   };
 
   const onlineResponse = await dispatchFetch();
-  assert.deepEqual(await onlineResponse.json(), { canonical: true, version: 2.7 });
+  assert.deepEqual(await onlineResponse.json(), { canonical: true, version: 2.8 });
   assert.equal(entries.has(chunkUrl), true);
 
   online = false;
   const offlineResponse = await dispatchFetch();
-  assert.deepEqual(await offlineResponse.json(), { canonical: true, version: 2.7 });
+  assert.deepEqual(await offlineResponse.json(), { canonical: true, version: 2.8 });
 });

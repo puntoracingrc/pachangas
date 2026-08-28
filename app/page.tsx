@@ -10820,6 +10820,16 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
                   <small>Competiciones privadas por invitación</small>
                   <b aria-hidden="true">›</b>
                 </a>
+                <a className="profile-notifications-link" href="/planes-organizador">
+                  <span>Planes de organización</span>
+                  <small>Capacidades para Clubs y equipos</small>
+                  <b aria-hidden="true">›</b>
+                </a>
+                {currentRole === "owner" ? <a className="profile-notifications-link" href="/ajustes/facturacion">
+                  <span>Facturación</span>
+                  <small>Plan, uso, continuidad y facturas</small>
+                  <b aria-hidden="true">›</b>
+                </a> : null}
               </>
             ) : null}
             {!ownPlayer && selectedPlayer && !selectedPlayer.ownerUserId && hasRealTeam && isRegisteredUser ? (
@@ -11316,6 +11326,12 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
                 <Link href="/ligas">
                   <span>Ligas (Beta)</span><small>Mis Ligas y acceso de organizador</small><b aria-hidden="true">›</b>
                 </Link>
+                <Link href="/planes-organizador">
+                  <span>Planes de organización</span><small>Capacidades para Clubs y equipos</small><b aria-hidden="true">›</b>
+                </Link>
+                {currentRole === "owner" ? <Link href="/ajustes/facturacion">
+                  <span>Facturación</span><small>Plan, uso, continuidad y facturas</small><b aria-hidden="true">›</b>
+                </Link> : null}
               </div>
 
               <div className="mobile-account-group">
