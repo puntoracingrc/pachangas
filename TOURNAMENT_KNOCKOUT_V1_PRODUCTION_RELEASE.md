@@ -52,8 +52,8 @@ pendientes como release completado.
 | Cleanup staging / branch eliminado | PASS | Datos, flags, grants, usuarios, probes y procesos QA a cero; branch R6C eliminado y `pwa-bridge-staging` preservado. |
 | Backup producción recuperable | PASS | Full-clone con datos creado desde producción, abierto en PostgreSQL 17.6, validado con historias canónicas y retirado tras cleanup. |
 | Baseline/ledger producción | PASS | 169 receipts, último `20260827105036`, 0 locks exclusivos, 54.693.011 bytes y relaciones R6C ausentes. |
-| Migraciones producción 170..175 | PENDING | - |
-| Flags nacen OFF | PENDING | - |
+| Migraciones producción 170..175 | PASS | Aplicación forward-only única; ledger 175 y seis nombres exactos confirmados por CLI y API. |
+| Flags nacen OFF | PASS | Siete flags R6C false; two-leg, double elimination y public discovery false; flags R6B preservados. |
 | PR #209 fusionado | PENDING | - |
 | Deployment Vercel SHA exacto READY | PENDING | - |
 | Smoke inactivo | PENDING | - |
@@ -107,6 +107,33 @@ pendientes como release completado.
 - La copia de release difiere del repositorio exclusivamente en
   `db.migrations.enabled = true`. `db push --dry-run` enumera exactamente los
   seis archivos 170..175 y ningún SQL adicional.
+
+## Readback posterior a migraciones
+
+- Ledger: 175 receipts; último `20260827205409` con los seis nombres y hashes
+  documentados. El warning opcional de cache pg-delta apareció después de la
+  aplicación y no se reintentó ningún SQL.
+- Las trece relaciones R6C existen, tienen RLS, están vacías y no conceden
+  `INSERT`, `UPDATE`, `DELETE`, `TRUNCATE`, `TRIGGER` ni `REFERENCES` a `anon`
+  o `authenticated`.
+- Realtime publica una vez `pachanga_tournament_invalidations` y cero tablas de
+  autoridad R6C. El cliente recibe invalidación y relee el snapshot canónico.
+- Los siete flags R6C nacieron OFF en foundation revision 16 / sequence 1285;
+  todos los flags R6B previos permanecen ON y los formatos avanzados/discovery
+  siguen OFF.
+- Baseline protegido sin cambios: 1 Rating snapshot, 17 reward grants,
+  0 conduct reports y 0 billing events. Locks exclusivos ajenos: 0.
+- Security Advisor: 13 INFO `RLS enabled/no policy`, intencionales como deny-all
+  sobre tablas, y 4 WARN en los entrypoints `SECURITY DEFINER`. Los cuatro
+  revocan `anon`, comprueban identidad/capacidad dentro de la función y son el
+  API previsto. Remediación de referencia:
+  https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable
+- Performance Advisor: 71 INFO de FK sin índice en 12 tablas append-only y
+  10 INFO de índices todavía no usados por estar las tablas vacías. No es un
+  stop condition: el scale gate de 10.000 brackets / 100.000 nodes y las
+  latencias certificadas pasan. Se registra como deuda explícita sin reescribir
+  una migración aplicada. Remediación de referencia:
+  https://supabase.com/docs/guides/database/database-linter?lint=0001_unindexed_foreign_keys
 
 ## Flags objetivo
 

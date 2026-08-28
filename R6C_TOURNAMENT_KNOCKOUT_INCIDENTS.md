@@ -1246,6 +1246,9 @@ reproducing the original scenario passes.
   independently through the Management API.
 - Regression: receipts 170..175, every R6C relation, RLS and zero initial R6C
   rows were present despite the optional cache warning.
+- Production recurrence: the same post-push cache warning appeared after all
+  six production migrations completed. No migration was retried; independent
+  production readback confirmed ledger 175 and canonical schema state.
 
 ### R6C-SIMULATION-062 - Staging readback guessed non-canonical table names
 
@@ -1522,3 +1525,48 @@ reproducing the original scenario passes.
 - Correction: config comparison and `db push --dry-run` were run independently.
 - Regression: migration enablement is the sole temporary diff and the CLI
   reports exactly files 170, 171, 172, 173, 174 and 175 as pending.
+
+### R6C-SIMULATION-076 - Production RLS readback uses the wrong pg_class column
+
+- Classification: `SIMULATION_BUG`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: after migration, collect ledger, flags, RLS, grants,
+  publication, protected counts and lock state in one read-only query.
+- Observed: the query references `pg_class.rowsecurity`; PostgreSQL correctly
+  reports that the catalog column is `relrowsecurity`.
+- Impact: migrations are already recorded at ledger 175, but the aggregate
+  security readback is invalid and no activation may proceed yet.
+- Planned correction: change only the diagnostic catalog reference and rerun
+  the complete readback. Do not retry any migration.
+- Regression plan: all 13 R6C tables exist with RLS, zero client write grants,
+  flags remain OFF, protected counts match baseline and no exclusive lock
+  remains.
+- Correction: the readback now selects `pg_class.relrowsecurity`; migrations
+  were not retried.
+- Regression: all 13 tables exist with RLS, zero rows and zero unsafe client
+  write grants; flags are OFF, the invalidation bus is published once, protected
+  counts match baseline and exclusive locks equal zero.
+
+### R6C-TESTABILITY-077 - Staging Advisor summary omitted INFO-level FK findings
+
+- Classification: `TESTABILITY_GAP`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: compare the full production Advisor output with the staging
+  certification that reported zero R6C performance findings.
+- Observed: the prior compact filter retained actionable warning-level output
+  but omitted INFO-level unindexed foreign-key notices on newly created R6C
+  tables. Fresh-table unused-index notices also appear as expected.
+- Impact: scale/performance tests remain green and no release stop condition is
+  met, but the staging report overstates Advisor cleanliness.
+- Planned correction: count only findings whose metadata names one of the 13
+  R6C tables, separate unindexed FKs from unused fresh indexes, and document the
+  exact non-blocking debt without altering an applied migration.
+- Regression plan: Advisor summary is reproducible, security posture remains
+  deny-all/direct-write closed, and the release report no longer claims zero
+  R6C performance findings.
+- Correction: the Advisor filter now matches exact R6C relation metadata and
+  preserves INFO-level findings separately from security warnings.
+- Regression: production reports 71 unindexed-FK INFO notices across 12
+  append-only authority tables and 10 unused-index INFO notices on fresh
+  tables. Scale/performance remains within the certified bounds; the debt is
+  documented and no applied migration is rewritten.
