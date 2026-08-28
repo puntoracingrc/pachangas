@@ -1725,3 +1725,79 @@ regression result marked `FIXED / REGRESSION_VERIFIED`.
   status edits are anchored by their complete incident headings.
 - Regression verified: the search returned exactly incidents `038`, `045` and
   `017`; `038` is `OPEN`, `045` is verified and no shell command was expanded.
+
+### W7A-ENVIRONMENT-018 - Staging direct PostgreSQL IPv6 endpoint timed out
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: rerun the canonical Tournament E2E against Preview
+  `dpl_DstnUjKXQeUs7foohXMSikLjhZtJ` and the unchanged isolated Supabase branch.
+- Observed: `psql` timed out connecting to the branch's direct IPv6 endpoint on
+  port 5432 before reading the baseline.
+- Impact: the runner stopped before any SQL, Auth or Wave 7A command executed;
+  staging data and production remain unchanged.
+- Planned correction: use the branch's official pooled PostgreSQL URL while
+  retaining the exact branch ref, API host and production-target guards.
+- Regression plan: the same immutable Preview and canonical Tournament fixture
+  pass the complete read-model, privacy and `noindex` assertions.
+- Correction: the rerun used `POSTGRES_URL`, the official pooled URL returned by
+  the same isolated branch, without weakening any target guard.
+- Regression verified: the immutable Preview passed with 32 fixtures, 32
+  official results, four standings groups, four bracket rounds, closed
+  registration, unlisted visibility and `noindex`.
+
+### W7A-ENVIRONMENT-019 - New Preview cannot resolve the canonical staging Tournament
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `OPEN`
+- Original scenario: open the canonical unlisted Tournament in deployment
+  `dpl_DstnUjKXQeUs7foohXMSikLjhZtJ` after the staging runner passed.
+- Observed: the browser title is `Competición no disponible | Pachangas IQ`
+  while direct anonymous RPC reads from branch `cvoeasffqzpnbcnbgssn` return
+  the complete published Tournament.
+- Impact: visual regressions cannot be certified against this deployment until
+  its runtime Supabase binding is reconciled; production is untouched.
+- Planned correction: inspect the Preview API response and branch-scoped Vercel
+  environment binding without printing credentials, then redeploy the same SHA
+  only if the deployment targets the wrong backend.
+- Regression plan: the exact Preview route renders `Copa Barrios IQ 2027`,
+  preserves `noindex` and exposes no private payload before responsive QA.
+
+### W7A-TESTABILITY-049 - Browser tab does not expose a direct evaluate method
+
+- Classification: `TESTABILITY_GAP`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: fetch the public Tournament API from the exact Preview
+  origin through the active browser tab.
+- Observed: the controller rejected `qaTab.evaluate` because that method is not
+  part of the tab API.
+- Impact: the first API probe returned no evidence and changed no browser,
+  staging or production state.
+- Planned correction: inspect the tab's supported interfaces and use its
+  page-scoped CDP runtime or semantic inspection surface.
+- Regression plan: retrieve the Preview API status and bounded response body
+  from the same origin without exposing credentials.
+- Correction: the controller surface was inspected explicitly; page execution
+  is available through `qaTab.playwright`, while protected HTTP inspection is
+  delegated to the authenticated Vercel CLI.
+- Regression verified: the immutable deployment returned a bounded JSON API
+  response without exposing credentials.
+
+### W7A-TESTABILITY-050 - Playwright evaluator removes the page fetch binding
+
+- Classification: `TESTABILITY_GAP`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: repeat the same-origin Tournament API probe through
+  `qaTab.playwright.evaluate` after discovering the supported tab surface.
+- Observed: the evaluator entered its page sandbox but exposed no callable
+  `fetch` binding.
+- Impact: the second API probe returned no evidence and changed no state.
+- Planned correction: use authenticated `vercel curl` against the exact
+  protected deployment, which is already the certified Preview read path.
+- Regression plan: the CLI returns a bounded API response for the immutable
+  Preview without exposing environment values or credentials.
+- Correction: authenticated `vercel curl` replaced the unsupported page fetch
+  probe for the protected Preview.
+- Regression verified: the exact deployment returned HTTP application JSON
+  `PUBLIC_COMPETITION_NOT_FOUND`, proving the runtime mismatch without leaking
+  an environment value.
