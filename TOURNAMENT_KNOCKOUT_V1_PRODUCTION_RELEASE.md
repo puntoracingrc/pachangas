@@ -46,10 +46,10 @@ pendientes como release completado.
 
 | Gate | Estado | Evidencia |
 | --- | --- | --- |
-| Staging efímero creado | PENDING | - |
-| Migraciones staging 170..175 | PENDING | - |
-| QA autenticada / Realtime | PENDING | - |
-| Cleanup staging / branch eliminado | PENDING | - |
+| Staging efímero creado | PASS | Branch privada full-clone `zsqmpkmvrpeiesbwvbsu`; baseline heredado ledger 169 y autoridades R6B presentes. |
+| Migraciones staging 170..175 | PASS | Dry-run exacto, aplicación única y readback independiente: ledger 175, hashes/nombres coincidentes. |
+| QA autenticada / Realtime | PASS | Dos clientes GoTrue, una invalidación canónica por dispositivo, refetch convergente y escritura directa denegada. |
+| Cleanup staging / branch eliminado | PARTIAL | Datos, flags, grants, usuarios, probes y procesos QA a cero; eliminación de branch pendiente del cierre documental. |
 | Backup producción recuperable | PENDING | - |
 | Baseline/ledger producción | PENDING | - |
 | Migraciones producción 170..175 | PENDING | - |
@@ -62,6 +62,31 @@ pendientes como release completado.
 | Readback y cleanup productivo | PENDING | - |
 | Demo World V2.6 LIVE | PENDING | - |
 | Service Worker productivo | PENDING | - |
+
+## Certificación de staging
+
+- El primer branch schema-only se descartó al comprobar que no heredaba el
+  baseline real. Se creó después un full-clone privado y se mantuvo intacto el
+  branch ajeno `pwa-bridge-staging`.
+- El escenario `COPA QA` recorrió activación, cuatro cuartos, resultado normal,
+  prórroga, penaltis, no-show, semifinales, corrección con invalidación y
+  replacement, final, tercer puesto, campeón y completion.
+- Readback de la historia: 8 nodes vigentes, 8 matches activos, 9 históricos,
+  1 predecesor retirado, 1 invalidación y campeón único. No se emitieron
+  rewards y Rating, Rewards, Conduct y Billing conservaron sus digests.
+- RLS permanece habilitada en todas las tablas R6C. Los clientes no tienen
+  grants de escritura directa y las tablas de autoridad no se publican por
+  Realtime; solo se publica una vez el bus canónico de invalidaciones.
+- El actor de equipo no puede ejecutar la RPC de plataforma. `anon` no puede
+  ejecutar APIs R6C; `authenticated` solo accede a los entrypoints previstos,
+  que vuelven a validar identidad, capacidad, revisión e idempotencia.
+- Supabase Advisors devuelve cero hallazgos de rendimiento R6C y cuatro
+  warnings de seguridad esperados para los entrypoints `SECURITY DEFINER`.
+  Están protegidos por permisos internos y sin grant a `anon`; no son
+  escrituras abiertas sobre tablas.
+- Cleanup de datos confirmado: siete flags R6C OFF, bundle beta QA revocado,
+  cero grants activos, cero usuarios temporales, cero probes, cero brackets
+  activos y cero procesos de prueba.
 
 ## Flags objetivo
 
@@ -87,4 +112,4 @@ directo.
 
 ## Estado actual
 
-`LOCAL_RELEASE_CANDIDATE_COMPLETE / REMOTE_GATES_PENDING`.
+`STAGING_CERTIFIED / STAGING_BRANCH_RETIREMENT_PENDING / PRODUCTION_GATES_PENDING`.

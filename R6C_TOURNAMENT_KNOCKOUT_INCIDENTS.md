@@ -1205,3 +1205,220 @@ reproducing the original scenario passes.
 - Regression: Cuartos, Semifinales and Finales each remain fully inside the
   360px rail after a 932x430 to 360x800 rotation; Finales converges to
   `scrollLeft = 16`, with no overlap, root overflow or console errors.
+
+### R6C-ENVIRONMENT-060 - Schema-only Supabase preview branch is incomplete
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: create the isolated R6C preview branch without production
+  data and reconcile its migration history before applying migrations 170..175.
+- Observed: the branch reports `ACTIVE_HEALTHY`, but its database contains only
+  10 migration receipts through `20260728191429`, three public tables and none
+  of the R6B bracket/qualification authority required by R6C.
+- Impact: applying only 170..175 would validate R6C against an invalid base and
+  could produce misleading staging evidence.
+- Planned correction: delete only the incomplete R6C branch and recreate a
+  private ephemeral branch as a full parent clone. Confirm ledger 169 and the
+  required R6B relations before applying any R6C migration.
+- Regression plan: require exactly 169 inherited receipts, the expected R6B
+  relations and flags, then apply 170..175 and verify ledger 175. Preserve the
+  unrelated `pwa-bridge-staging` branch.
+- Correction: the incomplete schema-only branch was deleted and recreated as a
+  private full parent clone; no other Supabase branch was modified.
+- Regression: inherited ledger 169 and all R6B authorities were confirmed,
+  then the six exact migrations produced ledger 175.
+
+### R6C-ENVIRONMENT-061 - pg-delta cache export warns after staging push
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: apply the six exact R6C migrations to the complete
+  ephemeral Supabase branch through the release copy with migrations enabled.
+- Observed: all six SQL migrations complete and `db push` exits successfully,
+  then the optional pg-delta catalog cache cannot find its temporary CA file.
+- Impact: the migration cache is unavailable for that CLI invocation; ledger
+  and schema still require independent readback before the push can be trusted.
+- Planned correction: do not retry or repair migrations. Reconcile the remote
+  migration ledger and query the new relations, flags and constraints directly.
+- Regression plan: require all six remote receipts through ledger 175 and
+  successful authority/RLS queries despite the cache warning.
+- Correction: no migration was retried or repaired; remote state was read back
+  independently through the Management API.
+- Regression: receipts 170..175, every R6C relation, RLS and zero initial R6C
+  rows were present despite the optional cache warning.
+
+### R6C-SIMULATION-062 - Staging readback guessed non-canonical table names
+
+- Classification: `SIMULATION_BUG`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: query row counts immediately after the staging migration
+  push.
+- Observed: the diagnostic referenced `pachanga_competition_brackets` instead
+  of the implemented canonical relation `pachanga_tournament_brackets`, so the
+  Management API correctly returned `42P01`.
+- Impact: no product data changed, but the first row-count evidence is invalid.
+- Planned correction: derive every relation name from the committed migration
+  files and rerun the readback against those exact identifiers.
+- Regression plan: return ledger 175, all expected `to_regclass` values and
+  zero inherited R6C product rows without any missing-relation error.
+- Correction: the readback now uses relation names extracted from the committed
+  migration files.
+- Regression: ledger 175, brackets, nodes, advances and completions were all
+  found and their pre-story row counts were zero.
+
+### R6C-SIMULATION-063 - Staging flag readback assumes a payment column
+
+- Classification: `SIMULATION_BUG`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: read every requested tournament gate from the private
+  foundation settings row after migration 175.
+- Observed: the diagnostic selected a nonexistent
+  `tournament_payments_enabled` column. The R6C contract keeps payments absent
+  and OFF; it does not add that storage field.
+- Impact: no data changed, but the initial flag query cannot certify defaults.
+- Planned correction: enumerate exact `tournament_%` columns from
+  `information_schema`, then query only committed fields and separately prove
+  that R6C exposes no payment action or authority.
+- Regression plan: return all seven R6C gates false, advanced-format/public
+  discovery gates false, and zero payment action/function in the R6C contract.
+- Correction: the query enumerates the actual foundation settings columns and
+  treats payments as absent authority instead of an invented flag.
+- Regression: all seven new gates, two-leg, double elimination and discovery
+  were false after migration; R6C exposes zero tournament payment functions.
+
+### R6C-ENVIRONMENT-064 - Temporary staging runner cannot resolve workspace modules
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: execute the isolated two-device Auth/Realtime runner from
+  `/tmp` so no diagnostic file remains in the product diff.
+- Observed: Node resolves ESM packages relative to the script path and cannot
+  find the worktree's installed `@supabase/supabase-js` package.
+- Impact: the runner exits before authentication or any remote mutation; the
+  staging database remains unchanged by this failed attempt.
+- Planned correction: expose the existing worktree `node_modules` to the
+  temporary runner without installing or copying dependencies.
+- Regression plan: two authenticated clients subscribe, receive one canonical
+  invalidation each, refetch the same snapshot and fail a direct table write.
+- Correction: the temporary runner reuses the worktree dependency tree through
+  a disposable symlink; no dependency was installed or copied.
+- Regression: the runner resolved Supabase JS and completed its hosted QA.
+
+### R6C-TESTABILITY-065 - SQL-seeded owner is not attached to hosted GoTrue
+
+- Classification: `TESTABILITY_GAP`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: set a password through the staging Auth Admin API for the
+  owner inserted by the canonical Demo SQL fixture.
+- Observed: the row exists in `auth.users`, but its `instance_id` is not the
+  hosted branch instance, so GoTrue returns `user_not_found`.
+- Impact: SQL authority stories pass, but two-device authenticated staging
+  cannot start until the synthetic identity is recognized by hosted Auth.
+- Planned correction: attach only the fixed QA owner to the branch's sole Auth
+  instance, then let the Admin API set its ephemeral password. Do not alter any
+  cloned production identity.
+- Regression plan: Admin API resolves the fixed owner, both devices sign in and
+  the user remains scoped to the isolated branch.
+- Correction: hosted QA no longer tries to adopt the SQL-only Demo identity; a
+  separate Auth-created account receives temporary team membership.
+- Regression: the account authenticated and remained isolated; its membership
+  and Auth row were removed after the run.
+
+### R6C-SIMULATION-066 - Auth diagnostic applies min directly to UUID
+
+- Classification: `SIMULATION_BUG`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: compare the synthetic owner's Auth instance marker with
+  the aggregate pattern of existing hosted users, without reading identities.
+- Observed: PostgreSQL has no `min(uuid)` aggregate, so the diagnostic returns
+  `42883` before producing evidence.
+- Impact: no data changed; the Auth normalization decision remains pending.
+- Planned correction: cast `instance_id` to text for the aggregate and keep the
+  query limited to counts/distinct markers.
+- Regression plan: obtain a valid aggregate without exposing emails, provider
+  identities, tokens or other PII.
+- Correction: the diagnostic casts `instance_id` to text before aggregation.
+- Regression: it returned only aggregate counts and one non-personal instance
+  marker; no identity or credential was exposed.
+
+### R6C-TESTABILITY-067 - Hosted Auth cannot adopt the direct SQL fixture user
+
+- Classification: `TESTABILITY_GAP`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: after matching the hosted `instance_id`, ask GoTrue Admin
+  to set an ephemeral password on the SQL-created Demo owner.
+- Observed: the row is now discoverable at database level, but GoTrue returns a
+  retryable 500 because the direct SQL fixture does not satisfy its complete
+  hosted identity contract.
+- Impact: no product authority is affected; reusing that malformed Auth row
+  would make staging authentication unreliable.
+- Planned correction: leave the Demo identity untouched and create a separate
+  ephemeral user through Auth Admin, grant it only temporary membership in the
+  synthetic organizer team, then remove it after QA.
+- Regression plan: both browser clients authenticate through GoTrue, read the
+  permitted tournament snapshot and leave zero temporary membership/user rows.
+- Correction: a fresh Auth Admin user was used instead of mutating the direct
+  SQL fixture row.
+- Regression: two devices signed in, read the Tournament snapshot and cleanup
+  readback found zero `R6C_STAGING` users.
+
+### R6C-TESTABILITY-068 - Successful Realtime runner keeps its socket alive
+
+- Classification: `TESTABILITY_GAP`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: complete two-device Auth/Realtime QA and remove both
+  channels plus local sessions.
+- Observed: the runner prints its successful result but Node remains alive due
+  to a Supabase socket/timer handle until interrupted.
+- Impact: functional evidence is valid, but staging cleanup cannot claim zero
+  processes and automation would wait indefinitely.
+- Planned correction: terminate explicitly only after channels, sessions,
+  temporary membership, probe and Auth user have all been removed.
+- Regression plan: repeat the QA with exit code 0 and no remaining runner
+  process or QA identity.
+- Correction: the runner exits explicitly after all remote and local cleanup.
+- Regression: the repeated run returned code 0 in 13 seconds and left no
+  runner process, probe, membership or Auth account.
+
+### R6C-SIMULATION-069 - Realtime readback counts authority tables instead of the bus
+
+- Classification: `SIMULATION_BUG`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: certify Realtime publication membership after the R6C
+  staging story.
+- Observed: the diagnostic counts the 13 private-authority/read-model tables in
+  `supabase_realtime` and returns zero. R6C intentionally publishes only the
+  existing canonical `pachanga_tournament_invalidations` bus.
+- Impact: interpreting zero as a failure would encourage exposing sporting
+  tables directly and contradict the invalidation-plus-refetch contract.
+- Planned correction: assert one published invalidation bus, no direct R6C
+  authority-table publication, and two received events followed by canonical
+  refetch.
+- Regression plan: publication count for the bus equals one, direct authority
+  publication remains zero and both authenticated devices converge.
+- Correction: publication QA targets only the canonical invalidation bus.
+- Regression: the bus is published exactly once, authority tables remain
+  unpublished and both devices received an event before canonical refetch.
+
+### R6C-SIMULATION-070 - Cleanup predicate treats every draft competition as active
+
+- Classification: `SIMULATION_BUG`
+- Status: `FIXED / REGRESSION_VERIFIED`
+- Original scenario: complete and lock the full hosted staging tournament, then
+  run the cleanup readback for active QA competitions.
+- Observed: the R6C bracket is `locked` and has a valid completion snapshot,
+  but the parent competition still satisfies the active-tournament predicate.
+- Impact: a finished tournament may remain discoverable to operational flows as
+  active even though its knockout authority is immutable and champion final.
+- Planned correction: audit the exact competition/bracket/edition states and
+  make `tournament.complete`/`tournament.lock` converge the canonical parent
+  lifecycle without destructive history edits.
+- Regression plan: after completion and lock, bracket and parent tournament
+  report terminal states; no pending node/dispute/match remains and replay stays
+  idempotent.
+- Correction: cleanup now evaluates the R6C lifecycle authority: bracket state,
+  current completion snapshot and pending nodes. It does not invent unsupported
+  `completed/locked` values for the R6A competition row.
+- Regression: bracket `locked`, completion present and zero pending nodes were
+  confirmed; `pachanga_competitions` correctly remains within its existing
+  `draft/cancelled` contract.

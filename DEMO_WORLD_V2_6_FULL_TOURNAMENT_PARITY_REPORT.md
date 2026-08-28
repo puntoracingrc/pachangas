@@ -84,6 +84,18 @@ regression_verified en `R6C_TOURNAMENT_KNOCKOUT_INCIDENTS.md`.
 - Proof y snapshot usan el mismo authority hash.
 - La batería global completa pasa 571/571.
 
+## Paridad remota en staging
+
+- El fixture canónico se ejecutó sobre un full-clone privado con ledger 175.
+- Resultado: 8 nodes vigentes, 8 matches activos, 9 históricos, 1 retirado,
+  campeón único y tercer puesto resuelto.
+- Dos clientes autenticados recibieron el evento de invalidación y recargaron
+  el mismo read model canónico; la escritura directa del cliente fue denegada.
+- Rating, Rewards, Conduct y Billing mantuvieron sus digests y se concedieron
+  cero rewards.
+- Tras la verificación se restauraron flags y grants, y se retiraron usuario,
+  membresía, probe y sesiones temporales.
+
 ## Estado remoto
 
 La publicación en `pachangasiq.com`, el Service Worker productivo y el smoke
