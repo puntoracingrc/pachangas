@@ -8,10 +8,10 @@ Date: 2026-08-29 CEST
 - Pull request: [#219](https://github.com/puntoracingrc/pachangas/pull/219), Draft.
 - Functional SHA: `c087d2f93a4d9f7124315fcd26b3a4db485db6b1`.
 - Least-privilege fix SHA: `4108fc1630fd5f3cb3510c92335b55a6ba432799`.
-- Current pushed evidence SHA: `4742bd2d7be9acb97ba4cb06aa097c4b1010d772`.
+- Current pushed evidence SHA: `3fa6c816c76db50d8d9cf1847fc5e34e339dc85d`.
 - Production merge SHA: pending.
-- Immutable Preview: `dpl_3v1AHUhavmE2GCpcBB8jSscD7Zth`, `READY`.
-- Preview URL: [Wave 7C exact SHA](https://pachangas-mj84h6hf1-persianas-almar-web-s-projects.vercel.app).
+- Immutable Preview: `dpl_5GtSokXvewm6nYjHN8xvHX726Eof`, `READY`.
+- Preview URL: [Wave 7C exact SHA](https://pachangas-h03bxfus0-persianas-almar-web-s-projects.vercel.app).
 - Production URL: [https://pachangasiq.com](https://pachangasiq.com).
 
 ## Forward-only database change
@@ -33,8 +33,9 @@ seventh release migration:
 
 Local fresh bootstrap reaches ledger 197. Staging contains the same seven names
 and SQL effects, under connector-generated versions for the six commercial
-migrations and the QA hotfix. Exact production migration parity remains a
-release gate. No historical migration is rewritten.
+migrations and the QA hotfix. Production applied the seven exact repository
+versions in order and now also reports ledger 197 with no local/remote mismatch.
+No historical migration was rewritten or manually repaired.
 
 ## Validation gates
 
@@ -59,6 +60,12 @@ and zero real paid subscriptions. All four hosted Checkout combinations were
 validated without submitting a payment; the signed endpoint, Portal,
 failure/recovery, cancellation/resume and two-client Realtime paths passed.
 
+Post-migration Production readback confirms that every new Wave 7C flag is OFF,
+there are zero LIVE mappings and the pre-existing Wave 7B settings retain their
+prior values. The CLI's post-push pg-delta cache warning was independently
+cleared by exact linked-history and settings readbacks; it did not alter the
+successful migration transactions.
+
 ## Activation boundary
 
 All new flags are born OFF. This release may activate the commercial workflow,
@@ -80,5 +87,5 @@ Stripe V1, Rating V2, rewards, player cosmetics, team cosmetics, sporting
 results and existing billing evidence remain intact. A redirect, browser cache
 or Stripe Dashboard state never grants Pachangas IQ access.
 
-Final migration, flag, deployment, smoke, Service Worker and cleanup evidence
-will replace the pending fields after controlled production release.
+Final merge, deployment, production smoke, Service Worker and cleanup evidence
+will replace the remaining pending fields after controlled production release.

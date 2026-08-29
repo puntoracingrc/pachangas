@@ -3886,3 +3886,72 @@ Resolved incidents must include `fixed` and `regression_verified`.
   registration internals.
 - Required regression: the active worker path, control state, waiting state and
   display mode return successfully with no credential or user data.
+
+## W7C-192 - Linked production push is intentionally disabled by repository config
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed + regression_verified`
+- Original scenario: after `supabase migration list --linked` proved that
+  Production ended at migration 190 with exactly the seven Wave 7C migrations
+  pending, QA ran `supabase db push --linked --dry-run` before any write.
+- Evidence: the CLI applied nothing and reported that migrations are disabled
+  for the linked project because `[db.migrations].enabled = false` in the
+  checked-in configuration.
+- Impact: Production remains unchanged at ledger 190. The normal linked-push
+  command cannot currently provide an exact-version dry run or apply the seven
+  migrations without bypassing or temporarily changing this repository guard.
+- Required correction: use a reviewed, exact-version migration path that keeps
+  the checked-in fresh-database bootstrap protection intact and does not
+  retimestamp, rewrite or manually mark migration history.
+- Required regression: Production reports the same seven repository versions
+  in the same order, all Wave 7C flags are born OFF, the final ledger is 197,
+  and a subsequent linked migration list has no local/remote mismatch.
+- Correction: QA temporarily enabled only `[db.migrations]` in the clean
+  worktree, reviewed the seven-file dry run, applied those exact versions and
+  immediately restored the committed guard.
+- Verification: linked history reports all seven local and remote versions
+  equal through ledger 197; every Wave 7C flag and LIVE mapping remains OFF.
+
+## W7C-193 - Temporary config patch targeted API TLS instead of migrations
+
+- Classification: `SIMULATION_BUG`
+- Status: `fixed + regression_verified`
+- Original scenario: QA prepared a temporary local-only enablement so the
+  Supabase CLI could dry-run the exact seven pending migrations while retaining
+  the committed migration guard after the operation.
+- Evidence: the first generic `enabled = false` match belonged to `[api.tls]`,
+  while `[db.migrations]` remained disabled; the dry run again skipped every
+  migration.
+- Impact: no migration, remote row, TLS service or repository commit changed.
+  Only the clean worktree held an incorrect uncommitted config line briefly.
+- Required correction: restore `[api.tls].enabled = false` and target
+  `[db.migrations].enabled` with both section headings in the patch context.
+- Required regression: the reviewed diff shows only migration enablement during
+  dry run/push, then both settings return byte-for-byte to the committed state.
+- Correction: the TLS line was restored before any push, and the second patch
+  included both `[api.tls]` and `[db.migrations]` as explicit context.
+- Verification: the reviewed temporary diff contained only migration
+  enablement; after the push `git diff --exit-code -- supabase/config.toml`
+  passed, proving both settings match the committed file.
+
+## W7C-194 - Post-push pg-delta catalog cache could not read its temporary CA
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed + regression_verified`
+- Original scenario: the exact production push applied all seven reviewed Wave
+  7C migrations and then attempted to refresh the optional pg-delta catalog.
+- Evidence: the migration command exited successfully after reporting that its
+  isolated edge runtime could not read the generated `pgdelta-target-ca.crt`.
+- Impact: every migration reported as applied, but the catalog-cache warning
+  means command success alone is insufficient evidence for final ledger parity.
+- Required correction: do not rerun or repair migration history. Re-read the
+  linked ledger and canonical Wave 7C settings directly, and verify the seven
+  exact versions and OFF defaults independently of pg-delta caching.
+- Required regression: linked history is 197 with no mismatch, the functions
+  exist, all commercial/Checkout/LIVE flags are OFF, and no migration is
+  offered by a subsequent dry run.
+- Correction: migration history was not rerun or repaired. QA used the linked
+  history and Management API query paths that do not depend on pg-delta cache.
+- Verification: ledger 197 has exact parity, all seven migrations are present,
+  all Wave 7C and LIVE flags are OFF, LIVE mappings are zero, and the repository
+  migration guard is restored.
