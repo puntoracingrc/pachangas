@@ -4489,3 +4489,40 @@ Resolved incidents must include `fixed` and `regression_verified`.
   scans over the Wave 7C range and final artifacts.
 - Verification: both bounded diff scans returned zero matches and process
   readback returned zero matching processes.
+
+## W7C-218 - Supabase local status prints development credentials
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed + regression_verified`
+- Original scenario: final worktree cleanup invoked `supabase status` to decide
+  whether a local stack still needed to be stopped.
+- Evidence: the CLI reported partially stopped services but also printed the
+  local demo API, storage and database credentials in diagnostic output. Values
+  are deliberately omitted from this ledger.
+- Impact: only regenerated localhost development credentials were shown; no
+  staging or Production secret was read, changed or exposed.
+- Required correction: stop the local Supabase stack without another detailed
+  status call and verify absence through process/container names only.
+- Required regression: no local Pachangas Supabase container or process remains,
+  repository and report scans contain no credential value, and remote projects
+  remain untouched.
+- Resolution: `supabase stop` shut down the local development setup without any
+  remote project argument or remote mutation.
+- Verification: a Docker name-filter readback returned zero running
+  `pachangas-synthetic-world-v1` containers; the final repository scan contains
+  no local credential value.
+
+## W7C-219 - Final documentation merge used an inferred full HEAD SHA
+
+- Classification: `SIMULATION_BUG`
+- Status: `open`
+- Original scenario: PR #221 passed all checks and the guarded merge supplied a
+  full `--match-head-commit` value reconstructed from the local short SHA.
+- Evidence: GitHub rejected the merge because the supplied value did not match
+  the remote PR HEAD. The safety guard worked and no merge occurred.
+- Impact: `main`, deployments and remote data remain unchanged.
+- Required correction: read the canonical `headRefOid` from PR #221, update this
+  ledger on that same PR and merge only against the exact returned OID after the
+  refreshed checks pass.
+- Required regression: GitHub reports PR #221 merged at its exact final HEAD and
+  the resulting `main` SHA reaches a READY production deployment.
