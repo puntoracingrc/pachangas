@@ -3051,3 +3051,50 @@ Resolved incidents must include `fixed` and `regression_verified`.
   repository's declared TypeScript test loader.
 - Verification: 23/23 focused Wave 7B/7C tests passed with zero failures,
   skipped, todo or cancelled; typecheck and focused lint also passed.
+
+## W7C-156 - Remote Team Checkout still failed after Customer name update
+
+- Classification: `PRODUCT_BUG`
+- Status: `fix_implemented_regression_pending_remote`
+- Original scenario: the exact Preview deployment containing
+  `customer_update[name]=auto` was made READY, the staging OAuth alias was
+  repointed to that SHA, the billing page was reloaded to discard the previous
+  client operation, and the authenticated Team owner requested the monthly
+  Team Organizer Pro Checkout again.
+- Evidence: the product stayed on the canonical billing page and rendered
+  `La operacion no fue confirmada por el servidor`; no Stripe-hosted URL was
+  opened.
+- Impact: the account remains without access or subscription at revision 1;
+  the client did not display optimistic success and no LIVE resource was used.
+- Required diagnosis: correlate the new server receipt, sanitized Vercel
+  runtime error and Stripe TEST request log before changing implementation.
+- Required correction: fix only the newly confirmed server-side blocker and
+  retry with a fresh idempotent operation after an exact READY deployment.
+- Required regression: the Team/month owner intent opens one hosted TEST
+  Checkout URL and the server still grants no entitlement before a valid
+  signed webhook confirms payment.
+- Root cause: Stripe accepted creation of the Customer and then rejected the
+  Checkout Session because Tax ID collection also requires
+  `customer_update[address]=auto` when the existing Customer has no canonical
+  address.
+- Correction: the server-owned request now allows Stripe Checkout to update
+  both Customer address and name automatically. The browser still sends
+  neither field and cannot choose the Stripe Customer.
+- Local regression: the Checkout source contract now requires address and name
+  updates together with Tax ID collection. Remote verification follows on the
+  next exact READY deployment.
+
+## W7C-157 - Generic incident patch targeted an older status line
+
+- Classification: `SIMULATION_BUG`
+- Status: `fixed + regression_verified`
+- Original scenario: while recording W7C-156, a generic patch hunk changed the
+  first matching `Status: open` line in the ledger instead of the new incident.
+- Evidence: the mandatory pre-commit diff review showed W7C-004 modified while
+  W7C-156 remained open.
+- Impact: documentation only; no code, Stripe, Supabase or deployment state was
+  changed and the accidental edit was never committed.
+- Correction: both status lines were patched with their incident headings as
+  explicit context.
+- Verification: the reviewed diff now leaves W7C-004 unchanged and changes
+  only W7C-156 to `fix_implemented_regression_pending_remote`.

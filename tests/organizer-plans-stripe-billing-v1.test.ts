@@ -61,7 +61,7 @@ test("browser Checkout sends intent only and cannot select Stripe mode or Price"
   assert.match(checkout, /prepare_pachanga_organizer_checkout_service_v1/);
   assert.match(checkout, /idempotencyKey: `\$\{input\.operationId\}:checkout`/);
   assert.match(checkout, /mode: "subscription"/);
-  assert.match(checkout, /customer_update: \{ name: "auto" \}/);
+  assert.match(checkout, /customer_update: \{ address: "auto", name: "auto" \}/);
   assert.match(checkout, /tax_id_collection: \{ enabled: true \}/);
   assert.doesNotMatch(checkout, /input\.(?:stripeMode|stripePriceId|stripeCustomerId)/);
 });
