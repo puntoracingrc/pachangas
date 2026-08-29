@@ -41,6 +41,7 @@ export const platformNavigation = [
   { capability: "rewards.read", href: "/admin/rewards", label: "Rewards" },
   { capability: "notifications.read", href: "/admin/notifications", label: "Notificaciones" },
   { capability: "billing.read", href: "/admin/billing", label: "Billing" },
+  { capability: "organizer_access.read", href: "/admin/organizer-access", label: "Acceso organizadores" },
   { capability: "system.read", href: "/admin/system", label: "Sistema" },
   { capability: "flags.read", href: "/admin/flags", label: "Flags" },
   { capability: "audit.read", href: "/admin/audit", label: "Auditoría" },

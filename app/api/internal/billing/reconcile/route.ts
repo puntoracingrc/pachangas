@@ -55,6 +55,13 @@ export async function GET(request: Request) {
   if (expiration.error) {
     return Response.json({ error: "BILLING_EXPIRATION_FAILED" }, { headers: noStoreHeaders, status: 500 });
   }
+  const accessReminders = await service.rpc("process_pachanga_organizer_access_expiry_notifications_v1", {
+    batch_size: 100,
+    operation_id: crypto.randomUUID(),
+  });
+  if (accessReminders.error) {
+    return Response.json({ error: "ORGANIZER_ACCESS_REMINDERS_FAILED" }, { headers: noStoreHeaders, status: 500 });
+  }
   const claimed = await service.rpc("claim_pachanga_billing_reconciliation_service_v1", {
     batch_size: 20,
     operation_id: crypto.randomUUID(),
@@ -156,6 +163,7 @@ export async function GET(request: Request) {
   return Response.json({
     claimed: items.length,
     expirationProcessed: true,
+    organizerAccessReminders: accessReminders.data,
     outcomes: outcomes.reduce<Record<string, number>>((counts, outcome) => {
       counts[outcome] = (counts[outcome] ?? 0) + 1;
       return counts;

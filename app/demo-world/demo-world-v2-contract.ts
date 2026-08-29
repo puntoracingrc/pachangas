@@ -21,8 +21,8 @@ import {
   type DemoWorldSnapshot,
 } from "./demo-world-contract";
 
-export const DEMO_WORLD_V2_VERSION = 2.9 as const;
-export const DEMO_WORLD_V2_SEED = "pachangas-iq-demo-world-v2-9-2026-27" as const;
+export const DEMO_WORLD_V2_VERSION = 3.0 as const;
+export const DEMO_WORLD_V2_SEED = "pachangas-iq-demo-world-v3-0-2026-27" as const;
 
 export type DemoWorldV2PrimaryTab = DemoWorldPrimaryTab
   | "arbitros"
@@ -44,6 +44,7 @@ export type DemoWorldV2Manifest = {
     configuration: string;
     core: string;
     matches: string;
+    organizerAccess: string;
     organizerBilling: string;
     players: string;
     publicCompetitions: string;
@@ -57,6 +58,7 @@ export type DemoWorldV2Manifest = {
     competitions: number;
     matches: number;
     notifications: number;
+    organizerAccessScenarios: number;
     organizerBillingScenarios: number;
     players: number;
     publicCompetitions: number;
@@ -133,6 +135,64 @@ export type DemoWorldV2OrganizerBillingChunk = {
     methods: ["GET"];
     remoteWrites: 0;
   };
+};
+
+export type DemoWorldV3OrganizerAccessScenario = {
+  applicationStatus: "approved" | "approved_interest" | "rejected" | "withdrawn";
+  checkoutAvailable: false;
+  decisionCode: string | null;
+  decisionType: "APPROVED" | "APPROVED_INTEREST" | "REJECTED" | null;
+  firstCompetition: {
+    canonicalMatches: number;
+    name: string;
+    status: "PUBLIC_ACTIVE";
+    type: "LEAGUE";
+    visibility: "public";
+  } | null;
+  grant: {
+    source: "PARTNERSHIP" | "PRIVATE_BETA";
+    status: "active";
+    validUntil: string | null;
+  } | null;
+  history: string[];
+  id: "club_paid_interest" | "club_partner_approved" | "club_withdrawn"
+    | "team_needs_information_beta" | "team_owner_transfer" | "team_rejected";
+  onboarding: {
+    completedCheckpoints: number;
+    nextAction: string;
+    status: "active" | "completed";
+    totalCheckpoints: 10;
+  } | null;
+  organizerKind: "CLUB" | "TEAM";
+  organizerName: string;
+  ownerTransferred: boolean;
+  planCode: DemoWorldV2OrganizerBillingPlan["planCode"];
+};
+
+export type DemoWorldV3OrganizerAccessChunk = {
+  firstCompetitionLaunches: 1;
+  grantCount: 3;
+  liveCheckoutEnabled: false;
+  onboardingCompleted: 1;
+  operationReceipts: number;
+  privacy: {
+    containsAuthUuid: false;
+    containsEmail: false;
+    containsPhone: false;
+    containsPrivateNote: false;
+    containsStripeId: false;
+  };
+  provenance: {
+    authority: "canonical-postgresql-read-model";
+    source: "simulation-world";
+    verified: true;
+  };
+  readOnly: true;
+  remoteWrites: 0;
+  scenarios: DemoWorldV3OrganizerAccessScenario[];
+  stripeTouched: false;
+  subscriptionGrants: 0;
+  transport: { methods: ["GET"]; remoteWrites: 0 };
 };
 
 export type DemoWorldV2LeagueEntry = {
@@ -713,6 +773,7 @@ export type DemoWorldV2Snapshot = {
   core: DemoWorldCoreChunk;
   manifest: DemoWorldV2Manifest;
   matches: DemoWorldMatchesChunk;
+  organizerAccess: DemoWorldV3OrganizerAccessChunk;
   organizerBilling: DemoWorldV2OrganizerBillingChunk;
   players: DemoWorldPlayersChunk;
   publicCompetitions: DemoWorldV2PublicCompetitionsChunk;
@@ -778,6 +839,7 @@ export function demoWorldV2IntegrityErrors(snapshot: DemoWorldV2Snapshot): strin
   const competition = snapshot.competitions;
   const configuration = snapshot.configuration;
   const publicCompetitions = snapshot.publicCompetitions;
+  const organizerAccess = snapshot.organizerAccess;
   const organizerBilling = snapshot.organizerBilling;
   const teamIds = new Set(snapshot.core.teams.map(({ id }) => id));
   const playerIds = new Set(snapshot.players.players.map(({ id }) => id));
@@ -819,6 +881,43 @@ export function demoWorldV2IntegrityErrors(snapshot: DemoWorldV2Snapshot): strin
       || Object.values(organizerBilling.privacy).some(Boolean)
       || /"(?:cus|sub|price|prod)_[A-Za-z0-9_]+"|@example|\+34/i.test(JSON.stringify(organizerBilling))) {
     errors.push("Demo World V2.9 organizer billing leaked commercial or private data");
+  }
+
+  const organizerAccessIds = organizerAccess.scenarios.map(({ id }) => id);
+  const organizerAccessById = new Map(organizerAccess.scenarios.map((scenario) => [scenario.id, scenario]));
+  if (!organizerAccess.readOnly
+      || organizerAccess.transport.methods.join(",") !== "GET"
+      || organizerAccess.transport.remoteWrites !== 0
+      || organizerAccess.remoteWrites !== 0
+      || !organizerAccess.provenance.verified
+      || organizerAccess.provenance.authority !== "canonical-postgresql-read-model"
+      || organizerAccess.grantCount !== 3
+      || organizerAccess.subscriptionGrants !== 0
+      || organizerAccess.firstCompetitionLaunches !== 1
+      || organizerAccess.onboardingCompleted !== 1
+      || organizerAccess.liveCheckoutEnabled
+      || organizerAccess.stripeTouched
+      || Object.values(organizerAccess.privacy).some(Boolean)) {
+    errors.push("Demo World V3.0 organizer access authority is invalid");
+  }
+  if (organizerAccessIds.join(",")
+      !== "club_partner_approved,club_paid_interest,team_needs_information_beta,team_rejected,club_withdrawn,team_owner_transfer"
+      || snapshot.manifest.counts.organizerAccessScenarios !== 6
+      || organizerAccessById.get("club_partner_approved")?.grant?.source !== "PARTNERSHIP"
+      || organizerAccessById.get("club_partner_approved")?.onboarding?.status !== "completed"
+      || organizerAccessById.get("club_partner_approved")?.firstCompetition?.status !== "PUBLIC_ACTIVE"
+      || organizerAccessById.get("club_paid_interest")?.grant !== null
+      || organizerAccessById.get("club_paid_interest")?.applicationStatus !== "approved_interest"
+      || organizerAccessById.get("team_needs_information_beta")?.grant?.source !== "PRIVATE_BETA"
+      || organizerAccessById.get("team_rejected")?.grant !== null
+      || organizerAccessById.get("club_withdrawn")?.grant !== null
+      || !organizerAccessById.get("team_owner_transfer")?.ownerTransferred) {
+    errors.push("Demo World V3.0 organizer access stories are incomplete");
+  }
+  const organizerAccessJson = JSON.stringify(organizerAccess);
+  if (/(?:cus|sub|price|prod)_[A-Za-z0-9_]+|@example|\+34/i.test(organizerAccessJson)
+      || /"(?:privateNote|assignedReviewer)"\s*:/i.test(organizerAccessJson)) {
+    errors.push("Demo World V3.0 organizer access leaked private data");
   }
 
   if (competition.entries.length !== 6) errors.push("League must have exactly 6 entries");
@@ -895,9 +994,10 @@ export function demoWorldV2IntegrityErrors(snapshot: DemoWorldV2Snapshot): strin
       || publicCompetitions.operationReceipts < 16) {
     errors.push("Demo World V2.7 public competition authority is invalid");
   }
-  if (directoryItems.length !== 2
+  if (directoryItems.length !== 3
       || !directorySlugs.includes("liga-publica-wave-7a")
       || !directorySlugs.includes("copa-barrios-iq-2027")
+      || !directorySlugs.includes("liga-marina-v3")
       || directorySlugs.includes("copa-enlace-demo")
       || directorySlugs.includes("liga-privada-organizador-demo")) {
     errors.push("Demo World V2.7 public directory visibility is invalid");

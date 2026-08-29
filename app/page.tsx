@@ -9287,6 +9287,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
                 <button type="button" onClick={openTeamGallery}>Mi equipo</button>
                 {hasRealTeam ? <Link href={`/equipo/identidad${remoteGroupId ? `?grupo=${remoteGroupId}` : ""}`}>{canManageTeam && !canonicalHomeTeamShield ? "Personalizar escudo" : "Escudo del equipo"}</Link> : null}
                 <Link href="/mercado">Mercado</Link>
+                <Link href="/organizacion/solicitudes">Organizar</Link>
                 {canUseAdminControls ? <button type="button" onClick={createMatch}>Crear partido</button> : null}
                 {canUseAdminControls ? <button type="button" onClick={() => void openCreatePlayerProfile()}>Crear ficha</button> : null}
                 {canUseAdminControls ? <button type="button" onClick={() => showQuickForm("venue")}>Crear campo</button> : null}
@@ -10825,6 +10826,11 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
                   <small>Capacidades para Clubs y equipos</small>
                   <b aria-hidden="true">›</b>
                 </a>
+                <Link className="profile-notifications-link" href="/organizacion/solicitudes">
+                  <span>Organizar</span>
+                  <small>Solicitudes, acceso y primera competición</small>
+                  <b aria-hidden="true">›</b>
+                </Link>
                 {currentRole === "owner" ? <a className="profile-notifications-link" href="/ajustes/facturacion">
                   <span>Facturación</span>
                   <small>Plan, uso, continuidad y facturas</small>
@@ -11328,6 +11334,9 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
                 </Link>
                 <Link href="/planes-organizador">
                   <span>Planes de organización</span><small>Capacidades para Clubs y equipos</small><b aria-hidden="true">›</b>
+                </Link>
+                <Link href="/organizacion/solicitudes">
+                  <span>Organizar</span><small>Solicitudes, acceso y onboarding</small><b aria-hidden="true">›</b>
                 </Link>
                 {currentRole === "owner" ? <Link href="/ajustes/facturacion">
                   <span>Facturación</span><small>Plan, uso, continuidad y facturas</small><b aria-hidden="true">›</b>

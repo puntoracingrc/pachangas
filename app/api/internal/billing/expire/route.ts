@@ -16,5 +16,10 @@ export async function GET(request: Request) {
     operation_id: crypto.randomUUID(),
   });
   if (result.error) return Response.json({ error: "BILLING_EXPIRATION_FAILED" }, { headers: noStoreHeaders, status: 500 });
-  return Response.json({ canonical: result.data }, { headers: noStoreHeaders });
+  const reminders = await platformServiceClient().rpc("process_pachanga_organizer_access_expiry_notifications_v1", {
+    batch_size: 100,
+    operation_id: crypto.randomUUID(),
+  });
+  if (reminders.error) return Response.json({ error: "ORGANIZER_ACCESS_REMINDERS_FAILED" }, { headers: noStoreHeaders, status: 500 });
+  return Response.json({ canonical: result.data, organizerAccessReminders: reminders.data }, { headers: noStoreHeaders });
 }

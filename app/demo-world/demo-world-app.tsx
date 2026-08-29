@@ -18,6 +18,7 @@ import {
   organizerBillingStatus,
   organizerFeatureLabels,
 } from "../organizer-billing-contract";
+import { organizerAccessNextActionLabel, organizerAccessStatusLabel } from "../organizer-access-contract";
 import { PLAYER_COSMETIC_CATALOG, catalogEntry } from "../player-cosmetics-catalog";
 import { withCosmeticKey } from "../player-cosmetics-contract";
 import { ProvincialRankingBoard } from "../ranking/provincial-ranking-board";
@@ -57,6 +58,7 @@ import {
   type DemoWorldV2Referee,
   type DemoWorldV2Snapshot,
   type DemoWorldV2TournamentChunk,
+  type DemoWorldV3OrganizerAccessChunk,
 } from "./demo-world-v2-contract";
 import {
   demoWorldV2TabFromSearch,
@@ -1264,39 +1266,79 @@ const organizerBillingScenarioLabels: Record<DemoWorldV2OrganizerBillingChunk["s
   team_past_due_grace: "Pago pendiente",
 };
 
-function DemoOrganizerBillingView({ billing }: { billing: DemoWorldV2OrganizerBillingChunk }) {
+const organizerAccessScenarioLabels: Record<DemoWorldV3OrganizerAccessChunk["scenarios"][number]["id"], string> = {
+  club_paid_interest: "Interés comercial",
+  club_partner_approved: "Partner aprobado",
+  club_withdrawn: "Solicitud retirada",
+  team_needs_information_beta: "Información y beta",
+  team_owner_transfer: "Cambio de owner",
+  team_rejected: "Solicitud rechazada",
+};
+
+function DemoOrganizerBillingView({ access, billing }: {
+  access: DemoWorldV3OrganizerAccessChunk;
+  billing: DemoWorldV2OrganizerBillingChunk;
+}) {
+  const [view, setView] = useState<"access" | "plans">("access");
+  const [accessScenarioId, setAccessScenarioId] = useState<DemoWorldV3OrganizerAccessChunk["scenarios"][number]["id"]>("club_partner_approved");
   const [scenarioId, setScenarioId] = useState<DemoWorldV2OrganizerBillingChunk["scenarios"][number]["id"]>("club_partner");
+  const accessScenario = access.scenarios.find(({ id }) => id === accessScenarioId) ?? access.scenarios[0]!;
   const scenario = billing.scenarios.find(({ id }) => id === scenarioId) ?? billing.scenarios[0]!;
   return <div className={`${styles.demoProductView} ${styles.organizerBillingDemo}`} data-demo-domain="organizer-billing" data-demo-read-only="true">
     <section className={styles.demoDomainHeading}>
-      <div><span className={styles.eyebrow}>ORGANIZER PLANS V1</span><h1>Planes y continuidad</h1><p>Estados canónicos de ejemplo sin cobros, datos personales ni escrituras remotas.</p></div>
+      <div><span className={styles.eyebrow}>ORGANIZER JOURNEY V1</span><h1>Acceso y planes</h1><p>Solicitudes, grants, onboarding y continuidad derivados de PostgreSQL sin datos personales ni escrituras remotas.</p></div>
       <span>Demo GET · Checkout live desactivado</span>
     </section>
-    <nav className={styles.organizerBillingScenarioRail} aria-label="Escenarios ficticios de facturación">
-      {billing.scenarios.map((entry) => <button aria-pressed={scenario.id === entry.id} key={entry.id} type="button" onClick={() => setScenarioId(entry.id)}>{organizerBillingScenarioLabels[entry.id]}</button>)}
+    <nav className={styles.organizerJourneyModes} aria-label="Vista de acceso de organizadores">
+      <button aria-pressed={view === "access"} type="button" onClick={() => setView("access")}>Solicitudes y onboarding</button>
+      <button aria-pressed={view === "plans"} type="button" onClick={() => setView("plans")}>Planes y continuidad</button>
     </nav>
-    <section className={styles.organizerBillingScenario}>
-      <header><span>{scenario.organizerKind === "CLUB" ? "Club" : "Equipo"}</span><h2>{scenario.organizerName}</h2><p>{scenario.note}</p></header>
-      <div className={styles.organizerBillingStateGrid}>
-        <span><small>Plan</small><strong>{scenario.planCode}</strong></span>
-        {scenario.billingInterval ? <span><small>Facturación</small><strong>{scenario.billingInterval === "year" ? "Anual" : "Mensual"}</strong></span> : null}
-        <span><small>Cuenta</small><strong>{organizerBillingStatus(scenario.accountStatus)}</strong></span>
-        <span><small>Acceso</small><strong>{organizerBillingStatus(scenario.accessStatus)}</strong></span>
-        <span><small>Nuevas creaciones</small><strong>{scenario.creationAllowed ? "Permitidas" : "Bloqueadas"}</strong></span>
-        {scenario.renewalAt ? <span><small>Renovación</small><strong>{organizerBillingDate(scenario.renewalAt)}</strong></span> : null}
-        {scenario.graceEndsAt ? <span><small>Gracia hasta</small><strong>{organizerBillingDate(scenario.graceEndsAt)}</strong></span> : null}
-        {scenario.continuityUntil ? <span><small>Continuidad hasta</small><strong>{organizerBillingDate(scenario.continuityUntil)}</strong></span> : null}
-      </div>
-    </section>
-    <section className={styles.organizerBillingPlanGrid} aria-label="Catálogo ficticio de planes">
-      {billing.catalog.plans.map((plan) => <article key={plan.planCode}>
-        <header><span>{plan.organizerKind === "CLUB" ? "Club" : "Equipo"}</span><strong>{plan.displayName}</strong></header>
-        <p>{plan.description}</p>
-        {plan.planCode === "TEAM_ORGANIZER_PRO" ? <b>Add-on · conserva el plan base</b> : null}
-        <ul>{plan.features.slice(0, 4).map((feature) => <li key={feature}>{organizerFeatureLabels[feature] ?? feature}</li>)}</ul>
-        <footer><span>{organizerBillingStatus(plan.pricingStatus)}</span><small>{plan.features.length} capacidades · límites pendientes</small></footer>
-      </article>)}
-    </section>
+    {view === "access" ? <>
+      <nav className={styles.organizerBillingScenarioRail} aria-label="Escenarios ficticios de acceso">
+        {access.scenarios.map((entry) => <button aria-pressed={accessScenario.id === entry.id} key={entry.id} type="button" onClick={() => setAccessScenarioId(entry.id)}>{organizerAccessScenarioLabels[entry.id]}</button>)}
+      </nav>
+      <section className={styles.organizerAccessScenario}>
+        <header><span>{accessScenario.organizerKind === "CLUB" ? "Club" : "Equipo"}</span><h2>{accessScenario.organizerName}</h2><p>{accessScenario.planCode} · {organizerAccessStatusLabel(accessScenario.applicationStatus)}</p></header>
+        <div className={styles.organizerBillingStateGrid}>
+          <span><small>Solicitud</small><strong>{organizerAccessStatusLabel(accessScenario.applicationStatus)}</strong></span>
+          <span><small>Decisión</small><strong>{accessScenario.decisionType ? organizerAccessStatusLabel(accessScenario.decisionType) : "Sin decisión"}</strong></span>
+          <span><small>Grant</small><strong>{accessScenario.grant ? `${accessScenario.grant.source} · ${accessScenario.grant.status}` : "No concedido"}</strong></span>
+          <span><small>Onboarding</small><strong>{accessScenario.onboarding ? `${accessScenario.onboarding.completedCheckpoints}/${accessScenario.onboarding.totalCheckpoints}` : "No iniciado"}</strong></span>
+          <span><small>Siguiente acción</small><strong>{accessScenario.onboarding ? organizerAccessNextActionLabel(accessScenario.onboarding.nextAction) : "Sin acceso"}</strong></span>
+          <span><small>Owner</small><strong>{accessScenario.ownerTransferred ? "Transferido con continuidad" : "Sin cambios"}</strong></span>
+        </div>
+      </section>
+      <section className={styles.organizerAccessEvidence}>
+        <div><span className={styles.eyebrow}>TRAZABILIDAD</span><h3>Historial confirmado</h3><ol>{accessScenario.history.map((action) => <li key={action}>{action.replaceAll(".", " ")}</li>)}</ol></div>
+        <div><span className={styles.eyebrow}>PRIMERA COMPETICIÓN</span>{accessScenario.firstCompetition ? <><h3>{accessScenario.firstCompetition.name}</h3><p>{accessScenario.firstCompetition.type} · {accessScenario.firstCompetition.visibility} · {accessScenario.firstCompetition.canonicalMatches} partido canónico</p></> : <><h3>Sin competición creada</h3><p>Una decisión sin grant nunca habilita el lanzador.</p></>}</div>
+      </section>
+    </> : <>
+      <nav className={styles.organizerBillingScenarioRail} aria-label="Escenarios ficticios de facturación">
+        {billing.scenarios.map((entry) => <button aria-pressed={scenario.id === entry.id} key={entry.id} type="button" onClick={() => setScenarioId(entry.id)}>{organizerBillingScenarioLabels[entry.id]}</button>)}
+      </nav>
+      <section className={styles.organizerBillingScenario}>
+        <header><span>{scenario.organizerKind === "CLUB" ? "Club" : "Equipo"}</span><h2>{scenario.organizerName}</h2><p>{scenario.note}</p></header>
+        <div className={styles.organizerBillingStateGrid}>
+          <span><small>Plan</small><strong>{scenario.planCode}</strong></span>
+          {scenario.billingInterval ? <span><small>Facturación</small><strong>{scenario.billingInterval === "year" ? "Anual" : "Mensual"}</strong></span> : null}
+          <span><small>Cuenta</small><strong>{organizerBillingStatus(scenario.accountStatus)}</strong></span>
+          <span><small>Acceso</small><strong>{organizerBillingStatus(scenario.accessStatus)}</strong></span>
+          <span><small>Nuevas creaciones</small><strong>{scenario.creationAllowed ? "Permitidas" : "Bloqueadas"}</strong></span>
+          {scenario.renewalAt ? <span><small>Renovación</small><strong>{organizerBillingDate(scenario.renewalAt)}</strong></span> : null}
+          {scenario.graceEndsAt ? <span><small>Gracia hasta</small><strong>{organizerBillingDate(scenario.graceEndsAt)}</strong></span> : null}
+          {scenario.continuityUntil ? <span><small>Continuidad hasta</small><strong>{organizerBillingDate(scenario.continuityUntil)}</strong></span> : null}
+        </div>
+      </section>
+      <section className={styles.organizerBillingPlanGrid} aria-label="Catálogo ficticio de planes">
+        {billing.catalog.plans.map((plan) => <article key={plan.planCode}>
+          <header><span>{plan.organizerKind === "CLUB" ? "Club" : "Equipo"}</span><strong>{plan.displayName}</strong></header>
+          <p>{plan.description}</p>
+          {plan.planCode === "TEAM_ORGANIZER_PRO" ? <b>Add-on · conserva el plan base</b> : null}
+          <ul>{plan.features.slice(0, 4).map((feature) => <li key={feature}>{organizerFeatureLabels[feature] ?? feature}</li>)}</ul>
+          <footer><span>{organizerBillingStatus(plan.pricingStatus)}</span><small>{plan.features.length} capacidades · límites pendientes</small></footer>
+        </article>)}
+      </section>
+    </>}
   </div>;
 }
 
@@ -1518,7 +1560,7 @@ export function DemoWorldApp({ manifest }: { manifest: DemoWorldV2Manifest }) {
         {snapshot && activeTab === "disciplina" ? <div className={styles.demoProductView} data-demo-domain="discipline"><CompetitionDisciplineClient competitionId={snapshot.competitions.competition.id} embedded previewData={snapshot.competitions.disciplinePreview} surface="public" /></div> : null}
         {snapshot && activeTab === "club" && selectedClub ? <DemoClubView club={selectedClub} clubs={snapshot.clubsReferees.clubs} onClub={setSelectedClubId} /> : null}
         {snapshot && activeTab === "arbitros" ? <DemoRefereesView assignments={snapshot.clubsReferees.refereeAssignmentPreview} referees={snapshot.clubsReferees.referees} /> : null}
-        {snapshot && activeTab === "planes" ? <DemoOrganizerBillingView billing={snapshot.organizerBilling} /> : null}
+        {snapshot && activeTab === "planes" ? <DemoOrganizerBillingView access={snapshot.organizerAccess} billing={snapshot.organizerBilling} /> : null}
       </div>
       <MobileAppNav active={activeTab as MobileAppTab} onNavigate={(tab) => navigate(tab as DemoWorldV2PrimaryTab)} />
       {selectedPlayer ? <PlayerModal onClose={() => setSelectedPlayerId(null)} player={selectedPlayer} /> : null}

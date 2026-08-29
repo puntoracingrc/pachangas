@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 
-export const DEMO_WORLD_V2_AUTHORITY_PROOF_VERSION = 9 as const;
+export const DEMO_WORLD_V2_AUTHORITY_PROOF_VERSION = 10 as const;
 
 export type DemoWorldV2AuthorityProofOrganizerBillingScenario = {
   accessStatus: "active" | "continuity" | "grace" | "pending";
@@ -37,6 +37,60 @@ export type DemoWorldV2AuthorityProofOrganizerBilling = {
   scenarios: DemoWorldV2AuthorityProofOrganizerBillingScenario[];
   stripeEvents: number;
   testRuntimeReady: true;
+};
+
+export type DemoWorldV3AuthorityProofOrganizerAccessScenario = {
+  applicationStatus: "approved" | "approved_interest" | "rejected" | "withdrawn";
+  checkoutAvailable: false;
+  decisionCode: string | null;
+  decisionType: "APPROVED" | "APPROVED_INTEREST" | "REJECTED" | null;
+  firstCompetition: {
+    canonicalMatches: number;
+    name: string;
+    status: "PUBLIC_ACTIVE";
+    type: "LEAGUE";
+    visibility: "public";
+  } | null;
+  grant: {
+    source: "PARTNERSHIP" | "PRIVATE_BETA";
+    status: "active";
+    validUntil: string | null;
+  } | null;
+  history: string[];
+  id: "club_paid_interest" | "club_partner_approved" | "club_withdrawn"
+    | "team_needs_information_beta" | "team_owner_transfer" | "team_rejected";
+  onboarding: {
+    completedCheckpoints: number;
+    nextAction: string;
+    status: "active" | "completed";
+    totalCheckpoints: 10;
+  } | null;
+  organizerKind: "CLUB" | "TEAM";
+  organizerName: string;
+  ownerTransferred: boolean;
+  planCode: "CLUB_ORGANIZER" | "CLUB_PARTNER" | "TEAM_ORGANIZER_PRO";
+};
+
+export type DemoWorldV3AuthorityProofOrganizerAccess = {
+  firstCompetitionLaunches: 1;
+  grantCount: 3;
+  liveCheckoutEnabled: false;
+  onboardingCompleted: 1;
+  operationReceipts: number;
+  privacy: {
+    containsAuthUuid: false;
+    containsEmail: false;
+    containsPhone: false;
+    containsPrivateNote: false;
+    containsStripeId: false;
+  };
+  remoteWrites: 0;
+  rpcFamilies: ["ORGANIZER_ACCESS", "LEAGUE_PRIVATE_BETA_V2", "LEAGUE_PARTICIPATION", "LEAGUE_SCHEDULING", "PUBLICATION"];
+  scenarioCount: 6;
+  scenarios: DemoWorldV3AuthorityProofOrganizerAccessScenario[];
+  stripeTouched: false;
+  subscriptionGrants: 0;
+  version: 1;
 };
 
 export type DemoWorldV2AuthorityProofConfigurationRevision = {
@@ -650,10 +704,11 @@ export type DemoWorldV2AuthorityProof = {
     scheduling: number;
   };
   organizerBilling: DemoWorldV2AuthorityProofOrganizerBilling;
+  organizerAccess: DemoWorldV3AuthorityProofOrganizerAccess;
   refereeAssignments: DemoWorldV2AuthorityProofRefereeAssignments;
   publicCompetitions: DemoWorldV2AuthorityProofPublicCompetitions;
   remoteWrites: 0;
-  rpcFamilies: ["R1", "R3", "R4A", "R4B", "R4C", "R4D", "R5", "R6A", "R6B", "R6C", "PUBLIC_COMPETITIONS", "ORGANIZER_BILLING"];
+  rpcFamilies: ["R1", "R3", "R4A", "R4B", "R4C", "R4D", "R5", "R6A", "R6B", "R6C", "PUBLIC_COMPETITIONS", "ORGANIZER_BILLING", "ORGANIZER_ACCESS"];
   roundCount: 5;
   standings: DemoWorldV2AuthorityProofStanding[];
   tournament: DemoWorldV2AuthorityProofTournament;
@@ -1020,9 +1075,10 @@ export function assertDemoWorldV2AuthorityProof(value: DemoWorldV2AuthorityProof
   const directorySlugs = directoryItems.map((item) => String(
     (item.publication as Record<string, unknown> | undefined)?.slug ?? "",
   ));
-  if (directoryItems.length !== 2
+  if (directoryItems.length !== 3
       || !directorySlugs.includes("liga-publica-wave-7a")
       || !directorySlugs.includes("copa-barrios-iq-2027")
+      || !directorySlugs.includes("liga-marina-v3")
       || directorySlugs.includes("copa-enlace-demo")
       || directorySlugs.includes("liga-privada-organizador-demo")) {
     throw new Error("DEMO_WORLD_V2_7_PUBLIC_DIRECTORY_INVALID");
@@ -1088,6 +1144,45 @@ export function assertDemoWorldV2AuthorityProof(value: DemoWorldV2AuthorityProof
   }
   if (/(?:cus|sub|price|prod)_[A-Za-z0-9_]+|@example|\+34/i.test(JSON.stringify(organizerBilling))) {
     throw new Error("DEMO_WORLD_V2_9_ORGANIZER_BILLING_PRIVATE_FIELD_LEAK");
+  }
+  const organizerAccess = value.organizerAccess;
+  const organizerAccessScenarioIds = organizerAccess.scenarios.map(({ id }) => id).join(",");
+  if (organizerAccessScenarioIds
+      !== "club_partner_approved,club_paid_interest,team_needs_information_beta,team_rejected,club_withdrawn,team_owner_transfer"
+      || organizerAccess.scenarioCount !== 6
+      || organizerAccess.grantCount !== 3
+      || organizerAccess.subscriptionGrants !== 0
+      || organizerAccess.firstCompetitionLaunches !== 1
+      || organizerAccess.onboardingCompleted !== 1
+      || organizerAccess.liveCheckoutEnabled
+      || organizerAccess.stripeTouched
+      || organizerAccess.remoteWrites !== 0
+      || Object.values(organizerAccess.privacy).some(Boolean)) {
+    throw new Error("DEMO_WORLD_V3_ORGANIZER_ACCESS_AUTHORITY_INVALID");
+  }
+  const accessScenarios = new Map(organizerAccess.scenarios.map((scenario) => [scenario.id, scenario]));
+  if (accessScenarios.get("club_partner_approved")?.grant?.source !== "PARTNERSHIP"
+      || accessScenarios.get("club_partner_approved")?.onboarding?.status !== "completed"
+      || accessScenarios.get("club_partner_approved")?.firstCompetition?.status !== "PUBLIC_ACTIVE"
+      || accessScenarios.get("club_paid_interest")?.applicationStatus !== "approved_interest"
+      || accessScenarios.get("club_paid_interest")?.grant !== null
+      || accessScenarios.get("team_needs_information_beta")?.grant?.source !== "PRIVATE_BETA"
+      || accessScenarios.get("team_rejected")?.applicationStatus !== "rejected"
+      || accessScenarios.get("team_rejected")?.grant !== null
+      || accessScenarios.get("club_withdrawn")?.applicationStatus !== "withdrawn"
+      || accessScenarios.get("club_withdrawn")?.grant !== null
+      || !accessScenarios.get("team_owner_transfer")?.ownerTransferred) {
+    throw new Error("DEMO_WORLD_V3_ORGANIZER_ACCESS_STORIES_INVALID");
+  }
+  if (!value.rpcFamilies.includes("ORGANIZER_ACCESS")
+      || organizerAccess.rpcFamilies.join(",")
+        !== "ORGANIZER_ACCESS,LEAGUE_PRIVATE_BETA_V2,LEAGUE_PARTICIPATION,LEAGUE_SCHEDULING,PUBLICATION") {
+    throw new Error("DEMO_WORLD_V3_ORGANIZER_ACCESS_RPC_FAMILY_MISSING");
+  }
+  const organizerAccessJson = JSON.stringify(organizerAccess);
+  if (/(?:cus|sub|price|prod)_[A-Za-z0-9_]+|@example|\+34/i.test(organizerAccessJson)
+      || /"(?:privateNote|assignedReviewer)"\s*:/i.test(organizerAccessJson)) {
+    throw new Error("DEMO_WORLD_V3_ORGANIZER_ACCESS_PRIVATE_FIELD_LEAK");
   }
   if (JSON.stringify(tournament).match(/[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/i)) {
     throw new Error("DEMO_WORLD_V2_4_INTERNAL_ID_LEAK");

@@ -1,47 +1,18 @@
 # Wave 8A Organizer Onboarding Incidents
 
-Date opened: 2026-08-29 CEST
+Registro permanente de incidencias encontradas durante la implementación y la simulación de Wave 8A. Ninguna incidencia se considera cerrada sin reproducir el escenario original y ejecutar su regresión.
 
-## Checkpoint
+| ID | Clasificación | Estado | Incidencia | Corrección | Regresión |
+| --- | --- | --- | --- | --- | --- |
+| W8A-001 | PRODUCT_BUG | fixed + regression_verified | `rate_limit.override` acepta contractualmente `application.*`, pero el `CHECK` inicial de `action_pattern` rechazaba `*`. La ruta de override documentada no podía persistirse. | La migración de hardening admite únicamente acciones concretas o un wildcard final `.*`, sin modificar migraciones históricas. | El runner persiste overrides `application.*` y completa las doce carreras reales con cleanup `PASS`. La suite SQL añade la prueba explícita por RPC. |
+| W8A-002 | ENVIRONMENT_ISSUE | fixed + regression_verified | El primer runner de concurrencia intentó terminar una conexión interna superuser de Supabase al limpiar su base efímera y el error de cleanup ocultó el fallo original. | El cleanup espera el cierre interno, termina solo clientes no-superuser y conserva el error primario. | `tests/organizer-access-onboarding-v1-concurrency.mjs` termina con `cleanup: PASS` y no deja base efímera. |
+| W8A-003 | TESTABILITY_GAP | fixed + regression_verified | Un test TS aislado no podía importar un módulo marcado `server-only` fuera del runtime Next.js. | La regresión valida el contrato del módulo mediante inspección focalizada, sin relajar `server-only`. | `tests/organizer-access-onboarding-v1.test.ts` pasa 16/16. |
+| W8A-004 | TESTABILITY_GAP | fixed + regression_verified | La prueba de autoridad de Demo World genera UUID y timestamps volátiles; el hash bruto cambia entre ejecuciones aunque la proyección canónica sea idéntica. | La verificación separa el hash bruto de los hashes de proyección determinista para autoridad y snapshot, y conserva `remoteWrites = 0`. | `npm run demo-world:v2:verify` compara ambas proyecciones con el snapshot versionado e informa sus hashes por separado. |
+| W8A-005 | NEEDS_PRODUCT_DECISION | open | El producto tiene lifecycle canónico para Club (`operational_status`) y para cuentas de usuario, pero `pachanga_groups` no dispone de un estado operativo canónico de equipo. Por tanto, “Team suspendido” no puede distinguirse de owner suspendido, billing inactivo o equipo sin actividad. | No se inventa un booleano ni se reutiliza billing como sanción. Club suspendido y actor sin autoridad sí quedan bloqueados; la suspensión propia de Team requiere un contrato futuro transversal. | La suite negativa cubre Club suspendido y actor sin autoridad. El caso Team suspendido queda explícitamente no ejecutable hasta definir su fuente de verdad. |
+| W8A-006 | PRODUCT_BUG | fixed + regression_verified | El trigger inicial comparaba los nombres internos `application.submitted` y `application.information_provided`, pero los eventos persistidos conservan las acciones canónicas `application.submit` y `application.respond_information`. Los revisores no habrían recibido esos dos avisos. | El fan-out usa ahora las acciones canónicas reales, separa los once hitos contractuales y añade un worker `service_role` idempotente para accesos próximos a expirar. | La suite SQL prueba destinatarios, obligatoriedad, semántica, replay y deduplicación; la suite TS comprueba el worker y su conexión con ambos endpoints internos. |
+| W8A-007 | SIMULATION_BUG | fixed + regression_verified | La prueba negativa del worker de avisos esperaba alcanzar su guardia interna `service_role`, pero el contrato de privilegios bloquea antes la ejecución a `authenticated`. | La aserción exige el error PostgreSQL `permission denied`, que es la barrera efectiva y más restrictiva. | El runner SQL confirma además que solo `service_role` conserva `EXECUTE` y que el worker rechaza cualquier bypass de cliente. |
+| W8A-008 | TESTABILITY_GAP | fixed + regression_verified | El gate global de Control Center solo reconocía capabilities formados por letras y puntos, por lo que rechazaba la nueva página aunque invocaba correctamente `requirePlatformPage("organizer_access.read")`. | El patrón admite también `_`, manteniendo obligatoria la autorización server-side en todas las páginas y APIs. | El test focalizado de Platform Control Center reproduce la ruta nueva y la batería global vuelve a comprobar todo el árbol administrativo. |
 
-- Base `origin/main`: `e0cbf7bd45f8d38e4edc8bc7dc97fd1272ec355f`.
-- Repository migration ledger: 197 forward-only migrations.
-- Organizer plan catalog, billing account, access grant and competition
-  entitlement authorities: present.
-- Canonical public plans: `CLUB_PARTNER`, `CLUB_ORGANIZER` and
-  `TEAM_ORGANIZER_PRO`.
-- Canonical internal access sources: `PROMOTION`, `PRIVATE_BETA` and
-  `PLATFORM_GRANT`.
-- Organizer Access Applications, review queue, guided onboarding and First
-  Competition Launcher: not present at the checkpoint.
-- `live_prices_approved=false`, `live_checkout_enabled=false` and
-  `portal_enabled=false` at the preceding production readback.
-- Stripe is outside Wave 8A and must remain untouched.
+## Criterio de cierre
 
-## Permanent boundaries
-
-An application is not an entitlement. Only an explicit, auditable platform
-decision may create an existing `CompetitionEntitlementGrant`. Paid-plan
-interest never creates `SUBSCRIPTION` access while canonical billing has no
-active subscription.
-
-Authority tables accept no direct `INSERT`, `UPDATE` or `DELETE` from `anon`
-or `authenticated`. Every write uses an authenticated actor, an idempotent
-operation ID, an expected revision, server time and a monotonic server
-sequence.
-
-## Incident taxonomy
-
-Every failure found during Wave 8A is recorded before correction as one of:
-
-- `PRODUCT_BUG`
-- `SIMULATION_BUG`
-- `TESTABILITY_GAP`
-- `ENVIRONMENT_ISSUE`
-- `NEEDS_PRODUCT_DECISION`
-
-Resolved incidents must include `fixed` and `regression_verified`.
-
-## Incidents
-
-No Wave 8A incident was open at the initial checkpoint.
+Cada fila debe terminar como `fixed + regression_verified`, o permanecer abierta con causa y efecto explícitos. No se silencian fallos para continuar el release.

@@ -151,6 +151,7 @@ export function OfficialProductShellV2({
         {navigationEnabled ? <div className={styles.desktopUtilities}>
           <Link href="/ligas">Ligas</Link>
           <Link href="/torneos">Torneos</Link>
+          <Link href="/organizacion/solicitudes">Organizar</Link>
           <Link href="/ranking">Ranking</Link>
           <Link href="/perfil/avisos">Avisos</Link>
           <span aria-label={`Estado: ${context.status ?? "Conectado"}`}>{context.status ?? "Conectado"}</span>
@@ -176,6 +177,7 @@ export function OfficialProductShellV2({
           <div className={styles.gameUtilities}>
             <Link href="/ligas" aria-label="Ligas (Beta)">LG</Link>
             <Link href="/torneos" aria-label="Torneos (Beta)">TR</Link>
+            <Link href="/organizacion/solicitudes" aria-label="Organizar">OR</Link>
             <Link href="/perfil/avisos" aria-label="Avisos">AV</Link>
             <Link href="/ranking" aria-label="Ranking">RK</Link>
           </div>

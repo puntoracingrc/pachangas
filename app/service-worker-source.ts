@@ -2,7 +2,7 @@ const precacheUrls = [
   "/",
   "/demo",
   "/demo-world/v1/manifest.json",
-  "/demo-world/v2/manifest.json",
+  "/demo-world/v3/manifest.json",
   "/manifest.webmanifest",
   "/favicon.svg",
   "/favicon-16.png",
@@ -30,10 +30,11 @@ const PRECACHE_URLS = ${encodedPrecache};
 const STATIC_DESTINATIONS = new Set(["font", "image", "manifest", "script", "style"]);
 const STATIC_FILE_EXTENSIONS = /\\.(?:css|js|mjs|png|jpg|jpeg|webp|svg|ico|woff2?)$/i;
 const LIVE_SERVICE_HOST_PARTS = ["supabase.co", "stripe.com", "googleapis.com", "google.com", "gstatic.com", "weather.googleapis.com"];
-const CACHEABLE_NAVIGATION_PATHS = new Set(["/", "/aviso-legal", "/competiciones", "/condiciones", "/condiciones-venta", "/cookies", "/demo", "/manual", "/mercado", "/planes-organizador", "/privacidad", "/torneos"]);
+const CACHEABLE_NAVIGATION_PATHS = new Set(["/", "/aviso-legal", "/competiciones", "/condiciones", "/condiciones-venta", "/cookies", "/demo", "/manual", "/mercado", "/organizacion/empezar", "/organizacion/onboarding", "/organizacion/solicitar-acceso", "/organizacion/solicitudes", "/planes-organizador", "/privacidad", "/torneos"]);
 const CACHEABLE_NAVIGATION_PATTERNS = [
   /^\\/competiciones\\/[a-z0-9]+(?:-[a-z0-9]+)*$/i,
   /^\\/competiciones\\/[0-9a-f-]{36}\\/torneo$/i,
+  /^\\/organizacion\\/solicitudes\\/[0-9a-f-]{36}$/i,
 ];
 
 function isSameOrigin(url) {

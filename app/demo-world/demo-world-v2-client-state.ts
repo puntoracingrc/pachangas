@@ -9,6 +9,7 @@ import {
   type DemoWorldV2PublicCompetitionsChunk,
   type DemoWorldV2Snapshot,
   type DemoWorldV2TournamentChunk,
+  type DemoWorldV3OrganizerAccessChunk,
 } from "./demo-world-v2-contract";
 import type {
   DemoWorldActivityChunk,
@@ -58,17 +59,18 @@ export async function loadDemoWorldV2Snapshot(
   manifest: DemoWorldV2Manifest,
   loadedCore?: DemoWorldCoreChunk,
 ): Promise<DemoWorldV2Snapshot> {
-  const [activity, clubsReferees, competitions, configuration, core, matches, organizerBilling, players, publicCompetitions, tournament] = await Promise.all([
+  const [activity, clubsReferees, competitions, configuration, core, matches, organizerAccess, organizerBilling, players, publicCompetitions, tournament] = await Promise.all([
     loadChunk<DemoWorldActivityChunk>(manifest.chunks.activity),
     loadChunk<DemoWorldV2ClubsRefereesChunk>(manifest.chunks.clubsReferees),
     loadChunk<DemoWorldV2CompetitionChunk>(manifest.chunks.competitions),
     loadChunk<DemoWorldV2ConfigurationChunk>(manifest.chunks.configuration),
     loadedCore ? Promise.resolve(loadedCore) : loadDemoWorldV2Core(manifest),
     loadChunk<DemoWorldMatchesChunk>(manifest.chunks.matches),
+    loadChunk<DemoWorldV3OrganizerAccessChunk>(manifest.chunks.organizerAccess),
     loadChunk<DemoWorldV2OrganizerBillingChunk>(manifest.chunks.organizerBilling),
     loadChunk<DemoWorldPlayersChunk>(manifest.chunks.players),
     loadChunk<DemoWorldV2PublicCompetitionsChunk>(manifest.chunks.publicCompetitions),
     loadChunk<DemoWorldV2TournamentChunk>(manifest.chunks.tournament),
   ]);
-  return assertDemoWorldV2Snapshot({ activity, clubsReferees, competitions, configuration, core, manifest, matches, organizerBilling, players, publicCompetitions, tournament });
+  return assertDemoWorldV2Snapshot({ activity, clubsReferees, competitions, configuration, core, manifest, matches, organizerAccess, organizerBilling, players, publicCompetitions, tournament });
 }

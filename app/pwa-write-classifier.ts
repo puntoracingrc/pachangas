@@ -41,6 +41,7 @@ const v2WriteRpcNames = new Set([
   "command_pachanga_competition_discipline_v1",
   "command_pachanga_competition_platform_v1",
   "command_pachanga_competition_publication_v1",
+  "command_pachanga_organizer_access_application_v1",
   "command_pachanga_competition_registration_request_v1",
   "command_pachanga_league_participation_platform_v1",
   "command_pachanga_league_participation_v1",
@@ -142,7 +143,9 @@ const v1ApplicationWriteOperations = new Set([
 const v2ApplicationWriteOperations = new Set([
   "api:organizer-billing-checkout",
   "api:organizer-billing-portal",
+  "api:organizer-access-command",
   "api:platform-admin-billing",
+  "api:platform-admin-organizer-access",
   "api:club-foundation-command",
   "api:competition-discipline-command",
   "api:competition-configuration-command",
