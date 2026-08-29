@@ -82,13 +82,14 @@ Demo World practice surface.
 
 ## Local verification
 
-- Organizer access source suite: 16/16 PASS.
+- Organizer access source suite: 17/17 PASS after the hydration regression.
 - SQL/RLS/idempotency suite: PASS.
 - Concurrency suite: 13/13 races PASS with cleanup PASS.
 - Fresh PostgreSQL bootstrap: 204 migrations, PASS.
 - Schema equivalence hash:
   `4793080d9ba7421e773be599e82753ad7af4bbbfedca75c1f62c849c777281a8`.
-- Global product suite: 615/615 PASS; skip/todo/cancelled: 0/0/0.
+- Global product suite: 616/616 PASS after the hotfix;
+  skip/todo/cancelled: 0/0/0.
 - Typecheck and build: PASS.
 - Focused lint: PASS. Global lint retains 40 pre-existing findings
   (22 errors, 18 warnings) and adds no Wave 8A error.
@@ -97,15 +98,17 @@ Demo World practice surface.
 - Performance Advisor: two pre-existing duplicate-index observations, neither
   introduced by Wave 8A.
 
-The contractual baseline written before implementation was 618, but the exact
-runner on the checkpoint `main` plus this Wave reports 615 tests. The report
-uses the executable runner total and does not present a subtotal as a total.
+The contractual baseline written before implementation was 618. The exact
+implementation checkpoint executed 615 tests and the final hotfix checkpoint
+executed 616 after adding its regression. The report uses the executable total
+for each checkpoint and does not present a subtotal as a total.
 
 ## Release boundary
 
-Stripe resources, variables, routes and flags are untouched. Live prices,
-Checkout and portal remain OFF. Preview, staging and production evidence is
-recorded separately in the production release report.
+Stripe resources, variables, routes and flags are untouched. The pre-existing
+Stripe Sandbox flag remains enabled; TEST Checkout, TEST Portal, live prices,
+LIVE Checkout and the production portal remain OFF. Staging and production
+evidence is recorded separately in the production release report.
 
 ## Staging verification
 
@@ -120,3 +123,19 @@ depended on a private predicate whose `EXECUTE` privilege had been revoked from
 `authenticated`. The final migration grants only that predicate execution;
 table writes remain denied. Owner/outsider SQL reads and an actual two-device
 Realtime delivery now pass.
+
+## Production verification
+
+- PR #223 and hydration hotfix PR #224 are merged; final `main` is
+  `b9c21ae57e0e7cec0cff3647561d7f92e20e6493`.
+- The production migration ledger is 204 and contains the seven exact Wave 8A
+  versions without rewriting the preceding 197.
+- Feature settings reached revision 7 through six canonical, idempotent RPC
+  writes. All seven Wave 8A flags are active.
+- A rolled-back canary traversed draft, submission, review, information
+  exchange and approval. Replay returned the original receipt and all stale
+  revision boundaries remained enforced.
+- Independent readback reports zero applications, decisions, application
+  grants, onboarding workspaces and invalidations after cleanup.
+- The release deployment is `READY`; runtime, API, Auth and Realtime logs show
+  no unrecorded error signal.
