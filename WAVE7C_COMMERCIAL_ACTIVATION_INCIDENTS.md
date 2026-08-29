@@ -4511,3 +4511,18 @@ Resolved incidents must include `fixed` and `regression_verified`.
 - Verification: a Docker name-filter readback returned zero running
   `pachangas-synthetic-world-v1` containers; the final repository scan contains
   no local credential value.
+
+## W7C-219 - Final documentation merge used an inferred full HEAD SHA
+
+- Classification: `SIMULATION_BUG`
+- Status: `open`
+- Original scenario: PR #221 passed all checks and the guarded merge supplied a
+  full `--match-head-commit` value reconstructed from the local short SHA.
+- Evidence: GitHub rejected the merge because the supplied value did not match
+  the remote PR HEAD. The safety guard worked and no merge occurred.
+- Impact: `main`, deployments and remote data remain unchanged.
+- Required correction: read the canonical `headRefOid` from PR #221, update this
+  ledger on that same PR and merge only against the exact returned OID after the
+  refreshed checks pass.
+- Required regression: GitHub reports PR #221 merged at its exact final HEAD and
+  the resulting `main` SHA reaches a READY production deployment.
