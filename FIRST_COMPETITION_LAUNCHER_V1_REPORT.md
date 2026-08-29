@@ -46,3 +46,19 @@ The onboarding next action links to the launcher only when the server returns
 `CREATE_FIRST_COMPETITION`. After creation, it links to the existing League or
 Tournament workspace. The practice action opens Demo World V3.0 and creates no
 data in the real account.
+
+## Production verification
+
+- First Competition Launcher and Demo World V3.0 were enabled at settings
+  revision 7 through the canonical platform RPC.
+- The production canary used an approved temporary `PRIVATE_BETA` entitlement
+  to call the real `competition.launch` command.
+- Exactly one League wizard was created, then cancelled through the existing
+  engine. The grant was revoked afterward.
+- Every step supplied its idempotent operation ID and expected revision. The
+  canary exposed and permanently recorded the single-statement timestamp issue
+  W8A-032; the successful run used an already-effective test grant and required
+  no product or schema change.
+- Full transaction rollback plus independent readback report zero canary
+  wizards, competitions, grants and receipts.
+- LIVE prices, LIVE Checkout and customer portal remain OFF.

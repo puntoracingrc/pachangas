@@ -61,6 +61,23 @@ Local browser checks completed for 1440x900, 1920x1080, 390x844,
 - organizer scenario rail remains horizontally scrollable without expanding
   the root.
 
-Real Service Worker control and standalone-mode behavior remain release gates
-in Preview HTTPS because local development intentionally disables Service
-Worker registration. Physical Android/iPhone PWA remains `PENDING` by contract.
+## Production verification
+
+- `https://pachangasiq.com/demo?tab=planes` serves manifest version 3, seed
+  `pachangas-iq-demo-world-v3-0-2026-27` and full hash
+  `f641bc1c787b08102ed14b2c15f58adcab86ad0fc031df360bd78593984bac1c`.
+- Production exposes six organizer access scenarios, seven organizer billing
+  scenarios and four public competitions. The public projection remains
+  read-only and has `remoteWrites = 0`.
+- Twenty-one production route/viewport combinations passed with zero root
+  overflow, broken images, redirects or console errors. A later exact-hotfix
+  reload passed again on the Organizer page and Demo V3 surface.
+- Service Worker registration is active with no waiting or installing worker
+  and controls the full production scope.
+- With network blocked, the Demo document and eleven immutable V3 fragments
+  were returned with `fromServiceWorker=true` and local cache. A non-cacheable
+  control request failed both before and after navigation. Reconnection then
+  returned a fresh `200` response.
+
+Browser-level PWA behavior passes. Physical Android, iPhone and an installed
+device PWA remain `PENDING` and are not reported as PASS.

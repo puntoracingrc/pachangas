@@ -62,3 +62,20 @@ Authenticated staging additionally confirmed that two sessions converge on
 the same canonical workspace revision after an invalidation. The Realtime row
 is never consumed as workspace state, and an unrelated authenticated user
 cannot read the organizer's invalidation.
+
+## Production verification
+
+- Guided Onboarding was enabled through the settings RPC at revision 6.
+- Approval in the transactional canary created the canonical workspace and the
+  server returned the launcher next action; no browser-computed completion was
+  accepted.
+- Launcher cancellation and grant revocation were reflected before the full
+  transaction rollback. Final readback contains zero onboarding workspaces and
+  zero invalidations.
+- The production Service Worker controls the origin. With network access
+  blocked, the Demo onboarding page and all eleven V3 data fragments loaded
+  from the worker cache while a non-cacheable control request continued to
+  fail. After reconnection, a fresh control request returned `200` and the
+  canonical route remained intact.
+- Browser-level Service Worker and reconnection QA pass. Physical Android,
+  iPhone and installed-device PWA QA remain explicitly `PENDING`.

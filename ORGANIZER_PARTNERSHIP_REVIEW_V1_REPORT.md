@@ -61,5 +61,20 @@ tests cover approve-vs-withdraw, approve-vs-reject,
 request-information-vs-approve, approval-vs-manual-grant and duplicate expiry
 reminders. All pass locally.
 
-Production activation and readback remain recorded in
+## Production verification
+
+- Review and partnership approval were enabled separately through the audited
+  platform settings RPC at monotonic revisions 4 and 5.
+- The ephemeral production canary exercised `review.start`,
+  `review.request_information` and `review.approve` with the real platform
+  authority. The approval created exactly one temporary `PRIVATE_BETA` grant.
+- The grant was revoked and the surrounding transaction rolled back. Final
+  readback reports zero applications, decisions and application-created grants.
+- Seven mandatory notifications and seven ordered application events were
+  observed before rollback; no roster-wide disclosure or private-note leakage
+  occurred.
+- Production logs contain only explicitly recorded harness/readback errors;
+  API, Auth, Realtime and Vercel show no unrecorded release error.
+
+Full migration, deployment and cleanup evidence is recorded in
 `ORGANIZER_ACCESS_ONBOARDING_V1_PRODUCTION_RELEASE.md`.
