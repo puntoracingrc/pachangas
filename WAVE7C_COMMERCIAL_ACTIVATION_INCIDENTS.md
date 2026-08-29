@@ -38,6 +38,7 @@ Resolved incidents must include `fixed` and `regression_verified`.
 
 - Classification: `PRODUCT_BUG`
 - Status: `fixed` / `regression_verified`
+
 - Found in: `command_pachanga_organizer_billing_platform_v1` and the
   `/api/platform-admin/billing` allowlist.
 - Original scenario: a role holding the broad `billing.write` capability can
@@ -837,6 +838,12 @@ Resolved incidents must include `fixed` and `regression_verified`.
 - Required regression: before production, compare local and remote lists by
   exact version and name; after deployment they must both end at
   `20260828205317_organizer_commercial_hardening_flags_v1` with 196 rows.
+- Current reconciliation: staging still contains the six correct migration
+  names in their required order under connector versions `20260828231354`
+  through `20260828231359`. A fresh `supabase migration list --linked` against
+  the separately linked production project exits zero, matches local and remote
+  through `20260828163756`, and shows all six Wave 7C repository versions as
+  local-only. Production therefore remains unchanged at ledger 190.
 
 ## W7C-048 - In-app tab creation ignores its initial URL argument
 
@@ -2153,3 +2160,200 @@ Resolved incidents must include `fixed` and `regression_verified`.
   invalid.
 - Verification: the focused contract passes 11/11, typecheck and focused lint
   pass, and the client-bundle secret/name scan remains empty.
+
+## W7C-113 - Supabase documentation search exceeded the diagnostic output bound
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed` / `regression_verified`
+- Original scenario: QA queried the official Supabase documentation for the
+  current Dashboard location and handling contract of a server-only staging
+  secret key before any credential transfer.
+- Evidence: the scoped search returned more documentation content than the
+  available diagnostic context and its output was truncated.
+- Impact: the operation was read-only and no Supabase, Vercel, repository or
+  credential state changed, but the truncated result is not accepted as
+  authoritative evidence for the next action.
+- Required correction: repeat the official documentation lookup with a bounded
+  result that returns only the relevant title and canonical link, then use the
+  authenticated staging Dashboard only if the connector cannot expose secret
+  keys.
+- Required regression: current official guidance and the exact staging project
+  are identified without output truncation before any secret is copied or
+  transmitted.
+- Correction: the documentation search was repeated with one result and only
+  the title plus canonical link requested; the authenticated Dashboard was then
+  scoped to the existing Preview branch.
+- Verification: official guidance resolved to `Migrating to publishable and
+  secret API keys`, the Dashboard identified project
+  `iozcjirlfytryzrcmrnq` as `pwa-bridge-staging / Preview`, and no output was
+  truncated.
+
+## W7C-114 - Supabase settings link was reported disabled during automation
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed` / `regression_verified`
+- Original scenario: after confirming the authenticated Preview branch and the
+  exact `API Keys` settings link in the Supabase Dashboard, QA attempted to
+  activate that visible navigation item.
+- Evidence: browser automation timed out with `Element is not enabled` while
+  its own bounded diagnostics reported one visible anchor with `disabled=false`
+  and the exact staging-project URL.
+- Impact: no credential was revealed, copied or transmitted and no Supabase or
+  Vercel state changed.
+- Required correction: navigate to the exact href already returned by the
+  authenticated Dashboard instead of retrying the inconsistent click.
+- Required regression: the API Keys page loads for project
+  `iozcjirlfytryzrcmrnq` and only non-secret UI presence counts are inspected
+  before requesting action-time transfer approval.
+- Correction: QA navigated to the exact API Keys href returned by the
+  authenticated Dashboard rather than retrying the inconsistent click.
+- Verification: the resulting page title identifies the Pachangas staging
+  Preview branch and exposes separate masked `Secret keys` reveal/copy controls;
+  no key value was revealed, emitted, copied or transmitted.
+
+## W7C-115 - Closed diagnostic incidents retained contradictory status fields
+
+- Classification: `SIMULATION_BUG`
+- Status: `fixed` / `regression_verified`
+- Original scenario: after adding correction and verification evidence to
+  W7C-113 and W7C-114, the ledger appended a second status line instead of
+  replacing each original `open` status; the first W7C-115 draft was also
+  inserted between the heading and body of W7C-001 by an ambiguous patch
+  context.
+- Evidence: both diagnostic incident blocks temporarily contained `open` and
+  `fixed / regression_verified`, and W7C-001's `Found in` field followed the
+  misplaced W7C-115 draft.
+- Impact: no code or external state changed, but automated open-incident
+  readback and incident boundaries were temporarily ambiguous.
+- Required correction: restore W7C-001 as one contiguous block, retain exactly
+  one canonical status near the top of W7C-113 and W7C-114, and place W7C-115
+  after the incidents it describes.
+- Required regression: open-incident readback reports neither W7C-113 nor
+  W7C-114 nor W7C-115; every incident block contains exactly one status field;
+  and W7C-001 retains its original contiguous evidence.
+- Correction: the misplaced block was moved, duplicate status lines were
+  removed and the two verified diagnostics now expose one canonical status.
+- Verification: structured ledger readback reports one status per W7C incident,
+  none of W7C-113 through W7C-115 is open, and W7C-001 again contains its full
+  original body immediately below its own status.
+
+## W7C-116 - Vercel environment inventory assumed an obsolete JSON root shape
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed` / `regression_verified`
+- Original scenario: QA requested the branch-scoped Preview environment
+  inventory and piped the CLI JSON through a filter that assumed a root array.
+- Evidence: Vercel CLI 59.4.0 returned a different root structure and `jq`
+  exited with `Cannot index array with string key` before emitting any variable
+  inventory.
+- Impact: no environment value was printed, copied or changed; Vercel,
+  Supabase and repository state remain unchanged.
+- Required correction: inspect only the JSON root type and keys, then extract a
+  bounded allowlist of non-secret metadata fields from the actual array node.
+- Required regression: branch Preview inventory completes without values and
+  proves the required server-only names/scopes while Production remains
+  excluded.
+- Correction: the CLI response was inspected as structural metadata only,
+  identifying an object root with an `envs` array before applying the bounded
+  field allowlist.
+- Verification: the exact Wave 7C branch contains five Preview-scoped entries;
+  `STRIPE_TEST_SECRET_KEY` is `sensitive` with `secret` visibility, and neither
+  that key nor `STRIPE_TEST_WEBHOOK_SECRET` exists in Production. The existing
+  pre-Wave production `SUPABASE_SERVICE_ROLE_KEY` was only observed by name and
+  remains untouched.
+
+## W7C-117 - Supabase secret copy action timed out before browser dispatch
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed` / `regression_verified`
+- Original scenario: after explicit action-time approval, QA selected the
+  second of the two exact `Copy API key` controls, corresponding to the masked
+  modern secret-key row in Supabase staging.
+- Evidence: the browser returned `CDP operation exceeded its deadline before
+  command dispatch`; its diagnostics still showed one visible, enabled button
+  named `Copy API key` for the scoped locator.
+- Impact: the click did not dispatch, the clipboard was not read and no secret
+  was copied, revealed, logged or transmitted to Vercel.
+- Required correction: reacquire the still-authenticated staging tab and invoke
+  the same already-verified second copy control through a direct DOM click,
+  without reading attributes, text or key value.
+- Required regression: transfer emits only secret-shape booleans, Vercel scope
+  metadata confirms one sensitive branch Preview variable, the clipboard and
+  runtime reference are cleared, and no secret appears in output or files.
+- Correction: the unreliable mouse path was abandoned and the exact scoped
+  button was later activated through its keyboard behavior after installing the
+  supported tab clipboard bridge.
+- Verification: one modern `sb_secret_` shape reached Vercel through process
+  stdin, and branch metadata now reports one sensitive secret variable without
+  exposing its value.
+
+## W7C-118 - Chrome binding did not expose the assumed clipboard API
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed` / `regression_verified`
+- Original scenario: QA invoked the verified secret-row copy control through a
+  direct DOM click and attempted to read and later clear the browser clipboard
+  through `chrome.clipboard`.
+- Evidence: the browser binding reported `Cannot read properties of undefined
+  (reading write)` while executing the mandatory cleanup block.
+- Impact: Vercel transfer did not start. The direct click may have populated the
+  operating-system clipboard, but no value was emitted or read into model
+  output; repository, Supabase and Vercel configuration remain unchanged.
+- Required correction: clear the operating-system clipboard without reading it,
+  inspect only the non-sensitive browser/tab API surface, then use the supported
+  clipboard bridge or a direct approved copy-to-process mechanism.
+- Required regression: the secret is transferred once through process stdin;
+  runtime and system clipboard are cleared; only boolean shape and Vercel scope
+  evidence is emitted; no secret value reaches output, files or logs.
+- Correction: QA used the supported `Tab.clipboard` bridge rather than the
+  absent browser-level property and separately cleared the operating-system
+  clipboard without reading it.
+- Verification: the bridge passed an empty write/read preflight, captured the
+  approved copy only inside the protected runtime, and read back empty after
+  transfer cleanup.
+
+## W7C-119 - Locator evaluation did not expose a native DOM click method
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed` / `regression_verified`
+- Original scenario: after installing and validating the supported tab
+  clipboard bridge, QA attempted to invoke the already scoped copy control with
+  locator evaluation so the secret would never enter accessibility output.
+- Evidence: the evaluated locator proxy raised `element.click is not a
+  function` before the copy operation.
+- Impact: Vercel transfer did not start; mandatory cleanup emptied both the tab
+  clipboard bridge and the operating-system clipboard, and no secret value was
+  emitted or persisted.
+- Required correction: keep the clipboard bridge installed and use the
+  locator's supported forced click action on the same exact second control.
+- Required regression: one modern staging secret reaches Vercel through stdin;
+  branch-scope metadata reads back correctly; clipboard/runtime cleanup passes;
+  scans remain free of secret material.
+- Correction: direct locator evaluation and its non-native element proxy were
+  discarded; the same exact second control was activated with `Enter`.
+- Verification: keyboard activation returned no key material, the validated
+  modern-secret boolean was true, and the Vercel subprocess exited zero.
+
+## W7C-120 - Forced locator click still timed out in Chrome mouse dispatch
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed` / `regression_verified`
+- Original scenario: with the supported clipboard bridge installed, QA retried
+  the exact secret copy control using the locator's forced click action.
+- Evidence: Chrome timed out on `Input.dispatchMouseEvent` while diagnostics
+  still reported the one scoped button as visible and enabled.
+- Impact: the Vercel subprocess was never started; tab and system clipboards
+  were cleared in the mandatory cleanup block, with no secret output or file
+  persistence.
+- Required correction: activate the same focused button through its keyboard
+  `Enter` behavior, avoiding the failing mouse-event channel.
+- Required regression: the keyboard activation populates only the protected
+  clipboard bridge; direct stdin transfer succeeds exactly once; readback and
+  secret scans pass after cleanup.
+- Correction: the exact copy control was activated by keyboard, bypassing the
+  failing mouse dispatch channel.
+- Verification: activation, modern-secret shape, non-empty value, zero-exit
+  transfer and clipboard cleanup all returned true; Vercel now reports both
+  Organizer TEST and Supabase staging secrets as sensitive, branch-scoped
+  Preview variables, with zero risky public names and zero Wave 7C Stripe
+  variables in Production.
