@@ -67,8 +67,8 @@ export function organizerAccessDate(value: unknown, includeTime = false) {
   const date = new Date(raw);
   if (!raw || Number.isNaN(date.getTime())) return "Pendiente";
   return new Intl.DateTimeFormat("es-ES", includeTime
-    ? { dateStyle: "medium", timeStyle: "short" }
-    : { dateStyle: "medium" }).format(date);
+    ? { dateStyle: "medium", timeStyle: "short", timeZone: "Europe/Madrid" }
+    : { dateStyle: "medium", timeZone: "Europe/Madrid" }).format(date);
 }
 
 export function organizerAccessStatusLabel(value: unknown) {

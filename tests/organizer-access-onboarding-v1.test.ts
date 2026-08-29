@@ -5,6 +5,7 @@ import test from "node:test";
 import {
   organizerAccessActions,
   organizerAccessCacheKey,
+  organizerAccessDate,
   organizerAccessPlatformActions,
 } from "../app/organizer-access-contract";
 import { knownClientWriteRpcNames } from "../app/pwa-write-classifier";
@@ -27,6 +28,21 @@ async function source(relativePath: string) {
 async function migrationSource(index: number) {
   return source(`supabase/migrations/${migrationNames[index]}`);
 }
+
+test("organizer access dates hydrate identically across server and browser time zones", { concurrency: false }, () => {
+  const previousTimeZone = process.env.TZ;
+  try {
+    process.env.TZ = "UTC";
+    const serverLabel = organizerAccessDate("2026-08-29T19:47:00.000Z", true);
+    process.env.TZ = "America/Los_Angeles";
+    const browserLabel = organizerAccessDate("2026-08-29T19:47:00.000Z", true);
+    assert.equal(serverLabel, browserLabel);
+    assert.match(serverLabel, /21:47$/);
+  } finally {
+    if (previousTimeZone === undefined) delete process.env.TZ;
+    else process.env.TZ = previousTimeZone;
+  }
+});
 
 test("Wave 8A consists of exactly seven forward-only migrations after ledger 197", async () => {
   const actual = (await readdir(path.join(root, "supabase/migrations")))
