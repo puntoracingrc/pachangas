@@ -2681,3 +2681,94 @@ Resolved incidents must include `fixed` and `regression_verified`.
   metadata into PostgreSQL, and update every affected report.
 - Required regression: Stripe readback, canonical mappings and Preview health
   all agree on exactly two Products, four Prices and zero active subscriptions.
+
+## W7C-136 - Keyboard activation did not start Preview Google OAuth
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `open`
+- Original scenario: QA opened the exact READY Preview, focused `Continuar con
+  Google` and activated it with `Enter` to establish an authenticated staging
+  session for the platform billing flow.
+- Evidence: the page remained on the unauthenticated root and `/admin/billing`
+  still returned `Sesión necesaria`.
+- Impact: no OAuth session, platform command or remote data mutation occurred.
+- Required correction: retry the same visible OAuth control with its supported
+  pointer activation and follow only the existing Google session flow.
+- Required regression: the branch Preview reaches `/admin/billing` as an
+  authenticated staging platform actor without exposing identity data.
+
+## W7C-137 - Wave 7C branch alias is not authorized by the Google OAuth client
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `open`
+- Original scenario: pointer activation successfully started Google OAuth from
+  the exact READY Wave 7C branch alias.
+- Evidence: Google rejected the callback with `redirect_uri_mismatch` for that
+  Preview origin before account selection or token issuance.
+- Impact: no Google or Supabase session was created, no identity was disclosed
+  to the application and no platform command ran.
+- Required correction: reuse the existing non-production OAuth Preview alias
+  that is already allowlisted, pointing it temporarily at the exact Wave 7C
+  READY deployment; do not alter the production Google client or production
+  environment variables.
+- Required regression: OAuth returns to the allowlisted Preview origin, the
+  staging session can read `/admin/billing`, and the temporary alias is removed
+  or restored during final cleanup.
+
+## W7C-138 - OAuth alias alone does not replace the missing branch client ID
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `open`
+- Original scenario: QA temporarily pointed the historical allowlisted OAuth
+  Preview alias at the exact Wave 7C deployment and retried Google sign-in.
+- Evidence: Google still returned `redirect_uri_mismatch`; the deployment was
+  built with the project-wide client ID rather than the historical staging
+  client configured on the former Official UI branch.
+- Impact: no OAuth or Supabase session was issued and no application data was
+  changed. The temporary alias now points to Wave 7C and is tracked for cleanup.
+- Required correction: recover only the public staging OAuth client ID from the
+  immutable historical Preview, add it as a non-sensitive Wave 7C branch
+  override, redeploy, and preserve production environment variables unchanged.
+- Required regression: the allowlisted alias and branch-scoped staging client
+  complete OAuth on the exact Wave 7C SHA; the client ID remains public-only and
+  the historical alias is restored after QA.
+
+## W7C-139 - Vercel rejected the first branch OAuth override transfer
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed` / `regression_verified`
+- Original scenario: the immutable Official UI Preview successfully supplied
+  the shape-valid public staging Google client ID, which QA piped through stdin
+  to a Wave 7C branch-scoped `NEXT_PUBLIC_GOOGLE_CLIENT_ID` override.
+- Evidence: Vercel CLI returned a non-zero status; the runtime client ID binding
+  was cleared and its value was not emitted.
+- Impact: no branch override was confirmed and no production variable changed.
+- Required correction: inspect only redacted CLI diagnostics, reconcile any
+  existing branch/global-name conflict with the supported Vercel env workflow,
+  and retry without exposing the public ID or any OAuth state.
+- Required regression: Preview metadata contains exactly one Wave 7C branch
+  override while the project-wide Production entry remains unchanged.
+- Correction: the supported `--force --no-sensitive` combination replaced the
+  inherited Preview value only for the Wave 7C branch.
+- Verification: the historical identifier passed the public-client shape check
+  and Vercel CLI exited zero without emitting its value.
+
+## W7C-140 - Failed OAuth transfer diagnostics did not persist across runtime calls
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed` / `regression_verified`
+- Original scenario: after the non-zero Vercel result, QA attempted to inspect
+  the prior subprocess object with all client IDs and OAuth parameters redacted.
+- Evidence: the persistent runtime no longer exposed that block-local binding.
+- Impact: no new subprocess or remote change occurred and no identifier was
+  emitted.
+- Required correction: inspect the supported `vercel env add` options first,
+  then rerun extraction and transfer in one bounded call that emits only a
+  sanitized status code and diagnostic category.
+- Required regression: the corrected command succeeds or returns a stable,
+  fully redacted actionable error without relying on prior bindings.
+- Correction: QA discovered the supported overwrite flags from CLI help and
+  performed extraction, transfer and redacted result classification in one
+  bounded runtime call.
+- Verification: client shape and zero-exit transfer both passed; the runtime
+  binding was cleared and no OAuth URL or identifier entered the repository.
