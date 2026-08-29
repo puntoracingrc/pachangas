@@ -29,6 +29,8 @@ from generate_series(1, 2000) value;
 
 set constraints all immediate;
 
+select set_config('pachangas.billing_settings_authority', 'wave7b-scale-fixture', true);
+select set_config('pachangas.billing_mapping_authority', 'wave7b-scale-fixture', true);
 update private.pachanga_organizer_billing_settings set
   foundation_enabled=true,
   plan_catalog_enabled=true,
@@ -51,6 +53,8 @@ insert into private.pachanga_organizer_plan_price_mappings(
   'prod_wave7b_scale', 'price_wave7b_scale_month', 'eur', 1299,
   'unspecified', false, true
 );
+select set_config('pachangas.billing_settings_authority', '', true);
+select set_config('pachangas.billing_mapping_authority', '', true);
 
 insert into private.pachanga_organizer_billing_accounts(
   id, organizer_kind, organizer_group_id, stripe_mode, stripe_customer_id,
@@ -61,7 +65,7 @@ select md5('wave7b-scale-account:' || value)::uuid,
   'TEAM', md5('wave7b-scale-team:' || value)::uuid, 'test',
   'cus_wave7b_scale_' || value,
   md5('wave7b-scale-user:' || value)::uuid,
-  'es-ES', 'ES', 'SANDBOX_READY', 'ORGANIZER',
+  'es-ES', 'ES', 'TEST_READY', 'ORGANIZER',
   case when value % 10 = 0 then 'past_due'
     when value % 17 = 0 then 'canceled' else 'active' end,
   1, nextval('private.pachanga_organizer_billing_sequence')

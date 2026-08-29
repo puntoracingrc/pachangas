@@ -15,7 +15,7 @@ const pgDumpBin = process.env.PG_DUMP_BIN || "pg_dump";
 const suffix = randomBytes(5).toString("hex");
 const databaseName = `pachangas_wave7b_scale_${suffix}`;
 const infrastructureDump = resolve(tmpdir(), `pachangas-wave7b-scale-${suffix}.sql`);
-const waveMigrationPattern = /^2026082816375[0-6]_/;
+const waveMigrationPattern = /^(?:20260828(?:16375[0-6]|2053(?:10|11|13|14|16|17))|20260829080812)_/;
 
 if (!["127.0.0.1", "localhost", "::1", "[::1]"].includes(new URL(adminUrl).hostname)) {
   throw new Error("ORGANIZER_BILLING_SCALE_LOCAL_DATABASE_REQUIRED");
@@ -25,8 +25,8 @@ const migrations = readdirSync(resolve(root, "supabase/migrations"))
   .filter((name) => /^\d{14}_.+\.sql$/.test(name))
   .sort();
 const waveMigrations = migrations.filter((name) => waveMigrationPattern.test(name));
-assert.equal(migrations.length, 190);
-assert.equal(waveMigrations.length, 7);
+assert.equal(migrations.at(-1), "20260829080812_organizer_billing_invalidation_rls_execute_v1.sql");
+assert.equal(waveMigrations.length, 14);
 
 function targetUrl() {
   const value = new URL(adminUrl);
@@ -218,7 +218,7 @@ try {
   assert.ok(finalMetric.indexBytes < 256 * 1024 * 1024, `Wave 7B indexes exceeded 256MiB: ${finalMetric.indexBytes}`);
   finalSummary = {
     database: "ephemeral-local",
-    ledger: 190,
+    ledger: migrations.length,
     preWaveTiming,
     migrationMetrics,
     seedTiming,

@@ -316,7 +316,9 @@ export function OrganizerBillingClient({ checkoutOperationId = "", checkoutStatu
   const currentPlan = organizerBillingRecord(writeAccount?.plan);
   const selectedPlan = selected ? organizerBillingPlanForKind(organizerBillingArray(catalog.plans), organizerBillingText(selected.kind)) : null;
   const checkoutAllowed = mode === "test" ? organizerBillingBoolean(availability.sandboxCheckout) : organizerBillingBoolean(availability.liveCheckout);
-  const portalAllowed = organizerBillingBoolean(availability.portal) && organizerBillingBoolean(writeAccount?.customerConfigured) && organizerBillingNumber(write.revision) > 0;
+  const portalAllowed = (mode === "test" ? organizerBillingBoolean(availability.sandboxPortal) : organizerBillingBoolean(availability.livePortal))
+    && organizerBillingBoolean(writeAccount?.customerConfigured)
+    && organizerBillingNumber(write.revision) > 0;
   const actionDisabled = busy || fromCache || !online;
   const confirmationActive = organizerBillingBoolean(confirmation.entitlementActive);
 

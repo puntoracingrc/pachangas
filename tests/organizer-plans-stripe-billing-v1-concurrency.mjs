@@ -27,7 +27,7 @@ if (!["127.0.0.1", "localhost", "::1", "[::1]"].includes(new URL(adminUrl).hostn
 const migrations = readdirSync(resolve(root, "supabase/migrations"))
   .filter((name) => /^\d{14}_.+\.sql$/.test(name))
   .sort();
-assert.equal(migrations.length, 190);
+assert.equal(migrations.at(-1), "20260829080812_organizer_billing_invalidation_rls_execute_v1.sql");
 
 function targetUrl() {
   const value = new URL(adminUrl);
@@ -154,6 +154,8 @@ try {
     "-c", "commit"], "load Wave 7B fixture");
 
   query(`
+    select set_config('pachangas.billing_settings_authority','wave7b-concurrency-fixture',false);
+    select set_config('pachangas.billing_mapping_authority','wave7b-concurrency-fixture',false);
     update private.pachanga_organizer_billing_settings set
       foundation_enabled=true, plan_catalog_enabled=true, partner_grants_enabled=true,
       billing_accounts_enabled=true, organizer_ui_enabled=true, webhook_ingest_enabled=true,
@@ -175,8 +177,10 @@ try {
     ) values (
       ${quote(billingAccountId)}::uuid, 'TEAM', ${quote(teamId)}::uuid, 'test',
       'cus_wave7b_concurrency', '7b000000-0000-4000-8000-000000000001'::uuid,
-      'SANDBOX_READY', 'ORGANIZER', 'ready'
+      'TEST_READY', 'ORGANIZER', 'ready'
     );
+    select set_config('pachangas.billing_settings_authority','',false);
+    select set_config('pachangas.billing_mapping_authority','',false);
   `, "prepare Wave 7B concurrency state");
 
   const replayOperation = randomUUID();

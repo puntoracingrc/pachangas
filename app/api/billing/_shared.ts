@@ -44,6 +44,15 @@ export function serviceSupabaseClient() {
   });
 }
 
+export function publicSupabaseClient() {
+  return createClient(requiredEnv("NEXT_PUBLIC_SUPABASE_URL"), requiredEnv("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY"), {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  });
+}
+
 export function getOrigin(request: Request) {
   const envOrigin = process.env.NEXT_PUBLIC_APP_URL || process.env.PACHANGAS_APP_URL;
   if (envOrigin) return envOrigin.replace(/\/$/, "");

@@ -78,8 +78,10 @@ function stripeKeyForMode(mode: OrganizerBillingMode) {
   const dedicated = optionalEnvironment(mode === "live" ? "STRIPE_LIVE_SECRET_KEY" : "STRIPE_TEST_SECRET_KEY");
   const fallback = optionalEnvironment("STRIPE_SECRET_KEY");
   const value = dedicated || fallback;
-  const expectedPrefix = mode === "live" ? "sk_live_" : "sk_test_";
-  if (!value.startsWith(expectedPrefix)) throw new Error(`BILLING_STRIPE_${mode.toUpperCase()}_NOT_CONFIGURED`);
+  const expectedPrefixes = mode === "live" ? ["sk_live_"] : ["sk_test_", "rk_test_"];
+  if (!expectedPrefixes.some((prefix) => value.startsWith(prefix))) {
+    throw new Error(`BILLING_STRIPE_${mode.toUpperCase()}_NOT_CONFIGURED`);
+  }
   return value;
 }
 

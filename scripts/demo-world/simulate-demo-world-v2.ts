@@ -1035,18 +1035,21 @@ from matches, standings, discipline_events, discipline_counters,
   discipline_sanctions, discipline_service, discipline_appeals,
   discipline_states, discipline_eligibility, referee_assignment_summary;
 `;
-  const extracted = JSON.parse(psql(["-At", "-c", sql], "extract Demo World V2 authority proof")) as Omit<DemoWorldV2AuthorityProof, "authorityHash" | "configuration" | "database" | "generatedAt" | "migrationCount" | "publicCompetitions" | "remoteWrites" | "rpcFamilies" | "version">;
+  const extracted = JSON.parse(psql(["-At", "-c", sql], "extract Demo World V2 authority proof")) as Omit<DemoWorldV2AuthorityProof, "authorityHash" | "configuration" | "database" | "generatedAt" | "migrationCount" | "organizerBilling" | "publicCompetitions" | "remoteWrites" | "rpcFamilies" | "version">;
   const payload: Omit<DemoWorldV2AuthorityProof, "authorityHash"> = {
     ...extracted,
     configuration: extractConfigurationAuthorityProof(),
     database: "temporary-local-postgresql",
     generatedAt: "2026-08-28T14:00:00.000Z",
     migrationCount,
+    organizerBilling: JSON.parse(psql([
+      "-At", "-c", "select proof from simulation.demo_world_organizer_billing_proof limit 1",
+    ], "extract Demo World V2.9 organizer billing proof")),
     publicCompetitions: extractPublicCompetitionAuthorityProof(),
     remoteWrites: 0,
-    rpcFamilies: ["R1", "R3", "R4A", "R4B", "R4C", "R4D", "R5", "R6A", "R6B", "R6C", "PUBLIC_COMPETITIONS"],
+    rpcFamilies: ["R1", "R3", "R4A", "R4B", "R4C", "R4D", "R5", "R6A", "R6B", "R6C", "PUBLIC_COMPETITIONS", "ORGANIZER_BILLING"],
     tournament: extractTournamentAuthorityProof(),
-    version: 8,
+    version: 9,
   };
   return assertDemoWorldV2AuthorityProof({
     ...payload,
@@ -1056,7 +1059,7 @@ from matches, standings, discipline_events, discipline_counters,
 
 async function committedSnapshot(): Promise<DemoWorldV2Snapshot> {
   const read = async <T>(name: string) => JSON.parse(await readFile(path.join(publicRoot, name), "utf8")) as T;
-  const [activity, clubsReferees, competitions, configuration, core, manifest, matches, players, publicCompetitions, tournament] = await Promise.all([
+  const [activity, clubsReferees, competitions, configuration, core, manifest, matches, organizerBilling, players, publicCompetitions, tournament] = await Promise.all([
     read<DemoWorldV2Snapshot["activity"]>("activity.json"),
     read<DemoWorldV2Snapshot["clubsReferees"]>("clubs-referees.json"),
     read<DemoWorldV2Snapshot["competitions"]>("competitions.json"),
@@ -1064,11 +1067,12 @@ async function committedSnapshot(): Promise<DemoWorldV2Snapshot> {
     read<DemoWorldV2Snapshot["core"]>("core.json"),
     read<DemoWorldV2Snapshot["manifest"]>("manifest.json"),
     read<DemoWorldV2Snapshot["matches"]>("matches.json"),
+    read<DemoWorldV2Snapshot["organizerBilling"]>("organizer-billing.json"),
     read<DemoWorldV2Snapshot["players"]>("players.json"),
     read<DemoWorldV2Snapshot["publicCompetitions"]>("public-competitions.json"),
     read<DemoWorldV2Snapshot["tournament"]>("tournament.json"),
   ]);
-  return { activity, clubsReferees, competitions, configuration, core, manifest, matches, players, publicCompetitions, tournament };
+  return { activity, clubsReferees, competitions, configuration, core, manifest, matches, organizerBilling, players, publicCompetitions, tournament };
 }
 
 function demoWorldVerificationProjection(value: unknown): unknown {
@@ -1076,8 +1080,8 @@ function demoWorldVerificationProjection(value: unknown): unknown {
   const volatileTimestampKeys = new Set([
     "acceptedAt", "approvedAt", "assignedAt", "cancelledAt", "confirmedAt",
     "createdAt", "decidedAt", "generatedAt", "grantedAt", "opensAt",
-    "publishedAt", "rejectedAt", "resolvedAt", "reviewedAt", "submittedAt",
-    "updatedAt", "withdrawnAt",
+    "continuityUntil", "graceEndsAt", "publishedAt", "rejectedAt", "renewalAt",
+    "resolvedAt", "reviewedAt", "submittedAt", "updatedAt", "withdrawnAt",
   ]);
   const digestKey = /(?:authority[_-]?)?hash$|checksum|fingerprint/i;
   const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -1141,7 +1145,9 @@ async function main() {
     { label: "R6A Tournament Foundation", names: incremental.filter((name) => name >= "20260826195034" && name < "20260827105014") },
     { label: "R6B Tournament Group Stage", names: incremental.filter((name) => name >= "20260827105014" && name < "20260827205347") },
     { label: "R6C Tournament Knockout", names: incremental.filter((name) => name >= "20260827205347" && name < "20260828072045") },
-    { label: "Wave 7A Public Competitions", names: incremental.filter((name) => name >= "20260828072045") },
+    { label: "Wave 7A Public Competitions", names: incremental.filter((name) => name >= "20260828072045" && name < "20260828163750") },
+    { label: "Wave 7B Organizer Billing", names: incremental.filter((name) => name >= "20260828163750" && name < "20260828205310") },
+    { label: "Wave 7C Commercial Activation", names: incremental.filter((name) => name >= "20260828205310") },
   ];
   assert.equal(migrationBatches.flatMap(({ names }) => names).length, incremental.length);
 
@@ -1211,6 +1217,11 @@ async function main() {
     psql([
       "-f", sqlFile("scripts/demo-world/demo-world-v2-public-competition-operations.sql"),
     ], "publish Demo World V2.7 public, unlisted and organizer-only canonical competitions");
+    applyBatch(migrationBatches[12]!.label, migrationBatches[12]!.names);
+    applyBatch(migrationBatches[13]!.label, migrationBatches[13]!.names);
+    psql([
+      "-f", sqlFile("scripts/demo-world/demo-world-v2-organizer-billing-operations.sql"),
+    ], "operate Demo World V2.9 Organizer Billing through canonical TEST RPCs and webhooks");
 
     const authorityProof = extractAuthorityProof(migrationNames.length);
     const generated = generateDemoWorldV2(authorityProof);
@@ -1240,7 +1251,7 @@ async function main() {
       migrations: migrationNames.length,
       mode: verifyOnly ? "verify" : "simulate",
       remoteWrites: 0,
-      rpcFamilies: ["R1", "R3", "R4A", "R4B", "R4C", "R4D", "R5", "R6A", "R6B", "R6C", "LEAGUE_PRIVATE_BETA_V1"],
+      rpcFamilies: ["R1", "R3", "R4A", "R4B", "R4C", "R4D", "R5", "R6A", "R6B", "R6C", "LEAGUE_PRIVATE_BETA_V1", "PUBLIC_COMPETITIONS", "ORGANIZER_BILLING"],
       snapshotIdentical: verifyOnly,
     })}\n`);
   } finally {

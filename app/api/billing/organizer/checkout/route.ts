@@ -68,6 +68,7 @@ export async function POST(request: Request) {
       billing_address_collection: "required",
       cancel_url: urls.cancel,
       customer: customerId,
+      customer_update: { address: "auto", name: "auto" },
       line_items: [{ price: String(intent.stripePriceId), quantity: 1 }],
       metadata: {
         billingAccountId: String(intent.billingAccountId),

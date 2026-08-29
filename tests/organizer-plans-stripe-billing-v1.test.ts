@@ -13,6 +13,8 @@ const migrations = [
   "supabase/migrations/20260828163756_organizer_billing_hardening_flags_v1.sql",
 ] as const;
 
+const realtimeRlsPatch = "supabase/migrations/20260829080812_organizer_billing_invalidation_rls_execute_v1.sql";
+
 function source(path: string) {
   return readFile(new URL(`../${path}`, import.meta.url), "utf8");
 }
@@ -61,6 +63,8 @@ test("browser Checkout sends intent only and cannot select Stripe mode or Price"
   assert.match(checkout, /prepare_pachanga_organizer_checkout_service_v1/);
   assert.match(checkout, /idempotencyKey: `\$\{input\.operationId\}:checkout`/);
   assert.match(checkout, /mode: "subscription"/);
+  assert.match(checkout, /customer_update: \{ address: "auto", name: "auto" \}/);
+  assert.match(checkout, /tax_id_collection: \{ enabled: true \}/);
   assert.doesNotMatch(checkout, /input\.(?:stripeMode|stripePriceId|stripeCustomerId)/);
 });
 
@@ -130,6 +134,18 @@ test("Realtime is invalidation-only and clients must refetch canonical read mode
   assert.doesNotMatch(realtime, /payload\.new|last-write-wins|offlineQueue/i);
 });
 
+test("Realtime subscribers can execute only the billing invalidation RLS predicate", async () => {
+  const patch = await source(realtimeRlsPatch);
+  assert.match(patch, /set lock_timeout = '5s'/);
+  assert.match(patch, /set statement_timeout = '5min'/);
+  assert.match(
+    patch,
+    /grant execute on function private\.pachanga_billing_invalidation_can_read_v1\(text, uuid, uuid\)[\s\S]+to anon, authenticated/,
+  );
+  assert.doesNotMatch(patch, /grant execute on function private\.pachanga_billing_(?:touch|invalidate)/);
+  assert.doesNotMatch(patch, /grant (?:insert|update|delete|all) on table/i);
+});
+
 test("Vercel invokes canonical billing reconciliation hourly", async () => {
   const vercel = JSON.parse(await source("vercel.json")) as { crons?: Array<{ path: string; schedule: string }> };
   assert.deepEqual(vercel.crons?.find((entry) => entry.path === "/api/internal/billing/reconcile"), {
@@ -177,12 +193,19 @@ test("Control Center keeps live approval and reconciliation on dedicated platfor
     source("app/admin/billing/organizer-billing-admin-client.tsx"),
     source("app/api/platform-admin/billing/route.ts"),
   ]);
-  assert.match(client, /priceMode === "live" && priceApproved && !canApproveLive/);
+  assert.match(client, /commercial_decision\.approve/);
+  assert.match(client, /disabled=\{!canApproveLive[^\n]+decisionStatus !== "pending_approval"/);
+  assert.match(client, /stripe_catalog\.provision/);
+  assert.match(client, /disabled=\{!canApproveLive[^\n]+decisionStatus !== "approved"[^\n]+LIVE_READY/);
+  assert.match(client, /live_checkout\.activate/);
+  assert.match(client, /disabled=\{!canApproveLive[^\n]+!liveGateReady[^\n]+!liveConfirmation/);
   assert.match(client, /reconciliation\.request/);
   assert.match(client, /manual\.grant/);
   assert.match(client, /manual\.revoke/);
   assert.match(client, /manual\.renew/);
   assert.match(route, /request_pachanga_billing_reconciliation_platform_v1/);
+  assert.match(route, /command_pachanga_organizer_commercial_decision_v1/);
+  assert.match(route, /activate_pachanga_organizer_live_checkout_platform_v1/);
   assert.match(route, /command_pachanga_organizer_billing_platform_v1/);
   assert.doesNotMatch(client, /service_role|stripeCustomerId|stripeSubscriptionId/);
 });
