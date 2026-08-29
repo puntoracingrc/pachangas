@@ -1318,3 +1318,40 @@ Resolved incidents must include `fixed` and `regression_verified`.
   and preserved every unrelated status.
 - Verification: a clean status inventory reports only W7C-004 and W7C-047 as
   open; W7C-068 through W7C-072 are fixed and regression verified.
+
+## W7C-073 - Browser control bindings expired between task turns
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed` / `regression_verified`
+- Original scenario: after explicit authorization to transfer TEST credentials,
+  Wave 7C resumed by listing the existing in-app browser tabs through the
+  previously established `iab` binding.
+- Evidence: the persistent JavaScript runtime reports `iab is not defined`.
+- Impact: no secret was read, printed or transferred; authenticated browser
+  sessions may still exist, but their automation bindings must be recreated.
+- Required correction: reload the in-app browser control package and reacquire
+  only the Stripe, Supabase staging, Vercel and Preview tabs.
+- Required regression: list the intended tabs without exposing credentials and
+  preserve the authenticated sessions needed for TEST-only configuration.
+- Correction: the browser runtime was reinitialized from the bundled client and
+  the exact existing Stripe TEST tab was reclaimed from the authenticated
+  in-app browser session.
+- Verification: the intended Stripe account and TEST URL were recovered without
+  reading cookies, storage, passwords or any credential value.
+
+## W7C-074 - Stripe TEST API-key diagnostic captured a visible secret
+
+- Classification: `SECURITY_ISSUE`
+- Status: `open`
+- Original scenario: the authenticated Stripe TEST API-key page was inspected
+  visually to locate the copy control before branch-scoped Vercel transfer.
+- Evidence: Stripe rendered the standard TEST secret as visible page text, so
+  the diagnostic image contained sensitive credential material.
+- Impact: the value was not copied to Git, Vercel, Supabase, reports or console
+  text, but it must be treated as exposed and cannot be reused for Wave 7C.
+- Required correction: rotate or replace the TEST credential, revoke the
+  exposed credential, transfer only the replacement directly to the isolated
+  Preview and never capture the key page again.
+- Required regression: the old key is unusable, the replacement remains
+  server-only and branch-scoped, and browser/bundle/report scans contain no key
+  material.
