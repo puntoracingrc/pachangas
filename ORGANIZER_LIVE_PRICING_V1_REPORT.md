@@ -22,9 +22,9 @@ mode mismatches, amount drift, interval drift, metadata drift and tax-behavior
 drift. A retry with the same `operationId` is idempotent; a new operation first
 reads and reuses the unique exact resource.
 
-## TEST catalog
+## Temporary TEST catalog
 
-The authorized TEST catalog contains only:
+The isolated Wave 7C QA catalog contained only:
 
 | Product | Monthly | Annual | Mode |
 | --- | ---: | ---: | --- |
@@ -35,6 +35,11 @@ The Stripe Dashboard readback confirmed both Products, all four recurring
 Prices, active state, zero active subscriptions and all five metadata pairs on
 2026-08-29. Their opaque Stripe IDs are intentionally excluded from reports
 and Demo World.
+
+After authenticated QA, the dedicated `Pachangas IQ Wave 7C` TEST environment
+was retired atomically. Its webhook, Products, Prices, standard key and
+restricted key are no longer active. PostgreSQL staging catalog mappings and
+runtime TEST health were reset, while Production retains zero TEST mappings.
 
 ## LIVE boundary
 
@@ -58,3 +63,9 @@ webhook, all four Checkout price/interval combinations without payment,
 owner-only Portal, invoice failure/recovery, cancellation/resume and two-client
 Realtime convergence. Exact redacted outcomes are recorded in
 `STRIPE_ORGANIZER_CHECKOUT_PORTAL_V1_REPORT.md`.
+
+Release readback confirms exact Production ledger 197, all commercial and LIVE
+flags OFF, zero LIVE mappings and no real charge. The production adapter and
+schema remain available for a later explicitly authorized commercial
+activation; this release does not leave Stripe TEST credentials or catalog
+resources deployed.

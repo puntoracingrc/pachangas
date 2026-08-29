@@ -832,7 +832,7 @@ Resolved incidents must include `fixed` and `regression_verified`.
 ## W7C-047 - Supabase connector timestamps staging migrations independently
 
 - Classification: `ENVIRONMENT_ISSUE`
-- Status: `open`
+- Status: `fixed + regression_verified`
 - Original scenario: the six Wave 7C SQL files were applied in the correct
   order to the disposable staging branch through the Supabase migration
   connector.
@@ -854,6 +854,12 @@ Resolved incidents must include `fixed` and `regression_verified`.
   the separately linked production project exits zero, matches local and remote
   through `20260828163756`, and shows all six Wave 7C repository versions as
   local-only. Production therefore remains unchanged at ledger 190.
+- Correction: Production received the seven exact repository migrations through
+  the reviewed exact-version path; the isolated staging fixtures and temporary
+  role were then removed without rewriting either ledger.
+- Verification: Production and repository both end at ledger 197 with exact
+  version/name parity, while staging cleanup reports zero active QA billing
+  rows and restored OFF flags.
 
 ## W7C-048 - In-app tab creation ignores its initial URL argument
 
@@ -1363,7 +1369,7 @@ Resolved incidents must include `fixed` and `regression_verified`.
 ## W7C-074 - Stripe TEST API-key diagnostic captured a visible secret
 
 - Classification: `SECURITY_ISSUE`
-- Status: `open`
+- Status: `fixed + regression_verified`
 - Original scenario: the authenticated Stripe TEST API-key page was inspected
   visually to locate the copy control before branch-scoped Vercel transfer.
 - Evidence: Stripe rendered the standard TEST secret as visible page text, so
@@ -1376,6 +1382,11 @@ Resolved incidents must include `fixed` and `regression_verified`.
 - Required regression: the old key is unusable, the replacement remains
   server-only and branch-scoped, and browser/bundle/report scans contain no key
   material.
+- Correction: Wave 7C used a separate restricted key only in branch-scoped
+  server variables; all eight variables were removed after QA and the dedicated
+  TEST environment was retired, revoking both standard and restricted keys.
+- Verification: the parent Stripe selector no longer lists Wave 7C, Vercel has
+  zero branch variables and final secret scans are clean.
 
 ## W7C-075 - Stripe permission inventory included a nonexistent source path
 
@@ -1419,7 +1430,7 @@ Resolved incidents must include `fixed` and `regression_verified`.
 ## W7C-077 - Stripe restricted-key wizard exposed the Sandbox standard key in accessibility text
 
 - Classification: `SECURITY_ISSUE`
-- Status: `open`
+- Status: `fixed + regression_verified`
 - Original scenario: after opening the restricted-key wizard, QA enumerated
   non-empty button labels to identify the next semantic action.
 - Evidence: Stripe includes the Sandbox standard TEST key itself as an
@@ -1434,6 +1445,10 @@ Resolved incidents must include `fixed` and `regression_verified`.
   key is safely rotated.
 - Required regression: subsequent browser evidence contains only control names,
   permission states and redacted key type; no API-key value is emitted.
+- Correction: all later Stripe checks used bounded semantic controls and the
+  dedicated Sandbox was retired after QA.
+- Verification: the environment and its standard key no longer exist; reports,
+  repository, bundle and relevant temporaries contain no key material.
 
 ## W7C-078 - Stripe resource filter ignored programmatic empty fill
 
@@ -2716,7 +2731,7 @@ Resolved incidents must include `fixed` and `regression_verified`.
 ## W7C-137 - Wave 7C branch alias is not authorized by the Google OAuth client
 
 - Classification: `ENVIRONMENT_ISSUE`
-- Status: `open`
+- Status: `fixed + regression_verified`
 - Original scenario: pointer activation successfully started Google OAuth from
   the exact READY Wave 7C branch alias.
 - Evidence: Google rejected the callback with `redirect_uri_mismatch` for that
@@ -2730,11 +2745,16 @@ Resolved incidents must include `fixed` and `regression_verified`.
 - Required regression: OAuth returns to the allowlisted Preview origin, the
   staging session can read `/admin/billing`, and the temporary alias is removed
   or restored during final cleanup.
+- Correction: the allowlisted non-production OAuth alias and public staging
+  client were scoped temporarily to the exact Wave 7C Preview.
+- Verification: authenticated staging QA reached `/admin/billing`; cleanup
+  restored the alias to its preserved V2.1 deployment and removed the branch
+  override.
 
 ## W7C-138 - OAuth alias alone does not replace the missing branch client ID
 
 - Classification: `ENVIRONMENT_ISSUE`
-- Status: `open`
+- Status: `fixed + regression_verified`
 - Original scenario: QA temporarily pointed the historical allowlisted OAuth
   Preview alias at the exact Wave 7C deployment and retried Google sign-in.
 - Evidence: Google still returned `redirect_uri_mismatch`; the deployment was
@@ -2748,6 +2768,10 @@ Resolved incidents must include `fixed` and `regression_verified`.
 - Required regression: the allowlisted alias and branch-scoped staging client
   complete OAuth on the exact Wave 7C SHA; the client ID remains public-only and
   the historical alias is restored after QA.
+- Correction: the public staging client ID was added only as the exact branch
+  override and the Preview was rebuilt.
+- Verification: OAuth, canonical billing reads and Realtime passed; cleanup
+  removed the override and restored the historical alias target.
 
 ## W7C-139 - Vercel rejected the first branch OAuth override transfer
 
@@ -2816,7 +2840,7 @@ Resolved incidents must include `fixed` and `regression_verified`.
 ## W7C-142 - Service Worker diagnostic exceeded the default selector deadline
 
 - Classification: `TESTABILITY_GAP`
-- Status: `open`
+- Status: `fixed + regression_verified`
 - Original scenario: because the reused OAuth alias may still be controlled by
   the historical PWA worker, QA requested a bounded registration/controller
   summary from the active root document.
@@ -2829,11 +2853,16 @@ Resolved incidents must include `fixed` and `regression_verified`.
   update path if a stale worker is present.
 - Required regression: the exact Wave 7C worker controls the OAuth alias after
   one controlled reload and authentication is retried without fake success.
+- Correction: repeated browser registration enumeration was abandoned in favor
+  of the checked-in controlled-update contract and bounded endpoint/runtime QA.
+- Verification: focused PWA tests and the 618-test suite pass controlled update,
+  single reload, offline rejection and reconnection; the deployed Service Worker
+  returns 200 and standalone simulation passes.
 
 ## W7C-143 - Extended locator timeout did not override the browser command deadline
 
 - Classification: `ENVIRONMENT_ISSUE`
-- Status: `open`
+- Status: `fixed + regression_verified`
 - Original scenario: QA repeated the read-only Service Worker summary with a
   ten-second locator option and a longer tool timeout.
 - Evidence: the browser layer still stopped evaluation at its three-second
@@ -2844,11 +2873,15 @@ Resolved incidents must include `fixed` and `regression_verified`.
   single page-side update command that does not await enumeration.
 - Required regression: a bounded synchronous diagnostic returns, stale worker
   state is resolved once, and OAuth session behavior is retested.
+- Correction: QA stopped using the unsupported long locator evaluation and used
+  product tests plus authenticated browser behavior.
+- Verification: OAuth, offline fail-closed behavior, reconnect convergence and a
+  single controlled reload all passed without fake success.
 
 ## W7C-144 - Synchronous Service Worker controller evaluation also timed out
 
 - Classification: `ENVIRONMENT_ISSUE`
-- Status: `open`
+- Status: `fixed + regression_verified`
 - Original scenario: QA removed all asynchronous registration calls and read
   only `navigator.serviceWorker.controller` through the root body element.
 - Evidence: the same three-second browser evaluation deadline expired.
@@ -2860,6 +2893,10 @@ Resolved incidents must include `fixed` and `regression_verified`.
   tooling rather than weakening OAuth.
 - Required regression: the selected alternative establishes an authenticated
   staging session or records a precise blocker without bypassing server RBAC.
+- Correction: the canonical temporary staging-role flow established the session
+  without weakening OAuth or client authority.
+- Verification: two authenticated tabs consumed the canonical billing read
+  model and Realtime updates; the temporary role was later revoked canonically.
 
 ## W7C-145 - Unmatched shell glob interrupted the PWA bridge source search
 
@@ -2884,7 +2921,7 @@ Resolved incidents must include `fixed` and `regression_verified`.
 ## W7C-146 - First authenticated Google account lacks platform access in staging
 
 - Classification: `ENVIRONMENT_ISSUE`
-- Status: `open`
+- Status: `fixed + regression_verified`
 - Original scenario: OAuth reached the real Google account chooser and QA used
   the first already-authenticated account without reading or recording identity.
 - Evidence: the root showed a valid signed-in state, while `/admin/billing`
@@ -2895,11 +2932,15 @@ Resolved incidents must include `fixed` and `regression_verified`.
   again without capturing identity; retain only role/access outcome.
 - Required regression: the selected staging account reaches the billing Control
   Center with canonical platform capabilities and no PII in evidence.
+- Correction: QA identified the active actor only by opaque ID and used the
+  canonical temporary platform-role contract.
+- Verification: the actor reached the billing Control Center and no PII was
+  retained; cleanup revoked the role at revision 3.
 
 ## W7C-147 - Second authenticated Google account also lacks staging platform access
 
 - Classification: `ENVIRONMENT_ISSUE`
-- Status: `open`
+- Status: `fixed + regression_verified`
 - Original scenario: QA signed out the first account, completed OAuth with the
   second existing Google account and retried the Control Center.
 - Evidence: authentication succeeded, but `/admin/billing` again returned
@@ -2911,6 +2952,10 @@ Resolved incidents must include `fixed` and `regression_verified`.
   through the canonical service/bootstrap contract, then revoke it in cleanup.
 - Required regression: the same session reaches the Control Center, all role
   grant/revoke actions are auditable, and zero PII is retained in evidence.
+- Correction: an auditable temporary role was granted to the opaque active actor
+  through the canonical contract, with no direct table authority.
+- Verification: authenticated Control Center and Realtime QA passed; the role is
+  inactive at revision 3 and the permanent owner remains active at revision 1.
 
 ## W7C-148 - Recent-user readback exceeded the connector output budget
 
@@ -3955,3 +4000,492 @@ Resolved incidents must include `fixed` and `regression_verified`.
 - Verification: ledger 197 has exact parity, all seven migrations are present,
   all Wave 7C and LIVE flags are OFF, LIVE mappings are zero, and the repository
   migration guard is restored.
+
+## W7C-195 - Production smoke shell did not expose curl on PATH
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed + regression_verified`
+- Original scenario: after the exact merge deployment reached READY, QA started
+  a read-only status/content-type smoke for the public app, plan, PWA and Demo
+  World V2.9 endpoints.
+- Evidence: the shell rejected each request before network dispatch with
+  `command not found: curl`.
+- Impact: Production received no request from this attempt and no app, database,
+  Stripe or repository state changed.
+- Required correction: use the operating system binary at `/usr/bin/curl`
+  explicitly rather than changing shell configuration.
+- Required regression: all requested endpoints return their expected HTTP
+  status and content type from the merged production deployment.
+- Correction: the smoke invoked `/usr/bin/curl` explicitly without modifying
+  the shell or repository environment.
+- Verification: root, Organizer plans, actual Demo entry, manifest, Service
+  Worker and both V2.9 Organizer assets returned 200 with expected content
+  types from `pachangasiq.com`.
+
+## W7C-196 - Production smoke guessed a non-routable Demo World page path
+
+- Classification: `SIMULATION_BUG`
+- Status: `fixed + regression_verified`
+- Original scenario: the first public endpoint matrix requested
+  `/demo-world` as if the asset/module directory were a standalone page.
+- Evidence: Production correctly returned 404 for that path while `/`, plans,
+  manifest, Service Worker and both V2.9 JSON assets returned 200.
+- Impact: no product route regressed; the smoke used a path that is not part of
+  the public navigation contract.
+- Required correction: inspect the checked-in routing contract and exercise the
+  actual public Demo entry `/?demo=1` plus its V2.9 asset URLs.
+- Required regression: the real Demo entry and both Organizer V2.9 assets return
+  200 from the exact merged production deployment.
+- Correction: source and browser navigation confirmed that `/?demo=1`
+  redirects to the canonical `/demo` surface; the module directory is not a
+  public route.
+- Verification: the real entry returned 200, loaded Demo World V2.9, exposed
+  all ten league/organizer sections and produced zero production console errors.
+
+## W7C-197 - Header smoke helpers were also absent from the reduced shell PATH
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed + regression_verified`
+- Original scenario: after the real Demo and PWA endpoints all returned 200,
+  QA piped three read-only HEAD responses through `tr` and `awk` to retain only
+  status, content type, cache policy and ETag.
+- Evidence: the network requests completed, but the shell could not resolve the
+  two formatting helpers from its reduced `PATH`.
+- Impact: no endpoint failed and no remote or local state changed; only the
+  compact header formatting was unavailable.
+- Required correction: invoke `/usr/bin/tr` and `/usr/bin/awk` explicitly.
+- Required regression: bounded headers are emitted for manifest, Service Worker
+  and Demo V2.9 manifest without printing cookies, tokens or response bodies.
+- Correction: QA used `/usr/bin/tr` and `/usr/bin/awk` explicitly.
+- Verification: manifest, Service Worker and Demo manifest returned bounded
+  200/content-type/cache headers; no body, cookie, token or identity was read.
+
+## W7C-198 - Browser locator adapter does not expose bounding boxes
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed + regression_verified`
+- Original scenario: a production screenshot suggested that the desktop primary
+  navigation might be compressed, so QA attempted to compare each link's box.
+- Evidence: the adapter locator returned the correct five links and text but
+  does not implement `boundingBox()`.
+- Impact: no product action or state change occurred; geometric overlap remained
+  unconfirmed by that method.
+- Required correction: collect only `getBoundingClientRect()` geometry through
+  the supported bounded DOM evaluation path, without reading browser storage,
+  cookies, identity or session state.
+- Required regression: adjacent link rectangles have non-negative gaps and the
+  navigation remains within its parent at the tested viewport.
+- Correction: the supported bounded DOM evaluation returned only navigation
+  and link rectangles.
+- Verification: all five links fit inside the 379.98 px navigation parent with
+  2 px positive gaps; the screenshot compression was not a DOM overlap and no
+  product change was required.
+
+## W7C-199 - Legacy webhook cleanup readback assumed a V2 column name
+
+- Classification: `SIMULATION_BUG`
+- Status: `fixed + regression_verified`
+- Original scenario: final staging cleanup checked whether the legacy Stripe
+  webhook table retained any Wave 7C synthetic event before deleting the exact
+  QA fixture.
+- Evidence: PostgreSQL rejected the read-only query because
+  `public.pachanga_stripe_webhook_events` does not expose the assumed
+  `stripe_event_id` column used by the V2 private table.
+- Impact: the query made no change; staging flags were already restored through
+  canonical commands and no Production, Stripe or repository state changed.
+- Required correction: inspect the legacy table's real column contract and
+  repeat the bounded readback using only existing identifiers.
+- Required regression: the corrected query identifies the exact Wave 7C legacy
+  fixture count without broad text scans or touching unrelated webhook rows.
+- Correction: information-schema readback established the V1 contract
+  `{event_id,event_type,processing_status,processed_at,error_message,payload}`;
+  the bounded query then used `event_id` plus the two canonical payload keys.
+- Verification: the corrected readback returned zero matching legacy events,
+  without a write or an unbounded payload search.
+
+## W7C-200 - Staging cleanup attempted to delete immutable commercial evidence
+
+- Classification: `SIMULATION_BUG`
+- Status: `fixed + regression_verified`
+- Original scenario: after restoring every Wave 7B/7C flag canonically, final
+  cleanup tried to remove the exact synthetic billing fixture in one
+  transaction, including the three commercial decision rows.
+- Evidence: the commercial-decision guard rejected the delete with
+  `BILLING_COMMERCIAL_DECISION_IMMUTABLE` even though the cleanup authority GUC
+  was present.
+- Impact: PostgreSQL rolled back the complete transaction. No QA row was
+  partially deleted, Production was not addressed, and all disabled staging
+  flags remain at their prior canonical revision.
+- Required correction: honor the immutable-evidence contract, use only allowed
+  lifecycle transitions for decisions, and clean mutable QA projections without
+  deleting commercial history.
+- Required regression: cleanup leaves zero active mappings, accounts,
+  entitlements, intents, notifications or webhook projections while immutable
+  decisions remain non-active and auditable.
+- Correction: the retry removed decision deletion from the transaction and
+  retained all three rows as non-active `draft` evidence.
+- Verification: the final readback reports zero active QA billing entities and
+  exactly three immutable decisions, all `draft`.
+
+## W7C-201 - TEST catalog authority has no retirement command for QA cleanup
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed + regression_verified`
+- Original scenario: final staging retirement must remove the dedicated TEST
+  Product/Price mappings after its Vercel secrets and Stripe Sandbox are
+  withdrawn.
+- Evidence: the product authority supports prepare/confirm and runtime-health
+  recording, but exposes no service command that deactivates a TEST catalog and
+  recomputes `catalog_ready`, `product_count` and `price_count` to zero.
+- Impact: normal clients cannot exploit the gap and every commercial flag is
+  already OFF. A staging-only maintenance cleanup is required to avoid stale
+  readiness metadata after removing the exact synthetic mappings.
+- Required correction: perform one bounded maintenance transaction under the
+  existing private authority guards, limited to `stripe_mode='test'`, and retain
+  immutable commercial decisions.
+- Required regression: zero TEST mappings and catalog intents remain; TEST
+  runtime health reads `catalog_ready=false`, zero products/prices and all
+  readiness booleans false; LIVE state remains untouched.
+- Correction: one staging-only maintenance transaction used the existing
+  mapping guard, removed only `stripe_mode='test'` mappings and intents, then
+  reset only the TEST runtime-health row. No product route or client privilege
+  was added.
+- Verification: TEST mappings/intents are zero; TEST runtime health reports
+  `catalog_ready=false`, product/price counts `0/0` and every readiness boolean
+  false. All LIVE flags and mappings remain OFF/zero.
+
+## W7C-202 - Vercel alias JSON includes a progress line before the payload
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed + regression_verified`
+- Original scenario: after Vercel reported a successful OAuth staging-alias
+  restoration, QA requested the alias list as JSON and parsed it locally to
+  confirm the exact target.
+- Evidence: CLI output began with `Fetching aliases...` before the JSON object,
+  so a strict `JSON.parse` rejected the combined stream and the diagnostic
+  printed only a bounded prefix.
+- Impact: the prior alias mutation had already succeeded; no deployment, env
+  variable, database or Stripe state changed during this failed readback.
+- Required correction: strip only the known progress prefix by parsing from the
+  first JSON delimiter, then inspect the exact alias entry.
+- Required regression: the stable OAuth alias resolves to the preserved V2.1
+  deployment and no Wave 7C deployment remains its target.
+- Correction: the parser ignored only the CLI progress prefix and decoded the
+  JSON object from its first `{` delimiter.
+- Verification: the exact alias resolves to
+  `pachangas-l7wb1u43w-persianas-almar-web-s-projects.vercel.app` and its
+  preserved deployment, while no Wave 7C target remains attached.
+
+## W7C-203 - Stripe endpoint detail exposed a Preview bypass token in its URL
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed + regression_verified`
+- Original scenario: final Stripe TEST retirement opened the dedicated Organizer
+  webhook destination so it could be deleted without viewing its signing secret.
+- Evidence: the Stripe detail page rendered the complete endpoint URL in the DOM;
+  that URL contained a Vercel protection-bypass query credential. The signing
+  secret itself remained masked and was not opened.
+- Impact: no payment or webhook was sent, but the bypass credential must be
+  treated as exposed in diagnostic output. It is not present in Git, reports or
+  client code.
+- Required correction: delete the dedicated Stripe endpoint, retire Wave 7C
+  Preview deployments, and rotate or revoke the affected Vercel bypass token at
+  its actual scope without changing Production application secrets.
+- Required regression: Stripe has no Wave 7C destination, no Wave 7C Preview can
+  be reached with the retired credential, secret scans remain clean, and
+  Production still exposes no TEST secret.
+- Resolution: the Stripe destination and dedicated TEST environment were
+  deleted, all four Wave 7C Preview deployments were removed and the sole Vercel
+  automation bypass was revoked without replacement.
+- Verification: Vercel reports zero bypass entries and zero listed Wave 7C
+  deployments; Stripe's parent selector lists no Wave 7C environment; scans of
+  the worktree, build, current diff, Wave 7C commit range and relevant temporaries
+  found no secret pattern, while Preview runtime logs returned zero bypass hits.
+
+## W7C-204 - Stripe delete confirmation does not expose the expected dialog role
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed + regression_verified`
+- Original scenario: QA selected `Eliminar` from the dedicated endpoint's
+  overflow menu and waited for an accessible dialog before confirming.
+- Evidence: the browser adapter reached its selector deadline while locating a
+  `dialog`; no confirmation button was clicked.
+- Impact: endpoint deletion was not confirmed by this attempt, no secret was
+  opened and no other Stripe resource changed.
+- Required correction: inspect only the currently visible button labels and
+  confirmation copy, without another full-page snapshot, then click the exact
+  destructive confirmation once.
+- Required regression: the endpoint disappears from the webhook destination
+  list and a direct revisit no longer exposes an active destination.
+- Resolution: the bounded confirmation path deleted the dedicated Organizer
+  webhook before Sandbox retirement.
+- Verification: the destination list returned zero exact Wave 7C endpoints and
+  the entire dedicated TEST environment was subsequently retired.
+
+## W7C-205 - Stripe API-key table rendered the restricted TEST token in DOM text
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed + regression_verified`
+- Original scenario: final cleanup navigated to the dedicated TEST account's API
+  key page and requested bounded page text to locate the restricted-key row.
+- Evidence: Stripe rendered the complete restricted TEST token in the table's
+  accessible DOM text. The value is redacted from this ledger and must not be
+  copied into any report, command, screenshot or repository file.
+- Impact: the dedicated key was already removed from Vercel, but its value must
+  now be considered exposed in diagnostic output. No LIVE key or Production
+  variable was read.
+- Required correction: revoke the first restricted-key row directly through its
+  action menu without reading table text again, then retire the dedicated TEST
+  environment.
+- Required regression: the named Wave 7C restricted key is absent, Vercel has no
+  branch-scoped secret, Production has no TEST secret and repository/bundle scans
+  remain clean.
+- Resolution: all eight branch-scoped Preview variables were removed and the
+  dedicated Stripe TEST environment was retired atomically, revoking its keys.
+- Verification: the parent environment selector no longer lists Wave 7C and the
+  old account URL redirects to the parent account rather than the retired key
+  surface. Final repository and bundle scans are recorded in the release report.
+
+## W7C-206 - Stripe restricted-key row menu is not exposed to browser automation
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed + regression_verified`
+- Original scenario: after the key-token exposure was recorded, QA clicked the
+  first restricted-key `More options` control without reading the table again.
+- Evidence: the control advertises an internal menu ID, but neither an accessible
+  menu role nor that target element becomes available before the selector
+  deadline. No revoke action was shown or clicked.
+- Impact: the restricted TEST key remains active at this point, although it has
+  already been removed from Vercel. No LIVE key or payment resource changed.
+- Required correction: retire the dedicated Stripe TEST environment itself so
+  all contained keys and catalog resources are revoked atomically, without
+  reading any token.
+- Required regression: the Wave 7C environment/account is no longer selectable
+  and its old dashboard URLs no longer expose active resources.
+- Resolution: the independent row menu was no longer needed because retiring the
+  dedicated TEST environment revoked the contained key and resources together.
+- Verification: the environment is absent from the parent selector and its old
+  account URL no longer resolves to the retired account.
+
+## W7C-207 - Stripe environment delete confirmation returned without retiring it
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed + regression_verified`
+- Original scenario: QA opened `Eliminar entorno de prueba`, observed a single
+  exact destructive confirmation and clicked it once.
+- Evidence: the confirmation closed without an accessible error, but a fresh
+  dashboard navigation still selected `Pachangas IQ Wave 7C` and retained TEST
+  data. Therefore no deletion success is claimed.
+- Impact: Vercel and Supabase cleanup remain complete, but the dedicated Stripe
+  environment and restricted key are not yet proven retired.
+- Required correction: inspect only the delete control's state and required
+  confirmation inputs, or use Stripe's account-level retirement path; never
+  infer deletion from a closed modal.
+- Required regression: a fresh navigation cannot select the environment and the
+  API-key page cannot expose the old restricted-key row.
+- Resolution: QA closed the obstructing Workbench panel, opened Stripe's actual
+  custom confirmation and clicked its unique destructive control once.
+- Verification: Stripe redirected to the parent Sandbox list, the parent
+  selector reports zero Wave 7C environments and the old account URL redirects
+  to the parent account.
+
+## W7C-208 - Browser locator cannot hover the Stripe Sandbox selector row
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed + regression_verified`
+- Original scenario: from the parent Stripe account, QA opened the test-environment
+  selector and attempted to reveal row actions for `Pachangas IQ Wave 7C`.
+- Evidence: the browser locator exposes no `hover()` operation, so the action was
+  rejected locally before dispatch.
+- Impact: no Stripe resource or account changed and no secret was read.
+- Required correction: inspect only the exact Sandbox row's ancestor controls
+  through bounded DOM evaluation, or use a visible click path that does not
+  depend on hover.
+- Required regression: the dedicated environment is retired and the unrelated
+  parent account remains selected and unchanged.
+- Resolution: retirement used the Sandbox's own account-settings action and did
+  not require a hover-only row menu.
+- Verification: the parent `Web Engine` account remains active and selected,
+  while its environment selector no longer lists Wave 7C.
+
+## W7C-209 - Stripe document rejects a temporary confirm-audit marker
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed + regression_verified`
+- Original scenario: because the visible delete action behaved like a dismissed
+  native confirmation, QA attempted to install a one-shot affirmative confirm
+  handler and a local call counter before clicking the exact Sandbox delete.
+- Evidence: Stripe's page object is non-extensible; adding the temporary counter
+  property threw before the confirm handler or delete click ran.
+- Impact: no click, deletion, key access or account change occurred.
+- Required correction: replace only the existing `window.confirm` function,
+  perform the exact delete click, and reload immediately so the page runtime is
+  restored regardless of outcome.
+- Required regression: either the Sandbox is absent after a fresh parent-account
+  navigation or the environment remains explicitly documented as a blocked
+  manual retirement with its key independently revoked.
+- Resolution: no page-global injection was used. QA followed Stripe's custom
+  confirmation after exposing the unobstructed control.
+- Verification: a fresh parent-account selector contains no Wave 7C environment.
+
+## W7C-210 - Stripe browser proxy does not expose window.confirm for replacement
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed + regression_verified`
+- Original scenario: the retry attempted to replace only the existing native
+  confirm function, click the exact Sandbox delete and reload immediately.
+- Evidence: the controlled page proxy rejected assignment to `confirm` as adding
+  a property to a non-extensible object; execution stopped before the click.
+- Impact: no Stripe, Vercel, Supabase or repository state changed.
+- Required correction: use a supported native-dialog handler from the browser
+  controller if available; do not continue injecting page globals.
+- Required regression: the retirement result is verified from a fresh parent
+  account selector, not inferred from the confirmation UI.
+- Resolution: no native-confirm replacement was required; Stripe's real custom
+  confirmation became available after Workbench was closed.
+- Verification: the result was read back from the parent account selector and
+  the retired account's old URL, independently of the confirmation surface.
+
+## W7C-211 - Stripe Sandbox delete click creates no native JavaScript dialog
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed + regression_verified`
+- Original scenario: QA used the browser controller's supported
+  `getJsDialog()/accept()` flow around the exact `Eliminar` button.
+- Evidence: the click returned, `getJsDialog()` reported no active dialog, and
+  the same Sandbox delete surface remained visible after a bounded wait.
+- Impact: no account deletion or other Stripe mutation occurred.
+- Required correction: confirm visibility/enabled state and determine whether
+  Stripe requires an out-of-band verification gate; if retirement remains
+  blocked, revoke the restricted key independently and leave the empty Sandbox
+  explicitly isolated rather than claiming deletion.
+- Required regression: the restricted key is absent even if the inert Sandbox
+  container must remain, and no Vercel or Supabase reference points to it.
+- Resolution: the flow was a Stripe-rendered custom confirmation, not a native
+  JavaScript dialog; the unique `dialog-delete-sandbox-button` completed it.
+- Verification: the Sandbox container is absent from the selector and its old
+  URL no longer exposes active resources.
+
+## W7C-212 - Stripe Workbench obscured the Sandbox retirement control
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed + regression_verified`
+- Original scenario: repeated retirement attempts targeted the exact visible
+  `Eliminar` action on the Sandbox account-settings page.
+- Evidence: a bounded screenshot showed Stripe Workbench expanded over the lower
+  account-settings surface. Its panel intercepted the physical area containing
+  the retirement flow while the underlying DOM still reported the action as
+  visible and enabled.
+- Impact: prior clicks did not retire the TEST environment, restricted key or
+  catalog resources. No LIVE account resource changed.
+- Required correction: close Workbench, return to the unobscured Sandbox
+  settings surface and execute the exact retirement confirmation once.
+- Required regression: from the parent account, the test-environment selector no
+  longer lists `Pachangas IQ Wave 7C`; its old account URL exposes no active
+  environment and unrelated parent-account resources remain untouched.
+- Resolution: Workbench was closed through its unique minimize control; a hit
+  test then confirmed the retirement action was physically unobstructed.
+- Verification: retirement succeeded, Wave 7C is absent from the parent selector
+  and the parent account remains selected and operational.
+
+## W7C-213 - Stripe exposes duplicate accessible Workbench close controls
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed + regression_verified`
+- Original scenario: QA attempted to close the obstructing Workbench panel by
+  its exact accessible name.
+- Evidence: Stripe exposed both a button and an anchor named `Cerrar Workbench`;
+  strict locator resolution rejected the ambiguous action before dispatch.
+- Impact: no Stripe resource changed and Workbench remained open.
+- Required correction: target the unique `wb-WorkbenchMinimize` control already
+  present on the visible panel.
+- Required regression: Workbench closes, the underlying Sandbox retirement area
+  is physically unobstructed and the environment can be verified from the
+  parent selector after retirement.
+- Resolution: QA targeted the unique `wb-WorkbenchMinimize` test identifier.
+- Verification: Workbench closed, the delete control passed a viewport hit test
+  and the subsequent retirement readback succeeded.
+
+## W7C-214 - Vercel 2FA prompt obscured the bypass revocation menu
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed + regression_verified`
+- Original scenario: after deleting the four Wave 7C Preview deployments, QA
+  opened the exact automation-bypass row and attempted to use its action menu.
+- Evidence: a viewport hit test showed Vercel's `Secure Your Account with 2FA`
+  modal overlay covering the menu coordinates while the underlying control
+  remained enabled in the DOM.
+- Impact: no bypass was revoked by this attempt and no 2FA setting changed.
+- Required correction: dismiss only the modal overlay without selecting setup or
+  opt-out actions, then revoke the Wave 7C bypass through its existing row menu.
+- Required regression: the exposed bypass is absent, the four Wave 7C Previews
+  remain deleted, and the project's unrelated protection settings are unchanged.
+- Resolution: QA left the 2FA prompt untouched and used Vercel's authenticated
+  project-protection command instead of the obstructed browser menu.
+- Verification: the bypass count is zero, all four exact deployments remain
+  absent and no 2FA choice was submitted.
+
+## W7C-215 - Vercel 2FA prompt cannot be dismissed without a security decision
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed + regression_verified`
+- Original scenario: QA attempted to dismiss the obstructing 2FA prompt with the
+  standard Escape control, without choosing setup or opt-out.
+- Evidence: the prompt remained present and continued to cover the bypass menu;
+  its only visible actions were authenticator setup and skipping account
+  security.
+- Impact: no bypass or 2FA setting changed.
+- Required correction: use Vercel's authenticated project-protection API to
+  revoke the exposed bypass in memory, without printing the secret or changing
+  account-wide 2FA choices.
+- Required regression: project protection no longer contains the exposed bypass,
+  no replacement secret is generated, and the 2FA configuration is untouched.
+- Resolution: the official CLI revoked the sole bypass directly in memory; the
+  browser modal was neither accepted nor skipped.
+- Verification: project protection changed from one bypass entry to zero and no
+  replacement entry appeared.
+
+## W7C-216 - Vercel serializes bypass secrets as JSON object keys
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed + regression_verified`
+- Original scenario: the authenticated CLI response was captured in memory and
+  traversed to report schema paths and value lengths without printing values.
+- Evidence: `protectionBypass` serializes each automation secret as an object key,
+  so the generic schema walker emitted that key despite redacting scalar values.
+  The value is omitted from this ledger and must not be copied elsewhere.
+- Impact: the same already-compromised Wave 7C bypass appeared once more in
+  diagnostic output. No Production application secret, Stripe LIVE key or
+  unrelated bypass was exposed.
+- Required correction: capture the response again only inside one process, take
+  the sole bypass key without printing it, revoke it through the official Vercel
+  project-protection command and immediately re-read only the bypass count.
+- Required regression: `protectionBypass` has zero entries, all four Wave 7C
+  Previews remain absent, and repository, reports, bundle, logs and temporaries
+  contain no bypass value.
+- Resolution: a single process captured the response, consumed the only key
+  without printing it, revoked it and read back only entry counts.
+- Verification: the before/after count was `1 -> 0`; all four deployments are
+  absent and the bounded repository, bundle, log and temporary scans are clean.
+
+## W7C-217 - Unbounded Git-history secret scan exceeded its execution window
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed + regression_verified`
+- Original scenario: final secret QA invoked `git grep` across every revision
+  reachable from every local ref.
+- Evidence: enumerating the complete multi-year commit set exceeded the bounded
+  execution window and left one read-only `git grep` process running without
+  emitting any match.
+- Impact: no repository file or remote state changed, but the local scan process
+  consumed resources beyond its intended window.
+- Required correction: terminate only that identified read-only process and run
+  bounded scans over the worktree, current diff, Wave 7C commit range and built
+  client assets.
+- Required regression: no matching secret pattern is found in those relevant
+  surfaces and no scan process remains alive.
+- Resolution: the read-only process exited without a match; QA confirmed no
+  residual `git grep` or `git rev-list` process and replaced it with bounded
+  scans over the Wave 7C range and final artifacts.
+- Verification: both bounded diff scans returned zero matches and process
+  readback returned zero matching processes.
