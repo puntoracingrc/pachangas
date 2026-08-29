@@ -1355,3 +1355,286 @@ Resolved incidents must include `fixed` and `regression_verified`.
 - Required regression: the old key is unusable, the replacement remains
   server-only and branch-scoped, and browser/bundle/report scans contain no key
   material.
+
+## W7C-075 - Stripe permission inventory included a nonexistent source path
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed` / `regression_verified`
+- Original scenario: the pre-key least-privilege inventory searched all expected
+  Organizer billing and shared-library paths in one read-only command.
+- Evidence: `rg` reported that `app/_lib` does not exist, while still returning
+  matches from the valid Wave 7C paths.
+- Impact: no source, Stripe resource or credential changed; the partial result
+  is insufficient as the final permission manifest input.
+- Required correction: repeat the inventory over paths discovered from
+  `rg --files` and inspect every real Stripe client call.
+- Required regression: produce a complete call-to-permission map with no missing
+  or guessed path and no secret material.
+- Correction: `rg --files` established the exact Organizer billing, platform
+  administration and webhook source set before the call inventory was repeated.
+- Verification: `STRIPE_ORGANIZER_RESTRICTED_TEST_KEY_MANIFEST.md` maps every
+  real Stripe API call to a minimum Read/Write permission, records explicit
+  denials and contains no key, customer, Product, Price or endpoint identifier.
+
+## W7C-076 - Stripe Sandbox radio inspection exceeded the selector deadline
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed` / `regression_verified`
+- Original scenario: the Sandbox creation form exposed two radio choices and QA
+  attempted to read each choice's bounded parent text before selecting one.
+- Evidence: the first locator evaluation exceeded the three-second selector
+  deadline.
+- Impact: no option was selected and no Sandbox or Stripe resource was created.
+- Required correction: identify choices through their accessible labels and
+  individual attributes, then select only the verified blank/copy option.
+- Required regression: the selected Sandbox mode and final confirmation state
+  must be readable semantically before submission.
+- Correction: the form choices were resolved from exact accessible labels;
+  `Crear entorno de prueba nuevo` was selected and confirmed visually before
+  the final create action.
+- Verification: Stripe switched to the new blank `Pachangas IQ Wave 7C`
+  Sandbox, whose account context contains no copied active-account resources.
+
+## W7C-077 - Stripe restricted-key wizard exposed the Sandbox standard key in accessibility text
+
+- Classification: `SECURITY_ISSUE`
+- Status: `open`
+- Original scenario: after opening the restricted-key wizard, QA enumerated
+  non-empty button labels to identify the next semantic action.
+- Evidence: Stripe includes the Sandbox standard TEST key itself as an
+  accessibility-labelled copy button, so the diagnostic output contained that
+  credential.
+- Impact: the credential was not copied to Git, Vercel, code, reports or the
+  application and will not be used by Wave 7C; it belongs only to the new empty
+  temporary Sandbox.
+- Required correction: never enumerate global control text on any API-key page;
+  target only known wizard labels, create the restricted key, and treat the
+  Sandbox standard key as exposed until the Sandbox is retired or its standard
+  key is safely rotated.
+- Required regression: subsequent browser evidence contains only control names,
+  permission states and redacted key type; no API-key value is emitted.
+
+## W7C-078 - Stripe resource filter ignored programmatic empty fill
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed` / `regression_verified`
+- Original scenario: the least-privilege review attempted to clear the resource
+  filter with `fill("")` before enumerating every selected permission.
+- Evidence: only three webhook-related rows remained and a bounded input readback
+  confirmed the filter value was still `Webhook`.
+- Impact: the initial empty selected-permission result is invalid; no permission
+  or Stripe resource changed during that readback.
+- Required correction: clear the custom combobox with select-all/backspace and
+  verify its value is empty before auditing all selected rows.
+- Required regression: the final selection inventory must include every
+  non-None permission and exactly match the redacted manifest allowlist.
+- Correction: the filter was cleared with select-all/backspace and its empty
+  value was confirmed before the complete resource table was audited.
+- Verification: the final selection inventory contained only the seven
+  allowlisted Stripe UI resources and no hidden filtered grants.
+
+## W7C-079 - Stripe use-case wizard preselected broad prohibited permissions
+
+- Classification: `SECURITY_ISSUE`
+- Status: `fixed` / `regression_verified`
+- Original scenario: the restricted-key wizard was initialized with the
+  `Facturacion y suscripciones recurrentes` use case before applying the
+  manifest's seven explicit resource permissions.
+- Evidence: the complete selection audit found dozens of implicit Write grants,
+  including Charges and Refunds, Payment Disputes, Subscriptions, invoices,
+  payment methods, Tax Settings and Registrations, and unrelated resources.
+- Impact: the restricted key has not been created, so no credential or remote API
+  access exists with those permissions.
+- Required correction: reset every resource to `Ninguno`, then apply only the
+  seven UI resources needed by the redacted manifest.
+- Required regression: the final full-table audit must contain exactly Balance
+  Read; Products, Prices, Checkout Sessions, Customers and Customer Portal
+  Write; and Webhook Endpoints Read, with every prohibited resource absent.
+- Correction: every preselected resource row was reset to `Ninguno` before the
+  seven manifest resources were reapplied explicitly.
+- Verification: the complete unfiltered audit matched the allowlist exactly;
+  Charges, Refunds, Disputes, Connect, Transfers, Tax and every other prohibited
+  resource remained unselected.
+
+## W7C-080 - Stripe restricted-key existence readback exceeded the output budget
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed` / `regression_verified`
+- Original scenario: after submitting the least-privilege restricted-key form,
+  QA navigated back to the Sandbox API-key page and attempted to verify the new
+  credential row.
+- Evidence: the browser diagnostic exceeded the available output budget and was
+  truncated before an exact key-name result was returned.
+- Impact: the truncated diagnostic is discarded and does not prove whether the
+  restricted key was created; no credential value from that output is used or
+  copied anywhere.
+- Required correction: query only the exact redacted key name and return a
+  boolean or bounded count, without enumerating page text, controls or values.
+- Required regression: the key-name readback must be deterministic and the only
+  credential evidence emitted must be the redacted type check `rk_test`, never
+  the key value.
+- Correction: the retry queried only the exact redacted key name after a bounded
+  reload and returned a numeric count.
+- Verification: the deterministic readback returned zero and emitted no page
+  text, control inventory or credential value, proving the prior submission did
+  not create the restricted key.
+
+## W7C-081 - Exact Stripe key-name locator used the wrong tab API
+
+- Classification: `SIMULATION_BUG`
+- Status: `fixed` / `regression_verified`
+- Original scenario: the bounded retry called `getByText` directly on the
+  persistent in-app browser tab object.
+- Evidence: the controller returned `getByText is not a function` without
+  evaluating any Stripe page text or credential value.
+- Impact: no remote or local state changed and the restricted key remains
+  unverified.
+- Required correction: inspect only the controller object's method names, then
+  use its supported semantic locator surface for the exact redacted key name.
+- Required regression: the supported call must return only a bounded count and
+  must not enumerate controls, page text or API-key values.
+- Correction: controller method inspection identified the supported semantic
+  locator under `tab.playwright` without reading the Stripe document.
+- Verification: the corrected locator returned the exact-name count only and
+  exposed no credential or unrelated page content.
+
+## W7C-082 - Restricted-key wizard appeared complete without creating a key
+
+- Classification: `SIMULATION_BUG`
+- Status: `open`
+- Original scenario: the least-privilege wizard submission navigated away from
+  its permission form and was initially treated as successful.
+- Evidence: two bounded exact-name readbacks after a fresh API-key-page reload
+  returned zero rows for `Pachangas IQ Wave 7C Preview`.
+- Impact: no restricted credential exists yet and no value has been transferred
+  to Vercel; TEST E2E remains blocked closed.
+- Required correction: repeat the restricted-key flow without a use-case preset,
+  submit through the exact final action and retain the one-time result until its
+  key row and restricted TEST type have both been confirmed.
+- Required regression: exactly one named restricted key must exist with only the
+  manifest allowlist, and Vercel transfer must occur from that verified row
+  without exposing its value.
+
+## W7C-083 - Semantic API-key create click produced no UI transition
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed` / `regression_verified`
+- Original scenario: after the exact-name readback proved no restricted key
+  existed, QA clicked the visible and enabled `Crear clave restringida` button
+  through its accessible role.
+- Evidence: the URL, visible headings and registered key-related test IDs were
+  unchanged, and no dialog or additional Stripe tab appeared.
+- Impact: no key, permission or remote object changed; the workflow remains
+  fail-closed.
+- Required correction: target the unique
+  `data-testid=create-restricted-key-button` control and verify a concrete UI
+  transition before interacting with any wizard field.
+- Required regression: one bounded interaction must expose the expected wizard
+  state without enumerating API-key-page text or controls.
+- Correction: the button's bounded React action was identified through the
+  exact test ID and invoked to open the same Stripe drawer without reading page
+  content or credentials.
+- Verification: the restricted-key drawer opened and exposed only its expected
+  own-integration choices plus disabled `Continuar` state.
+
+## W7C-084 - Locator evaluation did not expose a native DOM button
+
+- Classification: `SIMULATION_BUG`
+- Status: `fixed` / `regression_verified`
+- Original scenario: after semantic clicks produced no transition, QA attempted
+  to invoke the unique button's native `click()` inside locator evaluation.
+- Evidence: the browser abstraction returned `el.click is not a function`.
+- Impact: no Stripe UI or remote state changed and no page content was read.
+- Required correction: perform a page-scoped DOM query for the exact unique
+  test ID and invoke the native button there, then inspect only bounded wizard
+  state.
+- Required regression: the page-scoped action must open the restricted-key
+  workflow and must not read or emit any API-key value.
+- Correction: the unsupported locator mutation was abandoned; read-only CDP
+  inspection resolved the exact React action bound to the unique button.
+- Verification: invoking that bounded action opened the workflow without
+  enumerating API-key values, page controls or credential text.
+
+## W7C-085 - Browser evaluation sandbox omitted DOM constructor globals
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed` / `regression_verified`
+- Original scenario: the page-scoped retry guarded the exact button with an
+  `instanceof HTMLElement` check before invoking it.
+- Evidence: the browser evaluation sandbox returned that the right-hand side of
+  `instanceof` was not an object.
+- Impact: evaluation stopped before clicking; no Stripe state or credential
+  changed.
+- Required correction: test the queried node and callable method directly
+  without relying on unavailable DOM constructor globals.
+- Required regression: the bounded page action returns only found/clicked state
+  and the wizard transition, with no document text or values.
+- Correction: no unavailable DOM constructor is used; supported CDP object
+  inspection and native input activation are scoped to exact known controls.
+- Verification: the drawer, use-case checkbox and permission controls all
+  transitioned without exposing document text or credential values.
+
+## W7C-086 - Chrome connection timed out and reset browser bindings
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed` / `regression_verified`
+- Original scenario: after the in-app Stripe control failed to execute the
+  create-button transition, QA attempted to attach to the user's authenticated
+  Chrome session as a second browser surface.
+- Evidence: browser connection exceeded thirty seconds and reset the persistent
+  controller before returning documentation or a tab.
+- Impact: no Stripe, Vercel or Supabase state changed; only local browser-control
+  bindings were lost.
+- Required correction: reinitialize the browser runtime, read the Chrome
+  troubleshooting guidance and reacquire an authenticated Stripe tab once.
+- Required regression: the recovered browser exposes a stable tab and exact
+  semantic controls without reading cookies, storage or credential values.
+- Correction: Chrome troubleshooting was read, both browser surfaces were
+  reinitialized once, and the existing authenticated in-app Stripe tab was
+  reacquired directly.
+- Verification: Chrome was correctly identified as unauthenticated and left
+  unused; the recovered in-app tab remained authenticated and stable without
+  reading cookies, storage, passwords or credentials.
+
+## W7C-087 - Synthetic Stripe option event lacked required React event shape
+
+- Classification: `SIMULATION_BUG`
+- Status: `fixed` / `regression_verified`
+- Original scenario: after opening the restricted-key drawer through its exact
+  internal UI action, QA invoked the own-integration option with a minimal event
+  object.
+- Evidence: Stripe's composed option handler returned an exception and the
+  `Continuar` action remained disabled.
+- Impact: no option, permission or key changed; the wizard remains at its first
+  step.
+- Required correction: inspect the bounded exception and use the visible DOM
+  node's real interaction path or a complete compatible event shape.
+- Required regression: own integration becomes the selected option and
+  `Continuar` becomes enabled before any submission occurs.
+- Correction: the synthetic handler path was discarded and the visible option
+  was activated through Stripe's supported keyboard interaction.
+- Verification: `Poniendo en marcha una integracion que has creado` became the
+  selected path and `Continuar` lost its disabled state before advancing.
+
+## W7C-088 - Stripe use-case checkbox ignored native checked-state action
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed` / `regression_verified`
+- Original scenario: at the use-case step, QA attempted to select the recurring
+  billing preset through the visible enabled checkbox's native checked-state
+  action.
+- Evidence: the controller reported that the click did not change the checkbox
+  to checked.
+- Impact: no use case, permission or key changed and `Continuar` remained
+  disabled.
+- Required correction: activate the focused checkbox through Stripe's keyboard
+  path, verify the checked state, then advance to the permission table where all
+  preset grants are reset before applying the manifest.
+- Required regression: exactly one temporary use case is selected and no preset
+  permission survives the final unfiltered allowlist audit.
+- Correction: the exact recurring-billing input was activated through its
+  native HTML input action and its checked state was confirmed before advancing.
+- Verification: all 47 preset grants were subsequently reset to `Ninguno`; the
+  final unfiltered table contains exactly Balance Read; Customers, Products,
+  Customer Portal, Prices and Checkout Sessions Write; and Webhook Endpoints
+  Read.
