@@ -79,6 +79,13 @@ test("Organizer webhook remains distinct from Stripe V1", async () => {
   assert.doesNotMatch(legacy, /organizerWebhookSecrets/);
 });
 
+test("Organizer TEST accepts restricted server keys without weakening LIVE or public-key checks", async () => {
+  const shared = await source("app/api/billing/organizer/_shared.ts");
+  assert.match(shared, /mode === "live" \? \["sk_live_"\] : \["sk_test_", "rk_test_"\]/);
+  assert.match(shared, /expectedPrefixes\.some\(\(prefix\) => value\.startsWith\(prefix\)\)/);
+  assert.doesNotMatch(shared, /"pk_test_"|"pk_live_"|"rk_live_"/);
+});
+
 test("Stripe catalog provisioning resumes exact resources without duplicate creation", async () => {
   const adapter = await source("app/api/billing/organizer/_stripe-commercial.ts");
   assert.match(adapter, /stripe\.products\.list\(\{ active: true, limit: 100 \}\)/);

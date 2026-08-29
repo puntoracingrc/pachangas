@@ -98,6 +98,10 @@ Resolved incidents must include `fixed` and `regression_verified`.
   `/api/webhooks/stripe`, and keep every credential server-only.
 - Required regression: test Checkout/Portal/webhook pass while live Products,
   Prices, mappings and charges remain zero.
+- Progress: the approved restricted TEST credential is now present only as a
+  sensitive Preview variable scoped to this branch. Production has no matching
+  variable, the client bundle is clean, and the dedicated webhook signing
+  secret plus Supabase staging service authority remain pending.
 
 ## W7C-005 - Catalog readback assumed a non-existent ordering column
 
@@ -1455,6 +1459,14 @@ Resolved incidents must include `fixed` and `regression_verified`.
 - Verification: the complete unfiltered audit matched the allowlist exactly;
   Charges, Refunds, Disputes, Connect, Transfers, Tax and every other prohibited
   resource remained unselected.
+- Regression reopened: the next Stripe route encoded the original broad preset,
+  including charge, dispute, webhook-write and unrelated billing permissions,
+  despite the seven-row visual audit. No key was created and the visual state is
+  no longer accepted as authoritative submission evidence.
+- Final correction: the preset-derived route was discarded and rebuilt from the
+  seven identifiers extracted from the selected controls themselves.
+- Final verification: canonical route, visual table and created replacement key
+  agree on the seven-resource manifest; every prohibited resource remains None.
 
 ## W7C-080 - Stripe restricted-key existence readback exceeded the output budget
 
@@ -1501,7 +1513,7 @@ Resolved incidents must include `fixed` and `regression_verified`.
 ## W7C-082 - Restricted-key wizard appeared complete without creating a key
 
 - Classification: `SIMULATION_BUG`
-- Status: `open`
+- Status: `fixed` / `regression_verified`
 - Original scenario: the least-privilege wizard submission navigated away from
   its permission form and was initially treated as successful.
 - Evidence: two bounded exact-name readbacks after a fresh API-key-page reload
@@ -1514,6 +1526,10 @@ Resolved incidents must include `fixed` and `regression_verified`.
 - Required regression: exactly one named restricted key must exist with only the
   manifest allowlist, and Vercel transfer must occur from that verified row
   without exposing its value.
+- Correction: the exact final DOM action was invoked after independent zero-key
+  readback and a fully canonical seven-permission gate.
+- Verification: one replacement restricted TEST key exists and was transferred
+  only to the sensitive branch-scoped Preview variable.
 
 ## W7C-083 - Semantic API-key create click produced no UI transition
 
@@ -1638,3 +1654,502 @@ Resolved incidents must include `fixed` and `regression_verified`.
   final unfiltered table contains exactly Balance Read; Customers, Products,
   Customer Portal, Prices and Checkout Sessions Write; and Webhook Endpoints
   Read.
+- Regression reopened: the subsequent route retained the preset's original
+  permission query, proving that the native visual toggles did not reconcile the
+  authoritative form state used for submission.
+- Final correction: the preset path was abandoned; a route containing only the
+  seven control-derived identifiers became the authoritative creation state.
+- Final verification: query and visual readback both contain exactly seven
+  allowlisted grants and no preset permission.
+
+## W7C-089 - Stripe visual allowlist diverged from authoritative permission query
+
+- Classification: `SECURITY_ISSUE`
+- Status: `fixed` / `regression_verified`
+- Original scenario: after the unfiltered permission table showed exactly seven
+  allowlisted rows, the confirmed create action advanced to Stripe's dedicated
+  API-key creation route.
+- Evidence: the route query still encoded dozens of preset permissions,
+  including charge write, dispute write, webhook write, Payment Intents,
+  subscriptions, tax and unrelated billing resources; the exact restricted-key
+  name count remained zero.
+- Impact: no restricted key was created and no value was transferred to Vercel.
+  The mismatch fails closed before any persistent credential exists.
+- Required correction: discard the preset-derived route, rebuild the dedicated
+  creation form from an empty permission set and manipulate only controls whose
+  authoritative query/readback changes with them.
+- Required regression: immediately before final creation, Stripe's own canonical
+  permission representation must contain exactly the seven manifest resources,
+  no forbidden resource and one key name; after creation exactly one `rk_test`
+  credential must exist.
+- Correction: every canonical identifier was extracted from its selected
+  control and used to reconstruct a seven-entry route from an empty query.
+- Verification: route and visual readback agree, forbidden grants are None and
+  the active replacement inventory contains one restricted TEST credential.
+
+## W7C-090 - Recursive Stripe permission-code introspection exceeded its deadline
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed` / `regression_verified`
+- Original scenario: after rejecting the broad preset query, QA recursively
+  traversed each selected control's React closure to recover its canonical
+  `rak_*` permission identifier.
+- Evidence: the bounded browser controller exceeded thirty seconds and reset
+  before returning any code inventory.
+- Impact: the operation was read-only; no key, permission, Stripe resource or
+  Vercel variable changed.
+- Required correction: reacquire the existing form and resolve each allowlisted
+  permission through one shallow, individually bounded inspection or another
+  authoritative Stripe representation.
+- Required regression: seven unique permission codes are returned within the
+  deadline and the resulting creation state contains no additional code.
+- Correction: each selected control was inspected independently through its
+  exact DOM node and shallow React Fiber props.
+- Verification: seven unique canonical values were returned within the
+  deadline and the reconstructed route contains exactly those seven values.
+
+## W7C-091 - Browser-control documentation exceeded the available output budget
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed` / `regression_verified`
+- Original scenario: after the browser runtime reset, QA requested the complete
+  in-app browser documentation in a single response before reacquiring Stripe.
+- Evidence: the controller reported that its output exceeded the available
+  model context and was truncated.
+- Impact: the operation was read-only; no Stripe, Vercel or Supabase state
+  changed and no credential value was accessed.
+- Required correction: reuse the already validated browser API and request only
+  bounded diagnostics if a missing method must be confirmed.
+- Required regression: the recovered runtime exposes the required bindings and
+  reacquires the existing Stripe tab without another unbounded documentation
+  response.
+- Correction: the already validated browser API was reused without requesting
+  another complete documentation payload.
+- Verification: both browser bindings were present and the authenticated Stripe
+  creation tab was reacquired by its exact title and safe pathname.
+
+## W7C-092 - Reacquired browser tab did not expose a direct locator API
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed` / `regression_verified`
+- Original scenario: after reacquiring the authenticated Stripe tab, QA tried
+  to inspect seven known permission rows through a direct `tab.locator` call.
+- Evidence: the recovered tab object reported that `locator` was not a
+  function.
+- Impact: evaluation stopped before reading or changing the form; no Stripe,
+  Vercel or Supabase state changed.
+- Required correction: inspect only the bounded public shape of the recovered
+  tab and use the controller's supported page or CDP surface.
+- Required regression: the seven permission rows are read through the supported
+  browser surface without exposing the full page or credential values.
+- Correction: the controller's supported `tab.playwright.locator` surface was
+  used instead of a direct tab method.
+- Verification: all seven expected rows and their selected permission levels
+  were read without exposing page-wide content or any credential value.
+
+## W7C-093 - CDP capability required its scoped documentation before use
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed` / `regression_verified`
+- Original scenario: QA discovered the supported tab-level CDP capability and
+  attempted a read-only lookup of the exact Webhook Read control.
+- Evidence: the controller rejected the command because the scoped
+  `capabilities/tab/cdp` instructions had not yet been read in this recovered
+  runtime.
+- Impact: the CDP command did not execute; no form, key or external state
+  changed.
+- Required correction: read only the required scoped capability instructions
+  and repeat the bounded read-only lookup.
+- Required regression: the exact control is returned through CDP without
+  requesting unbounded browser documentation or exposing page-wide content.
+- Correction: only the required tab-level CDP instructions were loaded before
+  retrying the lookup.
+- Verification: CDP returned the exact selected Webhook Read DOM node with a
+  stable object identifier and no page-wide content.
+
+## W7C-094 - CDP retry referenced an uninitialized local binding
+
+- Classification: `SIMULATION_BUG`
+- Status: `fixed` / `regression_verified`
+- Original scenario: after loading the required scoped CDP documentation, QA
+  retried the read-only lookup by assigning into the binding from the rejected
+  attempt.
+- Evidence: the recovered JavaScript runtime reported that the binding was not
+  defined.
+- Impact: evaluation stopped locally before sending a CDP command; no Stripe,
+  Vercel or Supabase state changed.
+- Required correction: declare a fresh local result binding and repeat the same
+  bounded lookup.
+- Required regression: the exact Webhook Read DOM object is returned with a
+  stable object identifier and no state change.
+- Correction: the CDP result was declared in a fresh local binding.
+- Verification: the exact selected DOM node was returned and described without
+  changing the permission form.
+
+## W7C-095 - Webhook DOM listener resolved to React's global delegated handler
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed` / `regression_verified`
+- Original scenario: QA inspected the selected Webhook Read control's click
+  listener to locate its canonical permission identifier.
+- Evidence: the listener was React's global delegated click handler and its
+  closure exposed hundreds of framework bindings rather than the control's
+  local permission code.
+- Impact: inspection remained read-only and revealed no credential, but it did
+  not produce the required canonical identifier.
+- Required correction: inspect only React-specific properties attached to the
+  exact DOM node and filter any scalar result to `rak_*` identifiers.
+- Required regression: one unique Webhook Read identifier is recovered without
+  traversing React's global closure or emitting unrelated values.
+- Correction: QA inspected the selected node's React props and shallow Fiber
+  ancestry instead of the delegated global listener.
+- Verification: the control resolved uniquely to `rak_webhook_read` without
+  another global closure traversal.
+
+## W7C-096 - Preset-derived Prices permission code did not match the control
+
+- Classification: `SECURITY_ISSUE`
+- Status: `fixed` / `regression_verified`
+- Original scenario: the broad preset route suggested a Prices identifier that
+  had not yet been verified against the selected Prices Write control.
+- Evidence: the selected control's own React props resolve uniquely to
+  `rak_plan_write`, not the preset-derived identifier.
+- Impact: no reconstructed URL was built, no form was submitted and no key was
+  created; the discrepancy failed closed during read-only verification.
+- Required correction: build the final permission inventory exclusively from
+  the seven selected controls' canonical values.
+- Required regression: the final route and visual readback both contain the
+  canonical Prices Write value and exactly six other allowlisted permissions.
+- Correction: the reconstructed route uses the control-derived
+  `rak_plan_write` value.
+- Verification: route and visual readback agree on Prices Write plus exactly six
+  other allowlisted permissions.
+
+## W7C-097 - Preset-derived Checkout permission code did not match the control
+
+- Classification: `SECURITY_ISSUE`
+- Status: `fixed` / `regression_verified`
+- Original scenario: the broad preset route suggested a Checkout Sessions
+  identifier that had not yet been verified against its selected Write control.
+- Evidence: the selected control's own React props resolve uniquely to
+  `rak_checkout_session_write`, not the preset-derived identifier.
+- Impact: no reconstructed URL was built, no form was submitted and no key was
+  created; the mismatch failed closed before persistence.
+- Required correction: use only the control-derived Checkout Sessions Write
+  identifier in the final seven-permission route.
+- Required regression: canonical route and visual readback agree on exactly one
+  Checkout Sessions Write grant and contain no broad checkout preset grant.
+- Correction: the reconstructed route uses the control-derived
+  `rak_checkout_session_write` value.
+- Verification: route and visual readback agree on exactly one Checkout
+  Sessions Write grant and no broad preset grant.
+
+## W7C-098 - Visual permission readback included every selected None control
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed` / `regression_verified`
+- Original scenario: after loading the canonical seven-permission route, QA
+  enumerated every visually selected segmented option.
+- Evidence: every permission row selects `Ninguno` by default, so the diagnostic
+  returned the seven grants plus more than one hundred unrelated None rows.
+- Impact: the operation was read-only and contained no credential or personal
+  data, but its evidence was unnecessarily broad.
+- Required correction: return only selected levels other than `Ninguno` and an
+  aggregate count for the remaining rows.
+- Required regression: the bounded readback reports seven non-None grants and
+  zero additional non-None permission.
+- Correction: the visual readback now returns only non-None grants and one
+  aggregate count for None rows.
+- Verification: exactly seven non-None grants were reported and every other
+  selectable permission remained None.
+
+## W7C-099 - Browser locator did not expose inputValue readback
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed` / `regression_verified`
+- Original scenario: QA filled the restricted-key name and attempted to verify
+  it through the locator's `inputValue` helper.
+- Evidence: the browser wrapper reported that `inputValue` was not a function.
+- Impact: the name may have changed only in the local unsaved form; no key was
+  created and no credential value existed or was read.
+- Required correction: verify the exact first text input through a bounded DOM
+  evaluation before any submission.
+- Required regression: the canonical name is confirmed exactly once while the
+  create action remains unexecuted.
+- Correction: the exact first text input was read through bounded DOM
+  evaluation.
+- Verification: the 28-character canonical name matched exactly before the
+  first create attempt.
+
+## W7C-100 - Final Stripe create action returned an ambiguous readback
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed` / `regression_verified`
+- Original scenario: after the canonical seven-permission gate passed, QA
+  invoked the single enabled final `Crear clave` action with explicit user
+  confirmation.
+- Evidence: the page exposed a copy control but the bounded readback found no
+  exact key name and no visible restricted TEST prefix while remaining on the
+  creation pathname.
+- Impact: creation success is not yet proven. The action must not be retried
+  because doing so could create a duplicate credential.
+- Required correction: inspect only bounded headings, alerts and the exact key
+  inventory, then determine whether one credential exists before any retry.
+- Required regression: exactly one named restricted TEST credential is proven,
+  or zero is proven before a single controlled retry; no duplicate is allowed.
+- Correction: a separate listing proved zero keys before each retry and later
+  diagnostics identified the Workbench hit-area interception.
+- Verification: the exact native DOM action produced one success row; the
+  compromised first key was revoked and exactly one replacement remains active.
+
+## W7C-101 - Stripe create form reported a connectivity failure
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed` / `regression_verified`
+- Original scenario: QA inspected the bounded post-submit state after the final
+  create action returned no verifiable restricted key.
+- Evidence: the page displayed the heading `Comprueba tu conexion`, retained
+  the 28-character key name and still exposed the create action.
+- Impact: success remains unproven and no retry is permitted until a separate
+  exact-name inventory proves whether the first request persisted a key.
+- Required correction: inspect the TEST API-key listing in a separate tab,
+  preserving the failed form and avoiding any repeated submission.
+- Required regression: the listing proves an exact key count before the create
+  form is retried or its result is consumed.
+- Correction: a second authenticated Stripe tab opened the TEST API-key
+  inventory while preserving the failed form.
+- Verification: the independent listing reported zero exact-name credentials
+  and no connection warning, authorizing one controlled retry without duplicate
+  risk.
+
+## W7C-102 - Positional key-name fill did not reach the canonical input on retry
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed` / `regression_verified`
+- Original scenario: after reloading the exact seven-permission route, QA filled
+  the first text locator by position and ran the complete retry gate.
+- Evidence: route, seven grants, connectivity and create readiness passed, but
+  the canonical first DOM text value did not match the expected key name.
+- Impact: the retry remained blocked and no second create action was invoked.
+- Required correction: identify the name input through its bounded label or
+  surrounding form structure and fill that exact control.
+- Required regression: name, route, visual grants and create readiness all pass
+  in one atomic gate before the single retry.
+- Correction: the field was identified by the stable `#key-name` selector and
+  the unrelated global search was handled separately.
+- Verification: the replacement name, route, visual grants, connectivity and
+  create readiness all passed together before native submission.
+
+## W7C-103 - Stripe global search retained the accidental key-name text
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed` / `regression_verified`
+- Original scenario: after locating `#key-name`, QA cleared the unrelated
+  global search input through a targeted empty fill and populated the canonical
+  field.
+- Evidence: `#key-name` matched exactly, but the bounded readback showed that
+  the global search input was still non-empty.
+- Impact: no external state changed, but a search overlay could interfere with
+  the controlled retry if left active.
+- Required correction: focus the exact search input and clear it through its
+  native keyboard interaction.
+- Required regression: search is empty, canonical name is exact and no overlay
+  obscures the final create action.
+- Correction: the exact search input was cleared with select-all/backspace and
+  focus returned to the canonical name field.
+- Verification: the atomic gate reported an empty global search and exact key
+  name before submission.
+
+## W7C-104 - Controlled Stripe create retry produced no success evidence
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed` / `regression_verified`
+- Original scenario: after an atomic gate proved zero existing keys, exact name,
+  exact seven-permission route, exact visual grants, empty search and healthy
+  connectivity, QA invoked the final create action once more.
+- Evidence: the page remained on the creation path, still exposed the create
+  action and displayed neither the exact name nor a restricted TEST prefix.
+- Impact: no third create attempt is permitted. Persistence must be resolved by
+  independent inventory and event diagnostics to avoid duplicates.
+- Required correction: refresh the exact-name inventory and, if it remains
+  zero, inspect the button's own handler and validation state without invoking
+  it again.
+- Required regression: either one exact credential is proven, or a concrete
+  pre-submit blocker is identified while the inventory remains zero.
+- Correction: hit testing identified Stripe Workbench as the concrete blocker;
+  wrapper clicks were not treated as submissions.
+- Verification: inventory stayed at zero until the exact native action ran,
+  after which Stripe returned a unique restricted TEST success row.
+
+## W7C-105 - In-app overlay intercepted the final Stripe button
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed` / `regression_verified`
+- Original scenario: after the independent inventory proved zero persisted
+  keys, QA inspected the exact final create button without invoking it again.
+- Evidence: the button is enabled, visible and has a non-zero rectangle, but
+  `document.elementFromPoint` at its center resolves to an unrelated overlay
+  `DIV` instead of the button or one of its children.
+- Impact: both prior controller clicks were intercepted before reaching the
+  Stripe control, explaining the zero-key inventory. No Stripe creation request
+  was submitted.
+- Required correction: identify and dismiss only the intercepting in-app layer,
+  then repeat the atomic gate and verify the button is the top hit target.
+- Required regression: the button center resolves to itself or a child before
+  the first real create submission.
+- Correction: Stripe's fixed Workbench tray was identified as the interceptor;
+  pointer hit testing was bypassed through the exact DOM button's native HTML
+  action instead of mutating or hiding the tray.
+- Verification: independent inventory proved zero before native activation and
+  exactly one success row afterward, with no duplicate submission.
+
+## W7C-106 - Locator keyboard activation did not invoke the covered Stripe button
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed` / `regression_verified`
+- Original scenario: with the full canonical gate passing and zero persisted
+  keys, QA sent `Enter` to the exact create-button locator to bypass the fixed
+  Workbench hit area.
+- Evidence: the page remained unchanged and exposed no name, restricted prefix
+  or success state.
+- Impact: persistence remains unproven; inventory must again prove zero before
+  any lower-level native activation.
+- Required correction: after zero-key readback, invoke the exact DOM button's
+  native HTML click through scoped CDP, avoiding pointer hit testing.
+- Required regression: one and only one exact-name restricted TEST key appears
+  in the independent inventory after native activation.
+- Correction: the locator keyboard path was abandoned in favor of a scoped CDP
+  native click on the exact DOM button.
+- Verification: native activation returned the success state and one active
+  replacement restricted TEST row is present.
+
+## W7C-107 - Stripe success page and parallel key listing temporarily diverged
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed` / `regression_verified`
+- Original scenario: after the exact DOM button's native click executed, QA
+  compared the preserved creation page with a refreshed API-key listing tab.
+- Evidence: the creation page shows the exact name once, a restricted TEST
+  prefix, no live prefix and no create action; the parallel listing still shows
+  zero exact-name rows.
+- Impact: the one-time success page must be preserved while the secret is moved
+  directly to its approved branch-scoped secret manager. No recreate or reload
+  of that page is allowed.
+- Required correction: transfer from the exact success-page copy control, then
+  obtain eventual exact-name inventory readback without exposing the value.
+- Required regression: Vercel branch scope contains one restricted TEST secret
+  and Stripe eventually reports exactly one matching credential.
+- Correction: listing readback normalizes Stripe's visual line breaks before
+  matching the exact name and row.
+- Verification: Stripe reports one active replacement restricted TEST row;
+  Vercel reports one sensitive Preview variable scoped to the Wave 7C branch
+  and zero Production matches.
+
+## W7C-108 - Stripe copy-control accessibility label exposed the new secret
+
+- Classification: `SECURITY_ISSUE`
+- Status: `fixed` / `regression_verified`
+- Original scenario: after successful restricted-key creation, QA searched the
+  exact success-row ancestry for a copy control while intending to emit only its
+  descriptive label.
+- Evidence: Stripe embeds the complete one-time restricted key value inside that
+  control's accessibility label, so the bounded diagnostic output contained the
+  credential.
+- Impact: the newly created credential is considered compromised. It was not
+  copied to Vercel, Git, a report or the clipboard and must never be used.
+- Required correction: clear local diagnostic references, revoke this exact
+  credential, create a replacement, and interact with the replacement copy
+  control without ever returning its attributes or text.
+- Required regression: secret transfer returns only boolean prefix and scope
+  evidence; scans find no replacement value in output, Git, reports, logs or
+  temporaries.
+- Correction: local references were cleared, the exposed credential was
+  immediately expired, and a differently named replacement was copied through
+  its exact DOM object without reading any attribute or text.
+- Verification: transfer emitted only restricted/live/non-empty booleans, used
+  process stdin, cleared the clipboard and runtime reference, and scans report
+  zero secret values in source, HEAD, diff, client bundle and worktree
+  temporaries. The only Vercel match is sensitive Preview branch scope.
+
+## W7C-109 - Restricted-key action dialog used an unexpected first-level label
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed` / `regression_verified`
+- Original scenario: QA opened the exact compromised-key row action and searched
+  the resulting scoped UI for revoke or delete actions.
+- Evidence: a second dialog appeared, but no candidate matched the expected
+  revoke/delete labels and the route remained on the API-key inventory.
+- Impact: no destructive action occurred and the compromised credential remains
+  active pending safe identification of Stripe's actual action wording.
+- Required correction: inspect only the generic second-dialog text after
+  proving it contains neither key name nor restricted-key prefix.
+- Required regression: the destructive control is identified and scoped to the
+  exact compromised row before confirmation.
+- Correction: the scoped generic dialog was first proven free of key name and
+  value, then identified Stripe's action wording `Clave de caducidad`.
+- Verification: the confirmation was bound to the exact compromised name and
+  the credential disappeared from the active inventory after confirmation.
+
+## W7C-110 - Supabase Markdown changelog was unsupported by the web connector
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed` / `regression_verified`
+- Original scenario: before resuming staging credential and migration work, QA
+  requested Supabase's official lightweight `changelog.md` as required by the
+  current integration guidance.
+- Evidence: the connector returned an unsupported `text/markdown` content-type
+  error.
+- Impact: the operation was read-only and no Supabase, Vercel or repository
+  state changed.
+- Required correction: read the official HTML changelog surface and inspect
+  only entries relevant to Auth, API keys, Realtime or CLI behavior.
+- Required regression: current official guidance is available before any
+  Supabase staging mutation.
+- Correction: the official HTML changelog was read instead of the unsupported
+  Markdown representation.
+- Verification: current entries relevant to Wave 7C were reviewed before
+  staging work: Node 20 client support ended, the Realtime schema is locked and
+  newly exposed Data API tables require explicit grants.
+
+## W7C-111 - Wave 7C source inventory included an absent GitHub directory
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed` / `regression_verified`
+- Original scenario: QA searched Stripe, Supabase service authority, webhook and
+  Organizer checkout references across expected application, test, script and
+  CI directories.
+- Evidence: `rg` reported that `.github` does not exist in this repository while
+  returning valid matches from every existing path.
+- Impact: no file or external state changed, but the diagnostic is not accepted
+  as a clean final source inventory.
+- Required correction: discover the repository's actual top-level paths and
+  repeat the search only over existing locations.
+- Required regression: the same authority inventory completes without missing
+  path diagnostics.
+- Correction: the absent directory was removed from the source set and all
+  existing application, script, test, migration and configuration paths were
+  searched directly.
+- Verification: the authority inventory completed without a missing-path
+  diagnostic and confirmed service-role usage remains server-only.
+
+## W7C-112 - Organizer TEST runtime rejected the mandated restricted key prefix
+
+- Classification: `PRODUCT_BUG`
+- Status: `fixed` / `regression_verified`
+- Original scenario: after storing the branch-scoped restricted TEST key, QA
+  traced the Organizer Stripe runtime before redeploying Preview.
+- Evidence: `stripeKeyForMode("test")` accepts only `sk_test_`, while the
+  approved least-privilege credential and manifest require `rk_test_`.
+- Impact: the safe credential would fail closed as unconfigured and remote TEST
+  Checkout, Portal and catalog QA could not start. No live path is affected.
+- Required correction: accept restricted TEST keys on the server-only TEST path
+  while retaining legacy standard TEST compatibility and strict live-prefix
+  validation.
+- Required regression: `rk_test_` and legacy `sk_test_` TEST fixtures pass;
+  public, live, malformed and missing keys remain rejected, and no key value
+  enters client code.
+- Correction: the server-only TEST path accepts `sk_test_` and `rk_test_`, while
+  LIVE remains limited to `sk_live_` and public/restricted-live prefixes remain
+  invalid.
+- Verification: the focused contract passes 11/11, typecheck and focused lint
+  pass, and the client-bundle secret/name scan remains empty.

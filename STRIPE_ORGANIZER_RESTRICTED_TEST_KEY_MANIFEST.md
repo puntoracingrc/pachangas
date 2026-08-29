@@ -70,6 +70,25 @@ published in staging, so the E2E can provision this Sandbox without application
 code changes. The fallback to the shared TEST account is therefore not used.
 Stripe LIVE remains untouched.
 
+## Credential implementation readback
+
+- One active replacement restricted TEST credential exists in the dedicated
+  Pachangas IQ Sandbox.
+- Its seven canonical permission identifiers and the Stripe permission table
+  both match this manifest exactly.
+- The first created credential was treated as compromised after its one-time
+  value appeared in diagnostic accessibility output; it was never installed and
+  was immediately expired.
+- The replacement was transferred directly through process standard input to
+  the sensitive Vercel Preview variable `STRIPE_TEST_SECRET_KEY`.
+- Vercel readback shows branch
+  `codex/organizer-live-pricing-checkout-v1`, Preview only, sensitive type and
+  zero Production matches.
+- Source, tracked HEAD, diff, client bundle and worktree-temporary scans contain
+  zero Stripe credential values. No public secret variable exists.
+- The Organizer TEST runtime accepts the required `rk_test` server credential;
+  LIVE validation remains unchanged and no live credential is configured.
+
 ## Storage and lifecycle
 
 - Vercel environment: Preview only.

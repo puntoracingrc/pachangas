@@ -49,6 +49,11 @@ requests fail closed.
 | Payment failure / grace / recovery | PASS locally and Demo V2.9 |
 | LIVE Checkout and Portal | OFF / not exercised |
 
+Credential gate: PASS for one least-privilege `rk_test` credential stored as a
+sensitive branch-scoped Preview variable; Production and public client bundles
+contain no matching secret. The dedicated Organizer TEST webhook signing secret
+and Supabase staging service authority remain pending before remote QA.
+
 This report is updated with the final remote TEST result before release closure.
 The remaining remote gates require branch-scoped server credentials and a
 dedicated TEST webhook/Portal; no LIVE credential or resource is authorized.
