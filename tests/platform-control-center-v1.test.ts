@@ -48,13 +48,13 @@ test("all platform pages and APIs authorize on the server", async () => {
   for (const path of pageFiles) {
     const content = await source(path);
     if (path.endsWith("simulation-world/page.tsx")) assert.match(content, /requirePlatformPage\("labs\.read"\)/, path);
-    else assert.match(content, /requirePlatformPage\("[a-z.]+"\)/, path);
+    else assert.match(content, /requirePlatformPage\("[a-z._]+"\)/, path);
   }
   const routeFiles = (await filesBelow("app/api/platform-admin")).filter((path) => path.endsWith("/route.ts"));
   for (const path of routeFiles) {
     const content = await source(path);
     if (path.endsWith("/session/route.ts")) assert.match(content, /verifyPlatformToken\(/, path);
-    else assert.match(content, /requirePlatformRequest\(request, "[a-z.]+"\)/, path);
+    else assert.match(content, /requirePlatformRequest\(request, "[a-z._]+"\)/, path);
     assert.match(content, /dynamic = "force-dynamic"/, path);
     assert.match(content, /revalidate = 0/, path);
     if (/export async function POST/.test(content)) assert.match(content, /requireSameOriginMutation\(request\)/, path);

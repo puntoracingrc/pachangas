@@ -85,9 +85,12 @@ function PlanCard({ plan }: { plan: OrganizerBillingJson }) {
         </details> : null}
       </div>
       <div className={styles.actionRow}>
-        {partnership || checkoutAvailable
-          ? <Link className={styles.primary} href="/ajustes/facturacion">{partnership ? "Solicitar acceso" : "Gestionar plan"}</Link>
-          : <span className={styles.disabledAction} aria-disabled="true">Checkout no disponible</span>}
+        <Link
+          className={styles.primary}
+          href={checkoutAvailable ? "/ajustes/facturacion" : `/organizacion/solicitar-acceso?plan=${encodeURIComponent(planCode)}`}
+        >
+          {checkoutAvailable ? "Gestionar plan" : partnership ? "Solicitar colaboración" : "Solicitar acceso / avisarme"}
+        </Link>
         <span className={styles.status}>{organizerBillingStatus(plan.pricingStatus)}</span>
       </div>
     </article>

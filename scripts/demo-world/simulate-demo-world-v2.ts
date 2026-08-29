@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { randomBytes } from "node:crypto";
+import { createHash, randomBytes } from "node:crypto";
 import { readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -29,7 +29,7 @@ const pgDumpBin = process.env.PG_DUMP_BIN ?? "pg_dump";
 const suffix = randomBytes(5).toString("hex");
 const databaseName = `pachangas_demo_world_v2_${suffix}`;
 const infrastructureDump = path.join(tmpdir(), `pachangas-demo-world-v2-${suffix}.sql`);
-const publicRoot = path.join(root, "public/demo-world/v2");
+const publicRoot = path.join(root, "public/demo-world/v3");
 const authorityProofPath = path.join(root, "scripts/demo-world/demo-world-v2-authority-proof.json");
 
 if (!localHosts.has(parsedAdminUrl.hostname)) throw new Error("DEMO_WORLD_V2_LOCAL_DATABASE_REQUIRED");
@@ -1035,21 +1035,24 @@ from matches, standings, discipline_events, discipline_counters,
   discipline_sanctions, discipline_service, discipline_appeals,
   discipline_states, discipline_eligibility, referee_assignment_summary;
 `;
-  const extracted = JSON.parse(psql(["-At", "-c", sql], "extract Demo World V2 authority proof")) as Omit<DemoWorldV2AuthorityProof, "authorityHash" | "configuration" | "database" | "generatedAt" | "migrationCount" | "organizerBilling" | "publicCompetitions" | "remoteWrites" | "rpcFamilies" | "version">;
+  const extracted = JSON.parse(psql(["-At", "-c", sql], "extract Demo World V2 authority proof")) as Omit<DemoWorldV2AuthorityProof, "authorityHash" | "configuration" | "database" | "generatedAt" | "migrationCount" | "organizerAccess" | "organizerBilling" | "publicCompetitions" | "remoteWrites" | "rpcFamilies" | "version">;
   const payload: Omit<DemoWorldV2AuthorityProof, "authorityHash"> = {
     ...extracted,
     configuration: extractConfigurationAuthorityProof(),
     database: "temporary-local-postgresql",
     generatedAt: "2026-08-28T14:00:00.000Z",
     migrationCount,
+    organizerAccess: JSON.parse(psql([
+      "-At", "-c", "select proof from simulation.demo_world_organizer_access_proof limit 1",
+    ], "extract Demo World V3.0 organizer access proof")),
     organizerBilling: JSON.parse(psql([
       "-At", "-c", "select proof from simulation.demo_world_organizer_billing_proof limit 1",
     ], "extract Demo World V2.9 organizer billing proof")),
     publicCompetitions: extractPublicCompetitionAuthorityProof(),
     remoteWrites: 0,
-    rpcFamilies: ["R1", "R3", "R4A", "R4B", "R4C", "R4D", "R5", "R6A", "R6B", "R6C", "PUBLIC_COMPETITIONS", "ORGANIZER_BILLING"],
+    rpcFamilies: ["R1", "R3", "R4A", "R4B", "R4C", "R4D", "R5", "R6A", "R6B", "R6C", "PUBLIC_COMPETITIONS", "ORGANIZER_BILLING", "ORGANIZER_ACCESS"],
     tournament: extractTournamentAuthorityProof(),
-    version: 9,
+    version: 10,
   };
   return assertDemoWorldV2AuthorityProof({
     ...payload,
@@ -1059,7 +1062,7 @@ from matches, standings, discipline_events, discipline_counters,
 
 async function committedSnapshot(): Promise<DemoWorldV2Snapshot> {
   const read = async <T>(name: string) => JSON.parse(await readFile(path.join(publicRoot, name), "utf8")) as T;
-  const [activity, clubsReferees, competitions, configuration, core, manifest, matches, organizerBilling, players, publicCompetitions, tournament] = await Promise.all([
+  const [activity, clubsReferees, competitions, configuration, core, manifest, matches, organizerAccess, organizerBilling, players, publicCompetitions, tournament] = await Promise.all([
     read<DemoWorldV2Snapshot["activity"]>("activity.json"),
     read<DemoWorldV2Snapshot["clubsReferees"]>("clubs-referees.json"),
     read<DemoWorldV2Snapshot["competitions"]>("competitions.json"),
@@ -1067,12 +1070,13 @@ async function committedSnapshot(): Promise<DemoWorldV2Snapshot> {
     read<DemoWorldV2Snapshot["core"]>("core.json"),
     read<DemoWorldV2Snapshot["manifest"]>("manifest.json"),
     read<DemoWorldV2Snapshot["matches"]>("matches.json"),
+    read<DemoWorldV2Snapshot["organizerAccess"]>("organizer-access.json"),
     read<DemoWorldV2Snapshot["organizerBilling"]>("organizer-billing.json"),
     read<DemoWorldV2Snapshot["players"]>("players.json"),
     read<DemoWorldV2Snapshot["publicCompetitions"]>("public-competitions.json"),
     read<DemoWorldV2Snapshot["tournament"]>("tournament.json"),
   ]);
-  return { activity, clubsReferees, competitions, configuration, core, manifest, matches, organizerBilling, players, publicCompetitions, tournament };
+  return { activity, clubsReferees, competitions, configuration, core, manifest, matches, organizerAccess, organizerBilling, players, publicCompetitions, tournament };
 }
 
 function demoWorldVerificationProjection(value: unknown): unknown {
@@ -1106,6 +1110,10 @@ function demoWorldVerificationProjection(value: unknown): unknown {
   };
 
   return visit(value);
+}
+
+function projectionHash(value: unknown) {
+  return createHash("sha256").update(JSON.stringify(demoWorldVerificationProjection(value))).digest("hex");
 }
 
 async function dropDatabase() {
@@ -1147,7 +1155,8 @@ async function main() {
     { label: "R6C Tournament Knockout", names: incremental.filter((name) => name >= "20260827205347" && name < "20260828072045") },
     { label: "Wave 7A Public Competitions", names: incremental.filter((name) => name >= "20260828072045" && name < "20260828163750") },
     { label: "Wave 7B Organizer Billing", names: incremental.filter((name) => name >= "20260828163750" && name < "20260828205310") },
-    { label: "Wave 7C Commercial Activation", names: incremental.filter((name) => name >= "20260828205310") },
+    { label: "Wave 7C Commercial Activation", names: incremental.filter((name) => name >= "20260828205310" && name < "20260829152223") },
+    { label: "Wave 8A Organizer Access and Onboarding", names: incremental.filter((name) => name >= "20260829152223") },
   ];
   assert.equal(migrationBatches.flatMap(({ names }) => names).length, incremental.length);
 
@@ -1222,6 +1231,10 @@ async function main() {
     psql([
       "-f", sqlFile("scripts/demo-world/demo-world-v2-organizer-billing-operations.sql"),
     ], "operate Demo World V2.9 Organizer Billing through canonical TEST RPCs and webhooks");
+    applyBatch(migrationBatches[14]!.label, migrationBatches[14]!.names);
+    psql([
+      "-f", sqlFile("scripts/demo-world/demo-world-v3-organizer-access-operations.sql"),
+    ], "operate Demo World V3.0 Organizer Access and Onboarding through canonical RPCs");
 
     const authorityProof = extractAuthorityProof(migrationNames.length);
     const generated = generateDemoWorldV2(authorityProof);
@@ -1247,11 +1260,13 @@ async function main() {
       exported: !verifyOnly,
       flags: "synthetic-only",
       authorityHash: authorityProof.authorityHash,
+      authorityProjectionHash: projectionHash(authorityProof),
       hash: generated.manifest.hash,
+      snapshotProjectionHash: projectionHash(generated),
       migrations: migrationNames.length,
       mode: verifyOnly ? "verify" : "simulate",
       remoteWrites: 0,
-      rpcFamilies: ["R1", "R3", "R4A", "R4B", "R4C", "R4D", "R5", "R6A", "R6B", "R6C", "LEAGUE_PRIVATE_BETA_V1", "PUBLIC_COMPETITIONS", "ORGANIZER_BILLING"],
+      rpcFamilies: ["R1", "R3", "R4A", "R4B", "R4C", "R4D", "R5", "R6A", "R6B", "R6C", "LEAGUE_PRIVATE_BETA_V1", "PUBLIC_COMPETITIONS", "ORGANIZER_BILLING", "ORGANIZER_ACCESS"],
       snapshotIdentical: verifyOnly,
     })}\n`);
   } finally {

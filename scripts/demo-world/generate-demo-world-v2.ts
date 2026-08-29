@@ -20,6 +20,7 @@ import {
   type DemoWorldV2Snapshot,
   type DemoWorldV2TournamentChunk,
   type DemoWorldV2TournamentOutcome,
+  type DemoWorldV3OrganizerAccessChunk,
 } from "../../app/demo-world/demo-world-v2-contract";
 import { DEMO_WORLD_MODE, DEMO_WORLD_SEASON } from "../../app/demo-world/demo-world-contract";
 import {
@@ -1127,6 +1128,31 @@ function buildOrganizerBilling(
   };
 }
 
+function buildOrganizerAccess(
+  authorityProof: DemoWorldV2AuthorityProof,
+): DemoWorldV3OrganizerAccessChunk {
+  const proof = authorityProof.organizerAccess;
+  return {
+    firstCompetitionLaunches: proof.firstCompetitionLaunches,
+    grantCount: proof.grantCount,
+    liveCheckoutEnabled: false,
+    onboardingCompleted: proof.onboardingCompleted,
+    operationReceipts: proof.operationReceipts,
+    privacy: structuredClone(proof.privacy),
+    provenance: {
+      authority: "canonical-postgresql-read-model",
+      source: "simulation-world",
+      verified: true,
+    },
+    readOnly: true,
+    remoteWrites: 0,
+    scenarios: structuredClone(proof.scenarios),
+    stripeTouched: false,
+    subscriptionGrants: 0,
+    transport: { methods: ["GET"], remoteWrites: 0 },
+  };
+}
+
 export function generateDemoWorldV2(
   authorityProof = loadDemoWorldV2AuthorityProof(),
 ): DemoWorldV2Snapshot {
@@ -1143,6 +1169,7 @@ export function generateDemoWorldV2(
   const activity = structuredClone(v1.activity);
   const core = structuredClone(v1.core);
   const matches = structuredClone(v1.matches);
+  const organizerAccess = buildOrganizerAccess(authorityProof);
   const organizerBilling = buildOrganizerBilling(authorityProof);
   const players = structuredClone(v1.players);
   core.perspectives.push({
@@ -1153,21 +1180,22 @@ export function generateDemoWorldV2(
     summary: "Consulta la competición y sus decisiones públicas sin alterar el snapshot.",
     teamId: "demo_team_001",
   });
-  const payload = { activity, clubsReferees, competitions, configuration, core, matches, organizerBilling, players, publicCompetitions, tournament };
+  const payload = { activity, clubsReferees, competitions, configuration, core, matches, organizerAccess, organizerBilling, players, publicCompetitions, tournament };
   const snapshotHash = hash(payload);
   const cacheKey = snapshotHash.slice(0, 16);
   const manifest: DemoWorldV2Manifest = {
     chunks: {
-      activity: `/demo-world/v2/activity.json?h=${cacheKey}`,
-      clubsReferees: `/demo-world/v2/clubs-referees.json?h=${cacheKey}`,
-      competitions: `/demo-world/v2/competitions.json?h=${cacheKey}`,
-      configuration: `/demo-world/v2/configuration.json?h=${cacheKey}`,
-      core: `/demo-world/v2/core.json?h=${cacheKey}`,
-      matches: `/demo-world/v2/matches.json?h=${cacheKey}`,
-      organizerBilling: `/demo-world/v2/organizer-billing.json?h=${cacheKey}`,
-      players: `/demo-world/v2/players.json?h=${cacheKey}`,
-      publicCompetitions: `/demo-world/v2/public-competitions.json?h=${cacheKey}`,
-      tournament: `/demo-world/v2/tournament.json?h=${cacheKey}`,
+      activity: `/demo-world/v3/activity.json?h=${cacheKey}`,
+      clubsReferees: `/demo-world/v3/clubs-referees.json?h=${cacheKey}`,
+      competitions: `/demo-world/v3/competitions.json?h=${cacheKey}`,
+      configuration: `/demo-world/v3/configuration.json?h=${cacheKey}`,
+      core: `/demo-world/v3/core.json?h=${cacheKey}`,
+      matches: `/demo-world/v3/matches.json?h=${cacheKey}`,
+      organizerAccess: `/demo-world/v3/organizer-access.json?h=${cacheKey}`,
+      organizerBilling: `/demo-world/v3/organizer-billing.json?h=${cacheKey}`,
+      players: `/demo-world/v3/players.json?h=${cacheKey}`,
+      publicCompetitions: `/demo-world/v3/public-competitions.json?h=${cacheKey}`,
+      tournament: `/demo-world/v3/tournament.json?h=${cacheKey}`,
     },
     counts: {
       achievements: activity.achievements.length,
@@ -1180,6 +1208,7 @@ export function generateDemoWorldV2(
       competitions: 1,
       matches: matches.matches.length,
       notifications: activity.notifications.length,
+      organizerAccessScenarios: organizerAccess.scenarios.length,
       organizerBillingScenarios: organizerBilling.scenarios.length,
       players: players.players.length,
       publicCompetitions: 4,
@@ -1217,6 +1246,7 @@ export async function writeDemoWorldV2(snapshot: DemoWorldV2Snapshot, outputDire
     "core.json": snapshot.core,
     "manifest.json": snapshot.manifest,
     "matches.json": snapshot.matches,
+    "organizer-access.json": snapshot.organizerAccess,
     "organizer-billing.json": snapshot.organizerBilling,
     "players.json": snapshot.players,
     "public-competitions.json": snapshot.publicCompetitions,
@@ -1229,7 +1259,7 @@ export async function writeDemoWorldV2(snapshot: DemoWorldV2Snapshot, outputDire
 
 async function main() {
   const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
-  const outputDirectory = path.join(root, "public/demo-world/v2");
+  const outputDirectory = path.join(root, "public/demo-world/v3");
   const snapshot = generateDemoWorldV2();
   await writeDemoWorldV2(snapshot, outputDirectory);
   const payloadBytes = Buffer.byteLength(JSON.stringify({
@@ -1239,6 +1269,7 @@ async function main() {
     configuration: snapshot.configuration,
     core: snapshot.core,
     matches: snapshot.matches,
+    organizerAccess: snapshot.organizerAccess,
     organizerBilling: snapshot.organizerBilling,
     players: snapshot.players,
     publicCompetitions: snapshot.publicCompetitions,

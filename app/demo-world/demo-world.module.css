@@ -2312,6 +2312,30 @@
 
 .organizerBillingDemo { overflow-y: auto; padding-bottom: 88px; }
 
+.organizerJourneyModes {
+  display: flex;
+  gap: 6px;
+  border-bottom: 1px solid var(--official-line);
+  padding: 8px max(24px, calc((100vw - 1320px) / 2));
+}
+
+.organizerJourneyModes button {
+  min-height: 38px;
+  border: 1px solid var(--official-line);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--official-muted);
+  padding: 0 14px;
+  font-size: 0.68rem;
+  font-weight: 850;
+}
+
+.organizerJourneyModes button[aria-pressed="true"] {
+  border-color: var(--official-cyan);
+  background: rgba(61, 210, 222, 0.09);
+  color: var(--official-text);
+}
+
 .organizerBillingScenarioRail {
   display: grid;
   grid-auto-columns: minmax(175px, 0.24fr);
@@ -2353,6 +2377,37 @@
 .organizerBillingScenario header > span { color: var(--official-cyan); font-size: 0.62rem; font-weight: 900; text-transform: uppercase; }
 .organizerBillingScenario h2 { margin: 5px 0 7px; color: var(--official-text); font-size: 1.35rem; }
 .organizerBillingScenario p { margin: 0; color: var(--official-muted); font-size: 0.74rem; line-height: 1.45; }
+
+.organizerAccessScenario {
+  composes: organizerBillingScenario;
+}
+
+.organizerAccessScenario header { align-self: center; }
+.organizerAccessScenario header > span { color: var(--official-cyan); font-size: 0.62rem; font-weight: 900; text-transform: uppercase; }
+.organizerAccessScenario h2 { margin: 5px 0 7px; color: var(--official-text); font-size: 1.35rem; }
+.organizerAccessScenario p { margin: 0; color: var(--official-muted); font-size: 0.74rem; line-height: 1.45; }
+
+.organizerAccessEvidence {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px;
+  border-bottom: 1px solid var(--official-line);
+  background: var(--official-line);
+  padding: 0 max(24px, calc((100vw - 1320px) / 2));
+}
+
+.organizerAccessEvidence > div {
+  min-width: 0;
+  background: rgba(8, 20, 17, 0.96);
+  padding: 16px;
+}
+
+.organizerAccessEvidence h3 { margin: 5px 0 7px; color: var(--official-text); font-size: 0.9rem; }
+.organizerAccessEvidence p,
+.organizerAccessEvidence li { color: var(--official-muted); font-size: 0.64rem; line-height: 1.45; }
+.organizerAccessEvidence p { margin: 0; }
+.organizerAccessEvidence ol { display: flex; flex-wrap: wrap; gap: 5px; margin: 0; padding: 0; list-style: none; }
+.organizerAccessEvidence li { border: 1px solid var(--official-line); border-radius: 3px; padding: 4px 6px; text-transform: capitalize; }
 
 .organizerBillingStateGrid {
   display: grid;
@@ -2433,6 +2488,7 @@
   .tournamentEvidenceGrid > article { padding: 22px; }
   .tournamentEvidenceGrid > article:last-child { padding-left: 22px; }
   .organizerBillingScenario { grid-template-columns: 1fr; }
+  .organizerAccessScenario { grid-template-columns: 1fr; }
   .organizerBillingPlanGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
@@ -2440,6 +2496,10 @@
   .shell { padding-bottom: calc(var(--mobile-nav-height, 64px) + env(safe-area-inset-bottom)); }
   .demoBanner { align-items: flex-start; flex-direction: column; gap: 5px; padding: 6px 10px; }
   .organizerBillingScenario { gap: 14px; padding: 16px 14px; }
+  .organizerJourneyModes { overflow-x: auto; padding-inline: 14px; }
+  .organizerJourneyModes button { flex: 0 0 auto; min-height: 44px; }
+  .organizerAccessScenario { gap: 14px; padding: 16px 14px; }
+  .organizerAccessEvidence { grid-template-columns: 1fr; padding-inline: 14px; }
   .organizerBillingStateGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .organizerBillingPlanGrid { grid-template-columns: 1fr; padding: 14px; }
   .organizerBillingScenarioRail { grid-auto-columns: minmax(150px, 72%); padding-inline: 14px; }
@@ -2764,11 +2824,21 @@
   .organizerBillingDemo .demoDomainHeading { min-height: 62px; align-items: center; padding: 8px 14px; }
   .organizerBillingDemo .demoDomainHeading h1 { margin: 2px 0 3px; font-size: 1.1rem; }
   .organizerBillingDemo .demoDomainHeading p { font-size: 0.62rem; }
+  .organizerJourneyModes { padding: 4px 14px; }
+  .organizerJourneyModes button { min-height: 32px; font-size: 0.56rem; }
   .organizerBillingScenarioRail { grid-auto-columns: minmax(145px, 0.25fr); padding: 5px 14px; }
   .organizerBillingScenarioRail button { min-height: 34px; font-size: 0.58rem; }
   .organizerBillingScenario { grid-template-columns: minmax(210px, 0.55fr) minmax(0, 1.45fr); gap: 8px; padding: 8px 14px; }
   .organizerBillingScenario h2 { margin: 2px 0 3px; font-size: 0.95rem; }
   .organizerBillingScenario p { font-size: 0.59rem; }
+  .organizerAccessScenario { grid-template-columns: minmax(210px, 0.55fr) minmax(0, 1.45fr); gap: 8px; padding: 8px 14px; }
+  .organizerAccessScenario h2 { margin: 2px 0 3px; font-size: 0.95rem; }
+  .organizerAccessScenario p { font-size: 0.59rem; }
+  .organizerAccessEvidence { grid-template-columns: repeat(2, minmax(0, 1fr)); padding-inline: 14px; }
+  .organizerAccessEvidence > div { padding: 8px; }
+  .organizerAccessEvidence h3 { margin: 2px 0 4px; font-size: 0.72rem; }
+  .organizerAccessEvidence p,
+  .organizerAccessEvidence li { font-size: 0.54rem; }
   .organizerBillingStateGrid { grid-template-columns: repeat(7, minmax(78px, 1fr)); overflow-x: auto; }
   .organizerBillingStateGrid > span { min-height: 48px; padding: 5px 7px; }
   .organizerBillingStateGrid strong { font-size: 0.59rem; }
