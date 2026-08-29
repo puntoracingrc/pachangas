@@ -4515,7 +4515,7 @@ Resolved incidents must include `fixed` and `regression_verified`.
 ## W7C-219 - Final documentation merge used an inferred full HEAD SHA
 
 - Classification: `SIMULATION_BUG`
-- Status: `open`
+- Status: `fixed + regression_verified`
 - Original scenario: PR #221 passed all checks and the guarded merge supplied a
   full `--match-head-commit` value reconstructed from the local short SHA.
 - Evidence: GitHub rejected the merge because the supplied value did not match
@@ -4526,3 +4526,8 @@ Resolved incidents must include `fixed` and `regression_verified`.
   refreshed checks pass.
 - Required regression: GitHub reports PR #221 merged at its exact final HEAD and
   the resulting `main` SHA reaches a READY production deployment.
+- Resolution: the canonical `headRefOid` was read directly from PR #221 after
+  its refreshed checks passed and supplied unchanged to the guarded merge.
+- Verification: GitHub reports PR #221 merged as
+  `2e7816222976af76969e4938545178000be84ed2`; Vercel deployed that exact SHA to
+  Production with state `READY`.
