@@ -157,6 +157,8 @@ test("Realtime is invalidation-only, readable by participants and drives canonic
   assert.match(sql, /create table public\.pachanga_organizer_access_invalidations_v1/);
   assert.match(sql, /enable row level security/);
   assert.match(sql, /create policy "Organizer access participants read invalidations"/);
+  assert.match(sql, /grant execute on function private\.pachanga_organizer_access_invalidation_can_read_v1\(text, uuid\) to authenticated/);
+  assert.doesNotMatch(sql, /grant (insert|update|delete|all) on table public\.pachanga_organizer_access_invalidations_v1 to authenticated/i);
   assert.match(sql, /alter publication supabase_realtime add table public\.pachanga_organizer_access_invalidations_v1/);
   assert.match(client, /table: organizerAccessRealtimeTable/);
   assert.match(client, /if \(state === "SUBSCRIBED"\) reconcile\(\)/);

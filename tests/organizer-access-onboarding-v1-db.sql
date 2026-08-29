@@ -784,6 +784,50 @@ select pg_temp.assert_true(
 );
 
 select pg_temp.assert_true(
+  has_function_privilege(
+    'authenticated',
+    'private.pachanga_organizer_access_invalidation_can_read_v1(text,uuid)',
+    'EXECUTE'
+  )
+  and not has_function_privilege(
+    'anon',
+    'private.pachanga_organizer_access_invalidation_can_read_v1(text,uuid)',
+    'EXECUTE'
+  )
+  and has_table_privilege(
+    'authenticated',
+    'public.pachanga_organizer_access_invalidations_v1',
+    'SELECT'
+  )
+  and not has_table_privilege(
+    'authenticated',
+    'public.pachanga_organizer_access_invalidations_v1',
+    'INSERT'
+  ),
+  'W8A-018: authenticated participants need only the RLS predicate and SELECT privileges'
+);
+
+set local role authenticated;
+select pg_temp.actor('8a000000-0000-4000-8000-000000000004');
+select pg_temp.assert_true(
+  (select count(*) > 0
+   from public.pachanga_organizer_access_invalidations_v1 invalidations
+   where invalidations.organizer_club_id = '8a000000-0000-4000-8000-000000000020'),
+  'W8A-018: Club owner must read the canonical invalidation used by Realtime'
+);
+reset role;
+
+set local role authenticated;
+select pg_temp.actor('8a000000-0000-4000-8000-000000000002');
+select pg_temp.assert_true(
+  (select count(*) = 0
+   from public.pachanga_organizer_access_invalidations_v1 invalidations
+   where invalidations.organizer_club_id = '8a000000-0000-4000-8000-000000000020'),
+  'W8A-018: unrelated authenticated user must not read another organizer invalidation'
+);
+reset role;
+
+select pg_temp.assert_true(
   not has_function_privilege('anon',
     'public.command_pachanga_organizer_access_application_v1(uuid,uuid,bigint,text,jsonb,jsonb)', 'EXECUTE')
     and not has_function_privilege('authenticated',

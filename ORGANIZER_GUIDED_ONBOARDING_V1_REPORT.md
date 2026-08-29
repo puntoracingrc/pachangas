@@ -57,3 +57,8 @@ action, private competition completion, idempotent refresh and transfer of
 owner authority. Demo World V3.0 contains complete, interest-only,
 needs-information, rejected, withdrawn and transferred-owner workspaces without
 PII.
+
+Authenticated staging additionally confirmed that two sessions converge on
+the same canonical workspace revision after an invalidation. The Realtime row
+is never consumed as workspace state, and an unrelated authenticated user
+cannot read the organizer's invalidation.

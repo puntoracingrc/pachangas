@@ -411,6 +411,7 @@ end;
 $$;
 
 revoke all on function private.pachanga_organizer_access_invalidation_can_read_v1(text, uuid) from public, anon, authenticated;
+grant execute on function private.pachanga_organizer_access_invalidation_can_read_v1(text, uuid) to authenticated;
 revoke all on function private.pachanga_organizer_access_touch_invalidation_v1(text, uuid, uuid, text, bigint, bigint) from public, anon, authenticated;
 revoke all on function private.pachanga_organizer_access_event_side_effects_v1() from public, anon, authenticated;
 revoke all on function public.process_pachanga_organizer_access_expiry_notifications_v1(uuid, integer)

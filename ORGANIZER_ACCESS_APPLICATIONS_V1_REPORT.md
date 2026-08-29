@@ -106,3 +106,17 @@ uses the executable runner total and does not present a subtotal as a total.
 Stripe resources, variables, routes and flags are untouched. Live prices,
 Checkout and portal remain OFF. Preview, staging and production evidence is
 recorded separately in the production release report.
+
+## Staging verification
+
+The authenticated staging run exercised six independent actors and two client
+sessions. It confirmed one-winner stale-revision handling, canonical refetch
+after a Realtime invalidation, private-note isolation, owner transfer, paid
+interest without a grant, launcher cancellation, grant revocation and
+notification deduplication.
+
+That run found and permanently recorded W8A-018: the invalidation RLS policy
+depended on a private predicate whose `EXECUTE` privilege had been revoked from
+`authenticated`. The final migration grants only that predicate execution;
+table writes remain denied. Owner/outsider SQL reads and an actual two-device
+Realtime delivery now pass.
