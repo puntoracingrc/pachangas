@@ -41,7 +41,7 @@ platform decision has reached `LIVE_READY`.
 
 ## Verification
 
-- Focused contract tests: 9/9 PASS.
+- Focused commercial contract tests: 9/9 PASS; combined Wave 7B/7C suite: 22/22 PASS.
 - SQL, RLS, RBAC and idempotency: PASS on a fresh 196-migration database.
 - Nine requested concurrency races: PASS with one canonical winner and a
   stale, replayed or fail-closed loser.

@@ -32,8 +32,9 @@ The authorized TEST catalog contains only:
 | Pachangas IQ - Team Organizer Pro | EUR 9.90 | EUR 99 | TEST |
 
 The Stripe Dashboard readback confirmed both Products, all four recurring
-Prices and all five metadata pairs. Their opaque Stripe IDs are intentionally
-excluded from reports and Demo World.
+Prices, active state, zero active subscriptions and all five metadata pairs on
+2026-08-29. Their opaque Stripe IDs are intentionally excluded from reports
+and Demo World.
 
 ## LIVE boundary
 

@@ -6,9 +6,12 @@ Date: 2026-08-29 CEST
 
 - Starting `main`: `0040f750dc935ccb43a0f2ccfcf65a243bcb40ef`.
 - Pull request: [#219](https://github.com/puntoracingrc/pachangas/pull/219), Draft.
-- Functional SHA: pending final commit.
+- Functional SHA: `c087d2f93a4d9f7124315fcd26b3a4db485db6b1`.
+- Least-privilege fix SHA: `4108fc1630fd5f3cb3510c92335b55a6ba432799`.
+- Current evidence SHA: `62c9c4d748bf37cfa22e4981abec7f8cd528d7a9`.
 - Production merge SHA: pending.
-- Vercel deployment: pending.
+- Immutable Preview: `dpl_F5782xZibbsPqSGdLNtiXPP2VGNJ`, `READY`.
+- Preview URL: [Wave 7C exact SHA](https://pachangas-2zs7cs213-persianas-almar-web-s-projects.vercel.app).
 - Production URL: [https://pachangasiq.com](https://pachangasiq.com).
 
 ## Forward-only database change
@@ -22,24 +25,32 @@ Wave 7C contains exactly six new migrations:
 5. `20260828205316_organizer_commercial_read_models_v1.sql`
 6. `20260828205317_organizer_commercial_hardening_flags_v1.sql`
 
-Local fresh bootstrap reaches ledger 196. Linked migration parity and final
-production ledger are pending the release gate; no historical migration is
-rewritten.
+Local fresh bootstrap reaches ledger 196. The ephemeral staging branch also
+reaches 196, but its connector-generated versions differ from the six exact
+repository versions; exact production migration parity remains a release gate.
+No historical migration is rewritten.
 
 ## Validation gates
 
 | Gate | Result |
 | --- | --- |
-| Focused commercial tests | PASS, 9/9 |
+| Focused Wave 7B/7C tests | PASS, 22/22 |
 | SQL/RLS/idempotency | PASS, ledger 196 |
 | Nine concurrency races | PASS |
 | Wave 7B compatibility | PASS |
 | Representative scale | PASS |
 | Typecheck | PASS |
 | Focused lint | PASS |
-| Full tests / build / global lint | Pending final run |
-| Responsive/PWA QA | Pending final Preview |
+| Full tests | PASS, 615/615; 0 skipped/todo/cancelled |
+| Build | PASS, 56 static pages |
+| Global lint | Existing debt only: 22 errors / 18 warnings outside Wave 7C |
+| Responsive/PWA QA | PASS at 1440x900, 390x844, 844x390 and standalone simulation |
 | `git diff --check` | PASS |
+
+The exact Preview renders the three canonical plans with both paid plans
+disabled, four pending-price labels and zero runtime warnings/errors. TEST
+Stripe readback confirms two active Organizer Products, four active recurring
+Prices and zero active subscriptions.
 
 ## Activation boundary
 

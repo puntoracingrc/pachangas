@@ -39,6 +39,7 @@ requests fail closed.
 
 | Gate | State |
 | --- | --- |
+| Two TEST Products / four TEST Prices | PASS; metadata exact, zero active subscriptions |
 | Valid/invalid/tampered signature | Covered locally; remote TEST pending final QA |
 | Duplicate/out-of-order event | PASS locally |
 | Unknown Price / V1 Product at V2 endpoint | PASS locally |
@@ -49,3 +50,5 @@ requests fail closed.
 | LIVE Checkout and Portal | OFF / not exercised |
 
 This report is updated with the final remote TEST result before release closure.
+The remaining remote gates require branch-scoped server credentials and a
+dedicated TEST webhook/Portal; no LIVE credential or resource is authorized.
