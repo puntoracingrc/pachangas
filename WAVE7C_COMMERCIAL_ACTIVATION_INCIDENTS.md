@@ -91,18 +91,22 @@ Resolved incidents must include `fixed` and `regression_verified`.
 
 - Classification: `ENVIRONMENT_ISSUE`
 - Status: `open`
-- Evidence: the two authorized Organizer TEST products and four TEST prices now
-  exist, but Vercel still has no branch-scoped `STRIPE_TEST_SECRET_KEY` or
-  `STRIPE_TEST_WEBHOOK_SECRET` for this worktree branch.
+- Evidence: the dedicated Pachangas IQ Sandbox started without Organizer
+  Products, Prices, Portal configuration or webhook destination, and the branch
+  initially lacked its server-only TEST credentials.
 - Required correction: create only the two authorized TEST Products and four
   TEST Prices, configure a separate TEST destination for
   `/api/webhooks/stripe`, and keep every credential server-only.
 - Required regression: test Checkout/Portal/webhook pass while live Products,
   Prices, mappings and charges remain zero.
-- Progress: the approved restricted TEST credential is now present only as a
-  sensitive Preview variable scoped to this branch. Production has no matching
-  variable, the client bundle is clean, and the dedicated webhook signing
-  secret plus Supabase staging service authority remain pending.
+- Progress: the approved restricted TEST credential, Supabase staging service
+  authority and dedicated webhook signing secret are now sensitive Preview
+  variables scoped only to this branch. Production has no matching Wave 7C TEST
+  variable and the client bundle remains clean.
+- Current progress: the protected Preview reads the canonical plan catalog and
+  the new Sandbox has the exact 11-event Organizer webhook. Its two Products,
+  four Prices and Portal configuration still require canonical provisioning
+  before this incident can close.
 
 ## W7C-005 - Catalog readback assumed a non-existent ordering column
 
@@ -2357,3 +2361,323 @@ Resolved incidents must include `fixed` and `regression_verified`.
   Organizer TEST and Supabase staging secrets as sensitive, branch-scoped
   Preview variables, with zero risky public names and zero Wave 7C Stripe
   variables in Production.
+
+## W7C-121 - Preview smoke command used a disallowed temporary-file cleanup
+
+- Classification: `SIMULATION_BUG`
+- Status: `fixed` / `regression_verified`
+- Original scenario: after the exact SHA reached Vercel READY, QA prepared a
+  read-only catalog and page smoke using temporary response files followed by
+  `rm -f` cleanup.
+- Evidence: command execution was rejected before process creation because that
+  cleanup form is prohibited in the current environment.
+- Impact: no HTTP request ran, no temporary file was created, and Preview,
+  Supabase, Stripe, Vercel configuration and repository state did not change.
+- Required correction: perform both read-only requests entirely in memory with
+  Node `fetch`, emitting only status, content type, cache policy and bounded
+  catalog shape.
+- Required regression: the immutable/branch Preview catalog and page return
+  successfully with no temporary files or cleanup command.
+- Correction: all subsequent Preview probes ran in memory; the final app smoke
+  used authenticated Chrome and created no diagnostic files.
+- Verification: the branch alias reached `/planes-organizador` on the exact
+  READY deployment and rendered its server-confirmed catalog without any
+  temporary-file lifecycle.
+
+## W7C-122 - Anonymous smoke reached Vercel protection instead of the Preview app
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed` / `regression_verified`
+- Original scenario: the corrected in-memory smoke requested the branch alias
+  without an authenticated Vercel session.
+- Evidence: both the catalog and plans page returned HTTP 302 to the Vercel
+  access surface; the response was `no-store` and never reached application
+  routing.
+- Impact: no application assertion can be made from that response, but no
+  remote state changed and the protection behaved as configured.
+- Required correction: fetch the exact protected deployment through Vercel's
+  authenticated deployment connector rather than weakening access controls or
+  creating a public bypass.
+- Required regression: authenticated fetch reaches the Organizer catalog and
+  plans page on SHA `64ed4bc`, with no secret material in either response.
+- Correction: QA preserved Vercel protection and used the existing authenticated
+  Chrome session instead of the anonymous request path.
+- Verification: the branch alias opened the Organizer plans page, rendered one
+  plan grid, two canonical disabled Checkout actions and two pending-price
+  states, with zero catalog-unavailable, plans-disabled or empty-catalog states.
+
+## W7C-123 - Protected-deployment connector emitted SSO session metadata
+
+- Classification: `SECURITY_ISSUE`
+- Status: `fixed` / `regression_verified`
+- Original scenario: QA used Vercel's authenticated protected-deployment fetch
+  connector for the immutable Organizer catalog URL.
+- Evidence: instead of following authentication to the app, the connector
+  returned another 302 together with a transient SSO location and a nonce cookie
+  in its diagnostic response.
+- Impact: no application, Supabase or Stripe state changed. The transient
+  metadata was not copied to Git, reports, screenshots or a browser URL and
+  must not be reused as evidence.
+- Required correction: discard the connector response and use the user's
+  already-authenticated Chrome session to reach the protected Preview directly,
+  without generating a share URL or weakening deployment protection.
+- Required regression: final QA evidence contains only origin/path, HTTP/app
+  state and bounded non-sensitive UI/API shape; no cookies, nonces, share
+  parameters, emails or tokens are retained.
+- Correction: the connector response was discarded and never persisted; all
+  following protected QA used authenticated Chrome without a share URL.
+- Verification: retained evidence contains only the branch origin, path, page
+  title and bounded UI counts. No cookie, nonce, share parameter, email or token
+  was copied into the repository or reports.
+
+## W7C-124 - Chrome binding does not expose agent tab creation in this session
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed` / `regression_verified`
+- Original scenario: after discarding the unsafe protected-fetch response, QA
+  attempted to create a separate Chrome tab for authenticated Preview smoke.
+- Evidence: the persistent Chrome binding raised `chrome.tabs.create is not a
+  function` before any navigation.
+- Impact: no tab, request, credential or remote change was produced; the
+  authenticated Supabase staging tab remains available.
+- Required correction: preserve the current staging URL, reuse an existing
+  authenticated Chrome tab for the Preview smoke, then restore the original URL
+  if further staging-key work is required.
+- Required regression: the final URL reaches the protected Preview app through
+  Chrome authentication without share parameters and Supabase staging remains
+  recoverable by its exact project URL.
+- Correction: QA reused the otherwise idle Stripe-login tab and left the
+  authenticated Supabase staging tab untouched.
+- Verification: the reused tab reached the exact branch alias and plans path;
+  the separate Supabase tab remains bound to project `iozcjirlfytryzrcmrnq`.
+
+## W7C-125 - Stripe user tab was discovered but not yet claimed by automation
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed` / `regression_verified`
+- Original scenario: read-only discovery found the authenticated Stripe TEST
+  API Keys tab for `Pachangas IQ Wave 7C`, then QA attempted to retrieve it
+  directly from the agent-owned tab collection.
+- Evidence: `user.openTabs()` returned user tab `43`, while `tabs.get('43')`
+  reported no agent-owned tabs.
+- Impact: no Stripe navigation or mutation occurred and no key, cookie or
+  account data was inspected.
+- Required correction: claim the explicitly discovered user tab through the
+  browser-user handoff API before binding it as an agent tab.
+- Required regression: the claimed tab retains the same TEST account title and
+  path and no additional Stripe tab or login flow is created.
+- Correction: the exact discovered tab was claimed through the browser-user
+  handoff API and bound without navigation.
+- Verification: tab `43` retains the Stripe TEST API Keys path and the title
+  identifies `Pachangas IQ Wave 7C`; no new tab or authentication flow exists.
+
+## W7C-126 - Stripe event selector did not expose checkout.session.expired
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed` / `regression_verified`
+- Original scenario: webhook creation selected the 11 event names defined by
+  the server allowlist against Stripe API version `2026-08-26.dahlia`.
+- Evidence: `checkout.session.completed` was selected successfully, but an
+  exact search for `checkout.session.expired` returned no checkbox and the
+  bounded selector aborted before continuing.
+- Impact: no webhook destination has been created. One draft event selection is
+  present only in the unsubmitted Stripe form; Supabase, Vercel and Stripe
+  persistent configuration remain unchanged.
+- Required correction: inspect the filtered event surface and current Stripe
+  documentation to determine whether the event is unavailable, renamed or tied
+  to a different API version; do not silently broaden the webhook scope.
+- Required regression: the final submitted event set is explicitly reconciled
+  with the server allowlist and any deliberate omission is documented and
+  tested fail-safe before destination creation.
+- Correction: the same filtered surface was retried after its asynchronous
+  render completed; the event existed under the configured API version and no
+  server allowlist change was necessary.
+- Verification: the unsubmitted form now contains all 11 exact allowlisted
+  events, including `checkout.session.expired`, with no extra event selected.
+
+## W7C-127 - Multi-event selector wait exceeded the browser runtime deadline
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed` / `regression_verified`
+- Original scenario: after proving the supposedly missing event appeared with a
+  longer render delay, QA attempted to select the remaining ten allowlisted
+  events in one bounded browser script.
+- Evidence: one per-event wait did not resolve before the 30-second execution
+  deadline and the local browser-control runtime reset.
+- Impact: the webhook form was not submitted and no persistent Stripe endpoint
+  or signing secret exists. Some additional checkboxes may remain selected only
+  in the unsubmitted browser draft.
+- Required correction: reinitialize browser control, reclaim the same Stripe
+  tab, read the selected-event count without event values, and complete each
+  missing event as an independent operation with a short explicit wait.
+- Required regression: the submitted form proves exactly 11 selected events,
+  each matching the server allowlist, without a long-running selector loop.
+- Correction: QA reclaimed the surviving Stripe tab and completed only the
+  missing event as an isolated bounded operation.
+- Verification: the form and its URL independently report 11 selections and
+  their normalized set equals the server allowlist exactly.
+
+## W7C-128 - Browser runtime documentation exceeded the model context
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed` / `regression_verified`
+- Original scenario: after the browser-control runtime reset, QA reinitialized
+  the persistent runtime and requested its complete documentation before
+  reclaiming the existing Stripe TEST tab.
+- Evidence: the documentation response exceeded the available model context
+  and was truncated before any browser operation was attempted.
+- Impact: no browser navigation or mutation occurred and no Stripe, Supabase,
+  Vercel or repository state changed beyond this incident record.
+- Required correction: keep the initialized persistent runtime, avoid rereading
+  the full documentation, and resume with compact tab discovery and handoff
+  calls only.
+- Required regression: reclaim the exact Stripe TEST webhook tab and read its
+  bounded URL/title and selected-event count without output truncation.
+- Correction: the initialized runtime was reused with compact tab-list and tab
+  binding calls; the complete documentation was not requested again.
+- Verification: tab `43` was recovered with the same Stripe TEST title and
+  webhook path, and its bounded selected-event label was read successfully.
+
+## W7C-129 - Browser locator does not expose isChecked in this runtime
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed` / `regression_verified`
+- Original scenario: QA filtered the Stripe webhook selector to the final
+  allowlisted event, checked its only result, and attempted to confirm the
+  control through the familiar `isChecked()` locator method.
+- Evidence: the event and checkbox were found exactly once and `check()` ran,
+  but the locator proxy reported that `isChecked` is not a function.
+- Impact: the final checkbox may already be selected in the unsubmitted form;
+  no endpoint or other persistent Stripe resource was created.
+- Required correction: read the checkbox's DOM `checked` property through the
+  supported locator evaluation path, then verify the aggregate selected-event
+  count independently.
+- Required regression: the final event reads selected and the Stripe form
+  reports exactly 11 selected events before submission.
+- Correction: QA discarded the unsupported method and verified state through
+  the form's selected-event label and canonical `events` query parameter.
+- Verification: `customer.updated` is present, the aggregate count is 11 and
+  the full normalized set equals the expected allowlist with no extras.
+
+## W7C-130 - Locator evaluation did not expose the global navigator object
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed` / `regression_verified`
+- Original scenario: after creating the isolated TEST webhook, QA attempted to
+  copy the revealed signing secret into the protected tab clipboard from a
+  locator evaluation using the global `navigator.clipboard` object.
+- Evidence: evaluation stopped with a TypeError because `navigator` was
+  undefined in that isolated locator execution context.
+- Impact: the clipboard write, secret read and Vercel subprocess never ran;
+  no secret was emitted or persisted and both remote configurations remain
+  otherwise unchanged.
+- Required correction: resolve the page window through the located element's
+  `ownerDocument.defaultView` and use that window's protected clipboard bridge.
+- Required regression: transfer succeeds through stdin, only boolean evidence
+  is emitted, and tab/runtime/system clipboard cleanup all pass.
+- Correction: the page-global clipboard assumption was removed. The revealed
+  value was read only into an ephemeral runtime binding, immediately written to
+  the protected tab clipboard and then consumed by the Vercel subprocess.
+- Verification: the protected value shape passed, Vercel exited zero, no value
+  was emitted and all runtime and clipboard references were cleared.
+
+## W7C-131 - Failed evaluation did not retain its declared runtime binding
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed` / `regression_verified`
+- Original scenario: the corrected secret-transfer operation reused the name
+  from the preceding failed evaluation, expecting its `var` binding to persist.
+- Evidence: the persistent runtime reported that the binding was not defined
+  before evaluating the page function.
+- Impact: execution stopped before touching the page clipboard or launching
+  Vercel; no secret moved or was exposed.
+- Required correction: use fresh declarations for the complete corrected
+  operation instead of depending on bindings from a failed evaluation.
+- Required regression: the newly declared operation reaches protected copy,
+  stdin transfer and complete clipboard cleanup in one bounded call.
+- Correction: the successful operation used fresh bindings independent of all
+  failed evaluation calls.
+- Verification: the signing-secret shape passed and Vercel accepted the value
+  exactly once through stdin.
+
+## W7C-132 - Corrected page copy did not produce a valid protected clipboard value
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed` / `regression_verified`
+- Original scenario: QA retried the complete operation with fresh bindings and
+  the page window resolved through the located secret element.
+- Evidence: the operation rejected the value before starting Vercel because
+  the protected tab clipboard did not contain a valid `whsec_` value.
+- Impact: no Vercel subprocess ran; the runtime reference and tab/system
+  clipboards were cleared in the mandatory cleanup block.
+- Required correction: inspect only the non-sensitive shape booleans from the
+  completed attempt, re-reveal the current dynamic value if necessary, and
+  bind copying to the installed page clipboard bridge in the active document.
+- Required regression: the page reports a valid secret shape, protected read
+  confirms it, stdin transfer exits zero and both clipboards end empty.
+- Correction: QA explicitly confirmed the Dashboard value was unmasked before
+  copying it into the protected clipboard, then validated only its shape.
+- Verification: shape, protected read and zero-exit transfer passed; runtime,
+  tab and system clipboard state was cleared before the UI cleanup attempt.
+
+## W7C-133 - Post-transfer masking control disappeared after secret handling
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed` / `regression_verified`
+- Original scenario: QA securely read the revealed TEST signing secret, moved it
+  through the protected clipboard into the Vercel CLI stdin, cleared runtime,
+  tab and system clipboard state, then attempted to re-mask the Dashboard value.
+- Evidence: the final masking click found no matching show control before the
+  operation could emit its boolean summary.
+- Impact: the transfer may already have completed and must be reconciled by
+  metadata before any retry. Secret variables and both clipboards were cleared
+  before the failed UI cleanup; no value was printed or persisted locally.
+- Required correction: inspect only retained boolean runtime state and Vercel
+  environment metadata, then verify the Dashboard value is masked or navigate
+  away without re-reading it.
+- Required regression: exactly one branch-scoped sensitive Preview variable
+  exists, Production has none, all clipboards are empty and no revealed secret
+  remains on the active page.
+- Correction: the destination page was reloaded instead of depending on the
+  transient reveal control.
+- Verification: the signing-secret section returned with zero revealed values,
+  the protected clipboard is empty, Preview has one sensitive branch-scoped
+  variable and Production has no Wave 7C TEST secret.
+
+## W7C-134 - Vercel env list does not accept a branch filter option
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed` / `regression_verified`
+- Original scenario: after the successful webhook-secret transfer, QA tried to
+  constrain `vercel env ls preview` with the same `--git-branch` option used by
+  `vercel env add`.
+- Evidence: Vercel CLI 59.4.0 rejected the unsupported list option before any
+  request that could mutate environment configuration.
+- Impact: no Vercel state changed and no secret value was read.
+- Required correction: list Preview metadata without that option and verify
+  branch scope from the CLI metadata returned for the exact variable.
+- Required regression: the new webhook variable is sensitive, Preview-only and
+  bound to the Wave 7C branch, while Production contains no Wave 7C Stripe key.
+- Correction: QA used the supported environment-only list command and read the
+  branch binding from its returned metadata.
+- Verification: `STRIPE_TEST_WEBHOOK_SECRET` is Sensitive and scoped only to
+  Preview branch `codex/organizer-live-pricing-checkout-v1`; Production contains
+  none of the three Wave 7C TEST variable names.
+
+## W7C-135 - Prior TEST catalog evidence belonged to a superseded Stripe context
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `open`
+- Original scenario: existing Wave 7C reports stated that two Organizer TEST
+  Products and four Prices already existed, while QA had since moved to the
+  dedicated `Pachangas IQ Wave 7C` Sandbox required by the credential policy.
+- Evidence: direct TEST Dashboard readback in the dedicated Sandbox shows the
+  empty-state prompt to add the first test product and zero matches for either
+  canonical Organizer product name.
+- Impact: the product/price PASS statements are stale for the current Sandbox;
+  no Checkout or Portal E2E may rely on them.
+- Required correction: provision both Products and all four recurring Prices
+  only through the server-authoritative platform command, confirm their exact
+  metadata into PostgreSQL, and update every affected report.
+- Required regression: Stripe readback, canonical mappings and Preview health
+  all agree on exactly two Products, four Prices and zero active subscriptions.
