@@ -818,4 +818,38 @@ select pg_temp.assert_true(
   'Canonical writes must emit invalidations for Realtime refetch'
 );
 
+select pg_temp.assert_true(
+  has_function_privilege('anon',
+    'private.pachanga_billing_invalidation_can_read_v1(text,uuid,uuid)', 'EXECUTE')
+  and has_function_privilege('authenticated',
+    'private.pachanga_billing_invalidation_can_read_v1(text,uuid,uuid)', 'EXECUTE'),
+  'Realtime subscriber roles need EXECUTE on the RLS-only invalidation predicate'
+);
+
+set local role anon;
+select set_config('request.jwt.claims', '{"role":"anon"}', true);
+select pg_temp.assert_true(
+  (select count(*) = 1 from public.pachanga_organizer_billing_invalidations_v1
+    where organizer_kind = 'CATALOG'),
+  'Anon may read only the public catalog invalidation'
+);
+reset role;
+
+set local role authenticated;
+select pg_temp.actor('7b000000-0000-4000-8000-000000000005');
+select pg_temp.assert_true(
+  (select count(*) = 1 from public.pachanga_organizer_billing_invalidations_v1
+    where organizer_kind = 'TEAM'
+      and organizer_group_id = '7b000000-0000-4000-8000-000000000010'),
+  'The current owner may read the team billing invalidation'
+);
+select pg_temp.actor('7b000000-0000-4000-8000-000000000001');
+select pg_temp.assert_true(
+  (select count(*) = 0 from public.pachanga_organizer_billing_invalidations_v1
+    where organizer_kind = 'TEAM'
+      and organizer_group_id = '7b000000-0000-4000-8000-000000000010'),
+  'A non-owner member must not read the team billing invalidation'
+);
+reset role;
+
 select 'ORGANIZER_PLANS_STRIPE_BILLING_V1_DB_OK';

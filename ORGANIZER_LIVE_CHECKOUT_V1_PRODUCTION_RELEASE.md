@@ -8,15 +8,15 @@ Date: 2026-08-29 CEST
 - Pull request: [#219](https://github.com/puntoracingrc/pachangas/pull/219), Draft.
 - Functional SHA: `c087d2f93a4d9f7124315fcd26b3a4db485db6b1`.
 - Least-privilege fix SHA: `4108fc1630fd5f3cb3510c92335b55a6ba432799`.
-- Current evidence SHA: `62c9c4d748bf37cfa22e4981abec7f8cd528d7a9`.
+- Current pushed evidence SHA: `4742bd2d7be9acb97ba4cb06aa097c4b1010d772`.
 - Production merge SHA: pending.
-- Immutable Preview: `dpl_F5782xZibbsPqSGdLNtiXPP2VGNJ`, `READY`.
-- Preview URL: [Wave 7C exact SHA](https://pachangas-2zs7cs213-persianas-almar-web-s-projects.vercel.app).
+- Immutable Preview: `dpl_3v1AHUhavmE2GCpcBB8jSscD7Zth`, `READY`.
+- Preview URL: [Wave 7C exact SHA](https://pachangas-mj84h6hf1-persianas-almar-web-s-projects.vercel.app).
 - Production URL: [https://pachangasiq.com](https://pachangasiq.com).
 
 ## Forward-only database change
 
-Wave 7C contains exactly six new migrations:
+Wave 7C contains six planned commercial migrations:
 
 1. `20260828205310_organizer_commercial_decisions_v1.sql`
 2. `20260828205311_organizer_commercial_commands_v1.sql`
@@ -25,32 +25,39 @@ Wave 7C contains exactly six new migrations:
 5. `20260828205316_organizer_commercial_read_models_v1.sql`
 6. `20260828205317_organizer_commercial_hardening_flags_v1.sql`
 
-Local fresh bootstrap reaches ledger 196. The ephemeral staging branch also
-reaches 196, but its connector-generated versions differ from the six exact
-repository versions; exact production migration parity remains a release gate.
-No historical migration is rewritten.
+Authenticated staging QA discovered that the existing Realtime RLS policy could
+not execute its private predicate. The minimal forward-only correction is a
+seventh release migration:
+
+7. `20260829080812_organizer_billing_invalidation_rls_execute_v1.sql`
+
+Local fresh bootstrap reaches ledger 197. Staging contains the same seven names
+and SQL effects, under connector-generated versions for the six commercial
+migrations and the QA hotfix. Exact production migration parity remains a
+release gate. No historical migration is rewritten.
 
 ## Validation gates
 
 | Gate | Result |
 | --- | --- |
-| Focused Wave 7B/7C tests | PASS, 22/22 |
-| SQL/RLS/idempotency | PASS, ledger 196 |
-| Nine concurrency races | PASS |
+| Focused Wave 7B/7C tests | PASS, 24/24 |
+| SQL/RLS/idempotency | PASS, ledger 197 |
+| Concurrency | PASS, five billing races plus nine commercial races |
 | Wave 7B compatibility | PASS |
 | Representative scale | PASS |
 | Typecheck | PASS |
 | Focused lint | PASS |
-| Full tests | PASS, 615/615; 0 skipped/todo/cancelled |
+| Full tests | PASS, 618/618; 20 Node + 598 TS/TSX; 0 skipped/todo/cancelled |
 | Build | PASS, 56 static pages |
 | Global lint | Existing debt only: 22 errors / 18 warnings outside Wave 7C |
 | Responsive/PWA QA | PASS at 1440x900, 390x844, 844x390 and standalone simulation |
 | `git diff --check` | PASS |
 
-The exact Preview renders the three canonical plans with both paid plans
-disabled, four pending-price labels and zero runtime warnings/errors. TEST
-Stripe readback confirms two active Organizer Products, four active recurring
-Prices and zero active subscriptions.
+The exact Preview renders the three canonical plans and TEST pricing. Stripe
+readback confirms two active Organizer Products, four active recurring Prices
+and zero real paid subscriptions. All four hosted Checkout combinations were
+validated without submitting a payment; the signed endpoint, Portal,
+failure/recovery, cancellation/resume and two-client Realtime paths passed.
 
 ## Activation boundary
 

@@ -24,7 +24,7 @@ function psql(args, label) {
 
 const ledger = psql(["-Atq", databaseUrl, "-c",
   "select count(*)||'|'||max(version) from supabase_migrations.schema_migrations"], "read Wave 7C ledger");
-assert.equal(ledger, "196|20260828205317");
+assert.equal(ledger, "197|20260829080812");
 
 const output = psql([
   "-Atq", databaseUrl, "-c", "begin",
@@ -37,7 +37,7 @@ assert.match(output, /ORGANIZER_COMMERCIAL_ACTIVATION_V1_DB_OK/);
 process.stdout.write(`${JSON.stringify({
   commercialDecisions: 3,
   database: "local",
-  finalLedger: 196,
+  finalLedger: 197,
   liveObjectsCreated: 0,
   migrations: 6,
   sqlRlsIdempotencyActivation: "PASS",

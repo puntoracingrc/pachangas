@@ -5,9 +5,9 @@ Date: 2026-08-29 CEST
 ## Snapshot
 
 - Version: 2.9
-- Seed: `pachangas-iq-demo-world-v2-9-2026-28`
-- Manifest hash: `300c5490d8e1ff64dd6e9238228d57628bfbae5e70a0cde0f089c04c3adb7e74`
-- Authority proof hash: `b9ee4eee8398d338891771eed13c6573deca1d532c01229b668e495fbd10f36a`
+- Seed: `pachangas-iq-demo-world-v2-9-2026-27`
+- Manifest hash: `95b7583a6feb2224cd407105e71c989fc1c8e99b170aa5def28cb6d3a55378d1`
+- Authority proof hash: `b4d071bac65d769a77b875a930b5f2680c22d369246eea23e2164d034bf2f29e`
 - Historical V2.1 through V2.8 snapshots remain immutable; V2.8 is archived
   under `public/demo-world/v2-8/`.
 
@@ -21,7 +21,7 @@ Date: 2026-08-29 CEST
 6. Team F in `past_due` with bounded grace.
 7. Club G canceled with read continuity and no new creation entitlement.
 
-The simulator applies the 196-migration product schema in a disposable
+The simulator applies the 197-migration product schema in a disposable
 PostgreSQL database, drives the real internal billing processors and destroys
 the database after export. It never calls Stripe remotely.
 
@@ -40,9 +40,10 @@ payment instrument.
 
 ## Verification
 
-The deterministic V2.9 generate/verify cycle and the 17-test Demo World suite
-pass. Missing or changed Organizer Billing chunks fail verification. Immutable
-hash checks for historical V2.1 through V2.8 remain active.
+The deterministic V2.9 generation and two consecutive verification cycles pass
+with `snapshotIdentical=true`. Missing or changed Organizer Billing chunks fail
+verification. Immutable hash checks for historical V2.1 through V2.8 remain
+active, and no historical directory changed.
 
 Final production manifest, Service Worker and responsive smoke are recorded in
 `ORGANIZER_LIVE_CHECKOUT_V1_PRODUCTION_RELEASE.md`.

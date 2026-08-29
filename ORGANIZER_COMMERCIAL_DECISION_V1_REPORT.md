@@ -41,13 +41,15 @@ platform decision has reached `LIVE_READY`.
 
 ## Verification
 
-- Focused commercial contract tests: 9/9 PASS; combined Wave 7B/7C suite: 22/22 PASS.
-- SQL, RLS, RBAC and idempotency: PASS on a fresh 196-migration database.
+- Focused commercial contract tests: 11/11 PASS; combined Wave 7B/7C suite: 24/24 PASS.
+- SQL, RLS, RBAC and idempotency: PASS on a fresh 197-migration database.
 - Nine requested concurrency races: PASS with one canonical winner and a
   stale, replayed or fail-closed loser.
 - Direct authenticated writes to private decisions, protected settings and
   live mappings: rejected.
 - Existing Stripe V1 routes, resources and authority remain unchanged.
+- The six planned commercial migrations remain unchanged; authenticated
+  staging QA added one separate forward-only RLS predicate-execution hotfix.
 
 ## Release state
 

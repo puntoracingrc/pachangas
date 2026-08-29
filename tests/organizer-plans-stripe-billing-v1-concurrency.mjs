@@ -27,7 +27,7 @@ if (!["127.0.0.1", "localhost", "::1", "[::1]"].includes(new URL(adminUrl).hostn
 const migrations = readdirSync(resolve(root, "supabase/migrations"))
   .filter((name) => /^\d{14}_.+\.sql$/.test(name))
   .sort();
-assert.equal(migrations.at(-1), "20260828205317_organizer_commercial_hardening_flags_v1.sql");
+assert.equal(migrations.at(-1), "20260829080812_organizer_billing_invalidation_rls_execute_v1.sql");
 
 function targetUrl() {
   const value = new URL(adminUrl);

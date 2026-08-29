@@ -52,6 +52,9 @@ subscriptions, mappings, metadata, webhook destination or reconciliation.
 
 ## Verification state
 
-Local SQL, static isolation, idempotency and concurrency are PASS. Final remote
-TEST webhook, Checkout, Portal and environment readbacks are recorded in
-`STRIPE_ORGANIZER_CHECKOUT_PORTAL_V1_REPORT.md` after controlled QA.
+Local SQL, static isolation, idempotency, concurrency and representative volume
+are PASS on ledger 197. Controlled staging QA verified the dedicated signed TEST
+webhook, all four Checkout price/interval combinations without payment,
+owner-only Portal, invoice failure/recovery, cancellation/resume and two-client
+Realtime convergence. Exact redacted outcomes are recorded in
+`STRIPE_ORGANIZER_CHECKOUT_PORTAL_V1_REPORT.md`.

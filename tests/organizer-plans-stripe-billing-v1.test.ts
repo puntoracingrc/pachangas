@@ -13,6 +13,8 @@ const migrations = [
   "supabase/migrations/20260828163756_organizer_billing_hardening_flags_v1.sql",
 ] as const;
 
+const realtimeRlsPatch = "supabase/migrations/20260829080812_organizer_billing_invalidation_rls_execute_v1.sql";
+
 function source(path: string) {
   return readFile(new URL(`../${path}`, import.meta.url), "utf8");
 }
@@ -130,6 +132,18 @@ test("Realtime is invalidation-only and clients must refetch canonical read mode
     assert.match(realtime, new RegExp(`'${entityKind}'`));
   }
   assert.doesNotMatch(realtime, /payload\.new|last-write-wins|offlineQueue/i);
+});
+
+test("Realtime subscribers can execute only the billing invalidation RLS predicate", async () => {
+  const patch = await source(realtimeRlsPatch);
+  assert.match(patch, /set lock_timeout = '5s'/);
+  assert.match(patch, /set statement_timeout = '5min'/);
+  assert.match(
+    patch,
+    /grant execute on function private\.pachanga_billing_invalidation_can_read_v1\(text, uuid, uuid\)[\s\S]+to anon, authenticated/,
+  );
+  assert.doesNotMatch(patch, /grant execute on function private\.pachanga_billing_(?:touch|invalidate)/);
+  assert.doesNotMatch(patch, /grant (?:insert|update|delete|all) on table/i);
 });
 
 test("Vercel invokes canonical billing reconciliation hourly", async () => {

@@ -72,7 +72,7 @@ test("Demo World V2 is deterministic and the committed snapshot matches its hash
     tournament: committed.tournament,
   };
   assert.equal(createHash("sha256").update(JSON.stringify(payload)).digest("hex"), committed.manifest.hash);
-  assert.equal(committed.manifest.hash, "300c5490d8e1ff64dd6e9238228d57628bfbae5e70a0cde0f089c04c3adb7e74");
+  assert.equal(committed.manifest.hash, "95b7583a6feb2224cd407105e71c989fc1c8e99b170aa5def28cb6d3a55378d1");
   assert.equal(committed.manifest.version, 2.9);
   assert.equal(committed.manifest.seed, DEMO_WORLD_V2_SEED);
   assert.deepEqual(demoWorldV2IntegrityErrors(committed), []);
@@ -81,10 +81,10 @@ test("Demo World V2 is deterministic and the committed snapshot matches its hash
 test("the committed authority proof comes from deterministic PostgreSQL operations", async () => {
   const proof = assertDemoWorldV2AuthorityProof(loadDemoWorldV2AuthorityProof());
   const world = await committedSnapshot();
-  assert.equal(proof.authorityHash, "b9ee4eee8398d338891771eed13c6573deca1d532c01229b668e495fbd10f36a");
+  assert.equal(proof.authorityHash, "b4d071bac65d769a77b875a930b5f2680c22d369246eea23e2164d034bf2f29e");
   assert.equal(proof.authorityHash, world.competitions.provenance.authorityHash);
   assert.equal(proof.database, "temporary-local-postgresql");
-  assert.equal(proof.migrationCount, 196);
+  assert.equal(proof.migrationCount, 197);
   assert.equal(proof.remoteWrites, 0);
   assert.deepEqual(proof.rpcFamilies, ["R1", "R3", "R4A", "R4B", "R4C", "R4D", "R5", "R6A", "R6B", "R6C", "PUBLIC_COMPETITIONS", "ORGANIZER_BILLING"]);
   assert.deepEqual(proof.refereeAssignments.unconvergedRefereeNumbers, []);
@@ -151,7 +151,7 @@ test("the protagonist League has the complete canonical R1-R5 graph including R3
   )));
   assert.deepEqual(league.provenance.rpcFamilies, ["R1", "R3", "R4A", "R4B", "R4C", "R4D", "R5"]);
   assert.equal(league.provenance.verified, true);
-  assert.equal(league.provenance.migrations, 196);
+  assert.equal(league.provenance.migrations, 197);
   assert.equal(league.competition.refereeAssignmentsEnabled, true);
 });
 

@@ -90,7 +90,7 @@ Resolved incidents must include `fixed` and `regression_verified`.
 ## W7C-004 - Stripe Organizer test runtime is not configured for this branch
 
 - Classification: `ENVIRONMENT_ISSUE`
-- Status: `open`
+- Status: `fixed + regression_verified`
 - Evidence: the dedicated Pachangas IQ Sandbox started without Organizer
   Products, Prices, Portal configuration or webhook destination, and the branch
   initially lacked its server-only TEST credentials.
@@ -107,6 +107,12 @@ Resolved incidents must include `fixed` and `regression_verified`.
   the new Sandbox has the exact 11-event Organizer webhook. Its two Products,
   four Prices and Portal configuration still require canonical provisioning
   before this incident can close.
+- Correction: the dedicated Sandbox was provisioned through the canonical
+  server workflow with the two allowlisted Products, four recurring TEST
+  Prices, isolated webhook and TEST Portal configuration.
+- Verification: all four Checkout combinations, signed webhook, owner Portal,
+  invoice failure/recovery and cancellation/resume passed; LIVE Products,
+  Prices, mappings and charges remain zero.
 
 ## W7C-005 - Catalog readback assumed a non-existent ordering column
 
@@ -2667,7 +2673,7 @@ Resolved incidents must include `fixed` and `regression_verified`.
 ## W7C-135 - Prior TEST catalog evidence belonged to a superseded Stripe context
 
 - Classification: `ENVIRONMENT_ISSUE`
-- Status: `open`
+- Status: `fixed + regression_verified`
 - Original scenario: existing Wave 7C reports stated that two Organizer TEST
   Products and four Prices already existed, while QA had since moved to the
   dedicated `Pachangas IQ Wave 7C` Sandbox required by the credential policy.
@@ -2681,11 +2687,17 @@ Resolved incidents must include `fixed` and `regression_verified`.
   metadata into PostgreSQL, and update every affected report.
 - Required regression: Stripe readback, canonical mappings and Preview health
   all agree on exactly two Products, four Prices and zero active subscriptions.
+- Correction: only the dedicated Pachangas IQ Sandbox was provisioned through
+  the canonical platform workflow and every stale report statement was replaced
+  with evidence from that context.
+- Verification: Stripe, PostgreSQL and Preview agree on two Products, four
+  recurring Prices and zero paid subscriptions; opaque resource IDs are absent
+  from reports and Demo World.
 
 ## W7C-136 - Keyboard activation did not start Preview Google OAuth
 
 - Classification: `ENVIRONMENT_ISSUE`
-- Status: `open`
+- Status: `fixed + regression_verified`
 - Original scenario: QA opened the exact READY Preview, focused `Continuar con
   Google` and activated it with `Enter` to establish an authenticated staging
   session for the platform billing flow.
@@ -2696,6 +2708,10 @@ Resolved incidents must include `fixed` and `regression_verified`.
   pointer activation and follow only the existing Google session flow.
 - Required regression: the branch Preview reaches `/admin/billing` as an
   authenticated staging platform actor without exposing identity data.
+- Correction: QA used the visible control's supported pointer activation.
+- Verification: Google OAuth started, later completed on the allowlisted staging
+  alias and the authenticated actor reached the Organizer billing surface; no
+  identity appears in retained evidence.
 
 ## W7C-137 - Wave 7C branch alias is not authorized by the Google OAuth client
 
@@ -2776,7 +2792,7 @@ Resolved incidents must include `fixed` and `regression_verified`.
 ## W7C-141 - Google OAuth returned to Preview without retaining a Supabase session
 
 - Classification: `ENVIRONMENT_ISSUE`
-- Status: `open`
+- Status: `fixed + regression_verified`
 - Original scenario: after rebuilding with the branch-scoped staging client and
   moving the allowlisted alias to the exact READY SHA, Google OAuth completed
   without a redirect mismatch and returned to the Preview root.
@@ -2790,6 +2806,12 @@ Resolved incidents must include `fixed` and `regression_verified`.
 - Required regression: one OAuth completion produces a valid staging session,
   `/admin/billing` loads its canonical read model and no token appears in the
   final URL, evidence or logs.
+- Correction: the Preview was rebuilt with the branch-scoped public staging
+  OAuth client and staging Supabase boundary, then the allowlisted alias was
+  pointed to the exact deployment.
+- Verification: OAuth produced a valid session, two authenticated tabs loaded
+  the canonical billing read model and Realtime updates, and the final URLs and
+  retained evidence contain no token.
 
 ## W7C-142 - Service Worker diagnostic exceeded the default selector deadline
 
@@ -2842,7 +2864,7 @@ Resolved incidents must include `fixed` and `regression_verified`.
 ## W7C-145 - Unmatched shell glob interrupted the PWA bridge source search
 
 - Classification: `SIMULATION_BUG`
-- Status: `open`
+- Status: `fixed + regression_verified`
 - Original scenario: QA read the Service Worker strategy and appended a search
   for registration/update code using an unquoted `pwa-client-bridge*` path.
 - Evidence: zsh rejected the unmatched glob after the Service Worker source had
@@ -2853,6 +2875,11 @@ Resolved incidents must include `fixed` and `regression_verified`.
   the source search against explicit paths.
 - Required regression: the update/reload contract is inventoried without shell
   expansion errors before choosing the next OAuth diagnostic.
+- Correction: subsequent inventories used `rg --files` plus explicit checked-in
+  PWA bridge and Service Worker paths only.
+- Verification: focused PWA tests and the 618-test global suite pass, including
+  controlled update, one reload, offline rejection and reconnect convergence;
+  no unmatched glob was used again.
 
 ## W7C-146 - First authenticated Google account lacks platform access in staging
 
@@ -3009,7 +3036,7 @@ Resolved incidents must include `fixed` and `regression_verified`.
 ## W7C-154 - First remote Team Checkout TEST failed closed
 
 - Classification: `PRODUCT_BUG`
-- Status: `fix_implemented_regression_pending_remote`
+- Status: `fixed + regression_verified`
 - Original scenario: with TEST health, Checkout and Portal gates enabled, the
   authenticated owner selected Team Organizer Pro monthly and submitted the
   visible Checkout action.
@@ -3031,6 +3058,10 @@ Resolved incidents must include `fixed` and `regression_verified`.
 - Local regression: the source contract test now couples Tax ID collection to
   the required Customer name update. Remote verification follows on the next
   exact Preview deployment.
+- Remote verification: after completing the Customer address contract in
+  W7C-156, a fresh Team/month intent opened the Stripe-hosted TEST Checkout and
+  PostgreSQL still reported zero subscription projections and zero active
+  grants before any signed webhook.
 
 ## W7C-155 - Focused TypeScript test used Node without the repository loader
 
@@ -3055,7 +3086,7 @@ Resolved incidents must include `fixed` and `regression_verified`.
 ## W7C-156 - Remote Team Checkout still failed after Customer name update
 
 - Classification: `PRODUCT_BUG`
-- Status: `fix_implemented_regression_pending_remote`
+- Status: `fixed + regression_verified`
 - Original scenario: the exact Preview deployment containing
   `customer_update[name]=auto` was made READY, the staging OAuth alias was
   repointed to that SHA, the billing page was reloaded to discard the previous
@@ -3083,6 +3114,10 @@ Resolved incidents must include `fixed` and `regression_verified`.
 - Local regression: the Checkout source contract now requires address and name
   updates together with Tax ID collection. Remote verification follows on the
   next exact READY deployment.
+- Remote verification: the exact READY deployment opened one Team Organizer Pro
+  monthly TEST Checkout. The canonical intent is `SESSION_CREATED`, while the
+  account has no current plan family, subscription projection or access grant
+  before payment confirmation.
 
 ## W7C-157 - Generic incident patch targeted an older status line
 
@@ -3098,3 +3133,756 @@ Resolved incidents must include `fixed` and `regression_verified`.
   explicit context.
 - Verification: the reviewed diff now leaves W7C-004 unchanged and changes
   only W7C-156 to `fix_implemented_regression_pending_remote`.
+
+## W7C-158 - Pre-webhook readback referenced nonexistent account columns
+
+- Classification: `SIMULATION_BUG`
+- Status: `fixed + regression_verified`
+- Original scenario: after Stripe returned a hosted Team/month Checkout URL,
+  QA attempted to prove that the billing account still had no access before a
+  signed webhook.
+- Evidence: PostgreSQL rejected the read-only query because the billing account
+  table does not expose columns named `access_status` or `current_plan_code`.
+- Impact: the statement returned no row and changed no staging data.
+- Required correction: inspect the exact private schema and use subscription
+  and grant tables, plus only real account columns, for the fail-closed
+  assertion.
+- Required regression: one bounded row proves `SESSION_CREATED` while active
+  subscription and access-grant counts remain zero before payment confirmation.
+- Correction: the readback now uses real account columns plus
+  `pachanga_stripe_subscription_projections_v1` and
+  `pachanga_organizer_access_grants_v1`.
+- Verification: one bounded canonical row reported `SESSION_CREATED`, a stored
+  hosted Session URL, zero subscription projections and zero active grants.
+
+## W7C-159 - Stripe agent disclosure did not accept setChecked automation
+
+- Classification: `TESTABILITY_GAP`
+- Status: `open`
+- Original scenario: before entering any TEST payment data, QA attempted to
+  enable Stripe Checkout's visible `I am an AI agent acting on behalf of
+  someone else` disclosure with the semantic checkbox action.
+- Evidence: the browser found one visible enabled checkbox, but Stripe's custom
+  control did not transition to checked state and the action failed.
+- Impact: no payment was submitted, no webhook fired and canonical access
+  remains absent.
+- Required correction: activate the same visible disclosure with a normal user
+  click and verify its checked state before continuing; do not hide, bypass or
+  remove the control.
+- Required regression: the disclosure is checked in the hosted Checkout before
+  the TEST payment button is submitted.
+
+## W7C-160 - Browser locator lacks isChecked inspection helper
+
+- Classification: `SIMULATION_BUG`
+- Status: `fixed + regression_verified`
+- Original scenario: after clicking the visible Stripe agent disclosure, QA
+  attempted to verify it with the full Playwright `isChecked()` helper.
+- Evidence: this browser adapter does not expose that helper and rejected the
+  inspection call after the click.
+- Impact: no payment submission occurred; the click may have succeeded but its
+  state was not yet accepted as evidence.
+- Required correction: verify the same control through the supported semantic
+  DOM snapshot and continue only if it is explicitly marked checked.
+- Required regression: the snapshot records the disclosure as checked before
+  TEST payment submission.
+- Correction: the supported locator property evaluation was used for the
+  inspection instead of the unavailable convenience helper.
+- Verification: the control was proved unchecked, so QA did not submit the
+  hosted payment and did not misreport disclosure as complete.
+
+## W7C-161 - Stripe card method button exceeded the browser action deadline
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed + regression_verified`
+- Original scenario: with the hosted TEST Checkout open and before entering
+  payment data, QA selected Stripe's visible `Pago con tarjeta` control.
+- Evidence: one visible enabled button was found, but the third-party Checkout
+  did not complete the semantic click before the browser deadline.
+- Impact: no card data was entered, no payment was submitted and no webhook or
+  entitlement was produced.
+- Required correction: try the corresponding visible `Tarjeta` radio control;
+  if Stripe still blocks automated interaction, keep hosted-payment completion
+  explicitly pending and validate signed webhook projection through Stripe's
+  official TEST tooling instead.
+- Required regression: either the card fields become interactable and the
+  agent disclosure is checked, or the final report preserves this physical
+  Checkout limitation without claiming a completed hosted payment.
+- Correction: QA selected the equivalent visible `Tarjeta` radio control.
+- Verification: Stripe marked `Tarjeta` checked and exposed the cardholder and
+  billing-address fields. Payment submission remains deliberately blocked by
+  the unresolved agent-disclosure control in W7C-159.
+
+## W7C-162 - Vercel env run materialized a local environment file
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed + regression_verified`
+- Original scenario: QA used Vercel's documented `env run` command to execute a
+  signed TEST webhook probe with branch-scoped server variables and no secret
+  value in the command or output.
+- Evidence: Vercel reported that it loaded the Preview environment from a new
+  worktree-local `.env.local` file.
+- Impact: the file may contain sensitive branch Preview values. It was never
+  read, printed, staged or committed, but violates the requirement that the
+  restricted key remain only in Vercel.
+- Required correction: delete the known generated file immediately without
+  inspecting it, verify Git and filesystem cleanup, and do not use `env run`
+  again for this release.
+- Required regression: `.env.local` is absent, Git remains clean apart from
+  intentional Wave 7C documentation, and secret scans report no leaked value.
+- Correction: the generated file was removed without reading or printing it and
+  `env run` is retired from the remaining Wave 7C procedure.
+- Verification: a single-depth filesystem check reports `.env.local` absent;
+  the full secret scan remains part of the final gate.
+
+## W7C-163 - Signed TEST webhook probe was intercepted with HTTP 401
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed + regression_verified`
+- Original scenario: a controlled Stripe-compatible TEST event was signed with
+  the branch-only webhook secret and posted to the dedicated Organizer Preview
+  endpoint.
+- Evidence: the response was HTTP 401, whereas the application webhook route
+  itself returns 400 for bad signatures and 200/500 after ingestion.
+- Impact: the request did not reach canonical ingestion; no webhook event,
+  subscription projection or access grant was created.
+- Required diagnosis: confirm whether Vercel Deployment Protection is blocking
+  Stripe and test probes before the application route, then use a narrowly
+  scoped protection bypass or another isolated staging endpoint without
+  weakening Production.
+- Required regression: the dedicated TEST destination reaches the application,
+  accepts one valid signed event, rejects an invalid signature, and remains
+  isolated from Production and Stripe V1.
+- Correction: the dedicated Stripe TEST destination was given the isolated
+  Vercel automation-bypass query contract documented for third-party webhooks;
+  Production and Stripe V1 were not changed.
+- Verification: Vercel recorded HTTP 200 for an official Stripe-origin TEST
+  event and HTTP 400 for the invalid-signature probe. The private canonical
+  ledger recorded `signature_verified=true`, `ACCEPTED` and `PROCESSED`.
+
+## W7C-164 - Broad file-removal command was rejected during secret cleanup
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed + regression_verified`
+- Original scenario: immediately after W7C-162, QA attempted to remove only the
+  generated `.env.local` with a forced removal command.
+- Evidence: the execution environment rejected the command before it ran and
+  recommended a narrower removal operation.
+- Impact: no file was deleted by that command; the generated environment file
+  remained temporarily present but unread and untracked.
+- Required correction: use a single-path non-forced unlink operation, then
+  verify absence without displaying any former content.
+- Required regression: the file no longer exists and no other worktree path is
+  modified by cleanup.
+- Correction: the exact generated path was removed with a non-forced unlink.
+- Verification: the path is absent and no recursive or wildcard deletion was
+  executed.
+
+## W7C-165 - Vercel project readback exposed an existing automation bypass value
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed + regression_verified`
+- Original scenario: to diagnose the Preview HTTP 401, QA requested a redacted
+  project-security projection through the authenticated Vercel API.
+- Evidence: the `protectionBypass` object encodes the secret as its object key,
+  so the filtered CLI result still printed the full pre-existing automation
+  bypass value.
+- Impact: the value appeared in a private tool log. It was not copied to source,
+  reports, screenshots or the client bundle, but must now be treated as exposed
+  and never reused for Wave 7C.
+- Required correction: inventory references by variable name only, rotate or
+  revoke the exposed project bypass without printing the replacement, update
+  only necessary protected integrations, and verify the old value no longer
+  authenticates.
+- Required regression: project readbacks report only bypass count/scope/age,
+  no secret value appears in later logs, and final scans contain no bypass or
+  Stripe credential material.
+- Correction: the exposed bypass was regenerated without printing its
+  replacement and the project readback was reduced to count, scope, env-var
+  status and creation time.
+- Verification: the sanitized readback reports exactly one automation bypass;
+  the former value no longer reaches the application. The full repository and
+  artifact secret scan remains a final release gate.
+
+## W7C-166 - Previous Vercel bypass still authenticated immediately after rotation
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed + regression_verified`
+- Original scenario: the exposed automation bypass was revoked with
+  `regenerate=true` through Vercel's project API, then immediately used once
+  against the protected TEST webhook path.
+- Evidence: the old value reached the application and returned HTTP 405 for a
+  GET request instead of being stopped by Deployment Protection with 401.
+- Impact: the old bypass may still be valid during propagation or may not have
+  been removed by the requested operation. No application mutation occurred.
+- Required diagnosis: read back only bypass count, scope, env-var status and
+  creation time; wait for propagation if one replacement exists, otherwise
+  revoke the stale entry explicitly without printing either value.
+- Required regression: the former bypass no longer reaches the application and
+  the project retains only the intended replacement automation credential.
+- Correction: after propagation, the exposed value was retired again as part
+  of the W7C-169 rotation and no additional bypass entry was retained.
+- Verification: the old-value probe now redirects to Vercel SSO instead of
+  returning the application's HTTP 405, while the sanitized project readback
+  reports exactly one replacement credential.
+
+## W7C-167 - Clipboard paste did not update the Stripe webhook URL field
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed + regression_verified`
+- Original scenario: the replacement Vercel bypass was composed into the
+  dedicated TEST webhook URL without stdout and placed temporarily on the macOS
+  clipboard, then the visible Stripe endpoint field received Select All/Paste.
+- Evidence: a boolean-only field inspection reported the original URL length,
+  no bypass query key and no expected protected endpoint prefix.
+- Impact: Stripe was not modified and the replacement bypass was not submitted
+  or displayed by the browser.
+- Required correction: transfer the clipboard value directly in memory to the
+  visible field, never emit the string, and verify only prefix/bypass booleans
+  before saving.
+- Required regression: Stripe saves one dedicated TEST destination containing
+  the protected endpoint contract, while logs, screenshots and reports contain
+  no bypass value.
+- Correction: the protected endpoint was transferred directly in memory to the
+  visible Stripe field and saved; the clipboard was cleared immediately.
+- Verification: boolean-only field checks confirmed the expected endpoint and
+  bypass shape, and an official Stripe TEST delivery subsequently reached the
+  application with HTTP 200.
+
+## W7C-168 - Stripe test-event control did not open through browser automation
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed + regression_verified`
+- Original scenario: after saving the protected Organizer TEST destination, QA
+  activated Stripe Dashboard's visible `Enviar eventos de prueba` control to
+  generate one official signed event without completing a hosted payment.
+- Evidence: the control remained visible and enabled, but neither the semantic
+  click nor the adapter's element activation exposed the event picker; the
+  latter is not implemented by the browser adapter for Stripe's custom anchor.
+- Impact: no event was sent by this attempt and no subscription projection or
+  grant changed.
+- Required correction: use another official Stripe TEST mechanism or a
+  supported Dashboard interaction that preserves the dedicated destination,
+  signing secret and protection bypass without exposing credentials.
+- Required regression: one Stripe-origin signed TEST delivery reaches the
+  application route and is visible in both Stripe delivery status and the
+  canonical server ledger; no hosted charge or LIVE resource is created.
+- Correction: QA used Stripe Workbench's official `stripe trigger` TEST
+  mechanism instead of the inaccessible custom event-picker control.
+- Verification: the post-rotation trigger produced HTTP 200 and canonical
+  sequences 78/79 with verified signature, accepted delivery and processed
+  event. No LIVE object or charge was created.
+
+## W7C-169 - Stripe Workbench output exposed the protected TEST endpoint URL
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed + regression_verified`
+- Original scenario: QA used Stripe Workbench's official TEST shell to trigger
+  `checkout.session.completed` after the event-picker control in W7C-168 did
+  not open.
+- Evidence: the Workbench result included the complete dedicated endpoint URL,
+  including the current Vercel protection-bypass query value, in a private tool
+  log.
+- Impact: the bypass did not enter Git, reports, screenshots, the client bundle
+  or Production, but the current value must be considered exposed and retired.
+- Required correction: rotate the Vercel automation bypass again without
+  printing the replacement, update the dedicated Stripe TEST destination only
+  through an in-memory transfer, and never emit unfiltered Workbench body text.
+- Required regression: the previous value no longer passes Deployment
+  Protection, only one replacement exists, Stripe TEST reaches the route, and
+  all later evidence is limited to status codes, counts and redacted metadata.
+- Correction: the exposed bypass was regenerated again, the dedicated Stripe
+  TEST destination was updated directly in memory and all later evidence was
+  limited to redacted metadata and status codes.
+- Verification: the exposed value redirects to Vercel SSO, exactly one new
+  bypass exists, and a second Stripe-origin signed event reached the app and
+  private ledger with HTTP 200.
+
+## W7C-170 - Vercel bypass rotation used an obsolete revoke field
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed + regression_verified`
+- Original scenario: after W7C-169, QA attempted a silent rotation using the
+  same protected API contract recorded by the previous rotation.
+- Evidence: Vercel rejected the request with HTTP 400 because `revoke` now
+  requires the property `secret`; no rotation occurred.
+- Impact: the exposed replacement remained active temporarily, but no project
+  setting or application state changed in this failed attempt.
+- Required correction: repeat once with the API-confirmed `revoke.secret`
+  field, keeping both old and regenerated values out of stdout and files.
+- Required regression: rotation succeeds, the old value receives HTTP 401,
+  and the sanitized project readback reports exactly one new automation bypass.
+- Correction: the retry used the API-confirmed `revoke.secret` field.
+- Verification: the rotation completed, the old value is rejected by
+  Deployment Protection through its SSO redirect, and the sanitized readback
+  reports one replacement automation bypass.
+
+## W7C-171 - Post-rotation probe used a reserved zsh variable
+
+- Classification: `SIMULATION_BUG`
+- Status: `fixed + regression_verified`
+- Original scenario: the corrected Vercel rotation completed, after which the
+  same shell block attempted to store the old-token probe result in `status`.
+- Evidence: zsh rejected assignment to its read-only `status` parameter before
+  the probe result could be reported.
+- Impact: the rotation request had already completed, but this execution did
+  not prove revocation or the final bypass count.
+- Required correction: do not rotate again; perform a sanitized project
+  readback and use a non-reserved local variable for the old-value probe.
+- Required regression: one replacement exists and the previously exposed value
+  is rejected by Deployment Protection without reaching the application.
+- Correction: no additional rotation was performed; the old value was probed
+  in memory and the project was read back with a secret-free projection.
+- Verification: the old probe returned a Vercel SSO redirect rather than the
+  application's HTTP 405, and the project retains one replacement entry.
+
+## W7C-172 - Full hosted Checkout snapshot included the authenticated email
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed + regression_verified`
+- Original scenario: after opening Club Organizer monthly in Stripe TEST, QA
+  requested a complete semantic snapshot to confirm the hosted product and
+  interval.
+- Evidence: Stripe's accessible tree also included the authenticated Checkout
+  email in a private tool response.
+- Impact: no PII entered Git, reports, screenshots, application logs or public
+  artifacts, but the complete snapshot is unsuitable as retained evidence.
+- Required correction: do not request further full hosted-Checkout snapshots;
+  query only bounded product, amount, interval and TEST-mode controls and keep
+  all final evidence aggregate and redacted.
+- Required regression: the remaining three Checkout combinations are verified
+  without outputting email, Customer, Session, subscription or payment IDs.
+- Correction: hosted Checkout evidence was reduced to TEST mode, product,
+  amount and interval assertions only.
+- Verification: Club monthly, Club annual and Team annual were verified with
+  bounded semantic checks and canonical receipt readbacks; no further Checkout
+  snapshot or personal identifier was emitted.
+
+## W7C-173 - Billing-period selector missed the first post-Checkout deadline
+
+- Classification: `SIMULATION_BUG`
+- Status: `fixed + regression_verified`
+- Original scenario: after returning directly from hosted Club monthly
+  Checkout, QA immediately queried the annual-period selector.
+- Evidence: the browser adapter exceeded its dispatch deadline before the
+  selector evaluation began.
+- Impact: no Checkout Session or server mutation was created by this attempt.
+- Required correction: wait for the billing page and canonical snapshot to
+  stabilize, then query the existing selector without another navigation.
+- Required regression: Club annual opens once and records one non-replayed
+  `checkout.prepare` receipt with `billingInterval=year`.
+- Correction: QA waited for the canonical billing page to settle and selected
+  the annual option through the supported semantic select action.
+- Verification: Stripe TEST opened Club Organizer at 290 EUR per year and the
+  server recorded one non-replayed `checkout.prepare` receipt with
+  `billingInterval=year` at server sequence 85.
+
+## W7C-174 - Portal button property inspection exceeded the adapter deadline
+
+- Classification: `SIMULATION_BUG`
+- Status: `fixed + regression_verified`
+- Original scenario: before creating the synthetic canonical active
+  subscription, QA attempted to inspect the native `disabled` property of the
+  visible `Gestionar en Stripe` button.
+- Evidence: the semantic selector existed on the settled billing page, but its
+  property evaluation exceeded the browser adapter deadline.
+- Impact: no write occurred; the canonical snapshot still reported `Sin
+  acceso` and no active subscription or grant existed.
+- Required correction: validate Portal availability from the canonical billing
+  snapshot and the authenticated Portal route response, not from a fragile DOM
+  property helper.
+- Required regression: an owner with a server-configured Stripe Customer can
+  create one TEST Portal Session, an organizer without a Customer is denied,
+  a non-owner remains denied, and replaying the same operation does not create
+  a second intent. Portal access is deliberately not coupled to an active
+  entitlement because it must remain available for billing recovery.
+- Correction: QA replaced the fragile DOM-property inspection with the
+  authoritative Portal command and private intent readback.
+- Verification: the owner reached `billing.stripe.com`, the canonical intent
+  stayed `SESSION_CREATED`, replay returned the original receipt with one
+  intent row, the non-owner received `BILLING_OWNER_REQUIRED`, and a rolled
+  back owner-transfer test proved that permissions follow the current owner.
+
+## W7C-175 - Realtime invalidation readback assumed a nonexistent column
+
+- Classification: `SIMULATION_BUG`
+- Status: `fixed + regression_verified`
+- Original scenario: after the canonical active-subscription projection, QA
+  queried the public billing invalidation ledger using the guessed column name
+  `entity_type`.
+- Evidence: PostgreSQL rejected the read with undefined-column SQLSTATE 42703.
+- Impact: the projection transaction had already succeeded and was unaffected;
+  only the diagnostic read failed.
+- Required correction: inspect the relation contract and repeat the bounded
+  readback with canonical column names before diagnosing the client refresh.
+- Required regression: the active projection has a corresponding ordered
+  invalidation row and the client either converges through Realtime or records
+  a reproducible refresh defect.
+- Correction: QA inspected the relation definition and repeated the readback
+  with its canonical kind, organizer and sequence columns.
+- Verification: the projection produced the expected ordered invalidation at
+  server sequence 99, which led to W7C-176/W7C-177 instead of being mistaken
+  for a missing event.
+
+## W7C-176 - Open billing screen did not refetch after canonical invalidation
+
+- Classification: `PRODUCT_BUG`
+- Status: `fixed + regression_verified`
+- Original scenario: the authenticated Team billing screen remained open while
+  service-authoritative ingestion created an active subscription, access grant
+  and ordered public invalidation.
+- Evidence: PostgreSQL reported a newer invalidation at server sequence 99,
+  but after more than five seconds the screen still displayed `Sin acceso` and
+  did not show Team Organizer Pro.
+- Impact: the server state is correct and a manual read can converge, but the
+  open device did not reflect the confirmed access automatically.
+- Required diagnosis: inspect publication membership, RLS visibility, client
+  channel status and the snapshot-refetch handler; do not apply the WAL payload
+  as authority.
+- Required regression: two authenticated clients receive the invalidation,
+  refetch the canonical snapshot once, and converge to the same revision
+  without a reload loop or duplicate entitlement.
+- Correction: the underlying RLS execution defect was fixed by the forward-only
+  migration documented in W7C-177; the client continues to use the event only
+  as an invalidation signal and rereads the canonical snapshot.
+- Verification: two authenticated browser clients converged through Realtime
+  from active to `Pago pendiente`, back to `Activo`, then to `Cancelado` and
+  finally back to `Activo`, while PostgreSQL retained one subscription
+  projection and one Organizer access grant with monotonic revisions.
+
+## W7C-177 - Billing invalidation RLS policy could not execute its guard
+
+- Classification: `PRODUCT_BUG`
+- Status: `fixed + regression_verified`
+- Original scenario: QA reproduced the Realtime-table SELECT as the same
+  authenticated staging actor after W7C-176.
+- Evidence: PostgreSQL returned SQLSTATE 42501, `permission denied for function
+  pachanga_billing_invalidation_can_read_v1`.
+- Impact: the row and publication are correct, but authenticated clients cannot
+  pass the RLS policy, so no invalidation can trigger a canonical refetch.
+- Required correction: grant only `EXECUTE` on the policy guard to `anon` and
+  `authenticated`; keep the security-definer predicate, underlying tables and
+  every mutation function private.
+- Required regression: authorized owners/platform readers can SELECT only their
+  permitted invalidations, unrelated authenticated users see zero rows rather
+  than an error, and no client role can execute any billing mutation function.
+- Correction: migration
+  `20260829080812_organizer_billing_invalidation_rls_execute_v1.sql` grants only
+  `EXECUTE` on the RLS predicate to `anon` and `authenticated`; the predicate
+  remains security-definer and all tables and mutation functions keep their
+  existing private grants.
+- Verification: staging owner readback returned its single invalidation,
+  unrelated authenticated readback returned zero rows, anonymous catalog
+  access remained available, focused static tests pass, and both authenticated
+  clients now converge after canonical invalidations.
+
+## W7C-178 - Stripe Portal title exposed its ephemeral session secret
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed + regression_verified`
+- Original scenario: after canonical entitlement activation, the owner opened
+  the dedicated TEST Billing Portal and QA inspected host and title.
+- Evidence: Stripe uses the full Portal Session URL as the document title, so
+  the private browser response included the ephemeral `test_...` session value.
+- Impact: the temporary Portal Session did not enter Git, reports, screenshots,
+  client logs or Production, but it cannot be retained as evidence.
+- Required correction: never inspect Portal titles or complete URLs; let this
+  session expire and retain only host, canonical intent status and access-control
+  outcomes.
+- Required regression: a fresh owner Portal intent is confirmed server-side,
+  the browser reaches `billing.stripe.com`, non-owners are denied, and no Portal
+  URL or session ID appears in later evidence or artifacts.
+- Correction: the original ephemeral session was allowed to expire; every later
+  Portal assertion used only host, canonical intent status, replay count and
+  access-control outcome.
+- Verification: owner, replay, non-owner and transactional owner-transfer tests
+  passed, while the final tracked-file, diff, build-bundle, report and temporary
+  scan found zero Stripe key, webhook, Checkout-session or Portal-session
+  secret patterns.
+
+## W7C-179 - Cancellation readback used the competition-grant column name
+
+- Classification: `SIMULATION_BUG`
+- Status: `fixed + regression_verified`
+- Original scenario: after processing the newer canceled subscription event,
+  QA attempted to join the Organizer access grant to its subscription using
+  `billing_subscription_projection_id`.
+- Evidence: PostgreSQL returned undefined-column SQLSTATE 42703; that name
+  belongs to a different competition entitlement relation.
+- Impact: cancellation ingestion had already committed successfully and was not
+  changed; only the diagnostic read failed.
+- Required correction: inspect the private Organizer grant contract and repeat
+  the bounded status/count read with its canonical foreign-key column.
+- Required regression: one Organizer grant row remains auditable and is no
+  longer active after cancellation; both clients refetch the canceled state.
+- Correction: the readback now joins through the Organizer grant's canonical
+  `subscription_projection_id` foreign key.
+- Verification: cancellation preserved exactly one auditable Organizer grant
+  in `revoked` and both clients showed `Cancelado`; the later resume reused the
+  same grant, advanced subscription and grant revisions to 7, restored 20
+  active capabilities and converged both clients to `Activo`. The null
+  `restored_at` is intentional for subscription-derived grants; that timestamp
+  is reserved for administrative restoration of manual grants.
+
+## W7C-180 - Consolidated notification readback used an unverified relation contract
+
+- Classification: `SIMULATION_BUG`
+- Status: `fixed + regression_verified`
+- Original scenario: after the cancellation/resume cycle, QA combined account,
+  receipt, Portal-intent and billing-notification counts in one bounded staging
+  query before checking the canonical notification relation name.
+- Evidence: Supabase rejected the request as `INVALID_ARGUMENT` before the SQL
+  produced a result.
+- Impact: no database row, receipt, notification, subscription or entitlement
+  changed; only the diagnostic readback failed.
+- Required correction: inspect the checked-in notification schema, split the
+  readback into verified relations and rerun only aggregate, PII-free queries.
+- Required regression: report the canonical notification kinds and counts for
+  the synthetic billing lifecycle, prove duplicate events do not duplicate the
+  same transition notification, and keep notification bodies and identities
+  out of retained evidence.
+- Correction: QA inspected the checked-in notification foundation, used
+  `public.pachanga_user_notifications`, and split account/intent and
+  notification aggregation into bounded reads.
+- Verification: one notification exists for each cancellation and invoice
+  failure transition, the subscription and invoice payment-failure signals
+  remain separately classified, three real active transitions have three
+  distinct dedupe keys, and replaying the duplicate Stripe event created no
+  additional notification. No body, identity or dedupe value was retained.
+
+## W7C-181 - Supabase connector hid the expected stale-revision SQLSTATE
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed + regression_verified`
+- Original scenario: QA deliberately called Checkout preparation with account
+  revision 12 while the canonical account was already at revision 13.
+- Evidence: the connector returned the generic wrapper error
+  `INVALID_ARGUMENT` instead of exposing the expected `STALE_REVISION` detail.
+- Impact: the function transaction failed and no Checkout intent, receipt or
+  billing-account update committed, but this response alone cannot certify the
+  exact server rejection reason.
+- Required correction: repeat Checkout and Portal stale-revision calls inside
+  a rollback-only PostgreSQL harness that catches SQLSTATE/detail and returns a
+  redacted pass/fail result.
+- Required regression: both commands report `PT409`/`STALE_REVISION`, and
+  before/after intent and receipt counts remain identical.
+- Correction: the calls were repeated inside a rollback-only exception harness
+  that returned only SQLSTATE and message classification.
+- Verification: Checkout and Portal both returned
+  `PT409:STALE_REVISION`; Checkout intents remained four and Portal intents
+  remained one, so neither stale request created a durable command.
+
+## W7C-182 - Rollback harness lacked the server-only JWT authority context
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed + regression_verified`
+- Original scenario: QA wrapped the stale Checkout and Portal calls in a
+  PostgreSQL exception harness so the Supabase connector could return the exact
+  SQLSTATE without aborting its outer request.
+- Evidence: both commands returned `42501:SERVICE_ROLE_REQUIRED` before reaching
+  their revision checks; intent counts remained four Checkout and one Portal.
+- Impact: no mutation committed and the server-only boundary was reinforced,
+  but the harness still did not exercise the stale-revision branch.
+- Required correction: inspect and reuse the existing local SQL-test authority
+  setup for service commands, scoped to the diagnostic transaction only. Do not
+  grant execution to clients or weaken `pachanga_billing_require_service_v1`.
+- Required regression: the service-context harness reaches `PT409` for both
+  stale calls, while direct client execution remains denied and intent/receipt
+  counts remain unchanged.
+- Correction: the harness reused the existing SQL-test convention by setting a
+  transaction-local `request.jwt.claims` role of `service_role`; no grant or
+  persistent setting was changed.
+- Verification: the service-context calls reached `PT409:STALE_REVISION` for
+  both commands, the previous client-context attempt remained denied with
+  `SERVICE_ROLE_REQUIRED`, and durable intent counts did not change.
+
+## W7C-183 - Local SQL runners still pinned the pre-hotfix migration ledger
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed + regression_verified`
+- Original scenario: after adding the forward-only Realtime RLS hotfix required
+  by authenticated staging QA, the focused static suite passed but the SQL,
+  concurrency and scale runners still asserted the previous final migration
+  `20260828205317` and ledger count 196.
+- Evidence: source inspection showed those exact stale assertions before the
+  database runners were launched.
+- Impact: product SQL and staging remain valid, but the local runners would
+  stop before exercising the new migration and its RLS regression.
+- Required correction: advance only the runner ledger/last-migration
+  expectations to migration 197/`20260829080812`; retain the six planned Wave
+  7C commercial migrations as a separate count from the one QA hotfix.
+- Required regression: DB, concurrency and scale runners bootstrap through the
+  exact hotfix, pass, and the reports reconcile six planned migrations plus one
+  forward-only RLS correction without rewriting history.
+- Correction: Billing DB, concurrency and scale runners now pin ledger 197 and
+  the exact final migration; the scale migration set includes the hotfix as its
+  fourteenth Wave 7B/7C database step.
+- Verification: SQL/RLS, billing concurrency and representative-volume suites
+  all pass through ledger 197; the hotfix applied in 30 ms with no ungranted
+  locks and no index growth.
+
+## W7C-184 - Local command guard rejected force-removal syntax for a temporary log
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed + regression_verified`
+- Original scenario: QA prepared a redacted `supabase start` wrapper whose final
+  step used `rm -f` to remove its temporary startup log.
+- Evidence: the command guard rejected the entire shell command before process
+  creation because force-removal syntax is not permitted.
+- Impact: Supabase did not start through this attempt and no temporary file,
+  container, database or repository state was created or changed.
+- Required correction: repeat with a uniquely created temporary path and plain
+  `rm` cleanup after sanitized result handling.
+- Required regression: local Supabase starts, no credential-bearing startup
+  output is emitted, and the temporary log no longer exists afterward.
+- Correction: the startup wrapper used a unique temporary path and plain `rm`
+  after processing only sanitized output.
+- Verification: the wrapper executed without command-guard rejection, emitted
+  no credential value and removed its temporary log on both failed and
+  successful startup attempts.
+
+## W7C-185 - Supabase CLI could not inspect the local Docker service
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed + regression_verified`
+- Original scenario: QA retried the credential-redacted local Supabase startup
+  with accepted temporary-log cleanup.
+- Evidence: `supabase start` exited 1 with `failed to inspect service: EOF`.
+- Impact: the local SQL stack is not yet available, so DB, concurrency and scale
+  runners have not started; staging and Production are unchanged.
+- Required correction: inspect only Docker service names/states and sanitized
+  Supabase debug output, then recover the local stack without deleting volumes
+  or touching remote projects.
+- Required regression: local ledger reaches 197, all focused DB runners can
+  connect to loopback port 55322, and no startup log or orphan process remains.
+- Correction: Docker Desktop was recovered as documented in W7C-186, then
+  Supabase started and the single pending local migration was applied.
+- Verification: loopback PostgreSQL reported ledger
+  `197|20260829080812`; Billing DB/RLS, Commercial DB, both concurrency suites
+  and representative volume completed successfully.
+
+## W7C-186 - Docker Desktop restart timed out while stopping its own processes
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed + regression_verified`
+- Original scenario: after persistent daemon `EOF` responses, QA invoked Docker
+  Desktop's supported restart command with a 120-second timeout.
+- Evidence: Docker reported that its backend, desktop and helper processes were
+  still running when the stop deadline expired.
+- Impact: no reachable container or database was stopped by this command, the
+  local stack remains unavailable, and remote staging/Production are unchanged.
+- Required correction: request an orderly macOS application quit, terminate
+  only non-responsive Docker Desktop processes if they remain, reopen Docker
+  Desktop and wait for a successful `docker info` before starting Supabase.
+- Required regression: the daemon answers normally, Supabase starts, focused
+  local database suites pass, and Docker is left without orphaned QA processes.
+- Correction: macOS received an orderly quit request; only the six remaining
+  Docker Desktop-owned processes were terminated, then Docker was reopened.
+- Verification: the daemon returned server version 29.5.3, Supabase started,
+  all focused local database suites passed and every ephemeral test database
+  reported cleanup PASS.
+
+## W7C-187 - Commercial DB runner also pinned the pre-hotfix ledger
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed + regression_verified`
+- Original scenario: Organizer Billing SQL/RLS passed on local ledger 197, then
+  the commercial DB runner began.
+- Evidence: it stopped before its suite because it still asserted
+  `196|20260828205317` instead of the new forward-only hotfix ledger.
+- Impact: the billing DB suite passed, but the commercial DB assertions did not
+  run in this attempt; no database or product defect was observed.
+- Required correction: audit every Organizer Commercial DB/concurrency/scale
+  runner for the same final-ledger pin and advance only those expectations.
+- Required regression: all commercial runners execute through ledger 197 and
+  retain the six planned commercial migration count plus the separate RLS
+  hotfix classification.
+- Correction: the Commercial DB and concurrency runner final-ledger assertions
+  now target 197/`20260829080812` without changing the six-migration commercial
+  feature manifest.
+- Verification: Commercial SQL/RLS reports six planned migrations, four TEST
+  mappings, zero LIVE objects and PASS at final ledger 197.
+
+## W7C-188 - Commercial concurrency runner retained a second numeric ledger pin
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed + regression_verified`
+- Original scenario: Organizer Billing concurrency passed, then the Commercial
+  concurrency runner started after its last-migration filename had been updated.
+- Evidence: a separate assertion still expected migration count 196 and stopped
+  the runner when the repository correctly contained 197.
+- Impact: no concurrency scenario ran in that commercial attempt; no product or
+  database mutation failed.
+- Required correction: advance that numeric final-ledger assertion to 197 and
+  search the complete runner for any remaining pre-hotfix constants.
+- Required regression: Commercial concurrency completes every race on an
+  ephemeral local database and cleans it afterward.
+- Correction: the remaining repository migration-count assertion now expects
+  197, matching the exact final migration assertion beside it.
+- Verification: all nine commercial races pass, including owner transfer,
+  Portal revocation, webhook/reconciliation and cancellation/invoice ordering;
+  the ephemeral database cleanup also passes.
+
+## W7C-189 - Demo World V2.9 authority proof retained migration count 196
+
+- Classification: `SIMULATION_BUG`
+- Status: `fixed + regression_verified`
+- Original scenario: after the forward-only RLS hotfix and local ledger 197,
+  QA ran the deterministic Demo World V2.9 verifier without regenerating its
+  authority proof.
+- Evidence: verification failed only on `migrationCount`, actual 197 versus the
+  stored 196; the rest of the canonical simulation matched.
+- Impact: no remote write occurred and no Demo scenario changed, but the stored
+  proof correctly refuses to certify a different schema ledger.
+- Required correction: regenerate V2.9 deterministically on ledger 197 and
+  update only generated V2.9 artifacts and their documented hashes.
+- Required regression: two consecutive generation/verification runs match,
+  historical V2.1-V2.8 hashes remain unchanged, and Demo still reports zero
+  remote writes and zero LIVE mappings.
+- Correction: V2.9 data and its authority proof were regenerated from the real
+  local schema at ledger 197; no earlier version directory was written.
+- Verification: two consecutive verifier runs reported `snapshotIdentical=true`,
+  migration count 197 and zero remote writes; the Organizer chunk still has
+  seven scenarios, four TEST mappings and zero LIVE mappings.
+
+## W7C-190 - Demo V2.9 seal tests retained the pre-regeneration digests
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed + regression_verified`
+- Original scenario: after V2.9 was regenerated and twice verified on ledger
+  197, QA ran its 17-test product contract suite.
+- Evidence: 14 functional tests passed; three seal assertions still expected
+  the old manifest hash, old authority hash and migration count 196.
+- Impact: product behavior, historical versions and generated data are valid,
+  but the committed test contract had not yet acknowledged the intentional
+  V2.9 authority-proof regeneration.
+- Required correction: update only those three exact V2.9 seal constants to the
+  generated ledger-197 values.
+- Required regression: all 17 Demo tests pass and a fresh verifier still reports
+  `snapshotIdentical=true`, with no historical hash or scenario expectation
+  changed.
+- Correction: the test now pins the exact ledger-197 manifest hash, authority
+  hash and both migration-count assertions generated by V2.9.
+- Verification: 17/17 Demo tests pass with zero skip/todo/cancelled, and a fresh
+  PostgreSQL verifier reports `snapshotIdentical=true`, migration count 197 and
+  zero remote writes.
+
+## W7C-191 - Browser evaluation did not bind navigator as a direct global
+
+- Classification: `SIMULATION_BUG`
+- Status: `open`
+- Original scenario: final PWA QA requested only Service Worker controller,
+  registration-state and display-mode booleans from the authenticated Preview.
+- Evidence: the browser evaluation context exposed `document` but returned a
+  TypeError when reading the unqualified `navigator` identifier.
+- First retry: qualifying through `window.navigator` produced the same adapter
+  TypeError because this serialized callback does not bind `window` either.
+- Second retry: `document.defaultView` returned the adapter's isolated DOM
+  environment with browser APIs unavailable; its `supported=false` result is
+  explicitly not accepted as evidence about the real Preview worker.
+- Impact: no worker, cache, browser storage or remote state was read or changed.
+- Required correction: repeat the same bounded check through
+  `window.navigator` and `window.matchMedia`, without enumerating caches or
+  registration internals.
+- Required regression: the active worker path, control state, waiting state and
+  display mode return successfully with no credential or user data.

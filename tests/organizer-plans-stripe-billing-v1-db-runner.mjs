@@ -26,7 +26,7 @@ const ledger = psql([
   "-Atq", databaseUrl, "-c",
   "select count(*)||'|'||max(version) from supabase_migrations.schema_migrations",
 ], "read local migration ledger");
-assert.equal(ledger, "196|20260828205317");
+assert.equal(ledger, "197|20260829080812");
 
 const output = psql([
   "-Atq", databaseUrl,
@@ -39,7 +39,7 @@ assert.match(output, /ORGANIZER_PLANS_STRIPE_BILLING_V1_DB_OK/);
 
 process.stdout.write(`${JSON.stringify({
   database: "local",
-  finalLedger: 196,
+  finalLedger: 197,
   flagsDefaultOff: true,
   migrations: 7,
   sqlRlsIdempotencyContinuity: "PASS",
