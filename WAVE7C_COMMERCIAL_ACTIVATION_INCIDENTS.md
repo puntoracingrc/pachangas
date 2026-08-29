@@ -2772,3 +2772,282 @@ Resolved incidents must include `fixed` and `regression_verified`.
   bounded runtime call.
 - Verification: client shape and zero-exit transfer both passed; the runtime
   binding was cleared and no OAuth URL or identifier entered the repository.
+
+## W7C-141 - Google OAuth returned to Preview without retaining a Supabase session
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `open`
+- Original scenario: after rebuilding with the branch-scoped staging client and
+  moving the allowlisted alias to the exact READY SHA, Google OAuth completed
+  without a redirect mismatch and returned to the Preview root.
+- Evidence: the final URL contained no OAuth error, but `/admin/billing` still
+  rendered `Sesión necesaria`.
+- Impact: no platform command or billing mutation ran; the failure is limited
+  to authenticated Preview session establishment.
+- Required correction: inspect the app callback contract plus sanitized Preview
+  runtime/console diagnostics and reconcile the Supabase staging redirect or
+  cookie boundary without weakening authentication.
+- Required regression: one OAuth completion produces a valid staging session,
+  `/admin/billing` loads its canonical read model and no token appears in the
+  final URL, evidence or logs.
+
+## W7C-142 - Service Worker diagnostic exceeded the default selector deadline
+
+- Classification: `TESTABILITY_GAP`
+- Status: `open`
+- Original scenario: because the reused OAuth alias may still be controlled by
+  the historical PWA worker, QA requested a bounded registration/controller
+  summary from the active root document.
+- Evidence: the asynchronous locator evaluation exceeded its default three
+  second deadline before returning any state.
+- Impact: no worker was updated, unregistered or modified and no browser data
+  was read beyond the failed diagnostic attempt.
+- Required correction: repeat the same non-sensitive controller/registration
+  summary with an explicit bounded timeout, then use the product's controlled
+  update path if a stale worker is present.
+- Required regression: the exact Wave 7C worker controls the OAuth alias after
+  one controlled reload and authentication is retried without fake success.
+
+## W7C-143 - Extended locator timeout did not override the browser command deadline
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `open`
+- Original scenario: QA repeated the read-only Service Worker summary with a
+  ten-second locator option and a longer tool timeout.
+- Evidence: the browser layer still stopped evaluation at its three-second
+  command deadline before the registration promise resolved.
+- Impact: no worker, cache, session or remote resource changed.
+- Required correction: stop retrying registration enumeration; first read only
+  the synchronous controller path, then use the existing bridge update UI or a
+  single page-side update command that does not await enumeration.
+- Required regression: a bounded synchronous diagnostic returns, stale worker
+  state is resolved once, and OAuth session behavior is retested.
+
+## W7C-144 - Synchronous Service Worker controller evaluation also timed out
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `open`
+- Original scenario: QA removed all asynchronous registration calls and read
+  only `navigator.serviceWorker.controller` through the root body element.
+- Evidence: the same three-second browser evaluation deadline expired.
+- Impact: no browser or remote state changed; repeated page evaluation is no
+  longer a viable diagnostic path for this tab.
+- Required correction: abandon locator evaluation for this issue and use the
+  product's visible update behavior plus server/browser logs; if auth remains
+  blocked, use a canonical ephemeral staging actor through documented QA
+  tooling rather than weakening OAuth.
+- Required regression: the selected alternative establishes an authenticated
+  staging session or records a precise blocker without bypassing server RBAC.
+
+## W7C-145 - Unmatched shell glob interrupted the PWA bridge source search
+
+- Classification: `SIMULATION_BUG`
+- Status: `open`
+- Original scenario: QA read the Service Worker strategy and appended a search
+  for registration/update code using an unquoted `pwa-client-bridge*` path.
+- Evidence: zsh rejected the unmatched glob after the Service Worker source had
+  already been read.
+- Impact: no file or runtime state changed; only the second read-only search was
+  skipped.
+- Required correction: locate exact bridge filenames with `rg --files` and run
+  the source search against explicit paths.
+- Required regression: the update/reload contract is inventoried without shell
+  expansion errors before choosing the next OAuth diagnostic.
+
+## W7C-146 - First authenticated Google account lacks platform access in staging
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `open`
+- Original scenario: OAuth reached the real Google account chooser and QA used
+  the first already-authenticated account without reading or recording identity.
+- Evidence: the root showed a valid signed-in state, while `/admin/billing`
+  returned `Acceso no disponible`.
+- Impact: authentication succeeded but no platform read or write was authorized;
+  no billing state changed.
+- Required correction: sign out cleanly and retry the second existing account,
+  again without capturing identity; retain only role/access outcome.
+- Required regression: the selected staging account reaches the billing Control
+  Center with canonical platform capabilities and no PII in evidence.
+
+## W7C-147 - Second authenticated Google account also lacks staging platform access
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `open`
+- Original scenario: QA signed out the first account, completed OAuth with the
+  second existing Google account and retried the Control Center.
+- Evidence: authentication succeeded, but `/admin/billing` again returned
+  `Acceso no disponible`.
+- Impact: neither available browser identity can exercise platform billing in
+  staging; no billing command or role mutation has occurred yet.
+- Required correction: identify the just-authenticated staging user only by
+  opaque user ID and recent sign-in timestamp, grant a temporary platform role
+  through the canonical service/bootstrap contract, then revoke it in cleanup.
+- Required regression: the same session reaches the Control Center, all role
+  grant/revoke actions are auditable, and zero PII is retained in evidence.
+
+## W7C-148 - Recent-user readback exceeded the connector output budget
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed + regression_verified`
+- Original scenario: QA queried the three most recent staging sign-ins as a
+  bounded JSON aggregate in order to identify the active browser actor only by
+  opaque user ID and current platform role.
+- Evidence: the Supabase connector returned an unexpectedly large, truncated
+  response despite the inner `limit 3`, so no reliable row was consumed.
+- Impact: the query was read-only; no account, role or billing state changed and
+  no PII was retained in the evidence ledger.
+- Required correction: replace the aggregate with one scalar row containing
+  only the latest opaque user ID, sign-in timestamp, existing role/revision and
+  one deterministic active platform-owner ID.
+- Required regression: the compact query returns exactly one bounded row
+  without truncation or personal data before any temporary role command runs.
+- Correction: the aggregate was replaced with a scalar query returning one
+  latest opaque user row and one deterministic active owner actor.
+- Verification: staging returned exactly one bounded row containing only UUIDs,
+  timestamp and nullable role metadata; no email, name or token was queried.
+
+## W7C-149 - Browser selectOption stalled on the commercial-plan selector
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed + regression_verified`
+- Original scenario: after provisioning the Club TEST catalog, QA selected the
+  first visible `Plan` combobox and requested `TEAM_ORGANIZER_PRO` by option
+  value through the browser adapter.
+- Evidence: the adapter found exactly one visible native `select` containing
+  all three decisions but exceeded its action deadline before changing value.
+- Impact: the Club catalog remains canonically confirmed; no Team product,
+  price, decision or flag changed during the failed selector action.
+- Required correction: use visible keyboard interaction on the same native
+  selector, then confirm the selected label and amounts before provisioning.
+- Required regression: the UI shows `TEAM_ORGANIZER_PRO`, 9.90 EUR monthly and
+  99.00 EUR yearly before the server command is submitted once.
+- Correction: the selector was addressed by its visible option label rather
+  than assuming its internal value was the plan code.
+- Verification: the UI displayed Team Organizer Pro with 990/9900 minor units,
+  then PostgreSQL confirmed the second Product and both recurring Prices.
+
+## W7C-150 - Staging ownership readback used unsupported UUID aggregation
+
+- Classification: `SIMULATION_BUG`
+- Status: `fixed + regression_verified`
+- Original scenario: after catalog confirmation, QA requested counts plus the
+  first opaque owned Team and Club IDs for the authenticated staging actor.
+- Evidence: PostgreSQL rejected `min(uuid)` with SQLSTATE `42883` before
+  returning any row.
+- Impact: the readback was read-only; no organizer, setting or billing account
+  changed.
+- Required correction: order UUIDs by their textual representation in bounded
+  scalar subqueries instead of applying `min` to the UUID type.
+- Required regression: one compact row returns ownership counts, optional
+  opaque IDs and TEST flags without PII.
+- Correction: UUID candidates are now selected with deterministic textual order
+  and `limit 1`; no unsupported aggregate remains.
+- Verification: the bounded readback completed and reported zero owned Teams
+  and Clubs for the ephemeral actor.
+
+## W7C-151 - Ownership readback referenced obsolete TEST flag names
+
+- Classification: `SIMULATION_BUG`
+- Status: `fixed + regression_verified`
+- Original scenario: the corrected ownership query also requested
+  `test_checkout_enabled` and `test_portal_enabled` directly from the billing
+  settings row.
+- Evidence: staging rejected the first obsolete column name with SQLSTATE
+  `42703`; the current schema exposes the Wave 7C gate under different names.
+- Impact: no data changed and no partial row was consumed.
+- Required correction: read the exact settings columns from the forward-only
+  Wave 7C migrations, then rerun the compact query with canonical names only.
+- Required regression: the corrected query returns one row and its flags agree
+  with the Control Center read model.
+- Correction: the query now uses `stripe_test_checkout_enabled`,
+  `stripe_test_portal_enabled`, `stripe_test_webhook_ready` and
+  `stripe_test_portal_ready` from the exact Wave 7C schema.
+- Verification: one compact row matched the Control Center: TEST webhook and
+  Portal ready, while both public TEST gates remained disabled at revision 12.
+
+## W7C-152 - Club QA form remained disabled after the initial input set
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed + regression_verified`
+- Original scenario: QA filled the visible private-Club fields with synthetic
+  values and attempted the product's `Crear Club` action.
+- Evidence: the browser found the unique submit button but it remained disabled
+  until the form's exact client-side creation prerequisites are satisfied.
+- Impact: no Club was created and no canonical Club command ran.
+- Required correction: inspect the visible form state and the local validation
+  contract, supply only the missing non-sensitive prerequisite, and retry once.
+- Required regression: the submit button becomes enabled before click and the
+  resulting canonical Club is owned by the ephemeral actor.
+- Correction: staging's pre-existing Club Foundation and self-service flags
+  were enabled temporarily through `command_pachanga_club_platform_v1`; no
+  direct table update was used.
+- Verification: the same form became enabled, created one private draft Club
+  through `/api/clubs/command`, and a compact readback confirmed its opaque ID,
+  owner and revision. The flags are scheduled for exact restoration in cleanup.
+
+## W7C-153 - Platform activation correctly rejected a draft Club
+
+- Classification: `SIMULATION_BUG`
+- Status: `fixed + regression_verified`
+- Original scenario: immediately after creating the private QA Club, the
+  platform status command attempted to move it from `draft` to `active`.
+- Evidence: the publication guard rejected the transaction with
+  `CLUB_APPROVAL_REQUIRES_PENDING_REVIEW`.
+- Impact: the transaction rolled back atomically; the Club remains draft at
+  revision 1 and no billing account exists for it.
+- Required correction: use the real owner flow to record publication consent
+  and submit the Club for review, then let the platform command activate the
+  resulting pending revision.
+- Required regression: `draft -> consent -> pending_review -> active` is
+  observable through canonical revisions, with no direct table mutation.
+- Correction: the owner recorded both publication attestations and submitted
+  the Club through `/api/clubs/command`; the platform then applied
+  `club.status.set` at the expected revision.
+- Verification: revisions advanced 1 -> 2 -> 3 -> 4 and the final canonical
+  snapshot reported the same owner with `operationalStatus=active`.
+
+## W7C-154 - First remote Team Checkout TEST failed closed
+
+- Classification: `PRODUCT_BUG`
+- Status: `fix_implemented_regression_pending_remote`
+- Original scenario: with TEST health, Checkout and Portal gates enabled, the
+  authenticated owner selected Team Organizer Pro monthly and submitted the
+  visible Checkout action.
+- Evidence: the product remained on the billing page and rendered `La operacion
+  no fue confirmada por el servidor`; no Stripe-hosted URL was opened.
+- Impact: no entitlement, subscription or successful Checkout state appeared;
+  the UI correctly avoided fake success.
+- Required correction: correlate the sanitized Preview runtime log and
+  canonical intent/receipt ledger, fix only the concrete server-side blocker,
+  then retry with a fresh `operationId` if no confirmed intent exists.
+- Required regression: the same Team/month owner intent returns one hosted
+  TEST URL, while cancel and success redirects still grant no access alone.
+- Root cause: Stripe created the canonical Customer successfully, then rejected
+  `/v1/checkout/sessions` because Tax ID collection on that Customer requires
+  `customer_update[name]=auto`.
+- Correction: the server-owned Checkout request now includes exactly
+  `customer_update: { name: "auto" }`; no client field, permission or LIVE
+  behavior changed.
+- Local regression: the source contract test now couples Tax ID collection to
+  the required Customer name update. Remote verification follows on the next
+  exact Preview deployment.
+
+## W7C-155 - Focused TypeScript test used Node without the repository loader
+
+- Classification: `SIMULATION_BUG`
+- Status: `fixed + regression_verified`
+- Original scenario: the post-fix focused check invoked `node --test` directly
+  for two TypeScript files.
+- Evidence: the pure source tests passed, but Node could not resolve the
+  extensionless TypeScript import `app/pwa-write-classifier` in the Wave 7B
+  suite, producing one runner failure unrelated to the product change.
+- Impact: no runtime or remote state changed; 11 assertions passed before the
+  loader mismatch stopped the second file.
+- Required correction: use the repository's declared `tsx --test` command for
+  focused TypeScript suites.
+- Required regression: both focused files pass with zero skipped, todo or
+  cancelled tests under the same loader used by `npm test`.
+- Correction: the focused command now uses `npx tsx --test`, matching the
+  repository's declared TypeScript test loader.
+- Verification: 23/23 focused Wave 7B/7C tests passed with zero failures,
+  skipped, todo or cancelled; typecheck and focused lint also passed.
