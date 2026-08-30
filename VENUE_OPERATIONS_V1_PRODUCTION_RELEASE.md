@@ -1,14 +1,14 @@
 # Venue Operations V1 Production Release
 
-Estado: `LOCAL_AND_STAGING_CERTIFIED / PRODUCTION_PENDING`
+Estado: `PRODUCTION_SCHEMA_APPLIED / MERGE_AND_ACTIVATION_PENDING`
 
 | Campo | Valor |
 | --- | --- |
 | fecha | `2026-08-30` |
 | main inicial | `056414a8967933c2d839b0e27e39ae00d1fcc572` |
 | rama | `codex/venue-availability-reservations-v1` |
-| PR funcional | `#235` / draft |
-| migraciones | 8 forward-only, ledger aislado/staging 220 |
+| PR funcional | `#235` / ready, merge pendiente |
+| migraciones | 8 forward-only, ledger productivo 220 |
 | schema hash | `83c1142de712cdbcb6528794ccf511d9fabf127caecf2c3e27ac2e735e2ee135` |
 | staging Supabase | `zqrmuamcikcmbhnopfqx`, efimero |
 | Preview | `READY`, protegida por Vercel SSO |
@@ -20,12 +20,21 @@ Estado: `LOCAL_AND_STAGING_CERTIFIED / PRODUCTION_PENDING`
 
 ## Preflight productivo
 
-- `supabase migration list --linked`: remoto 212, ultimo
+- `supabase migration list --linked` inicial: remoto 212, ultimo
   `20260829221312`; local-only exactamente las ocho versiones Wave 9A.
 - Backup fisico mas reciente: `COMPLETED`, `2026-08-30T00:17:13.445Z`.
 - WALG: activo. PITR: no habilitado.
 - El restore no se ejecuto sobre produccion; la recuperabilidad se apoya en el
   backup fisico completado y el runbook del proveedor, sin alterar datos reales.
+- El dry-run aislado enumero solo las ocho versiones Wave 9A. El push las aplico
+  una vez y el readback posterior confirma ledger `220`, ultimo
+  `20260830145100`, con los ocho nombres exactos en el orden documentado.
+- PostgreSQL confirma `23` tablas Wave 9A (`10` publicas y `13` privadas), RLS
+  en las diez publicas, cero grants directos INSERT/UPDATE/DELETE a clientes,
+  invalidaciones en Realtime, el constraint GiST de no solapamiento y los dos
+  indices unicos de binding actual.
+- Las dieciseis flags nacieron OFF en revision `1`; todas las tablas de dominio,
+  eventos, recibos, revisiones e invalidaciones Wave 9A contienen cero filas.
 
 ## Gates locales finales
 
@@ -63,9 +72,8 @@ global sobre el arbol exacto de release.
 | `20260830145100` | `venue_hardening_indexes_flags_v1` | `e06ef1e6a9576e45ca0242e0d49dc412a7bf46a3c41711a78db0c4446bfff7b7` | `34b5595f4863dd3c2267f7c2b81af7e82701a6fe723085798a3b6e3a42bc53a8` |
 
 Las 212 migraciones base permanecen intactas. Fresh bootstrap, upgrade
-`212 -> 220` y staging reconstruido convergen al mismo esquema normalizado.
-Antes de produccion se repetira `supabase migration list --linked`; cualquier
-divergencia detendra el push.
+`212 -> 220`, staging reconstruido y el ledger productivo convergen al mismo
+frente de version. Ninguna migracion ejecutada fue modificada ni reescrita.
 
 ## Staging Supabase
 
@@ -95,10 +103,11 @@ soportadas.
 
 ## Advisors
 
-- Performance: 1.187 hallazgos, 1.186 INFO y 1 WARN.
+- Staging Performance: 1.187 hallazgos, 1.186 INFO y 1 WARN.
+- Produccion posterior al DDL: 1.007 hallazgos, 1.006 INFO y 1 WARN.
 - El unico WARN es un indice duplicado preexistente de
   `pachanga_player_rating_snapshots`; Wave 9A no toca Rating V2.
-- Security: 612 hallazgos, 173 INFO, 439 WARN y 0 ERROR.
+- Staging y produccion Security: 612 hallazgos, 173 INFO, 439 WARN y 0 ERROR.
 - Los WARN Wave 9A corresponden a RPC `SECURITY DEFINER` endurecidas o tablas
   cerradas con RLS y escritura cliente revocada; no se relajo ninguna ACL.
 - Remediacion consultable en
@@ -149,8 +158,6 @@ OFF. La activacion se realizara solo mediante la RPC de plataforma.
 
 ## Pendiente para RELEASED
 
-- reconciliar ledger productivo con `migration list --linked` y backup;
-- aplicar exactamente las ocho migraciones y confirmar flags nacidas OFF;
 - fusionar el PR y esperar deployment READY del SHA exacto;
 - smoke con flags OFF, activacion por RPC y canary transaccional con ROLLBACK;
 - readback final a cero, Demo V3.4, logs, Service Worker y responsive;
