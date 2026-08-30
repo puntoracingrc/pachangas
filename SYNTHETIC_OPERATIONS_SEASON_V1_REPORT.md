@@ -3,7 +3,7 @@
 Fecha: 2026-08-30
 Base: `131b0005d9f13d19db23372ff357dca4b2d0cdb2`
 Rama: `codex/synthetic-operations-season-v1`
-PR: `#230` (draft durante la validacion local)
+PR: `#230` (fusionado)
 
 ## Resultado local
 
@@ -156,9 +156,10 @@ ambos clientes releyeron la misma revision canonica 14 al entrar en
 `SUBSCRIBED`. La operacion deportiva se emitio una sola vez, con un ganador y
 un stale; su replay fue idempotente. Ningun cliente aplico WAL como estado.
 
-El proof final exacto de staging pasa. El branch se conserva solo hasta que la
-Preview del SHA final complete QA con variables publicas branch-scoped; despues
-se destruye y se exige readback 404.
+El proof final exacto de staging pasa. Tras completar Preview, merge, deployment
+y canary productivo, el branch se destruyo. El inventario de branches conserva
+unicamente `main` y el readback del project ref efimero devuelve `Project not
+found`.
 
 ## Preview exacta
 
@@ -185,4 +186,37 @@ La Preview `READY` del commit `e1f86f8` se valido en el deployment
 Las dos variables Supabase publicas de Preview quedaron limitadas a la rama
 Wave 8C y al branch efimero `shlumanmulzujhlgoegb`. No se incorporo
 `SUPABASE_SERVICE_ROLE_KEY`, no se modifico Production y el bundle no contiene
-secretos.
+secretos. Tras la validacion se retiraron ambos overrides, los seis deployments
+Preview de la rama y todas las cookies locales de bypass.
+
+## Release productiva
+
+El PR `#230` se fusiono en `main` y produjo el SHA funcional
+`3ac642855e79eb283b2bd32e77256a09fe2329a0`. Vercel desplego exactamente ese SHA
+en `dpl_HynEEjgPs69fd1X63rwsmFPaipPT`, estado `READY`, con alias
+`https://pachangasiq.com`.
+
+El smoke productivo de `/demo?tab=temporada&perspective=admin` pasa en 1440x900,
+390x844 y 844x390: checkpoint 8 y Cuadros visibles, cero overflow, controles
+cortados, imagenes rotas, PII, texto invalido o errores/avisos de consola. El
+Service Worker esta activo, controla la pagina desde `/sw.js` y mantiene 23
+recursos V3.2 en Cache Storage.
+
+El canary productivo se ejecuto en una subtransaccion forzada a rollback. Probo
+Team `ACTIVE` revision 1, transicion a `LIMITED` revision 2, bloqueo de actividad
+nueva en Mercado, continuidad de una operacion de competicion ya existente,
+revision canonica de partido 2, una invalidacion y read model canonico. No envio
+notificaciones externas ni genero eventos Stripe. El readback independiente
+posterior devuelve cero en las doce familias sinteticas y conserva los flags
+productivos en revision 9.
+
+No se creo ni aplico ninguna migracion. `supabase migration list --linked`
+confirma 212 parejas local/remoto, cero diferencias, desde `20260728051437`
+hasta `20260829221312`. La ultima ventana de logs contiene 0 API 5xx y 0 errores
+Realtime; el unico ERROR PostgreSQL corresponde al intento W8C-099 revertido y
+cerrado con regresion.
+
+La limpieza final retiro branch Supabase, variables y deployments Preview,
+`.env.local`, enlaces locales, SQL de canary y cookies temporales. El worktree se
+conserva exclusivamente hasta fusionar este cierre documental y se retira
+despues conforme a `AGENTS.md`.
