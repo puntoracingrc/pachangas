@@ -159,3 +159,30 @@ un stale; su replay fue idempotente. Ningun cliente aplico WAL como estado.
 El proof final exacto de staging pasa. El branch se conserva solo hasta que la
 Preview del SHA final complete QA con variables publicas branch-scoped; despues
 se destruye y se exige readback 404.
+
+## Preview exacta
+
+La Preview `READY` del commit `e1f86f8` se valido en el deployment
+`dpl_CDWyT3UoSACJqn8Sc9ceHUGtREZ2`:
+
+`https://pachangas-3wtp6qkfs-persianas-almar-web-s-projects.vercel.app`
+
+- 16 superficies de Temporada por ocho viewports: 128/128 PASS;
+- viewports: 1440x900, 1920x1080, 390x844, 360x800, 667x375, 740x360,
+  844x390 y 932x430;
+- checkpoint 8 y postemporada verificados en cada combinacion;
+- cero overflow horizontal, controles fixed/sticky cortados, imagenes rotas,
+  errores o avisos de consola, requests fallidos, PII, secretos y texto
+  `undefined`/`NaN`;
+- PWA standalone 390x844: manifest presente, Service Worker listo y
+  controlador tras una unica recarga;
+- manifiesto V3.2, `season.json` y checkpoint 8 presentes en Cache Storage;
+- 23 recursos V3.2 disponibles y recarga offline de Postemporada/Cuadros PASS;
+- la proteccion de Preview se atraveso mediante cookie temporal HttpOnly de
+  automatizacion Vercel: nunca se incluyo su valor en URL, argumentos, Git,
+  logs, capturas o informes.
+
+Las dos variables Supabase publicas de Preview quedaron limitadas a la rama
+Wave 8C y al branch efimero `shlumanmulzujhlgoegb`. No se incorporo
+`SUPABASE_SERVICE_ROLE_KEY`, no se modifico Production y el bundle no contiene
+secretos.
