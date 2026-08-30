@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { createHash, randomBytes } from "node:crypto";
+import { randomBytes } from "node:crypto";
 import { readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -11,6 +11,10 @@ import {
   demoWorldV2AuthorityHash,
   type DemoWorldV2AuthorityProof,
 } from "./demo-world-v2-authority";
+import {
+  demoWorldVerificationProjection,
+  demoWorldVerificationProjectionHash,
+} from "./demo-world-verification-projection";
 import { generateDemoWorldV2, writeDemoWorldV2 } from "./generate-demo-world-v2";
 
 type BaselineManifest = {
@@ -1062,7 +1066,7 @@ from matches, standings, discipline_events, discipline_counters,
 
 async function committedSnapshot(): Promise<DemoWorldV2Snapshot> {
   const read = async <T>(name: string) => JSON.parse(await readFile(path.join(publicRoot, name), "utf8")) as T;
-  const [activity, clubsReferees, competitions, configuration, core, manifest, matches, organizerAccess, organizerBilling, players, publicCompetitions, tournament] = await Promise.all([
+  const [activity, clubsReferees, competitions, configuration, core, manifest, matches, organizerAccess, organizerBilling, players, publicCompetitions, teamOperational, tournament] = await Promise.all([
     read<DemoWorldV2Snapshot["activity"]>("activity.json"),
     read<DemoWorldV2Snapshot["clubsReferees"]>("clubs-referees.json"),
     read<DemoWorldV2Snapshot["competitions"]>("competitions.json"),
@@ -1074,46 +1078,10 @@ async function committedSnapshot(): Promise<DemoWorldV2Snapshot> {
     read<DemoWorldV2Snapshot["organizerBilling"]>("organizer-billing.json"),
     read<DemoWorldV2Snapshot["players"]>("players.json"),
     read<DemoWorldV2Snapshot["publicCompetitions"]>("public-competitions.json"),
+    read<DemoWorldV2Snapshot["teamOperational"]>("team-operational.json"),
     read<DemoWorldV2Snapshot["tournament"]>("tournament.json"),
   ]);
-  return { activity, clubsReferees, competitions, configuration, core, manifest, matches, organizerAccess, organizerBilling, players, publicCompetitions, tournament };
-}
-
-function demoWorldVerificationProjection(value: unknown): unknown {
-  const uuidAliases = new Map<string, string>();
-  const volatileTimestampKeys = new Set([
-    "acceptedAt", "approvedAt", "assignedAt", "cancelledAt", "confirmedAt",
-    "createdAt", "decidedAt", "generatedAt", "grantedAt", "opensAt",
-    "continuityUntil", "graceEndsAt", "publishedAt", "rejectedAt", "renewalAt",
-    "resolvedAt", "reviewedAt", "submittedAt", "updatedAt", "withdrawnAt",
-  ]);
-  const digestKey = /(?:authority[_-]?)?hash$|checksum|fingerprint/i;
-  const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-  const visit = (input: unknown, key = ""): unknown => {
-    if (Array.isArray(input)) return input.map((item) => visit(item));
-    if (input && typeof input === "object") {
-      return Object.fromEntries(Object.entries(input as Record<string, unknown>)
-        .map(([entryKey, entryValue]) => [entryKey, visit(entryValue, entryKey)]));
-    }
-    if (typeof input !== "string") return input;
-    if (volatileTimestampKeys.has(key)) return "<server-time>";
-    if (digestKey.test(key)) return "<digest>";
-    if (uuidPattern.test(input)) {
-      const existing = uuidAliases.get(input);
-      if (existing) return existing;
-      const alias = `00000000-0000-4000-8000-${String(uuidAliases.size + 1).padStart(12, "0")}`;
-      uuidAliases.set(input, alias);
-      return alias;
-    }
-    return input.replace(/\?h=[0-9a-f]+$/i, "?h=<digest>");
-  };
-
-  return visit(value);
-}
-
-function projectionHash(value: unknown) {
-  return createHash("sha256").update(JSON.stringify(demoWorldVerificationProjection(value))).digest("hex");
+  return { activity, clubsReferees, competitions, configuration, core, manifest, matches, organizerAccess, organizerBilling, players, publicCompetitions, teamOperational, tournament };
 }
 
 async function dropDatabase() {
@@ -1260,9 +1228,9 @@ async function main() {
       exported: !verifyOnly,
       flags: "synthetic-only",
       authorityHash: authorityProof.authorityHash,
-      authorityProjectionHash: projectionHash(authorityProof),
+      authorityProjectionHash: demoWorldVerificationProjectionHash(authorityProof),
       hash: generated.manifest.hash,
-      snapshotProjectionHash: projectionHash(generated),
+      snapshotProjectionHash: demoWorldVerificationProjectionHash(generated),
       migrations: migrationNames.length,
       mode: verifyOnly ? "verify" : "simulate",
       remoteWrites: 0,

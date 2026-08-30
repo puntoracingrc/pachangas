@@ -9,6 +9,7 @@ import {
   type DemoWorldV2PublicCompetitionsChunk,
   type DemoWorldV2Snapshot,
   type DemoWorldV2TournamentChunk,
+  type DemoWorldV31TeamOperationalChunk,
   type DemoWorldV3OrganizerAccessChunk,
 } from "./demo-world-v2-contract";
 import type {
@@ -28,6 +29,7 @@ const tabs: DemoWorldV2PrimaryTab[] = [
   "clasificacion",
   "configuracion",
   "jornadas",
+  "estado-equipo",
   "competiciones",
   "club",
   "arbitros",
@@ -59,7 +61,7 @@ export async function loadDemoWorldV2Snapshot(
   manifest: DemoWorldV2Manifest,
   loadedCore?: DemoWorldCoreChunk,
 ): Promise<DemoWorldV2Snapshot> {
-  const [activity, clubsReferees, competitions, configuration, core, matches, organizerAccess, organizerBilling, players, publicCompetitions, tournament] = await Promise.all([
+  const [activity, clubsReferees, competitions, configuration, core, matches, organizerAccess, organizerBilling, players, publicCompetitions, teamOperational, tournament] = await Promise.all([
     loadChunk<DemoWorldActivityChunk>(manifest.chunks.activity),
     loadChunk<DemoWorldV2ClubsRefereesChunk>(manifest.chunks.clubsReferees),
     loadChunk<DemoWorldV2CompetitionChunk>(manifest.chunks.competitions),
@@ -70,7 +72,8 @@ export async function loadDemoWorldV2Snapshot(
     loadChunk<DemoWorldV2OrganizerBillingChunk>(manifest.chunks.organizerBilling),
     loadChunk<DemoWorldPlayersChunk>(manifest.chunks.players),
     loadChunk<DemoWorldV2PublicCompetitionsChunk>(manifest.chunks.publicCompetitions),
+    loadChunk<DemoWorldV31TeamOperationalChunk>(manifest.chunks.teamOperational),
     loadChunk<DemoWorldV2TournamentChunk>(manifest.chunks.tournament),
   ]);
-  return assertDemoWorldV2Snapshot({ activity, clubsReferees, competitions, configuration, core, manifest, matches, organizerAccess, organizerBilling, players, publicCompetitions, tournament });
+  return assertDemoWorldV2Snapshot({ activity, clubsReferees, competitions, configuration, core, manifest, matches, organizerAccess, organizerBilling, players, publicCompetitions, teamOperational, tournament });
 }

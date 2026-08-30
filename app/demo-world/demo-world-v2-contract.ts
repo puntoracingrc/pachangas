@@ -21,8 +21,8 @@ import {
   type DemoWorldSnapshot,
 } from "./demo-world-contract";
 
-export const DEMO_WORLD_V2_VERSION = 3.0 as const;
-export const DEMO_WORLD_V2_SEED = "pachangas-iq-demo-world-v3-0-2026-27" as const;
+export const DEMO_WORLD_V2_VERSION = 3.1 as const;
+export const DEMO_WORLD_V2_SEED = "pachangas-iq-demo-world-v3-1-2026-27" as const;
 
 export type DemoWorldV2PrimaryTab = DemoWorldPrimaryTab
   | "arbitros"
@@ -32,6 +32,7 @@ export type DemoWorldV2PrimaryTab = DemoWorldPrimaryTab
   | "disciplina"
   | "jornadas"
   | "liga"
+  | "estado-equipo"
   | "planes"
   | "competiciones"
   | "torneo";
@@ -48,6 +49,7 @@ export type DemoWorldV2Manifest = {
     organizerBilling: string;
     players: string;
     publicCompetitions: string;
+    teamOperational: string;
     tournament: string;
   };
   counts: {
@@ -68,6 +70,7 @@ export type DemoWorldV2Manifest = {
     rewardBoxes: number;
     rounds: number;
     stories: number;
+    teamOperationalScenarios: number;
     teams: number;
     tournamentDrawRevisions: number;
     tournamentGroups: number;
@@ -131,6 +134,92 @@ export type DemoWorldV2OrganizerBillingChunk = {
   };
   readOnly: true;
   scenarios: DemoWorldV2OrganizerBillingScenario[];
+  transport: {
+    methods: ["GET"];
+    remoteWrites: 0;
+  };
+};
+
+export type DemoWorldV31TeamOperationalScenario = {
+  allowedScopes: string[];
+  billingChangedOperationalState: false;
+  billingState: "INACTIVE" | "INDEPENDENT";
+  blockedScopes: string[];
+  challengesAllowed: boolean;
+  continuityPolicy: "ALLOW_EXISTING_COMPETITIONS_TO_FINISH" | "HISTORY_ONLY";
+  directoryVisible: boolean;
+  effectiveStatus: "ACTIVE" | "ARCHIVED" | "LIMITED" | "SUSPENDED" | "UNDER_REVIEW";
+  enforcement: "CLEAR" | "LIMITED" | "SUSPENDED" | "UNDER_REVIEW";
+  existingCompetitionOperationsAllowed: boolean;
+  id: "TEAM_A_ACTIVE" | "TEAM_B_UNDER_REVIEW" | "TEAM_C_LIMITED_SOCIAL_ONLY"
+    | "TEAM_D_SUSPENDED_NEW_ACTIVITY" | "TEAM_E_ARCHIVED"
+    | "TEAM_F_OWNER_TRANSFER" | "TEAM_G_BILLING_INACTIVE";
+  lifecycle: "ACTIVE" | "ARCHIVED";
+  marketplaceAllowed: boolean;
+  newCompetitionOrganizerAllowed: boolean;
+  newCompetitionRegistrationAllowed: boolean;
+  newMatchAllowed: boolean;
+  newOwnerAppealStatus: "SUBMITTED" | null;
+  ownerTransferred: boolean;
+  restrictionPreset: "CUSTOM" | "NEW_ACTIVITY_ONLY" | "SOCIAL_ONLY";
+  reviewOpen: boolean;
+  reviewPubliclyVisible: false;
+  revision: number;
+  sportingHistoryPreserved: true;
+  teamName: string;
+};
+
+export type DemoWorldV31TeamOperationalChunk = {
+  competitionContinuity: {
+    sourceAuthorityHash: string;
+    teamC: {
+      canonicalResult: { away: number; home: number };
+      existingCompetitionOperationsAllowed: true;
+      officialResultProvenance: "demo-world-canonical-league-engine";
+      pointsAfter: number;
+      pointsBefore: number;
+      restrictionPreset: "SOCIAL_ONLY";
+      standingsChangedByOfficialResult: true;
+    };
+    teamD: {
+      automaticForfeitCreated: false;
+      automaticNoShowCreated: false;
+      historicalResultPreserved: true;
+      newCompetitionRegistrationBlocked: true;
+    };
+  };
+  preservation: {
+    automaticForfeitsCreated: 0;
+    automaticNoShowsCreated: 0;
+    officialResultsUnchanged: true;
+    playerCosmeticsUnchanged: true;
+    ratingSnapshotsUnchanged: true;
+    rewardGrantsUnchanged: true;
+    standingsRewrittenByRestriction: false;
+    teamCosmeticsUnchanged: true;
+  };
+  privacy: {
+    containsAuthUuid: false;
+    containsBillingId: false;
+    containsEmail: false;
+    containsPhone: false;
+    containsPrivateEvidence: false;
+    containsPrivateMessage: false;
+    containsReviewerIdentity: false;
+  };
+  provenance: {
+    authorityHash: string;
+    database: "temporary-local-postgresql";
+    operationReceipts: number;
+    ownershipTransferReceipts: 1;
+    rpcFamilies: ["TEAM_OPERATIONAL_STATE", "TEAM_OWNERSHIP_TRANSFER"];
+    serverSequenceOrdered: true;
+    source: "simulation-world";
+    verified: true;
+  };
+  readOnly: true;
+  remoteWrites: 0;
+  scenarios: DemoWorldV31TeamOperationalScenario[];
   transport: {
     methods: ["GET"];
     remoteWrites: 0;
@@ -777,6 +866,7 @@ export type DemoWorldV2Snapshot = {
   organizerBilling: DemoWorldV2OrganizerBillingChunk;
   players: DemoWorldPlayersChunk;
   publicCompetitions: DemoWorldV2PublicCompetitionsChunk;
+  teamOperational: DemoWorldV31TeamOperationalChunk;
   tournament: DemoWorldV2TournamentChunk;
 };
 
@@ -841,11 +931,71 @@ export function demoWorldV2IntegrityErrors(snapshot: DemoWorldV2Snapshot): strin
   const publicCompetitions = snapshot.publicCompetitions;
   const organizerAccess = snapshot.organizerAccess;
   const organizerBilling = snapshot.organizerBilling;
+  const teamOperational = snapshot.teamOperational;
   const teamIds = new Set(snapshot.core.teams.map(({ id }) => id));
   const playerIds = new Set(snapshot.players.players.map(({ id }) => id));
   const entryIds = new Set(competition.entries.map(({ id }) => id));
   const roundIds = new Set(competition.rounds.map(({ id }) => id));
   const canonicalIds = new Set<string>();
+
+  const teamOperationalIds = teamOperational.scenarios.map(({ id }) => id);
+  const teamOperationalById = new Map(teamOperational.scenarios.map((scenario) => [scenario.id, scenario]));
+  if (!teamOperational.readOnly
+      || teamOperational.remoteWrites !== 0
+      || teamOperational.transport.methods.join(",") !== "GET"
+      || teamOperational.transport.remoteWrites !== 0
+      || !teamOperational.provenance.verified
+      || teamOperational.provenance.database !== "temporary-local-postgresql"
+      || teamOperational.provenance.source !== "simulation-world"
+      || teamOperational.provenance.operationReceipts !== 7
+      || teamOperational.provenance.ownershipTransferReceipts !== 1
+      || !teamOperational.provenance.serverSequenceOrdered
+      || snapshot.manifest.counts.teamOperationalScenarios !== 7) {
+    errors.push("Demo World V3.1 Team operational authority is invalid");
+  }
+  if (teamOperationalIds.join(",")
+      !== "TEAM_A_ACTIVE,TEAM_B_UNDER_REVIEW,TEAM_C_LIMITED_SOCIAL_ONLY,TEAM_D_SUSPENDED_NEW_ACTIVITY,TEAM_E_ARCHIVED,TEAM_F_OWNER_TRANSFER,TEAM_G_BILLING_INACTIVE") {
+    errors.push("Demo World V3.1 Team operational scenarios are incomplete");
+  }
+  if (teamOperationalById.get("TEAM_A_ACTIVE")?.effectiveStatus !== "ACTIVE"
+      || !teamOperationalById.get("TEAM_A_ACTIVE")?.newCompetitionRegistrationAllowed
+      || teamOperationalById.get("TEAM_B_UNDER_REVIEW")?.effectiveStatus !== "UNDER_REVIEW"
+      || !teamOperationalById.get("TEAM_B_UNDER_REVIEW")?.marketplaceAllowed
+      || teamOperationalById.get("TEAM_B_UNDER_REVIEW")?.reviewPubliclyVisible
+      || teamOperationalById.get("TEAM_C_LIMITED_SOCIAL_ONLY")?.marketplaceAllowed
+      || teamOperationalById.get("TEAM_C_LIMITED_SOCIAL_ONLY")?.challengesAllowed
+      || !teamOperationalById.get("TEAM_C_LIMITED_SOCIAL_ONLY")?.existingCompetitionOperationsAllowed
+      || teamOperationalById.get("TEAM_D_SUSPENDED_NEW_ACTIVITY")?.newCompetitionRegistrationAllowed
+      || !teamOperationalById.get("TEAM_D_SUSPENDED_NEW_ACTIVITY")?.existingCompetitionOperationsAllowed
+      || teamOperationalById.get("TEAM_E_ARCHIVED")?.directoryVisible
+      || !teamOperationalById.get("TEAM_F_OWNER_TRANSFER")?.ownerTransferred
+      || teamOperationalById.get("TEAM_F_OWNER_TRANSFER")?.newOwnerAppealStatus !== "SUBMITTED"
+      || teamOperationalById.get("TEAM_G_BILLING_INACTIVE")?.billingState !== "INACTIVE"
+      || teamOperationalById.get("TEAM_G_BILLING_INACTIVE")?.effectiveStatus !== "ACTIVE") {
+    errors.push("Demo World V3.1 Team operational stories are invalid");
+  }
+  if (!teamOperational.competitionContinuity.teamC.standingsChangedByOfficialResult
+      || teamOperational.competitionContinuity.teamC.pointsAfter <= teamOperational.competitionContinuity.teamC.pointsBefore
+      || !teamOperational.competitionContinuity.teamD.newCompetitionRegistrationBlocked
+      || !teamOperational.competitionContinuity.teamD.historicalResultPreserved
+      || teamOperational.competitionContinuity.teamD.automaticForfeitCreated
+      || teamOperational.competitionContinuity.teamD.automaticNoShowCreated
+      || teamOperational.preservation.automaticForfeitsCreated !== 0
+      || teamOperational.preservation.automaticNoShowsCreated !== 0
+      || !teamOperational.preservation.officialResultsUnchanged
+      || !teamOperational.preservation.ratingSnapshotsUnchanged
+      || !teamOperational.preservation.rewardGrantsUnchanged
+      || !teamOperational.preservation.teamCosmeticsUnchanged
+      || !teamOperational.preservation.playerCosmeticsUnchanged
+      || teamOperational.preservation.standingsRewrittenByRestriction) {
+    errors.push("Demo World V3.1 changed sporting history or cross-product data");
+  }
+  const teamOperationalJson = JSON.stringify(teamOperational);
+  if (Object.values(teamOperational.privacy).some(Boolean)
+      || /[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/i.test(teamOperationalJson)
+      || /@(?:example|test)|\+34|"(?:privateNote|evidence|reviewer|authUserId|billingId)"\s*:|(?:cus|sub|price|prod)_[A-Za-z0-9_]+/i.test(teamOperationalJson)) {
+    errors.push("Demo World V3.1 Team operational snapshot leaked private data");
+  }
 
   const billingScenarioIds = organizerBilling.scenarios.map(({ id }) => id);
   const billingPlanCodes = organizerBilling.catalog.plans.map(({ planCode }) => planCode);

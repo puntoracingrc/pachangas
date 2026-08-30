@@ -43,6 +43,7 @@ export function OfficialTeamIdentityBand({
   actions,
   context,
   name,
+  notice,
   object,
   role,
   status,
@@ -50,6 +51,7 @@ export function OfficialTeamIdentityBand({
   actions?: ReactNode;
   context: string;
   name: string;
+  notice?: ReactNode;
   object: ReactNode;
   role?: string;
   status?: string;
@@ -60,6 +62,7 @@ export function OfficialTeamIdentityBand({
         <span>Vestuario</span>
         <h1>{name}</h1>
         <p>{context}</p>
+        {notice}
         {role || status ? <div className={styles.identityMeta}>{role ? <b>{role}</b> : null}{status ? <small>{status}</small> : null}</div> : null}
       </div>
       <div className={styles.objectStage}>{object}</div>
@@ -147,6 +150,7 @@ export function OfficialHomeGameDashboard({
   identity,
   metrics,
   nextAction,
+  operationalNotice,
   object,
   secondaryActions,
   upcoming,
@@ -156,6 +160,7 @@ export function OfficialHomeGameDashboard({
   identity: { context: string; name: string; role?: string; status?: string };
   metrics: OfficialHomeMetric[];
   nextAction: OfficialHomeAction;
+  operationalNotice?: ReactNode;
   object: ReactNode;
   secondaryActions?: ReactNode;
   upcoming: OfficialUpcomingMatch[];
@@ -166,6 +171,7 @@ export function OfficialHomeGameDashboard({
         actions={access || secondaryActions ? <div className={styles.identityControlGroup} data-official-identity-controls="integrated">{access}{secondaryActions}</div> : undefined}
         context={identity.context}
         name={identity.name}
+        notice={operationalNotice}
         object={object}
         role={identity.role}
         status={identity.status}

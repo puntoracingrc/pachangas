@@ -14,6 +14,7 @@ import { OfficialMatchGameHub } from "./_components/official-match-game-hub";
 import { OfficialProductShellV2 } from "./_components/official-product-shell-v2";
 import { PlayerCosmeticCard } from "./_components/player-cosmetic-card";
 import { TeamShieldView } from "./_components/team-shield-view";
+import { TeamOperationalHomeCard } from "./_components/team-operational-client";
 import { attachVenueAutocomplete, type VenuePlace } from "./googlePlacesClient";
 import { GlobalRatingPanel } from "./global-rating-panel";
 import { resolveGoogleAuthReturnHref } from "./google-auth-return";
@@ -9248,6 +9249,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
               { label: "Nivel", value: groupLevel === null ? "-" : overallScore(groupLevel) },
             ]}
             nextAction={homeNextAction}
+            operationalNotice={hasRealTeam && remoteGroupId ? <TeamOperationalHomeCard groupId={remoteGroupId} /> : undefined}
             object={hasHomeTeamIdentity ? (
               <TeamShieldView
                 catalog={canonicalHomeTeamShield?.catalog ?? []}
@@ -9286,6 +9288,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
                 <button type="button" onClick={() => void openOwnPlayerProfile()} disabled={!hasRealTeam || !isRegisteredUser}>Mi carta</button>
                 <button type="button" onClick={openTeamGallery}>Mi equipo</button>
                 {hasRealTeam ? <Link href={`/equipo/identidad${remoteGroupId ? `?grupo=${remoteGroupId}` : ""}`}>{canManageTeam && !canonicalHomeTeamShield ? "Personalizar escudo" : "Escudo del equipo"}</Link> : null}
+                {hasRealTeam ? <Link href={`/equipo/estado${remoteGroupId ? `?grupo=${remoteGroupId}` : ""}`}>Estado del equipo</Link> : null}
                 <Link href="/mercado">Mercado</Link>
                 <Link href="/organizacion/solicitudes">Organizar</Link>
                 {canUseAdminControls ? <button type="button" onClick={createMatch}>Crear partido</button> : null}
@@ -11363,6 +11366,11 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
                 {hasRealTeam ? (
                   <a href={`/equipo/identidad${remoteGroupId ? `?grupo=${remoteGroupId}` : ""}`}>
                     <span>Escudo, logros y colección</span><small>Identidad oficial y recompensas del equipo</small><b aria-hidden="true">›</b>
+                  </a>
+                ) : null}
+                {hasRealTeam ? (
+                  <a href={`/equipo/estado${remoteGroupId ? `?grupo=${remoteGroupId}` : ""}`}>
+                    <span>Estado del equipo</span><small>Disponibilidad, restricciones y apelaciones</small><b aria-hidden="true">›</b>
                   </a>
                 ) : null}
                 <button type="button" onClick={() => runMobileAccountAction(openGroupSwitcher)} disabled={!isRegisteredUser}>
