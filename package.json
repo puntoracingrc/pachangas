@@ -171,6 +171,7 @@
     "test:venue-operations:db": "node tests/venue-operations-v1-db-runner.mjs",
     "test:venue-operations:concurrency": "node tests/venue-operations-v1-concurrency.mjs",
     "test:venue-operations:scale": "node tests/venue-operations-v1-scale-runner.mjs",
+    "test:venue-operations:staging-schema": "node tests/venue-operations-v1-staging-schema-bootstrap.mjs",
     "test:venue-operations:staging": "node tests/venue-operations-v1-staging-e2e.mjs",
     "test:organizer-access:concurrency": "node tests/organizer-access-onboarding-v1-concurrency.mjs",
     "lab:season-ranking": "tsx simulation/season-ranking-lab/run.ts",

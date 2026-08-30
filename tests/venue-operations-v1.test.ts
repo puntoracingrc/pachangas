@@ -154,6 +154,19 @@ test("staging bootstrap bypasses fixture guards only inside one transaction", as
   assert.doesNotMatch(bootstrap, /set\s+session_replication_role\s*=\s*replica\s*;/);
 });
 
+test("staging schema bootstrap is branch-only and reconciles the exact migration frontier", async () => {
+  const bootstrap = await source("tests/venue-operations-v1-staging-schema-bootstrap.mjs");
+  assert.match(bootstrap, /VENUE_OPERATIONS_STAGING_SCHEMA_PRODUCTION_TARGET_FORBIDDEN/);
+  assert.match(bootstrap, /manifest\.absorbedMigrations\.slice\(0, 10\)/);
+  assert.match(bootstrap, /"migration", "repair"/);
+  assert.match(bootstrap, /"db", "push"/);
+  assert.match(bootstrap, /enabled = true/);
+  assert.match(bootstrap, /mkdtempSync/);
+  assert.match(bootstrap, /rmSync\(cliWorkdir/);
+  assert.match(bootstrap, /ledgerCount: 220/);
+  assert.match(bootstrap, /flagsBornOff: true/);
+});
+
 test("staging dataset has the exact synthetic field-operations topology", async () => {
   const dataset = await source("tests/venue-operations-v1-staging-dataset.sql");
   for (const expected of [

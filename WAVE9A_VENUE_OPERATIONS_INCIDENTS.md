@@ -868,6 +868,57 @@ Fixed issues must include the original reproducer and finish with
   corrected 53-file scan allowed loopback fixtures only and returned zero
   external findings.
 
+### W9A-059 - Branch creation CLI prefixed its JSON response with human text
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed + regression_verified`
+- Original reproducer: create the final branch with CLI JSON output and pipe it
+  directly to a strict JSON parser used to redact credential fields.
+- Impact: the CLI wrote `Created preview branch:` before the JSON document, so
+  the parser exited after creation. Its input was not echoed and no credential
+  reached terminal output, Git, reports or logs.
+- Required correction: discover the created branch through the safe branch-list
+  API, expose only id/name/ref/status, and consume any later environment response
+  entirely in process memory. Do not repeat branch creation.
+  The safe branch-list API recovered exactly one new branch, exposed no
+  credential field, and the contaminated branch was later destroyed.
+
+### W9A-060 - Healthy Git-linked branch did not apply unmerged Wave migrations
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `open`
+- Original reproducer: create a Supabase branch linked to the published Wave 9A
+  Git branch, wait for `FUNCTIONS_DEPLOYED`, then read
+  `private.pachanga_venue_settings`.
+- Impact: the branch control plane was healthy but contained only the production
+  migration frontier; the Venue settings relation did not exist. No Wave flag
+  or product write could run and Production was unchanged.
+- Required correction: read back the exact base ledger, apply only the eight
+  forward Wave 9A migrations through Supabase migration authority, and require
+  exact ledger `220`, migration names/digests, flags born OFF and helper/schema
+  presence before loading synthetic fixtures.
+
+### W9A-061 - Generic db push advanced staging history without Venue schema
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `open`
+- Original reproducer: on the clean ten-version branch, apply the canonical
+  baseline, repair the 26 absorbed versions and run generic `supabase db push
+  --include-all`, then require the Venue settings relation.
+- Impact: the final readback found no `private.pachanga_venue_settings_v1` even
+  though the CLI command exited successfully. The branch must be treated as
+  contaminated because migration history and schema no longer prove each other.
+  No fixture, Auth account, flag activation or Production write followed.
+- Required correction: inspect the ledger statement payloads, destroy the
+  contaminated branch, and replace generic push with an explicit transactional
+  application of every post-baseline migration plus atomic ledger recording.
+  The replacement must compare exact file count/names and fresh schema hash
+  before staging data is allowed. Dry-run evidence showed the repository's
+  canonical `config.toml` intentionally reports `Skipping migrations because
+  it is disabled`; the replacement harness now creates an isolated temporary
+  config with migrations enabled, links the exact migration directory and
+  removes the temporary workdir in `finally`.
+
 ## Canonical regression evidence
 
 All incidents marked `fixed + regression_verified` are covered by the same
