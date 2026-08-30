@@ -137,7 +137,8 @@ export function OrganizerPlansClient() {
   const cached = Boolean(cacheSavedAt);
   return (
     <OfficialProductShellV2
-      active="perfil"
+      active="competir"
+      perspective="league-organizer"
       context={{ detail: "Acceso para organizar competiciones", eyebrow: "Organizacion", status: cached ? "Copia local" : "Servidor central", title: "Planes" }}
     >
       <main className={styles.page}>

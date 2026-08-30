@@ -13,6 +13,8 @@ import { RefereeProfileCard } from "../_components/referee-profile-card";
 import { TeamShieldView } from "../_components/team-shield-view";
 import { PublicClubProfile } from "../clubes/[slug]/public-club-profile";
 import { MobileAppNav, type MobileAppTab } from "../mobile-app-nav";
+import { ProductContextSelector, type ProductContextOption } from "../_components/product-context-selector";
+import { PRODUCT_PRIMARY_DESTINATIONS, type ProductPrimaryTab } from "../_components/product-navigation-contract";
 import {
   organizerBillingDate,
   organizerBillingStatus,
@@ -68,10 +70,12 @@ import {
 } from "./demo-world-v2-client-state";
 import { SyntheticSeasonView } from "./demo-world-v3-2-view";
 import type { DemoWorldV32Manifest, DemoWorldV32Snapshot } from "./demo-world-v3-2-contract";
+import { DemoWorldV33GuidedReview } from "./demo-world-v3-3-guided-review";
+import type { DemoWorldV33Manifest, DemoWorldV33Snapshot } from "./demo-world-v3-3-contract";
 import styles from "./demo-world.module.css";
 
-type DemoWorldManifest = DemoWorldV2Manifest | DemoWorldV32Manifest;
-type DemoWorldFullSnapshot = DemoWorldV2Snapshot | DemoWorldV32Snapshot;
+type DemoWorldManifest = DemoWorldV2Manifest | DemoWorldV32Manifest | DemoWorldV33Manifest;
+type DemoWorldFullSnapshot = DemoWorldV2Snapshot | DemoWorldV32Snapshot | DemoWorldV33Snapshot;
 type DemoWorldRenderableSnapshot = {
   activity: DemoWorldV2Snapshot["activity"];
   core: DemoWorldV2Snapshot["core"];
@@ -80,28 +84,65 @@ type DemoWorldRenderableSnapshot = {
   players: DemoWorldV2Snapshot["players"];
 };
 
-const primaryTabs: Array<{ id: DemoWorldV2PrimaryTab; label: string }> = [
-  { id: "inicio", label: "Inicio" },
-  { id: "partido", label: "Partido" },
-  { id: "mercado", label: "Mercado" },
-  { id: "equipo", label: "Equipo" },
-  { id: "perfil", label: "Perfil" },
+const domainTabs: Array<{ group: "competición" | "gestión" | "red"; id: DemoWorldV2PrimaryTab; label: string }> = [
+  { group: "competición", id: "temporada", label: "Temporada" },
+  { group: "competición", id: "liga", label: "Liga" },
+  { group: "competición", id: "torneo", label: "Torneo" },
+  { group: "competición", id: "competiciones", label: "Públicas" },
+  { group: "gestión", id: "configuracion", label: "Configuración" },
+  { group: "competición", id: "clasificacion", label: "Clasificación" },
+  { group: "competición", id: "jornadas", label: "Jornadas" },
+  { group: "gestión", id: "estado-equipo", label: "Estado equipos" },
+  { group: "gestión", id: "disciplina", label: "Disciplina" },
+  { group: "red", id: "club", label: "Club" },
+  { group: "red", id: "arbitros", label: "Árbitros" },
+  { group: "gestión", id: "planes", label: "Planes" },
+  { group: "gestión", id: "revision", label: "Recorrido guiado" },
 ];
 
-const leagueTabs: Array<{ id: DemoWorldV2PrimaryTab; label: string }> = [
-  { id: "temporada", label: "Temporada" },
-  { id: "liga", label: "Liga" },
-  { id: "torneo", label: "Torneo" },
-  { id: "competiciones", label: "Públicas" },
-  { id: "configuracion", label: "Configuración" },
-  { id: "clasificacion", label: "Clasificación" },
-  { id: "jornadas", label: "Jornadas" },
-  { id: "estado-equipo", label: "Estado equipos" },
-  { id: "disciplina", label: "Disciplina" },
-  { id: "club", label: "Club" },
-  { id: "arbitros", label: "Árbitros" },
-  { id: "planes", label: "Planes" },
-];
+const competitionTabs = new Set<DemoWorldV2PrimaryTab>(domainTabs.map(({ id }) => id));
+
+function primaryTabForDemo(tab: DemoWorldV2PrimaryTab): ProductPrimaryTab {
+  return competitionTabs.has(tab) ? "competir" : tab as ProductPrimaryTab;
+}
+
+function demoTabForPrimary(tab: ProductPrimaryTab): DemoWorldV2PrimaryTab {
+  return tab === "competir" ? "temporada" : tab;
+}
+
+function domainsForPerspective(perspectiveId: DemoWorldPerspective["id"]) {
+  if (perspectiveId === "free-agent") {
+    return domainTabs.filter(({ id }) => ["temporada", "competiciones", "clasificacion", "jornadas", "club"].includes(id));
+  }
+  if (perspectiveId === "referee") {
+    return domainTabs.filter(({ id }) => ["temporada", "liga", "torneo", "jornadas", "disciplina", "arbitros"].includes(id));
+  }
+  if (perspectiveId === "player") {
+    return domainTabs.filter(({ id }) => !["configuracion", "estado-equipo", "planes"].includes(id));
+  }
+  return domainTabs;
+}
+
+function DemoDomainMenu({ activeTab, onTab, perspectiveId }: {
+  activeTab: DemoWorldV2PrimaryTab;
+  onTab: (tab: DemoWorldV2PrimaryTab) => void;
+  perspectiveId: DemoWorldPerspective["id"];
+}) {
+  const visible = domainsForPerspective(perspectiveId);
+  return (
+    <details className={styles.domainMenu}>
+      <summary>{competitionTabs.has(activeTab) ? domainTabs.find(({ id }) => id === activeTab)?.label : "Secciones"}</summary>
+      <div className={styles.domainMenuPanel}>
+        {(["competición", "red", "gestión"] as const).map((group) => {
+          const entries = visible.filter((item) => item.group === group);
+          return entries.length ? <section key={group}><strong>{group}</strong>{entries.map((tab) => (
+            <button aria-current={activeTab === tab.id ? "page" : undefined} key={tab.id} type="button" onClick={() => onTab(tab.id)}>{tab.label}</button>
+          ))}</section> : null;
+        })}
+      </div>
+    </details>
+  );
+}
 
 const facetLabels = {
   defending: "DEF",
@@ -262,20 +303,29 @@ function DemoHeader({
   perspectives: DemoWorldPerspective[];
   setPerspective: (perspectiveId: DemoWorldPerspective["id"]) => void;
 }) {
-  const domainNavRef = useRef<HTMLElement>(null);
-
-  useEffect(() => {
-    const navigation = domainNavRef.current;
-    const activeControl = navigation?.querySelector<HTMLElement>('[aria-current="page"]');
-    if (!navigation || !activeControl || navigation.scrollWidth <= navigation.clientWidth + 2) return;
-    activeControl.scrollIntoView({ behavior: "auto", block: "nearest", inline: "center" });
-  }, [activeTab]);
+  const contextOptions: ProductContextOption[] = perspectives.map((entry) => ({
+    detail: entry.teamId ? "Equipo ficticio activo" : "Exploración sin equipo",
+    id: entry.id,
+    nextAction: entry.role === "admin" || entry.id === "team-owner" ? "Revisar operaciones" : "Explorar producto",
+    role: entry.label,
+    status: "Solo lectura",
+    title: entry.label,
+    type: entry.id === "platform-reviewer"
+      ? "platform"
+      : entry.id.includes("organizer")
+        ? "competition"
+        : entry.id === "free-agent"
+          ? "profile"
+          : "team",
+  }));
+  const activePrimary = primaryTabForDemo(activeTab);
 
   return (
     <>
       <div className={styles.demoBanner} data-tour-target="demo-mode-banner">
-        <span><b>Mundo Demo</b> · datos ficticios · temporada {manifest.season}</span>
+        <span><b>Mundo Demo V{manifest.version}</b> · datos ficticios · temporada {manifest.season}</span>
         <span className={styles.bannerActions}>
+          <button type="button" onClick={() => onTab("revision")}>Recorrido</button>
           <button type="button" onClick={onReset}>Reiniciar</button>
           <Link href="/">Salir</Link>
         </span>
@@ -286,26 +336,18 @@ function DemoHeader({
           <strong>Pachangas IQ</strong>
         </Link>
         <nav className={styles.desktopNav} aria-label="Navegación del Mundo Demo">
-          {primaryTabs.map((tab) => (
-            <button aria-current={activeTab === tab.id ? "page" : undefined} key={tab.id} type="button" onClick={() => onTab(tab.id)}>
+          {PRODUCT_PRIMARY_DESTINATIONS.map((tab) => (
+            <button aria-current={activePrimary === tab.id ? "page" : undefined} key={tab.id} type="button" onClick={() => onTab(demoTabForPrimary(tab.id))}>
               {tab.label}
             </button>
           ))}
         </nav>
-        <label className={styles.perspectivePicker} data-tour-target="demo-perspective">
-          <span>Perspectiva</span>
-          <select value={perspective.id} onChange={(event) => setPerspective(event.target.value as DemoWorldPerspective["id"])}>
-            {perspectives.map((entry) => <option key={entry.id} value={entry.id}>{entry.label}</option>)}
-          </select>
-        </label>
+        <div className={styles.headerContext} data-tour-target="demo-perspective">
+          <ProductContextSelector activeId={perspective.id} contexts={contextOptions} onChange={(id) => setPerspective(id as DemoWorldPerspective["id"])} />
+          <DemoDomainMenu activeTab={activeTab} onTab={onTab} perspectiveId={perspective.id} />
+        </div>
       </header>
-      <nav className={styles.domainNav} aria-label="Liga, Clubs y árbitros del Mundo Demo" ref={domainNavRef}>
-        {leagueTabs.map((tab) => (
-          <button aria-current={activeTab === tab.id ? "page" : undefined} key={tab.id} type="button" onClick={() => onTab(tab.id)}>
-            {tab.label}
-          </button>
-        ))}
-      </nav>
+      <div className={styles.mobileDomainMenu}><DemoDomainMenu activeTab={activeTab} onTab={onTab} perspectiveId={perspective.id} /></div>
     </>
   );
 }
@@ -1493,7 +1535,7 @@ export function DemoWorldApp({ manifest }: { manifest: DemoWorldManifest }) {
   }, [manifest]);
 
   useEffect(() => {
-    if (!core || snapshot || activeTab === "inicio" || fullWorldRequest.current) return;
+    if (!core || snapshot || activeTab === "inicio" || activeTab === "revision" || fullWorldRequest.current) return;
     setLoadingFullWorld(true);
     const request = loadDemoWorldSnapshot(manifest, core)
       .then((world) => {
@@ -1633,7 +1675,7 @@ export function DemoWorldApp({ manifest }: { manifest: DemoWorldManifest }) {
       <DemoHeader activeTab={activeTab} manifest={manifest} onReset={resetWorld} onTab={navigate} perspective={perspective} perspectives={world.core.perspectives} setPerspective={choosePerspective} />
       <div className={styles.content}>
         {activeTab === "inicio" ? <WorldHome currentPlayer={currentPlayer} currentTeam={currentTeam} notifications={notifications} onMatch={openMatch} onPlayer={setSelectedPlayerId} onTab={navigate} perspective={perspective} snapshot={world} teamMatches={teamMatches} /> : null}
-        {activeTab !== "inicio" && !snapshot ? <div className={styles.secondaryLoading} role="status"><span className={styles.loadingMark}>IQ</span><strong>{loadingFullWorld ? "Cargando esta sección" : "Preparando datos"}</strong><p>Solo descargamos el dominio que acabas de abrir.</p></div> : null}
+        {activeTab !== "inicio" && activeTab !== "revision" && !snapshot ? <div className={styles.secondaryLoading} role="status"><span className={styles.loadingMark}>IQ</span><strong>{loadingFullWorld ? "Cargando esta sección" : "Preparando datos"}</strong><p>Solo descargamos el dominio que acabas de abrir.</p></div> : null}
         {snapshot && activeTab === "partido" && selectedLeagueMatchPreview ? <div className={styles.demoProductView} data-demo-domain="league-match"><LeagueMatchOperationsClient disciplinePreviewData={selectedLeagueMatchDisciplinePreview} embedded previewData={selectedLeagueMatchPreview} refereeAssignmentPreviewData={selectedLeagueMatchRefereePreview} surface="match" /></div> : null}
         {snapshot && activeTab === "partido" && !selectedLeagueMatchPreview ? <MatchView currentPlayer={currentPlayer} currentTeam={currentTeam} key={perspective.id} match={selectedMatch} onLocalAttendance={(status) => { if (!selectedMatch) return; updateSession((current) => ({ ...current, attendanceByMatch: { ...current.attendanceByMatch, [selectedMatch.id]: status } })); setMessage(`Asistencia ${status === "voy" ? "confirmada" : status === "duda" ? "en duda" : "cancelada"} solo en esta sesión demo.`); }} onMatch={openMatch} onPlayer={setSelectedPlayerId} perspective={perspective} session={session} setMessage={setMessage} snapshot={snapshot} teamMatches={teamMatches} /> : null}
         {snapshot && activeTab === "mercado" ? <MarketView currentPlayer={currentPlayer} onMatch={openMatch} onPlayer={setSelectedPlayerId} onTeam={openTeam} perspective={perspective} setMessage={setMessage} snapshot={snapshot} /> : null}
@@ -1654,8 +1696,9 @@ export function DemoWorldApp({ manifest }: { manifest: DemoWorldManifest }) {
         {snapshot && activeTab === "estado-equipo" ? <DemoTeamOperationalView data={snapshot.teamOperational} /> : null}
         {snapshot && activeTab === "planes" ? <DemoOrganizerBillingView access={snapshot.organizerAccess} billing={snapshot.organizerBilling} /> : null}
         {snapshot && activeTab === "temporada" && "season" in snapshot ? <SyntheticSeasonView index={snapshot.season} /> : null}
+        {activeTab === "revision" ? <DemoWorldV33GuidedReview /> : null}
       </div>
-      <MobileAppNav active={activeTab as MobileAppTab} onNavigate={(tab) => navigate(tab as DemoWorldV2PrimaryTab)} />
+      <MobileAppNav active={primaryTabForDemo(activeTab) as MobileAppTab} onNavigate={(tab) => navigate(demoTabForPrimary(tab))} />
       {selectedPlayer ? <PlayerModal onClose={() => setSelectedPlayerId(null)} player={selectedPlayer} /> : null}
       {openedBox && RewardBoxComponent ? <RewardBoxComponent
         actionLabel="Guardar en esta demo"

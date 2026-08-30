@@ -588,5 +588,5 @@ export function LeagueMatchOperationsClient(props: Props) {
     </main>;
   return embedded
     ? content
-    : <OfficialProductShellV2 active={surface === "standings" || surface === "my" ? "equipo" : "partido"} context={shellContext}>{content}</OfficialProductShellV2>;
+    : <OfficialProductShellV2 active="competir" perspective="league-organizer" context={shellContext}>{content}</OfficialProductShellV2>;
 }

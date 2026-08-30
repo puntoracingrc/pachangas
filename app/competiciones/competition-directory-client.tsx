@@ -151,5 +151,5 @@ export function CompetitionDirectoryClient({
       {!loading && !items.length ? <p className={styles.empty}>No hay competiciones públicas con estos filtros.</p> : null}
       {pages > 1 ? <nav className={styles.pagination} aria-label="Páginas de competiciones"><button type="button" disabled={page <= 1 || loading} onClick={() => void load(page - 1)}>Anterior</button><span>{page} de {pages}</span><button type="button" disabled={page >= pages || loading} onClick={() => void load(page + 1)}>Siguiente</button></nav> : null}
     </div>;
-  return embedded ? content : <OfficialProductShellV2 active="mercado" context={{ detail: `${total} competiciones públicas`, eyebrow: "Mercado deportivo", status: "BETA", title: "Competiciones" }}>{content}</OfficialProductShellV2>;
+  return embedded ? content : <OfficialProductShellV2 active="competir" perspective="free-agent" context={{ detail: `${total} competiciones públicas`, eyebrow: "Mercado deportivo", status: "BETA", title: "Competiciones" }}>{content}</OfficialProductShellV2>;
 }

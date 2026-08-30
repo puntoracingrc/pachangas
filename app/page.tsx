@@ -1,6 +1,6 @@
 "use client";
 
-import { type CSSProperties, type Dispatch, type FormEvent, Fragment, type MouseEvent as ReactMouseEvent, type PointerEvent as ReactPointerEvent, type SetStateAction, type WheelEvent as ReactWheelEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { type CSSProperties, type Dispatch, type FormEvent, Fragment, type MouseEvent as ReactMouseEvent, type PointerEvent as ReactPointerEvent, type SetStateAction, type WheelEvent as ReactWheelEvent, useCallback, useEffect, useEffectEvent, useMemo, useRef, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import dynamic from "next/dynamic";
 import NextImage from "next/image";
@@ -1316,6 +1316,17 @@ function requestsNextMatchFromPrimaryNavigation(search: string, entryRoute?: Hom
   return params.get("mobile") === "partido" && !params.get("p") && !params.get("partido");
 }
 
+function homeEntrySearch(entryRoute: HomeEntryRoute | undefined, browserSearch = "") {
+  if (!entryRoute) return browserSearch;
+
+  const params = new URLSearchParams();
+  if (entryRoute.teamCode) params.set("equipo", entryRoute.teamCode);
+  if (entryRoute.matchId) params.set("p", entryRoute.matchId);
+  if (entryRoute.inviteToken) params.set("i", entryRoute.inviteToken);
+  if (entryRoute.adminInviteToken) params.set("a", entryRoute.adminInviteToken);
+  return `?${params.toString()}`;
+}
+
 function nextMatchDate(previousDate: string) {
   const base = new Date(previousDate);
   const next = Number.isNaN(base.getTime()) ? new Date() : base;
@@ -2385,10 +2396,6 @@ function facetAverage(player: Player, facet: RatingFacet) {
   return player.rating;
 }
 
-function currentPeerFacetBaseline(player: Player, facet: RatingFacet) {
-  return facetAverage(player, facet);
-}
-
 function cappedDelta(value: number, limit: number) {
   return Math.max(-limit, Math.min(limit, value));
 }
@@ -3113,7 +3120,7 @@ function pitchSlotPlayerIds(players: Player[], slotIds: LineupSlotPlayerId[] | u
     used.add(playerId);
     return playerId;
   });
-  let remaining = automaticIds.filter((playerId) => !used.has(playerId));
+  const remaining = automaticIds.filter((playerId) => !used.has(playerId));
 
   for (let index = 0; index < slots.length && remaining.length > 0; index += 1) {
     if (slots[index]) continue;
@@ -3423,16 +3430,6 @@ async function exitGameFullscreen() {
 }
 
 export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {}) {
-  function currentEntrySearch() {
-    if (!entryRoute) return typeof window === "undefined" ? "" : window.location.search;
-
-    const params = new URLSearchParams();
-    if (entryRoute.teamCode) params.set("equipo", entryRoute.teamCode);
-    if (entryRoute.matchId) params.set("p", entryRoute.matchId);
-    if (entryRoute.inviteToken) params.set("i", entryRoute.inviteToken);
-    if (entryRoute.adminInviteToken) params.set("a", entryRoute.adminInviteToken);
-    return `?${params.toString()}`;
-  }
   const [players, setPlayers] = useState<Player[]>(seedPlayers);
   const [venues, setVenues] = useState<Venue[]>(seedVenues);
   const [matches, setMatches] = useState<Match[]>(seedMatches);
@@ -3480,7 +3477,6 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
   const [currentDateValue, setCurrentDateValue] = useState(() => dateInputValue(new Date()));
   const [currentTimeMs, setCurrentTimeMs] = useState(() => Date.now());
   const [remoteGroupId, setRemoteGroupId] = useState<string | null>(null);
-  const [remoteInviteToken, setRemoteInviteToken] = useState<string | null>(null);
   const [remotePayloadRevision, setRemotePayloadRevision] = useState<number | null>(null);
   const [remoteReady, setRemoteReady] = useState(false);
   const [syncStatus, setSyncStatus] = useState<"connecting" | "error" | "live" | "local">("local");
@@ -3522,7 +3518,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
   const [localHydrated, setLocalHydrated] = useState(false);
   const [incomingSharedLink, setIncomingSharedLink] = useState<IncomingSharedLink>(() => (
     entryRoute
-      ? incomingSharedLinkFromSearch(currentEntrySearch())
+      ? incomingSharedLinkFromSearch(homeEntrySearch(entryRoute))
       : { hasAdminInvite: false, hasInvite: false, hasMatch: false, teamCode: null }
   ));
   const hasIncomingSharedLink = incomingSharedLink.hasInvite || incomingSharedLink.hasAdminInvite || incomingSharedLink.hasMatch || Boolean(incomingSharedLink.teamCode);
@@ -3559,6 +3555,19 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
   const [cameraError, setCameraError] = useState("");
   const [avatarDragging, setAvatarDragging] = useState(false);
 
+  const applyRealtimeGroupSnapshot = useEffectEvent((data: Record<string, unknown>, groupId: string) => {
+    const confirmedRevision = Number(data.payload_revision ?? 0);
+    const currentRevision = remotePayloadRevisionRef.current;
+    if (currentRevision !== null && confirmedRevision < currentRevision) return;
+    applyPayload(normalizePayload(data.payload as Partial<AppPayload>), confirmedRevision);
+    applyBillingFromGroupRow(data);
+    setRemoteTeams((current) => current.map((team) => (
+      team.id === groupId ? { ...team, ratingsEnabled: data.ratings_enabled !== false } : team
+    )));
+    setSyncStatus("live");
+    setSyncError("");
+  });
+
   useEffect(() => {
     const refreshDate = () => {
       const now = new Date();
@@ -3578,40 +3587,41 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
     const requestedTab = requestedParams.get("mobile");
     const requestedMatchPane = requestedParams.get("pane");
     const managerLandscape = isMobileManagerLandscape();
-    if (requestedTab === "partido") {
-      lockMobileNavigationTab("partido");
-      setActiveMobileTab("partido");
-      setActiveMatchManagerPane(requestedMatchPane === "admin" ? "admin" : "proximo");
-      if (!entryRoute?.matchId) {
-        const nextOpenMatch = openMatchesByDate(matches)[0];
-        if (nextOpenMatch) setActiveMatchId(nextOpenMatch.id);
+    queueMicrotask(() => {
+      if (requestedTab === "partido") {
+        lockMobileNavigationTab("partido");
+        setActiveMobileTab("partido");
+        setActiveMatchManagerPane(requestedMatchPane === "admin" ? "admin" : "proximo");
+        if (!entryRoute?.matchId) {
+          const nextOpenMatch = openMatchesByDate(seedMatches)[0];
+          if (nextOpenMatch) setActiveMatchId(nextOpenMatch.id);
+        }
+        window.requestAnimationFrame(() => {
+          document.getElementById("partido")?.scrollIntoView({ behavior: "smooth", block: "start" });
+        });
+        return;
       }
-      window.requestAnimationFrame(() => {
-        document.getElementById("partido")?.scrollIntoView({ behavior: "smooth", block: "start" });
-      });
-      return;
-    }
 
-    if (requestedTab === "equipo") {
-      lockMobileNavigationTab("equipo");
-      setActiveMobileTab("equipo");
-      setProfilePane("ranking");
-      setTeamGalleryOpen(false);
-      return;
-    }
-
-    if (requestedTab === "perfil") {
-      lockMobileNavigationTab("perfil");
-      setActiveMobileTab("perfil");
-      if (managerLandscape) {
-        setPlayerProfileMode("edit");
-        setProfilePane("ficha");
-        setSelectedPlayerId(null);
+      if (requestedTab === "equipo") {
+        lockMobileNavigationTab("equipo");
+        setActiveMobileTab("equipo");
+        setProfilePane("ranking");
+        setTeamGalleryOpen(false);
+        return;
       }
-      setMobileAccountOpen(true);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- mobile entry is intentionally handled once from the initial URL.
-  }, []);
+
+      if (requestedTab === "perfil") {
+        lockMobileNavigationTab("perfil");
+        setActiveMobileTab("perfil");
+        if (managerLandscape) {
+          setPlayerProfileMode("edit");
+          setProfilePane("ficha");
+          setSelectedPlayerId(null);
+        }
+        setMobileAccountOpen(true);
+      }
+    });
+  }, [entryRoute]);
 
   useEffect(() => {
     if (!mobileAccountOpen) return;
@@ -3649,21 +3659,13 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
 
   useEffect(() => {
     if (openQuickForm !== "venue") return;
-    setVenuePlaceMessage("");
-    setSelectedVenuePlace(null);
-
-    if (!googleMapsApiKey) {
-      setVenuePlaceStatus("missing-key");
-      return;
-    }
+    if (!googleMapsApiKey) return;
 
     const input = venueNameInputRef.current;
     if (!input) return;
 
     let cleanup: (() => void) | undefined;
     let disposed = false;
-    setVenuePlaceStatus("loading");
-
     attachVenueAutocomplete({
       apiKey: googleMapsApiKey,
       input,
@@ -3835,40 +3837,42 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
     }
   }
 
+  const rollbackRejectedWriteEffect = useEffectEvent((event: Event) => {
+    if (!remoteGroupId || !remoteReady) return;
+    const rejection = (event as CustomEvent<{ code?: string; message?: string }>).detail;
+    if (saveTimerRef.current) window.clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = null;
+
+    try {
+      if (lastCommittedPayloadJsonRef.current) {
+        applyPayload(normalizePayload(JSON.parse(lastCommittedPayloadJsonRef.current)), remotePayloadRevisionRef.current);
+      }
+    } catch {
+      // The authoritative reload below remains the fallback for a damaged local cache.
+    }
+
+    const message = rejection?.code === "CLIENT_UPDATE_REQUIRED"
+      ? "Actualización obligatoria. El cambio no se ha guardado."
+      : rejection?.code === "OFFLINE_WRITE_NOT_CONFIRMED"
+        ? "Sin conexión. El cambio no se ha confirmado."
+        : rejection?.message || "El servidor ha rechazado el cambio. Se ha restaurado el estado confirmado.";
+    markRemoteWriteError(message);
+
+    if (navigator.onLine && supabase) {
+      void loadTeams(supabase, remoteGroupId).catch((error) => {
+        setSyncError(error instanceof Error ? error.message : "No se pudo recargar el estado oficial");
+      });
+    }
+  });
+
   useEffect(() => {
     function rollbackRejectedWrite(event: Event) {
-      if (!remoteGroupId || !remoteReady) return;
-      const rejection = (event as CustomEvent<{ code?: string; message?: string }>).detail;
-      if (saveTimerRef.current) window.clearTimeout(saveTimerRef.current);
-      saveTimerRef.current = null;
-
-      try {
-        if (lastCommittedPayloadJsonRef.current) {
-          applyPayload(normalizePayload(JSON.parse(lastCommittedPayloadJsonRef.current)), remotePayloadRevisionRef.current);
-        }
-      } catch {
-        // The authoritative reload below remains the fallback for a damaged local cache.
-      }
-
-      const message = rejection?.code === "CLIENT_UPDATE_REQUIRED"
-        ? "Actualización obligatoria. El cambio no se ha guardado."
-        : rejection?.code === "OFFLINE_WRITE_NOT_CONFIRMED"
-          ? "Sin conexión. El cambio no se ha confirmado."
-          : rejection?.message || "El servidor ha rechazado el cambio. Se ha restaurado el estado confirmado.";
-      markRemoteWriteError(message);
-
-      if (navigator.onLine && supabase) {
-        void loadTeams(supabase, remoteGroupId).catch((error) => {
-          setSyncError(error instanceof Error ? error.message : "No se pudo recargar el estado oficial");
-        });
-      }
+      rollbackRejectedWriteEffect(event);
     }
 
     window.addEventListener(PWA_WRITE_REJECTED_EVENT, rollbackRejectedWrite);
     return () => window.removeEventListener(PWA_WRITE_REJECTED_EVENT, rollbackRejectedWrite);
-    // The handler intentionally follows the currently selected remote group and its canonical revision.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [remoteGroupId, remoteReady]);
+  }, []);
 
   function isAnonymousAuthUser(user: User | null) {
     return Boolean(user && (user as User & { is_anonymous?: boolean }).is_anonymous);
@@ -3939,7 +3943,6 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
     updateAuthState(null);
     setPreviewDemoMode(false);
     setRemoteGroupId(null);
-    setRemoteInviteToken(null);
     setRemoteRevision(null);
     setRemoteReady(false);
     setRemoteTeams([]);
@@ -3990,7 +3993,6 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
     if (!memberUserId) {
       setRemoteTeams([]);
       setRemoteGroupId(null);
-      setRemoteInviteToken(null);
       setRemoteRevision(null);
       setCurrentRole(null);
       setTeamMembers([]);
@@ -4049,7 +4051,6 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
       teams.find((team) => team.teamCode === preferredTeamCode?.toUpperCase());
     if ((preferredGroupId || preferredTeamCode) && !requestedTeam) {
       setRemoteGroupId(null);
-      setRemoteInviteToken(null);
       setRemoteRevision(null);
       setCurrentRole(null);
       setTeamMembers([]);
@@ -4065,7 +4066,6 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
     const selectedTeam = requestedTeam ?? teams[0];
     if (!selectedTeam) {
       setRemoteGroupId(null);
-      setRemoteInviteToken(null);
       setRemoteRevision(null);
       setCurrentRole(null);
       setTeamMembers([]);
@@ -4078,7 +4078,6 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
 
     if (options?.previewOnly) {
       setRemoteGroupId(selectedTeam.id);
-      setRemoteInviteToken(selectedTeam.inviteToken);
       setRemoteRevision(selectedTeam.payloadRevision);
       setCurrentRole(selectedTeam.role);
       setAdminInviteToken(null);
@@ -4090,16 +4089,16 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
     }
 
     setRemoteGroupId(selectedTeam.id);
-    setRemoteInviteToken(selectedTeam.inviteToken);
     setRemoteRevision(selectedTeam.payloadRevision);
     setCurrentRole(selectedTeam.role);
     setAdminInviteToken(null);
     applyPayload(selectedTeam.payload, selectedTeam.payloadRevision);
-    const currentParams = new URLSearchParams(currentEntrySearch());
+    const entrySearch = homeEntrySearch(entryRoute, window.location.search);
+    const currentParams = new URLSearchParams(entrySearch);
     const sharedMatchId = expandCompactUuid(currentParams.get("p") ?? currentParams.get("partido"));
     if (sharedMatchId && selectedTeam.payload.matches.some((match) => match.id === sharedMatchId)) {
       setActiveMatchId(sharedMatchId);
-    } else if (requestsNextMatchFromPrimaryNavigation(currentEntrySearch(), entryRoute)) {
+    } else if (requestsNextMatchFromPrimaryNavigation(entrySearch, entryRoute)) {
       const nextOpenMatch = openMatchesByDate(selectedTeam.payload.matches)[0];
       if (nextOpenMatch) setActiveMatchId(nextOpenMatch.id);
     }
@@ -4267,56 +4266,67 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
   }
 
   useEffect(() => {
-    setIncomingSharedLink(incomingSharedLinkFromSearch(currentEntrySearch()));
-    setProfileName(localStorage.getItem(profileNameKey) ?? "");
-    const params = new URLSearchParams(window.location.search);
-    if (params.get("demo") === "1") {
-      const nextParams = new URLSearchParams();
-      const requestedTab = params.get("mobile");
-      if (requestedTab === "inicio" || requestedTab === "partido" || requestedTab === "mercado" || requestedTab === "equipo" || requestedTab === "perfil") {
-        nextParams.set("tab", requestedTab);
+    let active = true;
+    const entrySearch = homeEntrySearch(entryRoute, window.location.search);
+    queueMicrotask(() => {
+      if (!active) return;
+      setIncomingSharedLink(incomingSharedLinkFromSearch(entrySearch));
+      setProfileName(localStorage.getItem(profileNameKey) ?? "");
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("demo") === "1") {
+        const nextParams = new URLSearchParams();
+        const requestedTab = params.get("mobile");
+        if (requestedTab === "inicio" || requestedTab === "partido" || requestedTab === "mercado" || requestedTab === "equipo" || requestedTab === "perfil") {
+          nextParams.set("tab", requestedTab);
+        }
+        if (params.get("qaPlayer") === "1") nextParams.set("perspective", "player");
+        window.location.replace(`/demo${nextParams.size ? `?${nextParams.toString()}` : ""}`);
+        return;
       }
-      if (params.get("qaPlayer") === "1") nextParams.set("perspective", "player");
-      window.location.replace(`/demo${nextParams.size ? `?${nextParams.toString()}` : ""}`);
-      return;
-    }
 
-    const saved = localStorage.getItem(storageKey);
-    if (!saved) {
-      if (requestsNextMatchFromPrimaryNavigation(currentEntrySearch(), entryRoute)) {
-        const nextOpenMatch = openMatchesByDate(seedMatches)[0];
-        if (nextOpenMatch) setActiveMatchId(nextOpenMatch.id);
+      const saved = localStorage.getItem(storageKey);
+      if (!saved) {
+        if (requestsNextMatchFromPrimaryNavigation(entrySearch, entryRoute)) {
+          const nextOpenMatch = openMatchesByDate(seedMatches)[0];
+          if (nextOpenMatch) setActiveMatchId(nextOpenMatch.id);
+        }
+        setLocalHydrated(true);
+        return;
+      }
+
+      try {
+        const parsed = parseLocalPayloadCache(saved);
+        const payload = normalizePayload(parsed);
+        setPlayers(payload.players);
+        setVenues(payload.venues);
+        setSiteSettings(payload.siteSettings);
+        setMatches(payload.matches);
+        const nextOpenMatch = requestsNextMatchFromPrimaryNavigation(entrySearch, entryRoute)
+          ? openMatchesByDate(payload.matches)[0]
+          : undefined;
+        setActiveMatchId(nextOpenMatch?.id ?? payload.activeMatchId);
+      } catch {
+        localStorage.removeItem(storageKey);
       }
       setLocalHydrated(true);
-      return;
-    }
-
-    try {
-      const parsed = parseLocalPayloadCache(saved);
-      const payload = normalizePayload(parsed);
-      setPlayers(payload.players);
-      setVenues(payload.venues);
-      setSiteSettings(payload.siteSettings);
-      setMatches(payload.matches);
-      const nextOpenMatch = requestsNextMatchFromPrimaryNavigation(currentEntrySearch(), entryRoute)
-        ? openMatchesByDate(payload.matches)[0]
-        : undefined;
-      setActiveMatchId(nextOpenMatch?.id ?? payload.activeMatchId);
-    } catch {
-      localStorage.removeItem(storageKey);
-    }
-    setLocalHydrated(true);
-  }, []);
+    });
+    return () => {
+      active = false;
+    };
+  }, [entryRoute]);
 
   useEffect(() => {
     localStorage.setItem(profileNameKey, profileName.trim());
   }, [profileName]);
 
+  const loadTeamBackupsEffect = useEffectEvent((client: NonNullable<typeof supabase>) => loadTeamBackups(client));
+
   useEffect(() => {
     const registeredUser = Boolean(authUser && !isAnonymousAuthUser(authUser));
     if (!showSettings || !supabase || !registeredUser) return;
-    void loadTeamBackups(supabase);
-  }, [showSettings, authUser?.id, remoteGroupId]);
+    const client = supabase;
+    queueMicrotask(() => void loadTeamBackupsEffect(client));
+  }, [showSettings, authUser, remoteGroupId]);
 
   useEffect(() => {
     if (!supabase) return;
@@ -4341,18 +4351,13 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
     };
   }, []);
 
-  useEffect(() => {
-    if (!localHydrated || !supabase) return;
-
-    const client = supabase;
-    let cancelled = false;
-
-    async function connectGroup() {
+  const connectGroupEffect = useEffectEvent(
+    async (client: NonNullable<typeof supabase>, isCancelled: () => boolean) => {
       setSyncStatus("connecting");
       setSyncError("");
 
       try {
-        const params = new URLSearchParams(currentEntrySearch());
+        const params = new URLSearchParams(homeEntrySearch(entryRoute, window.location.search));
         const inviteToken = previewDemoMode ? null : expandCompactUuid(params.get("i") ?? params.get("invite"));
         const adminInviteToken = previewDemoMode ? null : expandCompactUuid(params.get("a") ?? params.get("admin"));
         const sharedMatchId = previewDemoMode ? null : expandCompactUuid(params.get("p") ?? params.get("partido"));
@@ -4364,9 +4369,8 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
         setSharedMatchAccessDenied(false);
 
         if (linkNeedsLogin && (!initialUser || isAnonymousAuthUser(initialUser))) {
-          if (!cancelled) {
+          if (!isCancelled()) {
             setRemoteGroupId(null);
-            setRemoteInviteToken(null);
             setRemoteRevision(null);
             setRemoteReady(false);
             setRemoteTeams([]);
@@ -4405,9 +4409,8 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
         } else {
           const user = initialUser;
           if (!user) {
-            if (!cancelled) {
+            if (!isCancelled()) {
               setRemoteGroupId(null);
-              setRemoteInviteToken(null);
               setRemoteRevision(null);
               setRemoteReady(false);
               setRemoteTeams([]);
@@ -4424,15 +4427,22 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
           sharedMatchAccess: Boolean(sharedMatchId && !inviteToken && !adminInviteToken),
         });
 
-        if (cancelled) return;
+        if (isCancelled()) return;
       } catch (error) {
+        if (isCancelled()) return;
         setSyncStatus("error");
         setSyncError(error instanceof Error ? error.message : "No se pudo cargar el grupo");
-        return;
       }
-    }
+    },
+  );
 
-    void connectGroup();
+  useEffect(() => {
+    if (!localHydrated || !supabase) return;
+
+    const client = supabase;
+    let cancelled = false;
+
+    queueMicrotask(() => void connectGroupEffect(client, () => cancelled));
 
     return () => {
       cancelled = true;
@@ -4462,16 +4472,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
                 setSyncError(error?.message ?? "No se pudo recuperar el estado confirmado");
                 return;
               }
-              const confirmedRevision = Number(data.payload_revision ?? 0);
-              const currentRevision = remotePayloadRevisionRef.current;
-              if (currentRevision !== null && confirmedRevision < currentRevision) return;
-              applyPayload(normalizePayload(data.payload as Partial<AppPayload>), confirmedRevision);
-              applyBillingFromGroupRow(data as Record<string, unknown>);
-              setRemoteTeams((current) => current.map((team) => (
-                team.id === remoteGroupId ? { ...team, ratingsEnabled: data.ratings_enabled !== false } : team
-              )));
-              setSyncStatus("live");
-              setSyncError("");
+              applyRealtimeGroupSnapshot(data as Record<string, unknown>, remoteGroupId);
             });
         },
       )
@@ -4483,6 +4484,39 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
   }, [remoteGroupId, remoteReady]);
 
   const canAutosaveRemotePayload = Boolean(remoteGroupId && currentUserId && !selectedPlayerId && (currentRole === "owner" || currentRole === "admin"));
+
+  const runRemoteAutosave = useEffectEvent((client: NonNullable<typeof supabase>, targetGroupId: string) => {
+    const payload = payloadRef.current ?? currentPayload();
+    const nextPayloadJson = serializePayload(payload);
+    if (nextPayloadJson === lastCommittedPayloadJsonRef.current || autosaveInFlightRef.current) return;
+
+    autosaveInFlightRef.current = true;
+    void Promise.resolve(
+      client.rpc("save_pachanga_payload_authoritative_v2", {
+        client_metadata: clientOperationMetadata(),
+        expected_revision: remotePayloadRevisionRef.current,
+        next_payload: payload,
+        operation_id: id(),
+        target_group_id: targetGroupId,
+      }),
+    )
+      .then((result) => {
+        if (result.error) {
+          markRemoteWriteError(result.error.message);
+          if (isRemoteRevisionConflict(result.error.message)) {
+            void loadTeams(client, targetGroupId).catch((error) => {
+              setSyncError(error instanceof Error ? error.message : "No se pudo recargar el grupo");
+            });
+          }
+          return;
+        }
+
+        applyRemoteCommit(result.data as RemotePayloadCommit);
+      })
+      .finally(() => {
+        autosaveInFlightRef.current = false;
+      });
+  });
 
   useEffect(() => {
     if (previewDemoMode) return;
@@ -4506,42 +4540,15 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
     const client = supabase;
     const targetGroupId = remoteGroupId;
     saveTimerRef.current = setTimeout(() => {
-      const payload = payloadRef.current ?? currentPayload();
-      const nextPayloadJson = serializePayload(payload);
-      if (nextPayloadJson === lastCommittedPayloadJsonRef.current || autosaveInFlightRef.current) return;
-
-      autosaveInFlightRef.current = true;
-      void Promise.resolve(
-        client.rpc("save_pachanga_payload_authoritative_v2", {
-          client_metadata: clientOperationMetadata(),
-          expected_revision: remotePayloadRevisionRef.current,
-          next_payload: payload,
-          operation_id: id(),
-          target_group_id: targetGroupId,
-        }),
-      )
-        .then((result) => {
-          if (result.error) {
-            markRemoteWriteError(result.error.message);
-            if (isRemoteRevisionConflict(result.error.message)) {
-              void loadTeams(client, targetGroupId).catch((error) => {
-                setSyncError(error instanceof Error ? error.message : "No se pudo recargar el grupo");
-              });
-            }
-            return;
-          }
-
-          applyRemoteCommit(result.data as RemotePayloadCommit);
-        })
-        .finally(() => {
-          autosaveInFlightRef.current = false;
-        });
+      runRemoteAutosave(client, targetGroupId);
     }, 850);
-  }, [players, venues, matches, activeMatchId, siteSettings, canAutosaveRemotePayload, remoteGroupId, remoteReady, supabase, previewDemoMode]);
+  }, [players, venues, matches, activeMatchId, siteSettings, canAutosaveRemotePayload, remoteGroupId, remoteReady, previewDemoMode]);
+
+  const scrollToPlayerProfileEffect = useEffectEvent(() => scrollToPlayerProfile());
 
   useEffect(() => {
     if (!selectedPlayerId) return;
-    scrollToPlayerProfile();
+    scrollToPlayerProfileEffect();
   }, [selectedPlayerId]);
 
   useEffect(() => {
@@ -4586,7 +4593,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
   const activeKind = activeMatch.kind ?? "futbol7";
   const matchFinalized = Boolean(activeMatch.closed || activeMatch.scoreA !== undefined);
   useEffect(() => {
-    setPitchBoardState(initialPitchBoardState());
+    queueMicrotask(() => setPitchBoardState(initialPitchBoardState()));
   }, [activeMatchId, activeKind]);
   const activeVenue = venues.find((venue) => venue.id === activeMatch.venueId);
   const matchPlayersForDisplay = useMemo(
@@ -4611,11 +4618,12 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
     .filter((match) => match.scoreA !== undefined)
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   const playerForms = useMemo(() => playerFormStates(matches, players), [matches, players]);
-  const playerMediaScore = (player: Player) => scorePlayer(player);
-  const playerForm = (player: Player) => matchFinalized && matchPlayersById.has(player.id)
+  const playerMediaScore = scorePlayer;
+  const playerForm = useCallback((player: Player) => matchFinalized && matchPlayersById.has(player.id)
     ? historicalPlayerFormState(player)
-    : playerForms.get(player.id) ?? playerFormState(player, matches, new Map(players.map((item) => [item.id, item])));
-  const effectivePlayerScore = (player: Player) => playerForm(player).balanceScore;
+    : playerForms.get(player.id) ?? playerFormState(player, matches, new Map(players.map((item) => [item.id, item]))),
+  [matchFinalized, matchPlayersById, matches, playerForms, players]);
+  const effectivePlayerScore = useCallback((player: Player) => playerForm(player).balanceScore, [playerForm]);
   const absenceStreaks = useMemo(() => {
     const streaks = new Map<string, number>();
     players.forEach((player) => streaks.set(player.id, consecutiveAbsenceStreak(matches, player.id)));
@@ -4629,11 +4637,6 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
   const fieldCostDraftValue = editingMatchNumberField === "fieldCost" ? matchFieldCostDraft : String(fieldCost);
   const lineupClosed = activeMatch.lineupClosed ?? false;
   const matchConfigured = Boolean(activeMatch.configured);
-  useEffect(() => {
-    if (editingMatchNumberField) return;
-    setMatchReserveLimitDraft(String(activeMatch.reserveLimit ?? 0));
-    setMatchFieldCostDraft(String(fieldCost));
-  }, [activeMatch.id, activeMatch.reserveLimit, editingMatchNumberField, fieldCost]);
   const activeMatchTime = new Date(activeMatch.date).getTime();
   const previousPendingMatch = Number.isFinite(activeMatchTime)
     ? matches
@@ -4674,7 +4677,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
   const suggestedPayerId = paymentReady ? nextPayer(players, matches, activeMatch, payingParticipantIds) : undefined;
   const payerId = paymentReady && activeMatch.payerId && payingParticipantIds.includes(activeMatch.payerId) ? activeMatch.payerId : suggestedPayerId;
   const payer = players.find((player) => player.id === payerId);
-  const balancedLineup = useMemo(() => balanceTeams(confirmedPlayers, effectivePlayerScore), [confirmedPlayers, playerForms]);
+  const balancedLineup = useMemo(() => balanceTeams(confirmedPlayers, effectivePlayerScore), [confirmedPlayers, effectivePlayerScore]);
   const suggested = savedTeams(activeMatch, players, confirmedIds) ?? balancedLineup;
   const balanceSummary = teamBalanceSummary(suggested.teamA, suggested.teamB, effectivePlayerScore);
   const scoreAValue = result.a.trim() === "" ? undefined : Number(result.a);
@@ -4686,46 +4689,20 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
     Number(scoreBValue) >= 0;
 
   useEffect(() => {
-    setResult({
-      a: activeMatch.scoreA === undefined ? "" : String(activeMatch.scoreA),
-      b: activeMatch.scoreB === undefined ? "" : String(activeMatch.scoreB),
+    queueMicrotask(() => {
+      setResult({
+        a: activeMatch.scoreA === undefined ? "" : String(activeMatch.scoreA),
+        b: activeMatch.scoreB === undefined ? "" : String(activeMatch.scoreB),
+      });
     });
   }, [activeMatch.id, activeMatch.scoreA, activeMatch.scoreB]);
 
   useEffect(() => {
-    if (!matchConfigured) {
-      setMatchWeather(null);
-      setMatchWeatherStatus("idle");
-      setMatchWeatherMessage("");
-      return;
-    }
-
-    if (isDemoMode) {
-      setMatchWeather({
-        ...demoMatchWeather,
-        forecastTime: activeMatch.date || demoMatchWeather.forecastTime,
-      });
-      setMatchWeatherStatus("ready");
-      setMatchWeatherMessage("");
-      return;
-    }
-
-    if (typeof activeVenue?.lat !== "number" || typeof activeVenue.lng !== "number") {
-      setMatchWeather(null);
-      setMatchWeatherStatus("unavailable");
-      setMatchWeatherMessage("Elige un campo con ubicación para ver la previsión.");
-      return;
-    }
-
-    const matchDate = new Date(activeMatch.date);
-    if (Number.isNaN(matchDate.getTime())) {
-      setMatchWeather(null);
-      setMatchWeatherStatus("unavailable");
-      setMatchWeatherMessage("Fecha del partido pendiente de confirmar.");
-      return;
-    }
+    let active = true;
+    let controller: AbortController | null = null;
 
     const applyWeatherPayload = (payload: WeatherApiPayload) => {
+      if (!active) return;
       if (!payload.available || !payload.forecast) {
         setMatchWeather(null);
         setMatchWeatherStatus("unavailable");
@@ -4737,54 +4714,91 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
       setMatchWeatherStatus("ready");
       setMatchWeatherMessage("");
     };
-    const nowMs = Date.now();
-    const msUntilMatch = matchDate.getTime() - nowMs;
-    if (msUntilMatch > weatherForecastClientLimitMs) {
-      const msUntilAvailable = Math.max(0, msUntilMatch - weatherForecastClientLimitMs);
-      const daysUntilAvailable = Math.max(1, Math.ceil(msUntilAvailable / weatherClientDayMs));
-      setMatchWeather(null);
-      setMatchWeatherStatus("unavailable");
-      setMatchWeatherMessage(`Previsión del tiempo disponible en ${daysUntilAvailable} ${daysUntilAvailable === 1 ? "día" : "días"}.`);
-      return;
-    }
 
-    const weatherCacheKey = `${activeMatch.id}:${matchDate.toISOString()}:${activeVenue.lat.toFixed(5)}:${activeVenue.lng.toFixed(5)}`;
-    const cachedWeather = matchWeatherClientCache.get(weatherCacheKey);
-    if (cachedWeather && cachedWeather.expiresAt > nowMs) {
-      applyWeatherPayload(cachedWeather.payload);
-      return;
-    }
+    void Promise.resolve().then(async () => {
+      if (!active) return;
+      if (!matchConfigured) {
+        setMatchWeather(null);
+        setMatchWeatherStatus("idle");
+        setMatchWeatherMessage("");
+        return;
+      }
 
-    const controller = new AbortController();
-    const params = new URLSearchParams({
-      at: matchDate.toISOString(),
-      lat: String(activeVenue.lat),
-      lng: String(activeVenue.lng),
-    });
-    const weatherClientCacheMs =
-      msUntilMatch <= weatherForecastClientFreshWindowMs ? weatherClientShortCacheMs : weatherClientLongCacheMs;
+      if (isDemoMode) {
+        setMatchWeather({
+          ...demoMatchWeather,
+          forecastTime: activeMatch.date || demoMatchWeather.forecastTime,
+        });
+        setMatchWeatherStatus("ready");
+        setMatchWeatherMessage("");
+        return;
+      }
 
-    setMatchWeatherStatus("loading");
-    setMatchWeatherMessage("");
+      if (typeof activeVenue?.lat !== "number" || typeof activeVenue.lng !== "number") {
+        setMatchWeather(null);
+        setMatchWeatherStatus("unavailable");
+        setMatchWeatherMessage("Elige un campo con ubicación para ver la previsión.");
+        return;
+      }
 
-    fetch(`/api/weather?${params.toString()}`, { signal: controller.signal })
-      .then(async (response) => {
+      const matchDate = new Date(activeMatch.date);
+      if (Number.isNaN(matchDate.getTime())) {
+        setMatchWeather(null);
+        setMatchWeatherStatus("unavailable");
+        setMatchWeatherMessage("Fecha del partido pendiente de confirmar.");
+        return;
+      }
+
+      const nowMs = Date.now();
+      const msUntilMatch = matchDate.getTime() - nowMs;
+      if (msUntilMatch > weatherForecastClientLimitMs) {
+        const msUntilAvailable = Math.max(0, msUntilMatch - weatherForecastClientLimitMs);
+        const daysUntilAvailable = Math.max(1, Math.ceil(msUntilAvailable / weatherClientDayMs));
+        setMatchWeather(null);
+        setMatchWeatherStatus("unavailable");
+        setMatchWeatherMessage(`Previsión del tiempo disponible en ${daysUntilAvailable} ${daysUntilAvailable === 1 ? "día" : "días"}.`);
+        return;
+      }
+
+      const weatherCacheKey = `${activeMatch.id}:${matchDate.toISOString()}:${activeVenue.lat.toFixed(5)}:${activeVenue.lng.toFixed(5)}`;
+      const cachedWeather = matchWeatherClientCache.get(weatherCacheKey);
+      if (cachedWeather && cachedWeather.expiresAt > nowMs) {
+        applyWeatherPayload(cachedWeather.payload);
+        return;
+      }
+
+      controller = new AbortController();
+      const params = new URLSearchParams({
+        at: matchDate.toISOString(),
+        lat: String(activeVenue.lat),
+        lng: String(activeVenue.lng),
+      });
+      const weatherClientCacheMs =
+        msUntilMatch <= weatherForecastClientFreshWindowMs ? weatherClientShortCacheMs : weatherClientLongCacheMs;
+
+      setMatchWeatherStatus("loading");
+      setMatchWeatherMessage("");
+
+      try {
+        const response = await fetch(`/api/weather?${params.toString()}`, { signal: controller.signal });
         const payload = await response.json();
         if (!response.ok) throw new Error(payload?.message ?? "No se pudo consultar la previsión.");
-        return payload as WeatherApiPayload;
-      })
-      .then((payload) => {
-        matchWeatherClientCache.set(weatherCacheKey, { expiresAt: Date.now() + weatherClientCacheMs, payload });
-        applyWeatherPayload(payload);
-      })
-      .catch((error: unknown) => {
-        if (error instanceof DOMException && error.name === "AbortError") return;
+        if (!active) return;
+        const weatherPayload = payload as WeatherApiPayload;
+        matchWeatherClientCache.set(weatherCacheKey, { expiresAt: Date.now() + weatherClientCacheMs, payload: weatherPayload });
+        applyWeatherPayload(weatherPayload);
+      } catch (error: unknown) {
+        if (!active || (error instanceof DOMException && error.name === "AbortError")) return;
         setMatchWeather(null);
         setMatchWeatherStatus("error");
         setMatchWeatherMessage(error instanceof Error ? error.message : "No se pudo consultar la previsión.");
-      });
+      }
+    });
 
-    return () => controller.abort();
+    return () => {
+      active = false;
+      controller?.abort();
+    };
   }, [activeMatch.date, activeMatch.id, activeVenue?.lat, activeVenue?.lng, isDemoMode, matchConfigured]);
 
   function updateMatch(next: Match) {
@@ -4960,6 +4974,11 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
       return;
     }
 
+    if (tabId === "competir") {
+      window.location.assign("/competiciones");
+      return;
+    }
+
     if (tabId === "partido") {
       const nextOpenMatch = openMatches[0];
       if (nextOpenMatch) setActiveMatchId(nextOpenMatch.id);
@@ -5020,6 +5039,11 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
 
   function showQuickForm(form: NonNullable<typeof openQuickForm>) {
     setActiveMobileTab("inicio");
+    if (form === "venue") {
+      setVenuePlaceMessage("");
+      setSelectedVenuePlace(null);
+      setVenuePlaceStatus(googleMapsApiKey ? "loading" : "missing-key");
+    }
     setOpenQuickForm(form);
     scrollToQuickForm(form);
   }
@@ -5867,7 +5891,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
       b.appearances - a.appearances ||
       playerDisplayName(a.player).localeCompare(playerDisplayName(b.player), "es"),
     );
-  }, [activeRankingSeason, matches, players, rankingSort, playerForms]);
+  }, [activeRankingSeason, effectivePlayerScore, matches, playerForm, playerMediaScore, players, rankingSort]);
   const rankingBadgeText = (row: (typeof rankedPlayers)[number]) => {
     if (rankingSort === "goles") return `${row.goals} ${row.goals === 1 ? "gol" : "goles"}`;
     if (rankingSort === "partidos") return `${row.appearances} PJ`;
@@ -5975,38 +5999,58 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
   const canAdjustSelectedAvatar = Boolean(canEditSelectedPlayer && selectedPlayer && selectedAvatarDraft && avatarAdjustingPlayerId === selectedPlayer.id);
   const showPlayerSwitcher = Boolean(playerProfileMode === "edit" && canUseAdminControls && selectedPlayer && !selectedPlayerIsOwn && players.length > 1);
 
+  const updateMarketZoneFromPlace = useEffectEvent((player: Player, place: VenuePlace, radiusKm: number) => {
+    const nextZones = appendMarketZoneGeo(player.marketZonesGeo, place, radiusKm);
+    updatePlayer(player.id, {
+      marketZones: marketZoneTextFromGeo(nextZones),
+      marketZonesGeo: nextZones,
+    });
+    setMarketZoneDraft("");
+    setMarketZonePlaceMessage("");
+  });
+
   useEffect(() => {
+    let cleanup: (() => void) | undefined;
+    let disposed = false;
+
     if (!selectedPlayerIsOwn || !selectedPlayer?.marketEnabled) {
-      setMarketZoneDraft("");
-      setMarketZonePlaceMessage("");
-      setMarketZonePlaceStatus("idle");
-      return;
+      queueMicrotask(() => {
+        if (disposed) return;
+        setMarketZoneDraft("");
+        setMarketZonePlaceMessage("");
+        setMarketZonePlaceStatus("idle");
+      });
+      return () => {
+        disposed = true;
+      };
     }
 
     if (!googleMapsApiKey) {
-      setMarketZonePlaceStatus("missing-key");
-      return;
+      queueMicrotask(() => {
+        if (!disposed) setMarketZonePlaceStatus("missing-key");
+      });
+      return () => {
+        disposed = true;
+      };
     }
 
     const input = marketZoneInputRef.current;
-    if (!input) return;
+    if (!input) {
+      return () => {
+        disposed = true;
+      };
+    }
 
-    let cleanup: (() => void) | undefined;
-    let disposed = false;
-    setMarketZonePlaceStatus("loading");
+    queueMicrotask(() => {
+      if (!disposed) setMarketZonePlaceStatus("loading");
+    });
 
     attachVenueAutocomplete({
       apiKey: googleMapsApiKey,
       input,
       onPlace: (place) => {
-        if (disposed || !selectedPlayer) return;
-        const nextZones = appendMarketZoneGeo(selectedPlayer.marketZonesGeo, place, marketZoneRadiusKm);
-        updatePlayer(selectedPlayer.id, {
-          marketZones: marketZoneTextFromGeo(nextZones),
-          marketZonesGeo: nextZones,
-        });
-        setMarketZoneDraft("");
-        setMarketZonePlaceMessage("");
+        if (disposed) return;
+        updateMarketZoneFromPlace(selectedPlayer, place, marketZoneRadiusKm);
       },
       types: ["(cities)"],
     })
@@ -6028,7 +6072,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
       disposed = true;
       cleanup?.();
     };
-  }, [marketZoneRadiusKm, selectedPlayer?.id, selectedPlayer?.marketEnabled, selectedPlayer?.marketZonesGeo, selectedPlayerIsOwn]);
+  }, [marketZoneRadiusKm, selectedPlayer, selectedPlayerIsOwn]);
 
   useEffect(() => {
     if (!supabase || !hasRealTeam || !remoteGroupId || !currentUserId) {
@@ -6101,8 +6145,12 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
       !groupBillingLocked,
   );
 
+  const loadOpenMatchRequestsEffect = useEffectEvent(
+    (client?: NonNullable<typeof supabase>, groupId?: string, matchId?: string) => loadOpenMatchRequests(client, groupId, matchId),
+  );
+
   useEffect(() => {
-    void loadOpenMatchRequests();
+    void loadOpenMatchRequestsEffect();
   }, [activeMatch.id, canUseAdminControls, remoteGroupId, remoteReady]);
 
   useEffect(() => {
@@ -6116,7 +6164,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
         { event: "*", schema: "public", table: "pachanga_open_match_requests", filter: `source_group_id=eq.${remoteGroupId}` },
         (payload) => {
           const row = (payload.new ?? payload.old) as { source_match_id?: string } | null;
-          if (!row || row.source_match_id === activeMatch.id) void loadOpenMatchRequests(client, remoteGroupId, activeMatch.id);
+          if (!row || row.source_match_id === activeMatch.id) void loadOpenMatchRequestsEffect(client, remoteGroupId, activeMatch.id);
         },
       )
       .subscribe();
@@ -6125,19 +6173,6 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
       void client.removeChannel(channel);
     };
   }, [activeMatch.id, canUseAdminControls, remoteGroupId, remoteReady]);
-
-  useEffect(() => {
-    if (!showPlayerImportGate || !defaultPlayerImportCandidate) {
-      setSelectedImportCandidateKey(null);
-      setShowImportChoices(false);
-      return;
-    }
-
-    const selectedStillExists = playerImportCandidates.some((candidate) => candidate.key === selectedImportCandidateKey);
-    if (!selectedImportCandidateKey || !selectedStillExists) {
-      setSelectedImportCandidateKey(defaultPlayerImportCandidate.key);
-    }
-  }, [defaultPlayerImportCandidate?.key, playerImportCandidates, selectedImportCandidateKey, showPlayerImportGate]);
 
   useEffect(() => {
     if (needsLoginForSharedLink) return;
@@ -7561,7 +7596,6 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
     resetTeamScopedUi();
     setPreviewDemoMode(false);
     setRemoteGroupId(selectedTeam.id);
-    setRemoteInviteToken(selectedTeam.inviteToken);
     setRemoteRevision(selectedTeam.payloadRevision);
     setCurrentRole(selectedTeam.role);
     setAdminInviteToken(null);
@@ -8066,8 +8100,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
         <span className="fifa-position">{positionShort(player)}</span>
         <span className="fifa-photo">
           {player.avatar ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={player.avatar} alt={`Foto de ${playerDisplayName(player)}`} draggable={false} style={avatarImageStyle(player)} />
+            <NextImage unoptimized src={player.avatar} alt={`Foto de ${playerDisplayName(player)}`} draggable={false} height={256} style={avatarImageStyle(player)} width={256} />
           ) : (
             <b>+</b>
           )}
@@ -8111,8 +8144,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
           <span className="fifa-position">{positionShort(player)}</span>
           <span className="fifa-photo">
             {player.avatar ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={player.avatar} alt={`Foto de ${playerDisplayName(player)}`} draggable={false} style={avatarImageStyle(player)} />
+              <NextImage unoptimized src={player.avatar} alt={`Foto de ${playerDisplayName(player)}`} draggable={false} height={256} style={avatarImageStyle(player)} width={256} />
             ) : (
               <b>+</b>
             )}
@@ -8273,8 +8305,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
         <div>
           <button className="player-name" onClick={() => openPlayerProfile(player.id)}>
             {player.avatar ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={player.avatar} alt="" draggable={false} style={avatarImageStyle(player)} />
+              <NextImage unoptimized src={player.avatar} alt="" draggable={false} height={96} style={avatarImageStyle(player)} width={96} />
             ) : null}
             <strong>
               <span className="player-name-line">
@@ -8546,6 +8577,35 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
             href: "/mercado",
             label: "Buscar partido",
           };
+  const shellPerspective = previewDemoMode
+    ? "team-owner"
+    : displayedRole === "owner"
+      ? "team-owner"
+      : displayedRole === "admin"
+        ? "team-admin"
+        : hasRealTeam
+          ? "player"
+          : "free-agent";
+  const shellContextOptions = [
+    ...(previewDemoMode ? [{
+      detail: "Datos ficticios de revisión",
+      id: demoTeamOptionId,
+      nextAction: homeNextAction.label,
+      role: "Demo",
+      status: "Solo local",
+      title: "Mundo Demo",
+      type: "team" as const,
+    }] : []),
+    ...remoteTeams.map((team) => ({
+      detail: `${team.payload.players.length} jugadores`,
+      id: team.id,
+      nextAction: team.id === remoteGroupId ? homeNextAction.label : "Cambiar de equipo",
+      role: memberRoleLabel(team.role),
+      status: team.id === remoteGroupId && syncStatus === "live" ? "En directo" : "Disponible",
+      title: team.name,
+      type: "team" as const,
+    })),
+  ];
   const homeUpcomingMatches = openMatches.slice(0, 8).map((match) => {
     const confirmed = orderedGoingPlayers(match).slice(0, match.targetPlayers).length;
     const places = Math.max(match.targetPlayers - confirmed, 0);
@@ -9194,12 +9254,19 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
       context={{
         detail: activeMobileTab === "partido" ? `Partido · ${selectedMatchManagerPane}` : memberRoleLabel(displayedRole),
         eyebrow: activeMobileTab === "inicio" ? "Vestuario" : hasRealTeam ? "Equipo activo" : "Pachangas IQ",
+        id: previewDemoMode ? demoTeamOptionId : remoteGroupId ?? "profile",
+        nextAction: homeNextAction.label,
+        role: memberRoleLabel(displayedRole),
         status: previewDemoMode ? "Demo" : syncStatus === "live" ? "En directo" : syncStatus === "connecting" ? "Conectando" : syncStatus === "error" ? "Sin conexión" : "Local",
         title: activeMobileTab === "inicio" ? "Inicio" : currentTeamName,
+        type: hasRealTeam || previewDemoMode ? "team" : "profile",
       }}
-      links={{ mercado: "/mercado" }}
+      contextOptions={shellContextOptions.length > 0 ? shellContextOptions : undefined}
+      links={{ competir: "/competiciones", mercado: "/mercado" }}
       navigationEnabled={!needsLoginForSharedLink}
+      onContextChange={selectTeam}
       onNavigate={navigatePrimaryMobile}
+      perspective={shellPerspective}
     >
     <AuthenticatedThemeDefault />
     <main className="min-h-screen bg-[#f7f6f0] text-[#1d2521] official-ui-v2-product" data-mobile-tab={activeMobileTab} style={teamColorStyle}>
@@ -9241,6 +9308,8 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
             identity={{
               context: siteSettings.subtitle,
               name: currentTeamName,
+              role: memberRoleLabel(displayedRole),
+              status: previewDemoMode ? "Demo" : syncStatus === "live" ? "En directo" : "Copia local",
             }}
             metrics={[
               { label: "Partidos", value: closedMatches.length },
@@ -9555,8 +9624,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
             >
               <span className="profile-import-avatar">
                 {selectedImportCandidate.player.avatar ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={selectedImportCandidate.player.avatar} alt="" draggable={false} style={avatarImageStyle(selectedImportCandidate.player)} />
+                  <NextImage unoptimized src={selectedImportCandidate.player.avatar} alt="" draggable={false} height={96} style={avatarImageStyle(selectedImportCandidate.player)} width={96} />
                 ) : (
                   <b>+</b>
                 )}
@@ -10016,7 +10084,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
                           }}
                           title={`Ver foto de ${match.title}`}
                         >
-                          <img src={match.teamPhoto} alt="" />
+                          <NextImage src={match.teamPhoto} alt="" width={112} height={112} unoptimized />
                         </span>
                       ) : null}
                       <div>
@@ -10410,8 +10478,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
                         <article className={`open-match-request-card request-${request.status}`} key={request.id}>
                           <span className="request-avatar">
                             {request.avatar ? (
-                              // eslint-disable-next-line @next/next/no-img-element
-                              <img src={request.avatar} alt="" draggable={false} style={avatarImageStyle(request)} />
+                              <NextImage unoptimized src={request.avatar} alt="" draggable={false} height={96} style={avatarImageStyle(request)} width={96} />
                             ) : (
                               <b>+</b>
                             )}
@@ -10602,7 +10669,13 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
                   onClick={() => setMatchPhotoPreview({ src: activeMatch.teamPhoto!, title: activeMatch.title })}
                   aria-label={`Ver foto del partido ${activeMatch.title}`}
                 >
-                  <img src={activeMatch.teamPhoto} alt={`Foto del partido ${activeMatch.title}`} />
+                  <NextImage
+                    src={activeMatch.teamPhoto}
+                    alt={`Foto del partido ${activeMatch.title}`}
+                    width={960}
+                    height={720}
+                    unoptimized
+                  />
                   <span>Ver foto</span>
                 </button>
               ) : (
@@ -10689,7 +10762,13 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
               <strong>{matchPhotoPreview.title}</strong>
               <button type="button" onClick={() => setMatchPhotoPreview(null)}>Cerrar</button>
             </div>
-            <img src={matchPhotoPreview.src} alt={`Foto del partido ${matchPhotoPreview.title}`} />
+            <NextImage
+              src={matchPhotoPreview.src}
+              alt={`Foto del partido ${matchPhotoPreview.title}`}
+              width={1280}
+              height={960}
+              unoptimized
+            />
           </section>
         </div>
       ) : null}
@@ -11609,8 +11688,13 @@ function MatchPitch({
 
   useEffect(() => {
     if (canUseBoard) return;
-    clearBoardInteraction();
-    onBoardStateChange?.(initialPitchBoardState());
+    boardPointerAbortRef.current?.abort();
+    boardPointerAbortRef.current = null;
+    boardInteractionRef.current = null;
+    queueMicrotask(() => {
+      setBoardDraggingPlayerId(null);
+      onBoardStateChange?.(initialPitchBoardState());
+    });
   }, [canUseBoard, onBoardStateChange]);
 
   function baseBoardPositions() {
@@ -11759,7 +11843,7 @@ function MatchPitch({
     event.preventDefault();
     event.stopPropagation();
     clearBoardInteraction();
-    const lineId = `line-${Date.now()}-${event.pointerId}`;
+    const lineId = `line-${Math.round(event.timeStamp)}-${event.pointerId}`;
     updateBoardState((current) => ({
       ...current,
       active: true,
@@ -12071,8 +12155,7 @@ function MatchPitch({
             <span className="pitch-card-position">{positionShort(player)}</span>
             <span className="pitch-card-photo">
               {player.avatar ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={player.avatar} alt="" draggable={false} style={avatarImageStyle(player)} />
+                <NextImage unoptimized src={player.avatar} alt="" draggable={false} height={128} style={avatarImageStyle(player)} width={128} />
               ) : (
                 <b>{playerDisplayName(player).slice(0, 2).toUpperCase()}</b>
               )}

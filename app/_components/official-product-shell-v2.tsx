@@ -4,6 +4,12 @@ import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useState, type ReactNode } from "react";
 import { MobileAppNav, type AdminViewPreviewControl, type MobileAppTab } from "../mobile-app-nav";
+import { ProductContextSelector, type ProductContextOption } from "./product-context-selector";
+import {
+  PRODUCT_PRIMARY_DESTINATIONS,
+  contextualDestinationsForPerspective,
+  type ProductActorPerspective,
+} from "./product-navigation-contract";
 import {
   OFFICIAL_UI_V2_VERSION,
   resolveOfficialLayoutMode,
@@ -15,8 +21,12 @@ import styles from "./official-product-shell-v2.module.css";
 type OfficialContext = {
   detail?: string;
   eyebrow?: string;
+  id?: string;
+  nextAction?: string;
+  role?: string;
   status?: string;
   title: string;
+  type?: ProductContextOption["type"];
 };
 
 type ShellLinkMap = Partial<Record<MobileAppTab, string>>;
@@ -26,21 +36,19 @@ type OfficialProductShellV2Props = {
   adminViewPreview?: AdminViewPreviewControl;
   children: ReactNode;
   context: OfficialContext;
+  contextOptions?: ProductContextOption[];
   links?: ShellLinkMap;
   navigationEnabled?: boolean;
+  onContextChange?: (id: string) => void;
   onNavigate?: (tab: MobileAppTab) => void;
+  perspective?: ProductActorPerspective;
   variant?: OfficialShellVariant;
 };
 
-const primaryItems: Array<{ id: MobileAppTab; label: string; short: string }> = [
-  { id: "inicio", label: "Inicio", short: "IN" },
-  { id: "partido", label: "Partido", short: "PA" },
-  { id: "mercado", label: "Mercado", short: "ME" },
-  { id: "equipo", label: "Equipo", short: "EQ" },
-  { id: "perfil", label: "Perfil", short: "PF" },
-];
+const primaryItems: Array<{ id: MobileAppTab; label: string; short: string }> = PRODUCT_PRIMARY_DESTINATIONS;
 
 const defaultLinks: ShellLinkMap = {
+  competir: "/competiciones",
   equipo: "/?mobile=equipo",
   inicio: "/?mobile=inicio",
   mercado: "/mercado",
@@ -113,13 +121,26 @@ export function OfficialProductShellV2({
   adminViewPreview,
   children,
   context,
+  contextOptions,
   links,
   navigationEnabled = true,
+  onContextChange,
   onNavigate,
+  perspective = "player",
   variant = "PRODUCT",
 }: OfficialProductShellV2Props) {
   const mode = useOfficialLayoutMode();
   const destinations = { ...defaultLinks, ...links };
+  const contextualDestinations = contextualDestinationsForPerspective(perspective);
+  const resolvedContexts: ProductContextOption[] = contextOptions?.length ? contextOptions : [{
+    detail: context.detail,
+    id: context.id ?? "current",
+    nextAction: context.nextAction,
+    role: context.role ?? perspective,
+    status: context.status,
+    title: context.title,
+    type: context.type ?? (perspective.includes("organizer") ? "competition" : perspective.startsWith("platform") ? "platform" : "team"),
+  }];
   const destinationFor = (id: MobileAppTab) => onNavigate && links?.[id] === undefined ? undefined : destinations[id];
 
   return (
@@ -149,11 +170,7 @@ export function OfficialProductShellV2({
           ))}
         </nav> : <span />}
         {navigationEnabled ? <div className={styles.desktopUtilities}>
-          <Link href="/ligas">Ligas</Link>
-          <Link href="/torneos">Torneos</Link>
-          <Link href="/organizacion/solicitudes">Organizar</Link>
-          <Link href="/ranking">Ranking</Link>
-          <Link href="/perfil/avisos">Avisos</Link>
+          {contextualDestinations.slice(0, 4).map((item) => <Link href={item.href} key={item.id}>{item.label}</Link>)}
           <span aria-label={`Estado: ${context.status ?? "Conectado"}`}>{context.status ?? "Conectado"}</span>
         </div> : <span />}
       </header>
@@ -175,22 +192,13 @@ export function OfficialProductShellV2({
             ))}
           </nav>
           <div className={styles.gameUtilities}>
-            <Link href="/ligas" aria-label="Ligas (Beta)">LG</Link>
-            <Link href="/torneos" aria-label="Torneos (Beta)">TR</Link>
-            <Link href="/organizacion/solicitudes" aria-label="Organizar">OR</Link>
-            <Link href="/perfil/avisos" aria-label="Avisos">AV</Link>
-            <Link href="/ranking" aria-label="Ranking">RK</Link>
+            {contextualDestinations.slice(0, 4).map((item) => <Link href={item.href} key={item.id} aria-label={item.label}>{item.short}</Link>)}
           </div>
         </aside> : null}
 
         <div className={styles.viewport}>
           <div className={styles.contextBar}>
-            <div>
-              <span>{context.eyebrow ?? "Pachangas IQ"}</span>
-              <strong>{context.title}</strong>
-              {context.detail ? <small>{context.detail}</small> : null}
-            </div>
-            <b>{context.status ?? "Conectado"}</b>
+            <ProductContextSelector activeId={context.id ?? resolvedContexts[0]!.id} contexts={resolvedContexts} onChange={onContextChange} />
           </div>
           <div className={styles.content}>{children}</div>
         </div>

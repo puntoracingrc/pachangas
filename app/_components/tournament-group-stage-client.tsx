@@ -336,7 +336,8 @@ export function TournamentGroupStageClient({ competitionId }: Props) {
   const title = tournamentText(competition.name, "Tournament Hub");
 
   return <OfficialProductShellV2
-    active="equipo"
+    active="competir"
+    perspective="tournament-organizer"
     context={{
       detail: cached ? "Copia local revalidándose" : "Servidor autoritativo",
       eyebrow: "Tournament Private Beta",

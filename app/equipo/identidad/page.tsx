@@ -1120,7 +1120,7 @@ export default function TeamIdentityPage() {
       ) : null}
 
       {membershipStatus === "ready" && message ? (
-        <ProductFeedback tone={message.includes("confirmado") || message.includes("equipado") ? "success" : "error"}>
+        <ProductFeedback presentation="toast" tone={message.includes("confirmado") || message.includes("equipado") ? "success" : "error"}>
           {message}
         </ProductFeedback>
       ) : null}

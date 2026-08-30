@@ -173,7 +173,7 @@ test("builds the transfer market as a separated page", async () => {
   assert.match(page, /setActiveMatchManagerPane\(requestedMatchPane === "admin" \? "admin" : "proximo"\)/);
   assert.match(source, /<OfficialProductShellV2/);
   assert.match(source, /<main className="market-page official-ui-v2-market" data-mobile-tab="mercado">/);
-  assert.match(page, /links=\{\{ mercado: "\/mercado" \}\}/);
+  assert.match(page, /links=\{\{ competir: "\/competiciones", mercado: "\/mercado" \}\}/);
   assert.doesNotMatch(page, /links=\{\{[\s\S]*mercado: canUseAdminControls && matchConfigured \? marketScoutUrl\("jugadores"\)/);
   assert.doesNotMatch(page, /window\.location\.assign\(canUseAdminControls && matchConfigured \? marketScoutUrl/);
   assert.match(marketViewCss, /grid-template-columns: 176px minmax\(0, 1fr\)/);
@@ -423,7 +423,7 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /function openRankingPanel/);
   assert.match(page, /function openMarketConfiguration/);
   assert.match(page, /if \(tabId === "mercado"\) \{\s*return;/);
-  assert.match(page, /links=\{\{ mercado: "\/mercado" \}\}/);
+  assert.match(page, /links=\{\{ competir: "\/competiciones", mercado: "\/mercado" \}\}/);
   assert.doesNotMatch(page, /links=\{\{[\s\S]*mercado: canUseAdminControls && matchConfigured \? marketScoutUrl\("jugadores"\)/);
   assert.doesNotMatch(page, /window\.location\.assign\(canUseAdminControls && matchConfigured \? marketScoutUrl/);
   assert.match(page, /if \(requestedTab === "perfil"\) \{[\s\S]*setProfilePane\("ficha"\);[\s\S]*setSelectedPlayerId\(null\)/);
@@ -829,7 +829,7 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /groupOptionLabel/);
   assert.match(page, /compactUuid/);
   assert.match(page, /expandCompactUuid/);
-  assert.match(page, /remoteInviteToken/);
+  assert.match(page, /\/invitacion\/grupo\/\$\{encodeURIComponent\(compactUuid\(currentTeam\.inviteToken\)\)\}/);
   assert.match(page, /showGroupAccessPanel\s*=\s*isRegisteredUser\s*&&\s*\(previewDemoMode\s*\|\|\s*remoteTeams\.length\s*>\s*0\)/);
   assert.match(page, /actualCanManageTeam\s*=\s*Boolean\(hasRealTeam\s*&&\s*isRegisteredUser/);
   assert.match(page, /canManageTeam\s*=\s*actualCanManageTeam\s*&&\s*!playerPreviewActive/);

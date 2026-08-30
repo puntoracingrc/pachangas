@@ -413,13 +413,13 @@ export function RefereePlatformClient({ focusSection, laboratory = false, previe
   };
 
   if (loading && !data) return (
-    <OfficialProductShellV2 active="perfil" context={shellContext}>
+    <OfficialProductShellV2 active="perfil" perspective="referee" context={shellContext}>
       <main className={styles.page} data-mobile-tab="perfil"><p className={styles.loadingState}>Cargando plataforma arbitral...</p></main>
     </OfficialProductShellV2>
   );
 
   return (
-    <OfficialProductShellV2 active="perfil" context={shellContext}>
+    <OfficialProductShellV2 active="perfil" perspective="referee" context={shellContext}>
     <main className={styles.page} data-focus-section={focusSection} data-laboratory={laboratory || undefined} data-mobile-tab="perfil">
       <GamePageHeader
         actions={<><button type="button" disabled={!userId || busy} onClick={() => void loadCanonical(userId, accessToken, "manual")}>Actualizar</button><Link href={laboratory ? "/admin/referees" : "/"}>Volver</Link></>}

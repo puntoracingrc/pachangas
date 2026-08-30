@@ -472,7 +472,7 @@ export function LeagueOperationalExceptionsClient(props: Props) {
   const enabled = previewData ? true : surface === "public" ? Boolean(data) : leagueOperationalFlagsEnabled(flags);
   const shellContext = { detail: previewData ? "Laboratorio local" : cached ? "Copia local revalidándose" : "Snapshot canónico", eyebrow: "League Engine R4D", status: previewData ? "Solo visual" : loading ? "Sincronizando" : online ? "Servidor" : "Sin conexión", title };
 
-  return <OfficialProductShellV2 active={surface === "my" ? "equipo" : "partido"} context={shellContext}>
+  return <OfficialProductShellV2 active="competir" perspective="league-organizer" context={shellContext}>
     <main className={styles.page} data-mobile-tab={surface === "my" ? "equipo" : "partido"} data-operational-surface={surface}>
       <GamePageHeader eyebrow="Excepciones operativas" title={title} />
       {message ? <ProductFeedback tone={/confirmado|actualizado/i.test(message) ? "success" : /sin conexión|no |error|rechaz|inicia|revision/i.test(message) ? "warning" : "info"}>{message}</ProductFeedback> : null}

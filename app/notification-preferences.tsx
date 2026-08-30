@@ -212,7 +212,7 @@ export function NotificationPreferences() {
         })}
       </div> : null}
       {viewState === "ready" && message ? (
-        <ProductFeedback tone={message.includes("confirmadas") ? "success" : "error"}>{message}</ProductFeedback>
+        <ProductFeedback presentation="toast" tone={message.includes("confirmadas") ? "success" : "error"}>{message}</ProductFeedback>
       ) : null}
     </section>
   );

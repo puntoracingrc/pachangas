@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
+import NextImage from "next/image";
+import { useEffect, useEffectEvent, useMemo, useRef, useState } from "react";
 import { OfficialMarketGameView, type OfficialMarketTab } from "../_components/official-market-game-view";
 import { OfficialProductShellV2 } from "../_components/official-product-shell-v2";
 import { attachVenueAutocomplete, type VenuePlace } from "../googlePlacesClient";
@@ -369,6 +370,58 @@ function numberParam(value: string | null) {
   return Number.isFinite(numeric) ? numeric : undefined;
 }
 
+type InitialMarketRoute = {
+  context: MarketMatchContext | null;
+  day: string;
+  modality: string;
+  tab: MarketTab;
+  zone: string;
+  zonePlace: MarketTarget | null;
+};
+
+export function marketRouteFromSearch(search: string): InitialMarketRoute {
+  const params = new URLSearchParams(search);
+  const tab = marketTabFromParam(params.get("tab"));
+  const matchId = params.get("partido");
+  if (!matchId) return { context: null, day: "Todos", modality: "Todas", tab, zone: "", zonePlace: null };
+  const day = validDayFilter(params.get("dia"));
+  const modality = validModalityFilter(params.get("modalidad"));
+  const zone = params.get("zona") ?? "";
+  const lat = numberParam(params.get("lat"));
+  const lng = numberParam(params.get("lng"));
+  const placeId = params.get("placeId") ?? undefined;
+  const requesterKindParam = params.get("requesterKind");
+  const requesterKind = requesterKindParam === "CLUB" || requesterKindParam === "COMPETITION" ? requesterKindParam : "TEAM";
+  const sourceKindParam = params.get("sourceKind");
+  const sourceKind = sourceKindParam === "competition_generated" || sourceKindParam === "external_match" || sourceKindParam === "open_match" || sourceKindParam === "team_challenge" ? sourceKindParam : "group_match";
+  const groupId = params.get("grupoId") ?? "";
+  const context: MarketMatchContext = {
+    canonicalMatchId: params.get("canonicalMatchId") ?? undefined,
+    competitionId: params.get("competitionId") ?? undefined,
+    competitionMatchContextId: params.get("competitionMatchContextId") ?? undefined,
+    dateText: params.get("fecha") ?? "",
+    day,
+    groupId,
+    lat,
+    lng,
+    matchId,
+    matchUrl: params.get("link") ?? "",
+    missing: params.get("plazas") ?? "",
+    modality,
+    placeId,
+    revision: Math.max(0, Math.floor(numberParam(params.get("revision")) ?? 0)),
+    replaceAssignmentId: params.get("replaceAssignment") ?? undefined,
+    replaceRevision: Math.max(0, Math.floor(numberParam(params.get("replaceRevision")) ?? 0)),
+    requesterId: params.get("requesterId") ?? groupId,
+    requesterKind,
+    sourceId: params.get("sourceId") ?? matchId,
+    sourceKind,
+    title: params.get("titulo") ?? "Partido",
+    zone,
+  };
+  return { context, day, modality, tab, zone, zonePlace: zone ? { lat, lng, name: zone, placeId } : null };
+}
+
 function normalizeMarketZoneRadius(value: unknown) {
   const radius = Number(value);
   return [0, 5, 10, 20, 30, 50].includes(radius) ? radius : 0;
@@ -676,14 +729,15 @@ function marketAdminMatchUrl(matchUrl: string) {
 }
 
 export default function MarketPage() {
+  const [initialRoute] = useState(() => marketRouteFromSearch(""));
   const [profiles, setProfiles] = useState<MarketProfile[]>(fallbackProfiles);
   const [openMatches, setOpenMatches] = useState<OpenMarketMatch[]>(fallbackOpenMatches);
   const [openMatchRequests, setOpenMatchRequests] = useState<Record<string, OpenMatchRequestSummary>>({});
   const [matchInvitations, setMatchInvitations] = useState<Record<string, MatchInvitationSummary>>({});
-  const [activeTab, setActiveTab] = useState<MarketTab>("jugadores");
-  const [zoneFilter, setZoneFilter] = useState("");
-  const [dayFilter, setDayFilter] = useState("Todos");
-  const [modalityFilter, setModalityFilter] = useState("Todas");
+  const [activeTab, setActiveTab] = useState<MarketTab>(initialRoute.tab);
+  const [zoneFilter, setZoneFilter] = useState(initialRoute.zone);
+  const [dayFilter, setDayFilter] = useState(initialRoute.day);
+  const [modalityFilter, setModalityFilter] = useState(initialRoute.modality);
   const [positionFilter, setPositionFilter] = useState("Todas");
   const [canInvite, setCanInvite] = useState(false);
   const [canProposeReferee, setCanProposeReferee] = useState(false);
@@ -696,8 +750,8 @@ export default function MarketPage() {
   const [inviteMessage, setInviteMessage] = useState("");
   const [marketRefresh, setMarketRefresh] = useState(0);
   const [preparedRival, setPreparedRival] = useState<TeamSummary | null>(null);
-  const [marketContext, setMarketContext] = useState<MarketMatchContext | null>(null);
-  const [zonePlace, setZonePlace] = useState<MarketTarget | null>(null);
+  const [marketContext, setMarketContext] = useState<MarketMatchContext | null>(initialRoute.context);
+  const [zonePlace, setZonePlace] = useState<MarketTarget | null>(initialRoute.zonePlace);
   const [zonePlaceMessage, setZonePlaceMessage] = useState("");
   const zoneInputRef = useRef<HTMLInputElement>(null);
   const playerPreviewActive = canInvite && previewRequested;
@@ -706,61 +760,39 @@ export default function MarketPage() {
   const marketMatchId = marketContext?.matchId ?? "";
   const marketRequesterKind = marketContext?.requesterKind;
 
+  const restoreMarketRoute = useEffectEvent((route: InitialMarketRoute) => {
+    setActiveTab(route.tab);
+    setMarketContext(route.context);
+    setDayFilter(route.day);
+    setModalityFilter(route.modality);
+    setPositionFilter("Todas");
+    setZoneFilter(route.zone);
+    setZonePlace(route.zonePlace);
+  });
+
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const nextTab = marketTabFromParam(params.get("tab"));
-    setActiveTab(nextTab);
-    const matchId = params.get("partido");
-    if (!matchId) return;
-
-    const nextDay = validDayFilter(params.get("dia"));
-    const nextModality = validModalityFilter(params.get("modalidad"));
-    const nextZone = params.get("zona") ?? "";
-    const nextLat = numberParam(params.get("lat"));
-    const nextLng = numberParam(params.get("lng"));
-    const nextPlaceId = params.get("placeId") ?? undefined;
-    const requesterKindParam = params.get("requesterKind");
-    const requesterKind = requesterKindParam === "CLUB" || requesterKindParam === "COMPETITION" ? requesterKindParam : "TEAM";
-    const sourceKindParam = params.get("sourceKind");
-    const sourceKind = sourceKindParam === "competition_generated" || sourceKindParam === "external_match" || sourceKindParam === "open_match" || sourceKindParam === "team_challenge" ? sourceKindParam : "group_match";
-    const groupId = params.get("grupoId") ?? "";
-
-    const nextContext: MarketMatchContext = {
-      canonicalMatchId: params.get("canonicalMatchId") ?? undefined,
-      competitionId: params.get("competitionId") ?? undefined,
-      competitionMatchContextId: params.get("competitionMatchContextId") ?? undefined,
-      dateText: params.get("fecha") ?? "",
-      day: nextDay,
-      groupId,
-      lat: nextLat,
-      lng: nextLng,
-      matchId,
-      matchUrl: params.get("link") ?? "",
-      missing: params.get("plazas") ?? "",
-      modality: nextModality,
-      placeId: nextPlaceId,
-      revision: Math.max(0, Math.floor(numberParam(params.get("revision")) ?? 0)),
-      replaceAssignmentId: params.get("replaceAssignment") ?? undefined,
-      replaceRevision: Math.max(0, Math.floor(numberParam(params.get("replaceRevision")) ?? 0)),
-      requesterId: params.get("requesterId") ?? groupId,
-      requesterKind,
-      sourceId: params.get("sourceId") ?? matchId,
-      sourceKind,
-      title: params.get("titulo") ?? "Partido",
-      zone: nextZone,
+    let active = true;
+    const restore = () => {
+      const route = marketRouteFromSearch(window.location.search);
+      window.queueMicrotask(() => {
+        if (active) restoreMarketRoute(route);
+      });
     };
 
-    setMarketContext(nextContext);
-    if (nextTab === "jugadores") {
-      setDayFilter(nextDay);
-      setModalityFilter(nextModality);
-      setZoneFilter(nextZone);
-      setZonePlace(nextZone ? { lat: nextLat, lng: nextLng, name: nextZone, placeId: nextPlaceId } : null);
-    }
+    restore();
+    window.addEventListener("popstate", restore);
+    return () => {
+      active = false;
+      window.removeEventListener("popstate", restore);
+    };
   }, []);
 
   function selectMarketTab(nextTab: MarketTab) {
     setActiveTab(nextTab);
+
+    const params = new URLSearchParams(window.location.search);
+    params.set("tab", nextTab);
+    window.history.pushState(null, "", `${window.location.pathname}?${params.toString()}${window.location.hash}`);
 
     if (nextTab === "jugadores" && marketContext) {
       setDayFilter(marketContext.day);
@@ -990,7 +1022,6 @@ export default function MarketPage() {
 
   useEffect(() => {
     if (!googleMapsApiKey) {
-      setZonePlaceMessage("");
       return;
     }
 
@@ -1357,7 +1388,7 @@ export default function MarketPage() {
               <span className="fifa-position">{positionShort(profile.position, profile.goalkeeperOnly)}</span>
               <span className="fifa-photo">
                 {profile.avatar ? (
-                  <img src={profile.avatar} alt="" draggable={false} style={avatarStyle(profile)} />
+                  <NextImage src={profile.avatar} alt="" draggable={false} height={220} unoptimized width={160} style={{ ...avatarStyle(profile), height: "100%", objectFit: "cover", width: "100%" }} />
                 ) : (
                   <b>+</b>
                 )}

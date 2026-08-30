@@ -8,10 +8,11 @@ import type {
   SyntheticSeasonMatch,
   SyntheticSeasonSurface,
 } from "./demo-world-v3-2-contract";
+import { syntheticSeasonCheckpointFromValue } from "./demo-world-v3-2-contract";
 import { loadSyntheticSeasonCheckpoint } from "./demo-world-v2-client-state";
 import styles from "./demo-world-v3-2-view.module.css";
 
-const surfaces: Array<{ id: SyntheticSeasonSurface; label: string }> = [
+export const SYNTHETIC_SEASON_SURFACES: Array<{ id: SyntheticSeasonSurface; label: string }> = [
   { id: "overview", label: "Resumen" },
   { id: "leagues", label: "Ligas" },
   { id: "tournaments", label: "Torneos" },
@@ -29,6 +30,37 @@ const surfaces: Array<{ id: SyntheticSeasonSurface; label: string }> = [
   { id: "incidents", label: "Incidencias" },
   { id: "timeline", label: "Timeline" },
 ];
+
+export function adjacentSyntheticSeasonCheckpoints(index: SyntheticSeasonIndex, checkpointId: SyntheticSeasonCheckpointId) {
+  const position = index.checkpointFiles.findIndex(({ checkpoint }) => checkpoint === checkpointId);
+  return [index.checkpointFiles[position - 1], index.checkpointFiles[position + 1]].filter(Boolean);
+}
+
+function initialCheckpointFromLocation(index: SyntheticSeasonIndex) {
+  if (typeof window === "undefined") return 4;
+  const params = new URLSearchParams(window.location.search);
+  const checkpoint = syntheticSeasonCheckpointFromValue(params.get("checkpoint"));
+  if (checkpoint !== null) return checkpoint;
+  const week = Number(params.get("week"));
+  return index.checkpointFiles.find((item) => item.week === week)?.checkpoint ?? 4;
+}
+
+function initialSurfaceFromLocation(): SyntheticSeasonSurface {
+  if (typeof window === "undefined") return "overview";
+  const params = new URLSearchParams(window.location.search);
+  const requested = (params.get("surface") ?? params.get("view")) as SyntheticSeasonSurface | null;
+  return requested && SYNTHETIC_SEASON_SURFACES.some(({ id }) => id === requested) ? requested : "overview";
+}
+
+function competitionSlug(value: string) {
+  return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+}
+
+function initialCompetitionFromLocation(index: SyntheticSeasonIndex) {
+  if (typeof window === "undefined") return index.competitions[0]!.id;
+  const requested = new URLSearchParams(window.location.search).get("competition");
+  return index.competitions.find((competition) => competitionSlug(competition.name) === requested)?.id ?? index.competitions[0]!.id;
+}
 
 function matchDate(value: string) {
   return new Intl.DateTimeFormat("es-ES", {
@@ -139,10 +171,10 @@ function SeasonSurface({ checkpoint, index, selectedCompetitionId, selectedTeamI
 
 export function SyntheticSeasonView({ index }: { index: SyntheticSeasonIndex }) {
   const cache = useRef(new Map<SyntheticSeasonCheckpointId, SyntheticSeasonCheckpoint>());
-  const [checkpointId, setCheckpointId] = useState<SyntheticSeasonCheckpointId>(4);
+  const [checkpointId, setCheckpointId] = useState<SyntheticSeasonCheckpointId>(() => initialCheckpointFromLocation(index));
   const [checkpoint, setCheckpoint] = useState<SyntheticSeasonCheckpoint | null>(null);
-  const [surface, setSurface] = useState<SyntheticSeasonSurface>("overview");
-  const [selectedCompetitionId, setSelectedCompetitionId] = useState(index.competitions[0]!.id);
+  const [surface, setSurface] = useState<SyntheticSeasonSurface>(initialSurfaceFromLocation);
+  const [selectedCompetitionId, setSelectedCompetitionId] = useState(() => initialCompetitionFromLocation(index));
   const [selectedTeamId, setSelectedTeamId] = useState(index.teams[0]!.id);
   const [playing, setPlaying] = useState(false);
   const [error, setError] = useState("");
@@ -169,12 +201,36 @@ export function SyntheticSeasonView({ index }: { index: SyntheticSeasonIndex }) 
   }, [checkpointId, index.checkpointFiles]);
 
   useEffect(() => {
-    void Promise.all(index.checkpointFiles.map(async (descriptor) => {
+    const adjacent = adjacentSyntheticSeasonCheckpoints(index, checkpointId);
+    void Promise.all(adjacent.map(async (descriptor) => {
       if (cache.current.has(descriptor.checkpoint)) return;
       const value = await loadSyntheticSeasonCheckpoint(descriptor.path);
       cache.current.set(descriptor.checkpoint, value);
     })).catch(() => undefined);
-  }, [index.checkpointFiles]);
+  }, [checkpointId, index]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const descriptor = index.checkpointFiles.find((item) => item.checkpoint === checkpointId)!;
+    const selectedCompetition = index.competitions.find(({ id }) => id === selectedCompetitionId) ?? index.competitions[0]!;
+    params.set("checkpoint", String(checkpointId));
+    params.set("week", String(descriptor.week));
+    params.set("surface", surface);
+    params.set("view", surface);
+    params.set("competition", competitionSlug(selectedCompetition.name));
+    params.set("tab", "temporada");
+    window.history.replaceState(null, "", `/demo?${params.toString()}`);
+  }, [checkpointId, index.checkpointFiles, index.competitions, selectedCompetitionId, surface]);
+
+  useEffect(() => {
+    const restore = () => {
+      setCheckpointId(initialCheckpointFromLocation(index));
+      setSurface(initialSurfaceFromLocation());
+      setSelectedCompetitionId(initialCompetitionFromLocation(index));
+    };
+    window.addEventListener("popstate", restore);
+    return () => window.removeEventListener("popstate", restore);
+  }, [index]);
 
   useEffect(() => {
     if (!playing || reducedMotion) return;
@@ -188,10 +244,10 @@ export function SyntheticSeasonView({ index }: { index: SyntheticSeasonIndex }) 
   return (
     <section className={styles.season} data-season-checkpoint={checkpointId} data-season-surface={surface}>
       <header className={styles.hero}>
-        <div><span>Demo World V3.2 · Synthetic Live Season</span><h2>Temporada 2026/27</h2><p>Dieciséis semanas reproducibles con los motores reales y cero entidades reales.</p></div>
+        <div><span>Autoridad V3.2 · Revisión guiada V3.3</span><h2>Temporada 2026/27</h2><p>Dieciséis semanas reproducibles con los motores reales y cero entidades reales.</p></div>
         <button disabled={reducedMotion} title={reducedMotion ? "La reproducción automática respeta la reducción de movimiento" : undefined} type="button" onClick={() => setPlaying((value) => !value)}>{playing ? "Pausar" : "Reproducir temporada"}</button>
       </header>
-      <div className={styles.surfaceTabs} role="navigation" aria-label="Vistas de temporada">{surfaces.map((item) => <button aria-current={surface === item.id ? "page" : undefined} key={item.id} type="button" onClick={() => setSurface(item.id)}>{item.label}</button>)}</div>
+      <div className={styles.surfaceTabs} role="navigation" aria-label="Vistas de temporada">{SYNTHETIC_SEASON_SURFACES.map((item) => <button aria-current={surface === item.id ? "page" : undefined} key={item.id} type="button" onClick={() => setSurface(item.id)}>{item.label}</button>)}</div>
       <div className={styles.gameLayout}>
         <aside className={styles.weekRail} aria-label="Checkpoints de temporada">{index.checkpointFiles.map((item) => <button aria-current={checkpointId === item.checkpoint ? "step" : undefined} key={item.checkpoint} type="button" onClick={() => { setCheckpointId(item.checkpoint); setPlaying(false); }}><span>{item.checkpoint}</span><strong>{item.label}</strong><small>S{item.week}</small></button>)}</aside>
         <div className={styles.mainSurface}>

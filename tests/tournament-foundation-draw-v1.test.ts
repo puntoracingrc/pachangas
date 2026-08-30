@@ -190,11 +190,12 @@ test("PWA blocks Tournament writes offline while Realtime only invalidates canon
 });
 
 test("Official UI provides all private routes, adaptive Draw Desk, reveal and Control Center", async () => {
-  const [client, css, shell, admin] = await Promise.all([
+  const [client, css, shell, admin, navigation] = await Promise.all([
     source("app/_components/tournament-private-beta-client.tsx"),
     source("app/_components/tournament-private-beta-client.module.css"),
     source("app/_components/official-product-shell-v2.tsx"),
     source("app/admin/competitions/page.tsx"),
+    source("app/_components/product-navigation-contract.ts"),
   ]);
   for (const route of [
     "app/torneos/page.tsx", "app/torneos/crear/page.tsx",
@@ -209,7 +210,8 @@ test("Official UI provides all private routes, adaptive Draw Desk, reveal and Co
   assert.match(css, /orientation: landscape/);
   assert.match(css, /orientation: portrait/);
   assert.match(css, /min-width: 0/);
-  assert.match(shell, /href="\/torneos"/);
+  assert.match(shell, /contextualDestinationsForPerspective\(perspective\)/);
+  assert.match(navigation, /href: "\/torneos"/);
   assert.match(admin, /Tournament Private Beta/);
   assert.match(admin, /Tournament matches/);
 });

@@ -79,8 +79,8 @@ export const legalPages: Record<string, LegalPageContent> = {
       {
         title: "Normativa de referencia",
         items: [
-          <a href="https://www.boe.es/buscar/act.php?id=BOE-A-2002-13758" rel="noreferrer" target="_blank">Ley 34/2002 de servicios de la sociedad de la información y comercio electrónico</a>,
-          <a href="https://www.boe.es/buscar/act.php?id=BOE-A-2018-16673" rel="noreferrer" target="_blank">Ley Orgánica 3/2018 de protección de datos personales y garantía de derechos digitales</a>,
+          <a key="lssi" href="https://www.boe.es/buscar/act.php?id=BOE-A-2002-13758" rel="noreferrer" target="_blank">Ley 34/2002 de servicios de la sociedad de la información y comercio electrónico</a>,
+          <a key="lopdgdd" href="https://www.boe.es/buscar/act.php?id=BOE-A-2018-16673" rel="noreferrer" target="_blank">Ley Orgánica 3/2018 de protección de datos personales y garantía de derechos digitales</a>,
         ],
       },
     ],
@@ -158,8 +158,8 @@ export const legalPages: Record<string, LegalPageContent> = {
       {
         title: "Normativa de referencia",
         items: [
-          <a href="https://www.aepd.es/guias/guia-modelo-clausula-informativa.pdf" rel="noreferrer" target="_blank">Guía AEPD sobre cláusulas informativas</a>,
-          <a href="https://www.aepd.es/preguntas-frecuentes/10-menores-y-educacion/FAQ-1001-cual-es-la-edad-para-que-los-menores-puedan-prestar-consentimiento-para-tratar-sus-datos-personales" rel="noreferrer" target="_blank">AEPD: consentimiento de menores</a>,
+          <a key="aepd-clausulas" href="https://www.aepd.es/guias/guia-modelo-clausula-informativa.pdf" rel="noreferrer" target="_blank">Guía AEPD sobre cláusulas informativas</a>,
+          <a key="aepd-menores" href="https://www.aepd.es/preguntas-frecuentes/10-menores-y-educacion/FAQ-1001-cual-es-la-edad-para-que-los-menores-puedan-prestar-consentimiento-para-tratar-sus-datos-personales" rel="noreferrer" target="_blank">AEPD: consentimiento de menores</a>,
         ],
       },
     ],
@@ -192,7 +192,7 @@ export const legalPages: Record<string, LegalPageContent> = {
       {
         title: "Normativa de referencia",
         items: [
-          <a href="https://www.aepd.es/guias/guia-cookies.pdf" rel="noreferrer" target="_blank">Guía sobre el uso de cookies de la AEPD</a>,
+          <a key="aepd-cookies" href="https://www.aepd.es/guias/guia-cookies.pdf" rel="noreferrer" target="_blank">Guía sobre el uso de cookies de la AEPD</a>,
         ],
       },
     ],
@@ -289,8 +289,8 @@ export const legalPages: Record<string, LegalPageContent> = {
       {
         title: "Normativa de referencia",
         items: [
-          <a href="https://www.boe.es/buscar/act.php?id=BOE-A-2007-20555" rel="noreferrer" target="_blank">Texto refundido de la Ley General para la Defensa de los Consumidores y Usuarios</a>,
-          <a href="https://portal-cec.consumo.gob.es/es/informacion-general/compras-online/derechos-del-consumidor" rel="noreferrer" target="_blank">Centro Europeo del Consumidor: derechos en compras online</a>,
+          <a key="lgdcu" href="https://www.boe.es/buscar/act.php?id=BOE-A-2007-20555" rel="noreferrer" target="_blank">Texto refundido de la Ley General para la Defensa de los Consumidores y Usuarios</a>,
+          <a key="cec-compras" href="https://portal-cec.consumo.gob.es/es/informacion-general/compras-online/derechos-del-consumidor" rel="noreferrer" target="_blank">Centro Europeo del Consumidor: derechos en compras online</a>,
         ],
       },
     ],

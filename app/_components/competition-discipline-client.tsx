@@ -345,5 +345,5 @@ export function CompetitionDisciplineClient({ competitionId, embedded = false, m
   if (embedded) {
     return <section className={`${styles.page} ${styles.embedded}`} data-competition-discipline-surface={surface}>{body}</section>;
   }
-  return <OfficialProductShellV2 active="partido" context={shellContext}><main className={styles.page} data-competition-discipline-surface={surface} data-mobile-tab="partido">{body}</main></OfficialProductShellV2>;
+  return <OfficialProductShellV2 active="competir" perspective="league-organizer" context={shellContext}><main className={styles.page} data-competition-discipline-surface={surface} data-mobile-tab="partido">{body}</main></OfficialProductShellV2>;
 }

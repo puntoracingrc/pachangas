@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import styles from "./official-ui-v2-primitives.module.css";
+export { ProductFeedback } from "./product-state";
 
 export function GamePageHeader({ actions, eyebrow, summary, title }: { actions?: ReactNode; eyebrow: string; summary?: string; title: string }) {
   return <header className={styles.pageHeader}><div><span>{eyebrow}</span><h1>{title}</h1>{summary ? <p>{summary}</p> : null}</div>{actions ? <div className={styles.actions}>{actions}</div> : null}</header>;
@@ -7,10 +8,6 @@ export function GamePageHeader({ actions, eyebrow, summary, title }: { actions?:
 
 export function StatusChip({ children, tone = "neutral" }: { children: ReactNode; tone?: "danger" | "info" | "neutral" | "success" | "warning" }) {
   return <span className={styles.statusChip} data-tone={tone}>{children}</span>;
-}
-
-export function ProductFeedback({ children, tone = "info" }: { children: ReactNode; tone?: "danger" | "info" | "success" | "warning" }) {
-  return <p className={styles.feedback} data-tone={tone} role="status">{children}</p>;
 }
 
 export function MetricTile({ label, value }: { label: string; value: ReactNode }) {

@@ -57,6 +57,18 @@
   color: #aebfb6;
 }
 
+.state[data-state="NO_ACCESS"],
+.state[data-state="ERROR"],
+.state[data-state="SUSPENDED"] { border-color: color-mix(in srgb, #d6535c 58%, var(--line)); }
+.state[data-state="OFFLINE"],
+.state[data-state="STALE"],
+.state[data-state="UNDER_REVIEW"] { border-color: color-mix(in srgb, #efbd64 58%, var(--line)); }
+.state[data-state="SUCCESS"] { border-color: color-mix(in srgb, #6bd6a0 58%, var(--line)); }
+
+.technical { color: var(--ink-soft); font-size: 0.7rem; }
+.technical summary { cursor: pointer; font-weight: 800; }
+.technical code { display: block; margin-top: 5px; overflow-wrap: anywhere; }
+
 .actions {
   display: flex;
   flex-wrap: wrap;
@@ -86,12 +98,8 @@
 
 .feedback {
   box-sizing: border-box;
-  position: fixed;
-  z-index: var(--z-toast, 60);
-  right: max(16px, env(safe-area-inset-right));
-  bottom: max(16px, env(safe-area-inset-bottom));
   width: min(440px, calc(100vw - 32px));
-  margin: 0;
+  margin: 8px 0;
   border: 1px solid rgba(146, 183, 163, 0.46);
   border-radius: 8px;
   background: rgba(13, 31, 23, 0.96);
@@ -102,9 +110,20 @@
   line-height: 1.4;
 }
 
+.feedback[data-presentation="toast"] {
+  position: fixed;
+  z-index: var(--z-toast, 60);
+  right: max(16px, env(safe-area-inset-right));
+  bottom: max(16px, env(safe-area-inset-bottom));
+  margin: 0;
+}
+
+.feedback[data-tone="danger"],
 .feedback[data-tone="error"] {
   border-color: rgba(255, 118, 107, 0.58);
 }
+
+.feedback[data-tone="warning"] { border-color: rgba(239, 189, 100, 0.58); }
 
 .feedback[data-tone="success"] {
   border-color: rgba(183, 244, 82, 0.58);

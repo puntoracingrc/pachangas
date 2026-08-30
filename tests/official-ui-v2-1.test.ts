@@ -119,6 +119,7 @@ test("product primary navigation has one canonical destination per menu item", a
   for (const [tab, href] of [
     ["inicio", "/?mobile=inicio"],
     ["partido", "/?mobile=partido"],
+    ["competir", "/competiciones"],
     ["mercado", "/mercado"],
     ["equipo", "/?mobile=equipo"],
     ["perfil", "/?mobile=perfil"],
@@ -126,9 +127,9 @@ test("product primary navigation has one canonical destination per menu item", a
     assert.match(shell, new RegExp(`${tab}: "${href.replace(/[?]/g, "\\?")}"`));
   }
 
-  assert.match(page, /links=\{\{ mercado: "\/mercado" \}\}/);
+  assert.match(page, /links=\{\{ competir: "\/competiciones", mercado: "\/mercado" \}\}/);
   assert.match(page, /const openMatches = openMatchesByDate\(matches\)/);
-  assert.match(page, /requestsNextMatchFromPrimaryNavigation\(currentEntrySearch\(\), entryRoute\)/);
+  assert.match(page, /requestsNextMatchFromPrimaryNavigation\(entrySearch, entryRoute\)/);
   assert.match(page, /setActiveMatchManagerPane\(requestedMatchPane === "admin" \? "admin" : "proximo"\)/);
   assert.match(page, /const compactProfileNavigation =/);
   assert.match(page, /if \(!compactProfileNavigation && !managerLandscape\) \{[\s\S]*void openOwnPlayerProfile\(\)/);

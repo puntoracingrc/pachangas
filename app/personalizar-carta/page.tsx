@@ -464,7 +464,7 @@ export default function PlayerCosmeticsPage() {
       ) : null}
 
       {snapshot && message ? (
-        <ProductFeedback tone={message.includes("confirmada") ? "success" : "error"}>{message}</ProductFeedback>
+        <ProductFeedback presentation="toast" tone={message.includes("confirmada") ? "success" : "error"}>{message}</ProductFeedback>
       ) : null}
     </main>
     </OfficialProductShellV2>
