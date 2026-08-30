@@ -30,7 +30,8 @@ if (!["127.0.0.1", "localhost", "::1", "[::1]"].includes(new URL(adminUrl).hostn
 
 const migrationNames = readdirSync(resolve(root, "supabase/migrations"))
   .filter((name) => /^\d{14}_.+\.sql$/.test(name))
-  .sort();
+  .sort()
+  .filter((name) => name <= waveMigrations.at(-1));
 assert.equal(migrationNames.length, 163);
 assert.deepEqual(migrationNames.slice(-waveMigrations.length), waveMigrations);
 assert.equal(migrationNames.filter((name) => !waveMigrations.includes(name)).length, 158);

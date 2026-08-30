@@ -35,6 +35,7 @@ export type DemoWorldV2PrimaryTab = DemoWorldPrimaryTab
   | "estado-equipo"
   | "planes"
   | "competiciones"
+  | "temporada"
   | "torneo";
 
 export type DemoWorldV2Manifest = {

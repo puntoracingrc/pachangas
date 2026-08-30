@@ -444,6 +444,7 @@ try {
     alter table private.pachanga_competition_operation_receipts disable trigger guard_pachanga_competition_receipts_v1;
     alter table public.pachanga_competition_roster_revisions disable trigger guard_pachanga_competition_roster_revision_v1;
     alter table public.pachanga_competition_rule_revisions disable trigger guard_pachanga_competition_rule_history_v1;
+    alter table public.pachanga_competition_discipline_rule_catalogs disable trigger guard_pachanga_discipline_rule_catalog_v1;
     ${restoreFlags}
     delete from public.pachanga_user_notifications where recipient_user_id = any(array[${users.map((id) => `${quote(id)}::uuid`).join(",")}]) and dedupe_key like 'league:%';
     delete from public.pachanga_competition_invalidations where competition_id = ${quote(ids.competition)}::uuid;
@@ -470,6 +471,8 @@ try {
     delete from public.pachanga_competition_stages where edition_id in (${quote(ids.edition)}::uuid, ${quote(ids.closeEdition)}::uuid);
     delete from public.pachanga_competition_categories where edition_id in (${quote(ids.edition)}::uuid, ${quote(ids.closeEdition)}::uuid);
     delete from public.pachanga_competition_editions where competition_id = ${quote(ids.competition)}::uuid;
+    delete from public.pachanga_competition_discipline_rule_catalogs
+    where rule_revision_id in (select id from public.pachanga_competition_rule_revisions where rule_set_id = ${quote(ids.ruleSet)}::uuid);
     delete from public.pachanga_competition_rule_revisions where rule_set_id = ${quote(ids.ruleSet)}::uuid;
     delete from public.pachanga_competition_rule_sets where competition_id = ${quote(ids.competition)}::uuid;
     delete from public.pachanga_competition_staff_assignments where competition_id = ${quote(ids.competition)}::uuid;
@@ -480,6 +483,7 @@ try {
     delete from public.pachanga_groups where id = any(array[${teams.map(([id]) => `${quote(id)}::uuid`).join(",")}]);
     delete from private.pachanga_platform_admin_roles where user_id = ${quote(ids.platform)}::uuid;
     delete from auth.users where id = any(array[${users.map((id) => `${quote(id)}::uuid`).join(",")}]);
+    alter table public.pachanga_competition_discipline_rule_catalogs enable trigger guard_pachanga_discipline_rule_catalog_v1;
     alter table public.pachanga_competition_rule_revisions enable trigger guard_pachanga_competition_rule_history_v1;
     alter table public.pachanga_competition_roster_revisions enable trigger guard_pachanga_competition_roster_revision_v1;
     alter table private.pachanga_competition_events enable trigger guard_pachanga_competition_events_v1;

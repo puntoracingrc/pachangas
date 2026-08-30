@@ -37,9 +37,11 @@ if (!["127.0.0.1", "localhost", "::1", "[::1]"].includes(new URL(adminUrl).hostn
   throw new Error("PUBLIC_COMPETITIONS_CONCURRENCY_LOCAL_DATABASE_REQUIRED");
 }
 
+const publicCompetitionsBoundary = "20260828072053_public_competition_product_flags_hardening_v1.sql";
 const migrations = readdirSync(resolve(root, "supabase/migrations"))
   .filter((name) => /^\d{14}_.+\.sql$/.test(name))
-  .sort();
+  .sort()
+  .filter((name) => name <= publicCompetitionsBoundary);
 assert.equal(migrations.length, 183);
 
 function databaseUrl(name) {

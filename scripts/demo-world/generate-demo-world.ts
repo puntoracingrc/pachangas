@@ -334,7 +334,7 @@ function buildTeams(): DemoWorldTeam[] {
 
 function buildPlayers(random: Random, teams: DemoWorldTeam[]): DemoWorldPlayer[] {
   let playerIndex = 0;
-  const players = teams.flatMap((team, teamIndex) => positions.map((position, rosterIndex) => {
+  const players: DemoWorldPlayer[] = teams.flatMap((team, teamIndex) => positions.map((position, rosterIndex) => {
     playerIndex += 1;
     const name = `${firstNames[(playerIndex * 7 + teamIndex * 3) % firstNames.length]} ${lastNames[(playerIndex * 11 + rosterIndex * 5) % lastNames.length]}`;
     return {
