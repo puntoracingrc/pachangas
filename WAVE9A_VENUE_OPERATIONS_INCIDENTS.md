@@ -1039,6 +1039,37 @@ Fixed issues must include the original reproducer and finish with
   protected transport now passes all five paths and the complete two-device
   staging story without weakening SSO or exposing a bypass token.
 
+### W9A-069 - Wave 9A visual audit used non-canonical Demo labels
+
+- Classification: `SIMULATION_BUG`
+- Status: `fixed + regression_verified`
+- Original reproducer: run the 108-case Venue visual matrix and ask the audit
+  harness to select `Organizador de competición`, `Revisión de plataforma` and
+  the exact text `Camp Municipal Demo`.
+- Impact: 27 navigation actions failed because the rendered canonical labels
+  are `Organizador`, `Revisor de plataforma` and a Venue button whose accessible
+  text starts with the Venue name. The pages themselves had zero overflow,
+  console errors, broken images or viewport violations.
+- Required correction: use the exact product labels and prefix matching only
+  for the composite Venue button, then rerun all eight browser viewports. The
+  corrected matrix passed 96/96 browser combinations with no navigation,
+  overflow, console, image, network or viewport defect.
+
+### W9A-070 - PWA audit was launched as a browser tab
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed + regression_verified`
+- Original reproducer: include `pwa-portrait` in a normal headless browser run
+  without `VISUAL_AUDIT_APP_MODE=1`.
+- Impact: all twelve PWA rows correctly reported `displayMode=browser` even
+  though the Service Worker controlled every page. This did not demonstrate an
+  installed/standalone shell and therefore cannot be reported as PWA PASS.
+- Required correction: execute the PWA viewport in a dedicated Chrome app-mode
+  process, require `displayMode=standalone` plus Service Worker control, and
+  keep browser viewports in their separate run. The dedicated rerun passed
+  12/12 surfaces, all reporting `standalone` with an active Service Worker and
+  zero navigation, overflow, console, image, network or viewport defect.
+
 ## Canonical regression evidence
 
 All incidents marked `fixed + regression_verified` are covered by the same

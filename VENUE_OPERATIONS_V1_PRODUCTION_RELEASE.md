@@ -32,7 +32,7 @@ Estado: `LOCAL_AND_STAGING_CERTIFIED / PRODUCTION_PENDING`
 | SQL/RLS/idempotencia | PASS |
 | concurrencia | 12/12 PASS, 0 dobles reservas |
 | escala | PASS, rollback completo |
-| QA local desktop/portrait/landscape | PASS |
+| QA visual local | 108/108 PASS, 8 browser viewports + PWA standalone |
 
 El baseline contractual era 682 tests. El total actual es 699: 20 pruebas
 Node y 679 TS/TSX, sin presentar ningun subtotal como total. Wave 9A aporta 17
@@ -111,6 +111,14 @@ de Vercel: manifest, Service Worker, manifest Demo V3.4, `/campos` y
 `/reservas`. El Service Worker real responde `no-cache, no-store,
 must-revalidate`, incluye V3.4/Campos/Reservas y no contiene cola offline de
 escrituras. El mismo E2E completo certifico Auth, Realtime y convergencia.
+
+La matriz visual Wave 9A recorrio 108 combinaciones: 1440x900, 1920x1080,
+390x844, 360x800, 667x375, 740x360, 844x390, 932x430 y una PWA 390x844 en
+app-mode real. Cubrio directorio, reservas Team, gestion de campos/reservas de
+Club, Control Center, las seis perspectivas Demo V3.4 y mantenimiento. Resultado:
+0 overflow, 0 navegaciones fallidas, 0 errores o warnings de consola, 0 requests
+fallidas, 0 imagenes rotas, 0 controles fuera del viewport y 12/12 superficies
+PWA controladas por Service Worker.
 
 ## Rendimiento aislado
 
