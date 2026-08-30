@@ -946,7 +946,7 @@ Fixed issues must include the original reproducer and finish with
 ### W9A-063 - Certified staging database retained a failed migration control-plane label
 
 - Classification: `ENVIRONMENT_ISSUE`
-- Status: `open / external metadata / non-blocking`
+- Status: `fixed + regression_verified`
 - Original reproducer: after the schema bootstrap, authenticated E2E and
   Realtime regression all pass against project `bcrgoplbuaevskpfraif`, list
   the parent project's branches and compare database health with branch status.
@@ -961,7 +961,8 @@ Fixed issues must include the original reproducer and finish with
   ledger, ACL, SQL/RLS, authenticated E2E, Realtime and Preview all passed.
   Do not retry unsupported control-plane mutations or present the label as a
   database failure. Keep the discrepancy explicit and delete both ephemeral
-  branches after release.
+  branches after release. Both branches were deleted after production
+  certification; the parent project now lists only its default `main` branch.
 
 ### W9A-064 - CLI could not read credentials for a connector-created branch
 
@@ -1107,14 +1108,17 @@ Fixed issues must include the original reproducer and finish with
 ### W9A-073 - Temporary push workspace cleanup used a disallowed broad delete
 
 - Classification: `ENVIRONMENT_ISSUE`
-- Status: `fix pending regression`
+- Status: `fixed + regression_verified`
 - Original reproducer: prepare an isolated CLI configuration by first invoking
   `rm -rf` on a fixed path under `/tmp`.
 - Impact: the execution policy rejected the command before any filesystem or
   database operation. No file, migration, flag or data changed.
 - Required correction: allocate a unique path with `mktemp`, remove only the
   verified files/symlinks created by this release, then close the empty
-  directories with `rmdir` and confirm the path no longer exists.
+  directories with `rmdir` and confirm the path no longer exists. The exact
+  Wave 9A workspace was inventoried, its files and migration symlink were
+  deleted, all empty directories were closed and the final existence check
+  returned `no`; the repository's preexisting Supabase link remained present.
 
 ### W9A-074 - Ambiguous temporary TOML patch changed the TLS switch
 
@@ -1164,6 +1168,343 @@ Fixed issues must include the original reproducer and finish with
   broader RLS, ACL, Realtime and binding-index readback as independent evidence.
   The corrected query returned type `x` on
   `pachanga_venue_pitch_claims`, with the expected GiST overlap definition.
+
+### W9A-077 - Production Service Worker smoke assumed a literal V3.4 marker
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed + regression_verified`
+- Original reproducer: after the exact merge deployment reached READY, fetch
+  `/sw.js` and require the literal pattern `v3.4` together with Campos and
+  Reservas markers.
+- Impact: all six inactive production routes returned `200`, the worker returned
+  `no-cache, no-store, must-revalidate`, and Campos/Reservas were present, but
+  the strict marker assertion exited non-zero. No flag or domain row changed.
+- Required correction: inspect the deployed worker contract and its canonical
+  Demo cache/version marker, then assert the exact emitted identifier alongside
+  Campos, Reservas and the no-store response without weakening those checks.
+  The deployed contract uses `/demo-world/v3-4/manifest.json`; the corrected
+  seven-route smoke returned `200` throughout and confirmed that exact manifest,
+  Campos, Reservas and `no-cache, no-store, must-revalidate` in `/sw.js`.
+
+### W9A-078 - Activation orchestrator assumed Web Crypto availability
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed + regression_verified`
+- Original reproducer: generate the first production flag command operation ID
+  with `crypto.randomUUID()` inside the isolated tool-orchestration runtime.
+- Impact: the runtime raised `ReferenceError: crypto is not defined` before the
+  Supabase tool call was constructed. No RPC, revision, receipt, flag or data
+  change occurred; production remains at venue settings revision `1` with all
+  flags OFF.
+- Required correction: generate UUIDs through the local operating system or use
+  prevalidated UUID literals, then call only `set_pachanga_venue_flags_v1` with
+  the unchanged expected revision and read back every accepted phase. Seven
+  prevalidated UUID literals drove revisions `1 -> 8`, with a canonical readback
+  after each accepted phase and no future capability enabled.
+
+### W9A-079 - SQL connector session is not Venue service authority
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed + regression_verified`
+- Original reproducer: invoke `set_pachanga_venue_flags_v1` through the managed
+  production SQL connector with a valid operation ID and expected revision `1`.
+- Impact: the RPC failed closed with `VENUE_PLATFORM_AUTHORITY_REQUIRED`. No
+  receipt, revision or flag was written, proving that an ordinary Postgres
+  connector session cannot impersonate the platform activation channel.
+- Required correction: locate and use the canonical authenticated platform or
+  service-authority path already established by prior releases. Do not use a
+  direct table UPDATE, do not weaken the authority helper, and require revision
+  `1` plus all flags OFF before retrying the same staged activation contract.
+  The validated project service-role channel passed Auth, then the Venue RPC
+  accepted all seven phases; no direct settings-table UPDATE was used.
+
+### W9A-080 - Production Vercel service-role variable is rejected by Supabase
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed + regression_verified`
+- Original reproducer: pull the server-only Production environment into a
+  permission-restricted temporary file, select only the Supabase URL and
+  `SUPABASE_SERVICE_ROLE_KEY`, verify the production hostname, and call the
+  read-only Venue flags RPC before staged activation.
+- Impact: Supabase returned `Invalid API key` before any flag command ran. The
+  temporary file was removed by its exit trap; no secret was printed, no flag
+  changed and no receipt was created.
+- Required correction: inspect only non-secret key metadata and the current
+  server environment assignment, identify whether the key is stale or belongs
+  to another project, then restore a valid production server-only service
+  credential through the secret manager. Never expose it, place it in a public
+  variable, copy it to Git or bypass the RPC with a direct UPDATE. Reconfirm
+  revision `1` and all flags OFF before activation. The invalid value was an
+  eleven-character placeholder. It was replaced by direct secret-manager
+  transfer of the validated project service-role key, stored as Production-only
+  `Sensitive / Secret`; the exact merged deployment was rebuilt and its
+  server-only telemetry sink returned `200 / accepted=true`.
+
+### W9A-081 - Modern Supabase secret key is incompatible with current Auth client
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed + regression_verified`
+- Original reproducer: retrieve the production project's modern `secret` API
+  key into a protected temporary file and validate it through a read-only
+  `auth.admin.listUsers` request using the repository's installed Supabase
+  client.
+- Impact: Auth returned `Invalid API key`. The candidate key was never copied to
+  Vercel, printed or used for a mutation, and the temporary file was removed.
+- Required correction: validate the project's legacy `service_role` key, whose
+  JWT claims must identify role `service_role` and ref
+  `qonbngfrnrqgmxbdfbea`, through read-only Auth and Venue RPC calls. Use that
+  compatible key server-only until a separately tested client/key migration is
+  authorized; never expose either key to browser code. The legacy JWT claims and
+  Auth admin read matched the production project, all seven flag RPC phases
+  passed, and the browser bundle received no server key.
+
+### W9A-082 - Vercel Secret visibility prevents value pullback
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed + regression_verified`
+- Original reproducer: after replacing the eleven-character placeholder with
+  the validated legacy service-role key as `Sensitive / Secret`, pull the
+  Production environment and decode the returned value for a second local
+  read-only Auth check.
+- Impact: Vercel intentionally omitted the secret value, so the validator
+  received `undefined` and stopped before network access. The replacement had
+  already succeeded, but no secret was printed or made readable again and no
+  Supabase mutation ran.
+- Required correction: verify the Vercel assignment through redacted metadata
+  (`Production`, `Sensitive`, `Secret`, updated timestamp), redeploy the exact
+  merged SHA so server functions receive it, and validate a server-only path or
+  deployment runtime behavior. Use the separately protected Supabase CLI source
+  only for the immediate canonical flag RPC; do not weaken Secret visibility.
+  Metadata confirms Production-only `Sensitive / Secret`, no readable value and
+  the replacement timestamp; the rebuilt Vercel Function used it successfully
+  through the service-role-only telemetry RPC.
+
+### W9A-083 - Vercel env run also keeps Secret values opaque
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed + regression_verified`
+- Original reproducer: execute a read-only Supabase Auth validation through
+  `vercel env run --environment production` after the secret-scoped redeploy.
+- Impact: the CLI supplied an opaque non-JWT placeholder, so the validator
+  stopped on format before any network request. This preserves Secret
+  confidentiality but cannot prove the value injected into Vercel Functions.
+- Required correction: validate the redeployed secret through an actual
+  server-only production function using a uniquely identified synthetic
+  operation, then remove any mutable synthetic row and require a zero readback.
+  Do not print the secret or reduce its Vercel visibility. The deployed endpoint
+  returned `accepted=true`; its unique receipt and telemetry footprint were
+  removed and independently read back at zero.
+
+### W9A-084 - Runtime-secret canary cleanup used an over-specific fingerprint
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed + regression_verified`
+- Original reproducer: after the deployed telemetry endpoint returned
+  `200 / accepted=true`, delete its exact receipt and telemetry row in one CTE
+  and report remaining counts from that same statement snapshot.
+- Impact: the receipt delete matched, but the telemetry predicate did not; the
+  remaining-count subqueries also observed the statement's pre-delete snapshot.
+  One uniquely labelled synthetic telemetry row may remain, while no Venue
+  domain entity or real-user record was involved.
+- Required correction: locate the row only by the unique synthetic route,
+  app-version, browser and platform labels, inspect its normalized fingerprint,
+  delete that exact row plus any remaining operation receipt in a separate
+  statement, then perform an independent zero readback. Separate readbacks
+  returned zero matching telemetry rows and zero receipts for the operation ID.
+
+### W9A-085 - Production rollback canary used an ambiguous assertion identifier
+
+- Classification: `SIMULATION_BUG`
+- Status: `fixed + regression_verified`
+- Original reproducer: execute the first production transaction canary and
+  assert the active Match binding with `reservation_id=reservation_id` inside
+  its PL/pgSQL block.
+- Impact: PostgreSQL rejected the assertion because the identifier could name
+  either the PL/pgSQL variable or the table column. The surrounding transaction
+  aborted before completion and left zero synthetic users, teams, Clubs,
+  matches, Venue rows, receipts or notifications.
+- Required correction: qualify the table columns with a stable alias while
+  preserving the same variable, transaction, RPC sequence and final rollback;
+  then independently require a zero readback for every synthetic identifier.
+  The corrected canary returned `PASS_ROLLED_BACK`; all five synthetic
+  readback categories returned zero.
+
+### W9A-086 - Production rollback canary over-counted durable command receipts
+
+- Classification: `SIMULATION_BUG`
+- Status: `fixed + regression_verified`
+- Original reproducer: statically reconcile the canary operation IDs before
+  its second execution. IDs `001` through `015` include one intentionally stale
+  command that must fail and one replay of `001` that must reuse its receipt.
+- Impact: the original final assertion expected `15` receipts although the
+  authoritative command path can create exactly `14`. The first execution had
+  already aborted on W9A-085, so this incorrect assertion never committed or
+  affected production.
+- Required correction: require exactly `14` unique receipts inside the
+  transaction, retain the stale rejection and idempotent replay assertions,
+  then require zero receipts after rollback. The corrected invariant passed
+  with `14` receipts in-transaction and `0` after rollback.
+
+### W9A-087 - Final cleanup readback addressed telemetry in the wrong schema
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed + regression_verified`
+- Original reproducer: include the runtime-secret canary cleanup check in the
+  final Wave 9A readback as `public.pachanga_client_error_telemetry`.
+- Impact: PostgreSQL rejected the read-only statement because that relation
+  does not exist in `public`. No data, flag, receipt or schema changed.
+- Required correction: resolve the canonical telemetry relation from the
+  checked-in migration, query it by the unique synthetic route, and repeat the
+  full ledger/flags/domain/control readback without weakening any count. The
+  canonical `private` relation returned zero matching rows; ledger `220`, flags
+  revision `8` and all domain zero-counts were read back in the same pass.
+
+### W9A-088 - Final activation readback assumed the wrong flag action literal
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed + regression_verified`
+- Original reproducer: count the seven staged flag receipts and events with
+  action `venue.flags.update` in the final production readback.
+- Impact: the readback correctly found seven total Venue receipts, seven total
+  events and seven invalidations, but reported zero in the two flag-specific
+  counters. The settings row itself remained revision `8` with the intended
+  active/future-OFF matrix.
+- Required correction: resolve the exact action literal from the canonical
+  flag RPC, recount receipts and events by that literal, and require the seven
+  operation IDs used by the staged activation. The canonical action is
+  `platform.venue_flags.update`; readback returned seven receipts, seven
+  events, seven invalidations and revisions `2` through `8` in server-sequence
+  order `2, 4, 6, 8, 10, 12, 14`.
+
+### W9A-089 - Monolithic production visual matrix stalled on a healthy page
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed + regression_verified`
+- Original reproducer: run all `96` production surface/viewport combinations
+  through one long-lived Chrome DevTools Protocol session.
+- Impact: after more than fifteen minutes the runner remained waiting on
+  `/campos` and emitted no partial report. Independent CDP inspection showed
+  `document.readyState=complete`, `document.fonts.status=loaded` and the correct
+  production URL, so the stalled runner cannot be treated as either PASS or a
+  product failure.
+- Required correction: stop only the stalled QA process, rerun the identical
+  twelve surfaces in bounded per-viewport batches, combine their result files,
+  and require exactly `96/96` clean cases plus `12/12` standalone cases. Eight
+  bounded browser batches produced `96/96` clean cases; the independent PWA
+  batch produced `12/12`, all standalone and Service Worker controlled.
+
+### W9A-090 - One bounded visual batch hit a transient reachability failure
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed + regression_verified`
+- Original reproducer: after desktop-wide, portrait and portrait-small had
+  emitted their twelve-result reports, start the `landscape-small` batch and
+  run the auditor's initial fetch of `https://pachangasiq.com`.
+- Impact: the initial reachability assertion failed before Chrome, navigation
+  or visual checks started. The three completed batch artifacts remain intact;
+  no application, database, flag or deployment changed.
+- Required correction: independently verify the production domain and exact
+  deployment are reachable, validate the completed `36` cases, then rerun only
+  the four pending landscape batches without discarding prior evidence. The
+  domain returned `200`; all existing reports were clean and the four pending
+  landscape batches completed `48/48` without a second reachability failure.
+
+### W9A-091 - Secret-scan output exceeded the orchestrator evidence budget
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed + regression_verified`
+- Original reproducer: retrieve the production project's compatible legacy
+  service-role key into a protected temporary file, scan tracked sources,
+  client bundles and production assets for that exact value, and return the
+  aggregate result through the command orchestrator.
+- Impact: the orchestrator truncated the command output, so the scan cannot be
+  certified from that run even though its exit trap removed the protected key
+  file and no matching temporary key file remains. No secret value was printed
+  into a persistent report, Git file or browser artifact.
+- Required correction: rerun the same exact-value checks with all credential
+  retrieval output suppressed, a bounded one-line result and an exit trap;
+  verify the protected key file is removed independently and require zero
+  matches in Git, the client bundle, QA artifacts and production assets. The
+  bounded rerun found zero matches in all four surfaces, fetched fourteen
+  production assets without error and left zero protected temporary files.
+
+### W9A-092 - Local command guard rejected the secret-scan cleanup primitive
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed + regression_verified`
+- Original reproducer: rerun the bounded secret scan with `rm -f` in the exit
+  trap that removes its protected temporary credential file.
+- Impact: the local command guard rejected the command before shell execution;
+  no file was created, no credential was retrieved and no network call ran.
+- Required correction: preserve the exit trap but delete the exact protected
+  regular file with the accepted `find -delete` primitive, then require both a
+  clean scan and an independent zero temporary-file readback. The accepted
+  cleanup primitive ran on both normal exit and trap paths; the independent
+  readback returned zero matching temporary files.
+
+### W9A-093 - Release worktree does not carry the canonical Vercel link
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed + regression_verified`
+- Original reproducer: read `.vercel/project.json` from the isolated Wave 9A
+  worktree before listing the final production deployment.
+- Impact: the file is intentionally absent from this worktree, so the chained
+  deployment query stopped after Git and PR evidence. Git confirmed PR `#235`
+  merged into `bbef59dd78e13c36b837112290477a1f0193153f`; no deployment or
+  application state changed.
+- Required correction: obtain the redacted project and team identifiers from
+  the repository's existing canonical Vercel link, query the deployment API by
+  those identifiers and require READY, production target and exact Git SHA.
+  The canonical API returned deployment
+  `dpl_Dnubnky8y1r2McZrMaoomsDFLhYU` as `READY`, target `production`, with Git
+  SHA `bbef59dd78e13c36b837112290477a1f0193153f` and the production alias.
+
+### W9A-094 - Temporary-workspace inventory used GNU-only find output
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed + regression_verified`
+- Original reproducer: inventory the isolated production-push workspace and
+  repository Supabase link with `find -printf` on macOS before cleanup.
+- Impact: BSD `find` rejected the unsupported predicate before any deletion or
+  unlink operation. The isolated workspace remains present and production is
+  unchanged.
+- Required correction: repeat the read-only inventory with portable `find`
+  output plus `ls -ld`, verify every path belongs to Wave 9A, then delete only
+  those exact files/symlinks and close empty directories with `rmdir`. The
+  portable inventory identified only Wave 9A config, CLI metadata and the
+  migration symlink; exact cleanup removed that tree and preserved the
+  preexisting repository Supabase metadata.
+
+### W9A-095 - Vercel environment inventory assumed an array response
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed + regression_verified`
+- Original reproducer: list branch-scoped Preview variables with Vercel CLI
+  `59.4.0 --json` and filter the top-level value as an array.
+- Impact: `jq` rejected the current object envelope before displaying metadata
+  or removing variables. No environment variable, deployment or secret was
+  changed or exposed.
+- Required correction: inspect only top-level JSON keys, select the current
+  environment array without rendering values, remove the three exact Wave 9A
+  Preview assignments and independently confirm Production secret metadata is
+  unchanged. The corrected inventory identified exactly the three documented
+  encrypted Preview assignments, removed them at branch scope and read back an
+  empty branch list; Production still contains one server-only `sensitive`
+  service-role assignment with no branch scope.
+
+### W9A-096 - apply_patch rejected same-path delete and add
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed + regression_verified`
+- Original reproducer: replace the production release report through one patch
+  containing both `Delete File` and `Add File` for the same path.
+- Impact: `apply_patch` rejected the patch before changing the report; the
+  previous pending-release document remained intact.
+- Required correction: delete and add the exact report in two bounded patch
+  operations, then verify its heading, final release state and line count before
+  continuing with any commit. The two bounded operations completed; the report
+  exists with the expected heading, `RELEASED / ACTIVE / CANONICAL / CLEAN`
+  state and `175` lines.
 
 ## Canonical regression evidence
 

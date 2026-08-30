@@ -53,3 +53,15 @@ no se aplica como estado.
 - Availability query p50/p95: `2.424 / 5.079 ms`.
 - Conflict detection p50/p95: `60.176 / 64.711 ms`.
 - Rollback y cleanup del corpus: PASS.
+
+## Produccion
+
+Availability esta `ON` en settings revision `8`. El canary productivo creo un
+template, valido el slot, rechazo una revision obsoleta y completo el flujo de
+reserva dentro de una transaccion con `ROLLBACK`. El readback posterior devolvio
+cero templates, excepciones y claims. La exclusion GiST y los buffers siguen
+siendo la autoridad de conflicto; Realtime solo invalida y provoca refetch.
+
+Las superficies `/campos`, `/reservas`, gestion Club, Control Center y las seis
+perspectivas Demo V3.4 pasaron la matriz productiva sin overflow, requests
+fallidas ni errores de consola.

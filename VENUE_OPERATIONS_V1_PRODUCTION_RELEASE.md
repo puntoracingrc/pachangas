@@ -1,166 +1,175 @@
 # Venue Operations V1 Production Release
 
-Estado: `PRODUCTION_SCHEMA_APPLIED / MERGE_AND_ACTIVATION_PENDING`
+Estado: `RELEASED / ACTIVE / CANONICAL / CLEAN`
 
 | Campo | Valor |
 | --- | --- |
 | fecha | `2026-08-30` |
 | main inicial | `056414a8967933c2d839b0e27e39ae00d1fcc572` |
-| rama | `codex/venue-availability-reservations-v1` |
-| PR funcional | `#235` / ready, merge pendiente |
-| migraciones | 8 forward-only, ledger productivo 220 |
+| HEAD funcional | `c79a0d90c77fab030f1f64fda700381ac34de792` |
+| merge funcional | `bbef59dd78e13c36b837112290477a1f0193153f` |
+| PR funcional | `#235`, fusionado `2026-08-30T19:43:12Z` |
+| migraciones | 8 forward-only, ledger productivo `220` |
 | schema hash | `83c1142de712cdbcb6528794ccf511d9fabf127caecf2c3e27ac2e735e2ee135` |
-| staging Supabase | `zqrmuamcikcmbhnopfqx`, efimero |
-| Preview | `READY`, protegida por Vercel SSO |
-| deployment productivo | PENDING |
-| canary productivo | PENDING |
-| entidades reales | 0 |
-| Stripe | UNTOUCHED |
-| Wave 9B | NOT STARTED |
+| deployment | `dpl_Dnubnky8y1r2McZrMaoomsDFLhYU`, `READY` |
+| URL exacta | `https://pachangas-5ei6jvjcy-persianas-almar-web-s-projects.vercel.app` |
+| dominio | `https://pachangasiq.com` |
+| settings | revision `8`, server sequence `14` |
+| entidades reales | `0` |
+| Stripe | `UNTOUCHED` |
+| Wave 9B | `NOT STARTED` |
 
-## Preflight productivo
+## Secuencia de release
 
-- `supabase migration list --linked` inicial: remoto 212, ultimo
-  `20260829221312`; local-only exactamente las ocho versiones Wave 9A.
-- Backup fisico mas reciente: `COMPLETED`, `2026-08-30T00:17:13.445Z`.
-- WALG: activo. PITR: no habilitado.
-- El restore no se ejecuto sobre produccion; la recuperabilidad se apoya en el
-  backup fisico completado y el runbook del proveedor, sin alterar datos reales.
-- El dry-run aislado enumero solo las ocho versiones Wave 9A. El push las aplico
-  una vez y el readback posterior confirma ledger `220`, ultimo
-  `20260830145100`, con los ocho nombres exactos en el orden documentado.
-- PostgreSQL confirma `23` tablas Wave 9A (`10` publicas y `13` privadas), RLS
-  en las diez publicas, cero grants directos INSERT/UPDATE/DELETE a clientes,
-  invalidaciones en Realtime, el constraint GiST de no solapamiento y los dos
-  indices unicos de binding actual.
-- Las dieciseis flags nacieron OFF en revision `1`; todas las tablas de dominio,
-  eventos, recibos, revisiones e invalidaciones Wave 9A contienen cero filas.
+1. Se certifico el upgrade aislado `212 -> 220` y el fresh bootstrap `220`.
+2. Las ocho migraciones se aplicaron una sola vez en produccion, sin reescribir
+   ni modificar ninguna migracion ejecutada.
+3. PR `#235` se fusiono y Vercel publico el SHA exacto de merge como deployment
+   productivo `READY`.
+4. El smoke inicial confirmo las dieciseis flags nacidas OFF y cero datos Wave
+   9A.
+5. Siete operaciones idempotentes de la RPC
+   `set_pachanga_venue_flags_v1` activaron el producto por fases. No se uso
+   `UPDATE` directo.
+6. El canary sintetico recorrio el lifecycle completo dentro de una transaccion
+   y termino con `ROLLBACK`; el readback independiente devolvio cero entidades.
+7. Se repitieron logs, responsive, PWA, secreto cliente y limpieza externa.
 
-## Gates locales finales
+## Migraciones productivas
+
+| Version | Nombre | SHA-256 local |
+| --- | --- | --- |
+| `20260830145047` | `venue_pitch_foundation_v1` | `2623df4a6a8c1385ceeb1596b29c450592fc580fe0c486af8548af4c7c9631ea` |
+| `20260830145049` | `venue_availability_templates_exceptions_v1` | `65cad385bdd6558d67db17cbcd44532d93c29f8ee02d4a3840a333a74390655e` |
+| `20260830145051` | `venue_reservation_requests_holds_v1` | `9e4bce7145ca3f71c246f4be8a23cc4e50e77a791d348901444f1f3add99e018` |
+| `20260830145053` | `venue_canonical_match_binding_r4d_v1` | `1f5490529fa6ea9b3b0008218f1d9821280e603e8f6555c7d740a285fa72d6fe` |
+| `20260830145054` | `venue_command_receipts_events_v1` | `68c7fb07f57a78bd828405f8acda1539a77e7582f42977b6d1ae6c73ca5ccdfb` |
+| `20260830145056` | `venue_read_models_control_center_v1` | `8465fe3fe4be003fb49c565017d1479c6ce90adb2636fbfaf269310b3014caf6` |
+| `20260830145058` | `venue_rls_realtime_notifications_v1` | `7157dd0dafc3a005def0a4a367f47c9b7701f78b930dc86eff9ebc01ecfdc4db` |
+| `20260830145100` | `venue_hardening_indexes_flags_v1` | `e06ef1e6a9576e45ca0242e0d49dc412a7bf46a3c41711a78db0c4446bfff7b7` |
+
+Readback final: ledger `220`, ultima version `20260830145100` y los ocho
+nombres exactos en el mismo orden. Las 212 migraciones base permanecen
+intactas.
+
+## Flags finales
+
+Activas:
+
+- Venue Foundation y Management;
+- perfiles y directorio publicos con consentimiento;
+- Availability;
+- Reservation Requests y Counteroffers;
+- Reservation Holds y Canonical Reservations;
+- CanonicalMatch Venue Binding y R4D;
+- Demo World V3.4.
+
+Desactivadas:
+
+- pagos;
+- reservas recurrentes;
+- asignacion masiva de competiciones;
+- integraciones externas.
+
+La configuracion final esta en revision `8`, server sequence `14`. Las siete
+operaciones de activacion generaron exactamente siete receipts, siete eventos y
+siete invalidaciones, ordenadas por secuencia `2, 4, 6, 8, 10, 12, 14`.
+
+## Autoridad y canary
+
+PostgreSQL/Supabase es la autoridad unica. El cliente envia intencion,
+`operationId` y revision esperada; no calcula disponibilidad definitiva, no
+confirma reservas localmente y no mantiene una cola offline deportiva.
+Realtime invalida y obliga a releer el read model canonico.
+
+El canary productivo sintetico valido:
+
+- create y replay idempotente;
+- activacion de Venue, Pitch, disponibilidad y consentimiento publico;
+- rechazo de revision obsoleta;
+- solicitud, revision, contrapropuesta, hold, aceptacion y confirmacion;
+- privacidad del read model;
+- binding a CanonicalMatch;
+- cancelacion con binding `ACTION_REQUIRED / VENUE_ACTION_REQUIRED`.
+
+Resultado: `PASS_ROLLED_BACK`. Readback posterior: `0` Venues, Pitches,
+templates, excepciones, requests, claims, holds, reservas, bindings, usuarios,
+Teams, Clubs, Matches y operaciones sinteticas. No se contacto a usuarios ni
+entidades reales.
+
+## Validacion
 
 | Gate | Resultado |
 | --- | --- |
-| test focal Wave 9A | 17/17 PASS |
-| suite global | Node 20/20 + TS/TSX 679/679 = 699/699 PASS |
-| fail/skipped/todo/cancelled | 0/0/0/0 |
-| typecheck | PASS |
-| build | PASS, 66 paginas estaticas |
-| lint focal/global | PASS / PASS |
-| git diff --check | PASS |
-| SQL/RLS/idempotencia | PASS |
-| concurrencia | 12/12 PASS, 0 dobles reservas |
-| escala | PASS, rollback completo |
-| QA visual local | 108/108 PASS, 8 browser viewports + PWA standalone |
+| test focal Wave 9A | `17/17 PASS` |
+| suite global | Node `20/20` + TS/TSX `679/679` = `699/699 PASS` |
+| fail/skipped/todo/cancelled | `0/0/0/0` |
+| typecheck | `PASS` |
+| build | `PASS`, 66 paginas estaticas |
+| lint focal/global | `PASS / PASS` |
+| git diff --check | `PASS` |
+| SQL/RLS/idempotencia | `PASS` |
+| concurrencia | `12/12 PASS`, cero dobles reservas |
+| escala | `PASS`, corpus y escrituras revertidos |
+| staging autenticado | dos usuarios, dos dispositivos, `PASS` |
+| Realtime | subscribe, invalidacion, refetch y reconexion, `PASS` |
 
-El baseline contractual era 682 tests. El total actual es 699: 20 pruebas
-Node y 679 TS/TSX, sin presentar ningun subtotal como total. Wave 9A aporta 17
-regresiones netas y no elimina cobertura. `npm test` incluye un build completo;
-ademas se repitieron `npm run typecheck`, `npm run build`, lint focal y lint
-global sobre el arbol exacto de release.
+El baseline contractual era 682 tests. Wave 9A aporta 17 regresiones netas y
+no elimina cobertura. El corpus aislado uso 1.000 Venues, 5.000 Pitches, 50.000
+reglas/excepciones, 100.000 requests, 50.000 reservas y 100.000 invalidaciones.
+No se repitio la certificacion de escala tras cambios documentales porque SQL,
+indices y autoridad no cambiaron.
 
-## Migraciones certificadas
+## Produccion visual y PWA
 
-| Version | Nombre | SHA-256 local | Digest remoto staging |
-| --- | --- | --- | --- |
-| `20260830145047` | `venue_pitch_foundation_v1` | `2623df4a6a8c1385ceeb1596b29c450592fc580fe0c486af8548af4c7c9631ea` | `f16afbe6346343bc80336a1e41b89389a267b6260752384848ede958b2e19c8e` |
-| `20260830145049` | `venue_availability_templates_exceptions_v1` | `65cad385bdd6558d67db17cbcd44532d93c29f8ee02d4a3840a333a74390655e` | `f4c371ed81678eb6481d39e8f1ef87a83e131238c61e1442924965c71e154d47` |
-| `20260830145051` | `venue_reservation_requests_holds_v1` | `9e4bce7145ca3f71c246f4be8a23cc4e50e77a791d348901444f1f3add99e018` | `2053dcb1be658dad978f13e9b4126ff111b6f0b08a3b9c5239fc5a55aa19843c` |
-| `20260830145053` | `venue_canonical_match_binding_r4d_v1` | `1f5490529fa6ea9b3b0008218f1d9821280e603e8f6555c7d740a285fa72d6fe` | `d18c964f212cb80338f554f2b37ea51156fd0a0514c6e8067c2695601b99b3ce` |
-| `20260830145054` | `venue_command_receipts_events_v1` | `68c7fb07f57a78bd828405f8acda1539a77e7582f42977b6d1ae6c73ca5ccdfb` | `6077b7fc6f9f55409b67f48fb64f82f16a5153bdacc55c104d065e5865566905` |
-| `20260830145056` | `venue_read_models_control_center_v1` | `8465fe3fe4be003fb49c565017d1479c6ce90adb2636fbfaf269310b3014caf6` | `b3b2f7cb19280b0c3689fabff8932832cb6b05ba1a81630b0e4cf5db75eab247` |
-| `20260830145058` | `venue_rls_realtime_notifications_v1` | `7157dd0dafc3a005def0a4a367f47c9b7701f78b930dc86eff9ebc01ecfdc4db` | `3cdc6fd1e516913559c1772d861d38010466108323e6cdce03a4ef921d61f11f` |
-| `20260830145100` | `venue_hardening_indexes_flags_v1` | `e06ef1e6a9576e45ca0242e0d49dc412a7bf46a3c41711a78db0c4446bfff7b7` | `34b5595f4863dd3c2267f7c2b81af7e82701a6fe723085798a3b6e3a42bc53a8` |
+La matriz productiva final cubrio doce superficies en ocho viewports:
+1440x900, 1920x1080, 390x844, 360x800, 667x375, 740x360, 844x390 y
+932x430. Resultado agregado: `96/96 PASS`, cero errores de consola, warnings,
+requests fallidas, imagenes rotas, overflow, controles fuera del viewport o
+violaciones de game chrome.
 
-Las 212 migraciones base permanecen intactas. Fresh bootstrap, upgrade
-`212 -> 220`, staging reconstruido y el ledger productivo convergen al mismo
-frente de version. Ninguna migracion ejecutada fue modificada ni reescrita.
+La pasada PWA independiente recorrio las doce superficies en 390x844:
+`12/12 PASS`, todas en `standalone` y controladas por el Service Worker. El
+worker no confirma escrituras offline ni contiene una cola deportiva.
 
-## Staging Supabase
+Android fisico, iPhone fisico y PWA instalada en dispositivo fisico permanecen
+`PENDING`; no se presentan como PASS.
 
-El branch efimero limpio se reconstruyo hasta ledger `220` y paso:
+## Seguridad, logs y Advisors
 
-- schema bootstrap, SQL/RLS bootstrap y dataset en orden canonico;
-- topologia exacta `3 Clubs / 6 Teams / 6 Venues / 12 Pitches / 1 League /
-  1 Tournament / 20 CanonicalMatches`;
-- dos cuentas sinteticas y dos dispositivos autenticados;
-- una carrera con un ganador y un `STALE`, revision canonica final `8`;
-- replay idempotente, escritura directa denegada y cero `service_role` cliente;
-- Realtime `SUBSCRIBED`, invalidacion, refetch y reconexion;
-- flags nacidas OFF antes de activar exclusivamente el escenario sintetico.
+- RLS esta activa en las diez tablas publicas Wave 9A.
+- `anon` y `authenticated` no tienen escritura directa de tablas.
+- La exclusion GiST impide solapamientos y los bindings actuales tienen dos
+  indices unicos parciales.
+- Ninguna lectura de ultimo snapshot depende solo de `created_at DESC`.
+- El escaneo exacto del service-role devolvio cero coincidencias en Git, bundle
+  cliente, artefactos QA y catorce assets productivos; cero ficheros temporales.
+- Vercel no mostro runtime errors posteriores al release.
+- Los logs finales de API, PostgreSQL, Realtime y Auth no mostraron una
+  regresion Wave 9A; los errores QA previos estan trazados en el ledger.
+- Security Advisors: cero `ERROR`.
+- Performance Advisors: un unico WARN preexistente de indice duplicado en
+  Rating V2; Wave 9A no toca Rating.
 
-ACL/readback: diez tablas Venue/Club Venue con RLS, cero grants de escritura
-directa para clientes, invalidaciones de solo lectura con politicas anon/auth,
-una publicacion Realtime, una exclusion de rango y dos indices parciales de
-binding actual. Los comandos y flags solo tienen execute para
-`authenticated/postgres/service_role`; el helper generico conserva cero execute
-cliente y el helper estrecho de invalidacion tiene uno.
+## Demo, limpieza y limites
 
-El control plane de dos branches efimeros conserva el rotulo
-`MIGRATIONS_FAILED` de la primera automatizacion, aunque PostgreSQL esta
-`ACTIVE_HEALTHY` y todos los readbacks pasan. Se registra como W9A-063,
-incidencia externa no bloqueante, sin ocultarla ni mutar metadatos por rutas no
-soportadas.
+Demo World V3.4 esta activo y muestra casos saneados de Venue, Pitch,
+disponibilidad, solicitud, hold, reserva, binding, cambio R4D y Venue historico.
+No contiene PII, Auth IDs ni escritura publica remota.
 
-## Advisors
+Limpieza externa completada:
 
-- Staging Performance: 1.187 hallazgos, 1.186 INFO y 1 WARN.
-- Produccion posterior al DDL: 1.007 hallazgos, 1.006 INFO y 1 WARN.
-- El unico WARN es un indice duplicado preexistente de
-  `pachanga_player_rating_snapshots`; Wave 9A no toca Rating V2.
-- Staging y produccion Security: 612 hallazgos, 173 INFO, 439 WARN y 0 ERROR.
-- Los WARN Wave 9A corresponden a RPC `SECURITY DEFINER` endurecidas o tablas
-  cerradas con RLS y escritura cliente revocada; no se relajo ninguna ACL.
-- Remediacion consultable en
-  `https://supabase.com/docs/guides/database/database-linter` y
-  `https://supabase.com/docs/guides/database/database-linter?lint=0001_unindexed_foreign_keys`.
+- los dos branches Supabase efimeros fueron eliminados; solo queda `main`;
+- las tres variables Preview limitadas a la rama fueron retiradas;
+- el secreto de servicio productivo permanece server-only y `sensitive`;
+- el workspace temporal de migration push fue retirado sin tocar el metadata
+  Supabase preexistente del repositorio;
+- los canaries y filas QA tienen readback cero.
 
-No existe una consulta Wave 9A que seleccione el ultimo snapshot solo mediante
-`ORDER BY created_at DESC`; las selecciones usan secuencia, revision y/o ID
-estable.
+El worktree del informe se conserva solo hasta que su PR documental quede
+fusionado y el deployment correspondiente este `READY`; entonces se retira con
+`git worktree remove` y `git worktree prune`, conforme a `AGENTS.md`.
 
-## Preview y PWA
-
-La Preview reconstruida usa exactamente tres variables cifradas, limitadas a
-la rama y al entorno Preview: URL Supabase, publishable key y marcador staging.
-No existe variable Wave 9A en Production ni se agrego `service_role`.
-
-La Preview protegida por SSO paso cinco rutas mediante transporte autenticado
-de Vercel: manifest, Service Worker, manifest Demo V3.4, `/campos` y
-`/reservas`. El Service Worker real responde `no-cache, no-store,
-must-revalidate`, incluye V3.4/Campos/Reservas y no contiene cola offline de
-escrituras. El mismo E2E completo certifico Auth, Realtime y convergencia.
-
-La matriz visual Wave 9A recorrio 108 combinaciones: 1440x900, 1920x1080,
-390x844, 360x800, 667x375, 740x360, 844x390, 932x430 y una PWA 390x844 en
-app-mode real. Cubrio directorio, reservas Team, gestion de campos/reservas de
-Club, Control Center, las seis perspectivas Demo V3.4 y mantenimiento. Resultado:
-0 overflow, 0 navegaciones fallidas, 0 errores o warnings de consola, 0 requests
-fallidas, 0 imagenes rotas, 0 controles fuera del viewport y 12/12 superficies
-PWA controladas por Service Worker.
-
-## Rendimiento aislado
-
-Corpus: 1.000 Venues, 5.000 Pitches, 50.000 reglas/excepciones, 100.000
-requests, 50.000 reservas y 100.000 invalidaciones. P95: directorio 460.925 ms,
-availability 5.079 ms, submit 8.405 ms, hold 119.891 ms, accept 63.657 ms,
-conflict 64.711 ms, desk 28.500 ms, binding 4.653 ms, health 571.974 ms y
-Control Center 755.617 ms. Rollback y cleanup: PASS. No se repitio tras cambios
-solo documentales/tests porque SQL, autoridad e indices no cambiaron.
-
-## Activacion prevista
-
-Todas las flags nacen OFF. El release remoto seguira este orden: migraciones,
-merge, deployment READY del SHA exacto, smoke inactivo, Venue Foundation,
-Management, Availability, Requests, Counteroffers, Holds, Canonical
-Reservations, Match Binding, R4D, perfiles/directorio publicos y Demo V3.4.
-Pagos, recurrencia, asignacion masiva e integraciones externas permaneceran
-OFF. La activacion se realizara solo mediante la RPC de plataforma.
-
-## Pendiente para RELEASED
-
-- fusionar el PR y esperar deployment READY del SHA exacto;
-- smoke con flags OFF, activacion por RPC y canary transaccional con ROLLBACK;
-- readback final a cero, Demo V3.4, logs, Service Worker y responsive;
-- retirar variables Preview, branches Supabase, procesos, temporales y worktree.
-
-No se presentara este informe como `RELEASED` hasta disponer de esas evidencias.
+No se inicio Wave 9B, no se activo Stripe y no se modificaron Rating V2,
+Player Cosmetics, Team Cosmetics, rewards, Conduct, billing ni motores de Liga
+o Torneo ajenos al binding expresamente contratado.
