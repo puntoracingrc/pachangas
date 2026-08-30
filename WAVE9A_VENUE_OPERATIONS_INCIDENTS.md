@@ -1552,6 +1552,27 @@ Fixed issues must include the original reproducer and finish with
   `a96e7b7839428c9542db440bb7847641ae4233b3`, carry only the ledger delta,
   require a one-file diff and merge that PR through a remote-only API call.
 
+### W9A-100 - Safe local branch deletion compared against stale shared main
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed + regression_verified`
+- Original reproducer: after verifying the functional branch is an ancestor of
+  `origin/main`, delete its remote ref and then run `git branch -d` from the
+  shared checkout whose local `main` is intentionally 547 commits behind and
+  contains unrelated user changes.
+- Impact: the remote functional branch was deleted, but Git safely refused the
+  local deletion because `-d` compares against current `HEAD`. The command
+  stopped before processing the release-ledger branch. No commit, user change,
+  deployment or production state was modified.
+- Required correction: never fast-forward or switch the dirty shared checkout;
+  perform safe `-d` operations from a temporary clean worktree at exact
+  `origin/main`, delete only remote branches whose tips are ancestors of that
+  ref, preserve the non-ancestor release-report branch, then verify branch and
+  worktree cleanup before marking this incident fixed. The clean worktree
+  deleted the two ancestor local branches and the remaining ancestor remote
+  branch without force. The release-report branch was read back as
+  non-ancestor and remains deliberately preserved.
+
 ## Canonical regression evidence
 
 All incidents marked `fixed + regression_verified` are covered by the same
