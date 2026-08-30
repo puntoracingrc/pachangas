@@ -27,11 +27,13 @@ if (!["127.0.0.1", "localhost", "::1", "[::1]"].includes(new URL(adminUrl).hostn
   throw new Error("ORGANIZER_ACCESS_CONCURRENCY_LOCAL_DATABASE_REQUIRED");
 }
 
+const organizerAccessBoundary = "20260829152250_organizer_access_hardening_indexes_flags_v1.sql";
 const migrations = readdirSync(resolve(root, "supabase/migrations"))
   .filter((name) => /^\d{14}_.+\.sql$/.test(name))
-  .sort();
+  .sort()
+  .filter((name) => name <= organizerAccessBoundary);
 assert.equal(migrations.length, 204);
-assert.equal(migrations.at(-1), "20260829152250_organizer_access_hardening_indexes_flags_v1.sql");
+assert.equal(migrations.at(-1), organizerAccessBoundary);
 
 function targetUrl() {
   const value = new URL(adminUrl);

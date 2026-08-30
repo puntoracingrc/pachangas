@@ -1,64 +1,126 @@
-# Synthetic Operations Season V1 Report
+# Synthetic Operations Season V1
 
-Estado: IN PROGRESS
+Fecha: 2026-08-30
+Base: `131b0005d9f13d19db23372ff357dca4b2d0cdb2`
+Rama: `codex/synthetic-operations-season-v1`
+PR: `#230` (draft durante la validacion local)
 
-Inicio: 2026-08-30 05:21:22 CEST (+0200)
+## Resultado local
 
-## Checkpoint inicial
+Wave 8C construye una temporada determinista de 16 semanas y una proyeccion
+publica GET-only para Demo World V3.2. La conformidad de autoridad se ejecuta
+contra PostgreSQL temporal con el ledger completo de 212 migraciones y las RPC
+reales; la ampliacion a 128 partidos es una proyeccion determinista separada,
+validada por oraculos independientes. El proof no presenta esa proyeccion como
+filas productivas.
 
-- Rama: `codex/synthetic-operations-season-v1`.
-- Base exacta: `131b0005d9f13d19db23372ff357dca4b2d0cdb2`.
-- Ultimo cambio base: cierre productivo de Team Operational State V1.
-- Ledger Supabase productivo conocido: 212, hasta `20260829221312`.
-- Simulation version: `pachangas-iq-synthetic-season-v1-2026-27`.
-- Seed contractual: `pachangas-iq-synthetic-season-v1-2026-27`.
-- Produccion, Supabase y Stripe: no modificados durante este checkpoint.
+- version: `synthetic-operations-season-v1`
+- engine: `synthetic-season-engine-v1`
+- seed: `pachangas-iq-synthetic-season-v1-2026-27`
+- input hash: `1640e475d3e079f07225abdbbf9ede1fa1128358b63f1a560fd67eac43b2a4c5`
+- authority hash: `763c8c70cafde739c308a91668f5ca8b9ed6d6b2036935aa4ac1c65e49a8bab1`
+- public snapshot hash: `48b9bb09baa2e536708ec7c13109a716f81b128ba838a1ba29412d22b252358b`
+- remote writes Demo: `0`
+- Stripe tocado: `NO`
 
-## Estado inicial de Git
+## Mundo
 
-El checkout compartido permanece deliberadamente intacto y contiene cambios
-preexistentes en el laboratorio de Rating, ademas de `.codex-worktrees/` y
-`supabase/.temp/` sin seguimiento. Esta fase trabaja exclusivamente en un
-worktree limpio creado desde `origin/main`.
+| Entidad | Total |
+| --- | ---: |
+| Clubs | 6 |
+| Teams | 32 |
+| Jugadores | 480 |
+| Arbitros | 12 |
+| Organizadores | 8 |
+| Ligas | 2 |
+| Torneos | 2 |
+| Partidos canonicos | 128 |
+| Semanas | 16 |
+| Checkpoints | 9 |
+| Match sheets | 256 |
+| Eventos disciplinarios | 70 |
+| Sanciones | 5 |
+| Asignaciones arbitrales | 115 |
+| Solicitudes de organizador | 8 |
+| Grants | 3 |
+| Solicitudes de inscripcion | 38 |
+| Waitlists | 4 |
+| Retos | 16 |
+| Notificaciones sinteticas | 66 |
+| Fault injections | 12 |
 
-El inventario remoto encontro tres PR abiertos que quedan fuera de alcance:
+La distribucion de partidos es 107 normales, 7 aplazados, 3 cambios de sede,
+5 disputados, 3 no-show y 3 suspendidos. Un cambio normal de asistencia no se
+trata como no-show; el no-show existe solo en la MatchSheet canonica sintetica.
 
-- #6 `codex/demo-living-team`;
-- #131 `codex/team-shield-premium-3d-lab-v0-1`;
-- #132 `codex/team-shield-premium-3d-v1-rc`.
+## Autoridad
 
-No se incorporara ninguno de ellos ni cambios de ramas no fusionadas.
+El recorrido de conformidad real usa `temporary-local-postgresql`, aplica las
+212 migraciones y cubre:
 
-## Inventario funcional
+`R1`, `R3`, `R4A`, `R4B`, `R4C`, `R4D`, `R5`, `R6A`, `R6B`, `R6C`,
+`LEAGUE_PRIVATE_BETA_V1`, `PUBLIC_COMPETITIONS`, `ORGANIZER_BILLING`,
+`ORGANIZER_ACCESS`, `TEAM_OPERATIONAL_STATE` y
+`TEAM_OWNERSHIP_TRANSFER`.
 
-El `main` inicial ya contiene los motores de Organizer Access, Entitlements,
-Configuration Center, League, Tournament, Scheduling, Results/Standings,
-Operational Exceptions, Discipline, Referee Assignments, Team Operational,
-Public Competitions, Marketplace, Challenges y los contratos existentes de
-Rating/Rewards.
+El proof conserva 15 partidos de Liga y 32 de Torneo recorridos mediante RPC
+como muestra canonica de conformidad. Las 16 semanas publicas se identifican
+explicitamente como `REAL_RPC_CONFORMANCE_PLUS_DETERMINISTIC_SEASON_PROJECTION`.
 
-Tambien contiene:
+## Producto recorrido
 
-- Synthetic World V1 y sus scripts;
-- Demo World V1, V2.1-V2.9, V3.0 y V3.1;
-- runners DB, concurrencia, staging y escala por motor;
-- Service Worker y contratos de cache PWA;
-- informes historicos y pruebas de regresion por wave.
+- Organizer Access: solicitud, informacion adicional, aprobacion, rechazo,
+  retirada, partnership, private beta y onboarding.
+- Billing Foundation: independencia entre acceso, billing y continuidad; cero
+  Checkout, Customer o cobro real.
+- Ligas: inscripcion, calendario, partidos, resultados, standings, correccion,
+  aplazamiento y cierre.
+- Torneos: grupos, qualification, cuartos, semifinales, final, tercer puesto,
+  prorroga y penaltis.
+- Disciplina: amarilla, segunda amarilla, roja, azul, sancion, cumplimiento y
+  recuperacion de elegibilidad.
+- Arbitros: modalidad, disponibilidad, rechazo, sustitucion, reconfirmacion y
+  ausencia permitida por policy.
+- Team state: 28 ACTIVE, 1 UNDER_REVIEW, 1 LIMITED, 1 SUSPENDED y 1 ARCHIVED;
+  owner transfer y billing inactivo independiente.
+- Mercado y Retos: SOCIAL_ONLY bloquea actividad nueva y conserva historia.
+- Rating/Rewards: R6C confirma Rating V2 y rewards sin mutacion y cero grants
+  inesperados para modalidades excluidas.
+- Notificaciones: solo `SYNTHETIC_NOTIFICATION_SINK`; cero email, push, SMS o
+  WhatsApp.
 
-No habia procesos de desarrollo, Playwright, Supabase local ni simulacion
-activos al iniciar Wave 8C.
+## Seguridad y limpieza
 
-## Politica de validacion
+- guardas: confirmacion explicita, seed, namespace, ledger y target efimero;
+- bloqueo por project ref/URL productivos;
+- bloqueo de secretos publicos y variables Stripe;
+- scan serializado: 0 emails, telefonos, Auth UUID, secretos, Stripe IDs,
+  evidence privada o URLs de servidor;
+- bases temporales destruidas: si;
+- operaciones pendientes: 0;
+- sesiones sinteticas: 0;
+- filas productivas sinteticas: 0.
 
-- Cero entidades reales.
-- Cero notificaciones externas.
-- Cero Stripe calls, Customers o cargos.
-- Simulation World solo en PostgreSQL/Supabase aislado.
-- Demo World V3.2 como snapshots inmutables, saneados y de solo lectura.
-- Canary productivo exclusivamente transaccional y terminado con `ROLLBACK`.
-- Cada fallo se registra primero en `WAVE8C_SYNTHETIC_SEASON_INCIDENTS.md`.
+## Estado de gates
 
-## Pendiente
+Simulate, verify, replay, checkpoint e inspect: `PASS`.
 
-Este informe se completara con el contrato implementado, conteos reales,
-hashes, oraculos, fault injection, staging, Preview, produccion y cleanup.
+| Gate local | Resultado |
+| --- | --- |
+| `npm ci` | PASS; 522 paquetes, 21 vulnerabilidades de dependencias preexistentes |
+| `npm test` | PASS; Node 20/20, TS/TSX 648/648, total 668/668 |
+| fail/cancelled/skipped/todo | 0/0/0/0 |
+| `npm run typecheck` | PASS |
+| `npm run build` | PASS; Next.js 16.2.6, 62 paginas estaticas |
+| lint focalizado Wave 8C | PASS, cero errores y avisos |
+| lint global | 40 problemas preexistentes fuera del diff: 22 errores, 18 avisos |
+| `git diff --check` | PASS |
+| secret scan Wave 8C | PASS |
+| test focal | 19/19 PASS |
+| matriz visual local | 128/128 PASS |
+| consola/hidratacion | 0 errores y 0 avisos |
+| PWA cache/offline | PASS |
+
+La deuda global de lint queda como `W8C-025`, abierta y no bloqueante porque
+afecta exclusivamente rutas preexistentes no modificadas. Preview, staging
+efimero y release productiva se registran por separado cuando se completen.

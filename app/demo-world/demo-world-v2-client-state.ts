@@ -18,6 +18,13 @@ import type {
   DemoWorldMatchesChunk,
   DemoWorldPlayersChunk,
 } from "./demo-world-contract";
+import {
+  DEMO_WORLD_V32_VERSION,
+  type DemoWorldV32Manifest,
+  type DemoWorldV32Snapshot,
+  type SyntheticSeasonCheckpoint,
+  type SyntheticSeasonIndex,
+} from "./demo-world-v3-2-contract";
 
 const tabs: DemoWorldV2PrimaryTab[] = [
   "inicio",
@@ -36,6 +43,7 @@ const tabs: DemoWorldV2PrimaryTab[] = [
   "disciplina",
   "torneo",
   "planes",
+  "temporada",
 ];
 
 async function loadChunk<T>(path: string): Promise<T> {
@@ -53,7 +61,7 @@ export function demoWorldV2TabFromSearch(search: string): DemoWorldV2PrimaryTab 
   return value && tabs.includes(value) ? value : "inicio";
 }
 
-export function loadDemoWorldV2Core(manifest: DemoWorldV2Manifest) {
+export function loadDemoWorldV2Core(manifest: DemoWorldV2Manifest | DemoWorldV32Manifest) {
   return loadChunk<DemoWorldCoreChunk>(manifest.chunks.core);
 }
 
@@ -76,4 +84,39 @@ export async function loadDemoWorldV2Snapshot(
     loadChunk<DemoWorldV2TournamentChunk>(manifest.chunks.tournament),
   ]);
   return assertDemoWorldV2Snapshot({ activity, clubsReferees, competitions, configuration, core, manifest, matches, organizerAccess, organizerBilling, players, publicCompetitions, teamOperational, tournament });
+}
+
+export async function loadDemoWorldV32Snapshot(
+  manifest: DemoWorldV32Manifest,
+  loadedCore?: DemoWorldCoreChunk,
+): Promise<DemoWorldV32Snapshot> {
+  const [activity, clubsReferees, competitions, configuration, core, matches, organizerAccess, organizerBilling, players, publicCompetitions, season, teamOperational, tournament] = await Promise.all([
+    loadChunk<DemoWorldActivityChunk>(manifest.chunks.activity),
+    loadChunk<DemoWorldV2ClubsRefereesChunk>(manifest.chunks.clubsReferees),
+    loadChunk<DemoWorldV2CompetitionChunk>(manifest.chunks.competitions),
+    loadChunk<DemoWorldV2ConfigurationChunk>(manifest.chunks.configuration),
+    loadedCore ? Promise.resolve(loadedCore) : loadChunk<DemoWorldCoreChunk>(manifest.chunks.core),
+    loadChunk<DemoWorldMatchesChunk>(manifest.chunks.matches),
+    loadChunk<DemoWorldV3OrganizerAccessChunk>(manifest.chunks.organizerAccess),
+    loadChunk<DemoWorldV2OrganizerBillingChunk>(manifest.chunks.organizerBilling),
+    loadChunk<DemoWorldPlayersChunk>(manifest.chunks.players),
+    loadChunk<DemoWorldV2PublicCompetitionsChunk>(manifest.chunks.publicCompetitions),
+    loadChunk<SyntheticSeasonIndex>(manifest.chunks.season),
+    loadChunk<DemoWorldV31TeamOperationalChunk>(manifest.chunks.teamOperational),
+    loadChunk<DemoWorldV2TournamentChunk>(manifest.chunks.tournament),
+  ]);
+  return { activity, clubsReferees, competitions, configuration, core, manifest, matches, organizerAccess, organizerBilling, players, publicCompetitions, season, teamOperational, tournament };
+}
+
+export function loadDemoWorldSnapshot(
+  manifest: DemoWorldV2Manifest | DemoWorldV32Manifest,
+  loadedCore?: DemoWorldCoreChunk,
+) {
+  return manifest.version === DEMO_WORLD_V32_VERSION
+    ? loadDemoWorldV32Snapshot(manifest, loadedCore)
+    : loadDemoWorldV2Snapshot(manifest, loadedCore);
+}
+
+export function loadSyntheticSeasonCheckpoint(path: string) {
+  return loadChunk<SyntheticSeasonCheckpoint>(path);
 }

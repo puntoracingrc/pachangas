@@ -7,7 +7,8 @@ export const DEMO_WORLD_VERSION = 1 as const;
 export const DEMO_WORLD_SEASON = "2026/27" as const;
 export const DEMO_WORLD_MODE = "demo-world-read-only" as const;
 
-export type DemoWorldPerspectiveId = "admin" | "player" | "free-agent" | "league-organizer";
+export type DemoWorldPerspectiveId = "admin" | "club-organizer" | "free-agent" | "league-organizer" | "platform-reviewer"
+  | "player" | "referee" | "team-owner" | "tournament-organizer";
 export type DemoWorldPrimaryTab = "inicio" | "partido" | "mercado" | "equipo" | "perfil";
 export type DemoMatchKind = "sala" | "futbol7" | "futbol11";
 export type DemoMatchScope = "challenge" | "internal";

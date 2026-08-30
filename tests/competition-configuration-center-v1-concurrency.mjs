@@ -34,10 +34,13 @@ if (!["127.0.0.1", "localhost", "::1", "[::1]"].includes(new URL(adminUrl).hostn
   throw new Error("WAVE5_CONCURRENCY_LOCAL_DATABASE_REQUIRED");
 }
 
+const competitionConfigurationBoundary = "20260826123500_competition_configuration_control_center_v1.sql";
 const migrations = readdirSync(resolve(root, "supabase/migrations"))
   .filter((name) => /^\d{14}_.+\.sql$/.test(name))
-  .sort();
+  .sort()
+  .filter((name) => name <= competitionConfigurationBoundary);
 assert.equal(migrations.length, 158);
+assert.equal(migrations.at(-1), competitionConfigurationBoundary);
 
 function targetUrl(databaseName) {
   const value = new URL(adminUrl);

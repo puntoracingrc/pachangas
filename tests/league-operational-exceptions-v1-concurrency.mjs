@@ -32,6 +32,7 @@ if (!["127.0.0.1", "localhost", "::1", "[::1]"].includes(new URL(adminUrl).hostn
 const migrations = readdirSync(resolve(root, "supabase/migrations"))
   .filter((name) => /^\d{14}_.+\.sql$/.test(name))
   .sort()
+  .filter((name) => name <= r4dMigrations.at(-1))
   .filter((name) => name.slice(0, 14) > manifest.absorbsThrough);
 assert.equal(migrations.length + 36, 136);
 assert.deepEqual(migrations.slice(-r4dMigrations.length), r4dMigrations);

@@ -64,11 +64,21 @@ import {
 import {
   demoWorldV2TabFromSearch,
   loadDemoWorldV2Core,
-  loadDemoWorldV2Snapshot,
+  loadDemoWorldSnapshot,
 } from "./demo-world-v2-client-state";
+import { SyntheticSeasonView } from "./demo-world-v3-2-view";
+import type { DemoWorldV32Manifest, DemoWorldV32Snapshot } from "./demo-world-v3-2-contract";
 import styles from "./demo-world.module.css";
 
-type DemoWorldRenderableSnapshot = Pick<DemoWorldV2Snapshot, "activity" | "core" | "manifest" | "matches" | "players">;
+type DemoWorldManifest = DemoWorldV2Manifest | DemoWorldV32Manifest;
+type DemoWorldFullSnapshot = DemoWorldV2Snapshot | DemoWorldV32Snapshot;
+type DemoWorldRenderableSnapshot = {
+  activity: DemoWorldV2Snapshot["activity"];
+  core: DemoWorldV2Snapshot["core"];
+  manifest: DemoWorldManifest;
+  matches: DemoWorldV2Snapshot["matches"];
+  players: DemoWorldV2Snapshot["players"];
+};
 
 const primaryTabs: Array<{ id: DemoWorldV2PrimaryTab; label: string }> = [
   { id: "inicio", label: "Inicio" },
@@ -79,6 +89,7 @@ const primaryTabs: Array<{ id: DemoWorldV2PrimaryTab; label: string }> = [
 ];
 
 const leagueTabs: Array<{ id: DemoWorldV2PrimaryTab; label: string }> = [
+  { id: "temporada", label: "Temporada" },
   { id: "liga", label: "Liga" },
   { id: "torneo", label: "Torneo" },
   { id: "competiciones", label: "Públicas" },
@@ -153,7 +164,7 @@ function playerWithDemoCosmetics(player: DemoWorldPlayer, equippedCosmeticKeys: 
   return { ...player, cosmetics };
 }
 
-function previewSnapshot(manifest: DemoWorldV2Manifest, core: DemoWorldCoreChunk): DemoWorldRenderableSnapshot {
+function previewSnapshot(manifest: DemoWorldManifest, core: DemoWorldCoreChunk): DemoWorldRenderableSnapshot {
   return {
     activity: {
       achievements: [],
@@ -222,7 +233,7 @@ function EmptyState({ body, title }: { body: string; title: string }) {
   return <div className={styles.emptyState}><strong>{title}</strong><p>{body}</p></div>;
 }
 
-function LoadingWorld({ manifest }: { manifest: DemoWorldV2Manifest }) {
+function LoadingWorld({ manifest }: { manifest: DemoWorldManifest }) {
   return (
     <main className={styles.shell} data-demo-world="loading">
       <div className={styles.loadingPanel} role="status">
@@ -244,7 +255,7 @@ function DemoHeader({
   setPerspective,
 }: {
   activeTab: DemoWorldV2PrimaryTab;
-  manifest: DemoWorldV2Manifest;
+  manifest: DemoWorldManifest;
   onReset: () => void;
   onTab: (tab: DemoWorldV2PrimaryTab) => void;
   perspective: DemoWorldPerspective;
@@ -802,7 +813,7 @@ function LeagueOverviewView({
   onClub: (clubId: string) => void;
   onMatch: (matchId: string) => void;
   onTab: (tab: DemoWorldV2PrimaryTab) => void;
-  snapshot: DemoWorldV2Snapshot;
+  snapshot: DemoWorldFullSnapshot;
 }) {
   const league = snapshot.competitions;
   const teamById = new Map(snapshot.core.teams.map((team) => [team.id, team]));
@@ -1422,9 +1433,9 @@ function DemoTeamOperationalView({ data }: { data: DemoWorldV31TeamOperationalCh
   </div>;
 }
 
-export function DemoWorldApp({ manifest }: { manifest: DemoWorldV2Manifest }) {
+export function DemoWorldApp({ manifest }: { manifest: DemoWorldManifest }) {
   const [core, setCore] = useState<DemoWorldCoreChunk | null>(null);
-  const [snapshot, setSnapshot] = useState<DemoWorldV2Snapshot | null>(null);
+  const [snapshot, setSnapshot] = useState<DemoWorldFullSnapshot | null>(null);
   const [loadingFullWorld, setLoadingFullWorld] = useState(false);
   const [session, setSession] = useState<DemoWorldSessionState>(() => readInitialDemoWorldSession(
     typeof window === "undefined" ? "" : window.location.search,
@@ -1434,7 +1445,7 @@ export function DemoWorldApp({ manifest }: { manifest: DemoWorldV2Manifest }) {
     typeof window === "undefined" ? "" : window.location.search,
   ));
   const initialPerspectiveId = useRef(session.perspectiveId);
-  const fullWorldRequest = useRef<Promise<DemoWorldV2Snapshot | null> | null>(null);
+  const fullWorldRequest = useRef<Promise<DemoWorldFullSnapshot | null> | null>(null);
   const [selectedClubId, setSelectedClubId] = useState("demo_club_001");
   const [selectedLeagueMatchId, setSelectedLeagueMatchId] = useState<string | null>(null);
   const [selectedMatchId, setSelectedMatchId] = useState<string | null>(null);
@@ -1484,7 +1495,7 @@ export function DemoWorldApp({ manifest }: { manifest: DemoWorldV2Manifest }) {
   useEffect(() => {
     if (!core || snapshot || activeTab === "inicio" || fullWorldRequest.current) return;
     setLoadingFullWorld(true);
-    const request = loadDemoWorldV2Snapshot(manifest, core)
+    const request = loadDemoWorldSnapshot(manifest, core)
       .then((world) => {
         setSnapshot(world);
         return world;
@@ -1642,6 +1653,7 @@ export function DemoWorldApp({ manifest }: { manifest: DemoWorldV2Manifest }) {
         {snapshot && activeTab === "arbitros" ? <DemoRefereesView assignments={snapshot.clubsReferees.refereeAssignmentPreview} referees={snapshot.clubsReferees.referees} /> : null}
         {snapshot && activeTab === "estado-equipo" ? <DemoTeamOperationalView data={snapshot.teamOperational} /> : null}
         {snapshot && activeTab === "planes" ? <DemoOrganizerBillingView access={snapshot.organizerAccess} billing={snapshot.organizerBilling} /> : null}
+        {snapshot && activeTab === "temporada" && "season" in snapshot ? <SyntheticSeasonView index={snapshot.season} /> : null}
       </div>
       <MobileAppNav active={activeTab as MobileAppTab} onNavigate={(tab) => navigate(tab as DemoWorldV2PrimaryTab)} />
       {selectedPlayer ? <PlayerModal onClose={() => setSelectedPlayerId(null)} player={selectedPlayer} /> : null}

@@ -3,6 +3,7 @@ const precacheUrls = [
   "/demo",
   "/demo-world/v1/manifest.json",
   "/demo-world/v3/manifest.json",
+  "/demo-world/v3-2/manifest.json",
   "/manifest.webmanifest",
   "/favicon.svg",
   "/favicon-16.png",
@@ -57,7 +58,7 @@ function shouldCacheNavigation(url) {
 }
 
 function shouldCacheStaticRequest(request, url) {
-  const isImmutableDemoChunk = /^\\/demo-world\\/v\\d+\\//.test(url.pathname) && url.pathname.endsWith(".json") && url.searchParams.has("h");
+  const isImmutableDemoChunk = /^\\/demo-world\\/v\\d+(?:-\\d+)*\\//.test(url.pathname) && url.pathname.endsWith(".json") && url.searchParams.has("h");
   return isSameOrigin(url) && !isSensitivePath(url.pathname) && (!url.search || isImmutableDemoChunk) &&
     (isImmutableDemoChunk || url.pathname.startsWith("/_next/static/") || STATIC_DESTINATIONS.has(request.destination) || STATIC_FILE_EXTENSIONS.test(url.pathname));
 }

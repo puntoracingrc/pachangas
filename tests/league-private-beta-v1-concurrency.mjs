@@ -21,9 +21,11 @@ if (!["127.0.0.1", "localhost", "::1", "[::1]"].includes(new URL(adminUrl).hostn
   throw new Error("LEAGUE_PRIVATE_BETA_CONCURRENCY_LOCAL_DATABASE_REQUIRED");
 }
 
+const leaguePrivateBetaBoundary = "20260825115500_league_private_beta_draft_edition_fix.sql";
 const migrations = readdirSync(resolve(root, "supabase/migrations"))
   .filter((name) => /^\d{14}_.+\.sql$/.test(name))
   .sort()
+  .filter((name) => name <= leaguePrivateBetaBoundary)
   .filter((name) => name.slice(0, 14) > manifest.absorbsThrough);
 assert.equal(migrations.length + 36, 141);
 

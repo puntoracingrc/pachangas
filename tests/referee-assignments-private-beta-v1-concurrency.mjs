@@ -62,9 +62,11 @@ if (!["127.0.0.1", "localhost", "::1", "[::1]"].includes(new URL(adminUrl).hostn
   throw new Error("WAVE4_CONCURRENCY_LOCAL_DATABASE_REQUIRED");
 }
 
+const assignmentBoundary = "20260826105132_referee_assignment_fk_index_hardening_v1.sql";
 const migrations = readdirSync(resolve(root, "supabase/migrations"))
   .filter((name) => /^\d{14}_.+\.sql$/.test(name))
-  .sort();
+  .sort()
+  .filter((name) => name <= assignmentBoundary);
 assert.equal(migrations.length, 152);
 
 function targetUrl(databaseName) {

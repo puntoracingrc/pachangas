@@ -51,6 +51,11 @@ function hash(value: unknown) {
   return createHash("sha256").update(JSON.stringify(value)).digest("hex");
 }
 
+function exactNumber<const Expected extends number>(value: number, expected: Expected, label: string): Expected {
+  if (value !== expected) throw new Error(`${label} expected ${expected}, received ${value}`);
+  return expected;
+}
+
 function id(scope: string, index?: number) {
   return `demo_league_${scope}${index === undefined ? "" : `_${String(index).padStart(3, "0")}`}`;
 }
@@ -894,24 +899,24 @@ function buildTournament(
   } satisfies DemoWorldV2TournamentChunk["groupStage"];
   const knockout = {
     authority: {
-      activeMatches: authority.knockoutProof.matches.active,
+      activeMatches: exactNumber(authority.knockoutProof.matches.active, 8, "knockout active matches"),
       advanceDecisions: authority.knockoutProof.progression.advanceDecisions,
-      completionSnapshots: authority.knockoutProof.completion.snapshots,
+      completionSnapshots: exactNumber(authority.knockoutProof.completion.snapshots, 2, "knockout completion snapshots"),
       correction: {
         nodeHistoryRetained: authority.knockoutProof.correction.nodeHistoryRetained,
         oldContextRetired: authority.knockoutProof.correction.oldContextRetired,
         oldMatchRetired: authority.knockoutProof.correction.oldMatchRetired,
         replacementCreated: authority.knockoutProof.correction.replacementCreated,
       },
-      dependencyImpacts: authority.knockoutProof.progression.dependencyImpacts,
-      historicalMatches: authority.knockoutProof.matches.historical,
+      dependencyImpacts: exactNumber(authority.knockoutProof.progression.dependencyImpacts, 3, "knockout dependency impacts"),
+      historicalMatches: exactNumber(authority.knockoutProof.matches.historical, 9, "knockout historical matches"),
       integrity: {
         billingUnchanged: authority.knockoutProof.integrity.billingUnchanged,
         conductUnchanged: authority.knockoutProof.integrity.conductUnchanged,
         ratingV2Unchanged: authority.knockoutProof.integrity.ratingV2Unchanged,
         rewardsUnchanged: authority.knockoutProof.integrity.rewardsUnchanged,
       },
-      invalidations: authority.knockoutProof.progression.invalidations,
+      invalidations: exactNumber(authority.knockoutProof.progression.invalidations, 1, "knockout invalidations"),
       noShowResolutionLinked: authority.knockoutProof.r4d.knockoutNoShowResolution,
       penaltySeparation: {
         groupStandingsUnchanged: authority.knockoutProof.penaltySeparation.groupStandingsUnchanged,
@@ -919,7 +924,7 @@ function buildTournament(
       },
       readModelCanonical: authority.knockoutProof.readModel.serverSequencePresent
         && authority.knockoutProof.readModel.checksumPresent,
-      retiredMatches: authority.knockoutProof.matches.retired,
+      retiredMatches: exactNumber(authority.knockoutProof.matches.retired, 1, "knockout retired matches"),
     },
     discipline: {
       blockedFromSemifinal: authority.knockoutPublic.discipline.blockedFromSemifinal,
@@ -1013,9 +1018,9 @@ function buildTournament(
     knockout,
     nextPhase: {
       bracketProgression: true,
-      knockoutMatches: authority.knockoutProof.matches.active,
+      knockoutMatches: exactNumber(authority.knockoutProof.matches.active, 8, "next phase knockout matches"),
       message: "Torneo completado y cuadro bloqueado por PostgreSQL.",
-      tournamentMatches: authority.tournamentMatches + authority.knockoutProof.matches.active,
+      tournamentMatches: exactNumber(authority.tournamentMatches + authority.knockoutProof.matches.active, 32, "next phase tournament matches"),
     },
     provenance: {
       authorityHash: authorityProof.authorityHash,

@@ -776,7 +776,8 @@ test("the V2 public bundle contains no PII, remote write path or product mutatio
 test("the Service Worker precaches V3 and caches every immutable versioned Demo chunk", () => {
   const source = buildServiceWorkerSource("demo-world-v2-test");
   assert.match(source, /"\/demo-world\/v3\/manifest\.json"/);
-  assert.match(source, /\^\\\/demo-world\\\/v\\d\+\\\//);
+  assert.match(source, /"\/demo-world\/v3-2\/manifest\.json"/);
+  assert.match(source, /\^\\\/demo-world\\\/v\\d\+\(\?:-\\d\+\)\*\\\//);
   assert.match(source, /request\.method !== "GET"/);
   assert.match(source, /isImmutableDemoChunk/);
 });
