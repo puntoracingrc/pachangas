@@ -42,3 +42,15 @@ refetchea `get_pachanga_match_venue_v1`.
 - Match binding p50/p95 a escala: `2.955 / 4.653 ms`.
 - Demo V3.4 incluye binding de Liga, cambio R4D, reconfirmacion y Venue
   historico consumido.
+
+## Produccion
+
+Match Binding y R4D estan `ON`. El canary productivo vinculo una reserva
+confirmada a un CanonicalMatch sintetico y despues cancelo la reserva. El
+partido no se cancelo ni genero forfeit: el binding paso a `ACTION_REQUIRED`
+con razon `VENUE_ACTION_REQUIRED`. La transaccion termino con rollback y el
+readback posterior devolvio cero Matches y cero bindings sinteticos.
+
+El Match Hub, Control Center y Demo World V3.4 fueron verificados en produccion
+en desktop, portrait, landscape y PWA standalone. Rating V2, resultados,
+disciplina y la autoridad deportiva de CanonicalMatch permanecen intactos.

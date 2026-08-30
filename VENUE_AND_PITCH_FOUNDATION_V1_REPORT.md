@@ -75,4 +75,16 @@ ledger 220; hash de esquema aislado:
 - Directorio a escala, p95 `460.925 ms` con 1.000 Venues y 5.000 Pitches.
 - Control Center, p95 `755.617 ms`.
 - Root overflow, imagenes rotas y errores de consola: `0 / 0 / 0`.
-- Flags nacen OFF; activacion remota pendiente del release coordinado.
+- Flags nacieron OFF y se activaron mediante RPC de plataforma en el release
+  coordinado; no se utilizo `UPDATE` directo.
+
+## Produccion
+
+- PR funcional: `#235`, fusionado en
+  `bbef59dd78e13c36b837112290477a1f0193153f`.
+- Deployment exacto: `dpl_Dnubnky8y1r2McZrMaoomsDFLhYU`, `READY`.
+- Foundation, Management, perfiles publicos y directorio: `ON`.
+- Pagos, recurrencia, asignacion masiva e integraciones externas: `OFF`.
+- Readback de dominio: cero Venues y cero Pitches tras el canary con rollback.
+- Directorio, ficha publica, gestion Club y Control Center forman parte de la
+  matriz productiva `96/96` y PWA `12/12`, sin overflow ni errores de consola.

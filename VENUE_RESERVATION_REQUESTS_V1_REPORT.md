@@ -57,3 +57,15 @@ El corpus aislado uso 100.000 requests y 50.000 reservas:
 | reservation desk | 12.445 ms | 28.500 ms |
 
 Rollback y cleanup: PASS. Notificaciones reales: 0.
+
+## Produccion
+
+Requests, Counteroffers, Holds y Canonical Reservations estan `ON`; pagos y
+recurrencia permanecen `OFF`. El canary productivo cubrio submit, review,
+counter, hold, accept y confirm, incluido replay idempotente y rechazo stale.
+Termino con `PASS_ROLLED_BACK`; requests, claims, holds y reservas tienen
+readback cero.
+
+La PWA productiva conserva lectura cacheada, bloquea confirmaciones offline y
+refetchea tras Realtime/reconexion. La matriz final paso `96/96` casos web y
+`12/12` casos standalone controlados por Service Worker, sin fake success.
