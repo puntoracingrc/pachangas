@@ -8,6 +8,7 @@ const env = {
   confirmation: process.env.VENUE_OPERATIONS_STAGING_CONFIRM,
   databaseUrl: process.env.VENUE_OPERATIONS_STAGING_DATABASE_URL,
   previewUrl: process.env.VENUE_OPERATIONS_STAGING_PREVIEW_URL || null,
+  previewViaVercelCli: process.env.VENUE_OPERATIONS_STAGING_PREVIEW_VERCEL_CLI === "1",
   projectRef: process.env.VENUE_OPERATIONS_STAGING_PROJECT_REF,
   publishableKey: process.env.VENUE_OPERATIONS_STAGING_PUBLISHABLE_KEY,
   serviceRoleKey: process.env.VENUE_OPERATIONS_STAGING_SERVICE_ROLE_KEY,
@@ -175,6 +176,27 @@ async function previewSmoke() {
   if (!env.previewUrl) return { status: "NOT_REQUESTED" };
   const paths = ["/manifest.webmanifest", "/sw.js", "/demo-world/v3-4/manifest.json", "/campos", "/reservas"];
   for (const path of paths) {
+    if (env.previewViaVercelCli) {
+      const result = spawnSync("vercel", [
+        "curl", path,
+        "--deployment", env.previewUrl,
+        "--scope", "persianas-almar-web-s-projects",
+        "--", "--silent", "--show-error", "--dump-header", "-",
+      ], { encoding: "utf8", maxBuffer: 16 * 1024 * 1024 });
+      if (result.error) throw result.error;
+      if (result.status !== 0) throw new Error(`VENUE_PREVIEW_VERCEL_CURL_FAILED_${path}`);
+      const response = (result.stdout ?? "").replaceAll("\r\n", "\n");
+      const boundary = response.indexOf("\n\n");
+      assert.notEqual(boundary, -1, `${path} returned no HTTP header block`);
+      const headers = response.slice(0, boundary);
+      const body = response.slice(boundary + 2);
+      assert.match(headers, /^HTTP\/\d(?:\.\d)? 200\b/m, `${path} did not return 200`);
+      if (path === "/sw.js") {
+        assert.match(headers, /^cache-control: .*no-store/im);
+        assert.match(body, /demo-world\/v3-4|\/campos|\/reservas/);
+      }
+      continue;
+    }
     const response = await fetch(new URL(path, env.previewUrl), { cache: "no-store", redirect: "follow" });
     assert.equal(response.ok, true, `${path} returned ${response.status}`);
     if (path === "/sw.js") {

@@ -42,7 +42,7 @@ no se aplica como estado.
 | Version | Nombre | SHA-256 |
 | --- | --- | --- |
 | `20260830145049` | `venue_availability_templates_exceptions_v1` | `65cad385bdd6558d67db17cbcd44532d93c29f8ee02d4a3840a333a74390655e` |
-| `20260830145058` | `venue_rls_realtime_notifications_v1` | `3a403780cbf0a5508f97a4513d98332db9be2aea01604567ce0d13d196be7b4b` |
+| `20260830145058` | `venue_rls_realtime_notifications_v1` | `7157dd0dafc3a005def0a4a367f47c9b7701f78b930dc86eff9ebc01ecfdc4db` |
 
 ## Validacion local
 

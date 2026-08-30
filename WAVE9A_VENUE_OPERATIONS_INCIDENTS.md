@@ -946,7 +946,7 @@ Fixed issues must include the original reproducer and finish with
 ### W9A-063 - Certified staging database retained a failed migration control-plane label
 
 - Classification: `ENVIRONMENT_ISSUE`
-- Status: `fix pending regression`
+- Status: `open / external metadata / non-blocking`
 - Original reproducer: after the schema bootstrap, authenticated E2E and
   Realtime regression all pass against project `bcrgoplbuaevskpfraif`, list
   the parent project's branches and compare database health with branch status.
@@ -954,10 +954,90 @@ Fixed issues must include the original reproducer and finish with
   certified, but the branch control plane reports `MIGRATIONS_FAILED` from its
   original automatic migration attempt. Presenting it as clean staging would
   conflate recovered database state with deployment-pipeline health.
-- Required correction: preserve this branch only as evidence, create one final
-  branch from the published commit after the staging harness is committed, and
-  require both a healthy control-plane status and the full schema/E2E readback
-  before Preview certification. Delete both ephemeral branches after release.
+- Required correction: preserve the first branch only as evidence and repeat
+  the entire bootstrap on a clean branch from the published commit. The clean
+  branch reproduced the stale label even after the supported status update was
+  accepted, while database health remained `ACTIVE_HEALTHY` and schema,
+  ledger, ACL, SQL/RLS, authenticated E2E, Realtime and Preview all passed.
+  Do not retry unsupported control-plane mutations or present the label as a
+  database failure. Keep the discrepancy explicit and delete both ephemeral
+  branches after release.
+
+### W9A-064 - CLI could not read credentials for a connector-created branch
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed + regression_verified`
+- Original reproducer: create the clean non-Git branch through the Supabase
+  connector, wait for `FUNCTIONS_DEPLOYED / ACTIVE_HEALTHY`, then invoke
+  `supabase branches get <branch-id> -o json` inside the redacting bootstrap
+  wrapper.
+- Impact: the wrapper stopped with `BRANCH_CREDENTIAL_READ_FAILED` before
+  opening a database connection. No migration, fixture, flag or data changed.
+- Required correction: inspect only the CLI exit metadata, use an authenticated
+  connector or supported non-secret credential handoff for the same branch,
+  and rerun the unchanged branch-only bootstrap without ever printing or
+  persisting the credential payload. Adding the explicit parent project ref
+  allowed the wrapper to reach ledger `220` and clean its temporary workdir.
+
+### W9A-065 - Clean staging dataset ran before its synthetic authority bootstrap
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed + regression_verified`
+- Original reproducer: reconstruct a clean branch to ledger `220` and execute
+  `venue-operations-v1-staging-dataset.sql` before
+  `venue-operations-v1-staging-bootstrap.sql`.
+- Impact: the first Club flag command failed with `Platform access required`
+  because synthetic platform actor `c401...` had not been installed. The
+  dataset transaction rolled back; readback showed no partial staging graph.
+- Required correction: preserve the canonical staging order `schema bootstrap
+  -> SQL/RLS bootstrap -> synthetic dataset -> authenticated E2E`, then verify
+  both bootstrap markers, exact topology and two-device convergence.
+  The ordered rerun passed both markers, exact `3/6/6/12/1/1/20` topology and
+  authenticated two-device Realtime convergence.
+
+### W9A-066 - Preview environment wrapper used a conflicting interpolation delimiter
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed + regression_verified`
+- Original reproducer: compose the in-memory Supabase-to-Vercel environment
+  transfer with a nested JavaScript template literal inside the tool command.
+- Impact: the orchestration parser stopped with a syntax error before Node,
+  Supabase or Vercel ran. No variable was created and no value was printed.
+- Required correction: remove nested interpolation delimiters, keep values on
+  stdin only, then read back exactly three branch-scoped Preview variable names
+  while confirming no Wave 9A variable exists in Production. The corrected
+  wrapper added only the URL, publishable key and staging marker to the exact
+  Preview branch; it never handled or added a service-role key.
+
+### W9A-067 - Vercel environment readback mixed progress text with JSON
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed + regression_verified`
+- Original reproducer: pipe `vercel env ls ... --json` directly into a parser
+  that assumes the first `[` starts the only JSON document.
+- Impact: Vercel prepended progress text and the parser found trailing content,
+  while the already-started redeploy continued normally and reached `Ready`.
+  No environment value was changed by the failed readback.
+- Required correction: capture stdout and parse the final structured document
+  defensively, returning only variable names, target, branch and type. Never
+  print values. The corrected parser read one JSON object and confirmed exactly
+  three encrypted variables scoped to the Wave 9A Preview branch.
+
+### W9A-068 - Protected Preview smoke measured the Vercel login page
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed + regression_verified`
+- Original reproducer: run the authenticated staging E2E with the rebuilt
+  Preview URL and inspect `Cache-Control` for `/sw.js`.
+- Impact: the unauthenticated fetch followed Vercel SSO to `/login` and measured
+  that page's `public, max-age=0, must-revalidate` header instead of the worker.
+  An authenticated `vercel curl` readback proved the actual `/sw.js` already
+  returns `no-cache, no-store, must-revalidate`; no product header was wrong.
+- Required correction: add an explicit Vercel CLI transport for protected
+  Previews, preserve ordinary fetch for public environments, and require 200,
+  the real `no-store` header and V3.4/Campos/Reservas worker markers. The
+  protected transport now passes all five paths and the complete two-device
+  staging story without weakening SSO or exposing a bypass token.
 
 ## Canonical regression evidence
 
