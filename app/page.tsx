@@ -15,6 +15,8 @@ import { OfficialProductShellV2 } from "./_components/official-product-shell-v2"
 import { PlayerCosmeticCard } from "./_components/player-cosmetic-card";
 import { TeamShieldView } from "./_components/team-shield-view";
 import { TeamOperationalHomeCard } from "./_components/team-operational-client";
+import { VenueMatchPanel } from "./_components/venue-match-panel";
+import { VenueHomeStatus } from "./_components/venue-home-status";
 import { attachVenueAutocomplete, type VenuePlace } from "./googlePlacesClient";
 import { GlobalRatingPanel } from "./global-rating-panel";
 import { resolveGoogleAuthReturnHref } from "./google-auth-return";
@@ -118,7 +120,7 @@ type RatingRole = "field" | "goalkeeper";
 type MobileSectionTabId = "inicio" | "partido";
 type ProfilePane = "ficha" | "ranking";
 type PlayerProfileMode = "edit" | "viewer";
-type MatchManagerPane = "proximo" | "alineacion" | "resultado" | "admin";
+type MatchManagerPane = "proximo" | "campo" | "alineacion" | "resultado" | "admin";
 type ProfileReturnTarget = {
   matchPane: MatchManagerPane;
   mobileTab: MobileAppTab;
@@ -130,6 +132,7 @@ type ProfileFocusTarget = "rating";
 
 const matchManagerPaneLabels: Record<MatchManagerPane, string> = {
   proximo: "Próximo",
+  campo: "Campo y reserva",
   alineacion: "Alineación",
   resultado: "Resultado",
   admin: "Admin",
@@ -400,6 +403,7 @@ type LineupSlots = {
 
 type Match = {
   id: string;
+  canonicalMatchId?: string;
   title: string;
   date: string;
   season?: string;
@@ -5966,8 +5970,8 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
     matchFinalized ? "match-finalized-main" : "",
   ].filter(Boolean).join(" ");
   const matchManagerPanes: MatchManagerPane[] = canUseAdminControls
-    ? ["proximo", "alineacion", "resultado", "admin"]
-    : ["proximo", "alineacion", "resultado"];
+    ? ["proximo", "campo", "alineacion", "resultado", "admin"]
+    : ["proximo", "campo", "alineacion", "resultado"];
   const selectedMatchManagerPane = matchManagerPanes.includes(activeMatchManagerPane) ? activeMatchManagerPane : "proximo";
   const matchManagerPaneLabel = (pane: MatchManagerPane) => (pane === "proximo" && matchFinalized ? "Histórico" : matchManagerPaneLabels[pane]);
   const canConfigureMatchMarket = canUseAdminControls && showMatchRoster && !lineupClosed && !matchFinalized;
@@ -9318,7 +9322,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
               { label: "Nivel", value: groupLevel === null ? "-" : overallScore(groupLevel) },
             ]}
             nextAction={homeNextAction}
-            operationalNotice={hasRealTeam && remoteGroupId ? <TeamOperationalHomeCard groupId={remoteGroupId} /> : undefined}
+            operationalNotice={hasRealTeam && remoteGroupId ? <><TeamOperationalHomeCard groupId={remoteGroupId} /><VenueHomeStatus /></> : undefined}
             object={hasHomeTeamIdentity ? (
               <TeamShieldView
                 catalog={canonicalHomeTeamShield?.catalog ?? []}
@@ -10021,6 +10025,11 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
           share={selectedMatchManagerPane === "proximo" && matchMemberShareBox ? (
             <div className="match-side-share" aria-label="Compartir partido">{matchMemberShareBox}</div>
           ) : undefined}
+        />
+        <VenueMatchPanel
+          canManage={canUseAdminControls}
+          canonicalMatchId={activeMatch.canonicalMatchId || activeMatch.id}
+          legacyPlace={activeMatch.place}
         />
         <aside className="panel match-list" aria-label="Partidos">
           <div className="panel-title">

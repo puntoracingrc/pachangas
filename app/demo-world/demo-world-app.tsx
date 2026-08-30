@@ -72,10 +72,12 @@ import { SyntheticSeasonView } from "./demo-world-v3-2-view";
 import type { DemoWorldV32Manifest, DemoWorldV32Snapshot } from "./demo-world-v3-2-contract";
 import { DemoWorldV33GuidedReview } from "./demo-world-v3-3-guided-review";
 import type { DemoWorldV33Manifest, DemoWorldV33Snapshot } from "./demo-world-v3-3-contract";
+import { DemoWorldV34FieldOperations } from "./demo-world-v3-4-field-operations";
+import type { DemoWorldV34Manifest, DemoWorldV34Snapshot } from "./demo-world-v3-4-contract";
 import styles from "./demo-world.module.css";
 
-type DemoWorldManifest = DemoWorldV2Manifest | DemoWorldV32Manifest | DemoWorldV33Manifest;
-type DemoWorldFullSnapshot = DemoWorldV2Snapshot | DemoWorldV32Snapshot | DemoWorldV33Snapshot;
+type DemoWorldManifest = DemoWorldV2Manifest | DemoWorldV32Manifest | DemoWorldV33Manifest | DemoWorldV34Manifest;
+type DemoWorldFullSnapshot = DemoWorldV2Snapshot | DemoWorldV32Snapshot | DemoWorldV33Snapshot | DemoWorldV34Snapshot;
 type DemoWorldRenderableSnapshot = {
   activity: DemoWorldV2Snapshot["activity"];
   core: DemoWorldV2Snapshot["core"];
@@ -96,6 +98,7 @@ const domainTabs: Array<{ group: "competición" | "gestión" | "red"; id: DemoWo
   { group: "gestión", id: "disciplina", label: "Disciplina" },
   { group: "red", id: "club", label: "Club" },
   { group: "red", id: "arbitros", label: "Árbitros" },
+  { group: "gestión", id: "campos", label: "Campos" },
   { group: "gestión", id: "planes", label: "Planes" },
   { group: "gestión", id: "revision", label: "Recorrido guiado" },
 ];
@@ -1535,7 +1538,7 @@ export function DemoWorldApp({ manifest }: { manifest: DemoWorldManifest }) {
   }, [manifest]);
 
   useEffect(() => {
-    if (!core || snapshot || activeTab === "inicio" || activeTab === "revision" || fullWorldRequest.current) return;
+    if (!core || snapshot || activeTab === "inicio" || activeTab === "revision" || activeTab === "campos" || fullWorldRequest.current) return;
     setLoadingFullWorld(true);
     const request = loadDemoWorldSnapshot(manifest, core)
       .then((world) => {
@@ -1675,7 +1678,7 @@ export function DemoWorldApp({ manifest }: { manifest: DemoWorldManifest }) {
       <DemoHeader activeTab={activeTab} manifest={manifest} onReset={resetWorld} onTab={navigate} perspective={perspective} perspectives={world.core.perspectives} setPerspective={choosePerspective} />
       <div className={styles.content}>
         {activeTab === "inicio" ? <WorldHome currentPlayer={currentPlayer} currentTeam={currentTeam} notifications={notifications} onMatch={openMatch} onPlayer={setSelectedPlayerId} onTab={navigate} perspective={perspective} snapshot={world} teamMatches={teamMatches} /> : null}
-        {activeTab !== "inicio" && activeTab !== "revision" && !snapshot ? <div className={styles.secondaryLoading} role="status"><span className={styles.loadingMark}>IQ</span><strong>{loadingFullWorld ? "Cargando esta sección" : "Preparando datos"}</strong><p>Solo descargamos el dominio que acabas de abrir.</p></div> : null}
+        {activeTab !== "inicio" && activeTab !== "revision" && activeTab !== "campos" && !snapshot ? <div className={styles.secondaryLoading} role="status"><span className={styles.loadingMark}>IQ</span><strong>{loadingFullWorld ? "Cargando esta sección" : "Preparando datos"}</strong><p>Solo descargamos el dominio que acabas de abrir.</p></div> : null}
         {snapshot && activeTab === "partido" && selectedLeagueMatchPreview ? <div className={styles.demoProductView} data-demo-domain="league-match"><LeagueMatchOperationsClient disciplinePreviewData={selectedLeagueMatchDisciplinePreview} embedded previewData={selectedLeagueMatchPreview} refereeAssignmentPreviewData={selectedLeagueMatchRefereePreview} surface="match" /></div> : null}
         {snapshot && activeTab === "partido" && !selectedLeagueMatchPreview ? <MatchView currentPlayer={currentPlayer} currentTeam={currentTeam} key={perspective.id} match={selectedMatch} onLocalAttendance={(status) => { if (!selectedMatch) return; updateSession((current) => ({ ...current, attendanceByMatch: { ...current.attendanceByMatch, [selectedMatch.id]: status } })); setMessage(`Asistencia ${status === "voy" ? "confirmada" : status === "duda" ? "en duda" : "cancelada"} solo en esta sesión demo.`); }} onMatch={openMatch} onPlayer={setSelectedPlayerId} perspective={perspective} session={session} setMessage={setMessage} snapshot={snapshot} teamMatches={teamMatches} /> : null}
         {snapshot && activeTab === "mercado" ? <MarketView currentPlayer={currentPlayer} onMatch={openMatch} onPlayer={setSelectedPlayerId} onTeam={openTeam} perspective={perspective} setMessage={setMessage} snapshot={snapshot} /> : null}
@@ -1697,6 +1700,7 @@ export function DemoWorldApp({ manifest }: { manifest: DemoWorldManifest }) {
         {snapshot && activeTab === "planes" ? <DemoOrganizerBillingView access={snapshot.organizerAccess} billing={snapshot.organizerBilling} /> : null}
         {snapshot && activeTab === "temporada" && "season" in snapshot ? <SyntheticSeasonView index={snapshot.season} /> : null}
         {activeTab === "revision" ? <DemoWorldV33GuidedReview /> : null}
+        {activeTab === "campos" && "fieldOperations" in manifest ? <DemoWorldV34FieldOperations manifest={manifest.fieldOperations} /> : null}
       </div>
       <MobileAppNav active={primaryTabForDemo(activeTab) as MobileAppTab} onNavigate={(tab) => navigate(demoTabForPrimary(tab))} />
       {selectedPlayer ? <PlayerModal onClose={() => setSelectedPlayerId(null)} player={selectedPlayer} /> : null}
