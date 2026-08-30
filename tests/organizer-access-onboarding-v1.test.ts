@@ -264,10 +264,14 @@ test("Wave 8A leaves all Stripe and live-commerce activation outside its migrati
 });
 
 test("Demo World verification separates volatile raw hashes from deterministic projections", async () => {
-  const simulation = await source("scripts/demo-world/simulate-demo-world-v2.ts");
-  assert.match(simulation, /function projectionHash/);
-  assert.match(simulation, /authorityProjectionHash: projectionHash\(authorityProof\)/);
-  assert.match(simulation, /snapshotProjectionHash: projectionHash\(generated\)/);
+  const [simulation, projection] = await Promise.all([
+    source("scripts/demo-world/simulate-demo-world-v2.ts"),
+    source("scripts/demo-world/demo-world-verification-projection.ts"),
+  ]);
+  assert.match(projection, /export function demoWorldVerificationProjectionHash/);
+  assert.match(projection, /migration\(\?:Count\|s\)/);
+  assert.match(simulation, /authorityProjectionHash: demoWorldVerificationProjectionHash\(authorityProof\)/);
+  assert.match(simulation, /snapshotProjectionHash: demoWorldVerificationProjectionHash\(generated\)/);
   assert.match(simulation, /demoWorldVerificationProjection\(authorityProof\)/);
   assert.match(simulation, /demoWorldVerificationProjection\(generated\)/);
 });

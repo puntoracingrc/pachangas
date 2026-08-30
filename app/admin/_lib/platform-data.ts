@@ -248,6 +248,31 @@ export async function listPlatformTeams(
   return { items, page: input.page, pageSize: input.pageSize, total: Number(data.total) || 0 };
 }
 
+export async function listPlatformTeamOperationalStates(
+  session: VerifiedPlatformSession,
+  input: { page: number; pageSize: number; query?: string; status?: string },
+) {
+  const allowedStatus = new Set([
+    "", "ACTIVE", "UNDER_REVIEW", "LIMITED", "SUSPENDED", "ARCHIVED",
+    "EXPIRING", "APPEALED", "COMPETITION_AFFECTED",
+  ]);
+  const status = (input.status ?? "").trim().toUpperCase();
+  const data = await rpcOrThrow<JsonRecord>(session.client, "list_pachanga_platform_team_operational_states_v1", {
+    filters: {
+      ...(safeSearch(input.query) ? { query: safeSearch(input.query) } : {}),
+      ...(allowedStatus.has(status) && status ? { status } : {}),
+    },
+    page_limit: input.pageSize,
+    page_offset: (input.page - 1) * input.pageSize,
+  });
+  return {
+    items: asArray(data.items).map(asRecord),
+    page: input.page,
+    pageSize: input.pageSize,
+    total: Number(data.total) || 0,
+  };
+}
+
 export async function getPlatformTeamDetail(session: VerifiedPlatformSession, groupId: string) {
   const service = platformServiceClient();
   const canReadBilling = session.access.capabilities.includes("billing.read");
@@ -260,7 +285,7 @@ export async function getPlatformTeamDetail(session: VerifiedPlatformSession, gr
     .eq("group_id", groupId).order("created_at");
   if (memberResult.error) throw new Error(memberResult.error.message);
   const memberUserIds = [...new Set((memberResult.data ?? []).map((member) => member.user_id))];
-  const [sourceProfilesResult, memberProfilesResult, matchResult, sentChallengeResult, receivedChallengeResult, achievementResult, cosmeticResult, marketResult] = await Promise.all([
+  const [sourceProfilesResult, memberProfilesResult, matchResult, sentChallengeResult, receivedChallengeResult, achievementResult, cosmeticResult, marketResult, operational] = await Promise.all([
     service.from("pachanga_player_profiles").select("id,user_id,display_name,avatar,current_overall,rating_reliability,injured,inactive,market_enabled,position,updated_at").eq("source_group_id", groupId).order("display_name"),
     memberUserIds.length
       ? service.from("pachanga_player_profiles").select("id,user_id,display_name,avatar,current_overall,rating_reliability,injured,inactive,market_enabled,position,updated_at").in("user_id", memberUserIds).order("display_name")
@@ -271,6 +296,7 @@ export async function getPlatformTeamDetail(session: VerifiedPlatformSession, gr
     service.from("pachanga_achievement_grants").select("id,state,metric_value,awarded_at,occurred_at", { count: "exact" }).eq("group_id", groupId).order("awarded_at", { ascending: false }).limit(20),
     service.from("pachanga_team_cosmetic_inventory").select("cosmetic_key,state,unlocked_at,revision,source_kind,server_sequence", { count: "exact" }).eq("group_id", groupId).order("server_sequence", { ascending: false }).limit(40),
     service.from("pachanga_challengeable_team_profiles").select("enabled,zone_label,travel_radius_km,min_opponent_level,max_opponent_level,modalities,revision,updated_at").eq("group_id", groupId).maybeSingle(),
+    rpcOrThrow<JsonRecord>(session.client, "get_pachanga_platform_team_operational_detail_v1", { target_group_id: groupId }),
   ]);
   for (const result of [sourceProfilesResult, memberProfilesResult, matchResult, sentChallengeResult, receivedChallengeResult, achievementResult, cosmeticResult, marketResult]) {
     if (result.error) throw new Error(result.error.message);
@@ -294,6 +320,7 @@ export async function getPlatformTeamDetail(session: VerifiedPlatformSession, gr
     market: marketResult.data,
     matches: matchResult.data ?? [],
     members: memberResult.data ?? [],
+    operational,
     players,
     trial: {
       limit: FREE_TRIAL_MATCH_LIMIT,

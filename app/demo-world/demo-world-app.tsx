@@ -58,6 +58,7 @@ import {
   type DemoWorldV2Referee,
   type DemoWorldV2Snapshot,
   type DemoWorldV2TournamentChunk,
+  type DemoWorldV31TeamOperationalChunk,
   type DemoWorldV3OrganizerAccessChunk,
 } from "./demo-world-v2-contract";
 import {
@@ -84,6 +85,7 @@ const leagueTabs: Array<{ id: DemoWorldV2PrimaryTab; label: string }> = [
   { id: "configuracion", label: "Configuración" },
   { id: "clasificacion", label: "Clasificación" },
   { id: "jornadas", label: "Jornadas" },
+  { id: "estado-equipo", label: "Estado equipos" },
   { id: "disciplina", label: "Disciplina" },
   { id: "club", label: "Club" },
   { id: "arbitros", label: "Árbitros" },
@@ -1342,6 +1344,84 @@ function DemoOrganizerBillingView({ access, billing }: {
   </div>;
 }
 
+const teamOperationalScenarioLabels: Record<DemoWorldV31TeamOperationalChunk["scenarios"][number]["id"], string> = {
+  TEAM_A_ACTIVE: "Activo",
+  TEAM_B_UNDER_REVIEW: "En revisión",
+  TEAM_C_LIMITED_SOCIAL_ONLY: "Social limitado",
+  TEAM_D_SUSPENDED_NEW_ACTIVITY: "Actividad suspendida",
+  TEAM_E_ARCHIVED: "Archivado",
+  TEAM_F_OWNER_TRANSFER: "Cambio de owner",
+  TEAM_G_BILLING_INACTIVE: "Billing independiente",
+};
+
+const teamOperationalScopeLabels: Record<string, string> = {
+  COMPETITION_ORGANIZER: "Organizar competiciones",
+  COMPETITION_REGISTRATION: "Nuevas inscripciones",
+  EXISTING_COMPETITION_OPERATIONS: "Competición en curso",
+  MARKETPLACE: "Mercado",
+  NEW_MATCH_CREATION: "Crear partidos",
+  PUBLIC_DISCOVERY: "Directorio público",
+  PUBLIC_PROFILE: "Perfil público",
+  SOCIAL_CHALLENGES: "Retos",
+  TEAM_MEMBERSHIP_ADMINISTRATION: "Gestionar miembros",
+};
+
+function DemoTeamOperationalView({ data }: { data: DemoWorldV31TeamOperationalChunk }) {
+  const [scenarioId, setScenarioId] = useState(data.scenarios[0]!.id);
+  const scenario = data.scenarios.find(({ id }) => id === scenarioId) ?? data.scenarios[0]!;
+  const statusLabel = scenario.effectiveStatus === "UNDER_REVIEW"
+    ? "En revisión"
+    : scenario.effectiveStatus === "LIMITED"
+      ? "Disponibilidad limitada"
+      : scenario.effectiveStatus === "SUSPENDED"
+        ? "No disponible actualmente"
+        : scenario.effectiveStatus === "ARCHIVED"
+          ? "Equipo archivado"
+          : "Activo";
+  return <div className={`${styles.demoProductView} ${styles.organizerBillingDemo}`} data-demo-domain="team-operational" data-demo-read-only="true">
+    <section className={styles.demoDomainHeading}>
+      <div><span className={styles.eyebrow}>TEAM OPERATIONAL SAFETY V1</span><h1>Estado operativo del equipo</h1><p>Siete casos ficticios calculados por las RPC reales, sin usuarios ni escritura pública.</p></div>
+      <span>Simulation World · 0 remote writes</span>
+    </section>
+    <nav className={styles.organizerBillingScenarioRail} aria-label="Escenarios ficticios de estado operativo">
+      {data.scenarios.map((entry) => <button aria-pressed={scenario.id === entry.id} key={entry.id} type="button" onClick={() => setScenarioId(entry.id)}>{teamOperationalScenarioLabels[entry.id]}</button>)}
+    </nav>
+    <section className={styles.organizerBillingScenario}>
+      <header><span>{scenario.teamName}</span><h2>{statusLabel}</h2><p>La identidad, el histórico y los permisos se resuelven en PostgreSQL por revisión y ámbito.</p></header>
+      <div className={styles.organizerBillingStateGrid}>
+        <span><small>Lifecycle</small><strong>{scenario.lifecycle === "ARCHIVED" ? "Archivado" : "Activo"}</strong></span>
+        <span><small>Plataforma</small><strong>{scenario.enforcement.replaceAll("_", " ")}</strong></span>
+        <span><small>Preset</small><strong>{scenario.restrictionPreset.replaceAll("_", " ")}</strong></span>
+        <span><small>Continuidad</small><strong>{scenario.continuityPolicy === "HISTORY_ONLY" ? "Solo histórico" : "Puede terminar lo iniciado"}</strong></span>
+        {scenario.ownerTransferred ? <span><small>Owner</small><strong>Transferido · apelación enviada</strong></span> : null}
+        {scenario.billingState === "INACTIVE" ? <span><small>Billing</small><strong>Inactivo · equipo activo</strong></span> : null}
+      </div>
+    </section>
+    <section className={styles.organizerBillingPlanGrid} aria-label="Capacidades del escenario">
+      <article>
+        <span className={styles.eyebrow}>Permitido</span>
+        <h3>{scenario.allowedScopes.length} ámbitos</h3>
+        <p>{scenario.allowedScopes.map((scope) => teamOperationalScopeLabels[scope] ?? scope).join(" · ") || "Solo lectura histórica"}</p>
+      </article>
+      <article>
+        <span className={styles.eyebrow}>Bloqueado</span>
+        <h3>{scenario.blockedScopes.length} ámbitos</h3>
+        <p>{scenario.blockedScopes.map((scope) => teamOperationalScopeLabels[scope] ?? scope).join(" · ") || "Ninguno"}</p>
+      </article>
+      <article>
+        <span className={styles.eyebrow}>Liga activa</span>
+        <h3>{data.competitionContinuity.teamC.pointsBefore} → {data.competitionContinuity.teamC.pointsAfter} puntos</h3>
+        <p>El resultado oficial cambia la clasificación; la limitación SOCIAL_ONLY no la reescribe.</p>
+      </article>
+      <article>
+        <span className={styles.eyebrow}>Historia protegida</span>
+        <h3>0 forfeits · 0 no-shows</h3>
+        <p>Archivar o suspender no altera resultados, Rating, recompensas ni cosméticos.</p>
+      </article>
+    </section>
+  </div>;
+}
+
 export function DemoWorldApp({ manifest }: { manifest: DemoWorldV2Manifest }) {
   const [core, setCore] = useState<DemoWorldCoreChunk | null>(null);
   const [snapshot, setSnapshot] = useState<DemoWorldV2Snapshot | null>(null);
@@ -1560,6 +1640,7 @@ export function DemoWorldApp({ manifest }: { manifest: DemoWorldV2Manifest }) {
         {snapshot && activeTab === "disciplina" ? <div className={styles.demoProductView} data-demo-domain="discipline"><CompetitionDisciplineClient competitionId={snapshot.competitions.competition.id} embedded previewData={snapshot.competitions.disciplinePreview} surface="public" /></div> : null}
         {snapshot && activeTab === "club" && selectedClub ? <DemoClubView club={selectedClub} clubs={snapshot.clubsReferees.clubs} onClub={setSelectedClubId} /> : null}
         {snapshot && activeTab === "arbitros" ? <DemoRefereesView assignments={snapshot.clubsReferees.refereeAssignmentPreview} referees={snapshot.clubsReferees.referees} /> : null}
+        {snapshot && activeTab === "estado-equipo" ? <DemoTeamOperationalView data={snapshot.teamOperational} /> : null}
         {snapshot && activeTab === "planes" ? <DemoOrganizerBillingView access={snapshot.organizerAccess} billing={snapshot.organizerBilling} /> : null}
       </div>
       <MobileAppNav active={activeTab as MobileAppTab} onNavigate={(tab) => navigate(tab as DemoWorldV2PrimaryTab)} />

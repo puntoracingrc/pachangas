@@ -8,6 +8,10 @@
     {
       "path": "/api/internal/billing/reconcile",
       "schedule": "17 * * * *"
+    },
+    {
+      "path": "/api/internal/team-operational/expire",
+      "schedule": "*/10 * * * *"
     }
   ]
 }
