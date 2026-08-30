@@ -1070,6 +1070,23 @@ Fixed issues must include the original reproducer and finish with
   12/12 surfaces, all reporting `standalone` with an active Service Worker and
   zero navigation, overflow, console, image, network or viewport defect.
 
+### W9A-071 - Isolated release worktree had no Supabase project link
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed + regression_verified`
+- Original reproducer: execute `supabase migration list --linked` from the
+  clean Wave 9A worktree immediately before the production migration gate.
+- Impact: the CLI failed closed with `Cannot find project ref` before opening a
+  remote connection. No database, migration history, flag or product data was
+  read or changed.
+- Required correction: link only this isolated worktree to the already verified
+  production project ref, rerun the exact read-only command, and require the
+  remote frontier to be exactly 212 while local contains exactly the eight
+  pending Wave 9A migrations. The linked rerun returned 212 matching versions
+  through `20260829221312` and exactly the eight local-only versions
+  `20260830145047` through `20260830145100`. Remove the local link metadata
+  during cleanup.
+
 ## Canonical regression evidence
 
 All incidents marked `fixed + regression_verified` are covered by the same

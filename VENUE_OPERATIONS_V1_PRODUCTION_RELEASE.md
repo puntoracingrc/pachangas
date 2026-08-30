@@ -18,6 +18,15 @@ Estado: `LOCAL_AND_STAGING_CERTIFIED / PRODUCTION_PENDING`
 | Stripe | UNTOUCHED |
 | Wave 9B | NOT STARTED |
 
+## Preflight productivo
+
+- `supabase migration list --linked`: remoto 212, ultimo
+  `20260829221312`; local-only exactamente las ocho versiones Wave 9A.
+- Backup fisico mas reciente: `COMPLETED`, `2026-08-30T00:17:13.445Z`.
+- WALG: activo. PITR: no habilitado.
+- El restore no se ejecuto sobre produccion; la recuperabilidad se apoya en el
+  backup fisico completado y el runbook del proveedor, sin alterar datos reales.
+
 ## Gates locales finales
 
 | Gate | Resultado |
