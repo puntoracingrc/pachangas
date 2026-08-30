@@ -1573,6 +1573,18 @@ Fixed issues must include the original reproducer and finish with
   branch without force. The release-report branch was read back as
   non-ancestor and remains deliberately preserved.
 
+### W9A-101 - Remote merge API received an abbreviated expected SHA
+
+- Classification: `SIMULATION_BUG`
+- Status: `fixed + regression_verified`
+- Original reproducer: call the GitHub merge API for PR `#238` with the
+  seven-character commit prefix `69bc22f` as `expected_head_sha`.
+- Impact: GitHub returned validation error `422` and did not merge the PR. No
+  branch, commit, deployment or production state changed.
+- Required correction: resolve the updated PR head with `git rev-parse HEAD`,
+  pass its complete forty-character SHA to the same remote-only merge API and
+  verify PR state, merge SHA and `origin/main` ancestry before cleanup.
+
 ## Canonical regression evidence
 
 All incidents marked `fixed + regression_verified` are covered by the same
