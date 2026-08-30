@@ -77,7 +77,7 @@ function verifyFinal() {
       or venue_reservation_requests_enabled or venue_counteroffers_enabled
       or venue_reservation_holds_enabled or venue_canonical_reservations_enabled
       or venue_match_binding_enabled or venue_r4d_integration_enabled
-      or demo_world_v3_4_enabled
+      or demo_world_v34_enabled
     ) from private.pachanga_venue_settings_v1 where singleton)
   )::text`));
   assert.deepEqual(snapshot, {

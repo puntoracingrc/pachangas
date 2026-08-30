@@ -143,6 +143,18 @@ function waitForSubscribed(channel) {
   });
 }
 
+function postgresChangesBinding(queue) {
+  return new Promise((resolve, reject) => {
+    const timeout = setTimeout(() => reject(new Error("VENUE_POSTGRES_CHANGES_BINDING_TIMEOUT")), 20_000);
+    queue.binding = (payload) => {
+      if (payload?.extension !== "postgres_changes") return;
+      clearTimeout(timeout);
+      if (payload.status === "ok") resolve(payload);
+      else reject(new Error(`VENUE_POSTGRES_CHANGES_BINDING_${String(payload.status || "ERROR").toUpperCase()}`));
+    };
+  });
+}
+
 function nextInvalidation(queue) {
   return new Promise((resolve, reject) => {
     const timeout = setTimeout(() => reject(new Error("VENUE_REALTIME_EVENT_TIMEOUT")), 20_000);
@@ -214,18 +226,22 @@ values
   assert.equal(visibleInvalidations.data.length, 1);
 
   const queue = {};
-  const channel = deviceB.channel(`wave9a-${runId}`).on("postgres_changes", {
-    event: "INSERT",
-    schema: "public",
-    table: "pachanga_venue_invalidations",
-  }, (event) => {
-    if (
-      event.new?.entity_id === venue.id
-      && (event.new?.audience_id === clubId || event.new?.audience_kind === "PUBLIC")
-    ) queue.resolve?.(event);
-  });
+  const binding = postgresChangesBinding(queue);
+  const channel = deviceB.channel(`wave9a-${runId}`)
+    .on("system", {}, (payload) => queue.binding?.(payload))
+    .on("postgres_changes", {
+      event: "INSERT",
+      schema: "public",
+      table: "pachanga_venue_invalidations",
+    }, (event) => {
+      if (
+        event.new?.entity_id === venue.id
+        && (event.new?.audience_id === clubId || event.new?.audience_kind === "PUBLIC")
+      ) queue.resolve?.(event);
+    });
   channels.push({ channel, supabase: deviceB });
   await waitForSubscribed(channel);
+  await binding;
   const firstEvent = nextInvalidation(queue);
   const firstOperation = randomUUID();
   const updated = await commandOk(deviceA, {

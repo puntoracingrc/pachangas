@@ -774,7 +774,7 @@ Fixed issues must include the original reproducer and finish with
 ### W9A-054 - Authenticated staging mutation did not reach the Realtime listener
 
 - Classification: `TESTABILITY_GAP`
-- Status: `fix pending regression`
+- Status: `fixed + regression_verified`
 - Original reproducer: subscribe device B to Club-scoped Venue invalidations,
   wait for `SUBSCRIBED`, update a Venue from device A and await one insert.
 - Impact: the command confirmed and persisted, but the listener timed out after
@@ -788,12 +788,14 @@ Fixed issues must include the original reproducer and finish with
   now mirrors the production clients by subscribing to the RLS-protected table
   without a server-side filter and selecting the expected entity/audience in
   its callback; it also proves an authenticated Club member can read the
-  invalidation surface before awaiting delivery.
+  invalidation surface before awaiting delivery. The final healthy branch
+  confirmed the Postgres Changes system binding, delivered the matching insert,
+  refetched revision `5` and converged again after reconnect.
 
 ### W9A-055 - Venue invalidation RLS called a non-executable authority helper
 
 - Classification: `PRODUCT_BUG`
-- Status: `fix pending staging regression`
+- Status: `fixed + regression_verified`
 - Original reproducer: as an authenticated active Club Venue manager, select
   the Club-scoped row from `pachanga_venue_invalidations` before subscribing to
   Realtime.
@@ -806,13 +808,15 @@ Fixed issues must include the original reproducer and finish with
   the function, grant only that helper to `authenticated`, keep the generic
   three-argument Club authority helper revoked, and prove permitted/outsider
   row visibility plus Realtime delivery with two authenticated clients. Fresh
-  and upgraded local databases now prove the permission matrix and keep the
-  generic helper closed; remote Realtime remains pending on a clean branch.
+  and upgraded local databases prove the permission matrix and keep the
+  generic helper closed. The clean staging database then proved the authorized
+  read, Realtime delivery and refetch while direct table mutation remained
+  denied.
 
 ### W9A-056 - Reconstructed staging branch retained a failed control-plane status
 
 - Classification: `ENVIRONMENT_ISSUE`
-- Status: `open`
+- Status: `fixed + regression_verified`
 - Original reproducer: after reconstructing and certifying ledger `220`, inspect
   the Supabase branch state and subscribe an authenticated client to Postgres
   Changes.
@@ -827,7 +831,8 @@ Fixed issues must include the original reproducer and finish with
   could not transition to a healthy state through the branch API and was
   destroyed with deletion readback; the regression will use a new branch built
   from the exact published Git SHA instead of preserving repaired control-plane
-  state.
+  state. The replacement branch stayed `FUNCTIONS_DEPLOYED` and completed the
+  authenticated Realtime story.
 
 ### W9A-057 - Owner transfer and reservation acceptance both won a race
 
@@ -886,7 +891,7 @@ Fixed issues must include the original reproducer and finish with
 ### W9A-060 - Healthy Git-linked branch did not apply unmerged Wave migrations
 
 - Classification: `ENVIRONMENT_ISSUE`
-- Status: `open`
+- Status: `fixed + regression_verified`
 - Original reproducer: create a Supabase branch linked to the published Wave 9A
   Git branch, wait for `FUNCTIONS_DEPLOYED`, then read
   `private.pachanga_venue_settings`.
@@ -896,12 +901,14 @@ Fixed issues must include the original reproducer and finish with
 - Required correction: read back the exact base ledger, apply only the eight
   forward Wave 9A migrations through Supabase migration authority, and require
   exact ledger `220`, migration names/digests, flags born OFF and helper/schema
-  presence before loading synthetic fixtures.
+  presence before loading synthetic fixtures. The final branch reached ledger
+  `220`, last version `20260830145100`, nine Venue tables, the RLS helper and
+  flags born OFF before any synthetic fixture was loaded.
 
 ### W9A-061 - Generic db push advanced staging history without Venue schema
 
 - Classification: `ENVIRONMENT_ISSUE`
-- Status: `open`
+- Status: `fixed + regression_verified`
 - Original reproducer: on the clean ten-version branch, apply the canonical
   baseline, repair the 26 absorbed versions and run generic `supabase db push
   --include-all`, then require the Venue settings relation.
@@ -917,7 +924,40 @@ Fixed issues must include the original reproducer and finish with
   canonical `config.toml` intentionally reports `Skipping migrations because
   it is disabled`; the replacement harness now creates an isolated temporary
   config with migrations enabled, links the exact migration directory and
-  removes the temporary workdir in `finally`.
+  removes the temporary workdir in `finally`. The replacement applied all 184
+  post-baseline migrations, reached exact ledger `220`, and its idempotent
+  verification path passed after the temporary directory was removed.
+
+### W9A-062 - Staging readback used the wrong Demo V3.4 flag column
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed + regression_verified`
+- Original reproducer: finish the isolated 36-to-220 migration push and execute
+  the final born-OFF assertion.
+- Impact: PostgreSQL rejected `demo_world_v3_4_enabled`; the canonical column is
+  `demo_world_v34_enabled`. Migration execution had already completed, but the
+  harness correctly withheld PASS. No fixture or flag activation followed.
+- Required correction: confirm exact ledger and relation presence independently,
+  correct only the column name, rerun the bootstrap in its 220-version
+  idempotent verification path, and require temporary workdir cleanup. The
+  rerun returned `VENUE_OPERATIONS_V1_STAGING_SCHEMA_ALREADY_CERTIFIED` with
+  ledger `220`, nine Venue tables, RLS helper present and every Wave flag OFF.
+
+### W9A-063 - Certified staging database retained a failed migration control-plane label
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fix pending regression`
+- Original reproducer: after the schema bootstrap, authenticated E2E and
+  Realtime regression all pass against project `bcrgoplbuaevskpfraif`, list
+  the parent project's branches and compare database health with branch status.
+- Impact: the branch database is `ACTIVE_HEALTHY`, ledger `220` and functionally
+  certified, but the branch control plane reports `MIGRATIONS_FAILED` from its
+  original automatic migration attempt. Presenting it as clean staging would
+  conflate recovered database state with deployment-pipeline health.
+- Required correction: preserve this branch only as evidence, create one final
+  branch from the published commit after the staging harness is committed, and
+  require both a healthy control-plane status and the full schema/E2E readback
+  before Preview certification. Delete both ephemeral branches after release.
 
 ## Canonical regression evidence
 

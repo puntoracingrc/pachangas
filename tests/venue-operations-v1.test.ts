@@ -192,6 +192,8 @@ test("staging runner is production-safe and certifies Auth, Realtime and converg
   assert.match(staging, /STALE_REVISION\|PT409/);
   assert.match(staging, /pachanga_venue_invalidations/);
   assert.match(staging, /SUBSCRIBED/);
+  assert.match(staging, /VENUE_POSTGRES_CHANGES_BINDING_TIMEOUT/);
+  assert.match(staging, /payload\?\.extension !== "postgres_changes"/);
   assert.match(staging, /await clubDesk\(deviceB\)/);
   assert.match(staging, /EPHEMERAL_BRANCH_DESTRUCTION_REQUIRED/);
   assert.doesNotMatch(staging, /qonbngfrnrqgmxbdfbea\.supabase\.co/);
