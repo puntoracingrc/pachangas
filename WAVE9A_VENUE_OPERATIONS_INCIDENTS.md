@@ -289,6 +289,102 @@ Fixed issues must include the original reproducer and finish with
   rule window and use the canonical Europe/Madrid summer offset consistently
   in schedule, requests and reservations.
 
+### W9A-020 - Concurrency runner committed the Club fixture too early
+
+- Classification: `SIMULATION_BUG`
+- Status: `fixed + regression_verified`
+- Original reproducer: `node tests/venue-operations-v1-concurrency.mjs`
+  loaded `venue-operations-v1-fixture.sql` without one enclosing transaction.
+  The deferred Club ownership guard therefore ran after the Club insert and
+  before the immediately following primary-owner membership insert, raising
+  `CLUB_PRIMARY_OWNER_MEMBERSHIP_REQUIRED`.
+- Impact: the disposable database was cleaned correctly, but none of the
+  twelve concurrency races started. Product SQL and shared data were not
+  modified.
+- Correction and regression: load the deterministic fixture in one transaction,
+  as the canonical DB suite already does. All twelve races and database cleanup
+  now pass.
+
+### W9A-021 - Synthetic owner insert assumed a non-existent membership key
+
+- Classification: `SIMULATION_BUG`
+- Status: `fixed + regression_verified`
+- Original reproducer: after fixing W9A-020, the concurrency runner attempted
+  `ON CONFLICT (club_id,user_id,role)` while adding its replacement owner.
+  Memberships preserve temporal history and intentionally have no matching
+  unique constraint, so PostgreSQL rejected the fixture statement.
+- Impact: setup stopped before product commands or races ran; the ephemeral
+  database was destroyed.
+- Correction and regression: insert the guaranteed-new synthetic membership
+  directly. The owner-transfer versus reservation-acceptance race is the
+  permanent regression.
+
+### W9A-022 - Concurrency fixture used an out-of-policy referee deadline
+
+- Classification: `SIMULATION_BUG`
+- Status: `fixed + regression_verified`
+- Original reproducer: assignment setup sent a fixed May 2027 response
+  deadline. From the August 2026 execution date this exceeded the canonical
+  maximum of 30 days and the referee RPC raised
+  `INVALID_ASSIGNMENT_DEADLINE`.
+- Impact: the referee guard worked as designed and setup stopped before Venue
+  races; no data escaped the disposable database.
+- Correction and regression: derive the synthetic deadline as ten days after
+  the runner starts, retaining the production deadline guard.
+
+### W9A-023 - Expired hold fixture violated its own temporal invariant
+
+- Classification: `SIMULATION_BUG`
+- Status: `fixed + regression_verified`
+- Original reproducer: the hold-expiry race moved only `expires_at` into the
+  past. The canonical constraint requires expiry after creation, so PostgreSQL
+  rejected a row whose synthetic expiry preceded its unchanged creation time.
+- Impact: four races had completed inside the disposable database, but the
+  fifth fixture could not be prepared and all state was cleaned.
+- Correction and regression: move synthetic `created_at` two minutes back and
+  `expires_at` one second back together. Expiry versus accept now converges to
+  one expiry winner and one stale acceptance.
+
+### W9A-024 - R4D fixture invented a non-canonical Venue reason
+
+- Classification: `SIMULATION_BUG`
+- Status: `fixed + regression_verified`
+- Original reproducer: the setup replacement used
+  `CONCURRENCY_PREPARE_REPLACEMENT` and the actual R4D command rejected it with
+  `R4D_VENUE_REASON_INVALID` because sporting Venue changes use a closed reason
+  catalogue.
+- Impact: races before the R4D sequence ran, while the replacement transaction
+  rolled back and the disposable database was removed.
+- Correction and regression: use canonical `PITCH_UNAVAILABLE` in both
+  preparatory and concurrent replacements without widening product policy.
+
+### W9A-025 - Synthetic referee could not serve the replacement Venue
+
+- Classification: `SIMULATION_BUG`
+- Status: `fixed + regression_verified`
+- Original reproducer: after a valid R4D replacement, the referee attempted
+  `assignment.reconfirm`, but its inherited synthetic service area did not
+  include the newly created concurrency Venue. The transition guard raised
+  `REFEREE_SERVICE_AREA_INCOMPATIBLE`.
+- Impact: R4D correctly requested reconfirmation and the referee authority
+  correctly refused an incompatible field operation; no shared state changed.
+- Correction and regression: name the disposable Venue inside the referee's
+  existing Barcelona/Pista service area. The compatibility guard remains
+  unchanged and the R4D versus reconfirmation race now passes.
+
+### W9A-026 - Maintenance race omitted the canonical rejection code
+
+- Classification: `SIMULATION_BUG`
+- Status: `fixed + regression_verified`
+- Original reproducer: the maintenance command won and the delayed reservation
+  acceptance failed with `VENUE_PITCH_NOT_AVAILABLE`, but the test matcher only
+  listed two synonymous, non-emitted variants.
+- Impact: product convergence was correct; the runner rejected valid evidence
+  after the race.
+- Correction and regression: accept the exact canonical error code while still
+  asserting one successful maintenance transition plus one rejected
+  acceptance.
+
 ## Canonical regression evidence
 
 All incidents marked `fixed + regression_verified` are covered by the same
@@ -303,4 +399,14 @@ fixture correction:
 - schema SHA-256: `90fe290261f0cd23ad7401ea968fd053d71eb55979a1db839da6f6e79548b4f8`;
 - flags born OFF: `PASS`;
 - canonical lifecycle, RLS, privacy, DST, R4D and ledger: `PASS`;
+- concurrency: `12` races, `12` canonical winners, `12` explicit stale/conflict
+  outcomes, `0` double bookings and `1` active CanonicalMatch binding;
+- scale corpus: `1,000` Venues, `5,000` Pitches, `50,000` availability
+  records, `100,000` requests, `50,000` reservations and `100,000`
+  invalidations;
+- measured paths: directory, availability, request submit, hold, accept,
+  conflict detection, reservation desk, Match binding and health, with at least
+  `20` samples per path and valid p50/p95 ordering;
+- scale write samples rolled back: `PASS`; full corpus rollback: `PASS`;
+- scale database and temporary infrastructure dump cleanup: `PASS`;
 - ephemeral database cleanup: `PASS`.
