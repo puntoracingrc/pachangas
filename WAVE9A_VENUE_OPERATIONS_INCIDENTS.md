@@ -1506,6 +1506,52 @@ Fixed issues must include the original reproducer and finish with
   exists with the expected heading, `RELEASED / ACTIVE / CANONICAL / CLEAN`
   state and `175` lines.
 
+### W9A-097 - gh merge attempted to update main in another worktree
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed + regression_verified`
+- Original reproducer: run `gh pr merge 236 --merge --delete-branch` from the
+  release-report worktree while `main` is correctly checked out in the shared
+  repository checkout.
+- Impact: GitHub successfully merged PR `#236`, then Git failed only while
+  trying to update the local `main` checkout owned by another worktree. The
+  product report entered `main`; no checkout was switched or overwritten.
+- Required correction: read back the PR and remote branch before retrying any
+  merge. GitHub returned merge commit
+  `a96e7b7839428c9542db440bb7847641ae4233b3`; fetched `origin/main` matched it
+  and contained the PR head. The later ledger-only commit is published through
+  a separate follow-up PR based on that exact `main`.
+
+### W9A-098 - Ambiguous status patch targeted the first incident
+
+- Classification: `SIMULATION_BUG`
+- Status: `fixed + regression_verified`
+- Original reproducer: change a generic adjacent
+  `ENVIRONMENT_ISSUE / fixed` pair to `open` without anchoring the patch to the
+  W9A-097 heading.
+- Impact: the uncommitted report temporarily marked W9A-001 open while W9A-097
+  remained fixed. No product, database, remote branch or committed report
+  changed.
+- Required correction: restore W9A-001 with heading-specific context, avoid
+  generic status patches, recount incidents and require every status row to be
+  `fixed + regression_verified` before the next commit. The heading-specific
+  patch restored W9A-001 and the focused validator returned no non-fixed row.
+
+### W9A-099 - Local merge error was initially interpreted as remote failure
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed + regression_verified`
+- Original reproducer: infer PR `#236` remained open from the terminal error
+  emitted by `gh pr merge` without first reading the PR state back from GitHub.
+- Impact: the subsequent ledger commit was pushed to the old head branch after
+  PR `#236` had already merged, so that commit was not an ancestor of
+  `origin/main`. It changed only this incident report; product code, SQL,
+  deployment and production data were unaffected.
+- Required correction: query PR state, merge SHA and ancestry explicitly;
+  create a fresh follow-up branch from merge commit
+  `a96e7b7839428c9542db440bb7847641ae4233b3`, carry only the ledger delta,
+  require a one-file diff and merge that PR through a remote-only API call.
+
 ## Canonical regression evidence
 
 All incidents marked `fixed + regression_verified` are covered by the same
