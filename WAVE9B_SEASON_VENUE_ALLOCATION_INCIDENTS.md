@@ -788,8 +788,8 @@ passes all six races with exactly one authoritative winner per conflict.
   renders and fails the required zero-warning lint gate.
 - Required correction: initialize connectivity lazily from `navigator` and
   deliver cache hydration from an asynchronous external-state callback.
-- Resolution: connectivity now uses a lazy state initializer and cache
-  hydration is deferred through a cancellable microtask.
+- Resolution: connectivity and cache hydration now use deterministic first
+  snapshots and cancellable microtasks, avoiding synchronous effect updates.
 - Regression evidence: focal ESLint passes with zero errors and zero warnings;
   product tests pass `4/4` and typecheck passes.
 
@@ -822,3 +822,95 @@ passes all six races with exactly one authoritative winner per conflict.
 - Resolution: the focal command now targets only configured TypeScript/TSX
   sources; CSS remains covered by production build and visual QA.
 - Regression evidence: focal ESLint exits `0` with zero errors and warnings.
+
+### W9B-052 - Local visual runner uses a different development origin
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed + regression_verified`
+- Original reproducer: start Next on `http://localhost:3100` and open the same
+  process through `http://127.0.0.1:3100/demo` in the isolated browser.
+- Impact: Next 16 blocks cross-origin development chunks, so the server-rendered
+  Demo shell remains on its loading state even though the application build is
+  healthy.
+- Required correction: repeat visual QA on the exact advertised `localhost`
+  origin and confirm that all chunks load; do not weaken `allowedDevOrigins` or
+  change production configuration for this local-host mismatch.
+- Resolution: browser QA now uses the exact advertised `localhost` origin; no
+  application or Next configuration changed.
+- Regression evidence: Demo V3.5 hydrates beyond its loading shell, renders
+  2,472 visible text characters, has zero framework overlays, zero page errors
+  and zero root overflow.
+
+### W9B-053 - Demo section menu is rendered beneath the active surface
+
+- Classification: `SIMULATION_BUG`
+- Status: `fixed + regression_verified`
+- Original reproducer: open Demo V3.5 as Platform reviewer, expand `Secciones`
+  and press `Campos` at desktop width.
+- Impact: the section button has a visible layout box, but the active Home
+  statistics layer covers its click point; Demo V3.5 cannot be reached through
+  normal pointer interaction.
+- Required correction: keep the existing navigation structure and raise only
+  the section popover above the Demo content, then verify pointer navigation at
+  desktop, portrait and landscape widths.
+- Resolution: no product correction was required. The first automation tried
+  to locate the hidden option before opening its native `details` parent; the
+  real sequence opens `Secciones` first and its panel is already above Home.
+- Regression evidence: `elementFromPoint` at the visible `Campos` center
+  resolves to the button itself, and a real pointer click reaches
+  `Season Field Allocation` with zero root overflow.
+
+### W9B-054 - Demo section popover remains open after navigation
+
+- Classification: `PRODUCT_BUG`
+- Status: `fixed + regression_verified`
+- Original reproducer: open `Secciones`, click `Campos` and inspect the newly
+  selected Season Field Allocation surface.
+- Impact: navigation succeeds, but the native `details` panel remains open and
+  obscures the planner header and controls until the user closes it manually.
+- Required correction: close only the originating `details` after invoking the
+  existing tab navigation callback, and add a focused structural plus pointer
+  regression.
+- Resolution: each domain option invokes the unchanged tab callback and then
+  removes `open` from its closest native `details` element.
+- Regression evidence: Demo tests pass `5/5`, focal ESLint/typecheck pass, and
+  the pointer flow ends on `Season Field Allocation` with `open=false` and
+  zero root overflow.
+
+### W9B-055 - Connectivity initializer causes product hydration mismatch
+
+- Classification: `PRODUCT_BUG`
+- Status: `fixed + regression_verified`
+- Original reproducer: open the server-rendered Season Venue Planner in a
+  browser and inspect React hydration. The server and first client render can
+  disagree between `Servidor conectado` and `Solo lectura offline`.
+- Impact: React discards and regenerates the product shell, violates the zero
+  hydration-warning gate and can briefly present the wrong write state.
+- Required correction: use one deterministic SSR/first-client snapshot and
+  update actual browser connectivity only from an asynchronous mounted
+  subscription; retain offline write denial and zero synchronous state updates
+  in effects.
+- Resolution: both SSR and first client render start connected; a cancellable
+  microtask reads `navigator.onLine`, and subsequent browser events remain the
+  only connectivity transitions.
+- Regression evidence: fresh-browser hydration reports zero page errors, zero
+  console errors, `Estado: Servidor conectado`, zero root overflow; focal lint
+  and typecheck both pass.
+
+### W9B-056 - Product route reports a client-rendered script warning
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed + regression_verified`
+- Original reproducer: open the local Season Venue Planner in Next development
+  mode and inspect console output after hydration.
+- Impact: React reports that a script tag encountered inside a rendered
+  component will not execute on the client. The source and ownership are not
+  yet established, so it cannot be classified as Wave 9B product behavior.
+- Required correction: identify the exact script owner and reproduce on an
+  unchanged base route; fix only if Wave 9B introduced or exposed a reachable
+  regression.
+- Resolution: the warning was retained by the development browser after a hot
+  refresh of the root layout; it does not reproduce in a fresh context on the
+  Season Venue Planner or on the unchanged Mercado route.
+- Regression evidence: a clean browser context reports no page errors and only
+  the expected development HMR/React DevTools informational messages.

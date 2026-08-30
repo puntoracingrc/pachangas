@@ -54,7 +54,7 @@ export function SeasonVenuePlannerClient({ competitionId = "", seriesId = "", su
   const [selectedPoolId, setSelectedPoolId] = useState("");
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(Boolean(supabase));
-  const [online, setOnline] = useState(() => typeof navigator === "undefined" ? true : navigator.onLine);
+  const [online, setOnline] = useState(true);
   const [message, setMessage] = useState(supabase ? "" : "Supabase no está configurado.");
   const [pane, setPane] = useState<Pane>("assignment");
   const pending = useRef<{ id: string; key: string } | null>(null);
@@ -124,11 +124,16 @@ export function SeasonVenuePlannerClient({ competitionId = "", seriesId = "", su
   }, [cacheScope, clubId, competitionId, read, selectedPlanId, selectedPoolId, seriesId, surface]);
 
   useEffect(() => {
+    let active = true;
+    queueMicrotask(() => {
+      if (active) setOnline(navigator.onLine);
+    });
     const onlineListener = () => { setOnline(true); void reconcileRef.current?.(); };
     const offlineListener = () => setOnline(false);
     window.addEventListener("online", onlineListener);
     window.addEventListener("offline", offlineListener);
     return () => {
+      active = false;
       window.removeEventListener("online", onlineListener);
       window.removeEventListener("offline", offlineListener);
     };

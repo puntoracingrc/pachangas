@@ -141,7 +141,17 @@ function DemoDomainMenu({ activeTab, onTab, perspectiveId }: {
         {(["competición", "red", "gestión"] as const).map((group) => {
           const entries = visible.filter((item) => item.group === group);
           return entries.length ? <section key={group}><strong>{group}</strong>{entries.map((tab) => (
-            <button aria-current={activeTab === tab.id ? "page" : undefined} key={tab.id} type="button" onClick={() => onTab(tab.id)}>{tab.label}</button>
+            <button
+              aria-current={activeTab === tab.id ? "page" : undefined}
+              key={tab.id}
+              type="button"
+              onClick={(event) => {
+                onTab(tab.id);
+                event.currentTarget.closest("details")?.removeAttribute("open");
+              }}
+            >
+              {tab.label}
+            </button>
           ))}</section> : null;
         })}
       </div>

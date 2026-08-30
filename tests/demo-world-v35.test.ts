@@ -97,6 +97,7 @@ test("V3.5 is sanitized, read-only, PWA-cacheable and visually responsive", asyn
   assert.match(css, /orientation: landscape/);
   assert.match(css, /pointer: coarse/);
   assert.match(app, /DemoWorldV35SeasonFieldAllocation/);
+  assert.match(app, /closest\("details"\)\?\.removeAttribute\("open"\)/);
   assert.match(page, /version: 3\.5/);
   assert.match(worker, /\/demo-world\/v3-5\/manifest\.json/);
   assert.match(generator, /season-venue-allocation-v1-db-runner\.mjs/);
