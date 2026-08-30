@@ -21,7 +21,10 @@ import {
   assertDemoWorldV2AuthorityProof,
   loadDemoWorldV2AuthorityProof,
 } from "../scripts/demo-world/demo-world-v2-authority";
-import { demoWorldVerificationProjection } from "../scripts/demo-world/demo-world-verification-projection";
+import {
+  demoWorldVerificationProjection,
+  demoWorldVerificationProjectionHash,
+} from "../scripts/demo-world/demo-world-verification-projection";
 import { generateDemoWorldV2 } from "../scripts/demo-world/generate-demo-world-v2";
 import {
   assertTeamOperationalV31AuthorityProof,
@@ -83,7 +86,7 @@ test("Demo World V3 is deterministic and the committed snapshot matches its hash
     tournament: committed.tournament,
   };
   assert.equal(createHash("sha256").update(JSON.stringify(payload)).digest("hex"), committed.manifest.hash);
-  assert.equal(committed.manifest.hash, "7959f89934bca9578d5155b8558ba0c24eda8a66d564750f16ef4ad58056e6dc");
+  assert.equal(committed.manifest.hash, "7d1de10a66147c7da53a062db4d96f59fa4b592b0dce6ef9c749044314dcd53c");
   assert.equal(committed.manifest.version, 3.1);
   assert.equal(committed.manifest.seed, DEMO_WORLD_V2_SEED);
   assert.deepEqual(demoWorldV2IntegrityErrors(committed), []);
@@ -92,10 +95,10 @@ test("Demo World V3 is deterministic and the committed snapshot matches its hash
 test("the committed authority proof comes from deterministic PostgreSQL operations", async () => {
   const proof = assertDemoWorldV2AuthorityProof(loadDemoWorldV2AuthorityProof());
   const world = await committedSnapshot();
-  assert.equal(proof.authorityHash, "a5ca22830eb54198c608ba044e8aada8e278c4f6e18538729ea22b48cacdf433");
+  assert.equal(proof.authorityHash, "441370331d462172adf6efa347b16587ad36ef73558f376157d08441fd39c2f1");
   assert.equal(proof.authorityHash, world.competitions.provenance.authorityHash);
   assert.equal(proof.database, "temporary-local-postgresql");
-  assert.equal(proof.migrationCount, 204);
+  assert.equal(proof.migrationCount, 212);
   assert.equal(proof.remoteWrites, 0);
   assert.deepEqual(proof.rpcFamilies, ["R1", "R3", "R4A", "R4B", "R4C", "R4D", "R5", "R6A", "R6B", "R6C", "PUBLIC_COMPETITIONS", "ORGANIZER_BILLING", "ORGANIZER_ACCESS"]);
   assert.deepEqual(proof.refereeAssignments.unconvergedRefereeNumbers, []);
@@ -148,12 +151,18 @@ test("the frozen Demo authority comparison ignores additive migration counts", (
 
 test("V3.1 Team operational safety comes from isolated canonical RPCs", async () => {
   const proof = assertTeamOperationalV31AuthorityProof(loadTeamOperationalV31AuthorityProof());
+  const canonicalAuthority = assertDemoWorldV2AuthorityProof(loadDemoWorldV2AuthorityProof());
   const chunk = (await committedSnapshot()).teamOperational;
   assert.equal(proof.database, "temporary-local-postgresql");
   assert.equal(proof.remoteWrites, 0);
   assert.equal(proof.operationReceipts, 7);
   assert.equal(proof.ownershipTransferReceipts, 1);
   assert.equal(proof.scenarios.length, 7);
+  assert.equal(
+    proof.competitionContinuity.sourceAuthorityHash,
+    demoWorldVerificationProjectionHash(canonicalAuthority),
+  );
+  assert.notEqual(proof.competitionContinuity.sourceAuthorityHash, canonicalAuthority.authorityHash);
   assert.equal(chunk.provenance.authorityHash, proof.authorityHash);
   assert.deepEqual(chunk.scenarios, proof.scenarios);
   assert.deepEqual(chunk.competitionContinuity, proof.competitionContinuity);
@@ -184,7 +193,7 @@ test("the protagonist League has the complete canonical R1-R5 graph including R3
   )));
   assert.deepEqual(league.provenance.rpcFamilies, ["R1", "R3", "R4A", "R4B", "R4C", "R4D", "R5"]);
   assert.equal(league.provenance.verified, true);
-  assert.equal(league.provenance.migrations, 204);
+  assert.equal(league.provenance.migrations, 212);
   assert.equal(league.competition.refereeAssignmentsEnabled, true);
 });
 

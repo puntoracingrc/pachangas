@@ -14,6 +14,7 @@ import {
   assertDemoWorldV2AuthorityProof,
   type DemoWorldV2AuthorityProof,
 } from "./demo-world-v2-authority";
+import { demoWorldVerificationProjectionHash } from "./demo-world-verification-projection";
 
 const root = path.resolve(import.meta.dirname, "../..");
 const manifest = JSON.parse(readFileSync(path.join(root, "supabase/baselines/manifest.json"), "utf8")) as {
@@ -101,7 +102,7 @@ function buildCompetitionContinuity(authority: DemoWorldV2AuthorityProof) {
   assert.ok(standing);
   assert.ok(teamDHistory);
   return {
-    sourceAuthorityHash: authority.authorityHash,
+    sourceAuthorityHash: demoWorldVerificationProjectionHash(authority),
     teamC: {
       canonicalResult: canonicalMatch.result,
       existingCompetitionOperationsAllowed: true as const,

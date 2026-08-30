@@ -285,6 +285,34 @@ try {
   assertOneWinner(suspensionRace);
   assert.equal(query(`select current_revision from private.pachanga_team_operational_states_v1 where group_id=${quote(teams[1])}::uuid`), "2");
 
+  const preparedReview = lastJson(query(command(
+    platformOwner, randomUUID(), teams[13], 1, "team.review.open", {
+      reasonCode: "synthetic.review.race.prepare",
+      safeMessage: "Synthetic review race.",
+      evidence: { synthetic: true },
+    },
+  ), "prepare review close race"));
+  const reviewId = query(`select id from private.pachanga_team_operational_reviews_v1
+    where group_id=${quote(teams[13])}::uuid and status in ('OPEN','NEEDS_INFORMATION')
+    order by server_sequence desc, id desc limit 1`, "read review close race id");
+  const closeReviewOperationId = randomUUID();
+  const restrictReviewedTeamOperationId = randomUUID();
+  const reviewCloseRace = await Promise.all([
+    concurrent(command(platformOwner, closeReviewOperationId, teams[13], preparedReview.confirmedRevision, "team.review.close", {
+      reviewId,
+      outcome: "NO_ACTION",
+      reasonCode: "synthetic.review.race.close",
+      safeMessage: "Synthetic review closed.",
+    }), "close review"),
+    concurrent(command(platformOwner, restrictReviewedTeamOperationId, teams[13], preparedReview.confirmedRevision, "team.restriction.apply", {
+      ...restrictionPayload("synthetic.review.race.restrict"),
+    }), "restrict reviewed Team"),
+  ]);
+  assertOneWinner(reviewCloseRace, /STALE_REVISION/);
+  assert.equal(query(`select current_revision from private.pachanga_team_operational_states_v1 where group_id=${quote(teams[13])}::uuid`), "3");
+  assert.equal(query(`select count(*) from private.pachanga_team_operational_operation_receipts_v1
+    where operation_id in (${quote(closeReviewOperationId)}::uuid,${quote(restrictReviewedTeamOperationId)}::uuid)`), "1");
+
   const preparedSuspend = lastJson(query(command(
     platformOwner, randomUUID(), teams[2], 1, "team.suspend", suspensionPayload("synthetic.prepare.restore"),
   ), "prepare suspend vs restore"));
@@ -510,6 +538,7 @@ try {
     database: "ephemeral-local",
     duplicateOperationReplay: "PASS",
     twoSuspensions: "PASS",
+    reviewCloseVsRestriction: "PASS",
     suspendVsRestore: "PASS",
     restrictVsExpire: "PASS",
     appealVsRestore: "PASS",

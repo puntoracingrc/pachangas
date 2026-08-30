@@ -134,6 +134,51 @@ create index pachanga_registration_operational_block_idx
   on public.pachanga_competition_registration_requests(team_id, operational_blocked_at desc, id)
   where operational_blocked_at is not null;
 
+-- Cover every Wave 8B foreign key so reference cleanup and moderation workflows
+-- never require a full-table scan as operational history grows.
+create index team_op_appeal_msg_appeal_fk_idx
+  on private.pachanga_team_operational_appeal_messages_v1(appeal_id);
+create index team_op_appeal_msg_author_fk_idx
+  on private.pachanga_team_operational_appeal_messages_v1(authored_by);
+create index team_op_appeal_reviewer_fk_idx
+  on private.pachanga_team_operational_appeals_v1(assigned_reviewer);
+create index team_op_appeal_creator_fk_idx
+  on private.pachanga_team_operational_appeals_v1(created_by);
+create index team_op_appeal_resolver_fk_idx
+  on private.pachanga_team_operational_appeals_v1(resolved_by);
+create index team_op_appeal_restriction_fk_idx
+  on private.pachanga_team_operational_appeals_v1(subject_restriction_id);
+create index team_op_continuity_competition_fk_idx
+  on private.pachanga_team_operational_continuity_decisions_v1(competition_id);
+create index team_op_continuity_actor_fk_idx
+  on private.pachanga_team_operational_continuity_decisions_v1(decided_by);
+create index team_op_event_actor_fk_idx
+  on private.pachanga_team_operational_events_v1(actor_id);
+create index team_op_receipt_actor_fk_idx
+  on private.pachanga_team_operational_operation_receipts_v1(actor_id);
+create index team_op_restriction_supersedes_fk_idx
+  on private.pachanga_team_operational_restrictions_v1(supersedes_restriction_id);
+create index team_op_restriction_closed_restriction_fk_idx
+  on private.pachanga_team_operational_restrictions_v1(closed_by_restriction_id);
+create index team_op_restriction_applier_fk_idx
+  on private.pachanga_team_operational_restrictions_v1(applied_by);
+create index team_op_restriction_closer_fk_idx
+  on private.pachanga_team_operational_restrictions_v1(closed_by);
+create index team_op_review_revision_reviewer_fk_idx
+  on private.pachanga_team_operational_review_revisions_v1(assigned_reviewer);
+create index team_op_review_revision_actor_fk_idx
+  on private.pachanga_team_operational_review_revisions_v1(actor_id);
+create index team_op_review_reviewer_fk_idx
+  on private.pachanga_team_operational_reviews_v1(assigned_reviewer);
+create index team_op_review_closer_fk_idx
+  on private.pachanga_team_operational_reviews_v1(closed_by);
+create index team_op_review_opener_fk_idx
+  on private.pachanga_team_operational_reviews_v1(opened_by);
+create index team_op_settings_updater_fk_idx
+  on private.pachanga_team_operational_settings_v1(updated_by);
+create index team_op_state_updater_fk_idx
+  on private.pachanga_team_operational_states_v1(updated_by);
+
 create or replace function public.get_pachanga_team_operational_feature_flags_v1()
 returns jsonb
 language sql

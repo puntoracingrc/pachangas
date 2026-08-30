@@ -289,7 +289,7 @@
   "serverSequenceOrdered": true,
   "ownershipTransferReceipts": 1,
   "competitionContinuity": {
-    "sourceAuthorityHash": "a5ca22830eb54198c608ba044e8aada8e278c4f6e18538729ea22b48cacdf433",
+    "sourceAuthorityHash": "d4e7f2c6bef4e8c807335bc61037512496e8ae6013be0355f88cbcdca51da0db",
     "teamC": {
       "canonicalResult": {
         "away": 1,
@@ -309,5 +309,5 @@
       "newCompetitionRegistrationBlocked": true
     }
   },
-  "authorityHash": "3516c765041587455f04a2ac946cd0874ed204efc837feb4a1db55e2207fd109"
+  "authorityHash": "8813ba4f33eda8ba6e9a75de2572d31747c7fe613a3d71c4733c5625c3539a7c"
 }

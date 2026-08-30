@@ -175,6 +175,15 @@ select pg_temp.assert_true(
   ) = (select review_response from wave8b_state),
   'Exact replay must return the canonical receipt without a second decision'
 );
+select pg_temp.expect_failure(format(
+  'select public.command_pachanga_team_operational_state_v1(%L,%L,%s,%L,%L::jsonb,%L::jsonb)',
+  '8b100000-0000-4000-8000-000000000019',
+  '8b000000-0000-4000-8000-000000000102',
+  (select review_revision from wave8b_state),
+  'team.review.close',
+  '{"outcome":"NO_ACTION","reasonCode":"synthetic.review.missing_id"}',
+  '{}'
+), 'TEAM_REVIEW_ID_REQUIRED');
 reset role;
 
 select pg_temp.assert_true(

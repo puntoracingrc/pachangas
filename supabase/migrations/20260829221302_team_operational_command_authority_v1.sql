@@ -517,12 +517,18 @@ begin
     if payload - array['reviewId','outcome','safeMessage','privateNote','reasonCode'] <> '{}'::jsonb then
       raise exception 'TEAM_OPERATIONAL_PAYLOAD_FIELD_NOT_ALLOWED' using errcode = '22023';
     end if;
-    select * into strict review_row
+    if nullif(trim(coalesce(payload ->> 'reviewId', '')), '') is null then
+      raise exception 'TEAM_REVIEW_ID_REQUIRED' using errcode = '22023';
+    end if;
+    select * into review_row
     from private.pachanga_team_operational_reviews_v1 reviews
     where reviews.id = (payload ->> 'reviewId')::uuid
       and reviews.group_id = target_group_id
       and reviews.status in ('OPEN', 'NEEDS_INFORMATION')
     for update;
+    if not found then
+      raise exception 'TEAM_REVIEW_NOT_FOUND' using errcode = 'P0002';
+    end if;
     selected_status := case upper(coalesce(payload ->> 'outcome', 'NO_ACTION'))
       when 'ACTION_TAKEN' then 'CLOSED_ACTION_TAKEN' else 'CLOSED_NO_ACTION' end;
     update private.pachanga_team_operational_reviews_v1 reviews set

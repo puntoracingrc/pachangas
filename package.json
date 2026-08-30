@@ -166,6 +166,7 @@
     "test:team-operational:db": "node tests/team-operational-state-v1-db-runner.mjs",
     "test:team-operational:concurrency": "node tests/team-operational-state-v1-concurrency.mjs",
     "test:team-operational:scale": "node tests/team-operational-state-v1-scale-runner.mjs",
+    "test:team-operational:staging": "node tests/team-operational-state-v1-staging-e2e.mjs",
     "test:organizer-access:concurrency": "node tests/organizer-access-onboarding-v1-concurrency.mjs",
     "lab:season-ranking": "tsx simulation/season-ranking-lab/run.ts",
     "lab:season-ranking:elite": "tsx simulation/season-ranking-lab/run-elite.ts",

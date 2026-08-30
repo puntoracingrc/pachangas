@@ -95,6 +95,96 @@ test("Wave 8B consists of exactly eight forward-only migrations after ledger 204
   assert.doesNotMatch(sql, /grant update on table public\.pachanga_groups to authenticated/i);
 });
 
+test("Wave 8B hardening covers every operational foreign key reported by Advisors", async () => {
+  const sql = await source("supabase/migrations/20260829221312_team_operational_hardening_indexes_flags_v1.sql");
+  for (const indexName of [
+    "team_op_appeal_msg_appeal_fk_idx",
+    "team_op_appeal_msg_author_fk_idx",
+    "team_op_appeal_reviewer_fk_idx",
+    "team_op_appeal_creator_fk_idx",
+    "team_op_appeal_resolver_fk_idx",
+    "team_op_appeal_restriction_fk_idx",
+    "team_op_continuity_competition_fk_idx",
+    "team_op_continuity_actor_fk_idx",
+    "team_op_event_actor_fk_idx",
+    "team_op_receipt_actor_fk_idx",
+    "team_op_restriction_supersedes_fk_idx",
+    "team_op_restriction_closed_restriction_fk_idx",
+    "team_op_restriction_applier_fk_idx",
+    "team_op_restriction_closer_fk_idx",
+    "team_op_review_revision_reviewer_fk_idx",
+    "team_op_review_revision_actor_fk_idx",
+    "team_op_review_reviewer_fk_idx",
+    "team_op_review_closer_fk_idx",
+    "team_op_review_opener_fk_idx",
+    "team_op_settings_updater_fk_idx",
+    "team_op_state_updater_fk_idx",
+  ]) {
+    assert.match(sql, new RegExp(`create index ${indexName}\\b`));
+  }
+});
+
+test("Wave 8B staging harness is synthetic-only and rejects production targets", async () => {
+  const staging = await source("tests/team-operational-state-v1-staging-e2e.mjs");
+  assert.match(staging, /TEAM_OPERATIONAL_STAGING_PRODUCTION_TARGET_FORBIDDEN/);
+  assert.match(staging, /TEAM_OPERATIONAL_STAGING_ONLY/);
+  assert.match(staging, /EPHEMERAL_BRANCH_DESTRUCTION_REQUIRED/);
+  assert.match(staging, /command_pachanga_team_operational_state_v1/);
+  assert.match(staging, /command_pachanga_organizer_access_application_v1/);
+  assert.match(staging, /transfer_pachanga_group_ownership_authoritative_v1/);
+  assert.match(staging, /expire_pachanga_team_operational_states_v1/);
+  assert.match(staging, /pachanga_team_operational_invalidations_v1/);
+  assert.doesNotMatch(staging, /pachanga_public_competition_settings_v1/);
+  assert.doesNotMatch(staging, /invalidation_kind/);
+  assert.doesNotMatch(staging, /service\.from\(/);
+  assert.doesNotMatch(staging, /snapshot\.state/);
+  assert.doesNotMatch(staging, /snapshot\.ownerId/);
+  assert.doesNotMatch(staging, /new_owner_id/);
+  assert.match(staging, /target_user_id: nextOwnerAccount\.id/);
+  assert.match(staging, /transfer\.targetUserId/);
+  assert.match(staging, /transfer\.membershipStatus/);
+  assert.match(staging, /reviewId: ownerBReviewId/);
+  assert.doesNotMatch(staging, /TEAM_OPERATIONAL_STAGING_KEEP/i);
+});
+
+test("review closure validates its target and racing clients receive a canonical stale revision", async () => {
+  const authority = await source("supabase/migrations/20260829221302_team_operational_command_authority_v1.sql");
+  const database = await source("tests/team-operational-state-v1-db.sql");
+  const concurrency = await source("tests/team-operational-state-v1-concurrency.mjs");
+  assert.match(authority, /TEAM_REVIEW_ID_REQUIRED/);
+  assert.match(authority, /TEAM_REVIEW_NOT_FOUND/);
+  assert.match(database, /synthetic\.review\.missing_id/);
+  assert.match(database, /TEAM_REVIEW_ID_REQUIRED/);
+  assert.match(concurrency, /reviewCloseVsRestriction: "PASS"/);
+  assert.match(concurrency, /assertOneWinner\(reviewCloseRace, \/STALE_REVISION\//);
+});
+
+test("public invalidations use RLS while canonical private tables remain unreachable", async () => {
+  const migrations = await Promise.all([
+    source("supabase/migrations/20260829221256_team_operational_state_revisions_v1.sql"),
+    source("supabase/migrations/20260829221258_team_operational_restrictions_continuity_v1.sql"),
+    source("supabase/migrations/20260829221300_team_operational_reviews_appeals_v1.sql"),
+    source("supabase/migrations/20260829221309_team_operational_rls_realtime_notifications_v1.sql"),
+  ]);
+  const sql = migrations.join("\n");
+  assert.match(sql, /alter table public\.pachanga_team_operational_invalidations_v1 enable row level security/);
+  assert.match(sql, /create policy pachanga_team_operational_invalidations_member_read_v1/);
+  for (const relation of [
+    "states_v1",
+    "state_revisions_v1",
+    "operation_receipts_v1",
+    "events_v1",
+    "restrictions_v1",
+    "continuity_decisions_v1",
+    "reviews_v1",
+    "review_revisions_v1",
+    "appeals_v1",
+    "appeal_messages_v1",
+  ]) {
+    assert.match(sql, new RegExp(`revoke all on table private\\.pachanga_team_operational_${relation} from public, anon, authenticated`));
+  }
+});
+
 test("cross-product guards protect every Wave 8B boundary without mutating sporting history", async () => {
   const sql = await source("supabase/migrations/20260829221304_team_operational_cross_product_guards_v1.sql");
   for (const boundary of [
