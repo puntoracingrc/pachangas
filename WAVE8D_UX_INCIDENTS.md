@@ -35,5 +35,14 @@ diagnostic failures are grouped at the end.
   was stopped cleanly; the exact package suite was then rerun to completion.
 - The browser wrapper rejected `networkidle`; QA uses `domcontentloaded` plus a
   bounded render wait.
-- `next dev` generated untracked `AGENTS.md` and `CLAUDE.md`; both are temporary
-  framework artifacts and will be removed after the local server stops.
+- `next dev` generated untracked `AGENTS.md` and `CLAUDE.md`; both temporary
+  framework artifacts were removed after the local server stopped.
+- The protected Preview initially required a Vercel share session. A clean
+  browser tab established that session, after which the exact deployment was
+  verified without changing application code or configuration.
+- The isolated worktree intentionally had no legacy Supabase link file. The
+  read-only ledger check used the explicit approved project ref and confirmed
+  212 local/remote pairs with no drift; no link or schema state was written.
+- A first PR-body command interpreted Markdown backticks in the shell and was
+  discarded. The body was replaced from a temporary file, verified on GitHub,
+  and the temporary file was deleted; Git and product state were unaffected.
