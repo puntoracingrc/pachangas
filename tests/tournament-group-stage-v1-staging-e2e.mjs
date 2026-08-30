@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { randomUUID } from "node:crypto";
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -9,6 +9,11 @@ import { createClient } from "@supabase/supabase-js";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const productionRef = "qonbngfrnrqgmxbdfbea";
+const r6bBoundaryMigration = "20260827105036";
+const localMigrationVersions = readdirSync(resolve(root, "supabase/migrations"))
+  .map((filename) => filename.match(/^(\d+)_.*\.sql$/)?.[1])
+  .filter(Boolean)
+  .sort();
 const env = {
   confirmation: process.env.TOURNAMENT_GROUP_STAGING_CONFIRM,
   databaseUrl: process.env.TOURNAMENT_GROUP_STAGING_DATABASE_URL,
@@ -267,11 +272,15 @@ async function main() {
     select jsonb_build_object(
       'ledger', (select count(*) from supabase_migrations.schema_migrations),
       'lastMigration', (select max(version) from supabase_migrations.schema_migrations),
+      'migrations', (select jsonb_agg(version order by version)
+        from supabase_migrations.schema_migrations),
       'competitions', (select count(*) from public.pachanga_competitions)
     )::text;
   `, "inspect isolated staging baseline");
-  assert.equal(initial.ledger, 169);
-  assert.equal(initial.lastMigration, "20260827105036");
+  assert.ok(initial.migrations.includes(r6bBoundaryMigration));
+  assert.deepEqual(initial.migrations, localMigrationVersions);
+  assert.equal(initial.ledger, localMigrationVersions.length);
+  assert.equal(initial.lastMigration, localMigrationVersions.at(-1));
   if (!resumeExistingFixture) assert.equal(initial.competitions, 0);
   if (resumeExistingFixture) assert.equal(initial.competitions, 1);
 

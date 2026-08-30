@@ -299,7 +299,11 @@ test("the authenticated staging runner composes R1 through R4D and restores the 
   assert.match(scheduling, /r4b-qa-private-beta-/);
   assert.match(scheduling, /notificationCount, PRIVATE_BETA_EXTENSION \? 12 : 6/);
   assert.match(scheduling, /organizerModel\(organizerClient, organizerKind, organizerId\)/);
+  assert.match(scheduling, /const WIZARD_V2_WINDOW = PRIVATE_BETA_EXTENSION/);
+  assert.match(scheduling, /League Private Beta Wizard V2 dependency window/);
+  assert.match(scheduling, /League Private Beta Wizard V2 restore/);
   assert.match(scheduling, /\["beta", cleanupReadback\.beta, initialFlagState\.beta\]/);
+  assert.match(scheduling, /\["configuration", cleanupReadback\.configuration, initialFlagState\.configuration\]/);
   assert.match(scheduling, /typeof value === "boolean"/);
   assert.match(scheduling, /actual\[key\], value, `\$\{label\}\.\$\{key\} must match the initial snapshot`/);
   assert.match(scheduling, /flags: "restored_initial"/);

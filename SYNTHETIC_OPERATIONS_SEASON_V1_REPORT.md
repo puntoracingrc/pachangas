@@ -107,20 +107,55 @@ Simulate, verify, replay, checkpoint e inspect: `PASS`.
 
 | Gate local | Resultado |
 | --- | --- |
-| `npm ci` | PASS; 522 paquetes, 21 vulnerabilidades de dependencias preexistentes |
-| `npm test` | PASS; Node 20/20, TS/TSX 648/648, total 668/668 |
+| `npm ci` | PASS |
+| `npm test` | PASS; Node 20/20, TS/TSX 650/650, total 670/670 |
 | fail/cancelled/skipped/todo | 0/0/0/0 |
 | `npm run typecheck` | PASS |
-| `npm run build` | PASS; Next.js 16.2.6, 62 paginas estaticas |
+| `npm run build` | PASS; Next.js 16.3.3, 62 paginas estaticas |
 | lint focalizado Wave 8C | PASS, cero errores y avisos |
 | lint global | 40 problemas preexistentes fuera del diff: 22 errores, 18 avisos |
 | `git diff --check` | PASS |
 | secret scan Wave 8C | PASS |
-| test focal | 19/19 PASS |
+| `npm audit --omit=dev` | PASS; 0 vulnerabilidades de runtime |
+| audit completo | 18 hallazgos dev-only preexistentes; sin `--force` destructivo |
+| test focal | 20/20 PASS |
 | matriz visual local | 128/128 PASS |
 | consola/hidratacion | 0 errores y 0 avisos |
 | PWA cache/offline | PASS |
 
 La deuda global de lint queda como `W8C-025`, abierta y no bloqueante porque
-afecta exclusivamente rutas preexistentes no modificadas. Preview, staging
-efimero y release productiva se registran por separado cuando se completen.
+afecta exclusivamente rutas preexistentes no modificadas. El toolchain de
+desarrollo conserva 18 advisories que requieren upgrades incompatibles; el
+runtime productivo queda en cero tras actualizar Next a 16.3.3.
+
+## Staging efimero
+
+La temporada reducida se ejecuto sobre un unico branch Supabase limpio con el
+ledger canonico completo de 212 migraciones y sin clonar datos. Se utilizaron
+exclusivamente identidades `.test` y grants sinteticos:
+
+| Evidencia | Resultado |
+| --- | ---: |
+| Clubs / Teams / jugadores / arbitros | 3 / 12 / 120 / 6 |
+| Ligas / Torneos | 1 / 1 |
+| Liga oficial | 30 partidos, 30 decisiones y 5 standing states |
+| Group Stage / Knockout | 12 / 8 partidos oficiales |
+| CanonicalMatches activos | 50 |
+| Lineage retirado preservado | 1 predecessor |
+| Campeon / completion snapshots | 1 / 2 |
+| Private Beta capabilities | 14/14 |
+| Staff activo / distinto | 2 / 2 |
+| MAIN_REFEREE solapados | 0 |
+| Destinatarios no sinteticos | 0 |
+| Email / push reales | 0 / 0 |
+| Stripe calls | 0 |
+
+Realtime se valido con dos dispositivos autenticados. Una ejecucion recibio
+ambas invalidaciones; otra reprodujo perdida parcial, recreo ambos canales y
+ambos clientes releyeron la misma revision canonica 14 al entrar en
+`SUBSCRIBED`. La operacion deportiva se emitio una sola vez, con un ganador y
+un stale; su replay fue idempotente. Ningun cliente aplico WAL como estado.
+
+El proof final exacto de staging pasa. El branch se conserva solo hasta que la
+Preview del SHA final complete QA con variables publicas branch-scoped; despues
+se destruye y se exige readback 404.

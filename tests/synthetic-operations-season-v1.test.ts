@@ -74,6 +74,71 @@ test("Synthetic Operations Season V1 is deterministic and stays inside the contr
   assert.deepEqual(syntheticSeasonIntegrityErrors(first.index, first.checkpoints), []);
 });
 
+test("hosted reduced season is production guarded and composes the canonical engines", async () => {
+  const runner = await readFile(
+    path.join(root, "tests/synthetic-operations-season-v1-staging-e2e.mjs"),
+    "utf8",
+  );
+  assert.match(runner, /SYNTHETIC_SEASON_EPHEMERAL_ONLY/);
+  assert.match(runner, /qonbngfrnrqgmxbdfbea/);
+  assert.match(runner, /SYNTHETIC_SEASON_STAGING_PRODUCTION_TARGET_FORBIDDEN/);
+  assert.match(runner, /assert\.deepEqual\(initial\.migrations, localMigrationVersions\)/);
+  assert.match(runner, /canonicalMatches: 50/);
+  assert.match(runner, /clubs: 3/);
+  assert.match(runner, /teams: 12/);
+  assert.match(runner, /players: 120/);
+  assert.match(runner, /referees: 6/);
+  assert.match(runner, /leagueMatches: 30/);
+  assert.match(runner, /tournamentGroupMatches: 12/);
+  assert.match(runner, /tournamentKnockoutMatches: 8/);
+  assert.match(runner, /participantCap\\\":16\", \"participantCap\\\":12\", 3, \"participant-cap\"/);
+  assert.match(runner, /expectMarker\(source, "generate_series\(1, 6\) slot_number", 1, "three-round-rest-safe-slots"\)/);
+  assert.doesNotMatch(runner, /generate_series\(1, 6\) slot_number", "generate_series\(1, 3\) slot_number/);
+  assert.match(runner, /"if match_row\.ordinal = 11 then", "if match_row\.ordinal = 5 then", 1, "reduced-suspension-scenario"/);
+  assert.match(runner, /"if match_row\.ordinal = 14 then", "if match_row\.ordinal = 6 then", 1, "reduced-dispute-scenario"/);
+  assert.match(runner, /psql\(\["-v", "DEMO_WORLD_V2_PERSIST=1"\], "operate twelve-team Tournament group stage"/);
+  assert.match(runner, /\["DW00004", "DW00005", 1, "discipline-source-team"\]/);
+  assert.match(runner, /\["demo-world-v2-5-player-profile-4-1", "demo-world-v2-5-player-profile-5-1", 4, "discipline-source-player"\]/);
+  assert.match(runner, /W8C_STAGING_REALTIME_TIMEOUT:\$\{label\}`\)\), 35_000/);
+  assert.match(runner, /stage: "realtime-subscription"/);
+  assert.match(runner, /stage: "realtime-invalidation"/);
+  assert.match(runner, /stage: "realtime-reconnect"/);
+  assert.match(runner, /maximumAttempts = 3/);
+  assert.match(runner, /W8C_STAGING_REALTIME_RECONNECT_EXHAUSTED/);
+  assert.match(runner, /W8C_STAGING_REALTIME_DELIVERY_MISSING/);
+  assert.match(runner, /Promise\.allSettled\(\[realtimeA\.event, realtimeB\.event\]\)/);
+  assert.match(runner, /const deliveredEvents = realtimeResults\.filter/);
+  assert.match(runner, /canonicalDevices: 2/);
+  assert.match(runner, /reconnectedA\.groupStage\.revision, afterA\.groupStage\.revision/);
+  assert.match(runner, /setTimeout\(resolvePromise, 2_000\)/);
+  assert.match(runner, /000000000012', 'competition_director'/);
+  assert.match(runner, /000000000011', 'competition_schedule_manager'/);
+  assert.doesNotMatch(runner, /000000000012', 'competition_schedule_manager'/);
+  assert.match(runner, /wave8c_actor\('64010000-0000-4000-8000-000000000011'\)/);
+  assert.match(runner, /pachanga_league_private_beta_capabilities_v1\(\)/);
+  assert.match(runner, /W8C_STAGING_SCHEDULE_MANAGER_NOT_AUTHORIZED/);
+  assert.match(runner, /W8C_STAGING_UNAUTHORIZED_SCHEDULE_ACCEPTED/);
+  assert.match(runner, /COMPETITION_SCHEDULE_MANAGER_REQUIRED/);
+  assert.match(runner, /W8C_STAGING_LEAGUE_OFFICIAL_DECISION_COUNT_INVALID/);
+  assert.doesNotMatch(runner, /'official', 'official_result\.publish'/);
+  assert.match(runner, /users\.id=notifications\.recipient_user_id/);
+  assert.doesNotMatch(runner, /users\.id=notifications\.user_id/);
+  assert.match(runner, /where contexts\.status <> 'retired'/);
+  assert.match(runner, /retiredLineageMatches/);
+  assert.match(runner, /brackets\.current_completion_snapshot_id/);
+  assert.match(runner, /completionSnapshotLineage/);
+  assert.doesNotMatch(runner, /snapshots\.status='PUBLISHED'/);
+  assert.match(runner, /leagueDistinctActiveStaff/);
+  assert.match(runner, /leagueBundleCapabilities/);
+  assert.match(runner, /leagueOfficialDecisionMatches/);
+  assert.match(runner, /\.slice\(-12_000\)/);
+  assert.match(runner, /WAVE8C_REDUCED_AUTHENTICATED_SEASON_FAIL/);
+  assert.match(runner, /enterStage\("tournament-group-stage"\)/);
+  assert.match(runner, /ONE_WINNER_ONE_STALE/);
+  assert.match(runner, /POSTGRES_CHANGES_RECEIVED_AND_CANONICAL_REFETCHED/);
+  assert.doesNotMatch(runner, /NEXT_PUBLIC[^\n]*SERVICE_ROLE|process\.env\.NEXT_PUBLIC[^\n]*SERVICE_ROLE/);
+});
+
 test("League schedules use the production engine and canonical matches are unique", () => {
   const { index } = buildSyntheticSeason();
   assert.equal(index.proof.authorityAnchors.leagueSchedulingEngineVersion, "league-round-robin-v1");

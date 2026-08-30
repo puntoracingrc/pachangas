@@ -45,6 +45,15 @@ test("R6B exposes a bounded command, Hub tab and read-cache contract", () => {
   ]);
 });
 
+test("hosted R6B verifies its minimum frontier and the complete checkout ledger", async () => {
+  const runner = await source("tests/tournament-group-stage-v1-staging-e2e.mjs");
+  assert.match(runner, /const r6bBoundaryMigration = "20260827105036"/);
+  assert.match(runner, /readdirSync\(resolve\(root, "supabase\/migrations"\)\)/);
+  assert.match(runner, /initial\.migrations\.includes\(r6bBoundaryMigration\)/);
+  assert.match(runner, /assert\.deepEqual\(initial\.migrations, localMigrationVersions\)/);
+  assert.doesNotMatch(runner, /assert\.equal\(initial\.ledger, 169\)/);
+});
+
 test("slot proposals are deterministic semantic intent and never contain server fields", () => {
   const slots = buildTournamentGroupStageSlotIntents({
     firstStartsAt: "2027-06-01T18:00:00.000Z",

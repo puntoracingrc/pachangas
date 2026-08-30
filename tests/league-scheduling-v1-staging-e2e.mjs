@@ -18,6 +18,7 @@ const REFEREE_ASSIGNMENTS_EXTENSION = process.env.REFEREE_ASSIGNMENTS_STAGING_EX
 const PRIVATE_BETA_EXTENSION = process.env.LEAGUE_PRIVATE_BETA_STAGING_EXTENSION === "1";
 const CONFIGURATION_EXTENSION = process.env.COMPETITION_CONFIGURATION_STAGING_EXTENSION === "1";
 const MATCH_OPERATIONS_EXTENSION = R4C_EXTENSION || R4D_EXTENSION;
+const WIZARD_V2_WINDOW = PRIVATE_BETA_EXTENSION;
 
 const env = {
   url: process.env.R4B_STAGING_URL,
@@ -952,7 +953,7 @@ try {
     rpc(platform, "get_pachanga_league_operational_exceptions_flags_v1"),
     rpc(platform, "get_pachanga_referee_foundation_flags_v1"),
     rpc(platform, "get_pachanga_competition_discipline_flags_v1"),
-    CONFIGURATION_EXTENSION ? configurationFlags(platform) : Promise.resolve(null),
+    WIZARD_V2_WINDOW ? configurationFlags(platform) : Promise.resolve(null),
   ]);
   initialFlagState = {
     beta: initialBeta,
@@ -1044,14 +1045,16 @@ try {
       }, "Wave 5A staging Referee Assignments dependency");
       assert.equal(assignmentEnabled.snapshot.assignmentPrivateBetaEnabled, true);
       assert.equal(assignmentEnabled.snapshot.assignmentsEnabled, true);
-      const configurationEnabled = await setConfigurationFlags(platform, {
-        configurationCenterEnabled: true,
-        wizardV2Enabled: true,
-      }, "Wave 5A staging activation after dependencies");
-      assert.equal(configurationEnabled.snapshot.configurationCenterEnabled, true);
-      assert.equal(configurationEnabled.snapshot.wizardV2Enabled, true);
-      assert.equal(configurationEnabled.snapshot.publicSurfacesOff, true);
     }
+    const configurationEnabled = await setConfigurationFlags(platform, {
+      configurationCenterEnabled: true,
+      wizardV2Enabled: true,
+    }, CONFIGURATION_EXTENSION
+      ? "Wave 5A staging activation after dependencies"
+      : "League Private Beta Wizard V2 dependency window");
+    assert.equal(configurationEnabled.snapshot.configurationCenterEnabled, true);
+    assert.equal(configurationEnabled.snapshot.wizardV2Enabled, true);
+    assert.equal(configurationEnabled.snapshot.publicSurfacesOff, true);
     const noGrant = await betaCommand(ownerB, "command_pachanga_league_private_beta_v1", {
       action: "wizard.create",
       aggregateId: TEAMS[1].groupId,
@@ -2121,10 +2124,6 @@ try {
       });
       if (initialFlagState) {
         if (CONFIGURATION_EXTENSION && initialFlagState.configuration) {
-          await bestEffort("restore-wave5a", () => setConfigurationFlags(platform, {
-            configurationCenterEnabled: initialFlagState.configuration.configurationCenterEnabled,
-            wizardV2Enabled: initialFlagState.configuration.wizardV2Enabled,
-          }, "Wave 5A staging restore"));
           await bestEffort("restore-referee-assignment-beta", () => setRefereeAssignmentBetaFlags(
             platform,
             {
@@ -2133,6 +2132,14 @@ try {
             },
             "Wave 5A staging Referee Assignments restore",
           ));
+        }
+        if (WIZARD_V2_WINDOW && initialFlagState.configuration) {
+          await bestEffort("restore-wave5a", () => setConfigurationFlags(platform, {
+            configurationCenterEnabled: initialFlagState.configuration.configurationCenterEnabled,
+            wizardV2Enabled: initialFlagState.configuration.wizardV2Enabled,
+          }, CONFIGURATION_EXTENSION
+            ? "Wave 5A staging restore"
+            : "League Private Beta Wizard V2 restore"));
         }
         await bestEffort("restore-private-beta", () => setBetaFlags(platform, {
           creationEnabled: initialFlagState.beta.creationEnabled,
@@ -2220,7 +2227,7 @@ try {
           rpc(platform, "get_pachanga_league_operational_exceptions_flags_v1"),
           rpc(platform, "get_pachanga_referee_foundation_flags_v1"),
           rpc(platform, "get_pachanga_competition_discipline_flags_v1"),
-          CONFIGURATION_EXTENSION
+          WIZARD_V2_WINDOW
             ? rpc(platform, "get_pachanga_platform_competition_configuration_v1")
             : Promise.resolve(null),
           fixtureAdmin.from("pachanga_competition_entitlement_grants")
@@ -2290,7 +2297,7 @@ if (PRIVATE_BETA_EXTENSION) {
     ["operationalExceptions", cleanupReadback.operationalExceptions, initialFlagState.operationalExceptions],
     ["referee", cleanupReadback.referee, initialFlagState.referee],
     ["discipline", cleanupReadback.discipline, initialFlagState.discipline],
-    ...(CONFIGURATION_EXTENSION
+    ...(WIZARD_V2_WINDOW
       ? [["configuration", cleanupReadback.configuration, initialFlagState.configuration]]
       : []),
   ]) {

@@ -197,6 +197,7 @@
     "synthetic-season:replay": "tsx simulation/synthetic-season/cli.ts replay",
     "synthetic-season:checkpoint": "tsx simulation/synthetic-season/cli.ts checkpoint",
     "synthetic-season:inspect": "tsx simulation/synthetic-season/cli.ts inspect",
+    "synthetic-season:staging": "node tests/synthetic-operations-season-v1-staging-e2e.mjs",
     "test:demo-world:v2": "tsx --test tests/demo-world-v2.test.ts",
     "test:synthetic-world": "tsx --test tests/synthetic-world.test.ts tests/conduct-reports-no-show-v1.test.ts",
     "test:conduct-v1": "tsx --test tests/conduct-reports-no-show-v1.test.ts",
@@ -212,7 +213,7 @@
   "dependencies": {
     "@supabase/supabase-js": "^2.110.9",
     "drizzle-orm": "0.45.2",
-    "next": "16.2.6",
+    "next": "16.3.3",
     "react": "19.2.6",
     "react-dom": "19.2.6",
     "stripe": "^22.3.2",
