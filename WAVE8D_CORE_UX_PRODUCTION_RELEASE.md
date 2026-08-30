@@ -9,6 +9,9 @@
 - Vercel deployment: `dpl_HaHPEHZEXS3Dz6BTM34YqKgn4Rea`, `READY`.
 - Deployment URL: `https://pachangas-b0650rdf1-persianas-almar-web-s-projects.vercel.app`.
 - Production aliases: `https://pachangasiq.com` and `https://www.pachangasiq.com`.
+- The later documentation-only merge contains no product code change. Vercel
+  derives its build and Service Worker identifiers from that final `main` SHA;
+  the final identifiers are therefore verified in the external task closure.
 - Supabase project verified read-only: `qonbngfrnrqgmxbdfbea` (`Pachangas`).
 - Supabase migrations created/applied by Wave 8D: 0 / 0.
 - Supabase ledger: 212 local and 212 remote, with 0 local-only, 0 remote-only, and 0 mismatches.
@@ -48,7 +51,9 @@ deployment.
 - Manifest: `200`, installable, `display: fullscreen`, with `standalone`,
   `minimal-ui`, and `browser` fallbacks.
 - Service Worker: `200`, `Cache-Control: no-cache, no-store, must-revalidate`.
-- Productive worker version: `2.0.0+sw.dda599b0640e`.
+- Functional release worker observed: `2.0.0+sw.dda599b0640e`. The
+  documentation-only closure rebuild uses the same worker source with its own
+  final `main` SHA-derived version.
 - Demo V3.3 manifest and app shell are precached.
 - `/api`, `/auth`, Supabase, Stripe, Google, non-GET requests, and URL-bearing
   private navigation are excluded from runtime caching.
@@ -121,7 +126,7 @@ deployment.
 | 46 | Production smoke | PASS on 11 surfaces |
 | 47 | Logs | 0 runtime errors; 0 warning/error entries; no 4xx/5xx observed |
 | 48 | Deployment | `dpl_HaHPEHZEXS3Dz6BTM34YqKgn4Rea` READY |
-| 49 | Service Worker | `2.0.0+sw.dda599b0640e`, live and non-cacheable |
+| 49 | Service Worker | Live and non-cacheable; version is derived from each deployed `main` SHA |
 | 50 | Cleanup | Release worktree retained only until this report is merged; final removal is recorded in the task closure |
 | 51 | Real entities used | 0 |
 | 52 | External notifications | 0 |
