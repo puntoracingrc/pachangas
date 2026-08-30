@@ -103,6 +103,8 @@ create index if not exists pachanga_venue_reservations_terms_idx
   on public.pachanga_venue_reservations(terms_id,id);
 create index if not exists pachanga_venue_reservations_claim_idx
   on public.pachanga_venue_reservations(claim_id,id);
+create index if not exists pachanga_venue_reservations_venue_status_idx
+  on public.pachanga_venue_reservations(venue_id,status,server_sequence desc,id);
 create index if not exists pachanga_venue_bindings_fixture_idx
   on public.pachanga_venue_match_bindings(fixture_change_id,fixture_change_revision_id,id)
   where fixture_change_id is not null;

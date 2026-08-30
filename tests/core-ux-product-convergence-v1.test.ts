@@ -42,7 +42,7 @@ test("role-aware utilities prioritize capability context without granting author
   const owner = contextualDestinationsForPerspective("team-owner");
   const referee = contextualDestinationsForPerspective("referee");
   const reviewer = contextualDestinationsForPerspective("platform-reviewer");
-  assert.deepEqual(player.map(({ id }) => id), ["team", "ranking", "notifications"]);
+  assert.deepEqual(player.map(({ id }) => id), ["team", "reservations", "ranking", "notifications"]);
   assert.ok(owner.some(({ id }) => id === "organize"));
   assert.ok(referee.some(({ id }) => id === "assignments"));
   assert.deepEqual(referee.map(({ href }) => href), [

@@ -32,6 +32,9 @@ insert into public.pachanga_club_memberships(
   ('e9020000-0000-4000-8000-000000000001', 'e9010000-0000-4000-8000-000000000003', 'club_reservation_manager', 'active', clock_timestamp(), 'e9010000-0000-4000-8000-000000000001'),
   ('e9020000-0000-4000-8000-000000000001', 'e9010000-0000-4000-8000-000000000004', 'club_viewer', 'active', clock_timestamp(), 'e9010000-0000-4000-8000-000000000001');
 
+insert into private.pachanga_platform_admin_roles(user_id,role,active,granted_by)
+values('e9010000-0000-4000-8000-000000000001','platform_admin',true,'e9010000-0000-4000-8000-000000000001');
+
 insert into public.pachanga_competition_rule_revisions(
   id, rule_set_id, version, schema_version, rule_document, checksum,
   effective_from, effective_scope, status, revision, reason, created_by

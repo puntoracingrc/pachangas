@@ -41,6 +41,7 @@ export const PRODUCT_PORTRAIT_DESTINATIONS = PRODUCT_PRIMARY_DESTINATIONS.filter
 
 const commonPlayerTools: ProductContextualDestination[] = [
   { href: "/?mobile=equipo", id: "team", label: "Equipo", short: "EQ" },
+  { href: "/reservas", id: "reservations", label: "Reservas", short: "RS" },
   { href: "/ranking", id: "ranking", label: "Ranking", short: "RK" },
   { href: "/perfil/avisos", id: "notifications", label: "Avisos", short: "AV" },
 ];
@@ -48,6 +49,8 @@ const commonPlayerTools: ProductContextualDestination[] = [
 const organizerTools: ProductContextualDestination[] = [
   { href: "/organizacion/solicitudes", id: "organize", label: "Organizar", short: "OR" },
   { href: "/clubes/gestionar", id: "clubs", label: "Club", short: "CL" },
+  { href: "/clubes/gestionar/campos", id: "venues", label: "Campos", short: "CP" },
+  { href: "/clubes/gestionar/reservas", id: "bookings", label: "Reservas", short: "RS" },
   { href: "/ligas", id: "leagues", label: "Ligas", short: "LG" },
   { href: "/torneos", id: "tournaments", label: "Torneos", short: "TR" },
   { href: "/perfil/avisos", id: "notifications", label: "Avisos", short: "AV" },
@@ -77,6 +80,7 @@ export function contextualDestinationsForPerspective(
   if (perspective === "team-admin" || perspective === "team-owner") {
     return [
       ...commonPlayerTools,
+      { href: "/campos", id: "venues", label: "Campos", short: "CP" },
       { href: "/organizacion/solicitudes", id: "organize", label: "Organizar", short: "OR" },
       { href: "/equipo/estado", id: "team-state", label: "Estado", short: "ES" },
     ];

@@ -392,6 +392,12 @@ begin
     perform private.pachanga_venue_health_v1();
     insert into scale_metrics values('health',extract(epoch from clock_timestamp()-started)*1000);
   end loop;
+
+  for iteration in 1..25 loop
+    started:=clock_timestamp();
+    perform public.get_pachanga_venue_control_center_v1();
+    insert into scale_metrics values('control_center',extract(epoch from clock_timestamp()-started)*1000);
+  end loop;
 end;
 $$;
 

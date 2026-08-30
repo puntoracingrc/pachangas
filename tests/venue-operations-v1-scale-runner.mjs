@@ -136,13 +136,18 @@ try {
     invalidations: 100000,
   });
   assert.deepEqual(Object.keys(evidence.metrics).sort(), [
-    "accept", "availability_query", "conflict_detection", "directory", "health",
-    "hold", "match_binding", "request_submit", "reservation_desk",
+    "accept", "availability_query", "conflict_detection", "control_center",
+    "directory", "health", "hold", "match_binding", "request_submit",
+    "reservation_desk",
   ]);
   for (const [metric, values] of Object.entries(evidence.metrics)) {
     assert.ok(values.samples >= 20, `${metric} has too few samples`);
     assert.ok(values.p50Ms >= 0 && values.p95Ms >= values.p50Ms, `${metric} percentiles are invalid`);
   }
+  assert.ok(
+    evidence.metrics.control_center.p95Ms < 2000,
+    `control_center p95 ${evidence.metrics.control_center.p95Ms}ms exceeds 2000ms`,
+  );
 
   const rollbackCounts = JSON.parse(query(`select jsonb_build_object(
     'venues',(select count(*) from public.pachanga_club_venues),

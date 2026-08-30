@@ -441,9 +441,26 @@ begin
     'canManageReservations',private.pachanga_club_can_v1(target_club_id,actor_id,'reservation_manage'),
     'venues',coalesce((select jsonb_agg(to_jsonb(venues) order by venues.server_sequence desc,venues.id) from public.pachanga_club_venues venues where venues.club_id=target_club_id),'[]'::jsonb),
     'pitches',coalesce((select jsonb_agg(to_jsonb(pitches) order by pitches.server_sequence desc,pitches.id) from public.pachanga_venue_pitches pitches join public.pachanga_club_venues venues on venues.id=pitches.venue_id where venues.club_id=target_club_id),'[]'::jsonb),
-    'requests',coalesce((select jsonb_agg((to_jsonb(requests)-'message') order by requests.server_sequence desc,requests.id) from public.pachanga_venue_reservation_requests requests join public.pachanga_club_venues venues on venues.id=requests.venue_id where venues.club_id=target_club_id),'[]'::jsonb),
+    'availabilityTemplates',coalesce((select jsonb_agg(to_jsonb(templates) order by templates.server_sequence desc,templates.id) from public.pachanga_venue_availability_templates templates join public.pachanga_venue_pitches pitches on pitches.id=templates.pitch_id join public.pachanga_club_venues venues on venues.id=pitches.venue_id where venues.club_id=target_club_id),'[]'::jsonb),
+    'availabilityExceptions',coalesce((select jsonb_agg(to_jsonb(exceptions) order by exceptions.server_sequence desc,exceptions.id) from public.pachanga_venue_availability_exceptions exceptions join public.pachanga_venue_pitches pitches on pitches.id=exceptions.pitch_id join public.pachanga_club_venues venues on venues.id=pitches.venue_id where venues.club_id=target_club_id),'[]'::jsonb),
+    'requests',coalesce((select jsonb_agg(to_jsonb(requests) order by requests.server_sequence desc,requests.id) from public.pachanga_venue_reservation_requests requests join public.pachanga_club_venues venues on venues.id=requests.venue_id where venues.club_id=target_club_id),'[]'::jsonb),
     'holds',coalesce((select jsonb_agg(to_jsonb(holds) order by holds.server_sequence desc,holds.id) from public.pachanga_venue_reservation_holds holds join public.pachanga_venue_reservation_requests requests on requests.id=holds.request_id join public.pachanga_club_venues venues on venues.id=requests.venue_id where venues.club_id=target_club_id),'[]'::jsonb),
     'reservations',coalesce((select jsonb_agg(to_jsonb(reservations) order by reservations.server_sequence desc,reservations.id) from public.pachanga_venue_reservations reservations join public.pachanga_club_venues venues on venues.id=reservations.venue_id where venues.club_id=target_club_id),'[]'::jsonb),
+    'matchBindings',coalesce((select jsonb_agg(to_jsonb(bindings) order by bindings.server_sequence desc,bindings.id) from public.pachanga_venue_match_bindings bindings join public.pachanga_club_venues venues on venues.id=bindings.venue_id where venues.club_id=target_club_id),'[]'::jsonb),
+    'conflicts',coalesce((select jsonb_agg(jsonb_build_object(
+      'exceptionId',exceptions.id,'reservationId',reservations.id,'pitchId',reservations.pitch_id,
+      'startsAt',greatest(lower(exceptions.time_range),reservations.starts_at),
+      'endsAt',least(upper(exceptions.time_range),reservations.ends_at),
+      'exceptionKind',exceptions.exception_kind,'reservationStatus',reservations.status
+    ) order by reservations.server_sequence desc,reservations.id,exceptions.id)
+    from public.pachanga_venue_availability_exceptions exceptions
+    join public.pachanga_venue_pitches pitches on pitches.id=exceptions.pitch_id
+    join public.pachanga_club_venues venues on venues.id=pitches.venue_id
+    join public.pachanga_venue_reservations reservations on reservations.pitch_id=pitches.id
+      and reservations.status in ('PENDING_CONFIRMATION','CONFIRMED')
+      and exceptions.time_range&&tstzrange(reservations.starts_at,reservations.ends_at,'[)')
+    where venues.club_id=target_club_id and exceptions.status='ACTIVE'
+      and exceptions.exception_kind in ('MAINTENANCE','CLOSED','BLOCKED')),'[]'::jsonb),
     'serverSequence',coalesce((select max(venues.server_sequence) from public.pachanga_club_venues venues where venues.club_id=target_club_id),0)
   ) into response;
   return response;
@@ -465,7 +482,15 @@ begin
   if actor_id is null then raise exception 'VENUE_AUTHENTICATION_REQUIRED' using errcode='42501'; end if;
   return jsonb_build_object('items',coalesce((
     select jsonb_agg(jsonb_build_object(
-      'request',to_jsonb(requests)-'message'-'current_proposal',
+      'request',(to_jsonb(requests)-'message'-'current_proposal') || jsonb_build_object(
+        'currentProposal',case when requests.current_proposal='{}'::jsonb then null
+          else requests.current_proposal #- '{terms,privateNotes}' end
+      ),
+      'hold',case when holds.id is null then null else jsonb_build_object(
+        'id',holds.id,'requestId',holds.request_id,'pitchId',holds.pitch_id,
+        'startsAt',holds.starts_at,'endsAt',holds.ends_at,'expiresAt',holds.expires_at,
+        'status',holds.status,'revision',holds.revision,'serverSequence',holds.server_sequence
+      ) end,
       'reservation',case when reservations.id is null then null else to_jsonb(reservations) end,
       'venue',private.pachanga_venue_public_projection_v1(requests.venue_id),
       'operationalLocation',case when private.pachanga_venue_private_location_can_v1(requests.venue_id,actor_id)
@@ -475,6 +500,12 @@ begin
     from public.pachanga_venue_reservation_requests requests
     join public.pachanga_club_venues venues on venues.id=requests.venue_id
     left join public.pachanga_venue_reservations reservations on reservations.id=requests.current_reservation_id
+    left join lateral (
+      select candidate.*
+      from public.pachanga_venue_reservation_holds candidate
+      where candidate.request_id=requests.id
+      order by candidate.server_sequence desc,candidate.id desc limit 1
+    ) holds on true
     where requests.requester_user_id=actor_id
       or (requests.requester_team_id is not null and public.is_pachanga_group_admin(requests.requester_team_id))
       or (requests.competition_id is not null and private.pachanga_competition_can_v1(requests.competition_id,actor_id,'operations_read'))
@@ -610,10 +641,53 @@ security definer
 set search_path = pg_catalog
 as $$
 declare actor_id uuid:=auth.uid();
+declare partner_candidates jsonb;
 begin
   if actor_id is null or not private.pachanga_club_platform_can_v1(actor_id,'clubs.read') then
     raise exception 'VENUE_PLATFORM_AUTHORITY_REQUIRED' using errcode='42501';
   end if;
+
+  with visible_venues as materialized (
+    select venues.id,venues.club_id
+    from public.pachanga_club_venues venues
+    join private.pachanga_venue_publication_consents consents
+      on consents.venue_id=venues.id
+     and consents.status='ACTIVE'
+     and consents.content_fingerprint=venues.public_content_fingerprint
+    cross join private.pachanga_venue_settings_v1 settings
+    where settings.singleton
+      and settings.venue_foundation_enabled
+      and settings.venue_public_profiles_enabled
+      and venues.lifecycle='ACTIVE'
+      and venues.visibility='PUBLIC'
+  ), confirmed_by_venue as materialized (
+    select reservations.venue_id,count(*) reservation_count
+    from public.pachanga_venue_reservations reservations
+    where reservations.status='CONFIRMED'
+    group by reservations.venue_id
+  )
+  select coalesce(jsonb_agg(jsonb_build_object(
+    'clubId',candidates.club_id,
+    'clubName',candidates.club_name,
+    'municipality',candidates.municipality,
+    'publicVenues',candidates.public_venues,
+    'confirmedReservations',candidates.confirmed_reservations
+  ) order by candidates.confirmed_reservations desc,candidates.club_id),'[]'::jsonb)
+  into partner_candidates
+  from (
+    select clubs.id club_id,clubs.name club_name,clubs.municipality,
+      count(venues.id) public_venues,
+      coalesce(sum(reservations.reservation_count),0) confirmed_reservations
+    from public.pachanga_clubs clubs
+    join visible_venues venues on venues.club_id=clubs.id
+    left join confirmed_by_venue reservations on reservations.venue_id=venues.id
+    where clubs.operational_status='active'
+      and clubs.partnership_status in ('none','candidate')
+    group by clubs.id,clubs.name,clubs.municipality
+    order by confirmed_reservations desc,clubs.id
+    limit 20
+  ) candidates;
+
   return jsonb_build_object(
     'counts',jsonb_build_object(
       'venues',(select count(*) from public.pachanga_club_venues),
@@ -626,17 +700,72 @@ begin
       'bindings',(select count(*) from public.pachanga_venue_match_bindings where status in ('ACTIVE','ACTION_REQUIRED','CONSUMED')),
       'cancellations',(select count(*) from public.pachanga_venue_reservations where status='CANCELLED'),
       'publicConsents',(select count(*) from private.pachanga_venue_publication_consents where status='ACTIVE'),
-      'events',(select count(*) from private.pachanga_venue_events)
+      'events',(select count(*) from private.pachanga_venue_events),
+      'invalidations',(select count(*) from public.pachanga_venue_invalidations)
     ),
     'health',private.pachanga_venue_health_v1(),
     'flags',public.get_pachanga_venue_flags_v1(),
-    'latestSequence',coalesce((select max(events.server_sequence) from private.pachanga_venue_events events),0)
+    'latestSequence',coalesce((select max(events.server_sequence) from private.pachanga_venue_events events),0),
+    'indexes',jsonb_build_object(
+      'protectedIndexCount',(select count(*) from pg_catalog.pg_indexes indexes where indexes.schemaname in ('public','private') and (indexes.indexname like 'pachanga_venue_%' or indexes.indexname like 'pachanga_club_venue_%')),
+      'status','MIGRATION_MANAGED'
+    ),
+    'realtime',jsonb_build_object(
+      'latestInvalidationSequence',coalesce((select max(invalidations.server_sequence) from public.pachanga_venue_invalidations invalidations),0),
+      'publication','pachanga_realtime',
+      'transport','postgres_changes'
+    ),
+    'errors',jsonb_build_object(
+      'persistedCommandErrors',null,
+      'status','NOT_IN_CANONICAL_LEDGER',
+      'trackedByHealthChecks',true
+    ),
+    'partnerCandidates',partner_candidates
   );
 end;
 $$;
 
 revoke all on function public.get_pachanga_venue_control_center_v1() from public,anon;
 grant execute on function public.get_pachanga_venue_control_center_v1() to authenticated,service_role;
+
+create or replace function public.get_pachanga_venue_home_status_v1()
+returns jsonb
+language plpgsql
+stable
+security definer
+set search_path = pg_catalog
+as $$
+declare actor_id uuid:=auth.uid();
+begin
+  if actor_id is null then raise exception 'VENUE_AUTH_REQUIRED' using errcode='42501'; end if;
+  return jsonb_build_object(
+    'teamOwner',jsonb_build_object(
+      'visible',exists(select 1 from public.pachanga_groups groups where groups.owner_id=actor_id),
+      'pendingCounterproposals',(select count(*) from public.pachanga_venue_reservation_requests requests join public.pachanga_groups groups on groups.id=requests.requester_team_id where groups.owner_id=actor_id and requests.status='COUNTER_PROPOSED'),
+      'reservationsToConfirm',(select count(*) from public.pachanga_venue_reservations reservations join public.pachanga_groups groups on groups.id=reservations.requester_team_id where groups.owner_id=actor_id and reservations.status='PENDING_CONFIRMATION'),
+      'matchesWithoutVenue',(select count(*) from public.pachanga_canonical_match_bindings sources join public.pachanga_groups groups on groups.id=sources.source_group_id where groups.owner_id=actor_id and sources.binding_status='active' and not exists(select 1 from public.pachanga_venue_match_bindings bindings where bindings.canonical_match_id=sources.canonical_match_id and bindings.status in ('ACTIVE','ACTION_REQUIRED','CONSUMED')))
+    ),
+    'clubBookingManager',jsonb_build_object(
+      'visible',exists(select 1 from public.pachanga_clubs clubs where private.pachanga_club_can_v1(clubs.id,actor_id,'reservation_manage')),
+      'newRequests',(select count(*) from public.pachanga_venue_reservation_requests requests join public.pachanga_club_venues venues on venues.id=requests.venue_id where requests.status='SUBMITTED' and private.pachanga_club_can_v1(venues.club_id,actor_id,'reservation_manage')),
+      'holdsExpiring',(select count(*) from public.pachanga_venue_reservation_holds holds join public.pachanga_venue_reservation_requests requests on requests.id=holds.request_id join public.pachanga_club_venues venues on venues.id=requests.venue_id where holds.status='ACTIVE' and holds.expires_at>clock_timestamp() and holds.expires_at<=clock_timestamp()+interval '60 minutes' and private.pachanga_club_can_v1(venues.club_id,actor_id,'reservation_manage')),
+      'conflicts',(select count(*) from public.pachanga_venue_availability_exceptions exceptions join public.pachanga_venue_pitches pitches on pitches.id=exceptions.pitch_id join public.pachanga_club_venues venues on venues.id=pitches.venue_id join public.pachanga_venue_reservations reservations on reservations.pitch_id=pitches.id and reservations.status in ('PENDING_CONFIRMATION','CONFIRMED') and exceptions.time_range&&tstzrange(reservations.starts_at,reservations.ends_at,'[)') where exceptions.status='ACTIVE' and exceptions.exception_kind in ('MAINTENANCE','CLOSED','BLOCKED') and private.pachanga_club_can_v1(venues.club_id,actor_id,'reservation_manage')),
+      'reservationsToday',(select count(*) from public.pachanga_venue_reservations reservations join public.pachanga_club_venues venues on venues.id=reservations.venue_id where reservations.status in ('PENDING_CONFIRMATION','CONFIRMED') and (reservations.starts_at at time zone venues.timezone)::date=(clock_timestamp() at time zone venues.timezone)::date and private.pachanga_club_can_v1(venues.club_id,actor_id,'reservation_manage'))
+    ),
+    'competitionOrganizer',jsonb_build_object(
+      'visible',exists(select 1 from public.pachanga_competition_staff_assignments staff where staff.user_id=actor_id and staff.status='active' and staff.staff_role in ('competition_owner','competition_director','competition_admin')),
+      'matchesWithoutVenue',(select count(*) from public.pachanga_competition_match_contexts contexts join public.pachanga_competition_staff_assignments staff on staff.competition_id=contexts.competition_id and staff.user_id=actor_id and staff.status='active' where contexts.status<>'retired' and not exists(select 1 from public.pachanga_venue_match_bindings bindings where bindings.canonical_match_id=contexts.canonical_match_id and bindings.status in ('ACTIVE','ACTION_REQUIRED','CONSUMED'))),
+      'cancelledReservations',(select count(*) from public.pachanga_venue_reservations reservations join public.pachanga_competition_staff_assignments staff on staff.competition_id=reservations.competition_id and staff.user_id=actor_id and staff.status='active' where reservations.status='CANCELLED'),
+      'venueChanges',(select count(*) from public.pachanga_venue_match_bindings bindings join public.pachanga_competition_match_contexts contexts on contexts.id=bindings.competition_match_context_id join public.pachanga_competition_staff_assignments staff on staff.competition_id=contexts.competition_id and staff.user_id=actor_id and staff.status='active' where bindings.previous_binding_id is not null)
+    ),
+    'latestSequence',coalesce((select max(events.server_sequence) from private.pachanga_venue_events events),0),
+    'updatedAt',clock_timestamp()
+  );
+end;
+$$;
+
+revoke all on function public.get_pachanga_venue_home_status_v1() from public,anon;
+grant execute on function public.get_pachanga_venue_home_status_v1() to authenticated,service_role;
 
 reset statement_timeout;
 reset lock_timeout;

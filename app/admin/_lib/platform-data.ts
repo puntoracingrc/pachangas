@@ -49,6 +49,10 @@ export async function getPlatformOverview(session: VerifiedPlatformSession, peri
   });
 }
 
+export async function getPlatformVenueOperations(session: VerifiedPlatformSession) {
+  return rpcOrThrow<JsonRecord>(session.client, "get_pachanga_venue_control_center_v1");
+}
+
 async function userSummaries(session: VerifiedPlatformSession, userIds: string[]) {
   if (!userIds.length) return {} as Record<string, JsonRecord>;
   const result = await rpcOrThrow<unknown>(session.client, "get_pachanga_platform_user_summaries_v1", {

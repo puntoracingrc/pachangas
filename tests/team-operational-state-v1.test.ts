@@ -82,8 +82,8 @@ test("Wave 8B consists of exactly eight forward-only migrations after ledger 204
   const files = (await readdir(path.join(root, "supabase/migrations")))
     .filter((name) => /^\d{14}_.+\.sql$/.test(name))
     .sort();
-  assert.equal(files.length, 212);
-  assert.deepEqual(files.slice(-8), [...migrationNames]);
+  assert.equal(files.indexOf(migrationNames[0]), 204);
+  assert.deepEqual(files.slice(204, 212), [...migrationNames]);
   const sql = (await Promise.all(migrationNames.map((name) => source(`supabase/migrations/${name}`)))).join("\n");
   assert.match(sql, /command_pachanga_team_operational_state_v1/);
   assert.match(sql, /current_revision bigint not null/);

@@ -349,7 +349,7 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /openOwnPlayerProfile/);
   assert.match(page, /type ProfilePane = "ficha" \| "ranking"/);
   assert.match(page, /setProfilePane\("ficha"\)/);
-  assert.match(page, /type MatchManagerPane = "proximo" \| "alineacion" \| "resultado" \| "admin"/);
+  assert.match(page, /type MatchManagerPane = "proximo" \| "campo" \| "alineacion" \| "resultado" \| "admin"/);
   assert.match(page, /matchManagerPaneLabels/);
   assert.match(page, /activeMatchManagerPane/);
   assert.match(page, /data-match-manager-pane=\{selectedMatchManagerPane\}/);
@@ -560,8 +560,8 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /const demoTeamPhoto = "data:image\/svg\+xml/);
   assert.match(page, /teamPhoto: demoTeamPhoto/);
   assert.ok((page.match(/teamPhoto: demoTeamPhoto/g) ?? []).length >= 6);
-  assert.match(page, /\["proximo", "alineacion", "resultado", "admin"\]/);
-  assert.match(page, /\["proximo", "alineacion", "resultado"\]/);
+  assert.match(page, /\["proximo", "campo", "alineacion", "resultado", "admin"\]/);
+  assert.match(page, /\["proximo", "campo", "alineacion", "resultado"\]/);
   assert.doesNotMatch(page, /\["proximo", "alineacion", "resultado", "historico"/);
   assert.match(page, /result-score-field team-a-score/);
   assert.match(page, /Resultado equipo 1/);

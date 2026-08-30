@@ -46,6 +46,9 @@ declare
   replay jsonb;
   public_profile jsonb;
   private_detail jsonb;
+  club_desk jsonb;
+  control_center jsonb;
+  home_status jsonb;
   venue_id uuid;
   venue_revision bigint;
   pitch_one_id uuid;
@@ -63,6 +66,7 @@ declare
   hold_request_id uuid;
   hold_request_revision bigint;
   hold_id uuid;
+  my_reservations jsonb;
   context_revision bigint;
   winter timestamptz;
   summer timestamptz;
@@ -340,6 +344,22 @@ begin
     ), '{}'
   );
   request_one_revision := (response->>'confirmedRevision')::bigint;
+  perform pg_temp.expect_failure($sql$
+    select public.get_pachanga_club_venue_desk_v1('c4020000-0000-4000-8000-000000000001')
+  $sql$, 'VENUE_CLUB_DESK_AUTHORITY_REQUIRED');
+  club_desk := public.get_pachanga_club_venue_desk_v1('e9020000-0000-4000-8000-000000000001');
+  perform pg_temp.assert_true(
+    jsonb_array_length(club_desk->'availabilityTemplates')=2
+      and jsonb_typeof(club_desk->'availabilityExceptions')='array'
+      and jsonb_typeof(club_desk->'matchBindings')='array'
+      and jsonb_typeof(club_desk->'conflicts')='array'
+      and exists(
+        select 1 from jsonb_array_elements(club_desk->'requests') item
+        where item->>'id'=request_one_id::text
+          and item->>'message'='Solicitud sintética del equipo local.'
+      ),
+    'Club Venue desk omitted canonical availability or requester review context'
+  );
 
   perform pg_temp.actor('c4010000-0000-4000-8000-000000000003');
   response := public.command_pachanga_venue_reservation_v1(
@@ -495,6 +515,19 @@ begin
     'reservation.hold', jsonb_build_object('expiresInMinutes',15), '{}'
   );
   hold_id := (response->>'aggregateId')::uuid;
+  perform pg_temp.actor('c4010000-0000-4000-8000-000000000004');
+  my_reservations := public.get_pachanga_my_venue_reservations_v1();
+  perform pg_temp.assert_true(
+    exists(
+      select 1 from jsonb_array_elements(my_reservations->'items') item
+      where item#>>'{request,id}'=hold_request_id::text
+        and item#>>'{hold,id}'=hold_id::text
+        and item#>>'{hold,status}'='ACTIVE'
+        and item#>>'{hold,claim_id}' is null
+        and item#>>'{request,message}' is null
+    ),
+    'User read model omitted its privacy-filtered active hold'
+  );
   update public.pachanga_venue_reservation_holds
   set created_at=clock_timestamp()-interval '2 minutes',
       expires_at=clock_timestamp()-interval '1 second'
@@ -519,6 +552,27 @@ begin
   perform pg_temp.assert_true(
     not exists(select 1 from public.pachanga_venue_pitch_claims a join public.pachanga_venue_pitch_claims b on a.id<b.id and a.conflict_scope_id=b.conflict_scope_id and a.status='ACTIVE' and b.status='ACTIVE' and a.occupied_range&&b.occupied_range),
     'Confirmed or held claims overlap'
+  );
+
+  perform pg_temp.actor('e9010000-0000-4000-8000-000000000001');
+  control_center := public.get_pachanga_venue_control_center_v1();
+  perform pg_temp.assert_true(
+    (control_center#>>'{counts,venues}')::integer=1
+      and (control_center#>>'{counts,pitches}')::integer=2
+      and (control_center#>>'{counts,invalidations}')::integer>0
+      and (control_center#>>'{indexes,protectedIndexCount}')::integer>=10
+      and control_center#>>'{realtime,transport}'='postgres_changes'
+      and control_center#>>'{errors,status}'='NOT_IN_CANONICAL_LEDGER'
+      and jsonb_array_length(control_center->'partnerCandidates')=1,
+    'Venue Control Center omitted canonical health, indexes, Realtime or partner candidates'
+  );
+  home_status := public.get_pachanga_venue_home_status_v1();
+  perform pg_temp.assert_true(
+    (home_status#>>'{clubBookingManager,visible}')::boolean
+      and (home_status#>>'{clubBookingManager,newRequests}')::integer>=0
+      and home_status ? 'teamOwner'
+      and home_status ? 'competitionOrganizer',
+    'Role-aware Home omitted the authorized Club perspective or canonical role projections'
   );
 end;
 $$;
@@ -548,6 +602,33 @@ select pg_temp.expect_failure($sql$
     (select reservation_id from venue_operations_v1_test_refs limit 1)
   )
 $sql$, 'VENUE_RESERVATION_READ_FORBIDDEN|VENUE_RESERVATION_NOT_FOUND');
+select pg_temp.expect_failure($sql$
+  select private.pachanga_club_can_v1(
+    'e9020000-0000-4000-8000-000000000001',
+    'e9010000-0000-4000-8000-000000000001',
+    'venue_read'
+  )
+$sql$, 'permission denied');
+select pg_temp.assert_true(
+  not exists (
+    select 1 from public.pachanga_venue_invalidations
+    where audience_kind='CLUB'
+      and audience_id='e9020000-0000-4000-8000-000000000001'
+  ),
+  'Outsider could read Club-scoped Venue invalidations'
+);
+reset role;
+
+set local role authenticated;
+select set_config('request.jwt.claims','{"sub":"e9010000-0000-4000-8000-000000000002","role":"authenticated"}',true);
+select pg_temp.assert_true(
+  exists (
+    select 1 from public.pachanga_venue_invalidations
+    where audience_kind='CLUB'
+      and audience_id='e9020000-0000-4000-8000-000000000001'
+  ),
+  'Authorized Venue manager could not read Club-scoped invalidations'
+);
 reset role;
 
 select 'VENUE_OPERATIONS_V1_DB_PASS';

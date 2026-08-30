@@ -385,6 +385,489 @@ Fixed issues must include the original reproducer and finish with
   asserting one successful maintenance transition plus one rejected
   acceptance.
 
+### W9A-027 - User reservation read model hid its next canonical action
+
+- Classification: `PRODUCT_BUG`
+- Status: `fixed + regression_verified`
+- Original reproducer: inspect the response contract of
+  `get_pachanga_my_venue_reservations_v1()` for a request in
+  `COUNTER_PROPOSED` or `HELD`.
+- Impact: the read model removed private notes correctly, but also removed the
+  complete current proposal and exposed no hold projection. A compatible
+  client could identify the high-level status but could not show the proposed
+  slot, hold expiry or next action without querying tables directly.
+- Correction and regression: the canonical read now includes a
+  privacy-filtered proposal and latest hold while keeping messages, claim IDs
+  and Club-only notes out of the payload. The ephemeral PostgreSQL suite
+  creates an active hold, reads it as its requester and verifies both the next
+  action and the excluded fields.
+
+### W9A-028 - Club desk omitted availability and review context
+
+- Classification: `PRODUCT_BUG`
+- Status: `fixed + regression_verified`
+- Original reproducer: inspect `get_pachanga_club_venue_desk_v1()` as a
+  `club_booking_manager` after creating a template, an exception and a
+  reservation request with a requester message.
+- Impact: the authorized Club desk returned Venues, Pitches and high-level
+  reservations, but no availability templates, exceptions, Match bindings or
+  maintenance conflicts. It also removed the requester message required to
+  review a legitimate request.
+- Correction and regression: the authorized Club desk now includes templates,
+  exceptions, request review context, Match bindings and maintenance conflicts.
+  The SQL suite verifies all collections plus the exact requester message;
+  public projections and requester caches remain unchanged.
+
+### W9A-029 - Club desk regression targeted the wrong synthetic Club
+
+- Classification: `SIMULATION_BUG`
+- Status: `fixed + regression_verified`
+- Original reproducer: `node tests/venue-operations-v1-db-runner.mjs` after
+  adding the W9A-028 regression.
+- Impact: the booking manager belongs to synthetic Club `e902...`, but the new
+  assertion requested the desk of inherited R4D Club `c402...`. The canonical
+  ACL correctly returned `VENUE_CLUB_DESK_AUTHORITY_REQUIRED`; no product data
+  or permissions changed.
+- Correction and regression: the test queries Club `e902...` for its valid
+  read and explicitly preserves the rejected cross-Club `c402...` call.
+
+### W9A-030 - Venue API shared helper resolved policy from the wrong depth
+
+- Classification: `PRODUCT_BUG`
+- Status: `fixed + regression_verified`
+- Original reproducer: `npm run typecheck`.
+- Impact: `app/api/venues/_shared.ts` resolved `client-policy` as though it
+  lived inside a nested route, so TypeScript could not build the new API.
+- Correction and regression: the helper now imports the actual sibling policy
+  module; the complete TypeScript check passes.
+
+### W9A-031 - Status label mixed nullish and boolean precedence
+
+- Classification: `PRODUCT_BUG`
+- Status: `fixed + regression_verified`
+- Original reproducer: `npm run typecheck`.
+- Impact: TypeScript rejected a status-label expression that combined `??`
+  and `||` without explicit grouping. No runtime bundle was produced.
+- Correction and regression: the empty fallback is explicitly grouped and the
+  complete TypeScript check passes.
+
+### W9A-032 - Club Realtime reconciliation retained the initial Club
+
+- Classification: `PRODUCT_BUG`
+- Status: `fixed + regression_verified`
+- Original reproducer: open the Club Venue desk with access to two Clubs,
+  change the selected Club and then receive a
+  `pachanga_venue_invalidations` event.
+- Impact: the Realtime callback closed over the Club selected during the
+  initial mount, so it could replace the visible desk with the first Club's
+  canonical snapshot after the user had moved to another Club.
+- Correction and regression: reconciliation now reads the currently selected
+  Club from a stable ref. The UI regression verifies that the callback no
+  longer calls `loadDesk(initialClub, ...)` and uses the selected-Club ref.
+
+### W9A-033 - Stale reservation detail checked previous React message state
+
+- Classification: `PRODUCT_BUG`
+- Status: `fixed + regression_verified`
+- Original reproducer: submit a reservation mutation with an obsolete
+  revision from `/reservas/[reservation]` and return `STALE_REVISION`.
+- Impact: the catch block updated `message` and immediately inspected the old
+  React state value, so the detail could remain stale instead of replacing its
+  preview with the canonical server snapshot.
+- Correction and regression: the handler now inspects the local exception
+  detail, explains the conflict and reloads the canonical reservation. The UI
+  regression verifies the local-detail check.
+
+### W9A-034 - Home status API referenced nonexistent helper names
+
+- Classification: `PRODUCT_BUG`
+- Status: `fixed + regression_verified`
+- Original reproducer: `npm run typecheck` after adding
+  `/api/venues/home`.
+- Impact: the route imported aliases that were not exported by the shared
+  Venue API module, preventing a production bundle.
+- Correction and regression: the route now uses `venueApiSession` and
+  `venueApiJson`, the same authenticated no-store helpers as the other Venue
+  reads. The complete TypeScript check and route contract regression pass.
+
+### W9A-035 - Initial UI regression asserted draft aliases instead of canonical names
+
+- Classification: `SIMULATION_BUG`
+- Status: `fixed + regression_verified`
+- Original reproducer: `npm run test:venue-operations` after adding the first
+  Wave 9A source-contract suite.
+- Impact: five assertions used planning-language aliases for canonical flags,
+  RPCs, the client-version gate, the service-worker sensitive-path guard and
+  offline copy. They failed against valid implementation without identifying
+  a product defect.
+- Correction and regression: assertions now target the persisted flag/RPC
+  names and semantic fail-closed patterns actually shipped. All Wave 9A UI
+  and Demo V3.4 tests pass together.
+
+### W9A-036 - Scale certification omitted the public Control Center read model
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed + regression_verified`
+- Original reproducer: compare the measured paths in
+  `tests/venue-operations-v1-scale.sql` with the production read models added
+  by Wave 9A.
+- Impact: the corpus measured the private health digest but did not execute
+  `get_pachanga_venue_control_center_v1()`. Its platform ACL, aggregate counts
+  and operational projection therefore had no representative latency sample.
+- Correction and regression: the scale transaction now executes the public
+  Control Center RPC 25 times as the synthetic platform administrator. The
+  runner requires the `control_center` metric and validates its sample count
+  and percentile ordering with every other canonical path.
+
+### W9A-037 - Control Center partner candidates did not scale
+
+- Classification: `PRODUCT_BUG`
+- Status: `fixed + regression_verified`
+- Original reproducer: run `npm run test:venue-operations:scale` with the
+  public Control Center read model included in its 25-sample read suite.
+- Impact: on the representative corpus the Control Center produced p50
+  `12339.393 ms`, p95 `13912.765 ms` and maximum `14244.875 ms`. The health
+  digest itself remained at p95 `344.516 ms`, isolating the regression to the
+  additional Control Center projection.
+- Correction and regression: visible Venues and confirmed reservations are
+  each aggregated once before ranking partner candidates, backed by the
+  `(venue_id,status)` reservation index. The same 25-sample path now measures
+  p50 `368.280 ms`, p95 `375.104 ms` and maximum `394.097 ms`. The runner
+  enforces p95 below `2000 ms`; the complete corpus and write samples roll
+  back cleanly.
+
+### W9A-038 - Club Venue selector performed a synchronous effect correction
+
+- Classification: `PRODUCT_BUG`
+- Status: `fixed + regression_verified`
+- Original reproducer: run focused ESLint over the Wave 9A TS/TSX surface.
+- Impact: `ClubVenueOperationsClient` called `setSelectedVenueId` directly in
+  an effect whenever a refreshed desk removed or replaced the current Venue,
+  triggering the React cascading-render rule. The same lint run also exposed
+  an unused date helper and obsolete Demo V3.3 type import.
+- Correction and regression: the render-time canonical fallback now remains
+  the sole automatic selection path; state changes only after an explicit
+  Venue choice. The two dead symbols were removed and focused ESLint passes
+  across every changed TS, TSX and MJS file.
+
+### W9A-039 - Context selector inherited unreadable light-shell text
+
+- Classification: `PRODUCT_BUG`
+- Status: `fixed + regression_verified`
+- Original reproducer: render Demo World V3.4 at `390x844` and inspect the
+  active-context `<select>` in the light product header.
+- Impact: the dark control background resolved to `rgb(20,33,29)`, while its
+  text inherited `--official-text` as `rgb(16,32,26)`. The selected context
+  was almost invisible in portrait and equally affected the desktop header.
+- Correction and regression: the intrinsically dark native select now has an
+  explicit `#f1f6f2` foreground and dark color scheme. At `390x844` its
+  computed contrast is `15.18:1`, it introduces no horizontal overflow and
+  the Demo V3.4 source regression prevents inheritance from returning.
+
+### W9A-040 - Hero link color overrode the primary action foreground
+
+- Classification: `PRODUCT_BUG`
+- Status: `fixed + regression_verified`
+- Original reproducer: open `/reservas` at `390x844` and measure the active
+  `Buscar campo` link rendered with the shared `.action` class.
+- Impact: `.hero a` had higher specificity than `.action`, producing lime text
+  on a lime background with contrast `1.23:1` for an enabled primary action.
+- Correction and regression: informational link colors now explicitly exclude
+  all action classes. The same control computes to `11.63:1`, remains fully
+  visible in portrait, and the source test preserves the specificity boundary.
+
+### W9A-041 - Global wiring test rejected the canonical Venue Match pane
+
+- Classification: `SIMULATION_BUG`
+- Status: `fixed + regression_verified`
+- Original reproducer: run `npm test` after adding the `campo` pane to the
+  authoritative Match navigation.
+- Impact: the product build and focused Wave 9A suite passed, but the global
+  rendered-source contract still required exactly the four pre-Wave panes and
+  failed on the intentional fifth canonical pane.
+- Correction and regression: the exact type union plus the administrator and
+  player pane arrays now include `campo`; the latter still excludes `admin`.
+  The complete rendered HTML test file passes `9/9` before the global rerun.
+
+### W9A-042 - Core UX test omitted the requester Reservations utility
+
+- Classification: `SIMULATION_BUG`
+- Status: `fixed + regression_verified`
+- Original reproducer: run the complete TS/TSX suite after adding the
+  contextual `/reservas` destination to the shared player tools.
+- Impact: the product contract correctly exposed a requester read/action
+  surface without granting organizer authority, but the older exact player
+  destination list still expected only Team, Ranking and Notifications.
+- Correction and regression: the exact player list includes `reservations`;
+  its negative checks still reject Control Center and organizer access. The
+  focused Core UX and Wave 8B run passes with the corrected contract.
+
+### W9A-043 - Wave 8B test treated its closing ledger as the repository ceiling
+
+- Classification: `SIMULATION_BUG`
+- Status: `fixed + regression_verified`
+- Original reproducer: run the complete TS/TSX suite with the eight Wave 9A
+  migrations present after ledger 212.
+- Impact: the Wave 8B regression asserted that the whole migration directory
+  must forever contain exactly 212 files and that its own files remain the
+  final eight. It failed at the valid Wave 9A ledger 220.
+- Correction and regression: Wave 8B is now anchored at zero-based index 204
+  and its exact eight-file slice is verified through index 211, allowing only
+  later forward migrations after its boundary. The focused pair passes `23/23`.
+
+### W9A-044 - Ephemeral Supabase branch inherited an incomplete migration ledger
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed + regression_verified`
+- Original reproducer: create the isolated branch
+  `wave9a-venue-operations-20260830` from project `Pachangas` and read
+  `supabase_migrations.schema_migrations` before applying Wave 9A.
+- Impact: the branch contained only `10` versions, ending at
+  `20260728191429`, rather than the required production baseline of `212`.
+  Applying migrations 213-220 directly would certify the feature against an
+  invalid schema and could hide missing dependencies.
+- Required correction: rebuild the isolated branch deterministically through
+  the repository baseline plus migrations 11-212, confirm exact ledger and
+  required relation digests, and only then apply the eight Wave 9A migrations.
+  The baseline was applied transactionally, all 36 absorbed versions were
+  reconciled and migrations 37-212 completed. Direct PostgreSQL readback
+  reports ledger `212`, last version `20260829221312`, and the required Team,
+  CanonicalMatch, referee and command authorities are present.
+
+### W9A-045 - Branch inspection emitted ephemeral credentials to local tool output
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed + regression_verified`
+- Original reproducer: request full CLI details for the Wave 9A Supabase branch
+  while filtering only lower-case secret field names.
+- Impact: the CLI used upper-case environment names and emitted ephemeral
+  branch credentials to the private local tool channel. No value was written
+  to Git, files, reports, screenshots, browser bundles or user-visible output;
+  Production credentials were not involved.
+- Required correction: never print the branch environment again, consume it
+  directly into a process environment, run repository and bundle secret scans,
+  and destroy the entire ephemeral branch after staging so all emitted values
+  cease to authenticate. Every affected branch was destroyed with deletion
+  readback, no development branch remains active, and the 53-file pre-commit
+  scan found zero external database, Supabase, JWT or Stripe secrets.
+
+### W9A-046 - Transaction pooler rejected the staging migration session
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed + regression_verified`
+- Original reproducer: run the exact 11-212 migration push through the branch
+  transaction pooler on port `6543`.
+- Impact: PgBouncer reused a prepared statement name and PostgreSQL returned
+  `prepared statement already exists` before the migration batch started. No
+  schema or ledger change was recorded.
+- Required correction: use the IPv4 session pooler on port `5432`, verify the
+  branch ledger is still 10 before retrying, then require exact ledger 212 and
+  schema dependency readback. The session-pooler retry completed all
+  incremental migrations and the independent ledger/dependency readback passed.
+
+### W9A-047 - Supabase CLI could not persist its optional pg-delta cache
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed + regression_verified`
+- Original reproducer: complete the 37-212 staging push from a temporary
+  workdir whose generated `.temp/pgdelta` certificate path is absent.
+- Impact: all SQL migrations completed, but the CLI warned that it could not
+  export its optional migration catalog cache. No repository artifact or
+  product schema depends on that cache.
+- Required correction: verify ledger 212 and required schema objects directly
+  in PostgreSQL, keep no generated cache, and use database readback rather than
+  the failed local optimization as release evidence. The temporary directory
+  was deleted and PostgreSQL independently confirmed ledger 212 plus all
+  dependencies required by Wave 9A.
+
+### W9A-048 - Local fixture ordering violated the remote Club owner guard
+
+- Classification: `SIMULATION_BUG`
+- Status: `fixed + regression_verified`
+- Original reproducer: load `tests/venue-operations-v1-fixture.sql` on the
+  isolated Supabase branch after ledger 220.
+- Impact: the fixture inserts its synthetic Club before inserting the primary
+  owner membership. The current production guard correctly rejects that
+  intermediate state with `CLUB_PRIMARY_OWNER_MEMBERSHIP_REQUIRED`; the local
+  database suite did not expose the guard timing difference.
+- Required correction: add a staging-only transactional bootstrap that bypasses
+  product guards solely while importing deterministic dependencies, restore
+  normal trigger execution before tests, and separately create a Club through
+  the real authenticated Club RPC. The transactional bootstrap and canonical
+  DB suite both produced PASS markers; the exact dataset then created two more
+  Clubs through the real RPC.
+
+### W9A-049 - Failed pre-wrapper staging seed left a partial synthetic graph
+
+- Classification: `SIMULATION_BUG`
+- Status: `fixed + regression_verified`
+- Original reproducer: retry the transactional staging wrapper on the first
+  branch after the earlier unwrapped fixture stopped at the Club owner guard.
+- Impact: inherited fixture rows preceding the failing statement had already
+  committed, so the retry met duplicate synthetic Auth IDs. No real entity or
+  Production row was involved.
+- Required correction: destroy the contaminated ephemeral branch instead of
+  manually editing a partially known graph, recreate a clean branch, and run
+  the new single-transaction bootstrap exactly once. The regression requires
+  both bootstrap and canonical DB PASS markers with no partial retry. The
+  contaminated branches were destroyed and the clean certification branch
+  passed both markers on its first seed execution.
+
+### W9A-050 - Remote DB harness dropped its temporary reference in autocommit
+
+- Classification: `SIMULATION_BUG`
+- Status: `fixed + regression_verified`
+- Original reproducer: execute `tests/venue-operations-v1-db.sql` on staging
+  without the local runner's `--single-transaction` option.
+- Impact: `venue_operations_v1_test_refs` is declared `ON COMMIT DROP`; psql
+  autocommit removed it before the following insert. Canonical operations before
+  that point committed with fixed idempotency keys, but no product invariant
+  failed.
+- Required correction: execute the remote DB suite in one transaction, replay
+  the prior operation IDs, require the canonical PASS marker, and encode
+  one transaction in the permanent staging wrapper. The remote run reached
+  `VENUE_OPERATIONS_V1_DB_PASS`, including the temporary-reference negatives.
+
+### W9A-051 - Partial remote suite could not be replayed as a born-OFF test
+
+- Classification: `SIMULATION_BUG`
+- Status: `fixed + regression_verified`
+- Original reproducer: rerun the DB suite transactionally after the autocommit
+  execution had already activated Venue flags and committed its receipts.
+- Impact: the first invariant correctly rejected the branch because flags no
+  longer appeared born OFF. Deleting receipts or rewriting revisions would
+  invalidate the very authority being tested.
+- Required correction: destroy the partial branch and execute the complete
+  staging sequence once on a new branch, with bootstrap and DB suite each
+  transactional from the outset. No receipt or flag row was repaired; the clean
+  branch certified born-OFF before its authoritative activation receipt.
+
+### W9A-052 - Staging topology omitted the Club Foundation dependency window
+
+- Classification: `SIMULATION_BUG`
+- Status: `fixed + regression_verified`
+- Original reproducer: apply the exact 3-Club/6-Team staging topology after the
+  Venue DB suite while canonical Club Foundation flags remain OFF.
+- Impact: the real Club RPC rejected the first synthetic Club with
+  `CLUB_FOUNDATION_DISABLED`; the dataset transaction rolled back completely.
+- Required correction: enable only the five required Club Foundation flags
+  through `command_pachanga_club_platform_v1` on the isolated branch before
+  Club creation, retain its receipt and revision, and rerun the exact-count
+  assertion. The RPC activation and exact 3-Club count passed; Production flags
+  remain untouched.
+
+### W9A-053 - Synthetic Tournament filler hit an intentionally disabled beta guard
+
+- Classification: `SIMULATION_BUG`
+- Status: `fixed + regression_verified`
+- Original reproducer: insert the single Tournament required by the Wave 9A
+  staging topology while League/Tournament product flags remain OFF.
+- Impact: the Competition trigger rejected the filler with
+  `LEAGUE_PRIVATE_BETA_CREATION_DISABLED`; the complete dataset transaction
+  rolled back. Wave 9A does not authorize activating Tournament product flags.
+- Required correction: keep Tournament features OFF and bypass product guards
+  only for the synthetic Competition/CanonicalMatch filler rows inside the
+  isolated dataset transaction. Restore trigger authority before assertions
+  and continue to exercise Venue operations through real RPCs. The final exact
+  1-League/1-Tournament/20-Match assertion passed and product flags stayed OFF.
+
+### W9A-054 - Authenticated staging mutation did not reach the Realtime listener
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fix pending regression`
+- Original reproducer: subscribe device B to Club-scoped Venue invalidations,
+  wait for `SUBSCRIBED`, update a Venue from device A and await one insert.
+- Impact: the command confirmed and persisted, but the listener timed out after
+  20 seconds. The current evidence does not yet distinguish an incorrect test
+  filter/audience from a publication or RLS delivery defect.
+- Required correction: inspect the persisted invalidation, its audience, the
+  publication membership and Realtime logs; then correct only the proven layer
+  and rerun subscription, refetch and reconnect with two Auth sessions. The
+  persisted Club and Public invalidations, RLS-enabled table, publication
+  membership and active replication stream were confirmed. The staging test
+  now mirrors the production clients by subscribing to the RLS-protected table
+  without a server-side filter and selecting the expected entity/audience in
+  its callback; it also proves an authenticated Club member can read the
+  invalidation surface before awaiting delivery.
+
+### W9A-055 - Venue invalidation RLS called a non-executable authority helper
+
+- Classification: `PRODUCT_BUG`
+- Status: `fix pending staging regression`
+- Original reproducer: as an authenticated active Club Venue manager, select
+  the Club-scoped row from `pachanga_venue_invalidations` before subscribing to
+  Realtime.
+- Impact: PostgreSQL returned `42501 permission denied for function
+  pachanga_club_can_v1`. Venue commands and event persistence remained
+  authoritative, but authenticated readback and Realtime policy evaluation
+  could not expose the invalidation that tells a permitted client to refetch.
+- Required correction: route the authenticated invalidation policy through a
+  purpose-built, non-impersonable RLS helper that derives `auth.uid()` inside
+  the function, grant only that helper to `authenticated`, keep the generic
+  three-argument Club authority helper revoked, and prove permitted/outsider
+  row visibility plus Realtime delivery with two authenticated clients. Fresh
+  and upgraded local databases now prove the permission matrix and keep the
+  generic helper closed; remote Realtime remains pending on a clean branch.
+
+### W9A-056 - Reconstructed staging branch retained a failed control-plane status
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `open`
+- Original reproducer: after reconstructing and certifying ledger `220`, inspect
+  the Supabase branch state and subscribe an authenticated client to Postgres
+  Changes.
+- Impact: PostgreSQL was healthy and the channel reported `SUBSCRIBED`, but the
+  branch remained `MIGRATIONS_FAILED`; Realtime logs showed its database tenant
+  stopped without a subsequent replication-supervisor start, so no WAL event
+  reached the listener.
+- Required correction: independently read back exact ledger/schema health,
+  update only the ephemeral branch control-plane status to the certified state,
+  and require a fresh Realtime tenant start plus authenticated event delivery.
+  Production and its branch status must remain untouched. The failed branch
+  could not transition to a healthy state through the branch API and was
+  destroyed with deletion readback; the regression will use a new branch built
+  from the exact published Git SHA instead of preserving repaired control-plane
+  state.
+
+### W9A-057 - Owner transfer and reservation acceptance both won a race
+
+- Classification: `SIMULATION_BUG`
+- Status: `fixed + regression_verified`
+- Original reproducer: run the Wave 9A concurrency scenario labelled `owner
+  transfer vs Club acceptance` after the RLS regression update.
+- Impact: ownership moved to the successor while the former owner also accepted
+  a pending reservation; both commands committed. The operations target
+  different aggregate revisions, so the one-winner assertion may be stricter
+  than the product contract, but accepting with authority that has just been
+  revoked would be a real authorization defect if the Club transition was
+  already canonical at the command lock point.
+- Required correction: inspect transaction lock order and command-time authority
+  checks, decide whether this cross-aggregate pair is allowed to serialize as
+  two valid operations, and either enforce the missing Club authority fence or
+  replace the invalid one-winner assertion with an explicit allowed-outcome
+  invariant. Inspection found the fixture owner also held `platform_admin`, so
+  losing the Club role could not remove authority. The corrected scenario
+  withdraws only that synthetic override immediately before the race and keeps
+  the delayed acceptance as the original interleaving regression. The complete
+  twelve-race suite then returned twelve canonical winners, twelve explicit
+  stale/conflict/forbidden outcomes, zero double bookings and one active
+  CanonicalMatch binding.
+
+### W9A-058 - Secret scan classified loopback fixtures as remote credentials
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed + regression_verified`
+- Original reproducer: scan every modified/new file for a PostgreSQL URL that
+  embeds a password without distinguishing the destination host.
+- Impact: the scan flagged the standard disposable local URL
+  `postgres:postgres@127.0.0.1` in the concurrency and scale harnesses. No
+  Supabase, Stripe, JWT or external database secret was found or printed.
+- Required correction: retain strict remote credential patterns while allowing
+  only explicit loopback hosts used by isolated disposable databases, rerun all
+  five secret classes, and require zero external findings before commit. The
+  corrected 53-file scan allowed loopback fixtures only and returned zero
+  external findings.
+
 ## Canonical regression evidence
 
 All incidents marked `fixed + regression_verified` are covered by the same
@@ -396,7 +879,7 @@ fixture correction:
 - fresh bootstrap ledger: `220`;
 - migration count: `8`;
 - normalized schema equivalence: `PASS`;
-- schema SHA-256: `90fe290261f0cd23ad7401ea968fd053d71eb55979a1db839da6f6e79548b4f8`;
+- schema SHA-256: `83c1142de712cdbcb6528794ccf511d9fabf127caecf2c3e27ac2e735e2ee135`;
 - flags born OFF: `PASS`;
 - canonical lifecycle, RLS, privacy, DST, R4D and ledger: `PASS`;
 - concurrency: `12` races, `12` canonical winners, `12` explicit stale/conflict
@@ -405,8 +888,8 @@ fixture correction:
   records, `100,000` requests, `50,000` reservations and `100,000`
   invalidations;
 - measured paths: directory, availability, request submit, hold, accept,
-  conflict detection, reservation desk, Match binding and health, with at least
-  `20` samples per path and valid p50/p95 ordering;
+  conflict detection, reservation desk, Match binding, health and Control
+  Center, with at least `20` samples per path and valid p50/p95 ordering;
 - scale write samples rolled back: `PASS`; full corpus rollback: `PASS`;
 - scale database and temporary infrastructure dump cleanup: `PASS`;
 - ephemeral database cleanup: `PASS`.

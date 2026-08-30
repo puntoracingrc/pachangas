@@ -486,6 +486,11 @@ try {
   ));
 
   const transferRequest = createRequest(homeActor, requestPayload(venue.id, pitches[11].id, "2027-08-09"));
+  query(`
+    update private.pachanga_platform_admin_roles
+    set active=false, updated_at=clock_timestamp()
+    where user_id=${quote(venueOwner)}::uuid and role='platform_admin'
+  `, "remove synthetic platform override before owner transfer race");
   const clubRevision = Number(query(`select revision from public.pachanga_clubs where id=${quote(clubId)}::uuid`));
   raceEvidence.push(await runRace(
     "owner transfer vs Club acceptance",

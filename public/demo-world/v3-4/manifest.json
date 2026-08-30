@@ -1,0 +1,18 @@
+{
+  "authority": {
+    "hash": "763c8c70cafde739c308a91668f5ca8b9ed6d6b2036935aa4ac1c65e49a8bab1",
+    "manifest": "/demo-world/v3-2/manifest.json",
+    "version": 3.2
+  },
+  "fieldOperations": {
+    "hash": "c44b327f4ea0296ca6843f389dd043eaca06901ef14a5426ad877c989d3c3def",
+    "path": "/demo-world/v3-4/field-operations.json?h=c44b327f4ea0296c",
+    "pitches": 8,
+    "stories": 16,
+    "venues": 4
+  },
+  "mode": "field-operations-read-only",
+  "privacy": { "authIds": false, "pii": false },
+  "remoteWrites": 0,
+  "version": 3.4
+}

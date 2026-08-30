@@ -1,0 +1,44 @@
+{
+  "authority": { "generatedFrom": "simulation-world", "operationReceipts": 31, "serverSequenceOrdered": true },
+  "counts": { "pitches": 8, "stories": 16, "venues": 4 },
+  "integrity": { "activeCanonicalMatchBindings": 2, "confirmedOverlaps": 0, "noAutoCancel": true, "noAutoForfeit": true, "refereeReconfirmationCases": 1 },
+  "payment": { "charges": 0, "customers": 0, "notice": "Pago fuera de Pachangas IQ.", "stripeCalls": 0 },
+  "pitches": [
+    { "availability": "Lun-Vie 19:00-23:00", "environment": "OUTDOOR", "id": "demo_pitch_centre_1", "modalities": ["F11", "F7"], "name": "Campo 1", "status": "ACTIVE", "surface": "ARTIFICIAL_GRASS", "venueId": "demo_venue_centre" },
+    { "availability": "Sáb-Dom 09:00-20:00", "environment": "OUTDOOR", "id": "demo_pitch_centre_2", "modalities": ["F7"], "name": "Campo 2", "status": "ACTIVE", "surface": "ARTIFICIAL_GRASS", "venueId": "demo_venue_centre" },
+    { "availability": "Lun-Dom 16:00-23:30", "environment": "INDOOR", "id": "demo_pitch_pavello_1", "modalities": ["FUTSAL"], "name": "Pista central", "status": "ACTIVE", "surface": "PARQUET", "venueId": "demo_venue_pavello" },
+    { "availability": "Cerrado temporalmente", "environment": "OUTDOOR", "id": "demo_pitch_municipal_1", "modalities": ["F11"], "name": "Municipal A", "status": "MAINTENANCE", "surface": "ARTIFICIAL_GRASS", "venueId": "demo_venue_municipal" },
+    { "availability": "Mar-Jue 18:00-22:00", "environment": "OUTDOOR", "id": "demo_pitch_municipal_2", "modalities": ["F7"], "name": "Municipal B", "status": "ACTIVE", "surface": "ARTIFICIAL_GRASS", "venueId": "demo_venue_municipal" },
+    { "availability": "Sáb-Dom 08:00-22:00", "environment": "OUTDOOR", "id": "demo_pitch_relampag_1", "modalities": ["F11", "F7"], "name": "Relámpag A", "status": "ACTIVE", "surface": "ARTIFICIAL_GRASS", "venueId": "demo_venue_relampag" },
+    { "availability": "Sáb-Dom 08:00-22:00", "environment": "OUTDOOR", "id": "demo_pitch_relampag_2", "modalities": ["F7"], "name": "Relámpag B", "status": "ACTIVE", "surface": "ARTIFICIAL_GRASS", "venueId": "demo_venue_relampag" },
+    { "availability": "Vie-Dom 17:00-23:00", "environment": "INDOOR", "id": "demo_pitch_relampag_3", "modalities": ["FUTSAL"], "name": "Relámpag Indoor", "status": "ACTIVE", "surface": "PARQUET", "venueId": "demo_venue_relampag" }
+  ],
+  "privacy": { "authIds": false, "exactPrivateLocationBeforeConfirmation": false, "pii": false },
+  "readOnly": true,
+  "remoteWrites": 0,
+  "stories": [
+    { "id": "venue-public-consent", "paymentKind": "INDICATIVE", "perspective": "player", "state": "PUBLIC", "summary": "Perfil público limitado a información consentida.", "title": "Venue público con consentimiento", "venueId": "demo_venue_centre" },
+    { "id": "venue-private", "paymentKind": "CONTACT_CLUB", "perspective": "team-owner", "state": "PRIVATE", "summary": "La dirección exacta sigue oculta antes de confirmar.", "title": "Venue privado", "venueId": "demo_venue_municipal" },
+    { "id": "pitch-maintenance", "perspective": "club-booking-manager", "pitchId": "demo_pitch_municipal_1", "state": "ACTION_REQUIRED", "summary": "El mantenimiento bloquea nuevos claims sin cancelar partidos automáticamente.", "title": "Pitch en mantenimiento", "venueId": "demo_venue_municipal" },
+    { "id": "recurring-availability", "perspective": "club-booking-manager", "pitchId": "demo_pitch_centre_1", "state": "CANONICAL", "summary": "Plantilla nocturna recurrente interpretada en Europe/Madrid.", "title": "Disponibilidad recurrente", "venueId": "demo_venue_centre" },
+    { "id": "closure-exception", "perspective": "club-booking-manager", "pitchId": "demo_pitch_municipal_1", "state": "CANONICAL", "summary": "Una excepción de cierre prevalece sobre la plantilla semanal.", "title": "Excepción de cierre", "venueId": "demo_venue_municipal" },
+    { "id": "request-submitted", "paymentKind": "NEGOTIABLE", "perspective": "team-owner", "pitchId": "demo_pitch_centre_2", "reservationStatus": "SUBMITTED", "state": "CANONICAL", "summary": "El Team envía intención con operationId y revisión esperada.", "title": "Solicitud enviada", "venueId": "demo_venue_centre" },
+    { "id": "club-counter", "perspective": "club-booking-manager", "pitchId": "demo_pitch_centre_2", "reservationStatus": "COUNTER_PROPOSED", "state": "ACTION_REQUIRED", "summary": "El Club propone otro horario sin sobrescribir la solicitud original.", "title": "Contrapropuesta del Club", "venueId": "demo_venue_centre" },
+    { "id": "team-accepts-counter", "perspective": "team-owner", "pitchId": "demo_pitch_centre_2", "reservationStatus": "COUNTER_ACCEPTED", "state": "CANONICAL", "summary": "El Team acepta y el servidor confirma una única transición.", "title": "Contrapropuesta aceptada", "venueId": "demo_venue_centre" },
+    { "id": "reservation-confirmed", "paymentKind": "INDICATIVE", "perspective": "player", "pitchId": "demo_pitch_centre_2", "reservationStatus": "CONFIRMED", "state": "CANONICAL", "summary": "La ubicación operativa ya está autorizada para participantes.", "title": "Reserva confirmada", "venueId": "demo_venue_centre" },
+    { "id": "last-slot-race", "perspective": "platform-reviewer", "pitchId": "demo_pitch_pavello_1", "reservationStatus": "ONE_WINNER", "state": "CANONICAL", "summary": "Dos Teams compiten; uno gana y el otro recibe conflicto explícito.", "title": "Carrera por el último slot", "venueId": "demo_venue_pavello" },
+    { "id": "hold-expired", "perspective": "club-booking-manager", "pitchId": "demo_pitch_pavello_1", "reservationStatus": "EXPIRED", "state": "EXPIRED", "summary": "El hold expira por hora del servidor y libera el claim.", "title": "Hold expirado", "venueId": "demo_venue_pavello" },
+    { "id": "reservation-cancelled", "perspective": "team-owner", "pitchId": "demo_pitch_municipal_2", "reservationStatus": "CANCELLED", "state": "ACTION_REQUIRED", "summary": "La cancelación conserva recibo, historial y siguiente acción.", "title": "Reserva cancelada", "venueId": "demo_venue_municipal" },
+    { "id": "league-binding", "matchBinding": { "lineage": ["reservation", "canonical-match"], "status": "ACTIVE", "venueChanged": false }, "perspective": "league-organizer", "pitchId": "demo_pitch_relampag_1", "reservationStatus": "CONFIRMED", "state": "CANONICAL", "summary": "Una sola reserva activa queda vinculada al partido de Liga.", "title": "Reserva vinculada a Liga", "venueId": "demo_venue_relampag" },
+    { "id": "r4d-venue-change", "matchBinding": { "lineage": ["original-binding", "fixture-change", "replacement-binding"], "status": "ACTIVE", "venueChanged": true }, "perspective": "league-organizer", "pitchId": "demo_pitch_relampag_2", "reservationStatus": "CONFIRMED", "state": "CANONICAL", "summary": "R4D conserva el binding anterior y crea el reemplazo versionado.", "title": "Cambio de Venue por R4D", "venueId": "demo_venue_relampag" },
+    { "id": "referee-reconfirmation", "matchBinding": { "lineage": ["venue-change", "referee-reconfirmation"], "status": "ACTIVE", "venueChanged": true }, "perspective": "referee", "pitchId": "demo_pitch_relampag_2", "state": "ACTION_REQUIRED", "summary": "El árbitro ve la nueva sede y debe reconfirmar sin acceso a contactos privados.", "title": "Árbitro debe reconfirmar", "venueId": "demo_venue_relampag" },
+    { "id": "historical-venue", "matchBinding": { "lineage": ["consumed-binding", "finalized-match"], "status": "CONSUMED", "venueChanged": false }, "perspective": "platform-reviewer", "pitchId": "demo_pitch_centre_1", "reservationStatus": "CONFIRMED", "state": "HISTORICAL", "summary": "El partido finalizado conserva Venue, Pitch y snapshot histórico.", "title": "Sede histórica preservada", "venueId": "demo_venue_centre" }
+  ],
+  "venues": [
+    { "generalArea": "Distrito Demo Nord", "id": "demo_venue_centre", "name": "Centre Esportiu Barris IQ", "publicationConsent": true, "services": ["Iluminación", "Vestuarios", "Disponibilidad nocturna"], "slug": "centre-esportiu-barris-iq", "visibility": "PUBLIC" },
+    { "generalArea": "Zona Demo Interior", "id": "demo_venue_pavello", "name": "Pavelló Nocturn IQ", "publicationConsent": true, "services": ["Indoor", "Vestuarios", "Gradas"], "slug": "pavello-nocturn-iq", "visibility": "PUBLIC" },
+    { "generalArea": "Área Municipal Ficticia", "id": "demo_venue_municipal", "name": "Camp Municipal Demo", "publicationConsent": false, "services": ["Iluminación", "Mantenimiento programado"], "slug": "camp-municipal-demo", "visibility": "PRIVATE" },
+    { "generalArea": "Corredor Demo Est", "id": "demo_venue_relampag", "name": "Complex Relàmpag IQ", "publicationConsent": true, "services": ["Torneos", "Iluminación", "Vestuarios", "Accesibilidad"], "slug": "complex-relampag-iq", "visibility": "PUBLIC" }
+  ],
+  "version": 3.4
+}

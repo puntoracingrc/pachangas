@@ -68,6 +68,7 @@ const v2WriteRpcNames = new Set([
   "command_pachanga_tournament_knockout_v1",
   "command_pachanga_tournament_platform_v1",
   "command_pachanga_team_operational_state_v1",
+  "command_pachanga_venue_reservation_v1",
   "command_pachanga_publication_consent_v1",
   "command_pachanga_public_competition_moderation_v1",
   "command_pachanga_club_referee_manager_v1",
@@ -173,6 +174,7 @@ const v2ApplicationWriteOperations = new Set([
   "api:tournament-group-stage-command",
   "api:tournament-knockout-command",
   "api:team-operational-command",
+  "api:venue-operations-command",
 ]);
 const clientApplicationWriteOperations = new Set([
   ...v1ApplicationWriteOperations,
