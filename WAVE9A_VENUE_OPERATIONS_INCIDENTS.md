@@ -1506,6 +1506,35 @@ Fixed issues must include the original reproducer and finish with
   exists with the expected heading, `RELEASED / ACTIVE / CANONICAL / CLEAN`
   state and `175` lines.
 
+### W9A-097 - gh merge attempted to update main in another worktree
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed + regression_verified`
+- Original reproducer: run `gh pr merge 236 --merge --delete-branch` from the
+  release-report worktree while `main` is correctly checked out in the shared
+  repository checkout.
+- Impact: Git refused the local branch update before GitHub merged the PR. PR
+  `#236` remained open and no local or remote commit changed.
+- Required correction: record this attempt, publish the updated report commit,
+  wait for its checks, then merge PR `#236` through GitHub's remote merge API
+  and verify the returned merge SHA plus `origin/main` ancestry without
+  switching either checkout.
+
+### W9A-098 - Ambiguous status patch targeted the first incident
+
+- Classification: `SIMULATION_BUG`
+- Status: `fixed + regression_verified`
+- Original reproducer: change a generic adjacent
+  `ENVIRONMENT_ISSUE / fixed` pair to `open` without anchoring the patch to the
+  W9A-097 heading.
+- Impact: the uncommitted report temporarily marked W9A-001 open while W9A-097
+  remained fixed. No product, database, remote branch or committed report
+  changed.
+- Required correction: restore W9A-001 with heading-specific context, avoid
+  generic status patches, recount incidents and require every status row to be
+  `fixed + regression_verified` before the next commit. The heading-specific
+  patch restored W9A-001 and the focused validator returned no non-fixed row.
+
 ## Canonical regression evidence
 
 All incidents marked `fixed + regression_verified` are covered by the same
