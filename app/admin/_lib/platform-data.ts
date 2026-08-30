@@ -53,6 +53,10 @@ export async function getPlatformVenueOperations(session: VerifiedPlatformSessio
   return rpcOrThrow<JsonRecord>(session.client, "get_pachanga_venue_control_center_v1");
 }
 
+export async function getPlatformSeasonVenueAllocation(session: VerifiedPlatformSession) {
+  return rpcOrThrow<JsonRecord>(session.client, "get_pachanga_platform_venue_allocation_health_v1");
+}
+
 async function userSummaries(session: VerifiedPlatformSession, userIds: string[]) {
   if (!userIds.length) return {} as Record<string, JsonRecord>;
   const result = await rpcOrThrow<unknown>(session.client, "get_pachanga_platform_user_summaries_v1", {

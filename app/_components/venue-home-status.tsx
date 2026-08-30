@@ -44,21 +44,30 @@ export function VenueHomeStatus() {
     const team = venueRecord(data?.teamOwner);
     const club = venueRecord(data?.clubBookingManager);
     const organizer = venueRecord(data?.competitionOrganizer);
+    const season = venueRecord(data?.seasonVenue);
+    const seasonClub = venueRecord(season.clubBookingManager);
+    const seasonOrganizer = venueRecord(season.competitionOrganizer);
+    const seasonTeam = venueRecord(season.teamOwner);
     const result: Notice[] = [];
     if (team.visible) {
       result.push({ detail: "Contrapropuestas pendientes", href: "/reservas", id: "team-counter", label: "Reservas", value: venueNumber(team.pendingCounterproposals) });
       result.push({ detail: "Reservas por confirmar", href: "/reservas", id: "team-confirm", label: "Confirmar", value: venueNumber(team.reservationsToConfirm) });
       result.push({ detail: "Partidos sin campo", href: "/?mobile=partido", id: "team-venue", label: "Campo", value: venueNumber(team.matchesWithoutVenue) });
+      result.push({ detail: "Bloques recurrentes pendientes", href: "/reservas/recurrentes", id: "team-season", label: "Bloques", value: venueNumber(seasonTeam.pendingRecurringBlocks) });
     }
     if (club.visible) {
       result.push({ detail: "Solicitudes nuevas", href: "/clubes/gestionar/reservas", id: "club-requests", label: "Club", value: venueNumber(club.newRequests) });
       result.push({ detail: "Holds próximos a expirar", href: "/clubes/gestionar/reservas", id: "club-holds", label: "Holds", value: venueNumber(club.holdsExpiring) });
       result.push({ detail: "Conflictos y reservas de hoy", href: "/clubes/gestionar/reservas", id: "club-health", label: "Operación", value: venueNumber(club.conflicts) + venueNumber(club.reservationsToday) });
+      result.push({ detail: "Bloques por publicar", href: "/clubes/gestionar/campos/bloques", id: "club-series", label: "Temporada", value: venueNumber(seasonClub.blocksToPublish) });
+      result.push({ detail: "Conflictos de temporada", href: "/clubes/gestionar/campos/pools", id: "club-season-conflicts", label: "Campos", value: venueNumber(seasonClub.seasonConflicts) });
     }
     if (organizer.visible) {
       result.push({ detail: "Partidos sin Venue", href: "/competiciones", id: "organizer-venue", label: "Competición", value: venueNumber(organizer.matchesWithoutVenue) });
       result.push({ detail: "Reservas canceladas", href: "/competiciones", id: "organizer-cancel", label: "Revisar", value: venueNumber(organizer.cancelledReservations) });
       result.push({ detail: "Cambios de sede", href: "/competiciones", id: "organizer-change", label: "R4D", value: venueNumber(organizer.venueChanges) });
+      result.push({ detail: "Planes desactualizados", href: "/competiciones", id: "organizer-stale", label: "Planner", value: venueNumber(seasonOrganizer.stalePlans) });
+      result.push({ detail: "Listos para publicar", href: "/competiciones", id: "organizer-ready", label: "Campos", value: venueNumber(seasonOrganizer.readyToPublish) });
     }
     return result.filter((item) => item.value > 0).slice(0, 3);
   }, [data]);

@@ -74,10 +74,12 @@ import { DemoWorldV33GuidedReview } from "./demo-world-v3-3-guided-review";
 import type { DemoWorldV33Manifest, DemoWorldV33Snapshot } from "./demo-world-v3-3-contract";
 import { DemoWorldV34FieldOperations } from "./demo-world-v3-4-field-operations";
 import type { DemoWorldV34Manifest, DemoWorldV34Snapshot } from "./demo-world-v3-4-contract";
+import { DemoWorldV35SeasonFieldAllocation } from "./demo-world-v3-5-season-field-allocation";
+import type { DemoWorldV35Manifest, DemoWorldV35Snapshot } from "./demo-world-v3-5-contract";
 import styles from "./demo-world.module.css";
 
-type DemoWorldManifest = DemoWorldV2Manifest | DemoWorldV32Manifest | DemoWorldV33Manifest | DemoWorldV34Manifest;
-type DemoWorldFullSnapshot = DemoWorldV2Snapshot | DemoWorldV32Snapshot | DemoWorldV33Snapshot | DemoWorldV34Snapshot;
+type DemoWorldManifest = DemoWorldV2Manifest | DemoWorldV32Manifest | DemoWorldV33Manifest | DemoWorldV34Manifest | DemoWorldV35Manifest;
+type DemoWorldFullSnapshot = DemoWorldV2Snapshot | DemoWorldV32Snapshot | DemoWorldV33Snapshot | DemoWorldV34Snapshot | DemoWorldV35Snapshot;
 type DemoWorldRenderableSnapshot = {
   activity: DemoWorldV2Snapshot["activity"];
   core: DemoWorldV2Snapshot["core"];
@@ -1700,7 +1702,7 @@ export function DemoWorldApp({ manifest }: { manifest: DemoWorldManifest }) {
         {snapshot && activeTab === "planes" ? <DemoOrganizerBillingView access={snapshot.organizerAccess} billing={snapshot.organizerBilling} /> : null}
         {snapshot && activeTab === "temporada" && "season" in snapshot ? <SyntheticSeasonView index={snapshot.season} /> : null}
         {activeTab === "revision" ? <DemoWorldV33GuidedReview /> : null}
-        {activeTab === "campos" && "fieldOperations" in manifest ? <DemoWorldV34FieldOperations manifest={manifest.fieldOperations} /> : null}
+        {activeTab === "campos" && "seasonFieldAllocation" in manifest ? <><DemoWorldV35SeasonFieldAllocation manifest={manifest.seasonFieldAllocation} /><details className={styles.demoLegacyLayer}><summary>Operación de campos V3.4 preservada</summary><DemoWorldV34FieldOperations manifest={manifest.fieldOperations} /></details></> : activeTab === "campos" && "fieldOperations" in manifest ? <DemoWorldV34FieldOperations manifest={manifest.fieldOperations} /> : null}
       </div>
       <MobileAppNav active={primaryTabForDemo(activeTab) as MobileAppTab} onNavigate={(tab) => navigate(demoTabForPrimary(tab))} />
       {selectedPlayer ? <PlayerModal onClose={() => setSelectedPlayerId(null)} player={selectedPlayer} /> : null}

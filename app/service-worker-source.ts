@@ -6,6 +6,7 @@ const precacheUrls = [
   "/demo-world/v3-2/manifest.json",
   "/demo-world/v3-3/manifest.json",
   "/demo-world/v3-4/manifest.json",
+  "/demo-world/v3-5/manifest.json",
   "/manifest.webmanifest",
   "/favicon.svg",
   "/favicon-16.png",
@@ -33,11 +34,13 @@ const PRECACHE_URLS = ${encodedPrecache};
 const STATIC_DESTINATIONS = new Set(["font", "image", "manifest", "script", "style"]);
 const STATIC_FILE_EXTENSIONS = /\\.(?:css|js|mjs|png|jpg|jpeg|webp|svg|ico|woff2?)$/i;
 const LIVE_SERVICE_HOST_PARTS = ["supabase.co", "stripe.com", "googleapis.com", "google.com", "gstatic.com", "weather.googleapis.com"];
-const CACHEABLE_NAVIGATION_PATHS = new Set(["/", "/aviso-legal", "/campos", "/competiciones", "/condiciones", "/condiciones-venta", "/cookies", "/demo", "/equipo/estado", "/manual", "/mercado", "/organizacion/empezar", "/organizacion/onboarding", "/organizacion/solicitar-acceso", "/organizacion/solicitudes", "/planes-organizador", "/privacidad", "/reservas", "/torneos"]);
+const CACHEABLE_NAVIGATION_PATHS = new Set(["/", "/aviso-legal", "/campos", "/clubes/gestionar/campos/bloques", "/clubes/gestionar/campos/pools", "/competiciones", "/condiciones", "/condiciones-venta", "/cookies", "/demo", "/equipo/estado", "/manual", "/mercado", "/organizacion/empezar", "/organizacion/onboarding", "/organizacion/solicitar-acceso", "/organizacion/solicitudes", "/planes-organizador", "/privacidad", "/reservas", "/reservas/recurrentes", "/torneos"]);
 const CACHEABLE_NAVIGATION_PATTERNS = [
   /^\\/campos\\/[a-z0-9]+(?:-[a-z0-9]+)*$/i,
   /^\\/competiciones\\/[a-z0-9]+(?:-[a-z0-9]+)*$/i,
   /^\\/competiciones\\/[0-9a-f-]{36}\\/torneo$/i,
+  /^\\/competiciones\\/[0-9a-f-]{36}\\/gestion\\/campos(?:\\/plan|\\/revisiones)?$/i,
+  /^\\/reservas\\/recurrentes\\/[0-9a-f-]{36}$/i,
   /^\\/organizacion\\/solicitudes\\/[0-9a-f-]{36}$/i,
 ];
 

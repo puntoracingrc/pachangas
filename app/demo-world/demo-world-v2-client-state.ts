@@ -35,6 +35,11 @@ import {
   type DemoWorldV34Manifest,
   type DemoWorldV34Snapshot,
 } from "./demo-world-v3-4-contract";
+import {
+  DEMO_WORLD_V35_VERSION,
+  type DemoWorldV35Manifest,
+  type DemoWorldV35Snapshot,
+} from "./demo-world-v3-5-contract";
 
 const tabs: DemoWorldV2PrimaryTab[] = [
   "inicio",
@@ -73,7 +78,7 @@ export function demoWorldV2TabFromSearch(search: string): DemoWorldV2PrimaryTab 
   return value && tabs.includes(value) ? value : "inicio";
 }
 
-export function loadDemoWorldV2Core(manifest: DemoWorldV2Manifest | DemoWorldV32Manifest | DemoWorldV33Manifest | DemoWorldV34Manifest) {
+export function loadDemoWorldV2Core(manifest: DemoWorldV2Manifest | DemoWorldV32Manifest | DemoWorldV33Manifest | DemoWorldV34Manifest | DemoWorldV35Manifest) {
   return loadChunk<DemoWorldCoreChunk>(manifest.chunks.core);
 }
 
@@ -99,9 +104,9 @@ export async function loadDemoWorldV2Snapshot(
 }
 
 export async function loadDemoWorldV32Snapshot(
-  manifest: DemoWorldV32Manifest | DemoWorldV33Manifest | DemoWorldV34Manifest,
+  manifest: DemoWorldV32Manifest | DemoWorldV33Manifest | DemoWorldV34Manifest | DemoWorldV35Manifest,
   loadedCore?: DemoWorldCoreChunk,
-): Promise<DemoWorldV32Snapshot | DemoWorldV33Snapshot | DemoWorldV34Snapshot> {
+): Promise<DemoWorldV32Snapshot | DemoWorldV33Snapshot | DemoWorldV34Snapshot | DemoWorldV35Snapshot> {
   const [activity, clubsReferees, competitions, configuration, core, matches, organizerAccess, organizerBilling, players, publicCompetitions, season, teamOperational, tournament] = await Promise.all([
     loadChunk<DemoWorldActivityChunk>(manifest.chunks.activity),
     loadChunk<DemoWorldV2ClubsRefereesChunk>(manifest.chunks.clubsReferees),
@@ -118,7 +123,9 @@ export async function loadDemoWorldV32Snapshot(
     loadChunk<DemoWorldV2TournamentChunk>(manifest.chunks.tournament),
   ]);
   const snapshot = { activity, clubsReferees, competitions, configuration, core, manifest, matches, organizerAccess, organizerBilling, players, publicCompetitions, season, teamOperational, tournament };
-  return manifest.version === DEMO_WORLD_V34_VERSION
+  return manifest.version === DEMO_WORLD_V35_VERSION
+    ? snapshot as DemoWorldV35Snapshot
+    : manifest.version === DEMO_WORLD_V34_VERSION
     ? snapshot as DemoWorldV34Snapshot
     : manifest.version === DEMO_WORLD_V33_VERSION
     ? snapshot as DemoWorldV33Snapshot
@@ -126,10 +133,10 @@ export async function loadDemoWorldV32Snapshot(
 }
 
 export function loadDemoWorldSnapshot(
-  manifest: DemoWorldV2Manifest | DemoWorldV32Manifest | DemoWorldV33Manifest | DemoWorldV34Manifest,
+  manifest: DemoWorldV2Manifest | DemoWorldV32Manifest | DemoWorldV33Manifest | DemoWorldV34Manifest | DemoWorldV35Manifest,
   loadedCore?: DemoWorldCoreChunk,
 ) {
-  return manifest.version === DEMO_WORLD_V32_VERSION || manifest.version === DEMO_WORLD_V33_VERSION || manifest.version === DEMO_WORLD_V34_VERSION
+  return manifest.version === DEMO_WORLD_V32_VERSION || manifest.version === DEMO_WORLD_V33_VERSION || manifest.version === DEMO_WORLD_V34_VERSION || manifest.version === DEMO_WORLD_V35_VERSION
     ? loadDemoWorldV32Snapshot(manifest, loadedCore)
     : loadDemoWorldV2Snapshot(manifest, loadedCore);
 }

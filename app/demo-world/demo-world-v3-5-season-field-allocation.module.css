@@ -1,0 +1,74 @@
+.shell { min-height: 100%; color: #edf6f2; background: #071310; }
+.hero { display: flex; align-items: end; justify-content: space-between; gap: 24px; padding: clamp(18px, 3vw, 40px); border-bottom: 1px solid rgba(159, 198, 187, .18); background: linear-gradient(135deg, rgba(24, 74, 62, .72), rgba(7, 19, 16, .96)); }
+.hero span, .cardGrid article > span:first-child { color: #45dee1; font-size: .68rem; font-weight: 900; text-transform: uppercase; }
+.hero h1, .hero p { margin: 0; }
+.hero h1 { margin: 4px 0 6px; font-size: clamp(1.5rem, 3vw, 2.8rem); letter-spacing: 0; }
+.hero p { max-width: 720px; color: #a9bbb5; }
+.heroProof { display: grid; grid-template-columns: auto auto; gap: 2px 10px; min-width: 170px; padding-left: 18px; border-left: 2px solid #b8e64a; }
+.heroProof strong { font-size: 1.25rem; }
+.heroProof small { align-self: center; color: #8fa69f; }
+.toolbar { position: sticky; top: 0; z-index: 4; display: grid; grid-template-columns: minmax(190px, .35fr) 1fr; gap: 10px; padding: 10px clamp(14px, 2.4vw, 34px); border-bottom: 1px solid rgba(159, 198, 187, .18); background: rgba(5, 16, 13, .94); backdrop-filter: blur(14px); }
+.toolbar label { color: #91a7a0; font-size: .68rem; text-transform: uppercase; }
+.toolbar select { width: 100%; min-height: 38px; margin-top: 4px; padding: 7px 9px; border: 1px solid rgba(159, 198, 187, .25); border-radius: 4px; color: #edf6f2; background: #0d2620; }
+.toolbar nav { display: flex; align-items: end; gap: 5px; overflow-x: auto; scrollbar-width: none; }
+.toolbar nav::-webkit-scrollbar { display: none; }
+.toolbar button { flex: 0 0 auto; min-height: 38px; padding: 8px 11px; border: 1px solid rgba(159, 198, 187, .22); border-radius: 4px; color: #b7c9c3; background: #0b211c; font-weight: 800; }
+.toolbar button[aria-current="page"] { color: #071310; border-color: #b8e64a; background: #b8e64a; }
+.metrics { display: grid; grid-template-columns: repeat(6, minmax(110px, 1fr)); gap: 1px; margin: 18px clamp(14px, 2.4vw, 34px); border: 1px solid rgba(159, 198, 187, .16); background: rgba(159, 198, 187, .13); }
+.metric { min-height: 76px; padding: 12px; background: #0b1f1a; }
+.metric span { display: block; color: #89a199; font-size: .65rem; text-transform: uppercase; }
+.metric strong { display: block; margin-top: 6px; font-size: 1.35rem; }
+.summaryGrid, .cardGrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(235px, 1fr)); gap: 10px; padding: 18px clamp(14px, 2.4vw, 34px); }
+.summaryGrid article, .cardGrid article { min-width: 0; padding: 15px; border: 1px solid rgba(159, 198, 187, .19); border-radius: 6px; background: rgba(13, 31, 27, .9); }
+.cardGrid article[data-alert="true"] { border-color: rgba(255, 152, 110, .7); }
+.summaryGrid h2, .summaryGrid p, .cardGrid h2, .cardGrid p { margin: 0; }
+.summaryGrid h2, .cardGrid h2 { margin: 6px 0; font-size: 1rem; overflow-wrap: anywhere; }
+.summaryGrid p, .cardGrid p { margin-bottom: 10px; color: #9db0aa; font-size: .8rem; line-height: 1.45; }
+.summaryGrid strong, .cardGrid strong { font-size: .8rem; }
+.chip { display: inline-flex; min-height: 24px; align-items: center; padding: 3px 8px; border: 1px solid rgba(69, 222, 225, .38); border-radius: 999px; color: #7fe8e8; font-size: .64rem; font-weight: 900; text-transform: uppercase; }
+.planStats { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin: 10px 0; }
+.planStats b { padding: 7px; color: #dcebe6; background: rgba(69, 222, 225, .08); font-size: .72rem; }
+.assignmentTable { max-height: min(62vh, 680px); overflow: auto; margin: 0 clamp(14px, 2.4vw, 34px) 20px; border: 1px solid rgba(159, 198, 187, .18); overscroll-behavior: contain; }
+.assignmentTable article { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 10px; min-height: 58px; padding: 9px 12px; border-bottom: 1px solid rgba(159, 198, 187, .13); background: rgba(8, 25, 21, .88); }
+.assignmentTable article[data-alert="true"] { background: rgba(68, 31, 24, .62); }
+.assignmentTable strong, .assignmentTable small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.assignmentTable strong { font-size: .82rem; }
+.assignmentTable small { margin-top: 3px; color: #8fa69f; font-size: .72rem; }
+.assignmentTable b { color: #f5cc7a; font-size: .68rem; }
+.utilization { display: grid; gap: 10px; padding: 20px clamp(14px, 2.4vw, 34px); }
+.utilization article { display: grid; grid-template-columns: minmax(170px, .35fr) 1fr; align-items: center; gap: 14px; }
+.utilization strong, .utilization small { display: block; }
+.utilization small { margin-top: 2px; color: #8fa69f; }
+.utilization article > span { height: 12px; overflow: hidden; border-radius: 2px; background: #132c26; }
+.utilization i { display: block; height: 100%; background: #45dee1; }
+.integrity { display: flex; flex-wrap: wrap; gap: 10px 20px; padding: 14px clamp(14px, 2.4vw, 34px); border-top: 1px solid rgba(159, 198, 187, .18); color: #9eb1aa; }
+.integrity strong { color: #b8e64a; }
+.integrity p { flex: 1 1 100%; margin: 0; font-size: .75rem; }
+.loading, .error { min-height: 240px; padding: 40px; color: #b8c8c3; background: #071310; }
+.error { color: #ffd0ca; }
+
+@media (max-width: 760px) {
+  .hero { align-items: start; flex-direction: column; padding: 16px; }
+  .heroProof { width: 100%; }
+  .toolbar { grid-template-columns: 1fr; padding: 8px 12px; }
+  .metrics { grid-template-columns: repeat(2, 1fr); margin: 12px; }
+  .summaryGrid, .cardGrid { grid-template-columns: 1fr; padding: 12px; }
+  .assignmentTable { margin-inline: 12px; }
+  .assignmentTable article { grid-template-columns: minmax(0, 1fr) auto; }
+  .assignmentTable article > b { grid-column: 1 / -1; }
+  .utilization article { grid-template-columns: 1fr; }
+}
+
+@media (orientation: landscape) and (max-height: 560px),
+  (orientation: landscape) and (pointer: coarse) and (min-width: 768px) and (max-width: 1368px) and (max-height: 1024px) {
+  .hero { align-items: center; padding: 10px 14px; }
+  .hero h1 { font-size: 1.35rem; }
+  .hero p { display: none; }
+  .heroProof { grid-template-columns: repeat(6, auto); min-width: 0; border-left: 0; }
+  .toolbar { grid-template-columns: 170px 1fr; padding-block: 6px; }
+  .metrics { margin-block: 9px; }
+  .metric { min-height: 56px; padding: 8px; }
+  .metric strong { margin-top: 2px; font-size: 1rem; }
+  .summaryGrid, .cardGrid { padding-block: 9px; }
+  .assignmentTable { max-height: calc(100dvh - 180px); }
+}
