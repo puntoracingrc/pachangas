@@ -105,5 +105,5 @@ export function ClubDirectoryClient({
   );
 
   if (embedded) return directory;
-  return <OfficialProductShellV2 active="mercado" context={{ detail: "Clubs activos y públicos", eyebrow: "Mercado · Clubs", status: enabled ? "BETA" : "Próximamente", title: "Clubs" }}><main className={styles.page} data-mobile-tab="mercado"><GamePageHeader actions={<><Link href="/clubes/gestionar">Crear Club</Link><Link href="/mercado?tab=clubes">Mercado</Link></>} eyebrow="Red deportiva" summary="Encuentra Clubs, asociaciones y organizadores con perfil público." title="Clubs" />{directory}</main></OfficialProductShellV2>;
+  return <OfficialProductShellV2 active="mercado" perspective="free-agent" context={{ detail: "Clubs activos y públicos", eyebrow: "Mercado · Clubs", status: enabled ? "BETA" : "Próximamente", title: "Clubs" }}><main className={styles.page} data-mobile-tab="mercado"><GamePageHeader actions={<><Link href="/clubes/gestionar">Crear Club</Link><Link href="/mercado?tab=clubes">Mercado</Link></>} eyebrow="Red deportiva" summary="Encuentra Clubs, asociaciones y organizadores con perfil público." title="Clubs" />{directory}</main></OfficialProductShellV2>;
 }

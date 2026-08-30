@@ -451,7 +451,7 @@ export function LeagueSchedulingClient(props: Props) {
         </> : null}
       </> : null}
     </main>;
-  return embedded ? content : <OfficialProductShellV2 active="equipo" context={context}>{content}</OfficialProductShellV2>;
+  return embedded ? content : <OfficialProductShellV2 active="competir" perspective="league-organizer" context={context}>{content}</OfficialProductShellV2>;
 }
 
 function ConflictSummary({ conflicts }: { conflicts: LeagueSchedulingJson[] }) {

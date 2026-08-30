@@ -242,16 +242,18 @@ test("API routes are authenticated, no-store, origin-checked and service-role-fr
 });
 
 test("Plans, navigation and PWA write classification expose organizer access without enabling Checkout", async () => {
-  const [plans, shell, home] = await Promise.all([
+  const [plans, shell, home, navigation] = await Promise.all([
     source("app/_components/organizer-plans-client.tsx"),
     source("app/_components/official-product-shell-v2.tsx"),
     source("app/page.tsx"),
+    source("app/_components/product-navigation-contract.ts"),
   ]);
   assert.match(plans, /Solicitar colaboración/);
   assert.match(plans, /Solicitar acceso/);
   assert.match(plans, /\/organizacion\/solicitar-acceso\?plan=/);
-  assert.match(shell, /Organizar/);
-  assert.match(shell, /\/organizacion\/solicitudes/);
+  assert.match(shell, /contextualDestinationsForPerspective\(perspective\)/);
+  assert.match(navigation, /label: "Organizar"/);
+  assert.match(navigation, /href: "\/organizacion\/solicitudes"/);
   assert.match(home, /<Link href="\/organizacion\/solicitudes">Organizar<\/Link>/);
   assert.ok(knownClientWriteRpcNames().includes("command_pachanga_organizer_access_application_v1"));
 });

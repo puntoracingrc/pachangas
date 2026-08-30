@@ -31,8 +31,8 @@ export function PublicRefereeProfile({ initialProfile = null, previewProfile = n
     title: refereeText(profile?.displayName) || "Perfil arbitral",
   };
 
-  if (loading) return <OfficialProductShellV2 active="mercado" context={shellContext}><main className={styles.page} data-mobile-tab="mercado"><p className={styles.state}>Cargando ficha arbitral...</p></main></OfficialProductShellV2>;
-  if (!profile) return <OfficialProductShellV2 active="mercado" context={shellContext}><main className={styles.page} data-mobile-tab="mercado"><section className={styles.unavailable}><span>Perfil no disponible</span><h1>Ficha arbitral cerrada</h1><Link href="/mercado?tab=arbitros">Volver a Mercado</Link></section></main></OfficialProductShellV2>;
+  if (loading) return <OfficialProductShellV2 active="mercado" perspective="free-agent" context={shellContext}><main className={styles.page} data-mobile-tab="mercado"><p className={styles.state}>Cargando ficha arbitral...</p></main></OfficialProductShellV2>;
+  if (!profile) return <OfficialProductShellV2 active="mercado" perspective="free-agent" context={shellContext}><main className={styles.page} data-mobile-tab="mercado"><section className={styles.unavailable}><span>Perfil no disponible</span><h1>Ficha arbitral cerrada</h1><Link href="/mercado?tab=arbitros">Volver a Mercado</Link></section></main></OfficialProductShellV2>;
 
   const windows = refereeArray(profile.availabilityWindows);
   const clubs = refereeArray(profile.clubs);
@@ -46,7 +46,7 @@ export function PublicRefereeProfile({ initialProfile = null, previewProfile = n
     : "";
   const feeLabel = feeMode === "FREE" ? "Sin tarifa" : feeMode === "VOLUNTEER" ? "Voluntario" : feeMode === "FIXED" ? feeAmount || "Tarifa fija" : feeAmount ? `Desde ${feeAmount}` : "Negociable";
   return (
-    <OfficialProductShellV2 active="mercado" context={shellContext}>
+    <OfficialProductShellV2 active="mercado" perspective="free-agent" context={shellContext}>
     <main className={styles.page} data-mobile-tab="mercado">
       <GamePageHeader actions={<Link href="/mercado?tab=arbitros">Volver a Mercado</Link>} eyebrow="Ficha pública · BETA" summary="Información arbitral declarada por su titular y confirmada por el servidor." title={refereeText(profile.displayName)} />
       <div className={styles.layout}>

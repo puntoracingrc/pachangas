@@ -726,9 +726,11 @@ test("the public Demo uses production renderers in one shell and exposes all V2 
   assert.match(appSource, /Recorrido por equipo/);
   assert.match(appSource, /Prórroga, penaltis, no-show y corrección trazados/);
   assert.match(appSource, /Tarifa fija privada/);
-  assert.match(appSource, /const domainNavRef = useRef<HTMLElement>\(null\)/);
-  assert.match(appSource, /navigation\.scrollWidth <= navigation\.clientWidth \+ 2/);
-  assert.match(appSource, /scrollIntoView\(\{ behavior: "auto", block: "nearest", inline: "center" \}\)/);
+  assert.match(appSource, /function DemoDomainMenu/);
+  assert.match(appSource, /<details className=\{styles\.domainMenu\}>/);
+  assert.match(appSource, /aria-current=\{activeTab === tab\.id \? "page" : undefined\}/);
+  assert.match(demoStyles, /\.domainMenuPanel \{[\s\S]*grid-template-columns: repeat\(3, minmax\(0, 1fr\)\)/);
+  assert.match(demoStyles, /\.mobileDomainMenu \.domainMenuPanel \{[\s\S]*overflow: auto;/);
   assert.doesNotMatch(appSource, /DemoLeagueTable|DemoLeagueMatch/);
   assert.match(scheduleSource, /embedded \? content : <OfficialProductShellV2/);
   assert.match(matchSource, /embedded[\s\S]*\? content/);

@@ -323,7 +323,7 @@ export function OrganizerBillingClient({ checkoutOperationId = "", checkoutStatu
   const confirmationActive = organizerBillingBoolean(confirmation.entitlementActive);
 
   return (
-    <OfficialProductShellV2 active="perfil" context={{ detail: selected ? organizerBillingText(selected.name) : "Owner", eyebrow: "Ajustes", status: fromCache ? "Copia local" : online ? "Servidor central" : "Sin conexion", title: "Facturacion" }}>
+    <OfficialProductShellV2 active="competir" perspective="league-organizer" context={{ detail: selected ? organizerBillingText(selected.name) : "Owner", eyebrow: "Ajustes", status: fromCache ? "Copia local" : online ? "Servidor central" : "Sin conexion", title: "Facturacion" }}>
       <main className={styles.page}>
         <div className={styles.billingLayout}>
           <header className={styles.intro}>

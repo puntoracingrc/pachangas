@@ -297,7 +297,8 @@ export function TournamentPrivateBetaClient({ competitionId = "", planId = "", p
   </main>;
 
   return <OfficialProductShellV2
-    active="equipo"
+    active="competir"
+    perspective="tournament-organizer"
     context={{
       detail: preview ? "Laboratorio local" : cached ? "Copia local revalidándose" : "Servidor autoritativo",
       eyebrow: "Competiciones",

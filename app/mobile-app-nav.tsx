@@ -1,8 +1,12 @@
 "use client";
 
 import Link from "next/link";
+import {
+  PRODUCT_PORTRAIT_DESTINATIONS,
+  type ProductPrimaryTab,
+} from "./_components/product-navigation-contract";
 
-export type MobileAppTab = "inicio" | "partido" | "mercado" | "equipo" | "perfil";
+export type MobileAppTab = ProductPrimaryTab;
 
 type MobileAppNavProps = {
   active: MobileAppTab;
@@ -16,13 +20,7 @@ export type AdminViewPreviewControl = {
   onToggle: () => void;
 };
 
-const items: Array<{ id: MobileAppTab; label: string }> = [
-  { id: "inicio", label: "Inicio" },
-  { id: "partido", label: "Partido" },
-  { id: "mercado", label: "Mercado" },
-  { id: "equipo", label: "Equipo" },
-  { id: "perfil", label: "Perfil" },
-];
+const items: Array<{ id: MobileAppTab; label: string }> = PRODUCT_PORTRAIT_DESTINATIONS;
 
 export async function requestMobileGameFullscreen() {
   if (typeof window === "undefined" || typeof document === "undefined") return;
@@ -70,6 +68,14 @@ function MobileNavIcon({ name }: { name: MobileAppTab }) {
       <svg aria-hidden="true" viewBox="0 0 24 24">
         <circle cx="9" cy="8" r="3" />
         <path d="M3.8 19c.5-4 2.3-6 5.2-6s4.7 2 5.2 6M16.5 8.5h4M18.5 6.5v4M16 15.5h5M18.5 13v5" />
+      </svg>
+    );
+  }
+
+  if (name === "competir") {
+    return (
+      <svg aria-hidden="true" viewBox="0 0 24 24">
+        <path d="M8 4h8v4c0 3-1.5 5-4 6-2.5-1-4-3-4-6zM8 6H4c0 3 1.4 5 4.5 5M16 6h4c0 3-1.4 5-4.5 5M12 14v4M8 21h8M9 18h6" />
       </svg>
     );
   }

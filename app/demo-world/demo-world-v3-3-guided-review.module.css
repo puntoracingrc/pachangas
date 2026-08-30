@@ -1,0 +1,29 @@
+.review { min-height: calc(100dvh - 100px); color: var(--demo-ink); }
+.hero { display: flex; align-items: end; justify-content: space-between; gap: 24px; border-bottom: 1px solid var(--demo-line); padding: clamp(26px, 5vw, 58px) max(20px, calc((100vw - 1320px) / 2)); }
+.hero span, .workspace > header span, .comparison span { color: var(--demo-cyan); font-size: 0.65rem; font-weight: 900; text-transform: uppercase; }
+.hero h1 { margin: 5px 0 9px; font-size: clamp(1.7rem, 4vw, 3rem); }
+.hero p, .workspace p, .comparison p { margin: 0; color: var(--demo-muted); line-height: 1.5; }
+.hero details { max-width: 310px; border: 1px solid var(--demo-line); border-radius: 6px; background: var(--demo-panel-soft); padding: 10px 12px; }
+.hero summary { color: var(--demo-lime); cursor: pointer; font-weight: 850; }
+.hero details p { margin-top: 8px; font-size: 0.72rem; }
+.layout { min-height: 520px; display: grid; grid-template-columns: minmax(190px, 0.28fr) minmax(0, 1fr); }
+.layout > nav { display: grid; align-content: start; gap: 3px; border-right: 1px solid var(--demo-line); padding: 12px; }
+.layout > nav button { min-height: 54px; display: flex; align-items: center; justify-content: space-between; gap: 8px; border: 1px solid transparent; border-radius: 5px; background: transparent; padding: 8px 10px; color: var(--demo-muted); text-align: left; }
+.layout > nav button[aria-current="page"] { border-color: rgba(200, 239, 93, 0.35); background: rgba(200, 239, 93, 0.08); color: var(--demo-ink); }
+.layout > nav small { font-size: 0.58rem; }
+.workspace { min-width: 0; padding: clamp(20px, 4vw, 42px); }
+.workspace > header h2 { margin: 5px 0; font-size: 1.5rem; }
+.workspace ol { display: grid; gap: 8px; margin: 22px 0; padding: 0; list-style: none; }
+.workspace li { min-width: 0; display: grid; grid-template-columns: 34px minmax(0, 1fr) auto; align-items: center; gap: 12px; border: 1px solid var(--demo-line); border-radius: 6px; background: var(--demo-panel-soft); padding: 12px; }
+.workspace li > span { width: 30px; height: 30px; display: grid; place-items: center; border: 1px solid var(--demo-cyan); border-radius: 50%; color: var(--demo-cyan); font-weight: 900; }
+.workspace li[data-complete="true"] > span { border-color: var(--demo-lime); color: var(--demo-lime); }
+.workspace li p { font-size: 0.78rem; }
+.workspace li small { color: var(--demo-cyan); font-size: 0.63rem; }
+.workspace li a { min-height: 40px; display: inline-flex; align-items: center; border: 1px solid var(--demo-lime); border-radius: 5px; padding: 0 12px; color: var(--demo-lime); font-size: 0.72rem; font-weight: 900; text-decoration: none; }
+.comparison { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1px; border: 1px solid var(--demo-line); background: var(--demo-line); }
+.comparison > div { display: grid; gap: 6px; background: rgba(7, 17, 15, 0.92); padding: 16px; }
+.comparison strong { color: var(--demo-ink); }
+.comparison p { font-size: 0.72rem; }
+@media (max-width: 760px) { .hero { align-items: stretch; flex-direction: column; padding: 22px 14px; } .hero details { max-width: none; } .layout { grid-template-columns: 1fr; } .layout > nav { grid-auto-columns: minmax(165px, 62vw); grid-auto-flow: column; overflow-x: auto; border-right: 0; border-bottom: 1px solid var(--demo-line); } .workspace { padding: 18px 14px 90px; } .workspace li { grid-template-columns: 30px minmax(0, 1fr); } .workspace li a { grid-column: 1 / -1; justify-content: center; } .comparison { grid-template-columns: 1fr; } }
+@media (orientation: landscape) and (max-height: 600px) { .review { height: 100%; overflow: auto; } .hero { align-items: center; padding: 12px 16px; } .hero h1 { font-size: 1.25rem; } .hero p { font-size: 0.68rem; } .layout { min-height: 0; grid-template-columns: 170px minmax(0, 1fr); } .workspace { padding: 12px 14px 60px; } .workspace ol { margin-block: 10px; } .comparison > div { padding: 10px; } }
+@media (prefers-reduced-motion: reduce) { .review *, .review *::before, .review *::after { scroll-behavior: auto !important; transition-duration: 0.01ms !important; } }

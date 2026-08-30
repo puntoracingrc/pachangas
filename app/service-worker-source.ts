@@ -4,6 +4,7 @@ const precacheUrls = [
   "/demo-world/v1/manifest.json",
   "/demo-world/v3/manifest.json",
   "/demo-world/v3-2/manifest.json",
+  "/demo-world/v3-3/manifest.json",
   "/manifest.webmanifest",
   "/favicon.svg",
   "/favicon-16.png",

@@ -13,6 +13,21 @@ import {
 
 const DEMO_WORLD_SESSION_KEY = "pachangas-demo-world-v1-session";
 const DEMO_WORLD_PRIMARY_TABS: DemoWorldPrimaryTab[] = ["inicio", "partido", "mercado", "equipo", "perfil"];
+const DEMO_WORLD_PERSPECTIVES = [
+  "admin",
+  "club-organizer",
+  "free-agent",
+  "league-organizer",
+  "platform-reviewer",
+  "player",
+  "referee",
+  "team-owner",
+  "tournament-organizer",
+] as const;
+
+function isDemoWorldPerspective(value: unknown): value is DemoWorldSessionState["perspectiveId"] {
+  return typeof value === "string" && DEMO_WORLD_PERSPECTIVES.includes(value as typeof DEMO_WORLD_PERSPECTIVES[number]);
+}
 
 async function loadChunk<T>(path: string): Promise<T> {
   const response = await fetch(path, {
@@ -46,11 +61,7 @@ export function readDemoWorldSession(storage: Pick<Storage, "getItem">): DemoWor
   try {
     const value = JSON.parse(storage.getItem(DEMO_WORLD_SESSION_KEY) ?? "null") as Partial<DemoWorldSessionState> | null;
     if (!value || typeof value !== "object") return structuredClone(DEFAULT_DEMO_WORLD_SESSION);
-    const perspectiveId = value.perspectiveId === "admin"
-      || value.perspectiveId === "free-agent"
-      || value.perspectiveId === "league-organizer"
-      ? value.perspectiveId
-      : "player";
+    const perspectiveId = isDemoWorldPerspective(value.perspectiveId) ? value.perspectiveId : "player";
     const attendanceByMatch = value.attendanceByMatch && typeof value.attendanceByMatch === "object"
       ? Object.entries(value.attendanceByMatch).reduce<DemoWorldSessionState["attendanceByMatch"]>((result, [matchId, status]) => {
         if (status === "voy" || status === "duda" || status === "no") result[matchId] = status;
@@ -84,10 +95,7 @@ export function readInitialDemoWorldSession(
 ): DemoWorldSessionState {
   const state = storage ? readDemoWorldSession(storage) : structuredClone(DEFAULT_DEMO_WORLD_SESSION);
   const requestedPerspective = new URLSearchParams(search).get("perspective");
-  if (requestedPerspective === "admin"
-    || requestedPerspective === "player"
-    || requestedPerspective === "free-agent"
-    || requestedPerspective === "league-organizer") {
+  if (isDemoWorldPerspective(requestedPerspective)) {
     state.perspectiveId = requestedPerspective;
   }
   return state;

@@ -1,0 +1,18 @@
+{
+  "authority": {
+    "hash": "763c8c70cafde739c308a91668f5ca8b9ed6d6b2036935aa4ac1c65e49a8bab1",
+    "manifest": "/demo-world/v3-2/manifest.json",
+    "version": 3.2
+  },
+  "guidedReview": {
+    "localProgressOnly": true,
+    "remoteWrites": 0,
+    "tourCount": 8
+  },
+  "mode": "guided-product-review",
+  "privacy": {
+    "authIds": false,
+    "pii": false
+  },
+  "version": 3.3
+}

@@ -35,6 +35,7 @@ export type DemoWorldV2PrimaryTab = DemoWorldPrimaryTab
   | "estado-equipo"
   | "planes"
   | "competiciones"
+  | "revision"
   | "temporada"
   | "torneo";
 

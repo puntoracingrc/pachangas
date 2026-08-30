@@ -391,7 +391,8 @@ export function LeaguePrivateBetaClient() {
   }
 
   return <OfficialProductShellV2
-    active="equipo"
+    active="competir"
+    perspective="league-organizer"
     context={{ detail: "Acceso por grant", eyebrow: "Competiciones", status: leagueBetaBoolean(flags.enabled) ? "Beta privada" : "Lectura", title: "Ligas (Beta)" }}
   >
     <main className={styles.page}>

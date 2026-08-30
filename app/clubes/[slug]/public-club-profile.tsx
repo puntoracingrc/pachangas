@@ -14,7 +14,7 @@ export function PublicClubProfile({ club, embedded = false }: { club: JsonRecord
   const context = { detail: club ? "Perfil público" : "No disponible", eyebrow: "Mercado · Clubs", status: "BETA", title: name };
   if (!club) {
     const unavailable = <main className={styles.page} data-mobile-tab="mercado"><section className={styles.unavailable}><span>Club no disponible</span><h1>Este perfil no es público</h1><p>Puede estar pendiente de revisión, desactivado o publicado solo para sus miembros.</p><Link href="/clubes">Volver al directorio</Link></section></main>;
-    return embedded ? unavailable : <OfficialProductShellV2 active="mercado" context={context}>{unavailable}</OfficialProductShellV2>;
+    return embedded ? unavailable : <OfficialProductShellV2 active="mercado" perspective="free-agent" context={context}>{unavailable}</OfficialProductShellV2>;
   }
 
   const area = record(club.generalArea);
@@ -31,5 +31,5 @@ export function PublicClubProfile({ club, embedded = false }: { club: JsonRecord
     {text(club.description) ? <p className={styles.description}>{text(club.description)}</p> : null}
     <section className={styles.teams}><SectionHeader eyebrow="Red" title="Equipos visibles" />{teams.length ? <div>{teams.map((team, index) => <article key={`${text(team.name)}:${index}`}><strong>{text(team.name)}</strong><span>{text(team.relationshipType).replaceAll("_", " ")}</span></article>)}</div> : <p>Este Club todavía no muestra equipos públicos.</p>}</section>
   </main>;
-  return embedded ? content : <OfficialProductShellV2 active="mercado" context={context}>{content}</OfficialProductShellV2>;
+  return embedded ? content : <OfficialProductShellV2 active="mercado" perspective="free-agent" context={context}>{content}</OfficialProductShellV2>;
 }

@@ -232,13 +232,14 @@ test("Realtime invalidates and refetches canonical state instead of trusting WAL
 });
 
 test("Official UI provides private eligibility, twelve-step wizard and responsive game layouts", async () => {
-  const [page, client, css, shell, adminPage, adminClient] = await Promise.all([
+  const [page, client, css, shell, adminPage, adminClient, navigation] = await Promise.all([
     source("app/ligas/page.tsx"),
     source("app/_components/league-private-beta-client.tsx"),
     source("app/_components/league-private-beta-client.module.css"),
     source("app/_components/official-product-shell-v2.tsx"),
     source("app/admin/competitions/page.tsx"),
     source("app/admin/competitions/league-private-beta-admin-client.tsx"),
+    source("app/_components/product-navigation-contract.ts"),
   ]);
   assert.match(page, /follow: false, index: false/);
   assert.match(client, /OfficialProductShellV2/);
@@ -253,7 +254,8 @@ test("Official UI provides private eligibility, twelve-step wizard and responsiv
   assert.match(css, /orientation: landscape/);
   assert.match(css, /pointer: coarse/);
   assert.match(css, /min-width: 0/);
-  assert.match(shell, /href="\/ligas"/);
+  assert.match(shell, /contextualDestinationsForPerspective\(perspective\)/);
+  assert.match(navigation, /href: "\/ligas"/);
   assert.match(adminPage, /League Private Beta/);
   assert.match(adminClient, /Apagado inmediato/);
   assert.match(adminClient, /Conceder 11 capacidades/);

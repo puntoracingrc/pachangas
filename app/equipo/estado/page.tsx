@@ -12,7 +12,7 @@ type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 export default async function TeamOperationalPage({ searchParams }: { searchParams: SearchParams }) {
   const raw = await searchParams;
   const group = Array.isArray(raw.grupo) ? raw.grupo[0] ?? "" : raw.grupo ?? "";
-  return <OfficialProductShellV2 active="equipo" context={{ detail: "Revisión, límites y continuidad", eyebrow: "Equipo", status: "Servidor", title: "Estado operativo" }}>
+  return <OfficialProductShellV2 active="equipo" perspective="team-owner" context={{ detail: "Revisión, límites y continuidad", eyebrow: "Equipo", status: "Servidor", title: "Estado operativo" }}>
     <TeamOperationalClient initialGroupId={group} />
   </OfficialProductShellV2>;
 }

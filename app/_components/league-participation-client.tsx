@@ -244,7 +244,7 @@ export function LeagueParticipationClient(props: Props) {
     title: surfaceTitle(surface),
   };
 
-  return <OfficialProductShellV2 active="equipo" context={shellContext}>
+  return <OfficialProductShellV2 active="competir" perspective="league-organizer" context={shellContext}>
     <main className={styles.page} data-mobile-tab="equipo" data-surface={surface}>
       <GamePageHeader
         eyebrow="League Participation R4A"

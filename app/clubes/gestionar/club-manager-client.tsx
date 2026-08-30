@@ -199,7 +199,7 @@ export function ClubManagerClient() {
   }
 
   const context = { detail: cached ? "Caché local · verificando" : clubId ? `Revisión ${clubRevision}` : "Servidor canónico", eyebrow: "Clubs · BETA", status: cached ? "Actualizando" : "En directo", title: text(club.name) || "Mis Clubs" };
-  return <OfficialProductShellV2 active="mercado" context={context}><main className={styles.page} data-mobile-tab="mercado">
+  return <OfficialProductShellV2 active="competir" perspective="club-organizer" context={context}><main className={styles.page} data-mobile-tab="mercado">
     <GamePageHeader actions={<><button type="button" disabled={!userId || busy} onClick={() => void loadCanonical(userId, accessToken, "manual")}>Actualizar</button><Link href="/clubes">Directorio</Link></>} eyebrow="BETA" summary="Esta función está en beta. Puedes usarla con normalidad y ayudarnos a mejorarla." title="Gestionar Clubs" />
     {message ? <ProductFeedback tone={/confirmado|actualizado/i.test(message) ? "success" : /no |error|required|requer/i.test(message) ? "danger" : "info"}>{message}</ProductFeedback> : null}
     {oneTimeInvitation ? <ProductFeedback tone="warning"><strong>Enlace mostrado una sola vez:</strong> {oneTimeInvitation.kind === "referee" ? `${location.origin}/perfil/arbitro#relationship=${oneTimeInvitation.id}&token=${oneTimeInvitation.token}` : `${location.origin}/clubes/gestionar#invitation=${oneTimeInvitation.id}&token=${oneTimeInvitation.token}`}</ProductFeedback> : null}

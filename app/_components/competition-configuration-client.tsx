@@ -214,7 +214,7 @@ export function CompetitionConfigurationClient({ competitionId }: { competitionI
     });
   }
 
-  return <OfficialProductShellV2 active="equipo" context={{ detail: configurationText(edition.seasonLabel), eyebrow: "Competition Configuration", status: configurationText(data?.freezePoint) || "DRAFT", title: configurationText(competition.name) || "Configuración" }}>
+  return <OfficialProductShellV2 active="competir" perspective="league-organizer" context={{ detail: configurationText(edition.seasonLabel), eyebrow: "Competition Configuration", status: configurationText(data?.freezePoint) || "DRAFT", title: configurationText(competition.name) || "Configuración" }}>
     <main className={styles.page}>
       <GamePageHeader eyebrow="Autoridad canónica" title={configurationText(competition.name) || "Configuración de competición"} summary="Edita un borrador legible; PostgreSQL valida y publica una RuleRevision nueva sin reescribir el pasado." />
       {cached ? <ProductFeedback tone="warning">Mostrando caché de lectura mientras se confirma la revisión actual.</ProductFeedback> : null}

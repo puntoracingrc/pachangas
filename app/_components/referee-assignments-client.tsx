@@ -362,5 +362,5 @@ export function RefereeAssignmentsClient(props: Props) {
   </main>;
 
   if (embedded) return content;
-  return <OfficialProductShellV2 active={surface === "my" || surface === "club" ? "perfil" : "partido"} context={{ detail: cached ? "Caché en revalidación" : "Snapshot canónico", eyebrow: "Beta privada", status: loading ? "Sincronizando" : "Servidor", title }}>{content}</OfficialProductShellV2>;
+  return <OfficialProductShellV2 active={surface === "my" || surface === "club" ? "perfil" : "partido"} perspective="referee" context={{ detail: cached ? "Caché en revalidación" : "Snapshot canónico", eyebrow: "Beta privada", status: loading ? "Sincronizando" : "Servidor", title }}>{content}</OfficialProductShellV2>;
 }
