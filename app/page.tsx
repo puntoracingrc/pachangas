@@ -3511,6 +3511,8 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
   const [settingsDraft, setSettingsDraft] = useState<SiteSettings>(defaultSiteSettings);
   const [result, setResult] = useState({ a: "", b: "" });
   const [resultEntryStep, setResultEntryStep] = useState<1 | 2>(1);
+  const [resultCorrectionOpen, setResultCorrectionOpen] = useState(false);
+  const [resultCorrectionScorers, setResultCorrectionScorers] = useState<Array<{ playerId: string; goals: number }>>([]);
   const [rankingSeason, setRankingSeason] = useState(seasonKey(new Date()));
   const [historySeason, setHistorySeason] = useState("all");
   const [rankingSort, setRankingSort] = useState<RankingSort>("media");
@@ -4753,6 +4755,8 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
         b: activeMatch.scoreB === undefined ? "" : String(activeMatch.scoreB),
       });
       setResultEntryStep(1);
+      setResultCorrectionOpen(false);
+      setResultCorrectionScorers([]);
     });
   }, [activeMatch.id, activeMatch.scoreA, activeMatch.scoreB]);
 
@@ -5270,7 +5274,12 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
       return;
     }
 
-    if (supabase && remoteGroupId && hasRealTeam) {
+    if (hasRealTeam) {
+      if (!supabase || !remoteGroupId) {
+        setSyncStatus("error");
+        setSyncError("No hay conexión con el servidor. Tu asistencia no se ha guardado.");
+        return;
+      }
       setSyncStatus("connecting");
       setSyncError("");
 
@@ -5407,7 +5416,12 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
     const existingEntry = activeMatch.players.find((entry) => entry.playerId === playerId);
     const nextPaid = !existingEntry?.paid;
 
-    if (supabase && remoteGroupId && hasRealTeam) {
+    if (hasRealTeam) {
+      if (!supabase || !remoteGroupId) {
+        setSyncStatus("error");
+        setSyncError("No hay conexión con el servidor. El pago no se ha guardado.");
+        return;
+      }
       setSyncStatus("connecting");
       setSyncError("");
 
@@ -5721,7 +5735,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
     if (!canUseAdminControls) return;
     if (!resultIsReady) return;
 
-    const scorers = activeMatch.scorers ?? [];
+    const scorers = matchFinalized && resultCorrectionOpen ? resultCorrectionScorers : activeMatch.scorers ?? [];
     const isTeamA = suggested.teamA.some((player) => player.id === playerId);
     const teamPlayers = isTeamA ? suggested.teamA : suggested.teamB;
     const teamLimit = Number(isTeamA ? scoreAValue : scoreBValue);
@@ -5737,7 +5751,17 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
     const cleanScorers = nextScorers.filter((entry) => entry.goals > 0);
     const goalDelta = nextGoals - (existing?.goals ?? 0);
 
-    if (supabase && remoteGroupId && hasRealTeam && canUseAdminControls) {
+    if (matchFinalized && resultCorrectionOpen) {
+      setResultCorrectionScorers(cleanScorers);
+      return;
+    }
+
+    if (hasRealTeam && canUseAdminControls) {
+      if (!supabase || !remoteGroupId) {
+        setSyncStatus("error");
+        setSyncError("No hay conexión con el servidor. Los goleadores no se han guardado.");
+        return;
+      }
       setSyncStatus("connecting");
       setSyncError("");
 
@@ -5777,8 +5801,9 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
 
   function scorerRows(teamPlayers: Player[], variant: "team-a" | "team-b") {
     const teamLimit = Number(variant === "team-a" ? scoreAValue : scoreBValue);
+    const scorers = matchFinalized && resultCorrectionOpen ? resultCorrectionScorers : activeMatch.scorers ?? [];
     const assignedTeamGoals = teamPlayers.reduce(
-      (sum, teamPlayer) => sum + (activeMatch.scorers?.find((entry) => entry.playerId === teamPlayer.id)?.goals ?? 0),
+      (sum, teamPlayer) => sum + (scorers.find((entry) => entry.playerId === teamPlayer.id)?.goals ?? 0),
       0,
     );
     const teamHasNoGoals = resultIsReady && teamLimit === 0;
@@ -5786,7 +5811,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
 
     return teamPlayers
       .map((player) => {
-        const goals = activeMatch.scorers?.find((entry) => entry.playerId === player.id)?.goals ?? 0;
+        const goals = scorers.find((entry) => entry.playerId === player.id)?.goals ?? 0;
         if (!resultIsReady || (teamHasNoGoals && goals === 0) || (teamGoalsComplete && goals === 0)) return null;
 
         return (
@@ -5905,6 +5930,71 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
     setPlayers(nextPlayers);
     setMatches(nextMatches);
     await saveRemotePayloadWithBackup(nextPayload, "partido_finalizado");
+  }
+
+  async function saveResultCorrection() {
+    if (!canUseAdminControls || !matchFinalized || !resultIsReady) return;
+
+    const scoreA = Number(scoreAValue);
+    const scoreB = Number(scoreBValue);
+    const scorers = resultCorrectionScorers;
+    const teamAGoals = suggested.teamA.reduce(
+      (sum, player) => sum + (scorers.find((entry) => entry.playerId === player.id)?.goals ?? 0),
+      0,
+    );
+    const teamBGoals = suggested.teamB.reduce(
+      (sum, player) => sum + (scorers.find((entry) => entry.playerId === player.id)?.goals ?? 0),
+      0,
+    );
+
+    if (teamAGoals > scoreA || teamBGoals > scoreB) {
+      setSyncStatus("error");
+      setSyncError("Reduce primero los goleadores: su suma no puede superar el marcador corregido.");
+      return;
+    }
+
+    if (hasRealTeam) {
+      if (!supabase || !remoteGroupId) {
+        setSyncStatus("error");
+        setSyncError("No hay conexión con el servidor. La corrección no se ha guardado.");
+        return;
+      }
+      setSyncStatus("connecting");
+      setSyncError("");
+      const response = await supabase.rpc("patch_pachanga_match_scorers_authoritative_v2", {
+        client_metadata: clientOperationMetadata(),
+        expected_revision: remotePayloadRevisionRef.current,
+        next_scorers: scorers,
+        operation_id: id(),
+        target_group_id: remoteGroupId,
+        target_match_id: activeMatch.id,
+        target_score_a: scoreA,
+        target_score_b: scoreB,
+        target_team_a_ids: suggested.teamA.map((player) => player.id),
+        target_team_b_ids: suggested.teamB.map((player) => player.id),
+      });
+
+      if (response.error) {
+        markRemoteWriteError(response.error.message);
+        return;
+      }
+
+      applyRemoteCommit(response.data as RemotePayloadCommit);
+    } else {
+      const previousGoals = new Map((activeMatch.scorers ?? []).map((entry) => [entry.playerId, entry.goals]));
+      const nextGoals = new Map(scorers.map((entry) => [entry.playerId, entry.goals]));
+      updateMatch({ ...activeMatch, scoreA, scoreB, scorers });
+      setPlayers((current) => current.map((player) => {
+        const delta = (nextGoals.get(player.id) ?? 0) - (previousGoals.get(player.id) ?? 0);
+        return delta === 0 ? player : { ...player, goals: Math.max(0, player.goals + delta) };
+      }));
+      setSyncStatus("local");
+      setSyncError("");
+    }
+
+    setResultCorrectionOpen(false);
+    setResultCorrectionScorers([]);
+    setResultEntryStep(1);
   }
 
   function deleteClosedMatch(matchId: string) {
@@ -6293,7 +6383,6 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
   const showMatchAdminPanel = canUseAdminControls;
   const canEditMatchSettings = canUseAdminControls && !matchFinalized;
   const canEditLineup = canUseAdminControls && registrationOpen && !lineupClosed && !matchFinalized;
-  const canToggleLineupFromContext = canUseAdminControls && matchConfigured && registrationOpen && !matchFinalized;
 
   function toggleAdminPlayerView() {
     if (!previewRequested) {
@@ -8217,6 +8306,9 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
           <button className="copy-invite-button" type="button" onClick={() => void copySharedMatchLink()} disabled={!matchConfigured} title="Copiar enlace para miembros del grupo" aria-label="Copiar enlace del partido para miembros del grupo">
             Copiar link
           </button>
+          <button className="copy-invite-button" type="button" onClick={() => void shareSharedMatch()} disabled={!matchConfigured} title="Compartir con las aplicaciones del dispositivo" aria-label="Compartir partido">
+            Compartir
+          </button>
           <button className="whatsapp-icon-button" type="button" onClick={shareSharedMatchWhatsApp} disabled={!matchConfigured} title="Compartir el partido con miembros del grupo" aria-label="Compartir el partido con miembros del grupo por WhatsApp">
             <WhatsAppLogo />
           </button>
@@ -8309,6 +8401,22 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
       setSyncStatus("error");
       setSyncError("No se pudo copiar el partido");
     }
+  }
+
+  async function shareSharedMatch() {
+    const url = publicMatchUrl();
+    if (!url) return;
+
+    if (typeof navigator.share === "function") {
+      try {
+        await navigator.share({ text: shareText(url), title: activeMatch.title || "Partido", url });
+        return;
+      } catch (error) {
+        if (error instanceof DOMException && error.name === "AbortError") return;
+      }
+    }
+
+    await copySharedMatchLink();
   }
 
   async function copyMatchInvitationLink() {
@@ -8912,6 +9020,25 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
   }));
   const activeOwnAttendance = ownPlayer ? activeMatch.players.find((entry) => entry.playerId === ownPlayer.id)?.status ?? null : null;
   const canRespondToActiveMatch = Boolean(ownPlayer && matchConfigured && registrationOpen && !matchFinalized);
+  const matchPrimaryAction = matchFinalized
+    ? { label: "Ver resultado", pane: "resultado" as MatchManagerPane }
+    : canUseAdminControls && !matchConfigured
+      ? { label: "Continuar borrador", pane: "admin" as MatchManagerPane }
+      : canUseAdminControls && confirmedPlayers.length < activeMatch.targetPlayers
+        ? { label: "Gestionar convocatoria", pane: "admin" as MatchManagerPane }
+        : canUseAdminControls && !teamsPrepared
+          ? { label: "Crear equipos", pane: "alineacion" as MatchManagerPane }
+          : canUseAdminControls && !lineupClosed
+            ? { label: "Publicar equipos", pane: "alineacion" as MatchManagerPane }
+            : canUseAdminControls && activeMatchTime <= currentTimeMs
+              ? { label: "Añadir resultado", pane: "resultado" as MatchManagerPane }
+              : canUseAdminControls
+                ? { label: "Ver equipos", pane: "alineacion" as MatchManagerPane }
+                : canRespondToActiveMatch && activeOwnAttendance !== "voy"
+                  ? { label: "Confirmar asistencia", pane: "campo" as MatchManagerPane }
+                  : activeOwnAttendance === "voy"
+                    ? { label: "Ver equipos", pane: "alineacion" as MatchManagerPane }
+                    : null;
   const statusConfirmationPlayer = statusConfirmation ? players.find((player) => player.id === statusConfirmation.playerId) : undefined;
   const statusConfirmationPlayerName = statusConfirmationPlayer ? playerDisplayName(statusConfirmationPlayer) : "este jugador";
   const statusConfirmationTargetLabel = statusConfirmation?.nextStatus === "duda" ? "Duda" : "No voy";
@@ -10285,23 +10412,13 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
             kind: matchKinds[activeKind].label,
             label: matchContextKind,
             place: activeMatch.place,
-            status: canToggleLineupFromContext ? (
-              <button
-                aria-label={lineupClosed ? "Abrir alineación" : "Cerrar alineación"}
-                aria-pressed={lineupClosed}
-                className="match-context-status-button"
-                onClick={() => void toggleLineupClosed()}
-                type="button"
-              >
-                {matchContextStatus}
-              </button>
-            ) : canRespondToActiveMatch ? (
+            status: matchPrimaryAction ? (
               <button
                 className="match-context-status-button"
-                onClick={() => setActiveMatchManagerPane("campo")}
+                onClick={() => setActiveMatchManagerPane(matchPrimaryAction.pane)}
                 type="button"
               >
-                {activeOwnAttendance === "voy" ? "Asistencia: Voy" : activeOwnAttendance === "duda" ? "Asistencia: Duda" : activeOwnAttendance === "no" ? "Asistencia: No voy" : "Confirmar asistencia"}
+                {matchPrimaryAction.label}
               </button>
             ) : <b>{matchContextStatus}</b>,
             title: activeMatch.title || matchKinds[activeKind].label,
@@ -10411,6 +10528,19 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
                       <strong>Partido finalizado</strong>
                     </div>
                     <div className="match-admin-create-grid historical-match-admin-actions">
+                      <button type="button" onClick={() => {
+                        setResult({
+                          a: activeMatch.scoreA === undefined ? "" : String(activeMatch.scoreA),
+                          b: activeMatch.scoreB === undefined ? "" : String(activeMatch.scoreB),
+                        });
+                        setResultCorrectionScorers(activeMatch.scorers ?? []);
+                        setResultCorrectionOpen(true);
+                        setResultEntryStep(1);
+                        setActiveMatchManagerPane("resultado");
+                      }}>
+                        <span>Corregir resultado</span>
+                        <small>Marcador y goleadores</small>
+                      </button>
                       <button type="button" onClick={() => window.location.assign(`/admin/conduct?groupId=${encodeURIComponent(remoteGroupId ?? "")}&matchId=${encodeURIComponent(activeMatch.id)}`)}>
                         <span>Cerrar asistencia</span>
                         <small>Jugó, baja o no-show</small>
@@ -10672,13 +10802,9 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
             </div>
           ) : null}
 
-          {matchConfigured && !matchFinalized ? (
+          {matchConfigured && !matchFinalized && (matchWeatherStatus === "ready" || matchWeatherStatus === "loading") ? (
             <section className={`weather-card weather-card-${matchWeatherStatus}`} aria-label="Previsión del tiempo">
-              {matchWeatherStatus === "unavailable" && matchWeatherMessage.startsWith("Previsión del tiempo disponible") ? (
-                <p className="weather-availability-message">{matchWeatherMessage}</p>
-              ) : (
-                <>
-                  <div className="weather-card-main">
+              <div className="weather-card-main">
                     <WeatherIcon status={matchWeatherStatus} weather={matchWeather} />
                     <div className="weather-summary">
                       <span>Tiempo previsto</span>
@@ -10697,19 +10823,15 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
                           ? "Buscando la previsión más cercana a la hora del partido."
                           : matchWeatherMessage || "Guarda un campo con ubicación verificada para activar esta previsión."}
                     </p>
-                  </div>
-                  {matchWeatherStatus === "ready" && matchWeather ? (
-                    <>
-                      <div className="weather-metrics">
-                        <span><WeatherMetricIcon kind="feels" /> Sens. {matchWeather.feelsLike === null ? "-" : `${Math.round(matchWeather.feelsLike)}°`}</span>
-                        <span><WeatherMetricIcon kind="rain" /> Lluvia {matchWeather.precipitationProbability === null ? "-" : `${Math.round(matchWeather.precipitationProbability)}%`}</span>
-                        <span><WeatherMetricIcon kind="wind" /> Viento {matchWeather.windKmh === null ? "-" : `${Math.round(matchWeather.windKmh)} km/h`}</span>
-                        <span><WeatherMetricIcon kind="humidity" /> Hum. {matchWeather.humidity === null ? "-" : `${Math.round(matchWeather.humidity)}%`}</span>
-                      </div>
-                    </>
-                  ) : null}
-                </>
-              )}
+              </div>
+              {matchWeatherStatus === "ready" && matchWeather ? (
+                <div className="weather-metrics">
+                  <span><WeatherMetricIcon kind="feels" /> Sens. {matchWeather.feelsLike === null ? "-" : `${Math.round(matchWeather.feelsLike)}°`}</span>
+                  <span><WeatherMetricIcon kind="rain" /> Lluvia {matchWeather.precipitationProbability === null ? "-" : `${Math.round(matchWeather.precipitationProbability)}%`}</span>
+                  <span><WeatherMetricIcon kind="wind" /> Viento {matchWeather.windKmh === null ? "-" : `${Math.round(matchWeather.windKmh)} km/h`}</span>
+                  <span><WeatherMetricIcon kind="humidity" /> Hum. {matchWeather.humidity === null ? "-" : `${Math.round(matchWeather.humidity)}%`}</span>
+                </div>
+              ) : null}
             </section>
           ) : null}
 
@@ -10965,8 +11087,8 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
           ) : null}
             </>
           )}
-          <div className={`result-box ${matchFinalized ? "result-finalized" : `result-entry-step-${resultEntryStep}`}`}>
-            {matchFinalized ? (
+          <div className={`result-box ${matchFinalized && !resultCorrectionOpen ? "result-finalized" : `result-entry-step-${resultEntryStep}`}`}>
+            {matchFinalized && !resultCorrectionOpen ? (
               <>
                 <section className="final-result-hero" aria-label="Resultado final">
                   <span>Resultado final</span>
@@ -10983,6 +11105,12 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
                     })}
                   </section>
                 ) : null}
+                {activeMatch.teamPhoto ? (
+                  <button className="team-photo-preview-button final-team-photo" type="button" onClick={() => setMatchPhotoPreview({ src: activeMatch.teamPhoto!, title: activeMatch.title })} aria-label={`Ver foto del partido ${activeMatch.title}`}>
+                    <NextImage src={activeMatch.teamPhoto} alt={`Foto del partido ${activeMatch.title}`} width={960} height={720} unoptimized />
+                    <span>Ver foto del partido</span>
+                  </button>
+                ) : null}
               </>
             ) : canUseAdminControls ? (
               <>
@@ -10992,7 +11120,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
                 </div>
                 {resultEntryStep === 1 ? (
                   <section className="result-score-step">
-                    <span>Añadir resultado</span>
+                    <span>{resultCorrectionOpen ? "Corregir resultado" : "Añadir resultado"}</span>
                     <div className="result-score-grid">
                       <div className="result-score-field team-a-score">
                         <span>Equipo A</span>
@@ -11041,7 +11169,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
                           </button>
                         ) : <span className="team-photo-empty">+</span>}
                         <div className="team-photo-actions">
-                          <label className="team-photo-button">{activeMatch.teamPhoto ? "Cambiar foto" : "Añadir foto"}<input accept="image/*" capture="environment" disabled={!canUploadTeamPhoto} onChange={(event) => { void uploadTeamPhoto(event.target.files?.[0]); event.currentTarget.value = ""; }} type="file" /></label>
+                          <label className="team-photo-button">{activeMatch.teamPhoto ? "Cambiar foto del partido" : "Añadir foto del partido"}<input accept="image/*" capture="environment" disabled={!canUploadTeamPhoto} onChange={(event) => { void uploadTeamPhoto(event.target.files?.[0]); event.currentTarget.value = ""; }} type="file" /></label>
                           {activeMatch.teamPhoto ? <button className="team-photo-remove" type="button" onClick={removeTeamPhoto}>Quitar foto</button> : null}
                         </div>
                         {teamPhotoMessage ? <small className="team-photo-message">{teamPhotoMessage}</small> : null}
@@ -11050,11 +11178,20 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
                   </section>
                 )}
                 <div className="result-entry-actions">
+                  {resultCorrectionOpen ? <button type="button" onClick={() => {
+                    setResult({
+                      a: activeMatch.scoreA === undefined ? "" : String(activeMatch.scoreA),
+                      b: activeMatch.scoreB === undefined ? "" : String(activeMatch.scoreB),
+                    });
+                    setResultCorrectionScorers([]);
+                    setResultCorrectionOpen(false);
+                    setResultEntryStep(1);
+                  }}>Cancelar corrección</button> : null}
                   {resultEntryStep === 2 ? <button type="button" onClick={() => setResultEntryStep(1)}>Atrás</button> : null}
                   {resultEntryStep === 1 ? (
-                    <button className="primary-button" type="button" disabled={!matchConfigured || !lineupClosed || !resultIsReady} onClick={() => setResultEntryStep(2)}>Continuar</button>
+                    <button className="primary-button" type="button" disabled={!matchConfigured || (!matchFinalized && !lineupClosed) || !resultIsReady} onClick={() => setResultEntryStep(2)}>Continuar</button>
                   ) : (
-                    <button className="primary-button" type="button" disabled={!matchConfigured || !lineupClosed || !resultIsReady} onClick={() => void finalizeMatch()}>Confirmar resultado</button>
+                    <button className="primary-button" type="button" disabled={!matchConfigured || (!matchFinalized && !lineupClosed) || !resultIsReady} onClick={() => void (resultCorrectionOpen ? saveResultCorrection() : finalizeMatch())}>{resultCorrectionOpen ? "Guardar corrección" : "Confirmar resultado"}</button>
                   )}
                 </div>
               </>

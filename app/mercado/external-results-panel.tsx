@@ -16,6 +16,7 @@ import { supabase } from "../supabaseClient";
 
 type Props = {
   groupId: string;
+  initialChallengeId?: string;
   userId: string;
 };
 
@@ -69,7 +70,7 @@ function operationFingerprint(action: ResultAction, match: ExternalMatch, form: 
   return `${action}:${match.id}:${match.revision}:${JSON.stringify(form)}`;
 }
 
-export function ExternalResultsPanel({ groupId, userId }: Props) {
+export function ExternalResultsPanel({ groupId, initialChallengeId = "", userId }: Props) {
   const [snapshot, setSnapshot] = useState<ExternalResultsSnapshot | null>(null);
   const [selectedMatchId, setSelectedMatchId] = useState("");
   const [form, setForm] = useState<MatchForm>({ goals: {}, participantIds: [], scoreAway: "0", scoreHome: "0" });
@@ -78,8 +79,11 @@ export function ExternalResultsPanel({ groupId, userId }: Props) {
   const operationIds = useRef(new Map<string, string>());
 
   const selectedMatch = useMemo(
-    () => snapshot?.matches.find((match) => match.id === selectedMatchId) ?? snapshot?.matches[0] ?? null,
-    [selectedMatchId, snapshot?.matches],
+    () => snapshot?.matches.find((match) => match.id === selectedMatchId)
+      ?? snapshot?.matches.find((match) => match.challengeId === initialChallengeId)
+      ?? snapshot?.matches[0]
+      ?? null,
+    [initialChallengeId, selectedMatchId, snapshot?.matches],
   );
 
   const acceptSnapshot = useCallback((value: unknown) => {

@@ -185,6 +185,27 @@ const matchKindLabels: Record<DemoMatchKind, string> = {
   sala: "Fútbol sala",
 };
 
+const DEMO_SOCIAL_MATCH_ID = "demo_match_121";
+const DEMO_SOCIAL_PLAYER_ID = "demo_player_006";
+const DEMO_SOCIAL_CONFIRMED_FILLERS = ["demo_player_002", "demo_player_005", "demo_player_010"];
+
+function demoAttendanceKey(playerId: string, matchId: string) {
+  return `${playerId}:${matchId}`;
+}
+
+function demoSocialMatchJourney(match: DemoWorldMatch) {
+  if (match.id !== DEMO_SOCIAL_MATCH_ID) return match;
+  const confirmedPlayerIds = [
+    ...match.confirmedPlayerIds.filter((playerId) => playerId !== DEMO_SOCIAL_PLAYER_ID),
+    ...DEMO_SOCIAL_CONFIRMED_FILLERS,
+  ].filter((playerId, index, values) => values.indexOf(playerId) === index).slice(0, 11);
+  return {
+    ...match,
+    confirmedPlayerIds,
+    reservePlayerIds: match.reservePlayerIds.filter((playerId) => !confirmedPlayerIds.includes(playerId)),
+  };
+}
+
 const challengeStatusLabels: Record<DemoWorldChallenge["status"], string> = {
   accepted: "Aceptado",
   cancelled: "Cancelado",
@@ -575,8 +596,9 @@ function MatchView({
   const [demoScorerGoals, setDemoScorerGoals] = useState(match?.scorers[0]?.goals ?? 0);
   const playerById = useMemo(() => new Map(snapshot.players.players.map((player) => [player.id, player])), [snapshot]);
   const venue = match ? snapshot.core.venues.find((entry) => entry.id === match.venueId) : null;
-  const attendance = match ? session.attendanceByMatch[match.id] : undefined;
+  const attendance = match ? session.attendanceByMatch[demoAttendanceKey(currentPlayer.id, match.id)] : undefined;
   if (!match) return <EmptyState title="Sin partido seleccionado" body="Elige un partido público desde Mercado." />;
+  const currentTeamInMatch = Boolean(currentTeam && (match.homeTeamId === currentTeam.id || match.awayTeamId === currentTeam.id));
   const matchPanes: readonly DemoWorldMatchPane[] = match.status === "finalized"
     ? ["proximo", "resultado", "historico"]
     : perspective.role === "admin" ? ["proximo", "historico", "alineacion", "resultado"] : ["proximo", "historico", "alineacion"];
@@ -588,14 +610,20 @@ function MatchView({
     if (entry === "alineacion") return "Equipos";
     return match.status === "finalized" ? "Estadísticas" : "Jugadores";
   };
-  const rosterSource = snapshot.players.players.filter((player) => currentTeam ? player.teamId === currentTeam.id : match.confirmedPlayerIds.includes(player.id));
-  const pendingPlayers = rosterSource.filter((player) => !match.confirmedPlayerIds.includes(player.id) && !match.reservePlayerIds.includes(player.id));
+  const rosterPlayerIds = new Set([
+    ...match.confirmedPlayerIds,
+    ...match.reservePlayerIds,
+    ...snapshot.players.players.filter((player) => currentTeamInMatch && player.teamId === currentTeam?.id).map((player) => player.id),
+  ]);
+  const rosterSource = snapshot.players.players.filter((player) => rosterPlayerIds.has(player.id));
+  const pendingPlayers = rosterSource.filter((player) => !match.confirmedPlayerIds.includes(player.id));
   const roster = rosterSource.map((player) => {
-    const ownStatus = player.id === currentPlayer.id ? attendance : undefined;
     const pendingIndex = pendingPlayers.findIndex((entry) => entry.id === player.id);
-    const status = ownStatus ?? (match.confirmedPlayerIds.includes(player.id) || match.reservePlayerIds.includes(player.id)
-      ? "voy"
-      : pendingIndex === 0 ? "duda" : pendingIndex === pendingPlayers.length - 1 && pendingPlayers.length > 2 ? "no" : null);
+    const status = player.id === currentPlayer.id
+      ? attendance ?? (match.confirmedPlayerIds.includes(player.id) ? "voy" : null)
+      : match.confirmedPlayerIds.includes(player.id)
+        ? "voy"
+        : pendingIndex === 0 ? "duda" : pendingIndex === pendingPlayers.length - 1 && pendingPlayers.length > 2 ? "no" : null;
     return {
       avatar: demoAvatarDataUri(player.name, player.avatarHue),
       id: player.id,
@@ -604,7 +632,25 @@ function MatchView({
       status,
     } as const;
   });
-  const confirmedCount = roster.filter((player) => player.status === "voy").length;
+  const confirmedCount = match.confirmedPlayerIds.length
+    - (attendance && attendance !== "voy" && match.confirmedPlayerIds.includes(currentPlayer.id) ? 1 : 0)
+    + (attendance === "voy" && !match.confirmedPlayerIds.includes(currentPlayer.id) ? 1 : 0);
+  const teamsPrepared = match.homePlayerIds.length > 0 || match.awayPlayerIds.length > 0;
+
+  function generateDemoTeams() {
+    if (!match || match.confirmedPlayerIds.length < 2) {
+      setMessage("Todavía no hay suficientes confirmados para generar equipos.");
+      return;
+    }
+    const midpoint = Math.ceil(match.confirmedPlayerIds.length / 2);
+    onLocalMatchUpdate({
+      ...match,
+      awayPlayerIds: match.confirmedPlayerIds.slice(midpoint),
+      homePlayerIds: match.confirmedPlayerIds.slice(0, midpoint),
+      revision: match.revision + 1,
+    });
+    setMessage("Equipos equilibrados generados solo en esta sesión demo.");
+  }
 
   return (
     <div className={styles.managerLayout} data-match-pane={visiblePane} data-tour-target="demo-match">
@@ -642,12 +688,12 @@ function MatchView({
               <small>{dateLabel(match.date, true)}</small>
             </div>
             <div className={styles.matchFacts}>
-              <Stat label="Confirmados" value={match.confirmedPlayerIds.length + (attendance === "voy" && !match.confirmedPlayerIds.includes(currentPlayer.id) ? 1 : 0)} />
+              <Stat label="Confirmados" value={confirmedCount} />
               <Stat label="Reservas" value={match.reservePlayerIds.length} />
               <Stat label="Plazas" value={match.publicOpenSlots} />
               <Stat label="Modalidad" value={matchKindLabels[match.kind].replace("Fútbol ", "F-")} />
             </div>
-            {match.status === "scheduled" && perspective.role === "player" && currentTeam ? (
+            {match.status === "scheduled" && perspective.role === "player" && currentTeamInMatch ? (
               <div className={styles.attendanceControl} data-tour-target="demo-attendance">
                 <div><strong>Mi asistencia</strong><small>Esta elección solo vive en esta sesión demo.</small></div>
                 <div role="group" aria-label="Asistencia simulada">
@@ -655,7 +701,7 @@ function MatchView({
                 </div>
               </div>
             ) : null}
-            {match.status === "scheduled" && perspective.role === "player" && match.publicOpenSlots > 0 && !match.confirmedPlayerIds.includes(currentPlayer.id) ? (
+            {match.status === "scheduled" && perspective.role === "player" && !currentTeamInMatch && match.publicOpenSlots > 0 && !match.confirmedPlayerIds.includes(currentPlayer.id) ? (
               <div className={styles.demoSpotRequest}>
                 <div><strong>Plaza pública</strong><small>{match.publicOpenSlots} disponibles · aprobación del organizador</small></div>
                 <button type="button" disabled={requestStatus !== "idle"} onClick={onRequestSpot}>{requestStatus === "accepted" ? "Solicitud aceptada" : requestStatus === "pending" ? "Solicitud enviada" : "Solicitar plaza"}</button>
@@ -677,7 +723,16 @@ function MatchView({
           />
         ) : null}
 
-        {visiblePane === "alineacion" ? (
+        {visiblePane === "alineacion" && !teamsPrepared ? (
+          <div className={styles.demoTeamsEmpty} data-tour-target="demo-lineup-empty">
+            <span className={styles.eyebrow}>Equipos</span>
+            <h2>Los equipos todavía no están preparados.</h2>
+            <p>{perspective.role === "admin" ? "Podrás generarlos cuando haya suficientes jugadores confirmados." : "Aparecerán cuando el organizador los publique."}</p>
+            {perspective.role === "admin" ? <button type="button" onClick={generateDemoTeams}>Generar equipos equilibrados</button> : null}
+          </div>
+        ) : null}
+
+        {visiblePane === "alineacion" && teamsPrepared ? (
           <div className={styles.pitchWrap}>
             <div className={styles.pitch} data-tour-target="demo-lineup">
               <span className={styles.pitchCenterLine} aria-hidden="true" />
@@ -712,7 +767,7 @@ function MatchView({
               {match.scorers.length ? match.scorers.map((scorer) => {
                 const player = playerById.get(scorer.playerId);
                 return player ? <button key={`${scorer.playerId}-${scorer.side}`} type="button" onClick={() => onPlayer(player.id)}><span>{scorer.side === "home" ? match.homeLabel : match.awayLabel}</span><strong>{player.name}</strong><b>{scorer.goals}</b></button> : null;
-              }) : <EmptyState title="Marcador pendiente" body="Los goleadores aparecerán cuando el resultado esté confirmado." />}
+              }) : <EmptyState title="Sin goleadores registrados" body="El marcador está confirmado sin autores de gol." />}
             </div>
           </div>
         ) : null}
@@ -1795,7 +1850,7 @@ export function DemoWorldApp({ manifest, mode = "social" }: { manifest: DemoWorl
   const canonicalMatchIds = new Set(world.matches.matches.map((match) => match.id));
   const allMatches = [
     ...Object.values(localMatchOverrides).filter((match) => !canonicalMatchIds.has(match.id)),
-    ...world.matches.matches.map((match) => localMatchOverrides[match.id] ?? match),
+    ...world.matches.matches.map((match) => localMatchOverrides[match.id] ?? (fullMode ? match : demoSocialMatchJourney(match))),
   ];
   const teamMatches = allMatches.filter((match) => currentTeam
     ? match.homeTeamId === currentTeam.id || match.awayTeamId === currentTeam.id
@@ -1820,8 +1875,10 @@ export function DemoWorldApp({ manifest, mode = "social" }: { manifest: DemoWorl
   const notifications = world.activity.notifications;
   const targetForMatch = (match: DemoWorldMatch) => match.kind === "futbol11" ? 22 : match.kind === "futbol7" ? 14 : 10;
   const demoSummary = (match: DemoWorldMatch): OfficialMatchSummary => {
-    const ownStatus = session.attendanceByMatch[match.id] ?? null;
-    const confirmed = match.confirmedPlayerIds.length + (ownStatus === "voy" && !match.confirmedPlayerIds.includes(currentPlayer.id) ? 1 : 0);
+    const ownStatus = session.attendanceByMatch[demoAttendanceKey(currentPlayer.id, match.id)] ?? null;
+    const confirmed = match.confirmedPlayerIds.length
+      - (ownStatus && ownStatus !== "voy" && match.confirmedPlayerIds.includes(currentPlayer.id) ? 1 : 0)
+      + (ownStatus === "voy" && !match.confirmedPlayerIds.includes(currentPlayer.id) ? 1 : 0);
     return {
       confirmed,
       date: match.date,
@@ -1868,19 +1925,15 @@ export function DemoWorldApp({ manifest, mode = "social" }: { manifest: DemoWorl
 
   function confirmDemoMatch() {
     if (!demoMatchDraft || !currentTeam) return;
-    const teamPlayerIds = world.players.players.filter((player) => player.teamId === currentTeam.id).map((player) => player.id);
-    const targetPlayers = Math.max(2, Number(demoMatchDraft.targetPlayers) || 14);
-    const confirmedPlayerIds = teamPlayerIds.slice(0, Math.min(targetPlayers, teamPlayerIds.length));
-    const midpoint = Math.ceil(confirmedPlayerIds.length / 2);
     const matchId = "demo_session_social_match";
     const nextMatch: DemoWorldMatch = {
       awayLabel: "Equipo B",
-      awayPlayerIds: confirmedPlayerIds.slice(midpoint),
+      awayPlayerIds: [],
       awayTeamId: null,
-      confirmedPlayerIds,
+      confirmedPlayerIds: [],
       date: `${demoMatchDraft.date}T${demoMatchDraft.time}:00`,
       homeLabel: "Equipo A",
-      homePlayerIds: confirmedPlayerIds.slice(0, midpoint),
+      homePlayerIds: [],
       homeTeamId: currentTeam.id,
       id: matchId,
       kind: demoMatchDraft.kind as DemoMatchKind,
@@ -2039,7 +2092,7 @@ export function DemoWorldApp({ manifest, mode = "social" }: { manifest: DemoWorl
             setMessage("Solicitud aceptada en la sesión demo. Ninguna notificación real enviada.");
           }}
           onBack={() => setMatchExperienceView("overview")}
-          onLocalAttendance={(status) => { if (!selectedMatch) return; updateSession((current) => ({ ...current, attendanceByMatch: { ...current.attendanceByMatch, [selectedMatch.id]: status } })); setMessage(`Asistencia ${status === "voy" ? "confirmada" : status === "duda" ? "en duda" : "cancelada"} solo en esta sesión demo.`); }}
+          onLocalAttendance={(status) => { if (!selectedMatch) return; updateSession((current) => ({ ...current, attendanceByMatch: { ...current.attendanceByMatch, [demoAttendanceKey(currentPlayer.id, selectedMatch.id)]: status } })); setMessage(`Asistencia ${status === "voy" ? "confirmada" : status === "duda" ? "en duda" : "cancelada"} solo en esta sesión demo.`); }}
           onLocalMatchUpdate={updateLocalDemoMatch}
           onPlayer={setSelectedPlayerId}
           onRequestSpot={() => { setDemoSpotRequest("pending"); setMessage("Solicitud de plaza creada solo en esta sesión demo."); }}

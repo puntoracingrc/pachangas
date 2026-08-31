@@ -1914,10 +1914,19 @@ body.demo-world-active .notification-center {
   font-size: 12px;
 }
 
-.accepted-challenges-panel article a {
+.accepted-challenges-panel article :is(a, button) {
+  justify-self: start;
   color: #b7e34a;
   font-size: 12px;
   font-weight: 900;
+}
+
+.accepted-challenges-panel article > button {
+  min-height: 34px;
+  border: 1px solid color-mix(in srgb, #b7e34a 45%, transparent);
+  border-radius: 5px;
+  background: color-mix(in srgb, #b7e34a 10%, transparent);
+  padding: 6px 10px;
 }
 
 .external-results-panel {
@@ -17205,6 +17214,7 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
 .final-scorers-list > strong { margin-bottom: 4px; color: var(--official-cyan-text, #51cfdf); font-size: 0.68rem; text-transform: uppercase; }
 .final-scorers-list > div { min-height: 36px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--official-line, rgba(217, 234, 225, 0.12)); }
 .final-scorers-list > div b { color: var(--official-accent-text, #c8ef5d); }
+.result-box .final-team-photo { width: min(720px, 100%); margin-inline: auto; overflow: hidden; border-radius: 6px; }
 
 @media (max-width: 760px) and (orientation: portrait) {
   .teams-empty-state { min-height: 46dvh; margin: 10px; }

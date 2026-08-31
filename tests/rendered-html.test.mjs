@@ -358,9 +358,10 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(matchGameHub, /data-official-match-context="persistent"/);
   assert.match(matchGameHub, /<span>\{context\.label\}<\/span>/);
   assert.match(matchGameHub, /className=\{styles\.kind\}>\{context\.kind\}/);
-  assert.match(page, /const canToggleLineupFromContext = canUseAdminControls && matchConfigured && registrationOpen && !matchFinalized/);
-  assert.match(page, /canToggleLineupFromContext \? \(/);
+  assert.match(page, /const matchPrimaryAction = matchFinalized/);
+  assert.match(page, /status: matchPrimaryAction \? \(/);
   assert.match(page, /className="match-context-status-button"/);
+  assert.match(page, /onClick=\{\(\) => setActiveMatchManagerPane\(matchPrimaryAction\.pane\)\}/);
   assert.match(page, /onClick=\{\(\) => void toggleLineupClosed\(\)\}/);
   assert.match(page, /<b>\{matchContextStatus\}<\/b>/);
   assert.match(page, /const mainPanelClassName = \[/);
@@ -526,7 +527,7 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /navigateMobileTab/);
   assert.match(page, /function openMatchesByDate\(matches: Match\[\]\) \{[\s\S]*\.filter\(\(match\) => match\.configured && match\.scoreA === undefined && !match\.closed\)[\s\S]*new Date\(a\.date\)\.getTime\(\) - new Date\(b\.date\)\.getTime\(\)/);
   assert.match(page, /const openMatches = openMatchesByDate\(matches\)/);
-  assert.match(page, /if \(tabId === "partido"\) \{[\s\S]*const nextOpenMatch = openMatches\[0\];[\s\S]*if \(nextOpenMatch\) setActiveMatchId\(nextOpenMatch\.id\);[\s\S]*setActiveMatchManagerPane\("proximo"\);[\s\S]*navigateMobileTab\("partido"\);[\s\S]*return;[\s\S]*\}/);
+  assert.match(page, /if \(tabId === "partido"\) \{[\s\S]*setActiveMatchManagerPane\("proximo"\);[\s\S]*setMatchExperienceView\("overview"\);[\s\S]*navigateMobileTab\("partido"\);[\s\S]*return;[\s\S]*\}/);
   assert.match(page, /next-match-rail/);
   assert.match(page, /function openMatchFromInicio\(matchId: string, pane: MatchManagerPane = "proximo"\) \{[\s\S]*setActiveMatchId\(matchId\);[\s\S]*setActiveMatchManagerPane\(pane\);[\s\S]*navigateMobileTab\("partido"\);[\s\S]*\}/);
   assert.match(page, /onClick=\{\(\) => openMatchFromInicio\(match\.id, "proximo"\)\}/);
@@ -567,7 +568,8 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.doesNotMatch(page, /matchManagerPanes[^\n]+"admin"/);
   assert.doesNotMatch(page, /\["proximo", "alineacion", "resultado", "historico"/);
   assert.match(page, /result-score-field team-a-score/);
-  assert.match(page, /Resultado equipo 1/);
+  assert.match(page, /Goles del equipo A/);
+  assert.match(page, /Sumar gol al equipo A/);
   assert.match(page, /const otherPlayers = registrationOpen[\s\S]*!player\.inactive/);
   assert.doesNotMatch(page, /const inactiveOtherPlayers/);
   assert.doesNotMatch(page, /\{ id: "bajas", title: "Ya no están"/);
@@ -1352,7 +1354,8 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /function WeatherIcon/);
   assert.match(page, /function WeatherMetricIcon/);
   assert.match(page, /weatherVisualKey/);
-  assert.match(page, /weather-availability-message/);
+  assert.match(page, /matchConfigured && !matchFinalized && \(matchWeatherStatus === "ready" \|\| matchWeatherStatus === "loading"\)/);
+  assert.doesNotMatch(page, /className="weather-availability-message"/);
   assert.match(page, /weatherForecastClientLimitMs = 7 \* weatherClientDayMs/);
   assert.match(page, /weatherClientShortCacheMs = 2 \* weatherClientHourMs/);
   assert.match(page, /weatherClientLongCacheMs = weatherClientDayMs/);
@@ -1363,10 +1366,12 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /Elige un campo con ubicación para ver la previsión/);
   assert.doesNotMatch(page, /Google Places para ver la previsión/);
   assert.doesNotMatch(page, /<span>Toca<\/span>/);
-  assert.match(page, /matchConfigured && !matchFinalized && !lineupClosed \? <small>Cierra la alineación para calcular pago y finalizar/);
+  assert.match(page, /\? "Cierra la alineación para activar pagos"/);
   assert.doesNotMatch(page, /Partido finalizado\. Resultado y goleadores guardados\./);
   assert.doesNotMatch(page, /Partido finalizado\. Puedes corregir goleadores y asistencia\./);
-  assert.match(page, /disabled=\{!matchConfigured \|\| !lineupClosed \|\| !resultIsReady \|\| !canUseAdminControls\}/);
+  assert.match(page, /\) : canUseAdminControls \? \(/);
+  assert.match(page, /disabled=\{!matchConfigured \|\| \(!matchFinalized && !lineupClosed\) \|\| !resultIsReady\}/);
+  assert.match(page, /resultCorrectionOpen \? saveResultCorrection\(\) : finalizeMatch\(\)/);
   assert.doesNotMatch(page, /const matchTimeOptions = Array\.from\(\{ length: 144 \}/);
   assert.match(page, /type="date"/);
   assert.match(page, /type="time"/);
@@ -1531,7 +1536,7 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(globalsCss, /main\[data-mobile-tab="partido"\] \.weather-card small\s*\{[\s\S]*display:\s*none/);
   assert.match(globalsCss, /\.match-side-share/);
   assert.match(globalsCss, /\.match-side-share \.share-box/);
-  assert.match(page, /matchConfigured && !matchFinalized \? \(\s*<section className=\{`weather-card weather-card-\$\{matchWeatherStatus\}`\}/);
+  assert.match(page, /matchConfigured && !matchFinalized && \(matchWeatherStatus === "ready" \|\| matchWeatherStatus === "loading"\) \? \(\s*<section className=\{`weather-card weather-card-\$\{matchWeatherStatus\}`\}/);
   assert.match(globalsCss, /\.weather-icon-rain/);
   assert.match(globalsCss, /\.weather-metric-icon/);
   assert.match(globalsCss, /\.weather-metrics/);
