@@ -119,6 +119,11 @@ export function TeamChallengesPanel({ initialOpponent, initialTeamCode = "", vie
   const [selectedGroupId, setSelectedGroupId] = useState("");
   const [currentUserId, setCurrentUserId] = useState("");
   const [snapshot, setSnapshot] = useState<TeamSocialSnapshot | null>(null);
+  const [selectedExternalChallengeId, setSelectedExternalChallengeId] = useState(() => (
+    typeof window === "undefined"
+      ? ""
+      : new URLSearchParams(window.location.search).get("retoPartido") ?? ""
+  ));
   const [teamCode, setTeamCode] = useState(initialOpponent?.teamCode ?? initialTeamCode);
   const [confirmedTeam, setConfirmedTeam] = useState<TeamSummary | null>(initialOpponent ?? null);
   const [draft, setDraft] = useState<ChallengeDraft>(emptyDraft);
@@ -420,6 +425,16 @@ export function TeamChallengesPanel({ initialOpponent, initialTeamCode = "", vie
     document.getElementById("private-challenge-form")?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
+  function openAcceptedMatch(challengeId: string) {
+    setSelectedExternalChallengeId(challengeId);
+    const params = new URLSearchParams(window.location.search);
+    params.set("retoPartido", challengeId);
+    window.history.pushState(null, "", `${window.location.pathname}?${params.toString()}`);
+    window.requestAnimationFrame(() => {
+      document.getElementById("reto-partido")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }
+
   if (loading) return <section className="market-panel team-challenges-loading">Cargando retos…</section>;
   if (!memberships.length) {
     return <section className="market-panel team-challenges-empty">Necesitas pertenecer a un equipo para usar retos privados.</section>;
@@ -608,7 +623,14 @@ export function TeamChallengesPanel({ initialOpponent, initialTeamCode = "", vie
       ) : null}
 
       {(view === "all" || view === "history") && selectedGroupId && currentUserId ? (
-        <ExternalResultsPanel groupId={selectedGroupId} userId={currentUserId} />
+        <div id="reto-partido">
+          <ExternalResultsPanel
+            groupId={selectedGroupId}
+            initialChallengeId={selectedExternalChallengeId}
+            key={selectedExternalChallengeId || "external-results"}
+            userId={currentUserId}
+          />
+        </div>
       ) : null}
 
       {(view === "all" || view === "history") && acceptedChallenges.length ? (
@@ -620,6 +642,7 @@ export function TeamChallengesPanel({ initialOpponent, initialTeamCode = "", vie
                 <strong>{challenge.opponent.name}</strong>
                 <span>{formatDateTime(challenge.scheduledAt)}</span>
                 <span>{teamChallengeModalityLabel(challenge.modality)} · {challenge.field.name}</span>
+                <button type="button" onClick={() => openAcceptedMatch(challenge.id)}>Ver partido</button>
                 {challenge.field.mapsUrl ? <a href={challenge.field.mapsUrl} target="_blank" rel="noreferrer">Abrir campo</a> : null}
                 <b className={`challenge-status ${challenge.status}`}>{teamChallengeStatusLabel(challenge.status)}</b>
               </article>

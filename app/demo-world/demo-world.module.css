@@ -10,6 +10,16 @@
   --demo-cyan: #51cfdf;
   --demo-blue: #4d82d8;
   --demo-red: #d6535c;
+  --official-bg: var(--demo-bg);
+  --official-surface: var(--demo-panel);
+  --official-surface-soft: var(--demo-panel-soft);
+  --official-line: var(--demo-line);
+  --official-text: var(--demo-ink);
+  --official-muted: var(--demo-muted);
+  --official-accent: var(--demo-lime);
+  --official-accent-text: var(--demo-lime);
+  --official-cyan: var(--demo-cyan);
+  --official-cyan-text: var(--demo-cyan);
   min-height: 100dvh;
   overflow-x: hidden;
   background:
@@ -862,6 +872,22 @@
 
 .readOnlyNote { margin: 0; }
 
+.demoTeamsEmpty {
+  min-height: 300px;
+  display: grid;
+  align-content: center;
+  justify-items: start;
+  gap: 9px;
+  border: 1px dashed var(--demo-line);
+  background: var(--demo-panel-soft);
+  padding: clamp(22px, 5vw, 56px);
+}
+
+.demoTeamsEmpty h2,
+.demoTeamsEmpty p { margin: 0; }
+.demoTeamsEmpty p { max-width: 560px; color: var(--demo-muted); }
+.demoTeamsEmpty button { min-height: 42px; border: 1px solid var(--demo-lime); border-radius: 5px; background: var(--demo-lime); padding: 8px 13px; color: #17210d; font-weight: 900; }
+
 .resultLayout {
   display: grid;
   grid-template-columns: minmax(320px, 0.9fr) minmax(320px, 1.1fr);
@@ -1438,7 +1464,7 @@
   border-radius: 6px;
   background: #142119;
   padding: 12px 14px;
-  color: var(--demo-ink);
+  color: #f1f6f2;
   box-shadow: 0 16px 38px rgba(0, 0, 0, 0.38);
   font-size: 0.78rem;
 }
@@ -2706,13 +2732,28 @@
   .inlineActions button { min-height: 40px; padding: 5px 9px; font-size: 0.68rem; }
   .sectionBand { padding: 14px; }
   .managerLayout { height: 100%; min-height: 0; grid-template-columns: 142px minmax(0, 1fr); }
-  .sideSubnav { position: relative; top: 0; width: auto; height: 100%; grid-auto-flow: row; grid-auto-rows: minmax(40px, auto); overflow: hidden; border-right: 1px solid var(--demo-line); border-bottom: 0; padding: 6px; }
+  .sideSubnav {
+    position: relative;
+    top: 0;
+    width: auto;
+    height: 100%;
+    grid-auto-flow: row;
+    grid-auto-rows: minmax(32px, auto);
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+    border-right: 1px solid var(--demo-line);
+    border-bottom: 0;
+    padding: 6px;
+  }
   .sideTitle,
   .sideMeta { display: grid; }
-  .sideSubnav > button { min-width: 0; min-height: 40px; border-bottom: 0; border-left: 3px solid transparent; padding: 4px 8px; text-align: left; }
+  .sideSubnav > button { min-width: 0; min-height: 32px; border-bottom: 0; border-left: 3px solid transparent; padding: 3px 8px; font-size: 0.68rem; line-height: 1.15; text-align: left; }
   .sideSubnav > button[aria-current="page"] { border-bottom: 0; border-left-color: var(--demo-lime); }
-  .sideTitle { padding: 4px 8px 7px; }
-  .sideMeta { padding: 7px 8px; font-size: 0.58rem; }
+  .sideTitle { min-height: 34px; padding: 3px 8px 5px; }
+  .sideTitle span,
+  .sideMeta small { font-size: 0.54rem; }
+  .sideMeta { align-self: auto; gap: 2px; padding: 5px 8px; font-size: 0.56rem; }
   .gamePerspectiveSelect {
     display: grid;
     gap: 3px;
@@ -2987,4 +3028,83 @@
   color: #b7cac4;
   cursor: pointer;
   font-weight: 800;
+}
+
+.demoSocialProof {
+  width: min(1180px, calc(100% - 32px));
+  margin: 0 auto 24px;
+  border: 1px solid var(--demo-line);
+  border-radius: 6px;
+  background: rgba(18, 29, 26, 0.76);
+  padding: 12px 14px;
+}
+
+.demoSocialProof summary { cursor: pointer; color: var(--demo-cyan); font-weight: 900; }
+.demoSocialProof ol { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 5px 18px; margin: 14px 0; padding-left: 22px; color: var(--demo-muted); font-size: 0.74rem; }
+.demoSocialProof footer { display: flex; flex-wrap: wrap; gap: 6px; }
+.demoSocialProof footer span { border: 1px solid rgba(200, 239, 93, 0.2); border-radius: 4px; background: rgba(200, 239, 93, 0.06); padding: 5px 7px; color: var(--demo-lime); font-size: 0.64rem; font-weight: 850; }
+
+.demoSpotRequest,
+.demoAdminFlow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid var(--demo-line);
+  border-radius: 6px;
+  background: rgba(81, 207, 223, 0.06);
+  padding: 10px;
+}
+.demoSpotRequest > div { min-width: 0; display: grid; gap: 2px; }
+.demoSpotRequest small { color: var(--demo-muted); }
+.demoSpotRequest button,
+.demoAdminFlow button,
+.demoResultEntry button { min-height: 38px; border: 1px solid rgba(200, 239, 93, 0.3); border-radius: 5px; background: rgba(200, 239, 93, 0.1); padding: 0 12px; color: var(--demo-lime); font-weight: 850; }
+
+.demoAdminFlow { justify-content: flex-start; flex-wrap: wrap; }
+
+.demoResultEntry {
+  --demo-ink: #f1f6f2;
+  --demo-muted: #a9bbb2;
+  --demo-line: rgba(217, 234, 225, 0.18);
+  --demo-lime: #c8ef5d;
+  min-height: 100%;
+  display: grid;
+  align-content: start;
+  gap: 14px;
+  border: 1px solid var(--demo-line);
+  border-radius: 6px;
+  background: rgba(18, 29, 26, 0.82);
+  padding: clamp(14px, 3vw, 28px);
+  color: #f1f6f2;
+}
+.demoResultEntry strong,
+.demoResultEntry b { color: #f1f6f2; }
+.demoResultProgress { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+.demoResultProgress span { min-height: 34px; display: flex; align-items: center; border-bottom: 2px solid var(--demo-line); color: var(--demo-muted); font-size: 0.68rem; font-weight: 850; }
+.demoResultProgress span[aria-current="step"] { border-color: var(--demo-lime); color: var(--demo-ink); }
+.demoResultEntry > section { min-height: min(430px, 50dvh); display: grid; align-content: center; gap: 18px; }
+.demoScoreSteppers { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.demoScoreSteppers > div { display: grid; justify-items: center; gap: 10px; border: 1px solid var(--demo-line); border-radius: 6px; padding: 18px; }
+.demoScoreSteppers > div > span { display: grid; grid-template-columns: 42px 70px 42px; align-items: center; gap: 8px; }
+.demoScoreSteppers b { text-align: center; font-size: 2.8rem; }
+.demoScorerStepper { display: grid; grid-template-columns: minmax(0, 1fr) 38px 30px 38px; align-items: center; gap: 6px; border: 1px solid var(--demo-line); border-radius: 5px; padding: 8px; }
+.demoScorerStepper b { text-align: center; }
+.demoResultActions { display: flex; justify-content: flex-end; gap: 8px; }
+
+@media (max-width: 760px) and (orientation: portrait) {
+  .demoSocialProof { width: calc(100% - 20px); }
+  .demoSocialProof ol { grid-template-columns: minmax(0, 1fr); }
+  .demoSpotRequest { align-items: stretch; flex-direction: column; }
+  .demoScoreSteppers { grid-template-columns: minmax(0, 1fr); }
+  .demoResultActions button { flex: 1; }
+}
+
+@media (orientation: landscape) and (max-height: 600px) {
+  .demoSocialProof { margin-bottom: 10px; padding: 8px; }
+  .demoSocialProof ol { grid-template-columns: repeat(4, minmax(0, 1fr)); margin-block: 8px; font-size: 0.56rem; }
+  .demoResultEntry { min-height: 0; height: 100%; overflow: auto; padding: 8px; }
+  .demoResultEntry > section { min-height: 0; align-content: start; gap: 8px; }
+  .demoScoreSteppers > div { padding: 8px; }
+  .demoScoreSteppers b { font-size: 2rem; }
 }
