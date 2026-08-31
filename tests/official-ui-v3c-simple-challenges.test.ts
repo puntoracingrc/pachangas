@@ -193,6 +193,10 @@ test("the social Demo covers the local challenge lifecycle with zero remote effe
 test("Home shows at most one actionable challenge and V3A/V3B remain linked", async () => {
   const demo = await source("app/demo-world/demo-world-app.tsx");
   assert.match(demo, /const actionableChallenge = currentTeam \? challenges/);
+  assert.match(demo, /function demoChallengeNeedsResponse/);
+  assert.match(demo, /demoChallengeLastProposer\(challenge, overrides\) !== teamId/);
+  assert.match(demo, /demoChallengeNeedsResponse\(challenge, currentTeam\.id, overrides\) \|\| challenge\.status === "accepted"/);
+  assert.doesNotMatch(demo, /left\.awayTeamId === currentTeam\.id/);
   assert.match(demo, /Pendiente de ti/);
   assert.match(demo, /Responder reto/);
   assert.match(demo, /actionableChallenge\.status === "accepted" \? "Ver partido"/);

@@ -230,6 +230,22 @@ type DemoChallengeDraft = {
   time: string;
 };
 
+function demoChallengeLastProposer(
+  challenge: DemoWorldChallenge,
+  overrides: Record<string, DemoChallengeOverride>,
+) {
+  return overrides[challenge.id]?.lastProposedByTeamId ?? challenge.homeTeamId;
+}
+
+function demoChallengeNeedsResponse(
+  challenge: DemoWorldChallenge,
+  teamId: string,
+  overrides: Record<string, DemoChallengeOverride>,
+) {
+  return (challenge.status === "pending" || challenge.status === "countered")
+    && demoChallengeLastProposer(challenge, overrides) !== teamId;
+}
+
 function demoChallengeDateParts(value: string) {
   const parsed = new Date(value);
   if (Number.isNaN(parsed.getTime())) return { date: "", time: "" };
@@ -486,6 +502,7 @@ function WorldHome({
   onMatch,
   onPlayer,
   onTab,
+  overrides,
   perspective,
   snapshot,
   teamMatches,
@@ -497,6 +514,7 @@ function WorldHome({
   onMatch: (matchId: string) => void;
   onPlayer: (playerId: string) => void;
   onTab: (tab: DemoWorldV2PrimaryTab) => void;
+  overrides: Record<string, DemoChallengeOverride>;
   perspective: DemoWorldPerspective;
   snapshot: DemoWorldRenderableSnapshot;
   teamMatches: DemoWorldMatch[];
@@ -506,10 +524,10 @@ function WorldHome({
   const venueById = new Map(snapshot.core.venues.map((venue) => [venue.id, venue]));
   const actionableChallenge = currentTeam ? challenges
     .filter((challenge) => challenge.homeTeamId === currentTeam.id || challenge.awayTeamId === currentTeam.id)
-    .filter((challenge) => challenge.status === "pending" || challenge.status === "countered" || challenge.status === "accepted")
+    .filter((challenge) => demoChallengeNeedsResponse(challenge, currentTeam.id, overrides) || challenge.status === "accepted")
     .sort((left, right) => {
-      const leftPriority = (left.status === "pending" || left.status === "countered") && left.awayTeamId === currentTeam.id ? 0 : left.status === "accepted" ? 1 : 2;
-      const rightPriority = (right.status === "pending" || right.status === "countered") && right.awayTeamId === currentTeam.id ? 0 : right.status === "accepted" ? 1 : 2;
+      const leftPriority = demoChallengeNeedsResponse(left, currentTeam.id, overrides) ? 0 : 1;
+      const rightPriority = demoChallengeNeedsResponse(right, currentTeam.id, overrides) ? 0 : 1;
       return leftPriority - rightPriority || Date.parse(left.date) - Date.parse(right.date);
     })[0] ?? null : null;
   const challengeOpponent = actionableChallenge && currentTeam
@@ -990,12 +1008,11 @@ function ChallengesView({
   const teamChallenges = challenges
     .filter((challenge) => challenge.homeTeamId === activeTeamId || challenge.awayTeamId === activeTeamId)
     .sort((left, right) => Date.parse(right.date) - Date.parse(left.date));
-  const lastProposer = (challenge: DemoWorldChallenge) => overrides[challenge.id]?.lastProposedByTeamId ?? challenge.homeTeamId;
   const isPending = (challenge: DemoWorldChallenge) => challenge.status === "pending" || challenge.status === "countered";
   const direction = (challenge: DemoWorldChallenge) => challenge.homeTeamId === activeTeamId ? "sent" : "received";
   const filteredActive = teamChallenges.filter((challenge) => isPending(challenge) || challenge.status === "accepted").filter((challenge) => filter === "all" || direction(challenge) === filter);
-  const needsResponse = filteredActive.filter((challenge) => isPending(challenge) && lastProposer(challenge) !== activeTeamId);
-  const waiting = filteredActive.filter((challenge) => isPending(challenge) && lastProposer(challenge) === activeTeamId);
+  const needsResponse = filteredActive.filter((challenge) => demoChallengeNeedsResponse(challenge, activeTeamId, overrides));
+  const waiting = filteredActive.filter((challenge) => isPending(challenge) && !demoChallengeNeedsResponse(challenge, activeTeamId, overrides));
   const agreed = filteredActive.filter((challenge) => challenge.status === "accepted");
   const history = teamChallenges.filter((challenge) => challenge.status === "cancelled" || challenge.status === "completed" || challenge.status === "rejected");
   const selectedChallenge = teamChallenges.find((challenge) => challenge.id === selectedChallengeId) ?? null;
@@ -1058,7 +1075,7 @@ function ChallengesView({
 
   function challengeCard(challenge: DemoWorldChallenge) {
     const opponent = opponentFor(challenge);
-    const actionRequired = isPending(challenge) && lastProposer(challenge) !== activeTeamId;
+    const actionRequired = demoChallengeNeedsResponse(challenge, activeTeamId, overrides);
     return (
       <article className={styles.demoChallengeCard} data-state={challenge.status} key={challenge.id}>
         <button type="button" onClick={() => setSelectedChallengeId(challenge.id)}><TeamIdentity compact team={opponent} /><span><strong>{opponent.name}</strong><small>{challenge.status === "accepted" ? "Partido acordado" : actionRequired ? challenge.status === "countered" ? "Cambios propuestos" : "Te ha retado" : "Esperando respuesta"}</small></span><span><strong>{dateLabel(challenge.date)}</strong><small>{matchKindLabels[challenge.proposedKind]} · {fieldLabel(challenge)}</small></span></button>
@@ -1090,7 +1107,7 @@ function ChallengesView({
 
   if (selectedChallenge) {
     const opponent = opponentFor(selectedChallenge);
-    const actionRequired = isPending(selectedChallenge) && lastProposer(selectedChallenge) !== activeTeamId;
+    const actionRequired = demoChallengeNeedsResponse(selectedChallenge, activeTeamId, overrides);
     const currentParts = demoChallengeDateParts(selectedChallenge.date);
     return (
       <section className={styles.demoChallengeFocus} data-demo-challenge-detail={selectedChallenge.status}>
@@ -2240,7 +2257,7 @@ export function DemoWorldApp({ manifest, mode = "social" }: { manifest: DemoWorl
     <main className={styles.shell} data-demo-world="ready" data-demo-mode={mode} data-demo-perspective={perspective.id} data-demo-tab={activeTab}>
       <DemoHeader activeTab={activeTab} fullMode={fullMode} manifest={manifest} onReset={resetWorld} onTab={navigate} perspective={perspective} perspectives={world.core.perspectives} setPerspective={choosePerspective} />
       <div className={styles.content}>
-        {activeTab === "inicio" ? <WorldHome challenges={demoChallenges} currentPlayer={currentPlayer} currentTeam={currentTeam} notifications={notifications} onMatch={openMatch} onPlayer={setSelectedPlayerId} onTab={navigate} perspective={perspective} snapshot={world} teamMatches={teamMatches} /> : null}
+        {activeTab === "inicio" ? <WorldHome challenges={demoChallenges} currentPlayer={currentPlayer} currentTeam={currentTeam} notifications={notifications} onMatch={openMatch} onPlayer={setSelectedPlayerId} onTab={navigate} overrides={localChallengeOverrides} perspective={perspective} snapshot={world} teamMatches={teamMatches} /> : null}
         {activeTab !== "inicio" && activeTab !== "revision" && activeTab !== "campos" && !snapshot ? <div className={styles.secondaryLoading} role="status"><span className={styles.loadingMark}>IQ</span><strong>{loadingFullWorld ? "Cargando esta sección" : "Preparando datos"}</strong><p>Solo descargamos el dominio que acabas de abrir.</p></div> : null}
         {snapshot && activeTab === "partido" && selectedLeagueMatchPreview ? <div className={styles.demoProductView} data-demo-domain="league-match"><LeagueMatchOperationsClient disciplinePreviewData={selectedLeagueMatchDisciplinePreview} embedded previewData={selectedLeagueMatchPreview} refereeAssignmentPreviewData={selectedLeagueMatchRefereePreview} surface="match" /></div> : null}
         {snapshot && activeTab === "partido" && !selectedLeagueMatchPreview && !fullMode && matchExperienceView === "overview" ? <>
