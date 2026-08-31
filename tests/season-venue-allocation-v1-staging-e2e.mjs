@@ -419,6 +419,29 @@ select json_build_object(
     matches: 50,
   });
 
+  const residue = JSON.parse(runSql(`
+select json_build_object(
+  'assignment',(select count(*) from public.pachanga_referee_assignments
+    where id=${sqlLiteral(assignmentId)}::uuid),
+  'series',(select count(*) from public.pachanga_venue_recurring_series),
+  'pools',(select count(*) from public.pachanga_competition_venue_pools),
+  'plans',(select count(*) from public.pachanga_competition_venue_allocation_plans),
+  'reservations',(select count(*) from public.pachanga_venue_reservations),
+  'bindings',(select count(*) from public.pachanga_venue_match_bindings),
+  'wave9bReceipts',(select count(*) from private.pachanga_venue_operation_receipts
+    where client_metadata->>'sessionId' like 'wave9b-%')
+)::text;
+`, "inspect Wave 9B staging residue"));
+  assert.deepEqual(residue, {
+    assignment: 0,
+    bindings: 0,
+    plans: 0,
+    pools: 0,
+    reservations: 0,
+    series: 0,
+    wave9bReceipts: 0,
+  }, "WAVE9B_STAGING_PRODUCT_RESIDUE_REQUIRES_BRANCH_REPLACEMENT");
+
   const accountA = await createAccount("device-a");
   const accountB = await createAccount("device-b");
   runSql(`

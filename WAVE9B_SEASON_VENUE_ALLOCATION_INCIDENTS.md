@@ -1926,7 +1926,7 @@ passes all six races with exactly one authoritative winner per conflict.
   valid automation bypass.
 - Required correction: inject the Vercel automation bypass into Preview-only
   E2E requests, keep it out of Git and the browser bundle, add a focal
-  regression and rerun the entire flow against the still-clean `r7` branch and
+  regression and rerun the entire flow against a clean replacement branch and
   an exact Preview.
 
 ### W9B-112 - Vercel protection JSON exposes the automation bypass as a key
@@ -1965,3 +1965,27 @@ passes all six races with exactly one authoritative winner per conflict.
 - Regression evidence: the replacement returns the real Service Worker with
   `200 + no-store`, a request without a valid bypass still receives Vercel SSO
   `302`, and no replacement value was printed or persisted locally.
+
+### W9B-114 - Deterministic referee assignment ID collides in clean-branch E2E
+
+- Classification: `SIMULATION_BUG`
+- Status: `detected / correction_pending`
+- Original reproducer: run the authenticated Wave 9B E2E on branch `r7` after
+  the Preview bypass succeeds and call `assignment.propose` with the fixed
+  synthetic assignment identifier.
+- Impact: the referee authority rejects the command with
+  `PT409 REFEREE_ASSIGNMENT_ID_EXISTS`, stopping the flow before the Wave 9B
+  allocation lifecycle begins.
+- Required correction: read back the exact assignment row and originating
+  evidence without mutation, determine whether it belongs to the deterministic
+  seed or to cleanup residue, then make the E2E setup and cleanup unambiguous
+  and repeat on a fresh branch if any prior execution mutated product state.
+- Root cause: the preceding run completed all sporting mutations before its
+  final Preview smoke failed. Its documented cleanup contract restores flags,
+  roles and accounts but intentionally relies on branch destruction for product
+  rows; reusing `r7` therefore left one assignment, series, pool and plan, two
+  reservations and bindings, plus 32 Wave 9B receipts.
+- Correction implemented: the E2E now performs a read-only zero-residue
+  preflight before creating accounts or changing flags and requires branch
+  replacement whenever any deterministic sporting row or Wave 9B receipt is
+  present. Full verification remains pending on fresh `r8`.
