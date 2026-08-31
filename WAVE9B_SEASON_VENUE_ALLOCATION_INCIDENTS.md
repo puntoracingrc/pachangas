@@ -1647,3 +1647,18 @@ passes all six races with exactly one authoritative winner per conflict.
   dependencies, make contention fail or serialize within a bounded interval,
   preserve one authoritative winner and idempotent replay, then rerun the exact
   authenticated race and canonical readback on a clean branch.
+
+### W9B-096 - Synthetic venue manager cannot accept a Club reservation
+
+- Classification: `SIMULATION_BUG`
+- Status: `detected / correction_pending`
+- Original reproducer: after the Wave 9B publish flow and successful hold race,
+  submit and then accept the R4D replacement reservation from device B, whose
+  synthetic Club membership is `club_venue_manager`.
+- Impact: the canonical Wave 9A reservation RPC correctly rejects the intent
+  with `42501 VENUE_ACCEPT_NOT_ALLOWED`, so the staging flow cannot yet reach
+  replacement, referee reconfirmation and cancellation.
+- Required correction: reconcile the responsibilities of
+  `club_venue_manager` and `club_reservation_manager`; if acceptance belongs to
+  the latter, give the synthetic actor that existing role rather than widening
+  production authority, then rerun the exact E2E.

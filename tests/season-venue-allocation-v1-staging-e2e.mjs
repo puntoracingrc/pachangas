@@ -411,7 +411,7 @@ select json_build_object(
 insert into public.pachanga_club_memberships(club_id,user_id,role,status,accepted_at,invited_by)
 values
   (${sqlLiteral(clubId)}::uuid,${sqlLiteral(accountA.id)}::uuid,'club_venue_manager','active',clock_timestamp(),'e9010000-0000-4000-8000-000000000001'),
-  (${sqlLiteral(clubId)}::uuid,${sqlLiteral(accountB.id)}::uuid,'club_venue_manager','active',clock_timestamp(),'e9010000-0000-4000-8000-000000000001');
+  (${sqlLiteral(clubId)}::uuid,${sqlLiteral(accountB.id)}::uuid,'club_reservation_manager','active',clock_timestamp(),'e9010000-0000-4000-8000-000000000001');
 insert into public.pachanga_competition_staff_assignments(
   competition_id,user_id,staff_role,status,assigned_by
 ) values

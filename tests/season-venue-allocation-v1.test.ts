@@ -125,6 +125,8 @@ test("staging is canonical, transactional and two-device reproducible", async ()
   assert.match(dataset, /begin;[\s\S]*commit;/i);
   assert.match(staging, /createAccount\("device-a"\)/);
   assert.match(staging, /createAccount\("device-b"\)/);
+  assert.match(staging, /accountA\.id[\s\S]*'club_venue_manager'/);
+  assert.match(staging, /accountB\.id[\s\S]*'club_reservation_manager'/);
   assert.match(staging, /"ON_ERROR_STOP=1"/);
   assert.match(staging, /WAVE9B_REALTIME_SUBSCRIPTION_TIMEOUT/);
   assert.match(staging, /"demoWorldV34Enabled"/);
