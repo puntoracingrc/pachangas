@@ -1,6 +1,6 @@
 # Official UI V3A - Social Core
 
-Estado: LOCAL RELEASE CANDIDATE
+Estado: RELEASED / PRODUCTION VERIFIED
 
 ## Checkpoint
 
@@ -125,8 +125,10 @@ cliente.
 - PR: #241, draft durante la validacion de Preview.
 - Preview validada:
   `https://pachangas-git-codex-offic-4637a7-persianas-almar-web-s-projects.vercel.app`.
-  - Deployment: `dpl_8zW4KLKN3VYeVTm6a2Jvnyjpc6CZ`.
-  - HEAD auditado: `3e0b043e894e7def8a62fbf380bff1ce44a9bcc4`.
+  - Deployment funcional auditado: `dpl_8zW4KLKN3VYeVTm6a2Jvnyjpc6CZ`.
+  - HEAD funcional auditado: `3e0b043e894e7def8a62fbf380bff1ce44a9bcc4`.
+  - Deployment documental final: `dpl_9kFT9842rcyRZuM8qUfVbg2poFko`.
+  - HEAD final del PR: `8b1ba4ef4c32c02456d7a24d478fdf22e01aab40`.
   - Estado Vercel: READY.
   - Desktop 1440x900, portrait 390x844 y landscape 844x390: PASS.
   - Consola: 0 errores y 0 warnings en las superficies de producto.
@@ -135,9 +137,26 @@ cliente.
   - Service Worker: 200, `activated` y controlando la pagina.
   - `/admin/demo` sin sesion de Pachangas: fail-closed, sin Demo completa ni
     dominios tecnicos.
-- Merge a `main`: pendiente.
-- Deployment productivo: pendiente.
-- Smoke en `pachangasiq.com`: pendiente.
+- PR #241: MERGED.
+- Merge a `main`: `8e2bf124ad4d0deee30d19dde807281e3fbcaa08`.
+- Deployment productivo: `dpl_Ff6XByRrGJ2AykrtPvSM5tyUB5rJ`, READY y asociado
+  al merge exacto anterior.
+- Alias verificados: `https://pachangasiq.com` y
+  `https://www.pachangasiq.com`.
+- Smoke productivo:
+  - Inicio, Partidos, Retos, Mercado y Demo social: PASS.
+  - Destinos del menu: Inicio y Partidos cambian el estado canonico de la SPA;
+    Retos navega a `/retos`; Mercado navega a `/mercado`.
+  - Desktop 1440x900, portrait 390x844 y landscape 844x390: PASS.
+  - Ancho del documento: 1440/1440, 390/390 y 844/844.
+  - Imagenes rotas / errores de consola / warnings: 0 / 0 / 0.
+  - Manifest y `sw.js`: 200; Service Worker productivo `activated` y
+    controlando `https://pachangasiq.com/`.
+  - Readback canonico de plataforma: 200 y rol exacto `platform_owner`; los
+    enlaces `/admin` y `/admin/demo` aparecen solo tras esa confirmacion.
+  - Demo completa accesible para `platform_owner`; Preview sin sesion
+    confirmada fail-closed.
 
-Wave 9C no se ha iniciado. La fase no se considerara cerrada hasta completar
-Preview, merge, deployment, smoke productivo y limpieza segura del worktree.
+Wave 9C no se ha iniciado. No se han realizado cambios en Supabase ni en las
+autoridades deportivas existentes. La retirada del worktree se ejecuta solo
+despues de fusionar esta reconciliacion documental y verificar su ancestry.
