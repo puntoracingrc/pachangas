@@ -66,13 +66,14 @@ test("Retos is independent and Mercado keeps exactly three discovery domains", a
   assert.match(market, /return "partidos"/);
   assert.match(market, /window\.location\.replace\("\/retos"\)/);
   assert.doesNotMatch(market, /RefereeMarketplacePanel|ClubDirectoryClient/);
-  assert.match(retos, /active="retos"/);
-  assert.match(retos, /Recibidos/);
-  assert.match(retos, /Enviados/);
+  assert.match(retos, /active=\{matchMode \? "partido" : "retos"\}/);
+  assert.match(retos, /data-mobile-tab=\{matchMode \? "partido" : "retos"\}/);
+  assert.match(retos, /Activos/);
   assert.match(retos, /Historial/);
-  assert.match(retos, /Buscar rival/);
-  assert.match(retos, /<TeamChallengesPanel initialTeamCode=\{initialTeamCode\} key=\{initialTeamCode \|\| "retos"\} view=\{view\}/);
+  assert.match(retos, /\+ Retar equipo/);
+  assert.match(retos, /<TeamChallengesPanel/);
   assert.match(challengePanel, /useState\(initialOpponent\?\.teamCode \?\? initialTeamCode\)/);
+  assert.doesNotMatch(challengePanel, /Sincronización|Revisión N/);
 });
 
 test("match navigation is contextual and never exposes a permanent Admin tab", async () => {

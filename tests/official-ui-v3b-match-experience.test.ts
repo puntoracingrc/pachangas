@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
+import "./official-ui-v3c-simple-challenges.test";
 
 const root = process.cwd();
 const source = (file: string) => readFile(path.join(root, file), "utf8");
@@ -152,9 +153,9 @@ test("V3A destinations and role separation remain intact", async () => {
   assert.match(page, /canUseAdminControls/);
   assert.match(demo, /perspective\.role === "admin"/);
   assert.match(demo, /perspective\.role === "player"/);
-  assert.match(challenges, /retoPartido/);
+  assert.match(challenges, /matchChallengeId/);
   assert.match(challenges, />Ver partido<\/button>/);
-  assert.match(challenges, /initialChallengeId=\{selectedExternalChallengeId\}/);
+  assert.match(challenges, /initialChallengeId=\{matchChallengeId\}/);
   assert.match(externalResults, /match\.challengeId === initialChallengeId/);
 });
 

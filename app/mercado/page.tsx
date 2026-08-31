@@ -1342,7 +1342,7 @@ export default function MarketPage() {
       </section>
       ) : (
         <ChallengeableTeamsPanel
-          onPrepareChallenge={(team) => window.location.assign(`/retos?vista=search&rival=${encodeURIComponent(team.teamCode)}`)}
+          onPrepareChallenge={(team) => window.location.assign(`/retos?view=active&crear=1&rival=${encodeURIComponent(team.teamCode)}`)}
         />
       )}
       </OfficialMarketGameView>

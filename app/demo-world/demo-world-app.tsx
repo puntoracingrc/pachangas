@@ -39,6 +39,7 @@ import {
   type DemoWorldChallenge,
   type DemoWorldCoreChunk,
   type DemoWorldMatch,
+  type DemoWorldMatchesChunk,
   type DemoWorldMatchPane,
   type DemoWorldNotification,
   type DemoWorldPerspective,
@@ -116,7 +117,7 @@ const domainTabs: Array<{ group: "competición" | "gestión" | "red"; id: DemoWo
 
 const competitionTabs = new Set<DemoWorldV2PrimaryTab>(domainTabs.map(({ id }) => id));
 const socialDemoTabs = new Set<DemoWorldV2PrimaryTab>(["inicio", "partido", "retos", "mercado"]);
-const socialPerspectiveIds = new Set<DemoWorldPerspective["id"]>(["player", "team-owner"]);
+const socialPerspectiveIds = new Set<DemoWorldPerspective["id"]>(["admin", "free-agent", "player", "team-owner"]);
 
 function primaryTabForDemo(tab: DemoWorldV2PrimaryTab): ProductPrimaryTab {
   return competitionTabs.has(tab) ? "competir" : tab as ProductPrimaryTab;
@@ -214,6 +215,44 @@ const challengeStatusLabels: Record<DemoWorldChallenge["status"], string> = {
   pending: "Pendiente",
   rejected: "Rechazado",
 };
+
+type DemoChallengeOverride = Partial<Pick<DemoWorldChallenge, "date" | "matchId" | "message" | "proposedKind" | "status">> & {
+  fieldLabel?: string;
+  lastProposedByTeamId?: string;
+};
+
+type DemoChallengeDraft = {
+  date: string;
+  fieldLabel: string;
+  kind: DemoMatchKind;
+  message: string;
+  opponentTeamId: string;
+  time: string;
+};
+
+function demoChallengeDateParts(value: string) {
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return { date: "", time: "" };
+  const local = new Date(parsed.getTime() - parsed.getTimezoneOffset() * 60_000).toISOString();
+  return { date: local.slice(0, 10), time: local.slice(11, 16) };
+}
+
+function demoChallengeIso(draft: DemoChallengeDraft) {
+  const parsed = new Date(`${draft.date}T${draft.time}:00`);
+  return Number.isNaN(parsed.getTime()) ? new Date().toISOString() : parsed.toISOString();
+}
+
+function withDemoChallengeOverride(challenge: DemoWorldChallenge, override: DemoChallengeOverride | undefined): DemoWorldChallenge {
+  if (!override) return challenge;
+  return {
+    ...challenge,
+    ...(override.date ? { date: override.date } : {}),
+    ...(override.matchId !== undefined ? { matchId: override.matchId } : {}),
+    ...(override.message !== undefined ? { message: override.message } : {}),
+    ...(override.proposedKind ? { proposedKind: override.proposedKind } : {}),
+    ...(override.status ? { status: override.status } : {}),
+  };
+}
 
 const DEMO_WORLD_MARKET_PAGE_SIZE = 12;
 
@@ -440,6 +479,7 @@ function DemoHeader({
 }
 
 function WorldHome({
+  challenges,
   currentPlayer,
   currentTeam,
   notifications,
@@ -450,6 +490,7 @@ function WorldHome({
   snapshot,
   teamMatches,
 }: {
+  challenges: DemoWorldChallenge[];
   currentPlayer: DemoWorldPlayer;
   currentTeam: DemoWorldTeam | null;
   notifications: DemoWorldNotification[];
@@ -463,6 +504,17 @@ function WorldHome({
   const upcoming = teamMatches.filter((match) => match.status === "scheduled").sort((left, right) => Date.parse(left.date) - Date.parse(right.date));
   const history = teamMatches.filter((match) => match.status === "finalized").sort((left, right) => Date.parse(right.date) - Date.parse(left.date));
   const venueById = new Map(snapshot.core.venues.map((venue) => [venue.id, venue]));
+  const actionableChallenge = currentTeam ? challenges
+    .filter((challenge) => challenge.homeTeamId === currentTeam.id || challenge.awayTeamId === currentTeam.id)
+    .filter((challenge) => challenge.status === "pending" || challenge.status === "countered" || challenge.status === "accepted")
+    .sort((left, right) => {
+      const leftPriority = (left.status === "pending" || left.status === "countered") && left.awayTeamId === currentTeam.id ? 0 : left.status === "accepted" ? 1 : 2;
+      const rightPriority = (right.status === "pending" || right.status === "countered") && right.awayTeamId === currentTeam.id ? 0 : right.status === "accepted" ? 1 : 2;
+      return leftPriority - rightPriority || Date.parse(left.date) - Date.parse(right.date);
+    })[0] ?? null : null;
+  const challengeOpponent = actionableChallenge && currentTeam
+    ? snapshot.core.teams.find((team) => team.id === (actionableChallenge.homeTeamId === currentTeam.id ? actionableChallenge.awayTeamId : actionableChallenge.homeTeamId)) ?? null
+    : null;
   return (
     <div className={styles.pageStack} data-tour-target="demo-home">
       <section className={styles.identityBand}>
@@ -496,6 +548,13 @@ function WorldHome({
           )}
         </div>
       </section>
+
+      {actionableChallenge && challengeOpponent ? (
+        <section className={styles.homeChallengeAction} data-demo-home-challenge={actionableChallenge.status}>
+          <div><span className={styles.eyebrow}>{actionableChallenge.status === "accepted" ? "Partido acordado" : "Pendiente de ti"}</span><strong>{challengeOpponent.name} {actionableChallenge.status === "accepted" ? "ya tiene partido con vosotros" : "os ha retado"}</strong><small>{dateLabel(actionableChallenge.date)}</small></div>
+          <button className={styles.primaryButton} type="button" onClick={() => actionableChallenge.status === "accepted" && actionableChallenge.matchId ? onMatch(actionableChallenge.matchId) : onTab("retos")}>{actionableChallenge.status === "accepted" ? "Ver partido" : "Responder reto"}</button>
+        </section>
+      ) : null}
 
       <section className={styles.sectionBand} data-tour-target="demo-upcoming-matches">
         <div className={styles.sectionHeading}><div><span className={styles.eyebrow}>Agenda</span><h2>Próximos partidos</h2></div><button type="button" onClick={() => onTab("partido")}>Ver partido</button></div>
@@ -896,59 +955,172 @@ function MarketView({
 }
 
 function ChallengesView({
+  challenges,
   currentTeam,
+  onChallengeChange,
+  onChallengeCreate,
   onMatch,
-  onTeam,
+  overrides,
+  perspective,
+  setMessage,
   snapshot,
 }: {
+  challenges: DemoWorldChallenge[];
   currentTeam: DemoWorldTeam | null;
+  onChallengeChange: (challengeId: string, patch: DemoChallengeOverride) => void;
+  onChallengeCreate: (challenge: DemoWorldChallenge, override: DemoChallengeOverride) => void;
   onMatch: (matchId: string) => void;
-  onTeam: (teamId: string) => void;
+  overrides: Record<string, DemoChallengeOverride>;
+  perspective: DemoWorldPerspective;
+  setMessage: (message: string) => void;
   snapshot: DemoWorldRenderableSnapshot;
 }) {
-  const [view, setView] = useState<"history" | "received" | "search" | "sent">("received");
-  const teamId = currentTeam?.id ?? "";
-  const challenges = snapshot.matches.challenges
-    .filter((challenge) => challenge.homeTeamId === teamId || challenge.awayTeamId === teamId)
-    .filter((challenge) => {
-      if (view === "received") return challenge.awayTeamId === teamId && (challenge.status === "pending" || challenge.status === "countered");
-      if (view === "sent") return challenge.homeTeamId === teamId && (challenge.status === "pending" || challenge.status === "countered");
-      if (view === "history") return challenge.status !== "pending" && challenge.status !== "countered";
-      return false;
-    })
+  const [view, setView] = useState<"active" | "history">("active");
+  const [filter, setFilter] = useState<"all" | "received" | "sent">("all");
+  const [selectedChallengeId, setSelectedChallengeId] = useState<string | null>(null);
+  const [creating, setCreating] = useState(false);
+  const [wizardStep, setWizardStep] = useState<1 | 2 | 3>(1);
+  const [counteringId, setCounteringId] = useState<string | null>(null);
+  const [viewingTeamId, setViewingTeamId] = useState<string | null>(null);
+  const [draft, setDraft] = useState<DemoChallengeDraft>({ date: "", fieldLabel: "", kind: "futbol7", message: "", opponentTeamId: "", time: "" });
+  const baseTeamId = currentTeam?.id ?? "";
+  const activeTeamId = viewingTeamId ?? baseTeamId;
+  const activeTeam = snapshot.core.teams.find((team) => team.id === activeTeamId) ?? currentTeam;
+  const canManage = perspective.role === "admin";
+  const teamChallenges = challenges
+    .filter((challenge) => challenge.homeTeamId === activeTeamId || challenge.awayTeamId === activeTeamId)
     .sort((left, right) => Date.parse(right.date) - Date.parse(left.date));
-  const opponents = snapshot.core.teams.filter((team) => team.id !== teamId && team.openToChallenges);
+  const lastProposer = (challenge: DemoWorldChallenge) => overrides[challenge.id]?.lastProposedByTeamId ?? challenge.homeTeamId;
+  const isPending = (challenge: DemoWorldChallenge) => challenge.status === "pending" || challenge.status === "countered";
+  const direction = (challenge: DemoWorldChallenge) => challenge.homeTeamId === activeTeamId ? "sent" : "received";
+  const filteredActive = teamChallenges.filter((challenge) => isPending(challenge) || challenge.status === "accepted").filter((challenge) => filter === "all" || direction(challenge) === filter);
+  const needsResponse = filteredActive.filter((challenge) => isPending(challenge) && lastProposer(challenge) !== activeTeamId);
+  const waiting = filteredActive.filter((challenge) => isPending(challenge) && lastProposer(challenge) === activeTeamId);
+  const agreed = filteredActive.filter((challenge) => challenge.status === "accepted");
+  const history = teamChallenges.filter((challenge) => challenge.status === "cancelled" || challenge.status === "completed" || challenge.status === "rejected");
+  const selectedChallenge = teamChallenges.find((challenge) => challenge.id === selectedChallengeId) ?? null;
+  const opponents = snapshot.core.teams.filter((team) => team.id !== activeTeamId && team.openToChallenges).slice(0, 5);
+  const fieldLabel = (challenge: DemoWorldChallenge) => overrides[challenge.id]?.fieldLabel
+    ?? snapshot.core.venues.find((venue) => snapshot.matches.matches.find((match) => match.id === challenge.matchId)?.venueId === venue.id)?.label
+    ?? "Campo por confirmar";
+  const opponentFor = (challenge: DemoWorldChallenge) => snapshot.core.teams.find((team) => team.id === (challenge.homeTeamId === activeTeamId ? challenge.awayTeamId : challenge.homeTeamId))!;
 
-  return (
-    <div className={styles.managerLayout} data-tour-target="demo-challenges">
-      <aside className={styles.sideSubnav} aria-label="Secciones de Retos">
-        <div className={styles.sideTitle}><span>Retos</span><strong>{currentTeam?.name ?? "Equipo demo"}</strong></div>
-        {(["received", "sent", "history"] as const).map((entry) => (
-          <button aria-current={view === entry ? "page" : undefined} key={entry} type="button" onClick={() => setView(entry)}>
-            {entry === "received" ? "Recibidos" : entry === "sent" ? "Enviados" : "Historial"}
-          </button>
-        ))}
-        <button aria-current={view === "search" ? "page" : undefined} type="button" onClick={() => setView("search")}>Buscar rival</button>
-        <div className={styles.sideMeta}><span>{snapshot.matches.challenges.length} retos</span><small>Datos ficticios</small></div>
-      </aside>
-      <section className={styles.managerContent}>
-        <div className={styles.marketHeader}><div><span className={styles.eyebrow}>Competición social</span><h1>Retos</h1></div></div>
-        {view === "search" ? (
-          <div className={styles.teamMarketGrid}>{opponents.map((team) => (
-            <button key={team.id} type="button" onClick={() => onTeam(team.id)}><TeamIdentity team={team} /><p>{team.identity}</p><span>Disponible para retar · {team.publicLocation}</span></button>
-          ))}</div>
-        ) : (
-          <div className={styles.challengeGrid}>
-            {challenges.map((challenge) => {
-              const home = snapshot.core.teams.find((team) => team.id === challenge.homeTeamId)!;
-              const away = snapshot.core.teams.find((team) => team.id === challenge.awayTeamId)!;
-              return <article className={styles.challengeItem} key={challenge.id}><span data-status={challenge.status}>{challengeStatusLabels[challenge.status]}</span><div><TeamIdentity compact team={home} /><b>vs</b><TeamIdentity compact team={away} /></div><p>{challenge.message}</p><small>{dateLabel(challenge.date)} · {matchKindLabels[challenge.proposedKind]}</small>{challenge.matchId ? <button type="button" onClick={() => onMatch(challenge.matchId!)}>Abrir partido</button> : null}</article>;
-            })}
-            {!challenges.length ? <EmptyState title="Sin retos en esta vista" body="Cambia de pestaña o busca un rival para explorar el flujo." /> : null}
+  function openCounter(challenge: DemoWorldChallenge) {
+    const parts = demoChallengeDateParts(challenge.date);
+    setCounteringId(challenge.id);
+    setSelectedChallengeId(challenge.id);
+    setDraft({ ...parts, fieldLabel: fieldLabel(challenge), kind: challenge.proposedKind, message: challenge.message, opponentTeamId: opponentFor(challenge).id });
+  }
+
+  function acceptChallenge(challenge: DemoWorldChallenge) {
+    const linkedMatch = challenge.matchId ?? snapshot.matches.matches.find((match) => (
+      match.scope === "challenge"
+      && match.status === "scheduled"
+      && [match.homeTeamId, match.awayTeamId].includes(challenge.homeTeamId)
+      && [match.homeTeamId, match.awayTeamId].includes(challenge.awayTeamId)
+    ))?.id ?? null;
+    onChallengeChange(challenge.id, { matchId: linkedMatch, status: "accepted" });
+    setCounteringId(null);
+    setMessage("Reto aceptado en la sesión Demo. Remote writes: 0.");
+  }
+
+  function sendCounterproposal(challenge: DemoWorldChallenge) {
+    onChallengeChange(challenge.id, {
+      date: demoChallengeIso(draft),
+      fieldLabel: draft.fieldLabel,
+      lastProposedByTeamId: activeTeamId,
+      message: draft.message,
+      proposedKind: draft.kind,
+      status: "countered",
+    });
+    setCounteringId(null);
+    setMessage("Contrapropuesta guardada solo en esta sesión Demo.");
+  }
+
+  function createChallenge() {
+    if (!activeTeamId || !draft.opponentTeamId) return;
+    const id = `demo_session_challenge_${Date.now()}`;
+    onChallengeCreate({
+      awayTeamId: draft.opponentTeamId,
+      date: demoChallengeIso(draft),
+      homeTeamId: activeTeamId,
+      id,
+      matchId: null,
+      message: draft.message || "Propuesta creada en la sesión Demo.",
+      proposedKind: draft.kind,
+      status: "pending",
+    }, { fieldLabel: draft.fieldLabel, lastProposedByTeamId: activeTeamId });
+    setCreating(false);
+    setWizardStep(1);
+    setDraft({ date: "", fieldLabel: "", kind: "futbol7", message: "", opponentTeamId: "", time: "" });
+    setMessage("Reto creado solo en esta sesión Demo. Remote writes: 0.");
+  }
+
+  function challengeCard(challenge: DemoWorldChallenge) {
+    const opponent = opponentFor(challenge);
+    const actionRequired = isPending(challenge) && lastProposer(challenge) !== activeTeamId;
+    return (
+      <article className={styles.demoChallengeCard} data-state={challenge.status} key={challenge.id}>
+        <button type="button" onClick={() => setSelectedChallengeId(challenge.id)}><TeamIdentity compact team={opponent} /><span><strong>{opponent.name}</strong><small>{challenge.status === "accepted" ? "Partido acordado" : actionRequired ? challenge.status === "countered" ? "Cambios propuestos" : "Te ha retado" : "Esperando respuesta"}</small></span><span><strong>{dateLabel(challenge.date)}</strong><small>{matchKindLabels[challenge.proposedKind]} · {fieldLabel(challenge)}</small></span></button>
+        <div>
+          {challenge.status === "accepted" ? <button className={styles.primaryButton} type="button" disabled={!challenge.matchId} onClick={() => challenge.matchId && onMatch(challenge.matchId)}>Ver partido</button> : actionRequired && canManage ? <button className={styles.primaryButton} type="button" onClick={() => acceptChallenge(challenge)}>{challenge.status === "countered" ? "Aceptar cambios" : "Aceptar"}</button> : <button type="button" onClick={() => setSelectedChallengeId(challenge.id)}>Ver propuesta</button>}
+          {actionRequired && canManage ? <button type="button" onClick={() => openCounter(challenge)}>Proponer otro momento</button> : null}
+        </div>
+      </article>
+    );
+  }
+
+  if (!currentTeam) {
+    return <section className={styles.demoChallengeEmpty} data-demo-challenge-role="no-team"><span>Sin equipo</span><h1>No perteneces todavía a ningún equipo.</h1><p>En el producto real podrías crear uno, unirte o buscar partidos abiertos.</p><div><button type="button">Crear equipo</button><button type="button">Unirme a un equipo</button><button type="button">Ver partidos abiertos</button></div><small>LOCAL SESSION ONLY · remoteWrites = 0</small></section>;
+  }
+
+  if (creating && canManage) {
+    const chosenOpponent = snapshot.core.teams.find((team) => team.id === draft.opponentTeamId) ?? null;
+    return (
+      <section className={styles.demoChallengeFocus} data-demo-challenge-wizard={wizardStep}>
+        <header><div><span>Nuevo reto · Borrador local</span><h1>Retar equipo</h1></div><button type="button" onClick={() => setCreating(false)}>Cerrar</button></header>
+        <ol>{[1, 2, 3].map((step) => <li aria-current={wizardStep === step ? "step" : undefined} key={step}><b>{step}</b><span>{step === 1 ? "Rival" : step === 2 ? "Propuesta" : "Revisar"}</span></li>)}</ol>
+        {wizardStep === 1 ? <div className={styles.demoChallengeWizard}><h2>Elige rival</h2><div className={styles.demoOpponentList}>{opponents.map((team) => <button aria-pressed={draft.opponentTeamId === team.id} key={team.id} type="button" onClick={() => setDraft((current) => ({ ...current, opponentTeamId: team.id }))}><TeamIdentity compact team={team} /><span>{team.name}<small>{team.stats.challengesPlayed} retos jugados</small></span></button>)}</div><label><span>Código del equipo</span><input value={chosenOpponent ? `DEMO-${chosenOpponent.name.replace(/[^A-ZÁÉÍÓÚÜÑ0-9]/gi, "").slice(0, 6).toUpperCase()}` : ""} readOnly placeholder="Código sintético" /></label><div><span /><button className={styles.primaryButton} type="button" disabled={!chosenOpponent} onClick={() => setWizardStep(2)}>Continuar</button></div></div> : null}
+        {wizardStep === 2 ? <div className={styles.demoChallengeWizard}><h2>Cuándo y dónde</h2><div className={styles.demoChallengeFields}><label><span>Fecha</span><input type="date" value={draft.date} onChange={(event) => setDraft((current) => ({ ...current, date: event.target.value }))} /></label><label><span>Hora</span><input type="time" value={draft.time} onChange={(event) => setDraft((current) => ({ ...current, time: event.target.value }))} /></label><label><span>Modalidad</span><select value={draft.kind} onChange={(event) => setDraft((current) => ({ ...current, kind: event.target.value as DemoMatchKind }))}><option value="sala">Fútbol sala</option><option value="futbol7">Fútbol 7</option><option value="futbol11">Fútbol 11</option></select></label><label><span>Campo</span><input value={draft.fieldLabel} onChange={(event) => setDraft((current) => ({ ...current, fieldLabel: event.target.value }))} placeholder="Campo Demo" /></label></div><details><summary>Más detalles</summary><label><span>Mensaje</span><textarea value={draft.message} onChange={(event) => setDraft((current) => ({ ...current, message: event.target.value }))} /></label></details><div><button type="button" onClick={() => setWizardStep(1)}>Atrás</button><button className={styles.primaryButton} type="button" disabled={!draft.date || !draft.time || !draft.fieldLabel} onClick={() => setWizardStep(3)}>Revisar</button></div></div> : null}
+        {wizardStep === 3 && chosenOpponent ? <div className={styles.demoChallengeWizard}><h2>Revisa la propuesta</h2><article className={styles.demoChallengeReview}><strong>{activeTeam?.name}</strong><b>vs</b><strong>{chosenOpponent.name}</strong><p>{dateLabel(demoChallengeIso(draft))} · {matchKindLabels[draft.kind]}</p><span>{draft.fieldLabel}</span></article><p>El reto no existe fuera de esta sesión Demo.</p><div><button type="button" onClick={() => setWizardStep(2)}>Atrás</button><button className={styles.primaryButton} type="button" onClick={createChallenge}>Enviar reto</button></div></div> : null}
+        <footer><span>remoteWrites = 0</span><span>externalNotifications = 0</span><span>realEntities = 0</span><span>StripeCalls = 0</span></footer>
+      </section>
+    );
+  }
+
+  if (selectedChallenge) {
+    const opponent = opponentFor(selectedChallenge);
+    const actionRequired = isPending(selectedChallenge) && lastProposer(selectedChallenge) !== activeTeamId;
+    const currentParts = demoChallengeDateParts(selectedChallenge.date);
+    return (
+      <section className={styles.demoChallengeFocus} data-demo-challenge-detail={selectedChallenge.status}>
+        <header><div><span>{actionRequired ? "Pendiente de ti" : challengeStatusLabels[selectedChallenge.status]}</span><h1>{opponent.name}</h1></div><button type="button" onClick={() => { setSelectedChallengeId(null); setCounteringId(null); }}>Cerrar</button></header>
+        <div className={styles.demoChallengeDetail}><TeamIdentity team={opponent} /><dl><div><dt>Cuándo</dt><dd>{dateLabel(selectedChallenge.date)}</dd></div><div><dt>Modalidad</dt><dd>{matchKindLabels[selectedChallenge.proposedKind]}</dd></div><div><dt>Campo</dt><dd>{fieldLabel(selectedChallenge)}</dd></div><div><dt>Mensaje</dt><dd>{selectedChallenge.message}</dd></div></dl></div>
+        {counteringId === selectedChallenge.id ? <section className={styles.demoCounterproposal}><div><span>Propuesta actual</span><strong>{dateLabel(selectedChallenge.date)}</strong><small>{fieldLabel(selectedChallenge)}</small></div><h2>Tu contrapropuesta</h2><div className={styles.demoChallengeFields}><label><span>Fecha</span><input type="date" value={draft.date} onChange={(event) => setDraft((value) => ({ ...value, date: event.target.value }))} /></label><label><span>Hora</span><input type="time" value={draft.time} onChange={(event) => setDraft((value) => ({ ...value, time: event.target.value }))} /></label><label><span>Modalidad</span><select value={draft.kind} onChange={(event) => setDraft((value) => ({ ...value, kind: event.target.value as DemoMatchKind }))}><option value="sala">Fútbol sala</option><option value="futbol7">Fútbol 7</option><option value="futbol11">Fútbol 11</option></select></label><label><span>Campo</span><input value={draft.fieldLabel} onChange={(event) => setDraft((value) => ({ ...value, fieldLabel: event.target.value }))} /></label></div><div><button type="button" onClick={() => setCounteringId(null)}>Cancelar</button><button className={styles.primaryButton} type="button" disabled={!draft.date || !draft.time || !draft.fieldLabel || (draft.date === currentParts.date && draft.time === currentParts.time && draft.kind === selectedChallenge.proposedKind && draft.fieldLabel === fieldLabel(selectedChallenge))} onClick={() => sendCounterproposal(selectedChallenge)}>Enviar cambios</button></div></section> : (
+          <div className={styles.demoChallengeActions}>
+            {selectedChallenge.status === "accepted" ? <button className={styles.primaryButton} type="button" disabled={!selectedChallenge.matchId} onClick={() => selectedChallenge.matchId && onMatch(selectedChallenge.matchId)}>Ver partido</button> : null}
+            {actionRequired && canManage ? <button className={styles.primaryButton} type="button" onClick={() => acceptChallenge(selectedChallenge)}>{selectedChallenge.status === "countered" ? "Aceptar cambios" : "Aceptar"}</button> : null}
+            {actionRequired && canManage ? <button type="button" onClick={() => openCounter(selectedChallenge)}>Proponer otro momento</button> : null}
+            {canManage && selectedChallenge.homeTeamId === activeTeamId && isPending(selectedChallenge) ? <button type="button" onClick={() => { onChallengeChange(selectedChallenge.id, { status: "cancelled" }); setSelectedChallengeId(null); setMessage("Reto cancelado solo en la sesión Demo."); }}>Cancelar reto</button> : null}
+            {actionRequired && canManage ? <button type="button" onClick={() => { onChallengeChange(selectedChallenge.id, { status: "rejected" }); setSelectedChallengeId(null); setMessage("Reto rechazado solo en la sesión Demo."); }}>Rechazar</button> : null}
           </div>
         )}
+        {canManage && isPending(selectedChallenge) ? <button className={styles.demoPerspectiveSwitch} type="button" onClick={() => { setViewingTeamId(activeTeamId === baseTeamId ? opponent.id : baseTeamId); setSelectedChallengeId(selectedChallenge.id); setMessage(activeTeamId === baseTeamId ? `Perspectiva local: ${opponent.name}.` : `Perspectiva local: ${currentTeam.name}.`); }}>Ver como {activeTeamId === baseTeamId ? opponent.name : currentTeam.name}</button> : null}
+        {!canManage && isPending(selectedChallenge) ? <p className={styles.demoReadOnly}>Vista jugador: puedes consultar el reto, pero no modificarlo.</p> : null}
+        <footer><span>LOCAL SESSION ONLY</span><span>remoteWrites = 0</span><span>externalNotifications = 0</span></footer>
       </section>
-    </div>
+    );
+  }
+
+  return (
+    <section className={styles.demoChallengesV3c} data-tour-target="demo-challenges" data-demo-challenge-role={perspective.role}>
+      <header><div><h1>Retos</h1><p>Organiza un partido contra otro equipo.</p></div>{canManage ? <button className={styles.primaryButton} type="button" onClick={() => { setCreating(true); setViewingTeamId(null); }}>+ Retar equipo</button> : null}</header>
+      {viewingTeamId ? <div className={styles.demoPerspectiveBar}><span>Perspectiva local: {activeTeam?.name}</span><button type="button" onClick={() => setViewingTeamId(null)}>Volver a {currentTeam.name}</button></div> : null}
+      <nav aria-label="Vistas de Retos"><button aria-current={view === "active" ? "page" : undefined} type="button" onClick={() => setView("active")}>Activos</button><button aria-current={view === "history" ? "page" : undefined} type="button" onClick={() => setView("history")}>Historial</button></nav>
+      {view === "active" ? <nav className={styles.demoChallengeFilters} aria-label="Filtrar Retos"><button aria-pressed={filter === "all"} type="button" onClick={() => setFilter("all")}>Todos</button><button aria-pressed={filter === "received"} type="button" onClick={() => setFilter("received")}>Recibidos</button><button aria-pressed={filter === "sent"} type="button" onClick={() => setFilter("sent")}>Enviados</button></nav> : null}
+      {view === "active" ? <div className={styles.demoChallengeGroups}>{needsResponse.length ? <section><h2>Necesitan tu respuesta <b>{needsResponse.length}</b></h2>{needsResponse.map(challengeCard)}</section> : null}{waiting.length ? <section><h2>Esperando al rival <b>{waiting.length}</b></h2>{waiting.map(challengeCard)}</section> : null}{agreed.length ? <section><h2>Partidos acordados <b>{agreed.length}</b></h2>{agreed.map(challengeCard)}</section> : null}{!needsResponse.length && !waiting.length && !agreed.length ? <EmptyState title="Aún no tenéis retos activos" body={canManage ? "Elige un rival y envía una propuesta." : "Cuando un admin organice un reto, aparecerá aquí."} /> : null}</div> : <div className={styles.demoChallengeHistory}>{history.map((challenge) => { const opponent = opponentFor(challenge); return <button key={challenge.id} type="button" onClick={() => setSelectedChallengeId(challenge.id)}><TeamIdentity compact team={opponent} /><span><strong>{opponent.name}</strong><small>{dateLabel(challenge.date)} · {matchKindLabels[challenge.proposedKind]}</small></span><b data-status={challenge.status}>{challengeStatusLabels[challenge.status]}</b></button>; })}</div>}
+      <footer><span>LOCAL SESSION ONLY</span><span>remoteWrites = 0</span><span>externalNotifications = 0</span><span>realEntities = 0</span><span>StripeCalls = 0</span></footer>
+    </section>
   );
 }
 
@@ -1746,6 +1918,7 @@ export function DemoWorldApp({ manifest, mode = "social" }: { manifest: DemoWorl
   const fullMode = mode === "full";
   const [core, setCore] = useState<DemoWorldCoreChunk | null>(null);
   const [snapshot, setSnapshot] = useState<DemoWorldFullSnapshot | null>(null);
+  const [socialMatchesPreview, setSocialMatchesPreview] = useState<DemoWorldMatchesChunk | null>(null);
   const [loadingFullWorld, setLoadingFullWorld] = useState(false);
   const [session, setSession] = useState<DemoWorldSessionState>(() => {
     const initial = readInitialDemoWorldSession(
@@ -1767,6 +1940,9 @@ export function DemoWorldApp({ manifest, mode = "social" }: { manifest: DemoWorl
   const [matchExperienceView, setMatchExperienceView] = useState<DemoMatchExperienceView>(fullMode ? "detail" : "overview");
   const [demoMatchDraft, setDemoMatchDraft] = useState<OfficialQuickMatchDraft | null>(null);
   const [localMatchOverrides, setLocalMatchOverrides] = useState<Record<string, DemoWorldMatch>>({});
+  const [localChallengeOverrides, setLocalChallengeOverrides] = useState<Record<string, DemoChallengeOverride>>({});
+  const [localChallenges, setLocalChallenges] = useState<DemoWorldChallenge[]>([]);
+  const [challengeResetVersion, setChallengeResetVersion] = useState(0);
   const [demoSpotRequest, setDemoSpotRequest] = useState<"accepted" | "idle" | "pending">("idle");
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
   const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null);
@@ -1812,6 +1988,16 @@ export function DemoWorldApp({ manifest, mode = "social" }: { manifest: DemoWorl
   }, [manifest]);
 
   useEffect(() => {
+    if (fullMode || socialMatchesPreview) return;
+    let disposed = false;
+    void fetch(manifest.chunks.matches, { cache: "force-cache", credentials: "same-origin" })
+      .then((response) => response.ok ? response.json() as Promise<DemoWorldMatchesChunk> : Promise.reject(new Error("No se pudo cargar la agenda social Demo.")))
+      .then((matches) => { if (!disposed) setSocialMatchesPreview(matches); })
+      .catch(() => undefined);
+    return () => { disposed = true; };
+  }, [fullMode, manifest.chunks.matches, socialMatchesPreview]);
+
+  useEffect(() => {
     if (!core || snapshot || activeTab === "inicio" || activeTab === "revision" || activeTab === "campos" || fullWorldRequest.current) return;
     setLoadingFullWorld(true);
     const request = loadDemoWorldSnapshot(manifest, core)
@@ -1842,6 +2028,11 @@ export function DemoWorldApp({ manifest, mode = "social" }: { manifest: DemoWorl
   if (!core) return <LoadingWorld manifest={manifest} />;
 
   const world = snapshot ?? previewSnapshot(manifest, core);
+  const canonicalChallenges = snapshot?.matches.challenges ?? socialMatchesPreview?.challenges ?? world.matches.challenges;
+  const demoChallenges: DemoWorldChallenge[] = [
+    ...canonicalChallenges.map((challenge) => withDemoChallengeOverride(challenge, localChallengeOverrides[challenge.id])),
+    ...localChallenges.map((challenge) => withDemoChallengeOverride(challenge, localChallengeOverrides[challenge.id])),
+  ];
   const perspective = world.core.perspectives.find((entry) => entry.id === session.perspectiveId) ?? world.core.perspectives[0]!;
   const baseCurrentPlayer = world.players.players.find((player) => player.id === perspective.playerId)!;
   const currentPlayer = playerWithDemoCosmetics(baseCurrentPlayer, session.equippedCosmeticKeys);
@@ -2037,6 +2228,9 @@ export function DemoWorldApp({ manifest, mode = "social" }: { manifest: DemoWorl
     setMatchExperienceView(fullMode ? "detail" : "overview");
     setDemoMatchDraft(null);
     setLocalMatchOverrides({});
+    setLocalChallengeOverrides({});
+    setLocalChallenges([]);
+    setChallengeResetVersion((current) => current + 1);
     setDemoSpotRequest("idle");
     window.history.replaceState(null, "", fullMode ? "/admin/demo" : "/demo");
     setMessage("Mundo Demo restaurado al snapshot original.");
@@ -2046,7 +2240,7 @@ export function DemoWorldApp({ manifest, mode = "social" }: { manifest: DemoWorl
     <main className={styles.shell} data-demo-world="ready" data-demo-mode={mode} data-demo-perspective={perspective.id} data-demo-tab={activeTab}>
       <DemoHeader activeTab={activeTab} fullMode={fullMode} manifest={manifest} onReset={resetWorld} onTab={navigate} perspective={perspective} perspectives={world.core.perspectives} setPerspective={choosePerspective} />
       <div className={styles.content}>
-        {activeTab === "inicio" ? <WorldHome currentPlayer={currentPlayer} currentTeam={currentTeam} notifications={notifications} onMatch={openMatch} onPlayer={setSelectedPlayerId} onTab={navigate} perspective={perspective} snapshot={world} teamMatches={teamMatches} /> : null}
+        {activeTab === "inicio" ? <WorldHome challenges={demoChallenges} currentPlayer={currentPlayer} currentTeam={currentTeam} notifications={notifications} onMatch={openMatch} onPlayer={setSelectedPlayerId} onTab={navigate} perspective={perspective} snapshot={world} teamMatches={teamMatches} /> : null}
         {activeTab !== "inicio" && activeTab !== "revision" && activeTab !== "campos" && !snapshot ? <div className={styles.secondaryLoading} role="status"><span className={styles.loadingMark}>IQ</span><strong>{loadingFullWorld ? "Cargando esta sección" : "Preparando datos"}</strong><p>Solo descargamos el dominio que acabas de abrir.</p></div> : null}
         {snapshot && activeTab === "partido" && selectedLeagueMatchPreview ? <div className={styles.demoProductView} data-demo-domain="league-match"><LeagueMatchOperationsClient disciplinePreviewData={selectedLeagueMatchDisciplinePreview} embedded previewData={selectedLeagueMatchPreview} refereeAssignmentPreviewData={selectedLeagueMatchRefereePreview} surface="match" /></div> : null}
         {snapshot && activeTab === "partido" && !selectedLeagueMatchPreview && !fullMode && matchExperienceView === "overview" ? <>
@@ -2103,7 +2297,18 @@ export function DemoWorldApp({ manifest, mode = "social" }: { manifest: DemoWorl
           snapshot={snapshot}
         /> : null}
         {snapshot && activeTab === "mercado" ? <MarketView currentPlayer={currentPlayer} onMatch={openMatch} onPlayer={setSelectedPlayerId} onTeam={openTeam} perspective={perspective} setMessage={setMessage} snapshot={snapshot} /> : null}
-        {snapshot && activeTab === "retos" ? <ChallengesView currentTeam={currentTeam} onMatch={openMatch} onTeam={openTeam} snapshot={snapshot} /> : null}
+        {snapshot && activeTab === "retos" ? <ChallengesView
+          challenges={demoChallenges}
+          currentTeam={currentTeam}
+          key={`challenge-flow-${challengeResetVersion}-${perspective.id}`}
+          onChallengeChange={(challengeId, patch) => setLocalChallengeOverrides((current) => ({ ...current, [challengeId]: { ...current[challengeId], ...patch } }))}
+          onChallengeCreate={(challenge, override) => { setLocalChallenges((current) => [...current, challenge]); setLocalChallengeOverrides((current) => ({ ...current, [challenge.id]: override })); }}
+          onMatch={openMatch}
+          overrides={localChallengeOverrides}
+          perspective={perspective}
+          setMessage={setMessage}
+          snapshot={snapshot}
+        /> : null}
         {snapshot && activeTab === "equipo" ? <TeamView currentTeam={currentTeam} onPlayer={setSelectedPlayerId} onTeam={setSelectedTeamId} selectedTeam={selectedTeam} snapshot={snapshot} /> : null}
         {snapshot && activeTab === "perfil" ? <ProfileView currentPlayer={currentPlayer} currentTeam={currentTeam} notifications={notifications} onEquipCosmetic={equipCosmetic} onOpenBox={openRewardBox} onPerspective={choosePerspective} onPlayer={setSelectedPlayerId} onRead={(notificationId) => updateSession((current) => ({ ...current, readNotificationIds: [...new Set([...current.readNotificationIds, notificationId])] }))} perspective={perspective} perspectives={world.core.perspectives} session={session} snapshot={snapshot} /> : null}
         {snapshot && activeTab === "liga" ? <LeagueOverviewView onClub={openClub} onMatch={openLeagueMatch} onTab={navigate} snapshot={snapshot} /> : null}

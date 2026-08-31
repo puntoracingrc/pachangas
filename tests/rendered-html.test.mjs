@@ -151,7 +151,7 @@ test("builds the transfer market as a separated page", async () => {
   assert.doesNotMatch(source, /\{ id: "retos", label: "Retos"/);
   assert.doesNotMatch(source, /\{ id: "arbitros", label: "Árbitros"/);
   assert.match(source, /get\("tab"\) === "retos"[\s\S]*window\.location\.replace\("\/retos"\)/);
-  assert.match(source, /\/retos\?vista=search&rival=/);
+  assert.match(source, /\/retos\?view=active&crear=1&rival=/);
   assert.doesNotMatch(html, /\/brand\/pachangas-logo-wide\.png/);
   assert.match(marketView, /data-official-market-navigation="single"/);
   assert.match(source, /canUseMarketAdminControls && marketContext\?\.matchUrl/);
