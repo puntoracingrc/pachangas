@@ -40,7 +40,6 @@ function previewHeaders(headers = {}) {
   return {
     ...headers,
     "x-vercel-protection-bypass": vercelAutomationBypassSecret,
-    "x-vercel-set-bypass-cookie": "true",
   };
 }
 

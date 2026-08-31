@@ -1928,6 +1928,9 @@ passes all six races with exactly one authoritative winner per conflict.
   E2E requests, keep it out of Git and the browser bundle, add a focal
   regression and rerun the entire flow against a clean replacement branch and
   an exact Preview.
+- Correction implemented: the harness accepts the bypass only through process
+  environment and applies it to Preview requests without serializing its value.
+  Clean-branch end-to-end verification remains pending.
 
 ### W9B-112 - Vercel protection JSON exposes the automation bypass as a key
 
@@ -1992,3 +1995,21 @@ passes all six races with exactly one authoritative winner per conflict.
 - Clean replacement evidence: `r8` reports ledger `228`, schema hash
   `7b9a69ed...`, flags born OFF, the exact `3/12/120/6/6/12/1/1/50`
   topology and zero Wave 9B product rows before authentication.
+
+### W9B-115 - Node fetch loops when Vercel is asked to set a bypass cookie
+
+- Classification: `TESTABILITY_GAP`
+- Status: `detected / correction_pending`
+- Original reproducer: run the exact `r8` Preview smoke with both
+  `x-vercel-protection-bypass` and `x-vercel-set-bypass-cookie: true` through
+  Node 24's built-in `fetch`.
+- Impact: Undici does not persist the response cookie between redirects, so
+  Vercel repeatedly attempts the cookie setup until `redirect count exceeded`.
+  The failure occurs in final Preview smoke after the sporting flow, making
+  `r8` ineligible for reuse despite role/account/flag cleanup.
+- Required correction: send only the direct automation bypass header for the
+  non-browser E2E client, add a regression forbidding the cookie header in this
+  harness, discard `r8` and rerun the complete flow on a fresh branch.
+- Correction implemented: the cookie-setup header has been removed while the
+  direct bypass header remains; the focal source test now forbids reintroducing
+  cookie mode into this Node harness.

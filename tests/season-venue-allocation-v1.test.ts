@@ -137,6 +137,7 @@ test("staging is canonical, transactional and two-device reproducible", async ()
   assert.match(staging, /assert\.deepEqual\(JSON\.parse\(runSql/);
   assert.match(staging, /VERCEL_AUTOMATION_BYPASS_SECRET/);
   assert.match(staging, /x-vercel-protection-bypass/);
+  assert.doesNotMatch(staging, /x-vercel-set-bypass-cookie/);
   assert.match(staging, /WAVE9B_STAGING_PRODUCT_RESIDUE_REQUIRES_BRANCH_REPLACEMENT/);
   assert.match(staging, /wave9bReceipts: 0/);
   assert.match(staging, /assert\.equal\(topology\.matches, 50\)|matches: 50/);
