@@ -7,6 +7,13 @@ import { CompetitionDirectoryClient } from "../competiciones/competition-directo
 import { PublicCompetitionHub } from "../competiciones/[competition]/public-competition-hub";
 import { LeagueMatchOperationsClient } from "../_components/league-match-operations-client";
 import { LeagueSchedulingClient } from "../_components/league-scheduling-client";
+import {
+  OfficialAttendancePanel,
+  OfficialMatchesOverview,
+  OfficialQuickMatchWizard,
+  type OfficialMatchSummary,
+  type OfficialQuickMatchDraft,
+} from "../_components/official-match-experience";
 import { PlayerCosmeticCard } from "../_components/player-cosmetic-card";
 import { RefereeAssignmentsClient } from "../_components/referee-assignments-client";
 import { RefereeProfileCard } from "../_components/referee-profile-card";
@@ -87,6 +94,8 @@ type DemoWorldRenderableSnapshot = {
   matches: DemoWorldV2Snapshot["matches"];
   players: DemoWorldV2Snapshot["players"];
 };
+
+type DemoMatchExperienceView = "detail" | "overview" | "wizard";
 
 const domainTabs: Array<{ group: "competición" | "gestión" | "red"; id: DemoWorldV2PrimaryTab; label: string }> = [
   { group: "competición", id: "temporada", label: "Temporada" },
@@ -204,6 +213,43 @@ function shortDateLabel(value: string) {
     month: "short",
     timeZone: "Europe/Madrid",
   }).format(new Date(value));
+}
+
+function demoDateParts(value: string) {
+  const parsed = new Date(value);
+  const safe = Number.isNaN(parsed.getTime()) ? new Date() : parsed;
+  const pad = (part: number) => String(part).padStart(2, "0");
+  return {
+    date: `${safe.getFullYear()}-${pad(safe.getMonth() + 1)}-${pad(safe.getDate())}`,
+    time: `${pad(safe.getHours())}:${pad(safe.getMinutes())}`,
+  };
+}
+
+function demoQuickMatchDraft(match: DemoWorldMatch, repeat = false): OfficialQuickMatchDraft {
+  const source = new Date(match.date);
+  if (repeat || source.getTime() <= Date.now()) {
+    const next = new Date();
+    next.setDate(next.getDate() + 7);
+    next.setHours(source.getHours(), source.getMinutes(), 0, 0);
+    source.setTime(next.getTime());
+  }
+  const parts = demoDateParts(source.toISOString());
+  return {
+    date: parts.date,
+    fieldCost: "56",
+    groupInvited: true,
+    guestsPay: true,
+    kind: match.kind,
+    manualApproval: true,
+    publicOpen: false,
+    publicOpenSlots: String(Math.max(1, match.publicOpenSlots || 2)),
+    reserveLimit: "2",
+    reservesAttend: false,
+    targetPlayers: String(match.kind === "futbol11" ? 22 : match.kind === "futbol7" ? 14 : 10),
+    time: parts.time,
+    title: "Pachanga del grupo",
+    venueId: match.venueId,
+  };
 }
 
 function initials(name: string) {
@@ -496,9 +542,14 @@ function MatchView({
   currentPlayer,
   currentTeam,
   match,
+  onAcceptRequest,
+  onBack,
   onLocalAttendance,
+  onLocalMatchUpdate,
   onPlayer,
+  onRequestSpot,
   perspective,
+  requestStatus,
   session,
   setMessage,
   snapshot,
@@ -506,21 +557,29 @@ function MatchView({
   currentPlayer: DemoWorldPlayer;
   currentTeam: DemoWorldTeam | null;
   match: DemoWorldMatch | null;
+  onAcceptRequest: () => void;
+  onBack: () => void;
   onLocalAttendance: (status: "duda" | "no" | "voy") => void;
+  onLocalMatchUpdate: (match: DemoWorldMatch) => void;
   onPlayer: (playerId: string) => void;
+  onRequestSpot: () => void;
   perspective: DemoWorldPerspective;
+  requestStatus: "accepted" | "idle" | "pending";
   session: DemoWorldSessionState;
   setMessage: (message: string) => void;
   snapshot: DemoWorldRenderableSnapshot;
 }) {
   const [pane, setPane] = useState<DemoWorldMatchPane>("proximo");
+  const [resultStep, setResultStep] = useState<1 | 2>(1);
+  const [demoScore, setDemoScore] = useState({ away: match?.result?.away ?? 0, home: match?.result?.home ?? 0 });
+  const [demoScorerGoals, setDemoScorerGoals] = useState(match?.scorers[0]?.goals ?? 0);
   const playerById = useMemo(() => new Map(snapshot.players.players.map((player) => [player.id, player])), [snapshot]);
   const venue = match ? snapshot.core.venues.find((entry) => entry.id === match.venueId) : null;
   const attendance = match ? session.attendanceByMatch[match.id] : undefined;
   if (!match) return <EmptyState title="Sin partido seleccionado" body="Elige un partido público desde Mercado." />;
   const matchPanes: readonly DemoWorldMatchPane[] = match.status === "finalized"
     ? ["proximo", "resultado", "historico"]
-    : ["proximo", "historico", "alineacion"];
+    : perspective.role === "admin" ? ["proximo", "historico", "alineacion", "resultado"] : ["proximo", "historico", "alineacion"];
   const authorizedPane = demoWorldMatchPaneForRole(pane, perspective.role);
   const visiblePane = authorizedPane === "admin" || matchPanes.includes(authorizedPane) ? authorizedPane : "proximo";
   const paneLabel = (entry: DemoWorldMatchPane) => {
@@ -529,10 +588,28 @@ function MatchView({
     if (entry === "alineacion") return "Equipos";
     return match.status === "finalized" ? "Estadísticas" : "Jugadores";
   };
+  const rosterSource = snapshot.players.players.filter((player) => currentTeam ? player.teamId === currentTeam.id : match.confirmedPlayerIds.includes(player.id));
+  const pendingPlayers = rosterSource.filter((player) => !match.confirmedPlayerIds.includes(player.id) && !match.reservePlayerIds.includes(player.id));
+  const roster = rosterSource.map((player) => {
+    const ownStatus = player.id === currentPlayer.id ? attendance : undefined;
+    const pendingIndex = pendingPlayers.findIndex((entry) => entry.id === player.id);
+    const status = ownStatus ?? (match.confirmedPlayerIds.includes(player.id) || match.reservePlayerIds.includes(player.id)
+      ? "voy"
+      : pendingIndex === 0 ? "duda" : pendingIndex === pendingPlayers.length - 1 && pendingPlayers.length > 2 ? "no" : null);
+    return {
+      avatar: demoAvatarDataUri(player.name, player.avatarHue),
+      id: player.id,
+      name: player.name,
+      position: player.position.abbreviation,
+      status,
+    } as const;
+  });
+  const confirmedCount = roster.filter((player) => player.status === "voy").length;
 
   return (
     <div className={styles.managerLayout} data-match-pane={visiblePane} data-tour-target="demo-match">
       <aside className={styles.sideSubnav} aria-label="Secciones del partido">
+        <button type="button" onClick={onBack}>Todos los partidos</button>
         <div className={styles.sideTitle}><span>Partido</span><strong>{match.status === "finalized" ? "Histórico" : "Activo"}</strong></div>
         {matchPanes.map((entry) => (
           <button aria-current={visiblePane === entry ? "page" : undefined} key={entry} type="button" onClick={() => setPane(entry)}>
@@ -578,19 +655,26 @@ function MatchView({
                 </div>
               </div>
             ) : null}
+            {match.status === "scheduled" && perspective.role === "player" && match.publicOpenSlots > 0 && !match.confirmedPlayerIds.includes(currentPlayer.id) ? (
+              <div className={styles.demoSpotRequest}>
+                <div><strong>Plaza pública</strong><small>{match.publicOpenSlots} disponibles · aprobación del organizador</small></div>
+                <button type="button" disabled={requestStatus !== "idle"} onClick={onRequestSpot}>{requestStatus === "accepted" ? "Solicitud aceptada" : requestStatus === "pending" ? "Solicitud enviada" : "Solicitar plaza"}</button>
+              </div>
+            ) : null}
           </div>
         ) : null}
 
         {visiblePane === "historico" && match.status === "scheduled" ? (
-          <div className={styles.rosterColumns}>
-            {(["home", "away"] as const).map((side) => {
-              const ids = side === "home" ? match.homePlayerIds : match.awayPlayerIds;
-              return <div key={side}><strong>{side === "home" ? match.homeLabel : match.awayLabel}</strong>{ids.map((playerId) => {
-                const player = playerById.get(playerId);
-                return player ? <button key={playerId} type="button" onClick={() => onPlayer(playerId)}><span>{player.position.abbreviation}</span>{player.name}<b>{Math.round(player.rating.currentOverall ?? 0) || "POR"}</b></button> : null;
-              })}</div>;
-            })}
-          </div>
+          <OfficialAttendancePanel
+            canRespond={perspective.role === "player"}
+            currentStatus={attendance ?? null}
+            isUpdating={false}
+            message="Cambios guardados solo en esta sesión demo."
+            onManagePlayer={perspective.role === "admin" ? onPlayer : undefined}
+            onStatus={onLocalAttendance}
+            players={roster}
+            summary={{ confirmed: confirmedCount, target: match.kind === "futbol11" ? 22 : match.kind === "futbol7" ? 14 : 10 }}
+          />
         ) : null}
 
         {visiblePane === "alineacion" ? (
@@ -618,7 +702,7 @@ function MatchView({
           </div>
         ) : null}
 
-        {visiblePane === "resultado" ? (
+        {visiblePane === "resultado" && match.status === "finalized" ? (
           <div className={styles.resultLayout} data-tour-target="demo-result">
             <div className={styles.largeScore}>
               <span>{match.homeLabel}</span><strong>{match.result ? `${match.result.home} : ${match.result.away}` : "Pendiente"}</strong><span>{match.awayLabel}</span><small>{dateLabel(match.date, true)}</small>
@@ -630,6 +714,37 @@ function MatchView({
                 return player ? <button key={`${scorer.playerId}-${scorer.side}`} type="button" onClick={() => onPlayer(player.id)}><span>{scorer.side === "home" ? match.homeLabel : match.awayLabel}</span><strong>{player.name}</strong><b>{scorer.goals}</b></button> : null;
               }) : <EmptyState title="Marcador pendiente" body="Los goleadores aparecerán cuando el resultado esté confirmado." />}
             </div>
+          </div>
+        ) : null}
+
+        {visiblePane === "resultado" && match.status === "scheduled" && perspective.role === "admin" ? (
+          <div className={styles.demoResultEntry} data-tour-target="demo-result-entry">
+            <div className={styles.demoResultProgress}><span aria-current={resultStep === 1 ? "step" : undefined}>1 · Marcador</span><span aria-current={resultStep === 2 ? "step" : undefined}>2 · Goleadores opcionales</span></div>
+            {resultStep === 1 ? (
+              <section>
+                <span className={styles.eyebrow}>Resultado local</span>
+                <div className={styles.demoScoreSteppers}>
+                  {(["home", "away"] as const).map((side) => <div key={side}><strong>{side === "home" ? match.homeLabel : match.awayLabel}</strong><span><button type="button" disabled={demoScore[side] === 0} onClick={() => setDemoScore((current) => ({ ...current, [side]: Math.max(0, current[side] - 1) }))}>-</button><b>{demoScore[side]}</b><button type="button" onClick={() => setDemoScore((current) => ({ ...current, [side]: current[side] + 1 }))}>+</button></span></div>)}
+                </div>
+                <button type="button" onClick={() => setResultStep(2)}>Continuar</button>
+              </section>
+            ) : (
+              <section>
+                <span className={styles.eyebrow}>Goleadores · opcional</span>
+                {match.homePlayerIds[0] && playerById.get(match.homePlayerIds[0]) ? <div className={styles.demoScorerStepper}><span>{playerById.get(match.homePlayerIds[0])!.name}</span><button type="button" disabled={demoScorerGoals === 0} onClick={() => setDemoScorerGoals((current) => Math.max(0, current - 1))}>-</button><b>{demoScorerGoals}</b><button type="button" disabled={demoScorerGoals >= demoScore.home} onClick={() => setDemoScorerGoals((current) => current + 1)}>+</button></div> : <p>También puedes guardar solo el marcador.</p>}
+                <div className={styles.demoResultActions}><button type="button" onClick={() => setResultStep(1)}>Atrás</button><button type="button" onClick={() => {
+                  const scorerId = match.homePlayerIds[0];
+                  onLocalMatchUpdate({
+                    ...match,
+                    result: demoScore,
+                    revision: match.revision + 1,
+                    scorers: scorerId && demoScorerGoals > 0 ? [{ goals: demoScorerGoals, playerId: scorerId, side: "home" }] : [],
+                    status: "finalized",
+                  });
+                  setMessage("Resultado confirmado en la sesión demo. Remote writes: 0.");
+                }}>Confirmar resultado</button></div>
+              </section>
+            )}
           </div>
         ) : null}
 
@@ -654,6 +769,12 @@ function MatchView({
         {visiblePane === "admin" && perspective.role === "admin" ? (
           <div className={styles.adminTools} data-tour-target="demo-admin">
             <div><span className={styles.eyebrow}>Simulación local</span><h2>Herramientas del partido</h2><p>Estos controles enseñan el flujo de admin, pero no ejecutan RPC ni cambian datos reales.</p></div>
+            {match.status === "scheduled" ? <div className={styles.demoAdminFlow}>
+              <button type="button" onClick={() => { onLocalMatchUpdate({ ...match, publicOpenSlots: match.publicOpenSlots > 0 ? 0 : 2, revision: match.revision + 1 }); setMessage(match.publicOpenSlots > 0 ? "Plazas públicas cerradas en la sesión demo." : "Dos plazas públicas abiertas en la sesión demo."); }}>{match.publicOpenSlots > 0 ? "Cerrar plazas públicas" : "Abrir 2 plazas públicas"}</button>
+              {requestStatus === "pending" ? <button type="button" onClick={onAcceptRequest}>Aceptar solicitud pendiente</button> : null}
+              <button type="button" onClick={() => setPane("alineacion")}>Ver equipos</button>
+              <button type="button" onClick={() => setPane("resultado")}>Añadir resultado</button>
+            </div> : null}
             <div className={styles.adminActionGrid}>
               {demoWorldMatchAdminActions(match.status).map((label) => <button key={label} type="button" onClick={() => setMessage(`${label}: acción simulada en memoria.`)}>{label}<small>Solo demo</small></button>)}
             </div>
@@ -1588,6 +1709,10 @@ export function DemoWorldApp({ manifest, mode = "social" }: { manifest: DemoWorl
   const [selectedClubId, setSelectedClubId] = useState("demo_club_001");
   const [selectedLeagueMatchId, setSelectedLeagueMatchId] = useState<string | null>(null);
   const [selectedMatchId, setSelectedMatchId] = useState<string | null>(null);
+  const [matchExperienceView, setMatchExperienceView] = useState<DemoMatchExperienceView>(fullMode ? "detail" : "overview");
+  const [demoMatchDraft, setDemoMatchDraft] = useState<OfficialQuickMatchDraft | null>(null);
+  const [localMatchOverrides, setLocalMatchOverrides] = useState<Record<string, DemoWorldMatch>>({});
+  const [demoSpotRequest, setDemoSpotRequest] = useState<"accepted" | "idle" | "pending">("idle");
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
   const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null);
   const [openedBox, setOpenedBox] = useState<DemoWorldRewardBox | null>(null);
@@ -1667,10 +1792,15 @@ export function DemoWorldApp({ manifest, mode = "social" }: { manifest: DemoWorl
   const currentPlayer = playerWithDemoCosmetics(baseCurrentPlayer, session.equippedCosmeticKeys);
   const currentTeam = perspective.teamId ? world.core.teams.find((team) => team.id === perspective.teamId) ?? null : null;
   const selectedTeam = world.core.teams.find((team) => team.id === selectedTeamId) ?? currentTeam ?? world.core.teams[0]!;
-  const teamMatches = world.matches.matches.filter((match) => currentTeam
+  const canonicalMatchIds = new Set(world.matches.matches.map((match) => match.id));
+  const allMatches = [
+    ...Object.values(localMatchOverrides).filter((match) => !canonicalMatchIds.has(match.id)),
+    ...world.matches.matches.map((match) => localMatchOverrides[match.id] ?? match),
+  ];
+  const teamMatches = allMatches.filter((match) => currentTeam
     ? match.homeTeamId === currentTeam.id || match.awayTeamId === currentTeam.id
     : match.status === "scheduled" && match.publicOpenSlots > 0);
-  const selectedMatch = world.matches.matches.find((match) => match.id === selectedMatchId) ?? teamMatches[0] ?? null;
+  const selectedMatch = allMatches.find((match) => match.id === selectedMatchId) ?? teamMatches[0] ?? null;
   const selectedPlayerSource = world.players.players.find((player) => player.id === selectedPlayerId) ?? null;
   const selectedPlayer = selectedPlayerSource?.id === currentPlayer.id
     ? currentPlayer
@@ -1688,14 +1818,94 @@ export function DemoWorldApp({ manifest, mode = "social" }: { manifest: DemoWorl
     ? snapshot?.competitions.refereeAssignmentPreviews[selectedLeagueMatchId] ?? null
     : null;
   const notifications = world.activity.notifications;
+  const targetForMatch = (match: DemoWorldMatch) => match.kind === "futbol11" ? 22 : match.kind === "futbol7" ? 14 : 10;
+  const demoSummary = (match: DemoWorldMatch): OfficialMatchSummary => {
+    const ownStatus = session.attendanceByMatch[match.id] ?? null;
+    const confirmed = match.confirmedPlayerIds.length + (ownStatus === "voy" && !match.confirmedPlayerIds.includes(currentPlayer.id) ? 1 : 0);
+    return {
+      confirmed,
+      date: match.date,
+      id: match.id,
+      kind: matchKindLabels[match.kind],
+      myStatus: ownStatus,
+      openSlots: match.publicOpenSlots,
+      place: world.core.venues.find((venue) => venue.id === match.venueId)?.label ?? "Campo por confirmar",
+      result: match.result,
+      targetPlayers: targetForMatch(match),
+      title: match.title,
+    };
+  };
+  const demoUpcoming = teamMatches.filter((match) => match.status === "scheduled").sort((left, right) => Date.parse(left.date) - Date.parse(right.date)).map(demoSummary);
+  const demoHistory = teamMatches.filter((match) => match.status === "finalized").sort((left, right) => Date.parse(right.date) - Date.parse(left.date)).map(demoSummary);
+  const demoDraftSummary: OfficialMatchSummary[] = demoMatchDraft ? [{
+    confirmed: 0,
+    date: `${demoMatchDraft.date}T${demoMatchDraft.time}:00`,
+    draft: true,
+    id: "demo_session_match_draft",
+    kind: matchKindLabels[demoMatchDraft.kind as DemoMatchKind] ?? "Fútbol 7",
+    openSlots: demoMatchDraft.publicOpen ? Number(demoMatchDraft.publicOpenSlots) || 0 : 0,
+    place: world.core.venues.find((venue) => venue.id === demoMatchDraft.venueId)?.label ?? "Campo por confirmar",
+    targetPlayers: Number(demoMatchDraft.targetPlayers) || 14,
+    title: demoMatchDraft.title,
+  }] : [];
 
   function updateSession(next: (current: DemoWorldSessionState) => DemoWorldSessionState) {
     setSession((current) => next(current));
   }
 
+  function updateLocalDemoMatch(match: DemoWorldMatch) {
+    setLocalMatchOverrides((current) => ({ ...current, [match.id]: match }));
+  }
+
+  function startDemoMatchWizard(sourceMatch: DemoWorldMatch | null = selectedMatch, repeat = false) {
+    if (!sourceMatch) {
+      setMessage("No hay una configuración de partido disponible para reutilizar.");
+      return;
+    }
+    setDemoMatchDraft(demoQuickMatchDraft(sourceMatch, repeat));
+    setMatchExperienceView("wizard");
+  }
+
+  function confirmDemoMatch() {
+    if (!demoMatchDraft || !currentTeam) return;
+    const teamPlayerIds = world.players.players.filter((player) => player.teamId === currentTeam.id).map((player) => player.id);
+    const targetPlayers = Math.max(2, Number(demoMatchDraft.targetPlayers) || 14);
+    const confirmedPlayerIds = teamPlayerIds.slice(0, Math.min(targetPlayers, teamPlayerIds.length));
+    const midpoint = Math.ceil(confirmedPlayerIds.length / 2);
+    const matchId = "demo_session_social_match";
+    const nextMatch: DemoWorldMatch = {
+      awayLabel: "Equipo B",
+      awayPlayerIds: confirmedPlayerIds.slice(midpoint),
+      awayTeamId: null,
+      confirmedPlayerIds,
+      date: `${demoMatchDraft.date}T${demoMatchDraft.time}:00`,
+      homeLabel: "Equipo A",
+      homePlayerIds: confirmedPlayerIds.slice(0, midpoint),
+      homeTeamId: currentTeam.id,
+      id: matchId,
+      kind: demoMatchDraft.kind as DemoMatchKind,
+      publicOpenSlots: demoMatchDraft.publicOpen ? Math.max(1, Number(demoMatchDraft.publicOpenSlots) || 2) : 0,
+      reservePlayerIds: [],
+      result: null,
+      revision: 1,
+      scope: "internal",
+      scorers: [],
+      status: "scheduled",
+      title: demoMatchDraft.title || "Pachanga del grupo",
+      venueId: demoMatchDraft.venueId,
+    };
+    updateLocalDemoMatch(nextMatch);
+    setSelectedMatchId(matchId);
+    setDemoMatchDraft(null);
+    setDemoSpotRequest("idle");
+    setMatchExperienceView("detail");
+    setMessage("Partido creado solo en esta sesión demo. Remote writes: 0.");
+  }
+
   function navigate(requestedTab: DemoWorldV2PrimaryTab, preserveLeagueMatch = false) {
     const tab = fullMode || socialDemoTabs.has(requestedTab) ? requestedTab : "inicio";
     if (!preserveLeagueMatch) setSelectedLeagueMatchId(null);
+    if (!fullMode && tab === "partido") setMatchExperienceView("overview");
     setActiveTab(tab);
     const params = new URLSearchParams(window.location.search);
     params.set("tab", tab);
@@ -1732,6 +1942,7 @@ export function DemoWorldApp({ manifest, mode = "social" }: { manifest: DemoWorl
     setSelectedPlayerId(null);
     setSelectedTeamId(nextTeamId);
     setSelectedMatchId(nextMatch?.id ?? null);
+    setMatchExperienceView(fullMode ? "detail" : "overview");
     const params = new URLSearchParams(window.location.search);
     params.set("perspective", perspectiveId);
     params.set("tab", activeTab);
@@ -1741,6 +1952,7 @@ export function DemoWorldApp({ manifest, mode = "social" }: { manifest: DemoWorl
   function openMatch(matchId: string) {
     setSelectedMatchId(matchId);
     navigate("partido");
+    setMatchExperienceView("detail");
   }
 
   function openLeagueMatch(matchId: string) {
@@ -1769,6 +1981,10 @@ export function DemoWorldApp({ manifest, mode = "social" }: { manifest: DemoWorl
     setSelectedTeamId("demo_team_001");
     const nextMatch = world.matches.matches.filter((match) => match.homeTeamId === "demo_team_001" && match.status === "scheduled").sort((left, right) => Date.parse(left.date) - Date.parse(right.date))[0];
     setSelectedMatchId(nextMatch?.id ?? null);
+    setMatchExperienceView(fullMode ? "detail" : "overview");
+    setDemoMatchDraft(null);
+    setLocalMatchOverrides({});
+    setDemoSpotRequest("idle");
     window.history.replaceState(null, "", fullMode ? "/admin/demo" : "/demo");
     setMessage("Mundo Demo restaurado al snapshot original.");
   }
@@ -1780,7 +1996,59 @@ export function DemoWorldApp({ manifest, mode = "social" }: { manifest: DemoWorl
         {activeTab === "inicio" ? <WorldHome currentPlayer={currentPlayer} currentTeam={currentTeam} notifications={notifications} onMatch={openMatch} onPlayer={setSelectedPlayerId} onTab={navigate} perspective={perspective} snapshot={world} teamMatches={teamMatches} /> : null}
         {activeTab !== "inicio" && activeTab !== "revision" && activeTab !== "campos" && !snapshot ? <div className={styles.secondaryLoading} role="status"><span className={styles.loadingMark}>IQ</span><strong>{loadingFullWorld ? "Cargando esta sección" : "Preparando datos"}</strong><p>Solo descargamos el dominio que acabas de abrir.</p></div> : null}
         {snapshot && activeTab === "partido" && selectedLeagueMatchPreview ? <div className={styles.demoProductView} data-demo-domain="league-match"><LeagueMatchOperationsClient disciplinePreviewData={selectedLeagueMatchDisciplinePreview} embedded previewData={selectedLeagueMatchPreview} refereeAssignmentPreviewData={selectedLeagueMatchRefereePreview} surface="match" /></div> : null}
-        {snapshot && activeTab === "partido" && !selectedLeagueMatchPreview ? <MatchView currentPlayer={currentPlayer} currentTeam={currentTeam} key={perspective.id} match={selectedMatch} onLocalAttendance={(status) => { if (!selectedMatch) return; updateSession((current) => ({ ...current, attendanceByMatch: { ...current.attendanceByMatch, [selectedMatch.id]: status } })); setMessage(`Asistencia ${status === "voy" ? "confirmada" : status === "duda" ? "en duda" : "cancelada"} solo en esta sesión demo.`); }} onPlayer={setSelectedPlayerId} perspective={perspective} session={session} setMessage={setMessage} snapshot={snapshot} /> : null}
+        {snapshot && activeTab === "partido" && !selectedLeagueMatchPreview && !fullMode && matchExperienceView === "overview" ? <>
+          <OfficialMatchesOverview
+            canManage={perspective.role === "admin"}
+            drafts={demoDraftSummary}
+            history={demoHistory}
+            marketHref="/demo?tab=mercado"
+            onCreate={() => startDemoMatchWizard()}
+            onDiscardDraft={() => { setDemoMatchDraft(null); setMessage("Borrador local descartado. Remote writes: 0."); }}
+            onOpen={(matchId) => { setSelectedMatchId(matchId); setMatchExperienceView("detail"); }}
+            onRepeat={(matchId) => startDemoMatchWizard(allMatches.find((match) => match.id === matchId) ?? null, true)}
+            onResumeDraft={() => setMatchExperienceView("wizard")}
+            upcoming={demoUpcoming}
+          />
+          <details className={styles.demoSocialProof}>
+            <summary>Recorrido social de Partidos</summary>
+            <ol>{["Abrir Partidos y Próximos", "Confirmar Voy, Duda o No voy", "Consultar jugadores por estado", "Ver equipos", "Crear partido en tres pasos", "Repetir configuración", "Abrir dos plazas públicas", "Solicitar y aceptar plaza", "Introducir marcador", "Añadir goleadores opcionales", "Ver resultado final", "Reiniciar Mundo Demo"].map((step) => <li key={step}>{step}</li>)}</ol>
+            <footer><span>remoteWrites = 0</span><span>externalNotifications = 0</span><span>realEntities = 0</span><span>StripeCalls = 0</span></footer>
+          </details>
+        </> : null}
+        {snapshot && activeTab === "partido" && !selectedLeagueMatchPreview && !fullMode && matchExperienceView === "wizard" && demoMatchDraft ? <OfficialQuickMatchWizard
+          draft={demoMatchDraft}
+          isSaving={false}
+          kinds={Object.entries(matchKindLabels).map(([id, label]) => ({ id, label, targetPlayers: id === "futbol11" ? 22 : id === "futbol7" ? 14 : 10 }))}
+          onAddVenue={() => setMessage("La Demo reutiliza campos ficticios ya disponibles.")}
+          onCancel={() => setMatchExperienceView("overview")}
+          onChange={(patch) => setDemoMatchDraft((current) => current ? { ...current, ...patch } : current)}
+          onConfirm={confirmDemoMatch}
+          onDiscard={() => { setDemoMatchDraft(null); setMatchExperienceView("overview"); setMessage("Borrador local descartado. Remote writes: 0."); }}
+          venues={world.core.venues.map((venue) => ({ id: venue.id, label: venue.label }))}
+        /> : null}
+        {snapshot && activeTab === "partido" && !selectedLeagueMatchPreview && (fullMode || matchExperienceView === "detail") ? <MatchView
+          currentPlayer={currentPlayer}
+          currentTeam={currentTeam}
+          key={`${perspective.id}-${selectedMatch?.id ?? "none"}`}
+          match={selectedMatch}
+          onAcceptRequest={() => {
+            if (!selectedMatch || demoSpotRequest !== "pending") return;
+            const requesterId = world.core.perspectives.find((entry) => entry.id === "player")?.playerId;
+            updateLocalDemoMatch({ ...selectedMatch, confirmedPlayerIds: requesterId ? [...new Set([...selectedMatch.confirmedPlayerIds, requesterId])] : selectedMatch.confirmedPlayerIds, publicOpenSlots: Math.max(0, selectedMatch.publicOpenSlots - 1), revision: selectedMatch.revision + 1 });
+            setDemoSpotRequest("accepted");
+            setMessage("Solicitud aceptada en la sesión demo. Ninguna notificación real enviada.");
+          }}
+          onBack={() => setMatchExperienceView("overview")}
+          onLocalAttendance={(status) => { if (!selectedMatch) return; updateSession((current) => ({ ...current, attendanceByMatch: { ...current.attendanceByMatch, [selectedMatch.id]: status } })); setMessage(`Asistencia ${status === "voy" ? "confirmada" : status === "duda" ? "en duda" : "cancelada"} solo en esta sesión demo.`); }}
+          onLocalMatchUpdate={updateLocalDemoMatch}
+          onPlayer={setSelectedPlayerId}
+          onRequestSpot={() => { setDemoSpotRequest("pending"); setMessage("Solicitud de plaza creada solo en esta sesión demo."); }}
+          perspective={perspective}
+          requestStatus={demoSpotRequest}
+          session={session}
+          setMessage={setMessage}
+          snapshot={snapshot}
+        /> : null}
         {snapshot && activeTab === "mercado" ? <MarketView currentPlayer={currentPlayer} onMatch={openMatch} onPlayer={setSelectedPlayerId} onTeam={openTeam} perspective={perspective} setMessage={setMessage} snapshot={snapshot} /> : null}
         {snapshot && activeTab === "retos" ? <ChallengesView currentTeam={currentTeam} onMatch={openMatch} onTeam={openTeam} snapshot={snapshot} /> : null}
         {snapshot && activeTab === "equipo" ? <TeamView currentTeam={currentTeam} onPlayer={setSelectedPlayerId} onTeam={setSelectedTeamId} selectedTeam={selectedTeam} snapshot={snapshot} /> : null}

@@ -8,6 +8,14 @@ import Link from "next/link";
 import {
   OfficialHomeGameDashboard,
 } from "./_components/official-home-game-dashboard";
+import {
+  OfficialAttendancePanel,
+  OfficialMatchesOverview,
+  OfficialQuickMatchWizard,
+  type OfficialMatchRosterPlayer,
+  type OfficialMatchSummary,
+  type OfficialQuickMatchDraft,
+} from "./_components/official-match-experience";
 import { OfficialMatchGameHub } from "./_components/official-match-game-hub";
 import { OfficialProductShellV2 } from "./_components/official-product-shell-v2";
 import { PlayerCosmeticCard } from "./_components/player-cosmetic-card";
@@ -117,6 +125,7 @@ type MobileSectionTabId = "inicio" | "partido";
 type ProfilePane = "ficha" | "ranking";
 type PlayerProfileMode = "edit" | "viewer";
 type MatchManagerPane = "proximo" | "campo" | "alineacion" | "resultado" | "admin";
+type MatchExperienceView = "detail" | "overview" | "wizard";
 type ProfileReturnTarget = {
   matchPane: MatchManagerPane;
   mobileTab: MobileAppTab;
@@ -1334,6 +1343,12 @@ function nextMatchDate(previousDate: string) {
   return toDateTimeLocal(next);
 }
 
+function suggestedNextMatchDate(previousDate: string) {
+  const candidate = nextMatchDate(previousDate);
+  if (new Date(candidate).getTime() > Date.now()) return candidate;
+  return nextMatchDate(toDateTimeLocal(new Date()));
+}
+
 function toDateTimeLocal(date: Date) {
   const pad = (value: number) => String(value).padStart(2, "0");
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
@@ -1364,6 +1379,25 @@ function matchTimePart(value: string) {
 function combineMatchDateTime(datePart: string, timePart: string) {
   const date = /^\d{4}-\d{2}-\d{2}$/.test(datePart) ? datePart : dateInputValue(new Date());
   return `${date}T${matchTimePart(timePart)}`;
+}
+
+function quickMatchDraftFromMatch(match: Match): OfficialQuickMatchDraft {
+  return {
+    date: matchDatePart(match.date),
+    fieldCost: String(Math.max(0, Number(match.fieldCost ?? 0) || 0)),
+    groupInvited: true,
+    guestsPay: match.publicGuestsPay ?? true,
+    kind: match.kind ?? "futbol7",
+    manualApproval: match.publicRequiresApproval ?? true,
+    publicOpen: Boolean(match.publicOpen),
+    publicOpenSlots: String(Math.max(1, Math.floor(Number(match.publicOpenSlots) || 2))),
+    reserveLimit: String(Math.max(0, Math.floor(Number(match.reserveLimit) || 0))),
+    reservesAttend: Boolean(match.reservesAttend),
+    targetPlayers: String(Math.max(2, Math.floor(Number(match.targetPlayers) || 14))),
+    time: matchTimePart(match.date),
+    title: match.title || "Nueva pachanga",
+    venueId: match.venueId ?? "",
+  };
 }
 
 function scorePlayer(player: Player) {
@@ -3457,6 +3491,11 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
   const [pitchZoomOpen, setPitchZoomOpen] = useState(false);
   const [activeMobileTab, setActiveMobileTab] = useState<MobileAppTab>("inicio");
   const [activeMatchManagerPane, setActiveMatchManagerPane] = useState<MatchManagerPane>("proximo");
+  const [matchExperienceView, setMatchExperienceView] = useState<MatchExperienceView>("overview");
+  const [quickMatchDraft, setQuickMatchDraft] = useState<OfficialQuickMatchDraft | null>(null);
+  const [quickMatchSaving, setQuickMatchSaving] = useState(false);
+  const [quickMatchError, setQuickMatchError] = useState("");
+  const [discardedMatchDraftIds, setDiscardedMatchDraftIds] = useState<Set<string>>(() => new Set());
   const [editingMatchNumberField, setEditingMatchNumberField] = useState<"fieldCost" | "reserveLimit" | null>(null);
   const [matchFieldCostDraft, setMatchFieldCostDraft] = useState("");
   const [matchReserveLimitDraft, setMatchReserveLimitDraft] = useState("");
@@ -3471,6 +3510,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
   const [siteSettings, setSiteSettings] = useState<SiteSettings>(defaultSiteSettings);
   const [settingsDraft, setSettingsDraft] = useState<SiteSettings>(defaultSiteSettings);
   const [result, setResult] = useState({ a: "", b: "" });
+  const [resultEntryStep, setResultEntryStep] = useState<1 | 2>(1);
   const [rankingSeason, setRankingSeason] = useState(seasonKey(new Date()));
   const [historySeason, setHistorySeason] = useState("all");
   const [rankingSort, setRankingSort] = useState<RankingSort>("media");
@@ -3594,6 +3634,11 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
         lockMobileNavigationTab("partido");
         setActiveMobileTab("partido");
         setActiveMatchManagerPane(requestedMatchPane === "admin" ? "admin" : "proximo");
+        setMatchExperienceView(
+          entryRoute?.matchId || requestedParams.get("p") || requestedParams.get("partido") || requestedMatchPane
+            ? "detail"
+            : "overview",
+        );
         if (!entryRoute?.matchId) {
           const nextOpenMatch = openMatchesByDate(seedMatches)[0];
           if (nextOpenMatch) setActiveMatchId(nextOpenMatch.id);
@@ -4107,9 +4152,11 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
     const sharedMatchId = expandCompactUuid(currentParams.get("p") ?? currentParams.get("partido"));
     if (sharedMatchId && selectedTeam.payload.matches.some((match) => match.id === sharedMatchId)) {
       setActiveMatchId(sharedMatchId);
+      setMatchExperienceView("detail");
     } else if (requestsNextMatchFromPrimaryNavigation(entrySearch, entryRoute)) {
       const nextOpenMatch = openMatchesByDate(selectedTeam.payload.matches)[0];
       if (nextOpenMatch) setActiveMatchId(nextOpenMatch.id);
+      setMatchExperienceView("overview");
     }
     if (currentParams.get("mobile") === "perfil") {
       const remoteOwnPlayer = selectedTeam.payload.players.find((player) => player.ownerUserId === memberUserId);
@@ -4687,7 +4734,9 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
   const payerId = paymentReady && activeMatch.payerId && payingParticipantIds.includes(activeMatch.payerId) ? activeMatch.payerId : suggestedPayerId;
   const payer = players.find((player) => player.id === payerId);
   const balancedLineup = useMemo(() => balanceTeams(confirmedPlayers, effectivePlayerScore), [confirmedPlayers, effectivePlayerScore]);
-  const suggested = savedTeams(activeMatch, players, confirmedIds) ?? balancedLineup;
+  const savedLineup = savedTeams(activeMatch, players, confirmedIds);
+  const teamsPrepared = Boolean(savedLineup || lineupClosed || matchFinalized);
+  const suggested = savedLineup ?? balancedLineup;
   const balanceSummary = teamBalanceSummary(suggested.teamA, suggested.teamB, effectivePlayerScore);
   const scoreAValue = result.a.trim() === "" ? undefined : Number(result.a);
   const scoreBValue = result.b.trim() === "" ? undefined : Number(result.b);
@@ -4703,6 +4752,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
         a: activeMatch.scoreA === undefined ? "" : String(activeMatch.scoreA),
         b: activeMatch.scoreB === undefined ? "" : String(activeMatch.scoreB),
       });
+      setResultEntryStep(1);
     });
   }, [activeMatch.id, activeMatch.scoreA, activeMatch.scoreB]);
 
@@ -4994,9 +5044,8 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
     }
 
     if (tabId === "partido") {
-      const nextOpenMatch = openMatches[0];
-      if (nextOpenMatch) setActiveMatchId(nextOpenMatch.id);
       setActiveMatchManagerPane("proximo");
+      setMatchExperienceView("overview");
       navigateMobileTab("partido");
       return;
     }
@@ -5190,12 +5239,14 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
 
   function selectMatch(matchId: string) {
     setActiveMatchId(matchId);
+    setMatchExperienceView("detail");
     scrollToPanel(matchPanelRef);
   }
 
   function openMatchFromInicio(matchId: string, pane: MatchManagerPane = "proximo") {
     setActiveMatchId(matchId);
     setActiveMatchManagerPane(pane);
+    setMatchExperienceView("detail");
     navigateMobileTab("partido");
   }
 
@@ -5385,22 +5436,59 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
     });
   }
 
-  function createMatch() {
-    if (!canUseAdminControls) return;
+  function createMatch(sourceMatch: Match = activeMatch) {
+    if (!canUseAdminControls) return null;
     const existingDraft = matches.find((match) => !match.configured && !match.closed && match.scoreA === undefined);
     if (existingDraft) {
-      selectMatch(existingDraft.id);
-      return;
+      if (!discardedMatchDraftIds.has(existingDraft.id)) {
+        selectMatch(existingDraft.id);
+        return existingDraft;
+      }
+
+      const defaultVenue = venues.find((venue) => venue.id === sourceMatch.venueId) ?? venues[0];
+      const nextKind = sourceMatch.kind ?? defaultVenue?.kind ?? "futbol7";
+      const nextDate = suggestedNextMatchDate(sourceMatch.date);
+      const restoredDraft: Match = {
+        id: existingDraft.id,
+        title: "Nueva pachanga",
+        date: nextDate,
+        season: seasonKey(nextDate),
+        place: defaultVenue?.name ?? "Campo por confirmar",
+        configured: false,
+        venueId: defaultVenue?.id,
+        kind: nextKind,
+        targetPlayers: sourceMatch.targetPlayers || matchKinds[nextKind].targetPlayers,
+        fieldCost: sourceMatch.fieldCost ?? defaultVenue?.defaultCost ?? 56,
+        payerId: undefined,
+        players: [],
+        reservesAttend: sourceMatch.reservesAttend ?? false,
+        reserveLimit: sourceMatch.reserveLimit ?? 0,
+        publicGuestsPay: sourceMatch.publicGuestsPay ?? true,
+        publicMaxRating: sourceMatch.publicMaxRating,
+        publicMinRating: sourceMatch.publicMinRating,
+        publicOpen: false,
+        publicOpenSlots: sourceMatch.publicOpenSlots ?? 2,
+        publicPositions: sourceMatch.publicPositions,
+        publicRequiresApproval: sourceMatch.publicRequiresApproval ?? true,
+      };
+      setMatches((current) => current.map((match) => match.id === restoredDraft.id ? restoredDraft : match));
+      setDiscardedMatchDraftIds((current) => {
+        const next = new Set(current);
+        next.delete(restoredDraft.id);
+        return next;
+      });
+      selectMatch(restoredDraft.id);
+      return restoredDraft;
     }
 
     if (groupBillingLocked) {
       revealBillingPanel("Ya has finalizado los 2 partidos de prueba. Activa un plan para crear el siguiente.");
-      return;
+      return null;
     }
 
-    const defaultVenue = venues.find((venue) => venue.id === activeMatch.venueId) ?? venues[0];
-    const nextKind = activeMatch.kind ?? defaultVenue?.kind ?? "futbol7";
-    const nextDate = nextMatchDate(activeMatch.date);
+    const defaultVenue = venues.find((venue) => venue.id === sourceMatch.venueId) ?? venues[0];
+    const nextKind = sourceMatch.kind ?? defaultVenue?.kind ?? "futbol7";
+    const nextDate = suggestedNextMatchDate(sourceMatch.date);
     const next: Match = {
       id: id(),
       title: "Nueva pachanga",
@@ -5410,15 +5498,71 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
       configured: false,
       venueId: defaultVenue?.id,
       kind: nextKind,
-      targetPlayers: matchKinds[nextKind].targetPlayers,
-      fieldCost: activeMatch.fieldCost ?? defaultVenue?.defaultCost ?? 56,
+      targetPlayers: sourceMatch.targetPlayers || matchKinds[nextKind].targetPlayers,
+      fieldCost: sourceMatch.fieldCost ?? defaultVenue?.defaultCost ?? 56,
       payerId: undefined,
       players: [],
-      reservesAttend: activeMatch.reservesAttend ?? false,
-      reserveLimit: activeMatch.reserveLimit ?? 0,
+      reservesAttend: sourceMatch.reservesAttend ?? false,
+      reserveLimit: sourceMatch.reserveLimit ?? 0,
+      publicGuestsPay: sourceMatch.publicGuestsPay ?? true,
+      publicMaxRating: sourceMatch.publicMaxRating,
+      publicMinRating: sourceMatch.publicMinRating,
+      publicOpen: false,
+      publicOpenSlots: sourceMatch.publicOpenSlots ?? 2,
+      publicPositions: sourceMatch.publicPositions,
+      publicRequiresApproval: sourceMatch.publicRequiresApproval ?? true,
     };
     setMatches((current) => [next, ...current]);
     selectMatch(next.id);
+    return next;
+  }
+
+  function startQuickMatchWizard(sourceMatch: Match = activeMatch) {
+    const draftMatch = createMatch(sourceMatch);
+    if (!draftMatch) return;
+    setActiveMobileTab("partido");
+    setActiveMatchId(draftMatch.id);
+    setQuickMatchDraft(quickMatchDraftFromMatch(draftMatch));
+    setQuickMatchError("");
+    setMatchExperienceView("wizard");
+  }
+
+  function resumeQuickMatchWizard(matchId: string) {
+    const draftMatch = matches.find((match) => match.id === matchId && !match.configured && !match.closed && match.scoreA === undefined);
+    if (!draftMatch || discardedMatchDraftIds.has(matchId)) return;
+    setActiveMatchId(matchId);
+    setQuickMatchDraft(quickMatchDraftFromMatch(draftMatch));
+    setQuickMatchError("");
+    setMatchExperienceView("wizard");
+  }
+
+  async function discardQuickMatchDraft(matchId: string = activeMatch.id) {
+    const draftMatch = matches.find((match) => match.id === matchId && !match.configured && !match.closed && match.scoreA === undefined);
+    if (!draftMatch || !window.confirm("¿Descartar este borrador?")) return;
+    setDiscardedMatchDraftIds((current) => new Set(current).add(matchId));
+    const nextMatches = matches.filter((match) => match.id !== matchId);
+    const nextActiveMatchId = nextMatches[0]?.id ?? activeMatchId;
+    const nextPayload = { activeMatchId: nextActiveMatchId, matches: nextMatches, players, siteSettings, venues };
+
+    if (hasRealTeam) {
+      const saved = await saveRemotePayloadWithBackup(nextPayload, "partido_borrador_descartado", true);
+      if (!saved) {
+        setDiscardedMatchDraftIds((current) => {
+          const next = new Set(current);
+          next.delete(matchId);
+          return next;
+        });
+        setQuickMatchError("El servidor no confirmó el descarte. El borrador sigue disponible.");
+        return;
+      }
+    } else {
+      setMatches(nextMatches);
+      setActiveMatchId(nextActiveMatchId);
+    }
+
+    setQuickMatchDraft(null);
+    setQuickMatchError("");
+    setMatchExperienceView("overview");
   }
 
   async function toggleLineupClosed() {
@@ -5667,6 +5811,13 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
         );
       })
       .filter(Boolean);
+  }
+
+  function changeResultScore(team: "a" | "b", delta: number) {
+    setResult((current) => {
+      const currentValue = Number(current[team]) || 0;
+      return { ...current, [team]: String(Math.max(0, currentValue + delta)) };
+    });
   }
 
   async function finalizeMatch() {
@@ -6438,18 +6589,99 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
     updateMatch(next);
   }
 
-  async function saveMatchConfiguration() {
+  async function saveMatchConfiguration(matchToSave: Match = activeMatch) {
     if (groupBillingLocked) {
       revealBillingPanel("La prueba gratuita ya ha cerrado 2 partidos. Activa un plan para guardar nuevos partidos.");
+      return false;
+    }
+    const canSaveRequestedMatch = Boolean(
+      canUseAdminControls &&
+        !matchToSave.closed &&
+        matchToSave.scoreA === undefined &&
+        matchToSave.venueId &&
+        matchToSave.date &&
+        matchToSave.kind &&
+        Number.isFinite(Number(matchToSave.fieldCost ?? 0)) &&
+        Number(matchToSave.fieldCost ?? 0) >= 0,
+    );
+    if (!canSaveRequestedMatch) return false;
+    const nextMatch = { ...matchToSave, configured: true, season: seasonKey(matchToSave.date) };
+    const nextMatches = matches.map((match) => (match.id === matchToSave.id ? nextMatch : match));
+    const nextPayload = { activeMatchId: matchToSave.id, matches: nextMatches, players, siteSettings, venues };
+
+    if (hasRealTeam) {
+      const saved = await saveRemotePayloadWithBackup(nextPayload, "partido_guardado", true);
+      return saved;
+    }
+
+    setActiveMatchId(matchToSave.id);
+    setMatches(nextMatches);
+    return true;
+  }
+
+  async function confirmQuickMatch() {
+    if (!quickMatchDraft || quickMatchSaving) return;
+    const draftMatch = matches.find((match) => match.id === activeMatchId && !match.closed && match.scoreA === undefined);
+    if (!draftMatch) {
+      setQuickMatchError("El borrador ya no está disponible. Vuelve al listado.");
       return;
     }
-    if (!matchCanBeSaved) return;
-    const nextMatch = { ...activeMatch, configured: true, season: seasonKey(activeMatch.date) };
-    const nextMatches = matches.map((match) => (match.id === activeMatch.id ? nextMatch : match));
-    const nextPayload = { activeMatchId, matches: nextMatches, players, siteSettings, venues };
 
-    setMatches(nextMatches);
-    await saveRemotePayloadWithBackup(nextPayload, "partido_guardado", true);
+    const venue = venues.find((item) => item.id === quickMatchDraft.venueId);
+    const kind = quickMatchDraft.kind as MatchKind;
+    if (!venue || !matchKinds[kind]) {
+      setQuickMatchError("Selecciona un campo y una modalidad válidos.");
+      return;
+    }
+
+    const nextMatch: Match = {
+      ...draftMatch,
+      configured: false,
+      date: combineMatchDateTime(quickMatchDraft.date, quickMatchDraft.time),
+      fieldCost: Math.max(0, Number(quickMatchDraft.fieldCost) || 0),
+      kind,
+      place: venue.name,
+      publicGuestsPay: quickMatchDraft.guestsPay,
+      publicOpen: false,
+      publicOpenSlots: Math.max(1, Math.floor(Number(quickMatchDraft.publicOpenSlots) || 1)),
+      publicRequiresApproval: quickMatchDraft.manualApproval,
+      reserveLimit: quickMatchDraft.reservesAttend ? Math.max(0, Math.floor(Number(quickMatchDraft.reserveLimit) || 0)) : 0,
+      reservesAttend: quickMatchDraft.reservesAttend,
+      targetPlayers: Math.max(2, Math.floor(Number(quickMatchDraft.targetPlayers) || matchKinds[kind].targetPlayers)),
+      title: displayName(quickMatchDraft.title) || matchKinds[kind].label,
+      venueId: venue.id,
+    };
+
+    setQuickMatchSaving(true);
+    setQuickMatchError("");
+    const saved = await saveMatchConfiguration(nextMatch);
+    if (!saved) {
+      setQuickMatchError(syncError || "El servidor no ha confirmado el partido. No se ha creado.");
+      setQuickMatchSaving(false);
+      return;
+    }
+
+    let publicationWarning = "";
+    if (quickMatchDraft.publicOpen) {
+      const published = await syncOpenMatchPublication({ ...nextMatch, configured: true }, true);
+      if (!published) {
+        publicationWarning = "El partido está creado como privado, pero Mercado no confirmó la publicación. Puedes reintentarlo desde Administrar.";
+      }
+    }
+
+    setDiscardedMatchDraftIds((current) => {
+      const next = new Set(current);
+      next.delete(nextMatch.id);
+      return next;
+    });
+    setQuickMatchDraft(null);
+    setQuickMatchSaving(false);
+    if (publicationWarning) {
+      setSyncStatus("error");
+      setSyncError(publicationWarning);
+    }
+    setActiveMatchManagerPane("proximo");
+    setMatchExperienceView("detail");
   }
 
   function updatePlayer(playerId: string, next: Partial<Player>) {
@@ -6621,7 +6853,9 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
   }
 
   async function syncOpenMatchPublication(nextMatch: Match, active: boolean) {
-    const nextSlots = Math.max(1, Math.min(missing || nextMatch.targetPlayers, Math.floor(Number(nextMatch.publicOpenSlots) || missing || 1)));
+    const nextConfirmedCount = orderedGoingPlayers(nextMatch).slice(0, nextMatch.targetPlayers).length;
+    const nextMissing = Math.max(nextMatch.targetPlayers - nextConfirmedCount, 0);
+    const nextSlots = Math.max(1, Math.min(nextMissing || nextMatch.targetPlayers, Math.floor(Number(nextMatch.publicOpenSlots) || nextMissing || 1)));
     const nextPublicMatch: Match = {
       ...nextMatch,
       publicMaxRating: publicMatchRating(nextMatch.publicMaxRating, 10),
@@ -6633,9 +6867,10 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
       publicGuestsPay: nextMatch.publicGuestsPay ?? true,
     };
 
-    updateMatch(nextPublicMatch);
-
-    if (!supabase || !remoteGroupId || !canUseAdminControls) return true;
+    if (!supabase || !remoteGroupId || !canUseAdminControls) {
+      updateMatch(nextPublicMatch);
+      return true;
+    }
 
     setSyncStatus("connecting");
     setSyncError("");
@@ -8589,7 +8824,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
             detail: "Programa el siguiente encuentro del equipo.",
             eyebrow: "Sin partido",
             label: "Crear partido",
-            onClick: createMatch,
+            onClick: () => startQuickMatchWizard(),
           }
         : {
             detail: "Explora partidos abiertos y equipos de tu zona.",
@@ -8646,6 +8881,37 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
     title: `${match.scoreA ?? "-"} - ${match.scoreB ?? "-"} · ${matchTitleWithoutTrailingTime(match.title) || matchKinds[match.kind ?? "futbol7"].label}`,
     tone: "accent" as const,
   }));
+  const officialMatchSummary = (match: Match): OfficialMatchSummary => {
+    const confirmed = orderedGoingPlayers(match).slice(0, match.targetPlayers).length;
+    const ownStatus = ownPlayer ? match.players.find((entry) => entry.playerId === ownPlayer.id)?.status ?? null : null;
+    return {
+      confirmed,
+      date: match.date,
+      draft: !match.configured,
+      id: match.id,
+      kind: matchKinds[match.kind ?? "futbol7"].label,
+      myStatus: ownStatus,
+      openSlots: Math.max(match.targetPlayers - confirmed, 0),
+      place: match.place || "Campo por confirmar",
+      result: match.scoreA === undefined || match.scoreB === undefined ? null : { away: match.scoreB, home: match.scoreA },
+      targetPlayers: match.targetPlayers,
+      title: matchTitleWithoutTrailingTime(match.title) || matchKinds[match.kind ?? "futbol7"].label,
+    };
+  };
+  const matchOverviewDrafts = matches
+    .filter((match) => !match.configured && !match.closed && match.scoreA === undefined && !discardedMatchDraftIds.has(match.id))
+    .map(officialMatchSummary);
+  const matchOverviewUpcoming = openMatches.map(officialMatchSummary);
+  const matchOverviewHistory = closedMatches.map(officialMatchSummary);
+  const activeMatchRoster: OfficialMatchRosterPlayer[] = activeGroupPlayers.map((player) => ({
+    avatar: player.avatar,
+    id: player.id,
+    name: playerDisplayName(player),
+    position: positionShort(player),
+    status: activeMatch.players.find((entry) => entry.playerId === player.id)?.status ?? null,
+  }));
+  const activeOwnAttendance = ownPlayer ? activeMatch.players.find((entry) => entry.playerId === ownPlayer.id)?.status ?? null : null;
+  const canRespondToActiveMatch = Boolean(ownPlayer && matchConfigured && registrationOpen && !matchFinalized);
   const statusConfirmationPlayer = statusConfirmation ? players.find((player) => player.id === statusConfirmation.playerId) : undefined;
   const statusConfirmationPlayerName = statusConfirmationPlayer ? playerDisplayName(statusConfirmationPlayer) : "este jugador";
   const statusConfirmationTargetLabel = statusConfirmation?.nextStatus === "duda" ? "Duda" : "No voy";
@@ -9254,7 +9520,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
 
         <section className="top-panel demo-banner demo-world-entry" aria-labelledby="demo-world-entry-title">
           <div>
-            <span>Mundo Demo V1</span>
+            <span>Mundo Demo social</span>
             <strong id="demo-world-entry-title">Explora Pachangas IQ con una comunidad ficticia completa.</strong>
             <p>Equipos, cartas, partidos, Retos, Mercado, logros y ranking provincial sin crear una cuenta ni modificar datos reales.</p>
           </div>
@@ -9971,14 +10237,48 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
         </section>
       ) : null}
 
+      {activeMobileTab === "partido" && matchExperienceView === "overview" ? (
+        <OfficialMatchesOverview
+          canManage={canUseAdminControls}
+          drafts={matchOverviewDrafts}
+          history={matchOverviewHistory}
+          onCreate={() => startQuickMatchWizard()}
+          onDiscardDraft={discardQuickMatchDraft}
+          onOpen={(matchId, history) => openMatchFromInicio(matchId, history ? "resultado" : "proximo")}
+          onRepeat={(matchId) => {
+            const sourceMatch = matches.find((match) => match.id === matchId);
+            if (sourceMatch) startQuickMatchWizard(sourceMatch);
+          }}
+          onResumeDraft={resumeQuickMatchWizard}
+          upcoming={matchOverviewUpcoming}
+        />
+      ) : null}
+
+      {activeMobileTab === "partido" && matchExperienceView === "wizard" && quickMatchDraft ? (
+        <OfficialQuickMatchWizard
+          draft={quickMatchDraft}
+          error={quickMatchError || (syncStatus === "error" ? syncError : "")}
+          isSaving={quickMatchSaving}
+          kinds={Object.entries(matchKinds).map(([kind, config]) => ({ id: kind, label: config.label, targetPlayers: config.targetPlayers }))}
+          onAddVenue={() => showQuickForm("venue")}
+          onCancel={() => setMatchExperienceView("overview")}
+          onChange={(patch) => setQuickMatchDraft((current) => current ? { ...current, ...patch } : current)}
+          onConfirm={() => void confirmQuickMatch()}
+          onDiscard={() => discardQuickMatchDraft()}
+          venues={venues.map((venue) => ({ id: venue.id, label: venue.name }))}
+        />
+      ) : null}
+
+      {matchExperienceView === "detail" ? (
       <section
         className={sharedLinkContentBlocked ? "app-shell gated-shell" : "app-shell"}
         data-match-finalized={matchFinalized ? "true" : "false"}
         data-match-manager-pane={selectedMatchManagerPane}
-        data-official-match-hub="v2.1"
+        data-official-match-hub="v3b"
       >
         <OfficialMatchGameHub
           activePane={selectedMatchManagerPane}
+          back={<button type="button" onClick={() => setMatchExperienceView("overview")}>Todos los partidos</button>}
           context={{
             date: matchSummaryDate(activeMatch.date),
             finalized: matchFinalized,
@@ -9994,6 +10294,14 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
                 type="button"
               >
                 {matchContextStatus}
+              </button>
+            ) : canRespondToActiveMatch ? (
+              <button
+                className="match-context-status-button"
+                onClick={() => setActiveMatchManagerPane("campo")}
+                type="button"
+              >
+                {activeOwnAttendance === "voy" ? "Asistencia: Voy" : activeOwnAttendance === "duda" ? "Asistencia: Duda" : activeOwnAttendance === "no" ? "Asistencia: No voy" : "Confirmar asistencia"}
               </button>
             ) : <b>{matchContextStatus}</b>,
             title: activeMatch.title || matchKinds[activeKind].label,
@@ -10312,7 +10620,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
                       <span>Jugador</span>
                       <small>Ficha del grupo</small>
                     </button>
-                    <button type="button" onClick={createMatch} disabled={!canUseAdminControls}>
+                    <button type="button" onClick={() => startQuickMatchWizard()} disabled={!canUseAdminControls}>
                       <span>Nuevo partido</span>
                       <small>Borrador siguiente</small>
                     </button>
@@ -10345,6 +10653,23 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
                 </div>
               ) : null}
             </>
+          ) : null}
+
+          {!matchFinalized ? (
+            <div className="official-v3b-attendance">
+              <OfficialAttendancePanel
+                canRespond={canRespondToActiveMatch}
+                currentStatus={activeOwnAttendance}
+                isUpdating={syncStatus === "connecting"}
+                message={syncStatus === "error" ? syncError : syncStatus === "connecting" ? "Esperando confirmación del servidor..." : ""}
+                onManagePlayer={canUseAdminControls ? (playerId) => openPlayerProfile(playerId) : undefined}
+                onStatus={(status) => {
+                  if (ownPlayer) void setStatus(ownPlayer.id, status);
+                }}
+                players={activeMatchRoster}
+                summary={{ confirmed: confirmedPlayers.length, target: activeMatch.targetPlayers }}
+              />
+            </div>
           ) : null}
 
           {matchConfigured && !matchFinalized ? (
@@ -10586,6 +10911,19 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
               <strong>{matchKinds[activeKind].teamSize}v{matchKinds[activeKind].teamSize}</strong>
             </div>
           </div>
+          {!teamsPrepared && !matchFinalized ? (
+            <section className="teams-empty-state">
+              <span>Equipos</span>
+              <strong>Los equipos todavía no están preparados</strong>
+              <p>{canUseAdminControls ? "Genera una propuesta equilibrada y ajústala antes de publicarla." : "Aparecerán cuando el organizador los publique."}</p>
+              {canUseAdminControls ? (
+                <button className="primary-button" type="button" disabled={!canEditLineup || confirmedPlayers.length < 2} onClick={applyBalancedTeams}>
+                  Generar equipos equilibrados
+                </button>
+              ) : null}
+            </section>
+          ) : (
+            <>
           <div className="balance-summary" title={balanceSummary.detail}>
             <div>
               <span>Equilibrio de equipos</span>
@@ -10618,115 +10956,110 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
             <button type="button" onClick={applyRandomTeams} disabled={!canEditLineup}>Aleatorio</button>
             <button type="button" onClick={applyBalancedTeams} disabled={!canEditLineup}>Equilibrado</button>
           </div>
-          <Team title="Equipo 1" players={suggested.teamA} variant="team-a" scoreForPlayer={effectivePlayerScore} mediaForPlayer={playerMediaScore} formForPlayer={playerForm} />
-          <Team title="Equipo 2" players={suggested.teamB} variant="team-b" scoreForPlayer={effectivePlayerScore} mediaForPlayer={playerMediaScore} formForPlayer={playerForm} />
+          <Team title="Equipo A" players={suggested.teamA} variant="team-a" scoreForPlayer={effectivePlayerScore} mediaForPlayer={playerMediaScore} formForPlayer={playerForm} />
+          <Team title="Equipo B" players={suggested.teamB} variant="team-b" scoreForPlayer={effectivePlayerScore} mediaForPlayer={playerMediaScore} formForPlayer={playerForm} />
           {canUseAdminControls && matchConfigured && !matchFinalized ? (
             <button className="primary-button full" onClick={() => void toggleLineupClosed()}>
-              {lineupClosed ? "Abrir alineación" : "Cerrar alineación"}
+              {lineupClosed ? "Abrir alineación" : "Publicar equipos"}
             </button>
           ) : null}
-          <div className="result-box">
-            <span>Resultado</span>
-            <div className="result-score-grid">
-              <label className="result-score-field team-a-score">
-                <span>Equipo 1</span>
-                <input
-                  aria-label="Resultado equipo 1"
-                  type="number"
-                  min="0"
-                  value={result.a}
-                  disabled={!matchConfigured || matchFinalized}
-                  onChange={(event) => setResult({ ...result, a: event.target.value })}
-                  inputMode="numeric"
-                />
-              </label>
-              <b>-</b>
-              <label className="result-score-field team-b-score">
-                <span>Equipo 2</span>
-                <input
-                  aria-label="Resultado equipo 2"
-                  type="number"
-                  min="0"
-                  value={result.b}
-                  disabled={!matchConfigured || matchFinalized}
-                  onChange={(event) => setResult({ ...result, b: event.target.value })}
-                  inputMode="numeric"
-                />
-              </label>
-            </div>
-            <div className={activeMatch.teamPhoto ? "team-photo-card has-photo" : "team-photo-card"}>
-              {activeMatch.teamPhoto ? (
-                <button
-                  className="team-photo-preview-button"
-                  type="button"
-                  onClick={() => setMatchPhotoPreview({ src: activeMatch.teamPhoto!, title: activeMatch.title })}
-                  aria-label={`Ver foto del partido ${activeMatch.title}`}
-                >
-                  <NextImage
-                    src={activeMatch.teamPhoto}
-                    alt={`Foto del partido ${activeMatch.title}`}
-                    width={960}
-                    height={720}
-                    unoptimized
-                  />
-                  <span>Ver foto</span>
-                </button>
-              ) : (
-                <span className="team-photo-empty">+</span>
-              )}
-              {!matchFinalized ? (
-                <div className="team-photo-actions">
-                  <label className="team-photo-button">
-                    {activeMatch.teamPhoto ? "Cambiar foto del partido" : "Añadir foto del partido"}
-                    <input
-                      accept="image/*"
-                      capture="environment"
-                      disabled={!canUploadTeamPhoto}
-                      onChange={(event) => {
-                        void uploadTeamPhoto(event.target.files?.[0]);
-                        event.currentTarget.value = "";
-                      }}
-                      type="file"
-                    />
-                  </label>
-                  {canUseAdminControls && activeMatch.teamPhoto ? (
-                    <button className="team-photo-remove" type="button" onClick={removeTeamPhoto}>
-                      Quitar foto
-                    </button>
-                  ) : null}
-                </div>
-              ) : null}
-              {!matchFinalized && teamPhotoMessage ? <small className="team-photo-message">{teamPhotoMessage}</small> : null}
-            </div>
-            <div className="scorers-box">
-              <strong>Goles</strong>
-              {!matchConfigured ? <small>Guarda primero el partido.</small> : null}
-              {matchConfigured && !matchFinalized && !lineupClosed ? <small>Cierra la alineación para calcular pago y finalizar.</small> : null}
-              {matchConfigured && confirmedPlayers.length === 0 ? <small>Marca asistentes para añadir goleadores.</small> : null}
-              {confirmedPlayers.length > 0 && !resultIsReady ? <small>Rellena primero el resultado.</small> : null}
-              {matchConfigured && confirmedPlayers.length > 0 && resultIsReady ? (
-                <div className="scorers-teams">
-                  <div className="scorers-team team-a-scorers">
-                    <div className="scorers-team-title">
-                      <span>Equipo 1</span>
-                      <b>{scoreAValue}</b>
-                    </div>
-                    {scorerRows(suggested.teamA, "team-a")}
-                  </div>
-                  <div className="scorers-team team-b-scorers">
-                    <div className="scorers-team-title">
-                      <span>Equipo 2</span>
-                      <b>{scoreBValue}</b>
-                    </div>
-                    {scorerRows(suggested.teamB, "team-b")}
-                  </div>
-                </div>
-              ) : null}
-            </div>
+            </>
+          )}
+          <div className={`result-box ${matchFinalized ? "result-finalized" : `result-entry-step-${resultEntryStep}`}`}>
             {matchFinalized ? (
-              null
+              <>
+                <section className="final-result-hero" aria-label="Resultado final">
+                  <span>Resultado final</span>
+                  <div><strong>Equipo A</strong><b>{activeMatch.scoreA}</b></div>
+                  <i>Finalizado</i>
+                  <div><strong>Equipo B</strong><b>{activeMatch.scoreB}</b></div>
+                </section>
+                {activeMatch.scorers?.length ? (
+                  <section className="final-scorers-list">
+                    <strong>Goleadores</strong>
+                    {activeMatch.scorers.map((entry) => {
+                      const player = matchPlayersById.get(entry.playerId);
+                      return player ? <div key={entry.playerId}><span>{playerDisplayName(player)}</span><b>{entry.goals}</b></div> : null;
+                    })}
+                  </section>
+                ) : null}
+              </>
+            ) : canUseAdminControls ? (
+              <>
+                <div className="result-entry-progress" aria-label={`Paso ${resultEntryStep} de 2`}>
+                  <span aria-current={resultEntryStep === 1 ? "step" : undefined}>1 · Marcador</span>
+                  <span aria-current={resultEntryStep === 2 ? "step" : undefined}>2 · Goleadores opcionales</span>
+                </div>
+                {resultEntryStep === 1 ? (
+                  <section className="result-score-step">
+                    <span>Añadir resultado</span>
+                    <div className="result-score-grid">
+                      <div className="result-score-field team-a-score">
+                        <span>Equipo A</span>
+                        <div>
+                          <button type="button" disabled={!matchConfigured || Number(result.a) <= 0} onClick={() => changeResultScore("a", -1)} aria-label="Restar gol al equipo A">-</button>
+                          <output aria-label="Goles del equipo A">{Number(result.a) || 0}</output>
+                          <button type="button" disabled={!matchConfigured} onClick={() => changeResultScore("a", 1)} aria-label="Sumar gol al equipo A">+</button>
+                        </div>
+                      </div>
+                      <b>-</b>
+                      <div className="result-score-field team-b-score">
+                        <span>Equipo B</span>
+                        <div>
+                          <button type="button" disabled={!matchConfigured || Number(result.b) <= 0} onClick={() => changeResultScore("b", -1)} aria-label="Restar gol al equipo B">-</button>
+                          <output aria-label="Goles del equipo B">{Number(result.b) || 0}</output>
+                          <button type="button" disabled={!matchConfigured} onClick={() => changeResultScore("b", 1)} aria-label="Sumar gol al equipo B">+</button>
+                        </div>
+                      </div>
+                    </div>
+                  </section>
+                ) : (
+                  <section className="result-scorers-step">
+                    <div className="scorers-box">
+                      <strong>Goleadores <small>Opcional</small></strong>
+                      {confirmedPlayers.length === 0 ? <small>Marca asistentes para añadir goleadores.</small> : null}
+                      {confirmedPlayers.length > 0 && resultIsReady ? (
+                        <div className="scorers-teams">
+                          <div className="scorers-team team-a-scorers">
+                            <div className="scorers-team-title"><span>Equipo A</span><b>{scoreAValue}</b></div>
+                            {scorerRows(suggested.teamA, "team-a")}
+                          </div>
+                          <div className="scorers-team team-b-scorers">
+                            <div className="scorers-team-title"><span>Equipo B</span><b>{scoreBValue}</b></div>
+                            {scorerRows(suggested.teamB, "team-b")}
+                          </div>
+                        </div>
+                      ) : null}
+                    </div>
+                    <details className="result-photo-details">
+                      <summary>Foto del partido</summary>
+                      <div className={activeMatch.teamPhoto ? "team-photo-card has-photo" : "team-photo-card"}>
+                        {activeMatch.teamPhoto ? (
+                          <button className="team-photo-preview-button" type="button" onClick={() => setMatchPhotoPreview({ src: activeMatch.teamPhoto!, title: activeMatch.title })} aria-label={`Ver foto del partido ${activeMatch.title}`}>
+                            <NextImage src={activeMatch.teamPhoto} alt={`Foto del partido ${activeMatch.title}`} width={960} height={720} unoptimized />
+                            <span>Ver foto</span>
+                          </button>
+                        ) : <span className="team-photo-empty">+</span>}
+                        <div className="team-photo-actions">
+                          <label className="team-photo-button">{activeMatch.teamPhoto ? "Cambiar foto" : "Añadir foto"}<input accept="image/*" capture="environment" disabled={!canUploadTeamPhoto} onChange={(event) => { void uploadTeamPhoto(event.target.files?.[0]); event.currentTarget.value = ""; }} type="file" /></label>
+                          {activeMatch.teamPhoto ? <button className="team-photo-remove" type="button" onClick={removeTeamPhoto}>Quitar foto</button> : null}
+                        </div>
+                        {teamPhotoMessage ? <small className="team-photo-message">{teamPhotoMessage}</small> : null}
+                      </div>
+                    </details>
+                  </section>
+                )}
+                <div className="result-entry-actions">
+                  {resultEntryStep === 2 ? <button type="button" onClick={() => setResultEntryStep(1)}>Atrás</button> : null}
+                  {resultEntryStep === 1 ? (
+                    <button className="primary-button" type="button" disabled={!matchConfigured || !lineupClosed || !resultIsReady} onClick={() => setResultEntryStep(2)}>Continuar</button>
+                  ) : (
+                    <button className="primary-button" type="button" disabled={!matchConfigured || !lineupClosed || !resultIsReady} onClick={() => void finalizeMatch()}>Confirmar resultado</button>
+                  )}
+                </div>
+              </>
             ) : (
-              <button disabled={!matchConfigured || !lineupClosed || !resultIsReady || !canUseAdminControls} onClick={() => void finalizeMatch()}>Finalizar partido</button>
+              <section className="result-readonly-empty"><strong>Resultado pendiente</strong><p>El organizador lo publicará cuando termine el partido.</p></section>
             )}
           </div>
           {matchFinalized && canUseAdminControls && ratingsEnabled && supabase && remoteGroupId ? (
@@ -10741,6 +11074,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
           ) : null}
         </aside>
       </section>
+      ) : null}
 
       {matchPhotoPreview ? (
         <div
@@ -11425,7 +11759,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
               {canUseAdminControls || canCreateTeam ? (
                 <div className="mobile-account-group">
                   <h2>Administrar</h2>
-                  <button type="button" onClick={() => runMobileAccountAction(createMatch)} disabled={!canUseAdminControls}>
+                  <button type="button" onClick={() => runMobileAccountAction(() => startQuickMatchWizard())} disabled={!canUseAdminControls}>
                     <span>Crear partido</span><small>Fecha, campo, modalidad y plazas</small><b aria-hidden="true">›</b>
                   </button>
                   <button

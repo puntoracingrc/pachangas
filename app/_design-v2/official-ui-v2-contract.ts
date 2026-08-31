@@ -1,4 +1,4 @@
-export const OFFICIAL_UI_V2_VERSION = "2.0.0-preview" as const;
+export const OFFICIAL_UI_V2_VERSION = "3.2.0" as const;
 
 export type OfficialLayoutMode = "DESKTOP" | "MOBILE_GAME_LANDSCAPE" | "MOBILE_PORTRAIT";
 export type OfficialShellVariant = "PLATFORM_ADMIN" | "PRODUCT";

@@ -10,6 +10,7 @@ export type OfficialMatchHubPane = {
 
 export function OfficialMatchGameHub({
   activePane,
+  back,
   context,
   onSelectPane,
   panes,
@@ -17,6 +18,7 @@ export function OfficialMatchGameHub({
   tools,
 }: {
   activePane: string;
+  back?: ReactNode;
   context: {
     date: string;
     finalized?: boolean;
@@ -38,6 +40,7 @@ export function OfficialMatchGameHub({
         aria-label="Secciones del partido"
         data-official-match-navigation="single"
       >
+        {back ? <div className={styles.back}>{back}</div> : null}
         <div className={styles.panes}>
           {panes.map((pane) => (
             <button

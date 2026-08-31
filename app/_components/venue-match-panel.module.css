@@ -16,7 +16,7 @@
   padding: clamp(14px, 2.4vw, 28px);
 }
 
-:global(.app-shell[data-official-match-hub="v2.1"][data-match-manager-pane="campo"]) > .panel {
+:global(.app-shell[data-official-match-hub="v3b"][data-match-manager-pane="campo"]) > .panel {
   display: grid !important;
 }
 

@@ -9,7 +9,7 @@ test("builds Pachangas IQ HTML", async () => {
   assert.match(html, /El grupo del partido, pero con memoria\./);
   assert.match(html, /Continuar con Google/);
   assert.match(html, /data-product-entry="no-team"/);
-  assert.match(html, /Mundo Demo V1/);
+  assert.match(html, /Mundo Demo social/);
   assert.match(html, /Probar Mundo Demo/);
   assert.match(html, /href="\/demo"/);
   assert.match(html, /Crear mi grupo/);
@@ -436,7 +436,7 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /openCreatePlayerProfile/);
   assert.match(page, /showQuickForm\("venue"\)/);
   assert.match(page, /showQuickForm\("team"\)/);
-  assert.match(page, /onClick=\{\(\) => runMobileAccountAction\(createMatch\)\}/);
+  assert.match(page, /onClick=\{\(\) => runMobileAccountAction\(\(\) => startQuickMatchWizard\(\)\)\}/);
   assert.match(page, /attachVenueAutocomplete/);
   assert.match(page, /NEXT_PUBLIC_GOOGLE_MAPS_API_KEY/);
   assert.match(page, /selectedVenuePlace/);
@@ -863,7 +863,7 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /skipLeaveConfirmation/);
   assert.match(page, /Mantener plaza/);
   assert.match(page, /data-product-entry="no-team"/);
-  assert.match(page, /Mundo Demo V1/);
+  assert.match(page, /Mundo Demo social/);
   assert.match(page, /Probar Mundo Demo/);
   assert.match(page, /href="\/demo"/);
   assert.match(page, /previewOnly: previewDemoMode/);
