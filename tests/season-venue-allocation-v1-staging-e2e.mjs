@@ -14,6 +14,7 @@ const env = {
   serviceRoleKey: process.env.SEASON_VENUE_STAGING_SERVICE_ROLE_KEY,
   url: process.env.SEASON_VENUE_STAGING_URL,
 };
+const vercelAutomationBypassSecret = process.env.VERCEL_AUTOMATION_BYPASS_SECRET;
 
 for (const [key, value] of Object.entries(env)) {
   if (!value) throw new Error(`SEASON_VENUE_STAGING_${key.toUpperCase()}_REQUIRED`);
@@ -33,6 +34,15 @@ if (
   || /(^|\.)pachangasiq\.com$/i.test(new URL(env.previewUrl).hostname)
 ) throw new Error("SEASON_VENUE_STAGING_PRODUCTION_TARGET_FORBIDDEN");
 assert.notEqual(env.publishableKey, env.serviceRoleKey);
+
+function previewHeaders(headers = {}) {
+  if (!vercelAutomationBypassSecret) return headers;
+  return {
+    ...headers,
+    "x-vercel-protection-bypass": vercelAutomationBypassSecret,
+    "x-vercel-set-bypass-cookie": "true",
+  };
+}
 
 const runId = randomUUID().replaceAll("-", "").slice(0, 12);
 const password = `Wave9B-${randomUUID()}-Qa!`;
@@ -293,7 +303,11 @@ async function previewSmoke(accessToken, planId, expectedRevision) {
     "/reservas/recurrentes",
   ];
   for (const path of assets) {
-    const response = await fetch(new URL(path, origin), { cache: "no-store", redirect: "follow" });
+    const response = await fetch(new URL(path, origin), {
+      cache: "no-store",
+      headers: previewHeaders(),
+      redirect: "follow",
+    });
     assert.equal(response.ok, true, `${path} returned ${response.status}`);
     if (path === "/sw.js") {
       const body = await response.text();
@@ -308,7 +322,7 @@ async function previewSmoke(accessToken, planId, expectedRevision) {
   readUrl.searchParams.set("planId", planId);
   const read = await fetch(readUrl, {
     cache: "no-store",
-    headers: { authorization: `Bearer ${accessToken}` },
+    headers: previewHeaders({ authorization: `Bearer ${accessToken}` }),
   });
   assert.equal(read.status, 200);
   assert.match(read.headers.get("cache-control") ?? "", /no-store/);
@@ -323,14 +337,14 @@ async function previewSmoke(accessToken, planId, expectedRevision) {
       operationId: randomUUID(),
       payload: { reasonCode: "STAGING_STALE_PREVIEW" },
     }),
-    headers: {
+    headers: previewHeaders({
       authorization: `Bearer ${accessToken}`,
       "content-type": "application/json",
       origin,
       "x-pachangas-client-version": "9.2.0+wave9b-staging",
       "x-pachangas-display-mode": "standalone",
       "x-pachangas-service-worker-version": "9.2.0+wave9b-staging",
-    },
+    }),
     method: "POST",
   });
   assert.equal(stale.status, 409);
@@ -338,7 +352,7 @@ async function previewSmoke(accessToken, planId, expectedRevision) {
 
   const readAfter = await fetch(readUrl, {
     cache: "no-store",
-    headers: { authorization: `Bearer ${accessToken}` },
+    headers: previewHeaders({ authorization: `Bearer ${accessToken}` }),
   });
   assert.equal(readAfter.status, 200);
   assert.equal((await readAfter.json()).plan.revision, expectedRevision);

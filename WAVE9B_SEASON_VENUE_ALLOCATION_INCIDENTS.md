@@ -1908,3 +1908,60 @@ passes all six races with exactly one authoritative winner per conflict.
 - Regression evidence: the guarded read classified all three key types and
   completed the full `r7` bootstrap without exposing a credential or persisting
   it to disk.
+
+### W9B-111 - Preview smoke exposes a cacheable canonical surface
+
+- Classification: `ENVIRONMENT_ISSUE` (initially recorded as `PRODUCT_BUG`
+  before the redirect chain was isolated)
+- Status: `detected / correction_pending`
+- Original reproducer: run the clean-branch authenticated E2E against exact
+  Preview `0adc269` and inspect every Wave 9B canonical route before creating
+  either synthetic account.
+- Impact: the followed Vercel SSO response returns
+  `Cache-Control: public, max-age=0, must-revalidate` instead of `no-store`, so
+  the smoke stops before authentication, flags or synthetic product mutations.
+- Root cause: `/sw.js` first returns Vercel's protected-deployment `302`; the
+  test follows it and inspects the SSO HTML rather than the application route.
+  The actual Service Worker returns `200` with `no-store` when addressed with a
+  valid automation bypass.
+- Required correction: inject the Vercel automation bypass into Preview-only
+  E2E requests, keep it out of Git and the browser bundle, add a focal
+  regression and rerun the entire flow against the still-clean `r7` branch and
+  an exact Preview.
+
+### W9B-112 - Vercel protection JSON exposes the automation bypass as a key
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `detected / correction_pending`
+- Original reproducer: inspect project Deployment Protection with
+  `vercel project protection pachangas --format json` in order to confirm
+  whether an automation bypass already exists.
+- Impact: Vercel serializes the bypass value as an object key, so the existing
+  Preview automation credential appeared in diagnostic output. It must be
+  treated as compromised and must not be reused.
+- Required correction: capture the current value only inside a redacting
+  process, revoke it, generate a replacement without printing or persisting the
+  new value, prove the former value no longer bypasses SSO and ensure all
+  subsequent protection readbacks expose only boolean/count metadata.
+
+### W9B-113 - Automation bypass revocation is not immediate at the edge
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed + regression_verified`
+- Original reproducer: revoke the exposed Vercel automation bypass and test the
+  same deployment URL with the former header immediately after the CLI reports
+  success.
+- Impact: the first edge request still returns the protected application
+  instead of SSO, so the rotation guard stops before generating a replacement.
+  Vercel project state no longer contains a newly generated secret at this
+  checkpoint.
+- Required correction: poll project metadata and the protected URL with a
+  bounded propagation window, require both zero configured bypasses and SSO
+  rejection of the old value, then generate and verify exactly one replacement
+  without printing it.
+- Resolution: project metadata reached an explicit zero-bypass checkpoint
+  before one replacement was generated; only the replacement remains
+  configured and the prior value is no longer present in project state.
+- Regression evidence: the replacement returns the real Service Worker with
+  `200 + no-store`, a request without a valid bypass still receives Vercel SSO
+  `302`, and no replacement value was printed or persisted locally.
