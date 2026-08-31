@@ -71,6 +71,16 @@ function readLedger() {
     from supabase_migrations.schema_migrations`));
 }
 
+function ensureLedger() {
+  if (sql(`select to_regclass('supabase_migrations.schema_migrations') is not null`) === "t") return;
+  sql(`create schema if not exists supabase_migrations;
+    create table supabase_migrations.schema_migrations(
+      version text primary key,
+      statements text[],
+      name text
+    )`);
+}
+
 function normalizedSchemaHash() {
   const dump = run("pg_dump", [
     "--schema-only",
@@ -138,6 +148,7 @@ function verifyFinal() {
   return { ...snapshot, schemaHash };
 }
 
+ensureLedger();
 const initialVersions = readLedger();
 if (initialVersions.length === 228) {
   process.stdout.write(`${JSON.stringify({
@@ -148,7 +159,20 @@ if (initialVersions.length === 228) {
 }
 
 let absorbedVersionsReconciled = 0;
-if (initialVersions.length === 10) {
+if (initialVersions.length === 0) {
+  assert.equal(sql(`select count(*) from pg_class relations
+    join pg_namespace namespaces on namespaces.oid=relations.relnamespace
+    where namespaces.nspname='public' and relations.relkind in ('r','p')
+      and relations.relname like 'pachanga%'`), "0", "SEASON_VENUE_STAGING_EMPTY_BRANCH_NOT_EMPTY");
+  run("psql", [
+    "-X", "-w", "-v", "ON_ERROR_STOP=1", "-q", databaseUri,
+  ], "install signed baseline on empty staging branch", { input: baseline });
+  run("supabase", [
+    "migration", "repair", ...manifest.absorbedMigrations,
+    "--status", "applied", "--db-url", databaseUri, "--yes",
+  ], "repair absorbed staging migration history");
+  absorbedVersionsReconciled = manifest.absorbedMigrations.length;
+} else if (initialVersions.length === 10) {
   assert.deepEqual(initialVersions, manifest.absorbedMigrations.slice(0, 10));
   const prefix = JSON.parse(sql(`select json_build_object(
     'relations',(select coalesce(json_agg(relname order by relname),'[]'::json)

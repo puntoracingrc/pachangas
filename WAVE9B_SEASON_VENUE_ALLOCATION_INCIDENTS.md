@@ -1761,3 +1761,55 @@ passes all six races with exactly one authoritative winner per conflict.
 - Resolution: `stat` confirmed one regular file, `unlink` removed that exact
   path, and no wildcard or recursive deletion was used.
 - Regression evidence: an explicit absence check returned success.
+
+### W9B-103 - Fresh branch bootstraps before the SQL fix is pushed
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed + regression_verified`
+- Original reproducer: create isolated branch `r5` while the remote Git branch
+  still points to `9373b1d`, then push the migration-body fix `87d36a0` after
+  Supabase already reports `FUNCTIONS_DEPLOYED`.
+- Impact: the ledger may mark version `20260830223014` as applied with the old
+  body. Reusing or repairing that branch would no longer prove a clean forward
+  deployment of the exact candidate commit.
+- Required correction: discard `r5` without repair, create the next disposable
+  branch only after the candidate commit is remote, and certify its schema hash
+  as `7b9a69ed...` before loading any dataset.
+- Resolution: `r5` was deleted without repair. Branch `r6` was created after
+  `87d36a0` existed on the remote branch and was bootstrapped from zero.
+- Regression evidence: `r6` reports ledger 228, last version `20260830223014`,
+  12/12 Wave 9B RLS tables, flags born OFF and schema hash `7b9a69ed...`.
+
+### W9B-104 - Empty Supabase branch has no migration ledger schema
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed + regression_verified`
+- Original reproducer: run the canonical staging bootstrap against fresh branch
+  `r6` after Supabase reports `ACTIVE_HEALTHY/FUNCTIONS_DEPLOYED`, while the
+  database still has no `supabase_migrations.schema_migrations` relation.
+- Impact: the verifier fails during its first read-only ledger query and does
+  not reach the signed baseline or any migration application.
+- Required correction: treat an absent ledger schema as the explicit zero-
+  migration state, initialize only the standard ledger structure required by
+  the bootstrap, then apply the same signed baseline and ordered migrations.
+  Production refs must remain forbidden.
+- Resolution: the bootstrap now creates only the standard three-column ledger
+  after proving that no `pachanga*` product table exists, then installs the
+  signed baseline and applies the ordered forward history.
+- Regression evidence: fresh `r6` reached exact ledger 228 and schema hash
+  `7b9a69ed...`; the deterministic dataset then loaded its exact expected
+  topology without replay or residue from an earlier attempt.
+
+### W9B-105 - zsh expands an unquoted local Postgres URI
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed + regression_verified`
+- Original reproducer: pass the local diagnostic URI containing
+  `?sslmode=disable` to `psql` without shell quoting.
+- Impact: `zsh` exits with `no matches found` before starting `psql`; no local
+  or remote database receives a connection or query.
+- Required correction: quote the exact localhost URI, rerun only the schema
+  metadata query and use the result to mirror the standard ledger shape.
+- Resolution: the URI was quoted and the query remained localhost-only.
+- Regression evidence: the standard ledger columns read back as `version text`
+  (primary key), nullable `statements text[]` and nullable `name text`.

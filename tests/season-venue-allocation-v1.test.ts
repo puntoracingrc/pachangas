@@ -114,6 +114,8 @@ test("staging is canonical, transactional and two-device reproducible", async ()
     source("tests/season-venue-allocation-v1-staging-e2e.mjs"),
   ]);
   assert.match(bootstrap, /SEASON_VENUE_STAGING_SCHEMA_PRODUCTION_TARGET_FORBIDDEN/);
+  assert.match(bootstrap, /SEASON_VENUE_STAGING_EMPTY_BRANCH_NOT_EMPTY/);
+  assert.match(bootstrap, /create table supabase_migrations\.schema_migrations/);
   assert.match(bootstrap, /PSQL_ATOMIC_LEDGER/);
   assert.match(bootstrap, /pachanga_groups_team_code_key/);
   assert.match(bootstrap, /7b9a69ed794f9f71dc0a0efc91c9ae75b20f79fef9c4261eb5c19a4a1d0fee12/);
