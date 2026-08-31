@@ -1710,3 +1710,54 @@ passes all six races with exactly one authoritative winner per conflict.
 - Regression evidence: exactly `NEXT_PUBLIC_SUPABASE_URL` and
   `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` were returned with target `preview`,
   visibility `config` and the exact Wave 9B Git branch.
+
+### W9B-100 - Synthetic referee cannot reconfirm the replacement venue
+
+- Classification: `PRODUCT_BUG`
+- Status: `detected / correction_pending`
+- Original reproducer: complete the authenticated Wave 9B publish flow, create
+  and accept the R4D replacement reservation, replace the match venue and ask
+  device B to execute `assignment.reconfirm` for the existing referee.
+- Impact: the canonical Referee Assignment RPC correctly rejects the intent
+  with `42501 REFEREE_SERVICE_AREA_INCOMPATIBLE`; staging cannot yet certify the
+  post-venue-change reconfirmation and final cleanup path.
+- Required correction: compare the synthetic referee's canonical service area
+  with both original and replacement venue geography. Correct only the fixture
+  or E2E actor when the dataset is invalid; change product authority only if a
+  valid compatible assignment is being rejected. Then replay on a fresh branch.
+- Diagnosis: the referee area and canonical Venue both resolve to Barcelona,
+  but the legacy availability helper compares only the short display label and
+  ignores the structured municipality. The synthetic fixture is valid.
+
+### W9B-101 - Ambiguous Venue regression duplicates a name inside one Club
+
+- Classification: `SIMULATION_BUG`
+- Status: `fixed + regression_verified`
+- Original reproducer: add a second active Venue named `Season Allocation
+  Centre` to the same synthetic Club before asserting ambiguous-name rejection.
+- Impact: the fixture stops at the existing
+  `pachanga_club_venues_club_name_idx` uniqueness constraint, so it does not
+  exercise the intended cross-Club ambiguity path.
+- Required correction: create the homonymous Venue under a different existing
+  synthetic Club, rerun the compatible and ambiguous cases, and preserve both
+  the Club-local uniqueness invariant and global conservative rejection.
+- Resolution: the regression creates a temporary second synthetic Club, adds
+  the homonymous Girona Venue there, asserts rejection, and removes both rows
+  inside the disposable database transaction.
+- Regression evidence: the exact `220 -> 228` upgrade and fresh bootstrap both
+  converge to schema hash `7b9a69ed...`; the Barcelona unique-name case passes,
+  the cross-Club ambiguous-name case rejects, and cleanup passes.
+
+### W9B-102 - Executor rejects generic rm cleanup syntax
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed + regression_verified`
+- Original reproducer: remove the single known diagnostic file with
+  `rm -f /tmp/wave9b-referee-trigger-context.txt`.
+- Impact: the command is rejected by the executor policy before it runs; no
+  project or temporary file is modified.
+- Required correction: verify the exact regular-file path, remove it with a
+  non-recursive exact-path primitive, and confirm it no longer exists.
+- Resolution: `stat` confirmed one regular file, `unlink` removed that exact
+  path, and no wildcard or recursive deletion was used.
+- Regression evidence: an explicit absence check returned success.

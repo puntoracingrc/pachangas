@@ -123,6 +123,47 @@ begin
     'A Wave 9B future capability was enabled'
   );
 
+  -- Regression W9B-100: a short unique Venue label uses canonical geography,
+  -- while an ambiguous duplicate name must remain incompatible.
+  perform private.pachanga_referee_assert_available_v1(
+    'd6020000-0000-4000-8000-000000000001',
+    '2027-05-17 18:00:00+00','2027-05-17 19:10:00+00','Europe/Madrid',
+    'FOOTBALL_7','Season Allocation Centre','SAVED'
+  );
+  insert into public.pachanga_clubs(
+    id,name,slug,description,club_type,country_code,province,municipality,
+    general_area,visibility,operational_status,verification_status,
+    partnership_status,primary_owner_id,created_by
+  ) values (
+    'e9020000-0000-4000-8000-000000000002','Wave 9B Ambiguity Club',
+    'wave-9b-ambiguity-club','Temporary cross-Club Venue ambiguity fixture.',
+    'SPORTS_CENTER','ES','Girona','Girona','Zona Synthetic','private','active',
+    'unverified','none','e9010000-0000-4000-8000-000000000005',
+    'e9010000-0000-4000-8000-000000000005'
+  );
+  insert into public.pachanga_club_venues(
+    id,club_id,name,slug,description,municipality,general_area,timezone,
+    private_address,visibility,lifecycle,operation_id,created_by,updated_by
+  ) select
+    'e9b20000-0000-4000-8000-000000000002',
+    'e9020000-0000-4000-8000-000000000002',name,
+    'season-allocation-centre-duplicate',description,'Girona',general_area,timezone,
+    private_address,visibility,lifecycle,'e9b00000-0000-4000-8000-000000000002',
+    created_by,updated_by
+  from public.pachanga_club_venues
+  where id='e9b20000-0000-4000-8000-000000000001';
+  perform pg_temp.expect_failure($sql$
+    select private.pachanga_referee_assert_available_v1(
+      'd6020000-0000-4000-8000-000000000001',
+      '2027-05-17 18:00:00+00','2027-05-17 19:10:00+00','Europe/Madrid',
+      'FOOTBALL_7','Season Allocation Centre','SAVED'
+    )
+  $sql$,'REFEREE_SERVICE_AREA_INCOMPATIBLE');
+  delete from public.pachanga_club_venues
+  where id='e9b20000-0000-4000-8000-000000000002';
+  delete from public.pachanga_clubs
+  where id='e9020000-0000-4000-8000-000000000002';
+
   perform pg_temp.actor('e9010000-0000-4000-8000-000000000003');
   perform pg_temp.expect_failure($sql$
     select public.command_pachanga_competition_venue_allocation_v1(

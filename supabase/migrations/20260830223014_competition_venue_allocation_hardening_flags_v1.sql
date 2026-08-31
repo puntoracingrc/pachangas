@@ -58,6 +58,110 @@ alter table private.pachanga_venue_settings_v1
     and not venue_external_calendar_enabled
   );
 
+-- A saved canonical Venue can keep a short display name. Resolve an exact,
+-- unambiguous Venue name to its structured municipality before rejecting a
+-- referee whose service area is otherwise compatible.
+create or replace function private.pachanga_referee_assert_available_v1(
+  target_profile_id uuid,
+  target_start timestamptz,
+  target_end timestamptz,
+  target_timezone text,
+  target_modality text,
+  target_venue_label text,
+  target_venue_status text
+)
+returns void
+language plpgsql
+volatile
+security definer
+set search_path = pg_catalog
+as $$
+declare profile public.pachanga_referee_profiles%rowtype;
+begin
+  select * into profile
+  from public.pachanga_referee_profiles profiles
+  where profiles.id = target_profile_id for update;
+  if not found or profile.operational_status <> 'active'
+     or not profile.available_for_assignments
+     or profile.availability_status = 'UNAVAILABLE' then
+    raise exception 'REFEREE_PROFILE_NOT_ASSIGNABLE' using errcode = '42501';
+  end if;
+  if target_start is null or target_end is null or target_end <= target_start then
+    raise exception 'REFEREE_MATCH_SCHEDULE_REQUIRED' using errcode = '22023';
+  end if;
+  if exists (
+    select 1 from public.pachanga_referee_modalities modalities
+    where modalities.referee_profile_id = target_profile_id and modalities.active
+  ) and not exists (
+    select 1 from public.pachanga_referee_modalities modalities
+    where modalities.referee_profile_id = target_profile_id
+      and modalities.active
+      and modalities.modality = target_modality
+  ) then raise exception 'REFEREE_MODALITY_INCOMPATIBLE' using errcode = '42501'; end if;
+  if exists (
+    select 1 from public.pachanga_referee_availability_exceptions exceptions
+    where exceptions.referee_profile_id = target_profile_id
+      and exceptions.status = 'active'
+      and tstzrange(exceptions.unavailable_from, exceptions.unavailable_until, '[)')
+        && tstzrange(target_start, target_end, '[)')
+  ) then raise exception 'REFEREE_AVAILABILITY_EXCEPTION' using errcode = 'PT409'; end if;
+  if exists (
+    select 1 from public.pachanga_referee_availability_windows windows
+    where windows.referee_profile_id = target_profile_id and windows.status = 'active'
+  ) and not exists (
+    select 1 from public.pachanga_referee_availability_windows windows
+    where windows.referee_profile_id = target_profile_id
+      and windows.status = 'active'
+      and windows.weekday = extract(isodow from (target_start at time zone windows.timezone))::smallint
+      and (target_start at time zone windows.timezone)::time >= windows.start_local_time
+      and (target_end at time zone windows.timezone)::time <= windows.end_local_time
+  ) then raise exception 'REFEREE_OUTSIDE_RECURRING_AVAILABILITY' using errcode = 'PT409'; end if;
+  if coalesce(upper(target_venue_status), 'TBD') <> 'TBD'
+     and nullif(trim(coalesce(target_venue_label, '')), '') is not null
+     and exists (
+       select 1 from public.pachanga_referee_service_areas areas
+       where areas.referee_profile_id = target_profile_id and areas.status = 'active'
+     )
+     and not exists (
+       select 1 from public.pachanga_referee_service_areas areas
+       where areas.referee_profile_id = target_profile_id
+         and areas.status = 'active'
+         and (
+           lower(target_venue_label) like '%' || lower(areas.general_area) || '%'
+           or nullif(areas.municipality, '') is not null
+             and lower(target_venue_label) like '%' || lower(areas.municipality) || '%'
+           or nullif(areas.province, '') is not null
+             and lower(target_venue_label) like '%' || lower(areas.province) || '%'
+           or exists (
+             select 1
+             from public.pachanga_club_venues venues
+             where venues.lifecycle = 'ACTIVE'
+               and lower(trim(venues.name)) = lower(trim(target_venue_label))
+               and 1 = (
+                 select count(*)
+                 from public.pachanga_club_venues candidates
+                 where candidates.lifecycle = 'ACTIVE'
+                   and lower(trim(candidates.name)) = lower(trim(target_venue_label))
+               )
+               and (
+                 nullif(trim(areas.municipality), '') is not null
+                   and lower(trim(venues.municipality)) = lower(trim(areas.municipality))
+                 or nullif(trim(areas.general_area), '') is not null
+                   and (
+                     lower(venues.general_area) like '%' || lower(trim(areas.general_area)) || '%'
+                     or lower(trim(areas.general_area)) like '%' || lower(venues.general_area) || '%'
+                   )
+               )
+           )
+         )
+     ) then raise exception 'REFEREE_SERVICE_AREA_INCOMPATIBLE' using errcode = '42501'; end if;
+end;
+$$;
+
+revoke all on function private.pachanga_referee_assert_available_v1(
+  uuid,timestamptz,timestamptz,text,text,text,text
+) from public, anon, authenticated;
+
 alter table public.pachanga_venue_invalidations
   drop constraint if exists pachanga_venue_invalidations_entity_type_check;
 alter table public.pachanga_venue_invalidations

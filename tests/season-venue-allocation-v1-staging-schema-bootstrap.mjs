@@ -12,7 +12,7 @@ const databasePassword = process.env.SEASON_VENUE_STAGING_DATABASE_PASSWORD;
 const databaseUri = process.env.SEASON_VENUE_STAGING_DATABASE_URI;
 const projectRef = process.env.SEASON_VENUE_STAGING_PROJECT_REF;
 const productionRef = "qonbngfrnrqgmxbdfbea";
-const expectedSchemaHash = "5dba45ea20d2e12675d474ecc20d879f87b575d3f179fe3d78cfdfb2e87199e8";
+const expectedSchemaHash = "7b9a69ed794f9f71dc0a0efc91c9ae75b20f79fef9c4261eb5c19a4a1d0fee12";
 
 if (!databasePassword || !databaseUri || !projectRef) {
   throw new Error("SEASON_VENUE_STAGING_SCHEMA_ENV_REQUIRED");
