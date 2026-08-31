@@ -2975,3 +2975,16 @@
     transition: none !important;
   }
 }
+.demoLegacyLayer {
+  margin: 12px clamp(12px, 2vw, 28px) 24px;
+  border: 1px solid rgba(158, 194, 185, .2);
+  background: rgba(7, 19, 16, .92);
+}
+
+.demoLegacyLayer > summary {
+  min-height: 44px;
+  padding: 12px 14px;
+  color: #b7cac4;
+  cursor: pointer;
+  font-weight: 800;
+}

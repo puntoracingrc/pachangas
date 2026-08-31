@@ -8,7 +8,7 @@ import {
   StatusBadge,
 } from "../_components/platform-ui";
 import { requirePlatformPage } from "../_lib/platform-auth";
-import { getPlatformVenueOperations } from "../_lib/platform-data";
+import { getPlatformSeasonVenueAllocation, getPlatformVenueOperations } from "../_lib/platform-data";
 
 type Json = Record<string, unknown>;
 function record(value: unknown) { return value && typeof value === "object" && !Array.isArray(value) ? value as Json : {}; }
@@ -18,7 +18,10 @@ function text(value: unknown) { return typeof value === "string" ? value : ""; }
 
 export default async function PlatformVenueOperationsPage() {
   const session = await requirePlatformPage("clubs.read");
-  const data = await getPlatformVenueOperations(session);
+  const [data, seasonAllocation] = await Promise.all([
+    getPlatformVenueOperations(session),
+    getPlatformSeasonVenueAllocation(session),
+  ]);
   const counts = record(data.counts);
   const health = record(data.health);
   const indexes = record(data.indexes);
@@ -27,6 +30,8 @@ export default async function PlatformVenueOperationsPage() {
   const candidates = array(data.partnerCandidates);
   const healthEntries = Object.entries(health).filter(([key]) => key !== "checkedAt");
   const issueCount = healthEntries.reduce((total, [, value]) => total + number(value), 0);
+  const seasonCounts = record(seasonAllocation.counts);
+  const seasonHealth = record(seasonAllocation.health);
 
   return <>
     <PageHeader title="Venue Operations" subtitle="Read model global de instalaciones, disponibilidad, reservas, conflictos, privacidad y convergencia Realtime. Sin datos de pago ni contactos privados." />
@@ -57,6 +62,20 @@ export default async function PlatformVenueOperationsPage() {
         <tr><td>Índices</td><td><StatusBadge>{text(indexes.status)}</StatusBadge></td><td>{number(indexes.protectedIndexCount)} índices gestionados por migración</td></tr>
         <tr><td>Realtime</td><td><StatusBadge>CANONICAL_REFETCH</StatusBadge></td><td>{text(realtime.transport)} · {text(realtime.publication)}</td></tr>
         <tr><td>Errores de comando</td><td><StatusBadge>{text(errors.status)}</StatusBadge></td><td>No se presenta un cero ficticio; los fallos se observan mediante health y logs operativos.</td></tr>
+      </tbody></DataTable>
+    </Panel>
+
+    <Panel title="Season Venue Allocation">
+      <MetricGrid>
+        <Metric label="Pools" value={number(seasonCounts.pools)} />
+        <Metric label="Series" value={number(seasonCounts.recurringSeries)} />
+        <Metric label="Ocurrencias" value={number(seasonCounts.occurrences)} />
+        <Metric label="Planes" value={number(seasonCounts.plans)} />
+        <Metric label="Publicados" value={number(seasonCounts.published)} tone="good" />
+        <Metric label="Sin campo" value={number(seasonCounts.unassignedMatches)} tone={number(seasonCounts.unassignedMatches) ? "warning" : "good"} />
+      </MetricGrid>
+      <DataTable label="Salud de campos de temporada"><thead><tr><th>Control</th><th>Resultado</th><th>Estado</th></tr></thead><tbody>
+        {Object.entries(seasonHealth).filter(([key]) => key !== "checkedAt").map(([key, value]) => <tr key={key}><td>{key}</td><td>{number(value)}</td><td><StatusBadge>{number(value) ? "REVIEW" : "CLEAR"}</StatusBadge></td></tr>)}
       </tbody></DataTable>
     </Panel>
 

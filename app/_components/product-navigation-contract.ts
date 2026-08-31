@@ -50,6 +50,7 @@ const organizerTools: ProductContextualDestination[] = [
   { href: "/organizacion/solicitudes", id: "organize", label: "Organizar", short: "OR" },
   { href: "/clubes/gestionar", id: "clubs", label: "Club", short: "CL" },
   { href: "/clubes/gestionar/campos", id: "venues", label: "Campos", short: "CP" },
+  { href: "/clubes/gestionar/campos/bloques", id: "season-venues", label: "Temporada", short: "TE" },
   { href: "/clubes/gestionar/reservas", id: "bookings", label: "Reservas", short: "RS" },
   { href: "/ligas", id: "leagues", label: "Ligas", short: "LG" },
   { href: "/torneos", id: "tournaments", label: "Torneos", short: "TR" },
