@@ -2013,3 +2013,6 @@ passes all six races with exactly one authoritative winner per conflict.
 - Correction implemented: the cookie-setup header has been removed while the
   direct bypass header remains; the focal source test now forbids reintroducing
   cookie mode into this Node harness.
+- Clean replacement evidence: `r9` independently reproduces ledger `228`, hash
+  `7b9a69ed...`, flags born OFF, exact topology and zero Wave 9B rows before the
+  final authenticated run.
