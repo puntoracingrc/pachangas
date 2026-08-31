@@ -2703,3 +2703,22 @@ passes all six races with exactly one authoritative winner per conflict.
 - Regression evidence: the repeated 8-signature matrix returns `unsafe=[]`,
   `withAuthUid=8`, `withCanonicalGuard=8`, `authenticatedExecute=8` and
   `anonExecute=0`.
+
+### W9B-149 - Redundant documentation commit finds a clean tree
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed + regression_verified`
+- Original reproducer: run `git add`, `git commit` and `git push` for the
+  production advisor readback after merging PR #239.
+- Impact: Git exits nonzero with `nothing to commit, working tree clean`
+  because the advisor incidents were already included in the merged
+  `ce1d713` checkpoint; no file, branch or remote state changes.
+- Required correction: inspect the committed ledger at `ce1d713`, confirm all
+  production-readback incidents are present and proceed without manufacturing
+  an empty commit.
+- Correction implemented: no empty commit was created; the exact merged object
+  was inspected directly.
+- Regression evidence: `git show ce1d713:WAVE9B_SEASON_VENUE_ALLOCATION_INCIDENTS.md`
+  contains W9B-145 through W9B-148 with status
+  `fixed + regression_verified`; the only current diff is this explanatory
+  incident and `git diff --check` passes.
