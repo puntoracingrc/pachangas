@@ -1989,3 +1989,6 @@ passes all six races with exactly one authoritative winner per conflict.
   preflight before creating accounts or changing flags and requires branch
   replacement whenever any deterministic sporting row or Wave 9B receipt is
   present. Full verification remains pending on fresh `r8`.
+- Clean replacement evidence: `r8` reports ledger `228`, schema hash
+  `7b9a69ed...`, flags born OFF, the exact `3/12/120/6/6/12/1/1/50`
+  topology and zero Wave 9B product rows before authentication.
