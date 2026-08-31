@@ -2400,3 +2400,80 @@ passes all six races with exactly one authoritative winner per conflict.
 - Regression evidence: the corrected command reaches `rg`, finds only this
   incident's pre-correction status plus an explanatory historical sentence,
   and `git diff --check` exits cleanly.
+
+### W9B-134 - Isolated worktree has no linked Supabase project ref
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed + regression_verified`
+- Original reproducer: run `supabase migration list --linked` from the isolated
+  Wave 9B worktree before production migration readback.
+- Impact: CLI `2.107.0` returns `Cannot find project ref` because this worktree
+  intentionally did not inherit ignored `supabase/.temp/project-ref`; no remote
+  request, schema change or data write occurs.
+- Required correction: confirm the intended production project through a
+  redacted project inventory, link only this Wave 9B worktree to that exact
+  project ref, rerun `migration list --linked`, and require the remote/local
+  frontier to agree at 220 before any migration or backup operation.
+- Correction implemented: the isolated worktree was linked only to the
+  previously confirmed `Pachangas` production project; no other Supabase
+  project was enumerated or modified.
+- Regression evidence: the persisted linked listing exits zero and reports 220
+  exact local/remote matches, eight local Wave 9B migrations pending, zero
+  remote-only versions and zero mismatches.
+
+### W9B-135 - Supabase project detail connector uses `id`, not `project_id`
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed + regression_verified`
+- Original reproducer: call the Supabase project-detail connector with the
+  project identifier under `project_id`.
+- Impact: connector schema validation rejects the call before any Supabase
+  request; no project, database or configuration is read or changed.
+- Required correction: inspect the callable schema, repeat the read-only call
+  with the exact `id` key, verify only the previously confirmed production ref,
+  and do not enumerate or modify any unrelated project.
+- Correction implemented: the detail request was repeated with the required
+  `id` key against only the expected production project.
+- Regression evidence: the connector returned the expected `Pachangas`
+  project in `eu-west-1`, state `ACTIVE_HEALTHY`, PostgreSQL `17.6`; the
+  subsequent linked ledger reconciled with its 220-version production
+  frontier.
+
+### W9B-136 - Migration readback session output is no longer available
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed + regression_verified`
+- Original reproducer: poll unified terminal session `6580` after context
+  compaction to recover the final output of `supabase migration list --linked`.
+- Impact: the process has already closed and the terminal reports `Unknown
+  process id 6580`, so its final ledger output cannot be used as release
+  evidence; no database request, schema change or data write is performed by
+  the failed poll.
+- Required correction: rerun the same read-only migration listing while
+  persisting its complete output to a task-owned temporary file, print only a
+  bounded redacted summary, and require an exact local/remote frontier of 220
+  before any backup or migration operation.
+- Correction implemented: the linked listing was rerun with complete output in
+  `/private/tmp/wave9b-migration-list-before.txt` and only its bounded tail and
+  aggregate reconciliation were emitted.
+- Regression evidence: the command exits zero; aggregates are local 228,
+  remote 220, matched 220, pending local 8, remote-only 0 and mismatched 0.
+
+### W9B-137 - zsh reserves the diagnostic variable `status`
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed + regression_verified`
+- Original reproducer: capture the exit code of the persisted migration-list
+  command into a shell variable named `status` under zsh.
+- Impact: zsh stops the wrapper with `read-only variable: status` before the
+  bounded summary is printed. The preceding read-only Supabase command may
+  have produced its temporary output, but that output is not accepted as
+  release evidence until the wrapper is rerun cleanly; no database write is
+  performed.
+- Required correction: use a non-reserved exit-code variable, rerun the
+  read-only listing, verify a zero exit code and reconcile the exact local and
+  remote frontier before continuing.
+- Correction implemented: the wrapper now stores the exit code in `rc` and
+  preserves the complete command output before printing its bounded summary.
+- Regression evidence: zsh completes the corrected wrapper with exit code zero
+  and the authoritative 220/228 reconciliation above.
