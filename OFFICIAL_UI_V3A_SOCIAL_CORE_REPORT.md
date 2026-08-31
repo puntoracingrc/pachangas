@@ -123,7 +123,18 @@ cliente.
 - Diff funcional: 42 rutas de codigo y tests. El informe es la unica ruta
   documental adicional frente a la base.
 - PR: #241, draft durante la validacion de Preview.
-- Preview inmutable: pendiente.
+- Preview validada:
+  `https://pachangas-git-codex-offic-4637a7-persianas-almar-web-s-projects.vercel.app`.
+  - Deployment: `dpl_8zW4KLKN3VYeVTm6a2Jvnyjpc6CZ`.
+  - HEAD auditado: `3e0b043e894e7def8a62fbf380bff1ce44a9bcc4`.
+  - Estado Vercel: READY.
+  - Desktop 1440x900, portrait 390x844 y landscape 844x390: PASS.
+  - Consola: 0 errores y 0 warnings en las superficies de producto.
+  - Imagenes rotas / overflow del documento: 0 / 0.
+  - Manifest: 200 `application/manifest+json`.
+  - Service Worker: 200, `activated` y controlando la pagina.
+  - `/admin/demo` sin sesion de Pachangas: fail-closed, sin Demo completa ni
+    dominios tecnicos.
 - Merge a `main`: pendiente.
 - Deployment productivo: pendiente.
 - Smoke en `pachangasiq.com`: pendiente.
