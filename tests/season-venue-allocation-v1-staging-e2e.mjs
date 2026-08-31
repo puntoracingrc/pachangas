@@ -669,7 +669,7 @@ order by server_sequence desc,id desc limit 1;
   const holdLosers = holdRace.filter((result) => result.error);
   assert.equal(holdWinners.length, 1);
   assert.equal(holdLosers.length, 1);
-  assert.match(diagnostic(holdLosers[0]), /STALE_REVISION|40001|PT409/);
+  assert.match(diagnostic(holdLosers[0]), /STALE_REVISION|PT409/);
   const holdWinnerIndex = holdRace.findIndex((result) => !result.error);
   plan = holdWinners[0].data;
   const holdReplay = await allocationOk(holdInputs[holdWinnerIndex].supabase, holdInputs[holdWinnerIndex].input);

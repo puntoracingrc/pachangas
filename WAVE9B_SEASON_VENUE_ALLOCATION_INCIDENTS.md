@@ -1631,3 +1631,19 @@ passes all six races with exactly one authoritative winner per conflict.
   dataset and `ON_ERROR_STOP=1` in the E2E runner; the readback reports ledger
   228, 3 Clubs, 12 teams, 120 players, 6 referees, 6 venues, 12 pitches, one
   League, one Tournament and 50 CanonicalMatches.
+
+### W9B-095 - Concurrent hold loser times out instead of returning stale revision
+
+- Classification: `PRODUCT_BUG`
+- Status: `detected / correction_pending`
+- Original reproducer: from two independently authenticated devices, submit
+  `allocation.hold` concurrently against the same plan and expected revision
+  after the hybrid plan has been generated and locked.
+- Impact: one request wins, but the loser waits until PostgREST reports
+  `upstream request timeout` instead of the required `STALE_REVISION`/`PT409`.
+  The caller cannot distinguish a rejected intent from an unknown outcome, so
+  the two-device concurrency contract is not yet certified.
+- Required correction: inspect the hold command lock order and transaction
+  dependencies, make contention fail or serialize within a bounded interval,
+  preserve one authoritative winner and idempotent replay, then rerun the exact
+  authenticated race and canonical readback on a clean branch.

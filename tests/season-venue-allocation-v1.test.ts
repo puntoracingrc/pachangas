@@ -102,6 +102,7 @@ test("all eight migrations are forward-only, gated and privacy-safe", async () =
   assert.match(joined, /joint_schedule_venue_optimization_enabled/);
   assert.match(joined, /venue_payments_enabled/);
   assert.match(joined, /revoke all on function/);
+  assert.doesNotMatch(joined, /errcode\s*=\s*'40001'/);
   assert.doesNotMatch(joined, /sk_live_|rk_live_|whsec_/);
 });
 
@@ -114,7 +115,7 @@ test("staging is canonical, transactional and two-device reproducible", async ()
   assert.match(bootstrap, /SEASON_VENUE_STAGING_SCHEMA_PRODUCTION_TARGET_FORBIDDEN/);
   assert.match(bootstrap, /PSQL_ATOMIC_LEDGER/);
   assert.match(bootstrap, /pachanga_groups_team_code_key/);
-  assert.match(bootstrap, /4f3fa78ef66026dc8e14f45bfc9957b3154daf6b616a4a3f07106776fcb4bd93/);
+  assert.match(bootstrap, /5dba45ea20d2e12675d474ecc20d879f87b575d3f179fe3d78cfdfb2e87199e8/);
   assert.doesNotMatch(bootstrap, /db", "push/);
   assert.match(dataset, /WAVE9B_STAGING_DATASET_REQUIRES_EMPTY_BRANCH/);
   assert.match(dataset, /\\set ON_ERROR_STOP on/);

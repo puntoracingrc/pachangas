@@ -406,7 +406,7 @@ begin
      )
      or private.pachanga_venue_allocation_live_input_checksum_v1(plan_row.id)
         is distinct from freeze_row.input_checksum then
-    raise exception 'VENUE_ALLOCATION_INPUTS_CHANGED' using errcode = '40001';
+    raise exception 'VENUE_ALLOCATION_INPUTS_CHANGED' using errcode = 'PT409';
   end if;
 
   for item_row in
@@ -423,7 +423,7 @@ begin
           and bindings.canonical_match_id = item_row.canonical_match_id
           and bindings.status in ('ACTIVE', 'ACTION_REQUIRED', 'CONSUMED')
       ) then
-        raise exception 'VENUE_ALLOCATION_EXISTING_BINDING_CHANGED' using errcode = '40001';
+        raise exception 'VENUE_ALLOCATION_EXISTING_BINDING_CHANGED' using errcode = 'PT409';
       end if;
       update public.pachanga_competition_venue_allocation_items items set
         assignment_status = 'PUBLISHED',
@@ -475,7 +475,7 @@ begin
     where venues.id = item_row.venue_id;
     if not found or context_row.scheduled_start is distinct from item_row.scheduled_start
        or context_row.scheduled_end is distinct from item_row.scheduled_end then
-      raise exception 'VENUE_ALLOCATION_MATCH_CHANGED' using errcode = '40001';
+      raise exception 'VENUE_ALLOCATION_MATCH_CHANGED' using errcode = 'PT409';
     end if;
     if exists (
       select 1 from public.pachanga_venue_match_bindings bindings

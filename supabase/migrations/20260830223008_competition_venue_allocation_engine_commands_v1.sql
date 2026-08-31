@@ -848,7 +848,7 @@ begin
       server_sequence = nextval('private.pachanga_venue_sequence'),
       updated_by = target_actor_id, updated_at = clock_timestamp()
     where rows.id = target_plan_id;
-    raise exception 'VENUE_ALLOCATION_INPUT_STALE' using errcode = '40001';
+    raise exception 'VENUE_ALLOCATION_INPUT_STALE' using errcode = 'PT409';
   end if;
   select * into previous_revision
   from public.pachanga_competition_venue_allocation_revisions rows
@@ -1412,7 +1412,7 @@ begin
     where rows.id = aggregate_id for update;
     if not found then raise exception 'VENUE_RECURRING_SERIES_NOT_FOUND' using errcode = 'P0002'; end if;
     if series_row.revision <> expected_revision then
-      raise exception 'VENUE_ALLOCATION_STALE_REVISION' using errcode = '40001';
+      raise exception 'VENUE_ALLOCATION_STALE_REVISION' using errcode = 'PT409';
     end if;
     if normalized_action in ('recurring_series.update','recurring_series.validate',
       'recurring_series.offer','recurring_series.publish','recurring_series.pause',
@@ -1460,7 +1460,7 @@ begin
         payload ? 'pitchId' or payload ? 'frequency' or payload ? 'weekday'
         or payload ? 'localStartTime' or payload ? 'durationMinutes'
       ) then
-        raise exception 'VENUE_RECURRING_FUTURE_RESERVATION_REQUIRES_EXPLICIT_CHANGE' using errcode = '40001';
+        raise exception 'VENUE_RECURRING_FUTURE_RESERVATION_REQUIRES_EXPLICIT_CHANGE' using errcode = 'PT409';
       end if;
       select pitches.* into pitch_row from public.pachanga_venue_pitches pitches
       where pitches.id = coalesce(nullif(payload ->> 'pitchId','')::uuid, series_row.pitch_id);
@@ -1586,7 +1586,7 @@ begin
         where occurrences.series_id=series_row.id and occurrences.starts_at>clock_timestamp()
           and occurrences.status in ('held','reserved')
       ) then
-        raise exception 'VENUE_RECURRING_END_HAS_FUTURE_COMMITMENTS' using errcode='40001';
+        raise exception 'VENUE_RECURRING_END_HAS_FUTURE_COMMITMENTS' using errcode='PT409';
       end if;
       update public.pachanga_venue_recurring_series rows set
         status='ended', ended_at=clock_timestamp(), revision=rows.revision+1,
@@ -1693,7 +1693,7 @@ begin
       select * into pool_row from public.pachanga_competition_venue_pools rows
         where rows.id=authorization_row.pool_id for update;
       if authorization_row.revision<>expected_revision or authorization_row.status<>'offered' then
-        raise exception 'VENUE_ALLOCATION_STALE_REVISION' using errcode='40001';
+        raise exception 'VENUE_ALLOCATION_STALE_REVISION' using errcode='PT409';
       end if;
       if not private.pachanga_competition_venue_can_v1(pool_row.competition_id,actor_id,'manage') then
         raise exception 'VENUE_POOL_ACCEPT_AUTHORITY_REQUIRED' using errcode='42501';
@@ -1713,7 +1713,7 @@ begin
       select * into pool_row from public.pachanga_competition_venue_pools rows
         where rows.id=aggregate_id for update;
       if not found then raise exception 'VENUE_POOL_NOT_FOUND' using errcode='P0002'; end if;
-      if pool_row.revision<>expected_revision then raise exception 'VENUE_ALLOCATION_STALE_REVISION' using errcode='40001'; end if;
+      if pool_row.revision<>expected_revision then raise exception 'VENUE_ALLOCATION_STALE_REVISION' using errcode='PT409'; end if;
       if normalized_action in ('venue_pool.update','venue_pool.activate','venue_pool.revoke')
         and not private.pachanga_competition_venue_can_v1(pool_row.competition_id,actor_id,'manage') then
         raise exception 'VENUE_POOL_AUTHORITY_REQUIRED' using errcode='42501';
@@ -1883,7 +1883,7 @@ begin
     select * into plan_row from public.pachanga_competition_venue_allocation_plans rows
       where rows.id=aggregate_id for update;
     if not found then raise exception 'VENUE_ALLOCATION_PLAN_NOT_FOUND' using errcode='P0002'; end if;
-    if plan_row.revision<>expected_revision then raise exception 'VENUE_ALLOCATION_STALE_REVISION' using errcode='40001'; end if;
+    if plan_row.revision<>expected_revision then raise exception 'VENUE_ALLOCATION_STALE_REVISION' using errcode='PT409'; end if;
     if not private.pachanga_competition_venue_can_v1(plan_row.competition_id,actor_id,
       case when normalized_action='allocation.publish' then 'publish' else 'manage' end) then
       raise exception 'VENUE_ALLOCATION_AUTHORITY_REQUIRED' using errcode='42501';
