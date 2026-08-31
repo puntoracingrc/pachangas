@@ -8,6 +8,7 @@ Fecha de cierre: 2026-08-31 (Europe/Madrid)
 - Main inicial: `34f56eca31c9b14bfac8f700e08fc78eed922a0a`.
 - Main final funcional: `81b49483e345a9119ab9e85b0c00eb37e0ee32ed`.
 - PR funcional: [#243](https://github.com/puntoracingrc/pachangas/pull/243), fusionado mediante merge commit.
+- PR documental: [#244](https://github.com/puntoracingrc/pachangas/pull/244).
 - Commits funcionales: `71a8d8d43011` y `af1b251a1328`.
 - Deployment productivo: `dpl_TXiCfd82dBzKgppn2mo7LJgs9rWj`.
 - URL de deployment: `https://pachangas-huqrjllth-persianas-almar-web-s-projects.vercel.app`.
