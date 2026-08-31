@@ -69,6 +69,40 @@ alter table public.pachanga_venue_invalidations
     'venue_allocation_revision', 'venue_allocation_health'
   ));
 
+create or replace function private.pachanga_venue_can_read_invalidation_v1(
+  target_audience_kind text,
+  target_audience_id uuid
+)
+returns boolean
+language sql
+stable
+security definer
+set search_path = pg_catalog
+as $$
+  select (select auth.uid()) is not null and (
+    target_audience_kind in ('PUBLIC','AUTHENTICATED')
+    or (target_audience_kind = 'USER' and target_audience_id = (select auth.uid()))
+    or (target_audience_kind = 'CLUB' and private.pachanga_club_can_v1(
+      target_audience_id, (select auth.uid()), 'venue_read'
+    ))
+    or (target_audience_kind = 'TEAM' and (
+      exists (select 1 from public.pachanga_groups groups
+        where groups.id = target_audience_id and groups.owner_id = (select auth.uid()))
+      or exists (select 1 from public.pachanga_group_members members
+        where members.group_id = target_audience_id and members.user_id = (select auth.uid()))
+    ))
+    or (target_audience_kind = 'COMPETITION'
+      and private.pachanga_competition_venue_can_v1(
+        target_audience_id, (select auth.uid()), 'read'
+      ))
+  );
+$$;
+
+revoke all on function private.pachanga_venue_can_read_invalidation_v1(text,uuid)
+  from public, anon, authenticated;
+grant execute on function private.pachanga_venue_can_read_invalidation_v1(text,uuid)
+  to authenticated;
+
 do $$
 declare target_table text;
 begin

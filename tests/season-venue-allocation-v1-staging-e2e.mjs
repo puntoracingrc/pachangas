@@ -367,6 +367,7 @@ const prerequisiteFlagKeys = [
   "venueCanonicalReservationsEnabled",
   "venueMatchBindingEnabled",
   "venueR4dIntegrationEnabled",
+  "demoWorldV34Enabled",
 ];
 
 let completed = false;

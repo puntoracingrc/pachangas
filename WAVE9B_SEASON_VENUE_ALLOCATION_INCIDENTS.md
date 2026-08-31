@@ -1550,3 +1550,84 @@ passes all six races with exactly one authoritative winner per conflict.
 - Regression evidence: a replay against the committed dataset is rejected at
   the preflight with the stable Wave 9B error, leaves every count unchanged and
   reports Referee Assignments/private beta both ON at revision 4.
+
+### W9B-091 - Authenticated staging activation omits the Demo V3.4 prerequisite
+
+- Classification: `SIMULATION_BUG`
+- Status: `detected / correction_pending`
+- Original reproducer: run
+  `node tests/season-venue-allocation-v1-staging-e2e.mjs` against the certified
+  228-ledger staging branch while Demo V3.4 remains OFF in its original flag
+  snapshot.
+- Impact: the first authenticated flag transition is rejected by
+  `pachanga_venue_wave9b_demo_dependencies_check` when it requests Demo V3.5
+  without Demo V3.4. The product constraint remains intact, no venue allocation
+  command runs and the harness cleanup removes its two synthetic accounts and
+  roles.
+- Required correction: determine whether Demo V3.4 is a deliberate dependency;
+  if confirmed, activate and restore it through the same canonical flag RPC,
+  then rerun the exact authenticated two-device scenario and require the full
+  staging pass plus zero synthetic-account residue.
+
+### W9B-092 - Competition venue managers cannot read allocation invalidations
+
+- Classification: `PRODUCT_BUG`
+- Status: `detected / correction_pending`
+- Original reproducer: after a successful authenticated subscription and
+  `postgres_changes` binding on `pachanga_venue_invalidations`, execute
+  `allocation.generate` from device A and wait 30 seconds on device B for the
+  inserted `venue_allocation_plan` invalidation.
+- Impact: the server-authoritative command succeeds, but device B times out at
+  `WAVE9B_REALTIME_TIMEOUT:allocation.generate`; the E2E cannot yet certify
+  invalidation-driven canonical refetch or reconnect convergence.
+- Diagnosis: `supabase_realtime` contains the table and the row is emitted with
+  the correct `COMPETITION` audience. A controlled account receives an
+  `AUTHENTICATED` invalidation but cannot select or receive the competition row
+  because the inherited RLS helper delegates to the generic competition ACL,
+  which predates `competition_venue_manager`.
+- Required correction: delegate competition-scoped Venue invalidations to the
+  Wave 9B venue-specific ACL, preserve canonical refetch and avoid applying WAL
+  payloads as authority; then rebuild isolated staging and rerun the original
+  two-device scenario through Preview.
+
+### W9B-093 - Supabase branch creation ignores JSON-only output
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed + regression_verified`
+- Original reproducer: invoke `supabase branches create` with `-o json` and
+  parse stdout as one JSON document after the previous disposable branch has
+  been removed.
+- Impact: the CLI creates the branch but prefixes stdout with a human-readable
+  line, so the redacting parser raises `Unexpected token 'C'`. No duplicate
+  creation may be attempted until the existing branch is identified.
+- Required correction: locate the branch by its unique name through a redacted
+  branch list, retain only non-secret ID/ref/status fields, and use those fields
+  for the remaining isolated bootstrap.
+- Resolution: the unique branch was resolved from the project list as
+  `wave9b-season-venue-e2e-20260831-r2`; only its ID, project ref and health
+  status were retained for the secure wrapper, and no second branch was
+  created.
+- Regression evidence: the replacement branch reached exact ledger 228 and
+  schema hash `4f3fa78e...` with the production project ref explicitly rejected.
+
+### W9B-094 - Dataset wrapper cannot parse an empty composite readback
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed + regression_verified`
+- Original reproducer: apply the transactional staging dataset successfully,
+  then execute the wrapper's single composite `json_build_object` query through
+  the transaction pooler and parse stdout without first checking for an empty
+  result.
+- Impact: the parser raises `Unexpected end of JSON input` after the seed
+  command exits zero. Replaying the deterministic dataset would be unsafe
+  because it may already be committed.
+- Required correction: inspect one stable scalar count first, prove whether the
+  seed committed, and replace the fragile composite parser with explicit
+  scalar readback before any retry.
+- Resolution: no replay was attempted. Explicit scalar reads proved the exact
+  committed topology, while the canonical dataset and staging E2E both enforce
+  `ON_ERROR_STOP` so SQL errors cannot be misclassified as empty JSON.
+- Regression evidence: focal tests now require `\\set ON_ERROR_STOP on` in the
+  dataset and `ON_ERROR_STOP=1` in the E2E runner; the readback reports ledger
+  228, 3 Clubs, 12 teams, 120 players, 6 referees, 6 venues, 12 pitches, one
+  League, one Tournament and 50 CanonicalMatches.

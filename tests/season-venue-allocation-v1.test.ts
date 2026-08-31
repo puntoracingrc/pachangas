@@ -98,6 +98,7 @@ test("all eight migrations are forward-only, gated and privacy-safe", async () =
   assert.match(joined, /command_pachanga_competition_venue_allocation_v1/);
   assert.match(joined, /competition_venue_allocation_publish_enabled/);
   assert.match(joined, /demo_world_v35_enabled/);
+  assert.match(joined, /pachanga_competition_venue_can_v1\([\s\S]*'read'/);
   assert.match(joined, /joint_schedule_venue_optimization_enabled/);
   assert.match(joined, /venue_payments_enabled/);
   assert.match(joined, /revoke all on function/);
@@ -113,16 +114,19 @@ test("staging is canonical, transactional and two-device reproducible", async ()
   assert.match(bootstrap, /SEASON_VENUE_STAGING_SCHEMA_PRODUCTION_TARGET_FORBIDDEN/);
   assert.match(bootstrap, /PSQL_ATOMIC_LEDGER/);
   assert.match(bootstrap, /pachanga_groups_team_code_key/);
-  assert.match(bootstrap, /89ae7c302759827bcb58d747eec4ff538422548c3792b105d8d4ccf454141c26/);
+  assert.match(bootstrap, /4f3fa78ef66026dc8e14f45bfc9957b3154daf6b616a4a3f07106776fcb4bd93/);
   assert.doesNotMatch(bootstrap, /db", "push/);
   assert.match(dataset, /WAVE9B_STAGING_DATASET_REQUIRES_EMPTY_BRANCH/);
+  assert.match(dataset, /\\set ON_ERROR_STOP on/);
   assert.match(dataset, /command_pachanga_league_participation_platform_v1/);
   assert.match(dataset, /command_pachanga_referee_assignment_beta_admin_v1/);
   assert.match(dataset, /TOURNAMENT_PRIVATE_BETA_V1/);
   assert.match(dataset, /begin;[\s\S]*commit;/i);
   assert.match(staging, /createAccount\("device-a"\)/);
   assert.match(staging, /createAccount\("device-b"\)/);
+  assert.match(staging, /"ON_ERROR_STOP=1"/);
   assert.match(staging, /WAVE9B_REALTIME_SUBSCRIPTION_TIMEOUT/);
+  assert.match(staging, /"demoWorldV34Enabled"/);
   assert.match(staging, /assert\.equal\(stale\.status, 409\)/);
   assert.match(staging, /assert\.equal\(topology\.matches, 50\)|matches: 50/);
   assert.doesNotMatch(staging, /NEXT_PUBLIC_.*SERVICE_ROLE|pachangasiq\.com.*previewUrl/);
