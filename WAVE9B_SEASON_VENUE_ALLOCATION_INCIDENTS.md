@@ -2619,3 +2619,87 @@ passes all six races with exactly one authoritative winner per conflict.
   official CLI to only the previously confirmed Pachangas production ref.
 - Regression evidence: link exits zero; the subsequent IPv4 dry-run connects,
   exits zero and lists the exact eight expected migrations with no SQL applied.
+
+### W9B-145 - Optional pg-delta cache misses its temporary CA after push
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed + regression_verified`
+- Original reproducer: apply the exact eight-migration production plan through
+  the isolated Supabase CLI release directory.
+- Impact: all eight migrations report `Applying migration ...`, the push exits
+  zero and finishes, but the optional post-push `pg-delta` catalog cache cannot
+  read `pgdelta-target-ca.crt` from its ephemeral runtime. Replaying the push
+  could duplicate release work and is prohibited until authoritative readback.
+- Required correction: do not retry or repair migration history. Reconcile the
+  linked ledger at exactly 228, read exact migration names plus Wave 9B objects,
+  RLS, ACL, indexes and born-OFF flags directly from PostgreSQL, then run
+  security and performance Advisors; treat those canonical readbacks as the
+  release authority.
+- Correction implemented: the push was not replayed; independent linked and SQL
+  readbacks replaced the optional catalog cache as authority.
+- Regression evidence: local/remote ledger is 228/228 with zero drift, all eight
+  exact names exist, nineteen relations exist, all twelve public relations have
+  RLS, client direct writes are zero, 37/37 indexes are valid/ready, Wave 9B and
+  future flags remain OFF, zero Wave 9B rows exist and both Advisors completed.
+
+### W9B-146 - Realtime diagnostic queries the invalidation table in `private`
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed + regression_verified`
+- Original reproducer: include the Venue invalidation publication check in the
+  post-migration ACL query using schema `private`.
+- Impact: the aggregate reports zero Realtime bindings although the canonical
+  Wave 9A contract defines `pachanga_venue_invalidations` in `public`; all RPC
+  and ACL checks in the same query pass. No database write occurs.
+- Required correction: derive the relation schema from the immutable Wave 9A
+  migration, repeat only the publication/RLS/policy check against the public
+  relation and require exactly one `supabase_realtime` membership.
+- Correction implemented: the readback now targets
+  `public.pachanga_venue_invalidations`, matching the immutable Wave 9A schema.
+- Regression evidence: exactly one `supabase_realtime` membership exists; RLS
+  is enabled, both canonical select policies exist, anon/authenticated retain
+  scoped reads and both roles have zero direct write privileges.
+
+### W9B-147 - Security Advisor warns on authenticated server-authority RPCs
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed + regression_verified`
+- Original reproducer: run the production Security Advisor immediately after
+  applying Wave 9B and filter notices attributable to the nineteen new
+  relations and their canonical RPCs.
+- Impact: the Advisor raises eight generic
+  `authenticated_security_definer_function_executable` warnings for the write
+  command and protected read models. Converting them blindly to invoker rights
+  would require direct client access to private authority data and would break
+  the server-authoritative contract; accepting them without checking internal
+  guards would also be unsafe.
+- Required correction: audit each warned signature for `auth.uid()` plus the
+  canonical competition/Club/platform permission guard, reconfirm zero anon
+  execute access and authenticated-only execution, and retain the functions
+  only if the existing SQL/RLS suite proves unauthorized actors are rejected.
+- Correction implemented: all eight Advisor signatures were checked directly
+  in `pg_proc` and against their effective grants instead of suppressing or
+  weakening the RPC authority pattern.
+- Regression evidence: 8/8 are present, use `auth.uid()`, invoke a canonical
+  competition/pool/platform guard, grant execution to authenticated actors and
+  deny anon execution. The already-passing DB/RLS suite contains explicit
+  unauthorized read/command and direct-table-access rejection cases.
+
+### W9B-148 - Advisor guard audit omits the pool-specific read guard
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed + regression_verified`
+- Original reproducer: audit the eight warned RPC bodies while recognizing only
+  the general competition guard and the platform authority guard.
+- Impact: seven signatures pass but
+  `get_pachanga_competition_venue_pool_v1` is reported as unsafe even though it
+  uses the narrower canonical `pachanga_venue_pool_can_read_v1` guard. No
+  database write or ACL change occurs.
+- Required correction: include that exact pool-specific guard in the accepted
+  authorization matrix, rerun all eight signatures and require no unguarded
+  function, no anon execution and authenticated-only grants.
+- Correction implemented: the audit recognizes only the exact additional
+  `pachanga_venue_pool_can_read_v1` helper for the pool read model.
+- Regression evidence: the repeated 8-signature matrix returns `unsafe=[]`,
+  `withAuthUid=8`, `withCanonicalGuard=8`, `authenticatedExecute=8` and
+  `anonExecute=0`.
