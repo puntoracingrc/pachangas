@@ -212,3 +212,14 @@ test("V3C responsive surfaces cover portrait, compact landscape and reduced moti
   assert.match(demoStyles, /demoChallengeFocus/);
   assert.match(demoStyles, /demoChallengeCard/);
 });
+
+test("the PWA caches the Retos read shell while challenge writes remain online-only", async () => {
+  const [worker, panel] = await Promise.all([
+    source("app/service-worker-source.ts"),
+    source("app/mercado/team-challenges-panel.tsx"),
+  ]);
+  assert.match(worker, /precacheUrls = \[[\s\S]*"\/retos"/);
+  assert.match(worker, /CACHEABLE_NAVIGATION_PATHS = new Set\(\[[^\]]*"\/retos"/);
+  assert.match(panel, /!navigator\.onLine/);
+  assert.doesNotMatch(panel, /offline.*queue|queued.*challenge/i);
+});
