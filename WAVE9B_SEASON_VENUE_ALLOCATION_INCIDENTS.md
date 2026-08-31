@@ -1662,3 +1662,51 @@ passes all six races with exactly one authoritative winner per conflict.
   `club_venue_manager` and `club_reservation_manager`; if acceptance belongs to
   the latter, give the synthetic actor that existing role rather than widening
   production authority, then rerun the exact E2E.
+
+### W9B-097 - Branch health poll uses a reserved zsh variable
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed + regression_verified`
+- Original reproducer: poll the fresh Supabase branch from `zsh` while assigning
+  the CLI readback to a local variable named `status`.
+- Impact: `zsh` exits immediately with `read-only variable: status`; the branch
+  remains untouched and no database command is replayed.
+- Required correction: rename the shell-local readback variable, rerun only the
+  idempotent branch-status query and require `ACTIVE_HEALTHY` before bootstrap.
+- Resolution: the local variable was renamed to `branch_state`; no branch
+  mutation command was repeated.
+- Regression evidence: the isolated `r4` branch returned
+  `ACTIVE_HEALTHY/MIGRATIONS_FAILED`, which is the expected pre-bootstrap state.
+
+### W9B-098 - Vercel agent mode rejects piped environment values
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed + regression_verified`
+- Original reproducer: pipe the isolated branch URL directly into
+  `vercel env add` with Vercel CLI 59.4.0 running in agent non-interactive mode.
+- Impact: the CLI returns `missing_value` before persisting any variable; the
+  existing branch-scoped Preview configuration remains unchanged.
+- Required correction: keep the value in process memory, pass it through the
+  CLI's supported `--value` argument without logging it, and read back only the
+  variable name, environment and Git-branch scope.
+- Resolution: both public Supabase Preview values were supplied from in-memory
+  shell variables via `--value`; neither value was printed or persisted locally.
+- Regression evidence: Vercel reports both keys as Preview-only configuration
+  for `codex/recurring-venue-bulk-allocation-v1`.
+
+### W9B-099 - Vercel environment JSON is not a flat array
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed + regression_verified`
+- Original reproducer: pipe `vercel env ls preview <branch> --json` into a
+  filter that treats the root document as an array of variables.
+- Impact: the readback filter exits with `Cannot index array with string key`;
+  no Vercel configuration is changed and no value is printed.
+- Required correction: parse the documented root container in process memory,
+  redact all values, and emit only key, target, branch and type for the two
+  Wave 9B Preview variables.
+- Resolution: the readback now parses `root.envs` and discards `value` plus all
+  identifiers before emitting evidence.
+- Regression evidence: exactly `NEXT_PUBLIC_SUPABASE_URL` and
+  `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` were returned with target `preview`,
+  visibility `config` and the exact Wave 9B Git branch.
