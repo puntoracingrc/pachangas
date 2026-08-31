@@ -1,6 +1,6 @@
 # Competition Venue Pools V1 Report
 
-Estado: `RELEASE CANDIDATE / STAGING CERTIFIED`
+Estado: `RELEASED / ACTIVE / PRODUCTION VERIFIED`
 
 Fecha: 2026-08-31 CEST
 
@@ -66,7 +66,16 @@ solo pueden participar internamente en quality para actores autorizados.
 - Pitch privado/no autorizado/modalidad incompatible: rechazo canonico;
 - oferta/aceptacion/replay: idempotentes;
 - escala: 1.000 pools, reads p50/p95 certificados y rollback completo;
-- staging: pool ofrecido, aceptado y usado por Liga/Torneo sinteticos;
+- staging retirado: pool ofrecido, aceptado y usado por Liga/Torneo sinteticos;
 - PII, Auth IDs, coordenadas privadas y Stripe en Demo/staging: `0`.
 
-Produccion permanece pendiente del release coordinado de Wave 9B.
+## Produccion
+
+- PR `#239` fusionado y deployment funcional `READY` para
+  `78551dd6d2edef514c47fe45d8cb2ace3c76e79c`;
+- `competition_venue_pool_enabled` activo por comando de plataforma, con
+  revision de settings `18` y secuencia de servidor `121` al cierre;
+- 12 read models autenticados, tablas publicas con RLS y tablas privadas sin
+  grants `anon`/`authenticated`;
+- canary de pool propio y externo: `PASS`, rollback y cero residuo;
+- staging, variables de rama y Preview exacta retirados tras el smoke.

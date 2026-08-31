@@ -1,6 +1,6 @@
 # Season Venue Planner V1 Production Release
 
-Estado: `RELEASE CANDIDATE / STAGING CERTIFIED / PRODUCTION PENDING`
+Estado: `RELEASED / ACTIVE / PRODUCTION VERIFIED`
 
 | Campo | Valor |
 | --- | --- |
@@ -8,11 +8,14 @@ Estado: `RELEASE CANDIDATE / STAGING CERTIFIED / PRODUCTION PENDING`
 | main inicial | `592a3dcc1147df41fb05c21703f131e66fc75a0a` |
 | HEAD certificado | `0f5d25f0b4bd135f84b9faf7fae58bfcacab5ab7` + cierre documental/test |
 | rama | `codex/recurring-venue-bulk-allocation-v1` |
-| PR | `#239`, draft durante certificacion |
+| PR funcional | `#239`, fusionado |
+| main funcional | `78551dd6d2edef514c47fe45d8cb2ace3c76e79c` |
+| deployment funcional | `dpl_BMxWwYUMnnRNFcjgYrF3zk65oHgF`, `READY` |
+| dominio | `https://pachangasiq.com` |
 | migraciones | 8 forward-only, `220 -> 228` |
 | schema hash | `7b9a69ed794f9f71dc0a0efc91c9ae75b20f79fef9c4261eb5c19a4a1d0fee12` |
-| Preview exacta certificada | `https://pachangas-mgz54fbv0-persianas-almar-web-s-projects.vercel.app` |
-| staging Supabase | efimero `r9`, certificado y pendiente de retirada |
+| Preview exacta certificada | `0f5d25f`, retirada tras QA |
+| staging Supabase | efimero `r9`, certificado y retirado |
 | entidades reales | `0` |
 | Stripe | `UNTOUCHED` |
 
@@ -30,7 +33,8 @@ Estado: `RELEASE CANDIDATE / STAGING CERTIFIED / PRODUCTION PENDING`
 | `20260830223014` | `competition_venue_allocation_hardening_flags_v1` | `5bb88409be381e517824121ba6e508bfdd4788dbd97ba0af9453c22020f6d036` |
 
 Las 220 migraciones historicas permanecen intactas. Fresh bootstrap y upgrade
-producen el mismo esquema. Todos los flags nuevos nacen OFF.
+producen el mismo esquema. Todos los flags nuevos nacieron OFF y se activaron
+despues del deployment mediante la RPC canonica de plataforma.
 
 ## Staging autenticado
 
@@ -42,7 +46,8 @@ Dos usuarios/dispositivos recorrieron pool, serie, materializacion, freeze,
 automatico, manual, hibrido, hold concurrente, validacion, publicacion,
 reservas, bindings, cancelacion, reemplazo R4D, reconfirmacion arbitral,
 Realtime, refetch y reconexion. Resultado: `PASS`, cero duplicados y cero
-cambios de horario. La rama se conserva unicamente hasta completar release.
+cambios de horario. La rama Supabase y sus identidades sinteticas se retiraron
+despues del release.
 
 ## Gates locales
 
@@ -66,13 +71,45 @@ El baseline era `699/699`; Wave 9B anade diez pruebas netas y no elimina
 cobertura. El unico Advisor no corregido es el indice redundante del baseline
 historico en staging (`W9B-116`), fuera de las ocho migraciones Wave 9B.
 
-## Release pendiente
+## Release productivo
 
-Antes de declarar `ACTIVE` quedan: backup recuperable, readback de ledger 220,
-aplicacion exacta de las ocho migraciones con flags OFF, merge, deployment
-exacto, activacion secuencial mediante `set_pachanga_venue_flags_v1`, canary
-productivo con rollback/readback cero, smoke de dominio/PWA y retirada de
-staging, variables Preview, procesos y worktree.
+- backup previo recuperable verificado mediante restauracion desechable;
+- ocho migraciones aplicadas en orden, con ledger repositorio/local/remoto
+  `228/228/228`, ultima version `20260830223014` y cero drift;
+- 19 tablas Wave 9B, 37 indices validos, 12 read models autenticados y RLS/ACL
+  confirmados directamente en PostgreSQL;
+- los diez flags Wave 9B quedaron `ON` mediante
+  `set_pachanga_venue_flags_v1`; readback final revision `18`, server sequence
+  `121`;
+- canary productivo sobre motores reales: `WAVE9B_PRODUCTION_CANARY_PASS`, seis
+  Matches, siete revisiones de reserva, seis bindings activos, `ROLLBACK` y
+  readback cero en 42 familias;
+- Realtime publica invalidaciones canonicas en
+  `pachanga_venue_invalidations`; los clientes releen snapshots y no aplican el
+  payload WAL como autoridad;
+- smoke en `1440x900`, `390x844` y `844x390`: cero overflow, imagenes rotas o
+  errores de consola; Demo V3.5 confirma `128` Matches, `127` reservas, `126`
+  bindings y `1` no asignado;
+- manifest y Service Worker productivos verificados; Demo V3.5 carga desde
+  cache offline y converge tras reconexion;
+- logs del deployment: solo `200/304`, sin `4xx` o `5xx` inesperados;
+- branch Supabase efimero, deployment Preview y variables Preview de rama:
+  retirados.
 
-Joint schedule/venue optimization, payments, calendarios externos, Stripe y
-entidades reales permanecen fuera de alcance y OFF.
+## Estado final
+
+| Superficie | Estado |
+| --- | --- |
+| recurring series y materialization | `ON` |
+| Venue Pools y allocation foundation | `ON` |
+| automatic, manual, hybrid, holds y publish | `ON` |
+| Demo World V3.5 | `ON` |
+| Wave 9A reservations/bindings y R4D | `ON`, preservados |
+| joint schedule/venue optimization | `OFF` |
+| venue payments, public recurring sales, external calendar/integrations | `OFF` |
+| Stripe | `UNTOUCHED` |
+| entidades, avisos o cobros reales creados por QA | `0 / 0 / 0` |
+| Android, iPhone y PWA instalada fisica | `PENDING` |
+
+No se recalculo ni modifico Rating, Billing, disciplina, resultados, horarios
+deportivos ni autoridad arbitral fuera de la reconfirmacion R4D certificada.
