@@ -105,7 +105,7 @@ test("match sharing is separate from group and admin invitations", async () => {
   assert.match(home, /create_pachanga_match_link_invitation_v1/);
   assert.match(home, /Compartir partido/);
   assert.match(home, /Invitar al partido/);
-  assert.match(home, /<button type="button" onClick=\{\(\) => void copyTeamInvite\(\)\}[^>]*>Copiar invitación<\/button>/);
+  assert.match(home, /<button type="button" onClick=\{\(\) => void copyTeamInvite\(\)\} disabled=\{!remoteGroupId\}>[\s\S]*Copiar invitación[\s\S]*<\/button>/);
   assert.match(home, /Invitar como admin \(no owner\)/);
   assert.match(home, /\.eq\("user_id", memberUserId\)/);
   assert.match(home, /String\(group\.owner_id \?\? ""\) === memberUserId/);

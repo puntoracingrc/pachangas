@@ -241,20 +241,22 @@ test("API routes are authenticated, no-store, origin-checked and service-role-fr
   assert.doesNotMatch(combined, /SUPABASE_SERVICE_ROLE_KEY|service_role/);
 });
 
-test("Plans, navigation and PWA write classification expose organizer access without enabling Checkout", async () => {
-  const [plans, shell, home, navigation] = await Promise.all([
+test("Plans and dedicated organizer routes expose access without entering the social primary navigation", async () => {
+  const [plans, shell, applicationsPage, applyPage, navigation] = await Promise.all([
     source("app/_components/organizer-plans-client.tsx"),
     source("app/_components/official-product-shell-v2.tsx"),
-    source("app/page.tsx"),
+    source("app/organizacion/solicitudes/page.tsx"),
+    source("app/organizacion/solicitar-acceso/page.tsx"),
     source("app/_components/product-navigation-contract.ts"),
   ]);
   assert.match(plans, /Solicitar colaboración/);
   assert.match(plans, /Solicitar acceso/);
   assert.match(plans, /\/organizacion\/solicitar-acceso\?plan=/);
-  assert.match(shell, /contextualDestinationsForPerspective\(perspective\)/);
-  assert.match(navigation, /label: "Organizar"/);
-  assert.match(navigation, /href: "\/organizacion\/solicitudes"/);
-  assert.match(home, /<Link href="\/organizacion\/solicitudes">Organizar<\/Link>/);
+  assert.doesNotMatch(shell, /contextualDestinationsForPerspective\(perspective\)/);
+  assert.match(navigation, /const organizerTools[\s\S]*label: "Organizar"/);
+  assert.match(navigation, /const organizerTools[\s\S]*href: "\/organizacion\/solicitudes"/);
+  assert.match(applicationsPage, /OrganizerAccessClient surface="list"/);
+  assert.match(applyPage, /OrganizerAccessClient initialPlanCode=\{plan\} surface="apply"/);
   assert.ok(knownClientWriteRpcNames().includes("command_pachanga_organizer_access_application_v1"));
 });
 

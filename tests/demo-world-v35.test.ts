@@ -79,12 +79,14 @@ test("automatic and hybrid histories reconcile locks, incidents and canonical pu
 });
 
 test("V3.5 is sanitized, read-only, PWA-cacheable and visually responsive", async () => {
-  const [data, view, css, app, page, worker, generator] = await Promise.all([
+  const [data, view, css, app, page, fullPage, currentManifest, worker, generator] = await Promise.all([
     bytes("public/demo-world/v3-5/season-field-allocation.json"),
     bytes("app/demo-world/demo-world-v3-5-season-field-allocation.tsx"),
     bytes("app/demo-world/demo-world-v3-5-season-field-allocation.module.css"),
     bytes("app/demo-world/demo-world-app.tsx"),
     bytes("app/demo/page.tsx"),
+    bytes("app/admin/demo/page.tsx"),
+    bytes("app/demo-world/current-demo-world-manifest.ts"),
     bytes("app/service-worker-source.ts"),
     bytes("scripts/demo-world/generate-demo-world-v3-5.ts"),
   ]).then((values) => values.map((value) => value.toString("utf8")));
@@ -98,7 +100,9 @@ test("V3.5 is sanitized, read-only, PWA-cacheable and visually responsive", asyn
   assert.match(css, /pointer: coarse/);
   assert.match(app, /DemoWorldV35SeasonFieldAllocation/);
   assert.match(app, /closest\("details"\)\?\.removeAttribute\("open"\)/);
-  assert.match(page, /version: 3\.5/);
+  assert.match(page, /mode="social"/);
+  assert.match(fullPage, /mode="full"/);
+  assert.match(currentManifest, /version: 3\.5/);
   assert.match(worker, /\/demo-world\/v3-5\/manifest\.json/);
   assert.match(generator, /season-venue-allocation-v1-db-runner\.mjs/);
   assert.match(generator, /temporaryDatabaseDestroyed: true/);

@@ -136,13 +136,10 @@ test("Official UI beta surfaces reuse the same canonical directories and hide re
   assert.match(refereeMarket, /Crear mi ficha de árbitro/);
   assert.match(refereeMarket, /<select name="club">/);
   assert.doesNotMatch(refereeMarket, /placeholder="ID del Club"/);
-  assert.match(market, /id: "clubes"/);
-  assert.match(market, /selfServiceCreationEnabled/);
-  assert.match(market, /selfServiceEnabled/);
-  assert.match(market, /refereeProductEnabled/);
-  assert.match(market, /clubProductEnabled/);
-  assert.match(market, /value === "arbitros"[\s\S]*?value === "clubes"/);
-  assert.match(market, /<ClubDirectoryClient directoryEnabled=\{clubDirectoryEnabled\} embedded/);
+  assert.doesNotMatch(market, /id: "clubes"|id: "arbitros"/);
+  assert.doesNotMatch(market, /ClubDirectoryClient|RefereeMarketplacePanel/);
+  assert.match(refereeMarket, /marketplaceEnabled/);
+  assert.match(clubManager, /flags\.selfServiceCreationEnabled !== true/);
 });
 
 test("SEO is indexable only from canonical public read models", async () => {

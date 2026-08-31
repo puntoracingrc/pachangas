@@ -20,7 +20,8 @@ test("official Home exposes one primary action and one visual authority per cont
   assert.equal(component.match(/data-official-identity-controls="integrated"/g)?.length, 1);
   assert.equal(component.match(/data-official-team-access="identity"/g)?.length, 1);
   assert.match(page, /<OfficialHomeGameDashboard/);
-  assert.match(page, /<OfficialTeamAccess/);
+  assert.doesNotMatch(page, /<OfficialTeamAccess/);
+  assert.match(page, /contextVisual=\{hasHomeTeamIdentity/);
   assert.doesNotMatch(component, /<\/div>\s*\{access\}\s*<OfficialUpcomingMatchesRail/);
 });
 
@@ -33,7 +34,7 @@ test("official Home uses the canonical team shield and never another roster card
   assert.match(page, /: homeObjectPlayer \? \([\s\S]*<PlayerCosmeticCard/);
   assert.match(page, /const homeObjectPlayer = hasHomeTeamIdentity \? undefined : ownPlayer/);
   assert.doesNotMatch(page, /ownPlayer \?\? activeGroupPlayers\[0\]/);
-  assert.match(page, />Mi carta<\/button>/);
+  assert.match(page, /contextVisual=\{hasHomeTeamIdentity/);
 });
 
 test("authenticated theme defaults to dark without overriding explicit preferences", () => {
@@ -102,7 +103,9 @@ test("Market has one navigation while retaining authoritative operations", async
   assert.equal(component.match(/data-official-market-navigation="single"/g)?.length, 1);
   assert.equal(market.match(/<OfficialMarketGameView/g)?.length, 1);
   assert.doesNotMatch(market, /className="market-tabs"/);
-  for (const tab of ["jugadores", "partidos", "retos", "equipos", "arbitros"]) assert.match(market, new RegExp(`id: "${tab}"`));
+  for (const tab of ["partidos", "jugadores", "equipos"]) assert.match(market, new RegExp(`id: "${tab}"`));
+  for (const tab of ["retos", "arbitros", "clubes"]) assert.doesNotMatch(market, new RegExp(`id: "${tab}"`));
+  assert.match(market, /get\("tab"\) === "retos"[\s\S]*window\.location\.replace\("\/retos"\)/);
   assert.match(market, /request_pachanga_open_match_authoritative_v2/);
   assert.match(market, /operation_id: crypto\.randomUUID\(\)/);
   assert.doesNotMatch(component, /supabase|localStorage|\.rpc\(/i);
@@ -119,15 +122,14 @@ test("product primary navigation has one canonical destination per menu item", a
   for (const [tab, href] of [
     ["inicio", "/?mobile=inicio"],
     ["partido", "/?mobile=partido"],
-    ["competir", "/competiciones"],
+    ["retos", "/retos"],
     ["mercado", "/mercado"],
-    ["equipo", "/?mobile=equipo"],
-    ["perfil", "/?mobile=perfil"],
   ]) {
     assert.match(shell, new RegExp(`${tab}: "${href.replace(/[?]/g, "\\?")}"`));
   }
 
-  assert.match(page, /links=\{\{ competir: "\/competiciones", mercado: "\/mercado" \}\}/);
+  assert.match(shell, /const primaryItems[^=]*= PRODUCT_PRIMARY_DESTINATIONS/);
+  assert.match(page, /links=\{\{ mercado: "\/mercado", retos: "\/retos" \}\}/);
   assert.match(page, /const openMatches = openMatchesByDate\(matches\)/);
   assert.match(page, /requestsNextMatchFromPrimaryNavigation\(entrySearch, entryRoute\)/);
   assert.match(page, /setActiveMatchManagerPane\(requestedMatchPane === "admin" \? "admin" : "proximo"\)/);
@@ -169,14 +171,19 @@ test("V2.1 lab is noindex, dark by default and isolated from product authority",
 });
 
 test("Demo World authority and Platform Admin remain outside V2.1 presentation components", async () => {
-  const [lab, demo, admin] = await Promise.all([
+  const [lab, demo, publicDemo, fullDemo, admin] = await Promise.all([
     source("app/laboratorio-official-ui-v2-1/lab-client.tsx"),
     source("app/demo-world/demo-world-app.tsx"),
+    source("app/demo/page.tsx"),
+    source("app/admin/demo/page.tsx"),
     source("app/admin/_components/platform-shell.tsx"),
   ]);
 
   assert.doesNotMatch(lab, /DemoWorldApp|DEMO_WORLD_FIXTURES/);
   assert.match(demo, /DemoWorld/);
+  assert.match(publicDemo, /mode="social"/);
+  assert.match(fullDemo, /session\.access\.role !== "platform_owner"/);
+  assert.match(fullDemo, /mode="full"/);
   assert.match(admin, /data-shell-variant="PLATFORM_ADMIN"/);
   assert.doesNotMatch(admin, /OfficialHomeGameDashboard|OfficialMatchGameHub/);
 });

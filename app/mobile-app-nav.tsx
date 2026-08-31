@@ -10,7 +10,6 @@ export type MobileAppTab = ProductPrimaryTab;
 
 type MobileAppNavProps = {
   active: MobileAppTab;
-  adminViewPreview?: AdminViewPreviewControl;
   links?: Partial<Record<MobileAppTab, string>>;
   onNavigate?: (tab: MobileAppTab) => void;
 };
@@ -68,6 +67,14 @@ function MobileNavIcon({ name }: { name: MobileAppTab }) {
       <svg aria-hidden="true" viewBox="0 0 24 24">
         <circle cx="9" cy="8" r="3" />
         <path d="M3.8 19c.5-4 2.3-6 5.2-6s4.7 2 5.2 6M16.5 8.5h4M18.5 6.5v4M16 15.5h5M18.5 13v5" />
+      </svg>
+    );
+  }
+
+  if (name === "retos") {
+    return (
+      <svg aria-hidden="true" viewBox="0 0 24 24">
+        <path d="M7 5h10v4a5 5 0 0 1-10 0zM7 7H3.5v1.5A4.5 4.5 0 0 0 8 13M17 7h3.5v1.5A4.5 4.5 0 0 1 16 13M12 14v4M8 21h8M9 18h6" />
       </svg>
     );
   }
@@ -131,10 +138,10 @@ export function AdminViewPreviewButton({
   );
 }
 
-export function MobileAppNav({ active, adminViewPreview, links = {}, onNavigate }: MobileAppNavProps) {
+export function MobileAppNav({ active, links = {}, onNavigate }: MobileAppNavProps) {
   return (
     <nav className="mobile-app-nav" aria-label="Navegación principal móvil">
-      <div className={`mobile-app-nav-inner${adminViewPreview ? " has-admin-view-preview" : ""}`}>
+      <div className="mobile-app-nav-inner">
         {items.map((item) => {
           const selected = active === item.id;
           const href = links[item.id];
@@ -177,13 +184,6 @@ export function MobileAppNav({ active, adminViewPreview, links = {}, onNavigate 
             </button>
           );
         })}
-        {adminViewPreview ? (
-          <AdminViewPreviewButton
-            active={adminViewPreview.active}
-            className="mobile-app-nav-item mobile-app-role-preview"
-            onToggle={adminViewPreview.onToggle}
-          />
-        ) : null}
       </div>
     </nav>
   );

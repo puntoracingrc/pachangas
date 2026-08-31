@@ -1,4 +1,6 @@
-export type ProductPrimaryTab = "inicio" | "partido" | "competir" | "mercado" | "equipo" | "perfil";
+export type ProductPrimaryTab = "inicio" | "partido" | "retos" | "mercado" | "competir" | "equipo" | "perfil";
+
+export type SocialCorePrimaryTab = "inicio" | "partido" | "retos" | "mercado";
 
 export type ProductActorPerspective =
   | "player"
@@ -14,7 +16,7 @@ export type ProductActorPerspective =
 
 export type ProductNavigationDestination = {
   href: string;
-  id: ProductPrimaryTab;
+  id: SocialCorePrimaryTab;
   label: string;
   short: string;
 };
@@ -28,16 +30,12 @@ export type ProductContextualDestination = {
 
 export const PRODUCT_PRIMARY_DESTINATIONS: ProductNavigationDestination[] = [
   { href: "/?mobile=inicio", id: "inicio", label: "Inicio", short: "IN" },
-  { href: "/?mobile=partido", id: "partido", label: "Partido", short: "PA" },
-  { href: "/competiciones", id: "competir", label: "Competir", short: "CO" },
+  { href: "/?mobile=partido", id: "partido", label: "Partidos", short: "PA" },
+  { href: "/retos", id: "retos", label: "Retos", short: "RE" },
   { href: "/mercado", id: "mercado", label: "Mercado", short: "ME" },
-  { href: "/?mobile=equipo", id: "equipo", label: "Equipo", short: "EQ" },
-  { href: "/?mobile=perfil", id: "perfil", label: "Perfil", short: "PF" },
 ];
 
-export const PRODUCT_PORTRAIT_DESTINATIONS = PRODUCT_PRIMARY_DESTINATIONS.filter(
-  ({ id }) => id !== "equipo",
-);
+export const PRODUCT_PORTRAIT_DESTINATIONS = PRODUCT_PRIMARY_DESTINATIONS;
 
 const commonPlayerTools: ProductContextualDestination[] = [
   { href: "/?mobile=equipo", id: "team", label: "Equipo", short: "EQ" },

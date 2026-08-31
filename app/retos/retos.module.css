@@ -1,0 +1,64 @@
+.page {
+  width: min(1180px, calc(100% - 32px));
+  min-height: calc(100dvh - 64px);
+  margin: 0 auto;
+  padding: 22px 0 38px;
+  color: var(--official-text, #f1f6f2);
+}
+
+.header {
+  min-height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border-bottom: 1px solid var(--official-line, rgba(217, 234, 225, 0.16));
+}
+.header div { min-width: 0; }
+.header span { color: var(--official-cyan-text, #51cfdf); font-size: 0.66rem; font-weight: 900; text-transform: uppercase; }
+.header h1 { margin: 3px 0 0; font-size: clamp(1.55rem, 4vw, 2.35rem); }
+.header button,
+.back {
+  min-height: 40px;
+  border: 1px solid var(--official-accent, #c8ef5d);
+  border-radius: 6px;
+  background: var(--official-accent, #c8ef5d);
+  padding: 0 14px;
+  color: #17210d;
+  font: inherit;
+  font-size: 0.74rem;
+  font-weight: 880;
+}
+.tabs { display: flex; gap: 5px; padding: 12px 0; }
+.tabs button {
+  min-height: 38px;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  background: transparent;
+  padding: 0 14px;
+  color: var(--official-muted, #a9bbb2);
+  font: inherit;
+  font-size: 0.74rem;
+  font-weight: 820;
+}
+.tabs .active { border-color: var(--official-line, rgba(217, 234, 225, 0.16)); background: rgba(200, 239, 93, 0.1); color: var(--official-accent, #c8ef5d); }
+.back { margin-bottom: 10px; border-color: var(--official-line, rgba(217, 234, 225, 0.16)); background: transparent; color: var(--official-text, #f1f6f2); }
+
+@media (max-width: 760px) and (orientation: portrait) {
+  .page { width: 100%; padding: 10px 10px calc(84px + env(safe-area-inset-bottom)); }
+  .header { min-height: 58px; }
+  .header h1 { font-size: 1.45rem; }
+  .header button { min-height: 36px; padding-inline: 10px; }
+  .tabs { position: sticky; z-index: 20; top: calc(48px + env(safe-area-inset-top)); overflow-x: auto; background: rgba(7, 17, 15, 0.94); }
+  .tabs button { flex: 1; padding-inline: 10px; }
+}
+
+@media (orientation: landscape) and (max-height: 600px) {
+  .page { width: 100%; min-height: 100%; padding: 6px 9px 12px; }
+  .header { min-height: 42px; }
+  .header h1 { margin: 0; font-size: 1rem; }
+  .header span { display: none; }
+  .header button { min-height: 30px; font-size: 0.62rem; }
+  .tabs { padding: 5px 0; }
+  .tabs button { min-height: 30px; font-size: 0.6rem; }
+}

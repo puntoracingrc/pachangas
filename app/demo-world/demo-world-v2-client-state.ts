@@ -44,6 +44,7 @@ import {
 const tabs: DemoWorldV2PrimaryTab[] = [
   "inicio",
   "partido",
+  "retos",
   "mercado",
   "equipo",
   "perfil",

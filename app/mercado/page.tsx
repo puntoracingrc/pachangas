@@ -1,20 +1,14 @@
 "use client";
 
-import Link from "next/link";
 import NextImage from "next/image";
 import { useEffect, useEffectEvent, useMemo, useRef, useState } from "react";
 import { OfficialMarketGameView, type OfficialMarketTab } from "../_components/official-market-game-view";
 import { OfficialProductShellV2 } from "../_components/official-product-shell-v2";
 import { attachVenueAutocomplete, type VenuePlace } from "../googlePlacesClient";
 import { useAdminViewPreview } from "../admin-view-preview";
-import { AdminViewPreviewButton } from "../mobile-app-nav";
 import { supabase } from "../supabaseClient";
-import type { TeamSummary } from "../team-social-contract";
 import { SERVICE_UNAVAILABLE_MESSAGE, userFacingError } from "../user-facing-error";
 import { ChallengeableTeamsPanel } from "./challengeable-teams-panel";
-import { RefereeMarketplacePanel } from "./referee-marketplace-panel";
-import { TeamChallengesPanel } from "./team-challenges-panel";
-import { ClubDirectoryClient } from "../clubes/club-directory-client";
 
 const googleMapsApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
 
@@ -344,17 +338,15 @@ type MarketMatchContext = {
   zone: string;
 };
 
-type MarketTab = "arbitros" | "clubes" | "equipos" | "jugadores" | "partidos" | "retos";
+type MarketTab = "equipos" | "jugadores" | "partidos";
 
 function marketTabFromParam(value: string | null): MarketTab {
   if (
-    value === "arbitros"
-    || value === "clubes"
-    || value === "equipos"
+    value === "equipos"
+    || value === "jugadores"
     || value === "partidos"
-    || value === "retos"
   ) return value;
-  return "jugadores";
+  return "partidos";
 }
 
 function validDayFilter(value: string | null) {
@@ -670,31 +662,6 @@ function normalizeText(value: string) {
     .replace(/\p{Diacritic}/gu, "");
 }
 
-function normalizeBirthDate(value?: string) {
-  if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return "";
-  const [year, month, day] = value.split("-").map(Number);
-  const parsed = new Date(year, month - 1, day);
-  if (parsed.getFullYear() !== year || parsed.getMonth() !== month - 1 || parsed.getDate() !== day) return "";
-  return value;
-}
-
-function ageFromBirthDate(birthDate?: string) {
-  const normalized = normalizeBirthDate(birthDate);
-  if (!normalized) return null;
-  const [birthYear, birthMonth, birthDay] = normalized.split("-").map(Number);
-  const today = new Date();
-  let age = today.getFullYear() - birthYear;
-  if (today.getMonth() + 1 < birthMonth || (today.getMonth() + 1 === birthMonth && today.getDate() < birthDay)) age -= 1;
-  return age >= 0 && age <= 120 ? age : null;
-}
-
-function cardTierClass(media: number) {
-  const score = overall(media);
-  if (score <= 64) return "fifa-card-bronze";
-  if (score <= 74) return "fifa-card-silver";
-  return "fifa-card-gold";
-}
-
 function positionShort(position: string, goalkeeperOnly: boolean) {
   if (goalkeeperOnly || position.toLowerCase().includes("portero")) return "POR";
   if (position.toLowerCase().includes("defensa") || position.toLowerCase().includes("cierre")) return "DEF";
@@ -740,16 +707,10 @@ export default function MarketPage() {
   const [modalityFilter, setModalityFilter] = useState(initialRoute.modality);
   const [positionFilter, setPositionFilter] = useState("Todas");
   const [canInvite, setCanInvite] = useState(false);
-  const [canProposeReferee, setCanProposeReferee] = useState(false);
-  const [refereeProductEnabled, setRefereeProductEnabled] = useState(false);
-  const [refereeMarketplaceEnabled, setRefereeMarketplaceEnabled] = useState(false);
-  const [refereeAssignmentsEnabled, setRefereeAssignmentsEnabled] = useState(false);
-  const [clubProductEnabled, setClubProductEnabled] = useState(false);
-  const [clubDirectoryEnabled, setClubDirectoryEnabled] = useState(false);
   const { previewRequested, toggleAdminViewPreview } = useAdminViewPreview();
   const [inviteMessage, setInviteMessage] = useState("");
   const [marketRefresh, setMarketRefresh] = useState(0);
-  const [preparedRival, setPreparedRival] = useState<TeamSummary | null>(null);
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [marketContext, setMarketContext] = useState<MarketMatchContext | null>(initialRoute.context);
   const [zonePlace, setZonePlace] = useState<MarketTarget | null>(initialRoute.zonePlace);
   const [zonePlaceMessage, setZonePlaceMessage] = useState("");
@@ -773,6 +734,10 @@ export default function MarketPage() {
   useEffect(() => {
     let active = true;
     const restore = () => {
+      if (new URLSearchParams(window.location.search).get("tab") === "retos") {
+        window.location.replace("/retos");
+        return;
+      }
       const route = marketRouteFromSearch(window.location.search);
       window.queueMicrotask(() => {
         if (active) restoreMarketRoute(route);
@@ -826,7 +791,6 @@ export default function MarketPage() {
       const user = session?.data.session?.user ?? null;
 
       let exactCanInvite = false;
-      let exactCanProposeReferee = false;
       if (user && marketGroupId && marketRequesterKind === "TEAM") {
         const membership = await supabase
           ?.from("pachanga_group_members")
@@ -835,44 +799,9 @@ export default function MarketPage() {
           .eq("user_id", user.id)
           .maybeSingle();
         exactCanInvite = !membership?.error && ["owner", "admin"].includes(String(membership?.data?.role));
-        exactCanProposeReferee = !membership?.error && String(membership?.data?.role) === "owner";
-      } else if (user && marketRequesterKind && marketRequesterKind !== "TEAM") {
-        // Product visibility only. PostgreSQL resolves Club/Competition authority.
-        exactCanProposeReferee = true;
       }
       if (active) {
         setCanInvite(exactCanInvite);
-        setCanProposeReferee(exactCanProposeReferee);
-      }
-
-      const refereeFlags = await supabase?.rpc("get_pachanga_referee_foundation_flags_v1") as {
-        data: { assignmentsEnabled?: boolean; foundationEnabled?: boolean; marketplaceEnabled?: boolean; selfServiceEnabled?: boolean } | null;
-        error: { message: string } | null;
-      } | undefined;
-      const marketplaceEnabled = !refereeFlags?.error && refereeFlags?.data?.marketplaceEnabled === true;
-      const assignmentsEnabled = !refereeFlags?.error && refereeFlags?.data?.assignmentsEnabled === true;
-      const refereeEnabled = !refereeFlags?.error
-        && refereeFlags?.data?.foundationEnabled === true
-        && (refereeFlags.data.selfServiceEnabled === true || marketplaceEnabled);
-      const clubFlags = await supabase?.rpc("get_pachanga_club_foundation_flags_v1") as {
-        data: { foundationEnabled?: boolean; publicProfilesEnabled?: boolean; selfServiceCreationEnabled?: boolean } | null;
-        error: { message: string } | null;
-      } | undefined;
-      const directoryEnabled = !clubFlags?.error && clubFlags?.data?.foundationEnabled === true && clubFlags.data.publicProfilesEnabled === true;
-      const clubsEnabled = !clubFlags?.error
-        && clubFlags?.data?.foundationEnabled === true
-        && (clubFlags.data.selfServiceCreationEnabled === true || directoryEnabled);
-      if (active) {
-        setRefereeProductEnabled(refereeEnabled);
-        setRefereeMarketplaceEnabled(marketplaceEnabled);
-        setRefereeAssignmentsEnabled(assignmentsEnabled);
-        setClubProductEnabled(clubsEnabled);
-        setClubDirectoryEnabled(directoryEnabled);
-        const requestedTab = new URLSearchParams(window.location.search).get("tab");
-        if (requestedTab === "arbitros" && refereeEnabled) setActiveTab("arbitros");
-        if (requestedTab === "arbitros" && !refereeEnabled) setActiveTab("jugadores");
-        if (requestedTab === "clubes" && clubsEnabled) setActiveTab("clubes");
-        if (requestedTab === "clubes" && !clubsEnabled) setActiveTab("jugadores");
       }
 
       const marketColumns =
@@ -1235,67 +1164,29 @@ export default function MarketPage() {
   }
 
   const marketGameTabs: OfficialMarketTab[] = [
-    { id: "jugadores", label: "Jugadores", onSelect: () => selectMarketTab("jugadores") },
     { id: "partidos", label: "Partidos", onSelect: () => selectMarketTab("partidos") },
-    {
-      id: "retos",
-      label: "Retos",
-      onSelect: () => {
-        setPreparedRival(null);
-        selectMarketTab("retos");
-      },
-    },
+    { id: "jugadores", label: "Jugadores", onSelect: () => selectMarketTab("jugadores") },
     { id: "equipos", label: "Equipos", onSelect: () => selectMarketTab("equipos") },
-    ...(clubProductEnabled
-      ? [{ id: "clubes", label: "Clubes", onSelect: () => selectMarketTab("clubes") }]
-      : []),
-    ...(refereeProductEnabled
-      ? [{ id: "arbitros", label: "Árbitros", onSelect: () => selectMarketTab("arbitros") }]
-      : []),
   ];
   const marketViewTitle = activeTab === "jugadores"
     ? "Jugadores disponibles"
     : activeTab === "partidos"
       ? "Partidos abiertos"
-      : activeTab === "retos"
-        ? "Retos privados"
-        : activeTab === "arbitros"
-          ? "Árbitros"
-          : activeTab === "clubes"
-            ? "Clubs"
-          : "Equipos retables";
+      : "Equipos disponibles";
 
   return (
     <OfficialProductShellV2
       active="mercado"
       adminViewPreview={canInvite ? { active: playerPreviewActive, onToggle: toggleAdminViewPreview } : undefined}
       context={{
-        detail: activeTab === "jugadores" && marketContext
-          ? `${marketContext.missing || "0"} plazas libres`
-          : activeTab === "arbitros"
-            ? refereeAssignmentsEnabled && marketContext ? `Propuesta para ${marketContext.title}` : "Zona · modalidad · disponibilidad"
-            : activeTab === "clubes"
-              ? "Directorio público"
-            : activeTab,
+        detail: activeTab === "jugadores" && marketContext ? `${marketContext.missing || "0"} plazas libres` : "Descubre tu próximo partido",
         eyebrow: "Mercado",
         status: supabase ? "En directo" : "Vista local",
-        title: activeTab === "jugadores" ? "Jugadores" : activeTab === "partidos" ? "Partidos abiertos" : activeTab === "retos" ? "Retos" : activeTab === "arbitros" ? "Árbitros" : activeTab === "clubes" ? "Clubs" : "Equipos",
+        title: "Pachangas IQ",
       }}
     >
     <main className="market-page official-ui-v2-market" data-mobile-tab="mercado">
       <OfficialMarketGameView
-        actions={(
-          <>
-            {canInvite ? (
-              <AdminViewPreviewButton
-                active={playerPreviewActive}
-                className="admin-view-preview-desktop secondary-button"
-                onToggle={toggleAdminViewPreview}
-              />
-            ) : null}
-            <Link className="manual-back-button" href="/">Volver</Link>
-          </>
-        )}
         activeTab={activeTab}
         adminHref={canUseMarketAdminControls && marketContext?.matchUrl ? marketAdminMatchUrl(marketContext.matchUrl) : undefined}
         context={activeTab === "jugadores" && marketContext ? (
@@ -1304,10 +1195,10 @@ export default function MarketPage() {
             <span>{marketContext.missing || "0"} plaza{marketContext.missing === "1" ? "" : "s"} libre{marketContext.missing === "1" ? "" : "s"}.</span>
           </section>
         ) : undefined}
-        filters={activeTab === "jugadores" || activeTab === "partidos" ? (
-          <section className="market-panel market-filters" aria-label="Filtros del mercado">
-          <label>
-            Zona
+        search={activeTab === "jugadores" || activeTab === "partidos" ? (
+          <div className="market-search-row">
+            <label>
+            <span className="sr-only">Buscar por zona</span>
             <input
               ref={zoneInputRef}
               value={zoneFilter}
@@ -1315,10 +1206,16 @@ export default function MarketPage() {
                 setZoneFilter(event.target.value);
                 setZonePlace(null);
               }}
-              placeholder="Ciudad o zona"
+              placeholder="¿Dónde quieres jugar?"
             />
             {zonePlaceMessage ? <small>{zonePlaceMessage}</small> : null}
           </label>
+          <button type="button" aria-expanded={filtersOpen} onClick={() => setFiltersOpen((current) => !current)}>Filtros</button>
+          </div>
+        ) : undefined}
+        filters={filtersOpen && (activeTab === "jugadores" || activeTab === "partidos") ? (
+          <section className="market-panel market-filters market-filter-drawer" aria-label="Filtros del mercado">
+          <header><strong>Filtros</strong><button type="button" onClick={() => setFiltersOpen(false)} aria-label="Cerrar filtros">×</button></header>
           <label>
             Día
             <select value={dayFilter} onChange={(event) => setDayFilter(event.target.value)}>
@@ -1350,70 +1247,23 @@ export default function MarketPage() {
         title={marketViewTitle}
       >
 
-      {activeTab === "arbitros" && refereeProductEnabled ? (
-        <RefereeMarketplacePanel
-          assignmentsEnabled={refereeAssignmentsEnabled}
-          canPropose={canProposeReferee}
-          context={marketContext ? {
-            canonicalMatchId: marketContext.canonicalMatchId,
-            competitionId: marketContext.competitionId,
-            competitionMatchContextId: marketContext.competitionMatchContextId,
-            groupId: marketContext.groupId,
-            matchId: marketContext.matchId,
-            replaceAssignmentId: marketContext.replaceAssignmentId,
-            replaceRevision: marketContext.replaceRevision,
-            requesterId: marketContext.requesterId,
-            requesterKind: marketContext.requesterKind,
-            sourceId: marketContext.sourceId,
-            sourceKind: marketContext.sourceKind,
-            title: marketContext.title,
-          } : null}
-          marketplaceEnabled={refereeMarketplaceEnabled}
-        />
-      ) : activeTab === "clubes" && clubProductEnabled ? (
-        <ClubDirectoryClient directoryEnabled={clubDirectoryEnabled} embedded />
-      ) : activeTab === "jugadores" ? (
+      {activeTab === "jugadores" ? (
       <section className="market-grid" aria-label="Jugadores del mercado">
         {filteredProfiles.map((profile) => {
-          const age = ageFromBirthDate(profile.birthDate);
           const zoneMatch = profileZoneMatch(profile, activeMarketTarget(zonePlace, marketContext, zoneFilter), zoneFilter);
           const invitation = matchInvitations[profile.id];
           const invitationPending = invitation?.status === "pending";
           const invitationAccepted = invitation?.status === "accepted";
 
           return (
-          <article className="market-player" key={profile.id}>
-            <div className={`fifa-player-card team-mini-player-card market-player-card ${cardTierClass(profile.media)}`}>
-              <span className="fifa-score">{overall(profile.media)}</span>
-              <span className="fifa-position">{positionShort(profile.position, profile.goalkeeperOnly)}</span>
-              <span className="fifa-photo">
-                {profile.avatar ? (
-                  <NextImage src={profile.avatar} alt="" draggable={false} height={220} unoptimized width={160} style={{ ...avatarStyle(profile), height: "100%", objectFit: "cover", width: "100%" }} />
-                ) : (
-                  <b>+</b>
-                )}
-              </span>
-              <strong>{profile.displayName}</strong>
-              <span className="fifa-card-meta">{profile.goals} Goles · {profile.appearances} PJ{age !== null ? ` · ${age} años` : ""}</span>
-              <div className="fifa-facets">
-                <span><b>{profile.goals}</b>G</span>
-                <span><b>{profile.appearances}</b>PJ</span>
-                <span><b>{profile.wins}</b>PG</span>
-              </div>
-            </div>
+          <article className="market-player market-player-compact" key={profile.id}>
+            <span className="market-player-avatar">
+              {profile.avatar ? <NextImage src={profile.avatar} alt="" height={56} unoptimized width={56} style={avatarStyle(profile)} /> : <b>{profile.displayName.slice(0, 1)}</b>}
+            </span>
             <div className="market-player-info">
-              <span className="market-media-pill">Media {overall(profile.media)}</span>
-              <strong>{profile.position}{age !== null ? ` · ${age} años` : ""}</strong>
-              <small>{zoneMatch.label || (profile.zones.length ? profile.zones.join(" · ") : "Zona por definir")}</small>
-              <small>{profile.availabilityText || "Disponibilidad por definir"}</small>
-              <p>{profile.bio || "Ficha pública lista para completar pachangas."}</p>
-              <div className="market-tags">
-                {profile.modalities.map((modality) => (
-                  <span key={modality}>{modalityLabels[modality] ?? modality}</span>
-                ))}
-                {profile.openToGuest ? <span>Invitado puntual</span> : null}
-                {profile.openToGroup ? <span>Grupo</span> : null}
-              </div>
+              <strong>{profile.displayName}<span>{overall(profile.media)}</span></strong>
+              <small>{positionShort(profile.position, profile.goalkeeperOnly)} · {profile.modalities.map((modality) => modalityLabels[modality] ?? modality).join(" · ")}</small>
+              <small>{zoneMatch.label || "Zona por definir"} · {profile.availabilityText || "Disponibilidad por definir"}</small>
               <button
                 type="button"
                 onClick={() => void toggleMarketInvitation(profile)}
@@ -1490,14 +1340,9 @@ export default function MarketPage() {
           <p className="market-empty">No hay partidos abiertos que encajen con estos filtros todavía.</p>
         ) : null}
       </section>
-      ) : activeTab === "retos" ? (
-        <TeamChallengesPanel initialOpponent={preparedRival} />
       ) : (
         <ChallengeableTeamsPanel
-          onPrepareChallenge={(team) => {
-            setPreparedRival(team);
-            selectMarketTab("retos");
-          }}
+          onPrepareChallenge={(team) => window.location.assign(`/retos?vista=search&rival=${encodeURIComponent(team.teamCode)}`)}
         />
       )}
       </OfficialMarketGameView>

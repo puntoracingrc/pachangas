@@ -203,17 +203,20 @@ test("cross-product guards protect every Wave 8B boundary without mutating sport
   assert.doesNotMatch(sql, /update public\.pachanga_player_rating_snapshots/i);
 });
 
-test("Control Center and Team management expose one role-aware canonical surface", async () => {
-  const [ownerUi, home, adminList, adminDetail, adminActions] = await Promise.all([
+test("Control Center and dedicated Team management expose one role-aware canonical surface", async () => {
+  const [ownerUi, home, teamPage, adminList, adminDetail, adminActions] = await Promise.all([
     source("app/_components/team-operational-client.tsx"),
     source("app/page.tsx"),
+    source("app/equipo/estado/page.tsx"),
     source("app/admin/teams/page.tsx"),
     source("app/admin/teams/[teamId]/page.tsx"),
     source("app/admin/teams/[teamId]/team-operational-admin-actions.tsx"),
   ]);
   assert.match(ownerUi, /Solo el owner puede archivar, restaurar o solicitar una revisión/);
   assert.match(ownerUi, /El detalle de impacto operativo solo está disponible para el owner/);
-  assert.match(home, /TeamOperationalHomeCard/);
+  assert.doesNotMatch(home, /TeamOperationalHomeCard/);
+  assert.match(home, /href={`\/equipo\/estado/);
+  assert.match(teamPage, /TeamOperationalClient/);
   assert.match(adminList, /listPlatformTeamOperationalStates/);
   assert.match(adminDetail, /TeamOperationalAdminActions/);
   assert.match(adminActions, /Una revisión no bloquea por sí sola/);

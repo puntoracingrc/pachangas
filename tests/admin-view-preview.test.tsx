@@ -3,14 +3,14 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { MobileAppNav } from "../app/mobile-app-nav";
+import { AdminViewPreviewButton, MobileAppNav } from "../app/mobile-app-nav";
 
 test("keeps the admin-player switch visible in both preview states", () => {
   const adminView = renderToStaticMarkup(
-    <MobileAppNav active="inicio" adminViewPreview={{ active: false, onToggle: () => undefined }} />,
+    <AdminViewPreviewButton active={false} onToggle={() => undefined} />,
   );
   const playerView = renderToStaticMarkup(
-    <MobileAppNav active="inicio" adminViewPreview={{ active: true, onToggle: () => undefined }} />,
+    <AdminViewPreviewButton active onToggle={() => undefined} />,
   );
   const regularPlayer = renderToStaticMarkup(<MobileAppNav active="inicio" />);
 
@@ -56,5 +56,6 @@ test("keeps real authorization separate from the visual preview", async () => {
   assert.match(previewState, /window\.sessionStorage\.setItem/);
   assert.match(previewState, /window\.sessionStorage\.removeItem/);
   assert.doesNotMatch(previewState, /setCurrentRole|supabase|\.rpc\(/);
-  assert.match(css, /\.mobile-app-nav-inner\.has-admin-view-preview\s*\{\s*grid-template-columns:\s*repeat\(6/);
+  assert.match(css, /\.mobile-app-nav-inner\s*\{[\s\S]*grid-template-columns:\s*repeat\(4/);
+  assert.doesNotMatch(css, /\.mobile-app-nav-inner\.has-admin-view-preview/);
 });

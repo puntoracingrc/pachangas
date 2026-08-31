@@ -210,8 +210,9 @@ test("Official UI provides all private routes, adaptive Draw Desk, reveal and Co
   assert.match(css, /orientation: landscape/);
   assert.match(css, /orientation: portrait/);
   assert.match(css, /min-width: 0/);
-  assert.match(shell, /contextualDestinationsForPerspective\(perspective\)/);
-  assert.match(navigation, /href: "\/torneos"/);
+  assert.match(shell, /PRODUCT_PRIMARY_DESTINATIONS/);
+  assert.doesNotMatch(shell, /contextualDestinationsForPerspective\(perspective\)/);
+  assert.match(navigation, /const organizerTools[\s\S]*href: "\/torneos"/);
   assert.match(admin, /Tournament Private Beta/);
   assert.match(admin, /Tournament matches/);
 });

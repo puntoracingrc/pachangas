@@ -1,15 +1,16 @@
 "use client";
 
-import Link from "next/link";
 import Image from "next/image";
+import Link from "next/link";
 import { useEffect, useState, type ReactNode } from "react";
 import { MobileAppNav, type AdminViewPreviewControl, type MobileAppTab } from "../mobile-app-nav";
-import { ProductContextSelector, type ProductContextOption } from "./product-context-selector";
+import { supabase } from "../supabaseClient";
+import type { ProductContextOption } from "./product-context-selector";
 import {
   PRODUCT_PRIMARY_DESTINATIONS,
-  contextualDestinationsForPerspective,
   type ProductActorPerspective,
 } from "./product-navigation-contract";
+import { useCanonicalPlatformOwner } from "./use-canonical-platform-owner";
 import {
   OFFICIAL_UI_V2_VERSION,
   resolveOfficialLayoutMode,
@@ -31,11 +32,24 @@ type OfficialContext = {
 
 type ShellLinkMap = Partial<Record<MobileAppTab, string>>;
 
+type ShellAccount = {
+  avatarUrl?: string;
+  cardHref?: string;
+  displayName?: string;
+  notificationsHref?: string;
+  onSignOut?: () => void | Promise<void>;
+  profileHref?: string;
+  settingsHref?: string;
+  teamHref?: string;
+};
+
 type OfficialProductShellV2Props = {
+  account?: ShellAccount;
   active: MobileAppTab;
   adminViewPreview?: AdminViewPreviewControl;
   children: ReactNode;
   context: OfficialContext;
+  contextVisual?: ReactNode;
   contextOptions?: ProductContextOption[];
   links?: ShellLinkMap;
   navigationEnabled?: boolean;
@@ -54,6 +68,7 @@ const defaultLinks: ShellLinkMap = {
   mercado: "/mercado",
   partido: "/?mobile=partido",
   perfil: "/?mobile=perfil",
+  retos: "/retos",
 };
 
 function currentViewport(): OfficialLayoutMode {
@@ -116,11 +131,115 @@ function ShellDestination({
   );
 }
 
+function BellIcon() {
+  return <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M6 9a6 6 0 0 1 12 0v5l2 3H4l2-3zM10 20h4" /></svg>;
+}
+
+function UserIcon() {
+  return <svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4" /><path d="M4.5 21c.4-5.2 2.9-8 7.5-8s7.1 2.8 7.5 8" /></svg>;
+}
+
+function ContextIdentity({
+  context,
+  contexts,
+  onContextChange,
+  perspective,
+  visual,
+}: {
+  context: OfficialContext;
+  contexts: ProductContextOption[];
+  onContextChange?: (id: string) => void;
+  perspective: ProductActorPerspective;
+  visual?: ReactNode;
+}) {
+  const activeId = context.id ?? contexts[0]?.id ?? "current";
+  const canManageTeam = perspective === "team-admin" || perspective === "team-owner";
+
+  return (
+    <details className={styles.identityMenu}>
+      <summary aria-label="Abrir selector de equipo">
+        <span className={styles.identityVisual}>{visual ?? <Image src="/icon-192.png" alt="" width={38} height={38} priority unoptimized />}</span>
+        <span><small>Equipo activo</small><strong>{context.title}</strong></span>
+        <b aria-hidden="true">⌄</b>
+      </summary>
+      <div className={styles.identityMenuPanel}>
+        {contexts.length > 1 && onContextChange ? (
+          <label>
+            <span>Cambiar equipo</span>
+            <select value={activeId} onChange={(event) => onContextChange(event.target.value)}>
+              {contexts.map((entry) => <option key={entry.id} value={entry.id}>{entry.title}</option>)}
+            </select>
+          </label>
+        ) : <p>{context.detail ?? context.role ?? "Tu espacio de juego"}</p>}
+        <Link href="/?mobile=equipo">Ver plantilla</Link>
+        {canManageTeam ? <Link href="/?mobile=perfil&settings=1">Gestionar equipo</Link> : null}
+        <Link href="/?mobile=inicio&create=team">Crear equipo</Link>
+      </div>
+    </details>
+  );
+}
+
+function AccountActions({
+  account,
+  adminViewPreview,
+  platformOwner,
+}: {
+  account: ShellAccount;
+  adminViewPreview?: AdminViewPreviewControl;
+  platformOwner: boolean;
+}) {
+  const notificationsHref = account.notificationsHref ?? "/perfil/avisos";
+
+  async function signOut() {
+    if (account.onSignOut) await account.onSignOut();
+    else await supabase?.auth.signOut();
+    try {
+      await fetch("/api/platform-admin/session", {
+        method: "DELETE",
+        headers: { "X-Pachangas-Platform-Admin": "1" },
+      });
+    } finally {
+      if (!account.onSignOut) window.location.assign("/");
+    }
+  }
+
+  return (
+    <div className={styles.accountActions}>
+      <Link className={styles.iconAction} href={notificationsHref} aria-label="Avisos">
+        <BellIcon />
+      </Link>
+      <details className={styles.accountMenu}>
+        <summary className={styles.avatarAction} aria-label="Abrir menú de cuenta">
+          {account.avatarUrl ? <Image src={account.avatarUrl} alt="" width={34} height={34} unoptimized /> : <UserIcon />}
+        </summary>
+        <div className={styles.accountMenuPanel}>
+          <p><strong>{account.displayName ?? "Mi cuenta"}</strong><small>Vista jugador</small></p>
+          <Link href={account.profileHref ?? "/?mobile=perfil"}>Mi perfil</Link>
+          <Link href={account.cardHref ?? "/personalizar-carta"}>Mi carta</Link>
+          <Link href={account.teamHref ?? "/?mobile=equipo"}>Mi equipo</Link>
+          <Link href={account.settingsHref ?? "/?mobile=perfil&settings=1"}>Ajustes</Link>
+          {adminViewPreview ? (
+            <button type="button" onClick={adminViewPreview.onToggle}>
+              {adminViewPreview.active ? "Volver a vista admin" : "Ver como jugador"}
+            </button>
+          ) : null}
+          {platformOwner ? <hr /> : null}
+          {platformOwner ? <Link href="/admin">Administración</Link> : null}
+          {platformOwner ? <Link href="/admin/demo">Mundo Demo completo</Link> : null}
+          <button className={styles.signOut} type="button" onClick={() => void signOut()}>Cerrar sesión</button>
+        </div>
+      </details>
+    </div>
+  );
+}
+
 export function OfficialProductShellV2({
+  account = {},
   active,
   adminViewPreview,
   children,
   context,
+  contextVisual,
   contextOptions,
   links,
   navigationEnabled = true,
@@ -130,8 +249,13 @@ export function OfficialProductShellV2({
   variant = "PRODUCT",
 }: OfficialProductShellV2Props) {
   const mode = useOfficialLayoutMode();
+  const platformOwner = useCanonicalPlatformOwner();
+
+  useEffect(() => {
+    document.body.classList.add("official-product-active");
+    return () => document.body.classList.remove("official-product-active");
+  }, []);
   const destinations = { ...defaultLinks, ...links };
-  const contextualDestinations = contextualDestinationsForPerspective(perspective);
   const resolvedContexts: ProductContextOption[] = contextOptions?.length ? contextOptions : [{
     detail: context.detail,
     id: context.id ?? "current",
@@ -143,6 +267,17 @@ export function OfficialProductShellV2({
   }];
   const destinationFor = (id: MobileAppTab) => onNavigate && links?.[id] === undefined ? undefined : destinations[id];
 
+  const identity = (
+    <ContextIdentity
+      context={context}
+      contexts={resolvedContexts}
+      onContextChange={onContextChange}
+      perspective={perspective}
+      visual={contextVisual}
+    />
+  );
+  const accountActions = <AccountActions account={account} adminViewPreview={adminViewPreview} platformOwner={platformOwner} />;
+
   return (
     <div
       className={styles.shell}
@@ -150,12 +285,10 @@ export function OfficialProductShellV2({
       data-navigation-enabled={navigationEnabled ? "true" : "false"}
       data-official-ui-version={OFFICIAL_UI_V2_VERSION}
       data-shell-variant={variant}
+      data-social-core="v3a"
     >
       <header className={styles.desktopHeader}>
-        <Link className={styles.brand} href="/" aria-label="Pachangas IQ, Inicio">
-          <Image src="/icon-192.png" alt="" width={36} height={36} priority unoptimized />
-          <span><strong>Pachangas IQ</strong><small>{context.title}</small></span>
-        </Link>
+        {identity}
         {navigationEnabled ? <nav className={styles.desktopNav} aria-label="Navegación principal">
           {primaryItems.map((item) => (
             <ShellDestination
@@ -169,10 +302,7 @@ export function OfficialProductShellV2({
             />
           ))}
         </nav> : <span />}
-        {navigationEnabled ? <div className={styles.desktopUtilities}>
-          {contextualDestinations.slice(0, 4).map((item) => <Link href={item.href} key={item.id}>{item.label}</Link>)}
-          <span aria-label={`Estado: ${context.status ?? "Conectado"}`}>{context.status ?? "Conectado"}</span>
-        </div> : <span />}
+        {navigationEnabled ? accountActions : <span />}
       </header>
 
       <div className={styles.gameFrame}>
@@ -191,14 +321,12 @@ export function OfficialProductShellV2({
               />
             ))}
           </nav>
-          <div className={styles.gameUtilities}>
-            {contextualDestinations.slice(0, 4).map((item) => <Link href={item.href} key={item.id} aria-label={item.label}>{item.short}</Link>)}
-          </div>
         </aside> : null}
 
         <div className={styles.viewport}>
           <div className={styles.contextBar}>
-            <ProductContextSelector activeId={context.id ?? resolvedContexts[0]!.id} contexts={resolvedContexts} onChange={onContextChange} />
+            {identity}
+            {navigationEnabled ? accountActions : null}
           </div>
           <div className={styles.content}>{children}</div>
         </div>
@@ -207,7 +335,6 @@ export function OfficialProductShellV2({
       {navigationEnabled ? <div className={styles.portraitNav}>
         <MobileAppNav
           active={active}
-          adminViewPreview={adminViewPreview}
           links={onNavigate ? links : destinations}
           onNavigate={onNavigate}
         />

@@ -154,11 +154,12 @@ test("Vercel invokes canonical billing reconciliation hourly", async () => {
   });
 });
 
-test("public plans cache only canonical GET data and never invent a checkout", async () => {
-  const [client, serviceWorker, home] = await Promise.all([
+test("public plans cache only canonical GET data and remain on dedicated routes", async () => {
+  const [client, serviceWorker, plansPage, billingPage] = await Promise.all([
     source("app/_components/organizer-plans-client.tsx"),
     source("app/service-worker-source.ts"),
-    source("app/page.tsx"),
+    source("app/planes-organizador/page.tsx"),
+    source("app/ajustes/facturacion/page.tsx"),
   ]);
   assert.match(client, /fetch\("\/api\/billing\/organizer\/catalog", \{ cache: "no-store" \}\)/);
   assert.match(client, /storeCatalogCache\(canonical\)/);
@@ -170,8 +171,8 @@ test("public plans cache only canonical GET data and never invent a checkout", a
   assert.doesNotMatch(client, /clientWriteFetch|method:\s*"POST"|offlineQueue/i);
   assert.match(serviceWorker, /"\/planes-organizador"/);
   assert.doesNotMatch(serviceWorker, /"\/ajustes\/facturacion"/);
-  assert.match(home, /href="\/planes-organizador"/);
-  assert.match(home, /currentRole === "owner" \? <(?:a|Link)[^>]+href="\/ajustes\/facturacion"/);
+  assert.match(plansPage, /OrganizerPlansClient/);
+  assert.match(billingPage, /OrganizerBillingClient/);
 });
 
 test("owner billing treats local state as read-only and refetches after invalidation", async () => {

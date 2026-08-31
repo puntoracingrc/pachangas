@@ -7,16 +7,12 @@ import NextImage from "next/image";
 import Link from "next/link";
 import {
   OfficialHomeGameDashboard,
-  OfficialSecondaryActions,
-  OfficialTeamAccess,
 } from "./_components/official-home-game-dashboard";
 import { OfficialMatchGameHub } from "./_components/official-match-game-hub";
 import { OfficialProductShellV2 } from "./_components/official-product-shell-v2";
 import { PlayerCosmeticCard } from "./_components/player-cosmetic-card";
 import { TeamShieldView } from "./_components/team-shield-view";
-import { TeamOperationalHomeCard } from "./_components/team-operational-client";
 import { VenueMatchPanel } from "./_components/venue-match-panel";
-import { VenueHomeStatus } from "./_components/venue-home-status";
 import { attachVenueAutocomplete, type VenuePlace } from "./googlePlacesClient";
 import { GlobalRatingPanel } from "./global-rating-panel";
 import { resolveGoogleAuthReturnHref } from "./google-auth-return";
@@ -3590,6 +3586,8 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
     const requestedParams = new URLSearchParams(window.location.search);
     const requestedTab = requestedParams.get("mobile");
     const requestedMatchPane = requestedParams.get("pane");
+    const requestedSettings = requestedParams.get("settings") === "1";
+    const requestedCreateTeam = requestedParams.get("create") === "team";
     const managerLandscape = isMobileManagerLandscape();
     queueMicrotask(() => {
       if (requestedTab === "partido") {
@@ -3623,6 +3621,13 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
           setSelectedPlayerId(null);
         }
         setMobileAccountOpen(true);
+        if (requestedSettings) setShowSettings(true);
+        return;
+      }
+
+      if (requestedCreateTeam) {
+        setActiveMobileTab("inicio");
+        setOpenQuickForm("team");
       }
     });
   }, [entryRoute]);
@@ -4978,6 +4983,11 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
       return;
     }
 
+    if (tabId === "retos") {
+      window.location.assign("/retos");
+      return;
+    }
+
     if (tabId === "competir") {
       window.location.assign("/competiciones");
       return;
@@ -5969,11 +5979,19 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
     canUseAdminControls ? "panel main-panel" : "panel main-panel player-facing-main",
     matchFinalized ? "match-finalized-main" : "",
   ].filter(Boolean).join(" ");
-  const matchManagerPanes: MatchManagerPane[] = canUseAdminControls
-    ? ["proximo", "campo", "alineacion", "resultado", "admin"]
-    : ["proximo", "campo", "alineacion", "resultado"];
-  const selectedMatchManagerPane = matchManagerPanes.includes(activeMatchManagerPane) ? activeMatchManagerPane : "proximo";
-  const matchManagerPaneLabel = (pane: MatchManagerPane) => (pane === "proximo" && matchFinalized ? "Histórico" : matchManagerPaneLabels[pane]);
+  const matchManagerPanes: MatchManagerPane[] = matchFinalized
+    ? ["proximo", "resultado", "campo"]
+    : ["proximo", "campo", "alineacion"];
+  const selectedMatchManagerPane = activeMatchManagerPane === "admin" && canUseAdminControls
+    ? "admin"
+    : matchManagerPanes.includes(activeMatchManagerPane) ? activeMatchManagerPane : "proximo";
+  const matchManagerPaneLabel = (pane: MatchManagerPane) => {
+    if (pane === "proximo") return "Resumen";
+    if (pane === "campo") return matchFinalized ? "Estadísticas" : "Jugadores";
+    if (pane === "alineacion") return "Equipos";
+    if (pane === "resultado") return "Resultado";
+    return matchManagerPaneLabels[pane];
+  };
   const canConfigureMatchMarket = canUseAdminControls && showMatchRoster && !lineupClosed && !matchFinalized;
   const canCreateTeam = Boolean(supabase && isRegisteredUser);
   const ownPlayer = currentUserId ? players.find((player) => player.ownerUserId === currentUserId) : undefined;
@@ -6121,8 +6139,6 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
     };
   }, [currentUserId, hasRealTeam, remoteGroupId]);
 
-  const showGroupAccessPanel = isRegisteredUser && (previewDemoMode || remoteTeams.length > 0);
-  const showTeamAdminPanel = canManageTeam;
   const showMatchAdminPanel = canUseAdminControls;
   const canEditMatchSettings = canUseAdminControls && !matchFinalized;
   const canEditLineup = canUseAdminControls && registrationOpen && !lineupClosed && !matchFinalized;
@@ -9253,6 +9269,12 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
 
   return (
     <OfficialProductShellV2
+      account={{
+        avatarUrl: ownPlayer?.avatar,
+        displayName: authDisplayName(authUser),
+        onSignOut: signOut,
+        teamHref: "/?mobile=equipo",
+      }}
       active={activeMobileTab}
       adminViewPreview={canPreviewPlayerView ? { active: playerPreviewActive, onToggle: toggleAdminPlayerView } : undefined}
       context={{
@@ -9262,11 +9284,19 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
         nextAction: homeNextAction.label,
         role: memberRoleLabel(displayedRole),
         status: previewDemoMode ? "Demo" : syncStatus === "live" ? "En directo" : syncStatus === "connecting" ? "Conectando" : syncStatus === "error" ? "Sin conexión" : "Local",
-        title: activeMobileTab === "inicio" ? "Inicio" : currentTeamName,
+        title: currentTeamName,
         type: hasRealTeam || previewDemoMode ? "team" : "profile",
       }}
+      contextVisual={hasHomeTeamIdentity ? (
+        <TeamShieldView
+          catalog={canonicalHomeTeamShield?.catalog ?? []}
+          config={homeTeamShieldConfig}
+          label={`Escudo de ${currentTeamName}`}
+          size={32}
+        />
+      ) : undefined}
       contextOptions={shellContextOptions.length > 0 ? shellContextOptions : undefined}
-      links={{ competir: "/competiciones", mercado: "/mercado" }}
+      links={{ mercado: "/mercado", retos: "/retos" }}
       navigationEnabled={!needsLoginForSharedLink}
       onContextChange={selectTeam}
       onNavigate={navigatePrimaryMobile}
@@ -9277,37 +9307,6 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
       {activeMobileTab === "inicio" ? (
         <section id="inicio" ref={teamAccessPanelRef}>
           <OfficialHomeGameDashboard
-            access={showGroupAccessPanel ? (
-              <OfficialTeamAccess
-                selector={(
-                  <label className="official-home-team-selector">
-                    <span>Equipo activo</span>
-                    <select value={previewDemoMode ? demoTeamOptionId : remoteGroupId ?? ""} onChange={(event) => selectTeam(event.target.value)}>
-                      <option value="" disabled>Elige grupo o demo</option>
-                      <option value={demoTeamOptionId}>Mundo Demo</option>
-                      {remoteTeams.map((team) => <option key={team.id} value={team.id}>{groupOptionLabel(team)}</option>)}
-                    </select>
-                  </label>
-                )}
-              >
-                <dl className="official-home-team-access-details">
-                  <div><dt>Código</dt><dd>{previewDemoMode ? "DEMO" : currentTeam?.teamCode ?? "-"}</dd></div>
-                  <div><dt>Rol</dt><dd>{previewDemoMode ? "Demo" : memberRoleLabel(displayedRole)}</dd></div>
-                  <div><dt>Nivel</dt><dd>{groupLevel === null ? "-" : overallScore(groupLevel)}</dd></div>
-                  <div><dt>Plantilla</dt><dd>{activeRosterCount}</dd></div>
-                </dl>
-                {showTeamAdminPanel ? (
-                  <div className="official-home-team-access-actions">
-                    <button type="button" onClick={() => void copyTeamInvite()} disabled={!currentTeamInviteUrl()}>Copiar invitación</button>
-                    <button type="button" onClick={shareTeamInviteWhatsApp} disabled={!currentTeamInviteUrl()}>Enviar por WhatsApp</button>
-                    <button className="danger-light-button" disabled={!remoteGroupId || !canManageTeam} onClick={() => void deleteCurrentTeam()} type="button">Eliminar grupo</button>
-                  </div>
-                ) : null}
-                <small className={`sync-status sync-${syncStatus}`}>
-                  {syncStatus === "live" ? "Grupo privado sincronizado" : syncStatus === "connecting" ? "Conectando..." : syncStatus === "error" ? `Sin sync: ${syncError}` : "Copia local de lectura"}
-                </small>
-              </OfficialTeamAccess>
-            ) : undefined}
             activity={homeActivity}
             identity={{
               context: siteSettings.subtitle,
@@ -9316,13 +9315,10 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
               status: previewDemoMode ? "Demo" : syncStatus === "live" ? "En directo" : "Copia local",
             }}
             metrics={[
-              { label: "Partidos", value: closedMatches.length },
               { label: "Próximos", value: openMatches.length },
               { label: "Plantilla", value: activeRosterCount },
-              { label: "Nivel", value: groupLevel === null ? "-" : overallScore(groupLevel) },
             ]}
             nextAction={homeNextAction}
-            operationalNotice={hasRealTeam && remoteGroupId ? <><TeamOperationalHomeCard groupId={remoteGroupId} /><VenueHomeStatus /></> : undefined}
             object={hasHomeTeamIdentity ? (
               <TeamShieldView
                 catalog={canonicalHomeTeamShield?.catalog ?? []}
@@ -9354,24 +9350,6 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
                 <NextImage src="/icon-512.png" alt="Pachangas IQ" width={180} height={180} priority />
                 <small>Crea tu ficha para completar el vestuario.</small>
               </div>
-            )}
-            secondaryActions={(
-              <OfficialSecondaryActions>
-                {canPreviewPlayerView ? <button type="button" onClick={toggleAdminPlayerView}>{playerPreviewActive ? "Volver a vista admin" : "Ver como jugador"}</button> : null}
-                <button type="button" onClick={() => void openOwnPlayerProfile()} disabled={!hasRealTeam || !isRegisteredUser}>Mi carta</button>
-                <button type="button" onClick={openTeamGallery}>Mi equipo</button>
-                {hasRealTeam ? <Link href={`/equipo/identidad${remoteGroupId ? `?grupo=${remoteGroupId}` : ""}`}>{canManageTeam && !canonicalHomeTeamShield ? "Personalizar escudo" : "Escudo del equipo"}</Link> : null}
-                {hasRealTeam ? <Link href={`/equipo/estado${remoteGroupId ? `?grupo=${remoteGroupId}` : ""}`}>Estado del equipo</Link> : null}
-                <Link href="/mercado">Mercado</Link>
-                <Link href="/organizacion/solicitudes">Organizar</Link>
-                {canUseAdminControls ? <button type="button" onClick={createMatch}>Crear partido</button> : null}
-                {canUseAdminControls ? <button type="button" onClick={() => void openCreatePlayerProfile()}>Crear ficha</button> : null}
-                {canUseAdminControls ? <button type="button" onClick={() => showQuickForm("venue")}>Crear campo</button> : null}
-                <button type="button" onClick={() => showQuickForm("team")}>Crear grupo</button>
-                {canUseAdminControls ? <button type="button" onClick={toggleSettingsPanel}>Configurar</button> : null}
-                <Link href="/manual">Manual</Link>
-                {isRegisteredUser ? <button type="button" onClick={() => void signOut()}>Cerrar sesión</button> : null}
-              </OfficialSecondaryActions>
             )}
             upcoming={homeUpcomingMatches}
           />
@@ -9911,6 +9889,17 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
                   </label>
                 ))}
               </div>
+              <div className="admin-invite-row settings-admin-invite-row">
+                <span>Invitar al grupo</span>
+                <div>
+                  <button type="button" onClick={() => void copyTeamInvite()} disabled={!remoteGroupId}>
+                    Copiar invitación
+                  </button>
+                  <button className="whatsapp-icon-button" type="button" onClick={shareTeamInviteWhatsApp} disabled={!remoteGroupId} title="Enviar invitación al grupo por WhatsApp" aria-label="Enviar invitación al grupo por WhatsApp">
+                    <WhatsAppLogo />
+                  </button>
+                </div>
+              </div>
               {canManageRoles ? (
                 <div className="admin-invite-row settings-admin-invite-row">
                   <span>Invitar como admin (no owner)</span>
@@ -9984,6 +9973,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
 
       <section
         className={sharedLinkContentBlocked ? "app-shell gated-shell" : "app-shell"}
+        data-match-finalized={matchFinalized ? "true" : "false"}
         data-match-manager-pane={selectedMatchManagerPane}
         data-official-match-hub="v2.1"
       >
@@ -10010,26 +10000,15 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
           }}
           onSelectPane={(pane) => setActiveMatchManagerPane(pane as MatchManagerPane)}
           panes={matchManagerPanes.map((pane) => ({ id: pane, label: matchManagerPaneLabel(pane) }))}
-          tools={selectedMatchManagerPane === "alineacion" && !matchFinalized ? (
+          tools={canUseAdminControls ? (
             <div className="lineup-side-tools" aria-label="Herramientas de alineación">
-              <span className="lineup-side-tools-kicker">Herramientas</span>
-              <div className="lineup-side-actions">
-                <button type="button" onClick={applyRandomTeams} disabled={!canEditLineup}>Aleatorio</button>
-                <button type="button" onClick={applyBalancedTeams} disabled={!canEditLineup}>Equilibrado</button>
-                {canUseAdminControls && matchConfigured ? (
-                  <button type="button" onClick={() => void toggleLineupClosed()}>{lineupClosed ? "Abrir" : "Cerrar"}</button>
-                ) : null}
-              </div>
+              {selectedMatchManagerPane === "alineacion" && !matchFinalized ? <><span className="lineup-side-tools-kicker">Herramientas</span><div className="lineup-side-actions"><button type="button" onClick={applyRandomTeams} disabled={!canEditLineup}>Aleatorio</button><button type="button" onClick={applyBalancedTeams} disabled={!canEditLineup}>Equilibrado</button>{matchConfigured ? <button type="button" onClick={() => void toggleLineupClosed()}>{lineupClosed ? "Abrir" : "Cerrar"}</button> : null}</div></> : null}
+              <button className="match-admin-context-button" type="button" onClick={() => setActiveMatchManagerPane(selectedMatchManagerPane === "admin" ? "proximo" : "admin")}>{selectedMatchManagerPane === "admin" ? "Cerrar administración" : "Administrar partido"}</button>
             </div>
           ) : undefined}
           share={selectedMatchManagerPane === "proximo" && matchMemberShareBox ? (
             <div className="match-side-share" aria-label="Compartir partido">{matchMemberShareBox}</div>
           ) : undefined}
-        />
-        <VenueMatchPanel
-          canManage={canUseAdminControls}
-          canonicalMatchId={activeMatch.canonicalMatchId || activeMatch.id}
-          legacyPlace={activeMatch.place}
         />
         <aside className="panel match-list" aria-label="Partidos">
           <div className="panel-title">
@@ -10264,6 +10243,11 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
                     {matchAdminInviteBox}
                   </section>
                 ) : null}
+                <VenueMatchPanel
+                  canManage={canUseAdminControls}
+                  canonicalMatchId={activeMatch.canonicalMatchId}
+                  legacyPlace={activeMatch.place}
+                />
                 <section className={`match-admin-action-panel match-admin-market-panel ${activeMatch.publicOpen ? "public-open" : ""}`}>
                   <div className="match-admin-action-heading">
                     <span>Mercado del partido</span>
@@ -10902,31 +10886,6 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
                   <small>Tu colección, efectos y logro destacado</small>
                   <b aria-hidden="true">›</b>
                 </a>
-                <a className="profile-notifications-link" href="/ranking">
-                  <span>Ranking provincial</span>
-                  <small>Season Score oficial y posición publicada</small>
-                  <b aria-hidden="true">›</b>
-                </a>
-                <a className="profile-notifications-link" href="/ligas">
-                  <span>Ligas (Beta)</span>
-                  <small>Competiciones privadas por invitación</small>
-                  <b aria-hidden="true">›</b>
-                </a>
-                <a className="profile-notifications-link" href="/planes-organizador">
-                  <span>Planes de organización</span>
-                  <small>Capacidades para Clubs y equipos</small>
-                  <b aria-hidden="true">›</b>
-                </a>
-                <Link className="profile-notifications-link" href="/organizacion/solicitudes">
-                  <span>Organizar</span>
-                  <small>Solicitudes, acceso y primera competición</small>
-                  <b aria-hidden="true">›</b>
-                </Link>
-                {currentRole === "owner" ? <a className="profile-notifications-link" href="/ajustes/facturacion">
-                  <span>Facturación</span>
-                  <small>Plan, uso, continuidad y facturas</small>
-                  <b aria-hidden="true">›</b>
-                </a> : null}
               </>
             ) : null}
             {!ownPlayer && selectedPlayer && !selectedPlayer.ownerUserId && hasRealTeam && isRegisteredUser ? (
@@ -11414,24 +11373,6 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
                 >
                   <span>Ranking</span><small>Media, goles, partidos y victorias</small><b aria-hidden="true">›</b>
                 </button>
-                <Link href="/ranking">
-                  <span>Ranking provincial</span><small>Season Score y clasificación oficial</small><b aria-hidden="true">›</b>
-                </Link>
-                <Link href="/mercado">
-                  <span>Mercado</span><small>Jugadores disponibles y partidos abiertos</small><b aria-hidden="true">›</b>
-                </Link>
-                <Link href="/ligas">
-                  <span>Ligas (Beta)</span><small>Mis Ligas y acceso de organizador</small><b aria-hidden="true">›</b>
-                </Link>
-                <Link href="/planes-organizador">
-                  <span>Planes de organización</span><small>Capacidades para Clubs y equipos</small><b aria-hidden="true">›</b>
-                </Link>
-                <Link href="/organizacion/solicitudes">
-                  <span>Organizar</span><small>Solicitudes, acceso y onboarding</small><b aria-hidden="true">›</b>
-                </Link>
-                {currentRole === "owner" ? <Link href="/ajustes/facturacion">
-                  <span>Facturación</span><small>Plan, uso, continuidad y facturas</small><b aria-hidden="true">›</b>
-                </Link> : null}
               </div>
 
               <div className="mobile-account-group">
