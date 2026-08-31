@@ -2560,3 +2560,62 @@ passes all six races with exactly one authoritative winner per conflict.
   `ON_ERROR_STOP` and a single transaction, the subsequent data restore passes,
   representative readbacks succeed and cleanup returns the local catalog to
   zero task-owned restore databases.
+
+### W9B-142 - Linked db push is disabled by project configuration
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed + regression_verified`
+- Original reproducer: execute `supabase db push --linked --include-all
+  --dry-run` after reconciling the remote ledger at 220 and local ledger at 228.
+- Impact: CLI exits zero but skips all migrations because migration application
+  is disabled in the linked project configuration, then prints `Remote database
+  is up to date` even though the authoritative listing shows eight pending
+  Wave 9B versions. No migration or database write occurs.
+- Required correction: inspect the tracked Supabase configuration and the
+  repository's established production migration mechanism, select a mechanism
+  that applies the exact immutable eight files while recording their versions
+  in `supabase_migrations.schema_migrations`, and prove the planned set before
+  execution without weakening project-wide configuration.
+- Correction implemented: a unique task-owned Supabase release directory uses
+  the certified 228-file migration corpus and a copied config whose only change
+  enables `[db.migrations]`; the tracked project configuration remains OFF.
+- Regression evidence: config diff contains exactly that single line, TLS stays
+  OFF, all eight pending hashes match the reviewed manifest, and the linked
+  dry-run lists exactly versions `20260830223000` through `20260830223014` with
+  zero unexpected migrations.
+
+### W9B-143 - Temporary migration inventory does not follow its symlink
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed + regression_verified`
+- Original reproducer: count SQL migration files in the isolated release copy
+  with `find` while its migration directory is a task-owned symlink to the
+  certified worktree corpus.
+- Impact: the diagnostic reports zero files because default `find` does not
+  traverse the directory symlink. The link target remains intact and no remote
+  command or database write occurs.
+- Required correction: repeat the inventory with explicit symlink traversal,
+  require exactly 228 SQL migrations and prove the final eight names and hashes
+  before using the temporary configuration for a dry-run.
+- Correction implemented: the inventory now uses explicit `find -L` traversal
+  and sorts the resolved SQL files before selecting the release suffix.
+- Regression evidence: the temporary corpus contains exactly 228 migrations;
+  its final eight names and SHA-256 hashes match the reviewed Wave 9B manifest.
+
+### W9B-144 - Copied project ref does not configure the IPv4 pooler
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed + regression_verified`
+- Original reproducer: run the migration dry-run from the isolated release
+  directory after copying only the linked worktree's non-secret `project-ref`.
+- Impact: the CLI attempts the direct IPv6 database endpoint and fails with
+  `no route to host` before authentication or SQL execution. Production schema,
+  ledger and data remain unchanged.
+- Required correction: run the official `supabase link` command against the
+  same already-verified production ref with the isolated release directory as
+  its workdir, require IPv4 connection metadata to be generated there, and
+  repeat only the dry-run.
+- Correction implemented: the isolated release directory was linked with the
+  official CLI to only the previously confirmed Pachangas production ref.
+- Regression evidence: link exits zero; the subsequent IPv4 dry-run connects,
+  exits zero and lists the exact eight expected migrations with no SQL applied.
