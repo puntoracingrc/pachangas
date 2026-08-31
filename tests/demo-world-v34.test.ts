@@ -73,7 +73,8 @@ test("Demo UI exposes Campos responsively and performs no remote mutation", asyn
     bytes("app/demo-world/demo-world-v3-4-field-operations.module.css"),
     bytes("app/_components/product-context-selector.module.css"),
   ]).then((values) => values.map((value) => value.toString("utf8")));
-  assert.match(page, /version: 3\.4/);
+  assert.match(page, /public\/demo-world\/v3-4\/manifest\.json/);
+  assert.match(page, /fieldOperations: fieldOperationsSource as DemoWorldV34PresentationManifest/);
   assert.match(app, /id: "campos"/);
   assert.match(app, /DemoWorldV34FieldOperations/);
   assert.match(component, /cache: "force-cache"/);

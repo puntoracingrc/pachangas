@@ -28,7 +28,7 @@ migracion, release o cleanup.
 ### W9B-001 - npm audit reports preexisting dependency advisories
 
 - Classification: `ENVIRONMENT_ISSUE`
-- Status: `open / preexisting / non-blocking`
+- Status: `correction_not_in_wave9b_scope / regression_verified`
 - Original reproducer: run `npm ci` on exact base
   `592a3dcc1147df41fb05c21703f131e66fc75a0a`.
 - Impact: installation succeeds, but npm reports `18` advisories: `1` low,
@@ -37,6 +37,11 @@ migracion, release o cleanup.
   this product slice. Keep `package.json` and `package-lock.json` unchanged,
   run the full product gates, and close this incident only after the final diff
   proves Wave 9B introduced zero dependency changes.
+- Resolution: no dependency version or lockfile was changed; `package.json`
+  changes are limited to Wave 9B test/generator scripts. The full suite, build,
+  typecheck and lint pass without applying an unrelated dependency upgrade.
+- Regression evidence: final package diff contains no dependency block change
+  and `package-lock.json` is byte-identical to `origin/main`.
 
 ### W9B-002 - Baseline test result lost after output truncation
 
@@ -1554,7 +1559,7 @@ passes all six races with exactly one authoritative winner per conflict.
 ### W9B-091 - Authenticated staging activation omits the Demo V3.4 prerequisite
 
 - Classification: `SIMULATION_BUG`
-- Status: `detected / correction_pending`
+- Status: `fixed + regression_verified`
 - Original reproducer: run
   `node tests/season-venue-allocation-v1-staging-e2e.mjs` against the certified
   228-ledger staging branch while Demo V3.4 remains OFF in its original flag
@@ -1568,11 +1573,15 @@ passes all six races with exactly one authoritative winner per conflict.
   if confirmed, activate and restore it through the same canonical flag RPC,
   then rerun the exact authenticated two-device scenario and require the full
   staging pass plus zero synthetic-account residue.
+- Resolution: Demo V3.4 is included as an explicit prerequisite in the same
+  revisioned flag transition and restored in the harness `finally` block.
+- Regression evidence: the final `r9` run activated the complete dependency
+  chain, completed every flow and restored flags before returning PASS.
 
 ### W9B-092 - Competition venue managers cannot read allocation invalidations
 
 - Classification: `PRODUCT_BUG`
-- Status: `detected / correction_pending`
+- Status: `fixed + regression_verified`
 - Original reproducer: after a successful authenticated subscription and
   `postgres_changes` binding on `pachanga_venue_invalidations`, execute
   `allocation.generate` from device A and wait 30 seconds on device B for the
@@ -1589,6 +1598,10 @@ passes all six races with exactly one authoritative winner per conflict.
   Wave 9B venue-specific ACL, preserve canonical refetch and avoid applying WAL
   payloads as authority; then rebuild isolated staging and rerun the original
   two-device scenario through Preview.
+- Resolution: invalidation reads delegate to the Wave 9B competition Venue ACL;
+  clients still discard WAL payload authority and refetch the canonical model.
+- Regression evidence: two authenticated devices reached `SUBSCRIBED`, received
+  invalidation, refetched canonically and converged again after reconnect.
 
 ### W9B-093 - Supabase branch creation ignores JSON-only output
 
@@ -1635,7 +1648,7 @@ passes all six races with exactly one authoritative winner per conflict.
 ### W9B-095 - Concurrent hold loser times out instead of returning stale revision
 
 - Classification: `PRODUCT_BUG`
-- Status: `detected / correction_pending`
+- Status: `fixed + regression_verified`
 - Original reproducer: from two independently authenticated devices, submit
   `allocation.hold` concurrently against the same plan and expected revision
   after the hybrid plan has been generated and locked.
@@ -1647,11 +1660,15 @@ passes all six races with exactly one authoritative winner per conflict.
   dependencies, make contention fail or serialize within a bounded interval,
   preserve one authoritative winner and idempotent replay, then rerun the exact
   authenticated race and canonical readback on a clean branch.
+- Resolution: the hold path uses bounded conflict handling and returns the
+  canonical PT409 stale-revision outcome instead of an upstream timeout.
+- Regression evidence: final `r9` concurrency produced exactly one hold winner
+  and one `STALE_REVISION`, with no duplicate reservation or binding.
 
 ### W9B-096 - Synthetic venue manager cannot accept a Club reservation
 
 - Classification: `SIMULATION_BUG`
-- Status: `detected / correction_pending`
+- Status: `fixed + regression_verified`
 - Original reproducer: after the Wave 9B publish flow and successful hold race,
   submit and then accept the R4D replacement reservation from device B, whose
   synthetic Club membership is `club_venue_manager`.
@@ -1662,6 +1679,10 @@ passes all six races with exactly one authoritative winner per conflict.
   `club_venue_manager` and `club_reservation_manager`; if acceptance belongs to
   the latter, give the synthetic actor that existing role rather than widening
   production authority, then rerun the exact E2E.
+- Resolution: device B receives the existing `club_reservation_manager` role;
+  production ACL is unchanged and device A remains `club_venue_manager`.
+- Regression evidence: submit, accept, replacement and cancellation all passed
+  in `r9` without widening either role.
 
 ### W9B-097 - Branch health poll uses a reserved zsh variable
 
@@ -1714,7 +1735,7 @@ passes all six races with exactly one authoritative winner per conflict.
 ### W9B-100 - Synthetic referee cannot reconfirm the replacement venue
 
 - Classification: `PRODUCT_BUG`
-- Status: `detected / correction_pending`
+- Status: `fixed + regression_verified`
 - Original reproducer: complete the authenticated Wave 9B publish flow, create
   and accept the R4D replacement reservation, replace the match venue and ask
   device B to execute `assignment.reconfirm` for the existing referee.
@@ -1728,6 +1749,11 @@ passes all six races with exactly one authoritative winner per conflict.
 - Diagnosis: the referee area and canonical Venue both resolve to Barcelona,
   but the legacy availability helper compares only the short display label and
   ignores the structured municipality. The synthetic fixture is valid.
+- Resolution: the final forward migration resolves a unique active canonical
+  Venue name to its structured municipality/general area while retaining
+  fail-closed behavior for ambiguous duplicate names.
+- Regression evidence: local unique/ambiguous SQL regressions pass and `r9`
+  completed replacement plus `assignment.reconfirm` through the real RPC.
 
 ### W9B-101 - Ambiguous Venue regression duplicates a name inside one Club
 
@@ -1817,7 +1843,7 @@ passes all six races with exactly one authoritative winner per conflict.
 ### W9B-106 - Cancellation readback uses reference equality for JSON
 
 - Classification: `TESTABILITY_GAP`
-- Status: `detected / correction_pending`
+- Status: `fixed + regression_verified`
 - Original reproducer: complete replacement and referee reconfirmation, cancel
   the replacement reservation, parse the canonical SQL readback and compare it
   with an object literal through `assert.equal`.
@@ -1830,9 +1856,9 @@ passes all six races with exactly one authoritative winner per conflict.
 - Correction implemented: the canonical cancellation readback now uses
   `assert.deepEqual`, and the focal source test requires that structural
   assertion explicitly.
-- Verification state: local regression passes `10/10`; clean-branch authenticated E2E
-  still required before this incident can be marked `fixed +
-  regression_verified`.
+- Regression evidence: local regression passes `10/10`; the clean `r9` run
+  confirmed canonical `active / 1 action required / 0 active bindings` and
+  completed with no assertion mismatch.
 
 ### W9B-107 - Supabase branch creation mixes human output with JSON
 
@@ -1913,7 +1939,7 @@ passes all six races with exactly one authoritative winner per conflict.
 
 - Classification: `ENVIRONMENT_ISSUE` (initially recorded as `PRODUCT_BUG`
   before the redirect chain was isolated)
-- Status: `detected / correction_pending`
+- Status: `fixed + regression_verified`
 - Original reproducer: run the clean-branch authenticated E2E against exact
   Preview `0adc269` and inspect every Wave 9B canonical route before creating
   either synthetic account.
@@ -1930,12 +1956,14 @@ passes all six races with exactly one authoritative winner per conflict.
   an exact Preview.
 - Correction implemented: the harness accepts the bypass only through process
   environment and applies it to Preview requests without serializing its value.
-  Clean-branch end-to-end verification remains pending.
+- Regression evidence: exact Preview `0f5d25f` served all nine product/PWA
+  paths, `sw.js` returned `200 + no-store`, authenticated read passed and the
+  stale write was rejected.
 
 ### W9B-112 - Vercel protection JSON exposes the automation bypass as a key
 
 - Classification: `ENVIRONMENT_ISSUE`
-- Status: `detected / correction_pending`
+- Status: `fixed + regression_verified`
 - Original reproducer: inspect project Deployment Protection with
   `vercel project protection pachangas --format json` in order to confirm
   whether an automation bypass already exists.
@@ -1946,6 +1974,13 @@ passes all six races with exactly one authoritative winner per conflict.
   process, revoke it, generate a replacement without printing or persisting the
   new value, prove the former value no longer bypasses SSO and ensure all
   subsequent protection readbacks expose only boolean/count metadata.
+- Correction implemented: the exposed bypass was revoked, its edge rejection
+  was confirmed after propagation, and one replacement was generated and used
+  only through redacted in-memory/process boundaries.
+- Regression evidence: protection readback exposes only one configured bypass
+  as count/boolean metadata, unauthenticated access still redirects to SSO, the
+  replacement served the real worker during exact Preview E2E, and the final
+  workspace/diff/bundle/local/temporary scan contains no bypass literal.
 
 ### W9B-113 - Automation bypass revocation is not immediate at the edge
 
@@ -1972,7 +2007,7 @@ passes all six races with exactly one authoritative winner per conflict.
 ### W9B-114 - Deterministic referee assignment ID collides in clean-branch E2E
 
 - Classification: `SIMULATION_BUG`
-- Status: `detected / correction_pending`
+- Status: `fixed + regression_verified`
 - Original reproducer: run the authenticated Wave 9B E2E on branch `r7` after
   the Preview bypass succeeds and call `assignment.propose` with the fixed
   synthetic assignment identifier.
@@ -1991,15 +2026,17 @@ passes all six races with exactly one authoritative winner per conflict.
 - Correction implemented: the E2E now performs a read-only zero-residue
   preflight before creating accounts or changing flags and requires branch
   replacement whenever any deterministic sporting row or Wave 9B receipt is
-  present. Full verification remains pending on fresh `r8`.
+  present.
 - Clean replacement evidence: `r8` reports ledger `228`, schema hash
   `7b9a69ed...`, flags born OFF, the exact `3/12/120/6/6/12/1/1/50`
   topology and zero Wave 9B product rows before authentication.
+- Regression evidence: the same preflight passed on clean `r9`; the assignment
+  lifecycle completed and no reused identifier collision occurred.
 
 ### W9B-115 - Node fetch loops when Vercel is asked to set a bypass cookie
 
 - Classification: `TESTABILITY_GAP`
-- Status: `detected / correction_pending`
+- Status: `fixed + regression_verified`
 - Original reproducer: run the exact `r8` Preview smoke with both
   `x-vercel-protection-bypass` and `x-vercel-set-bypass-cookie: true` through
   Node 24's built-in `fetch`.
@@ -2016,3 +2053,350 @@ passes all six races with exactly one authoritative winner per conflict.
 - Clean replacement evidence: `r9` independently reproduces ledger `228`, hash
   `7b9a69ed...`, flags born OFF, exact topology and zero Wave 9B rows before the
   final authenticated run.
+- Regression evidence: the direct-header Preview smoke completed without a
+  redirect, and the full `r9` E2E returned
+  `SEASON_VENUE_ALLOCATION_V1_STAGING_PASS`.
+
+### W9B-116 - Signed baseline creates a redundant team-code index
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `correction_not_in_wave9b_scope / regression_verified`
+- Original reproducer: bootstrap the isolated staging branch from
+  `20260731080738_pachangas_product_baseline.sql` and run the database
+  performance Advisors comparison against production.
+- Impact: staging reports one duplicate-index warning because
+  `pachanga_groups.team_code` is declared `UNIQUE` and the same signed baseline
+  later creates `pachanga_groups_team_code_idx` on the identical column. The
+  warning is outside all eight Wave 9B migrations and production does not show
+  it as a Wave 9B delta.
+- Required correction: preserve the signed baseline and the 220 historical
+  migrations during this release. Verify that no Wave 9B migration creates or
+  depends on either duplicate, document the warning as preexisting bootstrap
+  debt, and do not rewrite historical SQL to silence staging Advisors.
+- Resolution: all 220 historical migrations and the signed baseline remain
+  unchanged; none of the eight Wave 9B migrations creates or depends on the
+  redundant index.
+- Regression evidence: production has only the explicit team-code index, fresh
+  staging identifies the warning at baseline bootstrap, and fresh/upgrade Wave
+  9B schemas remain equivalent with every product gate green.
+
+### W9B-117 - Redacted environment reader is parsed by zsh
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed + regression_verified`
+- Original reproducer: pass a quote-heavy inline Node regular expression to
+  `zsh` while classifying `.env.local` values by type without printing them.
+- Impact: `zsh` reports `bad pattern` before Node starts; the ignored environment
+  file is not read and no secret is printed, copied or modified.
+- Required correction: pass the diagnostic source through a literal standard-
+  input block or an equivalently shell-independent channel, emit only key name,
+  type and length, then verify that no raw value appears in the evidence.
+- Correction implemented: the reader is now supplied through a literal stdin
+  script and emits only variable name, coarse type and length.
+- Regression evidence: the same ignored `.env.local` was classified without a
+  shell parse error and without printing, copying or modifying its raw value.
+
+### W9B-118 - Documented agent-browser binary is unavailable
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed + regression_verified`
+- Original reproducer: run `agent-browser --help` before the final exact-
+  Preview visual pass.
+- Impact: `zsh` returns `command not found` before any browser session starts;
+  no product or remote state changes.
+- Required correction: use the installed in-app browser/Chrome connector or
+  the repository's available Playwright runtime, preserve the requested
+  viewport matrix and console/overflow/image assertions, then record the
+  replacement harness and its completed evidence.
+- Correction implemented: final visual QA used the installed in-app browser
+  harness against exact Preview commit `0f5d25f`.
+- Regression evidence: home passed eight explicit viewports; all eight Demo
+  V3.5 allocation layers passed desktop, portrait and landscape with zero root
+  or body overflow, zero broken images, zero unexpected clipping and zero
+  console warnings/errors.
+
+### W9B-119 - Persistent browser QA state rejects a redeclared metric binding
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed + regression_verified`
+- Original reproducer: declare the same top-level `const metrics` for the
+  second viewport in the persistent browser QA session.
+- Impact: the runtime rejects the declaration before evaluating the portrait
+  page; no navigation, click, product write or remote mutation occurs.
+- Required correction: store each viewport result on a reusable namespaced
+  global or use a redeclarable binding, rerun portrait from the same exact
+  Preview and require the original overflow/image/control assertions.
+- Correction implemented: viewport metrics use reusable namespaced globals in
+  the persistent browser session.
+- Regression evidence: portrait, landscape and desktop matrices all completed
+  in the same session without another redeclaration failure and retained their
+  independent assertions.
+
+### W9B-120 - Global clipping detector flags an intentional carousel card
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed + regression_verified`
+- Original reproducer: inspect every visible interactive element at `390x844`
+  and flag any rectangle extending past the viewport without considering its
+  scroll-container ancestry.
+- Impact: the second upcoming-match card is intentionally partially visible
+  inside a horizontal carousel, so the generic detector reports one false
+  positive while root and body overflow remain zero.
+- Required correction: exempt only elements whose ancestor explicitly owns
+  horizontal scrolling, retain failures for root-level clipping, and rerun the
+  portrait plus landscape matrices with the refined assertion.
+- Correction implemented: the clipping assertion ignores only descendants of
+  an ancestor whose computed overflow explicitly enables horizontal scrolling.
+- Regression evidence: the intentional upcoming-match carousel no longer
+  raises a false positive, while root/body overflow and non-carousel clipping
+  remain enforced across all portrait and landscape sizes.
+
+### W9B-121 - QA tries to click a closed section-menu entry
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed + regression_verified`
+- Original reproducer: resolve the two responsive `Campos` button copies while
+  the visible `Temporada` section selector is still closed, then require one of
+  those menu entries to be visible.
+- Impact: the QA harness raises `WAVE9B_FIELDS_BUTTON_NOT_VISIBLE` without
+  clicking or changing application state; the product menu itself has not
+  failed.
+- Required correction: open the visible `Temporada` selector first, resolve the
+  now-visible `Campos` entry semantically, then verify the destination and its
+  responsive metrics.
+- Correction implemented: the harness opens the visible section disclosure
+  before resolving `Campos`.
+- Regression evidence: `Campos` navigated to the Season Field Allocation view
+  and the destination passed desktop, portrait and landscape assertions.
+
+### W9B-122 - Navigation flow inherits the last landscape viewport
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed + regression_verified`
+- Original reproducer: finish the responsive matrix at `932x430` and begin the
+  desktop `Temporada` navigation flow without restoring a desktop viewport.
+- Impact: landscape correctly exposes `Secciones` instead of `Temporada`, so
+  the desktop locator is invisible and no click or remote action occurs.
+- Required correction: set the intended viewport explicitly at the start of
+  each navigation scenario, verify desktop through `Temporada` and landscape
+  through `Secciones`, and keep both paths in the final evidence.
+- Correction implemented: every navigation scenario now sets its viewport
+  before resolving responsive controls.
+- Regression evidence: desktop navigation passed through `Temporada` and the
+  landscape menu passed through its visible section disclosure at `844x390`.
+
+### W9B-123 - Desktop section selector remains non-visible after viewport reset
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed + regression_verified`
+- Original reproducer: restore `1440x900` after the landscape matrix, query the
+  semantic `Temporada` buttons and require one visible candidate before opening
+  `Campos`.
+- Impact: both responsive copies remain non-visible to the semantic locator even
+  though the DOM snapshot retains the section label; no click or write occurs.
+- Required correction: inspect the rendered frame, bounding rectangles,
+  display/visibility and current scroll position, then either target the actual
+  visible selector or register a product navigation defect before changing UI.
+- Root cause: the visible section selector is a native `<summary>` disclosure,
+  not a semantic `button`; the locator was querying the wrong role.
+- Correction implemented: the harness targets the visible `summary`, verifies
+  its parent disclosure state and then selects the requested section.
+- Regression evidence: the corrected route opened `Campos` at `1440x900`, and
+  the complete section list remained reachable in landscape without a product
+  navigation change.
+
+### W9B-124 - Read-only browser sandbox does not expose fetch
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed + regression_verified`
+- Original reproducer: call `fetch()` inside the browser's read-only page
+  evaluation scope to inspect manifest and Service Worker response headers.
+- Impact: the sandbox raises `TypeError: fetch is not a function` before any
+  request; the page, PWA registration and remote deployment remain unchanged.
+- Required correction: read manifest/registration state through the DOM and
+  Service Worker APIs available to the page, inspect HTTP responses through a
+  redacted Vercel-aware request path, and keep standalone emulation separate
+  from the real physical-PWA pending status.
+- Correction implemented: DOM and authenticated browser evidence cover the
+  manifest contract; the exact authenticated staging E2E retains the Service
+  Worker `200 + no-store` HTTP assertion.
+- Regression evidence: manifest metadata, icons, scope, start URL, orientation
+  and display fallbacks read back correctly without relying on sandbox fetch;
+  physical installed-PWA QA remains explicitly `PENDING`.
+
+### W9B-125 - Read-only browser sandbox also hides navigator
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed + regression_verified`
+- Original reproducer: inspect `navigator.serviceWorker` from the same read-
+  only browser evaluation scope after removing the unsupported `fetch` call.
+- Impact: the sandbox exposes document layout but not `navigator`, so it raises
+  before reading registration state; no application or remote state changes.
+- Required correction: retain DOM/visual evidence from this browser, use the
+  tested Service Worker contract and redacted HTTP checks for technical PWA
+  evidence, and leave physical installed-PWA validation explicitly pending.
+- Correction implemented: browser visual assertions and the tested worker
+  contract are kept as separate technical evidence instead of fabricating a
+  navigator readback unavailable to the sandbox.
+- Regression evidence: manifest and worker tests pass, exact Preview E2E proves
+  authenticated worker delivery and offline fail-closed behavior, while
+  Android, iPhone and installed physical PWA remain `PENDING`.
+
+### W9B-126 - Temporary Vercel share URL appears in diagnostic output
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed + regression_verified`
+- Original reproducer: inspect the raw text returned by the Vercel temporary-
+  access connector before parsing its `shareableUrl` field.
+- Impact: a Preview-only share token with a 23-hour expiry appears in internal
+  diagnostic output. It is not a production secret and changes no application
+  state, but it grants temporary access to the protected Preview.
+- Required correction: regenerate access inside a redacting process so the
+  previously returned token is superseded, retain the replacement only in
+  memory, use it for manifest/Service Worker checks without printing it and
+  verify that reports, Git, diff, bundle and temporary files contain neither
+  share token.
+- Correction implemented: subsequent temporary access was generated and parsed
+  only inside redacting orchestration; no replacement value was printed or
+  written, and final manifest/worker evidence used authenticated safe paths.
+- Regression evidence: bounded scans report zero suspicious files across
+  `1,962` workspace files, `3,966` built artifacts, `20` Wave 9B temporaries,
+  `3` ignored-local files and both branch/worktree diffs.
+
+### W9B-127 - Connector orchestration isolate lacks the URL constructor
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed + regression_verified`
+- Original reproducer: regenerate the temporary Preview share link inside the
+  redacting orchestration isolate and parse it with `new URL(...)`.
+- Impact: the replacement link is generated and remains unprinted, but the
+  isolate raises `ReferenceError: URL is not defined` before manifest or
+  Service Worker fetches. No product state changes.
+- Required correction: extract only the `_vercel_share` value with a bounded
+  in-memory pattern, never emit it, complete both protected GETs and report
+  only status, cache policy and public manifest/worker contract fields.
+- Correction implemented: the replacement value was extracted with a bounded
+  in-memory pattern and was never emitted or persisted.
+- Regression evidence: orchestration continued past parsing without the URL
+  constructor failure; only redacted status/cache metadata reached diagnostic
+  output, with protected-resource verification completed through the fallback
+  recorded in W9B-128.
+
+### W9B-128 - Vercel fetch connector does not follow the share-cookie redirect
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed + regression_verified`
+- Original reproducer: generate a fresh redacted `_vercel_share` URL and submit
+  manifest plus Service Worker GETs through the Vercel-aware fetch connector.
+- Impact: both calls return the protected deployment's `302 + no-store` cookie
+  bootstrap response instead of the final resources. No token is emitted and
+  no application state changes.
+- Required correction: read the public manifest body through the already
+  authenticated SSO browser session, retain the exact E2E `sw.js 200 +
+  no-store` response as worker evidence, and do not misreport the connector
+  redirect as an application failure.
+- Correction implemented: the authenticated browser supplied manifest content
+  while the exact staging E2E supplied the worker HTTP contract.
+- Regression evidence: manifest readback is complete, `sw.js` is independently
+  proven `200 + no-store`, and the connector's cookie-bootstrap `302 +
+  no-store` remains correctly classified as an environment limitation.
+
+### W9B-129 - CDP media emulation cannot force display-mode standalone
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed + regression_verified`
+- Original reproducer: send `Emulation.setEmulatedMedia` with a
+  `display-mode=standalone` feature and read back both standalone/fullscreen
+  media queries.
+- Impact: Chromium keeps both media queries false, so the resulting screenshot
+  is an ordinary landscape browser view and cannot certify installed-PWA UI.
+- Required correction: reset media emulation, verify standalone/fullscreen
+  contract through manifest, CSS and automated PWA tests, and leave physical
+  Android/iPhone/installed-PWA status explicitly `PENDING` rather than
+  reporting a false PASS.
+- Correction implemented: CDP media emulation was reset and the browser
+  returned to an explicit `1440x900` viewport; standalone/fullscreen evidence
+  is limited to manifest, CSS and automated PWA contracts.
+- Regression evidence: the manifest declares `fullscreen` with `standalone`,
+  `minimal-ui` and `browser` fallbacks, technical PWA tests remain green, and
+  physical Android, iPhone and installed-PWA QA remain truthfully `PENDING`.
+
+### W9B-130 - Demo V3.4 regression pins the superseded page version
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed + regression_verified`
+- Original reproducer: run `npm test` after Demo World V3.5 becomes the
+  canonical `/demo` composition.
+- Impact: the global suite passes `688/689`, but
+  `tests/demo-world-v34.test.ts` still requires the page source to contain
+  literal `version: 3.4`; the page correctly composes the preserved V3.4 field
+  operations layer into a V3.5 manifest and declares `version: 3.5`.
+- Required correction: prove that the V3.4 field-operations import and `Campos`
+  behavior remain covered, replace only the obsolete top-level version pin
+  with a forward-compatible composition assertion, and rerun the original
+  V3.4 test plus the V3.5 and global suites.
+- Root cause: the V3.4 test coupled its preserved content layer to the current
+  top-level Demo manifest version, which V3.5 legitimately superseded.
+- Correction implemented: the test now requires the V3.4 manifest import and
+  its typed `fieldOperations` composition instead of pinning the page version.
+- Regression evidence: the combined V3.4/V3.5 suite passes `10/10`, preserving
+  all field-operation, privacy, read-only, responsive and 128-Match assertions.
+
+### W9B-131 - Secret scanner treats the bypass header contract as a credential
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed + regression_verified`
+- Original reproducer: run the final bounded secret scanner across all tracked
+  and untracked non-ignored Wave 9B files.
+- Impact: the scanner reports one `vercel_share_or_bypass` hit in
+  `tests/season-venue-allocation-v1-staging-e2e.mjs` and its branch diff even
+  though the harness is expected to name that header and source its value from
+  process environment without a literal credential.
+- Required correction: inspect the matched source without emitting any runtime
+  value, distinguish a header-name-plus-variable contract from a literal token,
+  tighten only that detector and rerun workspace, diff, bundle, ignored-local
+  and temporary scopes.
+- Root cause: the first detector allowed an unquoted JavaScript identifier after
+  the header colon, so it consumed `vercelAutomationBypassSecret` as though it
+  were a literal credential.
+- Correction implemented: bypass-header findings now require a quoted literal
+  value; `_vercel_share` query values remain independently detected.
+- Regression evidence: the safe process-environment header contract no longer
+  raises a false positive, while all secret classes and every requested scope
+  complete with zero suspicious files.
+
+### W9B-132 - ASCII transliteration leaves six partial sidecar files
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed + regression_verified`
+- Original reproducer: run macOS `iconv` with the unsupported
+  `ASCII//TRANSLIT` target and conditionally rename each output only on a clean
+  exit.
+- Impact: the six intended reports remain correct, but six untracked
+  `*.md.ascii` sidecars remain after `iconv` warns about invalid characters and
+  skips the conditional rename.
+- Required correction: preserve the canonical reports, remove only the six
+  exact sidecars with single-file unlink operations, verify no `.ascii` report
+  remains and rerun status plus `git diff --check`.
+- Correction implemented: each exact sidecar was removed with `unlink`; none of
+  the six canonical Markdown reports was changed or deleted.
+- Regression evidence: a bounded `*.md.ascii` search returns zero files,
+  `git status` lists only the intended test, ledger and reports, and
+  `git diff --check` exits cleanly.
+
+### W9B-133 - Pending-status audit pattern is interpreted by zsh
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed + regression_verified`
+- Original reproducer: place Markdown backticks from the status syntax inside
+  a double-quoted `rg` expression passed through `zsh`.
+- Impact: `zsh` reports `unmatched quote` before `rg` starts; no file, process,
+  test result or remote state is changed.
+- Required correction: query status lines with a shell-inert expression, require
+  zero `detected`, `open`, `diagnosis_pending` or `correction_pending` states,
+  and rerun `git diff --check`.
+- Correction implemented: the status search now uses a single-quoted,
+  shell-inert pattern without Markdown backticks.
+- Regression evidence: the corrected command reaches `rg`, finds only this
+  incident's pre-correction status plus an explanatory historical sentence,
+  and `git diff --check` exits cleanly.
