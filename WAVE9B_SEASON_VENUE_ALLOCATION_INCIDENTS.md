@@ -2477,3 +2477,86 @@ passes all six races with exactly one authoritative winner per conflict.
   preserves the complete command output before printing its bounded summary.
 - Regression evidence: zsh completes the corrected wrapper with exit code zero
   and the authoritative 220/228 reconciliation above.
+
+### W9B-138 - Backup runner discovery names two nonexistent files
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed + regression_verified`
+- Original reproducer: run the bounded runner-discovery search with explicit
+  paths `tests/season-venue-allocation-v1-db.test.mjs` and
+  `tests/run-wave9b-db-tests.mjs`.
+- Impact: `rg` reports both guessed paths as missing while still finding the
+  real Wave 9B runners; no repository or database state changes.
+- Required correction: discover the actual filenames from `rg --files`, inspect
+  only the real database runner and reuse its isolated PostgreSQL contract for
+  backup restoration evidence.
+- Correction implemented: discovery now starts from the tracked file list and
+  resolves the actual runner as
+  `tests/season-venue-allocation-v1-db-runner.mjs`.
+- Regression evidence: the real runner is readable, confirms a loopback-only
+  PostgreSQL target at port 55322 and documents its disposable-database plus
+  infrastructure-restore lifecycle; `pg_isready` reports that target accepting
+  connections.
+
+### W9B-139 - Data-only backup reports circular foreign-key dependencies
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed + regression_verified`
+- Original reproducer: create the production pre-deploy data backup with
+  `supabase db dump --linked --data-only --use-copy`.
+- Impact: the dump exits zero and is nonempty, but `pg_dump` warns that several
+  cyclic relationships may require disabled triggers or deferred constraints
+  during restoration. File existence alone is therefore insufficient proof of
+  a recoverable backup.
+- Required correction: restore the captured roles, schema and data into an
+  isolated disposable PostgreSQL target using the minimum controlled trigger
+  handling required by the dump, require `ON_ERROR_STOP`, verify representative
+  row counts and discard the target after verification.
+- Correction implemented: schema and data were restored transactionally into a
+  loopback-only disposable PostgreSQL database; data import used
+  `session_replication_role=replica` only for the isolated restore session and
+  returned it to `origin` before commit.
+- Regression evidence: restoration exits zero with 382 product tables, 147
+  nonempty product tables and 2,243 product rows; the Venue settings singleton
+  and representative product tables read correctly. The disposable database
+  was then dropped and a catalog readback returned zero remaining databases
+  with its exact name.
+
+### W9B-140 - COPY terminator diagnostic is over-escaped
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed + regression_verified`
+- Original reproducer: count data-dump terminator lines with the first escaped
+  regular expression used by the backup diagnostic.
+- Impact: the diagnostic reports zero terminators despite 411 `COPY` blocks,
+  so that count cannot validate structural completeness; the backup file itself
+  remains unchanged.
+- Required correction: use a fixed-string exact-line match for `\\.`, require
+  one terminator per `COPY` block and include that equality in restoration
+  evidence.
+- Correction implemented: the diagnostic now uses an exact fixed-string match
+  for the single-backslash terminator line.
+- Regression evidence: the production data backup contains 411 `COPY` blocks
+  and exactly 411 corresponding terminators.
+
+### W9B-141 - Disposable restore target lacks the Realtime publication
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed + regression_verified`
+- Original reproducer: restore the captured production schema transactionally
+  into a disposable database prepared from the loopback Supabase
+  infrastructure dump.
+- Impact: restoration stops at the first reference to publication
+  `supabase_realtime`; the infrastructure export intentionally excludes
+  publications, and `--single-transaction` rolls back the complete product
+  schema restore so no partial schema remains. Production is untouched.
+- Required correction: create the empty `supabase_realtime` publication in the
+  disposable target exactly as the canonical Wave 9B database runner does,
+  rerun the schema restore with `ON_ERROR_STOP` and then continue the isolated
+  data recovery proof.
+- Correction implemented: the disposable target now creates the empty
+  `supabase_realtime` publication before replaying the captured schema.
+- Regression evidence: the complete schema restore passes under
+  `ON_ERROR_STOP` and a single transaction, the subsequent data restore passes,
+  representative readbacks succeed and cleanup returns the local catalog to
+  zero task-owned restore databases.
