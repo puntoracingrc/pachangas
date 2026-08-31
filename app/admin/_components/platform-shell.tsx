@@ -103,7 +103,8 @@ export function PlatformShell({
         </nav>
         <div className={styles.sidebarFooter}>
           <span>{platformRoleLabels[access.role]}</span>
-          <Link href="/">Volver a la app</Link>
+          {access.role === "platform_owner" ? <Link href="/admin/demo">Mundo Demo completo</Link> : null}
+          <Link href="/">Ver como usuario</Link>
         </div>
       </aside>
 

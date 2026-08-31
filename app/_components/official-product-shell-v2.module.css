@@ -53,6 +53,106 @@
   backdrop-filter: blur(18px);
 }
 
+.identityMenu,
+.accountMenu {
+  position: relative;
+  min-width: 0;
+}
+
+.identityMenu > summary,
+.accountMenu > summary {
+  list-style: none;
+  cursor: pointer;
+}
+
+.identityMenu > summary::-webkit-details-marker,
+.accountMenu > summary::-webkit-details-marker { display: none; }
+
+.identityMenu > summary {
+  min-width: 0;
+  max-width: 290px;
+  min-height: 44px;
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr) 16px;
+  align-items: center;
+  gap: 9px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  padding: 2px 7px 2px 3px;
+  color: var(--official-text);
+}
+
+.identityMenu > summary:hover,
+.identityMenu[open] > summary { border-color: var(--official-line); background: rgba(255, 255, 255, 0.04); }
+.identityVisual { width: 38px; height: 38px; display: grid; place-items: center; overflow: hidden; border-radius: 5px; }
+.identityVisual > :global(*) { max-width: 38px; max-height: 38px; }
+.identityMenu summary img { width: 38px; height: 38px; border-radius: 5px; object-fit: contain; }
+.identityMenu summary span { min-width: 0; display: grid; gap: 1px; }
+.identityMenu summary small { color: var(--official-muted); font-size: 0.58rem; font-weight: 750; }
+.identityMenu summary strong { overflow: hidden; font-size: 0.82rem; text-overflow: ellipsis; white-space: nowrap; }
+.identityMenu summary > b { color: var(--official-muted); font-size: 0.78rem; }
+
+.identityMenuPanel,
+.accountMenuPanel {
+  position: absolute;
+  z-index: 120;
+  top: calc(100% + 7px);
+  min-width: 230px;
+  display: grid;
+  gap: 3px;
+  border: 1px solid var(--official-line);
+  border-radius: 7px;
+  background: #101c18;
+  padding: 7px;
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.34);
+}
+
+.identityMenuPanel { left: 0; }
+.identityMenuPanel label { display: grid; gap: 5px; padding: 5px; color: var(--official-muted); font-size: 0.65rem; font-weight: 800; }
+.identityMenuPanel select { min-height: 38px; width: 100%; }
+.identityMenuPanel p,
+.accountMenuPanel p { margin: 0 0 4px; border-bottom: 1px solid var(--official-line); padding: 7px; color: var(--official-muted); font-size: 0.69rem; }
+.identityMenuPanel :is(a, button),
+.accountMenuPanel :is(a, button) {
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  padding: 0 9px;
+  color: var(--official-text);
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 780;
+  text-align: left;
+  text-decoration: none;
+}
+.identityMenuPanel :is(a, button):hover,
+.accountMenuPanel :is(a, button):hover { background: rgba(255, 255, 255, 0.06); }
+
+.accountActions { min-width: 0; display: flex; justify-self: end; align-items: center; gap: 7px; }
+.iconAction,
+.avatarAction {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--official-line);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--official-muted);
+}
+.iconAction svg,
+.avatarAction svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.7; }
+.avatarAction img { width: 34px; height: 34px; border-radius: 50%; object-fit: cover; }
+.accountMenuPanel { right: 0; }
+.accountMenuPanel p { display: grid; gap: 2px; }
+.accountMenuPanel p strong { color: var(--official-text); }
+.accountMenuPanel p small { color: var(--official-muted); }
+.accountMenuPanel hr { width: 100%; margin: 4px 0; border: 0; border-top: 1px solid var(--official-line); }
+.accountMenuPanel .signOut { color: var(--official-danger-text); }
+
 .brand {
   min-width: 0;
   display: inline-flex;
@@ -156,7 +256,7 @@
 .contextBar {
   width: min(1440px, calc(100% - 32px));
   min-height: 50px;
-  display: block;
+  display: none;
   margin-inline: auto;
   border-bottom: 1px solid var(--official-line);
   color: var(--official-muted);
@@ -270,11 +370,23 @@
 @media (max-width: 760px) and (orientation: portrait) {
   .desktopHeader { display: none; }
   .contextBar {
+    position: sticky;
+    z-index: 70;
+    top: 0;
     width: 100%;
     min-height: 48px;
-    padding: max(5px, env(safe-area-inset-top)) 12px 5px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: max(5px, env(safe-area-inset-top)) 10px 5px;
     background: rgba(7, 17, 15, 0.92);
   }
+  .contextBar .identityMenu { min-width: 0; flex: 1; }
+  .contextBar .identityMenu > summary { max-width: 100%; }
+  .contextBar .identityMenu summary small { display: none; }
+  .identityMenuPanel { position: fixed; top: calc(54px + env(safe-area-inset-top)); right: 10px; left: 10px; }
+  .accountMenuPanel { position: fixed; top: calc(54px + env(safe-area-inset-top)); right: 10px; left: 10px; }
   .content {
     min-height: calc(100dvh - 48px);
     padding-bottom: calc(70px + env(safe-area-inset-bottom));
@@ -324,7 +436,7 @@
   .gameRail nav {
     min-height: 0;
     display: grid;
-    grid-template-rows: repeat(6, minmax(34px, 1fr));
+    grid-template-rows: repeat(4, minmax(34px, 1fr));
     gap: 3px;
   }
   .gameRail nav :is(a, button) {
@@ -378,9 +490,21 @@
   .contextBar {
     width: 100%;
     min-height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
     padding: 0 10px;
     background: rgba(7, 17, 15, 0.88);
   }
+  .contextBar .identityMenu { min-width: 0; flex: 1; }
+  .contextBar .identityMenu > summary { min-height: 30px; max-width: 100%; grid-template-columns: 26px minmax(0, 1fr) 12px; gap: 6px; }
+  .contextBar .identityMenu summary img { width: 26px; height: 26px; }
+  .contextBar .identityMenu summary small { display: none; }
+  .contextBar .identityMenu summary strong { font-size: 0.66rem; }
+  .contextBar .accountActions { gap: 4px; }
+  .contextBar :is(.iconAction, .avatarAction) { width: 28px; height: 28px; }
+  .contextBar :is(.iconAction, .avatarAction) svg { width: 16px; height: 16px; }
   .content {
     min-width: 0;
     min-height: 0;
@@ -417,14 +541,20 @@
   .shell[data-navigation-enabled="false"] .gameFrame { grid-template-columns: minmax(0, 1fr); }
   .gameRail { position: relative; z-index: 30; display: flex; height: 100dvh; flex-direction: column; gap: 6px; border-right: 1px solid var(--official-line); background: rgba(7, 17, 15, 0.96); padding: max(8px, env(safe-area-inset-top)) 7px max(8px, env(safe-area-inset-bottom)) max(7px, env(safe-area-inset-left)); }
   .gameMark { min-height: 38px; display: grid; place-items: center; border: 1px solid rgba(200, 239, 93, 0.55); color: var(--official-accent); font-weight: 950; text-decoration: none; }
-  .gameRail nav { min-height: 0; display: grid; grid-template-rows: repeat(6, minmax(40px, 1fr)); gap: 4px; }
+  .gameRail nav { min-height: 0; display: grid; grid-template-rows: repeat(4, minmax(40px, 1fr)); gap: 4px; }
   .gameRail nav :is(a, button) { display: grid; place-items: center; border: 1px solid transparent; border-radius: 5px; background: transparent; color: var(--official-muted); font: inherit; font-size: 0.67rem; font-weight: 850; text-decoration: none; }
   .gameRail nav :is(a, button)[aria-current="page"] { border-color: rgba(200, 239, 93, 0.34); background: rgba(200, 239, 93, 0.1); color: var(--official-text); }
   .gameRail nav b { display: none; }
   .gameUtilities { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
   .gameUtilities a { min-height: 30px; display: grid; place-items: center; border: 1px solid var(--official-line); color: var(--official-muted); font-size: 0.58rem; font-weight: 900; text-decoration: none; }
   .viewport { min-width: 0; height: 100dvh; display: grid; grid-template-rows: 40px minmax(0, 1fr); overflow: hidden; padding-right: env(safe-area-inset-right); }
-  .contextBar { width: 100%; min-height: 40px; padding: 0 12px; background: rgba(7, 17, 15, 0.88); }
+  .contextBar { width: 100%; min-height: 40px; display: flex; align-items: center; justify-content: space-between; gap: 7px; padding: 0 12px; background: rgba(7, 17, 15, 0.88); }
+  .contextBar .identityMenu { min-width: 0; flex: 1; }
+  .contextBar .identityMenu > summary { min-height: 34px; max-width: 100%; grid-template-columns: 30px minmax(0, 1fr) 12px; gap: 6px; }
+  .contextBar .identityMenu summary img { width: 30px; height: 30px; }
+  .contextBar .identityMenu summary small { display: none; }
+  .contextBar .accountActions { gap: 5px; }
+  .contextBar :is(.iconAction, .avatarAction) { width: 30px; height: 30px; }
   .content { min-height: 0; height: 100%; overflow: auto; overscroll-behavior: contain; }
   .content > :global(main) { min-height: 100%; height: auto; }
   .content > :global(main[data-mobile-tab]) { --game-nav-offset: 0px; height: 100%; padding-top: 0; }
@@ -473,3 +603,5 @@
 }
 
 :global(:root[data-theme="light"]) .content :global(:is(input, select, textarea)) { background: #fff !important; }
+:global(:root[data-theme="light"]) .identityMenuPanel,
+:global(:root[data-theme="light"]) .accountMenuPanel { background: #ffffff; }

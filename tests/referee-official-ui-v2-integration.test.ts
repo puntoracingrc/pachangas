@@ -6,28 +6,23 @@ import { refereeDateLabel } from "../app/referee-platform-contract";
 const root = new URL("../", import.meta.url);
 const source = (path: string) => readFile(new URL(path, root), "utf8");
 
-test("Mercado keeps R3 authority inside the Official UI V2 shell", async () => {
-  const market = await source("app/mercado/page.tsx");
+test("Mercado keeps the social core while referee authority remains on dedicated surfaces", async () => {
+  const [market, privateProfile, refereeMarket] = await Promise.all([
+    source("app/mercado/page.tsx"),
+    source("app/_components/referee-platform-client.tsx"),
+    source("app/mercado/referee-marketplace-panel.tsx"),
+  ]);
   assert.match(market, /OfficialProductShellV2/);
   assert.match(market, /active="mercado"/);
-  assert.match(market, /MarketTab[^;]+"arbitros"/s);
-  assert.match(market, /get_pachanga_referee_foundation_flags_v1/);
-  assert.match(market, /refereeProductEnabled[\s\S]*\? \[\{ id: "arbitros", label: "Árbitros", onSelect: \(\) => selectMarketTab\("arbitros"\) \}\]/);
-  assert.match(market, /activeTab === "arbitros" && refereeProductEnabled \? \(/);
-  assert.match(market, /<RefereeMarketplacePanel/);
-  assert.match(market, /String\(membership\?\.data\?\.role\) === "owner"/);
-  assert.match(market, /activeTab === "arbitros"[\s\S]*?\? "Árbitros"[\s\S]*?activeTab === "clubes"[\s\S]*?\? "Clubs"/);
+  assert.doesNotMatch(market, /MarketTab[^;]+"arbitros"/s);
+  assert.doesNotMatch(market, /RefereeMarketplacePanel|refereeProductEnabled/);
+  assert.match(privateProfile, /OfficialProductShellV2/);
+  assert.match(refereeMarket, /Crear mi ficha de árbitro/);
   assert.doesNotMatch(market, /\bMobileAppNav\b/);
 });
 
 test("referee self-service stays reachable before the marketplace is enabled", async () => {
-  const [market, panel] = await Promise.all([
-    source("app/mercado/page.tsx"),
-    source("app/mercado/referee-marketplace-panel.tsx"),
-  ]);
-  assert.match(market, /requestedTab === "arbitros" && !refereeEnabled\) setActiveTab\("jugadores"\)/);
-  assert.match(market, /activeTab === "arbitros" && refereeProductEnabled/);
-  assert.match(market, /marketplaceEnabled={refereeMarketplaceEnabled}/);
+  const panel = await source("app/mercado/referee-marketplace-panel.tsx");
   assert.match(panel, /if \(!marketplaceEnabled && !previewItems\)/);
   assert.match(panel, /Crear mi ficha de árbitro/);
 });

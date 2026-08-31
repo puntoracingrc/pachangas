@@ -67,14 +67,20 @@ test("reservation races, hold expiry, R4D and historical Venue integrity are exp
 });
 
 test("Demo UI exposes Campos responsively and performs no remote mutation", async () => {
-  const [page, app, component, css, contextCss] = await Promise.all([
-    bytes("app/demo/page.tsx"), bytes("app/demo-world/demo-world-app.tsx"),
+  const [page, fullPage, currentManifest, app, component, css, contextCss] = await Promise.all([
+    bytes("app/demo/page.tsx"),
+    bytes("app/admin/demo/page.tsx"),
+    bytes("app/demo-world/current-demo-world-manifest.ts"),
+    bytes("app/demo-world/demo-world-app.tsx"),
     bytes("app/demo-world/demo-world-v3-4-field-operations.tsx"),
     bytes("app/demo-world/demo-world-v3-4-field-operations.module.css"),
     bytes("app/_components/product-context-selector.module.css"),
   ]).then((values) => values.map((value) => value.toString("utf8")));
-  assert.match(page, /public\/demo-world\/v3-4\/manifest\.json/);
-  assert.match(page, /fieldOperations: fieldOperationsSource as DemoWorldV34PresentationManifest/);
+  assert.match(page, /mode="social"/);
+  assert.match(fullPage, /session\.access\.role !== "platform_owner"/);
+  assert.match(fullPage, /mode="full"/);
+  assert.match(currentManifest, /public\/demo-world\/v3-4\/manifest\.json/);
+  assert.match(currentManifest, /fieldOperations: fieldOperationsSource as DemoWorldV34PresentationManifest/);
   assert.match(app, /id: "campos"/);
   assert.match(app, /DemoWorldV34FieldOperations/);
   assert.match(component, /cache: "force-cache"/);

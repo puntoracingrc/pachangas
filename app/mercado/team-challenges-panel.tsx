@@ -35,6 +35,8 @@ type ChallengeDraft = {
 
 type Props = {
   initialOpponent?: TeamSummary | null;
+  initialTeamCode?: string;
+  view?: "all" | "history" | "received" | "search" | "sent";
 };
 
 const emptyDraft: ChallengeDraft = {
@@ -112,12 +114,12 @@ function challengeDraftFingerprint(draft: ChallengeDraft) {
   return JSON.stringify(draft);
 }
 
-export function TeamChallengesPanel({ initialOpponent }: Props) {
+export function TeamChallengesPanel({ initialOpponent, initialTeamCode = "", view = "all" }: Props) {
   const [memberships, setMemberships] = useState<GroupMembership[]>([]);
   const [selectedGroupId, setSelectedGroupId] = useState("");
   const [currentUserId, setCurrentUserId] = useState("");
   const [snapshot, setSnapshot] = useState<TeamSocialSnapshot | null>(null);
-  const [teamCode, setTeamCode] = useState(initialOpponent?.teamCode ?? "");
+  const [teamCode, setTeamCode] = useState(initialOpponent?.teamCode ?? initialTeamCode);
   const [confirmedTeam, setConfirmedTeam] = useState<TeamSummary | null>(initialOpponent ?? null);
   const [draft, setDraft] = useState<ChallengeDraft>(emptyDraft);
   const [editingChallengeId, setEditingChallengeId] = useState<string | null>(null);
@@ -423,7 +425,13 @@ export function TeamChallengesPanel({ initialOpponent }: Props) {
     return <section className="market-panel team-challenges-empty">Necesitas pertenecer a un equipo para usar retos privados.</section>;
   }
 
-  const pendingChallenges = snapshot?.challenges.filter((challenge) => challenge.status === "proposed" || challenge.status === "changes_proposed") ?? [];
+  const pendingChallenges = snapshot?.challenges.filter((challenge) => (
+    challenge.status === "proposed" || challenge.status === "changes_proposed"
+  ) && (
+    view === "all"
+    || (view === "received" && challenge.direction === "incoming")
+    || (view === "sent" && challenge.direction === "outgoing")
+  )) ?? [];
   const acceptedChallenges = snapshot?.challenges.filter((challenge) => challenge.status === "accepted") ?? [];
   const resolvedChallenges = snapshot?.challenges.filter((challenge) => challenge.status === "rejected" || challenge.status === "cancelled" || challenge.status === "expired") ?? [];
 
@@ -446,7 +454,7 @@ export function TeamChallengesPanel({ initialOpponent }: Props) {
         </div>
       </div>
 
-      {snapshot?.canManage ? (
+      {(view === "all" || view === "search") && snapshot?.canManage ? (
         <section className="market-panel private-challenge-form" id="private-challenge-form">
           <header>
             <div>
@@ -506,13 +514,13 @@ export function TeamChallengesPanel({ initialOpponent }: Props) {
             {editingChallenge ? "Enviar cambios" : "Enviar reto"}
           </button>
         </section>
-      ) : (
+      ) : view === "all" || view === "search" ? (
         <p className="market-panel team-challenges-readonly">Puedes consultar los retos. Solo admins y owner pueden responder o crear propuestas.</p>
-      )}
+      ) : null}
 
       {message ? <p className="team-challenges-message" aria-live="polite">{message}</p> : null}
 
-      <div className="team-challenges-columns">
+      {view !== "history" && view !== "search" ? <div className="team-challenges-columns">
         <section className="market-panel challenge-list-panel">
           <header><span>Retos pendientes</span><strong>{pendingChallenges.length}</strong></header>
           <div className="challenge-list">
@@ -547,7 +555,7 @@ export function TeamChallengesPanel({ initialOpponent }: Props) {
           </div>
         </section>
 
-        <section className="market-panel known-opponents-panel">
+        {view === "all" ? <section className="market-panel known-opponents-panel">
           <header><span>Rivales conocidos</span><strong>{snapshot?.knownOpponents.length ?? 0}</strong></header>
           <div className="known-opponents-list">
             {snapshot?.knownOpponents.map((opponent) => (
@@ -572,14 +580,38 @@ export function TeamChallengesPanel({ initialOpponent }: Props) {
             ))}
             {!snapshot?.knownOpponents.length ? <p className="market-empty">Aparecerán aquí después del primer partido finalizado y enlazado con el rival.</p> : null}
           </div>
-        </section>
-      </div>
+        </section> : null}
+      </div> : null}
 
-      {selectedGroupId && currentUserId ? (
+      {view === "search" ? (
+        <section className="market-panel known-opponents-panel">
+          <header><span>Rivales conocidos</span><strong>{snapshot?.knownOpponents.length ?? 0}</strong></header>
+          <div className="known-opponents-list">
+            {snapshot?.knownOpponents.map((opponent) => (
+              <article key={opponent.groupId}>
+                <div><strong>{opponent.name}</strong><span>{opponent.matchesPlayed} partido{opponent.matchesPlayed === 1 ? "" : "s"}</span></div>
+                <small>Último: {formatDateTime(opponent.lastEncounterAt)}</small>
+                {snapshot.canManage ? (
+                  <button type="button" onClick={() => {
+                    setConfirmedTeam(opponent);
+                    setTeamCode(opponent.teamCode);
+                    setEditingChallengeId(null);
+                    setDraft(emptyDraft);
+                    document.getElementById("private-challenge-form")?.scrollIntoView({ behavior: "smooth" });
+                  }}>Retar de nuevo</button>
+                ) : null}
+              </article>
+            ))}
+            {!snapshot?.knownOpponents.length ? <p className="market-empty">Busca un rival por su código para enviar el primer reto.</p> : null}
+          </div>
+        </section>
+      ) : null}
+
+      {(view === "all" || view === "history") && selectedGroupId && currentUserId ? (
         <ExternalResultsPanel groupId={selectedGroupId} userId={currentUserId} />
       ) : null}
 
-      {acceptedChallenges.length ? (
+      {(view === "all" || view === "history") && acceptedChallenges.length ? (
         <section className="market-panel resolved-challenges-panel accepted-challenges-panel">
           <header><span>Retos acordados</span><strong>{acceptedChallenges.length}</strong></header>
           <div>
@@ -596,7 +628,7 @@ export function TeamChallengesPanel({ initialOpponent }: Props) {
         </section>
       ) : null}
 
-      {resolvedChallenges.length ? (
+      {(view === "all" || view === "history") && resolvedChallenges.length ? (
         <section className="market-panel resolved-challenges-panel">
           <header><span>Historial de retos</span><strong>{resolvedChallenges.length}</strong></header>
           <div>

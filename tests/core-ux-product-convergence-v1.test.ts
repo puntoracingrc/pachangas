@@ -16,25 +16,17 @@ import { buildServiceWorkerSource } from "../app/service-worker-source";
 
 const source = (path: string) => readFile(new URL(`../${path}`, import.meta.url), "utf8");
 
-test("the product exposes six desktop destinations and exactly five portrait destinations", () => {
+test("the social core exposes the same four primary destinations in every viewport", () => {
   assert.deepEqual(PRODUCT_PRIMARY_DESTINATIONS.map(({ id }) => id), [
     "inicio",
     "partido",
-    "competir",
+    "retos",
     "mercado",
-    "equipo",
-    "perfil",
   ]);
-  assert.deepEqual(PRODUCT_PORTRAIT_DESTINATIONS.map(({ id }) => id), [
-    "inicio",
-    "partido",
-    "competir",
-    "mercado",
-    "perfil",
-  ]);
-  assert.equal(productNavigationForViewport("portrait").length, 5);
-  assert.equal(productNavigationForViewport("desktop").length, 6);
-  assert.equal(productNavigationForViewport("landscape").length, 6);
+  assert.deepEqual(PRODUCT_PORTRAIT_DESTINATIONS, PRODUCT_PRIMARY_DESTINATIONS);
+  assert.equal(productNavigationForViewport("portrait").length, 4);
+  assert.equal(productNavigationForViewport("desktop").length, 4);
+  assert.equal(productNavigationForViewport("landscape").length, 4);
 });
 
 test("role-aware utilities prioritize capability context without granting authority", () => {
@@ -54,18 +46,15 @@ test("role-aware utilities prioritize capability context without granting author
   assert.ok(player.every(({ id }) => id !== "control-center" && id !== "organize"));
 });
 
-test("the unified context selector carries type, identity, role, state and next action", async () => {
-  const [selector, shell] = await Promise.all([
-    source("app/_components/product-context-selector.tsx"),
-    source("app/_components/official-product-shell-v2.tsx"),
-  ]);
-  for (const field of ["type", "title", "role", "status", "nextAction"]) {
-    assert.match(selector, new RegExp(field));
-  }
-  assert.match(selector, /aria-label="Contexto activo"/);
-  assert.match(shell, /contextualDestinationsForPerspective\(perspective\)/);
-  assert.match(shell, /<ProductContextSelector/);
-  assert.doesNotMatch(selector, /localStorage|sessionStorage|supabase|\.rpc\(/i);
+test("the unified header keeps team context separate from primary navigation", async () => {
+  const shell = await source("app/_components/official-product-shell-v2.tsx");
+  assert.match(shell, /aria-label="Abrir selector de equipo"/);
+  assert.match(shell, /contextOptions/);
+  assert.match(shell, /onContextChange/);
+  assert.match(shell, /Ver plantilla/);
+  assert.match(shell, /Gestionar equipo/);
+  assert.match(shell, /PRODUCT_PRIMARY_DESTINATIONS/);
+  assert.doesNotMatch(shell, /contextualDestinationsForPerspective\(perspective\)/);
 });
 
 test("all official competition operations identify Competir as their primary domain", async () => {

@@ -12,7 +12,7 @@
 .identityBand {
   position: relative;
   min-width: 0;
-  min-height: 250px;
+  min-height: 198px;
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(220px, 340px) auto;
   align-items: center;
@@ -32,7 +32,7 @@
   font-weight: 900;
   text-transform: uppercase;
 }
-.identityCopy h1 { margin: 5px 0 8px; font-size: clamp(2rem, 5vw, 4.7rem); line-height: 0.94; }
+.identityCopy h1 { margin: 5px 0 8px; font-size: clamp(1.8rem, 4vw, 3.4rem); line-height: 0.98; }
 .identityCopy p { max-width: 620px; margin: 0; color: var(--official-muted, #a9bbb2); font-size: 0.88rem; line-height: 1.5; }
 .identityMeta { display: flex; align-items: center; gap: 8px; margin-top: 14px; }
 .identityMeta :is(b, small) { min-height: 28px; display: inline-flex; align-items: center; border: 1px solid var(--official-line, rgba(217, 234, 225, 0.16)); border-radius: 5px; padding: 0 8px; font-size: 0.65rem; }
@@ -41,7 +41,7 @@
 
 .objectStage {
   min-width: 0;
-  min-height: 210px;
+  min-height: 170px;
   display: grid;
   place-items: center;
   filter: drop-shadow(0 18px 26px rgba(0, 0, 0, 0.24));
@@ -121,7 +121,7 @@
 .nextAction strong { font-size: 1.12rem; }
 .nextAction small { overflow: hidden; color: var(--official-muted, #a9bbb2); font-size: 0.7rem; text-overflow: ellipsis; white-space: nowrap; }
 
-.metrics { min-width: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border-block: 1px solid var(--official-line, rgba(217, 234, 225, 0.16)); }
+.metrics { min-width: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border-block: 1px solid var(--official-line, rgba(217, 234, 225, 0.16)); }
 .metrics > div { min-width: 0; display: grid; align-content: center; gap: 4px; border-left: 1px solid var(--official-line, rgba(217, 234, 225, 0.16)); padding: 10px 14px; }
 .metrics > div:first-child { border-left: 0; }
 .metrics span { color: var(--official-muted, #a9bbb2); font-size: 0.61rem; font-weight: 850; text-transform: uppercase; }
@@ -173,7 +173,7 @@
 
 @media (max-width: 760px) and (orientation: portrait) {
   .dashboard { width: 100%; gap: 14px; padding: 10px 12px 24px; }
-  .identityBand { min-height: 238px; grid-template-columns: minmax(0, 1fr) 126px auto; gap: 8px; padding: 14px 10px; }
+  .identityBand { min-height: 206px; grid-template-columns: minmax(0, 1fr) 126px auto; gap: 8px; padding: 12px 10px; }
   .identityCopy h1 { font-size: clamp(1.65rem, 10vw, 2.7rem); }
   .identityCopy p { display: -webkit-box; overflow: hidden; font-size: 0.72rem; -webkit-box-orient: vertical; -webkit-line-clamp: 3; }
   .identityMeta { align-items: start; flex-direction: column; gap: 4px; margin-top: 8px; }
@@ -187,8 +187,6 @@
   .actionRow { gap: 8px; }
   .nextAction { min-height: 80px; }
   .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .metrics > div:nth-child(3) { border-left: 0; border-top: 1px solid var(--official-line, rgba(217, 234, 225, 0.16)); }
-  .metrics > div:nth-child(4) { border-top: 1px solid var(--official-line, rgba(217, 234, 225, 0.16)); }
   .teamAccessDrawer { position: fixed; z-index: 145; inset: auto 12px calc(74px + env(safe-area-inset-bottom)) 12px; width: auto; max-height: min(68dvh, 560px); overflow: auto; }
   .rail,
   .activityRail { grid-auto-columns: minmax(218px, 84%); }

@@ -435,12 +435,14 @@ test("PWA caches v3-2 hashed chunks, keeps demo read-only and excludes private s
   assert.equal(immutablePath.test("/demo-world/v3-2/checkpoints/checkpoint-8.json"), true);
 });
 
-test("Demo V3.2 UI exposes timeline, all product views and game landscape without a second shell", async () => {
-  const [app, view, css, page, controlCenter] = await Promise.all([
+test("Demo V3.2 keeps social Demo focused and exposes the complete timeline only to platform owner", async () => {
+  const [app, view, css, page, fullPage, currentManifest, controlCenter] = await Promise.all([
     readFile(path.join(root, "app/demo-world/demo-world-app.tsx"), "utf8"),
     readFile(path.join(root, "app/demo-world/demo-world-v3-2-view.tsx"), "utf8"),
     readFile(path.join(root, "app/demo-world/demo-world-v3-2-view.module.css"), "utf8"),
     readFile(path.join(root, "app/demo/page.tsx"), "utf8"),
+    readFile(path.join(root, "app/admin/demo/page.tsx"), "utf8"),
+    readFile(path.join(root, "app/demo-world/current-demo-world-manifest.ts"), "utf8"),
     readFile(path.join(root, "app/laboratorio-synthetic-season/page.tsx"), "utf8"),
   ]);
   assert.match(app, /id: "temporada", label: "Temporada"/);
@@ -449,7 +451,10 @@ test("Demo V3.2 UI exposes timeline, all product views and game landscape withou
   assert.match(view, /Reproducir temporada/);
   assert.match(css, /grid-template-columns: 124px minmax\(0, 1fr\) 200px/);
   assert.match(css, /prefers-reduced-motion: reduce/);
-  assert.match(page, /public\/demo-world\/v3-2\/manifest\.json/);
+  assert.match(page, /mode="social"/);
+  assert.match(fullPage, /session\.access\.role !== "platform_owner"/);
+  assert.match(fullPage, /mode="full"/);
+  assert.match(currentManifest, /public\/demo-world\/v3-2\/manifest\.json/);
   assert.match(controlCenter, /robots: \{ follow: false, index: false \}/);
   assert.doesNotMatch(controlCenter, /execute|run simulation|POST/i);
 });

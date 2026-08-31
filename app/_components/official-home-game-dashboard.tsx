@@ -74,7 +74,7 @@ export function OfficialTeamIdentityBand({
 export function OfficialSeasonMetrics({ metrics }: { metrics: OfficialHomeMetric[] }) {
   return (
     <section className={styles.metrics} aria-label="Estado del equipo" data-official-season-metrics="true">
-      {metrics.slice(0, 4).map((metric) => <div key={metric.label}><span>{metric.label}</span><strong>{metric.value}</strong></div>)}
+      {metrics.slice(0, 2).map((metric) => <div key={metric.label}><span>{metric.label}</span><strong>{metric.value}</strong></div>)}
     </section>
   );
 }
@@ -88,10 +88,10 @@ export function OfficialUpcomingMatchesRail({
 }) {
   return (
     <section className={styles.band} data-official-upcoming-rail="true">
-      <header><div><span>Agenda</span><h2>Próximos partidos</h2></div><small>{matches.length} programado{matches.length === 1 ? "" : "s"}</small></header>
+      <header><div><span>Agenda</span><h2>Próximo partido</h2></div><small>{matches.length ? "Confirmado" : "Pendiente"}</small></header>
       {matches.length ? (
         <div className={styles.rail}>
-          {matches.map((match) => (
+          {matches.slice(0, 1).map((match) => (
             <button className={styles.matchTile} key={match.id} type="button" onClick={match.onOpen}>
               <span>{match.date}</span>
               <strong>{match.title}</strong>
@@ -108,10 +108,10 @@ export function OfficialUpcomingMatchesRail({
 export function OfficialActivityRail({ items }: { items: OfficialActivityItem[] }) {
   return (
     <section className={styles.band} data-official-activity-rail="true">
-      <header><div><span>Actividad</span><h2>Temporada</h2></div><small>{items.length} movimiento{items.length === 1 ? "" : "s"}</small></header>
+      <header><div><span>Para ti</span><h2>Ahora mismo</h2></div><small>{Math.min(items.length, 2)} señal{Math.min(items.length, 2) === 1 ? "" : "es"}</small></header>
       {items.length ? (
         <div className={styles.activityRail}>
-          {items.map((item) => {
+          {items.slice(0, 2).map((item) => {
             const content = <><span data-tone={item.tone ?? "neutral"}>{item.label}</span><strong>{item.title}</strong><small>{item.detail}</small></>;
             return item.onOpen
               ? <button key={item.id} type="button" onClick={item.onOpen}>{content}</button>

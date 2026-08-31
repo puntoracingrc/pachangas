@@ -106,6 +106,8 @@ const domainTabs: Array<{ group: "competición" | "gestión" | "red"; id: DemoWo
 ];
 
 const competitionTabs = new Set<DemoWorldV2PrimaryTab>(domainTabs.map(({ id }) => id));
+const socialDemoTabs = new Set<DemoWorldV2PrimaryTab>(["inicio", "partido", "retos", "mercado"]);
+const socialPerspectiveIds = new Set<DemoWorldPerspective["id"]>(["player", "team-owner"]);
 
 function primaryTabForDemo(tab: DemoWorldV2PrimaryTab): ProductPrimaryTab {
   return competitionTabs.has(tab) ? "competir" : tab as ProductPrimaryTab;
@@ -309,6 +311,7 @@ function DemoHeader({
   perspective,
   perspectives,
   setPerspective,
+  fullMode,
 }: {
   activeTab: DemoWorldV2PrimaryTab;
   manifest: DemoWorldManifest;
@@ -317,8 +320,10 @@ function DemoHeader({
   perspective: DemoWorldPerspective;
   perspectives: DemoWorldPerspective[];
   setPerspective: (perspectiveId: DemoWorldPerspective["id"]) => void;
+  fullMode: boolean;
 }) {
-  const contextOptions: ProductContextOption[] = perspectives.map((entry) => ({
+  const visiblePerspectives = fullMode ? perspectives : perspectives.filter((entry) => socialPerspectiveIds.has(entry.id));
+  const contextOptions: ProductContextOption[] = visiblePerspectives.map((entry) => ({
     detail: entry.teamId ? "Equipo ficticio activo" : "Exploración sin equipo",
     id: entry.id,
     nextAction: entry.role === "admin" || entry.id === "team-owner" ? "Revisar operaciones" : "Explorar producto",
@@ -340,13 +345,13 @@ function DemoHeader({
       <div className={styles.demoBanner} data-tour-target="demo-mode-banner">
         <span><b>Mundo Demo V{manifest.version}</b> · datos ficticios · temporada {manifest.season}</span>
         <span className={styles.bannerActions}>
-          <button type="button" onClick={() => onTab("revision")}>Recorrido</button>
+          {fullMode ? <button type="button" onClick={() => onTab("revision")}>Recorrido</button> : null}
           <button type="button" onClick={onReset}>Reiniciar</button>
           <Link href="/">Salir</Link>
         </span>
       </div>
       <header className={styles.header}>
-        <Link className={styles.brand} href="/demo" aria-label="Pachangas IQ Mundo Demo">
+        <Link className={styles.brand} href={fullMode ? "/admin/demo" : "/demo"} aria-label="Pachangas IQ Mundo Demo">
           <span>PIQ</span>
           <strong>Pachangas IQ</strong>
         </Link>
@@ -359,10 +364,10 @@ function DemoHeader({
         </nav>
         <div className={styles.headerContext} data-tour-target="demo-perspective">
           <ProductContextSelector activeId={perspective.id} contexts={contextOptions} onChange={(id) => setPerspective(id as DemoWorldPerspective["id"])} />
-          <DemoDomainMenu activeTab={activeTab} onTab={onTab} perspectiveId={perspective.id} />
+          {fullMode ? <DemoDomainMenu activeTab={activeTab} onTab={onTab} perspectiveId={perspective.id} /> : null}
         </div>
       </header>
-      <div className={styles.mobileDomainMenu}><DemoDomainMenu activeTab={activeTab} onTab={onTab} perspectiveId={perspective.id} /></div>
+      {fullMode ? <div className={styles.mobileDomainMenu}><DemoDomainMenu activeTab={activeTab} onTab={onTab} perspectiveId={perspective.id} /></div> : null}
     </>
   );
 }
@@ -492,36 +497,38 @@ function MatchView({
   currentTeam,
   match,
   onLocalAttendance,
-  onMatch,
   onPlayer,
   perspective,
   session,
   setMessage,
   snapshot,
-  teamMatches,
 }: {
   currentPlayer: DemoWorldPlayer;
   currentTeam: DemoWorldTeam | null;
   match: DemoWorldMatch | null;
   onLocalAttendance: (status: "duda" | "no" | "voy") => void;
-  onMatch: (matchId: string) => void;
   onPlayer: (playerId: string) => void;
   perspective: DemoWorldPerspective;
   session: DemoWorldSessionState;
   setMessage: (message: string) => void;
   snapshot: DemoWorldRenderableSnapshot;
-  teamMatches: DemoWorldMatch[];
 }) {
   const [pane, setPane] = useState<DemoWorldMatchPane>("proximo");
-  const visiblePane = demoWorldMatchPaneForRole(pane, perspective.role);
   const playerById = useMemo(() => new Map(snapshot.players.players.map((player) => [player.id, player])), [snapshot]);
   const venue = match ? snapshot.core.venues.find((entry) => entry.id === match.venueId) : null;
-  const matchPanes = perspective.role === "admin"
-    ? ["proximo", "alineacion", "resultado", "historico", "admin"] as const
-    : ["proximo", "alineacion", "resultado", "historico"] as const;
-  const history = teamMatches.filter((entry) => entry.status === "finalized").sort((left, right) => Date.parse(right.date) - Date.parse(left.date));
   const attendance = match ? session.attendanceByMatch[match.id] : undefined;
   if (!match) return <EmptyState title="Sin partido seleccionado" body="Elige un partido público desde Mercado." />;
+  const matchPanes: readonly DemoWorldMatchPane[] = match.status === "finalized"
+    ? ["proximo", "resultado", "historico"]
+    : ["proximo", "historico", "alineacion"];
+  const authorizedPane = demoWorldMatchPaneForRole(pane, perspective.role);
+  const visiblePane = authorizedPane === "admin" || matchPanes.includes(authorizedPane) ? authorizedPane : "proximo";
+  const paneLabel = (entry: DemoWorldMatchPane) => {
+    if (entry === "proximo") return "Resumen";
+    if (entry === "resultado") return "Resultado";
+    if (entry === "alineacion") return "Equipos";
+    return match.status === "finalized" ? "Estadísticas" : "Jugadores";
+  };
 
   return (
     <div className={styles.managerLayout} data-match-pane={visiblePane} data-tour-target="demo-match">
@@ -529,9 +536,14 @@ function MatchView({
         <div className={styles.sideTitle}><span>Partido</span><strong>{match.status === "finalized" ? "Histórico" : "Activo"}</strong></div>
         {matchPanes.map((entry) => (
           <button aria-current={visiblePane === entry ? "page" : undefined} key={entry} type="button" onClick={() => setPane(entry)}>
-            {entry === "proximo" ? (match.status === "finalized" ? "Partido" : "Próximo") : entry === "alineacion" ? "Alineación" : entry === "resultado" ? "Resultado" : entry === "historico" ? "Histórico" : "Admin"}
+            {paneLabel(entry)}
           </button>
         ))}
+        {perspective.role === "admin" ? (
+          <button type="button" onClick={() => setPane(visiblePane === "admin" ? "proximo" : "admin")}>
+            {visiblePane === "admin" ? "Cerrar administración" : "Administrar partido"}
+          </button>
+        ) : null}
         <div className={styles.sideMeta}>
           <span>{matchKindLabels[match.kind]}</span>
           <span>rev. {match.revision}</span>
@@ -566,15 +578,18 @@ function MatchView({
                 </div>
               </div>
             ) : null}
-            <div className={styles.rosterColumns}>
-              {(["home", "away"] as const).map((side) => {
-                const ids = side === "home" ? match.homePlayerIds : match.awayPlayerIds;
-                return <div key={side}><strong>{side === "home" ? match.homeLabel : match.awayLabel}</strong>{ids.map((playerId) => {
-                  const player = playerById.get(playerId);
-                  return player ? <button key={playerId} type="button" onClick={() => onPlayer(playerId)}><span>{player.position.abbreviation}</span>{player.name}<b>{Math.round(player.rating.currentOverall ?? 0) || "POR"}</b></button> : null;
-                })}</div>;
-              })}
-            </div>
+          </div>
+        ) : null}
+
+        {visiblePane === "historico" && match.status === "scheduled" ? (
+          <div className={styles.rosterColumns}>
+            {(["home", "away"] as const).map((side) => {
+              const ids = side === "home" ? match.homePlayerIds : match.awayPlayerIds;
+              return <div key={side}><strong>{side === "home" ? match.homeLabel : match.awayLabel}</strong>{ids.map((playerId) => {
+                const player = playerById.get(playerId);
+                return player ? <button key={playerId} type="button" onClick={() => onPlayer(playerId)}><span>{player.position.abbreviation}</span>{player.name}<b>{Math.round(player.rating.currentOverall ?? 0) || "POR"}</b></button> : null;
+              })}</div>;
+            })}
           </div>
         ) : null}
 
@@ -618,9 +633,21 @@ function MatchView({
           </div>
         ) : null}
 
-        {visiblePane === "historico" ? (
-          <div className={styles.historyGrid}>
-            {history.slice(0, 24).map((entry) => <button key={entry.id} type="button" onClick={() => onMatch(entry.id)}><span>{shortDateLabel(entry.date)} · {matchKindLabels[entry.kind]}</span><strong>{entry.homeLabel}<b>{entry.result?.home} : {entry.result?.away}</b>{entry.awayLabel}</strong></button>)}
+        {visiblePane === "historico" && match.status === "finalized" ? (
+          <div className={styles.nextMatchGrid}>
+            <div className={styles.matchFacts}>
+              <Stat label="Jugadores" value={match.homePlayerIds.length + match.awayPlayerIds.length} />
+              <Stat label="Goles" value={(match.result?.home ?? 0) + (match.result?.away ?? 0)} />
+              <Stat label="Goleadores" value={match.scorers.length} />
+              <Stat label="Revisión" value={match.revision} />
+            </div>
+            <div className={styles.rosterColumns}>
+              {(["home", "away"] as const).map((side) => {
+                const ids = side === "home" ? match.homePlayerIds : match.awayPlayerIds;
+                const average = ids.reduce((sum, id) => sum + (playerById.get(id)?.rating.currentOverall ?? 0), 0) / Math.max(ids.length, 1);
+                return <div key={side}><strong>{side === "home" ? match.homeLabel : match.awayLabel}</strong><p>{ids.length} jugadores · nivel {Math.round(average)}</p></div>;
+              })}
+            </div>
           </div>
         ) : null}
 
@@ -654,20 +681,19 @@ function MarketView({
   setMessage: (message: string) => void;
   snapshot: DemoWorldRenderableSnapshot;
 }) {
-  const [pane, setPane] = useState<"equipos" | "jugadores" | "partidos" | "retos">("jugadores");
+  const [pane, setPane] = useState<"equipos" | "jugadores" | "partidos">("partidos");
   const [query, setQuery] = useState("");
   const [visiblePlayerCount, setVisiblePlayerCount] = useState(DEMO_WORLD_MARKET_PAGE_SIZE);
   const normalizedQuery = query.trim().toLocaleLowerCase("es");
   const marketPlayers = snapshot.players.players.filter((player) => player.market.openToGuest && player.id !== currentPlayer.id && (!normalizedQuery || `${player.name} ${player.position.label} ${player.market.zones.join(" ")}`.toLocaleLowerCase("es").includes(normalizedQuery)));
   const publicMatches = snapshot.matches.matches.filter((match) => match.status === "scheduled" && match.publicOpenSlots > 0);
-  const challenges = snapshot.matches.challenges.slice().sort((left, right) => Date.parse(right.date) - Date.parse(left.date));
   const teams = snapshot.core.teams.filter((team) => team.openToChallenges && (!normalizedQuery || `${team.name} ${team.publicLocation} ${team.territory}`.toLocaleLowerCase("es").includes(normalizedQuery)));
 
   return (
     <div className={styles.managerLayout} data-market-pane={pane} data-tour-target="demo-market">
       <aside className={styles.sideSubnav} aria-label="Secciones de Mercado">
         <div className={styles.sideTitle}><span>Mercado</span><strong>Mundo Demo</strong></div>
-        {(["jugadores", "partidos", "retos", "equipos"] as const).map((entry) => <button aria-current={pane === entry ? "page" : undefined} key={entry} type="button" onClick={() => setPane(entry)}>{entry[0].toUpperCase() + entry.slice(1)}</button>)}
+        {(["partidos", "jugadores", "equipos"] as const).map((entry) => <button aria-current={pane === entry ? "page" : undefined} key={entry} type="button" onClick={() => setPane(entry)}>{entry[0].toUpperCase() + entry.slice(1)}</button>)}
         {perspective.role === "admin" ? <button type="button" onClick={() => setMessage("Configuración de Mercado: simulada en memoria.")}>Configurar</button> : null}
         <div className={styles.sideMeta}><span>{snapshot.manifest.counts.players} jugadores</span><span>{snapshot.manifest.counts.teams} equipos</span><small>Datos públicos ficticios</small></div>
       </aside>
@@ -685,16 +711,66 @@ function MarketView({
         {pane === "partidos" ? (
           <div className={styles.publicMatchGrid}>{publicMatches.map((match) => <button className={styles.publicMatch} key={match.id} type="button" onClick={() => onMatch(match.id)}><span>{dateLabel(match.date)} · {matchKindLabels[match.kind]}</span><strong>{match.homeLabel}<b>vs</b>{match.awayLabel}</strong><small>{snapshot.core.venues.find((venue) => venue.id === match.venueId)?.publicLocation} · {match.publicOpenSlots} plazas</small></button>)}</div>
         ) : null}
-        {pane === "retos" ? (
-          <div className={styles.challengeGrid}>{challenges.map((challenge) => {
-            const home = snapshot.core.teams.find((team) => team.id === challenge.homeTeamId)!;
-            const away = snapshot.core.teams.find((team) => team.id === challenge.awayTeamId)!;
-            return <article className={styles.challengeItem} key={challenge.id}><span data-status={challenge.status}>{challengeStatusLabels[challenge.status]}</span><div><TeamIdentity compact team={home} /><b>vs</b><TeamIdentity compact team={away} /></div><p>{challenge.message}</p><small>{dateLabel(challenge.date)} · {matchKindLabels[challenge.proposedKind]}</small>{challenge.matchId ? <button type="button" onClick={() => onMatch(challenge.matchId!)}>Abrir partido</button> : null}</article>;
-          })}</div>
-        ) : null}
         {pane === "equipos" ? (
           <div className={styles.teamMarketGrid}>{teams.map((team) => <button key={team.id} type="button" onClick={() => onTeam(team.id)}><TeamIdentity team={team} /><p>{team.identity}</p><span>{team.stats.challengesPlayed} retos · {team.rankingLabel}</span></button>)}</div>
         ) : null}
+      </section>
+    </div>
+  );
+}
+
+function ChallengesView({
+  currentTeam,
+  onMatch,
+  onTeam,
+  snapshot,
+}: {
+  currentTeam: DemoWorldTeam | null;
+  onMatch: (matchId: string) => void;
+  onTeam: (teamId: string) => void;
+  snapshot: DemoWorldRenderableSnapshot;
+}) {
+  const [view, setView] = useState<"history" | "received" | "search" | "sent">("received");
+  const teamId = currentTeam?.id ?? "";
+  const challenges = snapshot.matches.challenges
+    .filter((challenge) => challenge.homeTeamId === teamId || challenge.awayTeamId === teamId)
+    .filter((challenge) => {
+      if (view === "received") return challenge.awayTeamId === teamId && (challenge.status === "pending" || challenge.status === "countered");
+      if (view === "sent") return challenge.homeTeamId === teamId && (challenge.status === "pending" || challenge.status === "countered");
+      if (view === "history") return challenge.status !== "pending" && challenge.status !== "countered";
+      return false;
+    })
+    .sort((left, right) => Date.parse(right.date) - Date.parse(left.date));
+  const opponents = snapshot.core.teams.filter((team) => team.id !== teamId && team.openToChallenges);
+
+  return (
+    <div className={styles.managerLayout} data-tour-target="demo-challenges">
+      <aside className={styles.sideSubnav} aria-label="Secciones de Retos">
+        <div className={styles.sideTitle}><span>Retos</span><strong>{currentTeam?.name ?? "Equipo demo"}</strong></div>
+        {(["received", "sent", "history"] as const).map((entry) => (
+          <button aria-current={view === entry ? "page" : undefined} key={entry} type="button" onClick={() => setView(entry)}>
+            {entry === "received" ? "Recibidos" : entry === "sent" ? "Enviados" : "Historial"}
+          </button>
+        ))}
+        <button aria-current={view === "search" ? "page" : undefined} type="button" onClick={() => setView("search")}>Buscar rival</button>
+        <div className={styles.sideMeta}><span>{snapshot.matches.challenges.length} retos</span><small>Datos ficticios</small></div>
+      </aside>
+      <section className={styles.managerContent}>
+        <div className={styles.marketHeader}><div><span className={styles.eyebrow}>Competición social</span><h1>Retos</h1></div></div>
+        {view === "search" ? (
+          <div className={styles.teamMarketGrid}>{opponents.map((team) => (
+            <button key={team.id} type="button" onClick={() => onTeam(team.id)}><TeamIdentity team={team} /><p>{team.identity}</p><span>Disponible para retar · {team.publicLocation}</span></button>
+          ))}</div>
+        ) : (
+          <div className={styles.challengeGrid}>
+            {challenges.map((challenge) => {
+              const home = snapshot.core.teams.find((team) => team.id === challenge.homeTeamId)!;
+              const away = snapshot.core.teams.find((team) => team.id === challenge.awayTeamId)!;
+              return <article className={styles.challengeItem} key={challenge.id}><span data-status={challenge.status}>{challengeStatusLabels[challenge.status]}</span><div><TeamIdentity compact team={home} /><b>vs</b><TeamIdentity compact team={away} /></div><p>{challenge.message}</p><small>{dateLabel(challenge.date)} · {matchKindLabels[challenge.proposedKind]}</small>{challenge.matchId ? <button type="button" onClick={() => onMatch(challenge.matchId!)}>Abrir partido</button> : null}</article>;
+            })}
+            {!challenges.length ? <EmptyState title="Sin retos en esta vista" body="Cambia de pestaña o busca un rival para explorar el flujo." /> : null}
+          </div>
+        )}
       </section>
     </div>
   );
@@ -1490,17 +1566,23 @@ function DemoTeamOperationalView({ data }: { data: DemoWorldV31TeamOperationalCh
   </div>;
 }
 
-export function DemoWorldApp({ manifest }: { manifest: DemoWorldManifest }) {
+export function DemoWorldApp({ manifest, mode = "social" }: { manifest: DemoWorldManifest; mode?: "full" | "social" }) {
+  const fullMode = mode === "full";
   const [core, setCore] = useState<DemoWorldCoreChunk | null>(null);
   const [snapshot, setSnapshot] = useState<DemoWorldFullSnapshot | null>(null);
   const [loadingFullWorld, setLoadingFullWorld] = useState(false);
-  const [session, setSession] = useState<DemoWorldSessionState>(() => readInitialDemoWorldSession(
-    typeof window === "undefined" ? "" : window.location.search,
-    typeof window === "undefined" ? undefined : window.sessionStorage,
-  ));
-  const [activeTab, setActiveTab] = useState<DemoWorldV2PrimaryTab>(() => demoWorldV2TabFromSearch(
-    typeof window === "undefined" ? "" : window.location.search,
-  ));
+  const [session, setSession] = useState<DemoWorldSessionState>(() => {
+    const initial = readInitialDemoWorldSession(
+      typeof window === "undefined" ? "" : window.location.search,
+      typeof window === "undefined" ? undefined : window.sessionStorage,
+    );
+    if (fullMode || socialPerspectiveIds.has(initial.perspectiveId)) return initial;
+    return { ...initial, perspectiveId: "player" };
+  });
+  const [activeTab, setActiveTab] = useState<DemoWorldV2PrimaryTab>(() => {
+    const initial = demoWorldV2TabFromSearch(typeof window === "undefined" ? "" : window.location.search);
+    return fullMode || socialDemoTabs.has(initial) ? initial : "inicio";
+  });
   const initialPerspectiveId = useRef(session.perspectiveId);
   const fullWorldRequest = useRef<Promise<DemoWorldFullSnapshot | null> | null>(null);
   const [selectedClubId, setSelectedClubId] = useState("demo_club_001");
@@ -1611,13 +1693,14 @@ export function DemoWorldApp({ manifest }: { manifest: DemoWorldManifest }) {
     setSession((current) => next(current));
   }
 
-  function navigate(tab: DemoWorldV2PrimaryTab, preserveLeagueMatch = false) {
+  function navigate(requestedTab: DemoWorldV2PrimaryTab, preserveLeagueMatch = false) {
+    const tab = fullMode || socialDemoTabs.has(requestedTab) ? requestedTab : "inicio";
     if (!preserveLeagueMatch) setSelectedLeagueMatchId(null);
     setActiveTab(tab);
     const params = new URLSearchParams(window.location.search);
     params.set("tab", tab);
     params.set("perspective", session.perspectiveId);
-    window.history.replaceState(null, "", `/demo?${params.toString()}`);
+    window.history.replaceState(null, "", `${fullMode ? "/admin/demo" : "/demo"}?${params.toString()}`);
     window.scrollTo({ behavior: "smooth", top: 0 });
   }
 
@@ -1637,7 +1720,11 @@ export function DemoWorldApp({ manifest }: { manifest: DemoWorldManifest }) {
   }
 
   function choosePerspective(perspectiveId: DemoWorldPerspective["id"]) {
-    const nextPerspective = world.core.perspectives.find((entry) => entry.id === perspectiveId)!;
+    const requestedPerspective = world.core.perspectives.find((entry) => entry.id === perspectiveId)!;
+    const nextPerspective = fullMode || socialPerspectiveIds.has(requestedPerspective.id)
+      ? requestedPerspective
+      : world.core.perspectives.find((entry) => entry.id === "player")!;
+    perspectiveId = nextPerspective.id;
     const nextTeamId = nextPerspective.teamId ?? world.core.teams[0]!.id;
     const nextMatches = world.matches.matches.filter((match) => match.homeTeamId === nextTeamId || match.awayTeamId === nextTeamId);
     const nextMatch = nextMatches.filter((match) => match.status === "scheduled").sort((left, right) => Date.parse(left.date) - Date.parse(right.date))[0] ?? nextMatches[0];
@@ -1648,7 +1735,7 @@ export function DemoWorldApp({ manifest }: { manifest: DemoWorldManifest }) {
     const params = new URLSearchParams(window.location.search);
     params.set("perspective", perspectiveId);
     params.set("tab", activeTab);
-    window.history.replaceState(null, "", `/demo?${params.toString()}`);
+    window.history.replaceState(null, "", `${fullMode ? "/admin/demo" : "/demo"}?${params.toString()}`);
   }
 
   function openMatch(matchId: string) {
@@ -1668,7 +1755,8 @@ export function DemoWorldApp({ manifest }: { manifest: DemoWorldManifest }) {
 
   function openTeam(teamId: string) {
     setSelectedTeamId(teamId);
-    navigate("equipo");
+    if (fullMode) navigate("equipo");
+    else setMessage("Equipo seleccionado para esta sesión demo.");
   }
 
   function resetWorld() {
@@ -1681,19 +1769,20 @@ export function DemoWorldApp({ manifest }: { manifest: DemoWorldManifest }) {
     setSelectedTeamId("demo_team_001");
     const nextMatch = world.matches.matches.filter((match) => match.homeTeamId === "demo_team_001" && match.status === "scheduled").sort((left, right) => Date.parse(left.date) - Date.parse(right.date))[0];
     setSelectedMatchId(nextMatch?.id ?? null);
-    window.history.replaceState(null, "", "/demo");
+    window.history.replaceState(null, "", fullMode ? "/admin/demo" : "/demo");
     setMessage("Mundo Demo restaurado al snapshot original.");
   }
 
   return (
-    <main className={styles.shell} data-demo-world="ready" data-demo-perspective={perspective.id} data-demo-tab={activeTab}>
-      <DemoHeader activeTab={activeTab} manifest={manifest} onReset={resetWorld} onTab={navigate} perspective={perspective} perspectives={world.core.perspectives} setPerspective={choosePerspective} />
+    <main className={styles.shell} data-demo-world="ready" data-demo-mode={mode} data-demo-perspective={perspective.id} data-demo-tab={activeTab}>
+      <DemoHeader activeTab={activeTab} fullMode={fullMode} manifest={manifest} onReset={resetWorld} onTab={navigate} perspective={perspective} perspectives={world.core.perspectives} setPerspective={choosePerspective} />
       <div className={styles.content}>
         {activeTab === "inicio" ? <WorldHome currentPlayer={currentPlayer} currentTeam={currentTeam} notifications={notifications} onMatch={openMatch} onPlayer={setSelectedPlayerId} onTab={navigate} perspective={perspective} snapshot={world} teamMatches={teamMatches} /> : null}
         {activeTab !== "inicio" && activeTab !== "revision" && activeTab !== "campos" && !snapshot ? <div className={styles.secondaryLoading} role="status"><span className={styles.loadingMark}>IQ</span><strong>{loadingFullWorld ? "Cargando esta sección" : "Preparando datos"}</strong><p>Solo descargamos el dominio que acabas de abrir.</p></div> : null}
         {snapshot && activeTab === "partido" && selectedLeagueMatchPreview ? <div className={styles.demoProductView} data-demo-domain="league-match"><LeagueMatchOperationsClient disciplinePreviewData={selectedLeagueMatchDisciplinePreview} embedded previewData={selectedLeagueMatchPreview} refereeAssignmentPreviewData={selectedLeagueMatchRefereePreview} surface="match" /></div> : null}
-        {snapshot && activeTab === "partido" && !selectedLeagueMatchPreview ? <MatchView currentPlayer={currentPlayer} currentTeam={currentTeam} key={perspective.id} match={selectedMatch} onLocalAttendance={(status) => { if (!selectedMatch) return; updateSession((current) => ({ ...current, attendanceByMatch: { ...current.attendanceByMatch, [selectedMatch.id]: status } })); setMessage(`Asistencia ${status === "voy" ? "confirmada" : status === "duda" ? "en duda" : "cancelada"} solo en esta sesión demo.`); }} onMatch={openMatch} onPlayer={setSelectedPlayerId} perspective={perspective} session={session} setMessage={setMessage} snapshot={snapshot} teamMatches={teamMatches} /> : null}
+        {snapshot && activeTab === "partido" && !selectedLeagueMatchPreview ? <MatchView currentPlayer={currentPlayer} currentTeam={currentTeam} key={perspective.id} match={selectedMatch} onLocalAttendance={(status) => { if (!selectedMatch) return; updateSession((current) => ({ ...current, attendanceByMatch: { ...current.attendanceByMatch, [selectedMatch.id]: status } })); setMessage(`Asistencia ${status === "voy" ? "confirmada" : status === "duda" ? "en duda" : "cancelada"} solo en esta sesión demo.`); }} onPlayer={setSelectedPlayerId} perspective={perspective} session={session} setMessage={setMessage} snapshot={snapshot} /> : null}
         {snapshot && activeTab === "mercado" ? <MarketView currentPlayer={currentPlayer} onMatch={openMatch} onPlayer={setSelectedPlayerId} onTeam={openTeam} perspective={perspective} setMessage={setMessage} snapshot={snapshot} /> : null}
+        {snapshot && activeTab === "retos" ? <ChallengesView currentTeam={currentTeam} onMatch={openMatch} onTeam={openTeam} snapshot={snapshot} /> : null}
         {snapshot && activeTab === "equipo" ? <TeamView currentTeam={currentTeam} onPlayer={setSelectedPlayerId} onTeam={setSelectedTeamId} selectedTeam={selectedTeam} snapshot={snapshot} /> : null}
         {snapshot && activeTab === "perfil" ? <ProfileView currentPlayer={currentPlayer} currentTeam={currentTeam} notifications={notifications} onEquipCosmetic={equipCosmetic} onOpenBox={openRewardBox} onPerspective={choosePerspective} onPlayer={setSelectedPlayerId} onRead={(notificationId) => updateSession((current) => ({ ...current, readNotificationIds: [...new Set([...current.readNotificationIds, notificationId])] }))} perspective={perspective} perspectives={world.core.perspectives} session={session} snapshot={snapshot} /> : null}
         {snapshot && activeTab === "liga" ? <LeagueOverviewView onClub={openClub} onMatch={openLeagueMatch} onTab={navigate} snapshot={snapshot} /> : null}

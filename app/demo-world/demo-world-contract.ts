@@ -9,7 +9,7 @@ export const DEMO_WORLD_MODE = "demo-world-read-only" as const;
 
 export type DemoWorldPerspectiveId = "admin" | "club-organizer" | "free-agent" | "league-organizer" | "platform-reviewer"
   | "player" | "referee" | "team-owner" | "tournament-organizer";
-export type DemoWorldPrimaryTab = "inicio" | "partido" | "mercado" | "equipo" | "perfil";
+export type DemoWorldPrimaryTab = "inicio" | "partido" | "retos" | "mercado" | "equipo" | "perfil";
 export type DemoMatchKind = "sala" | "futbol7" | "futbol11";
 export type DemoMatchScope = "challenge" | "internal";
 export type DemoMatchStatus = "finalized" | "scheduled";

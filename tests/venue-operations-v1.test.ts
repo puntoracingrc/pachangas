@@ -126,10 +126,11 @@ test("offline writes fail closed while derived shells and Demo V3.4 can be cache
   assert.equal(isKnownClientWriteOperation("api:venue-operations-command"), true);
 });
 
-test("product navigation adds contextual Campos and Reservas without a sixth primary tab", async () => {
-  const [navigation, page, admin, shell, styles] = await Promise.all([
+test("product navigation keeps Campos and Reservas in dedicated and contextual admin surfaces", async () => {
+  const [navigation, page, venuePanel, admin, shell, styles] = await Promise.all([
     source("app/_components/product-navigation-contract.ts"),
     source("app/page.tsx"),
+    source("app/_components/venue-match-panel.tsx"),
     source("app/admin/venues/page.tsx"),
     source("app/admin/_lib/platform-contract.ts"),
     source("app/venue-operations.module.css"),
@@ -138,7 +139,9 @@ test("product navigation adds contextual Campos and Reservas without a sixth pri
   assert.match(navigation, /\/reservas/);
   assert.match(page, /Campo y reserva/);
   assert.match(page, /VenueMatchPanel/);
-  assert.match(page, /VenueHomeStatus/);
+  assert.doesNotMatch(page, /VenueHomeStatus/);
+  assert.match(venuePanel, /href="\/campos"/);
+  assert.match(venuePanel, /href="\/reservas"/);
   assert.match(admin, /Venue Operations/);
   assert.match(shell, /\/admin\/venues/);
   assert.match(styles, /\.hero a:not\(\.action\):not\(\.secondaryAction\):not\(\.dangerAction\)/);

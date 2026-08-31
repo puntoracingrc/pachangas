@@ -85,7 +85,9 @@ test("priority production routes share the official shell without replacing thei
   }
 
   const market = await source("app/mercado/page.tsx");
-  for (const capability of ["jugadores", "partidos", "retos", "equipos"]) assert.match(market, new RegExp(capability));
+  for (const capability of ["jugadores", "partidos", "equipos"]) assert.match(market, new RegExp(capability));
+  assert.doesNotMatch(market, /id: "retos"/);
+  assert.match(market, /window\.location\.replace\("\/retos"\)/);
   assert.match(market, /\.rpc\(/);
 });
 

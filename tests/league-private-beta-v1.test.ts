@@ -254,8 +254,10 @@ test("Official UI provides private eligibility, twelve-step wizard and responsiv
   assert.match(css, /orientation: landscape/);
   assert.match(css, /pointer: coarse/);
   assert.match(css, /min-width: 0/);
-  assert.match(shell, /contextualDestinationsForPerspective\(perspective\)/);
-  assert.match(navigation, /href: "\/ligas"/);
+  assert.match(shell, /PRODUCT_PRIMARY_DESTINATIONS/);
+  assert.doesNotMatch(shell, /contextualDestinationsForPerspective\(perspective\)/);
+  assert.match(navigation, /const organizerTools[\s\S]*href: "\/ligas"/);
+  assert.match(navigation, /PRODUCT_PRIMARY_DESTINATIONS[\s\S]*label: "Inicio"[\s\S]*label: "Partidos"[\s\S]*label: "Retos"[\s\S]*label: "Mercado"/);
   assert.match(adminPage, /League Private Beta/);
   assert.match(adminClient, /Apagado inmediato/);
   assert.match(adminClient, /Conceder 11 capacidades/);
