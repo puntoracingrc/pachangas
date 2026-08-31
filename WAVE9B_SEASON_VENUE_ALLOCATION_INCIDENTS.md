@@ -1813,3 +1813,98 @@ passes all six races with exactly one authoritative winner per conflict.
 - Resolution: the URI was quoted and the query remained localhost-only.
 - Regression evidence: the standard ledger columns read back as `version text`
   (primary key), nullable `statements text[]` and nullable `name text`.
+
+### W9B-106 - Cancellation readback uses reference equality for JSON
+
+- Classification: `TESTABILITY_GAP`
+- Status: `detected / correction_pending`
+- Original reproducer: complete replacement and referee reconfirmation, cancel
+  the replacement reservation, parse the canonical SQL readback and compare it
+  with an object literal through `assert.equal`.
+- Impact: Node rejects two structurally identical objects as non-reference-
+  equal, stopping the E2E after product state has already reached the expected
+  `active / 1 action required / 0 active bindings` outcome.
+- Required correction: use structural equality for this JSON readback, add a
+  static regression that fixes the assertion contract, and rerun the entire
+  authenticated flow on a clean branch.
+- Correction implemented: the canonical cancellation readback now uses
+  `assert.deepEqual`, and the focal source test requires that structural
+  assertion explicitly.
+- Verification state: local regression passes `10/10`; clean-branch authenticated E2E
+  still required before this incident can be marked `fixed +
+  regression_verified`.
+
+### W9B-107 - Supabase branch creation mixes human output with JSON
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed + regression_verified`
+- Original reproducer: create the clean `r7` preview branch with Supabase CLI
+  `2.107.0`, request JSON output and pipe the captured stdout directly to
+  `jq` for a redacted identifier-only readback.
+- Impact: the CLI prepends a human-readable creation line, so the JSON parser
+  stops before the branch identifier can be captured even though the remote
+  branch may already exist.
+- Required correction: discover the branch through the structured branch list,
+  select it by its exact unique name, expose only non-secret identifiers and
+  add a uniqueness assertion before continuing.
+- Resolution: the structured branch list was isolated from the CLI prefix and
+  filtered by the complete `r7` name; exactly one branch matched.
+- Regression evidence: the redacted readback returned only branch ID, name,
+  status and project ref, with a uniqueness count of exactly one and no secret
+  value emitted.
+
+### W9B-108 - Generic status patch targets the wrong incident
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed + regression_verified`
+- Original reproducer: update a generic
+  `Status: detected / correction_pending` line without including the incident
+  heading in the patch context.
+- Impact: `W9B-091` was marked fixed before its clean-branch authenticated E2E
+  evidence existed; no product code, database or remote flag was changed.
+- Required correction: restore `W9B-091` to its prior pending state, update
+  `W9B-107` only with heading-qualified context and verify the resulting diff
+  contains no other historical status mutation.
+- Resolution: `W9B-091` was restored to pending and `W9B-107` was updated with
+  its incident heading included in the patch context.
+- Regression evidence: the focused ledger diff shows no historical status
+  change before `W9B-106`; only the newly appended incidents remain modified.
+
+### W9B-109 - Fresh branch exposes a legacy public key instead of sb_publishable
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed + regression_verified`
+- Original reproducer: require `SUPABASE_DEFAULT_KEY` from the isolated `r7`
+  branch to begin with `sb_publishable_` before updating branch-scoped Preview
+  configuration.
+- Impact: the guarded setup stops with
+  `W9B_R7_PUBLISHABLE_KEY_TYPE_INVALID` before any Vercel variable, database
+  schema or dataset is modified.
+- Required correction: classify the branch key formats without emitting their
+  values, select the supported public anon/publishable credential used by the
+  app, and retain the explicit service-role inequality guard.
+- Resolution: the branch-scoped Preview now receives only `SUPABASE_URL` and
+  the legacy public `SUPABASE_ANON_KEY`; `SUPABASE_DEFAULT_KEY` was classified
+  as `sb_secret_*` and remained server-side and unpersisted.
+- Regression evidence: public anon, default secret and service-role values were
+  proven pairwise distinct without printing them; schema bootstrap and dataset
+  loading completed with Preview configured against isolated `r7`.
+
+### W9B-110 - Branch credential diagnostic parses empty stdout
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed + regression_verified`
+- Original reproducer: run a second redacted key-format diagnostic and parse
+  branch stdout without first asserting the Supabase CLI exit status and the
+  presence of a JSON object.
+- Impact: a transient empty response becomes an unhelpful
+  `Unexpected end of JSON input`; no credential is printed or persisted and no
+  remote state changes.
+- Required correction: add bounded retries plus explicit CLI-status and JSON-
+  boundary guards, redact any diagnostic output, then rerun the metadata-only
+  classification.
+- Resolution: all subsequent credential reads use bounded retries and require
+  both CLI success and an explicit JSON boundary before parsing.
+- Regression evidence: the guarded read classified all three key types and
+  completed the full `r7` bootstrap without exposing a credential or persisting
+  it to disk.

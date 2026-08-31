@@ -789,7 +789,7 @@ from public.pachanga_competition_match_contexts where id=${sqlLiteral(matchConte
     expectedRevision: replacement.confirmedRevision,
     payload: { reasonCode: "SYNTHETIC_STAGING_CANCELLATION" },
   });
-  assert.equal(JSON.parse(runSql(`
+  assert.deepEqual(JSON.parse(runSql(`
 select json_build_object(
   'matchStatus',(select status from public.pachanga_canonical_matches where id=${sqlLiteral(canonicalMatchId)}::uuid),
   'actionRequired',(select count(*) from public.pachanga_venue_match_bindings

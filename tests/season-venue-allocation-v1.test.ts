@@ -134,6 +134,7 @@ test("staging is canonical, transactional and two-device reproducible", async ()
   assert.match(staging, /WAVE9B_REALTIME_SUBSCRIPTION_TIMEOUT/);
   assert.match(staging, /"demoWorldV34Enabled"/);
   assert.match(staging, /assert\.equal\(stale\.status, 409\)/);
+  assert.match(staging, /assert\.deepEqual\(JSON\.parse\(runSql/);
   assert.match(staging, /assert\.equal\(topology\.matches, 50\)|matches: 50/);
   assert.doesNotMatch(staging, /NEXT_PUBLIC_.*SERVICE_ROLE|pachangasiq\.com.*previewUrl/);
 });
