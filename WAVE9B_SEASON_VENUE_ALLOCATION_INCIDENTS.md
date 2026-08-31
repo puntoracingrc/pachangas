@@ -914,3 +914,639 @@ passes all six races with exactly one authoritative winner per conflict.
   Season Venue Planner or on the unchanged Mercado route.
 - Regression evidence: a clean browser context reports no page errors and only
   the expected development HMR/React DevTools informational messages.
+
+### W9B-057 - Next development server generates untracked agent files
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed + regression_verified`
+- Original reproducer: start Next 16 development mode in the isolated Wave 9B
+  worktree and inspect `git status`.
+- Impact: framework-generated `AGENTS.md` and `CLAUDE.md` appear as untracked
+  files and could be included accidentally in a product commit.
+- Required correction: verify their Next-generated marker, remove only those
+  two untracked artifacts and confirm the Wave 9B diff contains neither path.
+- Resolution: both files contained the documented Next agent-rule marker and
+  were removed individually without touching repository-owned instructions.
+- Regression evidence: independent absence checks pass and `git status` lists
+  only the intentional incident-ledger update.
+
+### W9B-058 - Supabase branch-health poll reads the wrong JSON field
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed + regression_verified`
+- Original reproducer: create the isolated Supabase branch and poll
+  `branches get --output json` using only top-level `preview_project_status` or
+  `status` fields.
+- Impact: the poll reports an empty state for 30 bounded attempts even though
+  branch creation returned successfully; no migration is attempted, but the
+  staging gate cannot advance.
+- Required correction: inspect the current CLI response shape, read its actual
+  health field and retain a bounded wait before any schema operation.
+- Resolution: health is now read from the credential-free `branches list`
+  response, whose `preview_project_status` is the authoritative branch field.
+- Regression evidence: the replacement branch reports `ACTIVE_HEALTHY`,
+  `FUNCTIONS_DEPLOYED`, `with_data=false` and the exact Wave 9B Git branch.
+
+### W9B-059 - Branch credential response was emitted by the CLI diagnostic
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed + regression_verified`
+- Original reproducer: print `supabase branches get --output json` while
+  diagnosing W9B-058 on the newly created, empty preview branch.
+- Impact: the tool transcript receives ephemeral database and API credentials.
+  They were not committed, copied into product files or exposed to a browser,
+  but the branch must be treated as compromised and cannot be reused.
+- Required correction: delete the empty branch, verify its absence, create a
+  replacement with fresh credentials and suppress every later credential
+  response; retain only redacted presence/type evidence.
+- Resolution: the compromised empty branch was deleted before migration or
+  data load; its replacement has new credentials and later retrievals suppress
+  all secret-bearing output.
+- Regression evidence: the old name is absent and the replacement is a healthy
+  no-data branch linked only to Wave 9B.
+
+### W9B-060 - Branch-create output includes a non-JSON prefix
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed + regression_verified`
+- Original reproducer: pipe `supabase branches create --output json` directly
+  into `jq` with CLI 2.107.0.
+- Impact: branch creation completes, but the CLI prepends a human-readable
+  `Created preview branch:` line and the evidence parser exits non-zero.
+- Required correction: discover the created branch through the credential-free
+  `branches list` response and use that endpoint for bounded health polling.
+- Resolution: creation evidence is obtained only from the filtered branch list,
+  so no parser depends on the CLI prefix.
+- Regression evidence: the filtered response identifies exactly one healthy
+  branch with the expected name, project reference, no-data state and Git link.
+
+### W9B-061 - Direct preview database hostname is not resolvable locally
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed + regression_verified`
+- Original reproducer: connect with the replacement branch's non-pooling URL
+  immediately after it reports `ACTIVE_HEALTHY`.
+- Impact: local DNS cannot resolve the direct `db.<preview-ref>` hostname, so
+  the readback stops before any migration or data operation.
+- Required correction: use the same branch's supplied Supavisor pooler URL,
+  verify its embedded branch tenant before connecting, and continue only if a
+  read-only ledger query succeeds.
+- Resolution: later database access uses only the branch-specific Supavisor
+  URL after validating its embedded preview-project reference; the direct host
+  is not retried or treated as staging evidence.
+- Regression evidence: the verified pooler accepts a read-only PostgreSQL
+  query and reports the isolated branch ledger without exposing credentials.
+
+### W9B-062 - Supabase Git branch stops at migration 10
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed + regression_verified`
+- Original reproducer: read the healthy no-data branch through its verified
+  pooler and compare migration history with the canonical repository.
+- Impact: the branch reports `MIGRATIONS_FAILED`, ledger `10` and maximum
+  `20260728191429` instead of baseline `220`; Wave 9B cannot be validated on a
+  partial schema and no new migration has been applied manually.
+- Required correction: capture the first exact migration diagnostic using the
+  CLI against this disposable branch, determine whether it is a preexisting
+  fresh-bootstrap incompatibility or a Wave 9B defect, and rebuild staging to
+  the canonical 228-version schema before any synthetic E2E.
+- Resolution: rollback-only replay located the exact preexisting failure in
+  migration `20260728191804`: it references `pachanga_admin_invites`, which no
+  earlier migration creates. Staging now uses the repository's signed baseline
+  path on an isolated replacement branch.
+- Regression evidence: the failed branch was deleted; the replacement reports
+  exact version parity, ledger 228 and canonical schema hash `89ae...`.
+
+### W9B-063 - Non-Git Supabase branch starts without product schema or ledger
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed + regression_verified`
+- Original reproducer: create a healthy no-data Supabase branch without a Git
+  association and query `supabase_migrations.schema_migrations` through its
+  branch-verified Supavisor URL.
+- Impact: the branch is isolated and healthy, but it contains neither the
+  product schema nor the migration ledger, so Wave 9B cannot run until the
+  repository's signed baseline and forward migrations are installed.
+- Required correction: bootstrap only this verified ephemeral project from the
+  hash-checked product baseline, record absorbed migration versions, apply the
+  repository's incremental migrations in order and prove exact ledger `228`
+  plus schema equivalence before loading any synthetic identity or fixture.
+- Resolution: branch reads are delayed until deployment reaches a terminal
+  state, then the settled prefix is reconciled through the signed baseline and
+  exact repository migrations.
+- Regression evidence: final staging reaches `228|20260830223014`, hash
+  `89ae...`, and no synthetic fixture is loaded before that proof.
+
+### W9B-064 - zsh reserves the diagnostic variable name `status`
+
+- Classification: `SIMULATION_BUG`
+- Status: `fixed + regression_verified`
+- Original reproducer: wrap the transactional migration diagnostic in zsh and
+  assign the command exit code to the shell variable named `status`.
+- Impact: zsh rejects the read-only variable assignment after PostgreSQL has
+  closed the rollback-only diagnostic connection, so no error text is retained
+  and the Git-branch failure remains unexplained.
+- Required correction: retain the same verified branch and rollback-only SQL,
+  but capture the process code in a non-reserved variable and prove the target
+  migration leaves its schema unchanged.
+- Resolution: the wrapper now captures `exit_code`; PostgreSQL reports the
+  first exact failure at migration `20260728191804`, where
+  `public.pachanga_admin_invites` is absent.
+- Regression evidence: the diagnostic exits non-zero while `pg_policy` remains
+  unchanged at seven rows before and after the rollback-only connection.
+
+### W9B-065 - Supabase CLI migration runner collides through branch pooler
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed + regression_verified`
+- Original reproducer: after applying the signed baseline and repairing its 36
+  absorbed versions on the verified non-Git branch, run `supabase migration up
+  --include-all` through the branch's supplied Supavisor URL.
+- Impact: the CLI stops before establishing the incremental migration stream
+  with SQLSTATE `42P05` because prepared statement `lrupsc_1_0` already exists;
+  the direct branch hostname remains unavailable from this environment.
+- Required correction: prove the ledger stayed at 36, then apply every
+  incremental file through `psql` in its own transaction and insert the exact
+  migration version/name in that same transaction; stop on the first failure
+  and require final ledger 228 plus repository/remote version equality.
+- Resolution: staging uses credential-free `psql` connections, one transaction
+  per migration plus ledger row, instead of the incompatible CLI runner.
+- Regression evidence: all 192 incrementals apply in order and remote versions
+  equal all 228 repository versions byte-for-byte as a sorted set.
+
+### W9B-066 - psql variables are not interpolated inside `-c`
+
+- Classification: `SIMULATION_BUG`
+- Status: `fixed + regression_verified`
+- Original reproducer: execute the first incremental migration and append its
+  ledger row with `:'migration_version'` and `:'migration_name'` inside a
+  separate `psql -c` argument.
+- Impact: the migration body runs inside the intended transaction, but the
+  ledger statement reaches PostgreSQL with the literal colon syntax and fails;
+  connection teardown rolls back the entire first incremental migration.
+- Required correction: verify ledger 36 and absence of the first incremental
+  schema, constrain filename-derived values to the repository naming grammar,
+  then use those validated literals in the same transaction and require exact
+  ledger/schema parity after all 192 files.
+- Resolution: version and migration name are first constrained to numeric and
+  lowercase repository grammars, then inserted as validated literals.
+- Regression evidence: the failed first attempt leaves ledger 36 and no first
+  table; the corrected sequence ends at ledger 228 with exact schema parity.
+
+### W9B-067 - Schema-hash command loses its resumable session identifier
+
+- Classification: `SIMULATION_BUG`
+- Status: `fixed + regression_verified`
+- Original reproducer: start the remote normalized-schema hash with a 30-second
+  yield, but return only stdout from the orchestration wrapper and omit the
+  `exec_command` session identifier.
+- Impact: the long-running `pg_dump` continues without a resumable handle, so a
+  second comparison cannot safely start until the original process is located
+  and terminated or observed to completion.
+- Required correction: terminate the exact orphaned command tree, prove no
+  schema writer was involved, and propagate every later long-running session
+  identifier before waiting.
+- Resolution: the read-only parent and children were stopped by exact PID and
+  all later dump/bootstrap sessions propagate their session identifier.
+- Regression evidence: process readback confirms the orphan absent; subsequent
+  long operations are resumed to a terminal result rather than duplicated.
+
+### W9B-068 - Branch database password appears in local process arguments
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed + regression_verified`
+- Original reproducer: pass the credential-bearing branch URL directly as the
+  final `pg_dump` argument, then inspect the local process table while the dump
+  is still running.
+- Impact: the ephemeral branch password appears in diagnostic process output.
+  The branch contains schema and platform defaults only, with no synthetic
+  identities or product data, but its credentials can no longer be trusted.
+- Required correction: stop the dump, delete the affected no-data branch and
+  the earlier failed Git branch, verify both absent, then create a fresh branch
+  whose database tools receive the password only through `PGPASSWORD` and a
+  credential-free connection URI; secret-bearing branch responses remain
+  suppressed and no process/log/evidence may contain the new value.
+- Resolution: both affected no-data branches were deleted; the active branch
+  passes credentials through environment only and every process URI omits its
+  password.
+- Regression evidence: branch inventory reports the two old names absent and
+  all later dumps/migrations complete without a secret-bearing argument.
+
+### W9B-069 - zsh arithmetic cannot format a command-status expression
+
+- Classification: `SIMULATION_BUG`
+- Status: `fixed + regression_verified`
+- Original reproducer: terminate the orphaned schema-hash parent and try to
+  print its absence by embedding a command substitution and logical negation
+  directly in a zsh arithmetic expansion.
+- Impact: `TERM` is delivered before the formatting error, but the wrapper exits
+  without durable confirmation that the parent and its dump children stopped.
+- Required correction: use ordinary conditional control flow, verify the exact
+  PIDs are absent from the process table and only then continue with branch
+  retirement.
+- Resolution: ordinary `if kill -0` control flow replaced arithmetic status
+  formatting.
+- Regression evidence: the parent reports `parent_alive=false` and no listed
+  child PID remains.
+
+### W9B-070 - Healthy branch still runs repository migrations in background
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed + regression_verified`
+- Original reproducer: create a no-data branch without `--git-branch`, wait only
+  for `preview_project_status=ACTIVE_HEALTHY` while its deployment status is
+  still `CREATING_PROJECT`, and begin the baseline bootstrap.
+- Impact: Supabase concurrently creates the ten pre-failure migration rows, so
+  the baseline succeeds but the explicit absorbed-ledger insert collides on
+  `20260728051437`; staging cannot claim a deterministic bootstrap while a
+  platform migration job is still active.
+- Required correction: delete the no-data branch, recreate it, wait for both
+  database health and a terminal deployment status, verify the expected failed
+  prefix exactly, and only then apply the baseline plus missing absorbed and
+  incremental versions with no concurrent platform writer.
+- Resolution: the final branch is not touched at `CREATING_PROJECT`; bootstrap
+  begins only after `ACTIVE_HEALTHY/FUNCTIONS_DEPLOYED` and exact ten-version
+  prefix readback.
+- Regression evidence: no duplicate ledger insertion or concurrent schema
+  change occurs during the final 228-version bootstrap.
+
+### W9B-071 - PostgreSQL resolves an absent ledger relation inside `CASE`
+
+- Classification: `SIMULATION_BUG`
+- Status: `fixed + regression_verified`
+- Original reproducer: query `to_regclass` in a `CASE` arm while the alternate
+  arm contains a static subquery against
+  `supabase_migrations.schema_migrations` on a fresh branch.
+- Impact: PostgreSQL resolves the absent relation while planning the statement,
+  so the read-only probe fails instead of returning `ABSENT`.
+- Required correction: query relation existence first and only issue the ledger
+  query when that independent result is present; preserve the branch unchanged.
+- Resolution: relation existence and ledger contents are now separate queries.
+- Regression evidence: fresh-branch probes return an explicit prefix without a
+  planner error and perform no write.
+
+### W9B-072 - Remote `pg_dump` returns an empty schema stream
+
+- Classification: `SIMULATION_BUG`
+- Status: `fixed + regression_verified`
+- Original reproducer: export `public` and `private` through the branch's
+  credential-free Supavisor URI and hash the normalized stdout.
+- Impact: migration-version parity, flags and all 12 RLS markers pass, but the
+  dump stream hashes to SHA-256 `e3b0...`, proving that schema equivalence has
+  not actually been established even though `pg_dump` exits successfully.
+- Required correction: capture byte count and redacted diagnostics without
+  exposing credentials, determine whether Supavisor filtering or dump options
+  caused the empty stream, remove all temporary dump files, and establish
+  equivalence through a non-empty canonical schema export before staging E2E.
+- Resolution: the dump contained 6,553,848 bytes; Node had split on the literal
+  `\\n`, causing the leading comment filter to discard the whole stream. It now
+  uses a real newline regular expression and rejects empty input explicitly.
+- Regression evidence: the corrected remote export is non-empty and hashes
+  exactly to the fresh canonical `89ae...` value.
+
+### W9B-073 - Diagnostic cleanup command is rejected before execution
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed + regression_verified`
+- Original reproducer: prepare two `mktemp` paths and register a trap containing
+  `rm -f` before running the redacted `pg_dump` diagnostic.
+- Impact: the command sandbox rejects the process at creation time; no
+  temporary file or database command is created, but W9B-072 remains open.
+- Required correction: use verified individual `unlink` operations, prove both
+  temporary paths absent and retain only byte counts plus redacted stderr.
+- Resolution: diagnostics use individually verified `unlink` calls and no
+  prohibited recursive/force deletion.
+- Regression evidence: final comparison reports temporary files removed and a
+  follow-up namespace scan returns zero Wave 9B dump paths.
+
+### W9B-074 - macOS `unlink` accepts only one temporary path
+
+- Classification: `SIMULATION_BUG`
+- Status: `fixed + regression_verified`
+- Original reproducer: after a successful 6,553,848-byte schema export, invoke
+  one macOS `unlink` command with both temporary paths.
+- Impact: `unlink` prints its usage and the diagnostic exits before proving
+  cleanup; the files contain schema only and no rows or branch credentials, but
+  they must not remain on disk.
+- Required correction: locate only the freshly created `w9b-pgdump-*` paths,
+  unlink each one separately, prove the namespace is empty, and recalculate the
+  normalized hash with a real newline separator rather than the over-escaped
+  literal that caused W9B-072.
+- Resolution: cleanup iterates one exact temporary path per `unlink` call.
+- Regression evidence: no `w9b-pgdump-*` file remains and later dump comparison
+  also removes all five of its temporary files.
+
+### W9B-075 - zsh loop variable `path` overwrites executable search paths
+
+- Classification: `SIMULATION_BUG`
+- Status: `fixed + regression_verified`
+- Original reproducer: iterate temporary files with `read -r path` in zsh and
+  call `unlink` inside the loop.
+- Impact: zsh binds lowercase `path` to `PATH`; after the first unlink, later
+  `find`, `wc` and `tr` commands are no longer resolvable, so cleanup evidence
+  stops with at most one schema file remaining.
+- Required correction: start a fresh shell, use a non-special variable name,
+  unlink every exact Wave 9B dump path and prove zero remain.
+- Resolution: cleanup loops use `file_path`, never zsh's special `path` array.
+- Regression evidence: executable lookup remains available and zero targeted
+  temporary files remain.
+
+### W9B-076 - Remote non-empty schema hash differs from local certification
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed + regression_verified`
+- Original reproducer: normalize the 6.55 MB remote `public`/`private` dump with
+  the same line filter as the local Wave 9B migration runner and compare its
+  SHA-256 to the certified local hash.
+- Impact: remote hash `34cc...` differs from local `89ae...`; ledger 228, exact
+  version parity, flags and RLS counts are insufficient to prove full schema
+  equivalence, so authenticated staging remains blocked.
+- Required correction: compare canonical schema contracts object-by-object,
+  distinguish harmless server/dump-version serialization from actual DDL drift,
+  and proceed only after either exact contract equality or a corrected remote
+  schema followed by a regression hash.
+- Resolution: fresh-local versus remote diff isolated a partial-prefix bootstrap
+  defect; staging was rebuilt from canonical tables instead of waiving it.
+- Regression evidence: remote and freshly certified schemas now share exact
+  SHA-256 `89ae7c302759827bcb58d747eec4ff538422548c3792b105d8d4ccf454141c26`.
+
+### W9B-077 - Long-lived local database ledger masks stale function bodies
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed + regression_verified`
+- Original reproducer: compare the remote 228-schema dump against the default
+  local Supabase database, which also reports ledger 228.
+- Impact: the 698-line diff shows the local database retains older Wave 9B
+  function bodies and signatures while the remote branch reflects current
+  migration source; migration count alone falsely suggests schema parity and
+  the previously quoted hash cannot be reused as a live-instance contract.
+- Required correction: run the canonical fresh/upgrade database runner from the
+  current committed migration set, use its newly generated schema hash as the
+  authoritative expected value, and compare the remote branch to that fresh
+  result rather than to the long-lived local service database.
+- Resolution: the canonical runner rebuilt two disposable local databases from
+  current source and independently regenerated `89ae...`.
+- Regression evidence: runner reports schema equivalence, flags born OFF,
+  canonical lifecycle PASS and cleanup PASS; long-lived local state is excluded
+  from staging authority.
+
+### W9B-078 - Baseline over partial prefix omits canonical team-code uniqueness
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed + regression_verified`
+- Original reproducer: apply the signed baseline over the settled ten-migration
+  branch prefix and compare it to a database built from a genuinely empty
+  product schema.
+- Impact: only 49 dump lines differ, but the remote branch preserves earlier
+  column order and lacks `pachanga_groups_team_code_key`; `CREATE TABLE IF NOT
+  EXISTS` cannot repair that constraint, so the branch is not schema-equivalent
+  despite having all 228 ledger rows.
+- Required correction: on this verified no-data branch only, recreate the
+  product schemas from an empty canonical state, rerun baseline plus all 192
+  incrementals and prove exact dump hash, unique constraint, ledger, flags and
+  RLS before loading synthetic QA.
+- Resolution: the final branch drops only its three prefix tables before the
+  baseline creates canonical table definitions.
+- Regression evidence: `pachanga_groups_team_code_key` exists as a unique
+  constraint, schema hash is exact and all 12 Wave 9B relations have RLS.
+
+### W9B-079 - Full product-schema reset exceeds branch lock capacity
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed + regression_verified`
+- Original reproducer: drop `private`, `public` and the migration schema in one
+  transaction on the fully built 228-version ephemeral branch.
+- Impact: cascading through 1,282 dependent objects exceeds
+  `max_locks_per_transaction`; PostgreSQL aborts and rolls back the reset before
+  any baseline or ledger reconstruction begins.
+- Required correction: delete the unchanged no-data branch, recreate its
+  settled ten-migration prefix and drop only the three partial product tables
+  there, before the later dependency graph exists; then bootstrap canonically
+  and require the exact fresh-schema hash.
+- Resolution: the aborted 1,282-object reset was not retried; a new no-data
+  branch drops exactly three prefix tables before dependency expansion.
+- Regression evidence: the small transaction succeeds, final ledger is 228 and
+  canonical hash/constraint/RLS/flags all pass.
+
+### W9B-080 - Authenticated staging E2E has an extra closing parenthesis
+
+- Classification: `SIMULATION_BUG`
+- Status: `fixed + regression_verified`
+- Original reproducer: run
+  `node --check tests/season-venue-allocation-v1-staging-e2e.mjs` immediately
+  after adding the authenticated two-device staging harness.
+- Impact: Node stops at the synthetic-role setup call, before any staging
+  connection, identity, flag or product mutation can occur.
+- Required correction: remove only the unmatched parenthesis, rerun the exact
+  syntax check and retain this incident as a permanent regression record.
+- Resolution: the five direct `runSql` calls now close only their own call;
+  nested `JSON.parse` and `Number` expressions retain their second parenthesis.
+- Regression evidence: the exact `node --check` reproducer exits zero under
+  Node `24.16.0`, before staging credentials are loaded.
+
+### W9B-081 - Canonical Club owner guard rejects the inherited fixture order
+
+- Classification: `SIMULATION_BUG`
+- Status: `fixed + regression_verified`
+- Original reproducer: apply
+  `tests/season-venue-allocation-v1-staging-dataset.sql` to the clean 228-ledger
+  branch using `psql -v ON_ERROR_STOP=1`.
+- Impact: the inherited Wave 9A fixture inserts `pachanga_clubs` before its
+  owner membership; the current canonical trigger raises
+  `CLUB_PRIMARY_OWNER_MEMBERSHIP_REQUIRED` before any Wave 9B RPC is called.
+- Required correction: adapt staging setup without weakening or disabling the
+  product guard, then rerun against a newly isolated canonical branch.
+- Resolution: the complete inherited fixture and Wave 9B extension now execute
+  inside one explicit transaction, so the deferred Club owner membership guard
+  observes the canonical membership before commit without ever being disabled.
+- Regression evidence: the unchanged guard accepts all three synthetic Clubs
+  and the committed topology reports exactly three Clubs and twelve teams.
+
+### W9B-082 - Staging dataset did not enclose inherited fixtures in a transaction
+
+- Classification: `SIMULATION_BUG`
+- Status: `fixed + regression_verified`
+- Original reproducer: inspect the branch after W9B-081 stops `psql` with
+  `ON_ERROR_STOP`; earlier inherited fixture statements used normal autocommit.
+- Impact: rows preceding the rejected Club insert may remain committed, so the
+  branch can no longer provide a clean authenticated staging baseline.
+- Required correction: retire the affected branch, recreate the exact 228-ledger
+  schema and wrap the complete seed in one transaction so any later failure has
+  a mandatory zero-row readback.
+- Resolution: `season-venue-allocation-v1-staging-dataset.sql` owns one
+  `BEGIN/COMMIT` around every included fixture, platform activation and Wave 9B
+  row; `ON_ERROR_STOP` closes the failed connection and PostgreSQL rolls back.
+- Regression evidence: three later guard failures each produced zero groups,
+  Clubs, profiles, venues, competitions, matches and setup receipts before the
+  corrected dataset committed its exact topology.
+
+### W9B-083 - Replacement no-data branch has no migration relation
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed + regression_verified`
+- Original reproducer: after the replacement branch reports
+  `ACTIVE_HEALTHY/FUNCTIONS_DEPLOYED`, query
+  `supabase_migrations.schema_migrations` through its verified pooler.
+- Impact: PostgreSQL reports that the relation does not exist; no schema or data
+  mutation has occurred, but a prefix-based bootstrap cannot be assumed.
+- Required correction: treat relation absence as the canonical empty starting
+  state, verify the signed baseline hash, install all absorbed ledger versions
+  and incrementals in order, then require ledger 228 and schema hash parity
+  before retrying the transactional dataset.
+- Resolution: the guarded bootstrap waited for the asynchronous ten-version
+  prefix, verified all three partial tables were empty, replaced only those
+  tables with the signed baseline and installed every remaining migration.
+- Regression evidence: staging reports exact ledger `228`, last version
+  `20260830223014`, all repository versions in order and no product rows before
+  the dataset is loaded.
+
+### W9B-084 - Empty-ledger branch still hashes to the partial-prefix schema
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed + regression_verified`
+- Original reproducer: install the signed baseline, 36 absorbed versions and
+  all 192 incrementals on the replacement branch whose migration relation was
+  absent, then normalize `public`/`private` with the canonical dump filter.
+- Impact: ledger reaches exact 228 but remote SHA-256 is `34cc...`, not the
+  certified fresh-schema `89ae...`; authenticated staging remains blocked and
+  no synthetic dataset has been loaded.
+- Required correction: inspect whether product prefix tables existed despite
+  the absent ledger, rebuild from genuinely canonical table definitions if so,
+  and require exact hash parity before any fixture is retried.
+- Resolution: delayed branch initialization was treated as an asynchronous
+  ten-version prefix rather than an empty schema; only its three zero-row
+  product tables were rebuilt before dependency expansion.
+- Regression evidence: the remote normalized `public`/`private` dump equals
+  canonical SHA-256
+  `89ae7c302759827bcb58d747eec4ff538422548c3792b105d8d4ccf454141c26`,
+  `pachanga_groups_team_code_key` exists and all 12 Wave 9B public relations
+  have RLS enabled.
+
+### W9B-085 - Supabase CLI prepared statements collide on the staging pooler
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed + regression_verified`
+- Original reproducer: after replacing the delayed ten-version branch prefix
+  with the signed baseline and reconciling the 36 absorbed versions, invoke
+  `supabase db push --include-all` through the branch pooler.
+- Impact: the CLI aborts before the first incremental migration with PostgreSQL
+  `42P05` because prepared statement `lrupsc_1_0` already exists. The baseline
+  transaction and absorbed ledger are valid, no synthetic rows exist, and the
+  branch remains intentionally incomplete at version 36.
+- Required correction: keep the guarded non-production target checks, apply
+  each repository incremental in an explicit transaction over `psql` without
+  prepared statements, append its exact ledger row atomically, then prove all
+  228 versions and the canonical schema hash before seeding staging.
+- Resolution: the staging bootstrap now uses credential-redacted `psql`
+  transactions for every missing migration and atomically appends the matching
+  version/name to `supabase_migrations.schema_migrations`; the one historical
+  file with its own transaction wrapper is normalized before execution.
+- Regression evidence: the exact reproducer resumes safely from ledger 36,
+  reaches 228/228 with hash `89ae7c...`, leaves its temporary transport clean
+  and passes focal syntax plus ESLint checks.
+
+### W9B-086 - League Private Beta guard blocks the synthetic competition seed
+
+- Classification: `SIMULATION_BUG`
+- Status: `fixed + regression_verified`
+- Original reproducer: execute the fully transactional Wave 9B staging dataset
+  against the certified 228-schema while every product flag is correctly born
+  OFF.
+- Impact: the canonical Club/player/venue seed reaches the first League insert,
+  then `private.pachanga_league_private_beta_guard_competition_v1()` raises
+  `LEAGUE_PRIVATE_BETA_CREATION_DISABLED`. PostgreSQL aborts the enclosing
+  transaction, so no partial synthetic topology is allowed to survive.
+- Required correction: establish the minimum synthetic platform/competition
+  feature context through the existing server-authoritative flag contract for
+  dataset setup, never disable the trigger, rerun the full seed and require both
+  exact topology and cleanup/readback evidence.
+- Resolution: a dedicated `.test` platform actor is created inside the dataset
+  transaction and every dependency transition is confirmed through the
+  canonical platform RPCs before Wave 9B adds its Tournament/season objects.
+- Regression evidence: the League guard remains installed; the final seed
+  commits one private League, one explicitly keyed private Tournament and zero
+  public discovery.
+
+### W9B-087 - League beta creation cannot bypass prerequisite product layers
+
+- Classification: `SIMULATION_BUG`
+- Status: `fixed + regression_verified`
+- Original reproducer: enable Foundation through its canonical platform RPC,
+  then request only `league_private_beta_enabled` and
+  `league_private_beta_creation_enabled` through the League beta flag RPC.
+- Impact: the authoritative settings update is rejected by
+  `pachanga_comp_foundation_private_beta_creation_check` because participation,
+  scheduling and operational prerequisites remain OFF. The enclosing dataset
+  transaction rolls back flags, receipts and every synthetic row to zero.
+- Required correction: invoke the existing private-beta activation/bundle
+  command that enables the full supported dependency set in server-defined
+  order, retain public discovery OFF, and prove the fixture can no longer
+  manufacture an invalid partial activation.
+- Resolution: staging follows the established product activation sequence:
+  Foundation, R4A participation, R4B scheduling, R4C match operations and R4D
+  exceptions are confirmed in order before League creation is enabled.
+- Regression evidence: all authoritative RPCs accept monotonic revisions, the
+  private-beta creation constraint passes, and public registration/calendar,
+  standings and exception status remain OFF.
+
+### W9B-088 - Early beta activation retroactively changes legacy fixture rules
+
+- Classification: `SIMULATION_BUG`
+- Status: `fixed + regression_verified`
+- Original reproducer: enable the complete R4A/R4B/R4C/R4D dependency stack and
+  League beta before including the inherited canonical League fixture.
+- Impact: a pre-beta competition with its historical visibility is evaluated
+  under the new global private-beta guard and fails with
+  `LEAGUE_PRIVATE_BETA_VISIBILITY_REQUIRED`. The transaction rolls back the
+  synthetic authority, all flag receipts and every inherited row.
+- Required correction: load the immutable legacy graph under its original
+  feature state, then perform the server-authoritative dependency activation
+  before adding Wave 9B-specific competition objects; do not rewrite historical
+  fixture semantics merely to satisfy a later global gate.
+- Resolution: the inherited R4/R5/Wave 9A fixture loads first under its original
+  gates; the dedicated synthetic actor and Wave 9B activation follow without
+  modifying any historical competition visibility or schedule time.
+- Regression evidence: the public legacy League remains intact, the new
+  Tournament is private and the staging topology reaches 50 CanonicalMatches.
+
+### W9B-089 - Referee Assignments must pause before a League beta flag command
+
+- Classification: `SIMULATION_BUG`
+- Status: `fixed + regression_verified`
+- Original reproducer: load the inherited Wave 9A/R4D/referee graph, which ends
+  with the referee assignment private beta active, then invoke the League beta
+  flag RPC even when retaining `enabled=true` and `creationEnabled=false`.
+- Impact: the server rejects the command with
+  `REFEREE_ASSIGNMENTS_NOT_AVAILABLE_IN_LEAGUE_BETA`; transaction rollback again
+  leaves the branch at zero product rows.
+- Required correction: avoid the redundant first League beta mutation and use
+  the Referee Assignment platform RPC to pause assignments before enabling
+  League creation; the authenticated E2E may reactivate assignments later when
+  it tests the explicit referee flow.
+- Resolution: the redundant beta mutation was removed; after R4 dependencies
+  are confirmed, `command_pachanga_referee_assignment_beta_admin_v1` pauses both
+  assignment gates before the final League creation command, then reactivates
+  both gates through that same authority for the explicit referee E2E.
+- Regression evidence: the seed commits with League creation ON, public
+  discovery OFF and Referee Assignments/private beta ON at revision 4; no direct
+  settings update performs either transition.
+
+### W9B-090 - Deterministic staging dataset gives a low-level duplicate on replay
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed + regression_verified`
+- Original reproducer: rerun the one-shot deterministic staging dataset after
+  its first successful commit in the same disposable branch.
+- Impact: the first inherited Auth identity collides with `users_pkey`, which is
+  technically correct but obscures that this seed requires a zero-row branch;
+  the retry transaction aborts without altering the already valid topology.
+- Required correction: add an early canonical zero-topology preflight with a
+  stable Wave 9B error, retain fixed deterministic IDs, and validate any
+  post-seed flag adjustment through its RPC rather than replaying fixture rows.
+- Resolution: the dataset now checks the core product topology before including
+  any fixture and raises `WAVE9B_STAGING_DATASET_REQUIRES_EMPTY_BRANCH`; the
+  pending referee transition was confirmed separately through its canonical
+  admin command.
+- Regression evidence: a replay against the committed dataset is rejected at
+  the preflight with the stable Wave 9B error, leaves every count unchanged and
+  reports Referee Assignments/private beta both ON at revision 4.
