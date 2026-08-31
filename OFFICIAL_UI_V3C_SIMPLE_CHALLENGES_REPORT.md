@@ -22,8 +22,9 @@ Durante la verificacion final se reprodujo un defecto Demo-only: despues de envi
 | PR documental | #247 |
 | Produccion | [pachangasiq.com](https://pachangasiq.com) |
 | Deployment funcional | `pachangas-gy4jn9e3m-persianas-almar-web-s-projects.vercel.app` |
-| Deployment final | `pachangas-mclfnlj9g-persianas-almar-web-s-projects.vercel.app` |
-| Service Worker final | `2.0.0+sw.c2a4b897a387` |
+| Deployment funcional final | `pachangas-mclfnlj9g-persianas-almar-web-s-projects.vercel.app` |
+| Deployment documental | Vercel despliega automaticamente cada merge documental de `main`; la URL y el SHA final se incluyen en la entrega de cierre. |
+| Service Worker | `2.0.0+sw.<12 primeros caracteres del SHA desplegado>`; el build funcional fue `2.0.0+sw.c2a4b897a387`. |
 
 El PR documental no cambia runtime. El SHA definitivo de `main` tras fusionarlo queda registrado en GitHub y en la entrega final de la tarea.
 
@@ -35,8 +36,8 @@ El PR documental no cambia runtime. El SHA definitivo de `main` tras fusionarlo 
 | 2 | Main final | Main funcional: `c2a4b897a38728473d134f202a8ec40eecab6095`; el PR documental solo agrega este informe. |
 | 3 | PR funcional | #245, fusionado. |
 | 4 | PR documental | #247, dedicado exclusivamente al informe. |
-| 5 | Deployment | Deployment final READY y dominio productivo verificado. |
-| 6 | Service Worker | Versionado con el SHA final, precachea `/retos`, admite `SKIP_WAITING` y mantiene las escrituras fuera de cache. |
+| 5 | Deployment | Deployment funcional y deployment documental READY; dominio productivo verificado despues de ambos. |
+| 6 | Service Worker | Se deriva de cada SHA desplegado, precachea `/retos`, admite `SKIP_WAITING` y mantiene las escrituras fuera de cache. |
 | 7 | Navegacion anterior | Recibidos, Enviados e Historial actuaban como vistas principales y el contexto tecnico ocupaba la superficie. |
 | 8 | Navegacion final | Solo Activos e Historial; Todos, Recibidos y Enviados son filtros compactos dentro de Activos. |
 | 9 | Activos | Agrupa respuesta necesaria, espera del rival y partidos acordados; oculta grupos vacios. |
@@ -93,7 +94,7 @@ El PR documental no cambia runtime. El SHA definitivo de `main` tras fusionarlo 
 - Navegacion: Inicio -> Responder, Mercado -> Retar y Reto -> Partido V3B.
 - Regresion final: Cobalto envia una contrapropuesta a Vertice, vuelve a Inicio y ya no ve el falso `Pendiente de ti`; el siguiente CTA es el partido acordado con Carboni.
 - 1920x1080: `rootScrollWidth = rootClientWidth = 1920`, 0 imagenes rotas. Los unicos controles fuera del viewport pertenecen al carrusel horizontal intencional del historial.
-- Service Worker productivo: `/retos` en precache y rutas cacheables, `SKIP_WAITING` presente, version ligada a `c2a4b897a387`.
+- Service Worker productivo: `/retos` en precache y rutas cacheables, `SKIP_WAITING` presente. Readbacks observados: `sw.c2a4b897a387` tras el hotfix y `sw.545c0f867830` tras el PR documental; cada merge posterior deriva su version del nuevo SHA por diseno.
 - Android fisico: PENDING.
 - iPhone fisico: PENDING.
 - PWA instalada fisica: PENDING.
