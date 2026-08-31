@@ -1,6 +1,6 @@
 # Bulk Pitch Allocation Engine V1 Report
 
-Estado: `RELEASE CANDIDATE / STAGING CERTIFIED`
+Estado: `RELEASED / ACTIVE / PRODUCTION VERIFIED`
 
 Fecha: 2026-08-31 CEST
 
@@ -73,4 +73,15 @@ checksums y receipt. Un binding existente se conserva como lock implicito.
   reservas y 100.000 bindings/invalidaciones; cinco tamanos de Competition,
   diez metricas p50/p95 bajo 2.500 ms y rollback completo.
 
-Produccion permanece pendiente del release coordinado de Wave 9B.
+## Produccion
+
+- ocho migraciones forward-only aplicadas sin reescribir historia; ledger
+  local/repositorio/remoto `228/228/228`;
+- modos automatico, manual, hibrido, holds y publish activos exclusivamente por
+  la RPC de flags de plataforma;
+- canary: seis Matches publicados, siete revisiones de reserva y seis bindings
+  activos dentro de una transaccion terminada en `ROLLBACK`;
+- readback independiente: cero filas en 42 familias de producto, evidencias,
+  outbox y notificaciones;
+- joint schedule/venue optimization, pagos y calendarios externos permanecen
+  `OFF`.

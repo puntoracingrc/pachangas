@@ -13,6 +13,20 @@ Fecha de apertura: 2026-08-30 CEST
 - PR excluidos: `#6`, `#131`, `#132`;
 - checkout compartido: sucio y preservado, sin incorporar sus cambios.
 
+## Release checkpoint
+
+- PR funcional `#239`: fusionado;
+- main funcional: `78551dd6d2edef514c47fe45d8cb2ace3c76e79c`;
+- deployment: `dpl_BMxWwYUMnnRNFcjgYrF3zk65oHgF`, `READY` y servido por
+  `pachangasiq.com`;
+- migraciones: ocho aplicadas, ledger local/repositorio/remoto `228/228/228`,
+  ultima version `20260830223014` y cero drift;
+- flags: diez Wave 9B `ON` por RPC canonica, revision `18` y server sequence
+  `121`; futuras superficies, pagos y Stripe permanecen `OFF / UNTOUCHED`;
+- canary productivo: `PASS`, `ROLLBACK` explicito y readback cero en 42 familias;
+- staging Supabase, deployment Preview y variables Preview de rama: retirados;
+- Android, iPhone y PWA instalada fisica: `PENDING` y no presentados como PASS.
+
 ## Politica
 
 Todo fallo encontrado se registra antes de corregirse como `PRODUCT_BUG`,
@@ -2703,3 +2717,403 @@ passes all six races with exactly one authoritative winner per conflict.
 - Regression evidence: the repeated 8-signature matrix returns `unsafe=[]`,
   `withAuthUid=8`, `withCanonicalGuard=8`, `authenticatedExecute=8` and
   `anonExecute=0`.
+
+### W9B-149 - Redundant documentation commit finds a clean tree
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed + regression_verified`
+- Original reproducer: run `git add`, `git commit` and `git push` for the
+  production advisor readback after merging PR #239.
+- Impact: Git exits nonzero with `nothing to commit, working tree clean`
+  because the advisor incidents were already included in the merged
+  `ce1d713` checkpoint; no file, branch or remote state changes.
+- Required correction: inspect the committed ledger at `ce1d713`, confirm all
+  production-readback incidents are present and proceed without manufacturing
+  an empty commit.
+- Correction implemented: no empty commit was created; the exact merged object
+  was inspected directly.
+- Regression evidence: `git show ce1d713:WAVE9B_SEASON_VENUE_ALLOCATION_INCIDENTS.md`
+  contains W9B-145 through W9B-148 with status
+  `fixed + regression_verified`; the only current diff is this explanatory
+  incident and `git diff --check` passes.
+
+### W9B-150 - Production smoke shell cannot resolve `curl`
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed + regression_verified`
+- Original reproducer: request the four bounded production smoke paths using
+  bare `curl` from the Node 24 worktree shell.
+- Impact: zsh reports `command not found: curl` for every path; no HTTP request
+  is sent and no product or remote state changes. Vercel inspection remains
+  independently `READY` for the exact merge SHA.
+- Required correction: use the canonical macOS `/usr/bin/curl` executable,
+  repeat the same four read-only requests and require successful status codes
+  before activation.
+- Correction implemented: the bounded smoke was repeated with the absolute
+  macOS executable and without changing the tested host, paths or headers.
+- Regression evidence: `/`, `/demo`, `/manifest.webmanifest` and `/sw.js`
+  each returned HTTP `200` from `https://pachangasiq.com` before feature
+  activation.
+
+### W9B-151 - Service-authority preflight reads the private settings table
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed + regression_verified`
+- Original reproducer: switch a read-only activation preflight to
+  `service_role`, verify the authority helper and also select the current
+  revision directly from `private.pachanga_venue_settings_v1`.
+- Impact: PostgreSQL rejects the private-table read with `42501`; the explicit
+  transaction is aborted and rolled back, so no flag, receipt, event or data
+  changes. The denial confirms service clients cannot bypass the RPC contract.
+- Required correction: keep the authoritative revision from the prior
+  administrative readback, repeat the preflight using only `auth.role()` and
+  `pachanga_competition_is_service_authority_v1()`, then invoke the public RPC
+  with the expected revision rather than granting direct table access.
+- Correction implemented: no table grant was added and no private setting was
+  read as `service_role`; the release invoked only the public flag command with
+  the administratively read revision and a unique operation identifier.
+- Regression evidence: the public RPC accepted revision `8`, returned the
+  matching operation receipt at confirmed revision `9`, and a separate
+  administrative readback confirmed only `venueRecurringSeriesEnabled=true`.
+
+### W9B-152 - Private service-authority helper is not directly executable
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed + regression_verified`
+- Original reproducer: repeat the service-role activation preflight without a
+  private-table read but call
+  `private.pachanga_competition_is_service_authority_v1()` directly.
+- Impact: PostgreSQL returns `permission denied for function`; the transaction
+  rolls back and no product state changes. The helper is intentionally an
+  implementation detail called by the owner-executed public command, not a
+  client RPC.
+- Required correction: do not grant or directly probe private helpers. Invoke
+  only `public.set_pachanga_venue_flags_v1` as `service_role`, using the
+  administratively read expected revision and a unique operation ID, then
+  require the canonical response plus independent readback.
+- Correction implemented: the private helper remained ungranted and was not
+  called directly again; authority was exercised exclusively through the
+  owner-executed public RPC contract.
+- Regression evidence: the first staged production activation returned
+  `aggregateType=venue_settings`, `confirmedRevision=9` and
+  `serverSequence=103`; the independent settings readback matched that
+  revision and sequence with all later Wave 9B flags still OFF.
+
+### W9B-153 - zsh expands the unquoted local PostgreSQL URL
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed + regression_verified`
+- Original reproducer: pass
+  `postgresql://postgres:postgres@127.0.0.1:55322/postgres?sslmode=disable`
+  unquoted to `psql` while checking for the disposable canary database.
+- Impact: zsh rejects the argument with `no matches found` before `psql`
+  starts; no local or remote database connection or write occurs.
+- Required correction: quote every PostgreSQL URL containing a query string
+  and repeat the same read-only catalog check before creating the disposable
+  database.
+- Correction implemented: the connection URL is passed as one quoted shell
+  argument; no endpoint, credentials, query or database target changes.
+- Regression evidence: the repeated catalog query reaches PostgreSQL and
+  returns the exact count for `wave9b_prod_canary_local` without a shell
+  expansion error.
+
+### W9B-154 - `createdb` starts an interactive password prompt
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed + regression_verified`
+- Original reproducer: invoke `createdb` against the disposable local
+  PostgreSQL server without passing its local password through the process
+  environment.
+- Impact: the client repeatedly requests a password and does not send a create
+  statement. The initial tool call returned control while the local process
+  remained alive waiting for input; no remote connection or write occurs.
+- Required correction: provide the known disposable-local password only in
+  the command process environment, then verify the database exists exactly
+  once before restoring the backup.
+- Required closure: terminate only the identified waiting process, verify no
+  `createdb` process remains, then retry with a process-scoped `PGPASSWORD` and
+  confirm the database exists exactly once.
+- Correction implemented: PID `16045` was terminated, the retry used only the
+  disposable local password in its process environment and `createdb` exited
+  zero without emitting credentials.
+- Regression evidence: the independent catalog query returns exactly `1` for
+  `wave9b_prod_canary_local`.
+
+### W9B-155 - Interactive `createdb` process survives the yielded command
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed + regression_verified`
+- Original reproducer: inspect active processes after the password-prompting
+  `createdb` call yields control.
+- Impact: PID `16045` remains blocked on local standard input; it has not
+  created the database, but would leak a task-owned process if left running.
+- Required correction: terminate exactly PID `16045`, verify that no other
+  `createdb` process remains and do not touch unrelated local services.
+- Correction implemented: only PID `16045` received the termination signal.
+- Regression evidence: `pgrep -fl createdb` returned no process before the
+  noninteractive retry, and the retry itself exited normally.
+
+### W9B-156 - Plain PostgreSQL template lacks Supabase platform schemas
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed + regression_verified`
+- Original reproducer: restore the production schema dump into
+  `wave9b_prod_canary_local`, created from the server's plain default
+  template.
+- Impact: restore stops before product DDL at line 26 because schema
+  `extensions` does not exist. No remote connection occurs and the partial
+  local database is disposable.
+- Required correction: recreate the disposable database from a compatible
+  local Supabase platform template, preserving only system schemas and roles,
+  then repeat the same schema and data restore with `ON_ERROR_STOP`.
+- Correction implemented: a schema-only infrastructure dump excluding
+  product, migration and Realtime schemas was restored into a fresh
+  `template0` database before the production product backup.
+- Regression evidence: infrastructure restore, product schema restore and all
+  411 data COPY blocks complete with exit zero; the exact eight Wave 9B
+  migrations then apply atomically and the canonical flag RPC confirms all ten
+  Wave 9B flags at local revision `9`.
+
+### W9B-157 - Infrastructure-only restore omits the Realtime publication
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed + regression_verified`
+- Original reproducer: restore the system-schema dump and then the production
+  product schema into the clean disposable database while publications are
+  intentionally excluded from the infrastructure dump.
+- Impact: the product schema reaches its final Realtime membership statements
+  and stops at line 118425 because publication `supabase_realtime` is absent.
+  The partially restored database remains local and disposable; production is
+  not contacted.
+- Required correction: recreate the database from zero, restore the same
+  Supabase infrastructure, create one empty `supabase_realtime` publication,
+  then repeat the product schema and data restore with `ON_ERROR_STOP`.
+- Correction implemented: one empty publication was created after the system
+  restore and before the production schema restore; no product publication
+  membership was fabricated manually.
+- Regression evidence: the production schema restore completes past the prior
+  failing line with exit zero and installs its own canonical Realtime
+  memberships.
+
+### W9B-158 - Production canary creates its Competition before Billing authority
+
+- Classification: `SIMULATION_BUG`
+- Status: `fixed + regression_verified`
+- Original reproducer: execute the rollback-only canary against the restored
+  production schema and insert its Team-owned Competition before installing a
+  valid synthetic Organizer plan/grant.
+- Impact: the canonical Billing trigger rejects the insert with
+  `ORGANIZER_PLAN_CREATION_BLOCKED`; the local transaction aborts and rolls
+  back completely. No production call or persistent row occurs.
+- Required correction: preserve the Billing guard and seed the smallest valid,
+  rollback-only Organizer entitlement through the existing product schema
+  before Competition creation. Do not disable the trigger, mutate a real
+  subscription or bypass plan limits.
+- Correction implemented: the synthetic Team receives the existing complete
+  League Private Beta bundle plus `competition_venues`, all under one rollback
+  identifier and before Competition creation.
+- Regression evidence: the canonical Billing guard accepts the Competition and
+  edition; the canary advances through allocation publication without a plan
+  bypass, subscription, Customer or payment row.
+
+### W9B-159 - Referee canary omits the competition assignment capability
+
+- Classification: `SIMULATION_BUG`
+- Status: `fixed + regression_verified`
+- Original reproducer: rerun the rollback-only canary after fixing Organizer
+  creation authority and propose the synthetic referee assignment with only
+  competition manage, schedule and Venue capabilities.
+- Impact: canonical Referee authority rejects the proposal with
+  `REFEREE_COMPETITION_AUTHORITY_REQUIRED`; the local transaction rolls back
+  completely before any production call.
+- Diagnosis: `auth.uid()` and `competition_owner` both resolve correctly, but
+  `pachanga_competition_can_v1(...,'referees')` remains false because the
+  production Private Beta gate requires one complete active League bundle
+  before any non-read capability is considered.
+- Required correction: create the exact existing Private Beta capability
+  bundle, plus the Wave 9B Venue capability, for the synthetic Team inside the
+  same rollback transaction. Do not weaken Referee ACL, bypass the beta gate
+  or broaden a real user's role.
+- Correction implemented: the canary uses that exact bundle and retains
+  explicit assertions for `auth.uid()`, `competition_owner` and the
+  `referees` capability before calling the command.
+- Regression evidence: all three assertions pass and proposal, acceptance and
+  organizer confirmation complete before Venue allocation begins.
+
+### W9B-160 - Fixed referee deadline falls outside the 30-day authority window
+
+- Classification: `SIMULATION_BUG`
+- Status: `fixed + regression_verified`
+- Original reproducer: audit the next branch of the canonical Referee command
+  after the authority failure and compare the canary's fixed
+  `2027-05-10T18:00:00Z` deadline with the server clock on 2026-08-31.
+- Impact: once authority passes, the product would correctly reject the
+  proposal as `INVALID_ASSIGNMENT_DEADLINE`; no operation has reached that
+  branch yet and no remote state changes.
+- Required correction: calculate a deterministic deadline from
+  `clock_timestamp() + interval '10 days'` inside the transaction while
+  leaving the match schedule and allocation dates unchanged.
+- Correction implemented: only `responseDeadline` is server-clock-relative;
+  the six fixture slots and every Venue allocation input remain fixed.
+- Regression evidence: the Referee proposal passes deadline validation and
+  reaches confirmed `CURRENT` state.
+
+### W9B-161 - Publication assertion reads a non-existent binding column
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed + regression_verified`
+- Original reproducer: after successful bulk publication, count confirmed rows
+  and active bindings by filtering both tables on `competition_id` directly.
+- Impact: PostgreSQL reports that the column does not exist and rolls back the
+  local canary because `pachanga_venue_match_bindings` intentionally carries a
+  `competition_match_context_id`, not a duplicate `competition_id`. The six
+  reservations and bindings were created only inside the aborted local
+  transaction; production is untouched.
+- Required correction: keep the direct reservation filter, but join active
+  bindings to their canonical competition match context, then assert six of
+  each without adding redundant columns or weakening normalization.
+- Correction implemented: the binding assertion joins
+  `competition_match_context_id` and filters the owning Competition there.
+- Regression evidence: the publication assertion passes with six confirmed
+  reservations and six active bindings; the canary then completes the full
+  replacement and Referee reconfirmation DO block.
+
+### W9B-162 - Final evidence JSON repeats the invalid binding filter
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed + regression_verified`
+- Original reproducer: build the final rollback-canary JSON after the complete
+  operational DO block and count active bindings using
+  `pachanga_venue_match_bindings.competition_id`.
+- Impact: all functional assertions pass, but the final reporting SELECT fails
+  before emitting its PASS object; the transaction is rolled back locally and
+  production remains untouched.
+- Required correction: apply the same canonical match-context join to the
+  reporting count and require the final PASS JSON followed by explicit
+  `ROLLBACK` and zero synthetic residue.
+- Correction implemented: the final `activeBindings` count joins binding to
+  competition context and does not duplicate Competition ownership data.
+- Regression evidence: the unchanged local production clone emits
+  `WAVE9B_PRODUCTION_CANARY_PASS`, reports the exact 1/1/2/4/1/6 topology,
+  records six active bindings and seven historical reservations after the one
+  replacement, executes explicit `ROLLBACK`, and an independent readback
+  returns zero users, Clubs, Teams, Competitions, matches, Venues, referees,
+  series, pools, plans and notifications with the synthetic prefixes.
+
+### W9B-163 - Pooler URL does not embed the production database password
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed + regression_verified`
+- Original reproducer: invoke the locally certified canary with the linked
+  Supabase `pooler-url` file as the only connection argument.
+- Impact: `psql` prompts for the pooler user's password and exits with
+  `fe_sendauth: no password supplied`; authentication never completes and no
+  production transaction or SQL statement begins.
+- Required correction: reuse the already managed server-only database
+  credential or an official authenticated Supabase execution channel without
+  printing, persisting or widening the secret. Rerun the exact same canary and
+  require explicit PASS plus rollback and independent zero-residue readback.
+- Correction implemented: production SQL is submitted through the official
+  authenticated Supabase execution channel; the pooler password is neither
+  requested again nor exposed.
+- Regression evidence: PostgreSQL receives and executes the canary until a
+  later product assertion, proving authenticated access without a password in
+  the command, Git, logs or reports. The failed transaction is rolled back.
+
+### W9B-164 - Single-query execution makes the synthetic bundle not yet active
+
+- Classification: `SIMULATION_BUG`
+- Status: `fixed + regression_verified`
+- Original reproducer: submit the locally passing multi-statement canary as
+  one raw SQL query through the official Supabase execution channel.
+- Impact: all bundle rows default `valid_from` to `clock_timestamp()`, while
+  the beta authority compares them with the earlier fixed
+  `statement_timestamp()` for the whole query. The Referee capability assert
+  therefore fails and PostgreSQL aborts the production transaction; no
+  synthetic row persists.
+- Required correction: set the synthetic bundle's `valid_from` explicitly to
+  `statement_timestamp() - interval '1 second'`, preserving the real active
+  grant predicate and all product guards, then rerun locally and remotely with
+  zero-residue readback.
+- Correction implemented: the rollback-only fixture now gives every synthetic
+  entitlement an explicit `valid_from` one second before the statement clock.
+  No product predicate, capability bundle, grant, RPC or production row was
+  changed.
+- Regression evidence: the restored production clone and the official
+  authenticated production execution channel both emit
+  `WAVE9B_PRODUCTION_CANARY_PASS`, preserve the exact `1/4/1/2/1/6` topology,
+  create seven reservation revisions with six current bindings, and finish
+  with explicit `ROLLBACK`. A separate post-transaction production readback
+  returns zero across 42 synthetic families, including users, sessions,
+  Clubs, Teams, grants, Competition data, matches, Venues, Pitches, series,
+  occurrences, pools, plans, allocation holds, Wave 9A holds, reservations,
+  bindings, referee state, notifications, outbox rows, receipts and events.
+
+### W9B-165 - Browser evaluator does not expose `navigator` as a direct global
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed + regression_verified`
+- Original reproducer: inspect the installed Service Worker and display mode
+  from the production Demo using the browser's isolated read-only evaluator
+  and reference `navigator.serviceWorker` directly.
+- Impact: the evaluator raises a local `TypeError` before reading the browser
+  state. The page remains loaded, no request is submitted and product,
+  Supabase and PWA state are unchanged.
+- Required correction: read browser APIs through the evaluator's explicit
+  `window` object or, if that surface is intentionally filtered, use the
+  tab-scoped CDP interface. Then verify manifest, active worker, offline load
+  and reconnection without weakening the application or fabricating a PASS.
+- Correction implemented: the smoke moved only its browser-state reads to the
+  tab-scoped CDP runtime; application code and production state were not
+  modified.
+- Regression evidence: CDP confirms a `200` web manifest, active `/sw.js`,
+  root scope, no waiting worker and `updateViaCache=none`. With network access
+  disabled, a unique uncached request fails while the already cached Demo
+  V3.5 reloads with its 128/126 canonical counts; after reconnection, network
+  requests and the same Demo route load again without document overflow.
+
+### W9B-166 - CDP cannot emulate installed `display-mode` in this browser
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed + regression_verified`
+- Original reproducer: set the production smoke tab to the 844x390 PWA
+  viewport and request `display-mode: standalone` through
+  `Emulation.setEmulatedMedia`.
+- Impact: CDP accepts the command but Chromium continues to report browser
+  mode; no product code, browser installation or remote state changes. This
+  environment therefore cannot turn a normal tab into evidence of a physical
+  installed PWA.
+- Required correction: validate the production install contract, active
+  Service Worker, cache-backed offline load, reconnection and standalone CSS
+  regression independently. Keep physical Android, iPhone and installed-PWA
+  QA explicitly `PENDING` rather than converting emulation into a false PASS.
+- Correction implemented: the unsupported media override was removed from the
+  evidence boundary. The release is certified through the deployed manifest,
+  active worker, 844x390 coarse-layout regression and offline/reconnect smoke;
+  no physical-install result is inferred.
+- Regression evidence: production declares `display=fullscreen` with ordered
+  fallbacks `fullscreen`, `standalone`, `minimal-ui`, `browser`; the active
+  worker controls the root scope and Demo V3.5 renders at 844x390 with zero
+  document overflow. The existing V3.5 test covers its standalone/coarse
+  responsive contract. Physical Android, iPhone and installed-PWA checks
+  remain explicitly `PENDING`.
+
+### W9B-167 - Browser removes the temporary smoke tab before explicit cleanup
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed + regression_verified`
+- Original reproducer: after the offline/reconnect CDP reloads complete, send
+  the final network/media reset and close command through the original
+  temporary tab handle.
+- Impact: the browser reports the tab as unknown because it has already been
+  retired; no application or remote state changes. A browser-scoped viewport
+  override may still require an explicit reset.
+- Required correction: inspect the current tab list, reset the browser-scoped
+  viewport independently, and close only a still-existing task-created tab.
+  Confirm that no task tab remains rather than retrying a stale handle.
+- Correction implemented: no stale-tab operation was repeated. The cleanup
+  queried the selected browser, found zero controlled tabs, and reset the
+  viewport through its browser-scoped capability.
+- Regression evidence: the browser reports an empty task tab list and a
+  successful viewport reset; network/media emulation was scoped to the
+  already-retired tab and therefore has no surviving target.

@@ -1,6 +1,6 @@
 # Manual And Hybrid Venue Allocation V1 Report
 
-Estado: `RELEASE CANDIDATE / STAGING CERTIFIED`
+Estado: `RELEASED / ACTIVE / PRODUCTION VERIFIED`
 
 Fecha: 2026-08-31 CEST
 
@@ -63,8 +63,14 @@ invalida; el cliente relee el read model canonico.
 - asignacion manual concurrente: un ganador y un stale explicito;
 - lock + regeneracion: lock preservado;
 - automatico e hibrido: deterministas y comparables por diff;
-- Preview exacta `0f5d25f`: ocho viewports y ocho capas de planner sin overflow,
-  controles cortados, imagenes rotas ni errores de consola;
+- Preview exacta `0f5d25f`, retirada tras certificacion: ocho viewports y ocho
+  capas de planner sin overflow, controles cortados, imagenes rotas ni errores
+  de consola;
+- produccion `pachangasiq.com`: automatico, manual, hibrido, conflictos,
+  reservas, bindings y utilizacion verificados en desktop, portrait y
+  landscape, sin overflow ni errores de consola;
 - physical Android, iPhone e installed PWA: `PENDING`, no presentados como PASS.
 
-Produccion permanece pendiente del release coordinado de Wave 9B.
+El Service Worker productivo controla `/`, precarga Demo V3.5, conserva lectura
+offline y recupera el snapshot canonico al reconectar. Las escrituras siguen
+bloqueadas offline y no existe cola local deportiva.

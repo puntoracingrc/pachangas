@@ -1,6 +1,6 @@
 # Demo World V3.5 Season Field Allocation Parity Report
 
-Estado: `RELEASE CANDIDATE / PREVIEW VERIFIED`
+Estado: `RELEASED / PRODUCTION VERIFIED / READ-ONLY`
 
 Fecha: 2026-08-31 CEST
 
@@ -57,7 +57,7 @@ RPC ni POST y no fabrica estado deportivo.
 
 ## QA visual y PWA
 
-Exact Preview `0f5d25f`:
+Preview exacta `0f5d25f` y produccion funcional `78551dd`:
 
 - home: `1440x900`, `1920x1080`, `390x844`, `360x800`, `667x375`,
   `740x360`, `844x390` y `932x430`;
@@ -69,4 +69,9 @@ Exact Preview `0f5d25f`:
   respuesta exacta `200 + no-store` en E2E autenticado.
 
 Android fisico, iPhone fisico y PWA instalada fisica permanecen `PENDING`.
-Produccion permanece pendiente del release coordinado de Wave 9B.
+
+En `pachangasiq.com/demo`, las ocho capas se recorrieron en desktop, portrait y
+landscape. La produccion muestra `128` Matches, `0` overlaps, `4` bloques, `4`
+pools, `8` planes, `127` reservas, `126` bindings activos y `1` no asignado.
+No hubo overflow, imagenes rotas, warnings, errores de consola ni escritura
+remota. El snapshot sigue sin aparecer como competicion real ni contiene PII.

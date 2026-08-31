@@ -1,6 +1,6 @@
 # Recurring Venue Blocks V1 Report
 
-Estado: `RELEASE CANDIDATE / STAGING CERTIFIED`
+Estado: `RELEASED / ACTIVE / PRODUCTION VERIFIED`
 
 Fecha: 2026-08-31 CEST
 
@@ -66,8 +66,19 @@ si afecta a un Match vinculado, deriva a Wave 9A/R4D.
 - serie solapada: un ganador y un conflicto explicito;
 - materialize vs update: un ganador y una revision stale;
 - escala certificada: 1.000 series y 25.000 ocurrencias, rollback total;
-- staging: creacion, oferta, aceptacion, materializacion y publicacion
-  autenticadas con datos `.test`;
+- staging retirado: creacion, oferta, aceptacion, materializacion y publicacion
+  autenticadas con datos `.test` antes de su eliminacion;
 - datos reales, notificaciones reales y Stripe: `0 / 0 / NO`.
 
-Produccion permanece pendiente del release coordinado de Wave 9B.
+## Produccion
+
+- PR `#239` fusionado; codigo funcional en `main`
+  `78551dd6d2edef514c47fe45d8cb2ace3c76e79c`;
+- ledger remoto `228/228/228`, ultima migracion `20260830223014` y cero drift;
+- `venue_recurring_series_enabled` y
+  `venue_recurring_materialization_enabled` activos mediante la RPC canonica;
+- canary productivo sintetico: `PASS`, rollback explicito y readback cero en 42
+  familias de datos;
+- Realtime: invalidacion persistida por `pachanga_venue_invalidations`, seguida
+  de relectura del snapshot canonico;
+- Android, iPhone y PWA instalada fisica: `PENDING`, no presentados como PASS.
