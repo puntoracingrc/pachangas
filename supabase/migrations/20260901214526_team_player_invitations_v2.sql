@@ -104,6 +104,7 @@ as $$
     'teamCode', case when include_team then groups.team_code else null end,
     'modality', case when include_team then groups.social_modality else null end,
     'generalArea', case when include_team then groups.social_general_area else null end,
+    'createdByName', coalesce(creators.display_name, creators_membership.display_name, 'Admin del equipo'),
     'state', case
       when invitations.state = 'ACTIVE' and invitations.expires_at <= clock_timestamp() then 'EXPIRED'
       else invitations.state
@@ -117,6 +118,10 @@ as $$
   ))
   from public.pachanga_team_player_invitations_v2 invitations
   join public.pachanga_groups groups on groups.id = invitations.group_id
+  left join public.pachanga_social_player_profiles_v1 creators on creators.user_id = invitations.created_by
+  left join public.pachanga_group_members creators_membership
+    on creators_membership.group_id = invitations.group_id
+   and creators_membership.user_id = invitations.created_by
   where invitations.id = target_invitation_id;
 $$;
 
@@ -229,8 +234,8 @@ begin
     raise exception 'AUTHENTICATION_OPERATION_AND_REVISION_REQUIRED' using errcode = '42501';
   end if;
   if action_name not in (
-    'invitation.create','invitation.revoke','invitation.accept',
-    'invitation.decline','invitation.expire'
+    'team.invitation.create','team.invitation.revoke','team.invitation.accept',
+    'team.invitation.decline','team.invitation.expire'
   ) then raise exception 'UNSUPPORTED_INVITATION_ACTION' using errcode = '22023'; end if;
   if jsonb_typeof(body) <> 'object' then raise exception 'INVALID_INVITATION_PAYLOAD' using errcode = '22023'; end if;
 
@@ -240,7 +245,7 @@ begin
     raise exception 'TEAM_PLAYER_INVITATIONS_DISABLED' using errcode = '42501';
   end if;
 
-  if action_name = 'invitation.create' then
+  if action_name = 'team.invitation.create' then
     if target_group_id is null or target_invitation_id is not null or token_value <> ''
        or body - array['expiresInHours']::text[] <> '{}'::jsonb then
       raise exception 'INVALID_INVITATION_CREATE_REQUEST' using errcode = '22023';
@@ -248,7 +253,7 @@ begin
     aggregate_id := target_group_id::text;
   else
     if body <> '{}'::jsonb then raise exception 'INVITATION_PAYLOAD_FIELD_NOT_ALLOWED' using errcode = '22023'; end if;
-    if action_name in ('invitation.accept','invitation.decline') then
+    if action_name in ('team.invitation.accept','team.invitation.decline') then
       if token_value !~ '^piq_[0-9a-f]{64}$' then raise exception 'INVALID_INVITATION_TOKEN' using errcode = '22023'; end if;
       token_hash := encode(extensions.digest(convert_to(token_value, 'UTF8'), 'sha256'), 'hex');
       select secrets.invitation_id into invitation_id
@@ -278,12 +283,12 @@ begin
       raise exception 'OPERATION_ID_REUSED' using errcode = 'PT409';
     end if;
     return existing_receipt.response || case
-      when action_name = 'invitation.create' then jsonb_build_object('tokenAlreadyIssued', true)
+      when action_name = 'team.invitation.create' then jsonb_build_object('tokenAlreadyIssued', true)
       else '{}'::jsonb
     end;
   end if;
 
-  if action_name = 'invitation.create' then
+  if action_name = 'team.invitation.create' then
     if not public.is_pachanga_group_admin(target_group_id) then raise exception 'TEAM_ADMIN_REQUIRED' using errcode = '42501'; end if;
     perform private.pachanga_assert_team_operational_scope_v1(target_group_id, 'TEAM_MEMBERSHIP_ADMINISTRATION');
     perform pg_advisory_xact_lock(hashtextextended('social-team:' || target_group_id::text, 0));
@@ -319,20 +324,20 @@ begin
     end if;
     if invitation.revision <> expected_revision then raise exception 'STALE_INVITATION_REVISION' using errcode = 'PT409'; end if;
 
-    if action_name in ('invitation.revoke','invitation.expire') then
+    if action_name in ('team.invitation.revoke','team.invitation.expire') then
       if not public.is_pachanga_group_admin(invitation.group_id) then raise exception 'TEAM_ADMIN_REQUIRED' using errcode = '42501'; end if;
     end if;
     if invitation.state <> 'ACTIVE' then raise exception 'INVITATION_NOT_ACTIVE' using errcode = 'PT409'; end if;
-    if action_name <> 'invitation.expire' and invitation.expires_at <= clock_timestamp() then
+    if action_name <> 'team.invitation.expire' and invitation.expires_at <= clock_timestamp() then
       raise exception 'INVITATION_EXPIRED' using errcode = 'PT409';
     end if;
-    if action_name = 'invitation.expire' and invitation.expires_at > clock_timestamp() then
+    if action_name = 'team.invitation.expire' and invitation.expires_at > clock_timestamp() then
       raise exception 'INVITATION_NOT_EXPIRED' using errcode = 'PT409';
     end if;
     perform private.pachanga_assert_team_operational_scope_v1(invitation.group_id, 'TEAM_MEMBERSHIP_ADMINISTRATION');
     next_sequence := nextval('private.pachanga_social_team_sequence_v1');
 
-    if action_name = 'invitation.accept' then
+    if action_name = 'team.invitation.accept' then
       if not public.is_registered_pachanga_user() then raise exception 'REGISTERED_USER_REQUIRED' using errcode = '42501'; end if;
       if not exists (select 1 from public.pachanga_social_player_profiles_v1 profiles where profiles.user_id = actor_id) then
         raise exception 'SOCIAL_PROFILE_REQUIRED' using errcode = '42501';
@@ -348,13 +353,13 @@ begin
         accepted_at = clock_timestamp(), revision = invitations.revision + 1,
         server_sequence = next_sequence, updated_at = clock_timestamp()
       where invitations.id = invitation.id returning * into invitation;
-    elsif action_name = 'invitation.decline' then
+    elsif action_name = 'team.invitation.decline' then
       update public.pachanga_team_player_invitations_v2 invitations set
         state = 'DECLINED', declined_by = actor_id, declined_at = clock_timestamp(),
         revision = invitations.revision + 1, server_sequence = next_sequence,
         updated_at = clock_timestamp()
       where invitations.id = invitation.id returning * into invitation;
-    elsif action_name = 'invitation.revoke' then
+    elsif action_name = 'team.invitation.revoke' then
       update public.pachanga_team_player_invitations_v2 invitations set
         state = 'REVOKED', revoked_at = clock_timestamp(),
         revision = invitations.revision + 1, server_sequence = next_sequence,
@@ -395,7 +400,7 @@ begin
     safe_response, client_metadata, invitation.server_sequence
   );
 
-  if action_name in ('invitation.accept','invitation.decline') then
+  if action_name in ('team.invitation.accept','team.invitation.decline') then
     for admin_user in
       select members.user_id from public.pachanga_group_members members
       where members.group_id = invitation.group_id
@@ -403,9 +408,9 @@ begin
     loop
       perform private.pachanga_notify_v1(
         admin_user.user_id,
-        case when action_name = 'invitation.accept' then 'team_player_invitation_accepted' else 'team_player_invitation_declined' end,
-        case when action_name = 'invitation.accept' then 'Invitación aceptada' else 'Invitación rechazada' end,
-        case when action_name = 'invitation.accept' then 'Un jugador se ha unido al equipo.' else 'Un jugador ha rechazado la invitación.' end,
+        case when action_name = 'team.invitation.accept' then 'team_player_invitation_accepted' else 'team_player_invitation_declined' end,
+        case when action_name = 'team.invitation.accept' then 'Invitación aceptada' else 'Invitación rechazada' end,
+        case when action_name = 'team.invitation.accept' then 'Un jugador se ha unido al equipo.' else 'Un jugador ha rechazado la invitación.' end,
         '/equipo/invitaciones?team=' || invitation.group_id::text,
         jsonb_build_object('groupId', invitation.group_id, 'invitationId', invitation.id),
         'social-team-invitation:' || operation_id::text || ':' || admin_user.user_id::text
@@ -414,7 +419,7 @@ begin
   end if;
 
   response := safe_response;
-  if action_name = 'invitation.create' then
+  if action_name = 'team.invitation.create' then
     response := response || jsonb_build_object('shareToken', raw_token, 'tokenAlreadyIssued', false);
   end if;
   return response;

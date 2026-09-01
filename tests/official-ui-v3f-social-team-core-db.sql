@@ -62,12 +62,12 @@ where group_id=current_setting('v3f.group_id')::uuid \gset
 set local role authenticated;
 select set_config('request.jwt.claims', '{"sub":"f3000000-0000-4000-8000-000000000001","role":"authenticated","is_anonymous":false}', true);
 select public.command_pachanga_team_player_invitation_v2(
-  'invitation.create', current_setting('v3f.group_id')::uuid, null, null,
+  'team.invitation.create', current_setting('v3f.group_id')::uuid, null, null,
   :'invite_expected_revision'::bigint,
   'f3300000-0000-4000-8000-000000000001', '{"expiresInHours":24}'::jsonb, '{}'::jsonb
 ) as created_invite \gset
 select public.command_pachanga_team_player_invitation_v2(
-  'invitation.create', current_setting('v3f.group_id')::uuid, null, null,
+  'team.invitation.create', current_setting('v3f.group_id')::uuid, null, null,
   :'invite_expected_revision'::bigint,
   'f3300000-0000-4000-8000-000000000001', '{"expiresInHours":24}'::jsonb, '{}'::jsonb
 ) as replayed_invite \gset
@@ -86,7 +86,7 @@ set local role authenticated;
 select set_config('request.jwt.claims', '{"sub":"f3000000-0000-4000-8000-000000000002","role":"authenticated","is_anonymous":false}', true);
 select public.lookup_pachanga_team_player_invitation_v2(current_setting('v3f.invitation_token')) as lookup_invite \gset
 select public.command_pachanga_team_player_invitation_v2(
-  'invitation.accept', null, current_setting('v3f.invitation_id')::uuid,
+  'team.invitation.accept', null, current_setting('v3f.invitation_id')::uuid,
   current_setting('v3f.invitation_token'), 1,
   'f3400000-0000-4000-8000-000000000001', '{}'::jsonb, '{}'::jsonb
 ) as accepted_invite \gset
@@ -104,7 +104,7 @@ begin
   set local role authenticated;
   begin
     perform public.command_pachanga_team_player_invitation_v2(
-      'invitation.accept', null, current_setting('v3f.invitation_id')::uuid,
+      'team.invitation.accept', null, current_setting('v3f.invitation_id')::uuid,
       current_setting('v3f.invitation_token'), 2,
       'f3400000-0000-4000-8000-000000000002', '{}'::jsonb, '{}'::jsonb
     );
@@ -118,12 +118,12 @@ $$;
 set local role authenticated;
 select set_config('request.jwt.claims', '{"sub":"f3000000-0000-4000-8000-000000000001","role":"authenticated","is_anonymous":false}', true);
 select public.command_pachanga_team_player_invitation_v2(
-  'invitation.create', current_setting('v3f.group_id')::uuid, null, null,
+  'team.invitation.create', current_setting('v3f.group_id')::uuid, null, null,
   (select revision from public.pachanga_social_team_states_v1 where group_id=current_setting('v3f.group_id')::uuid),
   'f3300000-0000-4000-8000-000000000002', '{"expiresInHours":24}'::jsonb, '{}'::jsonb
 ) as revoke_candidate \gset
 select public.command_pachanga_team_player_invitation_v2(
-  'invitation.revoke', current_setting('v3f.group_id')::uuid,
+  'team.invitation.revoke', current_setting('v3f.group_id')::uuid,
   (:'revoke_candidate'::jsonb ->> 'invitationId')::uuid, null, 1,
   'f3500000-0000-4000-8000-000000000001', '{}'::jsonb, '{}'::jsonb
 ) as revoked_invite \gset

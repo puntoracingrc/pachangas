@@ -166,6 +166,27 @@ begin
   if actor_role is null then raise exception 'TEAM_MEMBERSHIP_REQUIRED' using errcode = '42501'; end if;
   team_snapshot := private.pachanga_social_team_snapshot_v1(target_group_id, actor_id);
   return team_snapshot || jsonb_build_object(
+    'nextMatch', (
+      select jsonb_build_object(
+        'matchId', matches.value ->> 'id',
+        'title', coalesce(nullif(matches.value ->> 'title',''), 'Próximo partido'),
+        'date', matches.value ->> 'date',
+        'place', coalesce(matches.value ->> 'place', ''),
+        'modality', matches.value ->> 'kind',
+        'targetPlayers', coalesce((matches.value ->> 'targetPlayers')::integer, 0)
+      )
+      from public.pachanga_groups home_group
+      cross join lateral jsonb_array_elements(
+        case when jsonb_typeof(home_group.payload -> 'matches') = 'array'
+          then home_group.payload -> 'matches' else '[]'::jsonb end
+      ) matches(value)
+      where home_group.id = target_group_id
+        and matches.value ->> 'date' ~ '^20[0-9]{2}-[0-9]{2}-[0-9]{2}T'
+        and (matches.value ->> 'date')::timestamptz > clock_timestamp()
+        and not coalesce((matches.value ->> 'closed')::boolean, false)
+      order by (matches.value ->> 'date')::timestamptz, matches.value ->> 'id'
+      limit 1
+    ),
     'actions', jsonb_build_object(
       'canInvitePlayers', actor_role in ('owner','admin'),
       'canManageRoster', actor_role in ('owner','admin'),
@@ -197,7 +218,9 @@ begin
   ) then raise exception 'TEAM_MEMBERSHIP_REQUIRED' using errcode = '42501'; end if;
   return coalesce((
     select jsonb_agg(jsonb_strip_nulls(jsonb_build_object(
-      'memberId', members.user_id,
+      'memberKey', left(encode(extensions.digest(
+        convert_to(target_group_id::text || ':' || members.user_id::text, 'UTF8'), 'sha256'
+      ), 'hex'), 24),
       'displayName', coalesce(profiles.display_name, members.display_name, 'Jugador'),
       'avatarRef', profiles.avatar_ref,
       'primaryPosition', profiles.primary_position,
