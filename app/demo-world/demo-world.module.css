@@ -82,6 +82,10 @@
   text-decoration: none;
 }
 
+.socialJourneyLauncher {
+  display: none;
+}
+
 .header {
   position: sticky;
   z-index: 30;
@@ -2764,6 +2768,24 @@
   .shell { height: 100dvh; padding: var(--game-nav-height, 48px) 0 0; overflow: hidden; }
   .demoBanner,
   .header { display: none; }
+  .socialJourneyLauncher {
+    position: fixed;
+    z-index: 84;
+    right: max(8px, env(safe-area-inset-right));
+    bottom: max(8px, env(safe-area-inset-bottom));
+    display: block;
+    min-height: 40px;
+    border: 1px solid rgba(200, 239, 93, 0.55);
+    border-radius: 5px;
+    background: rgba(7, 17, 15, 0.94);
+    padding: 7px 11px;
+    color: var(--demo-lime);
+    font-weight: 850;
+  }
+  .socialJourneyLauncher[data-full-mode="true"] {
+    right: auto;
+    left: max(8px, env(safe-area-inset-left));
+  }
   .mobileDomainMenu { position: fixed; z-index: 85; right: max(7px, env(safe-area-inset-right)); bottom: max(7px, env(safe-area-inset-bottom)); display: block; border: 0; background: transparent; padding: 0; }
   .mobileDomainMenu .domainMenu > summary { min-height: 36px; background: rgba(7, 17, 15, 0.94); }
   .mobileDomainMenu .domainMenuPanel { position: fixed; top: auto; right: max(7px, env(safe-area-inset-right)); bottom: 49px; width: min(500px, calc(100vw - 28px)); max-height: calc(100dvh - var(--game-nav-height, 48px) - 58px); overflow: auto; }

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { CompetitionDisciplineClient } from "../_components/competition-discipline-client";
 import { CompetitionDirectoryClient } from "../competiciones/competition-directory-client";
@@ -85,8 +86,14 @@ import { DemoWorldV34FieldOperations } from "./demo-world-v3-4-field-operations"
 import type { DemoWorldV34Manifest, DemoWorldV34Snapshot } from "./demo-world-v3-4-contract";
 import { DemoWorldV35SeasonFieldAllocation } from "./demo-world-v3-5-season-field-allocation";
 import type { DemoWorldV35Manifest, DemoWorldV35Snapshot } from "./demo-world-v3-5-contract";
+import { DEMO_SOCIAL_FIRST_TIME_SESSION_KEY } from "./demo-social-first-time-contract";
 import marketStyles from "../mercado/marketplace-v3d.module.css";
 import styles from "./demo-world.module.css";
+
+const DemoSocialFirstTimeJourney = dynamic(
+  () => import("./demo-social-first-time-journey").then((module) => module.DemoSocialFirstTimeJourney),
+  { ssr: false },
+);
 
 type DemoWorldManifest = DemoWorldV2Manifest | DemoWorldV32Manifest | DemoWorldV33Manifest | DemoWorldV34Manifest | DemoWorldV35Manifest;
 type DemoWorldFullSnapshot = DemoWorldV2Snapshot | DemoWorldV32Snapshot | DemoWorldV33Snapshot | DemoWorldV34Snapshot | DemoWorldV35Snapshot;
@@ -430,6 +437,7 @@ function LoadingWorld({ manifest }: { manifest: DemoWorldManifest }) {
 function DemoHeader({
   activeTab,
   manifest,
+  onFirstTime,
   onReset,
   onTab,
   perspective,
@@ -439,6 +447,7 @@ function DemoHeader({
 }: {
   activeTab: DemoWorldV2PrimaryTab;
   manifest: DemoWorldManifest;
+  onFirstTime: () => void;
   onReset: () => void;
   onTab: (tab: DemoWorldV2PrimaryTab) => void;
   perspective: DemoWorldPerspective;
@@ -470,6 +479,7 @@ function DemoHeader({
         <span><b>Mundo Demo V{manifest.version}</b> · datos ficticios · temporada {manifest.season}</span>
         <span className={styles.bannerActions}>
           {fullMode ? <button type="button" onClick={() => onTab("revision")}>Recorrido</button> : null}
+          <button type="button" onClick={onFirstTime}>Empezar</button>
           <button type="button" onClick={onReset}>Reiniciar</button>
           <Link href="/">Salir</Link>
         </span>
@@ -2055,6 +2065,10 @@ export function DemoWorldApp({ manifest, mode = "social" }: { manifest: DemoWorl
   >(null);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [socialFirstTimeOpen, setSocialFirstTimeOpen] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return new URLSearchParams(window.location.search).get("journey") === "first-time";
+  });
 
   const openRewardBox = (box: DemoWorldRewardBox) => {
     setOpenedBox(box);
@@ -2326,6 +2340,7 @@ export function DemoWorldApp({ manifest, mode = "social" }: { manifest: DemoWorl
 
   function resetWorld() {
     const reset = resetDemoWorldSession(window.sessionStorage);
+    window.sessionStorage.removeItem(DEMO_SOCIAL_FIRST_TIME_SESSION_KEY);
     setSession(reset);
     setActiveTab("inicio");
     setSelectedPlayerId(null);
@@ -2348,7 +2363,7 @@ export function DemoWorldApp({ manifest, mode = "social" }: { manifest: DemoWorl
 
   return (
     <main className={styles.shell} data-demo-world="ready" data-demo-mode={mode} data-demo-perspective={perspective.id} data-demo-tab={activeTab}>
-      <DemoHeader activeTab={activeTab} fullMode={fullMode} manifest={manifest} onReset={resetWorld} onTab={navigate} perspective={perspective} perspectives={world.core.perspectives} setPerspective={choosePerspective} />
+      <DemoHeader activeTab={activeTab} fullMode={fullMode} manifest={manifest} onFirstTime={() => setSocialFirstTimeOpen(true)} onReset={resetWorld} onTab={navigate} perspective={perspective} perspectives={world.core.perspectives} setPerspective={choosePerspective} />
       <div className={styles.content}>
         {activeTab === "inicio" ? <WorldHome challenges={demoChallenges} currentPlayer={currentPlayer} currentTeam={currentTeam} notifications={notifications} onMatch={openMatch} onPlayer={setSelectedPlayerId} onTab={navigate} overrides={localChallengeOverrides} perspective={perspective} snapshot={world} teamMatches={teamMatches} /> : null}
         {activeTab !== "inicio" && activeTab !== "revision" && activeTab !== "campos" && !snapshot ? <div className={styles.secondaryLoading} role="status"><span className={styles.loadingMark}>IQ</span><strong>{loadingFullWorld ? "Cargando esta sección" : "Preparando datos"}</strong><p>Solo descargamos el dominio que acabas de abrir.</p></div> : null}
@@ -2471,6 +2486,8 @@ export function DemoWorldApp({ manifest, mode = "social" }: { manifest: DemoWorl
         {activeTab === "campos" && "seasonFieldAllocation" in manifest ? <><DemoWorldV35SeasonFieldAllocation manifest={manifest.seasonFieldAllocation} /><details className={styles.demoLegacyLayer}><summary>Operación de campos V3.4 preservada</summary><DemoWorldV34FieldOperations manifest={manifest.fieldOperations} /></details></> : activeTab === "campos" && "fieldOperations" in manifest ? <DemoWorldV34FieldOperations manifest={manifest.fieldOperations} /> : null}
       </div>
       <MobileAppNav active={primaryTabForDemo(activeTab) as MobileAppTab} onNavigate={(tab) => navigate(demoTabForPrimary(tab))} />
+      {!socialFirstTimeOpen ? <button className={styles.socialJourneyLauncher} data-full-mode={fullMode ? "true" : "false"} type="button" onClick={() => setSocialFirstTimeOpen(true)}>Primeros pasos</button> : null}
+      {socialFirstTimeOpen ? <DemoSocialFirstTimeJourney onClose={() => setSocialFirstTimeOpen(false)} onNavigate={navigate} /> : null}
       {selectedPlayer ? <PlayerModal onClose={() => setSelectedPlayerId(null)} player={selectedPlayer} /> : null}
       {openedBox && RewardBoxComponent ? <RewardBoxComponent
         actionLabel="Guardar en esta demo"

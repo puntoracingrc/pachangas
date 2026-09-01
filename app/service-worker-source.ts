@@ -1,6 +1,8 @@
 const precacheUrls = [
   "/",
   "/demo",
+  "/equipo",
+  "/perfil",
   "/mercado",
   "/retos",
   "/demo-world/v1/manifest.json",
@@ -36,7 +38,7 @@ const PRECACHE_URLS = ${encodedPrecache};
 const STATIC_DESTINATIONS = new Set(["font", "image", "manifest", "script", "style"]);
 const STATIC_FILE_EXTENSIONS = /\\.(?:css|js|mjs|png|jpg|jpeg|webp|svg|ico|woff2?)$/i;
 const LIVE_SERVICE_HOST_PARTS = ["supabase.co", "stripe.com", "googleapis.com", "google.com", "gstatic.com", "weather.googleapis.com"];
-const CACHEABLE_NAVIGATION_PATHS = new Set(["/", "/aviso-legal", "/campos", "/clubes/gestionar/campos/bloques", "/clubes/gestionar/campos/pools", "/competiciones", "/condiciones", "/condiciones-venta", "/cookies", "/demo", "/equipo/estado", "/manual", "/mercado", "/organizacion/empezar", "/organizacion/onboarding", "/organizacion/solicitar-acceso", "/organizacion/solicitudes", "/planes-organizador", "/privacidad", "/reservas", "/reservas/recurrentes", "/retos", "/torneos"]);
+const CACHEABLE_NAVIGATION_PATHS = new Set(["/", "/aviso-legal", "/campos", "/clubes/gestionar/campos/bloques", "/clubes/gestionar/campos/pools", "/competiciones", "/condiciones", "/condiciones-venta", "/cookies", "/demo", "/equipo", "/equipo/crear", "/equipo/estado", "/equipo/unirse", "/manual", "/mercado", "/organizacion/empezar", "/organizacion/onboarding", "/organizacion/solicitar-acceso", "/organizacion/solicitudes", "/perfil", "/planes-organizador", "/privacidad", "/reservas", "/reservas/recurrentes", "/retos", "/torneos"]);
 const CACHEABLE_NAVIGATION_PATTERNS = [
   /^\\/campos\\/[a-z0-9]+(?:-[a-z0-9]+)*$/i,
   /^\\/competiciones\\/[a-z0-9]+(?:-[a-z0-9]+)*$/i,

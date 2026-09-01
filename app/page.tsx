@@ -19,6 +19,11 @@ import {
 import { OfficialMatchGameHub } from "./_components/official-match-game-hub";
 import { OfficialProductShellV2 } from "./_components/official-product-shell-v2";
 import { PlayerCosmeticCard } from "./_components/player-cosmetic-card";
+import {
+  SocialOnboarding,
+  emptySocialOnboardingDraft,
+  type PendingSocialInvitation,
+} from "./_components/social-onboarding";
 import { TeamShieldView } from "./_components/team-shield-view";
 import { VenueMatchPanel } from "./_components/venue-match-panel";
 import { attachVenueAutocomplete, type VenuePlace } from "./googlePlacesClient";
@@ -62,6 +67,16 @@ import {
   socialRatingDisclosure,
   type RatingComparison,
 } from "./rating-system-v2";
+import {
+  deriveSocialEntryState,
+  mapTeamJoinError,
+  normalizeSocialOnboardingDraft,
+  socialOnboardingFlowFromSearch,
+  socialProfileModalities,
+  type SocialOnboardingFlow,
+  type SocialOnboardingDraft,
+  type SocialProfileMinimum,
+} from "./social-onboarding-contract";
 import { supabase } from "./supabaseClient";
 import {
   normalizeTeamShieldSnapshot,
@@ -81,6 +96,8 @@ const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
 const googleMapsApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
 const googleAuthNonceKey = "pachanga-google-auth-nonce";
 const googleAuthReturnKey = "pachanga-google-auth-return";
+const socialOnboardingDraftKey = (userId: string) => `pachangas-social-onboarding-draft-v3e:${userId}`;
+const socialOnboardingDismissedKey = (userId: string) => `pachangas-social-onboarding-dismissed-v3e:${userId}`;
 const playerPhotoPromptForChatGpt = `Utiliza la fotografía adjunta como referencia y recorta únicamente a la persona que aparece en ella.
 
 Crea un retrato profesional desde los hombros hacia arriba, similar a la fotografía de un jugador utilizada en una carta de fútbol tipo FIFA.
@@ -1974,10 +1991,6 @@ function billingPatchFromRecord(record: Record<string, unknown>): Partial<Remote
   };
 }
 
-function groupOptionLabel(team: RemoteTeam) {
-  return `${team.name} · ${memberRoleLabel(team.role)}`;
-}
-
 function monthLabel(date: string) {
   const label = new Date(date).toLocaleDateString("es-ES", { month: "long", year: "numeric" });
   return label.charAt(0).toLocaleUpperCase("es-ES") + label.slice(1);
@@ -3532,6 +3545,11 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [authUser, setAuthUser] = useState<User | null>(null);
   const [profileName, setProfileName] = useState("");
+  const [canonicalSocialProfile, setCanonicalSocialProfile] = useState<SocialProfileMinimum | null>(null);
+  const [pendingSocialInvitation, setPendingSocialInvitation] = useState<PendingSocialInvitation | null>(null);
+  const [socialOnboardingDismissed, setSocialOnboardingDismissed] = useState(false);
+  const [socialOnboardingDraft, setSocialOnboardingDraft] = useState<SocialOnboardingDraft>(() => emptySocialOnboardingDraft());
+  const [socialFlowRequested, setSocialFlowRequested] = useState<SocialOnboardingFlow | null>(null);
   const [newTeamName, setNewTeamName] = useState("Mi grupo de pachangas");
   const [adminInviteToken, setAdminInviteToken] = useState<string | null>(null);
   const [avatarMessage, setAvatarMessage] = useState("");
@@ -3564,7 +3582,9 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
       : { hasAdminInvite: false, hasInvite: false, hasMatch: false, teamCode: null }
   ));
   const hasIncomingSharedLink = incomingSharedLink.hasInvite || incomingSharedLink.hasAdminInvite || incomingSharedLink.hasMatch || Boolean(incomingSharedLink.teamCode);
-  const isDemoMode = previewDemoMode || (!hasIncomingSharedLink && !remoteReady && remoteTeams.length === 0);
+  const isRegisteredAuthUser = Boolean(authUser && !isAnonymousAuthUser(authUser));
+  const isPublicEntryMode = !previewDemoMode && !hasIncomingSharedLink && !remoteReady && remoteTeams.length === 0 && !isRegisteredAuthUser;
+  const isDemoMode = previewDemoMode;
   const applyingRemoteRef = useRef(false);
   const payloadRef = useRef<AppPayload | null>(null);
   const lastCommittedPayloadJsonRef = useRef("");
@@ -3951,15 +3971,6 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
     return user;
   }
 
-  async function ensureRegisteredUser(client: NonNullable<typeof supabase>) {
-    const user = await getSignedUser(client);
-    if (!user || isAnonymousAuthUser(user)) {
-      throw new Error("Entra con Google para crear grupos o ser admin.");
-    }
-
-    return user.id;
-  }
-
   async function signInWithGoogle() {
     if (!supabase) {
       setSyncStatus("error");
@@ -4121,6 +4132,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
 
     const selectedTeam = requestedTeam ?? teams[0];
     if (!selectedTeam) {
+      applyPayload(emptyTeamPayload("Tu espacio de jugador"), null);
       setRemoteGroupId(null);
       setRemoteRevision(null);
       setCurrentRole(null);
@@ -4409,6 +4421,94 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
     };
   }, []);
 
+  useEffect(() => {
+    if (!currentUserId) return;
+    let active = true;
+    queueMicrotask(() => {
+      if (!active) return;
+      try {
+        const storedDraft = localStorage.getItem(socialOnboardingDraftKey(currentUserId));
+        setSocialOnboardingDraft(normalizeSocialOnboardingDraft(storedDraft ? JSON.parse(storedDraft) : null));
+        setSocialOnboardingDismissed(localStorage.getItem(socialOnboardingDismissedKey(currentUserId)) === "1");
+      } catch {
+        setSocialOnboardingDraft(emptySocialOnboardingDraft());
+      }
+
+      const requestedFlow = socialOnboardingFlowFromSearch(window.location.search);
+      if (requestedFlow) {
+        setSocialFlowRequested(requestedFlow);
+        setSocialOnboardingDismissed(false);
+      }
+    });
+
+    if (!supabase) return () => { active = false; };
+    const client = supabase;
+    const loadProfile = async () => {
+      const result = await client
+        .from("pachanga_player_profiles")
+        .select("display_name,position,market_modalities,assessment_summary")
+        .eq("user_id", currentUserId)
+        .maybeSingle();
+      if (!active || result.error) return;
+      if (!result.data) {
+        setCanonicalSocialProfile(null);
+        setSocialOnboardingDraft((current) => current.displayName ? current : { ...current, displayName: authDisplayName(authUser) });
+        return;
+      }
+      const profile = {
+        displayName: String(result.data.display_name ?? ""),
+        modalities: socialProfileModalities({
+          assessmentSummary: result.data.assessment_summary,
+          marketModalities: result.data.market_modalities,
+        }),
+        position: String(result.data.position ?? ""),
+      } satisfies SocialProfileMinimum;
+      setCanonicalSocialProfile(profile);
+      setSocialOnboardingDraft((current) => normalizeSocialOnboardingDraft({
+        ...current,
+        displayName: current.displayName || profile.displayName || authDisplayName(authUser),
+        position: current.position || profile.position,
+      }));
+    };
+    void loadProfile();
+    const channel = client
+      .channel(`social-profile-v3e-${currentUserId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "pachanga_player_profiles", filter: `user_id=eq.${currentUserId}` },
+        () => void loadProfile(),
+      )
+      .subscribe((status) => {
+        if (status === "SUBSCRIBED") void loadProfile();
+      });
+    const reconnect = () => { if (navigator.onLine) void loadProfile(); };
+    window.addEventListener("online", reconnect);
+    return () => {
+      active = false;
+      window.removeEventListener("online", reconnect);
+      void client.removeChannel(channel);
+    };
+  }, [authUser, currentUserId]);
+
+  useEffect(() => {
+    const restoreSocialIntent = () => {
+      const requestedFlow = socialOnboardingFlowFromSearch(window.location.search);
+      setSocialFlowRequested(requestedFlow);
+      if (requestedFlow) setSocialOnboardingDismissed(false);
+    };
+    window.addEventListener("popstate", restoreSocialIntent);
+    return () => window.removeEventListener("popstate", restoreSocialIntent);
+  }, []);
+
+  useEffect(() => {
+    if (!currentUserId) return;
+    try {
+      localStorage.setItem(socialOnboardingDraftKey(currentUserId), JSON.stringify(socialOnboardingDraft));
+    } catch {
+      // This is only a resumable visual draft; the canonical profile remains on the server.
+    }
+  }, [currentUserId, socialOnboardingDraft]);
+
   const connectGroupEffect = useEffectEvent(
     async (client: NonNullable<typeof supabase>, isCancelled: () => boolean) => {
       setSyncStatus("connecting");
@@ -4420,7 +4520,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
         const adminInviteToken = previewDemoMode ? null : expandCompactUuid(params.get("a") ?? params.get("admin"));
         const sharedMatchId = previewDemoMode ? null : expandCompactUuid(params.get("p") ?? params.get("partido"));
         const teamCode = previewDemoMode ? null : params.get("equipo");
-        let groupId = previewDemoMode ? null : params.get("grupo");
+        const groupId = previewDemoMode ? null : params.get("grupo");
         const initialUser = await getSignedUser(client);
         const linkNeedsLogin = Boolean(inviteToken || adminInviteToken || teamCode || groupId);
 
@@ -4444,27 +4544,19 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
           throw new Error("Este enlace antiguo mezclaba una invitación de grupo con un partido. Pide al admin un nuevo enlace de partido seguro.");
         }
 
-        if (adminInviteToken) {
-          const userId = initialUser?.id ?? await ensureRegisteredUser(client);
-          const user = initialUser?.id === userId ? initialUser : authUser?.id === userId ? authUser : (await getSignedUser(client));
-          const adminJoinResult = await client.rpc("accept_pachanga_admin_invite_authoritative_v1", {
-            admin_token: adminInviteToken,
-            client_metadata: clientOperationMetadata(),
-            expected_invite_revision: 1,
-            member_name: profileName.trim() || authDisplayName(user) || "Admin",
-            operation_id: id(),
+        if (adminInviteToken || inviteToken) {
+          setPendingSocialInvitation({
+            kind: adminInviteToken ? "admin" : "player",
+            token: adminInviteToken ?? inviteToken!,
           });
-          if (adminJoinResult.error || !adminJoinResult.data) throw new Error(adminJoinResult.error?.message ?? "No se pudo aceptar la invitación de admin");
-          groupId = String((adminJoinResult.data as { groupId?: string }).groupId ?? "");
-          if (!groupId) throw new Error("El servidor no devolvió el grupo de la invitación de admin");
-        } else if (inviteToken) {
-          const joinResult = await client.rpc("join_pachanga_team", {
-            member_name: profileName.trim() || authDisplayName(initialUser) || "Jugador",
-            token: inviteToken,
-          });
-          if (joinResult.error || !joinResult.data) throw new Error(joinResult.error?.message ?? "No se pudo entrar al grupo");
-          groupId = String(joinResult.data);
+          await loadTeams(client);
+          if (!isCancelled()) {
+            setSyncStatus("live");
+            setSyncError("");
+          }
+          return;
         } else {
+          setPendingSocialInvitation(null);
           const user = initialUser;
           if (!user) {
             if (!isCancelled()) {
@@ -5030,6 +5122,20 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
 
   function navigatePrimaryMobile(tabId: MobileAppTab) {
     setMobileAccountOpen(false);
+
+    if (tabId === "perfil") {
+      window.location.assign("/perfil");
+      return;
+    }
+
+    if (!remoteReady && !remoteGroupId && (tabId === "partido" || tabId === "equipo")) {
+      setSocialFlowRequested("start");
+      setSocialOnboardingDismissed(false);
+      setActiveMobileTab("inicio");
+      window.scrollTo({ behavior: "smooth", top: 0 });
+      return;
+    }
+
     lockMobileNavigationTab(tabId);
     setActiveMobileTab(tabId);
 
@@ -5054,34 +5160,9 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
       return;
     }
 
-    const managerLandscape = isMobileManagerLandscape();
-
     if (tabId === "equipo") {
       setProfilePane("ranking");
       setTeamGalleryOpen(false);
-      return;
-    }
-
-    if (tabId === "perfil") {
-      const compactProfileNavigation =
-        window.matchMedia("(max-width: 760px)").matches ||
-        window.matchMedia("(pointer: coarse)").matches ||
-        window.matchMedia("(any-pointer: coarse)").matches ||
-        navigator.maxTouchPoints > 0;
-      if (!compactProfileNavigation && !managerLandscape) {
-        void openOwnPlayerProfile();
-        return;
-      }
-      if (managerLandscape && ownPlayer) {
-        rememberPlayerProfileReturnTarget();
-        setMobileAccountOpen(false);
-        setPlayerProfileMode("edit");
-        setProfilePane("ficha");
-        setSelectedPlayerId(ownPlayer.id);
-        return;
-      }
-      setSelectedPlayerId(null);
-      setMobileAccountOpen(true);
       return;
     }
 
@@ -6236,6 +6317,25 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
   const canConfigureMatchMarket = canUseAdminControls && showMatchRoster && !lineupClosed && !matchFinalized;
   const canCreateTeam = Boolean(supabase && isRegisteredUser);
   const ownPlayer = currentUserId ? players.find((player) => player.ownerUserId === currentUserId) : undefined;
+  const socialProfile = ownPlayer
+    ? {
+        displayName: playerDisplayName(ownPlayer),
+        modalities: socialProfileModalities({
+          assessmentSummary: ownPlayer.assessmentSummary,
+          marketModalities: ownPlayer.marketModalities,
+        }),
+        position: ownPlayer.position,
+      }
+    : canonicalSocialProfile;
+  const socialEntryState = deriveSocialEntryState({
+    invitationPending: Boolean(pendingSocialInvitation),
+    membershipCount: remoteTeams.length,
+    profile: socialProfile,
+  });
+  const showSocialOnboarding = Boolean(
+    isRegisteredUser
+      && (pendingSocialInvitation || !hasRealTeam || socialFlowRequested),
+  );
   const needsOwnPlayerProfile = hasRealTeam && isRegisteredUser && !ownPlayer;
   const playerImportCandidates = useMemo(
     () => importCandidatesForUser(remoteTeams, remoteGroupId, currentUserId),
@@ -7477,44 +7577,63 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
     }
   }
 
-  async function createTeam(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!supabase) return;
+  async function confirmSocialInvitation(invitation: PendingSocialInvitation, displayNameDraft: string) {
+    if (!supabase || !navigator.onLine) {
+      return { error: "Sin conexión: la invitación no se ha aceptado.", ok: false };
+    }
 
     const client = supabase;
     setSyncStatus("connecting");
     setSyncError("");
-
     try {
       const user = await getSignedUser(client);
-      if (!user || isAnonymousAuthUser(user)) throw new Error("Entra con Google para crear grupos o ser admin.");
-      const userId = user.id;
-      const teamName = newTeamName.trim() || "Mi grupo de pachangas";
-      const initialPayload = emptyTeamPayload(teamName);
-      const insertResult = await client
-        .from("pachanga_groups")
-        .insert({ name: teamName, owner_id: userId, payload: initialPayload })
-        .select("id, invite_token, name, payload, team_code, payload_revision")
-        .single();
+      if (!user || isAnonymousAuthUser(user)) throw new Error("Registered user required");
+      const memberName = displayName(displayNameDraft) || profileName.trim() || authDisplayName(user) || "Jugador";
+      let groupId = "";
 
-      if (insertResult.error || !insertResult.data) throw new Error(insertResult.error?.message ?? "No se pudo crear el grupo");
+      if (invitation.kind === "admin") {
+        const result = await client.rpc("accept_pachanga_admin_invite_authoritative_v1", {
+          admin_token: invitation.token,
+          client_metadata: clientOperationMetadata(),
+          expected_invite_revision: 1,
+          member_name: memberName,
+          operation_id: id(),
+        });
+        if (result.error || !result.data) throw new Error(result.error?.message ?? "Invitation unavailable");
+        groupId = String((result.data as { groupId?: string }).groupId ?? "");
+      } else {
+        const result = await client.rpc("join_pachanga_team", {
+          member_name: memberName,
+          token: invitation.token,
+        });
+        if (result.error || !result.data) throw new Error(result.error?.message ?? "Invitation unavailable");
+        groupId = String(result.data);
+      }
 
-      const memberResult = await client.from("pachanga_group_members").insert({
-        display_name: profileName.trim() || authDisplayName(user),
-        group_id: insertResult.data.id,
-        role: "owner",
-        user_id: userId,
-      });
-
-      if (memberResult.error) throw new Error(memberResult.error.message);
-
-      await loadTeams(client, insertResult.data.id);
-      setAdminInviteToken(null);
-      setOpenQuickForm(null);
+      if (!groupId) throw new Error("Group not found");
+      setPendingSocialInvitation(null);
+      setProfileName(memberName);
+      const params = new URLSearchParams(window.location.search);
+      ["a", "admin", "i", "invite", "social"].forEach((key) => params.delete(key));
+      window.history.replaceState(null, "", params.size ? `${window.location.pathname}?${params.toString()}` : window.location.pathname);
+      await loadTeams(client, groupId);
+      setSyncStatus("live");
+      return { ok: true };
     } catch (error) {
+      const message = mapTeamJoinError(error);
       setSyncStatus("error");
-      setSyncError(error instanceof Error ? error.message : "No se pudo crear el grupo");
+      setSyncError(message);
+      return { error: message, ok: false };
     }
+  }
+
+  function createTeam(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setOpenQuickForm(null);
+    setSocialFlowRequested("create");
+    const params = new URLSearchParams(window.location.search);
+    params.set("social", "create");
+    window.history.replaceState(null, "", `${window.location.pathname}?${params.toString()}`);
   }
 
   function startPlayerAssessment(kind: PlayerAssessmentKind, seedPlayer?: Player) {
@@ -7866,45 +7985,6 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
   async function claimSelectedPlayer() {
     if (!selectedPlayer || selectedPlayer.ownerUserId || ownPlayer || !hasRealTeam || !isRegisteredUser || !currentUserId) return;
     startPlayerAssessment("initial", selectedPlayer);
-  }
-
-  async function deleteCurrentTeam() {
-    if (!supabase || !remoteGroupId || !canManageTeam) return;
-    const teamName = currentTeam?.name ?? "este grupo";
-    if (!window.confirm(`¿Eliminar ${teamName}?`)) return;
-    if (!window.confirm("Confirmación final: se borrarán el grupo y sus miembros.")) return;
-
-    const client = supabase;
-    setSyncStatus("connecting");
-    setSyncError("");
-
-    try {
-      const backupCreated = await createTeamBackup("equipo_borrado", currentPayload(), false);
-      if (!backupCreated) throw new Error("No se pudo crear una copia antes de borrar el grupo.");
-
-      const deleteResult = await client.from("pachanga_groups").delete().eq("id", remoteGroupId);
-      if (deleteResult.error) throw new Error(deleteResult.error.message);
-
-      const nextTeam = remoteTeams.find((team) => team.id !== remoteGroupId);
-      await loadTeams(client, nextTeam?.id ?? null);
-
-      const nextParams = new URLSearchParams(window.location.search);
-      if (nextTeam) {
-        nextParams.set("equipo", nextTeam.teamCode);
-        nextParams.set("i", compactUuid(nextTeam.inviteToken));
-      } else {
-        nextParams.delete("grupo");
-        nextParams.delete("invite");
-        nextParams.delete("equipo");
-        nextParams.delete("i");
-      }
-      nextParams.delete("admin");
-      nextParams.delete("a");
-      window.history.replaceState(null, "", nextParams.toString() ? `${window.location.pathname}?${nextParams.toString()}` : window.location.pathname);
-    } catch (error) {
-      setSyncStatus("error");
-      setSyncError(error instanceof Error ? error.message : "No se pudo eliminar el grupo");
-    }
   }
 
   function resetTeamScopedUi() {
@@ -8871,7 +8951,9 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
     "--team-a-muted": `color-mix(in srgb, ${siteSettings.teamAColor} 38%, white)`,
     "--team-b-muted": `color-mix(in srgb, ${siteSettings.teamBColor} 38%, white)`,
   } as CSSProperties;
-  const currentTeamName = currentTeam?.name ?? displayName(siteSettings.brand) ?? "Pachangas IQ";
+  const currentTeamName = currentTeam?.name
+    ?? (isRegisteredUser ? displayName(socialProfile?.displayName ?? "") || "Tu espacio de jugador" : displayName(siteSettings.brand))
+    ?? "Pachangas IQ";
   const homeNextMatch = openMatches[0];
   const homeDraftMatch = matches.find((match) => !match.configured && !match.closed && match.scoreA === undefined);
   const hasHomeTeamIdentity = hasRealTeam || previewDemoMode;
@@ -9607,7 +9689,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
     return (
       <form className="top-panel quick-create-form team-create-form top-team-form" ref={teamFormRef} onSubmit={createTeam}>
         <input value={newTeamName} onChange={(event) => setNewTeamName(event.target.value)} placeholder="Nombre del grupo de pachangas" />
-        <button type="submit" disabled={!canCreateTeam}>Crear grupo</button>
+        <button type="submit" disabled={!canCreateTeam}>Abrir asistente</button>
         {!canCreateTeam ? (
           <GoogleSignInButton label="Continuar con Google" onClick={() => void signInWithGoogle()} disabled={!supabase || !googleClientId} />
         ) : null}
@@ -9616,7 +9698,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
     );
   }
 
-  if (isDemoMode) {
+  if (isPublicEntryMode) {
     return (
       <main className="min-h-screen bg-[#f7f6f0] text-[#1d2521] demo-world-entry-shell" data-product-entry="no-team" style={teamColorStyle}>
         {isRegisteredUser ? <AuthenticatedThemeDefault /> : null}
@@ -9666,6 +9748,8 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
         avatarUrl: ownPlayer?.avatar,
         displayName: authDisplayName(authUser),
         onSignOut: signOut,
+        profileHref: "/perfil",
+        settingsHref: "/?mobile=perfil&settings=1",
         teamHref: "/?mobile=equipo",
       }}
       active={activeMobileTab}
@@ -9696,7 +9780,46 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
       perspective={shellPerspective}
     >
     <AuthenticatedThemeDefault />
-    <main className="min-h-screen bg-[#f7f6f0] text-[#1d2521] official-ui-v2-product" data-mobile-tab={activeMobileTab} style={teamColorStyle}>
+    <main className="min-h-screen bg-[#f7f6f0] text-[#1d2521] official-ui-v2-product" data-mobile-tab={activeMobileTab} data-team-state={hasRealTeam ? "member" : "no-team"} style={teamColorStyle}>
+      {showSocialOnboarding ? (
+        <SocialOnboarding
+          canonicalProfile={socialProfile}
+          dismissed={pendingSocialInvitation ? false : socialOnboardingDismissed}
+          draft={socialOnboardingDraft}
+          entryState={socialEntryState}
+          forcedView={socialFlowRequested}
+          invitation={pendingSocialInvitation}
+          key={pendingSocialInvitation?.token ?? "social-onboarding"}
+          onDismiss={() => {
+            setSocialOnboardingDismissed(true);
+            if (currentUserId) {
+              try {
+                localStorage.setItem(socialOnboardingDismissedKey(currentUserId), "1");
+              } catch {
+                // Dismissal is a visual preference; canonical identity is unaffected.
+              }
+            }
+          }}
+          onDraftChange={setSocialOnboardingDraft}
+          onForcedViewHandled={() => {
+            setSocialFlowRequested(null);
+            const params = new URLSearchParams(window.location.search);
+            params.delete("social");
+            window.history.replaceState(null, "", params.size ? `${window.location.pathname}?${params.toString()}` : window.location.pathname);
+          }}
+          onJoin={confirmSocialInvitation}
+          onOpen={() => {
+            setSocialOnboardingDismissed(false);
+            if (currentUserId) {
+              try {
+                localStorage.removeItem(socialOnboardingDismissedKey(currentUserId));
+              } catch {
+                // The onboarding remains usable without local preference storage.
+              }
+            }
+          }}
+        />
+      ) : null}
       {activeMobileTab === "inicio" ? (
         <section id="inicio" ref={teamAccessPanelRef}>
           <OfficialHomeGameDashboard
@@ -11296,7 +11419,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
         </section>
       ) : null}
 
-      <section className={`${selectedPlayer ? "bottom-grid" : "bottom-grid without-profile"} ${sharedLinkContentBlocked ? "gated-shell" : ""}`} data-profile-pane={profilePane}>
+      {hasRealTeam || previewDemoMode ? <section className={`${selectedPlayer ? "bottom-grid" : "bottom-grid without-profile"} ${sharedLinkContentBlocked ? "gated-shell" : ""}`} data-profile-pane={profilePane}>
         {selectedPlayer ? (
           <div className={`panel player-profile ${playerProfileMode === "viewer" ? "profile-viewer" : "profile-editor"}`} ref={playerProfileRef}>
             <div className="panel-title">
@@ -11755,7 +11878,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
             {rankedPlayers.map((row, index) => renderRankingMiniCard(row, index))}
           </div>
         </div>
-      </section>
+      </section> : null}
       {statusConfirmation ? (
         <div
           className="status-confirm-backdrop"

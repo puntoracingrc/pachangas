@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
 import "./official-ui-v3c-simple-challenges.test";
+import "./official-ui-v3e-social-onboarding.test";
 
 const root = process.cwd();
 const source = (file: string) => readFile(path.join(root, file), "utf8");
