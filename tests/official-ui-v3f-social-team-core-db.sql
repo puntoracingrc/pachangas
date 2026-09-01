@@ -144,3 +144,59 @@ select pg_temp.v3f_assert(not exists (
   select 1 from public.pachanga_player_profiles
   where user_id in ('f3000000-0000-4000-8000-000000000001','f3000000-0000-4000-8000-000000000002')
 ), 'V3F onboarding must not create or alter a Rating V2 profile');
+
+do $$
+begin
+  perform set_config('request.jwt.claims', '{"sub":"f3000000-0000-4000-8000-000000000001","role":"authenticated","is_anonymous":true}', true);
+  set local role authenticated;
+  if exists (
+    select 1 from public.pachanga_social_player_profiles_v1
+    where user_id = 'f3000000-0000-4000-8000-000000000001'
+  ) then
+    raise exception 'Anonymous sessions must not read registered social profiles';
+  end if;
+  begin
+    perform public.lookup_pachanga_social_team_code_v1(
+      (select team_code from public.pachanga_groups where id = current_setting('v3f.group_id')::uuid)
+    );
+    raise exception 'Anonymous sessions must not use registered Team reads';
+  exception when sqlstate '42501' then null;
+  end;
+  begin
+    perform public.lookup_pachanga_team_player_invitation_v2(current_setting('v3f.invitation_token'));
+    raise exception 'Anonymous sessions must not read player invitations';
+  exception when sqlstate '42501' then null;
+  end;
+  reset role;
+end;
+$$;
+
+do $$
+begin
+  perform set_config('request.jwt.claims', '{"sub":"f3000000-0000-4000-8000-000000000001","role":"authenticated","is_anonymous":false}', true);
+  set local role authenticated;
+  begin
+    perform public.command_pachanga_social_team_settings_v1(
+      'f3600000-0000-4000-8000-000000000001', 1,
+      '{"socialTeamCreationEnabled":false}'::jsonb, '{}'::jsonb
+    );
+    raise exception 'Ordinary users must not change V3F platform flags';
+  exception when sqlstate '42501' then null;
+  end;
+  reset role;
+end;
+$$;
+
+select pg_temp.v3f_assert((
+  select count(*) from pg_indexes
+  where indexname in (
+    'pachanga_social_events_actor_idx',
+    'pachanga_social_profile_revisions_actor_idx',
+    'pachanga_social_team_settings_updated_by_idx',
+    'pachanga_social_team_revisions_actor_idx',
+    'pachanga_team_player_invitation_revisions_actor_idx',
+    'pachanga_team_player_invitations_created_by_idx',
+    'pachanga_team_player_invitations_accepted_by_idx',
+    'pachanga_team_player_invitations_declined_by_idx'
+  )
+)=8, 'Every V3F foreign key flagged by Advisors must have a covering index');

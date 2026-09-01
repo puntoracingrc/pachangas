@@ -182,6 +182,9 @@ declare invitation_id uuid;
 declare settings private.pachanga_social_team_settings_v1%rowtype;
 begin
   if actor_id is null then raise exception 'AUTHENTICATION_REQUIRED' using errcode = '42501'; end if;
+  if not public.is_registered_pachanga_user() then
+    raise exception 'REGISTERED_USER_REQUIRED' using errcode = '42501';
+  end if;
   if token_value !~ '^piq_[0-9a-f]{64}$' then return null; end if;
   select * into settings from private.pachanga_social_team_settings_v1 where singleton;
   if not settings.social_team_invitation_v2_enabled then return null; end if;
@@ -232,6 +235,9 @@ declare admin_user record;
 begin
   if actor_id is null or operation_id is null or expected_revision is null then
     raise exception 'AUTHENTICATION_OPERATION_AND_REVISION_REQUIRED' using errcode = '42501';
+  end if;
+  if not public.is_registered_pachanga_user() then
+    raise exception 'REGISTERED_USER_REQUIRED' using errcode = '42501';
   end if;
   if action_name not in (
     'team.invitation.create','team.invitation.revoke','team.invitation.accept',

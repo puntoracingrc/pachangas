@@ -34,13 +34,55 @@ begin
 end;
 $$;
 
+create index if not exists pachanga_social_events_actor_idx
+  on private.pachanga_social_events_v1(actor_id) where actor_id is not null;
+create index if not exists pachanga_social_profile_revisions_actor_idx
+  on private.pachanga_social_player_profile_revisions_v1(actor_id) where actor_id is not null;
+create index if not exists pachanga_social_team_settings_updated_by_idx
+  on private.pachanga_social_team_settings_v1(updated_by) where updated_by is not null;
+create index if not exists pachanga_social_team_revisions_actor_idx
+  on private.pachanga_social_team_state_revisions_v1(actor_id) where actor_id is not null;
+create index if not exists pachanga_team_player_invitation_revisions_actor_idx
+  on private.pachanga_team_player_invitation_revisions_v2(actor_id) where actor_id is not null;
+create index if not exists pachanga_team_player_invitations_created_by_idx
+  on public.pachanga_team_player_invitations_v2(created_by);
+create index if not exists pachanga_team_player_invitations_accepted_by_idx
+  on public.pachanga_team_player_invitations_v2(accepted_by) where accepted_by is not null;
+create index if not exists pachanga_team_player_invitations_declined_by_idx
+  on public.pachanga_team_player_invitations_v2(declined_by) where declined_by is not null;
+
+drop policy if exists "Users read their own social profile v1"
+  on public.pachanga_social_player_profiles_v1;
+create policy "Users read their own social profile v1"
+on public.pachanga_social_player_profiles_v1
+for select to authenticated
+using (
+  public.is_registered_pachanga_user()
+  and (select auth.uid()) = user_id
+);
+
+drop policy if exists "Admins read Team player invitations v2"
+  on public.pachanga_team_player_invitations_v2;
+create policy "Admins read Team player invitations v2"
+on public.pachanga_team_player_invitations_v2
+for select to authenticated
+using (
+  public.is_registered_pachanga_user()
+  and (
+    public.is_pachanga_group_admin(group_id)
+    or accepted_by = (select auth.uid())
+    or declined_by = (select auth.uid())
+  )
+);
+
 drop policy if exists "Members read social Team states v1"
   on public.pachanga_social_team_states_v1;
 create policy "Members read social Team states v1"
 on public.pachanga_social_team_states_v1
 for select to authenticated
 using (
-  exists (
+  public.is_registered_pachanga_user()
+  and exists (
     select 1 from public.pachanga_group_members members
     where members.group_id = pachanga_social_team_states_v1.group_id
       and members.user_id = (select auth.uid())
@@ -54,11 +96,14 @@ create policy "Scoped social invalidations v1"
 on public.pachanga_social_invalidations_v1
 for select to authenticated
 using (
-  audience_user_id = (select auth.uid())
-  or exists (
-    select 1 from public.pachanga_group_members members
-    where members.group_id = pachanga_social_invalidations_v1.audience_group_id
-      and members.user_id = (select auth.uid())
+  public.is_registered_pachanga_user()
+  and (
+    audience_user_id = (select auth.uid())
+    or exists (
+      select 1 from public.pachanga_group_members members
+      where members.group_id = pachanga_social_invalidations_v1.audience_group_id
+        and members.user_id = (select auth.uid())
+    )
   )
 );
 grant select on table public.pachanga_social_invalidations_v1 to authenticated, service_role;
@@ -98,6 +143,7 @@ declare actor_id uuid := (select auth.uid());
 declare enabled boolean;
 begin
   if actor_id is null then raise exception 'AUTHENTICATION_REQUIRED' using errcode = '42501'; end if;
+  if not public.is_registered_pachanga_user() then raise exception 'REGISTERED_USER_REQUIRED' using errcode = '42501'; end if;
   select settings.social_team_home_v3f_enabled into enabled
   from private.pachanga_social_team_settings_v1 settings where settings.singleton;
   if not coalesce(enabled, false) then return '[]'::jsonb; end if;
@@ -123,6 +169,7 @@ declare code_value text := upper(trim(coalesce(target_team_code, '')));
 declare enabled boolean;
 begin
   if actor_id is null then raise exception 'AUTHENTICATION_REQUIRED' using errcode = '42501'; end if;
+  if not public.is_registered_pachanga_user() then raise exception 'REGISTERED_USER_REQUIRED' using errcode = '42501'; end if;
   select settings.social_team_home_v3f_enabled into enabled
   from private.pachanga_social_team_settings_v1 settings where settings.singleton;
   if not coalesce(enabled, false) or code_value !~ '^[A-Z0-9]{6,12}$' then return null; end if;
@@ -158,6 +205,7 @@ declare enabled boolean;
 declare actor_role text;
 begin
   if actor_id is null then raise exception 'AUTHENTICATION_REQUIRED' using errcode = '42501'; end if;
+  if not public.is_registered_pachanga_user() then raise exception 'REGISTERED_USER_REQUIRED' using errcode = '42501'; end if;
   select settings.social_team_home_v3f_enabled into enabled
   from private.pachanga_social_team_settings_v1 settings where settings.singleton;
   if not coalesce(enabled, false) then raise exception 'SOCIAL_TEAM_HOME_DISABLED' using errcode = '42501'; end if;
@@ -212,6 +260,7 @@ as $$
 declare actor_id uuid := (select auth.uid());
 begin
   if actor_id is null then raise exception 'AUTHENTICATION_REQUIRED' using errcode = '42501'; end if;
+  if not public.is_registered_pachanga_user() then raise exception 'REGISTERED_USER_REQUIRED' using errcode = '42501'; end if;
   if not exists (
     select 1 from public.pachanga_group_members own
     where own.group_id = target_group_id and own.user_id = actor_id
@@ -250,6 +299,7 @@ as $$
 declare actor_id uuid := (select auth.uid());
 begin
   if actor_id is null then raise exception 'AUTHENTICATION_REQUIRED' using errcode = '42501'; end if;
+  if not public.is_registered_pachanga_user() then raise exception 'REGISTERED_USER_REQUIRED' using errcode = '42501'; end if;
   if not public.is_pachanga_group_admin(target_group_id) then raise exception 'TEAM_ADMIN_REQUIRED' using errcode = '42501'; end if;
   return coalesce((
     select jsonb_agg(private.pachanga_team_player_invitation_snapshot_v2(invitations.id, false)
@@ -283,6 +333,9 @@ declare next_sequence bigint;
 begin
   if actor_id is null or operation_id is null or expected_revision is null then
     raise exception 'AUTHENTICATION_OPERATION_AND_REVISION_REQUIRED' using errcode = '42501';
+  end if;
+  if not public.is_registered_pachanga_user() then
+    raise exception 'REGISTERED_USER_REQUIRED' using errcode = '42501';
   end if;
   perform private.pachanga_platform_require_v1('flags.write');
   if jsonb_typeof(body) <> 'object' or body - array[

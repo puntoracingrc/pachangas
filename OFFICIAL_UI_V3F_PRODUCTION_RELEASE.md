@@ -27,9 +27,34 @@ flags, canary, deployment, smoke, informe documental o cleanup.
 | Entidades reales | 0 |
 | Stripe | NO TOCADO |
 
+## Supabase efímero
+
+| Evidencia | Resultado |
+| --- | --- |
+| Proyecto padre verificado | `qonbngfrnrqgmxbdfbea` (Pachangas, `eu-west-1`) |
+| Rama efímera | `v3f-social-team-core-qa` / `lhusningjrsanfzwmhiw` |
+| Datos productivos copiados | 0 |
+| Bootstrap | Esquema canónico sin filas ni PII; SHA-256 `4e172e42c1e86036bdb95dc33ee534710efff5565731f0aba97c4f226f6e7725` |
+| Ledger inicial | 228 versiones, idénticas a producción |
+| Ledger con V3F | 233 versiones exactas; `20260901214523`–`20260901214527`, sin versiones extra |
+| Flags V3F | 7/7 en `false`, revisión 1 |
+| Filas V3F iniciales | 0 en las seis tablas de actividad |
+| Realtime | `pachanga_social_invalidations_v1` publicada |
+| Legacy join | `join_pachanga_team` y `join_pachanga_group` sin `EXECUTE` autenticado |
+| DML directo | Sin privilegios de escritura para clientes |
+| SQL/RLS remoto | PASS dentro de transacción con rollback |
+| Advisors V3F | 0 foreign keys sin índice; avisos genéricos documentados en `V3F_SOCIAL_TEAM_CORE_INCIDENTS.md` |
+
+El historial previo no es reproducible desde una base completamente vacía
+porque una migración de 2026-07 presupone una tabla del bootstrap consolidado.
+V3F no reescribe esa historia: la rama se levantó desde un dump exclusivamente
+de esquema y se reconcilió contra las 228 versiones canónicas. La reparación
+fresh-install queda como deuda separada y no bloquea el upgrade productivo
+`228 -> 233`.
+
 ## Pendiente remoto
 
-- Supabase efímero y Preview autenticada con cinco identidades `.test`.
+- Preview autenticada con cinco identidades `.test` sobre la rama efímera.
 - Realtime, reconexión y offline de dos dispositivos.
 - Backup y reconciliación del ledger productivo.
 - Aplicación exacta de migraciones con flags OFF.
