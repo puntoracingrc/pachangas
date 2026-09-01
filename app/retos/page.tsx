@@ -90,8 +90,8 @@ export default function ChallengesPage() {
         detail: "Retos y partidos contra otros equipos",
         id: selectedMembership?.groupId,
         status: selectedMembership?.role === "player" ? "Jugador" : "Equipo activo",
-        title: selectedMembership?.name ?? "Tu equipo",
-        type: "team",
+        title: selectedMembership?.name ?? "Tu espacio de jugador",
+        type: selectedMembership ? "team" : "profile",
       }}
       contextOptions={contextOptions.length ? contextOptions : undefined}
       onContextChange={(groupId) => setRequestedGroupId(groupId)}

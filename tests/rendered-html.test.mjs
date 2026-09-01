@@ -833,7 +833,7 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(globalsCss, /\.status-confirm-dialog/);
   assert.match(globalsCss, /overflow-x:\s*hidden/);
   assert.match(page, /title: currentTeamName/);
-  assert.match(page, /groupOptionLabel/);
+  assert.match(page, /const shellContextOptions = \[/);
   assert.match(page, /compactUuid/);
   assert.match(page, /expandCompactUuid/);
   assert.match(page, /\/invitacion\/grupo\/\$\{encodeURIComponent\(compactUuid\(currentTeam\.inviteToken\)\)\}/);

@@ -236,9 +236,8 @@ test("product primary navigation has one canonical destination per menu item", a
   assert.match(page, /const openMatches = openMatchesByDate\(matches\)/);
   assert.match(page, /requestsNextMatchFromPrimaryNavigation\(entrySearch, entryRoute\)/);
   assert.match(page, /setActiveMatchManagerPane\(requestedMatchPane === "admin" \? "admin" : "proximo"\)/);
-  assert.match(page, /const compactProfileNavigation =/);
-  assert.match(page, /if \(!compactProfileNavigation && !managerLandscape\) \{[\s\S]*void openOwnPlayerProfile\(\)/);
-  assert.match(page, /if \(managerLandscape && ownPlayer\)[\s\S]*setSelectedPlayerId\(ownPlayer\.id\)/);
+  assert.match(page, /if \(tabId === "perfil"\) \{[\s\S]*window\.location\.assign\("\/perfil"\)[\s\S]*return;/);
+  assert.doesNotMatch(page, /compactProfileNavigation/);
   assert.doesNotMatch(page, /setSelectedPlayerId\(ownPlayer\?\.id \?\? selectedPlayerId \?\? players\[0\]\?\.id/);
   assert.match(shell, /links=\{onNavigate \? links : destinations\}/);
   assert.doesNotMatch(market, /<OfficialProductShellV2[\s\S]*links=\{\{/);

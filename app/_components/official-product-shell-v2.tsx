@@ -154,12 +154,13 @@ function ContextIdentity({
 }) {
   const activeId = context.id ?? contexts[0]?.id ?? "current";
   const canManageTeam = perspective === "team-admin" || perspective === "team-owner";
+  const isPlayerWithoutTeam = context.type === "profile";
 
   return (
     <details className={styles.identityMenu}>
       <summary aria-label="Abrir selector de equipo">
         <span className={styles.identityVisual}>{visual ?? <Image src="/icon-192.png" alt="" width={38} height={38} priority unoptimized />}</span>
-        <span><small>Equipo activo</small><strong>{context.title}</strong></span>
+        <span><small>{isPlayerWithoutTeam ? "Tu espacio" : "Equipo activo"}</small><strong>{context.title}</strong></span>
         <b aria-hidden="true">⌄</b>
       </summary>
       <div className={styles.identityMenuPanel}>
@@ -171,9 +172,10 @@ function ContextIdentity({
             </select>
           </label>
         ) : <p>{context.detail ?? context.role ?? "Tu espacio de juego"}</p>}
-        <Link href="/?mobile=equipo">Ver plantilla</Link>
-        {canManageTeam ? <Link href="/?mobile=perfil&settings=1">Gestionar equipo</Link> : null}
-        <Link href="/?mobile=inicio&create=team">Crear equipo</Link>
+        {!isPlayerWithoutTeam ? <Link href="/?mobile=equipo">Ver plantilla</Link> : <Link href="/equipo/unirse">Unirme a un equipo</Link>}
+        {!isPlayerWithoutTeam && canManageTeam ? <Link href="/?mobile=perfil&settings=1">Gestionar equipo</Link> : null}
+        <Link href="/equipo/crear">Crear equipo</Link>
+        {isPlayerWithoutTeam ? <Link href="/mercado?tab=partidos">Buscar una pachanga</Link> : null}
       </div>
     </details>
   );
@@ -182,10 +184,12 @@ function ContextIdentity({
 function AccountActions({
   account,
   adminViewPreview,
+  isPlayerWithoutTeam,
   platformOwner,
 }: {
   account: ShellAccount;
   adminViewPreview?: AdminViewPreviewControl;
+  isPlayerWithoutTeam: boolean;
   platformOwner: boolean;
 }) {
   const notificationsHref = account.notificationsHref ?? "/perfil/avisos";
@@ -214,9 +218,9 @@ function AccountActions({
         </summary>
         <div className={styles.accountMenuPanel}>
           <p><strong>{account.displayName ?? "Mi cuenta"}</strong><small>Vista jugador</small></p>
-          <Link href={account.profileHref ?? "/?mobile=perfil"}>Mi perfil</Link>
+          <Link href={account.profileHref ?? "/perfil"}>Mi perfil</Link>
           <Link href={account.cardHref ?? "/personalizar-carta"}>Mi carta</Link>
-          <Link href={account.teamHref ?? "/?mobile=equipo"}>Mi equipo</Link>
+          <Link href={isPlayerWithoutTeam ? "/?social=start" : account.teamHref ?? "/?mobile=equipo"}>{isPlayerWithoutTeam ? "Empezar" : "Mi equipo"}</Link>
           <Link href={account.settingsHref ?? "/?mobile=perfil&settings=1"}>Ajustes</Link>
           {adminViewPreview ? (
             <button type="button" onClick={adminViewPreview.onToggle}>
@@ -276,7 +280,7 @@ export function OfficialProductShellV2({
       visual={contextVisual}
     />
   );
-  const accountActions = <AccountActions account={account} adminViewPreview={adminViewPreview} platformOwner={platformOwner} />;
+  const accountActions = <AccountActions account={account} adminViewPreview={adminViewPreview} isPlayerWithoutTeam={context.type === "profile"} platformOwner={platformOwner} />;
 
   return (
     <div
