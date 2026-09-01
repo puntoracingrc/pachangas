@@ -95,17 +95,20 @@ test("canonical ordering never relies on a tied timestamp", async () => {
 
 test("match sharing is separate from group and admin invitations", async () => {
   const [, , hardening, home, linkPage] = await files;
-  const [sharedMatchRoute, groupInviteRoute, adminInviteRoute, matchInviteRoute] = await Promise.all([
+  const [sharedMatchRoute, groupInviteRoute, adminInviteRoute, matchInviteRoute, teamInvitations] = await Promise.all([
     readFile(new URL("../app/partido/[teamCode]/[matchId]/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/invitacion/grupo/[token]/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/invitacion/admin/[token]/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/invitacion/partido/[token]/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/equipo/social-team-client.tsx", import.meta.url), "utf8"),
   ]);
 
   assert.match(home, /create_pachanga_match_link_invitation_v1/);
   assert.match(home, /Compartir partido/);
   assert.match(home, /Invitar al partido/);
-  assert.match(home, /<button type="button" onClick=\{\(\) => void copyTeamInvite\(\)\} disabled=\{!remoteGroupId\}>[\s\S]*Copiar invitación[\s\S]*<\/button>/);
+  assert.doesNotMatch(home, /copyTeamInvite|currentTeamInviteUrl/);
+  assert.match(teamInvitations, /command_pachanga_team_player_invitation_v2/);
+  assert.match(teamInvitations, /\/invitacion\/grupo\/\$\{encodeURIComponent\(token\)\}/);
   assert.match(home, /Invitar como admin \(no owner\)/);
   assert.match(home, /\.eq\("user_id", memberUserId\)/);
   assert.match(home, /String\(group\.owner_id \?\? ""\) === memberUserId/);
@@ -113,10 +116,6 @@ test("match sharing is separate from group and admin invitations", async () => {
   assert.doesNotMatch(
     home.match(/function prettyTeamParams[\s\S]*?return params;/)?.[0] ?? "",
     /params\.set\("i"/,
-  );
-  assert.match(
-    home.match(/function currentTeamInviteUrl[\s\S]*?\n  }/)?.[0] ?? "",
-    /\/invitacion\/grupo\/\$\{encodeURIComponent\(compactUuid\(currentTeam\.inviteToken\)\)\}/,
   );
   assert.match(home, /\/partido\/\$\{encodeURIComponent\(currentTeam\.teamCode\)\}/);
   assert.match(home, /No puedes ver este partido porque no perteneces al grupo/);

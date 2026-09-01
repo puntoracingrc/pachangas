@@ -304,7 +304,9 @@ test("keeps the project wired to the Pachangas app", async () => {
     readFile(new URL("../docs/rating-system-v2-deployment-runbook.md", import.meta.url), "utf8"),
   ]);
 
-  assert.match(page, /join_pachanga_team/);
+  assert.match(page, /lookup_pachanga_team_player_invitation_v2/);
+  assert.match(page, /command_pachanga_team_player_invitation_v2/);
+  assert.doesNotMatch(page, /rpc\("join_pachanga_team"/);
   assert.match(page, /MemberRole/);
   assert.match(page, /incomingSharedLinkFromSearch/);
   assert.match(page, /needsLoginForSharedLink/);
@@ -836,7 +838,7 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /const shellContextOptions = \[/);
   assert.match(page, /compactUuid/);
   assert.match(page, /expandCompactUuid/);
-  assert.match(page, /\/invitacion\/grupo\/\$\{encodeURIComponent\(compactUuid\(currentTeam\.inviteToken\)\)\}/);
+  assert.doesNotMatch(page, /\/invitacion\/grupo\/\$\{encodeURIComponent\(compactUuid\(currentTeam\.inviteToken\)\)\}/);
   assert.doesNotMatch(page, /<OfficialTeamAccess/);
   assert.match(page, /actualCanManageTeam\s*=\s*Boolean\(hasRealTeam\s*&&\s*isRegisteredUser/);
   assert.match(page, /canManageTeam\s*=\s*actualCanManageTeam\s*&&\s*!playerPreviewActive/);
