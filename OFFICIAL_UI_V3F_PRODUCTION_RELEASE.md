@@ -52,10 +52,31 @@ de esquema y se reconcilió contra las 228 versiones canónicas. La reparación
 fresh-install queda como deuda separada y no bloquea el upgrade productivo
 `228 -> 233`.
 
+## Staging autenticado certificado
+
+| Evidencia | Resultado |
+| --- | --- |
+| Preview exacta | `https://pachangas-q1osyi32l-persianas-almar-web-s-projects.vercel.app`, SHA `c8ff3b05b17b591b11cfd37dd7fb2ac9d61d8e20` |
+| Identidades | 5 cuentas sintéticas `.test`; ninguna identidad real |
+| Dispositivos | 2 sesiones autenticadas simultáneas para el mismo owner |
+| Perfil | Crear sin equipo y actualizar: PASS; Rating separado y Mercado no publicado |
+| Equipos | 2 Teams canónicos; owner, estado `ACTIVE`, escudo base y creación atómica: PASS |
+| Invitaciones | `ACTIVE`, `USED`, `REVOKED`, `DECLINED`; raw token una sola vez y sin persistencia pública |
+| Idempotencia | Perfil, Team y aceptación: PASS |
+| Concurrencia | 1 ganador y 1 `STALE_INVITATION_REVISION`; una sola membresía |
+| Código | Identifica el Team y no concede membresía |
+| RBAC/DML | Jugador no invita; DML directo y joins legacy denegados |
+| Privacidad roster | Claves opacas; sin Auth UUID, email ni teléfono |
+| Realtime | `SUBSCRIBED`, ACK de binding, invalidación, refetch canónico y reconexión: PASS |
+| Offline | Escritura rechazada; 0 Teams confirmados localmente |
+| Notificaciones | Solo in-app a cuentas `.test`; token ausente; 0 destinatarios reales |
+| Preview/PWA | 6 rutas HTTP 200; SW `no-store`, SHA exacto y rutas sociales precacheadas |
+| Salida | Código 0; canales, sockets y sesiones locales cerrados |
+| Flags al terminar | 7/7 en `false` |
+| Cleanup | Rama efímera completa pendiente de destrucción tras cerrar el release |
+
 ## Pendiente remoto
 
-- Preview autenticada con cinco identidades `.test` sobre la rama efímera.
-- Realtime, reconexión y offline de dos dispositivos.
 - Backup y reconciliación del ledger productivo.
 - Aplicación exacta de migraciones con flags OFF.
 - Merge, deployment READY y smoke inactivo.

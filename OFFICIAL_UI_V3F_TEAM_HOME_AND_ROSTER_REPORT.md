@@ -59,4 +59,6 @@ Contadores acreditados por contrato y UI:
   etiquetados, botones con nombre y cierre con Escape: PASS.
 - Android físico, iPhone físico y PWA instalada física: `PENDING`.
 
-Staging y producción: pendientes del release coordinado V3F.
+Staging autenticado: PASS en dos dispositivos, varios equipos, roster privado,
+Realtime con refetch/reconexión, offline fail-closed y Preview/PWA. Producción:
+pendiente del release coordinado V3F.

@@ -57,4 +57,6 @@ coordenadas, dirección, roles ni datos bancarios.
 - PostgreSQL runner: PASS con `ROLLBACK`.
 - Tests V3F: PASS.
 
-Producción: pendiente del release coordinado V3F.
+Staging autenticado: PASS para creación sin equipo, actualización, revisión,
+idempotencia, caché derivada y offline fail-closed. Producción: pendiente del
+release coordinado V3F.

@@ -54,4 +54,6 @@ admin autoritativa permanece separada y activa.
 - Privacidad del roster/read models: PASS.
 - PostgreSQL runner: PASS con `ROLLBACK`.
 
-Producción: pendiente del release coordinado V3F.
+Staging autenticado: PASS para crear, aceptar, replay, rechazar, revocar,
+carrera de último uso, notificación `.test`, token raw-once y joins legacy
+denegados. Producción: pendiente del release coordinado V3F.

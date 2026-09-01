@@ -53,4 +53,6 @@ secuencia, permisos o entitlements.
 - Usuario/owner/team ID forjados: rechazados.
 - PostgreSQL runner: PASS con `ROLLBACK`.
 
+Staging autenticado: PASS con dos Teams, owner en la misma transacción,
+estado `ACTIVE`, escudo inicial, replay idempotente y DML directo denegado.
 Producción: pendiente del release coordinado V3F.
