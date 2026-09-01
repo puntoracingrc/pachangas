@@ -38,7 +38,7 @@ export const PRODUCT_PRIMARY_DESTINATIONS: ProductNavigationDestination[] = [
 export const PRODUCT_PORTRAIT_DESTINATIONS = PRODUCT_PRIMARY_DESTINATIONS;
 
 const commonPlayerTools: ProductContextualDestination[] = [
-  { href: "/?mobile=equipo", id: "team", label: "Equipo", short: "EQ" },
+  { href: "/equipo", id: "team", label: "Equipo", short: "EQ" },
   { href: "/reservas", id: "reservations", label: "Reservas", short: "RS" },
   { href: "/ranking", id: "ranking", label: "Ranking", short: "RK" },
   { href: "/perfil/avisos", id: "notifications", label: "Avisos", short: "AV" },

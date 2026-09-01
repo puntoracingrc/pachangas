@@ -80,11 +80,11 @@ test("team invitation input accepts full, compact and linked UUIDs without auto-
 });
 
 test("join errors are safe product copy and offline writes fail closed", () => {
-  assert.equal(mapTeamJoinError(new Error("Invalid invite token")), "EQUIPO NO ENCONTRADO");
+  assert.equal(mapTeamJoinError(new Error("Invalid invite token")), "INVITACIÓN NO VÁLIDA");
   assert.equal(mapTeamJoinError(new Error("Invite expired")), "INVITACIÓN CADUCADA");
   assert.equal(mapTeamJoinError(new Error("Already member")), "YA PERTENECES A ESTE EQUIPO");
   assert.equal(mapTeamJoinError(new Error("Team suspended")), "EQUIPO NO DISPONIBLE");
-  assert.deepEqual(socialWriteAvailability(false), { allowed: false, label: "Sin conexión: las acciones deportivas están bloqueadas" });
+  assert.deepEqual(socialWriteAvailability(false), { allowed: false, label: "Necesitas conexión para confirmar esta acción." });
 });
 
 test("market visibility is explicit and revocable", () => {
@@ -121,7 +121,9 @@ test("incoming invitations wait for explicit confirmation and canonical readback
   assert.doesNotMatch(connect, /join_pachanga_team|accept_pachanga_admin_invite_authoritative_v1/);
   assert.match(confirm, /accept_pachanga_admin_invite_authoritative_v1/);
   assert.match(confirm, /operation_id: id\(\)/);
-  assert.match(confirm, /join_pachanga_team/);
+  assert.match(confirm, /command_pachanga_team_player_invitation_v2/);
+  assert.match(confirm, /team\.invitation\.accept/);
+  assert.doesNotMatch(confirm, /join_pachanga_team/);
   assert.match(confirm, /await loadTeams\(client, groupId\)/);
   assert.match(component, /const visibleOpen = Boolean\(forcedView \|\| open\)/);
   assert.doesNotMatch(component, /visibleOpen = Boolean\(invitation \|\|/);
@@ -129,13 +131,19 @@ test("incoming invitations wait for explicit confirmation and canonical readback
   assert.match(page, /key=\{pendingSocialInvitation\?\.token \?\? "social-onboarding"\}/);
 });
 
-test("unsafe team creation remains visibly fail-closed and performs no local confirmation", async () => {
+test("team creation uses one authoritative command and never confirms locally", async () => {
   const [page, component] = await Promise.all([source("app/page.tsx"), source("app/_components/social-onboarding.tsx")]);
-  assert.equal(TEAM_CREATION_AUTHORITY.available, false);
-  assert.match(TEAM_CREATION_AUTHORITY.message, /no se ha creado ningún equipo/i);
-  const create = page.slice(page.indexOf("function createTeam(event"), page.indexOf("function startPlayerAssessment"));
-  assert.doesNotMatch(create, /\.from\(|\.rpc\(|setRemoteTeams|setPlayers/);
-  assert.match(component, /<button className=\{styles\.primary\} type="button" disabled>Crear equipo<\/button>/);
+  assert.equal(TEAM_CREATION_AUTHORITY.available, true);
+  assert.equal(TEAM_CREATION_AUTHORITY.command, "command_pachanga_social_team_v1");
+  const createStart = page.indexOf("async function createSocialTeam");
+  const create = page.slice(createStart, page.indexOf("async function lookupSocialTeamCode", createStart));
+  assert.match(create, /command_pachanga_social_team_v1/);
+  assert.match(create, /team\.create/);
+  assert.match(create, /expected_revision: 0/);
+  assert.match(create, /operation_id: id\(\)/);
+  assert.match(create, /await loadTeams\(supabase, team\.groupId\)/);
+  assert.match(component, /creating \? "Creando\.\.\." : "Crear equipo"/);
+  assert.doesNotMatch(component, /Crear equipo<\/button><p[^>]*>.*solo local/i);
 });
 
 test("a registered user without a team gets a clean canonical empty state", async () => {
@@ -156,7 +164,9 @@ test("Mi perfil is a clean cached read model with canonical Realtime invalidatio
   const profile = await source("app/perfil/profile-client.tsx");
   assert.match(profile, /pachangas-profile-read-cache/);
   assert.match(profile, /pachanga_player_profiles/);
-  assert.match(profile, /pachanga_group_members/);
+  assert.match(profile, /get_my_pachanga_social_teams_v1/);
+  assert.match(profile, /get_my_pachanga_social_profile_v1/);
+  assert.match(profile, /pachanga_social_invalidations_v1/);
   assert.match(profile, /nextStatus === "SUBSCRIBED"/);
   assert.match(profile, /window\.addEventListener\("online"/);
   assert.match(profile, /Resumen de perfil/);
@@ -193,10 +203,11 @@ test("canonical routes and PWA caches cover profile and team entry without offli
     source("app/equipo/crear/page.tsx"),
     source("app/service-worker-source.ts"),
   ]);
-  assert.match(team, /redirect\("\/\?mobile=equipo"\)/);
+  assert.match(team, /SocialTeamProduct/);
+  assert.doesNotMatch(team, /redirect\(/);
   assert.match(join, /redirect\("\/\?social=join"\)/);
   assert.match(create, /redirect\("\/\?social=create"\)/);
-  for (const route of ["/perfil", "/equipo", "/equipo/unirse", "/equipo/crear"]) assert.ok(worker.includes(`"${route}"`));
+  for (const route of ["/perfil", "/equipo", "/equipo/plantilla", "/equipo/invitaciones", "/equipo/unirse", "/equipo/crear"]) assert.ok(worker.includes(`"${route}"`));
   assert.match(worker, /if \(request\.method !== "GET"\) return/);
 });
 
@@ -209,24 +220,28 @@ test("social deep links restore through popstate and OAuth keeps the original in
   assert.match(page, /resolveGoogleAuthReturnHref\(window\.location\.href, window\.location\.origin\)/);
 });
 
-test("the social Demo has all 34 local first-time stories and loads on demand", async () => {
+test("the social Demo has all 26 V3F stories and loads on demand", async () => {
   const [journey, demo] = await Promise.all([
     source("app/demo-world/demo-social-first-time-journey.tsx"),
     source("app/demo-world/demo-world-app.tsx"),
   ]);
-  assert.equal(DEMO_SOCIAL_FIRST_TIME_STORIES.length, 34);
+  assert.equal(DEMO_SOCIAL_FIRST_TIME_STORIES.length, 26);
   assert.match(journey, /REMOTE WRITES 0/);
   assert.match(journey, /NOTIFICACIONES 0/);
   assert.match(journey, /STRIPE 0/);
   assert.doesNotMatch(journey, /supabase|\.rpc\(|fetch\(|method:\s*["'](?:POST|PUT|PATCH|DELETE)/i);
   assert.match(journey, /join-confirm/);
   assert.match(journey, /Buscar equipo/);
-  assert.match(journey, /Confirmar unión/);
+  assert.match(journey, /Confirmar entrada/);
   assert.match(journey, /createStep === 1/);
   assert.match(journey, /createStep === 2/);
   assert.match(journey, /createStep === 3/);
   assert.match(journey, /PIQ-DEMO-NUEVO/);
   assert.match(journey, /Crear primer partido/);
+  assert.match(journey, /Repetir aceptación/);
+  assert.match(journey, /Revocar otro enlace/);
+  assert.match(journey, /Intentar invitar/);
+  assert.match(journey, /data-demo-social-first-time="v3f"/);
   assert.match(journey, /Ver como otro equipo/);
   assert.match(demo, /dynamic\([\s\S]*demo-social-first-time-journey/);
   assert.match(demo, />Empezar<\/button>/);

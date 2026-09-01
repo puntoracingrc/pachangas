@@ -63,7 +63,7 @@ const primaryItems: Array<{ id: MobileAppTab; label: string; short: string }> = 
 
 const defaultLinks: ShellLinkMap = {
   competir: "/competiciones",
-  equipo: "/?mobile=equipo",
+  equipo: "/equipo",
   inicio: "/?mobile=inicio",
   mercado: "/mercado",
   partido: "/?mobile=partido",
@@ -172,7 +172,7 @@ function ContextIdentity({
             </select>
           </label>
         ) : <p>{context.detail ?? context.role ?? "Tu espacio de juego"}</p>}
-        {!isPlayerWithoutTeam ? <Link href="/?mobile=equipo">Ver plantilla</Link> : <Link href="/equipo/unirse">Unirme a un equipo</Link>}
+        {!isPlayerWithoutTeam ? <Link href="/equipo">Ver equipo</Link> : <Link href="/equipo/unirse">Unirme a un equipo</Link>}
         {!isPlayerWithoutTeam && canManageTeam ? <Link href="/?mobile=perfil&settings=1">Gestionar equipo</Link> : null}
         <Link href="/equipo/crear">Crear equipo</Link>
         {isPlayerWithoutTeam ? <Link href="/mercado?tab=partidos">Buscar una pachanga</Link> : null}
@@ -220,7 +220,7 @@ function AccountActions({
           <p><strong>{account.displayName ?? "Mi cuenta"}</strong><small>Vista jugador</small></p>
           <Link href={account.profileHref ?? "/perfil"}>Mi perfil</Link>
           <Link href={account.cardHref ?? "/personalizar-carta"}>Mi carta</Link>
-          <Link href={isPlayerWithoutTeam ? "/?social=start" : account.teamHref ?? "/?mobile=equipo"}>{isPlayerWithoutTeam ? "Empezar" : "Mi equipo"}</Link>
+          <Link href={isPlayerWithoutTeam ? "/?social=start" : account.teamHref ?? "/equipo"}>{isPlayerWithoutTeam ? "Empezar" : "Mi equipo"}</Link>
           <Link href={account.settingsHref ?? "/?mobile=perfil&settings=1"}>Ajustes</Link>
           {adminViewPreview ? (
             <button type="button" onClick={adminViewPreview.onToggle}>
