@@ -56,7 +56,7 @@ fresh-install queda como deuda separada y no bloquea el upgrade productivo
 
 | Evidencia | Resultado |
 | --- | --- |
-| Preview exacta | `https://pachangas-q1osyi32l-persianas-almar-web-s-projects.vercel.app`, SHA `c8ff3b05b17b591b11cfd37dd7fb2ac9d61d8e20` |
+| Preview exacta | `https://pachangas-jf9heryc0-persianas-almar-web-s-projects.vercel.app`, SHA `ede403a1160569b312ef99b0f1ac7873ff6cbdb5` |
 | Identidades | 5 cuentas sintéticas `.test`; ninguna identidad real |
 | Dispositivos | 2 sesiones autenticadas simultáneas para el mismo owner |
 | Perfil | Crear sin equipo y actualizar: PASS; Rating separado y Mercado no publicado |
