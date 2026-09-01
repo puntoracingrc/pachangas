@@ -29,7 +29,7 @@ llamadas Stripe.
 | Commit funcional | `e603929bf59238e2a454e6731bcf3da6f5d77bf7` |
 | PR funcional | [#251](https://github.com/puntoracingrc/pachangas/pull/251) |
 | Merge funcional / main funcional | `1e8655e7794704cf8f9e5dd9e2242e1637576016` |
-| PR documental | `PENDIENTE_DE_ASIGNACION` |
+| PR documental | [#252](https://github.com/puntoracingrc/pachangas/pull/252) |
 | Preview exacta | `pachangas-5dui16g31-persianas-almar-web-s-projects.vercel.app` |
 | Deployment productivo funcional | `dpl_6qmnswxcMjCin3xLd1LFFWuThGNh` |
 | URL inmutable productiva | `pachangas-c91h6ph05-persianas-almar-web-s-projects.vercel.app` |
@@ -75,7 +75,7 @@ Service Worker posterior a su merge quedan registrados en la entrega final.
 | 1 | Main inicial | `8a06116a93fca46a9926bfea413368ceed42d051`. |
 | 2 | Main final | Main funcional `1e8655e7794704cf8f9e5dd9e2242e1637576016`; el merge documental se registra en la entrega final. |
 | 3 | PR funcional | #251, fusionado, sin hotfix posterior. |
-| 4 | PR documental | `PENDIENTE_DE_ASIGNACION`, dedicado solo a este informe. |
+| 4 | PR documental | #252, dedicado solo a este informe. |
 | 5 | Deployment | `dpl_6qmnswxcMjCin3xLd1LFFWuThGNh`, READY y asociado al merge funcional. |
 | 6 | Service Worker | `2.0.0+sw.1e8655e77947`; incluye `/perfil`, `/equipo`, `/equipo/unirse` y `/equipo/crear`. |
 | 7 | Onboarding anterior | No habia un recorrido social unico que ordenase perfil, contexto y forma de empezar. |
