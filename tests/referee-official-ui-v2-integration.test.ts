@@ -8,7 +8,7 @@ const source = (path: string) => readFile(new URL(path, root), "utf8");
 
 test("Mercado keeps the social core while referee authority remains on dedicated surfaces", async () => {
   const [market, privateProfile, refereeMarket] = await Promise.all([
-    source("app/mercado/page.tsx"),
+    source("app/mercado/marketplace-client.tsx"),
     source("app/_components/referee-platform-client.tsx"),
     source("app/mercado/referee-marketplace-panel.tsx"),
   ]);

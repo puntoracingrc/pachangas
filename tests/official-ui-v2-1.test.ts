@@ -2,6 +2,16 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 import { googleAuthEntryHref, resolveGoogleAuthReturnHref } from "../app/google-auth-return";
+import {
+  marketRouteDetailFromParams,
+  marketRouteFiltersFromParams,
+  readMarketLocationPreference,
+  readMarketReadCache,
+  safeMarketError,
+  updateMarketRouteParams,
+  writeMarketLocationPreference,
+  writeMarketReadCache,
+} from "../app/mercado/market-ui-contract";
 import { resolveThemePreference } from "../app/theme-toggle";
 
 const source = (path: string) => readFile(new URL(`../${path}`, import.meta.url), "utf8");
@@ -96,7 +106,7 @@ test("Match is a single persistent game hub without changing its callbacks", asy
 test("Market has one navigation while retaining authoritative operations", async () => {
   const [component, market, css] = await Promise.all([
     source("app/_components/official-market-game-view.tsx"),
-    source("app/mercado/page.tsx"),
+    source("app/mercado/marketplace-client.tsx"),
     source("app/_components/official-market-game-view.module.css"),
   ]);
 
@@ -112,11 +122,104 @@ test("Market has one navigation while retaining authoritative operations", async
   assert.match(css, /\.official-ui-v2-market/);
 });
 
+test("V3D keeps safe shareable filters and restorable detail deep links", () => {
+  const filters = marketRouteFiltersFromParams(new URLSearchParams("zona=Barcelona&placeId=abc&dia=Esta+semana&modalidad=futbol7&posicion=Defensa&radio=50&orden=date"));
+  assert.deepEqual(filters, {
+    day: "Esta semana",
+    maxPrice: null,
+    maxRating: null,
+    minRating: null,
+    modality: "futbol7",
+    position: "Defensa",
+    radiusKm: 50,
+    sort: "date",
+    zone: "Barcelona",
+    zonePlaceId: "abc",
+  });
+  assert.deepEqual(marketRouteDetailFromParams(new URLSearchParams("openMatch=match-1")), { id: "match-1", kind: "match" });
+  const next = updateMarketRouteParams(new URLSearchParams("partido=context-1&lat=41.1&lng=2.1"), {
+    detail: { id: "player-1", kind: "player" },
+    filters,
+    tab: "jugadores",
+  });
+  assert.equal(next.get("partido"), "context-1");
+  assert.equal(next.get("player"), "player-1");
+  assert.equal(next.get("tab"), "jugadores");
+  assert.equal(next.get("lat"), "41.1", "legacy context coordinates are preserved but V3D never creates device coordinates");
+  assert.equal(next.get("openMatch"), null);
+});
+
+test("V3D local caches are derived reads and location preferences never persist device coordinates", () => {
+  const values = new Map<string, string>();
+  const storage = {
+    getItem: (key: string) => values.get(key) ?? null,
+    setItem: (key: string, value: string) => void values.set(key, value),
+  };
+  writeMarketLocationPreference(storage, { label: "Barcelona", placeId: "place-1", radiusKm: 30 });
+  assert.deepEqual(readMarketLocationPreference(storage), { label: "Barcelona", placeId: "place-1", radiusKm: 30 });
+  assert.doesNotMatch(values.get("pachangas-market-location-v3d") ?? "", /lat|lng|latitude|longitude/i);
+  const updatedAt = new Date().toISOString();
+  writeMarketReadCache(storage, { matches: [{ id: "m1" }], profiles: [{ id: "p1" }], updatedAt, version: 1 });
+  assert.deepEqual(readMarketReadCache(storage)?.matches, [{ id: "m1" }]);
+  assert.equal(safeMarketError({ code: "PT409", message: "stale revision" }).stale, true);
+  assert.match(safeMarketError({ message: "network fetch failed" }).body, /conexión/);
+});
+
+test("V3D removes synthetic live fallbacks and keeps configuration outside team results", async () => {
+  const [market, teamPanel, marketCss, filterSheet, globals, shellCss, demo, worker] = await Promise.all([
+    source("app/mercado/marketplace-client.tsx"),
+    source("app/mercado/challengeable-teams-panel.tsx"),
+    source("app/mercado/marketplace-v3d.module.css"),
+    source("app/mercado/market-filter-sheet.tsx"),
+    source("app/globals.css"),
+    source("app/_components/official-market-game-view.module.css"),
+    source("app/demo-world/demo-world-app.tsx"),
+    source("app/service-worker-source.ts"),
+  ]);
+  assert.doesNotMatch(market, /fallbackProfiles|fallbackOpenMatches|open-demo-|market-demo-/);
+  assert.match(market, /"CACHED" \| "LIVE" \| "LOADING" \| "UNAVAILABLE"/);
+  assert.match(market, /readMarketReadCache/);
+  assert.match(market, /Necesitas conexión para confirmar esta acción/);
+  assert.match(market, /navigator\.geolocation\.getCurrentPosition/);
+  assert.match(market, /request_pachanga_open_match_authoritative_v2/);
+  assert.match(market, /cancel_my_pachanga_open_match_request_v1/);
+  assert.match(market, /create_pachanga_match_invitation_v1/);
+  assert.match(market, /cancel_pachanga_match_invitation_v1/);
+  assert.match(teamPanel, /Mi equipo en Mercado/);
+  assert.match(teamPanel, /<MarketDetailSheet/);
+  assert.doesNotMatch(teamPanel, /Revisión \{searchSnapshot/);
+  assert.doesNotMatch(shellCss, /176px/);
+  assert.match(shellCss, /orientation: landscape/);
+  assert.match(marketCss, /\.filterSheet/);
+  assert.match(marketCss, /\.detailSheet/);
+  assert.match(marketCss, /padding: 0 0 calc\(60px \+ env\(safe-area-inset-bottom\)\)/);
+  assert.match(marketCss, /left: calc\(82px \+ env\(safe-area-inset-left\)\)/);
+  assert.match(marketCss, /left: calc\(88px \+ env\(safe-area-inset-left\)\)/);
+  assert.match(filterSheet, /market-filter-backdrop-v3d/);
+  assert.match(globals, /:not\(\.market-filter-backdrop-v3d\)/);
+  assert.match(demo, /Recorrido social de Mercado/);
+  assert.match(demo, /remoteWrites = 0/);
+  assert.match(demo, /Math\.round\(player\.rating\.currentOverall\)/);
+  assert.match(demo, /Math\.round\(selectedPlayer\.rating\.currentOverall\)/);
+  assert.match(demo, /data-demo-auth=\{signedOut \? "signed-out" : "signed-in"\}/);
+  assert.match(demo, /Probar sin sesión/);
+  assert.match(demo, /Entrar para continuar\. La ruta de Mercado se conserva/);
+  assert.match(demo, /const \[creating, setCreating\] = useState\(Boolean\(initialOpponentTeamId\)\)/);
+  assert.match(demo, /params\.set\("crear", "1"\)/);
+  assert.match(demo, /params\.set\("rival", teamId\)/);
+  assert.match(demo, /team\.id !== perspective\.teamId/);
+  assert.match(await source("app/demo-world/demo-world.module.css"), /\.demoMarketV3d \{\s*--official-surface-solid: color-mix\(in srgb, var\(--demo-panel\) 94%, var\(--demo-bg\)\)/);
+  assert.match(demo, /externalNotifications = 0/);
+  assert.match(demo, /realEntities = 0/);
+  assert.match(demo, /StripeCalls = 0/);
+  assert.match(worker, /"\/mercado"/);
+});
+
 test("product primary navigation has one canonical destination per menu item", async () => {
   const [shell, page, market] = await Promise.all([
     source("app/_components/official-product-shell-v2.tsx"),
     source("app/page.tsx"),
-    source("app/mercado/page.tsx"),
+    source("app/mercado/marketplace-client.tsx"),
   ]);
 
   for (const [tab, href] of [

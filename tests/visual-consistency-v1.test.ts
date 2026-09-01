@@ -56,7 +56,7 @@ test("technical infrastructure errors are converted into product copy", () => {
   for (const file of [
     "app/equipo/identidad/page.tsx",
     "app/personalizar-carta/page.tsx",
-    "app/mercado/page.tsx",
+    "app/mercado/marketplace-client.tsx",
     "app/notification-preferences.tsx",
   ]) {
     assert.doesNotMatch(source(file), /Supabase no está configurado|Google Places pendiente/);

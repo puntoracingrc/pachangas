@@ -72,7 +72,7 @@ test("the shell changes composition without remounting route content", async () 
 test("priority production routes share the official shell without replacing their logic", async () => {
   const routes = [
     "app/page.tsx",
-    "app/mercado/page.tsx",
+    "app/mercado/marketplace-client.tsx",
     "app/ranking/provincial-ranking-product.tsx",
     "app/perfil/avisos/page.tsx",
     "app/equipo/identidad/page.tsx",
@@ -84,7 +84,7 @@ test("priority production routes share the official shell without replacing thei
     assert.match(page, /OfficialProductShellV2/, route);
   }
 
-  const market = await source("app/mercado/page.tsx");
+  const market = await source("app/mercado/marketplace-client.tsx");
   for (const capability of ["jugadores", "partidos", "equipos"]) assert.match(market, new RegExp(capability));
   assert.doesNotMatch(market, /id: "retos"/);
   assert.match(market, /window\.location\.replace\("\/retos"\)/);

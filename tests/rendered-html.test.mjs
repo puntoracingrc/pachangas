@@ -127,15 +127,15 @@ test("builds the user manual as its own page", async () => {
 });
 
 test("builds the transfer market as a separated page", async () => {
-  const [html, source, page, css, marketView, marketViewCss] = await Promise.all([
+  const [html, source, page, marketView, marketViewCss, marketplaceCss] = await Promise.all([
     readFile(new URL("../.next/server/app/mercado.html", import.meta.url), "utf8"),
-    readFile(new URL("../app/mercado/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/mercado/marketplace-client.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
-    readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
     readFile(new URL("../app/_components/official-market-game-view.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/_components/official-market-game-view.module.css", import.meta.url), "utf8"),
+    readFile(new URL("../app/mercado/marketplace-v3d.module.css", import.meta.url), "utf8"),
   ]);
-  assert.match(html, /Partidos abiertos/);
+  assert.match(html, /Mercado/);
   assert.match(html, /data-official-market-navigation="single"/);
   assert.match(html, /Filtros/);
   assert.doesNotMatch(html, /Jugadores disponibles por zona y horario/);
@@ -159,31 +159,33 @@ test("builds the transfer market as a separated page", async () => {
   assert.match(source, /marketAdminMatchUrl\(marketContext\.matchUrl\)/);
   assert.match(source, /mobile=partido&pane=admin/);
   assert.match(marketView, /className=\{styles\.titlebar\}/);
-  assert.match(source, /title=\{marketViewTitle\}/);
-  assert.match(source, /activeTab === "jugadores" && marketContext/);
-  assert.match(source, /Filtrado por próximo partido:/);
+  assert.match(source, /title="Mercado"/);
+  assert.match(source, /marketContext && activeTab === "jugadores"/);
+  assert.match(source, /Buscando para/);
   assert.match(source, /aria-expanded=\{filtersOpen\}/);
-  assert.match(source, /filtersOpen && \(activeTab === "jugadores" \|\| activeTab === "partidos"\)/);
-  assert.match(source, /function selectMarketTab\(nextTab: MarketTab\)/);
-  assert.match(source, /activeMarketTarget\(zonePlace, null, zoneQuery\)/);
-  assert.match(source, /setDayFilter\("Todos"\)[\s\S]*setModalityFilter\("Todas"\)[\s\S]*setZoneFilter\(""\)/);
+  assert.match(source, /filtersOpen \? \(\s*<MarketFilterSheet/);
+  assert.match(source, /activeTab=\{activeTab\}/);
+  assert.match(source, /function selectMarketTab\(tab: MarketTab\)/);
+  assert.match(source, /const activeTarget = zonePlace \|\|/);
+  assert.match(source, /function clearFilters\(\) \{[\s\S]*day: "Todos"[\s\S]*modality: "Todas"[\s\S]*zone: ""[\s\S]*replaceRoute\(\{ filters: next \}\)/);
   assert.match(page, /requestedMatchPane === "admin"/);
   assert.match(page, /setActiveMatchManagerPane\(requestedMatchPane === "admin" \? "admin" : "proximo"\)/);
   assert.match(source, /<OfficialProductShellV2/);
-  assert.match(source, /<main className="market-page official-ui-v2-market" data-mobile-tab="mercado">/);
+  assert.match(source, /<main className="market-page official-ui-v2-market" data-mobile-tab="mercado" data-market-source=\{activeSource\}>/);
   assert.match(page, /links=\{\{ mercado: "\/mercado", retos: "\/retos" \}\}/);
   assert.doesNotMatch(page, /links=\{\{[\s\S]*mercado: canUseAdminControls && matchConfigured \? marketScoutUrl\("jugadores"\)/);
   assert.doesNotMatch(page, /window\.location\.assign\(canUseAdminControls && matchConfigured \? marketScoutUrl/);
-  assert.match(marketViewCss, /grid-template-columns: 176px minmax\(0, 1fr\)/);
+  assert.doesNotMatch(marketViewCss, /grid-template-columns: 176px minmax\(0, 1fr\)/);
+  assert.match(marketViewCss, /grid-template-columns: clamp\(108px, 14vw, 142px\) minmax\(0, 1fr\)/);
   assert.match(marketViewCss, /max-width: 760px[\s\S]*orientation: portrait/);
   assert.match(marketViewCss, /orientation: landscape[\s\S]*max-height: 600px/);
   assert.match(marketViewCss, /\.results \{ min-height: 0; overflow: auto/);
   assert.match(marketViewCss, /background: var\(--official-canvas/);
   assert.match(marketViewCss, /backdrop-filter: blur\(18px\)/);
-  assert.match(css, /\.market-page \.market-open-match,[\s\S]*rgba\(16, 29, 24, 0\.8\)/);
-  assert.match(source, /className="open-match-heading"/);
-  assert.match(source, /className="open-match-facts"/);
-  assert.match(css, /\.market-page \.market-open-grid\s*\{[\s\S]*grid-template-columns: repeat\(3, minmax\(220px, 1fr\)\)/);
+  assert.match(marketplaceCss, /\.matchCard,[\s\S]*background: var\(--official-surface\)/);
+  assert.match(source, /className=\{styles\.matchCard\}/);
+  assert.match(source, /className=\{styles\.matchSummary\}/);
+  assert.match(marketplaceCss, /\.matchGrid,[\s\S]*grid-template-columns: repeat\(auto-fill, minmax\(300px, 1fr\)\)/);
 });
 
 test("keeps portrait mobile views compact and readable", async () => {
@@ -283,7 +285,7 @@ test("keeps the project wired to the Pachangas app", async () => {
     readFile(new URL("../app/api/stripe/webhook/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../.env.example", import.meta.url), "utf8"),
     readFile(new URL("../app/googlePlacesClient.ts", import.meta.url), "utf8"),
-    readFile(new URL("../app/mercado/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/mercado/marketplace-client.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/_components/official-match-game-hub.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/api/weather/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/manifest.ts", import.meta.url), "utf8"),
@@ -478,11 +480,11 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(marketPage, /zones_geo/);
   assert.match(marketPage, /zonesGeo/);
   assert.match(marketPage, /distanceKmBetween/);
-  assert.match(marketPage, /profileZoneMatch/);
-  assert.match(marketPage, /openMatchZoneMatch/);
-  assert.match(marketPage, /activeMarketTarget/);
-  assert.match(marketPage, /misma población/);
-  assert.match(marketPage, /filteredOpenMatches/);
+  assert.match(marketPage, /function profileZone\(/);
+  assert.match(marketPage, /normalizeText\(`\$\{match\.zone\} \$\{match\.fieldName\}`\)\.includes\(zoneQuery\)/);
+  assert.match(marketPage, /const activeTarget = zonePlace \|\|/);
+  assert.match(marketPage, /profile\.zonesGeo\.map\(zoneLabel\)/);
+  assert.match(marketPage, /const filteredMatches = matchesFor\(filters\)/);
   assert.match(marketPage, /Partidos abiertos/);
   assert.match(marketPage, /pachanga_open_match_requests/);
   assert.match(marketPage, /requestOpenMatch/);
@@ -493,16 +495,16 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(marketPage, /requester_user_id/);
   assert.match(marketPage, /Solicitar plaza/);
   assert.match(marketPage, /Solicitud enviada/);
-  assert.match(marketPage, /Con aprobación/);
-  assert.match(marketPage, /<span>Equipo \{overall\(match\.groupLevel\)\}<\/span>/);
-  assert.match(marketPage, /Solo admins invitan/);
-  assert.match(marketPage, /Invitar desde un partido/);
+  assert.match(marketPage, /Aprobación manual/);
+  assert.match(marketPage, /Nivel orientativo/);
+  assert.match(marketPage, /marketContext && canUseMarketAdminControls/);
+  assert.match(marketPage, /Buscando para/);
   assert.match(marketPage, /MarketMatchContext/);
-  assert.match(marketPage, /Filtrado por próximo partido:/);
-  assert.match(marketPage, /toggleMarketInvitation/);
+  assert.match(marketPage, /Buscando para/);
+  assert.match(marketPage, /toggleInvitation/);
   assert.match(marketPage, /create_pachanga_match_invitation_v1/);
   assert.match(marketPage, /cancel_pachanga_match_invitation_v1/);
-  assert.match(marketPage, /Enviar invitación/);
+  assert.match(marketPage, /"Invitar"/);
   assert.match(marketPage, /Cancelar invitación/);
   assert.doesNotMatch(marketPage, /marketInviteText/);
   assert.doesNotMatch(page, /top-panel quick-create-form top-player-form/);

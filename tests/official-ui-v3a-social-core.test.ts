@@ -58,7 +58,7 @@ test("social Demo and full platform Demo have separate canonical entry points", 
 
 test("Retos is independent and Mercado keeps exactly three discovery domains", async () => {
   const [market, retos, challengePanel] = await Promise.all([
-    source("app/mercado/page.tsx"),
+    source("app/mercado/marketplace-client.tsx"),
     source("app/retos/page.tsx"),
     source("app/mercado/team-challenges-panel.tsx"),
   ]);

@@ -114,7 +114,7 @@ test("Official UI beta surfaces reuse the same canonical directories and hide re
     source("app/clubes/gestionar/club-manager-client.tsx"),
     source("app/_components/referee-platform-client.tsx"),
     source("app/mercado/referee-marketplace-panel.tsx"),
-    source("app/mercado/page.tsx"),
+    source("app/mercado/marketplace-client.tsx"),
   ]);
   for (const contents of [clubDirectory, clubManager, refereeProfile, refereeMarket]) assert.match(contents, /BETA/);
   assert.match(clubDirectory, /\/api\/clubs\/directory/);

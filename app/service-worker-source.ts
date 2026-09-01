@@ -1,6 +1,7 @@
 const precacheUrls = [
   "/",
   "/demo",
+  "/mercado",
   "/retos",
   "/demo-world/v1/manifest.json",
   "/demo-world/v3/manifest.json",

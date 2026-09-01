@@ -17,7 +17,7 @@ const files = Promise.all([
   readMigration("match_link_invitation_role_hardening"),
   readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/invitacion-partido/page.tsx", import.meta.url), "utf8"),
-  readFile(new URL("../app/mercado/page.tsx", import.meta.url), "utf8"),
+  readFile(new URL("../app/mercado/marketplace-client.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/notification-center.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/partido-invitado/page.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),

@@ -248,7 +248,7 @@ test("the classifier covers every current V1 write RPC and leaves auth outside t
 test("the write bridge classifies every browser RPC without treating reads as writes", async () => {
   const source = await Promise.all([
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
-    readFile(new URL("../app/mercado/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/mercado/marketplace-client.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/mercado/challengeable-teams-panel.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/mercado/team-challenges-panel.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/notification-center.tsx", import.meta.url), "utf8"),
