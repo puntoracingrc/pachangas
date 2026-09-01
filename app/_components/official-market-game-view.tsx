@@ -18,6 +18,8 @@ export function OfficialMarketGameView({
   context,
   filters,
   search,
+  status,
+  subtitle,
   tabs,
   title,
 }: {
@@ -28,6 +30,8 @@ export function OfficialMarketGameView({
   context?: ReactNode;
   filters?: ReactNode;
   search?: ReactNode;
+  status?: ReactNode;
+  subtitle?: string;
   tabs: OfficialMarketTab[];
   title: string;
 }) {
@@ -52,8 +56,8 @@ export function OfficialMarketGameView({
 
       <section className={styles.workspace}>
         <header className={styles.titlebar}>
-          <div><span>Mercado</span><h1>{title}</h1></div>
-          {actions ? <div className={styles.actions}>{actions}</div> : null}
+          <div><h1>{title}</h1>{subtitle ? <p>{subtitle}</p> : null}</div>
+          {actions || status ? <div className={styles.actions}>{status}{actions}</div> : null}
         </header>
         {context ? <div className={styles.context}>{context}</div> : null}
         {search ? <div className={styles.search}>{search}</div> : null}

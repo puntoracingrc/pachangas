@@ -107,7 +107,7 @@ test("the creation journey has exactly three steps and sends only at review", as
 });
 
 test("known opponents and exact market rival deep links only preselect", async () => {
-  const [panel, market] = await Promise.all([source("app/mercado/team-challenges-panel.tsx"), source("app/mercado/page.tsx")]);
+  const [panel, market] = await Promise.all([source("app/mercado/team-challenges-panel.tsx"), source("app/mercado/marketplace-client.tsx")]);
   assert.match(panel, /filtered\.slice\(0, 5\)/);
   assert.match(panel, /lookup_pachanga_team_by_code/);
   assert.match(panel, /initialTeamCode/);

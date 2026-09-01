@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   challengeableDayLabel,
@@ -20,6 +21,10 @@ import {
 import { attachVenueAutocomplete, type VenuePlace } from "../googlePlacesClient";
 import { supabase } from "../supabaseClient";
 import type { TeamChallengeModality, TeamSummary } from "../team-social-contract";
+import { MarketDetailSheet } from "./market-detail-sheet";
+import type { MarketFilterDraft } from "./market-filter-sheet";
+import { safeMarketError } from "./market-ui-contract";
+import styles from "./marketplace-v3d.module.css";
 
 const googleMapsApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
 const weekdays = [1, 2, 3, 4, 5, 6, 7];
@@ -37,7 +42,12 @@ type SearchZone = {
 };
 
 type Props = {
+  marketFilters: MarketFilterDraft;
+  onCloseTeam: () => void;
+  onOpenTeam: (teamId: string) => void;
   onPrepareChallenge: (team: TeamSummary) => void;
+  onSourceChange?: (source: "CACHED" | "LIVE" | "LOADING" | "UNAVAILABLE") => void;
+  selectedTeamId: string | null;
 };
 
 const emptySearchZone: SearchZone = { label: "", lat: null, lng: null, placeId: null };
@@ -203,6 +213,14 @@ function availabilitySummary(slots: ChallengeableAvailabilitySlot[]) {
   return [...grouped.entries()].map(([hours, days]) => `${days.join(", ")} ${hours}`).join(" · ");
 }
 
+function weekdayFromMarketDay(day: MarketFilterDraft["day"]) {
+  const labels = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+  if (day === "Hoy") return new Date().getDay() || 7;
+  if (day === "Mañana") return ((new Date().getDay() + 1) % 7) || 7;
+  const index = labels.indexOf(day);
+  return index > 0 ? index : index === 0 ? 7 : null;
+}
+
 function demoSearchSnapshot(
   groupId: string,
   searchFilters: ChallengeableTeamSearchFilters = defaultFilters,
@@ -246,9 +264,9 @@ function demoSearchSnapshot(
   };
 }
 
-export function ChallengeableTeamsPanel({ onPrepareChallenge }: Props) {
+export function ChallengeableTeamsPanel({ marketFilters, onCloseTeam, onOpenTeam, onPrepareChallenge, onSourceChange, selectedTeamId }: Props) {
   const demoMode = typeof window !== "undefined"
-    && new URLSearchParams(window.location.search).get("demo") === "1";
+    && window.location.pathname.startsWith("/demo");
   const [memberships, setMemberships] = useState<GroupMembership[]>(() => demoMode ? [demoMembership] : []);
   const [selectedGroupId, setSelectedGroupId] = useState(() => demoMode ? demoMembership.groupId : "");
   const [currentUserId, setCurrentUserId] = useState(() => demoMode ? "demo-user" : "");
@@ -257,21 +275,41 @@ export function ChallengeableTeamsPanel({ onPrepareChallenge }: Props) {
   const [searchSnapshot, setSearchSnapshot] = useState<ChallengeableTeamSearchSnapshot | null>(
     () => demoMode ? demoSearchSnapshot(demoMembership.groupId) : null,
   );
-  const [filters, setFilters] = useState<ChallengeableTeamSearchFilters>(defaultFilters);
   const [appliedFilters, setAppliedFilters] = useState<ChallengeableTeamSearchFilters>(defaultFilters);
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState(() => !demoMode && !supabase ? "El catálogo de equipos no está disponible en este entorno." : "");
   const [loading, setLoading] = useState(() => Boolean(supabase) && !demoMode);
   const [searching, setSearching] = useState(false);
   const [saving, setSaving] = useState(false);
   const [configOpen, setConfigOpen] = useState(false);
+  const [teamSource, setTeamSource] = useState<"CACHED" | "LIVE" | "LOADING" | "UNAVAILABLE">(() => demoMode ? "LIVE" : supabase ? "LOADING" : "UNAVAILABLE");
+  const [online, setOnline] = useState(true);
   const profileZoneInputRef = useRef<HTMLInputElement>(null);
-  const searchZoneInputRef = useRef<HTMLInputElement>(null);
   const operationIdsRef = useRef(new Map<string, string>());
 
   const selectedMembership = useMemo(
     () => memberships.find((membership) => membership.groupId === selectedGroupId) ?? null,
     [memberships, selectedGroupId],
   );
+
+  const selectedTeam = useMemo(
+    () => searchSnapshot?.items.find((item) => item.groupId === selectedTeamId) ?? null,
+    [searchSnapshot?.items, selectedTeamId],
+  );
+
+  useEffect(() => {
+    onSourceChange?.(teamSource);
+  }, [onSourceChange, teamSource]);
+
+  useEffect(() => {
+    const update = () => setOnline(navigator.onLine);
+    update();
+    window.addEventListener("online", update);
+    window.addEventListener("offline", update);
+    return () => {
+      window.removeEventListener("online", update);
+      window.removeEventListener("offline", update);
+    };
+  }, []);
 
   const operationIdFor = useCallback((fingerprint: string) => {
     const existing = operationIdsRef.current.get(fingerprint);
@@ -316,7 +354,7 @@ export function ChallengeableTeamsPanel({ onPrepareChallenge }: Props) {
     if (!supabase || !groupId) return;
     const result = await supabase.rpc("get_pachanga_challengeable_team_profile", { target_group_id: groupId });
     if (result.error) {
-      setMessage(result.error.message);
+      setMessage(safeMarketError(result.error).body);
       return;
     }
     if (!acceptProfileSnapshot(result.data, userId, groupId)) {
@@ -334,15 +372,20 @@ export function ChallengeableTeamsPanel({ onPrepareChallenge }: Props) {
     if (!groupId) return;
     if (demoMode) {
       setSearchSnapshot(demoSearchSnapshot(groupId, searchFilters, page));
+      setTeamSource("LIVE");
       return;
     }
     if (!supabase) return;
     if (useCache) {
       const cached = readChallengeableSearchCache(window.localStorage, userId, groupId, searchFilters, page);
-      if (cached) setSearchSnapshot(cached);
+      if (cached) {
+        setSearchSnapshot(cached);
+        setTeamSource("CACHED");
+      }
     }
     if (!navigator.onLine) {
       setMessage("Sin conexión: se muestran solo resultados guardados, nunca como estado nuevo confirmado.");
+      setTeamSource((current) => current === "CACHED" ? current : "UNAVAILABLE");
       return;
     }
     setSearching(true);
@@ -363,17 +406,50 @@ export function ChallengeableTeamsPanel({ onPrepareChallenge }: Props) {
     });
     setSearching(false);
     if (result.error) {
-      setMessage(result.error.message);
+      setMessage(safeMarketError(result.error).body);
+      setTeamSource((current) => current === "CACHED" ? current : "UNAVAILABLE");
       return;
     }
     setMessage("");
     if (!acceptSearchSnapshot(result.data, userId, groupId, searchFilters, page)) {
       setMessage("El servidor no devolvió una página de equipos válida.");
+      setTeamSource("UNAVAILABLE");
+    } else {
+      setTeamSource("LIVE");
     }
   }, [acceptSearchSnapshot, demoMode]);
 
   useEffect(() => {
-    if (!supabase || demoMode) return;
+    const nextFilters: ChallengeableTeamSearchFilters = {
+      day: weekdayFromMarketDay(marketFilters.day),
+      end: null,
+      maxDistanceKm: marketFilters.radiusKm,
+      maxTeamLevel: marketFilters.maxRating,
+      minTeamLevel: marketFilters.minRating,
+      modality: marketFilters.modality === "Todas" ? null : marketFilters.modality as TeamChallengeModality,
+      start: null,
+      zoneLabel: marketFilters.zone,
+      zoneLat: null,
+      zoneLng: null,
+    };
+    window.queueMicrotask(() => {
+      setAppliedFilters(nextFilters);
+      if (selectedGroupId && currentUserId) void loadSearch(selectedGroupId, currentUserId, nextFilters, 1, true);
+    });
+  }, [
+    currentUserId,
+    loadSearch,
+    marketFilters.day,
+    marketFilters.maxRating,
+    marketFilters.minRating,
+    marketFilters.modality,
+    marketFilters.radiusKm,
+    marketFilters.zone,
+    selectedGroupId,
+  ]);
+
+  useEffect(() => {
+    if (demoMode || !supabase) return;
 
     let active = true;
     async function loadGroups() {
@@ -381,7 +457,8 @@ export function ChallengeableTeamsPanel({ onPrepareChallenge }: Props) {
       const user = session?.data.session?.user ?? null;
       if (!active) return;
       if (!user) {
-        setMessage("Entra con Google para buscar o publicar equipos retables.");
+        setMessage("Entra para buscar equipos con la autoridad actual. Tus filtros se conservarán.");
+        setTeamSource("UNAVAILABLE");
         setLoading(false);
         return;
       }
@@ -394,7 +471,8 @@ export function ChallengeableTeamsPanel({ onPrepareChallenge }: Props) {
         .order("created_at", { ascending: true });
       if (!active) return;
       if (result?.error) {
-        setMessage(result.error.message);
+        setMessage(safeMarketError(result.error).body);
+        setTeamSource("UNAVAILABLE");
         setLoading(false);
         return;
       }
@@ -416,6 +494,8 @@ export function ChallengeableTeamsPanel({ onPrepareChallenge }: Props) {
           loadProfile(nextGroupId, user.id),
           loadSearch(nextGroupId, user.id, defaultFilters, 1),
         ]);
+      } else {
+        setTeamSource("UNAVAILABLE");
       }
       if (active) setLoading(false);
     }
@@ -486,29 +566,6 @@ export function ChallengeableTeamsPanel({ onPrepareChallenge }: Props) {
   }, [appliedFilters, currentUserId, demoMode, loadProfile, loadSearch, searchSnapshot?.page, selectedGroupId]);
 
   useEffect(() => {
-    if (!googleMapsApiKey || !searchZoneInputRef.current) return;
-    let cleanup: (() => void) | undefined;
-    let disposed = false;
-    attachVenueAutocomplete({
-      apiKey: googleMapsApiKey,
-      input: searchZoneInputRef.current,
-      onPlace: (place) => {
-        if (disposed) return;
-        const zone = zoneFromPlace(place);
-        setFilters((current) => ({ ...current, zoneLabel: zone.label, zoneLat: zone.lat, zoneLng: zone.lng }));
-        setMessage("");
-      },
-    }).then((nextCleanup) => {
-      if (disposed) nextCleanup();
-      else cleanup = nextCleanup;
-    }).catch(() => setMessage("Puedes buscar por nombre de zona aunque Google Places no esté disponible."));
-    return () => {
-      disposed = true;
-      cleanup?.();
-    };
-  }, [loading]);
-
-  useEffect(() => {
     if (!googleMapsApiKey || !profileZoneInputRef.current || !configOpen || (!profileSnapshot?.canManage && !demoMode)) return;
     let cleanup: (() => void) | undefined;
     let disposed = false;
@@ -572,7 +629,7 @@ export function ChallengeableTeamsPanel({ onPrepareChallenge }: Props) {
     });
     setSaving(false);
     if (result.error) {
-      setMessage(result.error.message);
+      setMessage(safeMarketError(result.error).body);
       if (result.error.code === "PT409") await loadProfile(selectedGroupId, currentUserId);
       return;
     }
@@ -584,11 +641,6 @@ export function ChallengeableTeamsPanel({ onPrepareChallenge }: Props) {
     }
     setMessage(profileDraft.enabled ? "Ficha pública guardada y confirmada." : "Ficha pública desactivada y confirmada.");
     await loadSearch(selectedGroupId, currentUserId, appliedFilters, 1, false);
-  }
-
-  async function runSearch() {
-    setAppliedFilters(filters);
-    await loadSearch(selectedGroupId, currentUserId, filters, 1, false);
   }
 
   async function prepareChallenge(item: ChallengeableTeamSearchItem) {
@@ -605,7 +657,7 @@ export function ChallengeableTeamsPanel({ onPrepareChallenge }: Props) {
       requesting_group_id: selectedGroupId,
     });
     if (result.error) {
-      setMessage(result.error.message);
+      setMessage(safeMarketError(result.error).body);
       await loadSearch(selectedGroupId, currentUserId, appliedFilters, searchSnapshot?.page ?? 1, false);
       return;
     }
@@ -633,31 +685,33 @@ export function ChallengeableTeamsPanel({ onPrepareChallenge }: Props) {
     }));
   }
 
-  if (loading) return <section className="market-panel challengeable-teams-loading">Cargando equipos retables…</section>;
+  if (loading) return <section className={styles.serviceState}><h2>Buscando equipos</h2><p>Estamos cargando el catálogo canónico del Mercado.</p></section>;
   if (!memberships.length) {
-    return <section className="market-panel challengeable-teams-empty">Necesitas pertenecer a un equipo para buscar rivales.</section>;
+    return (
+      <section className={styles.serviceState}>
+        <h2>Necesitas un equipo para enviar retos</h2>
+        <p>La autoridad actual permite consultar rivales desde un equipo registrado. No hemos sustituido esa restricción por datos ficticios.</p>
+        <div className={styles.emptyActions}>
+          <Link className={styles.primaryButton} href="/?mobile=inicio&create=team">Crear equipo</Link>
+          <Link className={styles.secondaryButton} href="/?mobile=perfil&settings=1">Unirme a un equipo</Link>
+        </div>
+      </section>
+    );
   }
 
   return (
     <section className="challengeable-teams-area" aria-label="Equipos públicamente retables">
-      <div className="challengeable-teams-toolbar">
+      <div className={styles.resultsHeader}>
         <label>
           Buscar como
           <select value={selectedGroupId} onChange={(event) => selectGroup(event.target.value)}>
             {memberships.map((membership) => <option key={membership.groupId} value={membership.groupId}>{membership.name}</option>)}
           </select>
         </label>
-        <div>
-          <span>Nivel del equipo</span>
-          <strong>{profileSnapshot?.ownLevel !== null && profileSnapshot?.ownLevel !== undefined ? Math.round(profileSnapshot.ownLevel) : searchSnapshot?.requesterLevel !== null && searchSnapshot?.requesterLevel !== undefined ? Math.round(searchSnapshot.requesterLevel) : "Pendiente"}</strong>
-        </div>
-        <div>
-          <span>Buscador</span>
-          <strong>{searchSnapshot ? `Revisión ${searchSnapshot.searchRevision}` : "Sin snapshot"}</strong>
-        </div>
+        <span>{teamSource === "CACHED" ? "Resultados guardados · solo lectura" : teamSource === "UNAVAILABLE" ? "Servicio no disponible" : `${searchSnapshot?.items.length ?? 0} equipos encontrados`}</span>
         {(profileSnapshot?.canManage || demoMode) ? (
           <button type="button" onClick={() => setConfigOpen((current) => !current)} aria-expanded={configOpen}>
-            {configOpen ? "Cerrar configuración" : "Configurar mi ficha"}
+            {configOpen ? "Cerrar" : "Mi equipo en Mercado"}
           </button>
         ) : null}
       </div>
@@ -739,92 +793,53 @@ export function ChallengeableTeamsPanel({ onPrepareChallenge }: Props) {
         </section>
       ) : null}
 
-      <section className="market-panel challengeable-search-panel">
-        <div className="challengeable-search-grid">
-          <label className="challengeable-search-zone">
-            Zona
-            <input
-              ref={searchZoneInputRef}
-              value={filters.zoneLabel}
-              onChange={(event) => setFilters((current) => ({ ...current, zoneLabel: event.target.value, zoneLat: null, zoneLng: null }))}
-              placeholder="Ciudad o comarca"
-            />
-          </label>
-          <label>
-            Distancia
-            <select value={filters.maxDistanceKm ?? 30} onChange={(event) => setFilters((current) => ({ ...current, maxDistanceKm: Number(event.target.value) }))}>
-              {[5, 10, 20, 30, 50, 75, 100].map((radius) => <option key={radius} value={radius}>{radius} km</option>)}
-            </select>
-          </label>
-          <label>
-            Nivel desde
-            <input type="number" min="0" max="100" placeholder="Todos" value={filters.minTeamLevel ?? ""} onChange={(event) => setFilters((current) => ({ ...current, minTeamLevel: event.target.value === "" ? null : Number(event.target.value) }))} />
-          </label>
-          <label>
-            Nivel hasta
-            <input type="number" min="0" max="100" placeholder="Todos" value={filters.maxTeamLevel ?? ""} onChange={(event) => setFilters((current) => ({ ...current, maxTeamLevel: event.target.value === "" ? null : Number(event.target.value) }))} />
-          </label>
-          <label>
-            Día
-            <select value={filters.day ?? ""} onChange={(event) => setFilters((current) => ({ ...current, day: event.target.value ? Number(event.target.value) : null }))}>
-              <option value="">Cualquier día</option>
-              {weekdays.map((day) => <option key={day} value={day}>{challengeableDayLabel(day)}</option>)}
-            </select>
-          </label>
-          <label>
-            Desde
-            <input type="time" disabled={!filters.day} value={filters.start ?? ""} onChange={(event) => setFilters((current) => ({ ...current, start: event.target.value || null }))} />
-          </label>
-          <label>
-            Hasta
-            <input type="time" disabled={!filters.day} value={filters.end ?? ""} onChange={(event) => setFilters((current) => ({ ...current, end: event.target.value || null }))} />
-          </label>
-          <label>
-            Modalidad
-            <select value={filters.modality ?? ""} onChange={(event) => setFilters((current) => ({ ...current, modality: (event.target.value || null) as TeamChallengeModality | null }))}>
-              <option value="">Todas</option>
-              {modalities.map((value) => <option key={value} value={value}>{challengeableModalityLabel(value)}</option>)}
-            </select>
-          </label>
-          <button className="challengeable-search-action" type="button" onClick={() => void runSearch()} disabled={searching}>{searching ? "Buscando…" : "Buscar equipos"}</button>
-        </div>
-      </section>
-
       {message ? <p className="challengeable-teams-message" aria-live="polite">{message}</p> : null}
 
-      <div className="challengeable-results-heading">
-        <div>
-          <span>Equipos compatibles</span>
-          <strong>{searchSnapshot?.items.length ?? 0}</strong>
-        </div>
-        <small>{searchSnapshot?.requesterLevel === null ? "Nivel propio pendiente: el rival decidirá la compatibilidad." : "Compatibilidad calculada por el servidor."}</small>
-      </div>
-
-      <section className="challengeable-team-grid" aria-label="Resultados de equipos retables">
-        {searchSnapshot?.items.map((item) => (
-          <article className="challengeable-team-card" key={item.groupId}>
-            <header>
-              <div><span>Equipo retable</span><strong>{item.name}</strong></div>
-              <b>{item.teamLevel === null ? "Nivel -" : `Nivel ${Math.round(item.teamLevel)}`}</b>
-            </header>
-            <dl>
-              <div><dt>Zona</dt><dd>{item.zoneLabel}</dd></div>
-              <div><dt>Radio</dt><dd>{item.travelRadiusKm} km</dd></div>
-              <div><dt>Rivales</dt><dd>{Math.round(item.minOpponentLevel)}-{Math.round(item.maxOpponentLevel)}</dd></div>
-              {item.distanceKm !== null ? <div><dt>Distancia</dt><dd>≈ {item.distanceKm.toFixed(1)} km</dd></div> : null}
-            </dl>
-            <p>{availabilitySummary(item.availability) || "Disponibilidad por confirmar"}</p>
-            <div className="challengeable-team-tags">
-              {item.modalities.map((value) => <span key={value}>{challengeableModalityLabel(value)}</span>)}
-              <span>{item.levelCompatibility === "compatible" ? "Nivel compatible" : "Compatibilidad pendiente"}</span>
+      <div className={styles.resultsLayout} data-detail={Boolean(selectedTeam)}>
+        <section className={styles.resultsColumn} aria-label="Resultados de equipos retables">
+          {teamSource === "UNAVAILABLE" && !searchSnapshot?.items.length ? (
+            <div className={styles.serviceState}><h2>Equipos no disponibles</h2><p>No hay una lectura remota o guardada que podamos mostrar con seguridad.</p></div>
+          ) : searchSnapshot?.items.length ? (
+            <div className={styles.matchGrid}>
+              {searchSnapshot.items.map((item) => (
+                <article className={styles.matchCard} data-selected={selectedTeam?.groupId === item.groupId} key={item.groupId}>
+                  <header>
+                    <div><span>{item.zoneLabel}</span><strong>{item.name}</strong></div>
+                    <b>{item.teamLevel === null ? "Nivel -" : Math.round(item.teamLevel)}</b>
+                  </header>
+                  <p className={styles.matchMeta}>{[item.modalities.map(challengeableModalityLabel).join(" · "), item.distanceKm === null ? null : `≈ ${item.distanceKm.toFixed(1)} km`, availabilitySummary(item.availability)].filter(Boolean).join(" · ")}</p>
+                  <div className={styles.matchSummary}>
+                    <span>{item.levelCompatibility === "compatible" ? "Nivel compatible" : "Compatibilidad pendiente"}</span>
+                    <span>Radio {item.travelRadiusKm} km</span>
+                  </div>
+                  <footer className={styles.cardFooter}>
+                    <button type="button" onClick={() => onOpenTeam(item.groupId)}>Ver equipo</button>
+                    {selectedMembership?.role !== "player" ? <button type="button" disabled={!online || teamSource === "CACHED"} onClick={() => void prepareChallenge(item)}>Retar</button> : null}
+                  </footer>
+                </article>
+              ))}
             </div>
-            <button type="button" onClick={() => void prepareChallenge(item)} disabled={selectedMembership?.role === "player"}>
-              {selectedMembership?.role === "player" ? "Solo admins retan" : "Preparar reto"}
-            </button>
-          </article>
-        ))}
-        {!searchSnapshot?.items.length ? <p className="market-empty">No hay equipos públicos que encajen con estos filtros.</p> : null}
-      </section>
+          ) : (
+            <div className={styles.emptyState}><h2>No hay equipos con estos filtros</h2><p>Amplía el radio o cambia modalidad y nivel desde Filtros.</p></div>
+          )}
+        </section>
+        {selectedTeam ? (
+          <MarketDetailSheet label={`equipo ${selectedTeam.name}`} onClose={onCloseTeam}>
+            <div className={styles.detailHero}><span>Equipo disponible</span><h2>{selectedTeam.name}</h2><p>{availabilitySummary(selectedTeam.availability) || "Disponibilidad por confirmar"}</p></div>
+            <dl className={styles.detailFacts}>
+              <div><dt>Nivel</dt><dd>{selectedTeam.teamLevel === null ? "Pendiente" : Math.round(selectedTeam.teamLevel)}</dd></div>
+              <div><dt>Zona</dt><dd>{selectedTeam.zoneLabel}</dd></div>
+              <div><dt>Distancia</dt><dd>{selectedTeam.distanceKm === null ? "No calculada" : `≈ ${selectedTeam.distanceKm.toFixed(1)} km`}</dd></div>
+              <div><dt>Modalidades</dt><dd>{selectedTeam.modalities.map(challengeableModalityLabel).join(", ")}</dd></div>
+              <div><dt>Rivales</dt><dd>{Math.round(selectedTeam.minOpponentLevel)}-{Math.round(selectedTeam.maxOpponentLevel)}</dd></div>
+              <div><dt>Compatibilidad</dt><dd>{selectedTeam.levelCompatibility === "compatible" ? "Compatible" : "Pendiente"}</dd></div>
+            </dl>
+            <div className={styles.detailActions}>
+              {selectedMembership?.role === "player" ? <span>Solo owner o admin puede enviar el reto.</span> : <button type="button" disabled={!online || teamSource === "CACHED"} onClick={() => void prepareChallenge(selectedTeam)}>Retar</button>}
+            </div>
+          </MarketDetailSheet>
+        ) : null}
+      </div>
 
       {searchSnapshot ? (
         <nav className="challengeable-pagination" aria-label="Páginas de equipos">

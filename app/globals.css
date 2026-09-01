@@ -11966,7 +11966,7 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
     pointer-events: none;
   }
 
-  main[data-mobile-tab] > :not(.mobile-app-nav):not(.pitch-modal-backdrop):not(.match-photo-preview-backdrop):not(.status-confirm-backdrop):not(.mobile-account-backdrop):not(.mobile-account-sheet) {
+  main[data-mobile-tab] > :not(.mobile-app-nav):not(.pitch-modal-backdrop):not(.match-photo-preview-backdrop):not(.status-confirm-backdrop):not(.mobile-account-backdrop):not(.mobile-account-sheet):not(.market-filter-backdrop-v3d) {
     position: relative;
     z-index: 1;
   }

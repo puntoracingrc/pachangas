@@ -40,7 +40,7 @@ test("keeps game navigation client-side and requests fullscreen from a user gest
 test("keeps real authorization separate from the visual preview", async () => {
   const [home, market, previewState, css] = await Promise.all([
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
-    readFile(new URL("../app/mercado/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/mercado/marketplace-client.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/admin-view-preview.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
   ]);

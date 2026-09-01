@@ -180,7 +180,7 @@ test("the Service Worker precaches V3.3 while refusing commands and private serv
 test("frontend stabilization contains no rule suppression or TypeScript escape hatch", async () => {
   const files = await Promise.all([
     source("app/page.tsx"),
-    source("app/mercado/page.tsx"),
+    source("app/mercado/marketplace-client.tsx"),
     source("app/legal-data.tsx"),
   ]);
   for (const file of files) {
@@ -189,7 +189,7 @@ test("frontend stabilization contains no rule suppression or TypeScript escape h
 });
 
 test("Mercado hydrates deterministically and restores shareable tab state", async () => {
-  const market = await source("app/mercado/page.tsx");
+  const market = await source("app/mercado/marketplace-client.tsx");
   assert.match(market, /useState\(\(\) => marketRouteFromSearch\(""\)\)/);
   assert.match(market, /window\.queueMicrotask/);
   assert.match(market, /addEventListener\("popstate"/);

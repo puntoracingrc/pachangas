@@ -18,6 +18,7 @@ import { PlayerCosmeticCard } from "../_components/player-cosmetic-card";
 import { RefereeAssignmentsClient } from "../_components/referee-assignments-client";
 import { RefereeProfileCard } from "../_components/referee-profile-card";
 import { TeamShieldView } from "../_components/team-shield-view";
+import { MarketDetailSheet } from "../mercado/market-detail-sheet";
 import { PublicClubProfile } from "../clubes/[slug]/public-club-profile";
 import { MobileAppNav, type MobileAppTab } from "../mobile-app-nav";
 import { ProductContextSelector, type ProductContextOption } from "../_components/product-context-selector";
@@ -84,6 +85,7 @@ import { DemoWorldV34FieldOperations } from "./demo-world-v3-4-field-operations"
 import type { DemoWorldV34Manifest, DemoWorldV34Snapshot } from "./demo-world-v3-4-contract";
 import { DemoWorldV35SeasonFieldAllocation } from "./demo-world-v3-5-season-field-allocation";
 import type { DemoWorldV35Manifest, DemoWorldV35Snapshot } from "./demo-world-v3-5-contract";
+import marketStyles from "../mercado/marketplace-v3d.module.css";
 import styles from "./demo-world.module.css";
 
 type DemoWorldManifest = DemoWorldV2Manifest | DemoWorldV32Manifest | DemoWorldV33Manifest | DemoWorldV34Manifest | DemoWorldV35Manifest;
@@ -919,62 +921,139 @@ function MatchView({
 
 function MarketView({
   currentPlayer,
+  onAcceptRequest,
+  onChallengeTeam,
   onMatch,
   onPlayer,
+  onRequestSpot,
   onTeam,
   perspective,
+  requestMatchId,
+  requestStatus,
   setMessage,
   snapshot,
 }: {
   currentPlayer: DemoWorldPlayer;
+  onAcceptRequest: (matchId: string) => void;
+  onChallengeTeam: (teamId: string) => void;
   onMatch: (matchId: string) => void;
   onPlayer: (playerId: string) => void;
+  onRequestSpot: (matchId: string) => void;
   onTeam: (teamId: string) => void;
   perspective: DemoWorldPerspective;
+  requestMatchId: string | null;
+  requestStatus: "accepted" | "idle" | "pending";
   setMessage: (message: string) => void;
   snapshot: DemoWorldRenderableSnapshot;
 }) {
-  const [pane, setPane] = useState<"equipos" | "jugadores" | "partidos">("partidos");
-  const [query, setQuery] = useState("");
+  const [pane, setPane] = useState<"equipos" | "jugadores" | "partidos">(() => {
+    if (typeof window === "undefined") return "partidos";
+    const value = new URLSearchParams(window.location.search).get("marketPane");
+    return value === "jugadores" || value === "equipos" ? value : "partidos";
+  });
+  const [query, setQuery] = useState(() => typeof window === "undefined" ? "Barcelona" : new URLSearchParams(window.location.search).get("marketZone") || "Barcelona");
+  const [day, setDay] = useState(() => typeof window === "undefined" ? "Esta semana" : new URLSearchParams(window.location.search).get("marketDay") || "Esta semana");
+  const [modality, setModality] = useState(() => typeof window === "undefined" ? "futbol7" : new URLSearchParams(window.location.search).get("marketModality") || "futbol7");
+  const [detailId, setDetailId] = useState<string | null>(() => typeof window === "undefined" ? null : new URLSearchParams(window.location.search).get("marketDetail"));
+  const [offline, setOffline] = useState(false);
+  const [signedOut, setSignedOut] = useState(false);
+  const [invitations, setInvitations] = useState<Record<string, "pending">>({});
   const [visiblePlayerCount, setVisiblePlayerCount] = useState(DEMO_WORLD_MARKET_PAGE_SIZE);
   const normalizedQuery = query.trim().toLocaleLowerCase("es");
-  const marketPlayers = snapshot.players.players.filter((player) => player.market.openToGuest && player.id !== currentPlayer.id && (!normalizedQuery || `${player.name} ${player.position.label} ${player.market.zones.join(" ")}`.toLocaleLowerCase("es").includes(normalizedQuery)));
-  const publicMatches = snapshot.matches.matches.filter((match) => match.status === "scheduled" && match.publicOpenSlots > 0);
+  const marketPlayers = snapshot.players.players.filter((player) => player.market.openToGuest && player.id !== currentPlayer.id && (!normalizedQuery || `${player.name} ${player.position.label} ${player.market.zones.join(" ")}`.toLocaleLowerCase("es").includes(normalizedQuery)) && (modality === "Todas" || player.market.modalities.includes(modality as DemoMatchKind)));
+  const publicMatches = snapshot.matches.matches.filter((match) => match.status === "scheduled" && match.publicOpenSlots > 0 && (modality === "Todas" || match.kind === modality) && (!normalizedQuery || `${match.title} ${snapshot.core.venues.find((venue) => venue.id === match.venueId)?.publicLocation ?? ""}`.toLocaleLowerCase("es").includes(normalizedQuery)));
   const teams = snapshot.core.teams.filter((team) => team.openToChallenges && (!normalizedQuery || `${team.name} ${team.publicLocation} ${team.territory}`.toLocaleLowerCase("es").includes(normalizedQuery)));
+  const selectedMatch = pane === "partidos" ? publicMatches.find((match) => match.id === detailId) ?? null : null;
+  const selectedPlayer = pane === "jugadores" ? marketPlayers.find((player) => player.id === detailId) ?? null : null;
+  const selectedTeam = pane === "equipos" ? teams.find((team) => team.id === detailId) ?? null : null;
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    params.set("marketPane", pane);
+    params.set("marketZone", query);
+    params.set("marketDay", day);
+    params.set("marketModality", modality);
+    if (detailId) params.set("marketDetail", detailId);
+    else params.delete("marketDetail");
+    window.history.replaceState(null, "", `/demo?${params.toString()}`);
+  }, [day, detailId, modality, pane, query]);
+
+  const resultCount = pane === "partidos" ? publicMatches.length : pane === "jugadores" ? marketPlayers.length : teams.length;
+  const resultLabel = pane === "partidos" ? "partidos" : pane === "jugadores" ? "jugadores" : "equipos";
+  const demoSteps = [
+    "Abrir Mercado", "Ver Partidos por defecto", "Buscar Barcelona", "Aplicar Esta semana", "Aplicar Fútbol 7",
+    "Abrir un partido", "Solicitar plaza", "Ver Solicitud enviada", "Cambiar perspectiva al owner", "Aceptar localmente dentro de la historia Demo",
+    "Volver como jugador", "Ver Plaza confirmada", "Abrir Partido V3B", "Reiniciar", "Abrir Jugadores", "Filtrar por posición",
+    "Abrir perfil", "Ver carta completa", "Entrar desde un partido con tres plazas", "Invitar jugador", "Ver Invitación enviada",
+    "Abrir Equipos", "Buscar equipo por zona", "Abrir perfil de equipo", "Pulsar Retar", "Abrir V3C con rival preseleccionado",
+    "Volver a Mercado conservando filtros", "Probar usuario sin equipo", "Probar usuario sin sesión", "Probar offline", "Reiniciar Demo",
+  ];
 
   return (
-    <div className={styles.managerLayout} data-market-pane={pane} data-tour-target="demo-market">
-      <aside className={styles.sideSubnav} aria-label="Secciones de Mercado">
-        <div className={styles.sideTitle}><span>Mercado</span><strong>Mundo Demo</strong></div>
-        {(["partidos", "jugadores", "equipos"] as const).map((entry) => <button aria-current={pane === entry ? "page" : undefined} key={entry} type="button" onClick={() => setPane(entry)}>{entry[0].toUpperCase() + entry.slice(1)}</button>)}
-        {perspective.role === "admin" ? <button type="button" onClick={() => setMessage("Configuración de Mercado: simulada en memoria.")}>Configurar</button> : null}
-        <div className={styles.sideMeta}><span>{snapshot.manifest.counts.players} jugadores</span><span>{snapshot.manifest.counts.teams} equipos</span><small>Datos públicos ficticios</small></div>
-      </aside>
-      <section className={styles.managerContent}>
-        <div className={styles.marketHeader}><div><span className={styles.eyebrow}>Explorar</span><h1>Mercado</h1></div><Link href="/">Volver a Pachangas IQ</Link></div>
-        {pane === "jugadores" ? <div className={styles.marketMatchFilter}>Filtrado por perfil demo: <strong>{currentPlayer.position.label}</strong> · {currentPlayer.market.zones.join(" / ")}</div> : null}
-        <label className={styles.searchLine}><span>Buscar</span><input value={query} onChange={(event) => { setQuery(event.target.value); setVisiblePlayerCount(DEMO_WORLD_MARKET_PAGE_SIZE); }} placeholder={pane === "jugadores" ? "Nombre, posición o zona" : "Equipo o territorio"} /></label>
+    <section className={styles.demoMarketV3d} data-market-pane={pane} data-tour-target="demo-market" data-demo-market-local="true" data-demo-auth={signedOut ? "signed-out" : "signed-in"}>
+      <header className={styles.marketHeader}>
+        <div><span className={styles.eyebrow}>Datos públicos ficticios</span><h1>Mercado</h1><p>{pane === "partidos" ? "Encuentra una pachanga y solicita tu plaza." : pane === "jugadores" ? "Busca a quien falta para completar el partido." : "Encuentra equipos de tu zona."}</p></div>
+        <Link href="/">Volver a Pachangas IQ</Link>
+      </header>
+      <nav className={styles.demoMarketTabs} aria-label="Secciones de Mercado">
+        {(["partidos", "jugadores", "equipos"] as const).map((entry) => <button aria-current={pane === entry ? "page" : undefined} key={entry} type="button" onClick={() => { setPane(entry); setDetailId(null); }}>{entry[0].toUpperCase() + entry.slice(1)}</button>)}
+      </nav>
+      <div className={marketStyles.searchStack}>
+        <div className={marketStyles.locationRow}>
+          <label className={marketStyles.locationField}><span className="sr-only">¿Dónde quieres jugar?</span><input value={query} onChange={(event) => { setQuery(event.target.value); setVisiblePlayerCount(DEMO_WORLD_MARKET_PAGE_SIZE); }} placeholder="¿Dónde quieres jugar?" /></label>
+          <button type="button" onClick={() => { setQuery("Barcelona"); setMessage("Ubicación demo aplicada. No se ha consultado el dispositivo."); }}>Usar ubicación demo</button>
+          {query ? <button type="button" aria-label="Quitar ubicación" onClick={() => setQuery("")}>×</button> : null}
+        </div>
+        <div className={marketStyles.quickRow}>
+          {["Hoy", "Mañana", "Esta semana"].map((value) => <button aria-pressed={day === value} key={value} type="button" onClick={() => setDay(day === value ? "Todos" : value)}>{value}</button>)}
+          {(["futbol7", "sala", "futbol11"] as const).map((value) => <button aria-pressed={modality === value} key={value} type="button" onClick={() => setModality(modality === value ? "Todas" : value)}>{matchKindLabels[value]}</button>)}
+          <button type="button" aria-pressed={offline} onClick={() => { setOffline((current) => !current); setMessage(offline ? "Demo reconectada localmente." : "Modo offline demo: las escrituras quedan bloqueadas."); }}>{offline ? "Reconectar" : "Probar offline"}</button>
+          <button type="button" aria-pressed={signedOut} onClick={() => { setSignedOut((current) => !current); setMessage(signedOut ? "Sesión demo restaurada." : "Sesión cerrada en la Demo. Los filtros y la ruta se conservan."); }}>{signedOut ? "Restaurar sesión" : "Probar sin sesión"}</button>
+        </div>
+      </div>
+      <div className={marketStyles.resultsHeader}><strong>{resultCount} {resultLabel} encontrados</strong><span>{offline ? "Resultados guardados · solo lectura" : "Demo · sesión local"}</span></div>
 
-        {pane === "jugadores" ? (
-          <>
-            <div className={styles.playerMarketGrid}>{marketPlayers.slice(0, visiblePlayerCount).map((player) => <div className={styles.marketPlayer} key={player.id}><PlayerCard compact onClick={() => onPlayer(player.id)} player={player} /><div><strong>{player.name}</strong><span>{player.position.label} · {player.market.zones[0]}</span><small>{player.market.availability}</small>{canDemoWorldInvite(perspective.role) ? <button type="button" onClick={() => setMessage(`Invitación a ${player.name}: simulada, no enviada.`)}>Invitar</button> : null}</div></div>)}</div>
-            {visiblePlayerCount < marketPlayers.length ? <div className={styles.marketPager}><span>{Math.min(visiblePlayerCount, marketPlayers.length)} de {marketPlayers.length}</span><button type="button" onClick={() => setVisiblePlayerCount((current) => current + DEMO_WORLD_MARKET_PAGE_SIZE)}>Mostrar más</button></div> : null}
-          </>
-        ) : null}
-        {pane === "partidos" ? (
-          <div className={styles.publicMatchGrid}>{publicMatches.map((match) => <button className={styles.publicMatch} key={match.id} type="button" onClick={() => onMatch(match.id)}><span>{dateLabel(match.date)} · {matchKindLabels[match.kind]}</span><strong>{match.homeLabel}<b>vs</b>{match.awayLabel}</strong><small>{snapshot.core.venues.find((venue) => venue.id === match.venueId)?.publicLocation} · {match.publicOpenSlots} plazas</small></button>)}</div>
-        ) : null}
-        {pane === "equipos" ? (
-          <div className={styles.teamMarketGrid}>{teams.map((team) => <button key={team.id} type="button" onClick={() => onTeam(team.id)}><TeamIdentity team={team} /><p>{team.identity}</p><span>{team.stats.challengesPlayed} retos · {team.rankingLabel}</span></button>)}</div>
-        ) : null}
-      </section>
-    </div>
+      <div className={marketStyles.resultsLayout} data-detail={Boolean(selectedMatch || selectedPlayer || selectedTeam)}>
+        <div className={marketStyles.resultsColumn}>
+          {pane === "partidos" ? <div className={marketStyles.matchGrid}>{publicMatches.map((match) => {
+            const venue = snapshot.core.venues.find((entry) => entry.id === match.venueId);
+            const requestForMatch = requestMatchId === match.id ? requestStatus : "idle";
+            return <article className={marketStyles.matchCard} data-selected={selectedMatch?.id === match.id} key={match.id}>
+              <header><div><span>{dateLabel(match.date)}</span><strong>{match.title}</strong></div><b>{match.publicOpenSlots} plazas</b></header>
+              <p className={marketStyles.matchMeta}>{matchKindLabels[match.kind]} · {venue?.label} · {venue?.publicLocation}</p>
+              <div className={marketStyles.matchSummary}><span>{match.confirmedPlayerIds.length} confirmados</span><span>Aprobación manual</span><span>Ficticio</span></div>
+              {requestForMatch !== "idle" ? <div className={marketStyles.inlineState} data-tone={requestForMatch === "accepted" ? "success" : "neutral"}><strong>{requestForMatch === "accepted" ? "Plaza confirmada" : "Solicitud enviada"}</strong><small>Solo en esta sesión demo.</small></div> : null}
+              <footer className={marketStyles.cardFooter}><button type="button" onClick={() => setDetailId(match.id)}>Ver detalles</button>{signedOut ? <button type="button" disabled={offline} onClick={() => setMessage("Entrar para continuar. La ruta de Mercado se conserva en esta Demo.")}>Entrar para continuar</button> : requestForMatch === "accepted" ? <button type="button" onClick={() => onMatch(match.id)}>Ver partido</button> : requestForMatch === "pending" && perspective.role === "admin" ? <button type="button" disabled={offline} onClick={() => onAcceptRequest(match.id)}>Aceptar</button> : <button type="button" disabled={offline || requestForMatch === "pending"} onClick={() => onRequestSpot(match.id)}>{requestForMatch === "pending" ? "Solicitud enviada" : "Solicitar plaza"}</button>}</footer>
+            </article>;
+          })}</div> : null}
+
+          {pane === "jugadores" ? <><div className={marketStyles.playerGrid}>{marketPlayers.slice(0, visiblePlayerCount).map((player) => <article className={marketStyles.playerCard} data-selected={selectedPlayer?.id === player.id} key={player.id}>
+            <span className={marketStyles.playerAvatar}>{player.name.slice(0, 1)}</span><div><header><div><span>{player.position.label}</span><strong>{player.name}</strong></div><b>{player.rating.currentOverall === null ? "-" : Math.round(player.rating.currentOverall)}</b></header><div className={marketStyles.playerMeta}><span>{player.market.zones[0]}</span><span>{matchKindLabels[player.market.modalities[0] as DemoMatchKind] ?? "Fútbol"}</span></div><p className={marketStyles.playerAvailability}>{player.market.availability}</p></div>
+            {invitations[player.id] ? <div className={marketStyles.inlineState}><strong>Invitación enviada</strong><small>Solo en esta sesión demo.</small></div> : null}
+            <footer className={marketStyles.cardFooter}><button type="button" onClick={() => setDetailId(player.id)}>Ver perfil</button>{signedOut ? <button type="button" disabled={offline} onClick={() => setMessage("Entrar para continuar. La ruta de Mercado se conserva en esta Demo.")}>Entrar para continuar</button> : canDemoWorldInvite(perspective.role) ? <button type="button" disabled={offline || Boolean(invitations[player.id])} onClick={() => { setInvitations((current) => ({ ...current, [player.id]: "pending" })); setMessage(`Invitación a ${player.name}: simulada, no enviada.`); }}>Invitar</button> : null}</footer>
+          </article>)}</div>{visiblePlayerCount < marketPlayers.length ? <div className={styles.marketPager}><span>{Math.min(visiblePlayerCount, marketPlayers.length)} de {marketPlayers.length}</span><button type="button" onClick={() => setVisiblePlayerCount((current) => current + DEMO_WORLD_MARKET_PAGE_SIZE)}>Mostrar más</button></div> : null}</> : null}
+
+          {pane === "equipos" ? <div className={marketStyles.matchGrid}>{teams.map((team) => <article className={marketStyles.matchCard} data-selected={selectedTeam?.id === team.id} key={team.id}><header><div><span>{team.publicLocation}</span><strong>{team.name}</strong></div><b>{team.memberCount} jug.</b></header><p className={marketStyles.matchMeta}>{team.identity}</p><div className={marketStyles.matchSummary}><span>{team.stats.challengesPlayed} retos</span><span>{team.rankingLabel}</span></div><footer className={marketStyles.cardFooter}><button type="button" onClick={() => { setDetailId(team.id); onTeam(team.id); }}>Ver equipo</button>{signedOut ? <button type="button" disabled={offline} onClick={() => setMessage("Entrar para continuar. La ruta de Mercado se conserva en esta Demo.")}>Entrar para continuar</button> : perspective.role === "admin" && team.id !== perspective.teamId ? <button type="button" disabled={offline} onClick={() => onChallengeTeam(team.id)}>Retar</button> : null}</footer></article>)}</div> : null}
+        </div>
+
+        {selectedMatch ? <MarketDetailSheet label={`partido demo ${selectedMatch.title}`} onClose={() => setDetailId(null)}><div className={marketStyles.detailHero}><span>Partido demo</span><h2>{selectedMatch.title}</h2><p>{dateLabel(selectedMatch.date)} · {matchKindLabels[selectedMatch.kind]}</p></div><dl className={marketStyles.detailFacts}><div><dt>Campo</dt><dd>{snapshot.core.venues.find((venue) => venue.id === selectedMatch.venueId)?.label}</dd></div><div><dt>Zona</dt><dd>{snapshot.core.venues.find((venue) => venue.id === selectedMatch.venueId)?.publicLocation}</dd></div><div><dt>Plazas</dt><dd>{selectedMatch.publicOpenSlots}</dd></div><div><dt>Confirmados</dt><dd>{selectedMatch.confirmedPlayerIds.length}</dd></div></dl><div className={marketStyles.detailActions}><button type="button" disabled={offline || !signedOut && requestMatchId === selectedMatch.id && requestStatus === "pending"} onClick={() => signedOut ? setMessage("Entrar para continuar. La ruta de Mercado se conserva en esta Demo.") : onRequestSpot(selectedMatch.id)}>{signedOut ? "Entrar para continuar" : "Solicitar plaza"}</button></div></MarketDetailSheet> : null}
+        {selectedPlayer ? <MarketDetailSheet label={`jugador demo ${selectedPlayer.name}`} onClose={() => setDetailId(null)}><div className={marketStyles.detailPlayerHero}><PlayerCard player={selectedPlayer} /><div><div className={marketStyles.detailHero}><span>Ficha completa demo</span><h2>{selectedPlayer.name}</h2><p>{selectedPlayer.market.publicBio}</p></div><dl className={marketStyles.detailFacts}><div><dt>Posición</dt><dd>{selectedPlayer.position.label}</dd></div><div><dt>Media</dt><dd>{selectedPlayer.rating.currentOverall === null ? "Pendiente" : Math.round(selectedPlayer.rating.currentOverall)}</dd></div><div><dt>Disponibilidad</dt><dd>{selectedPlayer.market.availability}</dd></div><div><dt>Zonas</dt><dd>{selectedPlayer.market.zones.join(", ")}</dd></div></dl></div></div><div className={marketStyles.detailActions}><button type="button" onClick={() => onPlayer(selectedPlayer.id)}>Abrir ficha</button>{signedOut ? <button type="button" disabled={offline} onClick={() => setMessage("Entrar para continuar. La ruta de Mercado se conserva en esta Demo.")}>Entrar para continuar</button> : canDemoWorldInvite(perspective.role) ? <button type="button" disabled={offline || Boolean(invitations[selectedPlayer.id])} onClick={() => setInvitations((current) => ({ ...current, [selectedPlayer.id]: "pending" }))}>Invitar</button> : null}</div></MarketDetailSheet> : null}
+        {selectedTeam ? <MarketDetailSheet label={`equipo demo ${selectedTeam.name}`} onClose={() => setDetailId(null)}><TeamIdentity team={selectedTeam} /><div className={marketStyles.detailHero}><span>Equipo demo</span><h2>{selectedTeam.name}</h2><p>{selectedTeam.identity}</p></div><dl className={marketStyles.detailFacts}><div><dt>Plantilla</dt><dd>{selectedTeam.memberCount} jugadores</dd></div><div><dt>Zona</dt><dd>{selectedTeam.publicLocation}</dd></div><div><dt>Retos</dt><dd>{selectedTeam.stats.challengesPlayed}</dd></div><div><dt>Ranking</dt><dd>{selectedTeam.rankingLabel}</dd></div></dl><div className={marketStyles.detailActions}>{signedOut ? <button type="button" disabled={offline} onClick={() => setMessage("Entrar para continuar. La ruta de Mercado se conserva en esta Demo.")}>Entrar para continuar</button> : perspective.role === "admin" && selectedTeam.id !== perspective.teamId ? <button type="button" disabled={offline} onClick={() => onChallengeTeam(selectedTeam.id)}>Retar</button> : <span>Solo owner/admin puede preparar el reto.</span>}</div></MarketDetailSheet> : null}
+      </div>
+
+      <details className={styles.demoSocialProof}>
+        <summary>Recorrido social de Mercado</summary>
+        <ol>{demoSteps.map((step) => <li key={step}>{step}</li>)}</ol>
+        <footer><span>remoteWrites = 0</span><span>externalNotifications = 0</span><span>realEntities = 0</span><span>StripeCalls = 0</span></footer>
+      </details>
+    </section>
   );
 }
 
 function ChallengesView({
   challenges,
   currentTeam,
+  initialOpponentTeamId,
   onChallengeChange,
   onChallengeCreate,
   onMatch,
@@ -985,6 +1064,7 @@ function ChallengesView({
 }: {
   challenges: DemoWorldChallenge[];
   currentTeam: DemoWorldTeam | null;
+  initialOpponentTeamId?: string | null;
   onChallengeChange: (challengeId: string, patch: DemoChallengeOverride) => void;
   onChallengeCreate: (challenge: DemoWorldChallenge, override: DemoChallengeOverride) => void;
   onMatch: (matchId: string) => void;
@@ -996,11 +1076,11 @@ function ChallengesView({
   const [view, setView] = useState<"active" | "history">("active");
   const [filter, setFilter] = useState<"all" | "received" | "sent">("all");
   const [selectedChallengeId, setSelectedChallengeId] = useState<string | null>(null);
-  const [creating, setCreating] = useState(false);
+  const [creating, setCreating] = useState(Boolean(initialOpponentTeamId));
   const [wizardStep, setWizardStep] = useState<1 | 2 | 3>(1);
   const [counteringId, setCounteringId] = useState<string | null>(null);
   const [viewingTeamId, setViewingTeamId] = useState<string | null>(null);
-  const [draft, setDraft] = useState<DemoChallengeDraft>({ date: "", fieldLabel: "", kind: "futbol7", message: "", opponentTeamId: "", time: "" });
+  const [draft, setDraft] = useState<DemoChallengeDraft>({ date: "", fieldLabel: "", kind: "futbol7", message: "", opponentTeamId: initialOpponentTeamId || "", time: "" });
   const baseTeamId = currentTeam?.id ?? "";
   const activeTeamId = viewingTeamId ?? baseTeamId;
   const activeTeam = snapshot.core.teams.find((team) => team.id === activeTeamId) ?? currentTeam;
@@ -1961,8 +2041,14 @@ export function DemoWorldApp({ manifest, mode = "social" }: { manifest: DemoWorl
   const [localChallenges, setLocalChallenges] = useState<DemoWorldChallenge[]>([]);
   const [challengeResetVersion, setChallengeResetVersion] = useState(0);
   const [demoSpotRequest, setDemoSpotRequest] = useState<"accepted" | "idle" | "pending">("idle");
+  const [demoSpotMatchId, setDemoSpotMatchId] = useState<string | null>(null);
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
   const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null);
+  const [challengeOpponentTeamId, setChallengeOpponentTeamId] = useState<string | null>(() => {
+    if (typeof window === "undefined") return null;
+    const params = new URLSearchParams(window.location.search);
+    return params.get("crear") === "1" ? params.get("rival") : null;
+  });
   const [openedBox, setOpenedBox] = useState<DemoWorldRewardBox | null>(null);
   const [RewardBoxComponent, setRewardBoxComponent] = useState<
     (typeof import("../reward-box-demo"))["RewardBoxDemo"] | null
@@ -2159,6 +2245,7 @@ export function DemoWorldApp({ manifest, mode = "social" }: { manifest: DemoWorl
     setSelectedMatchId(matchId);
     setDemoMatchDraft(null);
     setDemoSpotRequest("idle");
+    setDemoSpotMatchId(null);
     setMatchExperienceView("detail");
     setMessage("Partido creado solo en esta sesión demo. Remote writes: 0.");
   }
@@ -2171,6 +2258,11 @@ export function DemoWorldApp({ manifest, mode = "social" }: { manifest: DemoWorl
     const params = new URLSearchParams(window.location.search);
     params.set("tab", tab);
     params.set("perspective", session.perspectiveId);
+    if (tab !== "retos") {
+      params.delete("crear");
+      params.delete("rival");
+      setChallengeOpponentTeamId(null);
+    }
     window.history.replaceState(null, "", `${fullMode ? "/admin/demo" : "/demo"}?${params.toString()}`);
     window.scrollTo({ behavior: "smooth", top: 0 });
   }
@@ -2249,6 +2341,7 @@ export function DemoWorldApp({ manifest, mode = "social" }: { manifest: DemoWorl
     setLocalChallenges([]);
     setChallengeResetVersion((current) => current + 1);
     setDemoSpotRequest("idle");
+    setDemoSpotMatchId(null);
     window.history.replaceState(null, "", fullMode ? "/admin/demo" : "/demo");
     setMessage("Mundo Demo restaurado al snapshot original.");
   }
@@ -2300,24 +2393,55 @@ export function DemoWorldApp({ manifest, mode = "social" }: { manifest: DemoWorl
             const requesterId = world.core.perspectives.find((entry) => entry.id === "player")?.playerId;
             updateLocalDemoMatch({ ...selectedMatch, confirmedPlayerIds: requesterId ? [...new Set([...selectedMatch.confirmedPlayerIds, requesterId])] : selectedMatch.confirmedPlayerIds, publicOpenSlots: Math.max(0, selectedMatch.publicOpenSlots - 1), revision: selectedMatch.revision + 1 });
             setDemoSpotRequest("accepted");
+            setDemoSpotMatchId(selectedMatch.id);
             setMessage("Solicitud aceptada en la sesión demo. Ninguna notificación real enviada.");
           }}
           onBack={() => setMatchExperienceView("overview")}
           onLocalAttendance={(status) => { if (!selectedMatch) return; updateSession((current) => ({ ...current, attendanceByMatch: { ...current.attendanceByMatch, [demoAttendanceKey(currentPlayer.id, selectedMatch.id)]: status } })); setMessage(`Asistencia ${status === "voy" ? "confirmada" : status === "duda" ? "en duda" : "cancelada"} solo en esta sesión demo.`); }}
           onLocalMatchUpdate={updateLocalDemoMatch}
           onPlayer={setSelectedPlayerId}
-          onRequestSpot={() => { setDemoSpotRequest("pending"); setMessage("Solicitud de plaza creada solo en esta sesión demo."); }}
+          onRequestSpot={() => { setDemoSpotMatchId(selectedMatch?.id ?? null); setDemoSpotRequest("pending"); setMessage("Solicitud de plaza creada solo en esta sesión demo."); }}
           perspective={perspective}
-          requestStatus={demoSpotRequest}
+          requestStatus={demoSpotMatchId === selectedMatch?.id ? demoSpotRequest : "idle"}
           session={session}
           setMessage={setMessage}
           snapshot={snapshot}
         /> : null}
-        {snapshot && activeTab === "mercado" ? <MarketView currentPlayer={currentPlayer} onMatch={openMatch} onPlayer={setSelectedPlayerId} onTeam={openTeam} perspective={perspective} setMessage={setMessage} snapshot={snapshot} /> : null}
+        {snapshot && activeTab === "mercado" ? <MarketView
+          currentPlayer={currentPlayer}
+          onAcceptRequest={(matchId) => {
+            const match = allMatches.find((entry) => entry.id === matchId);
+            if (!match || demoSpotRequest !== "pending" || demoSpotMatchId !== matchId) return;
+            const requesterId = world.core.perspectives.find((entry) => entry.id === "player")?.playerId;
+            updateLocalDemoMatch({ ...match, confirmedPlayerIds: requesterId ? [...new Set([...match.confirmedPlayerIds, requesterId])] : match.confirmedPlayerIds, publicOpenSlots: Math.max(0, match.publicOpenSlots - 1), revision: match.revision + 1 });
+            setDemoSpotRequest("accepted");
+            setMessage("Solicitud aceptada en la sesión demo. Ninguna notificación real enviada.");
+          }}
+          onChallengeTeam={(teamId) => {
+            setSelectedTeamId(teamId);
+            setChallengeOpponentTeamId(teamId);
+            const params = new URLSearchParams(window.location.search);
+            params.set("crear", "1");
+            params.set("rival", teamId);
+            window.history.replaceState(null, "", `/demo?${params.toString()}`);
+            navigate("retos");
+            setMessage("Rival demo preseleccionado. El reto todavía no se ha enviado.");
+          }}
+          onMatch={openMatch}
+          onPlayer={setSelectedPlayerId}
+          onRequestSpot={(matchId) => { setDemoSpotMatchId(matchId); setDemoSpotRequest("pending"); setMessage("Solicitud de plaza creada solo en esta sesión demo."); }}
+          onTeam={openTeam}
+          perspective={perspective}
+          requestMatchId={demoSpotMatchId}
+          requestStatus={demoSpotRequest}
+          setMessage={setMessage}
+          snapshot={snapshot}
+        /> : null}
         {snapshot && activeTab === "retos" ? <ChallengesView
           challenges={demoChallenges}
           currentTeam={currentTeam}
-          key={`challenge-flow-${challengeResetVersion}-${perspective.id}`}
+          initialOpponentTeamId={challengeOpponentTeamId}
+          key={`challenge-flow-${challengeResetVersion}-${perspective.id}-${challengeOpponentTeamId ?? "none"}`}
           onChallengeChange={(challengeId, patch) => setLocalChallengeOverrides((current) => ({ ...current, [challengeId]: { ...current[challengeId], ...patch } }))}
           onChallengeCreate={(challenge, override) => { setLocalChallenges((current) => [...current, challenge]); setLocalChallengeOverrides((current) => ({ ...current, [challenge.id]: override })); }}
           onMatch={openMatch}
