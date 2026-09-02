@@ -20,6 +20,7 @@ import { RefereeAssignmentsClient } from "../_components/referee-assignments-cli
 import { RefereeProfileCard } from "../_components/referee-profile-card";
 import { TeamShieldView } from "../_components/team-shield-view";
 import { MarketDetailSheet } from "../mercado/market-detail-sheet";
+import { marketRequestPresentation, type MarketRequestVisualStatus } from "../mercado/marketplace-ui-state";
 import { PublicClubProfile } from "../clubes/[slug]/public-club-profile";
 import { MobileAppNav, type MobileAppTab } from "../mobile-app-nav";
 import { ProductContextSelector, type ProductContextOption } from "../_components/product-context-selector";
@@ -116,6 +117,7 @@ type DemoWorldRenderableSnapshot = {
 };
 
 type DemoMatchExperienceView = "detail" | "overview" | "wizard";
+type DemoSpotRequestStatus = Extract<MarketRequestVisualStatus, "accepted" | "idle" | "pending" | "sending">;
 
 const DEMO_SOCIAL_ATTENDANCE_ID = "demo_social_action_attendance";
 const DEMO_SOCIAL_CHALLENGE_ID = "demo_social_action_challenge";
@@ -142,6 +144,24 @@ const domainTabs: Array<{ group: "competición" | "gestión" | "red"; id: DemoWo
 const competitionTabs = new Set<DemoWorldV2PrimaryTab>(domainTabs.map(({ id }) => id));
 const socialDemoTabs = new Set<DemoWorldV2PrimaryTab>(["avisos", "inicio", "partido", "retos", "mercado", "equipo", "perfil"]);
 const socialPerspectiveIds = new Set<DemoWorldPerspective["id"]>(["admin", "free-agent", "player", "team-owner"]);
+const DEMO_HISTORY_STATE_KEY = "pachangasDemo";
+
+type DemoHistoryEntry = "fallback" | "market-detail" | "market-pane" | "route";
+
+function demoHistoryState(entry: DemoHistoryEntry) {
+  const current = window.history.state;
+  const base = current && typeof current === "object" ? current as Record<string, unknown> : {};
+  return { ...base, [DEMO_HISTORY_STATE_KEY]: true, demoEntry: entry };
+}
+
+function isDemoHistoryState(value: unknown): value is Record<string, unknown> {
+  return Boolean(value && typeof value === "object" && (value as Record<string, unknown>)[DEMO_HISTORY_STATE_KEY] === true);
+}
+
+function demoRouteUrl(fullMode: boolean, params: URLSearchParams) {
+  const query = params.toString();
+  return `${fullMode ? "/admin/demo" : "/demo"}${query ? `?${query}` : ""}${window.location.hash}`;
+}
 
 function primaryTabForDemo(tab: DemoWorldV2PrimaryTab): ProductPrimaryTab {
   if (tab === "avisos") return "perfil";
@@ -685,7 +705,7 @@ function MatchView({
   onPlayer: (playerId: string) => void;
   onRequestSpot: () => void;
   perspective: DemoWorldPerspective;
-  requestStatus: "accepted" | "idle" | "pending";
+  requestStatus: DemoSpotRequestStatus;
   session: DemoWorldSessionState;
   setMessage: (message: string) => void;
   snapshot: DemoWorldRenderableSnapshot;
@@ -699,6 +719,7 @@ function MatchView({
   const attendance = match ? session.attendanceByMatch[demoAttendanceKey(currentPlayer.id, match.id)] : undefined;
   if (!match) return <EmptyState title="Sin partido seleccionado" body="Elige un partido público desde Mercado." />;
   const currentTeamInMatch = Boolean(currentTeam && (match.homeTeamId === currentTeam.id || match.awayTeamId === currentTeam.id));
+  const canRespondAttendance = currentTeamInMatch && (perspective.role === "admin" || perspective.role === "player");
   const matchPanes: readonly DemoWorldMatchPane[] = match.status === "finalized"
     ? ["proximo", "resultado", "historico"]
     : perspective.role === "admin" ? ["proximo", "historico", "alineacion", "resultado"] : ["proximo", "historico", "alineacion"];
@@ -793,7 +814,7 @@ function MatchView({
               <Stat label="Plazas" value={match.publicOpenSlots} />
               <Stat label="Modalidad" value={matchKindLabels[match.kind].replace("Fútbol ", "F-")} />
             </div>
-            {match.status === "scheduled" && perspective.role === "player" && currentTeamInMatch ? (
+            {match.status === "scheduled" && canRespondAttendance ? (
               <div className={styles.attendanceControl} data-tour-target="demo-attendance">
                 <div><strong>Mi asistencia</strong><small>Esta elección solo vive en esta sesión demo.</small></div>
                 <div role="group" aria-label="Asistencia simulada">
@@ -804,7 +825,7 @@ function MatchView({
             {match.status === "scheduled" && perspective.role === "player" && !currentTeamInMatch && match.publicOpenSlots > 0 && !match.confirmedPlayerIds.includes(currentPlayer.id) ? (
               <div className={styles.demoSpotRequest}>
                 <div><strong>Plaza pública</strong><small>{match.publicOpenSlots} disponibles · aprobación del organizador</small></div>
-                <button type="button" disabled={requestStatus !== "idle"} onClick={onRequestSpot}>{requestStatus === "accepted" ? "Solicitud aceptada" : requestStatus === "pending" ? "Solicitud enviada" : "Solicitar plaza"}</button>
+                <button type="button" disabled={requestStatus !== "idle"} onClick={onRequestSpot}>{marketRequestPresentation(requestStatus).actionLabel}</button>
               </div>
             ) : null}
           </div>
@@ -812,7 +833,7 @@ function MatchView({
 
         {visiblePane === "historico" && match.status === "scheduled" ? (
           <OfficialAttendancePanel
-            canRespond={perspective.role === "player"}
+            canRespond={canRespondAttendance}
             currentStatus={attendance ?? null}
             isUpdating={false}
             message="Cambios guardados solo en esta sesión demo."
@@ -963,7 +984,7 @@ function MarketView({
   onTeam: (teamId: string) => void;
   perspective: DemoWorldPerspective;
   requestMatchId: string | null;
-  requestStatus: "accepted" | "idle" | "pending";
+  requestStatus: DemoSpotRequestStatus;
   setMessage: (message: string) => void;
   snapshot: DemoWorldRenderableSnapshot;
 }) {
@@ -987,6 +1008,44 @@ function MarketView({
   const selectedMatch = pane === "partidos" ? publicMatches.find((match) => match.id === detailId) ?? null : null;
   const selectedPlayer = pane === "jugadores" ? marketPlayers.find((player) => player.id === detailId) ?? null : null;
   const selectedTeam = pane === "equipos" ? teams.find((team) => team.id === detailId) ?? null : null;
+  const selectedMatchRequestStatus: DemoSpotRequestStatus = selectedMatch && requestMatchId === selectedMatch.id ? requestStatus : "idle";
+  const selectedMatchRequestPresentation = marketRequestPresentation(selectedMatchRequestStatus);
+
+  function writeMarketHistory(entry: DemoHistoryEntry, nextPane: typeof pane, nextDetailId: string | null) {
+    const params = new URLSearchParams(window.location.search);
+    params.set("tab", "mercado");
+    params.set("marketPane", nextPane);
+    params.set("marketZone", query);
+    params.set("marketDay", day);
+    params.set("marketModality", modality);
+    if (nextDetailId) params.set("marketDetail", nextDetailId);
+    else params.delete("marketDetail");
+    window.history.pushState(
+      demoHistoryState(entry),
+      "",
+      demoRouteUrl(window.location.pathname === "/admin/demo", params),
+    );
+  }
+
+  function selectMarketPane(nextPane: typeof pane) {
+    if (nextPane === pane && !detailId) return;
+    writeMarketHistory("market-pane", nextPane, null);
+    setPane(nextPane);
+    setDetailId(null);
+  }
+
+  function openMarketDetail(nextDetailId: string) {
+    writeMarketHistory("market-detail", pane, nextDetailId);
+    setDetailId(nextDetailId);
+  }
+
+  function closeMarketDetail() {
+    if (isDemoHistoryState(window.history.state) && window.history.state.demoEntry === "market-detail") {
+      window.history.back();
+      return;
+    }
+    setDetailId(null);
+  }
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -996,8 +1055,30 @@ function MarketView({
     params.set("marketModality", modality);
     if (detailId) params.set("marketDetail", detailId);
     else params.delete("marketDetail");
-    window.history.replaceState(null, "", `/demo?${params.toString()}`);
+    const entry = isDemoHistoryState(window.history.state) && typeof window.history.state.demoEntry === "string"
+      ? window.history.state.demoEntry as DemoHistoryEntry
+      : "route";
+    window.history.replaceState(
+      demoHistoryState(entry),
+      "",
+      demoRouteUrl(window.location.pathname === "/admin/demo", params),
+    );
   }, [day, detailId, modality, pane, query]);
+
+  useEffect(() => {
+    const restoreMarketRoute = () => {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("tab") !== "mercado") return;
+      const nextPane = params.get("marketPane");
+      setPane(nextPane === "jugadores" || nextPane === "equipos" ? nextPane : "partidos");
+      setQuery(params.get("marketZone") || "Barcelona");
+      setDay(params.get("marketDay") || "Esta semana");
+      setModality(params.get("marketModality") || "futbol7");
+      setDetailId(params.get("marketDetail"));
+    };
+    window.addEventListener("popstate", restoreMarketRoute);
+    return () => window.removeEventListener("popstate", restoreMarketRoute);
+  }, []);
 
   const resultCount = pane === "partidos" ? publicMatches.length : pane === "jugadores" ? marketPlayers.length : teams.length;
   const resultLabel = pane === "partidos" ? "partidos" : pane === "jugadores" ? "jugadores" : "equipos";
@@ -1017,7 +1098,7 @@ function MarketView({
         <Link href="/">Volver a Pachangas IQ</Link>
       </header>
       <nav className={styles.demoMarketTabs} aria-label="Secciones de Mercado">
-        {(["partidos", "jugadores", "equipos"] as const).map((entry) => <button aria-current={pane === entry ? "page" : undefined} key={entry} type="button" onClick={() => { setPane(entry); setDetailId(null); }}>{entry[0].toUpperCase() + entry.slice(1)}</button>)}
+        {(["partidos", "jugadores", "equipos"] as const).map((entry) => <button aria-current={pane === entry ? "page" : undefined} key={entry} type="button" onClick={() => selectMarketPane(entry)}>{entry[0].toUpperCase() + entry.slice(1)}</button>)}
       </nav>
       <div className={marketStyles.searchStack}>
         <div className={marketStyles.locationRow}>
@@ -1043,23 +1124,23 @@ function MarketView({
               <header><div><span>{dateLabel(match.date)}</span><strong>{match.title}</strong></div><b>{match.publicOpenSlots} plazas</b></header>
               <p className={marketStyles.matchMeta}>{matchKindLabels[match.kind]} · {venue?.label} · {venue?.publicLocation}</p>
               <div className={marketStyles.matchSummary}><span>{match.confirmedPlayerIds.length} confirmados</span><span>Aprobación manual</span><span>Ficticio</span></div>
-              {requestForMatch !== "idle" ? <div className={marketStyles.inlineState} data-tone={requestForMatch === "accepted" ? "success" : "neutral"}><strong>{requestForMatch === "accepted" ? "Plaza confirmada" : "Solicitud enviada"}</strong><small>Solo en esta sesión demo.</small></div> : null}
-              <footer className={marketStyles.cardFooter}><button type="button" onClick={() => setDetailId(match.id)}>Ver detalles</button>{signedOut ? <button type="button" disabled={offline} onClick={() => setMessage("Entrar para continuar. La ruta de Mercado se conserva en esta Demo.")}>Entrar para continuar</button> : requestForMatch === "accepted" ? <button type="button" onClick={() => onMatch(match.id)}>Ver partido</button> : requestForMatch === "pending" && perspective.role === "admin" ? <button type="button" disabled={offline} onClick={() => onAcceptRequest(match.id)}>Aceptar</button> : <button type="button" disabled={offline || requestForMatch === "pending"} onClick={() => onRequestSpot(match.id)}>{requestForMatch === "pending" ? "Solicitud enviada" : "Solicitar plaza"}</button>}</footer>
+              {requestForMatch !== "idle" ? <div className={marketStyles.inlineState} data-tone={marketRequestPresentation(requestForMatch).tone} aria-live="polite"><strong>{marketRequestPresentation(requestForMatch).statusLabel}</strong><small>Solo en esta sesión demo.</small></div> : null}
+              <footer className={marketStyles.cardFooter}><button type="button" onClick={() => openMarketDetail(match.id)}>Ver detalles</button>{signedOut ? <button type="button" disabled={offline} onClick={() => setMessage("Entrar para continuar. La ruta de Mercado se conserva en esta Demo.")}>Entrar para continuar</button> : requestForMatch === "accepted" ? <button type="button" onClick={() => onMatch(match.id)}>Ver partido</button> : requestForMatch === "pending" && perspective.role === "admin" ? <button type="button" disabled={offline} onClick={() => onAcceptRequest(match.id)}>Aceptar</button> : <button type="button" disabled={offline || requestForMatch !== "idle"} onClick={() => onRequestSpot(match.id)}>{marketRequestPresentation(requestForMatch).actionLabel}</button>}</footer>
             </article>;
           })}</div> : null}
 
           {pane === "jugadores" ? <><div className={marketStyles.playerGrid}>{marketPlayers.slice(0, visiblePlayerCount).map((player) => <article className={marketStyles.playerCard} data-selected={selectedPlayer?.id === player.id} key={player.id}>
             <span className={marketStyles.playerAvatar}>{player.name.slice(0, 1)}</span><div><header><div><span>{player.position.label}</span><strong>{player.name}</strong></div><b>{player.rating.currentOverall === null ? "-" : Math.round(player.rating.currentOverall)}</b></header><div className={marketStyles.playerMeta}><span>{player.market.zones[0]}</span><span>{matchKindLabels[player.market.modalities[0] as DemoMatchKind] ?? "Fútbol"}</span></div><p className={marketStyles.playerAvailability}>{player.market.availability}</p></div>
             {invitations[player.id] ? <div className={marketStyles.inlineState}><strong>Invitación enviada</strong><small>Solo en esta sesión demo.</small></div> : null}
-            <footer className={marketStyles.cardFooter}><button type="button" onClick={() => setDetailId(player.id)}>Ver perfil</button>{signedOut ? <button type="button" disabled={offline} onClick={() => setMessage("Entrar para continuar. La ruta de Mercado se conserva en esta Demo.")}>Entrar para continuar</button> : canDemoWorldInvite(perspective.role) ? <button type="button" disabled={offline || Boolean(invitations[player.id])} onClick={() => { setInvitations((current) => ({ ...current, [player.id]: "pending" })); setMessage(`Invitación a ${player.name}: simulada, no enviada.`); }}>Invitar</button> : null}</footer>
+            <footer className={marketStyles.cardFooter}><button type="button" onClick={() => openMarketDetail(player.id)}>Ver perfil</button>{signedOut ? <button type="button" disabled={offline} onClick={() => setMessage("Entrar para continuar. La ruta de Mercado se conserva en esta Demo.")}>Entrar para continuar</button> : canDemoWorldInvite(perspective.role) ? <button type="button" disabled={offline || Boolean(invitations[player.id])} onClick={() => { setInvitations((current) => ({ ...current, [player.id]: "pending" })); setMessage(`Invitación a ${player.name}: simulada, no enviada.`); }}>Invitar</button> : null}</footer>
           </article>)}</div>{visiblePlayerCount < marketPlayers.length ? <div className={styles.marketPager}><span>{Math.min(visiblePlayerCount, marketPlayers.length)} de {marketPlayers.length}</span><button type="button" onClick={() => setVisiblePlayerCount((current) => current + DEMO_WORLD_MARKET_PAGE_SIZE)}>Mostrar más</button></div> : null}</> : null}
 
-          {pane === "equipos" ? <div className={marketStyles.matchGrid}>{teams.map((team) => <article className={marketStyles.matchCard} data-selected={selectedTeam?.id === team.id} key={team.id}><header><div><span>{team.publicLocation}</span><strong>{team.name}</strong></div><b>{team.memberCount} jug.</b></header><p className={marketStyles.matchMeta}>{team.identity}</p><div className={marketStyles.matchSummary}><span>{team.stats.challengesPlayed} retos</span><span>{team.rankingLabel}</span></div><footer className={marketStyles.cardFooter}><button type="button" onClick={() => { setDetailId(team.id); onTeam(team.id); }}>Ver equipo</button>{signedOut ? <button type="button" disabled={offline} onClick={() => setMessage("Entrar para continuar. La ruta de Mercado se conserva en esta Demo.")}>Entrar para continuar</button> : perspective.role === "admin" && team.id !== perspective.teamId ? <button type="button" disabled={offline} onClick={() => onChallengeTeam(team.id)}>Retar</button> : null}</footer></article>)}</div> : null}
+          {pane === "equipos" ? <div className={marketStyles.matchGrid}>{teams.map((team) => <article className={marketStyles.matchCard} data-selected={selectedTeam?.id === team.id} key={team.id}><header><div><span>{team.publicLocation}</span><strong>{team.name}</strong></div><b>{team.memberCount} jug.</b></header><p className={marketStyles.matchMeta}>{team.identity}</p><div className={marketStyles.matchSummary}><span>{team.stats.challengesPlayed} retos</span><span>{team.rankingLabel}</span></div><footer className={marketStyles.cardFooter}><button type="button" onClick={() => { openMarketDetail(team.id); onTeam(team.id); }}>Ver equipo</button>{signedOut ? <button type="button" disabled={offline} onClick={() => setMessage("Entrar para continuar. La ruta de Mercado se conserva en esta Demo.")}>Entrar para continuar</button> : perspective.role === "admin" && team.id !== perspective.teamId ? <button type="button" disabled={offline} onClick={() => onChallengeTeam(team.id)}>Retar</button> : null}</footer></article>)}</div> : null}
         </div>
 
-        {selectedMatch ? <MarketDetailSheet label={`partido demo ${selectedMatch.title}`} onClose={() => setDetailId(null)}><div className={marketStyles.detailHero}><span>Partido demo</span><h2>{selectedMatch.title}</h2><p>{dateLabel(selectedMatch.date)} · {matchKindLabels[selectedMatch.kind]}</p></div><dl className={marketStyles.detailFacts}><div><dt>Campo</dt><dd>{snapshot.core.venues.find((venue) => venue.id === selectedMatch.venueId)?.label}</dd></div><div><dt>Zona</dt><dd>{snapshot.core.venues.find((venue) => venue.id === selectedMatch.venueId)?.publicLocation}</dd></div><div><dt>Plazas</dt><dd>{selectedMatch.publicOpenSlots}</dd></div><div><dt>Confirmados</dt><dd>{selectedMatch.confirmedPlayerIds.length}</dd></div></dl><div className={marketStyles.detailActions}><button type="button" disabled={offline || !signedOut && requestMatchId === selectedMatch.id && requestStatus === "pending"} onClick={() => signedOut ? setMessage("Entrar para continuar. La ruta de Mercado se conserva en esta Demo.") : onRequestSpot(selectedMatch.id)}>{signedOut ? "Entrar para continuar" : "Solicitar plaza"}</button></div></MarketDetailSheet> : null}
-        {selectedPlayer ? <MarketDetailSheet label={`jugador demo ${selectedPlayer.name}`} onClose={() => setDetailId(null)}><div className={marketStyles.detailPlayerHero}><PlayerCard player={selectedPlayer} /><div><div className={marketStyles.detailHero}><span>Ficha completa demo</span><h2>{selectedPlayer.name}</h2><p>{selectedPlayer.market.publicBio}</p></div><dl className={marketStyles.detailFacts}><div><dt>Posición</dt><dd>{selectedPlayer.position.label}</dd></div><div><dt>Media</dt><dd>{selectedPlayer.rating.currentOverall === null ? "Pendiente" : Math.round(selectedPlayer.rating.currentOverall)}</dd></div><div><dt>Disponibilidad</dt><dd>{selectedPlayer.market.availability}</dd></div><div><dt>Zonas</dt><dd>{selectedPlayer.market.zones.join(", ")}</dd></div></dl></div></div><div className={marketStyles.detailActions}><button type="button" onClick={() => onPlayer(selectedPlayer.id)}>Abrir ficha</button>{signedOut ? <button type="button" disabled={offline} onClick={() => setMessage("Entrar para continuar. La ruta de Mercado se conserva en esta Demo.")}>Entrar para continuar</button> : canDemoWorldInvite(perspective.role) ? <button type="button" disabled={offline || Boolean(invitations[selectedPlayer.id])} onClick={() => setInvitations((current) => ({ ...current, [selectedPlayer.id]: "pending" }))}>Invitar</button> : null}</div></MarketDetailSheet> : null}
-        {selectedTeam ? <MarketDetailSheet label={`equipo demo ${selectedTeam.name}`} onClose={() => setDetailId(null)}><TeamIdentity team={selectedTeam} /><div className={marketStyles.detailHero}><span>Equipo demo</span><h2>{selectedTeam.name}</h2><p>{selectedTeam.identity}</p></div><dl className={marketStyles.detailFacts}><div><dt>Plantilla</dt><dd>{selectedTeam.memberCount} jugadores</dd></div><div><dt>Zona</dt><dd>{selectedTeam.publicLocation}</dd></div><div><dt>Retos</dt><dd>{selectedTeam.stats.challengesPlayed}</dd></div><div><dt>Ranking</dt><dd>{selectedTeam.rankingLabel}</dd></div></dl><div className={marketStyles.detailActions}>{signedOut ? <button type="button" disabled={offline} onClick={() => setMessage("Entrar para continuar. La ruta de Mercado se conserva en esta Demo.")}>Entrar para continuar</button> : perspective.role === "admin" && selectedTeam.id !== perspective.teamId ? <button type="button" disabled={offline} onClick={() => onChallengeTeam(selectedTeam.id)}>Retar</button> : <span>Solo owner/admin puede preparar el reto.</span>}</div></MarketDetailSheet> : null}
+        {selectedMatch ? <MarketDetailSheet label={`partido demo ${selectedMatch.title}`} onClose={closeMarketDetail}><div className={marketStyles.detailHero}><span>Partido demo</span><h2>{selectedMatch.title}</h2><p>{dateLabel(selectedMatch.date)} · {matchKindLabels[selectedMatch.kind]}</p></div><dl className={marketStyles.detailFacts}><div><dt>Campo</dt><dd>{snapshot.core.venues.find((venue) => venue.id === selectedMatch.venueId)?.label}</dd></div><div><dt>Zona</dt><dd>{snapshot.core.venues.find((venue) => venue.id === selectedMatch.venueId)?.publicLocation}</dd></div><div><dt>Plazas</dt><dd>{selectedMatch.publicOpenSlots}</dd></div><div><dt>Confirmados</dt><dd>{selectedMatch.confirmedPlayerIds.length}</dd></div></dl>{selectedMatchRequestPresentation.statusLabel ? <div className={marketStyles.inlineState} data-tone={selectedMatchRequestPresentation.tone} aria-live="polite"><strong>{selectedMatchRequestPresentation.statusLabel}</strong><small>{selectedMatchRequestPresentation.detail}</small></div> : offline ? <div className={marketStyles.inlineState} data-tone="neutral" role="status"><strong>Sin conexión</strong><small>Necesitas conexión para solicitar una plaza.</small></div> : null}<div className={marketStyles.detailActions}>{selectedMatchRequestStatus === "accepted" ? <button type="button" onClick={() => onMatch(selectedMatch.id)}>Ver partido</button> : <button type="button" disabled={offline || !signedOut && selectedMatchRequestStatus !== "idle"} onClick={() => signedOut ? setMessage("Entrar para continuar. La ruta de Mercado se conserva en esta Demo.") : onRequestSpot(selectedMatch.id)}>{signedOut ? "Entrar para continuar" : selectedMatchRequestPresentation.actionLabel}</button>}</div></MarketDetailSheet> : null}
+        {selectedPlayer ? <MarketDetailSheet label={`jugador demo ${selectedPlayer.name}`} onClose={closeMarketDetail}><div className={marketStyles.detailPlayerHero}><PlayerCard player={selectedPlayer} /><div><div className={marketStyles.detailHero}><span>Ficha completa demo</span><h2>{selectedPlayer.name}</h2><p>{selectedPlayer.market.publicBio}</p></div><dl className={marketStyles.detailFacts}><div><dt>Posición</dt><dd>{selectedPlayer.position.label}</dd></div><div><dt>Media</dt><dd>{selectedPlayer.rating.currentOverall === null ? "Pendiente" : Math.round(selectedPlayer.rating.currentOverall)}</dd></div><div><dt>Disponibilidad</dt><dd>{selectedPlayer.market.availability}</dd></div><div><dt>Zonas</dt><dd>{selectedPlayer.market.zones.join(", ")}</dd></div></dl></div></div><div className={marketStyles.detailActions}><button type="button" onClick={() => onPlayer(selectedPlayer.id)}>Abrir ficha</button>{signedOut ? <button type="button" disabled={offline} onClick={() => setMessage("Entrar para continuar. La ruta de Mercado se conserva en esta Demo.")}>Entrar para continuar</button> : canDemoWorldInvite(perspective.role) ? <button type="button" disabled={offline || Boolean(invitations[selectedPlayer.id])} onClick={() => setInvitations((current) => ({ ...current, [selectedPlayer.id]: "pending" }))}>Invitar</button> : null}</div></MarketDetailSheet> : null}
+        {selectedTeam ? <MarketDetailSheet label={`equipo demo ${selectedTeam.name}`} onClose={closeMarketDetail}><TeamIdentity team={selectedTeam} /><div className={marketStyles.detailHero}><span>Equipo demo</span><h2>{selectedTeam.name}</h2><p>{selectedTeam.identity}</p></div><dl className={marketStyles.detailFacts}><div><dt>Plantilla</dt><dd>{selectedTeam.memberCount} jugadores</dd></div><div><dt>Zona</dt><dd>{selectedTeam.publicLocation}</dd></div><div><dt>Retos</dt><dd>{selectedTeam.stats.challengesPlayed}</dd></div><div><dt>Ranking</dt><dd>{selectedTeam.rankingLabel}</dd></div></dl><div className={marketStyles.detailActions}>{signedOut ? <button type="button" disabled={offline} onClick={() => setMessage("Entrar para continuar. La ruta de Mercado se conserva en esta Demo.")}>Entrar para continuar</button> : perspective.role === "admin" && selectedTeam.id !== perspective.teamId ? <button type="button" disabled={offline} onClick={() => onChallengeTeam(selectedTeam.id)}>Retar</button> : <span>Solo owner/admin puede preparar el reto.</span>}</div></MarketDetailSheet> : null}
       </div>
 
       <details className={styles.demoSocialProof}>
@@ -2059,8 +2140,9 @@ export function DemoWorldApp({ manifest, mode = "social" }: { manifest: DemoWorl
   const [localChallengeOverrides, setLocalChallengeOverrides] = useState<Record<string, DemoChallengeOverride>>({});
   const [localChallenges, setLocalChallenges] = useState<DemoWorldChallenge[]>([]);
   const [challengeResetVersion, setChallengeResetVersion] = useState(0);
-  const [demoSpotRequest, setDemoSpotRequest] = useState<"accepted" | "idle" | "pending">("idle");
+  const [demoSpotRequest, setDemoSpotRequest] = useState<DemoSpotRequestStatus>("idle");
   const [demoSpotMatchId, setDemoSpotMatchId] = useState<string | null>(null);
+  const demoSpotRequestFrame = useRef<number | null>(null);
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
   const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null);
   const [challengeOpponentTeamId, setChallengeOpponentTeamId] = useState<string | null>(() => {
@@ -2094,8 +2176,55 @@ export function DemoWorldApp({ manifest, mode = "social" }: { manifest: DemoWorl
 
   useEffect(() => {
     document.body.classList.add("demo-world-active");
-    return () => document.body.classList.remove("demo-world-active");
+    return () => {
+      document.body.classList.remove("demo-world-active");
+      if (demoSpotRequestFrame.current !== null) window.cancelAnimationFrame(demoSpotRequestFrame.current);
+    };
   }, []);
+
+  useEffect(() => {
+    const demoPath = fullMode ? "/admin/demo" : "/demo";
+    const restoreDemoRoute = () => {
+      if (window.location.pathname !== demoPath) return;
+      const params = new URLSearchParams(window.location.search);
+      const requestedTab = demoWorldV2TabFromSearch(window.location.search);
+      const nextTab = fullMode || socialDemoTabs.has(requestedTab) ? requestedTab : "inicio";
+      const routeSession = readInitialDemoWorldSession(window.location.search);
+      const nextPerspectiveId = fullMode || socialPerspectiveIds.has(routeSession.perspectiveId)
+        ? routeSession.perspectiveId
+        : "player";
+      setActiveTab(nextTab);
+      setSession((current) => current.perspectiveId === nextPerspectiveId ? current : { ...current, perspectiveId: nextPerspectiveId });
+      const matchId = params.get("match");
+      const leagueMatchId = params.get("leagueMatch");
+      if (matchId) setSelectedMatchId(matchId);
+      setSelectedLeagueMatchId(leagueMatchId);
+      setChallengeOpponentTeamId(params.get("crear") === "1" ? params.get("rival") : null);
+      if (nextTab === "partido" && !fullMode) {
+        setMatchExperienceView(params.get("matchView") === "detail" ? "detail" : "overview");
+      }
+    };
+
+    if (!isDemoHistoryState(window.history.state)) {
+      const params = new URLSearchParams(window.location.search);
+      const initialTab = demoWorldV2TabFromSearch(window.location.search);
+      const hasDeepContext = initialTab !== "inicio" || ["journey", "marketDetail", "match", "review", "rival"].some((key) => params.has(key));
+      if (hasDeepContext) {
+        const originalUrl = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+        const fallbackParams = new URLSearchParams();
+        fallbackParams.set("tab", "inicio");
+        const perspectiveId = params.get("perspective");
+        if (perspectiveId) fallbackParams.set("perspective", perspectiveId);
+        window.history.replaceState(demoHistoryState("fallback"), "", demoRouteUrl(fullMode, fallbackParams));
+        window.history.pushState(demoHistoryState("route"), "", originalUrl);
+      } else {
+        window.history.replaceState(demoHistoryState("route"), "", `${window.location.pathname}${window.location.search}${window.location.hash}`);
+      }
+    }
+
+    window.addEventListener("popstate", restoreDemoRoute);
+    return () => window.removeEventListener("popstate", restoreDemoRoute);
+  }, [fullMode]);
 
   useEffect(() => {
     if (fullMode || new URLSearchParams(window.location.search).get("review") !== "1") return;
@@ -2249,6 +2378,17 @@ export function DemoWorldApp({ manifest, mode = "social" }: { manifest: DemoWorl
     setLocalMatchOverrides((current) => ({ ...current, [match.id]: match }));
   }
 
+  function beginDemoSpotRequest(matchId: string) {
+    if (demoSpotRequestFrame.current !== null || (demoSpotMatchId === matchId && demoSpotRequest !== "idle")) return;
+    setDemoSpotMatchId(matchId);
+    setDemoSpotRequest("sending");
+    demoSpotRequestFrame.current = window.requestAnimationFrame(() => {
+      demoSpotRequestFrame.current = null;
+      setDemoSpotRequest((current) => current === "sending" ? "pending" : current);
+      setMessage("Solicitud de plaza creada solo en esta sesión demo.");
+    });
+  }
+
   function updateSocialInboxState(next: DemoSocialInboxState) {
     updateSession((current) => ({
       ...current,
@@ -2258,19 +2398,17 @@ export function DemoWorldApp({ manifest, mode = "social" }: { manifest: DemoWorl
 
   function openSocialInboxItem(tab: DemoWorldV2PrimaryTab, itemId: string) {
     setSocialActionFocus(itemId);
-    let openMatchDetail = false;
     if (itemId === DEMO_SOCIAL_ATTENDANCE_ID && socialAttendanceMatch) {
-      setSelectedMatchId(socialAttendanceMatch.id);
-      openMatchDetail = true;
+      openMatch(socialAttendanceMatch.id);
+      return;
     } else if (itemId !== DEMO_SOCIAL_CHALLENGE_ID && itemId !== DEMO_SOCIAL_TEAM_INVITATION_ID) {
       const source = notifications.find((notification) => notification.id === itemId);
       if (source?.targetId && tab === "partido" && allMatches.some((match) => match.id === source.targetId)) {
-        setSelectedMatchId(source.targetId);
-        openMatchDetail = true;
+        openMatch(source.targetId);
+        return;
       }
     }
     navigate(tab);
-    if (openMatchDetail) setMatchExperienceView("detail");
   }
 
   function startDemoMatchWizard(sourceMatch: DemoWorldMatch | null = selectedMatch, repeat = false) {
@@ -2311,9 +2449,20 @@ export function DemoWorldApp({ manifest, mode = "social" }: { manifest: DemoWorl
     setDemoMatchDraft(null);
     setDemoSpotRequest("idle");
     setDemoSpotMatchId(null);
+    if (demoSpotRequestFrame.current !== null) {
+      window.cancelAnimationFrame(demoSpotRequestFrame.current);
+      demoSpotRequestFrame.current = null;
+    }
     setSocialActionFocus(null);
     setMatchExperienceView("detail");
     setMessage("Partido creado solo en esta sesión demo. Remote writes: 0.");
+  }
+
+  function writeDemoRoute(params: URLSearchParams, entry: DemoHistoryEntry, mode: "push" | "replace") {
+    const url = demoRouteUrl(fullMode, params);
+    const currentUrl = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+    if (mode === "push" && url !== currentUrl) window.history.pushState(demoHistoryState(entry), "", url);
+    else window.history.replaceState(demoHistoryState(entry), "", url);
   }
 
   function navigate(requestedTab: DemoWorldV2PrimaryTab, preserveLeagueMatch = false) {
@@ -2329,7 +2478,17 @@ export function DemoWorldApp({ manifest, mode = "social" }: { manifest: DemoWorl
       params.delete("rival");
       setChallengeOpponentTeamId(null);
     }
-    window.history.replaceState(null, "", `${fullMode ? "/admin/demo" : "/demo"}?${params.toString()}`);
+    if (tab !== "partido") {
+      params.delete("leagueMatch");
+      params.delete("match");
+      params.delete("matchView");
+    } else if (!preserveLeagueMatch) {
+      params.delete("leagueMatch");
+      params.delete("match");
+      params.delete("matchView");
+    }
+    if (tab !== "mercado") params.delete("marketDetail");
+    writeDemoRoute(params, "route", activeTab === tab ? "replace" : "push");
     window.scrollTo({ behavior: "smooth", top: 0 });
   }
 
@@ -2345,7 +2504,7 @@ export function DemoWorldApp({ manifest, mode = "social" }: { manifest: DemoWorl
     const params = new URLSearchParams();
     params.set("tab", tab);
     params.set("perspective", perspectiveId);
-    window.history.replaceState(null, "", `/demo?${params.toString()}`);
+    writeDemoRoute(params, "route", "push");
     window.scrollTo({ behavior: "smooth", top: 0 });
     setSocialQuickReviewOpen(false);
   }
@@ -2382,18 +2541,50 @@ export function DemoWorldApp({ manifest, mode = "social" }: { manifest: DemoWorl
     const params = new URLSearchParams(window.location.search);
     params.set("perspective", perspectiveId);
     params.set("tab", activeTab);
-    window.history.replaceState(null, "", `${fullMode ? "/admin/demo" : "/demo"}?${params.toString()}`);
+    writeDemoRoute(params, "route", "replace");
   }
 
   function openMatch(matchId: string) {
     setSelectedMatchId(matchId);
-    navigate("partido");
+    setSelectedLeagueMatchId(null);
+    setActiveTab("partido");
     setMatchExperienceView("detail");
+    const params = new URLSearchParams(window.location.search);
+    params.set("tab", "partido");
+    params.set("perspective", session.perspectiveId);
+    params.set("match", matchId);
+    params.set("matchView", "detail");
+    params.delete("leagueMatch");
+    params.delete("marketDetail");
+    writeDemoRoute(params, "route", "push");
+    window.scrollTo({ behavior: "smooth", top: 0 });
   }
 
   function openLeagueMatch(matchId: string) {
     setSelectedLeagueMatchId(matchId);
-    navigate("partido", true);
+    setActiveTab("partido");
+    const params = new URLSearchParams(window.location.search);
+    params.set("tab", "partido");
+    params.set("perspective", session.perspectiveId);
+    params.set("leagueMatch", matchId);
+    params.delete("match");
+    params.delete("matchView");
+    params.delete("marketDetail");
+    writeDemoRoute(params, "route", "push");
+    window.scrollTo({ behavior: "smooth", top: 0 });
+  }
+
+  function closeMatchDetail() {
+    const params = new URLSearchParams(window.location.search);
+    if (isDemoHistoryState(window.history.state) && params.get("matchView") === "detail") {
+      window.history.back();
+      return;
+    }
+    if (fullMode) {
+      navigate("inicio");
+      return;
+    }
+    setMatchExperienceView("overview");
   }
 
   function openClub(clubId: string) {
@@ -2426,7 +2617,14 @@ export function DemoWorldApp({ manifest, mode = "social" }: { manifest: DemoWorl
     setChallengeResetVersion((current) => current + 1);
     setDemoSpotRequest("idle");
     setDemoSpotMatchId(null);
-    window.history.replaceState(null, "", fullMode ? "/admin/demo" : "/demo");
+    if (demoSpotRequestFrame.current !== null) {
+      window.cancelAnimationFrame(demoSpotRequestFrame.current);
+      demoSpotRequestFrame.current = null;
+    }
+    const params = new URLSearchParams();
+    params.set("tab", "inicio");
+    params.set("perspective", reset.perspectiveId);
+    writeDemoRoute(params, "route", "replace");
     setMessage("Mundo Demo restaurado al snapshot original.");
   }
 
@@ -2445,7 +2643,7 @@ export function DemoWorldApp({ manifest, mode = "social" }: { manifest: DemoWorl
             marketHref="/demo?tab=mercado"
             onCreate={() => startDemoMatchWizard()}
             onDiscardDraft={() => { setDemoMatchDraft(null); setMessage("Borrador local descartado. Remote writes: 0."); }}
-            onOpen={(matchId) => { setSelectedMatchId(matchId); setMatchExperienceView("detail"); }}
+            onOpen={openMatch}
             onRepeat={(matchId) => startDemoMatchWizard(allMatches.find((match) => match.id === matchId) ?? null, true)}
             onResumeDraft={() => setMatchExperienceView("wizard")}
             upcoming={demoUpcoming}
@@ -2480,11 +2678,11 @@ export function DemoWorldApp({ manifest, mode = "social" }: { manifest: DemoWorl
             setDemoSpotMatchId(selectedMatch.id);
             setMessage("Solicitud aceptada en la sesión demo. Ninguna notificación real enviada.");
           }}
-          onBack={() => setMatchExperienceView("overview")}
-          onLocalAttendance={(status) => { if (!selectedMatch) return; updateSession((current) => ({ ...current, attendanceByMatch: { ...current.attendanceByMatch, [demoAttendanceKey(currentPlayer.id, selectedMatch.id)]: status } })); setMessage(`Asistencia ${status === "voy" ? "confirmada" : status === "duda" ? "en duda" : "cancelada"} solo en esta sesión demo.`); }}
+          onBack={closeMatchDetail}
+          onLocalAttendance={(status) => { if (!selectedMatch) return; updateSession((current) => ({ ...current, attendanceByMatch: { ...current.attendanceByMatch, [demoAttendanceKey(currentPlayer.id, selectedMatch.id)]: status } })); setMessage(`Asistencia ${status === "voy" ? "confirmada" : status === "duda" ? "en duda" : "cancelada"} solo en esta sesión Demo. Remote writes: 0.`); }}
           onLocalMatchUpdate={updateLocalDemoMatch}
           onPlayer={setSelectedPlayerId}
-          onRequestSpot={() => { setDemoSpotMatchId(selectedMatch?.id ?? null); setDemoSpotRequest("pending"); setMessage("Solicitud de plaza creada solo en esta sesión demo."); }}
+          onRequestSpot={() => { if (selectedMatch) beginDemoSpotRequest(selectedMatch.id); }}
           perspective={perspective}
           requestStatus={demoSpotMatchId === selectedMatch?.id ? demoSpotRequest : "idle"}
           session={session}
@@ -2513,7 +2711,7 @@ export function DemoWorldApp({ manifest, mode = "social" }: { manifest: DemoWorl
           }}
           onMatch={openMatch}
           onPlayer={setSelectedPlayerId}
-          onRequestSpot={(matchId) => { setDemoSpotMatchId(matchId); setDemoSpotRequest("pending"); setMessage("Solicitud de plaza creada solo en esta sesión demo."); }}
+          onRequestSpot={beginDemoSpotRequest}
           onTeam={openTeam}
           perspective={perspective}
           requestMatchId={demoSpotMatchId}

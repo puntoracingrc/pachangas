@@ -12,6 +12,11 @@ import { ChallengeableTeamsPanel } from "./challengeable-teams-panel";
 import { MarketDetailSheet } from "./market-detail-sheet";
 import { MarketFilterSheet, type MarketFilterDraft } from "./market-filter-sheet";
 import {
+  marketQueryPhase,
+  visibleMarketResultCount,
+  type MarketDataSource,
+} from "./marketplace-ui-state";
+import {
   MARKET_QUICK_DAYS,
   marketAvailabilityMatches,
   marketDayMatches,
@@ -42,7 +47,6 @@ function LocationTargetIcon() {
 }
 
 type MarketTab = "equipos" | "jugadores" | "partidos";
-type MarketDataSource = "CACHED" | "LIVE" | "LOADING" | "UNAVAILABLE";
 type MarketOperationState = { message: string; pending?: boolean; tone?: "danger" | "neutral" | "success" };
 
 type MarketZone = {
@@ -462,6 +466,7 @@ function marketAdminMatchUrl(matchUrl: string) {
 function sourceLabel(source: MarketDataSource, updatedAt: string | null, online: boolean) {
   if (!online && source === "CACHED") return `Resultados guardados · ${updatedAt ? new Date(updatedAt).toLocaleString("es-ES") : "sin fecha"}`;
   if (source === "CACHED") return `Guardados · ${updatedAt ? new Date(updatedAt).toLocaleString("es-ES") : "sin fecha"}`;
+  if (source === "IDLE") return "Sin consultar";
   if (source === "LOADING") return "Buscando";
   if (source === "UNAVAILABLE") return "No disponible";
   return "Actualizado";
@@ -709,7 +714,7 @@ export default function MarketplaceClient() {
         setOpenMatchRequests({});
         if (!restoreCachedMatches()) {
           setOpenMatches([]);
-          setMatchSource("UNAVAILABLE");
+          setMatchSource("IDLE");
         }
       }
 
@@ -1153,6 +1158,8 @@ export default function MarketplaceClient() {
       : "Encuentra equipos de tu zona.";
   const activeSource = activeTab === "partidos" ? matchSource : activeTab === "jugadores" ? profileSource : teamSource;
   const resultCount = activeTab === "partidos" ? filteredMatches.length : activeTab === "jugadores" ? filteredProfiles.length : null;
+  const resultPhase = resultCount === null ? null : marketQueryPhase(activeSource, resultCount, online);
+  const confirmedResultCount = resultPhase === null ? null : visibleMarketResultCount(resultPhase, resultCount ?? 0);
   const resultNoun = activeTab === "partidos" ? "partidos" : activeTab === "jugadores" ? "jugadores" : "equipos";
   const sourceText = sourceLabel(activeSource, cacheUpdatedAt, online);
   const selectedRequest = selectedMatch ? openMatchRequests[selectedMatch.id] : undefined;
@@ -1266,9 +1273,9 @@ export default function MarketplaceClient() {
               </div>
             </section>
           ) : null}
-          {resultCount !== null ? (
+          {confirmedResultCount !== null ? (
             <div className={styles.resultsHeader}>
-              <strong>{resultCount} {resultNoun} {resultCount === 1 ? "encontrado" : "encontrados"}</strong>
+              <strong>{confirmedResultCount} {resultNoun} {confirmedResultCount === 1 ? "encontrado" : "encontrados"}</strong>
               {!online ? <span>Solo lectura sin conexión</span> : null}
             </div>
           ) : null}
@@ -1276,12 +1283,20 @@ export default function MarketplaceClient() {
           {activeTab === "partidos" ? (
             <div className={styles.resultsLayout} data-detail={Boolean(selectedMatch)}>
               <section className={styles.resultsColumn} aria-label="Partidos abiertos">
-                {matchSource === "LOADING" && !openMatches.length ? (
+                {matchSource === "IDLE" && !openMatches.length ? (
+                  <div className={styles.serviceState}>
+                    <h2>Encuentra tu próximo partido</h2>
+                    <p>Inicia sesión para buscar partidos abiertos. Conservaremos estos filtros cuando vuelvas.</p>
+                    <div className={styles.emptyActions}>
+                      <a className={styles.primaryButton} href={googleAuthEntryHref(`${typeof window === "undefined" ? "/mercado" : `${window.location.pathname}${window.location.search}`}`)}>Entrar para continuar</a>
+                    </div>
+                  </div>
+                ) : matchSource === "LOADING" && !openMatches.length ? (
                   <div className={styles.serviceState}><h2>Buscando partidos</h2><p>Estamos cargando el estado confirmado del Mercado.</p></div>
                 ) : matchSource === "UNAVAILABLE" && !openMatches.length ? (
                   <div className={styles.serviceState}>
                     <h2>{currentUserId ? "Partidos no disponibles" : "Entra para consultar partidos"}</h2>
-                    <p>{currentUserId ? "No hemos podido recuperar los partidos y no hay una lectura guardada segura." : "La autoridad actual de partidos abiertos requiere sesión. Tus filtros se conservarán al entrar."}</p>
+                    <p>{currentUserId ? "No hemos podido recuperar los partidos y no hay una lectura guardada segura." : "Necesitas conexión para consultar partidos. Tus filtros se conservarán al entrar."}</p>
                     <div className={styles.emptyActions}>
                       {!currentUserId ? <a className={styles.primaryButton} href={googleAuthEntryHref(`${typeof window === "undefined" ? "/mercado" : `${window.location.pathname}${window.location.search}`}`)}>Entrar para continuar</a> : null}
                       <button className={styles.secondaryButton} type="button" onClick={() => setMarketRefresh((value) => value + 1)}>Reintentar</button>
