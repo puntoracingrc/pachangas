@@ -2,18 +2,21 @@
 
 ## Release state
 
-`PENDING_RELEASE`
+`PRODUCTION_ACTIVE`
 
-This file is intentionally present before merge so the release evidence has a
-stable canonical location. It must not be interpreted as evidence of staging,
-merge, migration or production deployment until the sections below contain
-their final readbacks.
+Official UI V3G is merged, deployed and verified on the production domain. The
+only remaining repository operation is merging this final evidence update and
+removing its own clean worktree.
 
 ## Immutable inputs
 
 - Initial main: `8ce3dec994c16e32fd9cae5a05f51e37f4537b6f`
 - Functional PR: #256
 - Branch: `codex/official-ui-v3g-social-inbox`
+- Final functional branch SHA: `6018a0e96a142fc473936e85061adfbd17c27747`
+- Functional merge SHA: `62cccab2ae08319f0c06977a2cc7e70b3af8b1e6`
+- Production deployment: `dpl_EdhzJ5hUyA5Xn8aM87MsBpiNTAHw` (`READY`)
+- Production domain: `https://pachangasiq.com`
 - Initial migration ledger: 233
 - Final migration ledger: 235
 - Authority migration: `20260902064632_social_inbox_authority_v1.sql`
@@ -40,15 +43,40 @@ their final readbacks.
 - the V3G `unindexed_foreign_keys` Advisor finding is closed; only expected zero-use INFO notices remain for the new indexes;
 - direct receipt-table access remains denied to `anon` and `authenticated`; the two self-authorizing RPCs remain authenticated-only.
 
-## Pending release evidence
+## Production verification
 
-- disposable staging branch destruction and branch-scoped Preview variable removal;
-- final branch SHA and merged main SHA;
-- exact Vercel deployment ID, SHA and READY state;
-- production desktop, portrait, landscape and PWA smoke;
-- production canary rollback/readback at zero;
-- manifest, Service Worker, logs and redirect checks;
-- final report merge and worktree cleanup.
+- completed physical backup recorded before DDL: `1548932346`;
+- both additive migrations applied once, remote ledger 235 and final version/name exact;
+- all three receipt indexes valid/ready and both foreign keys covered;
+- production SQL/RLS/idempotency canary executed inside `ROLLBACK` and returned zero synthetic users, Teams, Challenges, notices and receipts;
+- exact merge deployment `READY`, Service Worker version `2.0.0+sw.62cccab2ae08` and valid manifest;
+- `/`, `/avisos`, `/ajustes/notificaciones`, `/perfil/avisos`, `/demo?tab=avisos`, `/admin/demo`, `/mercado` and `/equipo` passed at 1440x900, 390x844 and 844x390;
+- zero horizontal overflow, broken images, overlays or browser warnings/errors;
+- cached offline Inbox, reconnection and disposable standalone-mode emulation: PASS;
+- Vercel runtime errors: zero; deployment logs: zero 4xx and zero 5xx;
+- physical Android, iPhone and installed-PWA checks remain `PENDING`, not PASS.
+
+The post-DDL performance Advisor no longer reports the V3G unindexed foreign
+key. The two new indexes only have expected zero-use INFO notices because the
+receipt table remains empty. The two authenticated `SECURITY DEFINER` warnings
+are intentional RPC boundaries: each resolves `auth.uid()`, fixes
+`search_path=pg_catalog`, denies `anon` and exposes no direct table privilege.
+Reference: [unused index Advisor](https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index),
+[authenticated SECURITY DEFINER Advisor](https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable).
+
+## Disposable environment cleanup
+
+- branch-scoped Preview variables removed: 3/3; branch readback empty;
+- isolated Supabase branch deleted; final branch inventory contains only `main`;
+- no staging user, Team, session, notification or immutable evidence remains because the complete branch was destroyed;
+- no task-owned browser viewport, offline network emulation or temporary page mutation remains.
+
+## Repository closure pending
+
+- merge this final report update;
+- wait for the documentation-only `main` deployment;
+- verify the final `main` ancestry and clean status;
+- remove this task's own worktree and prune registered worktrees.
 
 ## Fixed safety boundaries
 

@@ -8,7 +8,7 @@
 - Migration frontier: 235 local files
 - V3G authority migration SHA-256: `4ade702f4ae82b4fbbabbf79d0cb3ee037b11d9345ee9dd8ab1853c36165460b`
 - V3G FK-index migration SHA-256: `3cbc006045c326737faf66210bc92753d7adf1ffd23dc0510958c24efcc51067`
-- Status: local, authenticated staging and isolated Preview certified; both V3G migrations applied and read back in production
+- Status: production active; local, authenticated staging, isolated Preview, migrations, canary, responsive/PWA smoke and disposable-environment cleanup certified
 
 ## Authority
 
