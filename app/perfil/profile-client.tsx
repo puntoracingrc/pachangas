@@ -5,6 +5,12 @@ import Image from "next/image";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { OfficialProductShellV2 } from "../_components/official-product-shell-v2";
 import { PlayerCosmeticCard } from "../_components/player-cosmetic-card";
+import {
+  modalityLabel as socialModalityLabel,
+  normalizeCanonicalSocialProfile,
+  normalizeSocialTeams,
+  type CanonicalSocialProfile,
+} from "../social-team-core-contract";
 import { playerMarketPresentationState } from "../social-onboarding-contract";
 import { supabase } from "../supabaseClient";
 import styles from "./profile.module.css";
@@ -38,10 +44,11 @@ type TeamSummary = {
 type ProfileSnapshot = {
   fetchedAt: string;
   profile: ProfileRow | null;
+  socialProfile: CanonicalSocialProfile | null;
   teams: TeamSummary[];
 };
 
-const cacheVersion = "v3e";
+const cacheVersion = "v3f";
 
 function cacheKey(userId: string) {
   return `pachangas-profile-read-cache:${cacheVersion}:${userId}`;
@@ -94,7 +101,11 @@ function normalizeProfileRow(value: unknown): ProfileRow | null {
 function readCache(userId: string): ProfileSnapshot | null {
   try {
     const parsed = JSON.parse(window.localStorage.getItem(cacheKey(userId)) ?? "null") as ProfileSnapshot | null;
-    return parsed && Array.isArray(parsed.teams) ? { ...parsed, profile: normalizeProfileRow(parsed.profile) } : null;
+    return parsed && Array.isArray(parsed.teams) ? {
+      ...parsed,
+      profile: normalizeProfileRow(parsed.profile),
+      socialProfile: normalizeCanonicalSocialProfile(parsed.socialProfile),
+    } : null;
   } catch {
     return null;
   }
@@ -120,17 +131,14 @@ export function CanonicalPlayerProfile() {
       return;
     }
 
-    const [profileResult, membershipsResult] = await Promise.all([
+    const [profileResult, socialProfileResult, membershipsResult] = await Promise.all([
       supabase
         .from("pachanga_player_profiles")
         .select("id,display_name,avatar,avatar_offset_x,avatar_offset_y,position,outfield_position,current_overall,current_facets,assessment_summary,market_enabled,market_zones,market_availability,market_modalities,profile_version,updated_at")
         .eq("user_id", targetUserId)
         .maybeSingle(),
-      supabase
-        .from("pachanga_group_members")
-        .select("role,pachanga_groups(id,name,team_code)")
-        .eq("user_id", targetUserId)
-        .order("created_at", { ascending: true }),
+      supabase.rpc("get_my_pachanga_social_profile_v1"),
+      supabase.rpc("get_my_pachanga_social_teams_v1"),
     ]);
 
     if (profileResult.error || membershipsResult.error) {
@@ -141,13 +149,18 @@ export function CanonicalPlayerProfile() {
       return;
     }
 
-    const teams = (membershipsResult.data ?? []).flatMap((membership) => {
-      const raw = Array.isArray(membership.pachanga_groups) ? membership.pachanga_groups[0] : membership.pachanga_groups;
-      if (!raw) return [];
-      const role = membership.role === "owner" || membership.role === "admin" ? membership.role : "player";
-      return [{ id: String(raw.id), name: safeText(raw.name, "Equipo"), role, teamCode: safeText(raw.team_code) } satisfies TeamSummary];
-    });
-    const next: ProfileSnapshot = { fetchedAt: new Date().toISOString(), profile: normalizeProfileRow(profileResult.data), teams };
+    const teams = normalizeSocialTeams(membershipsResult.data).map((team) => ({
+      id: team.groupId,
+      name: team.name,
+      role: team.role,
+      teamCode: team.teamCode,
+    } satisfies TeamSummary));
+    const next: ProfileSnapshot = {
+      fetchedAt: new Date().toISOString(),
+      profile: normalizeProfileRow(profileResult.data),
+      socialProfile: socialProfileResult.error ? null : normalizeCanonicalSocialProfile(socialProfileResult.data),
+      teams,
+    };
     setSnapshot(next);
     setStatus("ready");
     setMessage("");
@@ -181,9 +194,9 @@ export function CanonicalPlayerProfile() {
     const client = supabase;
     const reload = () => void loadCanonical(userId);
     const channel = client
-      .channel(`profile-v3e-${userId}`)
+      .channel(`profile-v3f-${userId}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "pachanga_player_profiles", filter: `user_id=eq.${userId}` }, reload)
-      .on("postgres_changes", { event: "*", schema: "public", table: "pachanga_group_members", filter: `user_id=eq.${userId}` }, reload)
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "pachanga_social_invalidations_v1" }, reload)
       .subscribe((nextStatus) => { if (nextStatus === "SUBSCRIBED") reload(); });
     const reconnect = () => reload();
     window.addEventListener("online", reconnect);
@@ -194,11 +207,19 @@ export function CanonicalPlayerProfile() {
   }, [loadCanonical, userId]);
 
   const profile = snapshot?.profile ?? null;
+  const socialProfile = snapshot?.socialProfile ?? null;
   const team = snapshot?.teams[0] ?? null;
   const modalities = useMemo(() => profileModalities(profile), [profile]);
   const marketState = playerMarketPresentationState({ availability: profile?.market_availability, enabled: profile?.market_enabled, zones: profile?.market_zones });
   const facets = Object.entries(profile?.current_facets ?? {}).slice(0, 6).map(([key, value]) => ({ key, label: key.slice(0, 3).toUpperCase(), value: Math.round(Number(value) || 0) }));
   const editHref = team ? `/?mobile=perfil&edit=1&equipo=${encodeURIComponent(team.teamCode)}` : "/?social=profile";
+  const identityName = profile?.display_name ?? socialProfile?.displayName ?? "Mi perfil";
+  const identityAvatar = profile?.avatar ?? socialProfile?.avatarRef ?? null;
+  const identityPosition = profile?.position ?? socialProfile?.primaryPosition ?? "Pendiente";
+  const identityModalities = modalities.length
+    ? modalities.map(modalityLabel)
+    : socialProfile ? [socialModalityLabel(socialProfile.preferredModality)] : [];
+  const identityArea = profile?.market_zones || socialProfile?.generalArea || "Zona general pendiente";
 
   async function signOut() {
     await supabase?.auth.signOut();
@@ -207,21 +228,21 @@ export function CanonicalPlayerProfile() {
 
   return (
     <OfficialProductShellV2
-      account={{ avatarUrl: profile?.avatar ?? undefined, displayName: profile?.display_name, onSignOut: signOut, profileHref: "/perfil", teamHref: "/?mobile=equipo" }}
+      account={{ avatarUrl: identityAvatar ?? undefined, displayName: identityName, onSignOut: signOut, profileHref: "/perfil", teamHref: "/equipo" }}
       active="perfil"
-      context={{ detail: team ? `${team.name} · ${team.role}` : "Jugador sin equipo", eyebrow: "Identidad", id: team?.id ?? "profile", role: team?.role ?? "Jugador", status: status === "ready" ? "Confirmado" : status === "offline" ? "Copia local" : "Comprobando", title: profile?.display_name ?? "Mi perfil", type: team ? "team" : "profile" }}
+      context={{ detail: team ? `${team.name} · ${team.role}` : "Jugador sin equipo", eyebrow: "Identidad", id: team?.id ?? "profile", role: team?.role ?? "Jugador", status: status === "ready" ? "Confirmado" : status === "offline" ? "Copia local" : "Comprobando", title: identityName, type: team ? "team" : "profile" }}
       links={{ perfil: "/perfil" }}
       perspective={team?.role === "owner" ? "team-owner" : team?.role === "admin" ? "team-admin" : team ? "player" : "free-agent"}
     >
-      <main className={styles.page} data-canonical-profile="v3e" data-profile-status={status}>
+      <main className={styles.page} data-canonical-profile="v3f" data-profile-status={status}>
         {status === "loading" ? <section className={styles.state}><strong>Cargando tu perfil confirmado...</strong></section> : null}
         {status === "signed-out" ? <section className={styles.state}><span>Mi perfil</span><h1>Inicia sesión para ver tu identidad de jugador</h1><Link href="/">Volver a Inicio</Link></section> : null}
         {status === "error" && !snapshot ? <section className={styles.state}><span>Perfil no disponible</span><h1>No pudimos cargar tu ficha</h1><p>{message}</p><button type="button" onClick={() => userId && void loadCanonical(userId)}>Reintentar</button></section> : null}
         {snapshot || status === "offline" ? (
           <>
             <header className={styles.hero}>
-              <div className={styles.avatar} style={{ position: "relative" }}>{profile?.avatar ? <Image alt={`Avatar de ${profile.display_name}`} fill sizes="92px" src={profile.avatar} unoptimized /> : <span aria-hidden="true">{(profile?.display_name ?? "J").slice(0, 1).toUpperCase()}</span>}</div>
-              <div><span>Mi perfil</span><h1>{profile?.display_name ?? "Perfil deportivo pendiente"}</h1><p>{profile ? `${profile.position} · ${modalities.map(modalityLabel).join(" · ") || "Modalidad pendiente"}` : "Completa tu identidad cuando actives una ficha dentro de un equipo."}</p><small>{profile?.market_zones || "Zona general pendiente"}</small></div>
+              <div className={styles.avatar} style={{ position: "relative" }}>{identityAvatar ? <Image alt={`Avatar de ${identityName}`} fill sizes="92px" src={identityAvatar} unoptimized /> : <span aria-hidden="true">{identityName.slice(0, 1).toUpperCase()}</span>}</div>
+              <div><span>Mi perfil</span><h1>{identityName}</h1><p>{identityPosition} · {identityModalities.join(" · ") || "Modalidad pendiente"}</p><small>{identityArea}</small></div>
               <Link className={styles.primary} href={editHref}>Editar perfil</Link>
             </header>
             {message ? <p className={styles.notice} role="status">{message}</p> : null}
@@ -229,8 +250,8 @@ export function CanonicalPlayerProfile() {
               <section className={styles.summary}>
                 <header><span>Identidad</span><h2>Resumen de perfil</h2></header>
                 <dl>
-                  <div><dt>Posición</dt><dd>{profile?.position ?? "Pendiente"}</dd></div>
-                  <div><dt>Modalidad</dt><dd>{modalities.map(modalityLabel).join(", ") || "Pendiente"}</dd></div>
+                  <div><dt>Posición</dt><dd>{identityPosition}</dd></div>
+                  <div><dt>Modalidad</dt><dd>{identityModalities.join(", ") || "Pendiente"}</dd></div>
                   <div><dt>Disponibilidad</dt><dd>{profile?.market_availability || "No indicada"}</dd></div>
                   <div><dt>Equipo activo</dt><dd>{team?.name ?? "Sin equipo"}</dd></div>
                 </dl>

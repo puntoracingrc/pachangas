@@ -71,12 +71,20 @@ import {
   deriveSocialEntryState,
   mapTeamJoinError,
   normalizeSocialOnboardingDraft,
+  parseTeamInvitationInput,
   socialOnboardingFlowFromSearch,
   socialProfileModalities,
   type SocialOnboardingFlow,
   type SocialOnboardingDraft,
-  type SocialProfileMinimum,
 } from "./social-onboarding-contract";
+import {
+  normalizeCanonicalSocialProfile,
+  normalizeSocialTeamInvitation,
+  normalizeSocialTeamSummary,
+  socialProfileCacheKey,
+  type CanonicalSocialProfile,
+  type SocialTeamCreateDraft,
+} from "./social-team-core-contract";
 import { supabase } from "./supabaseClient";
 import {
   normalizeTeamShieldSnapshot,
@@ -3545,7 +3553,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [authUser, setAuthUser] = useState<User | null>(null);
   const [profileName, setProfileName] = useState("");
-  const [canonicalSocialProfile, setCanonicalSocialProfile] = useState<SocialProfileMinimum | null>(null);
+  const [canonicalSocialProfile, setCanonicalSocialProfile] = useState<CanonicalSocialProfile | null>(null);
   const [pendingSocialInvitation, setPendingSocialInvitation] = useState<PendingSocialInvitation | null>(null);
   const [socialOnboardingDismissed, setSocialOnboardingDismissed] = useState(false);
   const [socialOnboardingDraft, setSocialOnboardingDraft] = useState<SocialOnboardingDraft>(() => emptySocialOnboardingDraft());
@@ -3610,6 +3618,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
   const cameraVideoRef = useRef<HTMLVideoElement>(null);
   const cameraStreamRef = useRef<MediaStream | null>(null);
   const handledMobileEntryRef = useRef(false);
+  const handledCreateMatchEntryRef = useRef(false);
   const mobileNavigationLockRef = useRef<MobileAppTab | null>(null);
   const mobileNavigationUnlockTimerRef = useRef<number | null>(null);
   const pitchFullscreenRequestedRef = useRef(false);
@@ -4444,38 +4453,45 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
     if (!supabase) return () => { active = false; };
     const client = supabase;
     const loadProfile = async () => {
-      const result = await client
-        .from("pachanga_player_profiles")
-        .select("display_name,position,market_modalities,assessment_summary")
-        .eq("user_id", currentUserId)
-        .maybeSingle();
-      if (!active || result.error) return;
-      if (!result.data) {
+      const result = await client.rpc("get_my_pachanga_social_profile_v1");
+      if (!active) return;
+      if (result.error) {
+        try {
+          const cached = normalizeCanonicalSocialProfile(JSON.parse(localStorage.getItem(socialProfileCacheKey(currentUserId)) ?? "null"));
+          if (cached) setCanonicalSocialProfile(cached);
+        } catch {
+          // A missing read cache leaves the server profile unknown, never confirmed locally.
+        }
+        return;
+      }
+      const profile = normalizeCanonicalSocialProfile(result.data);
+      if (!profile) {
         setCanonicalSocialProfile(null);
         setSocialOnboardingDraft((current) => current.displayName ? current : { ...current, displayName: authDisplayName(authUser) });
         return;
       }
-      const profile = {
-        displayName: String(result.data.display_name ?? ""),
-        modalities: socialProfileModalities({
-          assessmentSummary: result.data.assessment_summary,
-          marketModalities: result.data.market_modalities,
-        }),
-        position: String(result.data.position ?? ""),
-      } satisfies SocialProfileMinimum;
       setCanonicalSocialProfile(profile);
+      try {
+        localStorage.setItem(socialProfileCacheKey(currentUserId), JSON.stringify(profile));
+      } catch {
+        // The profile remains canonical even when this derived read cache is unavailable.
+      }
       setSocialOnboardingDraft((current) => normalizeSocialOnboardingDraft({
         ...current,
-        displayName: current.displayName || profile.displayName || authDisplayName(authUser),
-        position: current.position || profile.position,
+        approximateTime: profile.approximateTime || current.approximateTime,
+        days: profile.usualDays.length ? profile.usualDays : current.days,
+        displayName: profile.displayName || current.displayName || authDisplayName(authUser),
+        modality: profile.preferredModality,
+        position: profile.primaryPosition || current.position,
+        zone: profile.generalArea || current.zone,
       }));
     };
     void loadProfile();
     const channel = client
-      .channel(`social-profile-v3e-${currentUserId}`)
+      .channel(`social-profile-v3f-${currentUserId}`)
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "pachanga_player_profiles", filter: `user_id=eq.${currentUserId}` },
+        { event: "INSERT", schema: "public", table: "pachanga_social_invalidations_v1", filter: `audience_user_id=eq.${currentUserId}` },
         () => void loadProfile(),
       )
       .subscribe((status) => {
@@ -4516,7 +4532,9 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
 
       try {
         const params = new URLSearchParams(homeEntrySearch(entryRoute, window.location.search));
-        const inviteToken = previewDemoMode ? null : expandCompactUuid(params.get("i") ?? params.get("invite"));
+        const rawInviteToken = previewDemoMode ? null : params.get("i") ?? params.get("invite");
+        const parsedInvite = rawInviteToken ? parseTeamInvitationInput(rawInviteToken) : null;
+        const inviteToken = parsedInvite?.kind === "invite" ? parsedInvite.token : null;
         const adminInviteToken = previewDemoMode ? null : expandCompactUuid(params.get("a") ?? params.get("admin"));
         const sharedMatchId = previewDemoMode ? null : expandCompactUuid(params.get("p") ?? params.get("partido"));
         const teamCode = previewDemoMode ? null : params.get("equipo");
@@ -4545,8 +4563,16 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
         }
 
         if (adminInviteToken || inviteToken) {
+          let invitationSnapshot = null;
+          if (inviteToken?.startsWith("piq_")) {
+            const lookup = await client.rpc("lookup_pachanga_team_player_invitation_v2", {
+              invitation_token: inviteToken,
+            });
+            if (!lookup.error) invitationSnapshot = normalizeSocialTeamInvitation(lookup.data);
+          }
           setPendingSocialInvitation({
             kind: adminInviteToken ? "admin" : "player",
+            snapshot: invitationSnapshot,
             token: adminInviteToken ?? inviteToken!,
           });
           await loadTeams(client);
@@ -6297,6 +6323,18 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
   const canManageRoles = actualCanManageBilling && !playerPreviewActive;
   const canUseAdminControls = canPreviewPlayerView && !playerPreviewActive;
   const displayedRole: MemberRole | null = playerPreviewActive ? "player" : currentRole;
+  const openCreateMatchEntry = useEffectEvent(() => startQuickMatchWizard(activeMatch));
+
+  useEffect(() => {
+    if (handledCreateMatchEntryRef.current || !remoteReady || !canUseAdminControls) return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("create") !== "match") return;
+    handledCreateMatchEntryRef.current = true;
+    params.delete("create");
+    const nextSearch = params.toString();
+    window.history.replaceState(null, "", `${window.location.pathname}${nextSearch ? `?${nextSearch}` : ""}`);
+    queueMicrotask(openCreateMatchEntry);
+  }, [canUseAdminControls, remoteReady]);
   const mainPanelClassName = [
     canUseAdminControls ? "panel main-panel" : "panel main-panel player-facing-main",
     matchFinalized ? "match-finalized-main" : "",
@@ -6317,7 +6355,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
   const canConfigureMatchMarket = canUseAdminControls && showMatchRoster && !lineupClosed && !matchFinalized;
   const canCreateTeam = Boolean(supabase && isRegisteredUser);
   const ownPlayer = currentUserId ? players.find((player) => player.ownerUserId === currentUserId) : undefined;
-  const socialProfile = ownPlayer
+  const socialProfile = canonicalSocialProfile ?? (ownPlayer
     ? {
         displayName: playerDisplayName(ownPlayer),
         modalities: socialProfileModalities({
@@ -6326,7 +6364,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
         }),
         position: ownPlayer.position,
       }
-    : canonicalSocialProfile;
+    : null);
   const socialEntryState = deriveSocialEntryState({
     invitationPending: Boolean(pendingSocialInvitation),
     membershipCount: remoteTeams.length,
@@ -7577,6 +7615,136 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
     }
   }
 
+  function socialCommandError(error: unknown, fallback: string) {
+    const raw = error instanceof Error ? error.message : typeof error === "object" && error && "message" in error ? String(error.message) : String(error ?? "");
+    const message = raw.toLowerCase();
+    if (message.includes("disabled")) return "Esta función todavía no está activa en el servidor.";
+    if (message.includes("stale") || message.includes("conflict")) return "El estado cambió en otro dispositivo. Se ha recargado la copia oficial.";
+    if (message.includes("profile_already_exists")) return "El perfil ya existe. Recarga para editar su versión actual.";
+    if (message.includes("social_profile_required")) return "Guarda primero tu perfil de jugador.";
+    if (message.includes("team_owner_limit")) return "Has alcanzado el límite de equipos propios.";
+    if (message.includes("team_creation_recently_confirmed")) return "El equipo ya se confirmó. Estamos recuperando su estado oficial.";
+    if (message.includes("operationally_restricted") || message.includes("suspended") || message.includes("archived")) return "El equipo no permite esta acción ahora mismo.";
+    if (message.includes("client_update_required")) return "Actualiza Pachangas IQ antes de volver a guardar.";
+    return fallback;
+  }
+
+  async function saveSocialProfile(draft: SocialOnboardingDraft) {
+    if (!supabase || !navigator.onLine || !currentUserId) {
+      return { error: "Necesitas conexión para confirmar esta acción.", ok: false };
+    }
+    const client = supabase;
+    const action = canonicalSocialProfile ? "profile.update" : "profile.create";
+    const expectedRevision = canonicalSocialProfile?.revision ?? 0;
+    setSyncStatus("connecting");
+    setSyncError("");
+    const result = await client.rpc("command_pachanga_social_profile_v1", {
+      action,
+      client_metadata: clientOperationMetadata(),
+      expected_revision: expectedRevision,
+      operation_id: id(),
+      payload: {
+        approximateTime: draft.approximateTime,
+        displayName: draft.displayName,
+        generalArea: draft.zone,
+        preferredModality: draft.modality,
+        primaryPosition: draft.position,
+        usualDays: draft.days,
+      },
+    });
+    if (result.error) {
+      const error = socialCommandError(result.error, "El servidor no pudo confirmar el perfil.");
+      setSyncStatus("error");
+      setSyncError(error);
+      const readback = await client.rpc("get_my_pachanga_social_profile_v1");
+      const current = !readback.error ? normalizeCanonicalSocialProfile(readback.data) : null;
+      if (current) setCanonicalSocialProfile(current);
+      return { error, ok: false };
+    }
+    const profile = normalizeCanonicalSocialProfile(result.data);
+    if (!profile) {
+      const error = "El servidor respondió sin un perfil canónico válido.";
+      setSyncStatus("error");
+      setSyncError(error);
+      return { error, ok: false };
+    }
+    setCanonicalSocialProfile(profile);
+    setProfileName(profile.displayName);
+    setSocialOnboardingDraft(normalizeSocialOnboardingDraft({
+      approximateTime: profile.approximateTime,
+      days: profile.usualDays,
+      displayName: profile.displayName,
+      modality: profile.preferredModality,
+      position: profile.primaryPosition,
+      zone: profile.generalArea,
+    }));
+    try {
+      localStorage.setItem(socialProfileCacheKey(currentUserId), JSON.stringify(profile));
+    } catch {
+      // The confirmed response remains authoritative when the read cache is full.
+    }
+    setSyncStatus("live");
+    return { ok: true };
+  }
+
+  async function createSocialTeam(draft: SocialTeamCreateDraft) {
+    if (!supabase || !navigator.onLine) return { error: "Necesitas conexión para confirmar esta acción.", ok: false };
+    setSyncStatus("connecting");
+    setSyncError("");
+    const result = await supabase.rpc("command_pachanga_social_team_v1", {
+      action: "team.create",
+      client_metadata: clientOperationMetadata(),
+      expected_revision: 0,
+      operation_id: id(),
+      payload: {
+        generalArea: draft.zone,
+        modality: draft.modality,
+        name: draft.name,
+        shieldKey: draft.shieldKey,
+        targetPlayerCount: draft.targetPlayerCount,
+      },
+    });
+    if (result.error) {
+      const error = socialCommandError(result.error, "El servidor no pudo crear el equipo.");
+      setSyncStatus("error");
+      setSyncError(error);
+      return { error, ok: false };
+    }
+    const team = normalizeSocialTeamSummary(result.data);
+    if (!team) {
+      const error = "El servidor respondió sin un equipo canónico válido.";
+      setSyncStatus("error");
+      setSyncError(error);
+      return { error, ok: false };
+    }
+    setSocialOnboardingDismissed(true);
+    setSocialFlowRequested(null);
+    await loadTeams(supabase, team.groupId);
+    window.location.assign(`/equipo?team=${encodeURIComponent(team.groupId)}&created=1`);
+    return { ok: true };
+  }
+
+  async function lookupSocialTeamCode(code: string) {
+    if (!supabase || !navigator.onLine) return { error: "Necesitas conexión para buscar el equipo.", ok: false };
+    const result = await supabase.rpc("lookup_pachanga_social_team_code_v1", { target_team_code: code });
+    if (result.error || !result.data || typeof result.data !== "object") {
+      return { error: "EQUIPO NO ENCONTRADO", ok: false };
+    }
+    const source = result.data as Record<string, unknown>;
+    const name = typeof source.name === "string" ? source.name : "";
+    if (!name) return { error: "EQUIPO NO ENCONTRADO", ok: false };
+    return {
+      ok: true,
+      team: {
+        generalArea: typeof source.generalArea === "string" ? source.generalArea : "",
+        memberCount: Math.max(0, Math.floor(Number(source.memberCount) || 0)),
+        modality: typeof source.modality === "string" ? source.modality : "futbol7",
+        name,
+        teamCode: typeof source.teamCode === "string" ? source.teamCode : code,
+      },
+    };
+  }
+
   async function confirmSocialInvitation(invitation: PendingSocialInvitation, displayNameDraft: string) {
     if (!supabase || !navigator.onLine) {
       return { error: "Sin conexión: la invitación no se ha aceptado.", ok: false };
@@ -7602,12 +7770,23 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
         if (result.error || !result.data) throw new Error(result.error?.message ?? "Invitation unavailable");
         groupId = String((result.data as { groupId?: string }).groupId ?? "");
       } else {
-        const result = await client.rpc("join_pachanga_team", {
-          member_name: memberName,
-          token: invitation.token,
+        const lookup = await client.rpc("lookup_pachanga_team_player_invitation_v2", {
+          invitation_token: invitation.token,
+        });
+        const snapshot = !lookup.error ? normalizeSocialTeamInvitation(lookup.data) : null;
+        if (!snapshot || snapshot.state !== "ACTIVE") throw new Error(lookup.error?.message ?? `INVITATION_${snapshot?.state ?? "NOT_FOUND"}`);
+        const result = await client.rpc("command_pachanga_team_player_invitation_v2", {
+          action: "team.invitation.accept",
+          client_metadata: clientOperationMetadata(),
+          expected_revision: snapshot.revision,
+          invitation_token: invitation.token,
+          operation_id: id(),
+          payload: {},
+          target_group_id: snapshot.groupId,
+          target_invitation_id: snapshot.invitationId,
         });
         if (result.error || !result.data) throw new Error(result.error?.message ?? "Invitation unavailable");
-        groupId = String(result.data);
+        groupId = String((result.data as { groupId?: string }).groupId ?? snapshot.groupId);
       }
 
       if (!groupId) throw new Error("Group not found");
@@ -7618,6 +7797,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
       window.history.replaceState(null, "", params.size ? `${window.location.pathname}?${params.toString()}` : window.location.pathname);
       await loadTeams(client, groupId);
       setSyncStatus("live");
+      window.location.assign(`/equipo?team=${encodeURIComponent(groupId)}`);
       return { ok: true };
     } catch (error) {
       const message = mapTeamJoinError(error);
@@ -8318,33 +8498,6 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
     if (matchLink) params.set("link", matchLink);
 
     return `/mercado?${params.toString()}`;
-  }
-
-  function currentTeamInviteUrl() {
-    if (!localHydrated || typeof window === "undefined" || !currentTeam) return "";
-    return `${window.location.origin}/invitacion/grupo/${encodeURIComponent(compactUuid(currentTeam.inviteToken))}`;
-  }
-
-  async function copyTeamInvite() {
-    const inviteUrl = currentTeamInviteUrl();
-    if (!inviteUrl) return;
-
-    const copied = await copyTextWithFallback(inviteUrl, "Copia el enlace del equipo");
-    if (copied) {
-      setSyncStatus("live");
-      setSyncError("");
-      return;
-    }
-
-    setSyncStatus("error");
-    setSyncError("No se pudo copiar el enlace");
-  }
-
-  function shareTeamInviteWhatsApp() {
-    const inviteUrl = currentTeamInviteUrl();
-    if (!inviteUrl) return;
-    const teamName = currentTeam?.name ?? "mi equipo";
-    window.open(`https://wa.me/?text=${encodeURIComponent(`Únete a ${teamName}\n${inviteUrl}`)}`, "_blank", "noopener,noreferrer");
   }
 
   function shareText(invitationUrl: string) {
@@ -9750,7 +9903,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
         onSignOut: signOut,
         profileHref: "/perfil",
         settingsHref: "/?mobile=perfil&settings=1",
-        teamHref: "/?mobile=equipo",
+        teamHref: "/equipo",
       }}
       active={activeMobileTab}
       adminViewPreview={canPreviewPlayerView ? { active: playerPreviewActive, onToggle: toggleAdminPlayerView } : undefined}
@@ -9800,6 +9953,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
               }
             }
           }}
+          onCreateTeam={createSocialTeam}
           onDraftChange={setSocialOnboardingDraft}
           onForcedViewHandled={() => {
             setSocialFlowRequested(null);
@@ -9808,6 +9962,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
             window.history.replaceState(null, "", params.size ? `${window.location.pathname}?${params.toString()}` : window.location.pathname);
           }}
           onJoin={confirmSocialInvitation}
+          onLookupTeamCode={lookupSocialTeamCode}
           onOpen={() => {
             setSocialOnboardingDismissed(false);
             if (currentUserId) {
@@ -9818,6 +9973,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
               }
             }
           }}
+          onSaveProfile={saveSocialProfile}
         />
       ) : null}
       {activeMobileTab === "inicio" ? (
@@ -10406,14 +10562,9 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
                 ))}
               </div>
               <div className="admin-invite-row settings-admin-invite-row">
-                <span>Invitar al grupo</span>
+                <span>Invitar jugadores</span>
                 <div>
-                  <button type="button" onClick={() => void copyTeamInvite()} disabled={!remoteGroupId}>
-                    Copiar invitación
-                  </button>
-                  <button className="whatsapp-icon-button" type="button" onClick={shareTeamInviteWhatsApp} disabled={!remoteGroupId} title="Enviar invitación al grupo por WhatsApp" aria-label="Enviar invitación al grupo por WhatsApp">
-                    <WhatsAppLogo />
-                  </button>
+                  <Link href={remoteGroupId ? `/equipo/invitaciones?team=${encodeURIComponent(remoteGroupId)}` : "/equipo/invitaciones"}>Abrir invitaciones</Link>
                 </div>
               </div>
               {canManageRoles ? (

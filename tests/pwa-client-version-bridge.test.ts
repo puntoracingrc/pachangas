@@ -283,8 +283,11 @@ test("the write bridge classifies every browser RPC without treating reads as wr
     "get_pachanga_moderation_queue_v1_1",
     "get_pachanga_my_conduct_v1",
     "get_my_pachanga_open_match_requests_v1",
+    "get_my_pachanga_social_profile_v1",
     "lookup_pachanga_challengeable_team_for_challenge",
+    "lookup_pachanga_social_team_code_v1",
     "lookup_pachanga_team_by_code",
+    "lookup_pachanga_team_player_invitation_v2",
     "search_pachanga_challengeable_teams",
     "search_pachanga_open_matches_v1",
   ]);

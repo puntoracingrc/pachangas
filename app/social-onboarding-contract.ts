@@ -16,9 +16,19 @@ export type SocialProfileFieldClass =
   | "TECHNICAL";
 
 export type SocialProfileMinimum = {
+  approximateTime?: string | null;
+  avatarRef?: string | null;
+  confirmedRevision?: number | null;
   displayName?: string | null;
+  generalArea?: string | null;
   modalities?: string[] | null;
+  preferredModality?: string | null;
+  primaryPosition?: string | null;
   position?: string | null;
+  revision?: number | null;
+  serverSequence?: number | null;
+  updatedAt?: string | null;
+  usualDays?: string[] | null;
 };
 
 export type SocialOnboardingDraft = {
@@ -36,7 +46,7 @@ export type TeamInvitationInput =
   | { kind: "team-code"; code: string }
   | { kind: "invalid"; reason: "EMPTY" | "INVALID" };
 
-export const SOCIAL_ONBOARDING_VERSION = "official-ui-v3e";
+export const SOCIAL_ONBOARDING_VERSION = "official-ui-v3f";
 
 export const SOCIAL_PROFILE_FIELD_CLASSIFICATION = {
   authProvider: "TECHNICAL",
@@ -84,9 +94,9 @@ export const SOCIAL_POSITION_OPTIONS = [
 export const SOCIAL_DAY_OPTIONS = ["L", "M", "X", "J", "V", "S", "D"] as const;
 
 export const TEAM_CREATION_AUTHORITY = {
-  available: false,
-  code: "TEAM_CREATION_AUTHORITY_UNAVAILABLE",
-  message: "La creación segura de equipos está temporalmente bloqueada. No se ha creado ningún equipo.",
+  available: true,
+  command: "command_pachanga_social_team_v1",
+  message: "El servidor creará el equipo, su código, el owner y el escudo en una sola confirmación.",
 } as const;
 
 function cleanText(value: unknown, maxLength: number) {
@@ -115,9 +125,11 @@ export function normalizeSocialOnboardingDraft(value: unknown): SocialOnboarding
 export function socialProfileMinimumReady(profile: SocialProfileMinimum | null | undefined) {
   return Boolean(
     cleanText(profile?.displayName, 80)
-      && cleanText(profile?.position, 80)
-      && Array.isArray(profile?.modalities)
-      && profile.modalities.some((modality) => cleanText(modality, 40)),
+      && cleanText(profile?.primaryPosition ?? profile?.position, 80)
+      && (
+        cleanText(profile?.preferredModality, 40)
+        || (Array.isArray(profile?.modalities) && profile.modalities.some((modality) => cleanText(modality, 40)))
+      ),
   );
 }
 
@@ -166,7 +178,11 @@ export function parseTeamInvitationInput(rawInput: string): TeamInvitationInput 
     candidate = input;
   }
 
-  const token = normalizeUuidToken(decodeURIComponent(candidate));
+  const decodedCandidate = decodeURIComponent(candidate);
+  if (/^piq_[0-9a-f]{64}$/i.test(decodedCandidate)) {
+    return { kind: "invite", token: decodedCandidate.toLowerCase() };
+  }
+  const token = normalizeUuidToken(decodedCandidate);
   if (token) return { kind: "invite", token };
   if (/^[A-Z0-9]{6,12}$/i.test(input)) return { kind: "team-code", code: input.toUpperCase() };
   return { kind: "invalid", reason: "INVALID" };
@@ -175,10 +191,13 @@ export function parseTeamInvitationInput(rawInput: string): TeamInvitationInput 
 export function mapTeamJoinError(error: unknown) {
   const message = error instanceof Error ? error.message : String(error ?? "");
   const normalized = message.toLowerCase();
-  if (normalized.includes("invalid invite") || normalized.includes("not found")) return "EQUIPO NO ENCONTRADO";
+  if (normalized.includes("invalid_invitation_token") || normalized.includes("invalid invite") || normalized.includes("not found") || normalized.includes("invitation_not_found")) return "INVITACIÓN NO VÁLIDA";
   if (normalized.includes("expired") || normalized.includes("caduc")) return "INVITACIÓN CADUCADA";
-  if (normalized.includes("already") || normalized.includes("perteneces")) return "YA PERTENECES A ESTE EQUIPO";
-  if (normalized.includes("suspend") || normalized.includes("limited") || normalized.includes("no disponible")) return "EQUIPO NO DISPONIBLE";
+  if (normalized.includes("revoked") || normalized.includes("revoc")) return "INVITACIÓN REVOCADA";
+  if (normalized.includes("already") || normalized.includes("perteneces") || normalized.includes("already_team_member")) return "YA PERTENECES A ESTE EQUIPO";
+  if (normalized.includes("suspend") || normalized.includes("archive") || normalized.includes("limited") || normalized.includes("operationally_restricted") || normalized.includes("no disponible")) return "EQUIPO NO DISPONIBLE";
+  if (normalized.includes("social_profile_required")) return "GUARDA TU PERFIL ANTES DE UNIRTE";
+  if (normalized.includes("disabled")) return "ESTA FUNCIÓN AÚN NO ESTÁ ACTIVA";
   return "NO PUEDES UNIRTE AHORA";
 }
 
@@ -195,7 +214,7 @@ export function playerMarketPresentationState(profile: {
 export function socialWriteAvailability(online: boolean) {
   return online
     ? { allowed: true, label: "Listo para confirmar en servidor" }
-    : { allowed: false, label: "Sin conexión: las acciones deportivas están bloqueadas" };
+    : { allowed: false, label: "Necesitas conexión para confirmar esta acción." };
 }
 
 export function socialOnboardingFlowFromSearch(search: string): SocialOnboardingFlow | null {

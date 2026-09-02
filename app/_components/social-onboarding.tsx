@@ -16,13 +16,23 @@ import {
   type SocialOnboardingFlow,
   type SocialOnboardingDraft,
 } from "../social-onboarding-contract";
+import { modalityLabel, type SocialTeamCreateDraft, type SocialTeamInvitation } from "../social-team-core-contract";
 import styles from "./social-onboarding.module.css";
 
 type FlowView = SocialOnboardingFlow;
 
 export type PendingSocialInvitation = {
   kind: "admin" | "player";
+  snapshot?: SocialTeamInvitation | null;
   token: string;
+};
+
+type TeamCodePreview = {
+  generalArea: string;
+  memberCount: number;
+  modality: string;
+  name: string;
+  teamCode: string;
 };
 
 type SocialOnboardingProps = {
@@ -37,10 +47,13 @@ type SocialOnboardingProps = {
   forcedView?: FlowView | null;
   invitation?: PendingSocialInvitation | null;
   onDismiss: () => void;
+  onCreateTeam: (draft: SocialTeamCreateDraft) => Promise<{ error?: string; ok: boolean }>;
   onDraftChange: (draft: SocialOnboardingDraft) => void;
   onForcedViewHandled?: () => void;
   onJoin: (invitation: PendingSocialInvitation, displayName: string) => Promise<{ error?: string; ok: boolean }>;
+  onLookupTeamCode: (code: string) => Promise<{ error?: string; ok: boolean; team?: TeamCodePreview }>;
   onOpen: () => void;
+  onSaveProfile: (draft: SocialOnboardingDraft) => Promise<{ error?: string; ok: boolean }>;
 };
 
 const modalityOptions = [
@@ -67,10 +80,13 @@ export function SocialOnboarding({
   forcedView = null,
   invitation,
   onDismiss,
+  onCreateTeam,
   onDraftChange,
   onForcedViewHandled,
   onJoin,
+  onLookupTeamCode,
   onOpen,
+  onSaveProfile,
 }: SocialOnboardingProps) {
   const [open, setOpen] = useState(!dismissed);
   const [view, setView] = useState<FlowView>(() => viewForEntry(entryState));
@@ -79,15 +95,26 @@ export function SocialOnboarding({
   const [joinCandidate, setJoinCandidate] = useState<PendingSocialInvitation | null>(invitation ?? null);
   const [joinMessage, setJoinMessage] = useState("");
   const [joining, setJoining] = useState(false);
+  const [profileSaving, setProfileSaving] = useState(false);
+  const [profileMessage, setProfileMessage] = useState("");
+  const [creating, setCreating] = useState(false);
+  const [createMessage, setCreateMessage] = useState("");
   const [createStep, setCreateStep] = useState(1);
-  const [createDraft, setCreateDraft] = useState({ modality: "futbol7", name: "", players: "12-16", shield: "clásico", zone: "" });
+  const [createDraft, setCreateDraft] = useState<SocialTeamCreateDraft>({
+    modality: "futbol7",
+    name: "",
+    shieldKey: "team.shield.shape.classic_iq",
+    targetPlayerCount: 14,
+    zone: "",
+  });
+  const [teamCodePreview, setTeamCodePreview] = useState<TeamCodePreview | null>(null);
   const [online, setOnline] = useState(() => typeof navigator === "undefined" ? true : navigator.onLine);
   const [avatarPreview, setAvatarPreview] = useState("");
 
   const profileReady = socialProfileMinimumReady(canonicalProfile);
   const writeAvailability = socialWriteAvailability(online);
   const visibleDraft = useMemo(() => normalizeSocialOnboardingDraft(draft), [draft]);
-  const activeView = invitation ? "join" : forcedView ?? view;
+  const activeView = invitation ? (profileReady ? "join" : "profile") : forcedView ?? view;
   const activeJoinCandidate = invitation ?? joinCandidate;
   const visibleOpen = Boolean(forcedView || open);
 
@@ -130,7 +157,7 @@ export function SocialOnboarding({
     onOpen();
   }
 
-  function inspectJoinInput() {
+  async function inspectJoinInput() {
     const parsed = parseTeamInvitationInput(joinInput);
     if (parsed.kind === "invalid") {
       setJoinMessage(parsed.reason === "EMPTY" ? "Introduce un código o enlace de invitación." : "EQUIPO NO ENCONTRADO");
@@ -138,11 +165,45 @@ export function SocialOnboarding({
     }
     if (parsed.kind === "team-code") {
       setJoinCandidate(null);
-      setJoinMessage("Ese código identifica al equipo, pero no concede acceso. Pide a un admin su enlace de invitación.");
+      setJoinMessage("Buscando el equipo...");
+      const result = await onLookupTeamCode(parsed.code);
+      setTeamCodePreview(result.team ?? null);
+      setJoinMessage(result.ok
+        ? "El código identifica este equipo, pero no concede acceso. Pide a un admin su enlace de invitación."
+        : result.error ?? "EQUIPO NO ENCONTRADO");
       return;
     }
+    setTeamCodePreview(null);
     setJoinCandidate({ kind: "player", token: parsed.token });
     setJoinMessage("");
+  }
+
+  async function saveProfile() {
+    if (profileSaving || !writeAvailability.allowed || !visibleDraft.displayName.trim()) return;
+    setProfileSaving(true);
+    setProfileMessage("Guardando con el servidor...");
+    const result = await onSaveProfile(visibleDraft);
+    setProfileSaving(false);
+    if (!result.ok) {
+      setProfileMessage(result.error ?? "No se pudo guardar el perfil.");
+      return;
+    }
+    setProfileMessage("Perfil confirmado.");
+    setStep(3);
+    selectView("start");
+  }
+
+  async function createTeam() {
+    if (creating || !writeAvailability.allowed || !createDraft.name.trim() || !createDraft.zone.trim()) return;
+    setCreating(true);
+    setCreateMessage("Creando equipo y owner en una sola transacción...");
+    const result = await onCreateTeam(createDraft);
+    setCreating(false);
+    if (!result.ok) {
+      setCreateMessage(result.error ?? "El servidor no confirmó el equipo.");
+      return;
+    }
+    setCreateMessage("Equipo confirmado. Abriendo su portada...");
   }
 
   async function confirmJoin() {
@@ -172,12 +233,12 @@ export function SocialOnboarding({
   }
 
   return (
-    <section className={styles.flow} data-social-entry-state={entryState} data-social-onboarding="v3e" aria-labelledby="social-onboarding-title">
+    <section className={styles.flow} data-social-entry-state={entryState} data-social-onboarding="v3f" aria-labelledby="social-onboarding-title">
       <header className={styles.header}>
         <div>
           <span>Primeros pasos</span>
           <h2 id="social-onboarding-title">
-            {activeView === "join" ? "Unirme a un equipo" : activeView === "create" ? "Crear mi equipo" : activeView === "start" ? "¿Cómo quieres empezar?" : "Prepara tu perfil"}
+            {activeView === "join" ? "Unirme a un equipo" : activeView === "create" ? "Crear mi equipo" : activeView === "start" ? "¿Cómo quieres empezar?" : invitation ? "Primero, prepara tu perfil" : "Prepara tu perfil"}
           </h2>
         </div>
         <div className={styles.headerActions}>
@@ -205,7 +266,7 @@ export function SocialOnboarding({
                   setAvatarPreview(URL.createObjectURL(file));
                 }} /></span><small>Opcional. Esta vista previa no se publica hasta guardar tu perfil canónico.</small></label>
               </div>
-              <div className={styles.actions}><button className={styles.primary} type="button" onClick={() => setStep(2)} disabled={!visibleDraft.displayName.trim()}>Guardar borrador y continuar</button><button type="button" onClick={() => setStep(2)}>Omitir foto</button></div>
+              <div className={styles.actions}><button className={styles.primary} type="button" onClick={() => setStep(2)} disabled={!visibleDraft.displayName.trim()}>Continuar</button><button type="button" onClick={() => setStep(2)}>Omitir foto</button></div>
             </div>
           ) : null}
           {step === 2 ? (
@@ -214,7 +275,9 @@ export function SocialOnboarding({
               <label>Ciudad o zona general<input maxLength={120} placeholder="Ej. Gràcia, Barcelona" value={visibleDraft.zone} onChange={(event) => updateDraft({ zone: event.target.value })} /></label>
               <fieldset><legend>Días habituales</legend><div className={styles.dayPicker}>{SOCIAL_DAY_OPTIONS.map((day) => <button aria-pressed={visibleDraft.days.includes(day)} key={day} type="button" onClick={() => updateDraft({ days: visibleDraft.days.includes(day) ? visibleDraft.days.filter((item) => item !== day) : [...visibleDraft.days, day] })}>{day}</button>)}</div></fieldset>
               <label>Franja aproximada<select value={visibleDraft.approximateTime} onChange={(event) => updateDraft({ approximateTime: event.target.value })}><option>08:00-12:00</option><option>12:00-16:00</option><option>16:00-20:00</option><option>20:00-22:00</option><option>22:00-00:00</option></select></label>
-              <div className={styles.actions}><button type="button" onClick={() => setStep(1)}>Volver</button><button className={styles.primary} type="button" onClick={() => { setStep(3); selectView("start"); }}>Continuar</button></div>
+              {!writeAvailability.allowed ? <p className={styles.warning}>{writeAvailability.label}</p> : null}
+              {profileMessage ? <p className={styles.message} role="status">{profileMessage}</p> : null}
+              <div className={styles.actions}><button type="button" onClick={() => setStep(1)}>Volver</button><button className={styles.primary} type="button" disabled={profileSaving || !writeAvailability.allowed} onClick={() => void saveProfile()}>{profileSaving ? "Guardando..." : profileReady ? "Actualizar perfil" : "Guardar perfil"}</button></div>
             </div>
           ) : null}
           {step === 3 ? <StartChoices onCreate={() => selectView("create")} onJoin={() => selectView("join")} /> : null}
@@ -233,10 +296,11 @@ export function SocialOnboarding({
               <small>La invitación no se acepta automáticamente.</small>
             </article>
           ) : null}
-          {!invitation ? <><label>Código o enlace de invitación<input autoCapitalize="off" autoCorrect="off" value={joinInput} onChange={(event) => { setJoinInput(event.target.value); setJoinMessage(""); }} /></label><button className={styles.secondary} type="button" onClick={inspectJoinInput}>Buscar equipo</button></> : null}
+          {!invitation ? <><label>Código o enlace de invitación<input autoCapitalize="off" autoCorrect="off" value={joinInput} onChange={(event) => { setJoinInput(event.target.value); setJoinMessage(""); setTeamCodePreview(null); }} /></label><button className={styles.secondary} type="button" onClick={() => void inspectJoinInput()}>Buscar equipo</button></> : null}
+          {teamCodePreview ? <article className={styles.invitationCard}><span>Equipo identificado</span><strong>{teamCodePreview.name}</strong><p>{modalityLabel(teamCodePreview.modality)} · {teamCodePreview.generalArea || "Zona no indicada"} · {teamCodePreview.memberCount} miembros</p><small>Necesitas un enlace de invitación para entrar.</small></article> : null}
           {activeJoinCandidate ? (
             <div className={styles.joinConfirmation}>
-              <span>Confirmar</span><strong>Acceso como {activeJoinCandidate.kind === "admin" ? "administrador" : "jugador"}</strong><p>La membresía solo aparecerá cuando el servidor la confirme y recarguemos el equipo.</p>
+              <span>Confirmar</span><strong>{activeJoinCandidate.snapshot?.teamName || `Acceso como ${activeJoinCandidate.kind === "admin" ? "administrador" : "jugador"}`}</strong><p>{activeJoinCandidate.snapshot ? `${modalityLabel(activeJoinCandidate.snapshot.modality)} · ${activeJoinCandidate.snapshot.generalArea}` : "La membresía solo aparecerá cuando el servidor la confirme y recarguemos el equipo."}</p>
               <button className={styles.primary} type="button" disabled={joining || !writeAvailability.allowed} onClick={() => void confirmJoin()}>{joining ? "Confirmando..." : "Unirme"}</button>
             </div>
           ) : null}
@@ -249,9 +313,9 @@ export function SocialOnboarding({
       {activeView === "create" ? (
         <div className={styles.formBody}>
           <nav className={styles.steps} aria-label="Pasos para crear equipo">{[1, 2, 3].map((item) => <button aria-current={createStep === item ? "step" : undefined} key={item} type="button" onClick={() => setCreateStep(item)}>{item}</button>)}</nav>
-          {createStep === 1 ? <><div className={styles.stepHeading}><span>Paso 1</span><h3>Identidad</h3></div><label>Nombre del equipo<input maxLength={80} value={createDraft.name} onChange={(event) => setCreateDraft((current) => ({ ...current, name: event.target.value }))} /></label><fieldset><legend>Escudo inicial</legend><div className={styles.shields}>{["clásico", "redondo", "moderno"].map((shield) => <button aria-pressed={createDraft.shield === shield} key={shield} type="button" onClick={() => setCreateDraft((current) => ({ ...current, shield }))}><i aria-hidden="true">{shield.slice(0, 1).toUpperCase()}</i>{shield}</button>)}</div></fieldset></> : null}
-          {createStep === 2 ? <><div className={styles.stepHeading}><span>Paso 2</span><h3>Fútbol</h3></div><label>Modalidad principal<select value={createDraft.modality} onChange={(event) => setCreateDraft((current) => ({ ...current, modality: event.target.value }))}>{modalityOptions.map((option) => <option key={option.id} value={option.id}>{option.label}</option>)}</select></label><label>Zona general<input maxLength={120} value={createDraft.zone} onChange={(event) => setCreateDraft((current) => ({ ...current, zone: event.target.value }))} /></label><label>Jugadores orientativos<select value={createDraft.players} onChange={(event) => setCreateDraft((current) => ({ ...current, players: event.target.value }))}><option>8-12</option><option>12-16</option><option>16-22</option><option>22+</option></select></label></> : null}
-          {createStep === 3 ? <><div className={styles.stepHeading}><span>Paso 3</span><h3>Revisar</h3></div><dl className={styles.review}><div><dt>Equipo</dt><dd>{createDraft.name || "Sin nombre"}</dd></div><div><dt>Escudo</dt><dd>{createDraft.shield}</dd></div><div><dt>Modalidad</dt><dd>{modalityOptions.find((option) => option.id === createDraft.modality)?.label}</dd></div><div><dt>Zona</dt><dd>{createDraft.zone || "Pendiente"}</dd></div></dl><button className={styles.primary} type="button" disabled>Crear equipo</button><p className={styles.warning}>{TEAM_CREATION_AUTHORITY.message}</p><small>La ruta antigua hacía dos escrituras separadas. V3E no la presenta como una creación confirmada.</small></> : null}
+          {createStep === 1 ? <><div className={styles.stepHeading}><span>Paso 1</span><h3>Identidad</h3></div><label>Nombre del equipo<input maxLength={80} value={createDraft.name} onChange={(event) => setCreateDraft((current) => ({ ...current, name: event.target.value }))} /></label><fieldset><legend>Escudo inicial</legend><div className={styles.shields}>{[{ key: "team.shield.shape.classic_iq", label: "Clásico" }, { key: "team.shield.shape.round", label: "Redondo" }, { key: "team.shield.shape.modern", label: "Moderno" }].map((shield) => <button aria-pressed={createDraft.shieldKey === shield.key} key={shield.key} type="button" onClick={() => setCreateDraft((current) => ({ ...current, shieldKey: shield.key }))}><i aria-hidden="true">{shield.label.slice(0, 1)}</i>{shield.label}</button>)}</div></fieldset></> : null}
+          {createStep === 2 ? <><div className={styles.stepHeading}><span>Paso 2</span><h3>Fútbol</h3></div><label>Modalidad principal<select value={createDraft.modality} onChange={(event) => setCreateDraft((current) => ({ ...current, modality: event.target.value as SocialTeamCreateDraft["modality"] }))}>{modalityOptions.map((option) => <option key={option.id} value={option.id}>{option.label}</option>)}</select></label><label>Zona general<input maxLength={120} value={createDraft.zone} onChange={(event) => setCreateDraft((current) => ({ ...current, zone: event.target.value }))} /></label><label>Jugadores orientativos<select value={createDraft.targetPlayerCount} onChange={(event) => setCreateDraft((current) => ({ ...current, targetPlayerCount: Number(event.target.value) }))}><option value={10}>8-12</option><option value={14}>12-16</option><option value={20}>16-22</option><option value={28}>22+</option></select></label></> : null}
+          {createStep === 3 ? <><div className={styles.stepHeading}><span>Paso 3</span><h3>Revisar</h3></div><dl className={styles.review}><div><dt>Equipo</dt><dd>{createDraft.name || "Sin nombre"}</dd></div><div><dt>Escudo</dt><dd>{createDraft.shieldKey.endsWith("round") ? "Redondo" : createDraft.shieldKey.endsWith("modern") ? "Moderno" : "Clásico"}</dd></div><div><dt>Modalidad</dt><dd>{modalityOptions.find((option) => option.id === createDraft.modality)?.label}</dd></div><div><dt>Zona</dt><dd>{createDraft.zone || "Pendiente"}</dd></div></dl><button className={styles.primary} type="button" disabled={creating || !writeAvailability.allowed || !createDraft.zone.trim()} onClick={() => void createTeam()}>{creating ? "Creando..." : "Crear equipo"}</button><p className={styles.message}>{createMessage || TEAM_CREATION_AUTHORITY.message}</p></> : null}
           <div className={styles.actions}><button type="button" onClick={() => createStep === 1 ? selectView("start") : setCreateStep((current) => current - 1)}>Volver</button>{createStep < 3 ? <button className={styles.primary} type="button" disabled={createStep === 1 && !createDraft.name.trim()} onClick={() => setCreateStep((current) => current + 1)}>Continuar</button> : null}</div>
         </div>
       ) : null}
