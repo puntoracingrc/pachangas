@@ -110,5 +110,6 @@ the `/perfil/avisos` compatibility redirect.
 - Exact isolated Preview at 1440x900, 390x844, 844x390, offline shell and
   installed-mode emulation: PASS.
 - Production migrations are at exact ledger 235 with canonical ACL, index and
-  Advisor readbacks. Canary, deployment and final disposable-environment cleanup
-  remain pending and must be recorded in the production release report.
+  Advisor readbacks. Rollback canary, exact deployment, responsive/PWA smoke and
+  disposable-environment cleanup are PASS and recorded in the production release
+  report. Physical Android, iPhone and installed-PWA QA remain pending.

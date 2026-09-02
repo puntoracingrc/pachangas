@@ -302,28 +302,28 @@
 ## V3G-024 - First staging cleanup left two synthetic Teams and their owners
 
 - Classification: `SIMULATION_BUG`
-- Status: `detected`
+- Status: `fixed`
 - Detected: 2026-09-02
 - Scenario: `finally` cleanup after the Realtime timeout.
 - Original failure: readback returned two `pachanga_groups` rows and two `auth.users` rows while notices, Inbox receipts, challenges, requests and invitations were already zero.
 - Product impact: none outside the isolated branch, but cleanup certification is blocked and the run must not be reported as residue-free.
-- Cause: pending identification of the task-owned dependent rows that blocked Team deletion; the runner's best-effort cleanup intentionally swallowed the referential error.
-- Planned correction: enumerate only foreign-key dependencies for the two synthetic Team ids, delete the task-owned dependency in canonical order, remove the two owners and make future cleanup surface any residue.
+- Cause: task-owned immutable operational evidence blocked direct Team deletion while the runner's best-effort cleanup intentionally swallowed the referential error.
+- Correction: retained the isolated fixtures only for exact Preview QA, made the residue explicit and destroyed the complete disposable Supabase branch after production certification instead of bypassing product evidence.
 - Regression: readback must return zero for users, sessions, Teams and every V3G fixture table after both successful and failed runs.
-- Regression verified: no.
+- Regression verified: yes. Supabase branch readback now contains only production `main`; the deleted branch project and all of its users, sessions, Teams and V3G fixtures no longer exist.
 
 ## V3G-025 - Direct cleanup cannot delete immutable operational evidence
 
 - Classification: `SIMULATION_BUG`
-- Status: `detected`
+- Status: `fixed`
 - Detected: 2026-09-02
 - Scenario: targeted cleanup of the private operational rows automatically created for the two synthetic Teams.
 - Original failure: PostgreSQL raised `TEAM_OPERATIONAL_EVIDENCE_IMMUTABLE` and rolled back the complete cleanup transaction.
 - Product impact: none. The immutability guard behaved correctly, but the runner's cleanup design is incompatible with that evidence contract.
 - Cause: the first runner assumed task-owned operational evidence could be deleted directly before deleting its parent Team.
-- Planned correction: locate and use an existing authorized synthetic-cleanup path; if none exists, destroy the entire disposable branch and recreate a clean branch rather than weakening or bypassing immutable product evidence.
+- Correction: found no authorized row-level cleanup path and destroyed the entire disposable branch after release QA rather than weakening or bypassing immutable product evidence.
 - Regression: the staging strategy must finish with zero QA residue while all immutable-evidence triggers remain enabled.
-- Regression verified: no.
+- Regression verified: yes. The branch deletion succeeded, final branch inventory contains only production `main` and no immutable-evidence trigger or product row was altered in production.
 
 ## V3G-026 - Vercel redeploy did not resolve the abbreviated deployment id
 
@@ -519,3 +519,55 @@
 - Correction: terminated only the task-owned read-only CLI process and used the canonical migrations endpoint plus direct PostgreSQL readback instead of retrying the command.
 - Regression: the two independent sources must agree on ledger 235 and exact last version/name, the isolated dry-run must report up to date and no task-owned migration process may remain.
 - Regression verified: yes. The connector and PostgreSQL both report ledger 235 ending at `20260902102800 social_inbox_receipt_notification_index_v1`, the isolated dry-run reports up to date and process readback contains no V3G migration command.
+
+## V3G-041 - Canary summary mistook an assertion function name for a failure
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed`
+- Detected: 2026-09-02
+- Scenario: production rollback canary using the complete V3G SQL/RLS regression.
+- Original failure: a local text heuristic set `hasAssertFailure=true` because the successful result contained the function name `assert_true`.
+- Product impact: none. Supabase returned `isError=false` and the final assertion result was empty, indicating success.
+- Cause: the heuristic searched generic words instead of parsing the connector's structured error state.
+- Correction: use the connector `isError` field and the canonical post-rollback residue query as authoritative canary signals.
+- Regression: the canary must return without a database error and the independent readback must find zero fixed synthetic users, Teams, Challenges, notices and receipts.
+- Regression verified: yes. The SQL/RLS canary returned successfully; every synthetic count and the total receipt count were zero; ledger remained 235.
+
+## V3G-042 - Long landscape browser loop exceeded the CDP dispatch deadline
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed`
+- Detected: 2026-09-02
+- Scenario: production responsive smoke after completing eight desktop and eight portrait navigations in one external-Chrome session.
+- Original failure: the landscape loop stopped with a CDP dispatch deadline before returning any route assertions.
+- Product impact: not established. Desktop and portrait remained clean and no product exception was returned.
+- Cause: the test channel had accumulated sixteen sequential desktop/portrait navigations plus six landscape navigations before command dispatch exceeded its deadline; the tab remained healthy on `/admin/demo`.
+- Correction: inspected the current tab state once, then used a fresh tab and split landscape verification into two short bounded batches instead of blindly replaying the long loop.
+- Regression: all eight landscape routes must return content with zero root overflow, broken images, overlays and browser warnings/errors; temporary tabs and viewport overrides must be closed/reset.
+- Regression verified: yes. All eight landscape routes returned content with zero root overflow, broken images, overlays and browser warnings/errors; the fresh tab was closed and the viewport override was reset.
+
+## V3G-043 - Isolated page evaluation omits the Service Worker navigator API
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed`
+- Detected: 2026-09-02
+- Scenario: production PWA smoke after the responsive route matrix passed.
+- Original failure: the read-only page-evaluation scope raised a type error because its isolated `navigator` object does not expose `serviceWorker`.
+- Product impact: none established. The page and reload completed before the unsupported inspection ran.
+- Cause: the same reduced evaluation scope that omits network `fetch` also omits browser-owned Service Worker APIs.
+- Correction: read registration/controller state through the tab's scoped Chrome DevTools Runtime, then performed bounded offline/online emulation through that same tab and restored network state explicitly.
+- Regression: production must expose a controlling `/sw.js`, a valid manifest, a cached offline Inbox shell, successful reconnection and zero unexpected online browser errors; network emulation and viewport overrides must be reset.
+- Regression verified: yes. Production exposed a controlling `/sw.js`, a valid manifest, an offline cached Inbox and a successful online reload, all without overflow, overlay or unexpected browser errors; network emulation was disabled and the viewport was reset.
+
+## V3G-044 - Chrome extension blocks new-document CDP injection
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed`
+- Detected: 2026-09-02
+- Scenario: production installed-PWA emulation after Service Worker control, manifest, offline shell and reconnection passed.
+- Original failure: raw CDP rejected `Page.addScriptToEvaluateOnNewDocument`, so the first attempt could not persist `navigator.standalone` across reload.
+- Product impact: none. The command was rejected before modifying the page and all real PWA checks already passed.
+- Cause: the connected Chrome extension permits scoped Runtime inspection but not new-document script injection.
+- Correction: used supported Runtime evaluation in a disposable tab to expose `navigator.standalone`, dispatched the app's observed `appinstalled` event, asserted canonical `data-display-mode="standalone"`, then closed the tab.
+- Regression: installed-mode emulation must set the canonical display-mode dataset, retain Service Worker control and render the Inbox without overflow, overlay or browser warnings/errors; closing the disposable tab must remove the emulation.
+- Regression verified: yes. The disposable production tab reported `navigator.standalone=true`, `data-display-mode="standalone"`, active Service Worker control, no overflow, no overlay and no browser warnings/errors; closing it removed the emulation.
