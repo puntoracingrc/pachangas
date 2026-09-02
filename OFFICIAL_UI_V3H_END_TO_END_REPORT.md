@@ -2,7 +2,7 @@
 
 ## Estado
 
-Release Candidate funcional cerrado en local. Rama `codex/official-ui-v3h-social-core-rc`, PR borrador `#258`. La Preview exacta y el SHA productivo se registrarán en `OFFICIAL_UI_V3H_PRODUCTION_RELEASE.md` después del despliegue.
+Release Candidate fusionado mediante PR `#258` y verificado en producción. El código funcional quedó en `main` como `c55e35a2460840195242d2cfd0529554839397ea`; la trazabilidad completa del despliegue vive en `OFFICIAL_UI_V3H_PRODUCTION_RELEASE.md`.
 
 ## Alcance
 
@@ -19,14 +19,14 @@ Sin cambios en Supabase, migraciones, RPC, RLS, flags, Stripe, Rating, resultado
 
 | Tarea | Estado RC | Evidencia |
 | --- | --- | --- |
-| A. Visitante | PASS local | Landing → Demo → Mercado → Partido |
-| B. Usuario nuevo | PASS por contratos + Demo | Recorrido Usuario nuevo, sin escritura remota |
-| C. Owner nuevo | PASS por contratos + Demo | Recorrido Team owner |
-| D. Jugador de equipo | PASS por Demo | Inicio → asistencia → jugadores → alineación → resultado |
-| E. Buscar jugadores | PASS por Demo | Partido → Mercado → jugador → volver |
-| F. Retar equipo | PASS por Demo | Mercado → Retos → propuesta/contrapropuesta → partido |
-| G. Avisos | PASS por Demo | Pendientes → dominio → volver → contador local |
-| H. Varios equipos | PASS por contratos + Demo | Selector preserva contexto social |
+| A. Visitante | PASS producción | Landing → Demo → Mercado → Partido |
+| B. Usuario nuevo | PASS contratos + Demo productiva | Recorrido Usuario nuevo, sin escritura remota |
+| C. Owner nuevo | PASS contratos + Demo productiva | Recorrido Team owner |
+| D. Jugador de equipo | PASS Demo productiva | Inicio → asistencia → jugadores → alineación → resultado |
+| E. Buscar jugadores | PASS Demo productiva | Partido → Mercado → jugador → volver |
+| F. Retar equipo | PASS Demo productiva | Mercado → Retos → propuesta/contrapropuesta → partido |
+| G. Avisos | PASS Demo productiva | Pendientes → dominio → volver → contador local |
+| H. Varios equipos | PASS contratos + Demo productiva | Selector preserva contexto social |
 
 ## Autoridad y datos
 
@@ -68,6 +68,9 @@ Sin cambios en Supabase, migraciones, RPC, RLS, flags, Stripe, Rating, resultado
 | Teclado/focus/Escape | PASS; trampa, Escape y retorno al activador |
 | PWA standalone emulada | 8/8 superficies controladas por Service Worker |
 | Offline/reconexión | PASS; shell Demo cacheado, API no cacheable falla offline y vuelve 200 online |
+| Matriz productiva pública | 88/88; 0 overflow, imágenes rotas, errores, warnings, peticiones fallidas, violaciones de viewport o targets pequeños |
+| Service Worker productivo | 22/22 casos PWA controlados; `sw.js` público con `no-cache, no-store, must-revalidate` |
+| Logs Vercel productivos | 0 errores, 0 respuestas 4xx y 0 respuestas 5xx durante el smoke |
 | Android físico | PENDING |
 | iPhone físico | PENDING |
 | PWA instalada física | PENDING |
@@ -87,4 +90,4 @@ En el build productivo local PWA, las ocho superficies registraron CLS `0`, FCP 
 
 ## Incidencias
 
-La trazabilidad completa vive en `V3H_SOCIAL_CORE_INCIDENTS.md`. Todas las incidencias V3H localizadas están `fixed + regression_verified` o aceptadas como diferencia legítima. No se han localizado defectos de backend dentro del alcance V3H.
+La trazabilidad completa vive en `V3H_SOCIAL_CORE_INCIDENTS.md`. Todas las incidencias V3H localizadas están `fixed + regression_verified` o aceptadas como diferencia legítima. V3H-033 documenta el chunk CSS obsoleto recuperado por la primera compilación productiva y su corrección mediante despliegue sin caché. No se han localizado defectos de backend dentro del alcance V3H.
