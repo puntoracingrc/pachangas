@@ -16,7 +16,7 @@
 
 .headerActions { display: flex; align-items: center; gap: 7px; }
 .sortLabel { display: flex; align-items: center; gap: 6px; color: var(--official-muted); font-size: 0.62rem; font-weight: 800; }
-.sortLabel select { min-height: 34px; max-width: 150px; }
+.sortLabel select { min-height: 40px; max-width: 150px; }
 
 .contextBand {
   min-width: 0;
@@ -33,7 +33,7 @@
 .contextBand span { color: var(--official-cyan-text); font-size: 0.58rem; font-weight: 900; text-transform: uppercase; }
 .contextBand strong { overflow: hidden; color: var(--official-text); font-size: 0.82rem; text-overflow: ellipsis; white-space: nowrap; }
 .contextBand small { color: var(--official-muted); font-size: 0.68rem; }
-.contextBand a { min-height: 38px; display: inline-flex; align-items: center; border: 1px solid var(--official-line); border-radius: 5px; padding: 0 11px; color: var(--official-text); font-size: 0.68rem; font-weight: 850; text-decoration: none; }
+.contextBand a { min-height: 40px; display: inline-flex; align-items: center; border: 1px solid var(--official-line); border-radius: 5px; padding: 0 11px; color: var(--official-text); font-size: 0.68rem; font-weight: 850; text-decoration: none; }
 
 .searchStack { display: grid; gap: 8px; }
 .locationRow { min-width: 0; display: grid; grid-template-columns: minmax(220px, 1fr) auto auto; gap: 7px; }
@@ -61,18 +61,21 @@
 .locationRow > button:disabled,
 .primaryButton:disabled,
 .secondaryButton:disabled { cursor: not-allowed; opacity: 0.55; }
+.locationRow > button:last-child { min-width: 40px; }
+.locationAction { display: inline-flex; align-items: center; justify-content: center; gap: 7px; }
+.locationAction svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.8; }
 .primaryButton { border-color: var(--official-accent); background: var(--official-accent); color: #17210d; }
 .iconButton { width: 40px; padding: 0; font-size: 1.15rem; }
 
 .quickRow { min-width: 0; display: flex; align-items: center; gap: 6px; overflow-x: auto; scrollbar-width: none; }
 .quickRow::-webkit-scrollbar { display: none; }
-.quickRow button { flex: 0 0 auto; min-height: 34px; border-radius: 999px; padding-inline: 11px; font-size: 0.64rem; }
+.quickRow button { min-width: 40px; flex: 0 0 auto; min-height: 40px; border-radius: 999px; padding-inline: 11px; font-size: 0.64rem; }
 .quickRow button[aria-pressed="true"] { border-color: rgba(200, 239, 93, 0.5); background: rgba(200, 239, 93, 0.13); color: var(--official-accent); }
 .quickRow .filterButton { margin-left: auto; border-radius: 6px; }
 
 .activeFilters { min-width: 0; display: flex; align-items: center; gap: 5px; overflow-x: auto; scrollbar-width: none; }
 .activeFilters::-webkit-scrollbar { display: none; }
-.activeFilters button { flex: 0 0 auto; min-height: 29px; border: 1px solid rgba(81, 207, 223, 0.3); border-radius: 999px; background: rgba(81, 207, 223, 0.08); padding: 0 9px; color: var(--official-cyan-text); font: inherit; font-size: 0.59rem; font-weight: 800; }
+.activeFilters button { flex: 0 0 auto; min-height: 40px; border: 1px solid rgba(81, 207, 223, 0.3); border-radius: 999px; background: rgba(81, 207, 223, 0.08); padding: 0 9px; color: var(--official-cyan-text); font: inherit; font-size: 0.59rem; font-weight: 800; }
 .activeFilters .clearButton { border-color: transparent; background: transparent; color: var(--official-muted); text-decoration: underline; }
 
 .resultsHeader { min-width: 0; display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
@@ -115,7 +118,7 @@
 .playerMeta span { border: 1px solid var(--official-line); border-radius: 999px; background: rgba(255, 255, 255, 0.035); padding: 4px 7px; color: var(--official-muted); font-size: 0.58rem; font-weight: 800; }
 .cardFooter { min-width: 0; display: flex; align-items: center; justify-content: space-between; gap: 7px; }
 .cardFooter > button,
-.cardFooter > a { min-height: 38px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--official-line); border-radius: 6px; background: transparent; padding: 0 11px; color: var(--official-text); font: inherit; font-size: 0.66rem; font-weight: 850; text-decoration: none; }
+.cardFooter > a { min-height: 40px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--official-line); border-radius: 6px; background: transparent; padding: 0 11px; color: var(--official-text); font: inherit; font-size: 0.66rem; font-weight: 850; text-decoration: none; }
 .cardFooter > :last-child { border-color: var(--official-accent); background: var(--official-accent); color: #17210d; }
 .cardFooter > :only-child { margin-left: auto; }
 .cardFooter > button:disabled { opacity: 0.65; }
@@ -210,9 +213,11 @@
   .sourceBadge { max-width: 112px; overflow: hidden; text-overflow: ellipsis; }
   .contextBand { grid-template-columns: minmax(0, 1fr); }
   .contextBand a { justify-content: center; }
-  .locationRow { grid-template-columns: minmax(0, 1fr) 42px; }
-  .locationRow > button:first-of-type { grid-column: 1 / -1; grid-row: 2; }
-  .locationRow > button:last-child { grid-column: 2; grid-row: 1; min-width: 42px; padding: 0; }
+  .locationRow { grid-template-columns: minmax(0, 1fr) 44px 44px; }
+  .locationRow:not(:has(> button:not(.locationAction))) { grid-template-columns: minmax(0, 1fr) 44px; }
+  .locationAction { min-width: 44px; padding: 0; }
+  .locationAction span { display: none; }
+  .locationRow > button:last-child { min-width: 44px; padding: 0; }
   .quickRow .filterButton { margin-left: 0; }
   .matchGrid,
   .playerGrid { grid-template-columns: minmax(0, 1fr); }
@@ -228,7 +233,8 @@
 @media (max-width: 370px) and (orientation: portrait) {
   .filterGrid { grid-template-columns: minmax(0, 1fr); }
   .detailFacts { grid-template-columns: minmax(0, 1fr); }
-  .locationRow { grid-template-columns: minmax(0, 1fr) 40px; }
+  .locationRow { grid-template-columns: minmax(0, 1fr) 44px 44px; }
+  .locationRow:not(:has(> button:not(.locationAction))) { grid-template-columns: minmax(0, 1fr) 44px; }
 }
 
 @media (orientation: landscape) and (max-height: 600px) {
@@ -237,13 +243,13 @@
   .contextBand { min-height: 34px; grid-template-columns: minmax(0, 1fr) auto; padding: 4px 7px; }
   .contextBand > div { display: flex; align-items: center; gap: 6px; }
   .contextBand strong, .contextBand small { font-size: 0.55rem; }
-  .contextBand a { min-height: 28px; font-size: 0.52rem; }
+  .contextBand a { min-height: 40px; font-size: 0.52rem; }
   .searchStack { gap: 4px; }
   .locationRow { grid-template-columns: minmax(140px, 1fr) auto auto; gap: 4px; }
-  .locationField input, .locationRow > button { min-height: 30px; font-size: 0.56rem; }
+  .locationField input, .locationRow > button { min-height: 40px; font-size: 0.56rem; }
   .locationHint { display: none; }
   .quickRow { gap: 3px; }
-  .quickRow button { min-height: 27px; padding-inline: 7px; font-size: 0.5rem; }
+  .quickRow button { min-height: 40px; padding-inline: 7px; font-size: 0.5rem; }
   .activeFilters { display: none; }
   .resultsHeader { margin-bottom: 4px; }
   .resultsHeader strong, .resultsHeader span { font-size: 0.56rem; }
@@ -256,11 +262,11 @@
   .matchCard header strong, .playerCard header strong { font-size: 0.72rem; }
   .matchMeta, .playerAvailability { font-size: 0.52rem; }
   .matchSummary span, .playerMeta span { padding: 3px 5px; font-size: 0.48rem; }
-  .cardFooter > :is(button, a) { min-height: 29px; font-size: 0.52rem; }
+  .cardFooter > :is(button, a) { min-height: 40px; font-size: 0.52rem; }
   .playerCard { grid-template-columns: 42px minmax(0, 1fr); }
   .playerAvatar { width: 42px; height: 42px; }
   .detailSheet { position: sticky; inset: auto; max-height: 100%; padding: 9px; }
-  .detailClose { width: 30px; height: 30px; }
+  .detailClose { width: 40px; height: 40px; }
   .detailHero { padding: 2px 36px 7px 0; }
   .detailHero h2 { font-size: 0.9rem; }
   .detailHero p { font-size: 0.55rem; }
@@ -268,7 +274,7 @@
   .detailFacts > div { padding: 6px; }
   .detailFacts dt { font-size: 0.46rem; }
   .detailFacts dd { font-size: 0.58rem; }
-  .detailActions :is(button, a) { min-height: 30px; font-size: 0.52rem; }
+  .detailActions :is(button, a) { min-height: 40px; font-size: 0.52rem; }
   .detailPlayerHero { grid-template-columns: minmax(120px, 0.65fr) minmax(180px, 1.35fr); gap: 8px; }
   .detailCardStage { min-height: 185px; }
   .playerMiniCard { width: 130px; padding: 18px 12px 24px; }
@@ -278,9 +284,9 @@
   .filterSheet > header { padding-bottom: 6px; }
   .filterGrid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 5px; padding-block: 7px; }
   .filterGrid label { font-size: 0.48rem; }
-  .filterGrid :is(input, select) { min-height: 31px; font-size: 0.55rem; }
+  .filterGrid :is(input, select) { min-height: 40px; font-size: 0.55rem; }
   .filterSheet > footer { padding-top: 6px; }
-  .filterSheet > footer button { min-height: 30px; font-size: 0.54rem; }
+  .filterSheet > footer button { min-height: 40px; font-size: 0.54rem; }
 }
 
 @media (orientation: landscape) and (min-width: 768px) and (max-width: 1368px) and (max-height: 1024px) and (pointer: coarse),
@@ -291,4 +297,4 @@
 @media (prefers-reduced-motion: reduce) {
   .filterBackdrop, .detailSheet { scroll-behavior: auto; }
 }
-.incomingInvitation{display:flex;align-items:center;justify-content:space-between;gap:18px;margin:0 0 14px;border:1px solid rgba(200,239,93,.34);border-left:3px solid #c8ef5d;border-radius:7px;background:rgba(25,39,34,.82);padding:14px 16px;color:#f1f6f2}.incomingInvitation>div:first-child{min-width:0;display:grid;gap:4px}.incomingInvitation span{color:#51cfdf;font-size:.68rem;font-weight:900;text-transform:uppercase}.incomingInvitation h2,.incomingInvitation p{margin:0}.incomingInvitation h2{font-size:1.08rem}.incomingInvitation p,.incomingInvitation small{color:#a9bbb2;font-size:.74rem;line-height:1.4}.incomingInvitation>div:last-child{display:flex;flex:0 0 auto;align-items:center;gap:7px}.incomingInvitation :is(a,button){min-height:40px;display:inline-flex;align-items:center;justify-content:center;border:1px solid rgba(217,234,225,.18);border-radius:5px;background:rgba(255,255,255,.04);padding:0 12px;color:#f1f6f2;font:inherit;font-size:.72rem;font-weight:850;text-decoration:none}.incomingInvitation button:first-child,.incomingInvitation a{border-color:#c8ef5d;background:#c8ef5d;color:#17200f}.incomingInvitation button:disabled{opacity:.45}.incomingInvitation[data-state=error]{border-left-color:#d6535c}@media(max-width:620px){.incomingInvitation{align-items:stretch;flex-direction:column}.incomingInvitation>div:last-child{width:100%}.incomingInvitation :is(a,button){flex:1}}@media(orientation:landscape) and (max-height:650px){.incomingInvitation{margin-bottom:8px;padding:9px 12px}.incomingInvitation p{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.incomingInvitation :is(a,button){min-height:36px}}
+.incomingInvitation{display:flex;align-items:center;justify-content:space-between;gap:18px;margin:0 0 14px;border:1px solid rgba(200,239,93,.34);border-left:3px solid #c8ef5d;border-radius:7px;background:rgba(25,39,34,.82);padding:14px 16px;color:#f1f6f2}.incomingInvitation>div:first-child{min-width:0;display:grid;gap:4px}.incomingInvitation span{color:#51cfdf;font-size:.68rem;font-weight:900;text-transform:uppercase}.incomingInvitation h2,.incomingInvitation p{margin:0}.incomingInvitation h2{font-size:1.08rem}.incomingInvitation p,.incomingInvitation small{color:#a9bbb2;font-size:.74rem;line-height:1.4}.incomingInvitation>div:last-child{display:flex;flex:0 0 auto;align-items:center;gap:7px}.incomingInvitation :is(a,button){min-height:40px;display:inline-flex;align-items:center;justify-content:center;border:1px solid rgba(217,234,225,.18);border-radius:5px;background:rgba(255,255,255,.04);padding:0 12px;color:#f1f6f2;font:inherit;font-size:.72rem;font-weight:850;text-decoration:none}.incomingInvitation button:first-child,.incomingInvitation a{border-color:#c8ef5d;background:#c8ef5d;color:#17200f}.incomingInvitation button:disabled{opacity:.45}.incomingInvitation[data-state=error]{border-left-color:#d6535c}@media(max-width:620px){.incomingInvitation{align-items:stretch;flex-direction:column}.incomingInvitation>div:last-child{width:100%}.incomingInvitation :is(a,button){flex:1}}@media(orientation:landscape) and (max-height:650px){.incomingInvitation{margin-bottom:8px;padding:9px 12px}.incomingInvitation p{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.incomingInvitation :is(a,button){min-height:40px}}

@@ -31,6 +31,16 @@ import styles from "./marketplace-v3d.module.css";
 
 const googleMapsApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
 
+function LocationTargetIcon() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="6" />
+      <circle cx="12" cy="12" r="2" />
+      <path d="M12 2v4M12 18v4M2 12h4M18 12h4" />
+    </svg>
+  );
+}
+
 type MarketTab = "equipos" | "jugadores" | "partidos";
 type MarketDataSource = "CACHED" | "LIVE" | "LOADING" | "UNAVAILABLE";
 type MarketOperationState = { message: string; pending?: boolean; tone?: "danger" | "neutral" | "success" };
@@ -1192,7 +1202,10 @@ export default function MarketplaceClient() {
                   />
                   {locationMessage ? <small className={styles.locationHint} aria-live="polite">{locationMessage}</small> : null}
                 </label>
-                <button type="button" onClick={useMyLocation} disabled={locating}>{locating ? "Localizando…" : "Usar mi ubicación"}</button>
+                <button className={styles.locationAction} type="button" aria-label={locating ? "Buscando tu ubicación" : "Usar mi ubicación"} title="Usar mi ubicación" onClick={useMyLocation} disabled={locating}>
+                  <LocationTargetIcon />
+                  <span>{locating ? "Localizando…" : "Usar mi ubicación"}</span>
+                </button>
                 {filters.zone ? <button type="button" aria-label="Quitar ubicación" title="Quitar ubicación" onClick={() => applyQuickFilter({ zone: "", zonePlaceId: undefined })}>×</button> : null}
               </div>
               <div className={styles.quickRow} aria-label="Filtros rápidos">

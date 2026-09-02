@@ -5,7 +5,7 @@
 - Fecha: 2026-09-02 (Europe/Madrid).
 - Rama: `codex/official-ui-v3h-social-core-rc`.
 - Commit base: `fd97b25b191391baf17a60499e34c38dbd0e11cc` (`origin/main`).
-- Entorno: local, Node 24.19.0, npm 11.13.0, Next.js 16.3.3, Chromium automatizado.
+- Entorno: local, Node 24.16.0, npm 11.13.0, Next.js 16.3.3, Chromium automatizado.
 - Datos: rutas publicas y Mundo Demo sintetico. No se usaron usuarios, equipos, partidos ni avisos reales.
 - Supabase: solo codigo local; no se modifico ni consulto produccion.
 - Stripe, push, email y SMS: no utilizados.
@@ -196,3 +196,15 @@ La auditoria combina inspeccion de rutas, codigo invocado, pruebas existentes y 
 6. Crear pruebas y evidencia visual de los recorridos, estados y contratos V3H.
 
 No se modificaran SQL, Supabase, migraciones, RPC, RLS, Stripe, Rating, rewards, motores deportivos ni Wave 9C.
+
+## Cierre del RC
+
+- Resultado final: Node 20/20 + TS/TSX 804/804 = 824/824.
+- Omitidos, `todo` y cancelados: 0/0/0.
+- Typecheck, build 78/78, lint focalizado, lint global y `git diff --check`: PASS.
+- Responsive: 152 combinaciones en los ocho viewports exigidos; 0 overflow raiz, errores de navegacion, errores/warnings de consola, peticiones fallidas o imagenes rotas.
+- Tema y movimiento: 25 combinaciones light/dark/reduced motion; PASS.
+- PWA productiva local: 8/8 superficies `standalone`, controladas por Service Worker y sin targets pequenos.
+- Offline: Demo y pruebas de cero escritura disponibles desde cache; una ruta API no cacheable no finge exito y se recupera al reconectar.
+- Supabase, migraciones, RPC, RLS, flags, Stripe y datos productivos: sin cambios.
+- Android fisico, iPhone fisico y PWA instalada fisicamente: PENDING.

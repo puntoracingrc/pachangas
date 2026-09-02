@@ -100,6 +100,11 @@ const DemoSocialFirstTimeJourney = dynamic(
   { ssr: false },
 );
 
+const DemoSocialQuickReview = dynamic(
+  () => import("./demo-social-quick-review").then((module) => module.DemoSocialQuickReview),
+  { ssr: false },
+);
+
 type DemoWorldManifest = DemoWorldV2Manifest | DemoWorldV32Manifest | DemoWorldV33Manifest | DemoWorldV34Manifest | DemoWorldV35Manifest;
 type DemoWorldFullSnapshot = DemoWorldV2Snapshot | DemoWorldV32Snapshot | DemoWorldV33Snapshot | DemoWorldV34Snapshot | DemoWorldV35Snapshot;
 type DemoWorldRenderableSnapshot = {
@@ -448,7 +453,7 @@ function LoadingWorld({ manifest }: { manifest: DemoWorldManifest }) {
 function DemoHeader({
   activeTab,
   manifest,
-  onFirstTime,
+  onReview,
   onReset,
   onTab,
   pendingCount,
@@ -459,7 +464,7 @@ function DemoHeader({
 }: {
   activeTab: DemoWorldV2PrimaryTab;
   manifest: DemoWorldManifest;
-  onFirstTime: () => void;
+  onReview: () => void;
   onReset: () => void;
   onTab: (tab: DemoWorldV2PrimaryTab) => void;
   pendingCount: number;
@@ -489,11 +494,10 @@ function DemoHeader({
   return (
     <>
       <div className={styles.demoBanner} data-tour-target="demo-mode-banner">
-        <span><b>Mundo Demo V{manifest.version}</b> · datos ficticios · temporada {manifest.season}</span>
+        <span>{fullMode ? <><b>Mundo Demo V{manifest.version}</b> · datos ficticios · temporada {manifest.season}</> : <><b>SIMULACIÓN</b> · datos ficticios · sesión local</>}</span>
         <span className={styles.bannerActions}>
-          {fullMode ? <button type="button" onClick={() => onTab("revision")}>Recorrido</button> : null}
-          <button type="button" onClick={onFirstTime}>Empezar</button>
-          <button type="button" onClick={onReset}>Reiniciar</button>
+          {fullMode ? <button type="button" onClick={() => onTab("revision")}>Recorrido</button> : <button data-primary="true" type="button" onClick={onReview}>Revisión rápida</button>}
+          {fullMode ? <button type="button" onClick={onReset}>Reiniciar</button> : null}
           <Link href="/">Salir</Link>
         </span>
       </div>
@@ -1231,7 +1235,7 @@ function ChallengesView({
       <header><div><h1>Retos</h1><p>Organiza un partido contra otro equipo.</p></div>{canManage ? <button className={styles.primaryButton} type="button" onClick={() => { setCreating(true); setViewingTeamId(null); }}>+ Retar equipo</button> : null}</header>
       {viewingTeamId ? <div className={styles.demoPerspectiveBar}><span>Perspectiva local: {activeTeam?.name}</span><button type="button" onClick={() => setViewingTeamId(null)}>Volver a {currentTeam.name}</button></div> : null}
       <nav aria-label="Vistas de Retos"><button aria-current={view === "active" ? "page" : undefined} type="button" onClick={() => setView("active")}>Activos</button><button aria-current={view === "history" ? "page" : undefined} type="button" onClick={() => setView("history")}>Historial</button></nav>
-      {view === "active" ? <nav className={styles.demoChallengeFilters} aria-label="Filtrar Retos"><button aria-pressed={filter === "all"} type="button" onClick={() => setFilter("all")}>Todos</button><button aria-pressed={filter === "received"} type="button" onClick={() => setFilter("received")}>Recibidos</button><button aria-pressed={filter === "sent"} type="button" onClick={() => setFilter("sent")}>Enviados</button></nav> : null}
+      {view === "active" ? <label className={styles.demoChallengeFilterSelect}><span>Mostrar</span><select aria-label="Filtrar Retos" value={filter} onChange={(event) => setFilter(event.target.value as "all" | "received" | "sent")}><option value="all">Todos</option><option value="received">Recibidos</option><option value="sent">Enviados</option></select></label> : null}
       {view === "active" ? <div className={styles.demoChallengeGroups}>{needsResponse.length ? <section><h2>Necesitan tu respuesta <b>{needsResponse.length}</b></h2>{needsResponse.map(challengeCard)}</section> : null}{waiting.length ? <section><h2>Esperando al rival <b>{waiting.length}</b></h2>{waiting.map(challengeCard)}</section> : null}{agreed.length ? <section><h2>Partidos acordados <b>{agreed.length}</b></h2>{agreed.map(challengeCard)}</section> : null}{!needsResponse.length && !waiting.length && !agreed.length ? <EmptyState title="Aún no tenéis retos activos" body={canManage ? "Elige un rival y envía una propuesta." : "Cuando un admin organice un reto, aparecerá aquí."} /> : null}</div> : <div className={styles.demoChallengeHistory}>{history.map((challenge) => { const opponent = opponentFor(challenge); return <button key={challenge.id} type="button" onClick={() => setSelectedChallengeId(challenge.id)}><TeamIdentity compact team={opponent} /><span><strong>{opponent.name}</strong><small>{dateLabel(challenge.date)} · {matchKindLabels[challenge.proposedKind]}</small></span><b data-status={challenge.status}>{challengeStatusLabels[challenge.status]}</b></button>; })}</div>}
       <footer><span>LOCAL SESSION ONLY</span><span>remoteWrites = 0</span><span>externalNotifications = 0</span><span>realEntities = 0</span><span>StripeCalls = 0</span></footer>
     </section>
@@ -1240,6 +1244,7 @@ function ChallengesView({
 
 function TeamView({
   currentTeam,
+  fullMode,
   invitationOpen,
   invitationResolved,
   onAcceptInvitation,
@@ -1249,6 +1254,7 @@ function TeamView({
   snapshot,
 }: {
   currentTeam: DemoWorldTeam | null;
+  fullMode: boolean;
   invitationOpen: boolean;
   invitationResolved: boolean;
   onAcceptInvitation: () => void;
@@ -1274,8 +1280,8 @@ function TeamView({
         {pane === "ranking" ? (
           <div className={styles.provincialRanking}>
             <div className={styles.rankingIntro}>
-              <div><span className={styles.eyebrow}>Ranking Provincial Demo</span><h1>Season Score V3</h1><p>Read model congelado con la misma fórmula y estados públicos que el producto. No concede TOPS ni premios.</p></div>
-              <span>Premios provinciales OFF</span>
+              <div><span className={styles.eyebrow}>{fullMode ? "Ranking Provincial Demo" : "Ranking del equipo"}</span><h1>{fullMode ? "Season Score V3" : `Ranking de ${selectedTeam.name}`}</h1><p>{fullMode ? "Read model congelado con la misma fórmula y estados públicos que el producto. No concede TOPS ni premios." : "Compara la temporada del equipo con rivales de la misma provincia."}</p></div>
+              <span>{fullMode ? "Premios provinciales OFF" : "Datos ficticios"}</span>
             </div>
             <div className={styles.rankingShowcases} aria-label="Casos de ranking simulados">
               {([
@@ -1314,6 +1320,7 @@ function AchievementList({ achievements }: { achievements: DemoWorldAchievement[
 function ProfileView({
   currentPlayer,
   currentTeam,
+  fullMode,
   onEquipCosmetic,
   onOpenBox,
   onPerspective,
@@ -1325,6 +1332,7 @@ function ProfileView({
 }: {
   currentPlayer: DemoWorldPlayer;
   currentTeam: DemoWorldTeam | null;
+  fullMode: boolean;
   onEquipCosmetic: (cosmeticKey: string) => void;
   onOpenBox: (box: DemoWorldRewardBox) => void;
   onPerspective: (perspectiveId: DemoWorldPerspective["id"]) => void;
@@ -1350,7 +1358,7 @@ function ProfileView({
         {pane === "ficha" ? (
           <div className={styles.profileLayout}>
             <PlayerCard player={currentPlayer} />
-            <div className={styles.profileDetails}><span className={styles.eyebrow}>Ficha universal demo</span><h1>{currentPlayer.name}</h1><p>{currentPlayer.market.publicBio}</p><div className={styles.profileStats}><Stat label="Partidos" value={currentPlayer.appearances} /><Stat label="Goles" value={currentPlayer.goals} /><Stat label="Asistencias" value={currentPlayer.assists} /><Stat label="Fiabilidad" value={`${currentPlayer.rating.reliability}%`} /></div><dl><div><dt>Posición</dt><dd>{currentPlayer.position.label}</dd></div><div><dt>Motor</dt><dd>{currentPlayer.rating.engineVersion}</dd></div><div><dt>Evaluadores</dt><dd>{currentPlayer.rating.evaluatorCount}</dd></div><div><dt>Zonas públicas</dt><dd>{currentPlayer.market.zones.join(" · ")}</dd></div></dl><div className={styles.attendanceSummary}><strong>Asistencia histórica</strong><span>{attendance.filter((entry) => entry.status === "played").length} jugados</span><span>{attendance.filter((entry) => entry.status === "excused_absence").length} bajas justificadas</span><span>{attendance.filter((entry) => entry.status === "late_cancellation").length} cancelaciones tardías</span><span>{attendance.filter((entry) => entry.status === "unexcused_no_show").length} no-show</span></div><small>La ficha usa el read model de Rating V2. La demo no recalcula ni persiste valoraciones.</small></div>
+            <div className={styles.profileDetails}><span className={styles.eyebrow}>Ficha universal demo</span><h1>{currentPlayer.name}</h1><p>{currentPlayer.market.publicBio}</p><div className={styles.profileStats}><Stat label="Partidos" value={currentPlayer.appearances} /><Stat label="Goles" value={currentPlayer.goals} /><Stat label="Asistencias" value={currentPlayer.assists} /><Stat label="Fiabilidad" value={`${currentPlayer.rating.reliability}%`} /></div><dl><div><dt>Posición</dt><dd>{currentPlayer.position.label}</dd></div>{fullMode ? <div><dt>Motor</dt><dd>{currentPlayer.rating.engineVersion}</dd></div> : <div><dt>Valoraciones</dt><dd>{currentPlayer.rating.evaluatorCount}</dd></div>}{fullMode ? <div><dt>Evaluadores</dt><dd>{currentPlayer.rating.evaluatorCount}</dd></div> : <div><dt>Modalidad</dt><dd>{currentPlayer.market.modalities.map((modality) => matchKindLabels[modality as DemoMatchKind] ?? modality).join(" · ")}</dd></div>}<div><dt>Zonas públicas</dt><dd>{currentPlayer.market.zones.join(" · ")}</dd></div></dl><div className={styles.attendanceSummary}><strong>Asistencia histórica</strong><span>{attendance.filter((entry) => entry.status === "played").length} jugados</span><span>{attendance.filter((entry) => entry.status === "excused_absence").length} bajas justificadas</span><span>{attendance.filter((entry) => entry.status === "late_cancellation").length} cancelaciones tardías</span><span>{attendance.filter((entry) => entry.status === "unexcused_no_show").length} ausencias sin avisar</span></div><small>{fullMode ? "La ficha usa el read model de Rating V2. La demo no recalcula ni persiste valoraciones." : "Datos ficticios. La Demo no guarda valoraciones."}</small></div>
             <div className={styles.relatedPlayers}><h2>Compañeros</h2>{snapshot.players.players.filter((player) => player.teamId && player.teamId === currentPlayer.teamId && player.id !== currentPlayer.id).slice(0, 5).map((player) => <button key={player.id} type="button" onClick={() => onPlayer(player.id)}><span>{initials(player.name)}</span><strong>{player.name}</strong><small>{player.position.abbreviation} · {ratingScore(player)}</small></button>)}</div>
           </div>
         ) : null}
@@ -2071,6 +2079,7 @@ export function DemoWorldApp({ manifest, mode = "social" }: { manifest: DemoWorl
     if (typeof window === "undefined") return false;
     return new URLSearchParams(window.location.search).get("journey") === "first-time";
   });
+  const [socialQuickReviewOpen, setSocialQuickReviewOpen] = useState(false);
 
   const openRewardBox = (box: DemoWorldRewardBox) => {
     setOpenedBox(box);
@@ -2087,6 +2096,12 @@ export function DemoWorldApp({ manifest, mode = "social" }: { manifest: DemoWorl
     document.body.classList.add("demo-world-active");
     return () => document.body.classList.remove("demo-world-active");
   }, []);
+
+  useEffect(() => {
+    if (fullMode || new URLSearchParams(window.location.search).get("review") !== "1") return;
+    const frame = window.requestAnimationFrame(() => setSocialQuickReviewOpen(true));
+    return () => window.cancelAnimationFrame(frame);
+  }, [fullMode]);
 
   useEffect(() => {
     let disposed = false;
@@ -2318,6 +2333,23 @@ export function DemoWorldApp({ manifest, mode = "social" }: { manifest: DemoWorl
     window.scrollTo({ behavior: "smooth", top: 0 });
   }
 
+  function openSocialReviewJourney(requestedTab: DemoWorldV2PrimaryTab, perspectiveId: DemoWorldPerspective["id"]) {
+    const tab = socialDemoTabs.has(requestedTab) ? requestedTab : "inicio";
+    choosePerspective(perspectiveId);
+    setSelectedLeagueMatchId(null);
+    setActiveTab(tab);
+    if (tab === "partido") setMatchExperienceView("overview");
+    if (tab !== "retos") {
+      setChallengeOpponentTeamId(null);
+    }
+    const params = new URLSearchParams();
+    params.set("tab", tab);
+    params.set("perspective", perspectiveId);
+    window.history.replaceState(null, "", `/demo?${params.toString()}`);
+    window.scrollTo({ behavior: "smooth", top: 0 });
+    setSocialQuickReviewOpen(false);
+  }
+
   function equipCosmetic(cosmeticKey: string) {
     const item = PLAYER_COSMETIC_CATALOG.find((entry) => entry.key === cosmeticKey);
     if (!item) return;
@@ -2400,7 +2432,7 @@ export function DemoWorldApp({ manifest, mode = "social" }: { manifest: DemoWorl
 
   return (
     <main className={styles.shell} data-demo-world="ready" data-demo-mode={mode} data-demo-perspective={perspective.id} data-demo-tab={activeTab}>
-      <DemoHeader activeTab={activeTab} fullMode={fullMode} manifest={manifest} onFirstTime={() => setSocialFirstTimeOpen(true)} onReset={resetWorld} onTab={navigate} pendingCount={socialPendingCount} perspective={perspective} perspectives={world.core.perspectives} setPerspective={choosePerspective} />
+      <DemoHeader activeTab={activeTab} fullMode={fullMode} manifest={manifest} onReview={() => setSocialQuickReviewOpen(true)} onReset={resetWorld} onTab={navigate} pendingCount={socialPendingCount} perspective={perspective} perspectives={world.core.perspectives} setPerspective={choosePerspective} />
       <div className={styles.content}>
         {activeTab === "inicio" ? <WorldHome currentPlayer={currentPlayer} currentTeam={currentTeam} notifications={notifications} onMatch={openMatch} onPendingAction={(action) => openSocialInboxItem(action.targetTab, action.id)} onPlayer={setSelectedPlayerId} onTab={navigate} pendingActions={socialInboxActions} perspective={perspective} snapshot={world} teamMatches={teamMatches} /> : null}
         {activeTab !== "inicio" && activeTab !== "revision" && activeTab !== "campos" && !snapshot ? <div className={styles.secondaryLoading} role="status"><span className={styles.loadingMark}>IQ</span><strong>{loadingFullWorld ? "Cargando esta sección" : "Preparando datos"}</strong><p>Solo descargamos el dominio que acabas de abrir.</p></div> : null}
@@ -2503,8 +2535,8 @@ export function DemoWorldApp({ manifest, mode = "social" }: { manifest: DemoWorl
           snapshot={snapshot}
         /> : null}
         {snapshot && activeTab === "avisos" ? <DemoSocialInbox actions={socialInboxActions} notifications={notifications} onBack={() => navigate("inicio")} onOpen={openSocialInboxItem} onStateChange={updateSocialInboxState} state={socialInboxState} /> : null}
-        {snapshot && activeTab === "equipo" ? <TeamView currentTeam={currentTeam} invitationOpen={socialActionFocus === DEMO_SOCIAL_TEAM_INVITATION_ID || socialInboxState.resolvedActionIds.includes(DEMO_SOCIAL_TEAM_INVITATION_ID)} invitationResolved={socialInboxState.resolvedActionIds.includes(DEMO_SOCIAL_TEAM_INVITATION_ID)} onAcceptInvitation={() => { updateSocialInboxState({ ...socialInboxState, resolvedActionIds: [...new Set([...socialInboxState.resolvedActionIds, DEMO_SOCIAL_TEAM_INVITATION_ID])] }); setMessage("Invitación aceptada solo en esta sesión Demo. Remote writes: 0."); }} onPlayer={setSelectedPlayerId} onTeam={setSelectedTeamId} selectedTeam={selectedTeam} snapshot={snapshot} /> : null}
-        {snapshot && activeTab === "perfil" ? <ProfileView currentPlayer={currentPlayer} currentTeam={currentTeam} onEquipCosmetic={equipCosmetic} onOpenBox={openRewardBox} onPerspective={choosePerspective} onPlayer={setSelectedPlayerId} perspective={perspective} perspectives={world.core.perspectives} session={session} snapshot={snapshot} /> : null}
+        {snapshot && activeTab === "equipo" ? <TeamView currentTeam={currentTeam} fullMode={fullMode} invitationOpen={socialActionFocus === DEMO_SOCIAL_TEAM_INVITATION_ID || socialInboxState.resolvedActionIds.includes(DEMO_SOCIAL_TEAM_INVITATION_ID)} invitationResolved={socialInboxState.resolvedActionIds.includes(DEMO_SOCIAL_TEAM_INVITATION_ID)} onAcceptInvitation={() => { updateSocialInboxState({ ...socialInboxState, resolvedActionIds: [...new Set([...socialInboxState.resolvedActionIds, DEMO_SOCIAL_TEAM_INVITATION_ID])] }); setMessage("Invitación aceptada solo en esta sesión Demo. Remote writes: 0."); }} onPlayer={setSelectedPlayerId} onTeam={setSelectedTeamId} selectedTeam={selectedTeam} snapshot={snapshot} /> : null}
+        {snapshot && activeTab === "perfil" ? <ProfileView currentPlayer={currentPlayer} currentTeam={currentTeam} fullMode={fullMode} onEquipCosmetic={equipCosmetic} onOpenBox={openRewardBox} onPerspective={choosePerspective} onPlayer={setSelectedPlayerId} perspective={perspective} perspectives={fullMode ? world.core.perspectives : world.core.perspectives.filter((entry) => socialPerspectiveIds.has(entry.id))} session={session} snapshot={snapshot} /> : null}
         {snapshot && activeTab === "liga" ? <LeagueOverviewView onClub={openClub} onMatch={openLeagueMatch} onTab={navigate} snapshot={snapshot} /> : null}
         {snapshot && activeTab === "torneo" ? <DemoTournamentView tournament={snapshot.tournament} /> : null}
         {snapshot && activeTab === "competiciones" ? <DemoPublicCompetitionsView data={snapshot.publicCompetitions} /> : null}
@@ -2524,7 +2556,8 @@ export function DemoWorldApp({ manifest, mode = "social" }: { manifest: DemoWorl
         {activeTab === "campos" && "seasonFieldAllocation" in manifest ? <><DemoWorldV35SeasonFieldAllocation manifest={manifest.seasonFieldAllocation} /><details className={styles.demoLegacyLayer}><summary>Operación de campos V3.4 preservada</summary><DemoWorldV34FieldOperations manifest={manifest.fieldOperations} /></details></> : activeTab === "campos" && "fieldOperations" in manifest ? <DemoWorldV34FieldOperations manifest={manifest.fieldOperations} /> : null}
       </div>
       <MobileAppNav active={primaryTabForDemo(activeTab) as MobileAppTab} onNavigate={(tab) => navigate(demoTabForPrimary(tab))} />
-      {!socialFirstTimeOpen && activeTab !== "avisos" ? <button className={styles.socialJourneyLauncher} data-full-mode={fullMode ? "true" : "false"} type="button" onClick={() => setSocialFirstTimeOpen(true)}>Primeros pasos</button> : null}
+      {!socialFirstTimeOpen && !socialQuickReviewOpen && activeTab !== "avisos" ? <button className={styles.socialJourneyLauncher} data-full-mode={fullMode ? "true" : "false"} type="button" onClick={() => fullMode ? setSocialFirstTimeOpen(true) : setSocialQuickReviewOpen(true)}>{fullMode ? "Primeros pasos" : "Revisión rápida"}</button> : null}
+      {socialQuickReviewOpen ? <DemoSocialQuickReview onClose={() => setSocialQuickReviewOpen(false)} onOpenFirstTime={() => { setSocialQuickReviewOpen(false); setSocialFirstTimeOpen(true); }} onReset={resetWorld} onStart={openSocialReviewJourney} /> : null}
       {socialFirstTimeOpen ? <DemoSocialFirstTimeJourney onClose={() => setSocialFirstTimeOpen(false)} onNavigate={navigate} /> : null}
       {selectedPlayer ? <PlayerModal onClose={() => setSelectedPlayerId(null)} player={selectedPlayer} /> : null}
       {openedBox && RewardBoxComponent ? <RewardBoxComponent

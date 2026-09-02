@@ -82,6 +82,12 @@
   text-decoration: none;
 }
 
+.bannerActions button[data-primary="true"] {
+  border-color: var(--demo-lime);
+  background: var(--demo-lime);
+  color: #17210d;
+}
+
 .socialJourneyLauncher {
   display: none;
 }
@@ -2792,7 +2798,7 @@
     left: max(8px, env(safe-area-inset-left));
   }
   .mobileDomainMenu { position: fixed; z-index: 85; right: max(7px, env(safe-area-inset-right)); bottom: max(7px, env(safe-area-inset-bottom)); display: block; border: 0; background: transparent; padding: 0; }
-  .mobileDomainMenu .domainMenu > summary { min-height: 36px; background: rgba(7, 17, 15, 0.94); }
+  .mobileDomainMenu .domainMenu > summary { min-height: 40px; background: rgba(7, 17, 15, 0.94); }
   .mobileDomainMenu .domainMenuPanel { position: fixed; top: auto; right: max(7px, env(safe-area-inset-right)); bottom: 49px; width: min(500px, calc(100vw - 28px)); max-height: calc(100dvh - var(--game-nav-height, 48px) - 58px); overflow: auto; }
   .content { height: calc(100dvh - var(--game-nav-height, 48px)); min-height: 0; margin-top: 0; overflow: hidden; }
   .pageStack { height: 100%; overflow-y: auto; }
@@ -2815,7 +2821,7 @@
     width: auto;
     height: 100%;
     grid-auto-flow: row;
-    grid-auto-rows: minmax(32px, auto);
+    grid-auto-rows: minmax(40px, auto);
     overflow-x: hidden;
     overflow-y: auto;
     overscroll-behavior-y: contain;
@@ -2825,7 +2831,7 @@
   }
   .sideTitle,
   .sideMeta { display: grid; }
-  .sideSubnav > button { min-width: 0; min-height: 32px; border-bottom: 0; border-left: 3px solid transparent; padding: 3px 8px; font-size: 0.68rem; line-height: 1.15; text-align: left; }
+  .sideSubnav > button { min-width: 0; min-height: 40px; border-bottom: 0; border-left: 3px solid transparent; padding: 3px 8px; font-size: 0.68rem; line-height: 1.15; text-align: left; }
   .sideSubnav > button[aria-current="page"] { border-bottom: 0; border-left-color: var(--demo-lime); }
   .sideTitle { min-height: 34px; padding: 3px 8px 5px; }
   .sideTitle span,
@@ -3136,7 +3142,7 @@
 .demoSpotRequest small { color: var(--demo-muted); }
 .demoSpotRequest button,
 .demoAdminFlow button,
-.demoResultEntry button { min-height: 38px; border: 1px solid rgba(200, 239, 93, 0.3); border-radius: 5px; background: rgba(200, 239, 93, 0.1); padding: 0 12px; color: var(--demo-lime); font-weight: 850; }
+.demoResultEntry button { min-height: 40px; border: 1px solid rgba(200, 239, 93, 0.3); border-radius: 5px; background: rgba(200, 239, 93, 0.1); padding: 0 12px; color: var(--demo-lime); font-weight: 850; }
 
 .demoAdminFlow { justify-content: flex-start; flex-wrap: wrap; }
 
@@ -3228,11 +3234,10 @@
 .demoChallengeFocus > header span { color: var(--demo-cyan); font-size: 0.63rem; font-weight: 900; text-transform: uppercase; }
 .demoChallengeFocus > header button { min-height: 40px; border: 1px solid var(--demo-line); border-radius: 5px; background: transparent; padding: 0 12px; color: var(--demo-ink); }
 .demoChallengesV3c > nav { display: flex; width: fit-content; gap: 4px; }
-.demoChallengesV3c > nav > button { min-height: 38px; border: 1px solid transparent; border-radius: 5px; background: transparent; padding: 0 14px; color: var(--demo-muted); font-weight: 850; }
-.demoChallengesV3c > nav > button[aria-current="page"],
-.demoChallengeFilters > button[aria-pressed="true"] { border-color: var(--demo-line); background: rgba(200, 239, 93, 0.08); color: var(--demo-lime); }
-.demoChallengesV3c > .demoChallengeFilters { width: fit-content; border: 1px solid var(--demo-line); border-radius: 5px; padding: 3px; }
-.demoChallengeFilters > button { min-height: 30px !important; padding-inline: 10px !important; font-size: 0.63rem; }
+.demoChallengesV3c > nav > button { min-height: 40px; border: 1px solid transparent; border-radius: 5px; background: transparent; padding: 0 14px; color: var(--demo-muted); font-weight: 850; }
+.demoChallengesV3c > nav > button[aria-current="page"] { border-color: var(--demo-line); background: rgba(200, 239, 93, 0.08); color: var(--demo-lime); }
+.demoChallengeFilterSelect { width: fit-content; display: flex; align-items: center; gap: 7px; color: var(--demo-muted); font-size: 0.63rem; font-weight: 850; }
+.demoChallengeFilterSelect select { min-width: 120px; min-height: 40px; border: 1px solid var(--demo-line); border-radius: 5px; background: #101d1a; padding: 0 30px 0 9px; color: var(--demo-ink); }
 
 .demoPerspectiveBar {
   min-height: 42px;
@@ -3388,7 +3393,7 @@
   .demoMarketV3d .marketHeader h1 { font-size: 0.95rem; }
   .demoMarketV3d .marketHeader p { display: none; }
   .demoMarketTabs { grid-row: 2 / span 4; grid-column: 1; align-content: start; grid-template-columns: 1fr; border: 0; }
-  .demoMarketTabs button { min-height: 31px; border: 1px solid var(--demo-line); border-bottom: 0; font-size: 0.56rem; text-align: left; }
+  .demoMarketTabs button { min-height: 40px; border: 1px solid var(--demo-line); border-bottom: 0; font-size: 0.56rem; text-align: left; }
   .demoMarketTabs button:last-child { border-bottom: 1px solid var(--demo-line); }
   .demoMarketV3d > :not(.marketHeader):not(.demoMarketTabs):not(.demoSocialProof) { grid-column: 2; }
   .demoMarketV3d > .demoSocialProof { display: none; }
@@ -3401,9 +3406,9 @@
   .demoChallengesV3c > header h1 { font-size: 1rem; }
   .demoChallengesV3c > header p { display: none; }
   .demoChallengesV3c > nav { width: 96px; display: grid; grid-column: 1; align-content: start; }
-  .demoChallengesV3c > nav > button { min-height: 32px; padding: 0 7px; font-size: 0.59rem; text-align: left; }
-  .demoChallengesV3c > .demoChallengeFilters { border: 0; padding: 0; }
-  .demoChallengesV3c > .demoChallengeFilters > button { min-height: 27px !important; }
+  .demoChallengesV3c > nav > button { min-height: 40px; padding: 0 7px; font-size: 0.59rem; text-align: left; }
+  .demoChallengeFilterSelect { width: 96px; display: grid; grid-column: 1; gap: 3px; }
+  .demoChallengeFilterSelect select { width: 96px; min-width: 0; min-height: 40px; padding: 0 22px 0 6px; font-size: 0.57rem; }
   .demoPerspectiveBar,
   .demoChallengeGroups,
   .demoChallengeHistory { grid-column: 2; }
@@ -3411,7 +3416,7 @@
   .demoChallengeGroups > section { gap: 4px; }
   .demoChallengeCard { min-height: 54px; padding: 4px 7px; }
   .demoChallengeCard > button { grid-template-columns: 38px minmax(125px, 1fr) minmax(150px, 0.8fr); gap: 7px; }
-  .demoChallengeCard > div button { min-height: 34px !important; font-size: 0.58rem; }
+  .demoChallengeCard > div button { min-height: 40px !important; font-size: 0.58rem; }
   .demoChallengesV3c > footer { display: none; }
   .demoChallengeFocus { height: calc(100dvh - 84px); overflow: auto; padding: 9px; }
   .demoChallengeFocus > header { min-height: 38px; }

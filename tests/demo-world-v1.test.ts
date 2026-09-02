@@ -414,7 +414,7 @@ test("legacy demo entry redirects to the isolated public Demo World", async () =
   assert.match(homeSource, /window\.location\.replace\(`\/demo/);
   assert.match(homeSource, /window\.location\.assign\("\/demo"\)/);
   assert.match(homeSource, /if \(isDemoMode\) \{[\s\S]*data-product-entry="no-team"/);
-  assert.match(homeSource, /href="\/demo">Probar Mundo Demo<\/Link>/);
+  assert.match(homeSource, /href="\/demo\?review=1">Probar Demo<\/Link>/);
   assert.match(homeSource, /Mundo Demo/);
   assert.doesNotMatch(homeSource, /Lo que ves son datos de ejemplo/);
   assert.doesNotMatch(homeSource, /Crear mi grupo limpio/);

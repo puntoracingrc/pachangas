@@ -1,0 +1,89 @@
+# Official UI V3H End-to-End Report
+
+## Estado
+
+Release Candidate funcional cerrado en local. Rama `codex/official-ui-v3h-social-core-rc`, PR borrador `#258`. La Preview exacta y el SHA productivo se registrarán en `OFFICIAL_UI_V3H_PRODUCTION_RELEASE.md` después del despliegue.
+
+## Alcance
+
+- Landing pública simplificada.
+- Retos con una sola navegación local.
+- Mercado location-first compacto.
+- Demo social con Revisión rápida de siete recorridos.
+- Lenguaje y contrato visual unificados.
+- Auditor visual corregido para distinguir Avisos de Ajustes.
+
+Sin cambios en Supabase, migraciones, RPC, RLS, flags, Stripe, Rating, resultados, recompensas, cosméticos, Conduct ni Wave 9C.
+
+## Tareas A–H
+
+| Tarea | Estado RC | Evidencia |
+| --- | --- | --- |
+| A. Visitante | PASS local | Landing → Demo → Mercado → Partido |
+| B. Usuario nuevo | PASS por contratos + Demo | Recorrido Usuario nuevo, sin escritura remota |
+| C. Owner nuevo | PASS por contratos + Demo | Recorrido Team owner |
+| D. Jugador de equipo | PASS por Demo | Inicio → asistencia → jugadores → alineación → resultado |
+| E. Buscar jugadores | PASS por Demo | Partido → Mercado → jugador → volver |
+| F. Retar equipo | PASS por Demo | Mercado → Retos → propuesta/contrapropuesta → partido |
+| G. Avisos | PASS por Demo | Pendientes → dominio → volver → contador local |
+| H. Varios equipos | PASS por contratos + Demo | Selector preserva contexto social |
+
+## Autoridad y datos
+
+- Demo: `LOCAL SESSION ONLY`.
+- `remoteWrites = 0`.
+- `externalNotifications = 0`.
+- `pushSent = 0`.
+- `emailsSent = 0`.
+- `realEntities = 0`.
+- `StripeCalls = 0`.
+- La aplicación live conserva autoridad central; V3H solo modifica composición frontend y copy.
+
+## Baseline y resultado final
+
+- Node: 20/20.
+- TS/TSX baseline: 798/798.
+- TS/TSX final: 804/804.
+- Total final: 824/824.
+- Skipped/todo/cancelled: 0/0/0.
+- Typecheck: PASS.
+- Build: PASS, 78 rutas.
+- Auditoría visual inicial: 42 capturas; cero root overflow, imágenes rotas o errores/warnings de consola.
+
+## Gates finales
+
+| Gate | Estado |
+| --- | --- |
+| Regresión V3H focalizada | 6/6 PASS |
+| Tests completos | 824/824 PASS; 0 skip/todo/cancelled |
+| Typecheck | PASS |
+| Build | PASS; 78/78 rutas |
+| Lint focalizado | PASS, 0 warnings/error |
+| Lint global | PASS, 0 warnings/error |
+| `git diff --check` | PASS |
+| Matriz responsive | 152 combinaciones; 0 overflow/error/imagen rota |
+| Dark/light/reduced motion | 25 combinaciones; PASS |
+| Capturas finales | 54 combinaciones; PASS |
+| Teclado/focus/Escape | PASS; trampa, Escape y retorno al activador |
+| PWA standalone emulada | 8/8 superficies controladas por Service Worker |
+| Offline/reconexión | PASS; shell Demo cacheado, API no cacheable falla offline y vuelve 200 online |
+| Android físico | PENDING |
+| iPhone físico | PENDING |
+| PWA instalada física | PENDING |
+
+## Rendimiento local orientativo
+
+En el build productivo local PWA, las ocho superficies registraron CLS `0`, FCP entre 28 y 120 ms, carga entre 39 y 156 ms, 39–49 recursos y 8.992–767.657 bytes transferidos. Son cifras locales, no sustituyen métricas productivas. La Revisión rápida se carga dinámicamente y `/admin/demo` permanece separada.
+
+## Evidencia visual
+
+- `docs/official-ui-v3h/V3H_SOCIAL_CORE_DESKTOP_CONTACT_SHEET.png`
+- `docs/official-ui-v3h/V3H_SOCIAL_CORE_PORTRAIT_CONTACT_SHEET.png`
+- `docs/official-ui-v3h/V3H_SOCIAL_CORE_LANDSCAPE_CONTACT_SHEET.png`
+- `docs/official-ui-v3h/V3H_EMPTY_STATES_CONTACT_SHEET.png`
+- `docs/official-ui-v3h/V3H_END_TO_END_JOURNEYS_CONTACT_SHEET.png`
+- `docs/official-ui-v3h/V3H_BEFORE_AFTER_CONTACT_SHEET.png`
+
+## Incidencias
+
+La trazabilidad completa vive en `V3H_SOCIAL_CORE_INCIDENTS.md`. Todas las incidencias V3H localizadas están `fixed + regression_verified` o aceptadas como diferencia legítima. No se han localizado defectos de backend dentro del alcance V3H.

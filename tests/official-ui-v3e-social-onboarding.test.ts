@@ -244,7 +244,7 @@ test("the social Demo has all 26 V3F stories and loads on demand", async () => {
   assert.match(journey, /data-demo-social-first-time="v3f"/);
   assert.match(journey, /Ver como otro equipo/);
   assert.match(demo, /dynamic\([\s\S]*demo-social-first-time-journey/);
-  assert.match(demo, />Empezar<\/button>/);
+  assert.match(demo, /data-primary="true"[\s\S]*Revisión rápida<\/button>/);
   assert.match(demo, /socialJourneyLauncher[\s\S]*Primeros pasos/);
   assert.match(demo, /journey[\s\S]*first-time/);
   assert.match(journey, /map\(\(story, index\) => <li key=\{`\$\{index\}-\$\{story\}`\}/);

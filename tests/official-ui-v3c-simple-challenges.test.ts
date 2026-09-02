@@ -139,7 +139,7 @@ test("role and offline boundaries stay fail-closed", async () => {
   assert.match(page, /selectedMembership\?\.role === "owner"/);
   assert.match(page, /selectedMembership\?\.role === "admin"/);
   assert.match(panel, /snapshot\?\.canManage/);
-  assert.match(panel, /No perteneces todavía a ningún equipo/);
+  assert.match(panel, /Aún no tienes equipo/);
   assert.match(panel, /Solo un admin u owner/);
   assert.match(panel, /!navigator\.onLine/);
   assert.match(panel, /Necesitas conexión para confirmar esta acción/);

@@ -38,7 +38,7 @@
 .subnav button,
 .adminLink {
   min-width: 104px;
-  min-height: 38px;
+  min-height: 40px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -120,7 +120,7 @@
   .subnav::-webkit-scrollbar { display: none; }
   .subnav > div { width: max-content; }
   .subnav button,
-  .adminLink { min-width: 94px; min-height: 38px; padding-inline: 9px; }
+  .adminLink { min-width: 94px; min-height: 40px; padding-inline: 9px; }
   .adminLink { margin-left: 0; white-space: nowrap; }
   .workspace { gap: 9px; padding: 10px 10px calc(86px + env(safe-area-inset-bottom)); }
   .titlebar { min-height: 54px; align-items: start; padding-block: 5px; }
@@ -152,7 +152,7 @@
   .subnav button,
   .adminLink {
     min-width: 0;
-    min-height: 34px;
+    min-height: 40px;
     justify-content: flex-start;
     border-bottom-width: 1px;
     border-left: 3px solid transparent;
@@ -172,7 +172,7 @@
   .titlebar { min-height: 36px; }
   .titlebar h1 { font-size: 0.9rem; }
   .titlebar p { margin-top: 1px; font-size: 0.52rem; }
-  .actions :is(a, button, select) { min-height: 28px; font-size: 0.55rem; }
+  .actions :is(a, button, select) { min-height: 40px; font-size: 0.55rem; }
   .context, .search, .filters { min-height: 0; }
   .results { min-height: 0; overflow: auto; overscroll-behavior: contain; }
 }

@@ -117,11 +117,12 @@ export default function ChallengesPage() {
               <button aria-current={route.view === "history" ? "page" : undefined} className={route.view === "history" ? styles.active : ""} type="button" onClick={() => selectView("history")}>Historial</button>
             </nav>
             {route.view === "active" && !route.creating && !route.challengeId ? (
-              <nav className={styles.filters} aria-label="Filtrar retos activos">
-                {activeFilters.map((filter) => (
-                  <button aria-pressed={route.filter === filter.id} key={filter.id} type="button" onClick={() => selectFilter(filter.id)}>{filter.label}</button>
-                ))}
-              </nav>
+              <label className={styles.filterSelect}>
+                <span>Mostrar</span>
+                <select aria-label="Filtrar retos activos" value={route.filter} onChange={(event) => selectFilter(event.target.value as ChallengeActiveFilter)}>
+                  {activeFilters.map((filter) => <option key={filter.id} value={filter.id}>{filter.label}</option>)}
+                </select>
+              </label>
             ) : null}
           </>
         ) : null}
