@@ -3368,6 +3368,7 @@ h1 {
   .demo-world-entry-shell .brand-hero-logo {
     max-height: 42px;
     max-width: 240px;
+    transform: translateX(-16.5%);
   }
 
   .demo-world-entry-shell .hero h1 {
