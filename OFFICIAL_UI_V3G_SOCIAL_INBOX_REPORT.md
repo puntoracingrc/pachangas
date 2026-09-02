@@ -109,5 +109,6 @@ the `/perfil/avisos` compatibility redirect.
 - Authenticated staging with two devices and Realtime canonical refetch: PASS.
 - Exact isolated Preview at 1440x900, 390x844, 844x390, offline shell and
   installed-mode emulation: PASS.
-- Production canary, migration, deployment and final disposable-environment
-  cleanup remain pending and must be recorded in the production release report.
+- Production migrations are at exact ledger 235 with canonical ACL, index and
+  Advisor readbacks. Canary, deployment and final disposable-environment cleanup
+  remain pending and must be recorded in the production release report.

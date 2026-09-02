@@ -465,21 +465,21 @@
 - Product impact: the database transaction has already committed. Independent readback returns ledger 234, last version `20260902064632` and canonical name `social_inbox_authority_v1`; no merge or activation has occurred yet.
 - Cause: the CLI's post-commit `pg-delta` catalog-cache phase waited on the unavailable local Docker socket after PostgreSQL had already committed. PostgreSQL reported no active task-owned transaction or non-idle migration session.
 - Correction: did not replay or repair the migration; terminated only the task-owned stalled CLI after authoritative ledger and session readbacks, then verified schema, ACL, indexes, Advisors and a second dry-run reporting no pending authority migration.
-- Regression: the tracked worktree remains unchanged, production stays at one exact V3G receipt and all canonical readbacks pass with no residual CLI process.
-- Regression verified: yes. Production contains one exact authority migration receipt, all canonical readbacks passed and no task-owned CLI process remains.
+- Regression: the tracked worktree remains unchanged, production records each exact V3G migration once and all canonical readbacks pass with no residual CLI process.
+- Regression verified: yes. Both one-time pushes committed exactly one migration before the local Docker catalog-cache phase stalled; independent readbacks proved ledgers 234 and 235 with zero active migration sessions, only the task-owned CLIs were interrupted, no SQL was replayed and no residual push process remains.
 
 ## V3G-037 - Receipt notification foreign key has no covering index
 
 - Classification: `PRODUCT_BUG`
-- Status: `detected`
+- Status: `fixed`
 - Detected: 2026-09-02
 - Scenario: production performance Advisor immediately after the exact V3G migration readback.
 - Original failure: `private.pachanga_social_inbox_command_receipts_v1_notification_id_fkey` has no index beginning with `notification_id`.
 - Product impact: deleting or cascading a notification could require a sequential scan of the receipt ledger as it grows. Current receipt rows are zero and no user-facing failure has occurred.
 - Cause: the first migration indexed `(actor_user_id, created_at, operation_id)` for replay/audit access but omitted the independent foreign-key lookup path.
-- Planned correction: keep the executed migration immutable and add one forward-only corrective migration containing only a B-tree index beginning with `notification_id`; certify it in isolated staging, require the Advisor warning to disappear and then apply it once to production.
+- Correction: kept the executed migration immutable and added one forward-only corrective migration containing only a B-tree index beginning with `notification_id`; certified it in isolated staging, required the Advisor warning to disappear and applied it once to production.
 - Regression: all three V3G indexes must be valid/ready, every V3G foreign key must have a covering index, the ledger must contain exactly one additional canonical migration receipt and all prior SQL/RLS/idempotency tests must remain green.
-- Regression verified: partially. Isolated staging is at exact ledger 235, the index is valid/ready, the `unindexed_foreign_keys` Advisor warning is absent, the transactional SQL/RLS regression passed and rollback readback returned zero fixed synthetic users, Teams, notices and receipts. Production application remains pending.
+- Regression verified: yes. Isolated staging and production are at exact ledger 235; all three receipt indexes are valid/ready; both receipt foreign keys are covered; the V3G `unindexed_foreign_keys` Advisor warning is absent; direct table access remains denied; authenticated RPC grants and anonymous denials are unchanged; receipt rows remain zero; all prior SQL/RLS/idempotency tests remain green.
 
 ## V3G-038 - Browser page evaluation cannot issue the focal Service Worker request
 
@@ -506,3 +506,16 @@
 - Correction: compare the Service Worker version with the exact deployment HEAD's 12-character prefix and keep the full-SHA equality check at the Vercel deployment boundary.
 - Regression: Vercel metadata must equal the complete PR HEAD and `SERVICE_WORKER_VERSION` must end with its exact 12-character prefix.
 - Regression verified: yes. Vercel reports complete SHA `3f702675cdc669dbf41789ef7684c4a36d897fa0` and `/sw.js` declares `2.0.0+sw.3f702675cdc6`.
+
+## V3G-040 - Final CLI migration-list readback did not return
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed`
+- Detected: 2026-09-02
+- Scenario: final remote-ledger reconciliation after production had independently confirmed the corrective migration commit.
+- Original failure: `supabase migration list --linked` printed only its initialization line and remained running beyond the command budget.
+- Product impact: none. The command is read-only, production already reported no active migration transaction and the isolated push dry-run reported the database up to date.
+- Cause: the installed Supabase CLI `2.107.0` again failed to finish its local post-query workflow in this environment; the exact remote ledger remained available through the authenticated Supabase management connector.
+- Correction: terminated only the task-owned read-only CLI process and used the canonical migrations endpoint plus direct PostgreSQL readback instead of retrying the command.
+- Regression: the two independent sources must agree on ledger 235 and exact last version/name, the isolated dry-run must report up to date and no task-owned migration process may remain.
+- Regression verified: yes. The connector and PostgreSQL both report ledger 235 ending at `20260902102800 social_inbox_receipt_notification_index_v1`, the isolated dry-run reports up to date and process readback contains no V3G migration command.

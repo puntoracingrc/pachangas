@@ -15,7 +15,7 @@ their final readbacks.
 - Functional PR: #256
 - Branch: `codex/official-ui-v3g-social-inbox`
 - Initial migration ledger: 233
-- Planned final ledger: 235
+- Final migration ledger: 235
 - Authority migration: `20260902064632_social_inbox_authority_v1.sql`
 - Authority migration SHA-256: `4ade702f4ae82b4fbbabbf79d0cb3ee037b11d9345ee9dd8ab1853c36165460b`
 - FK-index migration: `20260902102800_social_inbox_receipt_notification_index_v1.sql`
@@ -23,7 +23,7 @@ their final readbacks.
 - Supabase production project: `Pachangas` (`qonbngfrnrqgmxbdfbea`)
 - Pre-release remote ledger: 233 exact local/remote pairs through `20260901214527`.
 - Authority migration applied: ledger 234, exact version/name and canonical readback PASS.
-- FK-index correction: isolated staging certification PASS; one-time production application pending.
+- FK-index correction: isolated staging certification PASS; production ledger/readback PASS.
 
 ## Completed pre-production evidence
 
@@ -36,12 +36,14 @@ their final readbacks.
 - 1440x900, 390x844, 844x390 and installed-mode Preview smoke: PASS;
 - Service Worker control and cached offline Inbox shell: PASS;
 - zero unexpected console errors, page errors, HTTP failures, overflow or broken images.
+- production contains both exact V3G migration receipts, all three receipt indexes are valid/ready and both receipt foreign keys are covered;
+- the V3G `unindexed_foreign_keys` Advisor finding is closed; only expected zero-use INFO notices remain for the new indexes;
+- direct receipt-table access remains denied to `anon` and `authenticated`; the two self-authorizing RPCs remain authenticated-only.
 
 ## Pending release evidence
 
 - disposable staging branch destruction and branch-scoped Preview variable removal;
 - final branch SHA and merged main SHA;
-- production migration ledger/readback;
 - exact Vercel deployment ID, SHA and READY state;
 - production desktop, portrait, landscape and PWA smoke;
 - production canary rollback/readback at zero;
