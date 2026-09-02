@@ -199,11 +199,12 @@ No se modificaran SQL, Supabase, migraciones, RPC, RLS, Stripe, Rating, rewards,
 
 ## Cierre del RC
 
-- Resultado final: Node 20/20 + TS/TSX 804/804 = 824/824.
+- Resultado final: Node 20/20 + TS/TSX 805/805 = 825/825.
 - Omitidos, `todo` y cancelados: 0/0/0.
 - Typecheck, build 78/78, lint focalizado, lint global y `git diff --check`: PASS.
 - Responsive: 152 combinaciones en los ocho viewports exigidos; 0 overflow raiz, errores de navegacion, errores/warnings de consola, peticiones fallidas o imagenes rotas.
 - Tema y movimiento: 25 combinaciones light/dark/reduced motion; PASS.
+- Retos light/dark: superficies tematicas verificadas y evidencia desktop/portrait/landscape regenerada tras V3H-032.
 - PWA productiva local: 8/8 superficies `standalone`, controladas por Service Worker y sin targets pequenos.
 - Offline: Demo y pruebas de cero escritura disponibles desde cache; una ruta API no cacheable no finge exito y se recupera al reconectar.
 - Supabase, migraciones, RPC, RLS, flags, Stripe y datos productivos: sin cambios.

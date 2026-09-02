@@ -47,6 +47,18 @@ test("Retos uses one local navigation and one compact filter", async () => {
   assert.doesNotMatch(emptyBranch, /Unirme a un equipo/);
 });
 
+test("Demo Retos uses theme-aware surfaces in light and dark modes", async () => {
+  const styles = await source("app/demo-world/demo-world.module.css");
+
+  assert.match(styles, /\.demoChallengeFilterSelect select \{[^}]*background: var\(--demo-panel-soft\)/);
+  assert.match(styles, /\.demoChallengeCard \{[^}]*background: var\(--demo-panel\)/s);
+  assert.match(styles, /\.demoChallengeHistory > button \{[^}]*background: var\(--demo-panel\)/);
+  assert.match(styles, /\.demoChallengeFocus \{[^}]*background: var\(--demo-panel\)/s);
+  assert.match(styles, /\.demoChallengeFields select \{[^}]*background: var\(--demo-panel-soft\)[^}]*color-scheme: inherit/);
+  assert.match(styles, /\.demoOpponentList > button \{[^}]*background: var\(--demo-panel-soft\)/);
+  assert.match(styles, /\.demoChallengeDetail dl > div \{[^}]*background: var\(--demo-panel\)/);
+});
+
 test("Mercado keeps location first and compacts geolocation accessibly", async () => {
   const [market, styles] = await Promise.all([
     source("app/mercado/marketplace-client.tsx"),

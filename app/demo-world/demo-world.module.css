@@ -3247,7 +3247,7 @@
 .demoChallengesV3c > nav > button { min-height: 40px; border: 1px solid transparent; border-radius: 5px; background: transparent; padding: 0 14px; color: var(--demo-muted); font-weight: 850; }
 .demoChallengesV3c > nav > button[aria-current="page"] { border-color: var(--demo-line); background: rgba(200, 239, 93, 0.08); color: var(--demo-lime); }
 .demoChallengeFilterSelect { width: fit-content; display: flex; align-items: center; gap: 7px; color: var(--demo-muted); font-size: 0.63rem; font-weight: 850; }
-.demoChallengeFilterSelect select { min-width: 120px; min-height: 40px; border: 1px solid var(--demo-line); border-radius: 5px; background: #101d1a; padding: 0 30px 0 9px; color: var(--demo-ink); }
+.demoChallengeFilterSelect select { min-width: 120px; min-height: 40px; border: 1px solid var(--demo-line); border-radius: 5px; background: var(--demo-panel-soft); padding: 0 30px 0 9px; color: var(--demo-ink); }
 
 .demoPerspectiveBar {
   min-height: 42px;
@@ -3278,7 +3278,7 @@
   border: 1px solid var(--demo-line);
   border-left: 3px solid var(--demo-cyan);
   border-radius: 6px;
-  background: rgba(18, 29, 26, 0.76);
+  background: var(--demo-panel);
   padding: 8px 10px;
 }
 .demoChallengeCard[data-state="accepted"] { border-left-color: var(--demo-lime); }
@@ -3294,7 +3294,7 @@
 .demoChallengeWizard > div:last-child button:not(.primaryButton) { min-height: 40px; border: 1px solid var(--demo-line); border-radius: 5px; background: transparent; padding: 0 10px; color: var(--demo-ink); font-weight: 800; }
 
 .demoChallengeHistory { display: grid; gap: 6px; }
-.demoChallengeHistory > button { min-height: 60px; display: grid; grid-template-columns: 46px minmax(0, 1fr) auto; align-items: center; gap: 10px; border: 1px solid var(--demo-line); border-radius: 5px; background: rgba(18, 29, 26, 0.7); padding: 7px 10px; color: inherit; text-align: left; }
+.demoChallengeHistory > button { min-height: 60px; display: grid; grid-template-columns: 46px minmax(0, 1fr) auto; align-items: center; gap: 10px; border: 1px solid var(--demo-line); border-radius: 5px; background: var(--demo-panel); padding: 7px 10px; color: inherit; text-align: left; }
 .demoChallengeHistory > button > span { min-width: 0; display: grid; gap: 2px; }
 .demoChallengeHistory small { overflow: hidden; color: var(--demo-muted); text-overflow: ellipsis; white-space: nowrap; }
 .demoChallengeHistory b { border-radius: 4px; background: rgba(255,255,255,0.07); padding: 5px 8px; color: var(--demo-muted); font-size: 0.63rem; }
@@ -3308,7 +3308,7 @@
   min-height: 0;
   border: 1px solid var(--demo-line);
   border-radius: 7px;
-  background: rgba(18, 29, 26, 0.82);
+  background: var(--demo-panel);
   padding: 16px;
 }
 .demoChallengeFocus > ol { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; margin: 14px 0 0; padding: 0; list-style: none; }
@@ -3327,12 +3327,12 @@
 .demoChallengeWizard select,
 .demoChallengeWizard textarea,
 .demoChallengeFields input,
-.demoChallengeFields select { min-height: 40px; border: 1px solid var(--demo-line); border-radius: 5px; background: #101d1a; padding: 0 9px; color: var(--demo-ink); color-scheme: dark; }
+.demoChallengeFields select { min-height: 40px; border: 1px solid var(--demo-line); border-radius: 5px; background: var(--demo-panel-soft); padding: 0 9px; color: var(--demo-ink); color-scheme: inherit; }
 .demoChallengeWizard textarea { min-height: 70px; padding-block: 8px; }
 .demoChallengeWizard > div:last-child,
 .demoCounterproposal > div:last-child { display: flex; justify-content: space-between; gap: 8px; }
 .demoOpponentList { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
-.demoOpponentList > button { min-height: 56px; display: flex; align-items: center; gap: 8px; border: 1px solid var(--demo-line); border-radius: 5px; background: rgba(8, 23, 19, 0.46); padding: 7px; color: inherit; text-align: left; }
+.demoOpponentList > button { min-height: 56px; display: flex; align-items: center; gap: 8px; border: 1px solid var(--demo-line); border-radius: 5px; background: var(--demo-panel-soft); padding: 7px; color: inherit; text-align: left; }
 .demoOpponentList > button[aria-pressed="true"] { border-color: var(--demo-lime); background: rgba(200, 239, 93, 0.06); }
 .demoOpponentList > button > span { display: grid; gap: 2px; font-weight: 850; }
 .demoOpponentList small { color: var(--demo-muted); font-size: 0.62rem; }
@@ -3346,7 +3346,7 @@
 
 .demoChallengeDetail { display: grid; grid-template-columns: minmax(220px, 0.7fr) minmax(0, 1fr); align-items: start; gap: 18px; padding: 18px 0 8px; }
 .demoChallengeDetail dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1px; margin: 0; background: var(--demo-line); }
-.demoChallengeDetail dl > div { display: grid; gap: 3px; background: #12201c; padding: 10px; }
+.demoChallengeDetail dl > div { display: grid; gap: 3px; background: var(--demo-panel); padding: 10px; }
 .demoChallengeDetail dt { color: var(--demo-muted); font-size: 0.61rem; text-transform: uppercase; }
 .demoChallengeDetail dd { margin: 0; overflow-wrap: anywhere; }
 .demoChallengeActions { display: flex; flex-wrap: wrap; gap: 7px; padding-top: 10px; }

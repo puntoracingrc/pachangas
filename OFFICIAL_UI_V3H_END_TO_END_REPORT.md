@@ -43,8 +43,8 @@ Sin cambios en Supabase, migraciones, RPC, RLS, flags, Stripe, Rating, resultado
 
 - Node: 20/20.
 - TS/TSX baseline: 798/798.
-- TS/TSX final: 804/804.
-- Total final: 824/824.
+- TS/TSX final: 805/805.
+- Total final: 825/825.
 - Skipped/todo/cancelled: 0/0/0.
 - Typecheck: PASS.
 - Build: PASS, 78 rutas.
@@ -54,8 +54,8 @@ Sin cambios en Supabase, migraciones, RPC, RLS, flags, Stripe, Rating, resultado
 
 | Gate | Estado |
 | --- | --- |
-| Regresión V3H focalizada | 6/6 PASS |
-| Tests completos | 824/824 PASS; 0 skip/todo/cancelled |
+| Regresión V3H focalizada | 7/7 PASS |
+| Tests completos | 825/825 PASS; 0 skip/todo/cancelled |
 | Typecheck | PASS |
 | Build | PASS; 78/78 rutas |
 | Lint focalizado | PASS, 0 warnings/error |
@@ -63,6 +63,7 @@ Sin cambios en Supabase, migraciones, RPC, RLS, flags, Stripe, Rating, resultado
 | `git diff --check` | PASS |
 | Matriz responsive | 152 combinaciones; 0 overflow/error/imagen rota |
 | Dark/light/reduced motion | 25 combinaciones; PASS |
+| Contraste Retos light/dark | PASS; superficies temáticas y tres contact sheets regeneradas |
 | Capturas finales | 54 combinaciones; PASS |
 | Teclado/focus/Escape | PASS; trampa, Escape y retorno al activador |
 | PWA standalone emulada | 8/8 superficies controladas por Service Worker |
