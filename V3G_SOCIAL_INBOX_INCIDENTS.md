@@ -480,3 +480,29 @@
 - Planned correction: keep the executed migration immutable and add one forward-only corrective migration containing only a B-tree index beginning with `notification_id`; certify it in isolated staging, require the Advisor warning to disappear and then apply it once to production.
 - Regression: all three V3G indexes must be valid/ready, every V3G foreign key must have a covering index, the ledger must contain exactly one additional canonical migration receipt and all prior SQL/RLS/idempotency tests must remain green.
 - Regression verified: partially. Isolated staging is at exact ledger 235, the index is valid/ready, the `unindexed_foreign_keys` Advisor warning is absent, the transactional SQL/RLS regression passed and rollback readback returned zero fixed synthetic users, Teams, notices and receipts. Production application remains pending.
+
+## V3G-038 - Browser page evaluation cannot issue the focal Service Worker request
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed`
+- Detected: 2026-09-02
+- Scenario: focal smoke of the exact corrective Preview HEAD after `/avisos` loaded without console errors.
+- Original failure: the browser's isolated read-only page-evaluation scope reported `fetch is not a function` when one assertion attempted to read `/sw.js` and the manifest from inside the page.
+- Product impact: none. The Preview page loaded normally and the failure occurred before either resource assertion ran.
+- Cause: the controlled page-evaluation scope intentionally exposes a reduced browser API and does not provide network `fetch`.
+- Correction: kept DOM assertions in page evaluation and verified the Service Worker and manifest through direct same-origin browser navigation, without weakening Preview protection or introducing a share token.
+- Regression: the settings route must render with no overlay, overflow or browser errors; direct navigation must expose the deployment version in `/sw.js`, include both V3G routes and return the manifest successfully.
+- Regression verified: yes. The settings route rendered without overlay, horizontal overflow or browser warnings/errors; direct navigation exposed the V3G Service Worker routes and a valid Pachangas IQ manifest.
+
+## V3G-039 - Service Worker version assertion expected a full commit SHA
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed`
+- Detected: 2026-09-02
+- Scenario: direct-navigation verification of `/sw.js` on exact Preview deployment `3f702675cdc669dbf41789ef7684c4a36d897fa0`.
+- Original failure: the first assertion searched for the full 40-character Git SHA and returned false even though the deployment and Service Worker were current.
+- Product impact: none. The Service Worker was generated from the correct deployment and cached both V3G routes.
+- Cause: the established build contract stores the first 12 SHA characters in `SERVICE_WORKER_VERSION`, while Vercel deployment metadata retains the full SHA.
+- Correction: compare the Service Worker version with the exact deployment HEAD's 12-character prefix and keep the full-SHA equality check at the Vercel deployment boundary.
+- Regression: Vercel metadata must equal the complete PR HEAD and `SERVICE_WORKER_VERSION` must end with its exact 12-character prefix.
+- Regression verified: yes. Vercel reports complete SHA `3f702675cdc669dbf41789ef7684c4a36d897fa0` and `/sw.js` declares `2.0.0+sw.3f702675cdc6`.
