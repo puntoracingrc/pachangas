@@ -166,8 +166,9 @@ test("V3D local caches are derived reads and location preferences never persist 
 });
 
 test("V3D removes synthetic live fallbacks and keeps configuration outside team results", async () => {
-  const [market, teamPanel, marketCss, filterSheet, globals, shellCss, demo, worker] = await Promise.all([
+  const [market, marketUiState, teamPanel, marketCss, filterSheet, globals, shellCss, demo, worker] = await Promise.all([
     source("app/mercado/marketplace-client.tsx"),
+    source("app/mercado/marketplace-ui-state.ts"),
     source("app/mercado/challengeable-teams-panel.tsx"),
     source("app/mercado/marketplace-v3d.module.css"),
     source("app/mercado/market-filter-sheet.tsx"),
@@ -177,7 +178,8 @@ test("V3D removes synthetic live fallbacks and keeps configuration outside team 
     source("app/service-worker-source.ts"),
   ]);
   assert.doesNotMatch(market, /fallbackProfiles|fallbackOpenMatches|open-demo-|market-demo-/);
-  assert.match(market, /"CACHED" \| "LIVE" \| "LOADING" \| "UNAVAILABLE"/);
+  assert.match(marketUiState, /"CACHED" \| "IDLE" \| "LIVE" \| "LOADING" \| "UNAVAILABLE"/);
+  assert.match(market, /marketQueryPhase\(activeSource, resultCount, online\)/);
   assert.match(market, /readMarketReadCache/);
   assert.match(market, /Necesitas conexión para confirmar esta acción/);
   assert.match(market, /navigator\.geolocation\.getCurrentPosition/);
