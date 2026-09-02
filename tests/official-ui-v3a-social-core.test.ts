@@ -52,7 +52,7 @@ test("social Demo and full platform Demo have separate canonical entry points", 
   assert.match(adminPage, /requirePlatformPage\("overview\.read"\)/);
   assert.match(adminPage, /session\.access\.role !== "platform_owner"/);
   assert.match(adminPage, /mode="full"/);
-  assert.match(demo, /socialDemoTabs = new Set[^\n]+\["inicio", "partido", "retos", "mercado"\]/);
+  assert.match(demo, /socialDemoTabs = new Set[^\n]+\["avisos", "inicio", "partido", "retos", "mercado", "equipo", "perfil"\]/);
   assert.match(demo, /fullMode \? <DemoDomainMenu/);
 });
 

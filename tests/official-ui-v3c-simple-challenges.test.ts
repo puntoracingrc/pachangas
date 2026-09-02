@@ -190,17 +190,19 @@ test("the social Demo covers the local challenge lifecycle with zero remote effe
   assert.doesNotMatch(demo, /supabaseClient|\.rpc\(|method:\s*["'](?:POST|PUT|PATCH|DELETE)/);
 });
 
-test("Home shows at most one actionable challenge and V3A/V3B remain linked", async () => {
+test("Home shows at most one canonical social action and V3A/V3B remain linked", async () => {
   const demo = await source("app/demo-world/demo-world-app.tsx");
-  assert.match(demo, /const actionableChallenge = currentTeam \? challenges/);
+  assert.match(demo, /const primaryPendingAction = pendingActions\.find/);
+  assert.match(demo, /pendingActions=\{socialInboxActions\}/);
+  assert.match(demo, /const socialChallenge = demoChallenges\.find/);
+  assert.match(demo, /id: DEMO_SOCIAL_CHALLENGE_ID/);
+  assert.match(demo, /targetTab: "retos"/);
   assert.match(demo, /function demoChallengeNeedsResponse/);
   assert.match(demo, /demoChallengeLastProposer\(challenge, overrides\) !== teamId/);
-  assert.match(demo, /demoChallengeNeedsResponse\(challenge, currentTeam\.id, overrides\) \|\| challenge\.status === "accepted"/);
   assert.doesNotMatch(demo, /left\.awayTeamId === currentTeam\.id/);
   assert.match(demo, /Pendiente de ti/);
   assert.match(demo, /Responder reto/);
-  assert.match(demo, /actionableChallenge\.status === "accepted" \? "Ver partido"/);
-  assert.match(demo, /onMatch\(actionableChallenge\.matchId\)/);
+  assert.match(demo, /onPendingAction\(primaryPendingAction\)/);
   assert.match(demo, /OfficialMatchesOverview/);
   assert.match(demo, /OfficialQuickMatchWizard/);
 });

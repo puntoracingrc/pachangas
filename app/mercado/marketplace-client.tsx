@@ -171,6 +171,22 @@ type MatchInvitationSummary = {
   targetMarketProfileId: string;
 };
 
+type IncomingMatchInvitation = {
+  createdAt: string;
+  groupId: string;
+  invitationId: string;
+  matchDate: string;
+  matchId: string;
+  matchKind: string;
+  matchPlace: string;
+  matchRevision: number;
+  matchTitle: string;
+  revision: number;
+  status: "accepted" | "cancelled" | "pending" | "rejected";
+  teamName: string;
+  updatedAt: string;
+};
+
 type MarketMatchContext = {
   dateText: string;
   day: string;
@@ -349,6 +365,28 @@ function normalizeOpenMatch(row: OpenMarketMatchRow): OpenMarketMatch {
   };
 }
 
+function normalizeIncomingMatchInvitation(value: unknown): IncomingMatchInvitation | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const row = value as Record<string, unknown>;
+  if (typeof row.invitationId !== "string" || typeof row.matchId !== "string") return null;
+  const status = row.status === "accepted" || row.status === "cancelled" || row.status === "rejected" ? row.status : "pending";
+  return {
+    createdAt: typeof row.createdAt === "string" ? row.createdAt : "",
+    groupId: typeof row.groupId === "string" ? row.groupId : "",
+    invitationId: row.invitationId,
+    matchDate: typeof row.matchDate === "string" ? row.matchDate : "",
+    matchId: row.matchId,
+    matchKind: typeof row.matchKind === "string" ? row.matchKind : "futbol7",
+    matchPlace: typeof row.matchPlace === "string" ? row.matchPlace : "",
+    matchRevision: Math.max(0, Math.floor(Number(row.matchRevision) || 0)),
+    matchTitle: typeof row.matchTitle === "string" ? row.matchTitle : "Partido",
+    revision: Math.max(1, Math.floor(Number(row.revision) || 1)),
+    status,
+    teamName: typeof row.teamName === "string" ? row.teamName : "Equipo",
+    updatedAt: typeof row.updatedAt === "string" ? row.updatedAt : "",
+  };
+}
+
 function normalizeText(value: string) {
   return value.toLocaleLowerCase("es").normalize("NFD").replace(/\p{Diacritic}/gu, "");
 }
@@ -441,6 +479,11 @@ export default function MarketplaceClient() {
   const [currentUserId, setCurrentUserId] = useState("");
   const [canInvite, setCanInvite] = useState(false);
   const [marketRefresh, setMarketRefresh] = useState(0);
+  const [incomingInvitationId, setIncomingInvitationId] = useState("");
+  const [incomingInvitation, setIncomingInvitation] = useState<IncomingMatchInvitation | null>(null);
+  const [incomingInvitationState, setIncomingInvitationState] = useState<"error" | "idle" | "loading" | "ready" | "responding" | "signed-out">("idle");
+  const [incomingInvitationMessage, setIncomingInvitationMessage] = useState("");
+  const [incomingInvitationRefresh, setIncomingInvitationRefresh] = useState(0);
   const [online, setOnline] = useState(true);
   const [locating, setLocating] = useState(false);
   const zoneInputRef = useRef<HTMLInputElement>(null);
@@ -468,6 +511,7 @@ export default function MarketplaceClient() {
         return;
       }
       const route = marketRouteFromSearch(window.location.search);
+      setIncomingInvitationId(params.get("invitacion")?.trim() ?? "");
       window.queueMicrotask(() => {
         if (active) restoreMarketRoute(route);
       });
@@ -491,6 +535,52 @@ export default function MarketplaceClient() {
       window.removeEventListener("popstate", restore);
     };
   }, []);
+
+  useEffect(() => {
+    let disposed = false;
+    async function loadInvitation() {
+      if (!incomingInvitationId) {
+        setIncomingInvitation(null);
+        setIncomingInvitationState("idle");
+        setIncomingInvitationMessage("");
+        return;
+      }
+      if (!currentUserId) {
+        setIncomingInvitation(null);
+        setIncomingInvitationState("signed-out");
+        return;
+      }
+      if (!online || !supabase) {
+        setIncomingInvitationState("error");
+        setIncomingInvitationMessage("Necesitas conexión para consultar y responder esta invitación.");
+        return;
+      }
+      setIncomingInvitationState("loading");
+      setIncomingInvitationMessage("");
+      const result = await supabase.rpc("get_my_pachanga_match_invitation_action_v1", {
+        target_invitation_id: incomingInvitationId,
+      });
+      if (disposed) return;
+      if (result.error) {
+        const safe = safeMarketError(result.error);
+        setIncomingInvitation(null);
+        setIncomingInvitationState("error");
+        setIncomingInvitationMessage(safe.body || "Esta invitación ya no está disponible.");
+        return;
+      }
+      const normalized = normalizeIncomingMatchInvitation(result.data);
+      if (!normalized) {
+        setIncomingInvitation(null);
+        setIncomingInvitationState("error");
+        setIncomingInvitationMessage("El servidor no devolvió una invitación válida.");
+        return;
+      }
+      setIncomingInvitation(normalized);
+      setIncomingInvitationState("ready");
+    }
+    void loadInvitation();
+    return () => { disposed = true; };
+  }, [currentUserId, incomingInvitationId, incomingInvitationRefresh, online]);
 
   useEffect(() => {
     const update = () => setOnline(navigator.onLine);
@@ -1014,6 +1104,33 @@ export default function MarketplaceClient() {
     setOperation(key, { message: status === "cancelled" ? "Invitación cancelada." : status === "accepted" ? "Jugador confirmado." : "Invitación enviada.", tone: "success" });
   }
 
+  async function respondIncomingInvitation(nextStatus: "accepted" | "rejected") {
+    if (!online || !supabase || !incomingInvitation || incomingInvitationState === "responding") {
+      setIncomingInvitationMessage("Necesitas conexión para confirmar esta acción.");
+      return;
+    }
+    setIncomingInvitationState("responding");
+    setIncomingInvitationMessage(nextStatus === "accepted" ? "Confirmando tu plaza…" : "Rechazando invitación…");
+    const result = await supabase.rpc("respond_pachanga_match_invitation_v1", {
+      client_metadata: marketOperationMetadata(),
+      expected_invitation_revision: incomingInvitation.revision,
+      expected_match_revision: incomingInvitation.matchRevision,
+      next_status: nextStatus,
+      operation_id: crypto.randomUUID(),
+      target_invitation_id: incomingInvitation.invitationId,
+    });
+    if (result.error) {
+      const safe = safeMarketError(result.error);
+      setIncomingInvitationMessage(safe.body);
+      setIncomingInvitationState("error");
+      if (safe.stale) setIncomingInvitationRefresh((value) => value + 1);
+      return;
+    }
+    setIncomingInvitationMessage(nextStatus === "accepted" ? "Invitación aceptada y confirmada por el servidor." : "Invitación rechazada.");
+    setIncomingInvitationRefresh((value) => value + 1);
+    setMarketRefresh((value) => value + 1);
+  }
+
   const marketTabs: OfficialMarketTab[] = [
     { id: "partidos", label: "Partidos", onSelect: () => selectMarketTab("partidos") },
     { id: "jugadores", label: "Jugadores", onSelect: () => selectMarketTab("jugadores") },
@@ -1120,6 +1237,22 @@ export default function MarketplaceClient() {
           tabs={marketTabs}
           title="Mercado"
         >
+          {incomingInvitationId ? (
+            <section className={styles.incomingInvitation} data-state={incomingInvitationState} aria-labelledby="incoming-match-invitation-title">
+              <div>
+                <span>Invitación de partido</span>
+                <h2 id="incoming-match-invitation-title">{incomingInvitation?.matchTitle ?? (incomingInvitationState === "loading" ? "Cargando invitación…" : "Revisa tu invitación")}</h2>
+                {incomingInvitation ? <p>{[incomingInvitation.teamName, incomingInvitation.matchDate, modalityLabels[incomingInvitation.matchKind] || incomingInvitation.matchKind, incomingInvitation.matchPlace].filter(Boolean).join(" · ")}</p> : null}
+                {incomingInvitationMessage ? <small aria-live="polite">{incomingInvitationMessage}</small> : null}
+              </div>
+              <div>
+                {incomingInvitationState === "signed-out" ? <a href={googleAuthEntryHref(`${typeof window === "undefined" ? "/mercado" : `${window.location.pathname}${window.location.search}`}`)}>Entrar para responder</a> : null}
+                {incomingInvitation?.status === "pending" ? <><button disabled={!online || incomingInvitationState === "responding"} type="button" onClick={() => void respondIncomingInvitation("accepted")}>Aceptar</button><button disabled={!online || incomingInvitationState === "responding"} type="button" onClick={() => void respondIncomingInvitation("rejected")}>Rechazar</button></> : null}
+                {incomingInvitation?.status === "accepted" ? <a href={`/?mobile=partido&p=${encodeURIComponent(incomingInvitation.matchId)}`}>Ver partido</a> : null}
+                {incomingInvitation && incomingInvitation.status !== "pending" && incomingInvitation.status !== "accepted" ? <span>{incomingInvitation.status === "rejected" ? "Rechazada" : "Cancelada"}</span> : null}
+              </div>
+            </section>
+          ) : null}
           {resultCount !== null ? (
             <div className={styles.resultsHeader}>
               <strong>{resultCount} {resultNoun} {resultCount === 1 ? "encontrado" : "encontrados"}</strong>

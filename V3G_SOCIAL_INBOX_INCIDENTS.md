@@ -1,0 +1,521 @@
+# Official UI V3G Social Inbox incidents
+
+## V3G-001 - Synthetic Team fixture referenced a non-canonical shield column
+
+- Classification: `SIMULATION_BUG`
+- Status: `fixed`
+- Detected: 2026-09-02
+- Scenario: transactional Social Inbox SQL contract test.
+- Original failure: `column "social_shield_key" of relation "pachanga_groups" does not exist`.
+- Product impact: none. The transaction aborted and no local or remote data was persisted.
+- Cause: the fixture mixed a UI shield key with the canonical `pachanga_groups` schema.
+- Correction: create the synthetic Teams using only the social columns introduced by V3F.
+- Regression: `npm run test:social-inbox:db` executes the complete V3F and V3G migration chain plus the synthetic Inbox scenario inside a rollback-only transaction.
+- Regression verified: yes. The rollback-only SQL suite passes.
+
+## V3G-002 - Inbox projection rejected canonical UUID values outside RFC version bits
+
+- Classification: `PRODUCT_BUG`
+- Status: `fixed`
+- Detected: 2026-09-02
+- Scenario: unresolved Challenge notification projected through `get_my_pachanga_social_inbox_v1`.
+- Original failure: the canonical Challenge existed and required a response, but the Inbox classified it as `RESOLVED / Ya no disponible`.
+- Product impact: imported or deterministic UUID values accepted by PostgreSQL could lose their actionable projection.
+- Cause: the defensive text-to-UUID helper required RFC version and variant bits even though the canonical columns use PostgreSQL `uuid`, whose accepted value space is broader.
+- Correction: validate UUID syntax, then let PostgreSQL perform the authoritative cast without imposing extra version bits.
+- Regression: the synthetic contract intentionally uses a canonical UUID without RFC version bits and requires the Challenge to remain `ACTION_REQUIRED`.
+- Regression verified: yes. The rollback-only SQL suite passes.
+
+## V3G-003 - Accepted guest match route was absent from the client allowlist
+
+- Classification: `PRODUCT_BUG`
+- Status: `fixed`
+- Detected: 2026-09-02
+- Scenario: an accepted open-match request projects the canonical `/partido-invitado?acceso=...` deep link.
+- Original failure: the server returned a safe internal destination, but `safeSocialInboxDeepLink` removed it because the client allowlist did not include `/partido-invitado`.
+- Product impact: an accepted guest could see the resolved activity without the button that opens the match they may access.
+- Cause: server and client allowlists were not reconciled after the accepted guest route was added to the projection.
+- Correction: add the exact internal pathname to the client allowlist. Parameters remain server-built and external, protocol-relative, `javascript:` and `data:` destinations remain rejected.
+- Regression: the focal test accepts `/partido-invitado?acceso=abc` and rejects external or administrative routes.
+- Regression verified: yes. `npm run test:social-inbox` passes.
+
+## V3G-004 - V3G focal tests were not included in the complete suite
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed`
+- Detected: 2026-09-02
+- Scenario: release-gate reconciliation after adding the V3G source and SQL tests.
+- Original failure: `npm run test:social-inbox` existed, but `npm test` did not invoke `tests/social-inbox-v1.test.ts`.
+- Product impact: later global release runs could pass without exercising the new Inbox contract.
+- Cause: the focal script was added before the complete-suite list was updated.
+- Correction: include the V3G test file in the global TS/TSX suite while retaining the focused command.
+- Regression: the focal test asserts that the complete test command contains its own V3G contract test.
+- Regression verified: yes. `npm run test:social-inbox` passes.
+
+## V3G-005 - Concurrent replay could collide after waiting for the actor lock
+
+- Classification: `PRODUCT_BUG`
+- Status: `fixed`
+- Detected: 2026-09-02
+- Scenario: two devices submit the same Inbox `operationId` before either transaction has committed its receipt.
+- Original failure: both transactions could miss the initial receipt lookup; after serializing on the actor lock, the second transaction continued and collided on the receipt primary key instead of replaying the confirmed response.
+- Product impact: the canonical mutation remained single-application, but the retrying device could receive an error instead of converging on the exact server receipt.
+- Cause: the receipt was checked before acquiring the advisory lock and not checked again after waiting.
+- Correction: repeat the receipt and argument-conflict check immediately after acquiring the per-user transaction lock.
+- Regression: the focal contract requires a post-lock receipt read, and the dedicated concurrency test holds the actor lock so two requests deterministically miss the first read before replaying the same operation.
+- Regression verified: yes. `npm run test:social-inbox:concurrency` passed with two concurrent sessions, one mutation, one receipt and identical confirmed responses.
+
+## V3G-006 - Demo Profile exposed a second obsolete notification center
+
+- Classification: `PRODUCT_BUG`
+- Status: `fixed`
+- Detected: 2026-09-02
+- Scenario: navigating to Demo Profile after V3G added the canonical Social Inbox tab and bell.
+- Original failure: Profile still offered a separate `Avisos` pane backed by the old generic read-state array.
+- Product impact: the Demo presented two competing Inbox concepts with different counters and state.
+- Cause: the V3G navigation was added without removing the replaced Demo-only pane.
+- Correction: Profile keeps `Ficha` and `Recompensas`; all social notices now enter through the bell and `Avisos`, while channel preferences remain in Ajustes on the real product.
+- Regression: the focal test isolates `ProfileView` and rejects the obsolete `Avisos` pane and its old center heading.
+- Regression verified: yes. `npm run test:social-inbox` passes and rejects the obsolete Demo Profile notification pane.
+
+## V3G-007 - Inbox commands bypassed the PWA client-version write bridge
+
+- Classification: `PRODUCT_BUG`
+- Status: `fixed`
+- Detected: 2026-09-02
+- Scenario: marking or archiving an Inbox item through Supabase in browser or installed PWA mode.
+- Original failure: `command_pachanga_social_inbox_v1` was not in the known write RPC classifier, so the shared Supabase fetch transport did not attach bridge metadata or enforce incompatible/offline write blocking.
+- Product impact: an obsolete PWA could attempt this new write without the permanent client-version guard and telemetry path.
+- Cause: the RPC was introduced after the classifier inventory was last updated.
+- Correction: register the exact V3G command RPC as a V2 client write. The read-model RPC remains deliberately unclassified and available for reads.
+- Regression: the focal test classifies the exact PostgREST endpoint as `rpc:command_pachanga_social_inbox_v1`.
+- Regression verified: yes. `npm run test:social-inbox` and the complete PWA bridge test classify the command as a write and leave the read RPC unclassified.
+
+## V3G-008 - Concurrency fixture used a non-canonical notification category
+
+- Classification: `SIMULATION_BUG`
+- Status: `fixed`
+- Detected: 2026-09-02
+- Scenario: setup for the deterministic two-session Inbox replay test.
+- Original failure: PostgreSQL rejected the synthetic `team` category through `pachanga_user_notifications_category_check`.
+- Product impact: none. Setup aborted before the concurrent command and the cleanup removed the synthetic user.
+- Cause: V3G exposes the product domain as `TEAM`, but the existing notification table deliberately retains the canonical storage category `group`.
+- Correction: the fixture now stores `group`; the projection remains responsible for returning `sourceDomain = TEAM`.
+- Regression: rerun the full two-session concurrency script with the canonical category.
+- Regression verified: yes. `npm run test:social-inbox:concurrency` passes with the canonical `group` storage category projected as `TEAM`.
+
+## V3G-009 - An in-flight Inbox command could update the next signed-in session
+
+- Classification: `PRODUCT_BUG`
+- Status: `fixed`
+- Detected: 2026-09-02
+- Scenario: user A starts a read/archive command and signs out or changes to user B before the RPC resolves.
+- Original failure: Inbox reads rejected stale responses by actor and request generation, but the command path did not capture its initiating actor and did not use `try/finally`. A late response could refresh the next session or leave the busy indicator stuck after a transport exception.
+- Product impact: no cross-user database write is possible because the RPC resolves `auth.uid()` and enforces recipient ownership, but the browser could display stale command feedback or refresh the wrong user session.
+- Cause: command lifecycle isolation lagged behind the already protected read lifecycle.
+- Correction: bind every command to its initiating actor, ignore late UI effects after an actor change, clear command state during reconnect, serialize commands in the provider and always release the busy state in `finally`.
+- Regression: the focal source contract requires actor capture, stale-session rejection, reconnect cleanup and guarded `finally` release.
+- Regression verified: yes. `npm run test:social-inbox` passes 17/17, including the stale-session command lifecycle contract.
+
+## V3G-010 - PWA regression inventory omitted the new match-invitation read RPC
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed`
+- Detected: 2026-09-02
+- Scenario: the complete PWA bridge test inventories every RPC invoked by browser product surfaces and separates reads from writes.
+- Original failure: `get_my_pachanga_match_invitation_action_v1` was absent from the explicit read list, so the test expected it to be protected as a write even though the write classifier correctly returned `null`.
+- Product impact: none at runtime. The failure prevented release and exposed an incomplete regression inventory.
+- Cause: Mercado gained a new server read model after the bridge test's read allowlist was last updated.
+- Correction: register the exact RPC as read-only in the bridge regression while retaining `respond_pachanga_match_invitation_v1` and the Social Inbox command as classified writes.
+- Regression: the complete PWA bridge inventory must classify the read RPC as `null` and every adjacent mutation as a known write.
+- Regression verified: yes. `npx tsx --test tests/pwa-client-version-bridge.test.ts` passes 10/10 with zero skips, todos or cancellations.
+
+## V3G-011 - Provider lifecycle violated focused React lint contracts
+
+- Classification: `PRODUCT_BUG`
+- Status: `fixed`
+- Detected: 2026-09-02
+- Scenario: focused ESLint over every V3G TypeScript and TSX route.
+- Original failure: the disabled-provider branch called React setters synchronously inside an effect, and `runCommand` read the complete `snapshot` while declaring only `snapshot.serverSequence` as a memo dependency.
+- Product impact: avoidable cascading renders on excluded routes and a React Compiler optimization skip caused by an imprecise callback dependency.
+- Cause: provider reset and command code were added incrementally without a final React lifecycle pass.
+- Correction: schedule guarded provider reset outside the effect body and read the current sequence through `snapshotRef`, keeping the command callback independent of the snapshot object.
+- Regression: focused ESLint plus V3G and typecheck.
+- Regression verified: yes. Focused ESLint, `npm run test:social-inbox` and `npm run typecheck` pass.
+
+## V3G-012 - Seven cross-slice tests still asserted the superseded notification UI
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed`
+- Detected: 2026-09-02
+- Scenario: complete `npm test` after replacing the mounted notification popover with the canonical Social Inbox and extending the Demo session schema.
+- Original failures: seven tests still required one or more superseded details: `/perfil/avisos`, mounted `NotificationCenter`, preferences rendered at the legacy route, the old four-entry Demo tab set, a Demo session shape without per-perspective Inbox state, or the old challenge-only Home action selector.
+- Product impact: no runtime failure was demonstrated, but the release suite failed and no longer described the intended product contract.
+- Cause: V3G focal coverage was added before reconciling older cross-feature source-contract assertions.
+- Correction: update the seven assertions to require `/avisos`, `/ajustes/notificaciones`, `SocialInboxProvider`, the versioned Demo Inbox state and the generalized one-action Home projection. Guest request review is asserted in its real admin surface and player invitation response remains in Mercado. Guest, preferences, V3B and V3C authority checks remain intact.
+- Regression: rerun the isolated seven-file suite, then the complete suite.
+- Regression verified: yes. The isolated suite passes 77/77 and the complete suite passes Node 20/20 plus TS/TSX 798/798, total 818/818, with zero failures, skips, todos or cancellations.
+
+## V3G-013 - Disposable database URL was not restored after the desktop restart
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed`
+- Detected: 2026-09-02
+- Scenario: rerunning the rollback-only SQL/RLS gate after ChatGPT Desktop had closed and resumed the task.
+- Original failure: `SOCIAL_INBOX_DATABASE_URL` was absent from the resumed shell, so `psql` tried the default local socket on port 5432 and exited before executing SQL.
+- Product impact: none. No migration, fixture or assertion ran and no database was modified.
+- Cause: the disposable local PostgreSQL connection was session-scoped and was not exported into the resumed process environment.
+- Correction: verified the disposable instance on `127.0.0.1:55322` and passed its URL explicitly to the rollback-only database and concurrency commands.
+- Regression: complete both SQL/RLS and concurrent replay gates against the disposable database, then confirm their cleanup/readback.
+- Regression verified: yes. The SQL/RLS suite completed inside `BEGIN`/`ROLLBACK`, and the deterministic two-session replay returned one receipt at revision 2 with both clients converged.
+
+## V3G-014 - Demo Inbox used dark-only surfaces under the light product theme
+
+- Classification: `PRODUCT_BUG`
+- Status: `fixed`
+- Detected: 2026-09-02
+- Scenario: local browser QA of Demo Social Inbox at 1440x900 with the product's current light theme.
+- Original failure: cards, selected state, detail pane, toolbar and proof panel used hard-coded dark backgrounds while their text inherited the light-theme dark ink variables.
+- Product impact: titles, summaries and detail text were difficult or impossible to read despite the DOM remaining structurally valid.
+- Cause: the new CSS module assumed the old always-dark Demo palette and did not use the existing theme-aware panel variables.
+- Correction: replace dark-only surfaces with `--demo-panel` and `--demo-panel-soft`, and use theme-aware text variables for notices and metadata.
+- Regression: visual and computed-style checks in light and dark themes across desktop, portrait and landscape.
+- Regression verified: yes. The clean production build is readable with the light theme, retains the intended dark treatment, and the final eight-viewport matrix reports zero overflow, zero broken images and fully visible Inbox actions.
+
+## V3G-015 - The 26-step Demo proof reused a React key
+
+- Classification: `PRODUCT_BUG`
+- Status: `fixed`
+- Detected: 2026-09-02
+- Scenario: opening Demo Social Inbox and inspecting the browser console.
+- Original failure: React reported two children with key `Volver` because the proof list used the human-readable step as its key and that label occurs twice.
+- Product impact: development console error and unsupported child identity if the list is updated.
+- Cause: a non-unique display string was used as the list identity.
+- Correction: include the deterministic step index in the local proof key.
+- Regression: reopen the Inbox, inspect the complete proof list and require zero console errors.
+- Regression verified: yes. The complete 26-step proof renders and the clean production build reports zero browser console errors.
+
+## V3G-016 - Demo onboarding launcher occupied the Inbox action area in landscape
+
+- Classification: `PRODUCT_BUG`
+- Status: `fixed`
+- Detected: 2026-09-02
+- Scenario: production-build browser QA at 844x390 in Demo Social Inbox.
+- Original failure: the global fixed `Primeros pasos` launcher remained visible over the lower-right Inbox detail area while that pane had its own canonical CTA and vertical scroll.
+- Product impact: the unrelated onboarding control consumed the only compact action corner and made the Inbox detail action less discoverable.
+- Cause: the landscape launcher was rendered for every Demo tab, including the new focused Inbox workspace.
+- Correction: suppress only the global launcher while `activeTab === "avisos"`; the 26-step Inbox proof and all other Demo onboarding entry points remain available. The focused detail typography and CTA spacing were compacted without removing any Inbox action.
+- Regression: require the launcher guard in the focal contract and recheck all landscape viewports for visible action collisions.
+- Regression verified: yes. At 667x375, 740x360, 844x390 and 932x430 the global launcher is absent, the canonical Inbox CTA is fully visible, and there is no horizontal overflow or broken image. The 844x390 readback places the CTA entirely inside the viewport at y=191..229.
+
+## V3G-017 - Isolated worktree did not inherit the linked Supabase project ref
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed`
+- Detected: 2026-09-02
+- Scenario: release-ledger reconciliation with `supabase migration list --linked`.
+- Original failure: CLI 2.107.0 returned `Cannot find project ref` because the ignored `supabase/.temp/project-ref` is not copied into an isolated Git worktree.
+- Product impact: none. The command stopped before connecting to a database and no migration or data operation ran.
+- Cause: task isolation correctly excludes ignored machine-local Supabase link state.
+- Correction: link only this task worktree to the independently verified `Pachangas` project ref `qonbngfrnrqgmxbdfbea`, rerun the read-only migration ledger and require all other Supabase projects to remain untouched.
+- Regression: exact local/remote migration list plus project inventory and final task-local link cleanup.
+- Regression verified: yes. CLI 2.107.0 reports 233 exact local/remote pairs through `20260901214527` and only the V3G migration `20260902064632` as local pending. The project inventory still contains the three pre-existing projects and no command targeted the two non-Pachangas refs.
+
+## V3G-018 - QA filter selector matched both the filter and mobile navigation
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed`
+- Detected: 2026-09-02
+- Scenario: browser QA of the `Retos` Social Inbox filter at 390x844.
+- Original failure: an unscoped accessible-name selector matched the `Retos` filter button and the `Retos` mobile-navigation button, so strict mode rejected the click before any UI action.
+- Product impact: none. Both controls were visible, distinct and functional; only the QA selector was ambiguous.
+- Cause: the automated step ignored the existing `Filtrar por tipo` accessible container.
+- Correction: scope the control lookup to the labelled filter group before selecting `Retos`.
+- Regression: the scoped filter returns only the four Challenge-related Inbox cards and does not navigate away from `/avisos`.
+- Regression verified: yes. The filtered titles are `Tienes una contrapropuesta`, `Reto aceptado`, `Contrapropuesta recibida` and `Resultado confirmado`.
+
+## V3G-019 - New files carried an extra blank line at EOF
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed`
+- Detected: 2026-09-02
+- Scenario: first staged `git diff --cached --check` over the complete V3G path set.
+- Original failure: six newly tracked files ended with an additional blank line and failed the release whitespace gate.
+- Product impact: none at runtime; the release gate correctly stopped the commit.
+- Cause: the earlier unstaged diff check could not inspect untracked file contents.
+- Correction: remove only the redundant trailing blank lines, restage the six paths and rerun the staged and unstaged diff checks.
+- Regression: both `git diff --cached --check` and `git diff --check` must return no output.
+- Regression verified: yes. Both staged and unstaged diff checks return no output.
+
+## V3G-020 - Ephemeral Supabase branch automatic bootstrap stopped before V3G
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed`
+- Detected: 2026-09-02
+- Scenario: creation of the isolated `v3g-social-inbox-e2e-20260902` Supabase branch after publishing commit `cd77e47`.
+- Original failure: the branch reached `ACTIVE_HEALTHY` but reported `MIGRATIONS_FAILED` during its automatic repository bootstrap.
+- Product impact: none. No synthetic accounts or V3G fixtures have been created and production remains unchanged.
+- Cause: the fresh branch inherited only the first 10 repository migrations and stopped at the pre-existing historical bootstrap incompatibility around `20260728191804`; V3G had not been reached. The branch-action log contained no additional diagnostic payload.
+- Correction: retain the isolated no-data branch and execute the established signed-baseline bootstrap through its branch-specific Supavisor endpoint. The bootstrap verifies the baseline digest, applies every incremental migration transactionally and records only the matching canonical receipts.
+- Regression: staging must report the canonical 234-version ledger, `ACTIVE_HEALTHY`, successful authenticated QA and zero cleanup residue before release.
+- Regression verified: yes. Readback reports exactly 234 migration receipts, maximum version `20260902064632`, all three V3G RPC signatures present and zero `auth.users`. The Preview project remains `ACTIVE_HEALTHY`; the control-plane `MIGRATIONS_FAILED` label records the superseded automatic attempt and is not used as release evidence.
+
+## V3G-021 - Direct ephemeral database hostname is unreachable from this network
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed`
+- Detected: 2026-09-02
+- Scenario: guarded preflight of the signed-baseline bootstrap against branch `wyekyfivjakfbpegfmdk`.
+- Original failure: `psql` could not resolve `db.wyekyfivjakfbpegfmdk.supabase.co` from the desktop network.
+- Product impact: none. The preflight connection failed before dropping a table, changing the ledger or creating any fixture.
+- Cause: the branch direct endpoint is not reachable through the current DNS/network path, while Supabase provides a branch-specific Supavisor endpoint for this environment.
+- Correction: use only the pooled URL returned for the same branch, require its database username to contain `wyekyfivjakfbpegfmdk`, reject the production ref and keep the credential in process memory only.
+- Regression: branch-only preflight, canonical 234-version bootstrap and zero-user readback must pass without exposing the URL or password.
+- Regression verified: yes. The guarded bootstrap connected through the branch-specific Supavisor endpoint, completed the 234-version ledger and exposed the exact Inbox RPC signatures with zero users. No credential was printed, written to Git or added to a browser-visible environment.
+
+## V3G-022 - Staging runner referenced an obsolete Supabase package path
+
+- Classification: `SIMULATION_BUG`
+- Status: `fixed`
+- Detected: 2026-09-02
+- Scenario: first execution of the temporary authenticated V3G staging runner.
+- Original failure: Node stopped with `ERR_MODULE_NOT_FOUND` before loading the runner because its absolute import expected `@supabase/supabase-js/dist/module/index.js`.
+- Product impact: none. The process exited before loading credentials, creating users or writing any fixture.
+- Cause: the installed package exposes `dist/index.mjs` and `dist/index.cjs`; it no longer contains the older `dist/module` layout.
+- Correction: import the installed ESM entrypoint resolved from this isolated worktree.
+- Regression: syntax-check and execute the complete runner against the branch-only project.
+- Regression verified: yes. The corrected runner passed its syntax gate and completed the authenticated staging flow with four `.test` accounts and no module-resolution failure.
+
+## V3G-023 - Authenticated staging run did not observe the expected Realtime UPDATE
+
+- Classification: `SIMULATION_BUG`
+- Status: `fixed`
+- Detected: 2026-09-02
+- Scenario: two authenticated devices subscribed to the recipient-filtered `pachanga_user_notifications` stream while the other device marked a challenge notice as read.
+- Original failure: both Inbox commands were issued, but the runner reached `V3G_REALTIME_EVENT_TIMEOUT` before it observed the expected `UPDATE` event.
+- Product impact: staging certification is blocked until the invalidation/refetch path is demonstrated. Production remains unchanged.
+- Cause: the first runner waited for channel state `SUBSCRIBED` but not for the separate server confirmation that its `postgres_changes` binding was active. The mutation could therefore race the binding on a freshly initialized Realtime tenant.
+- Correction: listen to the channel `system` event and require the `postgres_changes` binding status `ok` before issuing the first Inbox mutation.
+- Regression: an authenticated second device must observe a notification invalidation and refetch the canonical read model without using the WAL payload as authority.
+- Regression verified: yes. The clean rerun observed the `UPDATE`, refetched the canonical read model on the second device and emitted `realtime: UPDATE_REFETCH_PASS`; the client never treated the WAL payload as authoritative state.
+
+## V3G-024 - First staging cleanup left two synthetic Teams and their owners
+
+- Classification: `SIMULATION_BUG`
+- Status: `detected`
+- Detected: 2026-09-02
+- Scenario: `finally` cleanup after the Realtime timeout.
+- Original failure: readback returned two `pachanga_groups` rows and two `auth.users` rows while notices, Inbox receipts, challenges, requests and invitations were already zero.
+- Product impact: none outside the isolated branch, but cleanup certification is blocked and the run must not be reported as residue-free.
+- Cause: pending identification of the task-owned dependent rows that blocked Team deletion; the runner's best-effort cleanup intentionally swallowed the referential error.
+- Planned correction: enumerate only foreign-key dependencies for the two synthetic Team ids, delete the task-owned dependency in canonical order, remove the two owners and make future cleanup surface any residue.
+- Regression: readback must return zero for users, sessions, Teams and every V3G fixture table after both successful and failed runs.
+- Regression verified: no.
+
+## V3G-025 - Direct cleanup cannot delete immutable operational evidence
+
+- Classification: `SIMULATION_BUG`
+- Status: `detected`
+- Detected: 2026-09-02
+- Scenario: targeted cleanup of the private operational rows automatically created for the two synthetic Teams.
+- Original failure: PostgreSQL raised `TEAM_OPERATIONAL_EVIDENCE_IMMUTABLE` and rolled back the complete cleanup transaction.
+- Product impact: none. The immutability guard behaved correctly, but the runner's cleanup design is incompatible with that evidence contract.
+- Cause: the first runner assumed task-owned operational evidence could be deleted directly before deleting its parent Team.
+- Planned correction: locate and use an existing authorized synthetic-cleanup path; if none exists, destroy the entire disposable branch and recreate a clean branch rather than weakening or bypassing immutable product evidence.
+- Regression: the staging strategy must finish with zero QA residue while all immutable-evidence triggers remain enabled.
+- Regression verified: no.
+
+## V3G-026 - Vercel redeploy did not resolve the abbreviated deployment id
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed`
+- Detected: 2026-09-02
+- Scenario: rebuilding the successful PR deployment after adding branch-scoped staging variables.
+- Original failure: Vercel CLI 59.4.0 could inspect `PWD7EWSWEScYyY6wS7vgeEvDhF21` but `vercel redeploy` reported that the abbreviated id was not found in the team context.
+- Product impact: none. No deployment was created and Production was not targeted.
+- Cause: the redeploy command requires the canonical deployment URL or fully qualified deployment id in this CLI/context combination.
+- Correction: redeploy the already verified Preview URL with target `preview` and the exact team scope.
+- Regression: the new deployment must be READY, retain commit `cd77e47` and consume only the V3G branch-scoped environment.
+- Regression verified: yes. Redeploying the canonical URL produced READY deployment `dpl_Fooh9ShEXyyT6DRWSHXhAGfAbh5f`, target Preview, with exact Git SHA `cd77e4786760edb99c4e9fd7a67355bdbf62291b` and the V3G branch alias.
+
+## V3G-027 - Preview QA repeated the ambiguous Retos selector
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed`
+- Detected: 2026-09-02
+- Scenario: filtering the Demo Inbox by Challenge during remote Preview QA.
+- Original failure: strict mode found both the global `Retos` navigation button and the `Retos` filter button, aborting before any product interaction.
+- Product impact: none. Both controls were rendered with distinct accessible containers.
+- Cause: the temporary remote runner did not reuse the scoped selector already established by V3G-018.
+- Correction: locate `Retos` only inside the `Filtrar por tipo` container.
+- Regression: the click must filter the Inbox while keeping `/demo?tab=avisos` active.
+- Regression verified: yes. The scoped filter click succeeded on the next two runs, kept the Demo Inbox active and exposed the Challenge notice in its detail pane.
+
+## V3G-028 - Preview browser process survived a failed assertion
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed`
+- Detected: 2026-09-02
+- Scenario: Playwright runner abort after the ambiguous selector.
+- Original failure: the top-level catch set an exit code but could not reach the browser instance, leaving Chrome alive until the task sent `SIGINT`.
+- Product impact: none. The process was local and no data mutation remained in flight.
+- Cause: browser teardown existed only on the success path.
+- Correction: retain the browser handle outside the run closure and close it from the asynchronous error handler.
+- Regression: both PASS and FAIL paths must exit without Chrome processes owned by this runner.
+- Regression verified: yes. The next deliberately failing assertion exited with code 1 in 2.2 seconds, and the subsequent process readback found no Playwright Chrome process.
+
+## V3G-029 - Filtered notice title exists in both Inbox list and detail
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed`
+- Detected: 2026-09-02
+- Scenario: asserting the filtered Challenge result after the correctly scoped `Retos` click.
+- Original failure: exact text `Tienes una contrapropuesta` matched both the list-card title and the selected detail heading.
+- Product impact: none. The duplicate text is intentional master-detail context and the filter had worked.
+- Cause: the runner asserted unscoped text instead of the semantic detail heading.
+- Correction: require the levelled heading in the detail pane.
+- Regression: the filtered Challenge must appear as the active detail without leaving the Inbox route.
+- Regression verified: yes. The semantic heading assertion passed and the runner continued through desktop, portrait, landscape and client-bundle collection.
+
+## V3G-030 - Bundle scan confused an environment-variable name with a secret value
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed`
+- Detected: 2026-09-02
+- Scenario: proving that no Supabase service-role credential reached the Preview browser bundle.
+- Original failure: the scan rejected the harmless source string `SUPABASE_SERVICE_ROLE_KEY`, even though it had not found a credential value.
+- Product impact: none. The assertion stopped before claiming either leak or PASS.
+- Cause: the pattern tested a configuration identifier rather than secret material.
+- Correction: load the ephemeral branch service-role value into process memory only, compare the complete client bundle against that exact value, reject `sb_secret_` values and decode JWT candidates to reject any token whose payload role is `service_role`.
+- Regression: client chunks must contain the staging public ref, omit the production ref and contain neither the exact secret nor any service-role token.
+- Regression verified: yes. The complete remote client bundle contained only the ephemeral staging project ref, omitted the production ref and contained neither the exact branch service-role value, an `sb_secret_` value nor a JWT with `role=service_role`.
+
+## V3G-031 - zsh wrapper used the reserved variable status
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed`
+- Detected: 2026-09-02
+- Scenario: preserving the Playwright runner exit code while performing a final process readback.
+- Original failure: zsh rejected assignment to its read-only special parameter `status` after the runner had already reported its assertion.
+- Product impact: none. The application and browser state were unaffected.
+- Cause: a shell wrapper variable name valid in other shells is reserved by zsh.
+- Correction: retain the code in `exit_code` instead.
+- Regression: the wrapper must report process cleanup and preserve the original runner result.
+- Regression verified: yes. The wrapper returned the successful Preview QA exit code and the immediate process readback found no task-owned Playwright or Chrome process.
+
+## V3G-032 - Chrome headless did not emulate the installed display-mode media feature
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed`
+- Detected: 2026-09-02
+- Scenario: remote Preview QA of the 390x844 installed-PWA surface after the browser, Service Worker, offline and responsive checks had passed.
+- Original failure: Chrome accepted `Emulation.setEmulatedMedia` but `matchMedia("(display-mode: standalone)").matches` remained false.
+- Product impact: none established. The application also supports the canonical iOS installed-app signal `navigator.standalone`, but the temporary runner asserted only the unsupported headless media emulation.
+- Cause: CDP media emulation in this Chrome context does not provide an installed web-app display context for the `display-mode` media feature.
+- Correction: emulate the supported `navigator.standalone` signal before navigation and assert the application's resulting `data-display-mode="standalone"` state, while retaining the separate real Service Worker control and offline-shell checks.
+- Regression: the installed-mode context must render the Demo Inbox without overflow, broken images, console errors or network failures and expose `navigator.standalone=true` plus the canonical document display-mode dataset.
+- Regression verified: yes. The 390x844 installed-mode run exposed both canonical signals, retained one visible navigation and reported zero overflow, broken images, console errors, page errors, unexpected request failures and HTTP failures.
+
+## V3G-033 - Deliberate offline probe was counted as an online console regression
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed`
+- Detected: 2026-09-02
+- Scenario: remote Preview QA after the installed-mode assertion passed and the browser intentionally disconnected for the cached `/avisos` reload.
+- Original failure: the offline shell rendered correctly, but Chrome emitted eight `Failed to load resource: net::ERR_INTERNET_DISCONNECTED` console entries and the runner's final global zero-error assertion rejected them.
+- Product impact: none established. The cached page remained usable and no application exception was raised.
+- Cause: the runner aggregated expected transport failures from the explicit offline window together with unexpected online console failures.
+- Correction: scope the offline window in the observer, record only `ERR_INTERNET_DISCONNECTED` transport failures as expected offline evidence and continue rejecting every other console, page, request or HTTP error.
+- Regression: the offline shell must render with expected disconnected transport evidence while all online and installed-PWA error collections remain empty.
+- Regression verified: yes. The controlled offline reload rendered the cached signed-out Inbox shell and recorded 16 expected disconnected transport observations, while every unexpected online and installed-PWA error collection remained empty.
+
+## V3G-034 - PR body update received an unset shell variable
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed`
+- Detected: 2026-09-02
+- Scenario: replacing the draft PR checkpoint text with the completed staging and Preview evidence.
+- Original failure: the shell command referenced `PR_BODY` without passing it to the subprocess, and GitHub accepted an empty body.
+- Product impact: none. The branch, checks, Preview, migration and production state were unchanged.
+- Cause: the orchestration-local JavaScript value was not an environment variable in the nested shell.
+- Correction: write the intended body to a task-owned temporary file, pass it with `gh pr edit --body-file`, read it back from GitHub and remove the temporary file.
+- Regression: PR #256 must retain its complete scope, verification, safety and report sections after the command exits.
+- Regression verified: yes. GitHub readback returned the complete 1,840-character body and all four required sections: Scope, Verification, Safety and Reports. The only byte-level difference from the temporary source was the CLI's trailing newline.
+
+## V3G-035 - Linked production db push is disabled by the tracked project configuration
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed`
+- Detected: 2026-09-02
+- Scenario: production migration dry-run after confirming a completed physical backup, the exact 233-version remote ledger and one reviewed local V3G migration.
+- Original failure: `supabase db push --linked --dry-run` exited successfully but skipped migration discovery because tracked `[db.migrations].enabled` is deliberately `false` for the signed-baseline workflow.
+- Product impact: none. The command performed no SQL and production remained at ledger 233.
+- Cause: the canonical repository protects fresh databases from replaying its historical corpus; established releases use a task-owned temporary Supabase workdir whose only configuration change enables migration discovery.
+- Correction: copied the certified Supabase release corpus to an isolated temporary directory, changed only that copied setting, linked it explicitly to Pachangas production, required a 234-file inventory and a dry-run containing only `20260902064632`, then applied it once. No tracked configuration was changed.
+- Regression: the authority release must reach exact ledger 234 with the reviewed name/hash and canonical object/ACL readbacks, while tracked `supabase/config.toml` remains unchanged with migrations disabled.
+- Regression verified: yes. Production reached ledger 234 with exact version/name and canonical object, ACL and index readbacks; a subsequent isolated dry-run reported no pending authority migration and the tracked configuration has an empty diff.
+
+## V3G-036 - Supabase CLI did not exit after the production migration committed
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed`
+- Detected: 2026-09-02
+- Scenario: one-time production push from the isolated release workdir after its exact one-migration dry-run.
+- Original failure: the CLI printed `Applying migration 20260902064632_social_inbox_authority_v1.sql...` and then remained running for more than four minutes without further output or child process termination.
+- Product impact: the database transaction has already committed. Independent readback returns ledger 234, last version `20260902064632` and canonical name `social_inbox_authority_v1`; no merge or activation has occurred yet.
+- Cause: the CLI's post-commit `pg-delta` catalog-cache phase waited on the unavailable local Docker socket after PostgreSQL had already committed. PostgreSQL reported no active task-owned transaction or non-idle migration session.
+- Correction: did not replay or repair the migration; terminated only the task-owned stalled CLI after authoritative ledger and session readbacks, then verified schema, ACL, indexes, Advisors and a second dry-run reporting no pending authority migration.
+- Regression: the tracked worktree remains unchanged, production records each exact V3G migration once and all canonical readbacks pass with no residual CLI process.
+- Regression verified: yes. Both one-time pushes committed exactly one migration before the local Docker catalog-cache phase stalled; independent readbacks proved ledgers 234 and 235 with zero active migration sessions, only the task-owned CLIs were interrupted, no SQL was replayed and no residual push process remains.
+
+## V3G-037 - Receipt notification foreign key has no covering index
+
+- Classification: `PRODUCT_BUG`
+- Status: `fixed`
+- Detected: 2026-09-02
+- Scenario: production performance Advisor immediately after the exact V3G migration readback.
+- Original failure: `private.pachanga_social_inbox_command_receipts_v1_notification_id_fkey` has no index beginning with `notification_id`.
+- Product impact: deleting or cascading a notification could require a sequential scan of the receipt ledger as it grows. Current receipt rows are zero and no user-facing failure has occurred.
+- Cause: the first migration indexed `(actor_user_id, created_at, operation_id)` for replay/audit access but omitted the independent foreign-key lookup path.
+- Correction: kept the executed migration immutable and added one forward-only corrective migration containing only a B-tree index beginning with `notification_id`; certified it in isolated staging, required the Advisor warning to disappear and applied it once to production.
+- Regression: all three V3G indexes must be valid/ready, every V3G foreign key must have a covering index, the ledger must contain exactly one additional canonical migration receipt and all prior SQL/RLS/idempotency tests must remain green.
+- Regression verified: yes. Isolated staging and production are at exact ledger 235; all three receipt indexes are valid/ready; both receipt foreign keys are covered; the V3G `unindexed_foreign_keys` Advisor warning is absent; direct table access remains denied; authenticated RPC grants and anonymous denials are unchanged; receipt rows remain zero; all prior SQL/RLS/idempotency tests remain green.
+
+## V3G-038 - Browser page evaluation cannot issue the focal Service Worker request
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed`
+- Detected: 2026-09-02
+- Scenario: focal smoke of the exact corrective Preview HEAD after `/avisos` loaded without console errors.
+- Original failure: the browser's isolated read-only page-evaluation scope reported `fetch is not a function` when one assertion attempted to read `/sw.js` and the manifest from inside the page.
+- Product impact: none. The Preview page loaded normally and the failure occurred before either resource assertion ran.
+- Cause: the controlled page-evaluation scope intentionally exposes a reduced browser API and does not provide network `fetch`.
+- Correction: kept DOM assertions in page evaluation and verified the Service Worker and manifest through direct same-origin browser navigation, without weakening Preview protection or introducing a share token.
+- Regression: the settings route must render with no overlay, overflow or browser errors; direct navigation must expose the deployment version in `/sw.js`, include both V3G routes and return the manifest successfully.
+- Regression verified: yes. The settings route rendered without overlay, horizontal overflow or browser warnings/errors; direct navigation exposed the V3G Service Worker routes and a valid Pachangas IQ manifest.
+
+## V3G-039 - Service Worker version assertion expected a full commit SHA
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed`
+- Detected: 2026-09-02
+- Scenario: direct-navigation verification of `/sw.js` on exact Preview deployment `3f702675cdc669dbf41789ef7684c4a36d897fa0`.
+- Original failure: the first assertion searched for the full 40-character Git SHA and returned false even though the deployment and Service Worker were current.
+- Product impact: none. The Service Worker was generated from the correct deployment and cached both V3G routes.
+- Cause: the established build contract stores the first 12 SHA characters in `SERVICE_WORKER_VERSION`, while Vercel deployment metadata retains the full SHA.
+- Correction: compare the Service Worker version with the exact deployment HEAD's 12-character prefix and keep the full-SHA equality check at the Vercel deployment boundary.
+- Regression: Vercel metadata must equal the complete PR HEAD and `SERVICE_WORKER_VERSION` must end with its exact 12-character prefix.
+- Regression verified: yes. Vercel reports complete SHA `3f702675cdc669dbf41789ef7684c4a36d897fa0` and `/sw.js` declares `2.0.0+sw.3f702675cdc6`.
+
+## V3G-040 - Final CLI migration-list readback did not return
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed`
+- Detected: 2026-09-02
+- Scenario: final remote-ledger reconciliation after production had independently confirmed the corrective migration commit.
+- Original failure: `supabase migration list --linked` printed only its initialization line and remained running beyond the command budget.
+- Product impact: none. The command is read-only, production already reported no active migration transaction and the isolated push dry-run reported the database up to date.
+- Cause: the installed Supabase CLI `2.107.0` again failed to finish its local post-query workflow in this environment; the exact remote ledger remained available through the authenticated Supabase management connector.
+- Correction: terminated only the task-owned read-only CLI process and used the canonical migrations endpoint plus direct PostgreSQL readback instead of retrying the command.
+- Regression: the two independent sources must agree on ledger 235 and exact last version/name, the isolated dry-run must report up to date and no task-owned migration process may remain.
+- Regression verified: yes. The connector and PostgreSQL both report ledger 235 ending at `20260902102800 social_inbox_receipt_notification_index_v1`, the isolated dry-run reports up to date and process readback contains no V3G migration command.
