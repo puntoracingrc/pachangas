@@ -196,6 +196,14 @@ test("V3F Service Worker keeps Team read surfaces available without caching writ
   assert.match(worker, /networkFirstNavigation/);
 });
 
+test("V3F public entry keeps the brand inside compact landscape viewports", async () => {
+  const css = await source("app/globals.css");
+  assert.match(
+    css,
+    /@media \(orientation: landscape\) and \(max-height: 560px\)[\s\S]*?\.demo-world-entry-shell \.brand-hero-logo\s*\{[^}]*transform:\s*translateX\(-16\.5%\);/,
+  );
+});
+
 test("V3F migrations keep raw invitation tokens hashed and Rating untouched", async () => {
   const [profileSql, teamSql, invitationSql, hardeningSql] = await Promise.all([
     source("supabase/migrations/20260901214524_social_team_core_evidence_v1.sql"),
