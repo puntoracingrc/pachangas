@@ -15,15 +15,19 @@ their final readbacks.
 - Functional PR: #256
 - Branch: `codex/official-ui-v3g-social-inbox`
 - Initial migration ledger: 233
-- Planned final ledger: 234
-- Migration: `20260902064632_social_inbox_authority_v1.sql`
-- Migration SHA-256: `4ade702f4ae82b4fbbabbf79d0cb3ee037b11d9345ee9dd8ab1853c36165460b`
+- Planned final ledger: 235
+- Authority migration: `20260902064632_social_inbox_authority_v1.sql`
+- Authority migration SHA-256: `4ade702f4ae82b4fbbabbf79d0cb3ee037b11d9345ee9dd8ab1853c36165460b`
+- FK-index migration: `20260902102800_social_inbox_receipt_notification_index_v1.sql`
+- FK-index migration SHA-256: `3cbc006045c326737faf66210bc92753d7adf1ffd23dc0510958c24efcc51067`
 - Supabase production project: `Pachangas` (`qonbngfrnrqgmxbdfbea`)
-- Pre-release remote ledger: 233 exact local/remote pairs through `20260901214527`; only `20260902064632` is pending remotely
+- Pre-release remote ledger: 233 exact local/remote pairs through `20260901214527`.
+- Authority migration applied: ledger 234, exact version/name and canonical readback PASS.
+- FK-index correction: isolated staging certification PASS; one-time production application pending.
 
 ## Completed pre-production evidence
 
-- isolated Supabase branch bootstrapped to the exact 234-version ledger;
+- isolated Supabase branch bootstrapped to the authority ledger and advanced to the exact 235-version corrected ledger;
 - authenticated four-actor, two-Team staging dataset;
 - two devices converged through Realtime invalidation and canonical refetch;
 - direct writes, cross-user reads and stale/duplicate action effects denied;

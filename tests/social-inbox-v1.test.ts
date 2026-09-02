@@ -12,6 +12,7 @@ import {
 const read = (path: string) => readFile(new URL(path, import.meta.url), "utf8");
 const [
   migration,
+  receiptIndexMigration,
   layout,
   shell,
   inboxPage,
@@ -31,6 +32,7 @@ const [
   concurrencyTest,
 ] = await Promise.all([
   read("../supabase/migrations/20260902064632_social_inbox_authority_v1.sql"),
+  read("../supabase/migrations/20260902102800_social_inbox_receipt_notification_index_v1.sql"),
   read("../app/layout.tsx"),
   read("../app/_components/official-product-shell-v2.tsx"),
   read("../app/avisos/page.tsx"),
@@ -78,6 +80,8 @@ test("V3G reuses the canonical notification table and adds only minimal authorit
   assert.doesNotMatch(migration, /create table if not exists public\.pachanga_social_inbox|create table if not exists .*outbox/i);
   assert.match(migration, /get_my_pachanga_social_inbox_v1/);
   assert.match(migration, /command_pachanga_social_inbox_v1/);
+  assert.match(receiptIndexMigration, /create index if not exists pachanga_social_inbox_receipts_notification_idx[\s\S]*notification_id/);
+  assert.doesNotMatch(receiptIndexMigration, /alter table|create table|create or replace function/i);
 });
 
 test("the social projection is explicit and excludes advanced or raw payload data", () => {

@@ -441,3 +441,42 @@
 - Correction: write the intended body to a task-owned temporary file, pass it with `gh pr edit --body-file`, read it back from GitHub and remove the temporary file.
 - Regression: PR #256 must retain its complete scope, verification, safety and report sections after the command exits.
 - Regression verified: yes. GitHub readback returned the complete 1,840-character body and all four required sections: Scope, Verification, Safety and Reports. The only byte-level difference from the temporary source was the CLI's trailing newline.
+
+## V3G-035 - Linked production db push is disabled by the tracked project configuration
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed`
+- Detected: 2026-09-02
+- Scenario: production migration dry-run after confirming a completed physical backup, the exact 233-version remote ledger and one reviewed local V3G migration.
+- Original failure: `supabase db push --linked --dry-run` exited successfully but skipped migration discovery because tracked `[db.migrations].enabled` is deliberately `false` for the signed-baseline workflow.
+- Product impact: none. The command performed no SQL and production remained at ledger 233.
+- Cause: the canonical repository protects fresh databases from replaying its historical corpus; established releases use a task-owned temporary Supabase workdir whose only configuration change enables migration discovery.
+- Correction: copied the certified Supabase release corpus to an isolated temporary directory, changed only that copied setting, linked it explicitly to Pachangas production, required a 234-file inventory and a dry-run containing only `20260902064632`, then applied it once. No tracked configuration was changed.
+- Regression: the authority release must reach exact ledger 234 with the reviewed name/hash and canonical object/ACL readbacks, while tracked `supabase/config.toml` remains unchanged with migrations disabled.
+- Regression verified: yes. Production reached ledger 234 with exact version/name and canonical object, ACL and index readbacks; a subsequent isolated dry-run reported no pending authority migration and the tracked configuration has an empty diff.
+
+## V3G-036 - Supabase CLI did not exit after the production migration committed
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed`
+- Detected: 2026-09-02
+- Scenario: one-time production push from the isolated release workdir after its exact one-migration dry-run.
+- Original failure: the CLI printed `Applying migration 20260902064632_social_inbox_authority_v1.sql...` and then remained running for more than four minutes without further output or child process termination.
+- Product impact: the database transaction has already committed. Independent readback returns ledger 234, last version `20260902064632` and canonical name `social_inbox_authority_v1`; no merge or activation has occurred yet.
+- Cause: the CLI's post-commit `pg-delta` catalog-cache phase waited on the unavailable local Docker socket after PostgreSQL had already committed. PostgreSQL reported no active task-owned transaction or non-idle migration session.
+- Correction: did not replay or repair the migration; terminated only the task-owned stalled CLI after authoritative ledger and session readbacks, then verified schema, ACL, indexes, Advisors and a second dry-run reporting no pending authority migration.
+- Regression: the tracked worktree remains unchanged, production stays at one exact V3G receipt and all canonical readbacks pass with no residual CLI process.
+- Regression verified: yes. Production contains one exact authority migration receipt, all canonical readbacks passed and no task-owned CLI process remains.
+
+## V3G-037 - Receipt notification foreign key has no covering index
+
+- Classification: `PRODUCT_BUG`
+- Status: `detected`
+- Detected: 2026-09-02
+- Scenario: production performance Advisor immediately after the exact V3G migration readback.
+- Original failure: `private.pachanga_social_inbox_command_receipts_v1_notification_id_fkey` has no index beginning with `notification_id`.
+- Product impact: deleting or cascading a notification could require a sequential scan of the receipt ledger as it grows. Current receipt rows are zero and no user-facing failure has occurred.
+- Cause: the first migration indexed `(actor_user_id, created_at, operation_id)` for replay/audit access but omitted the independent foreign-key lookup path.
+- Planned correction: keep the executed migration immutable and add one forward-only corrective migration containing only a B-tree index beginning with `notification_id`; certify it in isolated staging, require the Advisor warning to disappear and then apply it once to production.
+- Regression: all three V3G indexes must be valid/ready, every V3G foreign key must have a covering index, the ledger must contain exactly one additional canonical migration receipt and all prior SQL/RLS/idempotency tests must remain green.
+- Regression verified: partially. Isolated staging is at exact ledger 235, the index is valid/ready, the `unindexed_foreign_keys` Advisor warning is absent, the transactional SQL/RLS regression passed and rollback readback returned zero fixed synthetic users, Teams, notices and receipts. Production application remains pending.

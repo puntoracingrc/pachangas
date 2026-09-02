@@ -99,7 +99,8 @@ the `/perfil/avisos` compatibility redirect.
 
 ## Release boundary
 
-- One additive forward-only migration, ledger 233 to 234.
+- Two additive forward-only migrations, ledger 233 to 235. The second contains
+  only the covering index required by the post-DDL performance Advisor.
 - No old migration modified.
 - Push and email delivery remain OFF.
 - Stripe is untouched.

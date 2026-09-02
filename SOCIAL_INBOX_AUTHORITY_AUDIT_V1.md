@@ -167,7 +167,7 @@ push channel or email channel is introduced.
 
 ## Validation required before release
 
-- bootstrap and 233-to-234 upgrade paths;
+- bootstrap and 233-to-235 upgrade paths;
 - RLS and direct-write denial;
 - own-user and platform-owner privacy;
 - advanced-kind exclusion;

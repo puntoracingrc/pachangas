@@ -5,9 +5,10 @@
 - Date: 2026-09-02 10:39:54 CEST
 - Base: `8ce3dec994c16e32fd9cae5a05f51e37f4537b6f`
 - Branch: `codex/official-ui-v3g-social-inbox`
-- Migration frontier: 234 local files
-- V3G migration SHA-256: `4ade702f4ae82b4fbbabbf79d0cb3ee037b11d9345ee9dd8ab1853c36165460b`
-- Status: local, authenticated staging and isolated Preview certified; production pending
+- Migration frontier: 235 local files
+- V3G authority migration SHA-256: `4ade702f4ae82b4fbbabbf79d0cb3ee037b11d9345ee9dd8ab1853c36165460b`
+- V3G FK-index migration SHA-256: `3cbc006045c326737faf66210bc92753d7adf1ffd23dc0510958c24efcc51067`
+- Status: local, authenticated staging and isolated Preview certified; authority migration applied in production and FK-index migration pending
 
 ## Authority
 
@@ -101,7 +102,8 @@ Supabase private RPC responses.
 ## Remote staging and Preview
 
 An isolated Supabase branch was bootstrapped from the signed 234-migration
-baseline and exposed the exact V3G RPC signatures. Four synthetic `.test`
+baseline, then advanced to the forward-only 235-migration FK-index correction.
+It exposed the exact V3G RPC signatures. Four synthetic `.test`
 actors exercised two Teams, one Match, one Challenge, one open-place request,
 one Match invitation and one Team invitation.
 
