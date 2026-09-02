@@ -428,3 +428,16 @@
 - Correction: scope the offline window in the observer, record only `ERR_INTERNET_DISCONNECTED` transport failures as expected offline evidence and continue rejecting every other console, page, request or HTTP error.
 - Regression: the offline shell must render with expected disconnected transport evidence while all online and installed-PWA error collections remain empty.
 - Regression verified: yes. The controlled offline reload rendered the cached signed-out Inbox shell and recorded 16 expected disconnected transport observations, while every unexpected online and installed-PWA error collection remained empty.
+
+## V3G-034 - PR body update received an unset shell variable
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed`
+- Detected: 2026-09-02
+- Scenario: replacing the draft PR checkpoint text with the completed staging and Preview evidence.
+- Original failure: the shell command referenced `PR_BODY` without passing it to the subprocess, and GitHub accepted an empty body.
+- Product impact: none. The branch, checks, Preview, migration and production state were unchanged.
+- Cause: the orchestration-local JavaScript value was not an environment variable in the nested shell.
+- Correction: write the intended body to a task-owned temporary file, pass it with `gh pr edit --body-file`, read it back from GitHub and remove the temporary file.
+- Regression: PR #256 must retain its complete scope, verification, safety and report sections after the command exits.
+- Regression verified: yes. GitHub readback returned the complete 1,840-character body and all four required sections: Scope, Verification, Safety and Reports. The only byte-level difference from the temporary source was the CLI's trailing newline.
