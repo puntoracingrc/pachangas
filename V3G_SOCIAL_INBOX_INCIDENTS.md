@@ -246,3 +246,185 @@
 - Correction: remove only the redundant trailing blank lines, restage the six paths and rerun the staged and unstaged diff checks.
 - Regression: both `git diff --cached --check` and `git diff --check` must return no output.
 - Regression verified: yes. Both staged and unstaged diff checks return no output.
+
+## V3G-020 - Ephemeral Supabase branch automatic bootstrap stopped before V3G
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed`
+- Detected: 2026-09-02
+- Scenario: creation of the isolated `v3g-social-inbox-e2e-20260902` Supabase branch after publishing commit `cd77e47`.
+- Original failure: the branch reached `ACTIVE_HEALTHY` but reported `MIGRATIONS_FAILED` during its automatic repository bootstrap.
+- Product impact: none. No synthetic accounts or V3G fixtures have been created and production remains unchanged.
+- Cause: the fresh branch inherited only the first 10 repository migrations and stopped at the pre-existing historical bootstrap incompatibility around `20260728191804`; V3G had not been reached. The branch-action log contained no additional diagnostic payload.
+- Correction: retain the isolated no-data branch and execute the established signed-baseline bootstrap through its branch-specific Supavisor endpoint. The bootstrap verifies the baseline digest, applies every incremental migration transactionally and records only the matching canonical receipts.
+- Regression: staging must report the canonical 234-version ledger, `ACTIVE_HEALTHY`, successful authenticated QA and zero cleanup residue before release.
+- Regression verified: yes. Readback reports exactly 234 migration receipts, maximum version `20260902064632`, all three V3G RPC signatures present and zero `auth.users`. The Preview project remains `ACTIVE_HEALTHY`; the control-plane `MIGRATIONS_FAILED` label records the superseded automatic attempt and is not used as release evidence.
+
+## V3G-021 - Direct ephemeral database hostname is unreachable from this network
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed`
+- Detected: 2026-09-02
+- Scenario: guarded preflight of the signed-baseline bootstrap against branch `wyekyfivjakfbpegfmdk`.
+- Original failure: `psql` could not resolve `db.wyekyfivjakfbpegfmdk.supabase.co` from the desktop network.
+- Product impact: none. The preflight connection failed before dropping a table, changing the ledger or creating any fixture.
+- Cause: the branch direct endpoint is not reachable through the current DNS/network path, while Supabase provides a branch-specific Supavisor endpoint for this environment.
+- Correction: use only the pooled URL returned for the same branch, require its database username to contain `wyekyfivjakfbpegfmdk`, reject the production ref and keep the credential in process memory only.
+- Regression: branch-only preflight, canonical 234-version bootstrap and zero-user readback must pass without exposing the URL or password.
+- Regression verified: yes. The guarded bootstrap connected through the branch-specific Supavisor endpoint, completed the 234-version ledger and exposed the exact Inbox RPC signatures with zero users. No credential was printed, written to Git or added to a browser-visible environment.
+
+## V3G-022 - Staging runner referenced an obsolete Supabase package path
+
+- Classification: `SIMULATION_BUG`
+- Status: `fixed`
+- Detected: 2026-09-02
+- Scenario: first execution of the temporary authenticated V3G staging runner.
+- Original failure: Node stopped with `ERR_MODULE_NOT_FOUND` before loading the runner because its absolute import expected `@supabase/supabase-js/dist/module/index.js`.
+- Product impact: none. The process exited before loading credentials, creating users or writing any fixture.
+- Cause: the installed package exposes `dist/index.mjs` and `dist/index.cjs`; it no longer contains the older `dist/module` layout.
+- Correction: import the installed ESM entrypoint resolved from this isolated worktree.
+- Regression: syntax-check and execute the complete runner against the branch-only project.
+- Regression verified: yes. The corrected runner passed its syntax gate and completed the authenticated staging flow with four `.test` accounts and no module-resolution failure.
+
+## V3G-023 - Authenticated staging run did not observe the expected Realtime UPDATE
+
+- Classification: `SIMULATION_BUG`
+- Status: `fixed`
+- Detected: 2026-09-02
+- Scenario: two authenticated devices subscribed to the recipient-filtered `pachanga_user_notifications` stream while the other device marked a challenge notice as read.
+- Original failure: both Inbox commands were issued, but the runner reached `V3G_REALTIME_EVENT_TIMEOUT` before it observed the expected `UPDATE` event.
+- Product impact: staging certification is blocked until the invalidation/refetch path is demonstrated. Production remains unchanged.
+- Cause: the first runner waited for channel state `SUBSCRIBED` but not for the separate server confirmation that its `postgres_changes` binding was active. The mutation could therefore race the binding on a freshly initialized Realtime tenant.
+- Correction: listen to the channel `system` event and require the `postgres_changes` binding status `ok` before issuing the first Inbox mutation.
+- Regression: an authenticated second device must observe a notification invalidation and refetch the canonical read model without using the WAL payload as authority.
+- Regression verified: yes. The clean rerun observed the `UPDATE`, refetched the canonical read model on the second device and emitted `realtime: UPDATE_REFETCH_PASS`; the client never treated the WAL payload as authoritative state.
+
+## V3G-024 - First staging cleanup left two synthetic Teams and their owners
+
+- Classification: `SIMULATION_BUG`
+- Status: `detected`
+- Detected: 2026-09-02
+- Scenario: `finally` cleanup after the Realtime timeout.
+- Original failure: readback returned two `pachanga_groups` rows and two `auth.users` rows while notices, Inbox receipts, challenges, requests and invitations were already zero.
+- Product impact: none outside the isolated branch, but cleanup certification is blocked and the run must not be reported as residue-free.
+- Cause: pending identification of the task-owned dependent rows that blocked Team deletion; the runner's best-effort cleanup intentionally swallowed the referential error.
+- Planned correction: enumerate only foreign-key dependencies for the two synthetic Team ids, delete the task-owned dependency in canonical order, remove the two owners and make future cleanup surface any residue.
+- Regression: readback must return zero for users, sessions, Teams and every V3G fixture table after both successful and failed runs.
+- Regression verified: no.
+
+## V3G-025 - Direct cleanup cannot delete immutable operational evidence
+
+- Classification: `SIMULATION_BUG`
+- Status: `detected`
+- Detected: 2026-09-02
+- Scenario: targeted cleanup of the private operational rows automatically created for the two synthetic Teams.
+- Original failure: PostgreSQL raised `TEAM_OPERATIONAL_EVIDENCE_IMMUTABLE` and rolled back the complete cleanup transaction.
+- Product impact: none. The immutability guard behaved correctly, but the runner's cleanup design is incompatible with that evidence contract.
+- Cause: the first runner assumed task-owned operational evidence could be deleted directly before deleting its parent Team.
+- Planned correction: locate and use an existing authorized synthetic-cleanup path; if none exists, destroy the entire disposable branch and recreate a clean branch rather than weakening or bypassing immutable product evidence.
+- Regression: the staging strategy must finish with zero QA residue while all immutable-evidence triggers remain enabled.
+- Regression verified: no.
+
+## V3G-026 - Vercel redeploy did not resolve the abbreviated deployment id
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed`
+- Detected: 2026-09-02
+- Scenario: rebuilding the successful PR deployment after adding branch-scoped staging variables.
+- Original failure: Vercel CLI 59.4.0 could inspect `PWD7EWSWEScYyY6wS7vgeEvDhF21` but `vercel redeploy` reported that the abbreviated id was not found in the team context.
+- Product impact: none. No deployment was created and Production was not targeted.
+- Cause: the redeploy command requires the canonical deployment URL or fully qualified deployment id in this CLI/context combination.
+- Correction: redeploy the already verified Preview URL with target `preview` and the exact team scope.
+- Regression: the new deployment must be READY, retain commit `cd77e47` and consume only the V3G branch-scoped environment.
+- Regression verified: yes. Redeploying the canonical URL produced READY deployment `dpl_Fooh9ShEXyyT6DRWSHXhAGfAbh5f`, target Preview, with exact Git SHA `cd77e4786760edb99c4e9fd7a67355bdbf62291b` and the V3G branch alias.
+
+## V3G-027 - Preview QA repeated the ambiguous Retos selector
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed`
+- Detected: 2026-09-02
+- Scenario: filtering the Demo Inbox by Challenge during remote Preview QA.
+- Original failure: strict mode found both the global `Retos` navigation button and the `Retos` filter button, aborting before any product interaction.
+- Product impact: none. Both controls were rendered with distinct accessible containers.
+- Cause: the temporary remote runner did not reuse the scoped selector already established by V3G-018.
+- Correction: locate `Retos` only inside the `Filtrar por tipo` container.
+- Regression: the click must filter the Inbox while keeping `/demo?tab=avisos` active.
+- Regression verified: yes. The scoped filter click succeeded on the next two runs, kept the Demo Inbox active and exposed the Challenge notice in its detail pane.
+
+## V3G-028 - Preview browser process survived a failed assertion
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed`
+- Detected: 2026-09-02
+- Scenario: Playwright runner abort after the ambiguous selector.
+- Original failure: the top-level catch set an exit code but could not reach the browser instance, leaving Chrome alive until the task sent `SIGINT`.
+- Product impact: none. The process was local and no data mutation remained in flight.
+- Cause: browser teardown existed only on the success path.
+- Correction: retain the browser handle outside the run closure and close it from the asynchronous error handler.
+- Regression: both PASS and FAIL paths must exit without Chrome processes owned by this runner.
+- Regression verified: yes. The next deliberately failing assertion exited with code 1 in 2.2 seconds, and the subsequent process readback found no Playwright Chrome process.
+
+## V3G-029 - Filtered notice title exists in both Inbox list and detail
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed`
+- Detected: 2026-09-02
+- Scenario: asserting the filtered Challenge result after the correctly scoped `Retos` click.
+- Original failure: exact text `Tienes una contrapropuesta` matched both the list-card title and the selected detail heading.
+- Product impact: none. The duplicate text is intentional master-detail context and the filter had worked.
+- Cause: the runner asserted unscoped text instead of the semantic detail heading.
+- Correction: require the levelled heading in the detail pane.
+- Regression: the filtered Challenge must appear as the active detail without leaving the Inbox route.
+- Regression verified: yes. The semantic heading assertion passed and the runner continued through desktop, portrait, landscape and client-bundle collection.
+
+## V3G-030 - Bundle scan confused an environment-variable name with a secret value
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed`
+- Detected: 2026-09-02
+- Scenario: proving that no Supabase service-role credential reached the Preview browser bundle.
+- Original failure: the scan rejected the harmless source string `SUPABASE_SERVICE_ROLE_KEY`, even though it had not found a credential value.
+- Product impact: none. The assertion stopped before claiming either leak or PASS.
+- Cause: the pattern tested a configuration identifier rather than secret material.
+- Correction: load the ephemeral branch service-role value into process memory only, compare the complete client bundle against that exact value, reject `sb_secret_` values and decode JWT candidates to reject any token whose payload role is `service_role`.
+- Regression: client chunks must contain the staging public ref, omit the production ref and contain neither the exact secret nor any service-role token.
+- Regression verified: yes. The complete remote client bundle contained only the ephemeral staging project ref, omitted the production ref and contained neither the exact branch service-role value, an `sb_secret_` value nor a JWT with `role=service_role`.
+
+## V3G-031 - zsh wrapper used the reserved variable status
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed`
+- Detected: 2026-09-02
+- Scenario: preserving the Playwright runner exit code while performing a final process readback.
+- Original failure: zsh rejected assignment to its read-only special parameter `status` after the runner had already reported its assertion.
+- Product impact: none. The application and browser state were unaffected.
+- Cause: a shell wrapper variable name valid in other shells is reserved by zsh.
+- Correction: retain the code in `exit_code` instead.
+- Regression: the wrapper must report process cleanup and preserve the original runner result.
+- Regression verified: yes. The wrapper returned the successful Preview QA exit code and the immediate process readback found no task-owned Playwright or Chrome process.
+
+## V3G-032 - Chrome headless did not emulate the installed display-mode media feature
+
+- Classification: `ENVIRONMENT_ISSUE`
+- Status: `fixed`
+- Detected: 2026-09-02
+- Scenario: remote Preview QA of the 390x844 installed-PWA surface after the browser, Service Worker, offline and responsive checks had passed.
+- Original failure: Chrome accepted `Emulation.setEmulatedMedia` but `matchMedia("(display-mode: standalone)").matches` remained false.
+- Product impact: none established. The application also supports the canonical iOS installed-app signal `navigator.standalone`, but the temporary runner asserted only the unsupported headless media emulation.
+- Cause: CDP media emulation in this Chrome context does not provide an installed web-app display context for the `display-mode` media feature.
+- Correction: emulate the supported `navigator.standalone` signal before navigation and assert the application's resulting `data-display-mode="standalone"` state, while retaining the separate real Service Worker control and offline-shell checks.
+- Regression: the installed-mode context must render the Demo Inbox without overflow, broken images, console errors or network failures and expose `navigator.standalone=true` plus the canonical document display-mode dataset.
+- Regression verified: yes. The 390x844 installed-mode run exposed both canonical signals, retained one visible navigation and reported zero overflow, broken images, console errors, page errors, unexpected request failures and HTTP failures.
+
+## V3G-033 - Deliberate offline probe was counted as an online console regression
+
+- Classification: `TESTABILITY_GAP`
+- Status: `fixed`
+- Detected: 2026-09-02
+- Scenario: remote Preview QA after the installed-mode assertion passed and the browser intentionally disconnected for the cached `/avisos` reload.
+- Original failure: the offline shell rendered correctly, but Chrome emitted eight `Failed to load resource: net::ERR_INTERNET_DISCONNECTED` console entries and the runner's final global zero-error assertion rejected them.
+- Product impact: none established. The cached page remained usable and no application exception was raised.
+- Cause: the runner aggregated expected transport failures from the explicit offline window together with unexpected online console failures.
+- Correction: scope the offline window in the observer, record only `ERR_INTERNET_DISCONNECTED` transport failures as expected offline evidence and continue rejecting every other console, page, request or HTTP error.
+- Regression: the offline shell must render with expected disconnected transport evidence while all online and installed-PWA error collections remain empty.
+- Regression verified: yes. The controlled offline reload rendered the cached signed-out Inbox shell and recorded 16 expected disconnected transport observations, while every unexpected online and installed-PWA error collection remained empty.

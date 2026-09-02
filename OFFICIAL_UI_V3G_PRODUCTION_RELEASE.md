@@ -21,10 +21,21 @@ their final readbacks.
 - Supabase production project: `Pachangas` (`qonbngfrnrqgmxbdfbea`)
 - Pre-release remote ledger: 233 exact local/remote pairs through `20260901214527`; only `20260902064632` is pending remotely
 
-## Pending evidence
+## Completed pre-production evidence
 
-- Supabase staging branch and authenticated two-device QA;
-- synthetic staging cleanup readback at zero;
+- isolated Supabase branch bootstrapped to the exact 234-version ledger;
+- authenticated four-actor, two-Team staging dataset;
+- two devices converged through Realtime invalidation and canonical refetch;
+- direct writes, cross-user reads and stale/duplicate action effects denied;
+- exact Preview bundle used only the ephemeral staging public project;
+- no service-role value or token in browser code;
+- 1440x900, 390x844, 844x390 and installed-mode Preview smoke: PASS;
+- Service Worker control and cached offline Inbox shell: PASS;
+- zero unexpected console errors, page errors, HTTP failures, overflow or broken images.
+
+## Pending release evidence
+
+- disposable staging branch destruction and branch-scoped Preview variable removal;
 - final branch SHA and merged main SHA;
 - production migration ledger/readback;
 - exact Vercel deployment ID, SHA and READY state;

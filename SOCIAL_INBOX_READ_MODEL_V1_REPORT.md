@@ -7,7 +7,7 @@
 - Branch: `codex/official-ui-v3g-social-inbox`
 - Migration frontier: 234 local files
 - V3G migration SHA-256: `4ade702f4ae82b4fbbabbf79d0cb3ee037b11d9345ee9dd8ab1853c36165460b`
-- Status: locally certified; staging and production pending
+- Status: local, authenticated staging and isolated Preview certified; production pending
 
 ## Authority
 
@@ -97,3 +97,30 @@ Supabase private RPC responses.
 - deterministic two-session replay: one mutation, one receipt, revision 2;
 - global suite: Node 20/20 plus TS/TSX 798/798, total 818/818;
 - typecheck, build, focused lint, global lint and `git diff --check`: PASS.
+
+## Remote staging and Preview
+
+An isolated Supabase branch was bootstrapped from the signed 234-migration
+baseline and exposed the exact V3G RPC signatures. Four synthetic `.test`
+actors exercised two Teams, one Match, one Challenge, one open-place request,
+one Match invitation and one Team invitation.
+
+The authenticated two-device run passed:
+
+- own-user privacy, foreign-user denial and direct-write denial;
+- actual Challenge deep-link resolution;
+- one receipt for concurrent idempotent replay;
+- stable cursor pagination and session-switch isolation;
+- offline write rejection with no optimistic confirmation;
+- Realtime `UPDATE` invalidation followed by canonical RPC refetch.
+
+The exact Preview bundle contained only the isolated staging project ref and no
+service-role credential. Remote browser QA passed signed-out Inbox, settings,
+Demo Inbox, domain filtering, Service Worker control, cached offline shell and
+installed-mode emulation at 1440x900, 390x844 and 844x390 with zero horizontal
+overflow, broken images or unexpected browser/network errors.
+
+No external push, email or domain side effect was emitted. The disposable
+branch and its branch-scoped Preview variables remain only until the release is
+complete; branch destruction is the canonical cleanup because immutable
+operational evidence must not be bypassed.

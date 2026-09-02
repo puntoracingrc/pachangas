@@ -105,5 +105,8 @@ the `/perfil/avisos` compatibility redirect.
 - Stripe is untouched.
 - Wave 9C remains paused.
 - V3H is not started.
-- Staging, Preview visual QA, production canary, deployment and final cleanup are
-  pending and must be recorded in the production release report.
+- Authenticated staging with two devices and Realtime canonical refetch: PASS.
+- Exact isolated Preview at 1440x900, 390x844, 844x390, offline shell and
+  installed-mode emulation: PASS.
+- Production canary, migration, deployment and final disposable-environment
+  cleanup remain pending and must be recorded in the production release report.
