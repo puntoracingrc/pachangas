@@ -2793,6 +2793,16 @@
     color: var(--demo-lime);
     font-weight: 850;
   }
+  .socialJourneyLauncher small,
+  .socialJourneyLauncher span {
+    display: block;
+    line-height: 1.05;
+  }
+  .socialJourneyLauncher small {
+    margin-bottom: 2px;
+    font-size: 0.48rem;
+    text-transform: uppercase;
+  }
   .socialJourneyLauncher[data-full-mode="true"] {
     right: auto;
     left: max(8px, env(safe-area-inset-left));

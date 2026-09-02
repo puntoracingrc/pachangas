@@ -35,5 +35,7 @@ Cada incidencia se registró en este ledger antes de corregirse; el inventario i
 | V3H-027 | CODE_QUALITY | fixed + regression_verified | El cleanup de foco consulta `dialogRef.current`, que puede apuntar a otro nodo al desmontar | Lint focalizado limpio; trampa, Escape y retorno al activador verificados |
 | V3H-028 | TESTABILITY_GAP | fixed + regression_verified | La prueba V3H conserva la comparación positiva anterior al arreglo de lint y no exige apertura diferida/cancelable | V3H 6/6 y batería 824/824 exigen frame y cancelación |
 | V3H-029 | TESTABILITY_GAP | fixed + regression_verified | La prueba V3H conserva `dialogRef.current` dentro del cleanup y rechaza la captura estable introducida por V3H-027 | V3H 6/6 y batería 824/824 exigen captura estable |
+| V3H-030 | ENVIRONMENT_ISSUE | accepted | Deployment Protection acepta la página con OIDC, pero el registro interno de `/sw.js` no hereda ese header y la Preview protegida no obtiene controller | PWA productiva local 8/8 PASS; repetir SW en `pachangasiq.com` público tras el merge |
+| V3H-031 | RESPONSIVE | fixed + regression_verified | Al ocultar cabecera y banner en Mobile Game Landscape, la Demo pierde la etiqueta persistente `SIMULACIÓN` | V3H 6/6, lint limpio y 4/4 landscape sin overflow ni targets pequeños |
 
 `verifying` solo puede cambiar a `fixed + regression_verified` cuando terminen la matriz visual, teclado, temas y reduced motion del SHA exacto.

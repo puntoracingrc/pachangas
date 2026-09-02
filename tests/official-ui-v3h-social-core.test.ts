@@ -67,6 +67,7 @@ test("social Demo exposes the seven local-only V3H review journeys", async () =>
   ]);
 
   assert.match(app, /<b>SIMULACIÓN<\/b> · datos ficticios · sesión local/);
+  assert.match(app, /socialJourneyLauncher[\s\S]*<small>SIMULACIÓN<\/small><span>Revisión rápida<\/span>/);
   assert.match(app, /get\("review"\) !== "1"/);
   assert.match(app, /requestAnimationFrame\(\(\) => setSocialQuickReviewOpen\(true\)\)/);
   assert.match(app, /cancelAnimationFrame\(frame\)/);
