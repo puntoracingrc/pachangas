@@ -118,7 +118,7 @@
   .header { min-height: 52px; align-items: center; padding-bottom: 8px; }
   .header h1 { margin: 0; font-size: 1.2rem; }
   .header p { display: none; }
-  .headerActions :is(a, button) { min-height: 38px; }
+  .headerActions :is(a, button) { min-height: 40px; }
   .toolbar { min-height: 46px; }
   .views button { min-height: 44px; }
   .inboxLayout { grid-template-columns: minmax(310px, 52%) minmax(260px, 1fr); gap: 10px; padding-top: 10px; }

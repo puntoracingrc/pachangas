@@ -220,7 +220,7 @@ test("Demo Social Inbox is local, user-namespaced and documents the 26-step jour
   assert.match(demoContract, /socialInboxByPerspective/);
   assert.match(demo, /socialInboxByPerspective: \{ \.\.\.current\.socialInboxByPerspective, \[perspective\.id\]: next \}/);
   assert.match(demo, /<DemoSocialInbox/);
-  assert.match(demo, /!socialFirstTimeOpen && activeTab !== "avisos"/);
+  assert.match(demo, /!socialFirstTimeOpen && !socialQuickReviewOpen && activeTab !== "avisos"/);
   assert.match(demo, /DEMO_SOCIAL_ATTENDANCE_ID/);
   assert.match(demo, /DEMO_SOCIAL_CHALLENGE_ID/);
   assert.match(demo, /DEMO_SOCIAL_TEAM_INVITATION_ID/);
@@ -228,7 +228,7 @@ test("Demo Social Inbox is local, user-namespaced and documents the 26-step jour
   assert.match(demoInbox, /key=\{`\$\{index\}-\$\{step\}`\}/);
   assert.match(demoInboxStyles, /\.toolbar>div:first-child,\.settings,\.item,\.detail,\.proof\{background:var\(--demo-panel-soft\)\}/);
   assert.match(demoInboxStyles, /\.item\[data-selected=true\],\.menu>div\{background:var\(--demo-panel\)\}/);
-  assert.match(demoInboxStyles, /orientation:landscape[\s\S]*\.detail h2\{font-size:1rem\}[\s\S]*\.detail button\{min-height:36px/);
+  assert.match(demoInboxStyles, /orientation:landscape[\s\S]*\.detail h2\{font-size:1rem\}[\s\S]*\.detail button\{min-height:40px/);
   for (const proof of ["remoteWrites = 0", "externalNotifications = 0", "pushSent = 0", "emailsSent = 0", "realEntities = 0", "StripeCalls = 0"]) assert.match(demoInbox, new RegExp(proof));
   assert.doesNotMatch(demoInbox, /supabase|\.rpc\(|fetch\(/i);
   const profileView = demo.match(/function ProfileView[\s\S]*?function PlayerModal/)?.[0] ?? "";

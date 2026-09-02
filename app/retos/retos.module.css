@@ -75,6 +75,28 @@
 .filters button { min-height: 32px; padding-inline: 12px; font-size: 0.64rem; }
 .filters button[aria-pressed="true"] { background: rgba(80, 207, 223, 0.13); color: var(--official-cyan-text, #51cfdf); }
 
+.filterSelect {
+  width: fit-content;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 16px;
+  color: var(--official-muted, #a9bbb2);
+  font-size: 0.66rem;
+  font-weight: 850;
+}
+
+.filterSelect select {
+  min-width: 132px;
+  min-height: 40px;
+  border: 1px solid var(--official-line, rgba(217, 234, 225, 0.16));
+  border-radius: 6px;
+  background: rgba(6, 18, 15, 0.72);
+  padding: 0 34px 0 10px;
+  color: var(--official-text, #f1f6f2);
+  font: inherit;
+}
+
 .challengeArea { display: grid; gap: 16px; }
 
 .notice {
@@ -116,7 +138,7 @@
   box-shadow: 0 16px 34px rgba(0, 0, 0, 0.34);
 }
 .teamCodeMenu strong { color: var(--official-text, #f1f6f2); font-size: 1.05rem; letter-spacing: 0; }
-.teamCodeMenu button { min-height: 38px; border: 1px solid var(--official-accent, #c8ef5d); border-radius: 5px; background: transparent; color: var(--official-accent, #c8ef5d); font: inherit; font-weight: 850; }
+.teamCodeMenu button { min-height: 40px; border: 1px solid var(--official-accent, #c8ef5d); border-radius: 5px; background: transparent; color: var(--official-accent, #c8ef5d); font: inherit; font-weight: 850; }
 
 .challengeGroup { display: grid; gap: 8px; }
 .challengeGroup > header { display: flex; align-items: center; gap: 8px; min-height: 30px; color: var(--official-muted, #a9bbb2); }
@@ -393,8 +415,7 @@
   .header button { min-height: 40px; padding-inline: 10px; font-size: 0.66rem; }
   .tabs { position: sticky; z-index: 20; top: calc(48px + env(safe-area-inset-top)); background: rgba(7, 17, 15, 0.96); }
   .tabs button { flex: 1; }
-  .filters { width: 100%; margin-bottom: 12px; }
-  .filters button { flex: 1; padding-inline: 5px; }
+  .filterSelect { width: 100%; justify-content: flex-end; margin-bottom: 12px; }
   .teamCodeMenu { justify-self: start; }
   .teamCodeMenu > div { right: auto; left: 0; }
   .challengeCard { grid-template-columns: 1fr; }
@@ -427,11 +448,11 @@
   .header { min-height: 42px; }
   .header h1 { font-size: 1rem; }
   .header p { display: none; }
-  .header button { min-height: 32px; font-size: 0.61rem; }
+  .header button { min-height: 40px; font-size: 0.61rem; }
   .tabs { float: left; width: 104px; display: grid; gap: 4px; padding: 7px 8px 0 0; }
-  .tabs button { min-height: 34px; padding: 0 8px; font-size: 0.61rem; text-align: left; }
-  .filters { width: calc(100% - 112px); margin: 7px 0 7px 112px; }
-  .filters button { min-height: 28px; }
+  .tabs button { min-height: 40px; padding: 0 8px; font-size: 0.61rem; text-align: left; }
+  .filterSelect { width: calc(100% - 112px); justify-content: flex-start; margin: 7px 0 7px 112px; }
+  .filterSelect select { min-height: 40px; }
   .challengeArea,
   .focusSurface,
   .matchOrigin { width: calc(100% - 112px); margin: 0 0 0 112px; }
@@ -447,7 +468,7 @@
   .cardField { font-size: 0.59rem; }
   .cardActions { padding-block: 5px; }
   .cardActions button,
-  .cardMenu summary { min-height: 34px; font-size: 0.59rem; }
+  .cardMenu summary { min-height: 40px; font-size: 0.59rem; }
   .focusSurface { max-width: none; padding: 10px; }
   .focusHeader { padding-bottom: 7px; }
   .focusHeader h2 { font-size: 0.95rem; }
@@ -457,11 +478,11 @@
   .proposalGrid input,
   .proposalGrid select,
   .codeLookup input,
-  .codeLookup > button { min-height: 34px; }
+  .codeLookup > button { min-height: 40px; }
   .opponentPicker > div { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .opponentPicker > div > button { min-height: 48px; }
   .wizardActions { padding-top: 0; }
-  .wizardActions button { min-height: 34px; }
+  .wizardActions button { min-height: 40px; }
   .detailHero { padding-top: 9px; }
   .detailList { margin-top: 8px; }
   .detailList > div { padding: 6px 8px; }
@@ -478,5 +499,6 @@
   .challengeCard,
   .focusSurface,
   .filters,
+  .filterSelect,
   .historyList > button { border: 1px solid CanvasText; }
 }

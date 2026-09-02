@@ -724,13 +724,19 @@ export function TeamChallengesPanel({
     );
   }
 
-  if (loading) return <section className={styles.loadingState} aria-live="polite"><span /><strong>Cargando Retos</strong><p>Recuperando el estado confirmado de tu equipo.</p></section>;
+  if (loading) return <section className={styles.loadingState} aria-live="polite"><span /><strong>Cargando Retos</strong><p>Estamos preparando los retos de tu equipo.</p></section>;
   if (!memberships.length) {
+    const unavailable = !supabase || notice?.tone === "error";
+    const signedOut = !unavailable && !currentUserId;
     return (
       <section className={styles.emptyState}>
-        <span>Sin equipo</span><h2>No perteneces todavía a ningún equipo.</h2><p>Únete a uno para ver sus retos o encuentra un partido abierto.</p>
-        <div><Link href="/?mobile=inicio&create=team">Crear equipo</Link><Link href="/?mobile=perfil&join=team">Unirme a un equipo</Link><Link href="/mercado?tab=partidos">Ver partidos abiertos</Link></div>
-        {renderNotice()}
+        <span>{unavailable ? "No disponible" : signedOut ? "Sesión necesaria" : "Sin equipo"}</span>
+        <h2>{unavailable ? "No podemos abrir tus Retos" : signedOut ? "Entra para ver tus Retos" : "Aún no tienes equipo"}</h2>
+        <p>{unavailable ? "Puedes seguir explorando partidos abiertos y volver a intentarlo más tarde." : signedOut ? "Los retos pertenecen a los equipos de tu cuenta." : "Crea un equipo o busca una pachanga abierta para empezar."}</p>
+        <div>
+          {unavailable ? null : signedOut ? <Link href="/">Ir a Inicio</Link> : <Link href="/?mobile=inicio&create=team">Crear equipo</Link>}
+          <Link href="/mercado?tab=partidos">Ver partidos abiertos</Link>
+        </div>
       </section>
     );
   }

@@ -3358,6 +3358,305 @@ h1 {
   text-align: center;
 }
 
+.social-entry-shell {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background: var(--background);
+  color: var(--foreground);
+}
+
+.social-entry-hero {
+  width: min(1180px, calc(100% - 40px));
+  min-height: 62dvh;
+  display: grid;
+  align-items: center;
+  margin: 0 auto;
+  padding: 48px 0 38px;
+}
+
+.social-entry-copy {
+  width: min(680px, 100%);
+  display: grid;
+  justify-items: start;
+}
+
+.social-entry-copy .brand-lockup {
+  margin-bottom: 28px;
+}
+
+.social-entry-copy .brand-hero-logo {
+  width: 430px;
+  max-width: 82vw;
+  border-radius: 0;
+  transform: none;
+}
+
+.social-entry-hero h1 {
+  max-width: 680px;
+  font-size: 64px;
+  line-height: 0.98;
+}
+
+.social-entry-hero .hero-copy {
+  max-width: 540px;
+  margin-top: 16px;
+  font-size: 19px;
+}
+
+.social-entry-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 28px;
+}
+
+.social-entry-actions > :is(a, button) {
+  min-height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  padding: 0 20px;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 900;
+  text-decoration: none;
+}
+
+.social-entry-primary {
+  border: 1px solid #4f7f16;
+  background: #4f7f16;
+  color: #fff;
+}
+
+.social-entry-secondary,
+.social-entry-actions .social-entry-login {
+  min-width: 150px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--foreground);
+}
+
+.social-entry-actions .social-entry-login svg {
+  width: 18px;
+  height: 18px;
+}
+
+.social-entry-discover {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  margin-top: 10px;
+  color: var(--green);
+  font-size: 14px;
+  font-weight: 850;
+  text-underline-offset: 4px;
+}
+
+.social-entry-steps {
+  width: min(1180px, calc(100% - 40px));
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 0 auto;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+
+.social-entry-steps article {
+  min-width: 0;
+  min-height: 132px;
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  align-content: center;
+  gap: 12px;
+  padding: 26px 28px;
+}
+
+.social-entry-steps article + article {
+  border-left: 1px solid var(--line);
+}
+
+.social-entry-steps b {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--green);
+  border-radius: 50%;
+  color: var(--green);
+  font-size: 13px;
+}
+
+.social-entry-steps article > div {
+  min-width: 0;
+  display: grid;
+  gap: 5px;
+}
+
+.social-entry-steps strong {
+  font-size: 16px;
+}
+
+.social-entry-steps span {
+  color: var(--ink-soft);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.social-entry-footer {
+  width: min(1180px, calc(100% - 40px));
+  min-height: 70px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 0 auto;
+  color: var(--ink-soft);
+  font-size: 12px;
+}
+
+.social-entry-footer b {
+  color: var(--green);
+}
+
+.social-entry-footer button {
+  min-height: 44px;
+  border: 0;
+  background: transparent;
+  color: var(--green);
+  font: inherit;
+  font-weight: 850;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+@media (max-width: 700px) and (orientation: portrait) {
+  .social-entry-hero,
+  .social-entry-steps,
+  .social-entry-footer {
+    width: min(100% - 28px, 560px);
+  }
+
+  .social-entry-hero {
+    min-height: 0;
+    padding: 26px 0 24px;
+  }
+
+  .social-entry-copy .brand-lockup {
+    margin-bottom: 24px;
+  }
+
+  .social-entry-copy .brand-hero-logo {
+    width: 310px;
+    max-width: 88vw;
+  }
+
+  .social-entry-hero h1 {
+    font-size: 44px;
+  }
+
+  .social-entry-hero .hero-copy {
+    font-size: 17px;
+  }
+
+  .social-entry-actions {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin-top: 24px;
+  }
+
+  .social-entry-actions > :is(a, button),
+  .social-entry-actions .social-entry-login {
+    min-width: 0;
+    padding-inline: 10px;
+  }
+
+  .social-entry-steps {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .social-entry-steps article {
+    min-height: 88px;
+    padding: 18px 8px;
+  }
+
+  .social-entry-steps article + article {
+    border-top: 1px solid var(--line);
+    border-left: 0;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 600px) and (max-width: 1368px) {
+  .social-entry-hero {
+    width: calc(100% - 32px);
+    min-height: 0;
+    padding: 14px 0 12px;
+  }
+
+  .social-entry-copy {
+    width: min(760px, 100%);
+    grid-template-columns: 220px minmax(0, 1fr);
+    align-items: center;
+    column-gap: 18px;
+  }
+
+  .social-entry-copy .brand-lockup {
+    grid-row: 1 / 5;
+    margin: 0;
+  }
+
+  .social-entry-copy .brand-hero-logo {
+    width: 210px;
+  }
+
+  .social-entry-hero h1 {
+    font-size: 34px;
+  }
+
+  .social-entry-hero .hero-copy {
+    margin-top: 5px;
+    font-size: 13px;
+  }
+
+  .social-entry-actions {
+    margin-top: 8px;
+  }
+
+  .social-entry-actions > :is(a, button) {
+    min-height: 40px;
+  }
+
+  .social-entry-discover {
+    min-height: 40px;
+    margin-top: 0;
+    font-size: 12px;
+  }
+
+  .social-entry-steps {
+    width: calc(100% - 32px);
+  }
+
+  .social-entry-steps article {
+    min-height: 82px;
+    padding: 12px 14px;
+  }
+
+  .social-entry-steps strong {
+    font-size: 13px;
+  }
+
+  .social-entry-steps span {
+    font-size: 11px;
+  }
+
+  .social-entry-footer {
+    width: calc(100% - 32px);
+    min-height: 48px;
+  }
+}
+
 @media (orientation: landscape) and (max-height: 560px) and (max-width: 1368px) {
   .demo-world-entry-shell .hero {
     gap: 12px;
@@ -3923,12 +4222,14 @@ h1 {
 }
 
 .legal-footer a {
+  align-items: center;
   border: 1px solid rgba(255, 253, 247, 0.18);
   border-radius: 999px;
   color: #fffdf7;
+  display: inline-flex;
   font-size: 12px;
   font-weight: 850;
-  min-height: 30px;
+  min-height: 40px;
   padding: 7px 10px;
   text-decoration: none;
 }

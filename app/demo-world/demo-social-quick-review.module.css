@@ -1,0 +1,168 @@
+.backdrop {
+  position: fixed;
+  z-index: 240;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgba(2, 8, 7, 0.78);
+  padding: max(14px, env(safe-area-inset-top)) max(14px, env(safe-area-inset-right)) max(14px, env(safe-area-inset-bottom)) max(14px, env(safe-area-inset-left));
+  backdrop-filter: blur(8px);
+}
+
+.review {
+  width: min(900px, 100%);
+  max-height: min(760px, 94dvh);
+  display: grid;
+  grid-template-columns: 230px minmax(0, 1fr);
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  overflow: hidden;
+  border: 1px solid rgba(200, 239, 93, 0.4);
+  border-radius: 8px;
+  background: #0d1915;
+  color: #f1f6f2;
+  box-shadow: 0 28px 90px rgba(0, 0, 0, 0.52);
+}
+
+.review > header {
+  grid-column: 1 / -1;
+  min-height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border-bottom: 1px solid rgba(217, 234, 225, 0.16);
+  padding: 14px 18px;
+}
+
+.review > header > div { min-width: 0; display: grid; gap: 3px; }
+.review > header span { color: #c8ef5d; font-size: 0.65rem; font-weight: 950; }
+.review h2 { margin: 0; font-size: 1.35rem; }
+.review > header button {
+  width: 44px;
+  height: 44px;
+  flex: 0 0 auto;
+  border: 1px solid rgba(217, 234, 225, 0.2);
+  border-radius: 50%;
+  background: transparent;
+  color: #f1f6f2;
+  font-size: 1.25rem;
+}
+
+.proof {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  border-bottom: 1px solid rgba(217, 234, 225, 0.12);
+  padding: 8px 18px;
+  scrollbar-width: none;
+}
+
+.proof::-webkit-scrollbar { display: none; }
+.proof span { flex: 0 0 auto; border: 1px solid rgba(81, 207, 223, 0.26); border-radius: 999px; padding: 4px 7px; color: #9ddfe7; font-size: 0.54rem; font-weight: 850; }
+
+.journeyList {
+  min-height: 0;
+  display: grid;
+  align-content: start;
+  gap: 3px;
+  overflow-y: auto;
+  border-right: 1px solid rgba(217, 234, 225, 0.14);
+  padding: 12px;
+}
+
+.journeyList button {
+  min-height: 46px;
+  display: grid;
+  grid-template-columns: 26px minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  background: transparent;
+  padding: 5px 8px;
+  color: #a9bbb2;
+  text-align: left;
+}
+
+.journeyList button b { width: 24px; height: 24px; display: grid; place-items: center; border: 1px solid rgba(217, 234, 225, 0.2); border-radius: 50%; font-size: 0.62rem; }
+.journeyList button span { min-width: 0; font-size: 0.7rem; font-weight: 850; }
+.journeyList button[aria-current="step"] { border-color: rgba(200, 239, 93, 0.36); background: rgba(200, 239, 93, 0.09); color: #f1f6f2; }
+.journeyList button[aria-current="step"] b { border-color: #c8ef5d; color: #c8ef5d; }
+
+.body {
+  min-height: 0;
+  display: grid;
+  align-content: center;
+  justify-items: start;
+  gap: 12px;
+  overflow-y: auto;
+  padding: 24px 30px;
+}
+
+.progress { width: 100%; display: grid; gap: 6px; }
+.progress > span { color: #a9bbb2; font-size: 0.62rem; font-weight: 850; }
+.progress i { height: 4px; overflow: hidden; border-radius: 2px; background: rgba(217, 234, 225, 0.12); }
+.progress i b { height: 100%; display: block; border-radius: inherit; background: #c8ef5d; transition: width 180ms ease; }
+.perspective { display: grid; gap: 2px; border-left: 3px solid #51cfdf; padding-left: 10px; }
+.perspective span { color: #a9bbb2; font-size: 0.58rem; font-weight: 850; text-transform: uppercase; }
+.perspective strong { font-size: 0.78rem; }
+.body h3 { margin: 4px 0 0; font-size: 1.65rem; }
+.body > p { max-width: 560px; margin: 0; color: #a9bbb2; line-height: 1.5; }
+.body ul { display: grid; gap: 7px; margin: 0; padding-left: 20px; color: #dfe8df; font-size: 0.76rem; }
+.body .primary { min-height: 46px; border: 1px solid #c8ef5d; border-radius: 6px; background: #c8ef5d; padding: 0 17px; color: #17210d; font-weight: 900; }
+
+.review > footer {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  border-top: 1px solid rgba(217, 234, 225, 0.14);
+  padding: 10px 14px;
+}
+
+.review > footer button { min-height: 42px; border: 1px solid rgba(217, 234, 225, 0.2); border-radius: 5px; background: rgba(255, 255, 255, 0.04); padding: 0 13px; color: #f1f6f2; font-weight: 850; }
+.review > footer button:last-child { border-color: rgba(200, 239, 93, 0.45); color: #c8ef5d; }
+.review > footer button:disabled { opacity: 0.42; }
+
+@media (max-width: 700px) and (orientation: portrait) {
+  .backdrop { align-items: end; padding: 8px 8px max(8px, env(safe-area-inset-bottom)); }
+  .review { max-height: calc(100dvh - 16px - env(safe-area-inset-bottom)); grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto auto minmax(0, 1fr) auto; }
+  .review > header { min-height: 64px; padding: 10px 12px; }
+  .review h2 { font-size: 1.05rem; }
+  .proof { padding-inline: 12px; }
+  .journeyList { grid-auto-columns: minmax(130px, 42vw); grid-auto-flow: column; grid-template-columns: none; overflow-x: auto; overflow-y: hidden; border-right: 0; border-bottom: 1px solid rgba(217, 234, 225, 0.14); padding: 8px; }
+  .journeyList button { min-height: 42px; }
+  .body { align-content: start; padding: 18px 16px; }
+  .body h3 { font-size: 1.35rem; }
+}
+
+@media (orientation: landscape) and (max-height: 600px) {
+  .backdrop { padding: 5px max(5px, env(safe-area-inset-right)) 5px max(5px, env(safe-area-inset-left)); }
+  .review { width: min(960px, 100%); max-height: calc(100dvh - 10px); grid-template-columns: 190px minmax(0, 1fr); grid-template-rows: auto auto minmax(0, 1fr) auto; }
+  .review > header { min-height: 48px; padding: 6px 10px; }
+  .review > header span { font-size: 0.53rem; }
+  .review h2 { font-size: 0.92rem; }
+  .review > header button { width: 40px; height: 40px; }
+  .proof { padding: 4px 10px; }
+  .journeyList { padding: 6px; }
+  .journeyList button { min-height: 40px; }
+  .body { gap: 6px; padding: 9px 16px; }
+  .body h3 { margin: 0; font-size: 1.15rem; }
+  .body > p { font-size: 0.67rem; }
+  .body ul { gap: 3px; font-size: 0.62rem; }
+  .body .primary { min-height: 40px; }
+  .review > footer { padding: 5px 8px; }
+  .review > footer button { min-height: 40px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .progress i b { transition: none; }
+}
+
+@media (forced-colors: active) {
+  .review,
+  .journeyList button,
+  .review button { border: 1px solid CanvasText; }
+}

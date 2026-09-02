@@ -9874,44 +9874,39 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
 
   if (isPublicEntryMode) {
     return (
-      <main className="min-h-screen bg-[#f7f6f0] text-[#1d2521] demo-world-entry-shell" data-product-entry="no-team" style={teamColorStyle}>
+      <main className="min-h-screen bg-[#f7f6f0] text-[#1d2521] demo-world-entry-shell social-entry-shell" data-product-entry="no-team" style={teamColorStyle}>
         {isRegisteredUser ? <AuthenticatedThemeDefault /> : null}
-        <section className="hero demo-hero" id="inicio">
-          <div>
+        <section className="social-entry-hero" id="inicio">
+          <div className="social-entry-copy">
             <div className="brand-lockup" aria-label={siteSettings.brand}>
               <NextImage className="brand-hero-logo" src="/brand/pachangas-logo-hero.png" alt={siteSettings.brand} width={960} height={268} priority />
             </div>
-            <h1>{siteSettings.title}</h1>
-            <p className="hero-copy">{siteSettings.subtitle}</p>
-          </div>
-          <div className="hero-action-stack">
-            <div className="hero-account-row">
+            <h1>Organiza tu pachanga.</h1>
+            <p className="hero-copy">Invita a tus amigos, crea los equipos y juega.</p>
+            <div className="social-entry-actions">
+              <Link className="social-entry-primary" href="/demo?review=1">Probar Demo</Link>
               {isRegisteredUser ? (
-                <GoogleSignInButton className="google-signout-button" label="Cerrar sesión" onClick={() => void signOut()} />
+                <button className="social-entry-secondary" type="button" onClick={() => showQuickForm("team")}>Crear mi grupo</button>
               ) : (
-                <GoogleSignInButton label={googleButtonText} onClick={() => void signInWithGoogle()} disabled={!supabase || !googleClientId} />
+                <GoogleSignInButton className="social-entry-login" label="Entrar" onClick={() => void signInWithGoogle()} disabled={!supabase || !googleClientId} />
               )}
             </div>
-            <div className="hero-actions">
-              <a className="manual-link-button" href="/manual">Manual</a>
-              <Link className="secondary-button market-link-button" href="/mercado">Mercado</Link>
-            </div>
+            <Link className="social-entry-discover" href="/mercado">Buscar una pachanga</Link>
           </div>
         </section>
 
         {renderTopTeamForm()}
 
-        <section className="top-panel demo-banner demo-world-entry" aria-labelledby="demo-world-entry-title">
-          <div>
-            <span>Mundo Demo social</span>
-            <strong id="demo-world-entry-title">Explora Pachangas IQ con una comunidad ficticia completa.</strong>
-            <p>Equipos, cartas, partidos, Retos, Mercado, logros y ranking provincial sin crear una cuenta ni modificar datos reales.</p>
-          </div>
-          <div className="demo-entry-actions">
-            <Link className="primary-button" href="/demo">Probar Mundo Demo</Link>
-            <button className="secondary-button" type="button" onClick={() => showQuickForm("team")}>Crear mi grupo</button>
-          </div>
+        <section className="social-entry-steps" aria-label="Cómo funciona Pachangas IQ">
+          <article><b>1</b><div><strong>Crea el partido.</strong><span>Elige cuándo y dónde jugáis.</span></div></article>
+          <article><b>2</b><div><strong>Reúne a los jugadores.</strong><span>Cada persona confirma su asistencia.</span></div></article>
+          <article><b>3</b><div><strong>Juega y guarda el resultado.</strong><span>El grupo conserva su historia.</span></div></article>
         </section>
+
+        <footer className="social-entry-footer">
+          <span>La Demo es una <b>SIMULACIÓN</b> con datos ficticios.</span>
+          {isRegisteredUser ? <button type="button" onClick={() => void signOut()}>Cerrar sesión</button> : null}
+        </footer>
       </main>
     );
   }
