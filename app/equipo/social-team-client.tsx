@@ -397,7 +397,7 @@ export function SocialTeamProduct({ surface = "home" }: { surface?: TeamSurface 
           <span>Equipo activo</span>
           <h1>{home.name}</h1>
           <p>{modalityLabel(home.modality)} · {home.generalArea || "Zona pendiente"}</p>
-          <small>{home.memberCount} jugadores · Código {home.teamCode}</small>
+          <small>{home.memberCount} jugadores</small>
         </div>
         {surface === "home" ? <PrimaryTeamAction home={home} /> : <Link className={styles.primary} href={`/equipo?team=${encodeURIComponent(home.groupId)}`}>Volver al equipo</Link>}
       </header>
@@ -424,6 +424,7 @@ export function SocialTeamProduct({ surface = "home" }: { surface?: TeamSurface 
         onExpiryChange={setExpiryHours}
         onRevoke={(invitation) => void revokeInvitation(invitation)}
         onShare={() => void shareInvitation()}
+        teamCode={home.teamCode}
         writeEnabled={status === "ready"}
       /> : null}
     </main>,
@@ -453,8 +454,8 @@ function TeamHome({ home, roster }: { home: SocialTeamHome; roster: SocialTeamRo
         <Link href={`/equipo/plantilla?team=${encodeURIComponent(home.groupId)}`}>Ver plantilla</Link>
       </section>
       <section className={styles.activity}>
-        <header><span>Actividad social</span><h2>Estado confirmado</h2></header>
-        <ul><li><b>{home.memberCount}</b><span>membresías activas</span></li><li><b>{home.activeInvitationCount}</b><span>invitaciones activas</span></li><li><b>{home.operationalStatus === "ACTIVE" ? "OK" : home.operationalStatus}</b><span>estado del equipo</span></li></ul>
+        <header><span>Equipo</span><h2>Ahora mismo</h2></header>
+        <ul><li><b>{home.memberCount}</b><span>jugadores</span></li><li><b>{home.activeInvitationCount}</b><span>invitaciones pendientes</span></li>{home.operationalStatus !== "ACTIVE" ? <li><b>{home.operationalStatus}</b><span>acción limitada</span></li> : null}</ul>
       </section>
       <section className={styles.destinations}>
         <header><span>Jugar</span><h2>Siguientes pasos</h2></header>
@@ -482,7 +483,7 @@ function RosterGroup({ members, title }: { members: SocialTeamRosterMember[]; ti
   return <section className={styles.rosterGroup}><header><span>{title}</span><strong>{members.length}</strong></header><div className={styles.rosterList}>{members.map((member) => <details key={member.memberKey}><summary><MemberAvatar member={member} /><span><strong>{member.displayName}{member.isCurrentUser ? " · Tú" : ""}</strong><small>{member.primaryPosition}</small></span><b>{roleLabel(member.role)}</b></summary><div><span>{modalityLabel(member.preferredModality)}</span><small>Miembro desde {dateLabel(member.joinedAt)}</small>{member.isCurrentUser ? <Link href="/perfil">Abrir mi perfil</Link> : null}</div></details>)}</div></section>;
 }
 
-function InvitationView({ busyInvitationId, canInvite, creating, expiryHours, freshShareUrl, invitations, onCopy, onCreate, onExpiryChange, onRevoke, onShare, writeEnabled }: {
+function InvitationView({ busyInvitationId, canInvite, creating, expiryHours, freshShareUrl, invitations, onCopy, onCreate, onExpiryChange, onRevoke, onShare, teamCode, writeEnabled }: {
   busyInvitationId: string;
   canInvite: boolean;
   creating: boolean;
@@ -494,6 +495,7 @@ function InvitationView({ busyInvitationId, canInvite, creating, expiryHours, fr
   onExpiryChange: (hours: number) => void;
   onRevoke: (invitation: SocialTeamInvitation) => void;
   onShare: () => void;
+  teamCode: string;
   writeEnabled: boolean;
 }) {
   if (!canInvite) return <section className={styles.state}><span>Invitaciones</span><h1>Solo owner y admins pueden crear enlaces</h1><p>Los jugadores pueden consultar la plantilla, pero no conceder membresías.</p></section>;
@@ -501,6 +503,7 @@ function InvitationView({ busyInvitationId, canInvite, creating, expiryHours, fr
     <div className={styles.invitationLayout}>
       <section className={styles.inviteComposer}>
         <header><span>Nuevo enlace</span><h2>Invitar jugador</h2></header>
+        <p className={styles.teamCode}>Código del equipo: <strong>{teamCode}</strong></p>
         <p>Solo quien tenga este enlace podrá solicitar su entrada. Es de un solo uso y nunca concede permisos de admin.</p>
         <label>Caducidad<select value={expiryHours} onChange={(event) => onExpiryChange(Number(event.target.value))}><option value={24}>24 horas</option><option value={72}>3 días</option><option value={168}>7 días</option><option value={336}>14 días</option></select></label>
         {!writeEnabled ? <p className={styles.notice}>Necesitas conexión para confirmar esta acción.</p> : null}

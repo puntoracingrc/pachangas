@@ -41,7 +41,7 @@ const commonPlayerTools: ProductContextualDestination[] = [
   { href: "/equipo", id: "team", label: "Equipo", short: "EQ" },
   { href: "/reservas", id: "reservations", label: "Reservas", short: "RS" },
   { href: "/ranking", id: "ranking", label: "Ranking", short: "RK" },
-  { href: "/perfil/avisos", id: "notifications", label: "Avisos", short: "AV" },
+  { href: "/avisos", id: "notifications", label: "Avisos", short: "AV" },
 ];
 
 const organizerTools: ProductContextualDestination[] = [
@@ -52,7 +52,7 @@ const organizerTools: ProductContextualDestination[] = [
   { href: "/clubes/gestionar/reservas", id: "bookings", label: "Reservas", short: "RS" },
   { href: "/ligas", id: "leagues", label: "Ligas", short: "LG" },
   { href: "/torneos", id: "tournaments", label: "Torneos", short: "TR" },
-  { href: "/perfil/avisos", id: "notifications", label: "Avisos", short: "AV" },
+  { href: "/avisos", id: "notifications", label: "Avisos", short: "AV" },
 ];
 
 export function contextualDestinationsForPerspective(
@@ -62,13 +62,13 @@ export function contextualDestinationsForPerspective(
     return [
       { href: "/perfil/arbitro", id: "referee-profile", label: "Ficha arbitral", short: "FA" },
       { href: "/mis-asignaciones-arbitrales", id: "assignments", label: "Asignaciones", short: "AS" },
-      { href: "/perfil/avisos", id: "notifications", label: "Avisos", short: "AV" },
+      { href: "/avisos", id: "notifications", label: "Avisos", short: "AV" },
     ];
   }
   if (perspective === "platform-admin" || perspective === "platform-reviewer") {
     return [
       { href: "/admin", id: "control-center", label: "Control Center", short: "CC" },
-      { href: "/perfil/avisos", id: "notifications", label: "Avisos", short: "AV" },
+      { href: "/avisos", id: "notifications", label: "Avisos", short: "AV" },
     ];
   }
   if (
@@ -88,7 +88,7 @@ export function contextualDestinationsForPerspective(
     return [
       { href: "/mercado", id: "market", label: "Buscar equipo", short: "ME" },
       { href: "/competiciones", id: "competitions", label: "Competiciones", short: "CO" },
-      { href: "/perfil/avisos", id: "notifications", label: "Avisos", short: "AV" },
+      { href: "/avisos", id: "notifications", label: "Avisos", short: "AV" },
     ];
   }
   return commonPlayerTools;

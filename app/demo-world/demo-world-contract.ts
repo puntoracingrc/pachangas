@@ -9,7 +9,7 @@ export const DEMO_WORLD_MODE = "demo-world-read-only" as const;
 
 export type DemoWorldPerspectiveId = "admin" | "club-organizer" | "free-agent" | "league-organizer" | "platform-reviewer"
   | "player" | "referee" | "team-owner" | "tournament-organizer";
-export type DemoWorldPrimaryTab = "inicio" | "partido" | "retos" | "mercado" | "equipo" | "perfil";
+export type DemoWorldPrimaryTab = "avisos" | "inicio" | "partido" | "retos" | "mercado" | "equipo" | "perfil";
 export type DemoMatchKind = "sala" | "futbol7" | "futbol11";
 export type DemoMatchScope = "challenge" | "internal";
 export type DemoMatchStatus = "finalized" | "scheduled";
@@ -285,6 +285,11 @@ export type DemoWorldSnapshot = {
 
 export type DemoWorldSessionState = {
   attendanceByMatch: Record<string, "duda" | "no" | "voy">;
+  socialInboxByPerspective: Record<string, {
+    archivedIds: string[];
+    readIds: string[];
+    resolvedActionIds: string[];
+  }>;
   equippedCosmeticKeys: string[];
   inventoryCosmeticKeys: string[];
   newCosmeticKeys: string[];
@@ -295,6 +300,7 @@ export type DemoWorldSessionState = {
 
 export const DEFAULT_DEMO_WORLD_SESSION: DemoWorldSessionState = {
   attendanceByMatch: {},
+  socialInboxByPerspective: {},
   equippedCosmeticKeys: [],
   inventoryCosmeticKeys: [],
   newCosmeticKeys: [],

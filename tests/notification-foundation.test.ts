@@ -2,11 +2,12 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const [migration, center, preferences, page, profilePage, css] = await Promise.all([
+const [migration, center, preferences, page, settingsPage, legacyProfilePage, css] = await Promise.all([
   readFile(new URL("../supabase/migrations/20260804144819_notification_foundation.sql", import.meta.url), "utf8"),
   readFile(new URL("../app/notification-center.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/notification-preferences.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
+  readFile(new URL("../app/ajustes/notificaciones/page.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/perfil/avisos/page.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
 ]);
@@ -70,8 +71,9 @@ test("profile preferences use confirmed RPC responses and never queue offline wr
   assert.match(preferences, /if \(!navigator\.onLine\)/);
   assert.match(preferences, /No se ha cambiado ninguna preferencia/);
   assert.doesNotMatch(preferences, /localStorage|indexedDB|optimistic/i);
-  assert.match(profilePage, /<NotificationPreferences \/>/);
-  assert.match(page, /href="\/perfil\/avisos"/);
+  assert.match(settingsPage, /<NotificationPreferences \/>/);
+  assert.match(legacyProfilePage, /redirect\("\/ajustes\/notificaciones"\)/);
+  assert.match(page, /href="\/ajustes\/notificaciones"/);
 });
 
 test("the notification center exposes unread count, Realtime refresh and category filters", () => {

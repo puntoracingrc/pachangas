@@ -18,13 +18,13 @@ const files = Promise.all([
   readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/invitacion-partido/page.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/mercado/marketplace-client.tsx", import.meta.url), "utf8"),
-  readFile(new URL("../app/notification-center.tsx", import.meta.url), "utf8"),
+  readFile(new URL("../app/social-inbox-provider.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/partido-invitado/page.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
 ]);
 
 test("guest invitations use central RPCs, revisions and idempotent operation ids", async () => {
-  const [migration, , , , , market, notifications, guestPage] = await files;
+  const [migration, , , home, , market, , guestPage] = await files;
   for (const rpc of [
     "create_pachanga_match_invitation_v1",
     "respond_pachanga_match_invitation_v1",
@@ -41,9 +41,10 @@ test("guest invitations use central RPCs, revisions and idempotent operation ids
   }
   assert.match(market, /operation_id: crypto\.randomUUID\(\)/);
   assert.match(market, /expected_match_revision/);
-  assert.match(notifications, /expected_invitation_revision/);
-  assert.match(notifications, /review_pachanga_open_match_request_authoritative_v2/);
-  assert.match(notifications, /requestGroupRevision/);
+  assert.match(market, /expected_invitation_revision/);
+  assert.match(home, /review_pachanga_open_match_request_authoritative_v2/);
+  assert.match(home, /expected_revision: remotePayloadRevisionRef\.current/);
+  assert.match(home, /operation_id: id\(\)/);
   assert.match(guestPage, /expected_snapshot_revision/);
   assert.doesNotMatch(guestPage, /localStorage|sessionStorage/);
 });
@@ -62,9 +63,10 @@ test("public market and guest reads expose canonical safe models only", async ()
 });
 
 test("Realtime invalidates only the affected guest entities and revoked access closes the view", async () => {
-  const [migration, , , , , market, notifications, guestPage, layout] = await files;
-  assert.match(layout, /<NotificationCenter \/>/);
-  assert.match(notifications, /table: "pachanga_user_notifications"/);
+  const [migration, , , , , market, socialInbox, guestPage, layout] = await files;
+  assert.match(layout, /<SocialInboxProvider>\{children\}<\/SocialInboxProvider>/);
+  assert.match(socialInbox, /table: "pachanga_user_notifications"/);
+  assert.doesNotMatch(socialInbox, /payload\.new/);
   assert.match(market, /table: "pachanga_open_match_requests"/);
   assert.match(guestPage, /table: "pachanga_match_guest_access"/);
   assert.match(guestPage, /table: "pachanga_match_guest_snapshots"/);

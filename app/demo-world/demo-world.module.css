@@ -163,6 +163,11 @@
   --official-text: var(--demo-ink);
 }
 
+.demoInboxBell{position:relative;width:42px;height:42px;display:grid;flex:0 0 42px;place-items:center;border:1px solid var(--demo-line);border-radius:50%;background:rgba(255,255,255,.04);color:var(--demo-ink)}
+.demoInboxBell svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round;stroke-width:1.7}
+.demoInboxBell b{position:absolute;right:-3px;top:-4px;min-width:20px;height:20px;display:grid;place-items:center;border:2px solid #07110f;border-radius:10px;background:#c8ef5d;color:#14200e;font-size:.62rem}
+.demoTeamInvitation{display:flex;align-items:center;justify-content:space-between;gap:16px;border:1px solid rgba(200,239,93,.34);border-left:3px solid var(--demo-lime);background:rgba(29,45,38,.78);padding:12px 14px}.demoTeamInvitation span{color:var(--demo-cyan);font-size:.65rem;font-weight:900;text-transform:uppercase}.demoTeamInvitation h1,.demoTeamInvitation p{margin:2px 0}.demoTeamInvitation p{color:var(--demo-muted);font-size:.73rem}.demoTeamInvitation button{min-height:40px;border:1px solid var(--demo-lime);border-radius:5px;background:var(--demo-lime);padding:0 14px;color:#15200e;font-weight:900}.demoTeamInvitation[data-resolved=true]{border-left-color:var(--demo-cyan)}
+
 .teamViewHeader select,
 .searchLine input {
   min-height: 40px;

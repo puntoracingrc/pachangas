@@ -42,6 +42,7 @@ import {
 } from "./demo-world-v3-5-contract";
 
 const tabs: DemoWorldV2PrimaryTab[] = [
+  "avisos",
   "inicio",
   "partido",
   "retos",

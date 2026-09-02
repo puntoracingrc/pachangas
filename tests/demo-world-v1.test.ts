@@ -316,6 +316,13 @@ test("ephemeral session round-trips and reset restores the frozen default", () =
     openedBoxIds: ["demo_reward_box_001"],
     perspectiveId: "admin" as const,
     readNotificationIds: ["demo_notification_001"],
+    socialInboxByPerspective: {
+      admin: {
+        archivedIds: ["demo_social_activity_001"],
+        readIds: ["demo_social_activity_001"],
+        resolvedActionIds: ["demo_social_action_team_invitation"],
+      },
+    },
   };
   writeDemoWorldSession(storage, changed);
   assert.deepEqual(readDemoWorldSession(storage), changed);

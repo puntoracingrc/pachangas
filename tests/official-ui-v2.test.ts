@@ -74,7 +74,7 @@ test("priority production routes share the official shell without replacing thei
     "app/page.tsx",
     "app/mercado/marketplace-client.tsx",
     "app/ranking/provincial-ranking-product.tsx",
-    "app/perfil/avisos/page.tsx",
+    "app/ajustes/notificaciones/page.tsx",
     "app/equipo/identidad/page.tsx",
     "app/personalizar-carta/page.tsx",
   ];

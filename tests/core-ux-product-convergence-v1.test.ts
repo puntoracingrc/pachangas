@@ -40,7 +40,7 @@ test("role-aware utilities prioritize capability context without granting author
   assert.deepEqual(referee.map(({ href }) => href), [
     "/perfil/arbitro",
     "/mis-asignaciones-arbitrales",
-    "/perfil/avisos",
+    "/avisos",
   ]);
   assert.deepEqual(reviewer.map(({ id }) => id), ["control-center", "notifications"]);
   assert.ok(player.every(({ id }) => id !== "control-center" && id !== "organize"));

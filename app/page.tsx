@@ -86,6 +86,7 @@ import {
   type SocialTeamCreateDraft,
 } from "./social-team-core-contract";
 import { supabase } from "./supabaseClient";
+import { useSocialInbox } from "./social-inbox-provider";
 import {
   normalizeTeamShieldSnapshot,
   readTeamIdentityCache,
@@ -3485,6 +3486,7 @@ async function exitGameFullscreen() {
 }
 
 export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {}) {
+  const { pendingSnapshot: socialInboxPending } = useSocialInbox();
   const [players, setPlayers] = useState<Player[]>(seedPlayers);
   const [venues, setVenues] = useState<Venue[]>(seedVenues);
   const [matches, setMatches] = useState<Match[]>(seedMatches);
@@ -9127,7 +9129,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
   const homeNextMatchOwnStatus = homeNextMatch && ownPlayer
     ? homeNextMatch.players.find((entry) => entry.playerId === ownPlayer.id)?.status
     : undefined;
-  const homeNextAction = homeNextMatch
+  const localHomeNextAction = homeNextMatch
     ? canUseAdminControls && homeNextMatch.lineupClosed
       ? {
           detail: `${matchDayLabel(homeNextMatch.date)} · ${matchTimeLabel(homeNextMatch.date)}`,
@@ -9175,6 +9177,14 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
             href: "/mercado",
             label: "Buscar partido",
           };
+  const socialPendingItems = (socialInboxPending?.items ?? []).filter((item) => item.attentionState === "ACTION_REQUIRED");
+  const socialPrimaryAction = socialPendingItems.find((item) => Boolean(item.deepLink));
+  const homeNextAction = socialPrimaryAction?.deepLink ? {
+    detail: socialPrimaryAction.summary,
+    eyebrow: socialPrimaryAction.context,
+    href: socialPrimaryAction.deepLink,
+    label: socialPrimaryAction.ctaLabel,
+  } : localHomeNextAction;
   const shellPerspective = previewDemoMode
     ? "team-owner"
     : displayedRole === "owner"
@@ -9216,14 +9226,25 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
       title: matchTitleWithoutTrailingTime(match.title) || match.place || "Próximo partido",
     };
   });
-  const homeActivity = closedMatches.slice(0, 8).map((match) => ({
+  const socialSecondaryAction = socialPendingItems.find((item) => item.id !== socialPrimaryAction?.id && Boolean(item.deepLink));
+  const homeActivity = [
+    ...(socialSecondaryAction?.deepLink ? [{
+      detail: socialSecondaryAction.summary,
+      id: `social-${socialSecondaryAction.id}`,
+      label: socialSecondaryAction.context,
+      onOpen: () => window.location.assign(socialSecondaryAction.deepLink!),
+      title: socialSecondaryAction.title,
+      tone: "warning" as const,
+    }] : []),
+    ...closedMatches.slice(0, 8).map((match) => ({
     detail: `${matchSummaryDate(match.date)} · ${match.place || "Campo sin nombre"}`,
     id: `result-${match.id}`,
     label: "Resultado",
     onOpen: () => openMatchFromInicio(match.id, "resultado"),
     title: `${match.scoreA ?? "-"} - ${match.scoreB ?? "-"} · ${matchTitleWithoutTrailingTime(match.title) || matchKinds[match.kind ?? "futbol7"].label}`,
     tone: "accent" as const,
-  }));
+    })),
+  ];
   const officialMatchSummary = (match: Match): OfficialMatchSummary => {
     const confirmed = orderedGoingPlayers(match).slice(0, match.targetPlayers).length;
     const ownStatus = ownPlayer ? match.players.find((entry) => entry.playerId === ownPlayer.id)?.status ?? null : null;
@@ -11616,7 +11637,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
             ) : null}
             {playerProfileMode === "edit" && selectedPlayerIsOwn ? (
               <>
-                <a className="profile-notifications-link" href="/perfil/avisos">
+                <a className="profile-notifications-link" href="/ajustes/notificaciones">
                   <span>Avisos y notificaciones</span>
                   <small>Preferencias por categoría y canal</small>
                   <b aria-hidden="true">›</b>
@@ -12103,7 +12124,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
                 >
                   <span>Mi ficha</span><small>Datos, posición, forma y valoraciones</small><b aria-hidden="true">›</b>
                 </button>
-                <a href="/perfil/avisos">
+                <a href="/ajustes/notificaciones">
                   <span>Avisos y notificaciones</span><small>Elige categorías y canales</small><b aria-hidden="true">›</b>
                 </a>
                 <a href="/perfil/conducta">

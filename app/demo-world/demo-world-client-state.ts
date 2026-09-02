@@ -12,7 +12,7 @@ import {
 } from "./demo-world-contract";
 
 const DEMO_WORLD_SESSION_KEY = "pachangas-demo-world-v1-session";
-const DEMO_WORLD_PRIMARY_TABS: DemoWorldPrimaryTab[] = ["inicio", "partido", "mercado", "equipo", "perfil"];
+const DEMO_WORLD_PRIMARY_TABS: DemoWorldPrimaryTab[] = ["avisos", "inicio", "partido", "mercado", "equipo", "perfil"];
 const DEMO_WORLD_PERSPECTIVES = [
   "admin",
   "club-organizer",
@@ -57,6 +57,20 @@ function normalizedStringArray(value: unknown) {
   return Array.isArray(value) ? value.filter((entry): entry is string => typeof entry === "string") : [];
 }
 
+function normalizedSocialInboxByPerspective(value: unknown): DemoWorldSessionState["socialInboxByPerspective"] {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+  return Object.entries(value).reduce<DemoWorldSessionState["socialInboxByPerspective"]>((result, [perspectiveId, entry]) => {
+    if (!isDemoWorldPerspective(perspectiveId) || !entry || typeof entry !== "object" || Array.isArray(entry)) return result;
+    const state = entry as Record<string, unknown>;
+    result[perspectiveId] = {
+      archivedIds: normalizedStringArray(state.archivedIds),
+      readIds: normalizedStringArray(state.readIds),
+      resolvedActionIds: normalizedStringArray(state.resolvedActionIds),
+    };
+    return result;
+  }, {});
+}
+
 export function readDemoWorldSession(storage: Pick<Storage, "getItem">): DemoWorldSessionState {
   try {
     const value = JSON.parse(storage.getItem(DEMO_WORLD_SESSION_KEY) ?? "null") as Partial<DemoWorldSessionState> | null;
@@ -70,6 +84,7 @@ export function readDemoWorldSession(storage: Pick<Storage, "getItem">): DemoWor
       : {};
     return {
       attendanceByMatch,
+      socialInboxByPerspective: normalizedSocialInboxByPerspective(value.socialInboxByPerspective),
       equippedCosmeticKeys: normalizedStringArray(value.equippedCosmeticKeys),
       inventoryCosmeticKeys: normalizedStringArray(value.inventoryCosmeticKeys),
       newCosmeticKeys: normalizedStringArray(value.newCosmeticKeys),
