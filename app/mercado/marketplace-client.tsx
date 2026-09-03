@@ -1242,7 +1242,7 @@ export default function MarketplaceClient() {
             <div className={styles.headerActions}>
               <label className={styles.sortLabel}>
                 <span>Ordenar por</span>
-                <select value={filters.sort} onChange={(event) => applyQuickFilter({ sort: event.target.value as MarketSort })}>
+                <select aria-label="Ordenar por" value={filters.sort} onChange={(event) => applyQuickFilter({ sort: event.target.value as MarketSort })}>
                   <option value="relevance">Relevancia</option>
                   {activeTab === "partidos" ? <option value="date">Más próximo</option> : null}
                   {activeTab === "partidos" ? <option value="slots">Más plazas</option> : null}

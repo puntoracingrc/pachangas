@@ -340,10 +340,10 @@ export function OfficialProductShellV2({
         </aside> : null}
 
         <div className={styles.viewport}>
-          <div className={styles.contextBar}>
+          <header className={styles.contextBar}>
             {identity}
             {navigationEnabled ? accountActions : null}
-          </div>
+          </header>
           <div className={styles.content}>{children}</div>
         </div>
       </div>
