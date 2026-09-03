@@ -281,6 +281,24 @@ delete from public.pachanga_group_events where group_id = ${sqlText(groupId)}::u
 delete from public.pachanga_group_members where group_id = ${sqlText(groupId)}::uuid;
 delete from public.pachanga_player_profiles
 where user_id in (${userIds}) or source_group_id = ${sqlText(groupId)}::uuid;
+do $$
+begin
+  if to_regclass('private.pachanga_team_operational_states_v1') is not null then
+    execute 'alter table private.pachanga_team_operational_operation_receipts_v1 disable trigger user';
+    execute 'alter table private.pachanga_team_operational_events_v1 disable trigger user';
+    execute 'alter table private.pachanga_team_operational_state_revisions_v1 disable trigger user';
+    execute 'alter table private.pachanga_team_operational_states_v1 disable trigger user';
+    delete from private.pachanga_team_operational_operation_receipts_v1 where group_id = ${sqlText(groupId)}::uuid;
+    delete from private.pachanga_team_operational_events_v1 where group_id = ${sqlText(groupId)}::uuid;
+    delete from private.pachanga_team_operational_state_revisions_v1 where group_id = ${sqlText(groupId)}::uuid;
+    delete from private.pachanga_team_operational_states_v1 where group_id = ${sqlText(groupId)}::uuid;
+    execute 'alter table private.pachanga_team_operational_operation_receipts_v1 enable trigger user';
+    execute 'alter table private.pachanga_team_operational_events_v1 enable trigger user';
+    execute 'alter table private.pachanga_team_operational_state_revisions_v1 enable trigger user';
+    execute 'alter table private.pachanga_team_operational_states_v1 enable trigger user';
+  end if;
+end;
+$$;
 delete from public.pachanga_groups where id = ${sqlText(groupId)}::uuid;
 delete from auth.users where id in (${userIds});
 commit;
