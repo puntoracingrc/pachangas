@@ -103,6 +103,9 @@ test("payload-bound replay is checked again after the group lock", () => {
 test("staging E2E is synthetic, production-blocked and checks canonical convergence", () => {
   assert.match(stagingRunner, /RATING_V2_ISSUE_165_PRODUCTION_TARGET_FORBIDDEN/);
   assert.match(stagingRunner, /env\.projectRef === PRODUCTION_REF/);
+  assert.match(stagingRunner, /shareTarget\.hostname !== previewTarget\.hostname/);
+  assert.match(stagingRunner, /primeProtectionCookie/);
+  assert.doesNotMatch(stagingRunner, /spawn\("vercel"/);
   assert.match(stagingRunner, /auth\.admin\.createUser/);
   assert.match(stagingRunner, /Promise\.all\(\[/);
   assert.match(stagingRunner, /pachanga_group_events/);

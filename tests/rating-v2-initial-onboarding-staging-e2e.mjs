@@ -13,16 +13,22 @@ const env = {
   expectedSha: process.env.RATING_V2_INITIAL_ONBOARDING_STAGING_EXPECTED_SHA,
   previewUrl: process.env.RATING_V2_INITIAL_ONBOARDING_STAGING_PREVIEW_URL,
   projectRef: process.env.RATING_V2_INITIAL_ONBOARDING_STAGING_PROJECT_REF,
-  scope: process.env.RATING_V2_INITIAL_ONBOARDING_VERCEL_SCOPE ?? "persianas-almar-web-s-projects",
+  shareUrl: process.env.RATING_V2_INITIAL_ONBOARDING_STAGING_SHARE_URL,
 };
+
+const previewTarget = env.previewUrl ? new URL(env.previewUrl) : null;
+const shareTarget = env.shareUrl ? new URL(env.shareUrl) : null;
 
 if (
   env.confirmation !== "RATING_V2_ISSUE_165_STAGING_ONLY"
   || !env.projectRef
   || env.projectRef === PRODUCTION_REF
   || !/^[0-9a-f]{40}$/i.test(env.expectedSha ?? "")
-  || !env.previewUrl
-  || /(^|\.)pachangasiq\.com$/i.test(new URL(env.previewUrl).hostname)
+  || !previewTarget
+  || /(^|\.)pachangasiq\.com$/i.test(previewTarget.hostname)
+  || !shareTarget
+  || shareTarget.hostname !== previewTarget.hostname
+  || !shareTarget.searchParams.has("_vercel_share")
 ) {
   throw new Error("RATING_V2_ISSUE_165_PRODUCTION_TARGET_FORBIDDEN");
 }
@@ -54,6 +60,26 @@ const password = `Rating165-${randomUUID()}-Qa!`;
 const accounts = [];
 const clients = [];
 const channels = [];
+const protectionDir = mkdtempSync(join(tmpdir(), "rating165-vercel-protection-"));
+const protectionCookiePath = join(protectionDir, "cookies.txt");
+writeFileSync(protectionCookiePath, "", { mode: 0o600 });
+
+function primeProtectionCookie() {
+  const result = spawnSync("curl", [
+    "--silent",
+    "--show-error",
+    "--location",
+    "--cookie",
+    protectionCookiePath,
+    "--cookie-jar",
+    protectionCookiePath,
+    "--output",
+    "/dev/null",
+    env.shareUrl,
+  ], { encoding: "utf8", maxBuffer: 1024 * 1024 });
+  if (result.error) throw result.error;
+  if (result.status !== 0) throw new Error("RATING_V2_PREVIEW_PROTECTION_COOKIE_FAILED");
+}
 
 function supabaseClient(key = publishableKey, options = {}) {
   return createClient(supabaseUrl, key, {
@@ -115,7 +141,7 @@ function requestBody(fixture, operationId, input = initialInput()) {
   };
 }
 
-function runVercelCurl(path, { body, method = "GET", token } = {}) {
+function runPreviewCurl(path, { body, method = "GET", token } = {}) {
   const secretDir = mkdtempSync(join(tmpdir(), "rating165-http-"));
   const configPath = join(secretDir, "headers.conf");
   const bodyPath = join(secretDir, "body.json");
@@ -124,15 +150,13 @@ function runVercelCurl(path, { body, method = "GET", token } = {}) {
   if (body !== undefined) writeFileSync(bodyPath, JSON.stringify(body), { mode: 0o600 });
 
   const args = [
-    "curl",
-    path,
-    "--deployment",
-    env.previewUrl,
-    "--scope",
-    env.scope,
-    "--",
+    new URL(path, previewTarget).toString(),
     "--silent",
     "--show-error",
+    "--cookie",
+    protectionCookiePath,
+    "--cookie-jar",
+    protectionCookiePath,
     "--dump-header",
     "-",
     "--request",
@@ -145,7 +169,7 @@ function runVercelCurl(path, { body, method = "GET", token } = {}) {
   if (body !== undefined) args.push("--header", "Content-Type: application/json", "--data-binary", `@${bodyPath}`);
 
   return new Promise((resolve, reject) => {
-    const child = spawn("vercel", args, { stdio: ["ignore", "pipe", "pipe"] });
+    const child = spawn("curl", args, { stdio: ["ignore", "pipe", "pipe"] });
     let stdout = "";
     let stderr = "";
     child.stdout.setEncoding("utf8").on("data", (chunk) => { stdout += chunk; });
@@ -180,7 +204,7 @@ function runVercelCurl(path, { body, method = "GET", token } = {}) {
 }
 
 async function jsonRequest(path, options) {
-  const response = await runVercelCurl(path, options);
+  const response = await runPreviewCurl(path, options);
   let data;
   try {
     data = JSON.parse(response.body);
@@ -310,6 +334,8 @@ async function bestEffort(action) {
 let completed = false;
 let report;
 try {
+  primeProtectionCookie();
+
   const baseline = await service.from("pachanga_player_assessments").select("id", { count: "exact", head: true });
   if (baseline.error) throw baseline.error;
   assert.equal(baseline.count, 0, "Rating V2 staging branch must start without assessments");
@@ -363,7 +389,7 @@ try {
     method: "POST",
     token: freshSession.token,
   });
-  assert.equal(freshResponse.status, 200);
+  assert.equal(freshResponse.status, 200, `Fresh assessment failed: ${freshResponse.data.error ?? "unknown"}`);
   assert.match(freshResponse.headers, /^cache-control: .*no-store/im);
   assert.equal(freshResponse.data.operationId, freshOperation);
   assert.ok(freshResponse.data.confirmedRevision > 0);
@@ -472,9 +498,9 @@ try {
   assert.ok(offlineAttempt.error);
   assert.deepEqual(await countRows(invalid.id), beforeOffline);
 
-  const preview = await runVercelCurl("/perfil");
+  const preview = await runPreviewCurl("/perfil");
   assert.equal(preview.status, 200);
-  const serviceWorker = await runVercelCurl("/sw.js");
+  const serviceWorker = await runPreviewCurl("/sw.js");
   assert.equal(serviceWorker.status, 200);
   assert.match(serviceWorker.body, new RegExp(`SERVICE_WORKER_VERSION = "2\\.0\\.0\\+sw\\.${env.expectedSha.slice(0, 12)}"`));
 
@@ -500,6 +526,7 @@ try {
     await bestEffort(() => client.auth.signOut({ scope: "local" }));
     await bestEffort(() => client.realtime.disconnect());
   }
+  rmSync(protectionDir, { force: true, recursive: true });
 }
 
 assert.equal(completed, true);
