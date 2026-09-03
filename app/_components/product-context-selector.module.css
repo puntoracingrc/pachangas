@@ -1,9 +1,9 @@
 .selector {
   min-width: 0;
   min-height: 42px;
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  justify-content: space-between;
   gap: 14px;
   color: var(--official-muted, #a9bbb2);
 }
@@ -14,6 +14,11 @@
   display: flex;
   align-items: baseline;
   gap: 8px;
+}
+
+.copy {
+  flex: 1 1 auto;
+  flex-wrap: wrap;
 }
 
 .copy small {
@@ -31,10 +36,15 @@
   font-weight: 900;
 }
 
-.copy label { min-width: 0; }
+.copy label {
+  min-width: 0;
+  max-width: min(48vw, 560px);
+  flex: 1 1 220px;
+}
 
 .copy select {
-  max-width: min(38vw, 320px);
+  width: 100%;
+  max-width: 560px;
   border: 1px solid var(--official-line, rgba(217, 234, 225, 0.16));
   border-radius: 5px;
   background: var(--official-surface-solid, #121d1a);
@@ -47,15 +57,20 @@
 }
 
 .copy em {
-  overflow: hidden;
-  max-width: 32vw;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  flex-basis: 100%;
+  overflow-wrap: anywhere;
+  white-space: normal;
   font-size: 0.7rem;
   font-style: normal;
 }
 
-.meta { flex: 0 0 auto; }
+.meta {
+  min-width: 124px;
+  max-width: 180px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  text-align: right;
+}
 .meta small { font-size: 0.65rem; }
 .meta b {
   color: var(--official-accent-text, #c8ef5d);
@@ -72,17 +87,33 @@
   white-space: nowrap;
 }
 
+@media (min-width: 761px) and (max-width: 1100px) {
+  .selector { grid-template-columns: minmax(0, 1fr); }
+  .copy, .meta { max-width: 100%; }
+
+  .meta {
+    min-width: 0;
+    justify-content: flex-start;
+    text-align: left;
+  }
+}
+
 @media (max-width: 760px) and (orientation: portrait) {
-  .selector { min-height: 46px; padding-inline: 12px; }
+  .selector { min-height: 46px; grid-template-columns: minmax(0, 1fr) auto; padding-inline: 12px; }
   .copy { display: grid; gap: 0; }
+  .copy label { max-width: 62vw; }
   .copy em, .meta small { display: none; }
-  .copy select { max-width: 62vw; }
+  .copy select { max-width: 100%; }
+  .meta { min-width: 0; max-width: none; }
 }
 
 @media (orientation: landscape) and (max-height: 600px) {
   .selector { min-height: 32px; padding-inline: 10px; }
+  .copy { flex-wrap: nowrap; }
+  .copy label { max-width: 42vw; flex-basis: auto; }
   .copy em, .meta small { display: none; }
   .copy small, .meta b { font-size: 0.52rem; }
   .copy strong, .copy select { font-size: 0.7rem; }
-  .copy select { max-width: 42vw; padding-block: 2px; }
+  .copy select { max-width: 100%; padding-block: 2px; }
+  .meta { min-width: 0; max-width: none; }
 }

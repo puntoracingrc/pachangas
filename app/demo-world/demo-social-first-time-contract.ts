@@ -21,10 +21,10 @@ export const DEMO_SOCIAL_FIRST_TIME_STORIES = [
   "Código de equipo identifica pero no concede acceso",
   "Jugador ordinario no puede invitar",
   "Owner crea primer partido",
-  "Abre V3B",
+  "Abre Partidos",
   "Cambia entre dos equipos",
-  "Verifica Retos V3C",
-  "Verifica Mercado V3D",
+  "Verifica Retos",
+  "Verifica Mercado",
   "Prueba offline",
   "Reinicia Demo",
 ] as const;

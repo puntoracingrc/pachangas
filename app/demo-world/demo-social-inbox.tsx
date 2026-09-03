@@ -167,7 +167,7 @@ export function DemoSocialInbox({
       </div>
 
       {filtersOpen ? <div className={styles.filters} aria-label="Filtrar por tipo">{(["all", "match", "challenge", "market", "team"] as const).map((value) => <button aria-pressed={filter === value} key={value} type="button" onClick={() => setFilter(value)}>{value === "all" ? "Todos" : value === "match" ? "Partidos" : value === "challenge" ? "Retos" : value === "market" ? "Mercado" : "Equipo"}</button>)}</div> : null}
-      {settingsOpen ? <aside className={styles.settings}><div><span>Ajustes de notificaciones</span><strong>Preferencias separadas de la bandeja</strong><p>En producción viven en Ajustes. Push y correo siguen desactivados en V3G.</p></div><dl><div><dt>En la app</dt><dd>Activo</dd></div><div><dt>Push</dt><dd>OFF</dd></div><div><dt>Correo</dt><dd>OFF</dd></div></dl></aside> : null}
+      {settingsOpen ? <aside className={styles.settings}><div><span>Ajustes de notificaciones</span><strong>Preferencias separadas de la bandeja</strong><p>En producción viven en Ajustes. Push y correo siguen desactivados por ahora.</p></div><dl><div><dt>En la app</dt><dd>Activo</dd></div><div><dt>Push</dt><dd>OFF</dd></div><div><dt>Correo</dt><dd>OFF</dd></div></dl></aside> : null}
       {offline ? <p className={styles.offline} role="status">Resultados guardados · última actualización confirmada · las escrituras están bloqueadas</p> : null}
       {message ? <p className={styles.message} aria-live="polite">{message}</p> : null}
 
