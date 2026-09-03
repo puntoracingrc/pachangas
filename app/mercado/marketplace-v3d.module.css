@@ -64,6 +64,7 @@
 .locationRow > button:last-child { min-width: 40px; }
 .locationAction { display: inline-flex; align-items: center; justify-content: center; gap: 7px; }
 .locationAction svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.8; }
+.locationAction:focus-visible { outline: 2px solid var(--official-cyan-text); outline-offset: 2px; }
 .primaryButton { border-color: var(--official-accent); background: var(--official-accent); color: #17210d; }
 .iconButton { width: 40px; padding: 0; font-size: 1.15rem; }
 
@@ -245,8 +246,12 @@
   .contextBand strong, .contextBand small { font-size: 0.55rem; }
   .contextBand a { min-height: 40px; font-size: 0.52rem; }
   .searchStack { gap: 4px; }
-  .locationRow { grid-template-columns: minmax(140px, 1fr) auto auto; gap: 4px; }
-  .locationField input, .locationRow > button { min-height: 40px; font-size: 0.56rem; }
+  .locationRow { grid-template-columns: minmax(140px, 1fr) 44px 44px; gap: 4px; }
+  .locationRow:not(:has(> button:not(.locationAction))) { grid-template-columns: minmax(140px, 1fr) 44px; }
+  .locationField input, .locationRow > button { min-height: 44px; font-size: 0.56rem; }
+  .locationAction { min-width: 44px; padding: 0; }
+  .locationAction span { display: none; }
+  .locationRow > button:last-child { min-width: 44px; padding: 0; }
   .locationHint { display: none; }
   .quickRow { gap: 3px; }
   .quickRow button { min-height: 40px; padding-inline: 7px; font-size: 0.5rem; }

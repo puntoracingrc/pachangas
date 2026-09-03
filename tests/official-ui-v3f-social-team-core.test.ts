@@ -178,7 +178,7 @@ test("V3F Demo covers the 26 local stories with no remote writer", async () => {
     "Demuestra cero membresía duplicada",
     "Código de equipo identifica pero no concede acceso",
     "Jugador ordinario no puede invitar",
-    "Abre V3B",
+    "Abre Partidos",
   ]) assert.ok(DEMO_SOCIAL_FIRST_TIME_STORIES.includes(story as never));
   assert.match(journey, /data-demo-social-first-time="v3f"/);
   assert.match(journey, /Replay idempotente/);

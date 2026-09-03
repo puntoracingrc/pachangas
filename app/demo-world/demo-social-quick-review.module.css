@@ -55,10 +55,14 @@
   overflow-x: auto;
   border-bottom: 1px solid rgba(217, 234, 225, 0.12);
   padding: 8px 18px;
-  scrollbar-width: none;
+  scrollbar-color: rgba(81, 207, 223, 0.5) rgba(217, 234, 225, 0.08);
+  scrollbar-width: thin;
 }
 
-.proof::-webkit-scrollbar { display: none; }
+.proof::-webkit-scrollbar { height: 6px; }
+.proof::-webkit-scrollbar-track { background: rgba(217, 234, 225, 0.08); }
+.proof::-webkit-scrollbar-thumb { border-radius: 3px; background: rgba(81, 207, 223, 0.5); }
+.proof:focus-visible { outline: 2px solid #51cfdf; outline-offset: -3px; }
 .proof span { flex: 0 0 auto; border: 1px solid rgba(81, 207, 223, 0.26); border-radius: 999px; padding: 4px 7px; color: #9ddfe7; font-size: 0.54rem; font-weight: 850; }
 
 .journeyList {
@@ -163,6 +167,7 @@
 
 @media (forced-colors: active) {
   .review,
+  .proof:focus-visible,
   .journeyList button,
   .review button { border: 1px solid CanvasText; }
 }

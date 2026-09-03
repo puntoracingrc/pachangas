@@ -98,7 +98,7 @@ export function DemoSocialQuickReview({
   onStart,
 }: {
   onClose: () => void;
-  onOpenFirstTime: () => void;
+  onOpenFirstTime: (perspectiveId: DemoWorldPerspective["id"]) => void;
   onReset: () => void;
   onStart: (tab: DemoWorldV2PrimaryTab, perspectiveId: DemoWorldPerspective["id"]) => void;
 }) {
@@ -132,7 +132,9 @@ export function DemoSocialQuickReview({
       return;
     }
     if (event.key !== "Tab") return;
-    const focusable = Array.from(dialogRef.current?.querySelectorAll<HTMLElement>("button:not([disabled])") ?? []);
+    const focusable = Array.from(dialogRef.current?.querySelectorAll<HTMLElement>(
+      'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+    ) ?? []);
     const first = focusable[0];
     const last = focusable.at(-1);
     if (!first || !last) return;
@@ -145,6 +147,18 @@ export function DemoSocialQuickReview({
     }
   }
 
+  function handleProofKeyDown(event: KeyboardEvent<HTMLDivElement>) {
+    const proof = event.currentTarget;
+    const step = Math.max(120, Math.round(proof.clientWidth * 0.75));
+    if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
+      event.preventDefault();
+      proof.scrollBy({ left: event.key === "ArrowLeft" ? -step : step });
+    } else if (event.key === "Home" || event.key === "End") {
+      event.preventDefault();
+      proof.scrollTo({ left: event.key === "Home" ? 0 : proof.scrollWidth });
+    }
+  }
+
   function reset() {
     window.sessionStorage.removeItem(REVIEW_SESSION_KEY);
     setIndex(0);
@@ -152,7 +166,7 @@ export function DemoSocialQuickReview({
   }
 
   function openJourney() {
-    if (journey.firstTime) onOpenFirstTime();
+    if (journey.firstTime) onOpenFirstTime(journey.perspectiveId);
     else onStart(journey.tab, journey.perspectiveId);
   }
 
@@ -164,7 +178,13 @@ export function DemoSocialQuickReview({
           <button type="button" onClick={onClose} aria-label="Cerrar revisión rápida">×</button>
         </header>
 
-        <div className={styles.proof} aria-label="Garantías de la simulación">
+        <div
+          className={styles.proof}
+          role="region"
+          aria-label="Garantías de la simulación"
+          tabIndex={0}
+          onKeyDown={handleProofKeyDown}
+        >
           <span>LOCAL SESSION ONLY</span>
           <span>remoteWrites = 0</span>
           <span>externalNotifications = 0</span>

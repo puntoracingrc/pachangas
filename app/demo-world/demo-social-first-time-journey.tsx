@@ -150,7 +150,7 @@ export function DemoSocialFirstTimeJourney({ onClose, onNavigate }: {
     <div className={styles.backdrop} role="presentation">
       <section className={styles.journey} role="dialog" aria-modal="true" aria-labelledby="demo-social-title" data-demo-social-first-time="v3f" onKeyDown={handleDialogKeyDown} ref={dialogRef}>
         <header>
-          <div><span>Mundo Demo · First-time social journey</span><h2 id="demo-social-title">Empieza como un jugador nuevo</h2></div>
+          <div><span>Mundo Demo · Primeros pasos</span><h2 id="demo-social-title">Empieza como un jugador nuevo</h2></div>
           <button type="button" onClick={onClose} aria-label="Cerrar recorrido">×</button>
         </header>
         <div className={styles.proof}><span>DATOS FICTICIOS</span><span>REMOTE WRITES 0</span><span>NOTIFICACIONES 0</span><span>STRIPE 0</span></div>
@@ -171,7 +171,7 @@ export function DemoSocialFirstTimeJourney({ onClose, onNavigate }: {
 
         {state.stage === "start" ? <div className={styles.body}>
           <Step number="3" title="Cómo quieres empezar" copy={state.profileConfirmed ? "Perfil confirmado simulado. Elige una dirección." : "Puedes explorar sin confirmar un perfil."} />
-          <div className={styles.choices}><button type="button" onClick={() => patch({ stage: "join" })}><b>+</b><strong>Unirme a un equipo</strong><small>Prueba el código sintético PIQ-DEMO.</small></button><button type="button" onClick={() => patch({ createStep: 1, stage: "create" })}><b>◇</b><strong>Crear mi equipo</strong><small>Simula identidad, escudo y modalidad.</small></button><button type="button" onClick={() => navigate("mercado")}><b>⌕</b><strong>Buscar una pachanga</strong><small>Abre Mercado V3D con datos ficticios.</small></button></div>
+          <div className={styles.choices}><button type="button" onClick={() => patch({ stage: "join" })}><b>+</b><strong>Unirme a un equipo</strong><small>Prueba el código sintético PIQ-DEMO.</small></button><button type="button" onClick={() => patch({ createStep: 1, stage: "create" })}><b>◇</b><strong>Crear mi equipo</strong><small>Simula identidad, escudo y modalidad.</small></button><button type="button" onClick={() => navigate("mercado")}><b>⌕</b><strong>Buscar una pachanga</strong><small>Abre Mercado con datos ficticios.</small></button></div>
         </div> : null}
 
         {state.stage === "join" ? <div className={styles.body}>
@@ -208,15 +208,15 @@ export function DemoSocialFirstTimeJourney({ onClose, onNavigate }: {
           <article className={styles.teamPreview}><i aria-hidden="true">{state.shield.slice(0, 1)}</i><div><span>Portada de equipo · {state.perspective === "owner" ? "Owner" : "Jugador"}</span><strong>{state.activeTeam}</strong><p>{state.modality} · {state.zone || "Barcelona"} · {state.rosterJoined ? 2 : 1} miembros</p></div></article>
           <div className={styles.readyGrid}>
             <button type="button" onClick={() => navigate("inicio")}><strong>Inicio</strong><small>Portada con equipo activo</small></button>
-            <button type="button" onClick={() => navigate("partido")}><strong>Partidos V3B</strong><small>Próximos, asistencia y alineación</small></button>
-            <button type="button" onClick={() => navigate("retos")}><strong>Retos V3C</strong><small>Rivales y contrapropuestas</small></button>
-            <button type="button" onClick={() => navigate("mercado")}><strong>Mercado V3D</strong><small>Jugadores y partidos públicos</small></button>
-            {state.createdLocally && state.perspective === "owner" ? <button type="button" onClick={() => state.offline ? setMessage("Necesitas conexión para confirmar esta acción.") : navigate("partido")}><strong>Crear primer partido</strong><small>Abre Partidos V3B</small></button> : null}
+            <button type="button" onClick={() => navigate("partido")}><strong>Partidos</strong><small>Próximos, asistencia y alineación</small></button>
+            <button type="button" onClick={() => navigate("retos")}><strong>Retos</strong><small>Rivales y contrapropuestas</small></button>
+            <button type="button" onClick={() => navigate("mercado")}><strong>Mercado</strong><small>Jugadores y partidos públicos</small></button>
+            {state.createdLocally && state.perspective === "owner" ? <button type="button" onClick={() => state.offline ? setMessage("Necesitas conexión para confirmar esta acción.") : navigate("partido")}><strong>Crear primer partido</strong><small>Abre Partidos</small></button> : null}
           </div>
           {state.createdLocally ? <div className={styles.teamCode}><span>Código sintético</span><strong>PIQ-DEMO-NUEVO</strong><small>Identifica; no concede acceso.</small><button type="button" onClick={() => { patch({ codeIdentified: true }); setMessage("Código reconocido. Membresías creadas: 0; hace falta invitación."); }}>Probar código</button></div> : null}
 
           {state.createdLocally ? <article className={styles.marketPreview} data-demo-invitation={state.invitationState}>
-            <div><span>Invitación de jugador V2 · simulada</span><strong>{state.invitationState === "IDLE" ? "Sin enlace activo" : state.invitationState === "ACTIVE" ? "Enlace activo" : "Aceptada"}</strong><small>Un uso · caducidad simulada · token no mostrado</small></div>
+            <div><span>Invitación de jugador · simulada</span><strong>{state.invitationState === "IDLE" ? "Sin enlace activo" : state.invitationState === "ACTIVE" ? "Enlace activo" : "Aceptada"}</strong><small>Un uso · caducidad simulada · token no mostrado</small></div>
             <p>Perspectiva actual: {state.perspective === "owner" ? "owner" : "jugador ordinario"}. La plantilla contiene {state.rosterJoined ? 2 : 1} membresía{state.rosterJoined ? "s" : ""}.</p>
             <div className={styles.inviteActions}>
               {state.perspective === "owner" ? <>
