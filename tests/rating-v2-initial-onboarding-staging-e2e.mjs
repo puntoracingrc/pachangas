@@ -402,8 +402,8 @@ try {
   assert.equal(freshRows.assessments.length, 1);
   assert.equal(freshRows.assessments[0].player_profile_id, freshRows.profiles[0].id);
   assert.equal(freshRows.assessments[0].assessment_kind, "initial");
-  assert.equal(freshRows.assessments[0].rating, 5.5);
-  assert.equal(freshRows.profiles[0].rating, 5.5);
+  assert.ok(Math.abs(freshRows.assessments[0].rating - 5.5) < 1e-9);
+  assert.ok(Math.abs(freshRows.profiles[0].rating - 5.5) < 1e-9);
   assert.equal(freshRows.notifications, 0);
   assert.equal(freshRows.events.length, 1);
   assert.equal(freshRows.receipts.length, 1);
