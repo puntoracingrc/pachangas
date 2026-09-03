@@ -2,14 +2,15 @@
 
 Fecha de apertura: 2026-09-03 23:13 CEST
 Fecha de cierre técnico local: 2026-09-04 00:10 CEST
+Fecha de cierre de staging: 2026-09-04 00:36 CEST
 
 ## 1. Clasificación final
 
 **REPRODUCED_AUTHORITY_DEFECT**
 
-Estado de entrega actual: **BLOCKED**, únicamente hasta completar Preview y E2E
-autenticado en la rama Supabase desechable. La reproducción, la corrección y
-todos los gates locales ya están cerrados.
+Estado de entrega actual: **READY FOR MERGE**. La reproducción, la corrección,
+los gates locales, la Preview exacta y el E2E autenticado en Supabase staging
+están cerrados.
 
 ## 2. SHA base real
 
@@ -260,7 +261,33 @@ canónico, se reconciliaron sus 36 versiones absorbidas y se ejecutaron en orden
 las incrementales hasta 236. El test SQL transaccional remoto pasa y vuelve a
 `0 perfiles | 0 evaluaciones | 0 grupos`.
 
-Preview Auth/Realtime: pendiente antes de marcar `READY FOR MERGE`.
+Preview funcional validada:
+
+- deployment: `dpl_8Lg3ikVpQsPFpzns5MTXNKLtLYZM`;
+- URL inmutable:
+  `https://pachangas-erv2koe4x-persianas-almar-web-s-projects.vercel.app`;
+- metadata SHA: `29de4fd4028d7d90571c482c1b75c9712a854076`;
+- estado: `READY`.
+
+El E2E utilizó cinco usuarios Auth sintéticos, un actor con dos sesiones
+simultáneas y las rutas reales Preview/API/Supabase. Verificó alta inicial,
+perfil y evaluación enlazados, ficha/read model, retry tras respuesta perdida,
+doble submit, conflicto de payload, revisión obsoleta, actor adulterado
+ignorado, DML/helper interno denegados, fallo offline, Realtime y refetch
+canónico. Resultado: `PASS`, con cero notificaciones.
+
+Antes de destruir staging se leyeron exactamente 5 usuarios, 4 grupos, 3
+perfiles, 3 evaluaciones, 3 eventos, 3 receipts y 0 notificaciones sintéticas.
+La rama Supabase fue eliminada después de recoger la evidencia y su ref dejó de
+estar presente. Las tres variables Vercel Preview limitadas a esta rama también
+fueron retiradas.
+
+El primer intento Preview fue rechazado con 401 porque el arnés usaba la
+cabecera de protección de Vercel donde la API necesitaba el bearer de Supabase.
+Se sustituyó por la cookie temporal oficial. Un intento posterior demostró el
+flujo funcional y detectó una aserción exacta de coma flotante
+(`5.499999999999999` frente a `5.5`); se corrigió exclusivamente el test con
+tolerancia de `1e-9`, sin modificar cálculo ni dato persistido.
 
 ## 22. Seguridad y Advisors
 
@@ -287,7 +314,10 @@ no se altera dentro de este alcance.
 - Instalación fresh: PASS.
 - Upgrade exacto: PASS.
 - Staging SQL con rollback: PASS.
-- Staging Auth/API/Realtime: pendiente.
+- Staging Auth/API/Realtime: PASS.
+- Staging dos sesiones/concurrencia/retry: PASS.
+- Staging directo/offline/revisión obsoleta: PASS fail-closed.
+- Preview `/perfil` y Service Worker exacto: PASS.
 
 La limpieza de la suite histórica de concurrencia se adaptó a las tablas
 operativas inmutables añadidas por Wave 8B. El cambio solo borra los fixtures
@@ -315,6 +345,17 @@ Resultado final local actual:
 - lint focalizado: PASS;
 - `git diff --check`: PASS;
 - secret scan: PASS.
+
+QA visual de la Preview exacta:
+
+- `1440x900`: PASS;
+- `390x844`: PASS;
+- `360x800`: PASS;
+- `844x390`: PASS;
+- overflow, controles cortados, imágenes rotas y overlays: 0;
+- errores y warnings de consola: 0;
+- 4xx inesperados: 0 (los tres 400 son los rechazos intencionados del E2E);
+- 5xx: 0.
 
 ## 25. Datos reales y servicios externos
 
@@ -368,7 +409,7 @@ del alcance autorizado.
 
 ## 30. Estado productivo
 
-- PR funcional: pendiente.
+- PR funcional: pendiente de apertura tras el último gate local.
 - Migración productiva: no aplicada.
 - Deployment funcional: pendiente.
 - Smoke y logs productivos: pendientes.
@@ -376,9 +417,9 @@ del alcance autorizado.
 
 ## 31. Estado del issue
 
-El defecto está reproducido y corregido localmente, pero el issue permanece
-abierto hasta completar staging, merge, migración, deployment, readback y el PR
-documental de producción.
+El defecto está reproducido y la corrección está verificada localmente y en
+staging autenticado. El issue permanece abierto hasta completar merge,
+migración, deployment, readback y el PR documental de producción.
 
 ## 32. Conclusión
 
