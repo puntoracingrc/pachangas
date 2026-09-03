@@ -2,9 +2,9 @@
 
 ## 1. Estado
 
-`OFFICIAL-UI-V3I-001` y `OFFICIAL-UI-V3I-002` estan corregidos y validados localmente. La certificacion de la Preview exacta permanece pendiente antes de declarar el lote listo para fusionar.
+`OFFICIAL-UI-V3I-001` y `OFFICIAL-UI-V3I-002` estan corregidos y validados localmente y en la Preview funcional exacta. El deployment `dpl_E572eVria4FbjUvwFAegATtngc1X` quedo `READY` con metadata `9a0935ecbb40f408c9bf5d4ec594f0d55d5b4697`.
 
-`BATCH 001 STATUS: BLOCKED` (solo por Preview pendiente).
+`BATCH 001 STATUS: READY FOR MERGE`.
 
 ## 2. SHA base real
 
@@ -145,12 +145,13 @@ Pixel delta: 0 en las cuatro comparaciones. No hay cambio visual deliberado.
 
 ## 23. PWA y offline
 
-La PWA emulada con Chrome real pasa en 390x844 y 844x390:
+La PWA emulada con Chrome real pasa localmente y en la Preview funcional exacta en 390x844 y 844x390:
 
 - `display-mode: standalone` en ambos viewports.
 - Service Worker controlador en ambos viewports.
 - Manifest y `/sw.js`: HTTP 200.
-- Una unica cache vigente: `pachangas-iq-pwa-2.0.0-sw.107d2be82dfd`.
+- Una unica cache local vigente: `pachangas-iq-pwa-2.0.0-sw.107d2be82dfd`.
+- Una unica cache Preview vigente: `pachangas-iq-pwa-2.0.0-sw.9a0935ecbb40`.
 - `/mercado` cacheado recarga offline y conserva `Ordenar por`.
 - Una peticion unica no cacheada falla offline, demostrando el corte real de red.
 - La reconexion y recarga posterior pasan.
@@ -189,4 +190,4 @@ La emulacion standalone no se presenta como QA fisica.
 
 ## 28. Conclusion
 
-Los dos defectos se reproducen de forma determinista y quedan resueltos localmente mediante cambios semanticos minimos. La suite completa y las regresiones sociales pasan, el aspecto es identico y no hay cambios de datos ni autoridad. Falta certificar el HEAD exacto en Preview antes de cambiar el estado a `READY FOR MERGE`.
+Los dos defectos se reproducen de forma determinista y quedan resueltos mediante cambios semanticos minimos. La suite completa y las regresiones sociales pasan, el aspecto es identico, la Preview funcional exacta esta certificada y no hay cambios de datos ni autoridad. Batch 001 queda listo para fusionar tras el readback final del PR.
