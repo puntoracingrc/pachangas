@@ -106,12 +106,16 @@ test("Official UI V3I Batch 001 keeps historical suites registered and frozen", 
   assert.match(v3h, /V3H keeps exactly four primary social destinations/);
 });
 
-test("OFFICIAL-UI-V3I-003 remains outside Batch 001", async () => {
-  const [packageJson, demoStyles] = await Promise.all([
+test("Official UI V3I Batch 001 records V3I-003 as a historical follow-up", async () => {
+  const [packageJson, functionalReport, productionReport] = await Promise.all([
     source("package.json"),
-    source("app/demo-world/demo-world.module.css"),
+    source("OFFICIAL_UI_V3I_BATCH_001_COMPACT_ACCESSIBILITY_REPORT.md"),
+    source("OFFICIAL_UI_V3I_BATCH_001_PRODUCTION_RELEASE.md"),
   ]);
 
-  assert.doesNotMatch(packageJson, /official-ui-v3i-demo-light-contrast/);
-  assert.doesNotMatch(demoStyles, /OFFICIAL-UI-V3I-003/);
+  assert.equal((packageJson.match(/tests\/official-ui-v3i-compact-accessibility\.test\.ts/g) ?? []).length, 1);
+  assert.match(productionReport, /cierra exclusivamente `OFFICIAL-UI-V3I-001` y `OFFICIAL-UI-V3I-002`/);
+  assert.match(productionReport, /OFFICIAL-UI-V3I-003`: `NOT STARTED/);
+  assert.match(productionReport, /Contraste del tema claro Demo: no modificado/);
+  assert.match(functionalReport, /CSS modificado: `NO`/);
 });
