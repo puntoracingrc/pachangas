@@ -2,9 +2,9 @@
 
 ## 1. Estado
 
-`BATCH 002 STATUS: BLOCKED`
+`BATCH 002 STATUS: READY FOR MERGE`
 
-La implementacion y todos los gates locales estan completos. El unico gate pendiente en este punto documental es certificar la Preview correspondiente al HEAD funcional exacto. No se declara `READY FOR MERGE` antes de esa comprobacion.
+La implementacion, los gates locales y la Preview del commit funcional exacto estan certificados. El deployment `dpl_CDwgjFhq1oXyL9Rr2owNY7xsoVSG` alcanzo `READY` en `https://pachangas-ay6u6vucf-persianas-almar-web-s-projects.vercel.app`; su Service Worker devolvio `2.0.0+sw.2ed1ceb356da`, correspondiente al SHA funcional `2ed1ceb356da7303c176f4991136d7876884639d`. El PR funcional es `#267`.
 
 ## 2. SHA base real
 
@@ -174,7 +174,7 @@ PASS. No hay whitespace errors.
 
 ## 27. Secret scan
 
-PASS sobre las rutas modificadas/nuevas y sobre `.next/static` + `.next/server`: cero ficheros con patrones de credenciales Stripe, Supabase o JWT. No se conservaran capturas, perfiles o artefactos temporales. No se imprimio ningun secreto.
+PASS sobre las rutas modificadas/nuevas y sobre `.next/static` + `.next/server`: cero ficheros con patrones de credenciales Stripe, Supabase o JWT. Una traza temporal del arnes que llego a contener una cabecera preexistente de bypass se elimino inmediatamente; el escaneo posterior del arbol temporal dio cero coincidencias y esa traza no entro en Git, capturas ni informes. No se conservaran perfiles ni artefactos temporales.
 
 ## 28. Tabla Axe final
 
@@ -188,6 +188,8 @@ PASS sobre las rutas modificadas/nuevas y sobre `.next/static` + `.next/server`:
 | 844x390 | 0 | 0 | 0 | 0 |
 
 Fueron 48 ejecuciones locales (dos repeticiones de cuatro modos por seis viewports), todas HTTP 200, sin overflow, imagenes rotas, consola, red ni respuestas 4xx/5xx inesperadas. Los incompletos Axe restantes son gradientes/pseudoelementos o elementos parcialmente ocultos en carruseles; la composicion matematica y los estilos computados dan ratios conformes.
+
+La matriz canonica se repitio sobre la Preview funcional: otras 48 ejecuciones HTTP 200, con `color-contrast/select-name/region = 0/0/0`, cero overflow, imagenes rotas, errores de consola, recursos fallidos y respuestas inesperadas. Los tokens computados fueron `#4d6800/#006a73` en light explicito y automatico y `#c8ef5d/#51cfdf` en dark explicito y por defecto.
 
 ## 29. Perspectivas y pestanas
 
@@ -206,7 +208,7 @@ La comparacion local base/cambio de `/mercado` signed-out dio cero pixeles, text
 
 ## 32. PWA/offline
 
-Manifest y Service Worker devolvieron HTTP 200. Una ventana Chrome real `--app` informo `standalone` en light/dark portrait/landscape, con contraste/select-name/region `0/0/0`. El worker quedo activo y controlador, con una sola cache; elimino una cache legacy de Batch 001. El CSS nuevo sobrevivio al reload offline, mostro el aviso offline, no genero claves pendientes ni fake success y convergio al reconectar. Los unicos fallos de red fueron los RSC esperados mientras el transporte estaba forzado offline. Manifest, worker y politica de cache no fueron modificados.
+Manifest y Service Worker devolvieron HTTP 200. Una ventana Chrome real `--app` informo `standalone` en light/dark portrait/landscape, tanto localmente como en Preview, con contraste/select-name/region `0/0/0`. En Preview, el worker `2.0.0+sw.2ed1ceb356da` quedo activo y controlador, con una sola cache; elimino una cache legacy de Batch 001. El CSS nuevo sobrevivio al reload offline, mostro el aviso offline, no genero claves pendientes ni fake success y convergio al reconectar. Los unicos fallos de red fueron los RSC esperados mientras el transporte estaba forzado offline y abortos de navegacion del arranque controlado `--app`; no hubo errores de producto online. Manifest, worker y politica de cache no fueron modificados.
 
 ## 33. Autoridad y contadores
 
@@ -239,4 +241,4 @@ No hubo cambios de producto, layout, copy, navegacion, dataset, mutaciones, back
 
 ## 37. Conclusion
 
-La solucion local satisface el objetivo exclusivo `OFFICIAL-UI-V3I-003`: separa pintura y foreground dentro de Demo, elimina los contrastes canonicos de light explicito y automatico, mantiene dark pixel-identico y no afecta live. El estado permanece `BLOCKED` unicamente hasta certificar la Preview del HEAD exacto; despues, si todos los gates remotos reproducen estos resultados, podra cambiar a `BATCH 002 STATUS: READY FOR MERGE`.
+La solucion satisface el objetivo exclusivo `OFFICIAL-UI-V3I-003`: separa pintura y foreground dentro de Demo, elimina los contrastes canonicos de light explicito y automatico, mantiene dark pixel-identico y no afecta live. Los resultados se reprodujeron en la Preview del commit funcional exacto y el lote queda `BATCH 002 STATUS: READY FOR MERGE`.
