@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { MobileAppNav, type AdminViewPreviewControl, type MobileAppTab } from "../mobile-app-nav";
 import { supabase } from "../supabaseClient";
 import type { ProductContextOption } from "./product-context-selector";
@@ -140,6 +140,38 @@ function UserIcon() {
   return <svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4" /><path d="M4.5 21c.4-5.2 2.9-8 7.5-8s7.1 2.8 7.5 8" /></svg>;
 }
 
+function useDismissableDetails() {
+  const menuRef = useRef<HTMLDetailsElement>(null);
+
+  function closeMenu() {
+    if (menuRef.current) menuRef.current.open = false;
+  }
+
+  useEffect(() => {
+    function handleOutsidePointer(event: PointerEvent) {
+      const menu = menuRef.current;
+      if (!menu?.open || !(event.target instanceof Node) || menu.contains(event.target)) return;
+      menu.open = false;
+    }
+
+    function handleEscape(event: KeyboardEvent) {
+      const menu = menuRef.current;
+      if (event.key !== "Escape" || !menu?.open) return;
+      menu.open = false;
+      menu.querySelector<HTMLElement>("summary")?.focus();
+    }
+
+    document.addEventListener("pointerdown", handleOutsidePointer);
+    document.addEventListener("keydown", handleEscape);
+    return () => {
+      document.removeEventListener("pointerdown", handleOutsidePointer);
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, []);
+
+  return { closeMenu, menuRef };
+}
+
 function ContextIdentity({
   context,
   contexts,
@@ -156,19 +188,31 @@ function ContextIdentity({
   const activeId = context.id ?? contexts[0]?.id ?? "current";
   const canManageTeam = perspective === "team-admin" || perspective === "team-owner";
   const isPlayerWithoutTeam = context.type === "profile";
+  const { closeMenu, menuRef } = useDismissableDetails();
 
   return (
-    <details className={styles.identityMenu}>
+    <details ref={menuRef} className={styles.identityMenu}>
       <summary aria-label="Abrir selector de equipo">
         <span className={styles.identityVisual}>{visual ?? <Image src="/icon-192.png" alt="" width={38} height={38} priority unoptimized />}</span>
         <span><small>{isPlayerWithoutTeam ? "Tu espacio" : "Equipo activo"}</small><strong>{context.title}</strong></span>
         <b aria-hidden="true">⌄</b>
       </summary>
-      <div className={styles.identityMenuPanel}>
+      <div
+        className={styles.identityMenuPanel}
+        onClickCapture={(event) => {
+          if (event.target instanceof Element && event.target.closest("a, button")) closeMenu();
+        }}
+      >
         {contexts.length > 1 && onContextChange ? (
           <label>
             <span>Cambiar equipo</span>
-            <select value={activeId} onChange={(event) => onContextChange(event.target.value)}>
+            <select
+              value={activeId}
+              onChange={(event) => {
+                onContextChange(event.target.value);
+                closeMenu();
+              }}
+            >
               {contexts.map((entry) => <option key={entry.id} value={entry.id}>{entry.title}</option>)}
             </select>
           </label>
@@ -195,6 +239,7 @@ function AccountActions({
 }) {
   const notificationsHref = account.notificationsHref ?? "/avisos";
   const { pendingSnapshot, snapshot, status } = useSocialInbox();
+  const { closeMenu, menuRef } = useDismissableDetails();
   const summary = pendingSnapshot ?? snapshot;
   const pendingCount = summary?.pendingCount ?? 0;
   const unreadCount = summary?.unreadCount ?? 0;
@@ -224,11 +269,16 @@ function AccountActions({
         {pendingCount > 0 ? <span className={styles.notificationBadge} aria-hidden="true">{pendingCount > 9 ? "9+" : pendingCount}</span>
           : unreadCount > 0 ? <span className={styles.notificationDot} aria-hidden="true" /> : null}
       </Link>
-      <details className={styles.accountMenu}>
+      <details ref={menuRef} className={styles.accountMenu}>
         <summary className={styles.avatarAction} aria-label="Abrir menú de cuenta">
           {account.avatarUrl ? <Image src={account.avatarUrl} alt="" width={34} height={34} unoptimized /> : <UserIcon />}
         </summary>
-        <div className={styles.accountMenuPanel}>
+        <div
+          className={styles.accountMenuPanel}
+          onClickCapture={(event) => {
+            if (event.target instanceof Element && event.target.closest("a, button")) closeMenu();
+          }}
+        >
           <p><strong>{account.displayName ?? "Mi cuenta"}</strong><small>Vista jugador</small></p>
           <Link href={account.profileHref ?? "/perfil"}>Mi perfil</Link>
           <Link href={account.cardHref ?? "/personalizar-carta"}>Mi carta</Link>
