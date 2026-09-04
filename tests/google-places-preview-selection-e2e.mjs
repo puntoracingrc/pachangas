@@ -256,7 +256,7 @@ async function navigate(client, url) {
   await waitForCondition(client, "document.readyState === 'complete'", "document-ready");
 }
 
-async function installPreviewBypass(client) {
+async function installPreviewBypass(client, onUnexpectedProtocolError) {
   if (!env.bypassSecret) return;
   await client.send("Fetch.enable", {
     patterns: [{ requestStage: "Request", urlPattern: `${previewTarget.origin}/*` }],
@@ -271,7 +271,11 @@ async function installPreviewBypass(client) {
       headers.push({ name: "x-vercel-protection-bypass", value: env.bypassSecret });
       headers.push({ name: "x-vercel-set-bypass-cookie", value: "true" });
     }
-    void client.send("Fetch.continueRequest", { headers, requestId: message.params.requestId });
+    void client.send("Fetch.continueRequest", { headers, requestId: message.params.requestId }).catch((error) => {
+      // Chrome can retire a paused request while a navigation or target is closing.
+      if (/^Invalid InterceptionId\.?$/.test(error instanceof Error ? error.message : String(error))) return;
+      onUnexpectedProtocolError(error);
+    });
   });
 }
 
@@ -875,7 +879,9 @@ try {
     browserClient.send("Page.enable"),
     browserClient.send("Runtime.enable"),
   ]);
-  await installPreviewBypass(browserClient);
+  await installPreviewBypass(browserClient, (error) => {
+    runtimeFailures.push(sanitizeDiagnostic(error instanceof Error ? error.message : String(error)));
+  });
   observeBrowserDiagnostics(browserClient);
 
   await setViewport(browserClient, { height: 900, mobile: false, width: 1440 });
@@ -982,7 +988,9 @@ try {
       pwaClient.send("Page.enable"),
       pwaClient.send("Runtime.enable"),
     ]);
-    await installPreviewBypass(pwaClient);
+    await installPreviewBypass(pwaClient, (error) => {
+      runtimeFailures.push(sanitizeDiagnostic(error instanceof Error ? error.message : String(error)));
+    });
     observeBrowserDiagnostics(pwaClient);
     await setViewport(pwaClient, { displayMode: "standalone", height: 844, mobile: true, width: 390 });
     await navigate(pwaClient, new URL("/", previewTarget).toString());

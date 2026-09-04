@@ -348,9 +348,10 @@ test("legacy autocomplete remains the fallback with Spain restriction and cleanu
 });
 
 test("the official field form stays fail-closed and persists through server authority", async () => {
-  const [page, helper, serviceWorker, manifest] = await Promise.all([
+  const [page, helper, previewRunner, serviceWorker, manifest] = await Promise.all([
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/googlePlacesClient.ts", import.meta.url), "utf8"),
+    readFile(new URL("./google-places-preview-selection-e2e.mjs", import.meta.url), "utf8"),
     readFile(new URL("../app/service-worker-source.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/manifest.ts", import.meta.url), "utf8"),
   ]);
@@ -370,6 +371,9 @@ test("the official field form stays fail-closed and persists through server auth
   assert.match(helper, /addEventListener\("gmp-error"/);
   assert.match(helper, /placePrediction\?\.toPlace\(\)/);
   assert.match(helper, /await place\.fetchFields/);
+  assert.match(previewRunner, /\^Invalid InterceptionId\\\.\?\$/);
+  assert.match(previewRunner, /onUnexpectedProtocolError\(error\)/);
+  assert.match(previewRunner, /runtimeFailures\.push\(sanitizeDiagnostic/);
   assert.doesNotMatch(serviceWorker, /Google Places|maps\.googleapis\.com/);
   assert.doesNotMatch(manifest, /Google Places|maps\.googleapis\.com/);
 });
