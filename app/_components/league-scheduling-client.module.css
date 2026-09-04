@@ -123,6 +123,17 @@
 .commandPanel { display: grid; align-content: start; gap: 9px; }
 .commandPanel small,
 .inlineControls small { color: var(--official-muted, #a9bbb2); }
+.capacityNotice {
+  display: grid;
+  gap: 2px;
+  border-left: 3px solid var(--official-accent, #c8ef5d);
+  background: var(--official-surface-soft, rgba(255, 255, 255, 0.045));
+  padding: 7px 9px;
+}
+.capacityNotice[data-allowed="false"] { border-left-color: var(--official-danger, #d6535c); }
+.capacityNotice strong { font-size: 0.72rem; }
+.capacityNotice span,
+.capacityNotice small { color: var(--official-muted, #a9bbb2); font-size: 0.62rem; }
 .slotBuilder > div { display: grid; grid-template-columns: repeat(7, minmax(92px, 1fr)); gap: 7px; }
 .slotBuilder > button { margin-top: 10px; }
 

@@ -2,6 +2,7 @@ import { createClient } from "@supabase/supabase-js";
 import { platformUserClient } from "../../../admin/_lib/platform-auth";
 import {
   isLeagueSchedulingAction,
+  scheduleInteractiveCapacityError,
   scheduleRecord,
   type LeagueSchedulingAction,
   type LeagueSchedulingJson,
@@ -202,7 +203,14 @@ export function parseScheduleAction(value: unknown) {
 }
 
 export function scheduleError(error: unknown) {
-  const detail = error instanceof Error ? error.message : "LEAGUE_SCHEDULING_REQUEST_FAILED";
+  const record = scheduleRecord(error);
+  const detail = error instanceof Error
+    ? error.message
+    : typeof record.message === "string"
+      ? record.message
+      : "LEAGUE_SCHEDULING_REQUEST_FAILED";
+  const capacityError = scheduleInteractiveCapacityError(error);
+  if (capacityError) return scheduleJson(capacityError, 422);
   const status = /AUTHENTICATION_REQUIRED/i.test(detail) ? 401
     : /STALE_REVISION|PT409|CONFLICT|DUPLICATE|ALREADY|UNSATISFIABLE/i.test(detail) ? 409
       : /FORBIDDEN|REQUIRED|42501|DISABLED|NOT_AUTHORIZED/i.test(detail) ? 403

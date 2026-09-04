@@ -6,6 +6,8 @@ import { clientWriteFetch } from "../pwa-client-bridge";
 import { supabase } from "../supabaseClient";
 import {
   leagueSchedulingCacheVersion,
+  leagueSchedulingInteractiveMaximumEntries,
+  leagueSchedulingMaximumEntries,
   leagueSchedulingRealtimeTable,
   scheduleActionLabel,
   scheduleArray,
@@ -566,6 +568,18 @@ function OrganizerControls({ busy, command, data, open, preview }: {
   preview: boolean;
 }) {
   const plan = scheduleRecord(data.plan);
+  const engine = scheduleRecord(data.engine);
+  const interactiveGeneration = scheduleRecord(data.interactiveGeneration);
+  const eligibleTeams = scheduleNumber(interactiveGeneration.eligibleTeams)
+    || scheduleNumber(plan.entryCount);
+  const interactiveMaximum = scheduleNumber(interactiveGeneration.maximumTeams)
+    || leagueSchedulingInteractiveMaximumEntries;
+  const engineMaximum = scheduleNumber(engine.maximumTeams)
+    || scheduleNumber(engine.capacity)
+    || leagueSchedulingMaximumEntries;
+  const interactiveAllowed = typeof interactiveGeneration.allowed === "boolean"
+    ? interactiveGeneration.allowed
+    : eligibleTeams <= interactiveMaximum;
   const actions = Array.isArray(data.nextValidActions)
     ? data.nextValidActions.map((value) => scheduleText(value)).filter(Boolean)
     : [];
@@ -594,6 +608,11 @@ function OrganizerControls({ busy, command, data, open, preview }: {
   return <section className={styles.organizerControls} data-open={open ? "true" : "false"}>
     <section className={styles.commandPanel}>
       <SectionHeader eyebrow="Autoridad" title="Revisión del calendario" />
+      <div className={styles.capacityNotice} data-allowed={interactiveAllowed ? "true" : "false"}>
+        <strong>{eligibleTeams} equipos elegibles</strong>
+        <span>Máximo interactivo {interactiveMaximum} · motor técnico {engineMaximum}</span>
+        {!interactiveAllowed ? <small>Divide la fase en grupos de hasta {interactiveMaximum} equipos para generar el calendario.</small> : null}
+      </div>
       <label>Semilla<input maxLength={160} value={seed} onChange={(event) => setSeed(event.target.value)} /></label>
       <ResponsiveActionBar>
         {(["schedule.generate", "schedule.regenerate", "schedule.validate", "schedule.publish", "schedule.cancel"] as LeagueSchedulingAction[]).map((action) => available.has(action) ? <button
