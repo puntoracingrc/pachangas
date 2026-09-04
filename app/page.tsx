@@ -3756,10 +3756,25 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
     attachVenueAutocomplete({
       apiKey: googleMapsApiKey,
       input,
+      onError: (message) => {
+        if (disposed) return;
+        setSelectedVenuePlace(null);
+        setNewVenue((current) => ({ ...current, address: "" }));
+        setVenuePlaceStatus("error");
+        setVenuePlaceMessage(message);
+      },
       onPlace: (place) => {
         if (disposed) return;
         setSelectedVenuePlace(place);
         setNewVenue((current) => ({ ...current, address: place.address, name: place.name }));
+        setVenuePlaceStatus("ready");
+        setVenuePlaceMessage("");
+      },
+      onSelectionInvalidated: () => {
+        if (disposed) return;
+        setSelectedVenuePlace(null);
+        setNewVenue((current) => ({ ...current, address: "" }));
+        setVenuePlaceStatus("ready");
         setVenuePlaceMessage("");
       },
     })
