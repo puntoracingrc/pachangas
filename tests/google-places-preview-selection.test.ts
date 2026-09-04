@@ -374,6 +374,9 @@ test("the official field form stays fail-closed and persists through server auth
   assert.match(previewRunner, /\^Invalid InterceptionId\\\.\?\$/);
   assert.match(previewRunner, /onUnexpectedProtocolError\(error\)/);
   assert.match(previewRunner, /runtimeFailures\.push\(sanitizeDiagnostic/);
+  assert.match(previewRunner, /label: "desktop-pointer-selection"/);
+  assert.match(previewRunner, /keyboardSelectionEventCounts\.select \+ pointerSelectionEventCounts\.select/);
+  assert.match(previewRunner, /"offline-gmp-error"/);
   assert.doesNotMatch(serviceWorker, /Google Places|maps\.googleapis\.com/);
   assert.doesNotMatch(manifest, /Google Places|maps\.googleapis\.com/);
 });

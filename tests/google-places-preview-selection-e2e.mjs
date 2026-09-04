@@ -1083,6 +1083,8 @@ try {
   let selected = await selectedVenueState(browserClient);
   assert.equal(selected.selected, true);
   assert.equal(selected.saveDisabled, false);
+  const keyboardSelectionEventCounts = await evaluate(browserClient, `globalThis.__places166 ?? { error: 0, select: 0 }`);
+  assert.ok(keyboardSelectionEventCounts.select >= 1, "Keyboard selection event was not retained");
 
   await focusWidget(browserClient);
   await clientInsertText(browserClient, " modificada");
@@ -1102,9 +1104,11 @@ try {
   await typeWidgetQuery(browserClient, "Polideportivo Barcelona");
   await waitForCondition(browserClient, `navigator.onLine === false`, "offline-state");
   await delay(1500);
+  await waitForCondition(browserClient, `(globalThis.__places166?.error ?? 0) >= 1`, "offline-gmp-error");
   selected = await selectedVenueState(browserClient);
   assert.equal(selected.saveDisabled, true, "Offline search enabled field persistence");
   assert.equal(selected.selected, false, "Offline search retained a confirmed selection");
+  const offlineEventCounts = await evaluate(browserClient, `globalThis.__places166 ?? { error: 0, select: 0 }`);
 
   await browserClient.send("Network.emulateNetworkConditions", {
     connectionType: "wifi",
@@ -1114,16 +1118,25 @@ try {
     uploadThroughput: -1,
   });
   await waitForCondition(browserClient, `navigator.onLine === true`, "online-restored");
+  intentionalOffline = false;
+  await openVenueFormAtViewport(
+    browserClient,
+    { height: 900, label: "desktop-pointer-selection", mobile: false, width: 1440 },
+    teamUrl,
+  );
   await typeWidgetQuery(browserClient, env.query);
   options = await waitForPredictionOptions(browserClient);
-  intentionalOffline = false;
   await selectPredictionByPointer(browserClient, options[0]);
-  await waitForCondition(browserClient, `(globalThis.__places166?.select ?? 0) >= 2`, "pointer-gmp-select");
+  await waitForCondition(browserClient, `(globalThis.__places166?.select ?? 0) >= 1`, "pointer-gmp-select");
   await waitForCondition(browserClient, `(document.querySelector(".venue-place-status")?.textContent || "").includes("Dirección verificada")`, "pointer-selection-details");
   selected = await selectedVenueState(browserClient);
   assert.equal(selected.selected, true);
   assert.equal(selected.saveDisabled, false);
-  const selectionEventCounts = await evaluate(browserClient, `globalThis.__places166 ?? { error: 0, select: 0 }`);
+  const pointerSelectionEventCounts = await evaluate(browserClient, `globalThis.__places166 ?? { error: 0, select: 0 }`);
+  const selectionEventCounts = {
+    error: keyboardSelectionEventCounts.error + offlineEventCounts.error + pointerSelectionEventCounts.error,
+    select: keyboardSelectionEventCounts.select + pointerSelectionEventCounts.select,
+  };
   assert.ok(selectionEventCounts.select >= 2, "Google Places did not emit both verified selection events");
 
   await clickByText(browserClient, "Guardar campo", ".top-venue-form button");

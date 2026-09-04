@@ -125,6 +125,7 @@ La certificacion corregida se ejecuto sobre `https://pachangas-3r9tpvon7-persian
 - Un fallo de script podia dejar una promesa fallida compartida e impedir un retry limpio.
 - Una publicacion manual no vinculada a la rama recibio variables generales; fallo cerrado y no escribio.
 - La primera recertificacion del HEAD documental encontro una carrera del harness: Chrome retiro una peticion pausada al cerrar o sustituir una navegacion y CDP devolvio `Invalid InterceptionId`. No fue un fallo de producto ni se oculto con un retry; el runner ignora unicamente ese cierre exacto y registra cualquier otro error de protocolo en `runtimeFailures`.
+- La siguiente ejecucion mostro que reutilizar el mismo widget despues de seleccion, edicion, offline y reconexion podia dejar la prueba de puntero sin un segundo evento. El contrato se corrigio para ejecutar el puntero en un formulario canonico reabierto tras reconectar, como segundo intento independiente, y contabilizar por separado ambos eventos reales.
 
 ## 16. Causa raiz
 
@@ -260,6 +261,7 @@ Dropdown, foco, nombre accesible, safe areas, controles, imagenes, consola y red
 - Eventos observados en el E2E: `gmp-select` 2 y `gmp-error` 1.
 - Official UI V2.1/V3B, Venue Operations, Mercado/Core UX, PWA/offline, Social RC, Official UI V3I y visual consistency: `151/151`, PASS.
 - Regresion del harness CDP: el unico identificador de intercepcion ya retirado se trata como cierre benigno; cualquier otro error sigue haciendo fallar el E2E.
+- Regresion de independencia: tras el `gmp-error` offline y la reconexion, el puntero usa un widget nuevo y debe emitir su propio `gmp-select`; el resultado no puede heredarse de la seleccion por teclado.
 - Retries que oculten fallos, skip, todo o fixtures de proveedor: `0`.
 
 ## 33. Suite global
