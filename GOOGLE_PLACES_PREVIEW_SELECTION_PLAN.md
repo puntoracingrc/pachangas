@@ -247,3 +247,14 @@ Este plan es el primer archivo creado.
 - Fingerprint SHA-256 de la clave Preview nueva: `f4ce75cb57f57469088fd7cbbd339f521dd3b7e4fb568749e0f1fef2878ab420`.
 - El fingerprint Preview es distinto del productivo y la clave productiva no se modifico.
 - La seleccion y persistencia reales quedan pendientes del deployment construido despues del cambio de runtime y de la nueva variable.
+
+## 28. Checkpoint de ejecucion completado
+
+- Deployment Git certificado: `https://pachangas-3r9tpvon7-persianas-almar-web-s-projects.vercel.app` (`READY`).
+- Alias estable autorizado: `https://pachangas-git-codex-googl-ff0eb8-persianas-almar-web-s-projects.vercel.app`.
+- SHA de implementacion: `5d73140277096c9bc32a7c609d8d908308f11045`.
+- La clave Preview quedo limitada al alias estable, Maps JavaScript API y Places API (New); la clave productiva permanecio intacta.
+- El E2E real obtuvo predicciones, selecciono por teclado y puntero, observo `gmp-select` y `gmp-error`, completo `fetchFields`, invalido una seleccion editada y mantuvo el guardado cerrado sin seleccion valida.
+- El campo y el partido se guardaron mediante la UI y autoridad existentes; la recarga, tras limpiar la cache derivada, recupero el mismo campo canonico.
+- Offline y reconexion, PWA emulada, seis viewports y overflow cero pasaron.
+- La rama Supabase aislada se destruira completa despues del merge para respetar sus evidencias inmutables y confirmar residuos cero antes de cerrar #166.
