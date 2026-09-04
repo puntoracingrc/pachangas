@@ -108,7 +108,7 @@ Official UI V2.1 permitio escribir texto en el campo, pero no mostro una predicc
 
 - Proyecto Vercel correcto y worktree enlazado.
 - `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` existe como variable Preview general y como variable Production.
-- Ambos valores tienen el mismo fingerprint SHA-256: `3930fb7a9a99cc3dae417b58f54434ef8fb795ef4e1229eaba49b37e8b48424a`.
+- Ambos valores tenian el mismo fingerprint SHA-256 real: `43042d3d2fb1c3d2f28ed7b3aa0a2341298b62e50788b7cb053af939548c42e1`. El fingerprint `3930fb7a9a99cc3dae417b58f54434ef8fb795ef4e1229eaba49b37e8b48424a` observado durante el primer inventario correspondia al marcador cifrado de Vercel, no al valor servido por el bundle, y queda descartado como evidencia de clave.
 - No existe override de Google Maps para la rama nueva.
 - La Preview general tambien hereda el mismo Supabase URL y publishable key que Production.
 - Existen variables branch-specific antiguas para staging, pero el endpoint usado por Official UI V2.1 ya no resuelve por DNS y no hay una rama staging activa reutilizable.
@@ -200,7 +200,7 @@ Este plan es el primer archivo creado.
 ## 23. Datos sinteticos
 
 - Una identidad QA sin PII, owner de un unico grupo QA.
-- El perfil minimo se creara solo por el onboarding oficial.
+- El perfil minimo y el equipo se crearan mediante sus RPC oficiales autenticadas; el campo y el partido se crearan exclusivamente mediante la UI oficial, sin inserts directos.
 - Un campo real seleccionado desde una prediccion devuelta por Google.
 - Un partido minimo creado con ese campo.
 - La evidencia solo publicara localidad general, hash del place ID y presencia de coordenadas.
@@ -234,3 +234,16 @@ Este plan es el primer archivo creado.
 - Offline fail-closed, reconexion, Realtime, responsive y PWA verificados.
 - Secret scan limpio, staging a cero, informe fusionado y produccion separada.
 - Si alguno de estos puntos no puede demostrarse con seguridad, el issue permanece abierto.
+
+## 27. Actualizacion tras la reproduccion aislada
+
+- Preview Git aislada: `https://pachangas-kgopmn31t-persianas-almar-web-s-projects.vercel.app`.
+- Alias estable de rama: `https://pachangas-git-codex-googl-ff0eb8-persianas-almar-web-s-projects.vercel.app`.
+- La reproduccion se ejecuto dos veces con consultas reales y devolvio bloqueo por referrer en ambas ocasiones.
+- El widget emitia el error en consola, pero el producto no mostraba un error visible.
+- Clasificacion provisional confirmada: `REPRODUCED_PREVIEW_INTEGRATION_DEFECT`.
+- Causas reproducidas: `PREVIEW_KEY_ORIGIN_CONFIGURATION`, `PREVIEW_ENVIRONMENT_INJECTION`, `CLIENT_ERROR_HANDLING` y `CLIENT_SELECTION_FLOW`.
+- Se creo una clave Preview separada, limitada al alias estable y exclusivamente a Maps JavaScript API y Places API (New).
+- Fingerprint SHA-256 de la clave Preview nueva: `f4ce75cb57f57469088fd7cbbd339f521dd3b7e4fb568749e0f1fef2878ab420`.
+- El fingerprint Preview es distinto del productivo y la clave productiva no se modifico.
+- La seleccion y persistencia reales quedan pendientes del deployment construido despues del cambio de runtime y de la nueva variable.

@@ -99,6 +99,8 @@ type GoogleMapsWindow = Window & {
 };
 
 const googlePlacesScriptSelector = 'script[data-pachangas-google-places="true"]';
+const googlePlacesSearchError = "No podemos buscar ubicaciones ahora mismo. Revisa la conexión e inténtalo de nuevo.";
+const googlePlacesSelectionError = "No pudimos verificar esta ubicación. Elige otra sugerencia.";
 
 function parseAddressComponent(components: GoogleAddressComponent[] | undefined, type: string) {
   const component = components?.find((item) => item.types.includes(type));
@@ -106,7 +108,8 @@ function parseAddressComponent(components: GoogleAddressComponent[] | undefined,
 }
 
 function coordinateValue(value: number | (() => number) | undefined) {
-  return typeof value === "function" ? value() : value;
+  const coordinate = typeof value === "function" ? value() : value;
+  return Number.isFinite(coordinate) ? coordinate : undefined;
 }
 
 function placeDisplayName(place: GooglePlace) {
@@ -123,8 +126,8 @@ function placeResultToVenuePlace(place: GooglePlaceResult): VenuePlace | null {
       parseAddressComponent(place.address_components, "postal_town") ??
       parseAddressComponent(place.address_components, "administrative_area_level_3"),
     country: parseAddressComponent(place.address_components, "country"),
-    lat: place.geometry?.location?.lat(),
-    lng: place.geometry?.location?.lng(),
+    lat: coordinateValue(place.geometry?.location?.lat),
+    lng: coordinateValue(place.geometry?.location?.lng),
     name: place.name,
     placeId: place.place_id,
     province: parseAddressComponent(place.address_components, "administrative_area_level_2"),
@@ -184,8 +187,13 @@ export async function loadGooglePlaces(apiKey: string) {
   const googleWindow = googleMapsWindow();
   if (googleWindow.google?.maps?.places?.Autocomplete || googleWindow.google?.maps?.places?.PlaceAutocompleteElement) return;
   if (googleWindow.__pachangasPlacesPromise) {
-    await googleWindow.__pachangasPlacesPromise;
-    await ensurePlacesAutocompleteAvailable();
+    try {
+      await googleWindow.__pachangasPlacesPromise;
+      await ensurePlacesAutocompleteAvailable();
+    } catch (error) {
+      delete googleWindow.__pachangasPlacesPromise;
+      throw error;
+    }
     return;
   }
 
@@ -197,29 +205,43 @@ export async function loadGooglePlaces(apiKey: string) {
         return;
       }
 
-      const timeoutId = window.setTimeout(() => {
-        reject(new Error("Google Places ha tardado demasiado en responder."));
-      }, 10000);
+      let settled = false;
+      const fail = (message: string) => {
+        if (settled) return;
+        settled = true;
+        window.clearTimeout(timeoutId);
+        existingScript.remove();
+        reject(new Error(message));
+      };
+      const timeoutId = window.setTimeout(() => fail("Google Places ha tardado demasiado en responder."), 10000);
 
       existingScript.addEventListener("load", () => {
+        if (settled) return;
+        settled = true;
         window.clearTimeout(timeoutId);
         existingScript.dataset.pachangasGooglePlacesLoaded = "true";
         resolve();
       }, { once: true });
-      existingScript.addEventListener("error", () => {
-        window.clearTimeout(timeoutId);
-        reject(new Error("No se pudo cargar Google Places."));
-      }, { once: true });
+      existingScript.addEventListener("error", () => fail("No se pudo cargar Google Places."), { once: true });
       return;
     }
 
     const script = document.createElement("script");
     const url = new URL("https://maps.googleapis.com/maps/api/js");
-    const timeoutId = window.setTimeout(() => {
-      reject(new Error("Google Places ha tardado demasiado en responder."));
-    }, 10000);
+    let settled = false;
+    const fail = (message: string) => {
+      if (settled) return;
+      settled = true;
+      window.clearTimeout(timeoutId);
+      script.remove();
+      delete googleWindow.__pachangasGooglePlacesReady;
+      reject(new Error(message));
+    };
+    const timeoutId = window.setTimeout(() => fail("Google Places ha tardado demasiado en responder."), 10000);
 
     googleWindow.__pachangasGooglePlacesReady = () => {
+      if (settled) return;
+      settled = true;
       window.clearTimeout(timeoutId);
       script.dataset.pachangasGooglePlacesLoaded = "true";
       resolve();
@@ -238,31 +260,36 @@ export async function loadGooglePlaces(apiKey: string) {
     script.onload = () => {
       script.dataset.pachangasGooglePlacesLoaded = "true";
     };
-    script.onerror = () => {
-      window.clearTimeout(timeoutId);
-      delete googleWindow.__pachangasGooglePlacesReady;
-      reject(new Error("No se pudo cargar Google Places."));
-    };
+    script.onerror = () => fail("No se pudo cargar Google Places.");
     document.head.appendChild(script);
   }).catch((error: unknown) => {
     delete googleWindow.__pachangasPlacesPromise;
     throw error;
   });
 
-  await googleWindow.__pachangasPlacesPromise;
-  await ensurePlacesAutocompleteAvailable();
-  if (googleWindow.google?.maps?.places?.PlaceAutocompleteElement) {
-    await waitForPlaceAutocompleteElement();
+  try {
+    await googleWindow.__pachangasPlacesPromise;
+    await ensurePlacesAutocompleteAvailable();
+    if (googleWindow.google?.maps?.places?.PlaceAutocompleteElement) {
+      await waitForPlaceAutocompleteElement();
+    }
+  } catch (error) {
+    delete googleWindow.__pachangasPlacesPromise;
+    throw error;
   }
 }
 
 function attachNewPlaceAutocomplete({
   input,
+  onError,
   onPlace,
+  onSelectionInvalidated,
   types,
 }: {
   input: HTMLInputElement;
+  onError?: (message: string) => void;
   onPlace: (place: VenuePlace) => void;
+  onSelectionInvalidated?: () => void;
   types?: string[];
 }) {
   const PlaceAutocompleteElement = googleMapsWindow().google?.maps?.places?.PlaceAutocompleteElement;
@@ -276,26 +303,72 @@ function attachNewPlaceAutocomplete({
   input.style.display = "none";
   input.insertAdjacentElement("beforebegin", autocompleteElement);
 
+  let active = true;
+  let selectionRevision = 0;
+  let deliveredPlaceId: string | null = null;
+
+  const invalidateSelection = () => {
+    selectionRevision += 1;
+    deliveredPlaceId = null;
+    onSelectionInvalidated?.();
+  };
+
+  const reportError = (message: string) => {
+    invalidateSelection();
+    onError?.(message);
+  };
+
+  const handleInput = () => {
+    if (active) invalidateSelection();
+  };
+
+  const handleError = () => {
+    if (active) reportError(googlePlacesSearchError);
+  };
+
   const handleSelect = async (event: Event) => {
+    if (!active) return;
+    const requestRevision = ++selectionRevision;
     const selectEvent = event as GooglePlaceSelectEvent;
     const placePrediction = selectEvent.placePrediction ?? selectEvent.detail?.placePrediction;
     const place = placePrediction?.toPlace();
-    if (!place) return;
+    if (!place) {
+      reportError(googlePlacesSelectionError);
+      return;
+    }
 
-    await place.fetchFields?.({
-      fields: ["id", "displayName", "formattedAddress", "location", "addressComponents"],
-    });
+    try {
+      await place.fetchFields?.({
+        fields: ["id", "displayName", "formattedAddress", "location", "addressComponents"],
+      });
+    } catch {
+      if (active && requestRevision === selectionRevision) reportError(googlePlacesSearchError);
+      return;
+    }
+
+    if (!active || requestRevision !== selectionRevision) return;
 
     const venuePlace = newPlaceResultToVenuePlace(place);
-    if (!venuePlace) return;
+    if (!venuePlace) {
+      reportError(googlePlacesSelectionError);
+      return;
+    }
+    if (deliveredPlaceId === venuePlace.placeId) return;
 
+    deliveredPlaceId = venuePlace.placeId;
     input.value = venuePlace.name;
     onPlace(venuePlace);
   };
 
+  autocompleteElement.addEventListener("input", handleInput);
+  autocompleteElement.addEventListener("gmp-error", handleError);
   autocompleteElement.addEventListener("gmp-select", handleSelect);
 
   return () => {
+    active = false;
+    selectionRevision += 1;
+    autocompleteElement.removeEventListener("input", handleInput);
+    autocompleteElement.removeEventListener("gmp-error", handleError);
     autocompleteElement.removeEventListener("gmp-select", handleSelect);
     autocompleteElement.remove();
     input.style.display = "";
@@ -305,17 +378,21 @@ function attachNewPlaceAutocomplete({
 export async function attachVenueAutocomplete({
   apiKey,
   input,
+  onError,
   onPlace,
+  onSelectionInvalidated,
   types,
 }: {
   apiKey: string;
   input: HTMLInputElement;
+  onError?: (message: string) => void;
   onPlace: (place: VenuePlace) => void;
+  onSelectionInvalidated?: () => void;
   types?: string[];
 }) {
   await loadGooglePlaces(apiKey);
 
-  const newPlacesCleanup = attachNewPlaceAutocomplete({ input, onPlace, types });
+  const newPlacesCleanup = attachNewPlaceAutocomplete({ input, onError, onPlace, onSelectionInvalidated, types });
   if (newPlacesCleanup) return newPlacesCleanup;
 
   const Autocomplete = googleMapsWindow().google?.maps?.places?.Autocomplete;
@@ -329,10 +406,21 @@ export async function attachVenueAutocomplete({
     ...(types?.length ? { types } : {}),
   });
 
+  const handleInput = () => onSelectionInvalidated?.();
+  input.addEventListener("input", handleInput);
+
   const listener = autocomplete.addListener("place_changed", () => {
     const venuePlace = placeResultToVenuePlace(autocomplete.getPlace());
-    if (venuePlace) onPlace(venuePlace);
+    if (venuePlace) {
+      onPlace(venuePlace);
+      return;
+    }
+    onSelectionInvalidated?.();
+    onError?.(googlePlacesSelectionError);
   });
 
-  return () => listener.remove();
+  return () => {
+    input.removeEventListener("input", handleInput);
+    listener.remove();
+  };
 }
