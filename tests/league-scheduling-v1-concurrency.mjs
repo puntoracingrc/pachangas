@@ -104,10 +104,17 @@ function concurrent(sql, label) {
 }
 
 async function race(action, aggregateId, revision, payload) {
-  return Promise.all([
-    concurrent(commandSql("e4010000-0000-4000-8000-000000000002", randomUUID(), aggregateId, revision, action, payload), `${action}:director`),
-    concurrent(commandSql("e4010000-0000-4000-8000-000000000003", randomUUID(), aggregateId, revision, action, payload), `${action}:manager`),
-  ]);
+  const attempts = [
+    { actorId: "e4010000-0000-4000-8000-000000000002", label: `${action}:director`, operationId: randomUUID() },
+    { actorId: "e4010000-0000-4000-8000-000000000003", label: `${action}:manager`, operationId: randomUUID() },
+  ];
+  return Promise.all(attempts.map(async (attempt) => ({
+    ...await concurrent(
+      commandSql(attempt.actorId, attempt.operationId, aggregateId, revision, action, payload),
+      attempt.label,
+    ),
+    operationId: attempt.operationId,
+  })));
 }
 
 function assertOneWinner(results, label) {
@@ -116,6 +123,91 @@ function assertOneWinner(results, label) {
   assert.equal(winners.length, 1, `${label} must have one winner: ${JSON.stringify(results)}`);
   assert.equal(losers.length, 1, `${label} must have one stale loser`);
   assert.match(losers[0].stderr, /STALE_REVISION|PT409/);
+}
+
+function extraEntriesSql(teamCount) {
+  return `
+    insert into auth.users(id, email, email_confirmed_at, raw_user_meta_data)
+    select md5('r4b-concurrency-owner-' || value)::uuid,
+      'r4b-concurrency-owner-' || value || '@example.test', clock_timestamp(),
+      jsonb_build_object('full_name', 'Concurrency team ' || value || ' owner')
+    from generate_series(7, ${teamCount}) value;
+
+    insert into public.pachanga_groups(id, owner_id, name, team_code, payload, payload_revision)
+    select md5('r4b-concurrency-team-' || value)::uuid,
+      md5('r4b-concurrency-owner-' || value)::uuid,
+      'R4B Concurrency Team ' || value, 'R4C' || lpad(value::text, 5, '0'),
+      '{"matches":[],"players":[],"siteSettings":{},"venues":[]}'::jsonb, 1
+    from generate_series(7, ${teamCount}) value;
+
+    insert into public.pachanga_group_members(group_id, user_id, role, display_name)
+    select md5('r4b-concurrency-team-' || value)::uuid,
+      md5('r4b-concurrency-owner-' || value)::uuid,
+      'owner', 'Concurrency team ' || value || ' owner'
+    from generate_series(7, ${teamCount}) value;
+
+    insert into public.pachanga_competition_entries(
+      id, competition_id, edition_id, category_id, team_id, entry_source, status,
+      rule_revision_id, accepted_by, accepted_at, reason_code, created_by
+    )
+    select md5('r4b-concurrency-entry-' || value)::uuid,
+      'e4040000-0000-4000-8000-000000000001'::uuid,
+      'e4070000-0000-4000-8000-000000000001'::uuid,
+      'e40b0000-0000-4000-8000-000000000001'::uuid,
+      md5('r4b-concurrency-team-' || value)::uuid,
+      'ORGANIZER_INVITATION', 'accepted',
+      'e4060000-0000-4000-8000-000000000001'::uuid,
+      'e4010000-0000-4000-8000-000000000003'::uuid,
+      clock_timestamp(), 'r4b.concurrency.accepted',
+      'e4010000-0000-4000-8000-000000000003'::uuid
+    from generate_series(7, ${teamCount}) value;
+
+    insert into public.pachanga_competition_stage_memberships(
+      id, entry_id, stage_id, division_id, competition_group_id, rule_revision_id,
+      status, reason, assigned_by
+    )
+    select md5('r4b-concurrency-membership-' || value)::uuid,
+      md5('r4b-concurrency-entry-' || value)::uuid,
+      'e4080000-0000-4000-8000-000000000001'::uuid,
+      'e4090000-0000-4000-8000-000000000001'::uuid,
+      'e40a0000-0000-4000-8000-000000000001'::uuid,
+      'e4060000-0000-4000-8000-000000000001'::uuid,
+      'active', 'R4B concurrency membership',
+      'e4010000-0000-4000-8000-000000000003'::uuid
+    from generate_series(7, ${teamCount}) value;
+
+    insert into public.pachanga_competition_rosters(
+      id, entry_id, category_id, rule_revision_id, status, revision, created_by
+    )
+    select md5('r4b-concurrency-roster-' || value)::uuid,
+      md5('r4b-concurrency-entry-' || value)::uuid,
+      'e40b0000-0000-4000-8000-000000000001'::uuid,
+      'e4060000-0000-4000-8000-000000000001'::uuid,
+      'locked', 1, 'e4010000-0000-4000-8000-000000000003'::uuid
+    from generate_series(7, ${teamCount}) value;
+
+    insert into public.pachanga_competition_roster_revisions(
+      id, roster_id, revision_number, roster_status, rule_revision_id,
+      member_count, eligibility_summary, member_set_checksum, reason, created_by
+    )
+    select md5('r4b-concurrency-roster-revision-' || value)::uuid,
+      md5('r4b-concurrency-roster-' || value)::uuid,
+      1, 'locked', 'e4060000-0000-4000-8000-000000000001'::uuid, 0,
+      '{"pending":0,"reviewRequired":0,"ineligible":0,"expired":0}'::jsonb,
+      encode(extensions.digest(convert_to('r4b-concurrency-roster-' || value, 'UTF8'), 'sha256'), 'hex'),
+      'R4B concurrency locked roster',
+      'e4010000-0000-4000-8000-000000000003'::uuid
+    from generate_series(7, ${teamCount}) value;
+
+    update public.pachanga_competition_rosters rosters
+    set current_revision_id = revisions.id
+    from public.pachanga_competition_roster_revisions revisions
+    where revisions.roster_id = rosters.id
+      and rosters.id in (
+        select md5('r4b-concurrency-roster-' || value)::uuid
+        from generate_series(7, ${teamCount}) value
+      );
+  `;
 }
 
 function dropDatabase() {
@@ -158,6 +250,7 @@ try {
     league_public_calendar_enabled=true,
     league_canonical_fixture_creation_enabled=true
     where singleton`, "enable disposable R4B flags");
+  query(extraEntriesSql(21), "seed 21-team capacity race");
 
   const planResponse = command(
     "e4010000-0000-4000-8000-000000000003",
@@ -174,6 +267,64 @@ try {
     },
   );
   const planId = planResponse.snapshot.plan.id;
+  assert.equal(Number(planResponse.snapshot.plan.entryCount), 21);
+
+  const capacityRace = await race(
+    "schedule.generate",
+    planId,
+    1,
+    { reason: "Over-limit concurrency race", seed: "capacity-race" },
+  );
+  assert.equal(capacityRace.filter((result) => result.code === 0).length, 0);
+  for (const result of capacityRace) {
+    assert.match(result.stderr, /SCHEDULE_INTERACTIVE_CAPACITY_EXCEEDED/);
+  }
+  const capacityOperationIds = capacityRace.map((result) => quote(result.operationId)).join(",");
+  assert.deepEqual(JSON.parse(query(`select jsonb_build_object(
+    'events', (select count(*) from private.pachanga_competition_events
+      where operation_id in (${capacityOperationIds})),
+    'receipts', (select count(*) from private.pachanga_competition_operation_receipts
+      where operation_id in (${capacityOperationIds})),
+    'revisions', (select count(*) from public.pachanga_competition_schedule_revisions
+      where schedule_plan_id=${quote(planId)}::uuid),
+    'planRevision', (select revision from public.pachanga_competition_schedule_plans
+      where id=${quote(planId)}::uuid)
+  )::text`)), { events: 0, planRevision: 1, receipts: 0, revisions: 0 });
+
+  query(`update public.pachanga_competition_rosters
+    set status='draft', revision=revision+1
+    where entry_id in (
+      select md5('r4b-concurrency-entry-' || value)::uuid
+      from generate_series(7, 21) value
+    )`, "return concurrency scope to six eligible teams");
+  const reconciledWorkbenchOutput = query(`
+    select set_config('request.jwt.claims', '${JSON.stringify({ role: "authenticated", sub: "e4010000-0000-4000-8000-000000000003" }).replaceAll("'", "''")}', false);
+    select public.get_pachanga_league_schedule_workbench_v1(${quote(planId)}::uuid,0,200)::text;
+  `, "reconciled workbench");
+  const reconciledWorkbench = JSON.parse(
+    reconciledWorkbenchOutput.split("\n").filter((line) => line.startsWith("{")).at(-1),
+  );
+  assert.deepEqual(reconciledWorkbench.interactiveGeneration, {
+    allowed: true,
+    eligibleTeams: 6,
+    maximumTeams: 20,
+    reasonCode: null,
+    source: "CANONICAL_CURRENT_INPUTS",
+  });
+  query(`
+    update public.pachanga_competition_stage_memberships
+    set status='archived', revision=revision+1
+    where entry_id in (
+      select md5('r4b-concurrency-entry-' || value)::uuid
+      from generate_series(7, 21) value
+    );
+    update public.pachanga_competition_entries
+    set status='withdrawn', withdrawn_at=clock_timestamp(), revision=revision+1
+    where id in (
+      select md5('r4b-concurrency-entry-' || value)::uuid
+      from generate_series(7, 21) value
+    );
+  `, "archive synthetic over-limit entries after roster regression");
   command("e4010000-0000-4000-8000-000000000003", planId, 1, "schedule_slot.bulk_create", {
     durationMinutes: 90,
     endDate: "2027-02-21",
@@ -190,7 +341,18 @@ try {
   assertOneWinner(generateRace, "generation race");
   assert.equal(query(`select revision || ':' || status from public.pachanga_competition_schedule_plans where id=${quote(planId)}::uuid`), "3:generated");
 
-  command("e4010000-0000-4000-8000-000000000003", planId, 3, "schedule.validate", { reason: "Concurrency validation" });
+  const validationResponse = command(
+    "e4010000-0000-4000-8000-000000000003",
+    planId,
+    3,
+    "schedule.validate",
+    { reason: "Concurrency validation" },
+  );
+  assert.equal(
+    validationResponse.snapshot.validation.status,
+    "VALID",
+    JSON.stringify(validationResponse.snapshot.validation),
+  );
   publishRace = await race("schedule.publish", planId, 4, { reason: "Publication race" });
   assertOneWinner(publishRace, "publication race");
 
@@ -201,7 +363,7 @@ try {
     'rounds', (select count(*) from public.pachanga_competition_rounds where status='published')
   )::text`);
   assert.deepEqual(JSON.parse(counts), { canonical: 15, contexts: 15, items: 15, rounds: 5 });
-  process.stdout.write(`${JSON.stringify({ generationRace: "1 winner / 1 stale", publishRace: "1 winner / 1 stale", canonicalMatches: 15 })}\n`);
+  process.stdout.write(`${JSON.stringify({ capacityRace: "2 rejected / 0 writes", generationRace: "1 winner / 1 stale", publishRace: "1 winner / 1 stale", canonicalMatches: 15 })}\n`);
 } finally {
   dropDatabase();
   rmSync(infrastructureDump, { force: true });

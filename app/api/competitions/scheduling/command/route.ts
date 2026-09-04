@@ -40,7 +40,7 @@ export async function POST(request: Request) {
       expected_revision: expectedRevision,
       operation_id: operationId,
     });
-    if (result.error) throw new Error(result.error.message);
+    if (result.error) throw result.error;
     return scheduleJson({ canonical: result.data });
   } catch (error) {
     return scheduleError(error);

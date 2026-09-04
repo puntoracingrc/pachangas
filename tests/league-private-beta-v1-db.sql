@@ -174,6 +174,64 @@ select pg_temp.expect_failure(
 
 select set_config(
   'request.jwt.claims',
+  '{"sub":"ba010000-0000-4000-8000-000000000002","role":"authenticated"}',
+  true
+);
+
+create temporary table beta_twenty_bundle_response(body jsonb);
+insert into beta_twenty_bundle_response(body)
+select public.command_pachanga_league_private_beta_platform_v1(
+  'ba030000-0000-4000-8000-000000000094',
+  'ba020000-0000-4000-8000-000000000002',
+  0,
+  'beta.bundle.grant',
+  '{"organizerKind":"TEAM","maxTeams":20,"capacityOverride":true,"expiresAt":"2027-12-31T23:59:59Z","reason":"20-team override regression"}',
+  '{"clientVersion":"test","surface":"sql"}'
+);
+
+select pg_temp.assert_true(
+  (select (body #>> '{snapshot,bundle,teamCap}')::integer
+    from beta_twenty_bundle_response) = 20,
+  'A platform capacity override must authorize exactly 20 teams'
+);
+
+select pg_temp.expect_failure(
+  $$select public.command_pachanga_league_private_beta_platform_v1(
+    'ba030000-0000-4000-8000-000000000096',
+    'ba020000-0000-4000-8000-000000000002',
+    1,
+    'beta.bundle.grant',
+    '{"organizerKind":"TEAM","maxTeams":21,"capacityOverride":true,"reason":"21 teams remain forbidden"}',
+    '{}'
+  )$$,
+  'BETA_CAPACITY_LIMIT'
+);
+
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"ba010000-0000-4000-8000-000000000004","role":"authenticated"}',
+  true
+);
+
+create temporary table beta_twenty_wizard_response(body jsonb);
+insert into beta_twenty_wizard_response(body)
+select public.command_pachanga_league_private_beta_v1(
+  'ba030000-0000-4000-8000-000000000095',
+  'ba020000-0000-4000-8000-000000000002',
+  1,
+  'wizard.create',
+  '{"organizerKind":"TEAM","reason":"20-team override wizard regression"}',
+  '{"clientVersion":"test","surface":"sql"}'
+);
+
+select pg_temp.assert_true(
+  (select (body #>> '{snapshot,organizer,bundle,teamCap}')::integer
+    from beta_twenty_wizard_response) = 20,
+  'The authorized organizer wizard must inherit the 20-team override'
+);
+
+select set_config(
+  'request.jwt.claims',
   '{"sub":"ba010000-0000-4000-8000-000000000001","role":"authenticated"}',
   true
 );

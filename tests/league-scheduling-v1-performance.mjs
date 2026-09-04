@@ -114,6 +114,25 @@ function timedJson(databaseName, sql, label) {
   return { durationMs: Number((performance.now() - startedAt).toFixed(3)), value };
 }
 
+function rejectedCommand(databaseName, sql, label) {
+  const startedAt = performance.now();
+  const result = spawnSync(psqlBin, [
+    "-X", "-w", "-v", "ON_ERROR_STOP=1", "-Atq",
+    databaseUrl(databaseName), "-c", sql,
+  ], {
+    cwd: root,
+    encoding: "utf8",
+    env: process.env,
+    maxBuffer: 16 * 1024 * 1024,
+  });
+  if (result.error) throw result.error;
+  assert.notEqual(result.status, 0, `${label} unexpectedly succeeded`);
+  return {
+    durationMs: Number((performance.now() - startedAt).toFixed(3)),
+    output: `${result.stdout ?? ""}${result.stderr ?? ""}`,
+  };
+}
+
 function commandSql({ action, aggregateId, expectedRevision, operationSeed, payload, userId = managerId }) {
   const metadata = JSON.stringify({
     clientVersion: "4.0.0+r4b-performance",
@@ -242,6 +261,7 @@ try {
   for (const { teamCount, legs } of [
     { teamCount: 6, legs: 1 },
     { teamCount: 20, legs: 2 },
+    { teamCount: 21, legs: 2 },
     { teamCount: 32, legs: 2 },
   ]) {
     const databaseName = `pachangas_r4b_perf_${teamCount}_${suffix}`;
@@ -271,6 +291,63 @@ try {
         ${seedSlotsSql(teamCount, legs)}
       `, `enable and seed ${teamCount}`);
 
+      if (teamCount === 6) {
+        const permissions = jsonLine(databaseQuery(databaseName, `
+          select jsonb_build_object(
+            'publicCommand', has_function_privilege(
+              'authenticated',
+              'public.command_pachanga_league_scheduling_v1(uuid,uuid,bigint,text,jsonb,jsonb)',
+              'EXECUTE'
+            ),
+            'publicWorkbench', has_function_privilege(
+              'authenticated',
+              'public.get_pachanga_league_schedule_workbench_v1(uuid,integer,integer)',
+              'EXECUTE'
+            ),
+            'privateCommand', has_function_privilege(
+              'authenticated',
+              'private.pachanga_league_scheduling_command_impl_v1(uuid,uuid,bigint,text,jsonb,jsonb)',
+              'EXECUTE'
+            ),
+            'privateEngine', has_function_privilege(
+              'authenticated',
+              'private.pachanga_league_schedule_generate_revision_engine_v1(uuid,text,text,uuid,bigint)',
+              'EXECUTE'
+            ),
+            'privatePreflight', has_function_privilege(
+              'authenticated',
+              'private.pachanga_league_schedule_interactive_preflight_v1(uuid,text)',
+              'EXECUTE'
+            )
+          )::text;
+        `, "interactive capacity privileges"));
+        assert.deepEqual(permissions, {
+          privateCommand: false,
+          privateEngine: false,
+          privatePreflight: false,
+          publicCommand: true,
+          publicWorkbench: true,
+        });
+
+        const flagsRevision = Number(databaseQuery(databaseName, `
+          select revision from private.pachanga_competition_foundation_settings where singleton;
+        `, "flags revision before platform payload rejection"));
+        const platformFlagsRejection = rejectedCommand(databaseName, `
+          select set_config('request.jwt.claims', '${actorClaims(managerId)}', false);
+          select public.command_pachanga_league_scheduling_platform_v1(
+            md5('r4b-platform-generation-bypass')::uuid,
+            '00000000-0000-0000-0000-00000000c4b1'::uuid,
+            ${flagsRevision},
+            '{"action":"schedule.generate","eligibleTeams":32}'::jsonb,
+            '{}'::jsonb
+          )::text;
+        `, "platform flags generation payload rejection");
+        assert.match(platformFlagsRejection.output, /INVALID_LEAGUE_SCHEDULING_FLAGS_PAYLOAD/);
+        assert.equal(Number(databaseQuery(databaseName, `
+          select revision from private.pachanga_competition_foundation_settings where singleton;
+        `, "flags revision after platform payload rejection")), flagsRevision);
+      }
+
       const create = timedJson(databaseName, commandSql({
         action: "schedule_plan.create",
         aggregateId: "e4080000-0000-4000-8000-000000000001",
@@ -288,6 +365,202 @@ try {
       const planId = create.value.snapshot.plan.id;
       assert.equal(Number(create.value.snapshot.plan.entryCount), teamCount);
 
+      if (teamCount > 20) {
+        const workbench = timedJson(databaseName, `
+          select set_config('request.jwt.claims', '${actorClaims(managerId)}', false);
+          select public.get_pachanga_league_schedule_workbench_v1('${planId}'::uuid, 0, 200)::text;
+        `, `over-limit workbench ${teamCount}`);
+        assert.deepEqual(workbench.value.interactiveGeneration, {
+          allowed: false,
+          eligibleTeams: teamCount,
+          maximumTeams: 20,
+          reasonCode: "INTERACTIVE_TEAM_LIMIT_EXCEEDED",
+          source: "CANONICAL_CURRENT_INPUTS",
+        });
+        assert.equal(workbench.value.engine.maximumTeams, 32);
+        assert.equal(workbench.value.nextValidActions.includes("schedule.generate"), false);
+
+        const userOperationSeed = `r4b-performance-reject-user-${teamCount}`;
+        const sequenceBefore = databaseQuery(
+          databaseName,
+          "select last_value::text from private.pachanga_competition_sequence",
+          `sequence before rejection ${teamCount}`,
+        );
+        const userRejection = rejectedCommand(databaseName, commandSql({
+          action: "schedule.generate",
+          aggregateId: planId,
+          expectedRevision: 1,
+          operationSeed: userOperationSeed,
+          payload: { seed: `r4b-performance-reject-${teamCount}` },
+        }), `user rejection ${teamCount}`);
+        assert.match(userRejection.output, /SCHEDULE_INTERACTIVE_CAPACITY_EXCEEDED/);
+        assert.match(userRejection.output, /INTERACTIVE_TEAM_LIMIT_EXCEEDED/);
+        assert.match(userRejection.output, new RegExp(`"eligibleTeams": ${teamCount}`));
+        assert.match(userRejection.output, /"maximumTeams": 20/);
+        assert.equal(databaseQuery(
+          databaseName,
+          "select last_value::text from private.pachanga_competition_sequence",
+          `sequence after rejection ${teamCount}`,
+        ), sequenceBefore);
+
+        databaseQuery(databaseName, `
+          insert into private.pachanga_platform_admin_roles(user_id, role, active, granted_by)
+          values ('${managerId}'::uuid, 'platform_owner', true, '${managerId}'::uuid)
+          on conflict (user_id) do update set role='platform_owner', active=true;
+        `, `grant platform role ${teamCount}`);
+        const platformOperationSeed = `r4b-performance-reject-platform-${teamCount}`;
+        const platformRejection = rejectedCommand(databaseName, commandSql({
+          action: "schedule.generate",
+          aggregateId: planId,
+          expectedRevision: 1,
+          operationSeed: platformOperationSeed,
+          payload: { seed: `r4b-performance-platform-${teamCount}` },
+        }), `platform-role rejection ${teamCount}`);
+        assert.match(platformRejection.output, /SCHEDULE_INTERACTIVE_CAPACITY_EXCEEDED/);
+
+        const rejectionEvidence = jsonLine(databaseQuery(databaseName, `
+          select jsonb_build_object(
+            'events', (select count(*) from private.pachanga_competition_events
+              where operation_id in (md5('${userOperationSeed}')::uuid, md5('${platformOperationSeed}')::uuid)),
+            'items', (select count(*) from public.pachanga_competition_schedule_items
+              where schedule_revision_id in (
+                select id from public.pachanga_competition_schedule_revisions
+                where schedule_plan_id='${planId}'::uuid
+              )),
+            'receipts', (select count(*) from private.pachanga_competition_operation_receipts
+              where operation_id in (md5('${userOperationSeed}')::uuid, md5('${platformOperationSeed}')::uuid)),
+            'revisions', (select count(*) from public.pachanga_competition_schedule_revisions
+              where schedule_plan_id='${planId}'::uuid),
+            'planRevision', (select revision from public.pachanga_competition_schedule_plans
+              where id='${planId}'::uuid)
+          )::text;
+        `, `rejection evidence ${teamCount}`));
+        assert.deepEqual(rejectionEvidence, {
+          events: 0,
+          items: 0,
+          receipts: 0,
+          revisions: 0,
+          planRevision: 1,
+        });
+
+        const result = {
+          engineMaximumTeams: 32,
+          interactiveMaximumTeams: 20,
+          legs,
+          platformRejectMs: platformRejection.durationMs,
+          teams: teamCount,
+          userRejectMs: userRejection.durationMs,
+          workbenchMs: workbench.durationMs,
+        };
+
+        if (teamCount === 21) {
+          databaseQuery(databaseName, `
+            update public.pachanga_competition_rosters
+            set status='draft', revision=revision+1
+            where entry_id=md5('r4b-entry-21')::uuid;
+          `, "make one roster ineligible");
+          const reconciledWorkbench = timedJson(databaseName, `
+            select set_config('request.jwt.claims', '${actorClaims(managerId)}', false);
+            select public.get_pachanga_league_schedule_workbench_v1('${planId}'::uuid, 0, 200)::text;
+          `, "workbench after roster state change");
+          assert.equal(reconciledWorkbench.value.interactiveGeneration.eligibleTeams, 20);
+          assert.equal(reconciledWorkbench.value.interactiveGeneration.allowed, true);
+          assert.equal(reconciledWorkbench.value.nextValidActions.includes("schedule.generate"), true);
+          const generationAfterRosterChange = timedJson(databaseName, commandSql({
+            action: "schedule.generate",
+            aggregateId: planId,
+            expectedRevision: 1,
+            operationSeed: "r4b-performance-generate-after-roster-change",
+            payload: { seed: "r4b-performance-roster-change" },
+          }), "generate after roster state change");
+          assert.equal(Number(generationAfterRosterChange.value.snapshot.plan.entryCount), 20);
+          assert.equal(Number(generationAfterRosterChange.value.snapshot.counts.items), 380);
+          databaseQuery(databaseName, `
+            update public.pachanga_competition_rosters
+            set status='locked', revision=revision+1
+            where entry_id=md5('r4b-entry-21')::uuid;
+          `, "restore twenty-first eligible roster");
+          const regenerateOperationSeed = "r4b-performance-regenerate-reject-21";
+          const regenerateRejection = rejectedCommand(databaseName, commandSql({
+            action: "schedule.regenerate",
+            aggregateId: planId,
+            expectedRevision: 2,
+            operationSeed: regenerateOperationSeed,
+            payload: { seed: "r4b-performance-regenerate-reject-21" },
+          }), "regenerate rejection after roster restoration");
+          assert.match(regenerateRejection.output, /SCHEDULE_INTERACTIVE_CAPACITY_EXCEEDED/);
+          assert.deepEqual(jsonLine(databaseQuery(databaseName, `
+            select jsonb_build_object(
+              'events', (select count(*) from private.pachanga_competition_events
+                where operation_id=md5('${regenerateOperationSeed}')::uuid),
+              'receipts', (select count(*) from private.pachanga_competition_operation_receipts
+                where operation_id=md5('${regenerateOperationSeed}')::uuid),
+              'revisions', (select count(*) from public.pachanga_competition_schedule_revisions
+                where schedule_plan_id='${planId}'::uuid),
+              'planRevision', (select revision from public.pachanga_competition_schedule_plans
+                where id='${planId}'::uuid)
+            )::text;
+          `, "regenerate rejection evidence")), {
+            events: 0,
+            planRevision: 2,
+            receipts: 0,
+            revisions: 1,
+          });
+          Object.assign(result, {
+            regenerateRejectMs: regenerateRejection.durationMs,
+            rosterReconciledEligibleTeams: 20,
+            rosterReconciledGenerateMs: generationAfterRosterChange.durationMs,
+          });
+        }
+
+        if (teamCount === 32) {
+          const engineRevisionId = databaseQuery(databaseName, `
+            select private.pachanga_league_schedule_generate_revision_engine_v1(
+              '${planId}'::uuid,
+              'r4b-direct-engine-32',
+              'generated',
+              '${managerId}'::uuid,
+              nextval('private.pachanga_competition_sequence')
+            )::text;
+          `, "direct internal engine 32").split("\n").at(-1);
+          const engineFixtures = Number(databaseQuery(databaseName, `
+            select count(*) from public.pachanga_competition_schedule_items
+            where schedule_revision_id='${engineRevisionId}'::uuid;
+          `, "direct internal engine fixture count"));
+          assert.equal(engineFixtures, 992);
+          databaseQuery(databaseName, `
+            update public.pachanga_competition_schedule_revisions
+            set status='cancelled', revision=revision+1
+            where id='${engineRevisionId}'::uuid;
+            update public.pachanga_competition_schedule_plans
+            set current_revision_id='${engineRevisionId}'::uuid,
+                status='cancelled', cancelled_by='${managerId}'::uuid,
+                cancelled_at=clock_timestamp(), revision=revision+1
+            where id='${planId}'::uuid;
+          `, "freeze synthetic 32-team historical schedule");
+          const historicalWorkbench = timedJson(databaseName, `
+            select set_config('request.jwt.claims', '${actorClaims(managerId)}', false);
+            select public.get_pachanga_league_schedule_workbench_v1('${planId}'::uuid, 0, 200)::text;
+          `, "historical 32-team workbench");
+          assert.equal(historicalWorkbench.value.items.length, 200);
+          assert.deepEqual(historicalWorkbench.value.interactiveGeneration, {
+            allowed: false,
+            eligibleTeams: 32,
+            maximumTeams: 20,
+            reasonCode: "INTERACTIVE_TEAM_LIMIT_EXCEEDED",
+            source: "FROZEN_REVISION",
+          });
+          assert.deepEqual(historicalWorkbench.value.nextValidActions, []);
+          Object.assign(result, {
+            directEngineFixtures: engineFixtures,
+            historicalWorkbenchMs: historicalWorkbench.durationMs,
+          });
+        }
+
+        scenarioResults.push(result);
+        continue;
+      }
+
       const generate = timedJson(databaseName, commandSql({
         action: "schedule.generate",
         aggregateId: planId,
@@ -300,6 +573,21 @@ try {
       assert.equal(Number(generate.value.snapshot.counts.items), expectedFixtures);
       assert.equal(Number(generate.value.snapshot.counts.rounds), expectedRounds);
       assert.equal(Number(generate.value.snapshot.counts.unassigned), 0);
+
+      const postWarmupGenerateMs = [];
+      if (teamCount === 20) {
+        for (let repetition = 0; repetition < 3; repetition += 1) {
+          const regenerated = timedJson(databaseName, commandSql({
+            action: "schedule.regenerate",
+            aggregateId: planId,
+            expectedRevision: 2 + repetition,
+            operationSeed: `r4b-performance-regenerate-20-${repetition}`,
+            payload: { seed: `r4b-performance-20-${repetition}` },
+          }), `regenerate 20 repetition ${repetition + 1}`);
+          assert.equal(Number(regenerated.value.snapshot.counts.items), expectedFixtures);
+          postWarmupGenerateMs.push(regenerated.durationMs);
+        }
+      }
 
       const workbench = timedJson(databaseName, `
         select set_config('request.jwt.claims', '${actorClaims(managerId)}', false);
@@ -315,6 +603,7 @@ try {
         rounds: expectedRounds,
         teams: teamCount,
         workbenchMs: workbench.durationMs,
+        ...(postWarmupGenerateMs.length ? { postWarmupGenerateMs } : {}),
       };
 
       if (teamCount === 6) {
@@ -368,9 +657,21 @@ try {
     }
   }
   const twentyTeams = scenarioResults.find((scenario) => scenario.teams === 20);
-  assert.ok(twentyTeams.generateMs < 180_000, "20-team generation exceeded statement timeout objective");
+  assert.ok(twentyTeams.generateMs < 15_000, "20-team warmup exceeded the interactive objective");
+  for (const durationMs of twentyTeams.postWarmupGenerateMs) {
+    assert.ok(durationMs < 15_000, `20-team post-warmup generation exceeded 15s: ${durationMs}`);
+  }
+  for (const teamCount of [21, 32]) {
+    const rejected = scenarioResults.find((scenario) => scenario.teams === teamCount);
+    assert.ok(rejected.userRejectMs < 1_000, `${teamCount}-team user rejection exceeded 1s`);
+    assert.ok(rejected.platformRejectMs < 1_000, `${teamCount}-team platform rejection exceeded 1s`);
+  }
+  const twentyOneTeams = scenarioResults.find((scenario) => scenario.teams === 21);
+  assert.ok(twentyOneTeams.regenerateRejectMs < 1_000, "21-team regeneration rejection exceeded 1s");
   process.stdout.write(`${JSON.stringify({
     database: "temporary",
+    engineMaximumTeams: 32,
+    interactiveMaximumTeams: 20,
     measurements: scenarioResults,
     statementTimeoutMs: 180_000,
   })}\n`);

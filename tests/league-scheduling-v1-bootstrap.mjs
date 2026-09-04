@@ -21,6 +21,7 @@ const r4bMigrations = [
   "20260823224235_league_scheduling_access_v1.sql",
   "20260823224236_league_scheduling_hardening_v1.sql",
 ];
+const originalR4bLedger = 119;
 
 if (!adminUrl) throw new Error("LEAGUE_SCHEDULING_DATABASE_URL is required");
 const parsedAdmin = new URL(adminUrl);
@@ -31,11 +32,17 @@ if (!["127.0.0.1", "localhost", "::1", "[::1]"].includes(parsedAdmin.hostname)) 
 const migrationNames = readdirSync(resolve(root, "supabase/migrations"))
   .filter((name) => /^\d{14}_.+\.sql$/.test(name))
   .sort();
-assert.equal(migrationNames.length, 123);
-assert.deepEqual(migrationNames.slice(-4), r4bMigrations);
 const incremental = migrationNames.filter((name) => name.slice(0, 14) > manifest.absorbsThrough);
-const preR4bIncremental = incremental.filter((name) => !r4bMigrations.includes(name));
-assert.equal(migrationNames.filter((name) => !r4bMigrations.includes(name)).length, 119);
+const r4bStart = incremental.indexOf(r4bMigrations[0]);
+assert.notEqual(r4bStart, -1, "R4B migrations are missing from the current ledger");
+assert.deepEqual(incremental.slice(r4bStart, r4bStart + r4bMigrations.length), r4bMigrations);
+const preR4bIncremental = incremental.slice(0, r4bStart);
+const postR4bIncremental = incremental.slice(r4bStart + r4bMigrations.length);
+assert.equal(
+  migrationNames.length - postR4bIncremental.length - r4bMigrations.length,
+  originalR4bLedger,
+  "The immutable pre-R4B ledger checkpoint changed",
+);
 
 function targetUrl(databaseName) {
   const value = new URL(adminUrl);
@@ -91,6 +98,8 @@ function contract(databaseName) {
       'platformCommand', to_regprocedure('public.command_pachanga_league_scheduling_platform_v1(uuid,uuid,bigint,jsonb,jsonb)') is not null,
       'workbench', to_regprocedure('public.get_pachanga_league_schedule_workbench_v1(uuid,integer,integer)') is not null,
       'publicCalendar', to_regprocedure('public.get_pachanga_public_league_calendar_v1(uuid,integer,integer)') is not null,
+      'interactiveMaximumTeams', private.pachanga_league_schedule_interactive_maximum_teams_v1(),
+      'engineMaximumTeams', 32,
       'flagsOff', not exists (
         select 1 from private.pachanga_competition_foundation_settings settings
         where settings.league_scheduling_foundation_enabled
@@ -148,6 +157,7 @@ try {
   apply(upgradeName, [baseline, ...preR4bIncremental.map((name) => resolve(root, "supabase/migrations", name))], "prepare exact 119 ledger");
   assert.equal(query(upgradeName, "select to_regclass('public.pachanga_competition_schedule_plans') is null"), "t");
   apply(upgradeName, r4bMigrations.map((name) => resolve(root, "supabase/migrations", name)), "upgrade 119 to R4B");
+  apply(upgradeName, postR4bIncremental.map((name) => resolve(root, "supabase/migrations", name)), "upgrade R4B to current ledger");
 
   const freshContract = contract(freshName);
   const upgradeContract = contract(upgradeName);
@@ -157,15 +167,18 @@ try {
   assert.equal(freshContract.platformCommand, true);
   assert.equal(freshContract.workbench, true);
   assert.equal(freshContract.publicCalendar, true);
+  assert.equal(freshContract.interactiveMaximumTeams, 20);
+  assert.equal(freshContract.engineMaximumTeams, 32);
   assert.equal(freshContract.flagsOff, true);
   assert.equal(freshContract.engine, "league-round-robin-v1");
   assert.equal(freshContract.canonicalMatches, 0);
   assert.equal(freshContract.matchContexts, 0);
 
   process.stdout.write(`${JSON.stringify({
-    freshLedger: 123,
-    upgradeFromLedger: 119,
+    freshLedger: migrationNames.length,
+    upgradeFromLedger: originalR4bLedger,
     r4bMigrations: r4bMigrations.length,
+    postR4bMigrations: postR4bIncremental.length,
     schemasEqual: true,
     flagsOff: true,
     canonicalMatches: 0,

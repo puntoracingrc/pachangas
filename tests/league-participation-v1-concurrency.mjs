@@ -5,6 +5,7 @@ import { spawn } from "node:child_process";
 const databaseUrl = process.env.LEAGUE_PARTICIPATION_DATABASE_URL;
 const psqlBin = process.env.PSQL_BIN || "psql";
 const timeoutMs = Number(process.env.LEAGUE_PARTICIPATION_SQL_TIMEOUT_MS || 45_000);
+const disposableDatabase = process.env.LEAGUE_PARTICIPATION_DISPOSABLE_DATABASE === "1";
 
 if (!databaseUrl) throw new Error("LEAGUE_PARTICIPATION_DATABASE_URL is required");
 
@@ -427,7 +428,8 @@ try {
     result: "all_clients_converged",
   }));
 } finally {
-  const restoreFlags = flagBaseline ? `
+  if (!disposableDatabase) {
+    const restoreFlags = flagBaseline ? `
     update private.pachanga_competition_foundation_settings set
       foundation_enabled = ${flagBaseline[0]},
       league_participation_foundation_enabled = ${flagBaseline[1]},
@@ -438,7 +440,7 @@ try {
       league_schedule_preferences_enabled = ${flagBaseline[6]}
     where singleton;
   ` : "";
-  await runOk(`
+    await runOk(`
     begin;
     alter table private.pachanga_competition_events disable trigger guard_pachanga_competition_events_v1;
     alter table private.pachanga_competition_operation_receipts disable trigger guard_pachanga_competition_receipts_v1;
@@ -489,5 +491,6 @@ try {
     alter table private.pachanga_competition_events enable trigger guard_pachanga_competition_events_v1;
     alter table private.pachanga_competition_operation_receipts enable trigger guard_pachanga_competition_receipts_v1;
     commit;
-  `, "R4A concurrency cleanup");
+    `, "R4A concurrency cleanup");
+  }
 }

@@ -2,13 +2,19 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 import { classifySupabaseWrite, isKnownClientWriteOperation } from "../app/pwa-write-classifier";
-import { leagueSchedulingActions } from "../app/league-scheduling-contract";
+import {
+  leagueSchedulingActions,
+  leagueSchedulingInteractiveMaximumEntries,
+  leagueSchedulingMaximumEntries,
+  scheduleInteractiveCapacityError,
+} from "../app/league-scheduling-contract";
 
 const root = new URL("../", import.meta.url);
 const paths = {
   access: "supabase/migrations/20260823224235_league_scheduling_access_v1.sql",
   commands: "supabase/migrations/20260823224218_league_scheduling_commands_v1.sql",
   hardening: "supabase/migrations/20260823224236_league_scheduling_hardening_v1.sql",
+  interactiveCapacity: "supabase/migrations/20260904184204_r4b_interactive_schedule_capacity_v1.sql",
   schema: "supabase/migrations/20260823224156_league_scheduling_schema_v1.sql",
 } as const;
 
@@ -93,6 +99,39 @@ test("round robin supports 2-32 entries, one or two legs, byes and mirrored retu
   assert.match(commands, /SCHEDULE_ENGINE_CAPACITY_EXCEEDED/);
   assert.match(commands, /pachanga_competition_round_byes/);
   assert.doesNotMatch(commands, /BYE FC|DESCANSA/);
+});
+
+test("R4B separates the 20-team interactive product boundary from the 32-team engine", async () => {
+  const migration = await source(paths.interactiveCapacity);
+  assert.equal(leagueSchedulingInteractiveMaximumEntries, 20);
+  assert.equal(leagueSchedulingMaximumEntries, 32);
+  assert.match(migration, /pachanga_league_schedule_interactive_maximum_teams_v1/);
+  assert.match(migration, /select 20/);
+  assert.match(migration, /pachanga_league_schedule_interactive_preflight_v1/);
+  assert.match(migration, /pachanga_league_schedule_inputs_v1/);
+  assert.match(migration, /SCHEDULE_INTERACTIVE_CAPACITY_EXCEEDED/);
+  assert.match(migration, /INTERACTIVE_TEAM_LIMIT_EXCEEDED/);
+  assert.match(migration, /errcode = '54000'/);
+  assert.match(migration, /pachanga_league_schedule_generate_revision_engine_v1/);
+  assert.match(migration, /maximumTeams', 32/);
+  assert.match(migration, /pachanga_league_scheduling_platform_flags_impl_v1/);
+  assert.match(migration, /where keys\.key not in/);
+  assert.doesNotMatch(migration, /league_private_beta_default_team_cap|capacityOverride|platform_grant/);
+});
+
+test("interactive capacity rejection is translated to the safe API contract", () => {
+  const response = scheduleInteractiveCapacityError({
+    code: "54000",
+    details: '{"eligibleTeams":21,"maximumTeams":20}',
+    hint: "INTERACTIVE_TEAM_LIMIT_EXCEEDED",
+    message: "SCHEDULE_INTERACTIVE_CAPACITY_EXCEEDED",
+  });
+  assert.deepEqual(response, {
+    details: { eligibleTeams: 21, maximumTeams: 20 },
+    error: "LEAGUE_SCHEDULING_REQUEST_REJECTED",
+    message: "La generación interactiva admite hasta 20 equipos por grupo o división.",
+    reasonCode: "INTERACTIVE_TEAM_LIMIT_EXCEEDED",
+  });
 });
 
 test("assignment separates hard legality from weighted explainable quality", async () => {
@@ -217,6 +256,9 @@ test("API payloads are whitelisted, no-store and never carry service authority",
   assert.match(commandRoute, /requireScheduleOrigin/);
   assert.match(commandRoute, /scheduleWriteGate/);
   assert.match(commandRoute, /scheduleCommandPayload/);
+  assert.match(commandRoute, /if \(result\.error\) throw result\.error/);
+  assert.match(shared, /scheduleInteractiveCapacityError/);
+  assert.match(shared, /scheduleJson\(capacityError, 422\)/);
   assert.doesNotMatch(`${shared}\n${commandRoute}`, /SUPABASE_SERVICE_ROLE_KEY|service_role/i);
   assert.doesNotMatch(shared, /actorId|actor_id|canonicalMatchId|pairings/);
 });
@@ -276,6 +318,10 @@ test("Official UI V2.1 exposes all gated routes and local laboratory scenarios",
   assert.match(client, /aria-label="Detalle del partido"/);
   assert.match(client, /Ver detalle/);
   assert.match(client, /scheduleText\(plan\.status\) !== "published"/);
+  assert.match(client, /interactiveGeneration/);
+  assert.match(client, /Máximo interactivo/);
+  assert.match(client, /motor técnico/);
+  assert.match(css, /\.capacityNotice\[data-allowed="false"\]/);
   assert.match(client, /Array\.isArray\(data\.nextValidActions\)\s*\?\s*actions/);
   assert.match(labLayout, /follow: false, index: false/);
   assert.match(lab, /leagueSchedulingScenarios/);
@@ -320,7 +366,8 @@ test("bootstrap, concurrency, scale, performance and staging remain explicit rel
     source("tests/league-scheduling-v1-staging-e2e.mjs"),
     source("package.json"),
   ]);
-  assert.match(bootstrap, /upgradeFromLedger: 119/);
+  assert.match(bootstrap, /originalR4bLedger = 119/);
+  assert.match(bootstrap, /postR4bMigrations: postR4bIncremental\.length/);
   assert.match(bootstrap, /schemasEqual: true/);
   assert.match(concurrency, /publishRace/);
   assert.match(scale, /95000/);
