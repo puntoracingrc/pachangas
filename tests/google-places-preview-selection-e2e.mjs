@@ -10,6 +10,7 @@ import { createClient } from "@supabase/supabase-js";
 
 const PRODUCTION_REF = "qonbngfrnrqgmxbdfbea";
 const REQUIRED_CONFIRMATION = "GOOGLE_PLACES_ISSUE_166_STAGING_ONLY";
+const SELECT_ALL_MODIFIER = platform() === "darwin" ? 4 : 2;
 const env = {
   bypassSecret: process.env.GOOGLE_PLACES_PREVIEW_BYPASS_SECRET,
   confirmation: process.env.GOOGLE_PLACES_PREVIEW_CONFIRM,
@@ -165,6 +166,13 @@ async function openPage(port) {
   return connectSocket(target.webSocketDebuggerUrl);
 }
 
+async function openExistingPage(port) {
+  const targets = await waitForJson(`http://127.0.0.1:${port}/json/list`);
+  const target = targets.find((entry) => entry.type === "page" && entry.webSocketDebuggerUrl);
+  if (!target) throw new Error("GOOGLE_PLACES_PWA_PAGE_TARGET_MISSING");
+  return connectSocket(target.webSocketDebuggerUrl);
+}
+
 async function evaluate(client, expression) {
   const result = await client.send("Runtime.evaluate", {
     awaitPromise: true,
@@ -261,6 +269,7 @@ async function installPreviewBypass(client) {
       .map(([name, value]) => ({ name, value: String(value) }));
     if (requestUrl.hostname === previewTarget.hostname) {
       headers.push({ name: "x-vercel-protection-bypass", value: env.bypassSecret });
+      headers.push({ name: "x-vercel-set-bypass-cookie", value: "true" });
     }
     void client.send("Fetch.continueRequest", { headers, requestId: message.params.requestId });
   });
@@ -307,6 +316,7 @@ async function elementState(client, selector) {
 }
 
 async function setViewport(client, { displayMode = "browser", height, mobile, width }) {
+  touchInputEnabled = mobile;
   await client.send("Emulation.setEmulatedMedia", {
     features: [{ name: "display-mode", value: displayMode }],
   });
@@ -322,27 +332,150 @@ async function setViewport(client, { displayMode = "browser", height, mobile, wi
     enabled: mobile,
     maxTouchPoints: mobile ? 5 : 1,
   });
-  await delay(120);
+  await delay(300);
+}
+
+async function observePlacesEvents(client) {
+  await evaluate(client, `(() => {
+    const widget = document.querySelector("gmp-place-autocomplete");
+    if (!widget) return false;
+    globalThis.__places166 = { error: 0, select: 0 };
+    widget.addEventListener("gmp-error", () => { globalThis.__places166.error += 1; });
+    widget.addEventListener("gmp-select", () => { globalThis.__places166.select += 1; });
+    return true;
+  })()`);
+}
+
+async function openVenueFormAtViewport(client, viewport, teamUrl) {
+  await setViewport(client, viewport);
+  await navigate(client, teamUrl);
+  await client.send("Emulation.setEmulatedMedia", {
+    features: [{ name: "display-mode", value: viewport.displayMode ?? "browser" }],
+  });
+  await waitForCondition(client, `Boolean(document.querySelector("main[data-team-state='member']"))`, `${viewport.label}-team-member`);
+  await waitForCondition(client, `Boolean(document.querySelector("[data-view='overview']"))`, `${viewport.label}-overview`);
+  const hasDraft = await evaluate(client, `Boolean(document.querySelector("[aria-label='Borradores de partido'] button"))`);
+  if (hasDraft) {
+    await clickByText(client, "Continuar", "[aria-label='Borradores de partido'] button");
+  } else {
+    await clickByText(client, "Crear partido", "[data-view='overview'] button");
+  }
+  await waitForCondition(client, `Boolean(document.querySelector("[data-view='wizard']"))`, `${viewport.label}-wizard`);
+  await clickByText(client, "Añadir campo", "[data-view='wizard'] button");
+  await waitForCondition(client, `Boolean(document.querySelector(".top-venue-form gmp-place-autocomplete"))`, `${viewport.label}-places-widget`);
+  await observePlacesEvents(client);
 }
 
 async function focusWidget(client) {
-  const point = await evaluate(client, `(() => {
+  await evaluate(client, `document.querySelector("gmp-place-autocomplete")?.scrollIntoView({ behavior: "instant", block: "center", inline: "center" })`);
+  await delay(200);
+  const bounds = await evaluate(client, `(() => {
     const element = document.querySelector("gmp-place-autocomplete");
     if (!element) return null;
-    element.scrollIntoView({ block: "center", inline: "center" });
+    element.focus({ preventScroll: true });
     const rect = element.getBoundingClientRect();
-    return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+    return {
+      bottom: rect.bottom,
+      left: rect.left,
+      right: rect.right,
+      top: rect.top,
+      x: rect.left + rect.width / 2,
+      y: rect.top + rect.height / 2,
+    };
   })()`);
-  assert.ok(point, "Google Places widget is missing");
-  await client.send("Input.dispatchMouseEvent", { button: "left", clickCount: 1, type: "mousePressed", ...point });
-  await client.send("Input.dispatchMouseEvent", { button: "left", clickCount: 1, type: "mouseReleased", ...point });
+  assert.ok(bounds, "Google Places widget is missing");
+  if (touchInputEnabled) {
+    const tree = await client.send("Accessibility.getFullAXTree");
+    let accessibleInput = null;
+    for (const node of tree.nodes ?? []) {
+      if (!["combobox", "textbox"].includes(node.role?.value) || !node.backendDOMNodeId) continue;
+      try {
+        const model = await client.send("DOM.getBoxModel", { backendNodeId: node.backendDOMNodeId });
+        const quad = model.model?.border;
+        if (!Array.isArray(quad) || quad.length !== 8) continue;
+        const x = (quad[0] + quad[2] + quad[4] + quad[6]) / 4;
+        const y = (quad[1] + quad[3] + quad[5] + quad[7]) / 4;
+        if (x >= bounds.left && x <= bounds.right && y >= bounds.top && y <= bounds.bottom) {
+          accessibleInput = { backendNodeId: node.backendDOMNodeId, x, y };
+          break;
+        }
+      } catch {
+        // A collapsed native select has no pointer surface inside the Places widget.
+      }
+    }
+    if (!accessibleInput) {
+      await client.send("Input.dispatchTouchEvent", {
+        touchPoints: [{ id: 1, radiusX: 1, radiusY: 1, x: bounds.x, y: bounds.y }],
+        type: "touchStart",
+      });
+      await client.send("Input.dispatchTouchEvent", { touchPoints: [], type: "touchEnd" });
+      await client.send("Input.dispatchMouseEvent", {
+        button: "left",
+        clickCount: 1,
+        type: "mousePressed",
+        x: bounds.x,
+        y: bounds.y,
+      });
+      await client.send("Input.dispatchMouseEvent", {
+        button: "left",
+        clickCount: 1,
+        type: "mouseReleased",
+        x: bounds.x,
+        y: bounds.y,
+      });
+      await delay(100);
+      return;
+    }
+    let accessibleCombobox = accessibleInput;
+    if (!accessibleCombobox) {
+      const widgetObject = await client.send("Runtime.evaluate", {
+        expression: 'document.querySelector("gmp-place-autocomplete")',
+        returnByValue: false,
+      });
+      const widgetDescription = await client.send("DOM.describeNode", { objectId: widgetObject.result.objectId });
+      accessibleCombobox = {
+        backendDOMNodeId: widgetDescription.node.backendNodeId,
+        x: bounds.x,
+        y: bounds.y,
+      };
+      await client.send("Runtime.releaseObject", { objectId: widgetObject.result.objectId });
+    }
+    const touchPoint = accessibleCombobox;
+    await client.send("DOM.focus", { backendNodeId: accessibleCombobox.backendNodeId });
+    await client.send("Input.dispatchTouchEvent", {
+      touchPoints: [{ id: 1, radiusX: 1, radiusY: 1, x: touchPoint.x, y: touchPoint.y }],
+      type: "touchStart",
+    });
+    await client.send("Input.dispatchTouchEvent", { touchPoints: [], type: "touchEnd" });
+    await client.send("DOM.focus", { backendNodeId: accessibleCombobox.backendNodeId });
+  } else {
+    await client.send("Input.dispatchMouseEvent", { button: "left", clickCount: 1, type: "mousePressed", x: bounds.x, y: bounds.y });
+    await client.send("Input.dispatchMouseEvent", { button: "left", clickCount: 1, type: "mouseReleased", x: bounds.x, y: bounds.y });
+  }
+  await delay(100);
 }
 
 async function clearFocusedText(client) {
-  await client.send("Input.dispatchKeyEvent", { code: "KeyA", key: "a", modifiers: 2, type: "rawKeyDown" });
-  await client.send("Input.dispatchKeyEvent", { code: "KeyA", key: "a", modifiers: 2, type: "keyUp" });
+  const modifiers = SELECT_ALL_MODIFIER === 4 ? [2, 4] : [4, 2];
+  for (const modifier of modifiers) {
+    await client.send("Input.dispatchKeyEvent", { code: "KeyA", key: "a", modifiers: modifier, type: "rawKeyDown" });
+    await client.send("Input.dispatchKeyEvent", { code: "KeyA", key: "a", modifiers: modifier, type: "keyUp" });
+  }
   await client.send("Input.dispatchKeyEvent", { code: "Backspace", key: "Backspace", type: "rawKeyDown" });
   await client.send("Input.dispatchKeyEvent", { code: "Backspace", key: "Backspace", type: "keyUp" });
+  const tree = await client.send("Accessibility.getFullAXTree");
+  const focusedTextbox = (tree.nodes ?? []).find((node) => (
+    node.role?.value === "textbox"
+    && node.properties?.some((property) => property.name === "focused" && property.value?.value === true)
+  ));
+  const remainingLength = String(focusedTextbox?.value?.value ?? "").length;
+  for (let index = 0; index < Math.min(remainingLength + 2, 128); index += 1) {
+    await client.send("Input.dispatchKeyEvent", { autoRepeat: index > 0, code: "Backspace", key: "Backspace", type: "rawKeyDown" });
+  }
+  if (remainingLength > 0) {
+    await client.send("Input.dispatchKeyEvent", { code: "Backspace", key: "Backspace", type: "keyUp" });
+  }
+  await delay(100);
 }
 
 async function typeWidgetQuery(client, query) {
@@ -353,10 +486,12 @@ async function typeWidgetQuery(client, query) {
 
 async function predictionOptions(client) {
   const tree = await client.send("Accessibility.getFullAXTree");
+  const nodesById = new Map((tree.nodes ?? []).map((node) => [node.nodeId, node]));
   const candidates = (tree.nodes ?? []).filter((node) => (
     node.role?.value === "option"
     && !node.ignored
     && node.backendDOMNodeId
+    && nodesById.get(node.parentId)?.role?.value === "listbox"
     && String(node.name?.value ?? "").trim()
   ));
   const visible = [];
@@ -375,13 +510,72 @@ async function predictionOptions(client) {
   return visible;
 }
 
-async function waitForPredictionOptions(client) {
+async function predictionDiagnostic(client) {
+  const tree = await client.send("Accessibility.getFullAXTree");
+  const accessibleCandidates = [];
+  const roleCounts = {};
+  const trackedRoles = new Set(["combobox", "listbox", "menu", "menuitem", "option", "textbox"]);
+  for (const node of tree.nodes ?? []) {
+    const role = String(node.role?.value ?? "");
+    if (trackedRoles.has(role)) roleCounts[role] = (roleCounts[role] ?? 0) + 1;
+    if (!["combobox", "textbox"].includes(role) || !node.backendDOMNodeId) continue;
+    try {
+      const model = await client.send("DOM.getBoxModel", { backendNodeId: node.backendDOMNodeId });
+      const quad = model.model?.border;
+      if (!Array.isArray(quad) || quad.length !== 8) continue;
+      accessibleCandidates.push({
+        focused: node.properties?.some((property) => property.name === "focused" && property.value?.value === true) ?? false,
+        height: Math.round(Math.max(quad[1], quad[3], quad[5], quad[7]) - Math.min(quad[1], quad[3], quad[5], quad[7])),
+        name: String(node.name?.value ?? "").slice(0, 80),
+        role,
+        width: Math.round(Math.max(quad[0], quad[2], quad[4], quad[6]) - Math.min(quad[0], quad[2], quad[4], quad[6])),
+        x: Math.round(Math.min(quad[0], quad[2], quad[4], quad[6])),
+        y: Math.round(Math.min(quad[1], quad[3], quad[5], quad[7])),
+      });
+    } catch {
+      // Hidden controls do not add useful geometry to the diagnostic.
+    }
+  }
+  const focused = (tree.nodes ?? []).find((node) => (
+    node.properties?.some((property) => property.name === "focused" && property.value?.value === true)
+  ));
+  const dom = await evaluate(client, `(() => {
+    const widget = document.querySelector("gmp-place-autocomplete");
+    const rect = widget?.getBoundingClientRect();
+    const describe = (element) => element ? {
+      ariaLabel: element.getAttribute?.("aria-label") || "",
+      className: String(element.className || "").slice(0, 80),
+      placeholder: element.getAttribute?.("placeholder") || "",
+      tag: element.tagName || "",
+      type: element.getAttribute?.("type") || "",
+    } : null;
+    return {
+      activeElement: describe(document.activeElement),
+      errorEvents: globalThis.__places166?.error ?? 0,
+      focusedTag: document.activeElement?.tagName || "",
+      hitStack: rect ? document.elementsFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2).slice(0, 5).map(describe) : [],
+      online: navigator.onLine,
+      widgetHeight: Math.round(rect?.height || 0),
+      widgetWidth: Math.round(rect?.width || 0),
+    };
+  })()`);
+  return {
+    accessibleCandidates,
+    dom,
+    focusedRole: String(focused?.role?.value ?? ""),
+    focusedValueLength: String(focused?.value?.value ?? "").length,
+    googleNetwork: networkEvidence.filter((entry) => /googleapis\.com$/.test(entry.host)).slice(-12),
+    roleCounts,
+  };
+}
+
+async function waitForPredictionOptions(client, label = "query") {
   for (let attempt = 0; attempt < 120; attempt += 1) {
     const options = await predictionOptions(client);
     if (options.length > 0) return options;
     await delay(125);
   }
-  throw new Error("GOOGLE_PLACES_REAL_PREDICTIONS_NOT_VISIBLE");
+  throw new Error(`GOOGLE_PLACES_REAL_PREDICTIONS_NOT_VISIBLE:${label}:${JSON.stringify(await predictionDiagnostic(client))}`);
 }
 
 async function selectPredictionByKeyboard(client) {
@@ -392,15 +586,37 @@ async function selectPredictionByKeyboard(client) {
 }
 
 async function selectPredictionByPointer(client, option) {
-  const model = await client.send("DOM.getBoxModel", { backendNodeId: option.backendDOMNodeId });
-  const quad = model.model?.border;
-  assert.ok(Array.isArray(quad) && quad.length === 8, "Prediction option has no pointer target");
+  const resolved = await client.send("DOM.resolveNode", { backendNodeId: option.backendDOMNodeId });
+  const objectId = resolved.object?.objectId;
+  assert.ok(objectId, "Prediction option cannot be resolved for pointer input");
+  const rectResult = await client.send("Runtime.callFunctionOn", {
+    awaitPromise: true,
+    functionDeclaration: `function () {
+      this.scrollIntoView({ block: "nearest", inline: "nearest" });
+      const rect = this.getBoundingClientRect();
+      return { bottom: rect.bottom, height: rect.height, left: rect.left, right: rect.right, top: rect.top, width: rect.width };
+    }`,
+    objectId,
+    returnByValue: true,
+  });
+  await client.send("Runtime.releaseObject", { objectId });
+  const rect = rectResult.result?.value;
+  assert.ok(rect && rect.width > 40 && rect.height > 8, "Prediction option has no visible pointer target");
   const point = {
-    x: (quad[0] + quad[2] + quad[4] + quad[6]) / 4,
-    y: (quad[1] + quad[3] + quad[5] + quad[7]) / 4,
+    x: rect.left + rect.width / 2,
+    y: rect.top + rect.height / 2,
   };
-  await client.send("Input.dispatchMouseEvent", { button: "left", clickCount: 1, type: "mousePressed", ...point });
-  await client.send("Input.dispatchMouseEvent", { button: "left", clickCount: 1, type: "mouseReleased", ...point });
+  const hit = await client.send("DOM.getNodeForLocation", {
+    includeUserAgentShadowDOM: true,
+    x: Math.round(point.x),
+    y: Math.round(point.y),
+  });
+  assert.ok(hit.backendNodeId, "Prediction option pointer target is not hit-testable");
+  await client.send("Input.dispatchMouseEvent", { button: "none", buttons: 0, pointerType: "mouse", type: "mouseMoved", ...point });
+  await delay(100);
+  await client.send("Input.dispatchMouseEvent", { button: "left", buttons: 1, clickCount: 1, pointerType: "mouse", type: "mousePressed", ...point });
+  await delay(50);
+  await client.send("Input.dispatchMouseEvent", { button: "left", buttons: 0, clickCount: 1, pointerType: "mouse", type: "mouseReleased", ...point });
 }
 
 async function selectedVenueState(client) {
@@ -414,6 +630,7 @@ async function selectedVenueState(client) {
       saveDisabled: !save || save.hasAttribute("disabled"),
       selected: Boolean(status?.classList.contains("selected") && status.textContent.includes("Dirección verificada")),
       statusError: Boolean(status?.classList.contains("error")),
+      statusText: String(status?.textContent || "").trim().replace(/\s+/g, " ").slice(0, 180),
     };
   })()`);
 }
@@ -485,8 +702,45 @@ let report;
 let settingsClient = ownerClient;
 let separateSettingsClient = false;
 const consoleErrors = [];
+const expectedOfflineConsoleErrors = [];
 const runtimeFailures = [];
 const networkEvidence = [];
+let intentionalOffline = false;
+let touchInputEnabled = false;
+
+function observeBrowserDiagnostics(client) {
+  return client.onEvent((message) => {
+    if (message.method === "Runtime.consoleAPICalled" && message.params.type === "error") {
+      const diagnostic = (message.params.args ?? []).map((entry) => entry.value ?? entry.description ?? "").join(" ");
+      const sanitized = sanitizeDiagnostic(diagnostic);
+      if (intentionalOffline && /<gmp-place-autocomplete>.*network request error.*xhr error/i.test(sanitized)) {
+        expectedOfflineConsoleErrors.push(sanitized);
+      } else {
+        consoleErrors.push(sanitized);
+      }
+    }
+    if (message.method === "Runtime.exceptionThrown") {
+      runtimeFailures.push(sanitizeDiagnostic(message.params.exceptionDetails?.exception?.description ?? "Uncaught exception"));
+    }
+    if (message.method === "Network.responseReceived") {
+      try {
+        const responseUrl = new URL(message.params.response.url);
+        const relevantSupabasePath = responseUrl.hostname === `${env.projectRef}.supabase.co`
+          && (/^\/auth\/v1\//.test(responseUrl.pathname) || /^\/rest\/v1\/(pachanga_group_members|pachanga_groups)/.test(responseUrl.pathname));
+        const relevantGooglePath = /(^|\.)(maps|places)\.googleapis\.com$/.test(responseUrl.hostname);
+        if ((message.params.response.status >= 400 || relevantSupabasePath || relevantGooglePath) && networkEvidence.length < 120) {
+          networkEvidence.push({
+            host: responseUrl.hostname,
+            path: responseUrl.pathname,
+            status: message.params.response.status,
+          });
+        }
+      } catch {
+        // Browser-internal responses without a standard URL are not useful here.
+      }
+    }
+  });
+}
 
 try {
   const created = await service.auth.admin.createUser({
@@ -622,31 +876,7 @@ try {
     browserClient.send("Runtime.enable"),
   ]);
   await installPreviewBypass(browserClient);
-  browserClient.onEvent((message) => {
-    if (message.method === "Runtime.consoleAPICalled" && message.params.type === "error") {
-      const diagnostic = (message.params.args ?? []).map((entry) => entry.value ?? entry.description ?? "").join(" ");
-      consoleErrors.push(sanitizeDiagnostic(diagnostic));
-    }
-    if (message.method === "Runtime.exceptionThrown") {
-      runtimeFailures.push(sanitizeDiagnostic(message.params.exceptionDetails?.exception?.description ?? "Uncaught exception"));
-    }
-    if (message.method === "Network.responseReceived") {
-      try {
-        const responseUrl = new URL(message.params.response.url);
-        const relevantSupabasePath = responseUrl.hostname === `${env.projectRef}.supabase.co`
-          && (/^\/auth\/v1\//.test(responseUrl.pathname) || /^\/rest\/v1\/(pachanga_group_members|pachanga_groups)/.test(responseUrl.pathname));
-        if ((message.params.response.status >= 400 || relevantSupabasePath) && networkEvidence.length < 40) {
-          networkEvidence.push({
-            host: responseUrl.hostname,
-            path: responseUrl.pathname,
-            status: message.params.response.status,
-          });
-        }
-      } catch {
-        // Browser-internal responses without a standard URL are not useful here.
-      }
-    }
-  });
+  observeBrowserDiagnostics(browserClient);
 
   await setViewport(browserClient, { height: 900, mobile: false, width: 1440 });
   if (shareTarget) {
@@ -680,12 +910,7 @@ try {
   await waitForCondition(browserClient, `Boolean(document.querySelector("[data-view='wizard']"))`, "quick-match-wizard");
   await clickByText(browserClient, "Añadir campo", "[data-view='wizard'] button");
   await waitForCondition(browserClient, `Boolean(document.querySelector(".top-venue-form gmp-place-autocomplete"))`, "places-widget");
-  await evaluate(browserClient, `(() => {
-    const widget = document.querySelector("gmp-place-autocomplete");
-    globalThis.__places166 = { error: 0, select: 0 };
-    widget.addEventListener("gmp-error", () => { globalThis.__places166.error += 1; });
-    widget.addEventListener("gmp-select", () => { globalThis.__places166.select += 1; });
-  })()`);
+  await observePlacesEvents(browserClient);
 
   const scriptIdentity = await googleScriptFingerprint(browserClient);
   assert.equal(scriptIdentity.count, 1, "Preview must load one Google Maps script");
@@ -708,10 +933,9 @@ try {
     { height: 390, label: "landscape-844", mobile: true, width: 844 },
   ];
   for (const viewport of viewports) {
-    await setViewport(browserClient, viewport);
-    await evaluate(browserClient, `document.querySelector(".top-venue-form")?.scrollIntoView({ block: "center" })`);
+    await openVenueFormAtViewport(browserClient, viewport, teamUrl);
     await typeWidgetQuery(browserClient, env.query);
-    const viewportOptions = await waitForPredictionOptions(browserClient);
+    const viewportOptions = await waitForPredictionOptions(browserClient, viewport.label);
     const metrics = await evaluate(browserClient, `(() => {
       const doc = document.documentElement;
       const body = document.body;
@@ -732,31 +956,122 @@ try {
     viewportResults.push({ label: viewport.label, options: viewportOptions.length, overflow: Math.round(metrics.overflow) });
   }
 
-  await setViewport(browserClient, { displayMode: "standalone", height: 844, mobile: true, width: 390 });
-  await typeWidgetQuery(browserClient, env.query);
-  assert.ok((await waitForPredictionOptions(browserClient)).length > 0);
-  assert.equal(await evaluate(browserClient, `matchMedia("(display-mode: standalone)").matches`), true);
-  const workerReady = await evaluate(browserClient, `(async () => {
-    if (!("serviceWorker" in navigator)) return false;
-    return Promise.race([
-      navigator.serviceWorker.ready.then(() => true),
-      new Promise((resolve) => setTimeout(() => resolve(false), 5000)),
+  const pwaChromeDir = mkdtempSync(join(tmpdir(), "pachangas-places166-pwa-"));
+  const pwaPort = 9800 + Math.floor(Math.random() * 200);
+  let pwaBrowser;
+  let pwaClient;
+  try {
+    pwaBrowser = spawn(chromePath, [
+      "--disable-dev-shm-usage",
+      "--disable-extensions",
+      "--no-default-browser-check",
+      "--no-first-run",
+      "--lang=es-ES",
+      "--window-position=-2000,-2000",
+      "--window-size=390,844",
+      `--remote-debugging-port=${pwaPort}`,
+      `--user-data-dir=${pwaChromeDir}`,
+      `--app=${previewTarget.origin}`,
+    ], { stdio: "ignore" });
+    await waitForJson(`http://127.0.0.1:${pwaPort}/json/version`);
+    pwaClient = await openExistingPage(pwaPort);
+    await Promise.all([
+      pwaClient.send("Accessibility.enable"),
+      pwaClient.send("DOM.enable"),
+      pwaClient.send("Network.enable"),
+      pwaClient.send("Page.enable"),
+      pwaClient.send("Runtime.enable"),
     ]);
-  })()`);
-  assert.equal(workerReady, true, "Preview PWA worker did not become ready");
-  assert.equal((await selectedVenueState(browserClient)).saveDisabled, true);
-  await setViewport(browserClient, { displayMode: "standalone", height: 390, mobile: true, width: 844 });
-  await typeWidgetQuery(browserClient, env.query);
-  assert.ok((await waitForPredictionOptions(browserClient)).length > 0);
-  assert.equal(await evaluate(browserClient, `matchMedia("(display-mode: standalone)").matches`), true);
-  assert.ok((await elementState(browserClient, "gmp-place-autocomplete"))?.width > 0);
+    await installPreviewBypass(pwaClient);
+    observeBrowserDiagnostics(pwaClient);
+    await setViewport(pwaClient, { displayMode: "standalone", height: 844, mobile: true, width: 390 });
+    await navigate(pwaClient, new URL("/", previewTarget).toString());
+    await evaluate(pwaClient, `localStorage.setItem(${JSON.stringify(authStorageKey)}, ${JSON.stringify(JSON.stringify(session))})`);
+    await openVenueFormAtViewport(
+      pwaClient,
+      { displayMode: "standalone", height: 844, label: "pwa-portrait-390", mobile: true, width: 390 },
+      teamUrl,
+    );
+    await typeWidgetQuery(pwaClient, env.query);
+    assert.ok((await waitForPredictionOptions(pwaClient, "pwa-portrait-390")).length > 0);
+    assert.equal(await evaluate(pwaClient, `matchMedia("(display-mode: standalone)").matches`), true);
+    const workerState = await evaluate(pwaClient, `(async () => {
+      if (!("serviceWorker" in navigator)) return { ready: false, supported: false };
+      const registrations = await navigator.serviceWorker.getRegistrations().catch(() => []);
+      const ready = registrations.some((registration) => Boolean(registration.active));
+      return {
+        controlled: Boolean(navigator.serviceWorker.controller),
+        displayMode: document.documentElement.dataset.displayMode || "",
+        ready,
+        registrations: registrations.map((registration) => ({
+          active: registration.active?.state || "",
+          installing: registration.installing?.state || "",
+          scopePath: new URL(registration.scope).pathname,
+          waiting: registration.waiting?.state || "",
+        })),
+        secureContext: window.isSecureContext,
+        supported: true,
+      };
+    })()`);
+    assert.equal(workerState.supported, true, "Standalone app context does not expose Service Worker support");
+    assert.equal(workerState.secureContext, true, "Standalone app context is not secure");
+    assert.equal((await selectedVenueState(pwaClient)).saveDisabled, true);
+    await openVenueFormAtViewport(
+      pwaClient,
+      { displayMode: "standalone", height: 390, label: "pwa-landscape-844", mobile: true, width: 844 },
+      teamUrl,
+    );
+    await typeWidgetQuery(pwaClient, env.query);
+    assert.ok((await waitForPredictionOptions(pwaClient, "pwa-landscape-844")).length > 0);
+    assert.equal(await evaluate(pwaClient, `matchMedia("(display-mode: standalone)").matches`), true);
+    assert.ok((await elementState(pwaClient, "gmp-place-autocomplete"))?.width > 0);
+  } finally {
+    if (pwaClient) pwaClient.close();
+    if (pwaBrowser) {
+      pwaBrowser.kill();
+      for (let attempt = 0; attempt < 20 && pwaBrowser.exitCode === null; attempt += 1) await delay(100);
+    }
+    rmSync(pwaChromeDir, { force: true, recursive: true });
+  }
 
-  await setViewport(browserClient, { height: 900, mobile: false, width: 1440 });
+  const browserWorkerState = await evaluate(browserClient, `(async () => {
+    if (!("serviceWorker" in navigator)) return { ready: false, supported: false };
+    const registration = await Promise.race([
+      navigator.serviceWorker.ready,
+      new Promise((resolve) => setTimeout(() => resolve(null), 15000)),
+    ]);
+    const registrations = await navigator.serviceWorker.getRegistrations().catch(() => []);
+    return {
+      active: registration?.active?.state || "",
+      controlled: Boolean(navigator.serviceWorker.controller),
+      ready: Boolean(registration?.active),
+      registrationCount: registrations.length,
+      supported: true,
+    };
+  })()`);
+  assert.equal(browserWorkerState.ready, true, `Preview Service Worker did not become ready: ${JSON.stringify(browserWorkerState)}`);
+  assert.equal(browserWorkerState.registrationCount, 1, "Preview must keep one Service Worker registration");
+
+  await openVenueFormAtViewport(
+    browserClient,
+    { height: 900, label: "desktop-selection", mobile: false, width: 1440 },
+    teamUrl,
+  );
   await typeWidgetQuery(browserClient, env.query);
   await waitForPredictionOptions(browserClient);
   await selectPredictionByKeyboard(browserClient);
   await waitForCondition(browserClient, `(globalThis.__places166?.select ?? 0) >= 1`, "keyboard-gmp-select");
-  await waitForCondition(browserClient, `(document.querySelector(".venue-place-status")?.textContent || "").includes("Dirección verificada")`, "keyboard-selection-details");
+  try {
+    await waitForCondition(browserClient, `(document.querySelector(".venue-place-status")?.textContent || "").includes("Dirección verificada")`, "keyboard-selection-details");
+  } catch (error) {
+    throw new Error(`${error instanceof Error ? error.message : "GOOGLE_PLACES_KEYBOARD_SELECTION_DETAILS_FAILED"}:${JSON.stringify({
+      consoleErrors: consoleErrors.filter(Boolean).slice(-8),
+      events: await evaluate(browserClient, `globalThis.__places166 ?? { error: 0, select: 0 }`),
+      networkEvidence: networkEvidence.slice(-16),
+      runtimeFailures: runtimeFailures.filter(Boolean).slice(-8),
+      selection: await selectedVenueState(browserClient),
+    })}`);
+  }
   let selected = await selectedVenueState(browserClient);
   assert.equal(selected.selected, true);
   assert.equal(selected.saveDisabled, false);
@@ -768,6 +1083,7 @@ try {
   assert.equal(selected.selected, false);
   assert.equal(selected.saveDisabled, true);
 
+  intentionalOffline = true;
   await browserClient.send("Network.emulateNetworkConditions", {
     connectionType: "none",
     downloadThroughput: 0,
@@ -792,12 +1108,15 @@ try {
   await waitForCondition(browserClient, `navigator.onLine === true`, "online-restored");
   await typeWidgetQuery(browserClient, env.query);
   options = await waitForPredictionOptions(browserClient);
+  intentionalOffline = false;
   await selectPredictionByPointer(browserClient, options[0]);
   await waitForCondition(browserClient, `(globalThis.__places166?.select ?? 0) >= 2`, "pointer-gmp-select");
   await waitForCondition(browserClient, `(document.querySelector(".venue-place-status")?.textContent || "").includes("Dirección verificada")`, "pointer-selection-details");
   selected = await selectedVenueState(browserClient);
   assert.equal(selected.selected, true);
   assert.equal(selected.saveDisabled, false);
+  const selectionEventCounts = await evaluate(browserClient, `globalThis.__places166 ?? { error: 0, select: 0 }`);
+  assert.ok(selectionEventCounts.select >= 2, "Google Places did not emit both verified selection events");
 
   await clickByText(browserClient, "Guardar campo", ".top-venue-form button");
   await waitForCondition(browserClient, `!document.querySelector(".top-venue-form")`, "venue-form-close");
@@ -822,11 +1141,21 @@ try {
   assert.equal(venue.kind, "futbol7");
   const placeIdHash = createHash("sha256").update(venue.placeId).digest("hex");
 
-  await clickByText(browserClient, "Partido", ".mobile-app-nav button, .mobile-app-nav a", false);
+  await clickByText(
+    browserClient,
+    "Partidos",
+    "nav[aria-label='Navegación principal'] button, nav[aria-label='Navegación principal'] a, nav[aria-label='Navegación principal móvil'] button, nav[aria-label='Navegación principal móvil'] a, aside[aria-label='Navegación de modo juego'] button, aside[aria-label='Navegación de modo juego'] a",
+    false,
+  );
   await waitForCondition(browserClient, `Boolean(document.querySelector("[data-view='overview']"))`, "overview-after-venue");
   await clickByText(browserClient, "Continuar", "[aria-label='Borradores de partido'] button");
   await waitForCondition(browserClient, `Boolean(document.querySelector("[data-view='wizard']"))`, "resume-wizard");
-  assert.equal(await evaluate(browserClient, `document.querySelector("[data-view='wizard'] select")?.value === ${JSON.stringify(venue.id)}`), true);
+  assert.equal(await evaluate(browserClient, `(() => {
+    const venueSelect = [...document.querySelectorAll("[data-view='wizard'] label")]
+      .find((label) => String(label.childNodes[0]?.textContent || "").trim() === "Campo")
+      ?.querySelector("select");
+    return venueSelect?.value === ${JSON.stringify(venue.id)};
+  })()`), true, "Resumed draft did not retain the canonical venue");
   await clickByText(browserClient, "Continuar", "[data-view='wizard'] footer button");
   await waitForCondition(browserClient, `document.querySelector("[data-view='wizard'] h1")?.textContent === "Jugadores y plazas"`, "wizard-step-two");
   await clickByText(browserClient, "Continuar", "[data-view='wizard'] footer button");
@@ -854,11 +1183,10 @@ try {
   await navigate(browserClient, teamUrl);
   await waitForCondition(browserClient, `Boolean(document.querySelector("main[data-team-state='member']"))`, "canonical-reload-member");
   await waitForCondition(browserClient, `Boolean(document.querySelector("[data-view='overview']"))`, "canonical-reload-overview");
-  const cardHasVenue = await evaluate(browserClient, `(() => [...document.querySelectorAll("[data-view='overview'] .matchOpen")]
-    .some((card) => String(card.textContent || "").includes(${JSON.stringify(venue.name)})))()`);
-  assert.equal(cardHasVenue, true, "Reloaded read model did not include the canonical venue");
+  await waitForCondition(browserClient, `(() => [...document.querySelectorAll("[data-view='overview'] article[data-match-state] > button")]
+    .some((card) => String(card.textContent || "").includes(${JSON.stringify(venue.name)})))()`, "canonical-venue-card");
   const opened = await evaluate(browserClient, `(() => {
-    const card = [...document.querySelectorAll("[data-view='overview'] .matchOpen")]
+    const card = [...document.querySelectorAll("[data-view='overview'] article[data-match-state] > button")]
       .find((entry) => String(entry.textContent || "").includes(${JSON.stringify(venue.name)}));
     if (!card) return false;
     card.click();
@@ -878,7 +1206,6 @@ try {
   assert.equal(finalReadback.data.payload.venues[0].placeId, venue.placeId);
   assert.equal(finalReadback.data.payload.matches[0].venueId, venue.id);
 
-  const eventCounts = await evaluate(browserClient, `globalThis.__places166 ?? { error: 0, select: 0 }`);
   const unexpectedRuntimeFailures = runtimeFailures.filter(Boolean);
   assert.deepEqual(unexpectedRuntimeFailures, [], `Runtime failures: ${unexpectedRuntimeFailures.join(" | ")}`);
   const relevantConsoleErrors = consoleErrors.filter((message) => (
@@ -893,9 +1220,10 @@ try {
     cleanup: "ISOLATED_BRANCH_DESTRUCTION_REQUIRED",
     coordinatesPresent: Number.isFinite(Number(venue.lat)) && Number.isFinite(Number(venue.lng)),
     errors: "OFFLINE_FAIL_CLOSED",
-    googleEvents: { gmpError: eventCounts.error, gmpSelect: eventCounts.select },
+    googleEvents: { gmpError: selectionEventCounts.error, gmpSelect: selectionEventCounts.select },
     keyboard: "PASS",
     locality: "Barcelona",
+    offlineConsoleErrors: expectedOfflineConsoleErrors.length,
     placeIdHash,
     pointer: "PASS",
     predictionCountLowerBound: observedPredictionCount,
