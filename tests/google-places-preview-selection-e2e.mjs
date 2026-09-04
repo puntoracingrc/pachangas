@@ -11,6 +11,7 @@ import { createClient } from "@supabase/supabase-js";
 const PRODUCTION_REF = "qonbngfrnrqgmxbdfbea";
 const REQUIRED_CONFIRMATION = "GOOGLE_PLACES_ISSUE_166_STAGING_ONLY";
 const env = {
+  bypassSecret: process.env.GOOGLE_PLACES_PREVIEW_BYPASS_SECRET,
   confirmation: process.env.GOOGLE_PLACES_PREVIEW_CONFIRM,
   expectedKeyFingerprint: process.env.GOOGLE_PLACES_PREVIEW_EXPECTED_KEY_FINGERPRINT,
   expectedSha: process.env.GOOGLE_PLACES_PREVIEW_EXPECTED_SHA,
@@ -35,9 +36,11 @@ if (
   || env.expectedKeyFingerprint === env.productionKeyFingerprint
   || !previewTarget
   || /(^|\.)pachangasiq\.com$/i.test(previewTarget.hostname)
-  || !shareTarget
-  || shareTarget.hostname !== previewTarget.hostname
-  || !shareTarget.searchParams.has("_vercel_share")
+  || (!env.bypassSecret && !shareTarget)
+  || (shareTarget && (
+    shareTarget.hostname !== previewTarget.hostname
+    || !shareTarget.searchParams.has("_vercel_share")
+  ))
 ) {
   throw new Error("GOOGLE_PLACES_ISSUE_166_PRODUCTION_TARGET_FORBIDDEN");
 }
@@ -185,6 +188,24 @@ async function waitForCondition(client, expression, label, attempts = 180) {
 async function navigate(client, url) {
   await client.send("Page.navigate", { url });
   await waitForCondition(client, "document.readyState === 'complete'", "document-ready");
+}
+
+async function installPreviewBypass(client) {
+  if (!env.bypassSecret) return;
+  await client.send("Fetch.enable", {
+    patterns: [{ requestStage: "Request", urlPattern: `${previewTarget.origin}/*` }],
+  });
+  client.onEvent((message) => {
+    if (message.method !== "Fetch.requestPaused") return;
+    const requestUrl = new URL(message.params.request.url);
+    const headers = Object.entries(message.params.request.headers ?? {})
+      .filter(([name]) => name.toLowerCase() !== "x-vercel-protection-bypass")
+      .map(([name, value]) => ({ name, value: String(value) }));
+    if (requestUrl.hostname === previewTarget.hostname) {
+      headers.push({ name: "x-vercel-protection-bypass", value: env.bypassSecret });
+    }
+    void client.send("Fetch.continueRequest", { headers, requestId: message.params.requestId });
+  });
 }
 
 function visibilitySource() {
@@ -508,6 +529,7 @@ try {
     browserClient.send("Page.enable"),
     browserClient.send("Runtime.enable"),
   ]);
+  await installPreviewBypass(browserClient);
   browserClient.onEvent((message) => {
     if (message.method === "Runtime.consoleAPICalled" && message.params.type === "error") {
       const diagnostic = (message.params.args ?? []).map((entry) => entry.value ?? entry.description ?? "").join(" ");
@@ -519,12 +541,14 @@ try {
   });
 
   await setViewport(browserClient, { height: 900, mobile: false, width: 1440 });
-  await navigate(browserClient, shareTarget.toString());
-  await waitForCondition(
-    browserClient,
-    `location.hostname === ${JSON.stringify(previewTarget.hostname)}`,
-    "vercel-protection-cookie",
-  );
+  if (shareTarget) {
+    await navigate(browserClient, shareTarget.toString());
+    await waitForCondition(
+      browserClient,
+      `location.hostname === ${JSON.stringify(previewTarget.hostname)}`,
+      "vercel-protection-cookie",
+    );
+  }
   await navigate(browserClient, new URL("/", previewTarget).toString());
   const authStorageKey = `sb-${env.projectRef}-auth-token`;
   await evaluate(browserClient, `localStorage.setItem(${JSON.stringify(authStorageKey)}, ${JSON.stringify(JSON.stringify(session))})`);
