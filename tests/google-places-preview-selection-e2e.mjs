@@ -185,8 +185,66 @@ async function waitForCondition(client, expression, label, attempts = 180) {
   throw new Error(`GOOGLE_PLACES_PREVIEW_TIMEOUT:${label}`);
 }
 
+async function teamBootstrapDiagnostic(client, authStorageKey) {
+  return evaluate(client, `(() => {
+    let auth = null;
+    try {
+      const stored = JSON.parse(localStorage.getItem(${JSON.stringify(authStorageKey)}) || "null");
+      auth = {
+        hasAccessToken: Boolean(stored?.access_token),
+        hasRefreshToken: Boolean(stored?.refresh_token),
+        hasUser: Boolean(stored?.user?.id),
+        unexpired: Number(stored?.expires_at || 0) * 1000 > Date.now(),
+      };
+    } catch {
+      auth = { malformed: true };
+    }
+    const bodyText = String(document.body?.innerText || "");
+    const main = document.querySelector("main[data-team-state]");
+    return {
+      auth,
+      hasMain: Boolean(main),
+      hasSignIn: /Entrar con Google/i.test(bodyText),
+      hasTeamAccessDenied: /No tienes acceso a este grupo/i.test(bodyText),
+      hasVercelProtection: /Vercel Authentication/i.test(bodyText),
+      host: location.hostname,
+      bodyChildren: [...(document.body?.children || [])].slice(0, 8).map((element) => ({
+        className: String(element.className || "").slice(0, 80),
+        tag: element.tagName,
+      })),
+      bodyHtmlLength: document.body?.innerHTML.length || 0,
+      bodyTextLength: bodyText.length,
+      path: location.pathname,
+      resourceCount: performance.getEntriesByType("resource").length,
+      scriptCount: document.scripts.length,
+      teamState: main?.getAttribute("data-team-state") || "missing",
+      title: document.title,
+    };
+  })()`);
+}
+
+function waitForProtocolEvent(client, method, timeoutMs = 30000) {
+  let dispose = () => {};
+  let timer;
+  const event = new Promise((resolve, reject) => {
+    dispose = client.onEvent((message) => {
+      if (message.method !== method) return;
+      clearTimeout(timer);
+      resolve(message.params);
+    });
+    timer = setTimeout(() => reject(new Error(`GOOGLE_PLACES_PREVIEW_PROTOCOL_TIMEOUT:${method}`)), timeoutMs);
+  });
+  return event.finally(() => {
+    clearTimeout(timer);
+    dispose();
+  });
+}
+
 async function navigate(client, url) {
-  await client.send("Page.navigate", { url });
+  const loaded = waitForProtocolEvent(client, "Page.loadEventFired");
+  const navigation = await client.send("Page.navigate", { url });
+  if (navigation.errorText) throw new Error(`GOOGLE_PLACES_PREVIEW_NAVIGATION_FAILED:${navigation.errorText}`);
+  await loaded;
   await waitForCondition(client, "document.readyState === 'complete'", "document-ready");
 }
 
@@ -424,8 +482,11 @@ let initialFlags;
 let flagsChanged = false;
 let session;
 let report;
+let settingsClient = ownerClient;
+let separateSettingsClient = false;
 const consoleErrors = [];
 const runtimeFailures = [];
+const networkEvidence = [];
 
 try {
   const created = await service.auth.admin.createUser({
@@ -450,12 +511,43 @@ try {
     "socialTeamHomeV3fEnabled",
   ];
   if (requiredFlags.some((key) => initialFlags[key] !== true)) {
-    await rpcOk(service, "bootstrap_pachanga_platform_owner_v1", {
-      operation_id: randomUUID(),
-      reason: "Google Places issue 166 isolated Preview fixture",
+    const platformAccess = await rpcOk(service, "get_pachanga_platform_access_service_v1", {
       target_user_id: account.id,
     });
-    await rpcOk(ownerClient, "command_pachanga_social_team_settings_v1", {
+    if (platformAccess?.role !== "platform_owner") {
+      const listedUsers = await service.auth.admin.listUsers({ page: 1, perPage: 1000 });
+      if (listedUsers.error) throw listedUsers.error;
+      let priorPlatformOwner = null;
+      for (const candidate of listedUsers.data.users) {
+        if (candidate.id === account.id || candidate.user_metadata?.qaFixture !== "GOOGLE_PLACES_ISSUE_166" || !candidate.email) continue;
+        const candidateAccess = await rpcOk(service, "get_pachanga_platform_access_service_v1", {
+          target_user_id: candidate.id,
+        });
+        if (candidateAccess?.role === "platform_owner") {
+          priorPlatformOwner = candidate;
+          break;
+        }
+      }
+      if (priorPlatformOwner?.email) {
+        const settingsPassword = `Places166-${randomUUID()}-Settings!`;
+        const updated = await service.auth.admin.updateUserById(priorPlatformOwner.id, { password: settingsPassword });
+        if (updated.error) throw updated.error;
+        settingsClient = supabaseClient(supabaseUrl, publishableKey);
+        const settingsSignIn = await settingsClient.auth.signInWithPassword({
+          email: priorPlatformOwner.email,
+          password: settingsPassword,
+        });
+        if (settingsSignIn.error) throw settingsSignIn.error;
+        separateSettingsClient = true;
+      } else {
+        await rpcOk(service, "bootstrap_pachanga_platform_owner_v1", {
+          operation_id: randomUUID(),
+          reason: "Google Places issue 166 isolated Preview fixture",
+          target_user_id: account.id,
+        });
+      }
+    }
+    await rpcOk(settingsClient, "command_pachanga_social_team_settings_v1", {
       client_metadata: metadata("places166-staging-flags"),
       expected_revision: initialFlags.confirmedRevision,
       operation_id: randomUUID(),
@@ -538,6 +630,22 @@ try {
     if (message.method === "Runtime.exceptionThrown") {
       runtimeFailures.push(sanitizeDiagnostic(message.params.exceptionDetails?.exception?.description ?? "Uncaught exception"));
     }
+    if (message.method === "Network.responseReceived") {
+      try {
+        const responseUrl = new URL(message.params.response.url);
+        const relevantSupabasePath = responseUrl.hostname === `${env.projectRef}.supabase.co`
+          && (/^\/auth\/v1\//.test(responseUrl.pathname) || /^\/rest\/v1\/(pachanga_group_members|pachanga_groups)/.test(responseUrl.pathname));
+        if ((message.params.response.status >= 400 || relevantSupabasePath) && networkEvidence.length < 40) {
+          networkEvidence.push({
+            host: responseUrl.hostname,
+            path: responseUrl.pathname,
+            status: message.params.response.status,
+          });
+        }
+      } catch {
+        // Browser-internal responses without a standard URL are not useful here.
+      }
+    }
   });
 
   await setViewport(browserClient, { height: 900, mobile: false, width: 1440 });
@@ -553,9 +661,19 @@ try {
   const authStorageKey = `sb-${env.projectRef}-auth-token`;
   await evaluate(browserClient, `localStorage.setItem(${JSON.stringify(authStorageKey)}, ${JSON.stringify(JSON.stringify(session))})`);
 
-  const teamUrl = new URL(`/equipo?team=${encodeURIComponent(groupId)}&mobile=partido`, previewTarget).toString();
+  const teamUrl = new URL(`/?grupo=${encodeURIComponent(groupId)}&mobile=partido`, previewTarget).toString();
   await navigate(browserClient, teamUrl);
-  await waitForCondition(browserClient, `Boolean(document.querySelector("main[data-team-state='member']"))`, "team-member-shell");
+  try {
+    await waitForCondition(browserClient, `Boolean(document.querySelector("main[data-team-state='member']"))`, "team-member-shell");
+  } catch (error) {
+    const diagnostic = await teamBootstrapDiagnostic(browserClient, authStorageKey);
+    throw new Error(`${error instanceof Error ? error.message : "GOOGLE_PLACES_PREVIEW_TEAM_BOOTSTRAP_FAILED"}:${JSON.stringify({
+      consoleErrors: consoleErrors.filter(Boolean).slice(-5),
+      diagnostic,
+      networkEvidence: networkEvidence.slice(-12),
+      runtimeFailures: runtimeFailures.filter(Boolean).slice(-5),
+    })}`);
+  }
   await waitForCondition(browserClient, `Boolean(document.querySelector("[data-view='overview']"))`, "match-overview");
 
   await clickByText(browserClient, "Crear partido", "[data-view='overview'] button");
@@ -800,8 +918,8 @@ try {
 
   if (flagsChanged && initialFlags) {
     await bestEffort(async () => {
-      const current = await rpcOk(ownerClient, "get_pachanga_social_team_feature_flags_v1", {});
-      await rpcOk(ownerClient, "command_pachanga_social_team_settings_v1", {
+      const current = await rpcOk(settingsClient, "get_pachanga_social_team_feature_flags_v1", {});
+      await rpcOk(settingsClient, "command_pachanga_social_team_settings_v1", {
         client_metadata: metadata("places166-restore-flags"),
         expected_revision: current.confirmedRevision,
         operation_id: randomUUID(),
@@ -822,7 +940,9 @@ try {
   }
   await bestEffort(() => service.from("pachanga_social_player_profiles_v1").delete().eq("user_id", account.id));
   await bestEffort(() => ownerClient.auth.signOut({ scope: "local" }));
+  if (separateSettingsClient) await bestEffort(() => settingsClient.auth.signOut({ scope: "local" }));
   await bestEffort(() => ownerClient.realtime.disconnect());
+  if (separateSettingsClient) await bestEffort(() => settingsClient.realtime.disconnect());
   await bestEffort(() => service.auth.admin.deleteUser(account.id));
 }
 
