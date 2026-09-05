@@ -27,7 +27,7 @@ como superada.
 | PR funcional | [#279](https://github.com/puntoracingrc/pachangas/pull/279) |
 | Merge funcional | `b86eb0fd3e331395127232b9f8fbfdd794a076ad` |
 | Produccion | [https://pachangasiq.com](https://pachangasiq.com) |
-| PR documental | Pendiente de asignacion al publicar este informe |
+| PR documental | [#280](https://github.com/puntoracingrc/pachangas/pull/280) |
 
 El checkout compartido se preservo sin cambios. Al cierre conservaba su HEAD
 local `0cae92ebb8123f16c4f349f7acdf2316193147eb`, las tres modificaciones
