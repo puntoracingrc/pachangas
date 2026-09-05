@@ -17,7 +17,11 @@ import {
   socialWriteAvailability,
 } from "../app/social-onboarding-contract";
 import { DEMO_SOCIAL_FIRST_TIME_STORIES } from "../app/demo-world/demo-social-first-time-contract";
-import { SOCIAL_TEAM_NAME_MAX_LENGTH, SOCIAL_TEAM_NAME_MIN_LENGTH } from "../app/social-team-core-contract";
+import {
+  SOCIAL_TEAM_NAME_MAX_LENGTH,
+  SOCIAL_TEAM_NAME_MIN_LENGTH,
+  normalizeSocialTeamCreateProgress,
+} from "../app/social-team-core-contract";
 
 const source = (path: string) => readFile(new URL(`../${path}`, import.meta.url), "utf8");
 
@@ -147,6 +151,46 @@ test("team creation keeps names compact and omits the orientative player count",
   assert.match(component, /createDraft\.name\.trim\(\)\.length < SOCIAL_TEAM_NAME_MIN_LENGTH/);
   assert.doesNotMatch(component, /Jugadores orientativos/);
   assert.doesNotMatch(component, /createDraft\.targetPlayerCount/);
+});
+
+test("team creation restores only a Places-confirmed city and the current wizard step", () => {
+  const restored = normalizeSocialTeamCreateProgress({
+    confirmedCity: "Terrassa",
+    draft: {
+      modality: "futbol7",
+      name: "Cobalto Real",
+      shieldKey: "team.shield.shape.hex_iq",
+      zone: "Terrassa",
+    },
+    step: 3,
+  });
+  assert.equal(restored.confirmedCity, "Terrassa");
+  assert.equal(restored.draft.name, "Cobalto Real");
+  assert.equal(restored.step, 3);
+
+  const manuallyTyped = normalizeSocialTeamCreateProgress({
+    confirmedCity: "Barcelona",
+    draft: { modality: "sala", name: "Manual", shieldKey: "team.shield.shape.round", zone: "Badalona" },
+    step: 2,
+  });
+  assert.equal(manuallyTyped.confirmedCity, "");
+});
+
+test("team creation uses Places, survives controlled reloads and keeps the final command visible", async () => {
+  const [page, component] = await Promise.all([
+    source("app/page.tsx"),
+    source("app/_components/social-onboarding.tsx"),
+  ]);
+  assert.match(component, /ref=\{teamCityInputRef\}/);
+  assert.match(component, /activeView !== "create" \|\| createStep !== 2/);
+  assert.match(component, /types: \["\(cities\)"\]/);
+  assert.match(component, /confirmedTeamCity === createDraft\.zone\.trim\(\)/);
+  assert.match(component, /localStorage\.setItem\(createDraftStorageKey/);
+  assert.match(component, /normalizeSocialTeamCreateProgress/);
+  assert.match(component, /createStep < 3[\s\S]*creating \? "Creando\.\.\." : "Crear equipo"[\s\S]*<\/button>\}/);
+  assert.match(page, /social: socialOnboardingFlowFromSearch\(entrySearch\) \?\? undefined/);
+  assert.match(page, /onForcedViewHandled=\{\(nextView\) =>/);
+  assert.match(page, /if \(nextView\) params\.set\("social", nextView\)/);
 });
 
 test("incoming invitations wait for explicit confirmation and canonical readback", async () => {

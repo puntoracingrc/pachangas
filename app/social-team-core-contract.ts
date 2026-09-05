@@ -105,6 +105,19 @@ export type SocialTeamCreateDraft = {
   zone: string;
 };
 
+export const DEFAULT_SOCIAL_TEAM_CREATE_DRAFT: SocialTeamCreateDraft = {
+  modality: "futbol7",
+  name: "",
+  shieldKey: "team.shield.shape.classic_iq",
+  zone: "",
+};
+
+export type SocialTeamCreateProgress = {
+  confirmedCity: string;
+  draft: SocialTeamCreateDraft;
+  step: 1 | 2 | 3;
+};
+
 export type SocialTeamCachedSnapshot = {
   fetchedAt: string;
   home: SocialTeamHome;
@@ -127,6 +140,26 @@ function integer(value: unknown, fallback = 0) {
 
 function modality(value: unknown): SocialTeamSummary["modality"] {
   return value === "sala" || value === "futbol11" ? value : "futbol7";
+}
+
+export function normalizeSocialTeamCreateProgress(value: unknown): SocialTeamCreateProgress {
+  const source = record(value);
+  const rawDraft = record(source?.draft);
+  const zone = text(rawDraft?.zone).slice(0, 120);
+  const confirmedCity = text(source?.confirmedCity).slice(0, 120);
+  const rawStep = Number(source?.step);
+  const step = rawStep === 2 || rawStep === 3 ? rawStep : 1;
+
+  return {
+    confirmedCity: confirmedCity === zone ? confirmedCity : "",
+    draft: {
+      modality: modality(rawDraft?.modality),
+      name: text(rawDraft?.name).slice(0, SOCIAL_TEAM_NAME_MAX_LENGTH),
+      shieldKey: text(rawDraft?.shieldKey, DEFAULT_SOCIAL_TEAM_CREATE_DRAFT.shieldKey).slice(0, 120),
+      zone,
+    },
+    step,
+  };
 }
 
 function role(value: unknown): SocialTeamRole {
