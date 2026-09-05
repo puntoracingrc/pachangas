@@ -5,6 +5,7 @@ import { ClientErrorReporter } from "./client-error-reporter";
 import { PwaRuntime } from "./pwa-runtime";
 import { SocialInboxProvider } from "./social-inbox-provider";
 import "./globals.css";
+import "./onboarding-theme-toggle.css";
 
 const themePreferenceScript = `
 (() => {

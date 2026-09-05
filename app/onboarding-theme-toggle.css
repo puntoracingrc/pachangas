@@ -1,0 +1,66 @@
+.theme-compact-toggle {
+  align-items: center;
+  background: color-mix(in srgb, var(--panel) 92%, transparent);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--foreground);
+  cursor: pointer;
+  display: inline-flex;
+  flex: 0 0 44px;
+  height: 44px;
+  justify-content: center;
+  padding: 0;
+  width: 44px;
+}
+
+.theme-compact-toggle:hover,
+.theme-compact-toggle:focus-visible {
+  border-color: var(--green);
+  color: var(--green);
+}
+
+.theme-compact-toggle svg {
+  height: 20px;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+  width: 20px;
+}
+
+.first-time-onboarding-shell {
+  align-items: start;
+  gap: 8px;
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
+.first-time-onboarding-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin: 0 auto;
+  max-width: 920px;
+  width: 100%;
+}
+
+.first-time-onboarding-shell > [data-social-onboarding],
+.first-time-onboarding-state {
+  align-self: safe center;
+}
+
+:root[data-theme="light"] .first-time-onboarding-shell {
+  background: #f7f6f0;
+  color: #1d2521;
+}
+
+:root[data-theme="light"] .first-time-onboarding-state > span {
+  color: #08717a;
+}
+
+:root[data-theme="light"] .first-time-onboarding-state > p {
+  color: #64706a;
+}
+
+:root[data-theme="light"] .first-time-onboarding-state button + button {
+  border-color: #cfd8d2;
+  color: #1d2521;
+}
