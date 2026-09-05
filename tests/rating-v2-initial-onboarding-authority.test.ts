@@ -56,7 +56,7 @@ test("assessment API derives the actor and calculation on the server", () => {
   assert.match(route, /const \{ client, user \} = await authedSupabaseClient\(request\)/);
   assert.match(route, /calculateSharedAssessmentResult\(/);
   assert.match(route, /p_actor_user_id: user\.id/);
-  assert.match(route, /serviceSupabaseClient\(\)\.rpc\("persist_pachanga_player_assessment_authoritative_v2"/);
+  assert.match(route, /service\.rpc\("persist_pachanga_player_assessment_authoritative_v2"/);
   assert.match(route, /Cache-Control": "private, no-store"/);
 });
 

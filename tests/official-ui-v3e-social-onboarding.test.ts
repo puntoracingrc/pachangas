@@ -93,7 +93,7 @@ test("market visibility is explicit and revocable", () => {
   assert.equal(playerMarketPresentationState({ enabled: true }), "PUBLICADO");
 });
 
-test("the three-step onboarding is optional, resumable and keeps the card optional", async () => {
+test("the three-step social onboarding is optional and resumable", async () => {
   const component = await source("app/_components/social-onboarding.tsx");
   assert.match(component, /\[1, 2, 3\]\.map/);
   assert.match(component, /Paso 1[\s\S]*Tu perfil/);
@@ -171,7 +171,8 @@ test("Mi perfil is a clean cached read model with canonical Realtime invalidatio
   assert.match(profile, /window\.addEventListener\("online"/);
   assert.match(profile, /Resumen de perfil/);
   assert.match(profile, /Tu carta aún no está creada/);
-  assert.match(profile, /La carta es opcional/);
+  assert.match(profile, /Hacer test inicial y crear mi carta/);
+  assert.match(profile, /Responde unas preguntas sobre cómo juegas/);
   assert.match(profile, /Tu perfil no se publica hasta que lo autorices expresamente/);
   assert.doesNotMatch(profile, />UUID<|>Provider<|>Revisión<|>Auth metadata</i);
 });
@@ -191,7 +192,7 @@ test("avatar, card and market entry reuse existing product authorities", async (
   ]);
   assert.match(page, /patch_pachanga_player_profile_authoritative_v2/);
   assert.match(page, /upsert_pachanga_own_player_profile_authoritative_v2/);
-  assert.match(profile, /href="\/personalizar-carta"/);
+  assert.match(profile, /initialAssessmentComplete \? "\/personalizar-carta" : "\/perfil\/test-inicial"/);
   assert.match(profile, /playerMarketPresentationState/);
   assert.match(card, /CLIENT_VERSION/);
 });
