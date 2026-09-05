@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync, statSync } from "node:fs";
 import test from "node:test";
 
-const modelUrl = new URL("../public/models/rewards/reward-box-blue.glb", import.meta.url);
+const modelUrl = new URL("../public/models/rewards/reward-box-refined.glb", import.meta.url);
 const componentSource = readFileSync(new URL("../app/reward-box-demo.tsx", import.meta.url), "utf8");
 const pageSource = readFileSync(new URL("../app/page.tsx", import.meta.url), "utf8");
 const stylesSource = readFileSync(new URL("../app/reward-box-demo.module.css", import.meta.url), "utf8");
@@ -49,4 +49,20 @@ test("the full-screen stage has desktop, portrait and landscape layouts", () => 
   assert.match(stylesSource, /@media \(orientation: portrait\) and \(max-width: 760px\)/);
   assert.match(stylesSource, /env\(safe-area-inset-top\)/);
   assert.match(stylesSource, /env\(safe-area-inset-right\)/);
+});
+
+
+test("the refined reveal exports all moving pieces in one three-second clip", () => {
+  const json = readGlbJson() as {
+    animations: { samplers: { input: number }[]; channels: { target: { node: number } }[] }[];
+    nodes: { name: string }[];
+    accessors: { max: number[] }[];
+  };
+  assert.equal(json.animations.length, 1, "The viewer plays one clip: all actions must be merged");
+  const clip = json.animations[0];
+  const names = new Set(clip.channels.map((channel) => json.nodes[channel.target.node].name));
+  for (const name of ["Box_Lid", "Front_Latch", "Reward_Card", "Particle_Blue_01", "Particle_Blue_12"]) {
+    assert.ok(names.has(name), `${name} must animate with the reveal`);
+  }
+  assert.equal(Math.max(...clip.samplers.map((sampler) => json.accessors[sampler.input].max[0])), 3);
 });

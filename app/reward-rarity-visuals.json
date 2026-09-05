@@ -1,0 +1,7 @@
+{
+  "common": { "label": "Común", "body": "#67796f", "dark": "#24352e", "accent": "#aec2b5", "trim": "#a9b6b0", "particles": 0, "rings": 0, "glow": 0.35 },
+  "uncommon": { "label": "Poco común", "body": "#19734a", "dark": "#0b3022", "accent": "#6ee6a1", "trim": "#bad9c7", "particles": 12, "rings": 0, "glow": 0.65 },
+  "rare": { "label": "Raro", "body": "#175ca9", "dark": "#0a244c", "accent": "#72bdff", "trim": "#b8d4f3", "particles": 28, "rings": 1, "glow": 1.0 },
+  "epic": { "label": "Épico", "body": "#7431aa", "dark": "#2c114c", "accent": "#d59aff", "trim": "#dfc2f6", "particles": 100, "rings": 3, "glow": 1.8 },
+  "legendary": { "label": "Legendario", "body": "#ad7020", "dark": "#422a0c", "accent": "#ffda75", "trim": "#f5cb6b", "particles": 180, "rings": 5, "glow": 2.5 }
+}

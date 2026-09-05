@@ -712,7 +712,10 @@ export default function TeamIdentityPage() {
     }
     operationIds.current.delete(fingerprint);
     const opened = normalizePendingReward(result.data);
-    if (opened) setOpenedReward(opened);
+    if (opened) {
+      setOpenedReward(opened);
+      setRewardSequence((sequence) => sequence.map((entry) => entry.boxId === opened.boxId ? { ...entry, status: "opened" } : entry));
+    }
     await Promise.all([loadProgression(), loadPlayerCosmetics()]);
   }
 
@@ -758,8 +761,8 @@ export default function TeamIdentityPage() {
   }
 
   function advanceRewardSequence() {
-    const nextIndex = rewardSequenceIndex + 1;
-    if (nextIndex < rewardSequence.length) {
+    const nextIndex = rewardSequence.findIndex((reward) => reward.status === "pending" && reward.boxId !== rewardSequence[rewardSequenceIndex]?.boxId);
+    if (nextIndex >= 0) {
       setRewardSequenceIndex(nextIndex);
       setOpenedReward(null);
       return;
@@ -791,6 +794,7 @@ export default function TeamIdentityPage() {
   const openedRewards = progression?.rewards.filter((reward) => reward.status === "opened") ?? [];
   const rewardEconomy = progression?.rewardEconomy ?? null;
   const currentSequenceReward = rewardSequence[rewardSequenceIndex] ?? null;
+  const sequencePending = rewardSequence.filter((reward) => reward.status === "pending");
   const openedCosmeticKey = grantedPlayerCosmetic(openedReward);
   const membershipState = membershipStatus === "unavailable"
     ? {
@@ -1126,26 +1130,45 @@ export default function TeamIdentityPage() {
       ) : null}
 
       <RewardBoxDemo
+        key={currentSequenceReward?.boxId ?? "no-reward"}
+        rarity={currentSequenceReward?.boxRarity ?? "common"}
         open={Boolean(currentSequenceReward)}
         onClose={closeRewardSequence}
         eyebrow={currentSequenceReward
-          ? `Caja ${rewardSequenceIndex + 1} de ${rewardSequence.length} · ${currentSequenceReward.rewardComponent?.label ?? currentSequenceReward.boxRarity}`
+          ? `Cofre ${rewardSequenceIndex + 1} de ${rewardSequence.length} · ${currentSequenceReward.rewardComponent?.label ?? currentSequenceReward.boxRarity}`
           : undefined}
         title={currentSequenceReward?.achievement.title}
         description={openedReward
           ? `Premio confirmado: ${rewardResultLabel(openedReward)}`
           : "El contenido permanece sellado hasta que abras esta caja."}
         actionDisabled={Boolean(busy)}
+        pendingChests={sequencePending.map((reward) => ({ id: reward.boxId, rarity: reward.boxRarity }))}
+        currentChestId={currentSequenceReward?.boxId}
+        onSelectChest={(id) => {
+          if (busy) return;
+          const selectedIndex = rewardSequence.findIndex((reward) => reward.boxId === id && reward.status === "pending");
+          if (selectedIndex < 0 || selectedIndex === rewardSequenceIndex) return;
+          setRewardSequenceIndex(selectedIndex);
+          setOpenedReward(null);
+          void openReward(rewardSequence[selectedIndex]);
+        }}
+        remainingCount={openedReward ? sequencePending.length : undefined}
+        continueLabel={openedReward
+          ? sequencePending.length > 0 ? "Abrir siguiente cofre →" : "Terminar y ver mis logros"
+          : undefined}
+        onContinue={openedReward ? () => {
+          if (busy) return;
+          const nextReward = sequencePending.find((reward) => reward.boxId !== currentSequenceReward?.boxId);
+          advanceRewardSequence();
+          if (nextReward) void openReward(nextReward);
+        } : undefined}
         actionLabel={openedReward
-          ? openedCosmeticKey
-            ? busy === "equip-player-cosmetic" ? "Equipando..." : "Equipar ahora"
-            : rewardSequenceIndex + 1 < rewardSequence.length ? "Siguiente caja" : "Ver mis logros"
+          ? openedCosmeticKey ? busy === "equip-player-cosmetic" ? "Equipando..." : "Equipar ahora" : undefined
           : busy ? "Abriendo..." : "Abrir caja"}
         onAction={() => {
           if (!currentSequenceReward) return;
           if (openedCosmeticKey) void equipOpenedPlayerCosmetic();
-          else if (openedReward) advanceRewardSequence();
-          else void openReward(currentSequenceReward);
+          else if (!openedReward) void openReward(currentSequenceReward);
         }}
         secondaryActionLabel={openedCosmeticKey ? "Ver mi colección" : undefined}
         onSecondaryAction={openedCosmeticKey ? () => {

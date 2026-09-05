@@ -1,0 +1,298 @@
+22:27:19 | INFO: Data are loaded, start creating Blender stuff
+22:27:19 | INFO: Blender create Mesh node Blue_Light_Core_1_Curve
+22:27:19 | INFO: Draco Decoder: Decode primitive Blue_Light_Core_1_Curve
+22:27:19 | INFO: Blender create Mesh node Blue_Light_Core_2_Curve
+22:27:19 | INFO: Draco Decoder: Decode primitive Blue_Light_Core_2_Curve
+22:27:19 | INFO: Blender create Mesh node Blue_Light_Core_3_Curve
+22:27:19 | INFO: Draco Decoder: Decode primitive Blue_Light_Core_3_Curve
+22:27:19 | INFO: Blender create Mesh node Blue_Light_Core_4_Curve
+22:27:19 | INFO: Draco Decoder: Decode primitive Blue_Light_Core_4_Curve
+22:27:19 | INFO: Blender create Mesh node Blue_Light_Strips_Curve
+22:27:19 | INFO: Draco Decoder: Decode primitive Blue_Light_Strips_Curve
+22:27:19 | INFO: Blender create Mesh node Blue_Light_Strips_Back_Curve
+22:27:19 | INFO: Draco Decoder: Decode primitive Blue_Light_Strips_Back_Curve
+22:27:19 | INFO: Blender create Mesh node Blue_Light_Strips_Left_Curve
+22:27:19 | INFO: Draco Decoder: Decode primitive Blue_Light_Strips_Left_Curve
+22:27:19 | INFO: Blender create Mesh node Blue_Light_Strips_Right_Curve
+22:27:19 | INFO: Draco Decoder: Decode primitive Blue_Light_Strips_Right_Curve
+22:27:19 | INFO: Blender create Mesh node Cube.002
+22:27:19 | INFO: Draco Decoder: Decode primitive Cube.002
+22:27:19 | INFO: Draco Decoder: Decode primitive Cube.002
+22:27:19 | INFO: Blender create Mesh node Cube.008
+22:27:19 | INFO: Draco Decoder: Decode primitive Cube.008
+22:27:19 | INFO: Blender create Mesh node Cube.014
+22:27:19 | INFO: Draco Decoder: Decode primitive Cube.014
+22:27:19 | INFO: Blender create Mesh node Exterior_Logo_Centre_Circle_Curve
+22:27:19 | INFO: Draco Decoder: Decode primitive Exterior_Logo_Centre_Circle_Curve
+22:27:19 | INFO: Blender create Mesh node Exterior_Logo_Field_Curve
+22:27:19 | INFO: Draco Decoder: Decode primitive Exterior_Logo_Field_Curve
+22:27:19 | INFO: Blender create Mesh node Exterior_Logo_Field_2_Curve
+22:27:19 | INFO: Draco Decoder: Decode primitive Exterior_Logo_Field_2_Curve
+22:27:19 | INFO: Blender create Mesh node Exterior_Logo_Field_3_Curve
+22:27:19 | INFO: Draco Decoder: Decode primitive Exterior_Logo_Field_3_Curve
+22:27:19 | INFO: Blender create Mesh node Exterior_Logo_Field_4_Curve
+22:27:19 | INFO: Draco Decoder: Decode primitive Exterior_Logo_Field_4_Curve
+22:27:19 | INFO: Blender create Mesh node Exterior_Logo_Field_5_Curve
+22:27:19 | INFO: Draco Decoder: Decode primitive Exterior_Logo_Field_5_Curve
+22:27:19 | INFO: Blender create Mesh node Exterior_Logo_Field_6_Curve
+22:27:19 | INFO: Draco Decoder: Decode primitive Exterior_Logo_Field_6_Curve
+22:27:19 | INFO: Blender create Mesh node Exterior_Logo_Field_7_Curve
+22:27:19 | INFO: Draco Decoder: Decode primitive Exterior_Logo_Field_7_Curve
+22:27:19 | INFO: Blender create Mesh node Cube.023
+22:27:19 | INFO: Draco Decoder: Decode primitive Cube.023
+22:27:19 | INFO: Blender create Mesh node Cylinder.005
+22:27:19 | INFO: Draco Decoder: Decode primitive Cylinder.005
+22:27:19 | INFO: Blender create Mesh node Cylinder.006
+22:27:19 | INFO: Draco Decoder: Decode primitive Cylinder.006
+22:27:19 | INFO: Blender create Mesh node Cylinder.007
+22:27:19 | INFO: Draco Decoder: Decode primitive Cylinder.007
+22:27:19 | INFO: Blender create Mesh node Cylinder.004
+22:27:19 | INFO: Draco Decoder: Decode primitive Cylinder.004
+22:27:19 | INFO: Blender create Mesh node Exterior_Logo_PIQ_Data
+22:27:19 | INFO: Draco Decoder: Decode primitive Exterior_Logo_PIQ_Data
+22:27:19 | INFO: Blender create Mesh node Cube.022
+22:27:19 | INFO: Draco Decoder: Decode primitive Cube.022
+22:27:19 | INFO: Blender create Mesh node Interior_Logo_Centre_Circle_Curve
+22:27:19 | INFO: Draco Decoder: Decode primitive Interior_Logo_Centre_Circle_Curve
+22:27:19 | INFO: Blender create Mesh node Cube.024
+22:27:19 | INFO: Draco Decoder: Decode primitive Cube.024
+22:27:19 | INFO: Blender create Mesh node Interior_Logo_Field_Curve
+22:27:19 | INFO: Draco Decoder: Decode primitive Interior_Logo_Field_Curve
+22:27:19 | INFO: Blender create Mesh node Interior_Logo_Field_2_Curve
+22:27:19 | INFO: Draco Decoder: Decode primitive Interior_Logo_Field_2_Curve
+22:27:19 | INFO: Blender create Mesh node Interior_Logo_Field_3_Curve
+22:27:19 | INFO: Draco Decoder: Decode primitive Interior_Logo_Field_3_Curve
+22:27:19 | INFO: Blender create Mesh node Interior_Logo_Field_4_Curve
+22:27:19 | INFO: Draco Decoder: Decode primitive Interior_Logo_Field_4_Curve
+22:27:19 | INFO: Blender create Mesh node Interior_Logo_Field_5_Curve
+22:27:19 | INFO: Draco Decoder: Decode primitive Interior_Logo_Field_5_Curve
+22:27:19 | INFO: Blender create Mesh node Interior_Logo_Field_6_Curve
+22:27:19 | INFO: Draco Decoder: Decode primitive Interior_Logo_Field_6_Curve
+22:27:19 | INFO: Blender create Mesh node Cylinder.009
+22:27:19 | INFO: Draco Decoder: Decode primitive Cylinder.009
+22:27:19 | INFO: Blender create Mesh node Cylinder.010
+22:27:19 | INFO: Draco Decoder: Decode primitive Cylinder.010
+22:27:19 | INFO: Blender create Mesh node Cylinder.011
+22:27:19 | INFO: Draco Decoder: Decode primitive Cylinder.011
+22:27:19 | INFO: Blender create Mesh node Cylinder.008
+22:27:19 | INFO: Draco Decoder: Decode primitive Cylinder.008
+22:27:19 | INFO: Blender create Mesh node Interior_Logo_Wordmark_Data
+22:27:19 | INFO: Draco Decoder: Decode primitive Interior_Logo_Wordmark_Data
+22:27:19 | INFO: Blender create Mesh node Cube.032
+22:27:19 | INFO: Draco Decoder: Decode primitive Cube.032
+22:27:19 | INFO: Blender create Mesh node Lid_Central_Inlay_Mesh
+22:27:19 | INFO: Draco Decoder: Decode primitive Lid_Central_Inlay_Mesh
+22:27:19 | INFO: Blender create Mesh node Cube.012
+22:27:19 | INFO: Draco Decoder: Decode primitive Cube.012
+22:27:19 | INFO: Blender create Mesh node Cylinder
+22:27:19 | INFO: Draco Decoder: Decode primitive Cylinder
+22:27:19 | INFO: Blender create Mesh node Cylinder.001
+22:27:19 | INFO: Draco Decoder: Decode primitive Cylinder.001
+22:27:19 | INFO: Blender create Mesh node Cylinder.002
+22:27:19 | INFO: Draco Decoder: Decode primitive Cylinder.002
+22:27:19 | INFO: Blender create Mesh node Cylinder.003
+22:27:19 | INFO: Draco Decoder: Decode primitive Cylinder.003
+22:27:19 | INFO: Blender create Mesh node Cube.013
+22:27:19 | INFO: Draco Decoder: Decode primitive Cube.013
+22:27:19 | INFO: Blender create Mesh node Cube.026
+22:27:19 | INFO: Draco Decoder: Decode primitive Cube.026
+22:27:19 | INFO: Blender create Mesh node Cube.028
+22:27:19 | INFO: Draco Decoder: Decode primitive Cube.028
+22:27:19 | INFO: Blender create Mesh node Top_Geometric_Seam_Curve
+22:27:19 | INFO: Draco Decoder: Decode primitive Top_Geometric_Seam_Curve
+22:27:19 | INFO: Blender create Mesh node Top_Stitch_L_1_Curve
+22:27:19 | INFO: Draco Decoder: Decode primitive Top_Stitch_L_1_Curve
+22:27:19 | INFO: Blender create Mesh node Top_Stitch_L_2_Curve
+22:27:19 | INFO: Draco Decoder: Decode primitive Top_Stitch_L_2_Curve
+22:27:19 | INFO: Blender create Mesh node Top_Stitch_L_3_Curve
+22:27:19 | INFO: Draco Decoder: Decode primitive Top_Stitch_L_3_Curve
+22:27:19 | INFO: Blender create Mesh node Top_Stitch_L_4_Curve
+22:27:19 | INFO: Draco Decoder: Decode primitive Top_Stitch_L_4_Curve
+22:27:19 | INFO: Blender create Mesh node Top_Stitch_L_5_Curve
+22:27:19 | INFO: Draco Decoder: Decode primitive Top_Stitch_L_5_Curve
+22:27:19 | INFO: Blender create Mesh node Top_Stitch_L_6_Curve
+22:27:19 | INFO: Draco Decoder: Decode primitive Top_Stitch_L_6_Curve
+22:27:19 | INFO: Blender create Mesh node Top_Stitch_R_1_Curve
+22:27:19 | INFO: Draco Decoder: Decode primitive Top_Stitch_R_1_Curve
+22:27:19 | INFO: Blender create Mesh node Top_Stitch_R_2_Curve
+22:27:19 | INFO: Draco Decoder: Decode primitive Top_Stitch_R_2_Curve
+22:27:19 | INFO: Blender create Mesh node Top_Stitch_R_3_Curve
+22:27:19 | INFO: Draco Decoder: Decode primitive Top_Stitch_R_3_Curve
+22:27:19 | INFO: Blender create Mesh node Top_Stitch_R_4_Curve
+22:27:19 | INFO: Draco Decoder: Decode primitive Top_Stitch_R_4_Curve
+22:27:19 | INFO: Blender create Mesh node Top_Stitch_R_5_Curve
+22:27:19 | INFO: Draco Decoder: Decode primitive Top_Stitch_R_5_Curve
+22:27:19 | INFO: Blender create Mesh node Top_Stitch_R_6_Curve
+22:27:19 | INFO: Draco Decoder: Decode primitive Top_Stitch_R_6_Curve
+22:27:19 | INFO: Blender create Mesh node Cube.029
+22:27:19 | INFO: Draco Decoder: Decode primitive Cube.029
+22:27:19 | INFO: Blender create Mesh node Cube.031
+22:27:19 | INFO: Draco Decoder: Decode primitive Cube.031
+22:27:19 | INFO: Blender create Mesh node Cube.030
+22:27:19 | INFO: Draco Decoder: Decode primitive Cube.030
+22:27:19 | INFO: Blender create Mesh node Cylinder.019
+22:27:19 | INFO: Draco Decoder: Decode primitive Cylinder.019
+22:27:19 | INFO: Blender create Mesh node Cylinder.020
+22:27:19 | INFO: Draco Decoder: Decode primitive Cylinder.020
+22:27:19 | INFO: Blender create Mesh node Cube.033
+22:27:19 | INFO: Draco Decoder: Decode primitive Cube.033
+22:27:19 | INFO: Blender create Mesh node Cube.050
+22:27:19 | INFO: Draco Decoder: Decode primitive Cube.050
+22:27:19 | INFO: Blender create Mesh node Cube.049
+22:27:19 | INFO: Draco Decoder: Decode primitive Cube.049
+22:27:19 | INFO: Blender create Mesh node Cube.041
+22:27:19 | INFO: Draco Decoder: Decode primitive Cube.041
+22:27:19 | INFO: Blender create Mesh node Cylinder.018
+22:27:19 | INFO: Draco Decoder: Decode primitive Cylinder.018
+22:27:19 | INFO: Blender create Mesh node Sphere.014
+22:27:19 | INFO: Draco Decoder: Decode primitive Sphere.014
+22:27:19 | INFO: Blender create Mesh node Sphere.015
+22:27:19 | INFO: Draco Decoder: Decode primitive Sphere.015
+22:27:19 | INFO: Blender create Mesh node Sphere.016
+22:27:19 | INFO: Draco Decoder: Decode primitive Sphere.016
+22:27:19 | INFO: Blender create Mesh node Sphere.017
+22:27:19 | INFO: Draco Decoder: Decode primitive Sphere.017
+22:27:19 | INFO: Blender create Mesh node Sphere.018
+22:27:19 | INFO: Draco Decoder: Decode primitive Sphere.018
+22:27:19 | INFO: Blender create Mesh node Sphere.019
+22:27:19 | INFO: Draco Decoder: Decode primitive Sphere.019
+22:27:19 | INFO: Blender create Mesh node Sphere.020
+22:27:19 | INFO: Draco Decoder: Decode primitive Sphere.020
+22:27:19 | INFO: Blender create Mesh node Sphere.021
+22:27:19 | INFO: Draco Decoder: Decode primitive Sphere.021
+22:27:19 | INFO: Blender create Mesh node Sphere.022
+22:27:19 | INFO: Draco Decoder: Decode primitive Sphere.022
+22:27:19 | INFO: Blender create Mesh node Sphere.023
+22:27:19 | INFO: Draco Decoder: Decode primitive Sphere.023
+22:27:19 | INFO: Blender create Mesh node Sphere.024
+22:27:19 | INFO: Draco Decoder: Decode primitive Sphere.024
+Blender 5.1.2 (hash ec6e62d40fa9 built 2026-05-19 01:30:33)
+DracoDecoder | Decoded 22 vertices, 60 indices
+DracoDecoder | Decoded 22 vertices, 60 indices
+DracoDecoder | Decoded 22 vertices, 60 indices
+DracoDecoder | Decoded 22 vertices, 60 indices
+DracoDecoder | Decoded 22 vertices, 60 indices
+DracoDecoder | Decoded 22 vertices, 60 indices
+DracoDecoder | Decoded 22 vertices, 60 indices
+DracoDecoder | Decoded 22 vertices, 60 indices
+DracoDecoder | Decoded 800 vertices, 1284 indices
+DracoDecoder | Decoded 3204 vertices, 5328 indices
+DracoDecoder | Decoded 4035 vertices, 6612 indices
+DracoDecoder | Decoded 3807 vertices, 7200 indices
+DracoDecoder | Decoded 363 vertices, 1920 indices
+DracoDecoder | Decoded 22 vertices, 60 indices
+DracoDecoder | Decoded 22 vertices, 60 indices
+DracoDecoder | Decoded 22 vertices, 60 indices
+DracoDecoder | Decoded 22 vertices, 60 indices
+DracoDecoder | Decoded 22 vertices, 60 indices
+DracoDecoder | Decoded 22 vertices, 60 indices
+DracoDecoder | Decoded 22 vertices, 60 indices
+DracoDecoder | Decoded 1234 vertices, 2292 indices
+DracoDecoder | Decoded 114 vertices, 324 indices
+DracoDecoder | Decoded 114 vertices, 324 indices
+DracoDecoder | Decoded 114 vertices, 324 indices
+DracoDecoder | Decoded 114 vertices, 324 indices
+DracoDecoder | Decoded 1880 vertices, 8826 indices
+DracoDecoder | Decoded 1162 vertices, 2292 indices
+DracoDecoder | Decoded 319 vertices, 1680 indices
+DracoDecoder | Decoded 1092 vertices, 2292 indices
+DracoDecoder | Decoded 22 vertices, 60 indices
+DracoDecoder | Decoded 22 vertices, 60 indices
+DracoDecoder | Decoded 22 vertices, 60 indices
+DracoDecoder | Decoded 22 vertices, 60 indices
+DracoDecoder | Decoded 22 vertices, 60 indices
+DracoDecoder | Decoded 22 vertices, 60 indices
+DracoDecoder | Decoded 98 vertices, 276 indices
+DracoDecoder | Decoded 98 vertices, 276 indices
+DracoDecoder | Decoded 98 vertices, 276 indices
+DracoDecoder | Decoded 98 vertices, 276 indices
+DracoDecoder | Decoded 25996 vertices, 124068 indices
+DracoDecoder | Decoded 396 vertices, 900 indices
+DracoDecoder | Decoded 60 vertices, 108 indices
+DracoDecoder | Decoded 776 vertices, 1284 indices
+DracoDecoder | Decoded 66 vertices, 180 indices
+DracoDecoder | Decoded 66 vertices, 180 indices
+DracoDecoder | Decoded 66 vertices, 180 indices
+DracoDecoder | Decoded 66 vertices, 180 indices
+DracoDecoder | Decoded 892 vertices, 1764 indices
+DracoDecoder | Decoded 415 vertices, 900 indices
+DracoDecoder | Decoded 415 vertices, 900 indices
+DracoDecoder | Decoded 110 vertices, 540 indices
+DracoDecoder | Decoded 22 vertices, 60 indices
+DracoDecoder | Decoded 22 vertices, 60 indices
+DracoDecoder | Decoded 22 vertices, 60 indices
+DracoDecoder | Decoded 22 vertices, 60 indices
+DracoDecoder | Decoded 22 vertices, 60 indices
+DracoDecoder | Decoded 22 vertices, 60 indices
+DracoDecoder | Decoded 22 vertices, 60 indices
+DracoDecoder | Decoded 22 vertices, 60 indices
+DracoDecoder | Decoded 22 vertices, 60 indices
+DracoDecoder | Decoded 22 vertices, 60 indices
+DracoDecoder | Decoded 22 vertices, 60 indices
+DracoDecoder | Decoded 22 vertices, 60 indices
+DracoDecoder | Decoded 815 vertices, 1284 indices
+DracoDecoder | Decoded 459 vertices, 900 indices
+DracoDecoder | Decoded 385 vertices, 900 indices
+DracoDecoder | Decoded 66 vertices, 180 indices
+DracoDecoder | Decoded 66 vertices, 180 indices
+DracoDecoder | Decoded 6502 vertices, 10272 indices
+DracoDecoder | Decoded 824 vertices, 1284 indices
+DracoDecoder | Decoded 824 vertices, 1284 indices
+DracoDecoder | Decoded 6502 vertices, 10272 indices
+DracoDecoder | Decoded 98 vertices, 276 indices
+DracoDecoder | Decoded 43 vertices, 144 indices
+DracoDecoder | Decoded 43 vertices, 144 indices
+DracoDecoder | Decoded 43 vertices, 144 indices
+DracoDecoder | Decoded 43 vertices, 144 indices
+DracoDecoder | Decoded 43 vertices, 144 indices
+DracoDecoder | Decoded 43 vertices, 144 indices
+DracoDecoder | Decoded 43 vertices, 144 indices
+DracoDecoder | Decoded 43 vertices, 144 indices
+DracoDecoder | Decoded 43 vertices, 144 indices
+DracoDecoder | Decoded 43 vertices, 144 indices
+DracoDecoder | Decoded 422:27:19 | INFO: Blender create Mesh node Sphere.025
+22:27:19 | INFO: Draco Decoder: Decode primitive Sphere.025
+22:27:19 | INFO: Blender create Mesh node Cube.025
+22:27:19 | INFO: Draco Decoder: Decode primitive Cube.025
+22:27:19 | INFO: Draco Decoder: Decode primitive Cube.025
+22:27:19 | INFO: Blender create Mesh node Cube.051
+22:27:19 | INFO: Draco Decoder: Decode primitive Cube.051
+22:27:19 | INFO: Blender create Mesh node Achievement_Name_Data
+22:27:19 | INFO: Draco Decoder: Decode primitive Achievement_Name_Data
+22:27:19 | INFO: Blender create Mesh node Achievement_Title_Data
+22:27:19 | INFO: Draco Decoder: Decode primitive Achievement_Title_Data
+22:27:19 | INFO: Blender create Mesh node Cube.053
+22:27:19 | INFO: Draco Decoder: Decode primitive Cube.053
+22:27:19 | INFO: Blender create Mesh node Cube.052
+22:27:19 | INFO: Draco Decoder: Decode primitive Cube.052
+22:27:19 | INFO: Blender create Mesh node Reward_Card_Line_L_Curve
+22:27:19 | INFO: Draco Decoder: Decode primitive Reward_Card_Line_L_Curve
+22:27:19 | INFO: Blender create Mesh node Reward_Card_Line_R_Curve
+22:27:19 | INFO: Draco Decoder: Decode primitive Reward_Card_Line_R_Curve
+22:27:19 | INFO: Blender create Mesh node Reward_Emblem_Shield_Mesh
+22:27:19 | INFO: Draco Decoder: Decode primitive Reward_Emblem_Shield_Mesh
+22:27:19 | INFO: Blender create Mesh node Reward_Emblem_Inlay_Mesh
+22:27:19 | INFO: Draco Decoder: Decode primitive Reward_Emblem_Inlay_Mesh
+22:27:19 | INFO: glTF import finished in 0.33s
+00:06.883  render           | Saved: '/Users/macbookpro14/.codex/worktrees/pachangas-reward-chest-animation/artifacts/reward-chest/original-open.png'
+POSE 0 [('Box_Assembly', (0.0, 0.0, -0.006000000052154064), (0.0, 0.0, 0.0), (1.0, 0.0, 0.0, 0.0), (0.9599999785423279, 0.9599999785423279, 0.9599999785423279)), ('Box_Lid', (0.0, 0.11800000816583633, 0.04000000283122063), (0.0, 0.0, 0.0), (1.0, 0.0, 0.0, 0.0), (1.0, 1.0, 1.0)), ('Front_Latch', (0.0, -0.12150000035762787, 0.01899999938905239), (0.0, 0.0, 0.0), (1.0, 0.0, 0.0, 0.0), (1.0, 1.0, 1.0)), ('Reward_Card', (0.0, -0.01400000136345625, 0.02500000037252903), (0.0, 0.0, 0.0), (0.7068644762039185, 0.7068644762039185, -0.01850990206003189, -0.01850990206003189), (0.9599999785423279, 0.9600000381469727, 0.9599999785423279))]
+POSE 12 [('Box_Assembly', (0.0003499999875202775, 0.0, 0.0), (0.0, 0.0, 0.0), (0.9999997615814209, 0.0, 0.0, 0.0006500001763924956), (1.0, 1.0, 1.0)), ('Box_Lid', (0.0, 0.11800000816583633, 0.04000000283122063), (0.0, 0.0, 0.0), (1.0, 0.0, 0.0, 0.0), (1.0, 1.0, 1.0)), ('Front_Latch', (0.0, -0.12150000035762787, 0.01899999938905239), (0.0, 0.0, 0.0), (1.0, 0.0, 0.0, 0.0), (1.0, 1.0, 1.0)), ('Reward_Card', (-1.6370904631912708e-11, -0.0139999995008111, 0.02500000037252903), (0.0, 0.0, 0.0), (0.7068644762039185, 0.7068644762039185, -0.01850990206003189, -0.01850990019738674), (0.9600000381469727, 0.9599999785423279, 0.9600000381469727))]
+POSE 24 [('Box_Assembly', (0.0, 0.0, 0.0), (0.0, 0.0, 0.0), (1.0, 0.0, 0.0, 0.0), (1.0, 1.0, 1.0)), ('Box_Lid', (0.0, 0.11800000816583633, 0.04000000283122063), (0.0, 0.0, 0.0), (0.9967780709266663, -0.08020894229412079, 0.0, 0.0), (1.0, 1.0, 1.0)), ('Front_Latch', (0.0, -0.12150000035762787, 0.01899999938905239), (0.0, 0.0, 0.0), (0.9335803985595703, 0.3583679795265198, 0.0, 0.0), (1.0, 1.0, 1.0)), ('Reward_Card', (0.0, -0.014000000432133675, 0.02500000037252903), (0.0, 0.0, 0.0), (0.7068644762039185, 0.7068644762039185, -0.01850990206003189, -0.01850990019738674), (0.9599999785423279, 0.9599999785423279, 0.9599999785423279))]
+POSE 36 [('Box_Assembly', (0.0, 0.0, 0.0), (0.0, 0.0, 0.0), (1.0, 0.0, 0.0, 0.0), (1.0, 1.0, 1.0)), ('Box_Lid', (0.0, 0.11800000816583633, 0.04000000283122063), (0.0, 0.0, 0.0), (0.6087614297866821, -0.7933533787727356, 0.0, 0.0), (1.0, 1.0, 1.0)), ('Front_Latch', (0.0, -0.12150000035762787, 0.01899999938905239), (0.0, 0.0, 0.0), (0.9335803985595703, 0.3583679795265198, 0.0, 0.0), (1.0, 1.0, 1.0)), ('Reward_Card', (0.0, -0.015153125859797001, 0.08600378781557083), (0.0, 0.0, 0.0), (0.9488826394081116, 0.3154478371143341, -0.0033748685382306576, -0.010151771828532219), (1.0, 1.0, 1.0))]
+POSE 48 [('Box_Assembly', (0.0, 0.0, 0.0), (0.0, 0.0, 0.0), (1.0, 0.0, 0.0, 0.0), (1.0, 1.0, 1.0)), ('Box_Lid', (0.0, 0.11800000816583633, 0.04000000283122063), (0.0, 0.0, 0.0), (0.6087614297866821, -0.7933533787727356, 0.0, 0.0), (1.0, 1.0, 1.0)), ('Front_Latch', (0.0, -0.12150000035762787, 0.01899999938905239), (0.0, 0.0, 0.0), (0.9335803985595703, 0.3583679795265198, 0.0, 0.0), (1.0, 1.0, 1.0)), ('Reward_Card', (0.0, -0.020999999716877937, 0.17800000309944153), (0.0, 0.0, 0.0), (1.0, 0.0, 0.0, 0.0), (1.0, 1.0, 1.0))]
+Info: Saved as "recovered.blend"
+3 vertices, 144 indices
+DracoDecoder | Decoded 43 vertices, 144 indices
+DracoDecoder | Decoded 1110 vertices, 2352 indices
+DracoDecoder | Decoded 264 vertices, 720 indices
+DracoDecoder | Decoded 856 vertices, 1764 indices
+DracoDecoder | Decoded 8166 vertices, 38280 indices
+DracoDecoder | Decoded 10828 vertices, 51060 indices
+DracoDecoder | Decoded 900 vertices, 1764 indices
+DracoDecoder | Decoded 830 vertices, 1764 indices
+DracoDecoder | Decoded 33 vertices, 120 indices
+DracoDecoder | Decoded 33 vertices, 120 indices
+DracoDecoder | Decoded 1288 vertices, 5112 indices
+DracoDecoder | Decoded 42 vertices, 72 indices
+
+Blender quit
