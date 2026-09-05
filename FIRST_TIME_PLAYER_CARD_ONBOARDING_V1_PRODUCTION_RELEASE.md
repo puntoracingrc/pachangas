@@ -8,9 +8,9 @@
 - Branch: `codex/first-time-onboarding-gate`.
 - Isolated worktree: `/Users/macbookpro14/.codex/worktrees/pachangas-first-time-onboarding-gate`.
 - Shared checkout: left untouched, including its pre-existing local changes.
-- Functional commit: pending.
-- Pull request: pending.
-- Preview deployment: pending.
+- Functional commit: `5b5d37035b2fc33452f2dff4a2953e7eb670dcff`.
+- Pull request: [#284](https://github.com/puntoracingrc/pachangas/pull/284), draft, clean and mergeable.
+- Preview deployment: `dpl_DpbaWjX5Zno7C7KZhYCr92HQar2q`, READY at `https://pachangas-ejgya00yd-persianas-almar-web-s-projects.vercel.app`.
 - Merge SHA: pending.
 - Production deployment: pending.
 - Supabase migrations: none.
@@ -74,7 +74,7 @@ The local layout and Places callback contract passed. A real Google Places selec
 
 ## Remote release gates
 
-- Exact-SHA Vercel Preview: pending.
+- Exact-SHA Vercel Preview: PASS for `5b5d37035b2fc33452f2dff4a2953e7eb670dcff`; deployment `dpl_DpbaWjX5Zno7C7KZhYCr92HQar2q` is READY.
 - Real Google Places city/town selection in Preview: pending.
 - Authenticated first-time user with no team: pending.
 - Canonical card creation, hard reload, fresh session and Realtime convergence: pending.
