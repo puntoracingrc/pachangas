@@ -139,6 +139,93 @@
   font-size: 0.82rem;
 }
 
+.editablePhoto {
+  cursor: pointer;
+  position: relative;
+  z-index: 4;
+}
+
+.editablePhoto:focus-visible {
+  border-radius: 8px;
+  outline: 3px solid #152d20;
+  outline-offset: 2px;
+}
+
+.hiddenPhotoInput {
+  display: none;
+}
+
+.photoMenu {
+  position: absolute;
+  z-index: 8;
+  top: 96px;
+  right: 10px;
+  display: grid;
+  min-width: 138px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 7px;
+  background: #102019;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.34);
+}
+
+.photoMenu button {
+  min-height: 42px;
+  border: 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.13);
+  background: transparent;
+  padding: 8px 12px;
+  color: #f3f8f5;
+  font: inherit;
+  font-size: 0.76rem;
+  font-weight: 850;
+  text-align: left;
+}
+
+.photoMenu button:last-child {
+  border-bottom: 0;
+}
+
+.photoMenu button:hover,
+.photoMenu button:focus-visible {
+  background: rgba(183, 244, 82, 0.16);
+  outline: 0;
+}
+
+.emptyCollection {
+  display: grid;
+  gap: 7px;
+  min-height: 150px;
+  align-content: center;
+  border: 1px solid rgba(161, 180, 171, 0.24);
+  border-radius: 7px;
+  background: rgba(8, 20, 17, 0.62);
+  padding: 18px;
+}
+
+.emptyCollection span {
+  color: #62d9e3;
+  font-size: 0.72rem;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
+.emptyCollection strong {
+  font-size: 1.05rem;
+}
+
+.emptyCollection p,
+.avatarMessage {
+  margin: 0;
+  color: #a7bab0;
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
+.avatarMessage {
+  margin-top: 10px;
+}
+
 @media (max-width: 600px) {
   .topbar {
     grid-template-columns: auto minmax(0, 1fr);

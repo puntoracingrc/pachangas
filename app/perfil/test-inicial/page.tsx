@@ -521,7 +521,7 @@ export default function PlayerInitialAssessmentPage() {
                   ) : (
                     <div className={styles.summaryActions}>
                       <Link href="/">Entrar en Pachangas IQ</Link>
-                      <Link href="/personalizar-carta">Personalizar mi carta</Link>
+                      <Link href="/personalizar-carta?returnTo=%2Fperfil%2Ftest-inicial">Personalizar mi carta</Link>
                       {!snapshot.assessments.advanced ? <button className="primary-button" type="button" onClick={() => beginAssessment("advanced")}>Mejorar precisión de mi ficha</button> : <strong>Test avanzado completado</strong>}
                     </div>
                   )}
