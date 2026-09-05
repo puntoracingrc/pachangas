@@ -61,7 +61,8 @@ insert into auth.users(id, email) values
   ('18100000-0000-4000-8000-000000000001', 'onboarding-1@example.test'),
   ('18100000-0000-4000-8000-000000000002', 'onboarding-2@example.test'),
   ('18100000-0000-4000-8000-000000000003', 'onboarding-3@example.test'),
-  ('18100000-0000-4000-8000-000000000004', 'onboarding-4@example.test');
+  ('18100000-0000-4000-8000-000000000004', 'onboarding-4@example.test'),
+  ('18100000-0000-4000-8000-000000000005', 'onboarding-delete@example.test');
 
 insert into public.pachanga_social_player_profiles_v1(
   user_id, display_name, avatar_ref, primary_position, preferred_modality
@@ -154,6 +155,35 @@ exception when sqlstate '55000' then
 end $$;
 select pg_temp.assert_true(current_setting('onboarding.receipt_immutable') = 'true', 'Receipts must be immutable');
 select pg_temp.assert_true(current_setting('onboarding.event_immutable') = 'true', 'Events must be immutable');
+
+insert into private.pachanga_player_assessment_self_receipts_v1(
+  user_id, operation_id, assessment_kind, request_fingerprint,
+  expected_revision, confirmed_revision, response
+) values (
+  '18100000-0000-4000-8000-000000000005',
+  '28100000-0000-4000-8000-000000000005',
+  'initial', 'account-delete-regression', 0, 1, '{}'::jsonb
+);
+select pg_catalog.set_config('onboarding.direct_evidence_delete_blocked', 'false', true);
+do $$ begin
+  delete from private.pachanga_player_assessment_self_receipts_v1
+  where user_id = '18100000-0000-4000-8000-000000000005';
+exception when sqlstate '55000' then
+  perform pg_catalog.set_config('onboarding.direct_evidence_delete_blocked', 'true', true);
+end $$;
+select pg_temp.assert_true(
+  current_setting('onboarding.direct_evidence_delete_blocked') = 'true',
+  'A direct evidence delete must remain blocked'
+);
+delete from auth.users where id = '18100000-0000-4000-8000-000000000005';
+select pg_temp.assert_true(
+  not exists (select 1 from auth.users where id = '18100000-0000-4000-8000-000000000005')
+  and not exists (
+    select 1 from private.pachanga_player_assessment_self_receipts_v1
+    where user_id = '18100000-0000-4000-8000-000000000005'
+  ),
+  'Deleting the Auth user must execute only the declared evidence cascade'
+);
 
 create temporary table replay_response(value jsonb) on commit drop;
 grant select, insert on replay_response to service_role;

@@ -31,6 +31,10 @@ const migration = readFileSync(
   new URL("../supabase/migrations/20260905084509_restore_initial_assessment_profile_onboarding_v1.sql", import.meta.url),
   "utf8",
 );
+const accountDeletionMigration = readFileSync(
+  new URL("../supabase/migrations/20260905105747_allow_rating_evidence_auth_user_cascade_v1.sql", import.meta.url),
+  "utf8",
+);
 const staging = readFileSync(
   new URL("./initial-assessment-profile-onboarding-v1-staging-e2e.mjs", import.meta.url),
   "utf8",
@@ -143,6 +147,14 @@ test("the standalone authority is private, idempotent, revisioned and auditable"
   assert.match(migration, /revoke all on table private\.pachanga_player_assessment_self_receipts_v1 from public, anon, authenticated, service_role/);
   assert.doesNotMatch(migration, /grant all on table private\.pachanga_player_assessment_self/);
   assert.doesNotMatch(migration, /grant\s+(insert|update|delete)\s+on\s+public/i);
+});
+
+test("immutable assessment evidence permits only the declared Auth user cascade", () => {
+  assert.match(accountDeletionMigration, /tg_op = 'DELETE'/);
+  assert.match(accountDeletionMigration, /pg_catalog\.pg_trigger_depth\(\) > 1/);
+  assert.match(accountDeletionMigration, /not exists \([\s\S]*from auth\.users/);
+  assert.match(accountDeletionMigration, /PLAYER_ASSESSMENT_EVIDENCE_IMMUTABLE/);
+  assert.doesNotMatch(accountDeletionMigration, /disable trigger|drop trigger/);
 });
 
 test("team onboarding remains available while no-team entry redirects to the universal flow", () => {
