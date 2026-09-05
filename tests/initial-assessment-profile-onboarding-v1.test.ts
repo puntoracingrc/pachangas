@@ -28,6 +28,7 @@ const onboarding = readFileSync(new URL("../app/perfil/test-inicial/page.tsx", i
 const onboardingStyles = readFileSync(new URL("../app/perfil/test-inicial/page.module.css", import.meta.url), "utf8");
 const socialOnboarding = readFileSync(new URL("../app/_components/social-onboarding.tsx", import.meta.url), "utf8");
 const globalStyles = readFileSync(new URL("../app/globals.css", import.meta.url), "utf8");
+const onboardingThemeStyles = readFileSync(new URL("../app/onboarding-theme-toggle.css", import.meta.url), "utf8");
 const googlePlaces = readFileSync(new URL("../app/googlePlacesClient.ts", import.meta.url), "utf8");
 const route = readFileSync(new URL("../app/api/ratings/assessment/route.ts", import.meta.url), "utf8");
 const home = readFileSync(new URL("../app/page.tsx", import.meta.url), "utf8");
@@ -79,7 +80,8 @@ test("first-time onboarding stays closed until the canonical initial assessment 
   assert.match(globalStyles, /body\.first-time-onboarding-active \.legal-footer/);
   assert.match(globalStyles, /\.first-time-onboarding-shell \{[\s\S]*grid-template-rows: auto minmax\(0, 1fr\)/);
   assert.match(home, /<ThemeToggle compact defaultPreference="dark" \/>/);
-  assert.match(globalStyles, /\.theme-compact-toggle \{/);
+  assert.match(onboardingThemeStyles, /\.theme-compact-toggle \{/);
+  assert.match(onboardingThemeStyles, /:root\[data-theme="light"\] \.first-time-onboarding-shell/);
 });
 
 test("step two requires a Places city and step three opens the mandatory initial test", () => {
