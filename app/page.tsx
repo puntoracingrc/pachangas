@@ -64,6 +64,10 @@ import {
   assessmentSelectedModes,
   assessmentSharesFromSelectedModes,
 } from "./player-assessment-flow-contract";
+import {
+  hasCanonicalInitialAssessment,
+  type PlayerCardOnboardingStatus,
+} from "./player-card-onboarding-contract";
 import { useAdminViewPreview } from "./admin-view-preview";
 import { type MobileAppTab } from "./mobile-app-nav";
 import {
@@ -3364,6 +3368,11 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
   const [authUser, setAuthUser] = useState<User | null>(null);
   const [profileName, setProfileName] = useState("");
   const [canonicalSocialProfile, setCanonicalSocialProfile] = useState<CanonicalSocialProfile | null>(null);
+  const [socialProfileResolved, setSocialProfileResolved] = useState(false);
+  const [playerCardOnboardingStatus, setPlayerCardOnboardingStatus] = useState<PlayerCardOnboardingStatus>("not-required");
+  const [playerCardOnboardingMessage, setPlayerCardOnboardingMessage] = useState("");
+  const [playerCardOnboardingRetry, setPlayerCardOnboardingRetry] = useState(0);
+  const authUserIdRef = useRef<string | null>(null);
   const [pendingSocialInvitation, setPendingSocialInvitation] = useState<PendingSocialInvitation | null>(null);
   const [socialOnboardingDismissed, setSocialOnboardingDismissed] = useState(false);
   const [socialOnboardingDraft, setSocialOnboardingDraft] = useState<SocialOnboardingDraft>(() => emptySocialOnboardingDraft());
@@ -3794,8 +3803,17 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
   }
 
   function updateAuthState(user: User | null) {
+    const nextUserId = user?.id ?? null;
+    const userChanged = authUserIdRef.current !== nextUserId;
+    authUserIdRef.current = nextUserId;
     setAuthUser(user);
-    setCurrentUserId(user?.id ?? null);
+    setCurrentUserId(nextUserId);
+    if (userChanged) {
+      setCanonicalSocialProfile(null);
+      setSocialProfileResolved(false);
+      setPlayerCardOnboardingMessage("");
+      setPlayerCardOnboardingStatus(user && !isAnonymousAuthUser(user) ? "checking" : "not-required");
+    }
   }
 
   async function getSignedUser(client: NonNullable<typeof supabase>) {
@@ -4256,6 +4274,83 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
   }, []);
 
   useEffect(() => {
+    const registeredUser = authUser && !isAnonymousAuthUser(authUser) ? authUser : null;
+    if (!registeredUser || previewDemoMode) {
+      let active = true;
+      queueMicrotask(() => {
+        if (!active) return;
+        setPlayerCardOnboardingStatus("not-required");
+        setPlayerCardOnboardingMessage("");
+      });
+      return () => { active = false; };
+    }
+    if (!supabase) {
+      let active = true;
+      queueMicrotask(() => {
+        if (!active) return;
+        setPlayerCardOnboardingStatus("error");
+        setPlayerCardOnboardingMessage("No podemos comprobar tu ficha porque el servidor no está configurado.");
+      });
+      return () => { active = false; };
+    }
+
+    const client = supabase;
+    let active = true;
+    let refreshInFlight = false;
+    const loadCanonicalCardState = async (showChecking: boolean) => {
+      if (!active || refreshInFlight) return;
+      if (!navigator.onLine) {
+        setPlayerCardOnboardingStatus("error");
+        setPlayerCardOnboardingMessage("Necesitas conexión para comprobar o crear tu ficha.");
+        return;
+      }
+      refreshInFlight = true;
+      if (showChecking) setPlayerCardOnboardingStatus("checking");
+      try {
+        const session = (await client.auth.getSession()).data.session;
+        if (!session || session.user.id !== registeredUser.id) throw new Error("La sesión ha cambiado. Vuelve a entrar.");
+        const response = await fetch("/api/ratings/assessment", {
+          cache: "no-store",
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        });
+        if (!response.ok) throw new Error("El servidor no pudo comprobar tu ficha.");
+        const snapshot: unknown = await response.json();
+        if (!active) return;
+        setPlayerCardOnboardingStatus(hasCanonicalInitialAssessment(snapshot) ? "complete" : "required");
+        setPlayerCardOnboardingMessage("");
+      } catch (error) {
+        if (!active) return;
+        setPlayerCardOnboardingStatus("error");
+        setPlayerCardOnboardingMessage(error instanceof Error ? error.message : "No pudimos comprobar tu ficha.");
+      } finally {
+        refreshInFlight = false;
+      }
+    };
+
+    void loadCanonicalCardState(true);
+    const channel = client
+      .channel(`first-card-onboarding:${registeredUser.id}`)
+      .on("postgres_changes", {
+        event: "INSERT",
+        filter: `audience_user_id=eq.${registeredUser.id}`,
+        schema: "public",
+        table: "pachanga_social_invalidations_v1",
+      }, (event) => {
+        if (event.new?.entity_type === "rating_profile") void loadCanonicalCardState(false);
+      })
+      .subscribe((status) => {
+        if (status === "SUBSCRIBED") void loadCanonicalCardState(false);
+      });
+    const reconnect = () => void loadCanonicalCardState(true);
+    window.addEventListener("online", reconnect);
+    return () => {
+      active = false;
+      window.removeEventListener("online", reconnect);
+      void client.removeChannel(channel);
+    };
+  }, [authUser, playerCardOnboardingRetry, previewDemoMode]);
+
+  useEffect(() => {
     if (!currentUserId) return;
     let active = true;
     queueMicrotask(() => {
@@ -4275,7 +4370,12 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
       }
     });
 
-    if (!supabase) return () => { active = false; };
+    if (!supabase) {
+      queueMicrotask(() => {
+        if (active) setSocialProfileResolved(true);
+      });
+      return () => { active = false; };
+    }
     const client = supabase;
     const loadProfile = async () => {
       const result = await client.rpc("get_my_pachanga_social_profile_v1");
@@ -4287,15 +4387,18 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
         } catch {
           // A missing read cache leaves the server profile unknown, never confirmed locally.
         }
+        setSocialProfileResolved(true);
         return;
       }
       const profile = normalizeCanonicalSocialProfile(result.data);
       if (!profile) {
         setCanonicalSocialProfile(null);
         setSocialOnboardingDraft((current) => current.displayName ? current : { ...current, displayName: authDisplayName(authUser) });
+        setSocialProfileResolved(true);
         return;
       }
       setCanonicalSocialProfile(profile);
+      setSocialProfileResolved(true);
       try {
         localStorage.setItem(socialProfileCacheKey(currentUserId), JSON.stringify(profile));
       } catch {
@@ -9703,6 +9806,101 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
     );
   }
 
+  function renderSocialOnboarding(requiredCardOnboarding = false) {
+    return (
+      <SocialOnboarding
+        canonicalProfile={socialProfile}
+        dismissed={requiredCardOnboarding ? false : pendingSocialInvitation ? false : socialOnboardingDismissed}
+        draft={socialOnboardingDraft}
+        entryState={socialEntryState}
+        forcedView={requiredCardOnboarding ? "profile" : socialFlowRequested}
+        googleMapsApiKey={googleMapsApiKey}
+        invitation={pendingSocialInvitation}
+        key={`${pendingSocialInvitation?.token ?? "social-onboarding"}:${requiredCardOnboarding ? "required" : "optional"}`}
+        onDismiss={() => {
+          if (requiredCardOnboarding) return;
+          setSocialOnboardingDismissed(true);
+          if (currentUserId) {
+            try {
+              localStorage.setItem(socialOnboardingDismissedKey(currentUserId), "1");
+            } catch {
+              // Dismissal is a visual preference; canonical identity is unaffected.
+            }
+          }
+        }}
+        onCreateTeam={createSocialTeam}
+        onDraftChange={setSocialOnboardingDraft}
+        onForcedViewHandled={() => {
+          if (requiredCardOnboarding) return;
+          setSocialFlowRequested(null);
+          const params = new URLSearchParams(window.location.search);
+          params.delete("social");
+          window.history.replaceState(null, "", params.size ? `${window.location.pathname}?${params.toString()}` : window.location.pathname);
+        }}
+        onJoin={confirmSocialInvitation}
+        onLookupTeamCode={lookupSocialTeamCode}
+        onOpen={() => {
+          setSocialOnboardingDismissed(false);
+          if (currentUserId) {
+            try {
+              localStorage.removeItem(socialOnboardingDismissedKey(currentUserId));
+            } catch {
+              // The onboarding remains usable without local preference storage.
+            }
+          }
+        }}
+        onSaveProfile={saveSocialProfile}
+        requiredCardOnboarding={requiredCardOnboarding}
+      />
+    );
+  }
+
+  const firstTimeCardGateActive = Boolean(
+    isRegisteredUser
+      && !previewDemoMode
+      && playerCardOnboardingStatus !== "complete"
+      && playerCardOnboardingStatus !== "not-required",
+  );
+
+  useEffect(() => {
+    if (!firstTimeCardGateActive) return;
+    document.body.classList.add("first-time-onboarding-active");
+    return () => document.body.classList.remove("first-time-onboarding-active");
+  }, [firstTimeCardGateActive]);
+
+  if (firstTimeCardGateActive) {
+    const loading = playerCardOnboardingStatus === "checking" || !socialProfileResolved;
+    return (
+      <main
+        className="first-time-onboarding-shell"
+        data-player-card-onboarding-gate={playerCardOnboardingStatus}
+        style={teamColorStyle}
+      >
+        <AuthenticatedThemeDefault />
+        {loading ? (
+          <section className="first-time-onboarding-state" aria-live="polite">
+            <NextImage src="/icon-192.png" alt="Pachangas IQ" width={72} height={72} priority />
+            <span>Primeros pasos</span>
+            <strong>Comprobando tu ficha confirmada...</strong>
+          </section>
+        ) : null}
+        {!loading && playerCardOnboardingStatus === "error" ? (
+          <section className="first-time-onboarding-state" role="alert">
+            <NextImage src="/icon-192.png" alt="Pachangas IQ" width={72} height={72} priority />
+            <span>No se ha abierto la aplicación</span>
+            <strong>No pudimos comprobar tu ficha</strong>
+            <p>{playerCardOnboardingMessage}</p>
+            <div>
+              <button type="button" onClick={() => setPlayerCardOnboardingRetry((current) => current + 1)}>Reintentar</button>
+              <button type="button" onClick={() => void signOut()}>Cerrar sesión</button>
+            </div>
+          </section>
+        ) : null}
+        {!loading && playerCardOnboardingStatus === "required" ? renderSocialOnboarding(true) : null}
+      </main>
+    );
+  }
+
   if (isPublicEntryMode) {
     return (
       <main className="min-h-screen bg-[#f7f6f0] text-[#1d2521] demo-world-entry-shell social-entry-shell" data-product-entry="no-team" style={teamColorStyle}>
@@ -9782,46 +9980,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
     <AuthenticatedThemeDefault />
     <main className="min-h-screen bg-[#f7f6f0] text-[#1d2521] official-ui-v2-product" data-mobile-tab={activeMobileTab} data-team-state={hasRealTeam ? "member" : "no-team"} style={teamColorStyle}>
       {showSocialOnboarding ? (
-        <SocialOnboarding
-          canonicalProfile={socialProfile}
-          dismissed={pendingSocialInvitation ? false : socialOnboardingDismissed}
-          draft={socialOnboardingDraft}
-          entryState={socialEntryState}
-          forcedView={socialFlowRequested}
-          invitation={pendingSocialInvitation}
-          key={pendingSocialInvitation?.token ?? "social-onboarding"}
-          onDismiss={() => {
-            setSocialOnboardingDismissed(true);
-            if (currentUserId) {
-              try {
-                localStorage.setItem(socialOnboardingDismissedKey(currentUserId), "1");
-              } catch {
-                // Dismissal is a visual preference; canonical identity is unaffected.
-              }
-            }
-          }}
-          onCreateTeam={createSocialTeam}
-          onDraftChange={setSocialOnboardingDraft}
-          onForcedViewHandled={() => {
-            setSocialFlowRequested(null);
-            const params = new URLSearchParams(window.location.search);
-            params.delete("social");
-            window.history.replaceState(null, "", params.size ? `${window.location.pathname}?${params.toString()}` : window.location.pathname);
-          }}
-          onJoin={confirmSocialInvitation}
-          onLookupTeamCode={lookupSocialTeamCode}
-          onOpen={() => {
-            setSocialOnboardingDismissed(false);
-            if (currentUserId) {
-              try {
-                localStorage.removeItem(socialOnboardingDismissedKey(currentUserId));
-              } catch {
-                // The onboarding remains usable without local preference storage.
-              }
-            }
-          }}
-          onSaveProfile={saveSocialProfile}
-        />
+        renderSocialOnboarding()
       ) : null}
       {activeMobileTab === "inicio" ? (
         <section id="inicio" ref={teamAccessPanelRef}>

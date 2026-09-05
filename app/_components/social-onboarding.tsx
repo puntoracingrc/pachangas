@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { attachVenueAutocomplete, type VenuePlace } from "../googlePlacesClient";
 import {
   DEFAULT_SOCIAL_ONBOARDING_DRAFT,
   SOCIAL_DAY_OPTIONS,
@@ -10,11 +11,13 @@ import {
   TEAM_CREATION_AUTHORITY,
   normalizeSocialOnboardingDraft,
   parseTeamInvitationInput,
+  socialFirstTimeProfileReady,
   socialProfileMinimumReady,
   socialWriteAvailability,
   type SocialEntryState,
   type SocialOnboardingFlow,
   type SocialOnboardingDraft,
+  type SocialProfileMinimum,
 } from "../social-onboarding-contract";
 import { modalityLabel, type SocialTeamCreateDraft, type SocialTeamInvitation } from "../social-team-core-contract";
 import styles from "./social-onboarding.module.css";
@@ -36,15 +39,12 @@ type TeamCodePreview = {
 };
 
 type SocialOnboardingProps = {
-  canonicalProfile: {
-    displayName?: string | null;
-    modalities?: string[] | null;
-    position?: string | null;
-  } | null;
+  canonicalProfile: SocialProfileMinimum | null;
   dismissed: boolean;
   draft: SocialOnboardingDraft;
   entryState: SocialEntryState;
   forcedView?: FlowView | null;
+  googleMapsApiKey?: string;
   invitation?: PendingSocialInvitation | null;
   onDismiss: () => void;
   onCreateTeam: (draft: SocialTeamCreateDraft) => Promise<{ error?: string; ok: boolean }>;
@@ -54,6 +54,7 @@ type SocialOnboardingProps = {
   onLookupTeamCode: (code: string) => Promise<{ error?: string; ok: boolean; team?: TeamCodePreview }>;
   onOpen: () => void;
   onSaveProfile: (draft: SocialOnboardingDraft) => Promise<{ error?: string; ok: boolean }>;
+  requiredCardOnboarding?: boolean;
 };
 
 const modalityOptions = [
@@ -72,12 +73,18 @@ function defaultStep(entryState: SocialEntryState) {
   return entryState === "PROFILE_READY_NO_TEAM" || entryState === "TEAM_INVITATION_PENDING" ? 3 : 1;
 }
 
+function requiredProfileStep(profile: SocialProfileMinimum | null) {
+  if (socialFirstTimeProfileReady(profile)) return 3;
+  return socialProfileMinimumReady(profile) ? 2 : 1;
+}
+
 export function SocialOnboarding({
   canonicalProfile,
   dismissed,
   draft,
   entryState,
   forcedView = null,
+  googleMapsApiKey = "",
   invitation,
   onDismiss,
   onCreateTeam,
@@ -87,10 +94,11 @@ export function SocialOnboarding({
   onLookupTeamCode,
   onOpen,
   onSaveProfile,
+  requiredCardOnboarding = false,
 }: SocialOnboardingProps) {
   const [open, setOpen] = useState(!dismissed);
   const [view, setView] = useState<FlowView>(() => viewForEntry(entryState));
-  const [step, setStep] = useState(() => defaultStep(entryState));
+  const [step, setStep] = useState(() => requiredCardOnboarding ? requiredProfileStep(canonicalProfile) : defaultStep(entryState));
   const [joinInput, setJoinInput] = useState("");
   const [joinCandidate, setJoinCandidate] = useState<PendingSocialInvitation | null>(invitation ?? null);
   const [joinMessage, setJoinMessage] = useState("");
@@ -110,13 +118,22 @@ export function SocialOnboarding({
   const [teamCodePreview, setTeamCodePreview] = useState<TeamCodePreview | null>(null);
   const [online, setOnline] = useState(() => typeof navigator === "undefined" ? true : navigator.onLine);
   const [avatarPreview, setAvatarPreview] = useState("");
+  const [confirmedCity, setConfirmedCity] = useState(() => canonicalProfile?.generalArea?.trim() ?? "");
+  const [placeMessage, setPlaceMessage] = useState("");
+  const [placeStatus, setPlaceStatus] = useState<"error" | "idle" | "loading" | "missing-key" | "ready">("idle");
+  const cityInputRef = useRef<HTMLInputElement>(null);
 
   const profileReady = socialProfileMinimumReady(canonicalProfile);
+  const firstTimeProfileReady = socialFirstTimeProfileReady(canonicalProfile);
   const writeAvailability = socialWriteAvailability(online);
   const visibleDraft = useMemo(() => normalizeSocialOnboardingDraft(draft), [draft]);
-  const activeView = invitation ? (profileReady ? "join" : "profile") : forcedView ?? view;
+  const draftRef = useRef(visibleDraft);
+  const activeView = requiredCardOnboarding
+    ? "profile"
+    : invitation ? (profileReady ? "join" : "profile") : forcedView ?? view;
   const activeJoinCandidate = invitation ?? joinCandidate;
-  const visibleOpen = Boolean(forcedView || open);
+  const visibleOpen = Boolean(requiredCardOnboarding || forcedView || open);
+  const cityConfirmed = Boolean(confirmedCity && confirmedCity === visibleDraft.zone.trim());
 
   useEffect(() => {
     const update = () => setOnline(navigator.onLine);
@@ -128,14 +145,109 @@ export function SocialOnboarding({
     };
   }, []);
 
+  useEffect(() => {
+    draftRef.current = visibleDraft;
+  }, [visibleDraft]);
+
   useEffect(() => () => {
     if (avatarPreview.startsWith("blob:")) URL.revokeObjectURL(avatarPreview);
   }, [avatarPreview]);
 
+  useEffect(() => {
+    const canonicalCity = canonicalProfile?.generalArea?.trim();
+    if (!canonicalCity) return;
+    let active = true;
+    queueMicrotask(() => {
+      if (active) setConfirmedCity(canonicalCity);
+    });
+    return () => { active = false; };
+  }, [canonicalProfile?.generalArea]);
+
+  useEffect(() => {
+    if (!requiredCardOnboarding) return;
+    const nextStep = firstTimeProfileReady ? 3 : profileReady ? 2 : 1;
+    let active = true;
+    queueMicrotask(() => {
+      if (active) setStep((current) => current === 3 && nextStep < 3 ? nextStep : Math.max(current, nextStep));
+    });
+    return () => { active = false; };
+  }, [firstTimeProfileReady, profileReady, requiredCardOnboarding]);
+
+  useEffect(() => {
+    if (activeView !== "profile" || step !== 2) return;
+    if (!googleMapsApiKey) {
+      let active = true;
+      queueMicrotask(() => {
+        if (!active) return;
+        setPlaceStatus("missing-key");
+        setPlaceMessage("No podemos abrir el buscador de poblaciones ahora mismo.");
+      });
+      return () => { active = false; };
+    }
+
+    const input = cityInputRef.current;
+    if (!input) return;
+    let cleanup: (() => void) | undefined;
+    let disposed = false;
+    queueMicrotask(() => {
+      if (!disposed) setPlaceStatus("loading");
+    });
+
+    attachVenueAutocomplete({
+      apiKey: googleMapsApiKey,
+      input,
+      onError: (message) => {
+        if (disposed) return;
+        setConfirmedCity("");
+        setPlaceStatus("error");
+        setPlaceMessage(message);
+      },
+      onPlace: (place: VenuePlace) => {
+        if (disposed) return;
+        const city = (place.city || place.name).trim();
+        if (!city) {
+          setConfirmedCity("");
+          setPlaceStatus("error");
+          setPlaceMessage("Elige una ciudad o población de las sugerencias.");
+          return;
+        }
+        setConfirmedCity(city);
+        setPlaceStatus("ready");
+        setPlaceMessage(`Población confirmada: ${city}`);
+        onDraftChange(normalizeSocialOnboardingDraft({ ...draftRef.current, zone: city }));
+      },
+      onSelectionInvalidated: () => {
+        if (disposed) return;
+        setConfirmedCity("");
+        setPlaceStatus("ready");
+        setPlaceMessage("Elige una ciudad o población de las sugerencias.");
+      },
+      types: ["(cities)"],
+    })
+      .then((nextCleanup) => {
+        if (disposed) {
+          nextCleanup();
+          return;
+        }
+        cleanup = nextCleanup;
+        setPlaceStatus("ready");
+      })
+      .catch((error: unknown) => {
+        if (disposed) return;
+        setPlaceStatus("error");
+        setPlaceMessage(error instanceof Error ? error.message : "No se pudo cargar Google Places.");
+      });
+
+    return () => {
+      disposed = true;
+      cleanup?.();
+    };
+  }, [activeView, googleMapsApiKey, onDraftChange, step]);
+
   if ((entryState === "TEAM_MEMBER" || entryState === "MULTI_TEAM_MEMBER") && !forcedView && !visibleOpen) return null;
 
   function updateDraft(patch: Partial<SocialOnboardingDraft>) {
-    onDraftChange(normalizeSocialOnboardingDraft({ ...visibleDraft, ...patch }));
+    onDraftChange(normalizeSocialOnboardingDraft({ ...draftRef.current, ...patch }));
   }
 
   function closeFlow() {
@@ -179,7 +291,7 @@ export function SocialOnboarding({
   }
 
   async function saveProfile() {
-    if (profileSaving || !writeAvailability.allowed || !visibleDraft.displayName.trim()) return;
+    if (profileSaving || !writeAvailability.allowed || !visibleDraft.displayName.trim() || !cityConfirmed) return;
     setProfileSaving(true);
     setProfileMessage("Guardando con el servidor...");
     const result = await onSaveProfile(visibleDraft);
@@ -190,6 +302,10 @@ export function SocialOnboarding({
     }
     setProfileMessage("Perfil confirmado.");
     setStep(3);
+    if (requiredCardOnboarding) {
+      setView("profile");
+      return;
+    }
     selectView("start");
   }
 
@@ -238,19 +354,29 @@ export function SocialOnboarding({
         <div>
           <span>Primeros pasos</span>
           <h2 id="social-onboarding-title">
-            {activeView === "join" ? "Unirme a un equipo" : activeView === "create" ? "Crear mi equipo" : activeView === "start" ? "¿Cómo quieres empezar?" : invitation ? "Primero, prepara tu perfil" : "Prepara tu perfil"}
+            {requiredCardOnboarding ? "Crea tu ficha de jugador" : activeView === "join" ? "Unirme a un equipo" : activeView === "create" ? "Crear mi equipo" : activeView === "start" ? "¿Cómo quieres empezar?" : invitation ? "Primero, prepara tu perfil" : "Prepara tu perfil"}
           </h2>
         </div>
         <div className={styles.headerActions}>
           {!profileReady ? <small>BORRADOR LOCAL</small> : <small>PERFIL CONFIRMADO</small>}
-          <button type="button" onClick={closeFlow}>Ahora no</button>
+          {!requiredCardOnboarding ? <button type="button" onClick={closeFlow}>Ahora no</button> : null}
         </div>
       </header>
 
       {activeView === "profile" ? (
         <div className={styles.profileFlow}>
           <nav className={styles.steps} aria-label="Pasos del perfil">
-            {[1, 2, 3].map((item) => <button aria-current={step === item ? "step" : undefined} key={item} type="button" onClick={() => setStep(item)}>{item}</button>)}
+            {[1, 2, 3].map((item) => (
+              <button
+                aria-current={step === item ? "step" : undefined}
+                disabled={item === 2 ? !visibleDraft.displayName.trim() : item === 3 ? requiredCardOnboarding && !firstTimeProfileReady : false}
+                key={item}
+                type="button"
+                onClick={() => setStep(item)}
+              >
+                {item}
+              </button>
+            ))}
           </nav>
           {step === 1 ? (
             <div className={styles.formBody}>
@@ -271,16 +397,32 @@ export function SocialOnboarding({
           ) : null}
           {step === 2 ? (
             <div className={styles.formBody}>
-              <div className={styles.stepHeading}><span>Paso 2</span><h3>Dónde y cuándo juegas</h3><p>Una referencia general. No pedimos ubicación exacta.</p></div>
-              <label>Ciudad o zona general<input maxLength={120} placeholder="Ej. Gràcia, Barcelona" value={visibleDraft.zone} onChange={(event) => updateDraft({ zone: event.target.value })} /></label>
-              <fieldset><legend>Días habituales</legend><div className={styles.dayPicker}>{SOCIAL_DAY_OPTIONS.map((day) => <button aria-pressed={visibleDraft.days.includes(day)} key={day} type="button" onClick={() => updateDraft({ days: visibleDraft.days.includes(day) ? visibleDraft.days.filter((item) => item !== day) : [...visibleDraft.days, day] })}>{day}</button>)}</div></fieldset>
+              <div className={styles.stepHeading}><span>Paso 2</span><h3>Dónde y cuándo prefieres jugar</h3><p>Solo pedimos tu ciudad o población, nunca una dirección exacta.</p></div>
+              <label>
+                Ciudad o población
+                <input
+                  autoComplete="off"
+                  maxLength={120}
+                  placeholder="Ej. Barcelona"
+                  ref={cityInputRef}
+                  value={visibleDraft.zone}
+                  onChange={(event) => {
+                    setConfirmedCity("");
+                    setPlaceMessage("Elige una ciudad o población de las sugerencias.");
+                    updateDraft({ zone: event.target.value });
+                  }}
+                />
+              </label>
+              {placeStatus === "loading" ? <p className={styles.placeStatus}>Preparando el buscador de poblaciones...</p> : null}
+              {placeMessage ? <p className={placeStatus === "error" || placeStatus === "missing-key" ? styles.warning : styles.placeStatus} role="status">{placeMessage}</p> : null}
+              <fieldset><legend>Días preferidos</legend><div className={styles.dayPicker}>{SOCIAL_DAY_OPTIONS.map((day) => <button aria-pressed={visibleDraft.days.includes(day)} key={day} type="button" onClick={() => updateDraft({ days: visibleDraft.days.includes(day) ? visibleDraft.days.filter((item) => item !== day) : [...visibleDraft.days, day] })}>{day}</button>)}</div></fieldset>
               <label>Franja aproximada<select value={visibleDraft.approximateTime} onChange={(event) => updateDraft({ approximateTime: event.target.value })}><option>08:00-12:00</option><option>12:00-16:00</option><option>16:00-20:00</option><option>20:00-22:00</option><option>22:00-00:00</option></select></label>
               {!writeAvailability.allowed ? <p className={styles.warning}>{writeAvailability.label}</p> : null}
               {profileMessage ? <p className={styles.message} role="status">{profileMessage}</p> : null}
-              <div className={styles.actions}><button type="button" onClick={() => setStep(1)}>Volver</button><button className={styles.primary} type="button" disabled={profileSaving || !writeAvailability.allowed} onClick={() => void saveProfile()}>{profileSaving ? "Guardando..." : profileReady ? "Actualizar perfil" : "Guardar perfil"}</button></div>
+              <div className={styles.actions}><button type="button" onClick={() => setStep(1)}>Volver</button><button className={styles.primary} type="button" disabled={profileSaving || !writeAvailability.allowed || !cityConfirmed} onClick={() => void saveProfile()}>{profileSaving ? "Guardando..." : profileReady ? "Actualizar perfil" : "Guardar perfil"}</button></div>
             </div>
           ) : null}
-          {step === 3 ? <StartChoices onCreate={() => selectView("create")} onJoin={() => selectView("join")} /> : null}
+          {step === 3 ? requiredCardOnboarding ? <RequiredAssessmentStep onBack={() => setStep(2)} /> : <StartChoices onCreate={() => selectView("create")} onJoin={() => selectView("join")} /> : null}
         </div>
       ) : null}
 
@@ -331,6 +473,22 @@ function StartChoices({ onCreate, onJoin }: { onCreate: () => void; onJoin: () =
         <button type="button" onClick={onJoin}><b aria-hidden="true">+</b><strong>Unirme a un equipo</strong><small>Usa el enlace de invitación de un admin.</small></button>
         <button type="button" onClick={onCreate}><b aria-hidden="true">◇</b><strong>Crear mi equipo</strong><small>Prepara identidad, modalidad y zona.</small></button>
         <Link href="/mercado?tab=partidos"><b aria-hidden="true">⌕</b><strong>Buscar una pachanga</strong><small>Explora partidos públicos sin crear equipo.</small></Link>
+      </div>
+    </div>
+  );
+}
+
+function RequiredAssessmentStep({ onBack }: { onBack: () => void }) {
+  return (
+    <div className={styles.requiredAssessment}>
+      <div className={styles.stepHeading}>
+        <span>Paso 3</span>
+        <h3>Crea tu primera carta</h3>
+        <p>El test inicial es obligatorio y solo puede completarse una vez. Responde con sinceridad: el servidor usará tus respuestas para crear tu ficha universal.</p>
+      </div>
+      <div className={styles.requiredAssessmentActions}>
+        <button type="button" onClick={onBack}>Volver</button>
+        <Link className={styles.primary} href="/perfil/test-inicial?onboarding=1">Hacer test inicial</Link>
       </div>
     </div>
   );

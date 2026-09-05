@@ -115,7 +115,7 @@ async function canonicalSnapshot(
   userId: string,
   requestedGroupId?: string | null,
 ) {
-  const [profileResult, assessmentResult, groupContext] = await Promise.all([
+  const [profileResult, assessmentResult, groupContext, socialProfileResult] = await Promise.all([
     client
       .from("pachanga_player_profiles")
       .select("id,display_name,avatar,position,outfield_position,current_overall,current_facets,rating_reliability,assessment_summary,profile_version,updated_at")
@@ -127,9 +127,15 @@ async function canonicalSnapshot(
       .eq("user_id", userId)
       .order("assessment_kind", { ascending: true }),
     resolveGroupContext(userId, requestedGroupId),
+    client
+      .from("pachanga_social_player_profiles_v1")
+      .select("display_name,primary_position,preferred_modality,general_area")
+      .eq("user_id", userId)
+      .maybeSingle(),
   ]);
   if (profileResult.error) throw new Error(profileResult.error.message);
   if (assessmentResult.error) throw new Error(assessmentResult.error.message);
+  if (socialProfileResult.error) throw new Error(socialProfileResult.error.message);
 
   const assessments = Object.fromEntries((assessmentResult.data ?? []).map((assessment) => [assessment.assessment_kind, {
     completedAt: assessment.completed_at,
@@ -141,6 +147,12 @@ async function canonicalSnapshot(
   const profileRevision = Math.max(0, Math.floor(Number(profileResult.data?.profile_version) || 0));
   return {
     assessments,
+    onboardingProfileReady: Boolean(
+      socialProfileResult.data?.display_name?.trim()
+        && socialProfileResult.data?.primary_position?.trim()
+        && socialProfileResult.data?.preferred_modality?.trim()
+        && socialProfileResult.data?.general_area?.trim(),
+    ),
     playerProfile: profileResult.data ?? null,
     writeContext: groupContext
       ? {
@@ -187,6 +199,23 @@ export async function POST(request: Request) {
     let initialInput: InitialRatingInput;
     let canonicalAssessmentInput: InitialRatingInput | { answers: Record<string, 1 | 2 | 3 | 4 | 5> };
     if (body.kind === "initial") {
+      const socialProfile = await client
+        .from("pachanga_social_player_profiles_v1")
+        .select("display_name,primary_position,preferred_modality,general_area")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (socialProfile.error) throw new Error(socialProfile.error.message);
+      if (
+        !socialProfile.data?.display_name?.trim()
+        || !socialProfile.data?.primary_position?.trim()
+        || !socialProfile.data?.preferred_modality?.trim()
+        || !socialProfile.data?.general_area?.trim()
+      ) {
+        return NextResponse.json(
+          { error: "Completa primero tu perfil y confirma tu ciudad o población." },
+          { status: 409, headers: noStoreHeaders },
+        );
+      }
       initialInput = canonicalInitialAssessmentInput(body.assessmentInput);
       canonicalAssessmentInput = initialInput;
     } else {

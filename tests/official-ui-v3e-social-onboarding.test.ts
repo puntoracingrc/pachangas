@@ -10,6 +10,7 @@ import {
   normalizeSocialOnboardingDraft,
   parseTeamInvitationInput,
   playerMarketPresentationState,
+  socialFirstTimeProfileReady,
   socialProfileMinimumReady,
   socialOnboardingFlowFromSearch,
   socialProfileModalities,
@@ -23,6 +24,7 @@ test("V3E classifies social profile fields without exposing technical authority"
   assert.equal(SOCIAL_PROFILE_FIELD_CLASSIFICATION.displayName, "ESSENTIAL");
   assert.equal(SOCIAL_PROFILE_FIELD_CLASSIFICATION.position, "ESSENTIAL");
   assert.equal(SOCIAL_PROFILE_FIELD_CLASSIFICATION.modalities, "ESSENTIAL");
+  assert.equal(SOCIAL_PROFILE_FIELD_CLASSIFICATION.zone, "ESSENTIAL");
   assert.equal(SOCIAL_PROFILE_FIELD_CLASSIFICATION.avatar, "OPTIONAL");
   assert.equal(SOCIAL_PROFILE_FIELD_CLASSIFICATION.marketVisibility, "MARKET_ONLY");
   assert.equal(SOCIAL_PROFILE_FIELD_CLASSIFICATION.teamCode, "TEAM_ONLY");
@@ -43,6 +45,11 @@ test("minimum profile requires only name, position and one modality", () => {
   assert.equal(socialProfileMinimumReady({ displayName: "Alex", modalities: ["futbol7"], position: "Pivote" }), true);
   assert.equal(socialProfileMinimumReady({ displayName: "Alex", modalities: [], position: "Pivote" }), false);
   assert.equal(socialProfileMinimumReady({ displayName: "", modalities: ["futbol7"], position: "Pivote" }), false);
+});
+
+test("first-card onboarding additionally requires a canonical city or town", () => {
+  assert.equal(socialFirstTimeProfileReady({ displayName: "Alex", modalities: ["futbol7"], position: "Pivote" }), false);
+  assert.equal(socialFirstTimeProfileReady({ displayName: "Alex", generalArea: "Barcelona", modalities: ["futbol7"], position: "Pivote" }), true);
 });
 
 test("the local draft is bounded, resumable and never preserves a blob as authority", () => {
@@ -93,15 +100,18 @@ test("market visibility is explicit and revocable", () => {
   assert.equal(playerMarketPresentationState({ enabled: true }), "PUBLICADO");
 });
 
-test("the three-step social onboarding is optional and resumable", async () => {
+test("the three-step onboarding is dismissible after card creation and mandatory before it", async () => {
   const component = await source("app/_components/social-onboarding.tsx");
   assert.match(component, /\[1, 2, 3\]\.map/);
   assert.match(component, /Paso 1[\s\S]*Tu perfil/);
-  assert.match(component, /Paso 2[\s\S]*Dónde y cuándo juegas/);
-  assert.match(component, /Paso 3[\s\S]*¿Cómo quieres empezar\?/);
-  assert.match(component, /Ahora no/);
+  assert.match(component, /Paso 2[\s\S]*Dónde y cuándo prefieres jugar/);
+  assert.match(component, /Ciudad o población/);
+  assert.match(component, /Días preferidos/);
+  assert.match(component, /requiredCardOnboarding \? <RequiredAssessmentStep/);
+  assert.match(component, /!requiredCardOnboarding \? <button type="button" onClick=\{closeFlow\}>Ahora no<\/button> : null/);
   assert.match(component, /Continuar configuración inicial/);
   assert.match(component, /Foto[\s\S]*Opcional/);
+  assert.match(component, /href="\/perfil\/test-inicial\?onboarding=1"/);
   assert.doesNotMatch(component, /onboardingCompleted/);
 });
 
@@ -125,10 +135,12 @@ test("incoming invitations wait for explicit confirmation and canonical readback
   assert.match(confirm, /team\.invitation\.accept/);
   assert.doesNotMatch(confirm, /join_pachanga_team/);
   assert.match(confirm, /await loadTeams\(client, groupId\)/);
-  assert.match(component, /const visibleOpen = Boolean\(forcedView \|\| open\)/);
+  assert.match(component, /const activeView = requiredCardOnboarding[\s\S]*\? "profile"/);
+  assert.match(component, /const visibleOpen = Boolean\(requiredCardOnboarding \|\| forcedView \|\| open\)/);
   assert.doesNotMatch(component, /visibleOpen = Boolean\(invitation \|\|/);
-  assert.match(page, /dismissed=\{pendingSocialInvitation \? false : socialOnboardingDismissed\}/);
-  assert.match(page, /key=\{pendingSocialInvitation\?\.token \?\? "social-onboarding"\}/);
+  assert.match(page, /dismissed=\{requiredCardOnboarding \? false : pendingSocialInvitation \? false : socialOnboardingDismissed\}/);
+  assert.match(page, /key=\{`\$\{pendingSocialInvitation\?\.token \?\? "social-onboarding"\}:\$\{requiredCardOnboarding \? "required" : "optional"\}`\}/);
+  assert.match(page, /invitation=\{pendingSocialInvitation\}/);
 });
 
 test("team creation uses one authoritative command and never confirms locally", async () => {

@@ -19,11 +19,16 @@ import {
   canonicalAdvancedAssessmentInput,
   canonicalInitialAssessmentInput,
 } from "../app/rating-assessment-contract";
+import { hasCanonicalInitialAssessment } from "../app/player-card-onboarding-contract";
+import { socialFirstTimeProfileReady } from "../app/social-onboarding-contract";
 
 const profile = readFileSync(new URL("../app/perfil/profile-client.tsx", import.meta.url), "utf8");
 const cosmetics = readFileSync(new URL("../app/personalizar-carta/page.tsx", import.meta.url), "utf8");
 const onboarding = readFileSync(new URL("../app/perfil/test-inicial/page.tsx", import.meta.url), "utf8");
 const onboardingStyles = readFileSync(new URL("../app/perfil/test-inicial/page.module.css", import.meta.url), "utf8");
+const socialOnboarding = readFileSync(new URL("../app/_components/social-onboarding.tsx", import.meta.url), "utf8");
+const globalStyles = readFileSync(new URL("../app/globals.css", import.meta.url), "utf8");
+const googlePlaces = readFileSync(new URL("../app/googlePlacesClient.ts", import.meta.url), "utf8");
 const route = readFileSync(new URL("../app/api/ratings/assessment/route.ts", import.meta.url), "utf8");
 const home = readFileSync(new URL("../app/page.tsx", import.meta.url), "utf8");
 const serviceWorker = readFileSync(new URL("../app/service-worker-source.ts", import.meta.url), "utf8");
@@ -60,6 +65,44 @@ test("Perfil exposes the real initial assessment instead of looping through cosm
   assert.match(profile, /Mejorar precisión de mi ficha/);
   assert.match(cosmetics, /href="\/perfil\/test-inicial">Hacer test inicial y crear mi carta/);
   assert.doesNotMatch(cosmetics, /missingProfile \? <Link href="\/\?mobile=perfil"/);
+});
+
+test("first-time onboarding stays closed until the canonical initial assessment exists", () => {
+  assert.equal(hasCanonicalInitialAssessment(null), false);
+  assert.equal(hasCanonicalInitialAssessment({ assessments: {} }), false);
+  assert.equal(hasCanonicalInitialAssessment({ assessments: { initial: { completedAt: "" } } }), false);
+  assert.equal(hasCanonicalInitialAssessment({ assessments: { initial: { completedAt: "2026-09-05T12:00:00.000Z" } } }), true);
+  assert.match(home, /fetch\("\/api\/ratings\/assessment"/);
+  assert.match(home, /playerCardOnboardingStatus !== "complete"/);
+  assert.match(home, /data-player-card-onboarding-gate/);
+  assert.match(home, /renderSocialOnboarding\(true\)/);
+  assert.match(globalStyles, /body\.first-time-onboarding-active \.legal-footer/);
+  assert.match(globalStyles, /\.first-time-onboarding-shell \{[\s\S]*align-items: safe center/);
+});
+
+test("step two requires a Places city and step three opens the mandatory initial test", () => {
+  assert.equal(socialFirstTimeProfileReady({ displayName: "Alex", position: "Portero", preferredModality: "futbol7" }), false);
+  assert.equal(socialFirstTimeProfileReady({ displayName: "Alex", generalArea: "Barcelona", position: "Portero", preferredModality: "futbol7" }), true);
+  assert.match(socialOnboarding, /Ciudad o población/);
+  assert.match(socialOnboarding, /Días preferidos/);
+  assert.match(socialOnboarding, /attachVenueAutocomplete/);
+  assert.match(socialOnboarding, /types: \["\(cities\)"\]/);
+  assert.match(socialOnboarding, /disabled=\{profileSaving \|\| !writeAvailability\.allowed \|\| !cityConfirmed\}/);
+  assert.match(socialOnboarding, /href="\/perfil\/test-inicial\?onboarding=1"/);
+  assert.match(socialOnboarding, /requiredCardOnboarding \? "Crea tu ficha de jugador"/);
+  assert.match(googlePlaces, /autocompleteElement\.value = input\.value/);
+  assert.match(route, /pachanga_social_player_profiles_v1/);
+  assert.match(route, /Completa primero tu perfil y confirma tu ciudad o población/);
+  assert.match(route, /onboardingProfileReady/);
+});
+
+test("the mandatory test itself has no product navigation until the card is created", () => {
+  assert.match(onboarding, /initialAssessmentRequired = status !== "ready" \|\| !snapshot\?\.assessments\.initial/);
+  assert.match(onboarding, /data-player-card-onboarding-gate="assessment"/);
+  assert.match(onboarding, /initialAssessmentRequired\) \{[\s\S]*styles\.requiredShell/);
+  assert.match(onboarding, /Entrar en Pachangas IQ/);
+  assert.match(onboarding, /params\.get\("onboarding"\) === "1"/);
+  assert.match(onboarding, /snapshot\.onboardingProfileReady/);
 });
 
 test("the dedicated onboarding reuses every existing initial question and mode", () => {
@@ -172,5 +215,6 @@ test("staging certification covers all five onboarding states and fails closed",
   assert.match(staging, /RATING_PROFILE_ONBOARDING_STAGING_PRODUCTION_TARGET_FORBIDDEN/);
   assert.match(staging, /RATING_PROFILE_ONBOARDING_REALTIME_EVENT_TIMEOUT/);
   assert.match(staging, /FAIL_CLOSED/);
+  assert.match(staging, /general_area: "Barcelona"/);
   assert.doesNotMatch(staging, /qonbngfrnrqgmxbdfbea\.supabase\.co/);
 });
