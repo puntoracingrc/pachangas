@@ -13,6 +13,7 @@
 - Initial implementation commit: `2149ddea4d73e17c6f079e1bcfa54c5b339865ee`.
 - Pull request: draft `#281`.
 - Initial Preview deployment: `dpl_8pBvR3yeZaXcL6786h9RdUtSB63j`, READY for commit `2149ddea4d73e17c6f079e1bcfa54c5b339865ee`.
+- Staging-certified Preview before the final responsive fix: `https://pachangas-ihya1cqqc-persianas-almar-web-s-projects.vercel.app`, READY for commit `8f0807a4a4ed10215b67aa398ced7961324bdb11`.
 - Merge SHA: pending.
 - Production deployment: pending.
 
@@ -96,6 +97,16 @@ Local application checks:
 - Focused onboarding, Rating V2, Official UI and PWA tests: PASS.
 - `git diff --check`: PASS.
 
+Responsive browser QA:
+
+- Desktop `1440x900`: the initial flow and completed-card state fit without horizontal overflow, clipped controls or broken images.
+- Portrait `390x844`: all 15 steps are reachable by normal vertical scrolling; the final submit clears the fixed mobile navigation and the completed state exposes both allowed follow-up actions.
+- Landscape `844x390`: QA first reproduced a real defect where the card and actions were cut because the compact layout depended on `pointer: coarse`, while the game shell did not. The fix now keys the compact assessment layout to landscape height, gives the flow a contained vertical fallback and assigns stable grid positions to its title and close control.
+- After the fix, step `15/15`, `Crear ficha`, the completed card, `Personalizar mi carta` and `Mejorar precisión de mi ficha` are all fully visible at `844x390` with zero horizontal overflow.
+- Browser console: zero runtime errors during the assessment traversal.
+- Broken images: zero in every checked viewport.
+- The development-only visual fixture used for these checks was removed before validation and is not part of the release diff.
+
 Disposable PostgreSQL checks:
 
 - Applied the complete pending migration chain to a disposable local database.
@@ -129,12 +140,11 @@ The first remote run found that `pachanga_player_profiles` and `pachanga_player_
 
 ## Remaining release gates
 
-Pending before merge or production:
+Pending before production closure:
 
-1. Publish a new exact-SHA Preview containing the Realtime client correction and rerun staging certification against it.
-2. Authenticated browser QA for the permanent profile entry, questionnaire, success card and cosmetic guard.
-3. Responsive QA at desktop, portrait mobile and landscape mobile/PWA.
-4. Console, overflow, broken-image and Service Worker checks.
-5. Coordinated additive migration and frontend deployment, followed by canonical production smoke with synthetic data and complete cleanup.
+1. Publish the final responsive commit as an exact-SHA Preview and rerun the authenticated staging certification against that exact build.
+2. Apply the single additive forward migration before the frontend begins using its new RPC.
+3. Merge and deploy the exact reviewed SHA.
+4. Run a canonical production smoke with synthetic data and complete cleanup.
 
 Production has not been modified at this checkpoint.

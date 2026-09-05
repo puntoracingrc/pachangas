@@ -23,6 +23,7 @@ import {
 const profile = readFileSync(new URL("../app/perfil/profile-client.tsx", import.meta.url), "utf8");
 const cosmetics = readFileSync(new URL("../app/personalizar-carta/page.tsx", import.meta.url), "utf8");
 const onboarding = readFileSync(new URL("../app/perfil/test-inicial/page.tsx", import.meta.url), "utf8");
+const onboardingStyles = readFileSync(new URL("../app/perfil/test-inicial/page.module.css", import.meta.url), "utf8");
 const route = readFileSync(new URL("../app/api/ratings/assessment/route.ts", import.meta.url), "utf8");
 const home = readFileSync(new URL("../app/page.tsx", import.meta.url), "utf8");
 const serviceWorker = readFileSync(new URL("../app/service-worker-source.ts", import.meta.url), "utf8");
@@ -66,6 +67,9 @@ test("the dedicated onboarding reuses every existing initial question and mode",
     INITIAL_TECHNICAL_QUESTIONS.map((question) => question.id),
   );
   assert.equal(assessmentInitialIsComplete(completeInput()), true);
+  assert.match(onboardingStyles, /orientation:landscape\) and \(max-height:560px\)/);
+  assert.match(onboardingStyles, /max-height:calc\(100% - 30px\);overflow-x:hidden;overflow-y:auto/);
+  assert.match(onboardingStyles, /player-assessment-title>button\)\{grid-column:2;grid-row:1\/span 2\}/);
 });
 
 test("the server canonicalizes answers and ignores client timestamps or extra fields", () => {
