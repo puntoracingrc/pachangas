@@ -9877,6 +9877,9 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
         style={teamColorStyle}
       >
         <AuthenticatedThemeDefault />
+        <div className="first-time-onboarding-toolbar" aria-label="Apariencia">
+          <ThemeToggle compact defaultPreference="dark" />
+        </div>
         {loading ? (
           <section className="first-time-onboarding-state" aria-live="polite">
             <NextImage src="/icon-192.png" alt="Pachangas IQ" width={72} height={72} priority />

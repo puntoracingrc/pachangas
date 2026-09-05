@@ -4,6 +4,11 @@ import { useEffect, useSyncExternalStore } from "react";
 
 export type ThemePreference = "system" | "light" | "dark";
 
+type ThemeToggleProps = {
+  compact?: boolean;
+  defaultPreference?: ThemePreference;
+};
+
 const themePreferenceKey = "pachanga-iq-theme";
 const themePreferenceEvent = "pachangas:theme-preference-change";
 const themePreferenceOptions: Array<{ value: ThemePreference; label: string }> = [
@@ -14,6 +19,14 @@ const themePreferenceOptions: Array<{ value: ThemePreference; label: string }> =
 
 export function resolveThemePreference(value: string | null, fallback: ThemePreference = "system"): ThemePreference {
   return value === "light" || value === "dark" || value === "system" ? value : fallback;
+}
+
+export function nextThemePreference(
+  preference: ThemePreference,
+  systemPreference: Exclude<ThemePreference, "system"> = "light",
+): Exclude<ThemePreference, "system"> {
+  const activePreference = preference === "system" ? systemPreference : preference;
+  return activePreference === "dark" ? "light" : "dark";
 }
 
 function getStoredThemePreference(fallback: ThemePreference): ThemePreference {
@@ -60,6 +73,18 @@ function subscribeThemePreference(listener: () => void) {
   };
 }
 
+function subscribeSystemTheme(listener: () => void) {
+  if (typeof window === "undefined") return () => undefined;
+  const preferenceQuery = window.matchMedia("(prefers-color-scheme: dark)");
+  preferenceQuery.addEventListener("change", listener);
+  return () => preferenceQuery.removeEventListener("change", listener);
+}
+
+function getSystemTheme(): Exclude<ThemePreference, "system"> {
+  if (typeof window === "undefined") return "light";
+  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+}
+
 export function AuthenticatedThemeDefault() {
   useEffect(() => {
     applyThemePreference(getStoredThemePreference("dark"));
@@ -68,12 +93,13 @@ export function AuthenticatedThemeDefault() {
   return null;
 }
 
-export function ThemeToggle({ defaultPreference = "system" }: { defaultPreference?: ThemePreference }) {
+export function ThemeToggle({ compact = false, defaultPreference = "system" }: ThemeToggleProps) {
   const themePreference = useSyncExternalStore(
     subscribeThemePreference,
     () => getStoredThemePreference(defaultPreference),
     () => defaultPreference,
   );
+  const systemTheme = useSyncExternalStore(subscribeSystemTheme, getSystemTheme, () => "light" as const);
 
   useEffect(() => {
     applyThemePreference(themePreference);
@@ -96,6 +122,32 @@ export function ThemeToggle({ defaultPreference = "system" }: { defaultPreferenc
     applyThemePreference(preference);
     window.dispatchEvent(new Event(themePreferenceEvent));
   };
+
+  if (compact) {
+    const nextPreference = nextThemePreference(themePreference, systemTheme);
+    const nextLabel = nextPreference === "dark" ? "oscuro" : "claro";
+
+    return (
+      <button
+        aria-label={`Cambiar a modo ${nextLabel}`}
+        className="theme-compact-toggle"
+        onClick={() => handleThemeChange(nextPreference)}
+        title={`Cambiar a modo ${nextLabel}`}
+        type="button"
+      >
+        {nextPreference === "light" ? (
+          <svg aria-hidden="true" fill="none" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="4" />
+            <path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.65 17.65l1.42 1.42M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.65 6.35l1.42-1.42" />
+          </svg>
+        ) : (
+          <svg aria-hidden="true" fill="none" viewBox="0 0 24 24">
+            <path d="M20.2 15.1A8.5 8.5 0 0 1 8.9 3.8 8.5 8.5 0 1 0 20.2 15.1Z" />
+          </svg>
+        )}
+      </button>
+    );
+  }
 
   return (
     <div className="theme-preference-panel">
