@@ -67,7 +67,7 @@ export const SOCIAL_PROFILE_FIELD_CLASSIFICATION = {
   position: "ESSENTIAL",
   profileRevision: "TECHNICAL",
   teamCode: "TEAM_ONLY",
-  zone: "OPTIONAL",
+  zone: "ESSENTIAL",
 } as const satisfies Record<string, SocialProfileFieldClass>;
 
 export const DEFAULT_SOCIAL_ONBOARDING_DRAFT: SocialOnboardingDraft = {
@@ -130,6 +130,13 @@ export function socialProfileMinimumReady(profile: SocialProfileMinimum | null |
         cleanText(profile?.preferredModality, 40)
         || (Array.isArray(profile?.modalities) && profile.modalities.some((modality) => cleanText(modality, 40)))
       ),
+  );
+}
+
+export function socialFirstTimeProfileReady(profile: SocialProfileMinimum | null | undefined) {
+  return Boolean(
+    socialProfileMinimumReady(profile)
+      && cleanText(profile?.generalArea, 120),
   );
 }
 

@@ -223,6 +223,7 @@ async function createAccount(label) {
   accounts.push(account);
   const social = await service.from("pachanga_social_player_profiles_v1").insert({
     display_name: `QA ${label.toUpperCase()}`,
+    general_area: "Barcelona",
     preferred_modality: "futbol7",
     primary_position: "Mediocentro / pivote",
     social_preferences: { openToMatchInvites: true, openToTeamInvites: true },

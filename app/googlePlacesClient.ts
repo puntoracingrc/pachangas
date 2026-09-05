@@ -66,6 +66,7 @@ type GooglePlaceAutocompleteElement = HTMLElement & {
   includedPrimaryTypes?: string[];
   includedRegionCodes?: string[];
   placeholder?: string;
+  value?: string;
 };
 
 type GooglePlaceAutocompleteElementConstructor = new () => GooglePlaceAutocompleteElement;
@@ -300,6 +301,7 @@ function attachNewPlaceAutocomplete({
   if (types?.length) autocompleteElement.includedPrimaryTypes = types;
   autocompleteElement.includedRegionCodes = ["es"];
   autocompleteElement.placeholder = input.placeholder || "Busca con Google Places";
+  autocompleteElement.value = input.value;
   input.style.display = "none";
   input.insertAdjacentElement("beforebegin", autocompleteElement);
 

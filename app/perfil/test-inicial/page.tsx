@@ -67,6 +67,7 @@ type PlayerProfile = {
 
 type AssessmentSnapshot = {
   assessments: Partial<Record<AssessmentKind, AssessmentEntry>>;
+  onboardingProfileReady: boolean;
   playerProfile: PlayerProfile | null;
   writeContext: {
     expectedRevision: number;
@@ -102,6 +103,7 @@ function normalizeSnapshot(value: unknown): AssessmentSnapshot | null {
   const expectedRevision = Math.max(0, Math.floor(Number(context.expectedRevision) || 0));
   return {
     assessments: value.assessments as AssessmentSnapshot["assessments"],
+    onboardingProfileReady: value.onboardingProfileReady === true,
     playerProfile: isRecord(value.playerProfile) ? value.playerProfile as PlayerProfile : null,
     writeContext: {
       expectedRevision,
@@ -174,6 +176,7 @@ export default function PlayerInitialAssessmentPage() {
   const [userId, setUserId] = useState("");
   const accessTokenRef = useRef("");
   const advancedDeepLinkHandled = useRef(false);
+  const initialDeepLinkHandled = useRef(false);
 
   const loadCanonical = useCallback(async (accessToken: string, preserveMessage = false) => {
     if (!navigator.onLine) {
@@ -346,6 +349,19 @@ export default function PlayerInitialAssessmentPage() {
     return () => { active = false; };
   }, [beginAssessment, snapshot, userId]);
 
+  useEffect(() => {
+    if (!snapshot || !userId || initialDeepLinkHandled.current) return;
+    initialDeepLinkHandled.current = true;
+    let active = true;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("onboarding") === "1" && snapshot.onboardingProfileReady && !snapshot.assessments.initial) {
+      queueMicrotask(() => {
+        if (active) beginAssessment("initial", snapshot);
+      });
+    }
+    return () => { active = false; };
+  }, [beginAssessment, snapshot, userId]);
+
   const previewRatings: AttributeRatings | null = flow?.kind === "advanced"
     ? advancedResult?.baseRatings ?? initialResult?.profile.baseRatings ?? null
     : initialResult?.profile.baseRatings ?? null;
@@ -360,11 +376,18 @@ export default function PlayerInitialAssessmentPage() {
     ? assessmentInitialStepIsComplete(flow.initial, flow.step)
     : Boolean(flow && (flow.step === -1 || advancedQuestion && flow.advancedAnswers[advancedQuestion.id] != null));
   const profile = snapshot?.playerProfile ?? null;
+  const initialAssessmentRequired = status !== "ready" || !snapshot?.assessments.initial;
   const displayedFacets = ATTRIBUTE_KEYS.map((key) => ({
     key,
     label: ({ pace: "RIT", shooting: "TIR", passing: "PAS", dribbling: "REG", defending: "DEF", physical: "FIS" } as const)[key],
     value: Math.round(Number(profile?.current_facets?.[key] ?? previewRatings?.[key] ?? 50)),
   }));
+
+  useEffect(() => {
+    if (!initialAssessmentRequired) return;
+    document.body.classList.add("first-time-onboarding-active");
+    return () => document.body.classList.remove("first-time-onboarding-active");
+  }, [initialAssessmentRequired]);
 
   async function completeAssessment() {
     if (!flow || !snapshot || !supabase || !navigator.onLine) {
@@ -417,6 +440,11 @@ export default function PlayerInitialAssessmentPage() {
       window.localStorage.removeItem(draftKey(userId, flow.kind));
       setFlow(null);
       setMessage(flow.kind === "initial" ? "Ficha creada con test inicial" : "Ficha afinada con test avanzado");
+      if (flow.kind === "initial") {
+        const params = new URLSearchParams(window.location.search);
+        params.delete("onboarding");
+        window.history.replaceState(null, "", params.size ? `${window.location.pathname}?${params.toString()}` : window.location.pathname);
+      }
     } catch (error) {
       setFlow((current) => current ? { ...current, saving: false } : current);
       setMessage(error instanceof Error ? error.message : "No se pudo guardar el test.");
@@ -440,28 +468,17 @@ export default function PlayerInitialAssessmentPage() {
   const cardScore = Math.round(Number(profile?.current_overall ?? previewOverall));
   const cardPosition = shortPosition(profile?.position ?? assessmentPositionLabels[previewPosition]);
 
-  return (
-    <OfficialProductShellV2
-      active="perfil"
-      context={{
-        detail: snapshot?.writeContext.scope === "group" ? "Sincronizada con tu equipo" : "Ficha universal",
-        eyebrow: "Mi ficha",
-        status: status === "ready" ? "Servidor conectado" : status === "offline" ? "Sin conexión" : "Comprobando",
-        title: "Test de nivel",
-      }}
-      links={{ perfil: "/perfil" }}
-      perspective="free-agent"
-    >
-      <main className={styles.page} data-assessment-onboarding="v1" data-assessment-status={status}>
+  const pageContent = (
+    <main className={styles.page} data-assessment-onboarding="v1" data-assessment-status={status}>
         <nav className={styles.topbar}>
-          <Link href="/perfil">Volver</Link>
+          <Link href={initialAssessmentRequired ? "/" : "/perfil"}>Volver</Link>
           <strong>Mi ficha</strong>
           <span>{profile ? `Rev. ${profile.profile_version}` : "Nueva"}</span>
         </nav>
 
         {status === "loading" ? <section className={styles.state}><strong>Recuperando tu ficha confirmada...</strong></section> : null}
         {status === "signed-out" ? <section className={styles.state}><h1>Inicia sesión para crear tu ficha</h1><Link href="/">Ir a Inicio</Link></section> : null}
-        {status === "error" ? <section className={styles.state}><h1>No pudimos abrir el test</h1><p>{message}</p><Link href="/perfil">Volver a Perfil</Link></section> : null}
+        {status === "error" ? <section className={styles.state}><h1>No pudimos abrir el test</h1><p>{message}</p><Link href="/">Volver al inicio</Link></section> : null}
         {status === "offline" ? <section className={styles.state}><h1>Necesitas conexión para crear la ficha</h1><p>{message}</p><button type="button" onClick={() => window.location.reload()}>Reintentar</button></section> : null}
 
         {status === "ready" && snapshot ? (
@@ -486,12 +503,20 @@ export default function PlayerInitialAssessmentPage() {
                   <span>{snapshot.assessments.initial ? "Test inicial completado" : "Primera valoración"}</span>
                   <h1>{snapshot.assessments.initial ? "Tu ficha ya está creada" : "Crea tu primera ficha"}</h1>
                   {!snapshot.assessments.initial ? (
-                    <>
-                      <p>Responde unas preguntas sobre cómo juegas. Crearemos tu primera media y tus atributos. Después evolucionarán con partidos y valoraciones.</p>
-                      <button className="primary-button" type="button" onClick={() => beginAssessment("initial")}>Hacer test inicial y crear mi carta</button>
-                    </>
+                    snapshot.onboardingProfileReady ? (
+                      <>
+                        <p>Responde unas preguntas sobre cómo juegas. Crearemos tu primera media y tus atributos. Después evolucionarán con partidos y valoraciones.</p>
+                        <button className="primary-button" type="button" onClick={() => beginAssessment("initial")}>Hacer test inicial y crear mi carta</button>
+                      </>
+                    ) : (
+                      <>
+                        <p>Completa primero tu nombre, preferencias y ciudad o población. Después podrás crear tu carta.</p>
+                        <div className={styles.summaryActions}><Link href="/">Completar pasos 1 y 2</Link></div>
+                      </>
+                    )
                   ) : (
                     <div className={styles.summaryActions}>
+                      <Link href="/">Entrar en Pachangas IQ</Link>
                       <Link href="/personalizar-carta">Personalizar mi carta</Link>
                       {!snapshot.assessments.advanced ? <button className="primary-button" type="button" onClick={() => beginAssessment("advanced")}>Mejorar precisión de mi ficha</button> : <strong>Test avanzado completado</strong>}
                     </div>
@@ -532,7 +557,26 @@ export default function PlayerInitialAssessmentPage() {
             </div>
           </section>
         ) : null}
-      </main>
+    </main>
+  );
+
+  if (initialAssessmentRequired) {
+    return <div className={styles.requiredShell} data-player-card-onboarding-gate="assessment">{pageContent}</div>;
+  }
+
+  return (
+    <OfficialProductShellV2
+      active="perfil"
+      context={{
+        detail: snapshot?.writeContext.scope === "group" ? "Sincronizada con tu equipo" : "Ficha universal",
+        eyebrow: "Mi ficha",
+        status: status === "ready" ? "Servidor conectado" : status === "offline" ? "Sin conexión" : "Comprobando",
+        title: "Test de nivel",
+      }}
+      links={{ perfil: "/perfil" }}
+      perspective="free-agent"
+    >
+      {pageContent}
     </OfficialProductShellV2>
   );
 }
