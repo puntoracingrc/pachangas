@@ -81,7 +81,7 @@ test("protected V2.1 deep links survive the Google OAuth round trip", async () =
   assert.match(shield, /googleAuthEntryHref\("\/equipo\/identidad"\)/);
   assert.match(card, /window\.location\.assign\(googleAuthEntryHref\(`\$\{window\.location\.pathname\}\$\{window\.location\.search\}`\)\)/);
   assert.match(card, /playerProfileRequired\(result\.error\)/);
-  assert.match(card, />Crear mi ficha<\/Link>/);
+  assert.match(card, /href="\/perfil\/test-inicial">Hacer test inicial y crear mi carta<\/Link>/);
   assert.match(card, /!message && !missingProfile/);
   assert.doesNotMatch(card, /description: message,[\s\S]*Player profile required/);
 });

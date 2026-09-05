@@ -362,7 +362,7 @@ export default function PlayerCosmeticsPage() {
     >
     <main className={styles.page} data-official-surface="player-card">
       <nav className={styles.topbar}>
-        <Link href="/?mobile=perfil">Volver</Link>
+        <Link href="/perfil">Volver</Link>
         <strong>Mi ficha</strong>
         <UnsavedChanges dirty={dirty} />
       </nav>
@@ -392,7 +392,7 @@ export default function PlayerCosmeticsPage() {
                   Iniciar sesión
                 </Link>
               )
-            : missingProfile ? <Link href="/?mobile=perfil">Crear mi ficha</Link> : undefined}
+            : missingProfile ? <Link href="/perfil/test-inicial">Hacer test inicial y crear mi carta</Link> : undefined}
           busy={!sessionResolved || Boolean(userId && !snapshot && !message && !missingProfile)}
           description={pageState.description}
           eyebrow={pageState.eyebrow}

@@ -79,6 +79,12 @@ function profileModalities(profile: ProfileRow | null) {
   return modes.filter((mode): mode is string => Boolean(mode));
 }
 
+function assessmentCompleted(profile: ProfileRow | null, kind: "advanced" | "initial") {
+  if (!profile?.assessment_summary || typeof profile.assessment_summary !== "object") return false;
+  const entry = (profile.assessment_summary as Record<string, unknown>)[kind];
+  return Boolean(entry && typeof entry === "object" && typeof (entry as { completedAt?: unknown }).completedAt === "string");
+}
+
 function modalityLabel(modality: string) {
   if (modality === "sala" || modality === "futsal_5") return "Fútbol sala";
   if (modality === "futbol11" || modality === "football_11") return "Fútbol 11";
@@ -242,6 +248,8 @@ export function CanonicalPlayerProfile() {
     ? modalities.map(modalityLabel)
     : socialProfile ? [socialModalityLabel(socialProfile.preferredModality)] : [];
   const identityArea = profile?.market_zones || socialProfile?.generalArea || "Zona general pendiente";
+  const initialAssessmentComplete = assessmentCompleted(profile, "initial");
+  const advancedAssessmentComplete = assessmentCompleted(profile, "advanced");
 
   async function signOut() {
     await supabase?.auth.signOut();
@@ -339,9 +347,14 @@ export function CanonicalPlayerProfile() {
                 </dl>
               </section>
               <section className={styles.cardSection}>
-                <header><span>Mi carta</span><h2>{profile?.current_overall ? "Identidad de juego" : "Tu carta aún no está creada"}</h2></header>
-                {profile?.current_overall ? <PlayerCosmeticCard facets={facets} meta={team?.name ?? "Jugador sin equipo"} name={profile.display_name} photoAlt={`Foto de ${profile.display_name}`} photoSrc={profile.avatar ?? undefined} position={profile.position.slice(0, 3).toUpperCase()} score={Math.round(profile.current_overall)} /> : <p>La carta es opcional para entrar, buscar partidos o unirte a un equipo.</p>}
-                <Link href="/personalizar-carta">{profile?.current_overall ? "Ver mi carta" : "Crear mi carta"}</Link>
+                <header><span>Mi carta</span><h2>{initialAssessmentComplete ? "Identidad de juego" : "Tu carta aún no está creada"}</h2></header>
+                {initialAssessmentComplete && profile?.current_overall ? <PlayerCosmeticCard facets={facets} meta={team?.name ?? "Jugador sin equipo"} name={profile.display_name} photoAlt={`Foto de ${profile.display_name}`} photoSrc={profile.avatar ?? undefined} position={profile.position.slice(0, 3).toUpperCase()} score={Math.round(profile.current_overall)} /> : <p>Responde unas preguntas sobre cómo juegas. Crearemos tu primera media y tus atributos. Después evolucionarán con partidos y valoraciones.</p>}
+                <div className={styles.cardActions}>
+                  <Link href={initialAssessmentComplete ? "/personalizar-carta" : "/perfil/test-inicial"}>
+                    {initialAssessmentComplete ? "Ver mi carta" : "Hacer test inicial y crear mi carta"}
+                  </Link>
+                  {initialAssessmentComplete && !advancedAssessmentComplete ? <Link href="/perfil/test-inicial?tipo=avanzado">Mejorar precisión de mi ficha</Link> : null}
+                </div>
               </section>
               <section className={styles.marketSection}>
                 <header><span>Disponibilidad en Mercado</span><strong data-market-state={marketState}>{marketState}</strong></header>
