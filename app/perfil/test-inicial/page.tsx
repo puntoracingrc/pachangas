@@ -221,6 +221,7 @@ export default function PlayerInitialAssessmentPage() {
   useEffect(() => {
     if (!supabase || !userId) return;
     const supabaseClient = supabase;
+    const activeGroupId = snapshot?.writeContext.groupId ?? null;
     let active = true;
     let refreshInFlight = false;
 
@@ -245,30 +246,34 @@ export default function PlayerInitialAssessmentPage() {
     };
 
     window.addEventListener("online", refreshCanonical);
-    const channel = supabaseClient
+    let channel = supabaseClient
       .channel(`player-assessment-onboarding:${userId}`)
       .on("postgres_changes", {
-        event: "*",
-        filter: `user_id=eq.${userId}`,
+        event: "INSERT",
+        filter: `audience_user_id=eq.${userId}`,
         schema: "public",
-        table: "pachanga_player_profiles",
-      }, refreshCanonical)
-      .on("postgres_changes", {
-        event: "*",
-        filter: `user_id=eq.${userId}`,
-        schema: "public",
-        table: "pachanga_player_assessments",
-      }, refreshCanonical)
-      .subscribe((subscriptionStatus) => {
-        if (subscriptionStatus === "SUBSCRIBED") refreshCanonical();
+        table: "pachanga_social_invalidations_v1",
+      }, (event) => {
+        if (event.new?.entity_type === "rating_profile") refreshCanonical();
       });
+    if (activeGroupId) {
+      channel = channel.on("postgres_changes", {
+        event: "INSERT",
+        filter: `group_id=eq.${activeGroupId}`,
+        schema: "public",
+        table: "pachanga_group_events",
+      }, refreshCanonical);
+    }
+    channel.subscribe((subscriptionStatus) => {
+      if (subscriptionStatus === "SUBSCRIBED") refreshCanonical();
+    });
 
     return () => {
       active = false;
       window.removeEventListener("online", refreshCanonical);
       void supabaseClient.removeChannel(channel);
     };
-  }, [loadCanonical, userId]);
+  }, [loadCanonical, snapshot?.writeContext.groupId, userId]);
 
   useEffect(() => {
     if (!flow || !userId || flow.saving) return;

@@ -8,6 +8,12 @@ create schema if not exists private;
 create sequence if not exists private.pachanga_player_assessment_self_sequence_v1;
 revoke all on sequence private.pachanga_player_assessment_self_sequence_v1 from public, anon, authenticated, service_role;
 
+alter table public.pachanga_social_invalidations_v1
+  drop constraint if exists pachanga_social_invalidations_v1_entity_type_check;
+alter table public.pachanga_social_invalidations_v1
+  add constraint pachanga_social_invalidations_v1_entity_type_check
+  check (entity_type in ('profile','rating_profile','team','membership','roster','invitation','team_selection'));
+
 create table if not exists private.pachanga_player_assessment_self_receipts_v1 (
   user_id uuid not null references auth.users(id) on delete cascade,
   operation_id uuid not null,
@@ -396,6 +402,11 @@ begin
     p_actor_user_id, p_operation_id, p_assessment_kind, request_fingerprint,
     p_expected_revision, saved_profile.profile_version, confirmed_sequence,
     operation_response, authoritative_metadata
+  );
+  insert into public.pachanga_social_invalidations_v1(
+    entity_type, entity_id, revision, audience_user_id
+  ) values (
+    'rating_profile', saved_profile.id::text, saved_profile.profile_version, p_actor_user_id
   );
 
   return operation_response;

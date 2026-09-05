@@ -27,6 +27,7 @@
     "test:rating-v2:profile-onboarding": "tsx --test tests/initial-assessment-profile-onboarding-v1.test.ts",
     "test:rating-v2:profile-onboarding:db": "psql -X -w \"$RATING_V2_DATABASE_URL\" -v ON_ERROR_STOP=1 -f tests/initial-assessment-profile-onboarding-v1-db.sql",
     "test:rating-v2:profile-onboarding:concurrency": "node tests/initial-assessment-profile-onboarding-v1-concurrency.mjs",
+    "test:rating-v2:profile-onboarding:staging": "node --import tsx tests/initial-assessment-profile-onboarding-v1-staging-e2e.mjs",
     "test:team-social:db": "psql -X -w \"$TEAM_SOCIAL_DATABASE_URL\" -v ON_ERROR_STOP=1 -f tests/team-social-db.sql",
     "test:team-social:concurrency": "node tests/team-social-concurrency.mjs",
     "test:free-agent-market:db": "psql -X -w \"$FREE_AGENT_MARKET_DATABASE_URL\" -v ON_ERROR_STOP=1 -f tests/controlled-pilot-free-agent-market-db.sql",

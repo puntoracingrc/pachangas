@@ -30,6 +30,10 @@ const migration = readFileSync(
   new URL("../supabase/migrations/20260905084509_restore_initial_assessment_profile_onboarding_v1.sql", import.meta.url),
   "utf8",
 );
+const staging = readFileSync(
+  new URL("./initial-assessment-profile-onboarding-v1-staging-e2e.mjs", import.meta.url),
+  "utf8",
+);
 
 function completeInput(): InitialRatingInput {
   return {
@@ -95,8 +99,9 @@ test("the client stores only a draft and waits for the canonical response", () =
   assert.match(onboarding, /removeItem\(draftKey\(userId, flow\.kind\)\)/);
   assert.match(onboarding, /Sin conexión: ninguna ficha se ha confirmado/);
   assert.match(onboarding, /postgres_changes/);
-  assert.match(onboarding, /table: "pachanga_player_profiles"/);
-  assert.match(onboarding, /table: "pachanga_player_assessments"/);
+  assert.match(onboarding, /table: "pachanga_social_invalidations_v1"/);
+  assert.match(onboarding, /event\.new\?\.entity_type === "rating_profile"/);
+  assert.match(onboarding, /table: "pachanga_group_events"/);
   assert.match(onboarding, /window\.addEventListener\("online", refreshCanonical\)/);
   assert.match(serviceWorker, /"\/perfil\/test-inicial"/);
   assert.doesNotMatch(onboarding, /from\("pachanga_player_profiles"\)\.(insert|update|upsert)/);
@@ -121,6 +126,8 @@ test("the standalone authority is private, idempotent, revisioned and auditable"
   assert.match(migration, /pachanga_player_assessment_self_sequence_v1/);
   assert.match(migration, /pachanga_player_assessment_self_evidence_immutable_v1/);
   assert.match(migration, /pachanga_player_assessment_self_events_profile_sequence_idx/);
+  assert.match(migration, /'rating_profile'/);
+  assert.match(migration, /insert into public\.pachanga_social_invalidations_v1/);
   assert.match(migration, /request_fingerprint/);
   assert.match(migration, /pg_advisory_xact_lock/);
   assert.match(migration, /profile_version, 0\) <> p_expected_revision/);
@@ -137,4 +144,17 @@ test("the standalone authority is private, idempotent, revisioned and auditable"
 test("team onboarding remains available while no-team entry redirects to the universal flow", () => {
   assert.match(home, /if \(!hasRealTeam\) \{\s*window\.location\.assign\(`\/perfil\/test-inicial/);
   assert.match(route, /groupContext\s*\? await service\.rpc\("persist_pachanga_player_assessment_authoritative_v2"/);
+});
+
+test("staging certification covers all five onboarding states and fails closed", () => {
+  for (const state of ["FLOW_A_NO_TEAM", "FLOW_B_TEAM", "FLOW_C_INVITED", "FLOW_D_INITIAL", "FLOW_E_ADVANCED"]) {
+    assert.match(staging, new RegExp(state));
+  }
+  assert.match(staging, /const args = \[\s*"curl"/);
+  assert.match(staging, /spawn\("vercel", args/);
+  assert.match(staging, /persist_pachanga_player_assessment_self_authoritative_v1/);
+  assert.match(staging, /RATING_PROFILE_ONBOARDING_STAGING_PRODUCTION_TARGET_FORBIDDEN/);
+  assert.match(staging, /RATING_PROFILE_ONBOARDING_REALTIME_EVENT_TIMEOUT/);
+  assert.match(staging, /FAIL_CLOSED/);
+  assert.doesNotMatch(staging, /qonbngfrnrqgmxbdfbea\.supabase\.co/);
 });

@@ -10,9 +10,9 @@
 - Shared checkout initial state: pre-existing edits in the player-rating laboratory plus untracked `.codex-worktrees/` and `supabase/.temp/`; none were absorbed or modified.
 - Isolated worktree initial state: clean.
 - Remote migration ledger before release: synchronized through `20260905061857`; `20260905084509` remains local until the release gate.
-- Commit: pending.
-- Pull request: pending.
-- Preview deployment: pending.
+- Initial implementation commit: `2149ddea4d73e17c6f079e1bcfa54c5b339865ee`.
+- Pull request: draft `#281`.
+- Initial Preview deployment: `dpl_8pBvR3yeZaXcL6786h9RdUtSB63j`, READY for commit `2149ddea4d73e17c6f079e1bcfa54c5b339865ee`.
 - Merge SHA: pending.
 - Production deployment: pending.
 
@@ -72,6 +72,7 @@ The dedicated screen includes the existing modes, position, experience, elapsed 
 - Advisory locking, expected revisions and payload-bound idempotency cover retries and concurrent devices.
 - Direct authenticated DML to profiles/assessments remains denied.
 - Realtime events are invalidation signals only. Clients always refetch the canonical snapshot.
+- Universal-profile writes emit a user-scoped `rating_profile` invalidation through the existing published social invalidation stream. Group-context clients also listen to the existing group event stream.
 - `localStorage` contains only an unconfirmed resumable draft; it is removed only after a successful canonical response.
 - Offline completion fails closed and never displays success.
 - The PWA caches the test route, not assessment API responses or confirmed writes.
@@ -89,7 +90,7 @@ The dedicated screen includes the existing modes, position, experience, elapsed 
 
 Local application checks:
 
-- `npm test`: PASS. Build PASS; Node `20/20`; TS/TSX `867/867`; total `887/887`; skipped/todo/cancelled `0/0/0`.
+- `npm test`: PASS. Build PASS; Node `20/20`; TS/TSX `868/868`; total `888/888`; skipped/todo/cancelled `0/0/0`.
 - `npm run typecheck`: PASS.
 - `npm run lint`: PASS. Only Babel's informational large-file message for the pre-existing `app/page.tsx`.
 - Focused onboarding, Rating V2, Official UI and PWA tests: PASS.
@@ -107,18 +108,33 @@ Disposable PostgreSQL checks:
 - Advanced assessment cannot replace or precede the initial assessment.
 - Stale revision and invalid result both roll back fully.
 - Direct client execution and private evidence access are denied.
-- Synthetic rows, disposable database and diagnostic files were removed after the checks.
+- Synthetic rows were rolled back by the SQL tests. The disposable database and local diagnostics remain isolated until the release gate completes, then will be removed.
 
 Database lint found no issue in the new authority. It still reports ten pre-existing findings in unrelated venue, Stripe, reward and standings functions; they were not changed in this release.
 
-## Remote release gates
+## Remote staging
+
+- Ephemeral Supabase branch: `rating-onboarding-v1` (`jtfugdbnvjnxhodispji`), separate from production.
+- Migration ledger: `239` entries through `20260905084509`.
+- New self-assessment RPC grants: `service_role` only; `anon` and `authenticated` denied.
+- Authenticated synthetic flows A-E: PASS.
+- Two clients racing the same operation: one canonical profile and identical confirmed response.
+- Hard reload and a fresh login recover the same initial assessment and universal profile.
+- Advanced assessment remains optional, requires the initial assessment and rejects a stale revision.
+- Direct profile/assessment DML and direct client execution of the server-only RPC: denied.
+- Offline attempt: fails closed with no persisted change.
+- Realtime between two devices: PASS through a scoped invalidation followed by canonical refetch.
+
+The first remote run found that `pachanga_player_profiles` and `pachanga_player_assessments` were not members of the Realtime publication even though the UI subscribed to them. The fix does not publish private rating tables: it reuses the existing RLS-protected invalidation table and adds the explicit `rating_profile` entity type. A regression now exercises the actual Realtime event.
+
+## Remaining release gates
 
 Pending before merge or production:
 
-1. Preview/staging with the forward-only migration.
-2. Authenticated browser QA for flows A-E, hard reload, sign-out/in and two-client convergence.
+1. Publish a new exact-SHA Preview containing the Realtime client correction and rerun staging certification against it.
+2. Authenticated browser QA for the permanent profile entry, questionnaire, success card and cosmetic guard.
 3. Responsive QA at desktop, portrait mobile and landscape mobile/PWA.
-4. Exact Preview SHA verification and console/overflow/image checks.
+4. Console, overflow, broken-image and Service Worker checks.
 5. Coordinated additive migration and frontend deployment, followed by canonical production smoke with synthetic data and complete cleanup.
 
 Production has not been modified at this checkpoint.

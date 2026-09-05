@@ -134,6 +134,7 @@ select pg_temp.assert_true((select count(*) from public.pachanga_player_assessme
 select pg_temp.assert_true((select count(*) from public.pachanga_player_rating_snapshots snapshots join public.pachanga_player_profiles profiles on profiles.id = snapshots.player_profile_id where profiles.user_id = '18100000-0000-4000-8000-000000000001') = 1, 'Initial test must create one Rating V2 snapshot');
 select pg_temp.assert_true((select count(*) from private.pachanga_player_assessment_self_receipts_v1 where user_id = '18100000-0000-4000-8000-000000000001') = 1, 'Initial test must have one receipt');
 select pg_temp.assert_true((select count(*) from private.pachanga_player_assessment_self_events_v1 where user_id = '18100000-0000-4000-8000-000000000001') = 1, 'Initial test must have one event');
+select pg_temp.assert_true((select count(*) from public.pachanga_social_invalidations_v1 where audience_user_id = '18100000-0000-4000-8000-000000000001' and entity_type = 'rating_profile') = 1, 'Initial test must emit one scoped Realtime invalidation');
 select pg_temp.assert_true((select not (client_metadata ? 'email') from private.pachanga_player_assessment_self_receipts_v1 where user_id = '18100000-0000-4000-8000-000000000001'), 'Unapproved client metadata must not persist');
 select pg_temp.assert_true((select (value ->> 'confirmedRevision')::bigint = (select profile_version from public.pachanga_player_profiles where user_id = '18100000-0000-4000-8000-000000000001') from first_response), 'Response must contain the canonical profile revision');
 
