@@ -1,0 +1,20 @@
+00:11.183  blend            | Read blend: "/Users/macbookpro14/.codex/worktrees/pachangas-reward-chest-animation/artifacts/reward-chest/reward-box-refined.blend"
+/Users/macbookpro14/.codex/worktrees/pachangas-reward-chest-animation/artifacts/reward-chest/rarity-variants.py:20: DeprecationWarning: 'Material.use_nodes' is expected to be removed in Blender 6.0
+  if m.use_nodes:
+00:14.652  render           | Saved: '/Users/macbookpro14/.codex/worktrees/pachangas-reward-chest-animation/artifacts/reward-chest/rarities/cofre-common.png'
+00:14.654  blend            | Read blend: "/Users/macbookpro14/.codex/worktrees/pachangas-reward-chest-animation/artifacts/reward-chest/reward-box-refined.blend"
+00:17.254  render           | Saved: '/Users/macbookpro14/.codex/worktrees/pachangas-reward-chest-animation/artifacts/reward-chest/rarities/cofre-uncommon.png'
+00:17.259  blend            | Read blend: "/Users/macbookpro14/.codex/worktrees/pachangas-reward-chest-animation/artifacts/reward-chest/reward-box-refined.blend"
+00:20.248  render           | Saved: '/Users/macbookpro14/.codex/worktrees/pachangas-reward-chest-animation/artifacts/reward-chest/rarities/cofre-rare.png'
+00:20.252  blend            | Read blend: "/Users/macbookpro14/.codex/worktrees/pachangas-reward-chest-animation/artifacts/reward-chest/reward-box-refined.blend"
+00:22.693  render           | Saved: '/Users/macbookpro14/.codex/worktrees/pachangas-reward-chest-animation/artifacts/reward-chest/rarities/cofre-epic.png'
+00:22.695  blend            | Read blend: "/Users/macbookpro14/.codex/worktrees/pachangas-reward-chest-animation/artifacts/reward-chest/reward-box-refined.blend"
+00:25.078  render           | Saved: '/Users/macbookpro14/.codex/worktrees/pachangas-reward-chest-animation/artifacts/reward-chest/rarities/cofre-legendary.png'
+Info: Saved as "cofre-common.blend"
+Info: Saved as "cofre-uncommon.blend"
+Info: Saved as "cofre-rare.blend"
+Info: Saved as "cofre-epic.blend"
+Info: Saved as "cofre-legendary.blend"
+Blender 5.1.2 (hash ec6e62d40fa9 built 2026-05-19 01:30:33)
+
+Blender quit

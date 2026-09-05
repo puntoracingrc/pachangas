@@ -1,0 +1,20 @@
+✔ the reward box uses the compact animated Draco GLB (3.732334ms)
+✔ the Three.js demo is visual-only, replay-safe and explicitly closable (0.212875ms)
+✔ only admin-capable surfaces expose the visual test (0.486541ms)
+✔ the full-screen stage has desktop, portrait and landscape layouts (0.081625ms)
+✔ the refined reveal exports all moving pieces in one three-second clip (0.845542ms)
+✔ Team Cosmetic Reward Policy V1 contains exactly the five approved mappings (1.38325ms)
+✔ the policy is server-only, flag-gated and non-retroactive (0.234083ms)
+✔ every reward foreign key reported by Supabase advisors has a covering index (0.125167ms)
+✔ 10 Retos gets a new active V3 authority row without reviving V1 or V2 (0.201291ms)
+✔ direct team rewards never create team currency or personal cosmetic ownership (0.140042ms)
+✔ reward notifications deep-link to the unlocked editor category (0.085333ms)
+✔ Synthetic World exercises grants, replays, alreadyOwned and admin NEW isolation (3.347375ms)
+ℹ tests 12
+ℹ suites 0
+ℹ pass 12
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 214.972959

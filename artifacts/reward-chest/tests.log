@@ -1,0 +1,13 @@
+✔ the reward box uses the compact animated Draco GLB (2.236333ms)
+✔ the Three.js demo is visual-only, replay-safe and explicitly closable (0.242625ms)
+✔ only admin-capable surfaces expose the visual test (0.507958ms)
+✔ the full-screen stage has desktop, portrait and landscape layouts (0.081084ms)
+✔ the refined reveal exports all moving pieces in one three-second clip (1.210125ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 242.091667
