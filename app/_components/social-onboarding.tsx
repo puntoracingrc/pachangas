@@ -20,9 +20,11 @@ import {
   type SocialProfileMinimum,
 } from "../social-onboarding-contract";
 import {
+  DEFAULT_SOCIAL_TEAM_CREATE_DRAFT,
   SOCIAL_TEAM_NAME_MAX_LENGTH,
   SOCIAL_TEAM_NAME_MIN_LENGTH,
   modalityLabel,
+  normalizeSocialTeamCreateProgress,
   type SocialTeamCreateDraft,
   type SocialTeamInvitation,
 } from "../social-team-core-contract";
@@ -49,6 +51,7 @@ type TeamCodePreview = {
 
 type SocialOnboardingProps = {
   canonicalProfile: SocialProfileMinimum | null;
+  createDraftStorageKey?: string;
   dismissed: boolean;
   draft: SocialOnboardingDraft;
   entryState: SocialEntryState;
@@ -58,7 +61,7 @@ type SocialOnboardingProps = {
   onDismiss: () => void;
   onCreateTeam: (draft: SocialTeamCreateDraft) => Promise<{ error?: string; ok: boolean }>;
   onDraftChange: (draft: SocialOnboardingDraft) => void;
-  onForcedViewHandled?: () => void;
+  onForcedViewHandled?: (nextView: FlowView | null) => void;
   onJoin: (invitation: PendingSocialInvitation, displayName: string) => Promise<{ error?: string; ok: boolean }>;
   onLookupTeamCode: (code: string) => Promise<{ error?: string; ok: boolean; team?: TeamCodePreview }>;
   onOpen: () => void;
@@ -99,6 +102,7 @@ function requiredProfileStep(profile: SocialProfileMinimum | null) {
 
 export function SocialOnboarding({
   canonicalProfile,
+  createDraftStorageKey = "",
   dismissed,
   draft,
   entryState,
@@ -127,12 +131,8 @@ export function SocialOnboarding({
   const [creating, setCreating] = useState(false);
   const [createMessage, setCreateMessage] = useState("");
   const [createStep, setCreateStep] = useState(1);
-  const [createDraft, setCreateDraft] = useState<SocialTeamCreateDraft>({
-    modality: "futbol7",
-    name: "",
-    shieldKey: "team.shield.shape.classic_iq",
-    zone: "",
-  });
+  const [createDraft, setCreateDraft] = useState<SocialTeamCreateDraft>({ ...DEFAULT_SOCIAL_TEAM_CREATE_DRAFT });
+  const [createProgressLoadedKey, setCreateProgressLoadedKey] = useState("");
   const [teamCodePreview, setTeamCodePreview] = useState<TeamCodePreview | null>(null);
   const [online, setOnline] = useState(() => typeof navigator === "undefined" ? true : navigator.onLine);
   const [avatarPreview, setAvatarPreview] = useState("");
@@ -140,6 +140,10 @@ export function SocialOnboarding({
   const [placeMessage, setPlaceMessage] = useState("");
   const [placeStatus, setPlaceStatus] = useState<"error" | "idle" | "loading" | "missing-key" | "ready">("idle");
   const cityInputRef = useRef<HTMLInputElement>(null);
+  const [confirmedTeamCity, setConfirmedTeamCity] = useState("");
+  const [teamPlaceMessage, setTeamPlaceMessage] = useState("");
+  const [teamPlaceStatus, setTeamPlaceStatus] = useState<"error" | "idle" | "loading" | "missing-key" | "ready">("idle");
+  const teamCityInputRef = useRef<HTMLInputElement>(null);
 
   const profileReady = socialProfileMinimumReady(canonicalProfile);
   const firstTimeProfileReady = socialFirstTimeProfileReady(canonicalProfile);
@@ -152,6 +156,40 @@ export function SocialOnboarding({
   const activeJoinCandidate = invitation ?? joinCandidate;
   const visibleOpen = Boolean(requiredCardOnboarding || forcedView || open);
   const cityConfirmed = Boolean(confirmedCity && confirmedCity === visibleDraft.zone.trim());
+  const teamCityConfirmed = Boolean(confirmedTeamCity && confirmedTeamCity === createDraft.zone.trim());
+
+  useEffect(() => {
+    if (!createDraftStorageKey || createProgressLoadedKey === createDraftStorageKey) return;
+    let active = true;
+    queueMicrotask(() => {
+      if (!active) return;
+      try {
+        const progress = normalizeSocialTeamCreateProgress(JSON.parse(localStorage.getItem(createDraftStorageKey) ?? "null"));
+        setCreateDraft(progress.draft);
+        setCreateStep(progress.step);
+        setConfirmedTeamCity(progress.confirmedCity);
+      } catch {
+        setCreateDraft({ ...DEFAULT_SOCIAL_TEAM_CREATE_DRAFT });
+        setCreateStep(1);
+        setConfirmedTeamCity("");
+      }
+      setCreateProgressLoadedKey(createDraftStorageKey);
+    });
+    return () => { active = false; };
+  }, [createDraftStorageKey, createProgressLoadedKey]);
+
+  useEffect(() => {
+    if (!createDraftStorageKey || createProgressLoadedKey !== createDraftStorageKey || activeView !== "create") return;
+    try {
+      localStorage.setItem(createDraftStorageKey, JSON.stringify({
+        confirmedCity: teamCityConfirmed ? confirmedTeamCity : "",
+        draft: createDraft,
+        step: createStep,
+      }));
+    } catch {
+      // This is a resumable local draft. Team creation remains server-authoritative.
+    }
+  }, [activeView, confirmedTeamCity, createDraft, createDraftStorageKey, createProgressLoadedKey, createStep, teamCityConfirmed]);
 
   useEffect(() => {
     if (!visibleOpen || activeView !== "create") return;
@@ -268,6 +306,77 @@ export function SocialOnboarding({
     };
   }, [activeView, googleMapsApiKey, onDraftChange, step]);
 
+  useEffect(() => {
+    if (activeView !== "create" || createStep !== 2) return;
+    if (!googleMapsApiKey) {
+      let active = true;
+      queueMicrotask(() => {
+        if (!active) return;
+        setTeamPlaceStatus("missing-key");
+        setTeamPlaceMessage("No podemos abrir el buscador de poblaciones ahora mismo.");
+      });
+      return () => { active = false; };
+    }
+
+    const input = teamCityInputRef.current;
+    if (!input) return;
+    let cleanup: (() => void) | undefined;
+    let disposed = false;
+    queueMicrotask(() => {
+      if (!disposed) setTeamPlaceStatus("loading");
+    });
+
+    attachVenueAutocomplete({
+      apiKey: googleMapsApiKey,
+      input,
+      onError: (message) => {
+        if (disposed) return;
+        setConfirmedTeamCity("");
+        setTeamPlaceStatus("error");
+        setTeamPlaceMessage(message);
+      },
+      onPlace: (place: VenuePlace) => {
+        if (disposed) return;
+        const city = (place.city || place.name).trim();
+        if (!city) {
+          setConfirmedTeamCity("");
+          setTeamPlaceStatus("error");
+          setTeamPlaceMessage("Elige una ciudad o población de las sugerencias.");
+          return;
+        }
+        setCreateDraft((current) => ({ ...current, zone: city }));
+        setConfirmedTeamCity(city);
+        setTeamPlaceStatus("ready");
+        setTeamPlaceMessage(`Población confirmada: ${city}`);
+      },
+      onSelectionInvalidated: () => {
+        if (disposed) return;
+        setConfirmedTeamCity("");
+        setTeamPlaceStatus("ready");
+        setTeamPlaceMessage("Elige una ciudad o población de las sugerencias.");
+      },
+      types: ["(cities)"],
+    })
+      .then((nextCleanup) => {
+        if (disposed) {
+          nextCleanup();
+          return;
+        }
+        cleanup = nextCleanup;
+        setTeamPlaceStatus("ready");
+      })
+      .catch((error: unknown) => {
+        if (disposed) return;
+        setTeamPlaceStatus("error");
+        setTeamPlaceMessage(error instanceof Error ? error.message : "No se pudo cargar Google Places.");
+      });
+
+    return () => {
+      disposed = true;
+      cleanup?.();
+    };
+  }, [activeView, createStep, googleMapsApiKey]);
+
   if ((entryState === "TEAM_MEMBER" || entryState === "MULTI_TEAM_MEMBER") && !forcedView && !visibleOpen) return null;
 
   function updateDraft(patch: Partial<SocialOnboardingDraft>) {
@@ -275,18 +384,19 @@ export function SocialOnboarding({
   }
 
   function closeFlow() {
-    onForcedViewHandled?.();
+    onForcedViewHandled?.(null);
     setOpen(false);
     onDismiss();
   }
 
   function selectView(nextView: FlowView) {
-    onForcedViewHandled?.();
+    onForcedViewHandled?.(nextView);
     setView(nextView);
     setOpen(true);
   }
 
   function resumeFlow(nextView: FlowView = viewForEntry(entryState)) {
+    onForcedViewHandled?.(nextView);
     setView(nextView);
     setStep(defaultStep(entryState));
     setOpen(true);
@@ -334,7 +444,7 @@ export function SocialOnboarding({
   }
 
   async function createTeam() {
-    if (creating || !writeAvailability.allowed || createDraft.name.trim().length < SOCIAL_TEAM_NAME_MIN_LENGTH || !createDraft.zone.trim()) return;
+    if (creating || !writeAvailability.allowed || createDraft.name.trim().length < SOCIAL_TEAM_NAME_MIN_LENGTH || !teamCityConfirmed) return;
     setCreating(true);
     setCreateMessage("Creando equipo y owner en una sola transacción...");
     const result = await onCreateTeam(createDraft);
@@ -342,6 +452,13 @@ export function SocialOnboarding({
     if (!result.ok) {
       setCreateMessage(result.error ?? "El servidor no confirmó el equipo.");
       return;
+    }
+    if (createDraftStorageKey) {
+      try {
+        localStorage.removeItem(createDraftStorageKey);
+      } catch {
+        // A stale local draft is harmless; the confirmed server response wins.
+      }
     }
     setCreateMessage("Equipo confirmado. Abriendo su portada...");
   }
@@ -480,9 +597,9 @@ export function SocialOnboarding({
         <div className={styles.formBody}>
           <nav className={styles.steps} aria-label="Pasos para crear equipo">{[1, 2, 3].map((item) => <button aria-current={createStep === item ? "step" : undefined} key={item} type="button" onClick={() => setCreateStep(item)}>{item}</button>)}</nav>
           {createStep === 1 ? <><div className={styles.stepHeading}><span>Paso 1</span><h3>Identidad</h3></div><label>Nombre del equipo<input maxLength={SOCIAL_TEAM_NAME_MAX_LENGTH} value={createDraft.name} onChange={(event) => setCreateDraft((current) => ({ ...current, name: event.target.value }))} /><small className={styles.characterCount}>{createDraft.name.length}/{SOCIAL_TEAM_NAME_MAX_LENGTH}</small></label><fieldset><legend>Escudo inicial</legend><div className={polishStyles.shields}>{initialShieldOptions.map((shield) => <button aria-pressed={createDraft.shieldKey === shield.key} key={shield.key} type="button" onClick={() => setCreateDraft((current) => ({ ...current, shieldKey: shield.key }))}><TeamShieldView className={polishStyles.shieldPreview} config={{ ...TEAM_SHIELD_DEFAULT_CONFIG, shapeKey: shield.key }} label={`Escudo ${shield.label}`} size={64} /><strong>{shield.label}</strong></button>)}</div></fieldset></> : null}
-          {createStep === 2 ? <><div className={styles.stepHeading}><span>Paso 2</span><h3>Fútbol</h3></div><label>Modalidad principal<select value={createDraft.modality} onChange={(event) => setCreateDraft((current) => ({ ...current, modality: event.target.value as SocialTeamCreateDraft["modality"] }))}>{modalityOptions.map((option) => <option key={option.id} value={option.id}>{option.label}</option>)}</select></label><label>Zona general<input maxLength={120} value={createDraft.zone} onChange={(event) => setCreateDraft((current) => ({ ...current, zone: event.target.value }))} /></label></> : null}
-          {createStep === 3 ? <><div className={styles.stepHeading}><span>Paso 3</span><h3>Revisar</h3></div><dl className={styles.review}><div><dt>Equipo</dt><dd>{createDraft.name || "Sin nombre"}</dd></div><div><dt>Escudo</dt><dd>{initialShieldLabel(createDraft.shieldKey)}</dd></div><div><dt>Modalidad</dt><dd>{modalityOptions.find((option) => option.id === createDraft.modality)?.label}</dd></div><div><dt>Zona</dt><dd>{createDraft.zone || "Pendiente"}</dd></div></dl><button className={styles.primary} type="button" disabled={creating || !writeAvailability.allowed || !createDraft.zone.trim()} onClick={() => void createTeam()}>{creating ? "Creando..." : "Crear equipo"}</button><p className={styles.message}>{createMessage || TEAM_CREATION_AUTHORITY.message}</p></> : null}
-          <div className={styles.actions}><button type="button" onClick={() => createStep === 1 ? selectView("start") : setCreateStep((current) => current - 1)}>Volver</button>{createStep < 3 ? <button className={styles.primary} type="button" disabled={createStep === 1 && createDraft.name.trim().length < SOCIAL_TEAM_NAME_MIN_LENGTH} onClick={() => setCreateStep((current) => current + 1)}>Continuar</button> : null}</div>
+          {createStep === 2 ? <><div className={styles.stepHeading}><span>Paso 2</span><h3>Fútbol</h3></div><label>Modalidad principal<select value={createDraft.modality} onChange={(event) => setCreateDraft((current) => ({ ...current, modality: event.target.value as SocialTeamCreateDraft["modality"] }))}>{modalityOptions.map((option) => <option key={option.id} value={option.id}>{option.label}</option>)}</select></label><label>Ciudad o población<input autoComplete="off" maxLength={120} placeholder="Ej. Barcelona" ref={teamCityInputRef} value={createDraft.zone} onChange={(event) => { setConfirmedTeamCity(""); setTeamPlaceMessage("Elige una ciudad o población de las sugerencias."); setCreateDraft((current) => ({ ...current, zone: event.target.value })); }} /></label>{teamPlaceStatus === "loading" ? <p className={styles.placeStatus}>Preparando el buscador de poblaciones...</p> : null}{teamPlaceMessage ? <p className={teamPlaceStatus === "error" || teamPlaceStatus === "missing-key" ? styles.warning : styles.placeStatus} role="status">{teamPlaceMessage}</p> : null}</> : null}
+          {createStep === 3 ? <><div className={styles.stepHeading}><span>Paso 3</span><h3>Revisar</h3></div><dl className={styles.review}><div><dt>Equipo</dt><dd>{createDraft.name || "Sin nombre"}</dd></div><div><dt>Escudo</dt><dd>{initialShieldLabel(createDraft.shieldKey)}</dd></div><div><dt>Modalidad</dt><dd>{modalityOptions.find((option) => option.id === createDraft.modality)?.label}</dd></div><div><dt>Ciudad</dt><dd>{createDraft.zone || "Pendiente"}</dd></div></dl><p className={styles.message}>{createMessage || TEAM_CREATION_AUTHORITY.message}</p></> : null}
+          <div className={styles.actions}><button type="button" onClick={() => createStep === 1 ? selectView("start") : setCreateStep((current) => current - 1)}>Volver</button>{createStep < 3 ? <button className={styles.primary} type="button" disabled={createStep === 1 ? createDraft.name.trim().length < SOCIAL_TEAM_NAME_MIN_LENGTH : !teamCityConfirmed} onClick={() => setCreateStep((current) => current + 1)}>Continuar</button> : <button className={styles.primary} type="button" disabled={creating || !writeAvailability.allowed || !teamCityConfirmed} onClick={() => void createTeam()}>{creating ? "Creando..." : "Crear equipo"}</button>}</div>
         </div>
       ) : null}
     </section>

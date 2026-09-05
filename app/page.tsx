@@ -122,6 +122,7 @@ const googleAuthNonceKey = "pachanga-google-auth-nonce";
 const googleAuthReturnKey = "pachanga-google-auth-return";
 const socialOnboardingDraftKey = (userId: string) => `pachangas-social-onboarding-draft-v3e:${userId}`;
 const socialOnboardingDismissedKey = (userId: string) => `pachangas-social-onboarding-dismissed-v3e:${userId}`;
+const socialTeamCreateProgressKey = (userId: string) => `pachangas-social-team-create-progress-v1:${userId}`;
 const playerPhotoPromptForChatGpt = `Utiliza la fotografía adjunta como referencia y recorta únicamente a la persona que aparece en ella.
 
 Crea un retrato profesional desde los hombros hacia arriba, similar a la fotografía de un jugador utilizada en una carta de fútbol tipo FIFA.
@@ -4039,7 +4040,10 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
     if (entryRoute?.teamCode && entryRoute.matchId) {
       window.history.replaceState(null, "", window.location.pathname);
     } else {
-      const nextParams = prettyTeamParams(selectedTeam, { p: sharedMatchId ? compactUuid(sharedMatchId) : undefined });
+      const nextParams = prettyTeamParams(selectedTeam, {
+        p: sharedMatchId ? compactUuid(sharedMatchId) : undefined,
+        social: socialOnboardingFlowFromSearch(entrySearch) ?? undefined,
+      });
       window.history.replaceState(null, "", `${window.location.pathname}?${nextParams.toString()}`);
     }
   }
@@ -9811,6 +9815,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
     return (
       <SocialOnboarding
         canonicalProfile={socialProfile}
+        createDraftStorageKey={currentUserId ? socialTeamCreateProgressKey(currentUserId) : ""}
         dismissed={requiredCardOnboarding ? false : pendingSocialInvitation ? false : socialOnboardingDismissed}
         draft={socialOnboardingDraft}
         entryState={socialEntryState}
@@ -9831,11 +9836,12 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
         }}
         onCreateTeam={createSocialTeam}
         onDraftChange={setSocialOnboardingDraft}
-        onForcedViewHandled={() => {
+        onForcedViewHandled={(nextView) => {
           if (requiredCardOnboarding) return;
-          setSocialFlowRequested(null);
+          setSocialFlowRequested(nextView);
           const params = new URLSearchParams(window.location.search);
-          params.delete("social");
+          if (nextView) params.set("social", nextView);
+          else params.delete("social");
           window.history.replaceState(null, "", params.size ? `${window.location.pathname}?${params.toString()}` : window.location.pathname);
         }}
         onJoin={confirmSocialInvitation}
