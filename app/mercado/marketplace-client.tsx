@@ -35,6 +35,8 @@ import {
 import styles from "./marketplace-v3d.module.css";
 
 const googleMapsApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+const marketProfileColumns = "id, display_name, avatar, avatar_offset_x, avatar_offset_y, birth_date, position, goalkeeper_only, media, appearances, goals, wins, zones, zones_geo, availability_text, modalities, open_to_guest, open_to_group, bio, active, group_name";
+const legacyMarketProfileColumns = "id, display_name, avatar, avatar_offset_x, avatar_offset_y, birth_date, position, goalkeeper_only, media, appearances, goals, wins, zones, availability_text, modalities, open_to_guest, open_to_group, bio, active, group_name";
 
 function LocationTargetIcon() {
   return (
@@ -105,6 +107,10 @@ type MarketRow = {
   wins: number | string | null;
   zones: string[] | null;
   zones_geo?: unknown | null;
+};
+
+type MarketInvalidationRow = {
+  profile_id: string | null;
 };
 
 type OpenMarketMatch = {
@@ -652,20 +658,20 @@ export default function MarketplaceClient() {
       if (!active) return;
       setCanInvite(exactCanInvite);
 
-      const columns = "id, display_name, avatar, avatar_offset_x, avatar_offset_y, birth_date, position, goalkeeper_only, media, appearances, goals, wins, zones, zones_geo, availability_text, modalities, open_to_guest, open_to_group, bio, active, group_name";
-      const legacyColumns = "id, display_name, avatar, avatar_offset_x, avatar_offset_y, birth_date, position, goalkeeper_only, media, appearances, goals, wins, zones, availability_text, modalities, open_to_guest, open_to_group, bio, active, group_name";
       let profileResult = (await supabase
         .from("pachanga_market_profiles")
-        .select(columns)
+        .select(marketProfileColumns)
         .eq("active", true)
         .order("media", { ascending: false })
+        .order("id", { ascending: true })
         .limit(80)) as { data: unknown[] | null; error: { message: string } | null };
       if (profileResult.error?.message.includes("zones_geo")) {
         profileResult = (await supabase
           .from("pachanga_market_profiles")
-          .select(legacyColumns)
+          .select(legacyMarketProfileColumns)
           .eq("active", true)
           .order("media", { ascending: false })
+          .order("id", { ascending: true })
           .limit(80)) as { data: unknown[] | null; error: { message: string } | null };
       }
       if (!active) return;
@@ -766,10 +772,52 @@ export default function MarketplaceClient() {
     if (!client) return;
     let disposed = false;
     let channel: ReturnType<typeof client.channel> | null = null;
+    const reconcileMarketProfile = async (invalidation: MarketInvalidationRow) => {
+      const profileId = typeof invalidation.profile_id === "string" ? invalidation.profile_id : "";
+      if (!profileId) {
+        setMarketRefresh((value) => value + 1);
+        return;
+      }
+
+      let profileResult = (await client
+        .from("pachanga_market_profiles")
+        .select(marketProfileColumns)
+        .eq("id", profileId)
+        .eq("active", true)
+        .maybeSingle()) as { data: unknown | null; error: { message: string } | null };
+      if (profileResult.error?.message.includes("zones_geo")) {
+        profileResult = (await client
+          .from("pachanga_market_profiles")
+          .select(legacyMarketProfileColumns)
+          .eq("id", profileId)
+          .eq("active", true)
+          .maybeSingle()) as { data: unknown | null; error: { message: string } | null };
+      }
+      if (disposed) return;
+      if (profileResult.error) {
+        setMarketRefresh((value) => value + 1);
+        return;
+      }
+      if (!profileResult.data) {
+        setProfiles((current) => current.filter((profile) => profile.id !== profileId));
+        return;
+      }
+      const confirmedProfile = normalizeProfile(profileResult.data as MarketRow);
+      setProfiles((current) => [
+        confirmedProfile,
+        ...current.filter((profile) => profile.id !== profileId),
+      ].sort((left, right) => right.media - left.media || left.id.localeCompare(right.id)).slice(0, 80));
+      setProfileSource("LIVE");
+    };
     void client.auth.getSession().then(({ data }) => {
       const user = data.session?.user;
       if (!user || disposed) return;
       channel = client.channel(`market-v3d-${user.id}-${marketGroupId || "public"}`)
+        .on("postgres_changes", {
+          event: "INSERT",
+          schema: "public",
+          table: "pachanga_market_invalidations_v1",
+        }, (event) => void reconcileMarketProfile(event.new as MarketInvalidationRow))
         .on("postgres_changes", {
           event: "*",
           schema: "public",
@@ -804,6 +852,12 @@ export default function MarketplaceClient() {
       if (channel) void client.removeChannel(channel);
     };
   }, [marketGroupId]);
+
+  useEffect(() => {
+    if (profileSource !== "LIVE" || matchSource !== "LIVE") return;
+    const updatedAt = new Date().toISOString();
+    writeMarketReadCache(window.localStorage, { matches: openMatches, profiles, updatedAt, version: 1 });
+  }, [matchSource, openMatches, profileSource, profiles]);
 
   useEffect(() => {
     if (!googleMapsApiKey || !zoneInputRef.current) return;

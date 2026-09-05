@@ -61,6 +61,7 @@ const v2WriteRpcNames = new Set([
   "command_pachanga_referee_officiating_v1",
   "command_pachanga_referee_incident_observation_v1",
   "command_pachanga_referee_public_fee_v1",
+  "command_pachanga_free_agent_market_v1",
   "command_pachanga_social_profile_v1",
   "command_pachanga_social_inbox_v1",
   "command_pachanga_social_team_settings_v1",
