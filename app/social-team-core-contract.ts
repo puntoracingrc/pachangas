@@ -24,6 +24,7 @@ export type CanonicalSocialProfile = {
   confirmedRevision: number;
   displayName: string;
   generalArea: string;
+  marketPublished: boolean;
   preferredModality: "futbol11" | "futbol7" | "sala";
   primaryPosition: string;
   revision: number;
@@ -171,6 +172,7 @@ export function normalizeCanonicalSocialProfile(value: unknown): CanonicalSocial
     confirmedRevision: integer(source.confirmedRevision ?? source.revision),
     displayName,
     generalArea: text(source.generalArea),
+    marketPublished: source.marketPublished === true,
     preferredModality: modality(source.preferredModality),
     primaryPosition,
     revision: integer(source.revision),

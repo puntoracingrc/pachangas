@@ -11,6 +11,8 @@ import {
   normalizeSocialTeams,
   type CanonicalSocialProfile,
 } from "../social-team-core-contract";
+import { CLIENT_VERSION } from "../client-version-contract";
+import { currentClientDisplayMode, pwaBridgeSnapshot } from "../pwa-client-bridge";
 import { playerMarketPresentationState } from "../social-onboarding-contract";
 import { supabase } from "../supabaseClient";
 import styles from "./profile.module.css";
@@ -56,6 +58,16 @@ function cacheKey(userId: string) {
 
 function safeText(value: unknown, fallback = "") {
   return typeof value === "string" && value.trim() ? value.trim() : fallback;
+}
+
+function marketClientMetadata() {
+  const bridge = pwaBridgeSnapshot();
+  return {
+    clientVersion: CLIENT_VERSION,
+    displayMode: currentClientDisplayMode(),
+    serviceWorkerVersion: bridge.serviceWorkerVersion,
+    surface: "canonical-profile",
+  };
 }
 
 function profileModalities(profile: ProfileRow | null) {
@@ -116,6 +128,7 @@ export function CanonicalPlayerProfile() {
   const [snapshot, setSnapshot] = useState<ProfileSnapshot | null>(null);
   const [status, setStatus] = useState<"error" | "loading" | "offline" | "ready" | "signed-out">(() => supabase ? "loading" : "error");
   const [message, setMessage] = useState("");
+  const [marketBusy, setMarketBusy] = useState(false);
 
   const loadCanonical = useCallback(async (targetUserId: string) => {
     if (!supabase) {
@@ -210,7 +223,16 @@ export function CanonicalPlayerProfile() {
   const socialProfile = snapshot?.socialProfile ?? null;
   const team = snapshot?.teams[0] ?? null;
   const modalities = useMemo(() => profileModalities(profile), [profile]);
-  const marketState = playerMarketPresentationState({ availability: profile?.market_availability, enabled: profile?.market_enabled, zones: profile?.market_zones });
+  const freeAgentMarketReady = Boolean(
+    socialProfile?.generalArea
+      && socialProfile.usualDays.length
+      && socialProfile.approximateTime,
+  );
+  const marketState = team
+    ? playerMarketPresentationState({ availability: profile?.market_availability, enabled: profile?.market_enabled, zones: profile?.market_zones })
+    : socialProfile?.marketPublished
+      ? "PUBLICADO"
+      : freeAgentMarketReady ? "PAUSADO" : "NO_CONFIGURADO";
   const facets = Object.entries(profile?.current_facets ?? {}).slice(0, 6).map(([key, value]) => ({ key, label: key.slice(0, 3).toUpperCase(), value: Math.round(Number(value) || 0) }));
   const editHref = team ? `/?mobile=perfil&edit=1&equipo=${encodeURIComponent(team.teamCode)}` : "/?social=profile";
   const identityName = profile?.display_name ?? socialProfile?.displayName ?? "Mi perfil";
@@ -224,6 +246,66 @@ export function CanonicalPlayerProfile() {
   async function signOut() {
     await supabase?.auth.signOut();
     window.location.assign("/");
+  }
+
+  async function toggleFreeAgentMarket() {
+    if (!supabase || !userId || !socialProfile || team || marketBusy) return;
+    if (!navigator.onLine) {
+      setMessage("Sin conexión: tu perfil no se ha publicado ni retirado.");
+      return;
+    }
+    if (!socialProfile.marketPublished && !freeAgentMarketReady) {
+      setMessage("Añade una zona, días y horario antes de publicar tu perfil.");
+      return;
+    }
+
+    setMarketBusy(true);
+    setMessage("");
+    const nextPublished = !socialProfile.marketPublished;
+    try {
+      const result = await supabase.rpc("command_pachanga_free_agent_market_v1", {
+        action: nextPublished ? "market.publish" : "market.unpublish",
+        client_metadata: marketClientMetadata(),
+        expected_revision: socialProfile.confirmedRevision,
+        operation_id: crypto.randomUUID(),
+        payload: {},
+      });
+
+      if (result.error) {
+        setMessage(result.error.code === "PT409"
+          ? "Tu perfil cambió en otro dispositivo. Hemos recuperado el estado confirmado."
+          : "No pudimos cambiar tu publicación. No se ha confirmado ningún cambio.");
+        if (result.error.code === "PT409") await loadCanonical(userId);
+        return;
+      }
+
+      const confirmedProfile = normalizeCanonicalSocialProfile(result.data);
+      if (!confirmedProfile) {
+        setMessage("El servidor no devolvió un perfil válido. Hemos recuperado el estado confirmado.");
+        await loadCanonical(userId);
+        return;
+      }
+      const nextSnapshot: ProfileSnapshot = {
+        fetchedAt: new Date().toISOString(),
+        profile,
+        socialProfile: confirmedProfile,
+        teams: snapshot?.teams ?? [],
+      };
+      setSnapshot(nextSnapshot);
+      try {
+        window.localStorage.setItem(cacheKey(userId), JSON.stringify(nextSnapshot));
+      } catch {
+        // The response is already authoritative; this cache is optional.
+      }
+      setStatus("ready");
+      setMessage(confirmedProfile.marketPublished
+        ? "Tu perfil ya está publicado en Mercado."
+        : "Tu perfil ya no aparece en Mercado.");
+    } catch {
+      setMessage("Se perdió la conexión antes de confirmar el cambio. Tu estado visible no se ha modificado.");
+    } finally {
+      setMarketBusy(false);
+    }
   }
 
   return (
@@ -252,7 +334,7 @@ export function CanonicalPlayerProfile() {
                 <dl>
                   <div><dt>Posición</dt><dd>{identityPosition}</dd></div>
                   <div><dt>Modalidad</dt><dd>{identityModalities.join(", ") || "Pendiente"}</dd></div>
-                  <div><dt>Disponibilidad</dt><dd>{profile?.market_availability || "No indicada"}</dd></div>
+                  <div><dt>Disponibilidad</dt><dd>{profile?.market_availability || socialProfile?.approximateTime || "No indicada"}</dd></div>
                   <div><dt>Equipo activo</dt><dd>{team?.name ?? "Sin equipo"}</dd></div>
                 </dl>
               </section>
@@ -264,7 +346,19 @@ export function CanonicalPlayerProfile() {
               <section className={styles.marketSection}>
                 <header><span>Disponibilidad en Mercado</span><strong data-market-state={marketState}>{marketState}</strong></header>
                 <p>{marketState === "PUBLICADO" ? "Otros equipos pueden encontrarte con la información deportiva permitida." : marketState === "PAUSADO" ? "Conservas tu configuración, pero ahora no apareces publicado." : "Tu perfil no se publica hasta que lo autorices expresamente."}</p>
-                <Link href={editHref}>Configurar</Link>
+                <div className={styles.marketActions}>
+                  {!team && socialProfile ? (
+                    <button
+                      data-free-agent-market-action={socialProfile.marketPublished ? "unpublish" : "publish"}
+                      disabled={marketBusy || (!socialProfile.marketPublished && !freeAgentMarketReady)}
+                      onClick={() => void toggleFreeAgentMarket()}
+                      type="button"
+                    >
+                      {marketBusy ? "Confirmando..." : socialProfile.marketPublished ? "Pausar publicación" : "Publicarme"}
+                    </button>
+                  ) : null}
+                  <Link href={editHref}>Configurar perfil</Link>
+                </div>
               </section>
               <section className={styles.privacy}>
                 <header><span>Privacidad</span><h2>Lo que no publicamos</h2></header>
