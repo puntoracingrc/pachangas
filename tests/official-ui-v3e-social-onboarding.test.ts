@@ -121,6 +121,20 @@ test("the onboarding offers exactly the three social starts and no competition s
   for (const forbidden of ["Liga", "Torneo", "Billing", "Stripe", "RuleRevision"]) assert.doesNotMatch(component, new RegExp(forbidden));
 });
 
+test("team creation shows the real shield shapes in an isolated full-screen flow", async () => {
+  const [component, polish] = await Promise.all([
+    source("app/_components/social-onboarding.tsx"),
+    source("app/_components/social-onboarding-polish.module.css"),
+  ]);
+  for (const shape of ["classic_iq", "round", "modern"]) assert.match(component, new RegExp(`team\\.shield\\.shape\\.${shape}`));
+  assert.match(component, /<TeamShieldView[\s\S]*size=\{64\}/);
+  assert.doesNotMatch(component, /shield\.label\.slice/);
+  assert.match(component, /data-onboarding-view=\{activeView\}/);
+  assert.match(component, /document\.body\.classList\.add\("team-onboarding-active"\)/);
+  assert.match(polish, /\.immersiveFlow\s*\{[\s\S]*position:\s*fixed;[\s\S]*inset:\s*0;[\s\S]*height:\s*100dvh;/);
+  assert.match(polish, /\.shields\s*\{[\s\S]*grid-template-columns:\s*repeat\(3, minmax\(0, 1fr\)\)/);
+});
+
 test("incoming invitations wait for explicit confirmation and canonical readback", async () => {
   const [page, component] = await Promise.all([source("app/page.tsx"), source("app/_components/social-onboarding.tsx")]);
   const connectStart = page.indexOf("const connectGroupEffect");

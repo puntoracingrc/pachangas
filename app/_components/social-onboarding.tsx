@@ -20,7 +20,10 @@ import {
   type SocialProfileMinimum,
 } from "../social-onboarding-contract";
 import { modalityLabel, type SocialTeamCreateDraft, type SocialTeamInvitation } from "../social-team-core-contract";
+import { TEAM_SHIELD_DEFAULT_CONFIG } from "../team-shield-contract";
+import { TeamShieldView } from "./team-shield-view";
 import styles from "./social-onboarding.module.css";
+import polishStyles from "./social-onboarding-polish.module.css";
 
 type FlowView = SocialOnboardingFlow;
 
@@ -61,6 +64,12 @@ const modalityOptions = [
   { id: "sala", label: "Fútbol sala" },
   { id: "futbol7", label: "Fútbol 7" },
   { id: "futbol11", label: "Fútbol 11" },
+] as const;
+
+const initialShieldOptions = [
+  { key: "team.shield.shape.classic_iq", label: "Clásico" },
+  { key: "team.shield.shape.round", label: "Redondo" },
+  { key: "team.shield.shape.modern", label: "Moderno" },
 ] as const;
 
 function viewForEntry(entryState: SocialEntryState): FlowView {
@@ -134,6 +143,12 @@ export function SocialOnboarding({
   const activeJoinCandidate = invitation ?? joinCandidate;
   const visibleOpen = Boolean(requiredCardOnboarding || forcedView || open);
   const cityConfirmed = Boolean(confirmedCity && confirmedCity === visibleDraft.zone.trim());
+
+  useEffect(() => {
+    if (!visibleOpen || activeView !== "create") return;
+    document.body.classList.add("team-onboarding-active");
+    return () => document.body.classList.remove("team-onboarding-active");
+  }, [activeView, visibleOpen]);
 
   useEffect(() => {
     const update = () => setOnline(navigator.onLine);
@@ -349,7 +364,7 @@ export function SocialOnboarding({
   }
 
   return (
-    <section className={styles.flow} data-social-entry-state={entryState} data-social-onboarding="v3f" aria-labelledby="social-onboarding-title">
+    <section className={`${styles.flow} ${activeView === "create" ? polishStyles.immersiveFlow : ""}`.trim()} data-onboarding-view={activeView} data-social-entry-state={entryState} data-social-onboarding="v3f" aria-labelledby="social-onboarding-title">
       <header className={styles.header}>
         <div>
           <span>Primeros pasos</span>
@@ -455,7 +470,7 @@ export function SocialOnboarding({
       {activeView === "create" ? (
         <div className={styles.formBody}>
           <nav className={styles.steps} aria-label="Pasos para crear equipo">{[1, 2, 3].map((item) => <button aria-current={createStep === item ? "step" : undefined} key={item} type="button" onClick={() => setCreateStep(item)}>{item}</button>)}</nav>
-          {createStep === 1 ? <><div className={styles.stepHeading}><span>Paso 1</span><h3>Identidad</h3></div><label>Nombre del equipo<input maxLength={80} value={createDraft.name} onChange={(event) => setCreateDraft((current) => ({ ...current, name: event.target.value }))} /></label><fieldset><legend>Escudo inicial</legend><div className={styles.shields}>{[{ key: "team.shield.shape.classic_iq", label: "Clásico" }, { key: "team.shield.shape.round", label: "Redondo" }, { key: "team.shield.shape.modern", label: "Moderno" }].map((shield) => <button aria-pressed={createDraft.shieldKey === shield.key} key={shield.key} type="button" onClick={() => setCreateDraft((current) => ({ ...current, shieldKey: shield.key }))}><i aria-hidden="true">{shield.label.slice(0, 1)}</i>{shield.label}</button>)}</div></fieldset></> : null}
+          {createStep === 1 ? <><div className={styles.stepHeading}><span>Paso 1</span><h3>Identidad</h3></div><label>Nombre del equipo<input maxLength={80} value={createDraft.name} onChange={(event) => setCreateDraft((current) => ({ ...current, name: event.target.value }))} /></label><fieldset><legend>Escudo inicial</legend><div className={polishStyles.shields}>{initialShieldOptions.map((shield) => <button aria-pressed={createDraft.shieldKey === shield.key} key={shield.key} type="button" onClick={() => setCreateDraft((current) => ({ ...current, shieldKey: shield.key }))}><TeamShieldView className={polishStyles.shieldPreview} config={{ ...TEAM_SHIELD_DEFAULT_CONFIG, shapeKey: shield.key }} label={`Escudo ${shield.label}`} size={64} /><strong>{shield.label}</strong></button>)}</div></fieldset></> : null}
           {createStep === 2 ? <><div className={styles.stepHeading}><span>Paso 2</span><h3>Fútbol</h3></div><label>Modalidad principal<select value={createDraft.modality} onChange={(event) => setCreateDraft((current) => ({ ...current, modality: event.target.value as SocialTeamCreateDraft["modality"] }))}>{modalityOptions.map((option) => <option key={option.id} value={option.id}>{option.label}</option>)}</select></label><label>Zona general<input maxLength={120} value={createDraft.zone} onChange={(event) => setCreateDraft((current) => ({ ...current, zone: event.target.value }))} /></label><label>Jugadores orientativos<select value={createDraft.targetPlayerCount} onChange={(event) => setCreateDraft((current) => ({ ...current, targetPlayerCount: Number(event.target.value) }))}><option value={10}>8-12</option><option value={14}>12-16</option><option value={20}>16-22</option><option value={28}>22+</option></select></label></> : null}
           {createStep === 3 ? <><div className={styles.stepHeading}><span>Paso 3</span><h3>Revisar</h3></div><dl className={styles.review}><div><dt>Equipo</dt><dd>{createDraft.name || "Sin nombre"}</dd></div><div><dt>Escudo</dt><dd>{createDraft.shieldKey.endsWith("round") ? "Redondo" : createDraft.shieldKey.endsWith("modern") ? "Moderno" : "Clásico"}</dd></div><div><dt>Modalidad</dt><dd>{modalityOptions.find((option) => option.id === createDraft.modality)?.label}</dd></div><div><dt>Zona</dt><dd>{createDraft.zone || "Pendiente"}</dd></div></dl><button className={styles.primary} type="button" disabled={creating || !writeAvailability.allowed || !createDraft.zone.trim()} onClick={() => void createTeam()}>{creating ? "Creando..." : "Crear equipo"}</button><p className={styles.message}>{createMessage || TEAM_CREATION_AUTHORITY.message}</p></> : null}
           <div className={styles.actions}><button type="button" onClick={() => createStep === 1 ? selectView("start") : setCreateStep((current) => current - 1)}>Volver</button>{createStep < 3 ? <button className={styles.primary} type="button" disabled={createStep === 1 && !createDraft.name.trim()} onClick={() => setCreateStep((current) => current + 1)}>Continuar</button> : null}</div>
