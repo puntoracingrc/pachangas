@@ -19,7 +19,13 @@ import {
   type SocialOnboardingDraft,
   type SocialProfileMinimum,
 } from "../social-onboarding-contract";
-import { modalityLabel, type SocialTeamCreateDraft, type SocialTeamInvitation } from "../social-team-core-contract";
+import {
+  SOCIAL_TEAM_NAME_MAX_LENGTH,
+  SOCIAL_TEAM_NAME_MIN_LENGTH,
+  modalityLabel,
+  type SocialTeamCreateDraft,
+  type SocialTeamInvitation,
+} from "../social-team-core-contract";
 import { TEAM_SHIELD_DEFAULT_CONFIG } from "../team-shield-contract";
 import { TeamShieldView } from "./team-shield-view";
 import styles from "./social-onboarding.module.css";
@@ -125,7 +131,6 @@ export function SocialOnboarding({
     modality: "futbol7",
     name: "",
     shieldKey: "team.shield.shape.classic_iq",
-    targetPlayerCount: 14,
     zone: "",
   });
   const [teamCodePreview, setTeamCodePreview] = useState<TeamCodePreview | null>(null);
@@ -329,7 +334,7 @@ export function SocialOnboarding({
   }
 
   async function createTeam() {
-    if (creating || !writeAvailability.allowed || !createDraft.name.trim() || !createDraft.zone.trim()) return;
+    if (creating || !writeAvailability.allowed || createDraft.name.trim().length < SOCIAL_TEAM_NAME_MIN_LENGTH || !createDraft.zone.trim()) return;
     setCreating(true);
     setCreateMessage("Creando equipo y owner en una sola transacción...");
     const result = await onCreateTeam(createDraft);
@@ -474,10 +479,10 @@ export function SocialOnboarding({
       {activeView === "create" ? (
         <div className={styles.formBody}>
           <nav className={styles.steps} aria-label="Pasos para crear equipo">{[1, 2, 3].map((item) => <button aria-current={createStep === item ? "step" : undefined} key={item} type="button" onClick={() => setCreateStep(item)}>{item}</button>)}</nav>
-          {createStep === 1 ? <><div className={styles.stepHeading}><span>Paso 1</span><h3>Identidad</h3></div><label>Nombre del equipo<input maxLength={80} value={createDraft.name} onChange={(event) => setCreateDraft((current) => ({ ...current, name: event.target.value }))} /></label><fieldset><legend>Escudo inicial</legend><div className={polishStyles.shields}>{initialShieldOptions.map((shield) => <button aria-pressed={createDraft.shieldKey === shield.key} key={shield.key} type="button" onClick={() => setCreateDraft((current) => ({ ...current, shieldKey: shield.key }))}><TeamShieldView className={polishStyles.shieldPreview} config={{ ...TEAM_SHIELD_DEFAULT_CONFIG, shapeKey: shield.key }} label={`Escudo ${shield.label}`} size={64} /><strong>{shield.label}</strong></button>)}</div></fieldset></> : null}
-          {createStep === 2 ? <><div className={styles.stepHeading}><span>Paso 2</span><h3>Fútbol</h3></div><label>Modalidad principal<select value={createDraft.modality} onChange={(event) => setCreateDraft((current) => ({ ...current, modality: event.target.value as SocialTeamCreateDraft["modality"] }))}>{modalityOptions.map((option) => <option key={option.id} value={option.id}>{option.label}</option>)}</select></label><label>Zona general<input maxLength={120} value={createDraft.zone} onChange={(event) => setCreateDraft((current) => ({ ...current, zone: event.target.value }))} /></label><label>Jugadores orientativos<select value={createDraft.targetPlayerCount} onChange={(event) => setCreateDraft((current) => ({ ...current, targetPlayerCount: Number(event.target.value) }))}><option value={10}>8-12</option><option value={14}>12-16</option><option value={20}>16-22</option><option value={28}>22+</option></select></label></> : null}
+          {createStep === 1 ? <><div className={styles.stepHeading}><span>Paso 1</span><h3>Identidad</h3></div><label>Nombre del equipo<input maxLength={SOCIAL_TEAM_NAME_MAX_LENGTH} value={createDraft.name} onChange={(event) => setCreateDraft((current) => ({ ...current, name: event.target.value }))} /><small className={styles.characterCount}>{createDraft.name.length}/{SOCIAL_TEAM_NAME_MAX_LENGTH}</small></label><fieldset><legend>Escudo inicial</legend><div className={polishStyles.shields}>{initialShieldOptions.map((shield) => <button aria-pressed={createDraft.shieldKey === shield.key} key={shield.key} type="button" onClick={() => setCreateDraft((current) => ({ ...current, shieldKey: shield.key }))}><TeamShieldView className={polishStyles.shieldPreview} config={{ ...TEAM_SHIELD_DEFAULT_CONFIG, shapeKey: shield.key }} label={`Escudo ${shield.label}`} size={64} /><strong>{shield.label}</strong></button>)}</div></fieldset></> : null}
+          {createStep === 2 ? <><div className={styles.stepHeading}><span>Paso 2</span><h3>Fútbol</h3></div><label>Modalidad principal<select value={createDraft.modality} onChange={(event) => setCreateDraft((current) => ({ ...current, modality: event.target.value as SocialTeamCreateDraft["modality"] }))}>{modalityOptions.map((option) => <option key={option.id} value={option.id}>{option.label}</option>)}</select></label><label>Zona general<input maxLength={120} value={createDraft.zone} onChange={(event) => setCreateDraft((current) => ({ ...current, zone: event.target.value }))} /></label></> : null}
           {createStep === 3 ? <><div className={styles.stepHeading}><span>Paso 3</span><h3>Revisar</h3></div><dl className={styles.review}><div><dt>Equipo</dt><dd>{createDraft.name || "Sin nombre"}</dd></div><div><dt>Escudo</dt><dd>{initialShieldLabel(createDraft.shieldKey)}</dd></div><div><dt>Modalidad</dt><dd>{modalityOptions.find((option) => option.id === createDraft.modality)?.label}</dd></div><div><dt>Zona</dt><dd>{createDraft.zone || "Pendiente"}</dd></div></dl><button className={styles.primary} type="button" disabled={creating || !writeAvailability.allowed || !createDraft.zone.trim()} onClick={() => void createTeam()}>{creating ? "Creando..." : "Crear equipo"}</button><p className={styles.message}>{createMessage || TEAM_CREATION_AUTHORITY.message}</p></> : null}
-          <div className={styles.actions}><button type="button" onClick={() => createStep === 1 ? selectView("start") : setCreateStep((current) => current - 1)}>Volver</button>{createStep < 3 ? <button className={styles.primary} type="button" disabled={createStep === 1 && !createDraft.name.trim()} onClick={() => setCreateStep((current) => current + 1)}>Continuar</button> : null}</div>
+          <div className={styles.actions}><button type="button" onClick={() => createStep === 1 ? selectView("start") : setCreateStep((current) => current - 1)}>Volver</button>{createStep < 3 ? <button className={styles.primary} type="button" disabled={createStep === 1 && createDraft.name.trim().length < SOCIAL_TEAM_NAME_MIN_LENGTH} onClick={() => setCreateStep((current) => current + 1)}>Continuar</button> : null}</div>
         </div>
       ) : null}
     </section>

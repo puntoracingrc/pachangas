@@ -30,7 +30,7 @@ select public.command_pachanga_social_profile_v1(
 ) as owner_profile \gset
 select public.command_pachanga_social_team_v1(
   'team.create', 0, 'f3200000-0000-4000-8000-000000000001',
-  '{"name":"V3F Social Team","modality":"futbol7","generalArea":"Barcelona","targetPlayerCount":14,"shieldKey":"team.shield.shape.round"}'::jsonb,
+  '{"name":"V3F Social Team","modality":"futbol7","generalArea":"Barcelona","shieldKey":"team.shield.shape.round"}'::jsonb,
   '{"clientVersion":"1.0.0","displayMode":"browser"}'::jsonb
 ) as created_team \gset
 reset role;
@@ -46,6 +46,29 @@ select pg_temp.v3f_assert((select enforcement_status from private.pachanga_team_
 select pg_temp.v3f_assert((select revision from public.pachanga_team_shield_public where group_id=current_setting('v3f.group_id')::uuid)=1, 'Initial shield projection must exist');
 select pg_temp.v3f_assert((select count(*) from public.pachanga_group_members where group_id=current_setting('v3f.group_id')::uuid and role='owner')=1, 'Exactly one owner membership required');
 select pg_temp.v3f_assert((select payload->'matches' from public.pachanga_groups where id=current_setting('v3f.group_id')::uuid)='[]'::jsonb, 'Team creation must not fabricate a sporting match');
+select pg_temp.v3f_assert((select social_target_player_count from public.pachanga_groups where id=current_setting('v3f.group_id')::uuid)=14, 'Team creation must retain the server default when the client omits the orientative count');
+
+do $$
+declare violated_constraint text;
+begin
+  begin
+    insert into public.pachanga_groups(owner_id, name, payload)
+    values ('f3000000-0000-4000-8000-000000000003', '  V3F   SOCIAL TÉAM  ', '{}'::jsonb);
+    raise exception 'A normalized duplicate Team name was accepted';
+  exception when unique_violation then
+    get stacked diagnostics violated_constraint = constraint_name;
+    if violated_constraint <> 'pachanga_groups_name_unique_v1_idx' then raise; end if;
+  end;
+
+  begin
+    insert into public.pachanga_groups(owner_id, name, payload)
+    values ('f3000000-0000-4000-8000-000000000003', repeat('x', 33), '{}'::jsonb);
+    raise exception 'An overlong Team name was accepted';
+  exception when sqlstate '22023' then
+    if sqlerrm <> 'TEAM_NAME_TOO_LONG' then raise; end if;
+  end;
+end;
+$$;
 
 set local role authenticated;
 select set_config('request.jwt.claims', '{"sub":"f3000000-0000-4000-8000-000000000002","role":"authenticated","is_anonymous":false}', true);
