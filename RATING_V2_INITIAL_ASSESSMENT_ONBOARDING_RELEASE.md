@@ -11,11 +11,12 @@
 - Isolated worktree initial state: clean.
 - Remote migration ledger before release: synchronized through `20260905061857`; `20260905084509` remains local until the release gate.
 - Initial implementation commit: `2149ddea4d73e17c6f079e1bcfa54c5b339865ee`.
-- Pull request: draft `#281`.
+- Pull request: `#281`, merged.
 - Initial Preview deployment: `dpl_8pBvR3yeZaXcL6786h9RdUtSB63j`, READY for commit `2149ddea4d73e17c6f079e1bcfa54c5b339865ee`.
 - Staging-certified Preview before the final responsive fix: `https://pachangas-ihya1cqqc-persianas-almar-web-s-projects.vercel.app`, READY for commit `8f0807a4a4ed10215b67aa398ced7961324bdb11`.
-- Merge SHA: pending.
-- Production deployment: pending.
+- Final staging Preview: `dpl_4fzXFzvpaqaJ2J92HZZKHy2NzEES`, READY at `https://pachangas-l4yfkx6ei-persianas-almar-web-s-projects.vercel.app` for commit `0ebf84b2ade29faa924414e551c0bca71c71e119`.
+- Merge SHA: `db7f72b28183075535ffafebd15acb1d34b9f3cf`.
+- Production deployment: `dpl_4brkngMSiU7kLVruy9MjjoXCaqba`, READY and assigned to `pachangasiq.com` for the exact merge SHA.
 
 ## Reproduction before the change
 
@@ -91,7 +92,7 @@ The dedicated screen includes the existing modes, position, experience, elapsed 
 
 Local application checks:
 
-- `npm test`: PASS. Build PASS; Node `20/20`; TS/TSX `868/868`; total `888/888`; skipped/todo/cancelled `0/0/0`.
+- `npm test`: PASS. Build PASS; Node `20/20`; TS/TSX `869/869`; total `889/889`; skipped/todo/cancelled `0/0/0`.
 - `npm run typecheck`: PASS.
 - `npm run lint`: PASS. Only Babel's informational large-file message for the pre-existing `app/page.tsx`.
 - Focused onboarding, Rating V2, Official UI and PWA tests: PASS.
@@ -113,7 +114,17 @@ Staging transport incident:
 - Reproduction: two final-SHA staging runs reached Vercel through the authenticated `vercel curl` beta transport and failed with `LibreSSL SSL_connect: SSL_ERROR_SYSCALL`, first on `/sw.js` and then on `/api/ratings/assessment`.
 - Scope: transport failed before an HTTP response; it was not tied to one product route, RPC or Supabase operation.
 - Correction: the staging harness retries at most three times only for an explicit allowlist of transient network errors. HTTP statuses, invalid JSON and product assertions remain fail-closed and are never retried as success.
-- Regression verification: pending the next exact-SHA staging run.
+- Regression verification: PASS. The exact-SHA staging run completed every product assertion after the bounded retry was added.
+
+Account-deletion compatibility incident:
+
+- Classification: `PRODUCT_BUG`, found during the pre-production synthetic cleanup check.
+- Reproduction: deleting a staging Auth account that had completed the assessment failed with SQLSTATE `55000` and `PLAYER_ASSESSMENT_EVIDENCE_IMMUTABLE`.
+- Root cause: the evidence tables declared `ON DELETE CASCADE` from `auth.users`, but their immutable trigger rejected that declared cascade as if it were a direct evidence deletion.
+- Correction: forward-only migration `20260905105747_allow_rating_evidence_auth_user_cascade_v1.sql` permits a delete only when it is nested inside the Auth foreign-key cascade and the parent Auth row is already absent. Direct receipt/event deletion and every update remain immutable.
+- Regression: PASS locally and in staging. SQL exercises direct-delete rejection and complete Auth cascade cleanup in the same transaction.
+- A complete Auth-account deletion then reached a separate pre-existing Rating V2 constraint: `pachanga_player_rating_snapshots_player_profile_id_fkey` rejects deletion of a canonical player profile that has snapshots. That wider account-erasure graph predates this release and is not changed here; synthetic production cleanup therefore uses an explicit, UUID-scoped administrative transaction and must finish with a zero-row readback.
+- Hotfix verification: build, `889/889` tests, typecheck, global lint, focused SQL/RLS, two-client concurrency and `git diff --check` all pass. Supabase Advisors attributes no security finding to the migration; the only related notice is the expected `unused_index` info for an empty staging evidence table.
 
 Disposable PostgreSQL checks:
 
@@ -143,16 +154,20 @@ Database lint found no issue in the new authority. It still reports ten pre-exis
 - Direct profile/assessment DML and direct client execution of the server-only RPC: denied.
 - Offline attempt: fails closed with no persisted change.
 - Realtime between two devices: PASS through a scoped invalidation followed by canonical refetch.
+- Final exact-SHA certification: PASS for commit `0ebf84b2ade29faa924414e551c0bca71c71e119` and all flows A-E.
 
 The first remote run found that `pachanga_player_profiles` and `pachanga_player_assessments` were not members of the Realtime publication even though the UI subscribed to them. The fix does not publish private rating tables: it reuses the existing RLS-protected invalidation table and adds the explicit `rating_profile` entity type. A regression now exercises the actual Realtime event.
 
-## Remaining release gates
+## Production release
 
-Pending before production closure:
+- Migration `20260905084509_restore_initial_assessment_profile_onboarding_v1.sql` was applied forward-only before the frontend deployment.
+- Linked migration history is synchronized at 239 versions through `20260905084509`.
+- Readback confirms zero production self-assessment receipts/events before canary, seven valid indexes, the public wrapper executable only by `service_role`, private functions unreachable by client roles and the `rating_profile` invalidation constraint active.
+- PR `#281` merged as `db7f72b28183075535ffafebd15acb1d34b9f3cf`.
+- Vercel production deployment `dpl_4brkngMSiU7kLVruy9MjjoXCaqba` is READY and aliases both `pachangasiq.com` and `www.pachangasiq.com` to that exact merge SHA.
 
-1. Publish the final responsive commit as an exact-SHA Preview and rerun the authenticated staging certification against that exact build.
-2. Apply the single additive forward migration before the frontend begins using its new RPC.
-3. Merge and deploy the exact reviewed SHA.
-4. Run a canonical production smoke with synthetic data and complete cleanup.
+Pending before final closure:
 
-Production has not been modified at this checkpoint.
+1. Merge and apply the account-cascade compatibility migration documented above.
+2. Run the canonical production smoke with synthetic data and explicit zero-row cleanup readback.
+3. Remove the ephemeral staging branch, branch-scoped Preview variables, disposable local database and this worktree.
