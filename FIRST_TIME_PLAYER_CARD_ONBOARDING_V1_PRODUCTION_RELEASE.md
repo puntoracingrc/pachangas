@@ -9,11 +9,11 @@
 - Isolated worktree: `/Users/macbookpro14/.codex/worktrees/pachangas-first-time-onboarding-gate`.
 - Shared checkout: left untouched, including its pre-existing local changes.
 - Functional commit: `5b5d37035b2fc33452f2dff4a2953e7eb670dcff`.
-- Pull request: [#284](https://github.com/puntoracingrc/pachangas/pull/284), draft, clean and mergeable.
+- Pull request: [#284](https://github.com/puntoracingrc/pachangas/pull/284), merged.
 - Functional Preview: `dpl_DpbaWjX5Zno7C7KZhYCr92HQar2q`, READY at `https://pachangas-ejgya00yd-persianas-almar-web-s-projects.vercel.app` for `5b5d37035b2fc33452f2dff4a2953e7eb670dcff`.
 - Canary Preview: `dpl_B5oNH1hqJuJG5H3ZpQdazh6dmtJz`, READY at `https://pachangas-nlek5k8q8-persianas-almar-web-s-projects.vercel.app` for `b79d8fba50723f2334ba7a329aec706506ffd0f1`.
-- Merge SHA: pending.
-- Production deployment: pending.
+- Merge SHA: `7e85b5774d5d39cdd6ba0f0d582e67ba2c62120d`.
+- Production deployment: `dpl_Bp9wwLrr3QxPYspn432ATdHdr1ax`, READY at `https://pachangas-lmn6qhlpk-persianas-almar-web-s-projects.vercel.app` and assigned to `https://pachangasiq.com` plus `https://www.pachangasiq.com`.
 - Supabase migrations: none.
 
 ## Product behavior
@@ -75,7 +75,7 @@ The local layout and Places callback contract passed. In the exact Preview, the 
 
 ## Authenticated Preview canary
 
-The first functional Preview exposed a Preview-environment omission: the authenticated server route returned `400 Missing SUPABASE_SERVICE_ROLE_KEY`. This was not accepted as a product result. No application or database change was made; a sensitive, server-only `SUPABASE_SERVICE_ROLE_KEY` was added only to the Preview environment and only for branch `codex/first-time-onboarding-gate`. It is explicitly temporary and must be removed after merge.
+The first functional Preview exposed a Preview-environment omission: the authenticated server route returned `400 Missing SUPABASE_SERVICE_ROLE_KEY`. This was not accepted as a product result. No application or database change was made; a sensitive, server-only `SUPABASE_SERVICE_ROLE_KEY` was added only to the Preview environment and only for branch `codex/first-time-onboarding-gate`. It was explicitly temporary and was removed after merge.
 
 The rebuilt exact-SHA Preview then passed one synthetic, reversible two-device canary:
 
@@ -90,12 +90,23 @@ The rebuilt exact-SHA Preview then passed one synthetic, reversible two-device c
 
 A separate direct PostgreSQL readback returned `0` rows for the synthetic user in Auth, social profile, player profile, assessment, rating snapshot, global rating response, invalidation and both private self-assessment event/receipt tables. No QA residue remains.
 
+## Production verification
+
+- Vercel deployed the exact merge SHA `7e85b5774d5d39cdd6ba0f0d582e67ba2c62120d`; the deployment is `READY` with no alias error.
+- `/`, `/perfil/test-inicial`, `/personalizar-carta`, `/manifest.webmanifest` and `/sw.js` returned HTTP `200` from `pachangasiq.com`.
+- The production Service Worker identifies `2.0.0+sw.7e85b5774d5d`, is served with `no-cache, no-store`, and precaches `/perfil/test-inicial`.
+- Browser smoke at `1440x900`, `390x844` and `844x390` found zero horizontal overflow, zero broken images and zero runtime exceptions on the inspected surfaces.
+- Vercel reported zero runtime-error clusters after deployment. The observed `409` responses were the two deliberate prerequisite/duplicate-assessment assertions in the canary.
+- The two-device production canary repeated the Preview guarantees: prerequisite block, canonical profile readiness, one idempotent card creation under concurrency, Realtime invalidation, fresh-session convergence and rejection of a distinct second initial assessment.
+- Automatic cleanup and an independent PostgreSQL readback again returned zero synthetic rows across Auth, public and private evidence tables.
+- The temporary branch-only Preview service credential was removed after merge; the branch-scoped environment list is empty.
+
 ## Remote release gates
 
 - Exact-SHA Vercel Preview: PASS for `b79d8fba50723f2334ba7a329aec706506ffd0f1`; deployment `dpl_B5oNH1hqJuJG5H3ZpQdazh6dmtJz` is READY.
 - Google Places city/town integration in Preview: PASS for API load, widget render and city-only contract; prior shared-provider selection certification remains valid. A new trusted physical suggestion selection was not claimed.
 - Authenticated first-time user with no team: PASS through a synthetic reversible canary.
 - Canonical card creation, fresh session, idempotent concurrency and Realtime convergence: PASS.
-- Production deployment and smoke: pending.
-- Synthetic QA residue readback: PASS, zero rows across public, private and Auth surfaces.
+- Production deployment and smoke: PASS for exact merge SHA `7e85b5774d5d39cdd6ba0f0d582e67ba2c62120d`.
+- Synthetic QA residue readback: PASS in Preview and production, zero rows across public, private and Auth surfaces.
 - Physical Android, iPhone and installed-PWA checks: not part of this browser release and remain `PENDING` unless performed on real devices.
