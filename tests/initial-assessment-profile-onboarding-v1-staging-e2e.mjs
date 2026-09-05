@@ -121,7 +121,7 @@ function assessmentBody(snapshot, kind, operationId, assessmentInput) {
   };
 }
 
-function runPreviewCurl(path, { body, method = "GET", token } = {}) {
+function runPreviewCurlOnce(path, { body, method = "GET", token } = {}) {
   const secretDir = mkdtempSync(join(tmpdir(), "profile-onboarding-http-"));
   const configPath = join(secretDir, "request.conf");
   const bodyPath = join(secretDir, "body.json");
@@ -180,6 +180,21 @@ function runPreviewCurl(path, { body, method = "GET", token } = {}) {
       });
     });
   });
+}
+
+async function runPreviewCurl(path, options = {}) {
+  let lastError;
+  for (let attempt = 1; attempt <= 3; attempt += 1) {
+    try {
+      return await runPreviewCurlOnce(path, options);
+    } catch (error) {
+      lastError = error;
+      const message = error instanceof Error ? error.message : String(error);
+      if (!/SSL_ERROR_SYSCALL|ECONNRESET|ETIMEDOUT|ENETUNREACH|EAI_AGAIN/.test(message) || attempt === 3) throw error;
+      await new Promise((resolve) => setTimeout(resolve, attempt * 500));
+    }
+  }
+  throw lastError;
 }
 
 async function jsonRequest(path, options) {

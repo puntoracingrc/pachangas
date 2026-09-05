@@ -107,6 +107,14 @@ Responsive browser QA:
 - Broken images: zero in every checked viewport.
 - The development-only visual fixture used for these checks was removed before validation and is not part of the release diff.
 
+Staging transport incident:
+
+- Classification: `ENVIRONMENT_ISSUE`.
+- Reproduction: two final-SHA staging runs reached Vercel through the authenticated `vercel curl` beta transport and failed with `LibreSSL SSL_connect: SSL_ERROR_SYSCALL`, first on `/sw.js` and then on `/api/ratings/assessment`.
+- Scope: transport failed before an HTTP response; it was not tied to one product route, RPC or Supabase operation.
+- Correction: the staging harness retries at most three times only for an explicit allowlist of transient network errors. HTTP statuses, invalid JSON and product assertions remain fail-closed and are never retried as success.
+- Regression verification: pending the next exact-SHA staging run.
+
 Disposable PostgreSQL checks:
 
 - Applied the complete pending migration chain to a disposable local database.
