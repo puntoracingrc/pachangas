@@ -77,7 +77,9 @@ test("first-time onboarding stays closed until the canonical initial assessment 
   assert.match(home, /data-player-card-onboarding-gate/);
   assert.match(home, /renderSocialOnboarding\(true\)/);
   assert.match(globalStyles, /body\.first-time-onboarding-active \.legal-footer/);
-  assert.match(globalStyles, /\.first-time-onboarding-shell \{[\s\S]*align-items: safe center/);
+  assert.match(globalStyles, /\.first-time-onboarding-shell \{[\s\S]*grid-template-rows: auto minmax\(0, 1fr\)/);
+  assert.match(home, /<ThemeToggle compact defaultPreference="dark" \/>/);
+  assert.match(globalStyles, /\.theme-compact-toggle \{/);
 });
 
 test("step two requires a Places city and step three opens the mandatory initial test", () => {
@@ -101,6 +103,7 @@ test("the mandatory test itself has no product navigation until the card is crea
   assert.match(onboarding, /data-player-card-onboarding-gate="assessment"/);
   assert.match(onboarding, /initialAssessmentRequired\) \{[\s\S]*styles\.requiredShell/);
   assert.match(onboarding, /Entrar en Pachangas IQ/);
+  assert.match(onboarding, /initialAssessmentRequired \? <ThemeToggle compact defaultPreference="dark" \/> : null/);
   assert.match(onboarding, /params\.get\("onboarding"\) === "1"/);
   assert.match(onboarding, /snapshot\.onboardingProfileReady/);
 });

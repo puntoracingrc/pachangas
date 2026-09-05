@@ -12,7 +12,7 @@ import {
   writeMarketLocationPreference,
   writeMarketReadCache,
 } from "../app/mercado/market-ui-contract";
-import { resolveThemePreference } from "../app/theme-toggle";
+import { nextThemePreference, resolveThemePreference } from "../app/theme-toggle";
 
 const source = (path: string) => readFile(new URL(`../${path}`, import.meta.url), "utf8");
 
@@ -47,11 +47,16 @@ test("official Home uses the canonical team shield and never another roster card
   assert.match(page, /contextVisual=\{hasHomeTeamIdentity/);
 });
 
-test("authenticated theme defaults to dark without overriding explicit preferences", () => {
+test("authenticated theme defaults to dark without overriding explicit preferences", async () => {
+  const layout = await source("app/layout.tsx");
   assert.equal(resolveThemePreference(null, "dark"), "dark");
   assert.equal(resolveThemePreference("light", "dark"), "light");
   assert.equal(resolveThemePreference("dark", "system"), "dark");
   assert.equal(resolveThemePreference("system", "dark"), "system");
+  assert.equal(nextThemePreference("dark"), "light");
+  assert.equal(nextThemePreference("light"), "dark");
+  assert.equal(nextThemePreference("system", "dark"), "light");
+  assert.match(layout, /<body[\s\S]*suppressHydrationWarning/);
 });
 
 test("protected V2.1 deep links survive the Google OAuth round trip", async () => {

@@ -39,6 +39,7 @@ import {
 } from "../../player-assessment-flow-contract";
 import { clientWriteFetch, currentClientDisplayMode, pwaBridgeSnapshot } from "../../pwa-client-bridge";
 import { supabase } from "../../supabaseClient";
+import { ThemeToggle } from "../../theme-toggle";
 import styles from "./page.module.css";
 
 type AssessmentKind = "advanced" | "initial";
@@ -473,7 +474,10 @@ export default function PlayerInitialAssessmentPage() {
         <nav className={styles.topbar}>
           <Link href={initialAssessmentRequired ? "/" : "/perfil"}>Volver</Link>
           <strong>Mi ficha</strong>
-          <span>{profile ? `Rev. ${profile.profile_version}` : "Nueva"}</span>
+          <div className={styles.topbarMeta}>
+            <span>{profile ? `Rev. ${profile.profile_version}` : "Nueva"}</span>
+            {initialAssessmentRequired ? <ThemeToggle compact defaultPreference="dark" /> : null}
+          </div>
         </nav>
 
         {status === "loading" ? <section className={styles.state}><strong>Recuperando tu ficha confirmada...</strong></section> : null}
