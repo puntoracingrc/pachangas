@@ -210,7 +210,7 @@ test("V3F migrations keep raw invitation tokens hashed and Rating untouched", as
     source("supabase/migrations/20260901214525_atomic_social_team_creation_v1.sql"),
     source("supabase/migrations/20260901214526_team_player_invitations_v2.sql"),
     source("supabase/migrations/20260901214527_social_team_read_models_rls_flags_v1.sql"),
-    source("supabase/migrations/20260905210704_unique_team_names_and_length_v1.sql"),
+    source("supabase/migrations/20260905212126_unique_team_names_and_length_v1.sql"),
   ]);
   assert.match(profileSql, /command_pachanga_social_profile_v1/);
   assert.match(teamSql, /command_pachanga_social_team_v1/);
