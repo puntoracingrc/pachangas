@@ -2,6 +2,8 @@ import { normalizeTeamShieldConfig, TEAM_SHIELD_DEFAULT_CONFIG, type TeamShieldC
 
 export const SOCIAL_TEAM_CORE_VERSION = "official-ui-v3f" as const;
 export const SOCIAL_TEAM_CACHE_VERSION = "v3f-1" as const;
+export const SOCIAL_TEAM_NAME_MIN_LENGTH = 2;
+export const SOCIAL_TEAM_NAME_MAX_LENGTH = 32;
 
 export type SocialTeamRole = "admin" | "owner" | "player";
 
@@ -100,7 +102,6 @@ export type SocialTeamCreateDraft = {
   modality: "futbol11" | "futbol7" | "sala";
   name: string;
   shieldKey: string;
-  targetPlayerCount: number;
   zone: string;
 };
 

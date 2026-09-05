@@ -205,18 +205,24 @@ test("V3F public entry keeps the brand inside compact landscape viewports", asyn
 });
 
 test("V3F migrations keep raw invitation tokens hashed and Rating untouched", async () => {
-  const [profileSql, teamSql, invitationSql, hardeningSql] = await Promise.all([
+  const [profileSql, teamSql, invitationSql, hardeningSql, teamNameSql] = await Promise.all([
     source("supabase/migrations/20260901214524_social_team_core_evidence_v1.sql"),
     source("supabase/migrations/20260901214525_atomic_social_team_creation_v1.sql"),
     source("supabase/migrations/20260901214526_team_player_invitations_v2.sql"),
     source("supabase/migrations/20260901214527_social_team_read_models_rls_flags_v1.sql"),
+    source("supabase/migrations/20260905210704_unique_team_names_and_length_v1.sql"),
   ]);
   assert.match(profileSql, /command_pachanga_social_profile_v1/);
   assert.match(teamSql, /command_pachanga_social_team_v1/);
   assert.match(invitationSql, /extensions\.digest\(convert_to\(raw_token/);
   assert.match(invitationSql, /command_pachanga_team_player_invitation_v2/);
   assert.match(hardeningSql, /revoke insert, update, delete/);
-  for (const sql of [profileSql, teamSql, invitationSql, hardeningSql]) {
+  assert.match(teamNameSql, /pachanga_groups_name_unique_v1_idx/);
+  assert.match(teamNameSql, /TEAM_NAME_TOO_LONG/);
+  assert.match(teamNameSql, /char_length\([\s\S]*between 2 and 32/);
+  assert.match(teamNameSql, /translate\([\s\S]*lower\([\s\S]*regexp_replace/);
+  assert.match(teamNameSql, /before insert or update of name/);
+  for (const sql of [profileSql, teamSql, invitationSql, hardeningSql, teamNameSql]) {
     assert.doesNotMatch(sql, /update\s+public\.pachanga_player_profiles[\s\S]{0,160}(current_overall|current_facets|rating)/i);
   }
 });

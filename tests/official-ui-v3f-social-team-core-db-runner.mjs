@@ -9,6 +9,7 @@ const migrations = [
   "20260901214525_atomic_social_team_creation_v1.sql",
   "20260901214526_team_player_invitations_v2.sql",
   "20260901214527_social_team_read_models_rls_flags_v1.sql",
+  "20260905210704_unique_team_names_and_length_v1.sql",
 ].flatMap((name) => ["-f", `supabase/migrations/${name}`]);
 
 const result = spawnSync("psql", [

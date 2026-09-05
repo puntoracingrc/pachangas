@@ -7550,6 +7550,8 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
     if (message.includes("stale") || message.includes("conflict")) return "El estado cambió en otro dispositivo. Se ha recargado la copia oficial.";
     if (message.includes("profile_already_exists")) return "El perfil ya existe. Recarga para editar su versión actual.";
     if (message.includes("social_profile_required")) return "Guarda primero tu perfil de jugador.";
+    if (message.includes("team_name_already_exists") || message.includes("pachanga_groups_name_unique_v1_idx")) return "Ese nombre ya pertenece a otro equipo.";
+    if (message.includes("team_name_too_long") || message.includes("pachanga_groups_name_canonical_length_check")) return "El nombre del equipo puede tener como máximo 32 caracteres.";
     if (message.includes("team_owner_limit")) return "Has alcanzado el límite de equipos propios.";
     if (message.includes("team_creation_recently_confirmed")) return "El equipo ya se confirmó. Estamos recuperando su estado oficial.";
     if (message.includes("operationally_restricted") || message.includes("suspended") || message.includes("archived")) return "El equipo no permite esta acción ahora mismo.";
@@ -7629,7 +7631,6 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
         modality: draft.modality,
         name: draft.name,
         shieldKey: draft.shieldKey,
-        targetPlayerCount: draft.targetPlayerCount,
       },
     });
     if (result.error) {

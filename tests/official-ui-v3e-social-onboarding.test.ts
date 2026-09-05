@@ -17,6 +17,7 @@ import {
   socialWriteAvailability,
 } from "../app/social-onboarding-contract";
 import { DEMO_SOCIAL_FIRST_TIME_STORIES } from "../app/demo-world/demo-social-first-time-contract";
+import { SOCIAL_TEAM_NAME_MAX_LENGTH, SOCIAL_TEAM_NAME_MIN_LENGTH } from "../app/social-team-core-contract";
 
 const source = (path: string) => readFile(new URL(`../${path}`, import.meta.url), "utf8");
 
@@ -135,6 +136,17 @@ test("team creation shows the real shield shapes in an isolated full-screen flow
   assert.match(component, /document\.body\.classList\.add\("team-onboarding-active"\)/);
   assert.match(polish, /\.immersiveFlow\s*\{[\s\S]*position:\s*fixed;[\s\S]*inset:\s*0;[\s\S]*height:\s*100dvh;/);
   assert.match(polish, /\.shields\s*\{[\s\S]*grid-template-columns:\s*repeat\(3, minmax\(0, 1fr\)\)/);
+});
+
+test("team creation keeps names compact and omits the orientative player count", async () => {
+  const component = await source("app/_components/social-onboarding.tsx");
+  assert.equal(SOCIAL_TEAM_NAME_MIN_LENGTH, 2);
+  assert.equal(SOCIAL_TEAM_NAME_MAX_LENGTH, 32);
+  assert.match(component, /maxLength=\{SOCIAL_TEAM_NAME_MAX_LENGTH\}/);
+  assert.match(component, /createDraft\.name\.length\}\/\{SOCIAL_TEAM_NAME_MAX_LENGTH/);
+  assert.match(component, /createDraft\.name\.trim\(\)\.length < SOCIAL_TEAM_NAME_MIN_LENGTH/);
+  assert.doesNotMatch(component, /Jugadores orientativos/);
+  assert.doesNotMatch(component, /createDraft\.targetPlayerCount/);
 });
 
 test("incoming invitations wait for explicit confirmation and canonical readback", async () => {
