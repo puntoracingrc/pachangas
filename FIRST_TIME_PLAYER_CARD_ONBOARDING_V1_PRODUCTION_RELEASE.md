@@ -10,7 +10,8 @@
 - Shared checkout: left untouched, including its pre-existing local changes.
 - Functional commit: `5b5d37035b2fc33452f2dff4a2953e7eb670dcff`.
 - Pull request: [#284](https://github.com/puntoracingrc/pachangas/pull/284), draft, clean and mergeable.
-- Preview deployment: `dpl_DpbaWjX5Zno7C7KZhYCr92HQar2q`, READY at `https://pachangas-ejgya00yd-persianas-almar-web-s-projects.vercel.app`.
+- Functional Preview: `dpl_DpbaWjX5Zno7C7KZhYCr92HQar2q`, READY at `https://pachangas-ejgya00yd-persianas-almar-web-s-projects.vercel.app` for `5b5d37035b2fc33452f2dff4a2953e7eb670dcff`.
+- Canary Preview: `dpl_B5oNH1hqJuJG5H3ZpQdazh6dmtJz`, READY at `https://pachangas-nlek5k8q8-persianas-almar-web-s-projects.vercel.app` for `b79d8fba50723f2334ba7a329aec706506ffd0f1`.
 - Merge SHA: pending.
 - Production deployment: pending.
 - Supabase migrations: none.
@@ -70,14 +71,31 @@ No Rating V2 question, formula, scale, facet, reliability rule, assessment engin
 - Broken images: zero in the local flow.
 - Runtime console errors: zero in the local flow.
 
-The local layout and Places callback contract passed. A real Google Places selection cannot be certified locally because Vercel redacts the sensitive Preview value when pulling environment variables; it remains an explicit exact-Preview gate.
+The local layout and Places callback contract passed. In the exact Preview, the real Google Maps JavaScript API and Places web component loaded with the Spanish city-only contract (`types: ["(cities)"]`). The browser automation backend could not send a trusted keystroke through the component's closed shadow root, so suggestion selection was not falsely recorded as a new physical interaction; the same shared provider and selection callback were already certified in `GOOGLE_PLACES_PREVIEW_SELECTION_REPORT.md`.
+
+## Authenticated Preview canary
+
+The first functional Preview exposed a Preview-environment omission: the authenticated server route returned `400 Missing SUPABASE_SERVICE_ROLE_KEY`. This was not accepted as a product result. No application or database change was made; a sensitive, server-only `SUPABASE_SERVICE_ROLE_KEY` was added only to the Preview environment and only for branch `codex/first-time-onboarding-gate`. It is explicitly temporary and must be removed after merge.
+
+The rebuilt exact-SHA Preview then passed one synthetic, reversible two-device canary:
+
+- A new authenticated user without a social profile received the canonical empty snapshot and no card.
+- Direct assessment submission before the profile was rejected with `409`.
+- After creating the synthetic city profile (`Barcelona`), the server reported the profile prerequisite ready.
+- Two authenticated clients submitted the same idempotent operation concurrently and received byte-equivalent canonical responses with one profile and one initial assessment.
+- The second client received the `rating_profile` Realtime invalidation.
+- A fresh authenticated session recovered the same canonical card.
+- Replaying the same operation returned the original response; a distinct second initial assessment was rejected with `409`.
+- Cleanup removed the synthetic Auth user and all public derived rows.
+
+A separate direct PostgreSQL readback returned `0` rows for the synthetic user in Auth, social profile, player profile, assessment, rating snapshot, global rating response, invalidation and both private self-assessment event/receipt tables. No QA residue remains.
 
 ## Remote release gates
 
-- Exact-SHA Vercel Preview: PASS for `5b5d37035b2fc33452f2dff4a2953e7eb670dcff`; deployment `dpl_DpbaWjX5Zno7C7KZhYCr92HQar2q` is READY.
-- Real Google Places city/town selection in Preview: pending.
-- Authenticated first-time user with no team: pending.
-- Canonical card creation, hard reload, fresh session and Realtime convergence: pending.
+- Exact-SHA Vercel Preview: PASS for `b79d8fba50723f2334ba7a329aec706506ffd0f1`; deployment `dpl_B5oNH1hqJuJG5H3ZpQdazh6dmtJz` is READY.
+- Google Places city/town integration in Preview: PASS for API load, widget render and city-only contract; prior shared-provider selection certification remains valid. A new trusted physical suggestion selection was not claimed.
+- Authenticated first-time user with no team: PASS through a synthetic reversible canary.
+- Canonical card creation, fresh session, idempotent concurrency and Realtime convergence: PASS.
 - Production deployment and smoke: pending.
-- Synthetic QA residue readback: pending.
+- Synthetic QA residue readback: PASS, zero rows across public, private and Auth surfaces.
 - Physical Android, iPhone and installed-PWA checks: not part of this browser release and remain `PENDING` unless performed on real devices.
