@@ -126,8 +126,10 @@ test("team creation shows the real shield shapes in an isolated full-screen flow
     source("app/_components/social-onboarding.tsx"),
     source("app/_components/social-onboarding-polish.module.css"),
   ]);
-  for (const shape of ["classic_iq", "round", "modern"]) assert.match(component, new RegExp(`team\\.shield\\.shape\\.${shape}`));
+  for (const shape of ["classic_iq", "round", "hex_iq"]) assert.match(component, new RegExp(`team\\.shield\\.shape\\.${shape}`));
   assert.match(component, /<TeamShieldView[\s\S]*size=\{64\}/);
+  assert.match(component, /<dd>\{initialShieldLabel\(createDraft\.shieldKey\)\}<\/dd>/);
+  assert.doesNotMatch(component, /label: "Moderno"/);
   assert.doesNotMatch(component, /shield\.label\.slice/);
   assert.match(component, /data-onboarding-view=\{activeView\}/);
   assert.match(component, /document\.body\.classList\.add\("team-onboarding-active"\)/);
