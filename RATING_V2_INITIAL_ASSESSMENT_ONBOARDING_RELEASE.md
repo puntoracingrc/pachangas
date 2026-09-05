@@ -3,6 +3,7 @@
 ## Checkpoint
 
 - Audit date: 2026-09-05 11:38:55 CEST.
+- Production closeout: 2026-09-05 13:20:42 CEST.
 - Repository: `puntoracingrc/pachangas`.
 - Initial SHA: `6baf4445514faa8546810917a4adf97d0498b425`.
 - Branch: `codex/restore-initial-assessment-onboarding`.
@@ -11,12 +12,15 @@
 - Isolated worktree initial state: clean.
 - Remote migration ledger before release: synchronized through `20260905061857`; `20260905084509` remains local until the release gate.
 - Initial implementation commit: `2149ddea4d73e17c6f079e1bcfa54c5b339865ee`.
-- Pull request: `#281`, merged.
+- Functional pull request: `#281`, merged.
+- Auth-cascade compatibility pull request: `#282`, merged.
 - Initial Preview deployment: `dpl_8pBvR3yeZaXcL6786h9RdUtSB63j`, READY for commit `2149ddea4d73e17c6f079e1bcfa54c5b339865ee`.
 - Staging-certified Preview before the final responsive fix: `https://pachangas-ihya1cqqc-persianas-almar-web-s-projects.vercel.app`, READY for commit `8f0807a4a4ed10215b67aa398ced7961324bdb11`.
 - Final staging Preview: `dpl_4fzXFzvpaqaJ2J92HZZKHy2NzEES`, READY at `https://pachangas-l4yfkx6ei-persianas-almar-web-s-projects.vercel.app` for commit `0ebf84b2ade29faa924414e551c0bca71c71e119`.
 - Merge SHA: `db7f72b28183075535ffafebd15acb1d34b9f3cf`.
 - Production deployment: `dpl_4brkngMSiU7kLVruy9MjjoXCaqba`, READY and assigned to `pachangasiq.com` for the exact merge SHA.
+- Hotfix merge SHA: `f52efd6772cd7d1216fac635e0e7ff2ebb39f7e0`.
+- Final functional production deployment: `dpl_ygHiEPyfH8vZpY4G9DAuHzVRdcWK`, READY and assigned to `pachangasiq.com` and `www.pachangasiq.com` for the exact hotfix merge SHA.
 
 ## Reproduction before the change
 
@@ -123,7 +127,7 @@ Account-deletion compatibility incident:
 - Root cause: the evidence tables declared `ON DELETE CASCADE` from `auth.users`, but their immutable trigger rejected that declared cascade as if it were a direct evidence deletion.
 - Correction: forward-only migration `20260905105747_allow_rating_evidence_auth_user_cascade_v1.sql` permits a delete only when it is nested inside the Auth foreign-key cascade and the parent Auth row is already absent. Direct receipt/event deletion and every update remain immutable.
 - Regression: PASS locally and in staging. SQL exercises direct-delete rejection and complete Auth cascade cleanup in the same transaction.
-- A complete Auth-account deletion then reached a separate pre-existing Rating V2 constraint: `pachanga_player_rating_snapshots_player_profile_id_fkey` rejects deletion of a canonical player profile that has snapshots. That wider account-erasure graph predates this release and is not changed here; synthetic production cleanup therefore uses an explicit, UUID-scoped administrative transaction and must finish with a zero-row readback.
+- A complete Auth-account deletion then reached a separate pre-existing Rating V2 constraint: `pachanga_player_rating_snapshots_player_profile_id_fkey` rejects deletion of a canonical player profile that has snapshots. That wider account-erasure graph predates this release and is not changed here. The production canary removed its UUID-scoped derived snapshot before deleting the Auth user; the new evidence cascade then completed and the final readback returned zero rows. A general user-facing account-erasure workflow still needs a separate canonical dependency policy.
 - Hotfix verification: build, `889/889` tests, typecheck, global lint, focused SQL/RLS, two-client concurrency and `git diff --check` all pass. Supabase Advisors attributes no security finding to the migration; the only related notice is the expected `unused_index` info for an empty staging evidence table.
 
 Disposable PostgreSQL checks:
@@ -138,7 +142,7 @@ Disposable PostgreSQL checks:
 - Advanced assessment cannot replace or precede the initial assessment.
 - Stale revision and invalid result both roll back fully.
 - Direct client execution and private evidence access are denied.
-- Synthetic rows were rolled back by the SQL tests. The disposable database and local diagnostics remain isolated until the release gate completes, then will be removed.
+- Synthetic rows were rolled back by the SQL tests. The disposable database and all local diagnostics were removed after the release gate; a final database-catalog readback confirmed that the disposable database no longer exists.
 
 Database lint found no issue in the new authority. It still reports ten pre-existing findings in unrelated venue, Stripe, reward and standings functions; they were not changed in this release.
 
@@ -155,19 +159,42 @@ Database lint found no issue in the new authority. It still reports ten pre-exis
 - Offline attempt: fails closed with no persisted change.
 - Realtime between two devices: PASS through a scoped invalidation followed by canonical refetch.
 - Final exact-SHA certification: PASS for commit `0ebf84b2ade29faa924414e551c0bca71c71e119` and all flows A-E.
+- The staging branch and its three branch-scoped Vercel Preview variables were removed after production certification. A branch readback now lists only the Supabase production branch.
 
 The first remote run found that `pachanga_player_profiles` and `pachanga_player_assessments` were not members of the Realtime publication even though the UI subscribed to them. The fix does not publish private rating tables: it reuses the existing RLS-protected invalidation table and adds the explicit `rating_profile` entity type. A regression now exercises the actual Realtime event.
 
 ## Production release
 
 - Migration `20260905084509_restore_initial_assessment_profile_onboarding_v1.sql` was applied forward-only before the frontend deployment.
-- Linked migration history is synchronized at 239 versions through `20260905084509`.
+- Migration `20260905105747_allow_rating_evidence_auth_user_cascade_v1.sql` was applied forward-only after its focused regression and before the final hotfix deployment.
+- Linked migration history is synchronized at `240` versions through `20260905105747`; both migration names were read back directly from PostgreSQL.
 - Readback confirms zero production self-assessment receipts/events before canary, seven valid indexes, the public wrapper executable only by `service_role`, private functions unreachable by client roles and the `rating_profile` invalidation constraint active.
 - PR `#281` merged as `db7f72b28183075535ffafebd15acb1d34b9f3cf`.
 - Vercel production deployment `dpl_4brkngMSiU7kLVruy9MjjoXCaqba` is READY and aliases both `pachangasiq.com` and `www.pachangasiq.com` to that exact merge SHA.
+- PR `#282` merged as `f52efd6772cd7d1216fac635e0e7ff2ebb39f7e0`.
+- Vercel production deployment `dpl_ygHiEPyfH8vZpY4G9DAuHzVRdcWK` is READY and aliases both production domains to that exact final functional SHA.
 
-Pending before final closure:
+Canonical production canary:
 
-1. Merge and apply the account-cascade compatibility migration documented above.
-2. Run the canonical production smoke with synthetic data and explicit zero-row cleanup readback.
-3. Remove the ephemeral staging branch, branch-scoped Preview variables, disposable local database and this worktree.
+- One synthetic registered player with no team was created without PII and signed in simultaneously from two independent Supabase clients.
+- Both clients submitted the same `operationId` and expected revision concurrently through the real `https://pachangasiq.com/api/ratings/assessment` endpoint.
+- Both calls returned HTTP `200` with the same canonical payload. PostgreSQL contained exactly one universal profile, one initial assessment, one immutable receipt and one immutable event.
+- The second client received the user-scoped `rating_profile` Realtime invalidation. A fresh canonical GET returned the same profile and assessment.
+- Replaying the operation returned the same result without creating rows or weight. A new initial-assessment operation was rejected with HTTP `409`.
+- Direct authenticated inserts into profile and assessment tables, direct client execution of the server-only RPC, and an unauthenticated API call were all denied.
+- The receipt retained only `clientVersion`, `displayMode`, `serviceWorkerVersion` and `surface`; forged actor, email and snapshot metadata were absent.
+- The authoritative evidence recorded expected revision `0`, confirmed revision `2` and one server sequence shared by receipt and event.
+- `/perfil`, `/perfil/test-inicial`, `/personalizar-carta` and `/sw.js` returned HTTP `200`; the Service Worker advertised the exact functional SHA and cached the onboarding route.
+- Cleanup removed the derived rating snapshot and then the synthetic Auth user. Final direct PostgreSQL readback returned zero Auth users, profiles, assessments, invalidations, receipts and events for the canary, and the total new evidence tables returned to their pre-canary count of zero.
+
+## Final status
+
+- Initial assessment as universal player-card onboarding: `RELEASED / PRODUCTION VERIFIED`.
+- Server authority, expected revision, idempotency, canonical reload and two-client Realtime: `PASS`.
+- Existing Rating V2 formulas, facets, advanced assessment and social-rating rules: `UNCHANGED`.
+- Production QA residue: `0` rows.
+- Ephemeral Supabase branch: `REMOVED`.
+- Branch-scoped staging variables: `REMOVED`.
+- Disposable local database and diagnostics: `REMOVED`.
+- Physical Android, iPhone and installed-PWA QA were not performed in this release and remain explicitly `PENDING`; responsive browser and PWA contract checks passed.
+- Pre-existing general account-erasure dependency graph: `OPEN DEBT`, outside this release and not a blocker for assessment creation or the verified scoped cleanup.
