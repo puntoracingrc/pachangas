@@ -132,6 +132,36 @@
 .identityMenuPanel :is(a, button):hover,
 .accountMenuPanel :is(a, button):hover { background: rgba(255, 255, 255, 0.06); }
 
+.accountMenuPanel .lockedMenuItem,
+.accountMenuPanel .lockedMenuItem:hover {
+  justify-content: space-between;
+  gap: 16px;
+  background: transparent;
+  color: var(--official-muted);
+  cursor: pointer;
+  font-weight: 500;
+}
+.lockedMenuItem svg {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+}
+.upcomingNotice {
+  display: grid;
+  gap: 4px;
+  margin: 4px 9px 8px;
+  padding: 10px;
+  border: 1px solid var(--official-line);
+  border-radius: 5px;
+  color: var(--official-muted);
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+.upcomingNotice strong { color: var(--official-text); }
+
 .accountActions { min-width: 0; display: flex; justify-self: end; align-items: center; gap: 7px; }
 .iconAction,
 .avatarAction,
