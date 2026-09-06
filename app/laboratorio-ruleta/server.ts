@@ -15,5 +15,6 @@ export async function rouletteRequest(operation?: RouletteOperation): Promise<Ro
     p_action: operation?.action ?? 'snapshot', p_operation_id: operation?.id ?? null, p_box_ids: operation?.ids ?? null,
   });
   if (error) throw error;
+  if (operation && typeof window !== 'undefined') window.dispatchEvent(new Event('pachangas:rewards-updated'));
   return operation ? data as RouletteResponse : { snapshot: data as RouletteSnapshot };
 }

@@ -163,10 +163,10 @@ export function SocialInboxProvider({ children }: { children: ReactNode }) {
       const sessionResult = await client.auth.getSession();
       if (disposed || generation !== sessionGeneration) return;
       const nextUserId = sessionResult.data.session?.user.id ?? null;
-      if (channel) {
-        await client.removeChannel(channel);
-        channel = null;
-      }
+      const previousChannel = channel;
+      channel = null;
+      if (previousChannel) await client.removeChannel(previousChannel);
+      if (disposed || generation !== sessionGeneration) return;
       requestGeneration.current += 1;
       const previousUserId = userRef.current;
       userRef.current = nextUserId;
@@ -193,6 +193,7 @@ export function SocialInboxProvider({ children }: { children: ReactNode }) {
       }
       setOffline(!navigator.onLine);
       if (navigator.onLine) await fetchInbox({ pendingCache: true });
+      if (disposed || generation !== sessionGeneration || userRef.current !== nextUserId) return;
       channel = client.channel(`social-inbox-v1-${nextUserId}`)
         .on("postgres_changes", {
           event: "*",
@@ -223,6 +224,7 @@ export function SocialInboxProvider({ children }: { children: ReactNode }) {
     };
     window.addEventListener("online", onlineHandler);
     window.addEventListener("offline", offlineHandler);
+    window.addEventListener("pachangas:rewards-updated", scheduleRefresh);
     document.addEventListener("visibilitychange", visibilityHandler);
     return () => {
       disposed = true;
@@ -231,6 +233,7 @@ export function SocialInboxProvider({ children }: { children: ReactNode }) {
       authSubscription.subscription.unsubscribe();
       window.removeEventListener("online", onlineHandler);
       window.removeEventListener("offline", offlineHandler);
+      window.removeEventListener("pachangas:rewards-updated", scheduleRefresh);
       document.removeEventListener("visibilitychange", visibilityHandler);
       if (invalidationTimer.current !== null) window.clearTimeout(invalidationTimer.current);
       if (channel) void client.removeChannel(channel);
@@ -240,7 +243,7 @@ export function SocialInboxProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!userRef.current || !enabled) return;
     void fetchInbox();
-  }, [domain, enabled, fetchInbox, view]);
+  }, [domain, enabled, fetchInbox, pathname, view]);
 
   const loadMore = useCallback(async () => {
     if (!snapshot?.hasMore || busyId) return;

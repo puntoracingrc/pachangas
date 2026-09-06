@@ -27,6 +27,11 @@ insert into auth.users(id, email) values
   ('a1000000-0000-0000-0000-000000000002', 'inbox-owner-b@example.test'),
   ('a1000000-0000-0000-0000-000000000003', 'inbox-player-b@example.test');
 
+-- External challenges require an adult administrator in the current policy.
+insert into public.pachanga_player_profiles(user_id, display_name, birth_date) values
+  ('a1000000-0000-0000-0000-000000000001', 'Inbox Owner A', '1990-01-01'),
+  ('a1000000-0000-0000-0000-000000000002', 'Inbox Owner B', '1990-01-01');
+
 insert into public.pachanga_groups(
   id, owner_id, name, team_code, payload, social_modality,
   social_general_area, social_target_player_count

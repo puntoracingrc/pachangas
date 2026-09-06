@@ -46,6 +46,8 @@ type TeamSummary = {
 
 type ProfileSnapshot = {
   pointBalance: number | null;
+  freeSpins: number | null;
+  unopenedChests: number | null;
   cosmetics: PlayerCosmeticsSnapshot | null;
   fetchedAt: string;
   profile: ProfileRow | null;
@@ -154,7 +156,7 @@ export function CanonicalPlayerProfile() {
       return;
     }
 
-    const [profileResult, socialProfileResult, membershipsResult, cosmeticsResult, pointsResult] = await Promise.all([
+    const [profileResult, socialProfileResult, membershipsResult, cosmeticsResult, pointsResult, rouletteResult] = await Promise.all([
       supabase
         .from("pachanga_player_profiles")
         .select("id,display_name,avatar,avatar_offset_x,avatar_offset_y,position,outfield_position,current_overall,current_facets,assessment_summary,market_enabled,market_zones,market_availability,market_modalities,profile_version,updated_at")
@@ -164,6 +166,7 @@ export function CanonicalPlayerProfile() {
       supabase.rpc("get_my_pachanga_social_teams_v1"),
       supabase.rpc("get_pachanga_player_cosmetics_snapshot_v1"),
       supabase.from("pachanga_player_point_accounts").select("balance").eq("user_id", targetUserId).maybeSingle(),
+      supabase.rpc("pachanga_roulette_v1", { p_action: "snapshot" }),
     ]);
 
     if (profileResult.error || membershipsResult.error) {
@@ -184,7 +187,10 @@ export function CanonicalPlayerProfile() {
       ? readCache(targetUserId)?.cosmetics ?? null
       : normalizePlayerCosmeticsSnapshot(cosmeticsResult.data);
     const pointBalance = pointsResult.error ? null : Number(pointsResult.data?.balance ?? 0);
+    const freeSpins = rouletteResult.error ? null : rouletteResult.data?.freeSpins;
     const next: ProfileSnapshot = {
+      freeSpins: Number.isSafeInteger(freeSpins) && freeSpins >= 0 ? freeSpins : null,
+      unopenedChests: !rouletteResult.error && Array.isArray(rouletteResult.data?.queue) ? rouletteResult.data.queue.length : null,
       pointBalance: pointBalance !== null && Number.isSafeInteger(pointBalance) && pointBalance >= 0 ? pointBalance : null,
       cosmetics: cosmetics?.playerProfileId === profileResult.data?.id ? cosmetics : null,
       fetchedAt: new Date().toISOString(),
@@ -314,6 +320,8 @@ export function CanonicalPlayerProfile() {
       }
       const nextSnapshot: ProfileSnapshot = {
         pointBalance: snapshot?.pointBalance ?? null,
+        freeSpins: snapshot?.freeSpins ?? null,
+        unopenedChests: snapshot?.unopenedChests ?? null,
         cosmetics: snapshot?.cosmetics ?? null,
         fetchedAt: new Date().toISOString(),
         profile,
@@ -357,9 +365,21 @@ export function CanonicalPlayerProfile() {
               <Link className={styles.primary} href={editHref}>Editar perfil</Link>
             </header>
             <section className={styles.points} aria-label="Tus puntos">
-              <div><span>Tus puntos</span><strong>{snapshot?.pointBalance != null ? `${snapshot.pointBalance.toLocaleString("es-ES")} puntos` : "Saldo no disponible"}</strong></div>
+              <div className={styles.rewardsOverview}>
+                <div><span>Tus puntos</span><strong>{snapshot?.pointBalance != null ? `${snapshot.pointBalance.toLocaleString("es-ES")} puntos` : "Saldo no disponible"}</strong></div>
+                <div className={styles.rewardCounts} aria-label="Premios disponibles">
+                  {snapshot?.freeSpins != null && snapshot.freeSpins > 0 ? <span>{snapshot.freeSpins} {snapshot.freeSpins === 1 ? "giro gratis" : "giros gratis"}</span> : null}
+                  {snapshot?.unopenedChests != null && snapshot.unopenedChests > 0 ? <span>{snapshot.unopenedChests} {snapshot.unopenedChests === 1 ? "cofre sin abrir" : "cofres sin abrir"}</span> : null}
+                </div>
+              </div>
               <Link className={styles.primary} href="/ruleta">Ir a la ruleta</Link>
             </section>
+            {initialAssessmentComplete && !advancedAssessmentComplete ? (
+              <section className={styles.assessmentReminder} aria-label="Test avanzado pendiente">
+                <div><h2>Tu carta puede ser más precisa</h2><p>Completa el test avanzado para definir mejor tus atributos y conseguir otro giro gratis en la ruleta.</p></div>
+                <Link className={styles.primary} href="/perfil/test-inicial?tipo=avanzado">Completar test avanzado</Link>
+              </section>
+            ) : null}
             {message ? <p className={styles.notice} role="status">{message}</p> : null}
             <div className={styles.grid}>
               <section className={styles.summary}>

@@ -1,4 +1,4 @@
-export type SocialInboxDomain = "CHALLENGE" | "MARKET" | "MATCH" | "TEAM";
+export type SocialInboxDomain = "CHALLENGE" | "MARKET" | "MATCH" | "TEAM" | "REWARD";
 export type SocialInboxView = "all" | "pending";
 export type SocialInboxAttentionState = "ACTION_REQUIRED" | "INFORMATIONAL" | "RESOLVED";
 export type SocialInboxReadState = "READ" | "UNREAD";
@@ -52,6 +52,7 @@ export const SOCIAL_INBOX_DOMAINS: Array<{ id: SocialInboxDomain; label: string 
   { id: "CHALLENGE", label: "Retos" },
   { id: "MARKET", label: "Mercado" },
   { id: "TEAM", label: "Equipo" },
+  { id: "REWARD", label: "Premios" },
 ];
 
 const safePaths = new Set([
@@ -61,6 +62,7 @@ const safePaths = new Set([
   "/mercado",
   "/partido-invitado",
   "/retos",
+  "/ruleta",
 ]);
 
 function record(value: unknown): Record<string, unknown> | null {
@@ -79,7 +81,7 @@ function text(value: unknown, fallback = "") {
 }
 
 function socialDomain(value: unknown): SocialInboxDomain | null {
-  return value === "MATCH" || value === "CHALLENGE" || value === "MARKET" || value === "TEAM"
+  return value === "MATCH" || value === "CHALLENGE" || value === "MARKET" || value === "TEAM" || value === "REWARD"
     ? value
     : null;
 }

@@ -80,7 +80,7 @@ function InboxCard({ item, onSelect, selected }: { item: SocialInboxItem; onSele
 }
 
 function InboxDetail({ item }: { item: SocialInboxItem | null }) {
-  if (!item) return <aside className={styles.detail}><span>Selecciona un aviso</span><h2>Tu siguiente acción aparecerá aquí</h2><p>La bandeja solo enlaza a la pantalla que conserva la autoridad del partido, reto, mercado o equipo.</p></aside>;
+  if (!item) return <aside className={styles.detail}><span>Selecciona un aviso</span><h2>Tu siguiente acción aparecerá aquí</h2><p>La bandeja solo enlaza a la pantalla donde puedes revisar el partido, reto, mercado, equipo o premio.</p></aside>;
   return (
     <aside className={styles.detail} data-attention={item.attentionState}>
       <span>{item.context}</span>
@@ -126,11 +126,11 @@ export default function SocialInboxPage() {
   return (
     <OfficialProductShellV2
       active="perfil"
-      context={{ detail: "Partidos, Retos, Mercado y Equipo", eyebrow: "Actividad social", title: "Avisos", type: "profile" }}
+      context={{ detail: "Partidos, Retos, Mercado, Equipo y Premios", eyebrow: "Actividad social", title: "Avisos", type: "profile" }}
     >
       <main className={styles.page} data-inbox-offline={offline || undefined}>
         <header className={styles.header}>
-          <div><span>Actividad social</span><h1>Avisos</h1><p>Lo que necesita tu atención y la actividad reciente de tus equipos.</p></div>
+          <div><span>Actividad social</span><h1>Avisos</h1><p>Tus premios, lo que necesita tu atención y la actividad reciente de tus equipos.</p></div>
           <div className={styles.headerActions}>
             <Link href="/ajustes/notificaciones">Ajustes</Link>
             <button disabled={offline || busyId === "all" || !snapshot?.unreadCount} type="button" onClick={() => void runCommand("inbox.mark_all_read")}>Marcar todo leído</button>
@@ -158,7 +158,7 @@ export default function SocialInboxPage() {
           : unavailable ? <ProductState description="La conexión con Pachangas IQ no está configurada en este entorno." eyebrow="Servicio no disponible" title="No podemos abrir tus avisos" />
             : status === "loading" && !snapshot ? <section className={styles.loading} aria-busy="true" aria-label="Cargando avisos"><i /><i /><i /></section>
               : status === "error" && !snapshot ? <ProductState actions={<button type="button" onClick={() => void refresh()}>Reintentar</button>} description={error || "No pudimos recuperar una copia segura de tus avisos."} eyebrow="No se pudo cargar" state="ERROR" title="Avisos no disponibles" />
-                : snapshot && !snapshot.items.length ? <ProductState actions={view === "pending" ? <button type="button" onClick={() => setView("all")}>Ver actividad reciente</button> : undefined} description={view === "pending" ? "No tienes ninguna respuesta pendiente en Partidos, Retos, Mercado o Equipo." : "La actividad social reciente aparecerá aquí cuando ocurra."} eyebrow={view === "pending" ? "Todo al día" : "Sin actividad"} state="SUCCESS" title={view === "pending" ? "No queda nada pendiente" : "Tu bandeja está vacía"} />
+                : snapshot && !snapshot.items.length ? <ProductState actions={view === "pending" ? <button type="button" onClick={() => setView("all")}>Ver actividad reciente</button> : undefined} description={view === "pending" ? "No tienes acciones pendientes ni giros gratis por utilizar." : "La actividad social reciente aparecerá aquí cuando ocurra."} eyebrow={view === "pending" ? "Todo al día" : "Sin actividad"} state="SUCCESS" title={view === "pending" ? "No queda nada pendiente" : "Tu bandeja está vacía"} />
                   : snapshot ? <div className={styles.inboxLayout}>
                     <section className={styles.list} aria-label="Lista de avisos">
                       {groups.map(({ group, items }) => <section className={styles.group} key={group}><h2>{groupLabels[group]}</h2>{items.map((item) => <InboxCard item={item} key={item.id} onSelect={() => setSelectedId(item.id)} selected={selected?.id === item.id} />)}</section>)}

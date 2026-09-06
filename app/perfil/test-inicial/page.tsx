@@ -455,6 +455,7 @@ export default function PlayerInitialAssessmentPage() {
       const canonical = normalizeSnapshot(payload);
       if (!canonical) throw new Error("El servidor no devolvió la ficha confirmada.");
       setSnapshot(canonical);
+      window.dispatchEvent(new Event("pachangas:rewards-updated"));
       window.localStorage.removeItem(draftKey(userId, flow.kind));
       setFlow(null);
       setMessage(flow.kind === "initial" ? "Ficha creada con test inicial" : "Ficha afinada con test avanzado");
