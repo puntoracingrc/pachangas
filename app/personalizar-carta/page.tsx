@@ -33,6 +33,7 @@ import {
 import { supabase } from "../supabaseClient";
 import { SERVICE_UNAVAILABLE_MESSAGE, userFacingError } from "../user-facing-error";
 import styles from "./page.module.css";
+import { AchievementGallery } from "./achievement-gallery";
 
 type EditorCategory = PlayerCosmeticSlot | "badge";
 
@@ -743,6 +744,7 @@ export default function PlayerCosmeticsPage() {
         </div>
         {avatarMessage ? <p className={styles.avatarMessage} role="status">{avatarMessage}</p> : null}
           </CosmeticEditorShell>
+          <AchievementGallery key={snapshot.playerProfileId} profileId={snapshot.playerProfileId} />
         </>
       ) : null}
 
