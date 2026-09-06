@@ -11,6 +11,7 @@ import {
   normalizeSocialTeams,
   type CanonicalSocialProfile,
 } from "../social-team-core-contract";
+import { normalizePlayerCosmeticsSnapshot, type PlayerCosmeticsSnapshot } from "../player-cosmetics-contract";
 import { CLIENT_VERSION } from "../client-version-contract";
 import { currentClientDisplayMode, pwaBridgeSnapshot } from "../pwa-client-bridge";
 import { playerMarketPresentationState } from "../social-onboarding-contract";
@@ -44,6 +45,7 @@ type TeamSummary = {
 };
 
 type ProfileSnapshot = {
+  cosmetics: PlayerCosmeticsSnapshot | null;
   fetchedAt: string;
   profile: ProfileRow | null;
   socialProfile: CanonicalSocialProfile | null;
@@ -121,6 +123,7 @@ function readCache(userId: string): ProfileSnapshot | null {
     const parsed = JSON.parse(window.localStorage.getItem(cacheKey(userId)) ?? "null") as ProfileSnapshot | null;
     return parsed && Array.isArray(parsed.teams) ? {
       ...parsed,
+      cosmetics: normalizePlayerCosmeticsSnapshot(parsed.cosmetics),
       profile: normalizeProfileRow(parsed.profile),
       socialProfile: normalizeCanonicalSocialProfile(parsed.socialProfile),
     } : null;
@@ -150,7 +153,7 @@ export function CanonicalPlayerProfile() {
       return;
     }
 
-    const [profileResult, socialProfileResult, membershipsResult] = await Promise.all([
+    const [profileResult, socialProfileResult, membershipsResult, cosmeticsResult] = await Promise.all([
       supabase
         .from("pachanga_player_profiles")
         .select("id,display_name,avatar,avatar_offset_x,avatar_offset_y,position,outfield_position,current_overall,current_facets,assessment_summary,market_enabled,market_zones,market_availability,market_modalities,profile_version,updated_at")
@@ -158,6 +161,7 @@ export function CanonicalPlayerProfile() {
         .maybeSingle(),
       supabase.rpc("get_my_pachanga_social_profile_v1"),
       supabase.rpc("get_my_pachanga_social_teams_v1"),
+      supabase.rpc("get_pachanga_player_cosmetics_snapshot_v1"),
     ]);
 
     if (profileResult.error || membershipsResult.error) {
@@ -174,7 +178,11 @@ export function CanonicalPlayerProfile() {
       role: team.role,
       teamCode: team.teamCode,
     } satisfies TeamSummary));
+    const cosmetics = cosmeticsResult.error
+      ? readCache(targetUserId)?.cosmetics ?? null
+      : normalizePlayerCosmeticsSnapshot(cosmeticsResult.data);
     const next: ProfileSnapshot = {
+      cosmetics: cosmetics?.playerProfileId === profileResult.data?.id ? cosmetics : null,
       fetchedAt: new Date().toISOString(),
       profile: normalizeProfileRow(profileResult.data),
       socialProfile: socialProfileResult.error ? null : normalizeCanonicalSocialProfile(socialProfileResult.data),
@@ -182,7 +190,7 @@ export function CanonicalPlayerProfile() {
     };
     setSnapshot(next);
     setStatus("ready");
-    setMessage("");
+    setMessage(cosmeticsResult.error && profileResult.data ? "No pudimos actualizar el diseño de tu carta. Vuelve a intentarlo con conexión." : "");
     try {
       window.localStorage.setItem(cacheKey(targetUserId), JSON.stringify(next));
     } catch {
@@ -219,13 +227,19 @@ export function CanonicalPlayerProfile() {
       .subscribe((nextStatus) => { if (nextStatus === "SUBSCRIBED") reload(); });
     const reconnect = () => reload();
     window.addEventListener("online", reconnect);
+    window.addEventListener("focus", reconnect);
+    window.addEventListener("pageshow", reconnect);
     return () => {
       window.removeEventListener("online", reconnect);
+      window.removeEventListener("focus", reconnect);
+      window.removeEventListener("pageshow", reconnect);
       void client.removeChannel(channel);
     };
   }, [loadCanonical, userId]);
 
   const profile = snapshot?.profile ?? null;
+  const cosmetics = snapshot?.cosmetics?.enabled ? snapshot.cosmetics : null;
+  const featuredAchievement = cosmetics?.featuredBadges.find((badge) => badge.grantId === cosmetics.loadout.featuredBadgeGrantId) ?? null;
   const socialProfile = snapshot?.socialProfile ?? null;
   const team = snapshot?.teams[0] ?? null;
   const modalities = useMemo(() => profileModalities(profile), [profile]);
@@ -241,6 +255,7 @@ export function CanonicalPlayerProfile() {
       : freeAgentMarketReady ? "PAUSADO" : "NO_CONFIGURADO";
   const facets = Object.entries(profile?.current_facets ?? {}).slice(0, 6).map(([key, value]) => ({ key, label: key.slice(0, 3).toUpperCase(), value: Math.round(Number(value) || 0) }));
   const editHref = "/?social=profile";
+  const marketSettingsHref = team ? `/?grupo=${encodeURIComponent(team.id)}&mobile=perfil&market=1#market-profile` : editHref;
   const identityName = profile?.display_name ?? socialProfile?.displayName ?? "Mi perfil";
   const identityAvatar = profile?.avatar ?? socialProfile?.avatarRef ?? null;
   const identityPosition = profile?.position ?? socialProfile?.primaryPosition ?? "Pendiente";
@@ -294,6 +309,7 @@ export function CanonicalPlayerProfile() {
         return;
       }
       const nextSnapshot: ProfileSnapshot = {
+        cosmetics: snapshot?.cosmetics ?? null,
         fetchedAt: new Date().toISOString(),
         profile,
         socialProfile: confirmedProfile,
@@ -348,7 +364,7 @@ export function CanonicalPlayerProfile() {
               </section>
               <section className={styles.cardSection}>
                 <header><span>Mi carta</span><h2>{initialAssessmentComplete ? "Identidad de juego" : "Tu carta aún no está creada"}</h2></header>
-                {initialAssessmentComplete && profile?.current_overall ? <PlayerCosmeticCard facets={facets} meta={team?.name ?? "Jugador sin equipo"} name={profile.display_name} photoAlt={`Foto de ${profile.display_name}`} photoSrc={profile.avatar ?? undefined} position={profile.position.slice(0, 3).toUpperCase()} score={Math.round(profile.current_overall)} /> : <p>Responde unas preguntas sobre cómo juegas. Crearemos tu primera media y tus atributos. Después evolucionarán con partidos y valoraciones.</p>}
+                {initialAssessmentComplete && profile?.current_overall ? <PlayerCosmeticCard cosmetics={cosmetics?.owned} loadout={cosmetics?.loadout} featuredAchievement={featuredAchievement} facets={facets} meta={team?.name ?? "Jugador sin equipo"} name={profile.display_name} photoAlt={`Foto de ${profile.display_name}`} photoSrc={profile.avatar ?? undefined} position={profile.position.slice(0, 3).toUpperCase()} score={Math.round(profile.current_overall)} /> : <p>Responde unas preguntas sobre cómo juegas. Crearemos tu primera media y tus atributos. Después evolucionarán con partidos y valoraciones.</p>}
                 <div className={styles.cardActions}>
                   <Link className={styles.primary} href={initialAssessmentComplete ? "/personalizar-carta" : "/perfil/test-inicial"}>
                     {initialAssessmentComplete ? "Editar carta" : "Hacer test inicial y crear mi carta"}
@@ -357,8 +373,9 @@ export function CanonicalPlayerProfile() {
                 </div>
               </section>
               <section className={styles.marketSection}>
-                <header><span>Disponibilidad en Mercado</span><strong data-market-state={marketState}>{marketState}</strong></header>
-                <p>{marketState === "PUBLICADO" ? "Otros equipos pueden encontrarte con la información deportiva permitida." : marketState === "PAUSADO" ? "Conservas tu configuración, pero ahora no apareces publicado." : "Tu perfil no se publica hasta que lo autorices expresamente."}</p>
+                <header><span>Mercado público</span><strong data-market-state={marketState}>{marketState === "PUBLICADO" ? "PUBLICADO" : "NO PUBLICADO"}</strong></header>
+                <p>Activa el mercado público para que otros equipos te encuentren y te propongan jugar. También te permite encontrar equipos y buscar partidos a los que apuntarte.</p>
+                {!team && !freeAgentMarketReady ? <p>Añade tu zona, días y horario. Después podrás pulsar «Publicarme» para activar tu publicación.</p> : null}
                 <div className={styles.marketActions}>
                   {!team && socialProfile ? (
                     <button
@@ -370,13 +387,13 @@ export function CanonicalPlayerProfile() {
                       {marketBusy ? "Confirmando..." : socialProfile.marketPublished ? "Pausar publicación" : "Publicarme"}
                     </button>
                   ) : null}
-                  <Link href={editHref}>Configurar perfil</Link>
+                  <Link href={marketSettingsHref}>{team ? "Configurar mercado público" : "Completar zona y disponibilidad"}</Link>
                 </div>
               </section>
-              <section className={styles.privacy}>
-                <header><span>Privacidad</span><h2>Lo que no publicamos</h2></header>
+              <details className={styles.privacy}>
+                <summary>Privacidad <span>Lo que no publicamos</span></summary>
                 <p>Email, teléfono, fecha de nacimiento completa, coordenadas exactas, identidad Auth y notas privadas permanecen fuera de esta vista.</p>
-              </section>
+              </details>
             </div>
           </>
         ) : null}

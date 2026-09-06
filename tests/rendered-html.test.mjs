@@ -440,7 +440,7 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /\/api\/ratings\/assessment/);
   assert.match(page, /record_pachanga_individual_rating_authoritative_v2/);
   assert.match(page, /Este test crea tu ficha real y solo se puede completar una vez por usuario/);
-  assert.match(page, /Mejorar precisión de mi ficha/);
+  assert.match(page, /Mejorar precisión de mi carta/);
   assert.match(page, /openCreatePlayerProfile/);
   assert.match(page, /openCreatePlayerProfile/);
   assert.match(page, /showQuickForm\("venue"\)/);

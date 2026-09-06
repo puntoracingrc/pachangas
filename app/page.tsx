@@ -3516,7 +3516,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
           setProfilePane("ficha");
           setSelectedPlayerId(null);
         }
-        setMobileAccountOpen(true);
+        setMobileAccountOpen(requestedParams.get("market") !== "1");
         if (requestedSettings) setShowSettings(true);
         return;
       }
@@ -4030,7 +4030,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
       setPlayerProfileMode("edit");
       setProfilePane("ficha");
       setSelectedPlayerId(remoteOwnPlayer?.id ?? null);
-      setMobileAccountOpen(!remoteOwnPlayer);
+      setMobileAccountOpen(!remoteOwnPlayer && currentParams.get("market") !== "1");
     }
     setRemoteReady(true);
     setSyncStatus("live");
@@ -5037,7 +5037,10 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
   }
 
   function scrollToPlayerProfile() {
-    scrollToPanel(playerProfileRef);
+    const marketPanel = new URLSearchParams(window.location.search).get("market") === "1"
+      ? document.getElementById("market-profile")
+      : null;
+    scrollToPanel(marketPanel ? { current: marketPanel } : playerProfileRef);
   }
 
   function scrollToQuickForm(form: NonNullable<typeof openQuickForm>) {
@@ -6225,6 +6228,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
   const showWaitingRosterColumn = !matchFinalized && waitingPlayers.length > 0;
   const showStatusRosterColumn = !matchFinalized;
   const selectedPlayer = selectedPlayerId ? players.find((player) => player.id === selectedPlayerId) : undefined;
+
   const selectedRatingFacets = selectedPlayer ? ratingFacetsForPlayer(selectedPlayer) : ratingFacets;
   const selectedForm = selectedPlayer ? playerForm(selectedPlayer) : undefined;
   const selectedEffectiveScore = selectedPlayer ? effectivePlayerScore(selectedPlayer) : 0;
@@ -11916,7 +11920,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
                   Lesionado
                 </label>
                 {selectedPlayerIsOwn ? (
-                  <div className="market-profile-box">
+                  <div className="market-profile-box" id="market-profile">
                     <label className="toggle-field market-toggle">
                       <input
                         type="checkbox"
