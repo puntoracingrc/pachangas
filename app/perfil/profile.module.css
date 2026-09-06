@@ -33,3 +33,5 @@
 :global(:root[data-theme="light"]) .primary,:global(:root[data-theme="light"]) .grid a.primary{background:#c8f069;border-color:#c8f069;color:#102018}
 
 .privacy summary{cursor:pointer;min-height:44px;align-content:center;font-weight:800}.privacy summary span{margin-left:8px;font-weight:400;font-size:.85rem;color:var(--official-muted,#aebcb7)}.privacy summary:focus-visible{outline:2px solid var(--official-accent-text,#c8f069);outline-offset:4px}
+
+@media(max-width:760px){.cardSection>.cardActions{display:grid;grid-template-columns:minmax(0,1fr);width:100%;gap:10px}.cardActions>a{width:100%;min-height:44px;text-align:center;padding:10px 16px}.hero>.primary{min-height:44px;text-align:center;padding:10px 16px}}

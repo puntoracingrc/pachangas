@@ -75,7 +75,7 @@ test("OFFICIAL-UI-V3I-002 preserves account links, badges and permission boundar
   assert.match(account, /pendingCount > 9 \? "9\+" : pendingCount/);
   assert.match(account, /aria-label=\{bellLabel\}/);
   assert.match(account, /aria-label="Abrir menú general"/);
-  assert.match(account, /aria-label="Abrir mi perfil y mi carta"/);
+  assert.match(account, /aria-label="Abrir menú de perfil"/);
   assert.match(account, /<ThemeToggle compact defaultPreference="dark" \/>/);
   assert.doesNotMatch(account, /onOpenMenu/);
   assert.match(account, /menuRef\.current\.open = true/);
