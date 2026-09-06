@@ -1213,7 +1213,7 @@ body.demo-world-active .notification-center {
 
   .mobile-app-nav-inner {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(5, minmax(0, 1fr));
     width: min(100%, 680px);
     min-height: var(--mobile-nav-height);
     margin: 0 auto;
@@ -12284,7 +12284,7 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
     display: grid;
     width: 100%;
     min-height: var(--game-nav-height);
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(5, minmax(0, 1fr));
     margin: 0;
   }
 

@@ -337,7 +337,7 @@ function AccountActions({
           <Link href="/ranking">Ranking</Link>
           <Link href="/ajustes/notificaciones">Avisos y notificaciones</Link>
           <Link href="/perfil/conducta">Avisos y conducta</Link>
-          <Link href={isPlayerWithoutTeam ? "/?social=start" : resolvedAccount.teamHref ?? "/equipo"}>{isPlayerWithoutTeam ? "Empezar" : "Mi equipo"}</Link>
+          {isPlayerWithoutTeam ? <Link href="/?social=start">Empezar</Link> : null}
           <Link href={resolvedAccount.settingsHref ?? "/?mobile=perfil&settings=1"}>Ajustes y equipo</Link>
           <Link href="/manual">Manual de usuario</Link>
           {adminViewPreview ? (
@@ -376,7 +376,7 @@ export function OfficialProductShellV2({
     document.body.classList.add("official-product-active");
     return () => document.body.classList.remove("official-product-active");
   }, []);
-  const destinations = { ...defaultLinks, ...links };
+  const destinations = { ...defaultLinks, equipo: account.teamHref ?? defaultLinks.equipo, ...links };
   const resolvedContexts: ProductContextOption[] = contextOptions?.length ? contextOptions : [{
     detail: context.detail,
     id: context.id ?? "current",

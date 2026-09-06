@@ -1,6 +1,6 @@
 export type ProductPrimaryTab = "inicio" | "partido" | "retos" | "mercado" | "competir" | "equipo" | "perfil";
 
-export type SocialCorePrimaryTab = "inicio" | "partido" | "retos" | "mercado";
+export type SocialCorePrimaryTab = "inicio" | "partido" | "retos" | "mercado" | "equipo";
 
 export type ProductActorPerspective =
   | "player"
@@ -33,6 +33,7 @@ export const PRODUCT_PRIMARY_DESTINATIONS: ProductNavigationDestination[] = [
   { href: "/?mobile=partido", id: "partido", label: "Partidos", short: "PA" },
   { href: "/retos", id: "retos", label: "Retos", short: "RE" },
   { href: "/mercado", id: "mercado", label: "Mercado", short: "ME" },
+  { href: "/equipo", id: "equipo", label: "Equipo", short: "EQ" },
 ];
 
 export const PRODUCT_PORTRAIT_DESTINATIONS = PRODUCT_PRIMARY_DESTINATIONS;

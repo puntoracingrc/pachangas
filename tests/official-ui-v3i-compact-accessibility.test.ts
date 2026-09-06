@@ -112,15 +112,15 @@ test("profile editing is isolated from the general account menu", async () => {
   assert.doesNotMatch(page, /onOpenMenu:/);
 });
 
-test("OFFICIAL-UI-V3I-002 preserves exactly four primary social destinations", async () => {
+test("OFFICIAL-UI-V3I-002 preserves exactly five primary social destinations", async () => {
   const navigation = await source("app/_components/product-navigation-contract.ts");
   const destinations = navigation.slice(
     navigation.indexOf("export const PRODUCT_PRIMARY_DESTINATIONS"),
     navigation.indexOf("export const PRODUCT_PORTRAIT_DESTINATIONS"),
   );
 
-  assert.equal((destinations.match(/\{ href:/g) ?? []).length, 4);
-  for (const label of ["Inicio", "Partidos", "Retos", "Mercado"]) {
+  assert.equal((destinations.match(/\{ href:/g) ?? []).length, 5);
+  for (const label of ["Inicio", "Partidos", "Retos", "Mercado", "Equipo"]) {
     assert.match(destinations, new RegExp(`label: "${label}"`));
   }
   assert.match(navigation, /PRODUCT_PORTRAIT_DESTINATIONS = PRODUCT_PRIMARY_DESTINATIONS/);
@@ -142,7 +142,7 @@ test("Official UI V3I Batch 001 keeps historical suites registered and frozen", 
   ]) assert.equal((packageJson.match(new RegExp(suite.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "g")) ?? []).length, 1);
   for (const id of ["SOCIAL-RC-001", "SOCIAL-RC-004", "SOCIAL-RC-006", "SOCIAL-RC-008", "SOCIAL-RC-010"]) assert.match(batch001, new RegExp(id));
   for (const id of ["SOCIAL-RC-002", "SOCIAL-RC-003", "SOCIAL-RC-005", "SOCIAL-RC-007", "SOCIAL-RC-009", "SOCIAL-RC-011", "SOCIAL-RC-012"]) assert.match(batch002, new RegExp(id));
-  assert.match(v3h, /V3H keeps exactly four primary social destinations/);
+  assert.match(v3h, /V3H keeps exactly five primary social destinations/);
 });
 
 test("Official UI V3I Batch 001 records V3I-003 as a historical follow-up", async () => {

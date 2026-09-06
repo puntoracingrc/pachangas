@@ -21,12 +21,13 @@ test("V3H public landing has one message, one primary action and an honest Demo"
   assert.doesNotMatch(landing, /Miles de jugadores|Cientos de partidos|Actividad en directo|Clubes|Ligas|Torneos|Billing|Control Center/);
 });
 
-test("V3H keeps exactly four primary social destinations", () => {
+test("V3H keeps exactly five primary social destinations", () => {
   assert.deepEqual(PRODUCT_PRIMARY_DESTINATIONS.map(({ id, label }) => [id, label]), [
     ["inicio", "Inicio"],
     ["partido", "Partidos"],
     ["retos", "Retos"],
     ["mercado", "Mercado"],
+    ["equipo", "Equipo"],
   ]);
 });
 

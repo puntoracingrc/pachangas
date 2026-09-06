@@ -16,17 +16,18 @@ import { buildServiceWorkerSource } from "../app/service-worker-source";
 
 const source = (path: string) => readFile(new URL(`../${path}`, import.meta.url), "utf8");
 
-test("the social core exposes the same four primary destinations in every viewport", () => {
+test("the social core exposes the same five primary destinations in every viewport", () => {
   assert.deepEqual(PRODUCT_PRIMARY_DESTINATIONS.map(({ id }) => id), [
     "inicio",
     "partido",
     "retos",
     "mercado",
+    "equipo",
   ]);
   assert.deepEqual(PRODUCT_PORTRAIT_DESTINATIONS, PRODUCT_PRIMARY_DESTINATIONS);
-  assert.equal(productNavigationForViewport("portrait").length, 4);
-  assert.equal(productNavigationForViewport("desktop").length, 4);
-  assert.equal(productNavigationForViewport("landscape").length, 4);
+  assert.equal(productNavigationForViewport("portrait").length, 5);
+  assert.equal(productNavigationForViewport("desktop").length, 5);
+  assert.equal(productNavigationForViewport("landscape").length, 5);
 });
 
 test("role-aware utilities prioritize capability context without granting authority", () => {

@@ -483,7 +483,7 @@
   .gameRail nav {
     min-height: 0;
     display: grid;
-    grid-template-rows: repeat(4, minmax(40px, 1fr));
+    grid-template-rows: repeat(5, minmax(40px, 1fr));
     gap: 3px;
   }
   .gameRail nav :is(a, button) {
@@ -589,7 +589,7 @@
   .shell[data-navigation-enabled="false"] .gameFrame { grid-template-columns: minmax(0, 1fr); }
   .gameRail { position: relative; z-index: 30; display: flex; height: 100dvh; flex-direction: column; gap: 6px; border-right: 1px solid var(--official-line); background: var(--official-overlay); padding: max(8px, env(safe-area-inset-top)) 7px max(8px, env(safe-area-inset-bottom)) max(7px, env(safe-area-inset-left)); }
   .gameMark { min-height: 40px; display: grid; place-items: center; border: 1px solid rgba(200, 239, 93, 0.55); color: var(--official-accent); font-weight: 950; text-decoration: none; }
-  .gameRail nav { min-height: 0; display: grid; grid-template-rows: repeat(4, minmax(40px, 1fr)); gap: 4px; }
+  .gameRail nav { min-height: 0; display: grid; grid-template-rows: repeat(5, minmax(40px, 1fr)); gap: 4px; }
   .gameRail nav :is(a, button) { display: grid; place-items: center; border: 1px solid transparent; border-radius: 5px; background: transparent; color: var(--official-muted); font: inherit; font-size: 0.67rem; font-weight: 850; text-decoration: none; }
   .gameRail nav :is(a, button)[aria-current="page"] { border-color: rgba(200, 239, 93, 0.34); background: rgba(200, 239, 93, 0.1); color: var(--official-text); }
   .gameRail nav b { display: none; }

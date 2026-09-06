@@ -192,9 +192,9 @@ test("V3F invitation snapshots expose membership state without leaking raw token
   assert.equal(invitation?.useCount, 4);
 });
 
-test("V3F keeps four primary tabs and routes Team contextually", () => {
-  assert.deepEqual(PRODUCT_PRIMARY_DESTINATIONS.map((entry) => entry.id), ["inicio", "partido", "retos", "mercado"]);
-  assert.equal(PRODUCT_PRIMARY_DESTINATIONS.some((entry) => entry.id === "equipo" as never), false);
+test("V3F keeps five primary tabs and includes Team directly", () => {
+  assert.deepEqual(PRODUCT_PRIMARY_DESTINATIONS.map((entry) => entry.id), ["inicio", "partido", "retos", "mercado", "equipo"]);
+  assert.equal(PRODUCT_PRIMARY_DESTINATIONS.some((entry) => entry.id === "equipo"), true);
 });
 
 test("V3F caches only canonical snapshots under versioned per-user keys", () => {
