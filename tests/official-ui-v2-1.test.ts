@@ -154,6 +154,20 @@ test("V3D keeps safe shareable filters and restorable detail deep links", () => 
   assert.equal(next.get("openMatch"), null);
 });
 
+test("all market tabs default to distance and preserves explicit ordering across reloads", () => {
+  for (const search of ["", "tab=partidos", "tab=partidos&orden=invalid"]) {
+    assert.equal(marketRouteFiltersFromParams(new URLSearchParams(search)).sort, "distance");
+  }
+  for (const tab of ["jugadores", "equipos"]) {
+    assert.equal(marketRouteFiltersFromParams(new URLSearchParams({ tab })).sort, "distance");
+  }
+  for (const sort of ["distance", "relevance", "date"] as const) {
+    const filters = marketRouteFiltersFromParams(new URLSearchParams());
+    const url = updateMarketRouteParams(new URLSearchParams(), { filters: { ...filters, sort }, tab: "partidos" });
+    assert.equal(marketRouteFiltersFromParams(url).sort, sort);
+  }
+});
+
 test("V3D local caches are derived reads and location preferences never persist device coordinates", () => {
   const values = new Map<string, string>();
   const storage = {
@@ -197,12 +211,10 @@ test("V3D removes synthetic live fallbacks and keeps configuration outside team 
   assert.doesNotMatch(teamPanel, /Revisión \{searchSnapshot/);
   assert.doesNotMatch(shellCss, /176px/);
   assert.match(shellCss, /orientation: landscape/);
-  assert.match(marketCss, /\.filterSheet/);
+  assert.match(marketCss, /\.inlineFilters/);
   assert.match(marketCss, /\.detailSheet/);
-  assert.match(marketCss, /padding: 0 0 calc\(60px \+ env\(safe-area-inset-bottom\)\)/);
-  assert.match(marketCss, /left: calc\(82px \+ env\(safe-area-inset-left\)\)/);
-  assert.match(marketCss, /left: calc\(88px \+ env\(safe-area-inset-left\)\)/);
-  assert.match(filterSheet, /market-filter-backdrop-v3d/);
+  assert.match(filterSheet, /aria-label="Filtros de mercado"/);
+  assert.doesNotMatch(filterSheet, /role="dialog"|onApply|Mostrar \{/);
   assert.match(globals, /:not\(\.market-filter-backdrop-v3d\)/);
   assert.match(demo, /Recorrido social de Mercado/);
   assert.match(demo, /remoteWrites = 0/);

@@ -25,7 +25,7 @@ test("OFFICIAL-UI-V3I-001 preserves the existing Market sort options and state m
     '<option value="date">Más próximo</option>',
     '<option value="slots">Más plazas</option>',
     '<option value="level">Nivel</option>',
-    '<option value="distance">Más cerca</option>',
+    '<option value="distance">Distancia</option>',
   ]) assert.match(market, new RegExp(option.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
   assert.match(market, /value=\{filters\.sort\}/);
   assert.match(market, /activeTab === "partidos"/);

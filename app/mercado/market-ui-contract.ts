@@ -76,8 +76,10 @@ export function marketDayFromParam(value: string | null): MarketDayFilter {
   return MARKET_DAY_FILTERS.includes(value as MarketDayFilter) ? value as MarketDayFilter : "Todos";
 }
 
+export const MARKET_DEFAULT_SORT: MarketSort = "distance";
+
 export function marketSortFromParam(value: string | null): MarketSort {
-  return allowedSorts.has(value as MarketSort) ? value as MarketSort : "relevance";
+  return allowedSorts.has(value as MarketSort) ? value as MarketSort : MARKET_DEFAULT_SORT;
 }
 
 export function marketRouteFiltersFromParams(params: URLSearchParams): MarketRouteFilters {
@@ -126,7 +128,7 @@ export function updateMarketRouteParams(
     setOrDelete("dia", filters.day, "Todos");
     setOrDelete("modalidad", filters.modality, "Todas");
     setOrDelete("posicion", filters.position, "Todas");
-    setOrDelete("orden", filters.sort, "relevance");
+    setOrDelete("orden", filters.sort, MARKET_DEFAULT_SORT);
     if (filters.radiusKm === 30) next.delete("radio");
     else next.set("radio", String(filters.radiusKm));
     if (filters.maxPrice === null) next.delete("precioMax");

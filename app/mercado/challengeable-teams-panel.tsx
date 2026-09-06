@@ -43,6 +43,7 @@ type SearchZone = {
 
 type Props = {
   marketFilters: MarketFilterDraft;
+  searchOrigin?: { lat?: number; lng?: number } | null;
   onCloseTeam: () => void;
   onOpenTeam: (teamId: string) => void;
   onPrepareChallenge: (team: TeamSummary) => void;
@@ -264,7 +265,9 @@ function demoSearchSnapshot(
   };
 }
 
-export function ChallengeableTeamsPanel({ marketFilters, onCloseTeam, onOpenTeam, onPrepareChallenge, onSourceChange, selectedTeamId }: Props) {
+export function ChallengeableTeamsPanel({ marketFilters, searchOrigin, onCloseTeam, onOpenTeam, onPrepareChallenge, onSourceChange, selectedTeamId }: Props) {
+  const searchLatitude = searchOrigin?.lat;
+  const searchLongitude = searchOrigin?.lng;
   const demoMode = typeof window !== "undefined"
     && window.location.pathname.startsWith("/demo");
   const [memberships, setMemberships] = useState<GroupMembership[]>(() => demoMode ? [demoMembership] : []);
@@ -429,8 +432,8 @@ export function ChallengeableTeamsPanel({ marketFilters, onCloseTeam, onOpenTeam
       modality: marketFilters.modality === "Todas" ? null : marketFilters.modality as TeamChallengeModality,
       start: null,
       zoneLabel: marketFilters.zone,
-      zoneLat: null,
-      zoneLng: null,
+      zoneLat: typeof searchLatitude === "number" && Number.isFinite(searchLatitude) ? searchLatitude : null,
+      zoneLng: typeof searchLongitude === "number" && Number.isFinite(searchLongitude) ? searchLongitude : null,
     };
     window.queueMicrotask(() => {
       setAppliedFilters(nextFilters);
@@ -445,6 +448,8 @@ export function ChallengeableTeamsPanel({ marketFilters, onCloseTeam, onOpenTeam
     marketFilters.modality,
     marketFilters.radiusKm,
     marketFilters.zone,
+    searchLatitude,
+    searchLongitude,
     selectedGroupId,
   ]);
 
@@ -490,10 +495,8 @@ export function ChallengeableTeamsPanel({ marketFilters, onCloseTeam, onOpenTeam
           setProfileSnapshot(cachedProfile);
           setProfileDraft(profileFromSnapshot(cachedProfile));
         }
-        await Promise.all([
-          loadProfile(nextGroupId, user.id),
-          loadSearch(nextGroupId, user.id, defaultFilters, 1),
-        ]);
+        // Search is driven by the current filters and origin in the effect above.
+        await loadProfile(nextGroupId, user.id);
       } else {
         setTeamSource("UNAVAILABLE");
       }
