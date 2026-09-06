@@ -2,7 +2,7 @@
 begin;
 \ir ../supabase/migrations/20260901214523_social_profile_foundation_v1.sql
 \ir ../supabase/migrations/20260902064632_social_inbox_authority_v1.sql
-\ir ../supabase/migrations/20260906154337_player_profile_claim_approval_v1.sql
+\ir ../supabase/migrations/20260906155901_player_profile_claim_approval_v1.sql
 insert into auth.users(id,email) values
 ('f9620000-0000-4000-8000-000000000001','claim-admin@example.test'),
 ('f9620000-0000-4000-8000-000000000002','claim-player@example.test'),
