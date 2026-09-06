@@ -28,7 +28,8 @@ test("the plus action offers a local file and the phone camera", () => {
   assert.match(editor, /capture="user"/);
   assert.match(editor, /photoClassName=\{styles\.editablePhoto\}/);
   assert.match(editor, /onClick: \(\) => setPhotoMenuOpen/);
-  assert.match(editor, /Elige una imagen del teléfono o haz una foto con la cámara/);
+  assert.match(editor, />Cambiar foto<\/button>/);
+  assert.match(editor, />Usar cámara<\/button>/);
   assert.match(editorStyles, /\.photoMenu/);
   assert.match(editorStyles, /\.editablePhoto:focus-visible/);
 });

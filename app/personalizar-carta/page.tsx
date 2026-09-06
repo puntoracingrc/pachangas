@@ -702,7 +702,7 @@ export default function PlayerCosmeticsPage() {
           />
         )}
       >
-        {snapshot.owned.length || snapshot.featuredBadges.length ? (
+        {(
           <>
             <CosmeticCategoryTabs active={activeCategory} counts={counts} onChange={(category) => void markCategorySeen(category)} />
             <div className={styles.categoryHeading}>
@@ -732,13 +732,15 @@ export default function PlayerCosmeticsPage() {
               />
             )}
           </>
-        ) : (
-          <div className={styles.emptyCollection}>
-            <span>Foto de jugador</span>
-            <strong>Toca el + de tu carta</strong>
-            <p>Elige una imagen del teléfono o haz una foto con la cámara. Los marcos y efectos aparecerán aquí cuando los consigas.</p>
-          </div>
         )}
+        {activeItems.length === 0 && activeCategory !== "badge" ? (
+          <p className={styles.notice}>Aún no tienes complementos en esta categoría. Puedes conseguirlos en los cofres de premios.</p>
+        ) : null}
+        <div className={styles.photoControls}>
+          <strong>Foto de jugador</strong>
+          <button type="button" onClick={() => fileInputRef.current?.click()}>Cambiar foto</button>
+          <button type="button" onClick={() => cameraInputRef.current?.click()}>Usar cámara</button>
+        </div>
         {avatarMessage ? <p className={styles.avatarMessage} role="status">{avatarMessage}</p> : null}
           </CosmeticEditorShell>
         </>

@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { OfficialProductShellV2 } from "../_components/official-product-shell-v2";
-import { PlayerCosmeticCard } from "../_components/player-cosmetic-card";
+import { ProfileCardZoom } from "./profile-card-zoom";
 import {
   modalityLabel as socialModalityLabel,
   normalizeCanonicalSocialProfile,
@@ -393,7 +393,7 @@ export function CanonicalPlayerProfile() {
               </section>
               <section className={styles.cardSection}>
                 <header><span>Mi carta</span>{!initialAssessmentComplete ? <h2>Tu carta aún no está creada</h2> : null}</header>
-                {initialAssessmentComplete && profile?.current_overall ? <PlayerCosmeticCard cosmetics={cosmetics?.owned} loadout={cosmetics?.loadout} featuredAchievement={featuredAchievement} facets={facets} meta={team?.name ?? "Jugador sin equipo"} name={profile.display_name} photoAlt={`Foto de ${profile.display_name}`} photoSrc={profile.avatar ?? undefined} position={profile.position.slice(0, 3).toUpperCase()} score={Math.round(profile.current_overall)} /> : <p>Responde unas preguntas sobre cómo juegas. Crearemos tu primera media y tus atributos. Después evolucionarán con partidos y valoraciones.</p>}
+                {initialAssessmentComplete && profile?.current_overall ? <ProfileCardZoom cosmetics={cosmetics?.owned} loadout={cosmetics?.loadout} featuredAchievement={featuredAchievement} facets={facets} meta={team?.name ?? "Jugador sin equipo"} name={profile.display_name} photoAlt={`Foto de ${profile.display_name}`} photoSrc={profile.avatar ?? undefined} position={profile.position.slice(0, 3).toUpperCase()} score={Math.round(profile.current_overall)} /> : <p>Responde unas preguntas sobre cómo juegas. Crearemos tu primera media y tus atributos. Después evolucionarán con partidos y valoraciones.</p>}
                 <div className={styles.cardActions}>
                   <Link className={styles.primary} href={initialAssessmentComplete ? "/personalizar-carta" : "/perfil/test-inicial"}>
                     {initialAssessmentComplete ? "Editar carta" : "Hacer test inicial y crear mi carta"}
