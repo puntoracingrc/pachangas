@@ -86,12 +86,12 @@ test("first-time onboarding stays closed until the canonical initial assessment 
 
 test("step two requires a Places city and step three opens the mandatory initial test", () => {
   assert.equal(socialFirstTimeProfileReady({ displayName: "Alex", position: "Portero", preferredModality: "futbol7" }), false);
-  assert.equal(socialFirstTimeProfileReady({ displayName: "Alex", generalArea: "Barcelona", position: "Portero", preferredModality: "futbol7" }), true);
+  assert.equal(socialFirstTimeProfileReady({ birthDate: "1990-01-01", displayName: "Alex", generalArea: "Barcelona", position: "Portero", preferredModality: "futbol7" }), true);
   assert.match(socialOnboarding, /Ciudad o población/);
   assert.match(socialOnboarding, /Días preferidos/);
   assert.match(socialOnboarding, /attachVenueAutocomplete/);
   assert.match(socialOnboarding, /types: \["\(cities\)"\]/);
-  assert.match(socialOnboarding, /disabled=\{profileSaving \|\| !writeAvailability\.allowed \|\| !cityConfirmed\}/);
+  assert.match(socialOnboarding, /disabled=\{profileSaving \|\| !writeAvailability\.allowed \|\| !displayNameValid \|\| !cityConfirmed \|\| !validBirthDate\(visibleDraft\.birthDate\)\}/);
   assert.match(socialOnboarding, /const assessmentHref = invitationPath/);
   assert.match(socialOnboarding, /`\/perfil\/test-inicial\?onboarding=1&next=\$\{encodeURIComponent\(invitationPath\)\}`/);
   assert.match(socialOnboarding, /: "\/perfil\/test-inicial\?onboarding=1"/);

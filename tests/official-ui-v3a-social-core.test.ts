@@ -25,7 +25,7 @@ test("V3A exposes play-first navigation only", async () => {
 
 test("team identity and account actions own secondary navigation", async () => {
   const shell = await source("app/_components/official-product-shell-v2.tsx");
-  for (const label of ["Ver equipo", "Gestionar equipo", "Crear equipo", "Mi perfil", "Mi carta", "Mi equipo", "Ajustes", "Cerrar sesión"]) {
+  for (const label of ["Ver equipo", "Gestionar equipo", "Crear equipo", "PERFIL/CARTA", "Ruleta de premios", "Ajustes", "Cerrar sesión"]) {
     assert.match(shell, new RegExp(label));
   }
   assert.match(shell, /perspective === "team-admin" \|\| perspective === "team-owner"/);
