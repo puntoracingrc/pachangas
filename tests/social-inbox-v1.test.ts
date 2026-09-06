@@ -145,8 +145,8 @@ test("the global bell opens the Inbox and the legacy command popover is not moun
   assert.match(layout, /<SocialInboxProvider>\{children\}<\/SocialInboxProvider>/);
   assert.doesNotMatch(layout, /<NotificationCenter \/>/);
   assert.match(shell, /notificationsHref = account\.notificationsHref \?\? "\/avisos"/);
-  assert.match(shell, /pendingCount > 9 \? "9\+" : pendingCount/);
-  assert.match(shell, /notificationDot/);
+  assert.match(shell, /unreadCount > 9 \? "9\+" : unreadCount/);
+  assert.doesNotMatch(shell, /const bellLabel = pendingCount/);
 });
 
 test("Inbox UI exposes only read/archive commands and delegates social actions by deep link", () => {
