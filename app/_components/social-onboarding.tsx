@@ -569,7 +569,7 @@ export function SocialOnboarding({
                   setAvatarPreview(URL.createObjectURL(file));
                 }} /></span><small>Opcional. Esta vista previa no se publica hasta guardar tu perfil canónico.</small></label>
               </div>
-              <div className={styles.actions}><button className={styles.primary} type="button" onClick={() => setStep(2)} disabled={!visibleDraft.displayName.trim()}>Continuar</button><button type="button" onClick={() => setStep(2)}>Omitir foto</button></div>
+              <div className={styles.actions}><button className={styles.primary} type="button" onClick={() => setStep(2)} disabled={!visibleDraft.displayName.trim()}>Continuar</button></div>
             </div>
           ) : null}
           {step === 2 ? (
