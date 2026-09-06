@@ -60,6 +60,9 @@ export function PlatformShell({
     return () => window.clearTimeout(timeout);
   }, [access, query]);
 
+  // The full demo has its own navigation and must occupy the whole viewport.
+  if (pathname === "/admin/demo") return <>{children}</>;
+
   return (
     <div
       className={styles.adminRoot}
