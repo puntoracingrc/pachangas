@@ -7160,6 +7160,8 @@ html:fullscreen .pitch-modal-fullscreen .match-pitch.match-pitch-horizontal.matc
 }
 
 .status-confirm-dialog {
+  max-height: calc(100dvh - 36px - var(--safe-top) - var(--safe-bottom));
+  overflow-y: auto;
   background:
     linear-gradient(135deg, color-mix(in srgb, var(--green) 9%, transparent), transparent 52%),
     var(--panel);

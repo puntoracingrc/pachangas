@@ -1,6 +1,7 @@
 "use client";
 
 import { type CSSProperties, type Dispatch, type FormEvent, Fragment, type MouseEvent as ReactMouseEvent, type PointerEvent as ReactPointerEvent, type SetStateAction, type WheelEvent as ReactWheelEvent, useCallback, useEffect, useEffectEvent, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import type { User } from "@supabase/supabase-js";
 import dynamic from "next/dynamic";
 import NextImage from "next/image";
@@ -368,6 +369,7 @@ type MatchPlayer = {
 };
 
 type PendingStatusChange = {
+  matchId: string;
   nextStatus: MatchPlayer["status"];
   playerId: string;
 };
@@ -3451,7 +3453,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
     const confirmedRevision = Number(data.payload_revision ?? 0);
     const currentRevision = remotePayloadRevisionRef.current;
     if (currentRevision !== null && confirmedRevision < currentRevision) return;
-    applyPayload(normalizePayload(data.payload as Partial<AppPayload>), confirmedRevision);
+    applyPayload(normalizePayload(data.payload as Partial<AppPayload>), confirmedRevision, true);
     applyBillingFromGroupRow(data);
     setRemoteTeams((current) => current.map((team) => (
       team.id === groupId ? { ...team, ratingsEnabled: data.ratings_enabled !== false } : team
@@ -3675,14 +3677,17 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
     setRemotePayloadRevision(nextRevision);
   }
 
-  function applyPayload(payload: AppPayload, revision?: number | string | null) {
+  function applyPayload(payload: AppPayload, revision?: number | string | null, preserveMatchSelection = false) {
     applyingRemoteRef.current = true;
     lastCommittedPayloadJsonRef.current = serializePayload(payload);
     setPlayers(payload.players);
     setVenues(payload.venues);
     setSiteSettings(payload.siteSettings);
     setMatches(payload.matches);
-    setActiveMatchId(payload.activeMatchId);
+    // The selected match is navigation state for this browser, not shared team state.
+    setActiveMatchId((current) => preserveMatchSelection && payload.matches.some((match) => match.id === current)
+      ? current
+      : payload.activeMatchId);
     if (revision !== undefined) setRemoteRevision(revision);
     window.setTimeout(() => {
       applyingRemoteRef.current = false;
@@ -3691,7 +3696,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
 
   function applyRemoteCommit(commit: RemotePayloadCommit | null | undefined) {
     if (!commit?.payload) return false;
-    applyPayload(normalizePayload(commit.payload), commit.confirmedRevision ?? commit.payload_revision);
+    applyPayload(normalizePayload(commit.payload), commit.confirmedRevision ?? commit.payload_revision, true);
     applyBillingFromCommit(commit);
     if (remoteGroupId && (commit.ratingsEnabled !== undefined || commit.ratings_enabled !== undefined)) {
       const ratingsEnabled = commit.ratingsEnabled ?? commit.ratings_enabled ?? true;
@@ -3766,7 +3771,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
 
     try {
       if (lastCommittedPayloadJsonRef.current) {
-        applyPayload(normalizePayload(JSON.parse(lastCommittedPayloadJsonRef.current)), remotePayloadRevisionRef.current);
+        applyPayload(normalizePayload(JSON.parse(lastCommittedPayloadJsonRef.current)), remotePayloadRevisionRef.current, true);
       }
     } catch {
       // The authoritative reload below remains the fallback for a damaged local cache.
@@ -4018,14 +4023,15 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
     setRemoteRevision(selectedTeam.payloadRevision);
     setCurrentRole(selectedTeam.role);
     setAdminInviteToken(null);
-    applyPayload(selectedTeam.payload, selectedTeam.payloadRevision);
+    const refreshingCurrentTeam = remoteReady && remoteGroupId === selectedTeam.id;
+    applyPayload(selectedTeam.payload, selectedTeam.payloadRevision, refreshingCurrentTeam);
     const entrySearch = homeEntrySearch(entryRoute, window.location.search);
     const currentParams = new URLSearchParams(entrySearch);
     const sharedMatchId = expandCompactUuid(currentParams.get("p") ?? currentParams.get("partido"));
-    if (sharedMatchId && selectedTeam.payload.matches.some((match) => match.id === sharedMatchId)) {
+    if (!refreshingCurrentTeam && sharedMatchId && selectedTeam.payload.matches.some((match) => match.id === sharedMatchId)) {
       setActiveMatchId(sharedMatchId);
       setMatchExperienceView("detail");
-    } else if (requestsNextMatchFromPrimaryNavigation(entrySearch, entryRoute)) {
+    } else if (!refreshingCurrentTeam && requestsNextMatchFromPrimaryNavigation(entrySearch, entryRoute)) {
       const nextOpenMatch = openMatchesByDate(selectedTeam.payload.matches)[0];
       if (nextOpenMatch) setActiveMatchId(nextOpenMatch.id);
       setMatchExperienceView("overview");
@@ -5331,7 +5337,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
     const existing = activeMatch.players.find((entry) => entry.playerId === playerId);
     if (existing?.status === "voy" && status !== "voy" && !options?.skipLeaveConfirmation) {
       setPlayerActionMenu(null);
-      setStatusConfirmation({ nextStatus: status, playerId });
+      setStatusConfirmation({ matchId: activeMatch.id, nextStatus: status, playerId });
       return;
     }
 
@@ -5407,6 +5413,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
     if (!pending) return;
 
     setStatusConfirmation(null);
+    if (pending.matchId !== activeMatch.id) return;
     void setStatus(pending.playerId, pending.nextStatus, { skipLeaveConfirmation: true });
   }
 
@@ -7238,7 +7245,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
 
   function ownPlayerFromCommit(commit: RemotePayloadCommit, fallbackPlayerId: string) {
     const payload = normalizePayload(commit.payload);
-    applyPayload(payload, commit.payload_revision);
+    applyPayload(payload, commit.payload_revision, true);
     setSyncStatus("live");
     setSyncError("");
     return payload.players.find((player) => player.ownerUserId === currentUserId) ?? payload.players.find((player) => player.id === fallbackPlayerId);
@@ -12242,7 +12249,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
           </div>
         </div>
       </section> : null}
-      {statusConfirmation ? (
+      {statusConfirmation ? createPortal(
         <div
           className="status-confirm-backdrop"
           role="presentation"
@@ -12275,7 +12282,8 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
               </button>
             </div>
           </section>
-        </div>
+        </div>,
+        document.body,
       ) : null}
       {!needsLoginForSharedLink && mobileAccountOpen ? (
         <>
