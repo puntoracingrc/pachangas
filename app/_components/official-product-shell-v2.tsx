@@ -289,6 +289,7 @@ function AccountActions({
   const notificationsHref = account.notificationsHref ?? "/avisos";
   const { pendingSnapshot, snapshot, status } = useSocialInbox();
   const { closeMenu, menuRef } = useDismissableDetails();
+  const [upcomingSection, setUpcomingSection] = useState<string | null>(null);
   const summary = pendingSnapshot ?? snapshot;
   const unreadCount = summary?.unreadCount ?? 0;
   const bellLabel = unreadCount > 0
@@ -329,17 +330,36 @@ function AccountActions({
         <div
           className={styles.accountMenuPanel}
           onClick={(event) => {
-            if (event.target instanceof Element && event.target.closest("a, button")) closeMenu();
+            if (event.target instanceof Element && event.target.closest("a, button") && !event.target.closest("[data-upcoming-section]")) closeMenu();
           }}
         >
           <p><strong>{resolvedAccount.displayName ?? "Mi cuenta"}</strong><small>Vista jugador</small></p>
           <Link href="/ruleta">Ruleta de premios</Link>
-          <Link href="/ranking">Ranking</Link>
           <Link href="/ajustes/notificaciones">Avisos y notificaciones</Link>
           <Link href="/perfil/conducta">Avisos y conducta</Link>
           {isPlayerWithoutTeam ? <Link href="/?social=start">Empezar</Link> : null}
           <Link href={resolvedAccount.settingsHref ?? "/?mobile=perfil&settings=1"}>Ajustes y equipo</Link>
           <Link href="/manual">Manual de usuario</Link>
+          <hr />
+          {["Ranking global", "Ligas", "Torneos", "Clubes", "Árbitros"].map((section) => (
+            <button
+              key={section}
+              className={styles.lockedMenuItem}
+              type="button"
+              data-upcoming-section={section}
+              aria-label={`${section}, disponible en futuras actualizaciones`}
+              onClick={() => setUpcomingSection(section)}
+            >
+              <span>{section}</span>
+              <svg aria-hidden="true" viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="11" rx="2" /><path d="M8 10V7a4 4 0 0 1 8 0v3" /></svg>
+            </button>
+          ))}
+          {upcomingSection ? (
+            <div className={styles.upcomingNotice} role="status">
+              <strong>{upcomingSection}</strong>
+              <span>Disponible en futuras actualizaciones.</span>
+            </div>
+          ) : null}
           {adminViewPreview ? (
             <button type="button" onClick={adminViewPreview.onToggle}>
               {adminViewPreview.active ? "Volver a vista admin" : "Ver como jugador"}
