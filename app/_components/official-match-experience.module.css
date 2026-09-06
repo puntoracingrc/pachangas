@@ -196,6 +196,17 @@
 .formGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
 .formGrid label { min-width: 0; display: grid; align-content: start; gap: 6px; color: var(--match-muted); font-size: 0.67rem; font-weight: 800; }
 .formGrid :is(input, select) { width: 100%; min-height: 46px; border: 1px solid var(--match-line); border-radius: 5px; background: var(--official-surface-solid, #0e1a17); padding: 0 11px; color: var(--match-text); font: inherit; font-size: 0.78rem; color-scheme: inherit; }
+/* Native pickers must match the field surface, including portrait overrides. */
+.wizard .formGrid input:is([type="date"], [type="time"]) {
+  color-scheme: dark !important;
+}
+:global(:root[data-theme="light"]) .wizard .formGrid input:is([type="date"], [type="time"]) {
+  color-scheme: light !important;
+}
+.wizard .formGrid input::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 1;
+}
 .wideField { grid-column: 1 / -1; }
 .inlineButton { width: fit-content; }
 .toggleField { grid-template-columns: 22px minmax(0, 1fr); align-items: start; border: 1px solid var(--match-line); border-radius: 5px; background: var(--match-soft); padding: 11px; }
