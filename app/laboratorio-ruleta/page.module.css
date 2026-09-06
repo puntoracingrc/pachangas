@@ -63,8 +63,8 @@
 .contents article strong, .history span { color:var(--accent); }
 .page { --roulette-points:#b7f452; --roulette-gold:#ffe39a; }
 .machineHeader > strong { color:var(--roulette-points); }
-:global(:root[data-theme="light"]) .contents article strong, .history span { color:var(--accent); }
-.page { --roulette-points:#476b00; --roulette-gold:#956000; background:radial-gradient(ellipse at 50% 32%,#e6f1dc 0,transparent 60%),#f4f7f2; color:#172c20; color-scheme:light; }
+:global(:root[data-theme="dark"]) .intro h1 { color:#b7f452; }
+:global(:root[data-theme="light"]) .page { --roulette-points:#476b00; --roulette-gold:#956000; background:radial-gradient(ellipse at 50% 32%,#e6f1dc 0,transparent 60%),#f4f7f2; color:#172c20; color-scheme:light; }
 :global(:root[data-theme="light"]) .top { color:#465d4e; }
 :global(:root[data-theme="light"]) .top button { border-color:#bdcdbf; background:#ffffffc9; color:#27422f; }
 :global(:root[data-theme="light"]) .intro h1, :global(:root[data-theme="light"]) .intro em, :global(:root[data-theme="light"]) .batchSummary header > span, :global(:root[data-theme="light"]) .batchSummary footer > strong { color:#476b00; }
@@ -98,8 +98,7 @@
 :global(:root[data-theme="light"]) .batchSummary footer { background:#edf5e5f5; border-color:#bacfab; }
 
 @media (prefers-color-scheme: light) {
-:global(:root:not([data-theme])) .contents article strong, .history span { color:var(--accent); }
-.page { --roulette-points:#476b00; --roulette-gold:#956000; background:radial-gradient(ellipse at 50% 32%,#e6f1dc 0,transparent 60%),#f4f7f2; color:#172c20; color-scheme:light; }
+:global(:root:not([data-theme])) .page { --roulette-points:#476b00; --roulette-gold:#956000; background:radial-gradient(ellipse at 50% 32%,#e6f1dc 0,transparent 60%),#f4f7f2; color:#172c20; color-scheme:light; }
 :global(:root:not([data-theme])) .top { color:#465d4e; }
 :global(:root:not([data-theme])) .top button { border-color:#bdcdbf; background:#ffffffc9; color:#27422f; }
 :global(:root:not([data-theme])) .intro h1, :global(:root:not([data-theme])) .intro em, :global(:root:not([data-theme])) .batchSummary header > span, :global(:root:not([data-theme])) .batchSummary footer > strong { color:#476b00; }
