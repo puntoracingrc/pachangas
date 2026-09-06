@@ -195,7 +195,7 @@
 
 .formGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
 .formGrid label { min-width: 0; display: grid; align-content: start; gap: 6px; color: var(--match-muted); font-size: 0.67rem; font-weight: 800; }
-.formGrid :is(input, select) { width: 100%; min-height: 46px; border: 1px solid var(--match-line); border-radius: 5px; background: #0e1a17; padding: 0 11px; color: #f1f6f2; font: inherit; font-size: 0.78rem; color-scheme: dark; }
+.formGrid :is(input, select) { width: 100%; min-height: 46px; border: 1px solid var(--match-line); border-radius: 5px; background: var(--official-surface-solid, #0e1a17); padding: 0 11px; color: var(--match-text); font: inherit; font-size: 0.78rem; color-scheme: inherit; }
 .wideField { grid-column: 1 / -1; }
 .inlineButton { width: fit-content; }
 .toggleField { grid-template-columns: 22px minmax(0, 1fr); align-items: start; border: 1px solid var(--match-line); border-radius: 5px; background: var(--match-soft); padding: 11px; }
@@ -213,7 +213,7 @@
 .advanced[open] summary { border-bottom: 1px solid var(--match-line); }
 .advanced .formGrid { padding: 14px; }
 
-.wizardFooter { position: sticky; z-index: 12; bottom: 0; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 12px; border: 1px solid var(--match-line); border-radius: 7px; background: rgba(7, 17, 15, 0.94); padding: 10px; backdrop-filter: blur(18px); }
+.wizardFooter { position: sticky; z-index: 12; bottom: 0; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 12px; border: 1px solid var(--match-line); border-radius: 7px; background: var(--official-overlay, rgba(7, 17, 15, 0.94)); padding: 10px; backdrop-filter: blur(18px); }
 .wizardFooter > span { color: #efbd64; font-size: 0.66rem; text-align: center; }
 .wizardFooter > div { display: flex; justify-content: flex-end; gap: 7px; }
 .wizardFooter .dangerButton { color: #ef9ca1; }
@@ -324,7 +324,7 @@
   .liveMessage { min-height: 12px; font-size: 0.52rem; }
   .rosterGroups { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 5px; }
   .rosterGroups > section { max-height: calc(100dvh - 190px); overflow-y: auto; }
-  .rosterGroups > section > header { position: sticky; z-index: 2; top: 0; min-height: 40px; background: #13211d; font-size: 0.55rem; }
+  .rosterGroups > section > header { position: sticky; z-index: 2; top: 0; min-height: 40px; background: var(--official-surface-solid, #13211d); font-size: 0.55rem; }
   .rosterGroups article { min-height: 44px; grid-template-columns: 30px minmax(0, 1fr) 40px; padding: 3px 5px; }
   .rosterGroups article :is(img, .avatarFallback) { width: 30px; height: 30px; }
   .rosterGroups article strong { font-size: 0.58rem; }

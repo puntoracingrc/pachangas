@@ -1,7 +1,7 @@
 .pageHeader { min-height: 72px; display: flex; align-items: end; justify-content: space-between; gap: 18px; border-bottom: 1px solid var(--official-line, rgba(217, 234, 225, 0.16)); padding: 14px 0; }
 .pageHeader > div:first-child { min-width: 0; }
 .pageHeader span, .sectionHeader span { color: var(--official-cyan-text, #51cfdf); font-size: 0.66rem; font-weight: 900; text-transform: uppercase; }
-.pageHeader h1 { margin: 3px 0; font-size: clamp(1.4rem, 3vw, 2.4rem); line-height: 1.05; }
+.pageHeader h1 { margin: 3px 0; color: var(--official-text, #f1f6f2) !important; font-size: clamp(1.4rem, 3vw, 2.4rem); line-height: 1.05; }
 .pageHeader p { max-width: 680px; margin: 0; color: var(--official-muted, #a9bbb2); font-size: 0.82rem; line-height: 1.45; }
 .actions, .actionBar { display: flex; align-items: center; flex-wrap: wrap; gap: 7px; }
 .actions :is(a, button), .actionBar :is(a, button), .primaryCard footer :is(a, button) { min-height: 42px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--official-line, rgba(217, 234, 225, 0.16)); border-radius: 6px; background: var(--official-surface-soft, rgba(255,255,255,.06)); padding: 0 12px; color: var(--official-text, #f1f6f2); font: inherit; font-size: .76rem; font-weight: 850; text-decoration: none; }

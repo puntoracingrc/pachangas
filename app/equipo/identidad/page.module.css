@@ -635,6 +635,69 @@
   padding: 10px 12px;
 }
 
+:global(:root[data-theme="light"]) .page{background:transparent;color:var(--official-text,#10201a)}
+:global(:root[data-theme="light"]) .topbar,
+:global(:root[data-theme="light"]) .crestBand,
+:global(:root[data-theme="light"]) .teamCosmeticEditor,
+:global(:root[data-theme="light"]) .rewardsBand,
+:global(:root[data-theme="light"]) .economyBand,
+:global(:root[data-theme="light"]) .progressBand,
+:global(:root[data-theme="light"]) .collectionBand,
+:global(:root[data-theme="light"]) .historyBand,
+:global(:root[data-theme="light"]) .recognitionHistory{border-color:var(--official-line,rgba(17,43,34,.16))}
+:global(:root[data-theme="light"]) .topbar a,
+:global(:root[data-theme="light"]) .header span,
+:global(:root[data-theme="light"]) .previewStage span,
+:global(:root[data-theme="light"]) .rewardsBand header span,
+:global(:root[data-theme="light"]) .progressBand header span,
+:global(:root[data-theme="light"]) .collectionBand header span,
+:global(:root[data-theme="light"]) .historyBand header span,
+:global(:root[data-theme="light"]) .economyBand header span,
+:global(:root[data-theme="light"]) .achievementGrid article span,
+:global(:root[data-theme="light"]) .collectionGrid article span,
+:global(:root[data-theme="light"]) .rewardModal>span{color:var(--official-cyan-text,#086875)}
+:global(:root[data-theme="light"]) .header label,
+:global(:root[data-theme="light"]) .identityFields label,
+:global(:root[data-theme="light"]) .teamColorRow,
+:global(:root[data-theme="light"]) .symbolControls label,
+:global(:root[data-theme="light"]) .emptyCategory,
+:global(:root[data-theme="light"]) .previewStage small,
+:global(:root[data-theme="light"]) .historyRail small,
+:global(:root[data-theme="light"]) .memberCrestCopy,
+:global(:root[data-theme="light"]) .economySummary span,
+:global(:root[data-theme="light"]) .economyEmpty,
+:global(:root[data-theme="light"]) .statGrid article span,
+:global(:root[data-theme="light"]) .scopeStats span,
+:global(:root[data-theme="light"]) .achievementGrid article p,
+:global(:root[data-theme="light"]) .achievementStatus,
+:global(:root[data-theme="light"]) .recognitionHistory small,
+:global(:root[data-theme="light"]) .collectionGrid article small,
+:global(:root[data-theme="light"]) .empty{color:var(--official-muted,#53675e)}
+:global(:root[data-theme="light"]) .header select,
+:global(:root[data-theme="light"]) .identityFields input,
+:global(:root[data-theme="light"]) .teamColorRow button,
+:global(:root[data-theme="light"]) .symbolControls button,
+:global(:root[data-theme="light"]) .symbolControls strong,
+:global(:root[data-theme="light"]) .previewStage,
+:global(:root[data-theme="light"]) .rewardModal button,
+:global(:root[data-theme="light"]) .economySummary article,
+:global(:root[data-theme="light"]) .progressTabs button,
+:global(:root[data-theme="light"]) .statGrid article,
+:global(:root[data-theme="light"]) .scopeStats>article,
+:global(:root[data-theme="light"]) .achievementGrid article,
+:global(:root[data-theme="light"]) .collectionGrid article,
+:global(:root[data-theme="light"]) .historyRail article{border-color:var(--official-line,rgba(17,43,34,.16));background:var(--official-surface,#fff);color:var(--official-text,#10201a);color-scheme:light}
+:global(:root[data-theme="light"]) .economySummary strong,
+:global(:root[data-theme="light"]) .recognitionHistory>span{color:var(--official-text,#10201a)}
+:global(:root[data-theme="light"]) .playerInventory span,
+:global(:root[data-theme="light"]) .progressTabs .activeProgressTab,
+:global(:root[data-theme="light"]) .achievementGrid .achievementUnlocked{border-color:rgba(71,107,0,.42);background:#eef7dc;color:var(--official-accent-text,#476b00)}
+:global(:root[data-theme="light"]) .achievementGrid .achievementLocked{border-color:var(--official-line,rgba(17,43,34,.14));background:var(--official-surface-soft,#f6f9f7)}
+:global(:root[data-theme="light"]) .achievementProgress{background:#dce5df}
+:global(:root[data-theme="light"]) .openAllRewards{border-color:var(--official-accent-text,#476b00);background:var(--official-accent,#c8ef5d);color:#17210d}
+:global(:root[data-theme="light"]) .rewardModal{background:var(--official-surface-solid,#fff);color:var(--official-text,#10201a)}
+:global(:root[data-theme="light"]) .sequenceRecognitions p{border-color:rgba(71,107,0,.28);background:#eef7dc}
+
 @media (max-width: 850px) {
   .topbar {
     grid-template-columns: auto minmax(0, 1fr) auto;

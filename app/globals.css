@@ -2347,25 +2347,25 @@ body.demo-world-active .notification-center {
   }
 }
 
-@media (prefers-color-scheme: dark) and (max-width: 760px) {
-  .mobile-app-nav {
+@media (max-width: 760px) {
+  :root[data-theme="dark"] .mobile-app-nav {
     background: rgba(15, 24, 20, 0.94);
     box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.28);
   }
 
-  .mobile-app-nav-item.active {
+  :root[data-theme="dark"] .mobile-app-nav-item.active {
     color: var(--lime);
   }
 
-  .mobile-app-nav-item.active::before {
+  :root[data-theme="dark"] .mobile-app-nav-item.active::before {
     background: var(--lime);
   }
 
-  .mobile-account-sheet {
+  :root[data-theme="dark"] .mobile-account-sheet {
     background: #101915;
   }
 
-  .mobile-account-session.danger {
+  :root[data-theme="dark"] .mobile-account-session.danger {
     border-color: #703b38;
     color: #ffaaa2;
   }
@@ -12081,7 +12081,7 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
   background: rgba(12, 20, 16, 0.62);
 }
 
-@media (prefers-color-scheme: dark) {
+@media screen {
   :root[data-theme="light"],
   :root[data-theme="light"] body,
   :root[data-theme="light"] body > main.min-h-screen,
@@ -12228,6 +12228,12 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
 
   :root[data-theme="light"] .main-panel {
     background: linear-gradient(90deg, var(--team-a-soft) 0 50%, var(--team-b-soft) 50% 100%);
+  }
+
+  :root[data-theme="light"] .legal-warning {
+    background: #fff5ce;
+    border-color: #e9c852;
+    color: #473813;
   }
 }
 
@@ -16814,43 +16820,26 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
 /* Portrait game mode keeps the compact manager language without locking vertical scroll. */
 @media (orientation: portrait) and (max-width: 760px) {
   :root {
-    color-scheme: dark;
+    color-scheme: inherit;
   }
 
   html {
-    background: #07110e !important;
+    background: var(--background) !important;
   }
 
   body {
-    background: #07110e;
+    background: var(--background);
     padding-bottom: calc(var(--mobile-nav-height) + 14px + var(--safe-bottom));
   }
 
   main[data-mobile-tab],
   .market-page {
-    --background: #0b1713;
-    --foreground: #f5f2e8;
-    --green: #5ad990;
-    --ink: #f5f2e8;
-    --ink-soft: #a7b8af;
-    --line: #30483e;
-    --lime: #c8ef5d;
-    --muted: #8da198;
-    --panel: rgba(15, 32, 26, 0.94);
-    --team-a: #78aaff;
-    --team-b: #ff766b;
-    --team-a-soft: color-mix(in srgb, var(--team-a) 16%, #0b1713);
-    --team-b-soft: color-mix(in srgb, var(--team-b) 16%, #0b1713);
-    --team-a-card: color-mix(in srgb, var(--team-a) 18%, #102018);
-    --team-b-card: color-mix(in srgb, var(--team-b) 18%, #102018);
-    --team-a-muted: color-mix(in srgb, var(--team-a) 42%, #203029);
-    --team-b-muted: color-mix(in srgb, var(--team-b) 42%, #203029);
     background:
-      linear-gradient(135deg, rgba(0, 105, 69, 0.22), transparent 48%),
-      linear-gradient(315deg, rgba(30, 75, 118, 0.2), transparent 52%),
-      #07110e !important;
+      linear-gradient(135deg, color-mix(in srgb, var(--green) 10%, transparent), transparent 48%),
+      linear-gradient(315deg, color-mix(in srgb, var(--team-a) 8%, transparent), transparent 52%),
+      var(--background) !important;
     color: var(--foreground);
-    color-scheme: dark;
+    color-scheme: inherit;
   }
 
   main[data-mobile-tab] {
@@ -16863,44 +16852,44 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
   main[data-mobile-tab] .pachangas-place-autocomplete,
   .market-page .pachangas-place-autocomplete,
   main[data-mobile-tab] .reserve-toggle-box {
-    background: rgba(5, 16, 13, 0.9) !important;
-    border-color: rgba(167, 184, 175, 0.38) !important;
-    color: #f5f2e8 !important;
+    background: var(--panel) !important;
+    border-color: var(--line) !important;
+    color: var(--foreground) !important;
   }
 
   main[data-mobile-tab] :is(input, textarea)::placeholder,
   .market-page :is(input, textarea)::placeholder {
-    color: rgba(215, 228, 221, 0.55) !important;
+    color: var(--muted) !important;
     opacity: 1;
   }
 
   main[data-mobile-tab] :is(input, select, textarea):focus,
   .market-page :is(input, select, textarea):focus {
-    border-color: #5ad990 !important;
-    box-shadow: 0 0 0 2px rgba(90, 217, 144, 0.2);
+    border-color: var(--green) !important;
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--green) 20%, transparent);
     outline: 0;
   }
 
   main[data-mobile-tab] :is(input, select, textarea):disabled,
   .market-page :is(input, select, textarea):disabled {
-    background: rgba(167, 184, 175, 0.1) !important;
-    color: rgba(245, 242, 232, 0.64) !important;
+    background: color-mix(in srgb, var(--muted) 10%, var(--panel)) !important;
+    color: var(--muted) !important;
     opacity: 1;
   }
 
   main[data-mobile-tab] select option,
   .market-page select option {
-    background: #0b1713;
-    color: #f5f2e8;
+    background: var(--panel);
+    color: var(--foreground);
   }
 
   main[data-mobile-tab] input:is([type="date"], [type="time"])::-webkit-calendar-picker-indicator {
-    filter: brightness(0) invert(1);
+    filter: none;
     opacity: 0.9;
   }
 
   main[data-mobile-tab] input:is([type="date"], [type="time"]) {
-    color-scheme: dark !important;
+    color-scheme: inherit !important;
   }
 
   main[data-mobile-tab] .panel,
@@ -16915,18 +16904,16 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
   .market-page .market-player,
   .market-page .market-open-match,
   .market-page .market-context-panel {
-    background:
-      linear-gradient(145deg, rgba(255, 255, 255, 0.035), transparent 42%),
-      rgba(16, 29, 24, 0.8) !important;
+    background: var(--panel) !important;
     backdrop-filter: blur(14px) saturate(1.05);
-    border-color: rgba(167, 184, 175, 0.26) !important;
-    color: #f5f2e8 !important;
+    border-color: var(--line) !important;
+    color: var(--foreground) !important;
   }
 
   main[data-mobile-tab] :is(.match-item, .history-item) {
-    background: rgba(20, 42, 34, 0.96) !important;
-    border-color: rgba(167, 184, 175, 0.28) !important;
-    color: #f5f2e8 !important;
+    background: var(--panel) !important;
+    border-color: var(--line) !important;
+    color: var(--foreground) !important;
   }
 
   main[data-mobile-tab] .match-item.active {
@@ -16935,11 +16922,11 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
   }
 
   main[data-mobile-tab] :is(.match-item, .history-item) :is(strong, b) {
-    color: #f5f2e8;
+    color: var(--foreground);
   }
 
   main[data-mobile-tab] :is(.match-item, .history-item) small {
-    color: #a7b8af;
+    color: var(--muted);
   }
 
   main[data-mobile-tab] :is(.panel, .top-panel, .main-panel, .lineup-panel),
@@ -16951,7 +16938,7 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
   .market-page :is(label, .market-info-panel span, .market-context-panel span),
   main[data-mobile-tab] :is(.ranking-card-detail, .ranking-card-flags),
   .market-page :is(.market-player-info small, .market-player-info p) {
-    color: #a7b8af;
+    color: var(--ink-soft);
   }
 
   main[data-mobile-tab] .hero {
@@ -17007,7 +16994,7 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
   }
 
   main[data-mobile-tab] .main-panel .match-editor {
-    background: rgba(6, 20, 16, 0.7) !important;
+    background: color-mix(in srgb, var(--panel) 94%, transparent) !important;
     margin: 0;
     padding: 9px;
   }
@@ -17049,9 +17036,9 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
   }
 
   main[data-mobile-tab] .weather-card {
-    background: rgba(30, 51, 43, 0.94) !important;
-    border-color: rgba(90, 217, 144, 0.3) !important;
-    color: #f5f2e8 !important;
+    background: var(--panel) !important;
+    border-color: color-mix(in srgb, var(--green) 30%, var(--line)) !important;
+    color: var(--foreground) !important;
     gap: 7px;
     grid-template-columns: 1fr;
     margin-top: 8px;
@@ -17068,7 +17055,7 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
   }
 
   main[data-mobile-tab] .weather-metrics span {
-    background: rgba(5, 16, 13, 0.38);
+    background: color-mix(in srgb, var(--muted) 8%, var(--panel));
     min-height: 34px;
     padding: 5px 7px;
   }
@@ -17079,11 +17066,11 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
 
   main[data-mobile-tab] .weather-card :is(.weather-summary span, strong, p, .weather-availability-message),
   main[data-mobile-tab] .weather-metrics span {
-    color: #d7e4dd;
+    color: var(--ink-soft);
   }
 
   main[data-mobile-tab] .weather-card strong {
-    color: #f5f2e8;
+    color: var(--foreground);
   }
 
   main[data-mobile-tab] .stats-row {
@@ -17121,18 +17108,18 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
   }
 
   main[data-mobile-tab] .player-card {
-    background: rgba(10, 27, 21, 0.96);
-    border-color: rgba(167, 184, 175, 0.26);
-    color: #f5f2e8;
+    background: var(--panel);
+    border-color: var(--line);
+    color: var(--foreground);
   }
 
   main[data-mobile-tab] .player-card.reserve-card {
-    background: rgba(89, 60, 7, 0.28);
+    background: color-mix(in srgb, #efbd64 16%, var(--panel));
   }
 
   main[data-mobile-tab] .player-card.waiting-card,
   main[data-mobile-tab] .player-card.inactive-card {
-    background: rgba(73, 86, 80, 0.24);
+    background: color-mix(in srgb, var(--muted) 10%, var(--panel));
   }
 
   main[data-mobile-tab] .ranking-toolbar {
@@ -17159,17 +17146,17 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
   }
 
   main[data-mobile-tab] .ranking-sort-buttons {
-    background: rgba(5, 16, 13, 0.72);
-    border-color: rgba(167, 184, 175, 0.28);
+    background: var(--panel);
+    border-color: var(--line);
   }
 
   main[data-mobile-tab] .ranking-sort-buttons button {
-    color: #a7b8af;
+    color: var(--ink-soft);
   }
 
   main[data-mobile-tab] .ranking-sort-buttons button.selected {
     background: rgba(200, 239, 93, 0.16);
-    color: #d8fa78;
+    color: var(--green);
   }
 
   main[data-mobile-tab] .ranking-card-grid {
@@ -17195,21 +17182,21 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
   }
 
   main[data-mobile-tab] .ranking-stat-grid span {
-    background: rgba(5, 16, 13, 0.52);
-    border-color: rgba(167, 184, 175, 0.24);
+    background: color-mix(in srgb, var(--muted) 8%, var(--panel));
+    border-color: var(--line);
     min-height: 34px;
     padding: 4px 2px;
   }
 
   main[data-mobile-tab] .ranking-stat-grid b {
-    color: #f5f2e8;
+    color: var(--foreground);
     font-size: 14px;
   }
 
   main[data-mobile-tab] .ranking-card-badge {
     background: rgba(200, 239, 93, 0.13);
     border-color: rgba(200, 239, 93, 0.45);
-    color: #d8fa78;
+    color: var(--green);
     font-size: 10px;
     padding: 5px 7px;
   }
@@ -17273,7 +17260,7 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
   .market-page .market-tabs button.selected,
   .market-page .market-tabs a.selected {
     background: rgba(200, 239, 93, 0.14);
-    color: #d8fa78;
+    color: var(--green);
   }
 
   .market-page .market-grid,
@@ -17300,7 +17287,7 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
   }
 
   .market-page .market-player-info strong {
-    color: #f5f2e8;
+    color: var(--foreground);
     font-size: 15px;
   }
 
@@ -17312,7 +17299,7 @@ main[data-mobile-tab="perfil"] .facet-stepper b {
 
   .market-page .market-tags span {
     background: rgba(167, 184, 175, 0.14);
-    color: #d7e4dd;
+    color: var(--ink-soft);
     font-size: 8px;
     padding: 3px 5px;
   }

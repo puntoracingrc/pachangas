@@ -25,3 +25,16 @@
 @media (max-width: 1180px) { .filters { grid-template-columns: repeat(4, minmax(0, 1fr)); } .search { grid-column: span 2; } .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 620px) { .page { padding: 12px 12px calc(84px + env(safe-area-inset-bottom)); } .filters { grid-template-columns: 1fr 1fr; } .search { grid-column: 1 / -1; } .grid { grid-template-columns: 1fr; } .card { grid-template-columns: 92px minmax(0, 1fr); min-height: 206px; } .card dl { grid-template-columns: 1fr 1fr; } }
 @media (orientation: landscape) and (pointer: coarse), (orientation: landscape) and (max-height: 560px) { .page { gap: 9px; padding: 9px; } .filters { grid-template-columns: repeat(7, minmax(0, 1fr)); padding: 7px; } .search { grid-column: auto; } .filters input, .filters select, .filters button { min-height: 32px; } .grid { grid-auto-columns: minmax(290px, 31%); grid-auto-flow: column; grid-template-columns: none; overflow-x: auto; overscroll-behavior-inline: contain; padding-bottom: 6px; scroll-snap-type: x proximity; } .card { min-height: 184px; scroll-snap-align: start; } }
+
+:global(:root[data-theme="light"]) .filters,
+:global(:root[data-theme="light"]) .card { background: #fff; border-color: rgba(17, 43, 34, .16); color: #10201a; }
+:global(:root[data-theme="light"]) .filters label,
+:global(:root[data-theme="light"]) .card p,
+:global(:root[data-theme="light"]) .empty,
+:global(:root[data-theme="light"]) .pagination { color: #53675e; }
+:global(:root[data-theme="light"]) .filters input,
+:global(:root[data-theme="light"]) .filters select { background: #fff; border-color: rgba(17, 43, 34, .22); color: #10201a; }
+:global(:root[data-theme="light"]) .card h2,
+:global(:root[data-theme="light"]) .card dd { color: #10201a; }
+:global(:root[data-theme="light"]) .card dt { color: #53675e; }
+:global(:root[data-theme="light"]) .open { border-color: rgba(71, 107, 0, .42); color: #476b00; }

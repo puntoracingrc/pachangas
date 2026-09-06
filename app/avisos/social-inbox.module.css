@@ -131,3 +131,13 @@
 }
 
 @media (prefers-reduced-motion: reduce) { .loading i { animation: none; } }
+
+:global(:root[data-theme="light"]) .filters > div,
+:global(:root[data-theme="light"]) .itemMenu > div{background:var(--official-surface-solid,#fff);color:var(--official-text,#10201a);box-shadow:0 18px 38px rgba(16,32,26,.14)}
+:global(:root[data-theme="light"]) .filters button[aria-pressed="true"],
+:global(:root[data-theme="light"]) .filters button:hover,
+:global(:root[data-theme="light"]) .itemMenu button:hover{background:var(--official-surface-soft,#f6f9f7)}
+:global(:root[data-theme="light"]) .offlineNotice{color:var(--official-warning-text,#8a5700)}
+:global(:root[data-theme="light"]) .domainMark[data-domain="MARKET"]{color:var(--official-warning-text,#8a5700)}
+:global(:root[data-theme="light"]) .domainMark[data-domain="TEAM"]{color:#315f9f}
+:global(:root[data-theme="light"]) .toolbar{background:transparent}
