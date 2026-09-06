@@ -350,10 +350,10 @@ export function CanonicalPlayerProfile() {
                 <header><span>Mi carta</span><h2>{initialAssessmentComplete ? "Identidad de juego" : "Tu carta aún no está creada"}</h2></header>
                 {initialAssessmentComplete && profile?.current_overall ? <PlayerCosmeticCard facets={facets} meta={team?.name ?? "Jugador sin equipo"} name={profile.display_name} photoAlt={`Foto de ${profile.display_name}`} photoSrc={profile.avatar ?? undefined} position={profile.position.slice(0, 3).toUpperCase()} score={Math.round(profile.current_overall)} /> : <p>Responde unas preguntas sobre cómo juegas. Crearemos tu primera media y tus atributos. Después evolucionarán con partidos y valoraciones.</p>}
                 <div className={styles.cardActions}>
-                  <Link href={initialAssessmentComplete ? "/personalizar-carta" : "/perfil/test-inicial"}>
-                    {initialAssessmentComplete ? "Ver mi carta" : "Hacer test inicial y crear mi carta"}
+                  <Link className={styles.primary} href={initialAssessmentComplete ? "/personalizar-carta" : "/perfil/test-inicial"}>
+                    {initialAssessmentComplete ? "Editar carta" : "Hacer test inicial y crear mi carta"}
                   </Link>
-                  {initialAssessmentComplete && !advancedAssessmentComplete ? <Link href="/perfil/test-inicial?tipo=avanzado">Mejorar precisión de mi ficha</Link> : null}
+                  {initialAssessmentComplete && !advancedAssessmentComplete ? <Link href="/perfil/test-inicial?tipo=avanzado">Mejorar precisión de mi carta</Link> : null}
                 </div>
               </section>
               <section className={styles.marketSection}>

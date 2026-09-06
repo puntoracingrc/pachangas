@@ -495,7 +495,7 @@ export default function PlayerInitialAssessmentPage() {
     <main className={styles.page} data-assessment-onboarding="v1" data-assessment-status={status}>
         <nav className={styles.topbar}>
           <Link href={initialAssessmentRequired ? onboardingReturnHref : "/perfil"}>Volver</Link>
-          <strong>Mi ficha</strong>
+          <strong>Mi carta</strong>
           <div className={styles.topbarMeta}>
             <span>{profile ? `Rev. ${profile.profile_version}` : "Nueva"}</span>
             {initialAssessmentRequired ? <ThemeToggle compact defaultPreference="dark" /> : null}
@@ -544,7 +544,7 @@ export default function PlayerInitialAssessmentPage() {
                     <div className={styles.summaryActions}>
                       <Link href={onboardingReturnHref}>Entrar en Pachangas IQ</Link>
                       <Link href="/personalizar-carta?returnTo=%2Fperfil%2Ftest-inicial">Personalizar mi carta</Link>
-                      {!snapshot.assessments.advanced ? <button className="primary-button" type="button" onClick={() => beginAssessment("advanced")}>Mejorar precisión de mi ficha</button> : <strong>Test avanzado completado</strong>}
+                      {!snapshot.assessments.advanced ? <button className="primary-button" type="button" onClick={() => beginAssessment("advanced")}>Mejorar precisión de mi carta</button> : <strong>Test avanzado completado</strong>}
                     </div>
                   )}
                 </div>
@@ -595,7 +595,7 @@ export default function PlayerInitialAssessmentPage() {
       active="perfil"
       context={{
         detail: snapshot?.writeContext.scope === "group" ? "Sincronizada con tu equipo" : "Ficha universal",
-        eyebrow: "Mi ficha",
+        eyebrow: "Mi carta",
         status: status === "ready" ? "Servidor conectado" : status === "offline" ? "Sin conexión" : "Comprobando",
         title: "Test de nivel",
       }}

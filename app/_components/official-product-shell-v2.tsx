@@ -39,7 +39,6 @@ type ShellAccount = {
   cardHref?: string;
   displayName?: string;
   notificationsHref?: string;
-  onOpenMenu?: () => void;
   onSignOut?: () => void | Promise<void>;
   profileHref?: string;
   settingsHref?: string;
@@ -319,42 +318,50 @@ function AccountActions({
         {pendingCount > 0 ? <span className={styles.notificationBadge} aria-hidden="true">{pendingCount > 9 ? "9+" : pendingCount}</span>
           : unreadCount > 0 ? <span className={styles.notificationDot} aria-hidden="true" /> : null}
       </Link>
-      <Link className={styles.avatarAction} href={resolvedAccount.profileHref ?? "/perfil"} aria-label="Abrir mi perfil">
+      <button
+        className={styles.avatarAction}
+        type="button"
+        aria-label="Abrir mi perfil y mi carta"
+        onClick={() => {
+          if (menuRef.current) {
+            menuRef.current.open = true;
+            menuRef.current.querySelector<HTMLAnchorElement>("a")?.focus();
+          }
+        }}
+      >
         {resolvedAccount.avatarUrl ? <Image src={resolvedAccount.avatarUrl} alt="" width={34} height={34} unoptimized /> : <UserIcon />}
-      </Link>
-      {resolvedAccount.onOpenMenu ? (
-        <button className={styles.menuAction} type="button" aria-label="Abrir menú general" onClick={resolvedAccount.onOpenMenu}>
+      </button>
+      <details ref={menuRef} className={styles.accountMenu}>
+        <summary className={styles.menuAction} aria-label="Abrir menú general">
           <MenuIcon />
-        </button>
-      ) : (
-        <details ref={menuRef} className={styles.accountMenu}>
-          <summary className={styles.menuAction} aria-label="Abrir menú general">
-            <MenuIcon />
-          </summary>
-          <div
-            className={styles.accountMenuPanel}
-            onClickCapture={(event) => {
-              if (event.target instanceof Element && event.target.closest("a, button")) closeMenu();
-            }}
-          >
-            <p><strong>{resolvedAccount.displayName ?? "Mi cuenta"}</strong><small>Vista jugador</small></p>
-            <Link href={resolvedAccount.profileHref ?? "/perfil"}>Mi perfil</Link>
-            <Link href={resolvedAccount.cardHref ?? "/personalizar-carta"}>Mi carta</Link>
-            <Link href="/ruleta">Ruleta de premios</Link>
-            <Link href={isPlayerWithoutTeam ? "/?social=start" : resolvedAccount.teamHref ?? "/equipo"}>{isPlayerWithoutTeam ? "Empezar" : "Mi equipo"}</Link>
-            <Link href={resolvedAccount.settingsHref ?? "/?mobile=perfil&settings=1"}>Ajustes</Link>
-            {adminViewPreview ? (
-              <button type="button" onClick={adminViewPreview.onToggle}>
-                {adminViewPreview.active ? "Volver a vista admin" : "Ver como jugador"}
-              </button>
-            ) : null}
-            {platformOwner ? <hr /> : null}
-            {platformOwner ? <Link href="/admin">Administración</Link> : null}
-            {platformOwner ? <Link href="/admin/demo">Mundo Demo completo</Link> : null}
-            <button className={styles.signOut} type="button" onClick={() => void signOut()}>Cerrar sesión</button>
-          </div>
-        </details>
-      )}
+        </summary>
+        <div
+          className={styles.accountMenuPanel}
+          onClickCapture={(event) => {
+            if (event.target instanceof Element && event.target.closest("a, button")) closeMenu();
+          }}
+        >
+          <p><strong>{resolvedAccount.displayName ?? "Mi cuenta"}</strong><small>Vista jugador</small></p>
+          <Link href={resolvedAccount.profileHref ?? "/perfil"}>Mi perfil</Link>
+          <Link href={resolvedAccount.cardHref ?? "/personalizar-carta"}>Mi carta</Link>
+          <Link href="/ruleta">Ruleta de premios</Link>
+          <Link href="/ranking">Ranking</Link>
+          <Link href="/ajustes/notificaciones">Avisos y notificaciones</Link>
+          <Link href="/perfil/conducta">Avisos y conducta</Link>
+          <Link href={isPlayerWithoutTeam ? "/?social=start" : resolvedAccount.teamHref ?? "/equipo"}>{isPlayerWithoutTeam ? "Empezar" : "Mi equipo"}</Link>
+          <Link href={resolvedAccount.settingsHref ?? "/?mobile=perfil&settings=1"}>Ajustes y equipo</Link>
+          <Link href="/manual">Manual de usuario</Link>
+          {adminViewPreview ? (
+            <button type="button" onClick={adminViewPreview.onToggle}>
+              {adminViewPreview.active ? "Volver a vista admin" : "Ver como jugador"}
+            </button>
+          ) : null}
+          {platformOwner ? <hr /> : null}
+          {platformOwner ? <Link href="/admin">Administración</Link> : null}
+          {platformOwner ? <Link href="/admin/demo">Mundo Demo completo</Link> : null}
+          <button className={styles.signOut} type="button" onClick={() => void signOut()}>Cerrar sesión</button>
+        </div>
+      </details>
     </div>
   );
 }

@@ -75,9 +75,10 @@ test("OFFICIAL-UI-V3I-002 preserves account links, badges and permission boundar
   assert.match(account, /pendingCount > 9 \? "9\+" : pendingCount/);
   assert.match(account, /aria-label=\{bellLabel\}/);
   assert.match(account, /aria-label="Abrir menú general"/);
-  assert.match(account, /aria-label="Abrir mi perfil"/);
+  assert.match(account, /aria-label="Abrir mi perfil y mi carta"/);
   assert.match(account, /<ThemeToggle compact defaultPreference="dark" \/>/);
-  assert.match(account, /resolvedAccount\.onOpenMenu \? \(/);
+  assert.doesNotMatch(account, /onOpenMenu/);
+  assert.match(account, /menuRef\.current\.open = true/);
   assert.match(account, /platformOwner \? <Link href="\/admin">Administración<\/Link> : null/);
   assert.match(account, /adminViewPreview \? \(/);
 });
@@ -108,7 +109,7 @@ test("profile editing is isolated from the general account menu", async () => {
   assert.match(onboarding, /profileOnly \? "Editar perfil"/);
   assert.match(onboarding, /profileOnly \? "Guardar cambios"/);
   assert.match(onboarding, /if \(profileOnly\) \{[\s\S]*onProfileSaved\?\.\(\)/);
-  assert.match(page, /onOpenMenu: \(\) => setMobileAccountOpen\(true\)/);
+  assert.doesNotMatch(page, /onOpenMenu:/);
 });
 
 test("OFFICIAL-UI-V3I-002 preserves exactly four primary social destinations", async () => {

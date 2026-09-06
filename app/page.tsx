@@ -9739,7 +9739,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
               <small>Test avanzado completado. La ficha seguirá evolucionando con valoraciones de compañeros.</small>
             ) : (
               <button type="button" onClick={() => startPlayerAssessment("advanced", selectedPlayer)}>
-                Mejorar precisión de mi ficha
+                Mejorar precisión de mi carta
               </button>
             )}
           </div>
@@ -10070,7 +10070,6 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
       account={{
         avatarUrl: ownPlayer?.avatar,
         displayName: authDisplayName(authUser),
-        onOpenMenu: () => setMobileAccountOpen(true),
         onSignOut: signOut,
         profileHref: "/perfil",
         settingsHref: "/?mobile=perfil&settings=1",
@@ -11759,7 +11758,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
                   <b aria-hidden="true">›</b>
                 </a>
                 <a className="profile-notifications-link" href="/personalizar-carta">
-                  <span>Personalizar ficha</span>
+                  <span>Personalizar carta</span>
                   <small>Tu colección, efectos y logro destacado</small>
                   <b aria-hidden="true">›</b>
                 </a>
@@ -12202,10 +12201,10 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
           <button
             className="mobile-account-backdrop"
             type="button"
-            aria-label="Cerrar menú de perfil"
+            aria-label="Cerrar ajustes y equipo"
             onClick={() => setMobileAccountOpen(false)}
           />
-          <section className="mobile-account-sheet" role="dialog" aria-modal="true" aria-label="Perfil y ajustes">
+          <section className="mobile-account-sheet" role="dialog" aria-modal="true" aria-label="Ajustes y equipo">
             <header className="mobile-account-header">
               <span className="mobile-account-avatar" aria-hidden="true">
                 {nameInitials(profileName || authDisplayName(authUser))}
@@ -12219,7 +12218,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
               <button
                 className="mobile-account-close"
                 type="button"
-                aria-label="Cerrar menú de perfil"
+                aria-label="Cerrar ajustes y equipo"
                 onClick={() => setMobileAccountOpen(false)}
               >
                 ×
@@ -12228,13 +12227,12 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
             <div className="mobile-account-scroll">
               <div className="mobile-account-group">
                 <h2>Jugador</h2>
-                <button
-                  type="button"
-                  onClick={() => runMobileAccountAction(() => void openOwnPlayerProfile())}
-                  disabled={!hasRealTeam || !isRegisteredUser}
-                >
-                  <span>Mi ficha</span><small>Datos, posición, forma y valoraciones</small><b aria-hidden="true">›</b>
-                </button>
+                <a href="/perfil">
+                  <span>Mi perfil</span><small>Tus datos e información deportiva</small><b aria-hidden="true">›</b>
+                </a>
+                <a href="/personalizar-carta">
+                  <span>Mi carta</span><small>Tu carta, diseños y cosméticos</small><b aria-hidden="true">›</b>
+                </a>
                 <a href="/ruleta">
                   <span>Ruleta de premios</span><small>Tus tiradas, cofres y recompensas</small><b aria-hidden="true">›</b>
                 </a>

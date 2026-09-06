@@ -332,7 +332,7 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.doesNotMatch(page, /createMenuRef/);
   assert.match(page, /<OfficialHomeGameDashboard/);
   assert.match(page, /nextAction=\{homeNextAction\}/);
-  assert.match(page, /Mi ficha/);
+  assert.match(page, /Mi perfil/);
   assert.match(page, /Mi equipo/);
   assert.match(page, /openGroupSwitcher/);
   assert.match(page, /teamAccessPanelRef/);
@@ -341,7 +341,7 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /Ficha de jugador/);
   assert.match(page, /Grupo de pachangas/);
   assert.match(page, /mobile-account-sheet/);
-  assert.match(page, /Perfil y ajustes/);
+  assert.match(page, /Ajustes y equipo/);
   assert.match(page, /canUseAdminControls \? \(/);
   assert.match(page, /closeSettingsPanelWithoutSave/);
   assert.match(page, /Cerrar sin guardar/);

@@ -567,7 +567,7 @@ export default function PlayerCosmeticsPage() {
       active="perfil"
       context={{
         detail: hasPendingChanges ? "Cambios sin guardar" : `${snapshot?.owned.length ?? 0} piezas`,
-        eyebrow: "Mi ficha",
+        eyebrow: "Mi carta",
         status: snapshot ? `Revisión ${snapshot.revision}` : "Sincronizando",
         title: "Personalizar carta",
       }}
@@ -575,14 +575,14 @@ export default function PlayerCosmeticsPage() {
     <main className={styles.page} data-official-surface="player-card">
       <nav className={styles.topbar}>
         <Link href={returnHref}>Volver</Link>
-        <strong>Mi ficha</strong>
+        <strong>Mi carta</strong>
         <UnsavedChanges dirty={hasPendingChanges} />
       </nav>
 
       <header className={styles.header}>
         <div>
           <span>Colección personal</span>
-          <h1>Personalizar ficha</h1>
+          <h1>Personalizar carta</h1>
         </div>
         <div className={styles.headerStats}>
           <span>{snapshot?.owned.length ?? 0} piezas</span>

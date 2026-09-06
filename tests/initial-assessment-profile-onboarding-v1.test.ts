@@ -63,7 +63,7 @@ test("Perfil exposes the real initial assessment instead of looping through cosm
   assert.match(profile, /Hacer test inicial y crear mi carta/);
   assert.match(profile, /href=\{initialAssessmentComplete \? "\/personalizar-carta" : "\/perfil\/test-inicial"\}/);
   assert.match(profile, /assessmentCompleted\(profile, "initial"\)/);
-  assert.match(profile, /Mejorar precisión de mi ficha/);
+  assert.match(profile, /Mejorar precisión de mi carta/);
   assert.match(cosmetics, /href="\/perfil\/test-inicial">Hacer test inicial y crear mi carta/);
   assert.doesNotMatch(cosmetics, /missingProfile \? <Link href="\/\?mobile=perfil"/);
 });
