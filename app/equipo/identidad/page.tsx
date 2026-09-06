@@ -4,14 +4,7 @@ import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { OfficialProductShellV2 } from "../../_components/official-product-shell-v2";
-import {
-  CosmeticCategoryNav,
-  CosmeticEditorShell,
-  CosmeticOptionSelector,
-  EditorActions,
-  MaterialSwatch,
-  UnsavedChanges,
-} from "../../_components/cosmetics-editor";
+import { TeamShieldCosmeticsEditor, teamShieldItemsForSlot } from "../team-shield-editor";
 import { ProductFeedback, ProductState } from "../../_components/product-state";
 import { TeamShieldView } from "../../_components/team-shield-view";
 import { CLIENT_VERSION } from "../../client-version-contract";
@@ -55,29 +48,6 @@ type Membership = {
 };
 
 type ProgressView = "achievements" | "records" | "stats";
-
-const teamShieldCategoryLabels: Record<TeamShieldCosmeticSlot, string> = {
-  background: "Fondo",
-  border: "Borde",
-  bottom_ornament: "Base",
-  effect: "Efecto",
-  pattern: "Trama",
-  primary_symbol: "Símbolo",
-  secondary_symbol: "Símbolo 2",
-  shape: "Forma",
-  side_ornament: "Laterales",
-  top_ornament: "Corona",
-};
-
-const teamShieldCategories = Object.keys(teamShieldCategoryLabels) as TeamShieldCosmeticSlot[];
-
-const rarityLabels: Record<CrestCatalogItem["rarity"], string> = {
-  common: "Común",
-  epic: "Épico",
-  legendary: "Legendario",
-  rare: "Raro",
-  uncommon: "Poco común",
-};
 
 const familyLabels: Partial<Record<CrestCatalogItem["family"], string>> = {
   adornment: "Adorno",
@@ -144,206 +114,6 @@ function grantedPlayerCosmetic(reward: PendingReward | null) {
   const grant = payload && isRecord(payload.grant) ? payload.grant : null;
   if (!grant || grant.cosmeticGranted !== true || typeof grant.cosmeticKey !== "string") return null;
   return grant.cosmeticKey;
-}
-
-function teamShieldItemsForSlot(catalog: CrestCatalogItem[], slot: TeamShieldCosmeticSlot) {
-  if (slot === "secondary_symbol") return catalog.filter((item) => item.family === "symbol");
-  return catalog.filter((item) => item.slot === slot);
-}
-
-function selectedTeamShieldKeys(config: TeamShieldConfig, slot: TeamShieldCosmeticSlot) {
-  const keys: Record<TeamShieldCosmeticSlot, string | null> = {
-    background: config.backgroundKey,
-    border: config.borderKey,
-    bottom_ornament: config.bottomOrnamentKey,
-    effect: config.effectKey,
-    pattern: config.patternKey,
-    primary_symbol: config.primarySymbolKey,
-    secondary_symbol: config.secondarySymbolKey,
-    shape: config.shapeKey,
-    side_ornament: config.sideOrnamentKey,
-    top_ornament: config.topOrnamentKey,
-  };
-  return keys[slot] ? [keys[slot] as string] : [];
-}
-
-function updateTeamShieldSlot(
-  config: TeamShieldConfig,
-  slot: TeamShieldCosmeticSlot,
-  key: string | null,
-): TeamShieldConfig {
-  if (slot === "shape" && key) return { ...config, shapeKey: key };
-  if (slot === "border" && key) return { ...config, borderKey: key };
-  if (slot === "background" && key) return { ...config, backgroundKey: key };
-  if (slot === "pattern") return { ...config, patternKey: key };
-  if (slot === "primary_symbol" && key) return { ...config, primarySymbolKey: key };
-  if (slot === "secondary_symbol") return { ...config, secondarySymbolKey: key };
-  if (slot === "top_ornament") return { ...config, topOrnamentKey: key };
-  if (slot === "side_ornament") return { ...config, sideOrnamentKey: key };
-  if (slot === "bottom_ornament") return { ...config, bottomOrnamentKey: key };
-  if (slot === "effect") return { ...config, effectKey: key };
-  return config;
-}
-
-function TeamShieldCosmeticsEditor({
-  activeCategory,
-  busy,
-  catalog,
-  config,
-  dirty,
-  isOnline,
-  onCategoryChange,
-  onChange,
-  onReset,
-  onSave,
-  revision,
-}: {
-  activeCategory: TeamShieldCosmeticSlot;
-  busy: boolean;
-  catalog: CrestCatalogItem[];
-  config: TeamShieldConfig;
-  dirty: boolean;
-  isOnline: boolean;
-  onCategoryChange: (slot: TeamShieldCosmeticSlot) => void;
-  onChange: (config: TeamShieldConfig) => void;
-  onReset: () => void;
-  onSave: () => void;
-  revision: number;
-}) {
-  const colors = catalog.filter((item) => item.family === "color");
-  const items = teamShieldItemsForSlot(catalog, activeCategory);
-  const selectedKeys = selectedTeamShieldKeys(config, activeCategory);
-  const counts = Object.fromEntries(teamShieldCategories.map((slot) => [
-    slot,
-    teamShieldItemsForSlot(catalog, slot).filter((item) => item.acquiredAt && !item.seenAt).length,
-  ])) as Record<TeamShieldCosmeticSlot, number>;
-  const optional = activeCategory === "effect" || activeCategory === "pattern"
-    || activeCategory === "secondary_symbol" || activeCategory === "top_ornament"
-    || activeCategory === "side_ornament" || activeCategory === "bottom_ornament";
-
-  return (
-    <CosmeticEditorShell
-      className={styles.teamCosmeticEditor}
-      preview={(
-        <div className={styles.previewStage}>
-          <TeamShieldView catalog={catalog} className={styles.identityShield} config={config} />
-          <div>
-            <span>Escudo oficial</span>
-            <strong>{config.initials}</strong>
-            <small>Revisión confirmada {revision}</small>
-          </div>
-        </div>
-      )}
-      actions={(
-        <>
-          <EditorActions
-            busy={busy}
-            onPrimary={onSave}
-            onReset={onReset}
-            primaryDisabled={!dirty || !isOnline}
-            primaryLabel={busy ? "Guardando…" : isOnline ? "Guardar escudo" : "Sin conexión"}
-            resetLabel="Deshacer cambios"
-          />
-          <UnsavedChanges dirty={dirty} synchronizedLabel="Escudo sincronizado" />
-        </>
-      )}
-    >
-      <CosmeticCategoryNav
-        active={activeCategory}
-        ariaLabel="Partes del escudo"
-        items={teamShieldCategories.map((slot) => ({
-          count: counts[slot],
-          key: slot,
-          label: teamShieldCategoryLabels[slot],
-        }))}
-        onChange={onCategoryChange}
-      />
-      <div className={styles.identityFields}>
-        <label>
-          Iniciales
-          <input
-            maxLength={4}
-            value={config.initials}
-            onChange={(event) => onChange({
-              ...config,
-              initials: event.target.value.toUpperCase().replace(/\s/g, ""),
-            })}
-          />
-        </label>
-        <label>
-          Año
-          <input
-            inputMode="numeric"
-            maxLength={4}
-            placeholder="Opcional"
-            value={config.foundationYear}
-            onChange={(event) => onChange({
-              ...config,
-              foundationYear: event.target.value.replace(/\D/g, "").slice(0, 4),
-            })}
-          />
-        </label>
-      </div>
-      <div className={styles.teamColorRows}>
-        {(["primaryColorKey", "secondaryColorKey"] as const).map((field) => (
-          <div className={styles.teamColorRow} key={field}>
-            <span>{field === "primaryColorKey" ? "Principal" : "Secundario"}</span>
-            <div>
-              {colors.map((item) => (
-                <button
-                  aria-label={`${field === "primaryColorKey" ? "Color principal" : "Color secundario"} ${item.name}`}
-                  aria-pressed={config[field] === item.key}
-                  className={config[field] === item.key ? styles.activeSwatch : ""}
-                  key={`${field}-${item.key}`}
-                  type="button"
-                  onClick={() => onChange({ ...config, [field]: item.key })}
-                >
-                  <MaterialSwatch
-                    color={typeof item.render.hex === "string" ? item.render.hex : null}
-                    material={item.material ?? null}
-                  />
-                </button>
-              ))}
-            </div>
-          </div>
-        ))}
-      </div>
-      {activeCategory === "primary_symbol" ? (
-        <div className={styles.symbolControls}>
-          <label>
-            Tamaño
-            <span>
-              <button type="button" onClick={() => onChange({ ...config, primarySymbolScale: Math.max(0.8, config.primarySymbolScale - 0.05) })}>−</button>
-              <strong>{Math.round(config.primarySymbolScale * 100)}%</strong>
-              <button type="button" onClick={() => onChange({ ...config, primarySymbolScale: Math.min(1.2, config.primarySymbolScale + 0.05) })}>+</button>
-            </span>
-          </label>
-          <label>
-            Giro
-            <span>
-              <button type="button" onClick={() => onChange({ ...config, primarySymbolRotation: Math.max(-12, config.primarySymbolRotation - 3) })}>−</button>
-              <strong>{config.primarySymbolRotation}°</strong>
-              <button type="button" onClick={() => onChange({ ...config, primarySymbolRotation: Math.min(12, config.primarySymbolRotation + 3) })}>+</button>
-            </span>
-          </label>
-        </div>
-      ) : null}
-      {items.length ? (
-        <CosmeticOptionSelector
-          items={items.map((item) => ({
-            key: item.key,
-            material: item.material,
-            meta: `${rarityLabels[item.rarity]}${item.collection ? ` · ${item.collection.replaceAll("_", " ")}` : ""}`,
-            name: item.name,
-            new: Boolean(item.acquiredAt && !item.seenAt),
-          }))}
-          noneLabel={optional ? "Ninguno" : undefined}
-          onChange={(key) => onChange(updateTeamShieldSlot(config, activeCategory, key))}
-          selectedKeys={selectedKeys}
-        />
-      ) : <p className={styles.emptyCategory}>No hay piezas disponibles en esta categoría.</p>}
-    </CosmeticEditorShell>
-  );
 }
 
 export default function TeamIdentityPage() {
@@ -891,6 +661,7 @@ export default function TeamIdentityPage() {
           {crest.canManage && crest.teamCosmeticsEnabled ? (
             <TeamShieldCosmeticsEditor
               activeCategory={activeShieldCategory}
+              canSave={crest.canManage}
               busy={Boolean(busy)}
               catalog={crest.catalog}
               config={draftDesign}

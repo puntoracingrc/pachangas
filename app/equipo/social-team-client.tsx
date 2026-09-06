@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { TeamAchievementGallery } from "../personalizar-carta/achievement-gallery";
+import { TeamShieldProduct } from "./team-shield-product";
 import { TeamRanking } from "./team-ranking";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -32,7 +33,7 @@ import { supabase } from "../supabaseClient";
 import styles from "./social-team.module.css";
 import { PlayerClaims } from "./player-claims";
 
-type TeamSurface = "home" | "invitations" | "roster" | "achievements";
+type TeamSurface = "home" | "invitations" | "roster" | "achievements" | "shield";
 type TeamStatus = "disabled" | "error" | "loading" | "no-team" | "offline" | "ready" | "signed-out";
 
 function readJson<T>(key: string): T | null {
@@ -450,13 +451,13 @@ export function SocialTeamProduct({ surface = "home" }: { surface?: TeamSurface 
         <Link onClick={() => setHomePane("ranking")} aria-current={surface === "home" && homePane === "ranking" ? "page" : undefined} href={`/equipo?team=${encodeURIComponent(home.groupId)}`}>Ranking</Link>
         <Link aria-current={surface === "roster" ? "page" : undefined} href={`/equipo/plantilla?team=${encodeURIComponent(home.groupId)}`}>Plantilla</Link>
         <Link aria-current={surface === "achievements" ? "page" : undefined} href={`/equipo/logros?team=${encodeURIComponent(home.groupId)}`}>Logros</Link>
-        <Link href={`/equipo/identidad?grupo=${encodeURIComponent(home.groupId)}`}>Escudo</Link>
+        <Link aria-current={surface === "shield" ? "page" : undefined} href={`/equipo/escudo?team=${encodeURIComponent(home.groupId)}`}>Escudo</Link>
         <Link onClick={() => setHomePane("home")} aria-current={surface === "home" && homePane === "home" ? "page" : undefined} href={`/equipo?team=${encodeURIComponent(home.groupId)}&tab=portada`}>Portada</Link>
         {home.actions.canInvitePlayers ? <Link aria-current={surface === "invitations" ? "page" : undefined} href={`/equipo/invitaciones?team=${encodeURIComponent(home.groupId)}`}>Invitaciones</Link> : null}
         <small>{home.generalArea || "Zona pendiente"} · {roster.length} jugadores</small>
       </nav>
       <div className={styles.workspaceContent}>
-      <header className={styles.hero}>
+      {surface !== "shield" ? <header className={styles.hero}>
         <TeamShieldView className={styles.heroShield} config={home.shield} label={`Escudo de ${home.name}`} size={210} />
         <div className={styles.heroCopy}>
           <span>Equipo activo</span>
@@ -465,13 +466,14 @@ export function SocialTeamProduct({ surface = "home" }: { surface?: TeamSurface 
           <small>{roster.length} jugadores</small>
         </div>
         {surface === "home" ? <PrimaryTeamAction home={home} /> : <Link className={styles.primary} href={`/equipo?team=${encodeURIComponent(home.groupId)}`}>Volver al equipo</Link>}
-      </header>
+      </header> : null}
 
       {message ? <p className={styles.notice} role="status">{message}</p> : null}
 
-      {status === "ready" && surface !== "achievements" ? <PlayerClaims key={`${userId}:${home.groupId}`} groupId={home.groupId} showCandidates={surface === "roster"} onChanged={() => { void loadCanonical(home.groupId); }} /> : null}
+      {status === "ready" && surface !== "achievements" && surface !== "shield" ? <PlayerClaims key={`${userId}:${home.groupId}`} groupId={home.groupId} showCandidates={surface === "roster"} onChanged={() => { void loadCanonical(home.groupId); }} /> : null}
       {surface === "home" && homePane === "home" ? <TeamHome home={home} roster={roster} /> : null}
       {surface === "home" && homePane === "ranking" ? <TeamRanking key={`${userId}:${home.groupId}`} groupId={home.groupId} /> : null}
+      {surface === "shield" ? <TeamShieldProduct key={`${userId}:${home.groupId}`} groupId={home.groupId} /> : null}
       {surface === "achievements" ? <TeamAchievementGallery key={`${userId}:${home.groupId}`} groupId={home.groupId} /> : null}
       {surface === "roster" ? <RosterView admins={groupedRoster.admins} invitationCount={home.activeInvitationCount} players={groupedRoster.players} canInvite={home.actions.canInvitePlayers} teamId={home.groupId} /> : null}
       {surface === "invitations" ? <InvitationView
