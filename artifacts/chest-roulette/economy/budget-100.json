@@ -1,0 +1,44 @@
+[
+  {
+    "initial": "empty",
+    "price": 10,
+    "mean": 32.52,
+    "p50": 29,
+    "p95": 59
+  },
+  {
+    "initial": "empty",
+    "price": 15,
+    "mean": 10.82,
+    "p50": 10,
+    "p95": 15
+  },
+  {
+    "initial": "empty",
+    "price": 20,
+    "mean": 6.51,
+    "p50": 6,
+    "p95": 9
+  },
+  {
+    "initial": "full",
+    "price": 10,
+    "mean": 98.28,
+    "p50": 73,
+    "p95": 245
+  },
+  {
+    "initial": "full",
+    "price": 15,
+    "mean": 15.21,
+    "p50": 14,
+    "p95": 25
+  },
+  {
+    "initial": "full",
+    "price": 20,
+    "mean": 7.98,
+    "p50": 7,
+    "p95": 12
+  }
+]

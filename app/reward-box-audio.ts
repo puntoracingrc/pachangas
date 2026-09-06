@@ -95,3 +95,49 @@ export function createRewardAudio(rarity: RewardRarity, reducedMotion: boolean) 
     },
   };
 }
+
+// Shared recorded samples and mute preference; one disposable voice group per spin.
+export function createRouletteAudio() {
+  preloadSamples();
+  let disposed = false;
+  const voices = new Set<AudioBufferSourceNode>();
+  function stopVoices() {
+    for (const source of voices) { try { source.stop(); } catch { /* Already ended. */ } }
+    voices.clear();
+  }
+  function play(name: SampleName, volume: number, rate = 1, delay = 0, short = false) {
+    const ctx = context;
+    const buffer = samples.get(name);
+    if (disposed || muted || document.hidden || !ctx || ctx.state !== "running" || !buffer) return;
+    const source = ctx.createBufferSource();
+    const gain = ctx.createGain();
+    source.buffer = buffer;
+    source.playbackRate.value = rate;
+    const at = ctx.currentTime + delay;
+    const length = short ? Math.min(.065, buffer.duration / rate) : buffer.duration / rate;
+    gain.gain.setValueAtTime(0, at);
+    gain.gain.linearRampToValueAtTime(volume, at + .003);
+    gain.gain.setValueAtTime(volume, at + Math.max(.004, length - .02));
+    gain.gain.linearRampToValueAtTime(0, at + length);
+    source.connect(gain).connect(ctx.destination);
+    voices.add(source);
+    source.onended = () => { voices.delete(source); source.disconnect(); gain.disconnect(); };
+    source.start(at);
+    source.stop(at + length);
+  }
+  const hide = () => { if (document.hidden) stopVoices(); };
+  document.addEventListener("visibilitychange", hide);
+  return {
+    tick(progress: number) { play("latch", .18, 1.12 - progress * .18, 0, true); },
+    finish(rarity: RewardRarity) {
+      const level = { common: 0, uncommon: 1, rare: 2, epic: 3, legendary: 4 }[rarity];
+      play("body", .22, .95 - level * .07);
+      play("latch", .13, .85, .06, true);
+      const count = [0, 2, 4, 7, 10][level];
+      for (let i = 0; i < count; i++) play(i % 2 ? "glass1" : "glass2", .085, [1, .9, 1.07][i % 3], .13 + i * .1);
+      if (level >= 3) play("air", .13, .7, .12);
+    },
+    setMuted(value: boolean) { setRewardSoundMuted(value); if (value) stopVoices(); },
+    dispose() { disposed = true; stopVoices(); document.removeEventListener("visibilitychange", hide); },
+  };
+}
