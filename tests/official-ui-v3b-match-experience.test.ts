@@ -22,14 +22,14 @@ test("Partidos opens a real Próximos and Historial overview", async () => {
   assert.match(page, /setMatchExperienceView\("overview"\)/);
 });
 
-test("the quick creator has exactly three progressive steps and folded advanced fields", async () => {
+test("the quick creator has exactly three progressive steps with visible price and reserves before review", async () => {
   const experience = await source("app/_components/official-match-experience.tsx");
   assert.match(experience, /useState<1 \| 2 \| 3>\(1\)/);
   assert.match(experience, /\[1, 2, 3\]\.map/);
   assert.match(experience, /Cuándo y dónde/);
   assert.match(experience, /Jugadores y plazas/);
   assert.match(experience, /Revisar y crear/);
-  assert.match(experience, /<details className=\{styles\.advanced\}>/);
+  assert.doesNotMatch(experience, /Opciones avanzadas/);
   assert.match(experience, /Coste del campo/);
   assert.match(experience, /Máximo reservas/);
 });
