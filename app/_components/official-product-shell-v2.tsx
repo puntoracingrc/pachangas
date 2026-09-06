@@ -341,7 +341,7 @@ function AccountActions({
           }}
         >
           <p><strong>{resolvedAccount.displayName ?? "Mi cuenta"}</strong><small>Vista jugador</small></p>
-          <Link href={resolvedAccount.profileHref ?? "/perfil"}>Mi perfil</Link>
+          <Link href={resolvedAccount.profileHref ?? "/perfil"}>PERFIL/CARTA</Link>
           <Link href="/ruleta">Ruleta de premios</Link>
           <Link href="/ranking">Ranking</Link>
           <Link href="/ajustes/notificaciones">Avisos y notificaciones</Link>

@@ -12232,7 +12232,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
               <div className="mobile-account-group">
                 <h2>Jugador</h2>
                 <a href="/perfil">
-                  <span>Mi perfil</span><small>Tus datos e información deportiva</small><b aria-hidden="true">›</b>
+                  <span>PERFIL/CARTA</span><small>Tus datos e información deportiva</small><b aria-hidden="true">›</b>
                 </a>
                 <a href="/ruleta">
                   <span>Ruleta de premios</span><small>Tus tiradas, cofres y recompensas</small><b aria-hidden="true">›</b>
