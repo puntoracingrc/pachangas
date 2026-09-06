@@ -169,8 +169,8 @@ test("builds the transfer market as a separated page", async () => {
   assert.match(source, /title="Mercado"/);
   assert.match(source, /marketContext && activeTab === "jugadores"/);
   assert.match(source, /Buscando para/);
-  assert.match(source, /aria-expanded=\{filtersOpen\}/);
-  assert.match(source, /filtersOpen \? \(\s*<MarketFilterSheet/);
+  assert.match(source, /<MarketFilters activeTab=\{activeTab\}/);
+  assert.doesNotMatch(source, /filtersOpen|<MarketFilterSheet/);
   assert.match(source, /activeTab=\{activeTab\}/);
   assert.match(source, /function selectMarketTab\(tab: MarketTab\)/);
   assert.match(source, /const activeTarget = zonePlace \|\|/);

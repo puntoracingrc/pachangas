@@ -12,16 +12,16 @@ import { googleAuthEntryHref } from "../google-auth-return";
 import { supabase } from "../supabaseClient";
 import { ChallengeableTeamsPanel } from "./challengeable-teams-panel";
 import { MarketDetailSheet } from "./market-detail-sheet";
-import { MarketFilterSheet, type MarketFilterDraft } from "./market-filter-sheet";
+import { MarketFilters, type MarketFilterDraft } from "./market-filter-sheet";
 import {
   marketQueryPhase,
   visibleMarketResultCount,
   type MarketDataSource,
 } from "./marketplace-ui-state";
 import {
-  MARKET_QUICK_DAYS,
   marketAvailabilityMatches,
   marketDayMatches,
+  MARKET_DEFAULT_SORT,
   marketRouteDetailFromParams,
   marketRouteFiltersFromParams,
   readMarketLocationPreference,
@@ -260,6 +260,7 @@ function marketTabFromParam(value: string | null): MarketTab {
 }
 
 function numberParam(value: string | null) {
+  if (value === null || value.trim() === "") return undefined;
   const numeric = Number(value);
   return Number.isFinite(numeric) ? numeric : undefined;
 }
@@ -484,8 +485,6 @@ function MarketplaceClientContent() {
   const [initialRoute] = useState(() => marketRouteFromSearch(""));
   const [activeTab, setActiveTab] = useState<MarketTab>(initialRoute.tab);
   const [filters, setFilters] = useState<MarketFilterDraft>(() => createFilterDraft(initialRoute.filters));
-  const [filterDraft, setFilterDraft] = useState<MarketFilterDraft>(() => createFilterDraft(initialRoute.filters));
-  const [filtersOpen, setFiltersOpen] = useState(false);
   const [selectedDetail, setSelectedDetail] = useState<MarketRouteDetail>(initialRoute.detail);
   const [marketContext, setMarketContext] = useState<MarketMatchContext | null>(initialRoute.context);
   const [zonePlace, setZonePlace] = useState<MarketTarget | null>(initialRoute.zonePlace);
@@ -521,7 +520,6 @@ function MarketplaceClientContent() {
     setMarketContext(route.context);
     setSelectedDetail(route.detail);
     setFilters((current) => ({ ...createFilterDraft(route.filters), approval: current.approval, goalkeeperOnly: current.goalkeeperOnly, openSlotsOnly: current.openSlotsOnly }));
-    setFilterDraft((current) => ({ ...createFilterDraft(route.filters), approval: current.approval, goalkeeperOnly: current.goalkeeperOnly, openSlotsOnly: current.openSlotsOnly }));
     setZonePlace(route.zonePlace);
   });
 
@@ -547,7 +545,6 @@ function MarketplaceClientContent() {
         window.queueMicrotask(() => {
           if (!active) return;
           setFilters((current) => ({ ...current, radiusKm: preference.radiusKm, zone: preference.label, zonePlaceId: preference.placeId }));
-          setFilterDraft((current) => ({ ...current, radiusKm: preference.radiusKm, zone: preference.label, zonePlaceId: preference.placeId }));
           setZonePlace({ name: preference.label, placeId: preference.placeId });
         });
       }
@@ -763,7 +760,6 @@ function MarketplaceClientContent() {
     const nextFilters = { ...filters, zone: label, zonePlaceId: target.placeId };
     setZonePlace(target);
     setFilters(nextFilters);
-    setFilterDraft(nextFilters);
     setLocationMessage("");
     writeMarketLocationPreference(window.localStorage, { label, placeId: target.placeId, radiusKm: nextFilters.radiusKm });
     replaceRoute({ filters: nextFilters });
@@ -920,7 +916,6 @@ function MarketplaceClientContent() {
   function applyQuickFilter(patch: Partial<MarketFilterDraft>) {
     const next = { ...filters, ...patch };
     setFilters(next);
-    setFilterDraft(next);
     replaceRoute({ filters: next });
   }
 
@@ -933,11 +928,10 @@ function MarketplaceClientContent() {
       modality: "Todas",
       position: "Todas",
       radiusKm: 30,
-      sort: "relevance",
+      sort: MARKET_DEFAULT_SORT,
       zone: "",
     });
     setFilters(next);
-    setFilterDraft(next);
     setZonePlace(null);
     replaceRoute({ filters: next });
   }
@@ -954,7 +948,6 @@ function MarketplaceClientContent() {
       setLocating(false);
       setZonePlace({ lat: position.coords.latitude, lng: position.coords.longitude, name: "Mi ubicación aproximada" });
       setFilters(next);
-      setFilterDraft(next);
       replaceRoute({ filters: next });
     }, () => {
       setLocating(false);
@@ -1015,8 +1008,9 @@ function MarketplaceClientContent() {
       .sort((left, right) => {
         if (activeFilters.sort === "slots") return right.openSlots - left.openSlots;
         if (activeFilters.sort === "distance") {
-          return (distanceKmBetween(activeTarget, left.lat, left.lng) ?? Number.MAX_SAFE_INTEGER)
+          const distanceDifference = (distanceKmBetween(activeTarget, left.lat, left.lng) ?? Number.MAX_SAFE_INTEGER)
             - (distanceKmBetween(activeTarget, right.lat, right.lng) ?? Number.MAX_SAFE_INTEGER);
+          if (distanceDifference !== 0) return distanceDifference;
         }
         return (Date.parse(left.date) || Number.MAX_SAFE_INTEGER) - (Date.parse(right.date) || Number.MAX_SAFE_INTEGER);
       });
@@ -1024,7 +1018,6 @@ function MarketplaceClientContent() {
 
   const filteredProfiles = profilesFor(filters);
   const filteredMatches = matchesFor(filters);
-  const draftResultCount = activeTab === "partidos" ? matchesFor(filterDraft).length : activeTab === "jugadores" ? profilesFor(filterDraft).length : 0;
   const selectedMatch = selectedDetail?.kind === "match" ? openMatches.find((match) => match.id === selectedDetail.id) ?? null : null;
   const selectedPlayer = selectedDetail?.kind === "player" ? profiles.find((profile) => profile.id === selectedDetail.id) ?? null : null;
 
@@ -1252,7 +1245,6 @@ function MarketplaceClientContent() {
                     onChange={(event) => {
                       const next = { ...filters, zone: event.target.value, zonePlaceId: undefined };
                       setFilters(next);
-                      setFilterDraft(next);
                       setZonePlace(event.target.value ? { name: event.target.value } : null);
                     }}
                     onBlur={() => {
@@ -1264,6 +1256,9 @@ function MarketplaceClientContent() {
                     placeholder="¿Dónde quieres jugar?"
                   />
                   {locationMessage ? <small className={styles.locationHint} aria-live="polite">{locationMessage}</small> : null}
+                  {!locationMessage && filters.sort === "distance" && (!Number.isFinite(activeTarget?.lat) || !Number.isFinite(activeTarget?.lng)) ? (
+                    <small className={styles.locationHint}>Selecciona una ciudad o usa tu ubicación para ordenar por distancia.</small>
+                  ) : null}
                 </label>
                 <button className={styles.locationAction} type="button" aria-label={locating ? "Buscando tu ubicación" : "Usar mi ubicación"} title="Usar mi ubicación" onClick={useMyLocation} disabled={locating}>
                   <LocationTargetIcon />
@@ -1271,18 +1266,7 @@ function MarketplaceClientContent() {
                 </button>
                 {filters.zone ? <button type="button" aria-label="Quitar ubicación" title="Quitar ubicación" onClick={() => applyQuickFilter({ zone: "", zonePlaceId: undefined })}>×</button> : null}
               </div>
-              <div className={styles.quickRow} aria-label="Filtros rápidos">
-                {MARKET_QUICK_DAYS.map((day) => (
-                  <button key={day} type="button" aria-pressed={filters.day === day} onClick={() => applyQuickFilter({ day: filters.day === day ? "Todos" : day })}>{day}</button>
-                ))}
-                {Object.entries(modalityLabels).map(([value, label]) => (
-                  <button key={value} type="button" aria-pressed={filters.modality === value} onClick={() => applyQuickFilter({ modality: filters.modality === value ? "Todas" : value })}>{label}</button>
-                ))}
-                <button className={styles.filterButton} type="button" aria-expanded={filtersOpen} onClick={() => {
-                  setFilterDraft(filters);
-                  setFiltersOpen(true);
-                }}>Filtros</button>
-              </div>
+              <MarketFilters activeTab={activeTab} draft={filters} onChange={applyQuickFilter} onReset={clearFilters} />
               {(filters.zone || filters.day !== "Todos" || filters.modality !== "Todas" || filters.position !== "Todas") ? (
                 <div className={styles.activeFilters} aria-label="Filtros activos">
                   {filters.zone ? <button type="button" onClick={() => applyQuickFilter({ zone: "", zonePlaceId: undefined })}>{filters.zone} ×</button> : null}
@@ -1303,7 +1287,7 @@ function MarketplaceClientContent() {
                   {activeTab === "partidos" ? <option value="date">Más próximo</option> : null}
                   {activeTab === "partidos" ? <option value="slots">Más plazas</option> : null}
                   {activeTab !== "partidos" ? <option value="level">Nivel</option> : null}
-                  {Number.isFinite(activeTarget?.lat) ? <option value="distance">Más cerca</option> : null}
+                  <option value="distance">Distancia</option>
                 </select>
               </label>
               <span className={styles.sourceBadge} data-source={activeSource}>{sourceText}</span>
@@ -1491,6 +1475,7 @@ function MarketplaceClientContent() {
           ) : (
             <ChallengeableTeamsPanel
               marketFilters={filters}
+              searchOrigin={activeTarget}
               onCloseTeam={closeDetail}
               onOpenTeam={(teamId) => openDetail({ id: teamId, kind: "team" })}
               onPrepareChallenge={(team) => window.location.assign(`/retos?view=active&crear=1&rival=${encodeURIComponent(team.teamCode)}&returnTo=${encodeURIComponent(`${window.location.pathname}${window.location.search}`)}`)}
@@ -1499,21 +1484,6 @@ function MarketplaceClientContent() {
             />
           )}
         </OfficialMarketGameView>
-        {filtersOpen ? (
-          <MarketFilterSheet
-            activeTab={activeTab}
-            draft={filterDraft}
-            onApply={() => {
-              setFilters(filterDraft);
-              setFiltersOpen(false);
-              pushRoute({ filters: filterDraft, tab: activeTab });
-            }}
-            onChange={(patch) => setFilterDraft((current) => ({ ...current, ...patch }))}
-            onClose={() => setFiltersOpen(false)}
-            onReset={() => setFilterDraft(createFilterDraft({ day: "Todos", maxPrice: null, maxRating: null, minRating: null, modality: "Todas", position: "Todas", radiusKm: 30, sort: "relevance", zone: "" }))}
-            resultCount={draftResultCount}
-          />
-        ) : null}
       </main>
     </OfficialProductShellV2>
   );
