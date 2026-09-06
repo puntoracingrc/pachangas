@@ -405,3 +405,8 @@
   .queuedChest img { height: 36px; }
   .queuedChest span { font-size: 10px; white-space: nowrap; }
 }
+
+/* Reserve the queue row even after its last chest is revealed. */
+.chestQueue { height: 105px; min-height: 105px; box-sizing: border-box; }
+.chestQueue:empty { visibility: hidden; }
+@media (orientation: portrait) and (max-height: 700px) { .chestQueue { height: 71px; min-height: 71px; } }

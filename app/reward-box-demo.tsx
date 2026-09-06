@@ -30,6 +30,7 @@ type RewardBoxDemoProps = {
   onClose: () => void;
   onSecondaryAction?: () => void;
   open: boolean;
+  secondaryActionProminent?: boolean;
   secondaryActionDisabled?: boolean;
   secondaryActionLabel?: string;
   title?: string;
@@ -92,6 +93,7 @@ export function RewardBoxDemo({
   onClose,
   onSecondaryAction,
   open,
+  secondaryActionProminent = false,
   secondaryActionDisabled = false,
   secondaryActionLabel,
   title,
@@ -149,7 +151,7 @@ export function RewardBoxDemo({
 
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
-    closeButtonRef.current?.focus();
+    closeButtonRef.current?.focus({ preventScroll: true });
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape") onClose();
     };
@@ -429,7 +431,7 @@ export function RewardBoxDemo({
         </button>
         {actionLabel || continueLabel || remainingCount !== undefined ? (
           <div className={styles.revealPanel} style={{ visibility: pendingChests?.length || revealed || phase === "error" || (actionLabel && onAction) ? "visible" : "hidden" }}>
-            {pendingChests && pendingChests.length > 0 ? (
+            {pendingChests ? (
               <div className={styles.chestQueue} role="group" aria-label="Cofres pendientes: elige cuál abrir">
                 {pendingChests.map((chest, i) => (
                   <button key={chest.id} type="button" className={styles.queuedChest}
@@ -446,21 +448,21 @@ export function RewardBoxDemo({
                 ))}
               </div>
             ) : null}
-            {revealed && remainingCount !== undefined ? (
-              <p className={styles.remaining} role="status">
+            {remainingCount !== undefined ? (
+              <p className={styles.remaining} role="status" style={{ visibility: revealed ? "visible" : "hidden" }}>
                 {remainingCount > 0
                   ? `Quedan ${remainingCount} ${remainingCount === 1 ? "cofre por abrir" : "cofres por abrir"}`
                   : "¡Has abierto todos los cofres!"}
               </p>
             ) : null}
-            {((revealed || phase === "error") && continueLabel && onContinue) || (actionLabel && onAction) ? (
+            {(continueLabel && onContinue) || (actionLabel && onAction) ? (
               <div className={styles.revealActions}>
-                {(revealed || phase === "error") && continueLabel && onContinue ? (
-                  <button type="button" disabled={leaving || actionDisabled} onClick={() => transitionTo(onContinue)}>{continueLabel}</button>
+                {continueLabel && onContinue ? (
+                  <button type="button" style={{ visibility: revealed || phase === "error" ? "visible" : "hidden" }} disabled={!revealed && phase !== "error" || leaving || actionDisabled} onClick={() => transitionTo(onContinue)}>{continueLabel}</button>
                 ) : null}
                 {actionLabel && onAction ? <button className={continueLabel ? styles.secondaryAction : undefined} type="button" disabled={leaving || actionDisabled} onClick={onAction}>{actionLabel}</button> : null}
                 {secondaryActionLabel && onSecondaryAction ? (
-                  <button className={styles.secondaryAction} type="button" disabled={leaving || secondaryActionDisabled} onClick={onSecondaryAction}>
+                  <button className={secondaryActionProminent ? undefined : styles.secondaryAction} style={secondaryActionProminent ? { visibility: revealed || phase === "error" ? "visible" : "hidden" } : undefined} type="button" disabled={leaving || secondaryActionDisabled || (secondaryActionProminent && !revealed && phase !== "error")} onClick={onSecondaryAction}>
                     {secondaryActionLabel}
                   </button>
                 ) : null}

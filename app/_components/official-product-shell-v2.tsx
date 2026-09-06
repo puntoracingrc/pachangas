@@ -340,6 +340,7 @@ function AccountActions({
             <p><strong>{resolvedAccount.displayName ?? "Mi cuenta"}</strong><small>Vista jugador</small></p>
             <Link href={resolvedAccount.profileHref ?? "/perfil"}>Mi perfil</Link>
             <Link href={resolvedAccount.cardHref ?? "/personalizar-carta"}>Mi carta</Link>
+            <Link href="/ruleta">Ruleta de premios</Link>
             <Link href={isPlayerWithoutTeam ? "/?social=start" : resolvedAccount.teamHref ?? "/equipo"}>{isPlayerWithoutTeam ? "Empezar" : "Mi equipo"}</Link>
             <Link href={resolvedAccount.settingsHref ?? "/?mobile=perfil&settings=1"}>Ajustes</Link>
             {adminViewPreview ? (

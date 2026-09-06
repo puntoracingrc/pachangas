@@ -12235,6 +12235,9 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
                 >
                   <span>Mi ficha</span><small>Datos, posición, forma y valoraciones</small><b aria-hidden="true">›</b>
                 </button>
+                <a href="/ruleta">
+                  <span>Ruleta de premios</span><small>Tus tiradas, cofres y recompensas</small><b aria-hidden="true">›</b>
+                </a>
                 <a href="/ajustes/notificaciones">
                   <span>Avisos y notificaciones</span><small>Elige categorías y canales</small><b aria-hidden="true">›</b>
                 </a>
