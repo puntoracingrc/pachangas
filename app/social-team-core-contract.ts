@@ -21,6 +21,8 @@ export type SocialTeamFeatureFlags = {
 };
 
 export type CanonicalSocialProfile = {
+  birthDate?: string;
+  marketAgeAllowed?: boolean;
   approximateTime: string;
   avatarRef: string | null;
   confirmedRevision: number;
@@ -221,6 +223,8 @@ export function normalizeCanonicalSocialProfile(value: unknown): CanonicalSocial
   const primaryPosition = text(source?.primaryPosition);
   if (!source || !displayName || !primaryPosition) return null;
   return {
+    birthDate: text(source.birthDate),
+    marketAgeAllowed: source.marketAgeAllowed === true,
     approximateTime: text(source.approximateTime),
     avatarRef: text(source.avatarRef) || null,
     confirmedRevision: integer(source.confirmedRevision ?? source.revision),

@@ -54,7 +54,7 @@ test("minimum profile requires only name, position and one modality", () => {
 
 test("first-card onboarding additionally requires a canonical city or town", () => {
   assert.equal(socialFirstTimeProfileReady({ displayName: "Alex", modalities: ["futbol7"], position: "Pivote" }), false);
-  assert.equal(socialFirstTimeProfileReady({ displayName: "Alex", generalArea: "Barcelona", modalities: ["futbol7"], position: "Pivote" }), true);
+  assert.equal(socialFirstTimeProfileReady({ birthDate: "2000-01-01", displayName: "Alex", generalArea: "Barcelona", modalities: ["futbol7"], position: "Pivote" }), true);
 });
 
 test("the local draft is bounded, resumable and never preserves a blob as authority", () => {
@@ -277,7 +277,7 @@ test("Mi perfil is a clean cached read model with canonical Realtime invalidatio
   assert.match(profile, /Tu carta aún no está creada/);
   assert.match(profile, /Hacer test inicial y crear mi carta/);
   assert.match(profile, /Responde unas preguntas sobre cómo juegas/);
-  assert.match(profile, /Tu perfil no se publica hasta que lo autorices expresamente/);
+  assert.match(profile, /Activa el mercado público para que otros equipos te encuentren/);
   assert.doesNotMatch(profile, />UUID<|>Provider<|>Revisión<|>Auth metadata</i);
 });
 

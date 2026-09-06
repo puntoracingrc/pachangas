@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { isAdultBirthDate, madridToday, validBirthDate } from "../market-age-contract";
 import Image from "next/image";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { attachVenueAutocomplete, type VenuePlace } from "../googlePlacesClient";
@@ -241,13 +242,13 @@ export function SocialOnboarding({
 
   useEffect(() => {
     if (!requiredCardOnboarding) return;
-    const nextStep = firstTimeProfileReady ? 3 : profileReady ? 2 : 1;
+    const nextStep = firstTimeProfileReady ? 3 : profileReady && validBirthDate(canonicalProfile?.birthDate) ? 2 : 1;
     let active = true;
     queueMicrotask(() => {
-      if (active) setStep((current) => current === 3 && nextStep < 3 ? nextStep : Math.max(current, nextStep));
+      if (active) setStep((current) => !validBirthDate(canonicalProfile?.birthDate) ? 1 : current === 3 && nextStep < 3 ? nextStep : Math.max(current, nextStep));
     });
     return () => { active = false; };
-  }, [firstTimeProfileReady, profileReady, requiredCardOnboarding]);
+  }, [firstTimeProfileReady, profileReady, requiredCardOnboarding, canonicalProfile?.birthDate]);
 
   useEffect(() => {
     if (activeView !== "profile" || step !== 2) return;
@@ -443,6 +444,7 @@ export function SocialOnboarding({
   }
 
   async function saveProfile() {
+    if (!validBirthDate(visibleDraft.birthDate)) { setStep(1); setProfileMessage("Indica una fecha de nacimiento válida."); return; }
     if (profileSaving || !writeAvailability.allowed || !visibleDraft.displayName.trim() || !cityConfirmed) return;
     setProfileSaving(true);
     setProfileMessage("Guardando con el servidor...");
@@ -546,7 +548,7 @@ export function SocialOnboarding({
             {(profileOnly ? [1, 2] : [1, 2, 3]).map((item) => (
               <button
                 aria-current={step === item ? "step" : undefined}
-                disabled={item === 2 ? !visibleDraft.displayName.trim() : item === 3 ? requiredCardOnboarding && !firstTimeProfileReady : false}
+                disabled={item === 2 ? (!visibleDraft.displayName.trim() || !validBirthDate(visibleDraft.birthDate)) : item === 3 ? requiredCardOnboarding && !firstTimeProfileReady : false}
                 key={item}
                 type="button"
                 onClick={() => setStep(item)}
@@ -559,6 +561,7 @@ export function SocialOnboarding({
             <div className={styles.formBody}>
               <div className={styles.stepHeading}><span>Paso 1</span><h3>Tu perfil</h3><p>Solo lo necesario para reconocerte cuando juegues.</p></div>
               <div className={styles.profileGrid}>
+                <label>Fecha de nacimiento<input type="date" autoComplete="bday" max={madridToday()} value={visibleDraft.birthDate ?? ""} onChange={(event) => updateDraft({ birthDate: event.target.value })} /><small>Es privada. Mercado y retos están disponibles a partir de los 18 años.</small></label>
                 <label>Nombre visible<input autoComplete="nickname" maxLength={80} value={visibleDraft.displayName} onChange={(event) => updateDraft({ displayName: event.target.value })} /></label>
                 <label>Posición principal<select value={visibleDraft.position} onChange={(event) => updateDraft({ position: event.target.value })}>{SOCIAL_POSITION_OPTIONS.map((position) => <option key={position}>{position}</option>)}</select></label>
                 <fieldset><legend>Modalidad preferida</legend><div className={styles.segmented}>{modalityOptions.map((option) => <button aria-pressed={visibleDraft.modality === option.id} key={option.id} type="button" onClick={() => updateDraft({ modality: option.id })}>{option.label}</button>)}</div></fieldset>
@@ -569,7 +572,8 @@ export function SocialOnboarding({
                   setAvatarPreview(URL.createObjectURL(file));
                 }} /></span><small>Opcional. Esta vista previa no se publica hasta guardar tu perfil canónico.</small></label>
               </div>
-              <div className={styles.actions}><button className={styles.primary} type="button" onClick={() => setStep(2)} disabled={!visibleDraft.displayName.trim()}>Continuar</button></div>
+              {validBirthDate(visibleDraft.birthDate) && !isAdultBirthDate(visibleDraft.birthDate) ? <p className={styles.ageNotice}>Puedes jugar con tu equipo y crear uno para partidos internos. Un administrador adulto podrá organizar encuentros por mercado y retos.</p> : null}
+              <div className={styles.actions}><button className={styles.primary} type="button" onClick={() => setStep(2)} disabled={!visibleDraft.displayName.trim() || !validBirthDate(visibleDraft.birthDate)}>Continuar</button></div>
             </div>
           ) : null}
           {step === 2 ? (
@@ -596,7 +600,7 @@ export function SocialOnboarding({
               <label>Franja aproximada<select value={visibleDraft.approximateTime} onChange={(event) => updateDraft({ approximateTime: event.target.value })}><option>08:00-12:00</option><option>12:00-16:00</option><option>16:00-20:00</option><option>20:00-22:00</option><option>22:00-00:00</option></select></label>
               {!writeAvailability.allowed ? <p className={styles.warning}>{writeAvailability.label}</p> : null}
               {profileMessage ? <p className={styles.message} role="status">{profileMessage}</p> : null}
-              <div className={styles.actions}><button type="button" onClick={() => setStep(1)}>Volver</button><button className={styles.primary} type="button" disabled={profileSaving || !writeAvailability.allowed || !cityConfirmed} onClick={() => void saveProfile()}>{profileSaving ? "Guardando..." : profileOnly ? "Guardar cambios" : profileReady ? "Actualizar perfil" : "Guardar perfil"}</button></div>
+              <div className={styles.actions}><button type="button" onClick={() => setStep(1)}>Volver</button><button className={styles.primary} type="button" disabled={profileSaving || !writeAvailability.allowed || !cityConfirmed || !validBirthDate(visibleDraft.birthDate)} onClick={() => void saveProfile()}>{profileSaving ? "Guardando..." : profileOnly ? "Guardar cambios" : profileReady ? "Actualizar perfil" : "Guardar perfil"}</button></div>
             </div>
           ) : null}
           {step === 3 ? requiredCardOnboarding ? <RequiredAssessmentStep invitation={invitation} onBack={() => setStep(2)} /> : <StartChoices onCreate={() => selectView("create")} onJoin={() => selectView("join")} /> : null}

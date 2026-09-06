@@ -7,3 +7,6 @@
 
 .alreadyMemberCard{margin-bottom:14px;border:1px solid rgba(100,219,228,.25);background:rgba(100,219,228,.06);padding:18px}.alreadyMemberCard span{color:#64dbe4;font-size:.72rem;font-weight:800;text-transform:uppercase}.alreadyMemberCard strong{display:block;margin-top:5px;font-size:1.2rem}.alreadyMemberCard p{margin:7px 0;color:#aebcb7}.alreadyMemberCard .primary{margin-top:12px;min-height:44px;padding:0 18px}
 :global(:root[data-theme="light"]) .alreadyMemberCard{border-color:rgba(8,113,122,.25);background:rgba(8,113,122,.06)}:global(:root[data-theme="light"]) .alreadyMemberCard span{color:#08717a}:global(:root[data-theme="light"]) .alreadyMemberCard p{color:#64706a}
+
+.ageNotice{margin:8px 0 12px;color:#aebcb7;font-size:.82rem;line-height:1.5}
+:global(:root[data-theme="light"]) .ageNotice{color:#46534d}

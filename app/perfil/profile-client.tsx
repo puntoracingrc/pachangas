@@ -385,18 +385,19 @@ export function CanonicalPlayerProfile() {
                 <header><span>Mercado público</span><strong data-market-state={marketState}>{marketState === "PUBLICADO" ? "PUBLICADO" : "NO PUBLICADO"}</strong></header>
                 <p>Activa el mercado público para que otros equipos te encuentren y te propongan jugar. También te permite encontrar equipos y buscar partidos a los que apuntarte.</p>
                 {!team && !freeAgentMarketReady ? <p>Añade tu zona, días y horario. Después podrás pulsar «Publicarme» para activar tu publicación.</p> : null}
+                {socialProfile?.marketAgeAllowed !== true ? <p>El mercado está disponible a partir de los 18 años. Puedes seguir jugando con tu equipo. <Link href="/?social=profile">Revisar fecha de nacimiento</Link></p> : null}
                 <div className={styles.marketActions}>
                   {!team && socialProfile ? (
                     <button
                       data-free-agent-market-action={socialProfile.marketPublished ? "unpublish" : "publish"}
-                      disabled={marketBusy || (!socialProfile.marketPublished && !freeAgentMarketReady)}
+                      disabled={marketBusy || (!socialProfile.marketPublished && (!freeAgentMarketReady || socialProfile.marketAgeAllowed !== true))}
                       onClick={() => void toggleFreeAgentMarket()}
                       type="button"
                     >
                       {marketBusy ? "Confirmando..." : socialProfile.marketPublished ? "Pausar publicación" : "Publicarme"}
                     </button>
                   ) : null}
-                  <Link href={marketSettingsHref}>{team ? "Configurar mercado público" : "Completar zona y disponibilidad"}</Link>
+                  {socialProfile?.marketAgeAllowed === true ? <Link href={marketSettingsHref}>{team ? "Configurar mercado público" : "Completar zona y disponibilidad"}</Link> : null}
                 </div>
               </section>
               <details className={styles.privacy}>

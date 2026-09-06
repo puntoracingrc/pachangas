@@ -1,3 +1,4 @@
+import { validBirthDate } from "./market-age-contract";
 export type SocialEntryState =
   | "NEW_USER"
   | "PROFILE_READY_NO_TEAM"
@@ -16,6 +17,7 @@ export type SocialProfileFieldClass =
   | "TECHNICAL";
 
 export type SocialProfileMinimum = {
+  birthDate?: string | null;
   approximateTime?: string | null;
   avatarRef?: string | null;
   confirmedRevision?: number | null;
@@ -32,6 +34,7 @@ export type SocialProfileMinimum = {
 };
 
 export type SocialOnboardingDraft = {
+  birthDate?: string;
   approximateTime: string;
   avatarPreviewUrl: string;
   days: string[];
@@ -71,6 +74,7 @@ export const SOCIAL_PROFILE_FIELD_CLASSIFICATION = {
 } as const satisfies Record<string, SocialProfileFieldClass>;
 
 export const DEFAULT_SOCIAL_ONBOARDING_DRAFT: SocialOnboardingDraft = {
+  birthDate: "",
   approximateTime: "20:00-22:00",
   avatarPreviewUrl: "",
   days: [],
@@ -108,6 +112,7 @@ export function normalizeSocialOnboardingDraft(value: unknown): SocialOnboarding
   const draft = value as Partial<SocialOnboardingDraft>;
   const modality = draft.modality === "sala" || draft.modality === "futbol11" ? draft.modality : "futbol7";
   return {
+    birthDate: cleanText(draft.birthDate, 10),
     approximateTime: cleanText(draft.approximateTime, 40) || DEFAULT_SOCIAL_ONBOARDING_DRAFT.approximateTime,
     avatarPreviewUrl: "",
     days: Array.isArray(draft.days)
@@ -136,6 +141,7 @@ export function socialProfileMinimumReady(profile: SocialProfileMinimum | null |
 export function socialFirstTimeProfileReady(profile: SocialProfileMinimum | null | undefined) {
   return Boolean(
     socialProfileMinimumReady(profile)
+      && validBirthDate(profile?.birthDate)
       && cleanText(profile?.generalArea, 120),
   );
 }
