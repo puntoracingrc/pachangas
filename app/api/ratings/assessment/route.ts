@@ -101,6 +101,10 @@ async function resolveGroupContext(
     throw new Error("La ficha seleccionada pertenece a otro jugador.");
   }
 
+  if (requestedPlayer && !requestedPlayer.ownerUserId) {
+    throw new Error("Solicita primero esta ficha y espera la aprobación del administrador.");
+  }
+
   return {
     groupId: group.data.id,
     playerId: typeof ownedPlayer?.id === "string"

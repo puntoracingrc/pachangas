@@ -28,6 +28,7 @@ import {
 } from "../social-team-core-contract";
 import { supabase } from "../supabaseClient";
 import styles from "./social-team.module.css";
+import { PlayerClaims } from "./player-claims";
 
 type TeamSurface = "home" | "invitations" | "roster";
 type TeamStatus = "disabled" | "error" | "loading" | "no-team" | "offline" | "ready" | "signed-out";
@@ -454,6 +455,7 @@ export function SocialTeamProduct({ surface = "home" }: { surface?: TeamSurface 
         {home.actions.canInvitePlayers ? <Link aria-current={surface === "invitations" ? "page" : undefined} href={`/equipo/invitaciones?team=${encodeURIComponent(home.groupId)}`}>Invitaciones</Link> : null}
       </nav>
 
+      {status === "ready" ? <PlayerClaims key={`${userId}:${home.groupId}`} groupId={home.groupId} showCandidates={surface === "roster"} onChanged={() => { void loadCanonical(home.groupId); }} /> : null}
       {surface === "home" ? <TeamHome home={home} roster={roster} /> : null}
       {surface === "roster" ? <RosterView admins={groupedRoster.admins} invitationCount={home.activeInvitationCount} players={groupedRoster.players} canInvite={home.actions.canInvitePlayers} teamId={home.groupId} /> : null}
       {surface === "invitations" ? <InvitationView
