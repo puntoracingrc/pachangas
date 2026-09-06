@@ -55,5 +55,5 @@ select set_config('request.jwt.claim.sub','a1000000-0000-0000-0000-000000000002'
 select pg_temp.check_it((public.pachanga_roulette_v1()->>'freeSpins')::int=0,'nonparticipant does not receive weekly credit');
 reset role;
 select pg_temp.check_it(not has_function_privilege('anon','public.pachanga_roulette_v1(text,uuid,uuid[])','execute'),'anonymous role cannot invoke');
-select pg_temp.check_it((select count(*) from public.pachanga_player_reward_inventory where source_grant_id is null and source_roulette_box_id is not null)=1,'cosmetic has roulette origin, no fake achievement');
+select pg_temp.check_it((select count(*) from public.pachanga_player_reward_inventory where player_profile_id='a2000000-0000-0000-0000-000000000001' and source_grant_id is null and source_roulette_box_id is not null)=1,'cosmetic has roulette origin, no fake achievement');
 rollback;
