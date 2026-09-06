@@ -1877,7 +1877,7 @@ function matchDayLabel(date: string) {
   const parsed = new Date(date);
   if (Number.isNaN(parsed.getTime())) return "Día por confirmar";
 
-  return parsed.toLocaleDateString("es-ES", { weekday: "short" });
+  return parsed.toLocaleDateString("es-ES", { weekday: "short", day: "2-digit", month: "short" });
 }
 
 function matchTimeLabel(date: string) {

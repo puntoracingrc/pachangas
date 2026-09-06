@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { ProvincialRankingProduct } from "../ranking/provincial-ranking-product";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { OfficialProductShellV2 } from "../_components/official-product-shell-v2";
@@ -104,6 +105,10 @@ function cachedTeamSnapshot(userId: string, groupId: string) {
 }
 
 export function SocialTeamProduct({ surface = "home" }: { surface?: TeamSurface }) {
+  const [homePane, setHomePane] = useState<"ranking" | "home">("ranking");
+  useEffect(() => {
+    setHomePane(new URLSearchParams(window.location.search).get("tab") === "portada" ? "home" : "ranking");
+  }, []);
   const [userId, setUserId] = useState("");
   const [flags, setFlags] = useState<SocialTeamFeatureFlags | null>(null);
   const [profile, setProfile] = useState<CanonicalSocialProfile | null>(null);
@@ -435,7 +440,18 @@ export function SocialTeamProduct({ surface = "home" }: { surface?: TeamSurface 
   if (!home) return shell(<main className={styles.page}><section className={styles.state}><span>Equipo no disponible</span><h1>No pudimos abrir una copia válida</h1><p>{message}</p><button type="button" onClick={() => void loadCanonical(selectedTeamId)}>Reintentar</button></section></main>);
 
   return shell(
-    <main className={styles.page} data-social-team-status={status} data-social-team-surface={surface}>
+    <main className={`${styles.page} ${styles.workspace}`} data-social-team-status={status} data-social-team-surface={surface}>
+      <nav className={styles.workspaceNav} aria-label="Secciones del equipo">
+        <div><span>Equipo</span><strong>{home.name}</strong></div>
+        <Link onClick={() => setHomePane("ranking")} aria-current={surface === "home" && homePane === "ranking" ? "page" : undefined} href={`/equipo?team=${encodeURIComponent(home.groupId)}`}>Ranking</Link>
+        <Link aria-current={surface === "roster" ? "page" : undefined} href={`/equipo/plantilla?team=${encodeURIComponent(home.groupId)}`}>Plantilla</Link>
+        <Link href={`/equipo/identidad?grupo=${encodeURIComponent(home.groupId)}&achievements=latest#logros`}>Logros</Link>
+        <Link href={`/equipo/identidad?grupo=${encodeURIComponent(home.groupId)}`}>Escudo</Link>
+        <Link onClick={() => setHomePane("home")} aria-current={surface === "home" && homePane === "home" ? "page" : undefined} href={`/equipo?team=${encodeURIComponent(home.groupId)}&tab=portada`}>Portada</Link>
+        {home.actions.canInvitePlayers ? <Link aria-current={surface === "invitations" ? "page" : undefined} href={`/equipo/invitaciones?team=${encodeURIComponent(home.groupId)}`}>Invitaciones</Link> : null}
+        <small>{home.generalArea || "Zona pendiente"} · {roster.length} jugadores</small>
+      </nav>
+      <div className={styles.workspaceContent}>
       <header className={styles.hero}>
         <TeamShieldView className={styles.heroShield} config={home.shield} label={`Escudo de ${home.name}`} size={210} />
         <div className={styles.heroCopy}>
@@ -449,14 +465,9 @@ export function SocialTeamProduct({ surface = "home" }: { surface?: TeamSurface 
 
       {message ? <p className={styles.notice} role="status">{message}</p> : null}
 
-      <nav className={styles.subnav} aria-label="Secciones del equipo">
-        <Link aria-current={surface === "home" ? "page" : undefined} href={`/equipo?team=${encodeURIComponent(home.groupId)}`}>Portada</Link>
-        <Link aria-current={surface === "roster" ? "page" : undefined} href={`/equipo/plantilla?team=${encodeURIComponent(home.groupId)}`}>Plantilla</Link>
-        {home.actions.canInvitePlayers ? <Link aria-current={surface === "invitations" ? "page" : undefined} href={`/equipo/invitaciones?team=${encodeURIComponent(home.groupId)}`}>Invitaciones</Link> : null}
-      </nav>
-
       {status === "ready" ? <PlayerClaims key={`${userId}:${home.groupId}`} groupId={home.groupId} showCandidates={surface === "roster"} onChanged={() => { void loadCanonical(home.groupId); }} /> : null}
-      {surface === "home" ? <TeamHome home={home} roster={roster} /> : null}
+      {surface === "home" && homePane === "home" ? <TeamHome home={home} roster={roster} /> : null}
+      {surface === "home" && homePane === "ranking" ? <ProvincialRankingProduct embedded /> : null}
       {surface === "roster" ? <RosterView admins={groupedRoster.admins} invitationCount={home.activeInvitationCount} players={groupedRoster.players} canInvite={home.actions.canInvitePlayers} teamId={home.groupId} /> : null}
       {surface === "invitations" ? <InvitationView
         busyInvitationId={busyInvitationId}
@@ -478,6 +489,7 @@ export function SocialTeamProduct({ surface = "home" }: { surface?: TeamSurface 
         teamCode={home.teamCode}
         writeEnabled={status === "ready"}
       /> : null}
+      </div>
     </main>,
   );
 }

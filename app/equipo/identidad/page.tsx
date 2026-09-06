@@ -370,6 +370,18 @@ export default function TeamIdentityPage() {
   const operationIds = useRef(new Map<string, string>());
   const handledRewardDeepLinks = useRef(new Set<string>());
   const handledTeamCosmeticDeepLinks = useRef(new Set<string>());
+  const handledAchievementNavigation = useRef("");
+  useEffect(() => {
+    if (!progression || progression.groupId !== selectedGroupId || window.location.hash !== "#logros" || handledAchievementNavigation.current === selectedGroupId) return;
+    const frame = window.requestAnimationFrame(() => {
+      const section = document.getElementById("logros");
+      if (section) {
+        section.scrollIntoView({ block: "start" });
+        handledAchievementNavigation.current = selectedGroupId;
+      }
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [progression, selectedGroupId]);
 
   const loadPlayerCosmetics = useCallback(async () => {
     if (!supabase || !userId) return;
@@ -958,7 +970,7 @@ export default function TeamIdentityPage() {
             ))}
           </nav>
 
-          {progressView === "achievements" ? <section className={styles.progressBand}>
+          {progressView === "achievements" ? <section id="logros" className={styles.progressBand}>
             <div>
               <header><span>Logros del equipo</span><strong>{activeTeamAchievements.length}</strong></header>
               <div className={styles.achievementGrid}>
