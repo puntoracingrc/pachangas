@@ -201,7 +201,8 @@ test("Home uses the canonical pending projection and Team keeps its V3F authorit
   assert.match(home, /pendingSnapshot/);
   assert.match(home, /socialPrimaryAction/);
   assert.match(home, /homeNextAction/);
-  assert.match(team, /Invitar jugadores/);
+  assert.match(team, /Invitaciones/);
+  assert.match(team, /command_pachanga_team_player_invitation_v2/);
   assert.match(team, /teamCode/);
   assert.doesNotMatch(team, /Estado confirmado/);
   assert.match(team, /operationalStatus !== "ACTIVE"/);

@@ -239,7 +239,7 @@ test("product primary navigation has one canonical destination per menu item", a
   }
 
   assert.match(shell, /const primaryItems[^=]*= PRODUCT_PRIMARY_DESTINATIONS/);
-  assert.match(page, /links=\{\{ mercado: "\/mercado", retos: "\/retos" \}\}/);
+  assert.match(page, /links=\{\{ equipo: "\/equipo", mercado: "\/mercado", retos: "\/retos" \}\}/);
   assert.match(page, /const openMatches = openMatchesByDate\(matches\)/);
   assert.match(page, /requestsNextMatchFromPrimaryNavigation\(entrySearch, entryRoute\)/);
   assert.match(page, /setActiveMatchManagerPane\(requestedMatchPane === "admin" \? "admin" : "proximo"\)/);
