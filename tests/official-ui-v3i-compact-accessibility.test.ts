@@ -43,7 +43,10 @@ test("OFFICIAL-UI-V3I-001 does not depend exclusively on the hideable visual lab
 });
 
 test("OFFICIAL-UI-V3I-002 gives desktop and compact account actions one banner each", async () => {
-  const shell = await source("app/_components/official-product-shell-v2.tsx");
+  const [shell, styles] = await Promise.all([
+    source("app/_components/official-product-shell-v2.tsx"),
+    source("app/_components/official-product-shell-v2.module.css"),
+  ]);
   const desktopStart = shell.indexOf('<header className={styles.desktopHeader}>');
   const desktopEnd = shell.indexOf("</header>", desktopStart);
   const compactStart = shell.indexOf('<header className={styles.contextBar}>');
@@ -56,6 +59,9 @@ test("OFFICIAL-UI-V3I-002 gives desktop and compact account actions one banner e
   assert.doesNotMatch(shell, /<div className=\{styles\.contextBar\}>/);
   assert.equal((shell.match(/<AccountActions /g) ?? []).length, 1);
   assert.equal((shell.match(/const accountActions = <AccountActions /g) ?? []).length, 1);
+  assert.match(styles, /\.contextBar > \.identityMenu \{ min-width: 0; width: auto; flex: 1 1 auto; \}/);
+  assert.match(styles, /\.contextBar > \.accountActions \{ width: auto; flex: 0 0 auto; \}/);
+  assert.doesNotMatch(styles, /\.contextBar > \* \{ width: 100%; \}/);
 });
 
 test("OFFICIAL-UI-V3I-002 preserves account links, badges and permission boundaries", async () => {

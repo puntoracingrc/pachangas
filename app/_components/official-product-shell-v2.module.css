@@ -307,7 +307,8 @@
   color: var(--official-muted);
 }
 
-.contextBar > * { width: 100%; }
+.contextBar > .identityMenu { min-width: 0; width: auto; flex: 1 1 auto; }
+.contextBar > .accountActions { width: auto; flex: 0 0 auto; }
 
 .content {
   min-width: 0;
