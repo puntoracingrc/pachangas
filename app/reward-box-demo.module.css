@@ -410,3 +410,37 @@
 .chestQueue { height: 105px; min-height: 105px; box-sizing: border-box; }
 .chestQueue:empty { visibility: hidden; }
 @media (orientation: portrait) and (max-height: 700px) { .chestQueue { height: 71px; min-height: 71px; } }
+:global(:root[data-theme="light"]) .backdrop { background:#edf3e8; color:#172c20; }
+:global(:root[data-theme="light"]) .stage { background-color:#edf3e8; border-color:#bdcdb4; }
+:global(:root[data-theme="light"]) .close, :global(:root[data-theme="light"]) .status, :global(:root[data-theme="light"]) .revealPanel { background:#fafff5ee; color:#203626; border-color:#a5bd92; }
+:global(:root[data-theme="light"]) .revealPanel > p { color:#486040; }
+:global(:root[data-theme="light"]) .revealPanel > span, :global(:root[data-theme="light"]) .revealPanel > .remaining { color:color-mix(in srgb,var(--reward-accent,#b7f452) 30%,#173416); }
+:global(:root[data-theme="light"]) .revealActions > .secondaryAction { background:#e4eddb; color:#294221; border-color:#9fb68e; }
+:global(:root[data-theme="light"]) .queuedChest { background:#f7fbf2; color:color-mix(in srgb,var(--chest-color) 35%,#172c20); }
+:global(:root[data-theme="light"]) .queuedChest:not(:disabled):hover { background:#e5f0db; }
+:global(:root[data-theme="light"]) .rewardFace { background:linear-gradient(155deg,color-mix(in srgb,var(--reward-accent) 12%,#fff),#fafdf7 85%); color:#172c20; }
+:global(:root[data-theme="light"]) .rewardFace > span { color:color-mix(in srgb,var(--reward-accent) 35%,#172c20); }
+:global(:root[data-theme="light"]) .rewardFace > .rarityBadge { background:#f4f9ed; color:color-mix(in srgb,var(--reward-accent) 35%,#172c20); }
+
+@media (prefers-color-scheme: light) {
+:global(:root:not([data-theme])) .backdrop { background:#edf3e8; color:#172c20; }
+:global(:root:not([data-theme])) .stage { background-color:#edf3e8; border-color:#bdcdb4; }
+:global(:root:not([data-theme])) .close, :global(:root:not([data-theme])) .status, :global(:root:not([data-theme])) .revealPanel { background:#fafff5ee; color:#203626; border-color:#a5bd92; }
+:global(:root:not([data-theme])) .revealPanel > p { color:#486040; }
+:global(:root:not([data-theme])) .revealPanel > span, :global(:root:not([data-theme])) .revealPanel > .remaining { color:color-mix(in srgb,var(--reward-accent,#b7f452) 30%,#173416); }
+:global(:root:not([data-theme])) .revealActions > .secondaryAction { background:#e4eddb; color:#294221; border-color:#9fb68e; }
+:global(:root:not([data-theme])) .queuedChest { background:#f7fbf2; color:color-mix(in srgb,var(--chest-color) 35%,#172c20); }
+:global(:root:not([data-theme])) .queuedChest:not(:disabled):hover { background:#e5f0db; }
+:global(:root:not([data-theme])) .rewardFace { background:linear-gradient(155deg,color-mix(in srgb,var(--reward-accent) 12%,#fff),#fafdf7 85%); color:#172c20; }
+:global(:root:not([data-theme])) .rewardFace > span { color:color-mix(in srgb,var(--reward-accent) 35%,#172c20); }
+:global(:root:not([data-theme])) .rewardFace > .rarityBadge { background:#f4f9ed; color:color-mix(in srgb,var(--reward-accent) 35%,#172c20); }
+}
+:global(:root[data-theme="light"]) .rewardFace > small, :global(:root[data-theme="light"]) .achievementDescription { color:#4b6052; border-color:#b6c8ad; }
+:global(:root[data-theme="light"]) .soundToggle { background:#fafff5ee; color:#203626; border-color:#a5bd92; }
+:global(:root[data-theme="light"]) .soundToggle:focus-visible { outline-color:#476b00; }
+
+@media (prefers-color-scheme: light) {
+:global(:root:not([data-theme])) .rewardFace > small, :global(:root:not([data-theme])) .achievementDescription { color:#4b6052; border-color:#b6c8ad; }
+:global(:root:not([data-theme])) .soundToggle { background:#fafff5ee; color:#203626; border-color:#a5bd92; }
+:global(:root:not([data-theme])) .soundToggle:focus-visible { outline-color:#476b00; }
+}
