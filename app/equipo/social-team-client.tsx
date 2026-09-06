@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { TeamAchievementGallery } from "../personalizar-carta/achievement-gallery";
 import { TeamRanking } from "./team-ranking";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -31,7 +32,7 @@ import { supabase } from "../supabaseClient";
 import styles from "./social-team.module.css";
 import { PlayerClaims } from "./player-claims";
 
-type TeamSurface = "home" | "invitations" | "roster";
+type TeamSurface = "home" | "invitations" | "roster" | "achievements";
 type TeamStatus = "disabled" | "error" | "loading" | "no-team" | "offline" | "ready" | "signed-out";
 
 function readJson<T>(key: string): T | null {
@@ -448,7 +449,7 @@ export function SocialTeamProduct({ surface = "home" }: { surface?: TeamSurface 
         <div><span>Equipo</span><strong>{home.name}</strong></div>
         <Link onClick={() => setHomePane("ranking")} aria-current={surface === "home" && homePane === "ranking" ? "page" : undefined} href={`/equipo?team=${encodeURIComponent(home.groupId)}`}>Ranking</Link>
         <Link aria-current={surface === "roster" ? "page" : undefined} href={`/equipo/plantilla?team=${encodeURIComponent(home.groupId)}`}>Plantilla</Link>
-        <Link href={`/equipo/identidad?grupo=${encodeURIComponent(home.groupId)}&achievements=latest#logros`}>Logros</Link>
+        <Link aria-current={surface === "achievements" ? "page" : undefined} href={`/equipo/logros?team=${encodeURIComponent(home.groupId)}`}>Logros</Link>
         <Link href={`/equipo/identidad?grupo=${encodeURIComponent(home.groupId)}`}>Escudo</Link>
         <Link onClick={() => setHomePane("home")} aria-current={surface === "home" && homePane === "home" ? "page" : undefined} href={`/equipo?team=${encodeURIComponent(home.groupId)}&tab=portada`}>Portada</Link>
         {home.actions.canInvitePlayers ? <Link aria-current={surface === "invitations" ? "page" : undefined} href={`/equipo/invitaciones?team=${encodeURIComponent(home.groupId)}`}>Invitaciones</Link> : null}
@@ -468,9 +469,10 @@ export function SocialTeamProduct({ surface = "home" }: { surface?: TeamSurface 
 
       {message ? <p className={styles.notice} role="status">{message}</p> : null}
 
-      {status === "ready" ? <PlayerClaims key={`${userId}:${home.groupId}`} groupId={home.groupId} showCandidates={surface === "roster"} onChanged={() => { void loadCanonical(home.groupId); }} /> : null}
+      {status === "ready" && surface !== "achievements" ? <PlayerClaims key={`${userId}:${home.groupId}`} groupId={home.groupId} showCandidates={surface === "roster"} onChanged={() => { void loadCanonical(home.groupId); }} /> : null}
       {surface === "home" && homePane === "home" ? <TeamHome home={home} roster={roster} /> : null}
       {surface === "home" && homePane === "ranking" ? <TeamRanking key={`${userId}:${home.groupId}`} groupId={home.groupId} /> : null}
+      {surface === "achievements" ? <TeamAchievementGallery key={`${userId}:${home.groupId}`} groupId={home.groupId} /> : null}
       {surface === "roster" ? <RosterView admins={groupedRoster.admins} invitationCount={home.activeInvitationCount} players={groupedRoster.players} canInvite={home.actions.canInvitePlayers} teamId={home.groupId} /> : null}
       {surface === "invitations" ? <InvitationView
         busyInvitationId={busyInvitationId}
