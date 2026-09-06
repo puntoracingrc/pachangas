@@ -67,6 +67,7 @@ const v2WriteRpcNames = new Set([
   "command_pachanga_social_team_settings_v1",
   "command_pachanga_social_team_v1",
   "command_pachanga_team_player_invitation_v2",
+  "command_pachanga_team_membership_request_v1",
   "command_pachanga_tournament_draw_v1",
   "command_pachanga_tournament_group_stage_platform_v1",
   "command_pachanga_tournament_group_stage_v1",

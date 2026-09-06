@@ -106,6 +106,7 @@ test("V3F profile and team commands are classified as authoritative writes", () 
     "command_pachanga_social_profile_v1",
     "command_pachanga_social_team_settings_v1",
     "command_pachanga_social_team_v1",
+    "command_pachanga_team_membership_request_v1",
     "command_pachanga_team_player_invitation_v2",
   ]) assert.ok(writes.includes(rpc));
 });
@@ -120,11 +121,11 @@ test("V3F onboarding sends intentions and reads back canonical state", async () 
   assert.match(page, /command_pachanga_team_player_invitation_v2/);
   assert.match(page, /lookup_pachanga_social_team_code_v1/);
   assert.match(page, /await loadTeams\(supabase, team\.groupId\)/);
-  assert.match(page, /window\.location\.assign\(`\/equipo\?team=/);
+  assert.match(page, /window\.location\.replace\(`\/equipo\?team=/);
   assert.doesNotMatch(page, /rpc\("join_pachanga_team"/);
   assert.match(onboarding, /writeAvailability\.label/);
   assert.match(onboarding, /Crear equipo/);
-  assert.match(onboarding, /El código identifica este equipo, pero no concede acceso/);
+  assert.match(onboarding, /Equipo encontrado\. Envía una solicitud para que un admin la revise/);
 });
 
 test("V3F team pages use canonical read models, cache only reads and refetch on invalidation", async () => {
@@ -155,9 +156,40 @@ test("V3F team role controls allow owner and admin while keeping players read-on
   assert.match(team, /selected\.role === "owner" \|\| selected\.role === "admin"/);
   assert.match(team, /home\.actions\.canInvitePlayers/);
   assert.match(team, /Solo owner y admins pueden crear enlaces/);
-  assert.match(team, /nunca concede permisos de admin/);
+  assert.match(team, /cada persona entrará únicamente como jugador/);
   assert.match(team, /team\.invitation\.create/);
   assert.match(team, /team\.invitation\.revoke/);
+});
+
+test("V3F invitations present the reusable team link before individual links and the non-authoritative code", async () => {
+  const team = await source("app/equipo/social-team-client.tsx");
+  const sharedPosition = team.indexOf("Enlace del equipo");
+  const individualPosition = team.indexOf("Invitación individual");
+  const codePosition = team.indexOf("Código del equipo");
+  assert.ok(sharedPosition >= 0 && individualPosition > sharedPosition && codePosition > individualPosition);
+  assert.match(team, /Crear enlace para compartir/);
+  assert.match(team, /Crear enlace de un solo uso/);
+  assert.match(team, /maxUses: inviteMode === "TEAM_LINK" \? 100 : 1/);
+  assert.match(team, /Identifica al equipo, pero no permite unirse/);
+  assert.match(team, /Enlace copiado al portapapeles/);
+  assert.match(team, /get_pachanga_team_membership_requests_v1/);
+  assert.match(team, /command_pachanga_team_membership_request_v1/);
+  assert.match(team, /Pendientes de aprobación/);
+});
+
+test("V3F invitation snapshots expose membership state without leaking raw tokens", () => {
+  const invitation = normalizeSocialTeamInvitation({
+    alreadyMember: true,
+    groupId: "group-demo",
+    invitationId: "invite-demo",
+    inviteMode: "TEAM_LINK",
+    maxUses: 100,
+    state: "ACTIVE",
+    useCount: 4,
+  });
+  assert.equal(invitation?.alreadyMember, true);
+  assert.equal(invitation?.inviteMode, "TEAM_LINK");
+  assert.equal(invitation?.useCount, 4);
 });
 
 test("V3F keeps four primary tabs and routes Team contextually", () => {
@@ -205,12 +237,14 @@ test("V3F public entry keeps the brand inside compact landscape viewports", asyn
 });
 
 test("V3F migrations keep raw invitation tokens hashed and Rating untouched", async () => {
-  const [profileSql, teamSql, invitationSql, hardeningSql, teamNameSql] = await Promise.all([
+  const [profileSql, teamSql, invitationSql, hardeningSql, teamNameSql, reusableInviteSql, reusableInviteDbTest] = await Promise.all([
     source("supabase/migrations/20260901214524_social_team_core_evidence_v1.sql"),
     source("supabase/migrations/20260901214525_atomic_social_team_creation_v1.sql"),
     source("supabase/migrations/20260901214526_team_player_invitations_v2.sql"),
     source("supabase/migrations/20260901214527_social_team_read_models_rls_flags_v1.sql"),
     source("supabase/migrations/20260905212126_unique_team_names_and_length_v1.sql"),
+    source("supabase/migrations/20260906020600_reusable_team_join_links_v1.sql"),
+    source("tests/reusable-team-join-links-v1-db.sql"),
   ]);
   assert.match(profileSql, /command_pachanga_social_profile_v1/);
   assert.match(teamSql, /command_pachanga_social_team_v1/);
@@ -222,7 +256,15 @@ test("V3F migrations keep raw invitation tokens hashed and Rating untouched", as
   assert.match(teamNameSql, /char_length\([\s\S]*between 2 and 32/);
   assert.match(teamNameSql, /translate\([\s\S]*lower\([\s\S]*regexp_replace/);
   assert.match(teamNameSql, /before insert or update of name/);
-  for (const sql of [profileSql, teamSql, invitationSql, hardeningSql, teamNameSql]) {
+  assert.match(reusableInviteSql, /invite_mode = 'TEAM_LINK'/);
+  assert.match(reusableInviteSql, /'alreadyMember', exists/);
+  assert.match(reusableInviteSql, /insert into public\.pachanga_group_members\(group_id, user_id, role, display_name\)/);
+  assert.match(reusableInviteSql, /select invitation\.group_id, actor_id, 'player'/);
+  assert.match(reusableInviteSql, /pachanga_team_membership_requests_v1/);
+  assert.match(reusableInviteDbTest, /A second player must be able to use the same shared link/);
+  assert.match(reusableInviteDbTest, /An existing member must never be duplicated/);
+  assert.match(reusableInviteDbTest, /No invitation or membership request may grant owner\/admin/);
+  for (const sql of [profileSql, teamSql, invitationSql, hardeningSql, teamNameSql, reusableInviteSql]) {
     assert.doesNotMatch(sql, /update\s+public\.pachanga_player_profiles[\s\S]{0,160}(current_overall|current_facets|rating)/i);
   }
 });

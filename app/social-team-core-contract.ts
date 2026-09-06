@@ -82,6 +82,7 @@ export type SocialTeamRosterMember = {
 };
 
 export type SocialTeamInvitation = {
+  alreadyMember: boolean;
   confirmedRevision: number;
   createdAt: string;
   createdByName: string;
@@ -89,10 +90,29 @@ export type SocialTeamInvitation = {
   generalArea: string;
   groupId: string;
   invitationId: string;
+  inviteMode: "INDIVIDUAL" | "TEAM_LINK";
+  maxUses: number;
   modality: string;
   revision: number;
   serverSequence: number;
   state: "ACTIVE" | "DECLINED" | "EXPIRED" | "REVOKED" | "USED";
+  teamCode: string;
+  teamName: string;
+  updatedAt: string;
+  useCount: number;
+};
+
+export type SocialTeamMembershipRequest = {
+  confirmedRevision: number;
+  createdAt: string;
+  groupId: string;
+  requestId: string;
+  requesterAvatarRef: string | null;
+  requesterName: string;
+  requesterPrimaryPosition: string;
+  revision: number;
+  serverSequence: number;
+  state: "ACCEPTED" | "CANCELLED" | "PENDING" | "REJECTED";
   teamCode: string;
   teamName: string;
   updatedAt: string;
@@ -300,6 +320,7 @@ export function normalizeSocialTeamInvitation(value: unknown): SocialTeamInvitat
   const rawState = text(source.state, "EXPIRED");
   const state: SocialTeamInvitation["state"] = rawState === "ACTIVE" || rawState === "USED" || rawState === "REVOKED" || rawState === "DECLINED" ? rawState : "EXPIRED";
   return {
+    alreadyMember: source.alreadyMember === true,
     confirmedRevision: integer(source.confirmedRevision ?? source.revision),
     createdAt: text(source.createdAt),
     createdByName: text(source.createdByName, "Admin del equipo"),
@@ -307,7 +328,41 @@ export function normalizeSocialTeamInvitation(value: unknown): SocialTeamInvitat
     generalArea: text(source.generalArea),
     groupId,
     invitationId,
+    inviteMode: source.inviteMode === "TEAM_LINK" ? "TEAM_LINK" : "INDIVIDUAL",
+    maxUses: Math.max(1, integer(source.maxUses, 1)),
     modality: text(source.modality),
+    revision: integer(source.revision),
+    serverSequence: integer(source.serverSequence),
+    state,
+    teamCode: text(source.teamCode),
+    teamName: text(source.teamName),
+    updatedAt: text(source.updatedAt),
+    useCount: integer(source.useCount),
+  };
+}
+
+export function normalizeSocialTeamInvitations(value: unknown): SocialTeamInvitation[] {
+  return Array.isArray(value) ? value.flatMap((item) => {
+    const invitation = normalizeSocialTeamInvitation(item);
+    return invitation ? [invitation] : [];
+  }) : [];
+}
+
+export function normalizeSocialTeamMembershipRequest(value: unknown): SocialTeamMembershipRequest | null {
+  const source = record(value);
+  const requestId = text(source?.requestId);
+  const groupId = text(source?.groupId);
+  if (!source || !requestId || !groupId) return null;
+  const rawState = text(source.state, "REJECTED");
+  const state: SocialTeamMembershipRequest["state"] = rawState === "PENDING" || rawState === "ACCEPTED" || rawState === "CANCELLED" ? rawState : "REJECTED";
+  return {
+    confirmedRevision: integer(source.confirmedRevision ?? source.revision),
+    createdAt: text(source.createdAt),
+    groupId,
+    requestId,
+    requesterAvatarRef: text(source.requesterAvatarRef) || null,
+    requesterName: text(source.requesterName, "Jugador"),
+    requesterPrimaryPosition: text(source.requesterPrimaryPosition, "Posición pendiente"),
     revision: integer(source.revision),
     serverSequence: integer(source.serverSequence),
     state,
@@ -317,10 +372,10 @@ export function normalizeSocialTeamInvitation(value: unknown): SocialTeamInvitat
   };
 }
 
-export function normalizeSocialTeamInvitations(value: unknown): SocialTeamInvitation[] {
+export function normalizeSocialTeamMembershipRequests(value: unknown): SocialTeamMembershipRequest[] {
   return Array.isArray(value) ? value.flatMap((item) => {
-    const invitation = normalizeSocialTeamInvitation(item);
-    return invitation ? [invitation] : [];
+    const request = normalizeSocialTeamMembershipRequest(item);
+    return request ? [request] : [];
   }) : [];
 }
 

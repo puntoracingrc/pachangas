@@ -43,10 +43,12 @@ export type PendingSocialInvitation = {
 
 type TeamCodePreview = {
   generalArea: string;
+  groupId: string;
   memberCount: number;
   modality: string;
   name: string;
   teamCode: string;
+  teamRevision: number;
 };
 
 type SocialOnboardingProps = {
@@ -64,6 +66,8 @@ type SocialOnboardingProps = {
   onForcedViewHandled?: (nextView: FlowView | null) => void;
   onJoin: (invitation: PendingSocialInvitation, displayName: string) => Promise<{ error?: string; ok: boolean }>;
   onLookupTeamCode: (code: string) => Promise<{ error?: string; ok: boolean; team?: TeamCodePreview }>;
+  onRequestTeamJoin: (groupId: string, expectedRevision: number) => Promise<{ error?: string; ok: boolean }>;
+  onCloseInvitation: (invitation: PendingSocialInvitation) => void;
   onOpen: () => void;
   onSaveProfile: (draft: SocialOnboardingDraft) => Promise<{ error?: string; ok: boolean }>;
   requiredCardOnboarding?: boolean;
@@ -115,6 +119,8 @@ export function SocialOnboarding({
   onForcedViewHandled,
   onJoin,
   onLookupTeamCode,
+  onRequestTeamJoin,
+  onCloseInvitation,
   onOpen,
   onSaveProfile,
   requiredCardOnboarding = false,
@@ -126,6 +132,7 @@ export function SocialOnboarding({
   const [joinCandidate, setJoinCandidate] = useState<PendingSocialInvitation | null>(invitation ?? null);
   const [joinMessage, setJoinMessage] = useState("");
   const [joining, setJoining] = useState(false);
+  const [requestingTeamJoin, setRequestingTeamJoin] = useState(false);
   const [profileSaving, setProfileSaving] = useState(false);
   const [profileMessage, setProfileMessage] = useState("");
   const [creating, setCreating] = useState(false);
@@ -154,6 +161,7 @@ export function SocialOnboarding({
     ? "profile"
     : invitation ? (profileReady ? "join" : "profile") : forcedView ?? view;
   const activeJoinCandidate = invitation ?? joinCandidate;
+  const alreadyInInvitedTeam = activeJoinCandidate?.snapshot?.alreadyMember === true;
   const visibleOpen = Boolean(requiredCardOnboarding || forcedView || open);
   const cityConfirmed = Boolean(confirmedCity && confirmedCity === visibleDraft.zone.trim());
   const teamCityConfirmed = Boolean(confirmedTeamCity && confirmedTeamCity === createDraft.zone.trim());
@@ -384,6 +392,10 @@ export function SocialOnboarding({
   }
 
   function closeFlow() {
+    if (invitation) {
+      onCloseInvitation(invitation);
+      return;
+    }
     onForcedViewHandled?.(null);
     setOpen(false);
     onDismiss();
@@ -415,7 +427,7 @@ export function SocialOnboarding({
       const result = await onLookupTeamCode(parsed.code);
       setTeamCodePreview(result.team ?? null);
       setJoinMessage(result.ok
-        ? "El código identifica este equipo, pero no concede acceso. Pide a un admin su enlace de invitación."
+        ? "Equipo encontrado. Envía una solicitud para que un admin la revise."
         : result.error ?? "EQUIPO NO ENCONTRADO");
       return;
     }
@@ -477,6 +489,20 @@ export function SocialOnboarding({
     setOpen(false);
   }
 
+  async function requestTeamJoin() {
+    if (!teamCodePreview || requestingTeamJoin || !writeAvailability.allowed) return;
+    setRequestingTeamJoin(true);
+    setJoinMessage("Enviando la solicitud al equipo...");
+    const result = await onRequestTeamJoin(teamCodePreview.groupId, teamCodePreview.teamRevision);
+    setRequestingTeamJoin(false);
+    if (!result.ok) {
+      setJoinMessage(result.error ?? "NO SE PUDO ENVIAR LA SOLICITUD");
+      return;
+    }
+    setJoinMessage("Solicitud enviada. Un admin del equipo debe aceptarla.");
+    setTeamCodePreview(null);
+  }
+
   if (!visibleOpen) {
     return (
       <section className={styles.resumeCard} aria-label="Continuar configuración inicial">
@@ -500,7 +526,7 @@ export function SocialOnboarding({
         </div>
         <div className={styles.headerActions}>
           {!profileReady ? <small>BORRADOR LOCAL</small> : <small>PERFIL CONFIRMADO</small>}
-          {!requiredCardOnboarding ? <button type="button" onClick={closeFlow}>Ahora no</button> : null}
+          {!requiredCardOnboarding && !alreadyInInvitedTeam ? <button type="button" onClick={closeFlow}>Ahora no</button> : null}
         </div>
       </header>
 
@@ -563,7 +589,7 @@ export function SocialOnboarding({
               <div className={styles.actions}><button type="button" onClick={() => setStep(1)}>Volver</button><button className={styles.primary} type="button" disabled={profileSaving || !writeAvailability.allowed || !cityConfirmed} onClick={() => void saveProfile()}>{profileSaving ? "Guardando..." : profileReady ? "Actualizar perfil" : "Guardar perfil"}</button></div>
             </div>
           ) : null}
-          {step === 3 ? requiredCardOnboarding ? <RequiredAssessmentStep onBack={() => setStep(2)} /> : <StartChoices onCreate={() => selectView("create")} onJoin={() => selectView("join")} /> : null}
+          {step === 3 ? requiredCardOnboarding ? <RequiredAssessmentStep invitation={invitation} onBack={() => setStep(2)} /> : <StartChoices onCreate={() => selectView("create")} onJoin={() => selectView("join")} /> : null}
         </div>
       ) : null}
 
@@ -571,7 +597,7 @@ export function SocialOnboarding({
 
       {activeView === "join" ? (
         <div className={styles.formBody}>
-          {invitation ? (
+          {invitation && !alreadyInInvitedTeam ? (
             <article className={styles.invitationCard}>
               <span>Te han invitado</span>
               <strong>Invitación segura de equipo</strong>
@@ -579,9 +605,17 @@ export function SocialOnboarding({
               <small>La invitación no se acepta automáticamente.</small>
             </article>
           ) : null}
+          {alreadyInInvitedTeam && activeJoinCandidate ? (
+            <article className={styles.alreadyMemberCard} role="status">
+              <span>Equipo confirmado</span>
+              <strong>Ya estás en este equipo</strong>
+              <p>{activeJoinCandidate.snapshot?.teamName || "Tu membresía ya estaba activa."}</p>
+              <button className={styles.primary} type="button" onClick={() => onCloseInvitation(activeJoinCandidate)}>Cerrar</button>
+            </article>
+          ) : null}
           {!invitation ? <><label>Código o enlace de invitación<input autoCapitalize="off" autoCorrect="off" value={joinInput} onChange={(event) => { setJoinInput(event.target.value); setJoinMessage(""); setTeamCodePreview(null); }} /></label><button className={styles.secondary} type="button" onClick={() => void inspectJoinInput()}>Buscar equipo</button></> : null}
-          {teamCodePreview ? <article className={styles.invitationCard}><span>Equipo identificado</span><strong>{teamCodePreview.name}</strong><p>{modalityLabel(teamCodePreview.modality)} · {teamCodePreview.generalArea || "Zona no indicada"} · {teamCodePreview.memberCount} miembros</p><small>Necesitas un enlace de invitación para entrar.</small></article> : null}
-          {activeJoinCandidate ? (
+          {teamCodePreview ? <article className={styles.invitationCard}><span>Equipo encontrado</span><strong>{teamCodePreview.name}</strong><p>{modalityLabel(teamCodePreview.modality)} · {teamCodePreview.generalArea || "Zona no indicada"} · {teamCodePreview.memberCount} miembros</p><small>El código no concede acceso. Puedes enviar una solicitud a sus admins.</small><button className={styles.primary} type="button" disabled={requestingTeamJoin || !writeAvailability.allowed} onClick={() => void requestTeamJoin()}>{requestingTeamJoin ? "Enviando..." : "Solicitar entrada"}</button></article> : null}
+          {activeJoinCandidate && !alreadyInInvitedTeam ? (
             <div className={styles.joinConfirmation}>
               <span>Confirmar</span><strong>{activeJoinCandidate.snapshot?.teamName || `Acceso como ${activeJoinCandidate.kind === "admin" ? "administrador" : "jugador"}`}</strong><p>{activeJoinCandidate.snapshot ? `${modalityLabel(activeJoinCandidate.snapshot.modality)} · ${activeJoinCandidate.snapshot.generalArea}` : "La membresía solo aparecerá cuando el servidor la confirme y recarguemos el equipo."}</p>
               <button className={styles.primary} type="button" disabled={joining || !writeAvailability.allowed} onClick={() => void confirmJoin()}>{joining ? "Confirmando..." : "Unirme"}</button>
@@ -589,7 +623,7 @@ export function SocialOnboarding({
           ) : null}
           {!writeAvailability.allowed ? <p className={styles.warning}>{writeAvailability.label}</p> : null}
           {joinMessage ? <p className={styles.message} role="status">{joinMessage}</p> : null}
-          <div className={styles.actions}><button type="button" onClick={() => selectView("start")}>Volver</button><button type="button" onClick={closeFlow}>Ahora no</button></div>
+          {!alreadyInInvitedTeam ? <div className={styles.actions}><button type="button" onClick={() => invitation ? closeFlow() : selectView("start")}>Volver</button>{!invitation ? <button type="button" onClick={closeFlow}>Ahora no</button> : null}</div> : null}
         </div>
       ) : null}
 
@@ -619,7 +653,15 @@ function StartChoices({ onCreate, onJoin }: { onCreate: () => void; onJoin: () =
   );
 }
 
-function RequiredAssessmentStep({ onBack }: { onBack: () => void }) {
+function RequiredAssessmentStep({ invitation, onBack }: { invitation?: PendingSocialInvitation | null; onBack: () => void }) {
+  const invitationPath = invitation
+    ? invitation.kind === "admin"
+      ? `/invitacion/admin/${encodeURIComponent(invitation.token)}`
+      : `/invitacion/grupo/${encodeURIComponent(invitation.token)}`
+    : "";
+  const assessmentHref = invitationPath
+    ? `/perfil/test-inicial?onboarding=1&next=${encodeURIComponent(invitationPath)}`
+    : "/perfil/test-inicial?onboarding=1";
   return (
     <div className={styles.requiredAssessment}>
       <div className={styles.stepHeading}>
@@ -629,7 +671,7 @@ function RequiredAssessmentStep({ onBack }: { onBack: () => void }) {
       </div>
       <div className={styles.requiredAssessmentActions}>
         <button type="button" onClick={onBack}>Volver</button>
-        <Link className={styles.primary} href="/perfil/test-inicial?onboarding=1">Hacer test inicial</Link>
+        <Link className={styles.primary} href={assessmentHref}>Hacer test inicial</Link>
       </div>
     </div>
   );

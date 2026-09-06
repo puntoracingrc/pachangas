@@ -92,7 +92,10 @@ test("step two requires a Places city and step three opens the mandatory initial
   assert.match(socialOnboarding, /attachVenueAutocomplete/);
   assert.match(socialOnboarding, /types: \["\(cities\)"\]/);
   assert.match(socialOnboarding, /disabled=\{profileSaving \|\| !writeAvailability\.allowed \|\| !cityConfirmed\}/);
-  assert.match(socialOnboarding, /href="\/perfil\/test-inicial\?onboarding=1"/);
+  assert.match(socialOnboarding, /const assessmentHref = invitationPath/);
+  assert.match(socialOnboarding, /`\/perfil\/test-inicial\?onboarding=1&next=\$\{encodeURIComponent\(invitationPath\)\}`/);
+  assert.match(socialOnboarding, /: "\/perfil\/test-inicial\?onboarding=1"/);
+  assert.match(socialOnboarding, /href=\{assessmentHref\}/);
   assert.match(socialOnboarding, /requiredCardOnboarding \? "Crea tu ficha de jugador"/);
   assert.match(googlePlaces, /autocompleteElement\.value = input\.value/);
   assert.match(route, /pachanga_social_player_profiles_v1/);
