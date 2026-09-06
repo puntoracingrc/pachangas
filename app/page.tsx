@@ -11738,7 +11738,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
         </section>
       ) : null}
 
-      {hasRealTeam || previewDemoMode ? <section className={`${selectedPlayer ? "bottom-grid" : "bottom-grid without-profile"} ${sharedLinkContentBlocked ? "gated-shell" : ""}`} data-profile-pane={profilePane}>
+      {(hasRealTeam || previewDemoMode) && !(activeMobileTab === "partido" && matchExperienceView === "wizard") ? <section className={`${selectedPlayer ? "bottom-grid" : "bottom-grid without-profile"} ${sharedLinkContentBlocked ? "gated-shell" : ""}`} data-profile-pane={profilePane}>
         {selectedPlayer ? (
           <div className={`panel player-profile ${playerProfileMode === "viewer" ? "profile-viewer" : "profile-editor"}`} ref={playerProfileRef}>
             <div className="panel-title">
