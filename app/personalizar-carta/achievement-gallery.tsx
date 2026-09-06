@@ -31,31 +31,17 @@ export function AchievementGallery({ profileId }: { profileId: string }) {
     const client = supabase;
     let generation = 0;
     let disposed = false;
-    async function loadGrants() {
-      const rows: AchievementGrant[] = [];
-      // Repeatable achievements can produce more than the API's default page.
-      for (let offset = 0; !disposed; offset += 500) {
-        const result = await client.from("pachanga_achievement_grants")
-          .select("definition_id,state").eq("subject_type", "player")
-          .eq("subject_id", profileId).eq("state", "active")
-          .order("id").range(offset, offset + 499);
-        if (result.error) return result;
-        rows.push(...result.data);
-        if (result.data.length < 500) break;
-      }
-      return { data: rows, error: null };
-    }
     async function load() {
       const request = ++generation;
       try {
-        const [definitions, stats, grants] = await Promise.all([
-          client.from("pachanga_achievement_definitions").select("id,achievement_key,title,description,rarity,match_scope,evaluator_key,threshold,repeatable").eq("active", true).eq("subject_type", "player").order("display_priority").order("threshold"),
-          client.from("pachanga_player_progression_stats").select("match_scope,appearances,wins,goals,braces,hat_tricks,pokers,repokers,double_hat_tricks,max_win_streak,max_unbeaten_streak,distinct_opponents,distinct_opponents_won").eq("player_profile_id", profileId),
-          loadGrants(),
-        ]);
+        const { data, error: requestError } = await client.rpc("get_my_pachanga_achievement_gallery_v1");
         if (disposed || request !== generation) return;
-        if (definitions.error || stats.error || grants.error) { setError(true); return; }
-        setCollection({ profileId, definitions: definitions.data as AchievementDefinition[], stats: stats.data as AchievementStats[], grants: grants.data as AchievementGrant[] });
+        if (requestError || !data || data.profileId !== profileId
+          || !Array.isArray(data.definitions) || !Array.isArray(data.stats) || !Array.isArray(data.grants)) {
+          setError(true);
+          return;
+        }
+        setCollection(data as Collection);
         setError(false);
       } catch { if (!disposed && request === generation) setError(true); }
     }

@@ -26,3 +26,9 @@ test("distinct opponents and scoring feats use their own canonical counters", ()
   assert.equal(achievementProgress({ ...definition, evaluator_key: "PLAYER_DOUBLE_HAT_TRICKS" }, [{ match_scope: "all", goals: 200, double_hat_tricks: 2 }], []).current, 2);
   assert.equal(achievementProgress({ ...definition, evaluator_key: "NEW_UNKNOWN_RULE" }, [], []).current, null);
 });
+
+test("server-aggregated repetitions are not capped by API pagination", () => {
+  const result = achievementProgress(definition, [], [{definition_id: "goals", state: "active", occurrences: 1501}]);
+  assert.equal(result.occurrences, 1501);
+  assert.equal(result.unlocked, true);
+});
