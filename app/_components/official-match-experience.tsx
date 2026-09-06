@@ -276,6 +276,10 @@ export function OfficialQuickMatchWizard({
               <label>Plazas públicas<input min="1" inputMode="numeric" type="number" value={draft.publicOpenSlots} onChange={(event) => onChange({ publicOpenSlots: event.target.value })} /></label>
               <label className={styles.toggleField}><input checked={draft.manualApproval} type="checkbox" onChange={(event) => onChange({ manualApproval: event.target.checked })} /><span><b>Aprobación manual</b><small>Un admin decide quién entra.</small></span></label>
             </> : null}
+            <label>Coste del campo (€)<input min="0" inputMode="decimal" type="number" value={draft.fieldCost} onChange={(event) => onChange({ fieldCost: event.target.value })} /></label>
+            <label className={styles.toggleField}><input checked={draft.reservesAttend} type="checkbox" onChange={(event) => onChange({ reservesAttend: event.target.checked })} /><span><b>Reservas presenciales</b><small>Las reservas van y pagan.</small></span></label>
+            {draft.reservesAttend ? <label>Máximo reservas<input min="0" inputMode="numeric" type="number" value={draft.reserveLimit} onChange={(event) => onChange({ reserveLimit: event.target.value })} /></label> : null}
+            {draft.publicOpen ? <label className={styles.toggleField}><input checked={draft.guestsPay} type="checkbox" onChange={(event) => onChange({ guestsPay: event.target.checked })} /><span><b>Invitados pagan</b><small>Se incluyen en el reparto del campo.</small></span></label> : null}
           </div>
         ) : null}
 
@@ -285,15 +289,9 @@ export function OfficialQuickMatchWizard({
             <div><span>Partido</span><strong>{selectedKind} · {draft.targetPlayers} jugadores</strong></div>
             <div><span>Campo</span><strong>{selectedVenue}</strong></div>
             <div><span>Convocatoria</span><strong>{draft.groupInvited ? "Grupo avisado" : "Sin aviso inicial"}{draft.publicOpen ? ` · ${draft.publicOpenSlots} plazas públicas` : " · Privado"}</strong></div>
-            <details className={styles.advanced}>
-              <summary>Opciones avanzadas</summary>
-              <div className={styles.formGrid}>
-                <label>Coste del campo (€)<input min="0" inputMode="decimal" type="number" value={draft.fieldCost} onChange={(event) => onChange({ fieldCost: event.target.value })} /></label>
-                <label className={styles.toggleField}><input checked={draft.reservesAttend} type="checkbox" onChange={(event) => onChange({ reservesAttend: event.target.checked })} /><span><b>Reservas presenciales</b><small>Las reservas van y pagan.</small></span></label>
-                {draft.reservesAttend ? <label>Máximo reservas<input min="0" inputMode="numeric" type="number" value={draft.reserveLimit} onChange={(event) => onChange({ reserveLimit: event.target.value })} /></label> : null}
-                {draft.publicOpen ? <label className={styles.toggleField}><input checked={draft.guestsPay} type="checkbox" onChange={(event) => onChange({ guestsPay: event.target.checked })} /><span><b>Invitados pagan</b><small>Se incluyen en el reparto del campo.</small></span></label> : null}
-              </div>
-            </details>
+            <div><span>Coste del campo</span><strong>{Number(draft.fieldCost || 0).toLocaleString("es-ES", { style: "currency", currency: "EUR" })}</strong></div>
+            <div><span>Reservas presenciales</span><strong>{draft.reservesAttend ? `Sí · máximo ${draft.reserveLimit} · van y pagan` : "No"}</strong></div>
+            {draft.publicOpen ? <div><span>Invitados pagan</span><strong>{draft.guestsPay ? "Sí" : "No"}</strong></div> : null}
           </div>
         ) : null}
       </div>
