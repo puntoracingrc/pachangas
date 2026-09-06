@@ -5,6 +5,7 @@ import { PLAYER_COSMETIC_RARITY_LABELS } from "../player-cosmetics-catalog";
 import type { PlayerCosmeticRarity } from "../player-cosmetics-contract";
 import { supabase } from "../supabaseClient";
 import { achievementProgress, type AchievementDefinition, type AchievementGrant, type AchievementStats } from "./achievement-gallery-model";
+import { ProgressionStatistics } from "./progression-statistics";
 import styles from "./achievement-gallery.module.css";
 
 const rarities: PlayerCosmeticRarity[] = ["common", "uncommon", "rare", "epic", "legendary"];
@@ -25,11 +26,16 @@ export function AchievementGallery({ profileId }: { profileId: string }) {
 }
 
 export function TeamAchievementGallery({ groupId }: { groupId: string }) {
-  return <AchievementCollection key={groupId} subject="team" subjectId={groupId} />;
+  return <AchievementCollection key={groupId} subject="team" subjectId={groupId} withProgression />;
 }
 
-function AchievementCollection({ subject, subjectId }: { subject: "player" | "team"; subjectId: string }) {
+export function PlayerProgression({ profileId }: { profileId: string }) {
+  return <AchievementCollection key={profileId} subject="player" subjectId={profileId} withProgression />;
+}
+
+function AchievementCollection({ subject, subjectId, withProgression = false }: { subject: "player" | "team"; subjectId: string; withProgression?: boolean }) {
   const team = subject === "team";
+  const [view, setView] = useState<"achievements" | "stats" | "records">("achievements");
   const [collection, setCollection] = useState<Collection | null>(null);
   const [error, setError] = useState(false);
   const [retry, setRetry] = useState(0);
@@ -70,12 +76,15 @@ function AchievementCollection({ subject, subjectId }: { subject: "player" | "te
   const data = (team ? collection?.groupId : collection?.profileId) === subjectId ? collection : null;
   const entries = data?.definitions.map(definition => ({ ...definition, ...achievementProgress(definition, data.stats, data.grants) })) ?? [];
   const unlocked = entries.filter(item => item.unlocked).length;
-  return <section className={styles.gallery} aria-label={team ? "Colección de logros del equipo" : "Colección de logros"}>
+  return <section id={withProgression && !team ? "trayectoria" : undefined} className={styles.gallery} aria-label={team ? "Colección de logros del equipo" : "Colección de logros"}>
     <header className={styles.header}>
-      <div><span className={styles.eyebrow}>{team ? "Vuestra historia, logro a logro" : "Tu próxima conquista"}</span><h2>{team ? "Logros del equipo" : "Logros por descubrir"}</h2><p>{team ? "Lo que habéis conseguido juntos y los desafíos que os esperan. Cada partido cuenta." : "Cada partido cuenta. Descubre qué puedes conseguir y sigue tu progreso."}</p></div>
+      <div><span className={styles.eyebrow}>{team ? "Vuestra historia, logro a logro" : "Tu próxima conquista"}</span><h2>{team ? "Logros del equipo" : withProgression ? "Mi trayectoria" : "Logros por descubrir"}</h2><p>{team ? "Vuestros logros, estadísticas y récords como equipo." : withProgression ? "Tus logros, estadísticas y récords personales, con todos tus equipos." : "Cada partido cuenta. Descubre qué puedes conseguir y sigue tu progreso."}</p></div>
       {data && !error ? <div className={styles.total}><strong>{unlocked}<span> / {entries.length}</span></strong><span>logros conseguidos</span>{team ? <span>{entries.length - unlocked} por conseguir</span> : null}</div> : null}
     </header>
-    {error ? <div className={styles.message} role="status">{team ? "No hemos podido actualizar los logros del equipo." : "No hemos podido actualizar tus logros."} <button type="button" onClick={() => setRetry(value => value + 1)}>Volver a intentar</button></div> : !data ? <p className={styles.message} role="status">{team ? "Cargando los logros del equipo…" : "Cargando tu colección de logros…"}</p> : <>
+    {withProgression ? <nav className={styles.viewTabs} aria-label={team ? "Trayectoria del equipo" : "Trayectoria personal"}>
+      {([["achievements", "Logros"], ["stats", "Estadísticas"], ["records", "Récords"]] as const).map(([value, label]) => <button type="button" key={value} aria-pressed={view === value} onClick={() => setView(value)}>{label}</button>)}
+    </nav> : null}
+    {error ? <div className={styles.message} role="status">{withProgression ? "No hemos podido actualizar la trayectoria." : team ? "No hemos podido actualizar los logros del equipo." : "No hemos podido actualizar tus logros."} <button type="button" onClick={() => setRetry(value => value + 1)}>Volver a intentar</button></div> : !data ? <p className={styles.message} role="status">{team ? "Cargando la trayectoria del equipo…" : "Cargando tu colección de logros…"}</p> : withProgression && view !== "achievements" ? <ProgressionStatistics subject={subject} stats={data.stats} view={view} /> : <>
       <div className={styles.filters}>
         <div className={styles.rarityFilters} aria-label="Filtrar logros por rareza">
           <button type="button" aria-pressed={rarity === "all"} onClick={() => setRarity("all")}>Todos</button>

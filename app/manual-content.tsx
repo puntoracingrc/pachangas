@@ -343,7 +343,7 @@ const manualFlows = [
     steps: [
       "Los logros individuales son reconocimiento personal: quedan en el historial y muestran su contador, pero no entregan cajas, puntos ni cosméticos.",
       "Doblete, hat-trick, póker, repóker y doble hat-trick pueden repetirse. En cada partido solo cuenta el mayor de esos logros que corresponda a los goles asignados al jugador.",
-      "En Identidad del equipo puedes separar Logros, Estadísticas y Récords. Allí aparecen partidos, victorias, goles, rivales distintos y mejores rachas calculados por el servidor.",
+      "En Equipo → Logros puedes consultar los logros, las estadísticas y los récords del equipo. Tu trayectoria individual está en Perfil, junto a tu ficha: logros personales, estadísticas y récords calculados por el servidor.",
       "Los hitos personales de partidos, victorias, goles, rachas y rivales se guardan para tu historial, pero siguen sin entregar cajas.",
       "Los goles no asignados sí cuentan para el marcador y los logros colectivos del equipo, pero no inventan un logro individual.",
       "Los logros colectivos se guardan al confirmar el resultado y generan una caja separada para cada participante real del partido.",

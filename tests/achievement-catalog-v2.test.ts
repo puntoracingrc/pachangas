@@ -49,10 +49,14 @@ test("the SQL suite covers lifecycle, corrections and Rating V2 isolation", () =
   assert.match(sqlTest, /Achievement progression must leave every Rating V2 field untouched/);
 });
 
-test("the existing screen distinguishes achievements, statistics and records", () => {
-  assert.match(identityUi, /\["achievements", "Logros"\]/);
-  assert.match(identityUi, /\["stats", "Estadísticas"\]/);
-  assert.match(identityUi, /\["records", "Récords"\]/);
-  assert.match(identityUi, /progression\?\.personalStats/);
-  assert.match(identityUi, /progression\?\.teamStats/);
+test("team and personal progression have separate destinations", () => {
+  const gallery = readFileSync(new URL("../app/personalizar-carta/achievement-gallery.tsx", import.meta.url), "utf8");
+  const profile = readFileSync(new URL("../app/perfil/profile-client.tsx", import.meta.url), "utf8");
+  assert.match(gallery, /\["achievements", "Logros"\]/);
+  assert.match(gallery, /\["stats", "Estadísticas"\]/);
+  assert.match(gallery, /\["records", "Récords"\]/);
+  assert.match(profile, /<PlayerProgression[^>]+profileId={profile.id}/);
+  assert.match(identityUi, /href="\/perfil#trayectoria"/);
+  assert.match(identityUi, /\/equipo\/logros\?team=/);
+  assert.doesNotMatch(identityUi, /Mis estadísticas|Mis récords|progressView/);
 });
