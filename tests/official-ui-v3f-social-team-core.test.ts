@@ -138,7 +138,7 @@ test("V3F team pages use canonical read models, cache only reads and refetch on 
   for (const rpc of [
     "get_my_pachanga_social_teams_v1",
     "get_pachanga_social_team_home_v1",
-    "get_pachanga_social_team_roster_v1",
+    "get_pachanga_team_players_v1",
     "get_pachanga_social_team_invitations_v2",
   ]) assert.match(team, new RegExp(rpc));
   assert.match(team, /pachanga_social_invalidations_v1/);
@@ -199,7 +199,7 @@ test("V3F keeps five primary tabs and includes Team directly", () => {
 
 test("V3F caches only canonical snapshots under versioned per-user keys", () => {
   assert.equal(socialProfileCacheKey("user-demo"), "pachangas-social-profile-cache:v3f-1:user-demo");
-  assert.equal(socialTeamCacheKey("user-demo", "team-demo"), "pachangas-social-team-cache:v3f-1:user-demo:team-demo");
+  assert.equal(socialTeamCacheKey("user-demo", "team-demo"), "pachangas-social-team-cache:players-v1:user-demo:team-demo");
 });
 
 test("V3F Demo covers the 26 local stories with no remote writer", async () => {
