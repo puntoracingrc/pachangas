@@ -298,6 +298,9 @@ function attachNewPlaceAutocomplete({
 
   const autocompleteElement = new PlaceAutocompleteElement();
   autocompleteElement.classList.add("pachangas-place-autocomplete");
+  // Set this on the host: the production CSS optimizer rewrites the inherited
+  // scheme to `normal`, leaving Google's dropdown out of sync with our theme.
+  autocompleteElement.style.colorScheme = "inherit";
   if (types?.length) autocompleteElement.includedPrimaryTypes = types;
   autocompleteElement.includedRegionCodes = ["es"];
   autocompleteElement.placeholder = input.placeholder || "Busca con Google Places";
