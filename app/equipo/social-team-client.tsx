@@ -198,7 +198,7 @@ export function SocialTeamProduct({ surface = "home" }: { surface?: TeamSurface 
     const isAdmin = selected.role === "owner" || selected.role === "admin";
     const [homeResult, rosterResult, invitationResult, membershipRequestResult] = await Promise.all([
       supabase.rpc("get_pachanga_social_team_home_v1", { target_group_id: selected.groupId }),
-      supabase.rpc("get_pachanga_social_team_roster_v1", { target_group_id: selected.groupId }),
+      supabase.rpc("get_pachanga_team_players_v1", { target_group_id: selected.groupId }),
       isAdmin ? supabase.rpc("get_pachanga_social_team_invitations_v2", { target_group_id: selected.groupId }) : Promise.resolve({ data: [], error: null }),
       isAdmin ? supabase.rpc("get_pachanga_team_membership_requests_v1", { target_group_id: selected.groupId }) : Promise.resolve({ data: [], error: null }),
     ]);
@@ -265,7 +265,7 @@ export function SocialTeamProduct({ surface = "home" }: { surface?: TeamSurface 
   const contextOptions = teams.map((team) => ({
     detail: `${modalityLabel(team.modality)} · ${team.generalArea}`,
     id: team.groupId,
-    nextAction: team.memberCount < 5 ? "Invitar jugadores" : "Ver equipo",
+    nextAction: "Ver equipo",
     role: roleLabel(team.role),
     status: team.operationalStatus,
     title: team.name,
@@ -441,7 +441,7 @@ export function SocialTeamProduct({ surface = "home" }: { surface?: TeamSurface 
           <span>Equipo activo</span>
           <h1>{home.name}</h1>
           <p>{modalityLabel(home.modality)} · {home.generalArea || "Zona pendiente"}</p>
-          <small>{home.memberCount} jugadores</small>
+          <small>{roster.length} jugadores</small>
         </div>
         {surface === "home" ? <PrimaryTeamAction home={home} /> : <Link className={styles.primary} href={`/equipo?team=${encodeURIComponent(home.groupId)}`}>Volver al equipo</Link>}
       </header>
@@ -498,13 +498,13 @@ function TeamHome({ home, roster }: { home: SocialTeamHome; roster: SocialTeamRo
         {home.nextMatch ? <><p>{dateLabel(home.nextMatch.date)} · {home.nextMatch.place || "Campo por confirmar"}</p><small>{modalityLabel(home.nextMatch.modality)} · objetivo {home.nextMatch.targetPlayers} jugadores</small></> : <p>Crea el primer partido cuando la plantilla esté preparada.</p>}
       </section>
       <section className={styles.rosterPreview}>
-        <header><span>Plantilla</span><h2>{home.memberCount} jugadores</h2></header>
+        <header><span>Plantilla</span><h2>{roster.length} jugadores</h2></header>
         <div>{roster.slice(0, 6).map((member) => <MemberAvatar key={member.memberKey} member={member} />)}</div>
         <Link href={`/equipo/plantilla?team=${encodeURIComponent(home.groupId)}`}>Ver plantilla</Link>
       </section>
       <section className={styles.activity}>
         <header><span>Equipo</span><h2>Ahora mismo</h2></header>
-        <ul><li><b>{home.memberCount}</b><span>jugadores</span></li><li><b>{home.activeInvitationCount}</b><span>invitaciones pendientes</span></li>{home.operationalStatus !== "ACTIVE" ? <li><b>{home.operationalStatus}</b><span>acción limitada</span></li> : null}</ul>
+        <ul><li><b>{roster.length}</b><span>jugadores</span></li><li><b>{home.activeInvitationCount}</b><span>invitaciones pendientes</span></li>{home.operationalStatus !== "ACTIVE" ? <li><b>{home.operationalStatus}</b><span>acción limitada</span></li> : null}</ul>
       </section>
       <section className={styles.destinations}>
         <header><span>Jugar</span><h2>Siguientes pasos</h2></header>
@@ -521,15 +521,16 @@ function MemberAvatar({ member }: { member: SocialTeamRosterMember }) {
 function RosterView({ admins, canInvite, invitationCount, players, teamId }: { admins: SocialTeamRosterMember[]; canInvite: boolean; invitationCount: number; players: SocialTeamRosterMember[]; teamId: string }) {
   return (
     <div className={styles.rosterSections}>
-      <RosterGroup members={admins} title="Admins" />
-      <RosterGroup members={players} title="Jugadores" />
+      {admins.length ? <RosterGroup members={admins} title="Jugadores administradores" /> : null}
+      {players.length ? <RosterGroup members={players} title="Jugadores" /> : null}
+      {!admins.length && !players.length ? <p>Aún no hay jugadores en la plantilla.</p> : null}
       {canInvite ? <section className={styles.invitationSummary}><div><span>Invitaciones pendientes</span><strong>{invitationCount}</strong></div><Link href={`/equipo/invitaciones?team=${encodeURIComponent(teamId)}`}>Gestionar</Link></section> : null}
     </div>
   );
 }
 
 function RosterGroup({ members, title }: { members: SocialTeamRosterMember[]; title: string }) {
-  return <section className={styles.rosterGroup}><header><span>{title}</span><strong>{members.length}</strong></header><div className={styles.rosterList}>{members.map((member) => <details key={member.memberKey}><summary><MemberAvatar member={member} /><span><strong>{member.displayName}{member.isCurrentUser ? " · Tú" : ""}</strong><small>{member.primaryPosition}</small></span><b>{roleLabel(member.role)}</b></summary><div><span>{modalityLabel(member.preferredModality)}</span><small>Miembro desde {dateLabel(member.joinedAt)}</small>{member.isCurrentUser ? <Link href="/perfil">Abrir mi perfil</Link> : null}</div></details>)}</div></section>;
+  return <section className={styles.rosterGroup}><header><span>{title}</span><strong>{members.length}</strong></header><div className={styles.rosterList}>{members.map((member) => <details key={member.memberKey}><summary><MemberAvatar member={member} /><span><strong>{member.displayName}{member.isCurrentUser ? " · Tú" : ""}</strong><small>{member.primaryPosition}</small></span><b>{roleLabel(member.role)}</b></summary><div><span>{modalityLabel(member.preferredModality)}</span>{member.joinedAt ? <small>Miembro desde {dateLabel(member.joinedAt)}</small> : null}{member.isCurrentUser ? <Link href="/perfil">Abrir mi perfil</Link> : null}</div></details>)}</div></section>;
 }
 
 function InvitationView({ busyInvitationId, busyRequestId, canInvite, copyConfirmed, creating, expiryHours, freshInviteMode, freshShareUrl, invitations, membershipRequests, onCopy, onCreate, onExpiryChange, onRespondRequest, onRevoke, onShare, teamCode, writeEnabled }: {

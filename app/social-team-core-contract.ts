@@ -384,7 +384,7 @@ export function normalizeSocialTeamMembershipRequests(value: unknown): SocialTea
 }
 
 export function socialTeamCacheKey(userId: string, groupId: string) {
-  return `pachangas-social-team-cache:${SOCIAL_TEAM_CACHE_VERSION}:${userId}:${groupId}`;
+  return `pachangas-social-team-cache:players-v1:${userId}:${groupId}`;
 }
 
 export function socialTeamsCacheKey(userId: string) {
