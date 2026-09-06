@@ -7814,7 +7814,8 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
 
   function startPlayerAssessment(kind: PlayerAssessmentKind, seedPlayer?: Player) {
     if (!isRegisteredUser || !currentUserId) return;
-    if (!hasRealTeam) {
+    // Real accounts always use the canonical profile and stored initial answers.
+    if (!isDemoMode) {
       window.location.assign(`/perfil/test-inicial${kind === "advanced" ? "?tipo=avanzado" : ""}`);
       return;
     }
@@ -9751,15 +9752,9 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
             {ratingEligibility.previousRatingAt ? <small>Valoración anterior: {new Date(ratingEligibility.previousRatingAt).toLocaleDateString("es-ES")}</small> : null}
           </div>
         ) : null}
-        {selectedPlayerIsOwn && assessmentSummaryKindCompleted(selectedPlayer, "initial") ? (
+        {selectedPlayerIsOwn && assessmentSummaryKindCompleted(selectedPlayer, "advanced") ? (
           <div className="assessment-followup">
-            {assessmentSummaryKindCompleted(selectedPlayer, "advanced") ? (
-              <small>Test avanzado completado. La ficha seguirá evolucionando con valoraciones de compañeros.</small>
-            ) : (
-              <button type="button" onClick={() => startPlayerAssessment("advanced", selectedPlayer)}>
-                Mejorar precisión de mi carta
-              </button>
-            )}
+            <small>Test avanzado completado. La ficha seguirá evolucionando con valoraciones de compañeros.</small>
           </div>
         ) : null}
         {!selectedPlayer.goalkeeperOnly && !selectedPlayerIsOwn ? (

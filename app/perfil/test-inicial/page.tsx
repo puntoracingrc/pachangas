@@ -561,7 +561,7 @@ export default function PlayerInitialAssessmentPage() {
                 <>
                   <div className="player-assessment-title">
                     <span>{flow.kind === "initial" ? "Test obligatorio" : "Test opcional"}</span>
-                    <strong>{flow.kind === "initial" ? "Crea tu ficha inicial" : "Afina tu ficha"}</strong>
+                    <strong>{flow.kind === "initial" ? "Crea tu ficha inicial" : "Afina tu carta"}</strong>
                     <button type="button" onClick={() => setFlow(null)} aria-label="Cerrar test" disabled={flow.saving}>×</button>
                   </div>
                   <div className="player-assessment-progress">
@@ -571,8 +571,8 @@ export default function PlayerInitialAssessmentPage() {
 
                   {flow.step === -1 ? (
                     <div className="player-assessment-intro">
-                      <p>Este test crea tu ficha real y solo se puede completar una vez por usuario. Responde con la máxima sinceridad: después evolucionará con partidos y valoraciones.</p>
-                      <p>Si sales antes de terminar, solo conservaremos un borrador en este dispositivo. No existirá ninguna ficha confirmada hasta que responda el servidor.</p>
+                      <p>{flow.kind === "initial" ? "Este test crea tu ficha real y solo se puede completar una vez por usuario. Responde con la máxima sinceridad: después evolucionará con partidos y valoraciones." : "Este test afina tu carta actual y solo se puede completar una vez. Tu nombre y tu foto se mantienen. Responde con la máxima sinceridad para definir mejor tus atributos."}</p>
+                      <p>{flow.kind === "initial" ? "Si sales antes de terminar, solo conservaremos un borrador en este dispositivo. No existirá ninguna ficha confirmada hasta que responda el servidor." : "Si sales antes de terminar, conservaremos solo un borrador en este dispositivo. Tu carta actual no cambiará hasta que completes y guardes el test."}</p>
                       <button className="primary-button" type="button" onClick={() => setFlow((current) => current ? { ...current, step: 0 } : current)}>{flow.kind === "initial" ? "Empezar test" : "Empezar test avanzado"}</button>
                     </div>
                   ) : null}

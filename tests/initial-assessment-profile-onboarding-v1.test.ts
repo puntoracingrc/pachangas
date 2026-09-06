@@ -208,8 +208,9 @@ test("immutable assessment evidence permits only the declared Auth user cascade"
   assert.doesNotMatch(accountDeletionMigration, /disable trigger|drop trigger/);
 });
 
-test("team onboarding remains available while no-team entry redirects to the universal flow", () => {
-  assert.match(home, /if \(!hasRealTeam\) \{\s*window\.location\.assign\(`\/perfil\/test-inicial/);
+test("all real accounts enter the canonical assessment flow and ranking has no duplicate advanced CTA", () => {
+  assert.match(home, /if \(!isDemoMode\) \{\s*window\.location\.assign\(`\/perfil\/test-inicial/);
+  assert.doesNotMatch(home, /onClick=\{\(\) => startPlayerAssessment\("advanced", selectedPlayer\)/);
   assert.match(route, /groupContext\s*\? await service\.rpc\("persist_pachanga_player_assessment_authoritative_v2"/);
 });
 
