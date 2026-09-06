@@ -5303,6 +5303,12 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
   }
 
   function openMatchFromInicio(matchId: string, pane: MatchManagerPane = "proximo") {
+    const requestedMatch = matches.find((match) => match.id === matchId);
+    if (canUseAdminControls && requestedMatch && !requestedMatch.configured && !requestedMatch.closed && requestedMatch.scoreA === undefined && requestedMatch.scoreB === undefined) {
+      resumeQuickMatchWizard(matchId);
+      navigateMobileTab("partido");
+      return;
+    }
     setActiveMatchId(matchId);
     setActiveMatchManagerPane(pane);
     setMatchExperienceView("detail");

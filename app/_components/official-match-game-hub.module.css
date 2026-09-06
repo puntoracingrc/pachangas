@@ -65,7 +65,34 @@
 .tools :global(.lineup-side-actions) { display: grid; gap: 4px; }
 .tools :global(button) { min-height: 34px; }
 .tools :global(.match-admin-context-button) { width: 100%; border: 1px solid var(--official-line); border-radius: 5px; background: rgba(81, 207, 223, 0.08); color: var(--official-cyan-text); font: inherit; font-size: 0.64rem; font-weight: 820; }
-.share :global(.match-side-share) { display: grid; }
+/* Sharing lives in the narrow sidebar; do not inherit the wide generic share grid. */
+.share :global(.match-side-share),
+.share :global(.match-share-options),
+.share :global(.share-box),
+.share :global(.share-actions) {
+  min-width: 0;
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+}
+.share :global(.share-box) { gap: 8px; padding: 8px; }
+.share :global(.share-box > span) { font-size: 0.6rem; overflow-wrap: anywhere; }
+.share :global(.share-actions button) {
+  min-width: 0;
+  width: 100%;
+  min-height: 40px;
+  padding: 6px;
+  font: inherit;
+  font-size: 0.65rem;
+  font-weight: 800;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.share :global(.share-actions .copy-invite-button) {
+  background: var(--official-surface, #121d1a);
+  color: var(--official-text, #f1f6f2);
+  border-color: var(--official-line, rgba(217, 234, 225, 0.16));
+}
 
 .context {
   min-width: 0;
