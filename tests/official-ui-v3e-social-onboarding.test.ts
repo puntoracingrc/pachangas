@@ -107,7 +107,7 @@ test("market visibility is explicit and revocable", () => {
 
 test("the three-step onboarding is dismissible after card creation and mandatory before it", async () => {
   const component = await source("app/_components/social-onboarding.tsx");
-  assert.match(component, /\[1, 2, 3\]\.map/);
+  assert.match(component, /profileOnly \? \[1, 2\] : \[1, 2, 3\]/);
   assert.match(component, /Paso 1[\s\S]*Tu perfil/);
   assert.match(component, /Paso 2[\s\S]*Dónde y cuándo prefieres jugar/);
   assert.match(component, /Ciudad o población/);
@@ -209,8 +209,8 @@ test("incoming invitations wait for explicit confirmation and canonical readback
   assert.match(confirm, /team\.invitation\.accept/);
   assert.doesNotMatch(confirm, /join_pachanga_team/);
   assert.match(confirm, /await loadTeams\(client, groupId\)/);
-  assert.match(component, /const activeView = requiredCardOnboarding[\s\S]*\? "profile"/);
-  assert.match(component, /const visibleOpen = Boolean\(requiredCardOnboarding \|\| forcedView \|\| open\)/);
+  assert.match(component, /const activeView = profileOnly[\s\S]*\? "profile"/);
+  assert.match(component, /const visibleOpen = Boolean\(profileOnly \|\| requiredCardOnboarding \|\| forcedView \|\| open\)/);
   assert.doesNotMatch(component, /visibleOpen = Boolean\(invitation \|\|/);
   assert.match(page, /dismissed=\{requiredCardOnboarding \? false : pendingSocialInvitation \? false : socialOnboardingDismissed\}/);
   assert.match(page, /key=\{`\$\{pendingSocialInvitation\?\.token \?\? "social-onboarding"\}:\$\{requiredCardOnboarding \? "required" : "optional"\}`\}/);

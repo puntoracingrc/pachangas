@@ -69,7 +69,9 @@ type SocialOnboardingProps = {
   onRequestTeamJoin: (groupId: string, expectedRevision: number) => Promise<{ error?: string; ok: boolean }>;
   onCloseInvitation: (invitation: PendingSocialInvitation) => void;
   onOpen: () => void;
+  onProfileSaved?: () => void;
   onSaveProfile: (draft: SocialOnboardingDraft) => Promise<{ error?: string; ok: boolean }>;
+  profileOnly?: boolean;
   requiredCardOnboarding?: boolean;
 };
 
@@ -122,7 +124,9 @@ export function SocialOnboarding({
   onRequestTeamJoin,
   onCloseInvitation,
   onOpen,
+  onProfileSaved,
   onSaveProfile,
+  profileOnly = false,
   requiredCardOnboarding = false,
 }: SocialOnboardingProps) {
   const [open, setOpen] = useState(!dismissed);
@@ -157,12 +161,14 @@ export function SocialOnboarding({
   const writeAvailability = socialWriteAvailability(online);
   const visibleDraft = useMemo(() => normalizeSocialOnboardingDraft(draft), [draft]);
   const draftRef = useRef(visibleDraft);
-  const activeView = requiredCardOnboarding
+  const activeView = profileOnly
+    ? "profile"
+    : requiredCardOnboarding
     ? "profile"
     : invitation ? (profileReady ? "join" : "profile") : forcedView ?? view;
   const activeJoinCandidate = invitation ?? joinCandidate;
   const alreadyInInvitedTeam = activeJoinCandidate?.snapshot?.alreadyMember === true;
-  const visibleOpen = Boolean(requiredCardOnboarding || forcedView || open);
+  const visibleOpen = Boolean(profileOnly || requiredCardOnboarding || forcedView || open);
   const cityConfirmed = Boolean(confirmedCity && confirmedCity === visibleDraft.zone.trim());
   const teamCityConfirmed = Boolean(confirmedTeamCity && confirmedTeamCity === createDraft.zone.trim());
 
@@ -447,6 +453,10 @@ export function SocialOnboarding({
       return;
     }
     setProfileMessage("Perfil confirmado.");
+    if (profileOnly) {
+      onProfileSaved?.();
+      return;
+    }
     setStep(3);
     if (requiredCardOnboarding) {
       setView("profile");
@@ -519,21 +529,21 @@ export function SocialOnboarding({
     <section className={`${styles.flow} ${activeView === "create" ? polishStyles.immersiveFlow : ""}`.trim()} data-onboarding-view={activeView} data-social-entry-state={entryState} data-social-onboarding="v3f" aria-labelledby="social-onboarding-title">
       <header className={styles.header}>
         <div>
-          <span>Primeros pasos</span>
+          <span>{profileOnly ? "Mi perfil" : "Primeros pasos"}</span>
           <h2 id="social-onboarding-title">
-            {requiredCardOnboarding ? "Crea tu ficha de jugador" : activeView === "join" ? "Unirme a un equipo" : activeView === "create" ? "Crear mi equipo" : activeView === "start" ? "¿Cómo quieres empezar?" : invitation ? "Primero, prepara tu perfil" : "Prepara tu perfil"}
+            {profileOnly ? "Editar perfil" : requiredCardOnboarding ? "Crea tu ficha de jugador" : activeView === "join" ? "Unirme a un equipo" : activeView === "create" ? "Crear mi equipo" : activeView === "start" ? "¿Cómo quieres empezar?" : invitation ? "Primero, prepara tu perfil" : "Prepara tu perfil"}
           </h2>
         </div>
         <div className={styles.headerActions}>
           {!profileReady ? <small>BORRADOR LOCAL</small> : <small>PERFIL CONFIRMADO</small>}
-          {!requiredCardOnboarding && !alreadyInInvitedTeam ? <button type="button" onClick={closeFlow}>Ahora no</button> : null}
+          {profileOnly ? <button type="button" onClick={closeFlow}>Volver</button> : !requiredCardOnboarding && !alreadyInInvitedTeam ? <button type="button" onClick={closeFlow}>Ahora no</button> : null}
         </div>
       </header>
 
       {activeView === "profile" ? (
         <div className={styles.profileFlow}>
           <nav className={styles.steps} aria-label="Pasos del perfil">
-            {[1, 2, 3].map((item) => (
+            {(profileOnly ? [1, 2] : [1, 2, 3]).map((item) => (
               <button
                 aria-current={step === item ? "step" : undefined}
                 disabled={item === 2 ? !visibleDraft.displayName.trim() : item === 3 ? requiredCardOnboarding && !firstTimeProfileReady : false}
@@ -586,7 +596,7 @@ export function SocialOnboarding({
               <label>Franja aproximada<select value={visibleDraft.approximateTime} onChange={(event) => updateDraft({ approximateTime: event.target.value })}><option>08:00-12:00</option><option>12:00-16:00</option><option>16:00-20:00</option><option>20:00-22:00</option><option>22:00-00:00</option></select></label>
               {!writeAvailability.allowed ? <p className={styles.warning}>{writeAvailability.label}</p> : null}
               {profileMessage ? <p className={styles.message} role="status">{profileMessage}</p> : null}
-              <div className={styles.actions}><button type="button" onClick={() => setStep(1)}>Volver</button><button className={styles.primary} type="button" disabled={profileSaving || !writeAvailability.allowed || !cityConfirmed} onClick={() => void saveProfile()}>{profileSaving ? "Guardando..." : profileReady ? "Actualizar perfil" : "Guardar perfil"}</button></div>
+              <div className={styles.actions}><button type="button" onClick={() => setStep(1)}>Volver</button><button className={styles.primary} type="button" disabled={profileSaving || !writeAvailability.allowed || !cityConfirmed} onClick={() => void saveProfile()}>{profileSaving ? "Guardando..." : profileOnly ? "Guardar cambios" : profileReady ? "Actualizar perfil" : "Guardar perfil"}</button></div>
             </div>
           ) : null}
           {step === 3 ? requiredCardOnboarding ? <RequiredAssessmentStep invitation={invitation} onBack={() => setStep(2)} /> : <StartChoices onCreate={() => selectView("create")} onJoin={() => selectView("join")} /> : null}

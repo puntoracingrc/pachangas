@@ -9857,6 +9857,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
   }
 
   function renderSocialOnboarding(requiredCardOnboarding = false) {
+    const profileOnly = !requiredCardOnboarding && socialFlowRequested === "profile" && Boolean(canonicalSocialProfile);
     return (
       <SocialOnboarding
         canonicalProfile={socialProfile}
@@ -9869,6 +9870,10 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
         invitation={pendingSocialInvitation}
         key={`${pendingSocialInvitation?.token ?? "social-onboarding"}:${requiredCardOnboarding ? "required" : "optional"}`}
         onDismiss={() => {
+          if (profileOnly) {
+            window.location.assign("/perfil");
+            return;
+          }
           if (requiredCardOnboarding) return;
           setSocialOnboardingDismissed(true);
           if (currentUserId) {
@@ -9903,7 +9908,9 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
             }
           }
         }}
+        onProfileSaved={profileOnly ? () => window.location.assign("/perfil") : undefined}
         onSaveProfile={saveSocialProfile}
+        profileOnly={profileOnly}
         requiredCardOnboarding={requiredCardOnboarding}
       />
     );
@@ -9921,9 +9928,16 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
       && (incomingSharedLink.hasInvite || incomingSharedLink.hasAdminInvite),
   );
   const isolatedTeamInvitationDecision = Boolean(pendingSocialInvitation && isRegisteredUser);
+  const isolatedProfileEditing = Boolean(
+    isRegisteredUser
+      && socialFlowRequested === "profile"
+      && canonicalSocialProfile
+      && !pendingSocialInvitation,
+  );
   const isolatedOnboardingActive = firstTimeCardGateActive
     || isolatedTeamInvitationLogin
-    || isolatedTeamInvitationDecision;
+    || isolatedTeamInvitationDecision
+    || isolatedProfileEditing;
 
   useEffect(() => {
     if (!isolatedOnboardingActive) return;
@@ -10002,6 +10016,16 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
     );
   }
 
+  if (isolatedProfileEditing) {
+    return (
+      <main className="first-time-onboarding-shell" data-profile-editing="isolated" style={teamColorStyle}>
+        <AuthenticatedThemeDefault />
+        <div className="first-time-onboarding-toolbar" aria-label="Apariencia"><ThemeToggle compact defaultPreference="dark" /></div>
+        {renderSocialOnboarding()}
+      </main>
+    );
+  }
+
   if (isPublicEntryMode) {
     return (
       <main className="min-h-screen bg-[#f7f6f0] text-[#1d2521] demo-world-entry-shell social-entry-shell" data-product-entry="no-team" style={teamColorStyle}>
@@ -10046,6 +10070,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
       account={{
         avatarUrl: ownPlayer?.avatar,
         displayName: authDisplayName(authUser),
+        onOpenMenu: () => setMobileAccountOpen(true),
         onSignOut: signOut,
         profileHref: "/perfil",
         settingsHref: "/?mobile=perfil&settings=1",
@@ -12210,6 +12235,9 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
                 >
                   <span>Mi ficha</span><small>Datos, posición, forma y valoraciones</small><b aria-hidden="true">›</b>
                 </button>
+                <a href="/ruleta">
+                  <span>Ruleta de premios</span><small>Tus tiradas, cofres y recompensas</small><b aria-hidden="true">›</b>
+                </a>
                 <a href="/ajustes/notificaciones">
                   <span>Avisos y notificaciones</span><small>Elige categorías y canales</small><b aria-hidden="true">›</b>
                 </a>

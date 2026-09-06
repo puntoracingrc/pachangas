@@ -257,7 +257,7 @@
 }
 
 .accessPanel img { filter: brightness(0) invert(1); }
-.accessPanel h1 { margin: 8px 0; font-size: 24px; }
+.accessPanel h1 { margin: 8px 0; color: #eef5f1 !important; font-size: 24px; }
 .accessPanel p { color: #9fb0aa; }
 .eyebrow { margin: 10px 0 0; color: #64d399; font-size: 11px; font-weight: 800; text-transform: uppercase; }
 

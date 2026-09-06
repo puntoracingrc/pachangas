@@ -2,3 +2,29 @@
 @media(max-width:760px){.page{padding:14px 12px 84px}.hero{grid-template-columns:auto 1fr;gap:12px}.hero .primary{grid-column:1/-1}.avatar{width:70px}.grid{grid-template-columns:1fr}.summary{grid-row:auto}.summary dl{grid-template-columns:1fr}.privacy{grid-column:auto}}
 @media(orientation:landscape) and (pointer:coarse){.page{padding:10px 14px}.hero{padding:10px 0}.avatar{width:62px}.grid{grid-template-columns:1.2fr .8fr;margin-top:10px}.grid>section{padding:12px}.summary dl{margin-top:8px}.privacy{display:none}}
 .cardSection>.cardActions{display:flex;flex-wrap:wrap;gap:10px;margin-inline:0;max-width:none}
+
+:global(:root[data-theme="light"]) .page{background:transparent;color:var(--official-text,#10201a)}
+:global(:root[data-theme="light"]) .hero{border-color:var(--official-line,rgba(17,43,34,.16))}
+:global(:root[data-theme="light"]) .hero>div:nth-child(2)>span,
+:global(:root[data-theme="light"]) .summary header span,
+:global(:root[data-theme="light"]) .cardSection header span,
+:global(:root[data-theme="light"]) .marketSection header span,
+:global(:root[data-theme="light"]) .privacy header span,
+:global(:root[data-theme="light"]) .state>span{color:var(--official-cyan-text,#086875)}
+:global(:root[data-theme="light"]) .hero p,
+:global(:root[data-theme="light"]) .hero small,
+:global(:root[data-theme="light"]) .summary dt,
+:global(:root[data-theme="light"]) .cardSection p,
+:global(:root[data-theme="light"]) .marketSection p,
+:global(:root[data-theme="light"]) .privacy p{color:var(--official-muted,#53675e)}
+:global(:root[data-theme="light"]) .avatar,
+:global(:root[data-theme="light"]) .grid>section,
+:global(:root[data-theme="light"]) .state{border-color:var(--official-line,rgba(17,43,34,.16));background:var(--official-surface,rgba(255,255,255,.92))}
+:global(:root[data-theme="light"]) .summary dl div{border-color:var(--official-line,rgba(17,43,34,.16))}
+:global(:root[data-theme="light"]) .avatar span,
+:global(:root[data-theme="light"]) .grid a,
+:global(:root[data-theme="light"]) .state a,
+:global(:root[data-theme="light"]) .marketActions button,
+:global(:root[data-theme="light"]) .marketSection strong[data-market-state="PUBLICADO"]{border-color:var(--official-accent-text,#476b00);color:var(--official-accent-text,#476b00)}
+:global(:root[data-theme="light"]) .notice{color:var(--official-cyan-text,#086875)}
+:global(:root[data-theme="light"]) .marketSection strong[data-market-state="PAUSADO"]{border-color:var(--official-warning-text,#8a5700);color:var(--official-warning-text,#8a5700)}

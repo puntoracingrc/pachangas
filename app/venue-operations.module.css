@@ -428,3 +428,58 @@
 @media (prefers-reduced-motion: reduce) {
   .page * { scroll-behavior: auto !important; transition: none !important; }
 }
+
+:global(:root[data-theme="light"]) .page { color: #10201a; }
+:global(:root[data-theme="light"]) .hero h1,
+:global(:root[data-theme="light"]) .surface h1,
+:global(:root[data-theme="light"]) .surface h2,
+:global(:root[data-theme="light"]) .panel h2,
+:global(:root[data-theme="light"]) .venueCard h2,
+:global(:root[data-theme="light"]) .pitchCard h3 { color: #10201a; }
+:global(:root[data-theme="light"]) .surface,
+:global(:root[data-theme="light"]) .panel,
+:global(:root[data-theme="light"]) .toolbar,
+:global(:root[data-theme="light"]) .metric,
+:global(:root[data-theme="light"]) .venueCard,
+:global(:root[data-theme="light"]) .pitchCard,
+:global(:root[data-theme="light"]) .timelineItem { background: #fff; border-color: rgba(17, 43, 34, .16); color: #10201a; }
+:global(:root[data-theme="light"]) .hero {
+  background: linear-gradient(90deg, rgba(238, 246, 242, .98), rgba(247, 250, 248, .9));
+  border-color: rgba(17, 43, 34, .16);
+  color: #10201a;
+}
+:global(:root[data-theme="light"]) .hero p,
+:global(:root[data-theme="light"]) .surface p,
+:global(:root[data-theme="light"]) .panel p,
+:global(:root[data-theme="light"]) .venueCard p,
+:global(:root[data-theme="light"]) .pitchCard p,
+:global(:root[data-theme="light"]) .muted,
+:global(:root[data-theme="light"]) .empty,
+:global(:root[data-theme="light"]) .cacheNote { color: #53675e; }
+:global(:root[data-theme="light"]) .eyebrow { color: #086875; }
+:global(:root[data-theme="light"]) .filters label,
+:global(:root[data-theme="light"]) .formGrid label,
+:global(:root[data-theme="light"]) .requestForm label { color: #33473e; }
+:global(:root[data-theme="light"]) .filters input,
+:global(:root[data-theme="light"]) .filters select,
+:global(:root[data-theme="light"]) .formGrid input,
+:global(:root[data-theme="light"]) .formGrid select,
+:global(:root[data-theme="light"]) .formGrid textarea,
+:global(:root[data-theme="light"]) .requestForm input,
+:global(:root[data-theme="light"]) .requestForm select,
+:global(:root[data-theme="light"]) .requestForm textarea { background: #fff; border-color: rgba(17, 43, 34, .24); color: #10201a; }
+:global(:root[data-theme="light"]) .secondaryAction,
+:global(:root[data-theme="light"]) .tabButton { background: rgba(8, 104, 117, .07); border-color: rgba(8, 104, 117, .28); color: #086875; }
+:global(:root[data-theme="light"]) .dangerAction { background: rgba(164, 38, 52, .06); border-color: rgba(164, 38, 52, .28); color: #a42634; }
+:global(:root[data-theme="light"]) .venueCard a:not(.action):not(.secondaryAction):not(.dangerAction),
+:global(:root[data-theme="light"]) .panel a:not(.action):not(.secondaryAction):not(.dangerAction),
+:global(:root[data-theme="light"]) .hero a:not(.action):not(.secondaryAction):not(.dangerAction) { color: #476b00; }
+:global(:root[data-theme="light"]) .chip { background: rgba(71, 107, 0, .07); border-color: rgba(71, 107, 0, .24); color: #476b00; }
+:global(:root[data-theme="light"]) .message { background: rgba(8, 104, 117, .07); color: #17453f; }
+:global(:root[data-theme="light"]) .message[data-tone="danger"] { background: rgba(164, 38, 52, .06); color: #7d202b; }
+:global(:root[data-theme="light"]) .message[data-tone="success"] { background: rgba(25, 113, 75, .07); color: #155f40; }
+:global(:root[data-theme="light"]) .slotButton,
+:global(:root[data-theme="light"]) .sidebar a,
+:global(:root[data-theme="light"]) .sidebar button { background: #f6f9f7; border-color: rgba(17, 43, 34, .18); color: #10201a; }
+:global(:root[data-theme="light"]) .sidebar a[aria-current="page"],
+:global(:root[data-theme="light"]) .sidebar button[aria-current="page"] { background: rgba(71, 107, 0, .09); border-color: #476b00; color: #385600; }

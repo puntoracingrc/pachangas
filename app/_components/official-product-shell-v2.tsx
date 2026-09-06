@@ -12,6 +12,7 @@ import {
 } from "./product-navigation-contract";
 import { useCanonicalPlatformOwner } from "./use-canonical-platform-owner";
 import { useSocialInbox } from "../social-inbox-provider";
+import { ThemeToggle } from "../theme-toggle";
 import {
   OFFICIAL_UI_V2_VERSION,
   resolveOfficialLayoutMode,
@@ -38,6 +39,7 @@ type ShellAccount = {
   cardHref?: string;
   displayName?: string;
   notificationsHref?: string;
+  onOpenMenu?: () => void;
   onSignOut?: () => void | Promise<void>;
   profileHref?: string;
   settingsHref?: string;
@@ -140,6 +142,47 @@ function UserIcon() {
   return <svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4" /><path d="M4.5 21c.4-5.2 2.9-8 7.5-8s7.1 2.8 7.5 8" /></svg>;
 }
 
+function MenuIcon() {
+  return <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16" /></svg>;
+}
+
+function useCanonicalAccountFallback() {
+  const [fallback, setFallback] = useState<Pick<ShellAccount, "avatarUrl" | "displayName">>({});
+
+  useEffect(() => {
+    if (!supabase) return;
+    const client = supabase;
+    let active = true;
+
+    void client.auth.getSession().then(async ({ data }) => {
+      const user = data.session?.user;
+      if (!active || !user) return;
+      const metadata = user.user_metadata as Record<string, unknown> | undefined;
+      const metadataAvatar = typeof metadata?.avatar_url === "string"
+        ? metadata.avatar_url
+        : typeof metadata?.picture === "string" ? metadata.picture : undefined;
+      const metadataName = typeof metadata?.full_name === "string"
+        ? metadata.full_name
+        : typeof metadata?.name === "string" ? metadata.name : user.email?.split("@")[0];
+      const profileResult = await client
+        .from("pachanga_player_profiles")
+        .select("avatar,display_name")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (!active) return;
+      const profile = profileResult.data as { avatar?: unknown; display_name?: unknown } | null;
+      setFallback({
+        avatarUrl: typeof profile?.avatar === "string" && profile.avatar ? profile.avatar : metadataAvatar,
+        displayName: typeof profile?.display_name === "string" && profile.display_name ? profile.display_name : metadataName,
+      });
+    });
+
+    return () => { active = false; };
+  }, []);
+
+  return fallback;
+}
+
 function useDismissableDetails() {
   const menuRef = useRef<HTMLDetailsElement>(null);
 
@@ -237,6 +280,12 @@ function AccountActions({
   isPlayerWithoutTeam: boolean;
   platformOwner: boolean;
 }) {
+  const fallback = useCanonicalAccountFallback();
+  const resolvedAccount = {
+    ...account,
+    avatarUrl: account.avatarUrl || fallback.avatarUrl,
+    displayName: account.displayName || fallback.displayName,
+  };
   const notificationsHref = account.notificationsHref ?? "/avisos";
   const { pendingSnapshot, snapshot, status } = useSocialInbox();
   const { closeMenu, menuRef } = useDismissableDetails();
@@ -264,38 +313,48 @@ function AccountActions({
 
   return (
     <div className={styles.accountActions}>
+      <span className={styles.themeAction}><ThemeToggle compact defaultPreference="dark" /></span>
       <Link className={styles.iconAction} data-inbox-status={status} href={notificationsHref} aria-label={bellLabel}>
         <BellIcon />
         {pendingCount > 0 ? <span className={styles.notificationBadge} aria-hidden="true">{pendingCount > 9 ? "9+" : pendingCount}</span>
           : unreadCount > 0 ? <span className={styles.notificationDot} aria-hidden="true" /> : null}
       </Link>
-      <details ref={menuRef} className={styles.accountMenu}>
-        <summary className={styles.avatarAction} aria-label="Abrir menú de cuenta">
-          {account.avatarUrl ? <Image src={account.avatarUrl} alt="" width={34} height={34} unoptimized /> : <UserIcon />}
-        </summary>
-        <div
-          className={styles.accountMenuPanel}
-          onClickCapture={(event) => {
-            if (event.target instanceof Element && event.target.closest("a, button")) closeMenu();
-          }}
-        >
-          <p><strong>{account.displayName ?? "Mi cuenta"}</strong><small>Vista jugador</small></p>
-          <Link href={account.profileHref ?? "/perfil"}>Mi perfil</Link>
-          <Link href={account.cardHref ?? "/personalizar-carta"}>Mi carta</Link>
-          <Link href="/ruleta">Ruleta de premios</Link>
-          <Link href={isPlayerWithoutTeam ? "/?social=start" : account.teamHref ?? "/equipo"}>{isPlayerWithoutTeam ? "Empezar" : "Mi equipo"}</Link>
-          <Link href={account.settingsHref ?? "/?mobile=perfil&settings=1"}>Ajustes</Link>
-          {adminViewPreview ? (
-            <button type="button" onClick={adminViewPreview.onToggle}>
-              {adminViewPreview.active ? "Volver a vista admin" : "Ver como jugador"}
-            </button>
-          ) : null}
-          {platformOwner ? <hr /> : null}
-          {platformOwner ? <Link href="/admin">Administración</Link> : null}
-          {platformOwner ? <Link href="/admin/demo">Mundo Demo completo</Link> : null}
-          <button className={styles.signOut} type="button" onClick={() => void signOut()}>Cerrar sesión</button>
-        </div>
-      </details>
+      <Link className={styles.avatarAction} href={resolvedAccount.profileHref ?? "/perfil"} aria-label="Abrir mi perfil">
+        {resolvedAccount.avatarUrl ? <Image src={resolvedAccount.avatarUrl} alt="" width={34} height={34} unoptimized /> : <UserIcon />}
+      </Link>
+      {resolvedAccount.onOpenMenu ? (
+        <button className={styles.menuAction} type="button" aria-label="Abrir menú general" onClick={resolvedAccount.onOpenMenu}>
+          <MenuIcon />
+        </button>
+      ) : (
+        <details ref={menuRef} className={styles.accountMenu}>
+          <summary className={styles.menuAction} aria-label="Abrir menú general">
+            <MenuIcon />
+          </summary>
+          <div
+            className={styles.accountMenuPanel}
+            onClickCapture={(event) => {
+              if (event.target instanceof Element && event.target.closest("a, button")) closeMenu();
+            }}
+          >
+            <p><strong>{resolvedAccount.displayName ?? "Mi cuenta"}</strong><small>Vista jugador</small></p>
+            <Link href={resolvedAccount.profileHref ?? "/perfil"}>Mi perfil</Link>
+            <Link href={resolvedAccount.cardHref ?? "/personalizar-carta"}>Mi carta</Link>
+            <Link href="/ruleta">Ruleta de premios</Link>
+            <Link href={isPlayerWithoutTeam ? "/?social=start" : resolvedAccount.teamHref ?? "/equipo"}>{isPlayerWithoutTeam ? "Empezar" : "Mi equipo"}</Link>
+            <Link href={resolvedAccount.settingsHref ?? "/?mobile=perfil&settings=1"}>Ajustes</Link>
+            {adminViewPreview ? (
+              <button type="button" onClick={adminViewPreview.onToggle}>
+                {adminViewPreview.active ? "Volver a vista admin" : "Ver como jugador"}
+              </button>
+            ) : null}
+            {platformOwner ? <hr /> : null}
+            {platformOwner ? <Link href="/admin">Administración</Link> : null}
+            {platformOwner ? <Link href="/admin/demo">Mundo Demo completo</Link> : null}
+            <button className={styles.signOut} type="button" onClick={() => void signOut()}>Cerrar sesión</button>
+          </div>
+        </details>
+      )}
     </div>
   );
 }

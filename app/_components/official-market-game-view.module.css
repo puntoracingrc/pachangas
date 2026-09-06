@@ -208,3 +208,7 @@
 @media (prefers-reduced-motion: reduce) {
   .layout *, .layout *::before, .layout *::after { transition-duration: 0.01ms !important; }
 }
+
+:global(:root[data-theme="light"]) .titlebar h1 {
+  color: var(--official-text, #10201a) !important;
+}

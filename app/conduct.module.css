@@ -84,3 +84,38 @@
   .moderationGrid { grid-template-columns: minmax(240px, .85fr) minmax(0, 1.45fr); gap: 10px; }
   .evidenceList { max-height: 160px; }
 }
+
+:global(:root[data-theme="light"]) .page {
+  background: linear-gradient(145deg, #f7f6f0, #eef2ef);
+  color: #10201a;
+}
+:global(:root[data-theme="light"]) .topbar { border-color: rgba(17, 43, 34, .16); }
+:global(:root[data-theme="light"]) .topbar a { color: #116149; }
+:global(:root[data-theme="light"]) .title span { color: #19714b; }
+:global(:root[data-theme="light"]) .title p,
+:global(:root[data-theme="light"]) .panel > p,
+:global(:root[data-theme="light"]) .empty,
+:global(:root[data-theme="light"]) .item small,
+:global(:root[data-theme="light"]) .sectionHeading small,
+:global(:root[data-theme="light"]) .caseButton span,
+:global(:root[data-theme="light"]) .triageSummary > span,
+:global(:root[data-theme="light"]) .triageSummary > small,
+:global(:root[data-theme="light"]) .evidenceItem small { color: #53675e; }
+:global(:root[data-theme="light"]) .message { background: rgba(25, 113, 75, .08); border-color: rgba(25, 113, 75, .28); color: #17453f; }
+:global(:root[data-theme="light"]) .panel,
+:global(:root[data-theme="light"]) .item,
+:global(:root[data-theme="light"]) .caseButton,
+:global(:root[data-theme="light"]) .queueTab,
+:global(:root[data-theme="light"]) .triageSummary,
+:global(:root[data-theme="light"]) .evidenceItem { background: #fff; border-color: rgba(17, 43, 34, .16); color: #10201a; }
+:global(:root[data-theme="light"]) .item p,
+:global(:root[data-theme="light"]) .triageSummary ul,
+:global(:root[data-theme="light"]) .evidenceItem em { color: #33473e; }
+:global(:root[data-theme="light"]) .actions button.secondary,
+:global(:root[data-theme="light"]) .buttonSecondary { background: #f6f9f7; border-color: rgba(17, 43, 34, .18); color: #10201a; }
+:global(:root[data-theme="light"]) .form label,
+:global(:root[data-theme="light"]) .caseTools label { color: #33473e; }
+:global(:root[data-theme="light"]) .form input,
+:global(:root[data-theme="light"]) .form select,
+:global(:root[data-theme="light"]) .form textarea,
+:global(:root[data-theme="light"]) .caseTools input { background: #fff; border-color: rgba(17, 43, 34, .24); color: #10201a; }

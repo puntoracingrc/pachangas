@@ -200,13 +200,13 @@ test("keeps portrait mobile views compact and readable", async () => {
 
   assert.ok(portraitStart > 0);
   assert.match(portraitCss, /@media \(orientation: portrait\) and \(max-width: 760px\)/);
-  assert.match(portraitCss, /main\[data-mobile-tab\],[\s\S]*\.market-page[\s\S]*--foreground: #f5f2e8/);
-  assert.match(portraitCss, /:is\(input, select, textarea\)[\s\S]*background: rgba\(5, 16, 13, 0\.9\) !important/);
+  assert.match(portraitCss, /main\[data-mobile-tab\],[\s\S]*\.market-page[\s\S]*color: var\(--foreground\)/);
+  assert.match(portraitCss, /:is\(input, select, textarea\)[\s\S]*background: var\(--panel\) !important/);
   assert.match(portraitCss, /\.match-editor[\s\S]*grid-template-columns: repeat\(2, minmax\(0, 1fr\)\) !important/);
   assert.match(portraitCss, /\.stats-row[\s\S]*grid-template-columns: repeat\(4, minmax\(0, 1fr\)\)/);
   assert.match(portraitCss, /\.ranking-player-entry[\s\S]*grid-template-columns: 86px minmax\(0, 1fr\)/);
   assert.match(portraitCss, /\.market-player[\s\S]*grid-template-columns: 88px minmax\(0, 1fr\)/);
-  assert.match(portraitCss, /:is\(\.match-item, \.history-item\)[\s\S]*rgba\(20, 42, 34, 0\.96\)/);
+  assert.match(portraitCss, /:is\(\.match-item, \.history-item\)[\s\S]*background: var\(--panel\) !important/);
   assert.match(portraitCss, /@media \(orientation: portrait\) and \(max-width: 350px\)/);
 });
 
