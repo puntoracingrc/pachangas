@@ -71,3 +71,30 @@
 :global(:root[data-theme="light"]) .invitationHistory article[data-invitation-state="REVOKED"] strong,
 :global(:root[data-theme="light"]) .invitationHistory article[data-invitation-state="EXPIRED"] strong{color:var(--official-muted,#53675e)}
 :global(:root[data-theme="light"]) .invitationHistory article[data-invitation-state="USED"] strong{color:var(--official-success-text,#19714b)}
+
+/* Team workspace follows the demo's side navigation, using live product routes. */
+.workspace{display:grid;grid-template-columns:190px minmax(0,1fr);gap:0;padding:0;width:min(1440px,100%)}
+.workspaceNav{position:sticky;top:66px;align-self:start;min-height:calc(100dvh - 66px);display:grid;align-content:start;border-right:1px solid var(--official-line);background:var(--official-overlay);padding:10px}
+.workspaceNav>div{display:grid;gap:3px;padding:8px 10px 14px;border-bottom:1px solid var(--official-line)}
+.workspaceNav>div span,.workspaceNav>small{font-size:.72rem;color:var(--official-muted)}
+.workspaceNav>div strong{font-size:.9rem;overflow-wrap:anywhere}
+.workspaceNav>a{min-height:46px;display:flex;align-items:center;border-left:3px solid transparent;padding:8px 10px;color:var(--official-muted);font-size:.85rem;font-weight:850}
+.workspaceNav>a[aria-current=page]{border-left-color:var(--official-accent);background:color-mix(in srgb,var(--official-accent) 8%,transparent);color:var(--official-text)}
+.workspaceNav>small{margin-top:16px;padding:8px 10px}
+.workspaceContent{min-width:0;padding:18px}
+.workspace .hero{min-height:120px;grid-template-columns:88px minmax(0,1fr) auto;gap:18px;padding:0 0 18px}
+.workspace .heroShield{max-width:88px;width:88px}
+.workspace .heroCopy h1{font-size:clamp(1.6rem,3vw,2.6rem);line-height:1.08}
+.workspace .heroCopy p{font-size:.9rem;margin:8px 0}
+.workspaceContent>[data-official-surface=ranking]{width:100%;min-height:0;padding:18px 0}
+@media(max-width:700px){
+ .workspace{grid-template-columns:minmax(0,1fr)}
+ .workspaceNav{top:60px;z-index:2;min-height:0;grid-auto-flow:column;grid-auto-columns:max-content;overflow-x:auto;border-right:0;border-bottom:1px solid var(--official-line);padding:0}
+ .workspaceNav>div,.workspaceNav>small{display:none}
+ .workspaceNav>a{border-left:0;border-bottom:3px solid transparent;white-space:nowrap;font-size:.8rem}
+ .workspaceNav>a[aria-current=page]{border-left:0;border-bottom-color:var(--official-accent)}
+ .workspaceContent{padding:14px}
+ .workspace .hero{grid-template-columns:64px minmax(0,1fr);gap:12px}
+ .workspace .heroShield{width:64px;max-width:64px}
+ .workspace .hero>.primary{grid-column:1/-1;width:100%}
+}

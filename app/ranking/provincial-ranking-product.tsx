@@ -94,7 +94,7 @@ function formatPublishedAt(value?: string) {
     .format(new Date(value));
 }
 
-export function ProvincialRankingProduct() {
+export function ProvincialRankingProduct({ embedded = false }: { embedded?: boolean } = {}) {
   const [ranking, setRanking] = useState<ProvincialRankingPayload | null>(null);
   const [ownRank, setOwnRank] = useState<ProvincialOwnRank | null>(null);
   const [loading, setLoading] = useState(true);
@@ -177,20 +177,11 @@ export function ProvincialRankingProduct() {
 
   const publishedLabel = formatPublishedAt(ranking?.publication?.publishedAt);
 
-  return (
-    <OfficialProductShellV2
-      active="equipo"
-      context={{
-        detail: ranking?.season?.label ?? "Sin temporada activa",
-        eyebrow: "Competición",
-        status: cached ? "Caché confirmada" : "En directo",
-        title: "Ranking provincial",
-      }}
-    >
-    <main className={styles.shell} data-official-surface="ranking">
+  const content = (
+    <section className={styles.shell} data-official-surface="ranking">
       <header className={styles.topbar}>
         <div>
-          <Link href="/" className={styles.back}>Volver</Link>
+          {!embedded ? <Link href="/" className={styles.back}>Volver</Link> : null}
           <h1>Ranking provincial</h1>
         </div>
         <div className={styles.territory}>
@@ -209,7 +200,20 @@ export function ProvincialRankingProduct() {
       {message && <div className={styles.notice} role="status">{message}</div>}
 
       <ProvincialRankingBoard loading={loading} ownRank={ownRank} ranking={ranking} />
-    </main>
+    </section>
+  );
+  if (embedded) return content;
+  return (
+    <OfficialProductShellV2
+      active="equipo"
+      context={{
+        detail: ranking?.season?.label ?? "Sin temporada activa",
+        eyebrow: "Competición",
+        status: cached ? "Caché confirmada" : "En directo",
+        title: "Ranking provincial",
+      }}
+    >
+      {content}
     </OfficialProductShellV2>
   );
 }
