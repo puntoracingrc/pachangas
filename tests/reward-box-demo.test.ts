@@ -35,8 +35,8 @@ test("the Three.js demo is visual-only, replay-safe and explicitly closable", ()
   assert.doesNotMatch(componentSource, /supabase|open_pachanga_reward|claim|reclamar/i);
 });
 
-test("only admin-capable surfaces expose the visual test", () => {
-  assert.equal(pageSource.match(/<span>Animación de logro<\/span>/g)?.length, 3);
+test("the match admin surface retains the visual test", () => {
+  assert.equal(pageSource.match(/<span>Animación de logro<\/span>/g)?.length, 1);
   assert.match(pageSource, /dynamic\(\s*\(\) => import\("\.\/reward-box-demo"\)/);
   assert.match(pageSource, /rewardBoxDemoOpen && canUseAdminControls/);
   assert.match(pageSource, /disabled={!canUseAdminControls}/);
