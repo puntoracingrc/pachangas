@@ -869,7 +869,6 @@ const seedMatches: Match[] = [
 ];
 
 const storageKey = "pachanga-iq-v3";
-const profileNameKey = "pachanga-iq-profile-name";
 const demoTeamOptionId = "__pachangas_demo__";
 const freeTrialMatchLimit = 2;
 
@@ -3810,6 +3809,8 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
     setAuthUser(user);
     setCurrentUserId(nextUserId);
     if (userChanged) {
+      // Names belong to the signed-in identity, never to the shared browser.
+      setProfileName(user && !isAnonymousAuthUser(user) ? authDisplayName(user) : "");
       setCanonicalSocialProfile(null);
       setSocialProfileResolved(false);
       setPlayerCardOnboardingMessage("");
@@ -3873,6 +3874,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
   }
 
   async function loadTeamMembers(client: NonNullable<typeof supabase>, groupId: string) {
+    const requestingUserId = authUserIdRef.current;
     const members = await client
       .from("pachanga_group_members")
       .select("user_id, role, display_name")
@@ -3880,6 +3882,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
       .order("created_at", { ascending: true });
 
     if (members.error) throw new Error(members.error.message);
+    if (authUserIdRef.current !== requestingUserId) return;
 
     setTeamMembers(
       (members.data ?? []).map((member, index) => ({
@@ -3889,7 +3892,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
       })),
     );
 
-    const ownMember = (members.data ?? []).find((member) => String(member.user_id) === currentUserId);
+    const ownMember = (members.data ?? []).find((member) => String(member.user_id) === requestingUserId);
     if (ownMember?.display_name) setProfileName(displayName(String(ownMember.display_name)));
   }
 
@@ -4202,7 +4205,6 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
     queueMicrotask(() => {
       if (!active) return;
       setIncomingSharedLink(incomingSharedLinkFromSearch(entrySearch));
-      setProfileName(localStorage.getItem(profileNameKey) ?? "");
       const params = new URLSearchParams(window.location.search);
       if (params.get("demo") === "1") {
         const nextParams = new URLSearchParams();
@@ -4245,10 +4247,6 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
       active = false;
     };
   }, [entryRoute]);
-
-  useEffect(() => {
-    localStorage.setItem(profileNameKey, profileName.trim());
-  }, [profileName]);
 
   const loadTeamBackupsEffect = useEffectEvent((client: NonNullable<typeof supabase>) => loadTeamBackups(client));
 
