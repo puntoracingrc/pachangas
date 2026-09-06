@@ -76,6 +76,7 @@ test("the client consumes canonical components and calls external matches Retos"
   assert.match(contract, /componentIndex: number/);
   assert.match(contract, /rewardComponent: RewardComponent \| null/);
   assert.match(contract, /scope: MatchScope/);
-  assert.match(identityUi, /scope === "external" \? "Retos"/);
+  const statistics = readFileSync(new URL("../app/personalizar-carta/progression-statistics.tsx", import.meta.url), "utf8");
+  assert.match(statistics, /\["external", "Retos"\]/);
   assert.match(identityUi, /rewardComponent\?\.label/);
 });
