@@ -566,9 +566,8 @@ export default function PlayerCosmeticsPage() {
     <OfficialProductShellV2
       active="perfil"
       context={{
-        detail: hasPendingChanges ? "Cambios sin guardar" : `${snapshot?.owned.length ?? 0} piezas`,
+        detail: hasPendingChanges ? "Cambios sin guardar" : "",
         eyebrow: "Mi carta",
-        status: snapshot ? `Revisión ${snapshot.revision}` : "Sincronizando",
         title: "Personalizar carta",
       }}
     >
@@ -583,10 +582,6 @@ export default function PlayerCosmeticsPage() {
         <div>
           <span>Colección personal</span>
           <h1>Personalizar carta</h1>
-        </div>
-        <div className={styles.headerStats}>
-          <span>{snapshot?.owned.length ?? 0} piezas</span>
-          <span>Revisión {snapshot?.revision ?? 0}</span>
         </div>
       </header>
 
