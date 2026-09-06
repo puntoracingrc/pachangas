@@ -209,6 +209,7 @@ export default function PlayerCosmeticsPage() {
   const [snapshot, setSnapshot] = useState<PlayerCosmeticsSnapshot | null>(null);
   const [socialProfile, setSocialProfile] = useState<SocialAvatarProfile | null>(null);
   const [userId, setUserId] = useState("");
+  const resetDialogRef = useRef<HTMLDialogElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const operationIds = useRef(new Map<string, string>());
@@ -241,7 +242,9 @@ export default function PlayerCosmeticsPage() {
     const canonical = normalizePlayerCosmeticsSnapshot(value);
     if (!canonical) return false;
     setSnapshot(canonical);
-    if (!preserveDraft) setDraft(canonical.loadout);
+    if (!preserveDraft) {
+      setDraft(canonical.loadout);
+    }
     if (userId) {
       try {
         writePlayerCosmeticsCache(window.localStorage, userId, canonical);
@@ -572,6 +575,19 @@ export default function PlayerCosmeticsPage() {
       }}
     >
     <main className={styles.page} data-official-surface="player-card">
+      <dialog className={styles.resetDialog} ref={resetDialogRef} aria-labelledby="reset-card-title" aria-describedby="reset-card-description">
+        <h2 id="reset-card-title">¿Restablecer el aspecto de tu carta?</h2>
+        <p id="reset-card-description">Vas a quitar los cosméticos equipados y volver al aspecto original. Tu puntuación no cambia y conservas todos los cosméticos de tu colección.</p>
+        <div className={styles.resetDialogActions}>
+          <button type="button" onClick={() => resetDialogRef.current?.close()}>Cancelar</button>
+          <button type="button" disabled={Boolean(busy)} onClick={() => {
+            setDraft({ ...EMPTY_PLAYER_COSMETIC_LOADOUT });
+            setMessage("");
+            setPhotoMenuOpen(false);
+            resetDialogRef.current?.close();
+          }}>Sí, restablecer aspecto</button>
+        </div>
+      </dialog>
       <nav className={styles.topbar}>
         <Link href={returnHref}>Volver</Link>
         <strong>Mi carta</strong>
@@ -617,13 +633,7 @@ export default function PlayerCosmeticsPage() {
           <EditorActions
             busy={Boolean(busy)}
             onPrimary={() => void saveChanges()}
-            onReset={() => {
-              setDraft({ ...EMPTY_PLAYER_COSMETIC_LOADOUT });
-              setMessage("");
-              setAvatarDraft(null);
-              setAvatarMessage("");
-              setPhotoMenuOpen(false);
-            }}
+            onReset={() => resetDialogRef.current?.showModal()}
             primaryDisabled={Boolean(dirty && !snapshot?.enabled)}
             primaryLabel={busy === "save" ? "Guardando..." : "Guardar carta"}
           />
@@ -704,11 +714,11 @@ export default function PlayerCosmeticsPage() {
             </div>
             {activeCategory === "badge" ? (
               <div className={styles.badgeGrid}>
-                <button className={!draft.featuredBadgeGrantId ? styles.selectedBadge : ""} type="button" onClick={() => setDraft((current) => ({ ...current, featuredBadgeGrantId: null }))}>
+                <button className={!draft.featuredBadgeGrantId ? styles.selectedBadge : ""} type="button" onClick={() => { setDraft((current) => ({ ...current, featuredBadgeGrantId: null })); }}>
                   <span aria-hidden="true">☆</span><strong>Sin logro destacado</strong>
                 </button>
                 {(snapshot?.featuredBadges ?? []).map((entry) => (
-                  <button className={draft.featuredBadgeGrantId === entry.grantId ? styles.selectedBadge : ""} key={entry.grantId} type="button" onClick={() => setDraft((current) => ({ ...current, featuredBadgeGrantId: entry.grantId }))}>
+                  <button className={draft.featuredBadgeGrantId === entry.grantId ? styles.selectedBadge : ""} key={entry.grantId} type="button" onClick={() => { setDraft((current) => ({ ...current, featuredBadgeGrantId: entry.grantId })); }}>
                     <span aria-hidden="true">★</span><strong>{entry.title}</strong><small>{entry.rarity}</small>
                   </button>
                 ))}
@@ -717,7 +727,7 @@ export default function PlayerCosmeticsPage() {
               <OwnedCosmeticSelector
                 items={activeItems}
                 noneLabel={activeCategory === "effect" || activeCategory === "title" ? "Ninguno" : "Original"}
-                onChange={(key) => setDraft((current) => withCosmeticKey(current, activeCategory, key))}
+                onChange={(key) => { setDraft((current) => withCosmeticKey(current, activeCategory, key)); }}
                 selectedKey={cosmeticKeyForSlot(draft, activeCategory)}
               />
             )}
