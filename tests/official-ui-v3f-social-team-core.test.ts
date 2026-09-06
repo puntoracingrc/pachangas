@@ -155,7 +155,8 @@ test("V3F team role controls allow owner and admin while keeping players read-on
   const team = await source("app/equipo/social-team-client.tsx");
   assert.match(team, /selected\.role === "owner" \|\| selected\.role === "admin"/);
   assert.match(team, /home\.actions\.canInvitePlayers/);
-  assert.match(team, /Solo owner y admins pueden crear enlaces/);
+  assert.match(team, /Solo para administradores/);
+  assert.match(team, /data-admin-only="invitations"/);
   assert.match(team, /cada persona entrará únicamente como jugador/);
   assert.match(team, /team\.invitation\.create/);
   assert.match(team, /team\.invitation\.revoke/);
