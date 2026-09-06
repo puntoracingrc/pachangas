@@ -38,6 +38,12 @@ export function OfficialMarketGameView({
   return (
     <div className={styles.layout} data-official-market-view="v2.1">
       <nav className={styles.subnav} aria-label="Secciones del mercado" data-official-market-navigation="single">
+        <span className={styles.searchPrompt}>
+          <span>¿Qué buscas?</span>
+          <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M4 12h16m-6-6 6 6-6 6" />
+          </svg>
+        </span>
         <div>
           {tabs.map((tab) => (
             <button
