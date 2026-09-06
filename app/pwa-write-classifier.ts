@@ -122,6 +122,7 @@ const v2WriteRpcNames = new Set([
   "review_pachanga_guest_withdrawal_v1",
   "review_pachanga_open_match_request_authoritative_v2",
   "discard_pachanga_match_draft_v1",
+  "configure_pachanga_match_v1",
   "save_pachanga_payload_authoritative_v2",
   "save_pachanga_player_cosmetic_loadout_v1",
   "save_pachanga_team_shield_loadout_v1",

@@ -6784,7 +6784,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
     updateMatch(next);
   }
 
-  async function saveMatchConfiguration(matchToSave: Match = activeMatch) {
+  async function saveMatchConfiguration(matchToSave: Match = activeMatch, onError?: (message: string) => void) {
     if (groupBillingLocked) {
       revealBillingPanel("La prueba gratuita ya ha cerrado 2 partidos. Activa un plan para guardar nuevos partidos.");
       return false;
@@ -6799,14 +6799,53 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
         Number.isFinite(Number(matchToSave.fieldCost ?? 0)) &&
         Number(matchToSave.fieldCost ?? 0) >= 0,
     );
-    if (!canSaveRequestedMatch) return false;
+    if (!canSaveRequestedMatch) {
+      onError?.("Revisa el campo, la fecha y el coste del partido antes de continuar.");
+      return false;
+    }
     const nextMatch = { ...matchToSave, configured: true, season: seasonKey(matchToSave.date) };
     const nextMatches = matches.map((match) => (match.id === matchToSave.id ? nextMatch : match));
-    const nextPayload = { activeMatchId: matchToSave.id, matches: nextMatches, players, siteSettings, venues };
 
     if (hasRealTeam) {
-      const saved = await saveRemotePayloadWithBackup(nextPayload, "partido_guardado", true);
-      return saved;
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+      try {
+        if (!supabase || !remoteGroupId || !remoteReady) throw new Error("La conexión con el equipo no está lista. Inténtalo de nuevo.");
+        const result = await supabase.rpc("configure_pachanga_match_v1", {
+          target_group_id: remoteGroupId,
+          target_match_id: nextMatch.id,
+          configuration: {
+            title: nextMatch.title, date: nextMatch.date, venueId: nextMatch.venueId, kind: nextMatch.kind,
+            targetPlayers: nextMatch.targetPlayers, fieldCost: nextMatch.fieldCost,
+            reservesAttend: Boolean(nextMatch.reservesAttend), reserveLimit: nextMatch.reserveLimit ?? 0,
+            publicGuestsPay: nextMatch.publicGuestsPay ?? true, publicOpenSlots: nextMatch.publicOpenSlots ?? 2,
+            publicRequiresApproval: nextMatch.publicRequiresApproval ?? true,
+          },
+          operation_id: id(), expected_revision: remotePayloadRevisionRef.current,
+          client_metadata: clientOperationMetadata(),
+        });
+        if (result.error) {
+          if (isRemoteRevisionConflict(result.error.message)) {
+            await loadTeams(supabase, remoteGroupId);
+            setMatches((current) => current.some((match) => match.id === matchToSave.id) ? current : [matchToSave, ...current]);
+            setActiveMatchId(matchToSave.id);
+            throw new Error("El equipo ha cambiado. Hemos actualizado los datos; vuelve a pulsar Crear partido.");
+          }
+          throw new Error("No se ha podido guardar el partido. Conservamos los datos para que puedas reintentarlo.");
+        }
+        if (!result.data?.payload?.matches?.some((match: Match) => match.id === nextMatch.id && match.configured)) {
+          throw new Error("El servidor no ha confirmado el partido. Puedes reintentar con los mismos datos.");
+        }
+        applyRemoteCommit(result.data);
+        setSyncStatus("live");
+        setSyncError("");
+        await createTeamBackup("partido_guardado", result.data.payload, true).catch(() => false);
+        return true;
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "No se ha podido guardar el partido. Inténtalo de nuevo.";
+        setSyncError(message);
+        onError?.(message);
+        return false;
+      }
     }
 
     setActiveMatchId(matchToSave.id);
@@ -6849,9 +6888,8 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
 
     setQuickMatchSaving(true);
     setQuickMatchError("");
-    const saved = await saveMatchConfiguration(nextMatch);
+    const saved = await saveMatchConfiguration(nextMatch, setQuickMatchError);
     if (!saved) {
-      setQuickMatchError(syncError || "El servidor no ha confirmado el partido. No se ha creado.");
       setQuickMatchSaving(false);
       return;
     }
