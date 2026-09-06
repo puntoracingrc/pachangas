@@ -141,11 +141,13 @@ test("builds the transfer market as a separated page", async () => {
     readFile(new URL("../app/mercado/marketplace-v3d.module.css", import.meta.url), "utf8"),
   ]);
   assert.match(html, /Mercado/);
-  assert.match(html, /data-official-market-navigation="single"/);
-  assert.match(html, /Filtros/);
+  assert.match(html, /Comprobando acceso/);
+  assert.doesNotMatch(html, /data-official-market-navigation="single"/);
+  assert.doesNotMatch(html, /Filtros/);
   assert.doesNotMatch(html, /Jugadores disponibles por zona y horario/);
   assert.doesNotMatch(html, /Un escaparate separado del grupo privado/);
-  assert.match(html, /¿Dónde quieres jugar\?/);
+  assert.doesNotMatch(html, /¿Dónde quieres jugar\?/);
+  assert.match(source, /<MarketAgeGate><MarketplaceClientContent\s*\/><\/MarketAgeGate>/);
   assert.match(source, /Partidos abiertos/);
   assert.match(source, /<ChallengeableTeamsPanel/);
   assert.match(source, /type MarketTab = "equipos" \| "jugadores" \| "partidos"/);

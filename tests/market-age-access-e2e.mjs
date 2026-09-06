@@ -8,14 +8,18 @@ page.setDefaultTimeout(15000);
 const uid='10000000-0000-4000-8000-000000000001', pid='20000000-0000-4000-8000-000000000001';
 const user={id:uid,aud:'authenticated',role:'authenticated',email:'profile-qa@example.invalid',app_metadata:{provider:'email'},user_metadata:{},created_at:new Date().toISOString()};
 const gid='30000000-0000-4000-8000-000000000001';
+let ageAccess='minor';
+let protectedReads=0;
 const frame='player.frame.future.navy';
 await page.route('https://profile-qa.supabase.co/**',async route=>{
  const path=new URL(route.request().url()).pathname;
  let data=[];
- if(path.includes('/auth/v1/user')) data=user;
+ if(path.endsWith('/get_my_pachanga_market_age_access_v1')) data={access:ageAccess};
+ else if(path.includes('/pachanga_market_profiles') || path.endsWith('/search_pachanga_open_matches_v1')) {protectedReads++;data=[];}
+ else if(path.includes('/auth/v1/user')) data=user;
  else if(path.includes('/pachanga_player_profiles')) data={id:pid,display_name:'Jugador QA',position:'Medio',current_overall:72,current_facets:{Pace:70,Shot:75,Pass:80},assessment_summary:{initial:{completedAt:'2026-09-01T10:00:00Z'},advanced:{completedAt:'2026-09-02T10:00:00Z'}},profile_version:1,market_enabled:false};
  else if(path.endsWith('/get_pachanga_player_cosmetics_snapshot_v1')) {data={enabled:true,playerProfileId:pid,revision:2,serverSequence:2,loadout:{frameKey:frame,backgroundKey:'player.background.future.navy',accentKey:null,effectKey:null,titleKey:null,featuredBadgeGrantId:'badge-qa'},owned:[],featuredBadges:[{grantId:'badge-qa',achievementKey:'qa',title:'Logro QA',rarity:'rare'}]};}
- else if(path.endsWith('/get_my_pachanga_social_profile_v1')) data={birthDate:'1990-01-01',marketAgeAllowed:true,displayName:'Jugador QA',primaryPosition:'CM',preferredModality:'football7',generalArea:'Madrid',usualDays:['monday'],approximateTime:'Tarde'};
+ else if(path.endsWith('/get_my_pachanga_social_profile_v1')) data={displayName:'Jugador QA',primaryPosition:'CM',preferredModality:'football7',generalArea:'Madrid',usualDays:['monday'],approximateTime:'Tarde'};
  else if(path.endsWith('/get_my_pachanga_social_teams_v1')) data=[{groupId:gid,name:'Equipo QA',teamCode:'QA123',role:'player'}];
  else if(path.includes('/pachanga_group_members')) {
   data=route.request().url().includes('pachanga_groups') ? [{group_id:gid,role:'player',pachanga_groups:{id:gid,name:'Equipo QA',owner_id:'40000000-0000-4000-8000-000000000001',team_code:'QA123',payload_revision:1,billing_status:'active',payload:{players:[{id:'player-qa',ownerUserId:uid,globalPlayerProfileId:pid,name:'Jugador QA',position:'Medio',rating:7,goals:0,assists:0,appearances:0,wins:0,assessmentSummary:{initial:{completedAt:'2026-09-01T10:00:00Z'}}}],matches:[],venues:[],siteSettings:{title:'Equipo QA'}}}}] : [{user_id:uid,role:'player',display_name:'Jugador QA'}];
@@ -29,22 +33,43 @@ await page.addInitScript(({user})=>{
 },{user});
 await page.route('**/api/ratings/assessment',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({assessments:{initial:{completedAt:'2026-09-01T10:00:00Z'}}})}));
 try {
- await page.goto(`${process.env.BASE_URL ?? 'http://127.0.0.1:3187'}/perfil`);
- const link=page.getByRole('link',{name:'Configurar mercado público',exact:true});
- await link.waitFor();
- await link.click();
- const market=page.locator('#market-profile');
- await market.waitFor();
- assert.equal(await page.getByRole('checkbox',{name:'Mostrarme en mercado de fichajes'}).isVisible(),true);
- await page.waitForTimeout(1600);
- assert.equal(await page.locator('main[data-mobile-tab]').getAttribute('data-mobile-tab'),'perfil');
- const y=await market.evaluate(e=>e.getBoundingClientRect().top);
- assert.ok(y>=-2&&y<250,`Market controls not at viewport start: ${y}`);
- assert.ok(new URL(page.url()).searchParams.get('market')==='1');
- await page.reload();
- await market.waitFor();
- await page.waitForTimeout(1600);
- assert.equal(await page.locator('main[data-mobile-tab]').getAttribute('data-mobile-tab'),'perfil');
- assert.ok(new URL(page.url()).searchParams.get('market')==='1');
- console.log(JSON.stringify({passed:true,url:page.url(),marketTop:y,reload:true}));
-} catch(error) {console.log(await page.locator('body').innerText());throw error;} finally {await browser.close();}
+ for(const route of ['/mercado','/retos']) {
+  await page.goto(`http://127.0.0.1:3187${route}`);
+  await page.getByRole('heading',{name:'Mercado y retos, a partir de los 18 años'}).waitFor();
+  assert.equal(protectedReads,0);
+  assert.equal(await page.getByText('Unirme a un equipo',{exact:true}).isVisible().catch(()=>false),false);
+ }
+ ageAccess='missing';
+ await page.goto('http://127.0.0.1:3187/mercado');
+ await page.getByRole('heading',{name:'Completa tu fecha de nacimiento'}).waitFor();
+ assert.equal(protectedReads,0);
+ await page.getByRole('link',{name:'Completar mi perfil',exact:true}).click();
+ const birthday=page.getByLabel('Fecha de nacimiento',{exact:false});
+ await birthday.waitFor();
+ const displayName=page.getByRole('textbox',{name:'Nombre visible',exact:false});
+ await displayName.fill('');
+ await displayName.pressSequentially('Alberto ');
+ assert.equal(await displayName.inputValue(),'Alberto ','A space must survive the next React render');
+ await displayName.pressSequentially('I');
+ assert.equal(await displayName.inputValue(),'Alberto I');
+ await displayName.fill('');
+ await displayName.pressSequentially('A'.repeat(33));
+ assert.equal((await displayName.inputValue()).length,32,'Visible name is limited to 32 characters');
+ await displayName.fill('Alberto M');
+
+ const next=page.getByRole('button',{name:'Continuar',exact:true});
+ assert.equal(await next.isEnabled(),false);
+ await birthday.fill('2099-01-01'); assert.equal(await next.isEnabled(),false);
+ await birthday.fill('2012-01-01'); assert.equal(await next.isEnabled(),true);
+ assert.equal(await page.getByText('Puedes jugar con tu equipo y crear uno para partidos internos.',{exact:false}).isVisible(),true);
+ await page.screenshot({path:'/tmp/age-registration-mobile.png',fullPage:true});
+ await next.click();
+ await page.getByRole('heading',{name:'Dónde y cuándo prefieres jugar'}).waitFor();
+ await page.getByRole('button',{name:'Volver',exact:true}).last().click();
+ assert.equal(await displayName.inputValue(),'Alberto M','Edited name survives navigating the form');
+ ageAccess='adult';
+ await page.goto('http://127.0.0.1:3187/mercado');
+ await page.waitForResponse(response=>response.url().includes('/search_pachanga_open_matches_v1')).catch(()=>{});
+ assert.ok(protectedReads>0,'Adult reaches normal market data loading');
+ console.log(JSON.stringify({passed:true,checks:['minor gate','missing date gate','no protected reads before adulthood','spaces while typing and editable 32 character name','registration requires valid date','minor can continue registration','adult market access']}));
+} catch(error) {console.log((await page.locator('body').innerText()).slice(0,5000));throw error;} finally {await browser.close();}

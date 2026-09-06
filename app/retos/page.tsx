@@ -1,5 +1,7 @@
 "use client";
 
+import { MarketAgeGate } from "../_components/market-age-gate";
+
 import { useEffect, useMemo, useState } from "react";
 import { OfficialProductShellV2 } from "../_components/official-product-shell-v2";
 import type { ProductContextOption } from "../_components/product-context-selector";
@@ -32,7 +34,7 @@ const activeFilters: Array<{ id: ChallengeActiveFilter; label: string }> = [
   { id: "sent", label: "Enviados" },
 ];
 
-export default function ChallengesPage() {
+function ChallengesPageContent() {
   const [route, setRoute] = useState<ChallengeRouteState>(emptyRoute);
   const [shellState, setShellState] = useState<TeamChallengesShellState | null>(null);
   const [requestedGroupId, setRequestedGroupId] = useState("");
@@ -145,4 +147,8 @@ export default function ChallengesPage() {
       </main>
     </OfficialProductShellV2>
   );
+}
+
+export default function ChallengesPage() {
+  return <MarketAgeGate><ChallengesPageContent /></MarketAgeGate>;
 }

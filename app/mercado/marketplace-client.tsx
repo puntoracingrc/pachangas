@@ -1,5 +1,7 @@
 "use client";
 
+import { MarketAgeGate } from "../_components/market-age-gate";
+
 import NextImage from "next/image";
 import { useEffect, useEffectEvent, useRef, useState } from "react";
 import { OfficialMarketGameView, type OfficialMarketTab } from "../_components/official-market-game-view";
@@ -478,7 +480,7 @@ function sourceLabel(source: MarketDataSource, updatedAt: string | null, online:
   return "Actualizado";
 }
 
-export default function MarketplaceClient() {
+function MarketplaceClientContent() {
   const [initialRoute] = useState(() => marketRouteFromSearch(""));
   const [activeTab, setActiveTab] = useState<MarketTab>(initialRoute.tab);
   const [filters, setFilters] = useState<MarketFilterDraft>(() => createFilterDraft(initialRoute.filters));
@@ -1515,4 +1517,8 @@ export default function MarketplaceClient() {
       </main>
     </OfficialProductShellV2>
   );
+}
+
+export default function MarketplaceClient() {
+  return <MarketAgeGate><MarketplaceClientContent /></MarketAgeGate>;
 }

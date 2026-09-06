@@ -75,10 +75,10 @@ test("OFFICIAL-UI-V3I-002 preserves account links, badges and permission boundar
   assert.match(account, /pendingCount > 9 \? "9\+" : pendingCount/);
   assert.match(account, /aria-label=\{bellLabel\}/);
   assert.match(account, /aria-label="Abrir menú general"/);
-  assert.match(account, /aria-label="Abrir menú de perfil"/);
+  assert.match(account, /aria-label="Abrir perfil y carta"/);
   assert.match(account, /<ThemeToggle compact defaultPreference="dark" \/>/);
   assert.doesNotMatch(account, /onOpenMenu/);
-  assert.match(account, /menuRef\.current\.open = true/);
+  assert.doesNotMatch(account, /menuRef\.current\.open = true/);
   assert.match(account, /platformOwner \? <Link href="\/admin">Administración<\/Link> : null/);
   assert.match(account, /adminViewPreview \? \(/);
 });
@@ -87,7 +87,7 @@ test("shell popover menus close outside, on Escape and after a menu action", asy
   const shell = await source("app/_components/official-product-shell-v2.tsx");
 
   assert.match(shell, /function useDismissableDetails\(\)/);
-  assert.match(shell, /document\.addEventListener\("pointerdown", handleOutsidePointer\)/);
+  assert.match(shell, /document\.addEventListener\("click", handleOutsideClick\)/);
   assert.match(shell, /menu\.contains\(event\.target\)/);
   assert.match(shell, /event\.key !== "Escape"/);
   assert.match(shell, /menu\.querySelector<HTMLElement>\("summary"\)\?\.focus\(\)/);

@@ -5159,10 +5159,11 @@ select {
   border: 1px solid var(--line);
   border-radius: 8px;
   color: var(--foreground);
+  color-scheme: inherit;
   display: block;
   font: inherit;
   min-height: 42px;
-  overflow: hidden;
+  overflow: visible;
   width: 100%;
 }
 

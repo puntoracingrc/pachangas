@@ -1,3 +1,4 @@
+import { validBirthDate } from "./market-age-contract";
 export type SocialEntryState =
   | "NEW_USER"
   | "PROFILE_READY_NO_TEAM"
@@ -16,6 +17,7 @@ export type SocialProfileFieldClass =
   | "TECHNICAL";
 
 export type SocialProfileMinimum = {
+  birthDate?: string | null;
   approximateTime?: string | null;
   avatarRef?: string | null;
   confirmedRevision?: number | null;
@@ -32,6 +34,7 @@ export type SocialProfileMinimum = {
 };
 
 export type SocialOnboardingDraft = {
+  birthDate?: string;
   approximateTime: string;
   avatarPreviewUrl: string;
   days: string[];
@@ -71,6 +74,7 @@ export const SOCIAL_PROFILE_FIELD_CLASSIFICATION = {
 } as const satisfies Record<string, SocialProfileFieldClass>;
 
 export const DEFAULT_SOCIAL_ONBOARDING_DRAFT: SocialOnboardingDraft = {
+  birthDate: "",
   approximateTime: "20:00-22:00",
   avatarPreviewUrl: "",
   days: [],
@@ -103,17 +107,22 @@ function cleanText(value: unknown, maxLength: number) {
   return typeof value === "string" ? value.trim().slice(0, maxLength) : "";
 }
 
+export const SOCIAL_DISPLAY_NAME_MAX_LENGTH = 32;
+
 export function normalizeSocialOnboardingDraft(value: unknown): SocialOnboardingDraft {
   if (!value || typeof value !== "object") return { ...DEFAULT_SOCIAL_ONBOARDING_DRAFT };
   const draft = value as Partial<SocialOnboardingDraft>;
   const modality = draft.modality === "sala" || draft.modality === "futbol11" ? draft.modality : "futbol7";
   return {
+    birthDate: cleanText(draft.birthDate, 10),
     approximateTime: cleanText(draft.approximateTime, 40) || DEFAULT_SOCIAL_ONBOARDING_DRAFT.approximateTime,
     avatarPreviewUrl: "",
     days: Array.isArray(draft.days)
       ? draft.days.filter((day): day is string => SOCIAL_DAY_OPTIONS.includes(day as (typeof SOCIAL_DAY_OPTIONS)[number]))
       : [],
-    displayName: cleanText(draft.displayName, 80),
+    // Keep the trailing space while typing the next word. Preserve legacy names
+    // up to their former limit so opening the editor never shortens them.
+    displayName: typeof draft.displayName === "string" ? draft.displayName.slice(0, 80) : "",
     modality,
     position: SOCIAL_POSITION_OPTIONS.includes(draft.position as (typeof SOCIAL_POSITION_OPTIONS)[number])
       ? String(draft.position)
@@ -136,6 +145,7 @@ export function socialProfileMinimumReady(profile: SocialProfileMinimum | null |
 export function socialFirstTimeProfileReady(profile: SocialProfileMinimum | null | undefined) {
   return Boolean(
     socialProfileMinimumReady(profile)
+      && validBirthDate(profile?.birthDate)
       && cleanText(profile?.generalArea, 120),
   );
 }

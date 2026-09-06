@@ -4415,6 +4415,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
       }
       setSocialOnboardingDraft((current) => normalizeSocialOnboardingDraft({
         ...current,
+        birthDate: profile.birthDate,
         approximateTime: profile.approximateTime || current.approximateTime,
         days: profile.usualDays.length ? profile.usualDays : current.days,
         displayName: profile.displayName || current.displayName || authDisplayName(authUser),
@@ -7566,6 +7567,8 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
     if (message.includes("disabled")) return "Esta función todavía no está activa en el servidor.";
     if (message.includes("stale") || message.includes("conflict")) return "El estado cambió en otro dispositivo. Se ha recargado la copia oficial.";
     if (message.includes("profile_already_exists")) return "El perfil ya existe. Recarga para editar su versión actual.";
+    if (message.includes("display_name_length_invalid")) return "El nombre visible debe tener entre 1 y 32 caracteres.";
+    if (message.includes("valid_birth_date_required")) return "Indica una fecha de nacimiento válida para guardar tu perfil.";
     if (message.includes("social_profile_required")) return "Guarda primero tu perfil de jugador.";
     if (message.includes("team_name_already_exists") || message.includes("pachanga_groups_name_unique_v1_idx")) return "Ese nombre ya pertenece a otro equipo.";
     if (message.includes("team_name_too_long") || message.includes("pachanga_groups_name_canonical_length_check")) return "El nombre del equipo puede tener como máximo 32 caracteres.";
@@ -7591,6 +7594,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
       expected_revision: expectedRevision,
       operation_id: id(),
       payload: {
+        birthDate: draft.birthDate,
         approximateTime: draft.approximateTime,
         displayName: draft.displayName,
         generalArea: draft.zone,
@@ -7618,6 +7622,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
     setCanonicalSocialProfile(profile);
     setProfileName(profile.displayName);
     setSocialOnboardingDraft(normalizeSocialOnboardingDraft({
+      birthDate: profile.birthDate,
       approximateTime: profile.approximateTime,
       days: profile.usualDays,
       displayName: profile.displayName,
