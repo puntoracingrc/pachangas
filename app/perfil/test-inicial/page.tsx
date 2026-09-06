@@ -528,6 +528,9 @@ export default function PlayerInitialAssessmentPage() {
                 <div className={styles.summary}>
                   <span>{snapshot.assessments.initial ? "Test inicial completado" : "Primera valoración"}</span>
                   <h1>{snapshot.assessments.initial ? "Tu ficha ya está creada" : "Crea tu primera ficha"}</h1>
+                  {snapshot.assessments.initial ? (
+                    <p className={styles.spinReward}>Has conseguido <strong>1 giro gratis en la ruleta</strong> por completar el test inicial.</p>
+                  ) : null}
                   {!snapshot.assessments.initial ? (
                     snapshot.onboardingProfileReady ? (
                       <>
@@ -544,7 +547,12 @@ export default function PlayerInitialAssessmentPage() {
                     <div className={styles.summaryActions}>
                       <Link href={onboardingReturnHref}>Entrar en Pachangas IQ</Link>
                       <Link href="/personalizar-carta?returnTo=%2Fperfil%2Ftest-inicial">Personalizar mi carta</Link>
-                      {!snapshot.assessments.advanced ? <button className="primary-button" type="button" onClick={() => beginAssessment("advanced")}>Mejorar precisión de mi carta</button> : <strong>Test avanzado completado</strong>}
+                      {!snapshot.assessments.advanced ? (
+                        <div className={styles.advancedAction}>
+                          <button className="primary-button" type="button" aria-describedby="advanced-test-reward" onClick={() => beginAssessment("advanced")}>Mejorar precisión de mi carta</button>
+                          <p id="advanced-test-reward">Completa el test avanzado para definir mejor tu carta y conseguir <strong>otro giro gratis en la ruleta.</strong></p>
+                        </div>
+                      ) : <strong>Test avanzado completado</strong>}
                     </div>
                   )}
                 </div>
