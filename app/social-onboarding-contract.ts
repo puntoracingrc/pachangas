@@ -107,6 +107,8 @@ function cleanText(value: unknown, maxLength: number) {
   return typeof value === "string" ? value.trim().slice(0, maxLength) : "";
 }
 
+export const SOCIAL_DISPLAY_NAME_MAX_LENGTH = 32;
+
 export function normalizeSocialOnboardingDraft(value: unknown): SocialOnboardingDraft {
   if (!value || typeof value !== "object") return { ...DEFAULT_SOCIAL_ONBOARDING_DRAFT };
   const draft = value as Partial<SocialOnboardingDraft>;
@@ -118,7 +120,9 @@ export function normalizeSocialOnboardingDraft(value: unknown): SocialOnboarding
     days: Array.isArray(draft.days)
       ? draft.days.filter((day): day is string => SOCIAL_DAY_OPTIONS.includes(day as (typeof SOCIAL_DAY_OPTIONS)[number]))
       : [],
-    displayName: cleanText(draft.displayName, 80),
+    // Keep the trailing space while typing the next word. Preserve legacy names
+    // up to their former limit so opening the editor never shortens them.
+    displayName: typeof draft.displayName === "string" ? draft.displayName.slice(0, 80) : "",
     modality,
     position: SOCIAL_POSITION_OPTIONS.includes(draft.position as (typeof SOCIAL_POSITION_OPTIONS)[number])
       ? String(draft.position)

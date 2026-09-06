@@ -395,3 +395,14 @@ test("responsive surfaces preserve portrait, compact landscape, safe areas and r
   assert.match(demo, /@media\(orientation:landscape\) and \(pointer:coarse\)/);
   assert.match(demo, /prefers-reduced-motion/);
 });
+
+// A trailing space belongs to the unfinished next word, not to save-time cleanup.
+test("visible name preserves spaces across every draft update", () => {
+  let draft = normalizeSocialOnboardingDraft({ displayName: "Alberto" });
+  draft = normalizeSocialOnboardingDraft({ ...draft, displayName: draft.displayName + " " });
+  assert.equal(draft.displayName, "Alberto ");
+  draft = normalizeSocialOnboardingDraft({ ...draft, displayName: draft.displayName + "I" });
+  assert.equal(draft.displayName, "Alberto I");
+  assert.equal(normalizeSocialOnboardingDraft({ displayName: "Alberto M" }).displayName, "Alberto M");
+  assert.equal(normalizeSocialOnboardingDraft({ displayName: "A".repeat(60) }).displayName.length, 60);
+});

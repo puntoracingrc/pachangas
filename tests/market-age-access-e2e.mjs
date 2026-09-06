@@ -46,6 +46,17 @@ try {
  await page.getByRole('link',{name:'Completar mi perfil',exact:true}).click();
  const birthday=page.getByLabel('Fecha de nacimiento',{exact:false});
  await birthday.waitFor();
+ const displayName=page.getByRole('textbox',{name:'Nombre visible',exact:false});
+ await displayName.fill('');
+ await displayName.pressSequentially('Alberto ');
+ assert.equal(await displayName.inputValue(),'Alberto ','A space must survive the next React render');
+ await displayName.pressSequentially('I');
+ assert.equal(await displayName.inputValue(),'Alberto I');
+ await displayName.fill('');
+ await displayName.pressSequentially('A'.repeat(33));
+ assert.equal((await displayName.inputValue()).length,32,'Visible name is limited to 32 characters');
+ await displayName.fill('Alberto M');
+
  const next=page.getByRole('button',{name:'Continuar',exact:true});
  assert.equal(await next.isEnabled(),false);
  await birthday.fill('2099-01-01'); assert.equal(await next.isEnabled(),false);
@@ -54,9 +65,11 @@ try {
  await page.screenshot({path:'/tmp/age-registration-mobile.png',fullPage:true});
  await next.click();
  await page.getByRole('heading',{name:'Dónde y cuándo prefieres jugar'}).waitFor();
+ await page.getByRole('button',{name:'Volver',exact:true}).last().click();
+ assert.equal(await displayName.inputValue(),'Alberto M','Edited name survives navigating the form');
  ageAccess='adult';
  await page.goto('http://127.0.0.1:3187/mercado');
  await page.waitForResponse(response=>response.url().includes('/search_pachanga_open_matches_v1')).catch(()=>{});
  assert.ok(protectedReads>0,'Adult reaches normal market data loading');
- console.log(JSON.stringify({passed:true,checks:['minor gate','missing date gate','no protected reads before adulthood','registration requires valid date','minor can continue registration','adult market access']}));
+ console.log(JSON.stringify({passed:true,checks:['minor gate','missing date gate','no protected reads before adulthood','spaces while typing and editable 32 character name','registration requires valid date','minor can continue registration','adult market access']}));
 } catch(error) {console.log((await page.locator('body').innerText()).slice(0,5000));throw error;} finally {await browser.close();}
