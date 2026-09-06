@@ -7,3 +7,67 @@
 @media(prefers-reduced-motion:reduce){.page *{scroll-behavior:auto!important;transition:none!important}}
 .membershipRequests{grid-column:1/-1;border:1px solid rgba(217,234,225,.16);border-radius:7px;background:rgba(18,29,26,.78);padding:18px}.membershipRequests header span{color:#51cfdf;font-size:.72rem;font-weight:900;text-transform:uppercase}.membershipRequests h2{margin:5px 0 12px;font-size:1.22rem}.membershipRequests>p{color:#a9bbb2}.membershipRequests>div{display:grid;gap:8px}.membershipRequests article{display:flex;align-items:center;justify-content:space-between;gap:16px;border:1px solid rgba(217,234,225,.13);border-radius:6px;padding:12px}.membershipRequests article>div:first-child{display:grid;gap:3px}.membershipRequests article small{color:#8fa49a}.requestActions{display:flex;gap:8px}.requestActions button{min-height:40px;border:1px solid rgba(217,234,225,.2);border-radius:5px;background:rgba(255,255,255,.05);padding:0 12px;color:#fff}.requestActions .primary{min-height:40px}
 @media(max-width:520px){.membershipRequests article{align-items:stretch;flex-direction:column}.requestActions button{flex:1}}
+
+:global(:root[data-theme="light"]) .page{color:var(--official-text,#10201a)}
+:global(:root[data-theme="light"]) .hero,
+:global(:root[data-theme="light"]) .subnav,
+:global(:root[data-theme="light"]) .activity li,
+:global(:root[data-theme="light"]) .individualInvite{border-color:var(--official-line,rgba(17,43,34,.16))}
+:global(:root[data-theme="light"]) .heroCopy>span,
+:global(:root[data-theme="light"]) .state>span,
+:global(:root[data-theme="light"]) .homeGrid header span,
+:global(:root[data-theme="light"]) .rosterGroup>header span,
+:global(:root[data-theme="light"]) .invitationSummary span,
+:global(:root[data-theme="light"]) .inviteComposer header span,
+:global(:root[data-theme="light"]) .invitationHistory header span,
+:global(:root[data-theme="light"]) .membershipRequests header span,
+:global(:root[data-theme="light"]) .freshInvite>span{color:var(--official-cyan-text,#086875)}
+:global(:root[data-theme="light"]) .heroCopy p,
+:global(:root[data-theme="light"]) .heroCopy small,
+:global(:root[data-theme="light"]) .homeGrid p,
+:global(:root[data-theme="light"]) .homeGrid small,
+:global(:root[data-theme="light"]) .activity span,
+:global(:root[data-theme="light"]) .state p,
+:global(:root[data-theme="light"]) .rosterList summary small,
+:global(:root[data-theme="light"]) .rosterList summary>b,
+:global(:root[data-theme="light"]) .rosterList details>div,
+:global(:root[data-theme="light"]) .inviteComposer p,
+:global(:root[data-theme="light"]) .inviteComposer label,
+:global(:root[data-theme="light"]) .invitationHistory>p,
+:global(:root[data-theme="light"]) .invitationHistory article small,
+:global(:root[data-theme="light"]) .invitationHistory article p,
+:global(:root[data-theme="light"]) .individualInvite small,
+:global(:root[data-theme="light"]) .inviteComposer .teamCode,
+:global(:root[data-theme="light"]) .teamCode small,
+:global(:root[data-theme="light"]) .membershipRequests>p,
+:global(:root[data-theme="light"]) .membershipRequests article small{color:var(--official-muted,#53675e)}
+:global(:root[data-theme="light"]) .homeGrid>section,
+:global(:root[data-theme="light"]) .rosterGroup,
+:global(:root[data-theme="light"]) .invitationSummary,
+:global(:root[data-theme="light"]) .inviteComposer,
+:global(:root[data-theme="light"]) .invitationHistory,
+:global(:root[data-theme="light"]) .membershipRequests,
+:global(:root[data-theme="light"]) .rosterList details,
+:global(:root[data-theme="light"]) .invitationHistory article,
+:global(:root[data-theme="light"]) .membershipRequests article,
+:global(:root[data-theme="light"]) .inviteComposer .teamCode{border-color:var(--official-line,rgba(17,43,34,.16));background:var(--official-surface,rgba(255,255,255,.92))}
+:global(:root[data-theme="light"]) .subnav{background:transparent}
+:global(:root[data-theme="light"]) .subnav a{color:var(--official-muted,#53675e)}
+:global(:root[data-theme="light"]) .subnav a[aria-current="page"],
+:global(:root[data-theme="light"]) .rosterPreview>a,
+:global(:root[data-theme="light"]) .destinations a,
+:global(:root[data-theme="light"]) .rosterList details>div a,
+:global(:root[data-theme="light"]) .invitationSummary>a,
+:global(:root[data-theme="light"]) .teamCode strong,
+:global(:root[data-theme="light"]) .invitationHistory article strong{color:var(--official-accent-text,#476b00)}
+:global(:root[data-theme="light"]) .stateActions a:not(.primary),
+:global(:root[data-theme="light"]) .individualInvite>button,
+:global(:root[data-theme="light"]) .freshInvite button,
+:global(:root[data-theme="light"]) .invitationHistory button,
+:global(:root[data-theme="light"]) .requestActions button{border-color:var(--official-line,rgba(17,43,34,.16));background:var(--official-surface-soft,#f6f9f7);color:var(--official-text,#10201a)!important}
+:global(:root[data-theme="light"]) .inviteComposer select{border-color:var(--official-line,rgba(17,43,34,.16));background:var(--official-surface-solid,#fff);color:var(--official-text,#10201a);color-scheme:light}
+:global(:root[data-theme="light"]) .freshInvite>a{color:var(--official-cyan-text,#086875)}
+:global(:root[data-theme="light"]) .notice{color:var(--official-cyan-text,#086875)}
+:global(:root[data-theme="light"]) .invitationHistory article[data-invitation-state="REVOKED"] strong,
+:global(:root[data-theme="light"]) .invitationHistory article[data-invitation-state="EXPIRED"] strong{color:var(--official-muted,#53675e)}
+:global(:root[data-theme="light"]) .invitationHistory article[data-invitation-state="USED"] strong{color:var(--official-success-text,#19714b)}

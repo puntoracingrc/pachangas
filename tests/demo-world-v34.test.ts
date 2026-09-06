@@ -87,5 +87,8 @@ test("Demo UI exposes Campos responsively and performs no remote mutation", asyn
   assert.doesNotMatch(component, /method: "POST"|clientWriteFetch|\.rpc\(/);
   assert.match(css, /max-width: 760px/);
   assert.match(css, /orientation: landscape/);
-  assert.match(contextCss, /\.copy select \{[\s\S]*color: #f1f6f2;[\s\S]*color-scheme: dark;/);
+  assert.match(
+    contextCss,
+    /\.copy select \{[\s\S]*color: var\(--official-text, #f1f6f2\);[\s\S]*color-scheme: inherit;/,
+  );
 });

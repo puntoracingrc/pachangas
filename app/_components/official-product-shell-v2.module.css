@@ -1,5 +1,6 @@
 .shell {
   --official-bg: #07110f;
+  --official-canvas: #08110f;
   --official-surface: rgba(18, 29, 26, 0.9);
   --official-surface-soft: rgba(25, 39, 34, 0.72);
   --official-surface-solid: #121d1a;
@@ -325,7 +326,7 @@
 .content :global(.hero),
 .content :global(.market-titlebar) {
   border-color: var(--official-line) !important;
-  background: rgba(7, 17, 15, 0.46) !important;
+  background: var(--official-surface-soft) !important;
   color: var(--official-text) !important;
 }
 
@@ -356,11 +357,11 @@
 .content :global(:is(input, select, textarea)) {
   border-color: var(--official-line) !important;
   border-radius: 6px !important;
-  background: #14211d !important;
+  background: var(--official-surface-solid) !important;
   color: var(--official-text) !important;
 }
 
-.content :global(:is(input, textarea)::placeholder) { color: #7f948a !important; }
+.content :global(:is(input, textarea)::placeholder) { color: var(--official-muted) !important; }
 
 .content :global(:is(.primary-button, .save-match-button)) {
   border-color: var(--official-accent) !important;
@@ -426,7 +427,7 @@
     justify-content: space-between;
     gap: 8px;
     padding: max(5px, env(safe-area-inset-top)) 10px 5px;
-    background: rgba(7, 17, 15, 0.92);
+    background: var(--official-overlay);
   }
   .contextBar .identityMenu { min-width: 0; flex: 1; }
   .contextBar .identityMenu > summary { max-width: 100%; }
@@ -465,7 +466,7 @@
     flex-direction: column;
     gap: 5px;
     border-right: 1px solid var(--official-line);
-    background: rgba(7, 17, 15, 0.96);
+    background: var(--official-overlay);
     padding: max(6px, env(safe-area-inset-top)) 6px max(6px, env(safe-area-inset-bottom)) max(6px, env(safe-area-inset-left));
   }
   .gameMark {
@@ -473,7 +474,7 @@
     display: grid;
     place-items: center;
     border: 1px solid rgba(200, 239, 93, 0.55);
-    background: #111c17;
+    background: var(--official-surface-solid);
     color: var(--official-accent);
     font-size: 0.7rem;
     font-weight: 950;
@@ -541,7 +542,7 @@
     justify-content: space-between;
     gap: 6px;
     padding: 0 10px;
-    background: rgba(7, 17, 15, 0.88);
+    background: var(--official-overlay);
   }
   .contextBar .identityMenu { min-width: 0; flex: 1; }
   .contextBar .identityMenu > summary { min-height: 40px; max-width: 100%; grid-template-columns: 26px minmax(0, 1fr) 12px; gap: 6px; }
@@ -586,7 +587,7 @@
   .desktopHeader, .portraitNav { display: none; }
   .gameFrame { height: 100dvh; display: grid; grid-template-columns: calc(88px + env(safe-area-inset-left)) minmax(0, 1fr); }
   .shell[data-navigation-enabled="false"] .gameFrame { grid-template-columns: minmax(0, 1fr); }
-  .gameRail { position: relative; z-index: 30; display: flex; height: 100dvh; flex-direction: column; gap: 6px; border-right: 1px solid var(--official-line); background: rgba(7, 17, 15, 0.96); padding: max(8px, env(safe-area-inset-top)) 7px max(8px, env(safe-area-inset-bottom)) max(7px, env(safe-area-inset-left)); }
+  .gameRail { position: relative; z-index: 30; display: flex; height: 100dvh; flex-direction: column; gap: 6px; border-right: 1px solid var(--official-line); background: var(--official-overlay); padding: max(8px, env(safe-area-inset-top)) 7px max(8px, env(safe-area-inset-bottom)) max(7px, env(safe-area-inset-left)); }
   .gameMark { min-height: 40px; display: grid; place-items: center; border: 1px solid rgba(200, 239, 93, 0.55); color: var(--official-accent); font-weight: 950; text-decoration: none; }
   .gameRail nav { min-height: 0; display: grid; grid-template-rows: repeat(4, minmax(40px, 1fr)); gap: 4px; }
   .gameRail nav :is(a, button) { display: grid; place-items: center; border: 1px solid transparent; border-radius: 5px; background: transparent; color: var(--official-muted); font: inherit; font-size: 0.67rem; font-weight: 850; text-decoration: none; }
@@ -595,7 +596,7 @@
   .gameUtilities { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
   .gameUtilities a { min-height: 40px; display: grid; place-items: center; border: 1px solid var(--official-line); color: var(--official-muted); font-size: 0.58rem; font-weight: 900; text-decoration: none; }
   .viewport { min-width: 0; height: 100dvh; display: grid; grid-template-rows: 40px minmax(0, 1fr); overflow: hidden; padding-right: env(safe-area-inset-right); }
-  .contextBar { width: 100%; min-height: 40px; display: flex; align-items: center; justify-content: space-between; gap: 7px; padding: 0 12px; background: rgba(7, 17, 15, 0.88); }
+  .contextBar { width: 100%; min-height: 40px; display: flex; align-items: center; justify-content: space-between; gap: 7px; padding: 0 12px; background: var(--official-overlay); }
   .contextBar .identityMenu { min-width: 0; flex: 1; }
   .contextBar .identityMenu > summary { min-height: 40px; max-width: 100%; grid-template-columns: 30px minmax(0, 1fr) 12px; gap: 6px; }
   .contextBar .identityMenu summary img { width: 30px; height: 30px; }
@@ -625,6 +626,7 @@
 
 :global(:root[data-theme="light"]) .shell {
   --official-bg: #eef2ef;
+  --official-canvas: #eef2ef;
   --official-surface: rgba(255, 255, 255, 0.92);
   --official-surface-soft: rgba(246, 249, 247, 0.9);
   --official-surface-solid: #ffffff;
@@ -648,6 +650,11 @@
 :global(:root[data-theme="light"]) .gameRail,
 :global(:root[data-theme="light"]) .contextBar {
   background: rgba(238, 242, 239, 0.94);
+}
+
+:global(:root[data-theme="light"]) .gameMark {
+  border-color: rgba(71, 107, 0, 0.42);
+  color: var(--official-accent-text);
 }
 
 :global(:root[data-theme="light"]) .content :global(:is(input, select, textarea)) { background: #fff !important; }

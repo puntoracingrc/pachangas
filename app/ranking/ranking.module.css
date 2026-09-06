@@ -285,3 +285,37 @@
 @media (prefers-reduced-motion: reduce) {
   .shell * { scroll-behavior: auto !important; }
 }
+
+:global(:root[data-theme="light"]) .shell { background: #eef2ef; color: #10201a; }
+:global(:root[data-theme="light"]) .topbar { border-color: rgba(17, 43, 34, .16); }
+:global(:root[data-theme="light"]) .back { color: #116149; }
+:global(:root[data-theme="light"]) .territory span,
+:global(:root[data-theme="light"]) .statusbar span,
+:global(:root[data-theme="light"]) .rankingPanel header span,
+:global(:root[data-theme="light"]) .ownPanel header span,
+:global(:root[data-theme="light"]) .formulaPanel > span,
+:global(:root[data-theme="light"]) .statusbar small,
+:global(:root[data-theme="light"]) .player span,
+:global(:root[data-theme="light"]) .ownPanel p,
+:global(:root[data-theme="light"]) .empty,
+:global(:root[data-theme="light"]) .ownEmpty,
+:global(:root[data-theme="light"]) .formulaPanel p { color: #53675e; }
+:global(:root[data-theme="light"]) .territory strong { color: #8a5700; }
+:global(:root[data-theme="light"]) .statusbar { background: #fff; }
+:global(:root[data-theme="light"]) .notice { background: rgba(138, 87, 0, .07); border-color: rgba(138, 87, 0, .28); color: #754a00; }
+:global(:root[data-theme="light"]) .rankingPanel,
+:global(:root[data-theme="light"]) .ownPanel,
+:global(:root[data-theme="light"]) .formulaPanel { background: #fff; border-color: rgba(17, 43, 34, .16); color: #10201a; }
+:global(:root[data-theme="light"]) .layout > .ownPanel > header,
+:global(:root[data-theme="light"]) .rankingPanel > header,
+:global(:root[data-theme="light"]) .ownPanel > header,
+:global(:root[data-theme="light"]) .list li,
+:global(:root[data-theme="light"]) .formulaPanel dl div { border-color: rgba(17, 43, 34, .12); }
+:global(:root[data-theme="light"]) .list li > b,
+:global(:root[data-theme="light"]) .formulaPanel dt,
+:global(:root[data-theme="light"]) .ownPanel header b { color: #53675e; }
+:global(:root[data-theme="light"]) .rankingPanel > header > strong { color: #19714b; }
+:global(:root[data-theme="light"]) .components span { background: #f6f9f7; border-color: rgba(17, 43, 34, .12); color: #33473e; }
+:global(:root[data-theme="light"]) .list output,
+:global(:root[data-theme="light"]) .ownScore output,
+:global(:root[data-theme="light"]) .ownPanel small { color: #8a5700; }

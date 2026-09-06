@@ -502,3 +502,32 @@
   .filterSelect,
   .historyList > button { border: 1px solid CanvasText; }
 }
+
+:global(:root[data-theme="light"]) .filters,
+:global(:root[data-theme="light"]) .filterSelect select,
+:global(:root[data-theme="light"]) .teamCodeMenu > div,
+:global(:root[data-theme="light"]) .challengeCard,
+:global(:root[data-theme="light"]) .cardMenu > div,
+:global(:root[data-theme="light"]) .destructiveMenu > div,
+:global(:root[data-theme="light"]) .focusSurface,
+:global(:root[data-theme="light"]) .opponentPicker > div > button,
+:global(:root[data-theme="light"]) .moreDetails,
+:global(:root[data-theme="light"]) .reviewCard dl > div,
+:global(:root[data-theme="light"]) .detailList > div,
+:global(:root[data-theme="light"]) .historyList > button,
+:global(:root[data-theme="light"]) .matchOrigin :global(.external-results-panel){background:var(--official-surface,#fff);color:var(--official-text,#10201a)}
+:global(:root[data-theme="light"]) .filters,
+:global(:root[data-theme="light"]) .moreDetails,
+:global(:root[data-theme="light"]) .opponentPicker > div > button{background:var(--official-surface-soft,#f6f9f7)}
+:global(:root[data-theme="light"]) .tabs{background:var(--official-overlay,rgba(255,255,255,.94))}
+:global(:root[data-theme="light"]) .header h1{color:var(--official-text,#10201a)!important}
+:global(:root[data-theme="light"]) .teamMark{background:linear-gradient(145deg,#e6f1ec,#d4e7df)}
+:global(:root[data-theme="light"]) .teamCodeMenu button,
+:global(:root[data-theme="light"]) .tabs .active,
+:global(:root[data-theme="light"]) .filters button[aria-pressed="true"],
+:global(:root[data-theme="light"]) .stepper li[aria-current="step"] b,
+:global(:root[data-theme="light"]) .stepper li[data-complete="true"] b{color:var(--official-accent-text,#476b00)}
+:global(:root[data-theme="light"]) .cardMenu button,
+:global(:root[data-theme="light"]) .destructiveMenu button,
+:global(:root[data-theme="light"]) .historyList > button > b[data-status="rejected"]{color:var(--official-danger-text,#a42634)}
+:global(:root[data-theme="light"]) .wizardActions{background:var(--official-overlay,rgba(255,255,255,.94))}

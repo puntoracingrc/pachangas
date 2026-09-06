@@ -335,3 +335,25 @@
     font-size: 12px;
   }
 }
+
+:global(:root[data-theme="light"]) .page{background:transparent;color:var(--official-text,#10201a)}
+:global(:root[data-theme="light"]) .topbar,
+:global(:root[data-theme="light"]) .page>section{border-color:var(--official-line,rgba(17,43,34,.16))}
+:global(:root[data-theme="light"]) .topbar a{color:var(--official-accent-text,#476b00)}
+:global(:root[data-theme="light"]) .header span,
+:global(:root[data-theme="light"]) .categoryHeading span,
+:global(:root[data-theme="light"]) .badgeGrid button>small,
+:global(:root[data-theme="light"]) .emptyCollection p,
+:global(:root[data-theme="light"]) .avatarMessage{color:var(--official-muted,#53675e)}
+:global(:root[data-theme="light"]) .headerStats span,
+:global(:root[data-theme="light"]) .badgeGrid button,
+:global(:root[data-theme="light"]) .emptyCollection,
+:global(:root[data-theme="light"]) .photoMenu{border-color:var(--official-line,rgba(17,43,34,.16));background:var(--official-surface,#fff);color:var(--official-text,#10201a)}
+:global(:root[data-theme="light"]) .headerStats span{color:var(--official-text,#10201a)}
+:global(:root[data-theme="light"]) .badgeGrid button>span{color:var(--official-warning-text,#8a5700)}
+:global(:root[data-theme="light"]) .badgeGrid .selectedBadge{border-color:var(--official-accent-text,#476b00)}
+:global(:root[data-theme="light"]) .notice{border-color:rgba(138,87,0,.34);background:#fff7df;color:var(--official-warning-text,#8a5700)}
+:global(:root[data-theme="light"]) .photoMenu button{border-color:var(--official-line,rgba(17,43,34,.16));color:var(--official-text,#10201a)}
+:global(:root[data-theme="light"]) .photoMenu button:hover,
+:global(:root[data-theme="light"]) .photoMenu button:focus-visible{background:var(--official-surface-soft,#f6f9f7)}
+:global(:root[data-theme="light"]) .emptyCollection span{color:var(--official-cyan-text,#086875)}

@@ -48,8 +48,8 @@
   border: 1px solid var(--official-line, rgba(217, 234, 225, 0.16));
   border-radius: 5px;
   background: var(--official-surface-solid, #121d1a);
-  color: #f1f6f2;
-  color-scheme: dark;
+  color: var(--official-text, #f1f6f2);
+  color-scheme: inherit;
   font-size: 0.84rem;
   font-style: normal;
   font-weight: 900;
