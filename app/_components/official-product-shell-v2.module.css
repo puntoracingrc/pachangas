@@ -133,7 +133,8 @@
 
 .accountActions { min-width: 0; display: flex; justify-self: end; align-items: center; gap: 7px; }
 .iconAction,
-.avatarAction {
+.avatarAction,
+.menuAction {
   position: relative;
   width: 40px;
   height: 40px;
@@ -143,7 +144,22 @@
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.04);
   color: var(--official-muted);
+  cursor: pointer;
+  padding: 0;
+  text-decoration: none;
 }
+.themeAction { display: grid; place-items: center; }
+.themeAction :global(.theme-compact-toggle) {
+  width: 40px;
+  height: 40px;
+  flex-basis: 40px;
+  border-color: var(--official-line);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--official-muted);
+}
+.themeAction :global(.theme-compact-toggle:hover),
+.themeAction :global(.theme-compact-toggle:focus-visible) { border-color: var(--official-accent); color: var(--official-accent-text); }
 .notificationBadge {
   position: absolute;
   top: -4px;
@@ -172,7 +188,8 @@
   background: var(--official-cyan);
 }
 .iconAction svg,
-.avatarAction svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.7; }
+.avatarAction svg,
+.menuAction svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.7; }
 .avatarAction img { width: 34px; height: 34px; border-radius: 50%; object-fit: cover; }
 .accountMenuPanel { right: 0; }
 .accountMenuPanel p { display: grid; gap: 2px; }
@@ -531,8 +548,9 @@
   .contextBar .identityMenu summary small { display: none; }
   .contextBar .identityMenu summary strong { font-size: 0.66rem; }
   .contextBar .accountActions { gap: 4px; }
-  .contextBar :is(.iconAction, .avatarAction) { width: 40px; height: 40px; }
-  .contextBar :is(.iconAction, .avatarAction) svg { width: 16px; height: 16px; }
+  .contextBar :is(.iconAction, .avatarAction, .menuAction),
+  .contextBar .themeAction :global(.theme-compact-toggle) { width: 36px; height: 36px; }
+  .contextBar :is(.iconAction, .avatarAction, .menuAction) svg { width: 16px; height: 16px; }
   .content {
     min-width: 0;
     min-height: 0;
@@ -582,7 +600,8 @@
   .contextBar .identityMenu summary img { width: 30px; height: 30px; }
   .contextBar .identityMenu summary small { display: none; }
   .contextBar .accountActions { gap: 5px; }
-  .contextBar :is(.iconAction, .avatarAction) { width: 40px; height: 40px; }
+  .contextBar :is(.iconAction, .avatarAction, .menuAction),
+  .contextBar .themeAction :global(.theme-compact-toggle) { width: 38px; height: 38px; }
   .content { min-height: 0; height: 100%; overflow: auto; overscroll-behavior: contain; }
   .content > :global(main) { min-height: 100%; height: auto; }
   .content > :global(main[data-mobile-tab]) { --game-nav-offset: 0px; height: 100%; padding-top: 0; }
