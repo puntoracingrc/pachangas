@@ -564,10 +564,10 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /\{ value: "Mediocentro \/ pivote", line: "Medio", short: "PIV" \}/);
   assert.match(page, /<span className="player-meta" title=\{positionLabel\(player\)\} aria-label=\{positionLabel\(player\)\}>\s*\{positionShort\(player\)\}/);
   assert.match(page, /<small className="position-pill" title=\{positionLabel\(player\)\} aria-label=\{positionLabel\(player\)\}>/);
-  assert.match(page, /id="ranking"/);
-  assert.match(page, /if \(requestedTab === "equipo"\) \{[\s\S]*setProfilePane\("ranking"\);[\s\S]*setTeamGalleryOpen\(false\)/);
-  assert.match(page, /if \(tabId === "equipo"\) \{[\s\S]*setProfilePane\("ranking"\);[\s\S]*setTeamGalleryOpen\(false\)/);
-  assert.match(page, /RankingSort/);
+  assert.doesNotMatch(page, /id="ranking"/);
+  assert.match(page, /if \(requestedTab === "equipo"\) \{[\s\S]*window.location.replace/);
+  assert.match(page, /if \(tabId === "equipo"\) \{\s*openTeamGallery\(\)/);
+
   assert.match(page, /rankingSeason/);
   assert.match(page, /historySeason/);
   assert.match(page, /filteredClosedMatches/);
@@ -624,13 +624,13 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /goles\/partido/);
   assert.match(page, /footballSeasonStartMonth/);
   assert.match(page, /parsed\.getMonth\(\) >= footballSeasonStartMonth/);
-  assert.match(page, /rankingSortLabels/);
+
   assert.match(page, /seasonKey/);
   assert.match(page, /matchSeason/);
   assert.match(page, /season: seasonKey/);
   assert.match(page, /season: seasonKey\(activeMatch\.date\)/);
   assert.doesNotMatch(page, /updateMatchSettings\(\{ \.\.\.activeMatch, season: event\.target\.value \}\)/);
-  assert.match(page, /rankingBadgeText/);
+
   assert.match(page, /teamPhoto\?: string/);
   assert.match(page, /matchPhotoDataUrl/);
   assert.match(page, /matchPhotoPreview/);
@@ -897,14 +897,14 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /renderTeamMiniCard/);
   assert.match(page, /team-player-main/);
   assert.match(page, /team-player-meta/);
-  assert.match(page, /renderRankingMiniCard/);
-  assert.match(page, /ranking-card-grid/);
-  assert.match(page, /ranking-player-entry/);
-  assert.match(page, /ranking-player-card/);
-  assert.match(page, /ranking-player-stats/);
-  assert.match(page, /ranking-stat-grid/);
-  assert.match(page, /ranking-season-filter/);
-  assert.match(page, /ranking-sort-filter/);
+
+
+
+
+
+
+
+
   assert.doesNotMatch(page, /rankedPlayers\.slice\(0,\s*8\)/);
   assert.match(page, /Mi equipo/);
   assert.match(page, /function scrollToPanel/);

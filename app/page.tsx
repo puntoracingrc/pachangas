@@ -413,7 +413,6 @@ type PublicMatchRequestRow = {
 };
 
 type MatchKind = "sala" | "futbol7" | "futbol11";
-type RankingSort = "media" | "goles" | "partidos" | "ganados";
 type BillingInterval = "month" | "year";
 type BillingStatus = "trial" | "active" | "trialing" | "past_due" | "canceled" | "unpaid" | "incomplete";
 
@@ -1011,12 +1010,7 @@ const matchKinds: Record<MatchKind, { label: string; targetPlayers: number; team
   futbol11: { label: "Fútbol 11", targetPlayers: 22, teamSize: 11 },
 };
 
-const rankingSortLabels: Record<RankingSort, string> = {
-  media: "Media",
-  goles: "Goles",
-  partidos: "Partidos",
-  ganados: "Ganados",
-};
+
 
 function starterMatch(baseDate = "2026-07-30T21:00", kind: MatchKind = "futbol7"): Match {
   const date = nextMatchDate(baseDate);
@@ -2198,22 +2192,6 @@ function peerAverage(player: Player) {
   return player.rating;
 }
 
-function groupRatingVoteCount(player: Player) {
-  return (player.ratingVotes ?? []).filter((vote) => !vote.source).length + (player.ratings?.length ?? 0);
-}
-
-function hasGroupRatingData(player: Player) {
-  return groupRatingVoteCount(player) > 0;
-}
-
-function playerRatingSource(player: Player) {
-  if (hasGroupRatingData(player)) return "del grupo";
-  if (assessmentSummaryKindCompleted(player, "advanced")) return "test avanzado";
-  if (assessmentSummaryKindCompleted(player, "initial")) return "test inicial";
-  if (player.importedRating) return "importada";
-  return "";
-}
-
 function ratingSeriesOffset(index: number, total: number) {
   if (total <= 1) return 0;
   const spread = Math.min(10, total * 1.7);
@@ -3033,12 +3011,6 @@ function orderedGoingPlayers(match: Match) {
     });
 }
 
-function matchPlayingIds(match: Match) {
-  return orderedGoingPlayers(match)
-    .slice(0, match.targetPlayers)
-    .map(({ entry }) => entry.playerId);
-}
-
 function matchPayingIds(match: Match) {
   return orderedGoingPlayers(match)
     .slice(0, match.targetPlayers + reserveCapacity(match))
@@ -3352,9 +3324,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
   const [resultEntryStep, setResultEntryStep] = useState<1 | 2>(1);
   const [resultCorrectionOpen, setResultCorrectionOpen] = useState(false);
   const [resultCorrectionScorers, setResultCorrectionScorers] = useState<Array<{ playerId: string; goals: number }>>([]);
-  const [rankingSeason, setRankingSeason] = useState(seasonKey(new Date()));
   const [historySeason, setHistorySeason] = useState("all");
-  const [rankingSort, setRankingSort] = useState<RankingSort>("media");
   const [currentDateValue, setCurrentDateValue] = useState(() => dateInputValue(new Date()));
   const [currentTimeMs, setCurrentTimeMs] = useState(() => Date.now());
   const [remoteGroupId, setRemoteGroupId] = useState<string | null>(null);
@@ -3449,6 +3419,21 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
   const [cameraError, setCameraError] = useState("");
   const [avatarDragging, setAvatarDragging] = useState(false);
 
+  const handledRankingPlayerRef = useRef(false);
+  useEffect(() => {
+    if (!remoteReady || !remoteGroupId || handledRankingPlayerRef.current) return;
+    const params = new URLSearchParams(window.location.search);
+    const playerId = params.get("rankingPlayer");
+    if (!playerId || params.get("grupo") !== remoteGroupId || !players.some(player => player.id === playerId)) return;
+    handledRankingPlayerRef.current = true;
+    queueMicrotask(() => {
+      setSelectedPlayerId(playerId);
+      setPlayerProfileMode("viewer");
+      setProfilePane("ficha");
+      setActiveMobileTab("perfil");
+    });
+  }, [remoteReady, remoteGroupId, players]);
+
   const applyRealtimeGroupSnapshot = useEffectEvent((data: Record<string, unknown>, groupId: string) => {
     const confirmedRevision = Number(data.payload_revision ?? 0);
     const currentRevision = remotePayloadRevisionRef.current;
@@ -3504,10 +3489,8 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
       }
 
       if (requestedTab === "equipo") {
-        lockMobileNavigationTab("equipo");
-        setActiveMobileTab("equipo");
-        setProfilePane("ranking");
-        setTeamGalleryOpen(false);
+        const groupId = requestedParams.get("grupo");
+        window.location.replace(`/equipo${groupId ? `?team=${encodeURIComponent(groupId)}` : ""}`);
         return;
       }
 
@@ -4970,15 +4953,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
   }
 
   function openTeamGallery() {
-    setMobileAccountOpen(false);
-    setActiveMobileTab("equipo");
-    setProfilePane("ranking");
-    setTeamGalleryOpen(false);
-    window.setTimeout(() => {
-      window.requestAnimationFrame(() => {
-        document.getElementById("ranking")?.scrollIntoView({ behavior: "smooth", block: "start" });
-      });
-    }, 0);
+    window.location.assign(`/equipo${remoteGroupId ? `?team=${encodeURIComponent(remoteGroupId)}` : ""}`);
   }
 
   function openGroupSwitcher() {
@@ -4999,18 +4974,14 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
   }
 
   function openRankingPanel() {
-    setMobileAccountOpen(false);
-    setProfilePane("ranking");
-    setActiveMobileTab("equipo");
-    setTeamGalleryOpen(false);
-    window.setTimeout(() => {
-      window.requestAnimationFrame(() => {
-        document.getElementById("ranking")?.scrollIntoView({ behavior: "smooth", block: "start" });
-      });
-    }, 0);
+    openTeamGallery();
   }
 
   function returnFromPlayerProfile() {
+    if (handledRankingPlayerRef.current && remoteGroupId) {
+      window.location.assign(`/equipo?team=${encodeURIComponent(remoteGroupId)}`);
+      return;
+    }
     if (selectedPlayerId) {
       clearAvatarDraft(selectedPlayerId);
       setAvatarMessage("");
@@ -5141,8 +5112,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
     }
 
     if (tabId === "equipo") {
-      setProfilePane("ranking");
-      setTeamGalleryOpen(false);
+      openTeamGallery();
       return;
     }
 
@@ -6176,70 +6146,9 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
     matches.forEach((match) => seasons.add(matchSeason(match)));
     return [...seasons].sort((a, b) => seasonStartYear(b) - seasonStartYear(a));
   }, [activeMatchSeason, matches]);
-  const activeRankingSeason = rankingSeasons.includes(rankingSeason) ? rankingSeason : rankingSeasons[0] ?? rankingSeason;
   const activeHistorySeason = historySeason === "all" || rankingSeasons.includes(historySeason) ? historySeason : "all";
   const filteredClosedMatches =
     activeHistorySeason === "all" ? closedMatches : closedMatches.filter((match) => matchSeason(match) === activeHistorySeason);
-  const rankedPlayers = useMemo(() => {
-    const stats = new Map(
-      players.map((player) => [
-        player.id,
-        {
-          appearances: 0,
-          balanceScore: effectivePlayerScore(player),
-          form: playerForm(player),
-          goals: 0,
-          media: playerMediaScore(player),
-          player,
-          wins: 0,
-        },
-      ]),
-    );
-
-    matches
-      .filter((match) => match.scoreA !== undefined && matchSeason(match) === activeRankingSeason)
-      .forEach((match) => {
-        const playedIds = new Set(matchPlayingIds(match));
-        const winningIds = new Set(
-          match.scoreA === match.scoreB ? [] : (match.scoreA ?? 0) > (match.scoreB ?? 0) ? match.teamA ?? [] : match.teamB ?? [],
-        );
-
-        playedIds.forEach((playerId) => {
-          const row = stats.get(playerId);
-          if (!row) return;
-          row.appearances += 1;
-          if (winningIds.has(playerId)) row.wins += 1;
-        });
-
-        (match.scorers ?? []).forEach((entry) => {
-          const row = stats.get(entry.playerId);
-          if (!row) return;
-          row.goals += entry.goals;
-        });
-      });
-
-    const rankingValue = (row: { appearances: number; goals: number; media: number; wins: number }) => {
-      if (rankingSort === "goles") return row.goals;
-      if (rankingSort === "partidos") return row.appearances;
-      if (rankingSort === "ganados") return row.wins;
-      return row.media;
-    };
-
-    return [...stats.values()].sort((a, b) =>
-      rankingValue(b) - rankingValue(a) ||
-      b.media - a.media ||
-      b.goals - a.goals ||
-      b.wins - a.wins ||
-      b.appearances - a.appearances ||
-      playerDisplayName(a.player).localeCompare(playerDisplayName(b.player), "es"),
-    );
-  }, [activeRankingSeason, effectivePlayerScore, matches, playerForm, playerMediaScore, players, rankingSort]);
-  const rankingBadgeText = (row: (typeof rankedPlayers)[number]) => {
-    if (rankingSort === "goles") return `${row.goals} ${row.goals === 1 ? "gol" : "goles"}`;
-    if (rankingSort === "partidos") return `${row.appearances} PJ`;
-    if (rankingSort === "ganados") return `${row.wins} ${row.wins === 1 ? "victoria" : "victorias"}`;
-    return `Media ${overallScore(row.media)}`;
-  };
   const sortedPlayers = [...players].sort((a, b) => {
     const statusOrder: Record<MatchPlayer["status"] | "sin", number> = { voy: 0, duda: 1, no: 2, sin: 3 };
     const statusA = a.injured || a.inactive ? "no" : activeMatch.players.find((entry) => entry.playerId === a.id)?.status ?? "sin";
@@ -8792,73 +8701,6 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
           ))}
         </span>
         {player.inactive ? <span className="team-mini-status">Ya no está</span> : null}
-      </button>
-    );
-  }
-
-  function renderRankingMiniCard(row: (typeof rankedPlayers)[number], index: number) {
-    const player = row.player;
-    const playerFacets = ratingFacetsForPlayer(player);
-    const compactAge = playerAge(player.birthDate, currentDateValue);
-    const formText = row.form.hasData ? `Forma ${visibleFormPercent(row.form)}%` : "Forma pendiente";
-    const mediaSource = playerRatingSource(player);
-
-    return (
-      <button
-        aria-label={`Abrir ficha de ${playerDisplayName(player)} desde ranking`}
-        className={`ranking-player-entry ${player.inactive ? "team-mini-inactive" : ""}`}
-        key={player.id}
-        onClick={() => openPlayerProfile(player.id)}
-        type="button"
-      >
-        <span className={`fifa-player-card team-mini-player-card ranking-player-card ${cardTierClass(row.media)}`}>
-          <span className="ranking-card-rank">{index + 1}</span>
-          <span className="fifa-score">{overallScore(row.media)}</span>
-          {renderRatingTrendChip(player)}
-          <span className="fifa-position">{positionShort(player)}</span>
-          <span className="fifa-photo">
-            {player.avatar ? (
-              <NextImage unoptimized src={player.avatar} alt={`Foto de ${playerDisplayName(player)}`} draggable={false} height={256} style={avatarImageStyle(player)} width={256} />
-            ) : (
-              <b>+</b>
-            )}
-          </span>
-          <strong>{playerDisplayName(player)}</strong>
-          <span className="fifa-facets">
-            {playerFacets.map((facet) => (
-              <span key={facet.key}>
-                <b>{overallScore(facetAverage(player, facet.key))}</b>
-                {facet.short}
-              </span>
-            ))}
-          </span>
-        </span>
-        <span className="ranking-player-stats">
-          <span className="ranking-card-badge">{rankingBadgeText(row)}</span>
-          <span
-            aria-label={`${row.goals} goles, ${row.appearances} partidos jugados, ${row.wins} partidos ganados`}
-            className="ranking-stat-grid"
-          >
-            <span title={`${row.goals} goles`}><b>{row.goals}</b><small>G</small></span>
-            <span title={`${row.appearances} partidos jugados`}><b>{row.appearances}</b><small>PJ</small></span>
-            <span title={`${row.wins} partidos ganados`}><b>{row.wins}</b><small>PG</small></span>
-          </span>
-          <span className="ranking-card-detail">{mediaSource ? `${mediaSource} · ` : ""}{formText}{compactAge !== null ? ` · ${compactAge} años` : ""}</span>
-          {player.injured || player.inactive ? (
-            <span className="ranking-card-flags">
-              {player.injured ? (
-                <span className="inline-injury" title="Jugador lesionado" aria-label="Jugador lesionado">
-                  <HospitalLogo />
-                </span>
-              ) : null}
-              {player.inactive ? (
-                <span className="inline-inactive" title="Ya no está en el grupo" aria-label="Ya no está en el grupo">
-                  <UserOffLogo />
-                </span>
-              ) : null}
-            </span>
-          ) : null}
-        </span>
       </button>
     );
   }
@@ -11785,7 +11627,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
         </section>
       ) : null}
 
-      {(hasRealTeam || previewDemoMode) && !(activeMobileTab === "partido" && matchExperienceView === "wizard") ? <section className={`${selectedPlayer ? "bottom-grid" : "bottom-grid without-profile"} ${sharedLinkContentBlocked ? "gated-shell" : ""}`} data-profile-pane={profilePane}>
+      {(hasRealTeam || previewDemoMode) && selectedPlayer && !(activeMobileTab === "partido" && matchExperienceView === "wizard") ? <section className={`bottom-grid profile-only ${sharedLinkContentBlocked ? "gated-shell" : ""}`} data-profile-pane={profilePane}>
         {selectedPlayer ? (
           <div className={`panel player-profile ${playerProfileMode === "viewer" ? "profile-viewer" : "profile-editor"}`} ref={playerProfileRef}>
             <div className="panel-title">
@@ -12210,40 +12052,6 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
           </div>
         ) : null}
 
-        <div className="panel" id="ranking">
-          <div className="panel-title">
-            <span>Ranking</span>
-            <strong>{rankedPlayers.length}</strong>
-          </div>
-          <div className="ranking-toolbar">
-            <label className="ranking-season-filter">
-              Temporada
-              <select value={activeRankingSeason} onChange={(event) => setRankingSeason(event.target.value)}>
-                {rankingSeasons.map((season) => (
-                  <option key={season} value={season}>{season}</option>
-                ))}
-              </select>
-            </label>
-            <div className="ranking-sort-filter">
-              <span>Ordenar por</span>
-              <div className="ranking-sort-buttons">
-                {(Object.keys(rankingSortLabels) as RankingSort[]).map((sort) => (
-                  <button
-                    className={rankingSort === sort ? "selected" : ""}
-                    key={sort}
-                    onClick={() => setRankingSort(sort)}
-                    type="button"
-                  >
-                    {rankingSortLabels[sort]}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-          <div className="ranking ranking-card-grid">
-            {rankedPlayers.map((row, index) => renderRankingMiniCard(row, index))}
-          </div>
-        </div>
       </section> : null}
       {statusConfirmation ? createPortal(
         <div
