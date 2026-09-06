@@ -346,7 +346,6 @@ function AccountActions({
             </button>
           ) : null}
           {platformOwner ? <hr /> : null}
-          {platformOwner ? <Link href="/admin">Administración</Link> : null}
           {platformOwner ? <Link href="/admin/demo">Mundo Demo completo</Link> : null}
           <button className={styles.signOut} type="button" onClick={() => void signOut()}>Cerrar sesión</button>
         </div>

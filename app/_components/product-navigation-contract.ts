@@ -67,7 +67,6 @@ export function contextualDestinationsForPerspective(
   }
   if (perspective === "platform-admin" || perspective === "platform-reviewer") {
     return [
-      { href: "/admin", id: "control-center", label: "Control Center", short: "CC" },
       { href: "/avisos", id: "notifications", label: "Avisos", short: "AV" },
     ];
   }

@@ -374,7 +374,7 @@ test("role separation stays canonical and never compares platform owner email in
     source("app/_components/use-canonical-platform-owner.ts"),
   ]);
   assert.match(shell, /perspective === "team-admin" \|\| perspective === "team-owner"/);
-  assert.match(shell, /platformOwner \? <Link href="\/admin">Administración<\/Link>/);
+  assert.doesNotMatch(shell, /href="\/admin"/);
   assert.match(shell, /platformOwner \? <Link href="\/admin\/demo">Mundo Demo completo<\/Link>/);
   assert.match(ownerHook, /body\?\.access\?\.role === "platform_owner"/);
   assert.doesNotMatch(ownerHook, /puntoracingrc|@gmail|email/i);
