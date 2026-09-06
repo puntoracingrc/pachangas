@@ -18,6 +18,16 @@ insert into public.pachanga_group_members(group_id,user_id,role,display_name) va
 -- Existing canonical profile must survive approval unchanged, including its rating.
 insert into public.pachanga_player_profiles(id,user_id,display_name,rating,avatar,stats) values
 ('f9620000-0000-4000-8000-000000000030','f9620000-0000-4000-8000-000000000002','My existing profile',7,'https://example.test/own.png','{"goals":9}');
+-- Even the owner cannot approve their own identity request.
+select set_config('request.jwt.claims','{"sub":"f9620000-0000-4000-8000-000000000001","role":"authenticated","is_anonymous":false}',true);
+set local role authenticated;
+select public.request_pachanga_player_claim_v1('f9620000-0000-4000-8000-000000000010','other-manual')->>'requestId' as self_claim \gset
+select set_config('test.claim', :'self_claim',true);
+do $$ begin
+ begin perform public.decide_pachanga_player_claim_v1(current_setting('test.claim')::uuid,'approve'); raise exception 'Self approval succeeded'; exception when others then if sqlerrm<>'ANOTHER_ADMIN_REQUIRED' then raise; end if; end;
+end $$;
+select public.decide_pachanga_player_claim_v1(:'self_claim','cancel');
+reset role;
 select set_config('request.jwt.claims','{"sub":"f9620000-0000-4000-8000-000000000002","role":"authenticated","is_anonymous":false}',true);
 set local role authenticated;
 -- Old direct claim RPC must be blocked before approval, even for an unowned player.
@@ -34,6 +44,12 @@ select public.request_pachanga_player_claim_v1('f9620000-0000-4000-8000-00000000
  \quit 1
 \endif
 select public.get_pachanga_player_claims_v1('f9620000-0000-4000-8000-000000000010');
+reset role;
+do $$ begin
+ if not exists(select 1 from public.pachanga_user_notifications n where n.kind='player_profile_claim_requested' and n.payload->>'groupId'='f9620000-0000-4000-8000-000000000010' and private.pachanga_social_inbox_descriptor_v1(n.id,n.recipient_user_id)->>'attentionState'='ACTION_REQUIRED') then raise exception 'No actionable inbox notice'; end if;
+end $$;
+set local role authenticated;
+
 select set_config('request.jwt.claims','{"sub":"f9620000-0000-4000-8000-000000000003","role":"authenticated","is_anonymous":false}',true);
 select public.request_pachanga_player_claim_v1('f9620000-0000-4000-8000-000000000010','manual')->>'requestId' as claim_b \gset
 -- A normal member cannot review another account's request.
