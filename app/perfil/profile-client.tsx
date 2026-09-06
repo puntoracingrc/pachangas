@@ -363,7 +363,7 @@ export function CanonicalPlayerProfile() {
                 </dl>
               </section>
               <section className={styles.cardSection}>
-                <header><span>Mi carta</span><h2>{initialAssessmentComplete ? "Identidad de juego" : "Tu carta aún no está creada"}</h2></header>
+                <header><span>Mi carta</span>{!initialAssessmentComplete ? <h2>Tu carta aún no está creada</h2> : null}</header>
                 {initialAssessmentComplete && profile?.current_overall ? <PlayerCosmeticCard cosmetics={cosmetics?.owned} loadout={cosmetics?.loadout} featuredAchievement={featuredAchievement} facets={facets} meta={team?.name ?? "Jugador sin equipo"} name={profile.display_name} photoAlt={`Foto de ${profile.display_name}`} photoSrc={profile.avatar ?? undefined} position={profile.position.slice(0, 3).toUpperCase()} score={Math.round(profile.current_overall)} /> : <p>Responde unas preguntas sobre cómo juegas. Crearemos tu primera media y tus atributos. Después evolucionarán con partidos y valoraciones.</p>}
                 <div className={styles.cardActions}>
                   <Link className={styles.primary} href={initialAssessmentComplete ? "/personalizar-carta" : "/perfil/test-inicial"}>
