@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { ProvincialRankingProduct } from "../ranking/provincial-ranking-product";
+import { TeamRanking } from "./team-ranking";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { OfficialProductShellV2 } from "../_components/official-product-shell-v2";
@@ -107,7 +107,10 @@ function cachedTeamSnapshot(userId: string, groupId: string) {
 export function SocialTeamProduct({ surface = "home" }: { surface?: TeamSurface }) {
   const [homePane, setHomePane] = useState<"ranking" | "home">("ranking");
   useEffect(() => {
-    setHomePane(new URLSearchParams(window.location.search).get("tab") === "portada" ? "home" : "ranking");
+    const syncPane = () => setHomePane(new URLSearchParams(window.location.search).get("tab") === "portada" ? "home" : "ranking");
+    queueMicrotask(syncPane);
+    window.addEventListener("popstate", syncPane);
+    return () => window.removeEventListener("popstate", syncPane);
   }, []);
   const [userId, setUserId] = useState("");
   const [flags, setFlags] = useState<SocialTeamFeatureFlags | null>(null);
@@ -467,7 +470,7 @@ export function SocialTeamProduct({ surface = "home" }: { surface?: TeamSurface 
 
       {status === "ready" ? <PlayerClaims key={`${userId}:${home.groupId}`} groupId={home.groupId} showCandidates={surface === "roster"} onChanged={() => { void loadCanonical(home.groupId); }} /> : null}
       {surface === "home" && homePane === "home" ? <TeamHome home={home} roster={roster} /> : null}
-      {surface === "home" && homePane === "ranking" ? <ProvincialRankingProduct embedded /> : null}
+      {surface === "home" && homePane === "ranking" ? <TeamRanking key={`${userId}:${home.groupId}`} groupId={home.groupId} /> : null}
       {surface === "roster" ? <RosterView admins={groupedRoster.admins} invitationCount={home.activeInvitationCount} players={groupedRoster.players} canInvite={home.actions.canInvitePlayers} teamId={home.groupId} /> : null}
       {surface === "invitations" ? <InvitationView
         busyInvitationId={busyInvitationId}
