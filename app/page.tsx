@@ -10613,10 +10613,6 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
             </div>
             <small>Admins · permisos solo owner</small>
           </div>
-          <button className="settings-reward-demo-button" type="button" onClick={() => setRewardBoxDemoOpen(true)}>
-            <span>Animación de logro</span>
-            <small>Abrir prueba visual</small>
-          </button>
           <label>
             Instrucciones
             <input value={settingsDraft.subtitle} disabled={!canUseAdminControls} onChange={(event) => setSettingsDraft({ ...settingsDraft, subtitle: event.target.value })} />
@@ -12413,9 +12409,6 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
                   </button>
                   {canUseAdminControls ? (
                     <>
-                      <button type="button" onClick={() => runMobileAccountAction(() => setRewardBoxDemoOpen(true))}>
-                        <span>Animación de logro</span><small>Prueba visual de la recompensa</small><b aria-hidden="true">›</b>
-                      </button>
                       <button type="button" onClick={() => runMobileAccountAction(toggleSettingsPanel)}>
                         <span>Configuración</span><small>Colores, roles, suscripción y copias</small><b aria-hidden="true">›</b>
                       </button>
