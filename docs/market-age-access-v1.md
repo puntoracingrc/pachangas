@@ -8,13 +8,13 @@ Decisión de producto acordada el 6 de septiembre de 2026: acceso personal al me
 - Sin fecha de nacimiento, el acceso externo queda pendiente de completar el perfil. La pertenencia al equipo sigue disponible.
 - La mayoría de edad se calcula con la fecha de Madrid, sin almacenar una edad que quede desactualizada.
 
-## Persistencia y publicación pendiente
+## Persistencia y publicación
 
 La migración `20260906121319_market_age_access_v1.sql` agrega la fecha al perfil social, recupera la fecha previa del perfil de jugador cuando existe y protege lecturas y operaciones en el servidor. Las restricciones también cubren las tablas que admite consultar el cliente. No se elimina ningún equipo, partido o miembro.
 
 Al aplicarla, se desactivan los anuncios personales de menores o sin fecha y los anuncios de equipos sin administrador adulto. Completar la fecha o incorporar un adulto habilita la posibilidad de publicar; no republica anuncios automáticamente. La migración debe desplegarse coordinadamente con el formulario nuevo y revisarse contra las funciones vigentes antes de producción. Clientes antiguos sin fecha deberán recargar para completar el dato.
 
-Cambios preparados localmente; no aplicados en producción.
+Las dos migraciones se aplicaron en producción el 6 de septiembre de 2026, junto con la publicación del PR #306. Se conservaron los dos perfiles sociales existentes y se recuperó la fecha de nacimiento ya disponible de uno de ellos. De los dos anuncios de equipos activos, uno quedó desactivado por no tener un administrador con mayoría de edad declarada; el equipo y sus miembros se conservaron.
 
 ## Validación local
 
