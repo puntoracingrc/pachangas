@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
+import { ThemeToggle } from "../theme-toggle";
 import { rewards, PrizePreview } from "../chest-lab-rewards";
 import { catalogEntry, PLAYER_COSMETIC_SLOT_LABELS } from "../player-cosmetics-catalog";
 import palettes from "../reward-rarity-visuals.json";
@@ -51,11 +52,14 @@ export default function RouletteLab() {
     const finishedAdding = displayedBalance > previousDisplayedBalance.current && displayedBalance === balance && active === null;
     previousDisplayedBalance.current = displayedBalance;
     if (!finishedAdding || !pointsCounter.current || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const colors = getComputedStyle(pointsCounter.current);
+    const green = colors.getPropertyValue("--roulette-points").trim() || "#b7f452";
+    const gold = colors.getPropertyValue("--roulette-gold").trim() || "#ffe39a";
     const glow = pointsCounter.current.animate([
-      { color: "#b7f452", textShadow: "0 0 0 transparent", transform: "scale(1)" },
-      { color: "#ffe39a", textShadow: "0 0 12px #ffd166, 0 0 30px #efb33c99", transform: "scale(1.06)", offset: 0.3 },
-      { color: "#f4ce70", textShadow: "0 0 16px #efb33c66", transform: "scale(1.02)", offset: 0.58 },
-      { color: "#b7f452", textShadow: "0 0 0 transparent", transform: "scale(1)" },
+      { color: green, textShadow: "0 0 0 transparent", transform: "scale(1)" },
+      { color: gold, textShadow: "0 0 12px #ffd166, 0 0 30px #efb33c99", transform: "scale(1.06)", offset: 0.3 },
+      { color: gold, textShadow: "0 0 16px #efb33c66", transform: "scale(1.02)", offset: 0.58 },
+      { color: green, textShadow: "0 0 0 transparent", transform: "scale(1)" },
     ], { duration: 850, easing: "ease-out" });
     return () => glow.cancel();
   }, [displayedBalance, balance, active]);
@@ -244,7 +248,7 @@ export default function RouletteLab() {
     });
   }
   return <main className={styles.page}>
-    <header className={styles.top}><Link href="/">← Volver a la app</Link><span>PACHANGAS IQ · RECOMPENSAS</span><button type="button" aria-pressed={!soundMuted} onClick={() => { unlockRewardAudio(); const sound = rouletteSound.current ?? createRouletteAudio(); rouletteSound.current = sound; sound.setMuted(!soundMuted); setSoundMuted(!soundMuted); }}>{soundMuted ? "Activar sonido" : "Silenciar sonido"}</button></header>
+    <header className={styles.top}><Link href="/">← Volver a la app</Link><span>PACHANGAS IQ · RECOMPENSAS</span><div className={styles.topActions}><ThemeToggle compact defaultPreference="dark"/><button type="button" aria-pressed={!soundMuted} onClick={() => { unlockRewardAudio(); const sound = rouletteSound.current ?? createRouletteAudio(); rouletteSound.current = sound; sound.setMuted(!soundMuted); setSoundMuted(!soundMuted); }}>{soundMuted ? "Activar sonido" : "Silenciar sonido"}</button></div></header>
     <section className={styles.intro}><h1>Ruleta de premios</h1></section>
     <div style={{ minHeight: "4.5rem" }}>
     {!signedIn && !busy && <p><Link href={googleAuthEntryHref('/ruleta')}>Inicia sesión para ver tus premios</Link></p>}
@@ -278,9 +282,9 @@ export default function RouletteLab() {
         <img src={`/models/rewards/thumbnails/cofre-${rewards[chest.rarity].rarity}.png`} alt="" width={80} height={64}/><span>{i + 1} · {palettes[rewards[chest.rarity].rarity].label}</span>
       </button>)}</div>
     </section>
-    <details className={styles.contents}><summary>Premios y tiradas gratuitas</summary><p>Todos los objetos son estéticos. Si ya tienes el cosmético, recibes puntos. Las probabilidades son iguales para todos.</p><div>{rewards.map((r, i) => <article key={r.rarity}><strong style={{ color: palettes[r.rarity].accent }}>{palettes[r.rarity].label}</strong>{snapshot?.pools.filter(p => p.rarity === i).map((p, index) => <span key={index}>{p.weight} % · {p.key ? catalogEntry(p.key)?.name ?? p.key : 'Puntos'}{p.max > 0 ? ` · ${p.min}–${p.max} puntos` : ''}{p.key ? ` · repetido: +${p.duplicatePoints} puntos` : ''}</span>)}</article>)}</div><p>Una tirada al completar el test inicial y otra al completar el avanzado. Además, una semanal si has jugado un partido confirmado en los últimos 30 días. Se acumulan: al dejar de jugar conservas las que ya tienes.</p></details>
+    <details className={styles.contents}><summary>Premios y tiradas gratuitas</summary><p>Todos los objetos son estéticos. Si ya tienes el cosmético, recibes puntos. Las probabilidades son iguales para todos.</p><div>{rewards.map((r, i) => <article key={r.rarity}><strong style={{ "--accent": palettes[r.rarity].accent } as CSSProperties}>{palettes[r.rarity].label}</strong>{snapshot?.pools.filter(p => p.rarity === i).map((p, index) => <span key={index}>{p.weight} % · {p.key ? catalogEntry(p.key)?.name ?? p.key : 'Puntos'}{p.max > 0 ? ` · ${p.min}–${p.max} puntos` : ''}{p.key ? ` · repetido: +${p.duplicatePoints} puntos` : ''}</span>)}</article>)}</div><p>Una tirada al completar el test inicial y otra al completar el avanzado. Además, una semanal si has jugado un partido confirmado en los últimos 30 días. Se acumulan: al dejar de jugar conservas las que ya tienes.</p></details>
     <section className={styles.collection}><div><h2>Tu colección</h2><p>{owned.length ? owned.map(key => catalogEntry(key)?.name).join(" · ") : "Aún no tienes cosméticos."}</p></div></section>
-    {history.length > 0 && <section className={styles.history}><h2>Tus últimos cofres</h2><div>{history.map((r, i) => <span key={i} style={{ color: palettes[rewards[r].rarity].accent }}>{palettes[rewards[r].rarity].label}</span>)}</div></section>}
+    {history.length > 0 && <section className={styles.history}><h2>Tus últimos cofres</h2><div>{history.map((r, i) => <span key={i} style={{ "--accent": palettes[rewards[r].rarity].accent } as CSSProperties}>{palettes[rewards[r].rarity].label}</span>)}</div></section>}
     {active && loot && <RewardBox key={active.chest.id} open rarity={rewards[active.chest.rarity].rarity} onClose={returnToRoulette} title={lootTitle} description={loot.duplicate ? `${cosmetic?.name} repetido. Convertido en ${loot.points} puntos.` : (cosmetic ? `${cosmetic.description}${loot.points ? ` Además, +${loot.points} puntos.` : ""}` : "")} eyebrow={loot.duplicate ? "Cosmético repetido" : cosmetic ? PLAYER_COSMETIC_SLOT_LABELS[cosmetic.slot] : "Puntos"} rewardPreview={<PrizePreview index={active.chest.rarity} prizeOverride={{ key: loot.duplicate ? null : loot.key, points: loot.points, color: palettes[rewards[active.chest.rarity].rarity].accent }}/>} 
       secondaryActionProminent secondaryActionLabel={queue.length ? "Abrir todo" : undefined} onSecondaryAction={openAll} secondaryActionDisabled={busy}
       pendingChests={queue.map(chest => ({ id: String(chest.id), rarity: rewards[chest.rarity].rarity }))} currentChestId={String(active.chest.id)} onSelectChest={id => { const chest = queue.find(item => String(item.id) === id); if (chest) openChest(chest); }} remainingCount={queue.length}
