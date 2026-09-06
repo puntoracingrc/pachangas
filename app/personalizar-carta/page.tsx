@@ -618,13 +618,14 @@ export default function PlayerCosmeticsPage() {
             busy={Boolean(busy)}
             onPrimary={() => void saveChanges()}
             onReset={() => {
-              setDraft(snapshot?.loadout ?? EMPTY_PLAYER_COSMETIC_LOADOUT);
+              setDraft({ ...EMPTY_PLAYER_COSMETIC_LOADOUT });
+              setMessage("");
               setAvatarDraft(null);
               setAvatarMessage("");
               setPhotoMenuOpen(false);
             }}
             primaryDisabled={Boolean(dirty && !snapshot?.enabled)}
-            primaryLabel={busy === "save" ? "Guardando..." : "Guardar ficha"}
+            primaryLabel={busy === "save" ? "Guardando..." : "Guardar carta"}
           />
         )}
         preview={(
