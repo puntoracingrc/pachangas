@@ -32,3 +32,16 @@ test("server-aggregated repetitions are not capped by API pagination", () => {
   assert.equal(result.occurrences, 1501);
   assert.equal(result.unlocked, true);
 });
+
+test("team progress uses team counters and only the definition's match scope", () => {
+  const teamDefinition = { ...definition, evaluator_key: "TEAM_GOALS", match_scope: "external" };
+  const stats = [{ match_scope: "all", goals_for: 80 }, { match_scope: "external", goals_for: 3, wins: 20, big_wins: 1, distinct_opponents_won: 2 }];
+  const pending = achievementProgress(teamDefinition, stats, [{ definition_id: definition.id, state: "revoked" }]);
+  assert.equal(pending.current, 3);
+  assert.equal(pending.percent, 60);
+  assert.equal(pending.unlocked, false);
+  assert.equal(achievementProgress({ ...teamDefinition, evaluator_key: "TEAM_BIG_WINS" }, stats, []).current, 1);
+  assert.equal(achievementProgress({ ...teamDefinition, evaluator_key: "TEAM_DISTINCT_OPPONENT_WINS" }, stats, []).current, 2);
+  assert.equal(achievementProgress({ ...teamDefinition, evaluator_key: "TEAM_MATCHES" }, [{ match_scope: "external", matches_played: 4 }], []).current, 4);
+  assert.equal(achievementProgress({ ...teamDefinition, evaluator_key: "TEAM_MAX_WIN_STREAK" }, [{ match_scope: "external", max_win_streak: 3, current_win_streak: 0 }], []).current, 3);
+});
