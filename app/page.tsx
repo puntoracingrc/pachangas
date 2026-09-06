@@ -10109,7 +10109,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
         />
       ) : undefined}
       contextOptions={shellContextOptions.length > 0 ? shellContextOptions : undefined}
-      links={{ mercado: "/mercado", retos: "/retos" }}
+      links={{ equipo: "/equipo", mercado: "/mercado", retos: "/retos" }}
       navigationEnabled={!needsLoginForSharedLink}
       onContextChange={selectTeam}
       onNavigate={navigatePrimaryMobile}

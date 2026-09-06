@@ -16,6 +16,7 @@ test("V3A exposes play-first navigation only", async () => {
     ["partido", "Partidos"],
     ["retos", "Retos"],
     ["mercado", "Mercado"],
+    ["equipo", "Equipo"],
   ]);
   assert.match(shell, /data-social-core="v3a"/);
   assert.match(shell, /const primaryItems[^=]*= PRODUCT_PRIMARY_DESTINATIONS/);

@@ -260,7 +260,7 @@ test("a registered user without a team gets a clean canonical empty state", asyn
   assert.match(page, /data-team-state=\{hasRealTeam \? "member" : "no-team"\}/);
   assert.match(shell, /Unirme a un equipo/);
   assert.match(shell, /Buscar una pachanga/);
-  assert.match(shell, /isPlayerWithoutTeam \? "Empezar" : "Mi equipo"/);
+  assert.match(shell, /isPlayerWithoutTeam \? <Link href="\/\?social=start">Empezar<\/Link> : null/);
   assert.match(retos, /type: selectedMembership \? "team" : "profile"/);
 });
 
