@@ -79,7 +79,7 @@ test("OFFICIAL-UI-V3I-002 preserves account links, badges and permission boundar
   assert.match(account, /<ThemeToggle compact defaultPreference="dark" \/>/);
   assert.doesNotMatch(account, /onOpenMenu/);
   assert.doesNotMatch(account, /menuRef\.current\.open = true/);
-  assert.match(account, /platformOwner \? <Link href="\/admin">Administración<\/Link> : null/);
+  assert.doesNotMatch(account, /href="\/admin"/);
   assert.match(account, /adminViewPreview \? \(/);
 });
 

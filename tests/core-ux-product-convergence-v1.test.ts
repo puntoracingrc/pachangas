@@ -42,7 +42,7 @@ test("role-aware utilities prioritize capability context without granting author
     "/mis-asignaciones-arbitrales",
     "/avisos",
   ]);
-  assert.deepEqual(reviewer.map(({ id }) => id), ["control-center", "notifications"]);
+  assert.deepEqual(reviewer.map(({ id }) => id), ["notifications"]);
   assert.ok(player.every(({ id }) => id !== "control-center" && id !== "organize"));
 });
 

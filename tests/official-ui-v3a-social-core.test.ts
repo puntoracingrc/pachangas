@@ -31,7 +31,7 @@ test("team identity and account actions own secondary navigation", async () => {
   assert.match(shell, /aria-label="Abrir perfil y carta"/);
   assert.doesNotMatch(shell, />PERFIL\/CARTA<\/Link>/);
   assert.match(shell, /perspective === "team-admin" \|\| perspective === "team-owner"/);
-  assert.match(shell, /platformOwner \? <Link href="\/admin">Administración<\/Link>/);
+  assert.doesNotMatch(shell, /href="\/admin"/);
   assert.match(shell, /platformOwner \? <Link href="\/admin\/demo">Mundo Demo completo<\/Link>/);
 });
 
