@@ -122,6 +122,8 @@ function MatchCard({
 export function OfficialMatchesOverview({
   canManage,
   drafts,
+  discardingDraftId = null,
+  error = "",
   history,
   marketHref = "/mercado?tab=partidos",
   onCreate,
@@ -133,6 +135,8 @@ export function OfficialMatchesOverview({
 }: {
   canManage: boolean;
   drafts: OfficialMatchSummary[];
+  discardingDraftId?: string | null;
+  error?: string;
   history: OfficialMatchSummary[];
   marketHref?: string;
   onCreate: () => void;
@@ -155,6 +159,8 @@ export function OfficialMatchesOverview({
         {canManage ? <button className={styles.primaryButton} type="button" onClick={onCreate}>Crear partido</button> : null}
       </header>
 
+      {error ? <p role="alert">{error}</p> : null}
+
       {canManage && drafts.length > 0 ? (
         <section className={styles.draftBand} aria-label="Borradores de partido">
           <header><span>Borrador pendiente</span><small>Solo visible para admins</small></header>
@@ -162,8 +168,8 @@ export function OfficialMatchesOverview({
             <article key={match.id}>
               <div><strong>{match.title}</strong><small>{matchDate(match.date)} · {match.place}</small></div>
               <div>
-                <button type="button" onClick={() => onResumeDraft(match.id)}>Continuar</button>
-                <button type="button" onClick={() => onDiscardDraft(match.id)}>Descartar</button>
+                <button type="button" disabled={discardingDraftId !== null} onClick={() => onResumeDraft(match.id)}>Continuar</button>
+                <button type="button" disabled={discardingDraftId !== null} aria-busy={discardingDraftId === match.id} onClick={() => onDiscardDraft(match.id)}>{discardingDraftId === match.id ? "Descartando…" : "Descartar"}</button>
               </div>
             </article>
           ))}

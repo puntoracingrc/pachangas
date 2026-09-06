@@ -2084,7 +2084,7 @@ function normalizePayload(payload?: Partial<AppPayload>): AppPayload {
         reserveLimit: Math.max(0, Math.floor(match.reserveLimit ?? 0)),
         season: match.season || seasonKey(match.date),
       }))
-    : [starterMatch()];
+    : [];
   const players = (payload?.players ? payload.players : fallback.players).map((player) => {
     const position = player.position ?? "Mediocentro / pivote";
     const outfieldPosition = player.outfieldPosition && !isGoalkeeperPosition(player.outfieldPosition)
@@ -2121,7 +2121,7 @@ function normalizePayload(payload?: Partial<AppPayload>): AppPayload {
   });
 
   return {
-    activeMatchId: payload?.activeMatchId && matches.some((match) => match.id === payload.activeMatchId) ? payload.activeMatchId : matches[0].id,
+    activeMatchId: payload?.activeMatchId && matches.some((match) => match.id === payload.activeMatchId) ? payload.activeMatchId : matches[0]?.id ?? "",
     matches,
     players,
     siteSettings: normalizeSiteSettings(payload?.siteSettings),
@@ -3330,6 +3330,8 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
   const [quickMatchDraft, setQuickMatchDraft] = useState<OfficialQuickMatchDraft | null>(null);
   const [quickMatchSaving, setQuickMatchSaving] = useState(false);
   const [quickMatchError, setQuickMatchError] = useState("");
+  const [discardingDraftId, setDiscardingDraftId] = useState<string | null>(null);
+  const discardDraftInFlightRef = useRef(false);
   const [discardedMatchDraftIds, setDiscardedMatchDraftIds] = useState<Set<string>>(() => new Set());
   const [editingMatchNumberField, setEditingMatchNumberField] = useState<"fieldCost" | "reserveLimit" | null>(null);
   const [matchFieldCostDraft, setMatchFieldCostDraft] = useState("");
@@ -4600,7 +4602,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
   const runRemoteAutosave = useEffectEvent((client: NonNullable<typeof supabase>, targetGroupId: string) => {
     const payload = payloadRef.current ?? currentPayload();
     const nextPayloadJson = serializePayload(payload);
-    if (nextPayloadJson === lastCommittedPayloadJsonRef.current || autosaveInFlightRef.current) return;
+    if (nextPayloadJson === lastCommittedPayloadJsonRef.current || discardDraftInFlightRef.current || autosaveInFlightRef.current) return;
 
     autosaveInFlightRef.current = true;
     void Promise.resolve(
@@ -4646,6 +4648,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
       !canAutosaveRemotePayload ||
       applyingRemoteRef.current ||
       autosaveInFlightRef.current ||
+      discardDraftInFlightRef.current ||
       payloadJson === lastCommittedPayloadJsonRef.current
     ) return;
 
@@ -4701,7 +4704,9 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
     };
   }, [cameraPlayerId]);
 
-  const activeMatch = matches.find((match) => match.id === activeMatchId) ?? matches[0];
+  // An empty calendar stays empty; this supplies UI defaults without persisting a new draft.
+  const emptyCalendarMatch = useMemo(() => starterMatch(), []);
+  const activeMatch = matches.find((match) => match.id === activeMatchId) ?? matches[0] ?? emptyCalendarMatch;
   const activeKind = activeMatch.kind ?? "futbol7";
   const matchFinalized = Boolean(activeMatch.closed || activeMatch.scoreA !== undefined);
   useEffect(() => {
@@ -5601,32 +5606,51 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
   }
 
   async function discardQuickMatchDraft(matchId: string = activeMatch.id) {
-    const draftMatch = matches.find((match) => match.id === matchId && !match.configured && !match.closed && match.scoreA === undefined);
+    if (!canUseAdminControls || discardDraftInFlightRef.current) return;
+    const draftMatch = matches.find((match) => match.id === matchId && !match.configured && !match.closed && match.scoreA === undefined && match.scoreB === undefined);
     if (!draftMatch || !window.confirm("¿Descartar este borrador?")) return;
-    setDiscardedMatchDraftIds((current) => new Set(current).add(matchId));
-    const nextMatches = matches.filter((match) => match.id !== matchId);
-    const nextActiveMatchId = nextMatches[0]?.id ?? activeMatchId;
-    const nextPayload = { activeMatchId: nextActiveMatchId, matches: nextMatches, players, siteSettings, venues };
-
-    if (hasRealTeam) {
-      const saved = await saveRemotePayloadWithBackup(nextPayload, "partido_borrador_descartado", true);
-      if (!saved) {
-        setDiscardedMatchDraftIds((current) => {
-          const next = new Set(current);
-          next.delete(matchId);
-          return next;
-        });
-        setQuickMatchError("El servidor no confirmó el descarte. El borrador sigue disponible.");
-        return;
-      }
-    } else {
-      setMatches(nextMatches);
-      setActiveMatchId(nextActiveMatchId);
-    }
-
-    setQuickMatchDraft(null);
+    discardDraftInFlightRef.current = true;
+    setDiscardingDraftId(matchId);
     setQuickMatchError("");
-    setMatchExperienceView("overview");
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+
+    try {
+      if (hasRealTeam) {
+        if (!supabase || !remoteGroupId || !remoteReady) throw new Error("La conexión con el equipo no está lista. Inténtalo de nuevo.");
+        const result = await supabase.rpc("discard_pachanga_match_draft_v1", {
+          target_group_id: remoteGroupId,
+          target_match_id: matchId,
+          operation_id: id(),
+          expected_revision: remotePayloadRevisionRef.current,
+          client_metadata: clientOperationMetadata(),
+        });
+        if (result.error) {
+          if (isRemoteRevisionConflict(result.error.message)) {
+            await loadTeams(supabase, remoteGroupId);
+            throw new Error("El equipo ha cambiado. Hemos actualizado el calendario; vuelve a descartar el borrador.");
+          }
+          throw new Error("No se ha podido descartar el borrador. Sigue disponible; inténtalo de nuevo.");
+        }
+        if (!Array.isArray(result.data?.payload?.matches) || result.data.payload.matches.some((match: Match) => match.id === matchId)) {
+          throw new Error("El servidor no ha confirmado el descarte. Inténtalo de nuevo.");
+        }
+        applyRemoteCommit(result.data);
+        setSyncStatus("live");
+        setSyncError("");
+      } else {
+        const nextMatches = matches.filter((match) => match.id !== matchId);
+        setMatches(nextMatches);
+        setActiveMatchId(nextMatches.some((match) => match.id === activeMatchId) ? activeMatchId : nextMatches[0]?.id ?? "");
+      }
+      setDiscardedMatchDraftIds((current) => new Set(current).add(matchId));
+      setQuickMatchDraft(null);
+      setMatchExperienceView("overview");
+    } catch (error) {
+      setQuickMatchError(error instanceof Error ? error.message : "No se ha podido descartar el borrador. Inténtalo de nuevo.");
+    } finally {
+      discardDraftInFlightRef.current = false;
+      setDiscardingDraftId(null);
+    }
   }
 
   async function toggleLineupClosed() {
@@ -10784,6 +10808,8 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
         <OfficialMatchesOverview
           canManage={canUseAdminControls}
           drafts={matchOverviewDrafts}
+          discardingDraftId={discardingDraftId}
+          error={quickMatchError}
           history={matchOverviewHistory}
           onCreate={() => startQuickMatchWizard()}
           onDiscardDraft={discardQuickMatchDraft}

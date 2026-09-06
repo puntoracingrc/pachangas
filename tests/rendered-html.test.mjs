@@ -179,7 +179,7 @@ test("builds the transfer market as a separated page", async () => {
   assert.match(page, /setActiveMatchManagerPane\(requestedMatchPane === "admin" \? "admin" : "proximo"\)/);
   assert.match(source, /<OfficialProductShellV2/);
   assert.match(source, /<main className="market-page official-ui-v2-market" data-mobile-tab="mercado" data-market-source=\{activeSource\}>/);
-  assert.match(page, /links=\{\{ mercado: "\/mercado", retos: "\/retos" \}\}/);
+  assert.match(page, /links=\{\{ equipo: "\/equipo", mercado: "\/mercado", retos: "\/retos" \}\}/);
   assert.doesNotMatch(page, /links=\{\{[\s\S]*mercado: canUseAdminControls && matchConfigured \? marketScoutUrl\("jugadores"\)/);
   assert.doesNotMatch(page, /window\.location\.assign\(canUseAdminControls && matchConfigured \? marketScoutUrl/);
   assert.doesNotMatch(marketViewCss, /grid-template-columns: 176px minmax\(0, 1fr\)/);
@@ -434,7 +434,7 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /function openRankingPanel/);
   assert.match(page, /function openMarketConfiguration/);
   assert.match(page, /if \(tabId === "mercado"\) \{\s*return;/);
-  assert.match(page, /links=\{\{ mercado: "\/mercado", retos: "\/retos" \}\}/);
+  assert.match(page, /links=\{\{ equipo: "\/equipo", mercado: "\/mercado", retos: "\/retos" \}\}/);
   assert.doesNotMatch(page, /links=\{\{[\s\S]*mercado: canUseAdminControls && matchConfigured \? marketScoutUrl\("jugadores"\)/);
   assert.doesNotMatch(page, /window\.location\.assign\(canUseAdminControls && matchConfigured \? marketScoutUrl/);
   assert.match(page, /if \(requestedTab === "perfil"\) \{[\s\S]*setProfilePane\("ficha"\);[\s\S]*setSelectedPlayerId\(null\)/);
@@ -442,7 +442,8 @@ test("keeps the project wired to the Pachangas app", async () => {
   assert.match(page, /\/api\/ratings\/assessment/);
   assert.match(page, /record_pachanga_individual_rating_authoritative_v2/);
   assert.match(page, /Este test crea tu ficha real y solo se puede completar una vez por usuario/);
-  assert.match(page, /Mejorar precisión de mi carta/);
+  assert.doesNotMatch(page, /Mejorar precisión de mi carta/);
+  assert.match(await readFile(new URL("../app/perfil/profile-client.tsx", import.meta.url), "utf8"), /Mejorar precisión de mi carta/);
   assert.match(page, /openCreatePlayerProfile/);
   assert.match(page, /openCreatePlayerProfile/);
   assert.match(page, /showQuickForm\("venue"\)/);
