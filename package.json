@@ -235,7 +235,9 @@
     "test:synthetic-world:dashboard-api": "node simulation/synthetic-world/scripts/dashboard-api-regression.mjs",
     "db:bootstrap:fresh": "node scripts/database/bootstrap-fresh.mjs",
     "db:schema-contract": "node scripts/database/export-schema-contract.mjs",
-    "db:generate": "drizzle-kit generate"
+    "db:generate": "drizzle-kit generate",
+    "test:player-claims:db": "psql -X -w \"$PACHANGAS_SYNTHETIC_DB_URL\" -v ON_ERROR_STOP=1 -f tests/player-profile-claims-db.sql",
+    "test:player-claims:browser": "node tests/player-profile-claims-browser.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.110.9",

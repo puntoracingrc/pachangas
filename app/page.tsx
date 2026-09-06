@@ -8166,8 +8166,8 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
   }
 
   async function claimSelectedPlayer() {
-    if (!selectedPlayer || selectedPlayer.ownerUserId || ownPlayer || !hasRealTeam || !isRegisteredUser || !currentUserId) return;
-    startPlayerAssessment("initial", selectedPlayer);
+    if (!selectedPlayer || selectedPlayer.ownerUserId || !hasRealTeam || !isRegisteredUser || !remoteGroupId) return;
+    window.location.assign(`/equipo/plantilla?team=${encodeURIComponent(remoteGroupId)}`);
   }
 
   function resetTeamScopedUi() {
