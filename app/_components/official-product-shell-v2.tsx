@@ -317,19 +317,13 @@ function AccountActions({
         {pendingCount > 0 ? <span className={styles.notificationBadge} aria-hidden="true">{pendingCount > 9 ? "9+" : pendingCount}</span>
           : unreadCount > 0 ? <span className={styles.notificationDot} aria-hidden="true" /> : null}
       </Link>
-      <button
+      <Link
         className={styles.avatarAction}
-        type="button"
-        aria-label="Abrir menú de perfil"
-        onClick={() => {
-          if (menuRef.current) {
-            menuRef.current.open = true;
-            menuRef.current.querySelector<HTMLAnchorElement>("a")?.focus();
-          }
-        }}
+        href={resolvedAccount.profileHref ?? "/perfil"}
+        aria-label="Abrir perfil y carta"
       >
         {resolvedAccount.avatarUrl ? <Image src={resolvedAccount.avatarUrl} alt="" width={34} height={34} unoptimized /> : <UserIcon />}
-      </button>
+      </Link>
       <details ref={menuRef} className={styles.accountMenu}>
         <summary className={styles.menuAction} aria-label="Abrir menú general">
           <MenuIcon />

@@ -45,6 +45,7 @@ type TeamSummary = {
 };
 
 type ProfileSnapshot = {
+  pointBalance: number | null;
   cosmetics: PlayerCosmeticsSnapshot | null;
   fetchedAt: string;
   profile: ProfileRow | null;
@@ -153,7 +154,7 @@ export function CanonicalPlayerProfile() {
       return;
     }
 
-    const [profileResult, socialProfileResult, membershipsResult, cosmeticsResult] = await Promise.all([
+    const [profileResult, socialProfileResult, membershipsResult, cosmeticsResult, pointsResult] = await Promise.all([
       supabase
         .from("pachanga_player_profiles")
         .select("id,display_name,avatar,avatar_offset_x,avatar_offset_y,position,outfield_position,current_overall,current_facets,assessment_summary,market_enabled,market_zones,market_availability,market_modalities,profile_version,updated_at")
@@ -162,6 +163,7 @@ export function CanonicalPlayerProfile() {
       supabase.rpc("get_my_pachanga_social_profile_v1"),
       supabase.rpc("get_my_pachanga_social_teams_v1"),
       supabase.rpc("get_pachanga_player_cosmetics_snapshot_v1"),
+      supabase.from("pachanga_player_point_accounts").select("balance").eq("user_id", targetUserId).maybeSingle(),
     ]);
 
     if (profileResult.error || membershipsResult.error) {
@@ -181,7 +183,9 @@ export function CanonicalPlayerProfile() {
     const cosmetics = cosmeticsResult.error
       ? readCache(targetUserId)?.cosmetics ?? null
       : normalizePlayerCosmeticsSnapshot(cosmeticsResult.data);
+    const pointBalance = pointsResult.error ? null : Number(pointsResult.data?.balance ?? 0);
     const next: ProfileSnapshot = {
+      pointBalance: pointBalance !== null && Number.isSafeInteger(pointBalance) && pointBalance >= 0 ? pointBalance : null,
       cosmetics: cosmetics?.playerProfileId === profileResult.data?.id ? cosmetics : null,
       fetchedAt: new Date().toISOString(),
       profile: normalizeProfileRow(profileResult.data),
@@ -309,6 +313,7 @@ export function CanonicalPlayerProfile() {
         return;
       }
       const nextSnapshot: ProfileSnapshot = {
+        pointBalance: snapshot?.pointBalance ?? null,
         cosmetics: snapshot?.cosmetics ?? null,
         fetchedAt: new Date().toISOString(),
         profile,
@@ -351,6 +356,10 @@ export function CanonicalPlayerProfile() {
               <div><span>Mi perfil</span><h1>{identityName}</h1><p>{identityPosition} · {identityModalities.join(" · ") || "Modalidad pendiente"}</p><small>{identityArea}</small></div>
               <Link className={styles.primary} href={editHref}>Editar perfil</Link>
             </header>
+            <section className={styles.points} aria-label="Tus puntos">
+              <div><span>Tus puntos</span><strong>{snapshot?.pointBalance != null ? `${snapshot.pointBalance.toLocaleString("es-ES")} puntos` : "Saldo no disponible"}</strong></div>
+              <Link className={styles.primary} href="/ruleta">Ir a la ruleta</Link>
+            </section>
             {message ? <p className={styles.notice} role="status">{message}</p> : null}
             <div className={styles.grid}>
               <section className={styles.summary}>

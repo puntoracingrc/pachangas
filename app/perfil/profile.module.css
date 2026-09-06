@@ -35,3 +35,7 @@
 .privacy summary{cursor:pointer;min-height:44px;align-content:center;font-weight:800}.privacy summary span{margin-left:8px;font-weight:400;font-size:.85rem;color:var(--official-muted,#aebcb7)}.privacy summary:focus-visible{outline:2px solid var(--official-accent-text,#c8f069);outline-offset:4px}
 
 @media(max-width:760px){.cardSection>.cardActions{display:grid;grid-template-columns:minmax(0,1fr);width:100%;gap:10px}.cardActions>a{width:100%;min-height:44px;text-align:center;padding:10px 16px}.hero>.primary{min-height:44px;text-align:center;padding:10px 16px}}
+
+.points{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:18px;padding:18px;border:1px solid rgba(200,240,105,.3);background:rgba(200,240,105,.06)}.points>div{display:grid;gap:4px;min-width:0}.points span{font-size:.8rem;color:var(--official-muted,#aebcb7)}.points strong{font-size:clamp(1.4rem,4vw,2rem);font-weight:900;font-variant-numeric:tabular-nums;color:var(--official-accent-text,#c8f069)}.points a{flex-shrink:0;text-align:center}
+:global(:root[data-theme="light"]) .points{background:var(--official-surface,#fff);border-color:var(--official-line,rgba(17,43,34,.16))}
+@media(max-width:460px){.points{flex-direction:column;align-items:stretch;gap:12px}.points a{width:100%}}

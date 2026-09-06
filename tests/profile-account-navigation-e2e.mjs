@@ -9,10 +9,16 @@ const uid='10000000-0000-4000-8000-000000000001', pid='20000000-0000-4000-8000-0
 const user={id:uid,aud:'authenticated',role:'authenticated',email:'profile-qa@example.invalid',app_metadata:{provider:'email'},user_metadata:{},created_at:new Date().toISOString()};
 let frame='player.frame.future.navy';
 let requests=0;
+let balance=114;
+let pointsFail=false;
 await page.route('https://profile-qa.supabase.co/**',async route=>{
  const path=new URL(route.request().url()).pathname;
  let data=[];
  if(path.includes('/auth/v1/user')) data=user;
+ else if(path.includes('/pachanga_player_point_accounts')) {
+  if(pointsFail) return route.fulfill({status:503,contentType:'application/json',body:JSON.stringify({message:'Unavailable'})});
+  data={balance};
+ }
  else if(path.includes('/pachanga_player_profiles')) data={id:pid,display_name:'Jugador QA',position:'Medio',current_overall:72,current_facets:{Pace:70,Shot:75,Pass:80},assessment_summary:{initial:{completedAt:'2026-09-01T10:00:00Z'},advanced:{completedAt:'2026-09-02T10:00:00Z'}},profile_version:1,market_enabled:false};
  else if(path.endsWith('/get_pachanga_player_cosmetics_snapshot_v1')) {requests++;data={enabled:true,playerProfileId:pid,revision:2,serverSequence:2,loadout:{frameKey:frame,backgroundKey:'player.background.future.navy',accentKey:null,effectKey:null,titleKey:null,featuredBadgeGrantId:'badge-qa'},owned:[],featuredBadges:[{grantId:'badge-qa',achievementKey:'qa',title:'Logro QA',rarity:'rare'}]};}
  else if(path.endsWith('/get_my_pachanga_social_profile_v1')) data=null;
@@ -40,12 +46,28 @@ try {
  frame='player.frame.barrio.copper';
  await page.evaluate(()=>window.dispatchEvent(new Event('focus')));
  await page.locator('[data-frame="player.frame.barrio.copper"]').waitFor();
- await page.getByRole('button',{name:'Abrir menú de perfil',exact:true}).click();
+ assert.equal(await page.getByRole('link',{name:'Abrir perfil y carta',exact:true}).getAttribute('href'),'/perfil');
+ assert.equal(await page.getByRole('link',{name:'PERFIL/CARTA',exact:true}).count(),0);
+ assert.equal(await page.getByRole('region',{name:'Tus puntos'}).getByText('114 puntos',{exact:true}).isVisible(),true);
+ assert.equal(await page.getByRole('link',{name:'Ir a la ruleta',exact:true}).getAttribute('href'),'/ruleta');
+ await page.locator('summary[aria-label="Abrir menú general"]:visible').click();
  assert.equal(await page.getByRole('link',{name:'PERFIL/CARTA',exact:true}).getAttribute('href'),'/perfil');
  assert.equal(await page.getByRole('link',{name:'Mi carta',exact:true}).count(),0);
  await page.keyboard.press('Escape');
  await page.locator('summary[aria-label="Abrir menú general"]:visible').click();
  assert.equal(await page.getByRole('link',{name:'PERFIL/CARTA',exact:true}).isVisible(),true);
  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
- console.log(JSON.stringify({passed:true,cosmeticReads:requests,checks:['saved frame and badge','editor button matches profile','refresh on return','avatar and hamburger menu','mobile overflow','market description','privacy collapsed and expandable']}));
+ await page.keyboard.press('Escape');
+ await page.getByRole('link',{name:'Abrir perfil y carta',exact:true}).click();
+ assert.equal(await page.getByRole('link',{name:'PERFIL/CARTA',exact:true}).isVisible(),false);
+ balance=152;
+ await page.evaluate(()=>window.dispatchEvent(new Event('focus')));
+ await page.getByText('152 puntos',{exact:true}).waitFor();
+ pointsFail=true;
+ await page.evaluate(()=>window.dispatchEvent(new Event('focus')));
+ await page.getByText('Saldo no disponible',{exact:true}).waitFor();
+ pointsFail=false; balance=0;
+ await page.evaluate(()=>window.dispatchEvent(new Event('focus')));
+ await page.getByText('0 puntos',{exact:true}).waitFor();
+ console.log(JSON.stringify({passed:true,cosmeticReads:requests,checks:['saved frame and badge','editor button matches profile','refresh on return','avatar opens profile directly; hamburger keeps menu','canonical points refresh, zero and unavailable states','mobile overflow','market description','privacy collapsed and expandable']}));
 } catch(error) {console.log(await page.locator('body').innerText()); console.log('reads',requests); throw error;} finally {await browser.close();}
