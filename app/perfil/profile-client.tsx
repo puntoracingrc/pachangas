@@ -240,7 +240,7 @@ export function CanonicalPlayerProfile() {
       ? "PUBLICADO"
       : freeAgentMarketReady ? "PAUSADO" : "NO_CONFIGURADO";
   const facets = Object.entries(profile?.current_facets ?? {}).slice(0, 6).map(([key, value]) => ({ key, label: key.slice(0, 3).toUpperCase(), value: Math.round(Number(value) || 0) }));
-  const editHref = team ? `/?mobile=perfil&edit=1&equipo=${encodeURIComponent(team.teamCode)}` : "/?social=profile";
+  const editHref = "/?social=profile";
   const identityName = profile?.display_name ?? socialProfile?.displayName ?? "Mi perfil";
   const identityAvatar = profile?.avatar ?? socialProfile?.avatarRef ?? null;
   const identityPosition = profile?.position ?? socialProfile?.primaryPosition ?? "Pendiente";

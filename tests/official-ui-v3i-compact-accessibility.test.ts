@@ -68,7 +68,10 @@ test("OFFICIAL-UI-V3I-002 preserves account links, badges and permission boundar
   assert.match(account, /useSocialInbox\(\)/);
   assert.match(account, /pendingCount > 9 \? "9\+" : pendingCount/);
   assert.match(account, /aria-label=\{bellLabel\}/);
-  assert.match(account, /aria-label="Abrir menú de cuenta"/);
+  assert.match(account, /aria-label="Abrir menú general"/);
+  assert.match(account, /aria-label="Abrir mi perfil"/);
+  assert.match(account, /<ThemeToggle compact defaultPreference="dark" \/>/);
+  assert.match(account, /resolvedAccount\.onOpenMenu \? \(/);
   assert.match(account, /platformOwner \? <Link href="\/admin">Administración<\/Link> : null/);
   assert.match(account, /adminViewPreview \? \(/);
 });
@@ -84,6 +87,22 @@ test("shell popover menus close outside, on Escape and after a menu action", asy
   assert.equal((shell.match(/ref=\{menuRef\} className=\{styles\.(?:identityMenu|accountMenu)\}/g) ?? []).length, 2);
   assert.equal((shell.match(/event\.target\.closest\("a, button"\)/g) ?? []).length, 2);
   assert.match(shell, /onContextChange\(event\.target\.value\);\s*closeMenu\(\);/);
+});
+
+test("profile editing is isolated from the general account menu", async () => {
+  const [page, profile, onboarding] = await Promise.all([
+    source("app/page.tsx"),
+    source("app/perfil/profile-client.tsx"),
+    source("app/_components/social-onboarding.tsx"),
+  ]);
+
+  assert.match(profile, /const editHref = "\/\?social=profile"/);
+  assert.match(page, /data-profile-editing="isolated"/);
+  assert.match(page, /onProfileSaved=\{profileOnly \? \(\) => window\.location\.assign\("\/perfil"\)/);
+  assert.match(onboarding, /profileOnly \? "Editar perfil"/);
+  assert.match(onboarding, /profileOnly \? "Guardar cambios"/);
+  assert.match(onboarding, /if \(profileOnly\) \{[\s\S]*onProfileSaved\?\.\(\)/);
+  assert.match(page, /onOpenMenu: \(\) => setMobileAccountOpen\(true\)/);
 });
 
 test("OFFICIAL-UI-V3I-002 preserves exactly four primary social destinations", async () => {
