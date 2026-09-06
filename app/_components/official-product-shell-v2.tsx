@@ -189,7 +189,9 @@ function useDismissableDetails() {
   }
 
   useEffect(() => {
-    function handleOutsidePointer(event: PointerEvent) {
+    // Match the native summary click: closing on pointerdown exposes the page
+    // between pressing another menu trigger and releasing it.
+    function handleOutsideClick(event: MouseEvent) {
       const menu = menuRef.current;
       if (!menu?.open || !(event.target instanceof Node) || menu.contains(event.target)) return;
       menu.open = false;
@@ -202,10 +204,10 @@ function useDismissableDetails() {
       menu.querySelector<HTMLElement>("summary")?.focus();
     }
 
-    document.addEventListener("pointerdown", handleOutsidePointer);
+    document.addEventListener("click", handleOutsideClick);
     document.addEventListener("keydown", handleEscape);
     return () => {
-      document.removeEventListener("pointerdown", handleOutsidePointer);
+      document.removeEventListener("click", handleOutsideClick);
       document.removeEventListener("keydown", handleEscape);
     };
   }, []);
@@ -232,7 +234,7 @@ function ContextIdentity({
   const { closeMenu, menuRef } = useDismissableDetails();
 
   return (
-    <details ref={menuRef} className={styles.identityMenu}>
+    <details ref={menuRef} className={styles.identityMenu} name="pachangas-header-menu">
       <summary aria-label="Abrir selector de equipo">
         <span className={styles.identityVisual}>{visual ?? <Image src="/icon-192.png" alt="" width={38} height={38} priority unoptimized />}</span>
         <span><small>{isPlayerWithoutTeam ? "Tu espacio" : "Equipo activo"}</small><strong>{context.title}</strong></span>
@@ -240,7 +242,7 @@ function ContextIdentity({
       </summary>
       <div
         className={styles.identityMenuPanel}
-        onClickCapture={(event) => {
+        onClick={(event) => {
           if (event.target instanceof Element && event.target.closest("a, button")) closeMenu();
         }}
       >
@@ -324,13 +326,13 @@ function AccountActions({
       >
         {resolvedAccount.avatarUrl ? <Image src={resolvedAccount.avatarUrl} alt="" width={34} height={34} unoptimized /> : <UserIcon />}
       </Link>
-      <details ref={menuRef} className={styles.accountMenu}>
+      <details ref={menuRef} className={styles.accountMenu} name="pachangas-header-menu">
         <summary className={styles.menuAction} aria-label="Abrir menú general">
           <MenuIcon />
         </summary>
         <div
           className={styles.accountMenuPanel}
-          onClickCapture={(event) => {
+          onClick={(event) => {
             if (event.target instanceof Element && event.target.closest("a, button")) closeMenu();
           }}
         >
