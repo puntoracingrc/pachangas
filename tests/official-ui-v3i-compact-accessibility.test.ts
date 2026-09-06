@@ -72,7 +72,7 @@ test("OFFICIAL-UI-V3I-002 preserves account links, badges and permission boundar
 
   assert.match(account, /notificationsHref = account\.notificationsHref \?\? "\/avisos"/);
   assert.match(account, /useSocialInbox\(\)/);
-  assert.match(account, /pendingCount > 9 \? "9\+" : pendingCount/);
+  assert.match(account, /unreadCount > 9 \? "9\+" : unreadCount/);
   assert.match(account, /aria-label=\{bellLabel\}/);
   assert.match(account, /aria-label="Abrir menú general"/);
   assert.match(account, /aria-label="Abrir perfil y carta"/);
