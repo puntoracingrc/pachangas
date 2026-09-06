@@ -11,6 +11,7 @@ import {
   normalizeSocialTeamFlags,
   normalizeSocialTeamHome,
   normalizeSocialTeamInvitations,
+  normalizeSocialTeamMembershipRequests,
   normalizeSocialTeamRoster,
   normalizeSocialTeams,
   roleLabel,
@@ -21,6 +22,7 @@ import {
   type SocialTeamFeatureFlags,
   type SocialTeamHome,
   type SocialTeamInvitation,
+  type SocialTeamMembershipRequest,
   type SocialTeamRosterMember,
   type SocialTeamSummary,
 } from "../social-team-core-contract";
@@ -109,12 +111,16 @@ export function SocialTeamProduct({ surface = "home" }: { surface?: TeamSurface 
   const [home, setHome] = useState<SocialTeamHome | null>(null);
   const [roster, setRoster] = useState<SocialTeamRosterMember[]>([]);
   const [invitations, setInvitations] = useState<SocialTeamInvitation[]>([]);
+  const [membershipRequests, setMembershipRequests] = useState<SocialTeamMembershipRequest[]>([]);
   const [status, setStatus] = useState<TeamStatus>(() => supabase ? "loading" : "error");
   const [message, setMessage] = useState("");
   const [busyInvitationId, setBusyInvitationId] = useState("");
+  const [busyRequestId, setBusyRequestId] = useState("");
   const [creatingInvite, setCreatingInvite] = useState(false);
   const [expiryHours, setExpiryHours] = useState(168);
   const [freshShareUrl, setFreshShareUrl] = useState("");
+  const [freshInviteMode, setFreshInviteMode] = useState<SocialTeamInvitation["inviteMode"]>("TEAM_LINK");
+  const [copyConfirmed, setCopyConfirmed] = useState(false);
 
   const applyCached = useCallback((targetUserId: string, targetGroupId: string) => {
     const cachedTeams = normalizeSocialTeams(readJson<unknown>(socialTeamsCacheKey(targetUserId)));
@@ -125,6 +131,7 @@ export function SocialTeamProduct({ surface = "home" }: { surface?: TeamSurface 
       setHome(cached.home);
       setRoster(cached.roster);
       setInvitations(cached.invitations);
+      setMembershipRequests([]);
       return true;
     }
     return false;
@@ -180,6 +187,7 @@ export function SocialTeamProduct({ surface = "home" }: { surface?: TeamSurface 
       setHome(null);
       setRoster([]);
       setInvitations([]);
+      setMembershipRequests([]);
       setStatus("no-team");
       setMessage("");
       return;
@@ -188,12 +196,13 @@ export function SocialTeamProduct({ surface = "home" }: { surface?: TeamSurface 
     setSelectedTeamId(selected.groupId);
     window.localStorage.setItem("pachangas-social-team-selected-v1", selected.groupId);
     const isAdmin = selected.role === "owner" || selected.role === "admin";
-    const [homeResult, rosterResult, invitationResult] = await Promise.all([
+    const [homeResult, rosterResult, invitationResult, membershipRequestResult] = await Promise.all([
       supabase.rpc("get_pachanga_social_team_home_v1", { target_group_id: selected.groupId }),
       supabase.rpc("get_pachanga_social_team_roster_v1", { target_group_id: selected.groupId }),
       isAdmin ? supabase.rpc("get_pachanga_social_team_invitations_v2", { target_group_id: selected.groupId }) : Promise.resolve({ data: [], error: null }),
+      isAdmin ? supabase.rpc("get_pachanga_team_membership_requests_v1", { target_group_id: selected.groupId }) : Promise.resolve({ data: [], error: null }),
     ]);
-    if (homeResult.error || rosterResult.error || invitationResult.error) {
+    if (homeResult.error || rosterResult.error || invitationResult.error || membershipRequestResult.error) {
       const restored = applyCached(actorId, selected.groupId);
       setStatus(restored ? "offline" : "error");
       setMessage(restored ? "No pudimos revalidar el equipo. Mostramos la última copia confirmada." : "No pudimos recuperar la portada del equipo.");
@@ -207,9 +216,11 @@ export function SocialTeamProduct({ surface = "home" }: { surface?: TeamSurface 
     }
     const nextRoster = normalizeSocialTeamRoster(rosterResult.data);
     const nextInvitations = normalizeSocialTeamInvitations(invitationResult.data);
+    const nextMembershipRequests = normalizeSocialTeamMembershipRequests(membershipRequestResult.data);
     setHome(nextHome);
     setRoster(nextRoster);
     setInvitations(nextInvitations);
+    setMembershipRequests(nextMembershipRequests);
     setStatus("ready");
     setMessage(new URLSearchParams(window.location.search).get("created") === "1" ? "Equipo creado y confirmado por el servidor." : "");
     writeJson(socialTeamCacheKey(actorId, selected.groupId), {
@@ -264,6 +275,7 @@ export function SocialTeamProduct({ surface = "home" }: { surface?: TeamSurface 
 
   function selectTeam(groupId: string) {
     setFreshShareUrl("");
+    setCopyConfirmed(false);
     setStatus("loading");
     const params = new URLSearchParams(window.location.search);
     params.set("team", groupId);
@@ -272,7 +284,7 @@ export function SocialTeamProduct({ surface = "home" }: { surface?: TeamSurface 
     void loadCanonical(groupId);
   }
 
-  async function createInvitation() {
+  async function createInvitation(inviteMode: SocialTeamInvitation["inviteMode"]) {
     if (!navigator.onLine) {
       setMessage("Necesitas conexión para confirmar esta acción.");
       return;
@@ -280,14 +292,15 @@ export function SocialTeamProduct({ surface = "home" }: { surface?: TeamSurface 
     if (!supabase || !home || creatingInvite || !home.actions.canInvitePlayers) return;
     setCreatingInvite(true);
     setFreshShareUrl("");
-    setMessage("Creando un enlace de un solo uso...");
+    setCopyConfirmed(false);
+    setMessage(inviteMode === "TEAM_LINK" ? "Creando el enlace del equipo..." : "Creando una invitación individual...");
     const result = await supabase.rpc("command_pachanga_team_player_invitation_v2", {
       action: "team.invitation.create",
       client_metadata: commandMetadata(),
       expected_revision: home.revision,
       invitation_token: null,
       operation_id: crypto.randomUUID(),
-      payload: { expiresInHours: expiryHours },
+      payload: { expiresInHours: expiryHours, inviteMode, maxUses: inviteMode === "TEAM_LINK" ? 100 : 1 },
       target_group_id: home.groupId,
       target_invitation_id: null,
     });
@@ -299,12 +312,17 @@ export function SocialTeamProduct({ surface = "home" }: { surface?: TeamSurface 
     }
     const token = result.data && typeof result.data === "object" && "shareToken" in result.data ? String(result.data.shareToken ?? "") : "";
     if (!/^piq_[0-9a-f]{64}$/.test(token)) {
-      setMessage("La invitación se confirmó, pero su enlace de un solo uso ya no puede volver a mostrarse.");
+      setMessage(inviteMode === "TEAM_LINK"
+        ? "El enlace del equipo se confirmó, pero su token ya no puede volver a mostrarse."
+        : "La invitación se confirmó, pero su enlace de un solo uso ya no puede volver a mostrarse.");
       await loadCanonical(home.groupId);
       return;
     }
     setFreshShareUrl(`${window.location.origin}/invitacion/grupo/${encodeURIComponent(token)}`);
-    setMessage("Invitación confirmada. Copia este enlace ahora: no se volverá a mostrar.");
+    setFreshInviteMode(inviteMode);
+    setMessage(inviteMode === "TEAM_LINK"
+      ? "Enlace del equipo confirmado. Cópialo ahora: el token no se volverá a mostrar."
+      : "Invitación individual confirmada. Cópiala ahora: el token no se volverá a mostrar.");
     await loadCanonical(home.groupId);
   }
 
@@ -332,12 +350,38 @@ export function SocialTeamProduct({ surface = "home" }: { surface?: TeamSurface 
     await loadCanonical(home.groupId);
   }
 
+  async function respondMembershipRequest(request: SocialTeamMembershipRequest, response: "accept" | "reject") {
+    if (!navigator.onLine) {
+      setMessage("Necesitas conexión para confirmar esta acción.");
+      return;
+    }
+    if (!supabase || !home || busyRequestId || request.state !== "PENDING") return;
+    setBusyRequestId(request.requestId);
+    setMessage(response === "accept" ? "Aceptando al jugador..." : "Rechazando la solicitud...");
+    const result = await supabase.rpc("command_pachanga_team_membership_request_v1", {
+      action: `team.membership.request.${response}`,
+      client_metadata: commandMetadata(),
+      expected_revision: request.revision,
+      operation_id: crypto.randomUUID(),
+      payload: {},
+      target_group_id: home.groupId,
+      target_request_id: request.requestId,
+    });
+    setBusyRequestId("");
+    if (result.error) setMessage(safeCommandError(result.error.message, "No se pudo responder la solicitud."));
+    else setMessage(response === "accept" ? "Jugador añadido al equipo." : "Solicitud rechazada.");
+    await loadCanonical(home.groupId);
+  }
+
   async function copyShareUrl() {
     if (!freshShareUrl) return;
     try {
       await navigator.clipboard.writeText(freshShareUrl);
-      setMessage("Enlace copiado. Es de un solo uso y tiene caducidad.");
+      setCopyConfirmed(true);
+      setMessage(freshInviteMode === "TEAM_LINK" ? "Enlace del equipo copiado." : "Invitación individual copiada.");
+      window.setTimeout(() => setCopyConfirmed(false), 2400);
     } catch {
+      setCopyConfirmed(false);
       setMessage("No pudimos copiarlo automáticamente. Mantén pulsado el enlace para copiarlo.");
     }
   }
@@ -414,15 +458,20 @@ export function SocialTeamProduct({ surface = "home" }: { surface?: TeamSurface 
       {surface === "roster" ? <RosterView admins={groupedRoster.admins} invitationCount={home.activeInvitationCount} players={groupedRoster.players} canInvite={home.actions.canInvitePlayers} teamId={home.groupId} /> : null}
       {surface === "invitations" ? <InvitationView
         busyInvitationId={busyInvitationId}
+        busyRequestId={busyRequestId}
         canInvite={home.actions.canInvitePlayers && flags?.socialTeamInvitationV2Enabled === true}
+        copyConfirmed={copyConfirmed}
         creating={creatingInvite}
         expiryHours={expiryHours}
         freshShareUrl={freshShareUrl}
+        freshInviteMode={freshInviteMode}
         invitations={invitations}
+        membershipRequests={membershipRequests}
         onCopy={() => void copyShareUrl()}
-        onCreate={() => void createInvitation()}
+        onCreate={(inviteMode) => void createInvitation(inviteMode)}
         onExpiryChange={setExpiryHours}
         onRevoke={(invitation) => void revokeInvitation(invitation)}
+        onRespondRequest={(request, response) => void respondMembershipRequest(request, response)}
         onShare={() => void shareInvitation()}
         teamCode={home.teamCode}
         writeEnabled={status === "ready"}
@@ -483,16 +532,21 @@ function RosterGroup({ members, title }: { members: SocialTeamRosterMember[]; ti
   return <section className={styles.rosterGroup}><header><span>{title}</span><strong>{members.length}</strong></header><div className={styles.rosterList}>{members.map((member) => <details key={member.memberKey}><summary><MemberAvatar member={member} /><span><strong>{member.displayName}{member.isCurrentUser ? " · Tú" : ""}</strong><small>{member.primaryPosition}</small></span><b>{roleLabel(member.role)}</b></summary><div><span>{modalityLabel(member.preferredModality)}</span><small>Miembro desde {dateLabel(member.joinedAt)}</small>{member.isCurrentUser ? <Link href="/perfil">Abrir mi perfil</Link> : null}</div></details>)}</div></section>;
 }
 
-function InvitationView({ busyInvitationId, canInvite, creating, expiryHours, freshShareUrl, invitations, onCopy, onCreate, onExpiryChange, onRevoke, onShare, teamCode, writeEnabled }: {
+function InvitationView({ busyInvitationId, busyRequestId, canInvite, copyConfirmed, creating, expiryHours, freshInviteMode, freshShareUrl, invitations, membershipRequests, onCopy, onCreate, onExpiryChange, onRespondRequest, onRevoke, onShare, teamCode, writeEnabled }: {
   busyInvitationId: string;
+  busyRequestId: string;
   canInvite: boolean;
+  copyConfirmed: boolean;
   creating: boolean;
   expiryHours: number;
+  freshInviteMode: SocialTeamInvitation["inviteMode"];
   freshShareUrl: string;
   invitations: SocialTeamInvitation[];
+  membershipRequests: SocialTeamMembershipRequest[];
   onCopy: () => void;
-  onCreate: () => void;
+  onCreate: (inviteMode: SocialTeamInvitation["inviteMode"]) => void;
   onExpiryChange: (hours: number) => void;
+  onRespondRequest: (request: SocialTeamMembershipRequest, response: "accept" | "reject") => void;
   onRevoke: (invitation: SocialTeamInvitation) => void;
   onShare: () => void;
   teamCode: string;
@@ -502,17 +556,32 @@ function InvitationView({ busyInvitationId, canInvite, creating, expiryHours, fr
   return (
     <div className={styles.invitationLayout}>
       <section className={styles.inviteComposer}>
-        <header><span>Nuevo enlace</span><h2>Invitar jugador</h2></header>
-        <p className={styles.teamCode}>Código del equipo: <strong>{teamCode}</strong></p>
-        <p>Solo quien tenga este enlace podrá solicitar su entrada. Es de un solo uso y nunca concede permisos de admin.</p>
+        <header><span>Enlace del equipo</span><h2>Invita a tus amigos</h2></header>
+        <p>Comparte el mismo enlace con tu grupo. Podrá usarse hasta que caduque o lo revoques y cada persona entrará únicamente como jugador.</p>
         <label>Caducidad<select value={expiryHours} onChange={(event) => onExpiryChange(Number(event.target.value))}><option value={24}>24 horas</option><option value={72}>3 días</option><option value={168}>7 días</option><option value={336}>14 días</option></select></label>
         {!writeEnabled ? <p className={styles.notice}>Necesitas conexión para confirmar esta acción.</p> : null}
-        <button className={styles.primary} type="button" disabled={creating || !writeEnabled} onClick={onCreate}>{creating ? "Creando..." : "Crear enlace"}</button>
-        {freshShareUrl ? <div className={styles.freshInvite}><span>Se muestra una sola vez</span><a href={freshShareUrl}>{freshShareUrl}</a><div><button type="button" onClick={onCopy}>Copiar</button><button type="button" onClick={onShare}>Compartir</button></div></div> : null}
+        <button className={styles.primary} type="button" disabled={creating || !writeEnabled} onClick={() => onCreate("TEAM_LINK")}>{creating ? "Creando..." : "Crear enlace para compartir"}</button>
+        {freshShareUrl ? <div className={styles.freshInvite} role="status"><span>{freshInviteMode === "TEAM_LINK" ? "Enlace reutilizable" : "Invitación de un solo uso"}</span><a href={freshShareUrl}>{freshShareUrl}</a><div><button type="button" onClick={onCopy}>{copyConfirmed ? "Copiado" : "Copiar"}</button><button type="button" onClick={onShare}>Compartir</button></div>{copyConfirmed ? <small>Enlace copiado al portapapeles.</small> : null}</div> : null}
+        <div className={styles.individualInvite}><div><strong>Invitación individual</strong><small>Genera un enlace distinto que solo podrá aceptar una persona.</small></div><button type="button" disabled={creating || !writeEnabled} onClick={() => onCreate("INDIVIDUAL")}>Crear enlace de un solo uso</button></div>
+        <div className={styles.teamCode}><span>Código del equipo</span><strong>{teamCode}</strong><small>Identifica al equipo, pero no permite unirse.</small></div>
       </section>
       <section className={styles.invitationHistory}>
         <header><span>Historial</span><h2>Invitaciones</h2></header>
-        {invitations.length ? <div>{invitations.map((invitation) => <article key={invitation.invitationId} data-invitation-state={invitation.state}><div><strong>{invitationStateLabel(invitation.state)}</strong><small>Creada por {invitation.createdByName}</small></div><p>{dateLabel(invitation.createdAt)} · caduca {dateLabel(invitation.expiresAt)}</p>{invitation.state === "ACTIVE" ? <button type="button" disabled={!writeEnabled || busyInvitationId === invitation.invitationId} onClick={() => onRevoke(invitation)}>{busyInvitationId === invitation.invitationId ? "Revocando..." : "Revocar"}</button> : null}</article>)}</div> : <p>No hay invitaciones creadas.</p>}
+        {invitations.length ? <div>{invitations.map((invitation) => <article key={invitation.invitationId} data-invitation-state={invitation.state}><div><strong>{invitation.inviteMode === "TEAM_LINK" ? "Enlace del equipo" : invitationStateLabel(invitation.state)}</strong><small>{invitation.inviteMode === "TEAM_LINK" ? `${invitation.useCount} accesos · ${invitationStateLabel(invitation.state)}` : `Creada por ${invitation.createdByName}`}</small></div><p>{dateLabel(invitation.createdAt)} · caduca {dateLabel(invitation.expiresAt)}</p>{invitation.state === "ACTIVE" ? <button type="button" disabled={!writeEnabled || busyInvitationId === invitation.invitationId} onClick={() => onRevoke(invitation)}>{busyInvitationId === invitation.invitationId ? "Revocando..." : "Revocar"}</button> : null}</article>)}</div> : <p>No hay invitaciones creadas.</p>}
+      </section>
+      <section className={styles.membershipRequests}>
+        <header><span>Solicitudes por código</span><h2>Pendientes de aprobación</h2></header>
+        {membershipRequests.filter((request) => request.state === "PENDING").length ? (
+          <div>{membershipRequests.filter((request) => request.state === "PENDING").map((request) => (
+            <article key={request.requestId}>
+              <div><strong>{request.requesterName}</strong><small>{request.requesterPrimaryPosition}</small></div>
+              <div className={styles.requestActions}>
+                <button type="button" disabled={!writeEnabled || busyRequestId === request.requestId} onClick={() => onRespondRequest(request, "reject")}>Rechazar</button>
+                <button className={styles.primary} type="button" disabled={!writeEnabled || busyRequestId === request.requestId} onClick={() => onRespondRequest(request, "accept")}>{busyRequestId === request.requestId ? "Guardando..." : "Aceptar"}</button>
+              </div>
+            </article>
+          ))}</div>
+        ) : <p>No hay solicitudes pendientes.</p>}
       </section>
     </div>
   );

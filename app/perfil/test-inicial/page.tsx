@@ -132,6 +132,20 @@ function draftKey(userId: string, kind: AssessmentKind) {
   return `pachangas-player-assessment-draft-v1:${userId}:${kind}`;
 }
 
+function safeAssessmentReturnPath(search: string) {
+  const requested = new URLSearchParams(search).get("next");
+  if (!requested || !requested.startsWith("/") || requested.startsWith("//")) return "/";
+  try {
+    const url = new URL(requested, "https://pachangasiq.local");
+    if (url.origin !== "https://pachangasiq.local" || url.search || url.hash) return "/";
+    const isPlayerInvitation = /^\/invitacion\/grupo\/piq_[0-9a-f]{64}$/i.test(url.pathname);
+    const isAdminInvitation = /^\/invitacion\/admin\/[0-9a-f_-]{20,64}$/i.test(url.pathname);
+    return isPlayerInvitation || isAdminInvitation ? url.pathname : "/";
+  } catch {
+    return "/";
+  }
+}
+
 function readDraft(userId: string, kind: AssessmentKind): AssessmentFlow | null {
   try {
     const value = JSON.parse(window.localStorage.getItem(draftKey(userId, kind)) ?? "null") as unknown;
@@ -178,6 +192,9 @@ export default function PlayerInitialAssessmentPage() {
   const accessTokenRef = useRef("");
   const advancedDeepLinkHandled = useRef(false);
   const initialDeepLinkHandled = useRef(false);
+  const onboardingReturnHref = typeof window === "undefined"
+    ? "/"
+    : safeAssessmentReturnPath(window.location.search);
 
   const loadCanonical = useCallback(async (accessToken: string, preserveMessage = false) => {
     if (!navigator.onLine) {
@@ -442,6 +459,11 @@ export default function PlayerInitialAssessmentPage() {
       setFlow(null);
       setMessage(flow.kind === "initial" ? "Ficha creada con test inicial" : "Ficha afinada con test avanzado");
       if (flow.kind === "initial") {
+        const returnPath = safeAssessmentReturnPath(window.location.search);
+        if (returnPath !== "/") {
+          window.location.replace(returnPath);
+          return;
+        }
         const params = new URLSearchParams(window.location.search);
         params.delete("onboarding");
         window.history.replaceState(null, "", params.size ? `${window.location.pathname}?${params.toString()}` : window.location.pathname);
@@ -472,7 +494,7 @@ export default function PlayerInitialAssessmentPage() {
   const pageContent = (
     <main className={styles.page} data-assessment-onboarding="v1" data-assessment-status={status}>
         <nav className={styles.topbar}>
-          <Link href={initialAssessmentRequired ? "/" : "/perfil"}>Volver</Link>
+          <Link href={initialAssessmentRequired ? onboardingReturnHref : "/perfil"}>Volver</Link>
           <strong>Mi ficha</strong>
           <div className={styles.topbarMeta}>
             <span>{profile ? `Rev. ${profile.profile_version}` : "Nueva"}</span>
@@ -520,7 +542,7 @@ export default function PlayerInitialAssessmentPage() {
                     )
                   ) : (
                     <div className={styles.summaryActions}>
-                      <Link href="/">Entrar en Pachangas IQ</Link>
+                      <Link href={onboardingReturnHref}>Entrar en Pachangas IQ</Link>
                       <Link href="/personalizar-carta?returnTo=%2Fperfil%2Ftest-inicial">Personalizar mi carta</Link>
                       {!snapshot.assessments.advanced ? <button className="primary-button" type="button" onClick={() => beginAssessment("advanced")}>Mejorar precisión de mi ficha</button> : <strong>Test avanzado completado</strong>}
                     </div>

@@ -7670,12 +7670,34 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
       ok: true,
       team: {
         generalArea: typeof source.generalArea === "string" ? source.generalArea : "",
+        groupId: typeof source.groupId === "string" ? source.groupId : "",
         memberCount: Math.max(0, Math.floor(Number(source.memberCount) || 0)),
         modality: typeof source.modality === "string" ? source.modality : "futbol7",
         name,
         teamCode: typeof source.teamCode === "string" ? source.teamCode : code,
+        teamRevision: Math.max(1, Math.floor(Number(source.teamRevision) || 1)),
       },
     };
+  }
+
+  async function requestSocialTeamMembership(groupId: string, expectedRevision: number) {
+    if (!supabase || !navigator.onLine) return { error: "Necesitas conexión para enviar la solicitud.", ok: false };
+    const result = await supabase.rpc("command_pachanga_team_membership_request_v1", {
+      action: "team.membership.request.create",
+      client_metadata: clientOperationMetadata(),
+      expected_revision: expectedRevision,
+      operation_id: id(),
+      payload: {},
+      target_group_id: groupId,
+      target_request_id: null,
+    });
+    if (result.error) {
+      const normalized = result.error.message.toLowerCase();
+      if (normalized.includes("already_pending")) return { error: "YA TIENES UNA SOLICITUD PENDIENTE", ok: false };
+      if (normalized.includes("already_team_member")) return { error: "YA PERTENECES A ESTE EQUIPO", ok: false };
+      return { error: "NO SE PUDO ENVIAR LA SOLICITUD", ok: false };
+    }
+    return { ok: true };
   }
 
   async function confirmSocialInvitation(invitation: PendingSocialInvitation, displayNameDraft: string) {
@@ -7708,6 +7730,10 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
         });
         const snapshot = !lookup.error ? normalizeSocialTeamInvitation(lookup.data) : null;
         if (!snapshot || snapshot.state !== "ACTIVE") throw new Error(lookup.error?.message ?? `INVITATION_${snapshot?.state ?? "NOT_FOUND"}`);
+        if (snapshot.alreadyMember) {
+          closeSocialInvitation({ ...invitation, snapshot });
+          return { ok: true };
+        }
         const result = await client.rpc("command_pachanga_team_player_invitation_v2", {
           action: "team.invitation.accept",
           client_metadata: clientOperationMetadata(),
@@ -7718,19 +7744,27 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
           target_group_id: snapshot.groupId,
           target_invitation_id: snapshot.invitationId,
         });
-        if (result.error || !result.data) throw new Error(result.error?.message ?? "Invitation unavailable");
+        if (result.error || !result.data) {
+          const normalizedError = result.error?.message.toLowerCase() ?? "";
+          if (normalizedError.includes("already_team_member") || normalizedError.includes("already member")) {
+            closeSocialInvitation({ ...invitation, snapshot: { ...snapshot, alreadyMember: true } });
+            return { ok: true };
+          }
+          throw new Error(result.error?.message ?? "Invitation unavailable");
+        }
         groupId = String((result.data as { groupId?: string }).groupId ?? snapshot.groupId);
       }
 
       if (!groupId) throw new Error("Group not found");
       setPendingSocialInvitation(null);
+      setIncomingSharedLink({ hasAdminInvite: false, hasInvite: false, hasMatch: false, teamCode: null });
       setProfileName(memberName);
       const params = new URLSearchParams(window.location.search);
       ["a", "admin", "i", "invite", "social"].forEach((key) => params.delete(key));
       window.history.replaceState(null, "", params.size ? `${window.location.pathname}?${params.toString()}` : window.location.pathname);
       await loadTeams(client, groupId);
       setSyncStatus("live");
-      window.location.assign(`/equipo?team=${encodeURIComponent(groupId)}`);
+      window.location.replace(`/equipo?team=${encodeURIComponent(groupId)}`);
       return { ok: true };
     } catch (error) {
       const message = mapTeamJoinError(error);
@@ -7738,6 +7772,17 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
       setSyncError(message);
       return { error: message, ok: false };
     }
+  }
+
+  function closeSocialInvitation(invitation: PendingSocialInvitation) {
+    setPendingSocialInvitation(null);
+    setSocialFlowRequested(null);
+    setIncomingSharedLink({ hasAdminInvite: false, hasInvite: false, hasMatch: false, teamCode: null });
+    const groupId = invitation.snapshot?.groupId ?? "";
+    const destination = invitation.snapshot?.alreadyMember && groupId
+      ? `/equipo?team=${encodeURIComponent(groupId)}`
+      : "/";
+    window.location.replace(destination);
   }
 
   function createTeam(event: FormEvent<HTMLFormElement>) {
@@ -9846,6 +9891,8 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
         }}
         onJoin={confirmSocialInvitation}
         onLookupTeamCode={lookupSocialTeamCode}
+        onRequestTeamJoin={requestSocialTeamMembership}
+        onCloseInvitation={closeSocialInvitation}
         onOpen={() => {
           setSocialOnboardingDismissed(false);
           if (currentUserId) {
@@ -9868,12 +9915,46 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
       && playerCardOnboardingStatus !== "complete"
       && playerCardOnboardingStatus !== "not-required",
   );
+  const invitationAlreadyMember = pendingSocialInvitation?.snapshot?.alreadyMember === true;
+  const isolatedTeamInvitationLogin = Boolean(
+    needsLoginForSharedLink
+      && (incomingSharedLink.hasInvite || incomingSharedLink.hasAdminInvite),
+  );
+  const isolatedTeamInvitationDecision = Boolean(pendingSocialInvitation && isRegisteredUser);
+  const isolatedOnboardingActive = firstTimeCardGateActive
+    || isolatedTeamInvitationLogin
+    || isolatedTeamInvitationDecision;
 
   useEffect(() => {
-    if (!firstTimeCardGateActive) return;
+    if (!isolatedOnboardingActive) return;
     document.body.classList.add("first-time-onboarding-active");
     return () => document.body.classList.remove("first-time-onboarding-active");
-  }, [firstTimeCardGateActive]);
+  }, [isolatedOnboardingActive]);
+
+  if (isolatedTeamInvitationLogin) {
+    return (
+      <main className="first-time-onboarding-shell" data-team-invitation-gate="login" style={teamColorStyle}>
+        <div className="first-time-onboarding-toolbar" aria-label="Apariencia"><ThemeToggle compact defaultPreference="dark" /></div>
+        <section className="first-time-onboarding-state">
+          <NextImage src="/icon-192.png" alt="Pachangas IQ" width={72} height={72} priority />
+          <span>Invitación de equipo</span>
+          <strong>Inicia sesión para continuar</strong>
+          <p>Guardaremos este enlace durante el acceso. Si aún no tienes ficha, volverás aquí después de crearla.</p>
+          <GoogleSignInButton label="Continuar con Google" onClick={() => void signInWithGoogle()} disabled={!supabase || !googleClientId} />
+        </section>
+      </main>
+    );
+  }
+
+  if (invitationAlreadyMember && isolatedTeamInvitationDecision) {
+    return (
+      <main className="first-time-onboarding-shell" data-team-invitation-gate="already-member" style={teamColorStyle}>
+        <AuthenticatedThemeDefault />
+        <div className="first-time-onboarding-toolbar" aria-label="Apariencia"><ThemeToggle compact defaultPreference="dark" /></div>
+        {renderSocialOnboarding()}
+      </main>
+    );
+  }
 
   if (firstTimeCardGateActive) {
     const loading = playerCardOnboardingStatus === "checking" || !socialProfileResolved;
@@ -9907,6 +9988,16 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
           </section>
         ) : null}
         {!loading && playerCardOnboardingStatus === "required" ? renderSocialOnboarding(true) : null}
+      </main>
+    );
+  }
+
+  if (isolatedTeamInvitationDecision) {
+    return (
+      <main className="first-time-onboarding-shell" data-team-invitation-gate="decision" style={teamColorStyle}>
+        <AuthenticatedThemeDefault />
+        <div className="first-time-onboarding-toolbar" aria-label="Apariencia"><ThemeToggle compact defaultPreference="dark" /></div>
+        {renderSocialOnboarding()}
       </main>
     );
   }

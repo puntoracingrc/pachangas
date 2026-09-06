@@ -113,10 +113,12 @@ test("the three-step onboarding is dismissible after card creation and mandatory
   assert.match(component, /Ciudad o población/);
   assert.match(component, /Días preferidos/);
   assert.match(component, /requiredCardOnboarding \? <RequiredAssessmentStep/);
-  assert.match(component, /!requiredCardOnboarding \? <button type="button" onClick=\{closeFlow\}>Ahora no<\/button> : null/);
+  assert.match(component, /!requiredCardOnboarding && !alreadyInInvitedTeam \? <button type="button" onClick=\{closeFlow\}>Ahora no<\/button> : null/);
   assert.match(component, /Continuar configuración inicial/);
   assert.match(component, /Foto[\s\S]*Opcional/);
-  assert.match(component, /href="\/perfil\/test-inicial\?onboarding=1"/);
+  assert.match(component, /const assessmentHref = invitationPath/);
+  assert.match(component, /\/perfil\/test-inicial\?onboarding=1&next=/);
+  assert.match(component, /href=\{assessmentHref\}/);
   assert.doesNotMatch(component, /onboardingCompleted/);
 });
 
@@ -213,6 +215,24 @@ test("incoming invitations wait for explicit confirmation and canonical readback
   assert.match(page, /dismissed=\{requiredCardOnboarding \? false : pendingSocialInvitation \? false : socialOnboardingDismissed\}/);
   assert.match(page, /key=\{`\$\{pendingSocialInvitation\?\.token \?\? "social-onboarding"\}:\$\{requiredCardOnboarding \? "required" : "optional"\}`\}/);
   assert.match(page, /invitation=\{pendingSocialInvitation\}/);
+  assert.match(page, /data-team-invitation-gate="login"/);
+  assert.match(page, /data-team-invitation-gate="decision"/);
+  assert.match(page, /data-team-invitation-gate="already-member"/);
+  assert.match(component, /Ya estás en este equipo/);
+  assert.match(component, /onCloseInvitation\(activeJoinCandidate\)/);
+  assert.match(component, /!requiredCardOnboarding && !alreadyInInvitedTeam/);
+  assert.match(confirm, /if \(snapshot\.alreadyMember\)[\s\S]*closeSocialInvitation/);
+  assert.match(confirm, /already_team_member[\s\S]*alreadyMember: true/);
+  assert.match(confirm, /window\.location\.replace\(`\/equipo\?team=/);
+  assert.match(confirm, /setIncomingSharedLink\(\{ hasAdminInvite: false, hasInvite: false, hasMatch: false, teamCode: null \}\)/);
+  assert.doesNotMatch(confirm, /window\.location\.assign\(`\/equipo\?team=/);
+  const closeStart = page.indexOf("function closeSocialInvitation");
+  const close = page.slice(closeStart, page.indexOf("function createTeam", closeStart));
+  assert.match(close, /setPendingSocialInvitation\(null\)/);
+  assert.match(close, /setSocialFlowRequested\(null\)/);
+  assert.match(close, /window\.location\.replace\(destination\)/);
+  assert.doesNotMatch(close, /window\.location\.assign/);
+  assert.doesNotMatch(component, /invitation \? closeFlow\(\) : selectView\("start"\)>Volver<\/button><button type="button" onClick=\{closeFlow\}>Ahora no/);
 });
 
 test("team creation uses one authoritative command and never confirms locally", async () => {
