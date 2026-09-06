@@ -35,6 +35,19 @@
   gap: 4px;
 }
 
+.searchPrompt {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 7px;
+  color: var(--official-cyan-text, #51cfdf);
+  font-size: 0.8rem;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.searchPrompt svg { flex-shrink: 0; }
+
 .subnav button,
 .adminLink {
   min-width: 104px;
@@ -118,9 +131,14 @@
     scrollbar-width: none;
   }
   .subnav::-webkit-scrollbar { display: none; }
-  .subnav > div { width: max-content; }
+  .subnav { gap: 6px; }
+  .searchPrompt { gap: 4px; font-size: 0.65rem; }
+  .searchPrompt > span { max-width: 46px; }
+  .searchPrompt svg { width: 13px; height: 13px; }
+  .subnav > div { flex: 1; }
   .subnav button,
   .adminLink { min-width: 94px; min-height: 40px; padding-inline: 9px; }
+  .subnav button { flex: 1; min-width: 0; padding-inline: 4px; font-size: 0.65rem; }
   .adminLink { margin-left: 0; white-space: nowrap; }
   .workspace { gap: 9px; padding: 10px 10px calc(86px + env(safe-area-inset-bottom)); }
   .titlebar { min-height: 54px; align-items: start; padding-block: 5px; }
@@ -149,6 +167,8 @@
     padding: 5px 4px;
   }
   .subnav > div { display: grid; gap: 3px; }
+  .searchPrompt { padding: 6px 7px; font-size: 0.65rem; }
+  .searchPrompt svg { transform: rotate(90deg); }
   .subnav button,
   .adminLink {
     min-width: 0;
@@ -197,6 +217,8 @@
     padding: 8px 6px;
   }
   .subnav > div { display: grid; gap: 4px; }
+  .searchPrompt { padding: 6px; font-size: 0.7rem; }
+  .searchPrompt svg { transform: rotate(90deg); }
   .subnav button,
   .adminLink { min-width: 0; justify-content: flex-start; border-bottom-width: 1px; border-left: 3px solid transparent; }
   .subnav .active { border-bottom-color: var(--official-line); border-left-color: var(--official-accent, #c8ef5d); }
