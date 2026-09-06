@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { OfficialProductShellV2 } from "../_components/official-product-shell-v2";
 import { ProductFeedback, ProductState } from "../_components/product-state";
 import {
@@ -44,52 +44,45 @@ function domainMark(domain: SocialInboxItem["sourceDomain"]) {
 function NotificationMenu({ item }: { item: SocialInboxItem }) {
   const { busyId, offline, runCommand } = useSocialInbox();
   const busy = busyId === item.id;
+  const menuRef = useRef<HTMLDetailsElement>(null);
+  async function confirmAction(action: "inbox.mark_read" | "inbox.mark_unread" | "inbox.archive") {
+    const confirmed = await runCommand(action, item);
+    if (confirmed && menuRef.current) {
+      menuRef.current.open = false;
+      menuRef.current.querySelector("summary")?.focus();
+    }
+  }
   return (
-    <details className={styles.itemMenu}>
+    <details className={styles.itemMenu} name="notification-actions" ref={menuRef}>
       <summary aria-label={`Más acciones para ${item.title}`}>•••</summary>
       <div role="menu">
-        <button disabled={busy || offline} role="menuitem" type="button" onClick={() => void runCommand(item.readState === "READ" ? "inbox.mark_unread" : "inbox.mark_read", item)}>
+        <button disabled={busy || offline} role="menuitem" type="button" onClick={() => void confirmAction(item.readState === "READ" ? "inbox.mark_unread" : "inbox.mark_read")}>
           {item.readState === "READ" ? "Marcar como no leído" : "Marcar como leído"}
         </button>
-        <button disabled={busy || offline} role="menuitem" type="button" onClick={() => void runCommand("inbox.archive", item)}>Archivar</button>
+        <button disabled={busy || offline} role="menuitem" type="button" onClick={() => void confirmAction("inbox.archive")}>Archivar</button>
       </div>
     </details>
   );
 }
-function InboxCard({ item, onSelect, selected }: { item: SocialInboxItem; onSelect: () => void; selected: boolean }) {
+function InboxCard({ item }: { item: SocialInboxItem }) {
   return (
     <article
       className={styles.card}
       data-attention={item.attentionState}
       data-read={item.readState}
-      data-selected={selected || undefined}
     >
       <span className={styles.domainMark} data-domain={item.sourceDomain} aria-hidden="true">{domainMark(item.sourceDomain)}</span>
-      <button className={styles.cardCopy} type="button" onClick={onSelect} aria-label={`Ver detalle de ${item.title}`}>
+      <div className={styles.cardCopy}>
         <span className={styles.cardMeta}>{item.context} · {relativeDate(item.occurredAt)}</span>
         <strong>{item.title}</strong>
         <p>{item.summary}</p>
         <small>{item.statusLabel}</small>
-      </button>
+      </div>
       <div className={styles.cardActions}>
         {item.deepLink ? <Link href={item.deepLink}>{item.ctaLabel}</Link> : null}
         <NotificationMenu item={item} />
       </div>
     </article>
-  );
-}
-
-function InboxDetail({ item }: { item: SocialInboxItem | null }) {
-  if (!item) return <aside className={styles.detail}><span>Selecciona un aviso</span><h2>Tu siguiente acción aparecerá aquí</h2><p>La bandeja solo enlaza a la pantalla donde puedes revisar el partido, reto, mercado, equipo o premio.</p></aside>;
-  return (
-    <aside className={styles.detail} data-attention={item.attentionState}>
-      <span>{item.context}</span>
-      <h2>{item.title}</h2>
-      <p>{item.summary}</p>
-      <dl><div><dt>Estado</dt><dd>{item.statusLabel}</dd></div><div><dt>Cuándo</dt><dd>{relativeDate(item.occurredAt)}</dd></div></dl>
-      {item.deepLink ? <Link className={styles.primaryAction} href={item.deepLink}>{item.ctaLabel}</Link> : <small>Esta actividad ya no tiene una acción disponible.</small>}
-      <NotificationMenu item={item} />
-    </aside>
   );
 }
 
@@ -108,7 +101,6 @@ export default function SocialInboxPage() {
     status,
     view,
   } = useSocialInbox();
-  const [selectedId, setSelectedId] = useState<string | null>(null);
 
   useEffect(() => {
     setView("pending");
@@ -119,7 +111,6 @@ export default function SocialInboxPage() {
     group,
     items: (snapshot?.items ?? []).filter((item) => socialInboxGroup(item) === group),
   })).filter((entry) => entry.items.length > 0), [snapshot?.items]);
-  const selected = snapshot?.items.find((item) => item.id === selectedId) ?? snapshot?.items[0] ?? null;
   const signedOut = status === "signed-out";
   const unavailable = status === "unavailable";
 
@@ -161,10 +152,9 @@ export default function SocialInboxPage() {
                 : snapshot && !snapshot.items.length ? <ProductState actions={view === "pending" ? <button type="button" onClick={() => setView("all")}>Ver actividad reciente</button> : undefined} description={view === "pending" ? "No tienes acciones pendientes ni giros gratis por utilizar." : "La actividad social reciente aparecerá aquí cuando ocurra."} eyebrow={view === "pending" ? "Todo al día" : "Sin actividad"} state="SUCCESS" title={view === "pending" ? "No queda nada pendiente" : "Tu bandeja está vacía"} />
                   : snapshot ? <div className={styles.inboxLayout}>
                     <section className={styles.list} aria-label="Lista de avisos">
-                      {groups.map(({ group, items }) => <section className={styles.group} key={group}><h2>{groupLabels[group]}</h2>{items.map((item) => <InboxCard item={item} key={item.id} onSelect={() => setSelectedId(item.id)} selected={selected?.id === item.id} />)}</section>)}
+                      {groups.map(({ group, items }) => <section className={styles.group} key={group}><h2>{groupLabels[group]}</h2>{items.map((item) => <InboxCard item={item} key={item.id} />)}</section>)}
                       {snapshot.hasMore ? <button className={styles.loadMore} disabled={Boolean(busyId)} type="button" onClick={() => void loadMore()}>Ver anteriores</button> : null}
                     </section>
-                    <InboxDetail item={selected} />
                   </div> : null}
         <p className={styles.liveStatus} aria-live="polite">{busyId ? "Confirmando el cambio con el servidor." : status === "ready" ? "Bandeja actualizada." : ""}</p>
       </main>

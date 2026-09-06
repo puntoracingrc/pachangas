@@ -290,13 +290,10 @@ function AccountActions({
   const { pendingSnapshot, snapshot, status } = useSocialInbox();
   const { closeMenu, menuRef } = useDismissableDetails();
   const summary = pendingSnapshot ?? snapshot;
-  const pendingCount = summary?.pendingCount ?? 0;
   const unreadCount = summary?.unreadCount ?? 0;
-  const bellLabel = pendingCount > 0
-    ? `Avisos, ${pendingCount} ${pendingCount === 1 ? "acción pendiente" : "acciones pendientes"}`
-    : unreadCount > 0
-      ? `Avisos, ${unreadCount} ${unreadCount === 1 ? "aviso nuevo" : "avisos nuevos"}`
-      : "Avisos";
+  const bellLabel = unreadCount > 0
+    ? `Avisos, ${unreadCount} ${unreadCount === 1 ? "aviso nuevo" : "avisos nuevos"}`
+    : "Avisos";
 
   async function signOut() {
     if (account.onSignOut) await account.onSignOut();
@@ -316,8 +313,7 @@ function AccountActions({
       <span className={styles.themeAction}><ThemeToggle compact defaultPreference="dark" /></span>
       <Link className={styles.iconAction} data-inbox-status={status} href={notificationsHref} aria-label={bellLabel}>
         <BellIcon />
-        {pendingCount > 0 ? <span className={styles.notificationBadge} aria-hidden="true">{pendingCount > 9 ? "9+" : pendingCount}</span>
-          : unreadCount > 0 ? <span className={styles.notificationDot} aria-hidden="true" /> : null}
+        {unreadCount > 0 ? <span className={styles.notificationBadge} aria-hidden="true">{unreadCount > 9 ? "9+" : unreadCount}</span> : null}
       </Link>
       <Link
         className={styles.avatarAction}
