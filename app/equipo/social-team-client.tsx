@@ -107,13 +107,6 @@ function cachedTeamSnapshot(userId: string, groupId: string) {
 }
 
 export function SocialTeamProduct({ surface = "home" }: { surface?: TeamSurface }) {
-  const [homePane, setHomePane] = useState<"ranking" | "home">("ranking");
-  useEffect(() => {
-    const syncPane = () => setHomePane(new URLSearchParams(window.location.search).get("tab") === "portada" ? "home" : "ranking");
-    queueMicrotask(syncPane);
-    window.addEventListener("popstate", syncPane);
-    return () => window.removeEventListener("popstate", syncPane);
-  }, []);
   const [userId, setUserId] = useState("");
   const [flags, setFlags] = useState<SocialTeamFeatureFlags | null>(null);
   const [profile, setProfile] = useState<CanonicalSocialProfile | null>(null);
@@ -190,7 +183,7 @@ export function SocialTeamProduct({ surface = "home" }: { surface?: TeamSurface 
     writeJson(socialTeamsCacheKey(actorId), nextTeams);
     if (!nextFlags?.socialTeamHomeV3fEnabled) {
       setStatus("disabled");
-      setMessage("La portada social de equipo todavía no está activa.");
+      setMessage("La sección de equipo todavía no está activa.");
       return;
     }
     if (!nextTeams.length) {
@@ -216,13 +209,13 @@ export function SocialTeamProduct({ surface = "home" }: { surface?: TeamSurface 
     if (homeResult.error || rosterResult.error || invitationResult.error || membershipRequestResult.error) {
       const restored = applyCached(actorId, selected.groupId);
       setStatus(restored ? "offline" : "error");
-      setMessage(restored ? "No pudimos revalidar el equipo. Mostramos la última copia confirmada." : "No pudimos recuperar la portada del equipo.");
+      setMessage(restored ? "No pudimos revalidar el equipo. Mostramos la última copia confirmada." : "No pudimos recuperar el equipo.");
       return;
     }
     const nextHome = normalizeSocialTeamHome(homeResult.data);
     if (!nextHome) {
       setStatus("error");
-      setMessage("El servidor respondió sin una portada canónica válida.");
+      setMessage("El servidor respondió sin datos válidos del equipo.");
       return;
     }
     const nextRoster = normalizeSocialTeamRoster(rosterResult.data);
@@ -440,7 +433,7 @@ export function SocialTeamProduct({ surface = "home" }: { surface?: TeamSurface 
 
   if (status === "loading") return shell(<main className={styles.page}><section className={styles.state}><span>Equipo</span><h1>Cargando tu estado confirmado...</h1></section></main>);
   if (status === "signed-out") return shell(<main className={styles.page}><section className={styles.state}><span>Mi equipo</span><h1>Inicia sesión para abrir tu equipo</h1><Link className={styles.primary} href="/">Volver a Inicio</Link></section></main>);
-  if (status === "disabled") return shell(<main className={styles.page}><section className={styles.state}><span>Equipo</span><h1>La portada social se está preparando</h1><p>{message}</p><Link href="/?mobile=inicio">Volver a Inicio</Link></section></main>);
+  if (status === "disabled") return shell(<main className={styles.page}><section className={styles.state}><span>Equipo</span><h1>La sección de equipo se está preparando</h1><p>{message}</p><Link href="/?mobile=inicio">Volver a Inicio</Link></section></main>);
   if (status === "no-team") return shell(<main className={styles.page}><section className={styles.state}><span>Tu espacio de jugador</span><h1>Aún no perteneces a un equipo</h1><p>Tu perfil sigue disponible. Puedes entrar mediante una invitación, crear tu equipo o buscar una pachanga.</p><div className={styles.stateActions}><Link className={styles.primary} href="/?social=create">Crear mi equipo</Link><Link href="/?social=join">Unirme a un equipo</Link><Link href="/mercado?tab=partidos">Buscar partido</Link></div></section></main>);
   if (!home) return shell(<main className={styles.page}><section className={styles.state}><span>Equipo no disponible</span><h1>No pudimos abrir una copia válida</h1><p>{message}</p><button type="button" onClick={() => void loadCanonical(selectedTeamId)}>Reintentar</button></section></main>);
 
@@ -448,11 +441,10 @@ export function SocialTeamProduct({ surface = "home" }: { surface?: TeamSurface 
     <main className={`${styles.page} ${styles.workspace}`} data-social-team-status={status} data-social-team-surface={surface}>
       <nav className={styles.workspaceNav} aria-label="Secciones del equipo">
         <div><span>Equipo</span><strong>{home.name}</strong></div>
-        <Link onClick={() => setHomePane("ranking")} aria-current={surface === "home" && homePane === "ranking" ? "page" : undefined} href={`/equipo?team=${encodeURIComponent(home.groupId)}`}>Ranking</Link>
+        <Link aria-current={surface === "home" ? "page" : undefined} href={`/equipo?team=${encodeURIComponent(home.groupId)}`}>Ranking</Link>
         <Link aria-current={surface === "roster" ? "page" : undefined} href={`/equipo/plantilla?team=${encodeURIComponent(home.groupId)}`}>Plantilla</Link>
         <Link aria-current={surface === "achievements" ? "page" : undefined} href={`/equipo/logros?team=${encodeURIComponent(home.groupId)}`}>Logros</Link>
         <Link aria-current={surface === "shield" ? "page" : undefined} href={`/equipo/escudo?team=${encodeURIComponent(home.groupId)}`}>Escudo</Link>
-        <Link onClick={() => setHomePane("home")} aria-current={surface === "home" && homePane === "home" ? "page" : undefined} href={`/equipo?team=${encodeURIComponent(home.groupId)}&tab=portada`}>Portada</Link>
         {home.actions.canInvitePlayers ? <Link aria-current={surface === "invitations" ? "page" : undefined} href={`/equipo/invitaciones?team=${encodeURIComponent(home.groupId)}`}>Invitaciones</Link> : null}
         <small>{home.generalArea || "Zona pendiente"} · {roster.length} jugadores</small>
       </nav>
@@ -471,8 +463,7 @@ export function SocialTeamProduct({ surface = "home" }: { surface?: TeamSurface 
       {message ? <p className={styles.notice} role="status">{message}</p> : null}
 
       {status === "ready" && surface !== "achievements" && surface !== "shield" ? <PlayerClaims key={`${userId}:${home.groupId}`} groupId={home.groupId} showCandidates={surface === "roster"} onChanged={() => { void loadCanonical(home.groupId); }} /> : null}
-      {surface === "home" && homePane === "home" ? <TeamHome home={home} roster={roster} /> : null}
-      {surface === "home" && homePane === "ranking" ? <TeamRanking key={`${userId}:${home.groupId}`} groupId={home.groupId} /> : null}
+      {surface === "home" ? <TeamRanking key={`${userId}:${home.groupId}`} groupId={home.groupId} /> : null}
       {surface === "shield" ? <TeamShieldProduct key={`${userId}:${home.groupId}`} groupId={home.groupId} /> : null}
       {surface === "achievements" ? <TeamAchievementGallery key={`${userId}:${home.groupId}`} groupId={home.groupId} /> : null}
       {surface === "roster" ? <RosterView admins={groupedRoster.admins} invitationCount={home.activeInvitationCount} players={groupedRoster.players} canInvite={home.actions.canInvitePlayers} teamId={home.groupId} /> : null}
@@ -509,30 +500,6 @@ function PrimaryTeamAction({ home }: { home: SocialTeamHome }) {
     return <Link className={styles.primary} href={`/?mobile=partido&equipo=${encodeURIComponent(home.teamCode)}&create=match`}>Crear primer partido</Link>;
   }
   return <Link className={styles.primary} href={`/equipo/plantilla?team=${encodeURIComponent(home.groupId)}`}>Ver plantilla</Link>;
-}
-
-function TeamHome({ home, roster }: { home: SocialTeamHome; roster: SocialTeamRosterMember[] }) {
-  return (
-    <div className={styles.homeGrid}>
-      <section className={styles.nextMatch}>
-        <header><span>Próximo partido</span><h2>{home.nextMatch?.title ?? "Aún no hay partido"}</h2></header>
-        {home.nextMatch ? <><p>{dateLabel(home.nextMatch.date)} · {home.nextMatch.place || "Campo por confirmar"}</p><small>{modalityLabel(home.nextMatch.modality)} · objetivo {home.nextMatch.targetPlayers} jugadores</small></> : <p>Crea el primer partido cuando la plantilla esté preparada.</p>}
-      </section>
-      <section className={styles.rosterPreview}>
-        <header><span>Plantilla</span><h2>{roster.length} jugadores</h2></header>
-        <div>{roster.slice(0, 6).map((member) => <MemberAvatar key={member.memberKey} member={member} />)}</div>
-        <Link href={`/equipo/plantilla?team=${encodeURIComponent(home.groupId)}`}>Ver plantilla</Link>
-      </section>
-      <section className={styles.activity}>
-        <header><span>Equipo</span><h2>Ahora mismo</h2></header>
-        <ul><li><b>{roster.length}</b><span>jugadores</span></li><li><b>{home.activeInvitationCount}</b><span>invitaciones pendientes</span></li>{home.operationalStatus !== "ACTIVE" ? <li><b>{home.operationalStatus}</b><span>acción limitada</span></li> : null}</ul>
-      </section>
-      <section className={styles.destinations}>
-        <header><span>Jugar</span><h2>Siguientes pasos</h2></header>
-        <div><Link href="/retos">Retar equipo</Link><Link href="/mercado">Abrir Mercado</Link></div>
-      </section>
-    </div>
-  );
 }
 
 function MemberAvatar({ member }: { member: SocialTeamRosterMember }) {
