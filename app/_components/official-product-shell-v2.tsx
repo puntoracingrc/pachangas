@@ -36,7 +36,6 @@ type ShellLinkMap = Partial<Record<MobileAppTab, string>>;
 
 type ShellAccount = {
   avatarUrl?: string;
-  cardHref?: string;
   displayName?: string;
   notificationsHref?: string;
   onSignOut?: () => void | Promise<void>;
@@ -321,7 +320,7 @@ function AccountActions({
       <button
         className={styles.avatarAction}
         type="button"
-        aria-label="Abrir mi perfil y mi carta"
+        aria-label="Abrir menú de perfil"
         onClick={() => {
           if (menuRef.current) {
             menuRef.current.open = true;
@@ -343,7 +342,6 @@ function AccountActions({
         >
           <p><strong>{resolvedAccount.displayName ?? "Mi cuenta"}</strong><small>Vista jugador</small></p>
           <Link href={resolvedAccount.profileHref ?? "/perfil"}>Mi perfil</Link>
-          <Link href={resolvedAccount.cardHref ?? "/personalizar-carta"}>Mi carta</Link>
           <Link href="/ruleta">Ruleta de premios</Link>
           <Link href="/ranking">Ranking</Link>
           <Link href="/ajustes/notificaciones">Avisos y notificaciones</Link>

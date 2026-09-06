@@ -40,12 +40,12 @@ try {
  frame='player.frame.barrio.copper';
  await page.evaluate(()=>window.dispatchEvent(new Event('focus')));
  await page.locator('[data-frame="player.frame.barrio.copper"]').waitFor();
- await page.getByRole('button',{name:'Abrir mi perfil y mi carta',exact:true}).click();
+ await page.getByRole('button',{name:'Abrir menú de perfil',exact:true}).click();
  assert.equal(await page.getByRole('link',{name:'Mi perfil',exact:true}).getAttribute('href'),'/perfil');
- assert.equal(await page.getByRole('link',{name:'Mi carta',exact:true}).getAttribute('href'),'/personalizar-carta');
+ assert.equal(await page.getByRole('link',{name:'Mi carta',exact:true}).count(),0);
  await page.keyboard.press('Escape');
  await page.locator('summary[aria-label="Abrir menú general"]:visible').click();
- assert.equal(await page.getByRole('link',{name:'Mi carta',exact:true}).isVisible(),true);
+ assert.equal(await page.getByRole('link',{name:'Mi perfil',exact:true}).isVisible(),true);
  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
  console.log(JSON.stringify({passed:true,cosmeticReads:requests,checks:['saved frame and badge','editor button matches profile','refresh on return','avatar and hamburger menu','mobile overflow','market description','privacy collapsed and expandable']}));
 } catch(error) {console.log(await page.locator('body').innerText()); console.log('reads',requests); throw error;} finally {await browser.close();}
