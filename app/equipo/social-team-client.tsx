@@ -108,6 +108,7 @@ function cachedTeamSnapshot(userId: string, groupId: string) {
 
 export function SocialTeamProduct({ surface = "home" }: { surface?: TeamSurface }) {
   const [userId, setUserId] = useState("");
+  const [restrictedInvitationTeam, setRestrictedInvitationTeam] = useState("");
   const [flags, setFlags] = useState<SocialTeamFeatureFlags | null>(null);
   const [profile, setProfile] = useState<CanonicalSocialProfile | null>(null);
   const [teams, setTeams] = useState<SocialTeamSummary[]>([]);
@@ -278,6 +279,7 @@ export function SocialTeamProduct({ surface = "home" }: { surface?: TeamSurface 
   const perspective = home?.role === "owner" ? "team-owner" : home?.role === "admin" ? "team-admin" : home ? "player" : "free-agent";
 
   function selectTeam(groupId: string) {
+    setRestrictedInvitationTeam("");
     setFreshShareUrl("");
     setCopyConfirmed(false);
     setStatus("loading");
@@ -445,9 +447,22 @@ export function SocialTeamProduct({ surface = "home" }: { surface?: TeamSurface 
         <Link aria-current={surface === "roster" ? "page" : undefined} href={`/equipo/plantilla?team=${encodeURIComponent(home.groupId)}`}>Plantilla</Link>
         <Link aria-current={surface === "achievements" ? "page" : undefined} href={`/equipo/logros?team=${encodeURIComponent(home.groupId)}`}>Logros</Link>
         <Link aria-current={surface === "shield" ? "page" : undefined} href={`/equipo/escudo?team=${encodeURIComponent(home.groupId)}`}>Escudo</Link>
-        {home.actions.canInvitePlayers ? <Link aria-current={surface === "invitations" ? "page" : undefined} href={`/equipo/invitaciones?team=${encodeURIComponent(home.groupId)}`}>Invitaciones</Link> : null}
+        {home.actions.canInvitePlayers ? <Link aria-current={surface === "invitations" ? "page" : undefined} href={`/equipo/invitaciones?team=${encodeURIComponent(home.groupId)}`}>Invitaciones</Link> : <button
+          className={styles.lockedNavItem}
+          type="button"
+          aria-label="Invitaciones, solo para administradores"
+          data-admin-only="invitations"
+          onClick={() => setRestrictedInvitationTeam(home.groupId)}
+        >
+          <span>Invitaciones</span>
+          <svg aria-hidden="true" viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="11" rx="2" /><path d="M8 10V7a4 4 0 0 1 8 0v3" /></svg>
+        </button>}
         <small>{home.generalArea || "Zona pendiente"} · {roster.length} jugadores</small>
       </nav>
+      {!home.actions.canInvitePlayers && restrictedInvitationTeam === home.groupId ? <aside className={styles.adminNotice} role="status">
+        <div><strong>Solo para administradores</strong><span>El administrador o propietario del equipo gestiona las invitaciones y las solicitudes de entrada.</span></div>
+        <button type="button" aria-label="Cerrar aviso" onClick={() => setRestrictedInvitationTeam("")}>×</button>
+      </aside> : null}
       <div className={styles.workspaceContent}>
       {surface !== "shield" ? <header className={styles.hero}>
         <TeamShieldView className={styles.heroShield} config={home.shield} label={`Escudo de ${home.name}`} size={210} />
@@ -541,7 +556,7 @@ function InvitationView({ busyInvitationId, busyRequestId, canInvite, copyConfir
   teamCode: string;
   writeEnabled: boolean;
 }) {
-  if (!canInvite) return <section className={styles.state}><span>Invitaciones</span><h1>Solo owner y admins pueden crear enlaces</h1><p>Los jugadores pueden consultar la plantilla, pero no conceder membresías.</p></section>;
+  if (!canInvite) return <section className={styles.state}><span>Invitaciones</span><h1>Solo para administradores</h1><p>El administrador o propietario del equipo gestiona las invitaciones y las solicitudes de entrada.</p></section>;
   return (
     <div className={styles.invitationLayout}>
       <section className={styles.inviteComposer}>
