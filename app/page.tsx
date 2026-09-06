@@ -3516,7 +3516,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
           setProfilePane("ficha");
           setSelectedPlayerId(null);
         }
-        setMobileAccountOpen(true);
+        setMobileAccountOpen(requestedParams.get("market") !== "1");
         if (requestedSettings) setShowSettings(true);
         return;
       }
@@ -4030,7 +4030,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
       setPlayerProfileMode("edit");
       setProfilePane("ficha");
       setSelectedPlayerId(remoteOwnPlayer?.id ?? null);
-      setMobileAccountOpen(!remoteOwnPlayer);
+      setMobileAccountOpen(!remoteOwnPlayer && currentParams.get("market") !== "1");
     }
     setRemoteReady(true);
     setSyncStatus("live");
@@ -5037,7 +5037,10 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
   }
 
   function scrollToPlayerProfile() {
-    scrollToPanel(playerProfileRef);
+    const marketPanel = new URLSearchParams(window.location.search).get("market") === "1"
+      ? document.getElementById("market-profile")
+      : null;
+    scrollToPanel(marketPanel ? { current: marketPanel } : playerProfileRef);
   }
 
   function scrollToQuickForm(form: NonNullable<typeof openQuickForm>) {
@@ -6225,6 +6228,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
   const showWaitingRosterColumn = !matchFinalized && waitingPlayers.length > 0;
   const showStatusRosterColumn = !matchFinalized;
   const selectedPlayer = selectedPlayerId ? players.find((player) => player.id === selectedPlayerId) : undefined;
+
   const selectedRatingFacets = selectedPlayer ? ratingFacetsForPlayer(selectedPlayer) : ratingFacets;
   const selectedForm = selectedPlayer ? playerForm(selectedPlayer) : undefined;
   const selectedEffectiveScore = selectedPlayer ? effectivePlayerScore(selectedPlayer) : 0;
@@ -9739,7 +9743,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
               <small>Test avanzado completado. La ficha seguirá evolucionando con valoraciones de compañeros.</small>
             ) : (
               <button type="button" onClick={() => startPlayerAssessment("advanced", selectedPlayer)}>
-                Mejorar precisión de mi ficha
+                Mejorar precisión de mi carta
               </button>
             )}
           </div>
@@ -10070,7 +10074,6 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
       account={{
         avatarUrl: ownPlayer?.avatar,
         displayName: authDisplayName(authUser),
-        onOpenMenu: () => setMobileAccountOpen(true),
         onSignOut: signOut,
         profileHref: "/perfil",
         settingsHref: "/?mobile=perfil&settings=1",
@@ -11759,7 +11762,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
                   <b aria-hidden="true">›</b>
                 </a>
                 <a className="profile-notifications-link" href="/personalizar-carta">
-                  <span>Personalizar ficha</span>
+                  <span>Personalizar carta</span>
                   <small>Tu colección, efectos y logro destacado</small>
                   <b aria-hidden="true">›</b>
                 </a>
@@ -11917,7 +11920,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
                   Lesionado
                 </label>
                 {selectedPlayerIsOwn ? (
-                  <div className="market-profile-box">
+                  <div className="market-profile-box" id="market-profile">
                     <label className="toggle-field market-toggle">
                       <input
                         type="checkbox"
@@ -12202,10 +12205,10 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
           <button
             className="mobile-account-backdrop"
             type="button"
-            aria-label="Cerrar menú de perfil"
+            aria-label="Cerrar ajustes y equipo"
             onClick={() => setMobileAccountOpen(false)}
           />
-          <section className="mobile-account-sheet" role="dialog" aria-modal="true" aria-label="Perfil y ajustes">
+          <section className="mobile-account-sheet" role="dialog" aria-modal="true" aria-label="Ajustes y equipo">
             <header className="mobile-account-header">
               <span className="mobile-account-avatar" aria-hidden="true">
                 {nameInitials(profileName || authDisplayName(authUser))}
@@ -12219,7 +12222,7 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
               <button
                 className="mobile-account-close"
                 type="button"
-                aria-label="Cerrar menú de perfil"
+                aria-label="Cerrar ajustes y equipo"
                 onClick={() => setMobileAccountOpen(false)}
               >
                 ×
@@ -12228,13 +12231,12 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
             <div className="mobile-account-scroll">
               <div className="mobile-account-group">
                 <h2>Jugador</h2>
-                <button
-                  type="button"
-                  onClick={() => runMobileAccountAction(() => void openOwnPlayerProfile())}
-                  disabled={!hasRealTeam || !isRegisteredUser}
-                >
-                  <span>Mi ficha</span><small>Datos, posición, forma y valoraciones</small><b aria-hidden="true">›</b>
-                </button>
+                <a href="/perfil">
+                  <span>Mi perfil</span><small>Tus datos e información deportiva</small><b aria-hidden="true">›</b>
+                </a>
+                <a href="/personalizar-carta">
+                  <span>Mi carta</span><small>Tu carta, diseños y cosméticos</small><b aria-hidden="true">›</b>
+                </a>
                 <a href="/ruleta">
                   <span>Ruleta de premios</span><small>Tus tiradas, cofres y recompensas</small><b aria-hidden="true">›</b>
                 </a>

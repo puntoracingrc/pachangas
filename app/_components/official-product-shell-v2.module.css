@@ -192,7 +192,7 @@
 .avatarAction svg,
 .menuAction svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.7; }
 .avatarAction img { width: 34px; height: 34px; border-radius: 50%; object-fit: cover; }
-.accountMenuPanel { right: 0; }
+.accountMenuPanel { right: 0; max-height:calc(100dvh - 80px - env(safe-area-inset-top)); overflow-y:auto; }
 .accountMenuPanel p { display: grid; gap: 2px; }
 .accountMenuPanel p strong { color: var(--official-text); }
 .accountMenuPanel p small { color: var(--official-muted); }
