@@ -205,7 +205,7 @@ test("Home uses the canonical pending projection and Team keeps its V3F authorit
   assert.match(team, /command_pachanga_team_player_invitation_v2/);
   assert.match(team, /teamCode/);
   assert.doesNotMatch(team, /Estado confirmado/);
-  assert.match(team, /operationalStatus !== "ACTIVE"/);
+  assert.match(team, /status: team\.operationalStatus/);
 });
 
 test("match invitation response lives in Mercado rather than the Inbox", () => {

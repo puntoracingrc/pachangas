@@ -32,7 +32,8 @@ test("group ranking has one product home and cannot embed the provincial/global 
  const [home,team,ranking]=await Promise.all([source("app/page.tsx"),source("app/equipo/social-team-client.tsx"),source("app/equipo/team-ranking.tsx")]);
  assert.doesNotMatch(home,/id="ranking"|renderRankingMiniCard/);
  assert.doesNotMatch(team,/ProvincialRankingProduct|from "..\/ranking\//);
- assert.match(team,/homePane === "ranking" \? <TeamRanking/);
+ assert.match(team,/surface === "home" \? <TeamRanking/);
+ assert.doesNotMatch(team,/homePane|>Portada<|<TeamHome/);
  assert.match(ranking,/\.eq\("id", groupId\)/);
  assert.match(home,/rankingPlayer/);
 });
