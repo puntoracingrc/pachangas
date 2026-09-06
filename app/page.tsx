@@ -4027,6 +4027,9 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
     }
     if (currentParams.get("mobile") === "perfil") {
       const remoteOwnPlayer = selectedTeam.payload.players.find((player) => player.ownerUserId === memberUserId);
+      lockMobileNavigationTab("perfil");
+      setActiveMobileTab("perfil");
+      setTeamGalleryOpen(false);
       setPlayerProfileMode("edit");
       setProfilePane("ficha");
       setSelectedPlayerId(remoteOwnPlayer?.id ?? null);
@@ -4043,6 +4046,8 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
       const nextParams = prettyTeamParams(selectedTeam, {
         p: sharedMatchId ? compactUuid(sharedMatchId) : undefined,
         social: socialOnboardingFlowFromSearch(entrySearch) ?? undefined,
+        mobile: currentParams.get("market") === "1" ? "perfil" : undefined,
+        market: currentParams.get("market") === "1" ? "1" : undefined,
       });
       window.history.replaceState(null, "", `${window.location.pathname}?${nextParams.toString()}`);
     }
@@ -5037,10 +5042,14 @@ export default function Home({ entryRoute }: { entryRoute?: HomeEntryRoute } = {
   }
 
   function scrollToPlayerProfile() {
-    const marketPanel = new URLSearchParams(window.location.search).get("market") === "1"
-      ? document.getElementById("market-profile")
-      : null;
-    scrollToPanel(marketPanel ? { current: marketPanel } : playerProfileRef);
+    scrollToPanel({
+      get current() {
+        const marketPanel = new URLSearchParams(window.location.search).get("market") === "1"
+          ? document.getElementById("market-profile")
+          : null;
+        return marketPanel ?? playerProfileRef.current;
+      },
+    });
   }
 
   function scrollToQuickForm(form: NonNullable<typeof openQuickForm>) {
