@@ -52,8 +52,8 @@ test("the unified header keeps team context separate from primary navigation", a
   assert.match(shell, /aria-label="Abrir selector de equipo"/);
   assert.match(shell, /contextOptions/);
   assert.match(shell, /onContextChange/);
-  assert.match(shell, /Ver equipo/);
-  assert.match(shell, /Gestionar equipo/);
+  assert.match(shell, /Cambiar equipo/);
+  assert.match(shell, /Crear equipo/);
   assert.match(shell, /PRODUCT_PRIMARY_DESTINATIONS/);
   assert.doesNotMatch(shell, /contextualDestinationsForPerspective\(perspective\)/);
 });

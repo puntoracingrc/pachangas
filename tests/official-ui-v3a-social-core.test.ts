@@ -26,12 +26,13 @@ test("V3A exposes play-first navigation only", async () => {
 
 test("team identity and account actions own secondary navigation", async () => {
   const shell = await source("app/_components/official-product-shell-v2.tsx");
-  for (const label of ["Ver equipo", "Gestionar equipo", "Crear equipo", "Ruleta de premios", "Ajustes", "Cerrar sesión"]) {
+  for (const label of ["Cambiar equipo", "Crear equipo", "Ruleta de premios", "Ajustes", "Cerrar sesión"]) {
     assert.match(shell, new RegExp(label));
   }
   assert.match(shell, /aria-label="Abrir perfil y carta"/);
   assert.doesNotMatch(shell, />PERFIL\/CARTA<\/Link>/);
-  assert.match(shell, /perspective === "team-admin" \|\| perspective === "team-owner"/);
+  const selector = shell.slice(shell.indexOf("function ContextIdentity("), shell.indexOf("function AccountActions("));
+  assert.doesNotMatch(selector, /Gestionar equipo|Ver equipo|Unirme a un equipo|Buscar una pachanga/);
   assert.doesNotMatch(shell, /href="\/admin"/);
   assert.match(shell, /platformOwner \? <Link href="\/admin\/demo">Mundo Demo completo<\/Link>/);
 });
