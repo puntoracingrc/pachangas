@@ -219,17 +219,14 @@ function ContextIdentity({
   context,
   contexts,
   onContextChange,
-  perspective,
   visual,
 }: {
   context: OfficialContext;
   contexts: ProductContextOption[];
   onContextChange?: (id: string) => void;
-  perspective: ProductActorPerspective;
   visual?: ReactNode;
 }) {
   const activeId = context.id ?? contexts[0]?.id ?? "current";
-  const canManageTeam = perspective === "team-admin" || perspective === "team-owner";
   const isPlayerWithoutTeam = context.type === "profile";
   const { closeMenu, menuRef } = useDismissableDetails();
 
@@ -260,10 +257,7 @@ function ContextIdentity({
             </select>
           </label>
         ) : <p>{context.detail ?? context.role ?? "Tu espacio de juego"}</p>}
-        {!isPlayerWithoutTeam ? <Link href="/equipo">Ver equipo</Link> : <Link href="/equipo/unirse">Unirme a un equipo</Link>}
-        {!isPlayerWithoutTeam && canManageTeam ? <Link href="/?mobile=perfil&settings=1">Gestionar equipo</Link> : null}
         <Link href="/equipo/crear">Crear equipo</Link>
-        {isPlayerWithoutTeam ? <Link href="/mercado?tab=partidos">Buscar una pachanga</Link> : null}
       </div>
     </details>
   );
@@ -413,7 +407,6 @@ export function OfficialProductShellV2({
       context={context}
       contexts={resolvedContexts}
       onContextChange={onContextChange}
-      perspective={perspective}
       visual={contextVisual}
     />
   );
